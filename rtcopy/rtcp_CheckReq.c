@@ -706,7 +706,6 @@ int rtcp_CheckReq(int *client_socket,
         rc = rtcp_CheckTapeReq(tl);
         if ( rc == -1 ) {
             tellClient(client_socket,tl,NULL,rc);
-            (void)rtcp_WriteAccountRecord(client,tl,tl->file,RTCPEMSG);
             break;
         }
 
@@ -722,7 +721,6 @@ int rtcp_CheckReq(int *client_socket,
                 rc = rtcp_CheckFileReq(fl);
                 if ( rc == -1 ) {
                     tellClient(client_socket,NULL,fl,rc);
-                    (void)rtcp_WriteAccountRecord(client,tl,fl,RTCPEMSG);
                 }
                 if ( rc == -1 ) break;
             }
@@ -734,7 +732,6 @@ int rtcp_CheckReq(int *client_socket,
             file = NULL;
             SET_REQUEST_ERR(tapereq,RTCP_USERR | RTCP_FAILED);
             tellClient(client_socket,tape,NULL,rc);
-            (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
         }
         if ( rc == -1 ) break;
     } CLIST_ITERATE_END(tape,tl);
@@ -748,7 +745,6 @@ int rtcp_CheckReq(int *client_socket,
         file = NULL;
         SET_REQUEST_ERR(tapereq,RTCP_SYERR | RTCP_FAILED);
         tellClient(client_socket,tape,NULL,rc);
-        (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
     }
     return(rc);
 }
@@ -778,7 +774,6 @@ int rtcp_CheckReqStructures(int *client_socket,
             SET_REQUEST_ERR(tapereq,RTCP_FAILED | RTCP_USERR);
             if ( client_socket != NULL && client != NULL ) {
                 tellClient(client_socket,tl,NULL,rc);
-                (void)rtcp_WriteAccountRecord(client,tl,tl->file,RTCPEMSG);
             }
             return(-1);
         }
@@ -789,7 +784,6 @@ int rtcp_CheckReqStructures(int *client_socket,
             SET_REQUEST_ERR(tapereq,RTCP_FAILED | RTCP_USERR);
             if ( client_socket != NULL && client != NULL ) {
                 tellClient(client_socket,tl,NULL,rc);
-                (void)rtcp_WriteAccountRecord(client,tl,tl->file,RTCPEMSG);
             }
             return(-1);
         }
@@ -803,7 +797,6 @@ int rtcp_CheckReqStructures(int *client_socket,
                 SET_REQUEST_ERR(filereq,RTCP_FAILED | RTCP_USERR);
                 if ( client_socket != NULL && client != NULL ) {
                     tellClient(client_socket,NULL,fl,rc);
-                    (void)rtcp_WriteAccountRecord(client,tl,fl,RTCPEMSG);
                 }
                 return(-1);
             }
@@ -814,7 +807,6 @@ int rtcp_CheckReqStructures(int *client_socket,
                 SET_REQUEST_ERR(filereq,RTCP_FAILED | RTCP_USERR);
                 if ( client_socket != NULL && client != NULL ) {
                     tellClient(client_socket,NULL,fl,rc);
-                    (void)rtcp_WriteAccountRecord(client,tl,fl,RTCPEMSG);
                 }
                 return(-1);
             }

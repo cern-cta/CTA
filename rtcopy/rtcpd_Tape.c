@@ -1406,7 +1406,6 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                  if ( rc == 0 && AbortFlag != 0 && (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) \
                     rtcpd_SetReqStatus(X,Y,(AbortFlag == 1 ? ERTUSINTR : ERTOPINTR),rtcpd_CheckProcError()); \
                  (void) tellClient(&client_socket,X,Y,-1); \
-                 (void)rtcp_WriteAccountRecord(client,nexttape,(tmpfile!=NULL?tmpfile:nextfile),RTCPEMSG); \
              } \
              (void)rtcpd_FreeBuffers(); \
              if(clientIsTapeBridge) { \
@@ -1422,7 +1421,6 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                  (void) tellClient(&client_socket,X,Y,0); \
                  (void)rtcpd_WaitCompletion(nexttape,nextfile); \
                  rtcpd_SetProcError(severity); \
-                 (void)rtcp_WriteAccountRecord(client,nexttape,nextfile,RTCPEMSG); \
              }\
          } \
          (void) tellClient(&client_socket,NULL,NULL,-1); \
@@ -1432,8 +1430,6 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                  if ( (nexttape == NULL || nexttape->tapereq.tprc == 0) && \
                       (nextfile == NULL || nextfile->filereq.cprc == 0) ) \
                      rtcpd_SetReqStatus(X,Y,(AbortFlag == 1 ? ERTUSINTR : ERTOPINTR),rtcpd_CheckProcError()); \
-                 (void)rtcp_WriteAccountRecord( \
-                       client,nexttape,nextfile,RTCPEMSG); \
              } \
              if ( WaitToJoin == FALSE ) exit(0); \
          } \
@@ -2032,7 +2028,6 @@ void *tapeIOthread(void *arg) {
                         if ( mode == WRITE_ENABLE ) {
                             (void)tellClient(&client_socket,NULL,tmpfile,-1);
                             rtcpd_SetProcError(severity);
-                            (void)rtcp_WriteAccountRecord(client,nexttape,tmpfile,RTCPEMSG);
                             if ( tmpfile != nextfile ) free(tmpfile);
                         }
                         (void)WaitDiskIO();
@@ -2188,7 +2183,6 @@ void *tapeIOthread(void *arg) {
                 }
                 rc = tellClient(&client_socket,NULL,nextfile,0);
                 CHECK_PROC_ERR(NULL,nextfile,"tellClient() error");
-                (void)rtcp_WriteAccountRecord(client,nexttape,nextfile,RTCPPRC);
 
                 switch(tapeFlushMode) {
                 case TAPEBRIDGE_N_FLUSHES_PER_FILE:

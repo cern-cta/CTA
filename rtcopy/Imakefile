@@ -24,7 +24,7 @@ RTCPD_OBJS =	rtcpd.o rtcp_CallVMGR.o rtcp_CheckReq.o \
 		rtcpd_TapeIO.o rtcp_InitNW.o \
 		rtcpd_ConvertData.o \
 		rtcpc_BuildReq.o rtcpapi.o rtcp_RetvalSHIFT.o \
-		rtcpd_tpdump.o rtcp_accounting.o rtcp_recvRtcpHdr.o \
+		rtcpd_tpdump.o rtcp_recvRtcpHdr.o \
 		rtcp_marshallVdqmClientInfoMsg.o \
 		rtcpd_SendAckToVdqmOrTapeBridge.o \
 		rtcpd_GetClientInfoMsg.o \

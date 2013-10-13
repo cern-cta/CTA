@@ -262,7 +262,6 @@ int rtcpd_tpdump (rtcpClientInfo_t *, tape_list_t *);
 int rtcp_SendTpDump (int *, rtcpDumpTapeRequest_t *);
 int rtcp_RecvTpDump (int *, rtcpDumpTapeRequest_t *);
 int rtcp_GetMsg (int *, char *, int);
-int rtcp_WriteAccountRecord (rtcpClientInfo_t *, tape_list_t *, file_list_t *, int);
 int rtcpd_tpdump (rtcpClientInfo_t *, tape_list_t *);
 int rtcp_CheckConnect (const int, tape_list_t *);
 int rtcpd_init_stgupdc (tape_list_t *);

@@ -80,7 +80,6 @@ void dmp_usrmsg(int dmpmsg_level, char *format, ...) {
         if ( rc == -1 ) { \
             rtcpd_SetProcError(RTCP_FAILED); \
             (void) tellClient(client_socket,X,Y,-1); \
-            (void) rtcp_WriteAccountRecord(client,tape,NULL,RTCPEMSG); \
         } \
         rtcpd_DmpEnd(); \
         (void) rtcpd_Release((X),NULL); \

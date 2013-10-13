@@ -2694,8 +2694,6 @@ int rtcpd_MainCntl(int *accept_socket) {
     }
   }
 
-  (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDR);
-
   cmd = rtcp_cmds[tapereq.mode];
 
   /*
@@ -2744,8 +2742,6 @@ int rtcpd_MainCntl(int *accept_socket) {
   if ( rc == -1 ) {
     (void)tellClient(client_socket,tape,NULL,-1);
     (void)rtcpd_Deassign(client->VolReqID,&tapereq,client);
-    (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
-    (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
     rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
     return(-1);
   }
@@ -2761,11 +2757,9 @@ int rtcpd_MainCntl(int *accept_socket) {
                      "Message", TL_MSG_PARAM_STR, "rtcp_CheckReq",
                      "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
     (void)rtcpd_Deassign(client->VolReqID,&tapereq,NULL);
-    (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
     rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
     return(-1);
   }
-  (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDD);
 
   /*
    * Start a thread to listen to client socket (to receive ABORT).
@@ -2781,8 +2775,6 @@ int rtcpd_MainCntl(int *accept_socket) {
                      "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
     (void)tellClient(client_socket,tape,NULL,-1);
     (void)rtcpd_Deassign(client->VolReqID,&tapereq,NULL);
-    (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
-    (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
     rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
     return(-1);
   }
@@ -2808,11 +2800,9 @@ int rtcpd_MainCntl(int *accept_socket) {
       if ( *tape->tapereq.err.errmsgtxt == '\0' ) {
         (void)rtcpd_AppendClientMsg(tape,NULL,"tpdump(): %s\n",
                                     sstrerror(serrno));
-        (void)rtcp_WriteAccountRecord(client,tape,NULL,RTCPEMSG);
       }
       (void)rtcpd_Deassign(client->VolReqID,&tapereq,NULL);
     }
-    (void)rtcp_WriteAccountRecord(client,tape,NULL,RTCPCMDC);
     (void)rtcpd_WaitCLThread(CLThId,&status);
     rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
     return(rc);
@@ -2831,9 +2821,7 @@ int rtcpd_MainCntl(int *accept_socket) {
                      "Message", TL_MSG_PARAM_STR, "failed to allocate buffers" );
     (void)rtcpd_AppendClientMsg(tape,NULL,RT105,cmd,sstrerror(serrno));
     (void)tellClient(client_socket,tape,NULL,-1);
-    (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
     (void)rtcpd_Deassign(client->VolReqID,&tapereq,NULL);
-    (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
     (void)rtcpd_WaitCLThread(CLThId,&status);
     rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
     return(-1);
@@ -2859,8 +2847,6 @@ int rtcpd_MainCntl(int *accept_socket) {
                                 sstrerror(serrno));
     (void)tellClient(client_socket,tape,NULL,-1);
     (void)rtcpd_Deassign(client->VolReqID,&tapereq,NULL);
-    (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
-    (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
     (void)rtcpd_WaitCLThread(CLThId,&status);
     rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
     return(-1);
@@ -2904,7 +2890,6 @@ int rtcpd_MainCntl(int *accept_socket) {
                                   sstrerror(serrno));
       (void)tellClient(client_socket,tape,NULL,-1);
       (void)rtcpd_Deassign(client->VolReqID,&tapereq,NULL);
-      (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
       rtcpd_SetProcError(RTCP_FAILED);
       break;
     }
@@ -2921,7 +2906,6 @@ int rtcpd_MainCntl(int *accept_socket) {
                        "Message"  , TL_MSG_PARAM_STR, "failed to start disk I/O thread" );
       (void)rtcpd_AppendClientMsg(tape,NULL,"rtcpd_StartDiskIO(): %s\n",
                                   sstrerror(serrno));
-      (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPEMSG);
       rtcpd_SetProcError(RTCP_FAILED);
     }
 
@@ -3041,7 +3025,6 @@ int rtcpd_MainCntl(int *accept_socket) {
   /*
    * Clean up allocated resources and return
    */
-  (void)rtcp_WriteAccountRecord(client,tape,tape->file,RTCPCMDC);
   rtcpd_FreeResources(&client_socket, &client, &tape, clientHostname);
 
   return(0);

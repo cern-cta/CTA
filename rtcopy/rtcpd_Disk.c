@@ -1658,8 +1658,6 @@ static int DiskToMemory(int disk_fd, int pool_index,
                                  "Message", TL_MSG_PARAM_STR, "return RC=0 to client" ); \
                 (void) tellClient(&client_socket,X,Y,0); \
             } \
-            if ( AbortFlag == 0 ) \
-                (void)rtcp_WriteAccountRecord(client,tape,file,RTCPEMSG); \
         } \
         if ( disk_fd != -1 ) \
             (void)DiskFileClose(disk_fd,pool_index,tape,file); \
@@ -1899,8 +1897,6 @@ void *diskIOthread(void *arg) {
 
         rc = tellClient(&client_socket,NULL,file,save_rc);
         CHECK_PROC_ERR(NULL,file,"tellClient() error");
-
-        (void)rtcp_WriteAccountRecord(client,tape,file,RTCPPRC); 
 
         rtcp_log(LOG_DEBUG,"diskIOthread() fseq %d <-> %s copied %d bytes, rc=%d, proc_status=%d severity=%d\n",
             filereq->tape_fseq,filereq->file_path,
