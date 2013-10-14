@@ -1,13 +1,13 @@
 # Generic macros
 #---------------
 %define name castor
-%define castorVersion __A__.__B__.__C__
-%define castorRelease __D__
+%define castorVersion @CASTOR_VERSION@
+%define castorRelease @CASTOR_RELEASE@
 
 # Partial compilations
 #---------------------
-%{expand:%define compiling_nostk  %(if [ -z $CASTOR_NOSTK ]; then echo 0; else echo 1; fi)}
-%{expand:%define compiling_client %(if [ -z $CASTOR_CLIENT ]; then echo 0; else echo 1; fi)}
+%define compiling_nostk  @COMPILING_NOSTK@
+%define compiling_client @COMPILING_CLIENT@
 
 # General settings
 #-----------------
@@ -24,12 +24,16 @@ BuildRoot: %{_builddir}/%{name}-%{version}-root
 %if %compiling_client
 %define debug_package %{nil}
 %endif
+%if %compiling_client
+%else
+BuildRequires: oracle-instantclient-devel
+%endif
 
 %description
 The CASTOR Project stands for CERN Advanced STORage Manager, and its goal is to handle LHC data in a fully distributed environment.
 
 %prep
-%setup -q
+%setup -q -n %{name}-%{version}-%{release}
 
 %build
 # rpmbuild --define="compilenostk 1" ...
@@ -47,8 +51,8 @@ export ORACOMPILE_OPTIONS="--quiet"
 %endif
 
 # define castor version (modified by maketar.sh to put the exact version)
-MAJOR_CASTOR_VERSION=__MAJOR_CASTOR_VERSION__
-MINOR_CASTOR_VERSION=__MINOR_CASTOR_VERSION__
+MAJOR_CASTOR_VERSION=@MAJOR_CASTOR_VERSION@
+MINOR_CASTOR_VERSION=@MINOR_CASTOR_VERSION@
 export MAJOR_CASTOR_VERSION
 export MINOR_CASTOR_VERSION
 ./configure
@@ -62,8 +66,8 @@ echo "Only compiling client part"
 
 %install
 # define castor version (modified by maketar.sh to put the exact version)
-MAJOR_CASTOR_VERSION=__MAJOR_CASTOR_VERSION__
-MINOR_CASTOR_VERSION=__MINOR_CASTOR_VERSION__
+MAJOR_CASTOR_VERSION=@MAJOR_CASTOR_VERSION@
+MINOR_CASTOR_VERSION=@MINOR_CASTOR_VERSION@
 export MAJOR_CASTOR_VERSION
 export MINOR_CASTOR_VERSION
 %{__rm} -rf ${RPM_BUILD_ROOT}

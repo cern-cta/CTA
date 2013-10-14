@@ -1,72 +1,8 @@
 #!/bin/sh
+# Generate the spec file from a Debian style package description collection.
+output=$1
 
-if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
-  echo "No MAJOR_CASTOR_VERSION environment variable - guessing from changelog"
-  MAJOR_CASTOR_VERSION=`egrep "^castor" debian/changelog | awk '{print $2}' | head -1 | perl -ne 'if (/\((\d+)\.(\d+)/) {print "$1.$2\n";}'`
-  if [ "x${MAJOR_CASTOR_VERSION}" = "x" ]; then
-    echo "Unable to guess MAJOR_CASTOR_VERSION"
-    exit 1
-  fi
-  export MAJOR_CASTOR_VERSION
-  echo "... Got MAJOR_CASTOR_VERSION=${MAJOR_CASTOR_VERSION}"
-fi
-if [ "x${MINOR_CASTOR_VERSION}" = "x" ]; then
-  echo "No MINOR_CASTOR_VERSION environment variable - guessing from changelog"
-  MINOR_CASTOR_VERSION=`egrep "^castor" debian/changelog | awk '{print $2}' | head -1 | perl -ne 'if (/(\d+)\-(\d+)\)/) {print "$1.$2\n";}'`
-  if [ "x${MINOR_CASTOR_VERSION}" = "x" ]; then
-    echo "Unable to guess MINOR_CASTOR_VERSION"
-    exit 1
-  fi
-  export MINOR_CASTOR_VERSION
-  echo "... Got MINOR_CASTOR_VERSION=${MINOR_CASTOR_VERSION}"
-fi
-
-#
-## We expect ${MAJOR_CASTOR_VERSION} in the form a.b
-#
-echo ${MAJOR_CASTOR_VERSION} | egrep -q '^[0-9]+\.[0-9]+$'
-if [ $? -ne 0 ]; then
-  echo "MAJOR_CASTOR_VERSION (${MAJOR_CASTOR_VERSION}) should be in the form a.b, example: 2.1"
-  exit 1
-fi
-
-#
-## We expect ${MINOR_CASTOR_VERSION} in the form c.d
-#
-echo ${MINOR_CASTOR_VERSION} | egrep -q '^[0-9]+\.[0-9]+$'
-if [ $? -ne 0 ]; then
-  echo "MINOR_CASTOR_VERSION (${MINOR_CASTOR_VERSION}) should be in the form c.d, example: 99.1"
-  exit 1
-fi
-
-a=`echo ${MAJOR_CASTOR_VERSION} | sed 's/\..*//g'`
-b=`echo ${MAJOR_CASTOR_VERSION} | sed 's/.*\.//g'`
-c=`echo ${MINOR_CASTOR_VERSION} | sed 's/\..*//g'`
-d=`echo ${MINOR_CASTOR_VERSION} | sed 's/.*\.//g'`
-version=${a}.${b}.${c}
-fullversion=${version}-${d}
-
-echo "### Making build directory"
-
-# Go to castor-${version} and do the changes in here
-curdir=`pwd`
-cd ..
-[ -d "castor-${version}" ] && rm -rf castor-${version}
-rsync -aC --exclude '.__afs*' $curdir/ castor-${version}
-cd castor-${version}
-
-echo "### Customizing spec file"
-
-#
-# Make spec file in sync
-#
-perl -pi -e s/\__MAJOR_CASTOR_VERSION__/${MAJOR_CASTOR_VERSION}/g CASTOR.spec
-perl -pi -e s/\__MINOR_CASTOR_VERSION__/${MINOR_CASTOR_VERSION}/g CASTOR.spec
-perl -pi -e s/__A__/${a}/g CASTOR.spec
-perl -pi -e s/__B__/${b}/g CASTOR.spec
-perl -pi -e s/__C__/${c}/g CASTOR.spec
-perl -pi -e s/__D__/${d}/g CASTOR.spec
-
+echo "### Generating spec file"
 function copyInstallPermInternal {
     package=$1
     file=$2
@@ -76,7 +12,7 @@ function copyInstallPermInternal {
           sed -i "s/$g\$/%config(noreplace) $g/" $file
       done
     fi
-    cat $file >> CASTOR.spec
+    cat $file >> $output
 }
 
 function copyInstallPerm {
@@ -97,11 +33,11 @@ function copyInstallPerm {
     if [ $? -eq 0 ]; then
       copyInstallPermInternal $package debian/$package.install.perm.tmp
     else
-      echo "%ifarch x86_64" >> CASTOR.spec
+      echo "%ifarch x86_64" >> $output
       copyInstallPermInternal $package debian/$package.install.perm.64.tmp
-      echo "%else" >> CASTOR.spec
+      echo "%else" >> $output
       copyInstallPermInternal $package debian/$package.install.perm.tmp
-      echo "%endif" >> CASTOR.spec
+      echo "%endif" >> $output
     fi
 }
 
@@ -134,11 +70,11 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
       }' $package XBS-Group |
       sed 's/ //g' | sed 's/\${[^{},]*}//g' | sed 's/^,*//g' | sed 's/,,*/,/g'`
     if [ "${group}" != "Client" ]; then
-        echo "%if ! %compiling_client" >> CASTOR.spec # no a client package
+        echo "%if ! %compiling_client" >> $output # no a client package
     fi
-    echo "%package -n $actualPackage" >> CASTOR.spec
-    echo "Summary: Cern Advanced mass STORage" >> CASTOR.spec
-    echo "Group: Application/Castor" >> CASTOR.spec
+    echo "%package -n $actualPackage" >> $output
+    echo "Summary: Cern Advanced mass STORage" >> $output
+    echo "Group: Application/Castor" >> $output
     #
     ## Except for Description that is truely a multi-line thing even within debian/control, the other
     ## fields are always on a single line:
@@ -163,7 +99,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
       }' $package Depends |
       sed 's/^[ \t]*//' | sed 's/\${[^{},]*}//g' | sed 's/^,*//g' | sed 's/,,*/,/g'`
     if [ -n "${requires}" ]; then
-        echo "Requires: ${requires}" >> CASTOR.spec
+        echo "Requires: ${requires}" >> $output
     fi
     #
     ## Get BuildRequires
@@ -179,7 +115,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
         print "$this{$what}\n";
       }' $package Build-Depends`
     if [ -n "${buildrequires}" ]; then
-        echo "BuildRequires: ${buildrequires}" >> CASTOR.spec
+        echo "BuildRequires: ${buildrequires}" >> $output
     fi
     #
     ## Get Conditional BuildRequires
@@ -194,7 +130,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
       $this = $1;
       print "$this\n";' $package`
     if [ -n "${buildrequirescond}" ]; then
-        echo "${buildrequirescond}" >> CASTOR.spec
+        echo "${buildrequirescond}" >> $output
     fi
     #
     ## Get Provides
@@ -211,7 +147,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
       }' $package Provides |
       sed 's/ //g'`
     if [ -n "${provides}" ]; then
-        echo "Provides: ${provides}" >> CASTOR.spec
+        echo "Provides: ${provides}" >> $output
     fi
     #
     ## Get Conflicts
@@ -228,7 +164,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
       }' $package Conflicts |
       sed 's/ //g'`
     if [ -n "${conflicts}" ]; then
-        echo "Conflicts: ${conflicts}" >> CASTOR.spec
+        echo "Conflicts: ${conflicts}" >> $output
     fi
     #
     ## Get Obsoletes
@@ -245,12 +181,12 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
       }' $package XBS-Obsoletes |
       sed 's/ //g'`
     if [ -n "${obsoletes}" ]; then
-        echo "Obsoletes: ${obsoletes}" >> CASTOR.spec
+        echo "Obsoletes: ${obsoletes}" >> $output
     fi
     #
     ## Get description
     #
-    echo "%description -n $actualPackage" >> CASTOR.spec
+    echo "%description -n $actualPackage" >> $output
     cat debian/control | perl -e '
       $package=shift;
       $what=shift;
@@ -261,25 +197,25 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
       $this =~ s/\n*$//sg;
       $this =~ s/\n/ \- /sg;
       $this =~ s/  */ /sg;
-      print "$this\n";' $package >> CASTOR.spec
+      print "$this\n";' $package >> $output
     #
     ## Get file list
     #
-    echo "%files -n $actualPackage" >> CASTOR.spec
-    echo "%defattr(-,root,root)" >> CASTOR.spec
+    echo "%files -n $actualPackage" >> $output
+    echo "%defattr(-,root,root)" >> $output
     ## deal with manpages
     if [ -s "debian/$package.manpages" ]; then
         for man in `cat debian/$package.manpages | sed 's/debian\/castor\///g'`; do
-            echo "%attr(0644,root,bin) %doc /$man" >> CASTOR.spec
+            echo "%attr(0644,root,bin) %doc /$man" >> $output
         done
     fi
     ## deal with directories
     if [ -s "debian/$package.dirs" ]; then
         cat debian/$package.dirs | while read dir; do
             if [ `echo $dir | grep -c %attr` -lt 1 ]; then
-                echo "%attr(-,root,bin) %dir /$dir" >> CASTOR.spec
+                echo "%attr(-,root,bin) %dir /$dir" >> $output
             else
-                echo $dir | sed -e "s/) /) %dir \//" >> CASTOR.spec
+                echo $dir | sed -e "s/) /) %dir \//" >> $output
             fi
         done
     fi
@@ -289,30 +225,24 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     fi
     ## deal with scripts
     if [ -s "debian/$package.postinst" ]; then
-        echo "%post -n $actualPackage" >> CASTOR.spec
-        cat debian/$package.postinst >> CASTOR.spec
+        echo "%post -n $actualPackage" >> $output
+        cat debian/$package.postinst >> $output
     fi
     if [ -s "debian/$package.preun" ]; then
-        echo "%preun -n $actualPackage" >> CASTOR.spec
-        cat debian/$package.preun >> CASTOR.spec
+        echo "%preun -n $actualPackage" >> $output
+        cat debian/$package.preun >> $output
     fi
     if [ -s "debian/$package.pre" ]; then
-        echo "%pre -n $actualPackage" >> CASTOR.spec
-        cat debian/$package.pre >> CASTOR.spec
+        echo "%pre -n $actualPackage" >> $output
+        cat debian/$package.pre >> $output
     fi
     if [ -s "debian/$package.postun" ]; then
-        echo "%postun -n $actualPackage" >> CASTOR.spec
-        cat debian/$package.postun >> CASTOR.spec
+        echo "%postun -n $actualPackage" >> $output
+        cat debian/$package.postun >> $output
     fi
     if [ "${group}" != "Client" ]; then
-        echo "%endif" >> CASTOR.spec # end of client compilation if
+        echo "%endif" >> $output # end of client compilation if
     fi
-    echo >> CASTOR.spec
+    echo >> $output
 done
 
-cd ..
-
-echo "### Creating tarball"
-
-tar -zcf castor-${fullversion}.tar.gz --exclude '.__afs*' castor-${version}
-rm -rf castor-${version}

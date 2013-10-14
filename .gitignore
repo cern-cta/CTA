@@ -228,3 +228,4 @@ vmgr/vmgr_oracle_ifce.lis
 vmgr/vmgrsettag
 xrootd/XrdTransfer
 *.xml
+00build
