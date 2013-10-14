@@ -1655,6 +1655,7 @@ void *tapeIOthread(void *arg) {
                     if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES == tapeFlushMode &&
                         (nbBytesWrittenWithoutFlush > 0 ||
                          nbFilesWrittenWithoutFlush > 0)) {
+			int private_tape_fd_for_flush = -1;
                         char tapePathForFlush[CA_MAXPATHLEN+1];
                         tapeBridgeFlushedToTapeMsgBody_t flushedMsgBody;
                         tapeBridgeFlushedToTapeAckMsg_t  flushedAckMsg;
@@ -1666,9 +1667,33 @@ void *tapeIOthread(void *arg) {
                             sizeof(tapePathForFlush));
                         tapePathForFlush[sizeof(tapePathForFlush)-1] = '\0';
 
-                        /* Open the tape device */
-                        tape_fd = open(tapePathForFlush, O_RDWR);
-                        rc = tape_fd;
+			/* Sanity check - tape_fd must be -1 at this stage */
+                        if(-1 != tape_fd) {
+                            char errMsg[128];
+
+                            snprintf(errMsg, sizeof(errMsg),
+                                "Error cannot do no-more-work flush because"
+                                " tape_fd is not -1");
+
+                            errMsg[sizeof(errMsg) - 1] = '\0';
+                            errno = ECANCELED;
+                            serrno = errno;
+                            CHECK_PROC_ERR(NULL,nextfile,errMsg);
+			}
+
+                        /* Open the tape device in order to flush            */
+                        /*                                                   */
+                        /* IMPORTANT                                         */
+                        /* =========                                         */
+                        /* Cannot use tape_fd to store the tape file         */
+                        /* because if CHECK_PROC_ERR sees it is not -1 then  */
+                        /* CHECK_PROC_ERR will call tcloserr() which will in */
+                        /* turn call deltpfile().  The deltpfile() assumes   */
+                        /* a payload file is being written and it will try   */
+                        /* to delete it and its already written header file. */
+                        private_tape_fd_for_flush = open(tapePathForFlush,
+                            O_RDWR);
+                        rc = private_tape_fd_for_flush;
                         if(-1 == rc) {
                             char errMsg[128];
                             const int saved_errno = errno;
@@ -1688,10 +1713,31 @@ void *tapeIOthread(void *arg) {
                         }
 
                         /* Flush data to tape */
-                        rc = wrttpmrk(tape_fd, tapePathForFlush, 0, 0);
-                        CHECK_PROC_ERR(NULL,nextfile,
-                            "No-more-work tape-flush failed"
-                            ": wrttpmrk() error");
+                        rc = wrttpmrk(private_tape_fd_for_flush,
+                            tapePathForFlush, 0, 0);
+                        if(-1 == rc) {
+                            char errMsg[128];
+                            const int saved_errno = errno;
+
+                            serrno = errno;
+
+                            /* Try to close the private tape file-descriptor */
+                            /* because it is intentionally hidden from       */
+                            /* CHECK_PROC_ERR                                */
+                            if(close(private_tape_fd_for_flush)) {
+                                snprintf(errMsg, sizeof(errMsg),
+                                    "Both the no-more-work tape-flush and the"
+                                    " closing of its private tape"
+                                    " file-descriptor failed");
+                            } else {
+                                snprintf(errMsg, sizeof(errMsg),
+                                    "No-more-work tape-flush failed");
+                            }
+                            errMsg[sizeof(errMsg) - 1] = '\0';
+                            errno = saved_errno;
+                            CHECK_PROC_ERR(NULL,nextfile,errMsg);
+                        }
+
                         {
                             char logMsg[128];
 
@@ -1709,19 +1755,20 @@ void *tapeIOthread(void *arg) {
                         *  the tape device.
                         */  
                             COMPRESSION_STATS compstats;
-                            if (0 == get_compression_stats(tape_fd,
-                                     tapePathForFlush,
-                                     tape->tapereq.devtype,&compstats) ) {
-                                batchBytesToTape   +=
-                                     ((uint64_t)compstats.to_tape)*1024;
+                            if (0 == get_compression_stats(
+                                private_tape_fd_for_flush,
+                                tapePathForFlush,
+                                tape->tapereq.devtype,&compstats) ) {
+                                batchBytesToTape +=
+                                    ((uint64_t)compstats.to_tape)*1024;
                             }
                         }
                         /* Close the tape device */
-                        rc = close(tape_fd);
-                        tape_fd = -1;
+                        rc = close(private_tape_fd_for_flush);
+                        serrno = errno;
                         CHECK_PROC_ERR(NULL,nextfile,
-                            "Failed to close tape-device file"
-                            " after no-more-work flush");
+                            "Failed to close the private tape"
+                            " file-descriptor of the no-more-work flush");
 
                         /* Tell the tapebridged daemon that all data written */
                         /* to tape has now been flushed to tape              */
