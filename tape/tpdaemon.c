@@ -1808,12 +1808,6 @@ static void procposreq(char *req_data,
                                     "func", TL_MSG_PARAM_STR, func );
 		errflg++;
 	}
-	if (method == TPPOSIT_FID && (tunp->lblcode == NL || tunp->lblcode == BLP)) {
-		usrmsg (func, TP064);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 64, 1,
-                                    "func", TL_MSG_PARAM_STR, func );
-		errflg++;
-	}
 	if (filstat != APPEND && filstat != NEW_FILE && filstat != CHECK_FILE &&
 	    filstat != NOFILECHECK) {
 		usrmsg (func, TP006, "file status");
@@ -1844,11 +1838,11 @@ static void procposreq(char *req_data,
                                     "Message", TL_MSG_PARAM_STR, "record format" );
 		errflg++;
 	}
-	if (flags & IGNOREEOI &&
-	    (tunp->lblcode == AL || tunp->lblcode == SL)) {
-		usrmsg (func, TP049);
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 49, 1,
-                                    "func", TL_MSG_PARAM_STR, func );
+	if (flags & IGNOREEOI) {
+		usrmsg (func, "TP002 - IGNOREEOI not supported");
+		tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 2,
+			"func", TL_MSG_PARAM_STR, func,
+			"Message", TL_MSG_PARAM_STR, "IGNOREEOI not supported" );
 		errflg++;
 	}
 	if (errflg) {
@@ -2409,7 +2403,7 @@ static void procstatreq(char *req_data,
 {
 	gid_t gid;
 	unsigned int j;
-	static char labels[7][4] = {"", "al", "nl", "sl", "blp", "aul", "DMP"};
+	static char labels[7][4] = {"", "", "", "", "", "aul", "DMP"};
 	char *rbp;
 	char repbuf[REPBUFSZ];
 	char *sbp;

@@ -40,13 +40,9 @@ r	ring status:
 .HP
 l	label type:
 .br
-	a	AL
+	a	AUL
 .br
-	n	NL
-.br
-	s	SL
-.br
-	b	BLP
+	D	DMP
 .HP
 vsn	volume serial number
 .HP

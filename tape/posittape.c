@@ -69,7 +69,6 @@ static int gethdr2uhl1(const int tapefd,
 		*tmr = 1;
 		return (0);
 	}
-	if (lblcode == SL) ebc2asc (hdr2, 80);
 	if (strncmp (hdr2, (*hdr1 == 'H') ? "HDR2" : "EOF2", 4)) {
 
                 sprintf( badLabelReason, "Unexpected hdr2 label content: exp %s",
@@ -94,7 +93,6 @@ static int gethdr2uhl1(const int tapefd,
 		*tmr = 1;
 		return (0);
 	}
-	if (lblcode == SL) ebc2asc (uhl1, 80);
 	if (strncmp (uhl1, (*hdr1 == 'H') ? "UHL1" : "UTL1", 4)) {
 
                 sprintf( badLabelReason, "Unexpected uhl1 label content: exp %s",
@@ -150,148 +148,6 @@ int posittape(const int tapefd,
 	sprintf (sfseq, "%d", fseq);
 	pfseq = *cfseq;		/* save current file sequence number */
 	if (Qfirst && fseq > 0) fseq += Qfirst - 1;
-	if (lblcode == NL || lblcode == BLP) {
-		if ((flags & NOPOS) || (flags & LOCATE_DONE)) {	/* tape is already positionned */
-			if (filstat == CHECK_FILE) {	/* must check if the file exist */
-				if ((c = readlbl (tapefd, path, vol1)) < 0) goto reply;
-				if (c >= 2) {
-					c = ETFSQ;
-					goto reply;
-				}
-				if ((c = skiptpfb (tapefd, path, 1))) goto reply;
-				if ((c = skiptpff (tapefd, path, 1))) goto reply;
-			}
-			(*cfseq)++;
-                        if (0 == mode) {                                
-                                /* set the cfseq to the requested fseq on a read;
-                                   this is required as the current fseq will be 
-                                   checked later on by CASTOR2 */
-                                (*cfseq) = fseq;
-                        }
-                        tplogit (func, "%s tape, cfseq is now %d\n", 
-                                 (lblcode == NL)?"nl":"blp", *cfseq);
-			goto reply;
-		}
-		if ((c = rwndtape (tapefd, path))) goto reply;
-		*cfseq = 1;
-		if (fseq == 1 && (filstat == NEW_FILE || filstat == NOFILECHECK))
-			goto reply;
-#if defined(linux)
-		if (fseq > 2 || fseq == -1) {	/* fast positionning */
-			if (fseq > 0)
-				n = fseq - 1;
-			else {		/* -q n */
-				if ((c = readlbl (tapefd, path, vol1)) < 0) goto reply;
-				if (c > 1) {	/* blank tape or only TM(s) */
-					c = rwndtape (tapefd, path);
-					goto reply;
-				}
-				n = INT_MAX;	/* arbitrary large count */
-			}
-			tplogit (func, "trying to skip over %d files\n", n);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "Message", TL_MSG_PARAM_STR, "trying to skip over files",
-                                            "Number",  TL_MSG_PARAM_INT, n );
-			if ((c = skiptpfff (tapefd, path, n)) < 0) goto reply;
-			if (c == 0) {
-				*cfseq = fseq;
-				if ((c = readlbl (tapefd, path, vol1)) < 0) goto reply;
-				if (c < 2) {	/* the requested file exists */
-					if ((c = skiptpfb (tapefd, path, 1))) goto reply;
-					if ((c = skiptpff (tapefd, path, 1))) goto reply;
-					goto finalpos;
-				} else {
-					if (c == 2) {	/* tape mark */
-						if (filstat != NEW_FILE) {
-							c = ETFSQ;
-							goto reply;
-						}
-						c = skiptpfb (tapefd, path, 1);
-						goto reply;
-					} else		/* blank tape */
-						(*cfseq)--;
-				}
-			} else {
-				*cfseq = n - c;
-			}
-			if (*cfseq == 1) {	/* 1 datafile + 1 TM */
-				*cfseq = 2;
-				c = 3;
-			} else {
-				if ((c = skiptpfb (tapefd, path, 2))) goto reply;
-				if ((c = skiptpff (tapefd, path, 1))) goto reply;
-				if ((c = readlbl (tapefd, path, vol1)) < 0) goto reply;
-				if (c < 2) {	/* only one tape mark at EOI */
-					if ((c = skiptpff (tapefd, path, 1))) goto reply;
-					c = 3;
-					(*cfseq)++;
-				}
-			}
-			if (fseq > 0 && fseq != *cfseq) {
-				if (filstat != NEW_FILE)
-					usrmsg (func, TP024, sfseq);
-				else
-					usrmsg (func, TP045, fseq, *cfseq-1);
-				c = ENOENT;
-				goto reply;
-			}
-			if (filstat != NEW_FILE) {
-				c = ETFSQ;
-				goto reply;
-			}
-			c = 3 - c;
-			if (c > 0)
-				c = skiptpfb (tapefd, path, c);
-			goto reply;
-		}
-#endif
-		while (fseq >= *cfseq || fseq == -1) {
-			if ((c = readlbl (tapefd, path, vol1)) < 0 &&
-				serrno != ETPARIT) goto reply;
-			if (c > 1) {	/* double tape mark or blank tape found */
-				if (fseq == -1) fseq = *cfseq;
-				if (fseq != *cfseq) {
-					if (c == 2 && (flags & IGNOREEOI)) {
-						(*cfseq)++;
-						continue;	/* ignoreeoi */
-					}
-					if (filstat != NEW_FILE)
-						usrmsg (func, TP024, sfseq);
-					else
-						usrmsg (func, TP045, fseq, *cfseq-1);
-					c = ENOENT;
-					goto reply;
-				}
-				if (filstat != NEW_FILE) {
-					c = ETFSQ;
-					goto reply;
-				}
-				if (fseq == 1) {
-					c = rwndtape (tapefd, path);
-				} else {
-					c = 3  - c;
-#if defined(linux)
-					if (c > 0)
-#endif
-						c = skiptpfb (tapefd, path, c);
-				}
-				goto reply;
-			}
-			if (fseq == *cfseq) {	/* the requested file exists */
-				/* reposition the tape to the beginning of file */
-				if (fseq == 1) {
-					if ((c = rwndtape (tapefd, path))) goto reply;
-				} else {
-					if ((c = skiptpfb (tapefd, path, 1))) goto reply;
-					if ((c = skiptpff (tapefd, path, 1))) goto reply;
-				}
-				break;
-			}
-			if ((c = skiptpff (tapefd, path, 1))) goto reply;
-			(*cfseq)++;
-		}
-	} else {	/* AL or SL */
 		if (flags & NOPOS && filstat == NEW_FILE) {	/* already positionned */
 			(*cfseq)++;
 			return (0);
@@ -316,7 +172,6 @@ int posittape(const int tapefd,
 				c = ETLBL;
 				goto reply;
 			} 
-			if (lblcode == SL) ebc2asc (hdr1, 80);
 			if (strncmp (hdr1, "HDR1", 4)) {
 
                                 sprintf( badLabelReason, "Unexpected hdr1 label content: exp HDR1" );
@@ -364,7 +219,6 @@ int posittape(const int tapefd,
 				c = ETLBL;
 				goto reply;
 			} 
-			if (lblcode == SL) ebc2asc (hdr1, 80);
 			if (strncmp (hdr1, "HDR1", 4)) {
 
                                 sprintf( badLabelReason, "Unexpected hdr1 label content: exp HDR1" );
@@ -423,11 +277,9 @@ int posittape(const int tapefd,
 			if ((c = skiptpfb (tapefd, path, 3))) goto reply;
 			if ((c = skiptpff (tapefd, path, 1))) goto reply;
 			if ((c = readlbl (tapefd, path, hdr1)) < 0) goto reply;
-			if (lblcode == SL) ebc2asc (hdr1, 80);
 			if (strncmp (hdr1, "EOF1", 4) == 0) {
 				if ((c = skiptpff (tapefd, path, 1))) goto reply;
 				if ((c = readlbl (tapefd, path, hdr1)) < 0) goto reply;
-				if (lblcode == SL) ebc2asc (hdr1, 80);
 			}
 			sscanf (hdr1 + 31, "%4d", cfseq);
 			if ((c = gethdr2uhl1 (tapefd, path, lblcode, hdr1, hdr2,
@@ -481,7 +333,6 @@ int posittape(const int tapefd,
 					c = ETLBL;
 					goto reply;
 				}
-				if (lblcode == SL) ebc2asc (hdr1, 80);
 				if (strncmp (hdr1, "EOF1", 4)) {
 
                                         sprintf( badLabelReason, "Unexpected hdr1 label content: exp EOF1" );
@@ -518,11 +369,9 @@ int posittape(const int tapefd,
 		while (fseq > *cfseq || fseq < 0) {
 			if ((c = readlbl (tapefd, path, hdr1)) < 0) goto reply;
 			if (c == 0) {
-				if (lblcode == SL) ebc2asc (hdr1, 80);
 				if (strncmp (hdr1, "EOF1", 4) == 0) {
 					if ((c = skiptpff (tapefd, path, 1))) goto reply;
 					if ((c = readlbl (tapefd, path, hdr1)) < 0) goto reply;
-					if (c == 0 && lblcode == SL) ebc2asc (hdr1, 80);
 				}
 			}
 			if (c == 1) {
@@ -602,11 +451,9 @@ int posittape(const int tapefd,
 			skiptpfb (tapefd, path, (*cfseq - fseq + 1) * 3);
 			if ((c = skiptpff (tapefd, path, 1))) goto reply;
 			if ((c = readlbl (tapefd, path, hdr1)) != 0) goto reply;
-			if (lblcode == SL) ebc2asc (hdr1, 80);
 			if (strncmp (hdr1, "EOF1", 4) == 0) {
 				if ((c = skiptpff (tapefd, path, 1))) goto reply;
 				if ((c = readlbl (tapefd, path, hdr1)) < 0) goto reply;
-				if (lblcode == SL) ebc2asc (hdr1, 80);
 			}
 			sscanf (hdr1 + 31, "%4d", cfseq);
 			if ((c = gethdr2uhl1 (tapefd, path, lblcode, hdr1, hdr2,
@@ -669,8 +516,6 @@ chkexpdat:
 			if (! tmr)
 				if ((c = skiptpff (tapefd, path, 1))) goto reply;
 		}
-	}
-finalpos:
 	if (filstat == APPEND) {	/* append mode, position after data */
 		if ((c = skiptpff (tapefd, path, 1))) goto reply;
 		if ((c = skiptpfb (tapefd, path, 1))) goto reply;

@@ -70,12 +70,6 @@ int buildhdrlbl(char hdr1[],
 	hdr2[80] = '\0';
 	strcpy (hdr2, "HDR2");
 	hdr2[4] = *recfm;
-	if (lblcode == SL && *(recfm+1)) {
-		if (strcmp (recfm + 1, "BS") == 0)
-			hdr2[38] = 'R';
-		else
-			hdr2[38] = *(recfm+1);
-	}
 	if (blksize < 100000) {
 		sprintf (buf, "%.5d", blksize);
 		memcpy (hdr2 + 5, buf, 5);
@@ -87,7 +81,7 @@ int buildhdrlbl(char hdr1[],
 	} else
 		memcpy (hdr2 + 10, "00000", 5);
 	if (den & IDRC) hdr2[34] = 'P';
-	if (lblcode == AL || lblcode == AUL)
+	if (lblcode == AUL)
 		memcpy (hdr2 + 50, "00", 2);
         return (0);
 }

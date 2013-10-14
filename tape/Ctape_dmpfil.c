@@ -19,7 +19,6 @@
 #include "h/u64subr.h"
 void (*Ctape_dmpmsg) (int, const char *, ...) = NULL;
 static char *buffer;
-static char codes[4][7] = {"", "ASCII", "", "EBCDIC"};
 static struct {
 	char vid[CA_MAXVIDLEN+1];
 	char devtype[CA_MAXDVTLEN+1];
@@ -99,7 +98,7 @@ int Ctape_dmpinit(char *path,
 		Ctape_dmpmsg (MSG_OUT, " DUMP - ALL FILES\n");
 	else
 		Ctape_dmpmsg (MSG_OUT, " DUMP - MAX. NB OF FILES: %d\n", maxfile);
-	Ctape_dmpmsg (MSG_OUT, " DUMP - %s INTERPRETATION\n", codes[code]);
+	Ctape_dmpmsg (MSG_OUT, " DUMP - ASCII INTERPRETATION\n");
 	Ctape_dmpmsg (MSG_OUT, " DUMP -\n");
 
 	/* open path */
@@ -378,8 +377,7 @@ int Ctape_dmpfil(char *path,
 	u_signed64 filesize;
 	int goodrec = 0;
 	char label[81];
-	static char labels[4][3] = {"nl", "al", "nl", "sl"};
-	static int lcode = 0;
+	static int volHasAulFormat = 0;
 	int max_block_length = 0;
 	int min_block_length = 0;
 	char *msgaddr;
@@ -397,9 +395,9 @@ int Ctape_dmpfil(char *path,
 	if (read_pos (infd, path, blockid) == 0) {
 		Ctape_dmpmsg (MSG_OUT, " BLOCKID:                    %02x%02x%02x%02x\n",
                       blockid[0], blockid[1], blockid[2], blockid[3]);
-    } else {
-        Ctape_dmpmsg(MSG_OUT, " BLOCKID: Retrieve error\n");
-    }
+	} else {
+		Ctape_dmpmsg(MSG_OUT, " BLOCKID: Retrieve error\n");
+	}
 	while (1) {
 		nbytes = read (infd, buffer, dmpparm.maxblksize);
 		if (nbytes > 0) {		/* record found */
@@ -416,35 +414,31 @@ int Ctape_dmpfil(char *path,
 			if (qbov) {	/* beginning of tape */
 				qbov = 0;
 				if (nbytes == 80) {
-					ebc_asc (buffer, label, 80);
+					asc_asc (buffer, label, 80);
 					if (strncmp (label, "VOL1", 4) == 0)
-						lcode = SL;
-					else {
-						asc_asc (buffer, label, 80);
-						if (strncmp (label, "VOL1", 4) == 0)
-							lcode = AL;
-					}
+						volHasAulFormat = 1; 
 				}
-				if (lcode) {
-					Ctape_dmpmsg (MSG_OUT, "               %s HAS AN %s LABEL\n",
-					    dmpparm.vid, codes[lcode]);
+				if (volHasAulFormat) {
+					Ctape_dmpmsg (MSG_OUT, "               %s HAS AN ASCII LABEL\n",
+					    dmpparm.vid);
 					Ctape_dmpmsg (MSG_OUT, "\n VOLUME LABEL :\n");
 					Ctape_dmpmsg (MSG_OUT, " VOLUME SERIAL NUMBER:       %.6s\n",
 					    label+4);
 					Ctape_dmpmsg (MSG_OUT, " OWNER IDENTIFIER:           %.14s\n",
 					    label+37);
+					if (lbltype) {
+						strcpy (lbltype, "aul");
+					}
 				} else {
 					Ctape_dmpmsg (MSG_OUT, "               %s IS UNLABELLED\n",
 					    dmpparm.vid);
+					if (lbltype) {
+                                                strcpy (lbltype, "nl");
+					}
 				}
-				if (lbltype)
-					strcpy (lbltype, labels[lcode]);
 				if (dmpparm.fromfile > 1) {
-					int n;
+					const int n = volHasAulFormat ? (dmpparm.fromfile - 1)*3 : (dmpparm.fromfile - 1);
 					goodrec = 0;
-					n = dmpparm.fromfile - 1;
-					if (lcode == AL || lcode == SL)
-						n *= 3;
 					Ctape_dmpmsg (MSG_OUT, "\n DUMP - SKIPPING TO FILE %d\n",
 					    dmpparm.fromfile);
 					if (skiptpff (infd, path, n) < 0) {
@@ -458,18 +452,12 @@ int Ctape_dmpfil(char *path,
 					sum_block_length = 0;
 					continue;
 				}
-				if (lcode)
+				if (volHasAulFormat) {
 					continue;
-			} else if (irec < 6 && nbytes == 80) {
-				if (lcode == SL)
-					ebc_asc (buffer, label, 80);
-				else
-					asc_asc (buffer, label, 80);
-				if ((qlab = islabel (label)) == 0 &&
-				    lcode == 0) {
-					ebc_asc (buffer, label, 80);
-					qlab = islabel (label);
 				}
+			} else if (irec < 6 && nbytes == 80) {
+				asc_asc (buffer, label, 80);
+				qlab = islabel (label);
 				switch (qlab) {
 				case 0:	/* not a label */
 					break;
@@ -479,34 +467,35 @@ int Ctape_dmpfil(char *path,
 						*(fid+17) = '\0';
 						if ((p = strchr (fid, ' '))) *p = '\0';
 					}
-					if (fsec)
+					if (fsec) {
 						sscanf (label+27, "%4d", fsec);
-					if (fseq)
+					}
+					if (fseq) {
 						sscanf (label+31, "%4d", fseq);
+					}
 					continue;
 				case 2:	/* HDR2 */
 					if (recfm) {
 						memset (recfm, 0, 4);
 						*recfm = label[4];
-						if (lcode == SL && label[38] != ' ') {
-							if (label[38] == 'R')
-								memcpy (recfm + 1, "BS", 2);
-							else
-								*(recfm + 1) = label[38];
-						}
 					}
-					if (blksize)
+					if (blksize) {
 						sscanf (label+5, "%5d", blksize);
-					if (lrecl)
+					}
+					if (lrecl) {
 						sscanf (label+10, "%5d", lrecl);
+					}
 					continue;
 				case 5: /* UHL1 */
-					if (fseq)
+					if (fseq) {
 						sscanf (label+4, "%10d", fseq);
-					if (blksize)
+					}
+					if (blksize) {
 						sscanf (label+14, "%10d", blksize);
-					if (lrecl)
+					}
+					if (lrecl) {
 						sscanf (label+24, "%10d", lrecl);
+					}
 					continue;
 				default:
 					continue;
@@ -533,8 +522,9 @@ int Ctape_dmpfil(char *path,
 #endif
 			if (qbov) {	/* beginning of tape */
 				Ctape_dmpmsg (MSG_OUT, "               %s IS UNLABELLED\n", dmpparm.vid);
-				if (lbltype)
-					strcpy (lbltype, labels[lcode]);
+				if (lbltype) {
+					strcpy (lbltype, "nl");
+				}
 			}
 			if (qlab) {
 				Ctape_dmpmsg (MSG_OUT, " ***** TAPE MARK READ *****      END OF LABEL GROUP\n");
@@ -562,7 +552,7 @@ int Ctape_dmpfil(char *path,
 					Ctape_dmpmsg (MSG_OUT, "                                 AVERAGE BLOCK LENGTH WAS %d BYTES\n",
 						avg_block_length);
 					Ctape_dmpmsg (MSG_OUT, " *********************************************************************************************************************\n");
-					if (lcode == 0 && dmpparm.maxfile != 0 &&
+					if (!volHasAulFormat && dmpparm.maxfile != 0 &&
 					    nfile >= dmpparm.maxfile) {
 						(void) report_comp_stats (infd, path, dmpparm.devtype);
 						Ctape_dmpmsg (MSG_OUT, " DUMP - DUMPING PROGRAM COMPLETE.\n");
@@ -576,7 +566,7 @@ int Ctape_dmpfil(char *path,
 			}
 			irec = 0;
 			qbov = 0;
-			if (lcode == 0 || qlab < 0) return (0);
+			if (!volHasAulFormat || qlab < 0) return (0);
 			goodrec = 0;
 			max_block_length = 0;
 			min_block_length = 0;

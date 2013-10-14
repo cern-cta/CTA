@@ -36,29 +36,17 @@ int checkeofeov (int	tapefd,
 	if (getlabelinfo (path, &dlip) < 0)
 		return (-1);
 	if ((c = readlbl (tapefd, path, hdr1)) < 0) {
-		if (dlip->flags & NOTRLCHK) {
-			return (0);
-		} else {
-			return (c);
-                }
+		return (c);
         }
-	if (dlip->lblcode == NL || dlip->lblcode == BLP) {	/* tape is unlabelled */
-		if (c > 1) {	/* last file on this tape */
-			if ((c = skiptpfb (tapefd, path, 1)) < 0) return (c);
-			return (ETEOV);
-		}
-	} else {	/* tape is labelled */
-		if (c) {
-			if (dlip->flags & NOTRLCHK) return (0);
-			serrno = ETLBL;
-			return (-1);
-		}
-		if (dlip->lblcode == SL) ebc2asc (hdr1, 80);
-		if (strncmp (hdr1, "EOV1", 4) == 0) return (ETEOV);
-		if (strncmp (hdr1, "EOF1", 4)) {
-			serrno = ETLBL;
-			return (-1);
-		}
+	/* tape is labelled */
+	if (c) {
+		serrno = ETLBL;
+		return (-1);
+	}
+	if (strncmp (hdr1, "EOV1", 4) == 0) return (ETEOV);
+	if (strncmp (hdr1, "EOF1", 4)) {
+		serrno = ETLBL;
+		return (-1);
 	}
 	if ((c = skiptpfb (tapefd, path, 1)) < 0) return (c);
 	if ((c = skiptpff (tapefd, path, 1)) < 0) return (c);
@@ -73,27 +61,28 @@ int wrthdrlbl(
 {
 	int c;
 	struct devlblinfo  *dlip;
-	int fsec;
 	char hdr1[80], hdr2[80];
 	char uhl1[80], vol1[80];
 
 	if (getlabelinfo (path, &dlip) < 0)
 		return (-1);
-	if (dlip->lblcode != NL)	/* tape is labelled */
+	if (dlip->lblcode != AUL) {
+		serrno = EINVAL;
+		return(-1);
+	}
+
+	{
+		int fsec = 0;
 		sscanf (dlip->hdr1 + 27, "%4d", &fsec);
-	else
-		fsec = 1;
-	if (dlip->lblcode == NL) return (0);	/* tape is unlabelled */
-	if (dlip->fseq == 1 || fsec > 1) {
-		memcpy (vol1, dlip->vol1, 80);
-		if (dlip->lblcode == SL) asc2ebc (vol1, 80);
-		if ((c = writelbl (tapefd, path, vol1)) < 0) return (c);
+
+		if (dlip->fseq == 1 || fsec > 1) {
+			memcpy (vol1, dlip->vol1, 80);
+			if ((c = writelbl (tapefd, path, vol1)) < 0) return (c);
+		}
 	}
 	memcpy (hdr1, dlip->hdr1, 80);
-	if (dlip->lblcode == SL) asc2ebc (hdr1, 80);
 	if ((c = writelbl (tapefd, path, hdr1)) < 0) return (c);
 	memcpy (hdr2, dlip->hdr2, 80);
-	if (dlip->lblcode == SL) asc2ebc (hdr2, 80);
 	if ((c = writelbl (tapefd, path, hdr2)) < 0) return (c);
 	if (dlip->lblcode == AUL) {
 		memcpy (uhl1, dlip->uhl1, 80);
@@ -182,7 +171,7 @@ int wrttrllbl (
 
 	if (getlabelinfo (path, &dlip) < 0)
 		return (-1);
-	if (dlip->lblcode == NL) return (wrteotmrk (tapefd, path, tapeFlushMode));	/* tape is unlabelled */
+	if (dlip->lblcode != AUL) return (-1);	/* unsupported tape label */
 
 	/* Write a buffered tape-mark */
 	if ((c = wrttpmrk (tapefd, path, 1, 1)) < 0) return (c);
@@ -214,7 +203,6 @@ int wrttrllbl (
 	memcpy (hdr2, dlip->hdr2, 80);
 	memcpy (hdr2, labelid, 3);
 
-	if (dlip->lblcode == SL) asc2ebc (hdr1, 80);
 #if defined(linux)
 	/* Please note that under Linux, this call is not necessary here
 	because the previous writing of filemark has already cleared the
@@ -223,7 +211,6 @@ int wrttrllbl (
 		c = ioctl (tapefd, MTIOCGET, &mt_info);
 #endif
 	if ((c = writelbl (tapefd, path, hdr1)) < 0) return (c);
-	if (dlip->lblcode == SL) asc2ebc (hdr2, 80);
 #if defined(linux)
 	/* must clear EOT condition */
 	c = ioctl (tapefd, MTIOCGET, &mt_info);
@@ -254,7 +241,7 @@ int deltpfil (int	tapefd,
 		return (-1);
 	if (dlip->fseq == 1) {
 		if ((c = rwndtape (tapefd, path)) < 0) return (c);
-		if (dlip->lblcode != NL) {
+		if (dlip->lblcode == AUL) {
 			memcpy (vol1, dlip->vol1, 80);
 			memcpy (hdr1, dlip->hdr1, 80);
 			memcpy (hdr2, dlip->hdr2, 80);
@@ -263,15 +250,12 @@ int deltpfil (int	tapefd,
 
 			memcpy (hdr1 + 47, hdr1 + 41, 6);
 
-			if (dlip->lblcode == SL) asc2ebc (vol1, 80);
 			if ((c = writelbl (tapefd, path, vol1)) < 0) return (c);
-			if (dlip->lblcode == SL) asc2ebc (hdr1, 80);
 			if ((c = writelbl (tapefd, path, hdr1)) < 0) return (c);
-			if (dlip->lblcode == SL) asc2ebc (hdr2, 80);
 			if ((c = writelbl (tapefd, path, hdr2)) < 0) return (c);
 		}
 	} else {
-		if ((c = skiptpfb (tapefd, path, dlip->lblcode == NL ? 1:2)) < 0) return (c);
+		if ((c = skiptpfb (tapefd, path, 2)) < 0) return (c);
 	}
 	{
 		/* Force synchronised tape-marks */

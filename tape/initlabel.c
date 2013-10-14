@@ -130,8 +130,7 @@ int setlabelinfo (const char *const path,
 	} else {
 		s_devlblinfo.flags = flags;
 		s_devlblinfo.fseq = fseq;
-		if (s_devlblinfo.lblcode == AL || s_devlblinfo.lblcode == AUL ||
-			s_devlblinfo.lblcode == SL) {
+		if (s_devlblinfo.lblcode == AUL) {
 			strncpy (s_devlblinfo.vol1, vol1,
 				sizeof(s_devlblinfo.vol1));
 			s_devlblinfo.vol1[sizeof(s_devlblinfo.vol1) - 1] = '\0';

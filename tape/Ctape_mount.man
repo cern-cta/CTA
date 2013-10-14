@@ -134,17 +134,14 @@ The vsn must match the one specified in VMGR.
 .TP
 .I lbltype
 may be
-.BR al ,
-.BR aul ,
-.BR nl ,
-.B sl
+.BR aul 
 or
-.BR blp .
+.BR DMP .
 It must match the label type specified in VMGR.
-.B blp
+.B DMP
 is allowed only for read.
 Default is
-.BR sl .
+.BR aul .
 .TP
 .I vdqm_reqid
 is the request identifier assigned by vdqm.
