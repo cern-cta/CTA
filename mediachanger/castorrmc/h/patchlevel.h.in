@@ -1,0 +1,26 @@
+/*
+ * $Id: patchlevel.h,v 1.8 2007/12/07 17:19:31 itglp Exp $
+ */
+
+/*
+ */
+
+/*
+ * Copyright (C) 1990-2000 by CERN IT-PDP/CS
+ * All rights reserved
+ */
+
+/* patchlevel.h                 Patch level                             */
+
+#ifndef _PATCHLEVEL_H_INCLUDED_
+#define _PATCHLEVEL_H_INCLUDED_
+
+#define MAJORVERSION  @MAJOR_CASTOR_VERSION_TOP@
+#define MINORVERSION  @MAJOR_CASTOR_VERSION_BOTTOM@
+#define MAJORRELEASE  @MINOR_CASTOR_VERSION_TOP@
+#define MINORRELEASE  @MINOR_CASTOR_VERSION_BOTTOM@
+#define BASEVERSION  @CASTOR_VERSION@
+
+#define PATCHLEVEL      MINORRELEASE
+
+#endif /* _PATCHLEVEL_H_INCLUDED_ */
