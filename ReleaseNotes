@@ -76,6 +76,9 @@
 
   - A new tape packaged name castor-rmc-client has been created and the command-line tool smc has
     been moved into it from the castor-tape-tools package.
+  - Package dependencies have been further strengthened. All RPMs depending on Oracle clients have
+    now an explicit dependency on oracle-instantclient-basic, and inter-dependencies across castor
+    packages now require the same version to be installed for all packages.
 
   Deployment Changes
   ------------------
