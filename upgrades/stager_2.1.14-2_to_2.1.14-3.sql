@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/db/oracleConstants.sql
+ *                 stager_2.1.14-2_to_2.1.14-3.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,184 +17,92 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
+ * This script upgrades a CASTOR v2.1.14-2 STAGER database to v2.1.14-3
  *
- *
- * @author castor-dev@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-/**
- * Package containing the definition of all tape-archive related PL/SQL
- * constants.
- */
-CREATE OR REPLACE PACKAGE tconst
-AS
-  -- TPMODE
-  WRITE_DISABLE CONSTANT PLS_INTEGER :=  0;
-  WRITE_ENABLE  CONSTANT PLS_INTEGER :=  1;
-
-  RECALLMOUNT_NEW        CONSTANT PLS_INTEGER := 0;
-  RECALLMOUNT_WAITDRIVE  CONSTANT PLS_INTEGER := 1;
-  RECALLMOUNT_RECALLING  CONSTANT PLS_INTEGER := 2;
-
-  RECALLJOB_PENDING      CONSTANT PLS_INTEGER := 1;
-  RECALLJOB_SELECTED     CONSTANT PLS_INTEGER := 2;
-  RECALLJOB_RETRYMOUNT   CONSTANT PLS_INTEGER := 3;
-
-  MIGRATIONMOUNT_WAITTAPE  CONSTANT PLS_INTEGER := 0;
-  MIGRATIONMOUNT_SEND_TO_VDQM CONSTANT PLS_INTEGER := 1;
-  MIGRATIONMOUNT_WAITDRIVE CONSTANT PLS_INTEGER := 2;
-  MIGRATIONMOUNT_MIGRATING CONSTANT PLS_INTEGER := 3;
-
-  MIGRATIONJOB_PENDING   CONSTANT PLS_INTEGER := 0;
-  MIGRATIONJOB_SELECTED  CONSTANT PLS_INTEGER := 1;
-  MIGRATIONJOB_WAITINGONRECALL CONSTANT PLS_INTEGER := 3;
-
-  REPACK_SUBMITTED       CONSTANT PLS_INTEGER := 6;
-  REPACK_STARTING        CONSTANT PLS_INTEGER := 0;
-  REPACK_ONGOING         CONSTANT PLS_INTEGER := 1;
-  REPACK_FINISHED        CONSTANT PLS_INTEGER := 2;
-  REPACK_FAILED          CONSTANT PLS_INTEGER := 3;
-  REPACK_ABORTING        CONSTANT PLS_INTEGER := 4;
-  REPACK_ABORTED         CONSTANT PLS_INTEGER := 5;
-
-  TAPE_DISABLED          CONSTANT PLS_INTEGER := 1;
-  TAPE_EXPORTED          CONSTANT PLS_INTEGER := 2;
-  TAPE_BUSY              CONSTANT PLS_INTEGER := 4;
-  TAPE_FULL              CONSTANT PLS_INTEGER := 8;
-  TAPE_RDONLY            CONSTANT PLS_INTEGER := 16;
-  TAPE_ARCHIVED          CONSTANT PLS_INTEGER := 32;
-END tconst;
-/
-
-CREATE OR REPLACE FUNCTION tapeStatusToString(status IN NUMBER) RETURN VARCHAR2 AS
-  res VARCHAR2(2048);
-  rebuildValue NUMBER := 0;
+/* Stop on errors */
+WHENEVER SQLERROR EXIT FAILURE
 BEGIN
-  IF status = 0 THEN RETURN 'OK'; END IF;
-  IF BITAND(status, tconst.TAPE_DISABLED) != 0 THEN
-    res := res || '|DISABLED';
-    rebuildValue := rebuildValue + tconst.TAPE_DISABLED;
-  END IF;
-  IF BITAND(status, tconst.TAPE_EXPORTED) != 0  THEN
-    res := res || '|EXPORTED';
-    rebuildValue := rebuildValue + tconst.TAPE_EXPORTED;
-  END IF;
-  IF BITAND(status, tconst.TAPE_BUSY) != 0  THEN
-    res := res || '|BUSY';
-    rebuildValue := rebuildValue + tconst.TAPE_BUSY;
-  END IF;
-  IF BITAND(status, tconst.TAPE_FULL) != 0  THEN
-    res := res || '|FULL';
-    rebuildValue := rebuildValue + tconst.TAPE_FULL;
-  END IF;
-  IF BITAND(status, tconst.TAPE_RDONLY) != 0  THEN
-    res := res || '|RDONLY';
-    rebuildValue := rebuildValue + tconst.TAPE_RDONLY;
-  END IF;
-  IF BITAND(status, tconst.TAPE_ARCHIVED) != 0  THEN
-    res := res || '|ARCHIVED';
-    rebuildValue := rebuildValue + tconst.TAPE_ARCHIVED;
-  END IF;
-  IF res IS NULL THEN
-    res := 'UNKNOWN:' || TO_CHAR(status);
-  ELSE
-    res := SUBSTR(res, 2);
-    IF rebuildValue != status THEN
-      res := res || '|UNKNOWN:' || TO_CHAR(status-rebuildValue);
-    END IF;
-  END IF;
-  RETURN res;
+  -- If we have encountered an error rollback any previously non committed
+  -- operations. This prevents the UPDATE of the UpgradeLog from committing
+  -- inconsistent data to the database.
+  ROLLBACK;
+  UPDATE UpgradeLog
+     SET failureCount = failureCount + 1
+   WHERE schemaVersion = '2_1_14_2'
+     AND release = '2_1_14_3'
+     AND state != 'COMPLETE';
+  COMMIT;
 END;
 /
 
-/**
- * Package containing the definition of all disk related PL/SQL constants.
- */
-CREATE OR REPLACE PACKAGE dconst
-AS
+/* Verify that the script is running against the correct schema and version */
+DECLARE
+  unused VARCHAR(100);
+BEGIN
+  SELECT release INTO unused FROM CastorVersion
+   WHERE schemaName = 'STAGER'
+     AND release LIKE '2_1_14_2%';
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- Error, we cannot apply this script
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the STAGER before this one.');
+END;
+/
 
-  CASTORFILE_NOTONTAPE       CONSTANT PLS_INTEGER :=  0;
-  CASTORFILE_ONTAPE          CONSTANT PLS_INTEGER :=  1;
-  CASTORFILE_DISKONLY        CONSTANT PLS_INTEGER :=  2;
+INSERT INTO UpgradeLog (schemaVersion, release, type)
+VALUES ('2_1_14_2', '2_1_14_3', 'TRANSPARENT');
+COMMIT;
 
-  DISKCOPY_VALID             CONSTANT PLS_INTEGER :=  0;
-  DISKCOPY_FAILED            CONSTANT PLS_INTEGER :=  4;
-  DISKCOPY_WAITFS            CONSTANT PLS_INTEGER :=  5;
-  DISKCOPY_STAGEOUT          CONSTANT PLS_INTEGER :=  6;
-  DISKCOPY_INVALID           CONSTANT PLS_INTEGER :=  7;
-  DISKCOPY_BEINGDELETED      CONSTANT PLS_INTEGER :=  9;
-  DISKCOPY_WAITFS_SCHEDULING CONSTANT PLS_INTEGER := 11;
+/* Job management */
+BEGIN
+  FOR a IN (SELECT * FROM user_scheduler_jobs)
+  LOOP
+    -- Stop any running jobs
+    IF a.state = 'RUNNING' THEN
+      dbms_scheduler.stop_job(a.job_name, force=>TRUE);
+    END IF;
+    -- Schedule the start date of the job to 15 minutes from now. This
+    -- basically pauses the job for 15 minutes so that the upgrade can
+    -- go through as quickly as possible.
+    dbms_scheduler.set_attribute(a.job_name, 'START_DATE', SYSDATE + 15/1440);
+  END LOOP;
+END;
+/
 
-  DISKSERVER_PRODUCTION CONSTANT PLS_INTEGER := 0;
-  DISKSERVER_DRAINING   CONSTANT PLS_INTEGER := 1;
-  DISKSERVER_DISABLED   CONSTANT PLS_INTEGER := 2;
-  DISKSERVER_READONLY   CONSTANT PLS_INTEGER := 3;
+/* small schema change : added an index */
+CREATE INDEX I_DLFLogs_Msg ON DLFLogs(msg);
 
-  FILESYSTEM_PRODUCTION CONSTANT PLS_INTEGER := 0;
-  FILESYSTEM_DRAINING   CONSTANT PLS_INTEGER := 1;
-  FILESYSTEM_DISABLED   CONSTANT PLS_INTEGER := 2;
-  FILESYSTEM_READONLY   CONSTANT PLS_INTEGER := 3;
-  
-  DRAININGJOB_SUBMITTED    CONSTANT PLS_INTEGER := 0;
-  DRAININGJOB_STARTING     CONSTANT PLS_INTEGER := 1;
-  DRAININGJOB_RUNNING      CONSTANT PLS_INTEGER := 2;
-  DRAININGJOB_FAILED       CONSTANT PLS_INTEGER := 4;
-  DRAININGJOB_FINISHED    CONSTANT PLS_INTEGER := 5;
+/* Update and revalidation of PL-SQL code */
+/******************************************/
 
-  DRAIN_FILEMASK_NOTONTAPE    CONSTANT PLS_INTEGER := 0;
-  DRAIN_FILEMASK_ALL          CONSTANT PLS_INTEGER := 1;
-  
-  SUBREQUEST_START            CONSTANT PLS_INTEGER :=  0;
-  SUBREQUEST_RESTART          CONSTANT PLS_INTEGER :=  1;
-  SUBREQUEST_RETRY            CONSTANT PLS_INTEGER :=  2;
-  SUBREQUEST_WAITSCHED        CONSTANT PLS_INTEGER :=  3;
-  SUBREQUEST_WAITTAPERECALL   CONSTANT PLS_INTEGER :=  4;
-  SUBREQUEST_WAITSUBREQ       CONSTANT PLS_INTEGER :=  5;
-  SUBREQUEST_READY            CONSTANT PLS_INTEGER :=  6;
-  SUBREQUEST_FAILED           CONSTANT PLS_INTEGER :=  7;
-  SUBREQUEST_FINISHED         CONSTANT PLS_INTEGER :=  8;
-  SUBREQUEST_FAILED_FINISHED  CONSTANT PLS_INTEGER :=  9;
-  SUBREQUEST_ARCHIVED         CONSTANT PLS_INTEGER := 11;
-  SUBREQUEST_REPACK           CONSTANT PLS_INTEGER := 12;
-  SUBREQUEST_READYFORSCHED    CONSTANT PLS_INTEGER := 13;
-
-  GETNEXTSTATUS_NOTAPPLICABLE CONSTANT PLS_INTEGER :=  0;
-  GETNEXTSTATUS_FILESTAGED    CONSTANT PLS_INTEGER :=  1;
-  GETNEXTSTATUS_NOTIFIED      CONSTANT PLS_INTEGER :=  2;
-
-  DISKPOOLQUERYTYPE_DEFAULT   CONSTANT PLS_INTEGER :=  0;
-  DISKPOOLQUERYTYPE_AVAILABLE CONSTANT PLS_INTEGER :=  1;
-  DISKPOOLQUERYTYPE_TOTAL     CONSTANT PLS_INTEGER :=  2;
-
-  DISKPOOLSPACETYPE_FREE     CONSTANT PLS_INTEGER :=  0;
-  DISKPOOLSPACETYPE_CAPACITY CONSTANT PLS_INTEGER :=  1;
-
-  GCTYPE_AUTO                CONSTANT PLS_INTEGER :=  0;
-  GCTYPE_USER                CONSTANT PLS_INTEGER :=  1;
-  GCTYPE_TOOMANYREPLICAS     CONSTANT PLS_INTEGER :=  2;
-  GCTYPE_DRAINING            CONSTANT PLS_INTEGER :=  3;
-  GCTYPE_NSSYNCH             CONSTANT PLS_INTEGER :=  4;
-  GCTYPE_OVERWRITTEN         CONSTANT PLS_INTEGER :=  5;
-  GCTYPE_ADMIN               CONSTANT PLS_INTEGER :=  6;
-  GCTYPE_FAILEDD2D           CONSTANT PLS_INTEGER :=  7;
-  
-  DELDC_ENOENT               CONSTANT PLS_INTEGER :=  1;
-  DELDC_RECALL               CONSTANT PLS_INTEGER :=  2;
-  DELDC_REPLICATION          CONSTANT PLS_INTEGER :=  3;
-  DELDC_LOST                 CONSTANT PLS_INTEGER :=  4;
-  DELDC_GC                   CONSTANT PLS_INTEGER :=  5;
-  DELDC_NOOP                 CONSTANT PLS_INTEGER :=  6;
-
-  DISK2DISKCOPYJOB_PENDING   CONSTANT PLS_INTEGER :=  0;
-  DISK2DISKCOPYJOB_SCHEDULED CONSTANT PLS_INTEGER :=  1;
-  DISK2DISKCOPYJOB_RUNNING   CONSTANT PLS_INTEGER :=  2;
-
-  REPLICATIONTYPE_USER       CONSTANT PLS_INTEGER :=  0;
-  REPLICATIONTYPE_INTERNAL   CONSTANT PLS_INTEGER :=  1;
-  REPLICATIONTYPE_DRAINING   CONSTANT PLS_INTEGER :=  2;
-  REPLICATIONTYPE_REBALANCE  CONSTANT PLS_INTEGER :=  3;
-
-END dconst;
+/* PL/SQL method used by the stager to collect the logging made in the DB */
+CREATE OR REPLACE PROCEDURE dumpDBLogs(logEntries OUT castor.LogEntry_Cur) AS
+  rowIds strListTable;
+  SrLocked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (SrLocked, -54);
+BEGIN
+  BEGIN
+    -- lock whatever we can from the table. This is to prevent deadlocks.
+    SELECT /*+ INDEX_RS_ASC(DLFLogs I_DLFLogs_Msg) */ ROWID BULK COLLECT INTO rowIds
+      FROM DLFLogs
+      WHERE ROWNUM < 10000
+      FOR UPDATE NOWAIT;
+    -- insert data on tmp table and drop selected entries
+    INSERT INTO DLFLogsHelper (timeinfo, uuid, priority, msg, fileId, nsHost, SOURCE, params)
+     (SELECT timeinfo, uuid, priority, msg, fileId, nsHost, SOURCE, params
+      FROM DLFLogs WHERE ROWID IN (SELECT * FROM TABLE(rowIds)));
+    DELETE FROM DLFLogs WHERE ROWID IN (SELECT * FROM TABLE(rowIds));
+  EXCEPTION WHEN SrLocked THEN
+    -- nothing we can lock, as someone else already has the lock.
+    -- The logs will be taken by this other guy, so just give up
+    NULL;
+  END;
+  -- return list of entries by opening a cursor on temp table
+  OPEN logEntries FOR
+    SELECT timeinfo, uuid, priority, msg, fileId, nsHost, source, params FROM DLFLogsHelper;
+END;
 /
 
 /**
@@ -324,49 +232,194 @@ AS
 END dlf;
 /
 
-/**
- * Package containing the definition of some relevant (s)errno values and messages.
+/* Get next candidates for a given recall mount.
+ * input:  VDQM transaction id, count and total size
+ * output: outFiles, a cursor for the set of recall candidates.
  */
-CREATE OR REPLACE PACKAGE serrno AS
-  /* (s)errno values */
-  ENOENT          CONSTANT PLS_INTEGER := 2;    /* No such file or directory */
-  EINTR           CONSTANT PLS_INTEGER := 4;    /* Interrupted system call */
-  EACCES          CONSTANT PLS_INTEGER := 13;   /* Permission denied */
-  EBUSY           CONSTANT PLS_INTEGER := 16;   /* Device or resource busy */
-  EEXIST          CONSTANT PLS_INTEGER := 17;   /* File exists */
-  EISDIR          CONSTANT PLS_INTEGER := 21;   /* Is a directory */
-  EINVAL          CONSTANT PLS_INTEGER := 22;   /* Invalid argument */
-  ENOSPC          CONSTANT PLS_INTEGER := 28;   /* No space left on device */
-
-  SEINTERNAL      CONSTANT PLS_INTEGER := 1015; /* Internal error */
-  SECHECKSUM      CONSTANT PLS_INTEGER := 1037; /* Bad checksum */
-  ENSFILECHG      CONSTANT PLS_INTEGER := 1402; /* File has been overwritten, request ignored */
-  ENSNOSEG        CONSTANT PLS_INTEGER := 1403; /* Segment had been deleted */
-  ENSTOOMANYSEGS  CONSTANT PLS_INTEGER := 1406; /* Too many copies on tape */
-  ENSOVERWHENREP  CONSTANT PLS_INTEGER := 1407; /* Cannot overwrite valid segment when replacing */
-  ERTWRONGSIZE    CONSTANT PLS_INTEGER := 1613; /* (Recalled) file size incorrect */
-  ESTKILLED       CONSTANT PLS_INTEGER := 1713; /* aborted by kill */
-  ESTNOTAVAIL     CONSTANT PLS_INTEGER := 1718; /* File is currently not available */
-  ESTNOSEGFOUND   CONSTANT PLS_INTEGER := 1723; /* File has no copy on tape or no diskcopies are accessible */
-  ESTNOTAPEROUTE  CONSTANT PLS_INTEGER := 1727; /* File recreation canceled since the file cannot be routed to tape */
-  
-  /* messages */
-  ENOENT_MSG          CONSTANT VARCHAR2(2048) := 'No such file or directory';
-  EINTR_MSG           CONSTANT VARCHAR2(2048) := 'Interrupted system call';
-  EACCES_MSG          CONSTANT VARCHAR2(2048) := 'Permission denied';
-  EBUSY_MSG           CONSTANT VARCHAR2(2048) := 'Device or resource busy';
-  EEXIST_MSG          CONSTANT VARCHAR2(2048) := 'File exists';
-  EISDIR_MSG          CONSTANT VARCHAR2(2048) := 'Is a directory';
-  EINVAL_MSG          CONSTANT VARCHAR2(2048) := 'Invalid argument';
-  
-  SEINTERNAL_MSG      CONSTANT VARCHAR2(2048) := 'Internal error';
-  SECHECKSUM_MSG      CONSTANT VARCHAR2(2048) := 'Checksum mismatch between segment and file';
-  ENSFILECHG_MSG      CONSTANT VARCHAR2(2048) := 'File has been overwritten, request ignored';
-  ENSNOSEG_MSG        CONSTANT VARCHAR2(2048) := 'Segment had been deleted';
-  ENSTOOMANYSEGS_MSG  CONSTANT VARCHAR2(2048) := 'Too many copies on tape';
-  ENSOVERWHENREP_MSG  CONSTANT VARCHAR2(2048) := 'Cannot overwrite valid segment when replacing';
-  ERTWRONGSIZE_MSG    CONSTANT VARCHAR2(2048) := 'Incorrect file size';
-  ESTNOSEGFOUND_MSG   CONSTANT VARCHAR2(2048) := 'File has no copy on tape or no diskcopies are accessible';
-  ESTNOTAPEROUTE_MSG  CONSTANT VARCHAR2(2048) := 'File recreation canceled since the file cannot be routed to tape';
-END serrno;
+create or replace 
+PROCEDURE tg_getBulkFilesToRecall(inLogContext IN VARCHAR2,
+                                                    inMountTrId IN NUMBER,
+                                                    inCount IN INTEGER,
+                                                    inTotalSize IN INTEGER,
+                                                    outFiles OUT SYS_REFCURSOR) AS
+  varVid VARCHAR2(10);
+  varPreviousFseq INTEGER;
+  varCount INTEGER;
+  varTotalSize INTEGER;
+  varPath VARCHAR2(2048);
+  varFileTrId INTEGER;
+  varNewFseq INTEGER;
+  bestFSForRecall_error EXCEPTION;
+  PRAGMA EXCEPTION_INIT(bestFSForRecall_error, -20115);
+  varNbLockedFiles INTEGER := 0;
+BEGIN
+  BEGIN
+    -- Get VID and last processed fseq for this recall mount, lock
+    SELECT vid, lastProcessedFseq INTO varVid, varPreviousFseq
+      FROM RecallMount
+     WHERE mountTransactionId = inMountTrId
+       FOR UPDATE;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- recall is over or unknown request: return an empty cursor
+    OPEN outFiles FOR
+      SELECT fileId, nsHost, fileTransactionId, filePath, blockId, fseq, copyNb,
+             euid, egid, VID, fileSize, creationTime, nbRetriesInMount, nbMounts
+        FROM FilesToRecallHelper;
+    RETURN;
+  END;
+  varCount := 0;
+  varTotalSize := 0;
+  varNewFseq := varPreviousFseq;
+  -- Get candidates up to inCount or inTotalSize
+  -- Select only the ones further down the tape (fseq > current one) as long as possible
+  LOOP
+    DECLARE
+      varRjId INTEGER;
+      varFSeq INTEGER;
+      varBlockId RAW(4);
+      varFileSize INTEGER;
+      varCfId INTEGER;
+      varFileId INTEGER;
+      varNsHost VARCHAR2(2048);
+      varCopyNb NUMBER;
+      varEuid NUMBER;
+      varEgid NUMBER;
+      varCreationTime NUMBER;
+      varNbRetriesInMount NUMBER;
+      varNbMounts NUMBER;
+      CfLocked EXCEPTION;
+      PRAGMA EXCEPTION_INIT (CfLocked, -54);
+    BEGIN
+      -- Find the unprocessed recallJobs of this tape with lowest fSeq
+      -- that is above the previous one
+      SELECT * INTO varRjId, varFSeq, varBlockId, varFileSize, varCfId, varCopyNb,
+                    varEuid, varEgid, varCreationTime, varNbRetriesInMount,
+                    varNbMounts
+        FROM (SELECT id, fSeq, blockId, fileSize, castorFile, copyNb, eUid, eGid,
+                     creationTime, nbRetriesWithinMount,  nbMounts
+                FROM RecallJob
+               WHERE vid = varVid
+                 AND status = tconst.RECALLJOB_PENDING
+                 AND fseq > varNewFseq
+               ORDER BY fseq ASC)
+       WHERE ROWNUM < 2;
+      -- lock the corresponding CastorFile, give up if we do not manage as it means that
+      -- this file is already being handled by someone else
+      -- Note that the giving up is handled by the handling of the CfLocked exception
+      SELECT fileId, nsHost INTO varFileId, varNsHost
+        FROM CastorFile
+       WHERE id = varCfId
+         FOR UPDATE NOWAIT;
+      -- Now that we have the lock, double check that the RecallJob is still there and
+      -- valid (due to race condition, it may have been processed in between our first select
+      -- and the takin gof the lock)
+      BEGIN
+        SELECT id INTO varRjId FROM RecallJob WHERE id = varRJId AND status = tconst.RECALLJOB_PENDING;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- we got the race condition ! So this has already been handled, let's move to next file
+        CONTINUE;
+      END;
+      -- move up last fseq used. Note that it moves up even if bestFileSystemForRecall
+      -- (or any other statement) fails and the file is actually not recalled.
+      -- The goal is that a potential retry within the same mount only occurs after
+      -- we went around the other files on this tape.
+      varNewFseq := varFseq;
+      -- Find the best filesystem to recall the selected file
+      bestFileSystemForRecall(varCfId, varPath);
+      varCount := varCount + 1;
+      varTotalSize := varTotalSize + varFileSize;
+      INSERT INTO FilesToRecallHelper (fileId, nsHost, fileTransactionId, filePath, blockId, fSeq,
+                 copyNb, euid, egid, VID, fileSize, creationTime, nbRetriesInMount, nbMounts)
+        VALUES (varFileId, varNsHost, ids_seq.nextval, varPath, varBlockId, varFSeq,
+                varCopyNb, varEuid, varEgid, varVID, varFileSize, varCreationTime, varNbRetriesInMount,
+                varNbMounts)
+        RETURNING fileTransactionId INTO varFileTrId;
+      -- update RecallJobs of this file. Only the recalled one gets a fileTransactionId
+      UPDATE RecallJob
+         SET status = tconst.RECALLJOB_SELECTED,
+             fileTransactionID = CASE WHEN id = varRjId THEN varFileTrId ELSE NULL END
+       WHERE castorFile = varCfId;
+      IF varCount >= inCount OR varTotalSize >= inTotalSize THEN
+        -- we have enough candidates for this round, exit loop
+        EXIT;
+      END IF;
+    EXCEPTION
+      WHEN CfLocked THEN
+        -- Go to next candidate, this CastorFile is being processed by another thread
+        -- still check that this does not happen too often
+        -- the reason is that a long standing lock (due to another bug) would make us spin
+        -- like mad (learnt the hard way in production...)
+        varNbLockedFiles := varNbLockedFiles + 1;
+        IF varNbLockedFiles >= 100 THEN
+          DECLARE
+            lastSQL VARCHAR2(2048);
+            prevSQL VARCHAR2(2048);
+          BEGIN
+            -- find the blocking SQL
+            SELECT lastSql.sql_text, prevSql.sql_text INTO lastSQL, prevSQL
+              FROM v$session currentSession, v$session blockerSession, v$sql lastSql, v$sql prevSql
+             WHERE currentSession.sid = (SELECT sys_context('USERENV','SID') FROM DUAL)
+               AND blockerSession.sid(+) = currentSession.blocking_session
+               AND lastSql.sql_id(+) = blockerSession.sql_id
+               AND prevSql.sql_id(+) = blockerSession.prev_sql_id;
+            -- log the issue and exit, as if we were out of candidates
+            logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_LOOPING_ON_LOCK, varFileId, varNsHost, 'tapegatewayd',
+                   'SQLOfLockingSession="' || lastSQL || '" PreviousSQLOfLockingSession="' || prevSQL ||
+                   '" mountTransactionId=' || to_char(inMountTrId) ||' '|| inLogContext);
+            EXIT;
+          END;
+        END IF;
+      WHEN bestFSForRecall_error THEN
+        -- log 'bestFileSystemForRecall could not find a suitable destination for this recall' and skip it
+        logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FS_NOT_FOUND, varFileId, varNsHost, 'tapegatewayd',
+                 'errorMessage="' || SQLERRM || '" mountTransactionId=' || to_char(inMountTrId) ||' '|| inLogContext);
+        -- mark the recall job as failed, and maybe retry
+        retryOrFailRecall(varCfId, varVID, NULL, inLogContext);
+      WHEN NO_DATA_FOUND THEN
+        -- nothing found. In case we did not try so far, try to restart with low fseqs
+        IF varNewFseq > -1 THEN
+          varNewFseq := -1;
+        ELSE
+          -- low fseqs were tried, we are really out of candidates, so exit the loop
+          EXIT;
+        END IF;
+    END;
+  END LOOP;
+  -- Record last fseq at the mount level
+  UPDATE RecallMount
+     SET lastProcessedFseq = varNewFseq
+   WHERE vid = varVid;
+  -- Return all candidates. Don't commit now, this will be done in C++
+  -- after the results have been collected as the temporary table will be emptied.
+  OPEN outFiles FOR
+    SELECT fileId, nsHost, fileTransactionId, filePath, blockId, fseq,
+           copyNb, euid, egid, VID, fileSize, creationTime,
+           nbRetriesInMount, nbMounts
+      FROM FilesToRecallHelper;
+END;
 /
+
+/* Recompile all invalid procedures, triggers and functions */
+/************************************************************/
+BEGIN
+  FOR a IN (SELECT object_name, object_type
+              FROM user_objects
+             WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY')
+               AND status = 'INVALID')
+  LOOP
+    IF a.object_type = 'PACKAGE BODY' THEN a.object_type := 'PACKAGE'; END IF;
+    BEGIN
+      EXECUTE IMMEDIATE 'ALTER ' ||a.object_type||' '||a.object_name||' COMPILE';
+    EXCEPTION WHEN OTHERS THEN
+      -- ignore, so that we continue compiling the other invalid items
+      NULL;
+    END;
+  END LOOP;
+END;
+/
+
+/* Flag the schema upgrade as COMPLETE */
+/***************************************/
+UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE'
+ WHERE release = '2_1_14_3';
+COMMIT;

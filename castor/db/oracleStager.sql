@@ -2454,8 +2454,10 @@ CREATE OR REPLACE PROCEDURE dumpDBLogs(logEntries OUT castor.LogEntry_Cur) AS
 BEGIN
   BEGIN
     -- lock whatever we can from the table. This is to prevent deadlocks.
-    SELECT ROWID BULK COLLECT INTO rowIds
-      FROM DLFLogs FOR UPDATE NOWAIT;
+    SELECT /*+ INDEX_RS_ASC(DLFLogs I_DLFLogs_Msg) */ ROWID BULK COLLECT INTO rowIds
+      FROM DLFLogs
+      WHERE ROWNUM < 10000
+      FOR UPDATE NOWAIT;
     -- insert data on tmp table and drop selected entries
     INSERT INTO DLFLogsHelper (timeinfo, uuid, priority, msg, fileId, nsHost, SOURCE, params)
      (SELECT timeinfo, uuid, priority, msg, fileId, nsHost, SOURCE, params
