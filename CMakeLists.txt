@@ -10,11 +10,17 @@ set (CASTOR_DEST_LIB_DIR /usr/lib64)
 # be specified here
 set (CMAKE_C_FLAGS
   "-pthread -fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
-set (CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
-set_property ( DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
 
-# Do not add rpath information to compiled executables
-set (CMAKE_SKIP_RPATH TRUE)
+if(APPLE)
+  set (CMAKE_SHARED_LINKER_FLAGS
+    "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
+else(APPLE)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
+endif(APPLE)
+
+set (CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
+
+set_property ( DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
 
 add_subdirectory (common)
 add_subdirectory (tape)

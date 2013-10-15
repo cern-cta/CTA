@@ -3,6 +3,12 @@ cmake_minimum_required (VERSION 2.6)
 include_directories ("..")
 include_directories ("../h")
 
+if(APPLE)
+  set (UUID_LIB_NAME "System")
+else(APPLE)
+  set (UUID_LIB_NAME "uuid")
+endif(APPLE)
+
 set (COMMON_LIB_SRC_FILES
   compat.c getacct.c getacctent.c getconfent.cpp
   getifnam.c getuser.c log.c marshall.c
@@ -47,4 +53,5 @@ set (COMMON_LIB_SRC_FILES
 add_library (castorcommon SHARED ${COMMON_LIB_SRC_FILES})
 set_target_properties (castorcommon
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
-install (TARGETS castorcommon DESTINATION $CASTOR_DEST_LIB_DIR)
+target_link_libraries (castorcommon dl ${UUID_LIB_NAME})
+install (TARGETS castorcommon DESTINATION ${CASTOR_DEST_LIB_DIR})
