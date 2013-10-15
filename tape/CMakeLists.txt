@@ -30,4 +30,5 @@ set (TAPE_LIB_SRC_FILES Ctape_config.c Ctape_devinfo.c Ctape_dmpfil.c
 
 add_library (castortape SHARED ${TAPE_LIB_SRC_FILES} ${TAPE_LIB_USR_SRC_FILES})
 set_target_properties (castortape PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
-#target_link_libraries (castortape 
+target_link_libraries (castortape castorcommon)
+install (TARGETS castortape DESTINATION $CASTOR_DEST_LIB_DIR)

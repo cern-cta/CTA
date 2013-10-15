@@ -47,3 +47,4 @@ set (COMMON_LIB_SRC_FILES
 add_library (castorcommon SHARED ${COMMON_LIB_SRC_FILES})
 set_target_properties (castorcommon
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+install (TARGETS castorcommon DESTINATION $CASTOR_DEST_LIB_DIR)
