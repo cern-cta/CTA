@@ -18,8 +18,8 @@ RFIOLIB = DepSharedLibraryTargetName(rfio,castorrfio)
 
 #if UseGSI
 LIBCRYPTO += -lcrypto
-#endif
 AddLdFlags(-ldl)
+#endif
 
 CKSUMLIB = -lz
 

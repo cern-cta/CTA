@@ -221,9 +221,6 @@ namespace castor {
     /** the list of services, by name */
     std::map<const std::string, IService*> m_services;
 
-    /** the list of dlopen handles to be closed at the end */
-    std::vector<void*> m_dlopenHandles;
-
   };
 
 } // end of namespace castor
