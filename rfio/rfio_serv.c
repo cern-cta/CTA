@@ -92,7 +92,6 @@ extern int      srreadahd64();          /* server remote read() ahead   */
 extern int      srlseek64();            /* server remote lseek()        */
 extern int      srpreseek64();          /* server remote preseek()      */
 extern int      srstat64();             /* server remote stat()         */
-extern int      srlockf64();            /* server remote lockf()        */
 extern int      srfstat64();            /* server remote fstat()        */
 extern int      srchown();              /* server remote chown()        */
 extern int      srfchmod();             /* server remote fchmod()       */
@@ -1040,11 +1039,6 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"request type <lockf()>\n");
       status = srlockf(s,fd) ;
       (*logfunc)(LOG_DEBUG,"rlockf returned %d\n", status);
-      break;
-    case RQST_LOCKF64:
-      (*logfunc)(LOG_DEBUG,"request type <lockf64()>\n");
-      status = srlockf64(s, &info, fd) ;
-      (*logfunc)(LOG_DEBUG,"rlockf64 returned %d\n", status);
       break;
     case RQST_END :
       (*logfunc)(LOG_DEBUG,"request type : end rfiod\n") ;

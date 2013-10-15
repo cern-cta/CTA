@@ -72,7 +72,6 @@ EXTERN_C int rfio_fchmod (int, int);
 EXTERN_C int rfio_fchown (int, int, int);
 EXTERN_C int rfio_fstat (int, struct stat *);
 EXTERN_C char *rfio_getcwd (char *, int);
-EXTERN_C int rfio_lockf (int, int, long);
 EXTERN_C off_t rfio_lseek (int, off_t, int);
 EXTERN_C int rfio_lstat (char *, struct stat *);
 EXTERN_C int rfio_mkdir (char *, int);
@@ -123,7 +122,6 @@ EXTERN_C int rfio_lseek_v3 (int, int, int);
 #if ! defined(linux) || defined(_LARGEFILE64_SOURCE)
 EXTERN_C int rfio_close64_v3 (int);
 EXTERN_C int rfio_fstat64 (int, struct stat64 *);
-EXTERN_C int rfio_lockf64 (int, int, off64_t);
 EXTERN_C off64_t rfio_lseek64 (int, off64_t, int);
 EXTERN_C off64_t rfio_lseek64_v3 (int, off64_t, int);
 EXTERN_C int rfio_lstat64 (char *, struct stat64 *);
