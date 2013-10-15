@@ -8,8 +8,7 @@ COMM		Make common routines library
 
 AddLdFlags(-l UUIDLIBNAME -lstdc++)
 
-COMMONLIB_OBJS = $(SYSDEP_OBJS) \
-		 compat.o getacct.o getacctent.o getconfent.o \
+COMMONLIB_OBJS = compat.o getacct.o getacctent.o getconfent.o \
 		 getifnam.o getuser.o log.o marshall.o \
 		 readc.o remote.o \
 		 serror.o socket.o solveln.o trace.o \
