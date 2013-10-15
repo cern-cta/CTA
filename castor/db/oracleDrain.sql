@@ -174,20 +174,27 @@ BEGIN
     -- compute average filling of filesystems on production machines
     -- note that read only ones are not taken into account as they cannot
     -- be filled anymore
-    SELECT AVG(free/totalSize) INTO varFreeRef
+    -- also note the use of decode and the extra totalSize > 0 to protect
+    -- us against division by 0. The decode is needed in case this filter
+    -- is applied first, before the totalSize > 0
+    SELECT AVG(free/decode(totalSize, 0, 1, totalSize)) INTO varFreeRef
       FROM FileSystem, DiskPool2SvcClass, DiskServer
      WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
        AND DiskPool2SvcClass.child = SC.id
        AND DiskServer.id = FileSystem.diskServer
        AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
        AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+       AND FileSystem.totalSize > 0
        AND DiskServer.hwOnline = 1
      GROUP BY SC.id;
     -- get sensibility of the rebalancing
     varSensibility := TO_NUMBER(getConfigOption('Rebalancing', 'Sensibility', '5'))/100;
     -- for each filesystem too full compared to average, rebalance
     -- note that we take the read only ones into account here
-    FOR FS IN (SELECT FileSystem.id, varFreeRef*totalSize-free dataToMove,
+    -- also note the use of decode and the extra totalSize > 0 to protect
+    -- us against division by 0. The decode is needed in case this filter
+    -- is applied first, before the totalSize > 0
+    FOR FS IN (SELECT FileSystem.id, varFreeRef*decode(totalSize, 0, 1, totalSize)-free dataToMove,
                       DiskServer.name ds, FileSystem.mountPoint
                  FROM FileSystem, DiskPool2SvcClass, DiskServer
                 WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
@@ -196,6 +203,7 @@ BEGIN
                   AND DiskServer.id = FileSystem.diskServer
                   AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
                   AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+                  AND FileSystem.totalSize > 0
                   AND DiskServer.hwOnline = 1) LOOP
       rebalance(FS.id, FS.dataToMove, SC.id, FS.ds, FS.mountPoint);
     END LOOP;

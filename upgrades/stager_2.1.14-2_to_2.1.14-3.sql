@@ -399,6 +399,77 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE PROCEDURE rebalancingManager AS
+  varFreeRef NUMBER;
+  varSensibility NUMBER;
+  varNbDS INTEGER;
+  varAlreadyRebalancing INTEGER;
+BEGIN
+  -- go through all service classes
+  FOR SC IN (SELECT id FROM SvcClass) LOOP
+    -- check if we are already rebalancing
+    SELECT count(*) INTO varAlreadyRebalancing
+      FROM Disk2DiskCopyJob
+     WHERE destSvcClass = SC.id
+       AND replicationType = dconst.REPLICATIONTYPE_REBALANCE
+       AND ROWNUM < 2;
+    -- if yes, do nothing for this round
+    IF varAlreadyRebalancing > 0 THEN
+      CONTINUE;
+    END IF;
+    -- check that we have more than one diskserver online
+    SELECT count(unique DiskServer.name) INTO varNbDS
+      FROM FileSystem, DiskPool2SvcClass, DiskServer
+     WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
+       AND DiskPool2SvcClass.child = SC.id
+       AND DiskServer.id = FileSystem.diskServer
+       AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+       AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+       AND DiskServer.hwOnline = 1;
+    -- if only 1 diskserver available, do nothing for this round
+    IF varNbDS < 2 THEN
+      CONTINUE;
+    END IF;
+    -- compute average filling of filesystems on production machines
+    -- note that read only ones are not taken into account as they cannot
+    -- be filled anymore
+    -- also note the use of decode and the extra totalSize > 0 to protect
+    -- us against division by 0. The decode is needed in case this filter
+    -- is applied first, before the totalSize > 0
+    SELECT AVG(free/decode(totalSize, 0, 1, totalSize)) INTO varFreeRef
+      FROM FileSystem, DiskPool2SvcClass, DiskServer
+     WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
+       AND DiskPool2SvcClass.child = SC.id
+       AND DiskServer.id = FileSystem.diskServer
+       AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+       AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+       AND FileSystem.totalSize > 0
+       AND DiskServer.hwOnline = 1
+     GROUP BY SC.id;
+    -- get sensibility of the rebalancing
+    varSensibility := TO_NUMBER(getConfigOption('Rebalancing', 'Sensibility', '5'))/100;
+    -- for each filesystem too full compared to average, rebalance
+    -- note that we take the read only ones into account here
+    -- also note the use of decode and the extra totalSize > 0 to protect
+    -- us against division by 0. The decode is needed in case this filter
+    -- is applied first, before the totalSize > 0
+    FOR FS IN (SELECT FileSystem.id, varFreeRef*decode(totalSize, 0, 1, totalSize)-free dataToMove,
+                      DiskServer.name ds, FileSystem.mountPoint
+                 FROM FileSystem, DiskPool2SvcClass, DiskServer
+                WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
+                  AND DiskPool2SvcClass.child = SC.id
+                  AND varFreeRef - free/totalSize > varSensibility
+                  AND DiskServer.id = FileSystem.diskServer
+                  AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
+                  AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+                  AND FileSystem.totalSize > 0
+                  AND DiskServer.hwOnline = 1) LOOP
+      rebalance(FS.id, FS.dataToMove, SC.id, FS.ds, FS.mountPoint);
+    END LOOP;
+  END LOOP;
+END;
+/
+
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
 BEGIN
