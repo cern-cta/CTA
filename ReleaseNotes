@@ -41,14 +41,16 @@
 
   [Features]
 
-     #102700 RFE: Remove tape-server code that supports unused drive types
-     #102786 RFE: Add the header files of the tapegatewayd protocol to castor-build-headers.rpm
-     #102815 RFE: Remove the tprstat command from CASTOR
      #102817 RFE: Move smc to a new package called castor-rmc-client
      #102830 RFE: Remove unused accounting from the tape server software
      #102831 RFE: Remove the reason argument from tpconfig
 
   [Code Maintenance]
+
+     #102700 RFE: Remove tape-server code that supports unused drive types
+     #102786 RFE: Add the header files of the tapegatewayd protocol to castor-build-headers.rpm
+     #102815 RFE: Remove the tprstat command from CASTOR
+     #102853 RFE: Remove code implementing unsupported tape label types
 
 
   CASTOR NS
