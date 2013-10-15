@@ -89,6 +89,7 @@ hsmtools/rfcpupd.c
 hsmtools/stager_actualget
 hsmtools/stager_actualput
 imake/*
+install_manifest.txt
 *.la
 .libs
 *.lo
