@@ -1670,15 +1670,16 @@ void *tapeIOthread(void *arg) {
 			/* Sanity check - tape_fd must be -1 at this stage */
                         if(-1 != tape_fd) {
                             char errMsg[128];
-
                             snprintf(errMsg, sizeof(errMsg),
-                                "Error cannot do no-more-work flush because"
-                                " tape_fd is not -1");
-
+                                "FATAL ERROR cannot do no-more-work flush"
+                                " because tape_fd is not -1");
                             errMsg[sizeof(errMsg) - 1] = '\0';
-                            errno = ECANCELED;
-                            serrno = errno;
-                            CHECK_PROC_ERR(NULL,nextfile,errMsg);
+
+                            rtcp_log(LOG_ERR, "tapeIOthread() %s\n", errMsg);
+                            tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
+                                "func"    , TL_MSG_PARAM_STR, "tapeIOthread",
+                                "Message" , TL_MSG_PARAM_STR, errMsg);
+                            exit(-1);
 			}
 
                         /* Open the tape device in order to flush            */
@@ -1693,54 +1694,39 @@ void *tapeIOthread(void *arg) {
                         /* to delete it and its already written header file. */
                         private_tape_fd_for_flush = open(tapePathForFlush,
                             O_RDWR);
-                        rc = private_tape_fd_for_flush;
-                        if(-1 == rc) {
+                        if(-1 == private_tape_fd_for_flush) {
                             char errMsg[128];
-                            const int saved_errno = errno;
-
-                            serrno = errno;
-
                             snprintf(errMsg, sizeof(errMsg),
-                                "Error opening tape path %s"
-                                " for no-more-work flush",
+                                "FATAL ERROR cannot do no-more-work flush"
+                                " because %s cannot be opened",
                                 tapePathForFlush);
                             errMsg[sizeof(errMsg) - 1] = '\0';
 
-                            /* Ignore any errors caused by snprintf */
-                            errno = saved_errno;
-
-                            CHECK_PROC_ERR(NULL,nextfile,errMsg);
+                            rtcp_log(LOG_ERR, "tapeIOthread() %s\n", errMsg);
+                            tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
+                                "func"    , TL_MSG_PARAM_STR, "tapeIOthread",
+                                "Message" , TL_MSG_PARAM_STR, errMsg);
+                            exit(-1);
                         }
 
                         /* Flush data to tape */
-                        rc = wrttpmrk(private_tape_fd_for_flush,
-                            tapePathForFlush, 0, 0);
-                        if(-1 == rc) {
+                        if(-1 == wrttpmrk(private_tape_fd_for_flush,
+                            tapePathForFlush, 0, 0)) {
                             char errMsg[128];
-                            const int saved_errno = errno;
-
-                            serrno = errno;
-
-                            /* Try to close the private tape file-descriptor */
-                            /* because it is intentionally hidden from       */
-                            /* CHECK_PROC_ERR                                */
-                            if(close(private_tape_fd_for_flush)) {
-                                snprintf(errMsg, sizeof(errMsg),
-                                    "Both the no-more-work tape-flush and the"
-                                    " closing of its private tape"
-                                    " file-descriptor failed");
-                            } else {
-                                snprintf(errMsg, sizeof(errMsg),
-                                    "No-more-work tape-flush failed");
-                            }
+                            snprintf(errMsg, sizeof(errMsg),
+                                "FATAL ERROR cannot do no-more-work flush"
+                                " because wrttpmrk() failed");
                             errMsg[sizeof(errMsg) - 1] = '\0';
-                            errno = saved_errno;
-                            CHECK_PROC_ERR(NULL,nextfile,errMsg);
+
+                            rtcp_log(LOG_ERR, "tapeIOthread() %s\n", errMsg);
+                            tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
+                                "func"    , TL_MSG_PARAM_STR, "tapeIOthread",
+                                "Message" , TL_MSG_PARAM_STR, errMsg);
+                            exit(-1);
                         }
 
                         {
                             char logMsg[128];
-
                             snprintf(logMsg, sizeof(logMsg),
                                 "Executed no-more-work tape-flush using"
                                 " tape path %s\n",
@@ -1764,11 +1750,19 @@ void *tapeIOthread(void *arg) {
                             }
                         }
                         /* Close the tape device */
-                        rc = close(private_tape_fd_for_flush);
-                        serrno = errno;
-                        CHECK_PROC_ERR(NULL,nextfile,
-                            "Failed to close the private tape"
-                            " file-descriptor of the no-more-work flush");
+                        if(close(private_tape_fd_for_flush)) {
+                            char errMsg[128];
+                            snprintf(errMsg, sizeof(errMsg),
+                                "FATAL ERROR failed to close the private tape"
+                                " file-descriptor of the no-more-work flush");
+                            errMsg[sizeof(errMsg) - 1] = '\0';
+
+                            rtcp_log(LOG_ERR, "tapeIOthread() %s\n", errMsg);
+                            tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
+                                "func"    , TL_MSG_PARAM_STR, "tapeIOthread",
+                                "Message" , TL_MSG_PARAM_STR, errMsg);
+                            exit(-1);
+                        }
 
                         /* Tell the tapebridged daemon that all data written */
                         /* to tape has now been flushed to tape              */
