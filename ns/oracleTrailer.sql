@@ -795,6 +795,7 @@ BEGIN
   FOR g IN (SELECT gid, copyNo, SUM(segSize * 100 / decode(compression,0,100,compression)) segComprSize,
                    SUM(segSize) segSize, COUNT(*) segCount
               FROM Cns_seg_metadata
+             WHERE gid IS NOT NULL    -- this will be dropped once the post-upgrade phase is completed
              GROUP BY gid, copyNo) LOOP
     IF g.copyNo = 1 THEN
       insertNSStats(g.gid, varTimestamp, 0, 0, 0, g.segCount, g.segSize, g.segComprSize, 0, 0, 0);
