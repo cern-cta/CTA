@@ -9,8 +9,8 @@ set_property (
   APPEND PROPERTY COMPILE_DEFINITIONS BIN="/usr/bin")
 
 # A set of eight source files for the tape library need to be copied to files to
-# with usr prepended to their names.  These usr... source files must then have
-# -DNOTRACE added to their compilation flags
+# with usr prepended to their names.  These usr files must then be compiled
+# with the -DNOTRACE option
 foreach (SRC_FILE locate.c readlbl.c rwndtape.c skiptape.c tperror.c usrmsg.c
   writelbl.c wrttpmrk.c)
   set (TAPE_LIB_USR_SRC_FILES ${TAPE_LIB_USR_SRC_FILES} usr${SRC_FILE})
