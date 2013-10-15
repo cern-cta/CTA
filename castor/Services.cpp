@@ -34,8 +34,6 @@
 #include "ICnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
-#include "common.h"   // for getconfent
-#include "dlfcn.h"
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -54,13 +52,6 @@ castor::Services::~Services() {
     delete it->second;
   }
   m_services.clear();
-  // close all dlopen handles
-  for (std::vector<void*>::const_iterator it = m_dlopenHandles.begin();
-       it != m_dlopenHandles.end();
-       it++) {
-    dlclose(*it);
-  }
-  m_dlopenHandles.clear();
 }
 
 //-----------------------------------------------------------------------------
@@ -74,43 +65,19 @@ castor::IService* castor::Services::service(const std::string name,
     if (id > 0) {
       // build the service using the associated factory
       const ISvcFactory* fac = castor::Factories::instance()->factory(id);
-      int id2 = id;
-      if (fac == 0) {
-        // no factory found: search for id remapping in the config file
-        char* targetId = getconfent("SvcMapping", castor::ServicesIdStrings[id], 0);
-        if (0 != targetId) {
-          id2 = strtol(targetId, NULL, 10);
-          if(id2 == 0) id2 = id;
-        }
-        // build the service using the new associated factory - 2nd try
-        fac = castor::Factories::instance()->factory(id2);
+      // if no factory is available, complain
+      if (0 == fac) {
+        castor::exception::Internal e;
+        e.getMessage() << "No factory found for object type " << id;
+        throw e;
       }
-      
-      if (fac == 0) {
-        // not yet found: check if a .so library has to be loaded
-        char* targetLib = getconfent("DynamicLib", castor::ServicesIdStrings[id2], 0);
-        if(0 != targetLib) {
-          void* handle = dlopen(targetLib, RTLD_NOW);//RTLD_GLOBAL
-          if (handle == 0) {
-            // something wrong in the config file?
-            castor::exception::Internal ex;
-            ex.getMessage() << "Couldn't load dynamic library for service " 
-                            << name << ": " << dlerror();
-            throw ex;
-          } else {
-            m_dlopenHandles.push_back(handle);
-          }
-        }
-        // build the service - 3rd try
-        fac = castor::Factories::instance()->factory(id2);
-      }
-        
-      // if no factory is available yet, we give up
-      if(fac == 0) return 0;
 
       IService* svc = fac->instantiate(name);
+      // if the service was not instantiated, complain
       if (0 == svc) {
-        return 0;
+        castor::exception::Internal e;
+        e.getMessage() << "No service found for service " << name;
+        throw e;
       } else {
         m_services[name] = svc;
       }
