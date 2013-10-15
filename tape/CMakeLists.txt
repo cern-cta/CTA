@@ -3,7 +3,7 @@ cmake_minimum_required (VERSION 2.6)
 include_directories ("..")
 include_directories ("../h")
 
-#set (CMAKE_C_FLAGS "-O0 -g -pthread -Wall -Wextra -Werror -Wno-unused-parameter")
+# Tape source files require the BIN macro to be set
 set_property (
   DIRECTORY
   APPEND PROPERTY COMPILE_DEFINITIONS BIN="/usr/bin")
@@ -29,3 +29,5 @@ set (TAPE_LIB_SRC_FILES Ctape_config.c Ctape_devinfo.c Ctape_dmpfil.c
   send2tpd.c usrlbl.c tplogger.c tplogger_messages.c sendscsicmd.c)
 
 add_library (castortape SHARED ${TAPE_LIB_SRC_FILES} ${TAPE_LIB_USR_SRC_FILES})
+set_target_properties (castortape PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+#target_link_libraries (castortape 
