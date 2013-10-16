@@ -1,5 +1,5 @@
 #
-#                      CMakeLists.txt
+#                      dlf/CMakeLists.txt
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -21,32 +21,14 @@
 # Steven.Murray@cern.ch
 #
 cmake_minimum_required (VERSION 2.6)
-project (castor)
 
-set (MAJOR_CASTOR_VERSION  2.1)
-set (MINOR_CASTOR_VERSION 14.2)
-set (CASTOR_DEST_BIN_DIR /usr/bin)
-set (CASTOR_DEST_LIB_DIR /usr/lib64)
-set (CASTOR_DEST_MAN_DIR /usr/shar/man)
+include_directories ("..")
+include_directories ("../h")
 
-# All common variables and values to be used by all CMakeLists.txt files should
-# be specified here
-set (CMAKE_C_FLAGS
-  "-pthread -fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
+set (DLF_LIB_SRC_FILES dlf_lib.c)
 
-if(APPLE)
-  set (CMAKE_SHARED_LINKER_FLAGS
-    "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
-else(APPLE)
-  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
-endif(APPLE)
-
-set (CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
-
-set_property ( DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
-
-add_subdirectory (common)
-add_subdirectory (dlf)
-add_subdirectory (tape)
-add_subdirectory (upv)
-add_subdirectory (vmgr)
+add_library (castordlf SHARED ${DLF_LIB_SRC_FILES})
+set_target_properties (castordlf
+  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+target_link_libraries (castordlf castorcommon)
+install (TARGETS castordlf DESTINATION ${CASTOR_DEST_LIB_DIR})
