@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 #
-# Steven.Murray@cern.ch
+# Steven.Murray@cern.ch Eric.Cano@cern.ch
 #
 cmake_minimum_required (VERSION 2.6)
 
@@ -39,7 +39,7 @@ foreach (SRC_FILE locate.c readlbl.c rwndtape.c skiptape.c tperror.c usrmsg.c
 
   add_custom_command (
     OUTPUT usr${SRC_FILE} DEPENDS ${SRC_FILE}
-    COMMAND ${CMAKE_COMMAND} -E copy ${SRC_FILE} usr${SRC_FILE})
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${SRC_FILE} ${CMAKE_CURRENT_BINARY_DIR}/usr${SRC_FILE})
 
   set_property(SOURCE usr${SRC_FILE} PROPERTY COMPILE_FLAGS -DNOTRACE)
 endforeach ()

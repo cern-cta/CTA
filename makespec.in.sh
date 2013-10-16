@@ -2,7 +2,9 @@
 # Generate the spec file from a Debian style package description collection.
 output=$1
 
-echo "### Generating spec file"
+echo "Output file: ${output}"
+tempdir=`mktemp -d`
+
 function copyInstallPermInternal {
     package=$1
     file=$2
@@ -12,14 +14,15 @@ function copyInstallPermInternal {
           sed -i "s/$g\$/%config(noreplace) $g/" $file
       done
     fi
-    cat $file >> $output
+    cat $file >> ${output}
 }
 
 function copyInstallPerm {
     package=$1
-    cp -f debian/$package.install.perm debian/$package.install.perm.tmp
+    tempdir=$2
+    cp -f debian/$package.install.perm $tempdir/$package.install.perm.tmp
     # Add a missing '/'
-    perl -pi -e 's/\) /\) \//g' debian/$package.install.perm.tmp
+    perl -pi -e 's/\) /\) \//g' $tempdir/$package.install.perm.tmp
     # compute 64 bits version :
     #   - replace usr/lib by usr/lib64
     #   - except for /usr/lib/perl
@@ -27,17 +30,18 @@ function copyInstallPerm {
     #   - except for /usr/lib/python
     #   - except for /usr/libexec
     #   - replace gcc32dbg by gcc64dbg (gridFTP specific)
-    perl -p -e 's/usr\/lib/usr\/lib64/g;s/usr\/lib64\/perl/usr\/lib\/perl/g;s/usr\/lib64\/python/usr\/lib\/python/g;s/usr\/lib64exec/usr\/libexec/g;s/usr\/lib64\/log/usr\/lib\/log/g;s/gcc32dbg/gcc64dbg/g' debian/$package.install.perm.tmp > debian/$package.install.perm.64.tmp
+    cp -f $tempdir/$package.install.perm.tmp $tempdir/$package.install.perm.64.tmp
+    perl -pi -e 's/usr\/lib/usr\/lib64/g;s/usr\/lib64\/perl/usr\/lib\/perl/g;s/usr\/lib64\/python/usr\/lib\/python/g;s/usr\/lib64exec/usr\/libexec/g;s/usr\/lib64\/log/usr\/lib\/log/g;s/gcc32dbg/gcc64dbg/g' $tempdir/$package.install.perm.64.tmp
     # check whether to bother with 64 bits specific code
-    diff -q debian/$package.install.perm.tmp debian/$package.install.perm.64.tmp > /dev/null
+    diff -q $tempdir/$package.install.perm.tmp $tempdir/$package.install.perm.64.tmp > /dev/null
     if [ $? -eq 0 ]; then
-      copyInstallPermInternal $package debian/$package.install.perm.tmp
+      copyInstallPermInternal $package $tempdir/$package.install.perm.tmp
     else
-      echo "%ifarch x86_64" >> $output
-      copyInstallPermInternal $package debian/$package.install.perm.64.tmp
-      echo "%else" >> $output
-      copyInstallPermInternal $package debian/$package.install.perm.tmp
-      echo "%endif" >> $output
+      echo "%ifarch x86_64" >> ${output}
+      copyInstallPermInternal $package $tempdir/$package.install.perm.64.tmp
+      echo "%else" >> ${output}
+      copyInstallPermInternal $package $tempdir/$package.install.perm.tmp
+      echo "%endif" >> ${output}
     fi
 }
 
@@ -221,7 +225,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     fi
     ## deal with files
     if [ -s "debian/$package.install.perm" ]; then
-        copyInstallPerm $package
+        copyInstallPerm $package $tempdir
     fi
     ## deal with scripts
     if [ -s "debian/$package.postinst" ]; then
@@ -245,4 +249,5 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     fi
     echo >> $output
 done
+rm -rf $tempdir
 

@@ -66,12 +66,12 @@ if(DEFINED ENV{ORACLE_HOME})
 else(DEFINED ENV{ORACLE_HOME})
   # Attempt known locations in Linux
   file(GLOB ORACLE_INCLUDE_DIR "/usr/include/oracle/*/client/")
-  message("ORACLE_INCLUDE_DIR=${ORACLE_INCLUDE_DIR}")
+  message(STATUS "ORACLE_INCLUDE_DIR=${ORACLE_INCLUDE_DIR}")
   find_path(ORACLE_INCLUDE_DIR
     NAMES oci.h
     PATHS
     ${ORACLE_INCLUDE_DIR}) # Oracle instant client 11 on Linux
-  message("ORACLE_INCLUDE_DIR=${ORACLE_INCLUDE_DIR}")
+  message(STATUS "ORACLE_INCLUDE_DIR=${ORACLE_INCLUDE_DIR}")
   set(ORACLE_LIB_DIR
     /usr/lib64/oracle/*/client/lib64
     /usr/lib/oracle/*/client/lib)

@@ -55,7 +55,9 @@ MAJOR_CASTOR_VERSION=@MAJOR_CASTOR_VERSION@
 MINOR_CASTOR_VERSION=@MINOR_CASTOR_VERSION@
 export MAJOR_CASTOR_VERSION
 export MINOR_CASTOR_VERSION
-./configure
+mkdir -p build
+cd build
+MAJOR_CASTOR_VERSION=${MAJOR_CASTOR_VERSION} MINOR_CASTOR_VERSION=${MINOR_CASTOR_VERSION} cmake .. 
 %if %compiling_client
 (cd h; ln -s . shift)
 echo "Only compiling client part"
@@ -77,6 +79,7 @@ export MINOR_CASTOR_VERSION
 export CASTOR_NOSTK=1
 %endif
 
+cd build
 %if %compiling_client
 %{__make} installclient DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 %else

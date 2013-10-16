@@ -40,6 +40,7 @@ FIND_PACKAGE(Oracle)
 ###########################################################################
 CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/h/patchlevel.h.in ${CMAKE_BINARY_DIR}/h/patchlevel.h)
 INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/h)
+INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/h})
 
 ###########################################################################
 # Include the subdirectories of the project
@@ -80,10 +81,14 @@ INCLUDE(CPack)
 INCLUDE(cmake/UseRPMTools.cmake)
 IF(RPMTools_FOUND)
   EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.spec.in.head  ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
-  EXECUTE_PROCESS(COMMAND ./makespec.in.sh ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in
-       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+  MESSAGE(STATUS "Generating spec file from debian pacakge structure...")
+  EXECUTE_PROCESS(COMMAND ./makespec.in.sh ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in 2>&1
+       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+       OUTPUT_VARIABLE result)
+  IF(NOT ${result} STREQUAL "")
+    MESSAGE(STATUS "${result}")
+  ENDIF(NOT ${result} STREQUAL "")
   RPMTools_ADD_RPM_TARGETS(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
 ENDIF(RPMTools_FOUND)
 
 
->>>>>>> cc/cmake
