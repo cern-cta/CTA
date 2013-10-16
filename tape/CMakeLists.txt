@@ -54,3 +54,7 @@ add_library (castortape SHARED ${TAPE_LIB_SRC_FILES} ${TAPE_LIB_USR_SRC_FILES})
 set_target_properties (castortape PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castortape castorcommon castorvmgr)
 install (TARGETS castortape DESTINATION ${CASTOR_DEST_LIB_DIR})
+
+set (TAPED_SRC_FILES tpdaemon.c checkjobdied.c cvtden.c sendrep.c tplogit.c usrmsg.c)
+add_executable(taped ${TAPED_SRC_FILES})
+target_link_libraries (taped castorcommon castorvdqm)

@@ -75,6 +75,7 @@ add_subdirectory (common)
 add_subdirectory (dlf)
 add_subdirectory (tape)
 add_subdirectory (upv)
+add_subdirectory (vdqm)
 add_subdirectory (vmgr)
 
 ###########################################################################
