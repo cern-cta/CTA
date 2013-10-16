@@ -559,7 +559,7 @@ unsigned int castor::rh::RHThread::handleRequest(castor::stager::Request* fr)
   m_rhSvc = dynamic_cast<castor::rh::IRHSvc*>(svc);
   if (0 == m_rhSvc) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Couldn't load the request handler service, check the castor.conf for DynamicLib entries" << std::endl;
+    ex.getMessage() << "Couldn't load the request handler service" << std::endl;
     throw ex;
   }
 
