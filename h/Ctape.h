@@ -36,10 +36,6 @@
 
 			/* label types */
 
-#define AL	1
-#define NL	2
-#define SL	3
-#define BLP	4
 #define AUL	5
 #define DMP	6	/* for the dump tape   */
 
@@ -297,7 +293,7 @@ struct tptab {		/* tape drive table */
 	char	vid[CA_MAXVIDLEN+1];
 	char	vsn[CA_MAXVSNLEN+1];
 	int	tobemounted;	/* 1 means tape to be mounted */
-	int	lblcode;	/* label code: AL, NL, SL or BLP */
+	int	lblcode;	/* label code: AUL or DMP */
 	int	mode;		/* WRITE_DISABLE or WRITE_ENABLE */
 };
 
@@ -306,7 +302,7 @@ struct tptab {		/* tape drive table */
 struct devlblinfo {
 	char	path[CA_MAXPATHLEN+1];	/* pathname */
 	char	devtype[CA_MAXDVTLEN+1];	/* device type */
-	int	lblcode;	/* label code: AL, NL, SL or BLP */
+	int	lblcode;	/* label code: AUL or DMP */
 	int	flags;		/* options like NOTRLCHK */
 	int	fseq;		/* file sequence number */
 	char	vol1[81];	/* VOL1 label */

@@ -1,8 +1,23 @@
+#                      CMakeLists.txt
 #
-#  Copyright (C) 1993-2013 by CERN/IT/DSS
-#  All rights reserved
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
 #
-# CMakeLists.txt for the CASTOR project.
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+#
+# Steven.Murray@cern.ch Eric.Cano@cern.ch
 #
 
 ###########################################################################
@@ -29,7 +44,32 @@ INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/h)
 ###########################################################################
 # Include the subdirectories of the project
 ###########################################################################
-add_subdirectory(tape)
+
+set (CASTOR_DEST_BIN_DIR /usr/bin)
+set (CASTOR_DEST_LIB_DIR /usr/lib64)
+set (CASTOR_DEST_MAN_DIR /usr/shar/man)
+
+# All common variables and values to be used by all CMakeLists.txt files should
+# be specified here
+set (CMAKE_C_FLAGS
+  "-pthread -fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
+
+if(APPLE)
+  set (CMAKE_SHARED_LINKER_FLAGS
+    "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
+else(APPLE)
+  set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
+endif(APPLE)
+
+set (CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
+
+set_property ( DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
+
+add_subdirectory (common)
+add_subdirectory (dlf)
+add_subdirectory (tape)
+add_subdirectory (upv)
+add_subdirectory (vmgr)
 
 ###########################################################################
 # Packaging step (replacing the maketar)
@@ -44,3 +84,6 @@ IF(RPMTools_FOUND)
        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
   RPMTools_ADD_RPM_TARGETS(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
 ENDIF(RPMTools_FOUND)
+
+
+>>>>>>> cc/cmake

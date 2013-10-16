@@ -202,7 +202,7 @@ int main(int	argc,
 				goto reply;
 
 	/* tape is positionned */
-	if (lblcode == AL || lblcode == AUL || lblcode == SL) {
+	if (lblcode == AUL ) {
 		if (filstat != NEW_FILE) {	/* set defaults from label */
 			if (fid[0] == '\0') {
 				strncpy (tpfid, hdr1 + 4, 17);
@@ -214,12 +214,6 @@ int main(int	argc,
 				if (recfm[0] == '\0') {
 					memset (recfm, 0, 4);
 					recfm[0] = hdr2[4];
-					if (lblcode == SL && hdr2[38] != ' ') {
-						if (hdr2[38] == 'R')
-							memcpy (recfm + 1, "BS", 2);
-						else
-							recfm[1] = hdr2[38];
-					}
 				}
 				if (blksize == 0) {
 					if (*uhl1) {
@@ -287,7 +281,7 @@ int main(int	argc,
 	if ((c = send2tpd (NULL, sendbuf, msglen, NULL, 0)) == 0) {
 		sbp = repbuf;
 		marshall_LONG (sbp, cfseq);
-		if (lblcode == AL || lblcode == AUL || lblcode == SL) {
+		if (lblcode == AUL) {
 			buildvollbl (vol1, vsn, lblcode, name);
 			if (mode == WRITE_DISABLE || filstat == APPEND)
 				for (i = 0; i < 80; i++)

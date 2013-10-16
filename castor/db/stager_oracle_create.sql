@@ -328,7 +328,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_2');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_3');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -592,6 +592,7 @@ AS
   RECALL_CANCEL_RECALLJOB_VID  CONSTANT VARCHAR2(2048) := 'Canceling RecallJobs for given VID';
   RECALL_FAILING               CONSTANT VARCHAR2(2048) := 'Failing Recall(s)';
   RECALL_FS_NOT_FOUND          CONSTANT VARCHAR2(2048) := 'bestFileSystemForRecall could not find a suitable destination for this recall';
+  RECALL_LOOPING_ON_LOCK       CONSTANT VARCHAR2(2048) := 'Giving up with recall as we are looping on locked file(s)';
   RECALL_NOT_FOUND             CONSTANT VARCHAR2(2048) := 'setBulkFileRecallResult: unable to identify recall, giving up';
   RECALL_INVALID_PATH          CONSTANT VARCHAR2(2048) := 'setFileRecalled: unable to parse input path, giving up';
   RECALL_COMPLETED_DB          CONSTANT VARCHAR2(2048) := 'setFileRecalled: db updates after full recall completed';
@@ -1697,6 +1698,7 @@ CREATE GLOBAL TEMPORARY TABLE DLFLogsHelper
    source VARCHAR2(2048),
    params VARCHAR2(2048))
 ON COMMIT DELETE ROWS;
+CREATE INDEX I_DLFLogs_Msg ON DLFLogs(msg);
 
 /* Temporary table to handle removing of priviledges */
 CREATE GLOBAL TEMPORARY TABLE RemovePrivilegeTmpTable
@@ -5920,8 +5922,10 @@ CREATE OR REPLACE PROCEDURE dumpDBLogs(logEntries OUT castor.LogEntry_Cur) AS
 BEGIN
   BEGIN
     -- lock whatever we can from the table. This is to prevent deadlocks.
-    SELECT ROWID BULK COLLECT INTO rowIds
-      FROM DLFLogs FOR UPDATE NOWAIT;
+    SELECT /*+ INDEX_RS_ASC(DLFLogs I_DLFLogs_Msg) */ ROWID BULK COLLECT INTO rowIds
+      FROM DLFLogs
+      WHERE ROWNUM < 10000
+      FOR UPDATE NOWAIT;
     -- insert data on tmp table and drop selected entries
     INSERT INTO DLFLogsHelper (timeinfo, uuid, priority, msg, fileId, nsHost, SOURCE, params)
      (SELECT timeinfo, uuid, priority, msg, fileId, nsHost, SOURCE, params
@@ -10710,6 +10714,7 @@ PROCEDURE tg_getBulkFilesToRecall(inLogContext IN VARCHAR2,
   varNewFseq INTEGER;
   bestFSForRecall_error EXCEPTION;
   PRAGMA EXCEPTION_INIT(bestFSForRecall_error, -20115);
+  varNbLockedFiles INTEGER := 0;
 BEGIN
   BEGIN
     -- Get VID and last processed fseq for this recall mount, lock
@@ -10804,7 +10809,29 @@ BEGIN
     EXCEPTION
       WHEN CfLocked THEN
         -- Go to next candidate, this CastorFile is being processed by another thread
-        NULL;
+        -- still check that this does not happen too often
+        -- the reason is that a long standing lock (due to another bug) would make us spin
+        -- like mad (learnt the hard way in production...)
+        varNbLockedFiles := varNbLockedFiles + 1;
+        IF varNbLockedFiles >= 100 THEN
+          DECLARE
+            lastSQL VARCHAR2(2048);
+            prevSQL VARCHAR2(2048);
+          BEGIN
+            -- find the blocking SQL
+            SELECT lastSql.sql_text, prevSql.sql_text INTO lastSQL, prevSQL
+              FROM v$session currentSession, v$session blockerSession, v$sql lastSql, v$sql prevSql
+             WHERE currentSession.sid = (SELECT sys_context('USERENV','SID') FROM DUAL)
+               AND blockerSession.sid(+) = currentSession.blocking_session
+               AND lastSql.sql_id(+) = blockerSession.sql_id
+               AND prevSql.sql_id(+) = blockerSession.prev_sql_id;
+            -- log the issue and exit, as if we were out of candidates
+            logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_LOOPING_ON_LOCK, varFileId, varNsHost, 'tapegatewayd',
+                   'SQLOfLockingSession="' || lastSQL || '" PreviousSQLOfLockingSession="' || prevSQL ||
+                   '" mountTransactionId=' || to_char(inMountTrId) ||' '|| inLogContext);
+            EXIT;
+          END;
+        END IF;
       WHEN bestFSForRecall_error THEN
         -- log 'bestFileSystemForRecall could not find a suitable destination for this recall' and skip it
         logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FS_NOT_FOUND, varFileId, varNsHost, 'tapegatewayd',
@@ -11937,20 +11964,27 @@ BEGIN
     -- compute average filling of filesystems on production machines
     -- note that read only ones are not taken into account as they cannot
     -- be filled anymore
-    SELECT AVG(free/totalSize) INTO varFreeRef
+    -- also note the use of decode and the extra totalSize > 0 to protect
+    -- us against division by 0. The decode is needed in case this filter
+    -- is applied first, before the totalSize > 0
+    SELECT AVG(free/decode(totalSize, 0, 1, totalSize)) INTO varFreeRef
       FROM FileSystem, DiskPool2SvcClass, DiskServer
      WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
        AND DiskPool2SvcClass.child = SC.id
        AND DiskServer.id = FileSystem.diskServer
        AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
        AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+       AND FileSystem.totalSize > 0
        AND DiskServer.hwOnline = 1
      GROUP BY SC.id;
     -- get sensibility of the rebalancing
     varSensibility := TO_NUMBER(getConfigOption('Rebalancing', 'Sensibility', '5'))/100;
     -- for each filesystem too full compared to average, rebalance
     -- note that we take the read only ones into account here
-    FOR FS IN (SELECT FileSystem.id, varFreeRef*totalSize-free dataToMove,
+    -- also note the use of decode and the extra totalSize > 0 to protect
+    -- us against division by 0. The decode is needed in case this filter
+    -- is applied first, before the totalSize > 0
+    FOR FS IN (SELECT FileSystem.id, varFreeRef*decode(totalSize, 0, 1, totalSize)-free dataToMove,
                       DiskServer.name ds, FileSystem.mountPoint
                  FROM FileSystem, DiskPool2SvcClass, DiskServer
                 WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
@@ -11959,6 +11993,7 @@ BEGIN
                   AND DiskServer.id = FileSystem.diskServer
                   AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
                   AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+                  AND FileSystem.totalSize > 0
                   AND DiskServer.hwOnline = 1) LOOP
       rebalance(FS.id, FS.dataToMove, SC.id, FS.ds, FS.mountPoint);
     END LOOP;

@@ -982,6 +982,7 @@ CREATE GLOBAL TEMPORARY TABLE DLFLogsHelper
    source VARCHAR2(2048),
    params VARCHAR2(2048))
 ON COMMIT DELETE ROWS;
+CREATE INDEX I_DLFLogs_Msg ON DLFLogs(msg);
 
 /* Temporary table to handle removing of priviledges */
 CREATE GLOBAL TEMPORARY TABLE RemovePrivilegeTmpTable

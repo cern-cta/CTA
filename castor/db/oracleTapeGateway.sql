@@ -1614,6 +1614,7 @@ PROCEDURE tg_getBulkFilesToRecall(inLogContext IN VARCHAR2,
   varNewFseq INTEGER;
   bestFSForRecall_error EXCEPTION;
   PRAGMA EXCEPTION_INIT(bestFSForRecall_error, -20115);
+  varNbLockedFiles INTEGER := 0;
 BEGIN
   BEGIN
     -- Get VID and last processed fseq for this recall mount, lock
@@ -1708,7 +1709,29 @@ BEGIN
     EXCEPTION
       WHEN CfLocked THEN
         -- Go to next candidate, this CastorFile is being processed by another thread
-        NULL;
+        -- still check that this does not happen too often
+        -- the reason is that a long standing lock (due to another bug) would make us spin
+        -- like mad (learnt the hard way in production...)
+        varNbLockedFiles := varNbLockedFiles + 1;
+        IF varNbLockedFiles >= 100 THEN
+          DECLARE
+            lastSQL VARCHAR2(2048);
+            prevSQL VARCHAR2(2048);
+          BEGIN
+            -- find the blocking SQL
+            SELECT lastSql.sql_text, prevSql.sql_text INTO lastSQL, prevSQL
+              FROM v$session currentSession, v$session blockerSession, v$sql lastSql, v$sql prevSql
+             WHERE currentSession.sid = (SELECT sys_context('USERENV','SID') FROM DUAL)
+               AND blockerSession.sid(+) = currentSession.blocking_session
+               AND lastSql.sql_id(+) = blockerSession.sql_id
+               AND prevSql.sql_id(+) = blockerSession.prev_sql_id;
+            -- log the issue and exit, as if we were out of candidates
+            logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_LOOPING_ON_LOCK, varFileId, varNsHost, 'tapegatewayd',
+                   'SQLOfLockingSession="' || lastSQL || '" PreviousSQLOfLockingSession="' || prevSQL ||
+                   '" mountTransactionId=' || to_char(inMountTrId) ||' '|| inLogContext);
+            EXIT;
+          END;
+        END IF;
       WHEN bestFSForRecall_error THEN
         -- log 'bestFileSystemForRecall could not find a suitable destination for this recall' and skip it
         logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FS_NOT_FOUND, varFileId, varNsHost, 'tapegatewayd',

@@ -41,14 +41,16 @@
 
   [Features]
 
-     #102700 RFE: Remove tape-server code that supports unused drive types
-     #102786 RFE: Add the header files of the tapegatewayd protocol to castor-build-headers.rpm
-     #102815 RFE: Remove the tprstat command from CASTOR
      #102817 RFE: Move smc to a new package called castor-rmc-client
      #102830 RFE: Remove unused accounting from the tape server software
      #102831 RFE: Remove the reason argument from tpconfig
 
   [Code Maintenance]
+
+     #102700 RFE: Remove tape-server code that supports unused drive types
+     #102786 RFE: Add the header files of the tapegatewayd protocol to castor-build-headers.rpm
+     #102815 RFE: Remove the tprstat command from CASTOR
+     #102853 RFE: Remove code implementing unsupported tape label types
 
 
   CASTOR NS
@@ -74,6 +76,9 @@
 
   - A new tape packaged name castor-rmc-client has been created and the command-line tool smc has
     been moved into it from the castor-tape-tools package.
+  - Package dependencies have been further strengthened. All RPMs depending on Oracle clients have
+    now an explicit dependency on oracle-instantclient-basic, and inter-dependencies across castor
+    packages now require the same version to be installed for all packages.
 
   Deployment Changes
   ------------------

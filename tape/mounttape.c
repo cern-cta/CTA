@@ -71,7 +71,6 @@ int main(int	argc,
 	char *dvn;
 	char hdr1[81];
 	char hdr2[81];
-	static char labels[7][4] = {"", "al", "nl", "sl", "blp", "aul", "DMP"};
 	int lblcode;
 	struct mtop mtop;
 	int n;
@@ -83,9 +82,7 @@ int main(int	argc,
 	char *sbp;
 	int scsi;
 	int side;
-	int Tflag = 0;
         int Fflag = 0; /* force flag */
-	int tplbl;
 	int tpmode;
 	int tpmounted;
 	char tpvsn[CA_MAXVSNLEN+1];
@@ -95,7 +92,6 @@ int main(int	argc,
 	int vdqm_status;
 	char *vsn;
 	char vol1[LBLBUFSZ];
-	int vsnretry = 0;
 	char *why;
     
         time_t TStartMount, TEndMount, TMount;
@@ -114,10 +110,11 @@ int main(int	argc,
         }
         tl_tpdaemon.tl_init( &tl_tpdaemon, 0 );
 
-  if (25 != argc) {
-    printf("Wrong number of arguments\n");
-    exit(-1);
-  }
+  	if (25 != argc) {
+                tplogit (func, "Wrong number of arguments\n");
+		printf("Wrong number of arguments\n");
+		exit(-1);
+	}
 
 	drive = argv[1];
 	vid = argv[2];
@@ -144,11 +141,18 @@ int main(int	argc,
 	side = atoi (argv[23]);
 	clienthost = argv[24];
 
-	if ((prelabel > 2) && (prelabel & DOUBLETM)) {
-                tplogit (func, "DOUBLETM option set\n");
-		prelabel -= DOUBLETM;
-		Tflag = 1;
+	if(	-1 != prelabel && /* -1 = do not prelabel          */
+		 1 != prelabel && /*  1 = prelabel without forcing */
+		33 != prelabel) { /* 33 = force prelabel           */
+                tplogit (func, "Unsupported prelabel value %d\n", prelabel);
+		exit(-1);
 	}
+
+	if (lblcode != AUL && lblcode != DMP) {
+		tplogit (func, "Illegal label code %d: Only AUL (5) and DMP (6) are supported\n", lblcode);
+		exit(-1);
+	}
+
 	if ((prelabel > 2) && (prelabel & FORCEPRELBL)) {
                 tplogit (func, "FORCEPRELBL option set\n");
 		prelabel -= FORCEPRELBL;
@@ -209,8 +213,11 @@ int main(int	argc,
 
 	updvsn_done = 0;
 	density[0] = '\0';
-	if ((c = vmgrchecki (vid, vsn, dgn, density, labels[lblcode], mode, uid, gid, clienthost)))
+	c = vmgrchecki (vid, vsn, dgn, density, lblcode == AUL ? "aul" : "DMP",
+		mode, uid, gid, clienthost);
+	if (c) {
 		goto reply;
+	}
 
 	if (tpmounted) {	/* tape already mounted */
 		if (!scsi)
@@ -225,10 +232,11 @@ int main(int	argc,
 
 	/* build mount message */
 
-	if (mode == WRITE_DISABLE)
+	if (mode == WRITE_DISABLE) {
 		strcpy (rings, "read");
-	else
+	} else {
 		strcpy (rings, "write");
+	}
 	why = "";
 	msg_num = 0;
 
@@ -244,8 +252,9 @@ int main(int	argc,
 	while (1) {
 		{
 			char msg[OPRMSGSZ];
-                	snprintf (msg, sizeof(msg), TP020, vid, labels[lblcode], rings, drive, hostname, 	 
-                         name, jid, why);
+                	snprintf (msg, sizeof(msg), TP020, vid,
+				lblcode == AUL ? "aul" : "DMP", rings, drive,
+				hostname, name, jid, why);
 			msg[sizeof(msg) - 1] = '\0';
                 
                 	tplogit (func, "%s\n", msg);
@@ -253,7 +262,7 @@ int main(int	argc,
                                     "func"    , TL_MSG_PARAM_STR  , func,
                                     "Message" , TL_MSG_PARAM_STR  , msg,
                                     "VID"     , TL_MSG_PARAM_STR  , vid,
-                                    "Label"   , TL_MSG_PARAM_STR  , labels[lblcode],
+                                    "Label"   , TL_MSG_PARAM_STR  , lblcode == AUL ? "aul" : "DMP",
                                     "Rings"   , TL_MSG_PARAM_STR  , rings, 
                                     "Drive"   , TL_MSG_PARAM_STR  , drive, 
                                     "DGN"     , TL_MSG_PARAM_STR  , dgn,
@@ -388,32 +397,29 @@ int main(int	argc,
 
 		if (lblcode == DMP) break;
 
-		/* the volume is not being dumped so check the VOL1 label */
+		/* Only DMP and aul are supported therefore if the tape      */
+                /* contains data then it should start with an aul VOL1 label */
 
 		if ((c = readlbl (tapefd, path, vol1)) < 0) goto reply;
 		if (prelabel >= 0 && c == 3) break;	/* tape is new. ok to prelabel */
 		if (prelabel >= 0 && c == 2 && readlbl (tapefd, path, vol1) > 1)
 			break;	/* tape has only a single or a double tapemark */
+		const int read80ByteLabel = c == 0;
+		const int foundVol1 = read80ByteLabel && (strncmp (vol1, "VOL1", 4) == 0);
 		if (c) {	/* record read is not 80 bytes long */
 			c = 0;
-			tplbl = NL;
-		} else if (strncmp (vol1, "VOL1", 4) == 0) tplbl = AL;
-		else {
-			ebc2asc (vol1, 80);
-			if (strncmp (vol1, "VOL1", 4) == 0) tplbl = SL;
-			else tplbl = NL;
 		}
-		if (tplbl != NL) {
+		if (foundVol1) {
 			strncpy (tpvsn, vol1 + 4, 6);
 			tpvsn[6] = '\0';
 			if ((p = strchr (tpvsn, ' ')) != NULL) *p = '\0';
 		}
 		if (prelabel >= 0) {
 			char msg[OPRMSGSZ];
-			if (tplbl == NL) {
-				snprintf (msg, sizeof(msg), TP062, vid, "is an NL tape", "");
-			} else {
+			if (foundVol1) {
 				snprintf (msg, sizeof(msg), TP062, vid, "has vsn ", tpvsn);
+			} else {
+				snprintf (msg, sizeof(msg), TP062, vid, "is an NL tape", "");
 			}
 			msg[sizeof(msg) - 1] = '\0';
 			usrmsg (func, "%s\n", msg);
@@ -434,54 +440,62 @@ int main(int	argc,
                                 break;	
                         }
 		}
-		if (tplbl == NL && lblcode == NL) break;
-		if (tplbl != NL) {
+		if (foundVol1) {
 			tplogit (func, "vol1 = %s\n", vol1);
                         tl_tpdaemon.tl_log( &tl_tpdaemon, 111, 3,
                                             "func" , TL_MSG_PARAM_STR  , func,
                                             "vol1" , TL_MSG_PARAM_STR  , vol1,
                                             "TPVID", TL_MSG_PARAM_TPVID, vid);
-                }
-		if (tplbl == AL && lblcode == AUL) tplbl = AUL;
-		if (lblcode != tplbl && vsnretry) {	/* wrong label type */
-			usrmsg (func, TP021, labels[lblcode], labels[tplbl]);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 21, 4,
-                                            "func"   , TL_MSG_PARAM_STR  , func,
-                                            "Request", TL_MSG_PARAM_STR  , labels[lblcode],
-                                            "Tape"   , TL_MSG_PARAM_STR  , labels[tplbl],
-                                            "TPVID"  , TL_MSG_PARAM_TPVID, vid );			
+                } else {
+			/* At this point a label type mismatch has been detected */
+			usrmsg (func, TP021, "aul", "nl");
+			tl_tpdaemon.tl_log( &tl_tpdaemon, 21, 4,
+				"func"   , TL_MSG_PARAM_STR  , func,
+				"Request", TL_MSG_PARAM_STR  , "aul",
+				"Tape"   , TL_MSG_PARAM_STR  , "nl",
+				"TPVID"  , TL_MSG_PARAM_TPVID, vid );			
 			c = ETWLBL;
 			goto reply;
 		}
-		if (tplbl != NL) {
-			if (lblcode == tplbl && strcmp (tpvsn, vsn) == 0) break;
-		}
-		if (*loader != 'm' && vsnretry++) {
-			usrmsg (func, TP039, vsn, tpvsn);
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 39, 4,
-                                            "func"   , TL_MSG_PARAM_STR  , func,
-                                            "Request", TL_MSG_PARAM_STR  , vsn,
-                                            "Tape"   , TL_MSG_PARAM_STR  , tpvsn,
-                                            "TPVID"  , TL_MSG_PARAM_TPVID, vid );			
+
+		if (strcmp (tpvsn, vsn) == 0) break;
+
+		/* At this point a vsn mismatch has been detected */
+
+		usrmsg (func, TP039, vsn, tpvsn);
+		tl_tpdaemon.tl_log( &tl_tpdaemon, 39, 4,
+			"func"   , TL_MSG_PARAM_STR  , func,
+			"Request", TL_MSG_PARAM_STR  , vsn,
+			"Tape"   , TL_MSG_PARAM_STR  , tpvsn,
+			"TPVID"  , TL_MSG_PARAM_TPVID, vid );			
+
+		/* Abort if not manual */
+		if (*loader != 'm') {
 			c = ETWVSN;
 			goto reply;
 		}
-		if (*loader != 'n')
+
+		if (*loader != 'n') {
 			if ((n = unldtape (tapefd, path))) {
 				c = n;
 				goto reply;
 			}
+		}
 		close (tapefd);
 		why = "wrong vsn";
 		if (*loader == 'm')
 			continue;
 		demountforce = 1;
-		do {
-            vsnretry++;  
-			c = rbtdemount (vid, drive, dvn, loader, demountforce, vsnretry);
-			if ((n = rbtdmntchk (&c, drive, &demountforce)) < 0)
-				goto reply;
-		} while (n == 1);
+		{
+			int vsnretry = 0;
+			do {
+				vsnretry++;  
+				c = rbtdemount (vid, drive, dvn, loader, demountforce, vsnretry);
+				if ((n = rbtdmntchk (&c, drive, &demountforce)) < 0) {
+					goto reply;
+				}
+			} while (n == 1);
+		}
 		if (n == 2)	/* tape not unloaded */
 			goto reply;
 		needrbtmnt = 1;
@@ -490,7 +504,7 @@ int main(int	argc,
 
 	/* tape is mounted */
                 
-    if (deviceTypeIsSupported(devtype)) {
+	if (deviceTypeIsSupported(devtype)) {
             
             /* Now checking the MIR */
             if (is_mir_invalid_load(tapefd, path, devtype) == 1) {
@@ -677,7 +691,7 @@ int main(int	argc,
                                         "Message", TL_MSG_PARAM_STR  , "MIR is valid",
                                         "TPVID"  , TL_MSG_PARAM_TPVID, vid );
             }
-    }
+	}
 
 	if ((c = Ctape_updvsn (uid, gid, jid, ux, vid, vsn, 0, lblcode, mode)))
 		goto reply;
@@ -743,28 +757,21 @@ mounted:
 			c = errno;
 			goto reply;
 		}
-		if (lblcode != NL) {
-			buildvollbl (vol1, vsn, lblcode, name);
-			if (lblcode == SL) asc2ebc (vol1, 80);
-			if ((c = writelbl (tapefd, path, vol1)) < 0) goto reply;
-			if (prelabel > 0) {
-				const int blksize = DEFAULTMIGRATIONBLOCKSIZE;
-				buildhdrlbl(hdr1, hdr2,
-					"PRELABEL", vsn, 1, 1, 0,
-					"U", blksize, 0, den, lblcode);
-				if (lblcode == SL) asc2ebc (hdr1, 80);
-				if ((c = writelbl (tapefd, path, hdr1)) < 0)
+		buildvollbl (vol1, vsn, lblcode, name);
+		if ((c = writelbl (tapefd, path, vol1)) < 0) goto reply;
+		if (prelabel > 0) {
+			const int blksize = DEFAULTMIGRATIONBLOCKSIZE;
+			buildhdrlbl(hdr1, hdr2,
+				"PRELABEL", vsn, 1, 1, 0,
+				"U", blksize, 0, den, lblcode);
+			if ((c = writelbl (tapefd, path, hdr1)) < 0)
+				goto reply;
+			if (prelabel > 1) {
+				if ((c = writelbl (tapefd, path, hdr2)) < 0)
 					goto reply;
-				if (prelabel > 1) {
-					if (lblcode == SL) asc2ebc (hdr2, 80);
-					if ((c = writelbl (tapefd, path, hdr2)) < 0)
-						goto reply;
-				}
 			}
 		}
 		if  ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) goto reply;
-		if (Tflag)
-			if  ((c = wrttpmrk (tapefd, path, 1, 0)) < 0) goto reply;
 		goto reply;
 	}
 

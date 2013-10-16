@@ -157,8 +157,6 @@ VOL1 record structure:
 .br
 38:51	Owner (login name) for AL tapes.
 .br
-42:51	Owner (login name) for SL tapes.
-.br
 80	Label standard level 3 (AL tapes).
 
 HDR1 record structure:
