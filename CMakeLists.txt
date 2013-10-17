@@ -44,8 +44,8 @@ find_package(Oracle)
 # Configure header file
 ###########################################################################
 configure_file(${CMAKE_SOURCE_DIR}/h/patchlevel.h.in ${CMAKE_BINARY_DIR}/h/patchlevel.h)
-include_DIRECTORIES(${CMAKE_BINARY_DIR}/h)
-include_DIRECTORIES(${CMAKE_SOURCE_DIR}/h})
+include_directories(${CMAKE_BINARY_DIR}/h)
+include_directories(${CMAKE_SOURCE_DIR}/h})
 
 ###########################################################################
 # Include the subdirectories of the project
