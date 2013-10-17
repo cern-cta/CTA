@@ -62,6 +62,7 @@
 #include "castor/stager/GCFile.hpp"
 #include "castor/stager/QueryParameter.hpp"
 #include "castor/rh/Client.hpp"
+#include "castor/ObjectSet.hpp"
 #include <string>
 #include <vector>
 #include "occi.h"
@@ -421,10 +422,14 @@ void castor::db::ora::OraRHSvc::storeRequest
       throw ex;
     } else {
       // unexpected exception
+      std::ostringstream ss;
+      castor::ObjectSet objset;
+      req->print(ss, "", objset);
       castor::exception::Internal ex;
-      std::string msg = e.what();
       ex.getMessage() << "unexpected ORACLE exception caught while inserting request : "
-                      << e.what();
+                      << e.what() << std::endl
+                      << "Original request : "
+                      << ss.str();
       throw ex;
     }
   }
