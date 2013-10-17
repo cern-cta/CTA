@@ -23,29 +23,29 @@
 ###########################################################################
 # In source build forbidding
 ###########################################################################
-CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
+cmake_minimum_required (VERSION 2.6)
 
 ###########################################################################
 # project definition section
 ###########################################################################
-PROJECT(castor)
-IF("${CMAKE_SOURCE_DIR}" MATCHES "${CMAKE_BINARY_DIR}")
-  MESSAGE(SEND_ERROR "In source building not supported. Please run something like: \"mkdir ../build; ( src=`pwd`; cd ../build; cmake $src ); make -C ../build\"")
-  MESSAGE(SEND_ERROR "Now that you reached that point you will unfortnately have to cleanup your source directory: \"rm -rf CMakeFiles/ CMakeCache.txt\". Sorry!")
-  RETURN()
-ENDIF("${CMAKE_SOURCE_DIR}" MATCHES "${CMAKE_BINARY_DIR}")
-SET(CMAKE_DISABLE_SOURCE_CHANGES ON)
-SET(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
-LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
-INCLUDE(cmake/CASTORVersion.cmake)
-FIND_PACKAGE(Oracle)
+project(castor)
+if("${CMAKE_SOURCE_DIR}" MATCHES "${CMAKE_BINARY_DIR}")
+  message(SEND_ERROR "In source building not supported. Please run something like: \"mkdir ../build; ( src=`pwd`; cd ../build; cmake $src ); make -C ../build\"")
+  message(SEND_ERROR "Now that you reached that point you will unfortnately have to cleanup your source directory: \"rm -rf CMakeFiles/ CMakeCache.txt\". Sorry!")
+  return()
+endif("${CMAKE_SOURCE_DIR}" MATCHES "${CMAKE_BINARY_DIR}")
+set(CMAKE_DISABLE_SOURCE_CHANGES ON)
+set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
+list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+include(cmake/CASTORVersion.cmake)
+find_package(Oracle)
 
 ###########################################################################
 # Configure header file
 ###########################################################################
-CONFIGURE_FILE(${CMAKE_SOURCE_DIR}/h/patchlevel.h.in ${CMAKE_BINARY_DIR}/h/patchlevel.h)
-INCLUDE_DIRECTORIES(${CMAKE_BINARY_DIR}/h)
-INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/h})
+configure_file(${CMAKE_SOURCE_DIR}/h/patchlevel.h.in ${CMAKE_BINARY_DIR}/h/patchlevel.h)
+include_DIRECTORIES(${CMAKE_BINARY_DIR}/h)
+include_DIRECTORIES(${CMAKE_SOURCE_DIR}/h})
 
 ###########################################################################
 # Include the subdirectories of the project
@@ -82,19 +82,17 @@ add_subdirectory (vmgr)
 # Packaging step (replacing the maketar)
 # See http://www.vtk.org/Wiki/CMakeUserUseRPMTools
 ###########################################################################
-SET(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${CASTOR_VERSION}-${CASTOR_RELEASE}")
-INCLUDE(CPack)
-INCLUDE(cmake/UseRPMTools.cmake)
-IF(RPMTools_FOUND)
-  EXECUTE_PROCESS(COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.spec.in.head  ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
-  MESSAGE(STATUS "Generating spec file from debian pacakge structure...")
-  EXECUTE_PROCESS(COMMAND ./makespec.in.sh ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in 2>&1
+set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${CASTOR_VERSION}-${CASTOR_RELEASE}")
+include(CPack)
+include(cmake/UseRPMTools.cmake)
+if(RPMTools_FOUND)
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.spec.in.head  ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
+  message(STATUS "Generating spec file from debian package structure...")
+  execute_process(COMMAND ./makespec.in.sh ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in 2>&1
        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
        OUTPUT_VARIABLE result)
-  IF(NOT ${result} STREQUAL "")
-    MESSAGE(STATUS "${result}")
-  ENDIF(NOT ${result} STREQUAL "")
+  if(NOT ${result} STREQUAL "")
+    message(STATUS "${result}")
+  endif(NOT ${result} STREQUAL "")
   RPMTools_ADD_RPM_TARGETS(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
-ENDIF(RPMTools_FOUND)
-
-
+endif(RPMTools_FOUND)
