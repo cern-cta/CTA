@@ -58,3 +58,5 @@ install (TARGETS castortape DESTINATION ${CASTOR_DEST_LIB_DIR})
 set (TAPED_SRC_FILES tpdaemon.c checkjobdied.c cvtden.c sendrep.c tplogit.c usrmsg.c)
 add_executable(taped ${TAPED_SRC_FILES})
 target_link_libraries (taped castorcommon castortape castorvdqm)
+
+set (CONFDRIVE_SRC_FILES confdrive.c sendrep.c tplogit.c)
