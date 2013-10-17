@@ -64,3 +64,10 @@ set (CONFDRIVE_SRC_FILES confdrive.c sendrep.c tplogit.c)
 add_executable(confdrive ${CONFDRIVE_SRC_FILES})
 target_link_libraries(confdrive castorcommon castortape castorvdqm)
 install (TARGETS confdrive DESTINATION ${CASTOR_DEST_BIN_DIR})
+
+set (POSOVL_SRC_FILES posovl.c buildhdrlbl.c builduhl.c buildvollbl.c
+ebc2asc.c getdrvstatus.c inquiry.c locate.c posittape.c readlbl.c rwndtape.c
+send2tpd.c sendrep.c skiptape.c tperror.c tplogit.c usrmsg.c)
+add_executable(posovl ${POSOVL_SRC_FILES})
+target_link_libraries(posovl castorcommon castortape)
+install (TARGETS posovl DESTINATION ${CASTOR_DEST_BIN_DIR})
