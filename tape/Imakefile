@@ -84,9 +84,9 @@ TapeMakeDir($(LOGPATH),0755)
 TAPED_OBJS = tpdaemon.o checkjobdied.o cvtden.o sendrep.o tplogit.o usrmsg.o
 CONFDRIVE_OBJS = confdrive.o sendrep.o tplogit.o
 POSOVL_OBJS = posovl.o buildhdrlbl.o builduhl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o locate.o posittape.o readlbl.o rwndtape.o send2tpd.o sendrep.o skiptape.o tperror.o tplogit.o usrmsg.o
-TapeProgramTarget(taped,$(TAPED_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
-TapeProgramTarget(confdrive,$(CONFDRIVE_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
-TapeProgramTarget(posovl,$(POSOVL_OBJS) $(TAPEACCT),$(TAPELIB),$(TAPELIB),755)
+TapeProgramTarget(taped,$(TAPED_OBJS),$(TAPELIB),$(TAPELIB),755)
+TapeProgramTarget(confdrive,$(CONFDRIVE_OBJS),$(TAPELIB),$(TAPELIB),755)
+TapeProgramTarget(posovl,$(POSOVL_OBJS),$(TAPELIB),$(TAPELIB),755)
 TapeProgramTarget(tplabel,tplabel.o,$(TAPELIB),$(TAPELIB),755)
 ADMMANPAGE(taped)
 EXEMANPAGE(tplabel)
@@ -105,12 +105,12 @@ include $(CASTOR_ROOT)/rmc/Makefile
 MOUNTTAPE_NOSTK_OBJS = mounttape.o asc2ebc.o buildhdrlbl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o rbtsubr.o readlbl.o rwndtape.o send2tpd.o sendrep.o setCompression.o skiptape.o tperror.o tplogit.o unldtape.o usrmsg.o writelbl.o wrttpmrk.o mircheck.o
 MOUNTTAPE_NOSTK_DEPLIBS = DepSharedLibraryTargetName(tape,castortape) DepSharedLibraryTargetName(rmc,castorrmc)
 MOUNTTAPE_NOSTK_LIBS = $(MOUNTTAPE_NOSTK_DEPLIBS) BuildRPathcastorrmc
-TapeProgramTarget(mounttape-nostk,$(MOUNTTAPE_NOSTK_OBJS) $(TAPEACCT),$(MOUNTTAPE_NOSTK_DEPLIBS),$(MOUNTTAPE_NOSTK_LIBS),755)
+TapeProgramTarget(mounttape-nostk,$(MOUNTTAPE_NOSTK_OBJS),$(MOUNTTAPE_NOSTK_DEPLIBS),$(MOUNTTAPE_NOSTK_LIBS),755)
 
 RLSTAPE_NOSTK_OBJS = rlstape.o getdrvstatus.o rbtsubr.o send2tpd.o sendrep.o tperror.o tplogit.o usrmsg.o unldtape.o tapealertcheck.o
 RLSTAPE_NOSTK_DEPLIBS = DepSharedLibraryTargetName(tape,castortape) DepSharedLibraryTargetName(rmc,castorrmc)
 RLSTAPE_NOSTK_LIBS = $(RLSTAPE_NOSTK_DEPLIBS) BuildRPathcastorrmc
-TapeProgramTarget(rlstape-nostk,$(RLSTAPE_NOSTK_OBJS) $(TAPEACCT),$(RLSTAPE_NOSTK_DEPLIBS),$(RLSTAPE_NOSTK_LIBS),755)
+TapeProgramTarget(rlstape-nostk,$(RLSTAPE_NOSTK_OBJS),$(RLSTAPE_NOSTK_DEPLIBS),$(RLSTAPE_NOSTK_LIBS),755)
 
 # Compile STK objects. Note: only 2 objects, mounttape and rbtsubr need to be recompiled with STK options
 ifeq ($(CASTOR_NOSTK),)
@@ -134,10 +134,10 @@ COMPILEC(rbtsubr-stk.c, $(CDKFLG) $(CDKINC))
 MOUNTTAPE_STK_OBJS = mounttape-stk.o asc2ebc.o buildhdrlbl.o buildvollbl.o ebc2asc.o getdrvstatus.o inquiry.o rbtsubr-stk.o readlbl.o rwndtape.o send2tpd.o sendrep.o setCompression.o skiptape.o tperror.o tplogit.o unldtape.o usrmsg.o writelbl.o wrttpmrk.o mircheck.o
 MOUNTTAPE_STK_DEPLIBS = DepSharedLibraryTargetName(tape,castortape) DepSharedLibraryTargetName(rmc,castorrmc)
 MOUNTTAPE_STK_LIBS = $(LIBCDK) $(MOUNTTAPE_STK_DEPLIBS) BuildRPathcastorrmc
-TapeProgramTarget(mounttape,$(MOUNTTAPE_STK_OBJS) $(TAPEACCT),$(MOUNTTAPE_STK_DEPLIBS),$(MOUNTTAPE_STK_LIBS),755)
+TapeProgramTarget(mounttape,$(MOUNTTAPE_STK_OBJS),$(MOUNTTAPE_STK_DEPLIBS),$(MOUNTTAPE_STK_LIBS),755)
 
 RLSTAPE_STK_OBJS = rlstape.o getdrvstatus.o rbtsubr-stk.o send2tpd.o sendrep.o tperror.o tplogit.o usrmsg.o unldtape.o tapealertcheck.o
 RLSTAPE_STK_DEPLIBS = DepSharedLibraryTargetName(tape,castortape) DepSharedLibraryTargetName(rmc,castorrmc)
 RLSTAPE_STK_LIBS = $(LIBCDK) $(RLSTAPE_STK_DEPLIBS) BuildRPathcastorrmc
-TapeProgramTarget(rlstape,$(RLSTAPE_STK_OBJS) $(TAPEACCT),$(RLSTAPE_STK_DEPLIBS),$(RLSTAPE_STK_LIBS),755)
+TapeProgramTarget(rlstape,$(RLSTAPE_STK_OBJS),$(RLSTAPE_STK_DEPLIBS),$(RLSTAPE_STK_LIBS),755)
 endif
