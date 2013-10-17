@@ -66,8 +66,29 @@ target_link_libraries(confdrive castorcommon castortape castorvdqm)
 install (TARGETS confdrive DESTINATION ${CASTOR_DEST_BIN_DIR})
 
 set (POSOVL_SRC_FILES posovl.c buildhdrlbl.c builduhl.c buildvollbl.c
-ebc2asc.c getdrvstatus.c inquiry.c locate.c posittape.c readlbl.c rwndtape.c
-send2tpd.c sendrep.c skiptape.c tperror.c tplogit.c usrmsg.c)
+  ebc2asc.c getdrvstatus.c inquiry.c locate.c posittape.c readlbl.c rwndtape.c
+  send2tpd.c sendrep.c skiptape.c tperror.c tplogit.c usrmsg.c)
 add_executable(posovl ${POSOVL_SRC_FILES})
 target_link_libraries(posovl castorcommon castortape)
 install (TARGETS posovl DESTINATION ${CASTOR_DEST_BIN_DIR})
+
+set (TPLABEL_SRC_FILES tplabel.c)
+add_executable(tplabel ${TPLABEL_SRC_FILES})
+target_link_libraries(tplabel castorcommon castortape)
+install (TARGETS tplabel DESTINATION ${CASTOR_DEST_BIN_DIR})
+
+set (MOUNTTAPE_NOSTK_SRC_FILES mounttape.c asc2ebc.c buildhdrlbl.c
+  buildvollbl.c ebc2asc.c getdrvstatus.c inquiry.c rbtsubr.c readlbl.c
+  rwndtape.c send2tpd.c sendrep.c setCompression.c skiptape.c tperror.c
+  tplogit.c unldtape.c usrmsg.c writelbl.c wrttpmrk.c mircheck.c)
+add_executable(mounttape-nostk ${MOUNTTAPE_NOSTK_SRC_FILES})
+target_link_libraries(mounttape-nostk castorcommon castorrmc castortape
+  castorvdqm)
+install (TARGETS mounttape-nostk DESTINATION ${CASTOR_DEST_BIN_DIR})
+
+set (RLSTAPE_NOSTK_SRC_FILES rlstape.c getdrvstatus.c rbtsubr.c send2tpd.c
+  sendrep.c tperror.c tplogit.c usrmsg.c unldtape.c tapealertcheck.c)
+add_executable(rlstape-nostk ${RLSTAPE_NOSTK_SRC_FILES})
+target_link_libraries(rlstape-nostk castorcommon castorrmc castortape
+  castorvdqm)
+install (TARGETS rlstape-nostk DESTINATION ${CASTOR_DEST_BIN_DIR})

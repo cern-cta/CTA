@@ -73,6 +73,7 @@ set_property ( DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
 
 add_subdirectory (common)
 add_subdirectory (dlf)
+add_subdirectory (rmc)
 add_subdirectory (tape)
 add_subdirectory (upv)
 add_subdirectory (vdqm)
