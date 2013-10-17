@@ -24,13 +24,18 @@
 # In source build forbidding
 ###########################################################################
 CMAKE_MINIMUM_REQUIRED (VERSION 2.6)
-SET(CMAKE_DISABLE_SOURCE_CHANGES ON)
-SET(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 ###########################################################################
 # project definition section
 ###########################################################################
 PROJECT(castor)
+IF("${CMAKE_SOURCE_DIR}" MATCHES "${CMAKE_BINARY_DIR}")
+  MESSAGE(SEND_ERROR "In source building not supported. Please run something like: \"mkdir ../build; ( src=`pwd`; cd ../build; cmake $src ); make -C ../build\"")
+  MESSAGE(SEND_ERROR "Now that you reached that point you will unfortnately have to cleanup your source directory: \"rm -rf CMakeFiles/ CMakeCache.txt\". Sorry!")
+  RETURN()
+ENDIF("${CMAKE_SOURCE_DIR}" MATCHES "${CMAKE_BINARY_DIR}")
+SET(CMAKE_DISABLE_SOURCE_CHANGES ON)
+SET(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 LIST(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 INCLUDE(cmake/CASTORVersion.cmake)
 FIND_PACKAGE(Oracle)
@@ -46,9 +51,9 @@ INCLUDE_DIRECTORIES(${CMAKE_SOURCE_DIR}/h})
 # Include the subdirectories of the project
 ###########################################################################
 
-set (CASTOR_DEST_BIN_DIR /usr/bin)
-set (CASTOR_DEST_LIB_DIR /usr/lib64)
-set (CASTOR_DEST_MAN_DIR /usr/shar/man)
+set(CASTOR_DEST_BIN_DIR /usr/bin)
+set(CASTOR_DEST_LIB_DIR /usr/lib64)
+set(CASTOR_DEST_MAN_DIR /usr/shar/man)
 
 # All common variables and values to be used by all CMakeLists.txt files should
 # be specified here
