@@ -20,14 +20,11 @@
 # Steven.Murray@cern.ch Eric.Cano@cern.ch
 #
 
-###########################################################################
-# In source build forbidding
-###########################################################################
+################################################################################
+# Project definition section - In source build forbidding
+################################################################################
 cmake_minimum_required (VERSION 2.6)
 
-###########################################################################
-# project definition section
-###########################################################################
 project(castor)
 if("${CMAKE_SOURCE_DIR}" MATCHES "${CMAKE_BINARY_DIR}")
   message(SEND_ERROR "In source building not supported. Please run something like: \"mkdir ../build; ( src=`pwd`; cd ../build; cmake $src ); make -C ../build\"")
@@ -40,16 +37,16 @@ list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(cmake/CASTORVersion.cmake)
 find_package(Oracle)
 
-###########################################################################
+################################################################################
 # Configure header file
-###########################################################################
+################################################################################
 configure_file(${CMAKE_SOURCE_DIR}/h/patchlevel.h.in ${CMAKE_BINARY_DIR}/h/patchlevel.h)
 include_directories(${CMAKE_BINARY_DIR}/h)
 include_directories(${CMAKE_SOURCE_DIR}/h})
 
-###########################################################################
-# Include the subdirectories of the project
-###########################################################################
+################################################################################
+# Global rules and variables
+################################################################################
 
 set(CASTOR_DEST_BIN_DIR /usr/bin)
 set(CASTOR_DEST_LIB_DIR /usr/lib64)
@@ -71,6 +68,10 @@ set (CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
 
 set_property ( DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
 
+################################################################################
+# Include the subdirectories of the project
+################################################################################
+
 add_subdirectory (common)
 add_subdirectory (dlf)
 add_subdirectory (rmc)
@@ -79,21 +80,24 @@ add_subdirectory (upv)
 add_subdirectory (vdqm)
 add_subdirectory (vmgr)
 
-###########################################################################
+################################################################################
 # Packaging step (replacing the maketar)
 # See http://www.vtk.org/Wiki/CMakeUserUseRPMTools
-###########################################################################
-set(CPACK_SOURCE_PACKAGE_FILE_NAME "${PROJECT_NAME}-${CASTOR_VERSION}-${CASTOR_RELEASE}")
+################################################################################
+set(CPACK_SOURCE_PACKAGE_FILE_NAME
+  "${PROJECT_NAME}-${CASTOR_VERSION}-${CASTOR_RELEASE}")
 include(CPack)
 include(cmake/UseRPMTools.cmake)
 if(RPMTools_FOUND)
   execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.spec.in.head  ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
   message(STATUS "Generating spec file from debian package structure...")
-  execute_process(COMMAND ./makespec.in.sh ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in 2>&1
-       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-       OUTPUT_VARIABLE result)
+  execute_process(
+    COMMAND ./makespec.in.sh ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in 2>&1
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    OUTPUT_VARIABLE result)
   if(NOT ${result} STREQUAL "")
     message(STATUS "${result}")
   endif(NOT ${result} STREQUAL "")
-  RPMTools_ADD_RPM_TARGETS(${PROJECT_NAME} ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
+  RPMTools_ADD_RPM_TARGETS(
+    ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
 endif(RPMTools_FOUND)
