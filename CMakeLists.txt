@@ -69,17 +69,17 @@ set (CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
 set_property ( DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
 
 # Generate the compilation variables, if needed
-if(NOT DEFINED COMPILING_NOSTK)
-  set(COMPILING_NOSTK 0)
-  message(STATUS "Setting option COMPILING_NOSTK to default (0). Override with
-option -DCOMPILING_NOSTK:STRING=1")
-endif(NOT DEFINED COMPILING_NOSTK)
+if(NOT DEFINED COMPILE_STK)
+  message(STATUS "Setting COMPILE_STK to the default value of 0")
+  message(STATUS "Override with -DCOMPILE_STK:STRING=1")
+  set(COMPILE_STK 0)
+endif(NOT DEFINED COMPILE_STK)
 
-if(NOT DEFINED COMPILING_CLIENT)
-  set(COMPILING_CLIENT 0)
-  message(STATUS "Setting option COMPILING_CLIENT to default (0). Override
-with option -DCOMPILING_CLIENT:STRING=1")
-endif(NOT DEFINED COMPILING_CLIENT)
+if(NOT DEFINED COMPILE_CLIENT)
+  message(STATUS "Setting COMPILING_CLIENT to the value of 0")
+  message(STATUS "Override with -DCOMPILING_CLIENT:STRING=1")
+  set(COMPILE_CLIENT 0)
+endif(NOT DEFINED COMPILE_CLIENT)
 
 ################################################################################
 # Include the subdirectories of the project

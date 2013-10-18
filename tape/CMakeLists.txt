@@ -92,3 +92,46 @@ add_executable(rlstape-nostk ${RLSTAPE_NOSTK_SRC_FILES})
 target_link_libraries(rlstape-nostk castorcommon castorrmc castortape
   castorvdqm)
 install (TARGETS rlstape-nostk DESTINATION ${CASTOR_DEST_BIN_DIR})
+
+foreach(SRC_FILE mounttape rbtsubr)
+  set (TAPE_STK_SRC_FILES ${TAPE_STK_SRC_FILES} ${SRC_FILE}-stk.c)
+
+  add_custom_command (
+    OUTPUT ${SRC_FILE}-stk.c DEPENDS ${SRC_FILE}.c
+    COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/${SRC_FILE}.c ${CMAKE_CURRENT_BINARY_DIR}/${SRC_FILE}-stk.c)
+
+  set_property(SOURCE ${SRC_FILE}-stk.c
+    PROPERTY COMPILE_FLAGS "-DCDK -DLINUX -I/usr/include/CDK")
+endforeach ()
+
+foreach(SRC_FILE ${TAPE_STK_SRC_FILES})
+  message (STATUS "STEVE WAS ERE AGAIN - ${SRC_FILE}")
+endforeach ()
+
+find_library (STK_CDK_API_LIB api PATHS /usr/lib64/CDK NO_DEFAULT_PATH)
+if (STK_CDK_API_LIB)
+  message(STATUS "Found the STK CDK api library: ${STK_CDK_API_LIB}")
+endif (STK_CDK_API_LIB)
+
+find_library (STK_CDK_UTL_LIB utl PATHS /usr/lib64/CDK NO_DEFAULT_PATH)
+if (STK_CDK_UTL_LIB)
+  message(STATUS "Found the STK CDK utl library: ${STK_CDK_UTL_LIB}")
+endif (STK_CDK_UTL_LIB)
+
+find_library (STK_CDK_IPC_LIB ipc PATHS /usr/lib64/CDK NO_DEFAULT_PATH)
+if (STK_CDK_IPC_LIB)
+  message(STATUS "Found the STK CDK ipc library: ${STK_CDK_IPC_LIB}")
+endif (STK_CDK_IPC_LIB)
+
+find_library (STK_CDK_CL_LIB cl PATHS /usr/lib64/CDK NO_DEFAULT_PATH)
+if (STK_CDK_CL_LIB)
+  message(STATUS "Found the STK CDK cl library: ${STK_CDK_CL_LIB}")
+endif (STK_CDK_CL_LIB)
+
+set (MOUNTTAPE_SRC_FILES mounttape-stk.c asc2ebc.c buildhdrlbl.c
+  buildvollbl.c ebc2asc.c getdrvstatus.c inquiry.c rbtsubr-stk.c readlbl.c
+  rwndtape.c send2tpd.c sendrep.c setCompression.c skiptape.c tperror.c
+  tplogit.c unldtape.c usrmsg.c writelbl.c wrttpmrk.c mircheck.c)
+#add_executable(mounttape ${MOUNTTAPE_SRC_FILES})
+#target_link_libraries(mounttape castorcommon castorrmc castortape castorvdqm)
+#install (TARGETS mounttape DESTINATION ${CASTOR_DEST_BIN_DIR})

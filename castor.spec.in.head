@@ -6,8 +6,8 @@
 
 # Partial compilations
 #---------------------
-%define compiling_nostk  @COMPILING_NOSTK@
-%define compiling_client @COMPILING_CLIENT@
+%define compile_stk    @COMPILE_STK@
+%define compile_client @COMPILE_CLIENT@
 
 # General settings
 #-----------------
@@ -21,10 +21,10 @@ License: http://cern.ch/castor/DIST/CONDITIONS
 Group: Application/Castor
 BuildRoot: %{_builddir}/%{name}-%{version}-root
 # only build debug info if you're building the whole code
-%if %compiling_client
+%if %compile_client
 %define debug_package %{nil}
 %endif
-%if %compiling_client
+%if %compile_client
 %else
 BuildRequires: oracle-instantclient-devel
 %endif
@@ -36,16 +36,17 @@ The CASTOR Project stands for CERN Advanced STORage Manager, and its goal is to 
 %setup -q -n %{name}-%{version}-%{release}
 
 %build
-# rpmbuild --define="compilenostk 1" ...
-%if 0%{?compilenostk:1} > 0
-%define compiling_nostk 1
-export CASTOR_NOSTK=%compiling_nostk
+
+%if %compile_stk
+unset CASTOR_NOSTK
+%else
+export CASTOR_NOSTK=1
 %endif
 
 # rpmbuild --define "clientonly 1" ...
 %if 0%{?clientonly:1} > 0
-%define compiling_client 1
-export CASTOR_CLIENT=%compiling_client
+%define compile_client 1
+export CASTOR_CLIENT=%compile_client
 # Suppress oracompile.py warnings in clientonly mode
 export ORACOMPILE_OPTIONS="--quiet"
 %endif
@@ -58,7 +59,7 @@ export MINOR_CASTOR_VERSION
 mkdir -p build
 cd build
 MAJOR_CASTOR_VERSION=${MAJOR_CASTOR_VERSION} MINOR_CASTOR_VERSION=${MINOR_CASTOR_VERSION} cmake .. 
-%if %compiling_client
+%if %compile_client
 (cd h; ln -s . shift)
 echo "Only compiling client part"
 %{__make} -s %{_smp_mflags} client
@@ -75,12 +76,14 @@ export MINOR_CASTOR_VERSION
 %{__rm} -rf ${RPM_BUILD_ROOT}
 
 # rpmbuild --define="compilenostk 1" ...
-%if 0%{?compilenostk:1} > 0
+%if %compile_stk
+unset CASTOR_NOSTK
+%else
 export CASTOR_NOSTK=1
 %endif
 
 cd build
-%if %compiling_client
+%if %compile_client
 %{__make} installclient DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
 %else
 %{__make} install DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
