@@ -76,8 +76,8 @@ if(NOT DEFINED COMPILE_STK)
 endif(NOT DEFINED COMPILE_STK)
 
 if(NOT DEFINED COMPILE_CLIENT)
-  message(STATUS "Setting COMPILING_CLIENT to the value of 0")
-  message(STATUS "Override with -DCOMPILING_CLIENT:STRING=1")
+  message(STATUS "Setting COMPILE_CLIENT to the value of 0")
+  message(STATUS "Override with -DCOMPILE_CLIENT:STRING=1")
   set(COMPILE_CLIENT 0)
 endif(NOT DEFINED COMPILE_CLIENT)
 
@@ -97,8 +97,10 @@ add_subdirectory (vmgr)
 # Packaging step (replacing the maketar)
 # See http://www.vtk.org/Wiki/CMakeUserUseRPMTools
 ################################################################################
+include(cmake/UseRPMToolsEnvironment.cmake)
 set(CPACK_SOURCE_PACKAGE_FILE_NAME
-  "${PROJECT_NAME}-${CASTOR_VERSION}-${CASTOR_RELEASE}")
+  "${PROJECT_NAME}-${CASTOR_VERSION}-${CASTOR_RELEASE}${RPMTools_RPMBUILD_DIST}")
+message(STATUS "Setting package file name to: ${CPACK_SOURCE_PACKAGE_FILE_NAME}")
 include(CPack)
 include(cmake/UseRPMTools.cmake)
 if(RPMTools_FOUND)

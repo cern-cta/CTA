@@ -33,8 +33,8 @@ IF (UNIX)
   ELSE (RPMTools_RPMBUILD_EXECUTABLE) 
     SET(RPMTools_RPMBUILD_FOUND "NO")
     MESSAGE(STATUS "Looking for RPMTools... - rpmbuild NOT FOUND")
-  ENDIF (RPMTools_RPMBUILD_EXECUTABLE) 
-  
+  ENDIF (RPMTools_RPMBUILD_EXECUTABLE)
+
   # Detect if CPack was included or not
   IF (NOT DEFINED "CPACK_PACKAGE_NAME") 
     MESSAGE(FATAL_ERROR "CPack was not included, you should include CPack before Using RPMTools")
@@ -74,6 +74,9 @@ IF (UNIX)
       FILE(MAKE_DIRECTORY ${RPM_ROOTDIR}/SOURCES)
       FILE(MAKE_DIRECTORY ${RPM_ROOTDIR}/SPECS)
       FILE(MAKE_DIRECTORY ${RPM_ROOTDIR}/SRPMS)
+
+      # Append the distribution name to the CPACK package tarball name
+      #set(CPACK_SOURCE_PACKAGE_FILE_NAME "${CPACK_SOURCE_PACKAGE_FILE_NAME}${RPMTools_RPMBUILD_DIST}")
 
       #
       # We check whether if the provided spec file is
@@ -157,7 +160,7 @@ rm -rf build_tree
             
       ADD_CUSTOM_TARGET(${RPMNAME}_srpm
 	COMMAND cpack -G TGZ --config CPackSourceConfig.cmake
-	COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz ${RPM_ROOTDIR}/SOURCES    
+	COMMAND ${CMAKE_COMMAND} -E copy ${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz ${RPM_ROOTDIR}/SOURCES
 	COMMAND ${RPMTools_RPMBUILD_EXECUTABLE} -bs --define=\"_topdir ${RPM_ROOTDIR}\"  --define '_source_filedigest_algorithm md5' --define '_binary_filedigest_algorithm md5' --nodeps --buildroot=${RPM_ROOTDIR}/tmp ${RPM_ROOTDIR}/SPECS/${SPECFILE_NAME} 
 	)
       

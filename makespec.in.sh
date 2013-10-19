@@ -74,7 +74,7 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
       }' $package XBS-Group |
       sed 's/ //g' | sed 's/\${[^{},]*}//g' | sed 's/^,*//g' | sed 's/,,*/,/g'`
     if [ "${group}" != "Client" ]; then
-        echo "%if ! %compiling_client" >> $output # no a client package
+        echo "%if ! %compile_client" >> $output # no a client package
     fi
     echo "%package -n $actualPackage" >> $output
     echo "Summary: Cern Advanced mass STORage" >> $output
