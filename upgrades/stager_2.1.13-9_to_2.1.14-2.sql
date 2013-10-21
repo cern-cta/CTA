@@ -730,7 +730,8 @@ DROP PROCEDURE processPrepareRequest;
 DROP PROCEDURE recreateCastorFile;
 
 -- second round :
---  - add missing constraints on statuses, 
+--  - add missing constraints on statuses and
+--    drop any remaining subrequests/diskcopies with bogus statuses
 --  - new draining schema
 --  - create Disk2DiskCopyJob table
 --  - drop of stageDiskcopyReplicaRequest table
@@ -765,6 +766,7 @@ ALTER TABLE FileSystem
   ADD CONSTRAINT CK_FileSystem_Status
   CHECK (status IN (0, 1, 2, 3));
 
+DELETE FROM DiskCopy WHERE status NOT IN (0, 4, 5, 6, 7, 9, 10, 11);
 ALTER TABLE DiskCopy
   ADD CONSTRAINT CK_DiskCopy_Status
   CHECK (status IN (0, 4, 5, 6, 7, 9, 10, 11));
