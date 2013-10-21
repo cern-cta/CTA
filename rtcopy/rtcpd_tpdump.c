@@ -25,7 +25,6 @@
 #include <log.h>
 #include <osdep.h>
 #include <net.h>
-#include <sacct.h>
 #include <Cthread_api.h>
 #include <vdqm_api.h>
 #include <Ctape_constants.h>

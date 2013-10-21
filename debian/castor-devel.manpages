@@ -157,7 +157,6 @@ debian/castor/usr/share/man/man3/rmc_mount.3castor.gz
 debian/castor/usr/share/man/man3/rmc_read_elem_status.3castor.gz
 debian/castor/usr/share/man/man3/rmc_seterrbuf.3castor.gz
 debian/castor/usr/share/man/man3/rwndtape.3castor.gz
-debian/castor/usr/share/man/man3/sacct.3castor.gz
 debian/castor/usr/share/man/man3/serrno.3castor.gz
 debian/castor/usr/share/man/man3/skiptape.3castor.gz
 debian/castor/usr/share/man/man3/usrlbl.3castor.gz
