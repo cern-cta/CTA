@@ -133,8 +133,4 @@ struct acctrfio64 {       /* accounting record for rfio64 software */
 #define SYSSHUTDOWN     0
 #define SYSSTARTUP      1
 
-#ifndef MAXFSEQ
-#define MAXFSEQ 15
-#endif
-
 #endif /* H_SACCT_H */
