@@ -18,6 +18,8 @@
 
   [Features]
 
+     #102938: RFE: extend CASTOR to support 32-bit uids
+
   [Code Maintenance]
 
      #102602 CM: Remove support for loading service libraries at run-time
