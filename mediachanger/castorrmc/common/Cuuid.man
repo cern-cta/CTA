@@ -2,7 +2,7 @@
 .\"
 .\"   Man page for the CASTOR's Universally Unique IDentifier (UUID)
 .\"
-.TH CUUID "3" "$Date: 2003/12/08 12:06:22 $" "CASTOR" "Common Library Functions"
+.TH CUUID "3castor" "$Date: 2003/12/08 12:06:22 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCuuid\fP \- \fBCASTOR\fP \fBUUID\fP inferface
 .SH SYNOPSIS

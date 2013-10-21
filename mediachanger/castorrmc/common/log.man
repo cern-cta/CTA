@@ -1,7 +1,7 @@
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DC
 .\" All rights reserved
 .\"
-.TH LOG 3 "$Date: 2001/09/26 10:03:15 $" CASTOR "Common Library Functions"
+.TH LOG "3castor" "$Date: 2001/09/26 10:03:15 $" CASTOR "Common Library Functions"
 .SH NAME
 log, initlog  \- log messages
 .SH SYNOPSIS

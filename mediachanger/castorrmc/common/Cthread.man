@@ -1,6 +1,6 @@
 .\"   $Id: Cthread.man,v 1.13 2007/09/10 10:42:34 obarring Exp $
 .\"
-.TH CTHREAD "3" "$Date: 2007/09/10 10:42:34 $" "CASTOR" "Common Library Functions"
+.TH CTHREAD "3castor" "$Date: 2007/09/10 10:42:34 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCthread\fP \- \fBCASTOR\fP \fBThread\fP inferface
 .SH SYNOPSIS

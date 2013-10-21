@@ -1,7 +1,7 @@
 .\" Copyright (C) 2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RMC_EXPORT 3 "$Date: 2002/12/06 15:58:32 $" CASTOR "rmc Library Functions"
+.TH RMC_EXPORT "3castor" "$Date: 2002/12/06 15:58:32 $" CASTOR "rmc Library Functions"
 .SH NAME
 rmc_export \- send a request to the Remote Media Changer daemon to have a volume exported/ejected from the robot
 .SH SYNOPSIS

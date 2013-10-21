@@ -1,6 +1,6 @@
 .\"   $Id: Cmutex.man,v 1.6 2002/01/09 13:25:25 jdurand Exp $
 .\"
-.TH CMUTEX "3" "$Date: 2002/01/09 13:25:25 $" "CASTOR" "Common Library Functions"
+.TH CMUTEX "3castor" "$Date: 2002/01/09 13:25:25 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCmutex\fP \- \fBCASTOR\fP \fBMutex\fP inferface
 .SH SYNOPSIS

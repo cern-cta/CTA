@@ -1,7 +1,7 @@
 .\" Copyright (C) 2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RMC_IMPORT 3 "$Date: 2002/12/06 15:58:33 $" CASTOR "rmc Library Functions"
+.TH RMC_IMPORT "3castor" "$Date: 2002/12/06 15:58:33 $" CASTOR "rmc Library Functions"
 .SH NAME
 rmc_import \- send a request to the Remote Media Changer daemon to have a volume imported/injected into the robot
 .SH SYNOPSIS

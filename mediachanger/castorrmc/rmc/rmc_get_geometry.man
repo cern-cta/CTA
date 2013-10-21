@@ -1,7 +1,7 @@
 .\" Copyright (C) 2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RMC_GET_GEOMETRY 3 "$Date: 2002/12/06 15:58:33 $" CASTOR "rmc Library Functions"
+.TH RMC_GET_GEOMETRY "3castor" "$Date: 2002/12/06 15:58:33 $" CASTOR "rmc Library Functions"
 .SH NAME
 rmc_get_geometry \- send a request to the Remote Media Changer daemon to get the robot geometry
 .SH SYNOPSIS

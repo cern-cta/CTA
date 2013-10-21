@@ -1,7 +1,7 @@
 .\" Copyright (C) 1991-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NETWRITE 3 "$Date: 2008/05/07 14:53:22 $" CASTOR "Common Library Functions"
+.TH NETWRITE "3castor" "$Date: 2008/05/07 14:53:22 $" CASTOR "Common Library Functions"
 .SH NAME
 netwrite \- send a message on a socket
 .SH SYNOPSIS
