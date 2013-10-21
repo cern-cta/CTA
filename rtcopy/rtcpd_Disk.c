@@ -30,7 +30,6 @@
 #include <log.h>
 #include <osdep.h>
 #include <net.h>
-#include <sacct.h>
 #define RFIO_KERNEL 1
 #include <rfio.h>
 #include <rfio_errno.h>

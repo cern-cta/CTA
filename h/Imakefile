@@ -9,7 +9,6 @@ DESTDIRCASTOR=$(TOPINCLUDE)/shift
 
 ClientInstallNonExecFile(shift.h,$(TOPINCLUDE),644)
 ClientInstallNonExecFile(Castor_limits.h,$(DESTDIRCASTOR),644)
-ClientInstallNonExecFile(sacct.h,$(DESTDIRCASTOR),644)
 ClientInstallNonExecFile(Cgetopt.h,$(DESTDIRCASTOR),644)
 ClientInstallNonExecFile(Cglobals.h,$(DESTDIRCASTOR),644)
 ClientInstallNonExecFile(stager_constants.h,$(DESTDIRCASTOR),644)
@@ -145,5 +144,4 @@ InstallNonExecFile(ypgetacctent.h,$(BUILDHEADERSDIRH),644)
 
 CLIENTFILEMANPAGE(Castor_limits)
 CLIENTLIBMANPAGE(serrno)
-CLIENTLIBMANPAGE(sacct)
 

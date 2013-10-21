@@ -19,7 +19,6 @@
 #include "rfio.h"                       /* Remote file I/O              */
 #include "stage_constants.h"
 #include "rfio_constants.h"
-#include "rfioacct.h"
 #include "rfio_calls.h"
 #include "u64subr.h"
 #include <signal.h>   /* Signal handling  */
@@ -797,7 +796,6 @@ int doit(int      s,
       log(LOG_INFO,"close_socket(%d): %s bytes read and %s bytes written\n",
           s, u64tostr(info.rnbr,tmpbuf,0), u64tostr(info.wnbr,tmpbuf2,0)) ;
       log(LOG_ERR, "connection %d dropped by remote end\n", s);
-      rfioacct(0,0,0,s,0,0,status,errno,&info,NULL,NULL);
 
       shutdown(s, 2);
       if( close(s) < 0 )
@@ -1050,7 +1048,6 @@ int doit(int      s,
       break;
     case RQST_END :
       log(LOG_DEBUG,"request type : end rfiod\n") ;
-      rfioacct(RQST_END,0,0,s,0,0,status,errno,&info,NULL,NULL);
       shutdown(s,2); close(s);
       if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break ;

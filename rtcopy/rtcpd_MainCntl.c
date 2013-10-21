@@ -28,7 +28,6 @@
 #include <Castor_limits.h>
 #include <Cglobals.h>
 #include <Cpwd.h>
-#include <sacct.h>
 #include <log.h>
 #include <trace.h>
 #include <osdep.h>

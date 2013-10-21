@@ -79,7 +79,7 @@ CREATE TABLE vmgr_tape_dgnmap (
 
 CREATE TABLE vmgr_tape_pool (
 	name VARCHAR2(15),
-	owner_uid NUMBER(6),
+	owner_uid NUMBER,
 	gid NUMBER(6),
 	capacity NUMBER,
 	tot_free_space NUMBER);
@@ -120,7 +120,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_2');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_3');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion

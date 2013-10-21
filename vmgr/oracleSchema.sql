@@ -76,7 +76,7 @@ CREATE TABLE vmgr_tape_dgnmap (
 
 CREATE TABLE vmgr_tape_pool (
 	name VARCHAR2(15),
-	owner_uid NUMBER(6),
+	owner_uid NUMBER,
 	gid NUMBER(6),
 	capacity NUMBER,
 	tot_free_space NUMBER);

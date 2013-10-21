@@ -27,7 +27,7 @@ WHENEVER SQLERROR EXIT FAILURE;
 
 /* SQL statement for User Privilege table */
 CREATE TABLE USER_PRIVILEGE
-  (U_ID NUMBER(6) CONSTRAINT NN_UserPrivilege_UID NOT NULL,
+  (U_ID NUMBER CONSTRAINT NN_UserPrivilege_UID NOT NULL,
    G_ID NUMBER(6) CONSTRAINT NN_UserPrivilege_GID NOT NULL,
    SRC_HOST VARCHAR2(63) CONSTRAINT NN_UserPrivilege_SrcHost NOT NULL,
    TGT_HOST VARCHAR2(63) CONSTRAINT NN_UserPrivilege_TgtHost NOT NULL,
@@ -49,7 +49,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_2');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_3');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion

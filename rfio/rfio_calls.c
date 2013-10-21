@@ -52,7 +52,6 @@
 #endif
 
 #include "rfio_callhandlers.h"
-#include "rfioacct.h"
 #include "checkkey.h"
 #include "alrm.h"
 #include "rfio_calls.h"
@@ -810,7 +809,6 @@ int srsymlink(int s,
   marshall_WORD(p,request);
   marshall_LONG(p,status);
   marshall_LONG(p,rcode);
-  rfioacct(RQST_SYMLINK,uid,gid,s,0,0,status,rcode,NULL,name1,name2);
   log(LOG_DEBUG, "rlink: sending back status(%d) and errno (%d) \n",status,rcode);
   if (netwrite_timeout(s,rqstbuf,WORDSIZE+2*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+2*LONGSIZE)) {
     log(LOG_ERR,"rlink: netwrite_timeout(): %s\n",strerror(errno));
@@ -893,7 +891,6 @@ int srreadlink(int s,
   if (status == 0 )
     marshall_STRING(p,lpath);
 
-  rfioacct(RQST_READLINK,uid,gid,s,0,0,status,rcode,NULL,path,lpath);
   if (netwrite_timeout(s,rqstbuf,len+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (len+3*LONGSIZE)) {
     log(LOG_ERR, "srreadlink(): netwrite_timeout(): %s\n", strerror(errno));
     return(-1);
@@ -976,7 +973,6 @@ int     srchown(int     s,
   p = rqstbuf;
   marshall_LONG(p, status);
   marshall_LONG(p, rcode);
-  rfioacct(RQST_CHOWN,uid,gid,s,(int)owner,(int)group,status,rcode,NULL,filename,NULL);
   log(LOG_DEBUG, "srchown: sending back status %d rcode %d\n", status,rcode);
   if (netwrite_timeout(s, rqstbuf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
     log(LOG_ERR, "srchown(): netwrite_timeout(): %s\n", strerror(errno));
@@ -1058,7 +1054,6 @@ int     srchmod(int     s,
   p = rqstbuf;
   marshall_LONG(p, status);
   marshall_LONG(p, rcode);
-  rfioacct(RQST_CHMOD,uid,gid,s,0,(int)mode,status,rcode,NULL,filename,NULL);
   log(LOG_DEBUG, "srchmod: sending back status %d rcode %d\n", status,rcode);
   if (netwrite_timeout(s, rqstbuf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
     log(LOG_ERR, "srchmod(): netwrite_timeout(): %s\n", strerror(errno));
@@ -1140,7 +1135,6 @@ int     srmkdir(int     s,
   p = rqstbuf;
   marshall_LONG(p, status);
   marshall_LONG(p, rcode);
-  rfioacct(RQST_MKDIR,uid,gid,s,0,(int)mode,status,rcode,NULL,filename,NULL);
   log(LOG_DEBUG, "srmkdir: sending back status %d rcode %d\n", status,rcode);
   if (netwrite_timeout(s, rqstbuf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
     log(LOG_ERR, "srmkdir(): netwrite_timeout(): %s\n", strerror(errno));
@@ -1220,7 +1214,6 @@ int     srrmdir(int     s,
   p = rqstbuf;
   marshall_LONG(p, status);
   marshall_LONG(p, rcode);
-  rfioacct(RQST_MKDIR,uid,gid,s,0,0,status,rcode,NULL,filename,NULL);
   log(LOG_DEBUG, "srrmdir: sending back status %d rcode %d\n", status,rcode);
   if (netwrite_timeout(s, rqstbuf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
     log(LOG_ERR, "srrmdir(): netwrite_timeout(): %s\n", strerror(errno));
@@ -1305,7 +1298,6 @@ int srrename(int     s,
   p = rqstbuf;
   marshall_LONG(p, status);
   marshall_LONG(p, rcode);
-  rfioacct(RQST_RENAME,uid,gid,s,0,0,status,rcode,NULL,filenameo,filenamen);
   log(LOG_DEBUG, "srrename: sending back status %d rcode %d\n", status,rcode);
   if (netwrite_timeout(s, rqstbuf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
     log(LOG_ERR, "srrename(): netwrite_timeout(): %s\n", strerror(errno));
@@ -1368,7 +1360,6 @@ int srlockf(int     s,
   p = rqstbuf;
   marshall_LONG(p, status);
   marshall_LONG(p, rcode);
-  rfioacct(RQST_LOCKF,uid,gid,s,op,(int)siz,status,rcode,NULL,NULL,NULL);
   log(LOG_DEBUG, "srlockf: sending back status %d rcode %d\n", status,rcode);
   if (netwrite_timeout(s, rqstbuf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
     log(LOG_ERR, "srlockf(): netwrite_timeout(): %s\n", strerror(errno));
@@ -1824,7 +1815,6 @@ int     sraccess(int     s,
    */
   if ( status == -1 && rcode > 0 ) status = rcode;
   marshall_LONG(p, status);
-  rfioacct(RQST_ACCESS,uid,gid,s,0,(int)mode,status,errno,NULL,filename,NULL);
   log(LOG_DEBUG, "raccess: sending back %d\n", status);
   if (netwrite_timeout(s,rqstbuf,LONGSIZE,RFIO_CTRL_TIMEOUT) != LONGSIZE)  {
     log(LOG_ERR, "raccess: netwrite_timeout(): %s\n", strerror(errno));
@@ -2118,7 +2108,6 @@ int  sropen(int     s,
   marshall_LONG(p,status);
   marshall_LONG(p,rcode);
   marshall_LONG(p,0);
-  rfioacct(RQST_OPEN,uid,gid,s,(int)ntohopnflg(flags),(int)mode,status,rcode,NULL,CORRECT_FILENAME(filename),NULL);
   log(LOG_DEBUG, "ropen: sending back status(%d) and errno(%d)\n",status,rcode);
   if (netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE))  {
     log(LOG_ERR,"ropen: netwrite_timeout(): %s\n",strerror(errno));
@@ -2504,7 +2493,6 @@ int   srclose(int     s,
   marshall_LONG(p,status);
   marshall_LONG(p,rcode);
   marshall_LONG(p,0);
-  rfioacct(RQST_CLOSE,0,0,s,0,0,status,rcode,infop,NULL,NULL);
   if (netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE))  {
     log(LOG_ERR, "rclose: netwrite_timeout(): %s\n", strerror(errno));
     return -1;
@@ -2527,7 +2515,6 @@ int  srpclose(int     s,
   p= rqstbuf;
   marshall_LONG(p,status);
   marshall_LONG(p,errno);
-  rfioacct(RQST_PCLOSE,0,0,s,0,0,status,errno,NULL,NULL,NULL);
   if (netwrite_timeout(s,rqstbuf,2*LONGSIZE,RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
     log(LOG_ERR, "rpclose: netwrite_timeout(): %s\n", strerror(errno));
     return -1;
@@ -2581,7 +2568,6 @@ FILE  *srpopen(int     s,
   }
 
   p= rqstbuf;
-  rfioacct(RQST_POPEN,uid,gid,s,0,0,status,rcode,NULL,command,NULL);
   log(LOG_DEBUG, "rpopen: sending back status(%d) and rcode(%d)\n",status, rcode);
   marshall_LONG( p, status );
   marshall_WORD( p, rcode );
@@ -3239,7 +3225,6 @@ DIR *sropendir(int s,
   marshall_LONG(p,status);
   marshall_LONG(p,rcode);
   marshall_LONG(p,0);
-  rfioacct(RQST_OPENDIR,uid,gid,s,0,0,status,rcode,NULL,filename,NULL);
   log(LOG_DEBUG, "ropendir: sending back status(%d) and errno(%d)\n",status,rcode);
   if (netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE))  {
     log(LOG_ERR,"ropendir: netwrite_timeout(): %s\n",strerror(errno));
@@ -3321,7 +3306,6 @@ int srrewinddir(int s,
   marshall_LONG(p,status);
   marshall_LONG(p,rcode);
   marshall_LONG(p,0);
-  rfioacct(RQST_REWINDDIR,0,0,s,0,0,status,rcode,infop,NULL,NULL);
   if (netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE))  {
     log(LOG_ERR, "rrewinddir: netwrite_timeout(): %s\n", strerror(errno));
     return -1;
@@ -3347,7 +3331,6 @@ int srclosedir(int s,
   marshall_LONG(p,status);
   marshall_LONG(p,rcode);
   marshall_LONG(p,0);
-  rfioacct(RQST_CLOSEDIR,0,0,s,0,0,status,rcode,infop,NULL,NULL);
   if (netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE))  {
     log(LOG_ERR, "rclosedir: netwrite_timeout(): %s\n", strerror(errno));
     return -1;
@@ -3939,7 +3922,6 @@ int  sropen_v3(int     s,
       }
       log(LOG_DEBUG,"setsockopt nodelay option set on ctrl socket\n");
     }
-  rfioacct(RQST_OPEN_V3,uid,gid,s,(int)flags,(int)mode,status,rcode,NULL,CORRECT_FILENAME(filename),NULL);
   if (data_s >= 0) close(data_s);
   return fd;
 }
@@ -3995,7 +3977,6 @@ int   srclose_v3(int     s,
   marshall_WORD(p, RQST_CLOSE_V3);
   marshall_LONG(p, status);
   marshall_LONG(p, rcode);
-  rfioacct(RQST_CLOSE_V3,0,0,s,0,0,status,rcode,&myinfo,NULL,NULL);
 
   errno = ECONNRESET;
   if (netwrite_timeout(s, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {

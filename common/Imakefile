@@ -12,7 +12,7 @@ COMMONLIB_OBJS = compat.o getacct.o getacctent.o getconfent.o \
 		 getifnam.o getuser.o log.o marshall.o \
 		 readc.o remote.o \
 		 serror.o socket.o solveln.o trace.o \
-		 wsacct.o ypgetacct.o ypgetacctent.o \
+		 ypgetacct.o ypgetacctent.o \
 		 Cthread.o Cglobals.o Cgrp.o Cmutex.o Cuuid.o \
 		 Cdomainname.o Cnetdb.o Cpool.o Cpwd.o Cstrerror.o \
 		 socket_timeout.o u64subr.o Cinitdaemon.o Cgetopt.o \
