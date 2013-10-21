@@ -9,6 +9,8 @@
   -----
 
   - To install the smc comand-line tool one must install the castor-rmc-client package.
+  - The castor-sacct rpm has been removed, therefore please do not try to
+    install it on your tape servers.
 
   CASTOR Core Framework
   ---------------------
@@ -47,6 +49,7 @@
      #102817 RFE: Move smc to a new package called castor-rmc-client
      #102830 RFE: Remove unused accounting from the tape server software
      #102831 RFE: Remove the reason argument from tpconfig
+     #102939 RFE: Remove the castor-sacct package
 
   [Code Maintenance]
 
