@@ -69,12 +69,6 @@ set (CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
 set_property ( DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
 
 # Generate the compilation variables, if needed
-if(NOT DEFINED COMPILE_STK)
-  message(STATUS "Setting COMPILE_STK to the default value of 0")
-  message(STATUS "Override with -DCOMPILE_STK:STRING=1")
-  set(COMPILE_STK 0)
-endif(NOT DEFINED COMPILE_STK)
-
 if(NOT DEFINED COMPILE_CLIENT)
   message(STATUS "Setting COMPILE_CLIENT to the value of 0")
   message(STATUS "Override with -DCOMPILE_CLIENT:STRING=1")

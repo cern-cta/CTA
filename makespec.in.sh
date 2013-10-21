@@ -52,13 +52,6 @@ for this in `grep Package: debian/control | awk '{print $NF}'`; do
     package=$this
     actualPackage=$package
 
-    # ignore the STK version of the castor-tape-server if compiling without STK support
-    if [ "$package" = "castor-tape-server" ]; then
-	if [ ! -z $CASTOR_NOSTK ]; then
-            continue
-        fi
-    fi
-
     #
     ## get package group if any
     #

@@ -6,7 +6,6 @@
 
 # Partial compilations
 #---------------------
-%define compile_stk    @COMPILE_STK@
 %define compile_client @COMPILE_CLIENT@
 
 # General settings
@@ -36,12 +35,6 @@ The CASTOR Project stands for CERN Advanced STORage Manager, and its goal is to 
 %setup -q -n %{name}-%{version}-%{release}
 
 %build
-
-%if %compile_stk
-unset CASTOR_NOSTK
-%else
-export CASTOR_NOSTK=1
-%endif
 
 # rpmbuild --define "clientonly 1" ...
 %if 0%{?clientonly:1} > 0
@@ -74,13 +67,6 @@ MINOR_CASTOR_VERSION=@MINOR_CASTOR_VERSION@
 export MAJOR_CASTOR_VERSION
 export MINOR_CASTOR_VERSION
 %{__rm} -rf ${RPM_BUILD_ROOT}
-
-# rpmbuild --define="compilenostk 1" ...
-%if %compile_stk
-unset CASTOR_NOSTK
-%else
-export CASTOR_NOSTK=1
-%endif
 
 cd build
 %if %compile_client
