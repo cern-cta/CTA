@@ -137,13 +137,4 @@ struct acctrfio64 {       /* accounting record for rfio64 software */
 #define MAXFSEQ 15
 #endif
 
-			/* subtypes for stage accounting records */
-
-#define	STGSTART	0	/* stgdaemon started */
-#define	STGCMDR		1	/* command received */
-#define	STGFILS		2	/* file staged */
-#define	STGCMDC		3	/* command completed (with success or not) */
-#define	STGCMDS		4	/* stager started */
-#define	STGFILC		5	/* file cleared */
-
 #endif /* H_SACCT_H */
