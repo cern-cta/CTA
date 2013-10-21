@@ -1,7 +1,7 @@
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_SELECTSRVR 3 "$Date: 2009/04/06 12:34:49 $" CASTOR "Cns Library Functions"
+.TH CNS_SELECTSRVR "3castor" "$Date: 2009/04/06 12:34:49 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_selectsrvr \- select the CASTOR Name Server
 .SH SYNOPSIS

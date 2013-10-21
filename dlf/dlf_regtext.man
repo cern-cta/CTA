@@ -1,4 +1,4 @@
-.TH dlf_reqtext 3 "CERN IT-DM" CASTOR "DLF Library Functions"
+.TH dlf_reqtext "3castor" "CERN IT-DM" CASTOR "DLF Library Functions"
 .SH NAME
 dlf_regtext \- registers a message text with the DLF logging interface
 .SH SYNOPSIS

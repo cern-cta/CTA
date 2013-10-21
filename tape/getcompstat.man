@@ -1,7 +1,7 @@
 .\" Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH GETCOMPSTAT 3 "$Date: 2003/11/12 14:55:14 $" CASTOR "Ctape Library Functions"
+.TH GETCOMPSTAT "3castor" "$Date: 2003/11/12 14:55:14 $" CASTOR "Ctape Library Functions"
 .SH NAME
 clear_compression_stats, get_compression_stats \- clear and get compression statistics
 .SH SYNOPSIS

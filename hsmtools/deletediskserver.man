@@ -1,4 +1,4 @@
-.TH DELETEDISKSERVER 1 "2011" CASTOR "stager catalogue administrative commands"
+.TH DELETEDISKSERVER "1castor" "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
 deletediskserver \- deletes existing disk servers from the stager catalogue
 

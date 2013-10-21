@@ -1,4 +1,4 @@
-.TH MODIFYSVCCLASS 1 "2011" CASTOR "stager catalogue administrative commands"
+.TH MODIFYSVCCLASS "1castor" "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
 modifysvcclass \- modifies an existing service class in the stager catalog
 .SH SYNOPSIS

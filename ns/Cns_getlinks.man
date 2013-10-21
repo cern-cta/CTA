@@ -1,7 +1,7 @@
 .\" Copyright (C) 2005 by CERN/IT/GD/SC
 .\" All rights reserved
 .\"
-.TH CNS_GETLINKS 3 "$Date: 2008/02/26 18:20:59 $" CASTOR "Cns Library Functions"
+.TH CNS_GETLINKS "3castor" "$Date: 2008/02/26 18:20:59 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_getlinks \- get the link entries associated with a given file
 .SH SYNOPSIS

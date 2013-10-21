@@ -1,1 +1,1 @@
-.so ./rfio_preseek.man
+.so man3/rfio_preseek.3castor

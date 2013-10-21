@@ -1,4 +1,4 @@
-.TH dlf_init 3 "CERN IT-DM" CASTOR "DLF Library Functions"
+.TH dlf_init "3castor" "CERN IT-DM" CASTOR "DLF Library Functions"
 .SH NAME
 dlf_init \- initialiZe the DLF logging interface
 .SH SYNOPSIS

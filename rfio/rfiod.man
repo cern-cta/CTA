@@ -4,7 +4,7 @@
 .\" Copyright (C) 1990-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIOD 1 "$Date: 2009/08/18 09:43:01 $" CASTOR "Rfio Administrator Commands"
+.TH RFIOD "1castor" "$Date: 2009/08/18 09:43:01 $" CASTOR "Rfio Administrator Commands"
 .SH NAME
 rfiod\- Remote file access daemon
 .SH SYNOPSIS

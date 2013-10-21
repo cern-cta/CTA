@@ -1,4 +1,4 @@
-.TH MIGRATENEWCOPY 1 "$Date: 2009/06/17 15:07:40 $" CASTOR "(re)creates an extra copy of a file on tape"
+.TH MIGRATENEWCOPY "1castor" "$Date: 2009/06/17 15:07:40 $" CASTOR "(re)creates an extra copy of a file on tape"
 .SH NAME
 migratenewcopy
 .SH SYNOPSIS

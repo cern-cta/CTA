@@ -1,1 +1,1 @@
-.so ./rfio_lockf.man
+.so man3/rfio_lockf.3castor

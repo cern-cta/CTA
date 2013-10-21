@@ -1,4 +1,4 @@
-.TH dlf_isinitialized 3 "CERN IT-DM" CASTOR "DLF Library Functions"
+.TH dlf_isinitialized "3castor" "CERN IT-DM" CASTOR "DLF Library Functions"
 .SH NAME
 dlf_isinitialized \- check to see if the DLF interface has been initialized
 

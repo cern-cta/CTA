@@ -1,4 +1,4 @@
-.TH DELETETAPEPOOL 1 "2011" CASTOR "stager catalogue administrative commands"
+.TH DELETETAPEPOOL "1castor" "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
 deletetapepool \- deletes existing tape pools from the stager catalogue
 

@@ -2,7 +2,7 @@
 .\"
 .\" Man page for the CASTOR's limits header file Castor_limits.h
 .\"
-.TH CASTOR_LIMITS "4" "$Date: 2004/02/12 15:40:32 $" "CASTOR" "File Formats"
+.TH CASTOR_LIMITS "4castor" "$Date: 2004/02/12 15:40:32 $" "CASTOR" "File Formats"
 .SH NAME
 \fBCastor_limits\fP \- CASTOR internal limits
 

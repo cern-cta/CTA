@@ -1,7 +1,7 @@
 .\" Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTMODEL 1 "$Date: 2003/11/24 06:59:50 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTMODEL "1castor" "$Date: 2003/11/24 06:59:50 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlistmodel \- query the CASTOR Volume Manager about a given model or list all existing cartridge models
 .SH SYNOPSIS

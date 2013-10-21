@@ -1,7 +1,7 @@
 .\" Copyright (C) 2000-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSLISTCLASS 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
+.TH NSLISTCLASS "1castor" "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
 .SH NAME
 nslistclass \- query the CASTOR Name Server about a given class or list all existing classes
 .SH SYNOPSIS

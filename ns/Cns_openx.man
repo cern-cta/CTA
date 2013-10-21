@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_OPENX 3 "$Date: 2009/06/30 12:54:06 $" CASTOR "Cns Library Functions"
+.TH CNS_OPENX "3castor" "$Date: 2009/06/30 12:54:06 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_openx \- open and possibly create a new CASTOR file
 .SH SYNOPSIS

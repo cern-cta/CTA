@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_QUERYMODEL 3 "$Date: 2003/10/29 07:48:59 $" CASTOR "vmgr Library Functions"
+.TH VMGR_QUERYMODEL "3castor" "$Date: 2003/10/29 07:48:59 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_querymodel \- query about a model of cartridge in the CASTOR Volume Manager
 .SH SYNOPSIS

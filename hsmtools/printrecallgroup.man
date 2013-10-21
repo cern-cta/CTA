@@ -1,4 +1,4 @@
-.TH PRINTRECALLGROUP 1 "2011" CASTOR "Prints out the given recall group(s)"
+.TH PRINTRECALLGROUP "1castor" "2011" CASTOR "Prints out the given recall group(s)"
 .SH NAME
 printrecallgroup
 .SH SYNOPSIS

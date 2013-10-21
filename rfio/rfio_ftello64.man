@@ -1,1 +1,1 @@
-.so ./rfio_ftell.man
+.so man3/rfio_ftell.3castor

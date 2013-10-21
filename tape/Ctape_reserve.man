@@ -1,7 +1,7 @@
 .\" Copyright (C) 1990-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CTAPE_RESERVE 3 "$Date: 2001/09/26 09:13:55 $" CASTOR "Ctape Library Functions"
+.TH CTAPE_RESERVE "3castor" "$Date: 2001/09/26 09:13:55 $" CASTOR "Ctape Library Functions"
 .SH NAME
 Ctape_reserve \- reserve tape resources
 .SH SYNOPSIS

@@ -1,5 +1,5 @@
 .lf 8 stagerd.man
-.TH stagerd 8 "$Date: 2009/07/23 12:18:45 $" CASTOR "stager"
+.TH stagerd "8castor" "$Date: 2009/07/23 12:18:45 $" CASTOR "stager"
 .SH NAME
 stagerd \- start the CASTOR Stager daemon
 .SH SYNOPSIS

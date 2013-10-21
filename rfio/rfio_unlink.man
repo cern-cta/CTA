@@ -4,7 +4,7 @@
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIO_UNLINK 3 "$Date: 2007/09/10 13:40:51 $" CASTOR "Rfio Library Functions"
+.TH RFIO_UNLINK "3castor" "$Date: 2007/09/10 13:40:51 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_unlink \- remove a file entry
 .SH SYNOPSIS

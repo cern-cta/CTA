@@ -1,4 +1,4 @@
-.TH MODIFYDBCONFIG 1 "2011" CASTOR "Modifies out the CASTOR DB configuration"
+.TH MODIFYDBCONFIG "1castor" "2011" CASTOR "Modifies out the CASTOR DB configuration"
 .SH NAME
 modifydbconfig
 .SH SYNOPSIS

@@ -1,1 +1,1 @@
-.so ./rfio_stat.man
+.so man3/rfio_stat.3castor

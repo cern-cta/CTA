@@ -1,7 +1,7 @@
 .\" Copyright (C) 1990-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPLABEL 1 "$Date: 2007/12/04 08:51:51 $" CASTOR "Ctape User Commands"
+.TH TPLABEL "1castor" "$Date: 2007/12/04 08:51:51 $" CASTOR "Ctape User Commands"
 .SH NAME
 tplabel \- initialize a new blank tape
 .SH SYNOPSIS

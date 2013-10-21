@@ -1,7 +1,7 @@
 .\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_SETCOMMENT 3 "$Date: 2008/05/05 13:08:53 $" CASTOR "Cns Library Functions"
+.TH CNS_SETCOMMENT "3castor" "$Date: 2008/05/05 13:08:53 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_setcomment \- add/replace a comment associated with a CASTOR file/directory in the name server
 .SH SYNOPSIS

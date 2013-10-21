@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_SETATIME 3 "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
+.TH CNS_SETATIME "3castor" "$Date: 2006/01/26 15:36:20 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_setatime \- set last access time for a regular file to the current time
 .SH SYNOPSIS

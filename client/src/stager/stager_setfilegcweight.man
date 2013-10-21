@@ -1,7 +1,7 @@
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_SETFILEGCWEIGHT 1castor "$Date: 2008/04/18 08:12:26 $" CASTOR "STAGER Commands"
+.TH STAGER_SETFILEGCWEIGHT "1castor"castor "$Date: 2008/04/18 08:12:26 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_setfilegcweight \- Updates the weight of a file for the garbage collection 
 .SH SYNOPSIS

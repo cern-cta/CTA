@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2009 by CERN/IT/DM
 .\" All rights reserved
 .\"
-.TH CNS_DROPSEGS 3 "$Date: 2009/05/29 13:43:06 $" CASTOR "Cns Library Functions"
+.TH CNS_DROPSEGS "3castor" "$Date: 2009/05/29 13:43:06 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_dropsegs \- drop all segments of a file
 .SH SYNOPSIS

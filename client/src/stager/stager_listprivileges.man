@@ -22,7 +22,7 @@
 .\"
 .\" @author Castor Dev team, castor-dev@cern.ch
 .\"****************************************************************************
-.TH STAGER_LISTPRIVILEGES 1castor "$Date: 2009/07/28 12:31:28 $" CASTOR "STAGER Commands"
+.TH STAGER_LISTPRIVILEGES "1castor"castor "$Date: 2009/07/28 12:31:28 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_listprivileges \- List the privileges defined in the B/W list of CASTOR
 .SH SYNOPSIS

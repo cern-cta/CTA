@@ -1,4 +1,4 @@
-.TH "PRINTRECALLTAPEQUEUE" "8" "2.1.14" "CASTOR" "Castor stager tools"
+.TH "PRINTRECALLTAPEQUEUE" "8castor" "2.1.14" "CASTOR" "Castor stager tools"
 .SH "NAME"
 printrecalltapequeue \- Prints the tapes having pending recalls and their queuing related information
 .SH "SYNOPSIS"

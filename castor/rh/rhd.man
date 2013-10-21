@@ -1,5 +1,5 @@
 .lf 8 rhd.man
-.TH RHD 8 "2007/08/16 16:50:00 CERN IT-FIO" CASTOR "request handler"
+.TH RHD "8castor" "2007/08/16 16:50:00 CERN IT-FIO" CASTOR "request handler"
 .SH NAME
 rhd \- start the CASTOR Request Handler daemon
 .SH SYNOPSIS

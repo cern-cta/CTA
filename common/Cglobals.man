@@ -1,7 +1,7 @@
 .\"
 .\" $Id: Cglobals.man,v 1.6 2001/10/26 11:56:31 jdurand Exp $
 .\"
-.TH CGLOBALS "3" "$Date: 2001/10/26 11:56:31 $" "CASTOR" "Common Library Functions"
+.TH CGLOBALS "3castor" "$Date: 2001/10/26 11:56:31 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCglobals\fP \- \fBC\fPASTOR thread-specific \fBglobal\fP variable\fBs\fP interface
 .SH SYNOPSIS

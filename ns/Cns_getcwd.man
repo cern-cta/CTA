@@ -1,7 +1,7 @@
 .\" Copyright (C) 2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_GETCWD 3 "$Date: 2006/01/26 15:36:18 $" CASTOR "Cns Library Functions"
+.TH CNS_GETCWD "3castor" "$Date: 2006/01/26 15:36:18 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_getcwd \- get CASTOR current directory used by the name server
 .SH SYNOPSIS

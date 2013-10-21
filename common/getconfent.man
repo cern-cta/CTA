@@ -1,7 +1,7 @@
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DC
 .\" All rights reserved
 .\"
-.TH GETCONFENT 3 "$Date: 2009/07/23 12:22:02 $" CASTOR "Common Library Functions"
+.TH GETCONFENT "3castor" "$Date: 2009/07/23 12:22:02 $" CASTOR "Common Library Functions"
 .SH NAME
 getconfent, getconfent_r \- Get configuration entry
 .SH SYNOPSIS

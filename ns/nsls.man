@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSLS 1 "$Date: 2009/05/18 13:40:45 $" CASTOR "Cns User Commands"
+.TH NSLS "1castor" "$Date: 2009/05/18 13:40:45 $" CASTOR "Cns User Commands"
 .SH NAME
 nsls \- list CASTOR name server directory/file entries
 .SH SYNOPSIS

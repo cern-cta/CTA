@@ -2,7 +2,7 @@
 .\" All rights reserved
 .\"
 .nh
-.TH RTCPD 1 "$Date: 2009/08/18 09:43:01 $" CASTOR "RTCOPY daemon"
+.TH RTCPD "1castor" "$Date: 2009/08/18 09:43:01 $" CASTOR "RTCOPY daemon"
 .SH NAME
 rtcpd \- CASTOR remote tape copy daemon
 .SH SYNOPSIS

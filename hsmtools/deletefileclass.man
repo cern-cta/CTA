@@ -1,4 +1,4 @@
-.TH DELETEFILECLASS 1 "2011" CASTOR "stager catalogue administrative commands"
+.TH DELETEFILECLASS "1castor" "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
 deletefileclass \- deletes an existing file class from the stager catalogue
 

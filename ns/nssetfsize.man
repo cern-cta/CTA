@@ -1,7 +1,7 @@
 .\" Copyright (C) 2003 by CERN/IT/DM
 .\" All rights reserved
 .\"
-.TH NSSETFSIZE 1 "$Date: 2009/03/26 15:00:27 $" CASTOR "Cns User Commands"
+.TH NSSETFSIZE "1castor" "$Date: 2009/03/26 15:00:27 $" CASTOR "Cns User Commands"
 .SH NAME
 nssetfsize \- update the size of a file
 .SH SYNOPSIS

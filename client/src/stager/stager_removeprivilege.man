@@ -22,7 +22,7 @@
 .\"
 .\" @author Castor Dev team, castor-dev@cern.ch
 .\"****************************************************************************"
-.TH STAGER_ADDPRIVILEGE 1castor "$Date: 2008/11/25 16:45:01 $" CASTOR "STAGER Commands"
+.TH STAGER_ADDPRIVILEGE "1castor"castor "$Date: 2008/11/25 16:45:01 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_addprivilege, stager_removeprivilege \- add/remove privileges to/from the B/W list of CASTOR
 .SH SYNOPSIS

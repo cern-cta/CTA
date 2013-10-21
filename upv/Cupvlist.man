@@ -1,7 +1,7 @@
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
-.TH "Cupvlist" "1" "$Date: 2002/10/16 08:05:23 $" "CASTOR" "UPV Administrator commands"
+.TH "Cupvlist" "1castor" "$Date: 2002/10/16 08:05:23 $" "CASTOR" "UPV Administrator commands"
 .SH "NAME"
 Cupvlist \- Lists the rights in to the user privilege validation system
 .SH "SYNOPSIS"

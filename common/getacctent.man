@@ -1,7 +1,7 @@
 .\" Copyright (C) 1995-2000 by CERN IT-PDP/CS
 .\" All rights reserved
 .\"
-.TH GETACCT 3 "$Date: 2001/09/26 09:13:49 $" CASTOR "Common Library Functions"
+.TH GETACCT "3castor" "$Date: 2001/09/26 09:13:49 $" CASTOR "Common Library Functions"
 .SH NAME
 .B getacct 
 \- get SHIFT account identifier

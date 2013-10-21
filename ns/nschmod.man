@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSCHMOD 1 "$Date: 2009/05/18 13:40:12 $" CASTOR "Cns User Commands"
+.TH NSCHMOD "1castor" "$Date: 2009/05/18 13:40:12 $" CASTOR "Cns User Commands"
 .SH NAME
 nschmod \- change access mode of a CASTOR directory/file in the name server
 .SH SYNOPSIS

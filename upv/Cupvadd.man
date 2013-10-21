@@ -1,7 +1,7 @@
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
-.TH "Cupvadd" "1" "$Date: 2008/07/21 18:18:30 $" "CASTOR" "UPV Administrator commands"
+.TH "Cupvadd" "1castor" "$Date: 2008/07/21 18:18:30 $" "CASTOR" "UPV Administrator commands"
 .SH "NAME"
 Cupvadd \- Adds an entry to the user privilege validation system
 .SH "SYNOPSIS"

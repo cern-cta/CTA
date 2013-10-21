@@ -1,7 +1,7 @@
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_RM 1castor "$Date: 2009/03/25 13:23:36 $" CASTOR "STAGER Commands"
+.TH STAGER_RM "1castor"castor "$Date: 2009/03/25 13:23:36 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_rm \- request for removing a file from the CASTOR stager
 .SH SYNOPSIS

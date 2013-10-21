@@ -1,4 +1,4 @@
-.TH MODIFYMIGRATIONROUTE 1 "2011" CASTOR "stager catalogue administrative commands"
+.TH MODIFYMIGRATIONROUTE "1castor" "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
 modifymigrationroute \- modifies the target of an existing migration route in the stager catalog
 .SH SYNOPSIS

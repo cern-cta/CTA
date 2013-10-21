@@ -1,7 +1,7 @@
 .\" Copyright (C) 2003 by CERN
 .\" All rights reserved
 .\"
-.TH CNS_LASTFSEQ 3 "$Date: 2008/02/26 18:20:59 $" CASTOR "Cns Library Functions"
+.TH CNS_LASTFSEQ "3castor" "$Date: 2008/02/26 18:20:59 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_lastfseq \- get the file segment attributes for the last file written to a volume
 .SH SYNOPSIS

@@ -1,4 +1,4 @@
-.TH DELETERECALLUSER 1 "2011" CASTOR "stager catalog administrative commands"
+.TH DELETERECALLUSER "1castor" "2011" CASTOR "stager catalog administrative commands"
 .SH NAME
 deleterecalluser \- delete recall users from the stager catalog
 .SH SYNOPSIS

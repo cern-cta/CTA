@@ -1,4 +1,4 @@
-.TH "PRINTMIGRATIONSTATUS" "8" "2.1.14" "CASTOR" "Castor stager tools"
+.TH "PRINTMIGRATIONSTATUS" "8castor" "2.1.14" "CASTOR" "Castor stager tools"
 .SH "NAME"
 printmigrationstatus \- Prints the pending migrations statistics by tape pool
 .SH "SYNOPSIS"

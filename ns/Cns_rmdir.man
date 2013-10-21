@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_RMDIR 3 "$Date: 2008/05/05 13:08:53 $" CASTOR "Cns Library Functions"
+.TH CNS_RMDIR "3castor" "$Date: 2008/05/05 13:08:53 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_rmdir \- remove a CASTOR directory in the name server
 .SH SYNOPSIS

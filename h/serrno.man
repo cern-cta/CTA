@@ -2,7 +2,7 @@
 .\"
 .\" Man page for the CASTOR's error variable serrno
 .\"
-.TH SERRNO "3" "2004/12/03 10:19:30" "CASTOR" "Castor Library Functions"
+.TH SERRNO "3castor" "2004/12/03 10:19:30" "CASTOR" "Castor Library Functions"
 .SH NAME
 \fBserrno\fP \- CASTOR internal error variable
 

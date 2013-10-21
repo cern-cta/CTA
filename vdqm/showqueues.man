@@ -1,7 +1,7 @@
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH SHOWQUEUES 1 "$Date: 2007/09/11 19:35:31 $" CASTOR "Show tape queues"
+.TH SHOWQUEUES "1castor" "$Date: 2007/09/11 19:35:31 $" CASTOR "Show tape queues"
 .SH NAME
 showqueues \- show tape queues and running requests
 .SH SYNOPSIS

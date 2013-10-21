@@ -1,7 +1,7 @@
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTPOOL 1 "$Date: 2008/02/28 14:21:09 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTPOOL "1castor" "$Date: 2008/02/28 14:21:09 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlistpool \- query the CASTOR Volume Manager about a given pool or list all existing tape pools
 .SH SYNOPSIS

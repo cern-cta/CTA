@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSRM 1 "$Date: 2009/06/24 09:03:38 $" CASTOR "Cns User Commands"
+.TH NSRM "1castor" "$Date: 2009/06/24 09:03:38 $" CASTOR "Cns User Commands"
 .SH NAME
 nsrm \- remove CASTOR files or directories in the name server
 .SH SYNOPSIS

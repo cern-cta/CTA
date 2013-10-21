@@ -1,4 +1,4 @@
-.TH "CASTOR-TRAFFIC-SHAPER" "8" "" "Castor development team <castor-dev@cern.ch>" ""
+.TH "CASTOR-TRAFFIC-SHAPER" "8castor" "" "Castor development team <castor-dev@cern.ch>" ""
 .SH "NAME"
 castor\-traffic\-shaper \- A traffic shaper used to give priority to tape servers on output of disk servers
 .SH "SYNOPSIS"

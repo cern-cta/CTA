@@ -1,5 +1,5 @@
 .lf 8 draintransfers.man
-.TH draintransfers 8 "2011/03/21" CASTOR "draintransfers"
+.TH draintransfers "8castor" "2011/03/21" CASTOR "draintransfers"
 .SH NAME
 draintransfers \- puts the transfermanager daemon on the specified machine in drain mode
 .SH SYNOPSIS

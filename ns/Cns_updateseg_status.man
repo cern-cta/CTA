@@ -1,7 +1,7 @@
 .\" Copyright (C) 2002 by CERN/IT/DM
 .\" All rights reserved
 .\"
-.TH CNS_UPDATESEG_STATUS 3 "$Date: 2008/11/03 10:10:24 $" CASTOR "Cns Library Functions"
+.TH CNS_UPDATESEG_STATUS "3castor" "$Date: 2008/11/03 10:10:24 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_updateseg_status \- updates the status of a file segment
 .SH SYNOPSIS

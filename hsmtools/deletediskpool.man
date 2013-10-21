@@ -1,4 +1,4 @@
-.TH DELETEDISKPOOL 1 "2011" CASTOR "stager catalogue administrative commands"
+.TH DELETEDISKPOOL "1castor" "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
 deletediskpool \- deletes existing disk pools from the stager catalogue
 

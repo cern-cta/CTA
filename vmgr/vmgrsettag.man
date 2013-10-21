@@ -1,7 +1,7 @@
 .\" Copyright (C) 2003 by CERN/IT/GD/CT
 .\" All rights reserved
 .\"
-.TH VMGRSETTAG 1 "$Date: 2003/10/28 11:13:26 $" CASTOR "vmgr User Commands"
+.TH VMGRSETTAG "1castor" "$Date: 2003/10/28 11:13:26 $" CASTOR "vmgr User Commands"
 .SH NAME
 vmgrsettag \- add/replace a tag associated with a tape volume in the CASTOR Volume Manager
 .SH SYNOPSIS

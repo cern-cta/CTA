@@ -35,7 +35,7 @@
 .\"
 .\"     @(#)getopt.3	8.5 (Berkeley) 4/27/95
 .\"
-.TH CGETOPT_LONG "3" "$Date: 2003/06/05 11:13:20 $" "CASTOR" "Common Library"
+.TH CGETOPT_LONG "3castor" "$Date: 2003/06/05 11:13:20 $" "CASTOR" "Common Library"
 .SH NAME
 Cgetopt_long - get long options from command line argument list
 .SH SYNOPSIS

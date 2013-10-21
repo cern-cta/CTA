@@ -1,7 +1,7 @@
 .\" Copyright (C) 2003 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
-.TH CNS_GETACL 3 "$Date: 2006/01/26 15:36:17 $" CASTOR "Cns Library Functions"
+.TH CNS_GETACL "3castor" "$Date: 2006/01/26 15:36:17 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_getacl \- get CASTOR directory/file access control lists
 .SH SYNOPSIS

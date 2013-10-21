@@ -21,7 +21,7 @@
 .\"
 .\" @author Castor Dev team, castor-dev@cern.ch
 .\" *****************************************************************************/
-.TH repack 8 "July, 2011" CASTOR "Moves data away from a tape"
+.TH repack "8castor" "July, 2011" CASTOR "Moves data away from a tape"
 .SH NAME
 repack \- Move files from tape(s) to other tape destination
 .SH SYNOPSIS

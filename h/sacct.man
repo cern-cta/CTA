@@ -2,7 +2,7 @@
 .\"
 .\" Man page for the CASTOR accounting header file sacct.h
 .\"
-.TH SACCT "4" "$Date: 2009/07/23 12:22:03 $" "CASTOR" "Accounting records"
+.TH SACCT "4castor" "$Date: 2009/07/23 12:22:03 $" "CASTOR" "Accounting records"
 .SH NAME
 \fBsacct\fP \- CASTOR accounting records
 

@@ -1,4 +1,4 @@
-.TH ENTERTAPEPOOL 1 "2011" CASTOR "stager catalog administrative commands"
+.TH ENTERTAPEPOOL "1castor" "2011" CASTOR "stager catalog administrative commands"
 .SH NAME
 entertapepool \- enter a new tape pool in the stager catalog
 .SH SYNOPSIS

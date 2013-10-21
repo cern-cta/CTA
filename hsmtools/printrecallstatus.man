@@ -1,4 +1,4 @@
-.TH "PRINTRECALLSTATUS" "8" "2.1.14" "CASTOR" "Castor stager tools"
+.TH "PRINTRECALLSTATUS" "8castor" "2.1.14" "CASTOR" "Castor stager tools"
 .SH "NAME"
 printrecallstatus \- Prints the pending recall statistics by recall group
 .SH "SYNOPSIS"

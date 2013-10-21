@@ -1,4 +1,4 @@
-.TH DELETERECALLGROUP 1 "2011" CASTOR "stager catalogue administrative commands"
+.TH DELETERECALLGROUP "1castor" "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
 deleterecallgroup \- deletes existing recall groups from the stager catalogue
 

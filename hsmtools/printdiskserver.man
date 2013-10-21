@@ -1,4 +1,4 @@
-.TH PRINTDISKSERVER 1 "2011" CASTOR "Prints out the given disk pool(s)"
+.TH PRINTDISKSERVER "1castor" "2011" CASTOR "Prints out the given disk pool(s)"
 .SH NAME
 printdiskserver
 .SH SYNOPSIS

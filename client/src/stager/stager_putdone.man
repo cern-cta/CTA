@@ -1,7 +1,7 @@
 .\" Copyright (C) 2005 by CERN/IT
 .\" All rights reserved
 .\"
-.TH STAGER_PUTDONE 1castor "$Date: 2008/06/02 16:27:29 $" CASTOR "STAGER Commands"
+.TH STAGER_PUTDONE "1castor"castor "$Date: 2008/06/02 16:27:29 $" CASTOR "STAGER Commands"
 .SH NAME
 stager_putdone \- terminate a CASTOR stager Put or Update session and flag files for tape migration
 .SH SYNOPSIS
