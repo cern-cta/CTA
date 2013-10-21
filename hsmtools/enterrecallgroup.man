@@ -1,4 +1,4 @@
-.TH ENTERRECALLGROUP 1 "2011" CASTOR "stager catalog administrative commands"
+.TH ENTERRECALLGROUP "1castor" "2011" CASTOR "stager catalog administrative commands"
 .SH NAME
 enterrecallgroup \- enter a new recall group in the stager catalog
 .SH SYNOPSIS

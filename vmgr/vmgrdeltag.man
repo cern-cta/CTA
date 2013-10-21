@@ -1,7 +1,7 @@
 .\" Copyright (C) 2003 by CERN/IT/GD/CT
 .\" All rights reserved
 .\"
-.TH VMGRDELTAG 1 "$Date: 2003/10/28 11:13:25 $" CASTOR "vmgr User Commands"
+.TH VMGRDELTAG "1castor" "$Date: 2003/10/28 11:13:25 $" CASTOR "vmgr User Commands"
 .SH NAME
 vmgrdeltag \- delete the tag associated with a tape volume in the CASTOR Volume Manager
 .SH SYNOPSIS

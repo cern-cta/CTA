@@ -1,4 +1,4 @@
-.TH ENTERDISKPOOL 1 "2011" CASTOR "stager catalog administrative commands"
+.TH ENTERDISKPOOL "1castor" "2011" CASTOR "stager catalog administrative commands"
 .SH NAME
 enterdiskpool \- enter a new disk pool in the stager catalog
 .SH SYNOPSIS

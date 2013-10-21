@@ -1,7 +1,7 @@
 .\" Copyright (C) 2003 by CERN/IT/DM
 .\" All rights reserved
 .\"
-.TH NSGETPATH 1 "$Date: 2009/06/19 09:28:58 $" CASTOR "Cns User Commands"
+.TH NSGETPATH "1castor" "$Date: 2009/06/19 09:28:58 $" CASTOR "Cns User Commands"
 .SH NAME
 nsgetpath \- get file path from fileid
 .SH SYNOPSIS

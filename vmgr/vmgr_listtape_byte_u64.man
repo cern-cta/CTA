@@ -1,7 +1,7 @@
 .\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_LISTTAPE_BYTE_U64 3 "$Date: 2002/02/07 06:46:24 $" CASTOR "vmgr Library Functions"
+.TH VMGR_LISTTAPE_BYTE_U64 "3castor" "$Date: 2002/02/07 06:46:24 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_listtape_byte_u64 \- list all existing tape entries in the CASTOR Volume Manager
 .SH SYNOPSIS

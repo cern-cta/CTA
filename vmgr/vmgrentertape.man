@@ -1,7 +1,7 @@
 .\" Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRENTERTAPE 1 "$Date: 2003/10/13 12:34:36 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRENTERTAPE "1castor" "$Date: 2003/10/13 12:34:36 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrentertape \- enter a new tape in the CASTOR Volume Manager
 .SH SYNOPSIS

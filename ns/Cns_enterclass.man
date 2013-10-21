@@ -1,7 +1,7 @@
 .\" Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_ENTERCLASS 3 "$Date: 2006/01/26 15:36:17 $" CASTOR "Cns Library Functions"
+.TH CNS_ENTERCLASS "3castor" "$Date: 2006/01/26 15:36:17 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_enterclass \- define a new fileclass in the name server
 .SH SYNOPSIS

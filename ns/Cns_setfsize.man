@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_SETFSIZE 3 "$Date: 2009/03/26 15:31:48 $" CASTOR "Cns Library Functions"
+.TH CNS_SETFSIZE "3castor" "$Date: 2009/03/26 15:31:48 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_setfsize \- set filesize for a regular file; set also last modification time to the current time
 .SH SYNOPSIS

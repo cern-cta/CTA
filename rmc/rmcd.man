@@ -1,7 +1,7 @@
 .\" Copyright (C) 2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RMCD 8 "$Date: 2009/08/18 09:43:01 $" CASTOR "rmc Administrator Commands"
+.TH RMCD "8castor" "$Date: 2009/08/18 09:43:01 $" CASTOR "rmc Administrator Commands"
 .SH NAME
 rmcd \- start the Remote Media Changer daemon
 .SH SYNOPSIS

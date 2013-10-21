@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_ENTERTAPE 3 "$Date: 2003/10/13 12:34:36 $" CASTOR "vmgr Library Functions"
+.TH VMGR_ENTERTAPE "3castor" "$Date: 2003/10/13 12:34:36 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_entertape \- enter a new tape in the CASTOR Volume Manager
 .SH SYNOPSIS

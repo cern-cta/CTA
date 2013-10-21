@@ -1,7 +1,7 @@
 .\" Copyright (C) 2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRLISTLIBRARY 1 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRLISTLIBRARY "1castor" "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrlistlibrary \- query the CASTOR Volume Manager about a given library or list all existing tape libraries
 .SH SYNOPSIS

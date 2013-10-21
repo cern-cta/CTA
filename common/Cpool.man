@@ -1,6 +1,6 @@
 .\" $Id: Cpool.man,v 1.7 2001/09/26 09:13:48 jdurand Exp $
 .\"
-.TH CPOOL "3" "$Date: 2001/09/26 09:13:48 $" "CASTOR" "Common Library Functions"
+.TH CPOOL "3castor" "$Date: 2001/09/26 09:13:48 $" "CASTOR" "Common Library Functions"
 .SH NAME
 \fBCpool\fP \- \fBCASTOR\fP \fBPool\fP inferface
 .SH SYNOPSIS

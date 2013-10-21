@@ -1,7 +1,7 @@
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
-.TH "Cupv_modify" "3" "$Date: 2002/10/16 08:04:34 $" "CASTOR" "UPV Library Functions"
+.TH "Cupv_modify" "3castor" "$Date: 2002/10/16 08:04:34 $" "CASTOR" "UPV Library Functions"
 .SH "NAME"
 Cupv_modify \- Modifies an entry in the user privilege validation system.
 .SH "SYNOPSIS"

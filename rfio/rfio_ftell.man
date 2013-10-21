@@ -4,7 +4,7 @@
 .\" Copyright (C) 2002 by CERN/IT-DS-HSM
 .\" All rights reserved
 .\"
-.TH RFIO_FTELL 3 "$Date: 2007/09/10 13:40:52 $" CASTOR "Rfio Library Functions"
+.TH RFIO_FTELL "3castor" "$Date: 2007/09/10 13:40:52 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfio_ftell \- tells the position in a stream
 .SH SYNOPSIS

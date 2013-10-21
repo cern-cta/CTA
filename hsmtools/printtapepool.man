@@ -1,4 +1,4 @@
-.TH PRINTTAPEPOOL 1 "2011" CASTOR "Prints out the given tape pool(s)"
+.TH PRINTTAPEPOOL "1castor" "2011" CASTOR "Prints out the given tape pool(s)"
 .SH NAME
 printtapepool
 .SH SYNOPSIS

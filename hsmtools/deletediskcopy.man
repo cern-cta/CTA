@@ -1,4 +1,4 @@
-.TH DELETEDISKCOPY 1 "2011" CASTOR "stager catalog administrative commands"
+.TH DELETEDISKCOPY "1castor" "2011" CASTOR "stager catalog administrative commands"
 .SH NAME
 deletediskcopy \- triggers garbage collection of specific disk copies or cleans the stager for
 disk copies that were lost.

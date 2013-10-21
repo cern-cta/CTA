@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_MKDIR 3 "$Date: 2008/04/17 12:10:03 $" CASTOR "Cns Library Functions"
+.TH CNS_MKDIR "3castor" "$Date: 2008/04/17 12:10:03 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_mkdir \- create a new CASTOR directory in the name server
 .SH SYNOPSIS

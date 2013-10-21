@@ -1,4 +1,4 @@
-.TH PRINTFILECLASS 1 "2011" CASTOR "Prints out the given file class(es)"
+.TH PRINTFILECLASS "1castor" "2011" CASTOR "Prints out the given file class(es)"
 .SH NAME
 printfileclass
 .SH SYNOPSIS

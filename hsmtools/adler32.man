@@ -22,7 +22,7 @@
 .\"
 .\" @author Castor Dev team, castor-dev@cern.ch
 .\" *****************************************************************************/
-.TH ADLER32 1 "$Date: 2007/06/07 14:11:11 $" CASTOR "Gets the path of a castor file from its fileId"
+.TH ADLER32 "1castor" "$Date: 2007/06/07 14:11:11 $" CASTOR "Gets the path of a castor file from its fileId"
 .SH NAME
 adler32
 .SH SYNOPSIS

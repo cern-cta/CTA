@@ -1,4 +1,4 @@
-.TH "PRINTRECALLUSERQUEUE" "8" "2.1.14" "CASTOR" "Castor stager tools"
+.TH "PRINTRECALLUSERQUEUE" "8castor" "2.1.14" "CASTOR" "Castor stager tools"
 .SH "NAME"
 printrecalluserqueue \- Prints the pending recalls, by user who triggered the recall.
 .SH "SYNOPSIS"

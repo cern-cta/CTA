@@ -18,9 +18,6 @@
 
   [Features]
 
-     #102935: RFE: CASTOR man pages should be in the standard numeric sections
-
-
   [Code Maintenance]
 
      #102602 CM: Remove support for loading service libraries at run-time

@@ -1,7 +1,7 @@
 .\" Copyright (C) 1990-2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH TPCONFIG 1 "$Date: 2001/09/26 09:13:56 $" CASTOR "Ctape Administrator Commands"
+.TH TPCONFIG "1castor" "$Date: 2001/09/26 09:13:56 $" CASTOR "Ctape Administrator Commands"
 .SH NAME
 tpconfig \- configure tape drive up/down
 .SH SYNOPSIS

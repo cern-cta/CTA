@@ -1,4 +1,4 @@
-.TH PRINTDISKPOOL 1 "2011" CASTOR "Prints out the given disk pool(s)"
+.TH PRINTDISKPOOL "1castor" "2011" CASTOR "Prints out the given disk pool(s)"
 .SH NAME
 printdiskpool
 .SH SYNOPSIS

@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2005 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_CLOSEX 3 "$Date: 2009/06/30 12:54:06 $" CASTOR "Cns Library Functions"
+.TH CNS_CLOSEX "3castor" "$Date: 2009/06/30 12:54:06 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_closex \- close a file, setting its size and checksum attributes
 .SH SYNOPSIS

@@ -1,7 +1,7 @@
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_LISTPOOL 3 "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Library Functions"
+.TH VMGR_LISTPOOL "3castor" "$Date: 2001/09/26 09:13:57 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_listpool \- list all existing tape pool entries in the CASTOR Volume Manager
 .SH SYNOPSIS

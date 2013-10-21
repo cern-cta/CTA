@@ -1,4 +1,4 @@
-.TH dlf_shutdown 3 "CERN IT-DM" CASTOR "DLF Library Functions"
+.TH dlf_shutdown "3castor" "CERN IT-DM" CASTOR "DLF Library Functions"
 
 .SH NAME
 dlf_shutdown \- shutdown the DLF logging interface

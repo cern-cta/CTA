@@ -1,4 +1,4 @@
-.TH "PRINTRECALLFILESTATUS" "8" "2.1.14" "CASTOR" "Castor stager tools"
+.TH "PRINTRECALLFILESTATUS" "8castor" "2.1.14" "CASTOR" "Castor stager tools"
 .SH "NAME"
 printrecallfilestatus \- Prints positions in the recall queue for file.
 .SH "SYNOPSIS"

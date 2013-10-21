@@ -1,4 +1,4 @@
-.TH ENTERMIGRATIONROUTE 1 "2011" CASTOR "stager catalogue administrative commands"
+.TH ENTERMIGRATIONROUTE "1castor" "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
 entermigrationroute \- define (a) new migration route(s) in the stager catalog
 .SH SYNOPSIS

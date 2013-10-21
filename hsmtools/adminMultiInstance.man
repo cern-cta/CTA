@@ -23,7 +23,7 @@
 .\"
 .\" @author Castor Dev team, castor-dev@cern.ch
 .\" *****************************************************************************/
-.TH ADMINMULTIINSTANCE 1 "$Date: 2006/04/24 16:13:40 $" CASTOR "Administration of several castor instance from a single node"
+.TH ADMINMULTIINSTANCE "1castor" "$Date: 2006/04/24 16:13:40 $" CASTOR "Administration of several castor instance from a single node"
 .SH SUBJECT
 How to administrate several castor
 instances from the same administration node

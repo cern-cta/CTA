@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRD 8 "$Date: 2009/08/18 09:43:02 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRD "8castor" "$Date: 2009/08/18 09:43:02 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrd \- start the volume manager
 .SH SYNOPSIS

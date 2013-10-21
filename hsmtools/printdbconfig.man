@@ -1,4 +1,4 @@
-.TH PRINTDBCONFIG 1 "2011" CASTOR "Prints out the CASTOR DB configuration"
+.TH PRINTDBCONFIG "1castor" "2011" CASTOR "Prints out the CASTOR DB configuration"
 .SH NAME
 printdbconfig
 .SH SYNOPSIS

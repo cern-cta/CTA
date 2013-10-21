@@ -1,7 +1,7 @@
 .\" Copyright (C) 2002 by CERN/IT/DM
 .\" All rights reserved
 .\"
-.TH CNS_UPDATEFILE_CHECKSUM 3 "$Date: 2009/02/26 14:56:41 $" CASTOR "Cns Library Functions"
+.TH CNS_UPDATEFILE_CHECKSUM "3castor" "$Date: 2009/02/26 14:56:41 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_updatefile_checksum \- updates the checksum of a regular file
 .SH SYNOPSIS

@@ -1,7 +1,7 @@
 .\" Copyright (C) 2001-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_UTIME 3 "$Date: 2008/05/05 13:08:53 $" CASTOR "Cns Library Functions"
+.TH CNS_UTIME "3castor" "$Date: 2008/05/05 13:08:53 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_utime \- set last access and modification times
 .SH SYNOPSIS

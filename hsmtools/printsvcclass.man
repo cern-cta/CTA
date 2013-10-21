@@ -1,4 +1,4 @@
-.TH PRINTSVCCLASS 1 "2011" CASTOR "Prints out the given service class(es)"
+.TH PRINTSVCCLASS "1castor" "2011" CASTOR "Prints out the given service class(es)"
 .SH NAME
 printsvcclass
 .SH SYNOPSIS

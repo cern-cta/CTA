@@ -5,7 +5,7 @@
 .\" Copyright (C) 1998-2002 by CERN/IT/PDP
 .\" All rights reserved
 .\"
-.TH RFDIR 1 "$Date: 2009/01/14 17:39:21 $" CASTOR "Rfio User Commands"
+.TH RFDIR "1castor" "$Date: 2009/01/14 17:39:21 $" CASTOR "Rfio User Commands"
 .SH NAME
 rfdir \- Remote directory list
 .SH SYNOPSIS

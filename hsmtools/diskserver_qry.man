@@ -1,7 +1,7 @@
 .\" Copyright (C) 2005 by CERN IT/ADC
 .\" All rights reserved
 .\"
-.TH DISKSERVER_QRY 1 "$Date: 2006/08/04 14:46:47 $" CASTOR "List files on a DiskServer"
+.TH DISKSERVER_QRY "1castor" "$Date: 2006/08/04 14:46:47 $" CASTOR "List files on a DiskServer"
 .SH NAME
 diskserver_qry
 .SH SYNOPSIS

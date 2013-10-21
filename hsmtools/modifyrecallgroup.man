@@ -1,4 +1,4 @@
-.TH MODIFYRECALLGROUP 1 "2011" CASTOR "stager catalogue administrative commands"
+.TH MODIFYRECALLGROUP "1castor" "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
 modifyrecallgroup \- modifies an existing recall group in the stager catalog
 .SH SYNOPSIS

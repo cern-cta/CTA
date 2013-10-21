@@ -1,4 +1,4 @@
-.TH dlf_write 3 "CERN IT-DM" CASTOR "DLF Library Functions"
+.TH dlf_write "3castor" "CERN IT-DM" CASTOR "DLF Library Functions"
 .SH NAME
 dlf_write \- writes a log message to the log destinations/targets
 .SH SYNOPSIS

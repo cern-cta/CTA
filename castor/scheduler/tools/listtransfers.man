@@ -1,5 +1,5 @@
 .lf 8 listtransfers.man
-.TH listtransfers 8 "2011/03/21" CASTOR "listtransfers"
+.TH listtransfers "8castor" "2011/03/21" CASTOR "listtransfers"
 .SH NAME
 listtransfers \- lists transfers managed by the transfer manager
 .SH SYNOPSIS

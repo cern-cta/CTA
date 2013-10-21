@@ -1,7 +1,7 @@
 .\" Copyright (C) 2004 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
-.TH CSEC_API 3 "$Date: 2009/07/23 12:22:05 $" CASTOR "CASTOR Security Functions"
+.TH CSEC_API "3castor" "$Date: 2009/07/23 12:22:05 $" CASTOR "CASTOR Security Functions"
 .SH NAME
 Csec_api \- Provides authentication in CASTOR services
 .SH SYNOPSIS

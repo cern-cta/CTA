@@ -1,7 +1,7 @@
 .\" Copyright (C) 2004 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
-.TH CNS_UNSETID 3 "$Date: 2004/11/03 09:43:05 $" CASTOR "Cns Library Functions"
+.TH CNS_UNSETID "3castor" "$Date: 2004/11/03 09:43:05 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_unsetid \- Clears the CNS API authorization ID
 .SH SYNOPSIS

@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2001 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH RFIOREADOPT 3 "$Date: 2007/09/10 13:40:51 $" CASTOR "Rfio Library Functions"
+.TH RFIOREADOPT "3castor" "$Date: 2007/09/10 13:40:51 $" CASTOR "Rfio Library Functions"
 .SH NAME
 rfioreadopt \- get RFIO options
 .SH SYNOPSIS

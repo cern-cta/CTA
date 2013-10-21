@@ -1,4 +1,4 @@
-.TH PRINTMIGRATIONROUTE 1 "2011" CASTOR "Prints out the given migration route(s)"
+.TH PRINTMIGRATIONROUTE "1castor" "2011" CASTOR "Prints out the given migration route(s)"
 .SH NAME
 printmigrationroute
 .SH SYNOPSIS

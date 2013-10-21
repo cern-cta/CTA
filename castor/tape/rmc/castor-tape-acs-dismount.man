@@ -10,7 +10,7 @@
 .\" You should have received a copy of the GNU General Public License
 .\" along with this program; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
-.TH CASTOR-TAPE-ACS-DISMOUNT 1 "$Date: 2013/10/09 14:00:00 $" CASTOR "CASTOR"
+.TH CASTOR-TAPE-ACS-DISMOUNT "1castor" "$Date: 2013/10/09 14:00:00 $" CASTOR "CASTOR"
 .SH NAME
 castor-tape-acs-dismount \- dismount a volume
 .SH SYNOPSIS

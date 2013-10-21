@@ -4,7 +4,7 @@
 .\" Copyright (C) 1998-2002 by IN2P3 CC
 .\" All rights reserved
 .\"
-.TH RFCHMOD 1 "$Date: 2009/01/14 17:39:21 $" CASTOR "Rfio User Commands"
+.TH RFCHMOD "1castor" "$Date: 2009/01/14 17:39:21 $" CASTOR "Rfio User Commands"
 .SH NAME
 rfchmod \- change file access permission
 .SH SYNOPSIS

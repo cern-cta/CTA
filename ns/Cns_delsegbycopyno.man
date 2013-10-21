@@ -1,7 +1,7 @@
 .\" Copyright (C) 2003 by CERN
 .\" All rights reserved
 .\"
-.TH CNS_delsegbycopyno 3 "$Date: 2009/07/09 12:43:40 $" CASTOR "Cns Library Functions"
+.TH CNS_delsegbycopyno "3castor" "$Date: 2009/07/09 12:43:40 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_delsegbycopyno \- delete file segment by copyno
 .SH SYNOPSIS

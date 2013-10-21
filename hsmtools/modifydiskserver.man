@@ -1,4 +1,4 @@
-.TH MODIFYDISKSERVER 1 "2011" CASTOR "stager catalogue administrative commands"
+.TH MODIFYDISKSERVER "1castor" "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
 modifydiskserver \- modifies existing disk servers in the stager catalog
 .SH SYNOPSIS

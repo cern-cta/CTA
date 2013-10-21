@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR_GETTAPE 3 "$Date: 2003/10/29 08:53:46 $" CASTOR "vmgr Library Functions"
+.TH VMGR_GETTAPE "3castor" "$Date: 2003/10/29 08:53:46 $" CASTOR "vmgr Library Functions"
 .SH NAME
 vmgr_gettape \- get a tape volume to store a given amount of data
 .SH SYNOPSIS

@@ -1,7 +1,7 @@
 .\" Copyright (C) 2004 by CERN/IT/DM
 .\" All rights reserved
 .\"
-.TH NSSETSEGMENT 1 "$Date: 2009/03/26 09:57:53 $" CASTOR "Cns User Commands"
+.TH NSSETSEGMENT "1castor" "$Date: 2009/03/26 09:57:53 $" CASTOR "Cns User Commands"
 .SH NAME
 nssetsegment \- utility to change the checksum and status for a tape segment
 .SH SYNOPSIS

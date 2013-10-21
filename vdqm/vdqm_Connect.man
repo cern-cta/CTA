@@ -2,7 +2,7 @@
 .\"
 .\" Copyright (C) 2000 by CERN/IT/PDP/DM
 .\"
-.TH VDQM_CONNECT 3 "$Date: 2009/07/23 12:22:06 $" "CASTOR" "VDQM Library Functions"
+.TH VDQM_CONNECT "3castor" "$Date: 2009/07/23 12:22:06 $" "CASTOR" "VDQM Library Functions"
 .SH NAME
 .PP
 vdqm_Connect \- connect to the VDQM server

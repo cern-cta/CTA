@@ -1,7 +1,7 @@
 .\" Copyright (C) 2007 by CERN/IT/GD/ITR
 .\" All rights reserved
 .\"
-.TH CNS_PING 3 "$Date: 2008/02/26 17:58:07 $" CASTOR "Cns Library Functions"
+.TH CNS_PING "3castor" "$Date: 2008/02/26 17:58:07 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_ping \- check if name server is alive and return its version number
 .SH SYNOPSIS

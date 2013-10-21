@@ -1,4 +1,4 @@
-.TH DELETESVCCLASS 1 "2011" CASTOR "stager catalogue administrative commands"
+.TH DELETESVCCLASS "1castor" "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
 deletemigrationroute \- deletes existing migration route(s) from the stager catalogue
 

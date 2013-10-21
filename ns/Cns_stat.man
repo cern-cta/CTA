@@ -1,7 +1,7 @@
 .\" Copyright (C) 1999-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH CNS_STAT 3 "$Date: 2006/01/26 15:36:21 $" CASTOR "Cns Library Functions"
+.TH CNS_STAT "3castor" "$Date: 2006/01/26 15:36:21 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_stat \- get information about a CASTOR file or directory in the name server
 .SH SYNOPSIS

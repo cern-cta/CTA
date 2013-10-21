@@ -1,7 +1,7 @@
 .\" Copyright (C) 2004 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
-.TH CNS_SETID 3 "$Date: 2004/11/03 09:43:05 $" CASTOR "Cns Library Functions"
+.TH CNS_SETID "3castor" "$Date: 2004/11/03 09:43:05 $" CASTOR "Cns Library Functions"
 .SH NAME
 Cns_setid \- Sets the authorization ID for the CNS API
 .SH SYNOPSIS

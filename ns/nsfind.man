@@ -1,7 +1,7 @@
 .\" Copyright (C) 2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH NSFIND 1 "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
+.TH NSFIND "1castor" "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
 .SH NAME
 nsfind \- search for files in CASTOR name server
 .SH SYNOPSIS

@@ -1,4 +1,4 @@
-.TH ENTERRECALLUSER 1 "2011" CASTOR "stager catalog administrative commands"
+.TH ENTERRECALLUSER "1castor" "2011" CASTOR "stager catalog administrative commands"
 .SH NAME
 enterrecalluser \- enter a new recall user in the stager catalog
 .SH SYNOPSIS

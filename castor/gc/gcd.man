@@ -1,4 +1,4 @@
-.TH gcd 8 "$Date: 2009/08/18 09:42:51 $" CASTOR "Garbage Collector daemon"
+.TH gcd "8castor" "$Date: 2009/08/18 09:42:51 $" CASTOR "Garbage Collector daemon"
 .SH NAME
 gcd \- CASTOR2 Garbage Collector daemon
 .SH SYNOPSIS

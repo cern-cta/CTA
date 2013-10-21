@@ -1,7 +1,7 @@
 .\" Copyright (C) 2001-2002 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGRMODIFYLIBRARY 1 "$Date: 2008/11/06 16:45:44 $" CASTOR "vmgr Administrator Commands"
+.TH VMGRMODIFYLIBRARY "1castor" "$Date: 2008/11/06 16:45:44 $" CASTOR "vmgr Administrator Commands"
 .SH NAME
 vmgrmodifylibrary \- modify the definition of an existing tape library in the CASTOR Volume Manager
 .SH SYNOPSIS

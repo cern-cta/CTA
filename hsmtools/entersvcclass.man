@@ -1,4 +1,4 @@
-.TH ENTERSVCCLASS 1 "2011" CASTOR "stager catalogue administrative commands"
+.TH ENTERSVCCLASS "1castor" "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
 entersvcclass \- define a new service class in the stager catalog
 .SH SYNOPSIS

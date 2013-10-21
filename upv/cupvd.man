@@ -1,7 +1,7 @@
 .\" Copyright (C) 2003 by CERN/IT/ADC/CA
 .\" All rights reserved
 .\"
-.TH CUPVD 8 "$Date: 2009/08/18 09:43:02 $" CASTOR "Cupv Administrator Commands"
+.TH CUPVD "8castor" "$Date: 2009/08/18 09:43:02 $" CASTOR "Cupv Administrator Commands"
 .SH NAME
 cupvd \- start the user privilege validation daemon
 .SH SYNOPSIS

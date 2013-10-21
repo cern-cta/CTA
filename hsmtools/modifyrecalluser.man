@@ -1,4 +1,4 @@
-.TH MODIFYRECALLUSER 1 "2011" CASTOR "stager catalog administrative commands"
+.TH MODIFYRECALLUSER "1castor" "2011" CASTOR "stager catalog administrative commands"
 .SH NAME
 modifyrecalluser \- modify the mapping of a recall user in the stager catalog
 .SH SYNOPSIS

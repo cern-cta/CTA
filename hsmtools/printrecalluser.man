@@ -1,4 +1,4 @@
-.TH PRINTRECALLUSER 1 "2011" CASTOR "stager catalog administrative commands"
+.TH PRINTRECALLUSER "1castor" "2011" CASTOR "stager catalog administrative commands"
 .SH NAME
 printrecalluser \- print recall users from the stager catalog
 .SH SYNOPSIS

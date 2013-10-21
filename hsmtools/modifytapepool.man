@@ -1,4 +1,4 @@
-.TH MODIFYTAPEPOOL 1 "2011" CASTOR "stager catalogue administrative commands"
+.TH MODIFYTAPEPOOL "1castor" "2011" CASTOR "stager catalogue administrative commands"
 .SH NAME
 modifytapepool \- modifies an existing tape pool in the stager catalog
 .SH SYNOPSIS

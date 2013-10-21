@@ -1,7 +1,7 @@
 .\" Copyright (C) 2000-2003 by CERN/IT/PDP/DM
 .\" All rights reserved
 .\"
-.TH VMGR 1 "$Date: 2003/11/24 06:44:14 $" CASTOR "vmgr Commands"
+.TH VMGR "1castor" "$Date: 2003/11/24 06:44:14 $" CASTOR "vmgr Commands"
 .SH DESCRIPTION
 A vmgr daemon manages the tape pool space.
 A tape pool consists in a set of cartridges.

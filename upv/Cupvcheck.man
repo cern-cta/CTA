@@ -1,7 +1,7 @@
 .\" Copyright (C) 2002 by CERN/IT/DS/HSM
 .\" All rights reserved
 .\" 
-.TH "Cupvcheck" "1" "$Date: 2007/08/08 16:14:38 $" "CASTOR" "UPV Administrator commands"
+.TH "Cupvcheck" "1castor" "$Date: 2007/08/08 16:14:38 $" "CASTOR" "UPV Administrator commands"
 .SH "NAME"
 Cupvcheck \- Checks that a given user has the right to perform an operation, according to the user privilege validation system
 .SH "SYNOPSIS"

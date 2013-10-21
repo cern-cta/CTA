@@ -1,5 +1,5 @@
 .lf 8 diskmanagerd.man
-.TH diskmanagerd 8 "2011/03/21" CASTOR "diskmanagerd"
+.TH diskmanagerd "8castor" "2011/03/21" CASTOR "diskmanagerd"
 .SH NAME
 diskmanagerd \- starts the CASTOR DiskServer Manager Daemon
 .SH SYNOPSIS

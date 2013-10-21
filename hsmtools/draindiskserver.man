@@ -21,7 +21,7 @@
 .\"
 .\" @author Castor Dev team, castor-dev@cern.ch
 .\" *****************************************************************************/
-.TH draindiskserver 1 "June 2013 $" CASTOR "Allows to drain Diskserver/FileSystems"
+.TH draindiskserver "1castor" "June 2013 $" CASTOR "Allows to drain Diskserver/FileSystems"
 .SH NAME
 draindiskserver \- management of draining filesystems and diskservers
 
