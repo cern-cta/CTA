@@ -55,6 +55,11 @@ INSERT INTO UpgradeLog (schemaVersion, release, type)
 VALUES ('2_1_14_2', '2_1_14_3', 'TRANSPARENT');
 COMMIT;
 
+/* Schema change */
+ALTER TABLE Cns_file_metadata MODIFY (owner_uid NUMBER);
+ALTER TABLE Cns_class_metadata MODIFY (owner_uid NUMBER);
+
+
 /* Update and revalidation of PL-SQL code */
 /******************************************/
 

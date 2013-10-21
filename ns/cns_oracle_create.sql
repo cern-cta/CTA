@@ -25,11 +25,11 @@ WHENEVER SQLERROR EXIT FAILURE;
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-CREATE TABLE Cns_class_metadata (classid NUMBER(5), name VARCHAR2(15), owner_uid NUMBER(6), gid NUMBER(6), min_filesize NUMBER, max_filesize NUMBER, flags NUMBER(2), maxdrives NUMBER(3), max_segsize NUMBER, migr_time_interval NUMBER, mintime_beforemigr NUMBER, nbcopies NUMBER(1), retenp_on_disk NUMBER);
+CREATE TABLE Cns_class_metadata (classid NUMBER(5), name VARCHAR2(15), owner_uid NUMBER, gid NUMBER(6), min_filesize NUMBER, max_filesize NUMBER, flags NUMBER(2), maxdrives NUMBER(3), max_segsize NUMBER, migr_time_interval NUMBER, mintime_beforemigr NUMBER, nbcopies NUMBER(1), retenp_on_disk NUMBER);
 
 CREATE TABLE Cns_tp_pool (classid NUMBER(5), tape_pool VARCHAR2(15));
 
-CREATE TABLE Cns_file_metadata (fileid NUMBER, parent_fileid NUMBER, guid CHAR(36), name VARCHAR2(255), filemode NUMBER(6), nlink NUMBER, owner_uid NUMBER(6), gid NUMBER(6), filesize NUMBER, atime NUMBER(10), mtime NUMBER(10), ctime NUMBER(10), stagertime NUMBER NOT NULL, fileclass NUMBER(5), status CHAR(1), csumtype VARCHAR2(2), csumvalue VARCHAR2(32), acl VARCHAR2(3900)) STORAGE (INITIAL 5M NEXT 5M PCTINCREASE 0);
+CREATE TABLE Cns_file_metadata (fileid NUMBER, parent_fileid NUMBER, guid CHAR(36), name VARCHAR2(255), filemode NUMBER(6), nlink NUMBER, owner_uid NUMBER, gid NUMBER(6), filesize NUMBER, atime NUMBER(10), mtime NUMBER(10), ctime NUMBER(10), stagertime NUMBER NOT NULL, fileclass NUMBER(5), status CHAR(1), csumtype VARCHAR2(2), csumvalue VARCHAR2(32), acl VARCHAR2(3900)) STORAGE (INITIAL 5M NEXT 5M PCTINCREASE 0);
 
 CREATE TABLE Cns_user_metadata (u_fileid NUMBER, comments VARCHAR2(255));
 
