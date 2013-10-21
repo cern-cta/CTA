@@ -508,7 +508,7 @@
 
          GRANT EXECUTE ON DBMS_LOCK TO <castorNsAccount>;
 
-      2. Once all stagers have been upgraded to version 2.1.14-2, run the cns_2.1.14-2_post-upgrade.sql
+      2. Once all stagers have been upgraded to version 2.1.14-2, run the cns_2.1.14_post-upgrade.sql
          post-upgrade script from:
          http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-2/dbupgrades
 
