@@ -1,1 +1,1 @@
-.so ./rfio_unlink.man
+.so man3/rfio_unlink.3castor

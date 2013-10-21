@@ -1,1 +1,1 @@
-.so ./Cns_opendirg.man
+.so man3/Cns_opendirg.3castor

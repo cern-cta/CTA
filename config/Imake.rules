@@ -9,13 +9,12 @@
 #define NullParameter
 
 #define ManPageTargetName(name,suffix) $(EXPORTMAN)/man/**/suffix/name.suffix/**/castor
-#define UglyTarget(suffix) 's/^\.so \.?\/?(\w+)(.*)/\.so man'/**/suffix/**/'\/$${1}\.'/**/suffix/**/'castor/g'
 
 #define MANPAGE(name,suffix,insttarget)                                   \
 ManPageTargetName(name,suffix):	LOCAL_PATH/$(PREFIX(MANSUBDIR))name.man	@@\
 	@echo Installing $@                                             @@\
 	install -d $(EXPORTMAN)/man/**/suffix                           @@\
-	cat LOCAL_PATH/$(PREFIX(MANSUBDIR))name.man | perl -pe UglyTarget(suffix) > ManPageTargetName(name,suffix) @@\
+	cp LOCAL_PATH/$(PREFIX(MANSUBDIR))name.man ManPageTargetName(name,suffix) @@\
 insttarget: ManPageTargetName(name,suffix)
 
 #define EXEMANPAGE(name) MANPAGE(name,1,install)

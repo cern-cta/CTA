@@ -1,1 +1,1 @@
-.so ./rfio_chmod.man
+.so man3/rfio_chmod.3castor

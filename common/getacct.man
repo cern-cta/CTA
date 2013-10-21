@@ -1,1 +1,1 @@
-.so ./getacctent.man
+.so man3/getacctent.3castor

@@ -1,1 +1,1 @@
-.so ./rfio_perror.man
+.so man3/rfio_perror.3castor

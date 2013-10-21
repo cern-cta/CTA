@@ -1,1 +1,1 @@
-.so ./rfio_fstat.man
+.so man3/rfio_fstat.3castor

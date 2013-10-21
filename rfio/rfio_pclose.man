@@ -1,1 +1,1 @@
-.so ./rfio_popen.man
+.so man3/rfio_popen.3castor

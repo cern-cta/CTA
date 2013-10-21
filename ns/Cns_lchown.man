@@ -1,1 +1,1 @@
-.so ./Cns_chown.man
+.so man3/Cns_chown.3castor

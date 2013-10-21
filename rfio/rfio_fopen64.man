@@ -1,1 +1,1 @@
-.so ./rfio_fopen.man
+.so man3/rfio_fopen.3castor
