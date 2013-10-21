@@ -50,7 +50,7 @@ include_directories(${CMAKE_SOURCE_DIR}/h})
 
 set(CASTOR_DEST_BIN_DIR /usr/bin)
 set(CASTOR_DEST_LIB_DIR /usr/lib64)
-set(CASTOR_DEST_MAN_DIR /usr/shar/man)
+set(CASTOR_DEST_MAN_DIR /usr/share/man)
 
 # All common variables and values to be used by all CMakeLists.txt files should
 # be specified here
@@ -66,7 +66,7 @@ endif(APPLE)
 
 set (CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
 
-set_property ( DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
+set_property (DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
 
 # Generate the compilation variables, if needed
 if(NOT DEFINED COMPILE_CLIENT)
@@ -93,12 +93,15 @@ add_subdirectory (vmgr)
 ################################################################################
 include(cmake/UseRPMToolsEnvironment.cmake)
 set(CPACK_SOURCE_PACKAGE_FILE_NAME
-  "${PROJECT_NAME}-${CASTOR_VERSION}-${CASTOR_RELEASE}${RPMTools_RPMBUILD_DIST}")
-message(STATUS "Setting package file name to: ${CPACK_SOURCE_PACKAGE_FILE_NAME}")
+ "${PROJECT_NAME}-${CASTOR_VERSION}-${CASTOR_RELEASE}${RPMTools_RPMBUILD_DIST}")
+message(STATUS
+  "Setting package file name to: ${CPACK_SOURCE_PACKAGE_FILE_NAME}")
 include(CPack)
 include(cmake/UseRPMTools.cmake)
 if(RPMTools_FOUND)
-  execute_process(COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.spec.in.head  ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
+  execute_process(COMMAND ${CMAKE_COMMAND} -E copy
+    ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.spec.in.head
+    ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
   message(STATUS "Generating spec file from debian package structure...")
   execute_process(
     COMMAND ./makespec.in.sh ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in 2>&1

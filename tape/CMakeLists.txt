@@ -64,6 +64,15 @@ target_link_libraries (castortape castorcommon castordlf castorvmgr)
 install (TARGETS castortape DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 ################################################################################
+# Rules to install the man pages of libcastortape.so
+################################################################################
+set (TAPE_LIB_MAN_PAGES Ctape_dmpfil.man Ctape_info.man Ctape_kill.man
+  Ctape_label.man Ctape_mount.man Ctape_position.man Ctape_reserve.man
+  Ctape_rls.man Ctape_rstatus.man Ctape_status.man getcompstat.man readlbl.man
+  rwndtape.man skiptape.man usrlbl.man wrttpmrk.man)
+install (FILES ${TAPE_LIB_MAN_PAGES} DESTINATION ${CASTOR_DEST_MAN_DIR}/man3)
+
+################################################################################
 # Rules to build taped
 ################################################################################
 set (TAPED_SRC_FILES tpdaemon.c checkjobdied.c cvtden.c sendrep.c tplogit.c
