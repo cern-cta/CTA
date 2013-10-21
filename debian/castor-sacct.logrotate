@@ -1,7 +1,0 @@
-/var/log/castor/sacct {
-    nocompress
-    weekly
-    missingok
-    rotate 500
-    delaycompress
-}

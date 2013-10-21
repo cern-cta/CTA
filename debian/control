@@ -3,12 +3,6 @@ Section: science
 Priority: optional
 Maintainer: CERN CASTOR Team <castor.support@cern.ch>
 
-Package: castor-sacct
-Architecture: any
-Depends: logrotate
-Description: castor (Cern Advanced STORage system)
- Contains a logrotate script for accounting files
-
 Package: castor-config
 Architecture: any
 Description: castor (Cern Advanced STORage system)
