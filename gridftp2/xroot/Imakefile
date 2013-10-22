@@ -47,6 +47,3 @@ COMM that should not be set on other components on 32 bits platforms so cannot b
 COMM to CPPFLAGS.
 COMM This part can be removed when 32 bits support will be dropped
 COMPILECPP(globus_gridftp_server_CASTOR2xroot.cpp,-Wno-error -D_FILE_OFFSET_BITS=64)
-
-LOGROTATE(castor-gridftp-dsi-common,install)
-MakeDir(/var/log,0755)

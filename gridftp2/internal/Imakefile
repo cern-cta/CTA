@@ -33,5 +33,3 @@ CFLAGS += $(MOPTION) -fPIC
 AddLdFlags($(GLOBUS_FTPLIB) $(MOPTION) -shared -lz)
 
 PlacedSharedLibraryTargetWithSo(globus_gridftp_server_CASTOR2int,globus_gridftp_server_CASTOR2int.o,,,$(GLOBUS_LIB_PATH))
-LOGROTATE(castor-gridftp-dsi-common,install)
-MakeDir(/var/log,0755)
