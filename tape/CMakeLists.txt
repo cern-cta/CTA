@@ -122,8 +122,7 @@ install (TARGETS posovl DESTINATION ${CASTOR_DEST_BIN_DIR})
 ################################################################################
 # Rules to build tplabel and install its man page
 ################################################################################
-set (TPLABEL_SRC_FILES tplabel.c)
-add_executable(tplabel ${TPLABEL_SRC_FILES})
+add_executable(tplabel tplabel.c)
 target_link_libraries(tplabel castorcommon castortape)
 install (TARGETS tplabel DESTINATION ${CASTOR_DEST_BIN_DIR})
 install (FILES tplabel.man DESTINATION ${CASTOR_DEST_MAN_DIR}/man1

@@ -36,7 +36,7 @@ set (COMMON_LIB_SRC_FILES
   getifnam.c getuser.c log.c marshall.c
   readc.c remote.c
   serror.c socket.c solveln.c trace.c
-  wsacct.c ypgetacct.c ypgetacctent.c
+  ypgetacct.c ypgetacctent.c
   Cthread.c Cglobals.c Cgrp.c Cmutex.c Cuuid.c
   Cdomainname.c Cnetdb.c Cpool.c Cpwd.c Cstrerror.c
   socket_timeout.c u64subr.c Cinitdaemon.c Cgetopt.c
