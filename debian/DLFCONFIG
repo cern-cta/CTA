@@ -1,5 +1,0 @@
-# This file must contain a single line like:
-# <dbusername>/<password>@<dbserver>
-#
-# - Remove these comments in the real file -
-dbusername/password@dbserver

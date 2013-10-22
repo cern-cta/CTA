@@ -265,7 +265,7 @@ $(DESTDIR)/etc/init.d/file: LOCAL_PATH/file.init @@\
 tgt: $(DESTDIR)/etc/init.d/file
 
 #define CONFIGFILE(file,tgt)                                                         \
-$(DESTDIR)/etc/castor/file/**/CONFIG.example: $(CASTOR_ROOT)/debian/file/**/CONFIG @@\
+$(DESTDIR)/etc/castor/file/**/CONFIG.example: LOCAL_PATH/file/**/CONFIG @@\
 	install -d $(DESTDIR)/etc/castor -m 0755                                   @@\
 	install -m 640 $< $@                                                       @@\
 tgt: $(DESTDIR)/etc/castor/file/**/CONFIG.example

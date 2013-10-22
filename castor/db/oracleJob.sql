@@ -1337,10 +1337,9 @@ END;
  * in order to sync running transfers in the database with the reality of the machine.
  * This is particularly useful to terminate cleanly transfers interupted by a power cut
  */
-CREATE OR REPLACE
-PROCEDURE syncRunningTransfers(machine IN VARCHAR2,
-                               transfers IN castor."strList",
-                               killedTransfersCur OUT castor.TransferRecord_Cur) AS
+CREATE OR REPLACE PROCEDURE syncRunningTransfers(machine IN VARCHAR2,
+                                                 transfers IN castor."strList",
+                                                 killedTransfersCur OUT castor.TransferRecord_Cur) AS
   unused VARCHAR2(2048);
   varFileid NUMBER;
   varNsHost VARCHAR2(2048);
@@ -1371,15 +1370,21 @@ BEGIN
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- this transfer is not running anymore although the stager DB believes it is
       -- we first get its reqid and fileid
-      SELECT Request.reqId INTO varReqId FROM
-        (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ reqId, id from StageGetRequest UNION ALL
-         SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ reqId, id from StagePutRequest UNION ALL
-         SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ reqId, id from StageUpdateRequest) Request
-       WHERE Request.id = SR.request;
-      SELECT fileid, nsHost INTO varFileid, varNsHost FROM CastorFile WHERE id = SR.castorFile;
-      -- and we put it in the list of transfers to be failed with code 1015 (SEINTERNAL)
-      INSERT INTO SyncRunningTransfersHelper2 (subreqId, reqId, fileid, nsHost, errorCode, errorMsg)
-      VALUES (SR.subreqId, varReqId, varFileid, varNsHost, 1015, 'Transfer has been killed while running');
+      BEGIN
+        SELECT Request.reqId INTO varReqId FROM
+          (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ reqId, id from StageGetRequest UNION ALL
+           SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ reqId, id from StagePutRequest UNION ALL
+           SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ reqId, id from StageUpdateRequest) Request
+         WHERE Request.id = SR.request;
+        SELECT fileid, nsHost INTO varFileid, varNsHost FROM CastorFile WHERE id = SR.castorFile;
+        -- and we put it in the list of transfers to be failed with code 1015 (SEINTERNAL)
+        INSERT INTO SyncRunningTransfersHelper2 (subreqId, reqId, fileid, nsHost, errorCode, errorMsg)
+        VALUES (SR.subreqId, varReqId, varFileid, varNsHost, 1015, 'Transfer has been killed while running');
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- not even the request exists any longer in the DB. It may have disappeared meanwhile
+        -- as we didn't take any lock yet. Fine, ignore and move on.
+        NULL;
+      END;
     END;
   END LOOP;
   -- fail the transfers that are no more running

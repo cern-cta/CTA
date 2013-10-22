@@ -342,6 +342,7 @@ CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost ON CastorFile (fileId, nsHost);
 ALTER TABLE CastorFile
   ADD CONSTRAINT CK_CastorFile_TapeStatus
   CHECK (tapeStatus IN (0, 1, 2));
+CREATE INDEX I_CastorFile_tapeStatus ON CastorFile(tapeStatus);
 
 /* SQL statement for table SubRequest */
 CREATE TABLE SubRequest
@@ -1307,6 +1308,23 @@ ALTER TABLE Disk2DiskCopyJob
 ALTER TABLE Disk2DiskCopyJob
   ADD CONSTRAINT CK_Disk2DiskCopyJob_type
   CHECK (replicationType IN (0, 1, 2, 3));
+
+/* A view to spot late or stuck migrations */
+/*******************************************/
+/* It returns all files that are not yet on tape, that are existing in the namespace
+ * and for which migration is pending for more than 24h.
+ */
+CREATE VIEW LateMigrationsView AS
+  SELECT /*+ LEADING(CF DC MJ CnsFile) INDEX_RS_ASC(CF I_CastorFile_TapeStatus) INDEX_RS_ASC(DC I_DiskCopy_CastorFile) INDEX_RS_ASC(MJ I_MigrationJob_CastorFile) */
+         CF.fileId, CF.lastKnownFileName as filePath, DC.creationTime as dcCreationTime,
+         decode(MJ.creationTime, NULL, -1, getTime() - MJ.creationTime) as mjElapsedTime, nvl(MJ.status, -1) as mjStatus
+    FROM CastorFile CF, DiskCopy DC, MigrationJob MJ, cns_file_metadata@remotens CnsFile
+   WHERE CF.fileId = CnsFile.fileId
+     AND DC.castorFile = CF.id
+     AND MJ.castorFile(+) = CF.id
+     AND CF.tapeStatus = 0  -- CASTORFILE_NOTONTAPE
+     AND DC.creationTime < getTime() - 86400
+  ORDER BY DC.creationTime DESC;
 
 /*****************/
 /* logon trigger */

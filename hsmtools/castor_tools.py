@@ -248,11 +248,11 @@ def getNSDBConnectParam(filename):
 #-------------------------------------------------------------------------------
 # connectTo_ methods
 #-------------------------------------------------------------------------------
-def connectToVdqm():
+def connectToVdqm(enforceCheck=True):
     '''Connects to the VDQM database'''
     VDQMSCHEMAVERSION = "2_1_12_0"
     user, passwd, dbname = getVdqmDBConnectParams()
-    return connectToDB(user, passwd, dbname, VDQMSCHEMAVERSION)
+    return connectToDB(user, passwd, dbname, VDQMSCHEMAVERSION, enforceCheck)
 
 def connectToVmgr():
     '''Gets the connection parameters for the VMGR DB from environment and/or config file'''
@@ -272,15 +272,15 @@ def connectToVmgr():
         break
     return conn
 
-def connectToStager():
+def connectToStager(enforceCheck=True):
     '''Connects to the stager database'''
     STAGERSCHEMAVERSION = "2_1_14_2"
     user, passwd, dbname = getStagerDBConnectParams()
-    return connectToDB(user, passwd, dbname, STAGERSCHEMAVERSION)
+    return connectToDB(user, passwd, dbname, STAGERSCHEMAVERSION, enforceCheck)
 
 def connectToNS():
     '''Connects to the nameserver database'''
-    NSSCHEMAVERSION = "2_1_13_0"
+    NSSCHEMAVERSION = "2_1_14_2"
     user, passwd, dbname = getNSDBConnectParam('NSCONFIG')
     return connectToDB(user, passwd, dbname, NSSCHEMAVERSION, enforceCheck=False)
 
