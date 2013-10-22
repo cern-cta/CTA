@@ -243,14 +243,11 @@ PREFIX(COMMONLIBS) += DepSharedLibraryTargetName(directory,libname) BuildRPath/*
 include $(CASTOR_ROOT)/directory/Makefile
 
 
-#define LOGROTATE(file,tgt)                             \
-ifndef $(DESTDIR)/etc/logrotate.d/file                @@\
-  $(DESTDIR)/etc/logrotate.d/file = 1                 @@\
-$(DESTDIR)/etc/logrotate.d/file: $(CASTOR_ROOT)/debian/file.logrotate @@\
-	install -d $(DESTDIR)/etc/logrotate.d -m 0755 @@\
-	install $< $@                                 @@\
-tgt: $(DESTDIR)/etc/logrotate.d/file                  @@\
-endif
+#define LOGROTATE(file,tgt)                                  \
+$(DESTDIR)/etc/logrotate.d/file: LOCAL_PATH/file.logrotate @@\
+	install -d $(DESTDIR)/etc/logrotate.d -m 0755      @@\
+	install $< $@                                      @@\
+tgt: $(DESTDIR)/etc/logrotate.d/file
 
 #define internalSYSCONFIG(destfile,origfile,tgt)         \
 $(DESTDIR)/etc/sysconfig/destfile: LOCAL_PATH/origfile @@\

@@ -1,5 +1,5 @@
 COMM
-COMM                      gridftp2/Imakefile
+COMM                    gridftp2/common/Imakefile
 COMM
 COMM This file is part of the Castor project.
 COMM See http://castor.web.cern.ch/castor
@@ -17,14 +17,11 @@ COMM You should have received a copy of the GNU General Public License
 COMM along with this program; if not, write to the Free Software
 COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 COMM
-COMM @(#)Imakefile,v 1.123 $Release$ 2006/02/27 15:19:27 itglp
 COMM
-COMM Make Castor libraries and executables
+COMM Make Castor Oracle library for CDBC API
 COMM
-COMM @author castor-dev team
+COMM @author castor-dev@cern.ch
 COMM
 
-include LOCAL_PATH/common/Makefile
-include LOCAL_PATH/internal/Makefile
-include LOCAL_PATH/external/Makefile
-include LOCAL_PATH/xroot/Makefile
+LOGROTATE(castor-gridftp-dsi-common,install)
+MakeDir(/var/log,0755)
