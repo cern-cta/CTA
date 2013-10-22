@@ -54,9 +54,9 @@ set (CASTOR_DEST_LIB_DIR /usr/lib64)
 set (CASTOR_DEST_MAN_DIR /usr/share/man)
 
 set (CASTOR_MAN_PAGE_PERMS
-  OWNER_READ OWNER_WRITE OWNER_EXECUTE
-  GROUP_READ             GROUP_EXECUTE
-  WORLD_READ             WORLD_EXECUTE)
+  OWNER_READ OWNER_WRITE
+  GROUP_READ
+  WORLD_READ)
 
 function (CastorInstallManPage _name _section)
   install (FILES ${_name}.man
@@ -85,8 +85,53 @@ function (CastorInstallAdmManPage _name)
   CastorInstallManPage(${_name} 8)
 endfunction ()
 
-# All common variables and values to be used by all CMakeLists.txt files should
-# be specified here
+set (CASTOR_LOGROTATE_PERMS
+  OWNER_READ OWNER_WRITE
+  GROUP_READ
+  WORLD_READ)
+
+function (CastorInstallLogrotate _name)
+  install (FILES ${_name}.logrotate
+    DESTINATION /etc/logrotate.d
+    PERMISSIONS ${CASTOR_LOGROTATE_PERMS}
+    RENAME ${_name})
+endfunction ()
+
+set (CASTOR_SYSCONFIG_PERMS
+  OWNER_READ OWNER_WRITE
+  GROUP_READ
+  WORLD_READ)
+
+function (CastorInstallSysconfig _name)
+  install (FILES ${_name}.sysconfig
+    DESTINATION /etc/sysconfig
+    PERMISSIONS ${CASTOR_SYSCONFIG_PERMS}
+    RENAME ${_name})
+endfunction ()
+
+set (CASTOR_INITSCRIPT_PERMS
+  OWNER_READ OWNER_WRITE OWNER_EXECUTE
+  GROUP_READ             GROUP_EXECUTE
+  WORLD_READ             WORLD_EXECUTE)
+
+function (CastorInstallInitScript _name)
+  install (FILES ${_name}.init
+    DESTINATION /etc/init.d
+    PERMISSIONS ${CASTOR_INITSCRIPT_PERMS}
+    RENAME ${_name})
+endfunction ()
+
+set (CASTOR_CONFIG_PERMS
+  OWNER_READ OWNER_WRITE
+  GROUP_READ)
+
+function (CastorInstallConfigFile _name)
+  install (FILES ${_name}CONFIG
+    DESTINATION /etc/castor
+    PERMISSIONS ${CASTOR_CONFIG_PERMS}
+    RENAME ${_name}CONFIG.example)
+endfunction ()
+
 set (CMAKE_C_FLAGS
   "-pthread -fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
 

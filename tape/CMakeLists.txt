@@ -92,12 +92,10 @@ add_executable (taped ${TAPED_SRC_FILES})
 target_link_libraries (taped castorcommon castortape castorvdqm)
 install (TARGETS taped DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage(taped)
-install (FILES castor-tape-server.logrotate DESTINATION /etc/logrotate.d
-  RENAME castor-tape-server)
-install (FILES taped.sysconfig DESTINATION /etc/sysconfig
-  RENAME taped.example)
-install (FILES taped.init DESTINATION /etc/init.d
-  RENAME taped)
+CastorInstallLogrotate(castor-tape-server)
+CastorInstallSysconfig(taped)
+CastorInstallInitScript(taped)
+# CANNOT BE USED YET - MASTER BRANCH REQUIRES UPDATE CastorInstallConfigFile(TP)
 
 ################################################################################
 # Rules to build confdrive
