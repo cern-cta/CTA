@@ -488,6 +488,211 @@ BEGIN
 END;
 /
 
+CREATE OR REPLACE PROCEDURE filesDeletedProc
+(dcIds IN castor."cnumList",
+ fileIds OUT castor.FileList_Cur) AS
+  fid NUMBER;
+  fc NUMBER;
+  nsh VARCHAR2(2048);
+  nb INTEGER;
+BEGIN
+  IF dcIds.COUNT > 0 THEN
+    -- List the castorfiles to be cleaned up afterwards
+    FORALL i IN dcIds.FIRST .. dcIds.LAST
+      INSERT INTO FilesDeletedProcHelper (cfId, dcId) (
+        SELECT castorFile, id FROM DiskCopy
+         WHERE id = dcIds(i));
+    -- Use a normal loop to clean castorFiles. Note: We order the list to
+    -- prevent a deadlock
+    FOR cf IN (SELECT cfId, dcId
+                 FROM filesDeletedProcHelper
+                ORDER BY cfId ASC) LOOP
+      BEGIN
+        -- Get data and lock the castorFile
+        SELECT fileId, nsHost, fileClass
+          INTO fid, nsh, fc
+          FROM CastorFile
+         WHERE id = cf.cfId FOR UPDATE;
+        -- delete the original diskcopy to be dropped
+        DELETE FROM DiskCopy WHERE id = cf.dcId;
+        -- Cleanup:
+        -- See whether it has any other DiskCopy or any new Recall request:
+        -- if so, skip the rest
+        SELECT count(*) INTO nb FROM DiskCopy
+         WHERE castorFile = cf.cfId;
+        IF nb > 0 THEN
+          CONTINUE;
+        END IF;
+        SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
+          FROM SubRequest
+         WHERE castorFile = cf.cfId
+           AND status = dconst.SUBREQUEST_WAITTAPERECALL;
+        IF nb > 0 THEN
+          CONTINUE;
+        END IF;
+        -- Now check for Disk2DiskCopy jobs
+        SELECT /*+ INDEX(I_Disk2DiskCopyJob_cfId) */ count(*) INTO nb FROM Disk2DiskCopyJob
+         WHERE castorFile = cf.cfId;
+        IF nb > 0 THEN
+          CONTINUE;
+        END IF;
+        -- Nothing found, check for any other subrequests
+        SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
+          FROM SubRequest
+         WHERE castorFile = cf.cfId
+           AND status IN (1, 2, 3, 4, 5, 6, 7, 10, 12, 13);  -- all but START, FINISHED, FAILED_FINISHED, ARCHIVED
+        IF nb = 0 THEN
+          -- Nothing left, delete the CastorFile
+          DELETE FROM CastorFile WHERE id = cf.cfId;
+        ELSE
+          -- Fail existing subrequests for this file
+          UPDATE /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ SubRequest
+             SET status = dconst.SUBREQUEST_FAILED
+           WHERE castorFile = cf.cfId
+             AND status IN (1, 2, 3, 4, 5, 6, 12, 13);  -- same as above
+        END IF;
+        -- Check whether this file potentially had copies on tape
+        SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
+        IF nb = 0 THEN
+          -- This castorfile was created with no copy on tape
+          -- So removing it from the stager means erasing
+          -- it completely. We should thus also remove it
+          -- from the name server
+          INSERT INTO FilesDeletedProcOutput (fileId, nsHost) VALUES (fid, nsh);
+        END IF;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- Ignore, this means that the castorFile did not exist.
+        -- There is thus no way to find out whether to remove the
+        -- file from the nameserver. For safety, we thus keep it
+        NULL;
+      END;
+    END LOOP;
+  END IF;
+  OPEN fileIds FOR
+    SELECT fileId, nsHost FROM FilesDeletedProcOutput;
+END;
+/
+
+CREATE OR REPLACE PROCEDURE deleteCastorFile(cfId IN NUMBER) AS
+  nb NUMBER;
+  LockError EXCEPTION;
+  PRAGMA EXCEPTION_INIT (LockError, -54);
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -2292);
+BEGIN
+  -- First try to lock the castorFile
+  SELECT id INTO nb FROM CastorFile
+   WHERE id = cfId FOR UPDATE NOWAIT;
+
+  -- See whether pending SubRequests exist
+  SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
+    FROM SubRequest
+   WHERE castorFile = cfId
+     AND status IN (1, 2, 3, 4, 5, 6, 7, 10, 12, 13);   -- All but START, FINISHED, FAILED_FINISHED, ARCHIVED
+  -- If any SubRequest, give up
+  IF nb = 0 THEN
+    DECLARE
+      fid NUMBER;
+      fc NUMBER;
+      nsh VARCHAR2(2048);
+    BEGIN
+      -- Delete the CastorFile
+      -- this will raise a constraint violation if any DiskCopy, MigrationJob, RecallJob or Disk2DiskCopyJob
+      -- still exists for this CastorFile. It is caught and we give up with the deletion in such a case.
+      DELETE FROM CastorFile WHERE id = cfId
+        RETURNING fileId, nsHost, fileClass
+        INTO fid, nsh, fc;
+      -- check whether this file potentially had copies on tape
+      SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
+      IF nb = 0 THEN
+        -- This castorfile was created with no copy on tape
+        -- So removing it from the stager means erasing
+        -- it completely. We should thus also remove it
+        -- from the name server
+        INSERT INTO FilesDeletedProcOutput (fileId, nsHost) VALUES (fid, nsh);
+      END IF;
+    END;
+  END IF;
+EXCEPTION
+  WHEN CONSTRAINT_VIOLATED THEN
+    -- ignore, this means we still have some DiskCopy or Job around
+    NULL;
+  WHEN NO_DATA_FOUND THEN
+    -- ignore, this means that the castorFile did not exist.
+    -- There is thus no way to find out whether to remove the
+    -- file from the nameserver. For safety, we thus keep it
+    NULL;
+  WHEN LockError THEN
+    -- ignore, somebody else is dealing with this castorFile
+    NULL;
+END;
+/
+
+CREATE OR REPLACE PROCEDURE syncRunningTransfers(machine IN VARCHAR2,
+                                                 transfers IN castor."strList",
+                                                 killedTransfersCur OUT castor.TransferRecord_Cur) AS
+  unused VARCHAR2(2048);
+  varFileid NUMBER;
+  varNsHost VARCHAR2(2048);
+  varReqId VARCHAR2(2048);
+  killedTransfers castor."strList";
+  errnos castor."cnumList";
+  errmsg castor."strList";
+BEGIN
+  -- cleanup from previous round
+  DELETE FROM SyncRunningTransfersHelper2;
+  -- insert the list of running transfers into a temporary table for easy access
+  FORALL i IN transfers.FIRST .. transfers.LAST
+    INSERT INTO SyncRunningTransfersHelper (subreqId) VALUES (transfers(i));
+  -- Go through all running transfers from the DB point of view for the given diskserver
+  FOR SR IN (SELECT SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
+               FROM SubRequest, DiskCopy, FileSystem, DiskServer
+              WHERE SubRequest.status = dconst.SUBREQUEST_READY
+                AND Subrequest.reqType IN (35, 37, 44)  -- StageGet/Put/UpdateRequest
+                AND Subrequest.diskCopy = DiskCopy.id
+                AND DiskCopy.fileSystem = FileSystem.id
+                AND FileSystem.diskServer = DiskServer.id
+                AND DiskServer.name = machine) LOOP
+    BEGIN
+      -- check if they are running on the diskserver
+      SELECT subReqId INTO unused FROM SyncRunningTransfersHelper
+       WHERE subreqId = SR.subreqId;
+      -- this one was still running, nothing to do then
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      -- this transfer is not running anymore although the stager DB believes it is
+      -- we first get its reqid and fileid
+      BEGIN
+        SELECT Request.reqId INTO varReqId FROM
+          (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ reqId, id from StageGetRequest UNION ALL
+           SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ reqId, id from StagePutRequest UNION ALL
+           SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ reqId, id from StageUpdateRequest) Request
+         WHERE Request.id = SR.request;
+        SELECT fileid, nsHost INTO varFileid, varNsHost FROM CastorFile WHERE id = SR.castorFile;
+        -- and we put it in the list of transfers to be failed with code 1015 (SEINTERNAL)
+        INSERT INTO SyncRunningTransfersHelper2 (subreqId, reqId, fileid, nsHost, errorCode, errorMsg)
+        VALUES (SR.subreqId, varReqId, varFileid, varNsHost, 1015, 'Transfer has been killed while running');
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- not even the request exists any longer in the DB. It may have disappeared meanwhile
+        -- as we didn't take any lock yet. Fine, ignore and move on.
+        NULL;
+      END;
+    END;
+  END LOOP;
+  -- fail the transfers that are no more running
+  SELECT subreqId, errorCode, errorMsg BULK COLLECT
+    INTO killedTransfers, errnos, errmsg
+    FROM SyncRunningTransfersHelper2;
+  -- Note that the next call will commit (even once per transfer to kill)
+  -- This is ok as SyncRunningTransfersHelper2 was declared "ON COMMIT PRESERVE ROWS" and
+  -- is a temporary table so it's content is only visible to our connection.
+  transferFailedSafe(killedTransfers, errnos, errmsg);
+  -- and return list of transfers that have been failed, for logging purposes
+  OPEN killedTransfersCur FOR
+    SELECT subreqId, reqId, fileid, nsHost FROM SyncRunningTransfersHelper2;
+END;
+/
+
+
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
 BEGIN

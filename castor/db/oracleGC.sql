@@ -441,6 +441,12 @@ BEGIN
         IF nb > 0 THEN
           CONTINUE;
         END IF;
+        -- Now check for Disk2DiskCopy jobs
+        SELECT /*+ INDEX(I_Disk2DiskCopyJob_cfId) */ count(*) INTO nb FROM Disk2DiskCopyJob
+         WHERE castorFile = cf.cfId;
+        IF nb > 0 THEN
+          CONTINUE;
+        END IF;
         -- Nothing found, check for any other subrequests
         SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
           FROM SubRequest
