@@ -95,7 +95,7 @@ CastorInstallAdmManPage(taped)
 CastorInstallLogrotate(castor-tape-server)
 CastorInstallSysconfig(taped)
 CastorInstallInitScript(taped)
-# CANNOT BE USED YET - MASTER BRANCH REQUIRES UPDATE CastorInstallConfigFile(TP)
+CastorInstallConfigFile(TP)
 
 ################################################################################
 # Rules to build confdrive
