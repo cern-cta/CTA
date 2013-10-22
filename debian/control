@@ -249,13 +249,6 @@ Build-Depends: globus-gridftp-server-devel, globus-common-devel
 Description: castor (Cern Advanced STORage system)
  External CASTOR2 gridftp2 DSI module
 
-Package: castor-gridftp-dsi-xroot
-Architecture: any
-Depends: globus-gridftp-server-progs, globus-common, castor-gridftp-dsi-common, xrootd-server, xrootd-client
-Build-Depends: globus-gridftp-server-devel, globus-common-devel, xrootd-server, xrootd-client, xrootd-libs-devel, xrootd-client-devel
-Description: castor (Cern Advanced STORage system)
- External CASTOR2 gridftp2 DSI module with xroot support
-
 Package: castor-tapebridge-server
 Architecture: any
 Depends: logrotate, castor-rtcopy-server, castor-lib-tape = %{version}-%{release}

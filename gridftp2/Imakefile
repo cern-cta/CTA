@@ -27,4 +27,3 @@ COMM
 include LOCAL_PATH/common/Makefile
 include LOCAL_PATH/internal/Makefile
 include LOCAL_PATH/external/Makefile
-include LOCAL_PATH/xroot/Makefile
