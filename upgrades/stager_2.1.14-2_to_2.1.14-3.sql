@@ -71,8 +71,26 @@ BEGIN
 END;
 /
 
-/* small schema change : added an index */
+/* small schema change : added indexes */
 CREATE INDEX I_DLFLogs_Msg ON DLFLogs(msg);
+CREATE INDEX I_CastorFile_TapeStatus ON CastorFile(tapeStatus);
+
+/* A view to spot late or stuck migrations */
+/*******************************************/
+/* It returns all files that are not yet on tape, that are existing in the namespace
+ * and for which migration is pending for more than 24h.
+ */
+CREATE VIEW LateMigrationsView AS
+  SELECT /*+ LEADING(CF DC MJ CnsFile) INDEX_RS_ASC(CF I_CastorFile_TapeStatus) INDEX_RS_ASC(DC I_DiskCopy_CastorFile) INDEX_RS_ASC(MJ I_MigrationJob_CastorFile) */
+         CF.fileId, CF.lastKnownFileName as filePath, DC.creationTime as dcCreationTime,
+         decode(MJ.creationTime, NULL, -1, getTime() - MJ.creationTime) as mjElapsedTime, nvl(MJ.status, -1) as mjStatus
+    FROM CastorFile CF, DiskCopy DC, MigrationJob MJ, cns_file_metadata@remotens CnsFile
+   WHERE CF.fileId = CnsFile.fileId
+     AND DC.castorFile = CF.id
+     AND MJ.castorFile(+) = CF.id
+     AND CF.tapeStatus = 0  -- CASTORFILE_NOTONTAPE
+     AND DC.creationTime < getTime() - 86400
+  ORDER BY DC.creationTime DESC;
 
 /* Update and revalidation of PL-SQL code */
 /******************************************/
