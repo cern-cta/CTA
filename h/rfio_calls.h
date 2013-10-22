@@ -25,10 +25,6 @@
 
 #pragma once
 
-int  srchk(
-           int     s
-           );
-
 int   srerrmsg(
                int     s
                );

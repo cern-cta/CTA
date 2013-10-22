@@ -789,12 +789,6 @@ int doit(int      s,
       else
         (*logfunc)(LOG_INFO, "closing socket fildesc=%d\n", s);
       exit(1);
-    case RQST_CHKCON :
-      (*logfunc)(LOG_DEBUG, "request type : check connect\n");
-      srchk(s) ;
-      shutdown(s, 2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-      break;
     case RQST_OPEN  :
       (*logfunc)(LOG_DEBUG, "request type <open()>\n");
       fd = sropen(s,(bet?is_remote:0),(bet?from_host:(char *)NULL), bet);

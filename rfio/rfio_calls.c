@@ -678,20 +678,6 @@ int srchkreqsize(int     s,
   return(0);
 }
 
-int  srchk(int     s)
-{
-  char * p       ;
-  int status = 0 ;
-
-  p = rqstbuf;
-  marshall_LONG(p,status);
-  if ( netwrite_timeout(s, rqstbuf ,LONGSIZE, RFIO_CTRL_TIMEOUT) != LONGSIZE )  {
-    (*logfunc)(LOG_ERR,"srchk() : netwrite_timeout(): %s\n",strerror(errno));
-    return -1;
-  }
-  return 0;
-}
-
 int srsymlink(int s,
 	      int request,
 	      int     rt, /* Is it a remote site call ?   */

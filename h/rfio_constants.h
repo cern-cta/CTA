@@ -150,7 +150,6 @@
 #define RQST_FREAD      0x300a          /* request for fread()          */
 #define RQST_FWRITE     0x300b          /* request for fwrite()         */
 #define RQST_ACCESS     0x300c          /* request for access()         */
-#define RQST_CHKCON     0x4001          /* request for connection check */
 #define RQST_READLINK   0x4002          /* request for readlink()       */
 #define RQST_MKDIR      0x4003          /* request for mkdir()          */
 #define RQST_CHOWN      0x4004          /* request for chown()          */
