@@ -40,7 +40,8 @@ find_package(Oracle)
 ################################################################################
 # Configure header file
 ################################################################################
-configure_file(${CMAKE_SOURCE_DIR}/h/patchlevel.h.in ${CMAKE_BINARY_DIR}/h/patchlevel.h)
+configure_file(${CMAKE_SOURCE_DIR}/h/patchlevel.h.in
+  ${CMAKE_BINARY_DIR}/h/patchlevel.h)
 include_directories(${CMAKE_BINARY_DIR}/h)
 include_directories(${CMAKE_SOURCE_DIR}/h})
 
@@ -48,21 +49,53 @@ include_directories(${CMAKE_SOURCE_DIR}/h})
 # Global rules and variables
 ################################################################################
 
-set(CASTOR_DEST_BIN_DIR /usr/bin)
-set(CASTOR_DEST_LIB_DIR /usr/lib64)
-set(CASTOR_DEST_MAN_DIR /usr/share/man)
+set (CASTOR_DEST_BIN_DIR /usr/bin)
+set (CASTOR_DEST_LIB_DIR /usr/lib64)
+set (CASTOR_DEST_MAN_DIR /usr/share/man)
+
+set (CASTOR_MAN_PAGE_PERMS
+  OWNER_READ OWNER_WRITE OWNER_EXECUTE
+  GROUP_READ             GROUP_EXECUTE
+  WORLD_READ             WORLD_EXECUTE)
+
+function (CastorInstallManPage _name _section)
+  install (FILES ${_name}.man
+    DESTINATION ${CASTOR_DEST_MAN_DIR}/man${_section}
+    PERMISSIONS ${CASTOR_MAN_PAGE_PERMS}
+    RENAME ${_name}.${_section}castor)
+endfunction ()
+
+function (CastorInstallExeManPage _name)
+  CastorInstallManPage(${_name} 1)
+endfunction ()
+
+function (CastorInstallSysManPage _name)
+  CastorInstallManPage(${_name} 2)
+endfunction ()
+
+function (CastorInstallLibManPage _name)
+  CastorInstallManPage(${_name} 3)
+endfunction ()
+
+function (CastorInstallFileManPage _name)
+  CastorInstallManPage(${_name} 4)
+endfunction ()
+
+function (CastorInstallAdmManPage _name)
+  CastorInstallManPage(${_name} 8)
+endfunction ()
 
 # All common variables and values to be used by all CMakeLists.txt files should
 # be specified here
 set (CMAKE_C_FLAGS
   "-pthread -fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
 
-if(APPLE)
+if (APPLE)
   set (CMAKE_SHARED_LINKER_FLAGS
     "${CMAKE_SHARED_LINKER_FLAGS} -undefined dynamic_lookup")
-else(APPLE)
+else (APPLE)
   set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pthread")
-endif(APPLE)
+endif (APPLE)
 
 set (CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
 

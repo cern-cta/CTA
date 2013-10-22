@@ -62,44 +62,42 @@ add_library (castortape SHARED ${TAPE_LIB_SRC_FILES} ${TAPE_LIB_USR_SRC_FILES})
 set_target_properties (castortape PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castortape castorcommon castordlf castorvmgr)
 install (TARGETS castortape DESTINATION ${CASTOR_DEST_LIB_DIR})
-
-################################################################################
-# Rules to install the man pages of libcastortape.so
-################################################################################
 set (TAPE_LIB_MAN_PAGES Ctape_dmpfil Ctape_info Ctape_kill Ctape_label
   Ctape_mount Ctape_position Ctape_reserve Ctape_rls Ctape_rstatus Ctape_status
   getcompstat readlbl rwndtape skiptape usrlbl wrttpmrk)
 foreach (MAN_PAGE ${TAPE_LIB_MAN_PAGES})
-  install (FILES ${MAN_PAGE}.man DESTINATION ${CASTOR_DEST_MAN_DIR}/man3
-    RENAME ${MAN_PAGE}.3castor)
+  CastorInstallLibManPage(${MAN_PAGE})
 endforeach ()
 
 ################################################################################
-# Rules to build tpconfig and install its man page
+# Rules to build tpconfig
 ################################################################################
 add_executable (tpconfig tpconfig.c)
 target_link_libraries (tpconfig castorcommon castortape)
-install (FILES tpconfig.man DESTINATION ${CASTOR_DEST_MAN_DIR}/man1
-  RENAME tpconfig.1castor)
+CastorInstallExeManPage (tpconfig)
 
 ################################################################################
-# Rules to build tpstat and install its man page
+# Rules to build tpstat
 ################################################################################
 add_executable (tpstat tpstat.c)
 target_link_libraries (tpstat castortape)
-install (FILES tpstat.man DESTINATION ${CASTOR_DEST_MAN_DIR}/man1
-  RENAME tpstat.1castor)
+CastorInstallExeManPage (tpstat)
 
 ################################################################################
-# Rules to build taped and install its man page
+# Rules to build taped
 ################################################################################
 set (TAPED_SRC_FILES tpdaemon.c checkjobdied.c cvtden.c sendrep.c tplogit.c
   usrmsg.c)
 add_executable (taped ${TAPED_SRC_FILES})
 target_link_libraries (taped castorcommon castortape castorvdqm)
 install (TARGETS taped DESTINATION ${CASTOR_DEST_BIN_DIR})
-install (FILES taped.man DESTINATION ${CASTOR_DEST_MAN_DIR}/man8
-  RENAME taped.8castor)
+CastorInstallAdmManPage(taped)
+install (FILES castor-tape-server.logrotate DESTINATION /etc/logrotate.d
+  RENAME castor-tape-server)
+install (FILES taped.sysconfig DESTINATION /etc/sysconfig
+  RENAME taped.example)
+install (FILES taped.init DESTINATION /etc/init.d
+  RENAME taped)
 
 ################################################################################
 # Rules to build confdrive
@@ -125,8 +123,7 @@ install (TARGETS posovl DESTINATION ${CASTOR_DEST_BIN_DIR})
 add_executable(tplabel tplabel.c)
 target_link_libraries(tplabel castorcommon castortape)
 install (TARGETS tplabel DESTINATION ${CASTOR_DEST_BIN_DIR})
-install (FILES tplabel.man DESTINATION ${CASTOR_DEST_MAN_DIR}/man1
-  RENAME tplabel.1castor)
+CastorInstallExeManPage (tplabel)
 
 ################################################################################
 # Rules to build mounttape-nostk
