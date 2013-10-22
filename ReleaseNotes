@@ -8,7 +8,8 @@
   Notes
   -----
 
-  - To install the smc comand-line tool one must install the castor-rmc-client package.
+  - To install the smc comand-line tool one must install the castor-rmc-client
+    package.
 
   CASTOR Core Framework
   ---------------------
@@ -75,6 +76,17 @@
 
   [Code Maintenance]
 
+  CASTOR Protocols
+  ----------------
+
+  [Bug]
+
+  [Features]
+
+     #102947 RFE Remove the castor-gridftp-dsi-xroot package
+
+  [Code Maintenance]
+
   Package Changes
   ---------------
 
@@ -85,6 +97,7 @@
   - Package dependencies have been further strengthened. All RPMs depending on Oracle clients have
     now an explicit dependency on oracle-instantclient-basic, and inter-dependencies across castor
     packages now require the same version to be installed for all packages.
+  - The castor-gridftp-dsi-xroot has been removed.
 
   Deployment Changes
   ------------------
