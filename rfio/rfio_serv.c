@@ -93,10 +93,6 @@ extern int      srfstat64();            /* server remote fstat()        */
 extern int      srlstat() ;             /* server remote lstat()        */
 extern int      srlstat64() ;           /* server remote lstat()        */
 extern int      sraccess();             /* server remote access()       */
-extern int      srxyopen();             /* server remote xyopen()       */
-extern int      srxyclos();             /* server remote xyclos()       */
-extern int      srxywrit();             /* server remote xywrit()       */
-extern int      srxyread();             /* server remote xyread()       */
 
 static int      standalone=0;   /* standalone flag                      */
 static char     logfile[CA_MAXPATHLEN+1];   /* log file name buffer                 */
@@ -567,8 +563,6 @@ int doit(int      s,
   int      status = 0;
   int      fd = -1;                /* Local fd      -> -1              */
   struct   hostent *hp;
-  int      lun = -1;
-  int      access = -1;
   int      yes;
   struct   rfiostat info;
   int      is_remote = 0;              /* Is requestor in another site ? */
@@ -741,8 +735,7 @@ int doit(int      s,
   for (;;) {
     int bet ;
     request = srrequest(s, &bet);
-    if ( (request==RQST_OPEN ||
-          request==RQST_XYOPEN) && !bet && is_remote ) {
+    if ( request==RQST_OPEN && !bet && is_remote ) {
       (*logfunc)(LOG_ERR,"Attempt to call daemon with expired magic from outside site\n");
       shutdown(s, 2);
       close(s);
@@ -1001,29 +994,6 @@ int doit(int      s,
       fd = -1;
       shutdown(s,2); close(s);
       exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-      break;
-    case RQST_XYOPEN  :
-      (*logfunc)(LOG_DEBUG, "request type <xyopen()>\n");
-      status = srxyopen(s, &lun, &access,(bet?is_remote:0),(bet?from_host:NULL),bet);
-      (*logfunc)(LOG_DEBUG, "xyopen(%d,%d) returned: %d\n",lun,access,status);
-      break;
-    case RQST_XYCLOS  :
-      (*logfunc)(LOG_DEBUG, "request type <xyclos(%d)>\n",lun);
-      status = srxyclos(s, &info, lun);
-      (*logfunc)(LOG_DEBUG,"xyclos() returned %d\n",status);
-      shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_XYREAD  :
-      info.readop ++ ;
-      (*logfunc)(LOG_DEBUG, "request type <xyread()>\n");
-      status = srxyread(s, &info, lun, access);
-      (*logfunc)(LOG_DEBUG, "xyread() returned: %d\n",status);
-      break;
-    case RQST_XYWRIT  :
-      info.writop ++ ;
-      (*logfunc)(LOG_DEBUG, "request type <xywrit(%d, %d)>\n", lun, access);
-      status = srxywrit(s, &info, lun, access);
-      (*logfunc)(LOG_DEBUG, "xywrit() returned: %d\n",status);
       break;
     case RQST_MSTAT64:
     case RQST_STAT64 :

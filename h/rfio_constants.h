@@ -138,10 +138,6 @@
 #define RQST_FIRSTSEEK  0x200a          /* request for first preseek()  */
 #define RQST_PRESEEK    0x200b          /* request for preseek()        */
 #define RQST_LASTSEEK   0x200c          /* request for last preseek()   */
-#define RQST_XYOPEN     0x3001          /* request for xyopen()         */
-#define RQST_XYREAD     0x3002          /* request for xyread()         */
-#define RQST_XYWRIT     0x3003          /* request for xywrit()         */
-#define RQST_XYCLOS     0x3004          /* request for xyclos()         */
 #define RQST_STATFS     0x3006          /* request for statfs()         */
 #define RQST_LSTAT      0x3007          /* request for lstat()          */
 #define RQST_POPEN      0x3008          /* request for popen()          */
