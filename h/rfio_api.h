@@ -152,7 +152,6 @@ EXTERN_C int rfio_feof (RFILE *);
 EXTERN_C int rfio_ferror (RFILE *);
 EXTERN_C int rfio_cleanup (int);
 EXTERN_C int rfio_cleanup_v3 (int);
-EXTERN_C int rfio_dircleanup (int);
 EXTERN_C int rfio_fflush (RFILE *);
 EXTERN_C int rfio_fileno (RFILE *);
 EXTERN_C RFILE *rfio_fopen (char *, char *);

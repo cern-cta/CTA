@@ -100,10 +100,6 @@ extern int      srlstat() ;             /* server remote lstat()        */
 extern int      srlstat64() ;           /* server remote lstat()        */
 extern int      srsymlink() ;           /* server remote symlink()      */
 extern int      srreadlink() ;          /* server remote readlink()     */
-extern DIR     *sropendir();            /* server remote opendir()      */
-extern int      srreaddir();            /* server remote readdir()      */
-extern int      srrewinddir();          /* server remote rewinddir()    */
-extern int      srclosedir();           /* server remote closedir()     */
 extern int      sraccess();             /* server remote access()       */
 extern int      srxyopen();             /* server remote xyopen()       */
 extern int      srxyclos();             /* server remote xyclos()       */
@@ -578,7 +574,6 @@ int doit(int      s,
   int      request;                /* Request Id  number               */
   int      status = 0;
   int      fd = -1;                /* Local fd      -> -1              */
-  DIR      *dirp = NULL;           /* Local dir ptr -> NULL            */
   struct   hostent *hp;
   int      lun = -1;
   int      access = -1;
@@ -754,7 +749,7 @@ int doit(int      s,
   for (;;) {
     int bet ;
     request = srrequest(s, &bet);
-    if ( (request==RQST_OPEN || request==RQST_OPENDIR ||
+    if ( (request==RQST_OPEN ||
           request==RQST_XYOPEN) && !bet && is_remote ) {
       (*logfunc)(LOG_ERR,"Attempt to call daemon with expired magic from outside site\n");
       shutdown(s, 2);
@@ -799,11 +794,6 @@ int doit(int      s,
       fd = sropen64(s, is_remote, from_host);
       (*logfunc)(LOG_DEBUG, "ropen64() returned: %d\n",fd);
       break;
-    case RQST_OPENDIR :
-      (*logfunc)(LOG_DEBUG, "request type <opendir()>\n");
-      dirp = sropendir(s,is_remote,from_host,bet);
-      (*logfunc)(LOG_DEBUG, "ropendir() returned %x\n",dirp);
-      break;
     case RQST_CLOSE  :
       (*logfunc)(LOG_DEBUG, "request type <close()>\n");
       status = srclose(s, &info, fd);
@@ -811,14 +801,6 @@ int doit(int      s,
       fd = -1;
       shutdown(s, 2); close(s);
       exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_CLOSEDIR  :
-      (*logfunc)(LOG_DEBUG, "request type <closedir()>\n");
-      status = srclosedir(s,&info,dirp);
-      (*logfunc)(LOG_DEBUG,"closedir() returned %d\n",status);
-      dirp = NULL;
-      shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-      break;
     case RQST_READ  :
       info.readop ++ ;
       (*logfunc)(LOG_DEBUG, "request type <read()>\n");
@@ -842,12 +824,6 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG, "request type <readahd64()>\n");
       status = srreadahd64(s, &info, fd);
       (*logfunc)(LOG_DEBUG, "rreadahd64() returned: %d\n",status);
-      break;
-    case RQST_READDIR :
-      info.readop++;
-      (*logfunc)(LOG_DEBUG, "request type <readdir()>\n");
-      status = srreaddir(s,&info,dirp);
-      (*logfunc)(LOG_DEBUG, "rreaddir() returned: %d\n",status);
       break;
     case RQST_WRITE  :
       info.writop ++ ;
@@ -947,12 +923,6 @@ int doit(int      s,
       shutdown(s,2); close(s);
       (*logfunc)(LOG_DEBUG, "srreadlink() returned %d\n", status) ;
       exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_REWINDDIR:
-      info.seekop ++;
-      (*logfunc)(LOG_DEBUG, "request type <rewinddir()>\n");
-      status = srrewinddir(s,&info,dirp);
-      (*logfunc)(LOG_DEBUG, "srrewinddir() returned %d\n",status);
-      break;
     case RQST_STATFS :
       (*logfunc)(LOG_DEBUG, "request type <statfs()>\n");
       status = srstatfs(s) ;

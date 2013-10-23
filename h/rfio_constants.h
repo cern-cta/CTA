@@ -171,10 +171,6 @@
 #define RQST_LSEEK_V3   0x5007
 #define RQST_FCHMOD     0x5008
 #define RQST_FCHOWN     0x5009
-#define RQST_OPENDIR    0x500a          /* request for opendir()        */
-#define RQST_READDIR    0x500b          /* request for readdir()        */
-#define RQST_CLOSEDIR   0x500c          /* request for closedir()       */
-#define RQST_REWINDDIR  0x500d          /* request for rewinddir()      */
 #define RQST_RMDIR      0x500e          /* request for rmdir()          */
 #define RQST_CHMOD      0x500f          /* request for chmod()          */
 
