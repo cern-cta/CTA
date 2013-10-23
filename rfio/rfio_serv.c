@@ -75,8 +75,6 @@ extern int      srstat();               /* server remote stat()         */
 extern int      srfstat();              /* server remote fstat()        */
 extern void     serrmsg();              /* server remote errmsg()       */
 extern int      srrequest();            /* server read request          */
-extern int      srmkdir();              /* server remote mkdir()        */
-extern int      srrmdir();              /* server remote rmdir()        */
 extern int      srrename();             /* server remote rename()       */
 extern int      srlockf();              /* server remote lockf()        */
 
@@ -940,18 +938,6 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"request type <access()>\n");
       status = sraccess(s, from_host, (bet?is_remote:0)) ;
       (*logfunc)(LOG_DEBUG,"raccess returned %d\n",status);
-      shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_MKDIR :
-      (*logfunc)(LOG_DEBUG,"request type <mkdir()>\n");
-      status = srmkdir(s,from_host,is_remote) ;
-      (*logfunc)(LOG_DEBUG,"rmkdir returned %d\n", status);
-      shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_RMDIR :
-      (*logfunc)(LOG_DEBUG,"request type <rmdir()>\n");
-      status = srrmdir(s,from_host,is_remote) ;
-      (*logfunc)(LOG_DEBUG,"rrmdir returned %d\n", status);
       shutdown(s,2); close(s);
       exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_RENAME:
