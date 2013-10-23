@@ -31,17 +31,11 @@ RFILE *rfio_popen(char * rcom,
 
   char *host  ;
   RFILE *rfp  ;
-  int rfp_index;
-  char *p , *cp, *cp2    ;
+  char *cp, *cp2    ;
   char command[MAXCOMSIZ]; /* command with remote syntax */
-  struct passwd *pwuid ;
   char *pcom = 0;
-  int rt   ; /* daemon is in the site or remote ? */
-  int rcode, status = 0 ;
-  int len  ;
   FILE *file, *popen()  ;
   char localhost[MAXHOSTNAMELEN];
-  char buf[BUFSIZ] ;
 
   INIT_TRACE("RFIO_TRACE");
 

@@ -141,7 +141,6 @@
 #define RQST_FREAD      0x300a          /* request for fread()          */
 #define RQST_FWRITE     0x300b          /* request for fwrite()         */
 #define RQST_ACCESS     0x300c          /* request for access()         */
-#define RQST_RENAME     0x4005          /* request for rename()         */
 #define RQST_MSTAT      0x4007          /* request for rfio_mstat()     */
 #define RQST_END        0x4008          /* request for end of rfiod     */
 #define RQST_MSTAT_SEC  0x4010          /* request for secure mstat()   */

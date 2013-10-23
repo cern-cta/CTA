@@ -73,7 +73,6 @@ extern int      srstat();               /* server remote stat()         */
 extern int      srfstat();              /* server remote fstat()        */
 extern void     serrmsg();              /* server remote errmsg()       */
 extern int      srrequest();            /* server read request          */
-extern int      srrename();             /* server remote rename()       */
 
 extern int      sropen64();             /* server remote open()         */
 extern int      sropen64_v3();          /* server remote open()         */
@@ -892,12 +891,6 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"request type <access()>\n");
       status = sraccess(s, from_host, (bet?is_remote:0)) ;
       (*logfunc)(LOG_DEBUG,"raccess returned %d\n",status);
-      shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_RENAME:
-      (*logfunc)(LOG_DEBUG,"request type <rename()>\n");
-      status = srrename(s,from_host,is_remote) ;
-      (*logfunc)(LOG_DEBUG,"rrename returned %d\n", status);
       shutdown(s,2); close(s);
       exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_END :
