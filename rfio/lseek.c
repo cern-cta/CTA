@@ -263,7 +263,7 @@ static int rfio_lseekinbuf(int      s,
        */
       rfilefdt[s_index]->nbrecord= status ;
       rfilefdt[s_index]->_iobuf.ptr= iodata(rfilefdt[s_index]) ;
-      rfilefdt[s_index]->preseek= ( req == RQST_LASTSEEK ) ? 2 : 1 ;
+      rfilefdt[s_index]->preseek= 1 ;
     }
     /*
      * The current record is the one we are looking for.
@@ -394,8 +394,6 @@ static int rfio_forcelseek(int      s,
       END_TRACE() ;
       return status ;
     case RQST_READAHEAD:
-    case RQST_LASTSEEK:
-    case RQST_PRESEEK:
       /*
        * At this point a temporary buffer may need to be created
        * to receive data which is going to be thrown away.

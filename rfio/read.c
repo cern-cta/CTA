@@ -397,7 +397,7 @@ static int rfio_preread(int     s,
       if ( status == -1 )  break ;
       rfilefdt[s_index]->nbrecord= status ;
       rfilefdt[s_index]->_iobuf.ptr= iodata(rfilefdt[s_index]) ;
-      rfilefdt[s_index]->preseek= ( req == RQST_LASTSEEK ) ? 2 : 1 ;
+      rfilefdt[s_index]->preseek=  1 ;
 
     }
   } while( rfilefdt[s_index]->preseek ) ;
@@ -538,7 +538,7 @@ int rfio_filbuf(int     s,
         return -1 ;
       }
     }
-  } while ( firstread && (req==RQST_READAHEAD || req==RQST_PRESEEK || req==RQST_LASTSEEK)) ;
+  } while ( firstread && (req==RQST_READAHEAD)) ;
   /*
    * Data we were waiting for has been received.
    */

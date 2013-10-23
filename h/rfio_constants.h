@@ -135,9 +135,6 @@
 #define RQST_STAT       0x2007          /* request for stat()           */
 #define RQST_FSTAT      0x2008          /* request for fstat()          */
 #define RQST_LSEEK      0x2009          /* request for lseek()          */
-#define RQST_FIRSTSEEK  0x200a          /* request for first preseek()  */
-#define RQST_PRESEEK    0x200b          /* request for preseek()        */
-#define RQST_LASTSEEK   0x200c          /* request for last preseek()   */
 #define RQST_STATFS     0x3006          /* request for statfs()         */
 #define RQST_LSTAT      0x3007          /* request for lstat()          */
 #define RQST_POPEN      0x3008          /* request for popen()          */
@@ -170,7 +167,6 @@
 #define RQST_STAT64     0x2807          /* request for stat64()         */
 #define RQST_FSTAT64    0x2808          /* request for fstat64()        */
 #define RQST_LSEEK64    0x2809          /* request for lseek64()        */
-#define RQST_PRESEEK64  0x280b          /* request for preseek64()      */
 #define RQST_STATFS64   0x3806          /* request for statfs64()       */
 #define RQST_LSTAT64    0x3807          /* request for lstat64()        */
 #define RQST_FREAD64    0x380a          /* request for fread64()        */

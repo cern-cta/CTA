@@ -70,7 +70,6 @@ extern int      srread_v3();            /* server remote read()         */
 extern int      srreadahead();          /* server remote read() ahead   */
 extern int      srlseek();              /* server remote lseek()        */
 extern int      srlseek_v3();           /* server remote lseek()        */
-extern int      srpreseek();            /* server remote preseek()      */
 extern int      srstat();               /* server remote stat()         */
 extern int      srfstat();              /* server remote fstat()        */
 extern void     serrmsg();              /* server remote errmsg()       */
@@ -87,7 +86,6 @@ extern int      srread64();             /* server remote read()         */
 extern int      srread64_v3();          /* server remote read()         */
 extern int      srreadahd64();          /* server remote read() ahead   */
 extern int      srlseek64();            /* server remote lseek()        */
-extern int      srpreseek64();          /* server remote preseek()      */
 extern int      srstat64();             /* server remote stat()         */
 extern int      srfstat64();            /* server remote fstat()        */
 extern int      srlstat() ;             /* server remote lstat()        */
@@ -864,18 +862,6 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG, "request type <lseek64()>\n");
       status = srlseek64(s, request, &info, fd);
       (*logfunc)(LOG_DEBUG, "lseek64() returned %d\n",status);
-      break;
-    case RQST_PRESEEK :
-      info.presop ++ ;
-      (*logfunc)(LOG_DEBUG, "request type <preseek()>\n");
-      status = srpreseek(s, &info, fd);
-      (*logfunc)(LOG_DEBUG, "preseek() returned %d\n",status);
-      break;
-    case RQST_PRESEEK64 :
-      info.presop ++ ;
-      (*logfunc)(LOG_DEBUG, "request type <preseek64()>\n");
-      status = srpreseek64(s, &info, fd);
-      (*logfunc)(LOG_DEBUG, "preseek64() returned %d\n",status);
       break;
     case RQST_ERRMSG :
       (*logfunc)(LOG_DEBUG, "request type <errmsg()>\n");
