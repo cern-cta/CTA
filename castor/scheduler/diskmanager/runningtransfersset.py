@@ -254,7 +254,7 @@ class RunningTransfersSet(object):
       self.tapelock.acquire()
       try:
         for tTransfer in self.tapeTransfers:
-          transferType = TransferType.toStr(tTransfer.transferType)
+          transferType = TapeTransferType.toStr(tTransfer.transferType)
           n = n + 1
           nbslots = self.config.getValue('DiskManager', transferType+'Weight', 1, int)
           ns = ns + nbslots
