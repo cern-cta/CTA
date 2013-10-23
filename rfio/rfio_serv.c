@@ -92,8 +92,6 @@ extern int      srstat64();             /* server remote stat()         */
 extern int      srfstat64();            /* server remote fstat()        */
 extern int      srlstat() ;             /* server remote lstat()        */
 extern int      srlstat64() ;           /* server remote lstat()        */
-extern int      srsymlink() ;           /* server remote symlink()      */
-extern int      srreadlink() ;          /* server remote readlink()     */
 extern int      sraccess();             /* server remote access()       */
 extern int      srxyopen();             /* server remote xyopen()       */
 extern int      srxyclos();             /* server remote xyclos()       */
@@ -890,22 +888,6 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG, "request type <errmsg()>\n");
       srerrmsg(s);
       shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_MSYMLINK :
-    case RQST_SYMLINK :
-      (*logfunc)(LOG_DEBUG, "request type <symlink()>\n");
-      status = srsymlink(s,request,(bet?is_remote:0),(bet?from_host:(char *)NULL)) ;
-      (*logfunc)(LOG_DEBUG, "srsymlink() returned %d\n", status) ;
-      if (request==RQST_SYMLINK) {
-        shutdown(s,2); close(s);
-        exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-      }
-      break;
-    case RQST_READLINK:
-      (*logfunc)(LOG_DEBUG, "request type <readlink()>\n");
-      status = srreadlink(s,from_host,is_remote) ;
-      shutdown(s,2); close(s);
-      (*logfunc)(LOG_DEBUG, "srreadlink() returned %d\n", status) ;
       exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_STATFS :
       (*logfunc)(LOG_DEBUG, "request type <statfs()>\n");

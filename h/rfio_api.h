@@ -66,8 +66,6 @@ EXTERN_C int rfio_chown (char *, int, int);
 EXTERN_C int rfio_close (int);
 EXTERN_C int rfio_close_v3 (int);
 EXTERN_C int rfio_end (void);  /* Close connections opened by rfio_mstat() */
-EXTERN_C int rfio_symend (void); /* Close connections opened by rfio_msymlink() */
-EXTERN_C int rfio_unend (void); /* Close connections opened by rfio_munlink() */
 EXTERN_C int rfio_fchmod (int, int);
 EXTERN_C int rfio_fchown (int, int, int);
 EXTERN_C int rfio_fstat (int, struct stat *);
@@ -79,8 +77,6 @@ EXTERN_C int rfio_mstat (char *, struct stat *);
 EXTERN_C int rfio_munlink (char *);
 EXTERN_C int rfio_msymlink (char *, char *);
 EXTERN_C int rfio_mstat_reset (void);  /* Reset connections opened by rfio_mstat() [fork() case] */
-EXTERN_C int rfio_munlink_reset (void);  /* Reset connections opened by rfio_mstat() [fork() case] */
-EXTERN_C int rfio_msymlink_reset (void);  /* Reset connections opened by rfio_mstat() [fork() case] */
 #if defined(RFIO_KERNEL)
 EXTERN_C int rfio_open (char *, int, int);
 #else /* RFIO_KERNEL */

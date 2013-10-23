@@ -142,7 +142,6 @@
 #define RQST_XYREAD     0x3002          /* request for xyread()         */
 #define RQST_XYWRIT     0x3003          /* request for xywrit()         */
 #define RQST_XYCLOS     0x3004          /* request for xyclos()         */
-#define RQST_SYMLINK    0x3005          /* request for symlink()        */
 #define RQST_STATFS     0x3006          /* request for statfs()         */
 #define RQST_LSTAT      0x3007          /* request for lstat()          */
 #define RQST_POPEN      0x3008          /* request for popen()          */
@@ -150,7 +149,6 @@
 #define RQST_FREAD      0x300a          /* request for fread()          */
 #define RQST_FWRITE     0x300b          /* request for fwrite()         */
 #define RQST_ACCESS     0x300c          /* request for access()         */
-#define RQST_READLINK   0x4002          /* request for readlink()       */
 #define RQST_RENAME     0x4005          /* request for rename()         */
 #define RQST_LOCKF      0x4006          /* request for lockf()          */
 #define RQST_MSTAT      0x4007          /* request for rfio_mstat()     */
@@ -158,7 +156,6 @@
 #define RQST_MSTAT_SEC  0x4010          /* request for secure mstat()   */
 #define RQST_STAT_SEC   0x4011          /* request for secure stat()    */
 #define RQST_LSTAT_SEC  0x4012          /* request for secure lstat()   */
-#define RQST_MSYMLINK   0x4013          /* request for msymlink()       */
 
 #define REP_ERROR       0x5000
 #define REP_EOF         0x5001
