@@ -51,7 +51,7 @@ foreach (SRC_FILE locate.c readlbl.c rwndtape.c skiptape.c tperror.c usrmsg.c
 endforeach ()
 
 ################################################################################
-# Rules to build libcastortape.so
+# Rules to build and install libcastortape.so
 ################################################################################
 set (TAPE_LIB_SRC_FILES Ctape_config.c Ctape_devinfo.c Ctape_dmpfil.c
   Ctape_errmsg.c Ctape_info.c Ctape_kill.c Ctape_label.c Ctape_mount.c
@@ -70,21 +70,21 @@ foreach (MAN_PAGE ${TAPE_LIB_MAN_PAGES})
 endforeach ()
 
 ################################################################################
-# Rules to build tpconfig
+# Rules to build and install tpconfig
 ################################################################################
 add_executable (tpconfig tpconfig.c)
 target_link_libraries (tpconfig castorcommon castortape)
 CastorInstallExeManPage (tpconfig)
 
 ################################################################################
-# Rules to build tpstat
+# Rules to build and install tpstat
 ################################################################################
 add_executable (tpstat tpstat.c)
 target_link_libraries (tpstat castortape)
 CastorInstallExeManPage (tpstat)
 
 ################################################################################
-# Rules to build taped
+# Rules to build and install taped
 ################################################################################
 set (TAPED_SRC_FILES tpdaemon.c checkjobdied.c cvtden.c sendrep.c tplogit.c
   usrmsg.c)
@@ -98,7 +98,7 @@ CastorInstallInitScript(taped)
 CastorInstallConfigFile(TP)
 
 ################################################################################
-# Rules to build confdrive
+# Rules to build and install confdrive
 ################################################################################
 set (CONFDRIVE_SRC_FILES confdrive.c sendrep.c tplogit.c)
 add_executable(confdrive ${CONFDRIVE_SRC_FILES})
@@ -106,7 +106,7 @@ target_link_libraries(confdrive castorcommon castortape castorvdqm)
 install (TARGETS confdrive DESTINATION ${CASTOR_DEST_BIN_DIR})
 
 ################################################################################
-# Rules to build posovl
+# Rules to build and install posovl
 ################################################################################
 set (POSOVL_SRC_FILES posovl.c buildhdrlbl.c builduhl.c buildvollbl.c
   ebc2asc.c getdrvstatus.c inquiry.c locate.c posittape.c readlbl.c rwndtape.c
@@ -116,7 +116,7 @@ target_link_libraries(posovl castorcommon castortape)
 install (TARGETS posovl DESTINATION ${CASTOR_DEST_BIN_DIR})
 
 ################################################################################
-# Rules to build tplabel and install its man page
+# Rules to build and install tplabel
 ################################################################################
 add_executable(tplabel tplabel.c)
 target_link_libraries(tplabel castorcommon castortape)
@@ -124,7 +124,7 @@ install (TARGETS tplabel DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallExeManPage (tplabel)
 
 ################################################################################
-# Rules to build mounttape-nostk
+# Rules to build and install mounttape-nostk
 ################################################################################
 set (MOUNTTAPE_NOSTK_SRC_FILES mounttape.c asc2ebc.c buildhdrlbl.c
   buildvollbl.c ebc2asc.c getdrvstatus.c inquiry.c rbtsubr.c readlbl.c
@@ -136,7 +136,7 @@ target_link_libraries(mounttape-nostk castorcommon castorrmc castortape
 install (TARGETS mounttape-nostk DESTINATION ${CASTOR_DEST_BIN_DIR})
 
 ################################################################################
-# Rules to build rlstape-nostk
+# Rules to build and install rlstape-nostk
 ################################################################################
 set (RLSTAPE_NOSTK_SRC_FILES rlstape.c getdrvstatus.c rbtsubr.c send2tpd.c
   sendrep.c tperror.c tplogit.c usrmsg.c unldtape.c tapealertcheck.c)
@@ -190,7 +190,7 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   endforeach ()
 
   ##############################################################################
-  # Rules to build mounttape
+  # Rules to build and install mounttape
   ##############################################################################
   message(STATUS "Adding the mounttape target")
   set (MOUNTTAPE_SRC_FILES mounttape-stk.c asc2ebc.c buildhdrlbl.c
@@ -203,7 +203,7 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   install (TARGETS mounttape DESTINATION ${CASTOR_DEST_BIN_DIR})
 
   ##############################################################################
-  # Rules to build rlstape
+  # Rules to build and install rlstape
   ##############################################################################
   message(STATUS "Adding the rlstape target")
   set (RLSTAPE_SRC_FILES rlstape.c getdrvstatus.c rbtsubr-stk.c send2tpd.c
