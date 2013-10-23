@@ -881,12 +881,6 @@ int doit(int      s,
       status = srfwrite(s,streamf);
       (*logfunc)(LOG_DEBUG, "rfwrite() returned %d\n",status);
       break ;
-    case RQST_PCLOSE :
-      (*logfunc)(LOG_DEBUG,"request type <pclose()>\n");
-      status = srpclose(s,streamf) ;
-      (*logfunc)(LOG_DEBUG,"pclose() returned %d\n",status);
-      shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_ACCESS :
       (*logfunc)(LOG_DEBUG,"request type <access()>\n");
       status = sraccess(s, from_host, (bet?is_remote:0)) ;

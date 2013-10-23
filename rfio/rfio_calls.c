@@ -1812,28 +1812,6 @@ int   srclose(int     s,
   return status;
 }
 
-int  srpclose(int     s,
-              FILE    *fs)
-{
-  int  status;
-  char *p;
-
-  errno = 0;
-  status = pclose(fs);
-  (*logfunc)(LOG_DEBUG,"rpclose(%x) returns %d\n",fs,status);
-  /*
-   * status returns the command's error code
-   */
-  p= rqstbuf;
-  marshall_LONG(p,status);
-  marshall_LONG(p,errno);
-  if (netwrite_timeout(s,rqstbuf,2*LONGSIZE,RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
-    (*logfunc)(LOG_ERR, "rpclose: netwrite_timeout(): %s\n", strerror(errno));
-    return -1;
-  }
-  return status;
-}
-
 int srfread(int     s,
             FILE    *fp)
 {

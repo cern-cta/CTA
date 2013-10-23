@@ -137,7 +137,6 @@
 #define RQST_LSEEK      0x2009          /* request for lseek()          */
 #define RQST_STATFS     0x3006          /* request for statfs()         */
 #define RQST_LSTAT      0x3007          /* request for lstat()          */
-#define RQST_PCLOSE     0x3009          /* request for pclose()         */
 #define RQST_FREAD      0x300a          /* request for fread()          */
 #define RQST_FWRITE     0x300b          /* request for fwrite()         */
 #define RQST_ACCESS     0x300c          /* request for access()         */

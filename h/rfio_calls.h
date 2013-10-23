@@ -39,7 +39,3 @@ int   srfwrite(
                int     s,
                FILE    *fp);
 
-int   srpclose(
-               int     s,
-               FILE    *fs);
-
