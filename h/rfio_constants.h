@@ -143,7 +143,6 @@
 #define RQST_FWRITE     0x300b          /* request for fwrite()         */
 #define RQST_ACCESS     0x300c          /* request for access()         */
 #define RQST_RENAME     0x4005          /* request for rename()         */
-#define RQST_LOCKF      0x4006          /* request for lockf()          */
 #define RQST_MSTAT      0x4007          /* request for rfio_mstat()     */
 #define RQST_END        0x4008          /* request for end of rfiod     */
 #define RQST_MSTAT_SEC  0x4010          /* request for secure mstat()   */
@@ -171,7 +170,6 @@
 #define RQST_LSTAT64    0x3807          /* request for lstat64()        */
 #define RQST_FREAD64    0x380a          /* request for fread64()        */
 #define RQST_FWRITE64   0x380b          /* request for fwrite64()       */
-#define RQST_LOCKF64    0x3846          /* request for lockf()          */
 #define RQST_MSTAT64    0x4807          /* request for rfio_mstat()     */
 #define RQST_OPEN64_V3  0x5803          /* request for open64_v3()      */
 #define RQST_CLOSE64_V3 0x5804          /* request for close64_v3()     */

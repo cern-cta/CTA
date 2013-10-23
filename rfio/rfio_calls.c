@@ -762,68 +762,6 @@ int srrename(int     s,
   return status;
 }
 
-int srlockf(int     s,
-            int     fd)
-{
-  char    *p;
-  LONG    status = 0;
-  LONG    len;
-  int     uid,gid;
-  int     op;
-  long    siz;
-  int     rcode = 0;
-
-  p = rqstbuf + (2*WORDSIZE);
-  unmarshall_WORD(p, uid);
-  unmarshall_WORD(p, gid);
-  unmarshall_LONG(p, len);
-
-  if ( (status = srchkreqsize(s,p,len)) == -1 ) {
-    rcode = errno;
-  } else {
-    /* While performing tape operations multiple calls to change uid are issued. As
-     * a result we ignore errors from setgroups if we are not running as the super-
-     * user because it is a super-user only command. If we do not do this all tape
-     * related activity will FAIL!!!
-     */
-    if ( ((getuid() == 0) && (setgroups(0, NULL)<0)) || (setgid(gid)<0) || (setuid(uid)<0) )  {
-      status= -1;
-      rcode= errno;
-      (*logfunc)(LOG_ERR,"srlockf(): unable to setuid,gid(%d,%d): %s, we are (uid=%d,gid=%d,euid=%d,egid=%d)\n",uid,gid,strerror(errno),(int) getuid(),(int) getgid(),(int) geteuid(),(int) getegid());
-    }
-
-    (*logfunc)(LOG_DEBUG, "srlockf for (%d,%d): reading %d bytes\n", uid,gid,len);
-
-    if (netread_timeout(s, rqstbuf, len, RFIO_CTRL_TIMEOUT) != len) {
-      (*logfunc)(LOG_ERR, "srlockf(): read(): %s\n", strerror(errno));
-      return -1;
-    }
-    /*
-     * Reading request.
-     */
-    p = rqstbuf;
-    unmarshall_LONG(p, op);
-    unmarshall_LONG(p, siz);
-    (*logfunc)(LOG_INFO,"srlockf: op %d, siz %ld\n", op, siz);
-    if (status == 0 ) {
-      if ( (status = lockf(fd, op, siz)) < 0 )
-        rcode = errno;
-      else
-        status = 0;
-    }
-  }
-
-  p = rqstbuf;
-  marshall_LONG(p, status);
-  marshall_LONG(p, rcode);
-  (*logfunc)(LOG_DEBUG, "srlockf: sending back status %d rcode %d\n", status,rcode);
-  if (netwrite_timeout(s, rqstbuf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
-    (*logfunc)(LOG_ERR, "srlockf(): netwrite_timeout(): %s\n", strerror(errno));
-    return -1;
-  }
-  return status;
-}
-
 int   srerrmsg(int     s)
 {
   int   code = 0;
