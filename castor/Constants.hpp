@@ -127,6 +127,7 @@ namespace castor {
     OBJ_JobSubmissionRequest = 130,
     OBJ_VersionQuery = 131,
     OBJ_VersionResponse = 132,
+    OBJ_StageDiskCopyReplicaRequest = 133,
     OBJ_RepackResponse = 134,
     OBJ_RepackFileQry = 135,
     OBJ_CnsInfoMigrationPolicy = 136,
