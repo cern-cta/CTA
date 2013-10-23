@@ -22,9 +22,6 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-include_directories ("..")
-include_directories ("../h")
-
 set (UPV_LIB_SRC_FILES Cupv_apiinit.c Cupv_errmsg.c send2Cupv.c Cupv_delete.c
 Cupv_list.c Cupv_util.c Cupv_check.c Cupv_modify.c Cupv_add.c)
 

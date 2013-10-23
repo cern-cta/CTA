@@ -22,9 +22,6 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-include_directories ("..")
-include_directories ("../h")
-
 if(APPLE)
   set (UUID_LIB_NAME "System")
 else(APPLE)

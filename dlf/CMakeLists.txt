@@ -22,9 +22,6 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-include_directories ("..")
-include_directories ("../h")
-
 set (DLF_LIB_SRC_FILES dlf_lib.c)
 
 add_library (castordlf SHARED ${DLF_LIB_SRC_FILES})

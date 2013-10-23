@@ -42,13 +42,10 @@ find_package(Oracle)
 ################################################################################
 configure_file(${CMAKE_SOURCE_DIR}/h/patchlevel.h.in
   ${CMAKE_BINARY_DIR}/h/patchlevel.h)
-include_directories(${CMAKE_BINARY_DIR}/h)
-include_directories(${CMAKE_SOURCE_DIR}/h})
 
 ################################################################################
 # Global rules and variables
 ################################################################################
-
 set (CASTOR_DEST_BIN_DIR /usr/bin)
 set (CASTOR_DEST_LIB_DIR /usr/lib64)
 set (CASTOR_DEST_MAN_DIR /usr/share/man)
@@ -57,6 +54,11 @@ set (CASTOR_MAN_PAGE_PERMS
   OWNER_READ OWNER_WRITE
   GROUP_READ
   WORLD_READ)
+
+include_directories(${CMAKE_BINARY_DIR})
+include_directories(${CMAKE_BINARY_DIR}/h)
+include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/h)
 
 function (CastorInstallManPage _name _section)
   install (FILES ${_name}.man
