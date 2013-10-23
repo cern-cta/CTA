@@ -79,7 +79,6 @@ extern int      srmkdir();              /* server remote mkdir()        */
 extern int      srrmdir();              /* server remote rmdir()        */
 extern int      srrename();             /* server remote rename()       */
 extern int      srlockf();              /* server remote lockf()        */
-extern int      srchmod();              /* server remote chmod()        */
 
 extern int      sropen64();             /* server remote open()         */
 extern int      sropen64_v3();          /* server remote open()         */
@@ -93,9 +92,6 @@ extern int      srlseek64();            /* server remote lseek()        */
 extern int      srpreseek64();          /* server remote preseek()      */
 extern int      srstat64();             /* server remote stat()         */
 extern int      srfstat64();            /* server remote fstat()        */
-extern int      srchown();              /* server remote chown()        */
-extern int      srfchmod();             /* server remote fchmod()       */
-extern int      srfchown();             /* server remote fchown()       */
 extern int      srlstat() ;             /* server remote lstat()        */
 extern int      srlstat64() ;           /* server remote lstat()        */
 extern int      srsymlink() ;           /* server remote symlink()      */
@@ -837,16 +833,6 @@ int doit(int      s,
       status = srwrite64(s, &info, fd);
       (*logfunc)(LOG_DEBUG, "rwrite64() returned: %d\n",status);
       break;
-    case RQST_FCHMOD :
-      (*logfunc)(LOG_DEBUG, "request type <fchmod()>\n");
-      status = srfchmod(s, from_host, is_remote, fd) ;
-      (*logfunc)(LOG_DEBUG, "fchmod() returned %d\n",status);
-      break;
-    case RQST_FCHOWN :
-      (*logfunc)(LOG_DEBUG, "request type <fchown()>\n");
-      status = srfchown(s, from_host, is_remote, fd) ;
-      (*logfunc)(LOG_DEBUG, "fchown() returned %d\n",status);
-      break;
     case RQST_FSTAT :
       info.statop ++ ;
       (*logfunc)(LOG_DEBUG, "request type <fstat()>\n");
@@ -966,18 +952,6 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"request type <rmdir()>\n");
       status = srrmdir(s,from_host,is_remote) ;
       (*logfunc)(LOG_DEBUG,"rrmdir returned %d\n", status);
-      shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_CHMOD:
-      (*logfunc)(LOG_DEBUG,"request type <chmod()>\n");
-      status = srchmod(s,from_host,is_remote) ;
-      (*logfunc)(LOG_DEBUG,"rchmod returned %d\n", status);
-      shutdown(s,2); close(s);
-      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_CHOWN:
-      (*logfunc)(LOG_DEBUG,"request type <chown()>\n");
-      status = srchown(s,from_host,is_remote) ;
-      (*logfunc)(LOG_DEBUG,"rchown returned %d\n", status);
       shutdown(s,2); close(s);
       exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_RENAME:

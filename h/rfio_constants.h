@@ -152,7 +152,6 @@
 #define RQST_ACCESS     0x300c          /* request for access()         */
 #define RQST_READLINK   0x4002          /* request for readlink()       */
 #define RQST_MKDIR      0x4003          /* request for mkdir()          */
-#define RQST_CHOWN      0x4004          /* request for chown()          */
 #define RQST_RENAME     0x4005          /* request for rename()         */
 #define RQST_LOCKF      0x4006          /* request for lockf()          */
 #define RQST_MSTAT      0x4007          /* request for rfio_mstat()     */
@@ -169,10 +168,7 @@
 #define RQST_READ_V3    0x5005
 #define RQST_WRITE_V3   0x5006
 #define RQST_LSEEK_V3   0x5007
-#define RQST_FCHMOD     0x5008
-#define RQST_FCHOWN     0x5009
 #define RQST_RMDIR      0x500e          /* request for rmdir()          */
-#define RQST_CHMOD      0x500f          /* request for chmod()          */
 
 #define RQST_OPEN64     0x2801          /* request for open64()         */
 #define RQST_READ64     0x2802          /* request for read64()         */
