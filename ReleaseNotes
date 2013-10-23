@@ -5,12 +5,15 @@
   Summary
   -------
 
-  This is a minor release bringing a number of bug fixes on top of the previous one.
+  This is a minor release bringing a number of bug fixes on top of the previous
+  one.
   General notes:
   - To install the smc comand-line tool one must install the castor-rmc-client
     package.
-  - A new view is now provided in the Stager database, LateMigrationsView, to help
-    operations spot stuck migrations.
+  - A new view is now provided in the Stager database, LateMigrationsView, to
+    help operations spot stuck migrations.
+  - Please note that the castor-gridftp-dsi-ext package is now deprecated.
+    This package will definitely be removed as of 2.1.15-0.
 
   CASTOR Core Framework
   ---------------------
