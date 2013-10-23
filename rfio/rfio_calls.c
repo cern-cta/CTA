@@ -1918,63 +1918,6 @@ int  srpclose(int     s,
   return status;
 }
 
-FILE  *srpopen(int     s,
-               char    *host,
-               int     rt)
-{
-  int  status = 0;
-  int  rcode = 0;
-  int  uid, gid;
-  char *p;
-  int  len;
-  char type[5];
-  char command[MAXCOMSIZ];
-  char username[CA_MAXUSRNAMELEN+1];
-  FILE *fs = NULL;
-
-  (*logfunc)(LOG_DEBUG, "srpopen(%d,%s,%d)\n",s,host,rt);
-  p= rqstbuf + 2*WORDSIZE;
-  unmarshall_LONG(p ,len );
-  if ( (status = srchkreqsize(s,p,len)) == -1 ) {
-    (*logfunc)(LOG_ERR,"Denying popen request (with bad request size) from %s\n", host);
-    rcode = errno;
-  } else {
-    if (netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT) != len) {
-      (*logfunc)(LOG_ERR,"rpopen: read(): %s\n",strerror(errno));
-      return NULL;
-    }
-    p= rqstbuf;
-    unmarshall_WORD(p, uid);
-    unmarshall_WORD(p, gid);
-    status += unmarshall_STRINGN(p , type, sizeof(type) );
-    status += unmarshall_STRINGN (p, command, MAXCOMSIZ);
-    command[MAXCOMSIZ-1] = '\0';
-    status += unmarshall_STRINGN (p, username, CA_MAXUSRNAMELEN+1);
-    username[CA_MAXUSRNAMELEN] = '\0';
-    (*logfunc)(LOG_DEBUG,"requestor is (%s, %d, %d) \n",username, uid, gid );
-    (*logfunc)(LOG_ERR,"Denying popen request (%s, %d, %d) from %s for command %s\n", username, uid, gid, host, command);
-    if (status) {
-      (*logfunc)(LOG_ERR,"message too long\n");
-      status = -1;
-      rcode = errno = ENAMETOOLONG;
-    } else {
-      status = -1;
-      rcode = errno = EACCES;
-    }
-  }
-
-  p= rqstbuf;
-  (*logfunc)(LOG_DEBUG, "rpopen: sending back status(%d) and rcode(%d)\n",status, rcode);
-  marshall_LONG( p, status );
-  marshall_WORD( p, rcode );
-  if (netwrite_timeout(s,rqstbuf,WORDSIZE+LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+LONGSIZE)) {
-    (*logfunc)(LOG_ERR,"rpopen(): netwrite_timeout(): %s\n",strerror(errno));
-    return NULL;
-  }
-  return fs;
-}
-
-
 int srfread(int     s,
             FILE    *fp)
 {

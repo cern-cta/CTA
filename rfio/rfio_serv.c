@@ -58,7 +58,6 @@ extern char     *getconfent();
 
 #define SO_BUFSIZE      20*1024         /* Default socket buffer size   */
 
-extern FILE     *srpopen();             /* server remote popen()        */
 extern int      sropen();               /* server remote open()         */
 extern int      sropen_v3();            /* server remote open()         */
 extern int      srclose();              /* server remote close()        */
@@ -873,11 +872,6 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG, "statfs() returned %d\n",status);
       shutdown(s,2); close(s);
       exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_POPEN :
-      (*logfunc)(LOG_DEBUG, "request type <popen()>\n");
-      streamf = srpopen(s, from_host, (bet?is_remote:0) ) ;
-      (*logfunc)(LOG_DEBUG, "srpopen() returned %x\n", streamf ) ;
-      break ;
     case RQST_FREAD :
       (*logfunc)(LOG_DEBUG,"request type <fread()>\n");
       status = srfread(s,streamf) ;
