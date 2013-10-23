@@ -25,10 +25,36 @@ cmake_minimum_required (VERSION 2.6)
 include_directories ("..")
 include_directories ("../h")
 
+################################################################################
+# Rules to build and install libcastorvdqm.so
+################################################################################
 set (VDQM_LIB_SRC_FILES vdqmapi.c vdqm_SendRecv.c)
-
 add_library (castorvdqm SHARED ${VDQM_LIB_SRC_FILES})
 set_target_properties (castorvdqm
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castorvdqm castorcommon)
 install (TARGETS castorvdqm DESTINATION ${CASTOR_DEST_LIB_DIR})
+CastorInstallLibManPage (vdqm_Connect)
+CastorInstallLibManPage (vdqm_DelDrive)
+CastorInstallLibManPage (vdqm_DelVolumeReq)
+CastorInstallLibManPage (vdqm_Disconnect)
+CastorInstallLibManPage (vdqm_NextDrive)
+CastorInstallLibManPage (vdqm_NextVol)
+CastorInstallLibManPage (vdqm_SendVolReq)
+CastorInstallLibManPage (vdqm_UnitStatus)
+
+################################################################################
+# Rules to install and build showqueues
+################################################################################
+add_executable (showqueues showqueues.c)
+target_link_libraries (showqueues castorcommon castorvdqm)
+install (TARGETS showqueues DESTINATION ${CASTOR_DEST_BIN_DIR})
+CastorInstallExeManPage (showqueues)
+
+################################################################################
+# Rules to install and build vdqm_admin
+################################################################################
+add_executable (vdqm_admin vdqm_admin.c)
+install (TARGETS vdqm_admin DESTINATION ${CASTOR_DEST_BIN_DIR})
+target_link_libraries (vdqm_admin castorcommon castorvdqm)
+CastorInstallExeManPage (vdqm_admin)
