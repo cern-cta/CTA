@@ -31,7 +31,7 @@ BEGIN
   ROLLBACK;
   UPDATE UpgradeLog
      SET failureCount = failureCount + 1
-   WHERE schemaVersion = '2_1_14_2'
+   WHERE schemaVersion = '2_1_9_3'
      AND release = '2_1_14_3'
      AND state != 'COMPLETE';
   COMMIT;
@@ -52,7 +52,7 @@ END;
 /
 
 INSERT INTO UpgradeLog (schemaVersion, release, type)
-VALUES ('2_1_14_2', '2_1_14_3', 'TRANSPARENT');
+VALUES ('2_1_9_3', '2_1_14_3', 'TRANSPARENT');
 COMMIT;
 
 /* Schema change */
