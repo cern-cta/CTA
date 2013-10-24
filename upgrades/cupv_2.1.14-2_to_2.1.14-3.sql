@@ -56,7 +56,7 @@ VALUES ('2_1_14_2', '2_1_14_3', 'TRANSPARENT');
 COMMIT;
 
 /* Schema change */
-ALTER TABLE User_privilege MODIFY (uid NUMBER);
+ALTER TABLE User_privilege MODIFY (u_id NUMBER);
 
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
