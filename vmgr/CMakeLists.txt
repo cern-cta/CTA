@@ -127,3 +127,44 @@ CastorInstallLogrotate (castor-vmgr-server)
 CastorInstallSysconfig (vmgrd)
 CastorInstallInitScript (vmgrd)
 CastorInstallConfigFile (vmgrd)
+
+################################################################################
+# Rule to install the vmgr "umbrella" man page which gives an overview of all
+# the vmgr client executables
+################################################################################
+CastorInstallExeManPage (vmgr)
+
+################################################################################
+# Rules to build and install the vmgr client executables
+################################################################################
+set (VMGR_CLIENT_EXES
+  vmgrdeletedenmap
+  vmgrdeletedgnmap
+  vmgrdeletelibrary
+  vmgrdeletemodel
+  vmgrdeletepool
+  vmgrdeletetape
+  vmgrdeltag
+  vmgrenterdenmap
+  vmgrenterdgnmap
+  vmgrenterlibrary
+  vmgrentermodel
+  vmgrenterpool
+  vmgrentertape
+  vmgrgettag
+  vmgrlistdenmap
+  vmgrlistdgnmap
+  vmgrlistlibrary
+  vmgrlistmodel
+  vmgrlistpool
+  vmgrlisttape
+  vmgrmodifylibrary
+  vmgrmodifypool
+  vmgrmodifytape
+  vmgrsettag)
+foreach (CLIENT_EXE ${VMGR_CLIENT_EXES})
+  add_executable (${CLIENT_EXE} ${CLIENT_EXE}.c)
+  target_link_libraries (${CLIENT_EXE} castorcommon castorvmgr)
+  CastorInstallExeManPage (${CLIENT_EXE})
+endforeach ()
+target_link_libraries (vmgrdeletetape castorns)

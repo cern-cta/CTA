@@ -1,5 +1,5 @@
 #
-#                      dlf/CMakeLists.txt
+#                      security/CMakeLists.txt
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -23,11 +23,12 @@
 cmake_minimum_required (VERSION 2.6)
 
 ################################################################################
-# Rules to build and install libcastordlf.so
+# Rules to build and install libcastorsecurity.so
 ################################################################################
-set (DLF_LIB_SRC_FILES dlf_lib.c)
-add_library (castordlf SHARED ${DLF_LIB_SRC_FILES})
-set_target_properties (castordlf
+set (SECURITY_LIB_SRC_FILES Csec_api_loader.c Csec_protocol_policy.c
+  Csec_api.c Csec_errmsg.c Csec_apiinit.c Csec_common.c)
+add_library (castorsecurity SHARED ${SECURITY_LIB_SRC_FILES})
+set_target_properties (castorsecurity
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
-target_link_libraries (castordlf castorcommon)
-install (TARGETS castordlf DESTINATION ${CASTOR_DEST_LIB_DIR})
+#target_link_libraries (castorsecurity castorcommon)
+install (TARGETS castorsecurity DESTINATION ${CASTOR_DEST_LIB_DIR})
