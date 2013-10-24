@@ -22,6 +22,9 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
+################################################################################
+# Rules to build and install libcastorvmgr.so
+################################################################################
 set (VMGR_LIB_SRC_FILES
   vmgr_apiinit.c
   vmgr_deletedenmap.c
@@ -65,9 +68,62 @@ set (VMGR_LIB_SRC_FILES
   vmgr_updatetape.c
   send2vmgr.c
   vmgrcheck.c)
-
 add_library (castorvmgr SHARED ${VMGR_LIB_SRC_FILES})
 set_target_properties (castorvmgr
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castorvmgr castorcommon castorupv)
 install (TARGETS castorvmgr DESTINATION ${CASTOR_DEST_LIB_DIR})
+CastorInstallLibManPage (vmgr_deletedenmap)
+CastorInstallLibManPage (vmgr_deletedgnmap)
+CastorInstallLibManPage (vmgr_deletelibrary)
+CastorInstallLibManPage (vmgr_deletemodel)
+CastorInstallLibManPage (vmgr_deletepool)
+CastorInstallLibManPage (vmgr_deletetape)
+CastorInstallLibManPage (vmgr_deltag)
+CastorInstallLibManPage (vmgr_enterdenmap)
+CastorInstallLibManPage (vmgr_enterdenmap_byte_u64)
+CastorInstallLibManPage (vmgr_enterdgnmap)
+CastorInstallLibManPage (vmgr_enterlibrary)
+CastorInstallLibManPage (vmgr_entermodel)
+CastorInstallLibManPage (vmgr_enterpool)
+CastorInstallLibManPage (vmgr_entertape)
+CastorInstallLibManPage (vmgr_gettag)
+CastorInstallLibManPage (vmgr_gettape)
+CastorInstallLibManPage (vmgr_listdenmap)
+CastorInstallLibManPage (vmgr_listdenmap_byte_u64)
+CastorInstallLibManPage (vmgr_listdgnmap)
+CastorInstallLibManPage (vmgr_listlibrary)
+CastorInstallLibManPage (vmgr_listmodel)
+CastorInstallLibManPage (vmgr_listpool)
+CastorInstallLibManPage (vmgr_listtape)
+CastorInstallLibManPage (vmgr_listtape_byte_u64)
+CastorInstallLibManPage (vmgr_modifylibrary)
+CastorInstallLibManPage (vmgr_modifymodel)
+CastorInstallLibManPage (vmgr_modifypool)
+CastorInstallLibManPage (vmgr_modifytape)
+CastorInstallLibManPage (vmgr_querylibrary)
+CastorInstallLibManPage (vmgr_querymodel)
+CastorInstallLibManPage (vmgr_querypool)
+CastorInstallLibManPage (vmgr_querytape)
+CastorInstallLibManPage (vmgr_querytape_byte_u64)
+CastorInstallLibManPage (vmgr_reclaim)
+CastorInstallLibManPage (vmgr_seterrbuf)
+CastorInstallLibManPage (vmgr_settag)
+CastorInstallLibManPage (vmgr_tpmounted)
+CastorInstallLibManPage (vmgr_updatetape)
+
+################################################################################
+# Rules to build and install vmgrd
+################################################################################
+CastorAddProC(vmgr_oracle_ifce)
+set (VMGR_SRC_FILES vmgr_main.c vmgr_oracle_ifce.c vmgr_procreq.c sendrep.c
+  vmgrlogit.c)
+add_executable(vmgrd ${VMGR_SRC_FILES})
+target_link_libraries (vmgrd castorcommon castorupv
+  ${ORACLE_LIBDIR}/libclntsh.so)
+install (TARGETS vmgrd DESTINATION ${CASTOR_DEST_BIN_DIR})
+CastorInstallAdmManPage (vmgrd)
+CastorInstallLogrotate (castor-vmgr-server)
+CastorInstallSysconfig (vmgrd)
+CastorInstallInitScript (vmgrd)
+CastorInstallConfigFile (vmgrd)

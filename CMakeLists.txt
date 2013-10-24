@@ -35,7 +35,6 @@ set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
 include(cmake/CASTORVersion.cmake)
-find_package(Oracle)
 
 ################################################################################
 # Configure header file
@@ -59,6 +58,50 @@ include_directories(${CMAKE_BINARY_DIR})
 include_directories(${CMAKE_BINARY_DIR}/h)
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/h)
+
+execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/oracompile.py
+    --with-precomp --home OUTPUT_VARIABLE ORACLE_HOME)
+string (REGEX REPLACE "\n" "" ORACLE_HOME ${ORACLE_HOME})
+message (STATUS "ORACLE_HOME = '${ORACLE_HOME}'")
+execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/oracompile.py
+    --with-precomp --bindir OUTPUT_VARIABLE ORACLE_BIN)
+string (REGEX REPLACE "\n" "" ORACLE_BIN ${ORACLE_BIN})
+message (STATUS "ORACLE_BIN = ${ORACLE_BIN}")
+execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/oracompile.py
+    --with-precomp --libdir OUTPUT_VARIABLE ORACLE_LIBDIR)
+string (REGEX REPLACE "\n" "" ORACLE_LIBDIR ${ORACLE_LIBDIR})
+message (STATUS "ORACLE_LIBDIR = ${ORACLE_LIBDIR}")
+execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/oracompile.py
+    --with-precomp --cppflags OUTPUT_VARIABLE ORACLE_CPPFLAGS)
+string (REGEX REPLACE "\n" "" ORACLE_CPPFLAGS ${ORACLE_CPPFLAGS})
+message (STATUS "ORACLE_CPPFLAGS = ${ORACLE_CPPFLAGS}")
+execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/oracompile.py
+    --with-precomp --procinc OUTPUT_VARIABLE ORACLE_PROCINC)
+string (REGEX REPLACE "\n" "" ORACLE_PROCINC ${ORACLE_PROCINC})
+message (STATUS "ORACLE_PROCINC = ${ORACLE_PROCINC}")
+
+function (CastorAddProC _name)
+  add_custom_command (
+    OUTPUT ${_name}.c DEPENDS ${_name}.pc
+    COMMAND
+      ORACLE_HOME=${ORACLE_HOME}
+      LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}:${ORACLE_LIBDIR}
+      ${ORACLE_BIN}/proc
+      iname=${CMAKE_CURRENT_SOURCE_DIR}/${_name}
+      oname=${CMAKE_CURRENT_BINARY_DIR}/${_name}.c
+      ${ORACLE_PROCINC}
+      include=${CMAKE_SOURCE_DIR}/h threads=yes
+      char_map=string
+      parse=full
+      prefetch=1000)
+
+  # Append the oracle specific compilation flags and also use -Wno-error to
+  # override the default -Werror compilation rule in the case of source files
+  # produced by the Pro*C precompiler.  Such files contain generated code that
+  # generates warnings.
+  set_property (SOURCE ${_name}.c
+    PROPERTY COMPILE_FLAGS "${ORACLE_CPPFLAGS} -Wno-error")
+endfunction ()
 
 function (CastorInstallManPage _name _section)
   install (FILES ${_name}.man
