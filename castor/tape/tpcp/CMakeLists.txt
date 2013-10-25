@@ -36,7 +36,47 @@ set (DUMPTP_SRC_FILES
   TapeFseqRangeSequence.cpp
   TpcpCommand.cpp)
 add_executable (dumptp ${DUMPTP_SRC_FILES})
-#target_link_libraries (castortapetpcp castorcommon castorclient castortapeutils)
-target_link_libraries (dumptp castorcommon castortapeutils castorvdqm castorvmgr)
+target_link_libraries (dumptp castorcommon castorrfio castortapegatewayprotocol
+  castortapenet castortapeutils castorvdqm castorvmgr)
 install (TARGETS dumptp DESTINATION ${CASTOR_DEST_LIB_DIR})
 CastorInstallExeManPage (dumptp)
+
+################################################################################
+# Rules to build and install readtp
+################################################################################
+set (READTP_SRC_FILES
+  Helper.cpp
+  ReadTpCommand.cpp
+  ReadTpMain.cpp
+  StreamOperators.cpp
+  TapeFileSequenceParser.cpp
+  TapeFseqRange.cpp
+  TapeFseqRangeListSequence.cpp
+  TapeFseqRangeSequence.cpp
+  TpcpCommand.cpp)
+add_executable (readtp ${READTP_SRC_FILES})
+target_link_libraries (readtp castorcommon castorrfio
+castortapegatewayprotocol
+  castortapenet castortapeutils castorvdqm castorvmgr)
+install (TARGETS readtp DESTINATION ${CASTOR_DEST_LIB_DIR})
+CastorInstallExeManPage (readtp)
+
+################################################################################
+# Rules to build and install writetp
+################################################################################
+set (WRITETP_SRC_FILES
+  Helper.cpp
+  StreamOperators.cpp
+  TapeFileSequenceParser.cpp
+  TapeFseqRange.cpp
+  TapeFseqRangeListSequence.cpp
+  TapeFseqRangeSequence.cpp
+  TpcpCommand.cpp
+  WriteTpCommand.cpp
+  WriteTpMain.cpp)
+add_executable (writetp ${WRITETP_SRC_FILES})
+target_link_libraries (writetp castorcommon castorrfio
+castortapegatewayprotocol
+  castortapenet castortapeutils castorvdqm castorvmgr)
+install (TARGETS writetp DESTINATION ${CASTOR_DEST_LIB_DIR})
+CastorInstallExeManPage (writetp)

@@ -1,0 +1,43 @@
+#
+#                      rfio/CMakeLists.txt
+#
+# This file is part of the Castor project.
+# See http://castor.web.cern.ch/castor
+#
+# Copyright (C) 2003  CERN
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, write to the Free Software
+# Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+#
+#
+# Steven.Murray@cern.ch
+#
+cmake_minimum_required (VERSION 2.6)
+
+################################################################################
+# Rules to build and install libcastorrfio.so
+################################################################################
+set (RFIO_LIB_SRC_FILES access.c alrm.c chdir.c checkkey.c chmod.c chown.c
+  close.c closedir.c connect.c error.c fchmod.c fchown.c fclose.c feof.c
+  ferror.c fflush.c fileno.c fio.c fopen.c fread.c fseek.c fstat.c ftell.c
+  fwrite.c getc.c getcwd.c lockf.c lseek.c lstat.c lun2fn.c misc.c mkdir.c
+  mstat.c msymlink.c munlink.c open.c opendir.c parse.c pclose.c popen.c
+  pread.c preseek.c pwrite.c read.c readdir.c readlink.c rename.c rewinddir.c
+  rfio_HsmIf.c rfio_rdirfdt.c rfio_rfilefdt.c rfstatfs.c rmdir.c setopt.c stat.c
+  statfs.c stream.c switch_req.c symlink.c unlink.c write.c xyclose.c xyopen.c
+  xyread.c xywrite.c fopen64.c fseeko64.c fstat64.c ftello64.c lockf64.c
+  lseek64.c open64.c preseek64.c read64.c stream64.c write64.c RfioTURL.c)
+add_library (castorrfio SHARED ${RFIO_LIB_SRC_FILES})
+set_target_properties (castorrfio PROPERTIES
+  SOVERSION ${MAJOR_CASTOR_VERSION}
+  COMPILE_DEFINITIONS USE_XFSPREALLOC)
+target_link_libraries (castorrfio castorns)
+install (TARGETS castorrfio DESTINATION ${CASTOR_DEST_LIB_DIR})
