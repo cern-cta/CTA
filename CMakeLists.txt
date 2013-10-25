@@ -111,23 +111,23 @@ function (CastorInstallManPage _name _section)
 endfunction ()
 
 function (CastorInstallExeManPage _name)
-  CastorInstallManPage(${_name} 1)
+  CastorInstallManPage (${_name} 1)
 endfunction ()
 
 function (CastorInstallSysManPage _name)
-  CastorInstallManPage(${_name} 2)
+  CastorInstallManPage (${_name} 2)
 endfunction ()
 
 function (CastorInstallLibManPage _name)
-  CastorInstallManPage(${_name} 3)
+  CastorInstallManPage (${_name} 3)
 endfunction ()
 
 function (CastorInstallFileManPage _name)
-  CastorInstallManPage(${_name} 4)
+  CastorInstallManPage (${_name} 4)
 endfunction ()
 
 function (CastorInstallAdmManPage _name)
-  CastorInstallManPage(${_name} 8)
+  CastorInstallManPage (${_name} 8)
 endfunction ()
 
 set (CASTOR_LOGROTATE_PERMS
@@ -202,6 +202,9 @@ endif(NOT DEFINED COMPILE_CLIENT)
 # Include the subdirectories of the project
 ################################################################################
 
+add_subdirectory (castor)
+add_subdirectory (castor/db/cnv)
+add_subdirectory (castor/vdqm)
 add_subdirectory (common)
 add_subdirectory (dlf)
 add_subdirectory (ns)

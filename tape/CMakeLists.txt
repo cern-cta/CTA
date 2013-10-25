@@ -63,7 +63,7 @@ set (TAPE_LIB_MAN_PAGES Ctape_dmpfil Ctape_info Ctape_kill Ctape_label
   Ctape_mount Ctape_position Ctape_reserve Ctape_rls Ctape_rstatus Ctape_status
   getcompstat readlbl rwndtape skiptape usrlbl wrttpmrk)
 foreach (MAN_PAGE ${TAPE_LIB_MAN_PAGES})
-  CastorInstallLibManPage(${MAN_PAGE})
+  CastorInstallLibManPage (${MAN_PAGE})
 endforeach ()
 
 ################################################################################
@@ -88,7 +88,7 @@ set (TAPED_SRC_FILES tpdaemon.c checkjobdied.c cvtden.c sendrep.c tplogit.c
 add_executable (taped ${TAPED_SRC_FILES})
 target_link_libraries (taped castorcommon castortape castorvdqm)
 install (TARGETS taped DESTINATION ${CASTOR_DEST_BIN_DIR})
-CastorInstallAdmManPage(taped)
+CastorInstallAdmManPage (taped)
 CastorInstallLogrotate(castor-tape-server)
 CastorInstallSysconfig(taped)
 CastorInstallInitScript(taped)
