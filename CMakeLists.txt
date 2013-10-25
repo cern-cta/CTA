@@ -203,8 +203,6 @@ endif(NOT DEFINED COMPILE_CLIENT)
 ################################################################################
 
 add_subdirectory (castor)
-add_subdirectory (castor/db/cnv)
-add_subdirectory (castor/vdqm)
 add_subdirectory (common)
 add_subdirectory (dlf)
 add_subdirectory (ns)

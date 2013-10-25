@@ -22,6 +22,10 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
+add_subdirectory (db)
+add_subdirectory (tape)
+add_subdirectory (vdqm)
+
 ################################################################################
 # Rules to build and install libcastorclient.so
 ################################################################################
