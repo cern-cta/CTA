@@ -1,21 +1,22 @@
------------
+------------
 - 2.1.14-3 -
 ------------
 
-  Summary of major features
-  -------------------------
+  Summary
+  -------
 
-  Notes
-  -----
-
+  This is a minor release bringing a number of bug fixes on top of the previous
+  one.
+  General notes:
   - To install the smc comand-line tool one must install the castor-rmc-client
     package.
+  - A new view is now provided in the Stager database, LateMigrationsView, to
+    help operations spot stuck migrations.
+  - Please note that the castor-gridftp-dsi-ext package is now deprecated.
+    This package will definitely be removed as of 2.1.15-0.
 
   CASTOR Core Framework
   ---------------------
-
-  [Bug]
-
 
   [Features]
 
@@ -24,16 +25,6 @@
   [Code Maintenance]
 
      #102602 CM: Remove support for loading service libraries at run-time
-
-
-  CASTOR Stager
-  -------------
-
-  [Bug]
-
-  [Features]
-
-  [Code Maintenance]
 
   CASTOR Tape
   -----------
@@ -57,35 +48,12 @@
      #102815 RFE: Remove the tprstat command from CASTOR
      #102853 RFE: Remove code implementing unsupported tape label types
 
-
-  CASTOR NS
-  ---------
-
-  [Bug]
-
-  [Features]
-
-  [Code Maintenance]
-
-  CASTOR Repack
-  -------------
-
-  [Bug]
-
-  [Features]
-
-  [Code Maintenance]
-
   CASTOR Protocols
   ----------------
-
-  [Bug]
 
   [Features]
 
      #102947 RFE Remove the castor-gridftp-dsi-xroot package
-
-  [Code Maintenance]
 
   Package Changes
   ---------------
@@ -99,12 +67,52 @@
     packages now require the same version to be installed for all packages.
   - The castor-gridftp-dsi-xroot has been removed.
 
-  Deployment Changes
-  ------------------
-
   Upgrade Instructions from 2.1.14-2
   ----------------------------------
 
+    Stager
+    ------
+
+    The upgrade of the stager database to 2.1.14-3 can be performed online while the system is running.
+    The RPM upgrade can also be performed on a running system, with 2 restrictions:
+      - the restart of the RH servers may be noticable by few clients (< 1s downtime);
+      - the restart of the transfermanagers and diskmanagers should not be done concurrently.
+
+      Instructions
+      ------------
+
+       1. Upgrade the STAGER database using the stager_2.1.14-2_to_2.1.14-3.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-3/dbupgrades
+
+       2. Upgrade the software on the headnodes.
+          Note: All daemons involved in the upgrade will be restarted automatically.
+
+       3. Upgrade the software on the diskservers.
+          Note: All daemons involved in the upgrade will be restarted automatically.
+
+       4. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-3/testsuite
+
+       5. Congratulations you have successfully upgraded to the 2.1.14-3 release
+          of CASTOR.
+
+    Central services (CUPV, VMGR, VDQM, Nameserver)
+    -----------------------------------------------
+
+      The upgrade of the central databases to 2.1.14-3 can be performed online while
+      the system is running.
+
+      Instructions
+      ------------
+
+       1. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-3/dbupgrades
+
+       2. Update the software to use the 2.1.14-3 RPMs. Note: All
+          daemons involved in the upgrade will be restarted automatically.
+
+       3. Upgrade complete.
 
 
 ------------
