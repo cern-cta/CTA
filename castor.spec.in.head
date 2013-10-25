@@ -6,7 +6,7 @@
 
 # Partial compilations
 #---------------------
-%define compile_client @COMPILE_CLIENT@
+%define compile_server @COMPILE_SERVER@
 
 # General settings
 #-----------------
@@ -20,11 +20,11 @@ License: http://cern.ch/castor/DIST/CONDITIONS
 Group: Application/Castor
 BuildRoot: %{_builddir}/%{name}-%{version}-root
 # only build debug info if you're building the whole code
-%if %compile_client
-%define debug_package %{nil}
-%endif
-%if %compile_client
+%if %compile_server
 %else
+  %define debug_package %{nil}
+%endif
+%if %compile_server
 BuildRequires: oracle-instantclient-devel
 %endif
 
@@ -38,8 +38,7 @@ The CASTOR Project stands for CERN Advanced STORage Manager, and its goal is to 
 
 # rpmbuild --define "clientonly 1" ...
 %if 0%{?clientonly:1} > 0
-%define compile_client 1
-export CASTOR_CLIENT=%compile_client
+%define compile_server 0
 # Suppress oracompile.py warnings in clientonly mode
 export ORACOMPILE_OPTIONS="--quiet"
 %endif
@@ -51,14 +50,9 @@ export MAJOR_CASTOR_VERSION
 export MINOR_CASTOR_VERSION
 mkdir -p build
 cd build
-MAJOR_CASTOR_VERSION=${MAJOR_CASTOR_VERSION} MINOR_CASTOR_VERSION=${MINOR_CASTOR_VERSION} cmake .. 
-%if %compile_client
-(cd h; ln -s . shift)
-echo "Only compiling client part"
-%{__make} -s %{_smp_mflags} client
-%else
+# The cmake step does the selection between client/server compilation or just client
+MAJOR_CASTOR_VERSION=${MAJOR_CASTOR_VERSION} MINOR_CASTOR_VERSION=${MINOR_CASTOR_VERSION} cmake .. -DCOMPILE_PACKAGING:STRING=0 -DCOMPILE_SERVER:STRING=@COMPILE_SERVER@
 %{__make} -s %{_smp_mflags}
-%endif
 
 %install
 # define castor version (modified by maketar.sh to put the exact version)
@@ -69,11 +63,7 @@ export MINOR_CASTOR_VERSION
 %{__rm} -rf ${RPM_BUILD_ROOT}
 
 cd build
-%if %compile_client
-%{__make} installclient DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
-%else
 %{__make} install DESTDIR=${RPM_BUILD_ROOT} EXPORTMAN=${RPM_BUILD_ROOT}/usr/share/man
-%endif
 
 %clean
 %{__rm} -rf $RPM_BUILD_ROOT

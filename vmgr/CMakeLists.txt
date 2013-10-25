@@ -126,7 +126,7 @@ CastorInstallAdmManPage (vmgrd)
 CastorInstallLogrotate (castor-vmgr-server)
 CastorInstallSysconfig (vmgrd)
 CastorInstallInitScript (vmgrd)
-CastorInstallConfigFile (vmgrd)
+CastorInstallConfigFile (VMGR)
 
 ################################################################################
 # Rule to install the vmgr "umbrella" man page which gives an overview of all

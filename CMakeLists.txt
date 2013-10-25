@@ -48,8 +48,14 @@ configure_file(${CMAKE_SOURCE_DIR}/h/patchlevel.h.in
 set (CASTOR_DEST_BIN_DIR /usr/bin)
 set (CASTOR_DEST_LIB_DIR /usr/lib64)
 set (CASTOR_DEST_MAN_DIR /usr/share/man)
+set (CASTOR_DEST_INCLUDE_DIR /usr/include)
 
 set (CASTOR_MAN_PAGE_PERMS
+  OWNER_READ OWNER_WRITE
+  GROUP_READ
+  WORLD_READ)
+
+set (CASTOR_HEADER_PERMS
   OWNER_READ OWNER_WRITE
   GROUP_READ
   WORLD_READ)
@@ -87,7 +93,7 @@ function (CastorAddProC _name)
       ORACLE_HOME=${ORACLE_HOME}
       LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}:${ORACLE_LIBDIR}
       ${ORACLE_BIN}/proc
-      iname=${CMAKE_CURRENT_SOURCE_DIR}/${_name}
+      iname=${CMAKE_CURRENT_SOURCE_DIR}/${_name}.pc
       oname=${CMAKE_CURRENT_BINARY_DIR}/${_name}.c
       ${ORACLE_PROCINC}
       include=${CMAKE_SOURCE_DIR}/h threads=yes
@@ -192,15 +198,27 @@ set (CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
 set_property (DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
 
 # Generate the compilation variables, if needed
-if(NOT DEFINED COMPILE_CLIENT)
-  message(STATUS "Setting COMPILE_CLIENT to the value of 0")
-  message(STATUS "Override with -DCOMPILE_CLIENT:STRING=1")
-  set(COMPILE_CLIENT 0)
-endif(NOT DEFINED COMPILE_CLIENT)
+if(NOT DEFINED COMPILE_SERVER)
+  message(STATUS "Setting COMPILE_SERVER to the value of 1")
+  message(STATUS "Override with -DCOMPILE_SERVER:STRING=0")
+  set(COMPILE_SERVER 0)
+endif(NOT DEFINED COMPILE_SERVER)
+
+# Generate the compilation variables, if needed
+if(NOT DEFINED COMPILE_PACKAGING)
+  message(STATUS "Setting COMPILE_PACKAGING to the value of 1")
+  message(STATUS "Override with -DCOMPILE_PACKAGING:STRING=0")
+  set(COMPILE_PACKAGING 1)
+endif(NOT DEFINED COMPILE_PACKAGING)
 
 ################################################################################
 # Include the subdirectories of the project
 ################################################################################
+
+# Some directories have client components, and get included unconditionnaly
+# inside them, we can filter further down what we need or not.
+# The ones with only server components can already be filtered out for the 
+# clients builds here.
 
 add_subdirectory (castor)
 add_subdirectory (common)
@@ -209,34 +227,40 @@ add_subdirectory (ns)
 add_subdirectory (rfio)
 add_subdirectory (rmc)
 add_subdirectory (security)
-add_subdirectory (tape)
 add_subdirectory (upv)
 add_subdirectory (vdqm)
 add_subdirectory (vmgr)
+add_subdirectory (h)
+if(${COMPILE_SERVER} STREQUAL "1")
+  add_subdirectory (rmc)
+  add_subdirectory (tape)
+endif(${COMPILE_SERVER} STREQUAL "1")
 
 ################################################################################
 # Packaging step (replacing the maketar)
 # See http://www.vtk.org/Wiki/CMakeUserUseRPMTools
 ################################################################################
-include(cmake/UseRPMToolsEnvironment.cmake)
-set(CPACK_SOURCE_PACKAGE_FILE_NAME
- "${PROJECT_NAME}-${CASTOR_VERSION}-${CASTOR_RELEASE}${RPMTools_RPMBUILD_DIST}")
-message(STATUS
-  "Setting package file name to: ${CPACK_SOURCE_PACKAGE_FILE_NAME}")
-include(CPack)
-include(cmake/UseRPMTools.cmake)
-if(RPMTools_FOUND)
-  execute_process(COMMAND ${CMAKE_COMMAND} -E copy
-    ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.spec.in.head
-    ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
-  message(STATUS "Generating spec file from debian package structure...")
-  execute_process(
-    COMMAND ./makespec.in.sh ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in 2>&1
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE result)
-  if(NOT ${result} STREQUAL "")
-    message(STATUS "${result}")
-  endif(NOT ${result} STREQUAL "")
-  RPMTools_ADD_RPM_TARGETS(
-    ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
-endif(RPMTools_FOUND)
+if(${COMPILE_PACKAGING} STREQUAL "1")
+  include(cmake/UseRPMToolsEnvironment.cmake)
+  set(CPACK_SOURCE_PACKAGE_FILE_NAME
+   "${PROJECT_NAME}-${CASTOR_VERSION}-${CASTOR_RELEASE}${RPMTools_RPMBUILD_DIST}")
+  message(STATUS
+    "Setting package file name to: ${CPACK_SOURCE_PACKAGE_FILE_NAME}")
+  include(CPack)
+  include(cmake/UseRPMTools.cmake)
+  if(RPMTools_FOUND)
+    execute_process(COMMAND ${CMAKE_COMMAND} -E copy
+      ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.spec.in.head
+      ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
+    message(STATUS "Generating spec file from debian package structure...")
+    execute_process(
+      COMMAND ./makespec.in.sh ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in 2>&1
+      WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      OUTPUT_VARIABLE result)
+    if(NOT ${result} STREQUAL "")
+      message(STATUS "${result}")
+    endif(NOT ${result} STREQUAL "")
+    RPMTools_ADD_RPM_TARGETS(
+      ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
+  endif(RPMTools_FOUND)
+endif(${COMPILE_PACKAGING} STREQUAL "1")
