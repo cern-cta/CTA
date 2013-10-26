@@ -97,3 +97,76 @@ set_target_properties (castorns
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castorns castorsecurity)
 install (TARGETS castorns DESTINATION ${CASTOR_DEST_LIB_DIR})
+
+set(CNS_MAN_PAGES
+  Cns_aborttrans
+  Cns_access
+  Cns_chclass
+  Cns_chdir
+  Cns_chmod
+  Cns_chown
+  Cns_closedir
+  Cns_closex
+  Cns_creat
+  Cns_delcomment
+  Cns_deleteclass
+  Cns_delsegbycopyno
+  Cns_dropsegs
+  Cns_endsess
+  Cns_endtrans
+  Cns_enterclass
+  Cns_getacl
+  Cns_getcomment
+  Cns_getcwd
+  Cns_getlinks
+  Cns_getsegattrs
+  Cns_lastfseq
+  Cns_lchown
+  Cns_listclass
+  Cns_listlinks
+  Cns_listtape
+  Cns_mkdirg
+  Cns_mkdir
+  Cns_modifyclass
+  Cns_opendirg
+  Cns_opendir
+  Cns_opendirxg
+  Cns_openx
+  Cns_ping
+  Cns_queryclass
+  Cns_readdirc
+  Cns_readdirg
+  Cns_readdir
+  Cns_readdirxc
+  Cns_readdirx
+  Cns_readdirxt
+  Cns_readlink
+  Cns_rename
+  Cns_replaceseg
+  Cns_rewinddir
+  Cns_rmdir
+  Cns_selectsrvr
+  Cns_setacl
+  Cns_setatime
+  Cns_setcomment
+  Cns_seterrbuf
+  Cns_setfsize
+  Cns_setid
+  Cns_startsess
+  Cns_starttrans
+  Cns_statg
+  Cns_stat
+  Cns_symlink
+  Cns_tapesum
+  Cns_umask
+  Cns_unlinkbyvid
+  Cns_unlink
+  Cns_unsetid
+  Cns_updatefile_checksum
+  Cns_updateseg_checksum
+  Cns_updateseg_status
+  Cns_utime)
+
+foreach(MAN_PAGE ${CNS_MAN_PAGES})
+  CastorInstallLibManPage(${MAN_PAGE})
+endforeach(MAN_PAGE)

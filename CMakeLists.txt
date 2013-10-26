@@ -183,6 +183,13 @@ function (CastorInstallConfigFile _name)
     RENAME ${_name}CONFIG.example)
 endfunction ()
 
+function (CastorInstallConfigFileLowercase _name)
+  install (FILES ${_name}
+    DESTINATION /etc/castor
+    PERMISSIONS ${CASTOR_CONFIG_PERMS}
+    RENAME ${_name}.example)
+endfunction ()
+
 set (CMAKE_C_FLAGS
   "-pthread -fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
 
@@ -201,7 +208,7 @@ set_property (DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
 if(NOT DEFINED COMPILE_SERVER)
   message(STATUS "Setting COMPILE_SERVER to the value of 1")
   message(STATUS "Override with -DCOMPILE_SERVER:STRING=0")
-  set(COMPILE_SERVER 0)
+  set(COMPILE_SERVER 1)
 endif(NOT DEFINED COMPILE_SERVER)
 
 # Generate the compilation variables, if needed
@@ -231,8 +238,9 @@ add_subdirectory (upv)
 add_subdirectory (vdqm)
 add_subdirectory (vmgr)
 add_subdirectory (h)
+add_subdirectory (config)
+add_subdirectory (shlib)
 if(${COMPILE_SERVER} STREQUAL "1")
-  add_subdirectory (rmc)
   add_subdirectory (tape)
 endif(${COMPILE_SERVER} STREQUAL "1")
 

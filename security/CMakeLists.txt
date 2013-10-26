@@ -32,3 +32,5 @@ set_target_properties (castorsecurity
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 #target_link_libraries (castorsecurity castorcommon)
 install (TARGETS castorsecurity DESTINATION ${CASTOR_DEST_LIB_DIR})
+
+CastorInstallLibManPage(Csec_api)

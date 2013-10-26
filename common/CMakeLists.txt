@@ -74,3 +74,23 @@ set_target_properties (castorcommon
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castorcommon dl ${UUID_LIB_NAME})
 install (TARGETS castorcommon DESTINATION ${CASTOR_DEST_LIB_DIR})
+
+set(COMMON_MAN_PAGES
+  Cgetopt
+  Cglobals
+  Cgrp
+  Cmutex
+  Cpool
+  Cpwd
+  Cthread
+  Cuuid
+  getacctent
+  getacct
+  getconfent
+  log
+  netread
+  netwrite)
+
+foreach(MAN_PAGE ${COMMON_MAN_PAGES})
+  CastorInstallLibManPage(${MAN_PAGE})
+endforeach(MAN_PAGE)

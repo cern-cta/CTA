@@ -31,3 +31,15 @@ set_target_properties (castordlf
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castordlf castorcommon)
 install (TARGETS castordlf DESTINATION ${CASTOR_DEST_LIB_DIR})
+
+set(DLF_API_MAN_PAGES
+  dlf_init
+  dlf_isinitialized
+  dlf_regtext
+  dlf_shutdown
+  dlf_write)
+
+
+foreach(MAN_PAGE ${DLF_API_MAN_PAGES})
+  CastorInstallLibManPage(${MAN_PAGE})
+endforeach(MAN_PAGE)

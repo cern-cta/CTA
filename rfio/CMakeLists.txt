@@ -41,3 +41,20 @@ set_target_properties (castorrfio PROPERTIES
   COMPILE_DEFINITIONS USE_XFSPREALLOC)
 target_link_libraries (castorrfio castorns)
 install (TARGETS castorrfio DESTINATION ${CASTOR_DEST_LIB_DIR})
+
+################################################################################
+# Rules to install the man pages
+################################################################################
+set (RFIO_MAN_FILES rfio_fileno rfio_read rfio_lstat rfio_readlink rfio_chown
+  rfio_mstat rfio_rewinddir rfio_fseeko64 rfio_rename rfio_preseek rfio_ftello64
+  rfio_write rfio_unlink rfio_fseek rfio_close rfio_msymlink rfio_fread
+  rfio_mstat64 rfio_open64 rfio_lseek rfio_closedir rfio_ftell rfio_stat
+  rfio_perror rfio_stat64 rfio_readdir rfio_opendir rfio_fwrite rfio_rmdir
+  rfio_lstat64 rfio_lockf64 rfio_fchmod rfio_fflush rfio_preseek64 rfio_pclose
+  rfio_mkdir rfio_access rfio_symlink rfio_munlink rfio_open rfio_statfs
+  rfio_fstat64 rfio_fstat rfio_feof rfio_popen rfio_lockf rfio_serror
+  rfio_fclose rfio_fopen64 rfio_lseek64 rfio_ferror rfio_chmod rfio_fopen
+  rfioreadopt rfiosetopt)
+foreach(MAN ${RFIO_MAN_FILES})
+  CastorInstallLibManPage(${MAN})
+endforeach(MAN)

@@ -118,3 +118,6 @@ set(SHIFT_SUBHEADERS
 install(FILES ${SHIFT_SUBHEADERS}
   DESTINATION ${CASTOR_DEST_INCLUDE_DIR}/shift
   PERMISSIONS ${CASTOR_HEADER_PERMS})
+
+CastorInstallFileManPage(Castor_limits)
+CastorInstallLibManPage(serrno)

@@ -1,5 +1,4 @@
-#
-#                      upv/CMakeLists.txt
+#                      CMakeLists.txt
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -18,27 +17,10 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 #
-# Steven.Murray@cern.ch
+# Steven.Murray@cern.ch Eric.Cano@cern.ch
 #
 cmake_minimum_required (VERSION 2.6)
 
-set (UPV_LIB_SRC_FILES Cupv_apiinit.c Cupv_errmsg.c send2Cupv.c Cupv_delete.c
-Cupv_list.c Cupv_util.c Cupv_check.c Cupv_modify.c Cupv_add.c)
-
-add_library (castorupv SHARED ${UPV_LIB_SRC_FILES})
-set_target_properties (castorupv
-  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
-target_link_libraries (castorupv castorcommon)
-install (TARGETS castorupv DESTINATION ${CASTOR_DEST_LIB_DIR})
-
-set(UPV_API_MAN_PAGES
-  Cupv_add
-  Cupv_check
-  Cupv_delete
-  Cupv_list
-  Cupv_modify)
-
-
-foreach(MAN_PAGE ${UPV_API_MAN_PAGES})
-  CastorInstallLibManPage(${MAN_PAGE})
-endforeach(MAN_PAGE)
+CastorInstallConfigFileLowercase(castor.conf)
+CastorInstallConfigFileLowercase(rsyslog.conf.client)
+CastorInstallConfigFileLowercase(rsyslog.conf.server)
