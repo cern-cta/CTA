@@ -49,6 +49,21 @@ set (CASTOR_DEST_BIN_DIR /usr/bin)
 set (CASTOR_DEST_LIB_DIR /usr/lib64)
 set (CASTOR_DEST_MAN_DIR /usr/share/man)
 set (CASTOR_DEST_INCLUDE_DIR /usr/include)
+set (CASTOR_DEST_PERL_LIBDIR /usr/lib/perl/CASTOR)
+execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/pycompile.py --libs
+  OUTPUT_VARIABLE CASTOR_PYTHON_LIBS)
+string(REGEX REPLACE "\n" "" CASTOR_PYTHON_LIBS ${CASTOR_PYTHON_LIBS})
+message(STATUS "CASTOR_PYTHON_LIBS = '${CASTOR_PYTHON_LIBS}'")
+execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/pycompile.py --inc
+  OUTPUT_VARIABLE CASTOR_PYTHON_INC)
+string(REGEX REPLACE "\n" "" CASTOR_PYTHON_INC ${CASTOR_PYTHON_INC})
+message(STATUS "CASTOR_PYTHON_INC = '${CASTOR_PYTHON_INC}'")
+execute_process (
+    COMMAND python -c "from distutils import sysconfig; print sysconfig.get_python_lib()"
+  OUTPUT_VARIABLE CASTOR_DEST_PYTHON_LIBDIR)
+string(REGEX REPLACE "\n" "" CASTOR_DEST_PYTHON_LIBDIR ${CASTOR_DEST_PYTHON_LIBDIR})
+message(STATUS "CASTOR_DEST_PYTHON_LIBDIR = '${CASTOR_DEST_PYTHON_LIBDIR}'")
+
 
 set (CASTOR_MAN_PAGE_PERMS
   OWNER_READ OWNER_WRITE
@@ -160,6 +175,13 @@ function (CastorInstallSysconfig _name)
     RENAME ${_name})
 endfunction ()
 
+function (CastorInstallSysconfigExample _name)
+  install (FILES ${_name}.sysconfig
+    DESTINATION /etc/sysconfig
+    PERMISSIONS ${CASTOR_SYSCONFIG_PERMS}
+    RENAME ${_name}.example)
+endfunction ()
+
 set (CASTOR_INITSCRIPT_PERMS
   OWNER_READ OWNER_WRITE OWNER_EXECUTE
   GROUP_READ             GROUP_EXECUTE
@@ -189,6 +211,16 @@ function (CastorInstallConfigFileLowercase _name)
     PERMISSIONS ${CASTOR_CONFIG_PERMS}
     RENAME ${_name}.example)
 endfunction ()
+
+set (CASTOR_SCRIPT_PERMS
+  OWNER_READ OWNER_WRITE OWNER_EXECUTE
+  GROUP_READ             GROUP_EXECUTE
+  WORLD_READ             WORLD_EXECUTE)
+
+set (CASTOR_PYTHON_LIB_PERMS
+  OWNER_READ OWNER_WRITE
+  GROUP_READ            
+  WORLD_READ            )
 
 set (CMAKE_C_FLAGS
   "-pthread -fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
@@ -240,6 +272,8 @@ add_subdirectory (vmgr)
 add_subdirectory (h)
 add_subdirectory (config)
 add_subdirectory (shlib)
+add_subdirectory (hsmtools)
+add_subdirectory (client/src/stager)
 if(${COMPILE_SERVER} STREQUAL "1")
   add_subdirectory (tape)
 endif(${COMPILE_SERVER} STREQUAL "1")
@@ -266,6 +300,7 @@ if(${COMPILE_PACKAGING} STREQUAL "1")
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
       OUTPUT_VARIABLE result)
     if(NOT ${result} STREQUAL "")
+      string(REGEX REPLACE "\n$" "" result ${result})
       message(STATUS "${result}")
     endif(NOT ${result} STREQUAL "")
     RPMTools_ADD_RPM_TARGETS(

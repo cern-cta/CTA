@@ -25,6 +25,7 @@ cmake_minimum_required (VERSION 2.6)
 add_subdirectory (db)
 add_subdirectory (tape)
 add_subdirectory (vdqm)
+add_subdirectory (gc)
 
 ################################################################################
 # Rules to build and install libcastorclient.so
@@ -264,3 +265,9 @@ set_target_properties (castorclient
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castorclient castordlf)
 install (TARGETS castorclient DESTINATION ${CASTOR_DEST_LIB_DIR})
+
+################################################################################
+# Create shared  directory strcutures at install time
+################################################################################
+INSTALL(CODE "FILE(MAKE_DIRECTORY \$ENV{DESTDIR}/var/log/castor)")
+INSTALL(CODE "FILE(MAKE_DIRECTORY \$ENV{DESTDIR}/var/spool/castor)")
