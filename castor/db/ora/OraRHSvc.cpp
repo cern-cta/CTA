@@ -749,6 +749,12 @@ void castor::db::ora::OraRHSvc::storeStageFileQueryRequest (castor::stager::Stag
   }
   // easier access to the parameters list
   const std::vector<castor::stager::QueryParameter*> &parameters = req->parameters();
+  if(0 == parameters.size()) {
+    // in case of no parameters, complain to the user
+    castor::exception::InvalidArgument e;
+    e.getMessage() << "Stager query by file must have at least one argument";
+    throw e;
+  }
   // Allocate ORACLE buffers for string arguments lengths (value)
   ub2 *lensValue = (ub2*) calloc(parameters.size(), sizeof(ub2));
   if (0 == lensValue) {

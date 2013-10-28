@@ -339,7 +339,7 @@ BEGIN
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- Loop on query parameters
+  -- Loop on query parameters. Note that the array is never empty (see the C++ calling method).
   FOR i IN qpValues.FIRST .. qpValues.LAST LOOP
     -- get unique ids for the query parameter
     SELECT ids_seq.nextval INTO queryParamId FROM DUAL;
