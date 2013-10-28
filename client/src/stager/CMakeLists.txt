@@ -22,47 +22,26 @@
 cmake_minimum_required (VERSION 2.6)
 
 ################################################################################
-# Rules to build stager client tools
+# Rules to build and install the stager client tools
 ################################################################################
 
-set(STAGER_CLIENT_PROGS
-  stager_get
-  stager_update
-  stager_put
-  stager_putdone
-  stager_qry
-  stager_rm
-  stager_setfilegcweight
-  castor
-  stager_addprivilege
-  stager_removeprivilege
-  stager_abort
-  stager_listprivileges
+set(STAGER_CLIENT_EXE_SRC_FILES
+  castor.c
+  stager_abort.cpp
+  stager_addprivilege.c
+  stager_get.c
+  stager_listprivileges.cpp
+  stager_update.c
+  stager_put.c
+  stager_putdone.c
+  stager_qry.cpp
+  stager_removeprivilege.c
+  stager_rm.c
+  stager_setfilegcweight.c
 )
-foreach(PROG ${STAGER_CLIENT_PROGS})
-  add_executable(${PROG} ${PROG})
-  target_link_libraries (${PROG} castorcommon castorns castorclient)
-endforeach(PROG)
-install(TARGETS ${STAGER_CLIENT_PROGS}
-  DESTINATION ${CASTOR_DEST_BIN_DIR})
-
-################################################################################
-# Rules to install hsmtools's man page(s) and init scripts
-################################################################################
-
-set(STAGER_CLIENT_MAN_PAGES
-  stager_get
-  stager_update
-  stager_put
-  stager_putdone
-  stager_qry
-  stager_rm
-  stager_setfilegcweight
-  stager_addprivilege
-  stager_removeprivilege
-  stager_listprivileges
-  stager_abort)
-
-foreach(PAGE ${STAGER_CLIENT_MAN_PAGES})
-  CastorInstallExeManPage(${PAGE})
-endforeach(PAGE)
+foreach(SRC_FILE ${STAGER_CLIENT_EXE_SRC_FILES})
+  string (REGEX REPLACE "[.]cp*$" "" EXE_FILE ${SRC_FILE})
+  add_executable(${EXE_FILE} ${SRC_FILE})
+  target_link_libraries (${EXE_FILE} castorcommon castorns castorclient)
+  CastorInstallExeManPage(${EXE_FILE})
+endforeach ()
