@@ -26,6 +26,7 @@ add_subdirectory (db)
 add_subdirectory (tape)
 add_subdirectory (vdqm)
 add_subdirectory (gc)
+add_subdirectory (job)
 
 ################################################################################
 # Rules to build and install libcastorclient.so
