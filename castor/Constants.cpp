@@ -170,7 +170,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "JobSubmissionRequest",
   "VersionQuery",
   "VersionResponse",
-  "DELETED TYPE",
+  "StageDiskCopyReplicaRequest",
   "RepackResponse",
   "RepackFileQry",
   "DELETED TYPE", 

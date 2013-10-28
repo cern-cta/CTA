@@ -22,6 +22,7 @@ ClientProgramTarget(stager_removeprivilege,stager_removeprivilege.o,,,0755)
 ClientProgramTarget(stager_listprivileges,stager_listprivileges.o,,,0755)
 NormalProgramTarget(stager_abort,stager_abort.o,,,0755)
 
+CLIENTEXEMANPAGE(castor)
 CLIENTEXEMANPAGE(stager_get)
 CLIENTEXEMANPAGE(stager_update)
 CLIENTEXEMANPAGE(stager_put)

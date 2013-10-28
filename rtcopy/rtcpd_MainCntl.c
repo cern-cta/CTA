@@ -1121,7 +1121,6 @@ static void rtcpd_FreeResources(int **client_socket,
   char vid[CA_MAXVIDLEN+1] = "N/A";
   char label[CA_MAXLBLTYPLEN+1] = "N/A";
   int mode = 0;
-  int jobID = 0;
   int VolReqID = -1;
   int client_uid = -1;
   int client_gid = -1;
@@ -1175,7 +1174,6 @@ static void rtcpd_FreeResources(int **client_socket,
     CLIST_ITERATE_BEGIN(*tape,nexttape) {
       tapereq = &(nexttape->tapereq);
       mode = tapereq->mode;
-      jobID = tapereq->jobID;
       strncpy(unit, tapereq->unit, sizeof(unit));
       strncpy(dgn, tapereq->dgn, sizeof(dgn));
       strncpy(vid, tapereq->vid, sizeof(vid));

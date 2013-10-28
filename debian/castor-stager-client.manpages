@@ -1,3 +1,4 @@
+debian/castor/usr/share/man/man1/castor.1castor.gz
 debian/castor/usr/share/man/man1/stager_get.1castor.gz
 debian/castor/usr/share/man/man1/stager_update.1castor.gz
 debian/castor/usr/share/man/man1/stager_put.1castor.gz

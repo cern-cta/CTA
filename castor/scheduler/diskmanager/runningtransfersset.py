@@ -119,7 +119,9 @@ class RunningTransfersSet(object):
           continue
         # extract the fileid and mountPoint from the filename
         filepath = params['CASTOR_FILENAME']
-        fileid = int(os.path.basename(filepath).split('@')[0])
+        fid, nshost = os.path.basename(filepath).split('@')
+        nshost = nshost.split('.')[0]
+        fileid = (nshost, int(fid))
         mountPoint = filepath.rsplit(os.sep, 2)[0]+os.sep
         # we found a tape transfer
         key = str(pid) + ":" + params['CASTOR_OPENTIME']
@@ -252,7 +254,7 @@ class RunningTransfersSet(object):
       self.tapelock.acquire()
       try:
         for tTransfer in self.tapeTransfers:
-          transferType = TransferType.toStr(tTransfer.transferType)
+          transferType = TapeTransferType.toStr(tTransfer.transferType)
           n = n + 1
           nbslots = self.config.getValue('DiskManager', transferType+'Weight', 1, int)
           ns = ns + nbslots

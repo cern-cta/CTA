@@ -65,7 +65,6 @@ rununittests: \
   common_socket_timeout.o \
   common_trace.o \
   common_u64subr.o \
-  common_wsacct.o \
   dlf_Dlf.o \
   dlf_Param.o \
   dlf_dlf_lib.o \
@@ -499,9 +498,6 @@ common_Cpwd.o: $(ROOT_DIR)/common/Cpwd.c
 
 common_u64subr.o: $(ROOT_DIR)/common/u64subr.c
 	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
-
-common_wsacct.o: $(ROOT_DIR)/common/wsacct.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 dlf_Dlf.o: $(ROOT_DIR)/castor/dlf/Dlf.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^

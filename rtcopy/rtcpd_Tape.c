@@ -1437,7 +1437,6 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
     }}
 
 void *tapeIOthread(void *arg) {
-    rtcpClientInfo_t *client;
     tape_list_t *tape, *nexttape;
     file_list_t *nextfile, *tmpfile, *prevfile;
     int client_socket;
@@ -1474,7 +1473,6 @@ void *tapeIOthread(void *arg) {
         return((void *)&failure);
     }
     tape = ((thread_arg_t *)arg)->tape;
-    client = ((thread_arg_t *)arg)->client;
     client_socket = ((thread_arg_t *)arg)->client_socket;
     clientIsTapeBridge = ((thread_arg_t *)arg)->clientIsTapeBridge;
     tapeFlushMode = ((thread_arg_t *)arg)->tapeFlushMode;

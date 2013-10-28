@@ -1671,7 +1671,6 @@ static int DiskToMemory(int disk_fd, int pool_index,
 void *diskIOthread(void *arg) {
     tape_list_t *tape, *tl;
     file_list_t *file, *fl;
-    rtcpClientInfo_t *client;
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
     u_signed64 nbbytes;
@@ -1703,7 +1702,6 @@ void *diskIOthread(void *arg) {
 
     tape = ((thread_arg_t *)arg)->tape;
     file = ((thread_arg_t *)arg)->file;
-    client = ((thread_arg_t *)arg)->client;
     client_socket = ((thread_arg_t *)arg)->client_socket;
     pool_index = ((thread_arg_t *)arg)->pool_index;
     indxp = ((thread_arg_t *)arg)->start_indxp;

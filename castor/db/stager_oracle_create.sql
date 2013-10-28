@@ -1058,6 +1058,7 @@ CREATE UNIQUE INDEX I_CastorFile_FileIdNsHost ON CastorFile (fileId, nsHost);
 ALTER TABLE CastorFile
   ADD CONSTRAINT CK_CastorFile_TapeStatus
   CHECK (tapeStatus IN (0, 1, 2));
+CREATE INDEX I_CastorFile_tapeStatus ON CastorFile(tapeStatus);
 
 /* SQL statement for table SubRequest */
 CREATE TABLE SubRequest
@@ -2024,6 +2025,23 @@ ALTER TABLE Disk2DiskCopyJob
   ADD CONSTRAINT CK_Disk2DiskCopyJob_type
   CHECK (replicationType IN (0, 1, 2, 3));
 
+/* A view to spot late or stuck migrations */
+/*******************************************/
+/* It returns all files that are not yet on tape, that are existing in the namespace
+ * and for which migration is pending for more than 24h.
+ */
+CREATE VIEW LateMigrationsView AS
+  SELECT /*+ LEADING(CF DC MJ CnsFile) INDEX_RS_ASC(CF I_CastorFile_TapeStatus) INDEX_RS_ASC(DC I_DiskCopy_CastorFile) INDEX_RS_ASC(MJ I_MigrationJob_CastorFile) */
+         CF.fileId, CF.lastKnownFileName as filePath, DC.creationTime as dcCreationTime,
+         decode(MJ.creationTime, NULL, -1, getTime() - MJ.creationTime) as mjElapsedTime, nvl(MJ.status, -1) as mjStatus
+    FROM CastorFile CF, DiskCopy DC, MigrationJob MJ, cns_file_metadata@remotens CnsFile
+   WHERE CF.fileId = CnsFile.fileId
+     AND DC.castorFile = CF.id
+     AND MJ.castorFile(+) = CF.id
+     AND CF.tapeStatus = 0  -- CASTORFILE_NOTONTAPE
+     AND DC.creationTime < getTime() - 86400
+  ORDER BY DC.creationTime DESC;
+
 /*****************/
 /* logon trigger */
 /*****************/
@@ -2292,7 +2310,7 @@ BEGIN
   SELECT /*+ INDEX(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
     FROM SubRequest
    WHERE castorFile = cfId
-     AND status IN (0, 1, 2, 3, 4, 5, 6, 7, 10, 12, 13);   -- All but FINISHED, FAILED_FINISHED, ARCHIVED
+     AND status IN (1, 2, 3, 4, 5, 6, 7, 10, 12, 13);   -- All but START, FINISHED, FAILED_FINISHED, ARCHIVED
   -- If any SubRequest, give up
   IF nb = 0 THEN
     DECLARE
@@ -8435,10 +8453,9 @@ END;
  * in order to sync running transfers in the database with the reality of the machine.
  * This is particularly useful to terminate cleanly transfers interupted by a power cut
  */
-CREATE OR REPLACE
-PROCEDURE syncRunningTransfers(machine IN VARCHAR2,
-                               transfers IN castor."strList",
-                               killedTransfersCur OUT castor.TransferRecord_Cur) AS
+CREATE OR REPLACE PROCEDURE syncRunningTransfers(machine IN VARCHAR2,
+                                                 transfers IN castor."strList",
+                                                 killedTransfersCur OUT castor.TransferRecord_Cur) AS
   unused VARCHAR2(2048);
   varFileid NUMBER;
   varNsHost VARCHAR2(2048);
@@ -8469,15 +8486,21 @@ BEGIN
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- this transfer is not running anymore although the stager DB believes it is
       -- we first get its reqid and fileid
-      SELECT Request.reqId INTO varReqId FROM
-        (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ reqId, id from StageGetRequest UNION ALL
-         SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ reqId, id from StagePutRequest UNION ALL
-         SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ reqId, id from StageUpdateRequest) Request
-       WHERE Request.id = SR.request;
-      SELECT fileid, nsHost INTO varFileid, varNsHost FROM CastorFile WHERE id = SR.castorFile;
-      -- and we put it in the list of transfers to be failed with code 1015 (SEINTERNAL)
-      INSERT INTO SyncRunningTransfersHelper2 (subreqId, reqId, fileid, nsHost, errorCode, errorMsg)
-      VALUES (SR.subreqId, varReqId, varFileid, varNsHost, 1015, 'Transfer has been killed while running');
+      BEGIN
+        SELECT Request.reqId INTO varReqId FROM
+          (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ reqId, id from StageGetRequest UNION ALL
+           SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ reqId, id from StagePutRequest UNION ALL
+           SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ reqId, id from StageUpdateRequest) Request
+         WHERE Request.id = SR.request;
+        SELECT fileid, nsHost INTO varFileid, varNsHost FROM CastorFile WHERE id = SR.castorFile;
+        -- and we put it in the list of transfers to be failed with code 1015 (SEINTERNAL)
+        INSERT INTO SyncRunningTransfersHelper2 (subreqId, reqId, fileid, nsHost, errorCode, errorMsg)
+        VALUES (SR.subreqId, varReqId, varFileid, varNsHost, 1015, 'Transfer has been killed while running');
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- not even the request exists any longer in the DB. It may have disappeared meanwhile
+        -- as we didn't take any lock yet. Fine, ignore and move on.
+        NULL;
+      END;
     END;
   END LOOP;
   -- fail the transfers that are no more running
@@ -11407,6 +11430,12 @@ BEGIN
           FROM SubRequest
          WHERE castorFile = cf.cfId
            AND status = dconst.SUBREQUEST_WAITTAPERECALL;
+        IF nb > 0 THEN
+          CONTINUE;
+        END IF;
+        -- Now check for Disk2DiskCopy jobs
+        SELECT /*+ INDEX(I_Disk2DiskCopyJob_cfId) */ count(*) INTO nb FROM Disk2DiskCopyJob
+         WHERE castorFile = cf.cfId;
         IF nb > 0 THEN
           CONTINUE;
         END IF;

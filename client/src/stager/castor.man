@@ -1,0 +1,27 @@
+.\" Copyright (C) 2005 by CERN/IT
+.\" All rights reserved
+.\"
+.TH CASTOR "1castor"castor "$Date: 2013/10/28 09:44:00 $" CASTOR "STAGER Commands"
+.SH NAME
+castor \- display current CASTOR version
+.SH SYNOPSIS
+.B castor [-v] [-s] [-h]
+.SH DESCRIPTION
+.B castor
+displays the version of the currently CASTOR system.
+
+.SH OPTIONS
+
+.TP
+.BI \-v
+displays the CASTOR version number that the castor command-line tool was compiled with.
+.TP
+.BI \-s
+asks the request handler daemon (rhd) for its CASTOR version number and
+displays the reply.
+.TP
+.BI \-h
+displays the usage message of the castor command-line tool.
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
