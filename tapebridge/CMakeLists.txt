@@ -1,5 +1,5 @@
 #
-#                      castor/tape/CMakeLists.txt
+#                      tapebridge/CMakeLists.txt
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -22,10 +22,17 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-add_subdirectory (gatewayprotocol)
-add_subdirectory (legacymsg)
-add_subdirectory (net)
-#add_subdirectory (rmc)
-add_subdirectory (tapebridge)
-add_subdirectory (tpcp)
-add_subdirectory (utils)
+################################################################################
+# Rules to build and install libcastortapebridge.so
+################################################################################
+set (TAPEBRIDGE_LIB_SRC_FILES
+  tapebridge_marshall.c
+  tapebridge_sendTapeBridgeClientInfo2Ack.c
+  tapebridge_sendTapeBridgeFlushedToTape.c
+  tapebridge_recvTapeBridgeFlushedToTapeAck.c
+  tapebridge_tapeFlushModeToStr.c)
+add_library (castortapebridge SHARED ${TAPEBRIDGE_LIB_SRC_FILES})
+set_target_properties (castortapebridge
+  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+target_link_libraries (castortapebridge castorcommon)
+install (TARGETS castortapebridge DESTINATION ${CASTOR_DEST_LIB_DIR})
