@@ -1882,7 +1882,7 @@ CREATE OR REPLACE PROCEDURE fixLastKnownFileName(inFileName IN VARCHAR2, inCfId 
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
-  UPDATE CastorFile SET lastKnownFileName = inFileName
+  UPDATE CastorFile SET lastKnownFileName = normalizePath(inFileName)
    WHERE id = inCfId;
 EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
   -- we have another file that already uses the new name of this one...
@@ -1891,7 +1891,7 @@ EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
   -- Note that this procedure will run in an autonomous transaction so that
   -- no dead lock can result from taking a second lock within this transaction
   dropReusedLastKnownFileName(inFileName);
-  UPDATE CastorFile SET lastKnownFileName = inFileName
+  UPDATE CastorFile SET lastKnownFileName = normalizePath(inFileName)
    WHERE id = inCfId;
 END;
 /
@@ -2092,7 +2092,7 @@ BEGIN
   SELECT /*+ INDEX_RS_ASC(CastorFile I_CastorFile_LastKnownFileName) */ fileId, nshost, id
     INTO varFileId, varNsHost, varCfId
     FROM CastorFile
-   WHERE lastKnownFileName = inFileName;
+   WHERE lastKnownFileName = normalizePath(inFileName);
   -- validate this file against the NameServer
   BEGIN
     SELECT getPathForFileid@remotens(fileId) INTO varNsPath
