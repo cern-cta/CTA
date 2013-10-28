@@ -34,3 +34,37 @@ set_target_properties (castorsecurity
 install (TARGETS castorsecurity DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 CastorInstallLibManPage(Csec_api)
+
+################################################################################
+# Rules to build and install plugins
+################################################################################
+
+# Detect the kerberos environment
+FIND_PROGRAM(KRB5_CONFIG
+  NAMES krb5-config
+  PATHS "/usr/kerberos/bin;/usr/bin")
+execute_process(
+  COMMAND $(KRB5_CONFIG) gssapi --cflags
+  OUTPUT_VARIABLE KRB5_CFLAGS)
+execute_process(
+  COMMAND $(KRB5_CONFIG) gssapi --libs
+  OUTPUT_VARIABLE KRB5_LIBS)
+
+# Compile the plugin
+set(SECURITY_PLUGIN_KRB5
+  Csec_plugin_GSS.c
+  Csec_plugin_GSS_mapper.c)
+add_library(castorsec_plugin_KRB5 SHARED ${SECURITY_PLUGIN_KRB5})
+set_property(SOURCE ${SECURITY_PLUGIN_KRB5}
+  PROPERTY COMPILE_FLAGS -DKRB5 ${KRB5_CFLAGS})
+target_link_libraries (castorsec_plugin_KRB5 castorcommon ${KRB5_LIBS})
+set_target_properties (castorsec_plugin_KRB5
+  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+install (TARGETS castorsec_plugin_KRB5 DESTINATION ${CASTOR_DEST_LIB_DIR})
+
+add_library(castorsec_plugin_ID SHARED Csec_plugin_ID.c)
+target_link_libraries (castorsec_plugin_ID castorcommon -lc -ldl)
+set_target_properties (castorsec_plugin_ID
+  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+install (TARGETS castorsec_plugin_ID DESTINATION ${CASTOR_DEST_LIB_DIR})
+
