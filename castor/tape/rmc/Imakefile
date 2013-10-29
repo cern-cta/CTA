@@ -38,10 +38,20 @@ COMM  -Wl,--end-group \
 COMM  $(LIBDIR)/CDK/libipc.a \
 COMM  $(LIBDIR)/CDK/libcl.a
 
+COMM The acs command-line tools depend on libcastorcommon.so therefore
+COMM include the rules to make it
+include $(CASTOR_ROOT)/common/Makefile
+
+COMM The acs command-line tools depend on libcastortapeutils.so therefore
+COMM include the rules to make it
+include $(CASTOR_ROOT)/castor/tape/utils/Makefile
+
 CDKLIB = -L $(LIBDIR)/CDK -lapi -lutl -lipc -lcl
 
-DependsOnLibrary(castor/tape/utils,castortapeutils)
-DependsOnLibrary(common,castorcommon)
+ACS_COMMAND_DEPLIBS = \
+  DepSharedLibraryTargetName(common,castorcommon) \
+  DepSharedLibraryTargetName(castor/tape/utils,castortapeutils)
+ACS_COMMAND_LIBS = $(ACS_COMMAND_DEPLIBS) BuildRPathcastortapeutils $(CDKLIB)
 
 ACS_SRCS = \
   Acs.cpp \
@@ -68,7 +78,7 @@ COMPILECPP(AcsMountCmd.cpp, -DLINUX -I/usr/include/CDK)
 COMPILECPP(AcsMountCmdLine.cpp, -DLINUX -I/usr/include/CDK)
 COMPILECPP(AcsMountMain.cpp, -DLINUX -I/usr/include/CDK)
 
-NormalProgramTarget(castor-tape-acs-mount,$(ACSMOUNTBIN_OBJS),,$(CDKLIB),755)
+TapeProgramTarget(castor-tape-acs-mount,$(ACSMOUNTBIN_OBJS),$(ACS_COMMAND_DEPLIBS),$(ACS_COMMAND_LIBS),755)
 EXEMANPAGE(castor-tape-acs-mount)
 
 ACSDISMOUNTBIN_SRCS = \
@@ -82,7 +92,7 @@ COMPILECPP(AcsDismountCmd.cpp, -DLINUX -I/usr/include/CDK)
 COMPILECPP(AcsDismountCmdLine.cpp, -DLINUX -I/usr/include/CDK)
 COMPILECPP(AcsDismountMain.cpp, -DLINUX -I/usr/include/CDK)
 
-NormalProgramTarget(castor-tape-acs-dismount,$(ACSDISMOUNTBIN_OBJS),,$(CDKLIB),755)
+TapeProgramTarget(castor-tape-acs-dismount,$(ACSDISMOUNTBIN_OBJS),$(ACS_COMMAND_DEPLIBS),$(ACS_COMMAND_LIBS),755)
 EXEMANPAGE(castor-tape-acs-dismount)
 
 ACSQUERYVOLUMEBIN_SRCS = \
@@ -96,5 +106,5 @@ COMPILECPP(AcsQueryVolumeCmd.cpp, -DLINUX -I/usr/include/CDK)
 COMPILECPP(AcsQueryVolumeCmdLine.cpp, -DLINUX -I/usr/include/CDK)
 COMPILECPP(AcsQueryVolumeMain.cpp, -DLINUX -I/usr/include/CDK)
 
-NormalProgramTarget(castor-tape-acs-queryvolume,$(ACSQUERYVOLUMEBIN_OBJS),,$(CDKLIB),755)
+TapeProgramTarget(castor-tape-acs-queryvolume,$(ACSQUERYVOLUMEBIN_OBJS),$(ACS_COMMAND_DEPLIBS),$(ACS_COMMAND_LIBS),755)
 EXEMANPAGE(castor-tape-acs-queryvolume)
