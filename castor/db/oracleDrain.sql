@@ -33,7 +33,10 @@ BEGIN
     -- check how many disk2DiskCopyJobs are already running for this draining job
     SELECT count(*) INTO varNbRunningJobs FROM Disk2DiskCopyJob WHERE drainingJob = dj.id;
     -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running
-    -- ones into account. Also Take the most important jobs first
+    -- ones into account. Also take the most important jobs first
+    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_REFILL, 0, '', 'stagerd',
+             'svcClass=' || getSvcClassName(dj.svcClass) || ' DrainReq=' ||
+             TO_CHAR(dj.id) || ' MaxNewJobsCount=' || TO_CHAR(varMaxNbOfSchedD2dPerDrain-varNbRunningJobs));
     FOR F IN (SELECT * FROM
                (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
                   FROM DiskCopy, CastorFile
@@ -63,8 +66,6 @@ END;
 /
 
 /* Procedure responsible for managing the draining process
- * note the locking that makes sure we are not running twice in parallel
- * as this will be restarted regularly by an Oracle job, but may take long to conclude
  */
 CREATE OR REPLACE PROCEDURE drainManager AS
   varTFiles INTEGER;
@@ -85,7 +86,9 @@ BEGIN
      WHERE fileSystem = dj.fileSystem
        AND status = dconst.DISKCOPY_VALID;
     UPDATE DrainingJob
-       SET totalFiles=varTFiles, totalBytes=varTBytes, status = dconst.DRAININGJOB_RUNNING
+       SET totalFiles = varTFiles,
+           totalBytes = nvl(varTBytes, 0),
+           status = decode(varTBytes, NULL, dconst.DRAININGJOB_FINISHED, dconst.DRAININGJOB_RUNNING)
      WHERE id = dj.id;
     COMMIT;
   END LOOP;
