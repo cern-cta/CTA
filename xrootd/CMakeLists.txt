@@ -22,15 +22,7 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-find_package (xrootd)
-
-message (STATUS "XROOTD_FOUND               = ${XROOTD_FOUND}")
-message (STATUS "XROOTD_INCLUDE_DIR         = ${XROOTD_INCLUDE_DIR}")
-message (STATUS "XROOTD_PRIVATE_INCLUDE_DIR = ${XROOTD_PRIVATE_INCLUDE_DIR}")
-message (STATUS "XROOTD_XRDCL_LIB           = ${XROOTD_XRDCL_LIB}")
-message (STATUS "XROOTD_XRDCLIENT_LIB       = ${XROOTD_XRDCLIENT_LIB}")
-message (STATUS "XROOTD_XRDOFS_LIB          = ${XROOTD_XRDOFS_LIB}")
-message (STATUS "XROOTD_XRDUTILS_LIB        = ${XROOTD_XRDUTILS_LIB}")
+find_package (xrootd REQUIRED)
 
 include_directories (${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR})
 
@@ -64,3 +56,23 @@ set (XRDXCASTOR2SERVERACC_LIB_SRC_FILES
 add_library (XrdxCastor2ServerAcc SHARED ${XRDXCASTOR2SERVERACC_LIB_SRC_FILES})
 target_link_libraries (XrdxCastor2ServerAcc crypto ${XROOTD_XRDUTILS_LIB})
 install (TARGETS XrdxCastor2ServerAcc DESTINATION ${CASTOR_DEST_LIB_DIR})
+
+################################################################################
+# Rules to build and install libXrdxCastor2Ofs.so
+################################################################################
+set (XRDXCASTOR2OFS_LIB_SRC_FILES
+  XrdxCastor2Ofs.cpp
+  XrdxCastor2OfsFSctl.cpp
+  XrdxCastor2OfsTransfer.cpp
+  XrdxCastor2OfsProc.cpp
+  XrdTransfer.cpp
+  XrdTransferManager.cpp
+  XrdxCastorLogging.cpp
+  XrdxCastorTiming.cpp)
+add_library (XrdxCastor2Ofs SHARED ${XRDXCASTOR2OFS_LIB_SRC_FILES})
+set_target_properties (XrdxCastor2Ofs PROPERTIES
+  SOVERSION ${MAJOR_CASTOR_VERSION}
+  COMPILE_DEFINITIONS _FILE_OFFSET_BITS=64)
+target_link_libraries (XrdxCastor2Ofs crypto ${XROOTD_XRDCL_LIB}
+  ${XROOTD_XRDCLIENT_LIB} ${XROOTD_XRDOFS_LIB} ${UUID_LIB} z)
+install (TARGETS XrdxCastor2Ofs DESTINATION ${CASTOR_DEST_LIB_DIR})

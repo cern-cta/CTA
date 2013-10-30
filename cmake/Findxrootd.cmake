@@ -53,9 +53,8 @@ find_library (XROOTD_XRDOFS_LIB XrdOfs)
 find_library (XROOTD_XRDUTILS_LIB XrdUtils)
 
 include (FindPackageHandleStandardArgs)
-find_package_handle_standard_args( xrootd DEFAULT_MSG 
+find_package_handle_standard_args (xrootd DEFAULT_MSG 
   XROOTD_INCLUDE_DIR
-  XROOTD_LIB_DIR
   XROOTD_PRIVATE_INCLUDE_DIR
   XROOTD_XRDCL_LIB
   XROOTD_XRDCLIENT_LIB

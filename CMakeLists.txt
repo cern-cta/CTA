@@ -50,6 +50,9 @@ set (CASTOR_DEST_LIB_DIR /usr/lib64)
 set (CASTOR_DEST_MAN_DIR /usr/share/man)
 set (CASTOR_DEST_INCLUDE_DIR /usr/include)
 set (CASTOR_DEST_PERL_LIBDIR /usr/lib/perl/CASTOR)
+
+find_package (uuid REQUIRED)
+
 execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/pycompile.py --libs
   OUTPUT_VARIABLE CASTOR_PYTHON_LIBS)
 string(REGEX REPLACE "\n" "" CASTOR_PYTHON_LIBS ${CASTOR_PYTHON_LIBS})
@@ -80,26 +83,7 @@ include_directories(${CMAKE_BINARY_DIR}/h)
 include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/h)
 
-execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/oracompile.py
-    --with-precomp --home OUTPUT_VARIABLE ORACLE_HOME)
-string (REGEX REPLACE "\n" "" ORACLE_HOME ${ORACLE_HOME})
-message (STATUS "ORACLE_HOME = '${ORACLE_HOME}'")
-execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/oracompile.py
-    --with-precomp --bindir OUTPUT_VARIABLE ORACLE_BIN)
-string (REGEX REPLACE "\n" "" ORACLE_BIN ${ORACLE_BIN})
-message (STATUS "ORACLE_BIN = ${ORACLE_BIN}")
-execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/oracompile.py
-    --with-precomp --libdir OUTPUT_VARIABLE ORACLE_LIBDIR)
-string (REGEX REPLACE "\n" "" ORACLE_LIBDIR ${ORACLE_LIBDIR})
-message (STATUS "ORACLE_LIBDIR = ${ORACLE_LIBDIR}")
-execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/oracompile.py
-    --with-precomp --cppflags OUTPUT_VARIABLE ORACLE_CPPFLAGS)
-string (REGEX REPLACE "\n" "" ORACLE_CPPFLAGS ${ORACLE_CPPFLAGS})
-message (STATUS "ORACLE_CPPFLAGS = ${ORACLE_CPPFLAGS}")
-execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/oracompile.py
-    --with-precomp --procinc OUTPUT_VARIABLE ORACLE_PROCINC)
-string (REGEX REPLACE "\n" "" ORACLE_PROCINC ${ORACLE_PROCINC})
-message (STATUS "ORACLE_PROCINC = ${ORACLE_PROCINC}")
+find_package (oracle REQUIRED)
 
 function (CastorAddProC _name)
   add_custom_command (
