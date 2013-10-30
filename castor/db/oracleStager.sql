@@ -1951,49 +1951,56 @@ END;
 /
 
 /* PL/SQL method implementing selectCastorFile */
-CREATE OR REPLACE PROCEDURE selectCastorFileInternal (fId IN INTEGER,
-                                                      nh IN VARCHAR2,
-                                                      fc IN INTEGER,
-                                                      fs IN INTEGER,
-                                                      fn IN VARCHAR2,
-                                                      srId IN NUMBER,
+CREATE OR REPLACE PROCEDURE selectCastorFileInternal (inFileId IN INTEGER,
+                                                      inNsHost IN VARCHAR2,
+                                                      inClassId IN INTEGER,
+                                                      inFileSize IN INTEGER,
+                                                      inFileName IN VARCHAR2,
+                                                      inSrId IN NUMBER,
                                                       inNsOpenTime IN NUMBER,
-                                                      waitForLock IN BOOLEAN,
-                                                      rid OUT INTEGER,
-                                                      rfs OUT INTEGER) AS
-  previousLastKnownFileName VARCHAR2(2048);
-  fcId NUMBER;
-  varReqType INTEGER;
+                                                      inWaitForLock IN BOOLEAN,
+                                                      outId OUT INTEGER,
+                                                      outFileSize OUT INTEGER) AS
+  varPreviousLastKnownFileName VARCHAR2(2048);
+  varNsOpenTime NUMBER;
+  varFcId NUMBER;
 BEGIN
   -- Resolve the fileclass
   BEGIN
-    SELECT id INTO fcId FROM FileClass WHERE classId = fc;
+    SELECT id INTO varFcId FROM FileClass WHERE classId = inClassId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    RAISE_APPLICATION_ERROR (-20010, 'File class '|| fc ||' not found in database');
+    RAISE_APPLICATION_ERROR (-20010, 'File class '|| inClassId ||' not found in database');
   END;
   BEGIN
     -- try to find an existing file
-    SELECT id, fileSize, lastKnownFileName
-      INTO rid, rfs, previousLastKnownFileName
+    SELECT id, fileSize, lastKnownFileName, nsOpenTime
+      INTO outId, outFileSize, varPreviousLastKnownFileName, varNsOpenTime
       FROM CastorFile
-     WHERE fileId = fid AND nsHost = nh;
+     WHERE fileId = inFileId AND nsHost = inNsHost;
     -- take a lock on the file. Note that the file may have disappeared in the
     -- meantime, this is why we first select (potentially having a NO_DATA_FOUND
     -- exception) before we update.
-    IF waitForLock THEN
-      SELECT id INTO rid FROM CastorFile WHERE id = rid FOR UPDATE;
+    IF inWaitForLock THEN
+      SELECT id INTO outId FROM CastorFile WHERE id = outId FOR UPDATE;
     ELSE
-      SELECT id INTO rid FROM CastorFile WHERE id = rid FOR UPDATE NOWAIT;
+      SELECT id INTO outId FROM CastorFile WHERE id = outId FOR UPDATE NOWAIT;
     END IF;
     -- In case its filename has changed, fix it
-    IF fn != previousLastKnownFileName THEN
-      fixLastKnownFileName(fn, rid);
+    IF inFileName != varPreviousLastKnownFileName THEN
+      fixLastKnownFileName(inFileName, outId);
     END IF;
     -- The file is still there, so update timestamps
-    UPDATE CastorFile SET lastAccessTime = getTime() WHERE id = rid;
-    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
-     WHERE id = srId
-     RETURNING reqType INTO varReqType;
+    UPDATE CastorFile SET lastAccessTime = getTime() WHERE id = outId;
+    IF varNsOpenTime = 0 AND inNsOpenTime > 0 THEN
+      -- We have a CastorFile entry, but it had not been created for an open operation
+      -- (effectively, only a putDone operation on a non-existing file can do this).
+      -- On the contrary, now we have been called after an open() as inNsOpenTime > 0.
+      -- Therefore, we set the nsOpenTime and lastUpdateTime like in createCastorFile()
+      UPDATE CastorFile SET nsOpenTime = inNsOpenTime, lastUpdateTime = TRUNC(inNsOpenTime)
+       WHERE id = outId;
+    END IF;
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = outId
+     WHERE id = inSrId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- we did not find the file, let's try to create a new one.
     -- This may fail with a low probability (subtle race condition, see comments
@@ -2002,7 +2009,8 @@ BEGIN
       varSuccess BOOLEAN := False;
     BEGIN
       WHILE NOT varSuccess LOOP
-        varSuccess := createCastorFile(fId, nh, fcId, fs, fn, srId, inNsOpenTime, waitForLock, rid, rfs);
+        varSuccess := createCastorFile(inFileId, inNsHost, varFcId, inFileSize, inFileName,
+                                       inSrId, inNsOpenTime, inWaitForLock, outId, outFileSize);
       END LOOP;
     END;
   END;
