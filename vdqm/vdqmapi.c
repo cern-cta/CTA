@@ -83,6 +83,10 @@ int vdqm_Connect(vdqmnw_t **nw) {
       strcpy(vdqm_host,p);
     } else if ( (p = getconfent("VDQM","HOST",1)) != (char *)NULL ) {
       strcpy(vdqm_host,p);
+    } else {
+      TRACE(1,"vdqm","vdqm_Connect() vdqm_host = \"\"");
+      serrno = SENOSSERV;
+      VDQM_API_RETURN(-1);
     }
     p = strtok(vdqm_host,", \t");
     vdqm_primary = p;
