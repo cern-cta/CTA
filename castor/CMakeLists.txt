@@ -27,6 +27,7 @@ add_subdirectory (tape)
 add_subdirectory (vdqm)
 add_subdirectory (gc)
 add_subdirectory (job)
+add_subdirectory (scheduler)
 
 ################################################################################
 # Rules to build and install libcastorclient.so
