@@ -1,4 +1,22 @@
 ------------
+- 2.1.14-4 -
+------------
+
+  Summary
+  -------
+
+  This is a minor release bringing a number of bug fixes on top of the previous
+  one.
+
+  CASTOR Tape
+  -----------
+
+  [Bug]
+
+     #103026 "showqueues" segfaults unless VDQM_HOST is set
+
+
+------------
 - 2.1.14-3 -
 ------------
 
