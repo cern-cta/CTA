@@ -128,7 +128,9 @@
 
   - Replacement of rmnode/rmmaster infrastructure. They have been integrated to transfermanager and
     diskmanager. The command line tools moveDiskServer, rmGetNodes and rmAdminNodes are replaced by
-    modify/printdiskserver.
+    modify/printdiskserver. As a consequence, now the mountpoints need to be owned by the stager
+    user (usually stage:st) and not by root, to allow the diskmanager daemon to create the
+    CASTOR directory structure used to store the disk copies.
   - Support for Read-Only hardware. DiskServers and FileSystems can be marked as Read-Only so that
     only read transfers are scheduled, without having to put them in draining and triggering
     replications.
@@ -137,7 +139,7 @@
     the system and cannot be changed by modifydiskserver. However, the output of stager_qry
     remains backward compatible and a status DISABLED is displayed when hwOnline is false.
     Moreover, the hardware status is now immediately respected: in case it is modified, or when
-    a node does not report itself as bein online for too long, all pending jobs on the changed
+    a node does not report itself as being online for too long, all pending jobs on the changed
     node are immediately killed if they are not allowed to run in the new status.
   - The CASTOR plugin to XROOT has been integrated into the CASTOR code so that it is built, tested,
     and distributed with the core CASTOR software. It comes under the form of a new RPM called
