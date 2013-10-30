@@ -43,12 +43,18 @@ CastorInstallLibManPage(Csec_api)
 FIND_PROGRAM(KRB5_CONFIG
   NAMES krb5-config
   PATHS "/usr/kerberos/bin;/usr/bin")
+string(REGEX REPLACE "\n" "" KRB5_CONFIG ${KRB5_CONFIG})
+message(STATUS "KRB5_CONFIG = '${KRB5_CONFIG}'")
 execute_process(
-  COMMAND $(KRB5_CONFIG) gssapi --cflags
+  COMMAND ${KRB5_CONFIG} gssapi --cflags
   OUTPUT_VARIABLE KRB5_CFLAGS)
+string(REGEX REPLACE "\n" "" KRB5_CFLAGS "${KRB5_CFLAGS}")
+message(STATUS "KRB5_CFLAGS = '${KRB5_CFLAGS}'")
 execute_process(
-  COMMAND $(KRB5_CONFIG) gssapi --libs
+  COMMAND ${KRB5_CONFIG} gssapi --libs
   OUTPUT_VARIABLE KRB5_LIBS)
+string(REGEX REPLACE "\n" "" KRB5_LIBS "${KRB5_LIBS}")
+message(STATUS "KRB5_LIBS = '${KRB5_LIBS}'")
 
 # Compile the plugin
 set(SECURITY_PLUGIN_KRB5
