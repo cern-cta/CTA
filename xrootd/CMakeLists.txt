@@ -76,3 +76,11 @@ set_target_properties (XrdxCastor2Ofs PROPERTIES
 target_link_libraries (XrdxCastor2Ofs crypto ${XROOTD_XRDCL_LIB}
   ${XROOTD_XRDCLIENT_LIB} ${XROOTD_XRDOFS_LIB} ${UUID_LIB} z)
 install (TARGETS XrdxCastor2Ofs DESTINATION ${CASTOR_DEST_LIB_DIR})
+
+################################################################################
+# Rules to build and install XrdTransfer
+################################################################################
+add_executable (XrdTransfer XrdTransfer.cpp)
+target_link_libraries (XrdTransfer crypto ${XROOTD_XRDCLIENT_LIB}
+  ${XROOTD_XRDUTILS_LIB})
+install (TARGETS XrdTransfer DESTINATION ${CASTOR_DEST_BIN_DIR})
