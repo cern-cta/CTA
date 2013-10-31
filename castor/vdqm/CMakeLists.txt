@@ -58,7 +58,7 @@ target_link_libraries (vdqmd castorclient castorcnv castorcommon castorupv
 install (TARGETS vdqmd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (vdqmd)
 CastorInstallLogrotate (castor-vdqm2-server)
-CastorInstallSysconfig (vdqmd)
+CastorInstallSysconfigExample (vdqmd)
 CastorInstallInitScript (vdqmd)
 
 ################################################################################

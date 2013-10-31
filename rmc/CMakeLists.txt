@@ -52,7 +52,7 @@ target_link_libraries (rmcd castorcommon castorupv)
 install (TARGETS rmcd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (rmcd)
 CastorInstallLogrotate (castor-rmc-server)
-CastorInstallSysconfig (rmcd)
+CastorInstallSysconfigExample (rmcd)
 CastorInstallInitScript (rmcd)
 
 ################################################################################

@@ -64,5 +64,5 @@ target_link_libraries (tapebridged castorcommon castortapebridge
 install (TARGETS tapebridged DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (tapebridged)
 CastorInstallLogrotate (castor-tapebridge-server)
-CastorInstallSysconfig (tapebridged)
+CastorInstallSysconfigExample (tapebridged)
 CastorInstallInitScript (tapebridged)

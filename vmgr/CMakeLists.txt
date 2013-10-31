@@ -124,7 +124,7 @@ target_link_libraries (vmgrd castorcommon castorupv
 install (TARGETS vmgrd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (vmgrd)
 CastorInstallLogrotate (castor-vmgr-server)
-CastorInstallSysconfig (vmgrd)
+CastorInstallSysconfigExample (vmgrd)
 CastorInstallInitScript (vmgrd)
 CastorInstallConfigFile (VMGR)
 

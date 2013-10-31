@@ -189,13 +189,6 @@ function (CastorInstallLogrotate _name)
     RENAME ${_name})
 endfunction ()
 
-function (CastorInstallSysconfig _name)
-  install (FILES ${_name}.sysconfig
-    DESTINATION /etc/sysconfig
-    PERMISSIONS ${CASTOR_SYSCONFIG_PERMS}
-    RENAME ${_name})
-endfunction ()
-
 function (CastorInstallSysconfigExample _name)
   install (FILES ${_name}.sysconfig
     DESTINATION /etc/sysconfig

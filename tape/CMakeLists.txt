@@ -90,7 +90,7 @@ target_link_libraries (taped castorcommon castortape castorvdqm)
 install (TARGETS taped DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (taped)
 CastorInstallLogrotate(castor-tape-server)
-CastorInstallSysconfig(taped)
+CastorInstallSysconfigExample(taped)
 CastorInstallInitScript(taped)
 CastorInstallConfigFile(TP)
 

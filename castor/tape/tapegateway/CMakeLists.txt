@@ -50,5 +50,5 @@ target_link_libraries (tapegatewayd castorclient castorcnv castorcommon
 install (TARGETS tapegatewayd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (tapegatewayd)
 CastorInstallLogrotate (castor-tapegateway-server)
-CastorInstallSysconfig (tapegatewayd)
+CastorInstallSysconfigExample (tapegatewayd)
 CastorInstallInitScript (tapegatewayd)
