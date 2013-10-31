@@ -236,7 +236,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
           nsMap->Add( nsin.c_str(), mnsout );
         }
 
-        if ( !strcmp( "proc", var ) )
+        if ( !strcmp( "proc", var ) ) {
           if ( !( val = config_stream.GetWord() ) ) {
             Eroute.Emsg( "Config", "argument for proc invalid." );
             NoGo = 1;
@@ -262,6 +262,7 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
             else
               Eroute.Say( "=====> xcastor2.proc: ", Procfilesystem.c_str(), " async" );
           }
+        }
 
         if ( !strcmp( "role", var ) ) {
           if ( !( val = config_stream.GetWord() ) ) {
