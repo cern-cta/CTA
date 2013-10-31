@@ -258,6 +258,15 @@ tgt: $(DESTDIR)/etc/sysconfig/destfile
 #define SYSCONFIG(file,tgt) \
 internalSYSCONFIG(file.example,file.sysconfig,tgt)
 
+#define internalETC(destfile,origfile,tgt)         \
+$(DESTDIR)/etc/destfile: LOCAL_PATH/origfile @@\
+	install -d $(DESTDIR)/etc -m 0755    @@\
+	install -m 644 $< $@                 @@\
+tgt: $(DESTDIR)/etc/destfile
+
+#define ETC(file,tgt) \
+internalETC(file.example,file.etc,tgt)
+
 #define INITSCRIPT(file,tgt)                       \
 $(DESTDIR)/etc/init.d/file: LOCAL_PATH/file.init @@\
 	install -d $(DESTDIR)/etc/init.d -m 0755 @@\
