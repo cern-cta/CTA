@@ -103,8 +103,8 @@ CastorInstallEtcCronD (xrd-logs)
 ################################################################################
 # Rules to install example configuration files
 ################################################################################
-CastorInstallEtc (xrd.cf.server)
-CastorInstallEtc (xrd.cf.manager)
+CastorInstallEtcExample (xrd.cf.server)
+CastorInstallEtcExample (xrd.cf.manager)
 CastorInstallSysconfigExample (xrootd.server)
 CastorInstallSysconfigExample (xrootd.manager)
 

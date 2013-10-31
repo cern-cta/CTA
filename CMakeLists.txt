@@ -132,16 +132,18 @@ function (CastorInstallDir _name)
     "FILE(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}\${_name})")
 endfunction ()
 
-function (CastorInstallEtc _name)
-  install (FILES ${_name}
-  DESTINATION /etc
-  PERMISSIONS ${CASTOR_ETC_PERMS})
+function (CastorInstallEtcCronD _name)
+  install (FILES ${_name}.cron_d
+    DESTINATION /etc/cron.d
+    PERMISSIONS ${CASTOR_ETC_CRON_D_PERMS}
+    RENAME ${_name})
 endfunction ()
 
-function (CastorInstallEtcCronD _name)
-  install (FILES ${_name}
-  DESTINATION /etc/cron.d
-  PERMISSIONS ${CASTOR_ETC_CRON_D_PERMS})
+function (CastorInstallEtcExample _name)
+  install (FILES ${_name}.etc
+    DESTINATION /etc
+    PERMISSIONS ${CASTOR_ETC_PERMS}
+    RENAME ${_name}.example)
 endfunction ()
 
 function (CastorInstallScript _name)
