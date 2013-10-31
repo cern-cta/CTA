@@ -41,6 +41,8 @@ set (XRDXCASTOR2FS_LIB_SRC_FILES
   XrdxCastorClient.cpp)
 set_property(SOURCE XrdxCastor2Fs.cpp
   PROPERTY COMPILE_FLAGS -Wno-write-strings)
+set_property(SOURCE XrdxCastor2ServerAcc.cpp
+  PROPERTY COMPILE_FLAGS -Wno-sign-compare)
 add_library (XrdxCastor2Fs SHARED ${XRDXCASTOR2FS_LIB_SRC_FILES})
 set_target_properties (XrdxCastor2Fs PROPERTIES
   SOVERSION ${MAJOR_CASTOR_VERSION}

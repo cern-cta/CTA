@@ -419,7 +419,7 @@ XrdxCastor2ServerAcc::SignBase64( unsigned char* input,
   int cnt = 0;
 
   // Remove the backslash from the signature buffer 
-  for ( size_t i = 0; (i + 1) <= bptr->length; i++ ) {
+  for ( int i = 0; i <= ( bptr->length - 1 ); i++ ) {
     if ( buff[i] != '\n' ) {
       signed_signature_buff[cnt] = buff[i];
       cnt++;
