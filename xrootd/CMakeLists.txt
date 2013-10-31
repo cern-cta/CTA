@@ -39,6 +39,8 @@ set (XRDXCASTOR2FS_LIB_SRC_FILES
   XrdxCastorLogging.cpp
   XrdxCastorTiming.cpp
   XrdxCastorClient.cpp)
+set_property(SOURCE XrdxCastor2Fs.cpp
+  PROPERTY COMPILE_FLAGS -Wno-write-strings)
 add_library (XrdxCastor2Fs SHARED ${XRDXCASTOR2FS_LIB_SRC_FILES})
 set_target_properties (XrdxCastor2Fs PROPERTIES
   SOVERSION ${MAJOR_CASTOR_VERSION}
@@ -69,6 +71,8 @@ set (XRDXCASTOR2OFS_LIB_SRC_FILES
   XrdTransferManager.cpp
   XrdxCastorLogging.cpp
   XrdxCastorTiming.cpp)
+set_property(SOURCE XrdxCastor2Ofs.cpp
+  PROPERTY COMPILE_FLAGS -Wno-write-strings)
 add_library (XrdxCastor2Ofs SHARED ${XRDXCASTOR2OFS_LIB_SRC_FILES})
 set_target_properties (XrdxCastor2Ofs PROPERTIES
   SOVERSION ${MAJOR_CASTOR_VERSION}

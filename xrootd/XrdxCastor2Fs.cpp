@@ -559,7 +559,7 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
       match += role;
       match += ":";
 
-      if (hisroles)
+      if (hisroles) {
         if ((hisroles->find(match.c_str())) != STR_NPOS)
         {
           mappedClient.role = STRINGSTORE(role);
@@ -575,6 +575,7 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
             mappedClient.name = STRINGSTORE(hisroles->c_str() + 7);
           }
         }
+      }
     }
 
     if (mappedClient.role && (!strcmp(mappedClient.role, "root")))

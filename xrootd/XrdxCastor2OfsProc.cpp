@@ -156,17 +156,17 @@ XrdxCastor2Ofs::ReadFromProc( const char* entryname )
   if ( val == -1 )
     return false;
 
-  if ( entryname == "thirdpartycopyslots" ) {
+  if ( oucentry == "thirdpartycopyslots" ) {
     ThirdPartyCopySlots = ( unsigned int )val;
     return true;
   }
 
-  if ( entryname == "thirdpartycopyslotrate" ) {
+  if ( oucentry == "thirdpartycopyslotrate" ) {
     ThirdPartyCopySlotRate = ( unsigned int ) val;
     return true;
   }
 
-  if ( entryname == "trace" ) {
+  if ( oucentry == "trace" ) {
     OfsTrace.What = val;
     return true;
   }
