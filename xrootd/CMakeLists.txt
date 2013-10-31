@@ -84,3 +84,35 @@ add_executable (XrdTransfer XrdTransfer.cpp)
 target_link_libraries (XrdTransfer crypto ${XROOTD_XRDCLIENT_LIB}
   ${XROOTD_XRDUTILS_LIB})
 install (TARGETS XrdTransfer DESTINATION ${CASTOR_DEST_BIN_DIR})
+
+################################################################################
+# Rules to install the x2cp and x2proc scripts
+################################################################################
+CastorInstallScript (x2cp)
+CastorInstallScript (x2proc)
+
+################################################################################
+# Rules to install xrd cron job
+################################################################################
+CastorInstallEtcCronD (xrd-logs)
+
+################################################################################
+# Rules to install example configuration files
+################################################################################
+CastorInstallEtc (xrd.cf.server.example)
+CastorInstallEtc (xrd.cf.manager.example)
+CastorInstallSysconfig (xrootd.server.example)
+CastorInstallSysconfig (xrootd.manager.example)
+
+################################################################################
+# Rules to install the log, spool and run directories of xrootd
+################################################################################
+CastorInstallDir (/var/log/xrootd/manager)
+CastorInstallDir (/var/log/xrootd/server)
+CastorInstallDir (/var/log/xrootd/manager/proc)
+CastorInstallDir (/var/log/xrootd/server/proc)
+CastorInstallDir (/var/spool/xrootd/admin)
+CastorInstallDir (/var/spool/xrootd/core)
+CastorInstallDir (/var/spool/xrootd/manager)
+CastorInstallDir (/var/spool/xrootd/server)
+CastorInstallDir (/var/run/xrootd)

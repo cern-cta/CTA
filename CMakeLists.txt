@@ -67,13 +67,32 @@ execute_process (
 string(REGEX REPLACE "\n" "" CASTOR_DEST_PYTHON_LIBDIR ${CASTOR_DEST_PYTHON_LIBDIR})
 message(STATUS "CASTOR_DEST_PYTHON_LIBDIR = '${CASTOR_DEST_PYTHON_LIBDIR}'")
 
+set (CASTOR_BIN_SCRIPT_PERMS
+  OWNER_READ OWNER_WRITE OWNER_EXECUTE
+  GROUP_READ             OWNER_EXECUTE
+  WORLD_READ             WORLD_EXECUTE)
+
+set (CASTOR_ETC_PERMS
+  OWNER_READ OWNER_WRITE
+  GROUP_READ
+  WORLD_READ            )
+
+set (CASTOR_ETC_CRON_D_PERMS
+  OWNER_READ OWNER_WRITE
+  GROUP_READ
+  WORLD_READ            )
+
+set (CASTOR_HEADER_PERMS
+  OWNER_READ OWNER_WRITE
+  GROUP_READ
+  WORLD_READ)
 
 set (CASTOR_MAN_PAGE_PERMS
   OWNER_READ OWNER_WRITE
   GROUP_READ
   WORLD_READ)
 
-set (CASTOR_HEADER_PERMS
+set (CASTOR_SYSCONFIG_PERMS
   OWNER_READ OWNER_WRITE
   GROUP_READ
   WORLD_READ)
@@ -106,6 +125,29 @@ function (CastorAddProC _name)
   # generates warnings.
   set_property (SOURCE ${_name}.c
     PROPERTY COMPILE_FLAGS "${ORACLE_CPPFLAGS} -Wno-error")
+endfunction ()
+
+function (CastorInstallDir _name)
+  install (CODE
+    "FILE(MAKE_DIRECTORY \$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}\${_name})")
+endfunction ()
+
+function (CastorInstallEtc _name)
+  install (FILES ${_name}
+  DESTINATION /etc
+  PERMISSIONS ${CASTOR_ETC_PERMS})
+endfunction ()
+
+function (CastorInstallEtcCronD _name)
+  install (FILES ${_name}
+  DESTINATION /etc/cron.d
+  PERMISSIONS ${CASTOR_ETC_CRON_D_PERMS})
+endfunction ()
+
+function (CastorInstallScript _name)
+  install (FILES ${_name}
+    DESTINATION ${CASTOR_DEST_BIN_DIR}
+    PERMISSIONS ${CASTOR_BIN_SCRIPT_PERMS})
 endfunction ()
 
 function (CastorInstallManPage _name _section)
@@ -146,11 +188,6 @@ function (CastorInstallLogrotate _name)
     PERMISSIONS ${CASTOR_LOGROTATE_PERMS}
     RENAME ${_name})
 endfunction ()
-
-set (CASTOR_SYSCONFIG_PERMS
-  OWNER_READ OWNER_WRITE
-  GROUP_READ
-  WORLD_READ)
 
 function (CastorInstallSysconfig _name)
   install (FILES ${_name}.sysconfig
@@ -233,6 +270,12 @@ if(NOT DEFINED COMPILE_PACKAGING)
   message(STATUS "Override with -DCOMPILE_PACKAGING:STRING=0")
   set(COMPILE_PACKAGING 1)
 endif(NOT DEFINED COMPILE_PACKAGING)
+
+################################################################################
+# Create shared directories at install time
+################################################################################
+CastorInstallDir (/var/log/castor)
+CastorInstallDir (/var/spool/castor)
 
 ################################################################################
 # Include the subdirectories of the project

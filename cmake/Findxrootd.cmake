@@ -52,6 +52,14 @@ find_library (XROOTD_XRDCLIENT_LIB XrdClient)
 find_library (XROOTD_XRDOFS_LIB XrdOfs)
 find_library (XROOTD_XRDUTILS_LIB XrdUtils)
 
+message (STATUS "XROOTD_FOUND               = ${XROOTD_FOUND}")
+message (STATUS "XROOTD_INCLUDE_DIR         = ${XROOTD_INCLUDE_DIR}")
+message (STATUS "XROOTD_PRIVATE_INCLUDE_DIR = ${XROOTD_PRIVATE_INCLUDE_DIR}")
+message (STATUS "XROOTD_XRDCL_LIB           = ${XROOTD_XRDCL_LIB}")
+message (STATUS "XROOTD_XRDCLIENT_LIB       = ${XROOTD_XRDCLIENT_LIB}")
+message (STATUS "XROOTD_XRDOFS_LIB          = ${XROOTD_XRDOFS_LIB}")
+message (STATUS "XROOTD_XRDUTILS_LIB        = ${XROOTD_XRDUTILS_LIB}")
+
 include (FindPackageHandleStandardArgs)
 find_package_handle_standard_args (xrootd DEFAULT_MSG 
   XROOTD_INCLUDE_DIR
