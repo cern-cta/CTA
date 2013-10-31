@@ -209,24 +209,25 @@ XrdxCastorClient::SendAsyncRequest(const std::string& userId,
   // Lock the map as we could receive the answer for our request before registering
   // it to the map. This is fine as the request is processed only after we get the ack.
   mMutexMaps.Lock();    // -->
-  castor::MessageAck* ack;
 
   try
   {
     // Wait for acknowledgment
     castor::IObject* obj = sock.readObject();
-    ack = dynamic_cast<castor::MessageAck*>(obj);
-  
+    castor::MessageAck* ack = dynamic_cast<castor::MessageAck*>(obj);
+      
     if (0 == ack) 
     {
       castor::exception::InvalidArgument e;
       e.getMessage() << "No Acknowledgement from the server";
       throw e;
     }
+
     if (!ack->status()) 
     {
       castor::exception::Exception e(ack->errorCode());
       e.getMessage() << ack->errorMessage();
+      delete ack;
       throw e;
     }
     
@@ -234,6 +235,7 @@ XrdxCastorClient::SendAsyncRequest(const std::string& userId,
     
     // Save the request id returned by the stager and add it to the map
     std::string req_id = ack->requestId();
+    delete ack;
     req->setReqId(req_id);
     
     // Save in map the identity of the user along with the request id and response
@@ -266,13 +268,11 @@ XrdxCastorClient::SendAsyncRequest(const std::string& userId,
     }
 
     mMutexMaps.UnLock();  // <--
-    delete ack;
   }
   catch (castor::exception::Exception& e) 
   {
     // Unlock the map and forward any exception
     mMutexMaps.UnLock(); // <--
-    delete ack;
     delete elem;
     throw e;   
   }

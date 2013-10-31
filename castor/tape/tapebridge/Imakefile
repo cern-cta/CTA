@@ -64,9 +64,7 @@ TAPEBRIDGEBIN_SRCS = \
   TapeBridgeMain.cpp \
   TapeFlushConfigParams.cpp \
   VdqmRequestHandler.cpp \
-  VmgrTxRx.cpp \
-  $(TAPEGATEWAY_MESSAGES_SRCS) \
-  $(TAPEGATEWAY_IO_SRCS)
+  VmgrTxRx.cpp
 TAPEBRIDGEBIN_OBJS = $(TAPEBRIDGEBIN_SRCS:.cpp=.o)
 
 NormalProgramTarget(tapebridged,$(TAPEBRIDGEBIN_OBJS),,,755)

@@ -307,7 +307,7 @@ CREATE OR REPLACE PROCEDURE updateDrainingJobOnD2dEnd(inDjId IN INTEGER, inFileS
   varNbSuccessFiles INTEGER;
   varStatus INTEGER;
 BEGIN
-  -- note the locking that insures consistency of the counters
+  -- note the locking that ensures consistency of the counters
   SELECT status, totalFiles, nbFailedBytes, nbSuccessBytes, nbFailedFiles, nbSuccessFiles
     INTO varStatus, varTotalFiles, varNbFailedBytes, varNbSuccessBytes, varNbFailedFiles, varNbSuccessFiles
     FROM DrainingJob

@@ -582,10 +582,12 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
     {
       mappedClient.name = STRINGSTORE("root");
     }
-
-    MapMutex.UnLock();  // <--
+    
+    break;
   }
   while (0);
+
+  MapMutex.UnLock();  // <--
 
   XrdSecEntity* newentity = new XrdSecEntity();
 

@@ -39,7 +39,6 @@ int main(int	argc,
 	int c;
 	int cfseq;
 	int den;
-	char *dgn;
 	char *domainname;
 	char *drive;
 	unsigned char drive_serial_no[13];
@@ -104,7 +103,7 @@ int main(int	argc,
 	name = argv[6];
 	jid = atoi (argv[7]);
 	ux = atoi(argv[8]);
-	dgn = argv[9];
+	/* dgn = argv[9]; not used */
 	devtype = argv[10];
 	/* The driver name in argv[11] is no longer used */
 	mode = atoi (argv[12]);
