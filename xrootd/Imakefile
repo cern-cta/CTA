@@ -88,7 +88,7 @@ NormalProgramTarget(XrdTransfer,$(XRDTRANSFER_OBJS),,-lXrdUtils -lXrdClient -lcr
 
 InstallNonExecFile(x2proc,/usr/bin,755)
 InstallNonExecFile(x2cp,/usr/bin,755)
-InstallNonExecFile(xrd-logs,/etc/cron.d,775)
+CRON_D(xrd-logs,install)
 ETC(xrd.cf.server,install)
 ETC(xrd.cf.manager,install)
 SYSCONFIG(xrootd.server,install)

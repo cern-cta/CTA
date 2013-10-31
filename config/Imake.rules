@@ -242,6 +242,14 @@ PREFIX(COMMONDEPLIB) += DepSharedLibraryTargetName(directory,libname)           
 PREFIX(COMMONLIBS) += DepSharedLibraryTargetName(directory,libname) BuildRPath/**/libname @@\
 include $(CASTOR_ROOT)/directory/Makefile
 
+#define internalCRON_D(destfile,origfile,tgt)         \
+$(DESTDIR)/etc/cron.d/destfile: LOCAL_PATH/origfile @@\
+	install -d $(DESTDIR)/etc/cron.d -m 0755    @@\
+	install -m 644 $< $@                        @@\
+tgt: $(DESTDIR)/etc/cron.d/destfile
+
+#define CRON_D(file,tgt) \
+internalCRON_D(file,file.cron_d,tgt)
 
 #define LOGROTATE(file,tgt)                                  \
 $(DESTDIR)/etc/logrotate.d/file: LOCAL_PATH/file.logrotate @@\
