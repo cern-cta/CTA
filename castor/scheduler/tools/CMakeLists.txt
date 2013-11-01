@@ -1,4 +1,4 @@
-#               castor/scheduler/CMakeLists.txt
+#               castor/tools/CMakeLists.txt
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -21,17 +21,17 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-add_subdirectory(transfermanager)
-add_subdirectory(tools)
-
 ################################################################################
-# Rules to install schedulers's scripts
+# Rules to install schedulers's tool scripts
 ################################################################################
 
-set(SCHEDULER_SCRIPTS
-  connectionpool.py
-  threadpoolserver.py
-  transfer.py)
-install(FILES ${SCHEDULER_SCRIPTS}
-  DESTINATION ${CASTOR_DEST_PYTHON_LIBDIR}
+set(SCHEDULER_TOOLS_SCRIPTS
+  draintransfers
+  killtransfers
+  listtransfers)
+install(FILES ${SCHEDULER_TOOLS_SCRIPTS}
+  DESTINATION ${CASTOR_DEST_BIN_DIR}
   PERMISSIONS ${CASTOR_SCRIPT_PERMS})
+foreach(TOOL ${SCHEDULER_TOOLS_SCRIPTS})
+  CastorInstallExeManPage(${TOOL})
+endforeach(TOOL)
