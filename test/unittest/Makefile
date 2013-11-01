@@ -363,6 +363,7 @@ rununittests: \
   unittest_PendingMigrationsStoreTest.o \
   unittest_BulkRequestConfigParamsTest.o \
   unittest_IndexedContainerTest.o \
+  unittest_TapeFseqRangeListSequenceTest.o \
   unittest_TapeFseqRangeSequenceTest.o \
   unittest_TapeFseqRangeTest.o \
   unittest_UtilsTest.o \
@@ -1646,6 +1647,9 @@ unittest_BulkRequestConfigParamsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/ta
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
 unittest_IndexedContainerTest.o: $(ROOT_DIR)/test/unittest/castor/tape/utils/IndexedContainerTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+unittest_TapeFseqRangeListSequenceTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tpcp/TapeFseqRangeListSequenceTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 unittest_TapeFseqRangeSequenceTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tpcp/TapeFseqRangeSequenceTest.cpp
