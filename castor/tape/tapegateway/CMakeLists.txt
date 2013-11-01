@@ -28,7 +28,6 @@ cmake_minimum_required (VERSION 2.6)
 set (TAPEGATEWAY_SRC_FILES
   ScopedTransaction.cpp
   TapeGatewayDlfMessageStrings.cpp
-  daemon/MountIdToFseqMap.cpp
   daemon/NsTapeGatewayHelper.cpp
   daemon/TapeGatewayDaemon.cpp
   daemon/TapeGatewayMain.cpp
