@@ -38,7 +38,7 @@ set (DUMPTP_SRC_FILES
 add_executable (dumptp ${DUMPTP_SRC_FILES})
 target_link_libraries (dumptp castorcommon castorrfio castortapegatewayprotocol
   castortapenet castortapeutils castorvdqm castorvmgr)
-install (TARGETS dumptp DESTINATION ${CASTOR_DEST_LIB_DIR})
+install (TARGETS dumptp DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallExeManPage (dumptp)
 
 ################################################################################
@@ -58,7 +58,7 @@ add_executable (readtp ${READTP_SRC_FILES})
 target_link_libraries (readtp castorcommon castorrfio
 castortapegatewayprotocol
   castortapenet castortapeutils castorvdqm castorvmgr)
-install (TARGETS readtp DESTINATION ${CASTOR_DEST_LIB_DIR})
+install (TARGETS readtp DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallExeManPage (readtp)
 
 ################################################################################
@@ -78,5 +78,5 @@ add_executable (writetp ${WRITETP_SRC_FILES})
 target_link_libraries (writetp castorcommon castorrfio
 castortapegatewayprotocol
   castortapenet castortapeutils castorvdqm castorvmgr)
-install (TARGETS writetp DESTINATION ${CASTOR_DEST_LIB_DIR})
+install (TARGETS writetp DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallExeManPage (writetp)

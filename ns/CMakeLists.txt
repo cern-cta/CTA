@@ -18,7 +18,7 @@
 # Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 #
 #
-# Steven.Murray@cern.ch
+# Steven.Murray@cern.ch Eric.Cano@cern.ch
 #
 cmake_minimum_required (VERSION 2.6)
 
@@ -97,6 +97,41 @@ set_target_properties (castorns
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castorns castorsecurity)
 install (TARGETS castorns DESTINATION ${CASTOR_DEST_LIB_DIR})
+
+set(NSCLIENTS
+  nschclass
+  nschmod
+  nschown
+  nsdelcomment
+  nsdeleteclass
+  nsdelsegment
+  nsenterclass
+  nsfind
+  nsgetacl
+  nsgetpath
+  nslistclass
+  nslisttape
+  nsln
+  nsls
+  nsmkdir
+  nsmodifyclass
+  nsping
+  nsrename
+  nsrm
+  nsrmdir
+  nsrmvid
+  nssetchecksum
+  nssetacl
+  nssetcomment
+  nssetfsize
+  nssetsegment
+  nstouch)
+foreach(CLT ${NSCLIENTS})
+  add_executable(${CLT} ${CLT}.c)
+  target_link_libraries (${CLT} castorcommon castorsecurity castorns)
+  CastorInstallExeManPage(${CLT})
+endforeach(CLT)
+install(TARGETS ${NSCLIENTS} DESTINATION ${CASTOR_DEST_BIN_DIR})
 
 set(CNS_MAN_PAGES
   Cns_aborttrans
