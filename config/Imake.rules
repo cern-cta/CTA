@@ -242,6 +242,15 @@ PREFIX(COMMONDEPLIB) += DepSharedLibraryTargetName(directory,libname)           
 PREFIX(COMMONLIBS) += DepSharedLibraryTargetName(directory,libname) BuildRPath/**/libname @@\
 include $(CASTOR_ROOT)/directory/Makefile
 
+#define internalXINETD_D(destfile,origfile,tgt)         \
+$(DESTDIR)/etc/xinetd.d/destfile: LOCAL_PATH/origfile @@\
+	install -d $(DESTDIR)/etc/xinetd.d -m 0755    @@\
+	install -m 644 $< $@                          @@\
+tgt: $(DESTDIR)/etc/xinetd.d/destfile
+
+#define XINETD_D(file,tgt) \
+internalXINETD_D(file,file.xinetd_d,tgt)
+
 #define internalCRON_D(destfile,origfile,tgt)         \
 $(DESTDIR)/etc/cron.d/destfile: LOCAL_PATH/origfile @@\
 	install -d $(DESTDIR)/etc/cron.d -m 0755    @@\
