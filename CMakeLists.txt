@@ -133,7 +133,12 @@ function (CastorAddProC _name)
 endfunction ()
 
 function (CastorInstallDir _name)
-  install (CODE "FILE(MAKE_DIRECTORY \$ENV{DESTDIR}${_name})")
+  install (CODE "file (MAKE_DIRECTORY \$ENV{DESTDIR}${_name})")
+endfunction ()
+
+function (CastorInstallDirWithOwnerShip _name _owner _group)
+  CastorInstallDir (${_name})
+  install (CODE "execute_process (COMMAND chown ${_owner}:${_group} \$ENV{DESTDIR}${_name})")
 endfunction ()
 
 function (CastorInstallEtcCronD _name)
@@ -281,7 +286,7 @@ endif(NOT DEFINED COMPILE_PACKAGING)
 # Rules to install the shared log and spool directories
 ################################################################################
 CastorInstallDir (/var/log/castor)
-CastorInstallDir (/var/log/spool/castor)
+CastorInstallDirWithOwnerShip(/var/log/spool/castor stage st)
 
 ################################################################################
 # Include the subdirectories of the project
