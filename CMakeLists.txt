@@ -127,6 +127,10 @@ function (CastorAddProC _name)
     PROPERTY COMPILE_FLAGS "${ORACLE_CPPFLAGS} -Wno-error")
 endfunction ()
 
+function (CastorInstallDir _name)
+  install (CODE "FILE(MAKE_DIRECTORY \$ENV{DESTDIR}${_name})")
+endfunction ()
+
 function (CastorInstallEtcCronD _name)
   install (FILES ${_name}.cron_d
     DESTINATION /etc/cron.d
@@ -262,10 +266,10 @@ if(NOT DEFINED COMPILE_PACKAGING)
 endif(NOT DEFINED COMPILE_PACKAGING)
 
 ################################################################################
-# Create shared directories at install time
+# Rules to install the shared log and spool directories
 ################################################################################
-install (CODE "FILE(MAKE_DIRECTORY \$ENV{DESTDIR}/var/log/castor)")
-install (CODE "FILE(MAKE_DIRECTORY \$ENV{DESTDIR}/var/spool/castor)")
+CastorInstallDir (/var/log/castor)
+CastorInstallDir (/var/log/spool/castor)
 
 ################################################################################
 # Include the subdirectories of the project
