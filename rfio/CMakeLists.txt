@@ -89,7 +89,7 @@ add_executable(rfiod ${RFIOD_SRC_FILES})
 target_link_libraries(rfiod castorcommon castorns castordlf castorsecurity
   castorclient castorrfio)
 set_target_properties(rfiod PROPERTIES
-  LINK_FLAGS "-lcrypto -ldl")
+  LINK_FLAGS "-lcrypto -ldl -lz")
 install(TARGETS rfiod DESTINATION ${CASTOR_DEST_BIN_DIR})
 
 CastorInstallExeManPage(rfiod)
