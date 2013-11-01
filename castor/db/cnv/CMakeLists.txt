@@ -78,8 +78,8 @@ set (CNV_LIB_SRC_FILES
   ../DbCnvSvc.cpp
   ../DbParamsSvc.cpp
 )
-add_library (castorcnv SHARED ${CNV_LIB_SRC_FILES})
-set_target_properties (castorcnv
+add_library (castorcnvs SHARED ${CNV_LIB_SRC_FILES})
+set_target_properties (castorcnvs
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
-target_link_libraries (castorcnv castorclient)
-install (TARGETS castorcnv DESTINATION ${CASTOR_DEST_LIB_DIR})
+target_link_libraries (castorcnvs castorclient)
+install (TARGETS castorcnvs DESTINATION ${CASTOR_DEST_LIB_DIR})

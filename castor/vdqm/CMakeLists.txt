@@ -53,7 +53,7 @@ set (VDQMD_SRC_FILES
   handler/VdqmMagic3RequestHandler.cpp
   handler/VdqmMagic4RequestHandler.cpp)
 add_executable (vdqmd ${VDQMD_SRC_FILES})
-target_link_libraries (vdqmd castorclient castorcnv castorcommon castorupv
+target_link_libraries (vdqmd castorclient castorcnvs castorcommon castorupv
   castorvmgr)
 install (TARGETS vdqmd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (vdqmd)
@@ -65,6 +65,6 @@ CastorInstallInitScript (vdqmd)
 # Rules to build and install vdqmDBInit
 ################################################################################
 add_executable (vdqmDBInit vdqmDBInit.cpp)
-target_link_libraries (vdqmDBInit castorcnv castorcommon castorvmgr)
+target_link_libraries (vdqmDBInit castorcnvs castorcommon castorvmgr)
 install (TARGETS vdqmDBInit DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallExeManPage (vdqmDBInit)
