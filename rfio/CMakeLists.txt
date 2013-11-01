@@ -58,3 +58,21 @@ set (RFIO_MAN_FILES rfio_fileno rfio_read rfio_lstat rfio_readlink rfio_chown
 foreach(MAN ${RFIO_MAN_FILES})
   CastorInstallLibManPage(${MAN})
 endforeach(MAN)
+
+################################################################################
+# Rules to build and install rfio's CLI commands (and man pages)
+################################################################################
+
+set (RFIO_CLI_CLIENTS rfcat rfchmod rfcp rfdir rfmkdir rfrename rfrm)
+set (RFIO_CLI_CLIENTS_NO_MANPAGE  rfstat)
+foreach(CLT ${RFIO_CLI_CLIENTS} ${RFIO_CLI_CLIENTS_NO_MANPAGE})
+  add_executable(${CLT} ${CLT}.c)
+  target_link_libraries(${CLT} castorcommon castorns castordlf castorsecurity
+      castorclient castorrfio)
+endforeach(CLT)
+install(TARGETS ${RFIO_CLI_CLIENTS} ${RFIO_CLI_CLIENTS_NO_MANPAGE}
+  DESTINATION ${CASTOR_DEST_BIN_DIR})
+
+foreach(CLT ${RFIO_CLI_CLIENTS})
+  CastorInstallExeManPage(${CLT})
+endforeach(CLT)
