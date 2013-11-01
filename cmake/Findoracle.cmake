@@ -39,7 +39,7 @@ endif (ORACLE_HOME)
 execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/oracompile.py
     --with-precomp --home OUTPUT_VARIABLE ORACLE_HOME)
 string (REGEX REPLACE "\n" "" ORACLE_HOME ${ORACLE_HOME})
-message (STATUS "ORACLE_HOME = '${ORACLE_HOME}'")
+message (STATUS "ORACLE_HOME = ${ORACLE_HOME}")
 
 execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/oracompile.py
     --with-precomp --bindir OUTPUT_VARIABLE ORACLE_BIN)

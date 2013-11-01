@@ -82,6 +82,11 @@ set (CASTOR_ETC_CRON_D_PERMS
   GROUP_READ
   WORLD_READ            )
 
+set (CASTOR_ETC_XINETD_D_PERMS
+  OWNER_READ OWNER_WRITE
+  GROUP_READ
+  WORLD_READ            )
+
 set (CASTOR_HEADER_PERMS
   OWNER_READ OWNER_WRITE
   GROUP_READ
@@ -143,6 +148,13 @@ function (CastorInstallEtcExample _name)
     DESTINATION /etc
     PERMISSIONS ${CASTOR_ETC_PERMS}
     RENAME ${_name}.example)
+endfunction ()
+
+function (CastorInstallEtcXinetdD _name)
+  install (FILES ${_name}.xinetd_d
+    DESTINATION /etc/xinetd.d
+    PERMISSIONS ${CASTOR_ETC_XINETD_D_PERMS}
+    RENAME ${_name})
 endfunction ()
 
 function (CastorInstallScript _name)
@@ -285,6 +297,7 @@ add_subdirectory (client/src/stager)
 add_subdirectory (common)
 add_subdirectory (config)
 add_subdirectory (dlf)
+add_subdirectory (gridftp2)
 add_subdirectory (h)
 add_subdirectory (hsmtools)
 add_subdirectory (ns)
