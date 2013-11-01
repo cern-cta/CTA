@@ -1,4 +1,4 @@
-#               castor/scheduler/CMakeLists.txt
+#               castor/diskmanager/CMakeLists.txt
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -21,18 +21,31 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-add_subdirectory(transfermanager)
-add_subdirectory(tools)
-add_subdirectory(diskmanager)
-
 ################################################################################
-# Rules to install schedulers's scripts
+# Rules to install diskmanagerd's componenets and man pages
 ################################################################################
 
-set(SCHEDULER_SCRIPTS
-  connectionpool.py
-  threadpoolserver.py
-  transfer.py)
-install(FILES ${SCHEDULER_SCRIPTS}
+install(FILES diskmanagerd
+  DESTINATION ${CASTOR_DEST_BIN_DIR}
+  PERMISSIONS ${CASTOR_BIN_SCRIPT_PERMS})
+set(DISKMANAGERD_LIBS
+  localqueue.py
+  runningtransfersset.py
+  activitycontrol.py
+  activitycontrolchecker.py
+  manager.py
+  reporter.py
+  diskmanagerdlf.py)
+install(FILES ${DISKMANAGERD_LIBS}
   DESTINATION ${CASTOR_DEST_PYTHON_LIBDIR}
   PERMISSIONS ${CASTOR_SCRIPT_PERMS})
+
+CastorInstallInitScript(diskmanagerd)
+CastorInstallSysconfigExample(diskmanagerd)
+CastorInstallLogrotate(castor-diskserver-manager)
+
+
+foreach(TOOL ${SCHEDULER_TOOLS_SCRIPTS})
+  CastorInstallExeManPage(${TOOL})
+endforeach(TOOL)
+CastorInstallAdmManPage(diskmanagerd)
