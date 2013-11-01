@@ -23,4 +23,4 @@ COMM
 COMM @author Sebastien Ponce, sebastien.ponce@cern.ch
 COMM
 
-SUBDIRS = tapegateway tpcp
+SUBDIRS = tpcp
