@@ -98,41 +98,6 @@ set_target_properties (castorns
 target_link_libraries (castorns castorsecurity)
 install (TARGETS castorns DESTINATION ${CASTOR_DEST_LIB_DIR})
 
-set(NSCLIENTS
-  nschclass
-  nschmod
-  nschown
-  nsdelcomment
-  nsdeleteclass
-  nsdelsegment
-  nsenterclass
-  nsfind
-  nsgetacl
-  nsgetpath
-  nslistclass
-  nslisttape
-  nsln
-  nsls
-  nsmkdir
-  nsmodifyclass
-  nsping
-  nsrename
-  nsrm
-  nsrmdir
-  nsrmvid
-  nssetchecksum
-  nssetacl
-  nssetcomment
-  nssetfsize
-  nssetsegment
-  nstouch)
-foreach(CLT ${NSCLIENTS})
-  add_executable(${CLT} ${CLT}.c)
-  target_link_libraries (${CLT} castorcommon castorsecurity castorns)
-  CastorInstallExeManPage(${CLT})
-endforeach(CLT)
-install(TARGETS ${NSCLIENTS} DESTINATION ${CASTOR_DEST_BIN_DIR})
-
 set(CNS_MAN_PAGES
   Cns_aborttrans
   Cns_access
@@ -205,3 +170,68 @@ set(CNS_MAN_PAGES
 foreach(MAN_PAGE ${CNS_MAN_PAGES})
   CastorInstallLibManPage(${MAN_PAGE})
 endforeach(MAN_PAGE)
+
+################################################################################
+# Rules to build and install the ns CLI clients
+################################################################################
+
+set(NSCLIENTS
+  nschclass
+  nschmod
+  nschown
+  nsdelcomment
+  nsdeleteclass
+  nsdelsegment
+  nsenterclass
+  nsfind
+  nsgetacl
+  nsgetpath
+  nslistclass
+  nslisttape
+  nsln
+  nsls
+  nsmkdir
+  nsmodifyclass
+  nsping
+  nsrename
+  nsrm
+  nsrmdir
+  nsrmvid
+  nssetchecksum
+  nssetacl
+  nssetcomment
+  nssetfsize
+  nssetsegment
+  nstouch)
+foreach(CLT ${NSCLIENTS})
+  add_executable(${CLT} ${CLT}.c)
+  target_link_libraries (${CLT} castorcommon castorsecurity castorns)
+  CastorInstallExeManPage(${CLT})
+endforeach(CLT)
+install(TARGETS ${NSCLIENTS} DESTINATION ${CASTOR_DEST_BIN_DIR})
+
+################################################################################
+# Rules to build and install the ns deamon and its config files
+################################################################################
+
+CastorAddProC(Cns_oracle_ifce)
+add_executable(nsd 
+  Cns_main.c
+  Cns_acl.c
+  Cns_chkperm.c
+  Cns_oracle_ifce.c
+  Cns_procreq.c
+  sendrep.c
+  nslogit.c)
+target_link_libraries(nsd castorcommon castorsecurity castorupv castordlf)
+set_target_properties(nsd PROPERTIES
+  COMPILE_FLAGS ${ORACLE_CPPFLAGS}
+  LINK_FLAGS "-L${ORACLE_LIBDIR} -lclntsh")
+install(TARGETS nsd DESTINATION ${CASTOR_DEST_BIN_DIR})
+CastorInstallAdmManPage(nsd)
+CastorInstallConfigFile(NS)
+CastorInstallInitScript(nsd)
+CastorInstallSysconfigExample(nsd)
+CastorInstallSysconfigExample(nsd.normal)
+CastorInstallSysconfigExample(nsd.secure)
+CastorInstallLogrotate(castor-ns-server)
