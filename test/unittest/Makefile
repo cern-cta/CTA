@@ -325,6 +325,8 @@ rununittests: \
   tapegateway_VolumeRequest.o \
   test_exception.o \
   tpcp_TapeFseqRange.o \
+  tpcp_TapeFseqRangeListSequence.o \
+  tpcp_TapeFseqRangeSequence.o \
   unittest.o \
   unittest_AcsCmdTest.o \
   unittest_AcsTest.o \
@@ -361,6 +363,7 @@ rununittests: \
   unittest_PendingMigrationsStoreTest.o \
   unittest_BulkRequestConfigParamsTest.o \
   unittest_IndexedContainerTest.o \
+  unittest_TapeFseqRangeSequenceTest.o \
   unittest_TapeFseqRangeTest.o \
   unittest_UtilsTest.o \
   unittest_RtcopyTest.o \
@@ -1523,6 +1526,14 @@ tpcp_TapeFseqRange.o : \
   $(ROOT_DIR)/castor/tape/tpcp/TapeFseqRange.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+tpcp_TapeFseqRangeListSequence.o : \
+  $(ROOT_DIR)/castor/tape/tpcp/TapeFseqRangeListSequence.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+tpcp_TapeFseqRangeSequence.o : \
+  $(ROOT_DIR)/castor/tape/tpcp/TapeFseqRangeSequence.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 test_exception.o: test_exception.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -1635,6 +1646,9 @@ unittest_BulkRequestConfigParamsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/ta
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
 unittest_IndexedContainerTest.o: $(ROOT_DIR)/test/unittest/castor/tape/utils/IndexedContainerTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+unittest_TapeFseqRangeSequenceTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tpcp/TapeFseqRangeSequenceTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 unittest_TapeFseqRangeTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tpcp/TapeFseqRangeTest.cpp
