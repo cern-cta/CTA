@@ -23,5 +23,4 @@ COMM
 COMM @author Sebastien Ponce, sebastien.ponce@cern.ch
 COMM
 
-COMM SUBDIRS = db io dbC stgSvc dstage tape
-COMM SUBDIRS = tape
+COMM SUBDIRS = db io dbC stgSvc dstage
