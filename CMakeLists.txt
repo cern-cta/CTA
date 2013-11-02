@@ -26,11 +26,11 @@
 cmake_minimum_required (VERSION 2.6)
 
 project(castor)
-if("${CMAKE_SOURCE_DIR}" MATCHES "${CMAKE_BINARY_DIR}")
-  message(SEND_ERROR "In source building not supported. Please run something like: \"mkdir ../build; ( src=`pwd`; cd ../build; cmake $src ); make -C ../build\"")
-  message(SEND_ERROR "Now that you reached that point you will unfortnately have to cleanup your source directory: \"rm -rf CMakeFiles/ CMakeCache.txt\". Sorry!")
+if ("${CMAKE_SOURCE_DIR}" MATCHES "${CMAKE_BINARY_DIR}")
+  message (SEND_ERROR "In source building not supported. Please run something like: \"mkdir ../build; ( src=`pwd`; cd ../build; cmake $src ); make -C ../build\"")
+  message (SEND_ERROR "Now that you reached that point you will unfortnately have to cleanup your source directory: \"rm -rf CMakeFiles/ CMakeCache.txt\". Sorry!")
   return()
-endif("${CMAKE_SOURCE_DIR}" MATCHES "${CMAKE_BINARY_DIR}")
+endif ("${CMAKE_SOURCE_DIR}" MATCHES "${CMAKE_BINARY_DIR}")
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 list(APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
@@ -51,21 +51,25 @@ set (CASTOR_DEST_MAN_DIR /usr/share/man)
 set (CASTOR_DEST_INCLUDE_DIR /usr/include)
 set (CASTOR_DEST_PERL_LIBDIR /usr/lib/perl/CASTOR)
 
+execute_process (COMMAND whoami OUTPUT_VARIABLE CASTOR_WHOAMI)
+string (REGEX REPLACE "\n" "" CASTOR_WHOAMI ${CASTOR_WHOAMI})
+message (STATUS "CASTOR_WHOAMI = ${CASTOR_WHOAMI}")
+
 find_package (uuid REQUIRED)
 
 execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/pycompile.py --libs
   OUTPUT_VARIABLE CASTOR_PYTHON_LIBS)
-string(REGEX REPLACE "\n" "" CASTOR_PYTHON_LIBS ${CASTOR_PYTHON_LIBS})
-message(STATUS "CASTOR_PYTHON_LIBS = '${CASTOR_PYTHON_LIBS}'")
+ string (REGEX REPLACE "\n" "" CASTOR_PYTHON_LIBS ${CASTOR_PYTHON_LIBS})
+message (STATUS "CASTOR_PYTHON_LIBS = '${CASTOR_PYTHON_LIBS}'")
 execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/pycompile.py --inc
   OUTPUT_VARIABLE CASTOR_PYTHON_INC)
-string(REGEX REPLACE "\n" "" CASTOR_PYTHON_INC ${CASTOR_PYTHON_INC})
-message(STATUS "CASTOR_PYTHON_INC = '${CASTOR_PYTHON_INC}'")
+ string (REGEX REPLACE "\n" "" CASTOR_PYTHON_INC ${CASTOR_PYTHON_INC})
+message (STATUS "CASTOR_PYTHON_INC = '${CASTOR_PYTHON_INC}'")
 execute_process (
     COMMAND python -c "from distutils import sysconfig; print sysconfig.get_python_lib()"
   OUTPUT_VARIABLE CASTOR_DEST_PYTHON_LIBDIR)
-string(REGEX REPLACE "\n" "" CASTOR_DEST_PYTHON_LIBDIR ${CASTOR_DEST_PYTHON_LIBDIR})
-message(STATUS "CASTOR_DEST_PYTHON_LIBDIR = '${CASTOR_DEST_PYTHON_LIBDIR}'")
+ string (REGEX REPLACE "\n" "" CASTOR_DEST_PYTHON_LIBDIR ${CASTOR_DEST_PYTHON_LIBDIR})
+message (STATUS "CASTOR_DEST_PYTHON_LIBDIR = '${CASTOR_DEST_PYTHON_LIBDIR}'")
 
 set (CASTOR_BIN_SCRIPT_PERMS
   OWNER_READ OWNER_WRITE OWNER_EXECUTE
@@ -133,11 +137,12 @@ function (CastorAddProC _name)
 endfunction ()
 
 function (CastorInstallDir _name)
+  install (CODE "message (STATUS \"Installing directory \$ENV{DESTDIR}${_name}\")")
   install (CODE "file (MAKE_DIRECTORY \$ENV{DESTDIR}${_name})")
 endfunction ()
 
-function (CastorInstallDirWithOwnerShip _name _owner _group)
-  CastorInstallDir (${_name})
+function (CastorInstallChown _name _owner _group)
+  install (CODE "message (STATUS \"Installing chown ${_owner}:${_group} \$ENV{DESTDIR}${_name}\")")
   install (CODE "execute_process (COMMAND chown ${_owner}:${_group} \$ENV{DESTDIR}${_name})")
 endfunction ()
 
@@ -269,24 +274,27 @@ set (CMAKE_CXX_FLAGS ${CMAKE_C_FLAGS})
 set_property (DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
 
 # Generate the compilation variables, if needed
-if(NOT DEFINED COMPILE_SERVER)
-  message(STATUS "Setting COMPILE_SERVER to the value of 1")
-  message(STATUS "Override with -DCOMPILE_SERVER:STRING=0")
+if (NOT DEFINED COMPILE_SERVER)
+  message (STATUS "Setting COMPILE_SERVER to the value of 1")
+  message (STATUS "Override with -DCOMPILE_SERVER:STRING=0")
   set(COMPILE_SERVER 1)
-endif(NOT DEFINED COMPILE_SERVER)
+endif (NOT DEFINED COMPILE_SERVER)
 
 # Generate the compilation variables, if needed
-if(NOT DEFINED COMPILE_PACKAGING)
-  message(STATUS "Setting COMPILE_PACKAGING to the value of 1")
-  message(STATUS "Override with -DCOMPILE_PACKAGING:STRING=0")
+if (NOT DEFINED COMPILE_PACKAGING)
+  message (STATUS "Setting COMPILE_PACKAGING to the value of 1")
+  message (STATUS "Override with -DCOMPILE_PACKAGING:STRING=0")
   set(COMPILE_PACKAGING 1)
-endif(NOT DEFINED COMPILE_PACKAGING)
+endif (NOT DEFINED COMPILE_PACKAGING)
 
 ################################################################################
 # Rules to install the shared log and spool directories
 ################################################################################
 CastorInstallDir (/var/log/castor)
-CastorInstallDirWithOwnerShip(/var/log/spool/castor stage st)
+CastorInstallDir (/var/log/spool/castor)
+if ("${CASTOR_WHOAMI}" MATCHES "root")
+  CastorInstallChown (/var/log/spool/castor stage st)
+endif ()
 
 ################################################################################
 # Include the subdirectories of the project
@@ -315,36 +323,36 @@ add_subdirectory (upv)
 add_subdirectory (vdqm)
 add_subdirectory (vmgr)
 add_subdirectory (xrootd)
-if(${COMPILE_SERVER} STREQUAL "1")
+if (${COMPILE_SERVER} STREQUAL "1")
   add_subdirectory (tape)
-endif(${COMPILE_SERVER} STREQUAL "1")
+endif (${COMPILE_SERVER} STREQUAL "1")
 
 ################################################################################
 # Packaging step (replacing the maketar)
 # See http://www.vtk.org/Wiki/CMakeUserUseRPMTools
 ################################################################################
-if(${COMPILE_PACKAGING} STREQUAL "1")
+if (${COMPILE_PACKAGING} STREQUAL "1")
   include(cmake/UseRPMToolsEnvironment.cmake)
   set(CPACK_SOURCE_PACKAGE_FILE_NAME
    "${PROJECT_NAME}-${CASTOR_VERSION}-${CASTOR_RELEASE}${RPMTools_RPMBUILD_DIST}")
-  message(STATUS
+  message (STATUS
     "Setting package file name to: ${CPACK_SOURCE_PACKAGE_FILE_NAME}")
   include(CPack)
   include(cmake/UseRPMTools.cmake)
-  if(RPMTools_FOUND)
-    execute_process(COMMAND ${CMAKE_COMMAND} -E copy
+  if (RPMTools_FOUND)
+    execute_process (COMMAND ${CMAKE_COMMAND} -E copy
       ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.spec.in.head
       ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
-    message(STATUS "Generating spec file from debian package structure...")
-    execute_process(
+    message (STATUS "Generating spec file from debian package structure...")
+    execute_process (
       COMMAND ./makespec.in.sh ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in 2>&1
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
       OUTPUT_VARIABLE result)
-    if(NOT ${result} STREQUAL "")
-      string(REGEX REPLACE "\n$" "" result ${result})
-      message(STATUS "${result}")
-    endif(NOT ${result} STREQUAL "")
+    if (NOT ${result} STREQUAL "")
+       string (REGEX REPLACE "\n$" "" result ${result})
+      message (STATUS "${result}")
+    endif (NOT ${result} STREQUAL "")
     RPMTools_ADD_RPM_TARGETS(
       ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
-  endif(RPMTools_FOUND)
-endif(${COMPILE_PACKAGING} STREQUAL "1")
+  endif (RPMTools_FOUND)
+endif (${COMPILE_PACKAGING} STREQUAL "1")
