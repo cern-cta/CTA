@@ -40,8 +40,9 @@ set (COMMON_ORA_LIB_SRC_FILES
 add_library (castorcommonora SHARED ${COMMON_ORA_LIB_SRC_FILES})
 set_target_properties (castorcommonora PROPERTIES
   SOVERSION ${MAJOR_CASTOR_VERSION}
-  COMPILE_FLAGS ${ORACLE_CPPFLAGS})
-#target_link_libraries (castorcommonora castorclient)
+  COMPILE_FLAGS ${ORACLE_CPPFLAGS}
+  LINK_FLAGS "-L${ORACLE_LIBDIR} -locci -lclntsh")
+target_link_libraries (castorcommonora castorclient )
 install (TARGETS castorcommonora DESTINATION ${CASTOR_DEST_LIB_DIR})
 CastorInstallConfigFile(ORASTAGER)
 
