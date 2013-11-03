@@ -325,6 +325,7 @@ add_subdirectory (vmgr)
 add_subdirectory (xrootd)
 if (${COMPILE_SERVER} STREQUAL "1")
   add_subdirectory (tape)
+  add_subdirectory (rtcopy)
 endif (${COMPILE_SERVER} STREQUAL "1")
 
 ################################################################################

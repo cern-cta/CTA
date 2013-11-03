@@ -39,7 +39,7 @@ add_library (castorrfio SHARED ${RFIO_LIB_SRC_FILES})
 set_target_properties (castorrfio PROPERTIES
   SOVERSION ${MAJOR_CASTOR_VERSION}
   COMPILE_DEFINITIONS USE_XFSPREALLOC)
-target_link_libraries (castorrfio castorns)
+target_link_libraries (castorrfio castorns castorclient)
 install (TARGETS castorrfio DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 ################################################################################
