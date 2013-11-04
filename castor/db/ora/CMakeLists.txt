@@ -49,8 +49,9 @@ CastorInstallConfigFile(ORASTAGER)
 ################################################################################
 # Rules to build and install libcastorvdqmora
 ################################################################################
-add_library (castorvdqmora OraVdqmSvc.cpp)
+add_library (castorvdqmora SHARED OraVdqmSvc.cpp)
 set_target_properties (castorvdqmora PROPERTIES
+  SOVERSION ${MAJOR_CASTOR_VERSION}
   COMPILE_FLAGS ${ORACLE_CPPFLAGS})
 install (TARGETS castorvdqmora DESTINATION ${CASTOR_DEST_LIB_DIR})
 CastorInstallConfigFile(ORAVDQM)
