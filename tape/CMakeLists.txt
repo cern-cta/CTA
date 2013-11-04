@@ -71,6 +71,7 @@ endforeach ()
 ################################################################################
 add_executable (tpconfig tpconfig.c)
 target_link_libraries (tpconfig castorcommon castortape)
+install (TARGETS tpconfig DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallExeManPage (tpconfig)
 
 ################################################################################
@@ -78,6 +79,7 @@ CastorInstallExeManPage (tpconfig)
 ################################################################################
 add_executable (tpstat tpstat.c)
 target_link_libraries (tpstat castortape)
+install (TARGETS tpstat DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallExeManPage (tpstat)
 
 ################################################################################
