@@ -269,6 +269,9 @@ set_target_properties (castorclient
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castorclient castordlf)
 install (TARGETS castorclient DESTINATION ${CASTOR_DEST_LIB_DIR})
+CastorInstallExample (castor.conf /etc/castor)
+CastorInstallExample (rsyslog.conf.client /etc/castor)
+CastorInstallExample (rsyslog.conf.server /etc/castor)
 
 ################################################################################
 # Installation of header files for package castor-build-headers

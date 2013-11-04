@@ -89,6 +89,11 @@ set (CASTOR_ETC_XINETD_D_PERMS
   GROUP_READ
   WORLD_READ            )
 
+set (CASTOR_EXAMPLE_PERMS
+  OWNER_READ OWNER_WRITE
+  GROUP_READ
+  WORLD_READ            )
+
 set (CASTOR_HEADER_PERMS
   OWNER_READ OWNER_WRITE
   GROUP_READ
@@ -135,7 +140,8 @@ function (CastorAddProC _name)
 endfunction ()
 
 function (CastorInstallDir _name)
-  install (CODE "message (STATUS \"Installing directory \$ENV{DESTDIR}${_name}\")")
+  install (CODE
+    "message (STATUS \"Installing directory \$ENV{DESTDIR}${_name}\")")
   install (CODE "file (MAKE_DIRECTORY \$ENV{DESTDIR}${_name})")
 endfunction ()
 
@@ -158,6 +164,13 @@ function (CastorInstallEtcXinetdD _name)
     DESTINATION /etc/xinetd.d
     PERMISSIONS ${CASTOR_ETC_XINETD_D_PERMS}
     RENAME ${_name})
+endfunction ()
+
+function (CastorInstallExample _name _dest)
+  install (FILES ${_name}
+    DESTINATION ${_dest}
+    PERMISSIONS ${CASTOR_EXAMPLE_PERMS}
+    RENAME ${_name}.example)
 endfunction ()
 
 function (CastorInstallScript _name)
