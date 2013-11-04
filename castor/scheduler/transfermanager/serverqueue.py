@@ -30,7 +30,7 @@
 Manages the transfers pending on the different diskServers'''
 
 import threading, socket
-import dlf, time, itertools
+import dlf, time
 import castor_tools, diskserverlistcache, connectionpool
 from transfermanagerdlf import msgs
 from transfer import TransferType, tupleToTransfer
@@ -211,8 +211,10 @@ class ServerQueue(dict):
   def removeAnyType(self, transferIds):
     '''drops transfers from the queues and return the dropped transfers. Handles transfers
        without knowning their type. In other words, it's trying to drop STD, D2DSRC and D2DDST'''
-    return self.remove(itertools.product(transferIds,
-                                         [TransferType.STD, TransferType.D2DSRC, TransferType.D2DDST]))
+    # we could use itertools here as soon as SLC5 (and python 2.4) is not supported anymore
+    return self.remove([(transferId , transferType)
+                        for transferId in transferIds
+                        for transferType in [TransferType.STD, TransferType.D2DSRC, TransferType.D2DDST]])
 
   def removeall(self, requser):
     '''drops transfers from the queues return a dictionnary "transferId => fileId" listing

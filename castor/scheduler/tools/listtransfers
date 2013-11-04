@@ -33,7 +33,6 @@ import time
 import getopt
 import rpyc
 import castor_tools
-from itertools import groupby
 
 # usage function
 def usage(exitCode):
