@@ -46,3 +46,9 @@ foreach(SRC_FILE ${STAGER_CLIENT_EXE_SRC_FILES})
   install(TARGETS ${EXE_FILE} DESTINATION ${CASTOR_DEST_BIN_DIR})
   CastorInstallExeManPage(${EXE_FILE})
 endforeach ()
+
+# Required by castor-srmv2
+install(FILES
+  stager_client_api_query.hpp
+  DESTINATION ${CASTOR_DEST_INCLUDE_DIR}/castor/client/src/stager
+  PERMISSIONS ${CASTOR_HEADER_PERMS})

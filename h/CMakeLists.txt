@@ -121,3 +121,56 @@ install(FILES ${SHIFT_SUBHEADERS}
 
 CastorInstallFileManPage(Castor_limits)
 CastorInstallLibManPage(serrno)
+
+################################################################################
+# Installation of header files for package castor-build-headers
+################################################################################
+
+set(BUILD_HEADERS
+  # Required by xrootd-xcastor2fs and castor-srmv2
+  Castor_limits.h
+  Cns_api.h
+  Cns_constants.h
+  Cns_struct.h
+  Cthread_api.h
+  Cthread_flags.h
+  Cuuid.h
+  dlf_api.h
+  net.h
+  osdep.h
+  serrno.h
+  stager_api.h
+  stager_client_api_common.hpp
+  stager_client_api.h
+  stager_errmsg.h
+
+  # Required by castor-srmv2
+  Cgetopt.h
+  Cglobals.h
+  Cgrp.h
+  Cnetdb.h
+  common.h
+  Cpool_api.h
+  Cpwd.h
+  Ctape_api.h
+  Ctape_constants.h
+  getacctent.h
+  getacct.h
+  getconfent.h
+  log.h
+  ${CMAKE_BINARY_DIR}/h/patchlevel.h
+  rfio_api.h
+  rfio_constants.h
+  rfio_errno.h
+  stager_mapper.h
+  stager_uuid.h
+  trace.h
+  u64subr.h
+  vmgr_api.h
+  vmgr_constants.h
+  vmgr_struct.h
+  ypgetacctent.h)
+
+install(FILES ${BUILD_HEADERS}
+  DESTINATION ${CASTOR_DEST_C_HEADERS_DIR}
+  PERMISSIONS ${CASTOR_HEADER_PERMS})
