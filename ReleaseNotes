@@ -15,6 +15,10 @@
 
      #103026 "showqueues" segfaults unless VDQM_HOST is set
 
+  [Features]
+
+     #103082 RFE: Remove tape gateway protocol header files from castor-build-headers.rpm
+
 
 ------------
 - 2.1.14-3 -
