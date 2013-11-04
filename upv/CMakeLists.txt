@@ -42,3 +42,11 @@ set(UPV_API_MAN_PAGES
 foreach(MAN_PAGE ${UPV_API_MAN_PAGES})
   CastorInstallLibManPage(${MAN_PAGE})
 endforeach(MAN_PAGE)
+
+set(UPV_CLI_PROGS Cupvadd Cupvmodify Cupvcheck Cupvdelete Cupvlist)
+foreach(CLI ${UPV_CLI_PROGS})
+  add_executable(${CLI} ${CLI}.c)
+  target_link_libraries(${CLI} castorcommon castorupv)
+  CastorInstallExeManPage(${CLI})
+endforeach(CLI)
+install(TARGETS ${UPV_CLI_PROGS} DESTINATION ${CASTOR_DEST_BIN_DIR})
