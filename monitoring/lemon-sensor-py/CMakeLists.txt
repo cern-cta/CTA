@@ -1,5 +1,5 @@
 #
-#                      monitoring/CMakeLists.txt
+#                      monitoring/lemon-sensor-py/CMakeLists.txt
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -22,6 +22,5 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-add_subdirectory (cockpit)
-add_subdirectory (hbase-consumer)
-add_subdirectory (lemon-sensor-py)
+install (FILES CastorMon.py DESTINATION /usr/libexec/sensors
+  PERMISSIONS ${CASTOR_NON_EXEC_PERMS})

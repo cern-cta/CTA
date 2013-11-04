@@ -22,7 +22,7 @@
 
 # - Find globus
 # Finds the locations of the Globus headers and executables to be used by
-# CASTOR.  the following variables are set if globus is found.
+# CASTOR.  The following variables are set if globus is found.
 #
 # GLOBUS_FOUND
 # GLOBUS_CONFINC_PATH
@@ -69,7 +69,6 @@ message (STATUS "GLOBUS_GSSLIB_THR = ${GLOBUS_GSSLIB_THR}")
 
 include (FindPackageHandleStandardArgs)
 find_package_handle_standard_args (globus DEFAULT_MSG 
-  GLOBUS_FOUND
   GLOBUS_CONFINC_PATH
   GLOBUS_INC_PATH
   GLOBUS_LIB_PATH

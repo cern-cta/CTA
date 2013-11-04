@@ -1,5 +1,5 @@
 #
-#                      monitoring/CMakeLists.txt
+#                      monitoring/hbase-consumer/CMakeLists.txt
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -22,6 +22,7 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-add_subdirectory (cockpit)
-add_subdirectory (hbase-consumer)
-add_subdirectory (lemon-sensor-py)
+add_subdirectory (hbaseconsumerlib)
+
+CastorInstallScript (hbase-consumer.py)
+CastorInstallExample (hbase-consumer.conf /etc/hbase-consumer)

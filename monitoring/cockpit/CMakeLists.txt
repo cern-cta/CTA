@@ -22,4 +22,7 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
+add_subdirectory (castormon)
+
 CastorInstallLogRotate (castor-cockpit)
+CastorInstallExample (cockpit-credentials.conf /etc/castor)
