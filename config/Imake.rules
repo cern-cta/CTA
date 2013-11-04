@@ -296,10 +296,10 @@ $(DESTDIR)/etc/castor/file/**/CONFIG.example: LOCAL_PATH/file/**/CONFIG @@\
 	install -m 640 $< $@                                                       @@\
 tgt: $(DESTDIR)/etc/castor/file/**/CONFIG.example
 
-#define EXAMPLEFILE(file,dest,tgt)                         \
-$(DESTDIR)/dest/file.example: $(CASTOR_ROOT)/debian/file @@\
-	install -d $(DESTDIR)/dest -m 0755               @@\
-	install -m 644 $< $@                             @@\
+#define EXAMPLEFILE(file,dest,tgt)              \
+$(DESTDIR)/dest/file.example: LOCAL_PATH/file @@\
+	install -d $(DESTDIR)/dest -m 0755    @@\
+	install -m 644 $< $@                  @@\
 tgt: $(DESTDIR)/dest/file.example
 
 #define COMPILECPP(file,flags)                           \
