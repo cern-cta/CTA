@@ -98,6 +98,17 @@ set_target_properties (castorns
 target_link_libraries (castorns castorsecurity)
 install (TARGETS castorns DESTINATION ${CASTOR_DEST_LIB_DIR})
 
+set(CNS_MAN_PAGES_NOT_PACKAGED
+  Cns_closex
+  Cns_dropsegs
+  Cns_getlinks
+  Cns_lchown
+  Cns_openx
+  Cns_opendirxg
+  Cns_seterrbuf
+  Cns_setid
+  Cns_unsetid)
+
 set(CNS_MAN_PAGES
   Cns_aborttrans
   Cns_access
@@ -106,22 +117,18 @@ set(CNS_MAN_PAGES
   Cns_chmod
   Cns_chown
   Cns_closedir
-  Cns_closex
   Cns_creat
   Cns_delcomment
   Cns_deleteclass
   Cns_delsegbycopyno
-  Cns_dropsegs
   Cns_endsess
   Cns_endtrans
   Cns_enterclass
   Cns_getacl
   Cns_getcomment
   Cns_getcwd
-  Cns_getlinks
   Cns_getsegattrs
   Cns_lastfseq
-  Cns_lchown
   Cns_listclass
   Cns_listlinks
   Cns_listtape
@@ -130,8 +137,6 @@ set(CNS_MAN_PAGES
   Cns_modifyclass
   Cns_opendirg
   Cns_opendir
-  Cns_opendirxg
-  Cns_openx
   Cns_ping
   Cns_queryclass
   Cns_readdirc
@@ -149,9 +154,7 @@ set(CNS_MAN_PAGES
   Cns_setacl
   Cns_setatime
   Cns_setcomment
-  Cns_seterrbuf
   Cns_setfsize
-  Cns_setid
   Cns_startsess
   Cns_starttrans
   Cns_statg
@@ -161,7 +164,6 @@ set(CNS_MAN_PAGES
   Cns_umask
   Cns_unlinkbyvid
   Cns_unlink
-  Cns_unsetid
   Cns_updatefile_checksum
   Cns_updateseg_checksum
   Cns_updateseg_status
