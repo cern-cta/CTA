@@ -53,10 +53,6 @@ set (CASTOR_DEST_PERL_LIBDIR /usr/lib/perl/CASTOR)
 set (CASTOR_DEST_C_HEADERS_DIR ${CASTOR_DEST_INCLUDE_DIR}/castor/h)
 set (CASTOR_DEST_CPP_HEADERS_DIR ${CASTOR_DEST_INCLUDE_DIR}/castor/castor)
 
-execute_process (COMMAND whoami OUTPUT_VARIABLE CASTOR_WHOAMI)
-string (REGEX REPLACE "\n" "" CASTOR_WHOAMI ${CASTOR_WHOAMI})
-message (STATUS "CASTOR_WHOAMI = ${CASTOR_WHOAMI}")
-
 find_package (uuid REQUIRED)
 
 execute_process (COMMAND python ${CMAKE_SOURCE_DIR}/config/pycompile.py --libs
@@ -141,11 +137,6 @@ endfunction ()
 function (CastorInstallDir _name)
   install (CODE "message (STATUS \"Installing directory \$ENV{DESTDIR}${_name}\")")
   install (CODE "file (MAKE_DIRECTORY \$ENV{DESTDIR}${_name})")
-endfunction ()
-
-function (CastorInstallChown _name _owner _group)
-  install (CODE "message (STATUS \"Installing chown ${_owner}:${_group} \$ENV{DESTDIR}${_name}\")")
-  install (CODE "execute_process (COMMAND chown ${_owner}:${_group} \$ENV{DESTDIR}${_name})")
 endfunction ()
 
 function (CastorInstallEtcCronD _name)
@@ -294,9 +285,6 @@ endif (NOT DEFINED COMPILE_PACKAGING)
 ################################################################################
 CastorInstallDir (/var/log/castor)
 CastorInstallDir (/var/log/spool/castor)
-if ("${CASTOR_WHOAMI}" MATCHES "root")
-  CastorInstallChown (/var/log/spool/castor stage st)
-endif ()
 
 ################################################################################
 # Include the subdirectories of the project
