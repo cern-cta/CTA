@@ -32,7 +32,8 @@ add_library (castorrmc SHARED ${RMC_LIB_SRC_FILES})
 set_target_properties (castorrmc
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castorrmc castorcommon)
-install (TARGETS castorrmc DESTINATION ${CASTOR_DEST_LIB_DIR})
+install (TARGETS castorrmc LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
+  NAMELINK_SKIP)
 CastorInstallLibManPage (rmc_dismount)
 CastorInstallLibManPage (rmc_export)
 CastorInstallLibManPage (rmc_find_cartridge)

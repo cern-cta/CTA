@@ -80,4 +80,5 @@ add_library (castortapegatewayprotocol SHARED
 set_target_properties (castortapegatewayprotocol
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castortapegatewayprotocol castorclient castorcommon)
-install (TARGETS castortapegatewayprotocol DESTINATION ${CASTOR_DEST_LIB_DIR})
+install (TARGETS castortapegatewayprotocol LIBRARY
+  DESTINATION ${CASTOR_DEST_LIB_DIR} NAMELINK_SKIP)

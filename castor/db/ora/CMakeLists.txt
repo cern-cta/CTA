@@ -43,7 +43,8 @@ set_target_properties (castorcommonora PROPERTIES
   COMPILE_FLAGS ${ORACLE_CPPFLAGS}
   LINK_FLAGS "-L${ORACLE_LIBDIR} -locci -lclntsh")
 target_link_libraries (castorcommonora castorclient )
-install (TARGETS castorcommonora DESTINATION ${CASTOR_DEST_LIB_DIR})
+install (TARGETS castorcommonora LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
+  NAMELINK_SKIP)
 CastorInstallConfigFile(ORASTAGER)
 
 ################################################################################
@@ -53,5 +54,6 @@ add_library (castorvdqmora SHARED OraVdqmSvc.cpp)
 set_target_properties (castorvdqmora PROPERTIES
   SOVERSION ${MAJOR_CASTOR_VERSION}
   COMPILE_FLAGS ${ORACLE_CPPFLAGS})
-install (TARGETS castorvdqmora DESTINATION ${CASTOR_DEST_LIB_DIR})
+install (TARGETS castorvdqmora LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
+  NAMELINK_SKIP)
 CastorInstallConfigFile(ORAVDQM)

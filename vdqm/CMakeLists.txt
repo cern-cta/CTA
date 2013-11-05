@@ -30,7 +30,8 @@ add_library (castorvdqm SHARED ${VDQM_LIB_SRC_FILES})
 set_target_properties (castorvdqm
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castorvdqm castorcommon)
-install (TARGETS castorvdqm DESTINATION ${CASTOR_DEST_LIB_DIR})
+install (TARGETS castorvdqm LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
+  NAMELINK_SKIP)
 CastorInstallLibManPage (vdqm_Connect)
 CastorInstallLibManPage (vdqm_DelDrive)
 CastorInstallLibManPage (vdqm_DelVolumeReq)

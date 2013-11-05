@@ -35,4 +35,5 @@ set_target_properties (castortapelegacymsg
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castortapelegacymsg castorclient castorcommon
   castortapeutils)
-install (TARGETS castortapelegacymsg DESTINATION ${CASTOR_DEST_LIB_DIR})
+install (TARGETS castortapelegacymsg LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
+  NAMELINK_SKIP)

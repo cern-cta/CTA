@@ -29,7 +29,8 @@ add_library (castorupv SHARED ${UPV_LIB_SRC_FILES})
 set_target_properties (castorupv
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castorupv castorcommon)
-install (TARGETS castorupv DESTINATION ${CASTOR_DEST_LIB_DIR})
+install (TARGETS castorupv LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
+  NAMELINK_SKIP)
 
 set(UPV_API_MAN_PAGES
   Cupv_add
@@ -37,7 +38,6 @@ set(UPV_API_MAN_PAGES
   Cupv_delete
   Cupv_list
   Cupv_modify)
-
 
 foreach(MAN_PAGE ${UPV_API_MAN_PAGES})
   CastorInstallLibManPage(${MAN_PAGE})
@@ -65,4 +65,3 @@ CastorInstallConfigFile(CUPV)
 CastorInstallInitScript(cupvd)
 CastorInstallSysconfigExample(cupvd)
 CastorInstallLogrotate(castor-upv-server)
-  

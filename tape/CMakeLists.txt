@@ -58,7 +58,8 @@ set (TAPE_LIB_SRC_FILES Ctape_config.c Ctape_devinfo.c Ctape_dmpfil.c
 add_library (castortape SHARED ${TAPE_LIB_SRC_FILES} ${TAPE_LIB_USR_SRC_FILES})
 set_target_properties (castortape PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castortape castorcommon castordlf castorvmgr)
-install (TARGETS castortape DESTINATION ${CASTOR_DEST_LIB_DIR})
+install (TARGETS castortape LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
+  NAMELINK_SKIP)
 set (TAPE_LIB_MAN_PAGES Ctape_dmpfil Ctape_info Ctape_kill Ctape_label
   Ctape_mount Ctape_position Ctape_reserve Ctape_rls Ctape_rstatus Ctape_status
   getcompstat readlbl rwndtape skiptape usrlbl wrttpmrk)

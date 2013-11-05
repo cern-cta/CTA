@@ -38,4 +38,5 @@ add_library (castortapeutils SHARED ${TAPE_UTILS_LIB_SRC_FILES})
 set_target_properties (castortapeutils
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castortapeutils castorcommon)
-install (TARGETS castortapeutils DESTINATION ${CASTOR_DEST_LIB_DIR})
+install (TARGETS castortapeutils LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
+  NAMELINK_SKIP)
