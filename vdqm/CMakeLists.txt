@@ -28,7 +28,7 @@ cmake_minimum_required (VERSION 2.6)
 set (VDQM_LIB_SRC_FILES vdqmapi.c vdqm_SendRecv.c)
 add_library (castorvdqm SHARED ${VDQM_LIB_SRC_FILES})
 set_target_properties (castorvdqm
-  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION}.${MINOR_CASTOR_VERSION})
 target_link_libraries (castorvdqm castorcommon)
 install (TARGETS castorvdqm LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
   NAMELINK_SKIP)

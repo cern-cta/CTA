@@ -28,7 +28,7 @@ cmake_minimum_required (VERSION 2.6)
 set (DLF_LIB_SRC_FILES dlf_lib.c)
 add_library (castordlf SHARED ${DLF_LIB_SRC_FILES})
 set_target_properties (castordlf
-  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION}.${MINOR_CASTOR_VERSION})
 target_link_libraries (castordlf castorcommon)
 install (TARGETS castordlf DESTINATION ${CASTOR_DEST_LIB_DIR})
 

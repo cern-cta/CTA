@@ -94,7 +94,7 @@ set (NS_LIB_SRC_FILES
   send2nsd.c)
 add_library (castorns SHARED ${NS_LIB_SRC_FILES})
 set_target_properties (castorns
-  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION}.${MINOR_CASTOR_VERSION})
 target_link_libraries (castorns castorsecurity)
 install (TARGETS castorns DESTINATION ${CASTOR_DEST_LIB_DIR})
 

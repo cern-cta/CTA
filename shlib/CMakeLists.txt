@@ -24,7 +24,7 @@ cmake_minimum_required (VERSION 2.6)
 
 add_library (shift SHARED libshift.c)
 set_target_properties (shift
-  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION}.${MINOR_CASTOR_VERSION})
 target_link_libraries(shift castorcommon castordlf castorupv castorns
   castorsecurity castorrfio castorclient)
 install (TARGETS shift DESTINATION ${CASTOR_DEST_LIB_DIR})

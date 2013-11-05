@@ -266,7 +266,7 @@ set (CLIENT_LIB_SRC_FILES
   ../client/src/stager/stager_mapper.c)
 add_library (castorclient SHARED ${CLIENT_LIB_SRC_FILES})
 set_target_properties (castorclient
-  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION}.${MINOR_CASTOR_VERSION})
 target_link_libraries (castorclient castordlf)
 install (TARGETS castorclient DESTINATION ${CASTOR_DEST_LIB_DIR})
 CastorInstallExample (castor.conf /etc/castor)
