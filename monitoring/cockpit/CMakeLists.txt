@@ -22,7 +22,7 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-add_subdirectory (castormon)
+install (DIRECTORY castormon DESTINATION ${CASTOR_DEST_PYTHON_LIBDIR})
 
 CastorInstallLogRotate (castor-cockpit)
 CastorInstallExample (cockpit-credentials.conf /etc/castor)

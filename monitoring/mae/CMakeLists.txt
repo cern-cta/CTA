@@ -22,7 +22,7 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-install (DIRECTOR mae DESTINATION ${CASTOR_DEST_PYTHON_LIBDIR})
+install (DIRECTORY mae DESTINATION ${CASTOR_DEST_PYTHON_LIBDIR})
 
 CastorInstallScript (mae-consumer.py)
 CastorInstallExample (mae.conf /etc/mae)

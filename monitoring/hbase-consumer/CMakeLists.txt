@@ -22,7 +22,7 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-add_subdirectory (hbaseconsumerlib)
+install (DIRECTORY hbaseconsumerlib DESTINATION ${CASTOR_DEST_PYTHON_LIBDIR})
 
 CastorInstallScript (hbase-consumer.py)
 CastorInstallExample (hbase-consumer.conf /etc/hbase-consumer)
