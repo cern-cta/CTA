@@ -22,7 +22,7 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-install (DIRECTORY castormon DESTINATION ${CASTOR_DEST_PYTHON_LIBDIR})
+install (DIRECTORY castormon DESTINATION /var/www)
 
 CastorInstallLogRotate (castor-cockpit)
 CastorInstallExample (cockpit-credentials.conf /etc/castor)
