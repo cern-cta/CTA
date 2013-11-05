@@ -22,7 +22,9 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-install (DIRECTORY castormon DESTINATION /var/www)
+install (DIRECTORY castormon 
+  DESTINATION ${CASTOR_DEST_WWW_DIR}
+  FILE_PERMISSIONS ${CASTOR_SCRIPT_PERMS})
 
 CastorInstallLogRotate (castor-cockpit)
 CastorInstallExample (cockpit-credentials.conf /etc/castor)
