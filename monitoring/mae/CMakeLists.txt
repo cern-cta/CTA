@@ -1,5 +1,5 @@
 #
-#              monitoring/hbase-consumer/hbaseconsumerlib/CMakeLists.txt
+#                      monitoring/mae/CMakeLists.txt
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -22,8 +22,7 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-install (FILES
-  __init__.py
-  pusher.py
-  utils.py
-  DESTINATION ${CASTOR_DEST_PYTHON_LIBDIR})
+install (DIRECTOR mae DESTINATION ${CASTOR_DEST_PYTHON_LIBDIR})
+
+CastorInstallScript (mae-consumer.py)
+CastorInstallExample (mae.conf /etc/mae)
