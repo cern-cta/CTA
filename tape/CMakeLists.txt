@@ -56,7 +56,7 @@ set (TAPE_LIB_SRC_FILES Ctape_config.c Ctape_devinfo.c Ctape_dmpfil.c
   asc2ebc.c chkdirw.c cvtden.c ebc2asc.c findpgrp.c getcompstat.c initlabel.c
   send2tpd.c usrlbl.c tplogger.c tplogger_messages.c sendscsicmd.c)
 add_library (castortape SHARED ${TAPE_LIB_SRC_FILES} ${TAPE_LIB_USR_SRC_FILES})
-set_target_properties (castortape PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION}.${MINOR_CASTOR_VERSION})
+CastorSetLibraryVersions (castortape)
 target_link_libraries (castortape castorcommon castordlf castorvmgr)
 install (TARGETS castortape LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
   NAMELINK_SKIP)

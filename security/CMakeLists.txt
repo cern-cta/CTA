@@ -28,9 +28,7 @@ cmake_minimum_required (VERSION 2.6)
 set (SECURITY_LIB_SRC_FILES Csec_api_loader.c Csec_protocol_policy.c
   Csec_api.c Csec_errmsg.c Csec_apiinit.c Csec_common.c)
 add_library (castorsecurity SHARED ${SECURITY_LIB_SRC_FILES})
-set_target_properties (castorsecurity
-  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION}.${MINOR_CASTOR_VERSION})
-#target_link_libraries (castorsecurity castorcommon)
+CastorSetLibraryVersions (castorsecurity)
 install (TARGETS castorsecurity DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 CastorInstallLibManPage(Csec_api)
@@ -64,13 +62,11 @@ add_library(castorsec_plugin_KRB5 SHARED ${SECURITY_PLUGIN_KRB5})
 set_property(SOURCE ${SECURITY_PLUGIN_KRB5}
   PROPERTY COMPILE_FLAGS -DKRB5 ${KRB5_CFLAGS})
 target_link_libraries (castorsec_plugin_KRB5 castorcommon ${KRB5_LIBS})
-set_target_properties (castorsec_plugin_KRB5
-  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION}.${MINOR_CASTOR_VERSION})
+CastorSetLibraryVersions (castorsec_plugin_KRB5)
 install (TARGETS castorsec_plugin_KRB5 DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 add_library(castorsec_plugin_ID SHARED Csec_plugin_ID.c)
 target_link_libraries (castorsec_plugin_ID castorcommon -lc -ldl)
-set_target_properties (castorsec_plugin_ID
-  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION}.${MINOR_CASTOR_VERSION})
+CastorSetLibraryVersions (castorsec_plugin_ID)
 install (TARGETS castorsec_plugin_ID DESTINATION ${CASTOR_DEST_LIB_DIR})
 

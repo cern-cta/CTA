@@ -44,9 +44,9 @@ set_property(SOURCE XrdxCastor2Fs.cpp
 set_property(SOURCE XrdxCastor2ServerAcc.cpp
   PROPERTY COMPILE_FLAGS -Wno-sign-compare)
 add_library (XrdxCastor2Fs SHARED ${XRDXCASTOR2FS_LIB_SRC_FILES})
-set_target_properties (XrdxCastor2Fs PROPERTIES
-  SOVERSION ${MAJOR_CASTOR_VERSION}.${MINOR_CASTOR_VERSION}
-  COMPILE_DEFINITIONS _FILE_OFFSET_BITS=64)
+CastorSetLibraryVersions (XrdxCastor2Fs)
+set_property (TARGET XrdxCastor2Fs
+  APPEND PROPERTY COMPILE_DEFINITIONS _FILE_OFFSET_BITS=64)
 target_link_libraries (XrdxCastor2Fs castorclient castorcommon castorns crypto
   ${XROOTD_XRDOFS_LIB} ${XROOTD_XRDUTILS_LIB})
 install (TARGETS XrdxCastor2Fs DESTINATION ${CASTOR_DEST_LIB_DIR})
@@ -76,9 +76,9 @@ set (XRDXCASTOR2OFS_LIB_SRC_FILES
 set_property(SOURCE XrdxCastor2Ofs.cpp
   PROPERTY COMPILE_FLAGS -Wno-write-strings)
 add_library (XrdxCastor2Ofs SHARED ${XRDXCASTOR2OFS_LIB_SRC_FILES})
-set_target_properties (XrdxCastor2Ofs PROPERTIES
-  SOVERSION ${MAJOR_CASTOR_VERSION}.${MINOR_CASTOR_VERSION}
-  COMPILE_DEFINITIONS _FILE_OFFSET_BITS=64)
+CastorSetLibraryVersions (XrdxCastor2Ofs)
+set_property (TARGET XrdxCastor2Ofs
+  APPEND PROPERTY COMPILE_DEFINITIONS _FILE_OFFSET_BITS=64)
 target_link_libraries (XrdxCastor2Ofs crypto ${XROOTD_XRDCL_LIB}
   ${XROOTD_XRDCLIENT_LIB} ${XROOTD_XRDOFS_LIB} ${UUID_LIB} z)
 install (TARGETS XrdxCastor2Ofs DESTINATION ${CASTOR_DEST_LIB_DIR})

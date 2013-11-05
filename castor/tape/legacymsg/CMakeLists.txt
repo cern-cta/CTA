@@ -31,8 +31,7 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   TapeBridgeMarshal.cpp
   VmgrMarshal.cpp)
 add_library (castortapelegacymsg SHARED ${TAPE_LEGACYMSG_LIB_SRC_FILES})
-set_target_properties (castortapelegacymsg
-  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION}.${MINOR_CASTOR_VERSION})
+CastorSetLibraryVersions (castortapelegacymsg)
 target_link_libraries (castortapelegacymsg castorclient castorcommon
   castortapeutils)
 install (TARGETS castortapelegacymsg LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
