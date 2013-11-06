@@ -36,9 +36,9 @@ set (RFIO_LIB_SRC_FILES access.c alrm.c chdir.c checkkey.c chmod.c chown.c
   xyread.c xywrite.c fopen64.c fseeko64.c fstat64.c ftello64.c lockf64.c
   lseek64.c open64.c preseek64.c read64.c stream64.c write64.c RfioTURL.c)
 add_library (castorrfio SHARED ${RFIO_LIB_SRC_FILES})
-set_target_properties (castorrfio PROPERTIES
-  SOVERSION ${MAJOR_CASTOR_VERSION}
-  COMPILE_DEFINITIONS USE_XFSPREALLOC)
+CastorSetLibraryVersions (castorrfio)
+set_property (TARGET castorrfio
+  APPEND PROPERTY COMPILE_DEFINITIONS USE_XFSPREALLOC)
 target_link_libraries (castorrfio castorns castorclient)
 install (TARGETS castorrfio DESTINATION ${CASTOR_DEST_LIB_DIR})
 

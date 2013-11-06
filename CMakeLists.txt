@@ -76,24 +76,34 @@ set (CASTOR_BIN_SCRIPT_PERMS
 set (CASTOR_ETC_PERMS
   OWNER_READ OWNER_WRITE
   GROUP_READ
-  WORLD_READ            )
+  WORLD_READ)
 
 set (CASTOR_ETC_CRON_D_PERMS
   OWNER_READ OWNER_WRITE
   GROUP_READ
-  WORLD_READ            )
+  WORLD_READ)
 
 set (CASTOR_ETC_XINETD_D_PERMS
   OWNER_READ OWNER_WRITE
   GROUP_READ
-  WORLD_READ            )
+  WORLD_READ)
 
 set (CASTOR_EXAMPLE_PERMS
   OWNER_READ OWNER_WRITE
   GROUP_READ
-  WORLD_READ            )
+  WORLD_READ)
 
 set (CASTOR_HEADER_PERMS
+  OWNER_READ OWNER_WRITE
+  GROUP_READ
+  WORLD_READ)
+
+set (CASTOR_INITSCRIPT_PERMS
+  OWNER_READ OWNER_WRITE OWNER_EXECUTE
+  GROUP_READ             GROUP_EXECUTE
+  WORLD_READ             WORLD_EXECUTE)
+
+set (CASTOR_LOGROTATE_PERMS
   OWNER_READ OWNER_WRITE
   GROUP_READ
   WORLD_READ)
@@ -107,6 +117,16 @@ set (CASTOR_NON_EXEC_PERMS
   OWNER_READ OWNER_WRITE
   GROUP_READ
   WORLD_READ)
+
+set (CASTOR_PYTHON_LIB_PERMS
+  OWNER_READ OWNER_WRITE
+  GROUP_READ            
+  WORLD_READ)
+
+set (CASTOR_SCRIPT_PERMS
+  OWNER_READ OWNER_WRITE OWNER_EXECUTE
+  GROUP_READ             GROUP_EXECUTE
+  WORLD_READ             WORLD_EXECUTE)
 
 set (CASTOR_SYSCONFIG_PERMS
   OWNER_READ OWNER_WRITE
@@ -210,11 +230,6 @@ function (CastorInstallAdmManPage _name)
   CastorInstallManPage (${_name} 8)
 endfunction ()
 
-set (CASTOR_LOGROTATE_PERMS
-  OWNER_READ OWNER_WRITE
-  GROUP_READ
-  WORLD_READ)
-
 function (CastorInstallLogrotate _name)
   install (FILES ${_name}.logrotate
     DESTINATION /etc/logrotate.d
@@ -228,11 +243,6 @@ function (CastorInstallSysconfigExample _name)
     PERMISSIONS ${CASTOR_SYSCONFIG_PERMS}
     RENAME ${_name}.example)
 endfunction ()
-
-set (CASTOR_INITSCRIPT_PERMS
-  OWNER_READ OWNER_WRITE OWNER_EXECUTE
-  GROUP_READ             GROUP_EXECUTE
-  WORLD_READ             WORLD_EXECUTE)
 
 function (CastorInstallInitScript _name)
   install (FILES ${_name}.init
@@ -259,15 +269,11 @@ function (CastorInstallConfigFileLowercase _name)
     RENAME ${_name}.example)
 endfunction ()
 
-set (CASTOR_SCRIPT_PERMS
-  OWNER_READ OWNER_WRITE OWNER_EXECUTE
-  GROUP_READ             GROUP_EXECUTE
-  WORLD_READ             WORLD_EXECUTE)
-
-set (CASTOR_PYTHON_LIB_PERMS
-  OWNER_READ OWNER_WRITE
-  GROUP_READ            
-  WORLD_READ            )
+function (CastorSetLibraryVersions _name)
+  set_target_properties (${_name} PROPERTIES
+  VERSION ${MAJOR_CASTOR_VERSION}.${MINOR_CASTOR_VERSION}
+  SOVERSION ${MAJOR_CASTOR_VERSION})
+endfunction ()
 
 set (CMAKE_C_FLAGS
   "-pthread -fPIC -Wall -Wextra -Werror -Wno-unused-parameter")

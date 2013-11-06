@@ -30,8 +30,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
     rmc_find_cartridge.c rmc_get_geometry.c rmc_import.c rmc_mount.c
     rmc_read_elem_status.c send2rmc.c)
   add_library (castorrmc SHARED ${RMC_LIB_SRC_FILES})
-  set_target_properties (castorrmc
-    PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+  CastorSetLibraryVersions (castorrmc)
   target_link_libraries (castorrmc castorcommon)
   install (TARGETS castorrmc LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
     NAMELINK_SKIP)

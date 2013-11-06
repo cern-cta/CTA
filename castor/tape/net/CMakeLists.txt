@@ -29,8 +29,7 @@ set (TAPE_NET_LIB_SRC_FILES
   IpAndPort.cpp
   net.cpp)
 add_library (castortapenet SHARED ${TAPE_NET_LIB_SRC_FILES})
-set_target_properties (castortapenet
-  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+CastorSetLibraryVersions (castortapenet)
 target_link_libraries (castortapenet castorcommon castorclient castortapeutils)
 install (TARGETS castortapenet LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
   NAMELINK_SKIP)

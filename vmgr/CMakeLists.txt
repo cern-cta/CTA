@@ -69,8 +69,7 @@ set (VMGR_LIB_SRC_FILES
   send2vmgr.c
   vmgrcheck.c)
 add_library (castorvmgr SHARED ${VMGR_LIB_SRC_FILES})
-set_target_properties (castorvmgr
-  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+CastorSetLibraryVersions (castorvmgr)
 target_link_libraries (castorvmgr castorcommon castorupv)
 install (TARGETS castorvmgr DESTINATION ${CASTOR_DEST_LIB_DIR})
 CastorInstallLibManPage (vmgr_deletedenmap)

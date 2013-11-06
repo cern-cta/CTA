@@ -26,8 +26,7 @@ set (UPV_LIB_SRC_FILES Cupv_apiinit.c Cupv_errmsg.c send2Cupv.c Cupv_delete.c
 Cupv_list.c Cupv_util.c Cupv_check.c Cupv_modify.c Cupv_add.c)
 
 add_library (castorupv SHARED ${UPV_LIB_SRC_FILES})
-set_target_properties (castorupv
-  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+CastorSetLibraryVersions (castorupv)
 target_link_libraries (castorupv castorcommon)
 install (TARGETS castorupv LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
   NAMELINK_SKIP)
