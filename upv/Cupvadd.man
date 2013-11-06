@@ -1,0 +1,70 @@
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\" 
+.TH "Cupvadd" "1castor" "$Date: 2008/07/21 18:18:30 $" "CASTOR" "UPV Administrator commands"
+.SH "NAME"
+Cupvadd \- Adds an entry to the user privilege validation system
+.SH "SYNOPSIS"
+.B Cupvadd
+(
+.BI \-\-uid " uid " | \-\-user " username"
+) (
+.BI \-\-gid " gid " | \-\-group " groupname"
+)
+.BI \-\-src " source_host"
+.BI \-\-tgt " target_host"
+.BI \-\-priv " privilege"
+
+.SH "DESCRIPTION"
+.B Cupvadd
+Adds an entry to the user privilege validation system. The permissions are always specified in this way: a given privilege level on a target machine (see below) is given  to a given uid/gid from a source machine.
+.TP 
+.I uid/user
+is the user id/user name of the user for whom the authorization is requested.
+.TP 
+.I gid/group
+is the group id/group name of the user for whom authorization is requested.
+.TP 
+.I source_host
+regular expression for the source host name
+.TP 
+.I target_host
+regular expression for the target host name
+.TP 
+.I privilege
+is the privilege requested. It must be one of the following:
+.IP 
+.TP
+.BR OPERATOR 
+(normal operator), 
+.TP
+.BR TP_OPER 
+(tape operator), 
+.TP
+.BR GRP_ADMIN 
+(experiment Administrator), 
+.TP
+.BR ADMIN 
+(CASTOR Administrator), 
+.TP
+.BR UPV_ADMIN 
+(Administrator for CASTOR privileges), 
+.TP
+.BR TAPE_SYSTEM 
+(Used by CASTOR tape software)
+.TP
+or a combination separated with "|".
+.SH "EXIT STATUS"
+This program returns 0 if the operation was successful, or 1 if the operation
+failed or if the authorization is rejected. 
+.SH "SEE ALSO"
+.BR Cupvcheck(1) ,
+.BR Cupvdelete(1) ,
+.BR Cupvlist(1) ,
+.BR Cupvmodify(1)
+.BR Cupv_add(3) ,
+.BR Cupv_delete(3) ,
+.BR Cupv_list(3) ,
+.B Cupv_modify(3)
+.SH "AUTHOR"
+\fBCASTOR\fP Team <castor.support@cern.ch>

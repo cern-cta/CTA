@@ -1,0 +1,226 @@
+.\"
+.\"              stager_listprivileges.man
+.\"
+.\" This file is part of the Castor project.
+.\" See http://castor.web.cern.ch/castor
+.\"
+.\" Copyright (C) 2003  CERN
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.\"
+.\"
+.\" man page for stager_listprivileges
+.\"
+.\" @author Castor Dev team, castor-dev@cern.ch
+.\"****************************************************************************
+.TH STAGER_LISTPRIVILEGES "1castor"castor "$Date: 2009/07/28 12:31:28 $" CASTOR "STAGER Commands"
+.SH NAME
+stager_listprivileges \- List the privileges defined in the B/W list of CASTOR
+.SH SYNOPSIS
+.B stager_listprivileges
+[
+.BI -U
+.BI userName
+]
+[
+.BI -G
+.BI groupName
+]
+[
+.BI -R
+.BI requestTypeName
+]
+[
+.BI -S
+.BI serviceClass
+]
+[
+.BI -h
+]
+.SH DESCRIPTION
+The
+.B stager_listprivileges
+command lists the CASTOR's Black and White list entries. This list can be restricted
+to a user, a group, a requestType, a service class or any combination of those.
+A "*" in the output for any column means that the entry does not have any restriction
+on this parameter.
+
+Note however the special value "'*'" in the output of the
+service class column. As just said, "*" (a star alone) means that this line is valid for any
+service class while "'*'" (a star surounded by simple quotes) means that this line
+concerns cross service class requests, typically queries with "-S '*'" arguments.
+See the last example below.
+
+.SH OPTIONS
+
+.TP
+.BI \-U,\ \-\-user " [userName|uid]"
+reduces the list to entries concerning the given user. If the user is given as a name the user must exist in the password file of the local machine.
+.TP
+.BI \-G,\ \-\-group " [groupName|gid]"
+reduces the list to entries concerning the given group. If the group is give as a name the group must exist in the group file of the local machine.
+.TP
+.BI \-R,\ \-\-reqType " requestTypeName"
+reduces the list to entries concerning the given request type. Here is a list of useful request types :
+
+.BR StageGetRequest " read only file access"
+.fi
+.BR TapeRecall " ability to trigger tape recalls"
+.fi
+.BR StagePutRequest " file creation/overwrite"
+.fi
+.BR StageUpdateRequest " file modification"
+.fi
+.BR StagePrepareToGetRequest " prestaging (stager_get command)"
+.fi
+.BR StagePrepareToPutRequest " multiple write start (stager_put command)"
+.fi
+.BR StagePrepareToUpdateRequest " prestaging + multiple modifications (stager_update command)"
+.fi
+.BR StagePutDoneRequest " end of multiple puts/modifications (stager_putdone command)"
+.fi
+
+.BR StageFileQueryRequest " all file related queries (stager_qry command)"
+.fi
+.BR DiskPoolQuery " space related query (stager_qry -s command)"
+.fi
+
+.BR StageRmRequest " drop file from cache (stager_rm command)"
+.fi
+.BR SetFileGCWeight " modify garbage collection weight of a file (stager_setfilegcweight command)"
+.fi
+.BR StageDiskCopyReplicaRequest " replicate a file via internal disk to disk copy"
+.fi
+
+.BR ChangePrivilege " change privileges in the Black/White list (stager_add/removeprivilege command)"
+.fi
+.BR ListPrivileges " list existing privileges (stager_listprivileges command)"
+.fi
+
+Note that a disk to disk copy will only be allowed if the 
+.B StageDiskCopyReplicaRequest
+privilege is granted on the source service class and the 
+.B StagePutRequest
+privilege is granted on the destination service class.
+
+.TP
+.BI \-S,\ \-\-service_class " service_class"
+reduces the list to entries concerning the given service class.
+Note that is this parameter is not specified and the environment variable
+.B STAGE_SVCCLASS
+is set, its value will be used. If this parameter is not specified and the
+environment variable
+.B STAGE_SVCCLASS
+is not set, the the 'default' service class will be used.
+Finally, the special value '*' can be used to query accross all service classes.
+
+.TP
+.BI \-h,\ \-\-help
+display command usage help
+.TP
+
+.SH EXAMPLE
+# start with an empty list
+.fi
+$ stager_listprivileges
+
+.fi
+# add privileges to anybody on service class default
+.fi
+$ stager_addprivilege -S default -U ':'
+.fi
+Change done successfully
+
+.fi
+# add all privileges to user stage, group st
+.fi
+$ stager_addprivilege -U 'stage:st' 
+.fi
+Change done successfully
+
+.fi
+# but remove the privilege to change privileges to stage/st
+.fi
+$ stager_removeprivilege -U 'stage:st' -R ChangePrivilege
+.fi
+Change done successfully
+
+.fi
+# and here is the result
+.fi
+$ stager_listprivileges 
+.fi
+ServiceClass    User     Group    RequestType          Status
+.fi
+*               stage    st       ChangePrivilege      Denied
+.fi
+*               stage    st       *                    Granted
+.fi
+default         *        *        *                    Granted
+.fi
+
+.fi
+# and here is (an extract of a) a more complex example from a
+.fi
+# production instance. Note that the user column may show numbers
+.fi
+# if the user id is not defined on the node where the command is run
+.fi
+$ stager_listprivileges -S '*'
+.fi
+ServiceClass    User     Group    RequestType                    Status
+.fi
+\'*'             *        *        *                              Granted
+.fi
+*               *        zp       TapeRecall                     Denied
+.fi
+*               *        *        StageDiskCopyReplicaRequest    Granted
+.fi
+*               *        *        TapeRecall                     Granted
+.fi
+amscdr          [16153]  va       *                              Granted
+.fi
+amscdr          [26478]  xv       *                              Granted
+.fi
+cdr             [10684]  za       *                              Granted
+.fi
+cdr             [11075]  za       *                              Granted
+.fi
+cdr             [27109]  wj       *                              Granted
+.fi
+cdr             [27612]  wj       *                              Granted
+.fi
+compass004d     *        *        *                              Granted
+.fi
+compasscdr      *        *        *                              Granted
+.fi
+na61            *        wj       StageFileQueryRequest          Granted
+.fi
+na61            *        wj       StageGetRequest                Granted
+.fi
+na61            *        wj       StagePrepareToGetRequest       Granted
+.fi
+na61            *        wj       DiskPoolQuery                  Granted
+.fi
+recovery        *        *        *                              Granted
+.fi
+
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+
+.SH SEE ALSO
+.BR stager_addprivilege(1castor)
+.BR stager_removeprivilege(1castor)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

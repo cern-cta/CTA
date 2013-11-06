@@ -1,0 +1,47 @@
+.\" Copyright (C) 2004 by CERN/IT/D
+.\" All rights reserved
+.\"
+.TH NSSETCHECKSUM "1castor" "$Date: 2009/07/23 12:22:04 $" CASTOR "Cns User Commands"
+.SH NAME
+nssetchecksum \- set or reset the checksum for a file
+.SH SYNOPSIS
+.B nssetchecksum [OPTION]... PATH
+.SH DESCRIPTION
+.B nssetchecksum
+set or resets the checksum for a file in the name server. Only files
+with 0 file size can be updated by regular users. Admins can update any
+file. Note that the modification time of the file is changed by this
+command, except for admins.
+.TP
+.I PATH
+specifies the CASTOR pathname.
+If PATH does not start with
+.BR / ,
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
+.SH OPTIONS
+.TP
+.B -n,\ \-\-name=CKSUMNAME
+Name of the checksum to be stored in the name server. Note that currently, only adler32 is supported.
+.TP
+.B -k,\ \-\-checksum=CKSUM
+Value of the checksum to be stored in the name server.
+.TP
+.B --clear
+Remove the checksum value.
+.TP
+.B \-\-help
+Display this help and exit
+
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed. In the later case, a proper error message is printed on the stderr.
+See
+.BR Cns_updatefile_checksum(3)
+for a list of possible errors.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_updatefile_checksum(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

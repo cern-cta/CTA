@@ -1,0 +1,105 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      printdiskpool
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line printing the given disk pool(s)'''
+
+import sys
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <diskPoolName> [...]'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+diskPools = None
+if len(args) != 0:
+    diskPools = set(args)
+
+try:
+    # connect to stager and prepare statements
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    sqlStatement = '''
+    SELECT DiskPools.name, nvl(FileSystems.nbFileSystems,0), SvcClasses.names, DiskPools.id
+      FROM (SELECT DiskPool.name, DiskPool.id
+              FROM DiskPool) DiskPools,
+           (SELECT diskPool, count(*) nbFileSystems
+              FROM FileSystem
+             GROUP BY diskPool) FileSystems,
+           (SELECT DiskPool2SvcClass.parent AS diskPoolId, cast(collect(SvcClass.name) AS strListTable) AS names
+              FROM DiskPool2SvcClass, SvcClass
+             WHERE SvcClass.id = DiskPool2SvcClass.child
+             GROUP BY parent) SvcClasses
+     WHERE DiskPools.id = SvcClasses.diskPoolId(+)
+       AND DiskPools.id = FileSystems.diskPool(+)'''
+    if diskPools:
+        sqlStatement = sqlStatement + " AND DiskPools.name IN ('" + "', '".join(diskPools) + "')"
+    stcur.execute(sqlStatement)
+    # get results
+    rows = stcur.fetchall()
+    existingDiskPools = set([row[0] for row in rows])
+    if diskPools:
+        unknownDiskPools = diskPools - existingDiskPools
+    # loop over disk pools and print them
+    if existingDiskPools:
+        titles = ('NAME', 'NBFILESYSTEMS', 'SVCCLASSES', 'ID')
+        data = []
+        for name, nbfs, svcclasses, dpId in rows:
+            if svcclasses:
+                data.append((name, nbfs, ','.join(svcclasses), dpId))
+            else:
+                data.append((name, nbfs, '-', dpId))
+        castor_tools.prettyPrintTable(titles, data)
+    # check unknown disk pools
+    if diskPools and unknownDiskPools:
+        print 'WARNING : the following disk pools do not exist : ' + ', '.join(unknownDiskPools)
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

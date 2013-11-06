@@ -1,0 +1,11 @@
+Device          : <device>
+Inode number    : <inode>
+Nb blocks       : <nbBlocks>
+Protection      : <protection>
+Hard Links      : <hard links>
+Uid             : <uid>
+Gid             : <gid>
+Size (bytes)    : <size>
+Last access     : <last access>
+Last modify     : <last modify>
+Last stat. mod. : <last stat>

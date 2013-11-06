@@ -1,0 +1,8 @@
+%attr(0755,root,root) usr/bin/rfcat
+%attr(0755,root,root) usr/bin/rfchmod
+%attr(0755,root,root) usr/bin/rfcp
+%attr(0755,root,root) usr/bin/rfdir
+%attr(0755,root,root) usr/bin/rfmkdir
+%attr(0755,root,root) usr/bin/rfrename
+%attr(0755,root,root) usr/bin/rfrm
+%attr(0755,root,root) usr/bin/rfstat

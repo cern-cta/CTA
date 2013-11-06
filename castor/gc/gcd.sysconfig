@@ -1,0 +1,2 @@
+# Options to pass to the garbage collector daemon
+#GCD_OPTIONS=

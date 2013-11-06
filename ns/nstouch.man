@@ -1,0 +1,47 @@
+.\" Copyright (C) 2003 by CERN/IT/DM
+.\" All rights reserved
+.\"
+.TH NSTOUCH "1castor" "$Date: 2009/01/26 09:11:35 $" CASTOR "Cns User Commands"
+.SH NAME
+nstouch \- change file timestamps
+.SH SYNOPSIS
+.B nstouch
+[\fIOPTION\fR]... \fIPATH\fR...
+.SH DESCRIPTION
+.B nstouch
+updates the access and modification times of CASTOR directory/files(s) in the name server to the current time.
+.TP
+.I PATH
+specifies the CASTOR pathname or directory.
+If PATH does not start with
+.BR /
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
+If PATH does not exist and the no create
+.I -c
+argument is not specified it will be created.
+.SH OPTIONS
+The following options are supported:
+.TP
+.B -a
+change only the access time
+.TP
+.B -c,\ \-\-no-create
+do not create any files
+.TP
+.B -m
+change only the modification time
+.TP
+.B -t STAMP
+use [[CC]YY]MMDDhhmm instead of current time
+.TP
+.B \-\-help
+display this help and exit
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

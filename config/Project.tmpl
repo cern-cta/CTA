@@ -1,0 +1,209 @@
+/*
+ * Copyright (C) 1993-2004 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+DLFWEB=/var/www/html/dlf
+DLFCONF=/var/www/conf/dlf
+
+.PHONY : install clean clobber checkDESTDIR checkORACLE checkGLOBUS checkSTK checkXROOTD checkVERSION client installclient tape installtape purge
+
+/**
+ * Meaning of the different rules :
+ * - all will build all the software
+ * - tape will build only the tape part, that is the software that runs on the tapeservers
+ * - client will build the client part, that is the software running on client nodes
+ * - install will build AND install the whole software
+ * - installtape will build AND install the tape part
+ * - installclient will build AND install the client part
+ * - clean is cleaning all intermediate files (e.g. .o) but leaves libraries and exes around
+ * - clobber is cleaning all files resulting from compilation
+ * - purge is clobber + the drop of all Makefiles
+ * - the check rules are testing the presence of one component and exiting if they fail
+ *   + checkORACLE checkGLOBUS checkSTK checkXROOTD checkMEMCACHED checkXFS are obvious
+ *   + checkDESTDIR checks whether the DESTDIR environment variable is set
+ *   + checkVERSION checks whether the MAJOR/MINOR_CASTOR_VERSION environment variables 
+ *                   are set
+ *   + checkXROOTD also checks whether the XROOTD private headers are present
+ */
+
+all: checkORACLE checkGLOBUS checkXROOTD checkMEMCACHED checkXFS tape client
+tape: checkSTK
+install: checkDESTDIR checkVERSION all installtape installclient
+
+EXPORTMAN ?= $(DESTDIR)/usr/share
+checkDESTDIR:
+	@if [ -z "$(DESTDIR)" ]; then \
+	  echo "Please set DESTDIR environment variable before invoking make install."; \
+	  exit 1; \
+	fi;
+
+checkORACLE:
+	@if [ -z $(ORACLE_HOME) ]; then \
+	  echo "Please define ORACLE_HOME environment variable before invoking make."; \
+	  exit 1; \
+	fi; \
+	if [ ! -r $(ORACLE_LIBDIR)/libclntsh.so ]; then \
+	  echo "Could not find libclntsh.so at $(ORACLE_LIBDIR). Giving up."; \
+	  exit 1; \
+	fi; \
+	if [ ! -r $(ORACLE_BIN)/proc ]; then \
+	  echo "Could not find proc executable at $(ORACLE_BIN). Giving up."; \
+	  exit 1; \
+	fi
+
+checkGLOBUS:
+	@if [ -z $(GLOBUS_CONFINC_PATH) ]; then \
+	  echo "Unable to find globus_config.h at $(GLOBUS_CONFINC_PATH). Giving up."; \
+          exit 1; \
+        fi; \
+        if [ -z $(GLOBUS_INC_PATH) ]; then \
+	  echo "Unable to find globus header files at $(GLOBUS_INC_PATH). Giving up."; \
+	  exit 1; \
+	fi; \
+	if [ -z $(GLOBUS_LIB_PATH) ]; then \
+	  echo "Unable to find globus library files at $(GLOBUS_LIB_PATH). Giving up."; \
+	  exit 1; \
+	fi
+
+checkSTK:
+	@if [ ! -z "$(CASTOR_NOSTK)" ]; then \
+	  echo "Compiling without STK support."; \
+	else \
+	  if [ ! -e $(LIBDIR)/CDK/libapi.so -o ! -e $(LIBDIR)/CDK/libutl.so -o ! -e $(LIBDIR)/CDK/libipc.so -o ! -e $(LIBDIR)/CDK/libcl.so ]; then \
+	    echo "Unable to find STK library files at $(LIBDIR). Giving up."; \
+	    exit 1; \
+	  fi; \
+	  if [ ! -d /usr/include/CDK ]; then \
+	    echo "Unable to find STK header files at /usr/include/CDK. Giving up."; \
+	    exit 1; \
+	  fi; \
+	fi
+
+XROOT_LIB_LOCATION ?= $(LIBDIR)
+XROOT_LOCATION ?= $(dir $(XROOT_LIB_LOCATION))
+checkXROOTD:
+	@if [ ! -r $(XROOT_LOCATION)/include/xrootd/XrdPosix/XrdPosixXrootd.hh ]; then \
+	  echo "Unable to find XROOT header files at $(XROOT_LOCATION). Giving up."; \
+	  exit 1; \
+	fi; \
+	if [ ! -e $(XROOT_LOCATION)/include/xrootd/private/XrdOfs/XrdOfs.hh ]; then \
+       	  echo "Unable to find XROOT private header files at $(XROOT_LOCATION). Giving up."; \
+	  exit 1; \
+	fi; \
+	if [ ! -e $(XROOT_LIB_LOCATION)/libXrdPosix.so ]; then \
+	  echo "Unable to find XROOT library files at $(XROOT_LIB_LOCATION). Giving up."; \
+	  exit 1; \
+	fi
+
+MEMCACHED_LIB_LOCATION ?= $(LIBDIR)
+MEMCACHED_LOCATION ?= $(dir $(MEMCACHED_LIB_LOCATION))
+checkMEMCACHED:
+	@if [ ! -r $(MEMCACHED_LOCATION)/include/libmemcached/memcached.h ]; then \
+	  echo "Unable to find memcached header files at $(MEMCACHED_LOCATION). Giving up."; \
+	  exit 1; \
+	fi; \
+	if [ ! -e $(MEMCACHED_LIB_LOCATION)/libmemcached.so ]; then \
+	  echo "Unable to find memcached library files at $(MEMCACHED_LIB_LOCATION). Giving up."; \
+	  exit 1; \
+	fi
+
+XFS_LOCATION ?= /usr
+checkXFS:
+	@if [ ! -e $(XFS_LOCATION)/include/xfs/xfs.h ]; then \
+	  echo "Unable to find xfs header files at $(XFS_LOCATION). Giving up."; \
+	  exit 1; \
+	fi
+
+checkVERSION:
+	@if [ -z "$(MAJOR_CASTOR_VERSION)" -o -z "$(MINOR_CASTOR_VERSION)" ]; then \
+	  echo "Please define MAJOR/MINOR_CASTOR_VERSION before installing."; \
+	  exit 1; \
+	fi
+
+/******************************************************************************
+ * The following code deals with automatic prerequisites, that is with        *
+ * automatic generation of the list of header files that a given source file  *
+ * depends on and with automatic validation that these files did not change   *
+ * when one checks whether to recompile the given source file.                *
+ * The ideas behind this code are taken from the GNU make manual (see chapter *
+ * "Generating Prerequisites Automatically") and from the article found at    *
+ * http://locklessinc.com/articles/makefile_tricks/                           *
+ * Nevertheless, the code is explained in deep details in the comment         *
+ ******************************************************************************/
+
+/*
+ * This first macro is able to build a piece of Makefile that expresses the
+ * list of dependencies of a given file. It is based on the gcc -MM
+ * functionnality plus a couple of refinements.
+ *
+ *   The basic functionnality is to call gcc -MM on the input file ("$<") and
+ * store the result in the output file $@. As you guessed, this
+ * macro is actually supposed to be used in a rule like this :
+ * %.d : %.c
+ *      $(create_d)
+ * And it will thus generate the .d file out of the .c one.
+ *   As gcc -MM is able to dig out all the non-system dependencies of a file and
+ * create a piece of Makefile, the .d file will look like this :
+ * BaseAddress.o : BaseAddress.cpp \
+ *  /home/sponcec3/DEVEL/trunk/castor/BaseAddress.hpp \
+ *  /home/sponcec3/DEVEL/trunk/castor/IAddress.hpp
+ *
+ *   However, the default output of gcc -MM misses the dependencies of the .d
+ * file itself (which are the same as for the .o). Thus the .d file would not
+ * be rebuilt if any dependency has changed. This is why we use the -MT option
+ * to specify the target ourselves. The final content of the .d file looks
+ * like this :
+ * BaseAddress.o BaseAddress.d : BaseAddress.cpp \
+ *  /home/sponcec3/DEVEL/trunk/castor/BaseAddress.hpp \
+ *  /home/sponcec3/DEVEL/trunk/castor/IAddress.hpp
+ */
+create_d = gcc -MM $(CPPFLAGS) -MT $(@:.d=.o) -MT $@ -MF $@ $<
+
+/*
+ * this rules use the create_d macro to build dependency files from source files.
+ * Another rule is needed to make the compiled files depend on the dependency
+ * file on top of the source file itself. This is achieved by using "Static
+ * Pattern Rules" (see GNU make manual) generated by imake from the
+ * BareSharedLibraryTarget and ProgramTarget that look like :
+ * objects: %.o: %.d
+ * They make all targets of the objects list depend on their coresponding .d file
+ */
+%.d: %.c
+	$(create_d)
+
+%.d: %.cpp
+	$(create_d)
+
+%.d: %.cc
+	$(create_d)
+
+/*
+ * close the ifndef IMAKETMPL started in Imake.tmpl
+ */
+endif
+
+/*
+ * The last part is to include the generated dependency files into this
+ * Makefile. This is done via the include directive.
+ * Note that this step is less trivial than it seems : we do not include
+ * explicit files here, but only existing dependency files. Typically, none
+ * on the first compilation of a clean repository.
+ * However, if no dependency file has been built so far, then we know that
+ * no compilation took place so far, thus the compilation will take place now
+ * and we do not need to check the dependencies to trigger it.
+ * Note also that a simpler approach would have been to include all .d files
+ * explicitely (using imake macros). However, the arguments to include are
+ * considered as targets by the Makefile. Thus in this approach, all .d
+ * files would be checked and built if necessary for each call to make,
+ * even if you called make clean for example.
+ * Another trick is the subst expression for 'startobereplaced'. The reason
+ * for this is that the simpler rule would look like LOCAL_PATH/*.d. the
+ * '/*' part would be taken a comment by imake and the end of the line dropped.
+ * The first idea was to prepend the directy to *.d using Makefile functions,
+ * but this does not work as the *.d would be expanded first (into the list
+ * of files of the wrong directory). You thus want the expansion to take place
+ * after the addition of the path. Hence the final trick.
+ */
+#define INCLUDEDEPFILES(path) include $(wildcard $(subst startobereplaced,*,path/startobereplaced.d))
+INCLUDEDEPFILES(LOCAL_PATH)

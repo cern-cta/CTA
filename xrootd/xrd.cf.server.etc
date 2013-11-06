@@ -1,0 +1,51 @@
+#-------------------------------------------------------------------------------
+xrootd.fslib /usr/lib64/libXrdxCastor2Ofs.so.2.1
+xrootd.async off nosf
+xrootd.trace emsg login
+xrd.network keepalive
+xrd.trace conn net
+#-------------------------------------------------------------------------------
+xrootd.seclib /usr/lib64/libXrdSec.so
+sec.protocol /usr/lib64 unix
+#-------------------------------------------------------------------------------
+all.export / nolock
+ofs.trace open close
+ofs.persist off
+#-------------------------------------------------------------------------------
+xrd.port 1095
+ofs.authlib /usr/lib64/libXrdxCastor2ServerAcc.so.2.1
+ofs.authorize
+#-------------------------------------------------------------------------------
+xcastor2.fs /
+xcastor2.capability true
+xcastor2.publickey /opt/xrootd/keys/pkey.pem
+xcastor2.ratelimiter true
+
+# Log level: INFO by default
+#xcastor2.loglevel 6
+
+#-------------------------------------------------------------------------------
+# Set the debug level and a filter. The debug levels are similar to the ones used
+# by syslog. The debug filter prints out only the messages from a certain function.
+#-------------------------------------------------------------------------------
+#xcastor2.loglevel err
+#xcastor2.debugfileter main
+
+# to enable persistency on successful close, you have to allow all disk servers 
+# to call back to the manager by adding
+# sec.protbind lxfs*.cern.ch only unix
+xcastor2.posc false
+
+#-------------------------------------------------------------------------------
+xcastor2.proc /var/log/xrootd/server/
+xcastor2.procuser root@localhost.localdomain
+xcastor2.procuser root@localhost
+#-------------------------------------------------------------------------------
+#3rd party default values
+#xcastor2.thirdparty yes
+#xcastor2.thirdparty.slots 5
+#xcastor2.thirdparty.slotrate  25
+
+# Enable native third-party copy support using xrdcp
+ofs.tpc pgm /usr/bin/xrdcp -f --nopbar
+

@@ -1,0 +1,1 @@
+.so man3/rfio_stat.3castor

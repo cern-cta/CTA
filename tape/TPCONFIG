@@ -1,0 +1,15 @@
+#               example of tape configuration
+#
+#               tape configuration, tpsrv101
+# unit    dev           dev             density   initial  robot/     dev
+# name    group         name           (0 = N/a)  status   manual     type
+#
+# units DOWN at reboot.
+#
+# Please replace and uncomment the following
+#
+#994B43A1  994BR4      /dev/nst0            200GC   down    acs0,3,10,1    9940
+#994B43A1  994BR4      /dev/nst0            200G    down    acs0,3,10,1    9940
+#
+#994B43A1  994BR4      /dev/nst0            60GC    down    acs0,3,10,1    9940
+#994B43A1  994BR4      /dev/nst0            60G     down    acs0,3,10,1    9940

@@ -1,0 +1,2 @@
+rfcat <localFileName> > <tmpLocalFileName>
+diff <localFileName> <tmpLocalFileName>

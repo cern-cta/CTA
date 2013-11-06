@@ -1,0 +1,91 @@
+.\" Copyright (C) 2003  CERN
+.\" This program is free software; you can redistribute it and/or
+.\" modify it under the terms of the GNU General Public License
+.\" as published by the Free Software Foundation; either version 2
+.\" of the License, or (at your option) any later version.
+.\" This program is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\" You should have received a copy of the GNU General Public License
+.\" along with this program; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+.TH VDQMSETPRIORITY "1castor" "$Date: 2008/07/21 13:17:04 $" CASTOR "Set a volume priority"
+.SH NAME
+vdqmsetpriority \- set a volume priority
+.SH SYNOPSIS
+.BI "vdqmsetpriority -V VID -m tapeAccessMode [ -t type ] -p priority [ -h ]"
+
+.SH DESCRIPTION
+.B vdqmsetpriority
+sets a volume access priority within the VDQM database.
+.P
+The RecallHandler daemon and the tape operator command-line tools send volume
+access priorities to the VDQM. A volume access priority sent from the
+RecallHandler will exist in the VDQM database for a single-mount of the tape in
+question.  A volume access priority sent from the tape operator command-line
+tools will by default have an unlimited lifespan type within the VDQM database.
+The priority will stay active until it is explicitly removed by the tape 
+operator command-line tools.
+A volume access priority is a quadruple of:
+.RS
+.P
+*
+.B VID
+.br
+Volume visual identifier
+.P
+*
+.B
+Access mode
+.br
+Either read or write
+.P
+*
+.B
+Type
+.br
+Either single-mount or unlimited
+.P
+*
+.B
+Priority number
+.br
+A positive integer , where 0 is the lowest and default priority
+.RE
+.P
+If there is a single-mount priority and an unlimited priority for the same 
+volume access (VID plus access mode), then the unlimited priority will override 
+the single mount priority.
+.P
+If the 
+.B
+vdqmsetpriority 
+command is used to set a volume access priority that does 
+not exist in the database, then a new one will be inserted. If the priority 
+already exists, then its value will be updated if the new value is greater than 
+or equal to the old one. The reason to update when both the new and old values 
+are the same is to take the opportunity to update the "last modified" timing 
+information in the database.
+
+.SH OPTIONS
+.TP
+\fB\-V, \-\-vid VID\fR
+Volume visual identifier
+.TP
+\fB\-m, \-\-mode read | write
+Tape access mode.  Valid values are "read" and "write".
+.TP
+\fB\-t, \-\-type singleMount | unlimited (default)
+Lifespan type. Valid values are "singleMount" and "unlimited".  The default
+value is "unlimited"
+.TP
+\fB\-p, \-\-priority positive integer
+Volume priority.  A positive integer, where 0 is the lowest and default
+priority
+.TP
+\fB\-h, \-\-help
+Get usage information
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

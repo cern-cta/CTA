@@ -1,0 +1,16 @@
+%attr(0755,root,root) etc/init.d/transfermanagerd
+%attr(0644,root,root) etc/sysconfig/transfermanagerd.example
+%attr(0755,root,root) usr/bin/transfermanagerd
+%attr(0644,root,root) etc/logrotate.d/castor-transfer-manager
+%attr(0644,root,root) usr/lib/python*/site-packages/serverqueue.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/dispatcher.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/aborter.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/synchronizer.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/suicider.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/reportmanager.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/diskserverlistcache.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/modifydiskservers.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/connectionpool.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/transfermanagerdlf.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/threadpoolserver.py*
+%attr(0644,root,root) usr/lib/python*/site-packages/transfer.py*

@@ -1,0 +1,77 @@
+.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH NSLISTTAPE "1castor" "$Date: 2009/05/26 13:07:21 $" CASTOR "Cns User Commands"
+.SH NAME
+nslisttape \- list the file segments residing on a volume
+.SH SYNOPSIS
+.B nslisttape
+-V VID
+[\fIOPTION\fR]...
+.SH DESCRIPTION
+.B nslisttape
+lists the file segments residing on a volume with the possibility of filtering the results by file sequence number and summarizing the overall data.
+.SH OPTIONS
+.TP
+.BI -h,\ \-\-host=HOSTNAME
+specify the name server hostname.
+This can also be set thru the CNS_HOST environment variable.
+.TP
+.BI -V=VID
+specifies the visual identifier for the volume.
+.TP
+.BI -ds,\ \-\-display_side
+print the vid followed by a slash followed by the media side number.
+This option is useful for multi-sided media like DVD.
+.TP
+.BI --checksum
+display the tape segments checksum.
+.TP
+.BI -i
+print the file uniqueid in front of each entry.
+.TP
+.BI -H
+print sizes in human readable format (e.g., 1K 234M 2G) using powers of 1024
+.TP
+.BI -s,\ \-\-summarize
+display some statistics for the tape, including the total number of files, the total size, the largest fileid
+of all files on the volume and the average compression factor. In this summary all segments are taken into account
+regardless their status.
+.TP
+.BI -D
+only display logical deleted segments.
+.TP
+.BI -f=FSEQ
+restrict the output to the given file sequence number.
+.TP
+.B \-\-help
+display this help and exit
+.LP
+The list gives the file segment status, the copy number, the file segment
+number, the tape visual identifier, the file sequence number on tape,
+the blockid, the segment size, the compression factor and the file name.
+The segment status can be either
+.B -
+for an active segment or
+.B D
+for a logically deleted segment.
+.SH EXAMPLES
+.nf
+.ft CW
+nslisttape -V RT0003
+- 1   1 RT0003     1 00000000         6 0 /castor/cern.ch/user/j/jdurand/TOTO6
+- 1   1 RT0003     2 00000000         7 0 /castor/cern.ch/user/j/jdurand/TOTO10
+- 1   1 RT0003     3 00000000         7 0 /castor/cern.ch/user/j/jdurand/TOTO18
+- 1   1 RT0003     4 00000000         7 0 /castor/cern.ch/user/j/jdurand/TOTO29
+- 1   1 RT0003     5 00000000         7 0 /castor/cern.ch/user/j/jdurand/TOTO16
+- 1   1 RT0003     6 00000000         7 0 /castor/cern.ch/user/j/jdurand/TOTO25
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.B Cns_listtape(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

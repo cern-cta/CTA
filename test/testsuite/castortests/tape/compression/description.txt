@@ -1,0 +1,13 @@
+Here we test a compression ratio statistics for files.
+The test is not critical as soon as in any case we compress all data on 
+tapes but it affects NS DB and VMGR DB.
+
+First we write /dev/urandom file on tape and the compression ratio 
+must be 100%.
+
+Second we write /dev/zero file on tape and the compression ratio 
+must be greater than 7777%.
+
+In tests for LTO and IBM tapes we have 9394%, for T10000C ~16000%,
+for VTL 1.4 with compression factor 9 -  93090% and with compression factor 1 - 22755%
+

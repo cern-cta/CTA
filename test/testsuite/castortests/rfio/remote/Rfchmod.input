@@ -1,0 +1,7 @@
+<rfcp> <localFileName> <remoteFileName>
+rfdir <remoteFileName>
+rfchmod 777 <remoteFileName>
+rfdir <remoteFileName>
+rfchmod 600 <remoteFileName>
+rfdir <remoteFileName>
+rfrm <remoteFileName>

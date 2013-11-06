@@ -1,0 +1,3 @@
+<rfcpupd> <localFileName> <noTapeFileName>
+stager_qry -M <noTapeFileName>
+nsrm <noTapeFileName>

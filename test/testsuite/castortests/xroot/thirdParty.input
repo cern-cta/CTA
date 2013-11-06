@@ -1,0 +1,9 @@
+<xrdcp> <localFileName> <simpleXrdcpURL1>
+stager_qry -M <noTapeFileName1>
+<xrdcp> --tpc only <simpleXrdcpURL1> <simpleXrdcpURL2>
+stager_qry -M <noTapeFileName2>
+<xrdcp> <simpleXrdcpURL2> <tmpLocalFileName>
+diff <localFileName> <tmpLocalFileName>
+rm <tmpLocalFileName>
+nsrm <noTapeFileName1>
+nsrm <noTapeFileName2>

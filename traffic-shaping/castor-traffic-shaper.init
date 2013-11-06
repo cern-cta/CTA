@@ -1,0 +1,269 @@
+#!/bin/bash
+#
+# Init file for CASTOR traffic shaping, used to prioritize tape servers
+# on output of disk servers
+#
+# chkconfig: 2345 99 01
+# description: CASTOR traffic shaping, used to prioritize tape servers\
+#               on output of disk servers
+#
+# processname: <none>, this is a kernel configuration
+# config: /etc/sysconfig/castor_traffic_shaper
+# pidfile: /var/lock/castor_traffic_shaper (used as a lock preventing 2 configuration happening at the same time)
+
+
+# source function library
+. /etc/rc.d/init.d/functions
+
+# pull in sysconfig settings
+[ -f /etc/sysconfig/castor-traffic-shaper ] && . /etc/sysconfig/castor-traffic-shaper
+
+# set defaults
+[ "${ETH}xxx" == "xxx" ] && ETH="eth0";
+
+RETVAL=0
+WARN=""
+FAIL=""
+prog="castor_traffic_shaper"
+pidfile="/var/lock/${prog}.pid"
+TC="/sbin/tc"
+ETHTOOL="/sbin/ethtool"
+MTU=1500
+
+take_lock()
+{
+        # Make redirection on existing file fail (noclobber)
+        # We will create the pid file (atomicly) only if it does not exist
+        set -o noclobber
+        while ((echo $$ > ${pidfile}) 2> /dev/null);
+        do
+                sleep 0.5
+        done;
+        # Lock is taken. If we die, let's do it cleanly
+        trap 'rm -f "$lockfile"; exit $?' INT TERM EXIT
+        # Remove clobber for normal running
+        set +o noclobber
+}
+
+release_lock()
+{
+        # Just delete the pid file
+        rm -f ${pidfile} 2> /dev/null
+}
+
+check_hosts()
+{
+        # Sanity check for the number of hosts, and their format
+        # We need something
+        if [ ${#TAPE_SERVERS[@]} == 0 ]; then
+                FAIL="TAPE_SERVERS[] array empty. Aborting. See /etc/sysconfig/castor_traffic_shaper";
+                return 1
+        fi
+        # Format of variables should be approprite (IPV4 decimal formatted hosts IPs or network ranges in <ip>/<bits> notation)
+        for (( i=0; i < ${#TAPE_SERVERS[@]}; i++ ))
+        do
+                echo ${TAPE_SERVERS[$i]} | perl -e  'while (<>) { if ( m%^(\d{1,3}\.){3}\d{1,3}(|/[123]?\d)$% ) { exit 0 } } exit 1'
+                if [[ $? -ne 0 ]]; then
+                        FAIL="Wrong format for TAPE_SERVERS[${i}]: \"${TAPE_SERVERS[$i]}\"";
+                        return 2
+                fi
+        done
+        # Experience showed that on today's servers (dec. 2012), more than 40 rules has a 
+        # risk of degrading the performance. More that 50 is guaranteed to.
+        # We will warn above 40, and forbid above 50
+        # YMMV
+        if [ ${#TAPE_SERVERS[@]} -gt 50 ]; then
+                FAIL="More than 50 rules (${#TAPE_SERVERS[@]}) is too much processing per packet. Aborting."
+                return 3
+        elif [ ${#TAPE_SERVERS[@]} -gt 40 ]; then
+                WARN="More than 40 rules (${#TAPE_SERVERS[@]}) could degrade the network performance. Check outbound speed in production."
+        fi
+        return 0
+}
+
+check_interface()
+{
+        # Verify this is a 1Gb interface. Traffic control is not necessary on 10Gb/s interfaces
+        ${ETHTOOL} eth0 | grep -q "Speed: 1000Mb"
+        if [ $? -ne 0 ];
+        then
+                return -1
+        fi
+        return 0
+}
+
+install_base_rules()
+{
+        # Create a priority map just like the default one (which we can't hook onto)
+        ${TC} qdisc add dev ${ETH} parent root handle 10: prio bands 3 priomap 1 2 2 2 1 2 0 0 1 1 1 1 1 1 1 1 || return -1
+        # Create a class based queuing discipline (cbq) on the middle priority
+        # This priority carries all non-interactive, non background packets
+        ${TC} qdisc add dev ${ETH} parent 10:2  handle 102: cbq bandwidth 1gbit avpkt ${MTU} || return -1
+        # This class is the favored one. It aill get the priviledged traffic as defined in filters
+        ${TC} class add dev ${ETH} parent 102: classid 102:10 cbq weight 90 \
+                split 102: defmap 0 bandwidth 1gbit prio 1 rate  900mbit \
+                maxburst 20 minburst 10 avpkt ${MTU} || return -1
+        # This class is the default one, less favored. All packets go to it
+        # unless explicitely filtered in the privileged class
+        ${TC} class add dev ${ETH} parent 102: classid 102:20 cbq weight 10 \
+                split 102: defmap ff bandwidth 1gbit prio 1 rate 100mbit \
+                maxburst 20 minburst 10 avpkt ${MTU} || return -1
+        # The ACK packets get prioritized by default, as well as ssh
+        ${TC} filter add dev ${ETH} parent 102: protocol ip prio 10 \
+                u32 match ip protocol 6 0xff match u8 0x05 0x0f at 0 \
+                match u16 0x0000 0xffc0 at 2 match u8 0x10 0xff at 33 \
+                flowid 102:10 || return -1
+        ${TC} filter add dev ${ETH} parent 102: protocol ip prio 10 \
+                u32 match ip sport 22 0xffff flowid 10:2 || return -1
+}
+
+install_host_rules()
+{
+        # The host specifications are supposed to be check before, so
+        # we blindly apply them
+        for (( i=0; i < ${#TAPE_SERVERS[@]}; i++ ))
+        do
+                ${TC} filter add dev ${ETH} parent 102: protocol ip prio 10 \
+                        u32 match ip dst ${TAPE_SERVERS[$i]} flowid 102:10 || return -1
+        done
+}
+
+delete_rules()
+{
+        # Unconditionally nuke any rules
+        (${TC} qdisc del dev eth0 root) 2> /dev/null
+}
+
+tune_interface()
+{
+        # Turn off TCP segmention offload from eth0 as traffic shaping
+        # has to see the actual packets going on the wire to be efficient
+        ${ETHTOOL} -K ${ETH} tso off
+        return $?
+}
+
+revert_interface()
+{
+        # Turn back on TCP segmention offload
+        ${ETHTOOL} -K ${ETH} tso on
+}
+
+get_mtu()
+{
+        # Get MTU, with a sanity check (no smaller than 1500)
+        tmpmtu=`ifconfig eth0 | perl -p -e 'while (<>) { if (/MTU:(\d+)\s/ ) { print $1."\n"; } }'`
+        if [[ $tmpmtu > 1500 ]]; then MTU=$tmpmtu; fi
+}
+
+roll_back_config_exit()
+{
+        # This script is used in the case of active configuraiton scenarios
+        revert_interface
+        delete_rules
+        release_lock
+        failure
+        echo
+        # Report "program is not running" (according to LSB 4.1)
+        exit 3
+}
+
+start()
+{
+        # Hold the result in case of warning
+        echo -n "Starting ${prog}: "
+        result=0;
+        check_interface
+        result=$?
+        if [[ $result -ne 0 ]]; then echo Interface ${ETH} is not a 1Gb/s interface; failure; echo; exit 3; fi
+        check_hosts
+        result=$?
+        if [[ $result -ne 0 ]]; then echo; echo ${FAIL}; roll_back_config_exit; fi
+        if [ "${WARN}xxx" != "xxx" ]; then echo; echo ${WARN}; result=1; fi
+        # This sets a global variable for the configuration functions
+        get_mtu
+        # Take lock. Failures are handled specialy from here on.
+        take_lock
+        # Start clean with the rules
+        delete_rules
+        tune_interface
+        result=$?
+        if [[ $result -ne 0 ]]; then echo Failed to tune interface ${ETH} \(${result}\); roll_back_config_exit; fi
+        install_base_rules
+        result=$?
+        if [[ $result -ne 0 ]]; then echo Failed to configure base rules for ${ETH} \(${result}\); roll_back_config_exit; fi
+        install_host_rules
+        result=$?
+        if [[ $result -ne 0 ]]; then echo Failed to configure host rules for ${ETH} \(${result}\); roll_back_config_exit; fi
+        # Done.
+        release_lock
+        if [[ $result -eq 0 ]]; then success; else passed; fi
+        echo
+        RETVAL=0
+}
+
+stop()
+{
+        echo -n $"Stopping $prog: "
+        take_lock
+        delete_rules
+        revert_interface
+        release_lock
+        success
+        echo
+        RETVAL=0
+}
+
+status()
+{
+        RETVAL=0
+        tc -s class show dev eth0 | grep -q "class cbq 102:10 parent 102: rate 900000Kbit prio 1"
+        if [ $? -ne 0 ]; then
+                echo castor-traffic-shaper is not installed.
+                RETVAL=3
+                return -1
+        fi
+        echo castor-traffic-shaper is installed:
+        ( time ( ${TC} -s class show dev eth0; sleep 1.5;  ${TC} -s class show dev eth0) ) 2>&1 |
+        perl -p -e 'my $interval;
+                    my @htxb;
+                    my @htxp;
+                    my @ltxb;
+                    my @ltxp;
+                    my $hcnt=0;
+                    my $lcnt=0;
+                    my $prio=0;
+                    while (<>) {
+                      if ( /class cbq 102:10/ ) { $prio=1; }
+                      elsif ( /class cbq 102:20/ ) { $prio=2; }
+                      elsif ( /Sent (\d+) bytes (\d+) pkt/ ) {
+                        if ( $prio == 1 ) { $htxb[$hcnt]=$1; $htxp[$hcnt++]=$2; $prio=0; }
+                        elsif ( $prio == 2 ) { $ltxb[$lcnt]=$1; $ltxp[$lcnt++]=$2; $prio=0; }
+                      } elsif ( /real.*(\d+)m([[:digit:]\.]+)s/ ) { $interval = $1 * 60 + $2; }
+                    }
+                    print "High priority class: ".sprintf ("%.2f", ($htxb[1] - $htxb[0])/$interval)." bytes/s ".
+                      sprintf("%.2f",($htxp[1] - $htxp[0])/$interval)." packets/s\n".
+                      "Low priority class: ".sprintf("%.2f",($ltxb[1] - $ltxb[0])/$interval)." bytes/s ".
+                      sprintf("%.2f",($ltxp[1] - $ltxp[0])/$interval)." packets/s\n";'
+}
+
+case "$1" in
+	start)
+		start
+		;;
+	stop)
+		stop
+		;;
+	restart)
+		start
+		;;
+	reload)
+		start
+		;;
+	status)
+		status
+		;;
+	*)
+		echo $"Usage: $0 {start|stop|restart|reload|status}"
+		RETVAL=1
+esac
+exit $RETVAL

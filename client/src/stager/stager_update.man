@@ -1,0 +1,109 @@
+.\" Copyright (C) 2005 by CERN/IT
+.\" All rights reserved
+.\"
+.TH STAGER_GET "1castor"castor "$Date: 2008/06/02 16:27:29 $" CASTOR "STAGER Commands"
+.SH NAME
+stager_update \- pre-stage existing CASTOR files to disk, to be opened for write, or create new ones
+.SH SYNOPSIS
+.B stager_update
+[
+.BI -M
+.BI hsmfile
+[
+{
+.BI -M
+}
+.BI ...
+]]
+[
+.BI -f
+.BI hsmFileList
+]
+[
+.BI -S
+.BI service_class
+]
+[
+.BI -U
+.BI usertag
+]
+[
+.BI -r
+]
+[
+.BI -h
+]
+.SH DESCRIPTION
+The
+.B stager_update
+command starts a put/update session in CASTOR. It is primarily intended
+for applications that need to open the same set of files several times (e.g. for updates).
+In addition the command pre-stages the existing CASTOR files from tape to disk.
+It only supports asychronous stage-in operation meaning that it returns immediately
+after the stager has stored and acknowledged the request. The command does not wait for the
+files to be staged in and it is supposed to be used in conjunction with the
+.B stager_qry(1castor)
+command to check the progress of the request.
+
+.SH OPTIONS
+
+.TP
+.BI \-M,\ \-\-filename " hsmfile"
+specifies the CASTOR HSM file(s) to be staged in. The
+.B \-M
+option can be repeated, allowing to stage in several files with a single command.
+.TP
+.BI \-f,\ \-\-filelist " hsmFileList"
+specifies a file containing a list of CASTOR HSM file(s) to be staged in, one per line.
+This can be used to avoid the command line restrictions when many files should be staged in at once.
+.TP
+.BI \-S,\ \-\-service_class " service_class"
+specifies the service class to be used when staging in the file. If no service class
+is given a default will be assigned by the stager.
+.TP
+.BI \-U,\ \-\-usertag " usertag"
+allows for associating a usertag that can be used for identifying the request in a subsequent
+.B stager_qry(1castor)
+command.
+.TP
+.BI \-r,\ \-\-display_reqid
+if specified, the request identifier asssigned by the stager will be printed to standard
+output. The request identifier can be used instead of the castor filenames when closing
+the put-session with
+.BI stager_putdone(1castor)
+.TP
+.BI \-h,\ \-\-help
+display command usage help
+.TP
+
+.SH EXAMPLE
+.fi
+$ stager_update -M /castor/cern.ch/user/t/test/file1 -M /castor/cern.ch/user/t/test/file2 -U test1
+.fi
+Received 2 responses
+.fi
+/castor/cern.ch/user/t/test/file1 SUBREQUEST_READY
+.fi
+/castor/cern.ch/user/t/test/file2 SUBREQUEST_READY
+.fi
+$ stager_qry -U test1
+.fi
+Received 2 responses
+.fi
+59316604@cnsuser STAGEIN
+.fi
+59316617@cnsuser STAGED
+.fi
+
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+
+.SH SEE ALSO
+.BR stager_qry(1castor) ,
+.BR stager_put(1castor) ,
+.BR stager_get(1castor) ,
+.BR stager_putdone(1castor) ,
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

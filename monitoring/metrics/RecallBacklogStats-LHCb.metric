@@ -1,0 +1,13 @@
+# recall backlog informations
+
+<metric>
+  name: RecallBacklogStats-LHCb
+  window: 60
+  unit: Nb of files and GB
+  category: LHCb
+  conditions: DAEMON=="stagerd" and INSTANCE=="c2lhcb" and MSG=="waitTapeRecallStats"
+  groupbykeys: NONE
+  data: AdderGB(totalFileSize), Adder(nbFiles)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

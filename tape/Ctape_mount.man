@@ -1,0 +1,254 @@
+.\" Copyright (C) 1990-2003 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH CTAPE_MOUNT "3castor" "$Date: 2003/10/14 07:17:16 $" CASTOR "Ctape Library Functions"
+.SH NAME
+Ctape_mount \- send a request to the tape daemon to have a tape mounted
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Ctape_api.h"\fR
+.sp
+.BI "int Ctape_mount (char *" path ,
+.BI "char *" vid ,
+.BI "int " side ,
+.BI "char *" dgn ,
+.BI "char *" density ,
+.BI "char *" drive ,
+.BI "int " mode ,
+.BI "char *" vsn ,
+.BI "char *" lbltype ,
+.BI "int " vdqm_reqid );
+.SH DESCRIPTION
+.B Ctape_mount
+checks with VMGR if the tape identified by
+.I vid
+is available, asks the operator or the robot to mount it on the drive selected
+by the tape daemon or specified by
+.IR drive ,
+checks the vsn
+in VOL1 if the tape is labelled.
+In case of failure the drive is freed.
+.TP
+.I path
+specifies the pathname relative to the current directory or the full pathname
+which is used by the application program in the
+.B open
+statement. This path should not be null and should not exist yet.
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most six characters long and is converted to upper case.
+.TP
+.I side
+is an integer specifying the side number.
+This field is only used if the specified device offers several sides,
+for example a DVD.
+.TP
+.I dgn
+The device group name must be a member of an installation defined set of
+"device groups". It must match the device group specified in VMGR (if installed).
+If this pointer is NULL, the value is taken from VMGR or defaults to CART.
+.TP
+.I density
+The supported alphanumeric densities are:
+.br
+.B 1600
+or
+.B 6250
+for round (IBM 3420) tapes,
+.B 38000
+for standard IBM 3480 cartridges,
+.B 38KC
+for 3480 cartridges with compaction (IDRC),
+.B 38KD
+for double density IBM 3490 cartridges,
+.B 38KDC
+for 3490 cartridges with compaction (IDRC),
+.BR 8200 ,
+.BR 8200C ,
+.B 8500
+or
+.B 8500C
+for Exabytes,
+.B DDS
+or
+.B DDSC
+for DAT cartridges,
+.BR 2G ,
+.BR 6G ,
+.BR 10G ,
+.BR 10GC ,
+.BR 20G ,
+.BR 20GC ,
+.BR 35G ,
+.BR 35GC ,
+.B 40G
+or
+.B 40GC
+for DLT cartridges,
+.B 10G
+or
+.B 10GC
+for IBM 3590 cartridges,
+.B 40G
+or
+.B 40GC
+for IBM 3590E cartridges,
+.BR 10G ,
+.BR 10GC ,
+.BR 25G ,
+.BR 25GC ,
+.B 50G
+or
+.B 50GC
+for Redwood cartridges,
+.B 20G
+or
+.B 20GC
+for STK 9840 cassettes,
+.B 60G
+or
+.B 60GC
+for STK 9940 cartridges,
+.B 100G
+or
+.B 100GC
+for LTO cartridges.
+It must match the density specified in VMGR (if installed).
+.TP
+.I drive
+specifies the drive name. If this pointer is NULL, a drive is selected by the
+tape daemon.
+.TP
+.I mode
+may be either
+.B WRITE_ENABLE
+or
+.BR WRITE_DISABLE .
+.TP
+.I vsn
+specifies the magnetically recorded volume serial number of the tape.
+It must be at most six characters long and is converted to upper case.
+The vsn must match the one specified in VMGR.
+.TP
+.I lbltype
+may be
+.BR aul 
+or
+.BR DMP .
+It must match the label type specified in VMGR.
+.B DMP
+is allowed only for read.
+Default is
+.BR aul .
+.TP
+.I vdqm_reqid
+is the request identifier assigned by vdqm.
+It should be zero in case vdqm is not used.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.2i
+.B EIO
+I/O error.
+.TP
+.B ENXIO
+Drive not operational. The drive is automatically configured down.
+.TP
+.B EACCES
+Access denied by VMGR.
+.TP
+.B EBUSY
+Requested drive is not free or no free drive.
+.TP
+.B EEXIST
+Path exists already.
+.TP
+.B EINVAL
+Bad parameter value.
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ETDNP
+Tape daemon is not running.
+.TP
+.B ETNDV
+Too many drives requested.
+.TP
+.B ETIDG
+Invalid device group name.
+.TP
+.B ETNRS
+Reserve not done.
+.TP
+.B ETIDN
+No unit with requested characteristics.
+.TP
+.B ETBLANK
+Blank tape.
+.TP
+.B ETCOMPA
+Drive/cartridge compatibility problem.
+.TP
+.B ETHWERR
+Device malfunction.
+.TP
+.B ETPARIT
+Parity error.
+.TP
+.B ETUNREC
+Unrecoverable media error.
+.TP
+.B ETNOSNS
+No sense data available.
+.TP
+.B ETRSLT
+Reselect server requested by operator.
+.TP
+.B ETVBSY
+Volume busy or inaccessible.
+.TP
+.B ETABSENT
+Volume absent.
+.TP
+.B ETARCH	 
+Volume archived.
+.TP
+.B ETHELD
+Volume held (TMS).
+.TP
+.B ETOPAB
+Operator cancel.
+.TP
+.B ETVUNKN
+Volume unknown.
+.TP
+.B ETWLBL
+Wrong label type.
+.TP
+.B ETWPROT
+Cartridge write protected.
+.TP
+.B ETWVSN
+Wrong vsn.
+.TP
+.B ETNOLBLINFO
+Label information not found in memory.
+.TP
+.B ETNOLBLINFOMEM
+No memory available for label information.
+.SH SEE ALSO
+.BR vdqm_SendVolReq(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

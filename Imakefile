@@ -1,0 +1,50 @@
+COMM       @(#)Imakefile,v 1.12 2002/11/28 06:54:12 CERN IT-PDP/DM Jean-Philippe Baud
+COMM
+COMM  Copyright (C) 1990-2002 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+
+COMM		Make CASTOR libraries and executables
+
+purge: clobber
+	find . -name Makefile -print | grep -v codeGeneration | xargs rm -f;	\
+	find . -name Makefile.bak -print | grep -v codeGeneration | xargs rm -f
+
+clean: imakeclean
+clobber: imakeclobber
+
+imakeclean:
+	(cd imake; $(MAKE) $(MFLAGS) -f Makefile.ini clean)
+imakeclobber:
+	(cd imake; $(MAKE) $(MFLAGS) -f Makefile.ini clobber)
+
+tar:
+	sh ./maketar.sh
+
+sql:
+	sh ./makesql.sh
+
+doxygen: tools/doxyconfig
+	doxygen tools/doxyconfig
+
+include LOCAL_PATH/upv/Makefile
+include LOCAL_PATH/hsmtools/Makefile
+include LOCAL_PATH/h/Makefile
+include LOCAL_PATH/client/src/stager/Makefile
+include LOCAL_PATH/rfio/Makefile
+include LOCAL_PATH/tape/Makefile
+include LOCAL_PATH/vdqm/Makefile
+include LOCAL_PATH/castor/Makefile
+include LOCAL_PATH/security/Makefile
+include LOCAL_PATH/vmgr/Makefile
+include LOCAL_PATH/rmc/Makefile
+include LOCAL_PATH/dlf/Makefile
+include LOCAL_PATH/ns/Makefile
+include LOCAL_PATH/rtcopy/Makefile
+include LOCAL_PATH/common/Makefile
+include LOCAL_PATH/gridftp2/Makefile
+include LOCAL_PATH/shlib/Makefile
+include LOCAL_PATH/tapebridge/Makefile
+include LOCAL_PATH/monitoring/Makefile
+include LOCAL_PATH/traffic-shaping/Makefile
+include LOCAL_PATH/xrootd/Makefile

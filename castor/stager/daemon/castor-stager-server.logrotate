@@ -1,0 +1,15 @@
+/var/log/castor/stagerd*.log {
+    compress
+    daily
+    missingok
+    rotate 500
+    delaycompress
+}
+
+/var/log/castor/repackd*.log {
+    compress
+    daily
+    missingok
+    rotate 500
+    delaycompress
+}

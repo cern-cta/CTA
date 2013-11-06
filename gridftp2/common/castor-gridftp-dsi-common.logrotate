@@ -1,0 +1,7 @@
+/var/log/globus-gridftp.log /var/log/gridftp.log {
+    compress
+    daily
+    missingok
+    rotate 500
+    delaycompress
+}

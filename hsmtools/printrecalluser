@@ -1,0 +1,123 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      printrecalluser
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line printing the given recall user(s)'''
+
+import sys, pwd, grp
+import getopt, time
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-g <recallGroupName]'
+    print '        ' + sys.argv[0] + ' [-h|--help] [(<userName>|<uid>) [...]]'
+    print '        ' + sys.argv[0] + ' [-h|--help] [(<userName>|<uid>)?:(groupName|<gid>) [...]]'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hvg:', ['help', 'verbose', 'recallgroup'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+recallGroup = None
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    elif f == '-g' or f == '--recallgroup':
+        recallGroup = v
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+recallUsers = None
+if recallGroup != None:
+    if len(args) > 0:
+        print 'Too many arguments'
+        usage(1)
+else:
+    if len(args) > 0:
+        try:
+            recallUsers = set(map(castor_tools.parseUser, args))
+        except castor_tools.ParsingError, e:
+            print e
+            usage(1)
+
+
+try:
+    # connect to stager and prepare statements
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    sqlStatement = '''
+    SELECT RecallUser.euid, RecallUser.egid, RecallGroup.name, RecallUser.lastEditor, RecallUser.lastEditionTime
+      FROM RecallUser, RecallGroup
+     WHERE RecallGroup.id(+) = RecallUser.recallGroup'''
+    if recallUsers:
+        sqlStatement = sqlStatement + " AND ("
+        firstOne = True
+        for uid,gid in recallUsers:
+            if firstOne:
+                firstOne = False
+            else:
+                sqlStatement = sqlStatement + " OR "
+            sqlStatement = sqlStatement + "("
+            if uid != None:
+                sqlStatement = sqlStatement + "euid = %d" % uid
+            if gid is not None:
+                if uid != None:
+                    sqlStatement = sqlStatement + " AND "
+                sqlStatement = sqlStatement + "egid = %d" % gid
+            sqlStatement = sqlStatement + ")"
+        sqlStatement = sqlStatement + ")"
+    elif recallGroup != None:
+        sqlStatement = sqlStatement + " AND RecallGroup.name = :recallGroup"
+    if recallGroup != None:
+        stcur.execute(sqlStatement, recallGroup=recallGroup)
+    else:
+        stcur.execute(sqlStatement)        
+    # get results
+    rows = stcur.fetchall()
+    existingUsers = set([(row[0],row[1]) for row in rows])
+    # loop over recall users and print them
+    if existingUsers:
+        titles = ('USER/GROUP (UID/GID)', 'RECALLGROUP', 'LASTEDITOR', 'LASTEDITION')
+        data = [(castor_tools.printUser((uid,gid)), recallGroup, lastEditor,
+                 castor_tools.secsToDate(lastEdition))
+                for uid, gid, recallGroup, lastEditor, lastEdition in rows]
+        castor_tools.prettyPrintTable(titles, data)
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

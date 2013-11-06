@@ -1,0 +1,350 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                   listtransfers
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# *
+# * command line to display the ongoing transfers in the CASTOR instance
+# * On top of the full list, summaries can be retrieved per host and per diskpool
+# * The output can also be restricted to a given user or diskpool
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line of the CASTOR transfer manager suite allowing to list ongoing transfers'''
+
+import sys
+import time
+import getopt
+import rpyc
+import castor_tools
+
+# usage function
+def usage(exitCode):
+  '''prints usage'''
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-s|--summary [-c|--clean]] ' + \
+        '[-p|--poolsummary] [-u|--user <user>] [-x|--extra ' + \
+        '[-r|--restrict p1[:...]]] [-t|--transfermanager <node>[:<port>]] [diskpool]'
+  sys.exit(exitCode)
+
+# first parse the options
+try:
+  options, args = getopt.getopt(sys.argv[1:], 'hscpu:vxr:t:', ['help', 'summary', 'clean', 'poolsummary', 'user', 'verbose', 'extra', 'restrict', 'transfermanager'])
+except Exception, parseException:
+  print parseException
+  usage(1)
+issummary = False
+clean = False
+ispoolsummary = False
+requser = None
+verbose = False
+extra = False
+extraprotocols = None
+transfermanager = None
+transfermanagerport = None
+for f, v in options:
+  if f == '-h' or f == '--help':
+    usage(0)
+  elif f == '-s' or f == '--summary':
+    if issummary:
+      print "-s/--summary cannot be given twice"
+      usage(1)
+    issummary = True
+  elif f == '-p' or f == '--poolsummary':
+    if ispoolsummary:
+      print "-p/--poolsummary cannot be given twice"
+      usage(1)
+    ispoolsummary = True
+  elif f == '-u' or f == '--user':
+    if requser != None:
+      print "-u/--user cannot be given twice"
+      usage(1)
+    requser = v
+  elif f == '-t' or f == '--transfermanager':
+    transfermanager = v
+    if transfermanager.find(':') >= 0:
+      transfermanager, transfermanagerport = transfermanager.split(':', 1)
+      try:
+        transfermanagerport = int(transfermanagerport)
+      except ValueError:
+        print "Invalid port number in -t/--transfermanager option :", transfermanagerport
+        usage(1)
+  elif f == '-h' or f == '--help':
+    usage(0)
+  elif f == '-x' or f == '--extra':
+    extra = True
+  elif f == '-c' or f == '--clean':
+    clean = True
+  elif f == '-r' or f == '--restrict':
+    extraprotocols = v
+  elif f == '-v' or f == '--verbose':
+    verbose = True
+  else:
+    print "unknown option : " + f
+    usage(1)
+
+# check consistency of options
+if issummary and ispoolsummary:
+  print "cannot use -s|--summary and -p|--poolsummary' at the same time"
+  usage(1)
+if extra and not (issummary or ispoolsummary):
+  if extraprotocols:
+    print "-x|--extra and -r|--restrict cannot be used for job listing"
+    usage(1)
+  else:
+    print "Warning : -x|--extra is ignored for regular job listing"
+if clean and not issummary:
+  print "-c|--clean only makes sense in conjunction with -s/--summary"
+  usage(1)
+if extraprotocols and not extra:
+  print "cannot use -r|--restrict without -x|--extra"
+  usage(1)
+
+# then parse the arguments, if any
+reqdiskpool = None
+if len(args) > 0:
+  reqdiskpool = args[0]
+  if len(args) > 1:
+    print "Too many arguments, only one diskpool can be given"
+    usage(1)
+
+def processTransfersListing():
+  '''retrieves and display the list of queuing and running transfers for the given diskpool and user.
+  The queuing transfers are listed from the central transfermanager, the running ones are requested
+  to the diskservers'''
+  transfers = rpconn.root.listRunningTransfers(reqdiskpool, requser)
+  transfers += rpconn.root.listPendingTransfersCentrally(reqdiskpool, requser)
+  # loop to display errors
+  for transfer in transfers:
+    if not transfer[0]:
+      print 'WARNING : was unable to contact ' + transfer[1] + '. Some transfers may be missing'
+  maxDiskPoolNameLen = max([5] + [len(t[5]) for t in transfers if t[0]])+1
+  # Display valid lines
+  titles = ('TRANSFERID', 'FILEID', 'USER', 'STAT', 'TYPE', 'POOL',
+            'SCHEDULER', 'DISKSERVER', 'SUBMIT_TIME', 'START_TIME')
+  data = []
+  for transfer in transfers:
+      if transfer[0]:
+          transId, fileId, scheduler, user, status, diskpool, \
+            execHost, transferType, submitTime, startTime = transfer
+          if startTime:
+              data.append((transId, fileId[1], user, status, transferType, diskpool,
+                           scheduler, execHost, time.strftime('%b %d %H:%M:%S', time.localtime(submitTime)),
+                           time.strftime('%b %d %H:%M:%S', time.localtime(startTime))))
+          else:
+              data.append((transId, fileId[1], user, status, transferType, diskpool,
+                           scheduler, execHost, time.strftime('%b %d %H:%M:%S', time.localtime(submitTime)), '-'))
+  castor_tools.prettyPrintTable(titles, data)
+
+def _buildProtocolList(summaryreport):
+  '''helper function to list the set of protocols reported in the summary'''
+  # build list of protocols found in summary
+  protocols = set()
+  for report in summaryreport:
+    for col in report:
+      if isinstance(col, tuple):
+        protocols = protocols | set(dict(col).keys())
+  # restrict it if user requested so
+  if extraprotocols:
+    protocols = protocols & set(extraprotocols.split(':'))
+  return sorted(list(protocols))
+
+def _buildTitleAndCoStrings(presubtitle, preformat, preformatnodata, protocols):
+  '''helper function to build title, subtitle and format string for the display in processHostListing
+  and processDiskPoolListing'''
+  subtitleblock = 'NBTPEND NBSPEND NBTRUN  NBSRUN '
+  stblocklen = len(subtitleblock)
+  title = ' ' * len(presubtitle)
+  subtitle = presubtitle
+  dataformat = preformat
+  nodataformat = preformatnodata
+  blockformat = '%7d %7d %7d %7d'
+  noblockformat = '%7s %7s %7s %7s'
+  # go through the protocols (and total) and build title, subtitles and format string
+  for col in ['total'] + protocols:
+    pad = (stblocklen - len(col))/2
+    title = title + ' ' + '-' * (pad-1) + ' ' + col.upper() + ' ' + '-' * (stblocklen-pad-len(col)-1) + ' '
+    subtitle = subtitle + ' ' + subtitleblock + ' '
+    dataformat = dataformat + ' ' + blockformat + ' '
+    nodataformat = nodataformat + ' ' + noblockformat + ' '
+  return title, subtitle, dataformat, nodataformat
+
+def processHostListing():
+  '''retrieves and display summary of the running transfers per host for the given diskpool and user'''
+  summaryreport = rpconn.root.summarizeTransfersPerHost(reqdiskpool, requser, extra)
+  # compute the max length of the machine names we got and deduce the title and printf args
+  maxMachineNameLen = max([0] + [len(s[0]) for s in summaryreport])
+  machineHead = 'DISKSERVER ' + ' '*(maxMachineNameLen-10)
+  machineHeadLen = max(maxMachineNameLen+1, 11)
+  if extra:
+    # summaryreport is a tuple of reports of this form :
+    # (hostname, nbslots,
+    #  nbQueueingTransfers, (('proto1', nbQueueingTransfersForProto1), ...),
+    #  nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
+    #  nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
+    #  nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...))
+    # or (hostname, None) if the host could not be contacted
+    # first we need to build a set of protocols to be displayed for the per protocol numbers
+    protocols = _buildProtocolList(summaryreport)
+    # now build the title lines and the format line
+    title, subtitle, dataformat, nodataformat = _buildTitleAndCoStrings(machineHead + 'NBSLOTS', '%-*s%4d', '%-*s%4s', protocols)
+    # display title and subtitle
+    print title
+    print subtitle
+    # go through the lines of data
+    for summary in summaryreport:
+      gotsummary = len(summary) > 2
+      if not gotsummary:
+        hostname, nbslots = summary[0:2]
+        nbQueueingTransfers, nbQueueingTransfersPerProto, nbQueueingSlots, \
+        nbQueueingSlotsPerProto, nbRunningTransfers, nbRunningTransfersPerProto, \
+        nbRunningSlots, nbRunningSlotsPerProto = '-', '-', '-', '-', '-', '-', '-', '-'
+      else:
+        hostname, nbslots, nbQueueingTransfers, nbQueueingTransfersPerProto, \
+        nbQueueingSlots, nbQueueingSlotsPerProto, nbRunningTransfers, \
+        nbRunningTransfersPerProto, nbRunningSlots, nbRunningSlotsPerProto = summary
+      # start with non protocol specific data
+      data = [machineHeadLen, hostname, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots]
+      # do not display idle machines in clean mode
+      if clean and nbQueueingTransfers == 0 and nbRunningTransfers == 0:
+        continue
+      # and for each protocol
+      for protocol in protocols:
+        # gather specific data
+        for t in nbQueueingTransfersPerProto, nbQueueingSlotsPerProto, nbRunningTransfersPerProto, nbRunningSlotsPerProto:
+          if gotsummary:
+            data.append(dict(t).get(protocol, 0))
+          else:
+            data.append('-')
+      # finally print a line for these data
+      if gotsummary:
+        print dataformat % tuple(data)
+      else:
+        print nodataformat % tuple(data)
+  else:
+    # summaryreport is a tuple of reports of this form :
+    # (hostname, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots)
+    # or (hostname, None) if the host could not be contacted
+    print machineHead + 'NBSLOTS NBTPEND NBSPEND NBTRUN  NBSRUN'
+    for summary in summaryreport:
+      if len(summary) > 2:
+       # do not display idle machines in clean mode
+       if clean and summary[2] == 0 and summary[4] == 0:
+         continue
+       print '%-*s%4d %7d %7d %7d %7d' % ((machineHeadLen,) + summary)
+      else:
+        print '%-*s%4s %7s %7s %7s %7s' % (machineHeadLen, summary[0], '-', '-', '-', '-', '-')
+
+def processDiskPoolListing():
+  '''retrieves and display summary of the running transfers per diskpool for the given diskpool and user'''
+  summaryreport = rpconn.root.summarizeTransfersPerPool(reqdiskpool, requser, extra)
+  # compute the max length of the diskpools we got and deduce the title and printf args
+  maxDiskPoolNameLen = max([0] + [len(s[0]) for s in summaryreport])
+  diskpoolHead = 'DISKPOOL ' + ' '*(maxDiskPoolNameLen-5)
+  diskpoolHeadLen = max(maxDiskPoolNameLen+4, 12)
+  # depending on the extra flag, the output will differ
+  if extra:
+    # summaryreport is a tuple of reports of this form :
+    # (diskpoolName, nbUniqueQueueingTransfers, nbslots,
+    #  nbQueueingTransfers, (('proto1', nbQueueingTransfersForProto1), ...),
+    #  nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
+    #  nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
+    #  nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...),
+    #  (unreachableMachine,...))
+    # Note that we do not send the lists of unreachableMachines as it would break
+    # the (very weak) parsing of _buildProtocolList
+    protocols = _buildProtocolList([report[:-1] for report in summaryreport])
+    # build title, subtitle and format strings
+    title, subtitle, dataformat = _buildTitleAndCoStrings(diskpoolHead + 'NBSLOTS  NBUTPEND', '%-*s%5d%9s', '%-*s%5s%9s', protocols)[0:3]
+    # display title and subtitle
+    print title
+    print subtitle
+    # go through the lines of data
+    allUnreachableMachines = {}
+    for s in summaryreport:
+      # start with non protocol specific data
+      if len(s) == 1:
+        data = [diskpoolHeadLen, s[0], '-', '0'] + [0] * (4 + len(protocols) * 4)
+        print dataformat % tuple(data)
+      else:
+        poolname, nbUniqueQueueingTransfers, nbslots, nbQueueingTransfers, \
+        nbQueueingTransfersPerProto, nbQueueingSlots, nbQueueingSlotsPerProto, \
+        nbRunningTransfers, nbRunningTransfersPerProto, nbRunningSlots, \
+        nbRunningSlotsPerProto, unreachableMachines = s
+        if unreachableMachines:
+          allUnreachableMachines[poolname] = unreachableMachines
+          poolname = poolname + '(*)'
+        data = [diskpoolHeadLen, poolname, nbslots, str(nbUniqueQueueingTransfers), nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots]
+        # and for each protocol
+        for protocol in protocols:
+          # gather specific data
+          for t in nbQueueingTransfersPerProto, nbQueueingSlotsPerProto, nbRunningTransfersPerProto, nbRunningSlotsPerProto:
+            data.append(dict(t).get(protocol, 0))
+        # finally print a line for these data
+        print dataformat % tuple(data)
+  else:
+    # summaryreport is a tuple of reports of this form :
+    # (diskpoolName, nbUniqueTransfers, nbslots,
+    #  nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots,
+    #  (unreachableMachine,...))
+    print diskpoolHead + 'NBSLOTS  NBTPEND  NBUTPEND NBSPEND  NBTRUN   NBSRUN'
+    allUnreachableMachines = {}
+    for s in summaryreport:
+      if len(s) == 1:
+        print '%-*s%5d %8d %8d %8d %8d %8d' % (diskpoolHeadLen, s[0], 0, 0, 0, 0, 0, 0)
+      else:
+        diskpoolName, nbUniqueTransfers, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots, unreachableMachines = s
+        if unreachableMachines:
+          allUnreachableMachines[diskpoolName] = unreachableMachines
+          diskpoolName = diskpoolName + '(*)'
+        print '%-*s%5d %8d %8s %8d %8d %8d' % (diskpoolHeadLen, diskpoolName, nbslots, nbQueueingTransfers, str(nbUniqueTransfers), nbQueueingSlots, nbRunningTransfers, nbRunningSlots)
+  # deal with unreachable machines if any
+  if allUnreachableMachines:
+    print '(*) Note that these numbers are incomplete as the following machines were unreachable :'
+    for p in allUnreachableMachines:
+      print '  pool ' + p + ' : ' + ', '.join(allUnreachableMachines[p])
+
+# connect to server and gather numbers
+try:
+  conf = castor_tools.castorConf()
+  try:
+    # get connection parameters
+    if not transfermanager:
+      transfermanager = conf.getValue('DiskManager', 'ServerHosts').split()[0]
+    if not transfermanagerport:
+      transfermanagerport = conf.getValue('TransferManager', 'Port', 15011, int)
+    # connect to server and gather numbers
+    rpconn = rpyc.connect(transfermanager, transfermanagerport)
+    # display the proper listing
+    if issummary:
+      processHostListing()
+    elif ispoolsummary:
+      processDiskPoolListing()
+    else:
+      processTransfersListing()
+  except Exception, unexpectedException:
+    print 'Caught exception : ' + str(unexpectedException)
+    if verbose:
+      if hasattr(unexpectedException, "_remote_tb"):
+          print 'Remote trace :'
+          print unexpectedException._remote_tb[0]
+      import traceback
+      traceback.print_exc()
+except ValueError, e:
+  print e
+  sys.exit(1)

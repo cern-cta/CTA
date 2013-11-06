@@ -1,0 +1,2 @@
+/sbin/chkconfig --add diskmanagerd
+/sbin/service diskmanagerd condrestart > /dev/null 2>&1 || :

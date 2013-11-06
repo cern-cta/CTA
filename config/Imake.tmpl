@@ -1,0 +1,96 @@
+/*
+ * Copyright (C) 1993-1999 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+/*
+ * @(#)Imake.tmpl,v 1.5 2004/06/09 08:45:47 CERN IT-PDP/DM   Jean-Philippe Baud
+ */
+
+ifndef IMAKETMPL
+  IMAKETMPL = 1
+
+#define COMM	#
+#define NO	0
+#define YES	1
+
+CASTOR_ROOT = __back_to_root__
+MAJOR_CASTOR_VERSION ?= $(shell egrep -m 1 "^castor" $(CASTOR_ROOT)/debian/changelog | awk '{ print $$2 }' | cut -d . -f 1,2 | cut -c 2-)
+MINOR_CASTOR_VERSION ?= $(shell egrep -m 1 "^castor" $(CASTOR_ROOT)/debian/changelog  | awk '{ print $$2 }' | cut -d . -f 3 | head -c -2 | sed 's/-/./')
+
+#ifdef linux
+#include <linux.cf>
+#else
+#ifdef __APPLE__
+#include <apple.cf>
+#endif
+#endif
+
+DEBUG = -O0 -g
+#define LOCAL_PATH $(CASTOR_ROOT)/__local_path__
+#define PREFIX(VAR) __root_prefix__/**/_/**/VAR
+
+CC += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror -Wno-unused-parameter
+CXX += -fPIC -D_LARGEFILE64_SOURCE -Wall -Wextra -Werror -Wno-unused-parameter
+CXXFLAGS += -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h $(DEBUG)
+CFLAGS += $(CXXFLAGS)
+CPPFLAGS += -pthread -I$(CASTOR_ROOT) -I$(CASTOR_ROOT)/h
+
+LDFLAGS += -lpthread
+
+LOGPATH := /var/log/castor
+BINDIR := /usr/bin
+TOPINCLUDE := /usr/include
+LIBNOARCHDIR := /usr/lib
+ifneq ($(wildcard /etc/debian_version),)
+  LIBDIR = /usr/lib
+else
+#if defined(__x86_64) && !defined(__APPLE__)
+  LIBDIR = /usr/lib64
+#else
+  LIBDIR = /usr/lib
+#endif
+endif
+PERL_LIBDIR = /usr/lib/perl/CASTOR
+
+PYTHON_LIBS := $(shell python $(CASTOR_ROOT)/config/pycompile.py --libs)
+PYTHON_INC := $(shell python $(CASTOR_ROOT)/config/pycompile.py --inc)
+PYTHON_LIBDIR := $(shell python -c "from distutils import sysconfig; print sysconfig.get_python_lib()")
+
+ORACLE_HOME := $(shell python $(CASTOR_ROOT)/config/oracompile.py --with-precomp --home)
+ORACLE_BIN := $(shell python $(CASTOR_ROOT)/config/oracompile.py --with-precomp --bindir)
+ORACLE_LIBDIR := $(shell python $(CASTOR_ROOT)/config/oracompile.py --with-precomp --libdir)
+ORACLE_CPPFLAGS := $(shell python $(CASTOR_ROOT)/config/oracompile.py --with-precomp --cppflags)
+ORACLE_PROCINC := $(shell python $(CASTOR_ROOT)/config/oracompile.py --with-precomp --procinc)
+
+GLOBUS_CONFINC_PATH := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --confinc)
+GLOBUS_INC_PATH := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --inc)
+GLOBUS_INC := -I$(GLOBUS_CONFINC_PATH) -I$(GLOBUS_INC_PATH)
+GLOBUS_LIB_PATH := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --libdir)
+GLOBUS_GSSLIB := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --gsslib)
+GLOBUS_FTPLIB := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --ftplib)
+GLOBUS_GSSLIB_THR := $(shell python $(CASTOR_ROOT)/config/globuscompile.py --gsslibthr)
+
+Krb5Config := $(shell if [ -r "/usr/kerberos/bin/krb5-config" ]; then echo /usr/kerberos/bin/krb5-config; else echo /usr/bin/krb5-config; fi)
+
+#include <Imake.rules>
+#include <Project.tmpl>
+/* Note that Project.tmpl is closing the ifndef IMAKETMPL here */
+
+
+ifndef LOCAL_PATH
+LOCAL_PATH = 1
+
+.PHONY: PREFIX(clean) PREFIX(clobber)
+
+clean : PREFIX(clean)
+PREFIX(clean):
+	RemoveFiles($(PREFIX(FilesToClean)))
+
+clobber : PREFIX(clobber)
+PREFIX(clobber): clean
+	RemoveFiles($(PREFIX(FilesToClobber)))
+
+#include INCLUDE_IMAKEFILE
+
+endif

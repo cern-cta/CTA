@@ -1,0 +1,81 @@
+.TH MIGRATENEWCOPY "1castor" "$Date: 2009/06/17 15:07:40 $" CASTOR "(re)creates an extra copy of a file on tape"
+.SH NAME
+migratenewcopy
+.SH SYNOPSIS
+.B migratenewcopy
+[
+.BI -h, 
+.BI --help
+]
+fileId[:copynb]
+[...]
+.SH DESCRIPTION
+.B migratenewcopy
+creates/replaces a copy of a file on tape for files that are already on disk
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.LP
+.BI fileId
+the fileId of the file that should be (re)migrated
+.LP
+.BI copynb
+the number of the copy to (re)create. If not given, this is set to 1.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or 1 if the operation failed.
+.SH ERRORS
+This command will fail in case there is at least one of the files that is not on disk,
+in status STAGED or CANBEMIGR. In other words, no recall will be triggered.
+On top it will fail if a migration is already ongoing for one of the files and the for copy concerned.
+Note also that you need to have the proper migration routes defined in order to migrate the new copy.
+.SH EXAMPLES
+.nf
+# nsls -T /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
+- 1   1 V12004       1 00000000                  738 100 /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
+- 2   1 V12005       1 00000000                  738 100 /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
+
+# nsls -i /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
+          5001051293 /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
+
+# nsdelsegment -c2 /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
+
+# nsls -T /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
+- 1   1 V12004       1 00000000                  738 100 /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
+
+# migratenewcopy.py 5001051293    # here I'm replacing copy 1 !
+All files have been found on disk, triggering migrations
+Done
+
+<wait a bit>
+
+# nsls -T /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
+- 1   1 V12002       1 00000000                  738 100 /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
+
+# migratenewcopy 5001051293:2    # this is creating copy 2
+All files have been found on disk, triggering migrations
+Done
+
+# migratenewcopy 5001051293:2    # this is trying to create copy 2 again
+Fileid 5001051293 already has a migration job for that copy. Giving up with the whole request
+
+<wait a bit>
+
+# nsls -T /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
+- 1   1 V12002       1 00000000                  738 100 /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
+- 2   1 V11005       1 00000000                  738 100 /castor/cern.ch/dev/s/sponcec3/tape2copy/testmigratenewcopy
+
+# migratenewcopy 5001051293:3    # let's try copy 3
+All files have been found on disk, triggering migrations
+ORA-20100: Cannot find an appropriate tape routing for this file, aborting
+ORA-06512: at "STAGER_DEV01.INITMIGRATION", line 17
+ORA-06512: at line 5
+
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR adminMultiInstance(1castor)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

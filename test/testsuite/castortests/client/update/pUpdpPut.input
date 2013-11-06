@@ -1,0 +1,9 @@
+<rfcp> <localFileName> <noTapeFileName>
+stager_update -M <noTapeFileName>
+stager_qry -M <noTapeFileName>
+stager_put -M <noTapeFileName>
+stager_qry -M <noTapeFileName>
+<rfcp> <localFileName> <noTapeFileName>
+stager_qry -M <noTapeFileName>
+stager_putdone -M <noTapeFileName>
+stager_qry -M <noTapeFileName>

@@ -1,0 +1,110 @@
+.\" Copyright (C) 2005 by CERN/IT
+.\" All rights reserved
+.\"
+.TH STAGER_PUTDONE "1castor"castor "$Date: 2008/06/02 16:27:29 $" CASTOR "STAGER Commands"
+.SH NAME
+stager_putdone \- terminate a CASTOR stager Put or Update session and flag files for tape migration
+.SH SYNOPSIS
+.B stager_putdone
+[
+.BI -M
+.BI hsmfile
+[
+{
+.BI -M
+}
+.BI ...
+]]
+[
+.BI -f
+.BI hsmFileList
+]
+[
+.BI -r
+.BI requestid
+]
+[
+.BI -h
+]
+.SH DESCRIPTION
+The
+.B stager_putdone
+command should be used for terminating a
+.BI stager_put(1castor)
+or
+.BI stager_update(1castor)
+session. The effect of the
+.B stager_putdone
+command is to mark the request as finished and flag the associated CASTOR files as candidates
+for tape migration.
+
+.SH OPTIONS
+.TP
+.BI \-M,\ \-\-hsm_filename " hsmfile"
+specifies the CASTOR HSM file to be flagged for migration. The
+.B \-M
+option can be repeated, allowing to handle several CASTOR files in the same request.
+.TP
+.BI \-f,\ \-\-filelist " hsmFileList"
+specifies a file containing a list of CASTOR HSM file(s) to be flagged for migration, one per line.
+This can be used to avoid the command line restrictions when many files should be flagged for migration at once.
+.TP
+.BI \-r,\ \-\-requestid " requestid"
+specifies the CASTOR stager request identifier of the request.
+The stager request identifier is a UUID (see
+.B uuidgen(1)
+) that uniquely identifies the stager request. The stager request identifier is printed when the
+.BI \-r
+option is specified with the
+.B stager_put(1castor)
+commands.
+.TP
+.BI \-h,\ \-\-help
+display command usage help
+.TP
+
+.SH EXAMPLE
+.fi
+$ stager_put -M /castor/cern.ch/user/t/test/file1 -U test1 -r
+.fi
+42b002d7-0000-1000-9db8-cf9fcba30800
+.fi
+/castor/cern.ch/user/t/test/file1 SUBRQUEST_READY
+.fi
+$ rfcp /etc/group /castor/cern.ch/user/t/test/file1
+.fi
+2317 bytes in 0 seconds through local (in) and eth0 (out)
+.fi
+$ stager_qry -U test1
+.fi
+Received 1 responses
+.fi
+59316604@cnsuser STAGEOUT
+.fi
+$ rfcp /etc/passwd /castor/cern.ch/user/t/test/file1
+.fi
+1240856 bytes in 0 seconds through local (in) and eth0 (out)
+.fi
+$ stager_putdone -M /castor/cern.ch/user/t/test/file1
+.fi
+/castor/cern.ch/user/t/test/file1 SUBRQUEST_READY
+.fi
+$ stager_qry -M /castor/cern.ch/user/t/test/file1
+.fi
+Received 1 responses
+.fi
+59316604@cnsuser CANBEMIGR
+.fi
+
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+
+.SH SEE ALSO
+.BR stager_qry(1castor) ,
+.BR stager_put(1castor)
+.BR stager_update(1castor) ,
+.BR rfcp(1castor)
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

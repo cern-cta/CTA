@@ -1,0 +1,7 @@
+%attr(-,root,root) usr/lib/libcastorrmc.so.*
+%attr(-,root,root) usr/lib/libcastortape.so.*
+%attr(-,root,root) usr/lib/libcastortapebridge.so.*
+%attr(-,root,root) usr/lib/libcastortapegatewayprotocol.so.*
+%attr(-,root,root) usr/lib/libcastortapelegacymsg.so.*
+%attr(-,root,root) usr/lib/libcastortapenet.so.*
+%attr(-,root,root) usr/lib/libcastortapeutils.so.*

@@ -1,0 +1,139 @@
+1. Install the umbrello application found in the kdesdk RPM. Version 3.5.10 is
+   the minimum required version! This version cannot be found in the CERN
+   software repository but can be downloaded from:
+
+   http://apt.kde-redhat.org/apt/kde-redhat/redhat/el5/x86_64/RPMS.stable/
+
+   The RPMS required from this repository are:
+   - kdebindings-dcopperl-3.5.10-1.el5.x86_64.rpm
+   - kde-filesystem-4-1.noarch.rpm
+   - kdelibs-3.5.10-1.el5.x86_64.rpm
+   - kdelibs-devel-3.5.10-1.el5.x86_64.rpm
+   - kdepim-devel-3.5.10-2.el5.x86_64.rpm
+   - kdesdk-3.5.10-1.el5.x86_64.rpm
+   - kde-settings-3.5-18.fc6.noarch.rpm
+   - kde-settings-kdm-3.5-18.fc6.noarch.rpm
+   - xorg-x11-xdm-1.0.5-5.fc6.x86_64.rpm
+
+   All other dependencies can be resolved using the standard Quattor SLC5
+   repository: http://swrep/swrep/x86_64_slc5/
+
+   [root@lxcastordev04 waldron]# rpm -Uvh *.rpm
+   Preparing...              ########################################### [100%]
+    1:mesa-libGLU            ########################################### [  1%]
+    2:freetype-devel         ########################################### [  3%]
+    3:pth                    ########################################### [  4%]
+    4:pinentry               ########################################### [  5%]
+    5:libXScrnSaver          ########################################### [  6%]
+    6:libxkbfile             ########################################### [  8%]
+    7:libogg                 ########################################### [  9%]
+    8:libvorbis              ########################################### [ 10%]
+    9:fontconfig-devel       ########################################### [ 11%]
+   10:libjpeg-devel          ########################################### [ 13%]
+   11:audiofile-devel        ########################################### [ 14%]
+   12:alsa-lib-devel         ########################################### [ 15%]
+   13:xorg-x11-apps          ########################################### [ 16%]
+   14:fltk                   ########################################### [ 18%]
+   15:OpenEXR                ########################################### [ 19%]
+   16:xorg-x11-xdm           ########################################### [ 20%]
+   17:lockdev                ########################################### [ 21%]
+   18:lm_sensors             ########################################### [ 23%]
+   19:libXxf86dga            ########################################### [ 24%]
+   20:libXv                  ########################################### [ 25%]
+   21:libXdamage             ########################################### [ 26%]
+   22:libXcomposite          ########################################### [ 28%]
+   23:libsmbclient           ########################################### [ 29%]
+   24:libraw1394             ########################################### [ 30%]
+   25:libksba                ########################################### [ 31%]
+   26:gnupg2                 ########################################### [ 33%]
+   27:gpgme                  ########################################### [ 34%]
+   28:libdmx                 ########################################### [ 35%]
+   29:xorg-x11-utils         ########################################### [ 36%]
+   30:lcms                   ########################################### [ 38%]
+   31:libmng                 ########################################### [ 39%]
+   32:qt                     ########################################### [ 40%]
+   33:arts                   ########################################### [ 41%]
+   34:avahi-qt3              ########################################### [ 43%]
+   35:pinentry-qt            ########################################### [ 44%]
+   36:jasper-libs            ########################################### [ 45%]
+   37:htdig                  ########################################### [ 46%]
+   38:gtk2-engines           ########################################### [ 48%]
+   39:redhat-artwork         ########################################### [ 49%]
+   40:gnokii                 ########################################### [ 50%]
+   41:glib2-devel            ########################################### [ 51%]
+   42:libmng-devel           ########################################### [ 52%]
+   43:esound-devel           ########################################### [ 54%]
+   44:libogg-devel           ########################################### [ 55%]
+   45:libvorbis-devel        ########################################### [ 56%]
+   46:arts-devel             ########################################### [ 58%]
+   47:spambayes              ########################################### [ 59%]
+   48:libXau-devel           ########################################### [ 60%]
+   49:libpng-devel           ########################################### [ 61%]
+   50:libgpg-error-devel     ########################################### [ 63%]
+   51:libgcrypt-devel        ########################################### [ 64%]
+   52:kde-filesystem         ########################################### [ 65%]
+   53:avahi-devel            ########################################### [ 66%]
+   54:libxslt-devel          ########################################### [ 68%]
+   55:subversion-devel       ########################################### [ 69%]
+   56:kdelibs                ########################################### [ 70%]
+   57:xorg-x11-proto-devel   ########################################### [ 71%]
+   58:libX11-devel           ########################################### [ 73%]
+   59:mesa-libGL-devel       ########################################### [ 74%]
+   60:kdnssd-avahi           ########################################### [ 75%]
+   61:kdebase                ########################################### [ 76%]
+   62:kdepim                 ########################################### [ 78%]
+   63:kdebindings-dcopperl   ########################################### [ 79%]
+   64:libXext-devel          ########################################### [ 80%]
+   65:libXrender-devel       ########################################### [ 81%]
+   66:libICE-devel           ########################################### [ 83%]
+   67:libSM-devel            ########################################### [ 84%]
+   68:libXt-devel            ########################################### [ 85%]
+   69:libXft-devel           ########################################### [ 86%]
+   70:libXrandr-devel        ########################################### [ 88%]
+   71:mesa-libGLU-devel      ########################################### [ 89%]
+   72:libXcursor-devel       ########################################### [ 90%]
+   73:libXinerama-devel      ########################################### [ 91%]
+   74:qt-devel               ########################################### [ 93%]
+   75:libXdmcp-devel         ########################################### [ 94%]
+   76:kde-settings-kdm       ########################################### [ 95%]
+   77:kde-settings           ########################################### [ 96%]
+   78:kdesdk                 ########################################### [ 98%]
+   79:kdelibs-devel          ########################################### [ 99%]
+   80:kdnssd-avahi-devel     ########################################### [100%]
+
+   After successful installation, `/usr/bin/umbrello` should work out of the box
+   without any modifications.
+
+2. To compile gencastor, download and extract the kdesdk source files from:
+
+   http://www.linuxfromscratch.org/blfs/view/svn/kde/kdesdk.html
+
+   Note: Make sure its version 3.5.10!
+
+   [lxcastordev04 src]# wget http://mirrors.isc.org/pub/kde/stable/3.5.10/src/kdesdk-3.5.10.tar.bz2
+   2010-11-05 16:09:25 (1.45 MB/s) - `kdesdk-3.5.10.tar.bz2' saved [5252055/5252055]
+   [lxcastordev04 src]# bunzip2 kdesdk-3.5.10.tar.bz2
+   [lxcastordev04 src]# tar -xf kdesdk-3.5.10.tar
+
+3. Compile the umbrello code from the kdesdk source (Some objects are required
+   to compile gencastor!)
+
+   Notes:
+     - If you get a ./configure warning about Subversion libraries, ignore it!
+     - Compiling umbrello takes a long time!
+
+   [root@lxcastordev04 src]# cd kdesdk-3.5.10
+   [root@lxcastordev04 kdesdk-3.5.10]# ./configure
+   [root@lxcastordev04 kdesdk-3.5.10]# cd umbrello/
+   [root@lxcastordev04 umbrello]# make
+
+4. Compile the gencastor code from the appropriate SVN location e.g. Trunk,
+   v2_1_9Version branch, v2_1_9_9 tag etc...
+
+   [root@lxcastordev04 trunk]# cd codeGeneration/gencastor/
+   [root@lxcastordev04 trunk]# export PATH=$PATH:/usr/lib64/qt-3.3/bin/
+   [root@lxcastordev04 trunk]# export CASTOR_ROOT=<path to castor root directory>
+   [root@lxcastordev04 trunk]# export UMBRELLOBASE=<path to kdesdk source files>
+   [root@lxcastordev04 gencastor]# make
+
+   At the end of the make process you should have a gencastor.bin binary.

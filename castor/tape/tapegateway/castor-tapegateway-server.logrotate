@@ -1,0 +1,7 @@
+/var/log/castor/tapegatewayd*.log {
+    compress
+    daily
+    missingok
+    rotate 500
+    delaycompress
+}

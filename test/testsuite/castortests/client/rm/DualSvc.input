@@ -1,0 +1,7 @@
+STAGE_SVCCLASS=<tapeServiceClass> rfcp <localFileName> <noTapeFileName>
+STAGE_SVCCLASS=<diskOnlyServiceClass> rfcp <noTapeFileName> /dev/null
+stager_qry -M <noTapeFileName> -S <diskOnlyServiceClass>
+stager_rm -M <noTapeFileName> -S <tapeServiceClass>
+stager_qry -M <noTapeFileName> -S <diskOnlyServiceClass>
+stager_rm -M <noTapeFileName> -S <diskOnlyServiceClass>
+stager_qry -M <noTapeFileName> -S <diskOnlyServiceClass>

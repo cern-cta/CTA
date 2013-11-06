@@ -1,0 +1,43 @@
+.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRENTERPOOL "1castor" "$Date: 2002/08/23 12:43:06 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrenterpool \- define a new tape pool in the CASTOR Volume Manager
+.SH SYNOPSIS
+.B vmgrenterpool
+[
+.BI --gid " pool_gid"
+] [
+.BI --group " pool_group"
+]
+.BI --name " pool_name"
+[
+.BI --uid " pool_uid"
+] [
+.BI --user " pool_user"
+]
+.SH DESCRIPTION
+.B vmgrenterpool
+defines a new tape pool in the CASTOR Volume Manager.
+.TP
+.I pool_gid
+if greater than zero, the tape pool is restricted to this group gid.
+.TP
+.I pool_name
+is the name of the tape pool.
+It must be at most CA_MAXPOOLNAMELEN characters long.
+.TP
+.I pool_uid
+if greater than zero, the tape pool is restricted to this user uid.
+.LP
+This command requires ADMIN privilege in the Cupv database.
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cupvlist(1) ,
+.B vmgr_enterpool(3)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

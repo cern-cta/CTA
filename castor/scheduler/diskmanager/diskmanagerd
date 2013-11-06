@@ -1,0 +1,298 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                   diskmanagerd.py
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# *
+# * the disk server manager daemon of CASTOR
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+"""disk server manager daemon of CASTOR."""
+
+import sys
+import getopt
+import rpyc
+import socket
+import traceback
+import connectionpool, castor_tools, localqueue, runningtransfersset
+import manager, activitycontrol, activitycontrolchecker, reporter
+import daemon
+import dlf
+from diskmanagerdlf import msgs
+from threadpoolserver import ThreadPoolServer
+from transfer import tupleToTransfer, RunningTransfer, TransferType
+
+# usage function
+def usage(exitCode):
+  '''prints usage'''
+  print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--foreground] [--fakemode]'
+  sys.exit(exitCode)
+
+# first parse the options
+daemonize = True
+fake = False
+verbose = False
+try:
+  options, arguments = getopt.getopt(sys.argv[1:], 'hvf', ['help', 'foreground', 'fakemode', 'verbose'])
+except Exception, parsingException:
+  print parsingException
+  usage(1)
+for f, v in options:
+  if f == '-h' or f == '--help':
+    usage(0)
+  elif f == '-f' or f == '--foreground':
+    daemonize = False
+  elif f == '--fakemode':
+    fake = True
+  elif f == '-v' or f == '--verbose':
+    verbose = True
+  else:
+    print "unknown option : " + f
+    usage(1)
+
+# If any arg, complain and stop
+if len(arguments) != 0:
+  print "Unknown arguments : " + ' '.join(arguments) + "\n"
+  usage(1)
+
+
+class DiskServerManagerService(rpyc.Service):
+  '''implementation of the DiskServer Manager service.
+  This service handles all the calls from the central scheduling, from
+  transfer starting to monitoring'''
+
+  def __init__(self, conn):
+    '''constructor'''
+    rpyc.Service.__init__(self, conn)
+
+  def exposed_scheduleTransfer(self, scheduler, transferTuple):
+    '''Called when a new transfer needs to be scheduled.
+    Queues the new transfer.'''
+    transfer = tupleToTransfer(transferTuple)
+    dlf.writedebug(msgs.INVOKINGSCHEDULETRANSFER, Scheduler=scheduler, subreqId=transfer.transferId,
+                   reqId=transfer.reqId, TransferType=TransferType.toStr(transfer.transferType),
+                   fileid=transfer.fileId)
+    transferQueue.put(scheduler, transfer)
+
+  def exposed_summarizeTransfers(self, user=None, detailed=False):
+    '''Returns a summary of the number of slots, of running and of pending transfers.
+    If detailed is True, then returns also the number of running and pending transfers per protocol.
+    The exact format of the returned tuple if detailed is False is :
+     (nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots)
+    If detailed is True, then it is :
+     (nbslots, nbQueueingTransfers, (('proto1', nbQueueingTransfersForProto1), ...),
+               nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
+               nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
+               nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...)) '''
+    dlf.writedebug(msgs.INVOKINGSUMMARIZETRANSFERS)
+    queueingData = transferQueue.nbTransfers(user, detailed)
+    runningData = runningTransfers.nbTransfers(user, detailed)
+    return (configuration.getValue('DiskManager', 'NbSlots', 0, int),) + queueingData + runningData
+
+  def exposed_listTransfers(self, user=None):
+    '''Lists all transfers running or pending on this host'''
+    dlf.writedebug(msgs.INVOKINGLISTTRANSFERS, Username=user, mode='all')
+    return tuple(runningTransfers.listTransfers(user) + transferQueue.listTransfers(user))
+
+  def exposed_listRunningTransfers(self, user=None):
+    '''Lists all running transfers on this host'''
+    dlf.writedebug(msgs.INVOKINGLISTTRANSFERS, Username=user, mode='running')
+    return tuple(runningTransfers.listTransfers(user))
+
+  def exposed_transferset(self):
+    '''Lists all pending and running transfers'''
+    dlf.writedebug(msgs.INVOKINGTRANSFERSET)
+    return tuple(runningTransfers.transferset() | transferQueue.transferset())
+
+  def exposed_killtransfers(self, transferIds):
+    '''Called when some transfers should be killed'''
+    dlf.writedebug(msgs.INVOKINGKILLTRANSFERS, TransferIds=', '.join(transferIds))
+    # remove transfers from the local queue
+    transferQueue.remove(transferIds)
+    # in case it's running, remove it from the running queue
+    runningTransfers.remove(transferIds)
+
+  def exposed_transferAlreadyStarted(self, transferId, reqId):
+    '''Called when a job has started on another diskServer and can be canceled on this one'''
+    dlf.writedebug(msgs.INVOKINGTRANSFERALREADYSTARTED, subreqId=transferId, reqId=reqId)
+    transferQueue.remove([transferId])
+
+  def exposed_getQueueingTransfers(self, scheduler):
+    '''returns the list of transfers in the queue'''
+    dlf.writedebug(msgs.INVOKINGGETQUEUEINGTRANSFERS, Scheduler=scheduler)
+    return tuple(transferQueue.listQueueingTransfers(scheduler))
+
+  def exposed_getRunningD2dSource(self, scheduler):
+    '''returns the list of running d2dsrc transfers'''
+    dlf.writedebug(msgs.INVOKINGGETRUNNINGD2DSOURCE, Scheduler=scheduler)
+    return tuple(runningTransfers.listRunningD2dSources(scheduler))
+
+  def exposed_retryD2dDest(self, transferId, reqId):
+    '''called when a d2d copy source has just started and the destination should be started'''
+    dlf.writedebug(msgs.INVOKINGRETRYD2DDEST, subreqId=transferId, reqId=reqId)
+    transferQueue.retryD2dDest(transferId, reqId)
+
+  def exposed_d2dend(self, transferTuple):
+    '''called when a d2d copy is over and we are the source'''
+    transfer = tupleToTransfer(transferTuple)
+    dlf.writedebug(msgs.INVOKINGD2DEND, subreqId=transfer.transferId, reqId=transfer.reqId)
+    runningTransfers.remove([transfer.transferId])
+
+  def exposed_anyTransfersFromScheduler(self, scheduler):
+    '''Tells whether any transfer is queueing/ongoing that is handled
+    by the given scheduler'''
+    dlf.writedebug(msgs.ANYTRANSFERFROMSCHED, Scheduler=scheduler)
+    return transferQueue.anyTransfersFromScheduler(scheduler) or runningTransfers.anyTransfersFromScheduler(scheduler)
+
+  def exposed_machineDisabled(self):
+    '''called when the machine is disabled by an admin'''
+    dlf.writedebug(msgs.INVOKINGMACHINEDISABLED)
+    transferQueue.FSDisabled(None)
+
+  def exposed_FSDisabled(self, mountPoints):
+    '''called when some filsystems are disabled by an admin'''
+    dlf.writedebug(msgs.INVOKINGFSDISABLED, mountPoints=''.join(mountPoints))
+    transferQueue.FSDisabled(mountPoints)
+
+
+def initQueues():
+  '''Initializes the queue of pending transfers by rebuilding it from the knowledge of the transfermanagers'''
+  # we will timeout after 5mn per machine. Note that in this case, we refuse to start
+  # and thus raise a SystemExit exception.
+  timeout = 300
+  # loop on all transfermanagers
+  for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
+    try:
+      # rebuild list of running d2dsrc transfers
+      for transferTuple, startTime in \
+              connectionpool.connections.getRunningD2dSourceTransfers(scheduler, socket.getfqdn(), timeout=timeout):
+        transfer = tupleToTransfer(transferTuple)
+        runningTransfers.add(RunningTransfer(scheduler, None, startTime, transfer, ''))
+      # rebuild transfer's queue
+      for transferTuple in \
+              connectionpool.connections.getQueueingTransfers(scheduler, socket.getfqdn(), timeout=timeout):
+        transfer = tupleToTransfer(transferTuple)
+        transferQueue.put(scheduler, transfer)
+    except connectionpool.Timeout:
+      dlf.writeerr(msgs.NOQUEUERETRIEVED, Scheduler=scheduler, Type='Timeout', Message='Timeout used : %d' % timeout)
+      raise SystemExit
+    except Exception, e:
+      # we could not connect. No problem, the scheduler is probably not running, so no queue to retrieve
+      # 'No queue could be retrieved' message
+      dlf.writenotice(msgs.NOQUEUERETRIEVED, Scheduler=scheduler, Type=str(e.__class__), Message=str(e))
+
+import signal
+def handler(signum, _unused_frame):
+  '''signal handler for the disk server manager daemon, only logging and calling sys.exit'''
+  # 'Caught signal' message
+  dlf.write(msgs.SIGNALRECEIVED, Signal=signum)
+  sys.exit()
+signal.signal(signal.SIGTERM, handler)
+signal.signal(signal.SIGINT, handler)
+
+# Note that from python 2.5 on, the daemonization should use the "with" statement :
+# with daemon.DaemonContext():
+if daemonize:
+  context = daemon.DaemonContext(working_directory='/var/log/castor/',
+                                 detach_process=True,
+                                 prevent_core=False)
+  context.__enter__()
+try:
+  try:
+    # get configuration
+    try:
+      configuration = castor_tools.castorConf()
+    except ValueError, ex:
+      print ex
+      sys.exit(1)
+    # setup logging
+    dlf.init('diskmanagerd')
+    # 'DiskManager Daemon started'
+    dlf.write(msgs.DISKMANAGERDSTARTED)
+    # create a queue of transfers to be run
+    transferQueue = localqueue.LocalQueue()
+    # create a list of running Transfers
+    runningTransfers = runningtransfersset.RunningTransfersSet(fake)
+    # initialize the queues of pending and running transfers using the knowledge of the central schedulers
+    initQueues()
+    # launch a processing thread that will regularly check if we need to start new transfers from the queue
+    activityControl = activitycontrol.ActivityControlThread(runningTransfers, transferQueue,
+                                                            configuration, fake)
+    # launch a processing thread that will regularly check if the activityControl one gets stuck
+    activityControlChecker = activitycontrolchecker.ActivityControlCheckerThread \
+                             (runningTransfers, transferQueue, configuration, activityControl)
+    # launch a management thread that will regularly check transfer completions, d2d transfer to be restarted
+    # and transfers to be dropped from the queue, because of timeouts, lack of space, etc...
+    managerThr = manager.ManagerThread(runningTransfers, transferQueue)
+    # launch a reporting thread that will regularly report status of this machine to transfermanagerd
+    reporterThr = reporter.ReporterThread(runningTransfers, configuration)
+    # launch a service listening for new transfers from the central scheduler and filling the queue
+    # By default, the number of threads in the server is the number of server hosts + 1
+    t = ThreadPoolServer(DiskServerManagerService,
+                         port = configuration.getValue('DiskManager', 'Port', 15011, int),
+                         auto_register=False,
+                         nbThreads = len(configuration.getValue('DiskManager', 'ServerHosts').split())+1)
+    t.daemon = True
+    t.start()
+    # we reach this point when the service has stopped
+    # so let's stop the other threads
+    activityControlChecker.stop()
+    activityControl.stop()
+    managerThr.stop()
+    reporterThr.stop()
+  except SystemExit:
+    # we are exiting, fine
+    pass
+  except Exception, unexpectedException:
+    # 'Caught unexpected exception, exiting' message
+    print 'Caught unexpected exception, exiting : (' + str(unexpectedException.__class__) + ') : ' + str(unexpectedException)
+    if verbose:
+      traceback.print_exc()
+    dlf.writeemerg(msgs.UNEXPECTEDEXCEPTION, Type=str(unexpectedException.__class__), Message=str(unexpectedException))
+    raise
+finally:
+  try:
+    activityControlChecker.stop()
+    activityControlChecker.join()
+  except Exception:
+    pass
+  try:
+    activityControl.stop()
+    activityControl.join()
+  except Exception:
+    pass
+  try:
+    managerThr.stop()
+    managerThr.join()
+  except Exception:
+    pass
+  try:
+    reporterThr.stop()
+    reporterThr.join()
+  except Exception:
+    pass
+  if daemonize:
+    try:
+      context.__exit__(None, None, None)
+    except Exception:
+      pass
+  # 'DiskManager Daemon stopped'
+  dlf.write(msgs.DISKMANAGERDSTOPPED)
+  dlf.shutdown()

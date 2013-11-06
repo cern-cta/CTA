@@ -1,0 +1,7 @@
+/var/log/castor/vdqmd*.log {
+    compress
+    daily
+    missingok
+    rotate 500
+    delaycompress
+}

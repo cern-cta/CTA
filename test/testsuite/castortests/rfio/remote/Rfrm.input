@@ -1,0 +1,4 @@
+<rfcp> <localFileName> <remoteFileName>
+rfdir <remoteFileName>
+rfrm <remoteFileName>
+rfdir <remoteFileName>

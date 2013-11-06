@@ -1,0 +1,159 @@
+/*
+ * Copyright (C) 1999-2002 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+/*	Ctape_label - send a request to the tape daemon to have a tape mounted
+ *	and the label written
+ */
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include "h/Ctape.h"
+#include "h/marshall.h"
+#include "h/serrno.h"
+#include "h/Ctape_api.h"
+#include "h/vmgr_api.h"
+
+int Ctape_label(char *path,
+                char *vid,
+                int side,
+                char *dgn,
+                char *density,
+                char *drive,
+                char *vsn,
+                char *lbltype,
+                int nbhdr,
+                int flags,
+                int vdqm_reqid)
+{
+	char acctname[7];
+	char actual_den[6];
+	char actual_dgn[CA_MAXDGNLEN+1];
+	char actual_lbltype[CA_MAXLBLTYPLEN+1];
+	char actual_vid[CA_MAXVIDLEN+1];
+	char actual_vsn[CA_MAXVSNLEN+1];
+	int c;
+	int errflg = 0;
+	char func[16];
+	char *getacct();
+	char *getcwd();
+	gid_t gid;
+	int jid;
+	int mode = WRITE_ENABLE;
+	int msglen;
+	char *q;
+	char internal_path[CA_MAXPATHLEN+1];
+	char repbuf[16];
+	char *sbp;
+	char sendbuf[REQBUFSZ];
+	char *tempnam();
+	uid_t uid;
+
+	strncpy (func, "Ctape_label", 16);
+	uid = getuid();
+	gid = getgid();
+	jid = findpgrp();
+	strcpy (acctname, "NOACCT");
+
+	/* path */
+
+	if (! path)
+		strcpy (internal_path, tempnam (NULL, "tp"));
+
+	/* vid */
+
+	if (vid == NULL || *vid == '\0') {
+		Ctape_errmsg (func, TP031);
+		errflg++;
+	} else {
+		if (strlen (vid) > CA_MAXVIDLEN) {
+			Ctape_errmsg (func, TP006, "vid");
+			errflg++;
+		} else {
+			strcpy (actual_vid, vid);
+			UPPER (actual_vid);
+		}
+	}
+
+	if (errflg) {
+		serrno = EINVAL;
+		return (-1);
+	}
+
+	/* Set default values */
+
+	if (! vsn)
+		actual_vsn[0] = '\0';
+	else {
+		strcpy (actual_vsn, vsn);
+		UPPER (actual_vsn);
+	}
+	if (! dgn)
+		actual_dgn[0] = '\0';
+	else
+		strcpy (actual_dgn, dgn);
+	if (! density)
+		actual_den[0] = '\0';
+	else
+		strcpy (actual_den, density);
+	if (! lbltype)
+		actual_lbltype[0] = '\0';
+	else
+		strcpy (actual_lbltype, lbltype);
+
+	if ((c = vmgrcheck (actual_vid, actual_vsn, actual_dgn, actual_den,
+                           actual_lbltype, mode, uid, gid))) {
+		{
+			Ctape_errmsg ("vmgrcheck", "%s\n", sstrerror(c));
+			serrno = c;
+			return (-1);
+		}
+	}
+ 
+        /* Build request header */
+ 
+        sbp = sendbuf;
+        marshall_LONG (sbp, TPMAGIC);
+        marshall_LONG (sbp, TPMOUNT);
+        q = sbp;        /* save pointer. The next field will be updated */
+        msglen = 3 * LONGSIZE;
+        marshall_LONG (sbp, msglen);
+ 
+        /* Build request body */
+ 
+	marshall_LONG (sbp, uid);
+	marshall_LONG (sbp, gid);
+	marshall_LONG (sbp, jid);
+	marshall_STRING (sbp, acctname);
+	marshall_STRING (sbp, path ? path : internal_path);
+	marshall_STRING (sbp, actual_vid);
+	marshall_WORD (sbp, side);
+	marshall_STRING (sbp, actual_dgn);
+	marshall_STRING (sbp, actual_den);
+	if (drive) {
+		marshall_STRING (sbp, drive);
+	} else {
+		marshall_STRING (sbp, "");
+	}
+	marshall_WORD (sbp, mode);
+	marshall_STRING (sbp, actual_vsn);
+	marshall_STRING (sbp, actual_lbltype);
+	if (flags & DOUBLETM)
+		nbhdr |= DOUBLETM;
+	if (flags & FORCEPRELBL)
+		nbhdr |= FORCEPRELBL;
+	marshall_WORD (sbp, nbhdr);
+	marshall_LONG (sbp, vdqm_reqid);
+
+	msglen = sbp - sendbuf;
+	marshall_LONG (q, msglen);	/* update length field */
+
+        Ctape_errmsg ("tplabel", "uid=%d gid=%d vid=%s side=%d dgn=%s den=%s vsn=%s lbltype=%s\n", 
+                      uid, gid, actual_vid, side, actual_dgn, actual_den, actual_vsn, actual_lbltype);
+
+	c = send2tpd (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
+	return (c);
+}

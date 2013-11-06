@@ -1,0 +1,83 @@
+.\" Copyright (C) 2002 by CERN/IT/DS/HSM
+.\" All rights reserved
+.\" 
+.TH "Cupv_add" "3castor" "$Date: 2002/10/16 08:04:12 $" "CASTOR" "UPV Library Functions"
+.SH "NAME"
+Cupv_add \- Adds an entry in the user privilege validation system.
+.SH "SYNOPSIS"
+\fB#include "Cupv_api.h"\fR
+.sp
+.BI "int Cupv_add (uid_t " uid , 
+.BI "gid_t "  gid , 
+.BI "char *" source_host , 
+.BI "char *" target_host , 
+.BI "int "  privilege ) 
+.SH "DESCRIPTION"
+.B Cupv_add
+adds the rights of a user in the CASTOR User Privilege Validation system. The permissions are always specified in this way: a given privilege on a target machine (see below) is given  to a given uid/gid from a source machine.
+.TP 
+.I uid
+is the user id of the user for whom the authorization is requested.
+.TP 
+.I gid
+is the group id of the user for whom authorization is requested.
+.TP 
+.I source_host
+is a regular expression specifying the source host(s).
+.TP 
+.I target_host
+is a regular expression specifying the target host(s).
+.TP 
+.I privilege
+is the privilege requested. It must be one of the following:
+.IP 
+.TP
+.BR P_OPERATOR
+(normal operator),
+.TP
+.BR P_TAPE_OPERATOR, 
+(tape operator), 
+.TP
+.BR P_GRP_ADMIN, 
+(experiment administrator),
+.TP
+.BR P_ADMIN,
+(CASTOR administrator),
+.TP
+.BR P_UPV_ADMIN, 
+(Administrator for CASTOR privileges), 
+.TP
+.BR P_TAPE_SYSTEM 
+(Used by CASTOR tape software)
+.SH "RETURN VALUE"
+This routine returns 0 if the call was successful, \-1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH "ERRORS"
+.TP 1.3i
+.B EACCES
+Permission denied.
+.TP 
+.B EINVAL
+a bad uid/gid or privilege has been passed as argument.
+.TP 
+.B SENOSHOST
+Host unknown.
+.TP 
+.B SENOSSERV
+Service unknown.
+.TP 
+.B SECOMERR
+Communication error.
+.TP 
+.B SEINTERNAL
+Internal CUPV error.
+.TP 
+.B SECUPVNACT
+Server is not running or is being shutdown.
+.SH "SEE ALSO"
+.B Castor_limits(4), Cupv_check(3), Cupv_delete(3), Cupv_list(3), 
+.B Cupv_modify(3)
+.SH "AUTHOR"
+\fBCASTOR\fP Team <castor.support@cern.ch>

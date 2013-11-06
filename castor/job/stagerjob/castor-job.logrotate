@@ -1,0 +1,7 @@
+/var/log/castor/stagerjob*.log /var/log/castor/d2dtransfer*.log {
+    compress
+    daily
+    missingok
+    rotate 500
+    delaycompress
+}

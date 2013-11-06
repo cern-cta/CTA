@@ -1,0 +1,159 @@
+.TH dlf_write "3castor" "CERN IT-DM" CASTOR "DLF Library Functions"
+.SH NAME
+dlf_write \- writes a log message to the log destinations/targets
+.SH SYNOPSIS
+.B #include "dlf_api.h"
+
+.BI "int dlf_write (Cuuid_t " reqid ", unsigned int " priority
+.BI ", unsigned int " msgno ", struct Cns_fileid * " ns
+.BI ", int " numparams ", ...)"
+.SH DESCRIPTION
+.B dlf_write
+writes a log message to
+.BR "syslog" (3),
+using the
+.BR LOG_LOCAL3
+facility. Common logging fields such as thread id, request id, ns hostname and
+fileid are added to the log message internally within this function.
+
+The
+.I reqid
+is the unique request identifier associated with the log message.
+
+.I severity
+is the severity level of the message and must be one of the following values:
+.RS
+.TP
+.B DLF_LVL_EMERGENCY
+.TP
+.B DLF_LVL_ALERT
+.TP
+.B DLF_LVL_CRIT
+.TP
+.B DLF_LVL_ERROR
+.TP
+.B DLF_LVL_WARNING
+.TP
+.B DLF_LVL_USER_ERROR
+.TP
+.B DLF_LVL_AUTH
+.TP
+.B DLF_LVL_SECURITY
+.TP
+.B DLF_LVL_SYSTEM
+.TP
+.B DLF_LVL_DEBUG
+.RE
+
+.I msgno
+Is the unique number which corresponds to a particular message text. The
+message number and its associated text must have been previously
+registered with the interface with a prior call to
+.BR "dlf_regtext" (3).
+
+.I ns
+is a pointer to the structure containing the CASTOR name server invariant
+associated with this message. The CASTOR name server invariant consists of the
+CASTOR name server hostname and a file identifier. This parameter must be set
+to NULL if there is no invariant for the message.
+
+.I numparams
+is the number of log message parameters passed to the function. Each log
+message parameter is passed to the function through three parameters:
+
+.I parameter name
+,
+.I parameter type
+, and
+.I parameter value.
+So
+.I numparams
+must actually represent the number of triplets.
+.TP
+.I parameter name
+is of type
+.B const char *.
+The character string must not exceed DLF_MAX_PARAMNAMELEN characters in length.
+The parameter names for the tape VIDs and sub request identifiers are ignored
+by this function but the argument must be present - it may contain any value
+but must be of type
+.B const char *.
+.TP
+.I parameter type
+is of type
+.B int
+and specifies the type of the parameter. It must be one of the following:
+.RS
+.TP
+.B DLF_MSG_PARAM_STR
+ - for the character string parameter value,
+.TP
+.B DLF_MSG_PARAM_INT
+ - for the integer parameter value,
+.TP
+.B DLF_MSG_PARAM_INT64
+ - for the 64-bit integer,
+.TP
+.B DLF_MSG_PARAM_FLOAT
+ - for the single precision floating point parameter value,
+.TP
+.B DLF_MSG_PARAM_DOUBLE
+ - for the double precision floating point value,
+.TP
+.B DLF_MSG_PARAM_TPVID
+ - for the tape visual identifier character string,
+.TP
+.B DLF_MSG_PARAM_UUID
+ - for the sub request identifier.
+.RE
+.TP
+.I parameter value
+must be in accordance with the parameter type and must be:
+.B const char *
+for string and tape VID parameter types;
+.B int
+for the integer parameter type;
+.B long long
+for the int64 parameter type;
+.B float
+for the floating parameter type;
+.B double
+for the double precision floating parameter type;
+.B Cuuid_t
+for the uuid parameter type.
+
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B errno
+is set appropriately.
+
+.SH ERRORS
+.TP 1.3i
+.B EPERM
+The interface is not initialized
+.TP
+.B EINVAL
+.I msgno
+is greater than
+.B DLF_MAX_MSGTEXTS
+or the
+.I priority
+is invalid or no message has been pre-registered with the
+.I msgno
+or a
+.I parameter
+of type
+.B DLF_MSG_PARAM_UUID
+ was specified but the
+.I value
+was not a valid uuid.
+.TP
+.B ENOMEM
+Out of memory
+
+.SH SEE ALSO
+.BR dlf_shutdown (3),
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

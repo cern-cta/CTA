@@ -1,0 +1,3 @@
+<rfcp> <localFileName> <rfioTURL>
+rfcat <rfioTURL> > <tmpLocalFileName>
+diff <localFileName> <tmpLocalFileName>

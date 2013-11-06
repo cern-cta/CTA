@@ -1,0 +1,5 @@
+nstouch <noTapeFileName>
+nschmod 444 <noTapeFileName>
+STAGE_EUID=<unprivUid> STAGE_EGID=<unprivGid> stager_put -M <noTapeFileName>
+STAGE_EUID=<unprivUid> STAGE_EGID=<unprivGid> stager_update -M <noTapeFileName>
+nsrm -rf <noTapeFileName>

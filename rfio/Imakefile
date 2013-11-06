@@ -1,0 +1,137 @@
+COMM   @(#)Imakefile,v 1.51 2004/06/09 16:10:36 IT-PDP/DM  Jean-Philippe Baud
+COMM
+COMM  Copyright (C) 1990-2003 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+
+COMM 		Make rfio library and daemon            GENERIC
+
+COMM
+COMM Define the file indicating that no more RFIO requests
+COMM should be issued.
+COMM
+
+CFLAGS += -DUSE_XFSPREALLOC
+
+RFIOLIB = DepSharedLibraryTargetName(rfio,castorrfio)
+
+#if UseGSI
+LIBCRYPTO += -lcrypto
+AddLdFlags(-ldl)
+#endif
+
+CKSUMLIB = -lz
+
+CommonDependsOnLibrary(common,castorcommon)
+CommonDependsOnLibrary(ns,castorns)
+CommonDependsOnLibrary(dlf,castordlf)
+CommonDependsOnLibrary(security,castorsecurity)
+CommonDependsOnLibrary(castor,castorclient)
+
+RFIOLIB_OBJS = access.o alrm.o chdir.o checkkey.o chmod.o \
+		chown.o close.o closedir.o connect.o error.o \
+		fchmod.o fchown.o fclose.o feof.o ferror.o \
+		fflush.o fileno.o fio.o fopen.o \
+		fread.o fseek.o fstat.o ftell.o \
+		fwrite.o getc.o getcwd.o lockf.o \
+		lseek.o lstat.o lun2fn.o misc.o \
+		mkdir.o mstat.o msymlink.o munlink.o open.o opendir.o parse.o  \
+		pclose.o popen.o pread.o preseek.o pwrite.o \
+		read.o readdir.o readlink.o rename.o rewinddir.o \
+		rfio_HsmIf.o rfio_rdirfdt.o rfio_rfilefdt.o \
+		rfstatfs.o rmdir.o setopt.o stat.o statfs.o stream.o \
+		switch_req.o symlink.o unlink.o write.o xyclose.o xyopen.o \
+		xyread.o xywrite.o \
+		fopen64.o fseeko64.o fstat64.o ftello64.o \
+		lockf64.o lseek64.o open64.o \
+		preseek64.o read64.o stream64.o write64.o RfioTURL.o
+ClientSharedLibraryTarget(castorrfio,$(RFIOLIB_OBJS),,)
+
+ClientProgramTarget(rfcat,rfcat.o, $(RFIOLIB), $(RFIOLIB),755)
+ClientProgramTarget(rfchmod,rfchmod.o, $(RFIOLIB), $(RFIOLIB),755)
+ClientProgramTarget(rfcp,rfcp.o, $(RFIOLIB), $(RFIOLIB),755)
+ClientProgramTarget(rfstat,rfstat.o, $(RFIOLIB), $(RFIOLIB),755)
+ClientProgramTarget(rfrm,rfrm.o, $(RFIOLIB), $(RFIOLIB),755)
+ClientProgramTarget(rfdir,rfdir.o, $(RFIOLIB), $(RFIOLIB),755)
+ClientProgramTarget(rfmkdir,rfmkdir.o, $(RFIOLIB), $(RFIOLIB),755)
+ClientProgramTarget(rfrename,rfrename.o, $(RFIOLIB), $(RFIOLIB),755)
+
+CLIENTEXEMANPAGE(rfcat)
+CLIENTEXEMANPAGE(rfchmod)
+CLIENTEXEMANPAGE(rfcp)
+CLIENTEXEMANPAGE(rfrm)
+CLIENTEXEMANPAGE(rfdir)
+CLIENTEXEMANPAGE(rfmkdir)
+CLIENTEXEMANPAGE(rfrename)
+CLIENTLIBMANPAGE(rfio_access)
+CLIENTLIBMANPAGE(rfio_chmod)
+CLIENTLIBMANPAGE(rfio_chown)
+CLIENTLIBMANPAGE(rfio_close)
+CLIENTLIBMANPAGE(rfio_closedir)
+CLIENTLIBMANPAGE(rfio_fchmod)
+CLIENTLIBMANPAGE(rfio_fclose)
+CLIENTLIBMANPAGE(rfio_feof)
+CLIENTLIBMANPAGE(rfio_ferror)
+CLIENTLIBMANPAGE(rfio_fflush)
+CLIENTLIBMANPAGE(rfio_fileno)
+CLIENTLIBMANPAGE(rfio_fopen)
+CLIENTLIBMANPAGE(rfio_fopen64)
+CLIENTLIBMANPAGE(rfio_fread)
+CLIENTLIBMANPAGE(rfio_fseek)
+CLIENTLIBMANPAGE(rfio_fseeko64)
+CLIENTLIBMANPAGE(rfio_fstat)
+CLIENTLIBMANPAGE(rfio_fstat64)
+CLIENTLIBMANPAGE(rfio_ftell)
+CLIENTLIBMANPAGE(rfio_ftello64)
+CLIENTLIBMANPAGE(rfio_fwrite)
+CLIENTLIBMANPAGE(rfio_lockf)
+CLIENTLIBMANPAGE(rfio_lockf64)
+CLIENTLIBMANPAGE(rfio_lseek)
+CLIENTLIBMANPAGE(rfio_lseek64)
+CLIENTLIBMANPAGE(rfio_lstat)
+CLIENTLIBMANPAGE(rfio_lstat64)
+CLIENTLIBMANPAGE(rfio_mkdir)
+CLIENTLIBMANPAGE(rfio_mstat)
+CLIENTLIBMANPAGE(rfio_mstat64)
+CLIENTLIBMANPAGE(rfio_munlink)
+CLIENTLIBMANPAGE(rfio_msymlink)
+CLIENTLIBMANPAGE(rfio_open)
+CLIENTLIBMANPAGE(rfio_open64)
+CLIENTLIBMANPAGE(rfio_opendir)
+CLIENTLIBMANPAGE(rfio_pclose)
+CLIENTLIBMANPAGE(rfio_perror)
+CLIENTLIBMANPAGE(rfio_popen)
+CLIENTLIBMANPAGE(rfio_preseek)
+CLIENTLIBMANPAGE(rfio_preseek64)
+CLIENTLIBMANPAGE(rfio_read)
+CLIENTLIBMANPAGE(rfio_readdir)
+CLIENTLIBMANPAGE(rfio_readlink)
+CLIENTLIBMANPAGE(rfio_rename)
+CLIENTLIBMANPAGE(rfio_rewinddir)
+CLIENTLIBMANPAGE(rfio_rmdir)
+CLIENTLIBMANPAGE(rfio_serror)
+CLIENTLIBMANPAGE(rfio_stat)
+CLIENTLIBMANPAGE(rfio_stat64)
+CLIENTLIBMANPAGE(rfio_statfs)
+CLIENTLIBMANPAGE(rfio_symlink)
+CLIENTLIBMANPAGE(rfio_unlink)
+CLIENTLIBMANPAGE(rfio_write)
+CLIENTLIBMANPAGE(rfioreadopt)
+CLIENTLIBMANPAGE(rfiosetopt)
+
+MakeDir($(LOGPATH),0755)
+MakeDir(/var/lib/rfiod,0755)
+SRVOBJS = Csemaphore.o rfio_serv.o rfio_calls.o \
+		rfio_call64.o rfio_fcalls.o rfio_callhandlers.o switch_req.o \
+		checkkey.o fio.o rfstatfs.o alrm.o \
+		stager_util.o stager_messages.o stager_extern_globals.o \
+		stager_uuid.o rfio_alignedbuf.o rfio_xfsprealloc.o
+CPPFLAGS += -I $(XFS_LOCATION)/include
+
+NormalProgramTarget(rfiod,$(SRVOBJS),$(RFIOLIB),$(RTFLAGS) $(RTLIBS) $(LIBCRYPTO) $(RFIOLIB) $(CKSUMLIB),755)
+LOGROTATE(castor-rfio-server,install)
+SYSCONFIG(rfiod,install)
+INITSCRIPT(rfiod,install)
+
+EXEMANPAGE(rfiod)
+

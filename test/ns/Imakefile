@@ -1,0 +1,16 @@
+COMM
+COMM  Copyright (C) 1999-2003 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+COMM  Make CASTOR tests for "ns" directory
+
+CPPFLAGS += $(ORACLE_CPPFLAGS)
+
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(castor,castorclient)
+
+NSTESTSRCS = TestThread.cpp \
+             TestMTServer.cpp
+NSTESTOBJS = $(NSTESTSRCS:.cpp=.o)
+NormalProgramTarget(nstest,$(NSTESTOBJS),,,755)
+

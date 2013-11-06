@@ -1,0 +1,4 @@
+<xrd> <stageHost> mkdir <noTapeFileName> | sed '/^$/d'
+nsls <noTapeFileName>
+<xrd> <stageHost> rmdir <noTapeFileName> | sed '/^$/d'
+nsls <noTapeFileName>

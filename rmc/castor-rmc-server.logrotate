@@ -1,0 +1,7 @@
+/var/log/castor/rmcd*.log {
+    compress
+    daily
+    missingok
+    rotate 500
+    delaycompress
+}

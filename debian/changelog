@@ -1,0 +1,221 @@
+castor (2.1.14-4) unstable; urgency=low
+
+  * Third 2.1.14 production release
+
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch> Tue, 29 Oct 2013 12:00:00 +0100
+
+castor (2.1.14-3) unstable; urgency=low
+
+  * Second 2.1.14 production release
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch> Wed, 23 Oct 2013 12:00:00 +0100
+
+castor (2.1.14-2) unstable; urgency=low
+
+  * First 2.1.14 production release
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Tue,  1 Oct 2013 16:00:00 +0100
+
+castor (2.1.13-3) unstable; urgency=low
+
+  * Second 2.1.13 production release
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Tue, 21 Aug 2012 11:32:00 +0100
+
+castor (2.1.13-2) unstable; urgency=low
+
+  * Internal release
+
+ -- Steven Murray <steven.murray@cern.ch> Wed, 9 Aug 10:00:00 +0100
+
+castor (2.1.13-1) unstable; urgency=low
+
+  * Internal release
+
+ -- Steven Murray <steven.murray@cern.ch> Wed, 8 Aug 10:09:28 +0100
+
+castor (2.1.13-0) unstable; urgency=low
+
+  * First 2.1.13 production release
+
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch> Wed, 18 Jul 17:17:25 +0100
+
+castor (2.1.12-9) unstable; urgency=low
+
+  * Internal release
+
+ -- Steven Murray <steven.murray@cern.ch> Thu, 19 Jul 15:52:15 +0100
+
+castor (2.1.12-8) unstable; urgency=low
+
+  * Internal release
+
+ -- Steven Murray <steven.murray@cern.ch> Wed, 18 Jul 17:17:25 +0100
+
+castor (2.1.12-4) unstable; urgency=low
+
+  * Third 2.1.12 production release
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Thu, 1 Mar 2012 18:00:00 +0100
+
+castor (2.1.12-3) unstable; urgency=low
+
+  * Internal release
+
+ -- Steven Murray <steven.murray@cern.ch>  Tue, 21 Feb 2012 11:51:49 +0100
+
+castor (2.1.12-2) unstable; urgency=low
+
+  * Internal release
+
+ -- Steven Murray <steven.murray@cern.ch>  Mon, 13 Feb 2012 11:02:17 +0100
+
+castor (2.1.12-1) unstable; urgency=low
+
+  * Second 2.1.12 production release
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Wed, 8 Feb 2012 14:00:00 +0100
+
+castor (2.1.12-0) unstable; urgency=low
+
+  * First 2.1.12 production release
+
+ -- Sebastien Ponce <sebastien.ponce@cern.ch>  Wed, 30 Nov 2011 14:00:00 +0100
+
+castor (2.1.11-0) unstable; urgency=low
+
+  * First 2.1.11 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Thu, 26 May 2011 08:00:00 +0100
+
+castor (2.1.10-2) unstable; urgency=low
+
+  * Third 2.1.10 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 02 May 2011 08:00:00 +0100
+
+castor (2.1.10-1) unstable; urgency=low
+
+  * Second 2.1.10 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Wed, 03 Mar 2011 08:00:00 +0100
+
+castor (2.1.10-0) unstable; urgency=low
+
+  * First 2.1.10 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 08 Nov 2010 08:00:00 +0100
+
+castor (2.1.9-4) unstable; urgency=low
+
+  * Fourth 2.1.9 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 01 Feb 2010 08:00:00 +0100
+
+castor (2.1.9-3) unstable; urgency=low
+
+  * Third 2.1.9 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 09 Nov 2009 08:00:00 +0100
+
+castor (2.1.9-2) unstable; urgency=low
+
+  * Internal release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 19 Oct 2009 08:00:00 +0100
+
+castor (2.1.9-1) unstable; urgency=low
+
+  * Second 2.1.9 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 05 Oct 2009 08:00:00 +0100
+
+castor (2.1.9-0) unstable; urgency=low
+
+  * First 2.1.9 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 07 Sep 2009 08:00:00 +0100
+
+castor (2.1.8-3) unstable; urgency=low
+
+  * Second 2.1.8 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Wed, 12 Nov 2008 12:00:00 +0100
+
+castor (2.1.8-2) unstable; urgency=low
+
+  * First 2.1.8 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Wed, 08 Oct 2008 08:00:00 +0100
+
+castor (2.1.7-12) unstable; urgency=low
+
+  * Seventh 2.1.7 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Wed, 23 Jul 2008 08:00:00 +0100
+
+castor (2.1.7-10) unstable; urgency=low
+
+  * Sixth 2.1.7 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Wed, 02 Jul 2008 08:00:00 +0100
+
+castor (2.1.7-9) unstable; urgency=low
+
+  * Internal release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 16 Jun 2008 08:00:00 +0100
+
+castor (2.1.7-8) unstable; urgency=low
+
+  * Internal release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Tue, 03 Jun 2008 08:00:00 +0100
+
+castor (2.1.7-7) unstable; urgency=low
+
+  * Fifth 2.1.7 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Tue, 20 May 2008 12:00:00 +0100
+
+castor (2.1.7-6) unstable; urgency=low
+
+  * Fourth 2.1.7 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Wed, 07 May 2008 16:00:00 +0100
+
+castor (2.1.7-5) unstable; urgency=low
+
+  * Third 2.1.7 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 05 May 2008 12:00:00 +0100
+
+castor (2.1.7-4) unstable; urgency=low
+
+  * Second 2.1.7 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 21 April 2008 14:00:00 +0100
+
+castor (2.1.7-3) unstable; urgency=low
+
+  * First 2.1.7 production release
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 31 March 2008 12:00:00 +0100
+
+castor (2.1.7-2) unstable; urgency=low
+
+  * Third internal release of CASTOR 2.1.7
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Thu, 27 March 2008 08:00:00 +0100
+
+castor (2.1.7-1) unstable; urgency=low
+
+  * Second internal release of CASTOR 2.1.7
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 03 March 2008 09:00:00 +0100
+
+castor (2.1.7-0) unstable; urgency=low
+
+  * First internal release of CASTOR 2.1.7
+
+ -- Dennis Waldron <dennis.waldron@cern.ch>  Mon, 03 March 2008 15:00:00 +0100

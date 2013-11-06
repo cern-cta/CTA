@@ -1,0 +1,6 @@
+<xrdcp> <localFileName> <xrdcpURL>
+<xrd> <stageHost> isfileonline <tapeFileName>
+status=`stager_qry -M <tapeFileName> | tail -1 | awk '{print $NF;}'`; while [[ $status == 'CANBEMIGR' ]]; do sleep 15; status=`stager_qry -M <tapeFileName> | tail -1 | awk '{print $NF;}'` ; done
+stager_rm -M <tapeFileName>
+<xrd> <stageHost> isfileonline <tapeFileName>
+nsrm <tapeFileName>

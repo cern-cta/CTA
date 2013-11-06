@@ -1,0 +1,13 @@
+# recall backlog informations
+
+<metric>
+  name: RecallBacklogStats-CMS
+  window: 60
+  unit: Nb of files and GB
+  category: CMS
+  conditions: DAEMON=="stagerd" and INSTANCE=="c2cms" and MSG=="waitTapeRecallStats"
+  groupbykeys: NONE
+  data: AdderGB(totalFileSize), Adder(nbFiles)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

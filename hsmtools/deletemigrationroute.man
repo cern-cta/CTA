@@ -1,0 +1,72 @@
+.TH DELETESVCCLASS "1castor" "2011" CASTOR "stager catalogue administrative commands"
+.SH NAME
+deletemigrationroute \- deletes existing migration route(s) from the stager catalogue
+
+.SH SYNOPSIS
+.B deletemigrationroute
+[
+.BI -h
+]
+.BI <fileClassName>
+[...]
+
+.SH DESCRIPTION
+.B deletesvcclass
+deletes migration routes for the given file class from the CASTOR stager catalog
+.LP
+.BI \-h,\ \-\-help
+Get usage information
+.TP
+.BI <fileClassName>
+name of file class for which rules should be deleted
+
+.SH EXAMPLES
+.nf
+.ft CW
+
+#printmigrationroute
+      FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------------
+      largeuser      1       False stager_dev02   sponcec3 31-Aug-2011 10:13:14
+      largeuser      1        True stager_dev01   sponcec3 31-Aug-2011 10:13:14
+          test2      1           - stager_dev01   sponcec3 31-Aug-2011 10:10:38
+          test2      2           - stager_dev02   sponcec3 31-Aug-2011 10:10:38
+threeCopyOnTape      1           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
+threeCopyOnTape      2           - stager_dev02   sponcec3 31-Aug-2011 10:11:06
+threeCopyOnTape      3           - stager_dev01   sponcec3 31-Aug-2011 10:11:06
+
+#deletemigrationroute threeCopyOnTape test2
+successfully dropped the route(s) for the following FileClass(es) :
+   test2
+   threeCopyOnTape
+
+#printmigrationroute
+FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+-------------------------------------------------------------------------
+largeuser      1       False stager_dev02   sponcec3 31-Aug-2011 10:13:14
+largeuser      1        True stager_dev01   sponcec3 31-Aug-2011 10:13:14
+
+#deletemigrationroute largeuser badfileclass
+successfully dropped the route(s) for the following FileClass(es) :
+   largeuser
+WARNING : the file class(es) of the following rule(s) did not exist :
+   badfileclass
+
+#printmigrationroute
+SVCCLASS FILECLASS COPYNB ISSMALLFILE     TAPEPOOL LASTEDITOR          LASTEDITION
+----------------------------------------------------------------------------------
+
+.SH NOTES
+This command requires database client access to the stager catalogue.
+Configuration for the database access is taken from castor.conf.
+
+.SH SEE ALSO
+.BR entermigrationroute
+.BR modifymigrationroute
+.BR printmigrationroute
+.BR deletefileclass
+.BR deletetapepool
+.BR adminMultiInstance
+
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

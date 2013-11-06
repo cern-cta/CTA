@@ -1,0 +1,2 @@
+Cupvcheck --uid `id -u` --gid `id -g`  --src `hostname` --tgt <cnsHost>  --priv ADMIN; echo $?
+Cupvcheck --uid `id -u` --gid `id -g`  --src `hostname` --tgt <cnsHost>  --priv GRP_ADMIN; echo $?

@@ -1,0 +1,109 @@
+/******************************************************************************
+ *                      IPlugin.hpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ *
+ * abstract interface of a stagerjob plugin
+ *
+ * @author Sebastien Ponce
+ *****************************************************************************/
+
+#ifndef STAGERJOB_IPLUGIN_HPP
+#define STAGERJOB_IPLUGIN_HPP 1
+
+// Include Files
+#include "castor/exception/Exception.hpp"
+
+namespace castor {
+
+  namespace job {
+
+    namespace stagerjob {
+
+      // Forward declarations
+      class InputArguments;
+      struct PluginContext;
+
+      /**
+       * Abstract interface of a stagerjob plugin
+       */
+      class IPlugin {
+
+      public:
+
+        /**
+         * Default destructor
+         */
+        virtual ~IPlugin() throw() {};
+
+        /**
+         * Gets the port range that can be used by the protocol
+         * to listen for client connections
+         */
+        virtual std::pair<int, int> getPortRange
+        (InputArguments &args) throw() = 0;
+
+        /**
+         * Hook for the code to be executed just before the mover fork
+         * empty by default.
+         * @param args the arguments given to the stager job
+         * @param context the current context (localhost, port, etc...)
+         */
+        virtual void preForkHook(InputArguments &args,
+                                 PluginContext &context)
+          throw (castor::exception::Exception) = 0;
+
+        /**
+         * Hook for the launching of the mover
+         * To be implemented in all plugins
+         * @param args the arguments given to the stager job
+         * @param context the current context (localhost, port, etc...)
+         */
+        virtual void execMover(InputArguments &args,
+                               PluginContext &context)
+          throw (castor::exception::Exception) = 0;
+
+        /**
+         * Hook for the code to be executed just after the mover fork,
+         * in the parent process. Empty by default.
+         * @param args the arguments given to the stager job
+         * @param context the current context (localhost, port, etc...)
+         * @param useChkSum flag to indicate whether checksum information
+         * should be sent in the prepareForMigration call.
+         * @param moverStatus status of the mover process. By default the
+         * value is -1, indicating that the function should wait for child
+         * processes to exit. If moverStatus > -1, the function will not
+         * wait for child processes and the value of moverStatus 
+         * argument will be used to indicate whether the transfer was
+         * successful or not.
+         */
+        virtual void postForkHook(InputArguments &args,
+                                  PluginContext &context,
+                                  bool useChksSum = false,
+                                  int moverStatus = -1)
+          throw (castor::exception::Exception) = 0;
+
+      }; // end of class IPlugin
+
+    } // end of namespace stagerjob
+
+  } // end of namespace job
+
+} // end of namespace castor
+
+#endif // STAGERJOB_IPLUGIN_HPP

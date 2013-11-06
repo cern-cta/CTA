@@ -1,0 +1,179 @@
+/*
+ * Copyright (C) 1999-2002 by CERN/IT/PDP/DM
+ * All rights reserved
+ */
+
+/*	Ctape_mount - send a request to the tape daemon to have a tape mounted
+ *	and the VOL1 label verified
+ */
+#include <errno.h>
+#include <string.h>
+#include <sys/types.h>
+#include <unistd.h>
+#include <netinet/in.h>
+#include "h/Ctape.h"
+#include "h/marshall.h"
+#include "h/serrno.h"
+#include "h/Ctape_api.h"
+#include "h/vmgr_api.h"
+
+int Ctape_mount(char *path,
+                char *vid,
+                int side,
+                char *dgn,
+                char *density,
+                char *drive,
+                int mode,
+                char *vsn,
+                char *lbltype,
+                int vdqm_reqid)
+{
+	char acctname[7];
+	char actual_den[6];
+	char actual_dgn[CA_MAXDGNLEN+1];
+	char actual_lbltype[CA_MAXLBLTYPLEN+1];
+	char actual_vid[CA_MAXVIDLEN+1];
+	char actual_vsn[CA_MAXVSNLEN+1];
+	int c;
+	int den;
+	char devtype[CA_MAXDVTLEN+1];
+	int errflg = 0;
+	char fullpath[CA_MAXPATHLEN+1];
+	char func[16];
+	char *getacct();
+	char *getcwd();
+	gid_t gid;
+	int jid;
+	int lblcode;
+	int msglen;
+	char *q;
+	int prelabel = -1;	/* not a prelabel */
+	char *rbp;
+	char repbuf[16];
+	char *sbp;
+	char sendbuf[REQBUFSZ];
+	uid_t uid;
+
+	strncpy (func, "Ctape_mount", 16);
+	uid = getuid();
+	gid = getgid();
+	jid = findpgrp();
+	strcpy (acctname, "NOACCT");
+
+	/* path */
+
+	if (path == NULL || *path == '\0') {
+		Ctape_errmsg (func, TP029);
+		errflg++;
+	} else {
+		fullpath[0] = '\0';
+		if (*path != '/') {
+			if (getcwd (fullpath, sizeof(fullpath) - 2) == NULL) {
+				Ctape_errmsg (func, TP002, "getcwd", strerror(errno));
+				errflg++;
+			} else {
+				strcat (fullpath, "/");
+			}
+		}
+		if (strlen(fullpath) + strlen(path) < sizeof(fullpath)) {
+			strcat (fullpath, path);
+		} else {
+			Ctape_errmsg (func, TP038);
+			errflg++;
+		}
+		if (*fullpath == '/' && chkdirw (fullpath)) {
+			Ctape_errmsg (func, "TP002 - %s : access error : %s\n",
+				fullpath, strerror(errno));
+			errflg++;
+		}
+	}
+
+	/* vid */
+
+	if (vid == NULL || *vid == '\0') {
+		Ctape_errmsg (func, TP031);
+		errflg++;
+	} else {
+		if (strlen (vid) > CA_MAXVIDLEN) {
+			Ctape_errmsg (func, TP006, "vid");
+			errflg++;
+		} else {
+			strcpy (actual_vid, vid);
+			UPPER (actual_vid);
+		}
+	}
+
+	if (errflg) {
+		serrno = EINVAL;
+		return (-1);
+	}
+
+	/* Set default values */
+
+	if (! vsn)
+		actual_vsn[0] = '\0';
+	else {
+		strcpy (actual_vsn, vsn);
+		UPPER (actual_vsn);
+	}
+	if (! dgn)
+		actual_dgn[0] = '\0';
+	else
+		strcpy (actual_dgn, dgn);
+	if (! density)
+		actual_den[0] = '\0';
+	else
+		strcpy (actual_den, density);
+	if (! lbltype)
+		actual_lbltype[0] = '\0';
+	else
+		strcpy (actual_lbltype, lbltype);
+
+	if ((c = vmgrcheck (actual_vid, actual_vsn, actual_dgn, actual_den,
+	    actual_lbltype, mode, uid, gid))) {
+	}
+ 
+        /* Build request header */
+ 
+        sbp = sendbuf;
+        marshall_LONG (sbp, TPMAGIC);
+        marshall_LONG (sbp, TPMOUNT);
+        q = sbp;        /* save pointer. The next field will be updated */
+        msglen = 3 * LONGSIZE;
+        marshall_LONG (sbp, msglen);
+ 
+        /* Build request body */
+ 
+	marshall_LONG (sbp, uid);
+	marshall_LONG (sbp, gid);
+	marshall_LONG (sbp, jid);
+	marshall_STRING (sbp, acctname);
+	marshall_STRING (sbp, fullpath);
+	marshall_STRING (sbp, actual_vid);
+	marshall_WORD (sbp, side);
+	marshall_STRING (sbp, actual_dgn);
+	marshall_STRING (sbp, actual_den);
+	if (drive) {
+		marshall_STRING (sbp, drive);
+	} else {
+		marshall_STRING (sbp, "");
+	}
+	marshall_WORD (sbp, mode);
+	marshall_STRING (sbp, actual_vsn);
+	marshall_STRING (sbp, actual_lbltype);
+	marshall_WORD (sbp, prelabel);
+	marshall_LONG (sbp, vdqm_reqid);
+
+	msglen = sbp - sendbuf;
+	marshall_LONG (q, msglen);	/* update length field */
+
+	c = send2tpd (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
+	if (c == 0) {
+		rbp = repbuf;
+		unmarshall_STRING (rbp, devtype);
+		unmarshall_WORD (rbp, den);
+		unmarshall_WORD (rbp, lblcode);
+		c = setdevinfo (path, devtype, den, lblcode);
+	}
+	return (c);
+}

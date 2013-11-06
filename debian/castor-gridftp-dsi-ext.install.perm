@@ -1,0 +1,2 @@
+%attr(0755,root,root) usr/lib/libglobus_gridftp_server_CASTOR2ext.so*
+%attr(0644,root,root) etc/xinetd.d/gsiftp

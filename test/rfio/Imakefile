@@ -1,0 +1,28 @@
+COMM
+COMM  Copyright (C) 1999-2001 by CERN/IT/PDP/DM
+COMM  All rights reserved
+COMM
+
+COMM		Make CASTOR tests for "rfio" directory
+
+DependsOnLibrary(common,castorcommon)
+DependsOnLibrary(rfio,castorrfio)
+DependsOnLibrary(ns,castorns)
+
+NormalProgramTarget(tpreseek,tpreseek.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(tpreseek64,tpreseek64.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(mstat_test_thread,mstat_test_thread.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(mstat_test_fork,mstat_test_fork.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(munlink_test,munlink_test.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(mstat_test_sequential,mstat_test_sequential.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(msymlink_test,msymlink_test.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(stat_test,stat_test.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(mstat_test,mstat_test.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(unlink_test,unlink_test.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(symlink_test,symlink_test.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(fxxx_test,fxxx_test.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(xxx_test,xxx_test.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(regression_tests,regression_tests.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(test_longpaths,test_longpaths.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(dataSource,dataSource.o,$(GLOBLIB),$(LIBS),755)
+NormalProgramTarget(parallelFileAccess,parallelFileAccess.o,$(GLOBLIB),$(LIBS),755)

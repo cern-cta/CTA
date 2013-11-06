@@ -1,0 +1,78 @@
+# Configure max message size before loading any modules
+$MaxMessageSize 4096
+
+# Modules
+$ModLoad immark    # provides --MARK-- message capability
+$ModLoad imuxsock  # provides support for local system logging (e.g. via logger command)
+$ModLoad imklog    # kernel logging (formerly provided by rklogd)
+$ModLoad imudp     # provides UDP syslog reception
+
+# Remote server
+$UDPServerRun 514                   # start UDP server on port 514
+
+# Global options
+$DynaFileCacheSize 100              # the maximum number of dynamically generated
+                                    # cached file names
+$umask 0000
+$FileCreateMode 0644                # world readable log files
+
+# Main message queue configuration (http://www.rsyslog.com/doc-queues.html)
+$MainMsgQueueType LinkedList        # dynamic allocation of memory for messages
+$MainMsgQueueSize 70000             # increase the maximum size of the main message
+                                    # queue to handle traffic bursts
+
+# Begin discarding informational and debug messages if the main message queue has
+# more than 48000 messages
+$MainMsgQueueDiscardMark 48000
+$MainMsgQueueDiscardSeverity 6
+
+# Templates
+$template DynaFile, "/var/log/castor/%programname%.log"
+
+# Logging configuration for CASTOR
+if $fromhost-ip == '127.0.0.1' and \
+   $syslogfacility-text == 'local3' then   -?DynaFile
+
+# respect the timestamps given in local messages
+$SystemLogSocketIgnoreMsgTimestamp off
+
+# If the message has been processed by one of the filters above stop
+# any further processing. This avoids duplicate logging!
+& ~
+
+# Discard any other messages not from localhost
+if $fromhost-ip != '127.0.0.1' then ~
+
+# Standard rsyslog configuration
+
+# The default output file format, syslog style format
+$ActionFileDefaultTemplate RSYSLOG_TraditionalFileFormat
+
+# The default file creation mode
+$FileCreateMode 0600
+
+# Log all kernel messages to the console.
+# Logging much else clutters up the screen.
+#kern.*                                                 /dev/console
+
+# Log anything (except mail) of level info or higher.
+# Don't log private authentication messages!
+*.info;mail.none;authpriv.none;cron.none                /var/log/messages
+
+# The authpriv file has restricted access.
+authpriv.*                                              /var/log/secure
+
+# Log all the mail messages in one place.
+mail.*                                                  -/var/log/maillog
+
+# Log cron stuff
+cron.*                                                  /var/log/cron
+
+# Everybody gets emergency messages
+*.emerg                                                 *
+
+# Save news errors of level crit and higher in a special file.
+uucp,news.crit                                          /var/log/spooler
+
+# Save boot messages also to boot.log
+local7.*                                                /var/log/boot.log

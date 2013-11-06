@@ -1,0 +1,84 @@
+#!/bin/tcsh
+#
+# A wrapper script for gencastor.bin, to put files in the proper places and avoid to overwrite not modified ones.
+# It also manages the generated SQL scripts.
+#
+# @author Castor dev team, castor-dev@cern.ch
+#
+# 
+
+if ("$1" == "-h" || "$1" == "") then
+  echo "Usage :"
+  echo "  $0 [-w castor_workdir] [-c topNamespace] [-h] [-v|--version] XMIFile"
+  exit
+else if ("$1" == "-v" || "$1" == "--version") then
+  "$0".bin --version
+  exit
+else if ("$1" == "-w") then
+  set WORKDIR=$2
+  if ("$3" == "-c") then
+    set TOPNS = $4
+    set XMIFILE=$5
+  else
+    set TOPNS = 'castor'
+    set XMIFILE=$3
+  endif
+else
+  set WORKDIR=`pwd`
+  if ("$1" == "-c") then
+    set TOPNS = $2
+    set XMIFILE=$3
+  else
+    set TOPNS = 'castor'
+    set XMIFILE=$1
+  endif
+endif
+
+set TMPDIR=`mktemp /tmp/gencastor-XXXXXX`
+rm -rf ${TMPDIR}
+mkdir -p ${TMPDIR}/${TOPNS}/db
+cp ${WORKDIR}/${TOPNS}/db/*.sql ${TMPDIR}/${TOPNS}/db/
+
+($0.bin -o ${TMPDIR} -c ${TOPNS} --nocrashhandler ${XMIFILE} > /dev/tty) >& /dev/null
+
+if ($? > 0) then
+  echo Error during code generation, exiting
+  exit
+endif
+
+set pushdsilent
+pushd ${TMPDIR}
+rm -f ${TOPNS}/db/*Generated* >& /dev/null
+if ( $? == "0" ) then
+  # Type2Obj content
+  echo '/* Fill Type2Obj metatable */' >> ${TOPNS}/db/oracleSchema.sql
+  grep OBJ_ ${WORKDIR}/${TOPNS}/Constants.hpp | grep '=' | sed 's/ *\([^ ]*\) = \([0-9]*\).*$/\2  \1/' | sed 's/OBJ_//g' | awk '{print "INSERT INTO Type2Obj (type, object) VALUES (" $1 ", '\''" $2 "'\'');" }' >> ${TOPNS}/db/oracleSchema.sql
+  echo 'COMMIT;' >> ${TOPNS}/db/oracleSchema.sql
+  echo >> ${TOPNS}/db/oracleSchema.sql
+endif
+
+foreach f (`find . -type f`)
+  #echo $f
+  if !(-f ${WORKDIR}/${f}) then
+    if !(-d `dirname ${WORKDIR}/${f}`) then
+      mkdir -p `dirname ${WORKDIR}/${f}`
+    endif
+    echo "Creating $f"
+    cp ${TMPDIR}/${f} ${WORKDIR}/$f
+  else
+    if (-f ${WORKDIR}/${f}_clone) then
+      #echo Merging clone before upgrading $f
+      `dirname $0`/codemerge.py ${TMPDIR}/${f} ${WORKDIR}/${f}_clone ${TMPDIR}/${f}_merge
+      mv ${TMPDIR}/${f}_merge ${TMPDIR}/${f}
+    endif
+    set d = `diff -q ${WORKDIR}/${f} ${TMPDIR}/${f}`
+    #echo "Diff gave --$d--"
+    if ("$d" != "") then
+      echo "Upgrading $f"
+      cp ${TMPDIR}/${f} ${WORKDIR}/${f}
+    endif
+  endif
+end
+echo Code generation done
+popd
+rm -rf ${TMPDIR}

@@ -1,0 +1,40 @@
+.\" Copyright (C) 1999-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH NSCHMOD "1castor" "$Date: 2009/05/18 13:40:12 $" CASTOR "Cns User Commands"
+.SH NAME
+nschmod \- change access mode of a CASTOR directory/file in the name server
+.SH SYNOPSIS
+.B nschmod
+[\fIOPTION\fR] MODE \fIPATH\fR...
+.SH DESCRIPTION
+.B nschmod
+sets the access mode of CASTOR directory/file(s) in the name server to the octal
+value in MODE. Symbolic mode changes are not supported yet.
+.LP
+The effective user ID of the process must match the owner of the file or
+the caller must have GRP_ADMIN or ADMIN privileges in the Cupv database.
+.TP
+.I PATH
+specifies the CASTOR pathname. If PATH does not start with
+.BR / ,
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
+.SH OPTIONS
+The following options are supported:
+.TP
+.B -R
+Recursive mode.
+.TP
+.B \-\-help
+Display this help and exit
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chmod(3) ,
+.BR Cupvlist(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

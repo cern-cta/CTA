@@ -1,0 +1,7 @@
+/var/log/castor/gcd*.log {
+    compress
+    daily
+    missingok
+    rotate 500
+    delaycompress
+}

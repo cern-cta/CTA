@@ -1,0 +1,13 @@
+# migration backlog informations
+
+<metric>
+  name: MigrationBacklogStats-ATLAS
+  window: 60
+  unit: Nb of files and GB
+  category: ATLAS
+  conditions: DAEMON=="stagerd" and INSTANCE=="c2atlas" and MSG=="waitTapeMigrationStats"
+  groupbykeys: NONE
+  data: AdderGB(totalFileSize), Adder(nbFiles)
+  handle_unordered: time_threshold
+  nbins: 1
+</metric>

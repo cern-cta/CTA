@@ -1,0 +1,58 @@
+.\" Copyright (C) 2000-2003 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH VMGRLISTMODEL "1castor" "$Date: 2003/11/24 06:59:50 $" CASTOR "vmgr Administrator Commands"
+.SH NAME
+vmgrlistmodel \- query the CASTOR Volume Manager about a given model or list all existing cartridge models
+.SH SYNOPSIS
+.B vmgrlistmodel
+[
+.BI --mo " model"
+] [
+.BI --ml " media_letter"
+]
+.SH DESCRIPTION
+.B vmgrlistmodel
+queries the CASTOR Volume Manager about a given cartridge model or list all
+existing cartridge models in tabular form:
+.HP 1.2i
+model		model of cartridge.
+.HP
+media_letter	media identification letter.
+.HP
+media_cost
+.SH EXAMPLES
+.nf
+.ft CW
+vmgrlistmodel
+3480     0
+3490   E 0
+3590   J 0
+3590E  K 0
+8200     0
+9840   R 0
+9940   P 0
+CT3    D 0
+CT4    D 0
+DAT120   0
+DAT60    0
+DAT90    0
+DVD      0
+LTO1   L 0
+LTO2   L 0
+SD1L     0
+SD1M     0
+SD3L   C 0
+SD3M   B 0
+SD3S   A 0
+SDLT   S 0
+.ft
+.fi
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR vmgr_entermodel(3) ,
+.B vmgrentermodel(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

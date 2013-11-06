@@ -1,0 +1,48 @@
+.\" Copyright (C) 2000-2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH NSCHCLASS "1castor" "$Date: 2008/11/03 10:37:05 $" CASTOR "Cns User Commands"
+.SH NAME
+nschclass \- change class of a CASTOR directory in the name server
+.SH SYNOPSIS
+.B nschclass
+[\fIOPTION\fR]...
+.I CLASS
+.IR DIRECTORY ...
+.SH DESCRIPTION
+.B nschclass
+sets the class of a CASTOR directory(s) in the name server to the value in
+.IR class .
+This can be either the classid or the class name.
+.LP
+The effective user ID of the process must match the owner of the directory or
+the caller must have GRP_ADMIN or ADMIN privileges in the Cupv database.
+.TP
+.I DIRECTORY
+specifies the CASTOR pathname. If DIRECTORY does not start with
+.BR / ,
+it is prefixed by the content of the
+.B CASTOR_HOME
+environment variable.
+.SH OPTIONS
+The following options are supported:
+.TP
+.B -i,\ \-\-interactive
+Request acknowledge before changing each individual entry.
+.TP
+.B -r,\ \-\-recursive
+Recursive mode.
+The class is changed on the directories, not on the existing regular files.
+.TP
+.B \-\-help
+display this help and exit
+.SH EXIT STATUS
+This program returns 0 if the operation was successful or >0 if the operation
+failed.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_chclass(3) ,
+.BR Cupvlist(1) ,
+.BR nslistclass(1)
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

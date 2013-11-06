@@ -1,0 +1,99 @@
+.\" Copyright (C) 2002 by CERN/IT/DM
+.\" All rights reserved
+.\"
+.TH CNS_UPDATESEG_STATUS "3castor" "$Date: 2008/11/03 10:10:24 $" CASTOR "Cns Library Functions"
+.SH NAME
+Cns_updateseg_status \- updates the status of a file segment
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "Cns_api.h"\fR
+.sp
+.BI "int Cns_updateseg_status (char *" server ,
+.BI "u_signed64 " fileid ,
+.BI "struct Cns_segattrs *" oldsegattrs ,
+.BI "const char " status )
+.SH DESCRIPTION
+.B Cns_updateseg_status
+updates the status of a file segment.
+The file is identified by
+.I server
+and
+.IR fileid .
+.TP
+.I oldsegattrs
+is a pointer to a Cns_segattrs structure containing the old segment attributes.
+.TP
+.I status
+the status to be applied to the segment, either '-' (enabled) or 'D' (logically deleted)
+.PP
+.nf
+.ft CW
+struct Cns_segattrs {
+        int             copyno;         /* copy number */
+        int             fsec;           /* file segment number */
+        u_signed64      segsize;        /* file segment size */
+        int             compression;    /* compression factor */
+        char            s_status;       /* 'D' --> deleted */
+        char            vid[CA_MAXVIDLEN+1];
+        int             side;
+        int             fseq;           /* file sequence number */
+        unsigned char   blockid[4];     /* for positionning with locate */
+        char            checksum_name[CA_MAXCKSUMNAMELEN+1];
+        unsigned long   checksum;
+};
+.ft
+.fi
+.LP
+This function requires ADMIN privileges in the Cupv database.
+.SH RETURN VALUE
+This routine returns 0 if the operation was successful or -1 if the operation
+failed. In the latter case,
+.B serrno
+is set appropriately.
+.SH ERRORS
+.TP 1.3i
+.B ENOENT
+The referenced file does not exist anymore.
+.TP
+.B EPERM
+The file is logically deleted, segment status changes are not permitted.
+.TP
+.B EFAULT
+.I oldsegattrs
+is a NULL pointer
+.TP
+.B EISDIR
+The file is not a regular file.
+.TP
+.B EINVAL
+Invalid 
+.I status
+or old s_status is the same as
+.I status
+or the length of
+.I vid
+exceeds
+.BR CA_MAXVIDLEN .
+.TP
+.B SENOSHOST
+Host unknown.
+.TP
+.B SENOSSERV
+Service unknown.
+.TP
+.B SEENTRYNFND
+vid, side, fseq or old s_status in
+.I oldsegattrs
+does not match the current values in the database.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ENSNACT
+Name server is not running or is being shutdown.
+.SH SEE ALSO
+.BR Castor_limits(4) ,
+.BR Cns_getsegattrs(3) ,
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>
