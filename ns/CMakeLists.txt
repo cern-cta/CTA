@@ -216,24 +216,26 @@ install(TARGETS ${NSCLIENTS} DESTINATION ${CASTOR_DEST_BIN_DIR})
 # Rules to build and install the ns deamon and its config files
 ################################################################################
 
-CastorAddProC(Cns_oracle_ifce)
-add_executable(nsd 
-  Cns_main.c
-  Cns_acl.c
-  Cns_chkperm.c
-  Cns_oracle_ifce.c
-  Cns_procreq.c
-  sendrep.c
-  nslogit.c)
-target_link_libraries(nsd castorcommon castorsecurity castorupv castordlf)
-set_target_properties(nsd PROPERTIES
-  COMPILE_FLAGS ${ORACLE_CPPFLAGS}
-  LINK_FLAGS "-L${ORACLE_LIBDIR} -lclntsh")
-install(TARGETS nsd DESTINATION ${CASTOR_DEST_BIN_DIR})
-CastorInstallAdmManPage(nsd)
-CastorInstallConfigFile(NS)
-CastorInstallInitScript(nsd)
-CastorInstallSysconfigExample(nsd)
-CastorInstallSysconfigExample(nsd.normal)
-CastorInstallSysconfigExample(nsd.secure)
-CastorInstallLogrotate(castor-ns-server)
+if (${COMPILE_SERVER} STREQUAL "1")
+  CastorAddProC(Cns_oracle_ifce)
+  add_executable(nsd 
+    Cns_main.c
+    Cns_acl.c
+    Cns_chkperm.c
+    Cns_oracle_ifce.c
+    Cns_procreq.c
+    sendrep.c
+    nslogit.c)
+  target_link_libraries(nsd castorcommon castorsecurity castorupv castordlf)
+  set_target_properties(nsd PROPERTIES
+    COMPILE_FLAGS ${ORACLE_CPPFLAGS}
+    LINK_FLAGS "-L${ORACLE_LIBDIR} -lclntsh")
+  install(TARGETS nsd DESTINATION ${CASTOR_DEST_BIN_DIR})
+  CastorInstallAdmManPage(nsd)
+  CastorInstallConfigFile(NS)
+  CastorInstallInitScript(nsd)
+  CastorInstallSysconfigExample(nsd)
+  CastorInstallSysconfigExample(nsd.normal)
+  CastorInstallSysconfigExample(nsd.secure)
+  CastorInstallLogrotate(castor-ns-server)
+endif (${COMPILE_SERVER} STREQUAL "1")

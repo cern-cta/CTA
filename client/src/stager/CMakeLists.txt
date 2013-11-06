@@ -27,7 +27,6 @@ cmake_minimum_required (VERSION 2.6)
 
 set(STAGER_CLIENT_EXE_SRC_FILES
   castor.c
-  stager_abort.cpp
   stager_addprivilege.c
   stager_get.c
   stager_listprivileges.cpp
@@ -37,8 +36,10 @@ set(STAGER_CLIENT_EXE_SRC_FILES
   stager_qry.cpp
   stager_removeprivilege.c
   stager_rm.c
-  stager_setfilegcweight.c
-)
+  stager_setfilegcweight.c)
+if (${COMPILE_SERVER} STREQUAL "1")
+  list(APPEND STAGER_CLIENT_EXE_SRC_FILES stager_abort.cpp)
+endif (${COMPILE_SERVER} STREQUAL "1")
 foreach(SRC_FILE ${STAGER_CLIENT_EXE_SRC_FILES})
   string (REGEX REPLACE "[.]cp*$" "" EXE_FILE ${SRC_FILE})
   add_executable(${EXE_FILE} ${SRC_FILE})
@@ -47,8 +48,10 @@ foreach(SRC_FILE ${STAGER_CLIENT_EXE_SRC_FILES})
   CastorInstallExeManPage(${EXE_FILE})
 endforeach ()
 
-# Required by castor-srmv2
-install(FILES
-  stager_client_api_query.hpp
-  DESTINATION ${CASTOR_DEST_INCLUDE_DIR}/castor/client/src/stager
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
+if (${COMPILE_SERVER} STREQUAL "1")
+  # Required by castor-srmv2
+  install(FILES
+    stager_client_api_query.hpp
+    DESTINATION ${CASTOR_DEST_INCLUDE_DIR}/castor/client/src/stager
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+endif (${COMPILE_SERVER} STREQUAL "1")

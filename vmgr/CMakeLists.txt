@@ -112,21 +112,23 @@ CastorInstallLibManPage (vmgr_settag)
 CastorInstallLibManPage (vmgr_tpmounted)
 CastorInstallLibManPage (vmgr_updatetape)
 
-################################################################################
-# Rules to build and install vmgrd
-################################################################################
-CastorAddProC(vmgr_oracle_ifce)
-set (VMGR_SRC_FILES vmgr_main.c vmgr_oracle_ifce.c vmgr_procreq.c sendrep.c
-  vmgrlogit.c)
-add_executable(vmgrd ${VMGR_SRC_FILES})
-target_link_libraries (vmgrd castorcommon castorupv
-  ${ORACLE_LIBDIR}/libclntsh.so)
-install (TARGETS vmgrd DESTINATION ${CASTOR_DEST_BIN_DIR})
-CastorInstallAdmManPage (vmgrd)
-CastorInstallLogrotate (castor-vmgr-server)
-CastorInstallSysconfigExample (vmgrd)
-CastorInstallInitScript (vmgrd)
-CastorInstallConfigFile (VMGR)
+if (${COMPILE_SERVER} STREQUAL "1")
+  ##############################################################################
+  # Rules to build and install vmgrd
+  ##############################################################################
+  CastorAddProC(vmgr_oracle_ifce)
+  set (VMGR_SRC_FILES vmgr_main.c vmgr_oracle_ifce.c vmgr_procreq.c sendrep.c
+    vmgrlogit.c)
+  add_executable(vmgrd ${VMGR_SRC_FILES})
+  target_link_libraries (vmgrd castorcommon castorupv
+    ${ORACLE_LIBDIR}/libclntsh.so)
+  install (TARGETS vmgrd DESTINATION ${CASTOR_DEST_BIN_DIR})
+  CastorInstallAdmManPage (vmgrd)
+  CastorInstallLogrotate (castor-vmgr-server)
+  CastorInstallSysconfigExample (vmgrd)
+  CastorInstallInitScript (vmgrd)
+  CastorInstallConfigFile (VMGR)
+endif (${COMPILE_SERVER} STREQUAL "1")
 
 ################################################################################
 # Rule to install the vmgr "umbrella" man page which gives an overview of all

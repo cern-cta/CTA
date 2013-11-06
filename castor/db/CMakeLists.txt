@@ -23,4 +23,6 @@
 cmake_minimum_required (VERSION 2.6)
 
 add_subdirectory (cnv)
-add_subdirectory (ora)
+if (${COMPILE_SERVER} STREQUAL "1")
+  add_subdirectory (ora)
+endif (${COMPILE_SERVER} STREQUAL "1")

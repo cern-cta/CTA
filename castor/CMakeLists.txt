@@ -22,14 +22,16 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-add_subdirectory (db)
-add_subdirectory (gc)
-add_subdirectory (rh)
-add_subdirectory (job)
-add_subdirectory (scheduler)
-add_subdirectory (stager/daemon)
-add_subdirectory (tape)
-add_subdirectory (vdqm)
+if (${COMPILE_SERVER} STREQUAL "1")
+  add_subdirectory (db)
+  add_subdirectory (gc)
+  add_subdirectory (rh)
+  add_subdirectory (job)
+  add_subdirectory (scheduler)
+  add_subdirectory (stager/daemon)
+  add_subdirectory (tape)
+  add_subdirectory (vdqm)
+endif (${COMPILE_SERVER} STREQUAL "1")
 
 ################################################################################
 # Rules to build and install libcastorclient.so
@@ -269,185 +271,190 @@ set_target_properties (castorclient
   PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
 target_link_libraries (castorclient castordlf)
 install (TARGETS castorclient DESTINATION ${CASTOR_DEST_LIB_DIR})
-CastorInstallExample (castor.conf /etc/castor)
-CastorInstallExample (rsyslog.conf.client /etc/castor)
-CastorInstallExample (rsyslog.conf.server /etc/castor)
 
-################################################################################
-# Installation of header files for package castor-build-headers
-################################################################################
+if (${COMPILE_SERVER} STREQUAL "1")
+  CastorInstallExample (castor.conf /etc/castor)
+  CastorInstallExample (rsyslog.conf.client /etc/castor)
+  CastorInstallExample (rsyslog.conf.server /etc/castor)
+endif (${COMPILE_SERVER} STREQUAL "1")
 
-# Required by xrootd-xcastor2fs and castor-srmv2
-install(FILES
-  BaseObject.hpp
-  Constants.hpp
-  IObject.hpp
-  IService.hpp
-  Services.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  client/BaseClient.hpp
-  client/IResponseHandler.hpp
-  client/VectorResponseHandler.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/client
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  dlf/Dlf.hpp
-  dlf/IPAddress.hpp
-  dlf/Message.hpp
-  dlf/Param.hpp
-  dlf/TimeStamp.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/dlf
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  exception/Communication.hpp
-  exception/Exception.hpp
-  exception/Internal.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/exception
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  io/ServerSocket.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/io
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  rh/Client.hpp
-  rh/FileResponse.hpp
-  rh/IOResponse.hpp
-  rh/Response.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/rh
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  stager/DiskCopyStatusCodes.hpp
-  stager/FileRequest.hpp
-  stager/ICommonSvc.hpp
-  stager/Request.hpp
-  stager/StageGetRequest.hpp
-  stager/StagePrepareToGetRequest.hpp
-  stager/StagePrepareToPutRequest.hpp
-  stager/StagePutRequest.hpp
-  stager/SubRequestGetNextStatusCodes.hpp
-  stager/SubRequest.hpp
-  stager/SubRequestStatusCodes.hpp
-  stager/TapeVid.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/stager
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-# Required by xrootd-xcastor2fs
-install(FILES  io/AbstractSocket.hpp
-  io/AbstractTCPSocket.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/io
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  stager/IJobSvc.hpp
-  stager/StagePrepareToUpdateRequest.hpp
-  stager/StageUpdateRequest.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/stager
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-# Required by castor-srmv2
-install(FILES
-  BaseAddress.hpp
-  BaseCnvSvc.hpp
-  BaseSvc.hpp
-  CnvFactory.hpp
-  Converters.hpp
-  Factories.hpp
-  IAddress.hpp
-  IClient.hpp
-  ICnvFactory.hpp
-  ICnvSvc.hpp
-  IConverter.hpp
-  IFactory.hpp
-  ISvcFactory.hpp
-  MessageAck.hpp
-  ObjectSet.hpp
-  SvcFactory.hpp
-  System.hpp
-  VectorAddress.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  db/DbBaseObj.hpp
-  db/DbCnvSvc.hpp
-  db/DbParamsSvc.hpp
-  db/IDbResultSet.hpp
-  db/IDbStatement.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/db
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  db/cnv/DbBaseCnv.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/db/cnv
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  db/ora/OraCnvSvc.hpp
-  db/ora/OraCommonSvc.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/db/ora
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  exception/InvalidArgument.hpp
-  exception/NoEntry.hpp
-  exception/OutOfMemory.hpp
-  exception/SQLError.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/exception
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  io/ClientSocket.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/io
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  metrics/Counter.hpp
-  metrics/Histogram.hpp
-  metrics/MetricsCollector.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/metrics
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  query/DiskPoolQueryType.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/query
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  rh/FileQryResponse.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/rh
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  server/BaseDaemon.hpp
-  server/BaseServer.hpp
-  server/BaseThreadPool.hpp
-  server/DynamicThreadPool.hpp
-  server/IThread.hpp
-  server/ListenerThreadPool.hpp
-  server/Mutex.hpp
-  server/NotifierThread.hpp
-  server/Queue.hpp
-  server/SelectProcessThread.hpp
-  server/SignalThreadPool.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/server
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
-
-install(FILES
-  stager/NsFileId.hpp
-  stager/QryRequest.hpp
-  stager/QueryParameter.hpp
-  stager/RequestQueryType.hpp
-  stager/StageAbortRequest.hpp
-  stager/StageFileQueryRequest.hpp
-  stager/StageRmRequest.hpp
-  stager/SvcClass.hpp
-  DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/stager
-  PERMISSIONS ${CASTOR_HEADER_PERMS})
+if (${COMPILE_SERVER} STREQUAL "1")
+  ################################################################################
+  # Installation of header files for package castor-build-headers
+  ################################################################################
+  
+  # Required by xrootd-xcastor2fs and castor-srmv2
+  install(FILES
+    BaseObject.hpp
+    Constants.hpp
+    IObject.hpp
+    IService.hpp
+    Services.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    client/BaseClient.hpp
+    client/IResponseHandler.hpp
+    client/VectorResponseHandler.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/client
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    dlf/Dlf.hpp
+    dlf/IPAddress.hpp
+    dlf/Message.hpp
+    dlf/Param.hpp
+    dlf/TimeStamp.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/dlf
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    exception/Communication.hpp
+    exception/Exception.hpp
+    exception/Internal.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/exception
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    io/ServerSocket.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/io
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    rh/Client.hpp
+    rh/FileResponse.hpp
+    rh/IOResponse.hpp
+    rh/Response.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/rh
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    stager/DiskCopyStatusCodes.hpp
+    stager/FileRequest.hpp
+    stager/ICommonSvc.hpp
+    stager/Request.hpp
+    stager/StageGetRequest.hpp
+    stager/StagePrepareToGetRequest.hpp
+    stager/StagePrepareToPutRequest.hpp
+    stager/StagePutRequest.hpp
+    stager/SubRequestGetNextStatusCodes.hpp
+    stager/SubRequest.hpp
+    stager/SubRequestStatusCodes.hpp
+    stager/TapeVid.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/stager
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  # Required by xrootd-xcastor2fs
+  install(FILES  io/AbstractSocket.hpp
+    io/AbstractTCPSocket.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/io
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    stager/IJobSvc.hpp
+    stager/StagePrepareToUpdateRequest.hpp
+    stager/StageUpdateRequest.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/stager
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  # Required by castor-srmv2
+  install(FILES
+    BaseAddress.hpp
+    BaseCnvSvc.hpp
+    BaseSvc.hpp
+    CnvFactory.hpp
+    Converters.hpp
+    Factories.hpp
+    IAddress.hpp
+    IClient.hpp
+    ICnvFactory.hpp
+    ICnvSvc.hpp
+    IConverter.hpp
+    IFactory.hpp
+    ISvcFactory.hpp
+    MessageAck.hpp
+    ObjectSet.hpp
+    SvcFactory.hpp
+    System.hpp
+    VectorAddress.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    db/DbBaseObj.hpp
+    db/DbCnvSvc.hpp
+    db/DbParamsSvc.hpp
+    db/IDbResultSet.hpp
+    db/IDbStatement.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/db
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    db/cnv/DbBaseCnv.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/db/cnv
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    db/ora/OraCnvSvc.hpp
+    db/ora/OraCommonSvc.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/db/ora
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    exception/InvalidArgument.hpp
+    exception/NoEntry.hpp
+    exception/OutOfMemory.hpp
+    exception/SQLError.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/exception
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    io/ClientSocket.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/io
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    metrics/Counter.hpp
+    metrics/Histogram.hpp
+    metrics/MetricsCollector.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/metrics
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    query/DiskPoolQueryType.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/query
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    rh/FileQryResponse.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/rh
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    server/BaseDaemon.hpp
+    server/BaseServer.hpp
+    server/BaseThreadPool.hpp
+    server/DynamicThreadPool.hpp
+    server/IThread.hpp
+    server/ListenerThreadPool.hpp
+    server/Mutex.hpp
+    server/NotifierThread.hpp
+    server/Queue.hpp
+    server/SelectProcessThread.hpp
+    server/SignalThreadPool.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/server
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+  
+  install(FILES
+    stager/NsFileId.hpp
+    stager/QryRequest.hpp
+    stager/QueryParameter.hpp
+    stager/RequestQueryType.hpp
+    stager/StageAbortRequest.hpp
+    stager/StageFileQueryRequest.hpp
+    stager/StageRmRequest.hpp
+    stager/SvcClass.hpp
+    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/stager
+    PERMISSIONS ${CASTOR_HEADER_PERMS})
+endif (${COMPILE_SERVER} STREQUAL "1")

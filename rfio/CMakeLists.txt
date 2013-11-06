@@ -77,23 +77,25 @@ foreach(CLT ${RFIO_CLI_CLIENTS})
   CastorInstallExeManPage(${CLT})
 endforeach(CLT)
 
-################################################################################
-# Rules to build and install the server rfiod, man pages and config files
-################################################################################
-
-set(RFIOD_SRC_FILES Csemaphore.c rfio_serv.c rfio_calls.c rfio_call64.c rfio_fcalls.c
-  rfio_callhandlers.c switch_req.c checkkey.c fio.c rfstatfs.c alrm.c
-  stager_util.c stager_messages.c stager_extern_globals.c stager_uuid.c 
-  rfio_alignedbuf.c rfio_xfsprealloc.c)
-add_executable(rfiod ${RFIOD_SRC_FILES})
-target_link_libraries(rfiod castorcommon castorns castordlf castorsecurity
-  castorclient castorrfio)
-set_target_properties(rfiod PROPERTIES
-  LINK_FLAGS "-lcrypto -ldl -lz")
-install(TARGETS rfiod DESTINATION ${CASTOR_DEST_BIN_DIR})
-
-CastorInstallExeManPage(rfiod)
-CastorInstallInitScript(rfiod)
-CastorInstallSysconfigExample(rfiod)
-CastorInstallLogrotate(castor-rfio-server)
-CastorInstallDir(/var/lib/rfiod)
+if (${COMPILE_SERVER} STREQUAL "1")
+  ##############################################################################
+  # Rules to build and install the server rfiod, man pages and config files
+  ##############################################################################
+  
+  set(RFIOD_SRC_FILES Csemaphore.c rfio_serv.c rfio_calls.c rfio_call64.c 
+    rfio_fcalls.c rfio_callhandlers.c switch_req.c checkkey.c fio.c rfstatfs.c 
+    alrm.c stager_util.c stager_messages.c stager_extern_globals.c stager_uuid.c 
+    rfio_alignedbuf.c rfio_xfsprealloc.c)
+  add_executable(rfiod ${RFIOD_SRC_FILES})
+  target_link_libraries(rfiod castorcommon castorns castordlf castorsecurity
+    castorclient castorrfio)
+  set_target_properties(rfiod PROPERTIES
+    LINK_FLAGS "-lcrypto -ldl -lz")
+  install(TARGETS rfiod DESTINATION ${CASTOR_DEST_BIN_DIR})
+  
+  CastorInstallExeManPage(rfiod)
+  CastorInstallInitScript(rfiod)
+  CastorInstallSysconfigExample(rfiod)
+  CastorInstallLogrotate(castor-rfio-server)
+  CastorInstallDir(/var/lib/rfiod)
+endif (${COMPILE_SERVER} STREQUAL "1")

@@ -6,7 +6,12 @@
 
 # Partial compilations
 #---------------------
+# rpmbuild --define "clientonly 1" ...
+%if 0%{?clientonly:1} > 0
+%define compile_server 0
+%else
 %define compile_server @COMPILE_SERVER@
+%endif
 
 # General settings
 #-----------------
@@ -20,6 +25,7 @@ License: http://cern.ch/castor/DIST/CONDITIONS
 Group: Application/Castor
 BuildRoot: %{_builddir}/%{name}-%{version}-root
 # only build debug info if you're building the whole code
+
 %if %compile_server
 %else
   %define debug_package %{nil}
@@ -36,9 +42,7 @@ The CASTOR Project stands for CERN Advanced STORage Manager, and its goal is to 
 
 %build
 
-# rpmbuild --define "clientonly 1" ...
 %if 0%{?clientonly:1} > 0
-%define compile_server 0
 # Suppress oracompile.py warnings in clientonly mode
 export ORACOMPILE_OPTIONS="--quiet"
 %endif
@@ -51,7 +55,7 @@ export MINOR_CASTOR_VERSION
 mkdir -p build
 cd build
 # The cmake step does the selection between client/server compilation or just client
-MAJOR_CASTOR_VERSION=${MAJOR_CASTOR_VERSION} MINOR_CASTOR_VERSION=${MINOR_CASTOR_VERSION} cmake .. -DCOMPILE_PACKAGING:STRING=0 -DCOMPILE_SERVER:STRING=@COMPILE_SERVER@
+MAJOR_CASTOR_VERSION=${MAJOR_CASTOR_VERSION} MINOR_CASTOR_VERSION=${MINOR_CASTOR_VERSION} cmake .. -DCOMPILE_PACKAGING:STRING=0 -DCOMPILE_SERVER:STRING=%{compile_server}
 %{__make} -s %{_smp_mflags}
 
 %install
@@ -69,4 +73,4 @@ cd build
 %{__rm} -rf $RPM_BUILD_ROOT
 %{__rm} -rf $RPM_BUILD_DIR/%{name}-%{version}
 
-# The following will be filled dynamically with the rule: make rpm, or make tar
+# The following will be filled dynamically with the rule: makespec.in.sh

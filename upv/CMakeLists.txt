@@ -51,17 +51,20 @@ foreach(CLI ${UPV_CLI_PROGS})
 endforeach(CLI)
 install(TARGETS ${UPV_CLI_PROGS} DESTINATION ${CASTOR_DEST_BIN_DIR})
 
+if (${COMPILE_SERVER} STREQUAL "1")
+
 CastorAddProC(Cupv_oracle_ifce)
-set(CUPVD_SOURCE_FILES Cupv_main.c Cupv_oracle_ifce.c Cupv_procreq.c sendrep.c
-  Cupv_util.c Cupvlogit.c)
-add_executable(cupvd ${CUPVD_SOURCE_FILES})
-target_link_libraries(cupvd castorcommon castorupv)
-set_target_properties(cupvd PROPERTIES
-  COMPILE_FLAGS ${ORACLE_CPPFLAGS}
-  LINK_FLAGS "-L${ORACLE_LIBDIR} -lclntsh")
-install(TARGETS cupvd DESTINATION ${CASTOR_DEST_BIN_DIR})
-CastorInstallAdmManPage(cupvd)
-CastorInstallConfigFile(CUPV)
-CastorInstallInitScript(cupvd)
-CastorInstallSysconfigExample(cupvd)
-CastorInstallLogrotate(castor-upv-server)
+  set(CUPVD_SOURCE_FILES Cupv_main.c Cupv_oracle_ifce.c Cupv_procreq.c sendrep.c
+    Cupv_util.c Cupvlogit.c)
+  add_executable(cupvd ${CUPVD_SOURCE_FILES})
+  target_link_libraries(cupvd castorcommon castorupv)
+  set_target_properties(cupvd PROPERTIES
+    COMPILE_FLAGS ${ORACLE_CPPFLAGS}
+    LINK_FLAGS "-L${ORACLE_LIBDIR} -lclntsh")
+  install(TARGETS cupvd DESTINATION ${CASTOR_DEST_BIN_DIR})
+  CastorInstallAdmManPage(cupvd)
+  CastorInstallConfigFile(CUPV)
+  CastorInstallInitScript(cupvd)
+  CastorInstallSysconfigExample(cupvd)
+  CastorInstallLogrotate(castor-upv-server)
+endif (${COMPILE_SERVER} STREQUAL "1")

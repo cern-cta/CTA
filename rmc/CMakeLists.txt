@@ -22,18 +22,21 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-################################################################################
-# Rules to build and install libcastorrmc.so
-################################################################################
-set (RMC_LIB_SRC_FILES rmc_dismount.c rmc_errmsg.c rmc_export.c
-  rmc_find_cartridge.c rmc_get_geometry.c rmc_import.c rmc_mount.c
-  rmc_read_elem_status.c send2rmc.c)
-add_library (castorrmc SHARED ${RMC_LIB_SRC_FILES})
-set_target_properties (castorrmc
-  PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
-target_link_libraries (castorrmc castorcommon)
-install (TARGETS castorrmc LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
-  NAMELINK_SKIP)
+if (${COMPILE_SERVER} STREQUAL "1")
+  ################################################################################
+  # Rules to build and install libcastorrmc.so
+  ################################################################################
+  set (RMC_LIB_SRC_FILES rmc_dismount.c rmc_errmsg.c rmc_export.c
+    rmc_find_cartridge.c rmc_get_geometry.c rmc_import.c rmc_mount.c
+    rmc_read_elem_status.c send2rmc.c)
+  add_library (castorrmc SHARED ${RMC_LIB_SRC_FILES})
+  set_target_properties (castorrmc
+    PROPERTIES SOVERSION ${MAJOR_CASTOR_VERSION})
+  target_link_libraries (castorrmc castorcommon)
+  install (TARGETS castorrmc LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
+    NAMELINK_SKIP)
+endif (${COMPILE_SERVER} STREQUAL "1")
+
 CastorInstallLibManPage (rmc_dismount)
 CastorInstallLibManPage (rmc_export)
 CastorInstallLibManPage (rmc_find_cartridge)
@@ -43,23 +46,26 @@ CastorInstallLibManPage (rmc_mount)
 CastorInstallLibManPage (rmc_read_elem_status)
 CastorInstallLibManPage (rmc_seterrbuf)
 
-################################################################################
-# Rules to build and install rmcd
-################################################################################
-set (RMCD_SRC_FILES rmc_serv.c rmc_procreq.c rmc_logit.c rmc_logreq.c
-  rmc_marshall_element.c rmc_sendrep.c rmc_smcsubr.c rmc_send_scsi_cmd.c)
-add_executable (rmcd ${RMCD_SRC_FILES})
-target_link_libraries (rmcd castorcommon castorupv)
-install (TARGETS rmcd DESTINATION ${CASTOR_DEST_BIN_DIR})
-CastorInstallAdmManPage (rmcd)
-CastorInstallLogrotate (castor-rmc-server)
-CastorInstallSysconfigExample (rmcd)
-CastorInstallInitScript (rmcd)
 
-################################################################################
-# Rules to build and install smc
-################################################################################
-add_executable (smc smc.c)
-target_link_libraries (smc castorcommon castorrmc)
-install (TARGETS smc DESTINATION ${CASTOR_DEST_BIN_DIR})
-CastorInstallExeManPage (smc)
+if (${COMPILE_SERVER} STREQUAL "1")
+  ##############################################################################
+  # Rules to build and install rmcd
+  ##############################################################################
+  set (RMCD_SRC_FILES rmc_serv.c rmc_procreq.c rmc_logit.c rmc_logreq.c
+    rmc_marshall_element.c rmc_sendrep.c rmc_smcsubr.c rmc_send_scsi_cmd.c)
+  add_executable (rmcd ${RMCD_SRC_FILES})
+  target_link_libraries (rmcd castorcommon castorupv)
+  install (TARGETS rmcd DESTINATION ${CASTOR_DEST_BIN_DIR})
+  CastorInstallAdmManPage (rmcd)
+  CastorInstallLogrotate (castor-rmc-server)
+  CastorInstallSysconfigExample (rmcd)
+  CastorInstallInitScript (rmcd)
+
+  ##############################################################################
+  # Rules to build and install smc
+  ##############################################################################
+  add_executable (smc smc.c)
+  target_link_libraries (smc castorcommon castorrmc)
+  install (TARGETS smc DESTINATION ${CASTOR_DEST_BIN_DIR})
+  CastorInstallExeManPage (smc)
+endif (${COMPILE_SERVER} STREQUAL "1")
