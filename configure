@@ -51,6 +51,7 @@ echo "### Customizing build directory"
 #
 ## Replace __X__ macros in patchlevel.h
 #
+cp h/patchlevel.h.imake h/patchlevel.h
 perl -pi -e s/\ \ __MAJORVERSION__/${a}/ h/patchlevel.h
 perl -pi -e s/\ \ __MINORVERSION__/${b}/ h/patchlevel.h
 perl -pi -e s/\ \ __MAJORRELEASE__/${c}/ h/patchlevel.h
