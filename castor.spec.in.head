@@ -74,6 +74,6 @@ cd build
 %{__rm} -rf $RPM_BUILD_DIR/%{name}-%{version}
 
 
-#%check
-#cd build
+%check
+cd build
 # The following will be filled dynamically with the rule: makespec.in.sh

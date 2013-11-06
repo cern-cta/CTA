@@ -1,2 +1,2 @@
-test/unitTest
-valgrind --leak-check=full --show-reachable=yes --error-exitcode=1 test/unitTest
+castor/tape/tapeserver/test/unitTest
+valgrind --leak-check=full --show-reachable=yes --error-exitcode=1 castor/tape/tapeserver/test/unitTest
