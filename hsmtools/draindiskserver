@@ -216,10 +216,10 @@ def getFileSystems(stcur, shouldNotBeEmpty=False):
     unknownTargets, diskServerIds = castor_tools.parseAndCheckTargets(targets, stcur)
     # and complain if some are unknown
     if unknownTargets:
-        print 'WARNING : the following diskpools/diskservers do not exist : ' + \
+        print 'ERROR : the following diskpools/diskservers do not exist : ' + \
               ', '.join(unknownTargets)
-        if not diskServerIds:
-            sys.exit(1)
+        print 'Giving up'
+        usage(1)
     if not diskServerIds:
         if shouldNotBeEmpty:
             print 'None of the provided diskpools/diskservers could be found. Giving up'
