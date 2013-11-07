@@ -8,6 +8,14 @@
   This is a minor release bringing a number of bug fixes on top of the previous
   one.
 
+  CASTOR Core Framework
+  ---------------------
+
+  [Features]
+
+     bug #103106: RFE: mark rebalancing transfers as such in listtransfer
+
+
   CASTOR Tape
   -----------
 

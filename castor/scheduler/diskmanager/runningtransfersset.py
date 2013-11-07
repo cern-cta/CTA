@@ -459,7 +459,7 @@ class RunningTransfersSet(object):
         transfer = rTransfer.transfer
         if not reqUser or transfer.user == transfer.user:
           res.append((transfer.transferId, transfer.fileId, rTransfer.scheduler,
-                      transfer.user, 'RUN', transfer.protocol, transfer.creationTime,
+                      transfer.user, 'RUN', TransferType.toPreciseStr(transfer), transfer.creationTime,
                       rTransfer.startTime))
     finally:
       self.lock.release()

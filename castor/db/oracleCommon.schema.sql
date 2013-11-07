@@ -1250,7 +1250,7 @@ ALTER TABLE DrainingErrors
  *   nsOpenTime : the nsOpenTime of the castorFile when this job was created
  *                Allows to detect if the file has been overwritten during replication
  *   destSvcClass : the destination service class
- *   replicationType : the type of replication involved (user, internal or draining)
+ *   replicationType : the type of replication involved (user, internal, draining or rebalancing)
  *   replacedDcId : in case of draining, the replaced diskCopy to be dropped
  *   destDcId : the destination diskCopy
  *   drainingJob : the draining job behind this d2dJob. Not NULL only if replicationType is DRAINING'
