@@ -96,7 +96,7 @@ class SynchronizerThread(threading.Thread):
         if transfersToFail:
           # in case of massive failures, weprevent ORACLE to complain about too
           # big buffers by only taking the first 10000
-          transfersToFail = transfersToFail[:10000]
+          transfersToFail = transfersToFail[:1000]
           # get back the fileids for the logs. We need to go back to the DB just for this
           conn = self.dbConnection(False)
           fileIdsCur = conn.cursor()
