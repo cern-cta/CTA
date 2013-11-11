@@ -74,6 +74,7 @@
      #102830 RFE: Remove unused accounting from the tape server software
      #102831 RFE: Remove the reason argument from tpconfig
      #102939 RFE: Remove the castor-sacct package
+     #103138 RFE: rtcpd should not space the tape backwards and forwards when recalling
 
   [Code Maintenance]
 
