@@ -48,8 +48,23 @@ int checkeofeov (int	tapefd,
 		serrno = ETLBL;
 		return (-1);
 	}
-	if ((c = skiptpfb (tapefd, path, 1)) < 0) return (c);
-	if ((c = skiptpff (tapefd, path, 1)) < 0) return (c);
+
+	/********************************************************************/
+	/* IMPORTANT  - S. Murray 11 Nov 2013                               */
+	/*                                                                  */
+	/* There is no need to read to the end of the trailer file, in      */
+	/* other words there is no need to read the EOF2 label, the UTL1    */
+	/* label and the tapemark.  The close of the file via the st driver */
+	/* will space the drive over the next tapemark.                     */
+	/*                                                                  */
+	/* A prevous version of this code did the following two actions     */
+	/* which were not needed and in some cases caused a delay of 3      */
+	/* seconds due to the drive coping with skipping backwards and then */
+	/* skipping forwards.                                               */
+	/*     if ((c = skiptpfb (tapefd, path, 1)) < 0) return (c);        */
+	/*     if ((c = skiptpff (tapefd, path, 1)) < 0) return (c);        */
+	/********************************************************************/
+
 	return (0);
 }
 
