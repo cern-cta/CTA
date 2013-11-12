@@ -581,7 +581,7 @@ END;
 /
 ALTER TABLE RecallJob
   ADD CONSTRAINT CK_RecallJob_Status
-  CHECK (status IN (0, 1, 2));
+  CHECK (status IN (1, 2, 3));
 
 /* Definition of the TapePool table
  *   name : the name of the TapePool

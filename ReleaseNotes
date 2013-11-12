@@ -11,6 +11,10 @@
   CASTOR Core Framework
   ---------------------
 
+  [Bug]
+
+     bug #103144: Bad constraint for status of RecallJobs
+
   [Features]
 
      bug #103106: RFE: mark rebalancing transfers as such in listtransfer

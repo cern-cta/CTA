@@ -328,7 +328,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_3');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_4');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -623,8 +623,7 @@ AS
   REPACK_JOB_STATS             CONSTANT VARCHAR2(2048) := 'repackManager: Repack processes statistics';
   REPACK_UNEXPECTED_EXCEPTION  CONSTANT VARCHAR2(2048) := 'handleRepackRequest: unexpected exception caught';
 
-  DRAINING_JOB_ONGOING         CONSTANT VARCHAR2(2048) := 'drainingManager: Draining jobs still starting, no new ones will be started for this round';
-  DRAINING_STARTED             CONSTANT VARCHAR2(2048) := 'drainingManager: Draining process started';
+  DRAINING_REFILL              CONSTANT VARCHAR2(2048) := 'drainRunner: Creating new replication jobs';
 
   DELETEDISKCOPY_RECALL        CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy was lost, about to recall from tape';
   DELETEDISKCOPY_REPLICATION   CONSTANT VARCHAR2(2048) := 'deleteDiskCopy: diskCopy was lost, about to replicate from another pool';
@@ -1297,7 +1296,7 @@ END;
 /
 ALTER TABLE RecallJob
   ADD CONSTRAINT CK_RecallJob_Status
-  CHECK (status IN (0, 1, 2));
+  CHECK (status IN (1, 2, 3));
 
 /* Definition of the TapePool table
  *   name : the name of the TapePool
@@ -1966,7 +1965,7 @@ ALTER TABLE DrainingErrors
  *   nsOpenTime : the nsOpenTime of the castorFile when this job was created
  *                Allows to detect if the file has been overwritten during replication
  *   destSvcClass : the destination service class
- *   replicationType : the type of replication involved (user, internal or draining)
+ *   replicationType : the type of replication involved (user, internal, draining or rebalancing)
  *   replacedDcId : in case of draining, the replaced diskCopy to be dropped
  *   destDcId : the destination diskCopy
  *   drainingJob : the draining job behind this d2dJob. Not NULL only if replicationType is DRAINING'
@@ -5368,7 +5367,7 @@ CREATE OR REPLACE PROCEDURE fixLastKnownFileName(inFileName IN VARCHAR2, inCfId 
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
-  UPDATE CastorFile SET lastKnownFileName = inFileName
+  UPDATE CastorFile SET lastKnownFileName = normalizePath(inFileName)
    WHERE id = inCfId;
 EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
   -- we have another file that already uses the new name of this one...
@@ -5377,7 +5376,7 @@ EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
   -- Note that this procedure will run in an autonomous transaction so that
   -- no dead lock can result from taking a second lock within this transaction
   dropReusedLastKnownFileName(inFileName);
-  UPDATE CastorFile SET lastKnownFileName = inFileName
+  UPDATE CastorFile SET lastKnownFileName = normalizePath(inFileName)
    WHERE id = inCfId;
 END;
 /
@@ -5437,49 +5436,56 @@ END;
 /
 
 /* PL/SQL method implementing selectCastorFile */
-CREATE OR REPLACE PROCEDURE selectCastorFileInternal (fId IN INTEGER,
-                                                      nh IN VARCHAR2,
-                                                      fc IN INTEGER,
-                                                      fs IN INTEGER,
-                                                      fn IN VARCHAR2,
-                                                      srId IN NUMBER,
+CREATE OR REPLACE PROCEDURE selectCastorFileInternal (inFileId IN INTEGER,
+                                                      inNsHost IN VARCHAR2,
+                                                      inClassId IN INTEGER,
+                                                      inFileSize IN INTEGER,
+                                                      inFileName IN VARCHAR2,
+                                                      inSrId IN NUMBER,
                                                       inNsOpenTime IN NUMBER,
-                                                      waitForLock IN BOOLEAN,
-                                                      rid OUT INTEGER,
-                                                      rfs OUT INTEGER) AS
-  previousLastKnownFileName VARCHAR2(2048);
-  fcId NUMBER;
-  varReqType INTEGER;
+                                                      inWaitForLock IN BOOLEAN,
+                                                      outId OUT INTEGER,
+                                                      outFileSize OUT INTEGER) AS
+  varPreviousLastKnownFileName VARCHAR2(2048);
+  varNsOpenTime NUMBER;
+  varFcId NUMBER;
 BEGIN
   -- Resolve the fileclass
   BEGIN
-    SELECT id INTO fcId FROM FileClass WHERE classId = fc;
+    SELECT id INTO varFcId FROM FileClass WHERE classId = inClassId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    RAISE_APPLICATION_ERROR (-20010, 'File class '|| fc ||' not found in database');
+    RAISE_APPLICATION_ERROR (-20010, 'File class '|| inClassId ||' not found in database');
   END;
   BEGIN
     -- try to find an existing file
-    SELECT id, fileSize, lastKnownFileName
-      INTO rid, rfs, previousLastKnownFileName
+    SELECT id, fileSize, lastKnownFileName, nsOpenTime
+      INTO outId, outFileSize, varPreviousLastKnownFileName, varNsOpenTime
       FROM CastorFile
-     WHERE fileId = fid AND nsHost = nh;
+     WHERE fileId = inFileId AND nsHost = inNsHost;
     -- take a lock on the file. Note that the file may have disappeared in the
     -- meantime, this is why we first select (potentially having a NO_DATA_FOUND
     -- exception) before we update.
-    IF waitForLock THEN
-      SELECT id INTO rid FROM CastorFile WHERE id = rid FOR UPDATE;
+    IF inWaitForLock THEN
+      SELECT id INTO outId FROM CastorFile WHERE id = outId FOR UPDATE;
     ELSE
-      SELECT id INTO rid FROM CastorFile WHERE id = rid FOR UPDATE NOWAIT;
+      SELECT id INTO outId FROM CastorFile WHERE id = outId FOR UPDATE NOWAIT;
     END IF;
     -- In case its filename has changed, fix it
-    IF fn != previousLastKnownFileName THEN
-      fixLastKnownFileName(fn, rid);
+    IF inFileName != varPreviousLastKnownFileName THEN
+      fixLastKnownFileName(inFileName, outId);
     END IF;
     -- The file is still there, so update timestamps
-    UPDATE CastorFile SET lastAccessTime = getTime() WHERE id = rid;
-    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
-     WHERE id = srId
-     RETURNING reqType INTO varReqType;
+    UPDATE CastorFile SET lastAccessTime = getTime() WHERE id = outId;
+    IF varNsOpenTime = 0 AND inNsOpenTime > 0 THEN
+      -- We have a CastorFile entry, but it had not been created for an open operation
+      -- (effectively, only a putDone operation on a non-existing file can do this).
+      -- On the contrary, now we have been called after an open() as inNsOpenTime > 0.
+      -- Therefore, we set the nsOpenTime and lastUpdateTime like in createCastorFile()
+      UPDATE CastorFile SET nsOpenTime = inNsOpenTime, lastUpdateTime = TRUNC(inNsOpenTime)
+       WHERE id = outId;
+    END IF;
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = outId
+     WHERE id = inSrId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- we did not find the file, let's try to create a new one.
     -- This may fail with a low probability (subtle race condition, see comments
@@ -5488,7 +5494,8 @@ BEGIN
       varSuccess BOOLEAN := False;
     BEGIN
       WHILE NOT varSuccess LOOP
-        varSuccess := createCastorFile(fId, nh, fcId, fs, fn, srId, inNsOpenTime, waitForLock, rid, rfs);
+        varSuccess := createCastorFile(inFileId, inNsHost, varFcId, inFileSize, inFileName,
+                                       inSrId, inNsOpenTime, inWaitForLock, outId, outFileSize);
       END LOOP;
     END;
   END;
@@ -5578,7 +5585,7 @@ BEGIN
   SELECT /*+ INDEX_RS_ASC(CastorFile I_CastorFile_LastKnownFileName) */ fileId, nshost, id
     INTO varFileId, varNsHost, varCfId
     FROM CastorFile
-   WHERE lastKnownFileName = inFileName;
+   WHERE lastKnownFileName = normalizePath(inFileName);
   -- validate this file against the NameServer
   BEGIN
     SELECT getPathForFileid@remotens(fileId) INTO varNsPath
@@ -7423,7 +7430,7 @@ CREATE OR REPLACE PROCEDURE updateDrainingJobOnD2dEnd(inDjId IN INTEGER, inFileS
   varNbSuccessFiles INTEGER;
   varStatus INTEGER;
 BEGIN
-  -- note the locking that insures consistency of the counters
+  -- note the locking that ensures consistency of the counters
   SELECT status, totalFiles, nbFailedBytes, nbSuccessBytes, nbFailedFiles, nbSuccessFiles
     INTO varStatus, varTotalFiles, varNbFailedBytes, varNbSuccessBytes, varNbFailedFiles, varNbSuccessFiles
     FROM DrainingJob
@@ -11852,7 +11859,10 @@ BEGIN
     -- check how many disk2DiskCopyJobs are already running for this draining job
     SELECT count(*) INTO varNbRunningJobs FROM Disk2DiskCopyJob WHERE drainingJob = dj.id;
     -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running
-    -- ones into account. Also Take the most important jobs first
+    -- ones into account. Also take the most important jobs first
+    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_REFILL, 0, '', 'stagerd',
+             'svcClass=' || getSvcClassName(dj.svcClass) || ' DrainReq=' ||
+             TO_CHAR(dj.id) || ' MaxNewJobsCount=' || TO_CHAR(varMaxNbOfSchedD2dPerDrain-varNbRunningJobs));
     FOR F IN (SELECT * FROM
                (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
                   FROM DiskCopy, CastorFile
@@ -11882,8 +11892,6 @@ END;
 /
 
 /* Procedure responsible for managing the draining process
- * note the locking that makes sure we are not running twice in parallel
- * as this will be restarted regularly by an Oracle job, but may take long to conclude
  */
 CREATE OR REPLACE PROCEDURE drainManager AS
   varTFiles INTEGER;
@@ -11904,7 +11912,9 @@ BEGIN
      WHERE fileSystem = dj.fileSystem
        AND status = dconst.DISKCOPY_VALID;
     UPDATE DrainingJob
-       SET totalFiles=varTFiles, totalBytes=varTBytes, status = dconst.DRAININGJOB_RUNNING
+       SET totalFiles = varTFiles,
+           totalBytes = nvl(varTBytes, 0),
+           status = decode(varTBytes, NULL, dconst.DRAININGJOB_FINISHED, dconst.DRAININGJOB_RUNNING)
      WHERE id = dj.id;
     COMMIT;
   END LOOP;
@@ -12692,7 +12702,7 @@ BEGIN
   -- insert the client information
   INSERT INTO Client (ipAddress, port, version, secure, id)
   VALUES (clientIP,clientPort,clientVersion,clientSecure,clientId);
-  -- Loop on query parameters
+  -- Loop on query parameters. Note that the array is never empty (see the C++ calling method).
   FOR i IN qpValues.FIRST .. qpValues.LAST LOOP
     -- get unique ids for the query parameter
     SELECT ids_seq.nextval INTO queryParamId FROM DUAL;
