@@ -50,12 +50,11 @@ int checkeofeov (int	tapefd,
 	}
 
 	/********************************************************************/
-	/* IMPORTANT  - S. Murray 11 Nov 2013                               */
+	/* IMPORTANT  - S. Murray 12 Nov 2013                               */
 	/*                                                                  */
-	/* There is no need to read to the end of the trailer file, in      */
-	/* other words there is no need to read the EOF2 label, the UTL1    */
-	/* label and the tapemark.  The close of the file via the st driver */
-	/* will space the drive over the next tapemark.                     */
+	/* There is no need to read to the end of the trailer file because  */
+	/* posittape() will call skiptpff (tapefd, path, 1) before trying   */
+	/* to read the the header labels of the next file.                  */
 	/*                                                                  */
 	/* A prevous version of this code did the following two actions     */
 	/* which were not needed and in some cases caused a delay of 3      */
