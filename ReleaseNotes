@@ -15,6 +15,7 @@
 
      bug #103144: Bad constraint for status of RecallJobs
      bug #103158: Bad DiskCopy status in createEmptyFile
+     bug #103162: Race condition between drainRunner and deleteDrainingJob
 
   [Features]
 
