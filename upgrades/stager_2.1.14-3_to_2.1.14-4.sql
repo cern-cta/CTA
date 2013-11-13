@@ -77,6 +77,81 @@ ALTER TABLE RecallJob
   ADD CONSTRAINT CK_RecallJob_Status
   CHECK (status IN (1, 2, 3));
 
+/* Revalidate changed PL/SQL code */
+/* PL/SQL method implementing createEmptyFile */
+CREATE OR REPLACE PROCEDURE createEmptyFile
+(cfId IN NUMBER, fileId IN NUMBER, nsHost IN VARCHAR2,
+ srId IN INTEGER, schedule IN INTEGER) AS
+  dcPath VARCHAR2(2048);
+  gcw NUMBER;
+  gcwProc VARCHAR(2048);
+  fsId NUMBER;
+  dcId NUMBER;
+  svcClassId NUMBER;
+  ouid INTEGER;
+  ogid INTEGER;
+  fsPath VARCHAR2(2048);
+BEGIN
+  -- update filesize overriding any previous value
+  UPDATE CastorFile SET fileSize = 0 WHERE id = cfId;
+  -- get an id for our new DiskCopy
+  dcId := ids_seq.nextval();
+  -- compute the DiskCopy Path
+  buildPathFromFileId(fileId, nsHost, dcId, dcPath);
+  -- find a fileSystem for this empty file
+  SELECT id, svcClass, euid, egid, name || ':' || mountpoint
+    INTO fsId, svcClassId, ouid, ogid, fsPath
+    FROM (SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
+                 FileSystem.id, Request.svcClass, Request.euid, Request.egid, DiskServer.name, FileSystem.mountpoint
+            FROM DiskServer, FileSystem, DiskPool2SvcClass,
+                 (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
+                         id, svcClass, euid, egid from StageGetRequest UNION ALL
+                  SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */
+                         id, svcClass, euid, egid from StagePrepareToGetRequest UNION ALL
+                  SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
+                         id, svcClass, euid, egid from StageUpdateRequest UNION ALL
+                  SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */
+                         id, svcClass, euid, egid from StagePrepareToUpdateRequest) Request,
+                  SubRequest
+           WHERE SubRequest.id = srId
+             AND Request.id = SubRequest.request
+             AND Request.svcclass = DiskPool2SvcClass.child
+             AND FileSystem.diskpool = DiskPool2SvcClass.parent
+             AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+             AND DiskServer.id = FileSystem.diskServer
+             AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+             AND DiskServer.hwOnline = 1
+        ORDER BY -- order by rate as defined by the function
+                 fileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
+                 -- finally use randomness to avoid preferring always the same FS
+                 DBMS_Random.value)
+   WHERE ROWNUM < 2;
+  -- compute it's gcWeight
+  gcwProc := castorGC.getRecallWeight(svcClassId);
+  EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(0); END;'
+    USING OUT gcw;
+  -- then create the DiskCopy
+  INSERT INTO DiskCopy
+    (path, id, filesystem, castorfile, status, importance,
+     creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
+  VALUES (dcPath, dcId, fsId, cfId, dconst.DISKCOPY_VALID, -1,
+          getTime(), getTime(), GCw, 0, 0, ouid, ogid);
+  -- link to the SubRequest and schedule an access if requested
+  IF schedule = 0 THEN
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET diskCopy = dcId WHERE id = srId;
+  ELSE
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+       SET diskCopy = dcId,
+           requestedFileSystems = fsPath,
+           xsize = 0, status = dconst.SUBREQUEST_READYFORSCHED,
+           getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED
+     WHERE id = srId;
+  END IF;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  raise_application_error(-20115, 'No suitable filesystem found for this empty file');
+END;
+/
+
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
 BEGIN

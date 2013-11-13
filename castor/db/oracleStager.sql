@@ -1624,7 +1624,7 @@ BEGIN
   INSERT INTO DiskCopy
     (path, id, filesystem, castorfile, status, importance,
      creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
-  VALUES (dcPath, dcId, fsId, cfId, dconst.CASTORFILE_DISKONLY, -1,
+  VALUES (dcPath, dcId, fsId, cfId, dconst.DISKCOPY_VALID, -1,
           getTime(), getTime(), GCw, 0, 0, ouid, ogid);
   -- link to the SubRequest and schedule an access if requested
   IF schedule = 0 THEN
