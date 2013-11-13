@@ -275,8 +275,7 @@ function (CastorSetLibraryVersions _name)
   SOVERSION ${MAJOR_CASTOR_VERSION})
 endfunction ()
 
-set (CMAKE_C_FLAGS
-  "-pthread -fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
+set (CMAKE_C_FLAGS "-fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
 
 if (APPLE)
   set (CMAKE_SHARED_LINKER_FLAGS
