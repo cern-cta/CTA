@@ -16,6 +16,18 @@
 #define CNS_MAXNBTHREADS 100  /* maximum number of threads */
 #define CNS_NBTHREADS    20
 
+/* redefinition of the syslog constants */
+/* one cannot use the original one as openlog and closelog functions collide */
+
+#define LOG_EMERG       0       /* system is unusable */
+#define LOG_ALERT       1       /* action must be taken immediately */
+#define LOG_CRIT        2       /* critical conditions */
+#define LOG_ERR         3       /* error conditions */
+#define LOG_WARNING     4       /* warning conditions */
+#define LOG_NOTICE      5       /* normal but significant condition */
+#define LOG_INFO        6       /* informational */
+#define LOG_DEBUG       7       /* debug-level messages */
+
 #define RETURN(x)                                                       \
   {                                                                     \
     if (thip->dbfd.tr_started) {                                        \
@@ -146,7 +158,7 @@ EXTERN_C int sendrep (int, int, ...);
 
 EXTERN_C int openlog (const char *, const char *);
 EXTERN_C int closelog (void);
-EXTERN_C int nslogit (const char *, ...);
+EXTERN_C int nslogit (const int, const char *, ...);
 EXTERN_C int nslogreq (struct Cns_srv_request_info *, const char *, const int);
 
 EXTERN_C int Cns_abort_tr (struct Cns_dbfd *);

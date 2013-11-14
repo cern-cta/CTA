@@ -578,7 +578,7 @@ int Cns_delete_segment_metadata(struct Cns_srv_thread_info *thip,
                                 struct Cns_seg_metadata *smd_entry,
                                 Cns_dbrec_addr *rec_addr)
 {
-  nslogit("MSG=\"Unlinking segment\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu "
+  nslogit(LOG_INFO, "MSG=\"Unlinking segment\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu "
           "CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d Status=\"%c\" "
           "TPVID=%s Side=%d Fseq=%d BlockId=\"%02x%02x%02x%02x\" "
           "ChecksumType=\"%s\" ChecksumValue=\"%lx\"",
@@ -600,7 +600,7 @@ int Cns_delete_file_metadata(struct Cns_srv_thread_info *thip,
                              Cns_dbrec_addr *rec_addr)
 {
   if (fmd_entry->filemode & S_IFREG) {
-    nslogit("MSG=\"Unlinking file\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu "
+    nslogit(LOG_INFO, "MSG=\"Unlinking file\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu "
             "ParentFileId=%llu Guid=\"%s\" Name=\"%s\" FileMode=%d Nlink=%d "
             "OwnerUid=%d OwnerGid=%d FileSize=%d Atime=%lld Mtime=%lld "
             "Ctime=%lld FileClass=%d Status=\"%c\" ChecksumType=\"%s\" "
@@ -3300,7 +3300,7 @@ int Cns_srv_updateseg_checksum(int magic,
       old_smd_entry.fseq != fseq)
     RETURN (SEENTRYNFND);
 
-  nslogit("MSG=\"Old segment information\" REQID=%s NSHOSTNAME=%s "
+  nslogit(LOG_INFO, "MSG=\"Old segment information\" REQID=%s NSHOSTNAME=%s "
           "NSFILEID=%llu CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d "
           "Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
           "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
@@ -3315,7 +3315,7 @@ int Cns_srv_updateseg_checksum(int magic,
 
   /* Checking that the segment has no checksum */
   if (old_smd_entry.checksum_name[0] != '\0') {
-    nslogit("MSG=\"Missing checksum information, segment metadata cannot be "
+    nslogit(LOG_ERR, "MSG=\"Missing checksum information, segment metadata cannot be "
             "updated\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu ",
             reqinfo->requuid, nshostname, old_smd_entry.s_fileid);
     RETURN(EPERM);
@@ -3347,14 +3347,14 @@ int Cns_srv_updateseg_checksum(int magic,
      * specified
      */
     if (!checksum_ok && smd_entry.checksum != 0) {
-      nslogit("MSG=\"No checksum value defined for checksum type, setting "
+      nslogit(LOG_INFO, "MSG=\"No checksum value defined for checksum type, setting "
               "checksum to 0\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu",
               reqinfo->requuid, nshostname, smd_entry.s_fileid);
       smd_entry.checksum = 0;
     }
   }
 
-  nslogit("MSG=\"New segment information\" REQID=%s NSHOSTNAME=%s "
+  nslogit(LOG_INFO, "MSG=\"New segment information\" REQID=%s NSHOSTNAME=%s "
           "NSFILEID=%llu CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d "
           "Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
           "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
@@ -3447,7 +3447,7 @@ int Cns_srv_replaceseg(int magic,
       old_smd_entry.fseq != fseq)
     RETURN (SEENTRYNFND);
 
-  nslogit("MSG=\"Old segment information\" REQID=%s NSHOSTNAME=%s "
+  nslogit(LOG_INFO, "MSG=\"Old segment information\" REQID=%s NSHOSTNAME=%s "
           "NSFILEID=%llu CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d "
           "Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
           "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
@@ -3497,14 +3497,14 @@ int Cns_srv_replaceseg(int magic,
      * specified
      */
     if (!checksum_ok && smd_entry.checksum != 0) {
-      nslogit("MSG=\"No checksum value defined for checksum type, setting "
+      nslogit(LOG_INFO, "MSG=\"No checksum value defined for checksum type, setting "
               "checksum to 0\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu",
               reqinfo->requuid, nshostname, smd_entry.s_fileid);
       smd_entry.checksum = 0;
     }
   }
 
-  nslogit("MSG=\"New segment information\" REQID=%s NSHOSTNAME=%s "
+  nslogit(LOG_INFO, "MSG=\"New segment information\" REQID=%s NSHOSTNAME=%s "
           "NSFILEID=%llu CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d "
           "Status=\"%c\" TPVID=%s Side=%d Fseq=%d "
           "BlockId=\"%02x%02x%02x%02x\" ChecksumType=\"%s\" "
@@ -4108,7 +4108,7 @@ int Cns_srv_setfsizecs(int magic,
   if ((strcmp(filentry.csumtype, "PA") == 0 && strcmp(csumtype, "AD") == 0)) {
     /* We have predefined checksums then should check them with new ones */
     if (strcmp(filentry.csumvalue,csumvalue)!=0) {
-      nslogit("MSG=\"Predefined file checksum mismatch\" REQID=%s "
+      nslogit(LOG_ERR, "MSG=\"Predefined file checksum mismatch\" REQID=%s "
               "NSHOSTNAME=%s NSFILEID=%llu NewChecksum=\"0x%s\" "
               "ExpectedChecksum=\"0x%s\"",
               reqinfo->requuid, nshostname, filentry.fileid, csumvalue,
@@ -5141,7 +5141,7 @@ int Cns_srv_openx(char *req_data,
     fmd_entry.fileclass = parent_dir.fileclass;
     if (classid > 0) {
       if (Cns_get_class_by_id (&thip->dbfd, classid, &class_entry, 0, NULL)) {
-        nslogit("MSG=\"Unable to find file class\" REQID=%s ClassId=%d "
+        nslogit(LOG_ERR, "MSG=\"Unable to find file class\" REQID=%s ClassId=%d "
                 "RtnCode=%d", reqinfo->requuid, classid, serrno);
         RETURN (serrno);
       }
@@ -5310,7 +5310,7 @@ int Cns_srv_closex(char *req_data,
   if ((strcmp (fmd_entry.csumtype, "PA") == 0) &&
       (strcmp (csumtype, "AD") == 0)) {
     if (strcmp (fmd_entry.csumvalue, csumvalue) != 0) {
-      nslogit("MSG=\"Predefined file checksum mismatch\" REQID=%s "
+      nslogit(LOG_ERR, "MSG=\"Predefined file checksum mismatch\" REQID=%s "
               "NSHOSTNAME=%s NSFILEID=%llu NewChecksum=\"0x%s\" "
               "ExpectedChecksum=\"0x%s\"",
               reqinfo->requuid, nshostname, fmd_entry.fileid, csumvalue,

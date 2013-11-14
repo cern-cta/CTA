@@ -41,7 +41,7 @@ Cns_oracle_error(char *func,
     err_msg[err_len - 1] = '\0';
   }
 
-  nslogit("MSG=\"Error: Encountered ORACLE error\" Method=\"%s\" "
+  nslogit(LOG_ERR, "MSG=\"Error: Encountered ORACLE error\" Method=\"%s\" "
           "Function=\"%s\" Error=\"%.*s\"",
           sql_method, func, err_len, err_msg);
 
@@ -1747,7 +1747,7 @@ int Cns_opendb(struct Cns_dbfd *dbfd)
   db_user[0] = db_pwd[0] = db_srv[0] = '\0';
   serrno = 0;
   if ((fp = fopen(nsconfigfile, "r")) == NULL) {
-    nslogit("MSG=\"Error: Failed to open NSCONFIG\" Path=\"%s\" "
+    nslogit(LOG_ERR, "MSG=\"Error: Failed to open NSCONFIG\" Path=\"%s\" "
             "Function=\"%s\" Error=\"%s\"",
             nsconfigfile, func, strerror(errno));
     return (-1);
@@ -1775,7 +1775,7 @@ int Cns_opendb(struct Cns_dbfd *dbfd)
       (db_pwd[0]  == '\0') ||
       (db_srv[0]  == '\0') ||
       (db_name[0] == '\0')) {
-    nslogit("MSG=\"Error: Failed to extract database connect string\" "
+    nslogit(LOG_ERR, "MSG=\"Error: Failed to extract database connect string\" "
             "Path=\"%s\" Function=\"%s\"", nsconfigfile, func);
     return (-1);
   }
@@ -1786,7 +1786,7 @@ int Cns_opendb(struct Cns_dbfd *dbfd)
   } else {
     sprintf(db_connect, "%s/%s", db_user, db_pwd);
   }
-  nslogit("MSG=\"Attempting to connect to database\" "
+  nslogit(LOG_INFO, "MSG=\"Attempting to connect to database\" "
           "ConnectionDetails=\"%s/*******@%s\"", db_user, db_srv);
 
   EXEC SQL CONNECT :db_connect;
@@ -1804,11 +1804,11 @@ int Cns_opendb(struct Cns_dbfd *dbfd)
   switch (sqlca.sqlcode) {
   case 0: {
     if (strcmp(schema_version, CNSSCHEMAVERSION) != 0) {
-      nslogit("MSG=\"Warning: incorrect schema version detected\" "
+      nslogit(LOG_WARNING, "MSG=\"Warning: incorrect schema version detected\" "
               "SchemaVersion=\"%s\" RequiredVersion=\"%s\"",
               schema_version, CNSSCHEMAVERSION);
     }
-    nslogit("MSG=\"Connection successful\" SchemaVersion=\"%s\"",
+    nslogit(LOG_INFO, "MSG=\"Connection successful\" SchemaVersion=\"%s\"",
             schema_version);
     return 0;
   }
