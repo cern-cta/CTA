@@ -28,7 +28,6 @@
 /*-----------------------------------------------------------------------------*/
 #include <sys/types.h>
 #include <unistd.h>
-#include <dirent.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <memory.h>
@@ -69,6 +68,7 @@ extern "C" XrdAccAuthorize* XrdAccAuthorizeObject( XrdSysLogger* lp,
 class XrdSysError;
 class XrdSysLogger;
 class XrdSfsAio;
+class XrdxCastor2FsDirectory;
 
 namespace xcastor
 {
@@ -210,90 +210,6 @@ class XrdxCastor2FsGroupInfo
     virtual ~XrdxCastor2FsGroupInfo() {}
 };
 
-
-/******************************************************************************/
-/*              X r d x C a s t o r 2 F s D i r e c t o r y                   */
-/******************************************************************************/
-
-//------------------------------------------------------------------------------
-//! Class XrdxCastor2FsDirectory
-//------------------------------------------------------------------------------
-class XrdxCastor2FsDirectory : public XrdSfsDirectory, public LogId
-{
-  public:
-
-    //--------------------------------------------------------------------------
-    //! Constructor
-    //--------------------------------------------------------------------------
-    XrdxCastor2FsDirectory( char* user = 0, int MonID = 0 );
-
-
-    //--------------------------------------------------------------------------
-    //! Destructor
-    //--------------------------------------------------------------------------
-    virtual ~XrdxCastor2FsDirectory();
-
-
-    //--------------------------------------------------------------------------
-    //! Open the directory `path' and prepare for reading
-    //!
-    //! @param path fully qualified name of the directory to open.
-    //! @param cred authentication credentials, if any
-    //! @param info opaque information, if any
-    //!
-    //! @return SFS_OK upon success, otherwise SFS_ERROR
-    //!
-    //--------------------------------------------------------------------------
-    int open( const char*              dirName,
-              const XrdSecClientName*  client = 0,
-              const char*              opaque = 0 );
-
-
-    //--------------------------------------------------------------------------
-    //! Read the next directory entry
-    //!
-    //! @return Upon success, returns the contents of the next directory entry as
-    //!         a null terminated string. Returns a null pointer upon EOF or an
-    //!         error. To differentiate the two cases, getErrorInfo will return
-    //!         0 upon EOF and an actual error code (i.e., not 0) on error.
-    //!
-    //--------------------------------------------------------------------------
-    const char* nextEntry();
-
-
-    //--------------------------------------------------------------------------
-    //! Close the directory object
-    //!
-    //! @param cred authentication credentials, if any
-    //!
-    //! @return SFS_OK upon success and SFS_ERROR upon failure
-    //!
-    //--------------------------------------------------------------------------
-    int close();
-
-
-    //--------------------------------------------------------------------------
-    //! Get directory name 
-    //--------------------------------------------------------------------------
-    const char* FName() {
-      return ( const char* )fname;
-    }
-
-  private:
-
-    DIR*           dh;    ///< directory stream handle
-    char           ateof; ///< mark the end of dir entries
-    char*          fname; ///< directory name 
-    XrdOucString   entry; ///<
-
-    struct {
-      struct dirent d_entry; ///<
-      char   pad[MAXNAMLEN]; ///< This is only required for Solaris!
-    } dirent_full;
-
-    struct dirent* d_pnt; ///<
-
-};
 
 
 /******************************************************************************/
@@ -558,17 +474,13 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     //--------------------------------------------------------------------------
     //! Create new directory
     //--------------------------------------------------------------------------
-    XrdSfsDirectory* newDir( char* user = 0, int MonID = 0 ) {
-      return ( XrdSfsDirectory* )new XrdxCastor2FsDirectory( user, MonID );
-    }
+    XrdSfsDirectory* newDir(char* user = 0, int MonID = 0);
 
 
     //--------------------------------------------------------------------------
     //! Create new file
     //--------------------------------------------------------------------------
-    XrdSfsFile* newFile( char* user = 0, int MonID = 0 ) {
-      return ( XrdSfsFile* )new XrdxCastor2FsFile( user, MonID );
-    }
+    XrdSfsFile* newFile(char* user = 0, int MonID = 0);
 
 
     //--------------------------------------------------------------------------
@@ -921,11 +833,9 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     //! Get stage variables
     //--------------------------------------------------------------------------
     bool GetStageVariables( const char*   Path, 
-                            const char*   Opaque, 
                             XrdOucString& stagevariables, 
                             uid_t         client_uid, 
-                            gid_t         client_gid, 
-                            const char*   tident );
+                            gid_t         client_gid);
 
 
     //--------------------------------------------------------------------------
@@ -936,8 +846,7 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
                            XrdOucString  stagevariables, 
                            XrdOucString& stagehost, 
                            XrdOucString& serviceclass, 
-                           int           n, 
-                           const char*   tident );
+                           int           n);
 
 
     //--------------------------------------------------------------------------
@@ -1033,7 +942,6 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
 
     bool MapCernCertificates;
     XrdOucString GridMapFile;
-    XrdOucString LocationCacheDir;
     char* ConfigFN;  ///< path to config file 
 
     // we must check if all these things need to be thread safed with a mutex ...
@@ -1041,7 +949,6 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     static  XrdSysMutex               filesystemhosttablelock;
     static  XrdOucHash<XrdOucString>* nsMap;
     static  XrdOucHash<XrdOucString>* stagertable;
-    static  XrdOucHash<XrdOucString>* stagerpolicy;
     static  XrdOucHash<XrdOucString>* roletable;
     static  XrdOucHash<XrdOucString>* stringstore;
     static  XrdOucHash<XrdSecEntity>* secentitystore;
@@ -1065,7 +972,6 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     XrdSysMutex VomsMapMutex;            ///< protecting the vomsmap store hash
     XrdOucString xCastor2FsName;         ///< mount point of the catalog fs
     XrdOucString xCastor2FsTargetPort;   ///< xrootd port where redirections go on the OSTs -default is 1094
-    XrdOucString xCastor2FsLocatePolicy; ///< can be configured to read only from the primary FS, from the twin FS or balanced between both
 
     long long xCastor2FsDelayRead;   ///< if true, all reads get a default delay to come back later
     long long xCastor2FsDelayWrite;  ///< if true, all writes get a default dealy to come back later
@@ -1094,5 +1000,18 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     int mLogLevel; ///< log level from config file or set in the proc "trace" file
     static  XrdSysError* eDest;
 };
+
+
+/******************************************************************************/
+/*                        C o n v i n i e n c e                               */
+/******************************************************************************/
+
+//------------------------------------------------------------------------------
+// This helps to avoid memory leaks by strdup, we maintain a string hash to
+// keep all used user ids/group ids etc.
+//------------------------------------------------------------------------------
+
+// TO BE DROPPED
+char* STRINGSTORE(const char* __charptr__);
 
 #endif // __XCASTOR_FS_HH__

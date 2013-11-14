@@ -25,14 +25,16 @@ CPPFLAGS += -I$(XROOT_LOCATION)/include/xrootd -I$(XROOT_LOCATION)/include/xroot
 
 AddLdFlags( -L$(XROOT_LIB_LOCATION) -lstdc++ )
 
-XCASTOR2FS_SRCS= XrdxCastor2Fs.cpp        \
-                 XrdxCastor2FsConfig.cpp  \
-	         XrdxCastor2FsStats.cpp   \
-	         XrdxCastor2ServerAcc.cpp \
-                 XrdxCastor2Stager.cpp    \
-                 XrdxCastor2Proc.cpp      \
-                 XrdxCastorLogging.cpp    \
-                 XrdxCastorTiming.cpp     \
+XCASTOR2FS_SRCS= XrdxCastor2Fs.cpp          \
+                 XrdxCastor2FsFile.cpp      \
+                 XrdxCastor2FsDirectory.cpp \
+                 XrdxCastor2FsConfig.cpp    \
+	         XrdxCastor2FsStats.cpp     \
+	         XrdxCastor2ServerAcc.cpp   \
+                 XrdxCastor2Stager.cpp      \
+                 XrdxCastor2Proc.cpp        \
+                 XrdxCastorLogging.cpp      \
+                 XrdxCastorTiming.cpp       \
                  XrdxCastorClient.cpp
 
 XCASTOR2FS_OBJS=$(XCASTOR2FS_SRCS:.cpp=.o)
@@ -43,6 +45,8 @@ DependsOnLibrary(ns,castorns)
 
 
 COMPILECPP(XrdxCastor2Fs.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)        
+COMPILECPP(XrdxCastor2FsFile.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)        
+COMPILECPP(XrdxCastor2FsDirectory.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)        
 COMPILECPP(XrdxCastor2FsConfig.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)
 COMPILECPP(XrdxCastor2FsStats.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error)  
 COMPILECPP(XrdxCastor2ServerAcc.cpp, -D_FILE_OFFSET_BITS=64 -Wno-error) 

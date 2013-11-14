@@ -132,7 +132,6 @@ XrdxCastorClient::Create()
 //------------------------------------------------------------------------------
 int 
 XrdxCastorClient::SendAsyncRequest(const std::string& userId,
-                                   const std::string& rhHost,
                                    unsigned int rhPort,
                                    castor::stager::Request* req,
                                    castor::client::IResponseHandler* rh,
@@ -188,6 +187,10 @@ XrdxCastorClient::SendAsyncRequest(const std::string& userId,
   }
 
   req->setMachine(hostName);
+
+  // Set the stager host to be the same machines as the stager and the XRootD
+  // redirector always run on the same machine
+  std::string rhHost = hostName;
 
   // Get the RH port
   if ((rhPort <= 0) || (rhPort > 65535))

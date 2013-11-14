@@ -463,11 +463,6 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
     void ThirdPartyCleanupOnRestart();
 
 
-    XrdSysMutex         MetaMutex;     ///< mutex to protect the UpdateMeta function
-    XrdSysMutex         PasswdMutex;   ///< mutex to protect the passwd expiry hash
-
-    static XrdOucHash<struct passwd>* passwdstore;               ///<
-
     XrdOucHash<XrdOucString> FileNameMap;    ///< keeping the mapping LFN->PFN for open files
     XrdSysMutex         FileNameMapLock;     ///< protecting the MAP hash for LFN->PFN
 

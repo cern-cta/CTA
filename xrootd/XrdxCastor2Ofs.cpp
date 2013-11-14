@@ -56,9 +56,6 @@ extern XrdOssSys*  XrdOfsOss;
 extern XrdOss*     XrdOssGetSS( XrdSysLogger*, const char*, const char* );
 extern XrdOucTrace OfsTrace;
 
-// global singletons
-XrdOucHash<struct passwd>* XrdxCastor2Ofs::passwdstore;
-
 
 //------------------------------------------------------------------------------
 // SfsGetFileSystem
@@ -77,7 +74,6 @@ extern "C"
 
     // Initialize the subsystems
     XrdxCastor2OfsFS.ConfigFN = ( configfn && *configfn ? strdup( configfn ) : 0 );
-    XrdxCastor2OfsFS.passwdstore = new XrdOucHash<struct passwd> ();
 
     if ( XrdxCastor2OfsFS.Configure( OfsEroute ) ) return 0;
 
@@ -482,6 +478,7 @@ XrdxCastor2OfsFile::XrdxCastor2OfsFile( const char* user, int MonID ) :
   IsThirdPartyStreamCopy = false;
   firstWrite = true;
   hasWrite = false;
+  // TODO: drop the stage host
   stagehost = "none";
   serviceclass = "none";
   reqid = "0";
@@ -1513,18 +1510,15 @@ XrdxCastor2OfsFile::Unlink()
 
   list.push_back(preparename.c_str());
   xcastor_debug("Informing about %s", preparename.c_str());
-
-  XrdxCastor2OfsFS.MetaMutex.Lock();
   XrdCl::XRootDStatus status = mdsclient->Prepare(list, XrdCl::PrepareFlags::Stage, 1, buffer); 
+  delete mdsclient;
 
   if (!status.IsOK()) {
     xcastor_err("Prepare response invalid.");
-    XrdxCastor2OfsFS.MetaMutex.UnLock();
     delete buffer;
     return XrdxCastor2OfsFS.Emsg("Unlink", error, ESHUTDOWN, "unlink ", FName());
   }
 
-  XrdxCastor2OfsFS.MetaMutex.UnLock();
   delete buffer;
   return SFS_OK;
 }
@@ -1586,17 +1580,15 @@ XrdxCastor2OfsFile::UpdateMeta()
   list.push_back(preparename.c_str());
   xcastor_debug("informing about %s", preparename.c_str());
 
-  XrdxCastor2OfsFS.MetaMutex.Lock();
   XrdCl::XRootDStatus status = mdsclient->Prepare(list, XrdCl::PrepareFlags::Stage, 1, buffer); 
+  delete mdsclient;
   
   if (!status.IsOK()) {
     xcastor_err("Prepare response invalid.");
-    XrdxCastor2OfsFS.MetaMutex.UnLock();
     delete buffer;
     return XrdxCastor2OfsFS.Emsg( "Unlink", error, ESHUTDOWN, "update mds size/modtime", FName());
   }
 
-  XrdxCastor2OfsFS.MetaMutex.UnLock();
   delete buffer;
   return SFS_OK;
 }

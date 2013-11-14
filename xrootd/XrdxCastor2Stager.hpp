@@ -253,9 +253,7 @@ class XrdxCastor2Stager : public LogId
                             const char* path,
                             const char* reqid,
                             const char* fileid,
-                            const char* nameserver,
-                            const char* stagehost,
-                            const char* serviceclass );
+                            const char* nameserver);
 };
 
 #endif // __XCASTOR_STAGER_HH__

@@ -59,12 +59,10 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
   Procfilesystem = "";
   ProcfilesystemSync = false;
   xCastor2FsTargetPort = "1094";
-  xCastor2FsLocatePolicy = "balanced";
   MapCernCertificates = false;
   xCastor2FsDelayRead = 0;
   xCastor2FsDelayWrite = 0;
   GridMapFile = "";
-  LocationCacheDir = "";
   long myPort = 0;
 
   {
@@ -320,15 +318,6 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
         }
       }
 
-      if ( !strcmp( "locatepolicy", var ) ) {
-        if ( ( !( val = config_stream.GetWord() ) ) || ( strcmp( "fs", val ) && strcmp( "twin", val ) && strcmp( "balanced", val ) ) ) {
-          Eroute.Emsg( "Config", "argument 2 for locatepolicy missing. Can be <fs>, <twin> or <balanced> " );
-          NoGo = 1;
-        } else {
-          xCastor2FsLocatePolicy = val;
-        }
-      }
-
       if ( !strcmp( "mapcerncertificates", var ) ) {
         if ( ( !( val = config_stream.GetWord() ) ) || ( strcmp( "true", val ) && strcmp( "false", val ) && strcmp( "1", val ) && strcmp( "0", val ) ) ) {
           Eroute.Emsg( "Config", "argument 2 for mapcerncertificates illegal or missing. Must be <true>,<false>,<1> or <0>!" );
@@ -376,40 +365,6 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
             }
           }
         }
-      }
-
-      if ( !strcmp( "stagerpolicy", var ) ) {
-        if ( ( !( val = config_stream.GetWord() ) ) ) {
-          Eroute.Emsg( "Config", "you have to give a stagerhost::svcclass tag and a policy ( schedall|schedread|schedwrite| )" );
-          NoGo = 1;
-        } else {
-          XrdOucString stagepair = val;
-
-          if ( ( !( val = config_stream.GetWord() ) ) || ( ( !strstr( val, "schedall" ) ) && ( !strstr( val, "schedread" ) ) && ( !strstr( val, "schedwrite" ) ) ) ) {
-            Eroute.Emsg( "Config", "you have to give a stagerhost::svcclass tag and a policy ( schedall|schedread|schedwrite| )" );
-            NoGo = 1;
-          } else {
-            if ( !stagertable->Find( stagepair.c_str() ) ) {
-              stagerpolicy->Add( stagepair.c_str(), new XrdOucString( val ) );
-              XrdOucString sayit;
-              sayit = stagepair;
-              sayit += " -> ";
-              sayit += val;
-              Eroute.Say( "=====> xcastor2.stagerpolicy : ", sayit.c_str() );
-            }
-          }
-        }
-      }
-
-      if ( !strcmp( "locationcache", var ) ) {
-        if ( ( !( val = config_stream.GetWord() ) ) || ( ::access( val, W_OK ) ) ) {
-          Eroute.Emsg( "Config", "I cannot access your location cache directory!" );
-          NoGo = 1;
-        } else {
-          LocationCacheDir = val;
-        }
-
-        Eroute.Say( "=====> xcastor2.locationcache : ", val );
       }
 
       if ( !strcmp( "subscribe", var ) ) {
@@ -483,7 +438,6 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
   XrdOucString sTokenLockTime = "";
   sTokenLockTime += TokenLockTime;
   Eroute.Say( "=====> xcastor2.tokenlocktime: ", sTokenLockTime.c_str(), "" );
-  Eroute.Say( "=====> xcastor2.locatepolicy : ", xCastor2FsLocatePolicy.c_str(), "" );
 
   if ( MapCernCertificates )
     Eroute.Say( "=====> xcastor2.mapcerncertificates : true", "", "" );

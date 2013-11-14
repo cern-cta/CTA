@@ -214,9 +214,9 @@ XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
                               struct ReqInfo* reqInfo,
                               struct RespInfo& respInfo)
 {
- xcastor_static_debug("op=%s uid=%i, gid=%i, path=%s, stagehost=%s, serviceclass=%s",
-                      opType.c_str(), reqInfo->mUid, reqInfo->mGid, reqInfo->mPath, 
-                      reqInfo->mStageHost, reqInfo->mServiceClass);
+ xcastor_static_debug("op=%s uid=%i, gid=%i, path=%s serviceclass=%s",
+                      opType.c_str(), reqInfo->mUid, reqInfo->mGid, 
+                      reqInfo->mPath, reqInfo->mServiceClass);
   // Build the user id
   std::stringstream sstr;
   const char* tident = error.getErrUser();
@@ -293,12 +293,12 @@ XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
   try
   {
     // Sending asynchronous get requests
-    xcastor_static_debug("op=%s path=%s, uid=%i, gid=%i, stagehost=%s, svc=%s",
-                         opType.c_str(), reqInfo->mPath, reqInfo->mUid, reqInfo->mGid, 
-                         reqInfo->mStageHost, reqInfo->mServiceClass);
+    xcastor_static_debug("op=%s path=%s, uid=%i, gid=%i, svc=%s",
+                         opType.c_str(), reqInfo->mPath, reqInfo->mUid, 
+                         reqInfo->mGid, reqInfo->mServiceClass);
 
-    int retc = XrdxCastor2FS->msCastorClient->SendAsyncRequest( user_id, 
-                    std::string(reqInfo->mStageHost), 0, request, rh, respvec);
+    int retc = XrdxCastor2FS->msCastorClient->SendAsyncRequest( user_id, 0, 
+                                                       request, rh, respvec);
 
     if (retc == SFS_ERROR)
     {
@@ -508,13 +508,9 @@ XrdxCastor2Stager::FirstWrite(XrdOucErrInfo& error,
                               const char*    path,
                               const char*    reqid,
                               const char*    fileid,
-                              const char*    nameserver,
-                              const char*    stagehost,
-                              const char*    serviceclass)
+                              const char*    nameserver)
 {
-  //const char* tident = error.getErrUser();
-  xcastor_static_debug("path=%s, stagehost=%s, sericeclass=%s",
-                       path, stagehost, serviceclass);
+  xcastor_static_debug("path=%s", path);
   castor::stager::SubRequest subReq;
   subReq.setId(atoll(reqid));
   castor::Services* cs2service = castor::BaseObject::services();
@@ -655,9 +651,9 @@ XrdxCastor2Stager::StagerQuery(XrdOucErrInfo& error,
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Process response received form the stager
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int 
 XrdxCastor2Stager::ProcessResponse(XrdOucErrInfo& error,
                                    struct xcastor::XrdxCastorClient::ReqElement*& respElem,
@@ -692,8 +688,7 @@ XrdxCastor2Stager::ProcessResponse(XrdOucErrInfo& error,
     std::stringstream sstr;
     sstr.str(std::string());
     sstr << "uid=" << (int)reqInfo->mUid << " gid=" << (int)reqInfo->mGid 
-         << " path=" << reqInfo->mPath << " stagehost=" << reqInfo->mStageHost 
-         << " serviceclass=" << reqInfo->mServiceClass;
+         << " path=" << reqInfo->mPath << " serviceclass=" << reqInfo->mServiceClass;
     XrdOucString ErrPrefix = sstr.str().c_str();
 
     xcastor_static_debug("received error errc=%i, errmsg=%s\%i, subreqid=%s, reqid=%s",
