@@ -275,6 +275,12 @@ Architecture: any
 Description: castor (Cern Advanced STORage system)
  Header files required by the build system
 
+Package: castor-slp-plugin
+Architecture: any
+Depends: python, python-rpyc >= 3.1
+Description: castor (Cern Advanced STORage system)
+ CASTOR plugin for the simple log producer
+
 Package: castor-cockpit
 Architecture: any
 Depends: logrotate, python >= 2.6, python-rpyc >= 3.1, Django < 1.4, Django-south, mysql-server, MySQL-python, httpd, mod_wsgi, thrift

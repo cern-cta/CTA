@@ -1,5 +1,5 @@
 COMM
-COMM                      monitoring/Imakefile
+COMM                      monitoring/mae/Imakefile
 COMM
 COMM This file is part of the Castor project.
 COMM See http://castor.web.cern.ch/castor
@@ -18,13 +18,12 @@ COMM along with this program; if not, write to the Free Software
 COMM Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 COMM
 COMM
-COMM Makefile for the CASTOR2 monitoring tools
+COMM Makefile for the CASTOR plugin to the simple log producer
 COMM
 COMM @author Castor Dev team, castor-dev@cern.ch
 
+InstallNonExecFile(castor_base_file_parser.py,/etc/simple-log-producer/plugins/,644)
+InstallNonExecFile(castor_rsyslogfile_header_parser.py,/etc/simple-log-producer/plugins/,644)
+InstallNonExecFile(castor_rsyslogfile_body_parser.py,/etc/simple-log-producer/plugins/,644)
+InstallNonExecFile(castor_rsyslogfile_oldheader_parser.py,/etc/simple-log-producer/plugins/,644)
 
-include LOCAL_PATH/cockpit/Makefile
-include LOCAL_PATH/mae/Makefile
-include LOCAL_PATH/slp-castor-plugins/Makefile
-include LOCAL_PATH/hbase-consumer/Makefile
-include LOCAL_PATH/lemon-sensor-py/Makefile
