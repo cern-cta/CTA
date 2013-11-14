@@ -212,6 +212,53 @@ BEGIN
 END;
 /
 
+/* update the db when a tape session is ended */
+CREATE OR REPLACE PROCEDURE tg_endTapeSession(inMountTransactionId IN NUMBER,
+                                              inErrorCode IN INTEGER) AS
+  varMjIds "numList";    -- recall/migration job Ids
+  varMountId INTEGER;
+BEGIN
+  -- Let's assume this is a migration mount
+  SELECT id INTO varMountId
+    FROM MigrationMount
+   WHERE mountTransactionId = inMountTransactionId
+   FOR UPDATE;
+  -- yes, it's a migration mount: delete it and detach all selected jobs
+  UPDATE MigrationJob
+     SET status = tconst.MIGRATIONJOB_PENDING,
+         VID = NULL,
+         mountTransactionId = NULL
+   WHERE mountTransactionId = inMountTransactionId
+     AND status = tconst.MIGRATIONJOB_SELECTED;
+  DELETE FROM MigrationMount
+   WHERE id = varMountId;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- was not a migration session, let's try a recall one
+  DECLARE
+    varVID VARCHAR2(2048);
+    varRjIds "numList";
+  BEGIN
+    SELECT vid INTO varVID
+      FROM RecallMount
+     WHERE mountTransactionId = inMountTransactionId
+     FOR UPDATE;
+    -- it was a recall mount
+    -- find and reset the all RecallJobs of files for this VID
+    UPDATE RecallJob
+       SET status = tconst.RECALLJOB_PENDING
+     WHERE castorFile IN (SELECT castorFile
+                            FROM RecallJob
+                           WHERE VID = varVID
+                             AND fileTransactionId IS NOT NULL);
+    DELETE FROM RecallMount WHERE vid = varVID;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Small infusion of paranoia ;-) We should never reach that point...
+    ROLLBACK;
+    RAISE_APPLICATION_ERROR (-20119, 'endTapeSession: no recall or migration mount found');
+  END;
+END;
+/
+
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
 BEGIN

@@ -35,6 +35,7 @@
 
      #103026 "showqueues" segfaults unless VDQM_HOST is set
      #103170 fix log levels in nameserver logs
+     #103175 Concurrent recalls that fail concurrently may create a deadlock if they share files
 
   [Features]
 

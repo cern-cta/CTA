@@ -9244,7 +9244,8 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
        SET status = tconst.RECALLJOB_PENDING
      WHERE castorFile IN (SELECT castorFile
                             FROM RecallJob
-                           WHERE VID = varVID);
+                           WHERE VID = varVID
+                             AND fileTransactionId IS NOT NULL);
     DELETE FROM RecallMount WHERE vid = varVID;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Small infusion of paranoia ;-) We should never reach that point...
