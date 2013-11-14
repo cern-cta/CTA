@@ -13,20 +13,20 @@
 
   [Bug]
 
-     bug #103144: Bad constraint for status of RecallJobs
-     bug #103158: Bad DiskCopy status in createEmptyFile
-     bug #103162: Race condition between drainRunner and deleteDrainingJob
+     #103144 Bad constraint for status of RecallJobs
+     #103158 Bad DiskCopy status in createEmptyFile
+     #103162 Race condition between drainRunner and deleteDrainingJob
 
   [Features]
 
-     bug #103106: RFE: mark rebalancing transfers as such in listtransfer
+     #103106 RFE: mark rebalancing transfers as such in listtransfer
 
   CASTOR NS
   ---------
 
   [Features]
 
-     bug #103168: RFE: Improve logging of failures in setOrReplaceSegmentsForFiles
+     #103168 RFE: Improve logging of failures in setOrReplaceSegmentsForFiles
 
   CASTOR Tape
   -----------
@@ -34,6 +34,7 @@
   [Bug]
 
      #103026 "showqueues" segfaults unless VDQM_HOST is set
+     #103170 fix log levels in nameserver logs
 
   [Features]
 
