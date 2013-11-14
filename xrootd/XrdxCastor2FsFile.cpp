@@ -294,8 +294,6 @@ XrdxCastor2FsFile::open(const char*         path,
   struct XrdxCastor2Stager::RespInfo resp_info;
   resp_info.mRedirectionPfn2 = 0;
   resp_info.mRedirectionPfn2 += ":";
-  resp_info.mRedirectionPfn2 += stagehost;
-  resp_info.mRedirectionPfn2 += ":";
   resp_info.mRedirectionPfn2 += serviceclass;
   resp_info.mRedirectionPfn2 += ":0";
   resp_info.mRedirectionPfn2 += ":0";
@@ -502,8 +500,6 @@ XrdxCastor2FsFile::open(const char*         path,
     // If there was no stager_get we fill request id 0
     if (!resp_info.mRedirectionPfn2.length())
     {
-      resp_info.mRedirectionPfn2 += ":";
-      resp_info.mRedirectionPfn2 += stagehost;
       resp_info.mRedirectionPfn2 += ":";
       resp_info.mRedirectionPfn2 += serviceclass;
     }

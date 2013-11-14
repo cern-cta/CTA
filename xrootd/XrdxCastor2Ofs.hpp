@@ -269,7 +269,6 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
     bool             isOpen;         ///<
     bool             viaDestructor;  ///<
     XrdOucString     reqid;          ///< 
-    XrdOucString     stagehost;      ///<
     XrdOucString     serviceclass;   ///<
     int              stagerjobport;  ///<
     XrdOucString     SjobUuid;       ///<

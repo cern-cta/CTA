@@ -478,8 +478,6 @@ XrdxCastor2OfsFile::XrdxCastor2OfsFile( const char* user, int MonID ) :
   IsThirdPartyStreamCopy = false;
   firstWrite = true;
   hasWrite = false;
-  // TODO: drop the stage host
-  stagehost = "none";
   serviceclass = "none";
   reqid = "0";
   hasadler = 1;
@@ -903,7 +901,6 @@ XrdxCastor2OfsFile::open( const char*         path,
 
   XrdOucString reqtag = val;
   reqid = "0";
-  stagehost = "none";
   serviceclass = "none";
   stagerjobport = 0;
   SjobUuid = "";
@@ -912,22 +909,19 @@ XrdxCastor2OfsFile::open( const char*         path,
   int pos3;
   int pos4;
 
-  // Syntax is reqid: <reqid:stagerhost:serviceclass:stagerjobport:stagerjobuuid>
+  // Syntax is reqid: <reqid:serviceclass:stagerjobport:stagerjobuuid>
   if ( ( pos1 = reqtag.find( ":" ) ) != STR_NPOS ) {
     reqid.assign( reqtag, 0, pos1 - 1 );
 
-    if ( ( pos2 = reqtag.find( ":", pos1 + 1 ) ) != STR_NPOS )  {
-      stagehost.assign( reqtag, pos1 + 1, pos2 - 1 );
-
-      if ( ( pos3 = reqtag.find( ":", pos2 + 1 ) ) != STR_NPOS ) {
-        serviceclass.assign( reqtag, pos2 + 1, pos3 - 1 );
-
-        if ( ( pos4 = reqtag.find( ":", pos3 + 1 ) ) != STR_NPOS ) {
-          XrdOucString sport;
-          sport.assign( reqtag, pos3 + 1, pos4 - 1 );
-          stagerjobport = atoi( sport.c_str() );
-          SjobUuid.assign( reqtag, pos4 + 1 );
-        }
+    if ( ( pos3 = reqtag.find( ":", pos2 + 1 ) ) != STR_NPOS ) {
+      serviceclass.assign( reqtag, pos2 + 1, pos3 - 1 );
+      
+      if ( ( pos4 = reqtag.find( ":", pos3 + 1 ) ) != STR_NPOS ) 
+      {
+        XrdOucString sport;
+        sport.assign( reqtag, pos3 + 1, pos4 - 1 );
+        stagerjobport = atoi( sport.c_str() );
+        SjobUuid.assign( reqtag, pos4 + 1 );
       }
     }
   }
@@ -1499,10 +1493,6 @@ XrdxCastor2OfsFile::Unlink()
   preparename += "&unlink=true";
   preparename += "&reqid=";
   preparename += reqid;
-  preparename += "&stagehost=";
-  preparename += stagehost;
-  preparename += "&serviceclass=";
-  preparename += serviceclass;
   preparename += "&uid=";
   preparename += secuid;
   preparename += "&gid=";
@@ -1573,10 +1563,6 @@ XrdxCastor2OfsFile::UpdateMeta()
 
   preparename += "&reqid=";
   preparename += reqid;
-  preparename += "&stagehost=";
-  preparename += stagehost;
-  preparename += "&serviceclass=";
-  preparename += serviceclass;
   list.push_back(preparename.c_str());
   xcastor_debug("informing about %s", preparename.c_str());
 

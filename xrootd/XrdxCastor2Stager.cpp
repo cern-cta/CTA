@@ -721,8 +721,6 @@ XrdxCastor2Stager::ProcessResponse(XrdOucErrInfo& error,
   sprintf(sid, "%llu", fr->id());
   respInfo.mRedirectionPfn2 = sid;  // request id
   respInfo.mRedirectionPfn2 += ":";
-  respInfo.mRedirectionPfn2 += reqInfo->mStageHost;
-  respInfo.mRedirectionPfn2 += ":";
   respInfo.mRedirectionPfn2 += reqInfo->mServiceClass;
   // Attach the port for the local host connection on a diskserver to talk with stagerJob
   respInfo.mRedirectionPfn2 += ":";
