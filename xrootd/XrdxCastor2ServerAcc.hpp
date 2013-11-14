@@ -267,11 +267,7 @@ class XrdxCastor2ServerAcc: public XrdAccAuthorize
     XrdOucTList* auth_keylist;
 
     bool RequireCapability; ///< client has to show up with a capability in the opaque info, if true
-    bool StrictCapability;  ///< a client has to show up with a capability but we don't require 
-                            ///< the authentication ID used in the capability e.g. we can run the 
-                            ///< disk server without strong authentication!
     bool AllowLocalhost;    ///< a client connecting from localhost does not need authorization [default=yes]
-    bool AllowXfer;         ///< a client coming from a transfer connection does not need authorization [default=yes]
 
     X509* x509public;
     EVP_PKEY*            publickey;

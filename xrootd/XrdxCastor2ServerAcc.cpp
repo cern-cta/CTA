@@ -111,9 +111,7 @@ XrdxCastor2ServerAcc::Configure( const char* conf_file )
   XrdOucStream Config( &TkEroute, getenv( "XRDINSTANCE" ) );
   TkTrace.What = 0x0;
   RequireCapability = false;
-  StrictCapability = false;
   AllowLocalhost = true;
-  AllowXfer = true;
   auth_certfile = NULL;
 
   if ( !conf_file || !*conf_file ) {
@@ -176,35 +174,19 @@ XrdxCastor2ServerAcc::Configure( const char* conf_file )
           if ( !( val = Config.GetWord() ) ) {
             TkEroute.Emsg( "Config", "argument 2 for capbility missing. Can be <true>/1 or <false>/0" );
             NoGo = 1;
-          } else {
-            if ( ( !( strcmp( val, "true" ) ) ) || ( !( strcmp( val, "1" ) ) ) || ( !( strcmp( val, "lazy" ) ) ) ) {
+          } 
+          else 
+          {
+            if (!(strcmp(val, "true")) || !(strcmp( val, "1")))
+            {
               RequireCapability = true;
-
-              if ( !( strcmp( val, "lazy" ) ) ) {
-                StrictCapability = false;
-              } else {
-                StrictCapability = true;
-              }
+            } 
+            else if (!(strcmp( val, "false")) || !(strcmp(val, "0")))
+            {
+              RequireCapability = false;
             } else {
-              if ( ( !( strcmp( val, "false" ) ) ) || ( !( strcmp( val, "0" ) ) ) ) {
-                RequireCapability = false;
-              } else {
-                TkEroute.Emsg( "Config", "argument 2 for capbility invalid. Can be <true>/1 or <false>/0" );
-                NoGo = 1;
-              }
-            }
-          }
-        }
-
-        if ( !strcmp( "allowxfer", var ) ) {
-          if ( !( val = Config.GetWord() ) ) {
-            TkEroute.Emsg( "Config", "argument 2 for allowxfer missing. Can be <true>/1 or <false>/0" );
-            NoGo = 1;
-          } else {
-            if ( ( !( strcmp( val, "true" ) ) ) || ( !( strcmp( val, "1" ) ) ) ) {
-              AllowXfer = true;
-            } else {
-              AllowXfer = false;
+              TkEroute.Emsg( "Config", "argument 2 for capbility invalid. Can be <true>/1 or <false>/0" );
+              NoGo = 1;
             }
           }
         }
@@ -225,11 +207,7 @@ XrdxCastor2ServerAcc::Configure( const char* conf_file )
     }
 
     if ( RequireCapability ) {
-      if ( StrictCapability ) {
-        TkEroute.Say( "=====> xcastor2.capability     : required" );
-      } else {
-        TkEroute.Say( "=====> xcastor2.capability     : lazy/required - no authentication required" );
-      }
+      TkEroute.Say( "=====> xcastor2.capability     : required" );
     } else {
       TkEroute.Say( "=====> xcastor2.capability     : ignored/not needed" );
     }
@@ -238,12 +216,6 @@ XrdxCastor2ServerAcc::Configure( const char* conf_file )
       TkEroute.Say( "=====> xcastor2.allowlocalhost : true" );
     } else {
       TkEroute.Say( "=====> xcastor2.allowlocalhost : false" );
-    }
-
-    if ( AllowXfer ) {
-      TkEroute.Say( "=====> xcastor2.allowxfer      : true" );
-    } else {
-      TkEroute.Say( "=====> xcastor2.allowxfer      : false" );
     }
 
     const char* tp;
