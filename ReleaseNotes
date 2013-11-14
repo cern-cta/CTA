@@ -41,6 +41,21 @@
 
      #103082 RFE: Remove tape gateway protocol header files from castor-build-headers.rpm
 
+  CASTOR Monitoring
+  -----------
+
+  [Features]
+
+     #103176: RFE: properly package the simple log processor plugin for CASTOR
+
+
+  Package Changes
+  ---------------
+
+  - castor-slp-plugin is a new package containing the CASTOR plugins to the simple log processor
+    daemon that is gathering the logs in the new monitoring infrastructure.
+    It replaces the hand made slp-castor-plugin package that was distributed outside of CASTOR.
+
 
 ------------
 - 2.1.14-3 -
