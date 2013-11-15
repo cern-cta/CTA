@@ -7287,6 +7287,7 @@ BEGIN
      SET status = dconst.SUBREQUEST_RESTART, lastModificationTime = getTime()
    WHERE status = dconst.SUBREQUEST_WAITSUBREQ
      AND castorFile = varCfId;
+  DBMS_ALERT.SIGNAL('wakeUpJobReqSvc', '');
   -- link DiskCopy and FileSystem and update DiskCopyStatus
   UPDATE DiskCopy
      SET status = 6, -- DISKCOPY_STAGEOUT
@@ -7577,6 +7578,7 @@ BEGIN
            lastModificationTime = getTime()
      WHERE status = dconst.SUBREQUEST_WAITSUBREQ
        AND castorfile = varCfId;
+    DBMS_ALERT.SIGNAL('wakeUpJobReqSvc', '');
     -- delete the disk2diskCopyJob
     DELETE FROM Disk2DiskCopyjob WHERE transferId = inTransferId;
     -- In case of valid new copy
@@ -7942,6 +7944,7 @@ BEGIN
      WHERE castorFile = cfId
        AND reqType = 39  -- PutDone
        AND SubRequest.status = dconst.SUBREQUEST_WAITSUBREQ;
+    DBMS_ALERT.SIGNAL('wakeUpStageReqSvc', '');
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- This means we are a standalone put
     -- thus cleanup DiskCopy and maybe the CastorFile
@@ -8127,15 +8130,6 @@ CREATE OR REPLACE TRIGGER tr_SubRequest_informError AFTER UPDATE OF status ON Su
 FOR EACH ROW WHEN (new.status = 7) -- SUBREQUEST_FAILED
 BEGIN
   DBMS_ALERT.SIGNAL('wakeUpErrorSvc', '');
-END;
-/
-
-CREATE OR REPLACE TRIGGER tr_SubRequest_informRestart AFTER UPDATE OF status ON SubRequest
-FOR EACH ROW WHEN (new.status = 1 OR -- SUBREQUEST_RESTART
-                   new.status = 2 OR -- SUBREQUEST_RETRY
-                   new.status = 0)   -- SUBREQUEST_START
-BEGIN
-  DBMS_ALERT.SIGNAL('wakeUp'||:new.svcHandler, '');
 END;
 /
 
