@@ -889,14 +889,22 @@ BEGIN
          AND SubRequest.castorFile = CastorFile.id;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- must be disk to disk copies
-      SELECT fileid, nsHost INTO fid, nh
-        FROM Castorfile, Disk2DiskCopyJob
-       WHERE Disk2DiskCopyJob.transferid = subReqIds(i)
-         AND Disk2DiskCopyJob.castorFile = CastorFile.id;
+      BEGIN
+        SELECT fileid, nsHost INTO fid, nh
+          FROM Castorfile, Disk2DiskCopyJob
+         WHERE Disk2DiskCopyJob.transferid = subReqIds(i)
+           AND Disk2DiskCopyJob.castorFile = CastorFile.id;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- not even a disk to disk copy: it must have been dropped meanwhile by a
+        -- transfermanagerd in another head node. Just insert an empty row, it will
+        -- be handled by the synchronizer thread of transfermanagerd.
+        fid := 0;
+        nh := '';
+      END;
     END;
     INSERT INTO GetFileIdsForSrsHelper (rowno, fileId, nsHost) VALUES (i, fid, nh);
   END LOOP;
-  OPEN fileids FOR SELECT nh, fileid FROM getFileIdsForSrsHelper ORDER BY rowno;
+  OPEN fileids FOR SELECT nh, fileid FROM GetFileIdsForSrsHelper ORDER BY rowno;
 END;
 /
 

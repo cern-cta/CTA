@@ -94,8 +94,8 @@ class SynchronizerThread(threading.Thread):
         transfersToFail = list(subReqIds - allTMTransfers)
         # and inform the stager
         if transfersToFail:
-          # in case of massive failures, weprevent ORACLE to complain about too
-          # big buffers by only taking the first 10000
+          # in case of massive failures, we prevent ORACLE to complain about too
+          # big buffers by only taking the first 1000
           transfersToFail = transfersToFail[:1000]
           # get back the fileids for the logs. We need to go back to the DB just for this
           conn = self.dbConnection(False)
@@ -107,14 +107,16 @@ class SynchronizerThread(threading.Thread):
           conn.commit()
           # 'Transfer killed by synchronization as it disappeared from the scheduling system'
           for (transferid, reqid), fileid in zip(transfersToFail, fileids):
-            dlf.write(msgs.SYNCHROKILLEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=fileid)
-          # prepare the transfers so that we have only tuples going onver the wire
+            if fileid > 0:
+              dlf.write(msgs.SYNCHROKILLEDTRANSFER, subreqid=transferid, reqid=reqid, fileid=fileid)
+          # prepare the transfers so that we have only tuples going over the wire
           transfers = tuple([tuple(item) for item in
                              zip([transferid for transferid, reqid in transfersToFail],
                                  fileids,
                                  [1015] * len(transfersToFail), # SEINTERNAL error code
                                  ['Transfer has disappeared from the scheduling system'] * len(transfersToFail),
-                                 [reqid for transferid, reqid in transfersToFail])])
+                                 [reqid for transferid, reqid in transfersToFail])
+                             if item[2] > 0])   # item[2] == fileid. If 0 it was already dropped, ignore the entry
           # finally inform the stager
           connectionpool.connections.transfersKilled(self.hostname, transfers, timeout=timeout)
         else:
