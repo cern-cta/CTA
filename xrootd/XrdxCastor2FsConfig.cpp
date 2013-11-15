@@ -32,12 +32,14 @@
 #include <time.h>
 #include <dirent.h>
 #include <string.h>
+#include <string>
+#include <sstream>
 /*-----------------------------------------------------------------------------*/
-#include "XrdSys/XrdSysDNS.hh"
 #include "XrdOuc/XrdOucStream.hh"
 #include "XrdOuc/XrdOucTrace.hh"
 #include "XrdSys/XrdSysError.hh"
 #include "XrdSys/XrdSysPlugin.hh"
+#include "XrdSys/XrdSysDNS.hh"
 /*-----------------------------------------------------------------------------*/
 
 //------------------------------------------------------------------------------
@@ -344,25 +346,48 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
         Eroute.Say( "=====> xcastor2.gridmapfile : ", val );
       }
 
-      if ( !strcmp( "stagermap", var ) ) {
-        if ( ( !( val = config_stream.GetWord() ) ) ) {
-          Eroute.Emsg( "Config", "you have to give a path + the stagerhost to assign" );
+      // Get stager map configuration
+      if (!strcmp("stagermap", var))
+      {
+        if ((!(val = config_stream.GetWord())))
+        {
+          xcastor_err("stagermap: provide a path and the service class(es) to assign");
           NoGo = 1;
-        } else {
-          XrdOucString stagepath = val;
-
-          if ( ( !( val = config_stream.GetWord() ) ) ) {
-            Eroute.Emsg( "Config", "you have to give a path + the stagerhost to assign" );
+        }
+        else
+        {
+          std::string stage_path = val;
+          
+          if ((!(val = config_stream.GetWord())))
+          {
+            xcastor_err("stagermap: provide a path and the service class(es) to assign");
             NoGo = 1;
-          } else {
-            if ( !stagertable->Find( stagepath.c_str() ) ) {
-              stagertable->Add( stagepath.c_str(), new XrdOucString( val ) );
-              XrdOucString sayit;
-              sayit = stagepath;
-              sayit += " -> ";
-              sayit += val;
-              Eroute.Say( "=====> xcastor2.stagermap : ", sayit.c_str() );
+          }
+          else
+          {
+            if (mStageMap.find(stage_path) == mStageMap.end())
+            {
+              std::string list_svc = val;
+              std::istringstream sstr(list_svc);
+              std::set<std::string> set_svc;
+              std::string svc;
+              list_svc = "";
+              
+              while (std::getline(sstr, svc, ','))
+              {
+                std::pair<std::set<std::string>::iterator, bool> res = set_svc.insert(svc);
+                
+                if (res.second)
+                  list_svc += svc + ',';
+              }
+
+              mStageMap[stage_path] = set_svc;
+              xcastor_info("stagermap: %s -> %s", stage_path.c_str(), list_svc.c_str());
             }
+            else
+              {
+                xcastor_err("stagermap: already contains stage path: %s", stage_path.c_str());
+              }
           }
         }
       }
@@ -412,16 +437,6 @@ int XrdxCastor2Fs::Configure( XrdSysError& Eroute )
     }
   }
 
-  // Setup the circular in-memory logging buffer  
-  XrdOucString unit = "rdr@";
-  unit += XrdSysDNS::getHostName();
-  unit += ":";
-  unit += xCastor2FsTargetPort;
-
-  Logging::Init();
-  Logging::SetLogPriority( mLogLevel );
-  Logging::SetUnit( unit.c_str() );
-  xcastor_info( "info=\"logging configured\" " );
 
   
   // Check if xcastor2fs has been set

@@ -34,6 +34,7 @@
 #include "castor/stager/Request.hpp"
 #include "castor/Services.hpp"
 #include "castor/IService.hpp"
+#include "castor/System.hpp"
 #include "castor/stager/IJobSvc.hpp"
 #include "castor/stager/StagePrepareToGetRequest.hpp"
 #include "castor/stager/StagePrepareToPutRequest.hpp"
@@ -92,15 +93,21 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo& error,
                                uid_t          uid,
                                gid_t          gid,
                                const char*    path,
-                               const char*    stagehost,
                                const char*    serviceclass,
                                struct RespInfo& respInfo)
 {
-  //const char* tident = error.getErrUser();
-  struct stage_options Opts;
-  xcastor_static_debug("uid=%i, gid=%i, path=%s, stagehost=%s, sericeclass=%s",
-                       uid, gid, path, stagehost, serviceclass);
+  // Get stagehost variable which is the localhost 
+  std::string stagehost = castor::System::getHostName();
+
+  if (stagehost == ""){
+    xcastor_static_err("can not get local stagehost");
+    return false;
+  }  
+
+  xcastor_static_debug("uid=%i, gid=%i, path=%s, sericeclass=%s",
+                       uid, gid, path, serviceclass);
   // Construct the request and subrequest objects
+  struct stage_options Opts;
   castor::stager::StagePrepareToGetRequest  getReq_ro;
   castor::stager::SubRequest* subreq = new castor::stager::SubRequest();
   std::vector<castor::rh::Response*>respvec;
@@ -115,7 +122,7 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo& error,
   subreq->setFileName(std::string(path));
   subreq->setModeBits(0744);
   castor::client::BaseClient cs2client(stage_getClientTimeout(), -1);
-  Opts.stage_host    = (char*)stagehost;
+  Opts.stage_host    = (char*)stagehost.c_str();
   Opts.service_class = (char*)serviceclass;
   Opts.stage_version = 2;
   Opts.stage_port    = 0;
@@ -124,8 +131,8 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo& error,
 
   try
   {
-    xcastor_static_debug("Sending Prepare2Get path=%s, uid=%i, gid=%i, stagehost=%s, svc=%s",
-                         path, uid, gid, stagehost, serviceclass);
+    xcastor_static_debug("Sending Prepare2Get path=%s, uid=%i, gid=%i, svc=%s",
+                         path, uid, gid, serviceclass);
     std::string reqid = cs2client.sendRequest(&getReq_ro, &rh);
   }
   catch (castor::exception::Communication e)
@@ -167,7 +174,7 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo& error,
   {
     std::stringstream sstr;
     sstr << "uid=" << (int)uid << " gid=" << (int)gid << " path=" << path
-         << " stagehost=" << stagehost << " serviceclass=" << serviceclass;
+         << "serviceclass=" << serviceclass;
     XrdOucString ErrPrefix = sstr.str().c_str();
     xcastor_static_debug("received error errc=%i, errmsg=%s\%i, subreqid=%s, reqid=%s",
                          fr->errorCode(), fr->errorMessage().c_str(), ErrPrefix.c_str(),
@@ -364,20 +371,16 @@ XrdxCastor2Stager::Rm(XrdOucErrInfo& error,
                       uid_t          uid,
                       gid_t          gid,
                       const char*    path,
-                      const char*    stagehost,
                       const char*    serviceclass)
 {
-  //const char* tident = error.getErrUser();
-  XrdOucString ErrPrefix = "uid=";
-  ErrPrefix += (int)uid;
-  ErrPrefix += " gid=";
-  ErrPrefix += (int)gid;
-  ErrPrefix += " path=";
-  ErrPrefix += path;
-  ErrPrefix += " stagehost=";
-  ErrPrefix += stagehost;
-  ErrPrefix += " serviceclass=";
-  ErrPrefix += serviceclass;
+  // Get stagehost variable which is the localhost 
+  std::string stagehost = castor::System::getHostName();
+
+  if (stagehost == ""){
+    xcastor_static_err("can not get local stagehost");
+    return false;
+  }  
+
   struct stage_filereq requests[1];
   struct stage_fileresp* resp;
   struct stage_options Opts;
@@ -385,7 +388,7 @@ XrdxCastor2Stager::Rm(XrdOucErrInfo& error,
   int nbresps;
   char* reqid;
   char errbuf[1024];
-  Opts.stage_host    = (char*)stagehost;
+  Opts.stage_host    = (char*)stagehost.c_str();
   Opts.service_class = (char*)serviceclass;
   Opts.stage_version = 2;
   Opts.stage_port    = 0;
@@ -444,12 +447,10 @@ XrdxCastor2Stager::UpdateDone(XrdOucErrInfo& error,
                               const char*    reqid,
                               const char*    fileid,
                               const char*    nameserver,
-                              const char*    stagehost,
                               const char*    serviceclass)
 {
   //const char* tident = error.getErrUser();
-  xcastor_static_debug("path=%s, stagehost=%s, sericeclass=%s",
-                       path, stagehost, serviceclass);
+  xcastor_static_debug("path=%s, sericeclass=%s", path, serviceclass);
   castor::stager::SubRequest subReq;
   subReq.setId(atoll(reqid));
   castor::Services* cs2service = castor::BaseObject::services();
@@ -564,30 +565,26 @@ XrdxCastor2Stager::StagerQuery(XrdOucErrInfo& error,
                                uid_t          uid,
                                gid_t          gid,
                                const char*    path,
-                               const char*    stagehost,
                                const char*    serviceclass,
                                XrdOucString&  status)
 {
-  //const char* tident = error.getErrUser();
-  xcastor_static_debug("uid=%i, gid=%i, path=%s, stagehost=%s, sericeclass=%s",
-                       uid, gid, path, stagehost, serviceclass);
-  XrdOucString ErrPrefix = "uid=";
-  ErrPrefix += (int)uid;
-  ErrPrefix += " gid=";
-  ErrPrefix += (int)gid;
-  ErrPrefix += " path=";
-  ErrPrefix += path;
-  ErrPrefix += " stagehost=";
-  ErrPrefix += stagehost;
-  ErrPrefix += " serviceclass=";
-  ErrPrefix += serviceclass;
+  // Get stagehost variable which is the localhost 
+  std::string stagehost = castor::System::getHostName();
+
+  if (stagehost == ""){
+    xcastor_static_err("can not get local stagehost");
+    return false;
+  }  
+
+  xcastor_static_debug("uid=%i, gid=%i, path=%s, sericeclass=%s",
+                       uid, gid, path, serviceclass);
   struct stage_query_req requests[1];
   struct stage_filequery_resp* resp;
   int  nbresps, i;
   char errbuf[1024];
   struct stage_options Opts;
   errbuf[0] = 0;
-  Opts.stage_host    = (char*)stagehost;
+  Opts.stage_host    = (char*)stagehost.c_str();
   Opts.service_class = (char*)serviceclass;
   Opts.stage_version = 2;
   Opts.stage_port    = 0;

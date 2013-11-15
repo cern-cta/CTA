@@ -40,6 +40,8 @@
 #include <attr/xattr.h>
 #include <utime.h>
 #include <pwd.h>
+#include <set>
+#include <map>
 /*-----------------------------------------------------------------------------*/
 #include "serrno.h"
 #include "Cns_api.h"
@@ -828,25 +830,29 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     //--------------------------------------------------------------------------
     int Stall( XrdOucErrInfo& error, int stime, const char* msg );
 
+  
+    //--------------------------------------------------------------------------
+    //! Get allowed service class for the requested path and desired svc
+    //! 
+    //! @param path path of  the request
+    //! @param svcClass desired service class by the user 
+    //! 
+    //! @return allowed service class or empty string if none alowed
+    //!
+    //--------------------------------------------------------------------------
+    std::string GetAllowedSvc(const char* path,
+                              const std::string& desired_svc);
+
 
     //--------------------------------------------------------------------------
-    //! Get stage variables
+    //! Get all allowed service classes for the requested path and desired svc
+    //! 
+    //! @param path path of  the request
+    //! 
+    //! @return set of allowed service class or empty string if none alowed
+    //!
     //--------------------------------------------------------------------------
-    bool GetStageVariables( const char*   Path, 
-                            XrdOucString& stagevariables, 
-                            uid_t         client_uid, 
-                            gid_t         client_gid);
-
-
-    //--------------------------------------------------------------------------
-    //! Set stage variables
-    //--------------------------------------------------------------------------
-    int SetStageVariables( const char*   Path, 
-                           const char*   Opaque, 
-                           XrdOucString  stagevariables, 
-                           XrdOucString& stagehost, 
-                           XrdOucString& serviceclass, 
-                           int           n);
+    std::set<std::string>& GetAllAllowedSvc(const char* path);
 
 
     //--------------------------------------------------------------------------
@@ -949,6 +955,10 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     static  XrdSysMutex               filesystemhosttablelock;
     static  XrdOucHash<XrdOucString>* nsMap;
     static  XrdOucHash<XrdOucString>* stagertable;
+  
+    // Map between stage paths and the set of service classes 
+    std::map< std::string, std::set<std::string> > mStageMap;
+
     static  XrdOucHash<XrdOucString>* roletable;
     static  XrdOucHash<XrdOucString>* stringstore;
     static  XrdOucHash<XrdSecEntity>* secentitystore;

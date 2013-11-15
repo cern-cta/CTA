@@ -257,44 +257,26 @@ XrdxCastor2FsFile::open(const char*         path,
   XrdxCastor2FS->GetId(map_path.c_str(), mappedclient, client_uid, client_gid);
   sclient_uid += (int) client_uid;
   sclient_gid += (int) client_gid;
- 
-  XrdOucString stagehost = "";
-  XrdOucString serviceclass = "default";
-  XrdOucString stagevariables = "";
-  const char* val;
 
-  if (!XrdxCastor2FS->GetStageVariables(map_path.c_str(), stagevariables, 
-                                        client_uid, client_gid))
-  {
-    return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "set the stager host - you didn't "
-                               "specify a valid one and I have no stager map for fn = ", 
-                               map_path.c_str());
-  }
+  const char* val; 
+  std::string desired_svc= "default";
+  std::string allowed_svc = "";
+    
+  // Try the user specified service class
+  if ((val = Open_Env.Get("svcClass"))) 
+    desired_svc = val;
 
-  XrdOucString* policy = NULL;
+  allowed_svc = XrdxCastor2FS->GetAllowedSvc(map_path.c_str(), desired_svc);
 
-  if (isRW)
-  {
-    const char* val;
-
-    // We try the user specified or the first possible setting
-    if ((val = Open_Env.Get("stagerHost"))) stagehost = val;
-    if ((val = Open_Env.Get("svcClass"))) serviceclass = val;
-
-    // Try the user specified pair
-    if ((XrdxCastor2FS->SetStageVariables(map_path.c_str(), info, stagevariables, stagehost,
-                                          serviceclass, XCASTOR2FS_EXACT_MATCH)) != 1)
-    {
-      return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "write - cannot find any valid "
-                                 "stager/service class mapping for you for fn = ", map_path.c_str());
-    }
-  }
+  if (allowed_svc.empty())
+    return XrdxCastor2Fs::Emsg(epname, error, EINVAL,  "open - no valid service"
+                               " class for fn=", map_path.c_str());
 
   // Open response structure in which we initialize rpfn2 for not scheduled access
   struct XrdxCastor2Stager::RespInfo resp_info;
   resp_info.mRedirectionPfn2 = 0;
   resp_info.mRedirectionPfn2 += ":";
-  resp_info.mRedirectionPfn2 += serviceclass;
+  resp_info.mRedirectionPfn2 += allowed_svc.c_str();
   resp_info.mRedirectionPfn2 += ":0";
   resp_info.mRedirectionPfn2 += ":0";
 
@@ -308,7 +290,7 @@ XrdxCastor2FsFile::open(const char*         path,
     if (!stall_comeback && !isRewrite)
     {
       // File doesn't exist, we have to create the path - check if we need to mkpath
-      if ((Mode & SFS_O_MKPTH) || (policy && (strstr(policy->c_str(), "mkpath"))))
+      if (Mode & SFS_O_MKPTH)
       {
         XrdOucString newpath = map_path;
 
@@ -368,19 +350,19 @@ XrdxCastor2FsFile::open(const char*         path,
     int status = 0;
 
     // Create structures for request and response and call the get method
-    struct XrdxCastor2Stager::ReqInfo req_info(client_uid, client_gid, map_path.c_str(), 
-                                               stagehost.c_str(), serviceclass.c_str());
+    struct XrdxCastor2Stager::ReqInfo req_info(client_uid, client_gid, 
+                                               map_path.c_str(), allowed_svc.c_str());
    
     if (!isRewrite)
     {
-      xcastor_debug("Put stagehost=%s, serviceclass=%s", stagehost.c_str(), serviceclass.c_str());
+      xcastor_debug("Put allowed_svc=%s", allowed_svc.c_str());
       status = XrdxCastor2Stager::DoAsyncReq(error, "put", &req_info, resp_info);
       delaytag += ":put";
       aop = AOP_Create;
     }
     else
     {
-      xcastor_debug("Update stagehost=%s, serviceclass=%s", stagehost.c_str(), serviceclass.c_str());
+      xcastor_debug("Update allowed_svc=%s", allowed_svc.c_str());
       status = XrdxCastor2Stager::DoAsyncReq(error, "update", &req_info, resp_info);
       delaytag += ":update";
       aop = AOP_Update;
@@ -436,62 +418,57 @@ XrdxCastor2FsFile::open(const char*         path,
   else
   {
     // Read operation
-    XrdOucString usedpolicytag = "";
-    int n = 0;
     bool possible = false;
-    int hasmore = 0;
-
-    // Loop through the possible stager settings to find the file somewhere staged
-    do
+    std::set<std::string> set_svc = XrdxCastor2FS->GetAllAllowedSvc(map_path.c_str());
+    
+    for (std::set<std::string>::iterator iter = set_svc.begin(); 
+         iter != set_svc.end(); ++iter)
     {
-      if ((hasmore = XrdxCastor2FS->SetStageVariables(map_path.c_str(), info,
-                     stagevariables, stagehost, serviceclass, n++)) == 1)
+      TIMING("PREP2GET", &opentiming);
+      allowed_svc = *iter;
+      
+      if (!XrdxCastor2Stager::Prepare2Get(error, (uid_t) client_uid, (gid_t) client_gid, 
+                                          map_path.c_str(), allowed_svc.c_str(), resp_info))
       {
-        TIMING("PREP2GET", &opentiming);
+        TIMING("RETURN", &opentiming);
         
-        if (!XrdxCastor2Stager::Prepare2Get(error, (uid_t) client_uid, (gid_t) client_gid, 
-                                            map_path.c_str(), stagehost.c_str(), serviceclass.c_str(), 
-                                            resp_info))
-        {
-          TIMING("RETURN", &opentiming);
-          
-          if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
-            opentiming.Print();
-
-          continue;
-        }
-
-        xcastor_debug("Got redirection to:%s and stagestatus is:%s", 
-                      resp_info.mRedirectionPfn1.c_str(), 
-                      resp_info.mStageStatus.c_str());
-
-        if (resp_info.mRedirectionPfn1.length() && (resp_info.mStageStatus == "READY"))
-        {
-          // That is perfect, we can use the setting to read
-          possible = true;
-          XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
-          break;
-        }
-
-        // We select this setting and tell the client to wait for the staging in this pool/svc class
-        if (resp_info.mStageStatus == "READY")
-        {
-          TIMING("RETURN", &opentiming);
-          
-          if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
-            opentiming.Print();
-
-          return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , 
-                                      "file is being staged in");
-        }
+        if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+          opentiming.Print();
+        
+        continue;
       }
+
+      xcastor_debug("Got redirection to:%s and stagestatus is:%s", 
+                    resp_info.mRedirectionPfn1.c_str(), 
+                    resp_info.mStageStatus.c_str());
+
+      if (resp_info.mRedirectionPfn1.length() && (resp_info.mStageStatus == "READY"))
+      {
+        // That is perfect, we can use the setting to read
+        possible = true;
+        XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
+        break;
+      }
+
+      // We select this setting and tell the client to wait for the staging in this pool/svc class
+      if (resp_info.mStageStatus == "READY")
+      {
+        TIMING("RETURN", &opentiming);
+        
+        if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+          opentiming.Print();
+        
+        return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , 
+                                    "file is being staged in");
+      }      
     }
-    while ((n < 20) && (hasmore >= 0));
 
     if (!possible)
     {
       TIMING("RETURN", &opentiming);
-      opentiming.Print();
+      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+        opentiming.Print();
+
       XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
       return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access file in ANY stager (all prepare2get failed) fn = ",
                                  map_path.c_str());
@@ -501,12 +478,12 @@ XrdxCastor2FsFile::open(const char*         path,
     if (!resp_info.mRedirectionPfn2.length())
     {
       resp_info.mRedirectionPfn2 += ":";
-      resp_info.mRedirectionPfn2 += serviceclass;
+      resp_info.mRedirectionPfn2 += allowed_svc.c_str();
     }
       
     // Create structures for request and response and call the get method
-    struct XrdxCastor2Stager::ReqInfo req_info(client_uid, client_gid, map_path.c_str(), 
-                                               stagehost.c_str(), serviceclass.c_str());
+    struct XrdxCastor2Stager::ReqInfo req_info(client_uid, client_gid, 
+                                               map_path.c_str(), allowed_svc.c_str());
    
     TIMING("GET", &opentiming); 
     int status = XrdxCastor2Stager::DoAsyncReq(error, "get", &req_info, resp_info);
@@ -577,9 +554,8 @@ XrdxCastor2FsFile::open(const char*         path,
     std::ostringstream ostreamclient;
     std::ostringstream ostreamserver;
 
-    ostreamclient << stagehost << "::" << serviceclass << "::" << mappedclient.name;
-    ostreamserver << stagehost << "::" << serviceclass << "::" 
-                  << resp_info.mRedirectionHost;
+    ostreamclient << allowed_svc << "::" << mappedclient.name;
+    ostreamserver << allowed_svc << "::" << resp_info.mRedirectionHost;
     
     XrdxCastor2FS->Stats.IncServerRdWr(ostreamserver.str().c_str(), isRW);
     XrdxCastor2FS->Stats.IncUserRdWr(ostreamclient.str().c_str(), isRW);
@@ -628,8 +604,7 @@ XrdxCastor2FsFile::open(const char*         path,
     int sig64len = 0;
     
     if (!XrdxCastor2FS->ServerAcc->SignBase64((unsigned char*)authz->token,
-                                              strlen(authz->token), sb64,
-                                              sig64len, stagehost.c_str()))
+                                              strlen(authz->token), sb64, sig64len))
     {
       XrdxCastor2Fs::Emsg(epname, error, retc, "sign authorization token for sfn = ", map_path.c_str());
       delete authz;
@@ -657,13 +632,6 @@ XrdxCastor2FsFile::open(const char*         path,
   if ((val = Open_Env.Get("svcClass")))
   {
     resp_info.mRedirectionHost += "svcClass=";
-    resp_info.mRedirectionHost += val;
-    resp_info.mRedirectionHost += "&";
-  }
-
-  if ((val = Open_Env.Get("stagerHost")))
-  {
-    resp_info.mRedirectionHost += "stagerHost=";
     resp_info.mRedirectionHost += val;
     resp_info.mRedirectionHost += "&";
   }

@@ -33,6 +33,7 @@
 #include "XrdOuc/XrdOucTList.hh"
 #include "XrdSys/XrdSysError.hh"
 #include "XrdSys/XrdSysLogger.hh"
+#include "XrdSys/XrdSysDNS.hh"
 #include "XrdSec/XrdSecInterface.hh"
 #include "XrdSfs/XrdSfsAio.hh"
 #include "XrdClient/XrdClientEnv.hh"
@@ -700,258 +701,122 @@ XrdxCastor2Fs::ReloadGridMapFile()
 }
 
 
+
 //------------------------------------------------------------------------------
-// Set stage variables
+// Get allowed service class for the requested path and desired svc
 //------------------------------------------------------------------------------
-int
-XrdxCastor2Fs::SetStageVariables(const char*   Path,
-                                 const char*   Opaque,
-                                 XrdOucString  stagevariables,
-                                 XrdOucString& stagehost,
-                                 XrdOucString& serviceclass,
-                                 int           n)
+std::string 
+XrdxCastor2Fs::GetAllowedSvc(const char* path,
+                             const std::string& desired_svc)
 {
-  XrdOucEnv Open_Env(Opaque);
-  xcastor_debug("path=%s opaque=%s stagevariables=%s", Path, 
-                (Opaque ? Opaque : ""), stagevariables.c_str());
-
-  // The tokenizer likes line feeds
-  stagevariables.replace(',', '\n');
-  XrdOucTokenizer stagetokens((char*)stagevariables.c_str());
-  XrdOucString desiredstagehost = "";
-  XrdOucString desiredserviceclass = "";
-  const char* sh = 0;
-  const char* stoken;
-  int ntoken = 0;
-
-  while ((stoken = stagetokens.GetLine()))
-  {
-    if ((sh = Open_Env.Get("stagerHost")))
-      desiredstagehost = sh;
-    else
-      desiredstagehost = "";
-
-    if ((sh = Open_Env.Get("svcClass")))
-      desiredserviceclass = sh;
-    else
-      desiredserviceclass = "";
-
-    XrdOucString mhost = stoken;
-    XrdOucString shost;
-    int offset;
-
-    if ((offset = mhost.find("::")) != STR_NPOS)
-    {
-      shost.assign(mhost.c_str(), 0, offset - 1);
-      stagehost = shost.c_str();
-      shost.assign(mhost.c_str(), offset + 2);
-      serviceclass = shost;
-    }
-    else
-    {
-      stagehost = mhost;
-      serviceclass = "default";
-    }
-
-    xcastor_debug("0 path=%s, dstagehost=%s, dserviceclass=%s, stagehost=%s, "
-                  "serviceclass=%s, n=%i, ntoken=%i", Path,
-                  desiredstagehost.c_str(), desiredserviceclass.c_str(),
-                  stagehost.c_str(), serviceclass.c_str(), n, ntoken);
-
-    if (!desiredstagehost.length())
-    {
-      if (stagehost == "*")
-      {
-        XrdOucString* dh = 0;
-
-        // Use the default one
-        if ((dh = stagertable->Find("default")))
-        {
-          XrdOucString defhost = dh->c_str();
-          int spos = 0;
-
-          // Remove the service class if defined
-          if ((spos = defhost.find("::")) != STR_NPOS)
-            defhost.assign(defhost.c_str(), 0, spos - 1);
-
-          // Set the default one now!
-          desiredstagehost = defhost;
-        }
-      }
-      else
-      {
-        desiredstagehost = stagehost;
-      }
-    }
-
-    if ((stagehost == "*"))
-    {
-      if (desiredstagehost.length())
-      {
-        stagehost = desiredstagehost;
-
-        if (!desiredserviceclass.length())
-        {
-          if (serviceclass != "*")
-            desiredserviceclass = serviceclass;
-        }
-      }
-    }
-
-    if ((serviceclass == "*") && desiredserviceclass.length())
-    {
-      serviceclass = desiredserviceclass;
-    }
-
-    xcastor_debug("1 path=%s, dstagehost=%s, dserviceclass=%s, stagehost=%s, "
-                  "serviceclass=%s, n=%i, ntoken=%i",
-                  Path, desiredstagehost.c_str(), desiredserviceclass.c_str(),
-                  stagehost.c_str(), serviceclass.c_str(), n, ntoken);
-
-    // This handles the case, where  only the stager is set
-    if ((desiredstagehost == stagehost) && (!desiredserviceclass.length()))
-    {
-      if (serviceclass != "*")
-      {
-        desiredserviceclass = serviceclass;
-      }
-    }
-
-    xcastor_debug("2 path=%s, dstagehost=%s, dserviceclass=%s, stagehost=%s, "
-                  "serviceclass=%s, n=%i, ntoken=%i",
-                  Path, desiredstagehost.c_str(), desiredserviceclass.c_str(),
-                  stagehost.c_str(), serviceclass.c_str(), n, ntoken);
-
-    // We are successfull if we either return the appropriate token or if
-    // the token matches the user specified stager/svc class pair as a result:
-    // if the host/svc class pair is not defined, a user cannot request it!
-    // this now also supports to allow any service class or host via *::default
-    // or stager::* to be user selected
-    if (((desiredstagehost == stagehost) &&
-         (desiredserviceclass == serviceclass)) &&
-        ((n == ntoken) || (n == XCASTOR2FS_EXACT_MATCH)))
-    {
-      xcastor_debug("path=%s, stagehost=%s, serviceclass=%s",
-                    Path, stagehost.c_str(), serviceclass.c_str());
-      return 1;
-    }
-    else
-    {
-      if ((n != XCASTOR2FS_EXACT_MATCH) && (ntoken == n))
-        return 0;
-    }
-
-    ntoken++;
-  }
-
-  return -1;
-}
-
-
-//------------------------------------------------------------------------------
-// Get stage variables
-//------------------------------------------------------------------------------
-bool
-XrdxCastor2Fs::GetStageVariables(const char*   Path,
-                                 XrdOucString& stagevariables,
-                                 uid_t         client_uid,
-                                 gid_t         client_gid)
-{
-  xcastor_debug("path=%s", Path);
-  XrdOucString spath = Path;
-  XrdOucString* mhost;
-  // Try the stagertable
-  int pos = 0;
+  xcastor_debug("path=%s", path);
+  std::string spath = path;
+  std::string subpath;
+  std::string allowed_svc = "";
+  size_t pos = 0;
   bool found = false;
+  std::map< std::string, std::set<std::string> >::iterator iter_map;
+  std::set<std::string>::iterator iter_set;
 
-  // Mapping by path is done first
-  while ((pos = spath.find("/", pos)) != STR_NPOS)
+  // Only mapping by path is supported
+  while ((pos = spath.find("/", pos)) != std::string::npos)
   {
-    XrdOucString subpath;
-    subpath.assign(Path, 0, pos);
+    subpath.assign(spath, 0, pos);
+    iter_map = mStageMap.find(subpath);
 
-    if ((mhost = stagertable->Find(subpath.c_str())))
+    if (iter_map != mStageMap.end())
     {
-      stagevariables = mhost->c_str();
-      found = true;
+      if (desired_svc == "*")
+      {
+        // Found path mapping, just return first svc 
+        // TODO: prefer default ?
+        allowed_svc = *iter_map->second.begin();
+        found = true;
+      }
+      else 
+      {
+        // Search for a specific service map
+        iter_set = iter_map->second.find(desired_svc);
+        
+        if (iter_set != iter_map->second.end())
+        {
+          found = true;
+          allowed_svc = desired_svc;
+        }
+      }
     }
-
+    
     pos++;
   }
 
-  // Mapping by uid/gid overwrites path mapping
-  XrdOucString uidmap = "uid:";
-  XrdOucString gidmap = "gid:";
-  uidmap += (int)client_uid;
-  gidmap += (int)client_gid;
-
-  if ((mhost = stagertable->Find(uidmap.c_str())))
-  {
-    stagevariables = mhost->c_str();
-    found = true;
-  }
-
-  if ((mhost = stagertable->Find(gidmap.c_str())))
-  {
-    stagevariables = mhost->c_str();
-    found = true;
-  }
-
-  // uid/gid + path mapping wins!
-  // user mapping superseeds group mapping
-  pos = 0;
-
-  while ((pos = spath.find("/", pos)) != STR_NPOS)
-  {
-    XrdOucString subpath;
-    subpath.assign(Path, 0, pos);
-    subpath += "::";
-    subpath += "gid:";
-    subpath += (int) client_gid;
-
-    if ((mhost = stagertable->Find(subpath.c_str())))
-    {
-      stagevariables = mhost->c_str();
-      found = true;
-    }
-
-    pos++;
-  }
-
-  pos = 0;
-
-  while ((pos = spath.find("/", pos)) != STR_NPOS)
-  {
-    XrdOucString subpath;
-    subpath.assign(Path, 0, pos);
-    subpath += "::";
-    subpath += "uid:";
-    subpath += (int) client_uid;
-
-    if ((mhost = stagertable->Find(subpath.c_str())))
-    {
-      stagevariables = mhost->c_str();
-      found = true;
-    }
-
-    pos++;
-  }
-
+  // Not found using path mapping check default configuration
   if (!found)
   {
-    if ((mhost = stagertable->Find("default")))
+    iter_map = mStageMap.find("default");
+    
+    if (iter_map != mStageMap.end())
     {
-      stagevariables = mhost->c_str();
-    }
-    else
-    {
-      return false;
+      if (desired_svc == "*")
+      {
+        // TODO: return first svc, prefer default ?
+        allowed_svc = *iter_map->second.begin();
+      }
+      else 
+      {
+        // Search for a specific service class
+        iter_set = iter_map->second.find(desired_svc);
+        
+        if (iter_set != iter_map->second.end())
+          allowed_svc = desired_svc;
+      }      
     }
   }
 
-  return true;
+  return allowed_svc;
 }
 
+
+//------------------------------------------------------------------------------
+// Get all allowed service classes for the requested path 
+//------------------------------------------------------------------------------
+std::set<std::string>&
+XrdxCastor2Fs::GetAllAllowedSvc(const char* path)
+{
+  xcastor_debug("path=%s", path);
+  std::string spath = path;
+  std::string subpath;
+  std::set<std::string>* set_svc;
+  size_t pos = 0;
+  bool found = false;
+  std::map< std::string, std::set<std::string> >::iterator iter_map;
+  std::set<std::string>::iterator iter_set;
+
+  // Only mapping by path is supported
+  while ((pos = spath.find("/", pos)) != std::string::npos)
+  {
+    subpath.assign(spath, 0, pos);
+    iter_map = mStageMap.find(subpath);
+
+    if (iter_map != mStageMap.end())
+    {
+      set_svc = &iter_map->second;
+      found = true;
+    }
+    
+    pos++;
+  }
+
+  // Not found using path mapping check default configuration
+  if (!found)
+  {
+    iter_map = mStageMap.find("default");
+    
+    if (iter_map != mStageMap.end())
+      set_svc = &iter_map->second;
+  }
+
+  return *set_svc;
+}
 
 
 /******************************************************************************/
@@ -1012,7 +877,18 @@ XrdxCastor2Fs::XrdxCastor2Fs(XrdSysError* ep):
 {
   eDest = ep;
   ConfigFN  = 0;
-  mLogLevel = LOG_INFO; // log info
+  mLogLevel = LOG_INFO; // default log level
+
+  // Setup the circular in-memory logging buffer  
+  XrdOucString unit = "rdr@";
+  unit += XrdSysDNS::getHostName();
+  unit += ":";
+  unit += xCastor2FsTargetPort;
+  
+  Logging::Init();
+  Logging::SetLogPriority( mLogLevel );
+  Logging::SetUnit( unit.c_str() );
+  xcastor_info( "info=\"logging configured\" " );
 }
 
 
@@ -1405,20 +1281,10 @@ XrdxCastor2Fs::stageprepare(const char*         path,
   int qpos = 0;
 
   if ((qpos = sinfo.find("?")) != STR_NPOS)
-  {
     sinfo.erase(qpos);
-  }
-
+  
   info = (ininfo ? sinfo.c_str() : ininfo);
-
-  if (info)
-  {
-    xcastor_debug("path=%s, info=%s", path, info);
-  }
-  else
-  {
-    xcastor_debug("path=%s", path);
-  }
+  xcastor_debug("path=%s, info=%s", path, (info ? info : ""));
 
   XrdOucEnv Open_Env(info);
   xcastor::Timing preparetiming("stageprepare");
@@ -1434,97 +1300,36 @@ XrdxCastor2Fs::stageprepare(const char*         path,
   struct Cns_filestatcs cstat;
 
   if (XrdxCastor2FsUFS::Statfn(map_path.c_str(), &cstat))
-  {
     return XrdxCastor2Fs::Emsg(epname, error, serrno, "stat", map_path.c_str());
-  }
-
+ 
   uid_t client_uid;
   gid_t client_gid;
   GetId(map_path.c_str(), mappedclient, client_uid, client_gid);
-  XrdOucString stagehost = "";
-  XrdOucString serviceclass = "default";
-  XrdOucString stagestatus = "";
-  XrdOucString stagevariables = "";
-
-  if (!XrdxCastor2FS->GetStageVariables(map_path.c_str(), stagevariables, client_uid, client_gid))
-  {
-    return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "set the stager host - "
-                               "you didn't specify it and I have no stager map for fn = ", map_path.c_str());
-  }
-
-  int n = 0;
-  const char* val;
-
-  // Try with the stagehost from the environment
-  if ((val = Open_Env.Get("stagerHost")))
-  {
-    stagehost = val;
-  }
-
+  char* val;
+  std::string desired_svc = "default";
+  
   if ((val = Open_Env.Get("svcClass")))
-  {
-    serviceclass = val;
-  }
-
-  if (stagehost.length() && serviceclass.length())
-  {
-    // Try the user specified pair
-    if ((XrdxCastor2FS->SetStageVariables(map_path.c_str(), info, stagevariables,
-                                          stagehost, serviceclass,
-                                          XCASTOR2FS_EXACT_MATCH)) != 1)
-    {
-      return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "write - cannot find any"
-                                 " valid stager/service class mapping for you for fn = ", map_path.c_str());
-    }
-  }
-  else
-  {
-    // Try the list and stop when we find a matching policy tag
-    bool allowed = false;
-    int hasmore = 0;
-
-    do
-    {
-      if ((hasmore = XrdxCastor2FS->SetStageVariables(map_path.c_str(), info, stagevariables,
-                     stagehost, serviceclass, n++)) == 1)
-      {
-        allowed = true;
-        break;
-      }
-    }
-    while ((n < 20) && (hasmore >= 0));
-
-    if (!allowed)
-    {
-      return XrdxCastor2Fs::Emsg(epname, error, EPERM, "do prepare request - "
-                                 "you are not allowed to do stage requests fn = ", map_path.c_str());
-    }
-  }
-
-  // Here we have the allowed stager/service class setting to issue the prepare request
+    desired_svc = val;
+  
+  std::string allowed_svc = GetAllowedSvc(map_path.c_str(), desired_svc);
+  
+  if (allowed_svc.empty())
+    return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "stageprepare - cannot find any"
+                               " valid service class mapping for fn = ", map_path.c_str());
+  
+  // Get the allowed service class, preference for the default one
   TIMING("STAGERQUERY", &preparetiming);
-  //XrdOucString dummy1;
-  //XrdOucString dummy2;
   struct XrdxCastor2Stager::RespInfo resp_info;
-
-  if (!XrdxCastor2Stager::Prepare2Get(error, (uid_t) client_uid, (gid_t) client_gid, 
-                                      map_path.c_str(), stagehost.c_str(), serviceclass.c_str(), 
-                                      resp_info))
-  {
-    TIMING("END", &preparetiming);
-    
-    if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
-      preparetiming.Print();
-
-    return SFS_ERROR;
-  }
-
+  int retc = (XrdxCastor2Stager::Prepare2Get(error, (uid_t) client_uid, 
+                                             (gid_t) client_gid, map_path.c_str(), 
+                                             allowed_svc.c_str(), resp_info)
+              ? SFS_OK : SFS_ERROR);
   TIMING("END", &preparetiming);
   
   if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
     preparetiming.Print();
 
-  return SFS_OK;
+  return retc;
 }
 
 
@@ -1701,76 +1506,29 @@ XrdxCastor2Fs::rem(const char*         path,
   GetId(map_path.c_str(), mappedclient, client_uid, client_gid);
 
   if (XrdxCastor2FS->Proc)
-  {
     XrdxCastor2FS->Stats.IncRm();
-  }
 
   TIMING("Authorize", &rmtiming);
 
   if (env.Get("stagerm"))
   {
-    XrdOucString stagevariables = "";
-    XrdOucString stagehost = "";
-    XrdOucString serviceclass = "";
-
-    if (!XrdxCastor2FS->GetStageVariables(map_path.c_str(), stagevariables, client_uid, client_gid))
-    {
-      return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "set the stager host - "
-                                 "add remove opaque tag stagerm=<..> or specify a "
-                                 "valid one because I have no stager map for fn = ", map_path.c_str());
-    }
-
-    int n = 0;
-    char* val = 0;
-
-    // Try with the stagehost from the environment
-    if ((val = env.Get("stagerHost")))
-      stagehost = val;
-
+    char* val;
+    std::string desired_svc = "";
+  
     if ((val = env.Get("svcClass")))
-      serviceclass = val;
-
-    if (stagehost.length() && serviceclass.length())
-    {
-      // Try the user specified pair
-      if ((XrdxCastor2FS->SetStageVariables(map_path.c_str(), info, stagevariables,
-                                            stagehost, serviceclass,
-                                            XCASTOR2FS_EXACT_MATCH)) != 1)
-      {
-        return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "write - cannot find any "
-                                   "valid stager/service class mapping for you for fn = ", map_path.c_str());
-      }
-    }
-    else
-    {
-      // Try the list and stop when we find a matching policy tag
-      bool allowed = false;
-      int hasmore = 0;
-
-      do
-      {
-        if ((hasmore = XrdxCastor2FS->SetStageVariables(map_path.c_str(), info, stagevariables,
-                       stagehost, serviceclass, n++)) == 1)
-        {
-          allowed = true;
-          break;
-        }
-      }
-      while ((n < 20) && (hasmore >= 0));
-
-      if (!allowed)
-      {
-        return XrdxCastor2Fs::Emsg(epname, error, EPERM, "do stage_rm request - "
-                                   "you are not allowed to do stage_rm requests for fn = ", map_path.c_str());
-      }
-    }
+      desired_svc = val;
+    
+    std::string allowed_svc = GetAllowedSvc(map_path.c_str(), desired_svc);
+    
+    if (allowed_svc.empty())
+      return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "rem - cannot find a valid service "
+                                 "class mapping for fn = ", map_path.c_str());
 
     // Here we have the allowed stager/service class setting to issue the stage_rm request
     TIMING("STAGERRM", &rmtiming);
 
-    if (!XrdxCastor2Stager::Rm(error, (uid_t) client_uid,
-                               (gid_t) client_gid, map_path.c_str(),
-                               stagehost.c_str(), serviceclass.c_str()))
+    if (!XrdxCastor2Stager::Rm(error, (uid_t) client_uid, (gid_t) client_gid, 
+                               map_path.c_str(), allowed_svc.c_str()))
     {
       TIMING("END", &rmtiming);
       
@@ -1780,7 +1538,7 @@ XrdxCastor2Fs::rem(const char*         path,
       return SFS_ERROR;
     }
 
-    // The stage_rm worked, let's proceed with the namespace
+    // The stage_rm worked, proceed with the namespace deletion
   }
 
   int retc = 0;
@@ -1981,6 +1739,7 @@ XrdxCastor2Fs::stat(const char*         path,
   XrdOucString map_path;
   xcastor::Timing stattiming("filestat");
   XrdOucEnv Open_Env(info);
+  XrdOucString stage_status = "";
   TIMING("START", &stattiming);
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &Open_Env, AOP_Stat, "stat", path, error);
@@ -1997,68 +1756,41 @@ XrdxCastor2Fs::stat(const char*         path,
   struct Cns_filestatcs cstat;
 
   if (XrdxCastor2FsUFS::Statfn(map_path.c_str(), &cstat))
-  {
     return XrdxCastor2Fs::Emsg(epname, error, serrno, "stat", map_path.c_str());
-  }
-
+ 
   uid_t client_uid;
   uid_t client_gid;
   GetId(map_path.c_str(), mappedclient, client_uid, client_gid);
-  XrdOucString stagehost = "";
-  XrdOucString serviceclass = "default";
-  XrdOucString stagestatus = "";
-  XrdOucString stagevariables = "";
 
   if (!(Open_Env.Get("nostagerquery")))
   {
     if (!S_ISDIR(cstat.filemode))
     {
-      if (!XrdxCastor2FS->GetStageVariables(map_path.c_str(), stagevariables, client_uid, client_gid))
+      // Loop over all allowed service classes to find an online one
+      std::string desired_svc = "default";
+      std::set<std::string> set_svc = GetAllAllowedSvc(map_path.c_str());
+
+      for (std::set<std::string>::iterator allowed_svc = set_svc.begin(); 
+           allowed_svc != set_svc.end(); ++allowed_svc)
       {
-        return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "set the stager host - "
-                                   "you didn't specify it and I have no stager map for fn = ", map_path.c_str());
-      }
-
-      // Now loop over all possible stager/svc combinations and to find an online one
-      int n = 0;
-      // Try the list and stop when we find a matching policy tag
-      int hasmore = 0;
-
-      do
-      {
-        stagestatus = "NA";
-
-        if ((hasmore = XrdxCastor2FS->SetStageVariables(map_path.c_str(), info, stagevariables,
-                       stagehost, serviceclass, n++)) == 1)
+        if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid, (gid_t) client_gid, 
+                                            map_path.c_str(), allowed_svc->c_str(), stage_status))
         {
-          // We don't care about policies for stat's
-          XrdOucString qrytag = "STAGERQUERY-";
-          qrytag += n;
-          TIMING(qrytag.c_str(), &stattiming);
-
-          if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid,
-                                              (gid_t) client_gid, map_path.c_str(), stagehost.c_str(),
-                                              serviceclass.c_str(), stagestatus))
-          {
-            stagestatus = "NA";
-          }
-
-          if ((stagestatus == "STAGED") ||
-              (stagestatus == "CANBEMIGR") ||
-              (stagestatus == "STAGEOUT"))
-          {
-            break;
-          }
+          stage_status = "NA";
         }
+        
+        if ((stage_status == "STAGED") || 
+            (stage_status == "CANBEMIGR") ||
+            (stage_status == "STAGEOUT"))
+        {
+          break;
+        }        
       }
-      while ((n < 20) && (hasmore >= 0));
     }
   }
 
   if (XrdxCastor2FS->Proc)
-  {
     XrdxCastor2FS->Stats.IncStat();
-  }
 
   memset(buf, sizeof(struct stat), 0);
   buf->st_dev     = 0xcaff;
@@ -2077,16 +1809,16 @@ XrdxCastor2Fs::stat(const char*         path,
 
   if (!S_ISDIR(cstat.filemode))
   {
-    if ((stagestatus != "STAGED") &&
-        (stagestatus != "CANBEMIGR") &&
-        (stagestatus != "STAGEOUT"))
+    if ((stage_status != "STAGED") &&
+        (stage_status != "CANBEMIGR") &&
+        (stage_status != "STAGEOUT"))
     {
       // This file is offline
       buf->st_mode = (mode_t) - 1;
       buf->st_dev   = 0;
     }
 
-    xcastor_debug("map_path=%s, stagestatus=%s", map_path.c_str(), stagestatus.c_str());
+    xcastor_debug("map_path=%s, stage_status=%s", map_path.c_str(), stage_status.c_str());
   }
 
   TIMING("END", &stattiming);

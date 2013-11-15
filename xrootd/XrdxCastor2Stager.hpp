@@ -76,18 +76,15 @@ class XrdxCastor2Stager : public LogId
        uid_t mUid;
        gid_t mGid;
        const char* mPath;
-       const char* mStageHost;
        const char* mServiceClass;
 
        //-----------------------------------------------------------------------
        //! Constructor
        //-----------------------------------------------------------------------
-       ReqInfo(uid_t uid, gid_t gid, const char* path, 
-              const char* stagehost, const char* serviceclass):
+       ReqInfo(uid_t uid, gid_t gid, const char* path, const char* serviceclass):
          mUid(uid),
          mGid(gid),
          mPath(path),
-         mStageHost(stagehost),
          mServiceClass(serviceclass)
        {
          // empty
@@ -189,7 +186,6 @@ class XrdxCastor2Stager : public LogId
     static bool Prepare2Get( XrdOucErrInfo& error,
                              uid_t uid, gid_t gid,
                              const char* path,
-                             const char* stagehost,
                              const char* serviceclass,
                              struct RespInfo& respInfo);
 
@@ -219,7 +215,6 @@ class XrdxCastor2Stager : public LogId
     static bool Rm( XrdOucErrInfo& error,
                     uid_t uid, gid_t gid,
                     const char* path,
-                    const char* stagehost,
                     const char* serviceclass );
   
 
@@ -231,7 +226,6 @@ class XrdxCastor2Stager : public LogId
                             const char* reqid,
                             const char* fileid,
                             const char* nameserver,
-                            const char* stagehost,
                             const char* serviceclass );
 
 
@@ -241,7 +235,6 @@ class XrdxCastor2Stager : public LogId
     static bool StagerQuery( XrdOucErrInfo& error,
                              uid_t uid, gid_t gid,
                              const char* path,
-                             const char* stagehost,
                              const char* serviceclass,
                              XrdOucString& stagestatus );
 
