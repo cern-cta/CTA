@@ -1535,7 +1535,7 @@ END;
 CREATE OR REPLACE PROCEDURE createDisk2DiskCopyJob
 (inCfId IN INTEGER, inNsOpenTime IN INTEGER, inDestSvcClassId IN INTEGER,
  inOuid IN INTEGER, inOgid IN INTEGER, inReplicationType IN INTEGER,
- inReplacedDcId IN INTEGER, inDrainingJob IN INTEGER) AS
+ inReplacedDcId IN INTEGER, inDrainingJob IN INTEGER, inDoSignal IN BOOLEAN) AS
   varD2dCopyJobId INTEGER;
   varDestDcId INTEGER;
 BEGIN
@@ -1563,8 +1563,10 @@ BEGIN
              ' DrainReq=' || TO_CHAR(inDrainingJob)));
   END;
   
-  -- wake up transfermanager
-  DBMS_ALERT.SIGNAL('d2dReadyToSchedule', '');
+  IF inDoSignal THEN
+    -- wake up transfermanager
+    DBMS_ALERT.SIGNAL('d2dReadyToSchedule', '');
+  END IF;
 END;
 /
 
@@ -1678,7 +1680,7 @@ BEGIN
   LOOP
     BEGIN
       -- Trigger a replication request.
-      createDisk2DiskCopyJob(cfId, varNsOpenTime, a.id, ouid, ogid, dconst.REPLICATIONTYPE_USER, NULL, NULL);
+      createDisk2DiskCopyJob(cfId, varNsOpenTime, a.id, ouid, ogid, dconst.REPLICATIONTYPE_USER, NULL, NULL, TRUE);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- No copies to replicate from
     END;
@@ -2966,7 +2968,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
         BEGIN
           -- yes, we can replicate, create a replication request without waiting on it.
           createDisk2DiskCopyJob(inCfId, inNsOpenTime, inSvcClassId, inEuid, inEgid,
-                                 dconst.REPLICATIONTYPE_INTERNAL, NULL, NULL);
+                                 dconst.REPLICATIONTYPE_INTERNAL, NULL, NULL, TRUE);
           -- log it
           logToDLF(inReqUUID, dlf.LVL_SYSTEM, dlf.STAGER_GET_REPLICATION, inFileId, inNsHost, 'stagerd',
                    'SUBREQID=' || inSrUUID || ' svcClassId=' || getSvcClassName(inSvcClassId) ||
@@ -2998,7 +3000,7 @@ BEGIN
   IF varSrcDcId > 0 THEN
     -- create DiskCopyCopyJob and make this subRequest wait on it
     createDisk2DiskCopyJob(inCfId, inNsOpenTime, inSvcClassId, inEuid, inEgid,
-                           dconst.REPLICATIONTYPE_USER, NULL, NULL);
+                           dconst.REPLICATIONTYPE_USER, NULL, NULL, TRUE);
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = dconst.SUBREQUEST_WAITSUBREQ
      WHERE id = inSrId;
