@@ -321,6 +321,28 @@ BEGIN
 END;
 /
 
+/* Function to return the name of a given file class */
+CREATE OR REPLACE FUNCTION getFileClassName(fileClassId NUMBER) RETURN VARCHAR2 IS
+  varFileClassName VARCHAR2(2048);
+BEGIN
+  SELECT name INTO varFileClassName FROM FileClass WHERE id = fileClassId;
+  RETURN varFileClassName;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  RETURN 'Unknown(' || fileClassId || ')';
+END;
+/
+
+/* Function to return the name of a given service class */
+CREATE OR REPLACE FUNCTION getSvcClassName(svcClassId NUMBER) RETURN VARCHAR2 IS
+  varSvcClassName VARCHAR2(2048);
+BEGIN
+  SELECT name INTO varSvcClassName FROM SvcClass WHERE id = svcClassId;
+  RETURN varSvcClassName;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  RETURN 'Unknown(' || svcClassId || ')';
+END;
+/
+
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
 BEGIN

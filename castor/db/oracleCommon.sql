@@ -73,6 +73,8 @@ CREATE OR REPLACE FUNCTION getFileClassName(fileClassId NUMBER) RETURN VARCHAR2 
 BEGIN
   SELECT name INTO varFileClassName FROM FileClass WHERE id = fileClassId;
   RETURN varFileClassName;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  RETURN 'Unknown(' || fileClassId || ')';
 END;
 /
 
@@ -82,6 +84,8 @@ CREATE OR REPLACE FUNCTION getSvcClassName(svcClassId NUMBER) RETURN VARCHAR2 IS
 BEGIN
   SELECT name INTO varSvcClassName FROM SvcClass WHERE id = svcClassId;
   RETURN varSvcClassName;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  RETURN 'Unknown(' || svcClassId || ')';
 END;
 /
 
