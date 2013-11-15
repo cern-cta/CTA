@@ -907,21 +907,20 @@ XrdxCastor2OfsFile::open( const char*         path,
   int pos1;
   int pos2;
   int pos3;
-  int pos4;
 
   // Syntax is reqid: <reqid:serviceclass:stagerjobport:stagerjobuuid>
   if ( ( pos1 = reqtag.find( ":" ) ) != STR_NPOS ) {
     reqid.assign( reqtag, 0, pos1 - 1 );
 
-    if ( ( pos3 = reqtag.find( ":", pos2 + 1 ) ) != STR_NPOS ) {
-      serviceclass.assign( reqtag, pos2 + 1, pos3 - 1 );
+    if ( ( pos2 = reqtag.find( ":", pos1 + 1 ) ) != STR_NPOS ) {
+      serviceclass.assign( reqtag, pos1 + 1, pos2 - 1 );
       
-      if ( ( pos4 = reqtag.find( ":", pos3 + 1 ) ) != STR_NPOS ) 
+      if ( ( pos3 = reqtag.find( ":", pos2 + 1 ) ) != STR_NPOS ) 
       {
         XrdOucString sport;
-        sport.assign( reqtag, pos3 + 1, pos4 - 1 );
+        sport.assign( reqtag, pos2 + 1, pos3 - 1 );
         stagerjobport = atoi( sport.c_str() );
-        SjobUuid.assign( reqtag, pos4 + 1 );
+        SjobUuid.assign( reqtag, pos3 + 1 );
       }
     }
   }
