@@ -17,11 +17,15 @@
      #103158 Bad DiskCopy status in createEmptyFile
      #103162 Race condition between drainRunner and deleteDrainingJob
      #103184 Missing lock on DrainingJob in drainManager leads to dead lock
+     #103165 "deadlock detected" around CASTOR_STAGER.DROPREUSEDLASTKNOWNFILENAME
      #103188 catch NO_DATA_FOUND in getFile/SvcClassName
+     #103189 Transfermanager synchronizer thread is not thread-safe
+     #103190 Constraint violation errors thrown by the GC
 
   [Features]
 
      #103106 RFE: mark rebalancing transfers as such in listtransfer
+     #103196 RFE: improve usage of DBMS_ALERT in the database
 
   CASTOR NS
   ---------

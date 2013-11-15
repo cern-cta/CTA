@@ -5024,7 +5024,7 @@ END;
 CREATE OR REPLACE PROCEDURE createDisk2DiskCopyJob
 (inCfId IN INTEGER, inNsOpenTime IN INTEGER, inDestSvcClassId IN INTEGER,
  inOuid IN INTEGER, inOgid IN INTEGER, inReplicationType IN INTEGER,
- inReplacedDcId IN INTEGER, inDrainingJob IN INTEGER) AS
+ inReplacedDcId IN INTEGER, inDrainingJob IN INTEGER, inDoSignal IN BOOLEAN) AS
   varD2dCopyJobId INTEGER;
   varDestDcId INTEGER;
 BEGIN
@@ -5052,8 +5052,10 @@ BEGIN
              ' DrainReq=' || TO_CHAR(inDrainingJob)));
   END;
   
-  -- wake up transfermanager
-  DBMS_ALERT.SIGNAL('d2dReadyToSchedule', '');
+  IF inDoSignal THEN
+    -- wake up transfermanager
+    DBMS_ALERT.SIGNAL('d2dReadyToSchedule', '');
+  END IF;
 END;
 /
 
@@ -5167,7 +5169,7 @@ BEGIN
   LOOP
     BEGIN
       -- Trigger a replication request.
-      createDisk2DiskCopyJob(cfId, varNsOpenTime, a.id, ouid, ogid, dconst.REPLICATIONTYPE_USER, NULL, NULL);
+      createDisk2DiskCopyJob(cfId, varNsOpenTime, a.id, ouid, ogid, dconst.REPLICATIONTYPE_USER, NULL, NULL, TRUE);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- No copies to replicate from
     END;
@@ -6455,7 +6457,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
         BEGIN
           -- yes, we can replicate, create a replication request without waiting on it.
           createDisk2DiskCopyJob(inCfId, inNsOpenTime, inSvcClassId, inEuid, inEgid,
-                                 dconst.REPLICATIONTYPE_INTERNAL, NULL, NULL);
+                                 dconst.REPLICATIONTYPE_INTERNAL, NULL, NULL, TRUE);
           -- log it
           logToDLF(inReqUUID, dlf.LVL_SYSTEM, dlf.STAGER_GET_REPLICATION, inFileId, inNsHost, 'stagerd',
                    'SUBREQID=' || inSrUUID || ' svcClassId=' || getSvcClassName(inSvcClassId) ||
@@ -6487,7 +6489,7 @@ BEGIN
   IF varSrcDcId > 0 THEN
     -- create DiskCopyCopyJob and make this subRequest wait on it
     createDisk2DiskCopyJob(inCfId, inNsOpenTime, inSvcClassId, inEuid, inEgid,
-                           dconst.REPLICATIONTYPE_USER, NULL, NULL);
+                           dconst.REPLICATIONTYPE_USER, NULL, NULL, TRUE);
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = dconst.SUBREQUEST_WAITSUBREQ
      WHERE id = inSrId;
@@ -8016,14 +8018,22 @@ BEGIN
          AND SubRequest.castorFile = CastorFile.id;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- must be disk to disk copies
-      SELECT fileid, nsHost INTO fid, nh
-        FROM Castorfile, Disk2DiskCopyJob
-       WHERE Disk2DiskCopyJob.transferid = subReqIds(i)
-         AND Disk2DiskCopyJob.castorFile = CastorFile.id;
+      BEGIN
+        SELECT fileid, nsHost INTO fid, nh
+          FROM Castorfile, Disk2DiskCopyJob
+         WHERE Disk2DiskCopyJob.transferid = subReqIds(i)
+           AND Disk2DiskCopyJob.castorFile = CastorFile.id;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- not even a disk to disk copy: it must have been dropped meanwhile by a
+        -- transfermanagerd in another head node. Just insert an empty row, it will
+        -- be handled by the synchronizer thread of transfermanagerd.
+        fid := 0;
+        nh := '';
+      END;
     END;
     INSERT INTO GetFileIdsForSrsHelper (rowno, fileId, nsHost) VALUES (i, fid, nh);
   END LOOP;
-  OPEN fileids FOR SELECT nh, fileid FROM getFileIdsForSrsHelper ORDER BY rowno;
+  OPEN fileids FOR SELECT nh, fileid FROM GetFileIdsForSrsHelper ORDER BY rowno;
 END;
 /
 
@@ -11416,6 +11426,9 @@ BEGIN
     FOR cf IN (SELECT cfId, dcId
                  FROM filesDeletedProcHelper
                 ORDER BY cfId ASC) LOOP
+      DECLARE
+        CONSTRAINT_VIOLATED EXCEPTION;
+        PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
       BEGIN
         -- Get data and lock the castorFile
         SELECT fileId, nsHost, fileClass
@@ -11474,6 +11487,15 @@ BEGIN
         -- There is thus no way to find out whether to remove the
         -- file from the nameserver. For safety, we thus keep it
         NULL;
+      WHEN CONSTRAINT_VIOLATED THEN
+        IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DISK2DISKCOPYJOB_CASTORFILE) violated%' THEN
+          -- Ignore the deletion, probably some draining/rebalancing activity created a Disk2DiskCopyJob entity
+          -- while we were attempting to drop the CastorFile
+          NULL;
+        ELSE
+          -- Any other constraint violation is an error
+          RAISE;
+        END IF;
       END;
     END LOOP;
   END IF;
@@ -12560,22 +12582,22 @@ BEGIN
     -- insert the subrequest
     INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, status, request, getNextStatus, reqType)
     VALUES (0, srFileNames(i), srProtocols(i), srXsizes(i), 0, NULL, srFlags(i), srModeBits(i), creationTime, creationTime, 0, 0, '', NULL, svcHandler, subreqId, NULL, NULL, dconst.SUBREQUEST_START, reqId, 0, inReqType);
-    -- send an alert to accelerate the processing of the request
-    CASE
-    WHEN inReqType = 35 OR   -- StageGetRequest
-         inReqType = 40 OR   -- StagePutRequest
-         inReqType = 44 THEN -- StageUpdateRequest
-      DBMS_ALERT.SIGNAL('wakeUpJobReqSvc', '');
-    WHEN inReqType = 36 OR   -- StagePrepareToGetRequest
-         inReqType = 37 OR   -- StagePrepareToPutRequest
-         inReqType = 38 THEN -- StagePrepareToUpdateRequest
-      DBMS_ALERT.SIGNAL('wakeUpPrepReqSvc', '');
-    WHEN inReqType = 42 OR   -- StageRmRequest
-         inReqType = 39 OR   -- StagePutDoneRequest
-         inReqType = 95 THEN -- SetFileGCWeight
-      DBMS_ALERT.SIGNAL('wakeUpStageReqSvc', '');
-    END CASE;
   END LOOP;
+  -- send one single alert to accelerate the processing of the request
+  CASE
+  WHEN inReqType = 35 OR   -- StageGetRequest
+       inReqType = 40 OR   -- StagePutRequest
+       inReqType = 44 THEN -- StageUpdateRequest
+    DBMS_ALERT.SIGNAL('wakeUpJobReqSvc', '');
+  WHEN inReqType = 36 OR   -- StagePrepareToGetRequest
+       inReqType = 37 OR   -- StagePrepareToPutRequest
+       inReqType = 38 THEN -- StagePrepareToUpdateRequest
+    DBMS_ALERT.SIGNAL('wakeUpPrepReqSvc', '');
+  WHEN inReqType = 42 OR   -- StageRmRequest
+       inReqType = 39 OR   -- StagePutDoneRequest
+       inReqType = 95 THEN -- SetFileGCWeight
+    DBMS_ALERT.SIGNAL('wakeUpStageReqSvc', '');
+  END CASE;
 END;
 /
 
