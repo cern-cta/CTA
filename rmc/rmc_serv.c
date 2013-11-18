@@ -308,14 +308,12 @@ static void procreq(
 	case RMC_FINDCART:
 		c = rmc_srv_findcart (&rqst_context);
 		break;
-/*
 	case RMC_GENERICMOUNT:
-		c = rmc_srv_genericmount (localhost, rpfd, req_data, clienthost);
+		c = rmc_srv_mnt (&rqst_context);
 		break;
 	case RMC_GENERICUNMOUNT:
-		c = rmc_srv_genericunmount (localhost, rpfd, req_data, clienthost);
+		c = rmc_srv_unmnt (&rqst_context);
 		break;
-*/
 	default:
 		rmc_sendrep (rpfd, MSG_ERR, RMC03, req_type);
 		c = ERMCUNREC;
