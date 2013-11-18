@@ -33,14 +33,14 @@ struct rmc_srv_rqst_context {
   const char *clienthost;
 };
 
-int rmc_srv_export(struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_findcart(struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_getgeom(struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_import(struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_mount(struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_readelem(struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_unmount(struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_genericmount(struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_genericunmount(struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_mnt(const struct rmc_srv_rqst_context *const rqst_context);
+int rmc_srv_unmnt(const struct rmc_srv_rqst_context *const rqst_context);
 
 #endif

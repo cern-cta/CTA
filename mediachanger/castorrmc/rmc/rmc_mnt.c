@@ -62,15 +62,19 @@ int rmc_mnt(
 		return -1;
 	}
 
-	/* Build request header */
+	if(CA_MAXVIDLEN < strlen(vid)) {
+		errno = ERMCUNREC;
+		serrno = errno;
+		return -1;
+	}
 
+	/* Build request header */
 	sbp = sendbuf;
 	marshall_LONG (sbp, RMC_MAGIC);
-	marshall_LONG (sbp, RMC_MOUNT);
+	marshall_LONG (sbp, RMC_GENERICMOUNT);
 	marshall_LONG (sbp, msglen);
 
 	/* Build request body */
-
 	marshall_LONG (sbp, uid);
 	marshall_LONG (sbp, gid);
 	marshall_STRING (sbp, vid);

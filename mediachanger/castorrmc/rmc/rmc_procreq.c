@@ -28,7 +28,7 @@ extern struct extended_robot_info extended_robot_info;
  
 /*	rmc_srv_export - export/eject a cartridge from the robot */
 
-int rmc_srv_export(struct rmc_srv_rqst_context *const rqst_context) {
+int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
 	char func[16];
 	gid_t gid;
@@ -76,7 +76,7 @@ int rmc_srv_export(struct rmc_srv_rqst_context *const rqst_context) {
 
 /*	rmc_srv_findcart - find cartridge(s) */
 
-int rmc_srv_findcart(struct rmc_srv_rqst_context *const rqst_context) {
+int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
 	struct smc_element_info *element_info;
 	struct smc_element_info *elemp;
@@ -167,7 +167,7 @@ int rmc_srv_findcart(struct rmc_srv_rqst_context *const rqst_context) {
 
 /*	rmc_srv_getgeom - get the robot geometry */
 
-int rmc_srv_getgeom(struct rmc_srv_rqst_context *const rqst_context) {
+int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context) {
 	char func[16];
 	gid_t gid;
 	char logbuf[8];
@@ -211,7 +211,7 @@ int rmc_srv_getgeom(struct rmc_srv_rqst_context *const rqst_context) {
 
 /*	rmc_srv_import - import/inject a cartridge into the robot */
 
-int rmc_srv_import(struct rmc_srv_rqst_context *const rqst_context) {
+int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
 	char func[16];
 	gid_t gid;
@@ -259,7 +259,7 @@ int rmc_srv_import(struct rmc_srv_rqst_context *const rqst_context) {
 
 /*	rmc_srv_mount - mount a cartridge on a drive */
 
-int rmc_srv_mount(struct rmc_srv_rqst_context *const rqst_context) {
+int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
 	int drvord;
 	char func[16];
@@ -312,7 +312,7 @@ int rmc_srv_mount(struct rmc_srv_rqst_context *const rqst_context) {
 
 /*	rmc_srv_readelem - read element status */
 
-int rmc_srv_readelem(struct rmc_srv_rqst_context *const rqst_context) {
+int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
 	struct smc_element_info *element_info;
 	struct smc_element_info *elemp;
@@ -396,7 +396,7 @@ int rmc_srv_readelem(struct rmc_srv_rqst_context *const rqst_context) {
 
 /*	rmc_srv_unmount - dismount a cartridge from a drive */
 
-int rmc_srv_unmount(struct rmc_srv_rqst_context *const rqst_context) {
+int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context) {
 	int c;
 	int drvord;
 	int force;
@@ -407,7 +407,8 @@ int rmc_srv_unmount(struct rmc_srv_rqst_context *const rqst_context) {
 	uid_t uid;
 	char vid[CA_MAXVIDLEN+1];
 
-	strncpy (func, "rmc_srv_unmount", 16);
+	strncpy (func, "rmc_srv_unmount", sizeof(func));
+	func[sizeof(func) - 1] = '\0';
 	rbp = rqst_context->req_data;
 	unmarshall_LONG (rbp, uid);
 	unmarshall_LONG (rbp, gid);
@@ -447,10 +448,30 @@ int rmc_srv_unmount(struct rmc_srv_rqst_context *const rqst_context) {
 	return c;
 }
 
-int rmc_srv_genericmount(struct rmc_srv_rqst_context *const rqst_context) {
+/*	rmc_srv_mnt - mount a cartridge into a drive that maybe in either */
+/*                    a SCSI compatible or an ACS compatible tape library */
+
+int rmc_srv_mnt(
+  const struct rmc_srv_rqst_context *const rqst_context) {
+	char func[16];
+	strncpy (func, "rmc_srv_mnt", sizeof(func));
+	func[sizeof(func) - 1] = '\0';
+
+	rmc_logreq (func, "Called");
+
 	return 0;
 }
 
-int rmc_srv_genericunmount(struct rmc_srv_rqst_context *const rqst_context) {
+/*	rmc_srv_unmnt - unmount a cartridge from a drive that maybe in either */
+/*                      a SCSI compatible or an ACS compatible tape library   */
+
+int rmc_srv_unmnt(
+  const struct rmc_srv_rqst_context *const rqst_context) {
+	char func[16];
+	strncpy (func, "rmc_srv_unmnt", sizeof(func));
+	func[sizeof(func) - 1] = '\0';
+
+	rmc_logreq (func, "Called");
+
 	return 0;
 }
