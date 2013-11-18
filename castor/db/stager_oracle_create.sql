@@ -2228,6 +2228,47 @@ BEGIN
 END;
 /
 
+/* parse a path to give back the FileSystem and path */
+CREATE OR REPLACE PROCEDURE parsePath(inFullPath IN VARCHAR2,
+                                      outFileSystem OUT INTEGER,
+                                      outPath OUT VARCHAR2,
+                                      outDcId OUT INTEGER,
+                                      outFileId OUT INTEGER,
+                                      outNsHost OUT VARCHAR2) AS
+  varPathPos INTEGER;
+  varLastDotPos INTEGER;
+  varLastSlashPos INTEGER;
+  varAtPos INTEGER;
+  varColonPos INTEGER;
+  varDiskServerName VARCHAR2(2048);
+  varMountPoint VARCHAR2(2048);
+BEGIN
+  -- path starts after the second '/' from the end
+  varPathPos := INSTR(inFullPath, '/', -1, 2);
+  outPath := SUBSTR(inFullPath, varPathPos+1);
+  -- DcId is the part after the last '.'
+  varLastDotPos := INSTR(inFullPath, '.', -1, 1);
+  outDcId := TO_NUMBER(SUBSTR(inFullPath, varLastDotPos+1));
+  -- the mountPoint is between the ':' and the start of the path
+  varColonPos := INSTR(inFullPath, ':', 1, 1);
+  varMountPoint := SUBSTR(inFullPath, varColonPos+1, varPathPos-varColonPos);
+  -- the diskserver is before the ':
+  varDiskServerName := SUBSTR(inFullPath, 1, varColonPos-1);
+  -- the fileid is between last / and '@'
+  varLastSlashPos := INSTR(inFullPath, '/', -1, 1);
+  varAtPos := INSTR(inFullPath, '@', 1, 1);
+  outFileId := TO_NUMBER(SUBSTR(inFullPath, varLastSlashPos+1, varAtPos-varLastSlashPos-1));
+  -- the nsHost is between '@' and last '.'
+  outNsHost := SUBSTR(inFullPath, varAtPos+1, varLastDotPos-varAtPos-1);
+  -- find out the filesystem Id
+  SELECT FileSystem.id INTO outFileSystem
+    FROM DiskServer, FileSystem
+   WHERE DiskServer.name = varDiskServerName
+     AND FileSystem.diskServer = DiskServer.id
+     AND FileSystem.mountPoint = varMountPoint;
+END;
+/
+
 /* Function to check if a diskserver and its given mountpoints have any files
  * attached to them.
  */
@@ -4986,37 +5027,6 @@ CREATE OR REPLACE PROCEDURE buildPathFromFileId(fid IN INTEGER,
                                                 path OUT VARCHAR2) AS
 BEGIN
   path := TO_CHAR(MOD(fid,100),'FM09') || '/' || TO_CHAR(fid) || '@' || nsHost || '.' || TO_CHAR(dcid);
-END;
-/
-
-/* parse a path to give back the FileSystem and path */
-CREATE OR REPLACE PROCEDURE parsePath(inFullPath IN VARCHAR2,
-                                      outFileSystem OUT INTEGER,
-                                      outPath OUT VARCHAR2,
-                                      outDcId OUT INTEGER) AS
-  varPathPos INTEGER;
-  varLastDotPos INTEGER;
-  varColonPos INTEGER;
-  varDiskServerName VARCHAR2(2048);
-  varMountPoint VARCHAR2(2048);
-BEGIN
-  -- path starts after the second '/' from the end
-  varPathPos := INSTR(inFullPath, '/', -1, 2);
-  outPath := SUBSTR(inFullPath, varPathPos+1);
-  -- DcId is the part after the last '.'
-  varLastDotPos := INSTR(inFullPath, '.', -1, 1);
-  outDcId := TO_NUMBER(SUBSTR(inFullPath, varLastDotPos+1));
-  -- the mountPoint is between the ':' and the start of the path
-  varColonPos := INSTR(inFullPath, ':', 1, 1);
-  varMountPoint := SUBSTR(inFullPath, varColonPos+1, varPathPos-varColonPos);
-  -- the diskserver is before the ':
-  varDiskServerName := SUBSTR(inFullPath, 1, varColonPos-1);
-  -- find out the filesystem Id
-  SELECT FileSystem.id INTO outFileSystem
-    FROM DiskServer, FileSystem
-   WHERE DiskServer.name = varDiskServerName
-     AND FileSystem.diskServer = DiskServer.id
-     AND FileSystem.mountPoint = varMountPoint;
 END;
 /
 
@@ -9686,8 +9696,18 @@ CREATE OR REPLACE PROCEDURE tg_setFileRecalled(inMountTransactionId IN INTEGER,
   varGcWeightProc   VARCHAR2(2048);
   varRecallStartTime NUMBER;
 BEGIN
-  -- first lock Castorfile, check NS and parse path
+  -- get diskserver, filesystem and path from full path in input
+  BEGIN
+    parsePath(inFilePath, varFSId, varDCPath, varDCId, varFileId, varNsHost);
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- log "setFileRecalled : unable to parse input path. giving up"
+    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_INVALID_PATH, 0, '', 'tapegatewayd',
+             'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
+             ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
+    RETURN;
+  END;
 
+  -- first lock Castorfile, check NS and parse path
   -- Get RecallJob and lock Castorfile
   BEGIN
     SELECT CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.lastUpdateTime,
@@ -9713,7 +9733,7 @@ BEGIN
     -- that it's uid/gid will be used for the DiskCopy creation
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- log "setFileRecalled : unable to identify Recall. giving up"
-    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, 0, '', 'tapegatewayd',
+    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, varFileId, varNsHost, 'tapegatewayd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) ||
              ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
     RETURN;
@@ -9724,16 +9744,6 @@ BEGIN
                          inCksumName, inCksumValue, varLastUpdateTime, inReqId, inLogContext) THEN
     RETURN;
   END IF;
-  -- get diskserver, filesystem and path from full path in input
-  BEGIN
-    parsePath(inFilePath, varFSId, varDCPath, varDCId);
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- log "setFileRecalled : unable to parse input path. giving up"
-    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_INVALID_PATH, varFileId, varNsHost, 'tapegatewayd',
-             'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
-             ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
-    RETURN;
-  END;
 
   -- Then deal with recalljobs and potential migrationJobs
 

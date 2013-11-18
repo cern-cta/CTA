@@ -548,8 +548,18 @@ CREATE OR REPLACE PROCEDURE tg_setFileRecalled(inMountTransactionId IN INTEGER,
   varGcWeightProc   VARCHAR2(2048);
   varRecallStartTime NUMBER;
 BEGIN
-  -- first lock Castorfile, check NS and parse path
+  -- get diskserver, filesystem and path from full path in input
+  BEGIN
+    parsePath(inFilePath, varFSId, varDCPath, varDCId, varFileId, varNsHost);
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- log "setFileRecalled : unable to parse input path. giving up"
+    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_INVALID_PATH, 0, '', 'tapegatewayd',
+             'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
+             ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
+    RETURN;
+  END;
 
+  -- first lock Castorfile, check NS and parse path
   -- Get RecallJob and lock Castorfile
   BEGIN
     SELECT CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.lastUpdateTime,
@@ -575,7 +585,7 @@ BEGIN
     -- that it's uid/gid will be used for the DiskCopy creation
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- log "setFileRecalled : unable to identify Recall. giving up"
-    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, 0, '', 'tapegatewayd',
+    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, varFileId, varNsHost, 'tapegatewayd',
              'mountTransactionId=' || TO_CHAR(inMountTransactionId) ||
              ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
     RETURN;
@@ -586,16 +596,6 @@ BEGIN
                          inCksumName, inCksumValue, varLastUpdateTime, inReqId, inLogContext) THEN
     RETURN;
   END IF;
-  -- get diskserver, filesystem and path from full path in input
-  BEGIN
-    parsePath(inFilePath, varFSId, varDCPath, varDCId);
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- log "setFileRecalled : unable to parse input path. giving up"
-    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_INVALID_PATH, varFileId, varNsHost, 'tapegatewayd',
-             'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
-             ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
-    RETURN;
-  END;
 
   -- Then deal with recalljobs and potential migrationJobs
 

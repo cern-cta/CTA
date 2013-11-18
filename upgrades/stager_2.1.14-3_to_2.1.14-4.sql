@@ -1319,6 +1319,193 @@ BEGIN
 END;
 /
 
+/* parse a path to give back the FileSystem and path */
+CREATE OR REPLACE PROCEDURE parsePath(inFullPath IN VARCHAR2,
+                                      outFileSystem OUT INTEGER,
+                                      outPath OUT VARCHAR2,
+                                      outDcId OUT INTEGER,
+                                      outFileId OUT INTEGER,
+                                      outNsHost OUT VARCHAR2) AS
+  varPathPos INTEGER;
+  varLastDotPos INTEGER;
+  varLastSlashPos INTEGER;
+  varAtPos INTEGER;
+  varColonPos INTEGER;
+  varDiskServerName VARCHAR2(2048);
+  varMountPoint VARCHAR2(2048);
+BEGIN
+  -- path starts after the second '/' from the end
+  varPathPos := INSTR(inFullPath, '/', -1, 2);
+  outPath := SUBSTR(inFullPath, varPathPos+1);
+  -- DcId is the part after the last '.'
+  varLastDotPos := INSTR(inFullPath, '.', -1, 1);
+  outDcId := TO_NUMBER(SUBSTR(inFullPath, varLastDotPos+1));
+  -- the mountPoint is between the ':' and the start of the path
+  varColonPos := INSTR(inFullPath, ':', 1, 1);
+  varMountPoint := SUBSTR(inFullPath, varColonPos+1, varPathPos-varColonPos);
+  -- the diskserver is before the ':
+  varDiskServerName := SUBSTR(inFullPath, 1, varColonPos-1);
+  -- the fileid is between last / and '@'
+  varLastSlashPos := INSTR(inFullPath, '/', -1, 1);
+  varAtPos := INSTR(inFullPath, '@', 1, 1);
+  outFileId := TO_NUMBER(SUBSTR(inFullPath, varLastSlashPos+1, varAtPos-varLastSlashPos-1));
+  -- the nsHost is between '@' and last '.'
+  outNsHost := SUBSTR(inFullPath, varAtPos+1, varLastDotPos-varAtPos-1);
+  -- find out the filesystem Id
+  SELECT FileSystem.id INTO outFileSystem
+    FROM DiskServer, FileSystem
+   WHERE DiskServer.name = varDiskServerName
+     AND FileSystem.diskServer = DiskServer.id
+     AND FileSystem.mountPoint = varMountPoint;
+END;
+/
+
+/* update the db after a successful recall */
+CREATE OR REPLACE PROCEDURE tg_setFileRecalled(inMountTransactionId IN INTEGER,
+                                               inFseq IN INTEGER,
+                                               inFilePath IN VARCHAR2,
+                                               inCksumName IN VARCHAR2,
+                                               inCksumValue IN INTEGER,
+                                               inReqId IN VARCHAR2,
+                                               inLogContext IN VARCHAR2) AS
+  varFileId         INTEGER;
+  varNsHost         VARCHAR2(2048);
+  varVID            VARCHAR2(2048);
+  varCopyNb         INTEGER;
+  varSvcClassId     INTEGER;
+  varEuid           INTEGER;
+  varEgid           INTEGER;
+  varLastUpdateTime INTEGER;
+  varCfId           INTEGER;
+  varFSId           INTEGER;
+  varDCPath         VARCHAR2(2048);
+  varDcId           INTEGER;
+  varFileSize       INTEGER;
+  varFileClassId    INTEGER;
+  varNbMigrationsStarted INTEGER;
+  varGcWeight       NUMBER;
+  varGcWeightProc   VARCHAR2(2048);
+  varRecallStartTime NUMBER;
+BEGIN
+  -- get diskserver, filesystem and path from full path in input
+  BEGIN
+    parsePath(inFilePath, varFSId, varDCPath, varDCId, varFileId, varNsHost);
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- log "setFileRecalled : unable to parse input path. giving up"
+    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_INVALID_PATH, 0, '', 'tapegatewayd',
+             'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
+             ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
+    RETURN;
+  END;
+
+  -- first lock Castorfile, check NS and parse path
+  -- Get RecallJob and lock Castorfile
+  BEGIN
+    SELECT CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.lastUpdateTime,
+           CastorFile.fileSize, CastorFile.fileClass, RecallMount.VID, RecallJob.copyNb,
+           RecallJob.euid, RecallJob.egid
+      INTO varCfId, varFileId, varNsHost, varLastUpdateTime, varFileSize, varFileClassId, varVID,
+           varCopyNb, varEuid, varEgid
+      FROM RecallMount, RecallJob, CastorFile
+     WHERE RecallMount.mountTransactionId = inMountTransactionId
+       AND RecallJob.vid = RecallMount.vid
+       AND RecallJob.fseq = inFseq
+       AND RecallJob.status = tconst.RECALLJOB_SELECTED
+       AND RecallJob.castorFile = CastorFile.id
+       AND ROWNUM < 2
+       FOR UPDATE OF CastorFile.id;
+    -- the ROWNUM < 2 clause is worth a comment here :
+    -- this select will select a single CastorFile and RecallMount, but may select
+    -- several RecallJobs "linked" to them. All these recall jobs have the same copyNb
+    -- but different uid/gid. They exist because these different uid/gid are attached
+    -- to different recallGroups.
+    -- In case of several recallJobs present, they are all equally responsible for the
+    -- recall, thus we pick the first one as "the" responsible. The only consequence is
+    -- that it's uid/gid will be used for the DiskCopy creation
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- log "setFileRecalled : unable to identify Recall. giving up"
+    logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_NOT_FOUND, varFileId, varNsHost, 'tapegatewayd',
+             'mountTransactionId=' || TO_CHAR(inMountTransactionId) ||
+             ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
+    RETURN;
+  END;
+  -- Check that the file is still there in the namespace (and did not get overwritten)
+  -- Note that error handling and logging is done inside the function
+  IF NOT checkRecallInNS(varCfId, inMountTransactionId, varVID, varCopyNb, inFseq, varFileId, varNsHost,
+                         inCksumName, inCksumValue, varLastUpdateTime, inReqId, inLogContext) THEN
+    RETURN;
+  END IF;
+
+  -- Then deal with recalljobs and potential migrationJobs
+
+  -- Find out starting time of oldest recall for logging purposes
+  SELECT MIN(creationTime) INTO varRecallStartTime FROM RecallJob WHERE castorFile = varCfId;
+  -- Delete recall jobs
+  DELETE FROM RecallJob WHERE castorFile = varCfId;
+  -- trigger waiting migrations if any
+  -- Note that we reset the creation time as if the MigrationJob was created right now
+  -- this is because "creationTime" is actually the time of entering the "PENDING" state
+  -- in the cases where the migrationJob went through a WAITINGONRECALL state
+  UPDATE /*+ INDEX_RS_ASC (MigrationJob I_MigrationJob_CFVID) */ MigrationJob
+     SET status = tconst.MIGRATIONJOB_PENDING,
+         creationTime = getTime()
+   WHERE status = tconst.MIGRATIONJOB_WAITINGONRECALL
+     AND castorFile = varCfId;
+  varNbMigrationsStarted := SQL%ROWCOUNT;
+
+  -- Deal with DiskCopies
+
+  -- compute GC weight of the recalled diskcopy
+  -- first get the svcClass
+  SELECT Diskpool2SvcClass.child INTO varSvcClassId
+    FROM Diskpool2SvcClass, FileSystem
+   WHERE FileSystem.id = varFSId
+     AND Diskpool2SvcClass.parent = FileSystem.diskPool
+     AND ROWNUM < 2;
+  -- Again, the ROWNUM < 2 is worth a comment : the diskpool may be attached
+  -- to several svcClasses. However, we do not support that these different
+  -- SvcClasses have different GC policies (actually the GC policy should be
+  -- moved to the DiskPool table in the future). Thus it is safe to take any
+  -- SvcClass from the list
+  varGcWeightProc := castorGC.getRecallWeight(varSvcClassId);
+  EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || varGcWeightProc || '(:size); END;'
+    USING OUT varGcWeight, IN varFileSize;
+  -- create the DiskCopy, after getting how many copies on tape we have, for the importance number
+  DECLARE
+    varNbCopiesOnTape INTEGER;
+  BEGIN
+    SELECT nbCopies INTO varNbCopiesOnTape FROM FileClass WHERE id = varFileClassId;
+    INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
+                          ownerUid, ownerGid, id, gcType, fileSystem, castorFile, status, importance)
+    VALUES (varDCPath, varGcWeight, getTime(), getTime(), varFileSize, 0,
+            varEuid, varEgid, varDCId, NULL, varFSId, varCfId, dconst.DISKCOPY_VALID,
+            -1-varNbCopiesOnTape*100);
+  END;
+  -- in case there are migrations, update CastorFile's tapeStatus to NOTONTAPE
+  IF varNbMigrationsStarted > 0 THEN
+    UPDATE CastorFile SET tapeStatus = dconst.CASTORFILE_NOTONTAPE WHERE id = varCfId;
+  END IF;
+
+  -- Finally deal with user requests
+  UPDATE SubRequest
+     SET status = decode(reqType,
+                         119, dconst.SUBREQUEST_REPACK, -- repack case
+                         dconst.SUBREQUEST_RESTART),    -- standard case
+         getNextStatus = dconst.GETNEXTSTATUS_FILESTAGED,
+         lastModificationTime = getTime()
+   WHERE castorFile = varCfId
+     AND status = dconst.SUBREQUEST_WAITTAPERECALL;
+
+  -- trigger the creation of additional copies of the file, if necessary.
+  replicateOnClose(varCfId, varEuid, varEgid);
+
+  -- log success
+  logToDLF(inReqId, dlf.LVL_SYSTEM, dlf.RECALL_COMPLETED_DB, varFileId, varNsHost, 'tapegatewayd',
+           'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || varVID ||
+           ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' recallTime=' ||
+           to_char(trunc(getTime() - varRecallStartTime, 0)) || ' ' || inLogContext);
+END;
+/
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/

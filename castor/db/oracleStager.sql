@@ -1500,37 +1500,6 @@ BEGIN
 END;
 /
 
-/* parse a path to give back the FileSystem and path */
-CREATE OR REPLACE PROCEDURE parsePath(inFullPath IN VARCHAR2,
-                                      outFileSystem OUT INTEGER,
-                                      outPath OUT VARCHAR2,
-                                      outDcId OUT INTEGER) AS
-  varPathPos INTEGER;
-  varLastDotPos INTEGER;
-  varColonPos INTEGER;
-  varDiskServerName VARCHAR2(2048);
-  varMountPoint VARCHAR2(2048);
-BEGIN
-  -- path starts after the second '/' from the end
-  varPathPos := INSTR(inFullPath, '/', -1, 2);
-  outPath := SUBSTR(inFullPath, varPathPos+1);
-  -- DcId is the part after the last '.'
-  varLastDotPos := INSTR(inFullPath, '.', -1, 1);
-  outDcId := TO_NUMBER(SUBSTR(inFullPath, varLastDotPos+1));
-  -- the mountPoint is between the ':' and the start of the path
-  varColonPos := INSTR(inFullPath, ':', 1, 1);
-  varMountPoint := SUBSTR(inFullPath, varColonPos+1, varPathPos-varColonPos);
-  -- the diskserver is before the ':
-  varDiskServerName := SUBSTR(inFullPath, 1, varColonPos-1);
-  -- find out the filesystem Id
-  SELECT FileSystem.id INTO outFileSystem
-    FROM DiskServer, FileSystem
-   WHERE DiskServer.name = varDiskServerName
-     AND FileSystem.diskServer = DiskServer.id
-     AND FileSystem.mountPoint = varMountPoint;
-END;
-/
-
 /* PL/SQL method implementing createDisk2DiskCopyJob */
 CREATE OR REPLACE PROCEDURE createDisk2DiskCopyJob
 (inCfId IN INTEGER, inNsOpenTime IN INTEGER, inDestSvcClassId IN INTEGER,
