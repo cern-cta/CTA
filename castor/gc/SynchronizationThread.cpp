@@ -172,7 +172,7 @@ void castor::gc::SynchronizationThread::run(void*) {
             continue;
           } else if (!(filebuf.st_mode & S_IFREG)) {
             continue;  // not a file
-          } else if (filebuf.st_mtime > time(NULL) - 60) {
+          } else if (filebuf.st_mtime > time(NULL) - 600) {
             continue;
           }
           
