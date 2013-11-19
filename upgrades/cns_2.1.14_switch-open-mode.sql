@@ -53,9 +53,6 @@ BEGIN
 END;
 /
 
--- add constraint now that all rows are populated
-ALTER TABLE Cns_file_metadata MODIFY (stagerTime CONSTRAINT NN_File_stagerTime NOT NULL);
-
 -- update configuration
 UPDATE CastorConfig SET value = 'N' WHERE class = 'stager' AND key = 'openmode';
 COMMIT;
