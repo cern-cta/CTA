@@ -2239,13 +2239,17 @@ static void wait_consumer64_thread(int *cidp)
   log(LOG_DEBUG,"wait_consumer64_thread: Entering wait_consumer64_thread\n");
   if (*cidp<0) return;
 
+  /* if no write error */
   /* Indicate to the consumer thread that an error has occured */
   /* The consumer thread will then terminate */
-  Csemaphore_down(&empty64);
-  array[produced64 % daemonv3_wrmt_nbuf].len = -1;
-  produced64++;
-  Csemaphore_up(&full64);
-
+  /* In case of write_error, the consumer thread has already exited */
+  /* and waiting on empty64 could lead to a dead lock */
+  if (!write_error) {
+    Csemaphore_down(&empty64);
+    array[produced64 % daemonv3_wrmt_nbuf].len = -1;
+    produced64++;
+    Csemaphore_up(&full64);
+  }
   log(LOG_INFO, "wait_consumer64_thread: Joining thread\n");
   if (Cthread_join(*cidp,NULL) < 0) {
     log(LOG_ERR,"wait_consumer64_thread: Error joining consumer thread, serrno=%d\n",serrno);

@@ -34,6 +34,13 @@
 
      #103168 RFE: Improve logging of failures in setOrReplaceSegmentsForFiles
 
+  CASTOR Protocols
+  ----------------
+
+  [Bug]
+
+    #92559 rfiod does not close
+
   CASTOR Tape
   -----------
 
