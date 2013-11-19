@@ -28,9 +28,6 @@
 #include "XrdxCastor2FsSecurity.hpp"
 /*----------------------------------------------------------------------------*/
 
-// TO BE DROPPED
-#define XCASTOR2FS_EXACT_MATCH 1000
-
 extern XrdxCastor2Fs* XrdxCastor2FS;
 
 //------------------------------------------------------------------------------

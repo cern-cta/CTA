@@ -60,10 +60,11 @@ SharedLibraryTarget(XrdxCastor2Fs,$(XCASTOR2FS_OBJS),,-lXrdUtils -lXrdCl -lXrdCl
 
 
 XCASTOR2SERVERACC_SRCS= XrdxCastor2ServerAcc.cpp \
-                        XrdxCastorTiming.cpp
+                        XrdxCastorTiming.cpp \
+                        XrdxCastorLogging.cpp
 
 XCASTOR2SERVERACC_OBJS=$(XCASTOR2SERVERACC_SRCS:.cpp=.o)
-SharedLibraryTarget(XrdxCastor2ServerAcc,$(XCASTOR2SERVERACC_OBJS),,-lXrdUtils -lcrypto -lrt)
+SharedLibraryTarget(XrdxCastor2ServerAcc,$(XCASTOR2SERVERACC_OBJS),,-lXrdUtils -lcrypto -lrt -l UUIDLIBNAME)
 
 
 XCASTOR2OFS_SRCS= XrdxCastor2Ofs.cpp         \

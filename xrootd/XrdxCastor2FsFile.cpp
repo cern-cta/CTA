@@ -32,9 +32,6 @@
 #include "XrdxCastor2FsSecurity.hpp"
 /*----------------------------------------------------------------------------*/
 
-// TO BE DROPPED
-#define XCASTOR2FS_EXACT_MATCH 1000
-
 extern XrdxCastor2Fs* XrdxCastor2FS;
 
 //------------------------------------------------------------------------------
@@ -562,68 +559,30 @@ XrdxCastor2FsFile::open(const char*         path,
   }
 
   // Add the opaque authorization information for the server for read & write
-  XrdOucString accopaque = "";
-  XrdxCastor2ServerAcc::AuthzInfo* authz = new XrdxCastor2ServerAcc::AuthzInfo(false);
-  authz->sfn = (char*) origpath;
-  authz->pfn1 = (char*) resp_info.mRedirectionPfn1.c_str();
-  authz->pfn2 = (char*) resp_info.mRedirectionPfn2.c_str();
-  authz->id  = (char*)tident;
-  authz->client_sec_uid = STRINGSTORE(sclient_uid.c_str());
-  authz->client_sec_gid = STRINGSTORE(sclient_gid.c_str());
-  authz->accessop = aop;
+  XrdxCastor2ServerAcc::AuthzInfo authz;
+  authz.sfn = (char*) origpath;
+  authz.pfn1 = (char*) resp_info.mRedirectionPfn1.c_str();
+  authz.pfn2 = (char*) resp_info.mRedirectionPfn2.c_str();
+  authz.id  = (char*)tident;
+  authz.client_sec_uid = sclient_uid.c_str();
+  authz.client_sec_gid = sclient_gid.c_str();
+  authz.accessop = aop;
   time_t now = time(NULL);
-  authz->exptime  = (now + XrdxCastor2FS->TokenLockTime);
-  
-  if (XrdxCastor2FS->IssueCapability)
-  {
-    authz->token = NULL;
-    authz->signature = NULL;
-  }
-  else
-  {
-    authz->token = "";
-    authz->signature = "";
-  }
-  
-  authz->manager = (char*)XrdxCastor2FS->ManagerId.c_str();
-  XrdOucString authztoken;
-  XrdOucString sb64;
-  
-  if (!XrdxCastor2ServerAcc::BuildToken(authz, authztoken))
+  authz.exptime  = (now + XrdxCastor2FS->TokenLockTime);
+  authz.token = "";
+  authz.signature = "";
+  authz.manager = (char*)XrdxCastor2FS->ManagerId.c_str();
+  std::string acc_opaque = "";
+
+  // Build and sign the authorization token with the server's private key
+  acc_opaque = XrdxCastor2FS->mServerAcc->GetOpaqueAcc(authz, XrdxCastor2FS->IssueCapability);
+
+  if (acc_opaque.empty())
   {
     XrdxCastor2Fs::Emsg(epname, error, retc, "build authorization token for sfn = ", map_path.c_str());
-    delete authz;
-    return SFS_ERROR;
-  }
-  
-  authz->token = (char*) authztoken.c_str();
-  TIMING("BUILDTOKEN", &opentiming);
-  
-  if (XrdxCastor2FS->IssueCapability)
-  {
-    int sig64len = 0;
-    
-    if (!XrdxCastor2FS->ServerAcc->SignBase64((unsigned char*)authz->token,
-                                              strlen(authz->token), sb64, sig64len))
-    {
-      XrdxCastor2Fs::Emsg(epname, error, retc, "sign authorization token for sfn = ", map_path.c_str());
-      delete authz;
-      return SFS_ERROR;
-    }
-    
-    authz->signature = (char*)sb64.c_str();
-  }
-  
-  TIMING("SIGNBASE64", &opentiming);
-  
-  if (!XrdxCastor2ServerAcc::BuildOpaque(authz, accopaque))
-  {
-    XrdxCastor2Fs::Emsg(epname, error, retc, "build authorization opaque string for sfn = ", map_path.c_str());
-    delete authz;
     return SFS_ERROR;
   }
 
-  TIMING("BUILDOPAQUE", &opentiming);
   // Add the internal token opaque tag
   resp_info.mRedirectionHost += "?";
   
@@ -637,7 +596,7 @@ XrdxCastor2FsFile::open(const char*         path,
   }
   
   // Add the external token opaque tag
-  resp_info.mRedirectionHost += accopaque;
+  resp_info.mRedirectionHost += acc_opaque.c_str();
   
   if (!isRW)
   {
@@ -656,8 +615,6 @@ XrdxCastor2FsFile::open(const char*         path,
   
   ecode = atoi(XrdxCastor2FS->xCastor2FsTargetPort.c_str());
   error.setErrInfo(ecode, resp_info.mRedirectionHost.c_str());
-  delete authz;
-  
   TIMING("AUTHZ", &opentiming);
 
   // Do the proc statistics if a proc file system is specified

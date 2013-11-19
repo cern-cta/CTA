@@ -83,9 +83,6 @@ xcastor::XrdxCastorClient* XrdxCastor2Fs::msCastorClient;
 int XrdxCastor2Fs::TokenLockTime = 5;
 XrdxCastor2Fs* XrdxCastor2FS = 0;
 
-// TO BE DROPPED
-#define XCASTOR2FS_EXACT_MATCH 1000
-
 
 //------------------------------------------------------------------------------
 // This helps to avoid memory leaks by strdup, we maintain a string hash to
@@ -856,10 +853,11 @@ XrdSfsFileSystem* XrdSfsGetFileSystem(XrdSfsFileSystem* /*native_fs*/,
 
   XrdxCastor2FS = &myFS;
   // Initialize authorization module ServerAcc
-  XrdxCastor2FS->ServerAcc = (XrdxCastor2ServerAcc*) XrdAccAuthorizeObject(lp, configfn, NULL);
+  XrdxCastor2FS->mServerAcc = (XrdxCastor2ServerAcc*) XrdAccAuthorizeObject(lp, configfn, NULL);
 
-  if (!XrdxCastor2FS->ServerAcc)
+  if (!XrdxCastor2FS->mServerAcc)
   {
+    xcastor_static_err("failed loading the authorization plugin");
     return 0;
   }
 
@@ -887,7 +885,7 @@ XrdxCastor2Fs::XrdxCastor2Fs(XrdSysError* ep):
   
   Logging::Init();
   Logging::SetLogPriority( mLogLevel );
-  Logging::SetUnit( unit.c_str() );
+  Logging::SetUnit(unit.c_str());
   xcastor_info( "info=\"logging configured\" " );
 }
 
