@@ -40,7 +40,7 @@
 int rmc_mnt(
 	const char *const server,
 	const char *const vid,
-	const char *const loader)
+	const char *const drive)
 {
 	const gid_t gid = getgid();
 	const uid_t uid = getuid();
@@ -48,7 +48,7 @@ int rmc_mnt(
 	/* The total length of the fixed size members of the request message */
 	/* is Magic (4 bytes) + request ID (4 bytes) + length (4 bytes) +    */
 	/* uid (4 bytes) + gid (4 bytes) = 20 bytes                          */
-	const int msglen = 20 + strlen(vid) + 1 + strlen(loader) + 1;
+	const int msglen = 20 + strlen(vid) + 1 + strlen(drive) + 1;
 
 	char repbuf[1];
 	char *sbp = NULL;
@@ -78,7 +78,7 @@ int rmc_mnt(
 	marshall_LONG (sbp, uid);
 	marshall_LONG (sbp, gid);
 	marshall_STRING (sbp, vid);
-	marshall_STRING (sbp, loader);
+	marshall_STRING (sbp, drive);
 
 	/* Being paranoid; checking the calculated message length against */
 	/* the number of bytes marshalled                                 */

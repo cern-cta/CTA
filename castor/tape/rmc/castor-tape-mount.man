@@ -22,15 +22,20 @@ mounts the volume with the specfied VID in into the drive with the specified
 DRIVE ID. The DRIVE ID format depends on the type of tape library being used.
 The
 .B castor-tape-mount
-currently supports two types of tape library, namely SCSI-compatible libraries
-and ACS-compatible libraries.  The DRIVE ID format for SCSI-compatible
-libraries is:
-
-.B smc@HOSTNAME,DRIVE_ORDINAL
+currently supports three types of tape library, namely ACS compatible, manual
+and SCSI compatible.
 
 The DRIVE ID format for ACS-compatible libraries is:
 
 .B ACS:LSM:panel:transport
+
+The DRIVE ID format for manual is simply:
+
+.B manual
+
+The DRIVE ID format for SCSI-compatible libraries is:
+
+.B smc@HOSTNAME,DRIVE_ORDINAL
 
 .SH OPTIONS
 .TP
