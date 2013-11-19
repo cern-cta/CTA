@@ -189,13 +189,13 @@ void castor::gc::SynchronizationThread::run(void*) {
             continue;
           }
 
-          try {
-            paths[fid.first][fid.second] = *it + "/" + file->d_name;
+          paths[fid.first][fid.second] = *it + "/" + file->d_name;
 
-            // In the case of a large number of files, synchronize them in
-            // chunks so to not overwhelming central services
-            if (paths[fid.first].size() >= chunkSize) {
+          // In the case of a large number of files, synchronize them in
+          // chunks so to not overwhelming central services
+          if (paths[fid.first].size() >= chunkSize) {
 
+            try {
               // "Synchronizing files with nameserver and stager catalog"
               castor::dlf::Param params[] =
                 {castor::dlf::Param("NbFiles", paths[fid.first].size()),
@@ -204,15 +204,21 @@ void castor::gc::SynchronizationThread::run(void*) {
 
               synchronizeFiles(fid.first, paths[fid.first], disableStagerSync, fs[fsIt]);
               paths[fid.first].clear();
-              sleep(chunkInterval);
+            } catch (castor::exception::Exception& e) {
+              // "Unexpected exception caught in synchronizeFiles"
+              castor::dlf::Param params[] =
+                {castor::dlf::Param("ErrorCode", e.code()),
+                 castor::dlf::Param("ErrorMessage", e.getMessage().str())};
+              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 2, params);
             }
-          } catch (castor::exception::Exception& e) {
-            // "Unexpected exception caught in synchronizeFiles"
-            castor::dlf::Param params[] =
-              {castor::dlf::Param("ErrorCode", e.code()),
-               castor::dlf::Param("ErrorMessage", e.getMessage().str())};
-            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 2, params);
+            // sleep a bit before next roudn to not overwhelm central services
             sleep(chunkInterval);
+            // after we've slept, we should flush the hidden cache inside the readdir
+            // call. Otherwise, our next files will have as mtime the one before our
+            // sleep, and this means that the check on the age is useless
+            // As the buffer is hidden, there is no clean way to flush it, but a
+            // repositioning of the dir stream to its current place does the trick
+            seekdir(files, telldir(files));
           }
         }
         closedir(files);
