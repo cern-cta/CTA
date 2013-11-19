@@ -20,8 +20,8 @@ END;
 
 /* handle the creation of the Disk2DiskCopyJobs for the running drainingJobs */
 CREATE OR REPLACE PROCEDURE drainRunner AS
-  varNbFiles INTEGER := 0;
-  varNbBytes INTEGER := 0;
+  varNbFiles INTEGER;
+  varNbBytes INTEGER;
   varNbRunningJobs INTEGER;
   varMaxNbOfSchedD2dPerDrain INTEGER;
   varUnused INTEGER;
@@ -44,6 +44,8 @@ BEGIN
       logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_REFILL, 0, '', 'stagerd',
                'svcClass=' || getSvcClassName(dj.svcClass) || ' DrainReq=' ||
                TO_CHAR(dj.id) || ' MaxNewJobsCount=' || TO_CHAR(varMaxNbOfSchedD2dPerDrain-varNbRunningJobs));
+      varNbFiles := 0;
+      varNbBytes := 0;
       FOR F IN (SELECT * FROM
                  (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
                     FROM DiskCopy, CastorFile
