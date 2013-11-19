@@ -21,6 +21,7 @@
      #103188 catch NO_DATA_FOUND in getFile/SvcClassName
      #103189 Transfermanager synchronizer thread is not thread-safe
      #103190 Constraint violation errors thrown by the GC
+     #103235 Stuck files after synchronization removes a file during recall
 
   [Features]
 
