@@ -28,7 +28,7 @@ EXTERN_C int rmc_mount(const char *const server, const char *const vid, const in
 EXTERN_C int rmc_read_elem_status(const char *const server, const int type, const int startaddr, const int nbelem, struct smc_element_info *const element_info);
 EXTERN_C void rmc_seterrbuf(const char *const buffer, const int buflen);
 EXTERN_C int send2rmc(const char *const host, const char *const reqp, const int reql, char *const user_repbuf, const int user_repbuf_len);
-EXTERN_C int rmc_mnt(const char *const server, const char *const vid, const char *const loader);
-EXTERN_C int rmc_unmnt(const char *const server, const char *const vid, const char *const loader);
+EXTERN_C int rmc_mnt(const char *const server, const char *const vid, const char *const drive);
+EXTERN_C int rmc_unmnt(const char *const server, const char *const vid, const char *const drive);
 
 #endif

@@ -11,7 +11,7 @@ rmc_unmnt \- send a request to the Remote Media Changer daemon to have a volume 
 .sp
 .BI "int rmc_unmnt (char *" server ,
 .BI "char *" vid ,
-.BI "char *" loader );
+.BI "char *" drive );
 .SH DESCRIPTION
 .B rmc_unmnt
 asks the Remote Media Changer server running on
@@ -19,7 +19,7 @@ asks the Remote Media Changer server running on
 to unmount the volume
 .I vid
 from the drive specified by
-.IR loader .
+.IR drive .
 .TP
 .I server
 specifies the Remote Media Changer to be contacted.
@@ -28,7 +28,7 @@ specifies the Remote Media Changer to be contacted.
 is the volume visual identifier.
 It must be at most six characters long.
 .TP
-.I loader
+.I drive
 specifies the drive in the robot in one of the following forms:
 .RS
 .TP
@@ -52,7 +52,7 @@ is set appropriately.
 Communication error.
 .TP
 .B ERMCUNREC
-Unknown host or invalid loader or vid too long or requester does not have
+Unknown host or invalid drive or vid too long or requester does not have
 TP_SYSTEM privilege in the Cupv database.
 .TP
 .B ERMCFASTR
