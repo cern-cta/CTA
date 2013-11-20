@@ -36,7 +36,6 @@
 static int rmc_buf2uint(const char *const buf, int buflen) {
 	int i = 0;
 	int value = 0;
-	int multipler = 1;
 
 	/* Fail conversion if there is nothing to convert */
 	if(NULL == buf || 0 == buflen) {
@@ -50,10 +49,8 @@ static int rmc_buf2uint(const char *const buf, int buflen) {
 		if(c < '0' || c > '9') {
 			return -1;
 		}
-		value *= multipler;
+		value *= 10;
 		value += (c - '0');
-
-		multipler *= 10;
 	}
 	return value;
 }
@@ -107,11 +104,11 @@ int rmc_get_acs_drive_id(const char *const drive,
 
 	/* Try to convert the 4 drive id numbers to integers */
 	drive_id->acs = rmc_buf2uint(drive + commaIndex[0] + 1,
-		commaIndex[1] - commaIndex[0]);
+		commaIndex[1] - commaIndex[0] - 1);
 	drive_id->lsm = rmc_buf2uint(drive + commaIndex[1] + 1,
-		commaIndex[2] - commaIndex[1]);
+		commaIndex[2] - commaIndex[1] - 1);
 	drive_id->panel = rmc_buf2uint(drive + commaIndex[2] + 1,
-		commaIndex[3] - commaIndex[2]);
+		commaIndex[3] - commaIndex[2] - 1);
 	drive_id->transport = rmc_buf2uint(drive + commaIndex[3] + 1,
 		str_len - 1 - commaIndex[3]);
 
