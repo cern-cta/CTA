@@ -154,10 +154,10 @@ To fulfil the requirement for an ability to kill a session, the main tape server
 will be simple, and just report its status to the VDQM and wait for requests from it on
 an open port.
 
-When a session should start, the process will fork a child process, which will reserve the memory
-and instantiate the session machinery.
+When a tape mount should start, the process will fork a child process, which will reserve the memory
+and instantiate the tape mount machinery.
 
-The layout of the main thread is show in figure \ref{tsParentProcess}. The layout of the child process, which contains all the complexity is shown in figure \ref{tsChildProcess}.
+The layout of the main process is show in figure \ref{tsParentProcess}. The layout of the child process, which contains all the complexity is shown in figure \ref{tsChildProcess}.
 
 \begin{figure}[h]
 \begin{center}
@@ -176,12 +176,40 @@ The layout of the main thread is show in figure \ref{tsParentProcess}. The layou
 
 The data path will go to/from tape drive, through the generic SCSI interface of st driver (CAStor uses a
 mixture of both in the Tape::Drive class), then through the File structure support class, as controlled by
-the tape thread. The tape thread will communicate the data to (or get from) the disk thread via the 
+the tape thread. The tape thread will communicate the data to (or get from) the disk threads via the 
 data FIFO class. This class will in turn allocate the memory from a preallocated, pool of
 fixed sized blocks. The size of the pool will be controlled by the operators.
 
 Some libraries already exist in CAStor, and will be reused, either by copying or linking from pre-compiled 
 packages. The main parts of the sessions spawner will be taken from the VDQM as well.
+
+\subsubsection{Memory management and threading architecture}
+Like the previous version in rtcpd, the tape server will pre-allocate a fixed number of memory
+blocks for the whole duration of the tape session, and circulate them between the data producers 
+and consumers.
+
+The data flow is organised around block passing, from queue to queue. Each queue output is processed
+by a thread of thread pool.
+
+The overall layout of a migration mount is shown in figure \ref{tsMigrationMM}. The recall mount, shown in\
+figure \ref{tsRecallMM}, is almost symmetric. The report packer triggers on threshold instead of tape 
+flushes, and 
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[scale=0.75]{images/MigrationMountMM}
+\end{center}
+\caption{\label{tsMigrationMM}Tape server child process: layout of the memory management in the case
+of a migration mount}
+\end{figure}
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[scale=0.75]{images/RecallMountMM}
+\end{center}
+\caption{\label{tsRecallMM}Tape server child process: layout of the memory management in the case
+of a recall mount}
+\end{figure}
 
 
 % Section:  Reference documentations
