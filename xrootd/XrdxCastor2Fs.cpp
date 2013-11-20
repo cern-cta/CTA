@@ -67,8 +67,6 @@
 
 XrdSysError  xCastor2FsEroute(0);
 XrdSysError* XrdxCastor2Fs::eDest;
-XrdOucHash<XrdOucString>* XrdxCastor2Fs::filesystemhosttable;
-XrdSysMutex               XrdxCastor2Fs::filesystemhosttablelock;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::nsMap;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::stagertable;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::roletable;
@@ -896,7 +894,6 @@ XrdxCastor2Fs::XrdxCastor2Fs(XrdSysError* ep):
 bool
 XrdxCastor2Fs::Init(XrdSysError& fsEroute)
 {
-  filesystemhosttable = new XrdOucHash<XrdOucString> ();
   nsMap   = new XrdOucHash<XrdOucString> ();
   stagertable   = new XrdOucHash<XrdOucString> ();
   roletable = new XrdOucHash<XrdOucString> ();
@@ -931,10 +928,8 @@ XrdxCastor2Fs::NsMapping(XrdOucString input)
   if (pos == STR_NPOS)
   {
     if (!(value = nsMap->Find("/")))
-    {
       return false;
-    }
-
+   
     pos = 0;
     prefix = "/";
   }
@@ -1356,16 +1351,12 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
   reducedTident += hostname;
 
   if (XrdxCastor2FS->Proc)
-  {
     XrdxCastor2FS->Stats.IncCmd();
-  }
 
   xcastor_debug("checking tident=%s, hostname=%s", tident, hostname.c_str());
-  XrdxCastor2FS->filesystemhosttablelock.Lock();
 
-  if (!filesystemhosttable->Find(hostname.c_str()))
+  if (!FindDiskServer(hostname.c_str()))
   {
-    XrdxCastor2FS->filesystemhosttablelock.UnLock();
     // This is not a trusted disk server, assume the 'traditional' xrootd prepare
     XrdOucTList* tp = pargs.paths;
     XrdOucTList* op = pargs.oinfo;
@@ -1376,12 +1367,12 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
       int retc;
 
       if ((retc = stageprepare(tp->text, error, client, op ? op->text : NULL)) != SFS_OK)
-      {
         return retc;
-      }
 
-      if (tp) tp = tp->next;
-      else break;
+      if (tp) 
+        tp = tp->next;
+      else 
+        break;
 
       if (op) op = op->next;
     }
@@ -1389,9 +1380,7 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
     return SFS_OK;
   }
 
-  XrdxCastor2FS->filesystemhosttablelock.UnLock();
-
-  if (! pargs.paths->text || !pargs.oinfo->text)
+  if (!pargs.paths->text || !pargs.oinfo->text)
   {
     xcastor_debug("ignoring prepare request");
     return SFS_OK;
@@ -2443,9 +2432,9 @@ XrdxCastor2Fs::GetAdminDelay(XrdOucString& msg, bool isRW)
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 //! Set the log level for the manager xrootd server
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void 
 XrdxCastor2Fs::SetLogLevel(int logLevel)
 {
@@ -2459,3 +2448,34 @@ XrdxCastor2Fs::SetLogLevel(int logLevel)
     Logging::SetLogPriority(mLogLevel);
   }
 }
+
+
+//------------------------------------------------------------------------------
+// Cache disk server host name with and without the domain name
+//------------------------------------------------------------------------------
+void 
+XrdxCastor2Fs::CacheDiskServer(const std::string& hostname)
+{
+  XrdSysMutexHelper scope_lock(mMutexFsSet);
+  mFsSet.insert(hostname);
+  size_t pos = hostname.find('.');
+  
+  // Insert the hostname without the domain
+  if (pos != std::string::npos)
+  {
+    std::string nodomain_host = hostname.substr(0, pos - 1);
+    mFsSet.insert(nodomain_host);
+  }
+}
+
+
+//------------------------------------------------------------------------------
+// Check if the hostname is known at the redirector 
+//------------------------------------------------------------------------------
+bool 
+XrdxCastor2Fs::FindDiskServer(const std::string& hostname)
+{
+  XrdSysMutexHelper scope_lock(mMutexFsSet);
+  return (mFsSet.find(hostname) != mFsSet.end());
+}
+

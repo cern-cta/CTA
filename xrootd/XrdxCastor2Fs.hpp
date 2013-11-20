@@ -950,9 +950,10 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     XrdOucString GridMapFile;
     char* ConfigFN;  ///< path to config file 
 
-    // we must check if all these things need to be thread safed with a mutex ...
-    static  XrdOucHash<XrdOucString>* filesystemhosttable;
-    static  XrdSysMutex               filesystemhosttablelock;
+    // we must check if all these things need to be thread safe with a mutex ...
+    std::set<std::string> mFsSet; ///< set of known diskserver hosts
+    XrdSysMutex mMutexFsSet; ///< mutex protecting set of diskservers
+
     static  XrdOucHash<XrdOucString>* nsMap;
     static  XrdOucHash<XrdOucString>* stagertable;
   
@@ -964,7 +965,7 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     static  XrdOucHash<XrdSecEntity>* secentitystore;
     static  XrdOucHash<struct passwd>* passwdstore;
     static  XrdOucHash<XrdOucString>*  gridmapstore;
-    static  XrdOucHash<XrdxCastor2FsGroupInfo>*  groupinfocache;
+    static  XrdOucHash<XrdxCastor2FsGroupInfo>* groupinfocache;
 
     static xcastor::XrdxCastorClient* msCastorClient; ///< obj dealing with async requests/responses
 
@@ -1007,8 +1008,30 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
 
   private:
 
-    int mLogLevel; ///< log level from config file or set in the proc "trace" file
-    static  XrdSysError* eDest;
+  //----------------------------------------------------------------------------
+  //! Cache diskserver host name with and without the domain name so that 
+  //! subsequent prepare requests from the diskservers are allowed to pass 
+  //! through
+  //! 
+  //! @param host hostaname to be cached
+  //!
+  //----------------------------------------------------------------------------
+  void CacheDiskServer(const std::string& hostname);
+
+
+  //----------------------------------------------------------------------------
+  //! Check if the diskserver hostname is known at the redirector 
+  //!
+  //! @param hostname hostname to look for in the cache 
+  //!
+  //! @return true if hostname knowns, otherwise false
+  //!
+  //----------------------------------------------------------------------------
+  bool FindDiskServer(const std::string& hostname);
+
+
+  int mLogLevel; ///< log level from config file or set in the proc "trace" file
+  static  XrdSysError* eDest;
 };
 
 

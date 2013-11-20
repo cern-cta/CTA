@@ -75,30 +75,25 @@ XrdxCastor2FsFile::open(const char*         path,
   const char* origpath = path;
   XrdSecEntity mappedclient;
   xcastor::Timing opentiming("fileopen");
-  XrdOucString sinfo = (ininfo ? ininfo : "");
+  XrdOucString info_str = (ininfo ? ininfo : "");
   XrdOucString map_path;
   const char* info;
   int qpos = 0;
 
   // => case where open fails and client bounces back
-  if ((qpos = sinfo.find("?") != STR_NPOS))
-    sinfo.erase(qpos);
+  if ((qpos = info_str.find("?") != STR_NPOS))
+    info_str.erase(qpos);
 
-  // If the clients sends tried info, we have to erase it
-  if ((qpos = sinfo.find("tried") != STR_NPOS))
-    sinfo.erase(qpos);
+  // If the clients send tried info, we have to erase it
+  if ((qpos = info_str.find("tried") != STR_NPOS))
+    info_str.erase(qpos);
 
   // If the clients send old redirection info, we have to erase it
-  if ((qpos = sinfo.find("castor2fs.sfn=")))
-    sinfo.erase(qpos);
+  if ((qpos = info_str.find("castor2fs.sfn=")))
+    info_str.erase(qpos);
 
-  if (ininfo)
-    info = sinfo.c_str();
-  else
-    info = 0;
-  
-  if (info)
-    xcastor_debug("path=%s, info=%s", path, info);
+  info = (ininfo ? info_str.c_str() : 0);
+  xcastor_debug("path=%s, info=%s", path, (info ? info : ""));
 
   TIMING("START", &opentiming);
   map_path = XrdxCastor2Fs::NsMapping(path);
@@ -111,9 +106,9 @@ XrdxCastor2FsFile::open(const char*         path,
     return SFS_ERROR;
   }
 
-  // Check if user is coming back for a response after a stall
-  bool stall_comeback = XrdxCastor2FS->msCastorClient->HasSubmittedReq(map_path.c_str(), error);
+  xcastor_debug("open_mode=%x, fn=%s, tident=%s", Mode, map_path.c_str(), tident);
 
+  // Check if user is coming back for a response after a stall
   int aop = AOP_Read;
   int retc, open_flag = 0;
   struct Cns_filestatcs buf;
@@ -121,16 +116,13 @@ XrdxCastor2FsFile::open(const char*         path,
   int isRewrite = 0;
   int crOpts = (Mode & SFS_O_MKPTH ? XRDOSS_mkpath : 0);
   XrdOucEnv Open_Env(info);
-  int ecode = 0;
-  //TODO: print the open mode in hex
-  xcastor_debug("open_mode=%i, fn=%s, tident=%s", Mode, map_path.c_str(), tident);
 
   // Set the actual open mode and find mode
   if (open_mode & SFS_O_CREAT) open_mode = SFS_O_CREAT;
   else if (open_mode & SFS_O_TRUNC) open_mode = SFS_O_TRUNC;
 
-  switch (open_mode & (SFS_O_RDONLY | SFS_O_WRONLY | SFS_O_RDWR |
-                       SFS_O_CREAT  | SFS_O_TRUNC))
+  switch (open_mode & (SFS_O_RDONLY | SFS_O_WRONLY | 
+                       SFS_O_RDWR | SFS_O_CREAT  | SFS_O_TRUNC))
   {
   case SFS_O_CREAT:
     open_flag  = O_RDWR | O_CREAT | O_EXCL;
@@ -165,14 +157,10 @@ XrdxCastor2FsFile::open(const char*         path,
   }
 
   if (open_flag & O_CREAT)
-  {
-    AUTHORIZE(client, &Open_Env, AOP_Create, "create", map_path.c_str(), error);
-  }
+    AUTHORIZE(client, &Open_Env, AOP_Create, "create", map_path.c_str(), error)
   else
-  {
-    AUTHORIZE(client, &Open_Env, (isRW ? AOP_Update : AOP_Read), "open", map_path.c_str(), error);
-  }
-  
+    AUTHORIZE(client, &Open_Env, (isRW ? AOP_Update : AOP_Read), "open", map_path.c_str(), error)
+    
   // See if the cluster is in maintenance mode and has delays configured for write/read
   XrdOucString msg_delay;
   int64_t delay = XrdxCastor2FS->GetAdminDelay(msg_delay, isRW);
@@ -188,6 +176,8 @@ XrdxCastor2FsFile::open(const char*         path,
 
   // Prepare to create or open the file, only if this is the first time the user
   // comes with this request. If the user comes after a stall we skip this part.
+  bool stall_comeback = XrdxCastor2FS->msCastorClient->HasSubmittedReq(map_path.c_str(), error);
+
   if (!stall_comeback)
   {
     if (isRW)
@@ -232,7 +222,8 @@ XrdxCastor2FsFile::open(const char*         path,
         else
           return XrdxCastor2Fs::Emsg(epname, error, ENOTBLK, "open not regular file", map_path.c_str());
       }
-      
+    
+      // For 0 file size use the dummy "zero" file and don't redirect
       if (buf.filesize == 0)
       {
         oh = XrdxCastor2FsUFS::Open(XrdxCastor2FS->zeroProc.c_str(), 0, 0);
@@ -518,29 +509,8 @@ XrdxCastor2FsFile::open(const char*         path,
     }
   }
 
-  // Save the redirection host with and without the domain in the host table 
-  int pos;
-  XrdOucString nodomainhost = "";
-
-  if ((pos = resp_info.mRedirectionHost.find(".")) != STR_NPOS)
-  {
-    nodomainhost.assign(resp_info.mRedirectionHost, 0, pos - 1);
-    XrdxCastor2FS->filesystemhosttablelock.Lock();    // -->
-
-    if (!XrdxCastor2FS->filesystemhosttable->Find(nodomainhost.c_str()))
-      XrdxCastor2FS->filesystemhosttable->Add(nodomainhost.c_str(), new XrdOucString(nodomainhost.c_str()));
-    
-    XrdxCastor2FS->filesystemhosttablelock.UnLock();  // <--
-  }
-
-  XrdxCastor2FS->filesystemhosttablelock.Lock();   // -->
-
-  if (!XrdxCastor2FS->filesystemhosttable->Find(resp_info.mRedirectionHost.c_str()))
-    XrdxCastor2FS->filesystemhosttable->Add(resp_info.mRedirectionHost.c_str(), 
-                                            new XrdOucString(resp_info.mRedirectionHost.c_str()));
-  
-  XrdxCastor2FS->filesystemhosttablelock.UnLock(); // -->
-
+  // Save the redirection host in the set of known diskservers 
+  XrdxCastor2FS->CacheDiskServer(resp_info.mRedirectionHost.c_str());
 
   TIMING("REDIRECTION", &opentiming);
   xcastor_debug("redirection to:%s", resp_info.mRedirectionHost.c_str());
@@ -613,7 +583,7 @@ XrdxCastor2FsFile::open(const char*         path,
       resp_info.mRedirectionHost += "createifnotexist=1&";
   }
   
-  ecode = atoi(XrdxCastor2FS->xCastor2FsTargetPort.c_str());
+  int ecode = atoi(XrdxCastor2FS->xCastor2FsTargetPort.c_str());
   error.setErrInfo(ecode, resp_info.mRedirectionHost.c_str());
   TIMING("AUTHZ", &opentiming);
 
@@ -627,9 +597,7 @@ XrdxCastor2FsFile::open(const char*         path,
     mode_t mode = strtol(Open_Env.Get("mode"), NULL, 8);
 
     if (XrdxCastor2FsUFS::Chmod(map_path.c_str(), mode))
-    {
       return XrdxCastor2Fs::Emsg(epname, error, serrno, "set mode on", map_path.c_str());
-    }
   }
 
   TIMING("PROC/DONE", &opentiming);
