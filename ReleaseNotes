@@ -22,11 +22,13 @@
      #103189 Transfermanager synchronizer thread is not thread-safe
      #103190 Constraint violation errors thrown by the GC
      #103235 Stuck files after synchronization removes a file during recall
+     #103242 Incorrect evaluation of lastModificationTime leads to double recalls + dark data
 
   [Features]
 
      #103106 RFE: mark rebalancing transfers as such in listtransfer
      #103196 RFE: improve usage of DBMS_ALERT in the database
+     #103243 RFE: drop GC/syncInterval option as it is redundant
 
   CASTOR NS
   ---------
