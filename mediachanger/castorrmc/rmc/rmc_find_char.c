@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      rmc_procreq.h
+ *                 rmc/rmc_find_char.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,29 +18,24 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * 
  *
- * @author Castor Dev team, castor-dev@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef _RMC_PROCREQ_H
-#define _RMC_PROCREQ_H 1
+#include "h/rmc_find_char.h"
 
-struct rmc_srv_rqst_context {
-  const char *localhost;
-  int rpfd;
-  char *req_data;
-  const char *clienthost;
-};
+#include <string.h>
 
-int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_acs_mnt(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_acs_unmnt(const struct rmc_srv_rqst_context *const rqst_context);
+int rmc_find_char(const char *const str, const char c) {
+	if(NULL != str) {
+		const int str_len = strlen(str);
+		int i = 0;
 
-#endif
+		for(i = 0; i < str_len; i++) {
+			if(c == str[i]) {
+				return i;
+			}
+		}
+	}
+	return -1;
+}

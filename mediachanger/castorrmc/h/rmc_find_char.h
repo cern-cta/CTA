@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      rmc_procreq.h
+ *                h/rmc_find_char.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,29 +18,27 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * 
  *
- * @author Castor Dev team, castor-dev@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef _RMC_PROCREQ_H
-#define _RMC_PROCREQ_H 1
+/******************************************************************************
+ * Please note that this file is part of the internal API of the rmc daemon
+ * and its client software and should therefore not be distributed to end users
+ *****************************************************************************/
 
-struct rmc_srv_rqst_context {
-  const char *localhost;
-  int rpfd;
-  char *req_data;
-  const char *clienthost;
-};
+#ifndef RMC_FIND_CHAR_H
+#define RMC_FIND_CHAR_H 1
 
-int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_acs_mnt(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_acs_unmnt(const struct rmc_srv_rqst_context *const rqst_context);
+/**
+ * Returns the index of the specified character within the specified string.
+ * The search for the character is performed from left to right and stops at the
+ * first coccurence of the character.
+ *
+ * @param str The string to be searched.
+ * @param c The character to be seacrhed for.
+ * @return The index of the character if it was found else -1 if not.
+ */
+int rmc_find_char(const char *const str, const char c);
 
-#endif
+#endif /* RMC_FIND_CHAR_H */

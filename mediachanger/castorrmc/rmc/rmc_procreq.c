@@ -448,13 +448,13 @@ int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context) {
 	return c;
 }
 
-/*	rmc_srv_mnt - mount a cartridge into a drive that maybe in either */
-/*                    a SCSI compatible or an ACS compatible tape library */
+/*	rmc_srv_acs_mnt - mount a cartridge into a drive in an ACS compatible */
+/*                        tape library                                        */
 
-int rmc_srv_mnt(
+int rmc_srv_acs_mnt(
   const struct rmc_srv_rqst_context *const rqst_context) {
 	char func[16];
-	strncpy (func, "rmc_srv_mnt", sizeof(func));
+	strncpy (func, "rmc_srv_acs_mnt", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
 	rmc_logreq (func, "Called");
@@ -462,13 +462,13 @@ int rmc_srv_mnt(
 	return 0;
 }
 
-/*	rmc_srv_unmnt - unmount a cartridge from a drive that maybe in either */
-/*                      a SCSI compatible or an ACS compatible tape library   */
+/*	rmc_srv_acs_unmnt - unmount a cartridge from a drive in an ACS  */
+/*                          compatible tape library                     */
 
-int rmc_srv_unmnt(
+int rmc_srv_acs_unmnt(
   const struct rmc_srv_rqst_context *const rqst_context) {
-	char func[16];
-	strncpy (func, "rmc_srv_unmnt", sizeof(func));
+	char func[18];
+	strncpy (func, "rmc_srv_acs_unmnt", sizeof(func));
 	func[sizeof(func) - 1] = '\0';
 
 	rmc_logreq (func, "Called");

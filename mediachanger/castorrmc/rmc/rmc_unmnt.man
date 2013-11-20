@@ -32,18 +32,19 @@ It must be at most six characters long.
 specifies the drive in the robot in one of the following forms:
 .RS
 .TP
-acsACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
+acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
 .TP
 manual
 .TP
-smc@hostname,drive_ordinal
+smc@rmc_host,drive_ordinal
 .RE
 
 .LP
 This function requires TP_SYSTEM privilege in the Cupv database.
 .SH RETURN VALUE
-This routine returns 0 if the operation was successful or -1 if the operation
-failed. In the latter case,
+This routine returns 0 if a unmount operation was successful, 1 if the unmount
+is manual and therefore the system is now waiting for an operator to perform the
+unmount, or -1 if the operation failed. In the latter case,
 .B serrno
 is set appropriately.
 .SH ERRORS

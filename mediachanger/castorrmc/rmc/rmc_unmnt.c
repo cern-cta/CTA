@@ -32,12 +32,39 @@
 #include "h/marshall.h"
 #include "h/rmc_api.h"
 #include "h/rmc_constants.h"
+#include "h/rmc_get_loader_type.h"
 #include "h/serrno.h"
 
 #include <errno.h>
 #include <string.h>
 
+static int rmc_acs_unmnt(const char *const server, const char *const vid,
+  const char *const drive);
+static int rmc_manual_unmnt(const char *const server, const char *const vid,
+   const char *const drive);
+static int rmc_smc_unmnt(const char *const server, const char *const vid,
+  const char *const drive);
+
 int rmc_unmnt(
+	const char *const server,
+	const char *const vid,
+	const char *const drive)
+{
+	switch(rmc_get_loader_type(drive)) {
+	case RMC_LOADER_TYPE_ACS:
+		return rmc_acs_unmnt(server, vid, drive);
+	case RMC_LOADER_TYPE_MANUAL:
+		return rmc_manual_unmnt(server, vid, drive);
+	case RMC_LOADER_TYPE_SMC:
+		return rmc_smc_unmnt(server, vid, drive);
+	default:
+		errno = ERMCUNREC;
+		serrno = errno;
+		return -1;
+	}
+}
+
+int rmc_acs_unmnt(
 	const char *const server,
 	const char *const vid,
 	const char *const drive)
@@ -71,7 +98,7 @@ int rmc_unmnt(
 	/* Build request header */
 	sbp = sendbuf;
 	marshall_LONG (sbp, RMC_MAGIC);
-	marshall_LONG (sbp, RMC_GENERICUNMOUNT);
+	marshall_LONG (sbp, RMC_ACS_UNMOUNT);
 	marshall_LONG (sbp, msglen);
 
 	/* Build request body */
@@ -89,4 +116,20 @@ int rmc_unmnt(
 	}
 
         return send2rmc (server, sendbuf, msglen, repbuf, sizeof(repbuf));
+}
+
+static int rmc_manual_unmnt(
+        const char *const server, 
+        const char *const vid,
+        const char *const drive) {
+
+        return 0;
+}
+
+static int rmc_smc_unmnt(
+        const char *const server, 
+        const char *const vid,
+        const char *const drive) {
+        
+        return 0;
 }
