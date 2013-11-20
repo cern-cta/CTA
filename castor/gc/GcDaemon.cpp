@@ -50,9 +50,9 @@ int main(int argc, char *argv[]) {
     char *value;
     int startDelay = 1;
     if ((value = getenv("GC_IMMEDIATESTART")) ||
-	(value = getconfent("GC", "ImmediateStart", 0))) {
+	      (value = getconfent("GC", "ImmediateStart", 0))) {
       if (!strcasecmp(value, "yes") || !strcmp(value, "1")) {
-	startDelay = 0;
+        startDelay = 0;
       }
     }
     if (startDelay){
@@ -71,15 +71,15 @@ int main(int argc, char *argv[]) {
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("Deletion",
-	new castor::gc::DeletionThread(startDelay)));
-    daemon.getThreadPool('D')->setNbThreads(1);
+        	new castor::gc::DeletionThread(startDelay)));
+            daemon.getThreadPool('D')->setNbThreads(1);
 
     // Create the Synchronization thread
     daemon.addThreadPool
       (new castor::server::SignalThreadPool
        ("Synchronization",
-	new castor::gc::SynchronizationThread(startDelay)));
-    daemon.getThreadPool('S')->setNbThreads(1);
+        	new castor::gc::SynchronizationThread(startDelay)));
+            daemon.getThreadPool('S')->setNbThreads(1);
 
     // Start daemon as the stager superuser
     daemon.parseCommandLine(argc, argv);
@@ -130,9 +130,7 @@ castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("gcd") {
     { 17, "Exception caught trying to getHostName" },
     { 17, "Exception caught when starting Garbage Collector daemon" },
     { 18, "Starting synchronization thread" },
-    { 19, "Invalid GC/SyncInterval option, using default" },
     { 20, "Invalid GC/ChunkSize option, using default" },
-    { 21, "New synchronization interval" },
     { 22, "New synchronization chunk size" },
     { 23, "Unable to retrieve mountpoints, giving up with synchronization" },
     { 24, "Could not list filesystem directories, giving up with filesystem's synchronisation" },
@@ -146,7 +144,7 @@ castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("gcd") {
     { 33, "Summary of files removed by stager synchronization" },
     { 35, "Summary of files removed by nameserver synchronization" },
     { 36, "Deleting local file which is no longer in the stager catalog" },
-    { 37, "New chunk interval" },
+    { 37, "New synchronization chunk interval" },
     { 38, "Invalid GC/ChunkInterval option, using default" },
     { 39, "Ignoring filename that does not conform to castor naming conventions" },
     { 40, "Unexpected exception caught in synchronizeFiles" },
