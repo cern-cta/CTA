@@ -1380,7 +1380,7 @@ CREATE OR REPLACE PROCEDURE tg_setFileRecalled(inMountTransactionId IN INTEGER,
   varSvcClassId     INTEGER;
   varEuid           INTEGER;
   varEgid           INTEGER;
-  varLastUpdateTime INTEGER;
+  varLastOpenTime   NUMBER;
   varCfId           INTEGER;
   varFSId           INTEGER;
   varDCPath         VARCHAR2(2048);
@@ -1406,10 +1406,10 @@ BEGIN
   -- first lock Castorfile, check NS and parse path
   -- Get RecallJob and lock Castorfile
   BEGIN
-    SELECT CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.lastUpdateTime,
+    SELECT CastorFile.id, CastorFile.fileId, CastorFile.nsHost, CastorFile.nsOpenTime,
            CastorFile.fileSize, CastorFile.fileClass, RecallMount.VID, RecallJob.copyNb,
            RecallJob.euid, RecallJob.egid
-      INTO varCfId, varFileId, varNsHost, varLastUpdateTime, varFileSize, varFileClassId, varVID,
+      INTO varCfId, varFileId, varNsHost, varLastOpenTime, varFileSize, varFileClassId, varVID,
            varCopyNb, varEuid, varEgid
       FROM RecallMount, RecallJob, CastorFile
      WHERE RecallMount.mountTransactionId = inMountTransactionId
@@ -1434,31 +1434,9 @@ BEGIN
              ' fseq=' || TO_CHAR(inFseq) || ' filePath=' || inFilePath || ' ' || inLogContext);
     RETURN;
   END;
-  -- Check that the file is still there in the namespace (and did not get overwritten)
-  -- Note that error handling and logging is done inside the function
-  IF NOT checkRecallInNS(varCfId, inMountTransactionId, varVID, varCopyNb, inFseq, varFileId, varNsHost,
-                         inCksumName, inCksumValue, varLastUpdateTime, inReqId, inLogContext) THEN
-    RETURN;
-  END IF;
 
-  -- Then deal with recalljobs and potential migrationJobs
-
-  -- Find out starting time of oldest recall for logging purposes
-  SELECT MIN(creationTime) INTO varRecallStartTime FROM RecallJob WHERE castorFile = varCfId;
-  -- Delete recall jobs
-  DELETE FROM RecallJob WHERE castorFile = varCfId;
-  -- trigger waiting migrations if any
-  -- Note that we reset the creation time as if the MigrationJob was created right now
-  -- this is because "creationTime" is actually the time of entering the "PENDING" state
-  -- in the cases where the migrationJob went through a WAITINGONRECALL state
-  UPDATE /*+ INDEX_RS_ASC (MigrationJob I_MigrationJob_CFVID) */ MigrationJob
-     SET status = tconst.MIGRATIONJOB_PENDING,
-         creationTime = getTime()
-   WHERE status = tconst.MIGRATIONJOB_WAITINGONRECALL
-     AND castorFile = varCfId;
-  varNbMigrationsStarted := SQL%ROWCOUNT;
-
-  -- Deal with DiskCopies
+  -- Deal with the DiskCopy: it is created now as the recall is effectively over. The subsequent
+  -- check in the NS may make it INVALID, which is fine as opposed to forget about it and generating dark data.
 
   -- compute GC weight of the recalled diskcopy
   -- first get the svcClass
@@ -1486,6 +1464,29 @@ BEGIN
             varEuid, varEgid, varDCId, NULL, varFSId, varCfId, dconst.DISKCOPY_VALID,
             -1-varNbCopiesOnTape*100);
   END;
+
+  -- Check that the file is still there in the namespace (and did not get overwritten)
+  -- Note that error handling and logging is done inside the function
+  IF NOT checkRecallInNS(varCfId, inMountTransactionId, varVID, varCopyNb, inFseq, varFileId, varNsHost,
+                         inCksumName, inCksumValue, varLastOpenTime, inReqId, inLogContext) THEN
+    RETURN;
+  END IF;
+
+  -- Then deal with recalljobs and potential migrationJobs
+  -- Find out starting time of oldest recall for logging purposes
+  SELECT MIN(creationTime) INTO varRecallStartTime FROM RecallJob WHERE castorFile = varCfId;
+  -- Delete recall jobs
+  DELETE FROM RecallJob WHERE castorFile = varCfId;
+  -- trigger waiting migrations if any
+  -- Note that we reset the creation time as if the MigrationJob was created right now
+  -- this is because "creationTime" is actually the time of entering the "PENDING" state
+  -- in the cases where the migrationJob went through a WAITINGONRECALL state
+  UPDATE /*+ INDEX_RS_ASC (MigrationJob I_MigrationJob_CFVID) */ MigrationJob
+     SET status = tconst.MIGRATIONJOB_PENDING,
+         creationTime = getTime()
+   WHERE status = tconst.MIGRATIONJOB_WAITINGONRECALL
+     AND castorFile = varCfId;
+  varNbMigrationsStarted := SQL%ROWCOUNT;
   -- in case there are migrations, update CastorFile's tapeStatus to NOTONTAPE
   IF varNbMigrationsStarted > 0 THEN
     UPDATE CastorFile SET tapeStatus = dconst.CASTORFILE_NOTONTAPE WHERE id = varCfId;
@@ -1511,6 +1512,121 @@ BEGIN
            to_char(trunc(getTime() - varRecallStartTime, 0)) || ' ' || inLogContext);
 END;
 /
+
+CREATE OR REPLACE FUNCTION checkRecallInNS(inCfId IN INTEGER,
+                                           inMountTransactionId IN INTEGER,
+                                           inVID IN VARCHAR2,
+                                           inCopyNb IN INTEGER,
+                                           inFseq IN INTEGER,
+                                           inFileId IN INTEGER,
+                                           inNsHost IN VARCHAR2,
+                                           inCksumName IN VARCHAR2,
+                                           inCksumValue IN INTEGER,
+                                           inLastOpenTime IN NUMBER,
+                                           inReqId IN VARCHAR2,
+                                           inLogContext IN VARCHAR2) RETURN BOOLEAN AS
+  varNSOpenTime NUMBER;
+  varNSSize INTEGER;
+  varNSCsumtype VARCHAR2(2048);
+  varNSCsumvalue VARCHAR2(2048);
+BEGIN
+  -- retrieve data from the namespace: note that if stagerTime is (still) NULL,
+  -- we're still in compatibility mode and we resolve to using mtime.
+  -- To be dropped in 2.1.15 where stagerTime is NOT NULL by design.
+  SELECT NVL(stagerTime, mtime), csumtype, csumvalue, filesize
+    INTO varNSOpenTime, varNSCsumtype, varNSCsumvalue, varNSSize
+    FROM Cns_File_Metadata@RemoteNS
+   WHERE fileid = inFileId;
+  -- was the file overwritten in the meantime ?
+  IF varNSOpenTime > inLastOpenTime THEN
+    -- yes ! reset it and thus restart the recall from scratch
+    resetOverwrittenCastorFile(inCfId, varNSOpenTime, varNSSize);
+    -- in case of repack, just stop and archive the corresponding request(s) as we're not interested
+    -- any longer (the original segment disappeared). This potentially stops the entire recall process.
+    archiveOrFailRepackSubreq(inCfId, serrno.ENSFILECHG);
+    -- log "setFileRecalled : file was overwritten during recall, restarting from scratch or skipping repack"
+    logToDLF(inReqId, dlf.LVL_NOTICE, dlf.RECALL_FILE_OVERWRITTEN, inFileId, inNsHost, 'tapegatewayd',
+             'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
+             ' fseq=' || TO_CHAR(inFseq) || ' NSOpenTime=' || TRUNC(varNSOpenTime, 6) ||
+             ' NsOpenTimeAtStager=' || TRUNC(inLastOpenTime, 6) ||' '|| inLogContext);
+    RETURN FALSE;
+  END IF;
+
+  -- is the checksum set in the namespace ?
+  IF varNSCsumtype IS NULL THEN
+    -- no -> let's set it (note that the function called commits in the remote DB)
+    setSegChecksumWhenNull@remoteNS(inFileId, inCopyNb, inCksumName, inCksumValue);
+    -- log 'checkRecallInNS : created missing checksum in the namespace'
+    logToDLF(inReqId, dlf.LVL_SYSTEM, dlf.RECALL_CREATED_CHECKSUM, inFileId, inNsHost, 'nsd',
+             'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' copyNb=' || TO_CHAR(inCopyNb) ||
+             ' TPVID=' || inVID || ' fseq=' || TO_CHAR(inFseq) || ' checksumType='  || inCksumName ||
+             ' checksumValue=' || TO_CHAR(inCksumValue));
+  ELSE
+    -- is the checksum matching ?
+    -- note that this is probably useless as it was already checked at transfer time
+    IF inCksumName = varNSCsumtype AND TO_CHAR(inCksumValue, 'XXXXXXXX') != varNSCsumvalue THEN
+      -- not matching ! log "checkRecallInNS : bad checksum detected, will retry if allowed"
+      logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_BAD_CHECKSUM, inFileId, inNsHost, 'tapegatewayd',
+               'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
+               ' fseq=' || TO_CHAR(inFseq) || ' copyNb=' || TO_CHAR(inCopyNb) || ' checksumType=' || inCksumName ||
+               ' expectedChecksumValue=' || varNSCsumvalue ||
+               ' checksumValue=' || TO_CHAR(inCksumValue, 'XXXXXXXX') ||' '|| inLogContext);
+      retryOrFailRecall(inCfId, inVID, inReqId, inLogContext);
+      RETURN FALSE;
+    END IF;
+  END IF;
+  RETURN TRUE;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- file got dropped from the namespace, recall should be cancelled
+  deleteRecallJobs(inCfId);
+  -- potentially terminate repack requests
+  archiveOrFailRepackSubreq(inCfId, serrno.ENOENT);
+  -- and fail remaining requests
+  UPDATE SubRequest
+       SET status = dconst.SUBREQUEST_FAILED,
+           errorCode = serrno.ENOENT,
+           errorMessage = 'File was removed during recall'
+     WHERE castorFile = inCfId
+       AND status = dconst.SUBREQUEST_WAITTAPERECALL;
+  -- log "checkRecallInNS : file was dropped from namespace during recall, giving up"
+  logToDLF(inReqId, dlf.LVL_NOTICE, dlf.RECALL_FILE_DROPPED, inFileId, inNsHost, 'tapegatewayd',
+           'mountTransactionId=' || TO_CHAR(inMountTransactionId) || ' TPVID=' || inVID ||
+           ' fseq=' || TO_CHAR(inFseq) || ' CFLastOpenTime=' || TO_CHAR(inLastOpenTime) || ' ' || inLogContext);
+  RETURN FALSE;
+END;
+/
+
+CREATE OR REPLACE PROCEDURE resetOverwrittenCastorFile(inCfId INTEGER,
+                                                       inNewOpenTime NUMBER,
+                                                       inNewSize INTEGER) AS
+BEGIN
+  -- update the Castorfile
+  UPDATE CastorFile
+     SET nsOpenTime = inNewOpenTime,
+         fileSize = inNewSize,
+         lastAccessTime = getTime()
+   WHERE id = inCfId;
+  -- cancel ongoing recalls, if any
+  deleteRecallJobs(inCfId);
+  -- cancel ongoing migrations, if any
+  deleteMigrationJobs(inCfId);
+  -- invalidate existing DiskCopies, if any
+  UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+   WHERE castorFile = inCfId
+     AND status = dconst.DISKCOPY_VALID;
+  -- restart ongoing requests
+  -- Note that we reset the "answered" flag of the subrequest. This will potentially lead to
+  -- a wrong attempt to answer again the client (but won't harm as the client is gone in that case)
+  -- but is needed as the current implementation of the stager also uses this flag to know
+  -- whether to archive the subrequest. If we leave it to 1, the subrequests are wrongly
+  -- archived when retried, leading e.g. to failing recalls
+  UPDATE SubRequest
+     SET status = dconst.SUBREQUEST_RESTART, answered = 0
+   WHERE castorFile = inCfId
+     AND status = dconst.SUBREQUEST_WAITTAPERECALL;
+END;
+/
+
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
