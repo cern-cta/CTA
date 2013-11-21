@@ -147,66 +147,6 @@ static void DiskIOfinished() {
     return;
 }
 
-int rtcpd_WaitForPosition(tape_list_t *tape, file_list_t *file) {
-    int rc,severity;
-
-    rtcp_log(LOG_DEBUG,"rtcpd_WaitForPosition() called\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
-                     "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitForPosition",
-                     "Message", TL_MSG_PARAM_STR, "called" );
-    if ( tape == NULL || file == NULL ) {
-        serrno = EINVAL;
-        return(-1);
-    }
-    if ( *file->filereq.recfm != '\0' && (tape->tapereq.mode == WRITE_ENABLE ||
-         *file->filereq.stageID == '\0') ) return(0);
-
-    rc = Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcpd_WaitForPosition(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
-            sstrerror(serrno));
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
-                         "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitForPosition",
-                         "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext(proc_cntl)",
-                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
-        return(-1);
-    }
-    while ( file->filereq.proc_status == RTCP_WAITING ) {
-        rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
-        if ( ((severity | rtcpd_CheckProcError()) &
-              (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV|RTCP_EOD)) != 0 ) {
-            (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
-            return(0);
-        }
-        rc = Cthread_cond_wait_ext(proc_cntl.cntl_lock);
-        if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"rtcpd_WaitForPosition(): Cthread_cond_broadcast_ext(proc_cntl) : %s\n", 
-                sstrerror(serrno));
-            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
-                             "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitForPosition",
-                             "Message", TL_MSG_PARAM_STR, "Cthread_cond_broadcast_ext(proc_cntl)",
-                             "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
-            (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
-            return(-1);
-        }
-    }
-    rc = Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcpd_WaitForPosition(): Cthread_mutex_lock_ext(proc_cntl): %s\n",
-            sstrerror(serrno));
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
-                         "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitForPosition",
-                         "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext(proc_cntl)",
-                         "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
-        return(-1);
-    }
-    rtcp_log(LOG_DEBUG,"rtcpd_WaitForPosition() returns\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, 
-                     "func"   , TL_MSG_PARAM_STR, "rtcpd_WaitForPosition",
-                     "Message", TL_MSG_PARAM_STR, "returns" );
-    return(0);
-}
-
 /*
  * Disk I/O wrappers
  */
