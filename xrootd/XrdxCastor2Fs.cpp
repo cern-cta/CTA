@@ -64,7 +64,6 @@
 /******************************************************************************/
 /*                        G l o b a l   O b j e c t s                         */
 /******************************************************************************/
-XrdOucHash<XrdOucString>* XrdxCastor2Fs::nsMap;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::stagertable;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::roletable;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::stringstore;
@@ -893,7 +892,6 @@ XrdxCastor2Fs::XrdxCastor2Fs():
 bool
 XrdxCastor2Fs::Init()
 {
-  nsMap   = new XrdOucHash<XrdOucString> ();
   stagertable   = new XrdOucHash<XrdOucString> ();
   roletable = new XrdOucHash<XrdOucString> ();
   stringstore = new XrdOucHash<XrdOucString> ();
@@ -916,42 +914,50 @@ XrdxCastor2Fs::Init()
 //------------------------------------------------------------------------------
 // Do namespace mappping
 //------------------------------------------------------------------------------
-XrdOucString
-XrdxCastor2Fs::NsMapping(XrdOucString input)
+std::string
+XrdxCastor2Fs::NsMapping(const std::string& input)
 {
-  XrdOucString output = "";
-  XrdOucString prefix;
-  XrdOucString* value;
-  int pos = input.find('/', 1);
+  std::string output = "";
+  std::string prefix;
+  std::string value;
+  size_t pos = input.find('/', 1);
 
-  if (pos == STR_NPOS)
+  if (pos == std::string::npos)
   {
-    if (!(value = nsMap->Find("/")))
+    std::map<std::string, std::string>::iterator iter_ns = mNsMap.find("/");
+
+    if (iter_ns == mNsMap.end())
       return output;
    
-    pos = 0;
+    value = iter_ns->second;
     prefix = "/";
   }
   else
   {
     prefix.assign(input, 0, pos);
+    std::map<std::string, std::string>::iterator iter_ns = mNsMap.find(prefix);
 
     // First check the namespace with deepness 1
-    if (!(value = nsMap->Find(prefix.c_str())))
+    if(iter_ns == mNsMap.end())
     {
       // If not found then check the namespace with deepness 0
       // e.g. look for a root mapping
-      if (!(value = nsMap->Find("/")))
+      iter_ns = mNsMap.find("/");
+      
+      if(iter_ns == mNsMap.end())
         return output;
 
-      pos = 0;
+      value = iter_ns->second;
       prefix = "/";
+    }
+    else 
+    {
+      value = iter_ns->second;        
     }
   }
 
-  output.assign(value->c_str(), 0, value->length() - 1);
-  input.erase(prefix, 0, prefix.length());
-  output += input;
+  output = value;
+  output += input.substr(prefix.length());
   xcastor_static_debug("input=%s, output=%s", input.c_str(), output.c_str());
   return output;
 }
@@ -972,10 +978,9 @@ XrdxCastor2Fs::chmod(const char*         path,
   mode_t acc_mode = Mode & S_IAMB;
   XrdOucEnv chmod_Env(info);
   XrdSecEntity mappedclient;
-  XrdOucString map_path;
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &chmod_Env, AOP_Chmod, "chmod", path, error)
-  map_path = NsMapping(path);
+  std::string map_path = NsMapping(path);
 
   if (map_path == "")
   {
@@ -1011,10 +1016,9 @@ XrdxCastor2Fs::exists(const char*          path,
   const char* tident = error.getErrUser();
   XrdOucEnv exists_Env(info);
   XrdSecEntity mappedclient;
-  XrdOucString map_path;
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &exists_Env, AOP_Stat, "execute exists", path, error)
-  map_path = NsMapping(path);
+  std::string map_path = NsMapping(path);
   RoleMap(client, info, mappedclient, tident);
 
   if (map_path == "")
@@ -1081,9 +1085,8 @@ XrdxCastor2Fs::mkdir(const char*         path,
   const char* tident = error.getErrUser();
   XrdOucEnv mkdir_Env(info);
   XrdSecEntity mappedclient;
-  XrdOucString map_path;
   xcastor_debug("path=%s", path);
-  map_path = NsMapping(path);
+  std::string map_path = NsMapping(path);
   RoleMap(client, info, mappedclient, tident);
 
   if (map_path == "")
@@ -1257,7 +1260,6 @@ XrdxCastor2Fs::stageprepare(const char*         path,
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
   XrdOucString sinfo = (ininfo ? ininfo : "");
-  XrdOucString map_path;
   const char* info = 0;
   int qpos = 0;
 
@@ -1269,7 +1271,7 @@ XrdxCastor2Fs::stageprepare(const char*         path,
 
   XrdOucEnv Open_Env(info);
   xcastor::Timing preparetiming("stageprepare");
-  map_path = NsMapping(path);
+  std::string map_path = NsMapping(path);
 
   if (map_path == "")
   {
@@ -1378,8 +1380,7 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
   xcastor_debug("updating opaque=%s", pargs.oinfo->text);
   XrdOucEnv oenv(pargs.oinfo->text);
   const char* path = pargs.paths->text;
-  XrdOucString map_path;
-  map_path = NsMapping(path);
+  std::string map_path = NsMapping(path);
   TIMING("CNSID", &preparetiming);
 
   // Unlink files which are not properly closed on a disk server
@@ -1460,13 +1461,11 @@ XrdxCastor2Fs::rem(const char*         path,
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
   xcastor::Timing rmtiming("fileremove");
-  XrdOucString map_path;
   TIMING("START", &rmtiming);
-  xcastor_debug("path=%s", path);
   XrdOucEnv env(info);
   AUTHORIZE(client, &env, AOP_Delete, "remove", path, error)
-  map_path = NsMapping(path);
-  xcastor_debug("map_path=%s", map_path.c_str());
+  std::string map_path = NsMapping(path);
+  xcastor_debug("path=%s, map_path=%s", path, map_path.c_str());
   RoleMap(client, info, mappedclient, tident);
 
   if (map_path == "")
@@ -1559,11 +1558,10 @@ XrdxCastor2Fs::remdir(const char*         path,
   const char* tident = error.getErrUser();
   XrdOucEnv remdir_Env(info);
   XrdSecEntity mappedclient;
-  XrdOucString map_path;
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &remdir_Env, AOP_Delete, "remove", path, error)
-  map_path = NsMapping(path);
   RoleMap(client, info, mappedclient, tident);
+  std::string map_path = NsMapping(path);
 
   if (map_path == "")
   {
@@ -1612,13 +1610,12 @@ XrdxCastor2Fs::rename(const char*         old_name,
   static const char* epname = "rename";
   const char* tident = error.getErrUser();
   XrdOucString source, destination;
-  XrdOucString oldn, newn;
   XrdSecEntity mappedclient;
   XrdOucEnv renameo_Env(infoO);
   XrdOucEnv renamen_Env(infoN);
   AUTHORIZE(client, &renameo_Env, AOP_Update, "rename", old_name, error)
   AUTHORIZE(client, &renamen_Env, AOP_Update, "rename", new_name, error)
-  oldn = NsMapping(old_name);
+ std::string oldn = NsMapping(old_name);
   
   if (oldn == "")
   {
@@ -1626,7 +1623,7 @@ XrdxCastor2Fs::rename(const char*         old_name,
     return SFS_ERROR;
   }
   
-  newn = NsMapping(new_name);
+  std::string newn = NsMapping(new_name);
   
   if (newn == "")
   {
@@ -1649,30 +1646,31 @@ XrdxCastor2Fs::rename(const char*         old_name,
     if (file_exists == XrdSfsFileExistIsDirectory)
     {
       // We have to path the destination name since the target is a directory
-      XrdOucString sourcebase = oldn.c_str();
-      int npos = oldn.rfind("/");
+      std::string sourcebase = oldn;
+      size_t npos = oldn.rfind('/');
 
-      if (npos == STR_NPOS)
+      if (npos == std::string::npos)
       {
         return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "rename", oldn.c_str());
       }
 
-      sourcebase.assign(oldn, npos);
-      newn += "/";
-      newn += sourcebase;
+      sourcebase = oldn.substr(0, npos);
+      // User XrdOucString for the replace functionality
+      XrdOucString tmp_str = newn.c_str();
+      tmp_str += "/";
+      tmp_str += sourcebase.c_str();
 
-      while (newn.replace("//", "/")) {};
+      while (tmp_str.replace("//", "/")) {};
+      newn = tmp_str.c_str();
     }
 
     if (file_exists == XrdSfsFileExistIsFile)
     {
       // Remove the target file first!
       int remrc = _rem(newn.c_str(), error, &mappedclient, infoN);
-
+      
       if (remrc)
-      {
         return remrc;
-      }
     }
   }
 
@@ -1700,14 +1698,13 @@ XrdxCastor2Fs::stat(const char*         path,
   static const char* epname = "stat";
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
-  XrdOucString map_path;
   xcastor::Timing stattiming("filestat");
   XrdOucEnv Open_Env(info);
   XrdOucString stage_status = "";
   TIMING("START", &stattiming);
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &Open_Env, AOP_Stat, "stat", path, error)
-  map_path = XrdxCastor2Fs::NsMapping(path);
+  std::string map_path = NsMapping(path);
 
   if (map_path == "")
   {
@@ -1827,13 +1824,12 @@ XrdxCastor2Fs::lstat(const char*         path,
   static const char* epname = "lstat";
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
-  XrdOucString map_path;
   XrdOucEnv lstat_Env(info);
   xcastor::Timing stattiming("filelstat");
   TIMING("START", &stattiming);
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &lstat_Env, AOP_Stat, "lstat", path, error)
-  map_path = XrdxCastor2Fs::NsMapping(path);
+  std::string map_path = NsMapping(path);
 
   if (map_path == "")
   {
@@ -1920,11 +1916,10 @@ XrdxCastor2Fs::readlink(const char*         path,
   static const char* epname = "readlink";
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
-  XrdOucString map_path;
   XrdOucEnv rl_Env(info);
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &rl_Env, AOP_Stat, "readlink", path, error)
-  map_path = XrdxCastor2Fs::NsMapping(path);
+  std::string map_path = NsMapping(path);
 
   if (map_path == "")
   {
@@ -1960,14 +1955,13 @@ XrdxCastor2Fs::symlink(const char*         path,
   XrdSecEntity mappedclient;
   XrdOucEnv sl_Env(info);
   xcastor_debug("path=%s", path);
-  XrdOucString source, destination;
   AUTHORIZE(client, &sl_Env, AOP_Create, "symlink", linkpath, error)
   // We only need to map absolut links
-  source = path;
+  std::string source = path;
 
   if (path[0] == '/')
   {
-    source = XrdxCastor2Fs::NsMapping(path);
+    source = NsMapping(path);
 
     if (source == "")
     {
@@ -1976,16 +1970,14 @@ XrdxCastor2Fs::symlink(const char*         path,
     }
   }
 
+  std::string destination = NsMapping(linkpath);
+
+  if (destination == "")
   {
-    destination = XrdxCastor2Fs::NsMapping(linkpath);
-
-    if (destination == "")
-    {
-      error.setErrInfo(ENOMEDIUM, "No mapping for file name");
-      return SFS_ERROR;
-    }
+    error.setErrInfo(ENOMEDIUM, "No mapping for file name");
+    return SFS_ERROR;
   }
-
+  
   RoleMap(client, info, mappedclient, tident);
   char lp[4096];
 
@@ -2011,10 +2003,9 @@ XrdxCastor2Fs::access(const char*         path,
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
   XrdOucEnv access_Env(info);
-  XrdOucString map_path;
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &access_Env, AOP_Stat, "access", path, error)
-  map_path = XrdxCastor2Fs::NsMapping(path);
+ std::string map_path = NsMapping(path);
 
   if (map_path == "")
   {
@@ -2039,11 +2030,10 @@ int XrdxCastor2Fs::utimes(const char*         path,
   static const char* epname = "utimes";
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
-  XrdOucString map_path;
   XrdOucEnv utimes_Env(info);
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &utimes_Env, AOP_Update, "set utimes", path, error)
-  map_path = XrdxCastor2Fs::NsMapping(path);
+  std::string map_path = NsMapping(path);
 
   if (map_path == "")
   {

@@ -62,10 +62,9 @@ XrdxCastor2FsDirectory::open(const char*         dir_path,
   static const char* epname = "open";
   const char* tident = error.getErrUser();
   XrdSecEntity mappedclient;
-  XrdOucString map_dir;
   XrdOucEnv Open_Env(info);
   AUTHORIZE(client, &Open_Env, AOP_Readdir, "open directory", dir_path, error);
-  map_dir = gMgr->NsMapping(dir_path) ;
+  std::string map_dir = gMgr->NsMapping(dir_path) ;
   xcastor_debug("open directory: %s", map_dir.c_str());
 
   if (map_dir == "")

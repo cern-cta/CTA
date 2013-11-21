@@ -75,7 +75,6 @@ XrdxCastor2FsFile::open(const char*         path,
   XrdSecEntity mappedclient;
   xcastor::Timing opentiming("fileopen");
   XrdOucString info_str = (ininfo ? ininfo : "");
-  XrdOucString map_path;
   const char* info;
   int qpos = 0;
 
@@ -95,7 +94,7 @@ XrdxCastor2FsFile::open(const char*         path,
   xcastor_debug("path=%s, info=%s", path, (info ? info : ""));
 
   TIMING("START", &opentiming);
-  map_path = gMgr->NsMapping(path);
+  std::string map_path = gMgr->NsMapping(path);
   gMgr->RoleMap(client, info, mappedclient, tident);
   TIMING("MAPPING", &opentiming);
 
@@ -279,7 +278,7 @@ XrdxCastor2FsFile::open(const char*         path,
       // File doesn't exist, we have to create the path - check if we need to mkpath
       if (Mode & SFS_O_MKPTH)
       {
-        XrdOucString newpath = map_path;
+        XrdOucString newpath = map_path.c_str();
 
         while (newpath.replace("//", "/")) {};
 

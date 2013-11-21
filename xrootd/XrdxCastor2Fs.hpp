@@ -913,7 +913,7 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     //! @return the mapped path according to the directives in the xrd.cf file
     //!
     //--------------------------------------------------------------------------
-    XrdOucString NsMapping( XrdOucString input );
+    std::string NsMapping(const std::string& input);
 
 
     //--------------------------------------------------------------------------
@@ -953,8 +953,8 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     // we must check if all these things need to be thread safe with a mutex ...
     std::set<std::string> mFsSet; ///< set of known diskserver hosts
     XrdSysMutex mMutexFsSet; ///< mutex protecting set of diskservers
-
-    static  XrdOucHash<XrdOucString>* nsMap;
+  
+    std::map<std::string, std::string> mNsMap; ///< namespace mapping
     static  XrdOucHash<XrdOucString>* stagertable;
   
     // Map between stage paths and the set of service classes 
