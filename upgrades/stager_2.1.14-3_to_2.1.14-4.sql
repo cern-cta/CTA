@@ -458,68 +458,6 @@ BEGIN
 END;
 /
 
-CREATE OR REPLACE PROCEDURE drainRunner AS
-  varNbFiles INTEGER := 0;
-  varNbBytes INTEGER := 0;
-  varNbRunningJobs INTEGER;
-  varMaxNbOfSchedD2dPerDrain INTEGER;
-  varUnused INTEGER;
-BEGIN
-  -- get maxNbOfSchedD2dPerDrain
-  varMaxNbOfSchedD2dPerDrain := TO_NUMBER(getConfigOption('Draining', 'MaxNbSchedD2dPerDrain', '1000'));
-  -- loop over draining jobs
-  FOR dj IN (SELECT id, fileSystem, svcClass, fileMask, euid, egid
-               FROM DrainingJob WHERE status = dconst.DRAININGJOB_RUNNING) LOOP
-    DECLARE
-      CONSTRAINT_VIOLATED EXCEPTION;
-      PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);      
-    BEGIN
-      -- lock the draining Job first
-      SELECT id INTO varUnused FROM DrainingJob WHERE id = dj.id FOR UPDATE;
-      -- check how many disk2DiskCopyJobs are already running for this draining job
-      SELECT count(*) INTO varNbRunningJobs FROM Disk2DiskCopyJob WHERE drainingJob = dj.id;
-      -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running
-      -- ones into account. Also take the most important jobs first
-      logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_REFILL, 0, '', 'stagerd',
-               'svcClass=' || getSvcClassName(dj.svcClass) || ' DrainReq=' ||
-               TO_CHAR(dj.id) || ' MaxNewJobsCount=' || TO_CHAR(varMaxNbOfSchedD2dPerDrain-varNbRunningJobs));
-      FOR F IN (SELECT * FROM
-                 (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
-                    FROM DiskCopy, CastorFile
-                   WHERE DiskCopy.fileSystem = dj.fileSystem
-                     AND CastorFile.id = DiskCopy.castorFile
-                     AND ((dj.fileMask = dconst.DRAIN_FILEMASK_NOTONTAPE AND
-                           CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
-                          (dj.fileMask = dconst.DRAIN_FILEMASK_ALL))
-                     AND DiskCopy.status = dconst.DISKCOPY_VALID
-                     AND NOT EXISTS (SELECT 1 FROM Disk2DiskCopyJob WHERE castorFile=CastorFile.id)
-                   ORDER BY DiskCopy.importance DESC)
-                 WHERE ROWNUM <= varMaxNbOfSchedD2dPerDrain-varNbRunningJobs) LOOP
-        createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
-                               dconst.REPLICATIONTYPE_DRAINING, F.dcId, dj.id);
-        varNbFiles := varNbFiles + 1;
-        varNbBytes := varNbBytes + F.fileSize;
-      END LOOP;
-      -- commit and update counters
-      UPDATE DrainingJob
-         SET totalFiles = totalFiles + varNbFiles,
-             totalBytes = totalBytes + varNbBytes,
-             lastModificationTime = getTime()
-       WHERE id = dj.id;
-      COMMIT;
-    EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-      -- check that the constraint violated is due to deletion of the drainingJob
-      IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DISK2DISKCOPYJOB_DRAINJOB) violated%' THEN
-        -- give up with this DrainingJob as it was canceled
-        ROLLBACK;
-      ELSE
-        raise;
-      END IF;
-    END;
-  END LOOP;
-END;
-/
-
 /*
  * PL/SQL method implementing filesDeleted
  * Note that we don't increase the freespace of the fileSystem.
@@ -1627,6 +1565,338 @@ BEGIN
 END;
 /
 
+/* PL/SQL declaration for the castorDebug package */
+CREATE OR REPLACE PACKAGE castorDebug AS
+  TYPE DiskCopyDebug_typ IS RECORD (
+    id INTEGER,
+    status VARCHAR2(2048),
+    creationtime VARCHAR2(2048),
+    diskPool VARCHAR2(2048),
+    location VARCHAR2(2048),
+    available CHAR(1),
+    diskCopySize NUMBER,
+    castorFileSize NUMBER,
+    gcWeight NUMBER);
+  TYPE DiskCopyDebug IS TABLE OF DiskCopyDebug_typ;
+  TYPE SubRequestDebug IS TABLE OF SubRequest%ROWTYPE;
+  TYPE RequestDebug_typ IS RECORD (
+    creationtime VARCHAR2(2048),
+    SubReqId NUMBER,
+    Status NUMBER,
+    username VARCHAR2(2048),
+    machine VARCHAR2(2048),
+    svcClassName VARCHAR2(2048),
+    ReqId NUMBER,
+    ReqType VARCHAR2(20));
+  TYPE RequestDebug IS TABLE OF RequestDebug_typ;
+  TYPE RecallJobDebug_typ IS RECORD (
+    id INTEGER,
+    status VARCHAR2(2048),
+    creationtime VARCHAR2(2048),
+    fseq INTEGER,
+    copyNb INTEGER,
+    recallGroup VARCHAR(2048),
+    svcClass VARCHAR(2048),
+    euid INTEGER,
+    egid INTEGER,
+    vid VARCHAR(2048),
+    nbRetriesWithinMount INTEGER,
+    nbMounts INTEGER);
+  TYPE RecallJobDebug IS TABLE OF RecallJobDebug_typ;
+  TYPE MigrationJobDebug_typ IS RECORD (
+    id INTEGER,
+    status VARCHAR2(2048),
+    creationTime VARCHAR2(2048),
+    fileSize INTEGER,
+    tapePoolName VARCHAR2(2048),
+    destCopyNb INTEGER,
+    fseq INTEGER,
+    mountTransactionId INTEGER,
+    originalVID VARCHAR2(2048),
+    originalCopyNb INTEGER,
+    nbRetries INTEGER,
+    fileTransactionId INTEGER);
+  TYPE MigrationJobDebug IS TABLE OF MigrationJobDebug_typ;
+  TYPE Disk2DiskCopyJobDebug_typ IS RECORD (
+    id INTEGER,
+    status VARCHAR2(2048),
+    creationTime VARCHAR2(2048),
+    transferId VARCHAR2(2048),
+    retryCounter INTEGER,
+    nsOpenTime INTEGER,
+    destSvcClassName VARCHAR2(2048),
+    replicationType VARCHAR2(2048),
+    replacedDCId INTEGER,
+    destDCId INTEGER,
+    drainingJob INTEGER);
+  TYPE Disk2DiskCopyJobDebug IS TABLE OF Disk2DiskCopyJobDebug_typ;
+END;
+/
+
+/* Return the castor file id associated with the reference number */
+CREATE OR REPLACE FUNCTION getCF(ref NUMBER) RETURN NUMBER AS
+  t NUMBER;
+  cfId NUMBER;
+BEGIN
+  SELECT id INTO cfId FROM CastorFile WHERE id = ref OR fileId = ref;
+  RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- DiskCopy?
+BEGIN
+  SELECT castorFile INTO cfId FROM DiskCopy WHERE id = ref;
+  RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- SubRequest?
+BEGIN
+  SELECT castorFile INTO cfId FROM SubRequest WHERE id = ref;
+  RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- RecallJob?
+BEGIN
+  SELECT castorFile INTO cfId FROM RecallJob WHERE id = ref;
+  RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- MigrationJob?
+BEGIN
+  SELECT castorFile INTO cfId FROM MigrationJob WHERE id = ref;
+  RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- Disk2DiskCopyJob?
+BEGIN
+  SELECT castorFile INTO cfId FROM Disk2DiskCopyJob WHERE id = ref;
+  RETURN cfId;
+EXCEPTION WHEN NO_DATA_FOUND THEN -- nothing found
+  RAISE_APPLICATION_ERROR (-20000, 'Could not find any CastorFile, SubRequest, DiskCopy, MigrationJob, RecallJob or Disk2DiskCopyJob with id = ' || ref);
+END; END; END; END; END; END;
+/
+
+/* Get the diskcopys associated with the reference number */
+CREATE OR REPLACE FUNCTION getDCs(ref number) RETURN castorDebug.DiskCopyDebug PIPELINED AS
+BEGIN
+  FOR d IN (SELECT DiskCopy.id, getObjStatusName('DiskCopy', 'status', DiskCopy.status) AS status,
+                   getTimeString(DiskCopy.creationtime) AS creationtime,
+                   DiskPool.name AS diskpool,
+                   DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path AS location,
+                   decode(DiskServer.status, 2, 'N', decode(FileSystem.status, 2, 'N', 'Y')) AS available,
+                   DiskCopy.diskCopySize AS diskcopysize,
+                   CastorFile.fileSize AS castorfilesize,
+                   trunc(DiskCopy.gcWeight, 2) AS gcweight
+              FROM DiskCopy, FileSystem, DiskServer, DiskPool, CastorFile
+             WHERE DiskCopy.fileSystem = FileSystem.id(+)
+               AND FileSystem.diskServer = diskServer.id(+)
+               AND DiskPool.id(+) = fileSystem.diskPool
+               AND DiskCopy.castorFile = getCF(ref)
+               AND DiskCopy.castorFile = CastorFile.id) LOOP
+     PIPE ROW(d);
+  END LOOP;
+END;
+/
+
+
+/* Get the recalljobs associated with the reference number */
+CREATE OR REPLACE FUNCTION getRJs(ref number) RETURN castorDebug.RecallJobDebug PIPELINED AS
+BEGIN
+  FOR t IN (SELECT RecallJob.id, getObjStatusName('RecallJob', 'status', RecallJob.status) as status,
+                   getTimeString(RecallJob.creationTime) as creationTime,
+                   RecallJob.fseq, RecallJob.copyNb, RecallGroup.name as recallGroupName,
+                   SvcClass.name as svcClassName, RecallJob.euid, RecallJob.egid, RecallJob.vid,
+                   RecallJob.nbRetriesWithinMount, RecallJob.nbMounts
+              FROM RecallJob, RecallGroup, SvcClass
+             WHERE RecallJob.castorfile = getCF(ref)
+               AND RecallJob.recallGroup = RecallGroup.id
+               AND RecallJob.svcClass = SvcClass.id) LOOP
+     PIPE ROW(t);
+  END LOOP;
+END;
+/
+
+
+/* Get the migration jobs associated with the reference number */
+CREATE OR REPLACE FUNCTION getMJs(ref number) RETURN castorDebug.MigrationJobDebug PIPELINED AS
+BEGIN
+  FOR t IN (SELECT MigrationJob.id, getObjStatusName('MigrationJob', 'status', MigrationJob.status) as status,
+                   getTimeString(MigrationJob.creationTime) as creationTime,
+                   MigrationJob.fileSize, TapePool.name as tapePoolName,
+                   MigrationJob.destCopyNb, MigrationJob.fseq,
+                   MigrationJob.mountTransactionId,
+                   MigrationJob.originalVID, MigrationJob.originalCopyNb,
+                   MigrationJob.nbRetries, MigrationJob.fileTransactionId
+              FROM MigrationJob, TapePool
+             WHERE castorfile = getCF(ref)
+               AND MigrationJob.tapePool = TapePool.id) LOOP
+     PIPE ROW(t);
+  END LOOP;
+END;
+/
+
+
+/* Get the (disk2disk) copy jobs associated with the reference number */
+CREATE OR REPLACE FUNCTION getCJs(ref number) RETURN castorDebug.Disk2DiskCopyJobDebug PIPELINED AS
+BEGIN
+  FOR t IN (SELECT Disk2DiskCopyJob.id, getObjStatusName('Disk2DiskCopyJob', 'status', Disk2DiskCopyJob.status) as status,
+                   getTimeString(Disk2DiskCopyJob.creationTime) as creationTime,
+                   Disk2DiskCopyJob.transferId, Disk2DiskCopyJob.retryCounter,
+                   Disk2DiskCopyJob.nsOpenTime, SvcClass.name as destSvcClassName,
+                   getObjStatusName('Disk2DiskCopyJob', 'replicationType', Disk2DiskCopyJob.replicationType) as replicationType,
+                   Disk2DiskCopyJob.replacedDCId, Disk2DiskCopyJob.destDCId,
+                   Disk2DiskCopyJob.drainingJob
+              FROM Disk2DiskCopyJob, SvcClass
+             WHERE castorfile = getCF(ref)
+               AND Disk2DiskCopyJob.destSvcClass = SvcClass.id) LOOP
+     PIPE ROW(t);
+  END LOOP;
+END;
+/
+
+/* PL/SQL method implementing renamedFileCleanup */
+CREATE OR REPLACE PROCEDURE renamedFileCleanup(inFileName IN VARCHAR2,
+                                               inSrId IN INTEGER) AS
+  varCfId INTEGER;
+  varFileId INTEGER;
+  varNsHost VARCHAR2(2048);
+  varNsPath VARCHAR2(2048);
+BEGIN
+  -- try to find a file with the right name
+  SELECT /*+ INDEX_RS_ASC(CastorFile I_CastorFile_LastKnownFileName) */ fileId, nshost, id
+    INTO varFileId, varNsHost, varCfId
+    FROM CastorFile
+   WHERE lastKnownFileName = normalizePath(inFileName);
+  -- validate this file against the NameServer
+  BEGIN
+    SELECT getPathForFileid@remotens(fileId) INTO varNsPath
+      FROM Cns_file_metadata@remotens
+     WHERE fileid = varFileId;
+    -- the nameserver contains a file with this fileid, but
+    -- with a different name than the stager. Obviously the
+    -- file got renamed and the requested deletion cannot succeed;
+    -- anyway we update the stager catalogue with the new name
+    fixLastKnownFileName(inFileName, varCfId);
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- the file exists only in the stager db,
+    -- execute stageForcedRm (cf. ns synch performed in GC daemon)
+    stageForcedRm(varFileId, varNsHost, dconst.GCTYPE_NSSYNCH);
+  END;
+  -- in all cases we fail the subrequest
+  UPDATE SubRequest
+     SET status = dconst.SUBREQUEST_FAILED, errorCode=serrno.ENOENT,
+         errorMessage = 'The file got renamed by another user request'
+   WHERE id = inSrId;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- No file found with the given name, fail the subrequest with a generic ENOENT
+  UPDATE SubRequest
+     SET status = dconst.SUBREQUEST_FAILED, errorCode=serrno.ENOENT
+   WHERE id = inSrId;
+END;
+/
+
+/* PL/SQL method implementing selectCastorFile */
+CREATE OR REPLACE PROCEDURE selectCastorFileInternal (inFileId IN INTEGER,
+                                                      inNsHost IN VARCHAR2,
+                                                      inClassId IN INTEGER,
+                                                      inFileSize IN INTEGER,
+                                                      inFileName IN VARCHAR2,
+                                                      inSrId IN NUMBER,
+                                                      inNsOpenTime IN NUMBER,
+                                                      inWaitForLock IN BOOLEAN,
+                                                      outId OUT INTEGER,
+                                                      outFileSize OUT INTEGER) AS
+  varPreviousLastKnownFileName VARCHAR2(2048);
+  varNsOpenTime NUMBER;
+  varFcId NUMBER;
+BEGIN
+  -- Resolve the fileclass
+  BEGIN
+    SELECT id INTO varFcId FROM FileClass WHERE classId = inClassId;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    RAISE_APPLICATION_ERROR (-20010, 'File class '|| inClassId ||' not found in database');
+  END;
+  BEGIN
+    -- try to find an existing file
+    SELECT id, fileSize, lastKnownFileName, nsOpenTime
+      INTO outId, outFileSize, varPreviousLastKnownFileName, varNsOpenTime
+      FROM CastorFile
+     WHERE fileId = inFileId AND nsHost = inNsHost;
+    -- take a lock on the file. Note that the file may have disappeared in the
+    -- meantime, this is why we first select (potentially having a NO_DATA_FOUND
+    -- exception) before we update.
+    IF inWaitForLock THEN
+      SELECT id INTO outId FROM CastorFile WHERE id = outId FOR UPDATE;
+    ELSE
+      SELECT id INTO outId FROM CastorFile WHERE id = outId FOR UPDATE NOWAIT;
+    END IF;
+    -- In case its filename has changed, fix it
+    IF inFileName != varPreviousLastKnownFileName THEN
+      fixLastKnownFileName(inFileName, outId);
+    END IF;
+    -- The file is still there, so update timestamps
+    UPDATE CastorFile SET lastAccessTime = getTime() WHERE id = outId;
+    IF varNsOpenTime = 0 AND inNsOpenTime > 0 THEN
+      -- We have a CastorFile entry, but it had not been created for an open operation
+      -- (effectively, only a putDone operation on a non-existing file can do this).
+      -- On the contrary, now we have been called after an open() as inNsOpenTime > 0.
+      -- Therefore, we set the nsOpenTime and lastUpdateTime like in createCastorFile()
+      UPDATE CastorFile SET nsOpenTime = inNsOpenTime, lastUpdateTime = TRUNC(inNsOpenTime)
+       WHERE id = outId;
+    END IF;
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = outId
+     WHERE id = inSrId;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- we did not find the file, let's try to create a new one.
+    -- This may fail with a low probability (subtle race condition, see comments
+    -- in the method), so we try in a loop
+    DECLARE
+      varSuccess BOOLEAN := False;
+    BEGIN
+      WHILE NOT varSuccess LOOP
+        varSuccess := createCastorFile(inFileId, inNsHost, varFcId, inFileSize, inFileName,
+                                       inSrId, inNsOpenTime, inWaitForLock, outId, outFileSize);
+      END LOOP;
+    END;
+  END;
+END;
+/
+
+/* update a drainingJob at then end of a disk2diskcopy */
+CREATE OR REPLACE PROCEDURE updateDrainingJobOnD2dEnd(inDjId IN INTEGER, inFileSize IN INTEGER,
+                                                      inHasFailed IN BOOLEAN) AS
+  varTotalFiles INTEGER;
+  varNbFailedBytes INTEGER;
+  varNbSuccessBytes INTEGER;
+  varNbFailedFiles INTEGER;
+  varNbSuccessFiles INTEGER;
+  varStatus INTEGER;
+BEGIN
+  -- note the locking that ensures consistency of the counters
+  SELECT status, totalFiles, nbFailedBytes, nbSuccessBytes, nbFailedFiles, nbSuccessFiles
+    INTO varStatus, varTotalFiles, varNbFailedBytes, varNbSuccessBytes, varNbFailedFiles, varNbSuccessFiles
+    FROM DrainingJob
+   WHERE id = inDjId
+     FOR UPDATE;
+  -- update counters
+  IF inHasFailed THEN
+    -- case of failures
+    varNbFailedBytes := varNbFailedBytes + inFileSize;
+    varNbFailedFiles := varNbFailedFiles + 1;
+  ELSE
+    -- case of success
+    varNbSuccessBytes := varNbSuccessBytes + inFileSize;
+    varNbSuccessFiles := varNbSuccessFiles + 1;
+  END IF;
+  -- detect end of draining. Do not touch INTERRUPTED status
+  IF varStatus = dconst.DRAININGJOB_RUNNING AND
+     varNbSuccessFiles + varNbFailedFiles = varTotalFiles THEN
+    IF varNbFailedFiles = 0 THEN
+      varStatus := dconst.DRAININGJOB_FINISHED;
+    ELSE
+      varStatus := dconst.DRAININGJOB_FAILED;
+    END IF;
+  END IF;
+  -- update DrainingJob
+  UPDATE DrainingJob
+     SET status = varStatus,
+         totalFiles = varTotalFiles,
+         nbFailedBytes = varNbFailedBytes,
+         nbSuccessBytes = varNbSuccessBytes,
+         nbFailedFiles = varNbFailedFiles,
+         nbSuccessFiles = varNbSuccessFiles
+   WHERE id = inDjId;
+END;
+/
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/

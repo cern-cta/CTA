@@ -13,11 +13,14 @@
 
   [Bug]
 
+     #103117 diskserver with no filesystem make strange output in printdiskserver
+     #103118 fail immediately on WARNINGS in draindiskserver
+     #103119 in transfermanager synchronization with the DB, do not cancel too much in one go
      #103144 Bad constraint for status of RecallJobs
      #103158 Bad DiskCopy status in createEmptyFile
      #103162 Race condition between drainRunner and deleteDrainingJob
-     #103184 Missing lock on DrainingJob in drainManager leads to dead lock
      #103165 "deadlock detected" around CASTOR_STAGER.DROPREUSEDLASTKNOWNFILENAME
+     #103184 Missing lock on DrainingJob in drainManager leads to dead lock
      #103188 catch NO_DATA_FOUND in getFile/SvcClassName
      #103189 Transfermanager synchronizer thread is not thread-safe
      #103190 Constraint violation errors thrown by the GC
@@ -33,6 +36,10 @@
   CASTOR NS
   ---------
 
+  [Bug]
+
+     #103170 fix log levels in nameserver logs
+
   [Features]
 
      #103168 RFE: Improve logging of failures in setOrReplaceSegmentsForFiles
@@ -42,7 +49,8 @@
 
   [Bug]
 
-    #92559 rfiod does not close
+    #92559  rfiod does not close
+    #103021 Xrootd castor plugin around xcastor::XrdxCastorClient::SendAsyncRequest
 
   CASTOR Tape
   -----------
@@ -62,7 +70,7 @@
 
   [Features]
 
-     #103176: RFE: properly package the simple log processor plugin for CASTOR
+     #103176 RFE: properly package the simple log processor plugin for CASTOR
 
 
   Package Changes
