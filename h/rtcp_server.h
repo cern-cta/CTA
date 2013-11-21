@@ -36,11 +36,6 @@ typedef struct buffer_table {
                                      * == data_length except when several
                                      * small files are concatenated
                                      * within a single buffer).*/
-    int nbrecs;                     /* U-format only: number of records
-                                     * (==nb blocks) within this buffer
-                                     */
-    int *lrecl_table;               /* U-format only: array of record
-                                     * lengths for each individual block */
     char *buffer;
 } buffer_table_t;
 
@@ -224,10 +219,6 @@ void rtcpd_SetProcError  (int);
 void rtcpd_SetReqStatus  (tape_list_t *, file_list_t *, int, int);
 void rtcpd_CheckReqStatus  (tape_list_t *, file_list_t *, int *, int *);
 int rtcpd_CalcBufSz  (tape_list_t *, file_list_t *);
-int rtcpd_VarToFix (char *, char *, int, int, int, int *, int *, void **);
-int rtcpd_FixToVar (char *, char *, int, int);
-int rtcpd_f77RecToFix (char *, int, int, char *, void **);
-int rtcpd_AdmUformatInfo (file_list_t *, int);
 int rtcpd_WaitTapeIO  (int *);
 int rtcpd_WaitCLThread  (int, int *);
 int rtcpd_CtapeInit (void);

@@ -255,7 +255,6 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
       if ( dumpreq->tp_err_action != -1 &&
            (dumpreq->tp_err_action == IGNOREEOI) != 0 )
         LOGLINE_APPEND(" -E %s","ignoreeoi");
-      if ( dumpreq->convert == EBCCONV ) LOGLINE_APPEND(" -C %s","ebcdic");
       if ( dumpreq->fromblock >= 0 && dumpreq->toblock >= 0 ) {
         LOGLINE_APPEND(" -N %d",dumpreq->fromblock);
         LOGLINE_APPEND(",%d",dumpreq->toblock);
@@ -287,13 +286,6 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
     }
   }
 
-  if ( *filereq->recfm != '\0' ) {
-    LOGLINE_APPEND(" -F %s",filereq->recfm);
-    if ( filereq->convert > 0 && (filereq->convert & NOF77CW) != 0 ) {
-      if ( *filereq->recfm == 'F' ) LOGLINE_APPEND(",%s","-f77");
-      else if ( *filereq->recfm == 'U' ) LOGLINE_APPEND(",%s","bin");
-    }
-  }
   if ( filereq->blocksize > 0 )
     LOGLINE_APPEND(" -b %d",filereq->blocksize);
   if ( filereq->recordlength > 0 )
@@ -318,14 +310,6 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
     LOGLINE_APPEND(" %s","-n");
   if ( *filereq->stageID != '\0' )
     LOGLINE_APPEND(" -Z %s",filereq->stageID);
-  if ( filereq->convert > 0 && (filereq->convert & (EBCCONV|FIXVAR)) != 0 ) {
-    LOGLINE_APPEND("%s"," -C ");
-    if ( (filereq->convert & EBCCONV) != 0 ) {
-      LOGLINE_APPEND("%s","ebcdic");
-    } else LOGLINE_APPEND("%s","ascii");
-    if ( (filereq->convert & FIXVAR) != 0 )
-      LOGLINE_APPEND(",%s","block");
-  }
 
   if ( filereq->maxnbrec > 0 )
     LOGLINE_APPEND(" -N %d",(int)filereq->maxnbrec);
@@ -617,8 +601,6 @@ static int rtcpd_AllocBuffers() {
     databufs[i]->end_of_tpfile = FALSE;
     databufs[i]->last_buffer = FALSE;
     databufs[i]->nb_waiters = 0;
-    databufs[i]->nbrecs = 0;
-    databufs[i]->lrecl_table = NULL;
     /*
      * Initialize semaphores
      */
@@ -684,8 +666,6 @@ static int rtcpd_ResetRequest(tape_list_t *tape) {
     databufs[i]->end_of_tpfile = FALSE;
     databufs[i]->last_buffer = FALSE;
     databufs[i]->nb_waiters = 0;
-    databufs[i]->nbrecs = 0;
-    databufs[i]->lrecl_table = NULL;
     /*
      * Initialize semaphores
      */
@@ -991,7 +971,7 @@ int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
 
 
 int rtcpd_FreeBuffers() {
-  int i, *q;
+  int i;
   char *p;
 
   if ( databufs == NULL ) return(0);
@@ -1009,7 +989,6 @@ int rtcpd_FreeBuffers() {
       }
       if ( (p = databufs[i]->buffer) != NULL ) free(p);
       databufs[i]->buffer = NULL;
-      if ( (q = databufs[i]->lrecl_table) != NULL ) free(q);
       /* S. Murray 24/08/09                                          */
       /* The CLThread concurrently broadcasts an exception whilst    */
       /* the tape thread is in this function.  Therefore do not free */
@@ -1049,52 +1028,6 @@ int rtcpd_CalcBufSz(tape_list_t *tape, file_list_t *file) {
   if ( current_bufsz <= 0 ) current_bufsz = blksiz;
 
   return(current_bufsz);
-}
-
-int rtcpd_AdmUformatInfo(file_list_t *file, int indxp) {
-  int blksiz, nb_blks;
-
-  if ( file == NULL || *(file->filereq.recfm) != 'U' ||
-       file->filereq.blocksize <= 0 || indxp < 0 ||
-       indxp > nb_bufs ) {
-    rtcp_log(LOG_ERR,"rtcpd_AdmUformatInfo() invalid parameter(s)\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
-                     "func"   , TL_MSG_PARAM_STR, "rtcpd_AdmUformatInfo",
-                     "Message", TL_MSG_PARAM_STR, "invalid parameter(s)" );
-    serrno = EINVAL;
-    return(-1);
-  }
-  blksiz = file->filereq.blocksize;
-  nb_blks = databufs[indxp]->length / blksiz;
-  if ( nb_blks <= 0 ) {
-    rtcp_log(LOG_ERR,"rtcpd_AdmUformatInfo() internal error: buffer too small!!!\n");
-    tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
-                     "func"   , TL_MSG_PARAM_STR, "rtcpd_AdmUformatInfo",
-                     "Message", TL_MSG_PARAM_STR, "internal error: buffer too small" );
-    serrno = SEINTERNAL;
-    return(-1);
-  }
-  if ( nb_blks > databufs[indxp]->nbrecs ) {
-    if ( databufs[indxp] != NULL ) {
-      if ( databufs[indxp]->lrecl_table != NULL )
-        free(databufs[indxp]->lrecl_table);
-      databufs[indxp]->lrecl_table = NULL;
-      databufs[indxp]->nbrecs = 0;
-    }
-    databufs[indxp]->lrecl_table = (int *)calloc((size_t)nb_blks,sizeof(int));
-    if ( databufs[indxp]->lrecl_table == NULL ) {
-      serrno = errno;
-      rtcp_log(LOG_ERR,"rtcpd_AdmUformatInfo() calloc(): %s\n",
-               sstrerror(serrno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
-                       "func"   , TL_MSG_PARAM_STR, "rtcpd_AdmUformatInfo",
-                       "Message", TL_MSG_PARAM_STR, "calloc()",
-                       "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
-      return(-1);
-    }
-    databufs[indxp]->nbrecs = nb_blks;
-  }
-  return(0);
 }
 
 static void rtcpd_FreeResources(int **client_socket,

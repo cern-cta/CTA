@@ -53,7 +53,6 @@ void rtcpc_InitReqStruct(rtcpTapeRequest_t *tapereq,
         filereq->def_alloc = -1;
         filereq->rtcp_err_action = -1;
         filereq->tp_err_action = -1;
-        filereq->convert = -1;
         filereq->check_fid = -1;
         filereq->concat = -1;
         filereq->err.max_tpretry = -1;
@@ -156,7 +155,6 @@ int rtcpc_InitDumpTapeReq(rtcpDumpTapeRequest_t *dump) {
     memset(dump,'\0',sizeof(rtcpDumpTapeRequest_t));
     dump->maxbyte = -1;
     dump->blocksize = -1;
-    dump->convert = -1;
     dump->tp_err_action = -1;
     dump->startfile = -1;
     dump->maxfile = -1;

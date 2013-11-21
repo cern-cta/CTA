@@ -246,14 +246,11 @@ static int MemoryToTape(
     uint64_t *const    batchBytesToTape) {
     int rc = 0;
     int nb_bytes, i, j, last_sz, blksiz, severity, lrecl;
-    int end_of_tpfile, buf_done, nb_truncated, spill, bytes_used, proc_err;
+    int end_of_tpfile, buf_done, nb_truncated, spill, proc_err;
     int pileupWaitTime = 0, nbFullBufs;
-    char *convert_buffer = NULL;
-    void *convert_context = NULL;
     char *p;
-    register int Uformat;
     register int debug = Debug;
-    register int convert, NoSyncAccess;
+    register int NoSyncAccess;
     rtcpTapeRequest_t *tapereq = NULL;
     rtcpFileRequest_t *filereq = NULL;
 
@@ -274,11 +271,10 @@ static int MemoryToTape(
 
     blksiz = filereq->blocksize;
     lrecl = filereq->recordlength;
-    Uformat = (*filereq->recfm == 'U' ? TRUE : FALSE);
-    if ( (lrecl <= 0) && (Uformat == FALSE) ) lrecl = blksiz;
-    else if ( Uformat == TRUE ) lrecl = 0;
+    if ( lrecl <= 0 ) {
+        lrecl = blksiz;
+    }
 
-    convert = filereq->convert;
     nb_truncated = spill = 0;
     NoSyncAccess = *diskIOfinished;
 
@@ -328,10 +324,6 @@ static int MemoryToTape(
                                  "func"    , TL_MSG_PARAM_STR, "MemoryToTape",
                                  "Message" , TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext",
                                  "Error"   , TL_MSG_PARAM_STR, sstrerror(serrno));
-                if ( (convert & FIXVAR) != 0 ) {
-                    if ( convert_buffer != NULL ) free(convert_buffer);
-                    if ( convert_context != NULL ) free(convert_context);
-                }
                 return(-1);
             }
         }
@@ -344,12 +336,6 @@ static int MemoryToTape(
                   (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV))) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
-                if ( (convert & FIXVAR) != 0 ) {
-                    if ( convert_buffer != NULL ) free(convert_buffer);
-                    if ( convert_context != NULL ) free(convert_context);
-                    convert_buffer = NULL;
-                    convert_context = NULL;
-                }
                 break;
             }
 
@@ -376,10 +362,6 @@ static int MemoryToTape(
                                  "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
                                  "Message", TL_MSG_PARAM_STR, "Cthread_cond_wait_ext",
                                  "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
-                if ( (convert & FIXVAR) != 0 ) {
-                    if ( convert_buffer != NULL ) free(convert_buffer);
-                    if ( convert_context != NULL ) free(convert_context);
-                }
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
             }
@@ -392,12 +374,6 @@ static int MemoryToTape(
                   (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV))) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
-                if ( (convert & FIXVAR) != 0 ) {
-                    if ( convert_buffer != NULL ) free(convert_buffer);
-                    if ( convert_context != NULL ) free(convert_context);
-                    convert_buffer = NULL;
-                    convert_context = NULL;
-                }
             }
         }
         if ( proc_err != 0 ) break;
@@ -415,34 +391,11 @@ static int MemoryToTape(
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
             }
-            if ( (convert & FIXVAR) != 0 ) {
-                if ( convert_buffer != NULL ) free(convert_buffer);
-                if ( convert_context != NULL ) free(convert_context);
-            }
             (void)rtcpd_SetReqStatus(NULL,file,SEINTERNAL,
                                      RTCP_FAILED|RTCP_UNERR);
             (void)rtcpd_AppendClientMsg(NULL,file,"Internal error: %s\n",
                                         "MemoryToTape() blocksize mismatch");
             return(-1);
-        }
-        if ( ((convert & FIXVAR) != 0) && (convert_buffer == NULL) ) {
-            convert_buffer = (char *)malloc(blksiz);
-            if ( convert_buffer == NULL ) {
-                (void)rtcpd_SetReqStatus(NULL,file,errno,
-                                         RTCP_RESELECT_SERV);
-                (void)rtcpd_AppendClientMsg(NULL,file,RT105,sstrerror(errno));
-                rtcp_log(LOG_ERR,"MemoryToTape() malloc(): %s\n",
-                    sstrerror(errno));
-                tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
-                                 "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
-                                 "Message", TL_MSG_PARAM_STR, "malloc",
-                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
-                if ( NoSyncAccess == 0 ) {
-                    (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
-                    (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
-                }
-                return(-1);
-            }
         }
         /*
          * Check if this is the last buffer of the tape file
@@ -454,36 +407,22 @@ static int MemoryToTape(
          * Copy the data to tape
          */
         last_sz = 0;
-        if ( filereq->maxnbrec > 0 && (convert & FIXVAR) == 0 ) {
+        if ( filereq->maxnbrec > 0 ) {
             /*
              * Check if we reached the number of records limit
              * and, if so, reduce the data_length accordingly.
              */
-            if ( Uformat == FALSE ) {
                 if ( filereq->nbrecs + databufs[i]->data_length/lrecl >
                     filereq->maxnbrec ) {
                     databufs[i]->data_length = (int)(filereq->maxnbrec -
                         filereq->nbrecs) * lrecl;
                     rtcpd_SetReqStatus(NULL,file,ERTLIMBYSZ,RTCP_OK | RTCP_LIMBYSZ);
                 }
-            } else {
-                if ( filereq->nbrecs + databufs[i]->nbrecs > 
-                    filereq->maxnbrec ) {
-                    databufs[i]->nbrecs = (int)(filereq->maxnbrec -
-                        filereq->nbrecs);
-                    rtcpd_SetReqStatus(NULL,file,ERTLIMBYSZ,RTCP_OK | RTCP_LIMBYSZ);
-                }
-            }
         }
         DEBUG_PRINT((LOG_DEBUG,"MemoryToTape() write %d bytes to tape\n",
             databufs[i]->data_length));
         j = *firstblk;
         for (;;) {
-            if ( (Uformat == FALSE) || ((Uformat == TRUE) && (convert & NOF77CW) != 0) ) {
-                /*
-                 * Fix record format
-                 */
-                if ( (convert & FIXVAR) == 0 ) {
                     /*
                      * Have we read all data in this buffer yet?
                      */
@@ -499,62 +438,13 @@ static int MemoryToTape(
                      */
                     nb_bytes = databufs[i]->data_length - (j-*firstblk)*blksiz;
                     if ( nb_bytes > blksiz ) nb_bytes = blksiz;
-                    convert_buffer = databufs[i]->buffer + j*blksiz;
-                } else {
-                    /*
-                     * Record padding (blocking) format: input records
-                     * are normal text lines with newlines, output
-                     * records are fixed length (lrecl) where the new
-                     * line has been replaced with spaces (' ') padded
-                     * up to lrecl
-                     */
-                    for (;;) {
-                        nb_bytes = rtcpd_VarToFix(
-                            databufs[i]->buffer + (*firstblk)*blksiz,
-                            convert_buffer,
-                            databufs[i]->data_length - (*firstblk)*blksiz,
-                            blksiz,lrecl,&bytes_used,
-                            &nb_truncated,&convert_context);
 
-                        if ( nb_bytes > 0 ) filereq->nbrecs++;
-                        if ( filereq->maxnbrec > 0 &&
-                             filereq->nbrecs > filereq->maxnbrec ) {
-                            spill = nb_bytes = 0;
-                            rtcpd_SetReqStatus(NULL,file,ERTLIMBYSZ,RTCP_OK | 
-                                                               RTCP_LIMBYSZ);
-                            break;
-                        }
-                        file->tapebytes_sofar += (u_signed64)bytes_used;
-                        if ( nb_bytes == blksiz ) {
-                            spill = 0;
-                            break;
-                        } else if ( nb_bytes > 0 ) {
-                            spill = nb_bytes;
-                            nb_bytes = 0;
-                        } else if ( nb_bytes <= 0 ) break;
-                    }
-                    /*
-                     * Break out to get a new buffer
-                     */
-                    if ( nb_bytes <= 0 ) break;
-                }
-            } else {
-                /*
-                 * FORTRAN sequential access variable length records.
-                 * Have we read all data in this buffer yet?
-                 */
-                if ( j*blksiz >= databufs[i]->data_length ) break;
-                nb_bytes = databufs[i]->lrecl_table[j];
-                convert_buffer = databufs[i]->buffer + j*blksiz;
-            }
-
-            if ( (convert & EBCCONV) != 0 ) asc2ebc(convert_buffer,nb_bytes);
             /*
              * >>>>>>>>>>> write to tape <<<<<<<<<<<<<
              */
             TP_STATUS(RTCP_PS_WRITE);
             rc = twrite(tape_fd,
-                        convert_buffer,
+                        databufs[i]->buffer + j*blksiz,
                         nb_bytes,
                         tape,
                         file,
@@ -571,10 +461,6 @@ static int MemoryToTape(
                     (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                     (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 }
-                if ( (convert & FIXVAR) != 0 ) {
-                    if ( convert_buffer != NULL ) free(convert_buffer);
-                    if ( convert_context != NULL ) free(convert_context);
-                }
                 return(-1);
             }
 
@@ -586,12 +472,10 @@ static int MemoryToTape(
                 break;
             }
             last_sz += rc;
-            if ( (convert & FIXVAR) == 0 ) {
                 file->tapebytes_sofar += (u_signed64)rc;
                 if ( lrecl > 0 && rc/lrecl > 0 ) 
                     filereq->nbrecs += (u_signed64)rc/lrecl;
                 else if ( rc > 0 ) filereq->nbrecs++;
-            }
 
             TP_SIZE(rc);
             j++;
@@ -605,10 +489,7 @@ static int MemoryToTape(
          * rtcpd_VarToFix() returns 0 if all input data has been
          * converted.
          */
-        if ( (convert & FIXVAR) == 0 )
             databufs[i]->data_length -= last_sz;
-        else
-            if ( nb_bytes == 0 ) databufs[i]->data_length = 0;
 
         /*
          * Reset the buffer semaphore only if the
@@ -627,7 +508,6 @@ static int MemoryToTape(
              */
             databufs[i]->bufendp = 0;
             databufs[i]->data_length = 0;
-            databufs[i]->nbrecs = 0;
             databufs[i]->end_of_tpfile = FALSE;
             databufs[i]->last_buffer = FALSE;
             databufs[i]->flag = BUFFER_EMPTY;
@@ -651,10 +531,6 @@ static int MemoryToTape(
                                  "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
                                  "Message", TL_MSG_PARAM_STR, "Cthread_cond_broadcast_ext",
                                  "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
-                if ( (convert & FIXVAR) != 0 ) {
-                    if ( convert_buffer != NULL ) free(convert_buffer);
-                    if ( convert_context != NULL ) free(convert_context);
-                }
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 return(-1);
             }
@@ -668,10 +544,6 @@ static int MemoryToTape(
                                  "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
                                  "Message", TL_MSG_PARAM_STR, "Cthread_mutex_unlock_ext",
                                  "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
-                if ( (convert & FIXVAR) != 0 ) {
-                    if ( convert_buffer != NULL ) free(convert_buffer);
-                    if ( convert_context != NULL ) free(convert_context);
-                }
                 return(-1);
             }
         }
@@ -689,10 +561,6 @@ static int MemoryToTape(
                                  "func"   , TL_MSG_PARAM_STR, "MemoryToTape",
                                  "Message", TL_MSG_PARAM_STR, "Cthread_mutex_lock_ext",
                                  "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno));
-                if ( (convert & FIXVAR) != 0 ) {
-                    if ( convert_buffer != NULL ) free(convert_buffer);
-                    if ( convert_context != NULL ) free(convert_context);
-                }
                 return(-1);
             }
             proc_cntl.nb_reserved_bufs--;
@@ -726,10 +594,6 @@ static int MemoryToTape(
                                      "func"    , TL_MSG_PARAM_STR, "MemoryToTape",
                                      "Message" , TL_MSG_PARAM_STR, "Cthread_cond_broadcast_ext(proc_cntl)",
                                      "Error"   , TL_MSG_PARAM_STR, sstrerror(serrno));
-                    if ( (convert & FIXVAR) != 0 ) {
-                        if ( convert_buffer != NULL ) free(convert_buffer);
-                        if ( convert_context != NULL ) free(convert_context);
-                    }
                     (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
                     return(-1);
                 }
@@ -743,10 +607,6 @@ static int MemoryToTape(
                                  "func"    , TL_MSG_PARAM_STR, "MemoryToTape",
                                  "Message" , TL_MSG_PARAM_STR, "Cthread_mutex_unlock_ext",
                                  "Error"   , TL_MSG_PARAM_STR, sstrerror(serrno));
-                if ( (convert & FIXVAR) != 0 ) {
-                    if ( convert_buffer != NULL ) free(convert_buffer);
-                    if ( convert_context != NULL ) free(convert_context);
-                }
                 return(-1);
             }
         }
@@ -779,35 +639,6 @@ static int MemoryToTape(
             break;
         }
     } /* End of for (;;) */
-
-    if ( ((convert & FIXVAR) != 0) && (convert_buffer != NULL) ) {
-        /*
-         * Write out spill from VarToFix conversion
-         */
-        rtcp_log(LOG_DEBUG,"MemoryToTape() FIXVAR spill: %d, proc_err=%d\n",
-                 spill,proc_err);
-        tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
-                         "func"    , TL_MSG_PARAM_STR, "MemoryToTape",
-                         "Message" , TL_MSG_PARAM_STR, "FIXVAR",
-                         "spill"   , TL_MSG_PARAM_INT, spill,
-                         "proc_err", TL_MSG_PARAM_INT, proc_err );
-        if ( proc_err == 0  && spill > 0 ) {
-            if ( (convert & EBCCONV) != 0 ) asc2ebc(convert_buffer,spill);
-            rc = twrite(tape_fd,
-                        convert_buffer,
-                        spill,
-                        tape,
-                        file,
-                        tapeFlushMode);
-            TP_SIZE(rc);
-        }
-        if ( nb_truncated > 0 ) {
-            rtcpd_AppendClientMsg(NULL,file,RT222,"CPDSKTP",
-                nb_truncated);
-        }
-        free(convert_buffer);
-        if ( convert_context != NULL ) free(convert_context);
-    }
 
     /* If data should be flushed to tape every N files */
     if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES == tapeFlushMode) {
@@ -879,7 +710,6 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
     int nb_bytes, rc, i, j, last_sz, blksiz, current_bufsz;
     int lrecl, end_of_tpfile, break_and_return, severity, proc_err;
     int nb_skipped_blks = 0;
-    register int Uformat;
     register int debug = Debug;
     rtcpFileRequest_t *filereq = NULL;
     extern char *u64tostr (u_signed64, char *, int);
@@ -903,8 +733,6 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
     file->tapebytes_sofar = filereq->startsize;
     blksiz = filereq->blocksize;
     lrecl = filereq->recordlength;
-    Uformat = (*filereq->recfm == 'U' ? TRUE : FALSE);
-    if ( Uformat == TRUE ) lrecl = 0;
 
     /*
      * Calculate new actual buffer length
@@ -997,11 +825,6 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
              * Copy the data from tape
              */
             last_sz = 0;
-            databufs[i]->nbrecs = 0;
-            /*
-             * If U-format, re-allocate the lrecl_table[] if needed.
-             */
-            if ( Uformat == TRUE ) rc = rtcpd_AdmUformatInfo(file,i);
 
             for (j=*firstblk; last_sz+blksiz < databufs[i]->length; j++) {
                 /*
@@ -1087,7 +910,7 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                 /*
                  * The record length was not given by the user
                  */
-                if ( (lrecl <= 0) && (Uformat == FALSE) ) {
+                if ( lrecl <= 0 ) {
                     lrecl = rc;
                     filereq->recordlength = lrecl;
                 }
@@ -1096,10 +919,6 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
                 file->tapebytes_sofar += rc;
                 if ( lrecl > 0 && rc/lrecl > 0 ) filereq->nbrecs += rc/lrecl;
                 else if ( rc > 0 ) filereq->nbrecs++;
-                if ( Uformat == TRUE ) {
-                    databufs[i]->lrecl_table[j] = rc;
-                    databufs[i]->nbrecs++;
-                }
 
                 TP_SIZE(rc);
             } /* End of for (j=...) */
@@ -1118,17 +937,11 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
              */
             if ( (filereq->maxnbrec > 0) &&
                  (filereq->nbrecs > filereq->maxnbrec) ) {
-                if ( Uformat == FALSE && lrecl > 0 ) {
+                if ( lrecl > 0 ) {
                     databufs[i]->data_length = databufs[i]->data_length -
                         (int)(filereq->nbrecs - filereq->maxnbrec)*lrecl;
                     file->tapebytes_sofar -= 
                         (filereq->nbrecs - filereq->maxnbrec)*lrecl;
-                } else if ( Uformat == TRUE ) {
-                    databufs[i]->nbrecs = (int)(filereq->nbrecs - filereq->maxnbrec);
-                    databufs[i]->data_length = 0;
-                    for (j=0;j<databufs[i]->nbrecs;j++)
-                        databufs[i]->data_length +=databufs[i]->lrecl_table[j];
-                    file->tapebytes_sofar -= databufs[i]->data_length;
                 }
                 filereq->nbrecs = filereq->maxnbrec;
                 end_of_tpfile = TRUE;

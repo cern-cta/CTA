@@ -77,9 +77,6 @@ EXTERN_C void Ctape_seterrbuf (char *, int);
 EXTERN_C int Ctape_status (char *, struct drv_status *, int);
 EXTERN_C int send2tpd (char *, char *, int, char *, int);
 
-/* tape/asc2ebc.c      */
-EXTERN_C void asc2ebc      (char *, int);
-
 /* tape/buildhdrlbl.c  */
 EXTERN_C int buildhdrlbl   (char[], char[], char*, char*, int, int, int, char*, int, int, int, int);
 
@@ -97,9 +94,6 @@ EXTERN_C int checkjobdied  (int[]);
 
 /* tape/cvtden.c       */
 EXTERN_C int cvtden        (const char *const);
-
-/* tape/ebc2asc.c      */
-EXTERN_C void ebc2asc      (char *, int);
 
 /* tape/getcompstat.c  */
 EXTERN_C int clear_compression_stats (int, char *, char *);

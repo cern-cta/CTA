@@ -227,15 +227,6 @@
 #define MAX_CPRETRY        (2)
 
 /*
- * Fortran unit table, for U-format only
- */
-#define FORTRAN_UNIT_OFFSET (20)   /* start at some safe number...*/
-#define NB_FORTRAN_UNITS    (50)   /* Table size  */
-#define VALID_FORTRAN_UNIT(X) \
-    ((X)>=FORTRAN_UNIT_OFFSET && \
-     (X)<FORTRAN_UNIT_OFFSET+NB_FORTRAN_UNITS)
-
-/*
  * Support for old VMS clients
  */
 #define   RTCP_VMSOPTLEN        (255)
