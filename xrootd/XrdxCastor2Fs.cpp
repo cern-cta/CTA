@@ -64,9 +64,6 @@
 /******************************************************************************/
 /*                        G l o b a l   O b j e c t s                         */
 /******************************************************************************/
-
-XrdSysError  xCastor2FsEroute(0);
-XrdSysError* XrdxCastor2Fs::eDest;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::nsMap;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::stagertable;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::roletable;
@@ -79,7 +76,47 @@ XrdOucHash<XrdOucString>* XrdxCastor2Stager::msDelayStore;
 xcastor::XrdxCastorClient* XrdxCastor2Fs::msCastorClient;
 
 int XrdxCastor2Fs::TokenLockTime = 5;
-XrdxCastor2Fs* XrdxCastor2FS = 0;
+XrdxCastor2Fs* gMgr;
+XrdSysError OfsEroute(0);
+
+//------------------------------------------------------------------------------
+// Get file system
+//------------------------------------------------------------------------------
+extern "C"
+XrdSfsFileSystem* XrdSfsGetFileSystem(XrdSfsFileSystem* native_fs,
+                                      XrdSysLogger*     lp,
+                                      const char*       configfn)
+{
+  OfsEroute.SetPrefix("xcastor2fs_");
+  OfsEroute.logger(lp);
+  static XrdxCastor2Fs myFS;
+  OfsEroute.Say("++++++ (c) 2008 CERN/IT-DM-SMD ",
+                "xCastor2Fs (xCastor2 File System) v 1.0 ");
+
+  // Initialize the subsystems
+  if (!myFS.Init()) return 0;
+
+  myFS.ConfigFN = (configfn && *configfn ? strdup(configfn) : 0);
+
+  if (myFS.Configure(OfsEroute)) return 0;
+
+  gMgr = &myFS;
+
+  // Initialize authorization module ServerAcc
+  gMgr->mServerAcc = (XrdxCastor2ServerAcc*) XrdAccAuthorizeObject(lp, configfn, NULL);
+
+  if (!gMgr->mServerAcc)
+  {
+    xcastor_static_err("failed loading the authorization plugin");
+    return 0;
+  }
+
+  // Initialize the CASTOR Cthread library
+  Cthread_init();
+  return &myFS;
+}
+
+
 
 
 //------------------------------------------------------------------------------
@@ -93,18 +130,18 @@ STRINGSTORE(const char* __charptr__)
 
   if (!__charptr__) return "";
 
-  XrdxCastor2FS->StoreMutex.Lock();
+  gMgr->StoreMutex.Lock();
 
-  if ((yourstring = XrdxCastor2FS->stringstore->Find(__charptr__)))
+  if ((yourstring = gMgr->stringstore->Find(__charptr__)))
   {
-    XrdxCastor2FS->StoreMutex.UnLock();
+    gMgr->StoreMutex.UnLock();
     return (char*)yourstring->c_str();
   }
   else
   {
     XrdOucString* newstring = new XrdOucString(__charptr__);
-    XrdxCastor2FS->stringstore->Add(__charptr__, newstring);
-    XrdxCastor2FS->StoreMutex.UnLock();
+    gMgr->stringstore->Add(__charptr__, newstring);
+    gMgr->StoreMutex.UnLock();
     return (char*)newstring->c_str();
   }
 }
@@ -829,49 +866,11 @@ XrdxCastor2Fs::getVersion()
 
 
 //------------------------------------------------------------------------------
-// Get file system
-//------------------------------------------------------------------------------
-extern "C"
-XrdSfsFileSystem* XrdSfsGetFileSystem(XrdSfsFileSystem* /*native_fs*/,
-                                      XrdSysLogger*     lp,
-                                      const char*       configfn)
-{
-  xCastor2FsEroute.SetPrefix("xcastor2fs_");
-  xCastor2FsEroute.logger(lp);
-  static XrdxCastor2Fs myFS(&xCastor2FsEroute);
-  XrdOucString vs = "xCastor2Fs (xCastor2 File System) v ";
-  xCastor2FsEroute.Say("++++++ (c) 2008 CERN/IT-DM-SMD ", vs.c_str());
-
-  // Initialize the subsystems
-  if (!myFS.Init(xCastor2FsEroute)) return 0;
-
-  myFS.ConfigFN = (configfn && *configfn ? strdup(configfn) : 0);
-
-  if (myFS.Configure(xCastor2FsEroute)) return 0;
-
-  XrdxCastor2FS = &myFS;
-  // Initialize authorization module ServerAcc
-  XrdxCastor2FS->mServerAcc = (XrdxCastor2ServerAcc*) XrdAccAuthorizeObject(lp, configfn, NULL);
-
-  if (!XrdxCastor2FS->mServerAcc)
-  {
-    xcastor_static_err("failed loading the authorization plugin");
-    return 0;
-  }
-
-  // Initialize the CASTOR Cthread library
-  Cthread_init();
-  return &myFS;
-}
-
-
-//------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-XrdxCastor2Fs::XrdxCastor2Fs(XrdSysError* ep):
+XrdxCastor2Fs::XrdxCastor2Fs():
   LogId()
 {
-  eDest = ep;
   ConfigFN  = 0;
   mLogLevel = LOG_INFO; // default log level
 
@@ -892,7 +891,7 @@ XrdxCastor2Fs::XrdxCastor2Fs(XrdSysError* ep):
 // Initialisation
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2Fs::Init(XrdSysError& fsEroute)
+XrdxCastor2Fs::Init()
 {
   nsMap   = new XrdOucHash<XrdOucString> ();
   stagertable   = new XrdOucHash<XrdOucString> ();
@@ -906,7 +905,7 @@ XrdxCastor2Fs::Init(XrdSysError& fsEroute)
   msCastorClient = xcastor::XrdxCastorClient::Create();
   if (!msCastorClient)
   {
-    fsEroute.Emsg( "Config", "error=failed to create castor client object" );
+    OfsEroute.Emsg( "Config", "error=failed to create castor client object" );
     return false;
   }
 
@@ -928,7 +927,7 @@ XrdxCastor2Fs::NsMapping(XrdOucString input)
   if (pos == STR_NPOS)
   {
     if (!(value = nsMap->Find("/")))
-      return false;
+      return output;
    
     pos = 0;
     prefix = "/";
@@ -943,9 +942,7 @@ XrdxCastor2Fs::NsMapping(XrdOucString input)
       // If not found then check the namespace with deepness 0
       // e.g. look for a root mapping
       if (!(value = nsMap->Find("/")))
-      {
         return output;
-      }
 
       pos = 0;
       prefix = "/";
@@ -977,8 +974,8 @@ XrdxCastor2Fs::chmod(const char*         path,
   XrdSecEntity mappedclient;
   XrdOucString map_path;
   xcastor_debug("path=%s", path);
-  AUTHORIZE(client, &chmod_Env, AOP_Chmod, "chmod", path, error);
-  map_path = XrdxCastor2Fs::NsMapping(path);
+  AUTHORIZE(client, &chmod_Env, AOP_Chmod, "chmod", path, error)
+  map_path = NsMapping(path);
 
   if (map_path == "")
   {
@@ -988,16 +985,12 @@ XrdxCastor2Fs::chmod(const char*         path,
 
   RoleMap(client, info, mappedclient, tident);
 
-  if (XrdxCastor2FS->Proc)
-  {
-    XrdxCastor2FS->Stats.IncCmd();
-  }
+  if (gMgr->Proc)
+    gMgr->Stats.IncCmd();
 
   // Perform the actual chmod
   if (XrdxCastor2FsUFS::Chmod(map_path.c_str(), acc_mode))
-  {
     return XrdxCastor2Fs::Emsg(epname, error, serrno, "change mode on", map_path.c_str());
-  }
 
   return SFS_OK;
 }
@@ -1020,8 +1013,8 @@ XrdxCastor2Fs::exists(const char*          path,
   XrdSecEntity mappedclient;
   XrdOucString map_path;
   xcastor_debug("path=%s", path);
-  AUTHORIZE(client, &exists_Env, AOP_Stat, "execute exists", path, error);
-  map_path = XrdxCastor2Fs::NsMapping(path);
+  AUTHORIZE(client, &exists_Env, AOP_Stat, "execute exists", path, error)
+  map_path = NsMapping(path);
   RoleMap(client, info, mappedclient, tident);
 
   if (map_path == "")
@@ -1030,10 +1023,8 @@ XrdxCastor2Fs::exists(const char*          path,
     return SFS_ERROR;
   }
 
-  if (XrdxCastor2FS->Proc)
-  {
-    XrdxCastor2FS->Stats.IncCmd();
-  }
+  if (gMgr->Proc)
+    gMgr->Stats.IncCmd();
 
   return _exists(map_path.c_str(), file_exists, error, &mappedclient, info);
 }
@@ -1056,9 +1047,12 @@ XrdxCastor2Fs::_exists(const char*          path,
   // Now try to find the file or directory
   if (!XrdxCastor2FsUFS::Statfn(path, &fstat))
   {
-    if (S_ISDIR(fstat.filemode)) file_exists = XrdSfsFileExistIsDirectory;
-    else if (S_ISREG(fstat.filemode)) file_exists = XrdSfsFileExistIsFile;
-    else file_exists = XrdSfsFileExistNo;
+    if (S_ISDIR(fstat.filemode)) 
+      file_exists = XrdSfsFileExistIsDirectory;
+    else if (S_ISREG(fstat.filemode)) 
+      file_exists = XrdSfsFileExistIsFile;
+    else 
+      file_exists = XrdSfsFileExistNo;
 
     return SFS_OK;
   }
@@ -1089,7 +1083,7 @@ XrdxCastor2Fs::mkdir(const char*         path,
   XrdSecEntity mappedclient;
   XrdOucString map_path;
   xcastor_debug("path=%s", path);
-  map_path = XrdxCastor2Fs::NsMapping(path);
+  map_path = NsMapping(path);
   RoleMap(client, info, mappedclient, tident);
 
   if (map_path == "")
@@ -1098,10 +1092,8 @@ XrdxCastor2Fs::mkdir(const char*         path,
     return SFS_ERROR;
   }
 
-  if (XrdxCastor2FS->Proc)
-  {
-    XrdxCastor2FS->Stats.IncCmd();
-  }
+  if (gMgr->Proc)
+    gMgr->Stats.IncCmd();
 
   int r1 = _mkdir(map_path.c_str(), Mode, error, &mappedclient, info);
   int r2 = SFS_OK;
@@ -1181,9 +1173,7 @@ XrdxCastor2Fs::_mkdir(const char*         path,
 
   // Set acl on directory
   if (client)
-  {
     SetAcl(path, (*client), 0);
-  }
 
   return SFS_OK;
 }
@@ -1235,10 +1225,8 @@ XrdxCastor2Fs::Mkpath(const char*    path,
     {
       if (client && error)
       {
-        if ((XrdxCastor2FS->_mkdir(actual_path, mode, (*error), client, info)))
-        {
+        if ((gMgr->_mkdir(actual_path, mode, (*error), client, info)))
           return -serrno;
-        }
       }
       else
       {
@@ -1281,7 +1269,7 @@ XrdxCastor2Fs::stageprepare(const char*         path,
 
   XrdOucEnv Open_Env(info);
   xcastor::Timing preparetiming("stageprepare");
-  map_path = XrdxCastor2Fs::NsMapping(path);
+  map_path = NsMapping(path);
 
   if (map_path == "")
   {
@@ -1319,7 +1307,7 @@ XrdxCastor2Fs::stageprepare(const char*         path,
               ? SFS_OK : SFS_ERROR);
   TIMING("END", &preparetiming);
   
-  if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+  if (gMgr->mLogLevel == LOG_DEBUG)
     preparetiming.Print();
 
   return retc;
@@ -1350,8 +1338,8 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
   hostname.assign(tident, adpos + 1);
   reducedTident += hostname;
 
-  if (XrdxCastor2FS->Proc)
-    XrdxCastor2FS->Stats.IncCmd();
+  if (gMgr->Proc)
+    gMgr->Stats.IncCmd();
 
   xcastor_debug("checking tident=%s, hostname=%s", tident, hostname.c_str());
 
@@ -1364,17 +1352,18 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
     // Run through the paths to make sure client can read each one
     while (tp)
     {
-      int retc;
-
-      if ((retc = stageprepare(tp->text, error, client, op ? op->text : NULL)) != SFS_OK)
+      int retc = stageprepare(tp->text, error, client, (op ? op->text : NULL));
+      
+      if (retc != SFS_OK)
         return retc;
 
       if (tp) 
+      {
         tp = tp->next;
+        if (op) op = op->next;
+      }
       else 
         break;
-
-      if (op) op = op->next;
     }
 
     return SFS_OK;
@@ -1390,7 +1379,7 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
   XrdOucEnv oenv(pargs.oinfo->text);
   const char* path = pargs.paths->text;
   XrdOucString map_path;
-  map_path = XrdxCastor2Fs::NsMapping(path);
+  map_path = NsMapping(path);
   TIMING("CNSID", &preparetiming);
 
   // Unlink files which are not properly closed on a disk server
@@ -1414,9 +1403,7 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
     XrdxCastor2FsUFS::SetId(atoi(oenv.Get("uid")), atoi(oenv.Get("gid")));
 
     if (XrdxCastor2FsUFS::Unlink(map_path.c_str()))
-    {
       return XrdxCastor2Fs::Emsg(epname, error, serrno, "unlink", map_path.c_str());
-    }
   }
 
   // This is currently needed
@@ -1444,7 +1431,7 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
     {
       TIMING("END", &preparetiming);
       
-      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+      if (gMgr->mLogLevel == LOG_DEBUG)
         preparetiming.Print();
 
       return SFS_ERROR;
@@ -1453,7 +1440,7 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
 
   TIMING("END", &preparetiming);
   
-  if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+  if (gMgr->mLogLevel == LOG_DEBUG)
     preparetiming.Print();
 
   return SFS_OK;
@@ -1477,8 +1464,8 @@ XrdxCastor2Fs::rem(const char*         path,
   TIMING("START", &rmtiming);
   xcastor_debug("path=%s", path);
   XrdOucEnv env(info);
-  AUTHORIZE(client, &env, AOP_Delete, "remove", path, error);
-  map_path = XrdxCastor2Fs::NsMapping(path);
+  AUTHORIZE(client, &env, AOP_Delete, "remove", path, error)
+  map_path = NsMapping(path);
   xcastor_debug("map_path=%s", map_path.c_str());
   RoleMap(client, info, mappedclient, tident);
 
@@ -1492,8 +1479,8 @@ XrdxCastor2Fs::rem(const char*         path,
   gid_t client_gid;
   GetId(map_path.c_str(), mappedclient, client_uid, client_gid);
 
-  if (XrdxCastor2FS->Proc)
-    XrdxCastor2FS->Stats.IncRm();
+  if (gMgr->Proc)
+    gMgr->Stats.IncRm();
 
   TIMING("Authorize", &rmtiming);
 
@@ -1519,7 +1506,7 @@ XrdxCastor2Fs::rem(const char*         path,
     {
       TIMING("END", &rmtiming);
       
-      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+      if (gMgr->mLogLevel == LOG_DEBUG)
         rmtiming.Print();
       
       return SFS_ERROR;
@@ -1532,7 +1519,7 @@ XrdxCastor2Fs::rem(const char*         path,
   retc = _rem(map_path.c_str(), error, &mappedclient, info);
   TIMING("RemoveNamespace", &rmtiming);
   
-  if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+  if (gMgr->mLogLevel == LOG_DEBUG)
     rmtiming.Print();
       
   return retc;
@@ -1553,9 +1540,7 @@ XrdxCastor2Fs::_rem(const char*         path,
 
   // Perform the actual deletion
   if (XrdxCastor2FsUFS::Unlink(path))
-  {
     return XrdxCastor2Fs::Emsg(epname, error, serrno, "remove", path);
-  }
 
   return SFS_OK;
 }
@@ -1576,8 +1561,8 @@ XrdxCastor2Fs::remdir(const char*         path,
   XrdSecEntity mappedclient;
   XrdOucString map_path;
   xcastor_debug("path=%s", path);
-  AUTHORIZE(client, &remdir_Env, AOP_Delete, "remove", path, error);
-  map_path = XrdxCastor2Fs::NsMapping(path);
+  AUTHORIZE(client, &remdir_Env, AOP_Delete, "remove", path, error)
+  map_path = NsMapping(path);
   RoleMap(client, info, mappedclient, tident);
 
   if (map_path == "")
@@ -1586,10 +1571,8 @@ XrdxCastor2Fs::remdir(const char*         path,
     return SFS_ERROR;
   }
 
-  if (XrdxCastor2FS->Proc)
-  {
-    XrdxCastor2FS->Stats.IncCmd();
-  }
+  if (gMgr->Proc)
+    gMgr->Stats.IncCmd();
 
   return _remdir(map_path.c_str(), error, &mappedclient, info);
 }
@@ -1633,33 +1616,29 @@ XrdxCastor2Fs::rename(const char*         old_name,
   XrdSecEntity mappedclient;
   XrdOucEnv renameo_Env(infoO);
   XrdOucEnv renamen_Env(infoN);
-  AUTHORIZE(client, &renameo_Env, AOP_Update, "rename", old_name, error);
-  AUTHORIZE(client, &renamen_Env, AOP_Update, "rename", new_name, error);
+  AUTHORIZE(client, &renameo_Env, AOP_Update, "rename", old_name, error)
+  AUTHORIZE(client, &renamen_Env, AOP_Update, "rename", new_name, error)
+  oldn = NsMapping(old_name);
+  
+  if (oldn == "")
   {
-    oldn = XrdxCastor2Fs::NsMapping(old_name);
-
-    if (oldn == "")
-    {
-      error.setErrInfo(ENOMEDIUM, "No mapping for file name");
-      return SFS_ERROR;
-    }
+    error.setErrInfo(ENOMEDIUM, "No mapping for file name");
+    return SFS_ERROR;
   }
+  
+  newn = NsMapping(new_name);
+  
+  if (newn == "")
   {
-    newn = XrdxCastor2Fs::NsMapping(new_name);
-
-    if (newn == "")
-    {
-      error.setErrInfo(ENOMEDIUM, "No mapping for file name");
-      return SFS_ERROR;
-    }
+    error.setErrInfo(ENOMEDIUM, "No mapping for file name");
+    return SFS_ERROR;
   }
+  
   RoleMap(client, infoO, mappedclient, tident);
 
-  if (XrdxCastor2FS->Proc)
-  {
-    XrdxCastor2FS->Stats.IncCmd();
-  }
-
+  if (gMgr->Proc)
+    gMgr->Stats.IncCmd();
+  
   int r1, r2;
   r1 = r2 = SFS_OK;
   // Check if dest is existing
@@ -1700,9 +1679,7 @@ XrdxCastor2Fs::rename(const char*         old_name,
   r1 = XrdxCastor2FsUFS::Rename(oldn.c_str(), newn.c_str());
 
   if (r1)
-  {
     return XrdxCastor2Fs::Emsg(epname, error, serrno, "rename", oldn.c_str());
-  }
 
   xcastor_debug("namespace rename done: %s => %s", oldn.c_str(), newn.c_str());
   return SFS_OK;
@@ -1729,7 +1706,7 @@ XrdxCastor2Fs::stat(const char*         path,
   XrdOucString stage_status = "";
   TIMING("START", &stattiming);
   xcastor_debug("path=%s", path);
-  AUTHORIZE(client, &Open_Env, AOP_Stat, "stat", path, error);
+  AUTHORIZE(client, &Open_Env, AOP_Stat, "stat", path, error)
   map_path = XrdxCastor2Fs::NsMapping(path);
 
   if (map_path == "")
@@ -1776,8 +1753,8 @@ XrdxCastor2Fs::stat(const char*         path,
     }
   }
 
-  if (XrdxCastor2FS->Proc)
-    XrdxCastor2FS->Stats.IncStat();
+  if (gMgr->Proc)
+    gMgr->Stats.IncStat();
 
   memset(buf, sizeof(struct stat), 0);
   buf->st_dev     = 0xcaff;
@@ -1810,7 +1787,7 @@ XrdxCastor2Fs::stat(const char*         path,
 
   TIMING("END", &stattiming);
 
-  if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+  if (gMgr->mLogLevel == LOG_DEBUG)
     stattiming.Print();
 
   return SFS_OK;
@@ -1855,7 +1832,7 @@ XrdxCastor2Fs::lstat(const char*         path,
   xcastor::Timing stattiming("filelstat");
   TIMING("START", &stattiming);
   xcastor_debug("path=%s", path);
-  AUTHORIZE(client, &lstat_Env, AOP_Stat, "lstat", path, error);
+  AUTHORIZE(client, &lstat_Env, AOP_Stat, "lstat", path, error)
   map_path = XrdxCastor2Fs::NsMapping(path);
 
   if (map_path == "")
@@ -1885,18 +1862,13 @@ XrdxCastor2Fs::lstat(const char*         path,
   }
 
   struct Cns_filestat cstat;
-
   TIMING("CNSLSTAT", &stattiming);
 
   if (XrdxCastor2FsUFS::Lstatfn(map_path.c_str(), &cstat))
-  {
     return XrdxCastor2Fs::Emsg(epname, error, serrno, "lstat", map_path.c_str());
-  }
 
-  if (XrdxCastor2FS->Proc)
-  {
-    XrdxCastor2FS->Stats.IncStat();
-  }
+  if (gMgr->Proc)
+    gMgr->Stats.IncStat();
 
   memset(buf, sizeof(struct stat), 0);
   buf->st_dev     = 0xcaff;
@@ -1914,7 +1886,7 @@ XrdxCastor2Fs::lstat(const char*         path,
   buf->st_ctime   = cstat.ctime;
   TIMING("END", &stattiming);
 
-  if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+  if (gMgr->mLogLevel == LOG_DEBUG)
     stattiming.Print();
 
   return SFS_OK;
@@ -1951,7 +1923,7 @@ XrdxCastor2Fs::readlink(const char*         path,
   XrdOucString map_path;
   XrdOucEnv rl_Env(info);
   xcastor_debug("path=%s", path);
-  AUTHORIZE(client, &rl_Env, AOP_Stat, "readlink", path, error);
+  AUTHORIZE(client, &rl_Env, AOP_Stat, "readlink", path, error)
   map_path = XrdxCastor2Fs::NsMapping(path);
 
   if (map_path == "")
@@ -1965,9 +1937,7 @@ XrdxCastor2Fs::readlink(const char*         path,
   int nlen;
 
   if ((nlen = XrdxCastor2FsUFS::Readlink(map_path.c_str(), lp, 4096)) == -1)
-  {
     return XrdxCastor2Fs::Emsg(epname, error, serrno, "readlink", map_path.c_str());
-  }
 
   lp[nlen] = 0;
   linkpath = lp;
@@ -1991,7 +1961,7 @@ XrdxCastor2Fs::symlink(const char*         path,
   XrdOucEnv sl_Env(info);
   xcastor_debug("path=%s", path);
   XrdOucString source, destination;
-  AUTHORIZE(client, &sl_Env, AOP_Create, "symlink", linkpath, error);
+  AUTHORIZE(client, &sl_Env, AOP_Create, "symlink", linkpath, error)
   // We only need to map absolut links
   source = path;
 
@@ -2020,9 +1990,7 @@ XrdxCastor2Fs::symlink(const char*         path,
   char lp[4096];
 
   if (XrdxCastor2FsUFS::Symlink(source.c_str(), destination.c_str()))
-  {
     return XrdxCastor2Fs::Emsg(epname, error, serrno, "symlink", source.c_str());
-  }
 
   SetAcl(destination.c_str(), mappedclient, 1);
   linkpath = lp;
@@ -2045,7 +2013,7 @@ XrdxCastor2Fs::access(const char*         path,
   XrdOucEnv access_Env(info);
   XrdOucString map_path;
   xcastor_debug("path=%s", path);
-  AUTHORIZE(client, &access_Env, AOP_Stat, "access", path, error);
+  AUTHORIZE(client, &access_Env, AOP_Stat, "access", path, error)
   map_path = XrdxCastor2Fs::NsMapping(path);
 
   if (map_path == "")
@@ -2074,7 +2042,7 @@ int XrdxCastor2Fs::utimes(const char*         path,
   XrdOucString map_path;
   XrdOucEnv utimes_Env(info);
   xcastor_debug("path=%s", path);
-  AUTHORIZE(client, &utimes_Env, AOP_Update, "set utimes", path, error);
+  AUTHORIZE(client, &utimes_Env, AOP_Update, "set utimes", path, error)
   map_path = XrdxCastor2Fs::NsMapping(path);
 
   if (map_path == "")
@@ -2086,9 +2054,7 @@ int XrdxCastor2Fs::utimes(const char*         path,
   RoleMap(client, info, mappedclient, tident);
 
   if ((XrdxCastor2FsUFS::Utimes(map_path.c_str(), tvp)))
-  {
     return XrdxCastor2Fs::Emsg(epname, error, serrno, "utimes", map_path.c_str());
-  }
 
   return SFS_OK;
 }
@@ -2118,7 +2084,7 @@ XrdxCastor2Fs::Emsg(const char*    pfx,
   // Format the error message
   snprintf(buffer, sizeof(buffer), "Unable to %s %s; %s", op, target, etext);
 #ifndef NODEBUG
-  eDest->Emsg(pfx, buffer);
+  OfsEroute.Emsg(pfx, buffer);
 #endif
   // Place the error message in the error object and return
   einfo.setErrInfo(ecode, buffer);
@@ -2144,8 +2110,6 @@ int XrdxCastor2Fs::Stall(XrdOucErrInfo& error,
 }
 
 
-
-
 //------------------------------------------------------------------------------
 // Fsctl
 //------------------------------------------------------------------------------
@@ -2167,9 +2131,7 @@ XrdxCastor2Fs::fsctl(const int           cmd,
   if ((cmd == SFS_FSCTL_LOCATE) || (cmd == 16777217))
   {
     if (path.beginswith("*"))
-    {
       path.erase(0, 1);
-    }
 
     // Check if this file exists
     XrdSfsFileExistence file_exists;
@@ -2186,16 +2148,14 @@ XrdxCastor2Fs::fsctl(const int           cmd,
     // We don't want to manage writes via global redirection - therefore we mark the files as 'r'
     rType[1] = 'r';
     rType[2] = '\0';
-    sprintf(locResp, "%s", (char*)XrdxCastor2FS->ManagerLocation.c_str());
+    sprintf(locResp, "%s", (char*)gMgr->ManagerLocation.c_str());
     error.setErrInfo(strlen(locResp) + 3, (const char**)Resp, 2);
     xcastor_debug("located at headnode: %s", locResp);
     return SFS_DATA;
   }
 
   if (cmd != SFS_FSCTL_PLUGIN)
-  {
     return SFS_ERROR;
-  }
 
   if ((scmd = env.Get("pcmd")))
   {
@@ -2414,7 +2374,7 @@ XrdxCastor2Fs::GetAdminDelay(XrdOucString& msg, bool isRW)
       if (Proc)
       {
         XrdxCastor2ProcFile* pf = Proc->Handle("sysmsg");
-        
+
         if (pf)
           pf->Read(msg);
       }

@@ -32,7 +32,6 @@
 #include "XrdxCastor2FsSecurity.hpp"
 /*----------------------------------------------------------------------------*/
 
-extern XrdxCastor2Fs* XrdxCastor2FS;
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -96,8 +95,8 @@ XrdxCastor2FsFile::open(const char*         path,
   xcastor_debug("path=%s, info=%s", path, (info ? info : ""));
 
   TIMING("START", &opentiming);
-  map_path = XrdxCastor2Fs::NsMapping(path);
-  XrdxCastor2FS->RoleMap(client, info, mappedclient, tident);
+  map_path = gMgr->NsMapping(path);
+  gMgr->RoleMap(client, info, mappedclient, tident);
   TIMING("MAPPING", &opentiming);
 
   if (map_path == "")
@@ -163,20 +162,20 @@ XrdxCastor2FsFile::open(const char*         path,
     
   // See if the cluster is in maintenance mode and has delays configured for write/read
   XrdOucString msg_delay;
-  int64_t delay = XrdxCastor2FS->GetAdminDelay(msg_delay, isRW);
+  int64_t delay = gMgr->GetAdminDelay(msg_delay, isRW);
 
   if (delay) 
   {
     TIMING("RETURN", &opentiming);
     opentiming.Print();
-    return XrdxCastor2FS->Stall(error, delay, msg_delay.c_str());
+    return gMgr->Stall(error, delay, msg_delay.c_str());
   }
 
   TIMING("DELAYCHECK", &opentiming);
 
   // Prepare to create or open the file, only if this is the first time the user
   // comes with this request. If the user comes after a stall we skip this part.
-  bool stall_comeback = XrdxCastor2FS->msCastorClient->HasSubmittedReq(map_path.c_str(), error);
+  bool stall_comeback = gMgr->msCastorClient->HasSubmittedReq(map_path.c_str(), error);
 
   if (!stall_comeback)
   {
@@ -226,8 +225,8 @@ XrdxCastor2FsFile::open(const char*         path,
       // For 0 file size use the dummy "zero" file and don't redirect
       if (buf.filesize == 0)
       {
-        oh = XrdxCastor2FsUFS::Open(XrdxCastor2FS->zeroProc.c_str(), 0, 0);
-        fname = strdup(XrdxCastor2FS->zeroProc.c_str());
+        oh = XrdxCastor2FsUFS::Open(gMgr->zeroProc.c_str(), 0, 0);
+        fname = strdup(gMgr->zeroProc.c_str());
         return SFS_OK;
       }
     }
@@ -242,7 +241,7 @@ XrdxCastor2FsFile::open(const char*         path,
   gid_t client_gid;
   XrdOucString sclient_uid = "";
   XrdOucString sclient_gid = "";
-  XrdxCastor2FS->GetId(map_path.c_str(), mappedclient, client_uid, client_gid);
+  gMgr->GetId(map_path.c_str(), mappedclient, client_uid, client_gid);
   sclient_uid += (int) client_uid;
   sclient_gid += (int) client_gid;
 
@@ -254,7 +253,7 @@ XrdxCastor2FsFile::open(const char*         path,
   if ((val = Open_Env.Get("svcClass"))) 
     desired_svc = val;
 
-  allowed_svc = XrdxCastor2FS->GetAllowedSvc(map_path.c_str(), desired_svc);
+  allowed_svc = gMgr->GetAllowedSvc(map_path.c_str(), desired_svc);
 
   if (allowed_svc.empty())
     return XrdxCastor2Fs::Emsg(epname, error, EINVAL,  "open - no valid service"
@@ -363,16 +362,16 @@ XrdxCastor2FsFile::open(const char*         path,
       {
         TIMING("RETURN", &opentiming);
 
-        if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+        if (gMgr->mLogLevel == LOG_DEBUG)
           opentiming.Print();
       
-        return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , 
-                                    "file is still busy, please wait");
+        return gMgr->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , 
+                           "file is still busy, please wait");
       }
 
       TIMING("RETURN", &opentiming);
 
-      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+      if (gMgr->mLogLevel == LOG_DEBUG)
         opentiming.Print();
 
       return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "async request failed");
@@ -382,11 +381,11 @@ XrdxCastor2FsFile::open(const char*         path,
     {
       TIMING("RETURN", &opentiming);
 
-      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+      if (gMgr->mLogLevel == LOG_DEBUG)
         opentiming.Print();
 
-      return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , 
-                                  "request queue full or response not ready yet");
+      return gMgr->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()), 
+                         "request queue full or response not ready yet");
     }
 
     // Clean-up any possible delay tag remainings
@@ -396,7 +395,7 @@ XrdxCastor2FsFile::open(const char*         path,
     {
       TIMING("RETURN", &opentiming);
       
-      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+      if (gMgr->mLogLevel == LOG_DEBUG)
         opentiming.Print();
 
       return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access file in stager (Put request failed)  fn = ",
@@ -407,7 +406,7 @@ XrdxCastor2FsFile::open(const char*         path,
   {
     // Read operation
     bool possible = false;
-    std::set<std::string> set_svc = XrdxCastor2FS->GetAllAllowedSvc(map_path.c_str());
+    std::set<std::string> set_svc = gMgr->GetAllAllowedSvc(map_path.c_str());
     
     for (std::set<std::string>::iterator iter = set_svc.begin(); 
          iter != set_svc.end(); ++iter)
@@ -420,7 +419,7 @@ XrdxCastor2FsFile::open(const char*         path,
       {
         TIMING("RETURN", &opentiming);
         
-        if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+        if (gMgr->mLogLevel == LOG_DEBUG)
           opentiming.Print();
         
         continue;
@@ -438,23 +437,23 @@ XrdxCastor2FsFile::open(const char*         path,
         break;
       }
 
-      // We select this setting and tell the client to wait for the staging in this pool/svc class
+      // We select this setting and tell the client to wait for the staging in this svcClass
       if (resp_info.mStageStatus == "READY")
       {
         TIMING("RETURN", &opentiming);
         
-        if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+        if (gMgr->mLogLevel == LOG_DEBUG)
           opentiming.Print();
         
-        return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , 
-                                    "file is being staged in");
+        return gMgr->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()), 
+                           "file is being staged in");
       }      
     }
 
     if (!possible)
     {
       TIMING("RETURN", &opentiming);
-      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+      if (gMgr->mLogLevel == LOG_DEBUG)
         opentiming.Print();
 
       XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
@@ -481,7 +480,7 @@ XrdxCastor2FsFile::open(const char*         path,
     {
       TIMING("RETURN", &opentiming);
       
-      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+      if (gMgr->mLogLevel == LOG_DEBUG)
         opentiming.Print();
       
       return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "async req failed fn=", map_path.c_str());
@@ -490,18 +489,18 @@ XrdxCastor2FsFile::open(const char*         path,
     {
       TIMING("RETURN", &opentiming);
       
-      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+      if (gMgr->mLogLevel == LOG_DEBUG)
         opentiming.Print();
       
-      return XrdxCastor2FS->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()) , 
-                                  "request queue full or response not ready");
+      return gMgr->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()), 
+                         "request queue full or response not ready");
     }
     
     if (resp_info.mStageStatus != "READY")
     {
       TIMING("RETURN", &opentiming);
       
-      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+      if (gMgr->mLogLevel == LOG_DEBUG)
         opentiming.Print();
       
       return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access stager (Get request failed) fn=", 
@@ -510,13 +509,13 @@ XrdxCastor2FsFile::open(const char*         path,
   }
 
   // Save the redirection host in the set of known diskservers 
-  XrdxCastor2FS->CacheDiskServer(resp_info.mRedirectionHost.c_str());
+  gMgr->CacheDiskServer(resp_info.mRedirectionHost.c_str());
 
   TIMING("REDIRECTION", &opentiming);
   xcastor_debug("redirection to:%s", resp_info.mRedirectionHost.c_str());
 
   // Save statistics about server read/write operations 
-  if (XrdxCastor2FS->Proc)
+  if (gMgr->Proc)
   {
     std::ostringstream ostreamclient;
     std::ostringstream ostreamserver;
@@ -524,8 +523,8 @@ XrdxCastor2FsFile::open(const char*         path,
     ostreamclient << allowed_svc << "::" << mappedclient.name;
     ostreamserver << allowed_svc << "::" << resp_info.mRedirectionHost;
     
-    XrdxCastor2FS->Stats.IncServerRdWr(ostreamserver.str().c_str(), isRW);
-    XrdxCastor2FS->Stats.IncUserRdWr(ostreamclient.str().c_str(), isRW);
+    gMgr->Stats.IncServerRdWr(ostreamserver.str().c_str(), isRW);
+    gMgr->Stats.IncUserRdWr(ostreamclient.str().c_str(), isRW);
   }
 
   // Add the opaque authorization information for the server for read & write
@@ -538,14 +537,14 @@ XrdxCastor2FsFile::open(const char*         path,
   authz.client_sec_gid = sclient_gid.c_str();
   authz.accessop = aop;
   time_t now = time(NULL);
-  authz.exptime  = (now + XrdxCastor2FS->TokenLockTime);
+  authz.exptime  = (now + gMgr->TokenLockTime);
   authz.token = "";
   authz.signature = "";
-  authz.manager = (char*)XrdxCastor2FS->ManagerId.c_str();
+  authz.manager = (char*)gMgr->ManagerId.c_str();
   std::string acc_opaque = "";
 
   // Build and sign the authorization token with the server's private key
-  acc_opaque = XrdxCastor2FS->mServerAcc->GetOpaqueAcc(authz, XrdxCastor2FS->IssueCapability);
+  acc_opaque = gMgr->mServerAcc->GetOpaqueAcc(authz, gMgr->IssueCapability);
 
   if (acc_opaque.empty())
   {
@@ -556,8 +555,8 @@ XrdxCastor2FsFile::open(const char*         path,
   // Add the internal token opaque tag
   resp_info.mRedirectionHost += "?";
   
-  // We add the user defined stager selection also to the redirection in case
-  // the client comes back from a failure
+  // Add the user defined svcClass also to the redirection in case the client
+  // comes back from a failure
   if ((val = Open_Env.Get("svcClass")))
   {
     resp_info.mRedirectionHost += "svcClass=";
@@ -571,7 +570,7 @@ XrdxCastor2FsFile::open(const char*         path,
   if (!isRW)
   {
     // We always assume adler, but we should check the type here ...
-    if (!strcmp(buf.csumtype, "AD"))
+    if (strncmp(buf.csumtype, "AD", 2) == 0)
     {
       resp_info.mRedirectionHost += "adler32=";
       resp_info.mRedirectionHost += buf.csumvalue;
@@ -583,13 +582,13 @@ XrdxCastor2FsFile::open(const char*         path,
       resp_info.mRedirectionHost += "createifnotexist=1&";
   }
   
-  int ecode = atoi(XrdxCastor2FS->xCastor2FsTargetPort.c_str());
+  int ecode = atoi(gMgr->xCastor2FsTargetPort.c_str());
   error.setErrInfo(ecode, resp_info.mRedirectionHost.c_str());
   TIMING("AUTHZ", &opentiming);
 
   // Do the proc statistics if a proc file system is specified
-  if (XrdxCastor2FS->Proc)
-    XrdxCastor2FS->Stats.IncRdWr(isRW);
+  if (gMgr->Proc)
+    gMgr->Stats.IncRdWr(isRW);
 
   // Check if a mode was given
   if (Open_Env.Get("mode"))
@@ -602,7 +601,7 @@ XrdxCastor2FsFile::open(const char*         path,
 
   TIMING("PROC/DONE", &opentiming);
   
-  if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
+  if (gMgr->mLogLevel == LOG_DEBUG)
     opentiming.Print();
 
   xcastor_debug("redirection to:%s", resp_info.mRedirectionHost.c_str());
@@ -618,9 +617,9 @@ XrdxCastor2FsFile::close()
 {
   static const char* epname = "close";
 
-  if (XrdxCastor2FS->Proc)
+  if (gMgr->Proc)
   {
-    XrdxCastor2FS->Stats.IncCmd();
+    gMgr->Stats.IncCmd();
   }
 
   // Release the handle and return
@@ -669,9 +668,9 @@ XrdxCastor2FsFile::read(XrdSfsFileOffset offset,
   static const char* epname = "read";
   XrdSfsXferSize nbytes;
 
-  if (XrdxCastor2FS->Proc)
+  if (gMgr->Proc)
   {
-    XrdxCastor2FS->Stats.IncCmd();
+    gMgr->Stats.IncCmd();
   }
 
   // Make sure the offset is not too large
@@ -696,7 +695,7 @@ XrdxCastor2FsFile::read(XrdSfsFileOffset offset,
     {
       XrdOucString line = lineptr;
       XrdOucString rep1 = "/";
-      rep1 += XrdxCastor2FS->xCastor2FsName;
+      rep1 += gMgr->xCastor2FsName;
       rep1 += "/";
 
       if (line.beginswith(rep1))
@@ -718,7 +717,7 @@ XrdxCastor2FsFile::read(XrdSfsFileOffset offset,
           XrdOucString line = "__STDERR__>";
           line += lineptr;
           XrdOucString rep1 = "/";
-          rep1 += XrdxCastor2FS->xCastor2FsName;
+          rep1 += gMgr->xCastor2FsName;
           rep1 += "/";
           line.replace(rep1, "/");
           memcpy(bufptr, line.c_str(), line.length());
@@ -739,7 +738,7 @@ XrdxCastor2FsFile::read(XrdSfsFileOffset offset,
         XrdOucString line = "__STDERR__>";
         line += lineptr;
         XrdOucString rep1 = "/";
-        rep1 += XrdxCastor2FS->xCastor2FsName;
+        rep1 += gMgr->xCastor2FsName;
         rep1 += "/";
         line.replace(rep1, "/");
         memcpy(bufptr, line.c_str(), line.length());
@@ -777,9 +776,9 @@ XrdxCastor2FsFile::read(XrdSfsFileOffset offset,
 int
 XrdxCastor2FsFile::read(XrdSfsAio* aiop)
 {
-  if (XrdxCastor2FS->Proc)
+  if (gMgr->Proc)
   {
-    XrdxCastor2FS->Stats.IncCmd();
+    gMgr->Stats.IncCmd();
   }
 
   // Execute this request in a synchronous fashion
@@ -802,9 +801,9 @@ XrdxCastor2FsFile::write(XrdSfsFileOffset offset,
   static const char* epname = "write";
   XrdSfsXferSize nbytes;
 
-  if (XrdxCastor2FS->Proc)
+  if (gMgr->Proc)
   {
-    XrdxCastor2FS->Stats.IncCmd();
+    gMgr->Stats.IncCmd();
   }
 
   // Make sure the offset is not too large
@@ -866,9 +865,7 @@ XrdxCastor2FsFile::stat(struct stat* buf)
     int rc = ::stat(fname, buf);
 
     if (rc)
-    {
       return XrdxCastor2Fs::Emsg(epname, error, errno, "stat", fname);
-    }
 
     return SFS_OK;
   }
@@ -877,9 +874,7 @@ XrdxCastor2FsFile::stat(struct stat* buf)
   struct Cns_filestatcs cstat;
 
   if (XrdxCastor2FsUFS::Statfn(fname, &cstat))
-  {
     return XrdxCastor2Fs::Emsg(epname, error, serrno, "stat", fname);
-  }
 
   // All went well
   memset(buf, sizeof(struct stat), 0);
@@ -908,10 +903,8 @@ XrdxCastor2FsFile::sync()
 {
   static const char* epname = "sync";
 
-  if (XrdxCastor2FS->Proc)
-  {
-    XrdxCastor2FS->Stats.IncCmd();
-  }
+  if (gMgr->Proc)
+    gMgr->Stats.IncCmd();
 
   // Perform the function
   if (fsync(oh))
@@ -942,10 +935,8 @@ XrdxCastor2FsFile::truncate(XrdSfsFileOffset flen)
 {
   static const char* epname = "trunc";
 
-  if (XrdxCastor2FS->Proc)
-  {
-    XrdxCastor2FS->Stats.IncCmd();
-  }
+  if (gMgr->Proc)
+    gMgr->Stats.IncCmd();
 
   // Make sure the offset is not too larg
 #if _FILE_OFFSET_BITS!=64

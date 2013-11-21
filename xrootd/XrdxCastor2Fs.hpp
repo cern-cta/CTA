@@ -450,7 +450,7 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     //--------------------------------------------------------------------------
     //! Constructor
     //--------------------------------------------------------------------------
-    XrdxCastor2Fs( XrdSysError* lp );
+    XrdxCastor2Fs();
 
 
     //--------------------------------------------------------------------------
@@ -464,13 +464,13 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     //!
     //! @return 0 upon success or non zero otherwise.
     //--------------------------------------------------------------------------
-    virtual int Configure( XrdSysError& fsEroute);
+    virtual int Configure(XrdSysError& fsEroute);
 
 
     //--------------------------------------------------------------------------
     //! Initialisation
     //--------------------------------------------------------------------------
-    virtual bool Init(XrdSysError& fsEroute);
+    virtual bool Init();
 
 
     //--------------------------------------------------------------------------
@@ -913,7 +913,7 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     //! @return the mapped path according to the directives in the xrd.cf file
     //!
     //--------------------------------------------------------------------------
-    static XrdOucString NsMapping( XrdOucString input );
+    XrdOucString NsMapping( XrdOucString input );
 
 
     //--------------------------------------------------------------------------
@@ -1031,8 +1031,9 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
 
 
   int mLogLevel; ///< log level from config file or set in the proc "trace" file
-  static  XrdSysError* eDest;
 };
+
+extern XrdxCastor2Fs* gMgr; ///< globl instance of the redirector OFS subsystem
 
 
 /******************************************************************************/

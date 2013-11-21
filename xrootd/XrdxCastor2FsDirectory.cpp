@@ -28,7 +28,6 @@
 #include "XrdxCastor2FsSecurity.hpp"
 /*----------------------------------------------------------------------------*/
 
-extern XrdxCastor2Fs* XrdxCastor2FS;
 
 //------------------------------------------------------------------------------
 // Constructor
@@ -66,16 +65,16 @@ XrdxCastor2FsDirectory::open(const char*         dir_path,
   XrdOucString map_dir;
   XrdOucEnv Open_Env(info);
   AUTHORIZE(client, &Open_Env, AOP_Readdir, "open directory", dir_path, error);
-  map_dir = XrdxCastor2Fs::NsMapping(dir_path) ;
+  map_dir = gMgr->NsMapping(dir_path) ;
   xcastor_debug("open directory: %s", map_dir.c_str());
 
   if (map_dir == "")
     return XrdxCastor2Fs::Emsg(epname, error, ENOMEDIUM, "map filename", dir_path);
 
-  XrdxCastor2FS->RoleMap(client, info, mappedclient, tident);
+  gMgr->RoleMap(client, info, mappedclient, tident);
 
-  if (XrdxCastor2FS->Proc)
-    XrdxCastor2FS->Stats.IncCmd();
+  if (gMgr->Proc)
+    gMgr->Stats.IncCmd();
 
   // Verify that this object is not already associated with an open directory
   if (dh) return XrdxCastor2Fs::Emsg(epname, error, EADDRINUSE,
@@ -111,8 +110,8 @@ XrdxCastor2FsDirectory::nextEntry()
   // Check if we are at EOF (once there we stay there)
   if (ateof) return (const char*)0;
 
-  if (XrdxCastor2FS->Proc)
-    XrdxCastor2FS->Stats.IncReadd();
+  if (gMgr->Proc)
+    gMgr->Stats.IncReadd();
 
   // Read the next directory entry
   if (!(d_pnt = XrdxCastor2FsUFS::ReadDir(dh)))
@@ -138,8 +137,8 @@ XrdxCastor2FsDirectory::close()
 {
   static const char* epname = "closedir";
 
-  if (XrdxCastor2FS->Proc)
-    XrdxCastor2FS->Stats.IncCmd();
+  if (gMgr->Proc)
+    gMgr->Stats.IncCmd();
  
   // Release the handle
   if (dh && XrdxCastor2FsUFS::CloseDir(dh))

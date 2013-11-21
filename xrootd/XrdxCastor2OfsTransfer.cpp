@@ -50,7 +50,7 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
   uuid_t uuid;
 
   if ( uuid_parse( val, uuid ) ) {
-    return XrdxCastor2OfsFS.Emsg( "3rdParty", error, EINVAL, 
+    return gSrv->Emsg( "3rdParty", error, EINVAL, 
                                   "open file for transfering - illegal xferuuid" );
   }
 
@@ -132,7 +132,7 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
   // Check that the registered transfer path is the same like in this open
   if ( transfer->Path != Spath ) {
     XrdTransferManager::TM()->DetachTransfer( uuidstring );
-    return XrdxCastor2OfsFS.Emsg( "3rdParty", error, EPERM,  "proceed with transfer "
+    return gSrv->Emsg( "3rdParty", error, EPERM,  "proceed with transfer "
                                   "- the registered path differs from the open path" );
   }
 
@@ -145,28 +145,28 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
       // This is a fresh transfer
       if ( !transfer->Initialize() ) {
         XrdTransferManager::TM()->DetachTransfer( uuidstring );
-        return XrdxCastor2OfsFS.Emsg( "3rdParty", error, EIO , "proceed with transfer - initialization failed" );
+        return gSrv->Emsg( "3rdParty", error, EIO , "proceed with transfer - initialization failed" );
       }
     }
 
     if ( transfer->State == XrdTransfer::kIllegal ) {
       XrdTransferManager::TM()->DetachTransfer( uuidstring );
-      return XrdxCastor2OfsFS.Emsg( "3rdParty", error, EILSEQ, "proceed with transfer - transfer is in state <illegal>" );
+      return gSrv->Emsg( "3rdParty", error, EILSEQ, "proceed with transfer - transfer is in state <illegal>" );
     }
 
     if ( transfer->State == XrdTransfer::kFinished ) {
       XrdTransferManager::TM()->DetachTransfer( uuidstring );
-      return XrdxCastor2OfsFS.Emsg( "3rdParty", error, 0, "proceed with transfer - transfer finished successfully" );
+      return gSrv->Emsg( "3rdParty", error, 0, "proceed with transfer - transfer finished successfully" );
     }
 
     if ( transfer->State == XrdTransfer::kCanceled ) {
       XrdTransferManager::TM()->DetachTransfer( uuidstring );
-      return XrdxCastor2OfsFS.Emsg( "3rdParty", error, ECANCELED, "proceed with transfer - transfer has been canceled" );
+      return gSrv->Emsg( "3rdParty", error, ECANCELED, "proceed with transfer - transfer has been canceled" );
     }
 
     if ( transfer->State == XrdTransfer::kError ) {
       XrdTransferManager::TM()->DetachTransfer( uuidstring );
-      return XrdxCastor2OfsFS.Emsg( "3rdParty", error, EIO, "proceed with transfer - transfer is in error state" );
+      return gSrv->Emsg( "3rdParty", error, EIO, "proceed with transfer - transfer is in error state" );
     }
   }
 
@@ -180,14 +180,14 @@ XrdxCastor2OfsFile::ThirdPartyTransfer( const char*         fileName,
 
     transfer->SetState( XrdTransfer::kScheduled );
 
-    if ( XrdTransferManager::TM()->ScheduledTransfers.Num() < XrdxCastor2OfsFS.ThirdPartyCopySlots ) {
+    if ( XrdTransferManager::TM()->ScheduledTransfers.Num() < gSrv->ThirdPartyCopySlots ) {
       xcastor_debug("scheduling" );
       transfer->SetState( XrdTransfer::kScheduled );
     } else {
       xcastor_debug("no scheduling - send delay");
-      // Sent a stall to the client
+      // Sent a stall tbo the client
       XrdTransferManager::TM()->DetachTransfer( uuidstring );
-      return XrdxCastor2OfsFS.Emsg( "3rdParty", error, EBUSY, "schedule transfer - all slots busy" );
+      return gSrv->Emsg( "3rdParty", error, EBUSY, "schedule transfer - all slots busy" );
     }
 
     // Wait that this transfer get's into running stage

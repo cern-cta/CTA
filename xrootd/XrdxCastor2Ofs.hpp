@@ -508,6 +508,6 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
     bool ReadFromProc( const char* entryname );
 };
 
-extern XrdxCastor2Ofs XrdxCastor2OfsFS;  ///< global instance of the Ofs subsystem
+extern XrdxCastor2Ofs* gSrv; ///< global diskserver OFS handle
 
 #endif // __XCASTOR_OFS_HH__

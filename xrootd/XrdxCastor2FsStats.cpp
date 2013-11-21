@@ -30,7 +30,7 @@
 #include "XrdOuc/XrdOucTrace.hh"
 /*-----------------------------------------------------------------------------*/
 
-extern XrdxCastor2Fs* XrdxCastor2FS; ///< defined in XrdxCastor2Fs.cpp
+extern XrdxCastor2Fs* gMgr; ///< defined in XrdxCastor2Fs.cpp
 
 //------------------------------------------------------------------------------
 // Function that starts the stats thread
@@ -466,7 +466,7 @@ void
 XrdxCastor2FsStats::Update()
 {
   if ( Proc ) {
-    XrdxCastor2FS->Stats.Lock();
+    gMgr->Stats.Lock();
     {
       XrdxCastor2ProcFile* pf = Proc->Handle( "read1" );
       pf && pf->Write( ReadRate( 1 ), 1 );
@@ -543,14 +543,14 @@ XrdxCastor2FsStats::Update()
       XrdxCastor2ProcFile* pf = Proc->Handle( "delayread" );
 
       if ( pf ) {
-        XrdxCastor2FS->xCastor2FsDelayRead  = pf->Read();
+        gMgr->xCastor2FsDelayRead  = pf->Read();
       }
     }
     {
       XrdxCastor2ProcFile* pf = Proc->Handle( "delaywrite" );
 
       if ( pf ) {
-        XrdxCastor2FS->xCastor2FsDelayWrite = pf->Read();
+        gMgr->xCastor2FsDelayWrite = pf->Read();
       }
     }
     {
@@ -577,34 +577,34 @@ XrdxCastor2FsStats::Update()
               {
                 // Conversion successful - the log level was an int
                 if ((log_level >= 0) && (log_level <= 7))
-                  XrdxCastor2FS->SetLogLevel(log_level);
+                  gMgr->SetLogLevel(log_level);
               }
             }
           }
           else
           {
             // Log level was a string
-            XrdxCastor2FS->SetLogLevel(log_level);
+            gMgr->SetLogLevel(log_level);
           }
         }
       }
     }
 
-    XrdxCastor2FS->Stats.UnLock();
+    gMgr->Stats.UnLock();
     {
       XrdxCastor2ProcFile* pf = Proc->Handle( "serverread" );
 
       if ( pf ) {
-        XrdxCastor2FS->Stats.Lock();
+        gMgr->Stats.Lock();
         // Loop over the ServerTable and write keyval pairs for each server
         int cursor = 0;
         bool first = true;
 
         do {
-          cursor = XrdxCastor2FS->Stats.ServerTable->Next( cursor );
+          cursor = gMgr->Stats.ServerTable->Next( cursor );
 
           if ( cursor >= 0 ) {
-            XrdOucString* name = XrdxCastor2FS->Stats.ServerTable->Item( cursor );
+            XrdOucString* name = gMgr->Stats.ServerTable->Item( cursor );
 
             if ( !name ) {
               cursor++;
@@ -613,7 +613,7 @@ XrdxCastor2FsStats::Update()
 
             XrdxCastor2StatULongLong* sval;
 
-            if ( ( sval = XrdxCastor2FS->Stats.ServerRead.Find( name->c_str() ) ) ) {
+            if ( ( sval = gMgr->Stats.ServerRead.Find( name->c_str() ) ) ) {
               // If we don't write in this time bin, we just stop the loop - 
               // or if there is an error writing
               if ( !pf->WriteKeyVal( name->c_str(), sval->Get(), 2, first ) )
@@ -626,7 +626,7 @@ XrdxCastor2FsStats::Update()
           }
         } while ( cursor >= 0 );
 
-        XrdxCastor2FS->Stats.UnLock();
+        gMgr->Stats.UnLock();
       }
     }
     {
@@ -634,15 +634,15 @@ XrdxCastor2FsStats::Update()
 
       if ( pf ) {
         // Loop over the ServerTable and write keyval pairs for each server
-        XrdxCastor2FS->Stats.Lock();
+        gMgr->Stats.Lock();
         int cursor = 0;
         bool first = true;
 
         do {
-          cursor = XrdxCastor2FS->Stats.ServerTable->Next( cursor );
+          cursor = gMgr->Stats.ServerTable->Next( cursor );
 
           if ( cursor >= 0 ) {
-            XrdOucString* name = XrdxCastor2FS->Stats.ServerTable->Item( cursor );
+            XrdOucString* name = gMgr->Stats.ServerTable->Item( cursor );
 
             if ( !name ) {
               cursor++;
@@ -651,7 +651,7 @@ XrdxCastor2FsStats::Update()
 
             XrdxCastor2StatULongLong* sval;
 
-            if ( ( sval = XrdxCastor2FS->Stats.ServerWrite.Find( name->c_str() ) ) ) {
+            if ( ( sval = gMgr->Stats.ServerWrite.Find( name->c_str() ) ) ) {
               // If we don't write in this time bin, we just stop the loop - 
               // or if there is an error writing
               if ( !pf->WriteKeyVal( name->c_str(), sval->Get(), 2, first ) )
@@ -664,23 +664,23 @@ XrdxCastor2FsStats::Update()
           }
         } while ( cursor >= 0 );
 
-        XrdxCastor2FS->Stats.UnLock();
+        gMgr->Stats.UnLock();
       }
     }
     {
       XrdxCastor2ProcFile* pf = Proc->Handle( "userread" );
 
       if ( pf ) {
-        XrdxCastor2FS->Stats.Lock();
+        gMgr->Stats.Lock();
         // Loop over the UserTable and write keyval pairs for each server
         int cursor = 0;
         bool first = true;
 
         do {
-          cursor = XrdxCastor2FS->Stats.UserTable->Next( cursor );
+          cursor = gMgr->Stats.UserTable->Next( cursor );
 
           if ( cursor >= 0 ) {
-            XrdOucString* name = XrdxCastor2FS->Stats.UserTable->Item( cursor );
+            XrdOucString* name = gMgr->Stats.UserTable->Item( cursor );
 
             if ( !name ) {
               cursor++;
@@ -689,7 +689,7 @@ XrdxCastor2FsStats::Update()
 
             XrdxCastor2StatULongLong* sval;
 
-            if ( ( sval = XrdxCastor2FS->Stats.UserRead.Find( name->c_str() ) ) ) {
+            if ( ( sval = gMgr->Stats.UserRead.Find( name->c_str() ) ) ) {
               // If we don't write in this time bin, we just stop the loop - 
               // or if there is an error writing
               if ( !pf->WriteKeyVal( name->c_str(), sval->Get(), 2, first ) )
@@ -702,7 +702,7 @@ XrdxCastor2FsStats::Update()
           }
         } while ( cursor >= 0 );
 
-        XrdxCastor2FS->Stats.UnLock();
+        gMgr->Stats.UnLock();
       }
     }
     {
@@ -710,15 +710,15 @@ XrdxCastor2FsStats::Update()
 
       if ( pf ) {
         // Loop over the UserTable and write keyval pairs for each serve
-        XrdxCastor2FS->Stats.Lock();
+        gMgr->Stats.Lock();
         int cursor = 0;
         bool first = true;
 
         do {
-          cursor = XrdxCastor2FS->Stats.UserTable->Next( cursor );
+          cursor = gMgr->Stats.UserTable->Next( cursor );
 
           if ( cursor >= 0 ) {
-            XrdOucString* name = XrdxCastor2FS->Stats.UserTable->Item( cursor );
+            XrdOucString* name = gMgr->Stats.UserTable->Item( cursor );
 
             if ( !name ) {
               cursor++;
@@ -727,7 +727,7 @@ XrdxCastor2FsStats::Update()
 
             XrdxCastor2StatULongLong* sval;
 
-            if ( ( sval = XrdxCastor2FS->Stats.UserWrite.Find( name->c_str() ) ) ) {
+            if ( ( sval = gMgr->Stats.UserWrite.Find( name->c_str() ) ) ) {
               // If we don't write in this time bin, we just stop the loop - 
               // or if there is an error writing
               if ( !pf->WriteKeyVal( name->c_str(), sval->Get(), 2, first ) )
@@ -740,7 +740,7 @@ XrdxCastor2FsStats::Update()
           }
         } while ( cursor >= 0 );
 
-        XrdxCastor2FS->Stats.UnLock();
+        gMgr->Stats.UnLock();
       }
     }
   }
