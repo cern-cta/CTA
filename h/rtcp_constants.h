@@ -117,17 +117,6 @@
      ((X)->tp_err_action & (IGNOREEOI|NOTRLCHK)) == (X)->tp_err_action) )
 
 /*
- * Format conversion flags (convert field in rtcpFileRequest_t)
- */
-#define EBCCONV          (0x1)   /* ebcdic <--> ascii conversion */
-#define FIXVAR           (0x2)   /* fixed records <--> variable records */
-#define ASCCONV          (0x4)   /* no conversion */
-#define NOF77CW          (0x8)   /* No F77 control words */
-#define VALID_CONVERT(X) ( (((X)->convert & (ASCCONV | EBCCONV | NOF77CW)) && \
-    (((X)->convert & (ASCCONV | EBCCONV)) != (ASCCONV | EBCCONV))) && \
-    (((X)->convert & (FIXVAR | NOF77CW)) != (FIXVAR  | NOF77CW)) )
-
-/*
  * Concatenate tape file to disk file. The *_TO_EOD constants reflect
  * that there was a trailing "-" if rtcopy client was the tpread command.
  */

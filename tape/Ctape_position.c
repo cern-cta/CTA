@@ -26,7 +26,6 @@ int Ctape_position(char *path,
                    int filstat,
                    char *fid,
                    char *fsid,
-                   char *recfm,
                    int blksize,
                    int lrecl,
                    int retentd,
@@ -126,11 +125,6 @@ int Ctape_position(char *path,
 		strcpy (actual_fsid, fsid);
 		UPPER (actual_fsid);
 		marshall_STRING (sbp, actual_fsid);
-	} else {
-		marshall_STRING (sbp, "");
-	}
-	if (recfm) {
-		marshall_STRING (sbp, recfm);
 	} else {
 		marshall_STRING (sbp, "");
 	}

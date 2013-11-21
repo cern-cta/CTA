@@ -23,8 +23,7 @@ int Ctape_info(char *path,
                char *drive,
                char *fid,
                int *fseq,
-               int *lrecl,
-               char *recfm)
+               int *lrecl)
 {
 	int c, n;
 	int errflg = 0;
@@ -118,9 +117,6 @@ int Ctape_info(char *path,
 		unmarshall_LONG (rbp, n);
 		if (lrecl)
 			*lrecl = n;
-		unmarshall_STRING (rbp, tmpbuf);
-		if (recfm)
-			strcpy (recfm, tmpbuf);
 	}
 	return (c);
 }

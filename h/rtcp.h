@@ -62,7 +62,6 @@ typedef struct rtcpCastorSegmentAttributes {
 typedef struct rtcpFileRequest {
     char file_path[CA_MAXPATHLEN+1];   /* Disk file path */
     char tape_path[CA_MAXPATHLEN+1];   /* Tape device file */
-    char recfm[CA_MAXRECFMLEN+1];
     char fid[CA_MAXFIDLEN+1];          /* Tape file ID */
     char ifce[5];                      /* Network interface name */
     char stageID[CA_MAXSTGRIDLEN+1];   /* Stage request ID */
@@ -93,7 +92,6 @@ typedef struct rtcpFileRequest {
      */
     int rtcp_err_action;               /* SKIPBAD or KEEPFILE */
     int tp_err_action;                 /* NOTRLCHK and IGNOREEOI */
-    int convert;                       /* EBCCONV, FIXVAR */
     int check_fid;                     /* CHECK_FILE, NEW_FILE */
     int concat;                        /* CONCAT, CONCAT_TO_EOD,
                                         * NOCONCAT or NOCONCAT_TO_EOD */
@@ -158,10 +156,10 @@ typedef struct rtcpFileRequest {
 
 } rtcpFileRequest_t;
 
-#define RTCP_FILEREQLEN(X) (24*LONGSIZE + 8*QUADSIZE + 4 + \
+#define RTCP_FILEREQLEN(X) (23*LONGSIZE + 8*QUADSIZE + 4 + \
         strlen(X->file_path) + strlen(X->tape_path) + \
-        strlen(X->recfm) + strlen(X->fid) + strlen(X->ifce) + \
-        strlen(X->stageID) + 6)
+        strlen(X->fid) + strlen(X->ifce) + \
+        strlen(X->stageID) + 5)
 
 /*
  * Sanity check of that all strings are terminated
@@ -169,7 +167,6 @@ typedef struct rtcpFileRequest {
 #define RTCP_FILEREQ_OK(X) ( \
         memchr((X)->file_path,'\0',sizeof((X)->file_path)) && \
         memchr((X)->tape_path,'\0',sizeof((X)->tape_path)) && \
-        memchr((X)->recfm,'\0',sizeof((X)->recfm)) && \
         memchr((X)->fid,'\0',sizeof((X)->fid)) && \
         memchr((X)->ifce,'\0',sizeof((X)->ifce)) && \
         memchr((X)->stageID,'\0',sizeof((X)->stageID)) && \
@@ -232,14 +229,13 @@ typedef struct rtcpTapeRequest {
 typedef struct rtcpDumpTapeRequest {
     int maxbyte;
     int blocksize;
-    int convert;
     int tp_err_action;
     int startfile;
     int maxfile;
     int fromblock;
     int toblock;
 } rtcpDumpTapeRequest_t;
-#define RTCP_DUMPTAPEREQLEN (8*LONGSIZE)
+#define RTCP_DUMPTAPEREQLEN (7*LONGSIZE)
 
 /*
  * Circular lists of tape and file requests. (Client only)
@@ -290,10 +286,6 @@ typedef struct file_list {
      */
     u_signed64 diskbytes_sofar;
     u_signed64 tapebytes_sofar;
-    /*
-     * Disk file FORTRAN UNIT number (recfm==U only)
-     */
-    int FortranUnit;
     /*
      * Checksum routine to be used for this tape segment
      */
