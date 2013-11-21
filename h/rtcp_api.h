@@ -88,31 +88,11 @@ EXTERN_C int rtcp_RetvalSHIFT (
 EXTERN_C void rtcpc_FreeReqLists (
 				  tape_list_t **
 				  );
-EXTERN_C int rtcp_NewTapeList (
-			       tape_list_t **,
-			       tape_list_t **,
-			       int
-			       );
 EXTERN_C int rtcp_NewFileList (
 			       tape_list_t **,
 			       file_list_t **,
 			       int
 			       );
-EXTERN_C int rtcpc_InitDumpTapeReq (
-				    rtcpDumpTapeRequest_t *
-				    );
-EXTERN_C int rtcpc_BuildDumpTapeReq (
-				     tape_list_t **,
-				     int,
-				     char *[]
-
-				     );
-EXTERN_C int dumpTapeReq (
-			  tape_list_t *
-			  );
-EXTERN_C int dumpFileReq (
-			  file_list_t *
-			  );
 EXTERN_C int rtcpc_CheckRetry (
 			       tape_list_t *
 			       );
