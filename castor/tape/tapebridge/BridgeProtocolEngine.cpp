@@ -1103,7 +1103,6 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
       firstFileToMigrate->path().c_str(),
       firstFileToMigrate->fileSize(),
       "",
-      RECORDFORMAT,
       migrationTapeFileId,
       RTCOPYCONSERVATIVEUMASK,
       (int32_t)firstFileToMigrate->positionCommandCode(),
@@ -1198,7 +1197,6 @@ void castor::tape::tapebridge::BridgeProtocolEngine::startDumpSession()
   legacymsg::RtcpDumpTapeRqstMsgBody request;
   request.maxBytes      = dumpParameters->maxBytes();
   request.blockSize     = dumpParameters->blockSize();
-  request.convert       = dumpParameters->converter();
   request.tapeErrAction = dumpParameters->errAction();
   request.startFile     = dumpParameters->startFile();
   request.maxFiles      = dumpParameters->maxFile();
@@ -1909,7 +1907,6 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToRecallToRtcpd(
       fileToRecall.path.c_str(),
       fileSize,
       rtcpdReqTapePath.c_str(),
-      RECORDFORMAT,
       tapeFileId,
       (uint32_t)fileToRecall.umask,
       fileToRecall.positionMethod,
@@ -3051,7 +3048,6 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToMigrateToRtcpd(
       fileToMigrate.path.c_str(),
       fileToMigrate.fileSize,
       "",
-      RECORDFORMAT,
       migrationTapeFileId,
       RTCOPYCONSERVATIVEUMASK,
       fileToMigrate.positionMethod,

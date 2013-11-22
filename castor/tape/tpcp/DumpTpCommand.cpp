@@ -483,7 +483,7 @@ bool castor::tape::tpcp::DumpTpCommand::handleDumpParametersRequest(
   dumpParameters.setAggregatorTransactionId(msg->aggregatorTransactionId());
   dumpParameters.setMaxBytes(m_cmdLine.dumpTapeMaxBytes);
   dumpParameters.setBlockSize(m_cmdLine.dumpTapeBlockSize);
-  dumpParameters.setConverter(ASCCONV);
+  dumpParameters.setConverter(0); // dumpParameters.converter is no longer used
   dumpParameters.setErrAction(m_cmdLine.dumpTapeErrAction);
   dumpParameters.setStartFile(m_cmdLine.dumpTapeFromFile);
   dumpParameters.setMaxFile(m_cmdLine.dumpTapeMaxFiles);
