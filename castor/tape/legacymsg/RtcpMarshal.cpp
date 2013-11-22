@@ -372,7 +372,7 @@ size_t castor::tape::legacymsg::marshal(char *dst,
     23 * sizeof(uint32_t) + // Number of 32-bit integers before segAttr
     4                     + // 4 = blockId[4]
     8 * sizeof(uint64_t)  + // Number of 64-bit integers before segAttr
-    6                     + // Number of string terminators before segAttr
+    5                     + // Number of string terminators before segAttr
 
     // segAttr
     strlen(src.rqst.segAttr.nameServerHostName) +
