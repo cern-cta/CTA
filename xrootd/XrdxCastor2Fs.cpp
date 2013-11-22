@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * @uathor Andreas Peters <apeters@cern.ch>
+ * @author Elvin Sindrilaru <esindril@cern.ch>
  *
  ******************************************************************************/
 
@@ -958,7 +959,7 @@ XrdxCastor2Fs::NsMapping(const std::string& input)
 
   output = value;
   output += input.substr(prefix.length());
-  xcastor_static_debug("input=%s, output=%s", input.c_str(), output.c_str());
+  xcastor_debug("input=%s, output=%s", input.c_str(), output.c_str());
   return output;
 }
 
@@ -982,7 +983,7 @@ XrdxCastor2Fs::chmod(const char*         path,
   AUTHORIZE(client, &chmod_Env, AOP_Chmod, "chmod", path, error)
   std::string map_path = NsMapping(path);
 
-  if (map_path == "")
+  if (map_path.empty())
   {
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
@@ -1021,7 +1022,7 @@ XrdxCastor2Fs::exists(const char*          path,
   std::string map_path = NsMapping(path);
   RoleMap(client, info, mappedclient, tident);
 
-  if (map_path == "")
+  if (map_path.empty())
   {
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
@@ -1089,7 +1090,7 @@ XrdxCastor2Fs::mkdir(const char*         path,
   std::string map_path = NsMapping(path);
   RoleMap(client, info, mappedclient, tident);
 
-  if (map_path == "")
+  if (map_path.empty())
   {
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
@@ -1273,7 +1274,7 @@ XrdxCastor2Fs::stageprepare(const char*         path,
   xcastor::Timing preparetiming("stageprepare");
   std::string map_path = NsMapping(path);
 
-  if (map_path == "")
+  if (map_path.empty())
   {
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
@@ -1468,7 +1469,7 @@ XrdxCastor2Fs::rem(const char*         path,
   xcastor_debug("path=%s, map_path=%s", path, map_path.c_str());
   RoleMap(client, info, mappedclient, tident);
 
-  if (map_path == "")
+  if (map_path.empty())
   {
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
@@ -1563,7 +1564,7 @@ XrdxCastor2Fs::remdir(const char*         path,
   RoleMap(client, info, mappedclient, tident);
   std::string map_path = NsMapping(path);
 
-  if (map_path == "")
+  if (map_path.empty())
   {
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
@@ -1706,7 +1707,7 @@ XrdxCastor2Fs::stat(const char*         path,
   AUTHORIZE(client, &Open_Env, AOP_Stat, "stat", path, error)
   std::string map_path = NsMapping(path);
 
-  if (map_path == "")
+  if (map_path.empty())
   {
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
@@ -1831,7 +1832,7 @@ XrdxCastor2Fs::lstat(const char*         path,
   AUTHORIZE(client, &lstat_Env, AOP_Stat, "lstat", path, error)
   std::string map_path = NsMapping(path);
 
-  if (map_path == "")
+  if (map_path.empty())
   {
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
@@ -1921,7 +1922,7 @@ XrdxCastor2Fs::readlink(const char*         path,
   AUTHORIZE(client, &rl_Env, AOP_Stat, "readlink", path, error)
   std::string map_path = NsMapping(path);
 
-  if (map_path == "")
+  if (map_path.empty())
   {
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
@@ -2007,7 +2008,7 @@ XrdxCastor2Fs::access(const char*         path,
   AUTHORIZE(client, &access_Env, AOP_Stat, "access", path, error)
  std::string map_path = NsMapping(path);
 
-  if (map_path == "")
+  if (map_path.empty())
   {
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
@@ -2035,7 +2036,7 @@ int XrdxCastor2Fs::utimes(const char*         path,
   AUTHORIZE(client, &utimes_Env, AOP_Update, "set utimes", path, error)
   std::string map_path = NsMapping(path);
 
-  if (map_path == "")
+  if (map_path.empty())
   {
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
