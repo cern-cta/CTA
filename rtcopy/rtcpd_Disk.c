@@ -45,7 +45,6 @@
 #include <serrno.h>
 #include <u64subr.h>
 #include "tplogger_api.h"
-#include "rfio_xy.h"
 
 #define DK_STATUS(X) (diskIOstatus->current_activity = (X))
 #define DK_SIZE(X)   (diskIOstatus->nbbytes = (X))
