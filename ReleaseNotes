@@ -13,6 +13,7 @@
 
   [Bug]
 
+     #93295  Binding error in call to 'INSERTSTAGEFILEQUERYREQUEST' (ORA-06550, PLS-00306)
      #103117 diskserver with no filesystem make strange output in printdiskserver
      #103118 fail immediately on WARNINGS in draindiskserver
      #103119 in transfermanager synchronization with the DB, do not cancel too much in one go
@@ -51,6 +52,7 @@
 
     #92559  rfiod does not close
     #103021 Xrootd castor plugin around xcastor::XrdxCastorClient::SendAsyncRequest
+    #103001 XRootD plugin authorization deadlock
 
   CASTOR Tape
   -----------
