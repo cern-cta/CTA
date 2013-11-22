@@ -1190,7 +1190,6 @@ static void procinforeq(char *req_data,
 		if (tunp->filp->Qfirst) cfseq -= tunp->filp->Qfirst - 1;
                 marshall_LONG (sbp, cfseq);
                 marshall_LONG (sbp, tunp->filp->lrecl);
-                marshall_STRING (sbp, tunp->filp->recfm);
 		sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
 		goto reply;
 	}
@@ -1693,7 +1692,6 @@ static void procposreq(char *req_data,
 	int Qfirst;
 	int Qlast;
 	char *rbp;
-	char *recfm;
 	int retentd;
 	struct tprrt *rrtp;
 	struct tptab *tunp;
@@ -1736,7 +1734,6 @@ static void procposreq(char *req_data,
 	unmarshall_WORD (rbp, filstat);
 	unmarshall_STRING (rbp, fid);
 	unmarshall_STRING (rbp, fsid);
-	unmarshall_STRING (rbp, recfm);
 	unmarshall_LONG (rbp, blksize);
 	unmarshall_LONG (rbp, lrecl);
 	unmarshall_WORD (rbp, retentd);
@@ -1829,15 +1826,6 @@ static void procposreq(char *req_data,
                                     "func", TL_MSG_PARAM_STR, func );
 		errflg++;
 	}
-	if (*recfm && strcmp (recfm, "F") && strcmp (recfm, "FB") &&
-	    strcmp (recfm, "FBS")  && strcmp (recfm, "FS") &&
-	    strcmp (recfm, "U")) {
-		usrmsg (func, TP006, "record format");
-                tl_tpdaemon.tl_log( &tl_tpdaemon, 6, 2,
-                                    "func",    TL_MSG_PARAM_STR, func,
-                                    "Message", TL_MSG_PARAM_STR, "record format" );
-		errflg++;
-	}
 	if (flags & IGNOREEOI) {
 		usrmsg (func, "TP002 - IGNOREEOI not supported");
 		tl_tpdaemon.tl_log( &tl_tpdaemon, 2, 2,
@@ -1864,7 +1852,6 @@ static void procposreq(char *req_data,
 	filp->lrecl = lrecl;
 	filp->Qfirst = Qfirst;
 	filp->Qlast = Qlast;
-	strcpy (filp->recfm, recfm);
 	filp->retentd = retentd;
 	filp->flags = flags;
 
@@ -1928,7 +1915,7 @@ static void procposreq(char *req_data,
 			tunp->dgn, tunp->devtype, "tape", arg_mode, arg_lbl,
 			tunp->vsn, arg_blockid, arg_cfseq, filp->fid, arg_filstat,
 			arg_fsec, arg_fseq, arg_method, filp->path, arg_Qfirst,
-			arg_Qlast, arg_retentd, filp->recfm, arg_blksize, arg_lrecl,
+			arg_Qlast, arg_retentd, arg_blksize, arg_lrecl,
 			arg_den, arg_flags, fsid, domainname, NULL);
 		tplogit (func, "TP002 - posovl : execlp error : %s\n",
 		    strerror(errno));
@@ -2463,7 +2450,6 @@ static void procufilreq(char *req_data,
 	int jid;
 	int lrecl;
 	char *rbp;
-	char *recfm;
 	struct tptab *tunp;
 	uid_t uid;
 	int ux;
@@ -2488,7 +2474,6 @@ static void procufilreq(char *req_data,
 	unmarshall_LONG (rbp, cfseq);
 	unmarshall_STRING (rbp, fid);
 	unmarshall_LONG (rbp, lrecl);
-        unmarshall_STRING (rbp, recfm);
 
 	tunp = tptabp + ux;
 	tunp->filp->blksize = blksize;
@@ -2496,7 +2481,6 @@ static void procufilreq(char *req_data,
 	tunp->filp->cfseq = cfseq;
 	strcpy (tunp->filp->fid, fid);
 	tunp->filp->lrecl = lrecl;
-	strcpy (tunp->filp->recfm, recfm);
 	close (rpfd);
 }
 

@@ -78,7 +78,7 @@ EXTERN_C int Ctape_status (char *, struct drv_status *, int);
 EXTERN_C int send2tpd (char *, char *, int, char *, int);
 
 /* tape/buildhdrlbl.c  */
-EXTERN_C int buildhdrlbl   (char[], char[], char*, char*, int, int, int, char*, int, int, int, int);
+EXTERN_C int buildhdrlbl   (char[], char[], char*, char*, int, int, int, const char, int, int, int, int);
 
 /* tape/builduhl.c     */
 EXTERN_C int builduhl      (char[], int, int, int, char*, char*, char*, char*);
