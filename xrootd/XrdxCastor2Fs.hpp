@@ -901,12 +901,6 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
 
 
     //--------------------------------------------------------------------------
-    //! Reload grid map file
-    //--------------------------------------------------------------------------
-    void ReloadGridMapFile();
-
-
-    //--------------------------------------------------------------------------
     //! Get delay for the current operation set for the entire instance by the 
     //! admin. The delay value is read from the xcastor2.proc value specified 
     //! in the /etc/xrd.cf file. 
@@ -946,7 +940,6 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     static  XrdOucHash<XrdOucString>* stringstore;
     static  XrdOucHash<XrdSecEntity>* secentitystore;
     static  XrdOucHash<struct passwd>* passwdstore;
-    static  XrdOucHash<XrdOucString>*  gridmapstore;
     static  XrdOucHash<XrdxCastor2FsGroupInfo>* groupinfocache;
 
     static xcastor::XrdxCastorClient* msCastorClient; ///< obj dealing with async requests/responses
@@ -955,14 +948,10 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
                                 ///< up on a disk server in seconds before the token expires
 
     XrdxCastor2ServerAcc* mServerAcc;///< authorization module for token encryption/decryption
-    XrdSysMutex encodeLock;          ///<
-    XrdSysMutex locatorLock;         ///< 
     XrdSysMutex PermissionMutex;     ///< protecting the permission hash
     XrdSysMutex StoreMutex;          ///< protecting the string+pwd store hash
     XrdSysMutex MapMutex;            ///< protecting all ROLEMAP, GETID etc. functions
     XrdSysMutex SecEntityMutex;      ///< protecting the sec entity hash
-    XrdSysMutex GridMapMutex;        ///< protecting the gridmap store hash
-    XrdSysMutex VomsMapMutex;        ///< protecting the vomsmap store hash
     XrdOucString xCastor2FsName;     ///< mount point of the catalog fs
     XrdOucString xCastor2FsTargetPort; ///< xrootd port where redirections go on the OSTs -default is 1094
 

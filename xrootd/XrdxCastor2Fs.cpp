@@ -47,7 +47,6 @@
 #include "XrdxCastor2FsSecurity.hpp"
 #include "XrdxCastorClient.hpp"
 /*-----------------------------------------------------------------------------*/
-
 #include "Cthread_api.h"
 
 #ifdef AIX
@@ -68,7 +67,6 @@
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::roletable;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::stringstore;
 XrdOucHash<XrdSecEntity>* XrdxCastor2Fs::secentitystore;
-XrdOucHash<XrdOucString>* XrdxCastor2Fs::gridmapstore;
 XrdOucHash<struct passwd>* XrdxCastor2Fs::passwdstore;
 XrdOucHash<XrdxCastor2FsGroupInfo>*  XrdxCastor2Fs::groupinfocache;
 XrdOucHash<XrdOucString>* XrdxCastor2Stager::msDelayStore;
@@ -246,6 +244,7 @@ XrdxCastor2Fs::SetAcl(const char* path, XrdSecEntity client, bool isLink)
   struct passwd* pw = NULL;
   XrdxCastor2FsGroupInfo* ginfo = NULL;
 
+  // TODO: REPACE ALL THIS BY THE GETID FUNCTION
   if (client.name)
   {
     if ((ginfo = groupinfocache->Find(client.name)))
@@ -292,16 +291,12 @@ XrdxCastor2Fs::SetAcl(const char* path, XrdSecEntity client, bool isLink)
   if (isLink)
   {
     if (XrdxCastor2FsUFS::Lchown(path , uid, gid))
-    {
       xcastor_debug("file=%s, error:chown failed");
-    }
   }
   else
   {
     if (XrdxCastor2FsUFS::Chown(path, uid, gid))
-    {
       xcastor_debug("file=%s, error:chown failed");
-    }
   }
 
   MapMutex.UnLock(); // <--
@@ -328,7 +323,6 @@ XrdxCastor2Fs::GetAllGroups(const char*   name,
   }
 
   struct group* gr;
-
   struct passwd* passwdinfo = NULL;
 
   if (!(passwdinfo = XrdxCastor2Fs::passwdstore->Find(name)))
@@ -389,9 +383,9 @@ XrdxCastor2Fs::GetAllGroups(const char*   name,
 //------------------------------------------------------------------------------
 void
 XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
-                       const char*         env,
-                       XrdSecEntity&       mappedClient,
-                       const char*         tident)
+                       const char* env,
+                       XrdSecEntity& mappedClient,
+                       const char* tident)
 {
   XrdSecEntity* entity = NULL;
   int len_env;
@@ -467,45 +461,6 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
         mappedClient.role = STRINGSTORE(defaultgroup.c_str());
         break;
       }
-
-      if ((client->prot) && ((!strcmp(client->prot, "gsi")) ||
-                             (!strcmp(client->prot, "ssl"))))
-      {
-        XrdOucString certsubject = client->name;
-
-        if ((MapCernCertificates) &&
-            (certsubject.beginswith("/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN=")))
-        {
-          certsubject.erasefromstart(strlen("/DC=ch/DC=cern/OU=Organic Units/OU=Users/CN="));
-          int pos = certsubject.find('/');
-
-          if (pos != STR_NPOS)
-            certsubject.erase(pos);
-
-          mappedClient.name = STRINGSTORE(certsubject.c_str());
-        }
-
-        certsubject.replace("/CN=proxy", "");
-        // Leave only the first CN=, cut the rest
-        int pos = certsubject.find("CN=");
-        int pos2 = certsubject.find("/", pos);
-        XrdOucString* gridmaprole;
-
-        if (pos2 > 0) certsubject.erase(pos2);
-
-        if (GridMapFile.length())
-          ReloadGridMapFile();
-
-        GridMapMutex.Lock();    // -->
-
-        if ((gridmaprole = gridmapstore->Find(certsubject.c_str())))
-        {
-          mappedClient.name = STRINGSTORE(gridmaprole->c_str());
-          mappedClient.role = 0;
-        }
-
-        GridMapMutex.UnLock();  // <--
-      }
     }
 
     if (client && mappedClient.name)
@@ -533,6 +488,7 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
                     allgroups.c_str(), match.c_str(), role);
 
       if (hisroles)
+      {
         if ((hisroles->find(match.c_str())) != STR_NPOS)
         {
           mappedClient.role = STRINGSTORE(role);
@@ -551,6 +507,7 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
               mappedClient.role = STRINGSTORE(defaultgroup.c_str());
           }
         }
+      }
       else
       {
         if ((allgroups.find(match.c_str())) != STR_NPOS)
@@ -563,45 +520,41 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
         mappedClient.role = STRINGSTORE(client->grps);
     }
 
+    // Try tident mapping
+    XrdOucString reducedTident, user, stident;
+    reducedTident = "";
+    user = "";
+    stident = tident;
+    int dotpos = stident.find(".");
+    reducedTident.assign(tident, 0, dotpos - 1);
+    reducedTident += "@";
+    int adpos  = stident.find("@");
+    user.assign(tident, adpos + 1);
+    reducedTident += user;
+    XrdOucString* hisroles = roletable->Find(reducedTident.c_str());
+    XrdOucString match = ":";
+    match += role;
+    match += ":";
+    
+    if (hisroles)
     {
-      // Try tident mapping
-      XrdOucString reducedTident, user, stident;
-      reducedTident = "";
-      user = "";
-      stident = tident;
-      int dotpos = stident.find(".");
-      reducedTident.assign(tident, 0, dotpos - 1);
-      reducedTident += "@";
-      int adpos  = stident.find("@");
-      user.assign(tident, adpos + 1);
-      reducedTident += user;
-      XrdOucString* hisroles = roletable->Find(reducedTident.c_str());
-      XrdOucString match = ":";
-      match += role;
-      match += ":";
-
-      if (hisroles)
-        if ((hisroles->find(match.c_str())) != STR_NPOS)
+      if ((hisroles->find(match.c_str())) != STR_NPOS)
+      {
+        mappedClient.role = STRINGSTORE(role);
+        mappedClient.name = STRINGSTORE(role);
+      }
+      else
+      {
+        if (hisroles->beginswith("static:"))
         {
-          mappedClient.role = STRINGSTORE(role);
-          mappedClient.name = STRINGSTORE(role);
+          mappedClient.role = STRINGSTORE(hisroles->c_str() + 7);
+          mappedClient.name = STRINGSTORE(hisroles->c_str() + 7);
         }
-        else
-        {
-          if (hisroles->beginswith("static:"))
-          {
-            if (mappedClient.role)(mappedClient.role);
-
-            mappedClient.role = STRINGSTORE(hisroles->c_str() + 7);
-            mappedClient.name = STRINGSTORE(hisroles->c_str() + 7);
-          }
-        }
+      }
     }
-
+        
     if (mappedClient.role && (!strcmp(mappedClient.role, "root")))
-    {
       mappedClient.name = STRINGSTORE("root");
-    }
     
     break;
   }
@@ -630,85 +583,6 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
   XrdxCastor2FsUFS::SetId(_client_uid, _client_gid);
   return;
 }
-
-
-//------------------------------------------------------------------------------
-// Reload grid map file
-//------------------------------------------------------------------------------
-void
-XrdxCastor2Fs::ReloadGridMapFile()
-{
-  xcastor_debug("reload grid map file");
-  static time_t GridMapMtime = 0;
-  static time_t GridMapCheckTime = 0;
-  time_t now = time(NULL);
-
-  // Load it for the first time or again
-  if ((!GridMapCheckTime) ||
-      (now > GridMapCheckTime + XCASTOR2FS_GRIDMAPCHECKINTERVAL))
-  {
-    struct stat buf;
-
-    if (!::stat(GridMapFile.c_str(), &buf))
-    {
-      if (buf.st_mtime != GridMapMtime)
-      {
-        GridMapMutex.Lock();
-        // Store the last modification time
-        GridMapMtime = buf.st_mtime;
-        // Store the current time of the check
-        GridMapCheckTime = now;
-        // Dump the current table
-        gridmapstore->Purge();
-        // Open the gridmap file
-        FILE* mapin = fopen(GridMapFile.c_str(), "r");
-
-        if (!mapin)
-        {
-          // Error no grid map possible
-          xcastor_debug("Unable to open gridmapfile:%s - no mapping!", GridMapFile.c_str());
-        }
-        else
-        {
-          char userdnin[4096];
-          char usernameout[4096];
-          int nitems;
-
-          // Parse it
-          while ((nitems = fscanf(mapin, "\"%[^\"]\" %s\n", userdnin, usernameout)) == 2)
-          {
-            XrdOucString dn = userdnin;
-            dn.replace("\"", "");
-            // Leave only the first CN=, cut the rest
-            int pos = dn.find("CN=");
-            int pos2 = dn.find("/", pos);
-
-            if (pos2 > 0) dn.erase(pos2);
-
-            if (!gridmapstore->Find(dn.c_str()))
-            {
-              gridmapstore->Add(dn.c_str(), new XrdOucString(usernameout));
-              xcastor_debug("GridMapFile mapping added: %s => %s", dn.c_str(), usernameout);
-            }
-          }
-
-          fclose(mapin);
-        }
-
-        GridMapMutex.UnLock();
-      }
-      else
-      {
-        // The file didn't change, we don't do anything
-      }
-    }
-    else
-    {
-      xcastor_debug("Unbale to stat gridmapfile:%s - no mapping!", GridMapFile.c_str());
-    }
-  }
-}
-
 
 
 //------------------------------------------------------------------------------
@@ -873,7 +747,6 @@ XrdxCastor2Fs::Init()
   roletable = new XrdOucHash<XrdOucString> ();
   stringstore = new XrdOucHash<XrdOucString> ();
   secentitystore = new XrdOucHash<XrdSecEntity> ();
-  gridmapstore = new XrdOucHash<XrdOucString> ();
   passwdstore = new XrdOucHash<struct passwd> ();
   groupinfocache   = new XrdOucHash<XrdxCastor2FsGroupInfo> ();
   XrdxCastor2Stager::msDelayStore = new XrdOucHash<XrdOucString> ();

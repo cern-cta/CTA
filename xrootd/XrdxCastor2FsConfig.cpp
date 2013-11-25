@@ -393,34 +393,6 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         }
       }
 
-      if (!strcmp("mapcerncertificates", var))
-      {
-        if ((!(val = config_stream.GetWord())) || (strcmp("true", val) && strcmp("false", val) && strcmp("1", val) && strcmp("0", val)))
-        {
-          Eroute.Emsg("Config", "argument 2 for mapcerncertificates illegal or missing. Must be <true>,<false>,<1> or <0>!");
-          NoGo = 1;
-        }
-        else
-        {
-          if ((!strcmp("true", val) || (!strcmp("1", val))))
-            MapCernCertificates = true;
-        }
-      }
-
-      if (!strcmp("gridmapfile", var))
-      {
-        if ((!(val = config_stream.GetWord())) || (::access(val, R_OK)))
-        {
-          Eroute.Emsg("Config", "I cannot access your specified gridmap file!");
-          NoGo = 1;
-        }
-        else
-        {
-          GridMapFile = val;
-          Eroute.Say("=====> xcastor2.gridmapfile : ", val);
-        }
-      }
-
       // Get stager map configuration
       if (!strcmp("stagermap", var))
       {

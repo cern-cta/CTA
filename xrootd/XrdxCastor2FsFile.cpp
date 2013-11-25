@@ -105,6 +105,7 @@ XrdxCastor2FsFile::open(const char*         path,
   }
 
   xcastor_debug("open_mode=%x, fn=%s, tident=%s", Mode, map_path.c_str(), tident);
+  xcastor_debug("client->role=%s, client->tident=%s", client->role, client->tident);
 
   // Check if user is coming back for a response after a stall
   int aop = AOP_Read;
