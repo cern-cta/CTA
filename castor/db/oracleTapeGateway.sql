@@ -455,6 +455,7 @@ CREATE OR REPLACE FUNCTION checkRecallInNS(inCfId IN INTEGER,
   varNSSize INTEGER;
   varNSCsumtype VARCHAR2(2048);
   varNSCsumvalue VARCHAR2(2048);
+  varOpenMode CHAR(1);
 BEGIN
   -- retrieve data from the namespace: note that if stagerTime is (still) NULL,
   -- we're still in compatibility mode and we resolve to using mtime.
@@ -463,6 +464,12 @@ BEGIN
     INTO varNSOpenTime, varNSCsumtype, varNSCsumvalue, varNSSize
     FROM Cns_File_Metadata@RemoteNS
    WHERE fileid = inFileId;
+  -- check open mode: in compatibility mode we still have only seconds precision,
+  -- hence the NS open time has to be truncated prior to comparing it with our time.
+  varOpenMode := getConfigOption@RemoteNS('stager', 'openmode', NULL);
+  IF varOpenMode = 'C' THEN
+    varNSOpenTime := TRUNC(varNSOpenTime);
+  END IF;
   -- was the file overwritten in the meantime ?
   IF varNSOpenTime > inLastOpenTime THEN
     -- yes ! reset it and thus restart the recall from scratch
@@ -644,10 +651,14 @@ BEGIN
    WHERE status = tconst.MIGRATIONJOB_WAITINGONRECALL
      AND castorFile = varCfId;
   varNbMigrationsStarted := SQL%ROWCOUNT;
-  -- in case there are migrations, update CastorFile's tapeStatus to NOTONTAPE
-  IF varNbMigrationsStarted > 0 THEN
-    UPDATE CastorFile SET tapeStatus = dconst.CASTORFILE_NOTONTAPE WHERE id = varCfId;
-  END IF;
+  -- in case there are migrations, update CastorFile's tapeStatus to NOTONTAPE, otherwise it is ONTAPE
+  UPDATE CastorFile
+     SET tapeStatus = CASE varNbMigrationsStarted
+                        WHEN 0
+                        THEN dconst.CASTORFILE_ONTAPE
+                        ELSE dconst.CASTORFILE_NOTONTAPE
+                      END
+   WHERE id = varCfId;
 
   -- Finally deal with user requests
   UPDATE SubRequest
