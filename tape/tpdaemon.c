@@ -1190,6 +1190,7 @@ static void procinforeq(char *req_data,
 		if (tunp->filp->Qfirst) cfseq -= tunp->filp->Qfirst - 1;
                 marshall_LONG (sbp, cfseq);
                 marshall_LONG (sbp, tunp->filp->lrecl);
+                marshall_STRING (sbp, ""); /* recfm is no longer used */
 		sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
 		goto reply;
 	}
@@ -1734,6 +1735,11 @@ static void procposreq(char *req_data,
 	unmarshall_WORD (rbp, filstat);
 	unmarshall_STRING (rbp, fid);
 	unmarshall_STRING (rbp, fsid);
+	{
+		/* recfm is no longer used */
+		char *dummyRecfm = NULL;
+		unmarshall_STRING (rbp, dummyRecfm);
+	}
 	unmarshall_LONG (rbp, blksize);
 	unmarshall_LONG (rbp, lrecl);
 	unmarshall_WORD (rbp, retentd);
@@ -2474,6 +2480,11 @@ static void procufilreq(char *req_data,
 	unmarshall_LONG (rbp, cfseq);
 	unmarshall_STRING (rbp, fid);
 	unmarshall_LONG (rbp, lrecl);
+	{
+		/* recfm is no longer used */
+		char *dummyRecfm = NULL;
+		unmarshall_STRING (rbp, dummyRecfm);
+	}
 
 	tunp = tptabp + ux;
 	tunp->filp->blksize = blksize;

@@ -129,7 +129,7 @@
 #define	TPKILL	8	/* mount killed by user */
 #define	FREEDRV	9	/* free drive */
 #define RSLT	11	/* switch to new drive */
-#define UPDFIL	12	/* update blksize, cfseq, fid, lrecl in tpfil */
+#define UPDFIL	12	/* update blksize, cfseq, fid, lrecl, recfm in tpfil */
 #define TPINFO	13	/* get info for a given mounted tape */
 #define TPPOS	14	/* position tape and check HDR1/HDR2 */
 #define DRVINFO	15	/* get info for a given drive */

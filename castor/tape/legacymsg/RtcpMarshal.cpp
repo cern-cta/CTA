@@ -366,13 +366,14 @@ size_t castor::tape::legacymsg::marshal(char *dst,
     // Fields before segAttr
     strlen(src.rqst.filePath)  +
     strlen(src.rqst.tapePath)  +
+    strlen(src.rqst.recfm_noLongerUsed) +
     strlen(src.rqst.fid)       +
     strlen(src.rqst.ifce)      +
     strlen(src.rqst.stageId)   +
-    23 * sizeof(uint32_t) + // Number of 32-bit integers before segAttr
+    24 * sizeof(uint32_t) + // Number of 32-bit integers before segAttr
     4                     + // 4 = blockId[4]
     8 * sizeof(uint64_t)  + // Number of 64-bit integers before segAttr
-    5                     + // Number of string terminators before segAttr
+    6                     + // Number of string terminators before segAttr
 
     // segAttr
     strlen(src.rqst.segAttr.nameServerHostName) +
@@ -409,6 +410,7 @@ size_t castor::tape::legacymsg::marshal(char *dst,
   marshalUint32(len                                       , p);
   marshalString(src.rqst.filePath                         , p);
   marshalString(src.rqst.tapePath                         , p);
+  marshalString(src.rqst.recfm_noLongerUsed               , p);
   marshalString(src.rqst.fid                              , p);
   marshalString(src.rqst.ifce                             , p);
   marshalString(src.rqst.stageId                          , p);
@@ -425,6 +427,7 @@ size_t castor::tape::legacymsg::marshal(char *dst,
   marshalUint32(src.rqst.defAlloc                         , p);
   marshalUint32(src.rqst.rtcpErrAction                    , p);
   marshalUint32(src.rqst.tpErrAction                      , p);
+  marshalUint32(src.rqst.convert_noLongerUsed             , p);
   marshalUint32(src.rqst.checkFid                         , p);
   marshalUint32(src.rqst.concat                           , p);
   marshalUint32(src.rqst.procStatus                       , p);
@@ -508,6 +511,7 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
 
   unmarshalString(src, srcLen, dst.rqst.filePath);
   unmarshalString(src, srcLen, dst.rqst.tapePath);
+  unmarshalString(src, srcLen, dst.rqst.recfm_noLongerUsed);
   unmarshalString(src, srcLen, dst.rqst.fid);
   unmarshalString(src, srcLen, dst.rqst.ifce);
   unmarshalString(src, srcLen, dst.rqst.stageId);
@@ -524,6 +528,7 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   unmarshalInt32(src, srcLen, dst.rqst.defAlloc);
   unmarshalInt32(src, srcLen, dst.rqst.rtcpErrAction);
   unmarshalInt32(src, srcLen, dst.rqst.tpErrAction);
+  unmarshalInt32(src, srcLen, dst.rqst.convert_noLongerUsed);
   unmarshalInt32(src, srcLen, dst.rqst.checkFid);
   unmarshalUint32(src, srcLen, dst.rqst.concat);
   unmarshalUint32(src, srcLen, dst.rqst.procStatus);
@@ -671,7 +676,7 @@ size_t castor::tape::legacymsg::marshal(char *dst,
   throw(castor::exception::Exception) {
 
   // Calculate the length of the message body
-  const uint32_t len = 7 * sizeof(int32_t);
+  const uint32_t len = 8 * sizeof(int32_t);
 
   // Calculate the total length of the message (header + body)
   // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
@@ -692,6 +697,7 @@ size_t castor::tape::legacymsg::marshal(char *dst,
   marshalUint32(len              , p);
   marshalUint32(src.maxBytes     , p);
   marshalUint32(src.blockSize    , p);
+  marshalUint32(src.convert_noLongerUsed, p);
   marshalUint32(src.tapeErrAction, p);
   marshalUint32(src.startFile    , p);
   marshalUint32(src.maxFiles     , p);

@@ -53,6 +53,7 @@ void rtcpc_InitReqStruct(rtcpTapeRequest_t *tapereq,
         filereq->def_alloc = -1;
         filereq->rtcp_err_action = -1;
         filereq->tp_err_action = -1;
+        filereq->convert_noLongerUsed = -1;
         filereq->check_fid = -1;
         filereq->concat = -1;
         filereq->err.max_tpretry = -1;

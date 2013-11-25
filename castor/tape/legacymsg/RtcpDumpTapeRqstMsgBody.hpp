@@ -37,6 +37,7 @@ namespace legacymsg {
   struct RtcpDumpTapeRqstMsgBody {
     int32_t maxBytes;
     int32_t blockSize;
+    int32_t convert_noLongerUsed;
     int32_t tapeErrAction;
     int32_t startFile;
     int32_t maxFiles;

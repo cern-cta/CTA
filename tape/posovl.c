@@ -264,6 +264,7 @@ int main(int	argc,
 	marshall_LONG (sbp, cfseq);
 	marshall_STRING (sbp, fid);
 	marshall_LONG (sbp, lrecl);
+	marshall_STRING (sbp, ""); /* recfm is no longer used */
 
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);      /* update length field */
