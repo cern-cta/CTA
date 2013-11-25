@@ -65,7 +65,6 @@
 /******************************************************************************/
 /*                        G l o b a l   O b j e c t s                         */
 /******************************************************************************/
-XrdOucHash<XrdOucString>* XrdxCastor2Fs::stagertable;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::roletable;
 XrdOucHash<XrdOucString>* XrdxCastor2Fs::stringstore;
 XrdOucHash<XrdSecEntity>* XrdxCastor2Fs::secentitystore;
@@ -115,8 +114,6 @@ XrdSfsFileSystem* XrdSfsGetFileSystem(XrdSfsFileSystem* native_fs,
   Cthread_init();
   return &myFS;
 }
-
-
 
 
 //------------------------------------------------------------------------------
@@ -186,7 +183,6 @@ XrdxCastor2Fs::GetId(const char* path, XrdSecEntity client, uid_t& uid, gid_t& g
       pw = &(ginfo->Passwd);
 
       if (pw) uid = pw->pw_uid;
-
       if (pw) gid = pw->pw_gid;
     }
     else
@@ -227,9 +223,7 @@ XrdxCastor2Fs::GetId(const char* path, XrdSecEntity client, uid_t& uid, gid_t& g
   }
 
   if (uid == 0)
-  {
     gid = 0;
-  }
 
   XrdOucString tracestring = "getgid ";
   tracestring += (int) uid;
@@ -408,9 +402,9 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
   sprintf(clientid, "%s:%llu", tident, (unsigned long long) client);
   xcastor_debug("tident=%s env=%s", tident, lenv.Env(len_env));
 
+  // Found existing client rolemaps
   if ((!role) && (entity = secentitystore->Find(clientid)))
   {
-    // Find existing client rolemaps ....
     mappedClient.name = entity->name;
     mappedClient.role = entity->role;
     mappedClient.host = entity->host;
@@ -428,7 +422,7 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
 
   do
   {
-    // (re-)create client rolemaps
+    // (Re-)create client rolemaps
     MapMutex.Lock();  // -->
     mappedClient.name = "__noauth__";
     mappedClient.role = "__noauth__";
@@ -460,18 +454,12 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
         XrdOucString FixedName;
 
         if (hisroles->beginswith("static:"))
-        {
           FixedName = hisroles->c_str() + 7;
-        }
         else
-        {
           FixedName = hisroles->c_str();
-        }
 
         while ((FixedName.find(":")) != STR_NPOS)
-        {
           FixedName.replace(":", "");
-        }
 
         mappedClient.name = STRINGSTORE(FixedName.c_str());
         GetAllGroups(mappedClient.name, allgroups, defaultgroup);
@@ -501,15 +489,12 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
         // Leave only the first CN=, cut the rest
         int pos = certsubject.find("CN=");
         int pos2 = certsubject.find("/", pos);
+        XrdOucString* gridmaprole;
 
         if (pos2 > 0) certsubject.erase(pos2);
 
-        XrdOucString* gridmaprole;
-
         if (GridMapFile.length())
-        {
           ReloadGridMapFile();
-        }
 
         GridMapMutex.Lock();    // -->
 
@@ -529,9 +514,7 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
       XrdOucString allgroups = "";
 
       if (client->role)
-      {
         defaultgroup = client->role;
-      }
 
       if ((client->grps == 0) || (!strlen(client->grps)))
       {
@@ -540,9 +523,7 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
       }
 
       if (((! mappedClient.role) || (!strlen(mappedClient.role))) && (!role))
-      {
         role = STRINGSTORE(defaultgroup.c_str());
-      }
 
       XrdOucString* hisroles = roletable->Find(mappedClient.name);
       XrdOucString match = ":";
@@ -573,13 +554,9 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
       else
       {
         if ((allgroups.find(match.c_str())) != STR_NPOS)
-        {
           mappedClient.role = STRINGSTORE(role);
-        }
         else
-        {
           mappedClient.role = STRINGSTORE(defaultgroup.c_str());
-        }
       }
 
       if ((!strlen(mappedClient.role)) && (client->grps))
@@ -893,7 +870,6 @@ XrdxCastor2Fs::XrdxCastor2Fs():
 bool
 XrdxCastor2Fs::Init()
 {
-  stagertable   = new XrdOucHash<XrdOucString> ();
   roletable = new XrdOucHash<XrdOucString> ();
   stringstore = new XrdOucHash<XrdOucString> ();
   secentitystore = new XrdOucHash<XrdSecEntity> ();
@@ -975,10 +951,8 @@ XrdxCastor2Fs::chmod(const char*         path,
                      const char*         info)
 {
   static const char* epname = "chmod";
-  const char* tident = error.getErrUser();
   mode_t acc_mode = Mode & S_IAMB;
   XrdOucEnv chmod_Env(info);
-  XrdSecEntity mappedclient;
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &chmod_Env, AOP_Chmod, "chmod", path, error)
   std::string map_path = NsMapping(path);
@@ -988,8 +962,6 @@ XrdxCastor2Fs::chmod(const char*         path,
     error.setErrInfo(ENOMEDIUM, "No mapping for file name");
     return SFS_ERROR;
   }
-
-  RoleMap(client, info, mappedclient, tident);
 
   if (gMgr->Proc)
     gMgr->Stats.IncCmd();
@@ -1004,23 +976,19 @@ XrdxCastor2Fs::chmod(const char*         path,
 
 //------------------------------------------------------------------------------
 // Determine if file exists
-//------------------------------------------------------------------------------
+//--------------------------------------------------3B----------------------------
 int
 XrdxCastor2Fs::exists(const char*          path,
                       XrdSfsFileExistence& file_exists,
                       XrdOucErrInfo&       error,
                       const XrdSecEntity*  client,
                       const char*          info)
-
 {
   static const char* epname = "exists";
-  const char* tident = error.getErrUser();
   XrdOucEnv exists_Env(info);
-  XrdSecEntity mappedclient;
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &exists_Env, AOP_Stat, "execute exists", path, error)
   std::string map_path = NsMapping(path);
-  RoleMap(client, info, mappedclient, tident);
 
   if (map_path.empty())
   {
@@ -1031,7 +999,7 @@ XrdxCastor2Fs::exists(const char*          path,
   if (gMgr->Proc)
     gMgr->Stats.IncCmd();
 
-  return _exists(map_path.c_str(), file_exists, error, &mappedclient, info);
+  return _exists(map_path.c_str(), file_exists, error, client, info);
 }
 
 
@@ -1042,9 +1010,8 @@ int
 XrdxCastor2Fs::_exists(const char*          path,
                        XrdSfsFileExistence& file_exists,
                        XrdOucErrInfo&       error,
-                       const XrdSecEntity*  /*client*/,
-                       const char*          /*info*/)
-
+                       const XrdSecEntity*  client,
+                       const char*          info)
 {
   static const char* epname = "exists";
   struct Cns_filestatcs fstat;
@@ -1180,71 +1147,6 @@ XrdxCastor2Fs::_mkdir(const char*         path,
     SetAcl(path, (*client), 0);
 
   return SFS_OK;
-}
-
-
-//------------------------------------------------------------------------------
-// Mkpath
-// TODO: caution! this function does not set any ownership attributes if no client
-// & error is given
-//------------------------------------------------------------------------------
-int
-XrdxCastor2Fs::Mkpath(const char*    path,
-                      mode_t         mode,
-                      const char*    info,
-                      XrdSecEntity*  client,
-                      XrdOucErrInfo* error)
-{
-  char actual_path[4096], *local_path, *next_path;
-  unsigned int plen;
-  struct Cns_filestatcs buf;
-
-  // Extract out the path we should make
-  if (!(plen = strlen(path))) return -ENOENT;
-
-  if (plen >= sizeof(actual_path)) return -ENAMETOOLONG;
-
-  strcpy(actual_path, path);
-
-  if (actual_path[plen - 1] == '/') actual_path[plen - 1] = '\0';
-
-  // Typically, the path exist. So, do a quick check before launching into it
-  if (!(local_path = rindex(actual_path, (int)'/'))
-      ||  local_path == actual_path) return 0;
-
-  *local_path = '\0';
-
-  if (!XrdxCastor2FsUFS::Statfn(actual_path, &buf)) return 0;
-
-  *local_path = '/';
-  // Start creating directories starting with the root. Notice that we will not
-  // do anything with the last component. The caller is responsible for that.
-  local_path = actual_path + 1;
-
-  while ((next_path = index(local_path, int('/'))))
-  {
-    *next_path = '\0';
-
-    if (XrdxCastor2FsUFS::Statfn(actual_path, &buf))
-    {
-      if (client && error)
-      {
-        if ((gMgr->_mkdir(actual_path, mode, (*error), client, info)))
-          return -serrno;
-      }
-      else
-      {
-        if (XrdxCastor2FsUFS::Mkdir(actual_path, mode) && (serrno != EEXIST))
-          return -serrno;
-      }
-    }
-
-    // Set acl on directory
-    *next_path = '/';
-    local_path = next_path + 1;
-  }
-
-  return 0;
 }
 
 

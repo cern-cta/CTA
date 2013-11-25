@@ -785,22 +785,6 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
                 const XrdSecEntity*, const char* );
 
 
-   //---------------------------------------------------------------------------
-   //! Create a directory path
-   //!
-   //! @param path fully qualified name of the new path.
-   //! @param mode new mode that each new directory is to have.
-   //! @param info opaque information, if any
-   //!
-   //! @return 0 upon success and -errno upon failure
-   //!
-   //---------------------------------------------------------------------------
-   static int Mkpath( const char*    path, 
-                      mode_t         mode,
-                      const char*    info = 0, 
-                      XrdSecEntity*  client = NULL, 
-                      XrdOucErrInfo* error = NULL );
-
     //--------------------------------------------------------------------------
     //! Compose error message
     //!
@@ -950,14 +934,12 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     XrdOucString GridMapFile;
     char* ConfigFN;  ///< path to config file 
 
-    // we must check if all these things need to be thread safe with a mutex ...
     std::set<std::string> mFsSet; ///< set of known diskserver hosts
-    XrdSysMutex mMutexFsSet; ///< mutex protecting set of diskservers
+    XrdSysMutex mMutexFsSet; ///< mutex protecting the set of known diskservers
   
     std::map<std::string, std::string> mNsMap; ///< namespace mapping
-    static  XrdOucHash<XrdOucString>* stagertable;
   
-    // Map between stage paths and the set of service classes 
+    //! Map between allowed paths and the set of service classes 
     std::map< std::string, std::set<std::string> > mStageMap;
 
     static  XrdOucHash<XrdOucString>* roletable;
