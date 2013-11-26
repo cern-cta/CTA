@@ -91,9 +91,6 @@ EXTERN_C int rtcp_NewFileList (
 EXTERN_C int rtcpc_CheckRetry (
 			       tape_list_t *
 			       );
-EXTERN_C int rtcpc_kill (
-			 void
-			 );
 EXTERN_C int rtcpc_validCksumAlg (
 				  char *
 				  );
