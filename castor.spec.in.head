@@ -13,6 +13,10 @@
 %define compile_server @COMPILE_SERVER@
 %endif
 
+# Conditional for unit test (off in imake builds)
+#------------------------------------------------
+%define castorUnitTest 0
+
 # Neutral packaging (for srpm)
 #-----------------------------
 %if 0%{?neutralpackage:1} > 0
