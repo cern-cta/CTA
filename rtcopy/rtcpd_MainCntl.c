@@ -76,9 +76,6 @@ buffer_table_t **databufs;
 extern int AbortFlag;
 int AbortFlag = 0;
 
-extern int SHIFTclient;
-int SHIFTclient = FALSE;
-
 extern int Dumptape;
 int Dumptape = FALSE;
 
