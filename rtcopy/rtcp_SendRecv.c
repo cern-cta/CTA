@@ -465,11 +465,6 @@ static int rtcp_TransferTpDump(int *s,
   return(0);
 }
 
-int rtcp_SendTpDump(int *s, rtcpDumpTapeRequest_t *dumpreq) {
-  direction_t whereto = SendTo;
-  return(rtcp_TransferTpDump(s,dumpreq,whereto));
-}
-
 int rtcp_RecvTpDump(int *s, rtcpDumpTapeRequest_t *dumpreq) {
   direction_t whereto = ReceiveFrom;
   return(rtcp_TransferTpDump(s,dumpreq,whereto));
