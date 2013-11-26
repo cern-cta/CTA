@@ -84,7 +84,7 @@ static int newTapeList(tape_list_t **tape, tape_list_t **newtape,
     return(0);
 }
 
-static int newFileList(tape_list_t **tape, file_list_t **newfile,
+int rtcp_NewFileList(tape_list_t **tape, file_list_t **newfile,
                        int mode) {
     file_list_t *fl;
     rtcpFileRequest_t *filereq;
@@ -111,9 +111,4 @@ static int newFileList(tape_list_t **tape, file_list_t **newfile,
     fl->tape = *tape;
     if ( newfile != NULL ) *newfile = fl;
     return(0);
-}
-
-int rtcp_NewFileList(tape_list_t **tape, file_list_t **newfile,
-                              int mode) {
-    return(newFileList(tape,newfile,mode));
 }
