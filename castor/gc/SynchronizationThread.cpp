@@ -337,7 +337,7 @@ void castor::gc::SynchronizationThread::readConfigFile
     castor::dlf::Param params[] =
       {castor::dlf::Param("ChunkInterval", *chunkInterval),
        castor::dlf::Param("ChunkSize", *chunkSize)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 30, 3, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 30, 2, params);
   }
 }
 
