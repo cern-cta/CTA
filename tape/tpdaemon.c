@@ -1190,7 +1190,7 @@ static void procinforeq(char *req_data,
 		if (tunp->filp->Qfirst) cfseq -= tunp->filp->Qfirst - 1;
                 marshall_LONG (sbp, cfseq);
                 marshall_LONG (sbp, tunp->filp->lrecl);
-                marshall_STRING (sbp, ""); /* recfm is no longer used */
+                marshall_STRING (sbp, "F"); /* recfm is no longer used */
 		sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
 		goto reply;
 	}

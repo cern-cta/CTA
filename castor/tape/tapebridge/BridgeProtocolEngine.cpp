@@ -1197,7 +1197,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::startDumpSession()
   legacymsg::RtcpDumpTapeRqstMsgBody request;
   request.maxBytes      = dumpParameters->maxBytes();
   request.blockSize     = dumpParameters->blockSize();
-  request.convert_noLongerUsed = 0;
+  request.convert_noLongerUsed = 4; /* 4 = ASCCONV */
   request.tapeErrAction = dumpParameters->errAction();
   request.startFile     = dumpParameters->startFile();
   request.maxFiles      = dumpParameters->maxFile();

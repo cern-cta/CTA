@@ -41,6 +41,7 @@ void rtcpc_InitReqStruct(rtcpTapeRequest_t *tapereq,
     }
     if ( filereq != NULL ) {
         memset(filereq,'\0',sizeof(rtcpFileRequest_t));
+        filereq->recfm_noLongerUsed[0] = 'F';
         filereq->VolReqID = -1;
         filereq->jobID = -1;
         filereq->stageSubreqID = -1;
@@ -53,7 +54,7 @@ void rtcpc_InitReqStruct(rtcpTapeRequest_t *tapereq,
         filereq->def_alloc = -1;
         filereq->rtcp_err_action = -1;
         filereq->tp_err_action = -1;
-        filereq->convert_noLongerUsed = -1;
+        filereq->convert_noLongerUsed = 4; /* 4 = ASCCONV */
         filereq->check_fid = -1;
         filereq->concat = -1;
         filereq->err.max_tpretry = -1;

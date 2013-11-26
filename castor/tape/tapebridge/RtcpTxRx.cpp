@@ -640,7 +640,7 @@ void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
 
   utils::setBytes(msgBody, '\0');
 
-  utils::copyString(msgBody.rqst.recfm_noLongerUsed, "");
+  utils::copyString(msgBody.rqst.recfm_noLongerUsed, "F");
 
   utils::copyString(msgBody.rqst.tapePath, tapePath);
   msgBody.rqst.volReqId       =  volReqId;
@@ -656,7 +656,7 @@ void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
   msgBody.rqst.defAlloc       = -1;
   msgBody.rqst.rtcpErrAction  = -1;
   msgBody.rqst.tpErrAction    = -1;
-  msgBody.rqst.convert_noLongerUsed = 0;
+  msgBody.rqst.convert_noLongerUsed = 4; /* 4 = ASCCONV */
   msgBody.rqst.checkFid       = -1;
   msgBody.rqst.concat         =  1;
   msgBody.rqst.procStatus     =  RTCP_REQUEST_MORE_WORK;
@@ -738,7 +738,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
   utils::setBytes(msgBody, '\0');
   utils::copyString(msgBody.rqst.filePath, filePath    );
   utils::copyString(msgBody.rqst.tapePath, tapePath    );
-  utils::copyString(msgBody.rqst.recfm_noLongerUsed, "");
+  utils::copyString(msgBody.rqst.recfm_noLongerUsed, "F");
   utils::copyString(msgBody.rqst.fid     , tapeFileId  );
 
   msgBody.rqst.volReqId             = volReqId;
@@ -754,7 +754,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
   msgBody.rqst.defAlloc             = 0;
   msgBody.rqst.rtcpErrAction        = -1;
   msgBody.rqst.tpErrAction          = -1;
-  msgBody.rqst.convert_noLongerUsed = 0;
+  msgBody.rqst.convert_noLongerUsed = 4; /* 4 = ASCCONV */
   msgBody.rqst.checkFid             = -1;
   msgBody.rqst.concat               = NOCONCAT;
   msgBody.rqst.procStatus           = RTCP_WAITING;

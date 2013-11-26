@@ -128,7 +128,7 @@ int Ctape_position(char *path,
 	} else {
 		marshall_STRING (sbp, "");
 	}
-	marshall_STRING (sbp, ""); /* recfm is no longer used */
+	marshall_STRING (sbp, "F"); /* recfm is no longer used */
 	marshall_LONG (sbp, blksize);
 	marshall_LONG (sbp, lrecl);
 	marshall_WORD (sbp, retentd);
