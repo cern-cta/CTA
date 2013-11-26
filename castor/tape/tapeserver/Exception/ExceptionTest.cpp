@@ -52,7 +52,7 @@ namespace UnitTests {
     f2();
   }
 
-  TEST(Exceptions, stacktrace_with_demangling) {
+  TEST(castor_tape_exceptions, stacktrace_with_demangling) {
     try {
       Nested x;
     } catch (castor::tape::Exception & e) {
@@ -65,11 +65,11 @@ namespace UnitTests {
     }
   }
   
-  TEST(Exceptions, errnum_throwing) {
+  TEST(castor_tape_exceptions, errnum_throwing) {
     /* Mickey Mouse test as we had trouble which throwing Errnum (with errno=ENOENT)*/
     errno = ENOENT;
     try {
-      throw castor::tape::Exceptions::Errnum("Test ENOENT");
+      throw castor::tape::exceptions::Errnum("Test ENOENT");
     } catch (std::exception & e) {
       std::string temp = e.what();
       temp += " ";

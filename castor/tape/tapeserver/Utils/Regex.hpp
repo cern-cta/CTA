@@ -34,12 +34,12 @@
  */
 namespace castor {
 namespace tape {
-namespace Utils {
+namespace utils {
 
-  class regex {
+  class Regex {
   public:
-    regex(const char * re_str);
-    virtual ~regex();
+    Regex(const char * re_str);
+    virtual ~Regex();
     std::vector<std::string> exec(const std::string &s);
   private:
     regex_t m_re;

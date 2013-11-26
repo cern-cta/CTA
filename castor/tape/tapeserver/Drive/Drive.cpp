@@ -34,10 +34,10 @@ m_tapeFD(-1),  m_sysWrapper(sw) {
    */
   m_tapeFD = m_sysWrapper.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK);
   if (-1 == m_tapeFD)
-    throw Exceptions::Errnum(std::string("Could not open device file: " + m_SCSIInfo.nst_dev));
+    throw exceptions::Errnum(std::string("Could not open device file: " + m_SCSIInfo.nst_dev));
   /* Read drive status */
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &m_mtInfo))
-    throw Exceptions::Errnum(std::string("Could not read drive status: " + m_SCSIInfo.nst_dev));
+    throw exceptions::Errnum(std::string("Could not read drive status: " + m_SCSIInfo.nst_dev));
 }
 
 /**
@@ -59,7 +59,7 @@ void drives::DriveGeneric::clearCompressionStats() throw (Exception) {
 
   /* Manage both system error and SCSI errors. */
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
-    throw Exceptions::Errnum("Failed SG_IO ioctl");
+    throw exceptions::Errnum("Failed SG_IO ioctl");
   SCSI::ExceptionLauncher(sgh, "SCSI error in clearCompressionStats:");
 }
 
@@ -81,7 +81,7 @@ drives::deviceInfo drives::DriveGeneric::getDeviceInfo() throw (Exception) {
 
   /* Manage both system error and SCSI errors. */
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
-    throw Exceptions::Errnum("Failed SG_IO ioctl");
+    throw exceptions::Errnum("Failed SG_IO ioctl");
   SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getDeviceInfo: ") +
       SCSI::statusToString(sgh.status));
 
@@ -115,7 +115,7 @@ std::string drives::DriveGeneric::getSerialNumber() throw (Exception) {
 
   /* Manage both system error and SCSI errors. */
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
-    throw Exceptions::Errnum("Failed SG_IO ioctl");
+    throw exceptions::Errnum("Failed SG_IO ioctl");
   SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getSerialNumber: ") +
       SCSI::statusToString(sgh.status));
   std::string serialNumber;
@@ -148,7 +148,7 @@ throw (Exception) {
 
   /* Manage both system error and SCSI errors. */
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
-    throw Exceptions::Errnum("Failed SG_IO ioctl");
+    throw exceptions::Errnum("Failed SG_IO ioctl");
   SCSI::ExceptionLauncher(sgh, "SCSI error in positionToLogicalObject:");
 }
 
@@ -174,7 +174,7 @@ throw (Exception) {
 
   /* Manage both system error and SCSI errors. */
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
-    throw Exceptions::Errnum("Failed SG_IO ioctl");
+    throw exceptions::Errnum("Failed SG_IO ioctl");
   SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getPositionInfo: ") +
       SCSI::statusToString(sgh.status));
 
@@ -219,7 +219,7 @@ std::vector<std::string> drives::DriveGeneric::getTapeAlerts() throw (Exception)
   sgh.dxfer_direction = SG_DXFER_FROM_DEV;
   /* Manage both system error and SCSI errors. */
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
-    throw Exceptions::Errnum("Failed SG_IO ioctl");
+    throw exceptions::Errnum("Failed SG_IO ioctl");
   SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getTapeAlerts: ") +
       SCSI::statusToString(sgh.status));
   /* Return the ACTIVE tape alerts (this is indicated by "flag" (see 
@@ -265,7 +265,7 @@ void drives::DriveGeneric::setDensityAndCompression(unsigned char densityCode,
 
     /* Manage both system error and SCSI errors. */
     if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
-      throw Exceptions::Errnum("Failed SG_IO ioctl");
+      throw exceptions::Errnum("Failed SG_IO ioctl");
     SCSI::ExceptionLauncher(sgh,
         std::string("SCSI error in setDensityAndCompression: ") +
         SCSI::statusToString(sgh.status));
@@ -291,7 +291,7 @@ void drives::DriveGeneric::setDensityAndCompression(unsigned char densityCode,
 
     /* Manage both system error and SCSI errors. */
     if (-1 == m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh))
-      throw Exceptions::Errnum("Failed SG_IO ioctl");
+      throw exceptions::Errnum("Failed SG_IO ioctl");
     SCSI::ExceptionLauncher(sgh,
         std::string("SCSI error in setDensityAndCompression: ") +
         SCSI::statusToString(sgh.status));
@@ -309,7 +309,7 @@ void drives::DriveGeneric::setSTBufferWrite(bool bufWrite) throw (Exception) {
   m_mtCmd.mt_op = MTSETDRVBUFFER;
   m_mtCmd.mt_count = bufWrite ? (MT_ST_SETBOOLEANS | MT_ST_BUFFER_WRITES) : (MT_ST_CLEARBOOLEANS | MT_ST_BUFFER_WRITES);
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
-    throw Exceptions::Errnum("Failed ST ioctl (MTSETDRVBUFFER)");
+    throw exceptions::Errnum("Failed ST ioctl (MTSETDRVBUFFER)");
 }
 
 /**
@@ -326,7 +326,7 @@ void drives::DriveGeneric::spaceToEOM(void) throw (Exception) {
   m_mtCmd.mt_op = MTEOM;
   m_mtCmd.mt_count = 1;
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
-    throw Exceptions::Errnum("Failed ST ioctl (MTEOM)");
+    throw exceptions::Errnum("Failed ST ioctl (MTEOM)");
 }
 
 /**
@@ -340,7 +340,7 @@ void drives::DriveGeneric::setSTFastMTEOM(bool fastMTEOM) throw (Exception) {
   m_mtCmd.mt_op = MTSETDRVBUFFER;
   m_mtCmd.mt_count = fastMTEOM ? (MT_ST_SETBOOLEANS | MT_ST_FAST_MTEOM) : (MT_ST_CLEARBOOLEANS | MT_ST_FAST_MTEOM);
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
-    throw Exceptions::Errnum("Failed ST ioctl (MTSETDRVBUFFER)");
+    throw exceptions::Errnum("Failed ST ioctl (MTSETDRVBUFFER)");
 }
 
 /**
@@ -353,7 +353,7 @@ void drives::DriveGeneric::fastSpaceToEOM(void) throw (Exception) {
   m_mtCmd.mt_op = MTEOM;
   m_mtCmd.mt_count = 1;
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
-    throw Exceptions::Errnum("Failed ST ioctl (MTEOM)");
+    throw exceptions::Errnum("Failed ST ioctl (MTEOM)");
 }
 
 /**
@@ -364,7 +364,7 @@ void drives::DriveGeneric::rewind(void) throw (Exception) {
   m_mtCmd.mt_op = MTREW;
   m_mtCmd.mt_count = 1;
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
-    throw Exceptions::Errnum("Failed ST ioctl (MTREW)");
+    throw exceptions::Errnum("Failed ST ioctl (MTREW)");
 }
 
 /**
@@ -376,7 +376,7 @@ void drives::DriveGeneric::spaceFileMarksBackwards(size_t count) throw (Exceptio
   m_mtCmd.mt_op = MTBSF;
   m_mtCmd.mt_count = (int)count;
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
-    throw Exceptions::Errnum("Failed ST ioctl (MTBSF)");
+    throw exceptions::Errnum("Failed ST ioctl (MTBSF)");
 }
 
 /**
@@ -388,7 +388,7 @@ void drives::DriveGeneric::spaceFileMarksForward(size_t count) throw (Exception)
   m_mtCmd.mt_op = MTFSF;
   m_mtCmd.mt_count = (int)count;
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
-    throw Exceptions::Errnum("Failed ST ioctl (MTFSF)");
+    throw exceptions::Errnum("Failed ST ioctl (MTFSF)");
 }
 
 /**
@@ -403,7 +403,7 @@ void drives::DriveGeneric::spaceBlocksBackwards(size_t count) throw (Exception) 
   m_mtCmd.mt_op = MTBSR;
   m_mtCmd.mt_count = (int)count;
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
-    throw Exceptions::Errnum("Failed ST ioctl (MTBSR)");
+    throw exceptions::Errnum("Failed ST ioctl (MTBSR)");
 }
 
 /**
@@ -418,7 +418,7 @@ void drives::DriveGeneric::spaceBlocksForward(size_t count) throw (Exception) {
   m_mtCmd.mt_op = MTFSR;
   m_mtCmd.mt_count = (int)count;
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
-    throw Exceptions::Errnum("Failed ST ioctl (MTFSR)");
+    throw exceptions::Errnum("Failed ST ioctl (MTFSR)");
 }
 
 /**
@@ -429,7 +429,7 @@ void drives::DriveGeneric::unloadTape(void) throw (Exception) {
   m_mtCmd.mt_op = MTUNLOAD;
   m_mtCmd.mt_count = 1;
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
-    throw Exceptions::Errnum("Failed ST ioctl (MTUNLOAD)");
+    throw exceptions::Errnum("Failed ST ioctl (MTUNLOAD)");
 }
 
 /**
@@ -441,7 +441,7 @@ void drives::DriveGeneric::sync(void) throw (Exception) {
   m_mtCmd.mt_op = MTNOP; //The side effect of the no-op is to actually flush the driver's buffer to tape (see "man st").
   m_mtCmd.mt_count = 1;
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
-    throw Exceptions::Errnum("Failed ST ioctl (MTNOP)");
+    throw exceptions::Errnum("Failed ST ioctl (MTNOP)");
 }
 
 /**
@@ -454,7 +454,7 @@ void drives::DriveGeneric::writeSyncFileMarks(size_t count) throw (Exception) {
   m_mtCmd.mt_op = MTWEOF;
   m_mtCmd.mt_count = (int)count;
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
-    throw Exceptions::Errnum("Failed ST ioctl (MTWEOF)");
+    throw exceptions::Errnum("Failed ST ioctl (MTWEOF)");
 }
 
 /**
@@ -467,7 +467,7 @@ void drives::DriveGeneric::writeImmediateFileMarks(size_t count) throw (Exceptio
   m_mtCmd.mt_op = MTWEOFI; //Undocumented in "man st" needs the mtio_add.hh header file (see above)
   m_mtCmd.mt_count = (int)count;
   if (-1 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd))
-    throw Exceptions::Errnum("Failed ST ioctl (MTWEOFI)");
+    throw exceptions::Errnum("Failed ST ioctl (MTWEOFI)");
 }
 
 /**
@@ -477,7 +477,7 @@ void drives::DriveGeneric::writeImmediateFileMarks(size_t count) throw (Exceptio
  */
 void drives::DriveGeneric::writeBlock(const unsigned char * data, size_t count) throw (Exception) {
   if (-1 == m_sysWrapper.write(m_tapeFD, data, count))
-    throw Exceptions::Errnum("Failed ST write");
+    throw exceptions::Errnum("Failed ST write");
 }
 
 /**
@@ -487,7 +487,7 @@ void drives::DriveGeneric::writeBlock(const unsigned char * data, size_t count) 
  */
 void drives::DriveGeneric::readBlock(unsigned char * data, size_t count) throw (Exception) {
   if (-1 == m_sysWrapper.read(m_tapeFD, data, count))
-    throw Exceptions::Errnum("Failed ST read");
+    throw exceptions::Errnum("Failed ST read");
 }
 
 void drives::DriveGeneric::SCSI_inquiry() {
@@ -514,7 +514,7 @@ void drives::DriveGeneric::SCSI_inquiry(int fd) {
   sgh.dxfer_len = sizeof (dataBuff);
   sgh.timeout = 30000;
   if (-1 == m_sysWrapper.ioctl(fd, SG_IO, &sgh))
-    throw Exceptions::Errnum("Failed SG_IO ioctl");
+    throw exceptions::Errnum("Failed SG_IO ioctl");
   std::cout << "INQUIRY result: " << std::endl
       << "sgh.dxfer_len=" << sgh.dxfer_len
       << " sgh.sb_len_wr=" << ((int) sgh.sb_len_wr)
@@ -547,7 +547,7 @@ drives::compressionStats drives::DriveT10000::getCompression() throw (Exception)
 
   /* Manage both system error and SCSI errors. */
   if (-1 == this->m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh))
-    throw Exceptions::Errnum("Failed SG_IO ioctl");
+    throw exceptions::Errnum("Failed SG_IO ioctl");
   SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getCompression: ") +
       SCSI::statusToString(sgh.status));
 
@@ -604,7 +604,7 @@ drives::compressionStats drives::DriveLTO::getCompression() throw (Exception) {
 
   /* Manage both system error and SCSI errors. */
   if (-1 == this->m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh))
-    throw Exceptions::Errnum("Failed SG_IO ioctl");
+    throw exceptions::Errnum("Failed SG_IO ioctl");
   SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getCompression: ") +
       SCSI::statusToString(sgh.status));
 
@@ -679,7 +679,7 @@ drives::compressionStats drives::DriveIBM3592::getCompression() throw (Exception
 
   /* Manage both system error and SCSI errors. */
   if (-1 == this->m_sysWrapper.ioctl(this->m_tapeFD, SG_IO, &sgh))
-    throw Exceptions::Errnum("Failed SG_IO ioctl");
+    throw exceptions::Errnum("Failed SG_IO ioctl");
   SCSI::ExceptionLauncher(sgh, std::string("SCSI error in getCompression: ") +
       SCSI::statusToString(sgh.status));
 

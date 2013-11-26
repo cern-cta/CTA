@@ -46,7 +46,7 @@ Exception::Exception(const Exception &ex): castor::exception::Exception(0) {
   m_backtrace = ex.m_backtrace;
 }
 
-Exceptions::Errnum::Errnum(std::string what):Exception("") {
+exceptions::Errnum::Errnum(std::string what):Exception("") {
   m_errnum = errno;
   char s[1000];
   /* _XOPEN_SOURCE seems not to work.  */

@@ -68,14 +68,14 @@ throw (castor::tape::Exception)
         break;
       case ':':
       {
-        castor::tape::Exceptions::InvalidArgument ex(std::string("The -") + (char) optopt + " option requires a parameter");
+        castor::tape::exceptions::InvalidArgument ex(std::string("The -") + (char) optopt + " option requires a parameter");
         throw ex;
       }
       case '?':
       {
         std::stringstream err("Unknown command-line option");
         if (optopt) err << std::string(": -") << optopt;
-        castor::tape::Exceptions::InvalidArgument ex(err.str().c_str());
+        castor::tape::exceptions::InvalidArgument ex(err.str().c_str());
         throw ex;
       }
       default:
@@ -83,7 +83,7 @@ throw (castor::tape::Exception)
         std::stringstream err;
         err << "getopt_long returned the following unknown value: 0x" <<
             std::hex << (int) c;
-        castor::tape::Exceptions::InvalidArgument ex(err.str().c_str());
+        castor::tape::exceptions::InvalidArgument ex(err.str().c_str());
         throw ex;
       }
     }
@@ -101,7 +101,7 @@ void castor::tape::Server::Daemon::daemonize()
   /* Fork off the parent process */
   pid = fork();
   if (pid < 0) {
-    castor::tape::Exceptions::Errnum e("Failed to fork in castor::tape::Server::Daemon::daemonize");
+    castor::tape::exceptions::Errnum e("Failed to fork in castor::tape::Server::Daemon::daemonize");
     throw e;
   }
   /* If we got a good PID, then we can exit the parent process. */
@@ -115,7 +115,7 @@ void castor::tape::Server::Daemon::daemonize()
   /* Create a new session for the child process */
   sid = setsid();
   if (sid < 0) {
-    castor::tape::Exceptions::Errnum e("Failed to create new session in castor::tape::Server::Daemon::daemonize");
+    castor::tape::exceptions::Errnum e("Failed to create new session in castor::tape::Server::Daemon::daemonize");
     throw e;
   }
 
@@ -130,7 +130,7 @@ void castor::tape::Server::Daemon::daemonize()
   if ((chdir(m_options.runDirectory.c_str())) < 0) {
     std::stringstream err("Failed to chdir in castor::tape::Server::Daemon::daemonize");
     err << " ( destination directory: " << m_options.runDirectory << ")";
-    castor::tape::Exceptions::Errnum e(err.str());
+    castor::tape::exceptions::Errnum e(err.str());
     throw e;
   }
 

@@ -34,7 +34,7 @@ using ::testing::Return;
 using ::testing::_;
 
 namespace UnitTests {
-  TEST(SCSI_Structures, inquiryData_t_multi_byte_numbers_strings) {
+  TEST(castor_tape_SCSI_Structures, inquiryData_t_multi_byte_numbers_strings) {
     /* Validate the bit field behavior of the struct inquiryData_t,
      which represents the standard INQUIRY data format as defined in 
      SPC-4. This test also validates the handling of multi-bytes numbers,
@@ -105,7 +105,7 @@ namespace UnitTests {
     ASSERT_EQ(0x12, *inq.vendorSpecific2);
   }
 
-  TEST(SCSI_Structures, inquiryCDB_t) {
+  TEST(castor_tape_SCSI_Structures, inquiryCDB_t) {
     castor::tape::SCSI::Structures::inquiryCDB_t inqCDB;
     unsigned char *buff = (unsigned char *)&inqCDB;
     
@@ -128,7 +128,7 @@ namespace UnitTests {
     ASSERT_EQ(0xCA, inqCDB.control);
   }
   
-    TEST(SCSI_Structures, inquiryUnitSerialNumberData_t) {
+    TEST(castor_tape_SCSI_Structures, inquiryUnitSerialNumberData_t) {
     castor::tape::SCSI::Structures::inquiryUnitSerialNumberData_t inqSerialNumber;
     unsigned char *buff = (unsigned char *)&inqSerialNumber;
     
@@ -161,7 +161,7 @@ namespace UnitTests {
     ASSERT_EQ("XYZZY_A2    ", castor::tape::SCSI::Structures::toString(inqSerialNumber.productSerialNumber));
   }
   
-  TEST(SCSI_Structures, logSelectCDB_t) {
+  TEST(castor_tape_SCSI_Structures, logSelectCDB_t) {
     castor::tape::SCSI::Structures::logSelectCDB_t logSelectCDB;
     unsigned char *buff = (unsigned char *)&logSelectCDB;
     
@@ -191,7 +191,7 @@ namespace UnitTests {
     ASSERT_EQ(0xBC, logSelectCDB.control);
   }
 
-  TEST(SCSI_Structures, LinuxSGIO_t) {
+  TEST(castor_tape_SCSI_Structures, LinuxSGIO_t) {
     ASSERT_EQ(sizeof(sg_io_hdr_t), sizeof(castor::tape::SCSI::Structures::LinuxSGIO_t));
     castor::tape::SCSI::Structures::LinuxSGIO_t lsg;
     /* Most important part: check that the class does not add data
@@ -203,7 +203,7 @@ namespace UnitTests {
     /* The rest is safe. It's just a struct with added functions */
   }
 
-  TEST(SCSI_Structures, logSenseCDB_t) {
+  TEST(castor_tape_SCSI_Structures, logSenseCDB_t) {
     castor::tape::SCSI::Structures::logSenseCDB_t logSenseCDB;
     unsigned char *buff = (unsigned char *)&logSenseCDB;
     
@@ -252,7 +252,7 @@ namespace UnitTests {
     ASSERT_EQ(0xBC, logSenseCDB.control);
   }
   
-  TEST(SCSI_Structures, locate10CDB_t) {
+  TEST(castor_tape_SCSI_Structures, locate10CDB_t) {
     castor::tape::SCSI::Structures::locate10CDB_t locate10CDB;
     unsigned char *buff = (unsigned char *)&locate10CDB;
     
@@ -293,7 +293,7 @@ namespace UnitTests {
     ASSERT_EQ(0xBC, locate10CDB.control);
   }
   
-  TEST(SCSI_Structures, readPositionCDB_t) {
+  TEST(castor_tape_SCSI_Structures, readPositionCDB_t) {
     castor::tape::SCSI::Structures::readPositionCDB_t readPositionCDB;
     unsigned char *buff = (unsigned char *)&readPositionCDB;  
     /*
@@ -323,7 +323,7 @@ namespace UnitTests {
     ASSERT_EQ(0xBC, readPositionCDB.control);
   }
   
-   TEST(SCSI_Structures, readPositionDataShortForm_t) {
+   TEST(castor_tape_SCSI_Structures, readPositionDataShortForm_t) {
     castor::tape::SCSI::Structures::readPositionDataShortForm_t readPositionData;
     unsigned char *buff = (unsigned char *)&readPositionData;  
 
@@ -374,7 +374,7 @@ namespace UnitTests {
     ASSERT_EQ(0x7ABCDEF7U, castor::tape::SCSI::Structures::toU32(readPositionData.bytesInBuffer));
   }
   
-  TEST(SCSI_Structures, modeSelect6CDB_t) {
+  TEST(castor_tape_SCSI_Structures, modeSelect6CDB_t) {
     castor::tape::SCSI::Structures::modeSelect6CDB_t modeSelect6CDB;
     unsigned char *buff = (unsigned char *)&modeSelect6CDB;  
     /*
@@ -408,7 +408,7 @@ namespace UnitTests {
     ASSERT_EQ(0xAB, modeSelect6CDB.control);
   }
   
-  TEST(SCSI_Structures, modeSense6CDB_t) {
+  TEST(castor_tape_SCSI_Structures, modeSense6CDB_t) {
     castor::tape::SCSI::Structures::modeSense6CDB_t modeSense6CDB;
     unsigned char *buff = (unsigned char *)&modeSense6CDB;  
     /*
@@ -448,7 +448,7 @@ namespace UnitTests {
     ASSERT_EQ(0xCDU, modeSense6CDB.control);
   }  
   
-  TEST(SCSI_Structures, modeSenseDeviceConfiguration_t) {
+  TEST(castor_tape_SCSI_Structures, modeSenseDeviceConfiguration_t) {
     castor::tape::SCSI::Structures::modeSenseDeviceConfiguration_t devConfig;
     unsigned char *buff = (unsigned char *)&devConfig;  
     /*
@@ -476,7 +476,7 @@ namespace UnitTests {
     ASSERT_EQ(0xEFU, devConfig.modePage.selectDataComprAlgorithm);
   }  
   
-  TEST(SCSI_Structures, tapeAlertLogPage_t_and_parameters) {
+  TEST(castor_tape_SCSI_Structures, tapeAlertLogPage_t_and_parameters) {
     castor::tape::SCSI::Structures::tapeAlertLogPage_t<12> tal;
     unsigned char * buff = (unsigned char *) & tal;
     
@@ -508,7 +508,7 @@ namespace UnitTests {
     ASSERT_EQ(1U, tal.parameters[11].flag);
   }
   
-  TEST(SCSI_Structures, senseBuffer_t) {
+  TEST(castor_tape_SCSI_Structures, senseBuffer_t) {
     castor::tape::SCSI::Structures::senseData_t<255> sense;
     unsigned char * buff = (unsigned char *) & sense;
     
@@ -579,32 +579,32 @@ namespace UnitTests {
     }
   }
   
-  TEST(SCSI_Structures, toU16) {
+  TEST(castor_tape_SCSI_Structures, toU16) {
     unsigned char num[2] = { 0x1, 0x2 };
     ASSERT_EQ( 0x102, castor::tape::SCSI::Structures::toU16(num));
   }
   
-  TEST(SCSI_Structures, toU32) {
+  TEST(castor_tape_SCSI_Structures, toU32) {
     unsigned char num[4] = { 0x1, 0x2, 0x3, 0x4 };
     ASSERT_EQ( 0x1020304U, castor::tape::SCSI::Structures::toU32(num));
   }
   
-  TEST(SCSI_Structures, toU32_3byte) {
+  TEST(castor_tape_SCSI_Structures, toU32_3byte) {
     unsigned char num[3] = { 0xAA, 0xBB, 0xCC };
     ASSERT_EQ( 0x00AABBCCU, castor::tape::SCSI::Structures::toU32(num));
   }
   
-  TEST(SCSI_Structures, toS32) {
+  TEST(castor_tape_SCSI_Structures, toS32) {
     unsigned char num[4] = { 0xE6, 0x29, 0x66, 0x5B };
     ASSERT_EQ( -433494437, castor::tape::SCSI::Structures::toS32(num));
   }
   
-  TEST(SCSI_Structures, toU64) {
+  TEST(castor_tape_SCSI_Structures, toU64) {
     unsigned char num[8] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xFA, 0xDE };
     ASSERT_EQ ( 0xDEADBEEFCAFEFADEU, castor::tape::SCSI::Structures::toU64(num));
   }
   
-  TEST(SCSI_Strucutres, Exception) {
+  TEST(castor_tape_SCSI_Structures, Exception) {
     castor::tape::SCSI::Structures::senseData_t<255> sense;
     castor::tape::SCSI::Structures::LinuxSGIO_t sgio;
     sgio.setSenseBuffer(&sense);

@@ -39,7 +39,7 @@ namespace tape {
     void setWhat(const std::string &w);
   };
 
-  namespace Exceptions {
+  namespace exceptions {
     class Errnum: public Exception {
     public:
       Errnum(std::string what = "");

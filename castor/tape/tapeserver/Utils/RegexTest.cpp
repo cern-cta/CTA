@@ -33,8 +33,8 @@ using ::testing::_;
 
 namespace UnitTests {
 
-TEST(Regex, BasicFunctionality) {
-  castor::tape::Utils::regex re("a(b)");
+TEST(castor_tape_utils_Regex, BasicFunctionality) {
+  castor::tape::utils::Regex re("a(b)");
   std::vector<std::string> ret1, ret2;
   ret1 = re.exec("1abc");
   ret2 = re.exec("xyz");
@@ -45,8 +45,8 @@ TEST(Regex, BasicFunctionality) {
   ASSERT_EQ(ret2.size(), 0U);
 }
 
-TEST(Regex, OperationalTest) {
-  castor::tape::Utils::regex re("^scsi_tape:(st[[:digit:]]+)$");
+TEST(castor_tape_utils_Regex, OperationalTest) {
+  castor::tape::utils::Regex re("^scsi_tape:(st[[:digit:]]+)$");
   std::vector<std::string> ret1, ret2, ret3;
   ret1 = re.exec("scsi_tape:st1");
   ret2 = re.exec("scsi_tape:st124");

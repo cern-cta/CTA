@@ -37,10 +37,10 @@ using namespace castor::tape;
  */
 SCSI::DeviceVector::DeviceVector(System::virtualWrapper& sysWrapper) : m_sysWrapper(sysWrapper) {
   std::string sysDevsPath = "/sys/bus/scsi/devices";
-  Utils::regex ifFirstCharIsDigit("^[[:digit:]]");
+  utils::Regex ifFirstCharIsDigit("^[[:digit:]]");
   std::vector<std::string> checkResult;
   DIR* dirp = m_sysWrapper.opendir(sysDevsPath.c_str());
-  if (!dirp) throw Exceptions::Errnum("Error opening sysfs scsi devs");
+  if (!dirp) throw exceptions::Errnum("Error opening sysfs scsi devs");
   while (struct dirent * dent = m_sysWrapper.readdir(dirp)) {
     std::string dn(dent->d_name);
     if ("." == dn || ".." == dn) continue;
@@ -50,7 +50,7 @@ SCSI::DeviceVector::DeviceVector(System::virtualWrapper& sysWrapper) : m_sysWrap
     /* We expect only symbolic links in this directory, */
     char rp[PATH_MAX];
     if (NULL == m_sysWrapper.realpath(fullpath.c_str(), rp))
-      throw Exceptions::Errnum("Could not find realpath for " + fullpath);
+      throw exceptions::Errnum("Could not find realpath for " + fullpath);
     this->push_back(getDeviceInfo(rp));
   }
   sysWrapper.closedir(dirp);
@@ -59,17 +59,17 @@ SCSI::DeviceVector::DeviceVector(System::virtualWrapper& sysWrapper) : m_sysWrap
 std::string SCSI::DeviceVector::readfile(std::string path) {
   int fd = m_sysWrapper.open(path.c_str(), 0);
   if (-1 == fd) {
-    throw Exceptions::Errnum("Could not open file " + path);
+    throw exceptions::Errnum("Could not open file " + path);
   }
   char buf[readfileBlockSize];
   std::string ret;
   while (ssize_t sread = m_sysWrapper.read(fd, buf, readfileBlockSize)) {
     if (-1 == sread)
-      throw Exceptions::Errnum("Could not read from open file " + path);
+      throw exceptions::Errnum("Could not read from open file " + path);
     ret.append(buf, sread);
   }
   if (m_sysWrapper.close(fd))
-    throw Exceptions::Errnum("Error closing file " + path);
+    throw exceptions::Errnum("Error closing file " + path);
   return ret;
 }
 
@@ -84,7 +84,7 @@ SCSI::DeviceInfo::DeviceFile SCSI::DeviceVector::readDeviceFile(std::string path
 SCSI::DeviceInfo::DeviceFile SCSI::DeviceVector::statDeviceFile(std::string path) {
   struct stat sbuf;
   if (m_sysWrapper.stat(path.c_str(), &sbuf))
-    throw Exceptions::Errnum("Could not stat file " + path);
+    throw exceptions::Errnum("Could not stat file " + path);
   if (!S_ISCHR(sbuf.st_mode))
     throw Exception("Device file " + path + " is not a character device");
   DeviceInfo::DeviceFile ret;
@@ -115,7 +115,7 @@ void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
   if (!dirp) {
     /* here we open sysfs_entry for SLC5 */
     dirp = m_sysWrapper.opendir(devinfo.sysfs_entry.c_str());
-    if (!dirp) throw Exceptions::Errnum(
+    if (!dirp) throw exceptions::Errnum(
       std::string("Error opening tape device directory ") +
       devinfo.sysfs_entry + tapeDir+" or "+devinfo.sysfs_entry);
     else {
@@ -125,8 +125,8 @@ void SCSI::DeviceVector::getTapeInfo(DeviceInfo & devinfo) {
     }
   } 
   
-  Utils::regex st_re((scsiPrefix+"(st[[:digit:]]+)$").c_str());
-  Utils::regex nst_re((scsiPrefix+"(nst[[:digit:]]+)$").c_str());
+  utils::Regex st_re((scsiPrefix+"(st[[:digit:]]+)$").c_str());
+  utils::Regex nst_re((scsiPrefix+"(nst[[:digit:]]+)$").c_str());
   
   while (struct dirent * dent = m_sysWrapper.readdir(dirp)) {
     std::vector<std::string> res;
@@ -219,7 +219,7 @@ SCSI::DeviceInfo SCSI::DeviceVector::getDeviceInfo(const char * path) {
     char rl[PATH_MAX];
     std::string lp = ret.sysfs_entry + "/generic";
     if (-1 == m_sysWrapper.readlink(lp.c_str(), rl, sizeof (rl)))
-      throw Exceptions::Errnum("Could not read link " + lp);
+      throw exceptions::Errnum("Could not read link " + lp);
     std::string gl(rl);
     size_t pos = gl.find_last_of("/");
     if (pos == std::string::npos)

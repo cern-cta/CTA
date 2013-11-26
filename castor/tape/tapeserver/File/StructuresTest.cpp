@@ -28,7 +28,7 @@
 
 namespace UnitTests {
 
-  TEST(FILE_Structures, VOL1) {
+  TEST(castor_tape_AULFile, VOL1) {
     castor::tape::AULFile::VOL1 vol1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -46,7 +46,7 @@ namespace UnitTests {
     ASSERT_EQ("test  ", vol1Label.getVSN());
   }
 
-  TEST(FILE_Structures, HDR1) {
+  TEST(castor_tape_AULFile, HDR1) {
     castor::tape::AULFile::HDR1 hdr1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -65,7 +65,7 @@ namespace UnitTests {
     ASSERT_EQ("AABBCC           ", hdr1Label.getFileId());
     ASSERT_EQ("2345", hdr1Label.getfSeq());
   }
-  TEST(FILE_Structures, HDR1PRELABEL) {
+  TEST(castor_tape_AULFile, HDR1PRELABEL) {
     castor::tape::AULFile::HDR1PRELABEL hdr1Prelabel;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -85,7 +85,7 @@ namespace UnitTests {
     ASSERT_EQ("0001", hdr1Prelabel.getfSeq());
   }
 
-  TEST(FILE_Structures, EOF1) {
+  TEST(castor_tape_AULFile, EOF1) {
     castor::tape::AULFile::EOF1 eof1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -106,7 +106,7 @@ namespace UnitTests {
     ASSERT_EQ("007654", eof1Label.getBlockCount());
   }
 
-  TEST(FILE_Structures, HDR2) {
+  TEST(castor_tape_AULFile, HDR2) {
     castor::tape::AULFile::HDR2 hdr2Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -126,7 +126,7 @@ namespace UnitTests {
     ASSERT_EQ("32760", hdr2Label.getBlockLength());
   }
 
-  TEST(FILE_Structures, EOF2) {
+  TEST(castor_tape_AULFile, EOF2) {
     castor::tape::AULFile::EOF2 eof2Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -146,7 +146,7 @@ namespace UnitTests {
     ASSERT_EQ("32760", eof2Label.getBlockLength());
   }
 
-  TEST(FILE_Structures, UHL1) {
+  TEST(castor_tape_AULFile, UHL1) {
     castor::tape::AULFile::UHL1 uhl1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
@@ -170,7 +170,7 @@ namespace UnitTests {
     ASSERT_EQ("0000012345", uhl1Label.getfSeq());
   }
 
-  TEST(FILE_Structures, UTL1) {
+  TEST(castor_tape_AULFile, UTL1) {
     castor::tape::AULFile::UTL1 utl1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)

@@ -35,7 +35,7 @@ using ::testing::An;
 
 namespace UnitTests {
 
-TEST(TapeDrive, OpensCorrectly) {
+TEST(castor_tape_drives_Drive, OpensCorrectly) {
   /* Prepare the test harness */
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
@@ -64,7 +64,7 @@ TEST(TapeDrive, OpensCorrectly) {
   }
 }
 
-TEST(TapeDrive, getPositionInfoAndPositionToLogicalObject) {
+TEST(castor_tape_drives_Drive, getPositionInfoAndPositionToLogicalObject) {
   /* Prepare the test harness */
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
@@ -115,7 +115,7 @@ TEST(TapeDrive, getPositionInfoAndPositionToLogicalObject) {
     }
   }
 } 
-TEST(TapeDrive, setDensityAndCompression) {
+TEST(castor_tape_drives_Drive, setDensityAndCompression) {
   /* Prepare the test harness */
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
@@ -162,7 +162,7 @@ TEST(TapeDrive, setDensityAndCompression) {
   }
 }
 
-TEST(TapeDrive, setStDriverOptions) {
+TEST(castor_tape_drives_Drive, setStDriverOptions) {
   /* Prepare the test harness */
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
@@ -199,7 +199,7 @@ TEST(TapeDrive, setStDriverOptions) {
   }
 }
 
-TEST(TapeDrive, getDeviceInfo) {
+TEST(castor_tape_drives_Drive, getDeviceInfo) {
   /* Prepare the test harness */
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
@@ -240,7 +240,7 @@ TEST(TapeDrive, getDeviceInfo) {
   }
 }
 
-TEST(TapeDrive, getCompressionAndClearCompressionStats) {
+TEST(castor_tape_drives_Drive, getCompressionAndClearCompressionStats) {
   /* Prepare the test harness */
   castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
@@ -337,7 +337,7 @@ TEST(TapeDrive, getCompressionAndClearCompressionStats) {
   }
 }
 
-TEST(TapeDrive, getTapeAlerts) {
+TEST(castor_tape_drives_Drive, getTapeAlerts) {
 
   /**
    * "Local function" allowing the test to be run twice (for SLC5 and then for 

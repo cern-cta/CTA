@@ -34,7 +34,7 @@ using ::testing::_;
 namespace UnitTests {
 castor::tape::System::mockWrapper sysWrapper;
 
-TEST(DeviceList, TriesToFind) {
+TEST(castor_tape_SCSI_DeviceList, TriesToFind) {
   /* Give minimal service output from mock system calls:
    * at least pretend there is a directory to scan */
   /* _ means anything goes */
@@ -45,7 +45,7 @@ TEST(DeviceList, TriesToFind) {
   castor::tape::SCSI::DeviceVector dl(sysWrapper);
 }
 
-TEST(DeviceList, ScansCorrectly) {
+TEST(castor_tape_SCSI_DeviceList, ScansCorrectly) {
   /* Configure the mock to use fake */
   sysWrapper.delegateToFake();
   /* Populate the test harness */
