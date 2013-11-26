@@ -80,11 +80,6 @@ EXTERN_C int rtcpc_GetDeviceQueues (
 				    int *,
 				    int *
 				    );
-EXTERN_C int rtcp_RetvalSHIFT (
-			       tape_list_t *,
-			       file_list_t *,
-			       int *
-			       );
 EXTERN_C void rtcpc_FreeReqLists (
 				  tape_list_t **
 				  );

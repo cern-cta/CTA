@@ -22,7 +22,7 @@ RTCPD_OBJS =	rtcpd.o rtcp_CallVMGR.o rtcp_CheckReq.o \
 		rtcpd_ClientListen.o rtcpd_Ctape.o rtcpd_Disk.o \
 		rtcpd_MainCntl.o rtcpd_SelfMonitor.o rtcpd_Tape.o \
 		rtcpd_TapeIO.o rtcp_InitNW.o \
-		rtcpc_BuildReq.o rtcpapi.o rtcp_RetvalSHIFT.o \
+		rtcpc_BuildReq.o rtcpapi.o \
 		rtcpd_tpdump.o rtcp_recvRtcpHdr.o \
 		rtcp_marshallVdqmClientInfoMsg.o \
 		rtcpd_SendAckToVdqmOrTapeBridge.o \
