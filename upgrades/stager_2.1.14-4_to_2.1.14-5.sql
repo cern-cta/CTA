@@ -403,7 +403,6 @@ CREATE INDEX I_CF_tapeStatus_null ON CastorFile (decode(nvl(tapeStatus, -1), -1,
 DECLARE
   varUnused NUMBER;
 BEGIN
-  -- go for a run of 10,000 files: this takes about 5 seconds
   FOR f IN (SELECT /*+ INDEX(f I_CF_tapeStatus_null) */ fileid, id
               FROM CastorFile
              WHERE decode(nvl(tapeStatus, -1), -1, -1, NULL) = -1) LOOP
@@ -421,7 +420,7 @@ BEGIN
       -- CastorFile has disappeared in the meantime or the file has no segment, meaning
       -- it is being created (cannot be DiskOnly as previous bug is RECALL related).
       -- Even in case of a second bug that would make the previous statement wrong,
-      -- we do not take any risk and we do not touche these files.
+      -- we do not take any risk and we do not touch these files.
       -- Conclusion : nothing to do here.
       NULL;
     END;
@@ -609,23 +608,122 @@ BEGIN
 END;
 /
 
-
-/* Recompile all invalid procedures, triggers and functions */
-/************************************************************/
+/* Procedure responsible for rebalancing one given filesystem by moving away
+ * the given amount of data */
+CREATE OR REPLACE PROCEDURE rebalance(inFsId IN INTEGER, inDataAmount IN INTEGER,
+                                      inDestSvcClassId IN INTEGER,
+                                      inDiskServerName IN VARCHAR2, inMountPoint IN VARCHAR2) AS
+  CURSOR DCcur IS
+    SELECT /*+ FIRST_ROWS_10 */
+           DiskCopy.id, DiskCopy.diskCopySize, CastorFile.id, CastorFile.nsOpenTime
+      FROM DiskCopy, CastorFile
+     WHERE DiskCopy.fileSystem = inFsId
+       AND DiskCopy.status = dconst.DISKCOPY_VALID
+       AND CastorFile.id = DiskCopy.castorFile;
+  varDcId INTEGER;
+  varDcSize INTEGER;
+  varCfId INTEGER;
+  varNsOpenTime INTEGER;
+  varTotalRebalanced INTEGER := 0;
+  varNbFilesRebalanced INTEGER := 0;
 BEGIN
-  FOR a IN (SELECT object_name, object_type
-              FROM user_objects
-             WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY')
-               AND status = 'INVALID')
+  -- disk to disk copy files out of this node until we reach inDataAmount
+  -- "rebalancing : starting" message
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.REBALANCING_START, 0, '', 'stagerd',
+           'DiskServer=' || inDiskServerName || ' mountPoint=' || inMountPoint ||
+           ' dataTomove=' || TO_CHAR(inDataAmount));
+  -- Loop on candidates until we can lock one
+  OPEN DCcur;
   LOOP
-    IF a.object_type = 'PACKAGE BODY' THEN a.object_type := 'PACKAGE'; END IF;
+    -- Fetch next candidate
+    FETCH DCcur INTO varDcId, varDcSize, varCfId, varNsOpenTime;
+    varTotalRebalanced := varTotalRebalanced + varDcSize;
+    varNbFilesRebalanced := varNbFilesRebalanced + 1;
+    -- stop if it would be too much
+    IF varTotalRebalanced > inDataAmount THEN EXIT; END IF;
+    -- create disk2DiskCopyJob for this diskCopy
+    createDisk2DiskCopyJob(varCfId, varNsOpenTime, inDestSvcClassId,
+                           0, 0, dconst.REPLICATIONTYPE_REBALANCE,
+                           varDcId, NULL, FALSE);
+  END LOOP;
+  CLOSE DCcur;
+  -- "rebalancing : stopping" message
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.REBALANCING_STOP, 0, '', 'stagerd',
+           'DiskServer=' || inDiskServerName || ' mountPoint=' || inMountPoint ||
+           ' dataMoveTriggered=' || TO_CHAR(varTotalRebalanced) ||
+           ' nbFileMovesTriggered=' || TO_CHAR(varNbFilesRebalanced));
+END;
+/
+
+/* handle the creation of the Disk2DiskCopyJobs for the running drainingJobs */
+CREATE OR REPLACE PROCEDURE drainRunner AS
+  varNbFiles INTEGER;
+  varNbBytes INTEGER;
+  varNbRunningJobs INTEGER;
+  varMaxNbOfSchedD2dPerDrain INTEGER;
+  varUnused INTEGER;
+BEGIN
+  -- get maxNbOfSchedD2dPerDrain
+  varMaxNbOfSchedD2dPerDrain := TO_NUMBER(getConfigOption('Draining', 'MaxNbSchedD2dPerDrain', '1000'));
+  -- loop over draining jobs
+  FOR dj IN (SELECT id, fileSystem, svcClass, fileMask, euid, egid
+               FROM DrainingJob WHERE status = dconst.DRAININGJOB_RUNNING) LOOP
+    DECLARE
+      CONSTRAINT_VIOLATED EXCEPTION;
+      PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
     BEGIN
-      EXECUTE IMMEDIATE 'ALTER ' ||a.object_type||' '||a.object_name||' COMPILE';
-    EXCEPTION WHEN OTHERS THEN
-      -- ignore, so that we continue compiling the other invalid items
-      NULL;
+      -- lock the draining Job first
+      SELECT id INTO varUnused FROM DrainingJob WHERE id = dj.id FOR UPDATE;
+      -- check how many disk2DiskCopyJobs are already running for this draining job
+      SELECT count(*) INTO varNbRunningJobs FROM Disk2DiskCopyJob WHERE drainingJob = dj.id;
+      -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running
+      -- ones into account. Also take the most important jobs first
+      logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_REFILL, 0, '', 'stagerd',
+               'svcClass=' || getSvcClassName(dj.svcClass) || ' DrainReq=' ||
+               TO_CHAR(dj.id) || ' MaxNewJobsCount=' || TO_CHAR(varMaxNbOfSchedD2dPerDrain-varNbRunningJobs));
+      varNbFiles := 0;
+      varNbBytes := 0;
+      FOR F IN (SELECT * FROM
+                 (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
+                    FROM DiskCopy, CastorFile
+                   WHERE DiskCopy.fileSystem = dj.fileSystem
+                     AND CastorFile.id = DiskCopy.castorFile
+                     AND ((dj.fileMask = dconst.DRAIN_FILEMASK_NOTONTAPE AND
+                           CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
+                          (dj.fileMask = dconst.DRAIN_FILEMASK_ALL))
+                     AND DiskCopy.status = dconst.DISKCOPY_VALID
+                     AND NOT EXISTS (SELECT 1 FROM Disk2DiskCopyJob WHERE castorFile=CastorFile.id)
+                   ORDER BY DiskCopy.importance DESC)
+                 WHERE ROWNUM <= varMaxNbOfSchedD2dPerDrain-varNbRunningJobs) LOOP
+        createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
+                               dconst.REPLICATIONTYPE_DRAINING, F.dcId, dj.id, FALSE);
+        varNbFiles := varNbFiles + 1;
+        varNbBytes := varNbBytes + F.fileSize;
+      END LOOP;
+      -- commit and update counters
+      UPDATE DrainingJob
+         SET totalFiles = totalFiles + varNbFiles,
+             totalBytes = totalBytes + varNbBytes,
+             lastModificationTime = getTime()
+       WHERE id = dj.id;
+      COMMIT;
+    EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+      -- check that the constraint violated is due to deletion of the drainingJob
+      IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DISK2DISKCOPYJOB_DRAINJOB) violated%' THEN
+        -- give up with this DrainingJob as it was canceled
+        ROLLBACK;
+      ELSE
+        raise;
+      END IF;
     END;
   END LOOP;
+END;
+/
+
+
+/* Recompile all procedures, triggers and functions */
+BEGIN
+  recompileAll();
 END;
 /
 
