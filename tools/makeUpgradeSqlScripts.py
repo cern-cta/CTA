@@ -258,11 +258,15 @@ def extractVersions(component):
         latestVersion = Version('0.0.0-0')
         latestScript = ''
         for script in updateScripts:
-            new = script[:-3].split('_')[3]
-            newVersion = Version(new)
-            if latestVersion < newVersion:
-                latestVersion = newVersion
-                latestScript = script
+            try:
+                new = script[:-3].split('_')[3]
+                newVersion = Version(new)
+                if latestVersion < newVersion:
+                    latestVersion = newVersion
+                    latestScript = script
+            except:
+                # some scripts don't have the standard format, ignore
+                None
         if not latestScript:
             latestVersion = Version(raw_input('latest version for %s (2.1.x-y): ' % component))
     else:
