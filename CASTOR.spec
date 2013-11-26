@@ -3,6 +3,7 @@
 %define name castor
 %define castorVersion __A__.__B__.__C__
 %define castorRelease __D__
+%define castorUnitTest 0
 
 # Partial compilations
 #---------------------
