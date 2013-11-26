@@ -351,6 +351,21 @@ static int rtcp_Transfer(int *s,
       len = 0;
       rtcp_log(LOG_DEBUG,"rtcp_Transfer(): send bodyless message\n");
     }
+    {
+       const int sizeOfMsgHeader = 12;
+       const int totalMsgLen = sizeOfMsgHeader + len;
+       const int nbBytesMarshalled = p - hdrbuf;
+       if(nbBytesMarshalled != totalMsgLen) {
+         rtcp_log(LOG_ERR,
+           "rtcp_Transfer(): length mismatch:"
+           " reqtype=0x%x nbBytesMarshalled=%d totalMsgLen=%d\n",
+           reqtype, nbBytesMarshalled, totalMsgLen);
+         errno = SEINTERNAL;
+         serrno = SEINTERNAL;;
+         return(-1);
+       }
+    }
+
     p = hdrbuf;
     DO_MARSHALL(LONG,p,magic,whereto);
     DO_MARSHALL(LONG,p,reqtype,whereto);
