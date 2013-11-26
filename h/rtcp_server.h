@@ -240,7 +240,6 @@ int rtcpd_stageupdc  (tape_list_t *, file_list_t *);
 int rtcp_CheckReq  (int *, rtcpClientInfo_t *, tape_list_t *);
 int rtcpd_CheckFileReq (file_list_t *);
 int rtcp_CheckReqStructures (int *, rtcpClientInfo_t *, tape_list_t *);
-int rtcp_CallTMS  (tape_list_t *, char *);
 int tellClient  (int *, tape_list_t *, file_list_t *, int);
 int topen  (tape_list_t *, file_list_t *);
 int tclose  (const int, tape_list_t *const, file_list_t *const, const uint32_t);
