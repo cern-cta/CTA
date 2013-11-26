@@ -117,38 +117,3 @@ int rtcp_NewFileList(tape_list_t **tape, file_list_t **newfile,
                               int mode) {
     return(newFileList(tape,newfile,mode));
 }
-
-
-#define DMPTP_INT_OPT(X,Y) { \
-    if ( (X) < 0 ) { \
-        X = strtol(optarg,&dp,10); \
-        if ( dp == NULL || *dp != '\0' ) { \
-            rtcp_log(LOG_ERR, TP006, #Y); \
-            errflg++; \
-        } \
-    } else { \
-        rtcp_log(LOG_ERR, TP018, #Y); \
-        errflg++; \
-    }}
-
-
-#define DMPTP_STR_OPT(X,Y) { \
-    if ( *(X) == '\0' ) { \
-        if ( strlen(optarg) < sizeof((X)) ) strcpy((X),optarg); \
-        else { \
-            rtcp_log(LOG_ERR, TP006, #Y); \
-            errflg++; \
-        } \
-    } else { \
-        rtcp_log(LOG_ERR, TP018, #Y); \
-        errflg++; \
-    }}
-
-#define DUMPSTR(Y,X) {if ( *X != '\0' ) rtcp_log(LOG_DEBUG,"%s%s: %s\n",Y,#X,X);}
-#define DUMPINT(Y,X) {if ( X != -1 ) rtcp_log(LOG_DEBUG,"%s%s: %d\n",Y,#X,X);}
-#define DUMPULONG(Y,X) {if ( X > 0 ) rtcp_log(LOG_DEBUG,"%s%s: %lu\n",Y,#X,X);}
-#define DUMPBLKID(Y,X) {rtcp_log(LOG_DEBUG,"%s%s: %d:%d:%d:%d\n",Y,#X,(int)X[0],(int)X[1],(int)X[2],(int)X[3]);}
-#define DUMPUUID(Y,X) {char *__p; rtcp_log(LOG_DEBUG,"%s%s: %s\n",Y,#X,((__p = CuuidToString(X)) == NULL ? "(null)" : __p));if ( __p != NULL ) free(__p);} 
-#define DUMPHEX(Y,X) {if ( X != -1 ) rtcp_log(LOG_DEBUG,"%s%s: 0x%x\n",Y,#X,X);}
-#define DUMPI64(Y,X) {if ( X > 0 ) rtcp_log(LOG_DEBUG,"%s%s: %llu\n",Y,#X,(u_signed64)X);}
-#define DUMPX64(Y,X) {if ( X > 0 ) rtcp_log(LOG_DEBUG,"%s%s: 0x%llx\n",Y,#X,(u_signed64)X);}
