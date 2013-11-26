@@ -601,7 +601,7 @@ namespace UnitTests {
   
   TEST(castor_tape_SCSI_Structures, toU64) {
     unsigned char num[8] = { 0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xFA, 0xDE };
-    ASSERT_EQ ( 0xDEADBEEFCAFEFADEU, castor::tape::SCSI::Structures::toU64(num));
+    ASSERT_EQ ( 0xDEADBEEFCAFEFADEULL, castor::tape::SCSI::Structures::toU64(num));
   }
   
   TEST(castor_tape_SCSI_Structures, Exception) {

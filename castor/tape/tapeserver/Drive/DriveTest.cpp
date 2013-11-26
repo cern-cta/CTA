@@ -272,10 +272,10 @@ TEST(castor_tape_drives_Drive, getCompressionAndClearCompressionStats) {
 
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           comp = drive->getCompression();
-          ASSERT_EQ(0xABCDEF1122334455U, comp.fromHost);
-          ASSERT_EQ(0x2233445566778899U, comp.toHost);
-          ASSERT_EQ(0x99AABBCCDDEEFF11U, comp.fromTape);
-          ASSERT_EQ(0x1122334455667788U, comp.toTape);
+          ASSERT_EQ(0xABCDEF1122334455ULL, comp.fromHost);
+          ASSERT_EQ(0x2233445566778899ULL, comp.toHost);
+          ASSERT_EQ(0x99AABBCCDDEEFF11ULL, comp.fromTape);
+          ASSERT_EQ(0x1122334455667788ULL, comp.toTape);
 
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           drive->clearCompressionStats();
@@ -294,10 +294,10 @@ TEST(castor_tape_drives_Drive, getCompressionAndClearCompressionStats) {
 
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           comp = drive->getCompression();
-          ASSERT_EQ(0x4488CD1000U, comp.fromHost);
-          ASSERT_EQ(0x15599DE2000U, comp.toHost);
-          ASSERT_EQ(0x377BBFC4400U, comp.fromTape);
-          ASSERT_EQ(0x266AAEF3000U, comp.toTape);
+          ASSERT_EQ(0x4488CD1000ULL, comp.fromHost);
+          ASSERT_EQ(0x15599DE2000ULL, comp.toHost);
+          ASSERT_EQ(0x377BBFC4400ULL, comp.fromTape);
+          ASSERT_EQ(0x266AAEF3000ULL, comp.toTape);
 
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           drive->clearCompressionStats();
@@ -316,10 +316,10 @@ TEST(castor_tape_drives_Drive, getCompressionAndClearCompressionStats) {
 
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           comp = drive->getCompression();
-          ASSERT_EQ(0x209DB2BE187D9U, comp.fromHost);
-          ASSERT_EQ(0x105707026D088U, comp.toHost);
-          ASSERT_EQ(0x928C54DFC8A11U, comp.fromTape);
-          ASSERT_EQ(0xA2D3009B64262U, comp.toTape);
+          ASSERT_EQ(0x209DB2BE187D9ULL, comp.fromHost);
+          ASSERT_EQ(0x105707026D088ULL, comp.toHost);
+          ASSERT_EQ(0x928C54DFC8A11ULL, comp.fromTape);
+          ASSERT_EQ(0xA2D3009B64262ULL, comp.toTape);
 
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           drive->clearCompressionStats();
