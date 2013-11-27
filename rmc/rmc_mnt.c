@@ -61,7 +61,7 @@ int rmc_mnt(
 	case RMC_LOADER_TYPE_SMC:
 		return rmc_smc_mnt(server, vid, drive);
 	default:
-		errno = ERMCUNREC;
+		errno = ERMCUKNLDRTYPE; /* Unknown loader type */
 		serrno = errno;
 		return -1;
 	}
@@ -88,25 +88,29 @@ static int rmc_acs_mnt(
 	char rmc_host[CA_MAXHOSTNAMELEN+1];
 	struct rmc_acs_drive_id drive_id = {0, 0, 0, 0};
 
-	/* Consider the function arguments invalid if the total size of the */
-	/* request message would be greater than RMC_REQBUFSZ               */
-	if(msglen > RMC_REQBUFSZ) {
-		errno = ERMCUNREC;
-		serrno = errno;
-		return -1;
-	}
-
 	if(CA_MAXVIDLEN < strlen(vid)) {
-		errno = ERMCUNREC;
+		errno = ERMCVIDTOOLONG; /* VID is too long */
 		serrno = errno;
 		return -1;
 	}
 
 	if(rmc_get_rmc_host_of_drive(drive, rmc_host, sizeof(rmc_host))) {
+		errno = ERMCPARSERMCHOST; /* Failed to parse RMC host */
+		serrno = errno;
 		return -1;
 	}
 
 	if(rmc_get_acs_drive_id(drive, &drive_id)) {
+		errno = ERMCPARSEACSDRV; /* Failed to parse ACS drive id */
+		serrno = errno;
+		return -1;
+	}
+
+	/* It is an internal error if the total size of the request message */
+	/* would be greater than RMC_REQBUFSZ                               */
+	if(msglen > RMC_REQBUFSZ) {
+		errno = SEINTERNAL;
+		serrno = errno;
 		return -1;
 	}
 

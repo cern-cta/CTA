@@ -28,7 +28,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
-#include "castor/exception/MountFailed.hpp"
+#include "castor/tape/rmc/Cmd.hpp"
 #include "castor/tape/rmc/MountCmdLine.hpp"
 
 #include <stdint.h>
@@ -40,7 +40,7 @@ namespace rmc {
 /**
  * The class implementing the mount command.
  */
-class MountCmd {
+class MountCmd: public Cmd {
 public:
 
   /**
@@ -101,6 +101,7 @@ private:
    * success or failure.
    */
   const int m_defaultTimeout;
+
 }; // class MountCmd
 
 } // namespace rmc

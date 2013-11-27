@@ -33,7 +33,7 @@
 //------------------------------------------------------------------------------
 castor::tape::rmc::MountCmd::MountCmd(std::istream &inStream,
   std::ostream &outStream, std::ostream &errStream) throw():
-  m_defaultTimeout(600) {
+  Cmd(inStream, outStream, errStream), m_defaultTimeout(600) {
 }
 
 //------------------------------------------------------------------------------
@@ -106,9 +106,6 @@ castor::tape::rmc::MountCmdLine castor::tape::rmc::MountCmd::parseCmdLine(
   MountCmdLine cmdLine;
   char c;
 
-  // Set the query option to the default value
-  cmdLine.queryInterval = m_defaultQueryInterval;
-
   // Set timeout option to the default value
   cmdLine.timeout = m_defaultTimeout;
 
@@ -125,7 +122,7 @@ castor::tape::rmc::MountCmdLine castor::tape::rmc::MountCmd::parseCmdLine(
       cmdLine.help = true;
       break;
     case 'r':
-      cmdLine.readOnly = TRUE;
+      cmdLine.readOnly = true;
       break;
     case 't':
       cmdLine.timeout = atoi(optarg);

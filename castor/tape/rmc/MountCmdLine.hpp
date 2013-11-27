@@ -38,7 +38,7 @@ struct MountCmdLine {
   /**
    * Constructor.
    *
-   * Initialises all BOOLEAN member-variables to FALSE, all integer
+   * Initialises all bool member-variables to false, all integer
    * member-variables to 0 and the volume identifier to an empty string.
    */
   MountCmdLine() throw();
@@ -56,7 +56,7 @@ struct MountCmdLine {
   /**
    * True if the tape is to be mount for read-only access.
    */
-  BOOLEAN readOnly;
+  bool readOnly;
 
   /**
    * Time in seconds to wait for the mount to conclude.

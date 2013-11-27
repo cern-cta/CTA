@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/MountMain.cpp
+ *                 castor/tape/rmc/Cmd.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,17 +21,27 @@
  *
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
- 
-#include "castor/tape/rmc/MountCmd.hpp"
 
-#include <iostream>
+#include "castor/tape/rmc/Cmd.hpp"
 
 //------------------------------------------------------------------------------
-// main
+// constructor
 //------------------------------------------------------------------------------
-int main(const int argc, char *const *const argv) {
+castor::tape::rmc::Cmd::Cmd(std::istream &inStream,
+  std::ostream &outStream, std::ostream &errStream) throw():
+  m_in(inStream), m_out(outStream), m_err(errStream), m_debugBuf(outStream),
+  m_dbg(&m_debugBuf) {
+}
 
-  castor::tape::rmc::MountCmd cmd(std::cin, std::cout, std::cerr);
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::tape::rmc::Cmd::~Cmd() throw() {
+}
 
-  return cmd.main(argc, argv);
+//------------------------------------------------------------------------------
+// bool2Str
+//------------------------------------------------------------------------------
+std::string castor::tape::rmc::Cmd::bool2Str(const bool value) const throw() {
+  return value ? "TRUE" : "FALSE";
 }

@@ -32,8 +32,7 @@
 //------------------------------------------------------------------------------
 castor::tape::rmc::AcsCmd::AcsCmd(std::istream &inStream,
   std::ostream &outStream, std::ostream &errStream, Acs &acs) throw():
-  m_in(inStream), m_out(outStream), m_err(errStream), m_acs(acs),
-  m_debugBuf(outStream), m_dbg(&m_debugBuf) {
+  Cmd(inStream, outStream, errStream), m_acs(acs) {
 }
 
 //------------------------------------------------------------------------------
@@ -45,25 +44,9 @@ castor::tape::rmc::AcsCmd::~AcsCmd() throw() {
 //------------------------------------------------------------------------------
 // bool2Str
 //------------------------------------------------------------------------------
-std::string castor::tape::rmc::AcsCmd::bool2Str(bool &value) const
+std::string castor::tape::rmc::AcsCmd::bool2Str(const BOOLEAN value) const
   throw() {
-  if(value) {
-    return "TRUE";
-  } else {
-    return "FALSE";
-  }
-}
-
-//------------------------------------------------------------------------------
-// bool2Str
-//------------------------------------------------------------------------------
-std::string castor::tape::rmc::AcsCmd::bool2Str(BOOLEAN &value) const
-  throw() {
-  if(value) {
-    return "TRUE";
-  } else {
-    return "FALSE";
-  }
+  return value ? "TRUE" : "FALSE";
 }
 
 //------------------------------------------------------------------------------

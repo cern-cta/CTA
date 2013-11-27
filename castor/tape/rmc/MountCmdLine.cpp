@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/MountMain.cpp
+ *                 castor/tape/rmc/MountCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,17 +21,15 @@
  *
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
- 
-#include "castor/tape/rmc/MountCmd.hpp"
 
-#include <iostream>
+#include "castor/tape/rmc/MountCmdLine.hpp"
 
-//------------------------------------------------------------------------------
-// main
-//------------------------------------------------------------------------------
-int main(const int argc, char *const *const argv) {
-
-  castor::tape::rmc::MountCmd cmd(std::cin, std::cout, std::cerr);
-
-  return cmd.main(argc, argv);
+//-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::tape::rmc::MountCmdLine::MountCmdLine() throw():
+  debug(false),
+  help(false),
+  readOnly(false),
+  timeout(0) {
 }
