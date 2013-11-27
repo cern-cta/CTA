@@ -74,7 +74,6 @@ namespace castor{
         /* DLF_LVL_ERROR */
         STAGER_SERVICES_EXCEPTION = 71, /*Impossible to get the Service" */
         STAGER_SVCCLASS_EXCEPTION = 72, /*Impossible to get the SvcClass" */
-        STAGER_USER_INVALID = 73, /*Invalid user" */
         STAGER_USER_PERMISSION = 74, /*User doenst have the right permission" */
         STAGER_USER_NONFILE = 75, /*User asking for a Non Existing File" */
         STAGER_INVALID_FILESYSTEM = 76, /*Invalid fileSystem" */

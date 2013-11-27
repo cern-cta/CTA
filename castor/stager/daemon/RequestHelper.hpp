@@ -89,9 +89,9 @@ namespace castor {
         castor::stager::SvcClass* svcClass;
         castor::stager::CastorFile* castorFile;
 
-        // resolved username and groupname        
-        std::string username;
-        std::string groupname;
+        // user and group id
+        uid_t euid;
+        gid_t egid;
       
         // for logging purposes
         Cuuid_t subrequestUuid;
@@ -131,12 +131,6 @@ namespace castor {
          * @throw exception in case of any database error
          */
         void getCastorFile() throw(castor::exception::Exception);
-
-        /**
-         * Extracts the username and groupname from uid,gid
-         * @throw exception in case of invalid user
-         */
-        void setUsernameAndGroupname() throw(castor::exception::Exception);
 
         /**
          * Logs a standard message to DLF including all needed info (e.g. filename, svcClass, etc.)

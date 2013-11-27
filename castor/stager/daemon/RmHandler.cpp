@@ -29,10 +29,6 @@ namespace castor{
 
       bool RmHandler::handle() throw(castor::exception::Exception)
       {
-        // We completely override the inherited behavior
-        // set the username and groupname for logging
-        reqHelper->setUsernameAndGroupname();
-        
         // stat the file in the nameserver
         reqHelper->statNameServerFile();
         

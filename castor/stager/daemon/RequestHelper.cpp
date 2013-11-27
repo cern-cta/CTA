@@ -47,7 +47,7 @@ namespace castor {
       RequestHelper::RequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest)
         throw(castor::exception::Exception) :
         stagerService(0), dbSvc(0), baseAddr(0), subrequest(subRequestToProcess),
-        fileRequest(0), svcClass(0), castorFile(0) {
+        fileRequest(0), svcClass(0), castorFile(0), euid(0), egid(0) {
 
         try{
           // for monitoring purposes
@@ -78,6 +78,8 @@ namespace castor {
           memset(&cnsFileid, 0, sizeof(cnsFileid));
           memset(&cnsFilestat, 0, sizeof(cnsFilestat));
           m_stagerOpenTimeInUsec = 0;
+          euid = fileRequest->euid();
+          egid = fileRequest->egid();
         }
         catch(castor::exception::Exception& e){
           // should never happen: the db service is initialized in the main as well
@@ -103,8 +105,8 @@ namespace castor {
             castor::dlf::Param(subrequestUuid),
             castor::dlf::Param("Type", castor::ObjectsIdStrings[fileRequest->type()]),
             castor::dlf::Param("Filename", subrequest->fileName()),
-            castor::dlf::Param("Username", username),
-            castor::dlf::Param("Groupname", groupname),
+            castor::dlf::Param("uid", euid),
+            castor::dlf::Param("gid", egid),
             castor::dlf::Param("SvcClass", fileRequest->svcClassName()),
             castor::dlf::Param("ProcessingTime", procTime * 0.000001)
           };
@@ -133,55 +135,12 @@ namespace castor {
                              ((unsigned)fileRequest->type() < castor::ObjectsIdsNb ?
                               castor::ObjectsIdStrings[fileRequest->type()] : "Unknown")),
           castor::dlf::Param("Filename", subrequest->fileName()),
-          castor::dlf::Param("Username", username),
-          castor::dlf::Param("Groupname", groupname),
+          castor::dlf::Param("uid", euid),
+          castor::dlf::Param("gid", egid),
           castor::dlf::Param("SvcClass", fileRequest->svcClassName())
         };
         castor::dlf::dlf_writep(requestUuid, level, messageNb, 6, params, fid);
       }
-
-
-      /* set the username and groupname string versions */
-      void RequestHelper::setUsernameAndGroupname() throw(castor::exception::Exception){
-        struct passwd *this_passwd = 0;
-        struct group *this_gr = 0;
-        try{
-          uid_t euid = fileRequest->euid();
-          uid_t egid = fileRequest->egid();
-
-          if ((this_passwd = Cgetpwuid(euid)) == NULL) {
-            castor::exception::Exception ex(serrno);
-            ex.getMessage() << "Cgetpwuid failed for uid " << euid << " : " << sstrerror(serrno);
-            throw ex;
-          }
-
-          if (egid != this_passwd->pw_gid) {
-            castor::exception::Exception ex(SEINTERNAL);
-            ex.getMessage() << "The given gid does not match passwd.gid";
-            throw ex;
-          }
-
-          if ((this_gr = Cgetgrgid(egid)) == NULL) {
-            castor::exception::Exception ex(serrno);
-            ex.getMessage() << "Cgetgrgid failed for gid " << egid << " : " << sstrerror(serrno);
-            throw ex;
-          }
-
-          username = this_passwd->pw_name;
-          groupname = this_gr->gr_name;
-        } catch(castor::exception::Exception& e) {
-          castor::dlf::Param params[] = {
-            castor::dlf::Param("Filename", subrequest->fileName()),
-            castor::dlf::Param("Euid", fileRequest->euid()),
-            castor::dlf::Param("Egid", fileRequest->egid()),
-            castor::dlf::Param("Function", "RequestHelper::setUsernameAndGroupname"),
-            castor::dlf::Param("PreciseMessage", e.getMessage().str())};
-          castor::dlf::dlf_writep(requestUuid, DLF_LVL_USER_ERROR, STAGER_USER_INVALID, 5, params);
-          e.getMessage() << "Invalid user";
-          throw e;
-        }
-      }
-
 
       void RequestHelper::resolveSvcClass() throw(castor::exception::Exception) {
         // XXX we're still using fillObj here, a single db method
@@ -295,8 +254,8 @@ namespace castor {
                                ((unsigned)fileRequest->type() < castor::ObjectsIdsNb ?
                                 castor::ObjectsIdStrings[fileRequest->type()] : "Unknown")),
             castor::dlf::Param("Filename", subrequest->fileName()),
-            castor::dlf::Param("Username", username),
-            castor::dlf::Param("Groupname", groupname),
+            castor::dlf::Param("uid", euid),
+            castor::dlf::Param("gid", egid),
             castor::dlf::Param("Flags", subrequest->flags()),
             castor::dlf::Param("Function", "Cns_openx"),
             castor::dlf::Param("Error", sstrerror(ex.code()))

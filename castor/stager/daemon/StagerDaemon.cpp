@@ -220,7 +220,6 @@ castor::stager::daemon::StagerDaemon::StagerDaemon(std::ostream &stdOut,
     /* DLF_LVL_ERROR */
     { STAGER_SERVICES_EXCEPTION, "Impossible to get the Service"},
     { STAGER_SVCCLASS_EXCEPTION, "Impossible to get the SvcClass"},
-    { STAGER_USER_INVALID, "Invalid user"},
     { STAGER_USER_PERMISSION, "User doesn't have the right permission"},
     { STAGER_USER_NONFILE, "User asking for a non existing file"},
     { STAGER_INVALID_FILESYSTEM, "Invalid fileSystem"},

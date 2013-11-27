@@ -81,8 +81,8 @@ namespace castor{
                                ((unsigned)reqHelper->fileRequest->type() < castor::ObjectsIdsNb ?
                                 castor::ObjectsIdStrings[reqHelper->fileRequest->type()] : "Unknown")),
             castor::dlf::Param("Filename", reqHelper->subrequest->fileName()),
-            castor::dlf::Param("Username", reqHelper->username),
-            castor::dlf::Param("Groupname", reqHelper->groupname),
+            castor::dlf::Param("uid", reqHelper->euid),
+            castor::dlf::Param("gid", reqHelper->egid),
             castor::dlf::Param("SvcClass", reqHelper->svcClass->name()),
             castor::dlf::Param("Weight", setGCWeightReq->weight())
           };
