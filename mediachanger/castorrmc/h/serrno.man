@@ -838,7 +838,7 @@ The following error values are returned only by the Remote SCSI media changer se
 (2211) Remote SCSI media changer error (unload + demount)
 .TP
 .B ERMCUKNLDRTYPE
-(2212) Unknown loader type
+(2212) Unknown drive-loader type
 .TP
 .B ERMCVIDTOOLONG
 (2213) VID is too long
