@@ -2,5 +2,5 @@ Cluster:
   castordev/client
 
 Example:
-  STAGER_TRACE=0 rfio --basedir /castor/cern.ch/user/s/sponcec3/tape/stress2114 --stager castorcert5-lb --svcclass largedisk2 --nbthreads 20 --nbreads 1 --delay 0 --nbiterations 0 
+  STAGER_TRACE=0 c2stress --basedir /castor/cern.ch/user/s/sponcec3/tape/stress2114 --stager castorcert5-lb --svcclass largedisk2 --nbthreads 20 --nbreads 1 --delay 0 --nbiterations 0 
 
