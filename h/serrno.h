@@ -421,7 +421,7 @@
 #define	ERMCOMSGR	ERMCRBTERR+8	/* Remote SCSI media changer error (ops message + wait) */
 #define	ERMCUNLOAD	ERMCRBTERR+9	/* Remote SCSI media changer error (unload + demount) */
 
-#define ERMCUKNLDRTYPE   ERMBASEOFF+12 /* Unknown loader type */
+#define ERMCUKNLDRTYPE   ERMBASEOFF+12 /* Unknown drive-loader type */
 #define ERMCVIDTOOLONG   ERMBASEOFF+13 /* VID is too long */
 #define ERMCPARSERMCHOST ERMBASEOFF+14 /* Failed to parse RMC host */
 #define ERMCPARSEACSDRV  ERMBASEOFF+15 /* Failed to parse ACS drive id */
