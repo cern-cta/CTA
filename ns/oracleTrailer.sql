@@ -747,30 +747,6 @@ BEGIN
 END;
 /
 
-/* This procedure is used by repack to update the new 2.1.14 metadata (file.stagerTime, seg.creationTime,
- * seg.lastAccessTime, seg.gid) should they be missing. It shall be dropped on 2.1.15 after dropping
- * the compatibility mode code. The NS post-upgrade script runs a job that populates the same data
- * for all files.
- */
-CREATE OR REPLACE PROCEDURE update2114Data(inVid IN VARCHAR2) AS
-  PRAGMA AUTONOMOUS_TRANSACTION;
-BEGIN
-  FOR f IN (SELECT fileid, mtime, f.gid FROM Cns_file_metadata f, Cns_seg_metadata s
-                         WHERE f.fileid = s.s_fileid AND s.vid = inVid
-                           AND f.stagertime IS NULL) LOOP
-    UPDATE Cns_file_metadata
-       SET stagerTime = mtime
-     WHERE fileid = f.fileid;
-    UPDATE Cns_seg_metadata
-       SET creationTime = f.mtime,
-           lastModificationTime = f.mtime,
-           gid = f.gid
-     WHERE s_fileid = f.fileid;
-    COMMIT;
-  END LOOP;
-END;
-/
-
 CREATE OR REPLACE PROCEDURE insertNSStats(inGid IN INTEGER, inTimestamp IN NUMBER,
                                           inMaxFileId IN INTEGER, inFileCount IN INTEGER, inFileSize IN INTEGER,
                                           inSegCount IN INTEGER, inSegSize IN INTEGER, inSegCompressedSize IN INTEGER,
@@ -814,7 +790,6 @@ BEGIN
                    SUM(segSize) segSize, COUNT(*) segCount
               FROM Cns_seg_metadata
              WHERE creationTime < varTimestamp
-               AND gid IS NOT NULL    -- XXX this will be dropped once the post-upgrade phase is completed
              GROUP BY gid, copyNo) LOOP
     IF g.copyNo = 1 THEN
       insertNSStats(g.gid, varTimestamp, 0, 0, 0, g.segCount, g.segSize, g.segComprSize, 0, 0, 0);

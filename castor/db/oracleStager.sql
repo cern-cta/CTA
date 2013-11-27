@@ -3414,14 +3414,12 @@ BEGIN
     END IF;
   END;
 
-  -- We should actually check whether our disk cache is stale,
-  -- that is IF CF.nsOpenTime < inNsOpenTime THEN invalidate our diskcopies.
-  -- This is pending the full deployment of the 'new open mode' as implemented
-  -- in the fix of bug #95189: Time discrepencies between
-  -- disk servers and name servers can lead to silent data loss on input.
-  -- The problem being that in 'Compatibility' mode inNsOpenTime is the
-  -- namespace's mtime, which can be modified by nstouch,
-  -- hence nstouch followed by a Get would destroy the data on disk!
+  -- Check whether our disk cache is stale
+  IF varNsOpenTime < inNsOpenTimeInUsec/1000000 THEN
+    -- yes, invalidate our diskcopies. This may later trigger a recall.
+    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+     WHERE status = dconst.DISKCOPY_VALID AND castorFile = inCfId;
+  END IF;
 
   -- Look for available diskcopies. The status is needed for the
   -- internal replication processing, and only if count = 1, hence

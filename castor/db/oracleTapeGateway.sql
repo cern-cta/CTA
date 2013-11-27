@@ -452,24 +452,15 @@ CREATE OR REPLACE FUNCTION checkRecallInNS(inCfId IN INTEGER,
   varNSSize INTEGER;
   varNSCsumtype VARCHAR2(2048);
   varNSCsumvalue VARCHAR2(2048);
-  varOpenMode CHAR(1);
 BEGIN
-  -- retrieve data from the namespace: note that if stagerTime is (still) NULL,
-  -- we're still in compatibility mode and we resolve to using mtime.
-  -- To be dropped in 2.1.15 where stagerTime is NOT NULL by design.
-  -- Note the truncation of stagerTime to 5 digits. This is needed for consistency with
-  -- the stager code that uses the OCCI api and thus loses precision when recuperating
-  -- 64 bits integers into doubles (lack of support for 64 bits numbers in OCCI)
-  SELECT NVL(TRUNC(stagertime,5), mtime), csumtype, csumvalue, filesize
+  -- retrieve data from the namespace: note the truncation of stagerTime to 5 digits.
+  -- This is needed for consistency with the stager code that uses the OCCI API and thus
+  -- loses precision when recuperating 64 bits integers into doubles
+  -- (lack of support for 64 bits numbers in OCCI).
+  SELECT TRUNC(stagerTime,5), csumtype, csumvalue, filesize
     INTO varNSOpenTime, varNSCsumtype, varNSCsumvalue, varNSSize
     FROM Cns_File_Metadata@RemoteNS
    WHERE fileid = inFileId;
-  -- check open mode: in compatibility mode we still have only seconds precision,
-  -- hence the NS open time has to be truncated prior to comparing it with our time.
-  varOpenMode := getConfigOption@RemoteNS('stager', 'openmode', NULL);
-  IF varOpenMode = 'C' THEN
-    varNSOpenTime := TRUNC(varNSOpenTime);
-  END IF;
   -- was the file overwritten in the meantime ?
   IF varNSOpenTime > inLastOpenTime THEN
     -- yes ! reset it and thus restart the recall from scratch
@@ -1387,17 +1378,12 @@ CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHA
   varNSParams strListTable;
   varParams VARCHAR2(4000);
   varNbSentToNS INTEGER := 0;
-  -- for the compatibility mode, to be dropped in 2.1.15
-  varOpenMode CHAR(1);
   varLastUpdateTime INTEGER;
 BEGIN
   varStartTime := SYSTIMESTAMP;
   varReqId := uuidGen();
   -- Get the NS host name
   varNsHost := getConfigOption('stager', 'nsHost', '');
-  -- Get the NS open mode: if compatibility, then CF.lastUpdTime is to be used for the
-  -- concurrent modifications check like in 2.1.13, else the new CF.nsOpenTime column is used.
-  varOpenMode := getConfigOption@RemoteNS('stager', 'openmode', NULL);
   FOR i IN inFileTrIds.FIRST .. inFileTrIds.LAST LOOP
     BEGIN
       -- Collect additional data. Note that this is NOT bulk
@@ -1410,10 +1396,6 @@ BEGIN
          AND MJ.mountTransactionId = inMountTrId
          AND MJ.fileTransactionId = inFileTrIds(i)
          AND status = tconst.MIGRATIONJOB_SELECTED;
-      -- Use the correct timestamp in case of compatibility mode
-      IF varOpenMode = 'C' THEN
-        varNsOpenTime := varLastUpdateTime;
-      END IF;
         -- Store in a temporary table, to be transfered to the NS DB
       IF inErrorCodes(i) = 0 THEN
         -- Successful migration

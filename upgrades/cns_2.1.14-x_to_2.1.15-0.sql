@@ -65,15 +65,15 @@ END;
 
 
 INSERT INTO UpgradeLog (schemaVersion, release, type)
-VALUES ('2_1_15_0', '2_1_15_0', 'NON TRANSPARENT');
+VALUES ('2_1_15_0', '2_1_15_0', 'TRANSPARENT');
 COMMIT;
 
 -- Not needed any longer
 DELETE FROM CastorConfig WHERE key = 'openmode';
 DROP PROCEDURE update2114Data;
 
--- enforce constraint on stagerTime. This was to be done as part of the post 2.1.14 upgrade phase, but it is not a transparent operation...
-ALTER TABLE Cns_file_metadata MODIFY (stagerTime CONSTRAINT NN_File_stagerTime NOT NULL);
+-- enforce constraint on stagerTime. NOVALIDATE makes the operation transparent.
+ALTER TABLE Cns_file_metadata MODIFY (stagerTime CONSTRAINT NN_File_stagerTime NOT NULL NOVALIDATE);
 
 
 /* PL/SQL code update */
@@ -85,3 +85,4 @@ ALTER TABLE Cns_file_metadata MODIFY (stagerTime CONSTRAINT NN_File_stagerTime N
 UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE'
  WHERE release = '2_1_15_0';
 COMMIT;
+
