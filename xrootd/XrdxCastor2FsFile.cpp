@@ -72,7 +72,6 @@ XrdxCastor2FsFile::open(const char*         path,
   static const char* epname = "open";
   const char* tident = error.getErrUser();
   const char* origpath = path;
-  XrdSecEntity mappedclient;
   xcastor::Timing opentiming("fileopen");
   XrdOucString info_str = (ininfo ? ininfo : "");
   const char* info;
@@ -95,8 +94,6 @@ XrdxCastor2FsFile::open(const char*         path,
 
   TIMING("START", &opentiming);
   std::string map_path = gMgr->NsMapping(path);
-  gMgr->RoleMap(client, info, mappedclient, tident);
-  TIMING("MAPPING", &opentiming);
 
   if (map_path == "")
   {
@@ -104,7 +101,9 @@ XrdxCastor2FsFile::open(const char*         path,
     return SFS_ERROR;
   }
 
-  xcastor_debug("open_mode=%x, fn=%s, tident=%s", Mode, map_path.c_str(), tident);
+  TIMING("MAPPING", &opentiming);
+  xcastor_debug("open_mode=%x, fn=%s, tident=%s opaque=%s", 
+                Mode, map_path.c_str(), tident, ininfo);
   xcastor_debug("client->role=%s, client->tident=%s", client->role, client->tident);
 
   // Check if user is coming back for a response after a stall
@@ -241,7 +240,7 @@ XrdxCastor2FsFile::open(const char*         path,
   gid_t client_gid;
   XrdOucString sclient_uid = "";
   XrdOucString sclient_gid = "";
-  gMgr->GetId(map_path.c_str(), mappedclient, client_uid, client_gid);
+  gMgr->GetIdMapping(client, client_uid, client_gid);
   sclient_uid += (int) client_uid;
   sclient_gid += (int) client_gid;
 
@@ -374,7 +373,7 @@ XrdxCastor2FsFile::open(const char*         path,
       if (gMgr->mLogLevel == LOG_DEBUG)
         opentiming.Print();
 
-      return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "async request failed");
+      return XrdxCastor2Fs::Emsg(epname, error, error.getErrInfo(), "async request failed");
 
     }
     else if (status >= SFS_STALL)
@@ -520,7 +519,7 @@ XrdxCastor2FsFile::open(const char*         path,
     std::ostringstream ostreamclient;
     std::ostringstream ostreamserver;
 
-    ostreamclient << allowed_svc << "::" << mappedclient.name;
+    ostreamclient << allowed_svc << "::" << client->name;
     ostreamserver << allowed_svc << "::" << resp_info.mRedirectionHost;
     
     gMgr->Stats.IncServerRdWr(ostreamserver.str().c_str(), isRW);
@@ -537,14 +536,14 @@ XrdxCastor2FsFile::open(const char*         path,
   authz.client_sec_gid = sclient_gid.c_str();
   authz.accessop = aop;
   time_t now = time(NULL);
-  authz.exptime  = (now + gMgr->TokenLockTime);
+  authz.exptime  = (now + gMgr->msTokenLockTime);
   authz.token = "";
   authz.signature = "";
   authz.manager = (char*)gMgr->ManagerId.c_str();
   std::string acc_opaque = "";
 
   // Build and sign the authorization token with the server's private key
-  acc_opaque = gMgr->mServerAcc->GetOpaqueAcc(authz, gMgr->IssueCapability);
+  acc_opaque = gMgr->mServerAcc->GetOpaqueAcc(authz, gMgr->mIssueCapability);
 
   if (acc_opaque.empty())
   {

@@ -60,8 +60,8 @@ XrdxCastor2FsDirectory::open(const char*         dir_path,
                              const char*         info)
 {
   static const char* epname = "open";
-  const char* tident = error.getErrUser();
-  XrdSecEntity mappedclient;
+  uid_t client_uid;
+  gid_t client_gid;
   XrdOucEnv Open_Env(info);
   AUTHORIZE(client, &Open_Env, AOP_Readdir, "open directory", dir_path, error);
   std::string map_dir = gMgr->NsMapping(dir_path) ;
@@ -70,7 +70,7 @@ XrdxCastor2FsDirectory::open(const char*         dir_path,
   if (map_dir == "")
     return XrdxCastor2Fs::Emsg(epname, error, ENOMEDIUM, "map filename", dir_path);
 
-  gMgr->RoleMap(client, info, mappedclient, tident);
+  gMgr->GetIdMapping(client, client_uid, client_gid);
 
   if (gMgr->Proc)
     gMgr->Stats.IncCmd();

@@ -55,16 +55,13 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
   bool xcastor2fsdefined = false;
   bool SubscribeCms = false;
   bool authorize = false;
-  AuthLib = "";
+  XrdOucString auth_lib = ""; ///< path to a possible authorizationn library
   Authorization = 0;
-  IssueCapability = false;
   Procfilesystem = "";
   ProcfilesystemSync = false;
   xCastor2FsTargetPort = "1094";
-  MapCernCertificates = false;
   xCastor2FsDelayRead = 0;
   xCastor2FsDelayWrite = 0;
-  GridMapFile = "";
   long myPort = 0;
   {
     // Borrowed from XrdOfs
@@ -289,45 +286,13 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
               Eroute.Say("=====> xcastor2.proc: ", Procfilesystem.c_str(), " async");
           }
         }
-
-        // TODO: replace with the version below
-        if (!strncmp("role", var, 4))
-        {
-          XrdOucString nsin;
-          XrdOucString nsout;
-          
-          if (!(val = config_stream.GetWord()))
-          {
-            Eroute.Emsg("Config", "argument for role invalid.");
-            NoGo = 1;
-          }
-          else
-            nsin = val;
-          
-          if (!(val = config_stream.GetWord()))
-          {
-            Eroute.Emsg("Config", "argument 2 for role missing.");
-            NoGo = 1;
-          }
-          else
-            nsout = val;
-         
-          XrdOucString sayit;
-          sayit = nsin;
-          sayit += " -> ";
-          sayit += nsout;
-          Eroute.Say("=====> xcastor2.role : ", sayit.c_str(), "");
-          XrdOucString* mnsout = new XrdOucString(nsout.c_str());
-          roletable->Add(nsin.c_str(), mnsout);          
-        }
-
+        
         // Get role map
-        /*
         if (!strncmp("role", var, 4))
         {
           std::string role_key;
           std::string role_value;
-
+          
           if (!(val = config_stream.GetWord()))
           {
             Eroute.Emsg("Config", "argument for role invalid.");
@@ -347,64 +312,59 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
           Eroute.Say("=====> xcastor2.role : ", role_key.c_str(), " -> ", role_value.c_str());
           mRoleMap[role_key] = role_value;
         }
-        */
-      }
-
-      if (!strcmp("capability", var))
-      {
-        if (!(val = config_stream.GetWord()))
+      
+        // Capability
+        if (!strcmp("capability", var))
         {
-          Eroute.Emsg("Config", "argument 2 for capbility missing. Can be true/lazy/1 or false/0");
-          NoGo = 1;
-        }
-        else
-        {
-          if ((!(strcmp(val, "true"))) || (!(strcmp(val, "1"))) || (!(strcmp(val, "lazy"))))
-            IssueCapability = true;
+          if (!(val = config_stream.GetWord()))
+          {
+            Eroute.Emsg("Config", "argument 2 for capbility missing. Can be true/lazy/1 or false/0");
+            NoGo = 1;
+          }
           else
           {
-            if ((!(strcmp(val, "false"))) || (!(strcmp(val, "0"))))
-              IssueCapability = false;
+            if ((!(strcmp(val, "true"))) || (!(strcmp(val, "1"))) || (!(strcmp(val, "lazy"))))
+              mIssueCapability = true;
             else
             {
-              Eroute.Emsg("Config", "argument 2 for capbility invalid. Can be <true>/1 or <false>/0");
+              if ((!(strcmp(val, "false"))) || (!(strcmp(val, "0"))))
+                mIssueCapability = false;
+              else
+              {
+                Eroute.Emsg("Config", "argument 2 for capbility invalid. Can be <true>/1 or <false>/0");
+                NoGo = 1;
+              }
+            }
+          }
+        }
+
+        // Get grace period for clients
+        if (!strcmp("tokenlocktime", var))
+        {
+          if (!(val = config_stream.GetWord()))
+          {
+            Eroute.Emsg("Config", "argument 2 for tokenlocktime missing. "
+                        "Specifies the grace period for a client to show up "
+                        "with a write on a disk server in seconds.");
+            NoGo = 1;
+          }
+          else
+          {
+            msTokenLockTime = atoi(val);
+            
+            if (msTokenLockTime == 0)
+            {
+              Eroute.Emsg("Config", "argument 2 for tokenlocktime is 0/illegal. " 
+                          "Specify the grace period for a client to show up with "
+                          "a write on a disk server in seconds.");
               NoGo = 1;
             }
           }
         }
-      }
-
-      if (!strcmp("tokenlocktime", var))
-      {
-        if (!(val = config_stream.GetWord()))
+        
+        // Get stager map configuration
+        if (!strcmp("stagermap", var))
         {
-          Eroute.Emsg("Config", "argument 2 for writelocktime missing. Specifies the grace period for a client to show up with a write on a disk server in seconds.");
-          NoGo = 1;
-        }
-        else
-        {
-          TokenLockTime = atoi(val);
-
-          if (TokenLockTime == 0)
-          {
-            Eroute.Emsg("Config", "argument 2 for writelocktime is 0/illegal. Specify the grace period for a client to show up with a write on a disk server in seconds.");
-            NoGo = 1;
-          }
-        }
-      }
-
-      // Get stager map configuration
-      if (!strcmp("stagermap", var))
-      {
-        if ((!(val = config_stream.GetWord())))
-        {
-          xcastor_err("stagermap: provide a path and the service class(es) to assign");
-          NoGo = 1;
-        }
-        else
-        {
-          std::string stage_path = val;
-
           if ((!(val = config_stream.GetWord())))
           {
             xcastor_err("stagermap: provide a path and the service class(es) to assign");
@@ -412,80 +372,93 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
           }
           else
           {
-            if (mStageMap.find(stage_path) == mStageMap.end())
+            std::string stage_path = val;
+            
+            if ((!(val = config_stream.GetWord())))
             {
-              std::string list_svc = val;
-              std::istringstream sstr(list_svc);
-              std::set<std::string> set_svc;
-              std::string svc;
-              list_svc = "";
-
-              while (std::getline(sstr, svc, ','))
-              {
-                std::pair<std::set<std::string>::iterator, bool> res = set_svc.insert(svc);
-
-                if (res.second)
-                  list_svc += svc + ',';
-              }
-
-              mStageMap[stage_path] = set_svc;
-              xcastor_info("stagermap: %s -> %s", stage_path.c_str(), list_svc.c_str());
+              xcastor_err("stagermap: provide a path and the service class(es) to assign");
+              NoGo = 1;
             }
             else
-              xcastor_err("stagermap: already contains stage path: %s", stage_path.c_str());
+            {
+              if (mStageMap.find(stage_path) == mStageMap.end())
+              {
+                std::string list_svc = val;
+                std::istringstream sstr(list_svc);
+                std::set<std::string> set_svc;
+                std::string svc;
+                list_svc = "";
+                
+                while (std::getline(sstr, svc, ','))
+                {
+                  std::pair<std::set<std::string>::iterator, bool> res = set_svc.insert(svc);
+                  
+                  if (res.second)
+                    list_svc += svc + ',';
+                }
+
+                mStageMap[stage_path] = set_svc;
+                xcastor_info("stagermap: %s -> %s", stage_path.c_str(), list_svc.c_str());
+              }
+              else
+                xcastor_err("stagermap: already contains stage path: %s", stage_path.c_str());
+            }
           }
         }
-      }
 
-      if (!strcmp("subscribe", var))
-      {
-        if ((!(val = config_stream.GetWord())) || (strcmp("true", val) && strcmp("false", val) && strcmp("1", val) && strcmp("0", val)))
+        //
+        if (!strcmp("subscribe", var))
         {
-          Eroute.Emsg("Config", "argument 2 for subscribe illegal or missing. Must be <true>,<false>,<1> or <0>!");
-          NoGo = 1;
+          if ((!(val = config_stream.GetWord())) || (strcmp("true", val) && strcmp("false", val) && strcmp("1", val) && strcmp("0", val)))
+          {
+            Eroute.Emsg("Config", "argument 2 for subscribe illegal or missing. Must be <true>,<false>,<1> or <0>!");
+            NoGo = 1;
+          }
+          else
+          {
+            if ((!strcmp("true", val) || (!strcmp("1", val))))
+              SubscribeCms = true;
+          }
+          
+          if (SubscribeCms)
+            Eroute.Say("=====> xcastor2.subscribe : true");
+          else
+            Eroute.Say("=====> xcastor2.subscribe : false");
         }
-        else
-        {
-          if ((!strcmp("true", val) || (!strcmp("1", val))))
-            SubscribeCms = true;
-        }
-
-        if (SubscribeCms)
-          Eroute.Say("=====> xcastor2.subscribe : true");
-        else
-          Eroute.Say("=====> xcastor2.subscribe : false");
-      }
-
-      if (!strcmp("authlib", var))
-      {
-        if ((!(val = config_stream.GetWord())) || (::access(val, R_OK)))
-        {
-          Eroute.Emsg("Config", "I cannot acccess you authorization library!");
-          NoGo = 1;
-        }
-        else
-          AuthLib = val;
         
-        Eroute.Say("=====> xcastor2.authlib : ", AuthLib.c_str());
-      }
-
-      if (!strcmp("authorize", var))
-      {
-        if ((!(val = config_stream.GetWord())) || (strcmp("true", val) && strcmp("false", val) && strcmp("1", val) && strcmp("0", val)))
+        //
+        if (!strcmp("authlib", var))
         {
-          Eroute.Emsg("Config", "argument 2 for authorize ilegal or missing. Must be <true>,<false>,<1> or <0>!");
-          NoGo = 1;
+          if ((!(val = config_stream.GetWord())) || (::access(val, R_OK)))
+          {
+            Eroute.Emsg("Config", "I cannot acccess you authorization library!");
+            NoGo = 1;
+          }
+          else
+            auth_lib = val;
+          
+          Eroute.Say("=====> xcastor2.authlib : ", auth_lib.c_str());
         }
-        else
+        
+        //
+        if (!strcmp("authorize", var))
         {
-          if ((!strcmp("true", val) || (!strcmp("1", val))))
-            authorize = true;
-        }
+          if ((!(val = config_stream.GetWord())) || (strcmp("true", val) && strcmp("false", val) && strcmp("1", val) && strcmp("0", val)))
+          {
+            Eroute.Emsg("Config", "argument 2 for authorize ilegal or missing. Must be <true>,<false>,<1> or <0>!");
+            NoGo = 1;
+          }
+          else
+          {
+            if ((!strcmp("true", val) || (!strcmp("1", val))))
+              authorize = true;
+          }
 
-        if (authorize)
-          Eroute.Say("=====> xcastor2.authorize : true");
-        else
-          Eroute.Say("=====> xcastor2.authorize : false");
+          if (authorize)
+            Eroute.Say("=====> xcastor2.authorize : true");
+          else
+            Eroute.Say("=====> xcastor2.authorize : false");
+        }
       }
     }
   }
@@ -504,16 +477,13 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
   // XrdxCastor2ServerAcc to find out which keys are required to be loaded
   Eroute.Say("=====> all.role: ", role.c_str(), "");
   XrdOucString sTokenLockTime = "";
-  sTokenLockTime += TokenLockTime;
+  sTokenLockTime += msTokenLockTime;
   Eroute.Say("=====> xcastor2.tokenlocktime: ", sTokenLockTime.c_str(), "");
-
-  if (MapCernCertificates)
-    Eroute.Say("=====> xcastor2.mapcerncertificates : true", "", "");
 
   if (role == "manager")
     putenv((char*)"XRDREDIRECT=R");
 
-  if ((AuthLib != "") && (authorize))
+  if ((auth_lib != "") && (authorize))
   {
     // Load the authorization plugin
     XrdSysPlugin*    myLib;
@@ -521,7 +491,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
     // Authorization comes from the library or we use the default
     Authorization = XrdAccAuthorizeObject(Eroute.logger(), ConfigFN, NULL);
 
-    if (!(myLib = new XrdSysPlugin(&Eroute, AuthLib.c_str())))
+    if (!(myLib = new XrdSysPlugin(&Eroute, auth_lib.c_str())))
     {
       Eroute.Emsg("Config", "Failed to load authorization library!");
       NoGo = 1;

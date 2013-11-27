@@ -673,8 +673,8 @@ XrdxCastor2Stager::ProcessResponse(XrdOucErrInfo& error,
 
   if (0 == fr)
   {
-    xcastor_static_debug("Invalid response object for %s for path %s", 
-                         opType.c_str(), reqInfo->mPath);
+    xcastor_static_err("Invalid response object for %s for path %s", 
+                       opType.c_str(), reqInfo->mPath);
     error.setErrInfo(ECOMM, "Invalid response object");
     delete respElem;
     return SFS_ERROR;
@@ -688,17 +688,12 @@ XrdxCastor2Stager::ProcessResponse(XrdOucErrInfo& error,
          << " path=" << reqInfo->mPath << " serviceclass=" << reqInfo->mServiceClass;
     XrdOucString ErrPrefix = sstr.str().c_str();
 
-    xcastor_static_debug("received error errc=%i, errmsg=%s\%i, subreqid=%s, reqid=%s",
-                         fr->errorCode(), fr->errorMessage().c_str(),
-                         ErrPrefix.c_str(), fr->subreqId().c_str(),
-                         fr->reqAssociated().c_str());
-
-    sstr.str(std::string());
-    sstr << "received error errc=" << (int)fr->errorCode() << " errmsg=\""
-         << fr->errorMessage() << "\" " << ErrPrefix.c_str() << "subreqid="
-         << fr->subreqId() << " reqid=" << fr->reqAssociated();
-    XrdOucString emsg = sstr.str().c_str();
-    error.setErrInfo(fr->errorCode(), emsg.c_str());
+    xcastor_static_err("received error errc=%i, errmsg=%s, errprefix=\"%s\", subreqid=%s, reqid=%s",
+                       fr->errorCode(), fr->errorMessage().c_str(),
+                       ErrPrefix.c_str(), fr->subreqId().c_str(),
+                       fr->reqAssociated().c_str());
+    
+    error.setErrInfo(fr->errorCode(), fr->errorMessage().c_str());
     delete respElem;
     return SFS_ERROR;
   }

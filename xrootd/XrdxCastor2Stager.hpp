@@ -63,6 +63,7 @@ class XrdxCastor2Stager : public LogId
 {
   public:
 
+    // TODO: move the delay store to gMgr
     ///! Delay store for each of the users
     static XrdOucHash<XrdOucString>* msDelayStore;
     static XrdSysRWLock msLockDelay; ///< RW lock for the delay map
