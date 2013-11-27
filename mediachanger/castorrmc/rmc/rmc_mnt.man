@@ -48,12 +48,12 @@ mount, or -1 if the operation failed. In the latter case,
 .B serrno
 is set appropriately.
 .SH ERRORS
-.TP 1.2i
+.TP 1.8i
 .B SECOMERR
 Communication error.
 .TP
 .B ERMCUNREC
-Unknown host or invalid drive or vid too long or requester does not have
+Unknown host or invalid drive or requester does not have
 TP_SYSTEM privilege in the Cupv database.
 .TP
 .B ERMCFASTR
@@ -61,6 +61,21 @@ Unit attention.
 .TP
 .B ERMCOMSGR
 Hardware error or Medium Removal Prevented.
+.TP
+.B ERMCUKNLDRTYPE
+Unknown loader type.
+.TP
+.B ERMCVIDTOOLONG
+VID is too long.
+.TP
+.B ERMCPARSERMCHOST
+Failed to parse RMC host.
+.TP
+.B ERMCPARSEACSDRV
+Failed to parse ACS drive id.
+.TP
+.B SEINTERNAL
+Internal error.
 .SH SEE ALSO
 .BR Cupvlist(1) ,
 .SH AUTHOR
