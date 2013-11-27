@@ -236,8 +236,6 @@ set (CLIENT_LIB_SRC_FILES
   stager/StagePrepareToGetRequest.cpp
   stager/StagePrepareToPutRequest.cpp
   stager/StagePrepareToUpdateRequest.cpp
-  stager/StageRepackRequest.cpp
-  stager/StageRepackRequestStatusCodes.cpp
   stager/StagePutDoneRequest.cpp
   stager/StagePutRequest.cpp
   stager/StageQueryResult.cpp

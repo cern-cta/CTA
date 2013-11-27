@@ -74,7 +74,6 @@ castor::rh::RHThread::RHThread()
   m_svcHandler[OBJ_StagePrepareToGetRequest] = "PrepReqSvc";
   m_svcHandler[OBJ_StagePrepareToPutRequest] = "PrepReqSvc";
   m_svcHandler[OBJ_StagePrepareToUpdateRequest] = "PrepReqSvc";
-  m_svcHandler[OBJ_StageRepackRequest] = "PrepReqSvc";
   m_svcHandler[OBJ_StagePutDoneRequest] = "StageReqSvc";
   m_svcHandler[OBJ_StageRmRequest] = "StageReqSvc";
   m_svcHandler[OBJ_SetFileGCWeight] = "StageReqSvc";

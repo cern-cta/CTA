@@ -259,8 +259,7 @@ namespace castor {
           // an Update may recreate, plus it's a read/write operation
           subrequest->setFlags(subrequest->flags() | O_CREAT | O_RDWR);
         }
-        else if(fileRequest->type() == OBJ_StageGetRequest || fileRequest->type() == OBJ_StagePrepareToGetRequest
-          || fileRequest->type() == OBJ_StageRepackRequest) {
+        else if(fileRequest->type() == OBJ_StageGetRequest || fileRequest->type() == OBJ_StagePrepareToGetRequest) {
           // a Get is always a read-only operation (O_RDONLY == 0, hence the or is a no-op)
           subrequest->setFlags((subrequest->flags() | O_RDONLY) & ~O_RDWR & ~O_WRONLY);
         }
