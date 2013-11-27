@@ -9,27 +9,20 @@ rmc_unmnt \- send a request to the Remote Media Changer daemon to have a volume 
 .br
 \fB#include "rmc_api.h"\fR
 .sp
-.BI "int rmc_unmnt (char *" server ,
-.BI "char *" vid ,
-.BI "char *" drive );
+int \fBrmc_unmnt\f[](const char *const \fIvid\f[], const char *const \fIdrive\f[]);
 .SH DESCRIPTION
 .B rmc_unmnt
-asks the Remote Media Changer server running on
-.I server
-to unmount the volume
+asks the Remote media-changer daemon (rmcd) to unmount the volume
 .I vid
 from the drive specified by
 .IR drive .
-.TP
-.I server
-specifies the Remote Media Changer to be contacted.
 .TP
 .I vid
 is the volume visual identifier.
 It must be at most six characters long.
 .TP
 .I drive
-specifies the drive in the robot in one of the following forms:
+specifies the drive in one of the following three forms corresponding to the three supported drive-loader types, namely acs, manual and smc:
 .RS
 .TP
 acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
@@ -49,6 +42,9 @@ unmount, or -1 if the operation failed. In the latter case,
 is set appropriately.
 .SH ERRORS
 .TP 1.2i
+.B EINVAL
+If either \fIvid\f[] or \fIdrive\f[] are passed a NULL pointer.
+.TP
 .B SECOMERR
 Communication error.
 .TP
@@ -61,6 +57,21 @@ Unit attention.
 .TP
 .B ERMCOMSGR
 Hardware error or Medium Removal Prevented.
+.TP
+.B ERMCUKNLDRTYPE
+Unknown drive-loader type.
+.TP
+.B ERMCVIDTOOLONG
+VID is too long.
+.TP
+.B ERMCPARSERMCHOST
+Failed to parse RMC host.
+.TP
+.B ERMCPARSEACSDRV
+Failed to parse ACS drive id.
+.TP
+.B SEINTERNAL
+Internal error
 .SH SEE ALSO
 .BR Cupvlist(1) ,
 .SH AUTHOR

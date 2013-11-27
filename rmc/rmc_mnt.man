@@ -9,27 +9,20 @@ rmc_mnt \- send a request to the Remote Media Changer daemon to have a volume mo
 .br
 \fB#include "rmc_api.h"\fR
 .sp
-.BI "int rmc_mnt (char *" server ,
-.BI "char *" vid ,
-.BI "char *" drive );
+.BI "int \fBrmc_mnt\f[](const char *const \fIvid\f[], const char *const \fIdrive\f[]);
 .SH DESCRIPTION
 .B rmc_mnt
-asks the Remote Media Changer server running on
-.I server
-to mount the volume
+asks the remote media-changer daemon to mount the volume
 .I vid
 on the drive specified by
 .IR drive .
-.TP
-.I server
-specifies the Remote Media Changer to be contacted.
 .TP
 .I vid
 is the volume visual identifier.
 It must be at most six characters long.
 .TP
 .I drive
-specifies the drive in the robot in one of the following forms:
+specifies the drive in one of the following three forms corresponding to the three supported drive-loader types, namely acs, manual and smc:
 .RS
 .TP
 acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
@@ -49,6 +42,9 @@ mount, or -1 if the operation failed. In the latter case,
 is set appropriately.
 .SH ERRORS
 .TP 1.8i
+.B EINVAL
+If either \fIvid\f[] or \fIdrive\f[] are passed a NULL pointer.
+.TP
 .B SECOMERR
 Communication error.
 .TP
@@ -63,7 +59,7 @@ Unit attention.
 Hardware error or Medium Removal Prevented.
 .TP
 .B ERMCUKNLDRTYPE
-Unknown loader type.
+Unknown drive-loader type.
 .TP
 .B ERMCVIDTOOLONG
 VID is too long.

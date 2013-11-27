@@ -32,7 +32,6 @@
 #include "h/marshall.h"
 #include "h/rmc_api.h"
 #include "h/rmc_constants.h"
-#include "h/rmc_find_char.h"
 #include "h/rmc_get_acs_drive_id.h"
 #include "h/rmc_get_rmc_host_of_drive.h"
 #include "h/rmc_get_loader_type.h"
@@ -41,25 +40,31 @@
 #include <errno.h>
 #include <string.h>
 
-static int rmc_acs_mnt(const char *const server, const char *const vid,
-  const char *const drive);
-static int rmc_manual_mnt(const char *const server, const char *const vid,
-   const char *const drive);
-static int rmc_smc_mnt(const char *const server, const char *const vid,
-  const char *const drive);
+static int rmc_acs_mnt(const char *const vid, const char *const drive);
+static int rmc_manual_mnt(const char *const vid, const char *const drive);
+static int rmc_smc_mnt(const char *const vid, const char *const drive);
 
-int rmc_mnt(
-	const char *const server,
-	const char *const vid,
-	const char *const drive)
-{
+int rmc_mnt(const char *const vid, const char *const drive) {
+	/* If there is nothing to work on then return EINVAL */
+	if(NULL == vid || NULL == drive) {
+		errno = EINVAL;
+		serrno = errno;
+		return -1;
+	}
+
+	if(CA_MAXVIDLEN < strlen(vid)) {
+		errno = ERMCVIDTOOLONG; /* VID is too long */
+		serrno = errno;
+		return -1;
+	}
+
 	switch(rmc_get_loader_type(drive)) {
 	case RMC_LOADER_TYPE_ACS:
-		return rmc_acs_mnt(server, vid, drive);
+		return rmc_acs_mnt(vid, drive);
 	case RMC_LOADER_TYPE_MANUAL:
-		return rmc_manual_mnt(server, vid, drive);
+		return rmc_manual_mnt(vid, drive);
 	case RMC_LOADER_TYPE_SMC:
-		return rmc_smc_mnt(server, vid, drive);
+		return rmc_smc_mnt(vid, drive);
 	default:
 		errno = ERMCUKNLDRTYPE; /* Unknown loader type */
 		serrno = errno;
@@ -67,11 +72,7 @@ int rmc_mnt(
 	}
 }
 
-static int rmc_acs_mnt(
-	const char *const server,
-	const char *const vid,
-	const char *const drive) {
-
+static int rmc_acs_mnt(const char *const vid, const char *const drive) {
 	const gid_t gid = getgid();
 	const uid_t uid = getuid();
 
@@ -87,12 +88,6 @@ static int rmc_acs_mnt(
 	char sendbuf[RMC_REQBUFSZ];
 	char rmc_host[CA_MAXHOSTNAMELEN+1];
 	struct rmc_acs_drive_id drive_id = {0, 0, 0, 0};
-
-	if(CA_MAXVIDLEN < strlen(vid)) {
-		errno = ERMCVIDTOOLONG; /* VID is too long */
-		serrno = errno;
-		return -1;
-	}
 
 	if(rmc_get_rmc_host_of_drive(drive, rmc_host, sizeof(rmc_host))) {
 		errno = ERMCPARSERMCHOST; /* Failed to parse RMC host */
@@ -140,18 +135,12 @@ static int rmc_acs_mnt(
         return send2rmc (rmc_host, sendbuf, msglen, repbuf, sizeof(repbuf));
 }
 
-static int rmc_manual_mnt(
-	const char *const server,
-	const char *const vid,
-	const char *const drive) {
+static int rmc_manual_mnt(const char *const vid, const char *const drive) {
 
 	return 0;
 }
 
-static int rmc_smc_mnt(
-	const char *const server,
-	const char *const vid,
-	const char *const drive) {
+static int rmc_smc_mnt(const char *const vid, const char *const drive) {
 
 	return 0;
 }

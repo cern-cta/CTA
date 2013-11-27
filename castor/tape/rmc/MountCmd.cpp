@@ -24,6 +24,8 @@
 
 #include "castor/tape/rmc/MountCmd.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "h/rmc_api.h"
+#include "h/serrno.h"
 
 #include <getopt.h>
 #include <iostream>
@@ -83,9 +85,27 @@ int castor::tape::rmc::MountCmd::main(const int argc,
   m_dbg << "VID = " << m_cmdLine.volId << std::endl;
   m_dbg << "DRIVE = " << m_cmdLine.driveId << std::endl;
 
-  // DO SOMETHING
-
-  return 0;
+  const int rmc_mnt_rc = rmc_mnt(m_cmdLine.volId.c_str(),
+    m_cmdLine.driveId.c_str());
+  const int rmc_mnt_serrno = serrno;
+  switch(rmc_mnt_rc) {
+  case 1:
+    m_out <<
+      "You have requested a manual mount.  The castor-tape-mount command\n"
+      " does nothing for this type of mount." << std::endl;
+    return 0;
+  case 0:
+    m_out << m_cmdLine.volId << "has been mounted" << std::endl;
+    return 0;
+  case -1:
+    m_err << "Failed to mount " << m_cmdLine.volId << ": " <<
+      sstrerror(rmc_mnt_serrno) << std::endl;
+    return -1;
+  default:
+    m_err << "Internal error: rmc_mnt() returned the unexpected value of " <<
+      rmc_mnt_rc << std::endl;
+    return -1;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -198,27 +218,30 @@ void castor::tape::rmc::MountCmd::usage(std::ostream &os)
   const throw() {
   os <<
   "Usage:\n"
+  "\n"
   "  castor-tape-mount [options] VID DRIVE\n"
   "\n"
   "Where:\n"
   "\n"
-  "  VID    The VID of the volume to be mounted.\n"
-  "  DRIVE  The ID of the drive into which the volume is to be mounted.\n"
-  "         If the tape library to be used is SCSI compatible then the format\n"
-  "         of DRIVE is:\n"
+  "  VID   The indentifier of the volume to be mounted.\n"
   "\n"
-  "             smc@HOSTNAME,DRIVE_ORDINAL\n"
+  "  DRIVE The drive in one of the following three forms corresponding to the\n"
+  "        three supported drive-loader types, namely acs, manual and smc:\n"
   "\n"
-  "         If the tape library to be used is ACS compatible then the format\n"
-  "         of DRIVE is:\n"
+  "             smc@rmc_host,drive_ordinal\n"
   "\n"
-  "             ACS:LSM:panel:transport\n"
+  "             manual\n"
+  "\n"
+  "             acs@rmc_host,ACS,LSM,panel,transport\n"
   "\n"
   "Options:\n"
   "\n"
   "  -d|--debug            Turn on the printing of debug information.\n"
+  "\n"
   "  -h|--help             Print this help message and exit.\n"
+  "\n"
   "  -r|--readOnly         Request the volume is mounted for read-only access\n"
+  "\n"
   "  -t|--timeout SECONDS  Time to wait for the mount to conclude. SECONDS\n"
   "                        must be an integer value greater than 0.  The\n"
   "                        default value of SECONDS is "
