@@ -982,17 +982,4 @@ private:
 
 extern XrdxCastor2Fs* gMgr; ///< globl instance of the redirector OFS subsystem
 
-
-/******************************************************************************/
-/*                        C o n v i n i e n c e                               */
-/******************************************************************************/
-
-//------------------------------------------------------------------------------
-// This helps to avoid memory leaks by strdup, we maintain a string hash to
-// keep all used user ids/group ids etc.
-//------------------------------------------------------------------------------
-
-// TO BE DROPPED
-char* STRINGSTORE(const char* __charptr__);
-
 #endif // __XCASTOR_FS_HH__
