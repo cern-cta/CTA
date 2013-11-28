@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastor2FsConfig.cc
+ *                      XrdxCastor2FsConfig.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * @author Andreas Peters <apeters@cern.ch>
+ * @author Elvin Sindrilaru <esindril@cern.ch>
  *
  ******************************************************************************/
 
@@ -26,18 +27,9 @@
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2Fs.hpp"
 /*-----------------------------------------------------------------------------*/
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <time.h>
-#include <dirent.h>
-#include <string.h>
-#include <string>
 #include <sstream>
 /*-----------------------------------------------------------------------------*/
 #include "XrdOuc/XrdOucStream.hh"
-#include "XrdOuc/XrdOucTrace.hh"
-#include "XrdSys/XrdSysError.hh"
 #include "XrdSys/XrdSysPlugin.hh"
 #include "XrdSys/XrdSysDNS.hh"
 /*-----------------------------------------------------------------------------*/
@@ -486,7 +478,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
   if ((auth_lib != "") && (authorize))
   {
     // Load the authorization plugin
-    XrdSysPlugin*    myLib;
+    XrdSysPlugin* myLib;
     XrdAccAuthorize *(*ep)(XrdSysLogger*, const char*, const char*);
     // Authorization comes from the library or we use the default
     Authorization = XrdAccAuthorizeObject(Eroute.logger(), ConfigFN, NULL);

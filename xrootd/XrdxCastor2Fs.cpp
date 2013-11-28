@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastor2Fs.cc
+ *                      XrdxCastor2Fs.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -29,18 +29,15 @@
 /*-----------------------------------------------------------------------------*/
 #include "XrdVersion.hh"
 #include "XrdOss/XrdOss.hh"
-#include "XrdOuc/XrdOucEnv.hh"
-#include "XrdOuc/XrdOucTokenizer.hh"
 #include "XrdOuc/XrdOucTList.hh"
 #include "XrdSys/XrdSysError.hh"
-#include "XrdSys/XrdSysLogger.hh"
 #include "XrdSys/XrdSysDNS.hh"
-#include "XrdSec/XrdSecInterface.hh"
+#include "XrdSec/XrdSecEntity.hh"
 #include "XrdSfs/XrdSfsAio.hh"
-#include "XrdClient/XrdClientEnv.hh"
 #include "XrdCl/XrdClFileSystem.hh"
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2Fs.hpp"
+#include "XrdxCastor2FsFile.hpp"
 #include "XrdxCastor2FsDirectory.hpp"
 #include "XrdxCastorTiming.hpp"
 #include "XrdxCastor2Stager.hpp"
@@ -48,6 +45,7 @@
 #include "XrdxCastorClient.hpp"
 /*-----------------------------------------------------------------------------*/
 #include "Cthread_api.h"
+/*-----------------------------------------------------------------------------*/
 
 #ifdef AIX
 #include <sys/mode.h>
@@ -64,7 +62,7 @@
 /******************************************************************************/
 /*                        G l o b a l   O b j e c t s                         */
 /******************************************************************************/
-// TODO: move this inside the class and make them non-static
+
 XrdOucHash<XrdOucString>* XrdxCastor2Stager::msDelayStore;
 xcastor::XrdxCastorClient* XrdxCastor2Fs::msCastorClient;
 
@@ -268,10 +266,6 @@ XrdxCastor2Fs::GetAllAllowedSvc(const char* path)
 }
 
 
-/******************************************************************************/
-/*         F i l e   S y s t e m   O b j e c t   I n t e r f a c e s          */
-/******************************************************************************/
-
 //------------------------------------------------------------------------------
 // Get plugin version
 //------------------------------------------------------------------------------
@@ -311,7 +305,7 @@ bool
 XrdxCastor2Fs::Init()
 {
   mPasswdStore = new XrdOucHash<struct passwd> ();
-  XrdxCastor2Stager::msDelayStore = new XrdOucHash<XrdOucString> ();
+  XrdxCastor2Stager::msDelayStore = new XrdOucHash<XrdOucString>();
   msCastorClient = xcastor::XrdxCastorClient::Create();
 
   if (!msCastorClient)
@@ -331,6 +325,7 @@ XrdxCastor2Fs::~XrdxCastor2Fs()
 {
   delete mPasswdStore;
   delete msCastorClient;
+  delete XrdxCastor2Stager::msDelayStore;
 }
 
 

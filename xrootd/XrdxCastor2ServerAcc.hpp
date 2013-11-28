@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastor2ServerAcc.hh
+ *                      XrdxCastor2ServerAcc.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -36,7 +36,6 @@
 /*-----------------------------------------------------------------------------*/
 #include "XrdAcc/XrdAccAuthorize.hh"
 #include "XrdAcc/XrdAccPrivs.hh"
-#include "XrdSys/XrdSysPthread.hh"
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastorLogging.hpp"
 /*-----------------------------------------------------------------------------*/

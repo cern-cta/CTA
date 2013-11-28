@@ -25,13 +25,15 @@
 
 /*----------------------------------------------------------------------------*/
 #include "XrdxCastor2Fs.hpp"
-#include "XrdOss/XrdOss.hh"
-#include "XrdSfs/XrdSfsAio.hh"
+#include "XrdxCastor2FsFile.hpp"
 #include "XrdxCastorTiming.hpp"
 #include "XrdxCastor2Stager.hpp"
 #include "XrdxCastor2FsSecurity.hpp"
 /*----------------------------------------------------------------------------*/
-
+#include "XrdOss/XrdOss.hh"
+#include "XrdSfs/XrdSfsAio.hh"
+#include "XrdSec/XrdSecEntity.hh"
+/*----------------------------------------------------------------------------*/
 
 //------------------------------------------------------------------------------
 // Constructor

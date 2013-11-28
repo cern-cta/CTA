@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastorLogging.cc
+ *                      XrdxCastorLogging.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * @author Andreas Peters <apeters@cern.ch>
+ * @author Elvin Sindrilaru <esindril@cern.ch>
  *
  ******************************************************************************/
 
@@ -86,6 +87,7 @@ LogId::SetLogId(const char* newlogid, const char* td )
 {
   if (newlogid != logId)
     snprintf(logId,sizeof(logId)-1,"%s",newlogid);
+
   snprintf(cident,sizeof(cident)-1,"%s", td);
 }
 
@@ -135,23 +137,23 @@ Logging::shouldlog(const char* func, int priority)
 // Logging function
 //------------------------------------------------------------------------------
 const char*
-Logging::log(const char*                     func,
-             const char*                     file,
-             int                             line,
-             const char*                     logid,
-             const VirtualIdentity&          vid,
-             const char*                     cident,
-             int                             priority,
-             const char*                     msg, ...)
+Logging::log(const char* func,
+             const char* file,
+             int line,
+             const char* logid,
+             const VirtualIdentity& vid,
+             const char* cident,
+             int priority,
+             const char* msg, ...)
 {
   static int logmsgbuffersize=1024*1024;
   static char* buffer=0;
 
-  if (!shouldlog(func, priority)) {
+  if (!shouldlog(func, priority)) 
     return "";
-  }
 
-  if (!buffer) {
+  if (!buffer) 
+  {
     // 1MB print buffer
     buffer = (char*) malloc(logmsgbuffersize);
   }
@@ -159,7 +161,8 @@ Logging::log(const char*                     func,
   XrdOucString File = file;
 
   // We truncate the file name and show only the end
-  if (File.length() > 16) {
+  if (File.length() > 16) 
+  {
     int up = File.length() - 13;
     File.erase(3, up);
     File.insert("...",3);
@@ -184,18 +187,22 @@ Logging::log(const char*                     func,
   XrdOucString truncname = vid;
 
   // We show only the last 16 bytes of the name
-  if (truncname.length() > 16) {
+  if (truncname.length() > 16) 
+  {
     truncname.insert("..",0);
     truncname.erase(0,truncname.length()-16);
   }
 
-  if (gShortFormat) {
+  if (gShortFormat) 
+  {
     tm = localtime (&current_time);
     sprintf (buffer, "%02d%02d%02d %02d:%02d:%02d time=%lu.%06lu func=%-12s level=%s tid=%lu source=%s:%-5s ",
              tm->tm_year-100, tm->tm_mon+1, tm->tm_mday, tm->tm_hour, tm->tm_min, tm->tm_sec, current_time,
              (unsigned long)tv.tv_usec, func, GetPriorityString(priority), (unsigned long)XrdSysThread::ID(),
              File.c_str(), linen);
-  } else {
+  } 
+  else 
+  {
     sprintf( fcident,"tident=%s vid=%s ", cident, vid.c_str() );
     tm = localtime (&current_time);
     sprintf (buffer, "%02d%02d%02d %02d:%02d:%02d time=%lu.%06lu func=%-24s level=%s logid=%s unit=%s tid=%lu source=%s:%-5s %s ",
@@ -226,7 +233,7 @@ Logging::log(const char*                     func,
 
 //------------------------------------------------------------------------------
 // Return priority int from string
-//- ----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int
 Logging::GetPriorityByString(const char* pri)
 {

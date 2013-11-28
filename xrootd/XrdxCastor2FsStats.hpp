@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastor2FsStats.hh
+ *                      XrdxCastor2FsStats.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * @author Andreas Peters <apeters@cern.ch> 
+ * @author Elvin Sindrilaru <esindril@cern.ch>
  * 
  ******************************************************************************/
 
@@ -26,7 +27,6 @@
 #define __XCASTOR_FSSTATS_HH__
 
 /*-----------------------------------------------------------------------------*/
-#include "XrdOuc/XrdOucHash.hh"
 #include "XrdOuc/XrdOucTable.hh"
 #include "XrdSys/XrdSysPthread.hh"
 /*-----------------------------------------------------------------------------*/
@@ -41,28 +41,34 @@
 class XrdxCastor2StatULongLong
 {
 
-  private:
-    unsigned long long cnt;
+private:
+  unsigned long long cnt;
 
-  public:
+public:
 
-    XrdxCastor2StatULongLong() {
-      Reset();
-    };
+  XrdxCastor2StatULongLong() 
+  {
+    Reset();
+  };
+  
+  
+  virtual ~XrdxCastor2StatULongLong() {};
 
-    virtual ~XrdxCastor2StatULongLong() {};
+  void Inc() 
+  {
+    cnt++;
+  }
 
-    void Inc() {
-      cnt++;
-    }
+  unsigned long long Get() 
+  {
+    return cnt;
+  }
+  
+  void Reset() 
+  {
+    cnt = 0;
+  }
 
-    unsigned long long Get() {
-      return cnt;
-    }
-
-    void Reset() {
-      cnt = 0;
-    }
 };
 
 
@@ -71,94 +77,104 @@ class XrdxCastor2StatULongLong
 //------------------------------------------------------------------------------
 class XrdxCastor2FsStats
 {
+  
+private:
+  
+  long long read300s[300];
+  long long write300s[300];
+  long long stat300s[300];
+  long long readd300s[300];
+  long long rm300s[300];
+  long long cmd300s[300];
+  
+  double readrate1s;
+  double readrate60s;
+  double readrate300s;
+  
+  double writerate1s;
+  double writerate60s;
+  double writerate300s;
+  
+  double statrate1s;
+  double statrate60s;
+  double statrate300s;
 
-  private:
+  double readdrate1s;
+  double readdrate60s;
+  double readdrate300s;
+  
+  double rmrate1s;
+  double rmrate60s;
+  double rmrate300s;
+  
+  double cmdrate1s;
+  double cmdrate60s;
+  double cmdrate300s;
+  
+  XrdOucHash<XrdxCastor2StatULongLong> ServerRead;
+  XrdOucHash<XrdxCastor2StatULongLong> ServerWrite;
+  XrdOucTable<XrdOucString>* ServerTable;
+  
+  XrdOucHash<XrdxCastor2StatULongLong> UserRead;
+  XrdOucHash<XrdxCastor2StatULongLong> UserWrite;
+  XrdOucTable<XrdOucString>* UserTable;
+  
+  XrdSysMutex statmutex;
+  XrdxCastor2Proc* Proc;
+  
+public:
+  
+  //----------------------------------------------------------------------------
+  //! Constructor
+  //----------------------------------------------------------------------------
+  XrdxCastor2FsStats( XrdxCastor2Proc* proc = NULL );
 
-    long long read300s[300];
-    long long write300s[300];
-    long long stat300s[300];
-    long long readd300s[300];
-    long long rm300s[300];
-    long long cmd300s[300];
-
-    double readrate1s;
-    double readrate60s;
-    double readrate300s;
-
-    double writerate1s;
-    double writerate60s;
-    double writerate300s;
-
-    double statrate1s;
-    double statrate60s;
-    double statrate300s;
-
-    double readdrate1s;
-    double readdrate60s;
-    double readdrate300s;
-
-    double rmrate1s;
-    double rmrate60s;
-    double rmrate300s;
-
-    double cmdrate1s;
-    double cmdrate60s;
-    double cmdrate300s;
-
-    XrdOucHash<XrdxCastor2StatULongLong> ServerRead;
-    XrdOucHash<XrdxCastor2StatULongLong> ServerWrite;
-    XrdOucTable<XrdOucString>* ServerTable;
-
-    XrdOucHash<XrdxCastor2StatULongLong> UserRead;
-    XrdOucHash<XrdxCastor2StatULongLong> UserWrite;
-    XrdOucTable<XrdOucString>* UserTable;
-
-    XrdSysMutex statmutex;
-    XrdxCastor2Proc* Proc;
-
-  public:
-
-    //--------------------------------------------------------------------------
-    //! Constructor
-    //--------------------------------------------------------------------------
-    XrdxCastor2FsStats( XrdxCastor2Proc* proc = NULL );
+  
+  //----------------------------------------------------------------------------
+  //! Destructor
+  //----------------------------------------------------------------------------
+  virtual ~XrdxCastor2FsStats();
+  
+  void SetProc( XrdxCastor2Proc* proc ) ;
+  void IncRdWr(bool isRW);
+  void IncRead() ;
+  void IncWrite();
+  void IncStat();
+  void IncReadd();
+  void IncRm();
+  void IncCmd( bool lock = true );
+  void IncServerRdWr(const char* server, bool isRW);
+  void IncServerRead( const char* server );
+  void IncServerWrite( const char* server );
+  void IncUserRdWr(const char* user, bool isRW);
+  void IncUserRead( const char* user );
+  void IncUserWrite( const char* user );
+  double ReadRate( int nbins );
+  double WriteRate( int nbins );
+  double StatRate( int nbins );
+  double ReaddRate( int nbins ); 
+  double RmRate( int nbins );
+  double CmdRate( int nbins );
+  void Update();
+  void UpdateLoop();
 
 
-    //--------------------------------------------------------------------------
-    //! Destructor
-    //--------------------------------------------------------------------------
-    virtual ~XrdxCastor2FsStats();
+  //----------------------------------------------------------------------------
+  //! Lock  
+  //----------------------------------------------------------------------------
+  inline void Lock() 
+  {
+    statmutex.Lock();
+  }
+  
+  //----------------------------------------------------------------------------
+  //! Unlock  
+  //----------------------------------------------------------------------------
+  inline void UnLock() 
+  {
+    statmutex.UnLock();
+  }
 
-    void SetProc( XrdxCastor2Proc* proc ) ;
-    void IncRdWr(bool isRW);
-    void IncRead() ;
-    void IncWrite();
-    void IncStat();
-    void IncReadd();
-    void IncRm();
-    void IncCmd( bool lock = true );
-    void IncServerRdWr(const char* server, bool isRW);
-    void IncServerRead( const char* server );
-    void IncServerWrite( const char* server );
-    void IncUserRdWr(const char* user, bool isRW);
-    void IncUserRead( const char* user );
-    void IncUserWrite( const char* user );
-    double ReadRate( int nbins );
-    double WriteRate( int nbins );
-    double StatRate( int nbins );
-    double ReaddRate( int nbins ); 
-    double RmRate( int nbins );
-    double CmdRate( int nbins );
-    void Update();
-    void UpdateLoop();
-
-    inline void Lock() {
-      statmutex.Lock();
-    }
-
-    inline void UnLock() {
-      statmutex.UnLock();
-    }
 };
 
 extern void* XrdxCastor2FsStatsStart( void* pp );

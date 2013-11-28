@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastor2Stager.cc
+ *                      XrdxCastor2Stager.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * @author Andreas Peters <apeters@cern.ch>
+ * @author Elvin Sindrilaru <esindril@cern.ch>
  *
  ******************************************************************************/
 
@@ -54,9 +55,25 @@
 #include "XrdxCastor2Fs.hpp"
 /*-----------------------------------------------------------------------------*/
 
+XrdSysRWLock XrdxCastor2Stager::msLockStore; ///< delay store lock
 
-extern XrdxCastor2Fs* XrdxCastor2FS;  ///< defined in XrdxCastor2Fs.cpp
-XrdSysRWLock XrdxCastor2Stager::msLockDelay;  ///< lock for delay map
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+XrdxCastor2Stager::XrdxCastor2Stager(): 
+  LogId()
+{
+  // empty
+}
+
+
+//------------------------------------------------------------------------------
+// Destructor
+//------------------------------------------------------------------------------
+XrdxCastor2Stager::~XrdxCastor2Stager() 
+{
+  // empty
+}
 
 
 //------------------------------------------------------------------------------
@@ -233,7 +250,7 @@ XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
   // Check if we are coming back for an old request
   bool found = false;
   struct xcastor::XrdxCastorClient::ReqElement* elem = 0;
-  elem = XrdxCastor2FS->msCastorClient->GetResponse(user_id, found, false);
+  elem = gMgr->msCastorClient->GetResponse(user_id, found, false);
   
   // We are looking for a previous request 
   if (found) 
@@ -304,8 +321,8 @@ XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
                          opType.c_str(), reqInfo->mPath, reqInfo->mUid, 
                          reqInfo->mGid, reqInfo->mServiceClass);
 
-    int retc = XrdxCastor2FS->msCastorClient->SendAsyncRequest( user_id, 0, 
-                                                       request, rh, respvec);
+    int retc = gMgr->msCastorClient->SendAsyncRequest(user_id, 0, 
+                                                      request, rh, respvec);
 
     if (retc == SFS_ERROR)
     {
@@ -338,7 +355,7 @@ XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
   // Try to get the response, maybe we are lucky ...
   elem = 0;
   found = false;
-  elem = XrdxCastor2FS->msCastorClient->GetResponse(user_id, found, true);
+  elem = gMgr->msCastorClient->GetResponse(user_id, found, true);
 
   if (elem)
   {
@@ -733,7 +750,7 @@ int
 XrdxCastor2Stager::GetDelayValue(const char* tag)
 {
   XrdOucString* delayval;
-  msLockDelay.ReadLock(); // -->
+  msLockStore.ReadLock(); // -->
 
   if ((delayval = msDelayStore->Find(tag)))
   {
@@ -752,14 +769,14 @@ XrdxCastor2Stager::GetDelayValue(const char* tag)
   }
   else
   {
-    msLockDelay.UnLock(); // <--
+    msLockStore.UnLock(); // <--
     delayval = new XrdOucString();
     *delayval = 2 + (rand() % 5);
-    msLockDelay.WriteLock(); // -->
+    msLockStore.WriteLock(); // -->
     msDelayStore->Add(tag, delayval, 3600);
   }
 
-  msLockDelay.UnLock(); // <--
+  msLockStore.UnLock(); // <--
   return atoi(delayval->c_str());
 }
 
@@ -770,7 +787,7 @@ XrdxCastor2Stager::GetDelayValue(const char* tag)
 void
 XrdxCastor2Stager::DropDelayTag(const char* tag)
 {
-  XrdSysRWLockHelper wr_lock(msLockDelay, 0);
+  XrdSysRWLockHelper wr_lock(msLockStore, 0);
   msDelayStore->Del(tag);
 }
 

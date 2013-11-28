@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastor2ServerAcc.cc
+ *                      XrdxCastor2ServerAcc.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,7 +24,6 @@
  ******************************************************************************/
 
 /*-----------------------------------------------------------------------------*/
-#include <stdio.h>
 #include <fcntl.h>
 #include <sstream>
 /*-----------------------------------------------------------------------------*/
@@ -34,16 +33,12 @@
 #include "XrdSec/XrdSecInterface.hh"
 #include "XrdOuc/XrdOucEnv.hh"
 #include "XrdOuc/XrdOucTokenizer.hh"
-#include "XrdOuc/XrdOucTrace.hh"
 #include "XrdOuc/XrdOucStream.hh"
-#include "XrdOuc/XrdOucString.hh"
 #include "XrdSys/XrdSysError.hh"
 #include "XrdSys/XrdSysDNS.hh"
 /*-----------------------------------------------------------------------------*/
 
 XrdSysError TkEroute(0, "xCastorServerAcc");
-XrdOucTrace TkTrace(&TkEroute);
-
 
 //------------------------------------------------------------------------------
 // XrdAccAuthorizeObject() is called to obtain an instance of the auth object
@@ -57,7 +52,7 @@ XrdOucTrace TkTrace(&TkEroute);
 //------------------------------------------------------------------------------
 extern "C" XrdAccAuthorize* XrdAccAuthorizeObject(XrdSysLogger* lp,
                                                   const char* cfn,
-                                                  const char* /*parm*/)
+                                                  const char* parm)
 {
   TkEroute.SetPrefix("XrdxCastor2ServerAcc::");
   TkEroute.logger(lp);
@@ -97,7 +92,7 @@ XrdxCastor2ServerAcc::XrdxCastor2ServerAcc():
   mRequireCapability(false),
   mAllowLocal(true)
 {
-  // To log level set for in the XrdxCastor2Fs also applies to this class
+  // The log level set for in the XrdxCastor2Fs also applies to this class
   //empty
 }
 

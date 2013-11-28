@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastorClient.hh
+ *                      XrdxCastorClient.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,13 +18,13 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru, esindril@cern.ch - CERN 2013
+ * @author Andreas Peters <apeters@cern.ch>
+ * @author Elvin Sindrilaru <esindril@cern.ch>
  * 
  ******************************************************************************/
 
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastorClient.hpp"
-#include "XrdxCastor2FsConstants.hpp"
 /*-----------------------------------------------------------------------------*/
 #include "XrdSfs/XrdSfsInterface.hh"
 /*-----------------------------------------------------------------------------*/
@@ -468,11 +468,13 @@ XrdxCastorClient::PollResponses()
     errno = 0;
     int rc = poll(mFds, mNfds, 1000);   // 1 sec timeout to be able to detect a shutdown
     
-    if(mDoStop) {
+    if(mDoStop) 
+    {
       // We're shutting down, just exit the loop
       break;
     }
-    if (rc == 0) {
+    if (rc == 0) 
+    {
       // poll timed out, go to next iteration
       continue;
     }
@@ -618,9 +620,8 @@ XrdxCastorClient::PollResponses()
       if (mFds[i].fd == -1) 
       {
         for (j = i; j < mNfds; j++) 
-        {
           mFds[j].fd = mFds[j + 1].fd;
-        }
+    
         mNfds--;
       }
     }

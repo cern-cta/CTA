@@ -23,12 +23,11 @@
  *
  ******************************************************************************/
 
-#ifndef __XCASTOR_FS_DIRECTORY_HH__
-#define __XCASTOR_FS_DIRECTORY_HH__
+#ifndef __XCASTOR_FSDIRECTORY_HH__
+#define __XCASTOR_FSDIRECTORY_HH__
 
 /*-----------------------------------------------------------------------------*/
 #include "XrdSfs/XrdSfsInterface.hh"
-#include "XrdxCastor2Fs.hpp"
 #include "XrdxCastorLogging.hpp"
 /*-----------------------------------------------------------------------------*/
 #include <dirent.h>
@@ -114,4 +113,4 @@ class XrdxCastor2FsDirectory : public XrdSfsDirectory, public LogId
 
 };
 
-#endif // __XCASTOR_FS_DIRECTORY_HH__
+#endif // __XCASTOR_FSDIRECTORY_HH__

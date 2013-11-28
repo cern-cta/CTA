@@ -26,6 +26,7 @@
 /*----------------------------------------------------------------------------*/
 #include "XrdxCastor2FsDirectory.hpp"
 #include "XrdxCastor2FsSecurity.hpp"
+#include "XrdxCastor2Fs.hpp"
 /*----------------------------------------------------------------------------*/
 
 

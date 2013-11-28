@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastorClient.hh
+ *                      XrdxCastorClient.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru, esindril@cern.ch - CERN 2013
+ * @author Andreas Peters <apeters@cern.ch>
+ * @author Elvin Sindrilaru <esindril@cern.ch>
  * 
  ******************************************************************************/
 
@@ -29,8 +30,6 @@
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <sys/poll.h>
-#include <sys/times.h>
-#include <sys/time.h>
 #include <string>
 #include <map>
 /*----------------------------------------------------------------------------*/
@@ -44,12 +43,10 @@
 #include "castor/rh/IOResponse.hpp"
 #include "castor/client/IResponseHandler.hpp"
 /*----------------------------------------------------------------------------*/
-#include "XrdSys/XrdSysPthread.hh"
 #include "XrdOuc/XrdOucErrInfo.hh"
 /*----------------------------------------------------------------------------*/
 
 XCASTORNAMESPACE_BEGIN
-
 
 //------------------------------------------------------------------------------
 //! Class XrdxCastorClient
@@ -58,9 +55,9 @@ class XrdxCastorClient: public LogId
 {
 public :
 
-  ///< Declare struct 
+  ///< Forward declaration of struct 
   struct ReqElement;
-
+  
   //! Convenience typedef for map of async requests
   typedef std::map<std::string, struct ReqElement*> AsyncReqMap;
   typedef std::map<std::string, AsyncReqMap::iterator> AsyncUserMap;
@@ -71,8 +68,10 @@ public :
   //! was also started successfully.
   //!
   //! @return new object instance 
+  //!
   //----------------------------------------------------------------------------
   static XrdxCastorClient* Create();
+
 
   //----------------------------------------------------------------------------
   //! Destructor
@@ -221,6 +220,7 @@ public :
       mRespVec->clear();
       delete mRespVec;
     }
+
 
     //--------------------------------------------------------------------------
     //! Send the time when the response arrived 
