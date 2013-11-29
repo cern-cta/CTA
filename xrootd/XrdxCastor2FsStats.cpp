@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastor2FsStats.hh
+ *                      XrdxCastor2FsStats.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,210 +20,212 @@
  *
  * @author Andreas Peters <apeters@cern.ch>
  * @author Elvin Sindrilaru <esindril@cern.ch>
- * 
+ *
  ******************************************************************************/
 
 /*-----------------------------------------------------------------------------*/
-#include "XrdxCastor2FsStats.hpp" 
+#include "XrdxCastor2FsStats.hpp"
 #include "XrdxCastor2Fs.hpp"
 /*-----------------------------------------------------------------------------*/
 #include "XrdSys/XrdSysTimer.hh"
 /*-----------------------------------------------------------------------------*/
 
-extern XrdxCastor2Fs* gMgr; ///< defined in XrdxCastor2Fs.cpp
 
 //------------------------------------------------------------------------------
 // Function that starts the stats thread
 //------------------------------------------------------------------------------
-void* 
-XrdxCastor2FsStatsStart( void* pp )
+void*
+XrdxCastor2FsStatsStart(void* pp)
 {
-  XrdxCastor2FsStats* stats = ( XrdxCastor2FsStats* ) pp;
+  XrdxCastor2FsStats* stats = (XrdxCastor2FsStats*) pp;
   stats->UpdateLoop();
-  return ( void* ) 0;
+  return (void*) 0;
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Constructor
-//--------------------------------------------------------------------------
-XrdxCastor2FsStats::XrdxCastor2FsStats( XrdxCastor2Proc* proc ) 
+//------------------------------------------------------------------------------
+XrdxCastor2FsStats::XrdxCastor2FsStats(XrdxCastor2Proc* proc)
 {
-  Lock();
+  statmutex.Lock();
   readrate1s = readrate60s = readrate300s = 0;
   writerate1s = writerate60s = writerate300s = 0;
   statrate1s = statrate60s = statrate300s = 0;
   readdrate1s = readdrate60s = readdrate300s = 0;
   rmrate1s = rmrate60s = rmrate300s = 0;
   cmdrate1s = cmdrate60s = cmdrate300s = 0;
-  memset( read300s, 0, sizeof( read300s ) );
-  memset( write300s, 0, sizeof( write300s ) );
-  memset( stat300s, 0, sizeof( stat300s ) );
-  memset( readd300s, 0, sizeof( readd300s ) );
-  memset( rm300s, 0, sizeof( rm300s ) );
-  memset( cmd300s, 0, sizeof( cmd300s ) );
-  ServerTable = new XrdOucTable<XrdOucString> ( XCASTOR2FS_MAXFILESYSTEMS );
-  UserTable   = new XrdOucTable<XrdOucString> ( XCASTOR2FS_MAXDISTINCTUSERS );
+  memset(read300s, 0, sizeof(read300s));
+  memset(write300s, 0, sizeof(write300s));
+  memset(stat300s, 0, sizeof(stat300s));
+  memset(readd300s, 0, sizeof(readd300s));
+  memset(rm300s, 0, sizeof(rm300s));
+  memset(cmd300s, 0, sizeof(cmd300s));
+  ServerTable = new XrdOucTable<XrdOucString> (XCASTOR2FS_MAXFILESYSTEMS);
+  UserTable   = new XrdOucTable<XrdOucString> (XCASTOR2FS_MAXDISTINCTUSERS);
   Proc = proc;
-  UnLock();
+  statmutex.UnLock();
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Destructor
-//--------------------------------------------------------------------------
-XrdxCastor2FsStats::~XrdxCastor2FsStats() 
+//------------------------------------------------------------------------------
+XrdxCastor2FsStats::~XrdxCastor2FsStats()
 {
-  if ( ServerTable ) delete ServerTable;
-  if ( UserTable )   delete UserTable;
+  if (ServerTable) delete ServerTable;
+  if (UserTable)   delete UserTable;
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Set the proc object
-//--------------------------------------------------------------------------
-void 
-XrdxCastor2FsStats::SetProc( XrdxCastor2Proc* proc ) {
+//------------------------------------------------------------------------------
+void
+XrdxCastor2FsStats::SetProc(XrdxCastor2Proc* proc)
+{
   Proc = proc;
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Increment number of read or write operations
-//--------------------------------------------------------------------------
-void 
+//------------------------------------------------------------------------------
+void
 XrdxCastor2FsStats::IncRdWr(bool isRW)
 {
   if (isRW)
     IncWrite();
-  else 
+  else
     IncRead();
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Increment reads
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void
-XrdxCastor2FsStats::IncRead() 
+XrdxCastor2FsStats::IncRead()
 {
-  time_t now = time( NULL );
+  time_t now = time(NULL);
   statmutex.Lock();
-  read300s[( now + 1 ) % 300] = 0;
+  read300s[(now + 1) % 300] = 0;
   read300s[now % 300]++;
-  IncCmd( false );
+  IncCmd(false);
   statmutex.UnLock();
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Increment writes
-//--------------------------------------------------------------------------
-void 
-XrdxCastor2FsStats::IncWrite() 
-{
-  time_t now = time( NULL );
-  statmutex.Lock();
-  write300s[( now + 1 ) % 300] = 0;
-  write300s[now % 300]++;
-  IncCmd( false );
-  statmutex.UnLock();
-}
-
-
-//--------------------------------------------------------------------------
-// Increment stats
-//--------------------------------------------------------------------------
-void 
-XrdxCastor2FsStats::IncStat() 
-{
-  time_t now = time( NULL );
-  statmutex.Lock();
-  stat300s[( now + 1 ) % 300] = 0;
-  stat300s[now % 300]++;
-  IncCmd( false );
-  statmutex.UnLock();
-}
-
-
-//--------------------------------------------------------------------------
-// Increment readd
-//--------------------------------------------------------------------------
-void 
-XrdxCastor2FsStats::IncReadd() 
-{
-  time_t now = time( NULL );
-  statmutex.Lock();
-  readd300s[( now + 1 ) % 300] = 0;
-  readd300s[now % 300]++;
-  IncCmd( false );
-  statmutex.UnLock();
-}
-
-
-//--------------------------------------------------------------------------
-// Increment rm
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void
-XrdxCastor2FsStats::IncRm() 
+XrdxCastor2FsStats::IncWrite()
 {
-  time_t now = time( NULL );
+  time_t now = time(NULL);
   statmutex.Lock();
-  rm300s[( now + 1 ) % 300] = 0;
-  rm300s[now % 300]++;
-  IncCmd( false );
+  write300s[(now + 1) % 300] = 0;
+  write300s[now % 300]++;
+  IncCmd(false);
   statmutex.UnLock();
 }
 
 
-//--------------------------------------------------------------------------
-// Increment number of cmds
-//--------------------------------------------------------------------------
-void 
-XrdxCastor2FsStats::IncCmd( bool lock ) 
+//------------------------------------------------------------------------------
+// Increment stats
+//------------------------------------------------------------------------------
+void
+XrdxCastor2FsStats::IncStat()
 {
-  time_t now = time( NULL );
+  time_t now = time(NULL);
+  statmutex.Lock();
+  stat300s[(now + 1) % 300] = 0;
+  stat300s[now % 300]++;
+  IncCmd(false);
+  statmutex.UnLock();
+}
 
-  if ( lock ) statmutex.Lock();
 
-  cmd300s[( now + 1 ) % 300] = 0;
+//------------------------------------------------------------------------------
+// Increment readd
+//------------------------------------------------------------------------------
+void
+XrdxCastor2FsStats::IncReadd()
+{
+  time_t now = time(NULL);
+  statmutex.Lock();
+  readd300s[(now + 1) % 300] = 0;
+  readd300s[now % 300]++;
+  IncCmd(false);
+  statmutex.UnLock();
+}
+
+
+//------------------------------------------------------------------------------
+// Increment rm
+//------------------------------------------------------------------------------
+void
+XrdxCastor2FsStats::IncRm()
+{
+  time_t now = time(NULL);
+  statmutex.Lock();
+  rm300s[(now + 1) % 300] = 0;
+  rm300s[now % 300]++;
+  IncCmd(false);
+  statmutex.UnLock();
+}
+
+
+//------------------------------------------------------------------------------
+// Increment number of cmds
+//------------------------------------------------------------------------------
+void
+XrdxCastor2FsStats::IncCmd(bool lock)
+{
+  time_t now = time(NULL);
+
+  if (lock) statmutex.Lock();
+
+  cmd300s[(now + 1) % 300] = 0;
   cmd300s[now % 300]++;
 
-  if ( lock ) statmutex.UnLock();
+  if (lock) statmutex.UnLock();
 }
 
 
-//--------------------------------------------------------------------------
-// Increment server read or write operations 
-//--------------------------------------------------------------------------
-void 
+//------------------------------------------------------------------------------
+// Increment server read or write operations
+//------------------------------------------------------------------------------
+void
 XrdxCastor2FsStats::IncServerRdWr(const char* server, bool isRW)
 {
   if (isRW)
     IncServerWrite(server);
-  else 
+  else
     IncServerRead(server);
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Increment server reads
-//--------------------------------------------------------------------------
-void 
-XrdxCastor2FsStats::IncServerRead( const char* server ) 
+//------------------------------------------------------------------------------
+void
+XrdxCastor2FsStats::IncServerRead(const char* server)
 {
   statmutex.Lock();
-  XrdxCastor2StatULongLong* rc = ServerRead.Find( server );
+  XrdxCastor2StatULongLong* rc = ServerRead.Find(server);
 
-  if ( !rc ) {
+  if (!rc)
+  {
     rc = new XrdxCastor2StatULongLong();
     rc->Inc();
-    ServerRead.Add( server, rc );
+    ServerRead.Add(server, rc);
 
-    if ( !ServerTable->Find( server ) ) {
-      ServerTable->Insert( new XrdOucString( server ), server );
-    }
-  } else {
+    if (!ServerTable->Find(server))
+      ServerTable->Insert(new XrdOucString(server), server);
+  }
+  else
+  {
     rc->Inc();
   }
 
@@ -231,24 +233,26 @@ XrdxCastor2FsStats::IncServerRead( const char* server )
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Increment server writes
-//--------------------------------------------------------------------------
-void 
-XrdxCastor2FsStats::IncServerWrite( const char* server ) 
+//------------------------------------------------------------------------------
+void
+XrdxCastor2FsStats::IncServerWrite(const char* server)
 {
   statmutex.Lock();
-  XrdxCastor2StatULongLong* rc = ServerWrite.Find( server );
+  XrdxCastor2StatULongLong* rc = ServerWrite.Find(server);
 
-  if ( !rc ) {
+  if (!rc)
+  {
     rc = new XrdxCastor2StatULongLong();
     rc->Inc();
-    ServerWrite.Add( server, rc );
+    ServerWrite.Add(server, rc);
 
-    if ( !ServerTable->Find( server ) ) {
-      ServerTable->Insert( new XrdOucString( server ), server );
-    }
-  } else {
+    if (!ServerTable->Find(server))
+      ServerTable->Insert(new XrdOucString(server), server);
+  }
+  else
+  {
     rc->Inc();
   }
 
@@ -256,34 +260,37 @@ XrdxCastor2FsStats::IncServerWrite( const char* server )
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Increment user read or write operations
-//--------------------------------------------------------------------------
-void 
+//------------------------------------------------------------------------------
+void
 XrdxCastor2FsStats::IncUserRdWr(const char* user, bool isRW)
 {
   if (isRW)
     IncUserWrite(user);
-  else 
+  else
     IncUserRead(user);
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Increment user reads
-//--------------------------------------------------------------------------
-void 
-XrdxCastor2FsStats::IncUserRead( const char* user ) 
+//------------------------------------------------------------------------------
+void
+XrdxCastor2FsStats::IncUserRead(const char* user)
 {
   statmutex.Lock();
-  XrdxCastor2StatULongLong* rc = UserRead.Find( user );
+  XrdxCastor2StatULongLong* rc = UserRead.Find(user);
 
-  if ( !rc ) {
+  if (!rc)
+  {
     rc = new XrdxCastor2StatULongLong();
     rc->Inc();
-    UserRead.Add( user, rc );
-    UserTable->Insert( new XrdOucString( user ), user );
-  } else {
+    UserRead.Add(user, rc);
+    UserTable->Insert(new XrdOucString(user), user);
+  }
+  else
+  {
     rc->Inc();
   }
 
@@ -291,21 +298,24 @@ XrdxCastor2FsStats::IncUserRead( const char* user )
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Incremenet server writes
-//--------------------------------------------------------------------------
-void 
-XrdxCastor2FsStats::IncUserWrite( const char* user ) 
+//------------------------------------------------------------------------------
+void
+XrdxCastor2FsStats::IncUserWrite(const char* user)
 {
   statmutex.Lock();
-  XrdxCastor2StatULongLong* rc = UserWrite.Find( user );
+  XrdxCastor2StatULongLong* rc = UserWrite.Find(user);
 
-  if ( !rc ) {
+  if (!rc)
+  {
     rc = new XrdxCastor2StatULongLong();
     rc->Inc();
-    UserWrite.Add( user, rc );
-    UserTable->Insert( new XrdOucString( user ), user );
-  } else {
+    UserWrite.Add(user, rc);
+    UserTable->Insert(new XrdOucString(user), user);
+  }
+  else
+  {
     rc->Inc();
   }
 
@@ -313,147 +323,143 @@ XrdxCastor2FsStats::IncUserWrite( const char* user )
 }
 
 
-//--------------------------------------------------------------------------
-// Get read rate 
-//--------------------------------------------------------------------------
-double 
-XrdxCastor2FsStats::ReadRate( int nbins ) 
+//------------------------------------------------------------------------------
+// Get read rate
+//------------------------------------------------------------------------------
+double
+XrdxCastor2FsStats::ReadRate(int nbins)
 {
-  if ( !nbins )
+  if (!nbins)
     return 0;
 
-  time_t now = time( NULL );
+  time_t now = time(NULL);
   double sum = 0;
 
-  for ( int i = 0 ; i < nbins; i++ ) {
-    sum += ( read300s[( now - 1 - i ) % 300] );
-  }
+  for (int i = 0 ; i < nbins; i++)
+    sum += (read300s[(now - 1 - i) % 300]);
 
   sum /= nbins;
   return sum;
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Get write rate
-//--------------------------------------------------------------------------
-double 
-XrdxCastor2FsStats::WriteRate( int nbins ) 
+//------------------------------------------------------------------------------
+double
+XrdxCastor2FsStats::WriteRate(int nbins)
 {
-  if ( !nbins )
+  if (!nbins)
     return 0;
 
-  time_t now = time( NULL );
+  time_t now = time(NULL);
   double sum = 0;
 
-  for ( int i = 0 ; i < nbins; i++ ) {
-    sum += ( write300s[( now - 1 - i ) % 300] );
-  }
+  for (int i = 0 ; i < nbins; i++)
+    sum += (write300s[(now - 1 - i) % 300]);
 
   sum /= nbins;
   return sum;
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Get stat rate
-//--------------------------------------------------------------------------
-double 
-XrdxCastor2FsStats::StatRate( int nbins ) 
+//------------------------------------------------------------------------------
+double
+XrdxCastor2FsStats::StatRate(int nbins)
 {
-  if ( !nbins )
+  if (!nbins)
     return 0;
 
-  time_t now = time( NULL );
+  time_t now = time(NULL);
   double sum = 0;
 
-  for ( int i = 0 ; i < nbins; i++ ) {
-    sum += ( stat300s[( now - 1 - i ) % 300] );
-  }
+  for (int i = 0 ; i < nbins; i++)
+    sum += (stat300s[(now - 1 - i) % 300]);
 
   sum /= nbins;
   return sum;
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Get readd rate
-//--------------------------------------------------------------------------
-double 
-XrdxCastor2FsStats::ReaddRate( int nbins ) 
+//------------------------------------------------------------------------------
+double
+XrdxCastor2FsStats::ReaddRate(int nbins)
 {
-  if ( !nbins )
+  if (!nbins)
     return 0;
 
-  time_t now = time( NULL );
+  time_t now = time(NULL);
   double sum = 0;
 
-  for ( int i = 0 ; i < nbins; i++ ) {
-    sum += ( readd300s[( now - 1 - i ) % 300] );
-  }
+  for (int i = 0 ; i < nbins; i++)
+    sum += (readd300s[(now - 1 - i) % 300]);
 
   sum /= nbins;
   return sum;
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Get rm rate
-//--------------------------------------------------------------------------
-double 
-XrdxCastor2FsStats::RmRate( int nbins ) 
+//------------------------------------------------------------------------------
+double
+XrdxCastor2FsStats::RmRate(int nbins)
 {
-  if ( !nbins )
+  if (!nbins)
     return 0;
 
-  time_t now = time( NULL );
+  time_t now = time(NULL);
   double sum = 0;
 
-  for ( int i = 0 ; i < nbins; i++ ) {
-    sum += ( rm300s[( now - 1 - i ) % 300] );
-  }
+  for (int i = 0 ; i < nbins; i++)
+    sum += (rm300s[(now - 1 - i) % 300]);
 
   sum /= nbins;
   return sum;
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Get cmds rate
-//--------------------------------------------------------------------------
-double 
-XrdxCastor2FsStats::CmdRate( int nbins ) 
+//------------------------------------------------------------------------------
+double
+XrdxCastor2FsStats::CmdRate(int nbins)
 {
-  if ( !nbins )
+  if (!nbins)
     return 0;
 
-  time_t now = time( NULL );
+  time_t now = time(NULL);
   double sum = 0;
 
-  for ( int i = 0 ; i < nbins; i++ ) {
-    sum += ( cmd300s[( now - 1 - i ) % 300] );
-  }
+  for (int i = 0 ; i < nbins; i++)
+    sum += (cmd300s[(now - 1 - i) % 300]);
+
 
   sum /= nbins;
   return sum;
 }
 
 
-//--------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // Run update loop
-//--------------------------------------------------------------------------
-void 
-XrdxCastor2FsStats::UpdateLoop() 
+//------------------------------------------------------------------------------
+void
+XrdxCastor2FsStats::UpdateLoop()
 {
-  while ( 1 ) {
-    XrdSysTimer::Wait( 490 );
-    time_t now = time( NULL );
-    read300s[( now + 1 ) % 300] = 0;
-    write300s[( now + 1 ) % 300] = 0;
-    stat300s[( now + 1 ) % 300] = 0;
-    readd300s[( now + 1 ) % 300] = 0;
-    rm300s[( now + 1 ) % 300] = 0;
-    cmd300s[( now + 1 ) % 300] = 0;
+  while (1)
+  {
+    XrdSysTimer::Wait(490);
+    time_t now = time(NULL);
+    read300s[(now + 1) % 300] = 0;
+    write300s[(now + 1) % 300] = 0;
+    stat300s[(now + 1) % 300] = 0;
+    readd300s[(now + 1) % 300] = 0;
+    rm300s[(now + 1) % 300] = 0;
+    cmd300s[(now + 1) % 300] = 0;
     Update();
   }
 }
@@ -465,100 +471,105 @@ XrdxCastor2FsStats::UpdateLoop()
 void
 XrdxCastor2FsStats::Update()
 {
-  if ( Proc ) {
-    gMgr->Stats.Lock();
+  if (Proc)
+  {
+    statmutex.Lock();
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "read1" );
-      pf && pf->Write( ReadRate( 1 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("read1");
+      pf && pf->Write(ReadRate(1), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "read60" );
-      pf && pf->Write( ReadRate( 60 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("read60");
+      pf && pf->Write(ReadRate(60), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "read300" );
-      pf && pf->Write( ReadRate( 298 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("read300");
+      pf && pf->Write(ReadRate(298), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "write1" );
-      pf && pf->Write( WriteRate( 1 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("write1");
+      pf && pf->Write(WriteRate(1), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "write60" );
-      pf && pf->Write( WriteRate( 60 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("write60");
+      pf && pf->Write(WriteRate(60), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "write300" );
-      pf && pf->Write( WriteRate( 298 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("write300");
+      pf && pf->Write(WriteRate(298), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "stat1" );
-      pf && pf->Write( StatRate( 1 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("stat1");
+      pf && pf->Write(StatRate(1), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "stat60" );
-      pf && pf->Write( StatRate( 60 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("stat60");
+      pf && pf->Write(StatRate(60), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "stat300" );
-      pf && pf->Write( StatRate( 298 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("stat300");
+      pf && pf->Write(StatRate(298), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "readd1" );
-      pf && pf->Write( ReaddRate( 1 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("readd1");
+      pf && pf->Write(ReaddRate(1), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "readd60" );
-      pf && pf->Write( ReaddRate( 60 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("readd60");
+      pf && pf->Write(ReaddRate(60), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "readd300" );
-      pf && pf->Write( ReaddRate( 298 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("readd300");
+      pf && pf->Write(ReaddRate(298), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "rm1" );
-      pf && pf->Write( RmRate( 1 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("rm1");
+      pf && pf->Write(RmRate(1), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "rm60" );
-      pf && pf->Write( RmRate( 60 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("rm60");
+      pf && pf->Write(RmRate(60), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "rm300" );
-      pf && pf->Write( RmRate( 298 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("rm300");
+      pf && pf->Write(RmRate(298), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "cmd1" );
-      pf && pf->Write( CmdRate( 1 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("cmd1");
+      pf && pf->Write(CmdRate(1), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "cmd60" );
-      pf && pf->Write( CmdRate( 60 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("cmd60");
+      pf && pf->Write(CmdRate(60), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "cmd300" );
-      pf && pf->Write( CmdRate( 298 ), 1 );
+      XrdxCastor2ProcFile* pf = Proc->Handle("cmd300");
+      pf && pf->Write(CmdRate(298), 1);
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "delayread" );
+      XrdxCastor2ProcFile* pf = Proc->Handle("delayread");
 
-      if ( pf ) {
+      if (pf)
+      {
         gMgr->xCastor2FsDelayRead  = pf->Read();
       }
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "delaywrite" );
+      XrdxCastor2ProcFile* pf = Proc->Handle("delaywrite");
 
-      if ( pf ) {
+      if (pf)
+      {
         gMgr->xCastor2FsDelayWrite = pf->Read();
       }
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "trace" );
+      XrdxCastor2ProcFile* pf = Proc->Handle("trace");
 
-      if ( pf ) {
+      if (pf)
+      {
         long int log_level = 0;
         XrdOucString slog_level;
+
         if (pf->Read(slog_level))
         {
           log_level = Logging::GetPriorityByString(slog_level.c_str());
@@ -569,7 +580,7 @@ XrdxCastor2FsStats::Update()
             char* end;
             errno = 0;
             log_level = (int) strtol(slog_level.c_str(), &end, 10);
-            
+
             if (!(errno == ERANGE && ((log_level == LONG_MIN) || (log_level == LONG_MAX))) &&
                 !((errno != 0) && (log_level == 0)))
             {
@@ -589,34 +600,40 @@ XrdxCastor2FsStats::Update()
         }
       }
     }
+    
+    statmutex.UnLock();
 
-    gMgr->Stats.UnLock();
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "serverread" );
+      XrdxCastor2ProcFile* pf = Proc->Handle("serverread");
 
-      if ( pf ) {
-        gMgr->Stats.Lock();
+      if (pf)
+      {
+        statmutex.Lock();
         // Loop over the ServerTable and write keyval pairs for each server
         int cursor = 0;
         bool first = true;
 
-        do {
-          cursor = gMgr->Stats.ServerTable->Next( cursor );
+        do
+        {
+          cursor = ServerTable->Next(cursor);
 
-          if ( cursor >= 0 ) {
-            XrdOucString* name = gMgr->Stats.ServerTable->Item( cursor );
+          if (cursor >= 0)
+          {
+            XrdOucString* name = ServerTable->Item(cursor);
 
-            if ( !name ) {
+            if (!name)
+            {
               cursor++;
               continue;
             }
 
             XrdxCastor2StatULongLong* sval;
 
-            if ( ( sval = gMgr->Stats.ServerRead.Find( name->c_str() ) ) ) {
-              // If we don't write in this time bin, we just stop the loop - 
+            if ((sval = ServerRead.Find(name->c_str())))
+            {
+              // If we don't write in this time bin, we just stop the loop -
               // or if there is an error writing
-              if ( !pf->WriteKeyVal( name->c_str(), sval->Get(), 2, first ) )
+              if (!pf->WriteKeyVal(name->c_str(), sval->Get(), 2, first))
                 break;
 
               first = false;
@@ -624,37 +641,43 @@ XrdxCastor2FsStats::Update()
 
             cursor++;
           }
-        } while ( cursor >= 0 );
+        }
+        while (cursor >= 0);
 
-        gMgr->Stats.UnLock();
+        statmutex.UnLock();
       }
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "serverwrite" );
+      XrdxCastor2ProcFile* pf = Proc->Handle("serverwrite");
 
-      if ( pf ) {
+      if (pf)
+      {
         // Loop over the ServerTable and write keyval pairs for each server
-        gMgr->Stats.Lock();
+        statmutex.Lock();
         int cursor = 0;
         bool first = true;
 
-        do {
-          cursor = gMgr->Stats.ServerTable->Next( cursor );
+        do
+        {
+          cursor = ServerTable->Next(cursor);
 
-          if ( cursor >= 0 ) {
-            XrdOucString* name = gMgr->Stats.ServerTable->Item( cursor );
+          if (cursor >= 0)
+          {
+            XrdOucString* name = ServerTable->Item(cursor);
 
-            if ( !name ) {
+            if (!name)
+            {
               cursor++;
               continue;
             }
 
             XrdxCastor2StatULongLong* sval;
 
-            if ( ( sval = gMgr->Stats.ServerWrite.Find( name->c_str() ) ) ) {
-              // If we don't write in this time bin, we just stop the loop - 
+            if ((sval = ServerWrite.Find(name->c_str())))
+            {
+              // If we don't write in this time bin, we just stop the loop -
               // or if there is an error writing
-              if ( !pf->WriteKeyVal( name->c_str(), sval->Get(), 2, first ) )
+              if (!pf->WriteKeyVal(name->c_str(), sval->Get(), 2, first))
                 break;
 
               first = false;
@@ -662,37 +685,43 @@ XrdxCastor2FsStats::Update()
 
             cursor++;
           }
-        } while ( cursor >= 0 );
+        }
+        while (cursor >= 0);
 
-        gMgr->Stats.UnLock();
+        statmutex.UnLock();
       }
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "userread" );
+      XrdxCastor2ProcFile* pf = Proc->Handle("userread");
 
-      if ( pf ) {
-        gMgr->Stats.Lock();
+      if (pf)
+      {
+        statmutex.Lock();
         // Loop over the UserTable and write keyval pairs for each server
         int cursor = 0;
         bool first = true;
 
-        do {
-          cursor = gMgr->Stats.UserTable->Next( cursor );
+        do
+        {
+          cursor = UserTable->Next(cursor);
 
-          if ( cursor >= 0 ) {
-            XrdOucString* name = gMgr->Stats.UserTable->Item( cursor );
+          if (cursor >= 0)
+          {
+            XrdOucString* name = UserTable->Item(cursor);
 
-            if ( !name ) {
+            if (!name)
+            {
               cursor++;
               continue;
             }
 
             XrdxCastor2StatULongLong* sval;
 
-            if ( ( sval = gMgr->Stats.UserRead.Find( name->c_str() ) ) ) {
-              // If we don't write in this time bin, we just stop the loop - 
+            if ((sval = UserRead.Find(name->c_str())))
+            {
+              // If we don't write in this time bin, we just stop the loop -
               // or if there is an error writing
-              if ( !pf->WriteKeyVal( name->c_str(), sval->Get(), 2, first ) )
+              if (!pf->WriteKeyVal(name->c_str(), sval->Get(), 2, first))
                 break;
 
               first = false;
@@ -700,37 +729,43 @@ XrdxCastor2FsStats::Update()
 
             cursor++;
           }
-        } while ( cursor >= 0 );
+        }
+        while (cursor >= 0);
 
-        gMgr->Stats.UnLock();
+        statmutex.UnLock();
       }
     }
     {
-      XrdxCastor2ProcFile* pf = Proc->Handle( "userwrite" );
+      XrdxCastor2ProcFile* pf = Proc->Handle("userwrite");
 
-      if ( pf ) {
+      if (pf)
+      {
         // Loop over the UserTable and write keyval pairs for each serve
-        gMgr->Stats.Lock();
+        statmutex.Lock();
         int cursor = 0;
         bool first = true;
 
-        do {
-          cursor = gMgr->Stats.UserTable->Next( cursor );
+        do
+        {
+          cursor = UserTable->Next(cursor);
 
-          if ( cursor >= 0 ) {
-            XrdOucString* name = gMgr->Stats.UserTable->Item( cursor );
+          if (cursor >= 0)
+          {
+            XrdOucString* name = UserTable->Item(cursor);
 
-            if ( !name ) {
+            if (!name)
+            {
               cursor++;
               continue;
             }
 
             XrdxCastor2StatULongLong* sval;
 
-            if ( ( sval = gMgr->Stats.UserWrite.Find( name->c_str() ) ) ) {
-              // If we don't write in this time bin, we just stop the loop - 
+            if ((sval = UserWrite.Find(name->c_str())))
+            {
+              // If we don't write in this time bin, we just stop the loop -
               // or if there is an error writing
-              if ( !pf->WriteKeyVal( name->c_str(), sval->Get(), 2, first ) )
+              if (!pf->WriteKeyVal(name->c_str(), sval->Get(), 2, first))
                 break;
 
               first = false;
@@ -738,9 +773,10 @@ XrdxCastor2FsStats::Update()
 
             cursor++;
           }
-        } while ( cursor >= 0 );
+        }
+        while (cursor >= 0);
 
-        gMgr->Stats.UnLock();
+        statmutex.UnLock();
       }
     }
   }
