@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/rmc/TestingRmcDaemon.hpp"
+#include "test/unittest/castor/tape/rmc/TestingRmcDaemon.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <sstream>
@@ -52,7 +52,7 @@ public:
       daemon.m_cmdLine.help);
 
     const int argc = 1;
-    char argv[1] = {"rmcd"};
+    char *argv[1] = {"rmcd"};
     daemon.parseCommandLine(argc, argv);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.foreground after parsing",
@@ -64,7 +64,7 @@ public:
   }
 
   CPPUNIT_TEST_SUITE(RmcDaemonTest);
-  CPPUNIT_TEST(testParceCmdLineWithNoArgs);
+  CPPUNIT_TEST(testParceCommandLineWithNoArgs);
   CPPUNIT_TEST_SUITE_END();
 };
 

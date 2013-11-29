@@ -779,13 +779,16 @@ rmc_AcsQueryVolumeCmdLine.o: $(ROOT_DIR)/castor/tape/rmc/AcsQueryVolumeCmdLine.c
 rmc_AcsQueryVolumeCmd.o: $(ROOT_DIR)/castor/tape/rmc/AcsQueryVolumeCmd.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+rmc_Cmd.o: $(ROOT_DIR)/castor/tape/rmc/Cmd.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+rmc_DlfMessageStrings.o: $(ROOT_DIR)/castor/tape/rmc/DlfMessageStrings.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 rmc_RmcdCmdLine.o: $(ROOT_DIR)/castor/tape/rmc/RmcdCmdLine.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rmc_RmcDaemon.o: $(ROOT_DIR)/castor/tape/rmc/RmcDaemon.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-rmc_RmcdMain.o: $(ROOT_DIR)/castor/tape/rmc/RmcdMain.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 ns_Cns_selectsrvr.o: $(ROOT_DIR)/ns/Cns_selectsrvr.c
@@ -1655,7 +1658,7 @@ unittest_BulkRequestConfigParamsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/ta
 unittest_IndexedContainerTest.o: $(ROOT_DIR)/test/unittest/castor/tape/utils/IndexedContainerTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-unittest_RmcDaemonTest.o: $(ROOT_DIR)/test/unittest/rmc/RmcDaemonTest.cpp
+unittest_RmcDaemonTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/RmcDaemonTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 unittest_RmcLibTest.o: $(ROOT_DIR)/test/unittest/rmc/RmcLibTest.cpp
