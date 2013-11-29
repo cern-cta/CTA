@@ -12,8 +12,6 @@ rmcd \- start the Remote Media Changer daemon
 The
 .B rmcd
 command starts the Remote Media Changer daemon.
-This command is usually executed at system startup time
-.RB ( /etc/rc.local ).
 .LP
 .I smc_ldr
 is the picker device as defined in /dev.
@@ -21,61 +19,50 @@ is the picker device as defined in /dev.
 If the Remote Media Changer daemon is not active,
 the requests are automatically retried by the client API.
 .LP
-All error messages and statistical information are kept in a log.
+All error messages and statistical information are kept in the log file
+/var/log/castor/rmcd.log.
 .LP
-The Remote Media Changer daemon listen port number can be defined on client
-hosts and on the Remote Media Changer host itself in either of the following
-ways:
-.RS
+.SH CASTOR CONFIGURATION PARAMETERS READ BY THE SERVER
+The remote media changer daemon reads and uses the following CASTOR
+configuration parameters which are specified within the CASTOR
+configuration file /etc/castor/castor.conf.
+.TP
+\fBRMC PORT
+The port on which the remote media changer daemon will listen for client
+requests.  The default value is 5014.  This configuration parameter should
+\fBNOT\fP normally be set and the default should be used.
+
+.SH CASTOR CONFIGURATION PARAMETERS READ BY THE CLIENTS
+The clients of the remote media changer daemon read and use the following
+CASTOR configuration parameters which are specified within the CASTOR
+configuration file /etc/castor/castor.conf.
+.TP
+\fBRMC HOST
+The host on which the rmcd daemon is running and listening for client requests.
+.TP
+\fBRMC PORT
+The port on which the remote media changer daemon will listen for client
+requests.  The default value is 5014.  This configuration parameter should
+\fBNOT\fP normally be set and the default should be used.
+
+.SH ENVIRONMENT VARIABLES READ BY THE CLIENTS
+The clients of the remote media changer daemon read and use the following
+environment variables.  Please note that an environment variable will override
+the equivalent CASTOR configuration parameter located within the CASTOR
+configuration file /etc/castor/castor.conf.
+.TP
+\fBRMC_HOST
+The same meaning as the CASTOR configuration parameter RMC HOST described
+above.
+.TP
+\fBRMC_PORT
+The same meaning as the CASTOR configuration parameter RMC PORT described
+above.
+
+.SH THE SERVER LOG FILE
 .LP
-setting an environment variable RMC_PORT
-.RS
-.HP
-setenv RMC_PORT 5014
-.RE
-.LP
-an entry in
-.B /etc/castor/castor.conf
-like:
-.RS
-.HP
-RMC	PORT	5014
-.RE
-.LP
-an entry in
-.B /etc/services
-like:
-.RS
-.HP
-rmc           5014/tcp                        # CASTOR Remote Media Changer
-.RE
-.RE
-.LP
-If none of these methods is used, the default port number is taken from the
-definition of RMC_PORT in rmc_constants.h.
-.LP
-The Remote Media Changer host name can be defined on client hosts
-in either of the following ways:
-.RS
-.LP
-setting an environment variable RMC_HOST, for example:
-.RS
-.HP
-setenv RMC_HOST castor5
-.RE
-.LP
-an entry in
-.B /etc/castor/castor.conf
-for example:
-.RS
-.HP
-RMC	HOST	castor5
-.RE
-.RE
-.LP
-If none of these methods is used, the default host is the local host.
-.LP
-In the log each entry has a timestamp.
+The remote media changer daemon writes logs to the file
+/var/log/castor/rmcd.log.  Each entry within the log has a timestamp.
 For each user command there is one message RMC92 giving information about
 the requestor (hostname, uid, gid) and one message RMC98 giving the command
 itself.
