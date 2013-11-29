@@ -18,6 +18,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "h/Cinit.h"
+#include "h/getconfent.h"
 #include "h/marshall.h"
 #include "h/net.h"
 #include "h/rmc_constants.h"
@@ -51,7 +52,6 @@ int rmc_main(struct main_args *main_args)
 	char domainname[CA_MAXHOSTNAMELEN+1];
 	struct sockaddr_in from;
 	socklen_t fromlen = sizeof(from);
-	char *getconfent();
 	char *msgaddr;
 	int nb_sense_ret;
 	int on = 1;	/* for REUSEADDR */
