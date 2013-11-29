@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/AcsDismountCmdLine.hpp
+ *                 castor/tape/rmc/RmcdCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,75 +22,38 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_ACSDISMOUNTCMDLINE_HPP
-#define CASTOR_TAPE_RMC_ACSDISMOUNTCMDLINE_HPP 1
-
-extern "C" {
-#include "acssys.h"
-#include "acsapi.h"
-}
-
-#include <string>
+#ifndef CASTOR_TAPE_RMC_RMCDCMDLINE_HPP
+#define CASTOR_TAPE_RMC_RMCDCMDLINE_HPP 1
 
 namespace castor {
-namespace tape {
-namespace rmc {
+namespace tape   {
+namespace rmc    {
 
 /**
  * Data type used to store the results of parsing the command-line.
  */
-struct AcsDismountCmdLine {
+struct RmcdCmdLine {
   /**
    * Constructor.
    *
-   * Initialises all boolean member-variables to false, all integer
-   * member-variables to 0 and the volume identifier to an empty string.
+   * Initialises all bool member-variables to false.
    */
-  AcsDismountCmdLine() throw();
+  RmcdCmdLine() throw();
 
   /**
-   * True if the debug option has been set.
+   * True if the foreground option has been set.
    */
-  bool debug;
-
-  /**
-   * True if the dismount should be forced.
-   *
-   * Forcing a dismount means dismounting the tape in the specified drive
-   * without checking the volume identifier of the tape.
-   */
-  BOOLEAN force;
+  bool foreground;
 
   /**
    * True if the help option has been set.
    */
   bool help;
 
-  /**
-   * Time in seconds to wait between queries to ACS for responses.
-   */
-  int queryInterval;
-
-  /**
-   * Time in seconds to wait for the dismount to conclude.
-   */
-  int timeout;
-
-  /**
-   * The volume identifier of the tape to be mounted.
-   */
-  VOLID volId;
-
-  /**
-   * The drive into which the tape is to be mounted.
-   */
-  DRIVEID driveId;
-
-}; // class AcsDismountCmdLine
+}; // class RmcdCmdLine
 
 } // namespace rmc
 } // namespace tape
 } // namespace castor
 
-
-#endif // CASTOR_TAPE_RMC_ACSDISMOUNTCMDLINE_HPP
+#endif // CASTOR_TAPE_RMC_RMCDCMDLINE_HPP

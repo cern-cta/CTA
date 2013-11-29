@@ -6,31 +6,36 @@
 rmcd \- start the Remote Media Changer daemon
 .SH SYNOPSIS
 .B rmcd
-.I smc_ldr
 .SH DESCRIPTION
 .LP
 The
 .B rmcd
 command starts the Remote Media Changer daemon.
 .LP
-.I smc_ldr
-is the picker device as defined in /dev.
-.LP
-If the Remote Media Changer daemon is not active,
-the requests are automatically retried by the client API.
-.LP
-All error messages and statistical information are kept in the log file
-/var/log/castor/rmcd.log.
-.LP
 .SH CASTOR CONFIGURATION PARAMETERS READ BY THE SERVER
 The remote media changer daemon reads and uses the following CASTOR
 configuration parameters which are specified within the CASTOR
 configuration file /etc/castor/castor.conf.
 .TP
+\fBRMC MODE
+The compatibility mode of the the remote media-changer daemon.  Valid values
+are ACS, MOCK and SMC.  A remote media-changer daemon can either be configured
+to work with an ACS compatible tape library or with a SCSI compatible tape
+library.  In addition a remote media-changer daemon can be configured to run
+in MOCK mode for debugging purposes.  In MOCK mode a remote media-changer will
+do nothing but log the client requests it receives.  It is \fBNOT\f[]
+recommended to run a remote media-changer daemon in MOCK mode in production
+unless you really know what you are doing.
+.TP
 \fBRMC PORT
 The port on which the remote media changer daemon will listen for client
 requests.  The default value is 5014.  This configuration parameter should
 \fBNOT\fP normally be set and the default should be used.
+.TP
+\fBRMC SMCDEV
+The path to the device file representing the SCSI media changer.  This
+configuration parameter is only read by a remote media-changer daemon
+configured to run in SMC compatibility mode. See \fBRMC MODE\f[] above.
 
 .SH CASTOR CONFIGURATION PARAMETERS READ BY THE CLIENTS
 The clients of the remote media changer daemon read and use the following
@@ -52,16 +57,16 @@ the equivalent CASTOR configuration parameter located within the CASTOR
 configuration file /etc/castor/castor.conf.
 .TP
 \fBRMC_HOST
-The same meaning as the CASTOR configuration parameter RMC HOST described
-above.
+The same meaning as the CASTOR configuration parameter \fBRMC HOST\f[]
+described above.
 .TP
 \fBRMC_PORT
-The same meaning as the CASTOR configuration parameter RMC PORT described
+The same meaning as the CASTOR configuration parameter \fBRMC PORT\f[] described
 above.
 
 .SH THE SERVER LOG FILE
 .LP
-The remote media changer daemon writes logs to the file
+All error messages and statistical information are written to the file
 /var/log/castor/rmcd.log.  Each entry within the log has a timestamp.
 For each user command there is one message RMC92 giving information about
 the requestor (hostname, uid, gid) and one message RMC98 giving the command
