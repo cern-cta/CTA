@@ -63,8 +63,100 @@ public:
       daemon.m_cmdLine.help);
   }
 
+  void testParceCommandLineWithMinusH() {
+    TestingRmcDaemon daemon;
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.foreground before parsing",
+      false,
+      daemon.m_cmdLine.foreground);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.help before parsing",
+      false,
+      daemon.m_cmdLine.help);
+
+    const int argc = 2;
+    char *argv[2] = {"rmcd", "-h"};
+    daemon.parseCommandLine(argc, argv);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.foreground after parsing",
+      false,
+      daemon.m_cmdLine.foreground);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.help after parsing",
+      true,
+      daemon.m_cmdLine.help);
+  }
+
+  void testParceCommandLineWithMinusMinusHelp() {
+    TestingRmcDaemon daemon;
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.foreground before parsing",
+      false,
+      daemon.m_cmdLine.foreground);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.help before parsing",
+      false,
+      daemon.m_cmdLine.help);
+
+    const int argc = 2;
+    char *argv[2] = {"rmcd", "--help"};
+    daemon.parseCommandLine(argc, argv);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.foreground after parsing",
+      false,
+      daemon.m_cmdLine.foreground);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.help after parsing",
+      true,
+      daemon.m_cmdLine.help);
+  }
+
+  void testParceCommandLineWithMinusF() {
+    TestingRmcDaemon daemon;
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.foreground before parsing",
+      false,
+      daemon.m_cmdLine.foreground);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.help before parsing",
+      false,
+      daemon.m_cmdLine.help);
+
+    const int argc = 2;
+    char *argv[2] = {"rmcd", "-f"};
+    daemon.parseCommandLine(argc, argv);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.foreground after parsing",
+      true,
+      daemon.m_cmdLine.foreground);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.help after parsing",
+      false,
+      daemon.m_cmdLine.help);
+  }
+
+  void testParceCommandLineWithMinusMinusForeground() {
+    TestingRmcDaemon daemon;
+  
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.foreground before parsing",
+      false,
+      daemon.m_cmdLine.foreground);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.help before parsing",
+      false,
+      daemon.m_cmdLine.help);
+
+    const int argc = 2;
+    char *argv[2] = {"rmcd", "--foreground"};
+    daemon.parseCommandLine(argc, argv);
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.foreground after parsing",
+      true,
+      daemon.m_cmdLine.foreground);
+    CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.help after parsing",
+      false,
+      daemon.m_cmdLine.help);
+  }
+
   CPPUNIT_TEST_SUITE(RmcDaemonTest);
   CPPUNIT_TEST(testParceCommandLineWithNoArgs);
+  CPPUNIT_TEST(testParceCommandLineWithMinusH);
+  CPPUNIT_TEST(testParceCommandLineWithMinusMinusHelp);
+  CPPUNIT_TEST(testParceCommandLineWithMinusF);
+  CPPUNIT_TEST(testParceCommandLineWithMinusMinusForeground);
   CPPUNIT_TEST_SUITE_END();
 };
 
