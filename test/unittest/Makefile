@@ -195,9 +195,7 @@ rununittests: \
   rtcopy_rtcp_Listen.o \
   rtcopy_rtcp_marshallVdqmClientInfoMsg.o \
   rtcopy_rtcp_recvRtcpHdr.o \
-  rtcopy_rtcp_RetvalSHIFT.o \
   rtcopy_rtcpc_BuildReq.o \
-  rtcopy_rtcpd_ConvertData.o \
   rtcopy_rtcpd_GetClientInfo.o \
   rtcopy_rtcpd_GetClientInfoMsg.o \
   rtcopy_rtcpd_SendAckToVdqmOrTapeBridge.o \
@@ -242,7 +240,6 @@ rununittests: \
   stager_SubRequestStatusCodes.o \
   stager_SubRequestGetNextStatusCodes.o \
   stager_StageUpdateRequest.o \
-  tape_asc2ebc.o \
   tape_chkdirw.o \
   tape_Ctape_kill.o \
   tape_Ctape_errmsg.o \
@@ -253,7 +250,6 @@ rununittests: \
   tape_Ctape_rls.o \
   tape_Ctape_reserve.o \
   tape_cvtden.o \
-  tape_ebc2asc.o \
   tape_findpgrp.o \
   tape_initlabel.o \
   tape_net.o \
@@ -912,9 +908,6 @@ rtcopy_rtcpapi.o: $(ROOT_DIR)/rtcopy/rtcpapi.c
 rtcopy_rtcp_accounting.o: $(ROOT_DIR)/rtcopy/rtcp_accounting.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-rtcopy_rtcp_RetvalSHIFT.o: $(ROOT_DIR)/rtcopy/rtcp_RetvalSHIFT.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 rtcopy_rtcp_InitNW.o: $(ROOT_DIR)/rtcopy/rtcp_InitNW.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -988,9 +981,6 @@ rtcopy_client_rtcp_SendRecv.o: $(ROOT_DIR)/rtcopy/rtcp_SendRecv.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcopy_server_rtcp_SendRecv.o: $(ROOT_DIR)/rtcopy/rtcp_SendRecv.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-rtcopy_rtcpd_ConvertData.o: $(ROOT_DIR)/rtcopy/rtcpd_ConvertData.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcopy_rtcpdIsConfiguredToReuseMount.o: $(ROOT_DIR)/rtcopy/rtcpdIsConfiguredToReuseMount.c
@@ -1145,9 +1135,6 @@ stager_SubRequestGetNextStatusCodes.o: \
 tape_usrlbl.o: $(ROOT_DIR)/tape/usrlbl.c
 	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
 
-tape_asc2ebc.o: $(ROOT_DIR)/tape/asc2ebc.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 tape_chkdirw.o: $(ROOT_DIR)/tape/chkdirw.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -1179,9 +1166,6 @@ tape_Ctape_reserve.o: $(ROOT_DIR)/tape/Ctape_reserve.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tape_cvtden.o: $(ROOT_DIR)/tape/cvtden.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tape_ebc2asc.o: $(ROOT_DIR)/tape/ebc2asc.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tape_findpgrp.o: $(ROOT_DIR)/tape/findpgrp.c
