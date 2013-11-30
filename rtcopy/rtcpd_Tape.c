@@ -246,7 +246,7 @@ static int MemoryToTape(
     uint64_t *const    batchBytesToTape) {
     int rc = 0;
     int nb_bytes, i, j, last_sz, blksiz, severity, lrecl;
-    int end_of_tpfile, buf_done, nb_truncated, spill, proc_err;
+    int end_of_tpfile, buf_done, spill, proc_err;
     int pileupWaitTime = 0, nbFullBufs;
     char *p;
     register int debug = Debug;
@@ -275,7 +275,7 @@ static int MemoryToTape(
         lrecl = blksiz;
     }
 
-    nb_truncated = spill = 0;
+    spill = 0;
     NoSyncAccess = *diskIOfinished;
 
     if ( ((p = getenv("RTCPD_PILEUP_WAIT_TIME")) != NULL) ||
