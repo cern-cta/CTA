@@ -24,8 +24,8 @@ COMM
 INCLUDEDEPFILES(LOCAL_PATH/daemon)
 INCLUDEDEPFILES(LOCAL_PATH/daemon/ora)
 
-CPPFLAGS += $(ORACLE_CPPFLAGS) $(PYTHON_INC)
-AddLdFlags($(PYTHON_LIBS) -L$(ORACLE_LIBDIR) -locci -lclntsh -lstdc++)
+CPPFLAGS += $(ORACLE_CPPFLAGS)
+AddLdFlags(-L$(ORACLE_LIBDIR) -locci -lclntsh -lstdc++)
 
 DependsOnLibrary(castor,castorclient)
 DependsOnLibrary(castor/db/cnv,castorcnvs)
