@@ -10,8 +10,32 @@ MACPORTS_CPPUNIT_INCLUDE_OP=
 MACPORTS_CPPUNIT_LIB_OP=
 endif
 
+ifdef CASTOR_NOSTK
+CDK_OPS=
+CDK_LIB_OPS=
+RMC_OBJECTS=
+else
 CDK_OPS=-DLINUX -I/usr/include/CDK
-CDK_LIB_OPS = -L/usr/lib64/CDK -lapi -lcl -lipc -lutl
+CDK_LIB_OPS=-L/usr/lib64/CDK -lapi -lcl -lipc -lutl
+RMC_OBJECTS= \
+  rmc_Acs.o \
+  rmc_AcsCmd.o \
+  rmc_DebugBuf.o \
+  rmc_AcsDismountCmdLine.o \
+  rmc_AcsDismountCmd.o \
+  rmc_AcsMountCmdLine.o \
+  rmc_AcsMountCmd.o \
+  rmc_AcsQueryVolumeCmdLine.o \
+  rmc_AcsQueryVolumeCmd.o \
+  unittest_AcsCmdTest.o \
+  unittest_AcsTest.o \
+  unittest_AcsDismountCmdLineTest.o \
+  unittest_AcsDismountCmdTest.o \
+  unittest_AcsMountCmdLineTest.o \
+  unittest_AcsMountCmdTest.o \
+  unittest_AcsQueryVolumeCmdLineTest.o \
+  unittest_AcsQueryVolumeCmdTest.o
+endif
 ROOT_DIR=../..
 INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h $(MACPORTS_CPPUNIT_INCLUDE_OP) $(CDK_OPS)
 LIB_DIR_OPS=$(MACPORTS_CPPUNIT_LIB_OP)
@@ -24,7 +48,7 @@ all: $(EXECUTABLES)
 clean:
 	rm -f $(EXECUTABLES) *.o
 
-rununittests: \
+rununittests: $(RMC_OBJECTS) \
   runUnitTestsMain.o \
   castor_BaseAddress.o \
   castor_BaseCnvSvc.o \
@@ -125,15 +149,6 @@ rununittests: \
   metrics_InternalCounter.o \
   metrics_MetricsCollector.o \
   metrics_UpdateThread.o \
-  rmc_Acs.o \
-  rmc_AcsCmd.o \
-  rmc_DebugBuf.o \
-  rmc_AcsDismountCmdLine.o \
-  rmc_AcsDismountCmd.o \
-  rmc_AcsMountCmdLine.o \
-  rmc_AcsMountCmd.o \
-  rmc_AcsQueryVolumeCmdLine.o \
-  rmc_AcsQueryVolumeCmd.o \
   ns_Cns_selectsrvr.o \
   ns_Cns_opendir.o \
   ns_Cns_closedir.o \
@@ -324,21 +339,13 @@ rununittests: \
   tpcp_TapeFseqRangeListSequence.o \
   tpcp_TapeFseqRangeSequence.o \
   unittest.o \
-  unittest_AcsCmdTest.o \
-  unittest_AcsTest.o \
   unittest_CvtdenTest.o \
   unittest_InitlabelTest.o \
   unittest_Ctape_reserveTest.o \
-  unittest_AcsDismountCmdLineTest.o \
-  unittest_AcsDismountCmdTest.o \
   unittest_RecvTapeBridgeFlushedToTapeAckTest.o \
   unittest_MarshallTapeBridgeFlushedToTapeTest.o \
   unittest_SendTapeBridgeFlushedToTapeTest.o \
   unittest_MarshallTapeBridgeClientInfo2Test.o \
-  unittest_AcsMountCmdLineTest.o \
-  unittest_AcsMountCmdTest.o \
-  unittest_AcsQueryVolumeCmdLineTest.o \
-  unittest_AcsQueryVolumeCmdTest.o \
   unittest_NetTest.o \
   unittest_FileToRecallTest.o \
   unittest_MigrationReportConnectionTest.o \
@@ -379,7 +386,7 @@ rununittests: \
   vmgr_vmgr_querypool.o \
   vmgr_send2vmgr.o \
   vmgr_vmgr_querytape_byte_u64.o
-	g++ $(COMMON_OPS) $(LIB_DIR_OPS) $(CDK_LIB_OPS) -lpthread -ldl $(UUID_LIB) -lcppunit -lz -o $@ $^
+	g++ $(COMMON_OPS) $(LIB_DIR_OPS) $(CDK_LIB_OPS) -o $@ $^ -lpthread -ldl $(UUID_LIB) -lcppunit -lz
 
 runUnitTestsMain.o: runUnitTestsMain.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
