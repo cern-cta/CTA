@@ -44,9 +44,6 @@ XrdxCastor2FsFile::XrdxCastor2FsFile(const char* user, int MonID) :
 {
   oh = -1;
   fname = 0;
-  ohp = NULL;
-  ohperror = NULL;
-  ohperror_cnt = 0;
 }
 
 
@@ -56,8 +53,6 @@ XrdxCastor2FsFile::XrdxCastor2FsFile(const char* user, int MonID) :
 XrdxCastor2FsFile::~XrdxCastor2FsFile()
 {
   if (oh) close();
-  if (ohp) pclose(ohp);
-  if (ohperror) pclose(ohperror);
 }
 
 
@@ -623,9 +618,7 @@ XrdxCastor2FsFile::close()
   static const char* epname = "close";
 
   if (gMgr->mProc)
-  {
     gMgr->mStats.IncCmd();
-  }
 
   // Release the handle and return
   if (oh >= 0  && XrdxCastor2FsUFS::Close(oh))
@@ -637,25 +630,6 @@ XrdxCastor2FsFile::close()
   {
     free(fname);
     fname = 0;
-  }
-
-  if (ohp != NULL)
-  {
-    pclose(ohp);
-    ohp = NULL;
-  }
-
-  if (ohperror_cnt != 0)
-  {
-    XrdOucString ohperrorfile = "/tmp/xrdfscmd.";
-    ohperrorfile += (int)ohperror_cnt;
-    ::unlink(ohperrorfile.c_str());
-  }
-
-  if (ohperror != NULL)
-  {
-    fclose(ohperror);
-    ohperror = NULL;
   }
 
   return SFS_OK;
@@ -683,78 +657,6 @@ XrdxCastor2FsFile::read(XrdSfsFileOffset offset,
     return XrdxCastor2Fs::Emsg(epname, error, EFBIG, "read", fname);
 
 #endif
-
-  // Pipe reads
-  if (ohp)
-  {
-    char linestorage[4096];
-    char* lineptr = linestorage;
-    char* bufptr = buff;
-    size_t n = 4096;
-    int pn;
-    nbytes = 0;
-
-    while ((pn = getline(&lineptr, &n, ohp)) > 0)
-    {
-      XrdOucString line = lineptr;
-      XrdOucString rep1 = "/";
-      rep1 += gMgr->xCastor2FsName;
-      rep1 += "/";
-
-      if (line.beginswith(rep1))
-        line.replace(rep1, "/");
-
-      memcpy(bufptr, line.c_str(), line.length());
-      bufptr[line.length()] = 0;
-      nbytes += line.length();
-      bufptr += line.length();
-
-      if (nbytes > (blen - 1024))
-        break;
-
-      // Read something from stderr if existing
-      if (ohperror)
-      {
-        while ((pn = getline(&lineptr, &n, ohperror)) > 0)
-        {
-          XrdOucString line = "__STDERR__>";
-          line += lineptr;
-          XrdOucString rep1 = "/";
-          rep1 += gMgr->xCastor2FsName;
-          rep1 += "/";
-          line.replace(rep1, "/");
-          memcpy(bufptr, line.c_str(), line.length());
-          bufptr[line.length()] = 0;
-          nbytes += line.length();
-          bufptr += line.length();
-
-          if (nbytes > (blen - 1024))
-            break;
-        }
-      }
-    }
-
-    // Read something from stderr if existing
-    if (ohperror)
-      while ((pn = getline(&lineptr, &n, ohperror)) > 0)
-      {
-        XrdOucString line = "__STDERR__>";
-        line += lineptr;
-        XrdOucString rep1 = "/";
-        rep1 += gMgr->xCastor2FsName;
-        rep1 += "/";
-        line.replace(rep1, "/");
-        memcpy(bufptr, line.c_str(), line.length());
-        bufptr[line.length()] = 0;
-        nbytes += line.length();
-        bufptr += line.length();
-
-        if (nbytes > (blen - 1024))
-          break;
-      }
-
-    return nbytes;
-  }
 
   // Read the actual number of bytes
   do
@@ -805,9 +707,7 @@ XrdxCastor2FsFile::write(XrdSfsFileOffset offset,
   XrdSfsXferSize nbytes;
 
   if (gMgr->mProc)
-  {
     gMgr->mStats.IncCmd();
-  }
 
   // Make sure the offset is not too large
 #if _FILE_OFFSET_BITS!=64
@@ -854,14 +754,6 @@ int
 XrdxCastor2FsFile::stat(struct stat* buf)
 {
   static const char* epname = "stat";
-
-  // Fake for pipe reads
-  if (ohp)
-  {
-    memset(buf, sizeof(struct stat), 0);
-    buf->st_size = 1024 * 1024 * 1024;
-    return SFS_OK;
-  }
 
   if (oh)
   {

@@ -100,20 +100,6 @@ public:
   {
     return fname;
   }
-  
-
-  //----------------------------------------------------------------------------
-  //! Fils System comand
-  //----------------------------------------------------------------------------
-  int Fscmd(const char* path,
-            const char* path2,
-            const char* orgipath,
-            const XrdSecEntity* client,
-            XrdOucErrInfo& error,
-            const char* info)
-  {
-    return SFS_OK;
-  }
 
 
   //----------------------------------------------------------------------------
@@ -233,7 +219,7 @@ public:
   //----------------------------------------------------------------------------
   //!
   //----------------------------------------------------------------------------
-  int getCXinfo(char* cxtype[4], int& cxrsz)
+  int getCXinfo(char* cxtype, int& cxrsz)
   {
     return cxrsz = 0;
   }
@@ -251,9 +237,6 @@ public:
 private:
   
   int oh; ///< file handler 
-  FILE* ohp; ///< file pointer to fs command pipe
-  FILE* ohperror; ///< file pointer to fs command stderr file
-  int ohperror_cnt; ///< cnt to find stderr file
   char* fname; ///< file name 
 };
 
