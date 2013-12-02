@@ -147,7 +147,7 @@ XrdxCastor2FsStats::IncStat()
 
 
 //------------------------------------------------------------------------------
-// Increment readd
+// Increment readd (read directory)
 //------------------------------------------------------------------------------
 void
 XrdxCastor2FsStats::IncReadd()
@@ -384,7 +384,7 @@ XrdxCastor2FsStats::StatRate(int nbins)
 
 
 //------------------------------------------------------------------------------
-// Get readd rate
+// Get readd (read directory) rate
 //------------------------------------------------------------------------------
 double
 XrdxCastor2FsStats::ReaddRate(int nbins)
@@ -550,17 +550,13 @@ XrdxCastor2FsStats::Update()
       XrdxCastor2ProcFile* pf = Proc->Handle("delayread");
 
       if (pf)
-      {
         gMgr->xCastor2FsDelayRead  = pf->Read();
-      }
     }
     {
       XrdxCastor2ProcFile* pf = Proc->Handle("delaywrite");
 
       if (pf)
-      {
         gMgr->xCastor2FsDelayWrite = pf->Read();
-      }
     }
     {
       XrdxCastor2ProcFile* pf = Proc->Handle("trace");

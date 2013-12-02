@@ -157,10 +157,14 @@ XrdxCastor2FsFile::open(const char*         path,
   }
 
   if (open_flag & O_CREAT)
-    AUTHORIZE(client, &Open_Env, AOP_Create, "create", map_path.c_str(), error)
+  {
+    AUTHORIZE(client, &Open_Env, AOP_Create, "create", map_path.c_str(), error);
+  }
   else
-    AUTHORIZE(client, &Open_Env, (isRW ? AOP_Update : AOP_Read), "open", map_path.c_str(), error)
-    
+  {
+    AUTHORIZE(client, &Open_Env, (isRW ? AOP_Update : AOP_Read), "open", map_path.c_str(), error);
+  }    
+
   // See if the cluster is in maintenance mode and has delays configured for write/read
   XrdOucString msg_delay;
   int64_t delay = gMgr->GetAdminDelay(msg_delay, isRW);
@@ -516,7 +520,7 @@ XrdxCastor2FsFile::open(const char*         path,
   xcastor_debug("redirection to:%s", resp_info.mRedirectionHost.c_str());
 
   // Save statistics about server read/write operations 
-  if (gMgr->Proc)
+  if (gMgr->mProc)
   {
     std::ostringstream ostreamclient;
     std::ostringstream ostreamserver;
@@ -524,8 +528,8 @@ XrdxCastor2FsFile::open(const char*         path,
     ostreamclient << allowed_svc << "::" << client->name;
     ostreamserver << allowed_svc << "::" << resp_info.mRedirectionHost;
     
-    gMgr->Stats.IncServerRdWr(ostreamserver.str().c_str(), isRW);
-    gMgr->Stats.IncUserRdWr(ostreamclient.str().c_str(), isRW);
+    gMgr->mStats.IncServerRdWr(ostreamserver.str().c_str(), isRW);
+    gMgr->mStats.IncUserRdWr(ostreamclient.str().c_str(), isRW);
   }
 
   // Add the opaque authorization information for the server for read & write
@@ -588,8 +592,8 @@ XrdxCastor2FsFile::open(const char*         path,
   TIMING("AUTHZ", &opentiming);
 
   // Do the proc statistics if a proc file system is specified
-  if (gMgr->Proc)
-    gMgr->Stats.IncRdWr(isRW);
+  if (gMgr->mProc)
+    gMgr->mStats.IncRdWr(isRW);
 
   // Check if a mode was given
   if (Open_Env.Get("mode"))
@@ -618,9 +622,9 @@ XrdxCastor2FsFile::close()
 {
   static const char* epname = "close";
 
-  if (gMgr->Proc)
+  if (gMgr->mProc)
   {
-    gMgr->Stats.IncCmd();
+    gMgr->mStats.IncCmd();
   }
 
   // Release the handle and return
@@ -663,17 +667,15 @@ XrdxCastor2FsFile::close()
 //------------------------------------------------------------------------------
 XrdSfsXferSize
 XrdxCastor2FsFile::read(XrdSfsFileOffset offset,
-                        char*            buff,
-                        XrdSfsXferSize   blen)
+                        char* buff,
+                        XrdSfsXferSize blen)
 {
   static const char* epname = "read";
   XrdSfsXferSize nbytes;
 
-  if (gMgr->Proc)
-  {
-    gMgr->Stats.IncCmd();
-  }
-
+  if (gMgr->mProc)
+    gMgr->mStats.IncCmd();
+ 
   // Make sure the offset is not too large
 #if _FILE_OFFSET_BITS!=64
 
@@ -710,7 +712,7 @@ XrdxCastor2FsFile::read(XrdSfsFileOffset offset,
       if (nbytes > (blen - 1024))
         break;
 
-      // Read something from stderr if, existing
+      // Read something from stderr if existing
       if (ohperror)
       {
         while ((pn = getline(&lineptr, &n, ohperror)) > 0)
@@ -732,7 +734,7 @@ XrdxCastor2FsFile::read(XrdSfsFileOffset offset,
       }
     }
 
-    // Read something from stderr if, existing
+    // Read something from stderr if existing
     if (ohperror)
       while ((pn = getline(&lineptr, &n, ohperror)) > 0)
       {
@@ -777,9 +779,9 @@ XrdxCastor2FsFile::read(XrdSfsFileOffset offset,
 int
 XrdxCastor2FsFile::read(XrdSfsAio* aiop)
 {
-  if (gMgr->Proc)
+  if (gMgr->mProc)
   {
-    gMgr->Stats.IncCmd();
+    gMgr->mStats.IncCmd();
   }
 
   // Execute this request in a synchronous fashion
@@ -802,9 +804,9 @@ XrdxCastor2FsFile::write(XrdSfsFileOffset offset,
   static const char* epname = "write";
   XrdSfsXferSize nbytes;
 
-  if (gMgr->Proc)
+  if (gMgr->mProc)
   {
-    gMgr->Stats.IncCmd();
+    gMgr->mStats.IncCmd();
   }
 
   // Make sure the offset is not too large
@@ -904,8 +906,8 @@ XrdxCastor2FsFile::sync()
 {
   static const char* epname = "sync";
 
-  if (gMgr->Proc)
-    gMgr->Stats.IncCmd();
+  if (gMgr->mProc)
+    gMgr->mStats.IncCmd();
 
   // Perform the function
   if (fsync(oh))
@@ -936,8 +938,8 @@ XrdxCastor2FsFile::truncate(XrdSfsFileOffset flen)
 {
   static const char* epname = "trunc";
 
-  if (gMgr->Proc)
-    gMgr->Stats.IncCmd();
+  if (gMgr->mProc)
+    gMgr->mStats.IncCmd();
 
   // Make sure the offset is not too larg
 #if _FILE_OFFSET_BITS!=64

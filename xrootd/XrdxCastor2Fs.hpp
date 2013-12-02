@@ -50,6 +50,8 @@ extern "C" XrdAccAuthorize* XrdAccAuthorizeObject(XrdSysLogger* lp,
 //! Forward declarations
 class XrdSecEntity;
 class XrdSysError;
+class XrdxCastor2FsFile;
+class XrdxCastor2FsDirectory;
 
 namespace xcastor
 {
@@ -172,7 +174,7 @@ public:
   //----------------------------------------------------------------------------
   //! Get stats information
   //----------------------------------------------------------------------------
-  int getStats(char* /*buff*/, int /*blen*/)
+  int getStats(char* buff, int blen)
   {
     return 0;
   }
@@ -398,6 +400,7 @@ public:
                XrdOucErrInfo& error,
                const XrdSecEntity* client = 0,
                const char* info = 0);
+
   
   //----------------------------------------------------------------------------
   //! Access
@@ -408,6 +411,7 @@ public:
              const XrdSecEntity* client,
              const char* info);
   
+
   //----------------------------------------------------------------------------
   //! Utimes
   //----------------------------------------------------------------------------
@@ -429,95 +433,53 @@ public:
                   XrdOucErrInfo& einfo,
                   int ecode,
                   const char* op,
-                    const char* tagert = "");
+                  const char* tagert = "");
+
+
+  static xcastor::XrdxCastorClient* msCastorClient; ///< obj dealing with async requests/responses
+  static  int msTokenLockTime;  ///< specifies the grace period for client to show
+                                ///< up on a disk server in seconds before the token expires
+
+  char* ConfigFN; ///< path to config file
+  XrdxCastor2ServerAcc* mServerAcc; ///< authorization module for token encryption/decryption
+  XrdOucString xCastor2FsName; ///< mount point of the catalog fs
+  XrdOucString xCastor2FsTargetPort; ///< xrootd port where redirections go on the OSTs -default is 1094
+  long long xCastor2FsDelayRead; ///< if true, all reads get a default delay to come back later
+  long long xCastor2FsDelayWrite; ///< if true, all writes get a default dealy to come back later
+  XrdOucString zeroProc; ///< path to a 0-byte file in the proc filesystem
   
-
-  //----------------------------------------------------------------------------
-  //! Stall message
-  //!
-  //! @param error error text and code
-  //! @param stime seconds to stall
-  //! @param msg message to give
-  //!
-  //! @return number of seconds to stall
-  //!
-  //----------------------------------------------------------------------------
-  int Stall(XrdOucErrInfo& error, int stime, const char* msg);
-
-
-  //----------------------------------------------------------------------------
-  //! Get allowed service class for the requested path and desired svc
-  //!
-  //! @param path path of  the request
-  //! @param svcClass desired service class by the user
-  //!
-  //! @return allowed service class or empty string if none alowed
-  //!
-  //----------------------------------------------------------------------------
-  std::string GetAllowedSvc(const char* path,
-                            const std::string& desired_svc);
+protected:
   
-
-  //----------------------------------------------------------------------------
-  //! Get all allowed service classes for the requested path and desired svc
-  //!
-  //! @param path path of  the request
-  //!
-  //! @return set of allowed service class or empty string if none alowed
-  //!
-  //----------------------------------------------------------------------------
-  const std::set<std::string>& GetAllAllowedSvc(const char* path);
-
-
-  //----------------------------------------------------------------------------
-  //! Set the acl for a file given the current client
-  //!
-  //! @param path file path
-  //! @param uid user uid
-  //! @param gid user gid
-  //! @param isLink true if file is link
-  //!
-  //----------------------------------------------------------------------------
-  void SetAcl(const char* path, uid_t uid, gid_t gid, bool isLink);
+  char* HostName; ///< our hostname as derived in XrdOfs
+  char* HostPref; ///< our hostname as derived in XrdOfs without domain
+  XrdOucString ManagerId;  ///< manager id in <host>:<port> format
+  XrdOucString ManagerLocation; ///< [::<IP>]:<port>
+  bool mIssueCapability; ///< attach an opaque capability for verification on the disk server
+  XrdxCastor2Proc* mProc; ///< proc handling object
+  XrdxCastor2FsStats mStats; ///< FS statistics
   
-
-  //----------------------------------------------------------------------------
-  //! Get all groups for a user name
-  //!
-  //! @param name client name
-  //! @param allGroups all groups for the given client
-  //! @param defaultGroup default group for the given client
-  //!
-  //----------------------------------------------------------------------------
-  void GetAllGroups(const char* name,
-                    XrdOucString& allGroups,
-                    XrdOucString& defaultGroup);
+private:
   
-
   //----------------------------------------------------------------------------
-  //! Map input path according to policy
+  //! Cache diskserver host name with and without the domain name so that
+  //! subsequent prepare requests from the diskservers are allowed to pass
+  //! through
   //!
-  //! @param input the initial input path
-  //!
-  //! @return the mapped path according to the directives in the xrd.cf file
-  //!
-  //----------------------------------------------------------------------------
-  std::string NsMapping(const std::string& input);
-
-
-  //----------------------------------------------------------------------------
-  //! Get delay for the current operation set for the entire instance by the
-  //! admin. The delay value is read from the xcastor2.proc value specified
-  //! in the /etc/xrd.cf file.
-  //!
-  //! @param msg message to be returned to the client
-  //! @param isRW true if delay value is requested for a write operation,
-  //!        otherwise false for read operations
-  //!
-  //! @return the delay value specified in seconds
+  //! @param host hostaname to be cached
   //!
   //----------------------------------------------------------------------------
-  int64_t GetAdminDelay(XrdOucString& msg, bool isRW);
+  void CacheDiskServer(const std::string& hostname);
+  
+  
+  //----------------------------------------------------------------------------
+  //! Check if the diskserver hostname is known at the redirector
+  //!
+  //! @param hostname hostname to look for in the cache
+  //!
+  //! @return true if hostname knowns, otherwise false
+  //!
+  //----------------------------------------------------------------------------
+  bool FindDiskServer(const std::string& hostname);
 
 
   //----------------------------------------------------------------------------
@@ -552,54 +514,80 @@ public:
   //----------------------------------------------------------------------------
   void SetIdentity(const XrdSecEntity* client);
 
- 
-  static xcastor::XrdxCastorClient* msCastorClient; ///< obj dealing with async requests/responses
-  static  int msTokenLockTime;  ///< specifies the grace period for client to show
-                                ///< up on a disk server in seconds before the token expires
 
-  char* ConfigFN; ///< path to config file
-  XrdxCastor2ServerAcc* mServerAcc; ///< authorization module for token encryption/decryption
-  XrdOucString xCastor2FsName; ///< mount point of the catalog fs
-  XrdOucString xCastor2FsTargetPort; ///< xrootd port where redirections go on the OSTs -default is 1094
-  long long xCastor2FsDelayRead; ///< if true, all reads get a default delay to come back later
-  long long xCastor2FsDelayWrite; ///< if true, all writes get a default dealy to come back later
-  XrdOucString Procfilesystem; ///< location of the proc file system directory
-  bool ProcfilesystemSync; ///< sync every access on disk
-  XrdOucString zeroProc; ///< path to a 0-byte file in the proc filesystem
-  XrdAccAuthorize* Authorization; ///< authorization service
-  
-protected:
-  
-  char* HostName; ///< our hostname as derived in XrdOfs
-  char* HostPref; ///< our hostname as derived in XrdOfs without domain
-  XrdOucString ManagerId;  ///< manager id in <host>:<port> format
-  XrdOucString ManagerLocation; ///< [::<IP>]:<port>
-  bool mIssueCapability; ///< attach an opaque capability for verification on the disk server
-  XrdxCastor2Proc* Proc; ///< proc handling object
-  XrdxCastor2FsStats Stats; ///< FS statistics
-  
-private:
-  
   //----------------------------------------------------------------------------
-  //! Cache diskserver host name with and without the domain name so that
-  //! subsequent prepare requests from the diskservers are allowed to pass
-  //! through
+  //! Set the acl for a file given the current client
   //!
-  //! @param host hostaname to be cached
+  //! @param path file path
+  //! @param uid user uid
+  //! @param gid user gid
+  //! @param isLink true if file is link
   //!
   //----------------------------------------------------------------------------
-  void CacheDiskServer(const std::string& hostname);
-  
-  
+  void SetAcl(const char* path, uid_t uid, gid_t gid, bool isLink);
+
+
   //----------------------------------------------------------------------------
-  //! Check if the diskserver hostname is known at the redirector
+  //! Map input path according to policy
   //!
-  //! @param hostname hostname to look for in the cache
+  //! @param input the initial input path
   //!
-  //! @return true if hostname knowns, otherwise false
+  //! @return the mapped path according to the directives in the xrd.cf file
   //!
   //----------------------------------------------------------------------------
-  bool FindDiskServer(const std::string& hostname);
+  std::string NsMapping(const std::string& input);
+
+
+  //----------------------------------------------------------------------------
+  //! Get allowed service class for the requested path and desired svc
+  //!
+  //! @param path path of  the request
+  //! @param svcClass desired service class by the user
+  //!
+  //! @return allowed service class or empty string if none alowed
+  //!
+  //----------------------------------------------------------------------------
+  std::string GetAllowedSvc(const char* path,
+                            const std::string& desired_svc);
+  
+
+  //----------------------------------------------------------------------------
+  //! Get all allowed service classes for the requested path and desired svc
+  //!
+  //! @param path path of  the request
+  //!
+  //! @return set of allowed service class or empty string if none alowed
+  //!
+  //----------------------------------------------------------------------------
+  const std::set<std::string>& GetAllAllowedSvc(const char* path);
+
+
+  //----------------------------------------------------------------------------
+  //! Stall message
+  //!
+  //! @param error error text and code
+  //! @param stime seconds to stall
+  //! @param msg message to give
+  //!
+  //! @return number of seconds to stall
+  //!
+  //----------------------------------------------------------------------------
+  int Stall(XrdOucErrInfo& error, int stime, const char* msg);
+
+
+  //----------------------------------------------------------------------------
+  //! Get delay for the current operation set for the entire instance by the
+  //! admin. The delay value is read from the xcastor2.proc value specified
+  //! in the /etc/xrd.cf file.
+  //!
+  //! @param msg message to be returned to the client
+  //! @param isRW true if delay value is requested for a write operation,
+  //!        otherwise false for read operations
+  //!
+  //! @return the delay value specified in seconds
+  //!
+  //----------------------------------------------------------------------------
+  int64_t GetAdminDelay(XrdOucString& msg, bool isRW);
 
   
   int mLogLevel; ///< log level from config file or set in the proc "trace" file
@@ -610,6 +598,8 @@ private:
   XrdOucHash<struct passwd>* mPasswdStore; ///< cache passwd struct info
   std::map<std::string, std::string> mRoleMap; ///< user role map
   XrdSysMutex mMutexPasswd; ///< mutex for the passwd store  
+  XrdAccAuthorize* mAuthorization; ///< authorization service used only by ALICE
+
 };
 
 extern XrdxCastor2Fs* gMgr; ///< globl instance of the redirector OFS subsystem

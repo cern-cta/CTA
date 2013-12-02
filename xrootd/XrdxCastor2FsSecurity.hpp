@@ -1,5 +1,5 @@
 /*******************************************************************************
- *                      XrdxCastor2FsSecurity.hh
+ *                      XrdxCastor2FsSecurity.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,7 +18,8 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * @author Andreas Peters <apeters@cern.ch>
+ * @author Elvin Sindrilaru <esindril@cern.ch> 
  * 
  ******************************************************************************/
 
@@ -28,8 +29,8 @@
 #include "XrdAcc/XrdAccAuthorize.hh"
 
 #define AUTHORIZE(usr, env, optype, action, pathp, edata) \
-    if (usr && gMgr->Authorization \
-    &&  !gMgr->Authorization->Access(usr, pathp, optype, env)) \
+    if (usr && gMgr->mAuthorization \
+    &&  !gMgr->mAuthorization->Access(usr, pathp, optype, env)) \
        {gMgr->Emsg(epname, edata, EACCES, action, pathp); return SFS_ERROR;}
 
 #define AUTHORIZE2(usr,edata,opt1,act1,path1,env1,opt2,act2,path2,env2) \

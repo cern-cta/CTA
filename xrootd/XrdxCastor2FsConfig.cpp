@@ -45,12 +45,11 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
   XrdOucStream config_stream(&Eroute, getenv("XRDINSTANCE"));
   XrdOucString role = "server";
   bool xcastor2fsdefined = false;
-  bool SubscribeCms = false;
   bool authorize = false;
   XrdOucString auth_lib = ""; ///< path to a possible authorizationn library
-  Authorization = 0;
-  Procfilesystem = "";
-  ProcfilesystemSync = false;
+  XrdOucString proc_filesystem = "";
+  bool proc_filesystem_sync = false;
+  mAuthorization = 0;
   xCastor2FsTargetPort = "1094";
   xCastor2FsDelayRead = 0;
   xCastor2FsDelayWrite = 0;
@@ -254,17 +253,17 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
           }
           else
           {
-            Procfilesystem = val;
-            Procfilesystem += "/proc";
+            proc_filesystem = val;
+            proc_filesystem += "/proc";
 
-            while (Procfilesystem.replace("//", "/")) {};
+            while (proc_filesystem.replace("//", "/")) {};
 
             if ((val = config_stream.GetWord()))
             {
               if (!strncmp(val, "sync", 4))
-                ProcfilesystemSync = true;
+                proc_filesystem_sync = true;
               else if (!strncmp(val, "async", 5))
-                ProcfilesystemSync = false;
+                proc_filesystem_sync = false;
               else
               {
                 Eroute.Emsg("Config", "argument for proc invalid. Specify xcastor2.proc [sync|async]");
@@ -272,10 +271,10 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
               }
             }
 
-            if (ProcfilesystemSync)
-              Eroute.Say("=====> xcastor2.proc: ", Procfilesystem.c_str(), " sync");
+            if (proc_filesystem_sync)
+              Eroute.Say("=====> xcastor2.proc: ", proc_filesystem.c_str(), " sync");
             else
-              Eroute.Say("=====> xcastor2.proc: ", Procfilesystem.c_str(), " async");
+              Eroute.Say("=====> xcastor2.proc: ", proc_filesystem.c_str(), " async");
           }
         }
         
@@ -397,28 +396,9 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
             }
           }
         }
-
-        //
-        if (!strcmp("subscribe", var))
-        {
-          if ((!(val = config_stream.GetWord())) || (strcmp("true", val) && strcmp("false", val) && strcmp("1", val) && strcmp("0", val)))
-          {
-            Eroute.Emsg("Config", "argument 2 for subscribe illegal or missing. Must be <true>,<false>,<1> or <0>!");
-            NoGo = 1;
-          }
-          else
-          {
-            if ((!strcmp("true", val) || (!strcmp("1", val))))
-              SubscribeCms = true;
-          }
-          
-          if (SubscribeCms)
-            Eroute.Say("=====> xcastor2.subscribe : true");
-          else
-            Eroute.Say("=====> xcastor2.subscribe : false");
-        }
         
-        //
+        // The following two directives set up the authrization plugin at the redirector
+        // they are only used for ALICE
         if (!strcmp("authlib", var))
         {
           if ((!(val = config_stream.GetWord())) || (::access(val, R_OK)))
@@ -432,7 +412,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
           Eroute.Say("=====> xcastor2.authlib : ", auth_lib.c_str());
         }
         
-        //
+        // 
         if (!strcmp("authorize", var))
         {
           if ((!(val = config_stream.GetWord())) || (strcmp("true", val) && strcmp("false", val) && strcmp("1", val) && strcmp("0", val)))
@@ -475,13 +455,14 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
   if (role == "manager")
     putenv((char*)"XRDREDIRECT=R");
 
+  // If the authorization library for ALICE is present then we load it
   if ((auth_lib != "") && (authorize))
   {
     // Load the authorization plugin
     XrdSysPlugin* myLib;
     XrdAccAuthorize *(*ep)(XrdSysLogger*, const char*, const char*);
     // Authorization comes from the library or we use the default
-    Authorization = XrdAccAuthorizeObject(Eroute.logger(), ConfigFN, NULL);
+    mAuthorization = XrdAccAuthorizeObject(Eroute.logger(), ConfigFN, NULL);
 
     if (!(myLib = new XrdSysPlugin(&Eroute, auth_lib.c_str())))
     {
@@ -500,17 +481,18 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
       }
       else
       {
-        Authorization = ep(Eroute.logger(), ConfigFN, NULL);
+        mAuthorization = ep(Eroute.logger(), ConfigFN, NULL);
       }
     }
   }
 
-  if (Procfilesystem != "")
+  // Create proc directory where all the traffic statistics are saved
+  if (proc_filesystem != "")
   {
     // Create the proc directories
     XrdOucString makeProc;
     makeProc = "mkdir -p ";
-    makeProc += Procfilesystem;
+    makeProc += proc_filesystem;
 #ifdef XFS_SUPPORT
     makeProc += "/xfs";
 #endif
@@ -518,25 +500,25 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
     // Create empty file in proc directory
     zeroProc = "";
     zeroProc = "rm -rf ";
-    zeroProc += Procfilesystem;
+    zeroProc += proc_filesystem;
     zeroProc += "/zero";
     zeroProc += "; touch ";
-    zeroProc += Procfilesystem;
+    zeroProc += proc_filesystem;
     zeroProc += "/zero";
     system(zeroProc.c_str());
     // Store the filename in zeroProc
-    zeroProc = Procfilesystem;
+    zeroProc = proc_filesystem;
     zeroProc += "/zero";
   }
 
   // Create the proc object, if a proc fs was specified
-  if (Procfilesystem != "")
+  if (proc_filesystem != "")
   {
-    Proc = new XrdxCastor2Proc(Procfilesystem.c_str(), ProcfilesystemSync);
+    mProc = new XrdxCastor2Proc(proc_filesystem.c_str(), proc_filesystem_sync);
 
-    if (Proc)
+    if (mProc)
     {
-      if (Proc->Open())
+      if (mProc->Open())
       {
         time_t now = time(NULL);
         pthread_t tid;
@@ -546,16 +528,16 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         XrdOucString ps = "1.1";
         // TODO: PACKAGE_STRING;
         ps += "\n";
-        pf = Proc->Handle("version");
+        pf = mProc->Handle("version");
         pf && pf->Write(ps.c_str());
-        pf = Proc->Handle("start");
+        pf = mProc->Handle("start");
         pf && pf->Write(ctime(&now));
-        // We have to give the proc pointer to the Stats class
-        Stats.SetProc(Proc);
+        // Give the proc pointer to the Stats class
+        mStats.SetProc(mProc);
 
         if ((rc = XrdSysThread::Run(&tid,
                                     XrdxCastor2FsStatsStart,
-                                    static_cast<void*>(&(this->Stats)),
+                                    static_cast<void*>(&(this->mStats)),
                                     0, "Stats Updater")))
         {
           Eroute.Emsg("Config", "cannot run stats update thread");

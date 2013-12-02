@@ -73,8 +73,8 @@ XrdxCastor2FsDirectory::open(const char*         dir_path,
 
   gMgr->GetIdMapping(client, client_uid, client_gid);
 
-  if (gMgr->Proc)
-    gMgr->Stats.IncCmd();
+  if (gMgr->mProc)
+    gMgr->mStats.IncCmd();
 
   // Verify that this object is not already associated with an open directory
   if (dh) return XrdxCastor2Fs::Emsg(epname, error, EADDRINUSE,
@@ -110,8 +110,8 @@ XrdxCastor2FsDirectory::nextEntry()
   // Check if we are at EOF (once there we stay there)
   if (ateof) return (const char*)0;
 
-  if (gMgr->Proc)
-    gMgr->Stats.IncReadd();
+  if (gMgr->mProc)
+    gMgr->mStats.IncReadd();
 
   // Read the next directory entry
   if (!(d_pnt = XrdxCastor2FsUFS::ReadDir(dh)))
@@ -137,8 +137,8 @@ XrdxCastor2FsDirectory::close()
 {
   static const char* epname = "closedir";
 
-  if (gMgr->Proc)
-    gMgr->Stats.IncCmd();
+  if (gMgr->mProc)
+    gMgr->mStats.IncCmd();
  
   // Release the handle
   if (dh && XrdxCastor2FsUFS::CloseDir(dh))

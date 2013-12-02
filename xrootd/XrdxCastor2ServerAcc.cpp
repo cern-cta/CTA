@@ -218,7 +218,7 @@ XrdxCastor2ServerAcc::Configure(const char* conf_file)
 
     // Get XRootD server type
     const char* tp;
-    int isMan = ((tp = getenv("XRDREDIRECT")) && !strcmp(tp, "R"));
+    int isMan = ((tp = getenv("XRDREDIRECT")) && !strncmp(tp, "R", 1));
 
     if (mRequireCapability)
     {

@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @uathor Andreas Peters <apeters@cern.ch>
+ * @author Andreas Peters <apeters@cern.ch>
  * @author Elvin Sindrilaru <esindril@cern.ch>
  *
  ******************************************************************************/
@@ -92,18 +92,74 @@ XrdSfsFileSystem* XrdSfsGetFileSystem(XrdSfsFileSystem* native_fs,
   if (myFS.Configure(OfsEroute)) return 0;
 
   gMgr = &myFS;
-  // Initialize authorization module ServerAcc
+  // Initialize authorization module ServerAcc used for securing the
+  // communication betweend redirector and diskserver
   gMgr->mServerAcc = (XrdxCastor2ServerAcc*) XrdAccAuthorizeObject(lp, configfn, NULL);
 
   if (!gMgr->mServerAcc)
   {
-    xcastor_static_err("failed loading the authorization plugin");
+    xcastor_static_err("failed loading the authorization plugin for "
+                       "encryption/decryption");
     return 0;
   }
 
   // Initialize the CASTOR Cthread library
   Cthread_init();
   return &myFS;
+}
+
+
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
+XrdxCastor2Fs::XrdxCastor2Fs():
+  LogId(),
+  mIssueCapability(false),
+  mProc(0)
+{
+  ConfigFN  = 0;
+  mLogLevel = LOG_INFO; // default log level
+
+  // Setup the circular in-memory logging buffer
+  XrdOucString unit = "rdr@";
+  unit += XrdSysDNS::getHostName();
+  unit += ":";
+  unit += xCastor2FsTargetPort;
+  Logging::Init();
+  Logging::SetLogPriority(mLogLevel);
+  Logging::SetUnit(unit.c_str());
+  xcastor_info("info=\"logging configured\" ");
+}
+
+
+//------------------------------------------------------------------------------
+// Initialisation
+//------------------------------------------------------------------------------
+bool
+XrdxCastor2Fs::Init()
+{
+  mPasswdStore = new XrdOucHash<struct passwd> ();
+  XrdxCastor2Stager::msDelayStore = new XrdOucHash<XrdOucString>();
+  msCastorClient = xcastor::XrdxCastorClient::Create();
+
+  if (!msCastorClient)
+  {
+    OfsEroute.Emsg("Config", "error=failed to create castor client object");
+    return false;
+  }
+
+  return true;
+}
+
+
+//------------------------------------------------------------------------------
+// Destructor
+//------------------------------------------------------------------------------
+XrdxCastor2Fs::~XrdxCastor2Fs()
+{
+  delete mPasswdStore;
+  delete msCastorClient;
+  delete XrdxCastor2Stager::msDelayStore;
 }
 
 
@@ -277,59 +333,6 @@ XrdxCastor2Fs::getVersion()
 
 
 //------------------------------------------------------------------------------
-// Constructor
-//------------------------------------------------------------------------------
-XrdxCastor2Fs::XrdxCastor2Fs():
-  LogId(),
-  mIssueCapability(false)
-{
-  ConfigFN  = 0;
-  mLogLevel = LOG_INFO; // default log level
-
-  // Setup the circular in-memory logging buffer
-  XrdOucString unit = "rdr@";
-  unit += XrdSysDNS::getHostName();
-  unit += ":";
-  unit += xCastor2FsTargetPort;
-  Logging::Init();
-  Logging::SetLogPriority(mLogLevel);
-  Logging::SetUnit(unit.c_str());
-  xcastor_info("info=\"logging configured\" ");
-}
-
-
-//------------------------------------------------------------------------------
-// Initialisation
-//------------------------------------------------------------------------------
-bool
-XrdxCastor2Fs::Init()
-{
-  mPasswdStore = new XrdOucHash<struct passwd> ();
-  XrdxCastor2Stager::msDelayStore = new XrdOucHash<XrdOucString>();
-  msCastorClient = xcastor::XrdxCastorClient::Create();
-
-  if (!msCastorClient)
-  {
-    OfsEroute.Emsg("Config", "error=failed to create castor client object");
-    return false;
-  }
-
-  return true;
-}
-
-
-//------------------------------------------------------------------------------
-// Destructor
-//------------------------------------------------------------------------------
-XrdxCastor2Fs::~XrdxCastor2Fs()
-{
-  delete mPasswdStore;
-  delete msCastorClient;
-  delete XrdxCastor2Stager::msDelayStore;
-}
-
-
-//------------------------------------------------------------------------------
 // Do namespace mappping
 //------------------------------------------------------------------------------
 std::string
@@ -404,8 +407,8 @@ XrdxCastor2Fs::chmod(const char*         path,
     return SFS_ERROR;
   }
 
-  if (gMgr->Proc)
-    gMgr->Stats.IncCmd();
+  if (mProc)
+    mStats.IncCmd();
 
   // Set client identity
   SetIdentity(client);
@@ -439,8 +442,8 @@ XrdxCastor2Fs::exists(const char* path,
     return SFS_ERROR;
   }
 
-  if (gMgr->Proc)
-    gMgr->Stats.IncCmd();
+  if (mProc)
+    mStats.IncCmd();
 
   return _exists(map_path.c_str(), file_exists, error, client, info);
 }
@@ -505,8 +508,8 @@ XrdxCastor2Fs::mkdir(const char*         path,
     return SFS_ERROR;
   }
 
-  if (gMgr->Proc)
-    gMgr->Stats.IncCmd();
+  if (mProc)
+    mStats.IncCmd();
 
   int r1 = _mkdir(map_path.c_str(), Mode, error, client, info);
   int r2 = SFS_OK;
@@ -522,11 +525,12 @@ XrdxCastor2Fs::_mkdir(const char* path,
                       XrdSfsMode Mode,
                       XrdOucErrInfo& error,
                       const XrdSecEntity* client,
-                      const char* /*info*/)
+                      const char* info)
 
 {
   static const char* epname = "mkdir";
   mode_t acc_mode = (Mode & S_IAMB) | S_IFDIR;
+
   // Set client identity
   uid_t client_uid;
   gid_t client_gid;
@@ -681,8 +685,8 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
   // Set client identity
   SetIdentity(client);
 
-  if (gMgr->Proc)
-    gMgr->Stats.IncCmd();
+  if (mProc)
+    mStats.IncCmd();
 
   xcastor_debug("checking tident=%s, hostname=%s", tident, hostname.c_str());
 
@@ -818,8 +822,8 @@ XrdxCastor2Fs::rem(const char*         path,
   gid_t client_gid;
   GetIdMapping(client, client_uid, client_gid);
 
-  if (gMgr->Proc)
-    gMgr->Stats.IncRm();
+  if (mProc)
+    mStats.IncRm();
 
   TIMING("Authorize", &rmtiming);
 
@@ -907,8 +911,8 @@ XrdxCastor2Fs::remdir(const char* path,
     return SFS_ERROR;
   }
 
-  if (gMgr->Proc)
-    gMgr->Stats.IncCmd();
+  if (mProc)
+    mStats.IncCmd();
 
   return _remdir(map_path.c_str(), error, client, info);
 }
@@ -968,8 +972,8 @@ XrdxCastor2Fs::rename(const char* old_name,
     return SFS_ERROR;
   }
 
-  if (gMgr->Proc)
-    gMgr->Stats.IncCmd();
+  if (mProc)
+    mStats.IncCmd();
 
   // Check if dest is existing
   XrdSfsFileExistence file_exists;
@@ -1077,8 +1081,8 @@ XrdxCastor2Fs::stat(const char* path,
     }
   }
 
-  if (gMgr->Proc)
-    gMgr->Stats.IncStat();
+  if (mProc)
+    mStats.IncStat();
 
   memset(buf, sizeof(struct stat), 0);
   buf->st_dev     = 0xcaff;
@@ -1187,8 +1191,8 @@ XrdxCastor2Fs::lstat(const char* path,
   if (XrdxCastor2FsUFS::Lstatfn(map_path.c_str(), &cstat))
     return XrdxCastor2Fs::Emsg(epname, error, serrno, "lstat", map_path.c_str());
 
-  if (gMgr->Proc)
-    gMgr->Stats.IncStat();
+  if (mProc) 
+    mStats.IncStat();
 
   memset(buf, sizeof(struct stat), 0);
   buf->st_dev     = 0xcaff;
@@ -1308,6 +1312,7 @@ XrdxCastor2Fs::symlink(const char* path,
   SetAcl(destination.c_str(), client_uid, client_gid, 1);
   return SFS_OK;
 }
+
 
 //------------------------------------------------------------------------------
 // Access
@@ -1634,9 +1639,9 @@ XrdxCastor2Fs::GetAdminDelay(XrdOucString& msg, bool isRW)
       if (delay > (4 * 3600))
         delay = (4 * 3600);
 
-      if (Proc)
+      if (mProc)
       {
-        XrdxCastor2ProcFile* pf = Proc->Handle("sysmsg");
+        XrdxCastor2ProcFile* pf = mProc->Handle("sysmsg");
 
         if (pf)
           pf->Read(msg);
@@ -1659,9 +1664,9 @@ XrdxCastor2Fs::GetAdminDelay(XrdOucString& msg, bool isRW)
       if (delay > (4 * 3600))
         delay = (4 * 3600);
 
-      if (Proc)
+      if (mProc)
       {
-        XrdxCastor2ProcFile* pf = Proc->Handle("sysmsg");
+        XrdxCastor2ProcFile* pf = mProc->Handle("sysmsg");
 
         if (pf)
           pf->Read(msg);
