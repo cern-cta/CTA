@@ -27,6 +27,120 @@
 // Include Files
 #include "castor/log/Log.hpp"
 
+#include <pthread.h>
+#include <string.h>
+#include <sys/un.h>
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <unistd.h>
+#include <fcntl.h>
+
+namespace castor {
+namespace log {
+
+/**
+ * The file descriptor of the log.
+ */
+static int s_logFile = -1;
+
+/**
+ * AF_UNIX address of local logger.
+ */
+static struct sockaddr_un s_syslogAddr;
+
+/**
+ * True if the the syslog connect has bveen done.
+ */
+static bool s_connected = false;
+
+/**
+ * Mutex used to synchronize syslog client.
+ */
+static pthread_mutex_t s_syslogMutex;
+
+//-----------------------------------------------------------------------------
+// castor_openlog
+//-----------------------------------------------------------------------------
+static void castor_openlog() {
+  if(-1 == s_logFile) {
+    s_syslogAddr.sun_family = AF_UNIX;
+    strncpy(s_syslogAddr.sun_path, _PATH_LOG, sizeof(s_syslogAddr.sun_path));
+    s_logFile = socket(AF_UNIX, SOCK_DGRAM, 0);
+    fcntl(s_logFile, F_SETFD, FD_CLOEXEC);
+    if(-1 == s_logFile) {
+      return;
+    }
+  }
+  if(!s_connected) {
+    if(-1 == connect(s_logFile, (struct sockaddr *)&s_syslogAddr,
+      sizeof(s_syslogAddr))) {
+      close(s_logFile);
+      s_logFile = -1;
+    } else {
+#ifdef __APPLE__
+      // MAC has has no MSG_NOSIGNAL
+      // but >= 10.2 comes with SO_NOSIGPIPE
+      int set = 1;
+      if (0 != setsockopt(s_logFile, SOL_SOCKET, SO_NOSIGPIPE, &set,
+        sizeof(int))) {
+        close(s_logFile);
+        s_logFile = -1;
+        return;
+      }
+#endif
+      s_connected = true;
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+// castor_closelog
+//-----------------------------------------------------------------------------
+static void castor_closelog() {
+  if (!s_connected) return;
+  close (s_logFile);
+  s_logFile = -1;
+  s_connected = false;
+}
+
+//-----------------------------------------------------------------------------
+// castor_syslog
+//-----------------------------------------------------------------------------
+static void castor_syslog(const std::string &msg) throw() {
+  int send_flags = 0;
+#ifndef __APPLE__
+  // MAC has has no MSG_NOSIGNAL
+  // but >= 10.2 comes with SO_NOSIGPIPE
+  send_flags = MSG_NOSIGNAL;
+#endif
+  // enter critical section
+  pthread_mutex_lock(&s_syslogMutex);
+
+  // Get connected, output the message to the local logger.
+  if (!s_connected) {
+    castor_openlog();
+  }
+
+  if (!s_connected ||
+    send(s_logFile, msg.c_str(), msg.length(), send_flags) < 0) {
+    if (s_connected) {
+      // Try to reopen the syslog connection.  Maybe it went down.
+      castor_closelog();
+      castor_openlog();
+    }
+    if (!s_connected ||
+      send(s_logFile, msg.c_str(), msg.length(), send_flags) < 0) {
+      castor_closelog();  // attempt re-open next time
+    }
+  }
+
+  // End of critical section.
+  pthread_mutex_unlock(&s_syslogMutex);
+}
+
+} // namespace log
+} // namespace castor
+
 //-----------------------------------------------------------------------------
 // writeMsg
 //-----------------------------------------------------------------------------
@@ -44,7 +158,8 @@ void castor::log::writeMsg(
   // we do when retrieving logs from the DB
   //----------------------------------------------------------------------------
 
-  // TO BE DONE
+  const std::string toBeDoneMsg = "TO BE DONE";
+  castor_syslog(toBeDoneMsg);
 }
 
 //-----------------------------------------------------------------------------
