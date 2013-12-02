@@ -68,6 +68,7 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
    "Missing operand",
    "Mismatch",
    "Request failed",
+   "Invalid number of arguments",
    "BAD ERROR NUMBER"
   };
 

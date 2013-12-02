@@ -79,8 +79,9 @@
 #define SEMISSINGOPER   SEBASEOFF+45    /* Missing operand              */
 #define SEMISMATCH      SEBASEOFF+46    /* Mismatch                     */
 #define SEREQUESTFAILED SEBASEOFF+47    /* Request failed               */
+#define SEINVALIDNBARGS SEBASEOFF+48    /* Invalid number of arguments  */
 
-#define SEMAXERR        SEBASEOFF+47    /* Maximum error number         */
+#define SEMAXERR        SEBASEOFF+48    /* Maximum error number         */
 
 #define SERRNO  (serrno - SEBASEOFF)    /* User convenience             */
 /*
