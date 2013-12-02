@@ -153,7 +153,8 @@ try:
                      minfree, maxfree, castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec,
                      ','.join(diskpools), dsid or '')
                     for dsname, fsmountpoint, nbmountpoints, status, adminstatus, free,
-                        minfree, maxfree, size, nbrd, nbwr, nbmigr, nbrec, diskpools, dsid, summary in rows]
+                        minfree, maxfree, size, nbrd, nbwr, nbmigr, nbrec, diskpools, dsid, summary in rows
+                    if summary or fsmountpoint or dsname]
         else:
             titles = ('DSNAME', 'NBMOUNTPOINTS', 'STATUS', 'ONLINE', 'FREE', 'SIZE', 'NBRD',
                       'NBWR', 'NBMIGR', 'NBREC', 'DISKPOOL', 'ID')
@@ -164,7 +165,7 @@ try:
                      dsid or '')
                     for dsname, fsmountpoint, nbmountpoints, status, adminstatus, free,
                         minfree, maxfree, size, nbrd, nbwr, nbmigr, nbrec, diskpools, dsid, summary in rows
-                    if not fsmountpoint or summary]
+                    if (not fsmountpoint and dsname) or summary]
         castor_tools.prettyPrintTable(titles, data, hasSummary=True)
     # mention unknown targets
     if targets and unknownTargets:

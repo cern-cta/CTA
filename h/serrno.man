@@ -187,6 +187,18 @@ The following error values might be returned by any package:
 .TP
 .B SEPYTHONEXEC
 (1044) Failed to execute Python
+.TP
+.B SEMISSINGOPER
+(1045) Missing operand
+.TP
+.B SEMISMATCH
+(1046) Mismatch
+.TP
+.B SEREQUESTFAILED
+(1047) Request failed
+.TP
+.B SEINVALIDNBARGS
+(1048) Invalid number of arguments
 
 .SH COPYTAPE ERRORS
 None yet
@@ -836,6 +848,18 @@ The following error values are returned only by the Remote SCSI media changer se
 .TP
 .B ERMCUNLOAD
 (2211) Remote SCSI media changer error (unload + demount)
+.TP
+.B ERMCUKNLDRTYPE
+(2212) Unknown drive-loader type
+.TP
+.B ERMCVIDTOOLONG
+(2213) VID is too long
+.TP
+.B ERMCPARSERMCHOST
+(2214) Failed to parse RMC host
+.TP
+.B ERMCPARSEACSDRV
+(2215) Failed to parse ACS drive id
 
 .SH MON ERRORS
 The following error values are returned only by the Monitoring package:

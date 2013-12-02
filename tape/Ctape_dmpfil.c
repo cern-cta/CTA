@@ -28,7 +28,6 @@ static struct {
 	int maxbyte;
 	int fromfile;
 	int maxfile;
-	int code;
 	int flags;
 } dmpparm;
 static int infd = -1;
@@ -45,17 +44,12 @@ int Ctape_dmpinit(char *path,
                   int maxbyte,
                   int fromfile,
                   int maxfile,
-                  int code,
                   int flags)
 {
 	int errflg = 0;
 
 	if (! vid || *vid == '\0') {
 		Ctape_dmpmsg (MSG_ERR, TP031);
-		errflg++;
-	}
-	if (code != DMP_ASC && code != DMP_EBC) {
-		Ctape_dmpmsg (MSG_ERR, TP006, "code");
 		errflg++;
 	}
 	if (flags != 0 && flags != IGNOREEOI) {
@@ -122,54 +116,8 @@ int Ctape_dmpinit(char *path,
 	dmpparm.maxbyte = maxbyte;
 	dmpparm.fromfile = fromfile;
 	dmpparm.maxfile = maxfile;
-	dmpparm.code = code;
 	dmpparm.flags = flags;
 	return (0);
-}
-
-int ebc_asc(char *p,
-            char *q,
-            int n)
-{
-	int i;
-	static char e2atab[256] = {
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.','.','.','.',
-
-	' ','.','.','.','.','.','.','.','.','.','.','.','<','(','+','|',
-
-	'&','.','.','.','.','.','.','.','.','.','!','$','*',')',';','^',
-
-	'-','/','.','.','.','.','.','.','.','.','.',',','%','_','>','?',
-
-	'.','.','.','.','.','.','.','.','.','`',':','#','@','\'','=','"',
-
-	'.','a','b','c','d','e','f','g','h','i','.','.','.','.','.','.',
-
-	'.','j','k','l','m','n','o','p','q','r','.','.','.','.','.','.',
-
-	'.','~','s','t','u','v','w','x','y','z','.','.','.','[','.','.',
-
-	'.','.','.','.','.','.','.','.','.','.','.','.','.',']','.','.',
-
-	'{','A','B','C','D','E','F','G','H','I','.','.','.','.','.','.',
-
-	'}','J','K','L','M','N','O','P','Q','R','.','.','.','.','.','.',
-
-	'\\','.','S','T','U','V','W','X','Y','Z','.','.','.','.','.','.',
-
-	'0','1','2','3','4','5','6','7','8','9','.','.','.','.','.','.',
-	};
-
-	for (i = 0; i < n; i++)
-		*q++ = e2atab[*p++ & 0xff];
-        return (0);
 }
 
 int asc_asc(char *p,
@@ -232,10 +180,7 @@ int dumpblock (char *buffer,
 		l = iad + 31;
 		if (l >= nbytes) l = nbytes - 1;
 		k = l - iad + 1;
-		if (dmpparm.code == DMP_EBC)
-			ebc_asc (p, bufftr, k);
-		else
-			asc_asc (p, bufftr, k);
+		asc_asc (p, bufftr, k);
 		bufftr[k] = '\0';
 		Ctape_dmpmsg (MSG_OUT, " %.8x   ", iad);
 		for (i = 0; i < k; i++) {
@@ -368,7 +313,6 @@ int Ctape_dmpfil(char *path,
                  int *fsec,
                  int *fseq,
                  int *lrecl,
-                 char *recfm,
                  u_signed64 *Size)
 {
 	int avg_block_length;
@@ -475,10 +419,6 @@ int Ctape_dmpfil(char *path,
 					}
 					continue;
 				case 2:	/* HDR2 */
-					if (recfm) {
-						memset (recfm, 0, 4);
-						*recfm = label[4];
-					}
 					if (blksize) {
 						sscanf (label+5, "%5d", blksize);
 					}

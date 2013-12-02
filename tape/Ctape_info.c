@@ -23,8 +23,7 @@ int Ctape_info(char *path,
                char *drive,
                char *fid,
                int *fseq,
-               int *lrecl,
-               char *recfm)
+               int *lrecl)
 {
 	int c, n;
 	int errflg = 0;
@@ -38,7 +37,6 @@ int Ctape_info(char *path,
 	char repbuf[66];
 	char *sbp;
 	char sendbuf[REQBUFSZ];
-	char tmpbuf[20];
 	uid_t uid;
  
 	strncpy (func, "Ctape_info", 16);
@@ -93,6 +91,8 @@ int Ctape_info(char *path,
 
 	c = send2tpd (NULL, sendbuf, msglen, repbuf, sizeof(repbuf));
 	if (c == 0) {
+		char tmpbuf[20];
+
 		rbp = repbuf;
 		unmarshall_LONG (rbp, n);
 		if (blksize)
@@ -118,9 +118,7 @@ int Ctape_info(char *path,
 		unmarshall_LONG (rbp, n);
 		if (lrecl)
 			*lrecl = n;
-		unmarshall_STRING (rbp, tmpbuf);
-		if (recfm)
-			strcpy (recfm, tmpbuf);
+		unmarshall_STRING (rbp, tmpbuf); /* recfm is no longer used */
 	}
 	return (c);
 }

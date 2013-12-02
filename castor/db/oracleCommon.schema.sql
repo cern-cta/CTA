@@ -581,7 +581,7 @@ END;
 /
 ALTER TABLE RecallJob
   ADD CONSTRAINT CK_RecallJob_Status
-  CHECK (status IN (0, 1, 2));
+  CHECK (status IN (1, 2, 3));
 
 /* Definition of the TapePool table
  *   name : the name of the TapePool
@@ -1250,7 +1250,7 @@ ALTER TABLE DrainingErrors
  *   nsOpenTime : the nsOpenTime of the castorFile when this job was created
  *                Allows to detect if the file has been overwritten during replication
  *   destSvcClass : the destination service class
- *   replicationType : the type of replication involved (user, internal or draining)
+ *   replicationType : the type of replication involved (user, internal, draining or rebalancing)
  *   replacedDcId : in case of draining, the replaced diskCopy to be dropped
  *   destDcId : the destination diskCopy
  *   drainingJob : the draining job behind this d2dJob. Not NULL only if replicationType is DRAINING'

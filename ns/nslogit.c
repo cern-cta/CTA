@@ -29,6 +29,24 @@ static char  app_ident[30];
 static char  app_logfile[CA_MAXPATHLEN + 1];
 static int   app_init = 0;
 
+/* Copied from dlf_lib.c To be dropped by integrating completely DLF into NS */
+static struct {
+  char *name;       /* Name of the priority */
+  int  value;       /* The priority's numeric representation in syslog */
+  char *text;       /* Textual representation of the priority */
+} prioritylist[] = {
+  { "LOG_EMERG",   LOG_EMERG,   "Emerg"  },
+  { "LOG_ALERT",   LOG_ALERT,   "Alert"  },
+  { "LOG_CRIT",    LOG_CRIT,    "Crit"   },
+  { "LOG_ERR",     LOG_ERR,     "Error"  },
+  { "LOG_WARNING", LOG_WARNING, "Warn"   },
+  { "LOG_NOTICE",  LOG_NOTICE,  "Notice" },
+  { "LOG_INFO",    LOG_INFO,    "Info"   },
+  { "LOG_DEBUG",   LOG_DEBUG,   "Debug"  },
+  { NULL,          0,           NULL     }
+};
+
+
 int openlog(const char *ident, const char *logfile) {
 
   /* Variables */
@@ -120,7 +138,7 @@ int closelog() {
   return 0;
 }
 
-int _format_header(char *buffer, size_t buflen) {
+int _format_header(char *buffer, size_t buflen, const int loglevel) {
 
   /* Variables */
   struct timeval tv;
@@ -154,7 +172,7 @@ int _format_header(char *buffer, size_t buflen) {
    */
   len = snprintf(buffer, buflen,
                  "%04d-%02d-%02dT%02d:%02d:%02d.%06u%c%02d:%02d "
-                 "%s %s[%d]: LVL=Info TID=%d ",
+                 "%s %s[%d]: LVL=%s TID=%d ",
                  tm->tm_year + 1900,
                  tm->tm_mon  + 1,
                  tm->tm_mday,
@@ -168,6 +186,7 @@ int _format_header(char *buffer, size_t buflen) {
                  app_localhost == NULL ? "127.0.0.1" : app_localhost,
                  app_ident[0]  == '\0' ? "unknown"   : app_ident,
                  getpid(),
+                 prioritylist[loglevel].text,
                  (int)syscall(__NR_gettid));
   return len;
 }
@@ -210,7 +229,7 @@ int nslogreq(struct Cns_srv_request_info *reqinfo,
     return 0;
 
   /* Retrieve the header part of the message. */
-  len = _format_header(buffer, sizeof(buffer));
+  len = _format_header(buffer, sizeof(buffer), errorcode?LOG_ERR:LOG_INFO);
 
   /* Here we format the message parameters in accordance with the DLF
    * specifications. First we handle the REQID, NSFILID and NSHOSTNAME. Note:
@@ -262,7 +281,7 @@ int nslogreq(struct Cns_srv_request_info *reqinfo,
   return 0;
 }
 
-int nslogit(const char *format, ...) {
+int nslogit(const int loglevel, const char *format, ...) {
 
   /* Variables */
   char    buffer[LOGBUFSZ * 2]; // 4096 * 2
@@ -274,7 +293,7 @@ int nslogit(const char *format, ...) {
     return 0;
 
   /* Retrieve the header part of the message. */
-  len = _format_header(buffer, sizeof(buffer));
+  len = _format_header(buffer, sizeof(buffer), loglevel);
 
   /* Now for the message body, if the message is truncated reset the len
    * variable, there isn't much we can do about this.

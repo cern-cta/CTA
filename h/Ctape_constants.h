@@ -31,11 +31,6 @@
 #define	CONF_DOWN	0
 #define	CONF_UP		1
 
-			/* byte interpretation in dumptape */
-
-#define	DMP_ASC		1	/* ASCII interpretation */
-#define	DMP_EBC		3	/* EBCDIC interpretation */
-
 			/* special processing flags */
 
 #define	NOPOS		2	/* do not reposition tape */

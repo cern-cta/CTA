@@ -68,6 +68,7 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
    "Missing operand",
    "Mismatch",
    "Request failed",
+   "Invalid number of arguments",
    "BAD ERROR NUMBER"
   };
 
@@ -430,6 +431,10 @@ char *sys_rmerrlist[ERMMAXERR-ERMBASEOFF+2] =
    "Remote SCSI media changer error (ops message + retry)",
    "Remote SCSI media changer error (ops message + wait)",
    "Remote SCSI media changer error (unload + demount)",
+   "Unknown drive-loader type",
+   "VID is too long",
+   "Failed to parse RMC host",
+   "Failed to parse ACS drive id",
    "BAD ERROR NUMBER"
   };
 

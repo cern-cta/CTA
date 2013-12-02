@@ -69,11 +69,6 @@ namespace tapebridge {
   const char *const TAPEBRIDGEPROGRAMNAME = "tapebridged";
 
   /**
-   * The tape record format.
-   */
-  const char *const RECORDFORMAT = "F";
-
-  /**
    * The timeout in seconds used when sending and receiving RTCPD network
    * messages.
    */

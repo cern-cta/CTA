@@ -53,9 +53,6 @@ BEGIN
 END;
 /
 
--- add constraint now that all rows are populated
-ALTER TABLE Cns_file_metadata ADD CONSTRAINT NN_File_stagerTime (stagerTime NOT NULL);
-
 -- update configuration
 UPDATE CastorConfig SET value = 'N' WHERE class = 'stager' AND key = 'openmode';
 COMMIT;
@@ -68,5 +65,6 @@ CREATE OR REPLACE PROCEDURE update2114Data(inVid IN VARCHAR2) AS
 BEGIN
   -- no op, to be dropped on next release once its call
   -- is removed from handleRepackRequest() in the Stager DB
+  NULL;
 END;
 /

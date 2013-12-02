@@ -117,17 +117,6 @@
      ((X)->tp_err_action & (IGNOREEOI|NOTRLCHK)) == (X)->tp_err_action) )
 
 /*
- * Format conversion flags (convert field in rtcpFileRequest_t)
- */
-#define EBCCONV          (0x1)   /* ebcdic <--> ascii conversion */
-#define FIXVAR           (0x2)   /* fixed records <--> variable records */
-#define ASCCONV          (0x4)   /* no conversion */
-#define NOF77CW          (0x8)   /* No F77 control words */
-#define VALID_CONVERT(X) ( (((X)->convert & (ASCCONV | EBCCONV | NOF77CW)) && \
-    (((X)->convert & (ASCCONV | EBCCONV)) != (ASCCONV | EBCCONV))) && \
-    (((X)->convert & (FIXVAR | NOF77CW)) != (FIXVAR  | NOF77CW)) )
-
-/*
  * Concatenate tape file to disk file. The *_TO_EOD constants reflect
  * that there was a trailing "-" if rtcopy client was the tpread command.
  */
@@ -236,15 +225,6 @@
 #define MAXNBSKIPS         (10)
 #define MAX_TPRETRY        (2)
 #define MAX_CPRETRY        (2)
-
-/*
- * Fortran unit table, for U-format only
- */
-#define FORTRAN_UNIT_OFFSET (20)   /* start at some safe number...*/
-#define NB_FORTRAN_UNITS    (50)   /* Table size  */
-#define VALID_FORTRAN_UNIT(X) \
-    ((X)>=FORTRAN_UNIT_OFFSET && \
-     (X)<FORTRAN_UNIT_OFFSET+NB_FORTRAN_UNITS)
 
 /*
  * Support for old VMS clients

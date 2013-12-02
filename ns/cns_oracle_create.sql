@@ -172,7 +172,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_3');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_4');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -894,7 +894,9 @@ EXCEPTION WHEN OTHERS THEN
   -- content for the stager as other files may have already been committed. Any other
   -- remaining file from the input will have to be migrated again.
   varParams := 'Function="setOrReplaceSegmentsForFiles" errorMessage="' || SQLERRM
-        ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'"';
+        ||'" stackTrace="' || dbms_utility.format_error_backtrace ||'" fileId=' || varSeg.fileId
+        || ' copyNo=' || varSeg.copyNo || ' VID=' || varSeg.vid
+        || ' fSeq=' || varSeg.fseq;
   addSegResult(1, inReqId, SQLCODE, 'Uncaught exception', 0, varParams);
   DELETE FROM SetSegsForFilesInputHelper
    WHERE reqId = inReqId;

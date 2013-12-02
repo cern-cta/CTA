@@ -1500,42 +1500,11 @@ BEGIN
 END;
 /
 
-/* parse a path to give back the FileSystem and path */
-CREATE OR REPLACE PROCEDURE parsePath(inFullPath IN VARCHAR2,
-                                      outFileSystem OUT INTEGER,
-                                      outPath OUT VARCHAR2,
-                                      outDcId OUT INTEGER) AS
-  varPathPos INTEGER;
-  varLastDotPos INTEGER;
-  varColonPos INTEGER;
-  varDiskServerName VARCHAR2(2048);
-  varMountPoint VARCHAR2(2048);
-BEGIN
-  -- path starts after the second '/' from the end
-  varPathPos := INSTR(inFullPath, '/', -1, 2);
-  outPath := SUBSTR(inFullPath, varPathPos+1);
-  -- DcId is the part after the last '.'
-  varLastDotPos := INSTR(inFullPath, '.', -1, 1);
-  outDcId := TO_NUMBER(SUBSTR(inFullPath, varLastDotPos+1));
-  -- the mountPoint is between the ':' and the start of the path
-  varColonPos := INSTR(inFullPath, ':', 1, 1);
-  varMountPoint := SUBSTR(inFullPath, varColonPos+1, varPathPos-varColonPos);
-  -- the diskserver is before the ':
-  varDiskServerName := SUBSTR(inFullPath, 1, varColonPos-1);
-  -- find out the filesystem Id
-  SELECT FileSystem.id INTO outFileSystem
-    FROM DiskServer, FileSystem
-   WHERE DiskServer.name = varDiskServerName
-     AND FileSystem.diskServer = DiskServer.id
-     AND FileSystem.mountPoint = varMountPoint;
-END;
-/
-
 /* PL/SQL method implementing createDisk2DiskCopyJob */
 CREATE OR REPLACE PROCEDURE createDisk2DiskCopyJob
 (inCfId IN INTEGER, inNsOpenTime IN INTEGER, inDestSvcClassId IN INTEGER,
  inOuid IN INTEGER, inOgid IN INTEGER, inReplicationType IN INTEGER,
- inReplacedDcId IN INTEGER, inDrainingJob IN INTEGER) AS
+ inReplacedDcId IN INTEGER, inDrainingJob IN INTEGER, inDoSignal IN BOOLEAN) AS
   varD2dCopyJobId INTEGER;
   varDestDcId INTEGER;
 BEGIN
@@ -1563,8 +1532,10 @@ BEGIN
              ' DrainReq=' || TO_CHAR(inDrainingJob)));
   END;
   
-  -- wake up transfermanager
-  DBMS_ALERT.SIGNAL('d2dReadyToSchedule', '');
+  IF inDoSignal THEN
+    -- wake up transfermanager
+    DBMS_ALERT.SIGNAL('d2dReadyToSchedule', '');
+  END IF;
 END;
 /
 
@@ -1624,7 +1595,7 @@ BEGIN
   INSERT INTO DiskCopy
     (path, id, filesystem, castorfile, status, importance,
      creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
-  VALUES (dcPath, dcId, fsId, cfId, dconst.CASTORFILE_DISKONLY, -1,
+  VALUES (dcPath, dcId, fsId, cfId, dconst.DISKCOPY_VALID, -1,
           getTime(), getTime(), GCw, 0, 0, ouid, ogid);
   -- link to the SubRequest and schedule an access if requested
   IF schedule = 0 THEN
@@ -1678,7 +1649,7 @@ BEGIN
   LOOP
     BEGIN
       -- Trigger a replication request.
-      createDisk2DiskCopyJob(cfId, varNsOpenTime, a.id, ouid, ogid, dconst.REPLICATIONTYPE_USER, NULL, NULL);
+      createDisk2DiskCopyJob(cfId, varNsOpenTime, a.id, ouid, ogid, dconst.REPLICATIONTYPE_USER, NULL, NULL, TRUE);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- No copies to replicate from
     END;
@@ -2966,7 +2937,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
         BEGIN
           -- yes, we can replicate, create a replication request without waiting on it.
           createDisk2DiskCopyJob(inCfId, inNsOpenTime, inSvcClassId, inEuid, inEgid,
-                                 dconst.REPLICATIONTYPE_INTERNAL, NULL, NULL);
+                                 dconst.REPLICATIONTYPE_INTERNAL, NULL, NULL, TRUE);
           -- log it
           logToDLF(inReqUUID, dlf.LVL_SYSTEM, dlf.STAGER_GET_REPLICATION, inFileId, inNsHost, 'stagerd',
                    'SUBREQID=' || inSrUUID || ' svcClassId=' || getSvcClassName(inSvcClassId) ||
@@ -2998,7 +2969,7 @@ BEGIN
   IF varSrcDcId > 0 THEN
     -- create DiskCopyCopyJob and make this subRequest wait on it
     createDisk2DiskCopyJob(inCfId, inNsOpenTime, inSvcClassId, inEuid, inEgid,
-                           dconst.REPLICATIONTYPE_USER, NULL, NULL);
+                           dconst.REPLICATIONTYPE_USER, NULL, NULL, TRUE);
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = dconst.SUBREQUEST_WAITSUBREQ
      WHERE id = inSrId;

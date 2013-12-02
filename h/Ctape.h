@@ -251,7 +251,6 @@ struct tpfil {		/* tape file description */
 	int	lrecl;		/* record length */
 	int	Qfirst;		/* fseq of first file of a mapped volume */
 	int	Qlast;		/* fseq of last file of a mapped volume */
-	char	recfm[CA_MAXRECFMLEN+1];	/* record format: F, FB or U */
 	int	retentd;	/* retention period in days */
 	int	flags;		/* NOTRLCHK, IGNOREEOI... */
 };

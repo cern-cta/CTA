@@ -10,8 +10,32 @@ MACPORTS_CPPUNIT_INCLUDE_OP=
 MACPORTS_CPPUNIT_LIB_OP=
 endif
 
+ifdef CASTOR_NOSTK
+CDK_OPS=
+CDK_LIB_OPS=
+RMC_OBJECTS=
+else
 CDK_OPS=-DLINUX -I/usr/include/CDK
-CDK_LIB_OPS = -L/usr/lib64/CDK -lapi -lcl -lipc -lutl
+CDK_LIB_OPS=-L/usr/lib64/CDK -lapi -lcl -lipc -lutl
+RMC_OBJECTS= \
+  rmc_Acs.o \
+  rmc_AcsCmd.o \
+  rmc_DebugBuf.o \
+  rmc_AcsDismountCmdLine.o \
+  rmc_AcsDismountCmd.o \
+  rmc_AcsMountCmdLine.o \
+  rmc_AcsMountCmd.o \
+  rmc_AcsQueryVolumeCmdLine.o \
+  rmc_AcsQueryVolumeCmd.o \
+  unittest_AcsCmdTest.o \
+  unittest_AcsTest.o \
+  unittest_AcsDismountCmdLineTest.o \
+  unittest_AcsDismountCmdTest.o \
+  unittest_AcsMountCmdLineTest.o \
+  unittest_AcsMountCmdTest.o \
+  unittest_AcsQueryVolumeCmdLineTest.o \
+  unittest_AcsQueryVolumeCmdTest.o
+endif
 ROOT_DIR=../..
 INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h $(MACPORTS_CPPUNIT_INCLUDE_OP) $(CDK_OPS)
 LIB_DIR_OPS=$(MACPORTS_CPPUNIT_LIB_OP)
@@ -24,7 +48,7 @@ all: $(EXECUTABLES)
 clean:
 	rm -f $(EXECUTABLES) *.o
 
-rununittests: \
+rununittests: $(RMC_OBJECTS) \
   runUnitTestsMain.o \
   castor_BaseAddress.o \
   castor_BaseCnvSvc.o \
@@ -125,15 +149,6 @@ rununittests: \
   metrics_InternalCounter.o \
   metrics_MetricsCollector.o \
   metrics_UpdateThread.o \
-  rmc_Acs.o \
-  rmc_AcsCmd.o \
-  rmc_DebugBuf.o \
-  rmc_AcsDismountCmdLine.o \
-  rmc_AcsDismountCmd.o \
-  rmc_AcsMountCmdLine.o \
-  rmc_AcsMountCmd.o \
-  rmc_AcsQueryVolumeCmdLine.o \
-  rmc_AcsQueryVolumeCmd.o \
   ns_Cns_selectsrvr.o \
   ns_Cns_opendir.o \
   ns_Cns_closedir.o \
@@ -195,9 +210,7 @@ rununittests: \
   rtcopy_rtcp_Listen.o \
   rtcopy_rtcp_marshallVdqmClientInfoMsg.o \
   rtcopy_rtcp_recvRtcpHdr.o \
-  rtcopy_rtcp_RetvalSHIFT.o \
   rtcopy_rtcpc_BuildReq.o \
-  rtcopy_rtcpd_ConvertData.o \
   rtcopy_rtcpd_GetClientInfo.o \
   rtcopy_rtcpd_GetClientInfoMsg.o \
   rtcopy_rtcpd_SendAckToVdqmOrTapeBridge.o \
@@ -242,7 +255,6 @@ rununittests: \
   stager_SubRequestStatusCodes.o \
   stager_SubRequestGetNextStatusCodes.o \
   stager_StageUpdateRequest.o \
-  tape_asc2ebc.o \
   tape_chkdirw.o \
   tape_Ctape_kill.o \
   tape_Ctape_errmsg.o \
@@ -253,7 +265,6 @@ rununittests: \
   tape_Ctape_rls.o \
   tape_Ctape_reserve.o \
   tape_cvtden.o \
-  tape_ebc2asc.o \
   tape_findpgrp.o \
   tape_initlabel.o \
   tape_net.o \
@@ -328,21 +339,13 @@ rununittests: \
   tpcp_TapeFseqRangeListSequence.o \
   tpcp_TapeFseqRangeSequence.o \
   unittest.o \
-  unittest_AcsCmdTest.o \
-  unittest_AcsTest.o \
   unittest_CvtdenTest.o \
   unittest_InitlabelTest.o \
   unittest_Ctape_reserveTest.o \
-  unittest_AcsDismountCmdLineTest.o \
-  unittest_AcsDismountCmdTest.o \
   unittest_RecvTapeBridgeFlushedToTapeAckTest.o \
   unittest_MarshallTapeBridgeFlushedToTapeTest.o \
   unittest_SendTapeBridgeFlushedToTapeTest.o \
   unittest_MarshallTapeBridgeClientInfo2Test.o \
-  unittest_AcsMountCmdLineTest.o \
-  unittest_AcsMountCmdTest.o \
-  unittest_AcsQueryVolumeCmdLineTest.o \
-  unittest_AcsQueryVolumeCmdTest.o \
   unittest_NetTest.o \
   unittest_FileToRecallTest.o \
   unittest_MigrationReportConnectionTest.o \
@@ -383,7 +386,7 @@ rununittests: \
   vmgr_vmgr_querypool.o \
   vmgr_send2vmgr.o \
   vmgr_vmgr_querytape_byte_u64.o
-	g++ $(COMMON_OPS) $(LIB_DIR_OPS) $(CDK_LIB_OPS) -lpthread -ldl $(UUID_LIB) -lcppunit -lz -o $@ $^
+	g++ $(COMMON_OPS) $(LIB_DIR_OPS) $(CDK_LIB_OPS) -o $@ $^ -lpthread -ldl $(UUID_LIB) -lcppunit -lz
 
 runUnitTestsMain.o: runUnitTestsMain.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -912,9 +915,6 @@ rtcopy_rtcpapi.o: $(ROOT_DIR)/rtcopy/rtcpapi.c
 rtcopy_rtcp_accounting.o: $(ROOT_DIR)/rtcopy/rtcp_accounting.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-rtcopy_rtcp_RetvalSHIFT.o: $(ROOT_DIR)/rtcopy/rtcp_RetvalSHIFT.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 rtcopy_rtcp_InitNW.o: $(ROOT_DIR)/rtcopy/rtcp_InitNW.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -988,9 +988,6 @@ rtcopy_client_rtcp_SendRecv.o: $(ROOT_DIR)/rtcopy/rtcp_SendRecv.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcopy_server_rtcp_SendRecv.o: $(ROOT_DIR)/rtcopy/rtcp_SendRecv.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-rtcopy_rtcpd_ConvertData.o: $(ROOT_DIR)/rtcopy/rtcpd_ConvertData.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rtcopy_rtcpdIsConfiguredToReuseMount.o: $(ROOT_DIR)/rtcopy/rtcpdIsConfiguredToReuseMount.c
@@ -1145,9 +1142,6 @@ stager_SubRequestGetNextStatusCodes.o: \
 tape_usrlbl.o: $(ROOT_DIR)/tape/usrlbl.c
 	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
 
-tape_asc2ebc.o: $(ROOT_DIR)/tape/asc2ebc.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 tape_chkdirw.o: $(ROOT_DIR)/tape/chkdirw.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -1179,9 +1173,6 @@ tape_Ctape_reserve.o: $(ROOT_DIR)/tape/Ctape_reserve.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tape_cvtden.o: $(ROOT_DIR)/tape/cvtden.c
-	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tape_ebc2asc.o: $(ROOT_DIR)/tape/ebc2asc.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tape_findpgrp.o: $(ROOT_DIR)/tape/findpgrp.c

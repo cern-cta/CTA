@@ -54,7 +54,7 @@ int sendrep(int rpfd, int rep_type, ...)
   va_end (args);
   repsize = rbp - repbuf;
   if (netwrite (rpfd, repbuf, repsize) != repsize) {
-    nslogit("MSG=\"Error: Unable to send response\" Function=\"sendrep\" "
+    nslogit(LOG_ERR, "MSG=\"Error: Unable to send response\" Function=\"sendrep\" "
             "Error=\"%s\" File=\"%s\" Line=%d",
             neterror(), __FILE__, __LINE__);
     if (rep_type == CNS_RC)
