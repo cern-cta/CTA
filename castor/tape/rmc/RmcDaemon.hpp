@@ -26,7 +26,11 @@
 #define CASTOR_TAPE_RMC_RMCDAEMON_HPP 1
 
 #include "castor/exception/Exception.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
+#include "castor/exception/InvalidNbArguments.hpp"
+#include "castor/exception/MissingOperand.hpp"
 #include "castor/server/BaseDaemon.hpp"
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/tape/rmc/RmcdCmdLine.hpp"
@@ -104,18 +108,15 @@ protected:
   server::BaseThreadPool *m_vdqmRequestHandlerThreadPool;
 
   /**
-   * Parses the command-line arguments and stores the results in the
-   * member-variable m_cmdLine.
-   *
-   * Please note that this member function overrides the implementation
-   * provided by the class castor::server::BaseDaemon.  The override is
-   * necessary because the threading of this daemon should not be configurable.
+   * Parses the specified command-line arguments and returns the result.
    *
    * @param argc Argument count from the executable's entry function: main().
    * @param argv Argument vector from the executable's entry function: main().
+   * @return The result of parsing the command-line arguments.
    */
-  void parseCommandLine(const int argc, char **argv)
-    throw(castor::exception::Exception);
+  RmcdCmdLine parseCmdLine(const int argc, char **argv)
+    throw(castor::exception::Internal, castor::exception::InvalidArgument,
+      castor::exception::InvalidNbArguments, castor::exception::MissingOperand);
 
   /**
    * Writes the command-line usage message of this daemon onto the

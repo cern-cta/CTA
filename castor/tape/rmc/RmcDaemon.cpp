@@ -32,9 +32,10 @@
 //#include "castor/tape/tapebridge/ConfigParamLogger.hpp"
 //#include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/utils/utils.hpp"
-#include "h/Cgetopt.h"
 #include "h/common.h"
 #include "h/Cuuid.h"
+
+#include <getopt.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -102,7 +103,7 @@ int castor::tape::rmc::RmcDaemon::main(const int argc,
 int castor::tape::rmc::RmcDaemon::exceptionThrowingMain(
   const int argc, char **argv) throw(castor::exception::Exception) {
   logStartOfDaemon(argc, argv);
-  parseCommandLine(argc, argv);
+  m_cmdLine = parseCmdLine(argc, argv);
 
   // Display usage message and exit if help option found on command-line
   if(m_cmdLine.help) {
@@ -185,10 +186,11 @@ int castor::tape::rmc::RmcDaemon::exceptionThrowingMain(
     bulkRequestConfigParams,
     tapeFlushConfigParams,
     driveNames.size());
+*/
 
   // Start the threads
   start();
-*/
+
   return 0;
 }
 
@@ -238,22 +240,26 @@ std::string castor::tape::rmc::RmcDaemon::argvToString(const int argc,
 }
 
 //------------------------------------------------------------------------------
-// parseCommandLine
+// parseCmdLine
 //------------------------------------------------------------------------------
-void castor::tape::rmc::RmcDaemon::parseCommandLine(
-  const int argc, char **argv) throw(castor::exception::Exception) {
+castor::tape::rmc::RmcdCmdLine castor::tape::rmc::RmcDaemon::parseCmdLine(
+  const int argc, char **argv) throw(castor::exception::Internal,
+  castor::exception::InvalidArgument, castor::exception::InvalidNbArguments,
+  castor::exception::MissingOperand) {
+  const std::string task = "parse command-line arguments";
 
-  static struct Coptions longopts[] = {
-    {"foreground", NO_ARGUMENT, NULL, 'f'},
-    {"help"      , NO_ARGUMENT, NULL, 'h'},
-    {NULL        , 0          , NULL,  0 }
+  static struct option longopts[] = {
+    {"foreground", 0, NULL, 'f'},
+    {"help"      , 0, NULL, 'h'},
+    {NULL        , 0, NULL,   0}
   };
-
-  Coptind = 1;
-  Copterr = 0;
-
+  RmcdCmdLine cmdLine;
   char c;
-  while ((c = Cgetopt_long(argc, argv, "fh", longopts, NULL)) != -1) {
+
+  // Prevent getopt() from printing an error message if it does not recognize
+  // an option character
+  opterr = 0;
+  while ((c = getopt_long(argc, argv, "fh", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_cmdLine.foreground = true;
@@ -261,74 +267,50 @@ void castor::tape::rmc::RmcDaemon::parseCommandLine(
     case 'h':
       m_cmdLine.help = true;
       break;
-    case '?':
-      {
-        std::stringstream oss;
-        oss <<
-          "Failed to parse the command-line"
-          ": Unknown command-line option"
-          ": option='" << (char)Coptopt << "'";
-
-        // Throw an exception
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << oss.str();
-        throw(ex);
-      }
-      break;
     case ':':
       {
-        std::stringstream oss;
-        oss <<
-          "Failed to parse the command-line"
-          ": An option is missing a parameter";
-
-        // Throw an exception
         castor::exception::InvalidArgument ex;
-        ex.getMessage() << oss.str();
-        throw(ex);
+        ex.getMessage() << "Failed to " << task <<
+          ": The -" << (char)optopt << " option requires a parameter";
+        throw ex;
+      }
+      break;
+    case '?':
+      {
+        castor::exception::InvalidArgument ex;
+        ex.getMessage() << "Failed to " << task;
+
+        if(optopt == 0) {
+          ex.getMessage() << ": Unknown command-line option";
+        } else {
+          ex.getMessage() << ": Unknown command-line option: -" << (char)optopt;
+        }
+        throw ex;
       }
       break;
     default:
       {
-        std::stringstream oss;
-        oss <<
-          "Failed to parse the command-line"
-          ": Cgetopt_long returned an unknown value"
-          ": value=0x" << std::hex << (int)c;
-
-        // Throw an exception
-        TAPE_THROW_EX(castor::exception::Internal,
-          ": " << oss.str());
+        castor::exception::Internal ex;
+        ex.getMessage() << "Failed to " << task <<
+          ": getopt_long returned the following unknown value: 0x" <<
+          std::hex << (int)c;
+        throw ex;
       }
-    }
+    } // switch (c)
+  } // while ((c = getopt_long( ... )) != -1)
+
+  // Calculate the number of non-option ARGV-elements
+  const int nbArgs = argc - optind;
+
+  if(0 != nbArgs) {
+    castor::exception::InvalidNbArguments ex;
+    ex.getMessage() << "Failed to " << task <<
+      ": Invalid number of command-line arguments: expected=0 actual=" <<
+      nbArgs;
+    throw ex;
   }
 
-  if(Coptind > argc) {
-    std::stringstream oss;
-    oss <<
-      "Failed to parse the command-line"
-      ": Invalid Coptind value"
-      ": Coptind=" << Coptind;
-
-    // Throw an exception
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": " << oss.str());
-  }
-
-  // If there is some extra text on the command-line which has not been parsed
-  if(Coptind < argc)
-  {
-    std::stringstream oss;
-    oss <<
-      "Failed to parse the command-line"
-      ": Unexpected command-line argument"
-      ": argument='" << argv[Coptind] << "'";
-
-    // Throw an exception
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() << oss.str();
-    throw(ex);
-  }
+  return cmdLine;
 }
 
 //------------------------------------------------------------------------------
