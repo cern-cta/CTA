@@ -187,6 +187,18 @@ The following error values might be returned by any package:
 .TP
 .B SEPYTHONEXEC
 (1044) Failed to execute Python
+.TP
+.B SEMISSINGOPER
+(1045) Missing operand
+.TP
+.B SEMISMATCH
+(1046) Mismatch
+.TP
+.B SEREQUESTFAILED
+(1047) Request failed
+.TP
+.B SEINVALIDNBARGS
+(1048) Invalid number of arguments
 
 .SH COPYTAPE ERRORS
 None yet
