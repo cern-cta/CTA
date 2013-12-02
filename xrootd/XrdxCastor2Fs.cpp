@@ -1447,7 +1447,7 @@ XrdxCastor2Fs::fsctl(const int cmd,
     // Check if this file exists
     XrdSfsFileExistence file_exists;
 
-    if ((_exists(path.c_str(), file_exists, error, 0)) ||
+    if ((_exists(path.c_str(), file_exists, error, client)) ||
         (file_exists == XrdSfsFileExistNo))
     {
       return SFS_ERROR;

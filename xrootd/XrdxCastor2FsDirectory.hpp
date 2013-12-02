@@ -38,79 +38,73 @@
 //------------------------------------------------------------------------------
 class XrdxCastor2FsDirectory : public XrdSfsDirectory, public LogId
 {
-  public:
+public:
 
-    //--------------------------------------------------------------------------
-    //! Constructor
-    //--------------------------------------------------------------------------
-    XrdxCastor2FsDirectory(const char* user=0, int MonID=0);
+  //----------------------------------------------------------------------------
+  //! Constructor
+  //----------------------------------------------------------------------------
+  XrdxCastor2FsDirectory(const char* user=0, int MonID=0);
+  
+  
+  //----------------------------------------------------------------------------
+  //! Destructor
+  //----------------------------------------------------------------------------
+  virtual ~XrdxCastor2FsDirectory();
+  
 
-
-    //--------------------------------------------------------------------------
-    //! Destructor
-    //--------------------------------------------------------------------------
-    virtual ~XrdxCastor2FsDirectory();
-
-
-    //--------------------------------------------------------------------------
-    //! Open the directory `path' and prepare for reading
-    //!
-    //! @param path fully qualified name of the directory to open.
-    //! @param cred authentication credentials, if any
-    //! @param info opaque information, if any
-    //!
-    //! @return SFS_OK upon success, otherwise SFS_ERROR
-    //!
-    //--------------------------------------------------------------------------
-    int open( const char*              dirName,
-              const XrdSecEntity*  client = 0,
-              const char*              opaque = 0 );
-
-
-    //--------------------------------------------------------------------------
-    //! Read the next directory entry
-    //!
-    //! @return Upon success, returns the contents of the next directory entry as
-    //!         a null terminated string. Returns a null pointer upon EOF or an
-    //!         error. To differentiate the two cases, getErrorInfo will return
-    //!         0 upon EOF and an actual error code (i.e., not 0) on error.
-    //!
-    //--------------------------------------------------------------------------
-    const char* nextEntry();
-
-
-    //--------------------------------------------------------------------------
-    //! Close the directory object
-    //!
-    //! @param cred authentication credentials, if any
-    //!
-    //! @return SFS_OK upon success and SFS_ERROR upon failure
-    //!
-    //--------------------------------------------------------------------------
-    int close();
-
-
-    //--------------------------------------------------------------------------
-    //! Get directory name 
-    //--------------------------------------------------------------------------
-    const char* FName() {
-      return ( const char* )fname;
-    }
-
-  private:
-
-    DIR*           dh;    ///< directory stream handle
-    char           ateof; ///< mark the end of dir entries
-    char*          fname; ///< directory name 
-    XrdOucString   entry; ///<
-
-    struct {
-      struct dirent d_entry; ///<
-      char   pad[MAXNAMLEN]; ///< This is only required for Solaris!
-    } dirent_full;
-
-    struct dirent* d_pnt; ///<
-
+  //----------------------------------------------------------------------------
+  //! Open the directory `path' and prepare for reading
+  //!
+  //! @param path fully qualified name of the directory to open.
+  //! @param cred authentication credentials, if any
+  //! @param info opaque information, if any
+  //!
+  //! @return SFS_OK upon success, otherwise SFS_ERROR
+  //!
+  //----------------------------------------------------------------------------
+  int open(const char* dirName,
+           const XrdSecEntity* client = 0,
+           const char* opaque = 0 );
+  
+  
+  //----------------------------------------------------------------------------
+  //! Read the next directory entry
+  //!
+  //! @return Upon success, returns the contents of the next directory entry as
+  //!         a null terminated string. Returns a null pointer upon EOF or an
+  //!         error. To differentiate the two cases, getErrorInfo will return
+  //!         0 upon EOF and an actual error code (i.e., not 0) on error.
+  //!
+  //----------------------------------------------------------------------------
+  const char* nextEntry();
+  
+  
+  //----------------------------------------------------------------------------
+  //! Close the directory object
+  //!
+  //! @param cred authentication credentials, if any
+  //!
+  //! @return SFS_OK upon success and SFS_ERROR upon failure
+  //!
+  //----------------------------------------------------------------------------
+  int close();
+  
+  
+  //----------------------------------------------------------------------------
+  //! Get directory name 
+  //----------------------------------------------------------------------------
+  const char* FName() 
+  {
+    return (const char*)fname;
+  }
+  
+private:
+  
+  DIR*           dh;    ///< directory stream handle
+  char*          fname; ///< directory name 
+  XrdOucString   entry; ///< directory entry item
+  struct dirent* d_pnt; ///< ptr to dir entry
+  
 };
 
 #endif // __XCASTOR_FSDIRECTORY_HH__

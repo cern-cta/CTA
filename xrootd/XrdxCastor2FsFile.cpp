@@ -40,10 +40,10 @@
 //------------------------------------------------------------------------------
 XrdxCastor2FsFile::XrdxCastor2FsFile(const char* user, int MonID) :
   XrdSfsFile(user, MonID),
-  LogId()
+  LogId(),
+  fname(0)
 {
   oh = -1;
-  fname = 0;
 }
 
 
@@ -52,7 +52,14 @@ XrdxCastor2FsFile::XrdxCastor2FsFile(const char* user, int MonID) :
 //------------------------------------------------------------------------------
 XrdxCastor2FsFile::~XrdxCastor2FsFile()
 {
-  if (oh) close();
+  if (oh) 
+    close();
+
+  if (fname)
+  {
+    free(fname);
+    fname = 0;
+  }
 }
 
 
@@ -712,7 +719,7 @@ XrdxCastor2FsFile::write(XrdSfsFileOffset offset,
   // Make sure the offset is not too large
 #if _FILE_OFFSET_BITS!=64
 
-  if (offset >  0x000000007fffffff)
+  if (offset > 0x000000007fffffff)
     return XrdxCastor2Fs::Emsg(epname, error, EFBIG, "write", fname);
 
 #endif

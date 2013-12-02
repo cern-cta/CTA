@@ -34,12 +34,12 @@
 // Constructor
 //------------------------------------------------------------------------------
 XrdxCastor2FsDirectory::XrdxCastor2FsDirectory(const char* user, int MonID) :
-  XrdSfsDirectory(user, MonID)
+  XrdSfsDirectory(user, MonID),
+  dh(0),
+  fname(0),
+  d_pnt(0)
 {
-  ateof = 0;
-  fname = 0;
-  dh    = (DIR*)0;
-  d_pnt = &dirent_full.d_entry;
+  // empty
 }
 
 
@@ -48,7 +48,14 @@ XrdxCastor2FsDirectory::XrdxCastor2FsDirectory(const char* user, int MonID) :
 //------------------------------------------------------------------------------
 XrdxCastor2FsDirectory::~XrdxCastor2FsDirectory()
 {
-  if (dh) close();
+  if (dh) 
+    close();
+
+  if (fname)
+  {
+    free(fname);
+    fname = 0;
+  }
 }
 
 
@@ -78,16 +85,13 @@ XrdxCastor2FsDirectory::open(const char*         dir_path,
 
   // Verify that this object is not already associated with an open directory
   if (dh) return XrdxCastor2Fs::Emsg(epname, error, EADDRINUSE,
-                                       "open directory", map_dir.c_str());
-
-  // Set up values for this directory object
-  ateof = 0;
-  fname = strdup(map_dir.c_str());
+                                     "open directory", map_dir.c_str());
 
   // Open the directory and get it's id
   if (!(dh = XrdxCastor2FsUFS::OpenDir(map_dir.c_str())))
     return  XrdxCastor2Fs::Emsg(epname, error, serrno, "open directory", map_dir.c_str());
 
+  fname = strdup(map_dir.c_str());
   return SFS_OK;
 }
 
@@ -100,15 +104,11 @@ XrdxCastor2FsDirectory::nextEntry()
 {
   static const char* epname = "nextEntry";
 
-  // Lock the directory and do any required tracing
   if (!dh)
   {
     XrdxCastor2Fs::Emsg(epname, error, EBADF, "read directory", fname);
     return (const char*)0;
   }
-
-  // Check if we are at EOF (once there we stay there)
-  if (ateof) return (const char*)0;
 
   if (gMgr->mProc)
     gMgr->mStats.IncReadd();
@@ -124,7 +124,6 @@ XrdxCastor2FsDirectory::nextEntry()
 
   entry = d_pnt->d_name;
   xcastor_debug("dir next entry: %s", entry.c_str());
-  // Return the actual entry
   return (const char*)(entry.c_str());
 }
 
@@ -147,8 +146,12 @@ XrdxCastor2FsDirectory::close()
     return SFS_ERROR;
   }
 
-  if (fname) free(fname);
-
+  if (fname) 
+  {
+    free(fname);
+    fname = 0;
+  }
+  
   dh = (DIR*)0;
   return SFS_OK;
 }
