@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)Dlf.cpp,v 1.1 $Release$ 2005/04/05 11:51:33 sponcec3
- *
  * Interface to the CASTOR logging system
  *
  * @author Sebastien Ponce
@@ -26,7 +24,9 @@
 
 // Include Files
 #include "castor/log/Log.hpp"
+#include "h/getconfent.h"
 
+#include <errno.h>
 #include <pthread.h>
 #include <string.h>
 #include <sys/un.h>
@@ -37,6 +37,41 @@
 
 namespace castor {
 namespace log {
+
+/**
+ * Default size of a syslog message.
+ */
+static const size_t DEFAULT_SYSLOG_MSGLEN = 1024;
+
+/**
+ * Default size of a rsyslog message.
+ */
+static const size_t DEFAULT_RSYSLOG_MSGLEN = 2000;
+
+/**
+ * Maximum length of a parameter name.
+ */
+static const size_t LOG_MAX_PARAMNAMELEN = 20;
+
+/**
+ * Maximum length of a string value.
+ */
+//static size_t LOG_MAX_PARAMSTRLEN = 1024;
+
+/**
+ * Maximum length of an ident/facility.
+ */
+static const size_t CASTOR_MAX_IDENTLEN = 20;
+
+/**
+ * Maximum length of a log message.
+ */
+static size_t CASTOR_MAX_LINELEN = 8192;
+
+/**
+ * True if the interface of the CASTOR logging system has been initialized.
+ */
+static bool s_initialized = false;
 
 /**
  * The file descriptor of the log.
@@ -57,6 +92,16 @@ static bool s_connected = false;
  * Mutex used to synchronize syslog client.
  */
 static pthread_mutex_t s_syslogMutex;
+
+/**
+ * ident/facility.
+ */
+static const char* s_progname = 0;
+
+/**
+ * The maximum message size that the client syslog server can handle.
+ */
+static int s_maxmsglen = DEFAULT_SYSLOG_MSGLEN;
 
 //-----------------------------------------------------------------------------
 // castor_openlog
@@ -91,6 +136,83 @@ static void castor_openlog() {
       s_connected = true;
     }
   }
+}
+
+//-----------------------------------------------------------------------------
+// initLog
+//-----------------------------------------------------------------------------
+int initLog(const char *ident) {
+
+  /* Variables */
+  FILE *fp = NULL;
+  char *p;
+  char buffer[1024];
+  size_t size = 0;
+
+  /* Check if already initialized */
+  if (s_initialized) {
+    errno = EPERM;
+    return (-1);
+  }
+
+  /* Check if the ident is too big */
+  if (strlen(ident) > CASTOR_MAX_IDENTLEN) {
+    errno = EINVAL;
+    return (-1);
+  }
+
+  s_progname = ident;
+
+  /* Determine the maximum message size that the client syslog server can
+   * handle.
+   */
+  if ((p = getconfent("LOG", "MaxMessageSize", 0)) != NULL) {
+    size = atoi(p);
+  } else {
+    /* Determine the size automatically, this is not guaranteed to work! */
+    fp = fopen("/etc/rsyslog.conf", "r");
+    if (fp) {
+      /* The /etc/rsyslog.conf file exists so we assume the default message
+       * size of 2K.
+       */
+      s_maxmsglen = DEFAULT_RSYSLOG_MSGLEN;
+
+      /* In rsyslog versions >= 3.21.4, the maximum size of a message became
+       * configurable through the $MaxMessageSize global config directive.
+       * Here we attempt to find out if the user has increased the size!
+       */
+      while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        if (strncasecmp(buffer, "$MaxMessageSize", 15)) {
+          continue; /* Option not of interest */
+        }
+        size = atol(&buffer[15]);
+      }
+      fclose(fp);
+    } else {
+      /* The /etc/rsyslog.conf file is missing which implies that we are
+       * running on a stock syslogd system, therefore the message size is
+       * governed by the syslog RFC: http://www.faqs.org/rfcs/rfc3164.html
+       */
+    }
+  }
+
+  /* Check that the size of messages falls within acceptable limits */
+  if ((size >= DEFAULT_SYSLOG_MSGLEN) &&
+      (size <= CASTOR_MAX_LINELEN)) {
+    s_maxmsglen = size;
+  }
+
+  /* create the syslog serialization lock */
+  if (pthread_mutex_init(&s_syslogMutex, NULL)) {
+    errno = ENOMEM;
+    return (-1);
+  }
+
+  /* Open syslog */
+  castor_openlog();
+  s_initialized = 1;
+
+  return (0);
 }
 
 //-----------------------------------------------------------------------------
