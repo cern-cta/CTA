@@ -370,7 +370,7 @@ ENDIF(DEFINED PackageOnly)
 if (${COMPILE_PACKAGING} STREQUAL "1")
   include(cmake/UseRPMToolsEnvironment.cmake)
   set(CPACK_SOURCE_PACKAGE_FILE_NAME
-   "${PROJECT_NAME}-${CASTOR_VERSION}-${CASTOR_RELEASE}${RPMTools_RPMBUILD_DIST}")
+   "${PROJECT_NAME}-${CASTOR_VERSION}-${CASTOR_RELEASE}")
   message (STATUS
     "Setting package file name to: ${CPACK_SOURCE_PACKAGE_FILE_NAME}")
   include(CPack)
