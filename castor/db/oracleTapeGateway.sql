@@ -934,10 +934,13 @@ END;
 
 /* insert new Migration Mount */
 CREATE OR REPLACE PROCEDURE insertMigrationMount(inTapePoolId IN NUMBER,
+                                                 minimumAge IN INTEGER,
                                                  outMountId OUT INTEGER) AS
   varMigJobId INTEGER;
 BEGIN
-  -- Check that the mount would be honoured by running a dry-run file selection.
+  -- Check that the mount would be honoured by running a dry-run file selection:
+  -- note that in case the mount was triggered because of age, we check that
+  -- we have a valid candidate that is at least minimumAge seconds old.
   -- This is almost a duplicate of the query in tg_getFilesToMigrate.
   SELECT /*+ FIRST_ROWS_1
              LEADING(MigrationJob CastorFile DiskCopy FileSystem DiskServer)
@@ -949,6 +952,7 @@ BEGIN
     FROM MigrationJob, DiskCopy, FileSystem, DiskServer, CastorFile
    WHERE MigrationJob.tapePool = inTapePoolId
      AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
+     AND (minimumAge = 0 OR MigrationJob.creationTime < getTime() - minimumAge)
      AND CastorFile.id = MigrationJob.castorFile
      AND CastorFile.id = DiskCopy.castorFile
      AND CastorFile.tapeStatus = dconst.CASTORFILE_NOTONTAPE
@@ -1003,7 +1007,7 @@ BEGIN
           ((varDataAmount/(varTotalNbMounts+1) >= t.minAmountDataForMount) OR
            (varNbFiles/(varTotalNbMounts+1) >= t.minNbFilesForMount)) AND
           (varTotalNbMounts+1 <= varNbFiles) LOOP   -- in case minAmountDataForMount << avgFileSize, stop creating more than one mount per file
-      insertMigrationMount(t.id, varMountId);
+      insertMigrationMount(t.id, 0, varMountId);
       varTotalNbMounts := varTotalNbMounts + 1;
       IF varMountId = 0 THEN
         -- log "startMigrationMounts: failed migration mount creation due to lack of files"
@@ -1031,7 +1035,7 @@ BEGIN
     -- force creation of a unique mount in case no mount was created at all and some files are too old
     IF varNbFiles > 0 AND varTotalNbMounts = 0 AND t.nbDrives > 0 AND
        gettime() - varOldestCreationTime > t.maxFileAgeBeforeMount THEN
-      insertMigrationMount(t.id, varMountId);
+      insertMigrationMount(t.id, t.maxFileAgeBeforeMount, varMountId);
       IF varMountId = 0 THEN
         -- log "startMigrationMounts: failed migration mount creation due to lack of files"
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.MIGMOUNT_AGE_NO_FILE, 0, '', 'tapegatewayd',
@@ -1612,8 +1616,7 @@ END;
  * input:  VDQM transaction id, count and total size
  * output: outFiles, a cursor for the set of recall candidates.
  */
-create or replace 
-PROCEDURE tg_getBulkFilesToRecall(inLogContext IN VARCHAR2,
+CREATE OR REPLACE PROCEDURE tg_getBulkFilesToRecall(inLogContext IN VARCHAR2,
                                                     inMountTrId IN NUMBER,
                                                     inCount IN INTEGER,
                                                     inTotalSize IN INTEGER,
