@@ -29,90 +29,119 @@
 // Include Files
 #include "castor/log/Param.hpp"
 
+#include <syslog.h>
 #include <sys/time.h>
 
+/* Priority levels */
+#define LOG_LVL_EMERGENCY     LOG_EMERG   /* System is unusable */
+#define LOG_LVL_ALERT         LOG_ALERT   /* Action must be taken immediately */
+#define LOG_LVL_CRIT          LOG_CRIT    /* Critical conditions */
+#define LOG_LVL_ERROR         LOG_ERR     /* Error conditions */
+#define LOG_LVL_WARNING       LOG_WARNING /* Warning conditions */
+#define LOG_LVL_USER_ERROR    LOG_NOTICE  /* Normal but significant condition */
+#define LOG_LVL_AUTH          LOG_NOTICE
+#define LOG_LVL_SECURITY      LOG_NOTICE
+#define LOG_LVL_SYSTEM        LOG_INFO    /* Informational */
+#define LOG_LVL_DEBUG         LOG_DEBUG   /* Debug-level messages */
+
 namespace castor {
+namespace log {
 
-  namespace log {
+/**
+ * Initialize the CASTOR logging interface.
+ *
+ * @param ident   The ident argument is a string that is prepended to every
+ *                log message and identifiers the source application.
+ *
+ * @return On success zero is returned, On error, -1 is returned, and errno is
+ *         set appropriately.
+ *
+ *         Possible errors include:
+ *          - EPERM  The interface is already initialized!
+ *          - EINVAL Invalid argument (refers to errors in parsing the LogMask
+ *                   configuration option in castor.conf for the daemon)
+ *
+ * @see openlog(), setlogmask()
+ */
+int initLog (const char *ident);
 
-    /**
-     * Writes a message into the CASTOR logging system. Note that no exception
-     * will ever be thrown in case of failure. Failures will actually be
-     * silently ignored in order to not impact the processing.
-     *
-     * Note that this version of writeMsg() allows the caller to specify the
-     * time stamp of the log message.
-     *
-     * @param severity the severity of the message.
-     * @param msg the message.
-     * @param numParams the number of parameters in the message.
-     * @param params the parameters of the message, given as an array.
-     * @param timeStamp the time stamp of the log message.
-     */
-    void writeMsg(const int severity,
-                  const std::string &msg,
-                  const int numParams,
-                  const castor::log::Param params[],
-                  const struct timeval &timeStamp) throw();
+/**
+ * Writes a message into the CASTOR logging system. Note that no exception
+ * will ever be thrown in case of failure. Failures will actually be
+ * silently ignored in order to not impact the processing.
+ *
+ * Note that this version of writeMsg() allows the caller to specify the
+ * time stamp of the log message.
+ *
+ * @param severity the severity of the message.
+ * @param msg the message.
+ * @param numParams the number of parameters in the message.
+ * @param params the parameters of the message, given as an array.
+ * @param timeStamp the time stamp of the log message.
+ */
+void writeMsg(const int severity,
+              const std::string &msg,
+              const int numParams,
+              const Param params[],
+              const struct timeval &timeStamp) throw();
 
-    /**
-     * A template function that wraps writeMsg in order to get the compiler
-     * to automatically determine the size of the params parameter, therefore
-     *
-     * Note that this version of writeMsg() allows the caller to specify the
-     * time stamp of the log message.
-     *
-     * @param msg the message.
-     * @param params the parameters of the message, given as an array.
-     * @param timeStamp the time stamp of the log message.
-     */
-    template<int numParams>
-    void writeMsg(const int severity,
-                  const std::string &msg,
-                  castor::log::Param(&params)[numParams],
-                  const struct timeval &timeStamp) throw() {
-      writeMsg(severity, msg, numParams, params, timeStamp);
-    }
+/**
+ * A template function that wraps writeMsg in order to get the compiler
+ * to automatically determine the size of the params parameter, therefore
+ *
+ * Note that this version of writeMsg() allows the caller to specify the
+ * time stamp of the log message.
+ *
+ * @param msg the message.
+ * @param params the parameters of the message, given as an array.
+ * @param timeStamp the time stamp of the log message.
+ */
+template<int numParams>
+void writeMsg(const int severity,
+              const std::string &msg,
+              castor::log::Param(&params)[numParams],
+              const struct timeval &timeStamp) throw() {
+  writeMsg(severity, msg, numParams, params, timeStamp);
+}
 
-    /**
-     * Writes a message into the CASTOR logging system. Note that no exception
-     * will ever be thrown in case of failure. Failures will actually be
-     * silently ignored in order to not impact the processing.
-     *
-     * Note that this version of writeMsg() implicitly uses the current time as
-     * the time stamp of the message.
-     *
-     * @param severity the severity of the message.
-     * @param msg the message.
-     * @param numParams the number of parameters in the message.
-     * @param params the parameters of the message, given as an array.
-     */
-    void writeMsg(const int severity,
-                  const std::string &msg,
-                  const int numParams,
-                  const castor::log::Param params[]) throw();
+/**
+ * Writes a message into the CASTOR logging system. Note that no exception
+ * will ever be thrown in case of failure. Failures will actually be
+ * silently ignored in order to not impact the processing.
+ *
+ * Note that this version of writeMsg() implicitly uses the current time as
+ * the time stamp of the message.
+ *
+ * @param severity the severity of the message.
+ * @param msg the message.
+ * @param numParams the number of parameters in the message.
+ * @param params the parameters of the message, given as an array.
+ */
+void writeMsg(const int severity,
+              const std::string &msg,
+              const int numParams,
+              const castor::log::Param params[]) throw();
 
-    /**
-     * A template function that wraps writeMsg in order to get the compiler
-     * to automatically determine the size of the params parameter, therefore
-     * removing the need for the devloper to provide it explicity.
-     *
-     * Note that this version of writeMsg() implicitly uses the current time as
-     * the time stamp of the message.
-     *
-     * @param severity the severity of the message.
-     * @param msg the message.
-     * @param params the parameters of the message, given as an array.
-     */
-    template<int numParams>
-    void writeMsg(const int severity,
-                  const std::string &msg,
-                  castor::log::Param(&params)[numParams]) throw() {
-      writeMsg(severity, msg, numParams, params);
-    }
+/**
+ * A template function that wraps writeMsg in order to get the compiler
+ * to automatically determine the size of the params parameter, therefore
+ * removing the need for the devloper to provide it explicity.
+ *
+ * Note that this version of writeMsg() implicitly uses the current time as
+ * the time stamp of the message.
+ *
+ * @param severity the severity of the message.
+ * @param msg the message.
+ * @param params the parameters of the message, given as an array.
+ */
+template<int numParams>
+void writeMsg(const int severity,
+              const std::string &msg,
+              castor::log::Param(&params)[numParams]) throw() {
+  writeMsg(severity, msg, numParams, params);
+}
 
-  } // end of namespace log
-
-} // end of namespace castor
+} // namespace log
+} // namespace castor
 
 #endif // CASTOR_LOG_LOG_HPP

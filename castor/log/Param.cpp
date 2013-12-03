@@ -17,8 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)Param.cpp,v 1.2 $Release$ 2005/04/05 13:36:36 sponcec3
- *
  * A parameter for the CASTOR logging system
  *
  * @author castor dev team
@@ -40,7 +38,7 @@ castor::log::Param::Param(const char* name,
                           castor::IObject* value) :
   m_deallocate(true) {
   m_cParam.name = (char*) name;
-  m_cParam.type = DLF_MSG_PARAM_STR;
+  m_cParam.type = LOG_MSG_PARAM_STR;
   std::ostringstream s;
   castor::ObjectSet set;
   value->print(s, "", set);
@@ -54,7 +52,7 @@ castor::log::Param::Param(const char* name,
                           castor::log::IPAddress value) :
   m_deallocate(true) {
   m_cParam.name = (char*) name;
-  m_cParam.type = DLF_MSG_PARAM_STR;
+  m_cParam.type = LOG_MSG_PARAM_STR;
   std::ostringstream s;
   s << ((value.ip() & 0xFF000000) >> 24) << "."
     << ((value.ip() & 0x00FF0000) >> 16) << "."
@@ -70,7 +68,7 @@ castor::log::Param::Param(const char* name,
                           castor::log::TimeStamp value) :
   m_deallocate(true) {
   m_cParam.name = (char*) name;
-  m_cParam.type = DLF_MSG_PARAM_STR;
+  m_cParam.type = LOG_MSG_PARAM_STR;
   time_t time = value.time();
   // There is NO localtime_r() on Windows,
   // so we will use non-reentrant version localtime().
