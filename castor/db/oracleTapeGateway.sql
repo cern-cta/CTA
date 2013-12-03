@@ -111,11 +111,12 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     -- it was a recall mount
     -- find and reset the all RecallJobs of files for this VID
     UPDATE RecallJob
-       SET status = tconst.RECALLJOB_PENDING
+       SET status = tconst.RECALLJOB_PENDING,
+           fileTransactionId = NULL
      WHERE castorFile IN (SELECT castorFile
                             FROM RecallJob
                            WHERE VID = varVID
-                             AND fileTransactionId IS NOT NULL);
+                             AND (fileTransactionId IS NOT NULL OR status = tconst.RECALLJOB_RETRYMOUNT));
     DELETE FROM RecallMount WHERE vid = varVID;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Small infusion of paranoia ;-) We should never reach that point...
@@ -154,21 +155,13 @@ CREATE OR REPLACE PROCEDURE bestFileSystemForRecall(inCfId IN INTEGER, outFilePa
   nb NUMBER;
 BEGIN
   -- try and select a good FileSystem for this recall
-  FOR f IN (SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/
+  FOR f IN (SELECT /*+ INDEX_RS_ASC(RecallJob I_RecallJob_Castorfile_VID) */
                    DiskServer.name ||':'|| FileSystem.mountPoint AS remotePath, FileSystem.id,
                    FileSystem.diskserver, CastorFile.fileSize, CastorFile.fileId, CastorFile.nsHost
-              FROM DiskServer, FileSystem, DiskPool2SvcClass,
-                   (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClass FROM StageGetRequest                            UNION ALL
-                    SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClass FROM StagePrepareToGetRequest UNION ALL
-                    SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClass from StageRepackRequest                   UNION ALL
-                    SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClass from StageUpdateRequest                   UNION ALL
-                    SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClass FROM StagePrepareToUpdateRequest) Request,
-                    SubRequest, CastorFile
+              FROM DiskServer, FileSystem, DiskPool2SvcClass, CastorFile, RecallJob
              WHERE CastorFile.id = inCfId
-               AND SubRequest.castorfile = inCfId
-               AND SubRequest.status = dconst.SUBREQUEST_WAITTAPERECALL
-               AND Request.id = SubRequest.request
-               AND Request.svcclass = DiskPool2SvcClass.child
+               AND RecallJob.castorFile = inCfId
+               AND RecallJob.svcclass = DiskPool2SvcClass.child
                AND FileSystem.diskpool = DiskPool2SvcClass.parent
                -- a priori, we want to have enough free space. However, if we don't, we accept to start writing
                -- if we have a minimum of 30GB free and count on gerbage collection to liberate space while writing
@@ -378,7 +371,9 @@ BEGIN
   -- cancel ongoing migrations, if any
   deleteMigrationJobs(inCfId);
   -- invalidate existing DiskCopies, if any
-  UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+  UPDATE DiskCopy
+     SET status = dconst.DISKCOPY_INVALID,
+         gcType = dconst.GCTYPE_OVERWRITTEN
    WHERE castorFile = inCfId
      AND status = dconst.DISKCOPY_VALID;
   -- restart ongoing requests
@@ -460,7 +455,10 @@ BEGIN
   -- retrieve data from the namespace: note that if stagerTime is (still) NULL,
   -- we're still in compatibility mode and we resolve to using mtime.
   -- To be dropped in 2.1.15 where stagerTime is NOT NULL by design.
-  SELECT NVL(stagerTime, mtime), csumtype, csumvalue, filesize
+  -- Note the truncation of stagerTime to 5 digits. This is needed for consistency with
+  -- the stager code that uses the OCCI api and thus loses precision when recuperating
+  -- 64 bits integers into doubles (lack of support for 64 bits numbers in OCCI)
+  SELECT NVL(TRUNC(stagertime,5), mtime), csumtype, csumvalue, filesize
     INTO varNSOpenTime, varNSCsumtype, varNSCsumvalue, varNSSize
     FROM Cns_File_Metadata@RemoteNS
    WHERE fileid = inFileId;
@@ -694,7 +692,8 @@ BEGIN
   -- increase retry counters within mount and set recallJob status to NEW
   UPDATE RecallJob
      SET nbRetriesWithinMount = nbRetriesWithinMount + 1,
-         status = tconst.RECALLJOB_PENDING
+         status = tconst.RECALLJOB_PENDING,
+         fileTransactionId = NULL
    WHERE castorFile = inCfId
      AND VID = inVID;
   -- detect the RecallJobs with too many retries within this mount
@@ -1112,7 +1111,7 @@ BEGIN
           -- log "startRecallMounts: created new recall mount"
           logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECMOUNT_NEW_MOUNT, 0, '', 'tapegatewayd',
                    'recallGroup=' || rg.name ||
-                   ' tape=' || varVid ||
+                   ' TPVID=' || varVid ||
                    ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
                    ' nbNewMountsSoFar=' || TO_CHAR(varNbExtraMounts) ||
                    ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
