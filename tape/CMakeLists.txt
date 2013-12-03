@@ -54,7 +54,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
   set (TAPE_LIB_SRC_FILES Ctape_config.c Ctape_devinfo.c Ctape_dmpfil.c
     Ctape_errmsg.c Ctape_info.c Ctape_kill.c Ctape_label.c Ctape_mount.c
     Ctape_position.c Ctape_reserve.c Ctape_rls.c Ctape_rstatus.c Ctape_status.c
-    asc2ebc.c chkdirw.c cvtden.c ebc2asc.c findpgrp.c getcompstat.c initlabel.c
+    chkdirw.c cvtden.c findpgrp.c getcompstat.c initlabel.c
     send2tpd.c usrlbl.c tplogger.c tplogger_messages.c sendscsicmd.c)
   add_library (castortape SHARED ${TAPE_LIB_SRC_FILES} ${TAPE_LIB_USR_SRC_FILES})
   CastorSetLibraryVersions (castortape)
@@ -114,7 +114,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
   # Rules to build and install posovl
   ################################################################################
   set (POSOVL_SRC_FILES posovl.c buildhdrlbl.c builduhl.c buildvollbl.c
-    ebc2asc.c getdrvstatus.c inquiry.c locate.c posittape.c readlbl.c rwndtape.c
+    getdrvstatus.c inquiry.c locate.c posittape.c readlbl.c rwndtape.c
     send2tpd.c sendrep.c skiptape.c tperror.c tplogit.c usrmsg.c)
   add_executable(posovl ${POSOVL_SRC_FILES})
   target_link_libraries(posovl castorcommon castortape)
@@ -131,8 +131,8 @@ if (${COMPILE_SERVER} STREQUAL "1")
   ##############################################################################
   # Rules to build and install mounttape-nostk
   ##############################################################################
-  set (MOUNTTAPE_NOSTK_SRC_FILES mounttape.c asc2ebc.c buildhdrlbl.c
-    buildvollbl.c ebc2asc.c getdrvstatus.c inquiry.c rbtsubr.c readlbl.c
+  set (MOUNTTAPE_NOSTK_SRC_FILES mounttape.c buildhdrlbl.c
+    buildvollbl.c getdrvstatus.c inquiry.c rbtsubr.c readlbl.c
     rwndtape.c send2tpd.c sendrep.c setCompression.c skiptape.c tperror.c
     tplogit.c unldtape.c usrmsg.c writelbl.c wrttpmrk.c mircheck.c)
   add_executable(mounttape-nostk ${MOUNTTAPE_NOSTK_SRC_FILES})
@@ -198,8 +198,8 @@ if (${COMPILE_SERVER} STREQUAL "1")
     # Rules to build and install mounttape
     ############################################################################
     message(STATUS "Adding the mounttape target")
-    set (MOUNTTAPE_SRC_FILES mounttape-stk.c asc2ebc.c buildhdrlbl.c
-      buildvollbl.c ebc2asc.c getdrvstatus.c inquiry.c rbtsubr-stk.c readlbl.c
+    set (MOUNTTAPE_SRC_FILES mounttape-stk.c buildhdrlbl.c
+      buildvollbl.c getdrvstatus.c inquiry.c rbtsubr-stk.c readlbl.c
       rwndtape.c send2tpd.c sendrep.c setCompression.c skiptape.c tperror.c
       tplogit.c unldtape.c usrmsg.c writelbl.c wrttpmrk.c mircheck.c)
     add_executable(mounttape ${MOUNTTAPE_SRC_FILES})

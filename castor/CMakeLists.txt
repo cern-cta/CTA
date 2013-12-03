@@ -312,6 +312,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
     exception/Communication.hpp
     exception/Exception.hpp
     exception/Internal.hpp
+    exception/InvalidNbArguments.hpp
     DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/exception
     PERMISSIONS ${CASTOR_HEADER_PERMS})
   

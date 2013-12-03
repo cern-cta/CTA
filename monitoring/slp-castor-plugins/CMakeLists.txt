@@ -22,8 +22,14 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-add_subdirectory (cockpit)
-add_subdirectory (hbase-consumer)
-add_subdirectory (lemon-sensor-py)
-add_subdirectory (mae)
-add_subdirectory (slp-castor-plugins)
+function (CastorInstallSLPPlugin _name)
+  install (FILES ${_name}
+    DESTINATION /etc/simple-log-producer/plugins
+    PERMISSIONS ${CASTOR_BIN_SCRIPT_PERMS})
+endfunction ()
+
+CastorInstallSLPPlugin (castor_base_file_parser.py)
+CastorInstallSLPPlugin (castor_rsyslogfile_body_parser.py)
+CastorInstallSLPPlugin (castor_rsyslogfile_header_parser.py)
+CastorInstallSLPPlugin (castor_rsyslogfile_oldheader_parser.py)
+
