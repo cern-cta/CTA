@@ -1,3 +1,30 @@
+--------------
+- 2.1.14-5-1 -
+--------------
+
+  Summary
+  -------
+
+  This is a hot fix release that fixes the following two bugs:
+  - #103363: Creation of tape mounts for migration is not resilient to hardware unavailability
+  - #103370: The logic to resume recall jobs after an unmount is broken when dealing with double copy recalls
+
+  Upgrade Instructions from 2.1.14-5
+  ----------------------------------
+
+    Stager
+    ------
+
+    The upgrade of the stager database to 2.1.14-5-1 can be performed online while the system is running.
+    Upgrade the STAGER database using the stager_2.1.14-5_to_2.1.14-5-1.sql script available from:
+      http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-5/dbupgrades.
+
+    Other components
+    ----------------
+
+    Nothing to be done.
+
+
 ------------
 - 2.1.14-5 -
 ------------
