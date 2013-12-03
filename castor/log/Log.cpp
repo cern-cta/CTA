@@ -34,6 +34,7 @@
 #include <sys/socket.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdio.h>
 
 namespace castor {
 namespace log {
