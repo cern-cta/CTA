@@ -33,6 +33,7 @@ set (COMMON_LIB_SRC_FILES
   socket_timeout.c u64subr.c Cinitdaemon.c Cgetopt.c
   Cregexp.c Cexportconf.c Csnprintf.c util.c
   Csecloader.c castor1compat.c
+  ../castor/exception/Backtrace.cpp
   ../castor/exception/BadVersion.cpp
   ../castor/exception/Busy.cpp
   ../castor/exception/DismountFailed.cpp

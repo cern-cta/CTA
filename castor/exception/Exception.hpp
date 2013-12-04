@@ -27,8 +27,10 @@
 #define EXCEPTION_EXCEPTION_HPP 1
 
 // Include Files
+#include "castor/exception/Backtrace.hpp"
 #include <serrno.h>
 #include <sstream>
+#include <exception>
 
 namespace castor {
 
@@ -38,7 +40,7 @@ namespace castor {
      * class Exception
      * A simple exception used for error handling in castor
      */
-    class Exception {
+    class Exception: public std::exception {
 
     public:
 
@@ -59,9 +61,10 @@ namespace castor {
       Exception& operator=(Exception &dbex);
 
       /**
-       * Empty Destructor
+       * Empty Destructor, explicitely non-throwing (needed for std::exception
+       * inheritance)
        */
-      virtual ~Exception();
+      virtual ~Exception() throw ();
 
       /**
        * Get the value of m_message
@@ -71,6 +74,21 @@ namespace castor {
       std::ostringstream& getMessage() {
         return m_message;
       }
+      
+      /**
+       * Get the backtrace's contents
+       * @return backtrace in a standard string.
+       */
+      std::string const backtrace() {
+        return (std::string)m_backtrace;
+      }
+      
+      /**
+       * Updates the m_what member with a concatenation of the message and
+       * the stack trace.
+       * @return pointer to m_what's contents
+       */
+      virtual const char * what();
 
       /**
        * gets the serrno code of the corresponding C error
@@ -85,6 +103,18 @@ namespace castor {
        * The serrno code of the corresponding C error
        */
       int m_serrno;
+      
+      /**
+       * Placeholder for the what result. It has to be a member
+       * of the object, and not on the stack of the "what" function.
+       */
+      std::string m_what;
+      
+      /**
+       * Backtrace object. Its constructor does the heavy lifting of
+       * generating the backtrace.
+       */
+      Backtrace m_backtrace;
 
     };
 

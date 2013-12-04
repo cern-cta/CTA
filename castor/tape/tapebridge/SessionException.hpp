@@ -54,6 +54,12 @@ public:
   SessionException(const SessionError &sessionError) throw();
 
   /**
+   * Empty Destructor, explicitely non-throwing (needed for std::exception
+   * inheritance)
+   */
+  virtual ~SessionException() throw () {}
+      
+  /**
    * Returns a "read only" (const) reference to the wrapped SessionError
    * object.
    *
