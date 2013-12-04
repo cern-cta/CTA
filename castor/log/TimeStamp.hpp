@@ -30,35 +30,33 @@
 #include <time.h>
 
 namespace castor {
+namespace log {
 
-  namespace log {
+/**
+ * A simple object around a time stamp
+ */
+class TimeStamp {
 
-    /**
-     * A simple object around a time stamp
-     */
-    class TimeStamp {
+public:
 
-    public:
+  /**
+   * Constructor
+   */
+  TimeStamp(const time_t time) throw();
 
-      /**
-       * Constructor
-       */
-      TimeStamp(time_t time) : m_time(time) {};
+  /**
+   * Accessor
+   */
+  int time() const throw();
 
-      /**
-       * Accessor
-       */
-      int time() { return m_time; }
+private:
 
-    private:
+  /// the IP address, as an int
+  int m_time;
 
-      /// the IP address, as an int
-      int m_time;
+};
 
-    };
-
-  } // end of namespace log
-
-} // end of namespace castor
+} // namespace log
+} // namespace castor
 
 #endif // CASTOR_LOG_TIMESTAMP_HPP

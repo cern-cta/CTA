@@ -34,51 +34,48 @@
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-castor::log::Param::Param(const char* name,
-                          castor::IObject* value) :
-  m_deallocate(true) {
-  m_cParam.name = (char*) name;
-  m_cParam.type = LOG_MSG_PARAM_STR;
-  std::ostringstream s;
+castor::log::Param::Param(const std::string &name,
+  const castor::IObject *const value) :
+  m_name(name), m_type(LOG_MSG_PARAM_STR),
+  m_intValue(0), m_uint64Value(0), m_doubleValue(0.0), m_uuidValue(nullCuuid) {
+  std::ostringstream oss;
   castor::ObjectSet set;
-  value->print(s, "", set);
-  m_cParam.value.par_string = strdup(s.str().c_str());
+  value->print(oss, "", set);
+  m_strValue = oss.str();
 }
 
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-castor::log::Param::Param(const char* name,
-                          castor::log::IPAddress value) :
-  m_deallocate(true) {
-  m_cParam.name = (char*) name;
-  m_cParam.type = LOG_MSG_PARAM_STR;
-  std::ostringstream s;
-  s << ((value.ip() & 0xFF000000) >> 24) << "."
-    << ((value.ip() & 0x00FF0000) >> 16) << "."
-    << ((value.ip() & 0x0000FF00) >> 8) << "."
-    << ((value.ip() & 0x000000FF));
-  m_cParam.value.par_string = strdup(s.str().c_str());
+castor::log::Param::Param(const std::string &name,
+  const castor::log::IPAddress &value) :
+  m_name(name), m_type(LOG_MSG_PARAM_STR),
+  m_intValue(0), m_uint64Value(0), m_doubleValue(0.0), m_uuidValue(nullCuuid) {
+  std::ostringstream oss;
+  oss << ((value.ip() & 0xFF000000) >> 24) << "."
+      << ((value.ip() & 0x00FF0000) >> 16) << "."
+      << ((value.ip() & 0x0000FF00) >> 8) << "."
+      << ((value.ip() & 0x000000FF));
+  m_strValue = oss.str();
 }
 
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-castor::log::Param::Param(const char* name,
-                          castor::log::TimeStamp value) :
-  m_deallocate(true) {
-  m_cParam.name = (char*) name;
-  m_cParam.type = LOG_MSG_PARAM_STR;
+castor::log::Param::Param(const std::string &name,
+  const castor::log::TimeStamp &value) :
+  m_name(name), m_type(LOG_MSG_PARAM_STR),
+  m_intValue(0), m_uint64Value(0), m_doubleValue(0.0), m_uuidValue(nullCuuid) {
   time_t time = value.time();
   // There is NO localtime_r() on Windows,
   // so we will use non-reentrant version localtime().
   struct tm tmstruc;
   localtime_r (&time, &tmstruc);
-  std::ostringstream s;
-  s << std::setw(2) << tmstruc.tm_mon+1
-    << "/" << tmstruc.tm_mday
-    << " " << tmstruc.tm_hour
-    << ":" << tmstruc.tm_min
-    << ":" << tmstruc.tm_sec;
-  m_cParam.value.par_string = strdup(s.str().c_str());
+  std::ostringstream oss;
+  oss << std::setw(2) << tmstruc.tm_mon+1
+      << "/" << tmstruc.tm_mday
+      << " " << tmstruc.tm_hour
+      << ":" << tmstruc.tm_min
+      << ":" << tmstruc.tm_sec;
+  m_strValue = oss.str();
 }

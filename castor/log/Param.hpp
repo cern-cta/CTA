@@ -54,21 +54,6 @@ namespace castor {
 namespace log {
 
 /**
- * Provided for C++ users. Refer to: castor/log/Param.hpp
- */
-struct castor_write_param_t {
-  char *name;                /* Name of the parameter */
-  int  type;                 /* Parameter type, one of LOG_MSG_PARAM_* */
-  union {
-    char       *par_string;  /* Value for type LOG_PARAM_STRING */
-    int        par_int;      /* Value for type LOG_PARAM_INT */
-    u_signed64 par_u64;      /* Value for type LOG_PARAM_INT64 */
-    double     par_double;   /* Value for type LOG_PARAM_DOUBLE */
-    Cuuid_t    par_uuid;     /* Value for type LOG_PARAM_UUID */
-  } value;
-};
-
-/**
  * A parameter for the CASTOR logging system.
  */
 class Param {
@@ -78,193 +63,256 @@ public:
   /**
    * Constructor for strings
    */
-  Param(const char* name, std::string value) :
-    m_deallocate(true) {
-    m_cParam.name = (char*) name;
-    m_cParam.type = LOG_MSG_PARAM_STR;
-    if (!strcmp(name, "TPVID")) {
-      m_cParam.type = LOG_MSG_PARAM_TPVID;
-    }
-    m_cParam.value.par_string = strdup(value.c_str());
-  };
-
-  /**
-   * Constructor for C strings
-   */
-  Param(const char* name, const char* value) :
-    m_deallocate(true) {
-    m_cParam.name = (char*) name;
-    m_cParam.type = LOG_MSG_PARAM_STR;
-    if (!strcmp(name, "TPVID")) {
-      m_cParam.type = LOG_MSG_PARAM_TPVID;
-    }
-    if (0 != value) {
-      m_cParam.value.par_string = strdup(value);
-    } else {
-      m_cParam.value.par_string = 0;
-    }
-  };
+  Param(const std::string &name, const std::string &value) :
+    m_name(name),
+    m_type(name == "TPVID" ? LOG_MSG_PARAM_TPVID : LOG_MSG_PARAM_STR),
+    m_strValue(value), m_intValue(0), m_uint64Value(0), m_doubleValue(0.0),
+    m_uuidValue(nullCuuid) {
+  }
 
   /**
    * Constructor for uuids
    */
-  Param(const char* name, Cuuid_t value) :
-    m_deallocate(false) {
-    m_cParam.name = (char*) name;
-    m_cParam.type = LOG_MSG_PARAM_UUID;
-    m_cParam.value.par_uuid = value;
-  };
+  Param(const std::string &name, const Cuuid_t value) :
+    m_name(name), m_type(LOG_MSG_PARAM_UUID),
+    m_strValue(), m_intValue(0), m_uint64Value(0), m_doubleValue(0.0),
+    m_uuidValue(value) {
+  }
 
   /**
    * Constructor for SubRequest uuids
    */
-  Param(Cuuid_t value) :
-    m_deallocate(false) {
-    m_cParam.name = NULL;
-    m_cParam.type = LOG_MSG_PARAM_UUID;
-    m_cParam.value.par_uuid = value;
-  };
+  Param(const Cuuid_t value) :
+    m_name(""), m_type(LOG_MSG_PARAM_UUID),
+    m_strValue(), m_intValue(0), m_uint64Value(0), m_doubleValue(0.0), 
+    m_uuidValue(value) {
+  }
 
   /**
-   * Constructor for int
+   * Constructor for long int
    */
-  Param(const char* name, const long int value) :
-    m_deallocate(false) {
-    m_cParam.name = (char*) name;
-    m_cParam.type = LOG_MSG_PARAM_INT;
-    m_cParam.value.par_int = value;
-  };
-
-  /**
-   * Constructor for int
-   */
-  Param(const char* name, const long unsigned int value) :
-    m_deallocate(false) {
-    m_cParam.name = (char*) name;
 #if defined __x86_64__
-    m_cParam.type = LOG_MSG_PARAM_INT64;
-    m_cParam.value.par_u64 = value;
+  Param(const std::string &name, const long int value) :
+    m_name(name), m_type(LOG_MSG_PARAM_INT64),
+    m_strValue(), m_intValue(0), m_uint64Value(value), m_doubleValue(0.0), 
+    m_uuidValue(nullCuuid) {
+  }
 #else
-    m_cParam.type = LOG_MSG_PARAM_INT;
-    m_cParam.value.par_int = value;
+  Param(const std::string &name, const long unsigned int value) :
+    m_name(name), m_type(LOG_MSG_PARAM_INT),
+    m_strValue(), m_intValue(value), m_uint64Value(0), m_doubleValue(0.0),
+    m_uuidValue(nullCuuid) {
+  }
 #endif
-  };
+
+  /**
+   * Constructor for long unsigned int
+   */
+#if defined __x86_64__
+  Param(const std::string &name, const long unsigned int value) :
+    m_name(name), m_type(LOG_MSG_PARAM_INT64),
+    m_strValue(), m_intValue(0), m_uint64Value(value), m_doubleValue(0.0), 
+    m_uuidValue(nullCuuid) {
+  }
+#else
+  Param(const std::string &name, const long unsigned int value) :
+    m_name(name), m_type(LOG_MSG_PARAM_INT),
+    m_strValue(), m_intValue(value), m_uint64Value(0), m_doubleValue(0.0),
+    m_uuidValue(nullCuuid) {
+  }
+#endif
 
   /**
    * Constructor for int
    */
-  Param(const char* name, const int value) :
-    m_deallocate(false) {
-    m_cParam.name = (char*) name;
-    m_cParam.type = LOG_MSG_PARAM_INT;
-    m_cParam.value.par_int = value;
-  };
+  Param(const std::string &name, const int value) :
+    m_name(name), m_type(LOG_MSG_PARAM_INT),
+    m_strValue(), m_intValue(value), m_uint64Value(0), m_doubleValue(0.0),
+    m_uuidValue(nullCuuid) {
+  }
 
   /**
    * Constructor for int
    */
-  Param(const char* name, const unsigned int value) :
-    m_deallocate(false) {
-    m_cParam.name = (char*) name;
-    m_cParam.type = LOG_MSG_PARAM_INT;
-    m_cParam.value.par_int = value;
-  };
+  Param(const std::string &name, const unsigned int value) :
+    m_name(name), m_type(LOG_MSG_PARAM_INT),
+    m_strValue(), m_intValue(value), m_uint64Value(0), m_doubleValue(0.0),
+    m_uuidValue(nullCuuid) {
+  }
 
   /**
    * Constructor for u_signed64
    */
-  Param(const char* name, u_signed64 value) :
-    m_deallocate(false) {
-    m_cParam.name = (char*) name;
-    m_cParam.type = LOG_MSG_PARAM_INT64;
-    m_cParam.value.par_u64 = value;
-  };
+  Param(const std::string &name, const u_signed64 value) :
+    m_name(name), m_type(LOG_MSG_PARAM_INT64),
+    m_strValue(), m_intValue(0), m_uint64Value(value), m_doubleValue(0.0),
+    m_uuidValue(nullCuuid) {
+  }
 
   /**
    * Constructor for floats
    */
-  Param(const char* name, float value) :
-    m_deallocate(false) {
-    m_cParam.name = (char*) name;
-    m_cParam.type = LOG_MSG_PARAM_DOUBLE;
-    m_cParam.value.par_double = value;
-  };
+  Param(const std::string &name, const float value) :
+    m_name(name), m_type(LOG_MSG_PARAM_DOUBLE),
+    m_strValue(), m_intValue(0), m_uint64Value(0), m_doubleValue(value),
+    m_uuidValue(nullCuuid) {
+  }
 
   /**
    * Constructor for doubles
    */
-  Param(const char* name, double value) :
-    m_deallocate(false) {
-    m_cParam.name = (char*) name;
-    m_cParam.type = LOG_MSG_PARAM_DOUBLE;
-    m_cParam.value.par_double = value;
-  };
+  Param(const std::string &name, const double value) :
+    m_name(name), m_type(LOG_MSG_PARAM_DOUBLE),
+    m_strValue(), m_intValue(0), m_uint64Value(0), m_doubleValue(value),
+    m_uuidValue(nullCuuid) {
+  }
 
   /**
    * Constructor for Tape VIDS
    */
-  Param(const char* name, castor::stager::TapeVid value) :
-    m_deallocate(false) {
-    m_cParam.name = (char*) name;
-    m_cParam.type = LOG_MSG_PARAM_TPVID;
-    if (0 != value.vid()) {
-      m_cParam.value.par_string = strdup(value.vid());
-    } else {
-      m_cParam.value.par_string = 0;
-    }
-  };
+  Param(const std::string &name, castor::stager::TapeVid &value) :
+    m_name(name), m_type(LOG_MSG_PARAM_TPVID),
+    m_strValue(0 != value.vid() ? value.vid() : ""), m_intValue(0),
+    m_uint64Value(0), m_doubleValue(0.0), m_uuidValue(nullCuuid) {
+  }
 
   /**
    * Constructor for Raw parameters
    */
-  Param(const char* rawParams) :
-    m_deallocate(true) {
-    m_cParam.name = (char*)"";
-    m_cParam.type = LOG_MSG_PARAM_RAW;
-    m_cParam.value.par_string = strdup(rawParams);
+  Param(const std::string &rawParams) :
+    m_name(""), m_type(LOG_MSG_PARAM_RAW),
+    m_strValue(rawParams), m_intValue(0), m_uint64Value(0), m_doubleValue(0.0),
+    m_uuidValue(nullCuuid) {
   };
 
   /**
    * Constructor for IPAddress
    */
-  Param(const char* name, castor::log::IPAddress value);
+  Param(const std::string &name, const castor::log::IPAddress &value);
 
   /**
    * Constructor for TimeStamp
    */
-  Param(const char* name, castor::log::TimeStamp value);
+  Param(const std::string &name, const castor::log::TimeStamp &value);
 
   /**
    * Constructor for objects
    */
-  Param(const char* name, castor::IObject* value);
+  Param(const std::string &name, const castor::IObject *const value);
 
   /**
-   *
+   * Returns a const reference to the name of the parameter.
    */
-  ~Param() {
-    if (m_deallocate && 0 != m_cParam.value.par_string) {
-      free(m_cParam.value.par_string);
+  const std::string &getName() const {
+    return m_name;
+  }
+
+  /**
+   * Returns the type of the parameter.
+   */
+  int getType() const {
+    return m_type;
+  }
+
+  /**
+   * Returns a const refverence to the string value if there is one, else an
+   * empty string.
+   */
+  const std::string &getStrValue() const {
+    if(LOG_MSG_PARAM_STR == m_type) {
+      return m_strValue;
+    } else {
+      return m_emptyStr;
     }
-  };
-
-public:
+  }
 
   /**
-   * Gets the corresponding C parameter for the
-   * CASTOR logging C interface
+   * Returns the int value if there is one, else 0.
    */
-  castor_write_param_t cParam() {
-    return m_cParam;
+  int getIntValue() const {
+    if(LOG_MSG_PARAM_INT == m_type) {
+      return m_intValue;
+    } else {
+      return 0;
+    }
+  }
+
+  /**
+   * Returns the unsigned 64-bit int value if there is one, else 0.
+   */
+  u_signed64 getUint64Value() const {
+    if(LOG_MSG_PARAM_INT64 == m_type) {
+      return m_uint64Value;
+    } else {
+      return (u_signed64)0;
+    }
+  }
+
+  /**
+   * Returns the double value if there is one, else 0.0;
+   */
+  double getDoubleValue() const {
+    if(LOG_MSG_PARAM_DOUBLE == m_type) {
+      return m_doubleValue;
+    } else {
+      return (double)0.0;
+    }
+  }
+
+  /**
+   * Returns a const reference to the UUID value if there is one, else
+   * nullCuuid.
+   */
+  const Cuuid_t &getUuidValue() const {
+    if(LOG_MSG_PARAM_UUID == m_type) {
+      return m_uuidValue;
+    } else {
+      return nullCuuid;
+    }
   }
 
 private:
 
-  /// the parameter, in a C structure
-  castor_write_param_t m_cParam;
+  /**
+   * Name of the parameter
+   */
+  std::string m_name;
 
-  /// Whether the param value should be deallocated
-  bool m_deallocate;
+  /**
+   * Parameter type, one of LOG_MSG_PARAM_*.
+   */
+  int m_type;
+
+  /**
+   * The string value of the parameter.
+   */
+  std::string m_strValue;
+
+  /**
+   * The int value of the parameter.
+   */
+  int m_intValue;
+
+  /**
+   * The unsigned 64-bit int value of the parameter.
+   */
+  u_signed64 m_uint64Value;
+
+  /**
+   * The double value of the parameter.
+   */
+  double m_doubleValue;
+
+  /**
+   * The UUID value of the parameter.
+   */
+  Cuuid_t m_uuidValue;
+
+  /**
+   * Empty string constant used by the getStrValue() method in the case where
+   * m_type does not equal LOG_MSG_PARAM_STR.
+   */
+  const std::string m_emptyStr;
 
 }; // class Param
 

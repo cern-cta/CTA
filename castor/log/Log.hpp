@@ -73,13 +73,13 @@ int initLog (const char *ident);
  * Note that this version of writeMsg() allows the caller to specify the
  * time stamp of the log message.
  *
- * @param severity the severity of the message.
+ * @param priority the priority of the message.
  * @param msg the message.
  * @param numParams the number of parameters in the message.
  * @param params the parameters of the message, given as an array.
  * @param timeStamp the time stamp of the log message.
  */
-void writeMsg(const int severity,
+void writeMsg(const int priority,
               const std::string &msg,
               const int numParams,
               const Param params[],
@@ -97,11 +97,11 @@ void writeMsg(const int severity,
  * @param timeStamp the time stamp of the log message.
  */
 template<int numParams>
-void writeMsg(const int severity,
+void writeMsg(const int priority,
               const std::string &msg,
               castor::log::Param(&params)[numParams],
               const struct timeval &timeStamp) throw() {
-  writeMsg(severity, msg, numParams, params, timeStamp);
+  writeMsg(priority, msg, numParams, params, timeStamp);
 }
 
 /**
@@ -112,12 +112,12 @@ void writeMsg(const int severity,
  * Note that this version of writeMsg() implicitly uses the current time as
  * the time stamp of the message.
  *
- * @param severity the severity of the message.
+ * @param priority the priority of the message.
  * @param msg the message.
  * @param numParams the number of parameters in the message.
  * @param params the parameters of the message, given as an array.
  */
-void writeMsg(const int severity,
+void writeMsg(const int priority,
               const std::string &msg,
               const int numParams,
               const castor::log::Param params[]) throw();
@@ -130,15 +130,15 @@ void writeMsg(const int severity,
  * Note that this version of writeMsg() implicitly uses the current time as
  * the time stamp of the message.
  *
- * @param severity the severity of the message.
+ * @param priority the priority of the message.
  * @param msg the message.
  * @param params the parameters of the message, given as an array.
  */
 template<int numParams>
-void writeMsg(const int severity,
+void writeMsg(const int priority,
               const std::string &msg,
               castor::log::Param(&params)[numParams]) throw() {
-  writeMsg(severity, msg, numParams, params);
+  writeMsg(priority, msg, numParams, params);
 }
 
 } // namespace log

@@ -27,35 +27,33 @@
 #define CASTOR_LOG_IPADDRESS_HPP 1
 
 namespace castor {
+namespace log {
 
-  namespace log {
+/**
+ * A simple object around an IP address
+ */
+class IPAddress {
 
-    /**
-     * A simple object around an IP address
-     */
-    class IPAddress {
+public:
 
-    public:
+  /**
+   * Constructor
+   */
+  IPAddress(const int ip) throw();
 
-      /**
-       * Constructor
-       */
-      IPAddress(int ip) : m_ip(ip) {};
+  /**
+   * Accessor
+   */
+  int ip() const throw();
 
-      /**
-       * Accessor
-       */
-      int ip() { return m_ip; }
+private:
 
-    private:
+  /// the IP address, as an int
+  int m_ip;
 
-      /// the IP address, as an int
-      int m_ip;
+};
 
-    };
-
-  } // end of namespace log
-
-} // end of namespace castor
+} // namespace log
+} // namespace castor
 
 #endif // CASTOR_LOG_IPADDRESS_HPP
