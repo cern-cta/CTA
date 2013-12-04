@@ -61,215 +61,124 @@ class Param {
 public:
 
   /**
-   * Constructor for strings
+   * Constructor for strings.
    */
-  Param(const std::string &name, const std::string &value) :
-    m_name(name),
-    m_type(name == "TPVID" ? LOG_MSG_PARAM_TPVID : LOG_MSG_PARAM_STR),
-    m_strValue(value), m_intValue(0), m_uint64Value(0), m_doubleValue(0.0),
-    m_uuidValue(nullCuuid) {
-  }
+  Param(const std::string &name, const std::string &value) throw();
 
   /**
-   * Constructor for uuids
+   * Constructor for uuids.
    */
-  Param(const std::string &name, const Cuuid_t value) :
-    m_name(name), m_type(LOG_MSG_PARAM_UUID),
-    m_strValue(), m_intValue(0), m_uint64Value(0), m_doubleValue(0.0),
-    m_uuidValue(value) {
-  }
+  Param(const std::string &name, const Cuuid_t value) throw();
 
   /**
-   * Constructor for SubRequest uuids
+   * Constructor for SubRequest uuids.
    */
-  Param(const Cuuid_t value) :
-    m_name(""), m_type(LOG_MSG_PARAM_UUID),
-    m_strValue(), m_intValue(0), m_uint64Value(0), m_doubleValue(0.0), 
-    m_uuidValue(value) {
-  }
+  Param(const Cuuid_t &value) throw();
 
   /**
-   * Constructor for long int
+   * Constructor for long int.
    */
 #if defined __x86_64__
-  Param(const std::string &name, const long int value) :
-    m_name(name), m_type(LOG_MSG_PARAM_INT64),
-    m_strValue(), m_intValue(0), m_uint64Value(value), m_doubleValue(0.0), 
-    m_uuidValue(nullCuuid) {
-  }
+  Param(const std::string &name, const long int value) throw();
 #else
-  Param(const std::string &name, const long int value) :
-    m_name(name), m_type(LOG_MSG_PARAM_INT),
-    m_strValue(), m_intValue(value), m_uint64Value(0), m_doubleValue(0.0),
-    m_uuidValue(nullCuuid) {
-  }
+  Param(const std::string &name, const long int value) throw();
 #endif
 
   /**
-   * Constructor for long unsigned int
+   * Constructor for long unsigned int.
    */
 #if defined __x86_64__
-  Param(const std::string &name, const long unsigned int value) :
-    m_name(name), m_type(LOG_MSG_PARAM_INT64),
-    m_strValue(), m_intValue(0), m_uint64Value(value), m_doubleValue(0.0), 
-    m_uuidValue(nullCuuid) {
-  }
+  Param(const std::string &name, const long unsigned int value) throw();
 #else
-  Param(const std::string &name, const long unsigned int value) :
-    m_name(name), m_type(LOG_MSG_PARAM_INT),
-    m_strValue(), m_intValue(value), m_uint64Value(0), m_doubleValue(0.0),
-    m_uuidValue(nullCuuid) {
-  }
+  Param(const std::string &name, const long unsigned int value) throw();
 #endif
 
   /**
-   * Constructor for int
+   * Constructor for int.
    */
-  Param(const std::string &name, const int value) :
-    m_name(name), m_type(LOG_MSG_PARAM_INT),
-    m_strValue(), m_intValue(value), m_uint64Value(0), m_doubleValue(0.0),
-    m_uuidValue(nullCuuid) {
-  }
+  Param(const std::string &name, const int value) throw();
 
   /**
-   * Constructor for int
+   * Constructor for unsigned int.
    */
-  Param(const std::string &name, const unsigned int value) :
-    m_name(name), m_type(LOG_MSG_PARAM_INT),
-    m_strValue(), m_intValue(value), m_uint64Value(0), m_doubleValue(0.0),
-    m_uuidValue(nullCuuid) {
-  }
+  Param(const std::string &name, const unsigned int value) throw();
 
   /**
-   * Constructor for u_signed64
+   * Constructor for u_signed64.
    */
-  Param(const std::string &name, const u_signed64 value) :
-    m_name(name), m_type(LOG_MSG_PARAM_INT64),
-    m_strValue(), m_intValue(0), m_uint64Value(value), m_doubleValue(0.0),
-    m_uuidValue(nullCuuid) {
-  }
+  Param(const std::string &name, const u_signed64 value) throw();
 
   /**
-   * Constructor for floats
+   * Constructor for floats.
    */
-  Param(const std::string &name, const float value) :
-    m_name(name), m_type(LOG_MSG_PARAM_DOUBLE),
-    m_strValue(), m_intValue(0), m_uint64Value(0), m_doubleValue(value),
-    m_uuidValue(nullCuuid) {
-  }
+  Param(const std::string &name, const float value) throw();
 
   /**
-   * Constructor for doubles
+   * Constructor for doubles.
    */
-  Param(const std::string &name, const double value) :
-    m_name(name), m_type(LOG_MSG_PARAM_DOUBLE),
-    m_strValue(), m_intValue(0), m_uint64Value(0), m_doubleValue(value),
-    m_uuidValue(nullCuuid) {
-  }
+  Param(const std::string &name, const double value) throw();
 
   /**
-   * Constructor for Tape VIDS
+   * Constructor for Tape VIDS.
    */
-  Param(const std::string &name, castor::stager::TapeVid &value) :
-    m_name(name), m_type(LOG_MSG_PARAM_TPVID),
-    m_strValue(0 != value.vid() ? value.vid() : ""), m_intValue(0),
-    m_uint64Value(0), m_doubleValue(0.0), m_uuidValue(nullCuuid) {
-  }
+  Param(const std::string &name, const castor::stager::TapeVid &value) throw();
 
   /**
-   * Constructor for Raw parameters
+   * Constructor for Raw parameters.
    */
-  Param(const std::string &rawParams) :
-    m_name(""), m_type(LOG_MSG_PARAM_RAW),
-    m_strValue(rawParams), m_intValue(0), m_uint64Value(0), m_doubleValue(0.0),
-    m_uuidValue(nullCuuid) {
-  };
+  Param(const std::string &rawParams) throw();
 
   /**
-   * Constructor for IPAddress
+   * Constructor for IPAddress.
    */
-  Param(const std::string &name, const castor::log::IPAddress &value);
+  Param(const std::string &name, const castor::log::IPAddress &value) throw();
 
   /**
-   * Constructor for TimeStamp
+   * Constructor for TimeStamp.
    */
-  Param(const std::string &name, const castor::log::TimeStamp &value);
+  Param(const std::string &name, const castor::log::TimeStamp &value) throw();
 
   /**
-   * Constructor for objects
+   * Constructor for objects.
    */
-  Param(const std::string &name, const castor::IObject *const value);
+  Param(const std::string &name, const castor::IObject *const value) throw();
 
   /**
    * Returns a const reference to the name of the parameter.
    */
-  const std::string &getName() const {
-    return m_name;
-  }
+  const std::string &getName() const throw();
 
   /**
    * Returns the type of the parameter.
    */
-  int getType() const {
-    return m_type;
-  }
+  int getType() const throw();
 
   /**
    * Returns a const refverence to the string value if there is one, else an
    * empty string.
    */
-  const std::string &getStrValue() const {
-    if(LOG_MSG_PARAM_STR == m_type) {
-      return m_strValue;
-    } else {
-      return m_emptyStr;
-    }
-  }
+  const std::string &getStrValue() const throw();
 
   /**
    * Returns the int value if there is one, else 0.
    */
-  int getIntValue() const {
-    if(LOG_MSG_PARAM_INT == m_type) {
-      return m_intValue;
-    } else {
-      return 0;
-    }
-  }
+  int getIntValue() const throw();
 
   /**
    * Returns the unsigned 64-bit int value if there is one, else 0.
    */
-  u_signed64 getUint64Value() const {
-    if(LOG_MSG_PARAM_INT64 == m_type) {
-      return m_uint64Value;
-    } else {
-      return (u_signed64)0;
-    }
-  }
+  u_signed64 getUint64Value() const throw();
 
   /**
    * Returns the double value if there is one, else 0.0;
    */
-  double getDoubleValue() const {
-    if(LOG_MSG_PARAM_DOUBLE == m_type) {
-      return m_doubleValue;
-    } else {
-      return (double)0.0;
-    }
-  }
+  double getDoubleValue() const throw();
 
   /**
    * Returns a const reference to the UUID value if there is one, else
    * nullCuuid.
    */
-  const Cuuid_t &getUuidValue() const {
-    if(LOG_MSG_PARAM_UUID == m_type) {
-      return m_uuidValue;
-    } else {
-      return nullCuuid;
-    }
-  }
+  const Cuuid_t &getUuidValue() const throw();
 
 private:
 
