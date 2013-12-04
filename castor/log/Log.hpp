@@ -50,8 +50,8 @@ namespace log {
 /**
  * Initialize the CASTOR logging interface.
  *
- * @param ident   The ident argument is a string that is prepended to every
- *                log message and identifiers the source application.
+ * @param progname The name of the program to be prepended to every log
+ *                 message.
  *
  * @return On success zero is returned, On error, -1 is returned, and errno is
  *         set appropriately.
@@ -63,7 +63,7 @@ namespace log {
  *
  * @see openlog(), setlogmask()
  */
-int initLog (const char *ident);
+int initLog (const char *progname);
 
 /**
  * Writes a message into the CASTOR logging system. Note that no exception

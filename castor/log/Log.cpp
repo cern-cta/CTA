@@ -38,79 +38,80 @@
 #include <fcntl.h>
 #include <stdio.h>
 
-namespace castor {
-namespace log {
+namespace {
 
 /**
  * Default size of a syslog message.
  */
-static const size_t DEFAULT_SYSLOG_MSGLEN = 1024;
+const size_t DEFAULT_SYSLOG_MSGLEN = 1024;
 
 /**
  * Default size of a rsyslog message.
  */
-static const size_t DEFAULT_RSYSLOG_MSGLEN = 2000;
+const size_t DEFAULT_RSYSLOG_MSGLEN = 2000;
 
 /**
  * Maximum length of a parameter name.
  */
-static const size_t LOG_MAX_PARAMNAMELEN = 20;
+const size_t LOG_MAX_PARAMNAMELEN = 20;
 
 /**
  * Maximum length of a string value.
  */
-static size_t LOG_MAX_PARAMSTRLEN = 1024;
+const size_t LOG_MAX_PARAMSTRLEN = 1024;
 
 /**
- * Maximum length of an ident/facility.
+ * Maximum length of the program name to be prepended to every log message.
  */
-static const size_t LOG_MAX_IDENTLEN = 20;
+const size_t LOG_MAX_PROGNAMELEN = 20;
 
 /**
  * Maximum length of a log message.
  */
-static size_t LOG_MAX_LINELEN = 8192;
+const size_t LOG_MAX_LINELEN = 8192;
 
 /**
  * True if the interface of the CASTOR logging system has been initialized.
  */
-static bool s_initialized = false;
+bool s_initialized = false;
 
 /**
  * The file descriptor of the log.
  */
-static int s_logFile = -1;
+int s_logFile = -1;
 
 /**
  * AF_UNIX address of local logger.
  */
-static struct sockaddr_un s_syslogAddr;
+struct sockaddr_un s_syslogAddr;
 
 /**
  * True if the the syslog connect has bveen done.
  */
-static bool s_connected = false;
+bool s_connected = false;
 
 /**
  * Mutex used to synchronize syslog client.
  */
-static pthread_mutex_t s_syslogMutex;
+pthread_mutex_t s_syslogMutex;
 
 /**
- * ident/facility.
+ * The name of the program to be prepended to every log message.
  */
-static const char* s_progname = 0;
+const char* s_progname = 0;
 
 /**
  * The maximum message size that the client syslog server can handle.
  */
-static int s_maxmsglen = DEFAULT_SYSLOG_MSGLEN;
+int s_maxmsglen = DEFAULT_SYSLOG_MSGLEN;
 
-static struct {
+struct PrioritySyslogMapping {
   const char *name; // Name of the priority
   int  value;       // The priority's numeric representation in syslog
   const char *text; // Textual representation of the priority
-} s_prioritylist[] = {
+};
+
+PrioritySyslogMapping s_prioritylist[] = {
   { "LOG_EMERG",   LOG_EMERG,   "Emerg"  },
   { "LOG_ALERT",   LOG_ALERT,   "Alert"  },
   { "LOG_CRIT",    LOG_CRIT,    "Crit"   },
@@ -125,7 +126,7 @@ static struct {
 //-----------------------------------------------------------------------------
 // castor_openlog
 //-----------------------------------------------------------------------------
-static void castor_openlog() {
+void castor_openlog() {
   if(-1 == s_logFile) {
     s_syslogAddr.sun_family = AF_UNIX;
     strncpy(s_syslogAddr.sun_path, _PATH_LOG, sizeof(s_syslogAddr.sun_path));
@@ -158,9 +159,129 @@ static void castor_openlog() {
 }
 
 //-----------------------------------------------------------------------------
+// castor_closelog
+//-----------------------------------------------------------------------------
+void castor_closelog() {
+  if (!s_connected) return;
+  close (s_logFile);
+  s_logFile = -1;
+  s_connected = false;
+}
+
+//-----------------------------------------------------------------------------
+// castor_syslog
+//-----------------------------------------------------------------------------
+void castor_syslog(const char *const msg, const int msgLen) throw() {
+  int send_flags = 0;
+#ifndef __APPLE__
+  // MAC has has no MSG_NOSIGNAL
+  // but >= 10.2 comes with SO_NOSIGPIPE
+  send_flags = MSG_NOSIGNAL;
+#endif
+  // enter critical section
+  pthread_mutex_lock(&s_syslogMutex);
+
+  // Get connected, output the message to the local logger.
+  if (!s_connected) {
+    castor_openlog();
+  }
+
+  if (!s_connected ||
+    send(s_logFile, msg, msgLen, send_flags) < 0) {
+    if (s_connected) {
+      // Try to reopen the syslog connection.  Maybe it went down.
+      castor_closelog();
+      castor_openlog();
+    }
+    if (!s_connected ||
+      send(s_logFile, msg, msgLen, send_flags) < 0) {
+      castor_closelog();  // attempt re-open next time
+    }
+  }
+
+  // End of critical section.
+  pthread_mutex_unlock(&s_syslogMutex);
+}
+
+//-----------------------------------------------------------------------------
+// build_syslog_header
+//-----------------------------------------------------------------------------
+int build_syslog_header(char *const buffer,
+                               const int buflen,
+                               const int priority,
+                               const struct timeval &timeStamp,
+                               const int pid) {
+  struct tm tmp;
+  int len = snprintf(buffer, buflen, "<%d>", priority);
+  localtime_r(&(timeStamp.tv_sec), &tmp);
+  len += strftime(buffer + len, buflen - len, "%Y-%m-%dT%T", &tmp);
+  len += snprintf(buffer + len, buflen - len, ".%06ld",
+    (unsigned long)timeStamp.tv_usec);
+  len += strftime(buffer + len, buflen - len, "%z: ", &tmp);
+  // dirty trick to have the proper timezone format (':' between hh and mm)
+  buffer[len-2] = buffer[len-3];
+  buffer[len-3] = buffer[len-4];
+  buffer[len-4] = ':';
+  // if no source given, you by default the name of the process in which we run
+  // print source and pid
+  len += snprintf(buffer + len, buflen - len, "%s[%d]: ", s_progname, pid);
+  return len;
+}
+
+//-----------------------------------------------------------------------------
+// _clean_string
+//-----------------------------------------------------------------------------
+std::string _clean_string(const std::string &s, const bool underscore) {
+  char *str = strdup(s.c_str());
+
+  // Return an empty string if the strdup() failed
+  if(NULL == str) {
+    return "";
+  }
+
+  // Variables
+  char *end = NULL;
+  char *ptr = NULL;
+
+  // Replace newline and tab with a space
+  while (((ptr = strchr(str, '\n')) != NULL) ||
+         ((ptr = strchr(str, '\t')) != NULL)) {
+    *ptr = ' ';
+  }
+
+  // Remove leading whitespace
+  while (isspace(*str)) str++;
+
+  // Remove trailing whitespace
+  end = str + strlen(str) - 1;
+  while (end > str && isspace(*end)) end--;
+
+  // Write new null terminator
+  *(end + 1) = '\0';
+
+  // Replace double quotes with single quotes
+  while ((ptr = strchr(str, '"')) != NULL) {
+    *ptr = '\'';
+  }
+
+  // Check for replacement of spaces with underscores
+  if (underscore) {
+    while ((ptr = strchr(str, ' ')) != NULL) {
+      *ptr = '_';
+    }
+  }
+
+  std::string result(str);
+  free(str);
+  return result;
+}
+
+} // unnamed namespace
+
+//-----------------------------------------------------------------------------
 // initLog
 //-----------------------------------------------------------------------------
-int initLog(const char *ident) {
+int castor::log::initLog(const char *const progname) {
 
   /* Variables */
   FILE *fp = NULL;
@@ -174,13 +295,13 @@ int initLog(const char *ident) {
     return (-1);
   }
 
-  /* Check if the ident is too big */
-  if (strlen(ident) > LOG_MAX_IDENTLEN) {
+  /* Check if the progname is too big */
+  if (strlen(progname) > LOG_MAX_PROGNAMELEN) {
     errno = EINVAL;
     return (-1);
   }
 
-  s_progname = ident;
+  s_progname = progname;
 
   /* Determine the maximum message size that the client syslog server can
    * handle.
@@ -232,127 +353,6 @@ int initLog(const char *ident) {
 
   return (0);
 }
-
-//-----------------------------------------------------------------------------
-// castor_closelog
-//-----------------------------------------------------------------------------
-static void castor_closelog() {
-  if (!s_connected) return;
-  close (s_logFile);
-  s_logFile = -1;
-  s_connected = false;
-}
-
-//-----------------------------------------------------------------------------
-// castor_syslog
-//-----------------------------------------------------------------------------
-static void castor_syslog(const char *const msg, const int msgLen) throw() {
-  int send_flags = 0;
-#ifndef __APPLE__
-  // MAC has has no MSG_NOSIGNAL
-  // but >= 10.2 comes with SO_NOSIGPIPE
-  send_flags = MSG_NOSIGNAL;
-#endif
-  // enter critical section
-  pthread_mutex_lock(&s_syslogMutex);
-
-  // Get connected, output the message to the local logger.
-  if (!s_connected) {
-    castor_openlog();
-  }
-
-  if (!s_connected ||
-    send(s_logFile, msg, msgLen, send_flags) < 0) {
-    if (s_connected) {
-      // Try to reopen the syslog connection.  Maybe it went down.
-      castor_closelog();
-      castor_openlog();
-    }
-    if (!s_connected ||
-      send(s_logFile, msg, msgLen, send_flags) < 0) {
-      castor_closelog();  // attempt re-open next time
-    }
-  }
-
-  // End of critical section.
-  pthread_mutex_unlock(&s_syslogMutex);
-}
-
-//-----------------------------------------------------------------------------
-// build_syslog_header
-//-----------------------------------------------------------------------------
-static int build_syslog_header(char *const buffer,
-                               const int buflen,
-                               const int priority,
-                               const struct timeval &timeStamp,
-                               const int pid) {
-  struct tm tmp;
-  int len = snprintf(buffer, buflen, "<%d>", priority);
-  localtime_r(&(timeStamp.tv_sec), &tmp);
-  len += strftime(buffer + len, buflen - len, "%Y-%m-%dT%T", &tmp);
-  len += snprintf(buffer + len, buflen - len, ".%06ld",
-    (unsigned long)timeStamp.tv_usec);
-  len += strftime(buffer + len, buflen - len, "%z: ", &tmp);
-  // dirty trick to have the proper timezone format (':' between hh and mm)
-  buffer[len-2] = buffer[len-3];
-  buffer[len-3] = buffer[len-4];
-  buffer[len-4] = ':';
-  // if no source given, you by default the name of the process in which we run
-  // print source and pid
-  len += snprintf(buffer + len, buflen - len, "%s[%d]: ", s_progname, pid);
-  return len;
-}
-
-//-----------------------------------------------------------------------------
-// _clean_string
-//-----------------------------------------------------------------------------
-static std::string _clean_string(const std::string &s, const bool underscore) {
-  char *str = strdup(s.c_str());
-
-  // Return an empty string if the strdup() failed
-  if(NULL == str) {
-    return "";
-  }
-
-  // Variables
-  char *end = NULL;
-  char *ptr = NULL;
-
-  // Replace newline and tab with a space
-  while (((ptr = strchr(str, '\n')) != NULL) ||
-         ((ptr = strchr(str, '\t')) != NULL)) {
-    *ptr = ' ';
-  }
-
-  // Remove leading whitespace
-  while (isspace(*str)) str++;
-
-  // Remove trailing whitespace
-  end = str + strlen(str) - 1;
-  while (end > str && isspace(*end)) end--;
-
-  // Write new null terminator
-  *(end + 1) = '\0';
-
-  // Replace double quotes with single quotes
-  while ((ptr = strchr(str, '"')) != NULL) {
-    *ptr = '\'';
-  }
-
-  // Check for replacement of spaces with underscores
-  if (underscore) {
-    while ((ptr = strchr(str, ' ')) != NULL) {
-      *ptr = '_';
-    }
-  }
-
-  std::string result(str);
-  free(str);
-  return result;
-}
-
-} // namespace log
-} // namespace castor
 
 //-----------------------------------------------------------------------------
 // writeMsg
