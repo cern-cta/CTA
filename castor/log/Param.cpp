@@ -71,8 +71,8 @@ castor::log::Param::Param(const std::string &name, const long int value)
   m_uuidValue(nullCuuid) {
 }
 #else
-castor::log::Param::Param(const std::string &name,
-  const long unsigned int value) throw():
+castor::log::Param::Param(const std::string &name, const long int value)
+  throw():
   m_name(name), m_type(LOG_MSG_PARAM_INT),
   m_strValue(), m_intValue(value), m_uint64Value(0), m_doubleValue(0.0),
   m_uuidValue(nullCuuid) {
