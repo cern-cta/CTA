@@ -30,7 +30,7 @@ extern Cuuid_t nullCuuid;
 EXTERN_C void Cuuid_create (Cuuid_t *);
 EXTERN_C int Cuuid_compare (Cuuid_t *, Cuuid_t *);
 
-EXTERN_C int Cuuid2string (char *, size_t, Cuuid_t *);
+EXTERN_C int Cuuid2string (char *, const size_t, const Cuuid_t *const);
 EXTERN_C int string2Cuuid (Cuuid_t *, const char *);
 
 EXTERN_C void _marshall_UUID (char**, Cuuid_t *);
