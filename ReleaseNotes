@@ -5,9 +5,10 @@
   Summary
   -------
 
-  This is a hot fix release that fixes the following two bugs:
+  This is a hot fix release that fixes the following bugs:
   - #103363: Creation of tape mounts for migration is not resilient to hardware unavailability
   - #103370: The logic to resume recall jobs after an unmount is broken when dealing with double copy recalls
+  - #103387: Incorrect clean up of Disk2diskCopyJobs when they are cancelled
 
   Upgrade Instructions from 2.1.14-5
   ----------------------------------
