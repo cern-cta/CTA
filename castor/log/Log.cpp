@@ -107,9 +107,9 @@ static const char* s_progname = 0;
 static int s_maxmsglen = DEFAULT_SYSLOG_MSGLEN;
 
 static struct {
-  char *name;       // Name of the priority
+  const char *name; // Name of the priority
   int  value;       // The priority's numeric representation in syslog
-  char *text;       // Textual representation of the priority
+  const char *text; // Textual representation of the priority
 } s_prioritylist[] = {
   { "LOG_EMERG",   LOG_EMERG,   "Emerg"  },
   { "LOG_ALERT",   LOG_ALERT,   "Alert"  },
