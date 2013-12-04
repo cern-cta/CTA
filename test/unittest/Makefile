@@ -20,13 +20,7 @@ CDK_LIB_OPS=-L/usr/lib64/CDK -lapi -lcl -lipc -lutl
 RMC_OBJECTS= \
   rmc_Acs.o \
   rmc_AcsCmd.o \
-  rmc_DebugBuf.o \
-  rmc_AcsDismountCmdLine.o \
-  rmc_AcsDismountCmd.o \
-  rmc_AcsMountCmdLine.o \
-  rmc_AcsMountCmd.o \
-  rmc_AcsQueryVolumeCmdLine.o \
-  rmc_AcsQueryVolumeCmd.o
+  rmc_Cmd.o
 endif
 ROOT_DIR=../..
 INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h $(MACPORTS_CPPUNIT_INCLUDE_OP) $(CDK_OPS)
@@ -95,6 +89,7 @@ rununittests: $(RMC_OBJECTS) \
   exception_InvalidArgument.o \
   exception_InvalidConfigEntry.o \
   exception_InvalidConfiguration.o \
+  exception_InvalidNbArguments.o \
   exception_Mismatch.o \
   exception_MissingOperand.o \
   exception_MountFailed.o \
@@ -565,6 +560,10 @@ exception_InvalidConfigEntry.o: \
 
 exception_InvalidConfiguration.o: \
   $(ROOT_DIR)/castor/exception/InvalidConfiguration.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_InvalidNbArguments.o: \
+  $(ROOT_DIR)/castor/exception/InvalidNbArguments.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_QueryVolumeFailed.o: $(ROOT_DIR)/castor/exception/QueryVolumeFailed.cpp

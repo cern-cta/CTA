@@ -19,13 +19,14 @@
  *
  *
  *
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
  
  
 #include "castor/PortNumbers.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/log/Log.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/tape/rmc/DlfMessageConstants.hpp"
 #include "castor/tape/rmc/RmcDaemon.hpp"
