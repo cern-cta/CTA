@@ -37,7 +37,7 @@ namespace UnitTests {
 
 TEST(TapeDrive, OpensCorrectly) {
   /* Prepare the test harness */
-  Tape::System::mockWrapper sysWrapper;
+  castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
   
@@ -55,18 +55,18 @@ TEST(TapeDrive, OpensCorrectly) {
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
   /* Test: detect devices, then open the device files */
-  SCSI::DeviceVector dl(sysWrapper);
-  for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
+  castor::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
-    if (SCSI::Types::tape == i->type) {
-      Tape::Drive drive(*i, sysWrapper);
+    if (castor::tape::SCSI::Types::tape == i->type) {
+      castor::tape::drives::Drive drive(*i, sysWrapper);
     }
   }
 }
 
 TEST(TapeDrive, getPositionInfoAndPositionToLogicalObject) {
   /* Prepare the test harness */
-  Tape::System::mockWrapper sysWrapper;
+  castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
   
@@ -84,15 +84,15 @@ TEST(TapeDrive, getPositionInfoAndPositionToLogicalObject) {
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
   /* Test: detect devices, then open the device files */
-  SCSI::DeviceVector dl(sysWrapper);
-  for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
+  castor::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
-    if (SCSI::Types::tape == i->type) {
-      Tape::Drive dContainer(*i, sysWrapper);
+    if (castor::tape::SCSI::Types::tape == i->type) {
+      castor::tape::drives::Drive dContainer(*i, sysWrapper);
       /* Compiler cannot implicitly use the conversion operator. Create an 
        * intermediate reference*/
-      Tape::DriveGeneric & drive = dContainer;
-      Tape::positionInfo posInfo;
+      castor::tape::drives::DriveGeneric & drive = dContainer;
+      castor::tape::drives::positionInfo posInfo;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(1);      
       posInfo = drive.getPositionInfo();
@@ -117,7 +117,7 @@ TEST(TapeDrive, getPositionInfoAndPositionToLogicalObject) {
 } 
 TEST(TapeDrive, setDensityAndCompression) {
   /* Prepare the test harness */
-  Tape::System::mockWrapper sysWrapper;
+  castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
   
@@ -135,14 +135,14 @@ TEST(TapeDrive, setDensityAndCompression) {
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
   /* Test: detect devices, then open the device files */
-  SCSI::DeviceVector dl(sysWrapper);
-  for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
+  castor::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
-    if (SCSI::Types::tape == i->type) {
-      Tape::Drive dContainer(*i, sysWrapper);
+    if (castor::tape::SCSI::Types::tape == i->type) {
+      castor::tape::drives::Drive dContainer(*i, sysWrapper);
       /* Compiler cannot implicitly use the conversion operator. Create an 
        * intermediate reference*/
-      Tape::DriveGeneric & drive = dContainer;
+      castor::tape::drives::DriveGeneric & drive = dContainer;
 
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
       drive.setDensityAndCompression();
@@ -164,7 +164,7 @@ TEST(TapeDrive, setDensityAndCompression) {
 
 TEST(TapeDrive, setStDriverOptions) {
   /* Prepare the test harness */
-  Tape::System::mockWrapper sysWrapper;
+  castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
   
@@ -182,13 +182,13 @@ TEST(TapeDrive, setStDriverOptions) {
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
   /* Test: detect devices, then open the device files */
-  SCSI::DeviceVector dl(sysWrapper);
-  for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
-    if (SCSI::Types::tape == i->type) {
-      Tape::Drive dContainer(*i, sysWrapper);
+  castor::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
+    if (castor::tape::SCSI::Types::tape == i->type) {
+      castor::tape::drives::Drive dContainer(*i, sysWrapper);
       /* Compiler cannot implicitly use the conversion operator. Create an 
        * intermediate reference*/
-      Tape::DriveGeneric & drive = dContainer;
+      castor::tape::drives::DriveGeneric & drive = dContainer;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<struct mtop *>())).Times(1);
       drive.setSTBufferWrite(true);
@@ -201,7 +201,7 @@ TEST(TapeDrive, setStDriverOptions) {
 
 TEST(TapeDrive, getDeviceInfo) {
   /* Prepare the test harness */
-  Tape::System::mockWrapper sysWrapper;
+  castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
   
@@ -219,15 +219,15 @@ TEST(TapeDrive, getDeviceInfo) {
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
   /* Test: detect devices, then open the device files */
-  SCSI::DeviceVector dl(sysWrapper);
-  for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
+  castor::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
-    if (SCSI::Types::tape == i->type) {
-      Tape::Drive dContainer(*i, sysWrapper);
+    if (castor::tape::SCSI::Types::tape == i->type) {
+      castor::tape::drives::Drive dContainer(*i, sysWrapper);
       /* Compiler cannot implicitly use the conversion operator. Create an 
        * intermediate reference*/
-      Tape::DriveGeneric & drive = dContainer;
-      Tape::deviceInfo devInfo;
+      castor::tape::drives::DriveGeneric & drive = dContainer;
+      castor::tape::drives::deviceInfo devInfo;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
       devInfo = drive.getDeviceInfo();
@@ -242,7 +242,7 @@ TEST(TapeDrive, getDeviceInfo) {
 
 TEST(TapeDrive, getCompressionAndClearCompressionStats) {
   /* Prepare the test harness */
-  Tape::System::mockWrapper sysWrapper;
+  castor::tape::System::mockWrapper sysWrapper;
   sysWrapper.fake.setupSLC5();
   sysWrapper.delegateToFake();
   
@@ -260,15 +260,15 @@ TEST(TapeDrive, getCompressionAndClearCompressionStats) {
   EXPECT_CALL(sysWrapper, stat(_,_)).Times(7);
   
   /* Test: detect devices, then open the device files */
-  SCSI::DeviceVector dl(sysWrapper);
-  for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
+  castor::tape::SCSI::DeviceVector dl(sysWrapper);
+  for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
-    if (SCSI::Types::tape == i->type) {
-      Tape::DriveGeneric *drive;
-      Tape::compressionStats comp;
+    if (castor::tape::SCSI::Types::tape == i->type) {
+      castor::tape::drives::DriveGeneric *drive;
+      castor::tape::drives::compressionStats comp;
       
         {
-          drive = new Tape::DriveT10000(*i, sysWrapper);
+          drive = new castor::tape::drives::DriveT10000(*i, sysWrapper);
 
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           comp = drive->getCompression();
@@ -290,7 +290,7 @@ TEST(TapeDrive, getCompressionAndClearCompressionStats) {
           delete drive;
         }
         {
-          drive = new Tape::DriveIBM3592(*i, sysWrapper);
+          drive = new castor::tape::drives::DriveIBM3592(*i, sysWrapper);
 
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           comp = drive->getCompression();
@@ -312,7 +312,7 @@ TEST(TapeDrive, getCompressionAndClearCompressionStats) {
           delete drive;
         }
         {
-          drive = new Tape::DriveLTO(*i, sysWrapper);
+          drive = new castor::tape::drives::DriveLTO(*i, sysWrapper);
 
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           comp = drive->getCompression();
@@ -344,7 +344,7 @@ TEST(TapeDrive, getTapeAlerts) {
    * SLC6).
    */
   struct {
-    void operator() (Tape::System::mockWrapper & sysWrapper) {
+    void operator() (castor::tape::System::mockWrapper & sysWrapper) {
       /* We expect the following calls: */
       EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(3));
       EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
@@ -359,14 +359,14 @@ TEST(TapeDrive, getTapeAlerts) {
       EXPECT_CALL(sysWrapper, stat(_, _)).Times(AtLeast(7));
 
       /* Test: detect devices, then open the device files */
-      SCSI::DeviceVector dl(sysWrapper);
-      for (std::vector<SCSI::DeviceInfo>::iterator i = dl.begin();
+      castor::tape::SCSI::DeviceVector dl(sysWrapper);
+      for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
           i != dl.end(); i++) {
-        if (SCSI::Types::tape == i->type) {
-          Tape::Drive dContainer(*i, sysWrapper);
+        if (castor::tape::SCSI::Types::tape == i->type) {
+          castor::tape::drives::Drive dContainer(*i, sysWrapper);
           /* Compiler cannot implicitly use the conversion operator. Create an 
            * intermediate reference*/
-          Tape::DriveGeneric & drive = dContainer;
+          castor::tape::drives::DriveGeneric & drive = dContainer;
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           std::vector<std::string> alerts = drive.getTapeAlerts();
           ASSERT_EQ(3U, alerts.size());
@@ -384,8 +384,8 @@ TEST(TapeDrive, getTapeAlerts) {
 
 
   /* Prepare the test harness */
-  Tape::System::mockWrapper sysWrapperSLC5;
-  Tape::System::mockWrapper sysWrapperSLC6;
+  castor::tape::System::mockWrapper sysWrapperSLC5;
+  castor::tape::System::mockWrapper sysWrapperSLC6;
   sysWrapperSLC5.fake.setupSLC5();
   sysWrapperSLC6.fake.setupSLC6();
   sysWrapperSLC5.delegateToFake();

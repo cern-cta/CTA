@@ -36,6 +36,8 @@
 #include "Constants.hpp"
 #include "../Exception/Exception.hpp"
 
+namespace castor {
+namespace tape {
 namespace SCSI {
   /**
    * Structures as defined in the SCSI specifications, and helper functions for them.
@@ -72,10 +74,10 @@ namespace SCSI {
       void setCDB(T * cdb) { cmdp = (unsigned char *)cdb; cmd_len = sizeof(T); }
       
       template <typename T>
-      void setSenseBuffer(T * senseBuff) throw (Tape::Exception) 
+      void setSenseBuffer(T * senseBuff) throw (Exception) 
       { 
         if (sizeof(T) > UCHAR_MAX)
-          throw Tape::Exception("sense structure too big in LinuxSGIO_t::setSense");
+          throw Exception("sense structure too big in LinuxSGIO_t::setSense");
         mx_sb_len = (unsigned char) sizeof(T);
         sbp = (unsigned char *)senseBuff;
       }
@@ -710,7 +712,7 @@ namespace SCSI {
        * length in bytes (as found in the struct) in a parameter count.
        * @return number of parameters.
        */
-      unsigned int parameterNumber() throw (Tape::Exception) {
+      unsigned int parameterNumber() throw (Exception) {
         unsigned int numFromLength = SCSI::Structures::toU16(pageLength) / sizeof (tapeAlertLogParameter_t);
         return numFromLength;
       }
@@ -735,7 +737,7 @@ namespace SCSI {
     public:
       senseData_t() {
         if (sizeof(*this) > 255)
-          throw Tape::Exception("In SCSI::Structures::senseData_t::senseData_t(): size too big (> 255>");      
+          throw Exception("In SCSI::Structures::senseData_t::senseData_t(): size too big (> 255>");      
         zeroStruct(this);
       }
       // byte 0
@@ -816,7 +818,7 @@ namespace SCSI {
           std::stringstream err;
           err << "In senseData_t::getASC: no ACS with this response code or response code not supported ("
                   << std::hex << std::showbase << (int)responseCode << ")";
-          throw Tape::Exception(err.str());
+          throw Exception(err.str());
         }
       }
 
@@ -829,7 +831,7 @@ namespace SCSI {
           std::stringstream err;
           err << "In senseData_t::getASCQ: no ACSQ with this response code or response code not supported ("
                   << std::hex << std::showbase << (int)responseCode << ")";
-          throw Tape::Exception(err.str());
+          throw Exception(err.str());
         }
       }
       /**
@@ -909,5 +911,7 @@ namespace SCSI {
       return hex.str();
     }
   }
-}
+} // namespace SCSI
+} // namespace tape
+} // namespace castor
 

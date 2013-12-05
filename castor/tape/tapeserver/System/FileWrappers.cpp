@@ -30,42 +30,44 @@
 #include "FileWrappers.hpp"
 #include "../SCSI/Structures.hpp"
 
-ssize_t Tape::System::vfsFile::read(void* buf, size_t nbytes)
+using namespace castor::tape;
+
+ssize_t System::vfsFile::read(void* buf, size_t nbytes)
 {
   /* The vfsFile's operations always fail */
   errno = EINVAL;
   return -1;
 }
 
-ssize_t Tape::System::vfsFile::write(const void* buf, size_t nbytes)
+ssize_t System::vfsFile::write(const void* buf, size_t nbytes)
 {
   /* The vfsFile's operations always fail */
   errno = EINVAL;
   return -1;
 }
 
-int Tape::System::vfsFile::ioctl(unsigned long int request, mtop * mt_cmd)
+int System::vfsFile::ioctl(unsigned long int request, mtop * mt_cmd)
 {
   /* The vfsFile's operations always fail */
   errno = EINVAL;
   return -1;
 }
 
-int Tape::System::vfsFile::ioctl(unsigned long int request, mtget* mt_status)
+int System::vfsFile::ioctl(unsigned long int request, mtget* mt_status)
 {
   /* The vfsFile's operations always fail */
   errno = EINVAL;
   return -1;
 }
 
-int Tape::System::vfsFile::ioctl(unsigned long int request, sg_io_hdr_t * sgio_h)
+int System::vfsFile::ioctl(unsigned long int request, sg_io_hdr_t * sgio_h)
 {
   /* The vfsFile's operations always fail */
   errno = EINVAL;
   return -1;
 }
 
-ssize_t Tape::System::regularFile::read(void* buf, size_t nbytes)
+ssize_t System::regularFile::read(void* buf, size_t nbytes)
 {
   try {
     ssize_t ret;
@@ -77,7 +79,7 @@ ssize_t Tape::System::regularFile::read(void* buf, size_t nbytes)
   }
 }
 
-ssize_t Tape::System::regularFile::write(const void *buf, size_t nbytes)
+ssize_t System::regularFile::write(const void *buf, size_t nbytes)
 {
   try {
     m_content.assign((const char *) buf, nbytes);
@@ -93,7 +95,7 @@ ssize_t Tape::System::regularFile::write(const void *buf, size_t nbytes)
  * Constructor for fake tape server: fill up status registers
  * and internal structures.
  */
-Tape::System::stDeviceFile::stDeviceFile()
+System::stDeviceFile::stDeviceFile()
 {
   m_mtStat.mt_type = 1;
   m_mtStat.mt_resid = 0;
@@ -106,7 +108,7 @@ Tape::System::stDeviceFile::stDeviceFile()
   clearCompressionStats = false;
 }
 
-int Tape::System::stDeviceFile::ioctl(unsigned long int request, struct mtop * mt_cmd)
+int System::stDeviceFile::ioctl(unsigned long int request, struct mtop * mt_cmd)
 {
   switch (request) {
     case MTIOCTOP:
@@ -117,7 +119,7 @@ int Tape::System::stDeviceFile::ioctl(unsigned long int request, struct mtop * m
   return -1;
 }
 
-int Tape::System::stDeviceFile::ioctl(unsigned long int request, mtget* mt_status)
+int System::stDeviceFile::ioctl(unsigned long int request, mtget* mt_status)
 {
   switch (request) {
     case MTIOCGET:
@@ -128,7 +130,7 @@ int Tape::System::stDeviceFile::ioctl(unsigned long int request, mtget* mt_statu
   return -1;
 }
 
-int Tape::System::stDeviceFile::ioctl(unsigned long int request, sg_io_hdr_t * sgio_h)
+int System::stDeviceFile::ioctl(unsigned long int request, sg_io_hdr_t * sgio_h)
 {
   /* for the moment, just implement the SG_IO ioctl */
   switch (request) {
@@ -159,7 +161,7 @@ int Tape::System::stDeviceFile::ioctl(unsigned long int request, sg_io_hdr_t * s
   return -1;
 }
 
-int Tape::System::stDeviceFile::ioctlReadPosition(sg_io_hdr_t* sgio_h) {
+int System::stDeviceFile::ioctlReadPosition(sg_io_hdr_t* sgio_h) {
   if (SG_DXFER_FROM_DEV != sgio_h->dxfer_direction) {
     errno = EINVAL;
     return -1;
@@ -208,7 +210,7 @@ int Tape::System::stDeviceFile::ioctlReadPosition(sg_io_hdr_t* sgio_h) {
   return 0;
 }
 
-int Tape::System::stDeviceFile::ioctlLogSelect(sg_io_hdr_t * sgio_h) {
+int System::stDeviceFile::ioctlLogSelect(sg_io_hdr_t * sgio_h) {
   if (SG_DXFER_NONE != sgio_h->dxfer_direction) {
     errno = EINVAL;
     return -1;
@@ -224,7 +226,7 @@ int Tape::System::stDeviceFile::ioctlLogSelect(sg_io_hdr_t * sgio_h) {
   return 0;
 }
 
-int Tape::System::stDeviceFile::ioctlLocate10(sg_io_hdr_t * sgio_h) {
+int System::stDeviceFile::ioctlLocate10(sg_io_hdr_t * sgio_h) {
   if (SG_DXFER_NONE != sgio_h->dxfer_direction) {
     errno = EINVAL;
     return -1;
@@ -236,7 +238,7 @@ int Tape::System::stDeviceFile::ioctlLocate10(sg_io_hdr_t * sgio_h) {
   return 0;
 }
 
-int Tape::System::stDeviceFile::ioctlLogSense(sg_io_hdr_t * sgio_h) {
+int System::stDeviceFile::ioctlLogSense(sg_io_hdr_t * sgio_h) {
   if (SG_DXFER_FROM_DEV != sgio_h->dxfer_direction) {
     errno = EINVAL;
     return -1;
@@ -260,7 +262,7 @@ int Tape::System::stDeviceFile::ioctlLogSense(sg_io_hdr_t * sgio_h) {
   errno = EINVAL;
   return -1;
 }
-int Tape::System::stDeviceFile::logSenseSequentialAccessDevicePage(sg_io_hdr_t * sgio_h) {
+int System::stDeviceFile::logSenseSequentialAccessDevicePage(sg_io_hdr_t * sgio_h) {
   /**
    * This is a real reply from the enterprise T10000C STK drive. 
    * We only fill the testing values in the corresponding fields for the 
@@ -294,7 +296,7 @@ int Tape::System::stDeviceFile::logSenseSequentialAccessDevicePage(sg_io_hdr_t *
   return 0;
 }
 
-int Tape::System::stDeviceFile::logSenseDataCompression32h(sg_io_hdr_t * sgio_h) {
+int System::stDeviceFile::logSenseDataCompression32h(sg_io_hdr_t * sgio_h) {
   /**
    * This is a real reply from the IBM ULTRIUM-TD5 LTO5 drive. 
    * We only fill the testing values in the corresponding fields for the 
@@ -328,7 +330,7 @@ int Tape::System::stDeviceFile::logSenseDataCompression32h(sg_io_hdr_t * sgio_h)
   return 0;
 }
 
-int Tape::System::stDeviceFile::logSenseBlockBytesTransferred(sg_io_hdr_t * sgio_h) {
+int System::stDeviceFile::logSenseBlockBytesTransferred(sg_io_hdr_t * sgio_h) {
   /**
    * This is a real reply from the enterprise IBM 03592E06 drive. 
    * We only fill the testing values in the corresponding fields for the 
@@ -369,7 +371,7 @@ int Tape::System::stDeviceFile::logSenseBlockBytesTransferred(sg_io_hdr_t * sgio
   return 0;
 }
 
-int Tape::System::stDeviceFile::logSenseTapeAlerts(sg_io_hdr_t* sgio_h) {
+int System::stDeviceFile::logSenseTapeAlerts(sg_io_hdr_t* sgio_h) {
   size_t remaining = sgio_h->dxfer_len;
   /* Truncation of any field should yield an error */
   if (remaining < (4 + 320)) {
@@ -412,7 +414,7 @@ int Tape::System::stDeviceFile::logSenseTapeAlerts(sg_io_hdr_t* sgio_h) {
   return 0;
 }
 
-int Tape::System::stDeviceFile::ioctlModSense6(sg_io_hdr_t * sgio_h) {
+int System::stDeviceFile::ioctlModSense6(sg_io_hdr_t * sgio_h) {
   if (SG_DXFER_FROM_DEV != sgio_h->dxfer_direction) {
     errno = EINVAL;
     return -1;
@@ -436,7 +438,7 @@ int Tape::System::stDeviceFile::ioctlModSense6(sg_io_hdr_t * sgio_h) {
   return 0;
 }
 
-int Tape::System::stDeviceFile::ioctlModSelect6(sg_io_hdr_t * sgio_h) {
+int System::stDeviceFile::ioctlModSelect6(sg_io_hdr_t * sgio_h) {
   if (SG_DXFER_TO_DEV != sgio_h->dxfer_direction) {
     errno = EINVAL;
     return -1;
@@ -464,7 +466,7 @@ int Tape::System::stDeviceFile::ioctlModSelect6(sg_io_hdr_t * sgio_h) {
   return 0;
 }
 
-int Tape::System::stDeviceFile::ioctlInquiry(sg_io_hdr_t * sgio_h) {
+int System::stDeviceFile::ioctlInquiry(sg_io_hdr_t * sgio_h) {
  if (SG_DXFER_FROM_DEV != sgio_h->dxfer_direction) {
     errno = EINVAL;
     return -1;

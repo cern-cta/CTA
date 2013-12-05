@@ -28,15 +28,17 @@
 
 #include <sstream>
 
+namespace castor {
+namespace tape {
 namespace SCSI {
   /**
    * An exception class turning SCSI sense data into a loggable string
    */
-  class Exception: public Tape::Exception {
+  class Exception: public castor::tape::Exception {
   public:
-    Exception(unsigned char status, SCSI::Structures::senseData_t<255> * sense,
+    Exception(unsigned char status, castor::tape::SCSI::Structures::senseData_t<255> * sense,
             const std::string & context = ""):
-        Tape::Exception("") {
+        castor::tape::Exception("") {
       std::stringstream w;
       w << context << (context.size()?" ":"") 
               << "SCSI command failed with status "
@@ -44,7 +46,7 @@ namespace SCSI {
       if (SCSI::Status::CHECK_CONDITION == status) {
         try {
           w << ": " << sense->getACSString();
-        } catch (Tape::Exception &ex) {
+        } catch (Exception &ex) {
           w << ": In addition, failed to get ACS string: "
                   << ex.shortWhat();
         }
@@ -59,4 +61,6 @@ namespace SCSI {
    * @param sgio the sgio struct.
    */
   void ExceptionLauncher (const SCSI::Structures::LinuxSGIO_t & sgio, std::string context = "");
-}
+} // namespace SCSI
+} // namespace tape
+} // namespace castor

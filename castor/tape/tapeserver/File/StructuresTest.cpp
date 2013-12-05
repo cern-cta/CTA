@@ -29,7 +29,7 @@
 namespace UnitTests {
 
   TEST(FILE_Structures, VOL1) {
-    Tape::AULFile::VOL1 vol1Label;
+    castor::tape::AULFile::VOL1 vol1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -47,7 +47,7 @@ namespace UnitTests {
   }
 
   TEST(FILE_Structures, HDR1) {
-    Tape::AULFile::HDR1 hdr1Label;
+    castor::tape::AULFile::HDR1 hdr1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -66,7 +66,7 @@ namespace UnitTests {
     ASSERT_EQ("2345", hdr1Label.getfSeq());
   }
   TEST(FILE_Structures, HDR1PRELABEL) {
-    Tape::AULFile::HDR1PRELABEL hdr1Prelabel;
+    castor::tape::AULFile::HDR1PRELABEL hdr1Prelabel;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -86,7 +86,7 @@ namespace UnitTests {
   }
 
   TEST(FILE_Structures, EOF1) {
-    Tape::AULFile::EOF1 eof1Label;
+    castor::tape::AULFile::EOF1 eof1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -107,7 +107,7 @@ namespace UnitTests {
   }
 
   TEST(FILE_Structures, HDR2) {
-    Tape::AULFile::HDR2 hdr2Label;
+    castor::tape::AULFile::HDR2 hdr2Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -127,7 +127,7 @@ namespace UnitTests {
   }
 
   TEST(FILE_Structures, EOF2) {
-    Tape::AULFile::EOF2 eof2Label;
+    castor::tape::AULFile::EOF2 eof2Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -147,7 +147,7 @@ namespace UnitTests {
   }
 
   TEST(FILE_Structures, UHL1) {
-    Tape::AULFile::UHL1 uhl1Label;
+    castor::tape::AULFile::UHL1 uhl1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -157,7 +157,7 @@ namespace UnitTests {
     EXPECT_ANY_THROW({
       uhl1Label.verify();
     });
-    Tape::deviceInfo deviceInfo;
+    castor::tape::drives::deviceInfo deviceInfo;
     deviceInfo.vendor = "TEST";
     deviceInfo.serialNumber = "XXYYTEST";
     deviceInfo.product = "TEST DRIVE";
@@ -171,7 +171,7 @@ namespace UnitTests {
   }
 
   TEST(FILE_Structures, UTL1) {
-    Tape::AULFile::UTL1 utl1Label;
+    castor::tape::AULFile::UTL1 utl1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -181,7 +181,7 @@ namespace UnitTests {
     EXPECT_ANY_THROW({
       utl1Label.verify();
     });
-    Tape::deviceInfo deviceInfo;
+    castor::tape::drives::deviceInfo deviceInfo;
     deviceInfo.vendor = "TEST";
     deviceInfo.serialNumber = "XXYYTEST";
     deviceInfo.product = "TEST DRIVE";

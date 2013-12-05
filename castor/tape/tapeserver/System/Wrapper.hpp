@@ -39,7 +39,8 @@
 
 #include "FileWrappers.hpp"
 
-namespace Tape {
+namespace castor {
+namespace tape {
 namespace System {
   /**
    * Interface class definition, allowing common ancestor between
@@ -167,5 +168,5 @@ namespace System {
     fakeWrapper fake;
   };
 } // namespace System
-} // namespace Tape
-
+} // namespace tape
+} // namespace castor

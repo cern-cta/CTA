@@ -35,7 +35,7 @@
 
 int main(int argc, char ** argv) {
   try {
-    Tape::Server::Daemon daemon(argc, argv);
+    castor::tape::Server::Daemon daemon(argc, argv);
   } catch (std::exception & e) {
     std::cerr << "Uncaught standard exception in tapeserverd:" << std::endl
         << e.what() << std::endl;
@@ -46,13 +46,13 @@ int main(int argc, char ** argv) {
   }
 }
 
-Tape::Server::Daemon::Daemon(int argc, char** argv) throw (Tape::Exception) {
+castor::tape::Server::Daemon::Daemon(int argc, char** argv) throw (castor::tape::Exception) {
   m_options = getCommandLineOptions(argc, argv);
   if (m_options.daemonize) daemonize();
 }
 
-Tape::Server::Daemon::options Tape::Server::Daemon::getCommandLineOptions(int argc, char** argv)
-throw (Tape::Exception)
+castor::tape::Server::Daemon::options castor::tape::Server::Daemon::getCommandLineOptions(int argc, char** argv)
+throw (castor::tape::Exception)
 {
   options ret;
   /* Expect -f or --foreground */
@@ -68,14 +68,14 @@ throw (Tape::Exception)
         break;
       case ':':
       {
-        Tape::Exceptions::InvalidArgument ex(std::string("The -") + (char) optopt + " option requires a parameter");
+        castor::tape::Exceptions::InvalidArgument ex(std::string("The -") + (char) optopt + " option requires a parameter");
         throw ex;
       }
       case '?':
       {
         std::stringstream err("Unknown command-line option");
         if (optopt) err << std::string(": -") << optopt;
-        Tape::Exceptions::InvalidArgument ex(err.str().c_str());
+        castor::tape::Exceptions::InvalidArgument ex(err.str().c_str());
         throw ex;
       }
       default:
@@ -83,7 +83,7 @@ throw (Tape::Exception)
         std::stringstream err;
         err << "getopt_long returned the following unknown value: 0x" <<
             std::hex << (int) c;
-        Tape::Exceptions::InvalidArgument ex(err.str().c_str());
+        castor::tape::Exceptions::InvalidArgument ex(err.str().c_str());
         throw ex;
       }
     }
@@ -91,7 +91,7 @@ throw (Tape::Exception)
   return ret;
 }
 
-void Tape::Server::Daemon::daemonize()
+void castor::tape::Server::Daemon::daemonize()
 {
   pid_t pid, sid;
 
@@ -101,7 +101,7 @@ void Tape::Server::Daemon::daemonize()
   /* Fork off the parent process */
   pid = fork();
   if (pid < 0) {
-    Tape::Exceptions::Errnum e("Failed to fork in Tape::Server::Daemon::daemonize");
+    castor::tape::Exceptions::Errnum e("Failed to fork in castor::tape::Server::Daemon::daemonize");
     throw e;
   }
   /* If we got a good PID, then we can exit the parent process. */
@@ -115,22 +115,22 @@ void Tape::Server::Daemon::daemonize()
   /* Create a new session for the child process */
   sid = setsid();
   if (sid < 0) {
-    Tape::Exceptions::Errnum e("Failed to create new session in Tape::Server::Daemon::daemonize");
+    castor::tape::Exceptions::Errnum e("Failed to create new session in castor::tape::Server::Daemon::daemonize");
     throw e;
   }
 
   /* At this point we are executing as the child process, and parent process should be init */
   if (getppid() != 1) { 
-    Tape::Exception e("Failed to detach from parent process in Tape::Server::Daemon::daemonize");
+    castor::tape::Exception e("Failed to detach from parent process in castor::tape::Server::Daemon::daemonize");
     throw e;
   }
 
   /* Change the current working directory.  This prevents the current
      directory from being locked; hence not being able to remove it. */
   if ((chdir(m_options.runDirectory.c_str())) < 0) {
-    std::stringstream err("Failed to chdir in Tape::Server::Daemon::daemonize");
+    std::stringstream err("Failed to chdir in castor::tape::Server::Daemon::daemonize");
     err << " ( destination directory: " << m_options.runDirectory << ")";
-    Tape::Exceptions::Errnum e(err.str());
+    castor::tape::Exceptions::Errnum e(err.str());
     throw e;
   }
 

@@ -30,7 +30,8 @@
 #include <scsi/sg.h>
 #include <stdint.h>
 
-namespace Tape {
+namespace castor {
+namespace tape {
 namespace System {
 /**
  * A dummy class allowing simple open/read/close/ioctl interface simulating
@@ -201,4 +202,5 @@ namespace System {
     int logSenseTapeAlerts(sg_io_hdr_t * sgio_h);
   };
 } // namespace System
-} // namespace Tape
+} // namespace tape
+} // namespace castor

@@ -25,11 +25,12 @@
 #pragma once
 #include "../Exception/Exception.hpp"
 
-namespace Tape {
+namespace castor {
+namespace tape {
   namespace Server {
     class Daemon {
     public:
-      Daemon (int argc, char ** argv) throw (Tape::Exception);
+      Daemon (int argc, char ** argv) throw (castor::tape::Exception);
       class options {
       public:
         options(): daemonize(true), runDirectory("/var/log/castor") {}
@@ -37,9 +38,10 @@ namespace Tape {
         std::string runDirectory;
       };
     private:
-      options getCommandLineOptions(int argc, char ** argv) throw (Tape::Exception);
+      options getCommandLineOptions(int argc, char ** argv) throw (castor::tape::Exception);
       void daemonize();
       options m_options;
     };
   }
-}       
+}
+}  

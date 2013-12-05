@@ -33,6 +33,8 @@
 #include "../Utils/Regex.hpp"
 #include "Constants.hpp"
 
+namespace castor {
+namespace tape {
 namespace SCSI {
   /**
    * Bare-bones representation of a SCSI device
@@ -80,9 +82,9 @@ namespace SCSI {
      * 
      * (all code using templates must be in the header file)
      */
-    DeviceVector(Tape::System::virtualWrapper & sysWrapper);
+    DeviceVector(castor::tape::System::virtualWrapper & sysWrapper);
   private:
-    Tape::System::virtualWrapper & m_sysWrapper;
+    castor::tape::System::virtualWrapper & m_sysWrapper;
 
     static const size_t readfileBlockSize = 1024;
 
@@ -115,4 +117,6 @@ namespace SCSI {
   private:
     int m_fd;
   }; // class Device
-} /* namespace SCSI */
+} // namespace SCSI
+} // namespace tape
+} // namespace castor

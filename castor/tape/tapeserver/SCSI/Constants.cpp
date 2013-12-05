@@ -25,7 +25,7 @@
 #include "Constants.hpp"
 #include <sstream>
 
-std::string SCSI::tapeAlertToString(uint16_t parameterCode)
+std::string castor::tape::SCSI::tapeAlertToString(uint16_t parameterCode)
 {
   std::stringstream ret;
   ret << std::hex << std::nouppercase << std::showbase;
@@ -169,7 +169,7 @@ std::string SCSI::tapeAlertToString(uint16_t parameterCode)
  * @param status
  * @return 
  */
-std::string SCSI::statusToString(unsigned char status)
+std::string castor::tape::SCSI::statusToString(unsigned char status)
 {
   switch (status) {
     case 0x00:
@@ -197,7 +197,7 @@ std::string SCSI::statusToString(unsigned char status)
   }
 }
 
-const SCSI::senseConstants::error_info SCSI::senseConstants::ascStrings[] = 
+const castor::tape::SCSI::senseConstants::error_info castor::tape::SCSI::senseConstants::ascStrings[] = 
 {
 	{0x0000, "No additional sense information"},
 	{0x0001, "Filemark detected"},
@@ -943,7 +943,7 @@ const SCSI::senseConstants::error_info SCSI::senseConstants::ascStrings[] =
 	{0, NULL}
 };
 
-const SCSI::senseConstants::error_range_info SCSI::senseConstants::ascRangesStrings[] =
+const castor::tape::SCSI::senseConstants::error_range_info castor::tape::SCSI::senseConstants::ascRangesStrings[] =
 {
 	{0x40, 0x00, 0x7f, "Ram failure (%02x)"},
 	{0x40, 0x80, 0xff, "Diagnostic failure on component (%02x)"},

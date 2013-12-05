@@ -38,22 +38,24 @@
 /* TODO remove me: it should be temporary */
 #include <iostream>
 
-const char * Tape::Exception::what() const throw () {
+using namespace castor::tape;
+
+const char * Exception::what() const throw () {
   return m_what.c_str();
 }
 
-const char * Tape::Exception::shortWhat() const throw () {
+const char * Exception::shortWhat() const throw () {
   return m_shortWhat.c_str();
 }
 
-void Tape::Exception::setWhat(const std::string& what) {
+void Exception::setWhat(const std::string& what) {
   std::stringstream w;
   w << what << std::endl << std::string(backtrace);
   m_what = w.str();
   m_shortWhat = what;
 }
 
-Tape::Exceptions::Errnum::Errnum(std::string what):Exception("") {
+Exceptions::Errnum::Errnum(std::string what):Exception("") {
   m_errnum = errno;
   char s[1000];
   /* _XOPEN_SOURCE seems not to work.  */
@@ -74,7 +76,7 @@ Tape::Exceptions::Errnum::Errnum(std::string what):Exception("") {
   setWhat(w2.str());
 }
 
-Tape::Exceptions::Backtrace::Backtrace() {
+Exceptions::Backtrace::Backtrace() {
   void * array[200];
   size_t depth = ::backtrace(array, sizeof(array)/sizeof(void*));
   char ** strings = ::backtrace_symbols(array, depth);

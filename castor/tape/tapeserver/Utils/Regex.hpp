@@ -32,17 +32,19 @@
  * useful for its destructor which will allow
  * RAII.
  */
-namespace Tape {
-  namespace Utils {
+namespace castor {
+namespace tape {
+namespace Utils {
 
-    class regex {
-    public:
-      regex(const char * re_str);
-      virtual ~regex();
-      std::vector<std::string> exec(const std::string &s);
-    private:
-      regex_t m_re;
-      bool m_set;
-    }; /* class regex */
-  } /* namespace Utils */
-} /* namespace Tape */
+  class regex {
+  public:
+    regex(const char * re_str);
+    virtual ~regex();
+    std::vector<std::string> exec(const std::string &s);
+  private:
+    regex_t m_re;
+    bool m_set;
+  }; /* class regex */
+} // namespace Utils
+} // namespace tape
+} // namespace castor

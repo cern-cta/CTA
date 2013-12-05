@@ -27,6 +27,8 @@
 #include <string>
 #include <stdint.h>
 
+namespace castor {
+namespace tape {
 namespace SCSI {
   /* Extracted from linux kernel's include/scsi/scsi.h. System-level include 
    is less complete */
@@ -332,3 +334,5 @@ namespace SCSI {
     static const struct error_range_info ascRangesStrings[];
   };
 } // namespace SCSI
+} // namespace tape
+} // namespace castor

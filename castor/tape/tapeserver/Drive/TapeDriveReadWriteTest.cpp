@@ -38,7 +38,7 @@
  * assertion and exits.
  * @param expected_position expected position
  */
-void print_and_assert_position(Tape::DriveGeneric &drive, int expected_position)
+void print_and_assert_position(castor::tape::drives::DriveGeneric &drive, int expected_position)
 {
   int curPos = (int)drive.getPositionInfo().currentPosition;
   std::cout << "CurrentPosition: "  << curPos << " (Expected: " << expected_position << ")" << std::endl;
@@ -62,19 +62,19 @@ void print_and_assert_data(const char * expected_data, const char * actual_data)
 int main ()
 {
   int fail = 0;
-  Tape::System::realWrapper sWrapper;
-  SCSI::DeviceVector dl(sWrapper);
-  for(SCSI::DeviceVector::iterator i = dl.begin();
+  castor::tape::System::realWrapper sWrapper;
+  castor::tape::SCSI::DeviceVector dl(sWrapper);
+  for(castor::tape::SCSI::DeviceVector::iterator i = dl.begin();
           i != dl.end(); i++) {
-    SCSI::DeviceInfo & dev = (*i);
+    castor::tape::SCSI::DeviceInfo & dev = (*i);
     std::cout << std::endl << "-- SCSI device: " 
               << dev.sg_dev << " (" << dev.nst_dev << ")" << std::endl;
-    if (dev.type == SCSI::Types::tape) {
-      Tape::Drive dContainer(dev, sWrapper);
+    if (dev.type == castor::tape::SCSI::Types::tape) {
+      castor::tape::drives::Drive dContainer(dev, sWrapper);
       /* Compiler cannot implicitly use the conversion operator. Create an 
        * intermediate reference*/
-      Tape::DriveGeneric & drive = dContainer;
-      Tape::deviceInfo devInfo;
+      castor::tape::drives::DriveGeneric & drive = dContainer;
+      castor::tape::drives::deviceInfo devInfo;
 
       try {
         devInfo = drive.getDeviceInfo();
@@ -115,7 +115,7 @@ int main ()
       }
       
       try {
-        Tape::positionInfo posInfo = drive.getPositionInfo();
+        castor::tape::drives::positionInfo posInfo = drive.getPositionInfo();
         std::cout << "-- INFO --------------------------------------" << std::endl 
                   << "  posInfo.currentPosition   : "  << posInfo.currentPosition <<std::endl
                   << "  posInfo.oldestDirtyObject : "<< posInfo.oldestDirtyObject <<std::endl
@@ -146,7 +146,7 @@ int main ()
          * Trying to get compression from the drive. Read or write should be
          * done before to have something in the data fields.
          */
-        Tape::compressionStats comp = drive.getCompression();
+        castor::tape::drives::compressionStats comp = drive.getCompression();
         std::cout << "-- INFO --------------------------------------" << std::endl
                 << "  fromHost : " << comp.fromHost << std::endl
                 << "  toHost   : " << comp.toHost << std::endl

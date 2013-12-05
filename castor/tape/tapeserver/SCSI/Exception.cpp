@@ -24,7 +24,7 @@
 
 #include "Exception.hpp" 
 
-void SCSI::ExceptionLauncher(const SCSI::Structures::LinuxSGIO_t & sgio, std::string context) {
+void castor::tape::SCSI::ExceptionLauncher(const SCSI::Structures::LinuxSGIO_t & sgio, std::string context) {
   if (SCSI::Status::GOOD != sgio.status) {
     throw Exception(sgio.status, (SCSI::Structures::senseData_t<255> *)sgio.sbp, context);
   }

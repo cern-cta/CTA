@@ -32,7 +32,7 @@ using ::testing::Return;
 using ::testing::_;
 
 namespace UnitTests {
-Tape::System::mockWrapper sysWrapper;
+castor::tape::System::mockWrapper sysWrapper;
 
 TEST(DeviceList, TriesToFind) {
   /* Give minimal service output from mock system calls:
@@ -42,7 +42,7 @@ TEST(DeviceList, TriesToFind) {
   EXPECT_CALL(sysWrapper, readdir(sysWrapper.m_DIR)).Times(1);
   EXPECT_CALL(sysWrapper, closedir(sysWrapper.m_DIR)).Times(1);
 
-  SCSI::DeviceVector dl(sysWrapper);
+  castor::tape::SCSI::DeviceVector dl(sysWrapper);
 }
 
 TEST(DeviceList, ScansCorrectly) {
@@ -65,12 +65,12 @@ TEST(DeviceList, ScansCorrectly) {
 
   /* Everything should have been found correctly */
 
-  SCSI::DeviceVector dl(sysWrapper);
+  castor::tape::SCSI::DeviceVector dl(sysWrapper);
 
   ASSERT_EQ(3U, dl.size());
-  ASSERT_EQ(SCSI::Types::mediumChanger, dl[0].type);
-  ASSERT_EQ(SCSI::Types::tape,          dl[1].type);
-  ASSERT_EQ(SCSI::Types::tape,          dl[2].type);
+  ASSERT_EQ(castor::tape::SCSI::Types::mediumChanger, dl[0].type);
+  ASSERT_EQ(castor::tape::SCSI::Types::tape,          dl[1].type);
+  ASSERT_EQ(castor::tape::SCSI::Types::tape,          dl[2].type);
   ASSERT_EQ( "/dev/sg2", dl[0].sg_dev);
   ASSERT_EQ( "/dev/sg0", dl[1].sg_dev);
   ASSERT_EQ( "/dev/sg1", dl[2].sg_dev);

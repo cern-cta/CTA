@@ -33,7 +33,9 @@ using ::testing::A;
 using ::testing::An;
 using ::testing::Invoke;
 
-DIR* Tape::System::fakeWrapper::opendir(const char* name) {
+using namespace castor::tape;
+
+DIR* System::fakeWrapper::opendir(const char* name) {
   /* Manage absence of directory */
   if (m_directories.end() == m_directories.find(std::string(name))) {
     errno = ENOENT;
@@ -46,12 +48,12 @@ DIR* Tape::System::fakeWrapper::opendir(const char* name) {
   return (DIR*) dir;
 }
 
-int Tape::System::fakeWrapper::closedir(DIR* dirp) {
+int System::fakeWrapper::closedir(DIR* dirp) {
   delete ((ourDIR *) dirp);
   return 0;
 }
 
-struct dirent * Tape::System::fakeWrapper::readdir(DIR* dirp) {
+struct dirent * System::fakeWrapper::readdir(DIR* dirp) {
   /* Dirty pointer gymnastics. Good enough for a test harness */
   ourDIR & dir = *((ourDIR *) dirp);
   /* Check we did not reach end of directory. This will create a new
@@ -65,7 +67,7 @@ struct dirent * Tape::System::fakeWrapper::readdir(DIR* dirp) {
   return & (dir.dent);
 }
 
-int Tape::System::fakeWrapper::readlink(const char* path, char* buf, size_t len) {
+int System::fakeWrapper::readlink(const char* path, char* buf, size_t len) {
   /*
    * Mimic readlink. see man 3 readlink.
    */
@@ -78,7 +80,7 @@ int Tape::System::fakeWrapper::readlink(const char* path, char* buf, size_t len)
   return len > link.size() ? link.size() : len;
 }
 
-char * Tape::System::fakeWrapper::realpath(const char* name, char* resolved) {
+char * System::fakeWrapper::realpath(const char* name, char* resolved) {
   /*
    * Mimic realpath. see man 3 realpath.
    */
@@ -90,7 +92,7 @@ char * Tape::System::fakeWrapper::realpath(const char* name, char* resolved) {
   return resolved;
 }
 
-int Tape::System::fakeWrapper::open(const char* file, int oflag) {
+int System::fakeWrapper::open(const char* file, int oflag) {
   /* 
    * Mimic open. See man 2 open.
    * We only allow read for the moment.
@@ -109,7 +111,7 @@ int Tape::System::fakeWrapper::open(const char* file, int oflag) {
   return ret;
 }
 
-ssize_t Tape::System::fakeWrapper::read(int fd, void* buf, size_t nbytes) {
+ssize_t System::fakeWrapper::read(int fd, void* buf, size_t nbytes) {
   /*
    * Mimic read. See man 2 read
    */
@@ -120,7 +122,7 @@ ssize_t Tape::System::fakeWrapper::read(int fd, void* buf, size_t nbytes) {
   return m_openFiles[fd]->read(buf, nbytes);
 }
 
-ssize_t Tape::System::fakeWrapper::write(int fd, const void *buf, size_t nbytes) {
+ssize_t System::fakeWrapper::write(int fd, const void *buf, size_t nbytes) {
   if (m_openFiles.end() == m_openFiles.find(fd)) {
     errno = EBADF;
     return -1;
@@ -128,7 +130,7 @@ ssize_t Tape::System::fakeWrapper::write(int fd, const void *buf, size_t nbytes)
   return m_openFiles[fd]->write(buf, nbytes);
 }
 
-int Tape::System::fakeWrapper::ioctl(int fd, unsigned long int request, mtop * mt_cmd) {
+int System::fakeWrapper::ioctl(int fd, unsigned long int request, mtop * mt_cmd) {
   /*
    * Mimic ioctl. Actually delegate the job to a vfsFile
    */
@@ -139,7 +141,7 @@ int Tape::System::fakeWrapper::ioctl(int fd, unsigned long int request, mtop * m
   return m_openFiles[fd]->ioctl(request, mt_cmd);
 }
 
-int Tape::System::fakeWrapper::ioctl(int fd, unsigned long int request, mtget* mt_status) {
+int System::fakeWrapper::ioctl(int fd, unsigned long int request, mtget* mt_status) {
   /*
    * Mimic ioctl. Actually delegate the job to a vfsFile
    */
@@ -150,7 +152,7 @@ int Tape::System::fakeWrapper::ioctl(int fd, unsigned long int request, mtget* m
   return m_openFiles[fd]->ioctl(request, mt_status);
 }
 
-int Tape::System::fakeWrapper::ioctl(int fd, unsigned long int request, sg_io_hdr_t * sgh) {
+int System::fakeWrapper::ioctl(int fd, unsigned long int request, sg_io_hdr_t * sgh) {
   /*
    * Mimic ioctl. Actually delegate the job to a vfsFile
    */
@@ -161,7 +163,7 @@ int Tape::System::fakeWrapper::ioctl(int fd, unsigned long int request, sg_io_hd
   return m_openFiles[fd]->ioctl(request, sgh);
 }
 
-int Tape::System::fakeWrapper::close(int fd) {
+int System::fakeWrapper::close(int fd) {
   /*
    * Mimic close. See man 2 close
    */
@@ -173,7 +175,7 @@ int Tape::System::fakeWrapper::close(int fd) {
   return 0;
 }
 
-int Tape::System::fakeWrapper::stat(const char* path, struct stat* buf) {
+int System::fakeWrapper::stat(const char* path, struct stat* buf) {
   /*
    * Mimic stat. See man 2 stat
    */
@@ -189,7 +191,7 @@ int Tape::System::fakeWrapper::stat(const char* path, struct stat* buf) {
  * Function merging all types of files into a single pointer
  * based map. This allows usage of polymorphic 
  */
-void Tape::System::fakeWrapper::referenceFiles() {
+void System::fakeWrapper::referenceFiles() {
   for (std::map<std::string, regularFile>::iterator i = m_regularFiles.begin();
           i != m_regularFiles.end(); i++)
     m_files[i->first] = &m_regularFiles[i->first];
@@ -198,13 +200,13 @@ void Tape::System::fakeWrapper::referenceFiles() {
     m_files[i->first] = &m_stFiles[i->first]; 
 }
 
-Tape::System::mockWrapper::mockWrapper() {
+System::mockWrapper::mockWrapper() {
   m_DIR = reinterpret_cast<DIR*> (& m_DIRfake);
   ON_CALL(*this, opendir(::testing::_))
       .WillByDefault(::testing::Return(m_DIR));
 }
 
-void Tape::System::mockWrapper::delegateToFake() {
+void System::mockWrapper::delegateToFake() {
   ON_CALL(*this, opendir(_)).WillByDefault(Invoke(&fake, &fakeWrapper::opendir));
   ON_CALL(*this, readdir(_)).WillByDefault(Invoke(&fake, &fakeWrapper::readdir));
   ON_CALL(*this, closedir(_)).WillByDefault(Invoke(&fake, &fakeWrapper::closedir));
@@ -225,7 +227,7 @@ void Tape::System::mockWrapper::delegateToFake() {
   ON_CALL(*this, stat(_, _)).WillByDefault(Invoke(&fake, &fakeWrapper::stat));
 }
 
-void Tape::System::fakeWrapper::setupSLC5() {
+void System::fakeWrapper::setupSLC5() {
   /*
    * Setup an tree similar to what we'll find in
    * and SLC5 system with mvhtl library (one media exchanger, 2 drives)
@@ -365,7 +367,7 @@ void Tape::System::fakeWrapper::setupSLC5() {
   referenceFiles();
 }
 
-void Tape::System::fakeWrapper::setupSLC6() {
+void System::fakeWrapper::setupSLC6() {
   /*
    * Setup an tree similar to what we'll find in
    * and SLC6 system with mvhtl library (one media exchanger, 2 drives).

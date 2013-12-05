@@ -26,7 +26,8 @@
 #include <exception>
 #include <string>
 
-namespace Tape {
+namespace castor {
+namespace tape {
   
   namespace Exceptions {
     class Backtrace {
@@ -44,7 +45,7 @@ namespace Tape {
     virtual ~Exception() throw() {};
     virtual const char * what() const throw();
     virtual const char * shortWhat() const throw();
-    Tape::Exceptions::Backtrace backtrace;
+    Exceptions::Backtrace backtrace;
   protected:
     void setWhat(const std::string &w);
   private:
@@ -53,7 +54,7 @@ namespace Tape {
   };
 
   namespace Exceptions {
-    class Errnum: public Tape::Exception {
+    class Errnum: public Exception {
     public:
       Errnum(std::string what = "");
       virtual ~Errnum() throw() {};
@@ -66,8 +67,9 @@ namespace Tape {
       std::string m_strerror;
     };
     
-    class InvalidArgument: public Tape::Exception {
-    public: InvalidArgument(std::string what = ""): Tape::Exception(what) {};
+    class InvalidArgument: public Exception {
+    public: InvalidArgument(std::string what = ""): Exception(what) {};
     };
   }
-}
+} //namespace tape
+} //namespace castor

@@ -36,7 +36,9 @@
  * Class wrapping the tape server. Has to be templated (and hence fully in .hh)
  * to allow unit testing against system wrapper.
  */
-namespace Tape {
+namespace castor {
+namespace tape {
+namespace drives {
 
   /**
    * Compressions statistics container, returned by Drive::getCompression()
@@ -320,7 +322,7 @@ namespace Tape {
   protected:
     SCSI::DeviceInfo m_SCSIInfo;
     int m_tapeFD; 
-    Tape::System::virtualWrapper & m_sysWrapper;
+    castor::tape::System::virtualWrapper & m_sysWrapper;
     struct mtget m_mtInfo;
   private:
     /**
@@ -370,7 +372,7 @@ namespace Tape {
       } else if (di.product.find("03592")) {
         m_drive = new DriveIBM3592(di, sw);
       } else {
-        throw Tape::Exception(std::string("Unsupported drive type: ")+di.product);
+        throw Exception(std::string("Unsupported drive type: ")+di.product);
       }
     }
     ~Drive() {
@@ -383,4 +385,6 @@ namespace Tape {
     DriveGeneric * m_drive;
   };
   
-}
+} // namespace drives
+} // namespace tape
+} // namespace castor

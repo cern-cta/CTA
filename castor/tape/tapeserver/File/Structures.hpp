@@ -26,7 +26,8 @@
 #include "string.h"
 #include "../Drive/Drive.hpp"
 
-namespace Tape {
+namespace castor {
+namespace tape {
   namespace AULFile {
 
     /**
@@ -123,7 +124,7 @@ namespace Tape {
        * Throws an exception if the common field of the structures does
        * not match expectations.
        */
-      void verifyCommon() const throw (Tape::Exceptions::Errnum);
+      void verifyCommon() const throw (Exceptions::Errnum);
     public:
 
       /**
@@ -170,7 +171,7 @@ namespace Tape {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const throw (Tape::Exceptions::Errnum);
+      void verify() const throw (castor::tape::Exceptions::Errnum);
     };
 
     class EOF1 : public HDR1EOF1 {
@@ -191,7 +192,7 @@ namespace Tape {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const throw (Tape::Exceptions::Errnum);
+      void verify() const throw (castor::tape::Exceptions::Errnum);
     };
     
     class HDR1PRELABEL : public HDR1EOF1 {
@@ -207,7 +208,7 @@ namespace Tape {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const throw (Tape::Exceptions::Errnum);
+      void verify() const throw (castor::tape::Exceptions::Errnum);
     };
 
     // The common part of the HDR2 and EOF2 labels
@@ -244,7 +245,7 @@ namespace Tape {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verifyCommon() const throw (Tape::Exceptions::Errnum);
+      void verifyCommon() const throw (castor::tape::Exceptions::Errnum);
     public:
       /**
        * @return    The block length 
@@ -270,7 +271,7 @@ namespace Tape {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const throw (Tape::Exceptions::Errnum);
+      void verify() const throw (castor::tape::Exceptions::Errnum);
     };
 
     class EOF2 : public HDR2EOF2 {
@@ -289,7 +290,7 @@ namespace Tape {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const throw (Tape::Exceptions::Errnum);
+      void verify() const throw (castor::tape::Exceptions::Errnum);
     };
 
     // The common part of the UHL1 and UTL1 labels
@@ -324,12 +325,12 @@ namespace Tape {
         int blockSize,
         std::string siteName,
         std::string hostName,
-        Tape::deviceInfo deviceInfo);
+        castor::tape::drives::deviceInfo deviceInfo);
       /**
        * Throws an exception if the common part structure does
        * not match expectations.
        */
-      void verifyCommon() const throw (Tape::Exceptions::Errnum);
+      void verifyCommon() const throw (castor::tape::Exceptions::Errnum);
     public:
       /**
        * @return    The block size
@@ -362,11 +363,11 @@ namespace Tape {
         int blockSize,
         std::string siteName,
         std::string hostName,
-        Tape::deviceInfo deviceInfo);
+        castor::tape::drives::deviceInfo deviceInfo);
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const throw (Tape::Exceptions::Errnum);
+      void verify() const throw (castor::tape::Exceptions::Errnum);
     };
 
     class UTL1 : public UHL1UTL1 {
@@ -385,11 +386,11 @@ namespace Tape {
         int blockSize,
         std::string siteName,
         std::string hostName,
-        Tape::deviceInfo deviceInfo);
+        castor::tape::drives::deviceInfo deviceInfo);
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const throw (Tape::Exceptions::Errnum);
+      void verify() const throw (castor::tape::Exceptions::Errnum);
     };
 
     template <size_t n>
@@ -450,5 +451,6 @@ namespace Tape {
 
       memcpy(t, bufDate, 6);      
     }
-  }
-}
+  } //namespace AULFile
+} // namespace tape
+} // namespace castor

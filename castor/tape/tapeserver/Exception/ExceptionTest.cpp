@@ -38,7 +38,7 @@ namespace UnitTests {
   
   /* Prevent inlining: it makes this test fail! */
   void __attribute__((noinline)) Nested::f1() {
-    throw Tape::Exception("");
+    throw castor::tape::Exception("");
   }
   
   /* Prevent inlining: it makes this test fail!
@@ -55,10 +55,10 @@ namespace UnitTests {
   TEST(Exceptions, stacktrace_with_demangling) {
     try {
       Nested x;
-    } catch (Tape::Exception & e) {
+    } catch (castor::tape::Exception & e) {
       std::string bt = e.backtrace;
       ASSERT_NE(std::string::npos, bt.find("Nested::f1"));
-      ASSERT_NE(std::string::npos, bt.find("Tape::Exceptions::Backtrace::Backtrace"));
+      ASSERT_NE(std::string::npos, bt.find("castor::tape::Exceptions::Backtrace::Backtrace"));
       ASSERT_EQ("", std::string(e.shortWhat()));
       std::string fullWhat(e.what());
       ASSERT_NE(std::string::npos, fullWhat.find("Nested::f1"));
@@ -69,7 +69,7 @@ namespace UnitTests {
     /* Mickey Mouse test as we had trouble which throwing Errnum (with errno=ENOENT)*/
     errno = ENOENT;
     try {
-      throw Tape::Exceptions::Errnum("Test ENOENT");
+      throw castor::tape::Exceptions::Errnum("Test ENOENT");
     } catch (std::exception & e) {
       std::string temp = e.what();
       temp += " ";
