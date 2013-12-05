@@ -20,6 +20,7 @@ COMMONLIB_OBJS = compat.o getacct.o getacctent.o getconfent.o \
 		 Csecloader.o castor1compat.o \
                  ../castor/exception/AlreadyInitialized.o \
                  ../castor/exception/BadVersion.o \
+                 ../castor/exception/Backtrace.o \
                  ../castor/exception/Busy.o \
                  ../castor/exception/DismountFailed.o \
                  ../castor/exception/Exception.o \

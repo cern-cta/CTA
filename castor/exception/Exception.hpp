@@ -53,12 +53,12 @@ namespace castor {
       /**
        * Copy Constructor
        */
-      Exception(Exception& dbex);
+      Exception(const Exception& rhs);
 
       /**
        * Assignment operator
        */
-      Exception& operator=(Exception &dbex);
+      Exception& operator=(const Exception &rhs);
 
       /**
        * Empty Destructor, explicitely non-throwing (needed for std::exception

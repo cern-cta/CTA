@@ -66,3 +66,4 @@ castor::exception::Backtrace::Backtrace(): m_trace() {
     free (strings);
   }
 }
+
