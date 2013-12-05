@@ -1,0 +1,64 @@
+/******************************************************************************
+ *                      Structures.cpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * 
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *****************************************************************************/
+
+#include "Structures.hpp"
+
+#include <sstream>
+#include <cstdio>
+
+std::string SCSI::Structures::toString(const inquiryData_t& inq) {
+  std::stringstream inqDump;
+  inqDump << std::hex << std::showbase << std::nouppercase
+          << "inq.perifDevType=" << (int) inq.perifDevType << std::endl
+          << "inq.perifQualifyer=" << (int) inq.perifQualifyer << std::endl
+          << "inq.RMB="            << (int) inq.RMB << std::endl
+          << "inq.version="        << (int) inq.version << std::endl
+          << "inq.respDataFmt="    << (int) inq.respDataFmt << std::endl
+          << "inq.HiSup="          << (int) inq.HiSup << std::endl
+          << "inq.normACA="        << (int) inq.normACA << std::endl
+          << "inq.addLength="      << (int) inq.addLength << std::endl
+          << "inq.protect="        << (int) inq.protect << std::endl
+          << "inq.threePC="        << (int) inq.threePC << std::endl
+          << "inq.TPGS="           << (int) inq.TPGS << std::endl
+          << "inq.ACC="            << (int) inq.ACC << std::endl
+          << "inq.SCCS="           << (int) inq.SCCS << std::endl         
+          << "inq.addr16="         << (int) inq.addr16 << std::endl       
+          << "inq.multiP="         << (int) inq.multiP << std::endl
+          << "inq.VS1="            << (int) inq.VS1 << std::endl
+          << "inq.encServ="        << (int) inq.encServ << std::endl
+          << "inq.VS2="            << (int) inq.VS2 << std::endl
+          << "inq.cmdQue="         << (int) inq.cmdQue << std::endl
+          << "inq.sync="           << (int) inq.sync << std::endl
+          << "inq.wbus16="         << (int) inq.wbus16  << std::endl 
+          << "inq.T10Vendor="      << SCSI::Structures::toString(inq.T10Vendor) << std::endl
+          << "inq.prodId="         << SCSI::Structures::toString(inq.prodId) << std::endl
+          << "inq.prodRevLv="      << SCSI::Structures::toString(inq.prodRevLvl) << std::endl
+          << "inq.vendorSpecific1="<< SCSI::Structures::toString(inq.vendorSpecific1)<< std::endl
+          << "inq.IUS="            << (int) inq.IUS << std::endl
+          << "inq.QAS="            << (int) inq.QAS << std::endl
+          << "inq.clocking="       << (int) inq.clocking << std::endl;
+  for (int i=0; i < 8; i++)
+    inqDump << "inq.versionDescriptor[" << i << "]=" << SCSI::Structures::toU16(inq.versionDescriptor[i]) << std::endl;
+  return inqDump.str();
+}

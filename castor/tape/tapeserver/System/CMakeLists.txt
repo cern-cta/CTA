@@ -1,4 +1,4 @@
-add_library(System Wrapper.cc FileWrappers.cc)
-set_property(SOURCE Wrapper.cc
+add_library(System Wrapper.cpp FileWrappers.cpp)
+set_property(SOURCE Wrapper.cpp
   PROPERTY COMPILE_FLAGS -fno-strict-aliasing
 )

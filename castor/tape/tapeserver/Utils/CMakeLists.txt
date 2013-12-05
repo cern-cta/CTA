@@ -1,1 +1,1 @@
-add_library(Utils Regex.cc)
+add_library(Utils Regex.cpp)

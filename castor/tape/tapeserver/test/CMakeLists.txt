@@ -1,12 +1,12 @@
-add_executable(unitTest unitTest.cc
-  ../SCSI/DeviceTest.cc
-  ../SCSI/StructuresTest.cc
-  ../Utils/RegexTest.cc
-  ../Drive/DriveTest.cc
-  ../Exception/ExceptionTest.cc
-  ../File/StructuresTest.cc
+add_executable(unitTest unitTest.cpp
+  ../SCSI/DeviceTest.cpp
+  ../SCSI/StructuresTest.cpp
+  ../Utils/RegexTest.cpp
+  ../Drive/DriveTest.cpp
+  ../Exception/ExceptionTest.cpp
+  ../File/StructuresTest.cpp
 )
-set_property(SOURCE ../SCSI/StructuresTest.cc
+set_property(SOURCE ../SCSI/StructuresTest.cpp
   PROPERTY COMPILE_FLAGS -fno-strict-aliasing
 )
 

@@ -1,1 +1,1 @@
-add_library(File Structures.cc)
+add_library(File Structures.cpp)

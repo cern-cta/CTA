@@ -1,2 +1,2 @@
-add_library(Exception Exception.cc)
+add_library(Exception Exception.cpp)
 

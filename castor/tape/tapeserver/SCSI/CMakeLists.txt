@@ -1,2 +1,2 @@
-add_library(SCSI Device.cc Structures.cc Constants.cc Exception.cc)
+add_library(SCSI Device.cpp Structures.cpp Constants.cpp Exception.cpp)
 
