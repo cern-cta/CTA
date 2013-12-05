@@ -354,6 +354,7 @@ InstallNonExecFile(db/cnv/DbBaseCnv.hpp,$(BUILDHEADERSDIRHPP)/db/cnv,644)
 InstallNonExecFile(db/ora/OraCnvSvc.hpp,$(BUILDHEADERSDIRHPP)/db/ora,644)
 InstallNonExecFile(db/ora/OraCommonSvc.hpp,$(BUILDHEADERSDIRHPP)/db/ora,644)
 
+InstallNonExecFile(exception/AlreadyInitialized.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
 InstallNonExecFile(exception/InvalidArgument.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
 InstallNonExecFile(exception/InvalidNbArguments.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
 InstallNonExecFile(exception/NoEntry.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
