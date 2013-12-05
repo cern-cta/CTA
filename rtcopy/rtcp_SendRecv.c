@@ -216,7 +216,7 @@ static int rtcp_Transfer(int *s,
   if ( REQTYPE(FILE,reqtype) && filereq != NULL ) {
     DO_MARSHALL(STRN,p,filereq->file_path,whereto);
     DO_MARSHALL(STRN,p,filereq->tape_path,whereto);
-    DO_MARSHALL(STRN,p,filereq->recfm,whereto);
+    DO_MARSHALL(STRN,p,filereq->recfm_noLongerUsed,whereto);
     DO_MARSHALL(STRN,p,filereq->fid,whereto);
     DO_MARSHALL(STRN,p,filereq->ifce,whereto);
     DO_MARSHALL(STRN,p,filereq->stageID,whereto);
@@ -235,7 +235,7 @@ static int rtcp_Transfer(int *s,
     DO_MARSHALL(LONG,p,filereq->def_alloc,whereto);
     DO_MARSHALL(LONG,p,filereq->rtcp_err_action,whereto);
     DO_MARSHALL(LONG,p,filereq->tp_err_action,whereto);
-    DO_MARSHALL(LONG,p,filereq->convert,whereto);
+    DO_MARSHALL(LONG,p,filereq->convert_noLongerUsed,whereto);
     DO_MARSHALL(LONG,p,filereq->check_fid,whereto);
     DO_MARSHALL(LONG,p,filereq->concat,whereto);
     DO_MARSHALL(LONG,p,filereq->proc_status,whereto);
@@ -351,6 +351,21 @@ static int rtcp_Transfer(int *s,
       len = 0;
       rtcp_log(LOG_DEBUG,"rtcp_Transfer(): send bodyless message\n");
     }
+    {
+       const int sizeOfMsgHeader = 12;
+       const int totalMsgLen = sizeOfMsgHeader + len;
+       const int nbBytesMarshalled = p - hdrbuf;
+       if(nbBytesMarshalled != totalMsgLen) {
+         rtcp_log(LOG_ERR,
+           "rtcp_Transfer(): length mismatch:"
+           " reqtype=0x%x nbBytesMarshalled=%d totalMsgLen=%d\n",
+           reqtype, nbBytesMarshalled, totalMsgLen);
+         errno = SEINTERNAL;
+         serrno = SEINTERNAL;;
+         return(-1);
+       }
+    }
+
     p = hdrbuf;
     DO_MARSHALL(LONG,p,magic,whereto);
     DO_MARSHALL(LONG,p,reqtype,whereto);
@@ -441,7 +456,7 @@ static int rtcp_TransferTpDump(int *s,
   p = buf;
   DO_MARSHALL(LONG,p,dumpreq->maxbyte,whereto);
   DO_MARSHALL(LONG,p,dumpreq->blocksize,whereto);
-  DO_MARSHALL(LONG,p,dumpreq->convert,whereto);
+  DO_MARSHALL(LONG,p,dumpreq->convert_noLongerUsed,whereto);
   DO_MARSHALL(LONG,p,dumpreq->tp_err_action,whereto);
   DO_MARSHALL(LONG,p,dumpreq->startfile,whereto);
   DO_MARSHALL(LONG,p,dumpreq->maxfile,whereto);
@@ -463,11 +478,6 @@ static int rtcp_TransferTpDump(int *s,
     }
   }
   return(0);
-}
-
-int rtcp_SendTpDump(int *s, rtcpDumpTapeRequest_t *dumpreq) {
-  direction_t whereto = SendTo;
-  return(rtcp_TransferTpDump(s,dumpreq,whereto));
 }
 
 int rtcp_RecvTpDump(int *s, rtcpDumpTapeRequest_t *dumpreq) {

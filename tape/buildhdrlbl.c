@@ -20,7 +20,7 @@ int buildhdrlbl(char hdr1[],
                 int fsec,
                 int fseq,
                 int retentd,
-                char *recfm,
+                const char recfm,
                 int blksize,
                 int lrecl,
                 int den,
@@ -69,7 +69,7 @@ int buildhdrlbl(char hdr1[],
 		hdr2[i] = ' ';
 	hdr2[80] = '\0';
 	strcpy (hdr2, "HDR2");
-	hdr2[4] = *recfm;
+	hdr2[4] = recfm;
 	if (blksize < 100000) {
 		sprintf (buf, "%.5d", blksize);
 		memcpy (hdr2 + 5, buf, 5);

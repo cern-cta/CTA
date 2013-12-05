@@ -61,15 +61,15 @@ EXTERN_C int Ctape_config (char *, int);
 EXTERN_C struct devinfo *Ctape_devinfo (const char *const);
 EXTERN_C int deviceTypeIsSupported(const char *const);
 EXTERN_C int Ctape_dmpend();
-EXTERN_C int Ctape_dmpfil (char *, char *, int *, char *, int *, int *, int *, char *, u_signed64 *);
-EXTERN_C int Ctape_dmpinit (char *, char *, char *, char *, char *, int, int, int, int, int, int, int, int);
+EXTERN_C int Ctape_dmpfil (char *, char *, int *, char *, int *, int *, int *, u_signed64 *);
+EXTERN_C int Ctape_dmpinit (char *, char *, char *, char *, char *, int, int, int, int, int, int, int);
 EXTERN_C void (*Ctape_dmpmsg) (int, const char *, ...);
 EXTERN_C int Ctape_errmsg (const char *const, const char *const, ...);
-EXTERN_C int Ctape_info (char *, int *, unsigned char *, char *, char *, char *, char *, int *, int *, char *);
+EXTERN_C int Ctape_info (char *, int *, unsigned char *, char *, char *, char *, char *, int *, int *);
 EXTERN_C int Ctape_kill (char *);
 EXTERN_C int Ctape_label (char *, char *, int, char *, char *, char *, char *, char *, int, int, int);
 EXTERN_C int Ctape_mount (char *, char *, int, char *, char *, char *, int, char *, char *, int);
-EXTERN_C int Ctape_position (char *, int, int, int, unsigned char *, int, int, int, char *, char *, char *, int, int, int, int);
+EXTERN_C int Ctape_position (char *, int, int, int, unsigned char *, int, int, int, char *, char *, int, int, int, int);
 EXTERN_C int Ctape_reserve (int, struct dgn_rsv *);
 EXTERN_C int Ctape_rls (char *, int);
 EXTERN_C int Ctape_rstatus (char *, struct rsv_status *, int, int);
@@ -77,11 +77,8 @@ EXTERN_C void Ctape_seterrbuf (char *, int);
 EXTERN_C int Ctape_status (char *, struct drv_status *, int);
 EXTERN_C int send2tpd (char *, char *, int, char *, int);
 
-/* tape/asc2ebc.c      */
-EXTERN_C void asc2ebc      (char *, int);
-
 /* tape/buildhdrlbl.c  */
-EXTERN_C int buildhdrlbl   (char[], char[], char*, char*, int, int, int, char*, int, int, int, int);
+EXTERN_C int buildhdrlbl   (char[], char[], char*, char*, int, int, int, const char, int, int, int, int);
 
 /* tape/builduhl.c     */
 EXTERN_C int builduhl      (char[], int, int, int, char*, char*, char*, char*);
@@ -97,9 +94,6 @@ EXTERN_C int checkjobdied  (int[]);
 
 /* tape/cvtden.c       */
 EXTERN_C int cvtden        (const char *const);
-
-/* tape/ebc2asc.c      */
-EXTERN_C void ebc2asc      (char *, int);
 
 /* tape/getcompstat.c  */
 EXTERN_C int clear_compression_stats (int, char *, char *);

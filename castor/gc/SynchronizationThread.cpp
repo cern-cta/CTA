@@ -47,7 +47,6 @@
 #include <algorithm>
 
 // Definitions
-#define DEFAULT_SYNCINTERVAL       3600
 #define DEFAULT_CHUNKINTERVAL      1800
 #define DEFAULT_CHUNKSIZE          2000
 #define DEFAULT_DISABLESTAGERSYNC  false
@@ -69,21 +68,19 @@ void castor::gc::SynchronizationThread::run(void*) {
   sleep(m_startDelay);
 
   // Get the synchronization interval and chunk size
-  unsigned int syncInterval = DEFAULT_SYNCINTERVAL;
   unsigned int chunkInterval = DEFAULT_CHUNKINTERVAL;
   unsigned int chunkSize = DEFAULT_CHUNKSIZE;
   bool disableStagerSync = DEFAULT_DISABLESTAGERSYNC;
-  readConfigFile(&syncInterval, &chunkInterval, &chunkSize,
-                 &disableStagerSync, true);
+  readConfigFile(&chunkInterval, &chunkSize, &disableStagerSync, true);
 
   // Endless loop
   for (;;) {
 
     // Get the synchronization interval and chunk size these may have changed
     // since the last iteration
-    readConfigFile(&syncInterval, &chunkInterval,
-                   &chunkSize, &disableStagerSync);
-    if (syncInterval <= 0) {
+    readConfigFile(&chunkInterval, &chunkSize, &disableStagerSync);
+    if (chunkInterval <= 0) {
+      // just do nothing if interval = 0
       sleep(300);
       return;
     }
@@ -94,7 +91,7 @@ void castor::gc::SynchronizationThread::run(void*) {
     if (getconfent_multi("DiskManager", "MountPoints", 1, &fs, &nbFs) < 0) {
       // "Unable to retrieve mountpoints, giving up with synchronization"
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 23);
-      sleep(syncInterval);
+      sleep(chunkInterval);
       continue;
     }
 
@@ -172,7 +169,7 @@ void castor::gc::SynchronizationThread::run(void*) {
             continue;
           } else if (!(filebuf.st_mode & S_IFREG)) {
             continue;  // not a file
-          } else if (filebuf.st_mtime > time(NULL) - 60) {
+          } else if (filebuf.st_mtime > time(NULL) - 600) {
             continue;
           }
           
@@ -189,13 +186,13 @@ void castor::gc::SynchronizationThread::run(void*) {
             continue;
           }
 
-          try {
-            paths[fid.first][fid.second] = *it + "/" + file->d_name;
+          paths[fid.first][fid.second] = *it + "/" + file->d_name;
 
-            // In the case of a large number of files, synchronize them in
-            // chunks so to not overwhelming central services
-            if (paths[fid.first].size() >= chunkSize) {
+          // In the case of a large number of files, synchronize them in
+          // chunks so to not overwhelming central services
+          if (paths[fid.first].size() >= chunkSize) {
 
+            try {
               // "Synchronizing files with nameserver and stager catalog"
               castor::dlf::Param params[] =
                 {castor::dlf::Param("NbFiles", paths[fid.first].size()),
@@ -204,15 +201,21 @@ void castor::gc::SynchronizationThread::run(void*) {
 
               synchronizeFiles(fid.first, paths[fid.first], disableStagerSync, fs[fsIt]);
               paths[fid.first].clear();
-              sleep(chunkInterval);
+            } catch (castor::exception::Exception& e) {
+              // "Unexpected exception caught in synchronizeFiles"
+              castor::dlf::Param params[] =
+                {castor::dlf::Param("ErrorCode", e.code()),
+                 castor::dlf::Param("ErrorMessage", e.getMessage().str())};
+              castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 2, params);
             }
-          } catch (castor::exception::Exception& e) {
-            // "Unexpected exception caught in synchronizeFiles"
-            castor::dlf::Param params[] =
-              {castor::dlf::Param("ErrorCode", e.code()),
-               castor::dlf::Param("ErrorMessage", e.getMessage().str())};
-            castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 40, 2, params);
+            // sleep a bit before next roudn to not overwhelm central services
             sleep(chunkInterval);
+            // after we've slept, we should flush the hidden cache inside the readdir
+            // call. Otherwise, our next files will have as mtime the one before our
+            // sleep, and this means that the check on the age is useless
+            // As the buffer is hidden, there is no clean way to flush it, but a
+            // repositioning of the dir stream to its current place does the trick
+            seekdir(files, telldir(files));
           }
         }
         closedir(files);
@@ -249,7 +252,6 @@ void castor::gc::SynchronizationThread::run(void*) {
     }
 
     free(fs);
-    sleep(syncInterval);
   }
 }
 
@@ -258,8 +260,7 @@ void castor::gc::SynchronizationThread::run(void*) {
 // ReadConfigFile
 //-----------------------------------------------------------------------------
 void castor::gc::SynchronizationThread::readConfigFile
-(unsigned int *syncInterval,
- unsigned int *chunkInterval,
+(unsigned int *chunkInterval,
  unsigned int *chunkSize,
  bool *disableStagerSync,
  bool firstTime)
@@ -268,27 +269,6 @@ void castor::gc::SynchronizationThread::readConfigFile
   // Synchronization interval
   char* value;
   int intervalnew;
-  if ((value = getenv("GC_SYNCINTERVAL")) ||
-      (value = getconfent("GC", "SyncInterval", 0))) {
-    intervalnew = atoi(value);
-    if (intervalnew >= 0) {
-      if ((unsigned int)intervalnew != *syncInterval) {
-        *syncInterval = intervalnew;
-        if (!firstTime) {
-          // "New synchronization interval"
-          castor::dlf::Param params[] =
-            {castor::dlf::Param("Interval", *syncInterval)};
-          castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 21, 1, params);
-        }
-      }
-    } else {
-      *syncInterval = DEFAULT_SYNCINTERVAL;
-      // "Invalid GC/SyncInterval option, using default"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Default", *syncInterval)};
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 19, 1, params);
-    }
-  }
 
   // Chunk interval
   if ((value = getenv("GC_CHUNKINTERVAL")) ||
@@ -355,10 +335,9 @@ void castor::gc::SynchronizationThread::readConfigFile
   if (firstTime) {
     // "Synchronization configuration"
     castor::dlf::Param params[] =
-      {castor::dlf::Param("SyncInterval", *syncInterval),
-       castor::dlf::Param("ChunkInterval", *chunkInterval),
+      {castor::dlf::Param("ChunkInterval", *chunkInterval),
        castor::dlf::Param("ChunkSize", *chunkSize)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 30, 3, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 30, 2, params);
   }
 }
 

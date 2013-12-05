@@ -125,6 +125,11 @@ STGLIB_SRCS = BaseAddress.cpp \
               io/StreamBWUserCnv.cpp \
               io/StreamRequestTypeCnv.cpp \
               io/StreamNsFileIdCnv.cpp \
+              log/IPAddress.cpp \
+              log/Log.cpp \
+              log/Message.cpp \
+              log/Param.cpp \
+              log/TimeStamp.cpp \
               replier/ClientConnection.cpp \
               replier/RequestReplier.cpp \
               rh/Client.cpp \
@@ -350,6 +355,7 @@ InstallNonExecFile(db/ora/OraCnvSvc.hpp,$(BUILDHEADERSDIRHPP)/db/ora,644)
 InstallNonExecFile(db/ora/OraCommonSvc.hpp,$(BUILDHEADERSDIRHPP)/db/ora,644)
 
 InstallNonExecFile(exception/InvalidArgument.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
+InstallNonExecFile(exception/InvalidNbArguments.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
 InstallNonExecFile(exception/NoEntry.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
 InstallNonExecFile(exception/OutOfMemory.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
 InstallNonExecFile(exception/SQLError.hpp,$(BUILDHEADERSDIRHPP)/exception,644)

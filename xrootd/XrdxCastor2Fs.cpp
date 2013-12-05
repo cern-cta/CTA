@@ -65,7 +65,6 @@
 
 XrdOucHash<XrdOucString>* XrdxCastor2Stager::msDelayStore;
 xcastor::XrdxCastorClient* XrdxCastor2Fs::msCastorClient;
-
 int XrdxCastor2Fs::msTokenLockTime = 5;
 XrdxCastor2Fs* gMgr;
 XrdSysError OfsEroute(0);

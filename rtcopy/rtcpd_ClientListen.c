@@ -179,7 +179,6 @@ void *rtcpd_CLThread(void *arg) {
         }
     }
     if ( rc == -1 || hdr.reqtype != RTCP_ENDOF_REQ ) {
-        if ( SHIFTclient == FALSE ) {
             if ( stop_request == 1 ) {
                 if ( hdr.reqtype != RTCP_KILLJID_REQ &&
                      hdr.reqtype != RTCP_RSLCT_REQ ) AbortFlag = 1;
@@ -189,10 +188,6 @@ void *rtcpd_CLThread(void *arg) {
                 rtcpd_SetProcError(RTCP_FAILED | RTCP_USERR);
             else rtcpd_SetProcError(RTCP_RESELECT_SERV);
             rtcpd_CtapeKill();
-        } else {
-            rtcp_log = (void (*)(int, const char *, ...))log;
-            if ( stop_request == 1 ) rtcpc_kill();
-        }
         if ( AbortFlag != 0 && Dumptape == TRUE ) exit(0);
     }
 

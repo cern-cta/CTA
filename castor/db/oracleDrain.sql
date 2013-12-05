@@ -20,8 +20,8 @@ END;
 
 /* handle the creation of the Disk2DiskCopyJobs for the running drainingJobs */
 CREATE OR REPLACE PROCEDURE drainRunner AS
-  varNbFiles INTEGER := 0;
-  varNbBytes INTEGER := 0;
+  varNbFiles INTEGER;
+  varNbBytes INTEGER;
   varNbRunningJobs INTEGER;
   varMaxNbOfSchedD2dPerDrain INTEGER;
   varUnused INTEGER;
@@ -33,7 +33,7 @@ BEGIN
                FROM DrainingJob WHERE status = dconst.DRAININGJOB_RUNNING) LOOP
     DECLARE
       CONSTRAINT_VIOLATED EXCEPTION;
-      PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);      
+      PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
     BEGIN
       -- lock the draining Job first
       SELECT id INTO varUnused FROM DrainingJob WHERE id = dj.id FOR UPDATE;
@@ -44,6 +44,8 @@ BEGIN
       logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_REFILL, 0, '', 'stagerd',
                'svcClass=' || getSvcClassName(dj.svcClass) || ' DrainReq=' ||
                TO_CHAR(dj.id) || ' MaxNewJobsCount=' || TO_CHAR(varMaxNbOfSchedD2dPerDrain-varNbRunningJobs));
+      varNbFiles := 0;
+      varNbBytes := 0;
       FOR F IN (SELECT * FROM
                  (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
                     FROM DiskCopy, CastorFile
@@ -57,7 +59,7 @@ BEGIN
                    ORDER BY DiskCopy.importance DESC)
                  WHERE ROWNUM <= varMaxNbOfSchedD2dPerDrain-varNbRunningJobs) LOOP
         createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
-                               dconst.REPLICATIONTYPE_DRAINING, F.dcId, dj.id);
+                               dconst.REPLICATIONTYPE_DRAINING, F.dcId, dj.id, FALSE);
         varNbFiles := varNbFiles + 1;
         varNbBytes := varNbBytes + F.fileSize;
       END LOOP;
@@ -147,7 +149,7 @@ BEGIN
     -- create disk2DiskCopyJob for this diskCopy
     createDisk2DiskCopyJob(varCfId, varNsOpenTime, inDestSvcClassId,
                            0, 0, dconst.REPLICATIONTYPE_REBALANCE,
-                           varDcId, NULL);
+                           varDcId, NULL, FALSE);
   END LOOP;
   CLOSE DCcur;
   -- "rebalancing : stopping" message

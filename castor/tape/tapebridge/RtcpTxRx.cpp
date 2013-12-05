@@ -640,7 +640,7 @@ void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
 
   utils::setBytes(msgBody, '\0');
 
-  utils::copyString(msgBody.rqst.recfm, "F");
+  utils::copyString(msgBody.rqst.recfm_noLongerUsed, "F");
 
   utils::copyString(msgBody.rqst.tapePath, tapePath);
   msgBody.rqst.volReqId       =  volReqId;
@@ -656,7 +656,7 @@ void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
   msgBody.rqst.defAlloc       = -1;
   msgBody.rqst.rtcpErrAction  = -1;
   msgBody.rqst.tpErrAction    = -1;
-  msgBody.rqst.convert        = ASCCONV;
+  msgBody.rqst.convert_noLongerUsed = 4; /* 4 = ASCCONV */
   msgBody.rqst.checkFid       = -1;
   msgBody.rqst.concat         =  1;
   msgBody.rqst.procStatus     =  RTCP_REQUEST_MORE_WORK;
@@ -725,7 +725,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
   const int, const uint32_t mode,
   const char *const filePath, const uint64_t fileSize,
-  const char *const tapePath, const char *const recordFormat,
+  const char *const tapePath,
   const char *const tapeFileId, const uint32_t umask,
   const int32_t positionMethod, const int32_t tapeFseq, const int32_t diskFseq,
   char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1], const uint64_t castorFileId,
@@ -738,7 +738,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
   utils::setBytes(msgBody, '\0');
   utils::copyString(msgBody.rqst.filePath, filePath    );
   utils::copyString(msgBody.rqst.tapePath, tapePath    );
-  utils::copyString(msgBody.rqst.recfm   , recordFormat);
+  utils::copyString(msgBody.rqst.recfm_noLongerUsed, "F");
   utils::copyString(msgBody.rqst.fid     , tapeFileId  );
 
   msgBody.rqst.volReqId             = volReqId;
@@ -754,7 +754,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
   msgBody.rqst.defAlloc             = 0;
   msgBody.rqst.rtcpErrAction        = -1;
   msgBody.rqst.tpErrAction          = -1;
-  msgBody.rqst.convert              = ASCCONV;
+  msgBody.rqst.convert_noLongerUsed = 4; /* 4 = ASCCONV */
   msgBody.rqst.checkFid             = -1;
   msgBody.rqst.concat               = NOCONCAT;
   msgBody.rqst.procStatus           = RTCP_WAITING;

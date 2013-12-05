@@ -62,7 +62,6 @@ int main(int	argc,
 	char *q;
 	int Qfirst;
 	int Qlast;
-	char recfm[CA_MAXRECFMLEN+1];
 	char repbuf[REPBUFSZ];
 	int retentd;
 	char *sbp;
@@ -90,7 +89,7 @@ int main(int	argc,
         }
         tl_tpdaemon.tl_init( &tl_tpdaemon, 0 );
 
-  if (33 != argc) {
+  if (32 != argc) {
     printf("Wrong number of arguments\n");
     exit(-1);
   }
@@ -126,13 +125,12 @@ int main(int	argc,
 	Qlast = atoi (argv[24]);
 	retentd = atoi (argv[25]);
 
-	strcpy (recfm, argv[26]);
-	blksize = atoi (argv[27]);
-	lrecl = atoi (argv[28]);
-	den = atoi (argv[29]);
-	flags = atoi (argv[30]);
-	fsid = argv[31];
-	domainname = argv[32];
+	blksize = atoi (argv[26]);
+	lrecl = atoi (argv[27]);
+	den = atoi (argv[28]);
+	flags = atoi (argv[29]);
+	fsid = argv[30];
+	domainname = argv[31];
  
 	scsi = 1;
 
@@ -210,10 +208,6 @@ int main(int	argc,
 				strcpy (fid, tpfid);
 			}
 			if (hdr2[0]) {
-				if (recfm[0] == '\0') {
-					memset (recfm, 0, 4);
-					recfm[0] = hdr2[4];
-				}
 				if (blksize == 0) {
 					if (*uhl1) {
 						sscanf (uhl1 + 14, "%10d", &blksize);
@@ -241,8 +235,6 @@ int main(int	argc,
 
 	/* set default values to the fields which have not been set yet */
 
-	if (recfm[0] == '\0')
-		strcpy (recfm, "U");
 	if (blksize == 0) {
 			if (lrecl == 0) {
 				blksize = DEFAULTMIGRATIONBLOCKSIZE;
@@ -250,7 +242,7 @@ int main(int	argc,
 				blksize = lrecl;
                         }
         }
-	if (lrecl == 0 && strcmp (recfm, "U")) lrecl = blksize;
+	if (lrecl == 0) lrecl = blksize;
 
 	/* Build UPDFIL request header */
 
@@ -272,7 +264,7 @@ int main(int	argc,
 	marshall_LONG (sbp, cfseq);
 	marshall_STRING (sbp, fid);
 	marshall_LONG (sbp, lrecl);
-	marshall_STRING (sbp, recfm);
+	marshall_STRING (sbp, "F"); /* recfm is no longer used */
 
 	msglen = sbp - sendbuf;
 	marshall_LONG (q, msglen);      /* update length field */
@@ -287,7 +279,7 @@ int main(int	argc,
 					actual_hdr1[i] = hdr1[i] ? hdr1[i] : ' ';
 			buildhdrlbl (hdr1, hdr2,
 				fid, fsid, fsec, cfseq, retentd,
-				recfm, blksize, lrecl, den, lblcode);
+				'F', blksize, lrecl, den, lblcode);
 			if (mode == WRITE_ENABLE && filstat != APPEND)
 				memcpy (actual_hdr1, hdr1, 80);
 			vol1[80] = '\0';

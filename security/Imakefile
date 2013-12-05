@@ -62,6 +62,6 @@ LOCAL_PATH/Csec_plugin_KRB5_mapper.d:  LOCAL_PATH/Csec_plugin_GSS_mapper.c
 
 IDLIB_OBJS = Csec_plugin_ID.o
 IDLIB = -lc -ldl
-ClientSharedLibraryTarget(castorsec_plugin_ID,$(KRB5LIB_OBJS),,$(KRB5LIB))
+ClientSharedLibraryTarget(castorsec_plugin_ID,$(IDLIB_OBJS),,$(IDLIB))
 
 CLIENTLIBMANPAGE(Csec_api)

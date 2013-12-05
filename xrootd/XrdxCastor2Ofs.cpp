@@ -209,7 +209,7 @@ int XrdxCastor2Ofs::Configure( XrdSysError& Eroute )
           }
         }
 
-        if ( !strcmp( "proc", var ) )
+        if ( !strcmp( "proc", var ) ) {
           if ( !( val = config_stream.GetWord() ) ) {
             Eroute.Emsg( "Config", "argument for proc invalid." );
             exit( -1 );
@@ -235,6 +235,7 @@ int XrdxCastor2Ofs::Configure( XrdSysError& Eroute )
               Eroute.Say( "=====> xcastor2.proc: ", Procfilesystem.c_str(), " async" );
             }
           }
+        }
 
         if ( !strcmp( "thirdparty", var ) ) {
           if ( ( val = config_stream.GetWord() ) ) {

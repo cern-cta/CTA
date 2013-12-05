@@ -13,22 +13,46 @@
 
   [Bug]
 
+     #93295  Binding error in call to 'INSERTSTAGEFILEQUERYREQUEST' (ORA-06550, PLS-00306)
+     #103117 diskserver with no filesystem make strange output in printdiskserver
+     #103118 fail immediately on WARNINGS in draindiskserver
+     #103119 in transfermanager synchronization with the DB, do not cancel too much in one go
      #103144 Bad constraint for status of RecallJobs
      #103158 Bad DiskCopy status in createEmptyFile
      #103162 Race condition between drainRunner and deleteDrainingJob
+     #103165 "deadlock detected" around CASTOR_STAGER.DROPREUSEDLASTKNOWNFILENAME
      #103184 Missing lock on DrainingJob in drainManager leads to dead lock
      #103188 catch NO_DATA_FOUND in getFile/SvcClassName
+     #103189 Transfermanager synchronizer thread is not thread-safe
+     #103190 Constraint violation errors thrown by the GC
+     #103235 Stuck files after synchronization removes a file during recall
+     #103242 Incorrect evaluation of lastModificationTime leads to double recalls + dark data
 
   [Features]
 
      #103106 RFE: mark rebalancing transfers as such in listtransfer
+     #103196 RFE: improve usage of DBMS_ALERT in the database
+     #103243 RFE: drop GC/syncInterval option as it is redundant
 
   CASTOR NS
   ---------
 
+  [Bug]
+
+     #103170 fix log levels in nameserver logs
+
   [Features]
 
      #103168 RFE: Improve logging of failures in setOrReplaceSegmentsForFiles
+
+  CASTOR Protocols
+  ----------------
+
+  [Bug]
+
+    #92559  rfiod does not close
+    #103021 Xrootd castor plugin around xcastor::XrdxCastorClient::SendAsyncRequest
+    #103001 XRootD plugin authorization deadlock
 
   CASTOR Tape
   -----------
@@ -48,7 +72,7 @@
 
   [Features]
 
-     #103176: RFE: properly package the simple log processor plugin for CASTOR
+     #103176 RFE: properly package the simple log processor plugin for CASTOR
 
 
   Package Changes
@@ -57,6 +81,54 @@
   - castor-slp-plugin is a new package containing the CASTOR plugins to the simple log processor
     daemon that is gathering the logs in the new monitoring infrastructure.
     It replaces the hand made slp-castor-plugin package that was distributed outside of CASTOR.
+
+
+  Upgrade Instructions from 2.1.14-3
+  ----------------------------------
+
+    Stager
+    ------
+
+    The upgrade of the stager database to 2.1.14-4 can be performed online while the system is running.
+    The RPM upgrade can also be performed on a running system, with 2 restrictions:
+      - the restart of the RH servers may be noticable by few clients (< 1s downtime);
+      - the restart of the transfermanagers and diskmanagers should not be done concurrently.
+
+      Instructions
+      ------------
+
+       1. Upgrade the STAGER database using the stager_2.1.14-3_to_2.1.14-4.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-4/dbupgrades
+
+       2. Upgrade the software on the headnodes.
+          Note: All daemons involved in the upgrade will be restarted automatically.
+
+       3. Upgrade the software on the diskservers.
+          Note: All daemons involved in the upgrade will be restarted automatically.
+
+       4. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-4/testsuite
+
+       5. Congratulations you have successfully upgraded to the 2.1.14-4 release
+          of CASTOR.
+
+    Central services (CUPV, VMGR, VDQM, Nameserver)
+    -----------------------------------------------
+
+      The upgrade of the central databases to 2.1.14-4 can be performed online while
+      the system is running.
+
+      Instructions
+      ------------
+
+       1. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-4/dbupgrades
+
+       2. Update the software to use the 2.1.14-4 RPMs. Note: All
+          daemons involved in the upgrade will be restarted automatically.
+
+       3. Upgrade complete.
 
 
 ------------

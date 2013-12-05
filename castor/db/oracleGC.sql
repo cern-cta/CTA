@@ -418,6 +418,9 @@ BEGIN
     FOR cf IN (SELECT cfId, dcId
                  FROM filesDeletedProcHelper
                 ORDER BY cfId ASC) LOOP
+      DECLARE
+        CONSTRAINT_VIOLATED EXCEPTION;
+        PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
       BEGIN
         -- Get data and lock the castorFile
         SELECT fileId, nsHost, fileClass
@@ -476,6 +479,15 @@ BEGIN
         -- There is thus no way to find out whether to remove the
         -- file from the nameserver. For safety, we thus keep it
         NULL;
+      WHEN CONSTRAINT_VIOLATED THEN
+        IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DISK2DISKCOPYJOB_CASTORFILE) violated%' THEN
+          -- Ignore the deletion, probably some draining/rebalancing activity created a Disk2DiskCopyJob entity
+          -- while we were attempting to drop the CastorFile
+          NULL;
+        ELSE
+          -- Any other constraint violation is an error
+          RAISE;
+        END IF;
       END;
     END LOOP;
   END IF;

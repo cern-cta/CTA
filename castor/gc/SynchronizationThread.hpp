@@ -76,7 +76,6 @@ namespace castor {
 
       /**
        * Read config file values
-       * @param syncInterval a pointer to the synchronization interval value
        * @param chunkInterval a pointer to the chunk interval value
        * @param chunkSize a pointer to the chunk size value
        * @param disableStagerSync a pointer to the boolean commanding disabling
@@ -84,8 +83,7 @@ namespace castor {
        * @param firstTime whether this is a first call. used only for logging
        * purposes
        */
-      void readConfigFile(unsigned int *syncInterval,
-			  unsigned int *chunkInterval,
+      void readConfigFile(unsigned int *chunkInterval,
                           unsigned int *chunkSize,
                           bool *disableStagerSync,
                           bool firstTime = false)

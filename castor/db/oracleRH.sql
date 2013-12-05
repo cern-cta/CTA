@@ -182,22 +182,22 @@ BEGIN
     -- insert the subrequest
     INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, status, request, getNextStatus, reqType)
     VALUES (0, srFileNames(i), srProtocols(i), srXsizes(i), 0, NULL, srFlags(i), srModeBits(i), creationTime, creationTime, 0, 0, '', NULL, svcHandler, subreqId, NULL, NULL, dconst.SUBREQUEST_START, reqId, 0, inReqType);
-    -- send an alert to accelerate the processing of the request
-    CASE
-    WHEN inReqType = 35 OR   -- StageGetRequest
-         inReqType = 40 OR   -- StagePutRequest
-         inReqType = 44 THEN -- StageUpdateRequest
-      DBMS_ALERT.SIGNAL('wakeUpJobReqSvc', '');
-    WHEN inReqType = 36 OR   -- StagePrepareToGetRequest
-         inReqType = 37 OR   -- StagePrepareToPutRequest
-         inReqType = 38 THEN -- StagePrepareToUpdateRequest
-      DBMS_ALERT.SIGNAL('wakeUpPrepReqSvc', '');
-    WHEN inReqType = 42 OR   -- StageRmRequest
-         inReqType = 39 OR   -- StagePutDoneRequest
-         inReqType = 95 THEN -- SetFileGCWeight
-      DBMS_ALERT.SIGNAL('wakeUpStageReqSvc', '');
-    END CASE;
   END LOOP;
+  -- send one single alert to accelerate the processing of the request
+  CASE
+  WHEN inReqType = 35 OR   -- StageGetRequest
+       inReqType = 40 OR   -- StagePutRequest
+       inReqType = 44 THEN -- StageUpdateRequest
+    DBMS_ALERT.SIGNAL('wakeUpJobReqSvc', '');
+  WHEN inReqType = 36 OR   -- StagePrepareToGetRequest
+       inReqType = 37 OR   -- StagePrepareToPutRequest
+       inReqType = 38 THEN -- StagePrepareToUpdateRequest
+    DBMS_ALERT.SIGNAL('wakeUpPrepReqSvc', '');
+  WHEN inReqType = 42 OR   -- StageRmRequest
+       inReqType = 39 OR   -- StagePutDoneRequest
+       inReqType = 95 THEN -- SetFileGCWeight
+    DBMS_ALERT.SIGNAL('wakeUpStageReqSvc', '');
+  END CASE;
 END;
 /
 

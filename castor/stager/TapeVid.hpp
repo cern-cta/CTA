@@ -40,17 +40,17 @@ namespace castor {
       /**
        * Constructor
        */
-      TapeVid(char* vid) : m_vid(vid){};
+      TapeVid(const char *const vid) : m_vid(vid){};
 
       /**
        * getter
        */
-      char* vid() { return m_vid; };
+      const char* vid() const { return m_vid; };
 
     private:
 
       /// The VID
-      char* m_vid;
+      const char* m_vid;
 
     };
 

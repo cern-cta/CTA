@@ -26,7 +26,6 @@ int Ctape_position(char *path,
                    int filstat,
                    char *fid,
                    char *fsid,
-                   char *recfm,
                    int blksize,
                    int lrecl,
                    int retentd,
@@ -129,11 +128,7 @@ int Ctape_position(char *path,
 	} else {
 		marshall_STRING (sbp, "");
 	}
-	if (recfm) {
-		marshall_STRING (sbp, recfm);
-	} else {
-		marshall_STRING (sbp, "");
-	}
+	marshall_STRING (sbp, "F"); /* recfm is no longer used */
 	marshall_LONG (sbp, blksize);
 	marshall_LONG (sbp, lrecl);
 	marshall_WORD (sbp, retentd);
