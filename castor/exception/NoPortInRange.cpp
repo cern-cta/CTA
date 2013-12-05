@@ -32,7 +32,7 @@
 castor::exception::NoPortInRange::NoPortInRange(
   const unsigned short lowPort,
   const unsigned short highPort) throw() :
-  exception::Exception(SENOPORTINRANGE),
+  castor::exception::Exception(SENOPORTINRANGE),
   m_lowPort(lowPort),
   m_highPort(highPort)  {
 

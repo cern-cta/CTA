@@ -22,7 +22,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/utils/SmartFILEPtr.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/Services.hpp"
 #include "h/Castor_limits.h"
@@ -41,13 +40,9 @@ int jid = 0;
 extern "C" char devtype[CA_MAXDVTLEN+1];
 char devtype[CA_MAXDVTLEN+1] = "DEVTYPE";
 
-int main() {
+static int exceptionThrowingMain() {
   char rtcpLogErrTxt[1024];
   rtcp_InitLog(rtcpLogErrTxt,NULL,stderr,NULL);
-
-  castor::tape::utils::SmartFILEPtr stdinFd(stdin);
-  castor::tape::utils::SmartFILEPtr stdoutFd(stdout);
-  castor::tape::utils::SmartFILEPtr stderrFd(stderr);
 
   CppUnit::TextUi::TestRunner runner;
   CppUnit::TestFactoryRegistry &registry =
@@ -59,4 +54,16 @@ int main() {
   delete castor::BaseObject::services();
 
   return runnerRc == 0 ? 1 : 0;
+}
+
+int main() {
+  try {
+    const int rc = exceptionThrowingMain();
+    fclose(stdin);
+    fclose(stdout);
+    fclose(stderr);
+    return rc;
+  } catch(...) {
+    return 1;
+  }
 }

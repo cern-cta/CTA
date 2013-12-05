@@ -140,13 +140,13 @@ int rtcpd_tpdump(rtcpClientInfo_t *client, tape_list_t *tape) {
     fl->tape_fsec = 1;
     filereq->check_fid = CHECK_FILE;
     *filereq->fid = '\0';
-    strcpy(filereq->recfm,"U");
+    strcpy(filereq->recfm_noLongerUsed,"F");
     filereq->blocksize = 0;
     filereq->recordlength = 0;
     filereq->retention = 0;
     filereq->tp_err_action = 0;
     filereq->concat = NOCONCAT;
-    filereq->convert = tape->dumpreq.convert;
+    filereq->convert_noLongerUsed = 4; /* 4 = ASCCONV */
     filereq->err.severity = RTCP_OK;
 
     /*

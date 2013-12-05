@@ -28,8 +28,8 @@ cmake_minimum_required (VERSION 2.6)
 set(RTCPD_SRC_FILES rtcpd.c rtcp_CallVMGR.c rtcp_CheckReq.c rtcp_Listen.c
   rtcp_SendRecv.c rtcp_log.c rtcpd_ClientListen.c rtcpd_Ctape.c rtcpd_Disk.c
   rtcpd_MainCntl.c rtcpd_SelfMonitor.c rtcpd_Tape.c rtcpd_TapeIO.c
-  rtcp_InitNW.c rtcpd_ConvertData.c rtcpc_BuildReq.c rtcpapi.c
-  rtcp_RetvalSHIFT.c rtcpd_tpdump.c rtcp_recvRtcpHdr.c 
+  rtcp_InitNW.c rtcpc_BuildReq.c rtcpapi.c
+  rtcpd_tpdump.c rtcp_recvRtcpHdr.c 
   rtcp_marshallVdqmClientInfoMsg.c rtcpd_SendAckToVdqmOrTapeBridge.c 
   rtcpd_GetClientInfoMsg.c rtcpd_GetClientInfo.c rtcp_tellClient.c
   rtcpdIsConfiguredToReuseMount.c)

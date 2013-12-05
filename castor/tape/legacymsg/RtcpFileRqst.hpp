@@ -43,7 +43,7 @@ namespace legacymsg {
   struct RtcpFileRqst {
     char filePath[CA_MAXPATHLEN+1];  // Disk file path
     char tapePath[CA_MAXPATHLEN+1];  // Tape device file
-    char recfm[CA_MAXRECFMLEN+1];                            
+    char recfm_noLongerUsed[CA_MAXRECFMLEN+1];                            
     char fid[CA_MAXFIDLEN+1];        // Tape file ID
     char ifce[5];                    // Network interface name
     char stageId[CA_MAXSTGRIDLEN+1]; // Stage request ID
@@ -64,7 +64,7 @@ namespace legacymsg {
     // Flags
     int32_t  rtcpErrAction; // SKIPBAD or KEEPFILE
     int32_t  tpErrAction;   // NOTRLCHK and IGNOREEOI
-    int32_t  convert;       // EBCCONV, FIXVAR
+    int32_t  convert_noLongerUsed;       // EBCCONV, FIXVAR
     int32_t  checkFid;      // CHECK_FILE, NEW_FILE
     uint32_t concat;        // CONCAT, CONCAT_TO_EOD, NOCONCAT or NOCONCAT_TO_EOD
 

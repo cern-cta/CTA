@@ -46,6 +46,12 @@ namespace castor {
        */
       Communication(std::string requestId,
                     int errorCode);
+      
+      /**
+        * Empty Destructor, explicitely non-throwing (needed for std::exception
+        * inheritance)
+        */
+      virtual ~Communication() throw () {}
 
       std::string getRequestId();
 

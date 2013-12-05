@@ -120,16 +120,16 @@ hat, and the detail per protocol is then given under the other hats
 .ft CW
 
 listtransfers
-                          TRANSFERID     USER STAT  TYPE    POOL             SCHEDULER         DISKSERVER     SUBMIT_TIME      START_TIME
------------------------------------------------------------------------------------------------------------------------------------------
-9eab0dae-c416-6b2d-e040-8a8949a14534 sponcec3 RUN  rfio3 default lxcastordev01.cern.ch lxc2disk01.cern.ch Mar 17 10:37:11 Mar 17 10:37:11   
-9eab0dae-c417-6b2d-e040-8a8949a14534 sponcec3 PEND rfio3 default lxcastordev01.cern.ch lxc2disk01.cern.ch Mar 17 10:37:12               -   
--                                    stage    TAPE migr  default                     - lxc2disk01.cern.ch Mar 17 10:39:24 Mar 17 10:39:24   
+                          TRANSFERID     USER STAT  TYPE        POOL             SCHEDULER         DISKSERVER     SUBMIT_TIME      START_TIME
+---------------------------------------------------------------------------------------------------------------------------------------------
+9eab0dae-c416-6b2d-e040-8a8949a14534 sponcec3 RUN  rfio3     default lxcastordev01.cern.ch lxc2disk01.cern.ch Mar 17 10:37:11 Mar 17 10:37:11   
+9eab0dae-c417-6b2d-e040-8a8949a14534 sponcec3 PEND rfio3     default lxcastordev01.cern.ch lxc2disk01.cern.ch Mar 17 10:37:12               -   
+-                                    stage    TAPE migr-user default                     - lxc2disk01.cern.ch Mar 17 10:39:24 Mar 17 10:39:24   
 
 listtransfers -u stage
-                          TRANSFERID     USER STAT  TYPE    POOL             SCHEDULER         DISKSERVER     SUBMIT_TIME      START_TIME
------------------------------------------------------------------------------------------------------------------------------------------
--                                       stage TAPE  migr default                     - lxc2disk01.cern.ch Mar 17 10:39:24 Mar 17 10:39:24   
+                          TRANSFERID     USER STAT TYPE         POOL             SCHEDULER         DISKSERVER     SUBMIT_TIME      START_TIME
+---------------------------------------------------------------------------------------------------------------------------------------------
+-                                       stage TAPE migr-user default                     - lxc2disk01.cern.ch Mar 17 10:39:24 Mar 17 10:39:24   
 
 listtransfers -s
 DISKSERVER                  NBSLOTS NBTPEND NBSPEND NBTRUN  NBSRUN

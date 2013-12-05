@@ -4216,13 +4216,17 @@ void *consume_thread(int *ptr)
 void wait_consumer_thread(int cid)
 {
   log(LOG_DEBUG,"Entering wait_consumer_thread\n");
+  /* if no write error */
   /* Indicate to the consumer thread that an error has occured */
   /* The consumer thread will then terminate */
-  Csemaphore_down(&empty);
-  array[produced % daemonv3_wrmt_nbuf].len = -1;
-  produced++;
-  Csemaphore_up(&full);
-
+  /* In case of write_error, the consumer thread has already exited */
+  /* and waiting on empty64 could lead to a dead lock */
+  if (!write_error) {
+    Csemaphore_down(&empty);
+    array[produced % daemonv3_wrmt_nbuf].len = -1;
+    produced++;
+    Csemaphore_up(&full);
+  }
   log(LOG_INFO,"Joining thread\n");
   log(LOG_DEBUG,"Joining consumer thread after error in main thread\n");
   if (Cthread_join(cid,NULL) < 0)

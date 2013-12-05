@@ -1103,7 +1103,6 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
       firstFileToMigrate->path().c_str(),
       firstFileToMigrate->fileSize(),
       "",
-      RECORDFORMAT,
       migrationTapeFileId,
       RTCOPYCONSERVATIVEUMASK,
       (int32_t)firstFileToMigrate->positionCommandCode(),
@@ -1198,7 +1197,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::startDumpSession()
   legacymsg::RtcpDumpTapeRqstMsgBody request;
   request.maxBytes      = dumpParameters->maxBytes();
   request.blockSize     = dumpParameters->blockSize();
-  request.convert       = dumpParameters->converter();
+  request.convert_noLongerUsed = 4; /* 4 = ASCCONV */
   request.tapeErrAction = dumpParameters->errAction();
   request.startFile     = dumpParameters->startFile();
   request.maxFiles      = dumpParameters->maxFile();
@@ -1238,14 +1237,13 @@ void castor::tape::tapebridge::BridgeProtocolEngine::endRtcpdSession() throw() {
           ": Unknown VolumeMode"
           ": Actual=" << m_volume.mode());
       }
-
+    } catch(castor::exception::Exception &ex) {
+      // Simply rethrow as there is no need to convert exception type
+      throw ex;
     } catch(std::exception &se) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught a std::exception"
         ": what=" << se.what());
-    } catch(castor::exception::Exception &ex) {
-      // Simply rethrow as there is no need to convert exception type
-      throw ex;
     } catch(...) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught an unknown exception");
@@ -1909,7 +1907,6 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToRecallToRtcpd(
       fileToRecall.path.c_str(),
       fileSize,
       rtcpdReqTapePath.c_str(),
-      RECORDFORMAT,
       tapeFileId,
       (uint32_t)fileToRecall.umask,
       fileToRecall.positionMethod,
@@ -3051,7 +3048,6 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToMigrateToRtcpd(
       fileToMigrate.path.c_str(),
       fileToMigrate.fileSize,
       "",
-      RECORDFORMAT,
       migrationTapeFileId,
       RTCOPYCONSERVATIVEUMASK,
       fileToMigrate.positionMethod,
@@ -3513,13 +3509,15 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
             ": Actual=" << m_volume.mode());
         }
       }
+    } catch(castor::exception::Exception &ex) {
+      // Simply rethrow as there is no need to convert exception type
+      // this is safe, as the next catch block will not intercept this
+      // also-std::exception-exception
+      throw ex;
     } catch(std::exception &se) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught a std::exception"
         ": what=" << se.what());
-    } catch(castor::exception::Exception &ex) {
-      // Simply rethrow as there is no need to convert exception type
-      throw ex;
     } catch(...) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught an unknown exception");
@@ -3725,13 +3723,13 @@ void castor::tape::tapebridge::BridgeProtocolEngine::notifyClientEndOfSession()
           m_tapebridgeTransactionCounter.next();
         m_clientProxy.notifyEndOfSession(tapebridgeTransId);
       }
+    } catch(castor::exception::Exception &ex) {
+      // Add some context information and rethrow exception
+      TAPE_THROW_CODE(ex.code(), ": " << ex.getMessage().str());
     } catch(std::exception &se) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught a std::exception"
         ": what=" << se.what());
-    } catch(castor::exception::Exception &ex) {
-      // Add some context information and rethrow exception
-      TAPE_THROW_CODE(ex.code(), ": " << ex.getMessage().str());
     } catch(...) {
       TAPE_THROW_EX(castor::exception::Internal,
         ": Caught an unknown exception");

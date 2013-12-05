@@ -620,7 +620,6 @@ int rtcpd_Position(tape_list_t *tape,
     rtcpTapeRequest_t *tapereq;
 
     if ( tape == NULL || file == NULL ||
-         !VALID_CONVERT(&file->filereq) ||
          !VALID_CONCAT(&file->filereq) ) {
         serrno = EINVAL;
         return(-1);
@@ -689,7 +688,7 @@ int rtcpd_Position(tape_list_t *tape,
      */
     strcpy(tape_path,filereq->tape_path);
     while (do_retry) {
-        rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position(%s,0x%x,%d,%d,%d:%d:%d:%d,%d,%d,0x%x,%s,%s,%s,%d,%d,%d,0x%x)\n",
+        rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position(%s,0x%x,%d,%d,%d:%d:%d:%d,%d,%d,0x%x,%s,%s,%d,%d,%d,0x%x)\n",
                  filereq->tape_path,
                  filereq->position_method,
                  filereq->tape_fseq,
@@ -701,7 +700,6 @@ int rtcpd_Position(tape_list_t *tape,
                  filereq->check_fid,
                  filereq->fid,
                  tapereq->vsn,
-                 filereq->recfm,
                  filereq->blocksize,
                  filereq->recordlength,
                  filereq->retention,flags);
@@ -710,7 +708,7 @@ int rtcpd_Position(tape_list_t *tape,
                 sprintf( __position_method, "0x%x", filereq->position_method );
                 sprintf( __check_fid, "0x%x", filereq->check_fid );
                 sprintf( __flags, "0x%x", flags );
-                tl_rtcpd.tl_log( &tl_rtcpd, 11, 20,
+                tl_rtcpd.tl_log( &tl_rtcpd, 11, 19,
                                  "func"           , TL_MSG_PARAM_STR, "rtcpd_Position",
                                  "Message"        , TL_MSG_PARAM_STR, "Ctape_position",
                                  "Tape Path"      , TL_MSG_PARAM_STR, filereq->tape_path,
@@ -726,7 +724,6 @@ int rtcpd_Position(tape_list_t *tape,
                                  "Check FID"      , TL_MSG_PARAM_STR, __check_fid,
                                  "fid"            , TL_MSG_PARAM_STR, filereq->fid,
                                  "vsn"            , TL_MSG_PARAM_STR, tapereq->vsn,
-                                 "recfm"          , TL_MSG_PARAM_STR, filereq->recfm,
                                  "blocksize"      , TL_MSG_PARAM_INT, filereq->blocksize,
                                  "record length"  , TL_MSG_PARAM_INT, filereq->recordlength,
                                  "retention"      , TL_MSG_PARAM_INT, filereq->retention,
@@ -745,7 +742,6 @@ int rtcpd_Position(tape_list_t *tape,
                             filereq->check_fid,
                             filereq->fid,
                             tapereq->vsn,
-                            filereq->recfm,
                             filereq->blocksize,
                             filereq->recordlength,
                             filereq->retention,
@@ -916,7 +912,6 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
     char unit[CA_MAXUNMLEN+1];
-    char recfm[CA_MAXRECFMLEN+1];
 
     if ( tape == NULL || file == NULL ) {
         serrno = EINVAL;
@@ -938,7 +933,6 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
                      "fsec"     , TL_MSG_PARAM_INT  , file->tape_fsec,
                      "TPVID"    , TL_MSG_PARAM_TPVID, tapereq->vid );
 
-    *recfm = '\0';
     rtcpd_ResetCtapeError();
     rc = Ctape_info( filereq->tape_path,
                     &filereq->blocksize,
@@ -948,8 +942,7 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
                      unit,
                      filereq->fid,
                     &filereq->tape_fseq,
-                    &filereq->recordlength,
-                     recfm);
+                    &filereq->recordlength);
     filereq->cprc = rc;
     save_serrno = serrno;
     if ( rc == -1 ) {
@@ -1002,18 +995,13 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
         rtcpd_SetReqStatus(NULL,file,SEINTERNAL,RTCP_FAILED | RTCP_UNERR);
         rc = -1;
     }
-    /*
-     * Only set recfm if user didn't specify it.
-     */
-    if ( *filereq->recfm == '\0' ) strcpy(filereq->recfm,recfm);
-    if ( *filereq->recfm == '\0' ) strcpy(filereq->recfm,"U");
     if ( rc == 0 ) {
-        rtcp_log(LOG_DEBUG,"rtcpd_Info(%s) returned vid=%s, fseq=%d, fsec=%d, unit=%s, blocksize=%d, recordlength=%d, recfm=%s, blockid=%d:%d:%d:%d\n",
+        rtcp_log(LOG_DEBUG,"rtcpd_Info(%s) returned vid=%s, fseq=%d, fsec=%d, unit=%s, blocksize=%d, recordlength=%d, blockid=%d:%d:%d:%d\n",
                  filereq->tape_path,tapereq->vid,filereq->tape_fseq,
                  file->tape_fsec,unit,filereq->blocksize,filereq->recordlength,
-                 recfm,(int)filereq->blockid[0],(int)filereq->blockid[1],
+                 (int)filereq->blockid[0],(int)filereq->blockid[1],
                  (int)filereq->blockid[2],(int)filereq->blockid[3]);
-        tl_rtcpd.tl_log( &tl_rtcpd, 11, 15,
+        tl_rtcpd.tl_log( &tl_rtcpd, 11, 14,
                          "func"         , TL_MSG_PARAM_STR  , "rtcpd_Info",
                          "Message"      , TL_MSG_PARAM_STR  , "returned",
                          "Tape Path"    , TL_MSG_PARAM_STR  , filereq->tape_path, 
@@ -1023,7 +1011,6 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
                          "unit"         , TL_MSG_PARAM_STR  , unit,
                          "block size"   , TL_MSG_PARAM_INT  , filereq->blocksize,
                          "record length", TL_MSG_PARAM_INT  , filereq->recordlength,
-                         "recfm"        , TL_MSG_PARAM_STR  , recfm,
                          "block 0"      , TL_MSG_PARAM_INT  , (int)filereq->blockid[0],
                          "block 1"      , TL_MSG_PARAM_INT  , (int)filereq->blockid[1],
                          "block 2"      , TL_MSG_PARAM_INT  , (int)filereq->blockid[2],
@@ -1114,22 +1101,19 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
 }
 
 int rtcpd_DmpInit(tape_list_t *tape) {
-    int rc, code, save_serrno;
+    int rc, save_serrno;
 
     if ( tape == NULL || tape->file == NULL ) {
         serrno = EINVAL;
         return(-1);
     }
 
-    if ( tape->dumpreq.convert == EBCCONV ) code = DMP_EBC;
-    else code = DMP_ASC;
-
     rtcp_log(LOG_DEBUG,"rtcpd_DmpInit() called\n");
     tl_rtcpd.tl_log( &tl_rtcpd, 11, 2,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_DmpInit",
                      "Message", TL_MSG_PARAM_STR, "called" );
 
-    rtcp_log(LOG_DEBUG,"Ctape_dmpinit(%s,%s,%s,%s,%s,%d,%d,%d,%d,%d,%d,%d,%d)\n",
+    rtcp_log(LOG_DEBUG,"Ctape_dmpinit(%s,%s,%s,%s,%s,%d,%d,%d,%d,%d,%d,%d)\n",
              tape->file->filereq.tape_path,
              tape->tapereq.vid,
              tape->tapereq.density,
@@ -1141,9 +1125,8 @@ int rtcpd_DmpInit(tape_list_t *tape) {
              tape->dumpreq.maxbyte,
              tape->dumpreq.startfile,
              tape->dumpreq.maxfile,
-             code,
              tape->dumpreq.tp_err_action);
-    tl_rtcpd.tl_log( &tl_rtcpd, 11, 15,
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 14,
                      "func"      , TL_MSG_PARAM_STR  , "rtcpd_DmpInit",
                      "Tape Path" , TL_MSG_PARAM_STR  , tape->file->filereq.tape_path,
                      "VID"       , TL_MSG_PARAM_STR  , tape->tapereq.vid,
@@ -1156,7 +1139,6 @@ int rtcpd_DmpInit(tape_list_t *tape) {
                      "Max byte"  , TL_MSG_PARAM_INT  , tape->dumpreq.maxbyte,
                      "Start file", TL_MSG_PARAM_INT  , tape->dumpreq.startfile,
                      "Max file"  , TL_MSG_PARAM_INT  , tape->dumpreq.maxfile,
-                     "Code"      , TL_MSG_PARAM_INT  , code,
                      "Err action", TL_MSG_PARAM_INT  , tape->dumpreq.tp_err_action,
                      "TPVID"     , TL_MSG_PARAM_TPVID, tape->tapereq.vid );
 
@@ -1171,7 +1153,6 @@ int rtcpd_DmpInit(tape_list_t *tape) {
                        tape->dumpreq.maxbyte,
                        tape->dumpreq.startfile,
                        tape->dumpreq.maxfile,
-                       code,
                        tape->dumpreq.tp_err_action);
 
     save_serrno = serrno;
@@ -1207,7 +1188,7 @@ int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file, char * tape_path) {
 
     memset(&filereq,'\0',sizeof(filereq));
 
-    rtcp_log(LOG_DEBUG,"call Ctape_dmpfil(%s,%s,%d,%s,%d,%d,%d,%s,%d)\n",
+    rtcp_log(LOG_DEBUG,"call Ctape_dmpfil(%s,%s,%d,%s,%d,%d,%d,%d)\n",
              tape_path,
              tape->tapereq.label,
              filereq.blocksize,
@@ -1215,9 +1196,8 @@ int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file, char * tape_path) {
              tape->file->tape_fsec,
              filereq.tape_fseq,
              filereq.recordlength,
-             filereq.recfm,
              (int)filereq.maxsize);
-    tl_rtcpd.tl_log( &tl_rtcpd, 11, 11,
+    tl_rtcpd.tl_log( &tl_rtcpd, 11, 10,
                      "func"         , TL_MSG_PARAM_STR, "rtcpd_DmpFile",
                      "Message"      , TL_MSG_PARAM_STR, "call Ctape_dmpfil",
                      "Tape path"    , TL_MSG_PARAM_STR, tape_path,
@@ -1227,7 +1207,6 @@ int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file, char * tape_path) {
                      "fsec"         , TL_MSG_PARAM_INT, tape->file->tape_fsec,
                      "fseq"         , TL_MSG_PARAM_INT, filereq.tape_fseq,
                      "Record length", TL_MSG_PARAM_INT, filereq.recordlength,
-                     "recfm"        , TL_MSG_PARAM_STR, filereq.recfm,
                      "Max size"     , TL_MSG_PARAM_INT, (int)filereq.maxsize );
     
     rc = Ctape_dmpfil(tape_path,
@@ -1237,10 +1216,9 @@ int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file, char * tape_path) {
                       &(tape->file->tape_fsec),
                       &filereq.tape_fseq,
                       &filereq.recordlength,
-                      filereq.recfm,
                       &filereq.maxsize);
 
-   rtcp_log(LOG_DEBUG,"returned Ctape_dmpfil(%s,%s,%d,%s,%d,%d,%d,%s,%d)\n",
+   rtcp_log(LOG_DEBUG,"returned Ctape_dmpfil(%s,%s,%d,%s,%d,%d,%d,%d)\n",
             tape_path,
             tape->tapereq.label,
             filereq.blocksize,
@@ -1248,9 +1226,8 @@ int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file, char * tape_path) {
             tape->file->tape_fsec,
             filereq.tape_fseq,
             filereq.recordlength,
-            filereq.recfm,
             (int)filereq.maxsize);
-   tl_rtcpd.tl_log( &tl_rtcpd, 11, 11,
+   tl_rtcpd.tl_log( &tl_rtcpd, 11, 10,
                     "func"         , TL_MSG_PARAM_STR, "rtcpd_DmpFile",
                     "Message"      , TL_MSG_PARAM_STR, "returned Ctape_dmpfil",
                     "Tape path"    , TL_MSG_PARAM_STR, tape_path,
@@ -1260,7 +1237,6 @@ int rtcpd_DmpFile(tape_list_t *tape, file_list_t *file, char * tape_path) {
                     "fsec"         , TL_MSG_PARAM_INT, tape->file->tape_fsec,
                     "fseq"         , TL_MSG_PARAM_INT, filereq.tape_fseq,
                     "Record length", TL_MSG_PARAM_INT, filereq.recordlength,
-                    "recfm"        , TL_MSG_PARAM_STR, filereq.recfm,
                     "Max size"     , TL_MSG_PARAM_INT, (int)filereq.maxsize );
 
      save_serrno = serrno;

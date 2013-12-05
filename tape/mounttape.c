@@ -763,7 +763,7 @@ mounted:
 			const int blksize = DEFAULTMIGRATIONBLOCKSIZE;
 			buildhdrlbl(hdr1, hdr2,
 				"PRELABEL", vsn, 1, 1, 0,
-				"U", blksize, 0, den, lblcode);
+				'U', blksize, 0, den, lblcode);
 			if ((c = writelbl (tapefd, path, hdr1)) < 0)
 				goto reply;
 			if (prelabel > 1) {

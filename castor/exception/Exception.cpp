@@ -50,6 +50,16 @@ castor::exception::Exception& castor::exception::Exception::operator=(castor::ex
 }
 
 //------------------------------------------------------------------------------
+// what operator
+//------------------------------------------------------------------------------
+const char * castor::exception::Exception::what() {
+  m_what = getMessage().str();
+  m_what += "\n";
+  m_what += (std::string) m_backtrace;
+  return m_what.c_str();
+}
+
+//------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::exception::Exception::~Exception() {}
+castor::exception::Exception::~Exception() throw()  {}

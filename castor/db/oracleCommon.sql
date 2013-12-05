@@ -73,6 +73,8 @@ CREATE OR REPLACE FUNCTION getFileClassName(fileClassId NUMBER) RETURN VARCHAR2 
 BEGIN
   SELECT name INTO varFileClassName FROM FileClass WHERE id = fileClassId;
   RETURN varFileClassName;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  RETURN 'Unknown(' || fileClassId || ')';
 END;
 /
 
@@ -82,6 +84,8 @@ CREATE OR REPLACE FUNCTION getSvcClassName(svcClassId NUMBER) RETURN VARCHAR2 IS
 BEGIN
   SELECT name INTO varSvcClassName FROM SvcClass WHERE id = svcClassId;
   RETURN varSvcClassName;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  RETURN 'Unknown(' || svcClassId || ')';
 END;
 /
 
@@ -168,6 +172,47 @@ BEGIN
     EXIT WHEN ret = buf;
   END LOOP;
   RETURN ret;
+END;
+/
+
+/* parse a path to give back the FileSystem and path */
+CREATE OR REPLACE PROCEDURE parsePath(inFullPath IN VARCHAR2,
+                                      outFileSystem OUT INTEGER,
+                                      outPath OUT VARCHAR2,
+                                      outDcId OUT INTEGER,
+                                      outFileId OUT INTEGER,
+                                      outNsHost OUT VARCHAR2) AS
+  varPathPos INTEGER;
+  varLastDotPos INTEGER;
+  varLastSlashPos INTEGER;
+  varAtPos INTEGER;
+  varColonPos INTEGER;
+  varDiskServerName VARCHAR2(2048);
+  varMountPoint VARCHAR2(2048);
+BEGIN
+  -- path starts after the second '/' from the end
+  varPathPos := INSTR(inFullPath, '/', -1, 2);
+  outPath := SUBSTR(inFullPath, varPathPos+1);
+  -- DcId is the part after the last '.'
+  varLastDotPos := INSTR(inFullPath, '.', -1, 1);
+  outDcId := TO_NUMBER(SUBSTR(inFullPath, varLastDotPos+1));
+  -- the mountPoint is between the ':' and the start of the path
+  varColonPos := INSTR(inFullPath, ':', 1, 1);
+  varMountPoint := SUBSTR(inFullPath, varColonPos+1, varPathPos-varColonPos);
+  -- the diskserver is before the ':
+  varDiskServerName := SUBSTR(inFullPath, 1, varColonPos-1);
+  -- the fileid is between last / and '@'
+  varLastSlashPos := INSTR(inFullPath, '/', -1, 1);
+  varAtPos := INSTR(inFullPath, '@', 1, 1);
+  outFileId := TO_NUMBER(SUBSTR(inFullPath, varLastSlashPos+1, varAtPos-varLastSlashPos-1));
+  -- the nsHost is between '@' and last '.'
+  outNsHost := SUBSTR(inFullPath, varAtPos+1, varLastDotPos-varAtPos-1);
+  -- find out the filesystem Id
+  SELECT FileSystem.id INTO outFileSystem
+    FROM DiskServer, FileSystem
+   WHERE DiskServer.name = varDiskServerName
+     AND FileSystem.diskServer = DiskServer.id
+     AND FileSystem.mountPoint = varMountPoint;
 END;
 /
 

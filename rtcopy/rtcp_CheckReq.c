@@ -132,13 +132,6 @@ static int rtcp_CheckTapeReq(tape_list_t *tape) {
         }
 
         if ( dumpreq->tp_err_action < 0 ) dumpreq->tp_err_action = 0;
-        if ( dumpreq->convert < 0 ) dumpreq->convert = EBCCONV;
-        if ( !VALID_CONVERT(dumpreq) ) {
-            serrno = EINVAL;
-            sprintf(errmsgtxt,"INVALID CONVERSION SPECIFIED\n");
-            SET_REQUEST_ERR(tapereq,RTCP_USERR | RTCP_FAILED);
-            if ( rc == -1 ) return(rc);
-        }
     }
 
     return(rc);
@@ -222,19 +215,6 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     if ( !VALID_ERRACT(filereq) ) {
         serrno = EINVAL;
         sprintf(errmsgtxt,"INVALID ERROR ACTION SPECIFIED\n");
-        SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
-        if ( rc == -1 ) return(rc);
-    }
-
-    /*
-     * Record conversion
-     */
-    DEBUG_CHKFILE(convert);
-    if ( filereq->convert == -1 ) filereq->convert = ASCCONV;
-    if ( (filereq->convert & EBCCONV) == 0 ) filereq->convert |= ASCCONV;
-    if ( !VALID_CONVERT(filereq) ) {
-        serrno = EINVAL;
-        sprintf(errmsgtxt,"INVALID CONVERSION SPECIFIED\n");
         SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
@@ -384,33 +364,6 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         SET_REQUEST_ERR(filereq, RTCP_USERR | RTCP_FAILED);
         if ( rc == -1 ) return(rc);
     }
-
-    /*
-     * Record format.
-     */
-    DEBUG_CHKFILE(recfm);
-    if ( *filereq->recfm != '\0' &&
-         strcmp(filereq->recfm,"F") != 0 &&
-         strcmp(filereq->recfm,"FB") != 0 &&
-         strcmp(filereq->recfm,"FBS") != 0 &&
-         strcmp(filereq->recfm,"FS") != 0 &&
-         strcmp(filereq->recfm,"U") != 0 ) {
-        serrno = EINVAL;
-        sprintf(errmsgtxt,RT130,CMD(mode));
-        SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
-        if ( rc == -1 ) return(rc);
-    }
-
-    /*
-     * F,-f77 format is valid for tape read mode only! 
-     */
-    if ( (mode == WRITE_ENABLE) && (*filereq->recfm == 'F') && 
-         ((filereq->convert & NOF77CW) != 0) ) {
-        serrno = EINVAL;
-        sprintf(errmsgtxt,"NOF77CW for F format is not valid for tape write\n");
-        SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
-        if ( rc == -1 ) return(rc);
-    } 
 
     /*
      * Blocksize and record length

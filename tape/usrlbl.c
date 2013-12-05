@@ -48,8 +48,22 @@ int checkeofeov (int	tapefd,
 		serrno = ETLBL;
 		return (-1);
 	}
-	if ((c = skiptpfb (tapefd, path, 1)) < 0) return (c);
-	if ((c = skiptpff (tapefd, path, 1)) < 0) return (c);
+
+	/********************************************************************/
+	/* IMPORTANT  - S. Murray 12 Nov 2013                               */
+	/*                                                                  */
+	/* There is no need to read to the end of the trailer file because  */
+	/* posittape() will call skiptpff (tapefd, path, 1) before trying   */
+	/* to read the the header labels of the next file.                  */
+	/*                                                                  */
+	/* A prevous version of this code did the following two actions     */
+	/* which were not needed and in some cases caused a delay of 3      */
+	/* seconds due to the drive coping with skipping backwards and then */
+	/* skipping forwards.                                               */
+	/*     if ((c = skiptpfb (tapefd, path, 1)) < 0) return (c);        */
+	/*     if ((c = skiptpff (tapefd, path, 1)) < 0) return (c);        */
+	/********************************************************************/
+
 	return (0);
 }
 

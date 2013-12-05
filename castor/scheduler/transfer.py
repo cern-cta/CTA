@@ -46,6 +46,15 @@ class TransferType(object):
       return 'd2ddest'
     else:
       return 'UNKNOWN'
+  @staticmethod
+  def toPreciseStr(transfer):
+    '''prints a readable version of the transfer type of a transfer, with details'''
+    if transfer.transferType == TransferType.STD:
+      return transfer.protocol
+    elif transfer.transferType in (TransferType.D2DSRC, TransferType.D2DDST):
+      return TransferType.toStr(transfer.transferType) + '-' + D2DTransferType.toStr(transfer.replicationType)
+    else:
+      return 'UNKNOWN'
 
 
 class TapeTransferType(object):
@@ -71,6 +80,7 @@ class D2DTransferType(object):
   USER = 0
   INTERNAL = 1
   DRAINING = 2
+  REBALANCE = 3
   def __init__(self):
     '''empty constructor, raises an exception'''
     raise NotImplementedError
@@ -83,6 +93,8 @@ class D2DTransferType(object):
       return 'internal'
     elif tType == D2DTransferType.DRAINING:
       return 'draining'
+    elif tType == D2DTransferType.REBALANCE:
+      return 'rebalance'
     else:
       return 'UNKNOWN'
 

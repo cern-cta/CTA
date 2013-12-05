@@ -57,8 +57,8 @@ int Cuuid_compare(Cuuid_t *u1,
 }
 
 int Cuuid2string(char *output,
-                 size_t maxlen,
-                 Cuuid_t *uuid)
+                 const size_t maxlen,
+                 const Cuuid_t *const uuid)
 {
   if ((output == NULL) || (uuid == NULL)) {
     serrno = EFAULT;

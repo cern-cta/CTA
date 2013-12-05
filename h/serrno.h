@@ -79,8 +79,9 @@
 #define SEMISSINGOPER   SEBASEOFF+45    /* Missing operand              */
 #define SEMISMATCH      SEBASEOFF+46    /* Mismatch                     */
 #define SEREQUESTFAILED SEBASEOFF+47    /* Request failed               */
+#define SEINVALIDNBARGS SEBASEOFF+48    /* Invalid number of arguments  */
 
-#define SEMAXERR        SEBASEOFF+47    /* Maximum error number         */
+#define SEMAXERR        SEBASEOFF+48    /* Maximum error number         */
 
 #define SERRNO  (serrno - SEBASEOFF)    /* User convenience             */
 /*
@@ -420,7 +421,12 @@
 #define	ERMCOMSGS	ERMCRBTERR+7	/* Remote SCSI media changer error (ops message + retry) */
 #define	ERMCOMSGR	ERMCRBTERR+8	/* Remote SCSI media changer error (ops message + wait) */
 #define	ERMCUNLOAD	ERMCRBTERR+9	/* Remote SCSI media changer error (unload + demount) */
-#define ERMMAXERR       ERMBASEOFF+11
+
+#define ERMCUKNLDRTYPE   ERMBASEOFF+12 /* Unknown drive-loader type */
+#define ERMCVIDTOOLONG   ERMBASEOFF+13 /* VID is too long */
+#define ERMCPARSERMCHOST ERMBASEOFF+14 /* Failed to parse RMC host */
+#define ERMCPARSEACSDRV  ERMBASEOFF+15 /* Failed to parse ACS drive id */
+#define ERMMAXERR        ERMBASEOFF+15
 
 /*
  *------------------------------------------------------------------------

@@ -51,10 +51,10 @@ struct Cns_srv_thread_info *Cns_srv_thread_info;
 void Cns_signal_handler(int sig)
 {
   if (sig == SIGINT) {
-    nslogit("MSG=\"Caught SIGINT, immediate stop\"");
+    nslogit(LOG_INFO, "MSG=\"Caught SIGINT, immediate stop\"");
     exit(0);
   } else if (sig == SIGTERM) {
-    nslogit("MSG=\"Caught SIGTERM, shutting down\"");
+    nslogit(LOG_INFO, "MSG=\"Caught SIGTERM, shutting down\"");
     being_shutdown = 1;
   }
 }
@@ -140,14 +140,14 @@ int Cns_main(struct main_args *main_args)
   /* Open the logging interface */
   openlog("nsd", logfile);
 
-  nslogit("MSG=\"NameServer Daemon Started\" Security=\"%s\" "
+  nslogit(LOG_INFO, "MSG=\"NameServer Daemon Started\" Security=\"%s\" "
           "Version=\"%d.%d.%d-%d\"",
           (security ? "Enabled" : "Disabled"),
           MAJORVERSION, MINORVERSION, MAJORRELEASE, MINORRELEASE);
 
   gethostname (localhost, CA_MAXHOSTNAMELEN+1);
   if (Cdomainname (localdomain, sizeof(localdomain)) < 0) {
-    nslogit("MSG=\"Error: Unable to get domainname\" Function=\"Cdomainname\" "
+    nslogit(LOG_ERR, "MSG=\"Error: Unable to get domainname\" Function=\"Cdomainname\" "
             "Error=\"%s\" File=\"%s\" Line=%d",
             sstrerror(serrno), __FILE__, __LINE__);
     exit (SYERR);
@@ -173,7 +173,7 @@ int Cns_main(struct main_args *main_args)
                              &direntry, 0, NULL) < 0) {
     if (serrno != ENOENT)
       return (SYERR);
-    nslogit("MSG=\"Creating root directory\" Path=\"/\"");
+    nslogit(LOG_INFO, "MSG=\"Creating root directory\" Path=\"/\"");
     memset (&direntry, 0, sizeof(direntry));
     direntry.fileid = 2;
     strcpy (direntry.name, "/");
@@ -194,14 +194,14 @@ int Cns_main(struct main_args *main_args)
 
   /* Create a pool of threads */
   if ((ipool = Cpool_create (nbthreads, NULL)) < 0) {
-    nslogit("MSG=\"Error: Unable to create thread pool\" "
+    nslogit(LOG_ERR, "MSG=\"Error: Unable to create thread pool\" "
             "Function=\"Cpool_create\" Error=\"%s\" File=\"%s\" Line=%d",
             sstrerror(serrno), __FILE__, __LINE__);
     return (SYERR);
   }
   if ((Cns_srv_thread_info =
        calloc (nbthreads, sizeof(struct Cns_srv_thread_info))) == NULL) {
-    nslogit("MSG=\"Error: Failed to allocate memory\" "
+    nslogit(LOG_ERR, "MSG=\"Error: Failed to allocate memory\" "
             "Function=\"calloc\" Error=\"%s\" File=\"%s\" Line=%d",
             strerror(errno), __FILE__, __LINE__);
     return (SYERR);
@@ -222,7 +222,7 @@ int Cns_main(struct main_args *main_args)
   /* Open request socket */
   serrno = 0;
   if ((s = socket (AF_INET, SOCK_STREAM, 0)) < 0) {
-    nslogit("MSG=\"Error: Failed to create listening socket\" "
+    nslogit(LOG_ERR, "MSG=\"Error: Failed to create listening socket\" "
             "Function=\"socket\" Error=\"%s\" File=\"%s\" Line=%d",
             neterror(), __FILE__, __LINE__);
     return (CONFERR);
@@ -244,7 +244,7 @@ int Cns_main(struct main_args *main_args)
              MAJORVERSION, MINORVERSION);
     void *handle = dlopen (filename, RTLD_LAZY);
     if (!handle) {
-      nslogit("MSG=\"Error: failed to load the KRB5 plugin library\" "
+      nslogit(LOG_ERR, "MSG=\"Error: failed to load the KRB5 plugin library\" "
               "Error=\"%s\"", dlerror());
     }
   } else {
@@ -260,13 +260,13 @@ int Cns_main(struct main_args *main_args)
   sin.sin_addr.s_addr = local_only ? htonl(INADDR_LOOPBACK) : htonl(INADDR_ANY);
   serrno = 0;
   if (setsockopt (s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on)) < 0) {
-    nslogit("MSG=\"Error: Failed to set socket option\" "
+    nslogit(LOG_ERR, "MSG=\"Error: Failed to set socket option\" "
             "Function=\"setsockopt\" Option=\"SO_REUSEADDR\" Error=\"%s\" "
             "File=\"%s\" Line=%d",
             neterror(), __FILE__, __LINE__);
   }
   if (bind (s, (struct sockaddr *) &sin, sizeof(sin)) < 0) {
-    nslogit("MSG=\"Error: Failed to bind listening socket\" "
+    nslogit(LOG_ERR, "MSG=\"Error: Failed to bind listening socket\" "
             "Function=\"socket\" Error=\"%s\" File=\"%s\" Line=%d",
             neterror(), __FILE__, __LINE__);
     close(s);
@@ -304,7 +304,7 @@ int Cns_main(struct main_args *main_args)
       }
 #endif
       if ((thread_index = Cpool_next_index (ipool)) < 0) {
-        nslogit("MSG=\"Error: Failed to determine next available thread "
+        nslogit(LOG_ERR, "MSG=\"Error: Failed to determine next available thread "
                 "to process request\" Function=\"Cpool_next_index\" "
                 "Error=\"%s\" File=\"%s\" Line=%d",
                 sstrerror(serrno), __FILE__, __LINE__);
@@ -320,7 +320,7 @@ int Cns_main(struct main_args *main_args)
       if (Cpool_assign (ipool, &doit,
                         Cns_srv_thread_info + thread_index, 1) < 0) {
         (Cns_srv_thread_info + thread_index)->s = -1;
-        nslogit("MSG=\"Error: Failed to assign request to thread\" "
+        nslogit(LOG_ERR, "MSG=\"Error: Failed to assign request to thread\" "
                 "Function=\"Cpool_assign\" Error=\"%s\" File=\"%s\" Line=%d",
                 sstrerror(serrno), __FILE__, __LINE__);
         close(s);
@@ -370,7 +370,7 @@ int getreq(struct Cns_srv_thread_info *thip,
     *req_type = n;
     unmarshall_LONG (rbp, msglen);
     if (msglen > ONE_MB) {
-      nslogit("MSG=\"Error: Request too large\" MaxSize=%d "
+      nslogit(LOG_ERR, "MSG=\"Error: Request too large\" MaxSize=%d "
               "File=\"%s\" Line=%d", ONE_MB, __FILE__, __LINE__);
       return (E2BIG);
     }
@@ -383,7 +383,7 @@ int getreq(struct Cns_srv_thread_info *thip,
       return (ENSNACT);
     }
     if (getpeername (thip->s, (struct sockaddr *) &from, &fromlen) < 0) {
-      nslogit("MSG=\"Error: Failed to getpeername\" "
+      nslogit(LOG_ERR, "MSG=\"Error: Failed to getpeername\" "
               "Function=\"getpeername\" Error=\"%s\" File=\"%s\" Line=%d",
               neterror(), __FILE__, __LINE__);
       return (SEINTERNAL);
@@ -398,11 +398,11 @@ int getreq(struct Cns_srv_thread_info *thip,
     return (0);
   } else {
     if (l > 0) {
-      nslogit("MSG=\"Error: Netread failure\" Function=\"netread\" "
+      nslogit(LOG_ERR, "MSG=\"Error: Netread failure\" Function=\"netread\" "
               "Error=\"1\" File=\"%s\" Line=%d",
               __FILE__, __LINE__);
     } else if (l < 0) {
-      nslogit("MSG=\"Error: Failed to netread\" Function=\"netread\" "
+      nslogit(LOG_ERR, "MSG=\"Error: Failed to netread\" Function=\"netread\" "
               "Error=\"%s\" File=\"%s\" Line=%d",
               neterror(), __FILE__, __LINE__);
       if (serrno == SETIMEDOUT)
@@ -729,7 +729,7 @@ doit(void *arg)
     char ipbuf[INET_ADDRSTRLEN];
     
     if (getpeername (thip->s, (struct sockaddr *) &from, &fromlen) < 0) {
-      nslogit("MSG=\"Error: Failed to getpeername\" Function=\"getpeername\" "
+      nslogit(LOG_ERR, "MSG=\"Error: Failed to getpeername\" Function=\"getpeername\" "
               "Error=\"%s\" File=\"%s\" Line=%d",
               neterror(), __FILE__, __LINE__);
       return NULL;
@@ -745,7 +745,7 @@ doit(void *arg)
 
     Csec_server_reinitContext (&thip->sec_ctx, CSEC_SERVICE_TYPE_HOST, NULL);
     if (Csec_server_establishContext (&thip->sec_ctx, thip->s) < 0) {
-      nslogit("MSG=\"Error: Could not establish security context\" "
+      nslogit(LOG_ERR, "MSG=\"Error: Could not establish security context\" "
               "Error=\"%s\" ClientHost=\"%s\" IP=\"%s\" Port=%d",
               Csec_getErrorMessage(), clienthost, clientip, clientport);
       sendrep (thip->s, CNS_RC, ESEC_NO_CONTEXT);
@@ -757,14 +757,14 @@ doit(void *arg)
     if (Csec_mapToLocalUser (thip->Csec_mech, thip->Csec_auth_id,
                              username, CA_MAXUSRNAMELEN, &thip->Csec_uid,
                              &thip->Csec_gid) < 0) {
-      nslogit("MSG=\"Error: Could not map to local user\" Error=\"%s\" "
+      nslogit(LOG_ERR, "MSG=\"Error: Could not map to local user\" Error=\"%s\" "
               "Principal=\"%s\" ClientHost=\"%s\" IP=\"%s\" Port=%d",
               sstrerror(serrno), thip->Csec_auth_id, clienthost, clientip, clientport);
       sendrep (thip->s, CNS_RC, serrno);
       thip->s = -1;
       return NULL;
     }
-    nslogit("MSG=\"KRB principal mapped to local user\" Principal=\"%s\" "
+    nslogit(LOG_INFO, "MSG=\"KRB principal mapped to local user\" Principal=\"%s\" "
             "Username=\"%s\" ClientHost=\"%s\" IP=\"%s\" Port=%d",
             thip->Csec_auth_id, username, clienthost, clientip, clientport);
   }

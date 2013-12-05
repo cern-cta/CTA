@@ -13,17 +13,26 @@
 %define compile_server @COMPILE_SERVER@
 %endif
 
+# Neutral packaging (for srpm)
+#-----------------------------
+%if 0%{?neutralpackage:1} > 0
+%define mydist %{nil}
+%else
+%define mydist %{?dist}
+%endif
+
 # General settings
 #-----------------
 Summary: Cern Advanced mass STORage
 Name: %{name}
 Version: %{castorVersion}
-Release: %{castorRelease}%{?dist}
-Source: %{name}-%{version}-%{castorRelease}%{?dist}.tar.gz
+Release: %{castorRelease}%{mydist}
+Source: %{name}-%{castorVersion}-%{castorRelease}.tar.gz
 URL: http://cern.ch/castor
 License: http://cern.ch/castor/DIST/CONDITIONS
 Group: Application/Castor
 BuildRoot: %{_builddir}/%{name}-%{version}-root
+BuildRequires: cmake >= 2.6
 # only build debug info if you're building the whole code
 
 %if %compile_server
@@ -38,7 +47,7 @@ BuildRequires: oracle-instantclient-devel
 The CASTOR Project stands for CERN Advanced STORage Manager, and its goal is to handle LHC data in a fully distributed environment.
 
 %prep
-%setup -q -n %{name}-%{version}-%{release}
+%setup -q -n %{name}-%{castorVersion}-%{castorRelease}
 
 %build
 
