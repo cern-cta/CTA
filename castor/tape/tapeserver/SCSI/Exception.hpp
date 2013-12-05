@@ -48,7 +48,7 @@ namespace SCSI {
           w << ": " << sense->getACSString();
         } catch (Exception &ex) {
           w << ": In addition, failed to get ACS string: "
-                  << ex.shortWhat();
+                  << ex.getMessage();
         }
       }
       setWhat(w.str());

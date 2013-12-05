@@ -17,9 +17,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- *
- *
- *
  * @author Eric Cano
  *****************************************************************************/
 
@@ -33,6 +30,7 @@ namespace castor {
     public:
       Backtrace();
       operator std::string() const { return m_trace; }
+      Backtrace& operator= (const Backtrace& bt) { m_trace = bt.m_trace; return *this; }
     private:
       std::string m_trace;
     };

@@ -76,6 +76,14 @@ namespace castor {
       }
       
       /**
+       * Get the value of m_message as a sting, for const-c orrectness
+       * @return the value as a string.
+       */
+      std::string getMessageValue() const {
+        return m_message.str();
+      }
+      
+      /**
        * Get the backtrace's contents
        * @return backtrace in a standard string.
        */
@@ -110,6 +118,7 @@ namespace castor {
        */
       std::string m_what;
       
+    protected:  
       /**
        * Backtrace object. Its constructor does the heavy lifting of
        * generating the backtrace.

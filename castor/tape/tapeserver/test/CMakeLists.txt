@@ -10,7 +10,7 @@ set_property(SOURCE ../SCSI/StructuresTest.cpp
   PROPERTY COMPILE_FLAGS -fno-strict-aliasing
 )
 
-target_link_libraries(unitTest TapeDrive Exception SCSI System Utils File ${GTEST_LIBRARY} gmock pthread)
+target_link_libraries(unitTest TapeDrive Exception SCSI System Utils File ${GTEST_LIBRARY} gmock pthread castorcommon)
 
 install(TARGETS unitTest
   RUNTIME DESTINATION bin)

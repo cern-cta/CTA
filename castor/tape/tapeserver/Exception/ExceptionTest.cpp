@@ -56,10 +56,10 @@ namespace UnitTests {
     try {
       Nested x;
     } catch (castor::tape::Exception & e) {
-      std::string bt = e.backtrace;
+      std::string bt = e.backtrace();
       ASSERT_NE(std::string::npos, bt.find("Nested::f1"));
-      ASSERT_NE(std::string::npos, bt.find("castor::tape::Exceptions::Backtrace::Backtrace"));
-      ASSERT_EQ("", std::string(e.shortWhat()));
+      ASSERT_NE(std::string::npos, bt.find("castor::exception::Backtrace::Backtrace"));
+      ASSERT_EQ("", std::string(e.getMessageValue()));
       std::string fullWhat(e.what());
       ASSERT_NE(std::string::npos, fullWhat.find("Nested::f1"));
     }

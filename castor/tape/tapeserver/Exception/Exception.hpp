@@ -23,34 +23,20 @@
  *****************************************************************************/
 
 #pragma once
+#include "../../../exception/Exception.hpp"
 #include <exception>
 #include <string>
 
 namespace castor {
 namespace tape {
-  
-  namespace Exceptions {
-    class Backtrace {
-    public:
-      Backtrace();
-      operator std::string() const { return m_trace; }
-    private:
-      std::string m_trace;
-    };
-  }
-  
-  class Exception: public std::exception {
+  class Exception: public castor::exception::Exception {
   public:
-    Exception(const std::string& what) { setWhat(what); }
+    Exception(const std::string& what): castor::exception::Exception(0) { setWhat(what); }
+    // Copy operator needed to throw anonymous instance (throw myClass("some failure."))
+    Exception(const Exception &ex);
     virtual ~Exception() throw() {};
-    virtual const char * what() const throw();
-    virtual const char * shortWhat() const throw();
-    Exceptions::Backtrace backtrace;
   protected:
     void setWhat(const std::string &w);
-  private:
-    std::string m_what;
-    std::string m_shortWhat;
   };
 
   namespace Exceptions {

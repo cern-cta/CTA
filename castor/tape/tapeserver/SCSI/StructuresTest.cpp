@@ -574,7 +574,7 @@ namespace UnitTests {
     
     try { sense.getACSString(); ASSERT_TRUE(false); }
     catch (castor::tape::Exception & ex) {
-      std::string what(ex.shortWhat());
+      std::string what(ex.getMessageValue());
       ASSERT_NE(std::string::npos, what.find("response code not supported (0x74)"));
     }
   }
@@ -618,7 +618,7 @@ namespace UnitTests {
     ASSERT_THROW(castor::tape::SCSI::ExceptionLauncher(sgio), castor::tape::SCSI::Exception);
     try { castor::tape::SCSI::ExceptionLauncher(sgio, "In exception validation:"); ASSERT_TRUE(false); }
     catch (castor::tape::SCSI::Exception & ex) {
-      std::string what(ex.shortWhat());
+      std::string what(ex.getMessageValue());
       ASSERT_NE(std::string::npos, what.find("Block sequence error"));
       /* We check here that the formatting is also done correctly (space added when context
        not empty */
