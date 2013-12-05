@@ -380,7 +380,7 @@ BEGIN
            replacedDcId, retryCounter, drainingJob
       INTO varCfId, varUid, varGid, varDestDcId, varDestSvcClass, varRepType,
            varReplacedDcId, varRetryCounter, varDrainingJob
-      FROM Disk2DiskCopyjob
+      FROM Disk2DiskCopyJob
      WHERE transferId = inTransferId;
     -- lock the castor file (and get logging info)
     SELECT fileid, nsHost, fileSize INTO varFileId, varNsHost, varFileSize
@@ -395,6 +395,7 @@ BEGIN
     -- So our brand new copy has to be created as invalid to trigger GC.
     varNewDcStatus := dconst.DISKCOPY_INVALID;
     varLogMsg := dlf.D2D_D2DDONE_CANCEL;
+    varDestDcId := ids_seq.nextval;
   END;
   -- check the filesize
   IF inReplicaFileSize != varFileSize THEN
@@ -414,7 +415,7 @@ BEGIN
     varComment := varComment || ' replicaFileSize=' || TO_CHAR(inReplicaFileSize) ||
                   ' errorMessage=' || inErrorMessage;
   END IF;
-  logToDLF(NULL, dlf.LVL_SYSTEM, varLogMsg, varFileId, varNsHost, 'stagerd', varComment);
+  logToDLF(NULL, dlf.LVL_SYSTEM, varLogMsg, varFileId, varNsHost, 'transfermanagerd', varComment);
   -- if success, create new DiskCopy, restart waiting requests, cleanup and handle replicate on close
   IF inErrorMessage IS NULL THEN
     -- get filesystem of the diskcopy and parse diskcopy path

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 cns_2.1.14-x_to_2.1.15-0.sql
+ *                 vmgr_2.1.14-4_to_2.1.14-5.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * This script upgrades a CASTOR v2.1.14-x CNS database to v2.1.15-0
+ * This script upgrades a CASTOR v2.1.14-4 VMGR database to v2.1.14-5
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -32,7 +32,7 @@ BEGIN
   UPDATE UpgradeLog
      SET failureCount = failureCount + 1
    WHERE schemaVersion = '2_1_14_2'
-     AND release = '2_1_15_0'
+     AND release = '2_1_14_5'
      AND state != 'COMPLETE';
   COMMIT;
 END;
@@ -43,45 +43,39 @@ DECLARE
   unused VARCHAR(100);
 BEGIN
   SELECT release INTO unused FROM CastorVersion
-   WHERE schemaName = 'CNS'
-     AND release LIKE '2_1_14%';
+   WHERE schemaName = 'VMGR'
+     AND release LIKE '2_1_14_4%';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we cannot apply this script
-  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the CNS before this one.');
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the VMGR before this one.');
 END;
 /
 
-/* Verify that the open mode switch has been performed */
-DECLARE
-  openMode VARCHAR(100);
-BEGIN
-  SELECT value INTO openMode FROM CastorConfig
-   WHERE key = 'openmode';
-  IF openMode != 'N' THEN
-    -- Error, we cannot apply this script
-    raise_application_error(-20000, 'Nameserver Open mode value is '|| openMode ||', not the expected value N(ative). Please run the cns_2.1.14_switch-open-mode.sql script before this one.');
-  END IF;
-END;
-
-
 INSERT INTO UpgradeLog (schemaVersion, release, type)
-VALUES ('2_1_15_0', '2_1_15_0', 'NON TRANSPARENT');
+VALUES ('2_1_14_2', '2_1_14_5', 'TRANSPARENT');
 COMMIT;
 
--- Not needed any longer
-DELETE FROM CastorConfig WHERE key = 'openmode';
-DROP PROCEDURE update2114Data;
-
--- enforce constraint on stagerTime. This was to be done as part of the post 2.1.14 upgrade phase, but it is not a transparent operation...
-ALTER TABLE Cns_file_metadata MODIFY (stagerTime CONSTRAINT NN_File_stagerTime NOT NULL);
-
-
-/* PL/SQL code update */
-
+/* Recompile all invalid procedures, triggers and functions */
+/************************************************************/
+BEGIN
+  FOR a IN (SELECT object_name, object_type
+              FROM user_objects
+             WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY')
+               AND status = 'INVALID')
+  LOOP
+    IF a.object_type = 'PACKAGE BODY' THEN a.object_type := 'PACKAGE'; END IF;
+    BEGIN
+      EXECUTE IMMEDIATE 'ALTER ' ||a.object_type||' '||a.object_name||' COMPILE';
+    EXCEPTION WHEN OTHERS THEN
+      -- ignore, so that we continue compiling the other invalid items
+      NULL;
+    END;
+  END LOOP;
+END;
+/
 
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
-
-UPDATE UpgradeLog SET endDate = sysdate, state = 'COMPLETE'
- WHERE release = '2_1_15_0';
+UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
+ WHERE release = '2_1_14_5';
 COMMIT;

@@ -187,9 +187,9 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
   if (result == 0 || result->size() == 0) { // sanity check, result always is != 0
     castor::exception::Exception e(ENOENT);
     if (svcClassId > 0)
-      e.getMessage() << "File " << fileName << " not on this service class";
+      e.getMessage() << "File " << fileName << " not available on this service class";
     else
-      e.getMessage() << "File " << fileName << " not on disk cache";
+      e.getMessage() << "File " << fileName << " not currently available on the disk cache";
     if (result != 0)
       delete result;
     throw e;
