@@ -93,6 +93,7 @@ rununittests: $(RMC_OBJECTS) \
   dlf_Param.o \
   dlf_dlf_lib.o \
   exception_AlreadyInitialized.o \
+  exception_Backtrace.o \
   exception_Communication.o \
   exception_DismountFailed.o \
   exception_Exception.o \
@@ -520,6 +521,10 @@ dlf_dlf_lib.o: $(ROOT_DIR)/dlf/dlf_lib.c
 
 exception_AlreadyInitialized.o: \
   $(ROOT_DIR)/castor/exception/AlreadyInitialized.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_Backtrace.o: \
+  $(ROOT_DIR)/castor/exception/Backtrace.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_Communication.o: $(ROOT_DIR)/castor/exception/Communication.cpp
