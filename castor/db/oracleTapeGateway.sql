@@ -578,7 +578,7 @@ BEGIN
        AND RecallJob.vid = RecallMount.vid
        AND RecallJob.fseq = inFseq
        AND (RecallJob.status = tconst.RECALLJOB_SELECTED
-         OR RecallJob.status = tconst.tconst.RECALLJOB_SELECTED2NDCOPY)
+         OR RecallJob.status = tconst.RECALLJOB_SELECTED2NDCOPY)
        AND RecallJob.castorFile = CastorFile.id
        AND ROWNUM < 2
        FOR UPDATE OF CastorFile.id;
