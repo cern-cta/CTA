@@ -599,6 +599,7 @@ private:
   std::map<std::string, std::string> mRoleMap; ///< user role map
   XrdSysMutex mMutexPasswd; ///< mutex for the passwd store  
   XrdAccAuthorize* mAuthorization; ///< authorization service used only by ALICE
+  bool mNohsm; ///< if true do transparent staging
 
 };
 

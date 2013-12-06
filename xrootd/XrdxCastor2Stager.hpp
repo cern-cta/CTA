@@ -231,7 +231,7 @@ public:
                           uid_t uid, gid_t gid,
                           const char* path,
                           const char* serviceclass,
-                          XrdOucString& stagestatus);
+                          std::string& stagestatus);
 
 
   //----------------------------------------------------------------------------

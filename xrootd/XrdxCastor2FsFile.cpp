@@ -413,6 +413,7 @@ XrdxCastor2FsFile::open(const char*         path,
   {
     // Read operation
     bool possible = false;
+    std::string stage_status;
     std::set<std::string> set_svc = gMgr->GetAllAllowedSvc(map_path.c_str());
     
     for (std::set<std::string>::iterator iter = set_svc.begin(); 
@@ -421,13 +422,31 @@ XrdxCastor2FsFile::open(const char*         path,
       TIMING("PREP2GET", &opentiming);
       allowed_svc = *iter;
       
+      // Do a stager_qry for the current allowed_svc
+      if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid, (gid_t) client_gid,
+                                          map_path.c_str(), allowed_svc.c_str(), stage_status))
+      {
+        stage_status = "NA";        
+      }
+
+      // Check if file offline and we want transparent staging
+      if (stage_status != "STAGED" && 
+          stage_status != "CANBEMIGR" && 
+          stage_status != "STAGEOUT" && 
+          gMgr->mNohsm) 
+      {
+        continue;
+      }
+
+      // Do a prepare to get for the current allowed_svc
       if (!XrdxCastor2Stager::Prepare2Get(error, (uid_t) client_uid, (gid_t) client_gid, 
                                           map_path.c_str(), allowed_svc.c_str(), resp_info))
       {
-        TIMING("RETURN", &opentiming);
-        
         if (gMgr->mLogLevel == LOG_DEBUG)
+        {
+          TIMING("RETURN", &opentiming);
           opentiming.Print();
+        }
         
         continue;
       }
@@ -447,10 +466,11 @@ XrdxCastor2FsFile::open(const char*         path,
       // We select this setting and tell the client to wait for the staging in this svcClass
       if (resp_info.mStageStatus == "READY")
       {
-        TIMING("RETURN", &opentiming);
-        
         if (gMgr->mLogLevel == LOG_DEBUG)
+        {
+          TIMING("RETURN", &opentiming);
           opentiming.Print();
+        }
         
         return gMgr->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()), 
                            "file is being staged in");
@@ -459,10 +479,12 @@ XrdxCastor2FsFile::open(const char*         path,
 
     if (!possible)
     {
-      TIMING("RETURN", &opentiming);
       if (gMgr->mLogLevel == LOG_DEBUG)
+      {
         opentiming.Print();
-
+        TIMING("RETURN", &opentiming);
+      }
+      
       XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
       return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access file in ANY stager (all prepare2get failed) fn = ",
                                  map_path.c_str());
@@ -485,19 +507,21 @@ XrdxCastor2FsFile::open(const char*         path,
     
     if (status == SFS_ERROR)
     {
-      TIMING("RETURN", &opentiming);
-      
       if (gMgr->mLogLevel == LOG_DEBUG)
+      {
         opentiming.Print();
+        TIMING("RETURN", &opentiming);
+      }
       
       return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "async req failed fn=", map_path.c_str());
     }
     else if (status >= SFS_STALL)
     {
-      TIMING("RETURN", &opentiming);
-      
       if (gMgr->mLogLevel == LOG_DEBUG)
+      {
+        TIMING("RETURN", &opentiming);
         opentiming.Print();
+      }
       
       return gMgr->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()), 
                          "request queue full or response not ready");
@@ -505,10 +529,11 @@ XrdxCastor2FsFile::open(const char*         path,
     
     if (resp_info.mStageStatus != "READY")
     {
-      TIMING("RETURN", &opentiming);
-      
       if (gMgr->mLogLevel == LOG_DEBUG)
+      {
+        TIMING("RETURN", &opentiming);
         opentiming.Print();
+      }
       
       return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access stager (Get request failed) fn=", 
                                  map_path.c_str());

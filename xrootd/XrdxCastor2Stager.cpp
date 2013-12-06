@@ -579,11 +579,11 @@ XrdxCastor2Stager::FirstWrite(XrdOucErrInfo& error,
 //------------------------------------------------------------------------------
 bool
 XrdxCastor2Stager::StagerQuery(XrdOucErrInfo& error,
-                               uid_t          uid,
-                               gid_t          gid,
-                               const char*    path,
-                               const char*    serviceclass,
-                               XrdOucString&  status)
+                               uid_t uid,
+                               gid_t gid,
+                               const char* path,
+                               const char* serviceclass,
+                               std::string& status)
 {
   // Get stagehost variable which is the localhost 
   std::string stagehost = castor::System::getHostName();

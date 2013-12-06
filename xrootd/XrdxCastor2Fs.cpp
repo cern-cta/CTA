@@ -114,7 +114,8 @@ XrdSfsFileSystem* XrdSfsGetFileSystem(XrdSfsFileSystem* native_fs,
 XrdxCastor2Fs::XrdxCastor2Fs():
   LogId(),
   mIssueCapability(false),
-  mProc(0)
+  mProc(0),
+  mNohsm(false)
 {
   ConfigFN  = 0;
   mLogLevel = LOG_INFO; // default log level
@@ -1031,7 +1032,7 @@ XrdxCastor2Fs::stat(const char* path,
   static const char* epname = "stat";
   xcastor::Timing stattiming("filestat");
   XrdOucEnv Open_Env(info);
-  XrdOucString stage_status = "";
+  std::string stage_status = "";
   TIMING("START", &stattiming);
   xcastor_debug("path=%s", path);
   AUTHORIZE(client, &Open_Env, AOP_Stat, "stat", path, error)

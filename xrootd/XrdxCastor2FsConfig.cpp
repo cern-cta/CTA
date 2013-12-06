@@ -161,7 +161,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         }
 
         // Get the debug level
-        if (!strcmp("loglevel", var))
+        if (!strncmp("loglevel", var, 8))
         {
           if (!(val = config_stream.GetWord()))
           {
@@ -184,7 +184,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         }
 
         // Get any debug filter name
-        if (!strcmp("debugfilter", var))
+        if (!strncmp("debugfilter", var, 11))
         {
           if (!(val = config_stream.GetWord()))
             Eroute.Emsg("Config", "argument for debug filter invalid set to none.");
@@ -193,6 +193,13 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
             Logging::SetFilter(val);
             Eroute.Say("=====> xcastor2.debugfileter: ", val, "");
           }
+        }
+
+        // Get token expiration time
+        if (!strncmp("noshm", var, 5))
+        {
+          mNohsm = true;
+          Eroute.Say("=====> xcastor2.nohsm: true");
         }
 
         // Get the target port

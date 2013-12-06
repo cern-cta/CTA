@@ -31,6 +31,8 @@ include_directories (${XROOTD_INCLUDE_DIR} ${XROOTD_PRIVATE_INCLUDE_DIR})
 ################################################################################
 set (XRDXCASTOR2FS_LIB_SRC_FILES
   XrdxCastor2Fs.cpp
+  XrdxCastor2FsFile.cpp
+  XrdxCastor2FsDirectory.cpp
   XrdxCastor2FsConfig.cpp
   XrdxCastor2FsStats.cpp
   XrdxCastor2ServerAcc.cpp
@@ -39,10 +41,6 @@ set (XRDXCASTOR2FS_LIB_SRC_FILES
   XrdxCastorLogging.cpp
   XrdxCastorTiming.cpp
   XrdxCastorClient.cpp)
-set_property(SOURCE XrdxCastor2Fs.cpp
-  PROPERTY COMPILE_FLAGS -Wno-write-strings)
-set_property(SOURCE XrdxCastor2ServerAcc.cpp
-  PROPERTY COMPILE_FLAGS -Wno-sign-compare)
 add_library (XrdxCastor2Fs SHARED ${XRDXCASTOR2FS_LIB_SRC_FILES})
 CastorSetLibraryVersions (XrdxCastor2Fs)
 set_property (TARGET XrdxCastor2Fs
@@ -56,6 +54,7 @@ install (TARGETS XrdxCastor2Fs DESTINATION ${CASTOR_DEST_LIB_DIR})
 ################################################################################
 set (XRDXCASTOR2SERVERACC_LIB_SRC_FILES
   XrdxCastor2ServerAcc.cpp
+  XrdxCastorLogging.cpp
   XrdxCastorTiming.cpp)
 add_library (XrdxCastor2ServerAcc SHARED ${XRDXCASTOR2SERVERACC_LIB_SRC_FILES})
 target_link_libraries (XrdxCastor2ServerAcc crypto ${XROOTD_XRDUTILS_LIB})
