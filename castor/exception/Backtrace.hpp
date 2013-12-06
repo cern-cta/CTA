@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      Communication.hpp
+ *                      Backtrace.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,52 +18,24 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * Communication error exception
  *
- * @author Sebastien Ponce
+ *
+ * @author Eric Cano
  *****************************************************************************/
 
-#ifndef EXCEPTION_COMMUNICATION_HPP 
-#define EXCEPTION_COMMUNICATION_HPP 1
+#pragma once
 
-// Include Files
-#include "castor/exception/Exception.hpp"
 #include <string>
 
 namespace castor {
-
   namespace exception {
-
-    /**
-     * Communication exception
-     */
-    class Communication : public castor::exception::Exception {
-      
+    class Backtrace {
     public:
-      
-      /**
-       * Constructor
-       */
-      Communication(std::string requestId,
-                    int errorCode);
-      
-      /**
-        * Empty Destructor, explicitely non-throwing (needed for std::exception
-        * inheritance)
-        */
-      virtual ~Communication() throw () {}
-
-      std::string getRequestId();
-
+      Backtrace();
+      operator std::string() const { return m_trace; }
     private:
-      std::string m_requestId;
-
+      std::string m_trace;
     };
+  }
+}
 
-
-      
-  } // end of namespace exception
-
-} // end of namespace castor
-
-#endif // EXCEPTION_COMMUNICATION_HPP

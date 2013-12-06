@@ -92,6 +92,7 @@ rununittests: $(RMC_OBJECTS) \
   dlf_Dlf.o \
   dlf_Param.o \
   dlf_dlf_lib.o \
+  exception_AlreadyInitialized.o \
   exception_Communication.o \
   exception_DismountFailed.o \
   exception_Exception.o \
@@ -517,6 +518,13 @@ dlf_Param.o: $(ROOT_DIR)/castor/dlf/Param.cpp
 dlf_dlf_lib.o: $(ROOT_DIR)/dlf/dlf_lib.c
 	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
 
+exception_AlreadyInitialized.o: \
+  $(ROOT_DIR)/castor/exception/AlreadyInitialized.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_Communication.o: $(ROOT_DIR)/castor/exception/Communication.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 exception_DismountFailed.o: $(ROOT_DIR)/castor/exception/DismountFailed.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -536,9 +544,6 @@ exception_NoEntry.o: $(ROOT_DIR)/castor/exception/NoEntry.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_InvalidArgument.o: $(ROOT_DIR)/castor/exception/InvalidArgument.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-exception_Communication.o: $(ROOT_DIR)/castor/exception/Communication.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_Internal.o: $(ROOT_DIR)/castor/exception/Internal.cpp

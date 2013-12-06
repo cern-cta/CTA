@@ -69,6 +69,7 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
    "Mismatch",
    "Request failed",
    "Invalid number of arguments",
+   "Already initialized",
    "BAD ERROR NUMBER"
   };
 

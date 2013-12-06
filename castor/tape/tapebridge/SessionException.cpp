@@ -30,7 +30,7 @@
 //-----------------------------------------------------------------------------
 castor::tape::tapebridge::SessionException::SessionException(
   const SessionError &sessionError) throw() :
-  exception::Exception(ETSESSIONERROR),
+  castor::exception::Exception(ETSESSIONERROR),
   m_sessionError(sessionError) {
   // Do nothing
 }

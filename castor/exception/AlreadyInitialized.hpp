@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      Communication.hpp
+ *                      AlreadyInitialized.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,52 +18,37 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * Communication error exception
+ * Invalid argument exception
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef EXCEPTION_COMMUNICATION_HPP 
-#define EXCEPTION_COMMUNICATION_HPP 1
+#ifndef EXCEPTION_ALREADYINITIALIZED_HPP 
+#define EXCEPTION_ALREADYINITIALIZED_HPP 1
 
 // Include Files
 #include "castor/exception/Exception.hpp"
-#include <string>
 
 namespace castor {
 
   namespace exception {
 
     /**
-     * Communication exception
+     * Invalid argument exception
      */
-    class Communication : public castor::exception::Exception {
+    class AlreadyInitialized : public castor::exception::Exception {
       
     public:
       
       /**
-       * Constructor
+       * default constructor
        */
-      Communication(std::string requestId,
-                    int errorCode);
-      
-      /**
-        * Empty Destructor, explicitely non-throwing (needed for std::exception
-        * inheritance)
-        */
-      virtual ~Communication() throw () {}
-
-      std::string getRequestId();
-
-    private:
-      std::string m_requestId;
+      AlreadyInitialized();
 
     };
-
-
       
   } // end of namespace exception
 
 } // end of namespace castor
 
-#endif // EXCEPTION_COMMUNICATION_HPP
+#endif // EXCEPTION_ALREADYINITIALIZED_HPP

@@ -199,6 +199,9 @@ The following error values might be returned by any package:
 .TP
 .B SEINVALIDNBARGS
 (1048) Invalid number of arguments
+.TP
+.B SEALREADYINIT
+(1049) Already initialized
 
 .SH COPYTAPE ERRORS
 None yet

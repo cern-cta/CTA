@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      Communication.hpp
+ *                      AlreadyInitialized.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,52 +18,18 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * Communication error exception
+ * 
  *
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef EXCEPTION_COMMUNICATION_HPP 
-#define EXCEPTION_COMMUNICATION_HPP 1
-
 // Include Files
-#include "castor/exception/Exception.hpp"
-#include <string>
+#include <errno.h>
+#include "serrno.h"
+#include "castor/exception/AlreadyInitialized.hpp"
 
-namespace castor {
-
-  namespace exception {
-
-    /**
-     * Communication exception
-     */
-    class Communication : public castor::exception::Exception {
-      
-    public:
-      
-      /**
-       * Constructor
-       */
-      Communication(std::string requestId,
-                    int errorCode);
-      
-      /**
-        * Empty Destructor, explicitely non-throwing (needed for std::exception
-        * inheritance)
-        */
-      virtual ~Communication() throw () {}
-
-      std::string getRequestId();
-
-    private:
-      std::string m_requestId;
-
-    };
-
-
-      
-  } // end of namespace exception
-
-} // end of namespace castor
-
-#endif // EXCEPTION_COMMUNICATION_HPP
+// -----------------------------------------------------------------------
+// Constructor
+// -----------------------------------------------------------------------
+castor::exception::AlreadyInitialized::AlreadyInitialized() :
+  castor::exception::Exception(SEALREADYINIT) {}

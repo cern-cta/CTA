@@ -407,6 +407,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
     PERMISSIONS ${CASTOR_HEADER_PERMS})
   
   install(FILES
+    exception/AlreadyInitialized.hpp
     exception/InvalidArgument.hpp
     exception/NoEntry.hpp
     exception/OutOfMemory.hpp
