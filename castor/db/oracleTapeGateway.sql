@@ -111,12 +111,12 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     -- it was a recall mount
     -- find and reset the all RecallJobs of files for this VID
     UPDATE RecallJob
-       SET status = tconst.RECALLJOB_PENDING,
-           fileTransactionId = NULL
+       SET status = tconst.RECALLJOB_PENDING
      WHERE castorFile IN (SELECT castorFile
                             FROM RecallJob
                            WHERE VID = varVID
-                             AND (fileTransactionId IS NOT NULL OR status = tconst.RECALLJOB_RETRYMOUNT));
+                             AND (status = tconst.RECALLJOB_SELECTED
+                               OR status = tconst.RECALLJOB_RETRYMOUNT));
     DELETE FROM RecallMount WHERE vid = varVID;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- Small infusion of paranoia ;-) We should never reach that point...
@@ -577,7 +577,8 @@ BEGIN
      WHERE RecallMount.mountTransactionId = inMountTransactionId
        AND RecallJob.vid = RecallMount.vid
        AND RecallJob.fseq = inFseq
-       AND RecallJob.status = tconst.RECALLJOB_SELECTED
+       AND (RecallJob.status = tconst.RECALLJOB_SELECTED
+         OR RecallJob.status = tconst.tconst.RECALLJOB_SELECTED2NDCOPY)
        AND RecallJob.castorFile = CastorFile.id
        AND ROWNUM < 2
        FOR UPDATE OF CastorFile.id;
@@ -692,8 +693,7 @@ BEGIN
   -- increase retry counters within mount and set recallJob status to NEW
   UPDATE RecallJob
      SET nbRetriesWithinMount = nbRetriesWithinMount + 1,
-         status = tconst.RECALLJOB_PENDING,
-         fileTransactionId = NULL
+         status = tconst.RECALLJOB_PENDING
    WHERE castorFile = inCfId
      AND VID = inVID;
   -- detect the RecallJobs with too many retries within this mount
@@ -1715,7 +1715,7 @@ BEGIN
         RETURNING fileTransactionId INTO varFileTrId;
       -- update RecallJobs of this file. Only the recalled one gets a fileTransactionId
       UPDATE RecallJob
-         SET status = tconst.RECALLJOB_SELECTED,
+         SET status = CASE WHEN id = varRjId THEN tconst.RECALLJOB_SELECTED ELSE tconst.RECALLJOB_SELECTED2NDCOPY END,
              fileTransactionID = CASE WHEN id = varRjId THEN varFileTrId ELSE NULL END
        WHERE castorFile = varCfId;
       IF varCount >= inCount OR varTotalSize >= inTotalSize THEN
