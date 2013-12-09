@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      unitTest.cpp
+ *                      castorUnitTests.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,16 +24,6 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
-
-
-namespace UnitTests {
-  /* Fail if the architecture is not 64 bits, as it is not tested, 
-   * and not supported. */
-  TEST(Architecture, 64bits) {
-    size_t pointerSizeInBits = 8*sizeof(void *);
-    ASSERT_EQ(64U, pointerSizeInBits);
-  }
-}
 
 int main(int argc, char** argv) {
   // The following line must be executed to initialize Google Mock

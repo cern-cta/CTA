@@ -1,5 +1,0 @@
-%defattr(-,root,root)
-/usr/local/bin/TapeDriveReadWriteTest
-/usr/local/bin/unitTest
-/etc/mhvtl/*
-%attr(755,-,-) /usr/local/bin/tape-server-system-test.sh
