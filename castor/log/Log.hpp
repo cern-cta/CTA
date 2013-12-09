@@ -51,10 +51,16 @@ namespace castor {
 namespace log {
 
 /**
+ * Maximum length of the program name to be prepended to every log message.
+ */
+const size_t LOG_MAX_PROGNAMELEN = 20;
+
+/**
  * Initialize the CASTOR logging interface.
  *
- * @param progname The name of the program to be prepended to every log
- *                 message.
+ * @param progname The name of the program to be prepended to every log message.
+ * The name should not be longer than castor::log::LOG_MAX_PROGNAMELEN
+ * characters.
  */
 void initLog (const std::string &progname)
   throw(castor::exception::AlreadyInitialized, castor::exception::Internal,

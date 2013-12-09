@@ -61,11 +61,6 @@ const size_t LOG_MAX_PARAMNAMELEN = 20;
 const size_t LOG_MAX_PARAMSTRLEN = 1024;
 
 /**
- * Maximum length of the program name to be prepended to every log message.
- */
-const size_t LOG_MAX_PROGNAMELEN = 20;
-
-/**
  * Maximum length of a log message.
  */
 const size_t LOG_MAX_LINELEN = 8192;
