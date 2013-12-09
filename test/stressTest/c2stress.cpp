@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      rfio.cpp
+ *                      c2stress.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,10 +17,9 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * g++ -g -pthread -Wall -Werror -D_LARGEFILE64_SOURCE -fPIC -I $CASTOR_ROOT -I $CASTOR_ROOT/h -I /usr/include/xrootd/ /usr/lib64/libXrdCl.so /usr/lib64/libshift.so.2.1 -o rfio rfio.cpp
+ * g++ -g -pthread -Wall -Werror -D_LARGEFILE64_SOURCE -fPIC -I $CASTOR_ROOT -I $CASTOR_ROOT/h -I /usr/include/xrootd/ /usr/lib64/libXrdCl.so /usr/lib64/libcastorclient.so.2.1 /usr/lib64/libcastorns.so.2.1 /usr/lib64/libcastorrfio.so.2.1 -o c2stress c2stress.cpp
  *
  * Not the best code in the world but it works!
- *  - Still need to add race condition test, same file random operations
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -95,12 +94,12 @@
 #define OPTION_XROOTD             15
 
 // Definitions (Maximum)
-#define MAX_NBTHREADS             50
+#define MAX_NBTHREADS             100
 #define MAX_RFIO_BUFFERSIZE       512 * 1024
-#define MAX_NBREADS               10
+#define MAX_NBREADS               30
 
 // Definitions (Minimum)
-#define MIN_FILESIZE              2048
+#define MIN_FILESIZE              1024
 
 // Global Variables
 static std::string baseDirectory  = "";

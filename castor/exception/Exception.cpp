@@ -34,18 +34,21 @@ castor::exception::Exception::Exception(int se) : m_serrno(se) {}
 //------------------------------------------------------------------------------
 // copy constructor
 //------------------------------------------------------------------------------
-castor::exception::Exception::Exception(castor::exception::Exception& ex) {
-  m_serrno = ex.code();
-  m_message << ex.getMessage().str();
+castor::exception::Exception::Exception(
+  const castor::exception::Exception& rhs):
+  std::exception() {
+  m_serrno = rhs.m_serrno;
+  m_message << rhs.m_message.str();
 }
 
 
 //------------------------------------------------------------------------------
-// assignement operator
+// assignment operator
 //------------------------------------------------------------------------------
-castor::exception::Exception& castor::exception::Exception::operator=(castor::exception::Exception &ex) {
-  m_serrno = ex.code();
-  m_message << ex.getMessage().str();
+castor::exception::Exception& castor::exception::Exception::operator=(
+  const castor::exception::Exception &rhs) {
+  m_serrno = rhs.m_serrno;
+  m_message << rhs.m_message.str();
   return *this;
 }
 

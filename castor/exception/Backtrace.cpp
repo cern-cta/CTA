@@ -46,9 +46,7 @@ castor::exception::Backtrace::Backtrace(): m_trace() {
         theFunc = line.substr(line.find("(")+1, line.find("+") - (line.find("(") + 1));
         after = line.substr(line.find("+"), std::string::npos);
         int status(-1);
-        char demangled[200];
-        size_t length(sizeof(demangled));
-        abi::__cxa_demangle(theFunc.c_str(), demangled, &length, &status);
+        char * demangled = abi::__cxa_demangle(theFunc.c_str(), NULL, NULL, &status);
         if (0 == status) {
           m_trace += before;
           m_trace += demangled;
@@ -58,6 +56,7 @@ castor::exception::Backtrace::Backtrace(): m_trace() {
           m_trace += strings[i];
           m_trace += "\n";
         }
+        free(demangled);
       } else {
         m_trace += strings[i];
         m_trace += "\n";
@@ -66,3 +65,4 @@ castor::exception::Backtrace::Backtrace(): m_trace() {
     free (strings);
   }
 }
+

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      Backtrace.hpp
+ *                      AlreadyInitialized.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,23 +17,38 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author Eric Cano
+ *
+ * Invalid argument exception
+ *
+ * @author Sebastien Ponce
  *****************************************************************************/
 
-#pragma once
+#ifndef EXCEPTION_ALREADYINITIALIZED_HPP 
+#define EXCEPTION_ALREADYINITIALIZED_HPP 1
 
-#include <string>
+// Include Files
+#include "castor/exception/Exception.hpp"
 
 namespace castor {
-  namespace exception {
-    class Backtrace {
-    public:
-      Backtrace();
-      operator std::string() const { return m_trace; }
-      Backtrace& operator= (const Backtrace& bt) { m_trace = bt.m_trace; return *this; }
-    private:
-      std::string m_trace;
-    };
-  }
-}
 
+  namespace exception {
+
+    /**
+     * Invalid argument exception
+     */
+    class AlreadyInitialized : public castor::exception::Exception {
+      
+    public:
+      
+      /**
+       * default constructor
+       */
+      AlreadyInitialized();
+
+    };
+      
+  } // end of namespace exception
+
+} // end of namespace castor
+
+#endif // EXCEPTION_ALREADYINITIALIZED_HPP

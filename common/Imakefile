@@ -18,7 +18,9 @@ COMMONLIB_OBJS = compat.o getacct.o getacctent.o getconfent.o \
 		 socket_timeout.o u64subr.o Cinitdaemon.o Cgetopt.o \
 		 Cregexp.o Cexportconf.o Csnprintf.o util.o \
 		 Csecloader.o castor1compat.o \
+                 ../castor/exception/AlreadyInitialized.o \
                  ../castor/exception/BadVersion.o \
+                 ../castor/exception/Backtrace.o \
                  ../castor/exception/Busy.o \
                  ../castor/exception/DismountFailed.o \
                  ../castor/exception/Exception.o \

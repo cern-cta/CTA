@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      Backtrace.hpp
+ *                      AlreadyInitialized.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,23 +17,19 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author Eric Cano
+ *
+ * 
+ *
+ * @author Sebastien Ponce
  *****************************************************************************/
 
-#pragma once
+// Include Files
+#include <errno.h>
+#include "serrno.h"
+#include "castor/exception/AlreadyInitialized.hpp"
 
-#include <string>
-
-namespace castor {
-  namespace exception {
-    class Backtrace {
-    public:
-      Backtrace();
-      operator std::string() const { return m_trace; }
-      Backtrace& operator= (const Backtrace& bt) { m_trace = bt.m_trace; return *this; }
-    private:
-      std::string m_trace;
-    };
-  }
-}
-
+// -----------------------------------------------------------------------
+// Constructor
+// -----------------------------------------------------------------------
+castor::exception::AlreadyInitialized::AlreadyInitialized() :
+  castor::exception::Exception(SEALREADYINIT) {}
