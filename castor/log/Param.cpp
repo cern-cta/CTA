@@ -164,7 +164,7 @@ castor::log::Param::Param(const std::string &rawParams) throw():
   m_name(""), m_type(LOG_MSG_PARAM_RAW),
   m_strValue(rawParams), m_intValue(0), m_uint64Value(0), m_doubleValue(0.0),
   m_uuidValue(nullCuuid) {
-};
+}
 
 //-----------------------------------------------------------------------------
 // Constructor

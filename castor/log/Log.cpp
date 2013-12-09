@@ -98,20 +98,20 @@ pthread_mutex_t s_syslogMutex;
 /**
  * The name of the program to be prepended to every log message.
  */
-const char* s_progname = 0;
+std::string s_progname;
 
 /**
  * The maximum message size that the client syslog server can handle.
  */
 int s_maxmsglen = DEFAULT_SYSLOG_MSGLEN;
 
-struct PrioritySyslogMapping {
+struct SyslogPriorityMapping {
   const char *name; // Name of the priority
   int  value;       // The priority's numeric representation in syslog
   const char *text; // Textual representation of the priority
 };
 
-PrioritySyslogMapping s_prioritylist[] = {
+SyslogPriorityMapping s_prioritylist[] = {
   { "LOG_EMERG",   LOG_EMERG,   "Emerg"  },
   { "LOG_ALERT",   LOG_ALERT,   "Alert"  },
   { "LOG_CRIT",    LOG_CRIT,    "Crit"   },
@@ -224,7 +224,8 @@ int build_syslog_header(char *const buffer,
   buffer[len-4] = ':';
   // if no source given, you by default the name of the process in which we run
   // print source and pid
-  len += snprintf(buffer + len, buflen - len, "%s[%d]: ", s_progname, pid);
+  len += snprintf(buffer + len, buflen - len, "%s[%d]: ", s_progname.c_str(),
+    pid);
   return len;
 }
 
@@ -276,82 +277,85 @@ std::string _clean_string(const std::string &s, const bool underscore) {
   return result;
 }
 
-} // unnamed namespace
+} // Unnamed namespace
 
 //-----------------------------------------------------------------------------
 // initLog
 //-----------------------------------------------------------------------------
-int castor::log::initLog(const char *const progname) {
-
-  /* Variables */
+void castor::log::initLog(const std::string &progname)
+  throw(castor::exception::AlreadyInitialized, castor::exception::Internal,
+    castor::exception::InvalidArgument) {
   FILE *fp = NULL;
   char *p;
   char buffer[1024];
   size_t size = 0;
 
-  /* Check if already initialized */
+  // Check if already initialized
   if (s_initialized) {
-    errno = EPERM;
-    return (-1);
+    castor::exception::AlreadyInitialized ex;
+    ex.getMessage() << "Failed to initialize the API of the CASTOR logging"
+      " system: API already initialized";
+    throw(ex);
   }
 
-  /* Check if the progname is too big */
-  if (strlen(progname) > LOG_MAX_PROGNAMELEN) {
-    errno = EINVAL;
-    return (-1);
+  // Check if the progname is too long
+  if (progname.length() > LOG_MAX_PROGNAMELEN) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Invalid argument: progname is too log: max=" <<
+      LOG_MAX_PROGNAMELEN << " actual=" << progname.length();
+    throw ex;
   }
 
   s_progname = progname;
 
-  /* Determine the maximum message size that the client syslog server can
-   * handle.
-   */
+  // Determine the maximum message size that the client syslog server can
+  // handle.
   if ((p = getconfent("LOG", "MaxMessageSize", 0)) != NULL) {
     size = atoi(p);
   } else {
-    /* Determine the size automatically, this is not guaranteed to work! */
+    // Determine the size automatically, this is not guaranteed to work!
     fp = fopen("/etc/rsyslog.conf", "r");
     if (fp) {
-      /* The /etc/rsyslog.conf file exists so we assume the default message
-       * size of 2K.
-       */
+      // The /etc/rsyslog.conf file exists so we assume the default message
+      // size of 2K.
       s_maxmsglen = DEFAULT_RSYSLOG_MSGLEN;
 
-      /* In rsyslog versions >= 3.21.4, the maximum size of a message became
-       * configurable through the $MaxMessageSize global config directive.
-       * Here we attempt to find out if the user has increased the size!
-       */
+      // In rsyslog versions >= 3.21.4, the maximum size of a message became
+      // configurable through the $MaxMessageSize global config directive.
+      // Here we attempt to find out if the user has increased the size!
       while (fgets(buffer, sizeof(buffer), fp) != NULL) {
         if (strncasecmp(buffer, "$MaxMessageSize", 15)) {
-          continue; /* Option not of interest */
+          continue; // Option not of interest
         }
         size = atol(&buffer[15]);
       }
       fclose(fp);
     } else {
-      /* The /etc/rsyslog.conf file is missing which implies that we are
-       * running on a stock syslogd system, therefore the message size is
-       * governed by the syslog RFC: http://www.faqs.org/rfcs/rfc3164.html
-       */
+      // The /etc/rsyslog.conf file is missing which implies that we are
+      // running on a stock syslogd system, therefore the message size is
+      // governed by the syslog RFC: http://www.faqs.org/rfcs/rfc3164.html
     }
   }
 
-  /* Check that the size of messages falls within acceptable limits */
+  // Check that the size of messages falls within acceptable limits
   if ((size >= DEFAULT_SYSLOG_MSGLEN) && (size <= LOG_MAX_LINELEN)) {
     s_maxmsglen = size;
   }
 
-  /* create the syslog serialization lock */
-  if (pthread_mutex_init(&s_syslogMutex, NULL)) {
-    errno = ENOMEM;
-    return (-1);
+  // create the syslog serialization lock
+  {
+    const int pthread_mutex_init_rc = pthread_mutex_init(&s_syslogMutex, NULL);
+    if(0 != pthread_mutex_init_rc) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Failed to initialize s_syslogMutex: " <<
+        sstrerror(pthread_mutex_init_rc);
+      throw ex;
+    }
   }
 
-  /* Open syslog */
+  // Open syslog
   castor_openlog();
-  s_initialized = 1;
-
-  return (0);
+  s_initialized = true;
 }
 
 //-----------------------------------------------------------------------------

@@ -27,6 +27,9 @@
 #define CASTOR_LOG_LOG_HPP 1
 
 // Include Files
+#include "castor/exception/AlreadyInitialized.hpp"
+#include "castor/exception/Internal.hpp"
+#include "castor/exception/InvalidArgument.hpp"
 #include "castor/log/Param.hpp"
 
 #include <syslog.h>
@@ -52,18 +55,10 @@ namespace log {
  *
  * @param progname The name of the program to be prepended to every log
  *                 message.
- *
- * @return On success zero is returned, On error, -1 is returned, and errno is
- *         set appropriately.
- *
- *         Possible errors include:
- *          - EPERM  The interface is already initialized!
- *          - EINVAL Invalid argument (refers to errors in parsing the LogMask
- *                   configuration option in castor.conf for the daemon)
- *
- * @see openlog(), setlogmask()
  */
-int initLog (const char *progname);
+void initLog (const std::string &progname)
+  throw(castor::exception::AlreadyInitialized, castor::exception::Internal,
+    castor::exception::InvalidArgument);
 
 /**
  * Writes a message into the CASTOR logging system. Note that no exception
