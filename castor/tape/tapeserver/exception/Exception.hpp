@@ -43,12 +43,14 @@ namespace tape {
     class Errnum: public Exception {
     public:
       Errnum(std::string what = "");
+	  Errnum (int err, std::string what = "");
       virtual ~Errnum() throw() {};
       int ErrorNumber() { return m_errnum; }
       std::string strError() { return m_strerror; }
       /* We rely on base version:
        *  virtual const char * what() const throw() */
     protected:
+	  void ErrnumConstructorBottomHalf(const std::string & what);
       int m_errnum;
       std::string m_strerror;
     };
@@ -56,6 +58,9 @@ namespace tape {
     class InvalidArgument: public Exception {
     public: InvalidArgument(std::string what = ""): Exception(what) {};
     };
+    
+    void throwOnReturnedErrno (int err, std::string context = "");
+    void throwOnNonZeroWithErrno (int status, std::string context = "");
   }
 } //namespace tape
 } //namespace castor

@@ -55,8 +55,8 @@ castor::exception::Exception& castor::exception::Exception::operator=(
 //------------------------------------------------------------------------------
 // what operator
 //------------------------------------------------------------------------------
-const char * castor::exception::Exception::what() {
-  m_what = getMessage().str();
+const char * castor::exception::Exception::what() const throw () {
+  m_what = getMessageValue();
   m_what += "\n";
   m_what += (std::string) m_backtrace;
   return m_what.c_str();

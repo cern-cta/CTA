@@ -26,7 +26,7 @@
 #include <gmock/gmock-cardinalities.h>
 #include "Device.hpp"
 #include "Structures.hpp"
-#include "../System/Wrapper.hpp"
+#include "../system/Wrapper.hpp"
 #include "Exception.hpp"
 
 using ::testing::AtLeast;

@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #include "Regex.hpp"
-#include "../Exception/Exception.hpp"
+#include "../exception/Exception.hpp"
 #include <regex.h>
 
 using namespace castor::tape;

@@ -28,9 +28,9 @@
 #include <regex.h>
 #include <sys/types.h>
 #include <dirent.h>
-#include "../System/Wrapper.hpp"
-#include "../Exception/Exception.hpp"
-#include "../Utils/Regex.hpp"
+#include "../system/Wrapper.hpp"
+#include "../exception/Exception.hpp"
+#include "../utils/Regex.hpp"
 #include "Constants.hpp"
 
 namespace castor {

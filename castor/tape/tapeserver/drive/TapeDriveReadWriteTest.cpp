@@ -26,7 +26,7 @@
  * Test main program. For development use.
  */
 
-#include "../System/Wrapper.hpp"
+#include "../system/Wrapper.hpp"
 #include "../SCSI/Device.hpp"
 #include "Drive.hpp"
 #include <iostream>

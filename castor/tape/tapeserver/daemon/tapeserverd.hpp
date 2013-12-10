@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #pragma once
-#include "../Exception/Exception.hpp"
+#include "../exception/Exception.hpp"
 
 namespace castor {
 namespace tape {

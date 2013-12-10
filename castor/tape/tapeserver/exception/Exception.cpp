@@ -24,6 +24,7 @@
 
 #define _XOPEN_SOURCE 600
 #include "Exception.hpp"
+
 #include <stdlib.h>
 #include <errno.h>
 /* We want the thread safe (and portable) version of strerror */
@@ -48,6 +49,15 @@ Exception::Exception(const Exception &ex): castor::exception::Exception(0) {
 
 exceptions::Errnum::Errnum(std::string what):Exception("") {
   m_errnum = errno;
+  ErrnumConstructorBottomHalf(what);
+}
+
+exceptions::Errnum::Errnum(int err, std::string what):Exception("") {
+  m_errnum = err;
+  ErrnumConstructorBottomHalf(what);
+}
+
+void exceptions::Errnum::ErrnumConstructorBottomHalf(const std::string & what) {
   char s[1000];
   /* _XOPEN_SOURCE seems not to work.  */
   char * errorStr = ::strerror_r(m_errnum, s, sizeof(s));
@@ -66,5 +76,14 @@ exceptions::Errnum::Errnum(std::string what):Exception("") {
   w2 << "Errno=" << m_errnum << ": " << m_strerror;
   setWhat(w2.str());
 }
+
+void exceptions::throwOnReturnedErrno (int err, std::string context) {
+  if (err) throw Errnum(err, context);
+}
+
+void exceptions::throwOnNonZeroWithErrno (int status, std::string context) {
+  if (status) throw Errnum(context);
+}
+
 
 

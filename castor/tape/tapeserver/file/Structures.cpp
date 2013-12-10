@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #include "Structures.hpp"
-#include "../Exception/Exception.hpp"
+#include "../exception/Exception.hpp"
 #include <time.h>
 #include <stdio.h>
 

@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "../Exception/Exception.hpp"
+#include "../exception/Exception.hpp"
 #include "Structures.hpp"
 #include "Constants.hpp"
 

@@ -1,4 +1,7 @@
 %if 0%{?castorUnitTest:1} > 0
 test/castorUnitTests
 valgrind --leak-check=full --show-reachable=yes --error-exitcode=1 test/castorUnitTests
+test/castorThreadedUnitTests
+valgrind --leak-check=full --show-reachable=yes --error-exitcode=1 test/castorThreadedUnitTests
+valgrind --tool=helgrind --error-exitcode=1 test/castorThreadedUnitTests
 %endif

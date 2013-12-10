@@ -22,23 +22,34 @@
 
 cmake_minimum_required (VERSION 2.6)
 
+# Those tests are single threaded, functionnal and error tests. They could
+# actually fail in helgrind/drd (but memcheck is recommended)
 add_executable(castorUnitTests
   castorUnitTests.cpp
   #../castor/exception/ExceptionUnitTest.cpp
   ../castor/tape/tapeserver/SCSI/DeviceTest.cpp
   ../castor/tape/tapeserver/SCSI/StructuresTest.cpp
-  ../castor/tape/tapeserver/Utils/RegexTest.cpp
-  ../castor/tape/tapeserver/Drive/DriveTest.cpp
-  ../castor/tape/tapeserver/Exception/ExceptionTest.cpp
-  ../castor/tape/tapeserver/File/StructuresTest.cpp
+  ../castor/tape/tapeserver/utils/RegexTest.cpp
+  ../castor/tape/tapeserver/drive/DriveTest.cpp
+  ../castor/tape/tapeserver/exception/ExceptionTest.cpp
+  ../castor/tape/tapeserver/file/StructuresTest.cpp
+  ../castor/tape/tapeserver/threading/ThreadingTests.cpp
 )
-
 set_property(SOURCE ../SCSI/StructuresTest.cpp
   PROPERTY COMPILE_FLAGS -fno-strict-aliasing
 )
-
 target_link_libraries(castorUnitTests TapeDrive Exception SCSI System Utils File 
+  castorTapeServerThreading ${GTEST_LIBRARY} gmock pthread castorcommon)
+
+# Those tests are multi threaded. They could should also be run in 
+# helgrind/drd (and also memcheck)
+add_executable(castorThreadedUnitTests
+  castorUnitTests.cpp
+  ../castor/tape/tapeserver/threading/ThreadingMTTests.cpp
+)
+target_link_libraries(castorThreadedUnitTests TapeDrive Exception SCSI System 
+  Utils File castorTapeServerThreading 
   ${GTEST_LIBRARY} gmock pthread castorcommon)
 
-install(TARGETS castorUnitTests
+install(TARGETS castorUnitTests castorThreadedUnitTests
   DESTINATION ${CASTOR_DEST_BIN_DIR})

@@ -51,7 +51,7 @@ castor::exception::Backtrace::Backtrace(): m_trace() {
           m_trace += before;
           m_trace += demangled;
           m_trace += after;
-          m_trace += "(C++ demangled)\n";
+          m_trace += "\n";
         } else {
           m_trace += strings[i];
           m_trace += "\n";

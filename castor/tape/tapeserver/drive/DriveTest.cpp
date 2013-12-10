@@ -25,7 +25,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock-cardinalities.h>
 #include "../SCSI/Device.hpp"
-#include "../System/Wrapper.hpp"
+#include "../system/Wrapper.hpp"
 #include "Drive.hpp"
 
 using ::testing::AtLeast;

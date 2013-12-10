@@ -25,7 +25,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock-cardinalities.h>
 #include "Device.hpp"
-#include "../System/Wrapper.hpp"
+#include "../system/Wrapper.hpp"
 
 using ::testing::AtLeast;
 using ::testing::Return;

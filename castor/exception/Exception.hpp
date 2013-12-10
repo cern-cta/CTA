@@ -96,7 +96,7 @@ namespace castor {
        * the stack trace.
        * @return pointer to m_what's contents
        */
-      virtual const char * what();
+      virtual const char * what() const throw ();
 
       /**
        * gets the serrno code of the corresponding C error
@@ -116,7 +116,7 @@ namespace castor {
        * Placeholder for the what result. It has to be a member
        * of the object, and not on the stack of the "what" function.
        */
-      std::string m_what;
+      mutable std::string m_what;
       
     protected:  
       /**

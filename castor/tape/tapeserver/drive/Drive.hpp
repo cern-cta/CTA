@@ -27,8 +27,8 @@
 #include "../SCSI/Device.hpp"
 #include "../SCSI/Structures.hpp"
 #include "../SCSI/Exception.hpp"
-#include "../System/Wrapper.hpp"
-#include "../Exception/Exception.hpp"
+#include "../system/Wrapper.hpp"
+#include "../exception/Exception.hpp"
 
 #include "mtio_add.hpp"
 
