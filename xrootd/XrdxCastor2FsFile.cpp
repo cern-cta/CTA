@@ -412,15 +412,39 @@ XrdxCastor2FsFile::open(const char*         path,
   else
   {
     // Read operation
+    bool tried_default = false;
     bool possible = false;
     std::string stage_status;
     std::set<std::string> set_svc = gMgr->GetAllAllowedSvc(map_path.c_str());
     
-    for (std::set<std::string>::iterator iter = set_svc.begin(); 
-         iter != set_svc.end(); ++iter)
+    for (std::set<std::string>::iterator allowed_iter = set_svc.begin(); 
+         allowed_iter != set_svc.end(); /* no increment */)
     {
+      // Try first the default svc
+      if (!tried_default)
+      {
+        tried_default = true;
+        std::set<std::string>::iterator iter_default = set_svc.find("default");
+        
+        if (iter_default != set_svc.end())
+          allowed_svc = *iter_default;
+        else 
+          continue;
+      }
+      else 
+      {
+        if (*allowed_iter == "default")
+        {
+          ++allowed_iter;
+          continue;
+        }
+        
+        allowed_svc = *allowed_iter;
+        ++allowed_iter;
+      }
+
+      xcastor_debug("trying service class:%s", allowed_svc.c_str());
       TIMING("PREP2GET", &opentiming);
-      allowed_svc = *iter;
       
       // Do a stager_qry for the current allowed_svc
       if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid, (gid_t) client_gid,

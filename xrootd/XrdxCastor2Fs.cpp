@@ -1059,14 +1059,40 @@ XrdxCastor2Fs::stat(const char* path,
     if (!S_ISDIR(cstat.filemode))
     {
       // Loop over all allowed service classes to find an online one
-      std::string desired_svc = "default";
       std::set<std::string> set_svc = GetAllAllowedSvc(map_path.c_str());
+      std::string allowed_svc;
+      bool tried_default = false;
 
-      for (std::set<std::string>::iterator allowed_svc = set_svc.begin();
-           allowed_svc != set_svc.end(); ++allowed_svc)
+      for (std::set<std::string>::iterator allowed_iter = set_svc.begin();
+           allowed_iter != set_svc.end(); /* no increment */)
       {
+         // Try first the default svc
+        if (!tried_default)
+        {
+          tried_default = true;
+          std::set<std::string>::iterator iter_default = set_svc.find("default");
+          
+          if (iter_default != set_svc.end())
+            allowed_svc = *iter_default;
+          else
+            continue;
+        }
+        else 
+        {
+          if (*allowed_iter == "default")
+          {
+            ++allowed_iter;
+            continue;
+          }
+          
+          allowed_svc = *allowed_iter;
+          ++allowed_iter;
+        }
+       
+        xcastor_debug("trying service class:%s", allowed_svc.c_str());
+        
         if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid, (gid_t) client_gid,
-                                            map_path.c_str(), allowed_svc->c_str(), stage_status))
+                                            map_path.c_str(), allowed_svc.c_str(), stage_status))
         {
           stage_status = "NA";
         }
