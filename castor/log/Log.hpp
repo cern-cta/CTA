@@ -35,18 +35,6 @@
 #include <syslog.h>
 #include <sys/time.h>
 
-/* Priority levels */
-#define LOG_LVL_EMERGENCY     LOG_EMERG   /* System is unusable */
-#define LOG_LVL_ALERT         LOG_ALERT   /* Action must be taken immediately */
-#define LOG_LVL_CRIT          LOG_CRIT    /* Critical conditions */
-#define LOG_LVL_ERROR         LOG_ERR     /* Error conditions */
-#define LOG_LVL_WARNING       LOG_WARNING /* Warning conditions */
-#define LOG_LVL_USER_ERROR    LOG_NOTICE  /* Normal but significant condition */
-#define LOG_LVL_AUTH          LOG_NOTICE
-#define LOG_LVL_SECURITY      LOG_NOTICE
-#define LOG_LVL_SYSTEM        LOG_INFO    /* Informational */
-#define LOG_LVL_DEBUG         LOG_DEBUG   /* Debug-level messages */
-
 namespace castor {
 namespace log {
 
