@@ -22,6 +22,7 @@
 %attr(0644,root,root) usr/include/castor/castor/dlf/Param.hpp
 %attr(0644,root,root) usr/include/castor/castor/dlf/TimeStamp.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/AlreadyInitialized.hpp
+%attr(0644,root,root) usr/include/castor/castor/exception/Backtrace.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/Communication.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/Exception.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/Internal.hpp

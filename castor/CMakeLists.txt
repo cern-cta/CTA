@@ -314,6 +314,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
     PERMISSIONS ${CASTOR_HEADER_PERMS})
   
   install(FILES
+    exception/Backtrace.hpp
     exception/Communication.hpp
     exception/Exception.hpp
     exception/Internal.hpp
