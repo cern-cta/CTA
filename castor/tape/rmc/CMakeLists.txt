@@ -23,6 +23,19 @@
 cmake_minimum_required (VERSION 2.6)
 
 ################################################################################
+# Rules to build and install rmcd
+################################################################################
+set (RMCD_SRC_FILES
+  DlfMessageStrings.cpp
+  RmcDaemon.cpp
+  RmcdCmdLine.cpp
+  RmcdMain.cpp)
+add_executable (newrmcd ${RMCD_SRC_FILES})
+target_link_libraries (newrmcd castorclient castorcommon)
+install (TARGETS newrmcd DESTINATION ${CASTOR_DEST_LIB_DIR})
+#CastorInstallExeManPage(newrmcd)
+
+################################################################################
 # Rules to build and install castor-tape-acs-mount
 ################################################################################
 set (ACS_MOUNT_SRC_FILES
@@ -32,6 +45,7 @@ set (ACS_MOUNT_SRC_FILES
   AcsMountCmd.cpp
   AcsMountCmdLine.cpp
   AcsMountMain.cpp
+  Cmd.cpp
   DebugBuf.cpp)
 add_executable (castor-tape-acs-mount ${ACS_MOUNT_SRC_FILES})
 set_target_properties (castor-tape-acs-mount PROPERTIES
@@ -52,6 +66,7 @@ set (ACS_DISMOUNT_SRC_FILES
   AcsDismountCmd.cpp
   AcsDismountCmdLine.cpp
   AcsDismountMain.cpp
+  Cmd.cpp
   DebugBuf.cpp)
 add_executable (castor-tape-acs-dismount ${ACS_DISMOUNT_SRC_FILES})
 target_link_libraries (castor-tape-acs-dismount castorcommon castortapeutils
@@ -72,6 +87,7 @@ set (ACS_QUERYVOLUME_SRC_FILES
   AcsQueryVolumeCmd.cpp
   AcsQueryVolumeCmdLine.cpp
   AcsQueryVolumeMain.cpp
+  Cmd.cpp
   DebugBuf.cpp)
 add_executable (castor-tape-acs-queryvolume ${ACS_QUERYVOLUME_SRC_FILES})
 target_link_libraries (castor-tape-acs-queryvolume castorcommon castortapeutils
@@ -81,3 +97,17 @@ set_target_properties (castor-tape-acs-queryvolume PROPERTIES
   COMPILE_DEFINITIONS LINUX)
 install (TARGETS castor-tape-acs-queryvolume DESTINATION ${CASTOR_DEST_LIB_DIR})
 CastorInstallExeManPage(castor-tape-acs-queryvolume)
+
+################################################################################
+# Rules to build and install castor-tape-mount
+################################################################################
+set (MOUNT_SRC_FILES
+  DebugBuf.cpp
+  Cmd.cpp
+  MountCmd.cpp
+  MountCmdLine.cpp
+  MountMain.cpp)
+add_executable (castor-tape-mount ${MOUNT_SRC_FILES})
+target_link_libraries (castor-tape-mount castorcommon castorrmc)
+install (TARGETS castor-tape-mount DESTINATION ${CASTOR_DEST_LIB_DIR})
+CastorInstallExeManPage(castor-tape-mount)
