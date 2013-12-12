@@ -291,10 +291,6 @@ InstallNonExecFile(dlf/Message.hpp,$(BUILDHEADERSDIRHPP)/dlf,644)
 InstallNonExecFile(dlf/Param.hpp,$(BUILDHEADERSDIRHPP)/dlf,644)
 InstallNonExecFile(dlf/TimeStamp.hpp,$(BUILDHEADERSDIRHPP)/dlf,644)
 
-InstallNonExecFile(exception/Communication.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
-InstallNonExecFile(exception/Exception.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
-InstallNonExecFile(exception/Internal.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
-
 InstallNonExecFile(io/ServerSocket.hpp,$(BUILDHEADERSDIRHPP)/io,644)
 
 InstallNonExecFile(rh/Client.hpp,$(BUILDHEADERSDIRHPP)/rh,644)
@@ -355,6 +351,10 @@ InstallNonExecFile(db/ora/OraCnvSvc.hpp,$(BUILDHEADERSDIRHPP)/db/ora,644)
 InstallNonExecFile(db/ora/OraCommonSvc.hpp,$(BUILDHEADERSDIRHPP)/db/ora,644)
 
 InstallNonExecFile(exception/AlreadyInitialized.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
+InstallNonExecFile(exception/Backtrace.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
+InstallNonExecFile(exception/Communication.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
+InstallNonExecFile(exception/Exception.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
+InstallNonExecFile(exception/Internal.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
 InstallNonExecFile(exception/InvalidArgument.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
 InstallNonExecFile(exception/InvalidNbArguments.hpp,$(BUILDHEADERSDIRHPP)/exception,644)
 InstallNonExecFile(exception/NoEntry.hpp,$(BUILDHEADERSDIRHPP)/exception,644)

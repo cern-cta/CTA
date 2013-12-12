@@ -20,13 +20,12 @@
  *
  * A parameter for the CASTOR log system
  *
- * @author castor dev team
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_LOG_PARAM_HPP
 #define CASTOR_LOG_PARAM_HPP 1
 
-// Include Files
 #include "castor/IObject.hpp"
 #include "castor/stager/TapeVid.hpp"
 #include "castor/log/IPAddress.hpp"
@@ -35,20 +34,6 @@
 
 #include <string.h>
 #include <stdlib.h>
-
-/* Parameter types */
-#define LOG_MSG_PARAM_DOUBLE  1     /* Double precision floating point value */
-#define LOG_MSG_PARAM_INT64   2     /* 64 bit integers */
-#define LOG_MSG_PARAM_STR     3     /* General purpose string */
-#define LOG_MSG_PARAM_TPVID   4     /* Tape visual identifier string */
-#define LOG_MSG_PARAM_UUID    5     /* Subrequest identifier */
-#define LOG_MSG_PARAM_FLOAT   6     /* Single precision floating point value */
-#define LOG_MSG_PARAM_INT     7     /* Integer parameter */
-#define LOG_MSG_PARAM_UID     8
-#define LOG_MSG_PARAM_GID     9
-#define LOG_MSG_PARAM_STYPE   10
-#define LOG_MSG_PARAM_SNAME   11
-#define LOG_MSG_PARAM_RAW     12    /* raw (set of) parameters, in key=value format */
 
 namespace castor {
 namespace log {
@@ -78,20 +63,12 @@ public:
   /**
    * Constructor for long int.
    */
-#if defined __x86_64__
   Param(const std::string &name, const long int value) throw();
-#else
-  Param(const std::string &name, const long int value) throw();
-#endif
 
   /**
    * Constructor for long unsigned int.
    */
-#if defined __x86_64__
   Param(const std::string &name, const long unsigned int value) throw();
-#else
-  Param(const std::string &name, const long unsigned int value) throw();
-#endif
 
   /**
    * Constructor for int.

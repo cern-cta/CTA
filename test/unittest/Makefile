@@ -146,6 +146,11 @@ rununittests: $(RMC_OBJECTS) \
   legacymsg_RtcpMarshal.o \
   legacymsg_TapeBridgeMarshal.o \
   legacymsg_VmgrMarshal.o \
+  log_IPAddress.o \
+  log_Log.o \
+  log_Message.o \
+  log_Param.o \
+  log_TimeStamp.o \
   metrics_Counter.o \
   metrics_Histogram.o \
   metrics_InternalCounter.o \
@@ -363,6 +368,7 @@ rununittests: $(RMC_OBJECTS) \
   unittest_BridgeClientInfo2SenderTest.o \
   unittest_TapeFlushConfigParamsTest.o \
   unittest_LegacyTxRxTest.o \
+  unittest_LogTest.o \
   unittest_GetMoreWorkConnectionTest.o \
   unittest_ClientAddressTcpIpTest.o \
   unittest_PendingMigrationsStoreTest.o \
@@ -708,6 +714,21 @@ legacymsg_TapeBridgeMarshal.o: \
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 legacymsg_VmgrMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/VmgrMarshal.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+log_IPAddress.o: $(ROOT_DIR)/castor/log/IPAddress.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+log_Log.o: $(ROOT_DIR)/castor/log/Log.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+log_Message.o:  $(ROOT_DIR)/castor/log/Message.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+log_Param.o: $(ROOT_DIR)/castor/log/Param.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+log_TimeStamp.o:  $(ROOT_DIR)/castor/log/TimeStamp.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 metrics_Counter.o: \
@@ -1633,6 +1654,9 @@ unittest_TapeFlushConfigParamsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tape
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
 unittest_LegacyTxRxTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/LegacyTxRxTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+unittest_LogTest.o: $(ROOT_DIR)/test/unittest/castor/log/LogTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
 unittest_GetMoreWorkConnectionTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/GetMoreWorkConnectionTest.cpp
