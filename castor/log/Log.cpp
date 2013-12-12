@@ -55,6 +55,13 @@ castor::log::Log &castor::log::Log::instance(const std::string &programName)
   throw(castor::exception::Internal, castor::exception::InvalidArgument) {
   checkProgramNameLen(programName);
 
+  // The following "if NULL != s_instance" if statement assumes that the
+  // instance() method is not called concurrently with the destroyInstance()
+  // method
+  if(NULL != s_instance) {
+    return *s_instance;
+  }
+
   {
     const int rc = pthread_mutex_lock(&s_instanceMutex);
     if(0 != rc) {
@@ -166,6 +173,12 @@ castor::log::Log::Log(const std::string &programName)
   m_connected(false),
   m_priorityToText(generatePriorityToTextMap()) {
   initMutex();
+}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::log::Log::~Log() throw() {
 }
 
 //------------------------------------------------------------------------------

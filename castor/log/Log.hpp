@@ -60,6 +60,10 @@ public:
    * method once in the main thread of the program, because the instance()
    * method uses a mutex to protect the creation of the Log singleton.
    *
+   * Please note that it is thread safe to call the instance() method
+   * concurrently with itself, however it is NOT thread safe to call the
+   * instance() method concurrently with the destroyInstance() method.
+   *
    * @param programName The name of the program to be prepended to every log
    * message.  The name should not be longer than
    * castor::log::LOG_MAX_PROGNAMELEN characters.
@@ -74,11 +78,16 @@ public:
    * WARNING
    * If you are not sure whether you should be using this method then please
    * do not use it.  You must be sure that no thread will try to use the
-   * Log singleton that was destoyed by a call to destroyInstance().  This
-   * method is intended to be used at cleanup time just before an executable
-   * exits.  Calling this method just before an executable exits will free heap
-   * memory owned by the CASTOR logging system and therefore a memory profiler
-   * should not detect a memory leak related to the logging system.
+   * Log singleton that was destoyed by a call to destroyInstance().  You must
+   * also make sure that this method is not called concurrently with
+   * the instance() method because due to an optimisation in the instance()
+   * method, calling these two methods concurrently is NOT thread safe.
+   *
+   * This method is intended to be used at cleanup time just before an
+   * executable exits.  Calling this method just before an executable exits
+   * will free heap memory owned by the CASTOR logging system and therefore a
+   * memory profiler should not detect a memory leak related to the logging
+   * system.
    */
   static void destroyInstance() throw(castor::exception::Internal);
 
@@ -244,6 +253,12 @@ private:
    * message.
    */
   Log(const std::string &programName) throw(castor::exception::Internal);
+
+  /**
+   * Private destructor to prevent clients from destroying the Log singleton
+   * themselves.
+   */
+  ~Log() throw();
 
   /**
    * Determines the maximum message length that the client syslog server can
