@@ -24,7 +24,9 @@
 
 #include "castor/log/Constants.hpp"
 #include "castor/log/Log.hpp"
+
 #include <cppunit/extensions/HelperMacros.h>
+#include <memory>
 
 namespace castor {
 namespace log {
@@ -36,27 +38,26 @@ public:
   }
 
   void tearDown() {
-    Log::destroyInstance();
   }
 
-  void testInitLog() {
+  void testInitLogWithTooLongProgramName() {
     // Create a program name that is 1 character too long
     std::string tooLongProgname;
     for(size_t i = 0; i <= LOG_MAX_PROGNAMELEN; i++) {
       tooLongProgname += 'X';
     }
 
-    CPPUNIT_ASSERT_THROW_MESSAGE(
-      "Checking a program name that is too long throws InvalidArgument",
-      Log::instance(tooLongProgname),
-      castor::exception::InvalidArgument);
-    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
-      "Checking the first call to initLog() does not fail",
-      Log::instance("LogTest"));
+    {
+      std::auto_ptr<Log> log;
+      CPPUNIT_ASSERT_THROW_MESSAGE(
+        "Checking a program name that is too long throws InvalidArgument",
+        log.reset(new Log(tooLongProgname)),
+        castor::exception::InvalidArgument);
+    }
   }
 
   CPPUNIT_TEST_SUITE(LogTest);
-  CPPUNIT_TEST(testInitLog);
+  CPPUNIT_TEST(testInitLogWithTooLongProgramName);
   CPPUNIT_TEST_SUITE_END();
 };
 

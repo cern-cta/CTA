@@ -39,146 +39,17 @@
 #include <stdio.h>
 
 //------------------------------------------------------------------------------
-// s_instanceMutex
-//------------------------------------------------------------------------------
-pthread_mutex_t castor::log::Log::s_instanceMutex = PTHREAD_MUTEX_INITIALIZER;
-
-//------------------------------------------------------------------------------
-// s_instance
-//------------------------------------------------------------------------------
-castor::log::Log *castor::log::Log::s_instance = NULL;
-
-//------------------------------------------------------------------------------
-// instance
-//------------------------------------------------------------------------------
-castor::log::Log &castor::log::Log::instance(const std::string &programName)
-  throw(castor::exception::Internal, castor::exception::InvalidArgument) {
-  checkProgramNameLen(programName);
-
-  // The following "if NULL != s_instance" if statement assumes that the
-  // instance() method is not called concurrently with the destroyInstance()
-  // method
-  if(NULL != s_instance) {
-    return *s_instance;
-  }
-
-  {
-    const int rc = pthread_mutex_lock(&s_instanceMutex);
-    if(0 != rc) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Failed to lock s_instanceMutex: " << sstrerror(rc);
-      throw ex;
-    }
-  }
-  if(NULL == s_instance) {
-    try {
-      try {
-        s_instance = new Log(programName);
-      } catch(std::bad_alloc &se) {
-        castor::exception::Internal ex;
-        ex.getMessage() << "Failed to create the Log singleton: " <<
-          se.what();
-        throw ex;
-      } catch(castor::exception::Exception &ex) {
-        castor::exception::Internal ex2;
-        ex2.getMessage() << "Failed to create the Log singleton: " <<
-          ex.getMessage().str();
-        throw ex2;
-      } catch(...) {
-        castor::exception::Internal ex;
-        ex.getMessage() << "Failed to create the Log singleton: "
-          "Caught an unknown exception";
-        throw ex;
-      }
-    } catch(castor::exception::Exception &ce) {
-      // Unlock the mutex protecting s_instance before rethrowing
-      const int rc = pthread_mutex_unlock(&s_instanceMutex);
-      if(0 != rc) {
-        castor::exception::Internal ex;
-        ex.getMessage() << "Failed to unlock s_instanceMutex whilst trying to "
-          " handle the failed creation of the Log singleton: " <<
-          sstrerror(rc);
-        throw ex;
-      }
-
-      castor::exception::Internal ex;
-      ex.getMessage() << "Failed to create Log singleton: " <<
-        ce.getMessage().str();
-      throw ex;
-    }
-  }
-
-  {
-    const int rc = pthread_mutex_unlock(&s_instanceMutex);
-    if(0 != rc) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Failed to unlock s_instanceMutex after creating the"
-        " Log singleton: " << sstrerror(rc);
-      throw ex;
-    }
-  }
-
-  return *s_instance;
-}
-
-
-//------------------------------------------------------------------------------
-// destroyInstance
-//------------------------------------------------------------------------------
-void castor::log::Log::destroyInstance()
-  throw(castor::exception::Internal) {
-  {
-    const int rc = pthread_mutex_lock(&s_instanceMutex);
-    if(0 != rc) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Failed to lock s_instanceMutex: " << sstrerror(rc);
-      throw ex;
-    }
-  }
-
-  delete s_instance;
-  s_instance = NULL;
-
-  {
-    const int rc = pthread_mutex_unlock(&s_instanceMutex);
-    if(0 != rc) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Failed to unlock s_instanceMutex: " << sstrerror(rc);
-      throw ex;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// checkProgramNameLen
-//------------------------------------------------------------------------------
-void castor::log::Log::checkProgramNameLen(const std::string &programName)
-  throw(castor::exception::InvalidArgument) {
-  if(programName.length() > LOG_MAX_PROGNAMELEN) {
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() << "Invalid argument: programName is too log: max=" <<
-      LOG_MAX_PROGNAMELEN << " actual=" << programName.length();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::log::Log::Log(const std::string &programName)
-  throw(castor::exception::Internal):
+  throw(castor::exception::Internal, castor::exception::InvalidArgument):
   m_programName(programName),
   m_maxMsgLen(determineMaxMsgLen()),
   m_logFile(-1),
   m_connected(false),
   m_priorityToText(generatePriorityToTextMap()) {
+  checkProgramNameLen(programName);
   initMutex();
-}
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-castor::log::Log::~Log() throw() {
 }
 
 //------------------------------------------------------------------------------
@@ -251,6 +122,19 @@ std::map<int, std::string> castor::log::Log::generatePriorityToTextMap() const
 }
 
 //------------------------------------------------------------------------------
+// checkProgramNameLen
+//------------------------------------------------------------------------------
+void castor::log::Log::checkProgramNameLen(const std::string &programName)
+  throw(castor::exception::InvalidArgument) {
+  if(programName.length() > LOG_MAX_PROGNAMELEN) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << "Invalid argument: programName is too log: max=" <<
+      LOG_MAX_PROGNAMELEN << " actual=" << programName.length();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
 // initMutex
 //------------------------------------------------------------------------------
 void castor::log::Log::initMutex() throw(castor::exception::Internal) {
@@ -260,6 +144,12 @@ void castor::log::Log::initMutex() throw(castor::exception::Internal) {
     ex.getMessage() << "Failed to initialize m_mutex: " << sstrerror(rc);
     throw ex;
   }
+}
+
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::log::Log::~Log() throw() {
 }
 
 //------------------------------------------------------------------------------
@@ -353,8 +243,8 @@ void castor::log::Log::writeMsg(
 
   // Start message with priority, time, program and PID (syslog standard
   // format)
-  size_t len = buildSyslogHeader(buffer, m_maxMsgLen - len, priority | LOG_LOCAL3,
-    timeStamp, getpid());
+  size_t len = buildSyslogHeader(buffer, m_maxMsgLen - len,
+    priority | LOG_LOCAL3, timeStamp, getpid());
 
   // Append the log level, the thread id and the message text
 #ifdef __APPLE__
