@@ -28,6 +28,7 @@
 #include <string.h>
 #include <iomanip>
 
+#include "castor/log/Constants.hpp"
 #include "castor/log/Param.hpp"
 #include "castor/ObjectSet.hpp"
 

@@ -22,6 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/log/Constants.hpp"
 #include "castor/log/Log.hpp"
 #include <cppunit/extensions/HelperMacros.h>
 
@@ -35,6 +36,7 @@ public:
   }
 
   void tearDown() {
+    Log::destroyInstance();
   }
 
   void testInitLog() {
@@ -46,15 +48,11 @@ public:
 
     CPPUNIT_ASSERT_THROW_MESSAGE(
       "Checking a program name that is too long throws InvalidArgument",
-      initLog(tooLongProgname),
+      Log::instance(tooLongProgname),
       castor::exception::InvalidArgument);
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
       "Checking the first call to initLog() does not fail",
-      initLog("LogTest"));
-    CPPUNIT_ASSERT_THROW_MESSAGE(
-      "Checking the second call to initLog() throws AlreadyInitialized",
-      initLog("LogTest"),
-      castor::exception::AlreadyInitialized);
+      Log::instance("LogTest"));
   }
 
   CPPUNIT_TEST_SUITE(LogTest);
