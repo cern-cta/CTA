@@ -243,8 +243,8 @@ void castor::log::Log::writeMsg(
 
   // Start message with priority, time, program and PID (syslog standard
   // format)
-  size_t len = buildSyslogHeader(buffer, m_maxMsgLen - len,
-    priority | LOG_LOCAL3, timeStamp, getpid());
+  size_t len = buildSyslogHeader(buffer, m_maxMsgLen, priority | LOG_LOCAL3,
+    timeStamp, getpid());
 
   // Append the log level, the thread id and the message text
 #ifdef __APPLE__
