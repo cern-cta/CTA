@@ -32,7 +32,7 @@ castor::exception::Backtrace::Backtrace(): m_trace() {
   void * array[200];
   g_lock.lock();  
   size_t depth = ::backtrace(array, sizeof(array)/sizeof(void*));
-  g_lock.lock();
+  g_lock.unlock();
   char ** strings = ::backtrace_symbols(array, depth);
 
   if (!strings)
