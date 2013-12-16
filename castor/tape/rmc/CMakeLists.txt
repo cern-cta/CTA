@@ -69,11 +69,11 @@ set (ACS_DISMOUNT_SRC_FILES
   Cmd.cpp
   DebugBuf.cpp)
 add_executable (castor-tape-acs-dismount ${ACS_DISMOUNT_SRC_FILES})
-target_link_libraries (castor-tape-acs-dismount castorcommon castortapeutils
-  ${STK_API_LIB} ${STK_UTL_LIB} ${STK_IPC_LIB} ${STK_CL_LIB})
 set_target_properties (castor-tape-acs-dismount PROPERTIES
   COMPILE_FLAGS -I/usr/include/CDK
   COMPILE_DEFINITIONS LINUX)
+target_link_libraries (castor-tape-acs-dismount castorcommon castortapeutils
+  ${STK_API_LIB} ${STK_UTL_LIB} ${STK_IPC_LIB} ${STK_CL_LIB})
 install (TARGETS castor-tape-acs-dismount DESTINATION ${CASTOR_DEST_LIB_DIR})
 CastorInstallExeManPage(castor-tape-acs-dismount)
 
