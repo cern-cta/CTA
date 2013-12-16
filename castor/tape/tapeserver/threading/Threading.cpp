@@ -40,8 +40,13 @@ castor::tape::threading::Mutex::Mutex() throw (castor::exception::Exception) {
     "Error from pthread_mutexattr_settype in castor::tape::threading::Mutex::Mutex()");
   throwOnReturnedErrno(pthread_mutex_init(&m_mutex, &attr),
     "Error from pthread_mutex_init in castor::tape::threading::Mutex::Mutex()");
-  throwOnReturnedErrno(pthread_mutexattr_destroy(&attr),
-    "Error from pthread_mutexattr_destroy in castor::tape::threading::Mutex::Mutex()");
+  try {
+    throwOnReturnedErrno(pthread_mutexattr_destroy(&attr),
+      "Error from pthread_mutexattr_destroy in castor::tape::threading::Mutex::Mutex()");
+  } catch (...) {
+    pthread_mutex_destroy(&m_mutex);
+    throw;
+  }
 }
 
 castor::tape::threading::Mutex::~Mutex() {
