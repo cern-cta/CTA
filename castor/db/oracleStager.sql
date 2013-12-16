@@ -832,7 +832,7 @@ BEGIN
     -- commit
     COMMIT;
     -- wake up the scheduler so that it can remove the transfer from the queues
-    DBMS_ALERT.SIGNAL('transfersToAbort', '');
+    alertSignalNoLock('transfersToAbort');
     -- reset all counters
     nbItems := nbItems - nbItemsDone;
     nbItemsDone := 0;
@@ -1534,7 +1534,7 @@ BEGIN
   
   IF inDoSignal THEN
     -- wake up transfermanager
-    DBMS_ALERT.SIGNAL('d2dReadyToSchedule', '');
+    alertSignalNoLock('d2dReadyToSchedule');
   END IF;
 END;
 /
@@ -2260,7 +2260,7 @@ BEGIN
   IF dcsToRmStatus.COUNT > 0 THEN
     COMMIT;
     -- wake up the scheduler so that it can remove the transfer from the queues now
-    DBMS_ALERT.SIGNAL('transfersToAbort', '');
+    alertSignalNoLock('transfersToAbort');
   END IF;
 
   ret := 1;  -- ok

@@ -160,7 +160,7 @@ BEGIN
      SET status = dconst.SUBREQUEST_RESTART, lastModificationTime = getTime()
    WHERE status = dconst.SUBREQUEST_WAITSUBREQ
      AND castorFile = varCfId;
-  DBMS_ALERT.SIGNAL('wakeUpJobReqSvc', '');
+  alertSignalNoLock('wakeUpJobReqSvc');
   -- link DiskCopy and FileSystem and update DiskCopyStatus
   UPDATE DiskCopy
      SET status = 6, -- DISKCOPY_STAGEOUT
@@ -452,7 +452,7 @@ BEGIN
            lastModificationTime = getTime()
      WHERE status = dconst.SUBREQUEST_WAITSUBREQ
        AND castorfile = varCfId;
-    DBMS_ALERT.SIGNAL('wakeUpJobReqSvc', '');
+    alertSignalNoLock('wakeUpJobReqSvc');
     -- delete the disk2diskCopyJob
     DELETE FROM Disk2DiskCopyjob WHERE transferId = inTransferId;
     -- In case of valid new copy
@@ -738,7 +738,7 @@ BEGIN
        AND castorFile = cfId
        AND status = dconst.SUBREQUEST_WAITSUBREQ;
     -- and wake up the stager for processing it
-    DBMS_ALERT.SIGNAL('wakeUpStageReqSvc', '');
+    alertSignalNoLock('wakeUpStageReqSvc');
   END IF;
   -- Archive Subrequest
   archiveSubReq(srId, 8);  -- FINISHED
@@ -818,7 +818,7 @@ BEGIN
      WHERE castorFile = cfId
        AND reqType = 39  -- PutDone
        AND SubRequest.status = dconst.SUBREQUEST_WAITSUBREQ;
-    DBMS_ALERT.SIGNAL('wakeUpStageReqSvc', '');
+    alertSignalNoLock('wakeUpStageReqSvc');
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- This means we are a standalone put
     -- thus cleanup DiskCopy and maybe the CastorFile
@@ -1004,14 +1004,14 @@ END;
 CREATE OR REPLACE TRIGGER tr_SubRequest_informSchedReady AFTER UPDATE OF status ON SubRequest
 FOR EACH ROW WHEN (new.status = 13) -- SUBREQUEST_READYFORSCHED
 BEGIN
-  DBMS_ALERT.SIGNAL('transferReadyToSchedule', '');
+  alertSignalNoLock('transferReadyToSchedule');
 END;
 /
 
 CREATE OR REPLACE TRIGGER tr_SubRequest_informError AFTER UPDATE OF status ON SubRequest
 FOR EACH ROW WHEN (new.status = 7) -- SUBREQUEST_FAILED
 BEGIN
-  DBMS_ALERT.SIGNAL('wakeUpErrorSvc', '');
+  alertSignalNoLock('wakeUpErrorSvc');
 END;
 /
 
