@@ -365,11 +365,11 @@ namespace drives {
   class Drive {
   public:
     Drive(SCSI::DeviceInfo di, System::virtualWrapper & sw): m_drive(NULL) {
-      if (di.product.find("T10000")) {
+      if (std::string::npos != di.product.find("T10000")) {
         m_drive = new DriveT10000(di, sw);
-      } else if (di.product.find("ULT" || di.product.find("Ultrium"))) {
+      } else if (std::string::npos != di.product.find("ULT" || std::string::npos != di.product.find("Ultrium"))) {
         m_drive = new DriveLTO(di, sw);
-      } else if (di.product.find("03592")) {
+      } else if (std::string::npos != di.product.find("03592")) {
         m_drive = new DriveIBM3592(di, sw);
       } else {
         throw Exception(std::string("Unsupported drive type: ")+di.product);

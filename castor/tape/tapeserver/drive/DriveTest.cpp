@@ -27,6 +27,7 @@
 #include "../SCSI/Device.hpp"
 #include "../system/Wrapper.hpp"
 #include "Drive.hpp"
+#include <typeinfo>
 
 using ::testing::AtLeast;
 using ::testing::Return;
@@ -56,10 +57,20 @@ TEST(castor_tape_drives_Drive, OpensCorrectly) {
   
   /* Test: detect devices, then open the device files */
   castor::tape::SCSI::DeviceVector dl(sysWrapper);
+  /* Check we detected things properly */
+  ASSERT_EQ("VL32STK1", dl[0].product);
+  ASSERT_EQ("STK", dl[0].vendor);
+  ASSERT_EQ("0104", dl[0].productRevisionLevel);
+  ASSERT_EQ("T10000B", dl[1].product);
+  ASSERT_EQ("STK", dl[1].vendor);
+  ASSERT_EQ("0104", dl[1].productRevisionLevel);
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
       castor::tape::drives::Drive drive(*i, sysWrapper);
+      std::string expected_classid (typeid(castor::tape::drives::DriveT10000).name());
+      std::string found_classid (typeid((castor::tape::drives::DriveGeneric &)drive).name());
+      ASSERT_EQ(expected_classid, found_classid);
     }
   }
 }
