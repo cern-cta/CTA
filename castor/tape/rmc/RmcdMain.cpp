@@ -24,15 +24,30 @@
  
 
 
+#include "castor/log/LogImplementation.hpp"
 #include "castor/tape/rmc/RmcDaemon.hpp"
 
+#include <iostream>
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int main(int argc, char **argv) {
+int main(const int argc, char **const argv) {
 
-  castor::tape::rmc::RmcDaemon daemon;
+  try {
+    castor::log::LogImplementation log("rmcd");
+    castor::tape::rmc::RmcDaemon daemon(log);
 
-  return daemon.main(argc, argv);
+    return daemon.main(argc, argv);
+  } catch(castor::exception::Exception &ex) {
+    std::cerr << "main() caught a CASTOR exception: " << ex.getMessage().str()
+      << std::endl;
+    return 1;
+  } catch(std::exception &se) {
+    std::cerr << "main() caught a std::exception: " << se.what() << std::endl;
+    return 1;
+  } catch(...) {
+    std::cerr << "main() caught an unknown exception" << std::endl;
+    return 1;
+  }
 }

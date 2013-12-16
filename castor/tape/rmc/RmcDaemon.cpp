@@ -30,10 +30,12 @@
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/tape/rmc/DlfMessageConstants.hpp"
 #include "castor/tape/rmc/RmcDaemon.hpp"
+/*
 //#include "castor/tape/tapebridge/ConfigParamLogger.hpp"
 //#include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/common.h"
+*/
 #include "h/Cuuid.h"
 
 #include <getopt.h>
@@ -41,9 +43,10 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::rmc::RmcDaemon::RmcDaemon()
-  throw(castor::exception::Exception) :
+castor::tape::rmc::RmcDaemon::RmcDaemon(log::Log &log)
+  throw(castor::exception::Exception):
   castor::server::BaseDaemon("rmcd"),
+  m_log(log),
   m_vdqmRequestHandlerThreadPool(0) {
 }
 
