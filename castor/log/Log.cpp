@@ -138,10 +138,30 @@ void castor::log::Log::checkProgramNameLen(const std::string &programName)
 // initMutex
 //------------------------------------------------------------------------------
 void castor::log::Log::initMutex() throw(castor::exception::Internal) {
-  const int rc = pthread_mutex_init(&m_mutex, NULL);
+  pthread_mutexattr_t attr;
+  int rc = pthread_mutexattr_init(&attr);
+  if(0 != rc) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to initialize mutex attribute: " << sstrerror(rc);
+    throw ex;
+  }
+  rc = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
+  if(0 != rc) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to set mutex type: " << sstrerror(rc);
+    throw ex;
+  }
+  rc = pthread_mutex_init(&m_mutex, NULL);
   if(0 != rc) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to initialize m_mutex: " << sstrerror(rc);
+    throw ex;
+  }
+  rc = pthread_mutexattr_destroy(&attr);
+  if(0 != rc) {
+    pthread_mutex_destroy(&m_mutex);
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to destroy mutex attribute: " << sstrerror(rc);
     throw ex;
   }
 }
