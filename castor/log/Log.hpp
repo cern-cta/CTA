@@ -40,31 +40,15 @@ namespace castor {
 namespace log {
 
 /**
- * Class representing the CASTOR logging system.
- *
- * This class follows the singleton design-pattern because only one instance of
- * this object should be created.
- *
- * For performance reasons it is recommended to only call the instance()
- * method once in the main thread of the program, because the instance()
- * method uses a mutex to protect the creation of the Log singleton.
+ * Abstract class representing the API of the CASTOR logging system.
  */
 class Log {
 public:
 
   /**
-   * Constructor
-   *
-   * @param programName The name of the program to be prepended to every log
-   * message.
-   */
-  Log(const std::string &programName) throw(castor::exception::Internal,
-    castor::exception::InvalidArgument);
-
-  /**
    * Destructor.
    */
-  ~Log() throw();
+  virtual ~Log() throw() = 0;
 
   /**
    * Writes a message into the CASTOR logging system. Note that no exception
@@ -80,12 +64,12 @@ public:
    * @param params the parameters of the message.
    * @param timeStamp the time stamp of the log message.
    */
-  void writeMsg(
+  virtual void writeMsg(
     const int priority,
     const std::string &msg,
     const int numParams,
     const Param params[],
-    const struct timeval &timeStamp) throw();
+    const struct timeval &timeStamp) throw() = 0;
 
   /**
    * A template function that wraps writeMsg in order to get the compiler
@@ -120,11 +104,11 @@ public:
    * @param numParams the number of parameters in the message.
    * @param params the parameters of the message.
    */
-  void writeMsg(
+  virtual void writeMsg(
     const int priority,
     const std::string &msg,
     const int numParams,
-    const castor::log::Param params[]) throw();
+    const castor::log::Param params[]) throw() = 0;
 
   /**
    * A template function that wraps writeMsg in order to get the compiler
@@ -144,150 +128,6 @@ public:
     castor::log::Param(&params)[numParams]) throw() {
     writeMsg(priority, msg, numParams, params);
   }
-
-private:
-
-  /**
-   * Default size of a syslog message.
-   */
-  static const size_t DEFAULT_SYSLOG_MSGLEN = 1024;
-
-  /**
-   * Default size of a rsyslog message.
-   */
-  static const size_t DEFAULT_RSYSLOG_MSGLEN = 2000;
-
-  /**
-   * Maximum length of a parameter name.
-   */
-  static const size_t LOG_MAX_PARAMNAMELEN = 20;
-
-  /**
-   * Maximum length of a string value.
-   */
-  static const size_t LOG_MAX_PARAMSTRLEN = 1024;
-
-  /**
-   * Maximum length of a log message.
-   */
-  static const size_t LOG_MAX_LINELEN = 8192;
-
-  /**
-   * The name of the program to be prepended to every log message.
-   */
-  const std::string m_programName;
-
-  /**
-   * The maximum message length that the client syslog server can handle.
-   */
-  const size_t m_maxMsgLen;
-
-  /**
-   * Mutex used to protect the critical section of the Log object.
-   */
-  pthread_mutex_t m_mutex;
-
-  /**
-   * The file descriptor of the socket used to send messages to syslog.
-   */
-  int m_logFile;
-
-  /**
-   * True if there is currrently a connection with syslog.
-   */
-  bool m_connected;
-
-  /**
-   * Map from syslog integer priority to textual representation.
-   */
-  const std::map<int, std::string> m_priorityToText;
-
-  /**
-   * Throws castor::exception::InvalidArgument if the specified program name is
-   * too long.
-   */
-  void checkProgramNameLen(const std::string &programName)
-    throw(castor::exception::InvalidArgument);
-
-  /**
-   * Determines the maximum message length that the client syslog server can
-   * handle.
-   *
-   * @return The maximum message length that the client syslog server can
-   * handle.
-   */
-  size_t determineMaxMsgLen() const throw();
-
-  /**
-   * Generates and returns the mapping between syslog priorities and their
-   * textual representations.
-   */
-  std::map<int, std::string> generatePriorityToTextMap() const
-    throw(castor::exception::Internal);
-
-  /**
-   * Initializes the mutex used to protect the critical section of the Log
-   * object.
-   */
-  void initMutex() throw(castor::exception::Internal);
-
-  /**
-   * Connects to syslog.
-   *
-   * Please note that this method must be called from within the critical
-   * section of the Log object.
-   *
-   * If the connection with syslog is already open then this method does
-   * nothing.
-   *
-   * This method does not throw an exception if the connection cannot be made
-   * to syslog.  In this case the internal state of the Log object reflects the
-   * fact that no connection was made.
-   */
-  void openLog() throw();
-
-  /**
-   * Build the header of a syslog message.
-   */
-  int buildSyslogHeader(
-    char *const buffer,
-    const int buflen,
-    const int priority,
-    const struct timeval &timeStamp,
-    const int pid) const throw();
-
-  /**
-   * Creates a clean version of the specified string ready for use with syslog.
-   *
-   * @param s The string to be cleaned.
-   * @param replaceSpaces Set to true if spaces should be replaced by
-   * underscores.
-   * @return A cleaned version of the string.
-   */
-  std::string cleanString(const std::string &s, const bool replaceSpaces)
-    throw();
-
-  /**
-   * A reduced version of syslog.  This method is able to set the message
-   * timestamp.  This is necessary when logging messages asynchronously of there
-   * creation, such as when retrieving logs from the DB.
-   *
-   * @param msg The message to be logged.
-   * @param msgLen The length of the message top be logged.
-   */
-  void reducedSyslog(const char *const msg, const int msgLen) throw();
-
-  /**
-   * Closes the connection to syslog.
-   *
-   * Please note that this method must be called from within the critical
-   * section of the Log object.
-   *
-   * If the connection to syslog is already closed then this method does
-   * nothing.
-   */
-  void closeLog() throw();
-
 }; // class Log
 
 } // namespace log
