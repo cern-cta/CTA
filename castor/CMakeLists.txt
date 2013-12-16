@@ -140,6 +140,7 @@ set (CLIENT_LIB_SRC_FILES
   io/StreamNsFileIdCnv.cpp
   log/IPAddress.cpp
   log/Log.cpp
+  log/LogImplementation.cpp
   log/Message.cpp
   log/Param.cpp
   log/TimeStamp.cpp

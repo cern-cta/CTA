@@ -148,6 +148,7 @@ rununittests: $(RMC_OBJECTS) \
   legacymsg_VmgrMarshal.o \
   log_IPAddress.o \
   log_Log.o \
+  log_LogImplementation.o \
   log_Message.o \
   log_Param.o \
   log_TimeStamp.o \
@@ -368,7 +369,7 @@ rununittests: $(RMC_OBJECTS) \
   unittest_BridgeClientInfo2SenderTest.o \
   unittest_TapeFlushConfigParamsTest.o \
   unittest_LegacyTxRxTest.o \
-  unittest_LogTest.o \
+  unittest_LogImplementationTest.o \
   unittest_GetMoreWorkConnectionTest.o \
   unittest_ClientAddressTcpIpTest.o \
   unittest_PendingMigrationsStoreTest.o \
@@ -720,6 +721,9 @@ log_IPAddress.o: $(ROOT_DIR)/castor/log/IPAddress.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 log_Log.o: $(ROOT_DIR)/castor/log/Log.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+log_LogImplementation.o: $(ROOT_DIR)/castor/log/LogImplementation.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 log_Message.o:  $(ROOT_DIR)/castor/log/Message.cpp
@@ -1656,7 +1660,8 @@ unittest_TapeFlushConfigParamsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tape
 unittest_LegacyTxRxTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/LegacyTxRxTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-unittest_LogTest.o: $(ROOT_DIR)/test/unittest/castor/log/LogTest.cpp
+unittest_LogImplementationTest.o: \
+  $(ROOT_DIR)/test/unittest/castor/log/LogImplementationTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
 unittest_GetMoreWorkConnectionTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/GetMoreWorkConnectionTest.cpp
