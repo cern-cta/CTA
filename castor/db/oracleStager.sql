@@ -1507,6 +1507,7 @@ CREATE OR REPLACE PROCEDURE createDisk2DiskCopyJob
  inReplacedDcId IN INTEGER, inDrainingJob IN INTEGER, inDoSignal IN BOOLEAN) AS
   varD2dCopyJobId INTEGER;
   varDestDcId INTEGER;
+  varTransferId VARCHAR2(2048);
 BEGIN
   varD2dCopyJobId := ids_seq.nextval();
   varDestDcId := ids_seq.nextval();
@@ -1516,7 +1517,8 @@ BEGIN
                                 replacedDcId, destDcId, drainingJob)
   VALUES (varD2dCopyJobId, uuidgen(), gettime(), dconst.DISK2DISKCOPYJOB_PENDING, 0, inOuid, inOgid,
           inDestSvcClassId, inCfId, inNsOpenTime, inReplicationType,
-          inReplacedDcId, varDestDcId, inDrainingJob);
+          inReplacedDcId, varDestDcId, inDrainingJob)
+  RETURNING transferId INTO varTransferId;
 
   -- log "Created new Disk2DiskCopyJob"
   DECLARE
@@ -1528,8 +1530,8 @@ BEGIN
              'destSvcClass=' || getSvcClassName(inDestSvcClassId) || ' nsOpenTime=' || TO_CHAR(inNsOpenTime) ||
              ' uid=' || TO_CHAR(inOuid) || ' gid=' || TO_CHAR(inOgid) || ' replicationType=' ||
              getObjStatusName('Disk2DiskCopyJob', 'replicationType', inReplicationType) ||
-             ' TransferId=' || TO_CHAR(varD2dCopyJobId) || ' replacedDcId=' || TO_CHAR(inReplacedDcId ||
-             ' DrainReq=' || TO_CHAR(inDrainingJob)));
+             ' TransferId=' || varTransferId || ' replacedDcId=' || TO_CHAR(inReplacedDcId) ||
+             ' DrainReq=' || TO_CHAR(inDrainingJob));
   END;
   
   IF inDoSignal THEN
@@ -2715,9 +2717,8 @@ BEGIN
   -- trigger recall only if recall is not already ongoing
   IF varIsBeingRecalled != 0 THEN
     -- createRecallCandidate: found already running recall
-    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_FOUND_ONGOING_RECALL, varFileId, varNsHost, 'stagerd',
-             'FileName=' || varFileName || ' REQID=' || varReqUUID ||
-             ' SUBREQID=' || varSubReqUUID || ' RecallGroup=' || varRecallGroupName ||
+    logToDLF(varReqUUID, dlf.LVL_SYSTEM, dlf.RECALL_FOUND_ONGOING_RECALL, varFileId, varNsHost, 'stagerd',
+             'FileName=' || varFileName || ' SUBREQID=' || varSubReqUUID || ' RecallGroup=' || varRecallGroupName ||
              ' RequestType=' || varReqType);
   ELSE
     varRc := createRecallJobs(varCfId, varFileId, varNsHost, varFileSize, varFileClassId,
