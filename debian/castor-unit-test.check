@@ -4,4 +4,6 @@ valgrind --leak-check=full --show-reachable=yes --error-exitcode=1 test/castorUn
 test/castorThreadedUnitTests
 valgrind --leak-check=full --show-reachable=yes --error-exitcode=1 test/castorThreadedUnitTests
 valgrind --tool=helgrind --error-exitcode=1 test/castorThreadedUnitTests
+test/castorMultiprocessUnitTests
+valgrind --tool=helgrind --error-exitcode=1 test/castorMultiprocessUnitTests
 %endif

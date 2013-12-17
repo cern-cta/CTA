@@ -51,5 +51,15 @@ target_link_libraries(castorThreadedUnitTests TapeDrive Exception SCSI System
   Utils File castorTapeServerThreading 
   ${GTEST_LIBRARY} gmock pthread castorcommon)
 
-install(TARGETS castorUnitTests castorThreadedUnitTests
+# Those tests are multi threaded. They could should also be run in 
+# helgrind/drd (but not memcheck)
+add_executable(castorMultiprocessUnitTests
+  castorUnitTests.cpp
+  ../castor/tape/tapeserver/threading/ThreadingMPTests.cpp
+)
+target_link_libraries(castorMultiprocessUnitTests TapeDrive Exception SCSI System 
+  Utils File castorTapeServerThreading 
+  ${GTEST_LIBRARY} gmock pthread castorcommon)
+
+install(TARGETS castorUnitTests castorThreadedUnitTests castorMultiprocessUnitTests
   DESTINATION ${CASTOR_DEST_BIN_DIR})

@@ -1,4 +1,5 @@
 %if 0%{?castorUnitTest:1} > 0
 %attr(0755,root,root) usr/bin/castorUnitTests
 %attr(0755,root,root) usr/bin/castorThreadedUnitTests
+%attr(0755,root,root) usr/bin/castorMultiprocessUnitTests
 %endif

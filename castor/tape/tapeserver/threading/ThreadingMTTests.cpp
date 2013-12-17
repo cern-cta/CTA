@@ -24,10 +24,9 @@
 
 #include <gtest/gtest.h>
 #include "Threading.hpp"
-#include "ChildProcess.hpp"
 
-/* This is a collection of multi threaded unit tests, which can (and should
- be passed through helgrind). */
+/* This is a collection of multi threaded unit tests, which can (and should)
+ be passed through helgrind, as well as valgrind */
 
 namespace ThreadedUnitTests {
 
@@ -116,67 +115,6 @@ namespace ThreadedUnitTests {
       std::string w(e.what());
       ASSERT_NE(std::string::npos, w.find("Exception in child thread"));
     }
-  }
-
-  class emptyCleanup : public castor::tape::threading::ChildProcess::Cleanup {
-  public:
-
-    virtual void operator ()() { };
-  };
-
-  class myOtherProcess : public castor::tape::threading::ChildProcess {
-  private:
-
-    int run() {
-      /* Just sleep a bit so the parent process gets a chance to see us running */
-      struct timespec ts;
-      ts.tv_sec = 0;
-      ts.tv_nsec = 50000;
-      nanosleep(&ts, NULL);
-      return 123;
-    }
-  };
-
-  TEST(castor_tape_threading, ChildProcess_return_value) {
-    myOtherProcess cp;
-    emptyCleanup cleanup;
-    EXPECT_THROW(cp.exitCode(), castor::tape::threading::ChildProcess::ProcessNeverStarted);
-    EXPECT_NO_THROW(cp.start(cleanup));
-    EXPECT_THROW(cp.exitCode(), castor::tape::threading::ChildProcess::ProcessStillRunning);
-    EXPECT_NO_THROW(cp.wait());
-    ASSERT_EQ(123, cp.exitCode());
-  }
-
-  class myInfiniteSpinner : public castor::tape::threading::ChildProcess {
-  private:
-
-    int run() {
-      /* Loop forever (politely) */
-      while (true) {
-        struct timespec ts;
-        ts.tv_sec = 0;
-        ts.tv_nsec = 10*1000*1000;
-        nanosleep(&ts, NULL);
-      }
-      return 321;
-    }
-  };
-
-  TEST(castor_tape_threading, ChildProcess_killing) {
-    myInfiniteSpinner cp;
-    emptyCleanup cleanup;
-    EXPECT_THROW(cp.kill(), castor::tape::threading::ChildProcess::ProcessNeverStarted);
-    EXPECT_NO_THROW(cp.start(cleanup));
-    EXPECT_THROW(cp.exitCode(), castor::tape::threading::ChildProcess::ProcessStillRunning);
-    ASSERT_EQ(true, cp.running());
-    EXPECT_NO_THROW(cp.kill());
-    /* The effect is not immediate, wait a bit. */
-    struct timespec ts;
-    ts.tv_sec = 0;
-    ts.tv_nsec = 10*1000*1000;
-    nanosleep(&ts, NULL);
-    ASSERT_EQ(false, cp.running());
-    EXPECT_THROW(cp.exitCode(), castor::tape::threading::ChildProcess::ProcessWasKilled);
   }
 } // namespace ThreadedUnitTests
 
