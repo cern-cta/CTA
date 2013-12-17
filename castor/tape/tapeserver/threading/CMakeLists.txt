@@ -1,1 +1,1 @@
-add_library(castorTapeServerThreading Threading.cpp)
+add_library(castorTapeServerThreading Threading.cpp ChildProcess.cpp)

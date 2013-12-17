@@ -24,6 +24,8 @@
 
 #include <gtest/gtest.h>
 #include "Threading.hpp"
+#include "ChildProcess.hpp"
+#include <time.h>
 
 /* Note: those tests create multi threading errors on purpose and should not
  * be run in helgrind */
