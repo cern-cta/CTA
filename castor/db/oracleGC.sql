@@ -378,7 +378,7 @@ BEGIN
            Castorfile.fileid, Castorfile.nshost,
            DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
            getObjStatusName('DiskCopy', 'gcType', DiskCopy.gcType),
-          getSvcClassList(FileSystem.id)
+           getSvcClassList(FileSystem.id)
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
      WHERE decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
        AND DiskCopy.castorfile = CastorFile.id
