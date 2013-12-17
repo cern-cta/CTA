@@ -877,7 +877,7 @@ END;
 /
 ALTER TABLE DiskCopy
   ADD CONSTRAINT CK_DiskCopy_Status
-  CHECK (status IN (0, 4, 5, 6, 7, 9, 10, 11));
+  CHECK (status IN (0, 4, 5, 6, 7, 9, 11));
 ALTER TABLE DiskCopy
   ADD CONSTRAINT CK_DiskCopy_GcType
   CHECK (gcType IN (0, 1, 2, 3, 4, 5, 6, 7));
@@ -1174,6 +1174,7 @@ CREATE TABLE DrainingJob
    egid           INTEGER CONSTRAINT NN_DrainingJob_Egid NOT NULL,
    pid            INTEGER CONSTRAINT NN_DrainingJob_Pid NOT NULL,
    machine        VARCHAR2(2048) CONSTRAINT NN_DrainingJob_Machine NOT NULL,
+   reqId          VARCHAR2(2048) CONSTRAINT NN_DrainingJob_ReqId NOT NULL,
    creationTime   INTEGER CONSTRAINT NN_DrainingJob_CT NOT NULL,
    lastModificationTime INTEGER CONSTRAINT NN_DrainingJob_LMT NOT NULL,
    status         INTEGER CONSTRAINT NN_DrainingJob_Status NOT NULL,
@@ -1228,7 +1229,9 @@ CREATE TABLE DrainingErrors
   (drainingJob  INTEGER CONSTRAINT NN_DrainingErrors_DJ NOT NULL,
    errorMsg     VARCHAR2(2048) CONSTRAINT NN_DrainingErrors_ErrorMsg NOT NULL,
    fileId       INTEGER CONSTRAINT NN_DrainingErrors_FileId NOT NULL,
-   nsHost       VARCHAR2(2048) CONSTRAINT NN_DrainingErrors_NsHost NOT NULL)
+   nsHost       VARCHAR2(2048) CONSTRAINT NN_DrainingErrors_NsHost NOT NULL,
+   diskCopy     INTEGER CONSTRAINT NN_DrainingErrors_DiskCopy NOT NULL,
+   timeStamp    NUMBER CONSTRAINT NN_DrainingErrors_TimeStamp NOT NULL)
 ENABLE ROW MOVEMENT;
 
 CREATE INDEX I_DrainingErrors_DJ ON DrainingErrors (drainingJob);
@@ -1237,6 +1240,12 @@ ALTER TABLE DrainingErrors
   ADD CONSTRAINT FK_DrainingErrors_DJ
   FOREIGN KEY (drainingJob)
   REFERENCES DrainingJob (id);
+
+ALTER TABLE DrainingErrors
+  ADD CONSTRAINT FK_DrainingErrors_DC
+  FOREIGN KEY (diskCopy)
+  REFERENCES DiskCopy (id);
+
 
 /* Definition of the Disk2DiskCopyJob table. Each line is a disk2diskCopy job to process
  *   id : unique DB identifier for this job
