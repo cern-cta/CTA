@@ -233,16 +233,16 @@ class LocalQueue(Queue.Queue):
     '''Checks which transfers need to be canceled because they are queueing for too long'''
     # get timeouts from configuration
     timeouts = dict([entry.split(':') for entry in
-                     self.config.getValue('TransferManager', 'PendingTimeouts', '').split()])
+                     self.config.getValue('DiskManager', 'PendingTimeouts', '').split()])
     for svcclass, timeout in timeouts.items():
       try:
         timeouts[svcclass] = int(timeout)
       except ValueError:
         del timeouts[svcclass]
-        # "Invalid TransferManager/PendingTimeouts option, ignoring entry" message
+        # "Invalid DiskManager/PendingTimeouts option, ignoring entry" message
         dlf.writeerr(msgs.INVALIDTIMEOUTOPTION, SvcClass=svcclass, Timeout=timeout)
     # get the disk to disk copy timeout
-    d2dtimeout =  self.config.getValue('TransferManager', 'DiskCopyPendingTimeout', 7200, int)
+    d2dtimeout =  self.config.getValue('DiskManager', 'DiskCopyPendingTimeout', 7200, int)
     # get current time and diskserver status
     currenttime = time.time()
     # loop over the transfers
