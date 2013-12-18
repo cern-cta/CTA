@@ -7,7 +7,7 @@ import sys
 from django.shortcuts import render_to_response, get_object_or_404, redirect
 from django.http import HttpResponse, HttpResponseRedirect
 from django.utils import simplejson
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.contrib import messages
 from django.template import RequestContext
 from django.views.decorators.csrf import csrf_exempt
@@ -213,6 +213,8 @@ def pushdata(request):
                 mo.data = simplejson.dumps(d['metricData'])
                 mo.save()
                 debug[m] = "updated" # debug
+            except MultipleObjectsReturned:
+                debug[m] = "not updated - multiple objects found" # debug
             else: 
                 debug[m] = "not updated" # debug
         
