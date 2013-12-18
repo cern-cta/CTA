@@ -128,6 +128,21 @@ public:
     castor::log::Param(&params)[numParams]) throw() {
     writeMsg(priority, msg, numParams, params);
   }
+
+  /**
+   * Writes a message into the CASTOR logging system. Note that no exception
+   * will ever be thrown in case of failure. Failures will actually be
+   * silently ignored in order to not impact the processing.
+   *
+   * Note that this version of writeMsg() implicitly uses the current time as
+   * the time stamp of the message.
+   *
+   * @param priority the priority of the message as defined by the syslog API.
+   * @param msg the message.
+   */
+  virtual void writeMsg(
+    const int priority,
+    const std::string &msg) throw() = 0;
 }; // class Log
 
 } // namespace log

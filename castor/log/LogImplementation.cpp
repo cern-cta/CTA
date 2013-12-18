@@ -484,7 +484,7 @@ void castor::log::LogImplementation::reducedSyslog(const char *const msg,
 // writeMsg
 //-----------------------------------------------------------------------------
 void castor::log::LogImplementation::writeMsg(
-  const int severity,
+  const int priority,
   const std::string &msg,
   const int numParams,
   const castor::log::Param params[]) throw() {
@@ -492,5 +492,15 @@ void castor::log::LogImplementation::writeMsg(
   struct timeval timeStamp;
   gettimeofday(&timeStamp, NULL);
 
-  writeMsg(severity, msg, numParams, params, timeStamp);
+  writeMsg(priority, msg, numParams, params, timeStamp);
+}
+
+//-----------------------------------------------------------------------------
+// writeMsg
+//-----------------------------------------------------------------------------
+void castor::log::LogImplementation::writeMsg(
+  const int priority,
+  const std::string &msg) throw() {
+  Param *emptyParams = NULL;
+  writeMsg(priority, msg, 0, emptyParams);
 }
