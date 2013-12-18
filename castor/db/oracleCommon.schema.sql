@@ -1230,11 +1230,12 @@ CREATE TABLE DrainingErrors
    errorMsg     VARCHAR2(2048) CONSTRAINT NN_DrainingErrors_ErrorMsg NOT NULL,
    fileId       INTEGER CONSTRAINT NN_DrainingErrors_FileId NOT NULL,
    nsHost       VARCHAR2(2048) CONSTRAINT NN_DrainingErrors_NsHost NOT NULL,
-   diskCopy     INTEGER CONSTRAINT NN_DrainingErrors_DiskCopy NOT NULL,
+   diskCopy     INTEGER,
    timeStamp    NUMBER CONSTRAINT NN_DrainingErrors_TimeStamp NOT NULL)
 ENABLE ROW MOVEMENT;
 
 CREATE INDEX I_DrainingErrors_DJ ON DrainingErrors (drainingJob);
+CREATE INDEX I_DrainingErrors_DC ON DrainingErrors (diskCopy);
 
 ALTER TABLE DrainingErrors
   ADD CONSTRAINT FK_DrainingErrors_DJ
@@ -1279,6 +1280,7 @@ CREATE TABLE Disk2DiskCopyJob
    replicationType INTEGER CONSTRAINT NN_Disk2DiskCopyJob_Type NOT NULL,
    replacedDcId INTEGER,
    destDcId INTEGER CONSTRAINT NN_Disk2DiskCopyJob_DCId NOT NULL,
+   srcDcId INTEGER,
    drainingJob INTEGER)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_Disk2DiskCopyJob_Tid ON Disk2DiskCopyJob(transferId);

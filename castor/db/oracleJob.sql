@@ -356,6 +356,7 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
   varUid INTEGER := -1;
   varGid INTEGER := -1;
   varDestDcId INTEGER;
+  varSrcDcId INTEGER;
   varDestSvcClass INTEGER;
   varRepType INTEGER;
   varReplacedDcId INTEGER;
@@ -372,14 +373,17 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
   varComment VARCHAR2(2048);
   varDrainingJob VARCHAR2(2048);
 BEGIN
-  varLogMsg := CASE WHEN inErrorMessage IS NULL THEN dlf.D2D_D2DDONE_OK ELSE dlf.D2D_D2DFAILED END;
   BEGIN
-    -- Parse destination path
-    parsePath(inDestDsName ||':'|| inDestPath, varDestFsId, varDestPath, varDestDcId, varFileId, varNsHost);
-    -- Get data from the disk2DiskCopy Job
-    SELECT castorFile, ouid, ogid, destDcId, destSvcClass, replicationType,
+    IF inDestPath != '' THEN
+      -- Parse destination path
+      parsePath(inDestDsName ||':'|| inDestPath, varDestFsId, varDestPath, varDestDcId, varFileId, varNsHost);
+    -- ELSE we are called because of an error at start: try to gather information
+    -- from the Disk2DiskCopyJob entry or and fail accordingly.
+    END IF;
+    -- Get data from the Disk2DiskCopyJob
+    SELECT castorFile, ouid, ogid, destDcId, srcDcId, destSvcClass, replicationType,
            replacedDcId, retryCounter, drainingJob
-      INTO varCfId, varUid, varGid, varDestDcId, varDestSvcClass, varRepType,
+      INTO varCfId, varUid, varGid, varDestDcId, varSrcDcId, varDestSvcClass, varRepType,
            varReplacedDcId, varRetryCounter, varDrainingJob
       FROM Disk2DiskCopyJob
      WHERE transferId = inTransferId;
@@ -405,6 +409,7 @@ BEGIN
       RETURN;
     END;
   END;
+  varLogMsg := CASE WHEN inErrorMessage IS NULL THEN dlf.D2D_D2DDONE_OK ELSE dlf.D2D_D2DFAILED END;
   -- lock the castor file (and get logging info)
   SELECT fileid, nsHost, fileSize INTO varFileId, varNsHost, varFileSize
     FROM CastorFile
@@ -421,7 +426,7 @@ BEGIN
   -- Log success or failure of the replication
   varComment := 'transferId="' || inTransferId ||
          '" destSvcClass=' || getSvcClassName(varDestSvcClass) ||
-         ' dstDcId=' || TO_CHAR(varDestDcId) || ' destPath="' || inDestDsName || ':' || inDestPath ||
+         ' dstDcId=' || TO_CHAR(varDestDcId) || ' destPath="' || inDestPath ||
          '" euid=' || TO_CHAR(varUid) || ' egid=' || TO_CHAR(varGid) ||
          ' fileSize=' || TO_CHAR(varFileSize);
   IF inErrorMessage IS NOT NULL THEN
@@ -499,7 +504,7 @@ BEGIN
           -- and remember the error in case of draining
           IF varDrainingJob IS NOT NULL THEN
             INSERT INTO DrainingErrors (drainingJob, errorMsg, fileId, nsHost, diskCopy, timeStamp)
-            VALUES (varDrainingJob, inErrorMessage, varFileId, varNsHost, varDestDcId, getTime());
+            VALUES (varDrainingJob, inErrorMessage, varFileId, varNsHost, varSrcDcId, getTime());
           END IF;
         EXCEPTION WHEN NO_DATA_FOUND THEN
           -- the Disk2DiskCopyjob was already dropped (e.g. because of an interrupted draining)
@@ -553,7 +558,8 @@ BEGIN
     SELECT castorFile, destDcId INTO varCfId, varDestDcId
       FROM Disk2DiskCopyJob
      WHERE transferId = inTransferId
-       AND status = dconst.DISK2DISKCOPYJOB_SCHEDULED;
+       AND status = dconst.DISK2DISKCOPYJOB_SCHEDULED
+       FOR UPDATE;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- log "disk2DiskCopyStart : Replication request canceled while queuing in scheduler or transfer already started"
     logToDLF(NULL, dlf.LVL_USER_ERROR, dlf.D2D_CANCELED_AT_START, inFileId, inNsHost, 'transfermanagerd',
@@ -588,6 +594,14 @@ BEGIN
     -- raise exception for the scheduling part
     raise_application_error(-20110, dlf.D2D_SOURCE_GONE);
   END;
+
+  -- at this point we can update the Disk2DiskCopyJob with the source. This may be used
+  -- by disk2DiskCopyEnded to track the failed sources.
+  UPDATE Disk2DiskCopyJob
+     SET status = dconst.DISK2DISKCOPYJOB_RUNNING,
+         srcDcId = varSrcDcId
+   WHERE transferId = inTransferId;
+
   IF (varSrcDsStatus = dconst.DISKSERVER_DISABLED OR varSrcFsStatus = dconst.FILESYSTEM_DISABLED
       OR varSrcHwOnline = 0) THEN
     -- log "disk2DiskCopyStart : Source diskserver/filesystem was DISABLED meanwhile"
@@ -637,11 +651,6 @@ BEGIN
     -- raise exception
     raise_application_error(-20110, dlf.D2D_MULTIPLE_COPIES_ON_DS);
   END IF;
-
-  -- update the Disk2DiskCopyJob status and filesystem
-  UPDATE Disk2DiskCopyJob
-     SET status = dconst.DISK2DISKCOPYJOB_RUNNING
-   WHERE transferId = inTransferId;
 
   -- build full path of destination copy
   buildPathFromFileId(inFileId, inNsHost, varDestDcId, outDestDcPath);
@@ -957,7 +966,7 @@ BEGIN
         -- try disk2diskCopyJob
         SELECT id into srId FROM Disk2diskCopyJob WHERE transferId = subReqIds(i);
       EXCEPTION WHEN NO_DATA_FOUND THEN
-        CONTINUE;  -- The SubRequest/disk2DiskCopyJob may have be removed, nothing to be done.
+        CONTINUE;  -- The SubRequest/disk2DiskCopyJob may have been removed, nothing to be done.
       END;
       disk2DiskCopyEnded(subReqIds(i), '', '', 0, errnos(i), errmsgs(i));
     END;

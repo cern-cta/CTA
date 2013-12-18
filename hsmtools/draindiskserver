@@ -357,20 +357,23 @@ def queryFailures():
         fileSystems = getFileSystems(stcur)
         # build SQL statement
         stGetFailures = '''
-        SELECT DiskServer.name, fileSystem.mountPoint || DiskCopy.path as filePath,
+        SELECT DiskServer.name, DrainingErrors.fileId,
+               fileSystem.mountPoint || DiskCopy.path as filePath,
                DrainingErrors.timestamp, DrainingErrors.errorMsg
           FROM DiskServer, FileSystem, DrainingJob, DrainingErrors, DiskCopy
          WHERE FileSystem.diskServer = DiskServer.id
            AND DrainingJob.fileSystem = FileSystem.id
            AND DrainingErrors.drainingJob = DrainingJob.id
-           AND DrainingErrors.diskCopy = DiskCopy.id'''
+           AND DrainingErrors.diskCopy = DiskCopy.id(+)'''
         if fileSystems:
             stGetFailures += ' AND FileSystem.id IN (' + ', '.join([str(fs[2]) for fs in fileSystems]) + ')'
         # get data
         stcur.execute(stGetFailures)
-        data = stcur.fetchall()
+        results = stcur.fetchall()
         # pretty printing
-        titles = ('DiskServer', 'FilePath', 'Timestamp', 'Error')
+        titles = ('DiskServer', 'FileId', 'FilePath', 'Timestamp', 'Error')
+        data = [(name, fileId, filePath, castor_tools.secsToDate(timestamp), errorMsg)
+                for name, fileId, filePath, timestamp, errorMsg in results]
         castor_tools.prettyPrintTable(titles, data)
     finally:
         # close DB connection
