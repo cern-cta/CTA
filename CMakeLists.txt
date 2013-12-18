@@ -26,6 +26,9 @@
 cmake_minimum_required (VERSION 2.6)
 
 project(castor)
+
+set(CMAKE_BUILD_TYPE Debug)
+
 if ("${CMAKE_SOURCE_DIR}" MATCHES "${CMAKE_BINARY_DIR}")
   message (SEND_ERROR "In source building not supported. Please run something like: \"mkdir ../build; ( src=`pwd`; cd ../build; cmake $src ); make -C ../build\"")
   message (SEND_ERROR "Now that you reached that point you will unfortnately have to cleanup your source directory: \"rm -rf CMakeFiles/ CMakeCache.txt\". Sorry!")
