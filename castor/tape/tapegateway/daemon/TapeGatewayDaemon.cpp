@@ -164,8 +164,8 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
 //------------------------------------------------------------------------------
 // TapeGatewayDaemon Constructor
 //------------------------------------------------------------------------------
-castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon(log::Log &log):
-  castor::server::BaseDaemon(log) {
+castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon(
+  log::Logger &logger): castor::server::BaseDaemon(logger) {
 
   // get the port
   char* tmp=NULL;

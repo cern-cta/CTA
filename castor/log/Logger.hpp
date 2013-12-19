@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/log/Log.hpp
+ *                      castor/log/Logger.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,8 +23,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_LOG_LOG_HPP
-#define CASTOR_LOG_LOG_HPP 1
+#ifndef CASTOR_LOG_LOGGER_HPP
+#define CASTOR_LOG_LOGGER_HPP 1
 
 // Include Files
 #include "castor/exception/Internal.hpp"
@@ -42,7 +42,7 @@ namespace log {
 /**
  * Abstract class representing the API of the CASTOR logging system.
  */
-class Log {
+class Logger {
 public:
 
   /**
@@ -51,7 +51,7 @@ public:
    * @param programName The name of the program to be prepended to every log
    * message.
    */
-  Log(const std::string &programName)
+  Logger(const std::string &programName)
     throw(castor::exception::Internal, castor::exception::InvalidArgument);
 
   /**
@@ -63,14 +63,14 @@ public:
   /**
    * Destructor.
    */
-  virtual ~Log() throw() = 0;
+  virtual ~Logger() throw() = 0;
 
   /**
    * Writes a message into the CASTOR logging system. Note that no exception
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
    *
-   * Note that this version of writeMsg() allows the caller to specify the
+   * Note that this version of logMsg() allows the caller to specify the
    * time stamp of the log message.
    *
    * @param priority the priority of the message as defined by the syslog API.
@@ -79,7 +79,7 @@ public:
    * @param params the parameters of the message.
    * @param timeStamp the time stamp of the log message.
    */
-  virtual void writeMsg(
+  virtual void logMsg(
     const int priority,
     const std::string &msg,
     const int numParams,
@@ -87,10 +87,10 @@ public:
     const struct timeval &timeStamp) throw() = 0;
 
   /**
-   * A template function that wraps writeMsg in order to get the compiler
+   * A template function that wraps logMsg in order to get the compiler
    * to automatically determine the size of the params parameter, therefore
    *
-   * Note that this version of writeMsg() allows the caller to specify the
+   * Note that this version of logMsg() allows the caller to specify the
    * time stamp of the log message.
    *
    * @param priority the priority of the message as defined by the syslog API.
@@ -98,12 +98,12 @@ public:
    * @param params the parameters of the message.
    * @param timeStamp the time stamp of the log message.
    */
-  template<int numParams> void writeMsg(
+  template<int numParams> void logMsg(
     const int priority,
     const std::string &msg,
     castor::log::Param(&params)[numParams],
     const struct timeval &timeStamp) throw() {
-    writeMsg(priority, msg, numParams, params, timeStamp);
+    logMsg(priority, msg, numParams, params, timeStamp);
   }
 
   /**
@@ -111,7 +111,7 @@ public:
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
    *
-   * Note that this version of writeMsg() implicitly uses the current time as
+   * Note that this version of logMsg() implicitly uses the current time as
    * the time stamp of the message.
    *
    * @param priority the priority of the message as defined by the syslog API.
@@ -119,29 +119,29 @@ public:
    * @param numParams the number of parameters in the message.
    * @param params the parameters of the message.
    */
-  virtual void writeMsg(
+  virtual void logMsg(
     const int priority,
     const std::string &msg,
     const int numParams,
     const castor::log::Param params[]) throw() = 0;
 
   /**
-   * A template function that wraps writeMsg in order to get the compiler
+   * A template function that wraps logMsg in order to get the compiler
    * to automatically determine the size of the params parameter, therefore
    * removing the need for the devloper to provide it explicity.
    *
-   * Note that this version of writeMsg() implicitly uses the current time as
+   * Note that this version of logMsg() implicitly uses the current time as
    * the time stamp of the message.
    *
    * @param priority the priority of the message as defined by the syslog API.
    * @param msg the message.
    * @param params the parameters of the message.
    */
-  template<int numParams> void writeMsg(
+  template<int numParams> void logMsg(
     const int priority,
     const std::string &msg,
     castor::log::Param(&params)[numParams]) throw() {
-    writeMsg(priority, msg, numParams, params);
+    logMsg(priority, msg, numParams, params);
   }
 
   /**
@@ -149,13 +149,13 @@ public:
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
    *
-   * Note that this version of writeMsg() implicitly uses the current time as
+   * Note that this version of logMsg() implicitly uses the current time as
    * the time stamp of the message.
    *
    * @param priority the priority of the message as defined by the syslog API.
    * @param msg the message.
    */
-  virtual void writeMsg(
+  virtual void logMsg(
     const int priority,
     const std::string &msg) throw() = 0;
 
@@ -166,9 +166,9 @@ protected:
    */
   const std::string m_programName;
 
-}; // class Log
+}; // class Logger
 
 } // namespace log
 } // namespace castor
 
-#endif // CASTOR_LOG_LOG_HPP
+#endif // CASTOR_LOG_LOGGER_HPP

@@ -51,10 +51,10 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::server::BaseServer::BaseServer(log::Log &log) :
+castor::server::BaseServer::BaseServer(log::Logger &logger) :
   m_foreground(false),
   m_runAsStagerSuperuser(false),
-  m_log(log)
+  m_logger(logger)
 {
   m_cmdLineParams.clear();
   m_cmdLineParams << "fc:mh";
@@ -126,7 +126,7 @@ void castor::server::BaseServer::init() throw (castor::exception::Exception)
 void castor::server::BaseServer::dlfInit(castor::dlf::Message messages[])
   throw (castor::exception::Exception)
 {
-  castor::dlf::dlf_init((char*)m_log.getProgramName().c_str(), messages);
+  castor::dlf::dlf_init((char*)m_logger.getProgramName().c_str(), messages);
   // Add framework specific messages
   castor::dlf::Message frameworkMessages[] =
     {{  1, "Error while reading datagrams" },
@@ -158,7 +158,7 @@ void castor::server::BaseServer::dlfInit(castor::dlf::Message messages[])
 void castor::server::BaseServer::start() throw (castor::exception::Exception)
 {
   if (m_foreground) {
-    std::cout << "Starting " << m_log.getProgramName() << std::endl;
+    std::cout << "Starting " << m_logger.getProgramName() << std::endl;
   }
 
   std::map<const char, castor::server::BaseThreadPool*>::const_iterator tp;

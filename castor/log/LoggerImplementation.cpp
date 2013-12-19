@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/log/LogImplementation.cpp
+ *                      castor/log/LoggerImplementation.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #include "castor/log/Constants.hpp"
-#include "castor/log/LogImplementation.hpp"
+#include "castor/log/LoggerImplementation.hpp"
 #include "h/Castor_limits.h"
 #include "h/getconfent.h"
 
@@ -40,10 +40,10 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::log::LogImplementation::LogImplementation(
+castor::log::LoggerImplementation::LoggerImplementation(
   const std::string &programName)
   throw(castor::exception::Internal, castor::exception::InvalidArgument):
-  Log(programName),
+  Logger(programName),
   m_maxMsgLen(determineMaxMsgLen()),
   m_logFile(-1),
   m_connected(false),
@@ -55,7 +55,7 @@ castor::log::LogImplementation::LogImplementation(
 //------------------------------------------------------------------------------
 // determineMaxMsgLen
 //------------------------------------------------------------------------------
-size_t castor::log::LogImplementation::determineMaxMsgLen() const throw() {
+size_t castor::log::LoggerImplementation::determineMaxMsgLen() const throw() {
   const char *p = NULL;
   size_t msgSize = 0;
 
@@ -99,7 +99,7 @@ size_t castor::log::LogImplementation::determineMaxMsgLen() const throw() {
 // generatePriorityToTextMap
 //------------------------------------------------------------------------------
 std::map<int, std::string>
-  castor::log::LogImplementation::generatePriorityToTextMap() const 
+  castor::log::LoggerImplementation::generatePriorityToTextMap() const 
   throw(castor::exception::Internal) {
   std::map<int, std::string> m;
 
@@ -125,7 +125,7 @@ std::map<int, std::string>
 //------------------------------------------------------------------------------
 // checkProgramNameLen
 //------------------------------------------------------------------------------
-void castor::log::LogImplementation::checkProgramNameLen(
+void castor::log::LoggerImplementation::checkProgramNameLen(
   const std::string &programName) throw(castor::exception::InvalidArgument) {
   if(programName.length() > LOG_MAX_PROGNAMELEN) {
     castor::exception::InvalidArgument ex;
@@ -138,7 +138,7 @@ void castor::log::LogImplementation::checkProgramNameLen(
 //------------------------------------------------------------------------------
 // initMutex
 //------------------------------------------------------------------------------
-void castor::log::LogImplementation::initMutex()
+void castor::log::LoggerImplementation::initMutex()
   throw(castor::exception::Internal) {
   pthread_mutexattr_t attr;
   int rc = pthread_mutexattr_init(&attr);
@@ -174,13 +174,13 @@ void castor::log::LogImplementation::initMutex()
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::log::LogImplementation::~LogImplementation() throw() {
+castor::log::LoggerImplementation::~LoggerImplementation() throw() {
 }
 
 //------------------------------------------------------------------------------
 // openLog
 //------------------------------------------------------------------------------
-void castor::log::LogImplementation::openLog() throw() {
+void castor::log::LoggerImplementation::openLog() throw() {
   if(-1 == m_logFile) {
     struct sockaddr_un syslogAddr;
     syslogAddr.sun_family = AF_UNIX;
@@ -224,7 +224,7 @@ void castor::log::LogImplementation::openLog() throw() {
 //------------------------------------------------------------------------------
 // closeLog
 //------------------------------------------------------------------------------
-void castor::log::LogImplementation::closeLog() throw() {
+void castor::log::LoggerImplementation::closeLog() throw() {
   if(!m_connected) {
     return;
   }
@@ -234,9 +234,9 @@ void castor::log::LogImplementation::closeLog() throw() {
 }
 
 //-----------------------------------------------------------------------------
-// writeMsg
+// logMsg
 //-----------------------------------------------------------------------------
-void castor::log::LogImplementation::writeMsg(
+void castor::log::LoggerImplementation::logMsg(
   const int priority,
   const std::string &msg,
   const int numParams,
@@ -371,7 +371,7 @@ void castor::log::LogImplementation::writeMsg(
 //-----------------------------------------------------------------------------
 // buildSyslogHeader
 //-----------------------------------------------------------------------------
-int castor::log::LogImplementation::buildSyslogHeader(
+int castor::log::LoggerImplementation::buildSyslogHeader(
   char *const buffer,
   const int buflen,
   const int priority,
@@ -398,7 +398,7 @@ int castor::log::LogImplementation::buildSyslogHeader(
 //-----------------------------------------------------------------------------
 // cleanString
 //-----------------------------------------------------------------------------
-std::string castor::log::LogImplementation::cleanString(const std::string &s,
+std::string castor::log::LoggerImplementation::cleanString(const std::string &s,
   const bool replaceSpaces) throw() {
   char *str = strdup(s.c_str());
 
@@ -447,7 +447,7 @@ std::string castor::log::LogImplementation::cleanString(const std::string &s,
 //-----------------------------------------------------------------------------
 // reducedSyslog
 //-----------------------------------------------------------------------------
-void castor::log::LogImplementation::reducedSyslog(const char *const msg,
+void castor::log::LoggerImplementation::reducedSyslog(const char *const msg,
   const int msgLen) throw() {
   int send_flags = 0;
 #ifndef __APPLE__
@@ -481,9 +481,9 @@ void castor::log::LogImplementation::reducedSyslog(const char *const msg,
 }
 
 //-----------------------------------------------------------------------------
-// writeMsg
+// logMsg
 //-----------------------------------------------------------------------------
-void castor::log::LogImplementation::writeMsg(
+void castor::log::LoggerImplementation::logMsg(
   const int priority,
   const std::string &msg,
   const int numParams,
@@ -492,15 +492,15 @@ void castor::log::LogImplementation::writeMsg(
   struct timeval timeStamp;
   gettimeofday(&timeStamp, NULL);
 
-  writeMsg(priority, msg, numParams, params, timeStamp);
+  logMsg(priority, msg, numParams, params, timeStamp);
 }
 
 //-----------------------------------------------------------------------------
-// writeMsg
+// logMsg
 //-----------------------------------------------------------------------------
-void castor::log::LogImplementation::writeMsg(
+void castor::log::LoggerImplementation::logMsg(
   const int priority,
   const std::string &msg) throw() {
   Param *emptyParams = NULL;
-  writeMsg(priority, msg, 0, emptyParams);
+  logMsg(priority, msg, 0, emptyParams);
 }

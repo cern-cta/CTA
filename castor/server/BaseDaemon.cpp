@@ -44,8 +44,8 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::server::BaseDaemon::BaseDaemon(log::Log &log) :
-  castor::server::BaseServer(log),
+castor::server::BaseDaemon::BaseDaemon(log::Logger &logger) :
+  castor::server::BaseServer(logger),
   m_signalMutex(0) {
   memset(&m_signalSet, 0, sizeof(m_signalSet));
 }

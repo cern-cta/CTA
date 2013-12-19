@@ -84,9 +84,9 @@ namespace castor {
       /**
        * Constructor
        *
-       * @param log Object representing the API of the CASTOR logging system.
+       * @param logger Object representing the API of the CASTOR logging system.
        */
-      TapeGatewayDaemon(log::Log &log);
+      TapeGatewayDaemon(log::Logger &logger);
 
       /**
        * The main entry function of the mighunter daemon.

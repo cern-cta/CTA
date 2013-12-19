@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/log/LogImplementation.hpp
+ *                      castor/log/LoggerImplementation.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,10 +23,10 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_LOG_LOGIMPLEMENTATION_HPP
-#define CASTOR_LOG_LOGIMPLEMENTATION_HPP 1
+#ifndef CASTOR_LOG_LOGGERIMPLEMENTATION_HPP
+#define CASTOR_LOG_LOGGERIMPLEMENTATION_HPP 1
 
-#include "castor/log/Log.hpp"
+#include "castor/log/Logger.hpp"
 
 #include <map>
 #include <pthread.h>
@@ -39,7 +39,7 @@ namespace log {
 /**
  * Class implementaing the API of the CASTOR logging system.
  */
-class LogImplementation: public Log {
+class LoggerImplementation: public Logger {
 public:
 
   /**
@@ -48,20 +48,20 @@ public:
    * @param programName The name of the program to be prepended to every log
    * message.
    */
-  LogImplementation(const std::string &programName)
+  LoggerImplementation(const std::string &programName)
     throw(castor::exception::Internal, castor::exception::InvalidArgument);
 
   /**
    * Destructor.
    */
-  ~LogImplementation() throw();
+  ~LoggerImplementation() throw();
 
   /**
    * Writes a message into the CASTOR logging system. Note that no exception
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
    *
-   * Note that this version of writeMsg() allows the caller to specify the
+   * Note that this version of logMsg() allows the caller to specify the
    * time stamp of the log message.
    *
    * @param priority the priority of the message as defined by the syslog API.
@@ -70,7 +70,7 @@ public:
    * @param params the parameters of the message.
    * @param timeStamp the time stamp of the log message.
    */
-  void writeMsg(
+  void logMsg(
     const int priority,
     const std::string &msg,
     const int numParams,
@@ -82,7 +82,7 @@ public:
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
    *
-   * Note that this version of writeMsg() implicitly uses the current time as
+   * Note that this version of logMsg() implicitly uses the current time as
    * the time stamp of the message.
    *
    * @param priority the priority of the message as defined by the syslog API.
@@ -90,7 +90,7 @@ public:
    * @param numParams the number of parameters in the message.
    * @param params the parameters of the message.
    */
-  void writeMsg(
+  void logMsg(
     const int priority,
     const std::string &msg,
     const int numParams,
@@ -101,13 +101,13 @@ public:
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
    *
-   * Note that this version of writeMsg() implicitly uses the current time as
+   * Note that this version of logMsg() implicitly uses the current time as
    * the time stamp of the message.
    *
    * @param priority the priority of the message as defined by the syslog API.
    * @param msg the message.
    */
-  void writeMsg(
+  void logMsg(
     const int priority,
     const std::string &msg) throw();
 
@@ -144,7 +144,8 @@ private:
   const size_t m_maxMsgLen;
 
   /**
-   * Mutex used to protect the critical section of the LogImplementation object.
+   * Mutex used to protect the critical section of the LoggerImplementation
+   * object.
    */
   pthread_mutex_t m_mutex;
 
@@ -188,7 +189,7 @@ private:
 
   /**
    * Initializes the mutex used to protect the critical section of the
-   * LogImplementation object.
+   * LoggerImplementation object.
    */
   void initMutex() throw(castor::exception::Internal);
 
@@ -196,13 +197,13 @@ private:
    * Connects to syslog.
    *
    * Please note that this method must be called from within the critical
-   * section of the LogImplementation object.
+   * section of the LoggerImplementation object.
    *
    * If the connection with syslog is already open then this method does
    * nothing.
    *
    * This method does not throw an exception if the connection cannot be made
-   * to syslog.  In this case the internal state of the LogImplementation
+   * to syslog.  In this case the internal state of the LoggerImplementation
    * object reflects the fact that no connection was made.
    */
   void openLog() throw();
@@ -242,16 +243,16 @@ private:
    * Closes the connection to syslog.
    *
    * Please note that this method must be called from within the critical
-   * section of the LogImplementation object.
+   * section of the LoggerImplementation object.
    *
    * If the connection to syslog is already closed then this method does
    * nothing.
    */
   void closeLog() throw();
 
-}; // class LogImplementation
+}; // class LoggerImplementation
 
 } // namespace log
 } // namespace castor
 
-#endif // CASTOR_LOG_LOGIMPLEMENTATION_HPP
+#endif // CASTOR_LOG_LOGGERIMPLEMENTATION_HPP

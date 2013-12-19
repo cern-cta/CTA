@@ -54,9 +54,9 @@ public:
   /**
    * Constructor.
    *
-   * @param log Object representing the API of the CASTOR logging system.
+   * @param logger Object representing the API of the CASTOR logging system.
    */
-  TapeBridgeDaemon(log::Log &log) throw(castor::exception::Exception);
+  TapeBridgeDaemon(log::Logger &logger) throw(castor::exception::Exception);
 
   /**
    * Destructor.

@@ -59,9 +59,9 @@ namespace castor {
       /**
        * Constructor
        *
-       * @param log Object representing the API of the CASTOR logging system.
+       * @param logger Object representing the API of the CASTOR logging system.
        */
-      Server(log::Log &log);
+      Server(log::Logger &logger);
 
       /**
        * Destructor

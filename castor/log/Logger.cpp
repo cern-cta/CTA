@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/log/Log.cpp
+ *                      castor/log/Logger.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,12 +22,12 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/log/Log.hpp"
+#include "castor/log/Logger.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::log::Log::Log(const std::string &programName)
+castor::log::Logger::Logger(const std::string &programName)
   throw(castor::exception::Internal, castor::exception::InvalidArgument):
   m_programName(programName) {
 }
@@ -35,12 +35,12 @@ castor::log::Log::Log(const std::string &programName)
 //------------------------------------------------------------------------------
 // getProgramName
 //------------------------------------------------------------------------------
-const std::string &castor::log::Log::getProgramName() const throw() {
+const std::string &castor::log::Logger::getProgramName() const throw() {
   return m_programName;
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::log::Log::~Log() throw() {
+castor::log::Logger::~Logger() throw() {
 }

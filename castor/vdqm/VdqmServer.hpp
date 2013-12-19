@@ -48,9 +48,9 @@ namespace castor {
       /**
        * Constructor
        *
-       * @param log Object representing the API of the CASTOR logging system.
+       * @param logger Object representing the API of the CASTOR logging system.
        */
-      VdqmServer(log::Log &log) throw(castor::exception::Exception);
+      VdqmServer(log::Logger &logger) throw(castor::exception::Exception);
 
       /**
        * Logs the start of the server.

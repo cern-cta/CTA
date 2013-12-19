@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/log/LogImplementation.hpp"
+#include "castor/log/LoggerImplementation.hpp"
 #include "castor/tape/tapegateway/daemon/TapeGatewayDaemon.hpp"
 #include "castor/exception/Exception.hpp"
 
@@ -31,8 +31,8 @@
 //------------------------------------------------------------------------------
 int main(int argc, char **argv) {
   try {
-    castor::log::LogImplementation log("tapegatewayd");
-    castor::tape::tapegateway::TapeGatewayDaemon daemon(log);
+    castor::log::LoggerImplementation logger("tapegatewayd");
+    castor::tape::tapegateway::TapeGatewayDaemon daemon(logger);
     return daemon.main(argc, argv);
   } catch (castor::exception::Exception e) {
     std::cerr << "Caught exception :\n" << e.getMessage().str() << "\nExiting" << std::endl;

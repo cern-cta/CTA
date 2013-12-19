@@ -35,7 +35,7 @@
 #include "castor/dlf/Message.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/log/LogImplementation.hpp"
+#include "castor/log/LoggerImplementation.hpp"
 #include "castor/PortNumbers.hpp"
 #include "castor/System.hpp"
 #include "castor/server/SignalThreadPool.hpp"
@@ -59,8 +59,8 @@
 
 int main(int argc, char* argv[]){
   try{
-    castor::log::LogImplementation log("stagerd");
-    castor::stager::daemon::StagerDaemon stagerDaemon(log);
+    castor::log::LoggerImplementation logger("stagerd");
+    castor::stager::daemon::StagerDaemon stagerDaemon(logger);
 
     castor::stager::IStagerSvc* stgService =
       dynamic_cast<castor::stager::IStagerSvc*>
@@ -157,9 +157,9 @@ int main(int argc, char* argv[]){
 /******************************************************************************************/
 /* constructor: initiallizes the DLF logging and set the default value to its attributes */
 /****************************************************************************************/
-castor::stager::daemon::StagerDaemon::StagerDaemon(log::Log &log)
+castor::stager::daemon::StagerDaemon::StagerDaemon(log::Logger &logger)
   throw (castor::exception::Exception)
-  : castor::server::BaseDaemon(log) {
+  : castor::server::BaseDaemon(logger) {
 
   castor::dlf::Message stagerDlfMessages[]={
 

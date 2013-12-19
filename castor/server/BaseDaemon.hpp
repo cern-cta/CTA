@@ -32,7 +32,7 @@
 #include <map>
 #include "castor/exception/Exception.hpp"
 #include "castor/BaseObject.hpp"
-#include "castor/log/Log.hpp"
+#include "castor/log/Logger.hpp"
 #include "castor/server/BaseServer.hpp"
 #include "castor/server/Mutex.hpp"
 
@@ -59,9 +59,9 @@ namespace castor {
 
     /**
      * Constructor
-     * @param log Object representing the API of the CASTOR logging system.
+     * @param logger Object representing the API of the CASTOR logging system.
      */
-    BaseDaemon(log::Log &log);
+    BaseDaemon(log::Logger &logger);
 
     /**
      * Destructor
