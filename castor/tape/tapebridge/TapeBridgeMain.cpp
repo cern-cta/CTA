@@ -24,6 +24,7 @@
  
 
 
+#include "castor/log/LogImplementation.hpp"
 #include "castor/tape/tapebridge/TapeBridgeDaemon.hpp"
 
 
@@ -32,7 +33,8 @@
 //------------------------------------------------------------------------------
 int main(int argc, char **argv) {
 
-  castor::tape::tapebridge::TapeBridgeDaemon daemon;
+  castor::log::LogImplementation log("tapebridged");
+  castor::tape::tapebridge::TapeBridgeDaemon daemon(log);
 
   return daemon.main(argc, argv);
 }

@@ -27,6 +27,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/server/AuthListenerThreadPool.hpp"
+#include "castor/log/LogImplementation.hpp"
 #include "castor/metrics/MetricsCollector.hpp"
 #include "castor/metrics/ObjTypeCounter.hpp"
 #include "castor/rh/UserCounter.hpp"
@@ -61,7 +62,8 @@ const char *castor::rh::PORT_SEC_CONF = "SEC_PORT";
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
   try {
-    castor::rh::Server server;
+    castor::log::LogImplementation log("rhd");
+    castor::rh::Server server(log);
 
     // parse the command line
     server.parseCommandLine(argc, argv);
@@ -91,8 +93,8 @@ int main(int argc, char *argv[]) {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::rh::Server::Server() :
-  castor::server::BaseDaemon("rhd"),
+castor::rh::Server::Server(castor::log::Log &log) :
+  castor::server::BaseDaemon(log),
   m_port(-1),
   m_secure(false),
   m_waitIfBusy(true),

@@ -45,9 +45,11 @@ namespace castor {
     public:
 
       /**
-       * Default constructor
+       * Constructor
+       *
+       * @param log Object representing the API of the CASTOR logging system.
        */
-      GcDaemon();
+      GcDaemon(log::Log &log);
 
       /**
        * Default destructor

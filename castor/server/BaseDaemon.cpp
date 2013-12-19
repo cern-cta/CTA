@@ -44,8 +44,8 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::server::BaseDaemon::BaseDaemon(const std::string serverName) :
-  castor::server::BaseServer(serverName),
+castor::server::BaseDaemon::BaseDaemon(log::Log &log) :
+  castor::server::BaseServer(log),
   m_signalMutex(0) {
   memset(&m_signalSet, 0, sizeof(m_signalSet));
 }

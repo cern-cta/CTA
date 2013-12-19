@@ -46,6 +46,21 @@ class Log {
 public:
 
   /**
+   * Constructor
+   *
+   * @param programName The name of the program to be prepended to every log
+   * message.
+   */
+  Log(const std::string &programName)
+    throw(castor::exception::Internal, castor::exception::InvalidArgument);
+
+  /**
+   * Returns the name of the program that is to  be prepended to every log
+   * message.
+   */
+  const std::string &getProgramName() const throw();
+
+  /**
    * Destructor.
    */
   virtual ~Log() throw() = 0;
@@ -143,6 +158,14 @@ public:
   virtual void writeMsg(
     const int priority,
     const std::string &msg) throw() = 0;
+
+protected:
+
+  /**
+   * The name of the program to be prepended to every log message.
+   */
+  const std::string m_programName;
+
 }; // class Log
 
 } // namespace log

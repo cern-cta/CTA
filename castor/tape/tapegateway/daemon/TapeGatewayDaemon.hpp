@@ -45,32 +45,25 @@ namespace castor {
       /**
        * port to accept connections (environment)     
        */
-
       int m_listenPort;
       
       /**
        * DLF message strings.
        */
-      
       static castor::dlf::Message s_dlfMessages[];
-     
     
       /**
        * Exception throwing main() function which basically implements the
        * non-exception throwing main() function except for the initialisation of
        * DLF and the "exception catch and log" logic.
        */
-
-
       int exceptionThrowingMain(int argc,char **argv) 
         throw(castor::exception::Exception);
-
 
       /**
        * Logs the start of the daemon.
        */
       void logStart(const int argc, const char *const *const argv) throw();
-
       
       /**
        * Writes the command-line usage message of the daemon to standard out.
@@ -89,11 +82,11 @@ namespace castor {
     public:
 
       /**
-       * constructor
+       * Constructor
+       *
+       * @param log Object representing the API of the CASTOR logging system.
        */
-
-      TapeGatewayDaemon();
-      
+      TapeGatewayDaemon(log::Log &log);
 
       /**
        * The main entry function of the mighunter daemon.
@@ -104,7 +97,6 @@ namespace castor {
        * @param argc Argument count from the executable's entry function: main().
        * @param argv Argument vector from the executable's entry function: main().
        */
-
       int main(const int argc, char **argv);
       
 
@@ -116,7 +108,6 @@ namespace castor {
 
       /** to access the value of the port which is used  */
       inline int listenPort(){ return m_listenPort; }
-         
     };
 
     } //end of namespace tapegateway

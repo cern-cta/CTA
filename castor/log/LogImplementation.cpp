@@ -43,7 +43,7 @@
 castor::log::LogImplementation::LogImplementation(
   const std::string &programName)
   throw(castor::exception::Internal, castor::exception::InvalidArgument):
-  m_programName(programName),
+  Log(programName),
   m_maxMsgLen(determineMaxMsgLen()),
   m_logFile(-1),
   m_connected(false),

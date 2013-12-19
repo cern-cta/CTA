@@ -139,11 +139,6 @@ private:
   static const size_t LOG_MAX_LINELEN = 8192;
 
   /**
-   * The name of the program to be prepended to every log message.
-   */
-  const std::string m_programName;
-
-  /**
    * The maximum message length that the client syslog server can handle.
    */
   const size_t m_maxMsgLen;

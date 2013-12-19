@@ -45,9 +45,9 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapebridge::TapeBridgeDaemon::TapeBridgeDaemon()
+castor::tape::tapebridge::TapeBridgeDaemon::TapeBridgeDaemon(log::Log &log)
   throw(castor::exception::Exception) :
-  castor::server::BaseDaemon("tapebridged"),
+  castor::server::BaseDaemon(log),
   m_vdqmRequestHandlerThreadPool(0) {
 }
 

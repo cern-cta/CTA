@@ -25,6 +25,21 @@
 #include "castor/log/Log.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::log::Log::Log(const std::string &programName)
+  throw(castor::exception::Internal, castor::exception::InvalidArgument):
+  m_programName(programName) {
+}
+
+//------------------------------------------------------------------------------
+// getProgramName
+//------------------------------------------------------------------------------
+const std::string &castor::log::Log::getProgramName() const throw() {
+  return m_programName;
+}
+
+//------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::log::Log::~Log() throw() {

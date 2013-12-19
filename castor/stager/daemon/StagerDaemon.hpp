@@ -46,9 +46,17 @@ namespace castor{
       class StagerDaemon : public castor::server::BaseDaemon {
 
       public:
-        /*** constructor ***/
-        StagerDaemon() throw (castor::exception::Exception);
-        /*** destructor ***/
+
+        /**
+         * Constructor
+         *
+         * @param log Object representing the API of the CASTOR logging system.
+         */
+        StagerDaemon(log::Log &log) throw (castor::exception::Exception);
+
+        /**
+         * Destructor
+         */
         virtual ~StagerDaemon() throw() {};
       
         void help(std::string programName);

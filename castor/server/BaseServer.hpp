@@ -34,6 +34,7 @@
 #include "castor/BaseObject.hpp"
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/dlf/Message.hpp"
+#include "castor/log/Log.hpp"
 
 namespace castor {
 
@@ -49,10 +50,9 @@ namespace castor {
 
       /**
        * Constructor
-       * @param serverName a friendly name for this daemon,
-       * used to initialize the logging facility.
+       * @param log Object representing the API of the CASTOR logging system.
        */
-      BaseServer(const std::string serverName);
+      BaseServer(log::Log &log);
 
       /*
        * Destructor
@@ -114,8 +114,8 @@ namespace castor {
       };
       
       /// Returns this server's name
-      std::string& getServerName() {
-        return m_serverName;
+      const std::string &getServerName() {
+        return m_log.getProgramName();
       }
 
       /**
@@ -155,9 +155,9 @@ namespace castor {
       bool m_runAsStagerSuperuser;
 
       /**
-       * Name of the server, for logging purposes.
+       * Object representing the API of the CASTOR logging system.
        */
-      std::string m_serverName;
+      log::Log &m_log;
 
       /**
        * Command line parameters. Includes by default a parameter
