@@ -100,13 +100,13 @@ int   srxyopen(int     s,
   if ( (status = srchkreqsize(s,p,len)) == -1 ) {
     status = errno;
   } else {
-    log(LOG_DEBUG,"rxyopen: betel protocol ? %s\n",(bet ? "yes":"no"));
+    (*logfunc)(LOG_DEBUG,"rxyopen: betel protocol ? %s\n",(bet ? "yes":"no"));
     /*
      * Reading xyopen request.
      */
-    log(LOG_DEBUG,"rxyopen: reading %d bytes\n",len) ;
+    (*logfunc)(LOG_DEBUG,"rxyopen: reading %d bytes\n",len) ;
     if ((status = netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT)) != len) {
-      log(LOG_ERR,"rxyopen: read(): %s\n",strerror(errno));
+      (*logfunc)(LOG_ERR,"rxyopen: read(): %s\n",strerror(errno));
       return -1 ;
     }
     p= rqstbuf ;
@@ -139,30 +139,30 @@ int   srxyopen(int     s,
     }
 
     if (rt) {
-      log(LOG_DEBUG, "Mapping: %s\n", (mapping ? "yes" : "no") );
-      log(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ?"with" : "without"),user,uid,gid,host) ;
+      (*logfunc)(LOG_DEBUG, "Mapping: %s\n", (mapping ? "yes" : "no") );
+      (*logfunc)(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s",(mapping ?"with" : "without"),user,uid,gid,host) ;
     }
 
     if (rt && !mapping) {
-      log(LOG_DEBUG, "passwd: %d\n",passwd);
-      log(LOG_DEBUG, "reqhost: %s\n",reqhost);
+      (*logfunc)(LOG_DEBUG, "passwd: %d\n",passwd);
+      (*logfunc)(LOG_DEBUG, "reqhost: %s\n",reqhost);
     }
     /*
      * Someone in the site has tried to specify (uid,gid) directly !
      */
     if (bet && !mapping && !rt) {
-      log(LOG_INFO,"attempt to make non-mapped I/O and modify uid or gid !\n");
+      (*logfunc)(LOG_INFO,"attempt to make non-mapped I/O and modify uid or gid !\n");
       status=EACCES ;
     }
 
     if ( bet )
-      log(LOG_DEBUG,"Opening file %s for remote user: %s\n",filename,user);
+      (*logfunc)(LOG_DEBUG,"Opening file %s for remote user: %s\n",filename,user);
     /*
      * Do not authorize any request to create file to
      * a user whose uid < 100
      */
     if ( uid < 100 ) {
-      log(LOG_INFO,"attempt to start rfiod with (uid,gid)=(%d,%d) rejected\n",uid,gid);
+      (*logfunc)(LOG_INFO,"attempt to start rfiod with (uid,gid)=(%d,%d) rejected\n",uid,gid);
       status=EACCES;
     }
     /*
@@ -173,17 +173,17 @@ int   srxyopen(int     s,
       int rcd,to_uid,to_gid ;
 
       if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-        log(LOG_ERR,"get_user(): Error opening mapping file\n") ;
+        (*logfunc)(LOG_ERR,"get_user(): Error opening mapping file\n") ;
         status=EINVAL ;
       }
 
       if ( abs(rcd) == 1 ) {
-        log(LOG_ERR,"No entry found in mapping file for (%s,%s,%d,%d)\n",
+        (*logfunc)(LOG_ERR,"No entry found in mapping file for (%s,%s,%d,%d)\n",
             host,user,uid,gid);
         status = EACCES;
       }
       else {
-        log(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
+        (*logfunc)(LOG_DEBUG,"(%s,%s,%d,%d) mapped to %s(%d,%d)\n",
             host,user,uid,gid,to,to_uid,to_gid) ;
         uid = to_uid ;
         gid = to_gid ;
@@ -195,28 +195,28 @@ int   srxyopen(int     s,
     if ( !status && rt && !mapping ) {
       char *pr ;
       if ( (pr= getconfent ("RTUSER","CHECK",0)) == NULL || !strcmp ( pr,"YES") ) {
-        log(LOG_INFO ,"Connecting %s for passwd check ...\n",reqhost);
+        (*logfunc)(LOG_INFO ,"Connecting %s for passwd check ...\n",reqhost);
         if ((sock=connecttpread(reqhost,passwd))>=0 && !checkkey(sock,passwd)) {
           status= EACCES;
-          log(LOG_ERR,"ropen: DIRECT mapping : permission denied\n");
+          (*logfunc)(LOG_ERR,"ropen: DIRECT mapping : permission denied\n");
         }
         if (sock < 0) {
           status= EACCES ;
-          log(LOG_ERR,"ropen: DIRECT mapping failed: Couldn't connect %s\n",reqhost);
+          (*logfunc)(LOG_ERR,"ropen: DIRECT mapping failed: Couldn't connect %s\n",reqhost);
         }
       }
       else
-        log(LOG_INFO ,"Any DIRECT rfio request from out of site is authorized\n");
+        (*logfunc)(LOG_INFO ,"Any DIRECT rfio request from out of site is authorized\n");
     }
 
     if ( !status ) {
       filen= strlen(filename) ;
-      log(LOG_DEBUG, "rxyopen: uid %d gid %d mask %o ftype %d \n",uid, gid, mask, ftype);
-      log(LOG_DEBUG, "rxyopen: lun %d format %d access %d lrecl %d openopt %x\n",
+      (*logfunc)(LOG_DEBUG, "rxyopen: uid %d gid %d mask %o ftype %d \n",uid, gid, mask, ftype);
+      (*logfunc)(LOG_DEBUG, "rxyopen: lun %d format %d access %d lrecl %d openopt %x\n",
           lun, format, *access, lrecl, openopt);
-      log(LOG_DEBUG, "rxyopen: account: %s\n", account);
-      log(LOG_DEBUG, "rxyopen: filename: %s\n", filename);
-      log(LOG_INFO, "rxyopen(%s) for (%d,%d)\n",filename,uid,gid);
+      (*logfunc)(LOG_DEBUG, "rxyopen: account: %s\n", account);
+      (*logfunc)(LOG_DEBUG, "rxyopen: filename: %s\n", filename);
+      (*logfunc)(LOG_INFO, "rxyopen(%s) for (%d,%d)\n",filename,uid,gid);
       *rlun = lun;
       (void) umask((mode_t) CORRECT_UMASK(mask)) ;
       append = openopt & FFOOPT_A;
@@ -228,7 +228,7 @@ int   srxyopen(int     s,
        */
       if ( ((getuid() == 0) && (setgroups(0, NULL)<0)) || (setgid(gid)<0) || (setuid(uid)<0))  {
         status = errno;
-        log(LOG_ERR, "rxyopen: unable to setuid,gid(%d,%d): %s\n", uid, gid, strerror(errno));
+        (*logfunc)(LOG_ERR, "rxyopen: unable to setuid,gid(%d,%d): %s\n", uid, gid, strerror(errno));
       }
       else
         {
@@ -239,19 +239,19 @@ int   srxyopen(int     s,
           } else {
             status=errno;
           }
-          log(LOG_DEBUG, "rxyopen: %d\n", status);
+          (*logfunc)(LOG_DEBUG, "rxyopen: %d\n", status);
         }
     }
   }
 
   p= rqstbuf;
   marshall_LONG(p, status);
-  log(LOG_DEBUG, "rxyopen: sending back %d\n", status);
+  (*logfunc)(LOG_DEBUG, "rxyopen: sending back %d\n", status);
   if (netwrite_timeout(s, rqstbuf, LONGSIZE, RFIO_CTRL_TIMEOUT) != LONGSIZE)  {
-    log(LOG_ERR, "rxyopen: write(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "rxyopen: write(): %s\n", strerror(errno));
     return(-1);
   }
-  log(LOG_INFO, "rxyopen(%s): status is: %d\n",filename,status);
+  (*logfunc)(LOG_INFO, "rxyopen(%s): status is: %d\n",filename,status);
   return(status);
 }
 
@@ -263,13 +263,13 @@ int   srxyclos(int     s,
   char    *p ;
   int     irc;
 
-  log(LOG_INFO, "%d read, %d readahead, %d write, %d flush, %d stat, %d lseek and %d preseek\n",
+  (*logfunc)(LOG_INFO, "%d read, %d readahead, %d write, %d flush, %d stat, %d lseek and %d preseek\n",
       infop->readop,infop->aheadop,infop->writop,infop->flusop,infop->statop,infop->seekop,infop->presop);
-  log(LOG_INFO, "%d bytes read and %d bytes written\n",infop->rnbr,infop->wnbr) ;
-  log(LOG_DEBUG, "rxyclos(%d)\n",lun);
+  (*logfunc)(LOG_INFO, "%d bytes read and %d bytes written\n",infop->rnbr,infop->wnbr) ;
+  (*logfunc)(LOG_DEBUG, "rxyclos(%d)\n",lun);
   irc=switch_close(&lun);
   if (iobufsiz > 0)       {
-    log(LOG_DEBUG, "rxyclos(): freeing %x\n",iobuffer);
+    (*logfunc)(LOG_DEBUG, "rxyclos(): freeing %x\n",iobuffer);
     (void) free(iobuffer);
   }
   iobufsiz= 0;
@@ -279,10 +279,10 @@ int   srxyclos(int     s,
   p= rqstbuf ;
   marshall_LONG(p,status) ;
   if (netwrite_timeout(s,rqstbuf,LONGSIZE,RFIO_CTRL_TIMEOUT) != LONGSIZE)  {
-    log(LOG_ERR, "rxyclos: write(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "rxyclos: write(): %s\n", strerror(errno));
     return(-1);
   }
-  log(LOG_INFO, "rxyclos(%d): status is: %d\n",lun,status);
+  (*logfunc)(LOG_INFO, "rxyclos(%d): status is: %d\n",lun,status);
   return(status);
 }
 
@@ -300,27 +300,27 @@ int srxywrit(int     s,
   p = rqstbuf + 2*WORDSIZE ;
   unmarshall_LONG(p, nrec);
   unmarshall_LONG(p, nwrit);
-  log(LOG_DEBUG, "rxywrit(%d,%d): nrec %d nwrit %d\n",s,lun,nrec,nwrit) ;
+  (*logfunc)(LOG_DEBUG, "rxywrit(%d,%d): nrec %d nwrit %d\n",s,lun,nrec,nwrit) ;
   if (iobufsiz < nwrit)     {
     if (iobufsiz > 0)       {
-      log(LOG_DEBUG, "rxywrit(): freeing %x\n",iobuffer);
+      (*logfunc)(LOG_DEBUG, "rxywrit(): freeing %x\n",iobuffer);
       (void) free(iobuffer);
     }
     if ((iobuffer = malloc(nwrit)) == NULL)    {
-      log(LOG_ERR, "rxywrit: malloc(): %s\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "rxywrit: malloc(): %s\n", strerror(errno));
       return(-1);
     }
     iobufsiz = nwrit;
-    log(LOG_DEBUG, "rxywrit(): allocated %d bytes at %x\n",nwrit,iobuffer);
+    (*logfunc)(LOG_DEBUG, "rxywrit(): allocated %d bytes at %x\n",nwrit,iobuffer);
     optval = iobufsiz;
     if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *)&optval, sizeof(optval)) == -1)    {
-      log(LOG_ERR, "rxywrit(): setsockopt(SO_RCVBUF): %s\n",strerror(errno));
+      (*logfunc)(LOG_ERR, "rxywrit(): setsockopt(SO_RCVBUF): %s\n",strerror(errno));
     }
-    log(LOG_DEBUG, "rxywrit(): setsockopt(SO_RCVBUF): %d\n",nwrit);
+    (*logfunc)(LOG_DEBUG, "rxywrit(): setsockopt(SO_RCVBUF): %d\n",nwrit);
   }
   ptr = iobuffer;
   if (netread_timeout(s, ptr, nwrit, RFIO_DATA_TIMEOUT) != nwrit)       {
-    log(LOG_ERR, "rxywrit: read(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "rxywrit: read(): %s\n", strerror(errno));
     return(-1);
   }
   status=switch_write(access,&lun,ptr,&nwrit,&nrec,LLTM);
@@ -331,12 +331,12 @@ int srxywrit(int     s,
     infop->wnbr+= nwrit ;
   }
 
-  log(LOG_DEBUG, "rxywrit: status %d, rcode %d\n", status, rcode);
+  (*logfunc)(LOG_DEBUG, "rxywrit: status %d, rcode %d\n", status, rcode);
   p = rqstbuf;
   marshall_LONG(p, status);
   marshall_LONG(p, rcode);
   if (netwrite_timeout(s, rqstbuf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != 2*LONGSIZE)  {
-    log(LOG_ERR, "rxywrit: write(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "rxywrit: write(): %s\n", strerror(errno));
     return(-1);
   }
   return(status);
@@ -359,23 +359,23 @@ int srxyread(int     s,
   unmarshall_LONG(p, readopt);
   unmarshall_LONG(p, nrec);
   unmarshall_LONG(p, nwant);
-  log(LOG_DEBUG, "rxyread(%d,%d): readopt %x nrec %d nwant %d\n",s,lun,readopt,nrec,nwant) ;
+  (*logfunc)(LOG_DEBUG, "rxyread(%d,%d): readopt %x nrec %d nwant %d\n",s,lun,readopt,nrec,nwant) ;
   if (iobufsiz < nwant )  {
     if (iobufsiz > 0)       {
-      log(LOG_DEBUG, "rxyread(): freeing %x\n",iobuffer);
+      (*logfunc)(LOG_DEBUG, "rxyread(): freeing %x\n",iobuffer);
       (void) free(iobuffer);
     }
     if ((iobuffer = malloc(nwant)) == NULL)    {
-      log(LOG_ERR, "rxyread: malloc(): %s\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "rxyread: malloc(): %s\n", strerror(errno));
       return(-1);
     }
     iobufsiz = nwant ;
-    log(LOG_DEBUG, "rxyread(): allocated %d bytes at %x\n",nwant,iobuffer);
+    (*logfunc)(LOG_DEBUG, "rxyread(): allocated %d bytes at %x\n",nwant,iobuffer);
     optval = iobufsiz;
     if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *)&optval, sizeof(optval)) == -1)    {
-      log(LOG_ERR, "rxyread(): setsockopt(SO_SNDBUF): %s\n",strerror(errno));
+      (*logfunc)(LOG_ERR, "rxyread(): setsockopt(SO_SNDBUF): %s\n",strerror(errno));
     }
-    log(LOG_DEBUG, "rxyread(): setsockopt(SO_SNDBUF): %d\n",nwant);
+    (*logfunc)(LOG_DEBUG, "rxyread(): setsockopt(SO_SNDBUF): %d\n",nwant);
   }
   ptr = iobuffer;
   serrno = 0 ;
@@ -393,15 +393,15 @@ int srxyread(int     s,
   marshall_LONG(p, rcode);
   marshall_LONG(p, ngot);
   if (netwrite_timeout(s, rqstbuf, 3*LONGSIZE, RFIO_CTRL_TIMEOUT) != (3*LONGSIZE)) {
-    log(LOG_ERR, "rxyread: write(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "rxyread: write(): %s\n", strerror(errno));
     return(-1);
   }
   if ( ngot ) {
     if (netwrite_timeout(s, ptr, ngot, RFIO_DATA_TIMEOUT) != ngot) {
-      log(LOG_ERR, "rxyread: read(): %s\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "rxyread: read(): %s\n", strerror(errno));
       return(-1);
     }
   }
-  log(LOG_DEBUG, "rxyread: status %d, rcode %d\n", status, rcode);
+  (*logfunc)(LOG_DEBUG, "rxyread: status %d, rcode %d\n", status, rcode);
   return status ;
 }

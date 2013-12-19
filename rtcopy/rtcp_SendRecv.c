@@ -731,7 +731,7 @@ int rtcpd_ConnectToClient(
  *
  * Needed to support OLD SHIFT clients but other applications could use
  * it as well. Note: this routine is called by rtcp_log() -> we have 
- * to use log() to log our errors.
+ * to use (*logfunc)() to log our errors.
  */
 int rtcp_ClientMsg(
                    int *s, 
@@ -766,7 +766,7 @@ int rtcp_ClientMsg(
                         );
   switch (rc) {
   case -1: 
-    log(
+    (*logfunc)(
         LOG_ERR,
         "rtcp_ClientMsg() netwrite(%d): %s\n",
         *s,
@@ -776,7 +776,7 @@ int rtcp_ClientMsg(
     rc = -1;
     break;
   case 0:
-    log(
+    (*logfunc)(
         LOG_ERR,
         "rtcp_ClientMsg() netwrite(%d): connection dropped\n",
         *s
@@ -810,7 +810,7 @@ int rtcp_GetMsg(
                        );
   switch (rc) {
   case -1:
-    log(
+    (*logfunc)(
         LOG_ERR,
         "rtcp_GetMsg() netread(%d): %s\n",
         *s,
@@ -820,7 +820,7 @@ int rtcp_GetMsg(
     rc = -1;
     break;
   case 0:
-    log(
+    (*logfunc)(
         LOG_ERR,
         "rtcp_GetMsg() netread(%d): connection dropped\n",
         *s

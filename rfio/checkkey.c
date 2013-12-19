@@ -41,18 +41,18 @@ int connecttpread(char * host,
   extern char      * getenv() ;           /* Getting env variables        */
   char                  * env ;           /* To store env variables       */
 
-  log(LOG_DEBUG,"Connecting tpread@%s to check key on port %d\n",host,aport);
+  (*logfunc)(LOG_DEBUG,"Connecting tpread@%s to check key on port %d\n",host,aport);
   /*
    * Creating socket.
    */
   if (( sock= socket(AF_INET,SOCK_STREAM,0)) == -1 ) {
-    log(LOG_ERR,"socket(): %s\n",strerror(errno)) ;
+    (*logfunc)(LOG_ERR,"socket(): %s\n",strerror(errno)) ;
     return -1 ;
   }
 
   if ((hp= Cgethostbyname(host)) == NULL ) {
     serrno = SENOSHOST;
-    log(LOG_ERR,"Cgethostbyname(): %s\n",sstrerror(serrno)) ;
+    (*logfunc)(LOG_ERR,"Cgethostbyname(): %s\n",sstrerror(serrno)) ;
     close(sock);
     return -1 ;
   }
@@ -72,14 +72,14 @@ int connecttpread(char * host,
    * Connecting the socket.
    */
   if ( connect(sock, (struct sockaddr *) &sin, sizeof(sin))  == -1 ) {
-    log(LOG_ERR,"connect(): %s\n",strerror(errno)) ;
+    (*logfunc)(LOG_ERR,"connect(): %s\n",strerror(errno)) ;
     close(sock);
     return -1 ;
   }
 
-  log(LOG_DEBUG,"Checking that key replier is in site\n");
+  (*logfunc)(LOG_DEBUG,"Checking that key replier is in site\n");
   if ( isremote(sin.sin_addr, host) ) {
-    log(LOG_INFO,"Attempt to give key from outside site rejected\n");
+    (*logfunc)(LOG_INFO,"Attempt to give key from outside site rejected\n");
     close(sock);
     return  -1 ;
   }
@@ -107,31 +107,31 @@ int checkkey(int sock,
    * Sending key.
    */
   if ( netwrite_timeout(sock,marsh_buf,3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (3*LONGSIZE) ) {
-    log(LOG_ERR,"netwrite(): %s\n", strerror(errno)) ;
+    (*logfunc)(LOG_ERR,"netwrite(): %s\n", strerror(errno)) ;
     return -1 ;
   }
   /*
    * Waiting for ok akn.
    */
   if ( (rcode= netread_timeout(sock,marsh_buf,LONGSIZE*3,RFIO_CTRL_TIMEOUT)) != (LONGSIZE*3) ) {
-    log(LOG_ERR,"netread(): %s\n",strerror(errno)) ;
+    (*logfunc)(LOG_ERR,"netread(): %s\n",strerror(errno)) ;
     (void) close(sock) ;
     return -1 ;
   }
   ptr = marsh_buf ;
   if ( rcode == 0 ) {
-    log(LOG_ERR,"connection closed by remote end\n") ;
+    (*logfunc)(LOG_ERR,"connection closed by remote end\n") ;
     (void) close(sock) ;
     return -1 ;
   }
   unmarshall_LONG(ptr,magic);
   if ( magic != RFIO2TPREAD_MAGIC ) {
-    log(LOG_ERR,"Magic inconsistency. \n");
+    (*logfunc)(LOG_ERR,"Magic inconsistency. \n");
     return -1 ;
   }
   unmarshall_LONG(ptr,answer);
   if ( answer==OK ) {
-    log(LOG_DEBUG,"Key is correct.\n");
+    (*logfunc)(LOG_DEBUG,"Key is correct.\n");
     return 1 ;
   }
   else

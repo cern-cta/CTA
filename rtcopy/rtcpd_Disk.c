@@ -190,7 +190,7 @@ static int DiskFileOpen(int pool_index,
            (filereq->concat & (CONCAT|CONCAT_TO_EOD)) != 0 )) {
         rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
         if ( (severity & RTCP_EOD) != 0 ) return(-1);
-        log(LOG_DEBUG,"DiskFileOpen(%s) lock file for concatenation\n",
+        (*logfunc)(LOG_DEBUG,"DiskFileOpen(%s) lock file for concatenation\n",
             filereq->file_path);
         rc = LockForAppend(1);
         rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);

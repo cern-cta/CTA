@@ -323,7 +323,7 @@ int topen(tape_list_t *tape, file_list_t *file) {
 					       const char *,
 					       unsigned int))crc32;
     } else {
-      log(LOG_ERR,"topen() client specifies unknown cksum algorithm: %s\n",
+      (*logfunc)(LOG_ERR,"topen() client specifies unknown cksum algorithm: %s\n",
           filereq->castorSegAttr.segmCksumAlgorithm);
       tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
                        "func"   , TL_MSG_PARAM_STR, "topen",

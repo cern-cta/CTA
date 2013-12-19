@@ -325,7 +325,7 @@ int qryFile(char *svcClass, char *path)
   rc = stage_filequery(qrequests,1,&qresponses,&nbqresps,&opts);
   UPDATE_TIMING(svcClass,stager_qry_end);
   if ( rc != 0 ) {
-    log(LOG_ERR,"stage_filequery(%s), svcClass=%s: %s\n",
+    (*logfunc)(LOG_ERR,"stage_filequery(%s), svcClass=%s: %s\n",
         path,svcClass,sstrerror(serrno));
     UPDATE_ERROR(svcClass,stager_qry_error);
   }
@@ -371,7 +371,7 @@ int rmFile(char *svcClass, char *path)
 
   UPDATE_TIMING(svcClass,stager_rm_end);
   if (rc < 0) {
-    log(LOG_ERR, "stage_rm(%s,%s): %s, errbuf=%s\n",
+    (*logfunc)(LOG_ERR, "stage_rm(%s,%s): %s, errbuf=%s\n",
         svcClass,path,sstrerror(serrno),errbuf);
     UPDATE_ERROR(svcClass,stager_rm_error);
     free_filereq(reqs,nbreqs);
@@ -379,7 +379,7 @@ int rmFile(char *svcClass, char *path)
   }
 
   if (response == NULL) {
-    log(LOG_ERR, "stage_rm(%s,%s): Response object is NULL\n",
+    (*logfunc)(LOG_ERR, "stage_rm(%s,%s): Response object is NULL\n",
         svcClass,path);
     return(-1);
   }
@@ -401,7 +401,7 @@ void dumpStat()
 
   fd = open(statFileName,oflags,0766);
   if ( fd == -1 ) {
-    log(LOG_ERR,"dumpStat() open(%s): %s\n",statFileName,sstrerror(errno));
+    (*logfunc)(LOG_ERR,"dumpStat() open(%s): %s\n",statFileName,sstrerror(errno));
     return;
   }
   now = time(NULL);
@@ -480,7 +480,7 @@ void *svcClassProbe(
   char *myWriteBuffer, *myReadBuffer;
 
   if ( arg == NULL ) {
-    log(LOG_ERR,"svcClassProbe() thread started without service class???\n");
+    (*logfunc)(LOG_ERR,"svcClassProbe() thread started without service class???\n");
     return(NULL);
   }
   mySvcClass = strdup((char *)arg);
@@ -493,7 +493,7 @@ void *svcClassProbe(
                                strlen(stageHost)+strlen("/") +
                                strlen(mySvcClass)+1);
   if ( myRootPath == NULL ) {
-    log(LOG_ERR,"malloc(): %s\n",sstrerror(errno));
+    (*logfunc)(LOG_ERR,"malloc(): %s\n",sstrerror(errno));
     free(mySvcClass);
     return(NULL);
   }
@@ -501,7 +501,7 @@ void *svcClassProbe(
           stageHost,mySvcClass,directoryName);
   rc = rfio_mkdir(myRootPath,0755);
   if ( rc == -1 ) {
-    log(LOG_ERR,"rfio_mkdir(%s): %s\n",myRootPath,rfio_serror());
+    (*logfunc)(LOG_ERR,"rfio_mkdir(%s): %s\n",myRootPath,rfio_serror());
     if ( rfio_serrno() != EEXIST ) {
       free(mySvcClass);
       return(NULL);
@@ -511,7 +511,7 @@ void *svcClassProbe(
           stageHost,mySvcClass,directoryName,stageHost);
   rc = rfio_mkdir(myRootPath,0755);
   if ( rc == -1 ) {
-    log(LOG_ERR,"rfio_mkdir(%s): %s\n",myRootPath,rfio_serror());
+    (*logfunc)(LOG_ERR,"rfio_mkdir(%s): %s\n",myRootPath,rfio_serror());
     if ( rfio_serrno() != EEXIST ) {
       free(mySvcClass);
       return(NULL);
@@ -521,28 +521,28 @@ void *svcClassProbe(
           stageHost,mySvcClass,directoryName,stageHost,mySvcClass);
   rc = rfio_mkdir(myRootPath,0755);
   if ( rc == -1 ) {
-    log(LOG_ERR,"rfio_mkdir(%s): %s\n",myRootPath,rfio_serror());
+    (*logfunc)(LOG_ERR,"rfio_mkdir(%s): %s\n",myRootPath,rfio_serror());
     if ( rfio_serrno() != EEXIST ) {
       free(mySvcClass);
       return(NULL);
     }
   }
-  log(LOG_INFO,"svcClassProbe(%s) starting with root path %s\n",
+  (*logfunc)(LOG_INFO,"svcClassProbe(%s) starting with root path %s\n",
       mySvcClass,myRootPath);
   if ( (baseName = (char *)malloc(256)) == NULL ) {
-    log(LOG_ERR,"svcClassProbe(%s) malloc(): %s\n",mySvcClass,sstrerror(errno));
+    (*logfunc)(LOG_ERR,"svcClassProbe(%s) malloc(): %s\n",mySvcClass,sstrerror(errno));
     free(mySvcClass);
     return(NULL);
   }
   if ( (myWriteBuffer = (char *)malloc(bufferSize)) == NULL ) {
-    log(LOG_ERR,"svcClassProbe(%s) malloc(%d): %s\n",mySvcClass,
+    (*logfunc)(LOG_ERR,"svcClassProbe(%s) malloc(%d): %s\n",mySvcClass,
         bufferSize,sstrerror(errno));
     free(baseName);
     free(mySvcClass);
     return(NULL);
   }
   if ( (myReadBuffer = (char *)malloc(bufferSize)) == NULL ) {
-    log(LOG_ERR,"svcClassProbe(%s) malloc(%d): %s\n",mySvcClass,
+    (*logfunc)(LOG_ERR,"svcClassProbe(%s) malloc(%d): %s\n",mySvcClass,
         bufferSize,sstrerror(errno));
     free(myWriteBuffer);
     free(baseName);
@@ -566,7 +566,7 @@ void *svcClassProbe(
     if ( fullPath != NULL ) free(fullPath);
     fullPath = NULL;
     if ( (fullPath = (char *)malloc(strlen(myRootPath)+strlen(baseName)+2)) == NULL ) {
-      log(LOG_ERR,"svcClassProbe(%s) malloc(): %s\n",mySvcClass,sstrerror(errno));
+      (*logfunc)(LOG_ERR,"svcClassProbe(%s) malloc(): %s\n",mySvcClass,sstrerror(errno));
       return(NULL);
     }
     sprintf(fullPath,"%s/%s",myRootPath,baseName);
@@ -579,7 +579,7 @@ void *svcClassProbe(
     fd = rfio_open(fullPath,O_CREAT|O_TRUNC|O_WRONLY,0766);
     UPDATE_TIMING(mySvcClass,rfio_open_write_end);
     if ( fd == -1 ) {
-      log(LOG_ERR,"rfio_open(%s): %s\n",fullPath,rfio_serror());
+      (*logfunc)(LOG_ERR,"rfio_open(%s): %s\n",fullPath,rfio_serror());
       UPDATE_ERROR(mySvcClass,rfio_open_write_error);
       continue;
     }
@@ -590,7 +590,7 @@ void *svcClassProbe(
       rc = rfio_write(fd,myWriteBuffer,size);
       if ( rc > 0 ) nbBytesWritten += rc;
       else {
-        log(LOG_ERR,"rfio_write(%s,O_WRONLY): %s\n",fullPath,rfio_serror());
+        (*logfunc)(LOG_ERR,"rfio_write(%s,O_WRONLY): %s\n",fullPath,rfio_serror());
         UPDATE_ERROR(mySvcClass,rfio_write_error);
         break;
       }
@@ -600,7 +600,7 @@ void *svcClassProbe(
     rc = rfio_close(fd);
     UPDATE_TIMING(mySvcClass,rfio_close_write_end);
     if ( rc == -1 ) {
-      log(LOG_ERR,"rfio_close(%s): %s\n",fullPath,rfio_serror());
+      (*logfunc)(LOG_ERR,"rfio_close(%s): %s\n",fullPath,rfio_serror());
       UPDATE_ERROR(mySvcClass,rfio_close_write_error);
       continue;
     }
@@ -613,7 +613,7 @@ void *svcClassProbe(
     fd = rfio_open(fullPath,O_RDONLY,0766);
     UPDATE_TIMING(mySvcClass,rfio_open_read_end);
     if ( fd == -1 ) {
-      log(LOG_ERR,"rfio_open(%s,O_RDONLY): %s\n",fullPath,rfio_serror());
+      (*logfunc)(LOG_ERR,"rfio_open(%s,O_RDONLY): %s\n",fullPath,rfio_serror());
       UPDATE_ERROR(mySvcClass,rfio_open_read_error);
       continue;
     }
@@ -624,13 +624,13 @@ void *svcClassProbe(
       rc = rfio_read(fd,myReadBuffer,size);
       if ( rc > 0 ) nbBytesRead += rc;
       else {
-        log(LOG_ERR,"rfio_read(%s): %s\n",fullPath,rfio_serror());
+        (*logfunc)(LOG_ERR,"rfio_read(%s): %s\n",fullPath,rfio_serror());
         UPDATE_ERROR(mySvcClass,rfio_read_error);
         break;
       }
       if ( rc == size ) {
         if ( memcmp(myReadBuffer,myWriteBuffer,rc) != 0 ) {
-          log(LOG_ERR,"svcClassProbe(%s): data corruption after %d bytes?",
+          (*logfunc)(LOG_ERR,"svcClassProbe(%s): data corruption after %d bytes?",
               mySvcClass,nbBytesRead);
           UPDATE_ERROR(mySvcClass,corruption_error);
         }       
@@ -641,7 +641,7 @@ void *svcClassProbe(
     rc = rfio_close(fd);
     UPDATE_TIMING(mySvcClass,rfio_close_read_end);
     if ( rc == -1 ) {
-      log(LOG_ERR,"rfio_close(%s): %s\n",fullPath,rfio_serror());
+      (*logfunc)(LOG_ERR,"rfio_close(%s): %s\n",fullPath,rfio_serror());
       UPDATE_ERROR(mySvcClass,rfio_close_read_error);
       continue;
     }
@@ -764,7 +764,7 @@ int main(int argc, char *argv[])
   
   thrPool = Cpool_create(nbSvcClasses,&nbThreads);
   if ( (thrPool == -1) || (nbSvcClasses > nbThreads) ) {
-    log(LOG_ERR,"Cpool_init(): failed to get required number of threads (%d, got %d)\n",
+    (*logfunc)(LOG_ERR,"Cpool_init(): failed to get required number of threads (%d, got %d)\n",
         nbSvcClasses,nbThreads);
     exit(1);
   }
@@ -772,14 +772,14 @@ int main(int argc, char *argv[])
   for (i=0; i<nbSvcClasses; i++) {
     item = (TimingItem_t *)calloc(1,sizeof(TimingItem_t));
     if ( item == NULL ) {
-      log(LOG_ERR,"calloc(1,%d): %s\n",sizeof(TimingItem_t),sstrerror(errno));
+      (*logfunc)(LOG_ERR,"calloc(1,%d): %s\n",sizeof(TimingItem_t),sstrerror(errno));
       exit(1);
     }
     item->svcClass = strdup(svcClasses[i]);
     CLIST_INSERT(timingList,item);    
     rc = Cpool_assign(thrPool,svcClassProbe,(void *)svcClasses[i],-1);
     if ( rc == -1 ) {
-      log(LOG_ERR,"Cpool_assign(): %s\n",sstrerror(serrno));
+      (*logfunc)(LOG_ERR,"Cpool_assign(): %s\n",sstrerror(serrno));
       exit(1);
     }
   }

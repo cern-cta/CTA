@@ -47,12 +47,12 @@ int rfio_alrm(int rcode,
   struct stat statb ;
 
   if ( (p= (char *)getconfent("RFIOD","ALRM",0)) == NULL ) {
-    log(LOG_DEBUG,"rfio_alrm() entered: no alarm in getconfent() \n");
+    (*logfunc)(LOG_DEBUG,"rfio_alrm() entered: no alarm in getconfent() \n");
     return 1 ;
   }
   if ( ( (n=atoi(p)) > 0 && n==rcode ) || n==0  ) {
     time(&clock) ;
-    log(LOG_DEBUG,"rfio_alrm(): alarm %s\n",buf) ;
+    (*logfunc)(LOG_DEBUG,"rfio_alrm(): alarm %s\n",buf) ;
     if ( stat(RFIO_ALRM,&statb) < 0 )  {
       wrtbanner ++ ;
     }

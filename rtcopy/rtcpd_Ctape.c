@@ -1070,7 +1070,7 @@ int rtcpd_Release(tape_list_t *tape, file_list_t *file) {
         case EINVAL:
             path = NULL;
             flags = TPRLS_ALL;
-            log(LOG_ERR,"rtcpd_Release() retry with TPRLS_ALL\n");
+            (*logfunc)(LOG_ERR,"rtcpd_Release() retry with TPRLS_ALL\n");
             rtcpd_ResetCtapeError();
             (void)Ctape_rls(path,flags);
             break;

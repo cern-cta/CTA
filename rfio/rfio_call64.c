@@ -159,10 +159,10 @@ int srlockf64(int      s,
   if ( (status = srchkreqsize(s,p,len)) == -1 ) {
     rcode = errno;
   } else {
-    log(LOG_DEBUG, "srlockf64(%d,%d): reading %d bytes\n", s, fd, len);
+    (*logfunc)(LOG_DEBUG, "srlockf64(%d,%d): reading %d bytes\n", s, fd, len);
 
     if (netread_timeout(s, rqstbuf, len, RFIO_CTRL_TIMEOUT) != len) {
-      log(LOG_ERR, "srlockf64:  read(): %s\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "srlockf64:  read(): %s\n", strerror(errno));
       return -1;
     }
     /*
@@ -172,7 +172,7 @@ int srlockf64(int      s,
     unmarshall_LONG(p, op);
     unmarshall_HYPER(p, siz);
     unmarshall_HYPER(p, offset);
-    log(LOG_DEBUG, "srlockf64(%d,%d): operation %d, size %s\n", s, fd, op,
+    (*logfunc)(LOG_DEBUG, "srlockf64(%d,%d): operation %d, size %s\n", s, fd, op,
         u64tostr(siz,tmpbuf,0));
     infop->lockop++;
 
@@ -180,19 +180,19 @@ int srlockf64(int      s,
      * lseek() if needed.
      */
     if ( how != -1 ) {
-      log(LOG_DEBUG, "lseek64(%d,%d): lseek64(%d,%s,%d)\n", s, fd, fd,
+      (*logfunc)(LOG_DEBUG, "lseek64(%d,%d): lseek64(%d,%s,%d)\n", s, fd, fd,
           u64tostr(offset,tmpbuf,0), how);
       infop->seekop++;
       if ( (offsetout= lseek64(fd,offset,how)) == -1 ) {
         rcode= errno;
         status = -1;
-        log(LOG_ERR, "srlockf64(%d,%d): error %d in lseek64\n", s, fd, rcode);
+        (*logfunc)(LOG_ERR, "srlockf64(%d,%d): error %d in lseek64\n", s, fd, rcode);
       }
     }
     if (status == 0 ) {
       if ( (status = lockf64(fd, op, siz)) < 0 ) {
         rcode = errno;
-        log(LOG_ERR, "srlockf64(%d,%d): error %d in lockf64(%d,%d,%s)\n",
+        (*logfunc)(LOG_ERR, "srlockf64(%d,%d): error %d in lockf64(%d,%d,%s)\n",
             s, fd, rcode, fd, op, u64tostr(siz,tmpbuf,0));
       }
       else
@@ -203,9 +203,9 @@ int srlockf64(int      s,
   p = rqstbuf;
   marshall_LONG(p, status);
   marshall_LONG(p, rcode);
-  log(LOG_DEBUG, "srlockf64:  sending back status %d rcode %d\n", status, rcode);
+  (*logfunc)(LOG_DEBUG, "srlockf64:  sending back status %d rcode %d\n", status, rcode);
   if (netwrite_timeout(s, rqstbuf, 2*LONGSIZE, RFIO_CTRL_TIMEOUT) != (2*LONGSIZE))  {
-    log(LOG_ERR, "srlockf64:  write(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "srlockf64:  write(): %s\n", strerror(errno));
     return -1;
   }
   return status;
@@ -232,9 +232,9 @@ int     srlstat64(int     s,
     /*
      * Reading stat request.
      */
-    log(LOG_DEBUG, "srlstat64(%d): reading %d bytes\n", s, len);
+    (*logfunc)(LOG_DEBUG, "srlstat64(%d): reading %d bytes\n", s, len);
     if ((status = netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT)) != len) {
-      log(LOG_ERR, "srlstat64: read(): %s\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "srlstat64: read(): %s\n", strerror(errno));
       return -1;
     }
     p= rqstbuf;
@@ -256,21 +256,21 @@ int     srlstat64(int     s,
       int to_uid, to_gid;
 
       if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-        log(LOG_ERR, "srlstat64: get_user(): Error opening mapping file\n");
+        (*logfunc)(LOG_ERR, "srlstat64: get_user(): Error opening mapping file\n");
         status= -1;
         errno = EINVAL;
         rcode = errno;
       }
 
       if ( !status && abs(rcd) == 1 ) {
-        log(LOG_ERR, "srlstat64: No entry in mapping file for (%s,%s,%d,%d)\n",
+        (*logfunc)(LOG_ERR, "srlstat64: No entry in mapping file for (%s,%s,%d,%d)\n",
             host, user, uid, gid);
         status= -1;
         errno=EACCES;
         rcode=errno;
       }
       else {
-        log(LOG_DEBUG, "srlstat64: (%s,%s,%d,%d) mapped to %s(%d,%d)\n",
+        (*logfunc)(LOG_DEBUG, "srlstat64: (%s,%s,%d,%d) mapped to %s(%d,%d)\n",
             host, user, uid, gid, to, to_uid, to_gid);
         uid = to_uid;
         gid = to_gid;
@@ -291,9 +291,9 @@ int     srlstat64(int     s,
             (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST"))  < 0 &&
             (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0 ) {
         if (status == -2)
-          log(LOG_ERR, "srlstat64: uid %d not allowed to stat()\n", uid);
+          (*logfunc)(LOG_ERR, "srlstat64: uid %d not allowed to stat()\n", uid);
         else
-          log(LOG_ERR, "srlstat64: failed at check_user_perm(), rcode %d\n", rcode);
+          (*logfunc)(LOG_ERR, "srlstat64: failed at check_user_perm(), rcode %d\n", rcode);
         status = rcode;
       }
       else {
@@ -304,7 +304,7 @@ int     srlstat64(int     s,
         } else {
           status = errno;
         }
-        log(LOG_INFO, "srlstat64: file: %s , status %d\n", CORRECT_FILENAME(filename), status);
+        (*logfunc)(LOG_INFO, "srlstat64: file: %s , status %d\n", CORRECT_FILENAME(filename), status);
       }
     }
   }
@@ -330,9 +330,9 @@ int     srlstat64(int     s,
   marshall_HYPER(p, statbuf.st_blocks);
 
   replen = 3*HYPERSIZE+5*LONGSIZE+5*WORDSIZE;
-  log(LOG_DEBUG, "srlstat64: sending back %d\n", status);
+  (*logfunc)(LOG_DEBUG, "srlstat64: sending back %d\n", status);
   if (netwrite_timeout(s,rqstbuf, replen, RFIO_CTRL_TIMEOUT) != replen)  {
-    log(LOG_ERR, "srlstat64: write(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "srlstat64: write(): %s\n", strerror(errno));
     return -1;
   }
   return 0;
@@ -359,9 +359,9 @@ int     srstat64(int     s,
     /*
      * Reading stat request.
      */
-    log(LOG_DEBUG, "srstat64(%d): reading %d bytes\n", s, len);
+    (*logfunc)(LOG_DEBUG, "srstat64(%d): reading %d bytes\n", s, len);
     if ((status = netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT)) != len) {
-      log(LOG_ERR, "srstat64: read(): %s\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "srstat64: read(): %s\n", strerror(errno));
       return -1;
     }
     p = rqstbuf;
@@ -383,21 +383,21 @@ int     srstat64(int     s,
       int to_uid, to_gid;
 
       if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-        log(LOG_ERR, "srstat64: get_user(): Error opening mapping file\n");
+        (*logfunc)(LOG_ERR, "srstat64: get_user(): Error opening mapping file\n");
         status= -1;
         errno = EINVAL;
         rcode = errno;
       }
 
       if ( !status && abs(rcd) == 1 ) {
-        log(LOG_ERR, "srstat64: No entry in mapping file for (%s,%s,%d,%d)\n",
+        (*logfunc)(LOG_ERR, "srstat64: No entry in mapping file for (%s,%s,%d,%d)\n",
             host, user, uid, gid);
         status= -1;
         errno=EACCES;
         rcode=errno;
       }
       else {
-        log(LOG_DEBUG, "srstat64: (%s,%s,%d,%d) mapped to %s(%d,%d)\n",
+        (*logfunc)(LOG_DEBUG, "srstat64: (%s,%s,%d,%d) mapped to %s(%d,%d)\n",
             host, user, uid, gid, to, to_uid, to_gid);
         uid = to_uid;
         gid = to_gid;
@@ -423,9 +423,9 @@ int     srstat64(int     s,
           (status=check_user_perm(&uid,&gid,host,&rcode,"RMDIRTRUST"))  < 0 &&
           (status=check_user_perm(&uid,&gid,host,&rcode,"RENAMETRUST")) < 0 ) {
         if (status == -2)
-          log(LOG_ERR, "srstat64: uid %d not allowed to stat()\n", uid);
+          (*logfunc)(LOG_ERR, "srstat64: uid %d not allowed to stat()\n", uid);
         else
-          log(LOG_ERR, "srstat64: failed at check_user_perm(), rcode %d\n", rcode);
+          (*logfunc)(LOG_ERR, "srstat64: failed at check_user_perm(), rcode %d\n", rcode);
         status = rcode;
       }
       else  {
@@ -436,7 +436,7 @@ int     srstat64(int     s,
         } else {
           status = errno;
         }
-        log(LOG_INFO, "srstat64: file: %s for (%d,%d) status %d\n",
+        (*logfunc)(LOG_INFO, "srstat64: file: %s for (%d,%d) status %d\n",
             CORRECT_FILENAME(filename), uid, gid, status);
       }
     }
@@ -463,7 +463,7 @@ int     srstat64(int     s,
   marshall_HYPER(p, statbuf.st_blocks);
   replen = 3*HYPERSIZE+5*LONGSIZE+5*WORDSIZE;
   if (netwrite_timeout(s, rqstbuf, replen, RFIO_CTRL_TIMEOUT) != replen)  {
-    log(LOG_ERR, "srstat64: write(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "srstat64: write(): %s\n", strerror(errno));
     return -1;
   }
   return 0;
@@ -504,9 +504,9 @@ int  sropen64(int     s,
     /*
      * Reading open request.
      */
-    log(LOG_DEBUG, "sropen64(%d): reading %d bytes\n", s, len);
+    (*logfunc)(LOG_DEBUG, "sropen64(%d): reading %d bytes\n", s, len);
     if ((status = netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT)) != len) {
-      log(LOG_ERR, "sropen64: read(): %s\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "sropen64: read(): %s\n", strerror(errno));
       return -1;
     }
     p = rqstbuf;
@@ -533,25 +533,25 @@ int  sropen64(int     s,
     unmarshall_LONG(p, passwd);
     unmarshall_WORD(p, mapping);
 
-    log(LOG_DEBUG, "sropen64: Opening file %s for remote user: %s\n", CORRECT_FILENAME(filename), user);
+    (*logfunc)(LOG_DEBUG, "sropen64: Opening file %s for remote user: %s\n", CORRECT_FILENAME(filename), user);
     if (rt)
-      log(LOG_DEBUG, "sropen64: Mapping : %s\n", mapping ? "yes" : "no" );
+      (*logfunc)(LOG_DEBUG, "sropen64: Mapping : %s\n", mapping ? "yes" : "no" );
     if (rt && !mapping) {
-      log(LOG_DEBUG, "sropen64: name : %d, uid: %d, gid: %d\n", passwd, uid, gid);
+      (*logfunc)(LOG_DEBUG, "sropen64: name : %d, uid: %d, gid: %d\n", passwd, uid, gid);
     }
 
     /*
      * Someone in the site has tried to specify (uid,gid) directly !
      */
     if ( (status == 0) && !mapping && !rt) {
-      log(LOG_INFO, "sropen64: attempt to make non-mapped I/O and modify uid or gid !\n");
+      (*logfunc)(LOG_INFO, "sropen64: attempt to make non-mapped I/O and modify uid or gid !\n");
       errno=EACCES;
       rcode=errno;
       status= -1;
     }
 
     if ( (status == 0) && rt ) {
-      log(LOG_ALERT, "sropen64: connection %s mapping by %s(%d,%d) from %s",
+      (*logfunc)(LOG_ALERT, "sropen64: connection %s mapping by %s(%d,%d) from %s",
           (mapping ? "with" : "without"), user, uid, gid, host);
     }
 
@@ -562,23 +562,23 @@ int  sropen64(int     s,
       char to[100];
       int rcd,to_uid,to_gid;
 
-      log(LOG_DEBUG, "sropen64: Mapping (%s, %d, %d) \n", user, uid, gid );
+      (*logfunc)(LOG_DEBUG, "sropen64: Mapping (%s, %d, %d) \n", user, uid, gid );
       if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-        log(LOG_ERR, "sropen64: get_user() error opening mapping file\n");
+        (*logfunc)(LOG_ERR, "sropen64: get_user() error opening mapping file\n");
         status = -1;
         errno = EINVAL;
         rcode = SEHOSTREFUSED;
       }
 
       else if ( abs(rcd) == 1 ) {
-        log(LOG_ERR, "sropen64: No entry found in mapping file for (%s,%s,%d,%d)\n",
+        (*logfunc)(LOG_ERR, "sropen64: No entry found in mapping file for (%s,%s,%d,%d)\n",
             host,user,uid,gid);
         status = -1;
         errno = EACCES;
         rcode = SEHOSTREFUSED;
       }
       else {
-        log(LOG_DEBUG, "sropen64: (%s,%s,%d,%d) mapped to %s(%d,%d)\n",
+        (*logfunc)(LOG_DEBUG, "sropen64: (%s,%s,%d,%d) mapped to %s(%d,%d)\n",
             host, user, uid, gid, to, to_uid, to_gid);
         uid = to_uid;
         gid = to_gid;
@@ -602,27 +602,27 @@ int  sropen64(int     s,
                 status= -1;
                 errno = EACCES;
                 rcode= errno;
-                log(LOG_ERR, "sropen64: DIRECT mapping : permission denied\n");
+                (*logfunc)(LOG_ERR, "sropen64: DIRECT mapping : permission denied\n");
               }
             if( sock < 0 )
               {
                 status= -1;
-                log(LOG_ERR, "sropen64: DIRECT mapping failed: Couldn't connect %s\n", reqhost);
+                (*logfunc)(LOG_ERR, "sropen64: DIRECT mapping failed: Couldn't connect %s\n", reqhost);
                 rcode = EACCES;
               }
         }
       else
-        log(LOG_INFO, "sropen64: Any DIRECT rfio request from out of site is authorized\n");
+        (*logfunc)(LOG_INFO, "sropen64: Any DIRECT rfio request from out of site is authorized\n");
     }
     if ( !status ) {
       int rc;
       char *pfn = NULL;
       int need_user_check = 1;
 
-      log(LOG_DEBUG, "sropen64: uid %d gid %d mask %o ftype %d flags 0%o mode 0%o\n",
+      (*logfunc)(LOG_DEBUG, "sropen64: uid %d gid %d mask %o ftype %d flags 0%o mode 0%o\n",
           uid, gid, mask, ftype, flags, mode);
-      log(LOG_DEBUG, "sropen64: account: %s\n", account);
-      log(LOG_INFO, "sropen64: (%s,0%o,0%o) for (%d,%d)\n",
+      (*logfunc)(LOG_DEBUG, "sropen64: account: %s\n", account);
+      (*logfunc)(LOG_INFO, "sropen64: (%s,0%o,0%o) for (%d,%d)\n",
           CORRECT_FILENAME(filename), flags, mode, uid, gid);
       (void) umask((mode_t) CORRECT_UMASK(mask));
 
@@ -637,7 +637,7 @@ int  sropen64(int     s,
       if (rc < 0) {
         char alarmbuf[1024];
         sprintf(alarmbuf,"sropen64(): %s",CORRECT_FILENAME(filename));
-        log(LOG_DEBUG, "sropen64: rfio_handler_open refused open: %s\n", sstrerror(serrno));
+        (*logfunc)(LOG_DEBUG, "sropen64: rfio_handler_open refused open: %s\n", sstrerror(serrno));
         rcode = serrno;
         rfio_alrm(rcode,alarmbuf);
       }
@@ -645,9 +645,9 @@ int  sropen64(int     s,
       if (need_user_check &&  ((status=check_user_perm(&uid,&gid,host,&rcode,(((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
           ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
         if (status == -2)
-          log(LOG_ERR, "sropen64: uid %d not allowed to open64()\n", uid);
+          (*logfunc)(LOG_ERR, "sropen64: uid %d not allowed to open64()\n", uid);
         else
-          log(LOG_ERR, "sropen64: failed at check_user_perm(), rcode %d\n", rcode);
+          (*logfunc)(LOG_ERR, "sropen64: failed at check_user_perm(), rcode %d\n", rcode);
         status = -1;
       }
       else
@@ -662,7 +662,7 @@ int  sropen64(int     s,
           if (forced_filename!=NULL || !check_path_whitelist(host, pfn, perm_array, ofilename, sizeof(ofilename),1)) {
             fd = open64((forced_filename!=NULL)?pfn:ofilename, ntohopnflg(flags),
                         ((forced_filename != NULL) && (((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
-            log(LOG_DEBUG, "sropen64: open64(%s,0%o,0%o) returned %x (hex)\n",
+            (*logfunc)(LOG_DEBUG, "sropen64: open64(%s,0%o,0%o) returned %x (hex)\n",
                 CORRECT_FILENAME(filename), flags, mode, fd);
           }
           if (fd < 0) {
@@ -670,7 +670,7 @@ int  sropen64(int     s,
             sprintf(alarmbuf,"sropen64: %s", CORRECT_FILENAME(filename));
             status= -1;
             rcode= errno;
-            log(LOG_DEBUG, "sropen64: open64: %s\n", strerror(errno));
+            (*logfunc)(LOG_DEBUG, "sropen64: open64: %s\n", strerror(errno));
             rfio_alrm(rcode,alarmbuf);
           }
           else {
@@ -680,7 +680,7 @@ int  sropen64(int     s,
             offsetin = 0;
             errno    = 0;
             offsetout= lseek64(fd, offsetin, SEEK_CUR);
-            log(LOG_DEBUG, "sropen64: lseek64(%d,%s,SEEK_CUR) returned %s\n",
+            (*logfunc)(LOG_DEBUG, "sropen64: lseek64(%d,%s,SEEK_CUR) returned %s\n",
                 fd, u64tostr(offsetin,tmpbuf,0), u64tostr(offsetout,tmpbuf2,0));
             if ( offsetout < 0 ) {
               rcode = errno;
@@ -702,10 +702,10 @@ int  sropen64(int     s,
   marshall_LONG(p,rcode);
   marshall_LONG(p,0);
   marshall_HYPER(p,offsetout);
-  log(LOG_DEBUG, "sropen64: sending back status(%d) and errno(%d)\n", status, rcode);
+  (*logfunc)(LOG_DEBUG, "sropen64: sending back status(%d) and errno(%d)\n", status, rcode);
   replen = WORDSIZE+3*LONGSIZE+HYPERSIZE;
   if (netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen)  {
-    log(LOG_ERR, "sropen64: write(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "sropen64: write(): %s\n", strerror(errno));
     if (fd >=0) close(fd);
     return -1;
   }
@@ -721,9 +721,9 @@ int rfio_call64_answer_client_internal
   marshall_LONG(p,status);
   marshall_LONG(p,code);
   marshall_LONG(p,0);
-  log(LOG_DEBUG, "srwrite64: status %d, rcode %d\n", status, code);
+  (*logfunc)(LOG_DEBUG, "srwrite64: status %d, rcode %d\n", status, code);
   if ( netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != WORDSIZE+3*LONGSIZE ) {
-    log(LOG_ERR, "srwrite64: netwrite(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "srwrite64: netwrite(): %s\n", strerror(errno));
     return -1;
   }
   return 0;
@@ -747,7 +747,7 @@ int srwrite64(int     s,
     first_write = 0;
     status = rfio_handle_firstwrite(handler_context);
     if (status != 0) {
-      log(LOG_ERR, "srwrite64: rfio_handle_firstwrite(): %s\n", strerror(serrno));
+      (*logfunc)(LOG_ERR, "srwrite64: rfio_handle_firstwrite(): %s\n", strerror(serrno));
       rfio_call64_answer_client_internal(rqstbuf, serrno, status, s);
       return -1;
     }
@@ -762,13 +762,13 @@ int srwrite64(int     s,
    */
   p= rqstbuf + RQSTSIZE;
   reqlen = HYPERSIZE;
-  log(LOG_DEBUG, "srwrite64(%d, %d)): reading %d bytes\n", s, fd, reqlen);
+  (*logfunc)(LOG_DEBUG, "srwrite64(%d, %d)): reading %d bytes\n", s, fd, reqlen);
   if ((status = netread_timeout(s, p, reqlen, RFIO_CTRL_TIMEOUT)) != reqlen) {
-    log(LOG_ERR, "srwrite64: read(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "srwrite64: read(): %s\n", strerror(errno));
     return -1;
   }
   unmarshall_HYPER(p,offset);
-  log(LOG_DEBUG, "srwrite64(%d, %d): size %d, how %d offset %s\n", s, fd, size,
+  (*logfunc)(LOG_DEBUG, "srwrite64(%d, %d): size %d, how %d offset %s\n", s, fd, size,
       how, u64tostr(offset,tmpbuf,0));
 
   /*
@@ -778,7 +778,7 @@ int srwrite64(int     s,
     int     optval;       /* setsockopt opt value */
 
     if (iobufsiz > 0)       {
-      log(LOG_DEBUG, "srwrite64: freeing %x\n", iobuffer);
+      (*logfunc)(LOG_DEBUG, "srwrite64: freeing %x\n", iobuffer);
       (void) free(iobuffer);
     }
     if ((iobuffer = malloc(size)) == NULL)    {
@@ -787,25 +787,25 @@ int srwrite64(int     s,
     }
     iobufsiz = size;
     optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
-    log(LOG_DEBUG, "srwrite64: allocated %d bytes at %x\n", size, iobuffer);
+    (*logfunc)(LOG_DEBUG, "srwrite64: allocated %d bytes at %x\n", size, iobuffer);
     if (setsockopt(s, SOL_SOCKET, SO_RCVBUF, (char *)&optval, sizeof(optval)) == -1)
-      log(LOG_ERR, "srwrite64: setsockopt(SO_RCVBUF): %s\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "srwrite64: setsockopt(SO_RCVBUF): %s\n", strerror(errno));
     else
-      log(LOG_DEBUG, "srwrite64: setsockopt(SO_RCVBUF): %d\n", optval);
+      (*logfunc)(LOG_DEBUG, "srwrite64: setsockopt(SO_RCVBUF): %d\n", optval);
   }
   /*
    * Reading data on the network.
    */
   p= iobuffer;
   if (netread_timeout(s,p,size,RFIO_DATA_TIMEOUT) != size) {
-    log(LOG_ERR, "srwrite64: read(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "srwrite64: read(): %s\n", strerror(errno));
     return -1;
   }
   /*
    * lseek() if needed.
    */
   if ( how != -1 ) {
-    log(LOG_DEBUG, "srwrite64(%d,%d): lseek64(%d,%s,%d)\n", s, fd, fd,
+    (*logfunc)(LOG_DEBUG, "srwrite64(%d,%d): lseek64(%d,%s,%d)\n", s, fd, fd,
         u64tostr(offset,tmpbuf,0), how);
     infop->seekop++;
     if ( (offsetout = lseek64(fd,offset,how)) == -1 ) {
@@ -817,7 +817,7 @@ int srwrite64(int     s,
    * Writing data on disk.
    */
   infop->wnbr+= size;
-  log(LOG_DEBUG, "srwrite64: writing %d bytes on %d\n", size, fd);
+  (*logfunc)(LOG_DEBUG, "srwrite64: writing %d bytes on %d\n", size, fd);
   status = write(fd,p,size);
   rcode= ( status < 0 ) ? errno : 0;
 
@@ -857,9 +857,9 @@ int srread64(int     s,
    */
   p= rqstbuf + RQSTSIZE;
   reqlen = HYPERSIZE;
-  log(LOG_DEBUG, "srread64(%d, %d): reading %d bytes\n", s, fd, reqlen);
+  (*logfunc)(LOG_DEBUG, "srread64(%d, %d): reading %d bytes\n", s, fd, reqlen);
   if ((status = netread_timeout(s, p , reqlen, RFIO_CTRL_TIMEOUT)) != reqlen) {
-    log(LOG_ERR, "srread64: read(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "srread64: read(): %s\n", strerror(errno));
     return -1;
   }
   unmarshall_HYPER(p,offset);
@@ -868,7 +868,7 @@ int srread64(int     s,
    * lseek() if needed.
    */
   if ( how != -1 ) {
-    log(LOG_DEBUG, "srread64(%d,%d): lseek64(%d,%s,%d)\n", s, fd, fd,
+    (*logfunc)(LOG_DEBUG, "srread64(%d,%d): lseek64(%d,%s,%d)\n", s, fd, fd,
         u64tostr(offset,tmpbuf,0), how);
     infop->seekop++;
     if ( (offsetout= lseek64(fd,offset,how)) == -1 ) {
@@ -880,7 +880,7 @@ int srread64(int     s,
       marshall_LONG(p,rcode);
       marshall_LONG(p,0);
       if ( netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen ) {
-        log(LOG_ERR, "srread64: write(): %s\n", strerror(errno));
+        (*logfunc)(LOG_ERR, "srread64: write(): %s\n", strerror(errno));
         return -1;
       }
       return -1;
@@ -889,35 +889,35 @@ int srread64(int     s,
   /*
    * Allocating buffer if not large enough.
    */
-  log(LOG_DEBUG, "srread64(%d, %d): checking buffer size %d\n", s, fd, size);
+  (*logfunc)(LOG_DEBUG, "srread64(%d, %d): checking buffer size %d\n", s, fd, size);
   if (iobufsiz < (size+replen))     {
     int     optval;       /* setsockopt opt value       */
 
     if (iobufsiz > 0)       {
-      log(LOG_DEBUG, "srread64: freeing %x\n", iobuffer);
+      (*logfunc)(LOG_DEBUG, "srread64: freeing %x\n", iobuffer);
       (void) free(iobuffer);
     }
     if ((iobuffer = malloc(size+replen)) == NULL)    {
       status= -1;
       rcode= errno;
-      log(LOG_ERR, "srread64: malloc(): %s\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "srread64: malloc(): %s\n", strerror(errno));
       p= rqstbuf;
       marshall_WORD(p,RQST_READ64);
       marshall_LONG(p,status);
       marshall_LONG(p,rcode);
       marshall_LONG(p,0);
       if ( netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen ) {
-        log(LOG_ERR, "srread64: write(): %s\n", strerror(errno));
+        (*logfunc)(LOG_ERR, "srread64: write(): %s\n", strerror(errno));
         return -1;
       }
       return -1;
     }
     iobufsiz = size + replen;
-    log(LOG_DEBUG, "srread64: allocated %d bytes at %x\n", size, iobuffer);
+    (*logfunc)(LOG_DEBUG, "srread64: allocated %d bytes at %x\n", size, iobuffer);
     optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
     if( setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char*)&optval, sizeof(optval)) == -1 )
-      log(LOG_ERR, "srread64: setsockopt(SO_SNDBUF): %s\n", strerror(errno));
-    log(LOG_DEBUG, "srread64: setsockopt(SO_SNDBUF): %d\n", optval);
+      (*logfunc)(LOG_ERR, "srread64: setsockopt(SO_SNDBUF): %s\n", strerror(errno));
+    (*logfunc)(LOG_DEBUG, "srread64: setsockopt(SO_SNDBUF): %d\n", optval);
   }
   p = iobuffer + replen;
   status = read(fd, p, size);
@@ -937,9 +937,9 @@ int srread64(int     s,
   marshall_LONG(p,status);
   marshall_LONG(p,rcode);
   marshall_LONG(p,status);
-  log(LOG_DEBUG, "srread64: returning status %d, rcode %d\n", status, rcode);
+  (*logfunc)(LOG_DEBUG, "srread64: returning status %d, rcode %d\n", status, rcode);
   if (netwrite_timeout(s,iobuffer,msgsiz,RFIO_CTRL_TIMEOUT) != msgsiz)  {
-    log(LOG_ERR, "srread64: write(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "srread64: write(): %s\n", strerror(errno));
     return -1;
   }
   return status;
@@ -963,7 +963,7 @@ int srreadahd64(int     s,
   /*
    * Receiving request.
    */
-  log(LOG_DEBUG, "rreadahd64(%d, %d)\n",s, fd);
+  (*logfunc)(LOG_DEBUG, "rreadahd64(%d, %d)\n",s, fd);
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p,size);
   unmarshall_LONG(p,how);
@@ -973,9 +973,9 @@ int srreadahd64(int     s,
    */
   p= rqstbuf + RQSTSIZE;
   reqlen = HYPERSIZE;
-  log(LOG_DEBUG, "rreadahd64(%d, %d): reading %d bytes\n", s, fd, reqlen);
+  (*logfunc)(LOG_DEBUG, "rreadahd64(%d, %d): reading %d bytes\n", s, fd, reqlen);
   if ((status = netread_timeout(s, p , reqlen, RFIO_CTRL_TIMEOUT)) != reqlen) {
-    log(LOG_ERR, "rreadahd64: read(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "rreadahd64: read(): %s\n", strerror(errno));
     return -1;
   }
   unmarshall_HYPER(p,offset);
@@ -984,7 +984,7 @@ int srreadahd64(int     s,
    * lseek() if needed.
    */
   if ( how != -1 ) {
-    log(LOG_DEBUG,"rread64(%d,%d): lseek64(%d,%s,%d)\n", s, fd, fd,
+    (*logfunc)(LOG_DEBUG,"rread64(%d,%d): lseek64(%d,%s,%d)\n", s, fd, fd,
         u64tostr(offset,tmpbuf,0), how);
     infop->seekop++;
     if ( (offsetout= lseek64(fd,offset,how)) == -1 ) {
@@ -995,7 +995,7 @@ int srreadahd64(int     s,
       marshall_LONG(p,status);
       marshall_LONG(p,rcode);
       if ( netwrite_timeout(s,iobuffer,iobufsiz,RFIO_CTRL_TIMEOUT) != iobufsiz ) {
-        log(LOG_ERR, "rreadahd64(): netwrite_timeout(): %s\n", strerror(errno));
+        (*logfunc)(LOG_ERR, "rreadahd64(): netwrite_timeout(): %s\n", strerror(errno));
         return -1;
       }
       return status;
@@ -1004,26 +1004,26 @@ int srreadahd64(int     s,
   /*
    * Allocating buffer if not large enough.
    */
-  log(LOG_DEBUG, "rreadahd64(%d, %d): checking buffer size %d\n", s, fd, size);
+  (*logfunc)(LOG_DEBUG, "rreadahd64(%d, %d): checking buffer size %d\n", s, fd, size);
   if (iobufsiz < (size+WORDSIZE+3*LONGSIZE))     {
     int     optval; /* setsockopt opt value */
 
     if (iobufsiz > 0)       {
-      log(LOG_DEBUG, "rreadahd64(): freeing %x\n",iobuffer);
+      (*logfunc)(LOG_DEBUG, "rreadahd64(): freeing %x\n",iobuffer);
       (void) free(iobuffer);
     }
     if ((iobuffer = malloc(size+WORDSIZE+3*LONGSIZE)) == NULL)    {
-      log(LOG_ERR, "rreadahd64: malloc(): %s\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "rreadahd64: malloc(): %s\n", strerror(errno));
       (void) close(s);
       return -1;
     }
     iobufsiz = size+WORDSIZE+3*LONGSIZE;
     optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
-    log(LOG_DEBUG, "rreadahd64(): allocated %d bytes at %x\n",iobufsiz,iobuffer);
+    (*logfunc)(LOG_DEBUG, "rreadahd64(): allocated %d bytes at %x\n",iobufsiz,iobuffer);
     if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *)&optval, sizeof(optval)) == -1)
-      log(LOG_ERR, "rreadahd64(): setsockopt(SO_SNDBUF): %s\n",strerror(errno));
+      (*logfunc)(LOG_ERR, "rreadahd64(): setsockopt(SO_SNDBUF): %s\n",strerror(errno));
     else
-      log(LOG_DEBUG, "rreadahd64(): setsockopt(SO_SNDBUF): %d\n",optval);
+      (*logfunc)(LOG_DEBUG, "rreadahd64(): setsockopt(SO_SNDBUF): %d\n",optval);
   }
   /*
    * Reading data and sending it.
@@ -1040,11 +1040,11 @@ int srreadahd64(int     s,
     timeout.tv_sec = 0;
     timeout.tv_usec= 0;
     if ( select(FD_SETSIZE,&fds,(fd_set *)0,(fd_set *)0,&timeout) == -1 ) {
-      log(LOG_ERR,"rreadahd64(): select(): %s\n",strerror(errno));
+      (*logfunc)(LOG_ERR,"rreadahd64(): select(): %s\n",strerror(errno));
       return -1;
     }
     if ( FD_ISSET(s,&fds) ) {
-      log(LOG_DEBUG,"rreadahd64(): returns because of new request\n");
+      (*logfunc)(LOG_DEBUG,"rreadahd64(): returns because of new request\n");
       return 0;
     }
     /*
@@ -1061,7 +1061,7 @@ int srreadahd64(int     s,
       infop->rnbr+= status;
       iobufsiz = status+WORDSIZE+3*LONGSIZE;
     }
-    log(LOG_DEBUG, "rreadahd64: status %d, rcode %d\n", status, rcode);
+    (*logfunc)(LOG_DEBUG, "rreadahd64: status %d, rcode %d\n", status, rcode);
     /*
      * Sending data.
      */
@@ -1071,7 +1071,7 @@ int srreadahd64(int     s,
     marshall_LONG(p, rcode);
     marshall_LONG(p, status);
     if ( netwrite_timeout(s, iobuffer, iobufsiz, RFIO_CTRL_TIMEOUT) != iobufsiz ) {
-      log(LOG_ERR, "rreadahd64(): netwrite_timeout(): %s\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "rreadahd64(): netwrite_timeout(): %s\n", strerror(errno));
       return -1;
     }
     /*
@@ -1095,7 +1095,7 @@ int     srfstat64(int      s,
   char           *p;
   struct stat64  statbuf;
 
-  log(LOG_DEBUG, "rfstat64(%d, %d)\n", s, fd);
+  (*logfunc)(LOG_DEBUG, "rfstat64(%d, %d)\n", s, fd);
   infop->statop++;
 
   /*
@@ -1104,7 +1104,7 @@ int     srfstat64(int      s,
   status= fstat64(fd, &statbuf);
   if ( status < 0) {
     rcode= errno;
-    log(LOG_ERR,"rfstat64(%d,%d): fstat64 gave rc %d, errno=%d\n", s, fd, status, errno);
+    (*logfunc)(LOG_ERR,"rfstat64(%d,%d): fstat64 gave rc %d, errno=%d\n", s, fd, status, errno);
   }
   else errno = 0;
 
@@ -1127,9 +1127,9 @@ int     srfstat64(int      s,
   marshall_LONG(p, statbuf.st_blksize);
   marshall_HYPER(p, statbuf.st_blocks);
 
-  log(LOG_DEBUG, "rfstat64(%d,%d): sending back %d bytes, status=%d\n", s, fd, msgsiz, status);
+  (*logfunc)(LOG_DEBUG, "rfstat64(%d,%d): sending back %d bytes, status=%d\n", s, fd, msgsiz, status);
   if (netwrite_timeout(s,rqstbuf,headlen+msgsiz,RFIO_CTRL_TIMEOUT) != (headlen+msgsiz) )  {
-    log(LOG_ERR,"rfstat64(%d,%d): netwrite(): %s\n", s, fd, strerror(errno));
+    (*logfunc)(LOG_ERR,"rfstat64(%d,%d): netwrite(): %s\n", s, fd, strerror(errno));
     return -1;
   }
   return 0;
@@ -1153,20 +1153,20 @@ int srlseek64(int         s,
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_HYPER(p,offset);
   unmarshall_LONG(p,how);
-  log(LOG_DEBUG, "srlseek64(%d, %d): offset64 %s, how: %x\n", s, fd,
+  (*logfunc)(LOG_DEBUG, "srlseek64(%d, %d): offset64 %s, how: %x\n", s, fd,
       u64tostr(offset,tmpbuf,0), how);
   offsetout = lseek64(fd, offset, how);
   if (offsetout == (off64_t)-1 ) status = -1;
   else status = 0;
   rcode= ( status < 0 ) ? errno : 0;
-  log(LOG_DEBUG, "srlseek64: status %s, rcode %d\n", u64tostr(offsetout,tmpbuf,0), rcode);
+  (*logfunc)(LOG_DEBUG, "srlseek64: status %s, rcode %d\n", u64tostr(offsetout,tmpbuf,0), rcode);
   p= rqstbuf;
   marshall_WORD(p,request);
   marshall_HYPER(p, offsetout);
   marshall_LONG(p,rcode);
   rlen =  WORDSIZE+LONGSIZE+HYPERSIZE;
   if (netwrite_timeout(s,rqstbuf,rlen,RFIO_CTRL_TIMEOUT) != rlen)  {
-    log(LOG_ERR, "srlseek64: write(): %s\n",strerror(errno));
+    (*logfunc)(LOG_ERR, "srlseek64: write(): %s\n",strerror(errno));
     return -1;
   }
   return status;
@@ -1188,7 +1188,7 @@ int srpreseek64(int     s,
   p= rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p,size);
   unmarshall_LONG(p,nblock);
-  log(LOG_DEBUG,"rpreseek64(%d, %d)\n",s,fd);
+  (*logfunc)(LOG_DEBUG,"rpreseek64(%d, %d)\n",s,fd);
 
   /*
    * A temporary buffer may need to be created
@@ -1203,9 +1203,9 @@ int srpreseek64(int     s,
   /*
    * Receiving the request.
    */
-  log(LOG_DEBUG,"rpreseek64: reading %d bytes\n",nblock*(HYPERSIZE+LONGSIZE));
+  (*logfunc)(LOG_DEBUG,"rpreseek64: reading %d bytes\n",nblock*(HYPERSIZE+LONGSIZE));
   if ( netread_timeout(s,p,nblock*(HYPERSIZE+LONGSIZE),RFIO_CTRL_TIMEOUT) != (nblock*(HYPERSIZE+LONGSIZE)) ) {
-    log(LOG_ERR,"rpreseek64: read(): %s\n",strerror(errno));
+    (*logfunc)(LOG_ERR,"rpreseek64: read(): %s\n",strerror(errno));
     if ( trp ) (void) free(trp);
     return -1;
   }
@@ -1213,7 +1213,7 @@ int srpreseek64(int     s,
    * Allocating space for the list of requests.
    */
   if ( (v= ( struct iovec64 *) malloc(nblock*sizeof(struct iovec64))) == NULL ) {
-    log(LOG_ERR, "rpreseek64: malloc(): %s\n",strerror(errno));
+    (*logfunc)(LOG_ERR, "rpreseek64: malloc(): %s\n",strerror(errno));
     if ( trp ) (void) free(trp);
     (void) close(s);
     return -1;
@@ -1233,27 +1233,27 @@ int srpreseek64(int     s,
    * Allocating new data buffer if the
    * current one is not large enough.
    */
-  log(LOG_DEBUG,"rpreseek64(%d, %d): checking buffer size %d\n",s,fd,size);
+  (*logfunc)(LOG_DEBUG,"rpreseek64(%d, %d): checking buffer size %d\n",s,fd,size);
   if (iobufsiz < (size+WORDSIZE+3*LONGSIZE))     {
     int     optval; /* setsockopt opt value */
 
     if (iobufsiz > 0)       {
-      log(LOG_DEBUG, "rpreseek64(): freeing %x\n",iobuffer);
+      (*logfunc)(LOG_DEBUG, "rpreseek64(): freeing %x\n",iobuffer);
       (void) free(iobuffer);
     }
     if ((iobuffer = malloc(size+WORDSIZE+3*LONGSIZE)) == NULL)    {
-      log(LOG_ERR, "rpreseek64: malloc(): %s\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "rpreseek64: malloc(): %s\n", strerror(errno));
       (void) close(s);
       free(v);
       return -1;
     }
     iobufsiz = size+WORDSIZE+3*LONGSIZE;
     optval = (iobufsiz > 64 * 1024) ? iobufsiz : (64 * 1024);
-    log(LOG_DEBUG, "rpreseek64(): allocated %d bytes at %x\n",iobufsiz,iobuffer);
+    (*logfunc)(LOG_DEBUG, "rpreseek64(): allocated %d bytes at %x\n",iobufsiz,iobuffer);
     if (setsockopt(s, SOL_SOCKET, SO_SNDBUF, (char *)&optval, sizeof(optval)) == -1)
-      log(LOG_ERR, "rpreseek64(): setsockopt(SO_SNDBUF): %s\n",strerror(errno));
+      (*logfunc)(LOG_ERR, "rpreseek64(): setsockopt(SO_SNDBUF): %s\n",strerror(errno));
     else
-      log(LOG_DEBUG, "rpreseek64(): setsockopt(SO_SNDBUF): %d\n",optval);
+      (*logfunc)(LOG_DEBUG, "rpreseek64(): setsockopt(SO_SNDBUF): %d\n",optval);
   }
   /*
    * Reading data and sending it.
@@ -1275,11 +1275,11 @@ int srpreseek64(int     s,
     timeout.tv_sec = 0;
     timeout.tv_usec= 0;
     if ( select(FD_SETSIZE,&fds,(fd_set *)0,(fd_set *)0,&timeout) == -1 ) {
-      log(LOG_ERR,"rpreseek64(): select(): %s\n",strerror(errno));
+      (*logfunc)(LOG_ERR,"rpreseek64(): select(): %s\n",strerror(errno));
       return -1;
     }
     if ( FD_ISSET(s,&fds) ) {
-      log(LOG_DEBUG,"rpreseek64(): returns because of new request\n");
+      (*logfunc)(LOG_DEBUG,"rpreseek64(): returns because of new request\n");
       return 0;
     }
     /*
@@ -1339,9 +1339,9 @@ int srpreseek64(int     s,
     marshall_LONG(p,nb);
     marshall_LONG(p,0);
     marshall_LONG(p,size);
-    log(LOG_DEBUG,"rpreseek64(): sending %d bytes\n",iobufsiz);
+    (*logfunc)(LOG_DEBUG,"rpreseek64(): sending %d bytes\n",iobufsiz);
     if ( netwrite_timeout(s,iobuffer,iobufsiz,RFIO_CTRL_TIMEOUT) != iobufsiz ) {
-      log(LOG_ERR, "rpreseek64(): netwrite_timeout(): %s\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "rpreseek64(): netwrite_timeout(): %s\n", strerror(errno));
       return -1;
     }
     /*
@@ -1419,9 +1419,9 @@ int  sropen64_v3(int         s,
     /*
      * Reading open request.
      */
-    log(LOG_DEBUG,"ropen64_v3(%d): reading %d bytes\n", s, len);
+    (*logfunc)(LOG_DEBUG,"ropen64_v3(%d): reading %d bytes\n", s, len);
     if ((status = netread_timeout(s,rqstbuf,len,RFIO_CTRL_TIMEOUT)) != len) {
-      log(LOG_ERR,"ropen64_v3: read(): %s\n",strerror(errno));
+      (*logfunc)(LOG_ERR,"ropen64_v3: read(): %s\n",strerror(errno));
       return -1;
     }
     p= rqstbuf;
@@ -1490,7 +1490,7 @@ int  sropen64_v3(int         s,
       sprintf(infofile, "/var/lib/rfiod/%d.info", getpid());
       FILE *fp = fopen(infofile, "w");
       if (fp == NULL) {
-        log(LOG_WARNING, "ropen64_v3: fopen(%s): %s, ignoring\n", infofile, strerror(errno));
+        (*logfunc)(LOG_WARNING, "ropen64_v3: fopen(%s): %s, ignoring\n", infofile, strerror(errno));
       } else {
         fprintf(fp,
 		"CASTOR_OPENTIME=%lld\n"
@@ -1508,25 +1508,25 @@ int  sropen64_v3(int         s,
       }
     }
     
-    log(LOG_DEBUG,"ropen64_v3: Opening file %s for remote user: %s\n", CORRECT_FILENAME(filename), user);
+    (*logfunc)(LOG_DEBUG,"ropen64_v3: Opening file %s for remote user: %s\n", CORRECT_FILENAME(filename), user);
     if (rt)
-      log(LOG_DEBUG,"ropen64_v3: Mapping : %s\n", mapping ? "yes" : "no");
+      (*logfunc)(LOG_DEBUG,"ropen64_v3: Mapping : %s\n", mapping ? "yes" : "no");
     if (rt && !mapping) {
-      log(LOG_DEBUG,"ropen64_v3: user : %d, uid: %d, gid: %d\n", passwd, uid, gid);
+      (*logfunc)(LOG_DEBUG,"ropen64_v3: user : %d, uid: %d, gid: %d\n", passwd, uid, gid);
     }
 
     /*
      * Someone in the site has tried to specify (uid,gid) directly !
      */
     if (!mapping && !rt) {
-      log(LOG_INFO,"ropen64_v3: attempt to make non-mapped I/O and modify uid or gid !\n");
+      (*logfunc)(LOG_INFO,"ropen64_v3: attempt to make non-mapped I/O and modify uid or gid !\n");
       errno=EACCES;
       rcode=errno;
       status= -1;
     }
 
     if ( rt ) {
-      log(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s\n",
+      (*logfunc)(LOG_ALERT, "rfio: connection %s mapping by %s(%d,%d) from %s\n",
           (mapping ? "with" : "without"), user, uid, gid, host);
     }
 
@@ -1537,23 +1537,23 @@ int  sropen64_v3(int         s,
       char to[100];
       int rcd,to_uid,to_gid;
 
-      log(LOG_DEBUG,"ropen64_v3: Mapping (%s, %d, %d) \n", user, uid, gid );
+      (*logfunc)(LOG_DEBUG,"ropen64_v3: Mapping (%s, %d, %d) \n", user, uid, gid );
       if ( (rcd = get_user(host,user,uid,gid,to,&to_uid,&to_gid)) == -ENOENT ) {
-        log(LOG_ERR,"ropen64_v3: get_user() error opening mapping file\n");
+        (*logfunc)(LOG_ERR,"ropen64_v3: get_user() error opening mapping file\n");
         status = -1;
         errno = EINVAL;
         rcode = SEHOSTREFUSED;
       }
 
       else if ( abs(rcd) == 1 ) {
-        log(LOG_ERR,"ropen64_v3: No entry found in mapping file for (%s,%s,%d,%d)\n",
+        (*logfunc)(LOG_ERR,"ropen64_v3: No entry found in mapping file for (%s,%s,%d,%d)\n",
             host, user, uid, gid);
         status = -1;
         errno = EACCES;
         rcode = SEHOSTREFUSED;
       }
       else {
-        log(LOG_DEBUG,"ropen64_v3: (%s,%s,%d,%d) mapped to %s(%d,%d)\n",
+        (*logfunc)(LOG_DEBUG,"ropen64_v3: (%s,%s,%d,%d) mapped to %s(%d,%d)\n",
             host, user, uid, gid, to, to_uid, to_gid);
         uid = to_uid;
         gid = to_gid;
@@ -1578,32 +1578,32 @@ int  sropen64_v3(int         s,
                 status= -1;
                 errno = EACCES;
                 rcode= errno;
-                log(LOG_ERR,"ropen64_v3: DIRECT mapping : permission denied\n");
+                (*logfunc)(LOG_ERR,"ropen64_v3: DIRECT mapping : permission denied\n");
               }
             if (sock < 0)
               {
                 status= -1;
-                log(LOG_ERR,"ropen64_v3: DIRECT mapping failed: Couldn't connect %s\n", reqhost);
+                (*logfunc)(LOG_ERR,"ropen64_v3: DIRECT mapping failed: Couldn't connect %s\n", reqhost);
                 rcode = EACCES;
               }
         }
       else
-        log(LOG_INFO ,"ropen64_v3: Any DIRECT rfio request from out of site is authorized\n");
+        (*logfunc)(LOG_INFO ,"ropen64_v3: Any DIRECT rfio request from out of site is authorized\n");
     }
     if ( !status ) {
 
-      log(LOG_DEBUG, "ropen64_v3: uid %d gid %d mask %o ftype %d flags 0%o mode 0%o\n",
+      (*logfunc)(LOG_DEBUG, "ropen64_v3: uid %d gid %d mask %o ftype %d flags 0%o mode 0%o\n",
           uid, gid, mask, ftype, flags, mode);
-      log(LOG_DEBUG, "ropen64_v3: account: %s\n", account);
-      log(LOG_INFO,  "ropen64_v3: (%s,0%o,0%o) for (%d,%d)\n", CORRECT_FILENAME(filename), flags, mode, uid, gid);
+      (*logfunc)(LOG_DEBUG, "ropen64_v3: account: %s\n", account);
+      (*logfunc)(LOG_INFO,  "ropen64_v3: (%s,0%o,0%o) for (%d,%d)\n", CORRECT_FILENAME(filename), flags, mode, uid, gid);
 
       (void) umask((mode_t) CORRECT_UMASK(mask));
       if ( ((status=check_user_perm(&uid,&gid,host,&rcode,(((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
            ((status=check_user_perm(&uid,&gid,host,&rcode,"OPENTRUST")) < 0) ) {
         if (status == -2)
-          log(LOG_ERR,"ropen64_v3: uid %d not allowed to open()\n", uid);
+          (*logfunc)(LOG_ERR,"ropen64_v3: uid %d not allowed to open()\n", uid);
         else
-          log(LOG_ERR,"ropen64_v3: failed at check_user_perm(), rcode %d\n", rcode);
+          (*logfunc)(LOG_ERR,"ropen64_v3: failed at check_user_perm(), rcode %d\n", rcode);
         status = -1;
       }  else
         {
@@ -1621,7 +1621,7 @@ int  sropen64_v3(int         s,
           if (rc < 0) {
             char alarmbuf[1024];
             sprintf(alarmbuf,"sropen64_v3: %s",CORRECT_FILENAME(filename));
-            log(LOG_DEBUG, "ropen64_v3: rfio_handler_open refused open: %s\n", sstrerror(serrno));
+            (*logfunc)(LOG_DEBUG, "ropen64_v3: rfio_handler_open refused open: %s\n", sstrerror(serrno));
             rcode = serrno;
             rfio_alrm(rcode,alarmbuf);
           }
@@ -1638,10 +1638,10 @@ int  sropen64_v3(int         s,
           }
           if (myinfo.directio) {
 #if defined(linux)
-            log(LOG_INFO, "%s: O_DIRECT requested\n", __func__);
+            (*logfunc)(LOG_INFO, "%s: O_DIRECT requested\n", __func__);
             flags |= O_DIRECT;
 #else
-            log(LOG_INFO, "%s: O_DIRECT requested but ignored.", __func__);
+            (*logfunc)(LOG_INFO, "%s: O_DIRECT requested but ignored.", __func__);
 #endif
           }
           {
@@ -1661,24 +1661,24 @@ int  sropen64_v3(int         s,
           if (fd < 0)  {
             status= -1;
             rcode= errno;
-            log(LOG_DEBUG,"ropen64_v3: open64(%s,0%o,0%o): %s\n",
+            (*logfunc)(LOG_DEBUG,"ropen64_v3: open64(%s,0%o,0%o): %s\n",
                 CORRECT_FILENAME(filename), flags, mode, strerror(errno));
           }
           else  {
             /* File is opened         */
-            log(LOG_DEBUG,"ropen64_v3: open64(%s,0%o,0%o) returned %d \n",
+            (*logfunc)(LOG_DEBUG,"ropen64_v3: open64(%s,0%o,0%o) returned %d \n",
                 CORRECT_FILENAME(filename), flags, mode, fd);
             /*
              * Getting current offset
              */
             offsetout = lseek64(fd, (off64_t)0, SEEK_CUR);
             if (offsetout == ((off64_t)-1) ) {
-              log(LOG_ERR,"ropen64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd,strerror(errno));
+              (*logfunc)(LOG_ERR,"ropen64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd,strerror(errno));
               status = -1;
               rcode  = errno;
             }
             else {
-              log(LOG_DEBUG,"ropen64_v3: lseek64(%d,0,SEEK_CUR) returned %s\n",
+              (*logfunc)(LOG_DEBUG,"ropen64_v3: lseek64(%d,0,SEEK_CUR) returned %s\n",
                   fd, u64tostr(offsetout,tmpbuf,0));
               status = 0;
             }
@@ -1690,10 +1690,10 @@ int  sropen64_v3(int         s,
     if (! status && fd >= 0)  {
       data_s = socket(AF_INET, SOCK_STREAM, 0);
       if( data_s < 0 )  {
-        log(LOG_ERR, "ropen64_v3: datasocket(): %s\n", strerror(errno));
+        (*logfunc)(LOG_ERR, "ropen64_v3: datasocket(): %s\n", strerror(errno));
         exit(1);
       }
-      log(LOG_DEBUG, "ropen64_v3: data socket created fd=%d\n", data_s);
+      (*logfunc)(LOG_DEBUG, "ropen64_v3: data socket created fd=%d\n", data_s);
 
       sin.sin_addr.s_addr = htonl(INADDR_ANY);
       sin.sin_family = AF_INET;
@@ -1701,7 +1701,7 @@ int  sropen64_v3(int         s,
       /* Check to see if there is a user defined RFIOD/PORT_RANGE configured */
       if ((value = getconfent("RFIOD", "PORT_RANGE", 0)) != NULL) {
         if ((buf = strdup(value)) == NULL) {
-          log(LOG_ERR, "ropen64_v3: strdup: %s\n", strerror(errno));
+          (*logfunc)(LOG_ERR, "ropen64_v3: strdup: %s\n", strerror(errno));
           exit(1);
         }
         if ((p = strchr(buf, ',')) != NULL) {
@@ -1713,15 +1713,15 @@ int  sropen64_v3(int         s,
               (high_port <= low_port) ||
               ((low_port < 1024) || (low_port > 65535)) ||
               ((high_port < 1024) || (high_port > 65535))) {
-            log(LOG_ERR, "ropen64_v3: invalid port range: %s, using default %d,%d\n",
+            (*logfunc)(LOG_ERR, "ropen64_v3: invalid port range: %s, using default %d,%d\n",
                 value, RFIO_LOW_PORT_RANGE, RFIO_HIGH_PORT_RANGE);
             low_port  = RFIO_LOW_PORT_RANGE;
             high_port = RFIO_HIGH_PORT_RANGE;
           } else {
-            log(LOG_DEBUG, "ropen64_v3: using port range: %d,%d\n", low_port, high_port);
+            (*logfunc)(LOG_DEBUG, "ropen64_v3: using port range: %d,%d\n", low_port, high_port);
           }
         } else {
-          log(LOG_ERR, "ropen64_v3: invalid port range: %s, using default %d,%d\n",
+          (*logfunc)(LOG_ERR, "ropen64_v3: invalid port range: %s, using default %d,%d\n",
               value, RFIO_LOW_PORT_RANGE, RFIO_HIGH_PORT_RANGE);
         }
         (void) free(buf);
@@ -1751,34 +1751,34 @@ int  sropen64_v3(int         s,
            */
           if (listen(data_s, 5) < 0) {
             if (errno == EADDRINUSE) {
-              log(LOG_DEBUG, "ropen64_v3: listen(%d): %s, attempting another port\n", data_s, strerror(errno));
+              (*logfunc)(LOG_DEBUG, "ropen64_v3: listen(%d): %s, attempting another port\n", data_s, strerror(errno));
               /* close and recreate the socket */
               close(data_s);
               data_s = socket(AF_INET, SOCK_STREAM, 0);
               if( data_s < 0 )  {
-                log(LOG_ERR, "datasocket(): %s\n", strerror(errno));
+                (*logfunc)(LOG_ERR, "datasocket(): %s\n", strerror(errno));
                 exit(1);
               }
               sleep(1);
               continue;
             } else {
-              log(LOG_ERR, "ropen64_v3: listen(%d): %s\n", data_s, strerror(errno));
+              (*logfunc)(LOG_ERR, "ropen64_v3: listen(%d): %s\n", data_s, strerror(errno));
               exit(1);
             }
           }
           break;
         } else {
-          log(LOG_DEBUG, "ropen64_v3: bind(%d:%d): %s, trying again\n", data_s, port, strerror(errno));
+          (*logfunc)(LOG_DEBUG, "ropen64_v3: bind(%d:%d): %s, trying again\n", data_s, port, strerror(errno));
         }
       }
 
       size_sin = sizeof(sin);
       if (getsockname(data_s, (struct sockaddr*)&sin, &size_sin) < 0 )  {
-        log(LOG_ERR, "ropen64_v3: getsockname: %s\n", strerror(errno));
+        (*logfunc)(LOG_ERR, "ropen64_v3: getsockname: %s\n", strerror(errno));
         exit(1);
       }
 
-      log(LOG_DEBUG, "ropen64_v3: assigning data port %d\n", htons(sin.sin_port));
+      (*logfunc)(LOG_DEBUG, "ropen64_v3: assigning data port %d\n", htons(sin.sin_port));
     }
   }
 
@@ -1792,10 +1792,10 @@ int  sropen64_v3(int         s,
   marshall_LONG(p,rcode);
   marshall_LONG(p,ntohs(sin.sin_port));
   marshall_HYPER(p, offsetout);
-  log(LOG_DEBUG, "ropen64_v3: sending back status(%d) and errno(%d)\n", status, rcode);
+  (*logfunc)(LOG_DEBUG, "ropen64_v3: sending back status(%d) and errno(%d)\n", status, rcode);
   errno = ECONNRESET;
   if (netwrite_timeout(s,rqstbuf,replen,RFIO_CTRL_TIMEOUT) != replen)  {
-    log(LOG_ERR,"ropen64_v3: write(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR,"ropen64_v3: write(): %s\n", strerror(errno));
     close(data_s);
     if (fd >= 0) close(fd);
     return -1;
@@ -1814,85 +1814,85 @@ int  sropen64_v3(int         s,
        * as it is not inherited (at least not on SGI).
        * 98/08/05 - Jes
        */
-      log(LOG_DEBUG, "ropen64_v3: doing setsockopt %d RCVBUF\n", data_s);
+      (*logfunc)(LOG_DEBUG, "ropen64_v3: doing setsockopt %d RCVBUF\n", data_s);
       if (setsockopt(data_s, SOL_SOCKET, SO_RCVBUF, (char *)&max_rcvbuf,
                      sizeof(max_rcvbuf)) < 0) {
-        log(LOG_ERR, "ropen64_v3: setsockopt %d rcvbuf(%d bytes): %s\n",
+        (*logfunc)(LOG_ERR, "ropen64_v3: setsockopt %d rcvbuf(%d bytes): %s\n",
             data_s, max_rcvbuf, strerror(errno));
       }
-      log(LOG_DEBUG, "ropen64_v3: setsockopt rcvbuf on data socket %d (%d bytes)\n",
+      (*logfunc)(LOG_DEBUG, "ropen64_v3: setsockopt rcvbuf on data socket %d (%d bytes)\n",
           data_s, max_rcvbuf);
       for (;;)
         {
-          log(LOG_DEBUG, "ropen64_v3: doing select\n");
+          (*logfunc)(LOG_DEBUG, "ropen64_v3: doing select\n");
           FD_ZERO(&read_fds);
           FD_SET(data_s, &read_fds);
           tv.tv_sec  = 10;
           tv.tv_usec = 0;
           if ( select(FD_SETSIZE, &read_fds, NULL, NULL, &tv) < 0 ) {
-            log(LOG_ERR, "ropen64_v3: select failed: %s\n", strerror(errno));
+            (*logfunc)(LOG_ERR, "ropen64_v3: select failed: %s\n", strerror(errno));
             return -1;
           }
           /* Anything received on the data socket ? */
           if ( !FD_ISSET(data_s, &read_fds) ) {
-            log(LOG_ERR, "ropen64_v3: timeout in accept(%d)\n", data_s);
+            (*logfunc)(LOG_ERR, "ropen64_v3: timeout in accept(%d)\n", data_s);
             return(-1);
           }
           fromlen = sizeof(from);
-          log(LOG_DEBUG, "ropen64_v3: wait for accept to complete\n");
+          (*logfunc)(LOG_DEBUG, "ropen64_v3: wait for accept to complete\n");
           data_sock = accept(data_s, (struct sockaddr*)&from, &fromlen);
           if( data_sock < 0 )  {
-            log(LOG_ERR, "ropen64_v3: data accept(%d): %s\n", data_s, strerror(errno));
+            (*logfunc)(LOG_ERR, "ropen64_v3: data accept(%d): %s\n", data_s, strerror(errno));
             exit(1);
           }
           else break;
         }
-      log(LOG_DEBUG, "ropen64_v3: data accept is ok, fildesc=%d\n", data_sock);
+      (*logfunc)(LOG_DEBUG, "ropen64_v3: data accept is ok, fildesc=%d\n", data_sock);
 
       /*
        * Set the send socket buffer on the data socket (see comment
        * above before accept())
        */
-      log(LOG_DEBUG, "ropen64_v3: doing setsockopt %d SNDBUF\n", data_sock);
+      (*logfunc)(LOG_DEBUG, "ropen64_v3: doing setsockopt %d SNDBUF\n", data_sock);
       if (setsockopt(data_sock,SOL_SOCKET,SO_SNDBUF,(char *)&max_sndbuf,
                      sizeof(max_sndbuf)) < 0) {
-        log(LOG_ERR, "ropen64_v3: setsockopt %d SNDBUFF(%d bytes): %s\n",
+        (*logfunc)(LOG_ERR, "ropen64_v3: setsockopt %d SNDBUFF(%d bytes): %s\n",
             data_sock, max_sndbuf, strerror(errno));
       }
-      log(LOG_DEBUG, "ropen64_v3: setsockopt SNDBUF on data socket %d(%d bytes)\n",
+      (*logfunc)(LOG_DEBUG, "ropen64_v3: setsockopt SNDBUF on data socket %d(%d bytes)\n",
           data_sock, max_sndbuf);
 
       /* Set the keepalive option on both sockets */
       yes = 1;
       if (setsockopt(data_sock,SOL_SOCKET,SO_KEEPALIVE,(char *)&yes, sizeof(yes)) < 0) {
-        log(LOG_ERR, "ropen64_v3: setsockopt keepalive on data socket %d: %s\n",
+        (*logfunc)(LOG_ERR, "ropen64_v3: setsockopt keepalive on data socket %d: %s\n",
             data_sock, strerror(errno));
       }
-      log(LOG_DEBUG, "ropen64_v3: setsockopt keepalive on data socket %d done\n", data_sock);
+      (*logfunc)(LOG_DEBUG, "ropen64_v3: setsockopt keepalive on data socket %d done\n", data_sock);
 
       yes = 1;
       if (setsockopt(ctrl_sock,SOL_SOCKET,SO_KEEPALIVE,(char *)&yes, sizeof(yes)) < 0) {
-        log(LOG_ERR, "ropen64_v3: setsockopt keepalive on ctrl socket %d: %s\n",
+        (*logfunc)(LOG_ERR, "ropen64_v3: setsockopt keepalive on ctrl socket %d: %s\n",
             ctrl_sock, strerror(errno));
       }
-      log(LOG_DEBUG, "ropen64_v3: setsockopt keepalive on ctrl socket %d done\n", ctrl_sock);
+      (*logfunc)(LOG_DEBUG, "ropen64_v3: setsockopt keepalive on ctrl socket %d done\n", ctrl_sock);
 
       /*
        * TCP_NODELAY seems to cause small Hippi packets on Digital UNIX 4.x
        */
       yes = 1;
       if (setsockopt(data_sock,IPPROTO_TCP,TCP_NODELAY,(char *)&yes,sizeof(yes)) < 0) {
-        log(LOG_ERR, "ropen64_v3: setsockopt nodelay on data socket %d: %s\n",
+        (*logfunc)(LOG_ERR, "ropen64_v3: setsockopt nodelay on data socket %d: %s\n",
             data_sock, strerror(errno));
       }
-      log(LOG_DEBUG,"ropen64_v3: setsockopt nodelay option set on data socket %d\n", data_sock);
+      (*logfunc)(LOG_DEBUG,"ropen64_v3: setsockopt nodelay option set on data socket %d\n", data_sock);
 
       yes = 1;
       if (setsockopt(ctrl_sock,IPPROTO_TCP,TCP_NODELAY,(char *)&yes,sizeof(yes)) < 0) {
-        log(LOG_ERR, "ropen64_v3: setsockopt nodelay on ctrl socket %d: %s\n",
+        (*logfunc)(LOG_ERR, "ropen64_v3: setsockopt nodelay on ctrl socket %d: %s\n",
             ctrl_sock, strerror(errno));
       }
-      log(LOG_DEBUG,"ropen64_v3: setsockopt nodelay option set on ctrl socket %d\n", ctrl_sock);
+      (*logfunc)(LOG_DEBUG,"ropen64_v3: setsockopt nodelay option set on ctrl socket %d\n", ctrl_sock);
     }
   return fd;
 }
@@ -1911,10 +1911,10 @@ int   srclose64_v3(int       s,
 
   (void)infop;
   /* Issue statistics                                        */
-  log(LOG_INFO,"rclose64_v3(%d, %d): %d read, %d readahead, %d write, %d flush, %d stat, %d lseek and %d lockf\n",
+  (*logfunc)(LOG_INFO,"rclose64_v3(%d, %d): %d read, %d readahead, %d write, %d flush, %d stat, %d lseek and %d lockf\n",
       s, fd, myinfo.readop, myinfo.aheadop, myinfo.writop, myinfo.flusop, myinfo.statop,
       myinfo.seekop, myinfo.lockop);
-  log(LOG_INFO,"rclose64_v3(%d, %d): %s bytes read and %s bytes written\n",
+  (*logfunc)(LOG_INFO,"rclose64_v3(%d, %d): %s bytes read and %s bytes written\n",
       s, fd, u64tostr(myinfo.rnbr,tmpbuf,0), u64tostr(myinfo.wnbr,tmpbuf2,0));
 
   /* sync the file to be sure that filesize in correct in following stats.
@@ -1933,7 +1933,7 @@ int   srclose64_v3(int       s,
 
   ret=rfio_handle_close(handler_context, &filestat, rcode);
   if (ret<0){
-    log(LOG_ERR, "srclose: rfio_handle_close failed\n");
+    (*logfunc)(LOG_ERR, "srclose: rfio_handle_close failed\n");
     if (status>=0) {
       /* we have to set status = -1 and fill rcode with serrno, that should be filled by rfio_handle_close */
       status=-1;
@@ -1945,10 +1945,10 @@ int   srclose64_v3(int       s,
   /* Close the data socket */
   if (data_sock >= 0) {
     if( close(data_sock) < 0 )
-      log(LOG_DEBUG, "rclose64_v3 : Error closing data socket fildesc=%d,errno=%d\n",
+      (*logfunc)(LOG_DEBUG, "rclose64_v3 : Error closing data socket fildesc=%d,errno=%d\n",
           data_sock, errno);
     else
-      log(LOG_DEBUG, "rclose64_v3 : closing data socket fildesc=%d\n", data_sock);
+      (*logfunc)(LOG_DEBUG, "rclose64_v3 : closing data socket fildesc=%d\n", data_sock);
     data_sock = -1;
   }
 
@@ -1960,15 +1960,15 @@ int   srclose64_v3(int       s,
 
   errno = ECONNRESET;
   if (netwrite_timeout(s, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {
-    log(LOG_ERR, "rclose64_v3: netwrite(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "rclose64_v3: netwrite(): %s\n", strerror(errno));
     return -1;
   }
 
   if( close(s) < 0 )
-    log(LOG_DEBUG, "rclose64_v3 : Error closing control socket fildesc=%d,errno=%d\n",
+    (*logfunc)(LOG_DEBUG, "rclose64_v3 : Error closing control socket fildesc=%d,errno=%d\n",
         s, errno);
   else
-    log(LOG_DEBUG, "rclose64_v3 : closing ctrl socket fildesc=%d\n", s);
+    (*logfunc)(LOG_DEBUG, "rclose64_v3 : closing ctrl socket fildesc=%d\n", s);
 
   return status;
 }
@@ -2000,14 +2000,14 @@ static void *produce64_thread(int *ptr)
 
   if (useCksum) {
     if ((xattr_len = fgetxattr(fd,"user.castor.checksum.value",ckSumbufdisk,CA_MAXCKSUMLEN)) == -1) {
-      log(LOG_ERR,"produce64_thread: fgetxattr failed for user.castor.checksum.value, error=%d\n",errno);
-      log(LOG_ERR,"produce64_thread: skipping checksums check\n");
+      (*logfunc)(LOG_ERR,"produce64_thread: fgetxattr failed for user.castor.checksum.value, error=%d\n",errno);
+      (*logfunc)(LOG_ERR,"produce64_thread: skipping checksums check\n");
       useCksum = 0;
     } else {
       ckSumbufdisk[xattr_len] = '\0';
       ckSum = adler32(0L,Z_NULL,0);
-      log(LOG_DEBUG,"produce64_thread: checksum init for %s\n",ckSumalg);
-      log(LOG_DEBUG,"produce64_thread: disk file checksum=0x%s\n",ckSumbufdisk);
+      (*logfunc)(LOG_DEBUG,"produce64_thread: checksum init for %s\n",ckSumalg);
+      (*logfunc)(LOG_DEBUG,"produce64_thread: disk file checksum=0x%s\n",ckSumbufdisk);
     }
   }
 
@@ -2015,25 +2015,25 @@ static void *produce64_thread(int *ptr)
     if (stop_read)
       return (NULL);
 
-    log(LOG_DEBUG, "produce64_thread: calling Csemaphore_down(&empty64)\n");
+    (*logfunc)(LOG_DEBUG, "produce64_thread: calling Csemaphore_down(&empty64)\n");
     Csemaphore_down(&empty64);
 
-    log(LOG_DEBUG, "produce64_thread: read() at %s:%d\n", __FILE__, __LINE__);
+    (*logfunc)(LOG_DEBUG, "produce64_thread: read() at %s:%d\n", __FILE__, __LINE__);
     byte_read = read(fd,array[produced64 % daemonv3_rdmt_nbuf].p,daemonv3_rdmt_bufsize);
 
     if (byte_read > 0) {
       total_produced += byte_read;
-      log(LOG_DEBUG, "Has read in buf %d (len %d)\n",produced64 % daemonv3_rdmt_nbuf,byte_read);
+      (*logfunc)(LOG_DEBUG, "Has read in buf %d (len %d)\n",produced64 % daemonv3_rdmt_nbuf,byte_read);
       array[produced64 % daemonv3_rdmt_nbuf].len = byte_read;
       /* Check for checksum mismatch. */
       if (useCksum) {
         ckSum = adler32(ckSum,(unsigned char*)array[produced64 % daemonv3_rdmt_nbuf].p,(unsigned int)byte_read);
-        log(LOG_DEBUG,"produce64_thread: current checksum=0x%lx\n",ckSum);
+        (*logfunc)(LOG_DEBUG,"produce64_thread: current checksum=0x%lx\n",ckSum);
       }
     }
     else {
       if (byte_read == 0)  {
-        log(LOG_DEBUG,"produce64_thread: End of reading : total produced = %s,buffers=%d\n",
+        (*logfunc)(LOG_DEBUG,"produce64_thread: End of reading : total produced = %s,buffers=%d\n",
             u64tostr(total_produced,tmpbuf,0),produced64);
         array[produced64 % daemonv3_rdmt_nbuf].len = 0;
         transferTime = time(0) - startTime;
@@ -2043,19 +2043,19 @@ static void *produce64_thread(int *ptr)
         } else {
           tmpbuf[0]='\0';
         }
-        log(LOG_INFO,
+        (*logfunc)(LOG_INFO,
          "produce64_thread: %llu bytes in %u seconds%s read from "
          "file: %s \n",
           total_produced,transferTime,tmpbuf,
           CORRECT_FILENAME(filename));
         if (useCksum) {
           sprintf(ckSumbuf,"%x", ckSum);
-          log(LOG_DEBUG,"produce64_thread: file checksum=0x%s\n",ckSumbuf);
+          (*logfunc)(LOG_DEBUG,"produce64_thread: file checksum=0x%s\n",ckSumbuf);
           if (strncmp(ckSumbufdisk,ckSumbuf,CA_MAXCKSUMLEN)==0) {
-            log(LOG_DEBUG,"produce64_thread: checksums OK!\n");
+            (*logfunc)(LOG_DEBUG,"produce64_thread: checksums OK!\n");
           }
           else {
-            log(LOG_ERR,"produce64_thread: checksum error detected reading file: %s (recorded checksum: %s calculated checksum: %s)\n",
+            (*logfunc)(LOG_ERR,"produce64_thread: checksum error detected reading file: %s (recorded checksum: %s calculated checksum: %s)\n",
                 CORRECT_FILENAME(filename), ckSumbufdisk, ckSumbuf);
             array[produced64 % daemonv3_rdmt_nbuf].len = -(SECHECKSUM); /* setting errno= Bad checksum */
             error = -1;
@@ -2068,7 +2068,7 @@ static void *produce64_thread(int *ptr)
       }
     }
     produced64++;
-    log(LOG_DEBUG, "produce64_thread: calling Csemaphore_up(&full64)\n");
+    (*logfunc)(LOG_DEBUG, "produce64_thread: calling Csemaphore_up(&full64)\n");
     Csemaphore_up(&full64);
   }
   return(NULL);
@@ -2106,12 +2106,12 @@ static void *consume64_thread(int *ptr)
   if (useCksum) {
     mode = fcntl(fd,F_GETFL);
     if (mode == -1) {
-      log(LOG_ERR,"consume64_thread: fcntl (F_GETFL) failed, error=%d\n",errno);
+      (*logfunc)(LOG_ERR,"consume64_thread: fcntl (F_GETFL) failed, error=%d\n",errno);
       useCksum = 0;
     }
     /* Checksums on updates are not supported */
     else if (mode & O_RDWR) {
-      log(LOG_INFO,"consume64_thread: file opened in O_RDWR, skipping checksums\n");
+      (*logfunc)(LOG_INFO,"consume64_thread: file opened in O_RDWR, skipping checksums\n");
       useCksum = 0;
     }
     /* If we are writing to the file and a checksum already exists, we
@@ -2119,30 +2119,30 @@ static void *consume64_thread(int *ptr)
      */
     else if ((mode & O_WRONLY) &&
              (fgetxattr(fd,"user.castor.checksum.type",ckSumbufdisk,CA_MAXCKSUMLEN) != -1)) {
-      log(LOG_INFO,"consume64_thread: file opened in O_WRONLY and checksum already exists, removing checksum\n");
+      (*logfunc)(LOG_INFO,"consume64_thread: file opened in O_WRONLY and checksum already exists, removing checksum\n");
       useCksum = 0;
     } else {
       ckSum = adler32(0L,Z_NULL,0);
-      log(LOG_DEBUG,"consume64_thread: checksum init for %s\n",ckSumalg);
+      (*logfunc)(LOG_DEBUG,"consume64_thread: checksum init for %s\n",ckSumalg);
     }
   }
   /* Always remove the checksum value */
   fremovexattr(fd,"user.castor.checksum.value");
 
   while ((! error) && (! end)) {
-    log(LOG_DEBUG, "consume64_thread: calling Csemaphore_down(&full64)\n");
+    (*logfunc)(LOG_DEBUG, "consume64_thread: calling Csemaphore_down(&full64)\n");
     Csemaphore_down(&full64);
 
     buffer_to_write = array[consumed64 % daemonv3_wrmt_nbuf].p;
     len_to_write    = array[consumed64 % daemonv3_wrmt_nbuf].len;
 
     if (len_to_write > 0) {
-      log(LOG_DEBUG,"consume64_thread: Trying to write %d bytes from %X\n",
+      (*logfunc)(LOG_DEBUG,"consume64_thread: Trying to write %d bytes from %X\n",
           len_to_write, buffer_to_write);
 
       byte_written = write(fd, buffer_to_write, len_to_write);
       saved_errno = errno;
-      log(LOG_DEBUG, "consume64_thread: succeeded to write %d bytes\n", byte_written);
+      (*logfunc)(LOG_DEBUG, "consume64_thread: succeeded to write %d bytes\n", byte_written);
       /* If the write is successfull but incomplete (fs is full) we
          report the ENOSPC error immediately in order to simplify the
          code */
@@ -2155,46 +2155,46 @@ static void *consume64_thread(int *ptr)
       if (byte_written == -1)   {
         error = 1;
         if (Cthread_mutex_lock(&write_error)) {
-          log(LOG_ERR,"consume64_thread: Cannot get mutex : serrno=%d\n", serrno);
+          (*logfunc)(LOG_ERR,"consume64_thread: Cannot get mutex : serrno=%d\n", serrno);
           return(NULL);
         }
 
         write_error = saved_errno;
 
         if (Cthread_mutex_unlock(&write_error)) {
-          log(LOG_ERR,"consume64_thread: Cannot release mutex : serrno=%d\n", serrno);
+          (*logfunc)(LOG_ERR,"consume64_thread: Cannot release mutex : serrno=%d\n", serrno);
           return(NULL);
         }
 
-        log(LOG_DEBUG,"consume64_thread: Error when writing : buffers=%d, error=%d\n",
+        (*logfunc)(LOG_DEBUG,"consume64_thread: Error when writing : buffers=%d, error=%d\n",
             consumed64,saved_errno);
       }
       else {
         /* All bytes written to disks */
         total_consumed += byte_written;
-        log(LOG_DEBUG,"consume64_thread: Has written buf %d to disk (len %d)\n",
+        (*logfunc)(LOG_DEBUG,"consume64_thread: Has written buf %d to disk (len %d)\n",
             consumed64 % daemonv3_wrmt_nbuf, byte_written);
         if (useCksum) {
           ckSum = adler32(ckSum,(unsigned char*)buffer_to_write,(unsigned int)byte_written);
-          log(LOG_DEBUG,"consume64_thread: current checksum=0x%lx\n",ckSum);
+          (*logfunc)(LOG_DEBUG,"consume64_thread: current checksum=0x%lx\n",ckSum);
         }
       }
     }  /* if  (len_to_write > 0) */
     else {
       if (len_to_write == 0) {
-        log(LOG_DEBUG,"consume64_thread: End of writing : total consumed = %s, buffers=%d\n",
+        (*logfunc)(LOG_DEBUG,"consume64_thread: End of writing : total consumed = %s, buffers=%d\n",
             u64tostr(total_consumed,tmpbuf,0),consumed64);
         end = 1;
       } else {
         /* Error indicated by the thread reading from network, this thread just terminates */
-        log(LOG_DEBUG,"consume64_thread: Error on reading : total consumed = %s, buffers=%d\n",
+        (*logfunc)(LOG_DEBUG,"consume64_thread: Error on reading : total consumed = %s, buffers=%d\n",
             u64tostr(total_consumed,tmpbuf,0), consumed64);
         error = 1;
       }
     }  /* else  (len_to_write > 0) */
 
     consumed64++;
-    log(LOG_DEBUG, "consume64_thread: calling Csemaphore_up(&empty64)\n");
+    (*logfunc)(LOG_DEBUG, "consume64_thread: calling Csemaphore_up(&empty64)\n");
     Csemaphore_up(&empty64);
   }  /* End of while   */
 
@@ -2203,19 +2203,19 @@ static void *consume64_thread(int *ptr)
    */
   if (useCksum) {
     sprintf(ckSumbuf,"%x",ckSum);
-    log(LOG_DEBUG,"consume64_thread: file checksum=0x%s\n",ckSumbuf);
+    (*logfunc)(LOG_DEBUG,"consume64_thread: file checksum=0x%s\n",ckSumbuf);
     /* Double check whether the checksum is set on disk. If yes, it means
        it appeared while we were writing. this means that concurrent writing
        is taking place. Thus we reset the checksum rather than setting it */
     if (fgetxattr(fd,"user.castor.checksum.value",ckSumbufdisk,CA_MAXCKSUMLEN) != -1) {
-      log(LOG_INFO,"consume64_thread: concurrent writing detected, removing checksum\n");
+      (*logfunc)(LOG_INFO,"consume64_thread: concurrent writing detected, removing checksum\n");
       fremovexattr(fd,"user.castor.checksum.value");
     } else {
       /* Always try and set the type first! */
       if (fsetxattr(fd,"user.castor.checksum.type",ckSumalg,strlen(ckSumalg),0))
-        log(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.type, error=%d\n",errno);
+        (*logfunc)(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.type, error=%d\n",errno);
       else if (fsetxattr(fd,"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0))
-        log(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.value, error=%d\n",errno);
+        (*logfunc)(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.value, error=%d\n",errno);
     }
   }
   transferTime = time(0) - startTime;
@@ -2225,7 +2225,7 @@ static void *consume64_thread(int *ptr)
   } else {
     tmpbuf[0]='\0';
   }
-  log(LOG_INFO,
+  (*logfunc)(LOG_INFO,
          "consume64_thread: %llu bytes in %u seconds%s written to "
          "file: %s\n",
           total_consumed,transferTime, tmpbuf,
@@ -2236,7 +2236,7 @@ static void *consume64_thread(int *ptr)
 
 static void wait_consumer64_thread(int *cidp)
 {
-  log(LOG_DEBUG,"wait_consumer64_thread: Entering wait_consumer64_thread\n");
+  (*logfunc)(LOG_DEBUG,"wait_consumer64_thread: Entering wait_consumer64_thread\n");
   if (*cidp<0) return;
 
   /* if no write error */
@@ -2250,9 +2250,9 @@ static void wait_consumer64_thread(int *cidp)
     produced64++;
     Csemaphore_up(&full64);
   }
-  log(LOG_INFO, "wait_consumer64_thread: Joining thread\n");
+  (*logfunc)(LOG_INFO, "wait_consumer64_thread: Joining thread\n");
   if (Cthread_join(*cidp,NULL) < 0) {
-    log(LOG_ERR,"wait_consumer64_thread: Error joining consumer thread, serrno=%d\n",serrno);
+    (*logfunc)(LOG_ERR,"wait_consumer64_thread: Error joining consumer thread, serrno=%d\n",serrno);
     return;
   }
   *cidp = -1;
@@ -2260,7 +2260,7 @@ static void wait_consumer64_thread(int *cidp)
 
 static void wait_producer64_thread(int *cidp)
 {
-  log(LOG_DEBUG,"wait_producer64_thread: Entering wait_producer64_thread\n");
+  (*logfunc)(LOG_DEBUG,"wait_producer64_thread: Entering wait_producer64_thread\n");
   if (*cidp<0) return;
 
   if (!stop_read) {
@@ -2268,9 +2268,9 @@ static void wait_producer64_thread(int *cidp)
     Csemaphore_up(&empty64);
   }
 
-  log(LOG_INFO, "wait_producer64_thread: Joining thread\n");
+  (*logfunc)(LOG_INFO, "wait_producer64_thread: Joining thread\n");
   if (Cthread_join(*cidp,NULL) < 0) {
-    log(LOG_ERR,"wait_producer64_thread: Error joining producer thread, serrno=%d\n",serrno);
+    (*logfunc)(LOG_ERR,"wait_producer64_thread: Error joining producer thread, serrno=%d\n",serrno);
     return;
   }
   *cidp = -1;
@@ -2290,24 +2290,24 @@ static int   readerror64_v3(int            s,
   /* We close the data socket                                        */
   if (data_sock >= 0) {
     if( close(data_sock) < 0 )
-      log(LOG_DEBUG, "readerror64_v3 : Error closing data socket fildesc=%d,errno=%d\n",
+      (*logfunc)(LOG_DEBUG, "readerror64_v3 : Error closing data socket fildesc=%d,errno=%d\n",
           data_sock, errno);
     else
-      log(LOG_DEBUG, "readerror64_v3 : closing data socket fildesc=%d\n", data_sock);
+      (*logfunc)(LOG_DEBUG, "readerror64_v3 : closing data socket fildesc=%d\n", data_sock);
     data_sock = -1;
   }
 
   /* Issue statistic messages - There is no accounting record generated */
-  log(LOG_INFO,
+  (*logfunc)(LOG_INFO,
       "readerror64_v3(%d): %d read, %d readahead, %d write, %d flush, %d stat, %d lseek and %d lockf\n",
       s, infop->readop, infop->aheadop, infop->writop, infop->flusop, infop->statop,
       infop->seekop, infop->lockop);
-  log(LOG_INFO,"readerror64_v3(%d): %s bytes read and %s bytes written\n",
+  (*logfunc)(LOG_INFO,"readerror64_v3(%d): %s bytes read and %s bytes written\n",
       s, u64tostr(infop->rnbr,tmpbuf,0), u64tostr(infop->wnbr,tmpbuf2,0));
 
   /* Free allocated memory                                              */
   if (!daemonv3_rdmt) {
-    log(LOG_DEBUG,"readerror64_v3: freeing iobuffer at 0X%X\n", iobuffer);
+    (*logfunc)(LOG_DEBUG,"readerror64_v3: freeing iobuffer at 0X%X\n", iobuffer);
     if (iobufsiz > 0) {
       if (myinfo.directio) {
         free_page_aligned(iobuffer);
@@ -2323,7 +2323,7 @@ static int   readerror64_v3(int            s,
     if (array) {
       int      el;
       for (el=0; el < daemonv3_rdmt_nbuf; el++) {
-        log(LOG_DEBUG,"readerror64_v3: freeing array element %d at 0X%X\n", el,array[el].p);
+        (*logfunc)(LOG_DEBUG,"readerror64_v3: freeing array element %d at 0X%X\n", el,array[el].p);
         if (myinfo.directio) {
           free_page_aligned(array[el].p);
         } else {
@@ -2331,7 +2331,7 @@ static int   readerror64_v3(int            s,
         }
         array[el].p = NULL;
       }
-      log(LOG_DEBUG,"readerror64_v3: freeing array at 0X%X\n", array);
+      (*logfunc)(LOG_DEBUG,"readerror64_v3: freeing array at 0X%X\n", array);
       free(array);
       array = NULL;
     }
@@ -2365,7 +2365,7 @@ static int   readerror64_v3(int            s,
   /*
    * Receiving request,
    */
-  log(LOG_DEBUG, "rread64_v3(%d,%d)\n",ctrl_sock, fd);
+  (*logfunc)(LOG_DEBUG, "rread64_v3(%d,%d)\n",ctrl_sock, fd);
 
   if (first_read) {
     char *p;
@@ -2395,7 +2395,7 @@ static int   readerror64_v3(int            s,
       if (atoi(p) > 0)
         daemonv3_rdmt_bufsize = atoi(p);
 
-    log(LOG_DEBUG,
+    (*logfunc)(LOG_DEBUG,
         "rread64_v3(%d) : daemonv3_rdmt=%d,daemonv3_rdmt_nbuf=%d,daemonv3_rdmt_bufsize=%d\n",
         ctrl_sock, daemonv3_rdmt,daemonv3_rdmt_nbuf,daemonv3_rdmt_bufsize);
 
@@ -2403,19 +2403,19 @@ static int   readerror64_v3(int            s,
       /* Indicates we are using RFIO V3 and multithreadding while reading */
       myinfo.aheadop = 3;
       /* Allocating circular buffer itself */
-      log(LOG_DEBUG, "rread64_v3: allocating circular buffer : %d bytes\n",
+      (*logfunc)(LOG_DEBUG, "rread64_v3: allocating circular buffer : %d bytes\n",
           sizeof(struct element) * daemonv3_rdmt_nbuf);
       array = (struct element *)malloc(sizeof(struct element) * daemonv3_rdmt_nbuf);
       if (array == NULL)  {
-        log(LOG_ERR, "rread64_v3: malloc array: ERROR occured (errno=%d)\n", errno);
+        (*logfunc)(LOG_ERR, "rread64_v3: malloc array: ERROR occured (errno=%d)\n", errno);
         readerror64_v3(ctrl_sock, &myinfo, &cid1);
         return -1;
       }
-      log(LOG_DEBUG, "rread64_v3: malloc array allocated : 0X%X\n", array);
+      (*logfunc)(LOG_DEBUG, "rread64_v3: malloc array allocated : 0X%X\n", array);
 
       /* Allocating memory for each element of circular buffer */
       for (el=0; el < daemonv3_rdmt_nbuf; el++) {
-        log(LOG_DEBUG, "rread64_v3: allocating circular buffer element %d: %d bytes\n",
+        (*logfunc)(LOG_DEBUG, "rread64_v3: allocating circular buffer element %d: %d bytes\n",
             el, daemonv3_rdmt_bufsize);
         if (myinfo.directio) {
           array[el].p = (char *)malloc_page_aligned(daemonv3_rdmt_bufsize);
@@ -2423,57 +2423,57 @@ static int   readerror64_v3(int            s,
           array[el].p = (char *)malloc(daemonv3_rdmt_bufsize);
         }
         if ( array[el].p == NULL)  {
-          log(LOG_ERR, "rread64_v3: malloc array element %d, size %d: ERROR %d occured\n",
+          (*logfunc)(LOG_ERR, "rread64_v3: malloc array element %d, size %d: ERROR %d occured\n",
               el, daemonv3_rdmt_bufsize, errno);
           readerror64_v3(ctrl_sock, &myinfo, &cid1);
           return -1;
         }
-        log(LOG_DEBUG, "rread64_v3: malloc array element %d allocated : 0X%X\n",
+        (*logfunc)(LOG_DEBUG, "rread64_v3: malloc array element %d allocated : 0X%X\n",
             el, array[el].p);
       }
     }
     else {
-      log(LOG_DEBUG, "rread64_v3: allocating malloc buffer : %d bytes\n", DISKBUFSIZE_READ);
+      (*logfunc)(LOG_DEBUG, "rread64_v3: allocating malloc buffer : %d bytes\n", DISKBUFSIZE_READ);
       if (myinfo.directio) {
         iobuffer = (char *)malloc_page_aligned(DISKBUFSIZE_READ);
       } else {
         iobuffer = (char *)malloc(DISKBUFSIZE_READ);
       }
       if ( iobuffer == NULL)  {
-        log(LOG_ERR, "rread64_v3: malloc: ERROR occured (errno=%d)\n", errno);
+        (*logfunc)(LOG_ERR, "rread64_v3: malloc: ERROR occured (errno=%d)\n", errno);
         readerror64_v3(ctrl_sock, &myinfo, &cid1);
         return -1;
       }
-      log(LOG_DEBUG, "rread64_v3: malloc buffer allocated : 0X%X\n", iobuffer);
+      (*logfunc)(LOG_DEBUG, "rread64_v3: malloc buffer allocated : 0X%X\n", iobuffer);
       iobufsiz = DISKBUFSIZE_READ;
     }
 
     if (fstat64(fd,&st) < 0) {
-      log(LOG_ERR, "rread64_v3: fstat(): ERROR occured (errno=%d)\n", errno);
+      (*logfunc)(LOG_ERR, "rread64_v3: fstat(): ERROR occured (errno=%d)\n", errno);
       readerror64_v3(ctrl_sock, &myinfo, &cid1);
       return -1;
     }
 
-    log(LOG_DEBUG, "rread64_v3: filesize : %s bytes\n", u64tostr(st.st_size,tmpbuf,0));
+    (*logfunc)(LOG_DEBUG, "rread64_v3: filesize : %s bytes\n", u64tostr(st.st_size,tmpbuf,0));
     offsetout = lseek64(fd,0L,SEEK_CUR);
     if (offsetout == (off64_t)-1) {
-      log(LOG_ERR, "rread64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd, strerror(errno));
+      (*logfunc)(LOG_ERR, "rread64_v3: lseek64(%d,0,SEEK_CUR): %s\n", fd, strerror(errno));
       readerror64_v3(ctrl_sock, &myinfo, &cid1);
       return -1;
     }
     bytes2send = st.st_size - offsetout;
     if (bytes2send < 0) bytes2send = 0;
-    log(LOG_DEBUG, "rread64_v3: %s bytes to send (offset taken into account)\n",
+    (*logfunc)(LOG_DEBUG, "rread64_v3: %s bytes to send (offset taken into account)\n",
         u64tostr(bytes2send,tmpbuf,0));
     p = rfio_buf;
     marshall_WORD(p,RQST_READ64_V3);
     marshall_HYPER(p,bytes2send);
 
-    log(LOG_DEBUG, "rread64_v3: sending %d bytes\n", RQSTSIZE);
+    (*logfunc)(LOG_DEBUG, "rread64_v3: sending %d bytes\n", RQSTSIZE);
     errno = ECONNRESET;
     n = netwrite_timeout(ctrl_sock, rfio_buf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
     if (n != RQSTSIZE) {
-      log(LOG_ERR, "rread64_v3: netwrite() ERROR: %s\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "rread64_v3: netwrite() ERROR: %s\n", strerror(errno));
       readerror64_v3(ctrl_sock, &myinfo, &cid1);
       return -1;
     }
@@ -2484,7 +2484,7 @@ static int   readerror64_v3(int            s,
       stop_read = 0;
 
       if ((cid1 = Cthread_create((void *(*)(void *))produce64_thread,(void *)&fd)) < 0) {
-        log(LOG_ERR,"rread64_v3: Cannot create producer thread : serrno=%d,errno=%d\n",
+        (*logfunc)(LOG_ERR,"rread64_v3: Cannot create producer thread : serrno=%d,errno=%d\n",
             serrno, errno);
         readerror64_v3(ctrl_sock, &myinfo, &cid1);
         return(-1);
@@ -2514,9 +2514,9 @@ static int   readerror64_v3(int            s,
       else
         write_fdset = &fdvar2;
 
-      log(LOG_DEBUG,"srread64_v3: doing select\n");
+      (*logfunc)(LOG_DEBUG,"srread64_v3: doing select\n");
       if( select(FD_SETSIZE, &fdvar, write_fdset, NULL, &t) < 0 ) {
-        log(LOG_ERR, "srread64_v3: select failed: %s\n", strerror(errno));
+        (*logfunc)(LOG_ERR, "srread64_v3: select failed: %s\n", strerror(errno));
         readerror64_v3(ctrl_sock, &myinfo, &cid1);
         return -1;
       }
@@ -2525,11 +2525,11 @@ static int   readerror64_v3(int            s,
         int n, magic, code;
 
         /* Something received on the control socket */
-        log(LOG_DEBUG, "srread64_v3: ctrl socket: reading %d bytes\n", RQSTSIZE);
+        (*logfunc)(LOG_DEBUG, "srread64_v3: ctrl socket: reading %d bytes\n", RQSTSIZE);
         errno = ECONNRESET;
         n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT);
         if (n != RQSTSIZE) {
-          log(LOG_ERR, "srread64_v3: read ctrl socket %d: read(): %s\n",
+          (*logfunc)(LOG_ERR, "srread64_v3: read ctrl socket %d: read(): %s\n",
               ctrl_sock, strerror(errno));
           readerror64_v3(ctrl_sock, &myinfo, &cid1);
           return -1;
@@ -2540,9 +2540,9 @@ static int   readerror64_v3(int            s,
 
         /* what to do ? */
         if (code == RQST_CLOSE64_V3)  {
-          log(LOG_DEBUG,"srread64_v3: close request: magic: %x code: %x\n", magic, code);
+          (*logfunc)(LOG_DEBUG,"srread64_v3: close request: magic: %x code: %x\n", magic, code);
           if (!daemonv3_rdmt) {
-            log(LOG_DEBUG,"srread64_v3: freeing iobuffer at 0X%X\n", iobuffer);
+            (*logfunc)(LOG_DEBUG,"srread64_v3: freeing iobuffer at 0X%X\n", iobuffer);
             if (iobufsiz > 0) {
               if (myinfo.directio) {
                 free_page_aligned(iobuffer);
@@ -2556,12 +2556,12 @@ static int   readerror64_v3(int            s,
           else {
             wait_producer64_thread(&cid1);
             if(cid1 >= 0) {
-              log(LOG_ERR,"srread64_v3: Error joining producer, serrno=%d\n", serrno);
+              (*logfunc)(LOG_ERR,"srread64_v3: Error joining producer, serrno=%d\n", serrno);
               readerror64_v3(ctrl_sock, &myinfo, &cid1);
               return(-1);
             }
             for (el=0; el < daemonv3_rdmt_nbuf; el++) {
-              log(LOG_DEBUG,"srread64_v3: freeing array element %d at 0X%X\n", el,array[el].p);
+              (*logfunc)(LOG_DEBUG,"srread64_v3: freeing array element %d at 0X%X\n", el,array[el].p);
               if (myinfo.directio) {
                 free_page_aligned(array[el].p);
               } else {
@@ -2569,7 +2569,7 @@ static int   readerror64_v3(int            s,
               }
               array[el].p = NULL;
             }
-            log(LOG_DEBUG,"srread64_v3: freeing array at 0X%X\n", array);
+            (*logfunc)(LOG_DEBUG,"srread64_v3: freeing array at 0X%X\n", array);
             free(array);
             array = NULL;
           }
@@ -2577,7 +2577,7 @@ static int   readerror64_v3(int            s,
           return 0;
         }
         else  {
-          log(LOG_ERR,"srread64_v3: unknown request:  magic: %x code: %x\n", magic,code);
+          (*logfunc)(LOG_ERR,"srread64_v3: unknown request:  magic: %x code: %x\n", magic,code);
           readerror64_v3(ctrl_sock, &myinfo, &cid1);
           return(-1);
         }
@@ -2599,9 +2599,9 @@ static int   readerror64_v3(int            s,
             if (array[consumed64 % daemonv3_rdmt_nbuf].len == 0) {
               status = 0;
               iobuffer = NULL;
-              log(LOG_DEBUG,"srread64_v3: Waiting for producer thread\n");
+              (*logfunc)(LOG_DEBUG,"srread64_v3: Waiting for producer thread\n");
               if (Cthread_join(cid1,NULL) < 0) {
-                log(LOG_ERR,"srread64_v3: Error joining producer, serrno=%d\n", serrno);
+                (*logfunc)(LOG_ERR,"srread64_v3: Error joining producer, serrno=%d\n", serrno);
                 readerror64_v3(ctrl_sock, &myinfo, &cid1);
                 return(-1);
               }
@@ -2618,21 +2618,21 @@ static int   readerror64_v3(int            s,
           status = read(fd,iobuffer,DISKBUFSIZE_READ);
 
         rcode = (status < 0) ? errno:0;
-        log(LOG_DEBUG, "srread64_v3: %d bytes have been read on disk\n", status);
+        (*logfunc)(LOG_DEBUG, "srread64_v3: %d bytes have been read on disk\n", status);
 
         if (status == 0)  {
           if (daemonv3_rdmt) {
-            log(LOG_DEBUG, "srread64_v3: calling Csemaphore_up(&empty64)\n");
+            (*logfunc)(LOG_DEBUG, "srread64_v3: calling Csemaphore_up(&empty64)\n");
             Csemaphore_up(&empty64);
           }
           eof_met = 1;
           p = rqstbuf;
           marshall_WORD(p,REP_EOF);
-          log(LOG_DEBUG, "rread64_v3: eof\n");
+          (*logfunc)(LOG_DEBUG, "rread64_v3: eof\n");
           errno = ECONNRESET;
           n = netwrite_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
           if (n != RQSTSIZE)  {
-            log(LOG_ERR,"rread64_v3: netwrite(): %s\n", strerror(errno));
+            (*logfunc)(LOG_ERR,"rread64_v3: netwrite(): %s\n", strerror(errno));
             readerror64_v3(ctrl_sock, &myinfo, &cid1);
             return -1;
           }
@@ -2645,21 +2645,21 @@ static int   readerror64_v3(int            s,
             marshall_WORD(p, REP_ERROR);
             marshall_LONG(p, status);
             marshall_LONG(p, rcode);
-            log(LOG_DEBUG, "rread64_v3: status %d, rcode %d\n", status, rcode);
+            (*logfunc)(LOG_DEBUG, "rread64_v3: status %d, rcode %d\n", status, rcode);
             errno = ECONNRESET;
             n = netwrite_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
             if (n != RQSTSIZE)  {
-              log(LOG_ERR, "rread64_v3: netwrite(): %s\n", strerror(errno));
+              (*logfunc)(LOG_ERR, "rread64_v3: netwrite(): %s\n", strerror(errno));
               readerror64_v3(ctrl_sock, &myinfo, &cid1);
               return -1;
             }
-            log(LOG_DEBUG, "read64_v3: waiting ack for error\n");
+            (*logfunc)(LOG_DEBUG, "read64_v3: waiting ack for error\n");
             n = netread_timeout(ctrl_sock,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT);
             if (n != RQSTSIZE) {
               if (n == 0)  {
                 errno = ECONNRESET;
               }
-              log(LOG_ERR, "read64_v3: read ctrl socket %d: read(): %s\n",
+              (*logfunc)(LOG_ERR, "read64_v3: read ctrl socket %d: read(): %s\n",
                   ctrl_sock, strerror(errno));
             }  /* n != RQSTSIZE */
             readerror64_v3(ctrl_sock, &myinfo, &cid1);
@@ -2667,10 +2667,10 @@ static int   readerror64_v3(int            s,
           }  /* status < 0  */
           else  {
             /* status > 0, reading was succesfully */
-            log(LOG_DEBUG, "rread64_v3: writing %d bytes to data socket %d\n", status, data_sock);
+            (*logfunc)(LOG_DEBUG, "rread64_v3: writing %d bytes to data socket %d\n", status, data_sock);
             errno = ECONNRESET;
             if( (n = netwrite(data_sock, iobuffer, status)) != status ) {
-              log(LOG_ERR, "rread64_v3: netwrite(): %s\n", strerror(errno));
+              (*logfunc)(LOG_ERR, "rread64_v3: netwrite(): %s\n", strerror(errno));
               readerror64_v3(ctrl_sock, &myinfo, &cid1);
               return -1;
             }
@@ -2713,11 +2713,11 @@ static int   writerror64_v3(int            s,
   marshall_WORD(p, REP_ERROR);
   marshall_LONG(p, status);
   marshall_LONG(p, rcode);
-  log(LOG_ERR, "writerror64_v3: status %d, rcode %d (%s)\n", status, rcode, strerror(rcode));
+  (*logfunc)(LOG_ERR, "writerror64_v3: status %d, rcode %d (%s)\n", status, rcode, strerror(rcode));
   errno = ECONNRESET;
   n = netwrite_timeout(s, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
   if (n != RQSTSIZE)  {
-    log(LOG_ERR, "writerror64_v3: write(): %s\n", strerror(errno));
+    (*logfunc)(LOG_ERR, "writerror64_v3: write(): %s\n", strerror(errno));
     /* Consumer thread already exited after error */
   }
 
@@ -2728,7 +2728,7 @@ static int   writerror64_v3(int            s,
   sizeofdummy = 256 * 1024;
   dummy = (unsigned char *)malloc(sizeof(unsigned char) * sizeofdummy);
   if (dummy == NULL)
-    log(LOG_ERR, "writerror64_v3: malloc(%d) for dummy: %s\n",
+    (*logfunc)(LOG_ERR, "writerror64_v3: malloc(%d) for dummy: %s\n",
         sizeofdummy, strerror(errno));
 
   /*
@@ -2747,10 +2747,10 @@ static int   writerror64_v3(int            s,
     t.tv_sec = 1;
     t.tv_usec = 0;
 
-    log(LOG_DEBUG,"writerror64_v3: doing select after error writing on disk\n");
+    (*logfunc)(LOG_DEBUG,"writerror64_v3: doing select after error writing on disk\n");
       if( select(FD_SETSIZE, &fdvar2, NULL, NULL, &t) < 0 )
         {
-          log(LOG_ERR, "writerror64_v3: select fdvar2 failed (errno=%d)\n", errno);
+          (*logfunc)(LOG_ERR, "writerror64_v3: select fdvar2 failed (errno=%d)\n", errno);
           /* Consumer thread already exited after error */
           break;
         }
@@ -2758,12 +2758,12 @@ static int   writerror64_v3(int            s,
     if ( FD_ISSET(s, &fdvar2) )  {
       /* The ack has been received on the control socket */
 
-      log(LOG_DEBUG, "writerror64_v3: waiting ack for error\n");
+      (*logfunc)(LOG_DEBUG, "writerror64_v3: waiting ack for error\n");
       n = netread_timeout(s, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
       if (n != RQSTSIZE)  {
         /* Connexion dropped (n==0) or some another error */
         if (n == 0)  errno = ECONNRESET;
-        log(LOG_ERR, "writerror64_v3: read ctrl socket: read(): %s\n", strerror(errno));
+        (*logfunc)(LOG_ERR, "writerror64_v3: read ctrl socket: read(): %s\n", strerror(errno));
         /* Consumer thread already exited after error */
         break;
       }
@@ -2775,37 +2775,37 @@ static int   writerror64_v3(int            s,
     if (data_sock >= 0 && FD_ISSET(data_sock, &fdvar2))  {
       /* Read as much data as possible from the data socket */
 
-      log(LOG_DEBUG, "writerror64_v3: emptying data socket (last disk write)\n");
+      (*logfunc)(LOG_DEBUG, "writerror64_v3: emptying data socket (last disk write)\n");
         n = read(data_sock, dummy, sizeofdummy);
       if ( n <= 0 )
         {
           /* Connexion dropped (n==0) or some another error */
           if (n == 0) errno = ECONNRESET;
-          log(LOG_ERR, "writerror64_v3: read emptying data socket: read(): %s\n",
+          (*logfunc)(LOG_ERR, "writerror64_v3: read emptying data socket: read(): %s\n",
               strerror(errno));
           /* Consumer thread already exited after error     */
           break;
         }
-      log(LOG_DEBUG, "writerror64_v3: emptying data socket, %d bytes read\n", n);
+      (*logfunc)(LOG_DEBUG, "writerror64_v3: emptying data socket, %d bytes read\n", n);
     }  /* if (FD_ISSET(data_sock,&fdvar2)) */
   }  /* End of while (1) : drop the data */
 
   /* Close the data socket                                   */
   if (data_sock >= 0) {
     if( close(data_sock) < 0 )
-      log(LOG_DEBUG, "writerror64_v3 : Error closing data socket fildesc=%d,errno=%d\n",
+      (*logfunc)(LOG_DEBUG, "writerror64_v3 : Error closing data socket fildesc=%d,errno=%d\n",
           data_sock, errno);
     else
-      log(LOG_DEBUG, "writerror64_v3 : closing data socket fildesc=%d\n", data_sock);
+      (*logfunc)(LOG_DEBUG, "writerror64_v3 : closing data socket fildesc=%d\n", data_sock);
     data_sock = -1;
   }
 
   /* Issue statistic messages - There is no accounting record generated */
-  log(LOG_INFO,
+  (*logfunc)(LOG_INFO,
       "writerror64_v3(%d): %d read, %d readahead, %d write, %d flush, %d stat, %d lseek and %d lockf\n",
       s, infop->readop, infop->aheadop, infop->writop, infop->flusop, infop->statop,
       infop->seekop, infop->lockop);
-  log(LOG_INFO,"writerror64_v3(%d): %s bytes read and %s bytes written\n",
+  (*logfunc)(LOG_INFO,"writerror64_v3(%d): %s bytes read and %s bytes written\n",
       s, u64tostr(infop->rnbr,tmpbuf,0), u64tostr(infop->wnbr,tmpbuf2,0));
 
   /* free the allocated ressources     */
@@ -2813,7 +2813,7 @@ static int   writerror64_v3(int            s,
   dummy = NULL;
 
   if (!daemonv3_wrmt) {
-    log(LOG_DEBUG,"writerror64_v3: freeing iobuffer at 0X%X\n", iobuffer);
+    (*logfunc)(LOG_DEBUG,"writerror64_v3: freeing iobuffer at 0X%X\n", iobuffer);
     if (myinfo.directio) {
       free_page_aligned(iobuffer);
     } else {
@@ -2826,7 +2826,7 @@ static int   writerror64_v3(int            s,
     wait_consumer64_thread(cidp);
     if (array) {
       for (el=0; el < daemonv3_wrmt_nbuf; el++) {
-        log(LOG_DEBUG,"writerror64_v3: freeing array element %d at 0X%X\n",
+        (*logfunc)(LOG_DEBUG,"writerror64_v3: freeing array element %d at 0X%X\n",
             el,array[el].p);
         if (myinfo.directio) {
           free_page_aligned(array[el].p);
@@ -2835,7 +2835,7 @@ static int   writerror64_v3(int            s,
         }
         array[el].p = NULL;
       }
-      log(LOG_DEBUG,"writerror64_v3: freeing array at 0X%X\n", array);
+      (*logfunc)(LOG_DEBUG,"writerror64_v3: freeing array at 0X%X\n", array);
       free(array);
       array = NULL;
     }
@@ -2870,7 +2870,7 @@ int srwrite64_v3(int            s,
   /*
    * Receiving request,
    */
-  log(LOG_DEBUG, "rwrite64_v3(%d, %d)\n",s, fd);
+  (*logfunc)(LOG_DEBUG, "rwrite64_v3(%d, %d)\n",s, fd);
   if( first_write )  {
     char *p;
 
@@ -2883,7 +2883,7 @@ int srwrite64_v3(int            s,
     first_write = 0;
     status = rfio_handle_firstwrite(handler_context);
     if (status != 0)  {
-      log(LOG_ERR, "srwrite64_v3: rfio_handle_firstwrite: %s\n", strerror(serrno));
+      (*logfunc)(LOG_ERR, "srwrite64_v3: rfio_handle_firstwrite: %s\n", strerror(serrno));
       writerror64_v3(ctrl_sock, EBUSY, &myinfo, &cid2);
       return -1;
     }
@@ -2909,7 +2909,7 @@ int srwrite64_v3(int            s,
         DISKBUFSIZE_WRITE = atoi(p);
       }
 
-    log(LOG_DEBUG,
+    (*logfunc)(LOG_DEBUG,
         "rwrite64_v3: daemonv3_wrmt=%d,daemonv3_wrmt_nbuf=%d,daemonv3_wrmt_bufsize=%d\n",
         daemonv3_wrmt,daemonv3_wrmt_nbuf,daemonv3_wrmt_bufsize);
 
@@ -2917,18 +2917,18 @@ int srwrite64_v3(int            s,
       /* Indicates we are using RFIO V3 and multithreading while writing */
       myinfo.aheadop = 3;
       /* Allocating circular buffer itself */
-      log(LOG_DEBUG, "rwrite64_v3: allocating circular buffer: %d bytes\n",
+      (*logfunc)(LOG_DEBUG, "rwrite64_v3: allocating circular buffer: %d bytes\n",
           sizeof(struct element) * daemonv3_wrmt_nbuf);
       array = (struct element *)malloc(sizeof(struct element) * daemonv3_wrmt_nbuf);
       if (array == NULL)  {
-        log(LOG_ERR, "rwrite64_v3: malloc array: ERROR occured (errno=%d)\n", errno);
+        (*logfunc)(LOG_ERR, "rwrite64_v3: malloc array: ERROR occured (errno=%d)\n", errno);
         return -1;
       }
-      log(LOG_DEBUG, "rwrite64_v3: malloc array allocated at 0X%X\n", array);
+      (*logfunc)(LOG_DEBUG, "rwrite64_v3: malloc array allocated at 0X%X\n", array);
 
       /* Allocating memory for each element of circular buffer */
       for (el=0; el < daemonv3_wrmt_nbuf; el++) {
-        log(LOG_DEBUG, "rwrite64_v3: allocating circular buffer element %d: %d bytes\n",
+        (*logfunc)(LOG_DEBUG, "rwrite64_v3: allocating circular buffer element %d: %d bytes\n",
             el,daemonv3_wrmt_bufsize);
         if (myinfo.directio) {
           array[el].p = (char *)malloc_page_aligned(daemonv3_wrmt_bufsize);
@@ -2936,23 +2936,23 @@ int srwrite64_v3(int            s,
           array[el].p = (char *)malloc(daemonv3_wrmt_bufsize);
         }
         if ( array[el].p == NULL)  {
-          log(LOG_ERR, "rwrite64_v3: malloc array element %d: ERROR occured (errno=%d)\n",
+          (*logfunc)(LOG_ERR, "rwrite64_v3: malloc array element %d: ERROR occured (errno=%d)\n",
               el, errno);
           return -1;
         }
-        log(LOG_DEBUG, "rwrite64_v3: malloc array element %d allocated at 0X%X\n",
+        (*logfunc)(LOG_DEBUG, "rwrite64_v3: malloc array element %d allocated at 0X%X\n",
             el, array[el].p);
       }
     }
 
     /* Don't allocate this buffer if we are multithreaded */
     if (!daemonv3_wrmt) {
-      log(LOG_DEBUG, "rwrite64_v3: allocating malloc buffer: %d bytes\n", DISKBUFSIZE_WRITE);
+      (*logfunc)(LOG_DEBUG, "rwrite64_v3: allocating malloc buffer: %d bytes\n", DISKBUFSIZE_WRITE);
       if ((iobuffer = (char *)malloc(DISKBUFSIZE_WRITE)) == NULL) {
-        log(LOG_ERR, "rwrite64_v3: malloc: ERROR occured (errno=%d)\n", errno);
+        (*logfunc)(LOG_ERR, "rwrite64_v3: malloc: ERROR occured (errno=%d)\n", errno);
         return -1;
       }
-      log(LOG_DEBUG, "rwrite64_v3: malloc buffer allocated at 0X%X\n", iobuffer);
+      (*logfunc)(LOG_DEBUG, "rwrite64_v3: malloc buffer allocated at 0X%X\n", iobuffer);
       iobufsiz = DISKBUFSIZE_WRITE;
     }
 
@@ -2964,17 +2964,17 @@ int srwrite64_v3(int            s,
 
     optlen = sizeof(maxseg);
     if (getsockopt(data_sock,IPPROTO_TCP,TCP_MAXSEG,(char *)&maxseg,&optlen) < 0) {
-      log(LOG_ERR, "rwrite64_v3: getsockopt: ERROR occured (errno=%d)\n", errno);
+      (*logfunc)(LOG_ERR, "rwrite64_v3: getsockopt: ERROR occured (errno=%d)\n", errno);
       return -1;
     }
-    log(LOG_DEBUG,"rwrite64_v3: max TCP segment: %d\n", maxseg);
+    (*logfunc)(LOG_DEBUG,"rwrite64_v3: max TCP segment: %d\n", maxseg);
 
     if (daemonv3_wrmt) {
       Csemaphore_init(&empty64,daemonv3_wrmt_nbuf);
       Csemaphore_init(&full64,0);
 
       if ((cid2 = Cthread_create((void *(*)(void *))consume64_thread,(void *)&fd)) < 0) {
-        log(LOG_ERR,"rwrite64_v3: Cannot create consumer thread : serrno=%d, errno=%d\n",
+        (*logfunc)(LOG_ERR,"rwrite64_v3: Cannot create consumer thread : serrno=%d, errno=%d\n",
             serrno, errno);
         return(-1);
       }
@@ -2994,9 +2994,9 @@ int srwrite64_v3(int            s,
     t.tv_sec = 10;
     t.tv_usec = 0;
 
-    log(LOG_DEBUG,"rwrite64_v3: doing select\n");
+    (*logfunc)(LOG_DEBUG,"rwrite64_v3: doing select\n");
     if( select(FD_SETSIZE, &fdvar, NULL, NULL, &t) < 0 )  {
-      log(LOG_ERR, "rwrite64_v3: select: %s\n", strerror(errno));
+      (*logfunc)(LOG_ERR, "rwrite64_v3: select: %s\n", strerror(errno));
       if (daemonv3_wrmt)
         wait_consumer64_thread(&cid2);
       return -1;
@@ -3007,11 +3007,11 @@ int srwrite64_v3(int            s,
       int  n, magic, code;
 
       /* Something received on the control socket */
-      log(LOG_DEBUG, "rwrite64_v3: ctrl socket: reading %d bytes\n", RQSTSIZE);
+      (*logfunc)(LOG_DEBUG, "rwrite64_v3: ctrl socket: reading %d bytes\n", RQSTSIZE);
       n = netread_timeout(ctrl_sock, rqstbuf, RQSTSIZE, RFIO_CTRL_TIMEOUT);
       if ( n != RQSTSIZE )  {
         if (n == 0)  errno = ECONNRESET;
-        log(LOG_ERR, "rwrite64_v3: read ctrl socket: netread(): %s\n", strerror(errno));
+        (*logfunc)(LOG_ERR, "rwrite64_v3: read ctrl socket: netread(): %s\n", strerror(errno));
         if (daemonv3_wrmt)
           wait_consumer64_thread(&cid2);
         return -1;
@@ -3022,16 +3022,16 @@ int srwrite64_v3(int            s,
       unmarshall_HYPER(p, byte_written_by_client);
 
       if (code == RQST_CLOSE64_V3) {
-        log(LOG_DEBUG,"rwrite64_v3: close request:  magic: %x code: %x\n", magic, code);
+        (*logfunc)(LOG_DEBUG,"rwrite64_v3: close request:  magic: %x code: %x\n", magic, code);
         eof_received = 1;
       }
       else {
-        log(LOG_ERR,"rwrite64_v3: unknown request:  magic: %x code: %x\n", magic, code);
+        (*logfunc)(LOG_ERR,"rwrite64_v3: unknown request:  magic: %x code: %x\n", magic, code);
         writerror64_v3(ctrl_sock, EINVAL, &myinfo, &cid2);
         return -1;
       }
 
-      log(LOG_DEBUG, "rwrite64_v3: data socket: read_from_net=%s, written_by_client=%s\n",
+      (*logfunc)(LOG_DEBUG, "rwrite64_v3: data socket: read_from_net=%s, written_by_client=%s\n",
           u64tostr(byte_read_from_network,tmpbuf,0), u64tostr(byte_written_by_client,tmpbuf2,0));
 
     }  /* if (FD_ISSET(ctrl_sock, &fdvar)) */
@@ -3042,25 +3042,25 @@ int srwrite64_v3(int            s,
       int n;
 
       if ((daemonv3_wrmt) && (byte_in_diskbuffer == 0)) {
-        log(LOG_DEBUG, "rwrite64_v3: Data received on data socket, new buffer %d requested\n",
+        (*logfunc)(LOG_DEBUG, "rwrite64_v3: Data received on data socket, new buffer %d requested\n",
             produced64 % daemonv3_wrmt_nbuf);
         Csemaphore_down(&empty64);
         iobuffer = iobuffer_p = array[produced64 % daemonv3_wrmt_nbuf].p;
       }
 
-      log(LOG_DEBUG,"rwrite64_v3: iobuffer_p = %X, DISKBUFSIZE_WRITE = %d, data socket = %d\n",
+      (*logfunc)(LOG_DEBUG,"rwrite64_v3: iobuffer_p = %X, DISKBUFSIZE_WRITE = %d, data socket = %d\n",
           iobuffer_p, DISKBUFSIZE_WRITE, data_sock);
         n = read(data_sock, iobuffer_p, DISKBUFSIZE_WRITE-byte_in_diskbuffer);
       if( n <= 0 )
         {
           if (n == 0) errno = ECONNRESET;
-          log(LOG_ERR, "rwrite64_v3: read data socket: read(): %s\n", strerror(errno));
+          (*logfunc)(LOG_ERR, "rwrite64_v3: read data socket: read(): %s\n", strerror(errno));
           if (daemonv3_wrmt)
             wait_consumer64_thread(&cid2);
           return -1;
         }
 
-      log(LOG_DEBUG, "rwrite64_v3: read data socket %d: %d bytes\n", data_sock, n);
+      (*logfunc)(LOG_DEBUG, "rwrite64_v3: read data socket %d: %d bytes\n", data_sock, n);
       byte_read_from_network += n;
       byte_in_diskbuffer += n;
       iobuffer_p += n;
@@ -3071,7 +3071,7 @@ int srwrite64_v3(int            s,
      */
     if (byte_in_diskbuffer && (byte_in_diskbuffer == DISKBUFSIZE_WRITE ||
                                (eof_received && byte_written_by_client == byte_read_from_network)) )  {
-      log(LOG_DEBUG, "rwrite64_v3: writing %d bytes on disk\n", byte_in_diskbuffer);
+      (*logfunc)(LOG_DEBUG, "rwrite64_v3: writing %d bytes on disk\n", byte_in_diskbuffer);
       if (daemonv3_wrmt) {
         array[produced64 % daemonv3_wrmt_nbuf].len = byte_in_diskbuffer;
         produced64++;
@@ -3096,7 +3096,7 @@ int srwrite64_v3(int            s,
 
         /* Get the last write status within a mutex transaction     */
         if (Cthread_mutex_lock(&write_error)) {
-          log(LOG_ERR,"rwrite64_v3: Cannot get mutex : serrno=%d\n", serrno);
+          (*logfunc)(LOG_ERR,"rwrite64_v3: Cannot get mutex : serrno=%d\n", serrno);
           return(-1);
         }
         if (write_error) {
@@ -3107,7 +3107,7 @@ int srwrite64_v3(int            s,
           status = byte_in_diskbuffer;
 
         if (Cthread_mutex_unlock(&write_error)) {
-          log(LOG_ERR,"rwrite64_v3: Cannot release mutex : serrno=%d\n", serrno);
+          (*logfunc)(LOG_ERR,"rwrite64_v3: Cannot release mutex : serrno=%d\n", serrno);
           return(-1);
         }
         /* End of mutex transaction                                 */
@@ -3131,7 +3131,7 @@ int srwrite64_v3(int            s,
     /* Have we finished ?    */
     if ( eof_received && byte_written_by_client == myinfo.wnbr ) {
       if (!daemonv3_wrmt) {
-        log(LOG_DEBUG,"rwrite64_v3: freeing iobuffer at 0X%X\n", iobuffer);
+        (*logfunc)(LOG_DEBUG,"rwrite64_v3: freeing iobuffer at 0X%X\n", iobuffer);
         if (myinfo.directio) {
           free_page_aligned(iobuffer);
         } else {
@@ -3143,7 +3143,7 @@ int srwrite64_v3(int            s,
       else {
         /* Indicate to the consumer thread that writing is finished */
         /* if the actual buffer wasn't empty                         */
-        log(LOG_DEBUG, "rwrite64_v3: Terminates thread by null buffer %d requested\n",
+        (*logfunc)(LOG_DEBUG, "rwrite64_v3: Terminates thread by null buffer %d requested\n",
             produced64 % daemonv3_wrmt_nbuf);
         Csemaphore_down(&empty64);
         array[produced64 % daemonv3_wrmt_nbuf].len = 0;
@@ -3152,16 +3152,16 @@ int srwrite64_v3(int            s,
 
         /* Wait for consumer thread                                 */
         /* We can then safely catch deferred disk write errors      */
-        log(LOG_INFO,"Joining thread\n");
+        (*logfunc)(LOG_INFO,"Joining thread\n");
         if (Cthread_join(cid2,NULL) < 0) {
-          log(LOG_ERR,"Error joining consumer, serrno=%d\n", serrno);
+          (*logfunc)(LOG_ERR,"Error joining consumer, serrno=%d\n", serrno);
           return(-1);
         }
         cid2 = -1;
 
         /* Get the last write status within a mutex transaction     */
         if (Cthread_mutex_lock(&write_error)) {
-          log(LOG_ERR,"rwrite64_v3: Cannot get mutex : serrno=%d\n", serrno);
+          (*logfunc)(LOG_ERR,"rwrite64_v3: Cannot get mutex : serrno=%d\n", serrno);
           return(-1);
         }
         if (write_error) {
@@ -3171,7 +3171,7 @@ int srwrite64_v3(int            s,
         else  status = 0;
 
         if (Cthread_mutex_unlock(&write_error)) {
-          log(LOG_ERR,"rwrite64_v3: Cannot release mutex : serrno=%d\n", serrno);
+          (*logfunc)(LOG_ERR,"rwrite64_v3: Cannot release mutex : serrno=%d\n", serrno);
           return(-1);
         }
         /* End of mutex transaction                                 */
@@ -3184,7 +3184,7 @@ int srwrite64_v3(int            s,
 
         /* Free the buffers                                         */
         for (el=0; el < daemonv3_wrmt_nbuf; el++) {
-          log(LOG_DEBUG,"rwrite64_v3: freeing array element %d at 0X%X\n", el, array[el].p);
+          (*logfunc)(LOG_DEBUG,"rwrite64_v3: freeing array element %d at 0X%X\n", el, array[el].p);
           if (myinfo.directio) {
             free_page_aligned(array[el].p);
           } else {
@@ -3192,7 +3192,7 @@ int srwrite64_v3(int            s,
           }
           array[el].p = NULL;
         }
-        log(LOG_DEBUG,"rwrite64_v3: freeing array at 0X%X\n", array);
+        (*logfunc)(LOG_DEBUG,"rwrite64_v3: freeing array at 0X%X\n", array);
         free(array);
         array = NULL;
       }

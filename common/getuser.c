@@ -45,7 +45,7 @@ int get_user(char *from_node,
     char *last = NULL;
 
     if  ( (fsin=fopen(infile,"r"))==NULL ) {
-       log(LOG_ERR, "Could not open file %s, errno %d\n", infile, errno);
+       (*logfunc)(LOG_ERR, "Could not open file %s, errno %d\n", infile, errno);
        serrno = ENOENT;
        return -ENOENT ;
     }
@@ -54,7 +54,7 @@ int get_user(char *from_node,
         if ( buf[0] == '#') continue ;
         if ( ( p = strrchr( buf,'\n') ) != NULL ) *p='\0' ;
 
-        log(LOG_DEBUG,"Entry >%s< in %s\n",buf,infile) ;
+        (*logfunc)(LOG_DEBUG,"Entry >%s< in %s\n",buf,infile) ;
 
         p = strtok_r( buf, " \t",&last);
         if ( p != NULL ) strcpy (maphostnam, p) ;
@@ -90,10 +90,10 @@ int get_user(char *from_node,
         if ( strcmp( mapgid, "*" ) && ( (gid=atoi(mapgid)) <= 0 || gid != from_gid ) )
             continue ;
 
-        log( LOG_DEBUG,"Found a possible entry: %s\n",to_user);
+        (*logfunc)( LOG_DEBUG,"Found a possible entry: %s\n",to_user);
 
         if ( (pw = Cgetpwnam(to_user))==NULL) {
-            log(LOG_INFO,"Cgetpwnam(): %s\n",sstrerror(serrno));
+            (*logfunc)(LOG_INFO,"Cgetpwnam(): %s\n",sstrerror(serrno));
             continue ;
         } else {
             *to_uid = pw->pw_uid;

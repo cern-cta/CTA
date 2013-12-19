@@ -54,14 +54,14 @@ char  *getifnam_r(int     s,
     addrlen = (socklen_t) sizeof(struct sockaddr_in);
     if (getsockname(s, (struct  sockaddr *)&addr, &addrlen) == -1 ) {
         TRACE(2,"getifnam_r", "getsockname returned %d", errno);
-        log(LOG_ERR, "getsockname: %s\n",strerror(errno));
+        (*logfunc)(LOG_ERR, "getsockname: %s\n",strerror(errno));
         END_TRACE();
         return(NULL);
     } else {
         binaddr = addr.sin_addr.s_addr;
     }
     if ((s_s = socket(AF_INET, SOCK_DGRAM, 0)) == -1 ) {
-        log(LOG_ERR, "socket: %s\n",strerror(errno));
+        (*logfunc)(LOG_ERR, "socket: %s\n",strerror(errno));
         return(NULL);
     }
 
@@ -70,7 +70,7 @@ char  *getifnam_r(int     s,
     ifr = ifc.ifc_req;
     if ((n = ioctl(s_s, SIOCGIFCONF, (char *)&ifc)) < 0) {
         TRACE(2,"getifnam_r", "ioctl returned %d", errno);
-        log(LOG_ERR, "ioctl(SIOCGIFCONF): %s\n",strerror(errno));
+        (*logfunc)(LOG_ERR, "ioctl(SIOCGIFCONF): %s\n",strerror(errno));
         (void) close(s_s);
         END_TRACE();
         return(NULL);

@@ -55,7 +55,7 @@ void stager_log(const char *func, const char *file, int line, int what, struct C
       if ((stagerLog != NULL) && (stagerLog[0] != '\0')) {
         if ((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) {
           if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) {
-            log(
+            (*logfunc)(
                 stagerMessages[what].severity2LogLevel,
                 "%s : %s:%d : %s : %s : %s (errno=%d [%s], serrno=%d[%s])\n",
                 func,
@@ -70,7 +70,7 @@ void stager_log(const char *func, const char *file, int line, int what, struct C
                 serrno ? sstrerror(serrno) : ""
                 );
           } else {
-            log(
+            (*logfunc)(
                 stagerMessages[what].severity2LogLevel,
                 "%s : %s:%d : %s : %s : %d (errno=%d [%s], serrno=%d[%s])\n",
                 func,
@@ -85,7 +85,7 @@ void stager_log(const char *func, const char *file, int line, int what, struct C
           }
         } else {
           if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) {
-            log(
+            (*logfunc)(
                 stagerMessages[what].severity2LogLevel,
                 "%s : %s:%d : %s : %d : %s (errno=%d [%s], serrno=%d[%s])\n",
                 func,
@@ -98,7 +98,7 @@ void stager_log(const char *func, const char *file, int line, int what, struct C
                 serrno, serrno ? sstrerror(serrno) : ""
                 );
           } else {
-            log(
+            (*logfunc)(
                 stagerMessages[what].severity2LogLevel,
                 "%s : %s:%d : %s : %d : %d (errno=%d [%s], serrno=%d[%s])\n",
                 func,
@@ -117,7 +117,7 @@ void stager_log(const char *func, const char *file, int line, int what, struct C
     } else {
       if ((stagerLog != NULL) && (stagerLog[0] != '\0')) {
         if ((strcmp(message,"STRING") == 0) || (strcmp(message,"SIGNAL NAME") == 0)) {
-          log(
+          (*logfunc)(
               stagerMessages[what].severity2LogLevel,
               "%s : %s:%d : %s : %s (errno=%d [%s], serrno=%d[%s])\n",
               func,
@@ -129,7 +129,7 @@ void stager_log(const char *func, const char *file, int line, int what, struct C
               serrno, serrno ? sstrerror(serrno) : ""
               );
         } else {
-          log(
+          (*logfunc)(
               stagerMessages[what].severity2LogLevel,
               "%s : %s:%d : %s : %d (errno=%d [%s], serrno=%d[%s])\n",
               func,
@@ -156,7 +156,7 @@ void stager_log(const char *func, const char *file, int line, int what, struct C
       }
       if ((stagerLog != NULL) && (stagerLog[0] != '\0')) {
         if ((strcmp(message2,"STRING") == 0) || (strcmp(message2,"SIGNAL NAME") == 0)) {
-          log(
+          (*logfunc)(
               stagerMessages[what].severity2LogLevel,
               "%s : %s:%d : %s : %s\n",
               func,
@@ -166,7 +166,7 @@ void stager_log(const char *func, const char *file, int line, int what, struct C
               value2Str
               );
         } else {
-          log(
+          (*logfunc)(
               stagerMessages[what].severity2LogLevel,
               "%s : %s:%d : %s : %d\n",
               func,
@@ -179,7 +179,7 @@ void stager_log(const char *func, const char *file, int line, int what, struct C
       }
     } else {
       if ((stagerLog != NULL) && (stagerLog != '\0')) {
-        log(
+        (*logfunc)(
             stagerMessages[what].severity2LogLevel,
             "%s : %s:%d : %s\n",
             func,

@@ -32,7 +32,7 @@ int switch_open(int     *access,
   switch ((int)*access) {
   case FFFACC_S:
     if (mod == LLTM)
-      log(LOG_INFO, "rxyopen(%s) SEQUENTIAL\n",filename);
+      (*logfunc)(LOG_INFO, "rxyopen(%s) SEQUENTIAL\n",filename);
     else
       TRACE(2, "rfio",  "rfio_xyopen(%s) SEQUENTIAL (local)",filename);
 
@@ -40,7 +40,7 @@ int switch_open(int     *access,
     break;
   case FFFACC_D:
     if (mod == LLTM)
-      log(LOG_INFO, "rxyopen(%s) DIRECT\n",filename);
+      (*logfunc)(LOG_INFO, "rxyopen(%s) DIRECT\n",filename);
     else {
       TRACE(2, "rfio",  "rfio_xyopen(%s) DIRECT (local)",filename);
     }
@@ -49,7 +49,7 @@ int switch_open(int     *access,
     break;
   default:
     if (mod == LLTM)
-      log(LOG_ERR, "rxyopen(%s) invalid access type: %d\n",filename, *access);
+      (*logfunc)(LOG_ERR, "rxyopen(%s) invalid access type: %d\n",filename, *access);
     else {
       TRACE(2, "rfio",  "rfio_xyopen(%d) invalid access type: %d\n",lun, *access);
     }
@@ -70,7 +70,7 @@ int switch_write(int     access,
   switch (access) {
   case FFFACC_S:
     if (mod == LLTM)
-      log(LOG_DEBUG, "rxywrit(%d) SEQUENTIAL\n",*lun);
+      (*logfunc)(LOG_DEBUG, "rxywrit(%d) SEQUENTIAL\n",*lun);
     else {
       TRACE(2, "rfio",  "rfio_xywrit(%d) SEQUENTIAL",*lun);
     }
@@ -79,7 +79,7 @@ int switch_write(int     access,
     break;
   case FFFACC_D:
     if (mod == LLTM)
-      log(LOG_DEBUG, "rxywrit(%d) DIRECT\n",*lun);
+      (*logfunc)(LOG_DEBUG, "rxywrit(%d) DIRECT\n",*lun);
     else
       TRACE(2, "rfio",  "rfio_xywrit(%d) DIRECT",*lun);
 
@@ -87,7 +87,7 @@ int switch_write(int     access,
     break;
   default:
     if (mod == LLTM)
-      log(LOG_ERR, "rxyopen(%d) invalid access type: %d\n",*lun, access);
+      (*logfunc)(LOG_ERR, "rxyopen(%d) invalid access type: %d\n",*lun, access);
     else
       TRACE(2, "rfio",  "rfio_xywrite(%d) invalid access type:%d",*lun, access);
 
@@ -109,7 +109,7 @@ int switch_read(int   access,
   int status;
   if (readopt == FFREAD_C)        {
     if (mod == LLTM)
-      log(LOG_DEBUG, "rxyread(%d) SPECIAL\n",*ptlun);
+      (*logfunc)(LOG_DEBUG, "rxyread(%d) SPECIAL\n",*ptlun);
     else {
       TRACE(2, "rfio", "rfio_xyread(%d) SPECIAL",*ptlun);
     }
@@ -121,7 +121,7 @@ int switch_read(int   access,
     switch (access) {
     case FFFACC_S:
       if (mod == LLTM)
-        log(LOG_DEBUG, "rxyread(%d) SEQUENTIAL\n",*ptlun);
+        (*logfunc)(LOG_DEBUG, "rxyread(%d) SEQUENTIAL\n",*ptlun);
       else
         TRACE(2, "rfio", "rfio_xyread(%d) SEQUENTIAL",*ptlun);
       status=usf_read(ptlun, buffer1, nwant);
@@ -130,7 +130,7 @@ int switch_read(int   access,
       break;
     case FFFACC_D:
       if (mod == LLTM)
-        log(LOG_DEBUG, "rxyread(%d) DIRECT\n",*ptlun);
+        (*logfunc)(LOG_DEBUG, "rxyread(%d) DIRECT\n",*ptlun);
       else
         TRACE(2, "rfio", "rfio_xyread(%d) DIRECT",*ptlun);
       status =udf_read(ptlun, buffer1, nrec, nwant);
@@ -139,7 +139,7 @@ int switch_read(int   access,
       break;
     default:
       if (mod == LLTM)
-        log(LOG_ERR, "rxyread(%d) invalid access type: %d\n",*ptlun, access);
+        (*logfunc)(LOG_ERR, "rxyread(%d) invalid access type: %d\n",*ptlun, access);
       else
         TRACE(2, "rfio", "rfio_xyread(%d) invalid access type: %d",*ptlun, access);
       *ngot = 0;

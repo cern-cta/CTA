@@ -23,11 +23,6 @@ EXTERN_C void logit (int, char *, ...);
 EXTERN_C void setlogbits (int);
 EXTERN_C int getloglv (void);
 
-#ifdef log
-#undef log
-#endif
-#define log (*logfunc)          /* logging function name                */
-
 #ifndef _SYSLOG_WIN32_H
 #include <syslog.h>             /* system logger definitions            */
 #endif

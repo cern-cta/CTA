@@ -55,22 +55,22 @@ static void
     p->aligned = a;
     p->next = NULL;
 
-    log(ALIGNEDBUF_LOG_LEVEL,"%s: u=%p a=%p\n", __func__, u, a);
+    (*logfunc)(ALIGNEDBUF_LOG_LEVEL,"%s: u=%p a=%p\n", __func__, u, a);
     if (a_map_find_unaligned(a)) {
-      log(LOG_ERR,"%s: mapping already exists!\n", __func__);
+      (*logfunc)(LOG_ERR,"%s: mapping already exists!\n", __func__);
       free(p);
       return a;
     }
     if ((q = _a_map_get_tail())) {
       q->next = p;
-      log(ALIGNEDBUF_LOG_LEVEL, "tail q=%p\n", q);
+      (*logfunc)(ALIGNEDBUF_LOG_LEVEL, "tail q=%p\n", q);
     } else {
       aligned_mapping = p;
-      log(ALIGNEDBUF_LOG_LEVEL, "head p=%p\n", p);
+      (*logfunc)(ALIGNEDBUF_LOG_LEVEL, "head p=%p\n", p);
     }
     return a;
   } else {
-    log(LOG_ERR,"%s: malloc() failed\n", __func__);
+    (*logfunc)(LOG_ERR,"%s: malloc() failed\n", __func__);
     return NULL;
   }
 }
@@ -99,9 +99,9 @@ static void
     }
     u = q->unaligned;
     free(q);
-    log(ALIGNEDBUF_LOG_LEVEL,"%s: u=%p a=%p\n", __func__, u, a);
+    (*logfunc)(ALIGNEDBUF_LOG_LEVEL,"%s: u=%p a=%p\n", __func__, u, a);
   } else {
-    log(LOG_ERR,"%s: a=%p mapping not found!\n", __func__, a);
+    (*logfunc)(LOG_ERR,"%s: a=%p mapping not found!\n", __func__, a);
   }
   return u;
 }
@@ -113,7 +113,7 @@ void
   int padding;
   void *unaligned, *aligned;
 
-  log(ALIGNEDBUF_LOG_LEVEL,"%s(%ld)\n", __func__, size);
+  (*logfunc)(ALIGNEDBUF_LOG_LEVEL,"%s(%ld)\n", __func__, size);
   page_size = getpagesize();
   mask = page_size-1;
   padding = (size + mask) / page_size;
@@ -122,13 +122,13 @@ void
   if (unaligned) {
     aligned = (void*)((intptr_t) (unaligned + mask) & ~mask);
     if ( a_map_add(unaligned, aligned) ) {
-      log(ALIGNEDBUF_LOG_LEVEL, "%s: success\n", __func__);
+      (*logfunc)(ALIGNEDBUF_LOG_LEVEL, "%s: success\n", __func__);
       return (void*)aligned;
     } else {
       return NULL;
     }
   } else {
-    log(ALIGNEDBUF_LOG_LEVEL, "%s: failure\n", __func__);
+    (*logfunc)(ALIGNEDBUF_LOG_LEVEL, "%s: failure\n", __func__);
     return NULL;
   }
 }
@@ -138,13 +138,13 @@ free_page_aligned(void *buf)
 {
   void *unaligned;
 
-  log(ALIGNEDBUF_LOG_LEVEL,"%s: buf=%p\n", __func__, buf);
+  (*logfunc)(ALIGNEDBUF_LOG_LEVEL,"%s: buf=%p\n", __func__, buf);
   unaligned = a_map_del(buf);
   if (unaligned) {
     free(unaligned);
-    log(ALIGNEDBUF_LOG_LEVEL, "%s: success\n", __func__);
+    (*logfunc)(ALIGNEDBUF_LOG_LEVEL, "%s: success\n", __func__);
   } else {
-    log(ALIGNEDBUF_LOG_LEVEL, "%s: failure\n", __func__);
+    (*logfunc)(ALIGNEDBUF_LOG_LEVEL, "%s: failure\n", __func__);
   }
 }
 
