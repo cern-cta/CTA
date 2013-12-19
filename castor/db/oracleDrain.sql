@@ -135,10 +135,13 @@ BEGIN
   LOOP
     -- Fetch next candidate
     FETCH DCcur INTO varDcId, varDcSize, varCfId, varNsOpenTime;
+    -- no next candidate : this is surprising, but nevertheless, we should go out of the loop
+    IF DCcur%NOTFOUND THEN EXIT; END IF;
+    -- stop if it would be too much
+    IF varTotalRebalanced + varDcSize > inDataAmount THEN EXIT; END IF;
+    -- compute new totals
     varTotalRebalanced := varTotalRebalanced + varDcSize;
     varNbFilesRebalanced := varNbFilesRebalanced + 1;
-    -- stop if it would be too much
-    IF varTotalRebalanced > inDataAmount THEN EXIT; END IF;
     -- create disk2DiskCopyJob for this diskCopy
     createDisk2DiskCopyJob(varCfId, varNsOpenTime, inDestSvcClassId,
                            0, 0, dconst.REPLICATIONTYPE_REBALANCE,
