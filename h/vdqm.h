@@ -59,7 +59,6 @@ int vdqm_CleanUp (vdqmnw_t *,int);
 int vdqm_ConnectToVDQM (vdqmnw_t **, char *);
 int vdqm_CloseConn (vdqmnw_t *);
 int vdqm_ConnectToRTCP (int *, char *);
-int vdqm_SendToRTCP (int, vdqmVolReq_t *, vdqmDrvReq_t *);
 int vdqm_GetRTCPReq (char *, vdqmVolReq_t *, vdqmDrvReq_t *);
 int vdqm_SendRTCPAckn (int, int *, int *, char *);
 int vdqm_GetRTCPPort (void);
