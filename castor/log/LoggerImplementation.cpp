@@ -240,7 +240,7 @@ void castor::log::LoggerImplementation::logMsg(
   const int priority,
   const std::string &msg,
   const int numParams,
-  const castor::log::Param params[],
+  const log::Param params[],
   const struct timeval &timeStamp) throw() {
   //---------------------------------------------------------------------------
   // Note that we do here part of the work of the real syslog call, by building
@@ -487,7 +487,7 @@ void castor::log::LoggerImplementation::logMsg(
   const int priority,
   const std::string &msg,
   const int numParams,
-  const castor::log::Param params[]) throw() {
+  const log::Param params[]) throw() {
 
   struct timeval timeStamp;
   gettimeofday(&timeStamp, NULL);

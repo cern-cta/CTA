@@ -94,7 +94,7 @@ public:
     const int priority,
     const std::string &msg,
     const int numParams,
-    const castor::log::Param params[]) throw();
+    const Param params[]) throw();
 
   /**
    * Writes a message into the CASTOR logging system. Note that no exception

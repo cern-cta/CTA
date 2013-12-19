@@ -227,3 +227,35 @@ void castor::server::BaseServer::sendNotification
     // this is a best effort service, ignore any failure
   }
 }
+
+//-----------------------------------------------------------------------------
+// logMsg
+//-----------------------------------------------------------------------------
+void castor::server::BaseServer::logMsg(
+  const int priority,
+  const std::string &msg,
+  const int numParams,
+  const log::Param params[],
+  const struct timeval &timeStamp) throw() {
+  m_logger.logMsg(priority, msg, numParams, params, timeStamp);
+}
+
+//-----------------------------------------------------------------------------
+// logMsg
+//-----------------------------------------------------------------------------
+void castor::server::BaseServer::logMsg(
+  const int priority,
+  const std::string &msg,
+  const int numParams,
+  const log::Param params[]) throw() {
+  m_logger.logMsg(priority, msg, numParams, params);
+}
+
+//-----------------------------------------------------------------------------
+// logMsg
+//-----------------------------------------------------------------------------
+void castor::server::BaseServer::logMsg(
+  const int priority,
+  const std::string &msg) throw() {
+  m_logger.logMsg(priority, msg);
+}

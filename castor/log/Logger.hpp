@@ -87,26 +87,6 @@ public:
     const struct timeval &timeStamp) throw() = 0;
 
   /**
-   * A template function that wraps logMsg in order to get the compiler
-   * to automatically determine the size of the params parameter, therefore
-   *
-   * Note that this version of logMsg() allows the caller to specify the
-   * time stamp of the log message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   * @param timeStamp the time stamp of the log message.
-   */
-  template<int numParams> void logMsg(
-    const int priority,
-    const std::string &msg,
-    castor::log::Param(&params)[numParams],
-    const struct timeval &timeStamp) throw() {
-    logMsg(priority, msg, numParams, params, timeStamp);
-  }
-
-  /**
    * Writes a message into the CASTOR logging system. Note that no exception
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
@@ -123,26 +103,7 @@ public:
     const int priority,
     const std::string &msg,
     const int numParams,
-    const castor::log::Param params[]) throw() = 0;
-
-  /**
-   * A template function that wraps logMsg in order to get the compiler
-   * to automatically determine the size of the params parameter, therefore
-   * removing the need for the devloper to provide it explicity.
-   *
-   * Note that this version of logMsg() implicitly uses the current time as
-   * the time stamp of the message.
-   *
-   * @param priority the priority of the message as defined by the syslog API.
-   * @param msg the message.
-   * @param params the parameters of the message.
-   */
-  template<int numParams> void logMsg(
-    const int priority,
-    const std::string &msg,
-    castor::log::Param(&params)[numParams]) throw() {
-    logMsg(priority, msg, numParams, params);
-  }
+    const Param params[]) throw() = 0;
 
   /**
    * Writes a message into the CASTOR logging system. Note that no exception
