@@ -31,7 +31,7 @@
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/exception/InvalidNbArguments.hpp"
 #include "castor/exception/MissingOperand.hpp"
-#include "castor/log/Log.hpp"
+#include "castor/log/Logger.hpp"
 #include "castor/server/BaseDaemon.hpp"
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/tape/rmc/RmcdCmdLine.hpp"
@@ -58,7 +58,7 @@ public:
    *
    * @param log The object representing the API of the CASTOR logging system.
    */
-  RmcDaemon(log::Log &log) throw(castor::exception::Exception);
+  RmcDaemon(log::Logger &logger) throw(castor::exception::Exception);
 
   /**
    * Destructor.
@@ -98,11 +98,6 @@ protected:
    */
   std::string argvToString(const int argc, const char *const *const argv)
     throw();
-
-  /**
-   * The object representing the API of the CASTOR logging system.
-   */
-  log::Log &m_log;
 
   /**
    * The results of parsing the command-line.

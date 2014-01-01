@@ -26,7 +26,6 @@
 #include "castor/PortNumbers.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/log/Log.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/tape/rmc/DlfMessageConstants.hpp"
 #include "castor/tape/rmc/RmcDaemon.hpp"
@@ -43,10 +42,9 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::rmc::RmcDaemon::RmcDaemon(log::Log &log)
+castor::tape::rmc::RmcDaemon::RmcDaemon(log::Logger &logger)
   throw(castor::exception::Exception):
-  castor::server::BaseDaemon("rmcd"),
-  m_log(log),
+  castor::server::BaseDaemon(logger),
   m_vdqmRequestHandlerThreadPool(0) {
 }
 

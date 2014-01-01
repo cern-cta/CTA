@@ -19,12 +19,12 @@
  *
  *
  *
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
  
 
 
-#include "castor/log/LogImplementation.hpp"
+#include "castor/log/LoggerImplementation.hpp"
 #include "castor/tape/rmc/RmcDaemon.hpp"
 
 #include <iostream>
@@ -35,8 +35,8 @@
 int main(const int argc, char **const argv) {
 
   try {
-    castor::log::LogImplementation log("rmcd");
-    castor::tape::rmc::RmcDaemon daemon(log);
+    castor::log::LoggerImplementation logger("rmcd");
+    castor::tape::rmc::RmcDaemon daemon(logger);
 
     return daemon.main(argc, argv);
   } catch(castor::exception::Exception &ex) {

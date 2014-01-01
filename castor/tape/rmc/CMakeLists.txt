@@ -37,27 +37,6 @@ if (${COMPILE_SERVER} STREQUAL "1")
   #CastorInstallExeManPage(newrmcd)
 
   ##############################################################################
-  # Rules to build and install castor-tape-acs-mount
-  ##############################################################################
-  set (ACS_MOUNT_SRC_FILES
-    Acs.cpp
-    AcsCmd.cpp
-    AcsImpl.cpp
-    AcsMountCmd.cpp
-    AcsMountCmdLine.cpp
-    AcsMountMain.cpp
-    Cmd.cpp
-    DebugBuf.cpp)
-  add_executable (castor-tape-acs-mount ${ACS_MOUNT_SRC_FILES})
-  set_target_properties (castor-tape-acs-mount PROPERTIES
-    COMPILE_FLAGS -I/usr/include/CDK
-    COMPILE_DEFINITIONS LINUX)
-  target_link_libraries (castor-tape-acs-mount castorcommon castortapeutils
-    ${STK_API_LIB} ${STK_UTL_LIB} ${STK_IPC_LIB} ${STK_CL_LIB})
-  install (TARGETS castor-tape-acs-mount DESTINATION ${CASTOR_DEST_LIB_DIR})
-  CastorInstallExeManPage(castor-tape-acs-mount)
-
-  ##############################################################################
   # Rules to build and install castor-tape-mount
   ##############################################################################
   set (MOUNT_SRC_FILES
@@ -96,8 +75,8 @@ if (${COMPILE_SERVER} STREQUAL "1")
   endif (STK_CL_LIB)
 
   ##############################################################################
-  # Add the castor-tape-acs-dismount, castor-tape-queryvolume and
-  # castor-tape-acs-mounttape targets if all four STK client libaries
+  # Add the castor-tape-acs-dismount, castor-tape-acs-mount and
+  # castor-tape-queryvolume targets if all four STK client libaries
   # (libapi.so, libutl.so, libipc.so and libcl.so) have been found
   ##############################################################################
   if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
@@ -126,6 +105,26 @@ if (${COMPILE_SERVER} STREQUAL "1")
       DESTINATION ${CASTOR_DEST_LIB_DIR})
     CastorInstallExeManPage(castor-tape-acs-dismount)
 
+    ############################################################################
+    # Rules to build and install castor-tape-acs-mount
+    ############################################################################
+    set (ACS_MOUNT_SRC_FILES
+      Acs.cpp
+      AcsCmd.cpp
+      AcsImpl.cpp
+      AcsMountCmd.cpp
+      AcsMountCmdLine.cpp
+      AcsMountMain.cpp
+      Cmd.cpp
+      DebugBuf.cpp)
+    add_executable (castor-tape-acs-mount ${ACS_MOUNT_SRC_FILES})
+    set_target_properties (castor-tape-acs-mount PROPERTIES
+      COMPILE_FLAGS -I/usr/include/CDK
+      COMPILE_DEFINITIONS LINUX)
+    target_link_libraries (castor-tape-acs-mount castorcommon castortapeutils
+      ${STK_API_LIB} ${STK_UTL_LIB} ${STK_IPC_LIB} ${STK_CL_LIB})
+    install (TARGETS castor-tape-acs-mount DESTINATION ${CASTOR_DEST_LIB_DIR})
+    CastorInstallExeManPage(castor-tape-acs-mount)
 
     ############################################################################
     # Rules to build and install castor-tape-acs-queryvolume
