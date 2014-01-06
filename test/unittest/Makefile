@@ -370,6 +370,7 @@ rununittests: $(RMC_OBJECTS) \
   unittest_TapeFlushConfigParamsTest.o \
   unittest_LegacyTxRxTest.o \
   unittest_LoggerImplementationTest.o \
+  unittest_ParamTest.o \
   unittest_GetMoreWorkConnectionTest.o \
   unittest_ClientAddressTcpIpTest.o \
   unittest_PendingMigrationsStoreTest.o \
@@ -1662,6 +1663,9 @@ unittest_LegacyTxRxTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/Lega
 
 unittest_LoggerImplementationTest.o: \
   $(ROOT_DIR)/test/unittest/castor/log/LoggerImplementationTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+unittest_ParamTest.o: $(ROOT_DIR)/test/unittest/castor/log/ParamTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
 unittest_GetMoreWorkConnectionTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/GetMoreWorkConnectionTest.cpp

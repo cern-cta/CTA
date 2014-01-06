@@ -27,7 +27,6 @@
 #define CASTOR_LOG_PARAM_HPP 1
 
 #include "castor/IObject.hpp"
-#include "castor/stager/TapeVid.hpp"
 #include "castor/log/IPAddress.hpp"
 #include "castor/log/TimeStamp.hpp"
 #include "h/Cuuid.h"
@@ -94,11 +93,6 @@ public:
    * Constructor for doubles.
    */
   Param(const std::string &name, const double value) throw();
-
-  /**
-   * Constructor for Tape VIDS.
-   */
-  Param(const castor::stager::TapeVid &value) throw();
 
   /**
    * Constructor for Raw parameters.

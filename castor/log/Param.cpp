@@ -151,15 +151,6 @@ castor::log::Param::Param(const std::string &name, const double value)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::log::Param::Param(const castor::stager::TapeVid &value) throw():
-  m_name("TPVID"), m_type(LOG_MSG_PARAM_TPVID),
-  m_strValue(0 != value.vid() ? value.vid() : ""), m_intValue(0),
-  m_uint64Value(0), m_doubleValue(0.0), m_uuidValue(nullCuuid) {
-}
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
 castor::log::Param::Param(const std::string &rawParams) throw():
   m_name(""), m_type(LOG_MSG_PARAM_RAW),
   m_strValue(rawParams), m_intValue(0), m_uint64Value(0), m_doubleValue(0.0),
@@ -233,7 +224,7 @@ int castor::log::Param::getType() const throw() {
 // getStrValue
 //------------------------------------------------------------------------------
 const std::string &castor::log::Param::getStrValue() const throw() {
-  if(LOG_MSG_PARAM_STR == m_type) {
+  if(LOG_MSG_PARAM_STR == m_type || LOG_MSG_PARAM_RAW == m_type) {
     return m_strValue;
   } else {
     return m_emptyStr;
