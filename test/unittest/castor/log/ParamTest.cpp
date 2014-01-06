@@ -40,250 +40,26 @@ public:
   void tearDown() {
   }
 
-  void testConstructorForString() {
+  void testConstructorWithAString() {
     std::auto_ptr<Param> param;
 
     CPPUNIT_ASSERT_NO_THROW(
       param.reset(new Param("Name", "Value")));
-    CPPUNIT_ASSERT_EQUAL(
-      std::string("Name"),
-      param->getName());
-    CPPUNIT_ASSERT_EQUAL(
-      std::string("Value"),
-      param->getStrValue());
-    CPPUNIT_ASSERT_EQUAL(
-      LOG_MSG_PARAM_STR,
-      param->getType());
+    CPPUNIT_ASSERT_EQUAL(std::string("Name"), param->getName());
+    CPPUNIT_ASSERT_EQUAL(std::string("Value"), param->getValue());
   }
 
-  void testConstructorForUuid() {
-    const Cuuid_t &value = nullCuuid;
+  void testConstructorWithAnInt() {
     std::auto_ptr<Param> param;
 
-    CPPUNIT_ASSERT_NO_THROW(
-      param.reset(new Param("Name", value)));
-    CPPUNIT_ASSERT_EQUAL(
-      std::string("Name"),
-      param->getName());
-    CPPUNIT_ASSERT_EQUAL(
-      LOG_MSG_PARAM_UUID,
-      param->getType());
-  }
-
-  void testConstructorForSubRequestUuid() {
-    const Cuuid_t &value = nullCuuid;
-    std::auto_ptr<Param> param;
-
-    CPPUNIT_ASSERT_NO_THROW(
-      param.reset(new Param(value)));
-    CPPUNIT_ASSERT_EQUAL(
-      std::string(""),
-      param->getName());
-    CPPUNIT_ASSERT_EQUAL(
-      LOG_MSG_PARAM_UUID,
-      param->getType());
-  }
-
-  void testConstructorForLongInt() {
-    const long int value = 1234;
-    std::auto_ptr<Param> param;
-
-    CPPUNIT_ASSERT_NO_THROW(
-      param.reset(new Param("Name", value)));
-    CPPUNIT_ASSERT_EQUAL(
-      std::string("Name"),
-      param->getName());
-#if defined __x86_64__
-    CPPUNIT_ASSERT_EQUAL(
-      (u_signed64)value,
-      param->getUint64Value());
-    CPPUNIT_ASSERT_EQUAL(
-      LOG_MSG_PARAM_INT64,
-      param->getType());
-#else
-    CPPUNIT_ASSERT_EQUAL(
-      value,
-      param->getIntValue());
-    CPPUNIT_ASSERT_EQUAL(
-      LOG_MSG_PARAM_INT,
-      param->getType());
-#endif
-  }
-
-  void testConstructorForUnsignedLongInt() {
-    const long unsigned int value = 1234;
-    std::auto_ptr<Param> param;
-
-    CPPUNIT_ASSERT_NO_THROW(
-      param.reset(new Param("Name", value)));
-    CPPUNIT_ASSERT_EQUAL(
-      std::string("Name"),
-      param->getName());
-#if defined __x86_64__
-    CPPUNIT_ASSERT_EQUAL(
-      (u_signed64)value,
-      param->getUint64Value());
-    CPPUNIT_ASSERT_EQUAL(
-      LOG_MSG_PARAM_INT64,
-      param->getType());
-#else
-    CPPUNIT_ASSERT_EQUAL(
-      value,
-      param->getIntValue());
-    CPPUNIT_ASSERT_EQUAL(
-      LOG_MSG_PARAM_INT,
-      param->getType());
-#endif
-  }
-
-  void testConstructorForInt() {
-    const int value = 1234;
-    std::auto_ptr<Param> param;
-
-    CPPUNIT_ASSERT_NO_THROW(
-      param.reset(new Param("Name", value)));
-    CPPUNIT_ASSERT_EQUAL(
-      std::string("Name"),
-      param->getName());
-    CPPUNIT_ASSERT_EQUAL(
-      value,
-      param->getIntValue());
-    CPPUNIT_ASSERT_EQUAL(
-      LOG_MSG_PARAM_INT,
-      param->getType());
-  }
-
-  void testConstructorForUnsignedInt() {
-    const unsigned int value = 1234;
-    std::auto_ptr<Param> param;
-
-    CPPUNIT_ASSERT_NO_THROW(
-      param.reset(new Param("Name", value)));
-    CPPUNIT_ASSERT_EQUAL(
-      std::string("Name"),
-      param->getName());
-    CPPUNIT_ASSERT_EQUAL(
-      (int)value,
-      param->getIntValue());
-    CPPUNIT_ASSERT_EQUAL(
-      LOG_MSG_PARAM_INT,
-      param->getType());
-  }
-
-  void testConstructorForU_signed64() {
-    const u_signed64 value = 1234;
-    std::auto_ptr<Param> param;
-
-    CPPUNIT_ASSERT_NO_THROW(
-      param.reset(new Param("Name", value)));
-    CPPUNIT_ASSERT_EQUAL(
-      std::string("Name"),
-      param->getName());
-    CPPUNIT_ASSERT_EQUAL(
-      value,
-      param->getUint64Value());
-    CPPUNIT_ASSERT_EQUAL(
-      LOG_MSG_PARAM_INT64,
-      param->getType());
-  }
-
-  void testConstructorForFloat() {
-    const float value = 1234.5678;
-    std::auto_ptr<Param> param;
-
-    CPPUNIT_ASSERT_NO_THROW(
-      param.reset(new Param("Name", value)));
-    CPPUNIT_ASSERT_EQUAL(
-      std::string("Name"),
-      param->getName());
-    CPPUNIT_ASSERT_EQUAL(
-      (double)value,
-      param->getDoubleValue());
-    CPPUNIT_ASSERT_EQUAL(
-      LOG_MSG_PARAM_DOUBLE,
-      param->getType());
-  }
-
-  void testConstructorForDouble() {
-    const double value = 1234.5678;
-    std::auto_ptr<Param> param;
-
-    CPPUNIT_ASSERT_NO_THROW(
-      param.reset(new Param("Name", value)));
-    CPPUNIT_ASSERT_EQUAL(
-      std::string("Name"),
-      param->getName());
-    CPPUNIT_ASSERT_EQUAL(
-      value,
-      param->getDoubleValue());
-    CPPUNIT_ASSERT_EQUAL(
-      LOG_MSG_PARAM_DOUBLE,
-      param->getType());
-  }
-
-  void testConstructorForRawParams() {
-    std::auto_ptr<Param> param;
-
-    CPPUNIT_ASSERT_NO_THROW(
-      param.reset(new Param("Name1=Value1,Name2=Value2")));
-    CPPUNIT_ASSERT_EQUAL(
-      std::string("Name1=Value1,Name2=Value2"),
-      param->getStrValue());
-    CPPUNIT_ASSERT_EQUAL(
-      LOG_MSG_PARAM_RAW,
-      param->getType());
-  }
-
-  void testConstructorForIPAddress() {
-    IPAddress value(0x01020304);
-    std::auto_ptr<Param> param;
-
-    CPPUNIT_ASSERT_NO_THROW(
-      param.reset(new Param("Name", value)));
-   CPPUNIT_ASSERT_EQUAL(
-      std::string("Name"),
-      param->getName());
-    CPPUNIT_ASSERT_EQUAL(
-      std::string("1.2.3.4"),
-      param->getStrValue());
-    CPPUNIT_ASSERT_EQUAL(
-      LOG_MSG_PARAM_STR,
-      param->getType());
-  }
-
-  void testConstructorForTimeStamp() {
-    const TimeStamp value(0);
-    std::auto_ptr<Param> param;
-
-    CPPUNIT_ASSERT_NO_THROW(
-      param.reset(new Param("Name", value)));
-    CPPUNIT_ASSERT_EQUAL(
-      std::string("Name"),
-      param->getName());
-    CPPUNIT_ASSERT_EQUAL(
-      std::string(" 1/1 1:0:0"),
-      param->getStrValue());
-    CPPUNIT_ASSERT_EQUAL(
-      LOG_MSG_PARAM_STR,
-      param->getType());
+    CPPUNIT_ASSERT_NO_THROW(param.reset(new Param("Name", 1234)));
+    CPPUNIT_ASSERT_EQUAL(std::string("Name"), param->getName());
+    CPPUNIT_ASSERT_EQUAL(std::string("1234"), param->getValue());
   }
 
   CPPUNIT_TEST_SUITE(ParamTest);
-  CPPUNIT_TEST(testConstructorForString);
-  CPPUNIT_TEST(testConstructorForUuid);
-  CPPUNIT_TEST(testConstructorForSubRequestUuid);
-  CPPUNIT_TEST(testConstructorForLongInt);
-  CPPUNIT_TEST(testConstructorForUnsignedLongInt);
-  CPPUNIT_TEST(testConstructorForInt);
-  CPPUNIT_TEST(testConstructorForUnsignedInt);
-  CPPUNIT_TEST(testConstructorForU_signed64);
-  CPPUNIT_TEST(testConstructorForFloat);
-  CPPUNIT_TEST(testConstructorForDouble);
-  CPPUNIT_TEST(testConstructorForRawParams);
-  CPPUNIT_TEST(testConstructorForIPAddress);
-  CPPUNIT_TEST(testConstructorForTimeStamp);
-  //CPPUNIT_TEST(testConstructorForIObject);
-  
+  CPPUNIT_TEST(testConstructorWithAString);
+  CPPUNIT_TEST(testConstructorWithAnInt);
   CPPUNIT_TEST_SUITE_END();
 };
 

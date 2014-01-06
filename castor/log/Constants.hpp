@@ -36,66 +36,6 @@ namespace log {
  */
 const size_t LOG_MAX_PROGNAMELEN = 20;
 
-/**
- * Parameter type: Double precision floating point value.
- */
-const int LOG_MSG_PARAM_DOUBLE = 1;
-
-/**
- * Parameter type: 64 bit integer.
- */
-const int LOG_MSG_PARAM_INT64 = 2;
-
-/**
- * Parameter type: General purpose string.
- */
-const int LOG_MSG_PARAM_STR = 3;
-
-/**
- * Parameter type: Tape volume identifier string.
- */
-const int LOG_MSG_PARAM_TPVID = 4;
-
-/**
- * Parameter type: Subrequest identifier.
- */
-const int LOG_MSG_PARAM_UUID = 5;
-
-/**
- * Parameter type: Single precision floating point value.
- */
-const int LOG_MSG_PARAM_FLOAT = 6;
-
-/**
- * Parameter type: Integer.
- */
-const int LOG_MSG_PARAM_INT = 7;
-
-/**
- * Parameter type: User identifier as in getuid().
- */
-const int LOG_MSG_PARAM_UID = 8;
-
-/**
- * Parameter type: Group identifier as in getgid().
- */
-const int LOG_MSG_PARAM_GID = 9;
-
-/**
- * Parameter type: STYPE?
- */
-const int LOG_MSG_PARAM_STYPE = 10;
-
-/**
- * Parameter type: SNAME?
- */
-const int LOG_MSG_PARAM_SNAME = 11;
-
-/**
- * Parameter type: Raw (set of) parameters, in key=value format.
- */
-const int LOG_MSG_PARAM_RAW = 12;
-
 } // namespace log
 } // namespace castor
 

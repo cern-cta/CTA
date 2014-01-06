@@ -289,69 +289,13 @@ void castor::log::LoggerImplementation::logMsg(
     const std::string name = param.getName() == "" ? "Undefined" :
       cleanString(param.getName(), true);
 
-    // Process the data type associated with the parameter
-    switch(params[i].getType()) {
-    // Strings
-    case LOG_MSG_PARAM_TPVID:
-    case LOG_MSG_PARAM_STR:
-      {
-        const std::string value = cleanString(param.getStrValue(), false);
-        if(LOG_MSG_PARAM_TPVID == param.getType()) {
-          len += snprintf(buffer + len, m_maxMsgLen - len, "TPVID=%.*s ",
-            CA_MAXVIDLEN, value.c_str());
-        } else {
-          len += snprintf(buffer + len, m_maxMsgLen - len, "%.*s=\"%.*s\" ",
-            (int)LOG_MAX_PARAMNAMELEN, name.c_str(),
-            (int)LOG_MAX_PARAMSTRLEN, value.c_str());
-        }
-      }
-      break;
-    // Numerical values
-    case LOG_MSG_PARAM_INT:
-      len += snprintf(buffer + len, m_maxMsgLen - len, "%.*s=%d ",
-        (int)LOG_MAX_PARAMNAMELEN, name.c_str(),
-        param.getIntValue());
-      break;
-    case LOG_MSG_PARAM_INT64:
-      len += snprintf(buffer + len, m_maxMsgLen - len, "%.*s=%lld ",
-        (int)LOG_MAX_PARAMNAMELEN, name.c_str(),
-        param.getUint64Value());
-      break;
-    case LOG_MSG_PARAM_DOUBLE:
-      len += snprintf(buffer + len, m_maxMsgLen - len, "%.*s=%f ",
-        (int)LOG_MAX_PARAMNAMELEN, name.c_str(),
-        param.getDoubleValue());
-      break;
+    // Process the parameter value
+    const std::string value = cleanString(param.getValue(), false);
 
-    // Subrequest uuid
-    case LOG_MSG_PARAM_UUID:
-      {
-        char uuidstr[CUUID_STRING_LEN + 1];
-        if(Cuuid2string(uuidstr, CUUID_STRING_LEN + 1,
-          &param.getUuidValue())) {
-          return;
-        }
-
-        len += snprintf(buffer + len, m_maxMsgLen - len, "SUBREQID=%.*s ",
-                      CUUID_STRING_LEN, uuidstr);
-      }
-      break;
-
-    case LOG_MSG_PARAM_RAW:
-      len += snprintf(buffer + len, m_maxMsgLen - len, "%s ",
-        param.getStrValue().c_str());
-      break;
-
-    default:
-      // Please note that this case is used for normal program execution
-      // for the following parameter types:
-      //
-      //   LOG_MSG_PARAM_UID
-      //   LOG_MSG_PARAM_GID
-      //   LOG_MSG_PARAM_STYPE
-      //   LOG_MSG_PARAM_SNAME
-      break; // Nothing
-    }
+    // Write the name and value to the buffer
+    len += snprintf(buffer + len, m_maxMsgLen - len, "%.*s=\"%.*s\" ",
+      (int)LOG_MAX_PARAMNAMELEN, name.c_str(),
+      (int)LOG_MAX_PARAMSTRLEN, value.c_str());
 
     // Check if there is enough space in the buffer
     if(len >= m_maxMsgLen) {
