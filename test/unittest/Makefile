@@ -146,12 +146,10 @@ rununittests: $(RMC_OBJECTS) \
   legacymsg_RtcpMarshal.o \
   legacymsg_TapeBridgeMarshal.o \
   legacymsg_VmgrMarshal.o \
-  log_IPAddress.o \
   log_Logger.o \
   log_LoggerImplementation.o \
   log_Message.o \
   log_Param.o \
-  log_TimeStamp.o \
   metrics_Counter.o \
   metrics_Histogram.o \
   metrics_InternalCounter.o \
@@ -718,9 +716,6 @@ legacymsg_TapeBridgeMarshal.o: \
 legacymsg_VmgrMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/VmgrMarshal.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-log_IPAddress.o: $(ROOT_DIR)/castor/log/IPAddress.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 log_Logger.o: $(ROOT_DIR)/castor/log/Logger.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -731,9 +726,6 @@ log_Message.o:  $(ROOT_DIR)/castor/log/Message.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 log_Param.o: $(ROOT_DIR)/castor/log/Param.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-log_TimeStamp.o:  $(ROOT_DIR)/castor/log/TimeStamp.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 metrics_Counter.o: \

@@ -138,12 +138,10 @@ set (CLIENT_LIB_SRC_FILES
   io/StreamBWUserCnv.cpp
   io/StreamRequestTypeCnv.cpp
   io/StreamNsFileIdCnv.cpp
-  log/IPAddress.cpp
   log/Logger.cpp
   log/LoggerImplementation.cpp
   log/Message.cpp
   log/Param.cpp
-  log/TimeStamp.cpp
   replier/ClientConnection.cpp
   replier/RequestReplier.cpp
   rh/Client.cpp
