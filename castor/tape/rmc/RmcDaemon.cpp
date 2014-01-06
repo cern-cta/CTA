@@ -218,10 +218,20 @@ void castor::tape::rmc::RmcDaemon::logStartOfDaemon(
   const int argc, const char *const *const argv) throw() {
   const std::string concatenatedArgs = argvToString(argc, argv);
 
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("argv", concatenatedArgs)};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, RMCD_STARTED,
-    params);
+  // The DLF way
+  {
+    castor::dlf::Param params[] = {
+      castor::dlf::Param("argv", concatenatedArgs)};
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, RMCD_STARTED,
+      params);
+  }
+
+  // The Logger way
+  {
+    log::Param params[] = {
+      log::Param("argv", concatenatedArgs)};
+    logMsg(LOG_INFO, "rmcd daemon started", params);
+  }
 }
 
 //------------------------------------------------------------------------------
