@@ -165,13 +165,6 @@ private:
   const std::map<int, std::string> m_priorityToText;
 
   /**
-   * Throws castor::exception::InvalidArgument if the specified program name is
-   * too long.
-   */
-  void checkProgramNameLen(const std::string &programName)
-    throw(castor::exception::InvalidArgument);
-
-  /**
    * Determines the maximum message length that the client syslog server can
    * handle.
    *
@@ -210,10 +203,13 @@ private:
 
   /**
    * Build the header of a syslog message.
+   *
+   * @param priority The priority of the message.
+   * @param timeStamp The time stamp of the message.
+   * @param pid The process ID of the process logging the message.
+   * @return The header of the syslog message.
    */
-  int buildSyslogHeader(
-    char *const buffer,
-    const int buflen,
+  std::string buildSyslogHeader(
     const int priority,
     const struct timeval &timeStamp,
     const int pid) const throw();
@@ -235,9 +231,8 @@ private:
    * creation, such as when retrieving logs from the DB.
    *
    * @param msg The message to be logged.
-   * @param msgLen The length of the message top be logged.
    */
-  void reducedSyslog(const char *const msg, const int msgLen) throw();
+  void reducedSyslog(const std::string &msg) throw();
 
   /**
    * Closes the connection to syslog.

@@ -22,7 +22,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/log/Constants.hpp"
 #include "castor/log/LoggerImplementation.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
@@ -39,22 +38,6 @@ public:
   }
 
   void tearDown() {
-  }
-
-  void testConstructorTooLongProgramName() {
-    // Create a program name that is 1 character too long
-    std::string tooLongProgname;
-    for(size_t i = 0; i <= LOG_MAX_PROGNAMELEN; i++) {
-      tooLongProgname += 'X';
-    }
-
-    {
-      std::auto_ptr<Logger> logger;
-      CPPUNIT_ASSERT_THROW_MESSAGE(
-        "Checking a program name that is too long throws InvalidArgument",
-        logger.reset(new LoggerImplementation(tooLongProgname)),
-        castor::exception::InvalidArgument);
-    }
   }
 
   void testLogMsgWithAllParams() {
@@ -114,7 +97,6 @@ public:
   }   
 
   CPPUNIT_TEST_SUITE(LoggerImplementationTest);
-  CPPUNIT_TEST(testConstructorTooLongProgramName);
   CPPUNIT_TEST(testLogMsgWithAllParams);
   CPPUNIT_TEST(testLogMsgWithoutTimeStamp);
   CPPUNIT_TEST(testLogMsgWithoutParamsOrTimeStamp);

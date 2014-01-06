@@ -22,7 +22,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/log/Constants.hpp"
 #include "castor/log/Param.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>

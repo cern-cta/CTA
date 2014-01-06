@@ -22,12 +22,12 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/log/Constants.hpp"
 #include "castor/log/LoggerImplementation.hpp"
 #include "h/Castor_limits.h"
 #include "h/getconfent.h"
 
 #include <errno.h>
+#include <sstream>
 #include <string.h>
 #include <sys/un.h>
 #include <sys/types.h>
@@ -48,7 +48,6 @@ castor::log::LoggerImplementation::LoggerImplementation(
   m_logFile(-1),
   m_connected(false),
   m_priorityToText(generatePriorityToTextMap()) {
-  checkProgramNameLen(programName);
   initMutex();
 }
 
@@ -120,19 +119,6 @@ std::map<int, std::string>
   }
 
   return m;
-}
-
-//------------------------------------------------------------------------------
-// checkProgramNameLen
-//------------------------------------------------------------------------------
-void castor::log::LoggerImplementation::checkProgramNameLen(
-  const std::string &programName) throw(castor::exception::InvalidArgument) {
-  if(programName.length() > LOG_MAX_PROGNAMELEN) {
-    castor::exception::InvalidArgument ex;
-    ex.getMessage() << "Invalid argument: programName is too log: max=" <<
-      LOG_MAX_PROGNAMELEN << " actual=" << programName.length();
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -262,23 +248,21 @@ void castor::log::LoggerImplementation::logMsg(
   // Safe to get a reference to the textual representation of the priority
   const std::string &priorityText = priorityTextPair->second;
 
-  // Initialize buffer
-  char buffer[LOG_MAX_LINELEN * 2];
-  memset(buffer,  '\0', sizeof(buffer));
+  std::ostringstream logMsg;
 
   // Start message with priority, time, program and PID (syslog standard
   // format)
-  size_t len = buildSyslogHeader(buffer, m_maxMsgLen, priority | LOG_LOCAL3,
-    timeStamp, getpid());
+  logMsg << buildSyslogHeader(priority | LOG_LOCAL3, timeStamp, getpid());
+
+  // Determine the thread id
+#ifdef __APPLE__
+  const int tid = mach_thread_self();
+#else
+  const int tid = syscall(__NR_gettid);
+#endif
 
   // Append the log level, the thread id and the message text
-#ifdef __APPLE__
-  len += snprintf(buffer + len, m_maxMsgLen - len, "LVL=%s TID=%d MSG=\"%s\" ",
-    priorityText.c_str(),(int)mach_thread_self(), msg.c_str());
-#else
-  len += snprintf(buffer + len, m_maxMsgLen - len, "LVL=%s TID=%d MSG=\"%s\" ",
-    priorityText.c_str(),(int)syscall(__NR_gettid), msg.c_str());
-#endif
+  logMsg << "LVL=" << priorityText << " TID=" << tid << " MSG=\"" << msg << "\" ";
 
   // Process parameters
   for(int i = 0; i < numParams; i++) {
@@ -293,50 +277,51 @@ void castor::log::LoggerImplementation::logMsg(
     const std::string value = cleanString(param.getValue(), false);
 
     // Write the name and value to the buffer
-    len += snprintf(buffer + len, m_maxMsgLen - len, "%.*s=\"%.*s\" ",
-      (int)LOG_MAX_PARAMNAMELEN, name.c_str(),
-      (int)LOG_MAX_PARAMSTRLEN, value.c_str());
-
-    // Check if there is enough space in the buffer
-    if(len >= m_maxMsgLen) {
-      buffer[m_maxMsgLen - 1] = '\n';
-      break;
-    }
+    logMsg << name << "=\"" << value << "\" ";
   }
 
   // Terminate the string
-  if(len < m_maxMsgLen) {
-    len += snprintf(buffer + (len - 1), m_maxMsgLen - len, "\n");
-  }
+  logMsg << "\n";
 
-  reducedSyslog(buffer, len);
+  // If the message is too long for syslog then truncate it before calling
+  // reducedSyslog
+  if(logMsg.str().length() > m_maxMsgLen) {
+    std::ostringstream truncatedLogMsg;
+    truncatedLogMsg << logMsg.str().substr(0, m_maxMsgLen - 1);
+    truncatedLogMsg << "\n";
+    reducedSyslog(truncatedLogMsg.str());
+  } else {
+    reducedSyslog(logMsg.str());
+  }
 }
 
 //-----------------------------------------------------------------------------
 // buildSyslogHeader
 //-----------------------------------------------------------------------------
-int castor::log::LoggerImplementation::buildSyslogHeader(
-  char *const buffer,
-  const int buflen,
+std::string castor::log::LoggerImplementation::buildSyslogHeader(
   const int priority,
   const struct timeval &timeStamp,
   const int pid) const throw() {
-  struct tm tmp;
-  int len = snprintf(buffer, buflen, "<%d>", priority);
-  localtime_r(&(timeStamp.tv_sec), &tmp);
-  len += strftime(buffer + len, buflen - len, "%Y-%m-%dT%T", &tmp);
-  len += snprintf(buffer + len, buflen - len, ".%06ld",
+  char buf[80];
+  int bufLen = sizeof(buf);
+  int len = 0;
+  std::ostringstream oss;
+
+  oss << "<" << priority << ">";
+
+  struct tm localTime;
+  localtime_r(&(timeStamp.tv_sec), &localTime);
+  len += strftime(buf, bufLen, "%Y-%m-%dT%T", &localTime);
+  len += snprintf(buf + len, bufLen - len, ".%06ld",
     (unsigned long)timeStamp.tv_usec);
-  len += strftime(buffer + len, buflen - len, "%z: ", &tmp);
+  len += strftime(buf + len, bufLen - len, "%z: ", &localTime);
   // dirty trick to have the proper timezone format (':' between hh and mm)
-  buffer[len-2] = buffer[len-3];
-  buffer[len-3] = buffer[len-4];
-  buffer[len-4] = ':';
-  // if no source given, you by default the name of the process in which we run
-  // print source and pid
-  len += snprintf(buffer + len, buflen - len, "%s[%d]: ",
-    m_programName.c_str(), pid);
-  return len;
+  buf[len-2] = buf[len-3];
+  buf[len-3] = buf[len-4];
+  buf[len-4] = ':';
+  buf[sizeof(buf) - 1] = '\0';
+  oss << buf << m_programName.c_str() << "[" << pid << "]: ";
+  return oss.str();
 }
 
 //-----------------------------------------------------------------------------
@@ -391,8 +376,8 @@ std::string castor::log::LoggerImplementation::cleanString(const std::string &s,
 //-----------------------------------------------------------------------------
 // reducedSyslog
 //-----------------------------------------------------------------------------
-void castor::log::LoggerImplementation::reducedSyslog(const char *const msg,
-  const int msgLen) throw() {
+void castor::log::LoggerImplementation::reducedSyslog(const std::string &msg)
+  throw() {
   int send_flags = 0;
 #ifndef __APPLE__
   // MAC has has no MSG_NOSIGNAL
@@ -402,21 +387,25 @@ void castor::log::LoggerImplementation::reducedSyslog(const char *const msg,
   // enter critical section
   pthread_mutex_lock(&m_mutex);
 
-  // Get connected, output the message to the local logger.
-  if (!m_connected) {
+  // Try to connect if not already connected
+  if(!m_connected) {
     openLog();
   }
 
-  if (!m_connected ||
-    send(m_logFile, msg, msgLen, send_flags) < 0) {
-    if (m_connected) {
-      // Try to reopen the syslog connection.  Maybe it went down.
+  // If connected
+  if(m_connected) {
+    // If sending the log message fails then try to reopen the syslog
+    // connection and try again
+    if(0 > send(m_logFile, msg.c_str(), msg.length(), send_flags)) {
       closeLog();
       openLog();
-    }
-    if (!m_connected ||
-      send(m_logFile, msg, msgLen, send_flags) < 0) {
-      closeLog();  // attempt re-open next time
+      if (m_connected) {
+        // If the second attempt to send the log message fails then give up and
+        // attempt re-open next time
+        if(0 > send(m_logFile, msg.c_str(), msg.length(), send_flags)) {
+          closeLog();
+        }
+      }
     }
   }
 
