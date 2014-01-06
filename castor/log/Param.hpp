@@ -98,7 +98,7 @@ public:
   /**
    * Constructor for Tape VIDS.
    */
-  Param(const std::string &name, const castor::stager::TapeVid &value) throw();
+  Param(const castor::stager::TapeVid &value) throw();
 
   /**
    * Constructor for Raw parameters.

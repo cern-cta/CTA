@@ -151,9 +151,8 @@ castor::log::Param::Param(const std::string &name, const double value)
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::log::Param::Param(const std::string &name,
-  const castor::stager::TapeVid &value) throw():
-  m_name(name), m_type(LOG_MSG_PARAM_TPVID),
+castor::log::Param::Param(const castor::stager::TapeVid &value) throw():
+  m_name("TPVID"), m_type(LOG_MSG_PARAM_TPVID),
   m_strValue(0 != value.vid() ? value.vid() : ""), m_intValue(0),
   m_uint64Value(0), m_doubleValue(0.0), m_uuidValue(nullCuuid) {
 }

@@ -27,6 +27,7 @@
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <memory>
+#include <sys/time.h>
 
 namespace castor {
 namespace log {
@@ -56,8 +57,67 @@ public:
     }
   }
 
+  void testLogMsgWithAllParams() {
+    std::auto_ptr<Logger> logger;
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Constructing logger",
+      logger.reset(new LoggerImplementation("unitttests")));
+
+    const int numParams = 1;
+    const Param params[1] = {Param("testParam", "valueOfTestParam")};
+    struct timeval timeStamp;
+
+    CPPUNIT_ASSERT_EQUAL_MESSAGE(
+      "gettimeofday()",
+      0,
+      gettimeofday(&timeStamp, NULL));
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Calling logMsg() with all parameters",
+      logger->logMsg(
+        LOG_INFO,
+        "Calling logMsg() with all parameters",
+        numParams,
+        params,
+        timeStamp));
+  }
+
+  void testLogMsgWithoutTimeStamp() {
+    std::auto_ptr<Logger> logger;
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Constructing logger",
+      logger.reset(new LoggerImplementation("unitttests")));
+
+    const int numParams = 1;
+    const Param params[1] = {Param("testParam", "valueOfTestParam")};
+
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Calling logMsg() without time stamp",
+      logger->logMsg(
+        LOG_INFO,
+        "Calling logMsg() without time stamp",
+        numParams,
+        params));
+  }
+
+  void testLogMsgWithoutParamsOrTimeStamp() {
+    std::auto_ptr<Logger> logger;
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Constructing logger",
+      logger.reset(new LoggerImplementation("unitttests")));
+  
+    CPPUNIT_ASSERT_NO_THROW_MESSAGE(
+      "Calling logMsg() without parameters or time stamp",
+      logger->logMsg(
+        LOG_INFO,
+        "Calling logMsg() without parameters or time stamp"));
+  }   
+
   CPPUNIT_TEST_SUITE(LoggerImplementationTest);
   CPPUNIT_TEST(testConstructorTooLongProgramName);
+  CPPUNIT_TEST(testLogMsgWithAllParams);
+  CPPUNIT_TEST(testLogMsgWithoutTimeStamp);
+  CPPUNIT_TEST(testLogMsgWithoutParamsOrTimeStamp);
   CPPUNIT_TEST_SUITE_END();
 };
 
