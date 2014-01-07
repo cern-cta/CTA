@@ -36,6 +36,13 @@
 #include <syslog.h>
 #include <sys/time.h>
 
+/**
+ * It is a convention of CASTOR to use syslog level of LOG_NOTICE to label
+ * user errors.  This macro helps enforce that convention and document it in
+ * the code.
+ */
+#define LOG_USERERR LOG_NOTICE
+
 namespace castor {
 namespace log {
 
