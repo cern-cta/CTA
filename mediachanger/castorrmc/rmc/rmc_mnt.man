@@ -31,15 +31,24 @@ manual
 .TP
 smc@rmc_host,drive_ordinal
 .RE
-
 .LP
 This function requires TP_SYSTEM privilege in the Cupv database.
 .SH RETURN VALUE
-This routine returns 0 if a mount operation was successful, 1 if the mount is
-manual and therefore the system is now waiting for an operator to perform the
-mount, or -1 if the operation failed. In the latter case,
+.TP
+.B 0
+The mount operation was successful.
+.TP
+.B 1
+The mount operations is manual and the rmc_mnt() function has therefore not
+taken any further action.
+.TP
+.B -1
+The mount operation has failed and both
+.B errno
+and
 .B serrno
-is set appropriately.
+have been set appropriately.
+
 .SH ERRORS
 .TP 1.8i
 .B EINVAL

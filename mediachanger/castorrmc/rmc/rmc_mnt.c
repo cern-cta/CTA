@@ -136,8 +136,8 @@ static int rmc_acs_mnt(const char *const vid, const char *const drive) {
 }
 
 static int rmc_manual_mnt(const char *const vid, const char *const drive) {
-
-	return 0;
+	/* Return 1 indicating the mount is manual */
+	return 1;
 }
 
 static int rmc_smc_mnt(const char *const vid, const char *const drive) {
