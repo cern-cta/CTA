@@ -216,7 +216,8 @@ int _write_to_log(char *buffer, int buflen) {
 
 int nslogreq(struct Cns_srv_request_info *reqinfo,
              const char *func,
-             const int errorcode) {
+             const int errorcode,
+             const int loglevel) {
 
   /* Variables */
   struct  timeval tv;
@@ -229,7 +230,7 @@ int nslogreq(struct Cns_srv_request_info *reqinfo,
     return 0;
 
   /* Retrieve the header part of the message. */
-  len = _format_header(buffer, sizeof(buffer), errorcode?LOG_ERR:LOG_INFO);
+  len = _format_header(buffer, sizeof(buffer), loglevel);
 
   /* Here we format the message parameters in accordance with the DLF
    * specifications. First we handle the REQID, NSFILID and NSHOSTNAME. Note:
@@ -272,7 +273,7 @@ int nslogreq(struct Cns_srv_request_info *reqinfo,
                     errorcode, sstrerror(errorcode), elapsed);
   } else {
     len += snprintf(buffer + len, sizeof(buffer) - len,
-                    "RtnCode=%d ProcessingTime=%.3f ", errorcode, elapsed);
+                    "RtnCode=0 ProcessingTime=%.3f ", elapsed);
   }
 
   /* Write the message to the log file. */

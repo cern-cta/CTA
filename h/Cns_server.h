@@ -28,25 +28,6 @@
 #define LOG_INFO        6       /* informational */
 #define LOG_DEBUG       7       /* debug-level messages */
 
-#define RETURN(x)                                                       \
-  {                                                                     \
-    if (thip->dbfd.tr_started) {                                        \
-      if (x) {                                                          \
-        (void) Cns_abort_tr (&thip->dbfd);                              \
-      } else if (! thip->dbfd.tr_mode) {                                \
-        (void) Cns_end_tr (&thip->dbfd);                                \
-      }                                                                 \
-    }                                                                   \
-    nslogreq(reqinfo, func, x);                                         \
-    return ((x));                                                       \
-  }
-
-#define RETURNQ(x)                                                      \
-  {                                                                     \
-    nslogreq(reqinfo, func, x);                                         \
-    return ((x));                                                       \
-  }
-
                         /* name server tables and structures */
 
 struct Cns_dbfd {
@@ -159,7 +140,6 @@ EXTERN_C int sendrep (int, int, ...);
 EXTERN_C int openlog (const char *, const char *);
 EXTERN_C int closelog (void);
 EXTERN_C int nslogit (const int, const char *, ...);
-EXTERN_C int nslogreq (struct Cns_srv_request_info *, const char *, const int);
 
 EXTERN_C int Cns_abort_tr (struct Cns_dbfd *);
 EXTERN_C int Cns_acl_chmod (struct Cns_file_metadata *);
