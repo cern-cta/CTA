@@ -125,6 +125,7 @@ STGLIB_SRCS = BaseAddress.cpp \
               io/StreamBWUserCnv.cpp \
               io/StreamRequestTypeCnv.cpp \
               io/StreamNsFileIdCnv.cpp \
+              log/DummyLogger.cpp
               log/Logger.cpp \
               log/LoggerImplementation.cpp \
               log/Message.cpp \
