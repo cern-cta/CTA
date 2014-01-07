@@ -95,7 +95,7 @@ int castor::tape::rmc::MountCmd::main(const int argc,
       " does nothing for this type of mount." << std::endl;
     return 0;
   case 0:
-    m_out << m_cmdLine.volId << "has been mounted" << std::endl;
+    m_out << m_cmdLine.volId << " has been mounted" << std::endl;
     return 0;
   case -1:
     m_err << "Failed to mount " << m_cmdLine.volId << ": " <<

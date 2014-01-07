@@ -27,7 +27,6 @@ if (${COMPILE_SERVER} STREQUAL "1")
   # Rules to build and install rmcd
   ##############################################################################
   set (RMCD_SRC_FILES
-    DlfMessageStrings.cpp
     RmcDaemon.cpp
     RmcdCmdLine.cpp
     RmcdMain.cpp)

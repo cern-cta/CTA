@@ -34,6 +34,11 @@ namespace rmc {
 class TestingRmcDaemon: public RmcDaemon {
 public:
 
+  TestingRmcDaemon(std::ostream &stdOut, std::ostream &stdIn,
+    log::Logger &logger) throw(castor::exception::Exception):
+    RmcDaemon(stdOut, stdIn, logger) {
+  }
+
   using RmcDaemon::argvToString;
   using RmcDaemon::m_cmdLine;
   using RmcDaemon::parseCommandLine;

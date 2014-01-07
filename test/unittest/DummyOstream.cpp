@@ -1,5 +1,5 @@
 /******************************************************************************
- *           castor/tape/rmc/DlfMessageStrings.cpp
+ *                test/unittest/DummyStreambuf.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,10 +19,13 @@
  *
  *
  *
- * @author Steven Murray Steven.Murray@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/rmc/DlfMessageConstants.hpp"
-#include "castor/tape/rmc/RmcDaemon.hpp"
+#include "test/unittest/DummyOstream.hpp"
 
-castor::dlf::Message castor::tape::rmc::RmcDaemon::s_dlfMessages[] = {
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+unittest::DummyOstream::DummyOstream(): std::ostream(&m_dummyStreambuf) {
+}

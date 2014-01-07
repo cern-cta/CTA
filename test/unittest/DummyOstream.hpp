@@ -1,5 +1,5 @@
 /******************************************************************************
- *             castor/tape/tapebridge/DlfMessageConstants.hpp
+ *                test/unittest/DummyOstream.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,14 +19,37 @@
  *
  *
  *
- * @author Steven Murray Steven.Murray@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_DLFMESSAGECONSTANTS_HPP
-#define CASTOR_TAPE_RMC_DLFMESSAGECONSTANTS_HPP 1
+#ifndef TEST_UNITTEST_DUMMYOSTREAM_HPP
+#define TEST_UNITTEST_DUMMYOSTREAM_HPP 1
 
+#include "test/unittest/DummyStreambuf.hpp"
 
-namespace castor {
-namespace tape {
-namespace rmc {
-enum RmcDlfMessages {
+#include <ostream>
+
+namespace unittest {
+
+/**
+ * A dummy output stream that does nothing.
+ */
+class DummyOstream: public std::ostream {
+public:
+
+  /**
+   * Constructor.
+   */
+  DummyOstream();
+
+private:
+
+  /**
+   * Dummy stream buffer that does nothing.
+   */
+  DummyStreambuf m_dummyStreambuf;
+};
+
+} // namespace unittest
+
+#endif // TEST_UNITTEST_DUMMYOSTREAM_HPP

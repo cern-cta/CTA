@@ -17,10 +17,7 @@ RMC_OBJECTS=
 else
 CDK_OPS=-DLINUX -I/usr/include/CDK
 CDK_LIB_OPS=-L/usr/lib64/CDK -lapi -lcl -lipc -lutl
-RMC_OBJECTS= \
-  rmc_Acs.o \
-  rmc_AcsCmd.o \
-  rmc_Cmd.o
+RMC_OBJECTS=
 endif
 ROOT_DIR=../..
 INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h $(MACPORTS_CPPUNIT_INCLUDE_OP) $(CDK_OPS)
@@ -79,6 +76,8 @@ rununittests: $(RMC_OBJECTS) \
   dlf_Dlf.o \
   dlf_Param.o \
   dlf_dlf_lib.o \
+  DummyOstream.o \
+  DummyStreambuf.o \
   exception_AlreadyInitialized.o \
   exception_Backtrace.o \
   exception_Communication.o \
@@ -134,6 +133,7 @@ rununittests: $(RMC_OBJECTS) \
   legacymsg_RtcpMarshal.o \
   legacymsg_TapeBridgeMarshal.o \
   legacymsg_VmgrMarshal.o \
+  log_DummyLogger.o \
   log_Logger.o \
   log_LoggerImplementation.o \
   log_Message.o \
@@ -516,6 +516,12 @@ dlf_Param.o: $(ROOT_DIR)/castor/dlf/Param.cpp
 dlf_dlf_lib.o: $(ROOT_DIR)/dlf/dlf_lib.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+DummyOstream.o: $(ROOT_DIR)/test/unittest/DummyOstream.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+DummyStreambuf.o: $(ROOT_DIR)/test/unittest/DummyStreambuf.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 exception_AlreadyInitialized.o: \
   $(ROOT_DIR)/castor/exception/AlreadyInitialized.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -710,6 +716,9 @@ legacymsg_TapeBridgeMarshal.o: \
 legacymsg_VmgrMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/VmgrMarshal.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+log_DummyLogger.o: $(ROOT_DIR)/castor/log/DummyLogger.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 log_Logger.o: $(ROOT_DIR)/castor/log/Logger.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -779,9 +788,6 @@ rmc_AcsQueryVolumeCmd.o: $(ROOT_DIR)/castor/tape/rmc/AcsQueryVolumeCmd.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rmc_Cmd.o: $(ROOT_DIR)/castor/tape/rmc/Cmd.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-rmc_DlfMessageStrings.o: $(ROOT_DIR)/castor/tape/rmc/DlfMessageStrings.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rmc_RmcdCmdLine.o: $(ROOT_DIR)/castor/tape/rmc/RmcdCmdLine.cpp

@@ -37,9 +37,9 @@
 #include "castor/tape/rmc/RmcdCmdLine.hpp"
 
 #include <stdint.h>
-#include <iostream>
 #include <list>
 #include <map>
+#include <ostream>
 #include <string>
 
 namespace castor {
@@ -56,9 +56,12 @@ public:
   /**
    * Constructor.
    *
+   * @param stdOut Stream representing standard out.
+   * @param stdErr Stream representing standard error.
    * @param log The object representing the API of the CASTOR logging system.
    */
-  RmcDaemon(log::Logger &logger) throw(castor::exception::Exception);
+  RmcDaemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &logger)
+    throw(castor::exception::Exception);
 
   /**
    * Destructor.
@@ -100,59 +103,35 @@ protected:
     throw();
 
   /**
-   * The results of parsing the command-line.
-   */
-  RmcdCmdLine m_cmdLine;
-
-  /**
-   * The VDQM request handler thread pool which should contain as many threads
-   * as there are drives per tape server.
-   */
-  server::BaseThreadPool *m_vdqmRequestHandlerThreadPool;
-
-  /**
    * Parses the specified command-line arguments and returns the result.
    *
    * @param argc Argument count from the executable's entry function: main().
    * @param argv Argument vector from the executable's entry function: main().
-   * @return The result of parsing the command-line arguments.
    */
-  RmcdCmdLine parseCmdLine(const int argc, char **argv)
-    throw(castor::exception::Internal, castor::exception::InvalidArgument,
-      castor::exception::InvalidNbArguments, castor::exception::MissingOperand);
+  void parseCommandLine(int argc, char *argv[]);
 
   /**
    * Writes the command-line usage message of this daemon onto the
    * specified output stream.
    *
    * @param os Output stream to be written to.
-   * @param programName The program name to be used in the message.
    */
-  void usage(std::ostream &os, const std::string &programName) throw();
+  void usage(std::ostream &os) throw();
 
   /**
-   * Creates the VDQM request handler thread pool.
-   *
-   * @param bulkRequestConfigParams The values of the bul-request
-   *                                configuration-parameters to be used by the
-   *                                tapebridged daemon.
-   * @param tapeFlushConfigParams   The values of the tape-flush
-   *                                configuration-parameters to be used by the
-   *                                tapebridged daemon.
-   * @param nbDrives                The number of tape drives attached to the
-   *                                tape server that the tapebridged daemon is
-   *                                running on.
+   * Stream representing standard out.
    */
-//void createVdqmRequestHandlerPool(
-//  const BulkRequestConfigParams &bulkRequestConfigParams,
-//  const TapeFlushConfigParams   &tapeFlushConfigParams,
-//  const uint32_t                nbDrives)
-//  throw (castor::exception::Exception);
+  std::ostream &m_stdOut;
 
   /**
-   * DLF message strings.
+   * Stream reprsenting standard in.
    */
-  static castor::dlf::Message s_dlfMessages[];
+  std::ostream &m_stdErr;
+
+  /**
+   * The results of parsing the command-line.
+   */
+  RmcdCmdLine m_cmdLine;
 
 }; // class RmcDaemon
 

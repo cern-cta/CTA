@@ -27,14 +27,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
-#include "castor/tape/rmc/DlfMessageConstants.hpp"
 #include "castor/tape/rmc/RmcDaemon.hpp"
-/*
-//#include "castor/tape/tapebridge/ConfigParamLogger.hpp"
-//#include "castor/tape/tapebridge/Constants.hpp"
-#include "castor/tape/utils/utils.hpp"
-#include "h/common.h"
-*/
 #include "h/Cuuid.h"
 
 #include <getopt.h>
@@ -42,10 +35,12 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::rmc::RmcDaemon::RmcDaemon(log::Logger &logger)
+castor::tape::rmc::RmcDaemon::RmcDaemon(std::ostream &stdOut,
+  std::ostream &stdErr, log::Logger &logger)
   throw(castor::exception::Exception):
   castor::server::BaseDaemon(logger),
-  m_vdqmRequestHandlerThreadPool(0) {
+  m_stdOut(stdOut),
+  m_stdErr(stdErr) {
 }
 
 //------------------------------------------------------------------------------
@@ -60,38 +55,19 @@ castor::tape::rmc::RmcDaemon::~RmcDaemon() throw() {
 int castor::tape::rmc::RmcDaemon::main(const int argc,
   char **argv) {
 
-  // Try to initialize the DLF logging system, quitting with an error message
-  // to stderr if the initialization fails
-  try {
-
-    castor::server::BaseServer::dlfInit(s_dlfMessages);
-
-  } catch(castor::exception::Exception &ex) {
-    std::cerr << std::endl <<
-      "Failed to start daemon"
-      ": Failed to initialize DLF"
-      ": " << ex.getMessage().str() << std::endl << std::endl;
-
-    return 1;
-  }
-
-  // Try to start the daemon, quitting with an error message to stderr and DLF
-  // if the start fails
+  // Enter the exception throwing main of the daemon
   try {
 
     exceptionThrowingMain(argc, argv);
 
   } catch (castor::exception::Exception &ex) {
-    std::cerr << std::endl << "Failed to start daemon: "
-      << ex.getMessage().str() << std::endl << std::endl;
-    usage(std::cerr, "rmcd");
-    std::cerr << std::endl;
+    // Write the exception to both standard error and the logging system
+    m_stdErr << std::endl << ex.getMessage().str() << std::endl << std::endl;
 
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("Message", ex.getMessage().str()),
-      castor::dlf::Param("Code"   , ex.code()            )};
-    CASTOR_DLF_WRITEPC(nullCuuid, DLF_LVL_ERROR,
-      RMCD_FAILED_TO_START, params);
+    castor::log::Param params[] = {
+      log::Param("Message", ex.getMessage().str()),
+      log::Param("Code"   , ex.code()            )};
+    logMsg(LOG_ERR, "Exiting due to an exception", params);
 
     return 1;
   }
@@ -105,13 +81,13 @@ int castor::tape::rmc::RmcDaemon::main(const int argc,
 int castor::tape::rmc::RmcDaemon::exceptionThrowingMain(
   const int argc, char **argv) throw(castor::exception::Exception) {
   logStartOfDaemon(argc, argv);
-  m_cmdLine = parseCmdLine(argc, argv);
+  parseCommandLine(argc, argv);
 
   // Display usage message and exit if help option found on command-line
   if(m_cmdLine.help) {
-    std::cout << std::endl;
-    castor::tape::rmc::RmcDaemon::usage(std::cout, "rmcd");
-    std::cout << std::endl;
+    m_stdOut << std::endl;
+    castor::tape::rmc::RmcDaemon::usage(m_stdOut);
+    m_stdOut << std::endl;
     return 0;
   }
 
@@ -199,9 +175,8 @@ int castor::tape::rmc::RmcDaemon::exceptionThrowingMain(
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::tape::rmc::RmcDaemon::usage(std::ostream &os,
-  const std::string &programName) throw() {
-  os << "\nUsage: "<< programName << " [options]\n"
+void castor::tape::rmc::RmcDaemon::usage(std::ostream &os) throw() {
+  os << "\nUsage: rmcd [options]\n"
     "\n"
     "where options can be:\n"
     "\n"
@@ -218,20 +193,9 @@ void castor::tape::rmc::RmcDaemon::logStartOfDaemon(
   const int argc, const char *const *const argv) throw() {
   const std::string concatenatedArgs = argvToString(argc, argv);
 
-  // The DLF way
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("argv", concatenatedArgs)};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, RMCD_STARTED,
-      params);
-  }
-
-  // The Logger way
-  {
-    log::Param params[] = {
-      log::Param("argv", concatenatedArgs)};
-    logMsg(LOG_INFO, "rmcd daemon started", params);
-  }
+  log::Param params[] = {
+    log::Param("argv", concatenatedArgs)};
+  logMsg(LOG_INFO, "rmcd daemon started", params);
 }
 
 //------------------------------------------------------------------------------
@@ -252,12 +216,9 @@ std::string castor::tape::rmc::RmcDaemon::argvToString(const int argc,
 }
 
 //------------------------------------------------------------------------------
-// parseCmdLine
+// parseCommandLine
 //------------------------------------------------------------------------------
-castor::tape::rmc::RmcdCmdLine castor::tape::rmc::RmcDaemon::parseCmdLine(
-  const int argc, char **argv) throw(castor::exception::Internal,
-  castor::exception::InvalidArgument, castor::exception::InvalidNbArguments,
-  castor::exception::MissingOperand) {
+void castor::tape::rmc::RmcDaemon::parseCommandLine(int argc, char *argv[]) {
   const std::string task = "parse command-line arguments";
 
   static struct option longopts[] = {
@@ -265,8 +226,7 @@ castor::tape::rmc::RmcdCmdLine castor::tape::rmc::RmcDaemon::parseCmdLine(
     {"help"      , 0, NULL, 'h'},
     {NULL        , 0, NULL,   0}
   };
-  RmcdCmdLine cmdLine;
-  char c;
+  char c = '\0';
 
   // Prevent getopt() from printing an error message if it does not recognize
   // an option character
@@ -321,8 +281,6 @@ castor::tape::rmc::RmcdCmdLine castor::tape::rmc::RmcDaemon::parseCmdLine(
       nbArgs;
     throw ex;
   }
-
-  return cmdLine;
 }
 
 //------------------------------------------------------------------------------

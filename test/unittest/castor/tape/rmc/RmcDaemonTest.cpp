@@ -22,7 +22,9 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/log/DummyLogger.hpp"
 #include "test/unittest/castor/tape/rmc/TestingRmcDaemon.hpp"
+#include "test/unittest/DummyOstream.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <sstream>
@@ -39,10 +41,15 @@ public:
   }
 
   void tearDown() {
+    // Allow getopt_long to be called again
+    optind = 0;
   }
 
   void testParceCommandLineWithNoArgs() {
-    TestingRmcDaemon daemon;
+    unittest::DummyOstream stdOut;
+    unittest::DummyOstream stdErr;
+    log::DummyLogger logger("unittest");
+    TestingRmcDaemon daemon(stdOut, stdErr, logger);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.foreground before parsing",
       false,
@@ -64,7 +71,10 @@ public:
   }
 
   void testParceCommandLineWithMinusH() {
-    TestingRmcDaemon daemon;
+    unittest::DummyOstream stdOut;
+    unittest::DummyOstream stdErr;
+    log::DummyLogger logger("unittest");
+    TestingRmcDaemon daemon(stdOut, stdErr, logger);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.foreground before parsing",
       false,
@@ -86,7 +96,10 @@ public:
   }
 
   void testParceCommandLineWithMinusMinusHelp() {
-    TestingRmcDaemon daemon;
+    unittest::DummyOstream stdOut;
+    unittest::DummyOstream stdErr;
+    log::DummyLogger logger("unittest");
+    TestingRmcDaemon daemon(stdOut, stdErr, logger);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.foreground before parsing",
       false,
@@ -108,7 +121,10 @@ public:
   }
 
   void testParceCommandLineWithMinusF() {
-    TestingRmcDaemon daemon;
+    unittest::DummyOstream stdOut;
+    unittest::DummyOstream stdErr;
+    log::DummyLogger logger("unittest");
+    TestingRmcDaemon daemon(stdOut, stdErr, logger);
 
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.foreground before parsing",
       false,
@@ -130,7 +146,10 @@ public:
   }
 
   void testParceCommandLineWithMinusMinusForeground() {
-    TestingRmcDaemon daemon;
+    unittest::DummyOstream stdOut;
+    unittest::DummyOstream stdErr;
+    log::DummyLogger logger("unittest");
+    TestingRmcDaemon daemon(stdOut, stdErr, logger);
   
     CPPUNIT_ASSERT_EQUAL_MESSAGE("Testing m_cmdLine.foreground before parsing",
       false,

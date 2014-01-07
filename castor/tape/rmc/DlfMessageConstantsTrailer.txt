@@ -1,7 +1,0 @@
-}; // enum RmcdDlfMessages
-} // namespace rmc
-} // namespace tape
-} // namespace castor
-
-
-#endif // CASTOR_TAPE_RMC_DLFMESSAGECONSTANTS_HPP

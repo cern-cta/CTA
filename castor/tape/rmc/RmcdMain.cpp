@@ -36,7 +36,7 @@ int main(const int argc, char **const argv) {
 
   try {
     castor::log::LoggerImplementation logger("rmcd");
-    castor::tape::rmc::RmcDaemon daemon(logger);
+    castor::tape::rmc::RmcDaemon daemon(std::cout, std::cerr, logger);
 
     return daemon.main(argc, argv);
   } catch(castor::exception::Exception &ex) {
