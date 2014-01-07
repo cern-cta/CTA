@@ -581,7 +581,7 @@ def printPercentage(portion, total):
     if total == 0:
         return 'N/A'
     perc = portion*100.0/total
-    return "%.2f %%" % perc
+    return "%.1f %%" % perc
 
 def nbToAge(n):
     '''converts a number of seconds into a readable age'''
@@ -611,8 +611,8 @@ def nbToAge(n):
 def printETC(portion, total, runningTime):
     '''computes and print Estimated Time to Completion based on the work done,
        the total work to be done and the time alredy spent'''
-    if portion == 0:
-        return 'N/A'
+    if portion < 0.05*total:
+        return 'N/A'   # irrelevant if < 5%
     totalTime = 1.0*runningTime/portion*total
     return nbToAge(totalTime-runningTime)
 

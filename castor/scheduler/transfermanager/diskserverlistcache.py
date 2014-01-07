@@ -59,12 +59,13 @@ class DiskServerListCache:
       try:
         stcur = stconn.cursor()
         stcur.arraysize = 50
+        # get all but DISABLED diskservers
         stDiskServers = '''SELECT UNIQUE DiskServer.name, DiskPool.name
                              FROM FileSystem, DiskServer, DiskPool
                             WHERE FileSystem.diskServer = DiskServer.id
                               AND FileSystem.diskPool = DiskPool.id
-                              AND DiskServer.status IN (0,1)
-                              AND FileSystem.status IN (0,1)'''
+                              AND DiskServer.status IN (0, 1, 3)
+                              AND FileSystem.status IN (0, 1, 3)'''
         stcur.execute(stDiskServers)
         rows = stcur.fetchall()
         # build up the list of new ones

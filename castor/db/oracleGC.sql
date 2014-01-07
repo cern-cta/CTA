@@ -378,7 +378,7 @@ BEGIN
            Castorfile.fileid, Castorfile.nshost,
            DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
            getObjStatusName('DiskCopy', 'gcType', DiskCopy.gcType),
-          getSvcClassList(FileSystem.id)
+           getSvcClassList(FileSystem.id)
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
      WHERE decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
        AND DiskCopy.castorfile = CastorFile.id
@@ -480,9 +480,9 @@ BEGIN
         -- file from the nameserver. For safety, we thus keep it
         NULL;
       WHEN CONSTRAINT_VIOLATED THEN
-        IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DISK2DISKCOPYJOB_CASTORFILE) violated%' THEN
-          -- Ignore the deletion, probably some draining/rebalancing activity created a Disk2DiskCopyJob entity
-          -- while we were attempting to drop the CastorFile
+        IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_%_CASTORFILE) violated%' THEN
+          -- Ignore the deletion, probably some draining/rebalancing/recall activity created
+	  -- a new Disk2DiskCopyJob/RecallJob entity while we were attempting to drop the CastorFile
           NULL;
         ELSE
           -- Any other constraint violation is an error

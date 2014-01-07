@@ -20,8 +20,6 @@ END;
 
 /* handle the creation of the Disk2DiskCopyJobs for the running drainingJobs */
 CREATE OR REPLACE PROCEDURE drainRunner AS
-  varNbFiles INTEGER;
-  varNbBytes INTEGER;
   varNbRunningJobs INTEGER;
   varMaxNbOfSchedD2dPerDrain INTEGER;
   varUnused INTEGER;
@@ -44,8 +42,6 @@ BEGIN
       logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DRAINING_REFILL, 0, '', 'stagerd',
                'svcClass=' || getSvcClassName(dj.svcClass) || ' DrainReq=' ||
                TO_CHAR(dj.id) || ' MaxNewJobsCount=' || TO_CHAR(varMaxNbOfSchedD2dPerDrain-varNbRunningJobs));
-      varNbFiles := 0;
-      varNbBytes := 0;
       FOR F IN (SELECT * FROM
                  (SELECT CastorFile.id cfId, Castorfile.nsOpenTime, DiskCopy.id dcId, CastorFile.fileSize
                     FROM DiskCopy, CastorFile
@@ -55,19 +51,15 @@ BEGIN
                            CastorFile.tapeStatus IN (dconst.CASTORFILE_NOTONTAPE, dconst.CASTORFILE_DISKONLY)) OR
                           (dj.fileMask = dconst.DRAIN_FILEMASK_ALL))
                      AND DiskCopy.status = dconst.DISKCOPY_VALID
-                     AND NOT EXISTS (SELECT 1 FROM Disk2DiskCopyJob WHERE castorFile=CastorFile.id)
+                     AND NOT EXISTS (SELECT 1 FROM Disk2DiskCopyJob WHERE castorFile = CastorFile.id)
+                     AND NOT EXISTS (SELECT 1 FROM DrainingErrors WHERE diskCopy = DiskCopy.id)
                    ORDER BY DiskCopy.importance DESC)
                  WHERE ROWNUM <= varMaxNbOfSchedD2dPerDrain-varNbRunningJobs) LOOP
         createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
                                dconst.REPLICATIONTYPE_DRAINING, F.dcId, dj.id, FALSE);
-        varNbFiles := varNbFiles + 1;
-        varNbBytes := varNbBytes + F.fileSize;
       END LOOP;
-      -- commit and update counters
       UPDATE DrainingJob
-         SET totalFiles = totalFiles + varNbFiles,
-             totalBytes = totalBytes + varNbBytes,
-             lastModificationTime = getTime()
+         SET lastModificationTime = getTime()
        WHERE id = dj.id;
       COMMIT;
     EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
@@ -99,6 +91,7 @@ BEGIN
   FOR dj IN (SELECT id, fileSystem FROM DrainingJob WHERE status = dconst.DRAININGJOB_SUBMITTED) LOOP
     UPDATE DrainingJob SET status = dconst.DRAININGJOB_STARTING WHERE id = dj.id;
     COMMIT;
+    -- Compute totals now. Jobs will be later added in bunches by drainRunner
     SELECT count(*), SUM(diskCopySize) INTO varTFiles, varTBytes
       FROM DiskCopy
      WHERE fileSystem = dj.fileSystem
@@ -142,10 +135,13 @@ BEGIN
   LOOP
     -- Fetch next candidate
     FETCH DCcur INTO varDcId, varDcSize, varCfId, varNsOpenTime;
+    -- no next candidate : this is surprising, but nevertheless, we should go out of the loop
+    IF DCcur%NOTFOUND THEN EXIT; END IF;
+    -- stop if it would be too much
+    IF varTotalRebalanced + varDcSize > inDataAmount THEN EXIT; END IF;
+    -- compute new totals
     varTotalRebalanced := varTotalRebalanced + varDcSize;
     varNbFilesRebalanced := varNbFilesRebalanced + 1;
-    -- stop if it would be too much
-    IF varTotalRebalanced > inDataAmount THEN EXIT; END IF;
     -- create disk2DiskCopyJob for this diskCopy
     createDisk2DiskCopyJob(varCfId, varNsOpenTime, inDestSvcClassId,
                            0, 0, dconst.REPLICATIONTYPE_REBALANCE,
@@ -242,7 +238,7 @@ BEGIN
   END LOOP;
 
 
-  -- Create the drain manager job to be executed every minute. This one starts and clean up draining jobs
+  -- Create the drain manager job to be executed every minute. This one starts and cleans up draining jobs
   DBMS_SCHEDULER.CREATE_JOB(
       JOB_NAME        => 'drainManagerJob',
       JOB_TYPE        => 'PLSQL_BLOCK',

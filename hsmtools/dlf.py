@@ -158,14 +158,14 @@ def _writep(priority, msgnb, **params):
         rawmsg += 'NSHOSTNAME=%s NSFILEID=%d ' % (params['fileId'])
     if params.has_key('fileid'):
         rawmsg += 'NSHOSTNAME=%s NSFILEID=%d ' % (params['fileid'])
-    if params.has_key('reqId'):
+    if params.has_key('reqId') and params['reqId']:
         rawmsg += 'REQID=%s ' % (params['reqId'])
-    if params.has_key('reqid'):
+    if params.has_key('reqid') and params['reqid']:
         rawmsg += 'REQID=%s ' % (params['reqid'])
-    if params.has_key('subreqId'):
-        rawmsg += 'SUBREQID=%s ' % (params['subreqId']) 
-    if params.has_key('subreqid'):
-        rawmsg += 'SUBREQID=%s ' % (params['subreqid']) 
+    if params.has_key('subreqId') and params['subreqId']:
+        rawmsg += 'SUBREQID=%s ' % (params['subreqId'])
+    if params.has_key('subreqid') and params['subreqid']:
+        rawmsg += 'SUBREQID=%s ' % (params['subreqid'])
     for param in params:
         if param in ['reqId', 'fileId', 'subreqId', 'reqid', 'fileid', 'subreqid']:
             continue
@@ -181,6 +181,8 @@ def _writep(priority, msgnb, **params):
             pass
         except TypeError:
             pass
+        except AttributeError:
+            pass
 
         # Floats
         try:
@@ -189,6 +191,8 @@ def _writep(priority, msgnb, **params):
         except ValueError:
             pass
         except TypeError:
+            pass
+        except AttributeError:
             pass
 
         # Rest of the logs, converted to Strings

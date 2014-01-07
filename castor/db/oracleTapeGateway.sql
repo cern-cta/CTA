@@ -119,9 +119,11 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
                                OR status = tconst.RECALLJOB_RETRYMOUNT));
     DELETE FROM RecallMount WHERE vid = varVID;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Small infusion of paranoia ;-) We should never reach that point...
-    ROLLBACK;
-    RAISE_APPLICATION_ERROR (-20119, 'endTapeSession: no recall or migration mount found');
+    -- reaching this point means that the tape session was already ended by somebody else
+    -- This can typically be the VDQMChecker of the tapegateway. We log a warning and
+    -- return ok, as there is nothing to do anyway
+    logToDLF(NULL, dlf.LVL_NOTICE, 'endTapeSession: no recall or migration mount found',
+             0, '', 'tapegatewayd', 'mountTransactionId=' || TO_CHAR(inMountTransactionId));
   END;
 END;
 /

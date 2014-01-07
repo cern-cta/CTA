@@ -112,6 +112,7 @@ void castor::gc::SynchronizationThread::run(void*) {
           {castor::dlf::Param("FileSystem", fs[fsIt]),
            castor::dlf::Param("Error", strerror(errno))};
         castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 24, 2, params);
+        sleep(chunkInterval);
         continue;
       }
       struct dirent *dir;
