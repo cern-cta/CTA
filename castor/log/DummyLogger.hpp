@@ -49,6 +49,15 @@ class DummyLogger: public Logger {
 public:
 
   /**
+   * Constructor
+   *
+   * @param programName The name of the program to be prepended to every log
+   * message.
+   */
+  DummyLogger(const std::string &programName)
+    throw(castor::exception::Internal, castor::exception::InvalidArgument);
+
+  /**
    * Destructor.
    */
   ~DummyLogger() throw();

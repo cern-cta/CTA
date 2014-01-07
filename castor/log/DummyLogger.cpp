@@ -25,6 +25,14 @@
 #include "castor/log/DummyLogger.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::log::DummyLogger::DummyLogger(const std::string &programName)
+  throw(castor::exception::Internal, castor::exception::InvalidArgument):
+  Logger(programName) {
+}
+
+//------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::log::DummyLogger::~DummyLogger() throw() {
