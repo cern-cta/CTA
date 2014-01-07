@@ -284,16 +284,7 @@ void castor::log::LoggerImplementation::logMsg(
   // Terminate the string
   logMsg << "\n";
 
-  // If the message is too long for syslog then truncate it before calling
-  // reducedSyslog
-  if(logMsg.str().length() > m_maxMsgLen) {
-    std::ostringstream truncatedLogMsg;
-    truncatedLogMsg << logMsg.str().substr(0, m_maxMsgLen - 1);
-    truncatedLogMsg << "\n";
-    reducedSyslog(truncatedLogMsg.str());
-  } else {
-    reducedSyslog(logMsg.str());
-  }
+  reducedSyslog(logMsg.str());
 }
 
 //-----------------------------------------------------------------------------
@@ -377,8 +368,14 @@ std::string castor::log::LoggerImplementation::cleanString(const std::string &s,
 //-----------------------------------------------------------------------------
 // reducedSyslog
 //-----------------------------------------------------------------------------
-void castor::log::LoggerImplementation::reducedSyslog(const std::string &msg)
+void castor::log::LoggerImplementation::reducedSyslog(std::string msg)
   throw() {
+  // Truncate the log message if it exceeds the permitted maximum
+  if(msg.length() > m_maxMsgLen) {
+    msg.resize(m_maxMsgLen);
+    msg[msg.length() - 1] = '\n';
+  }
+
   int send_flags = 0;
 #ifndef __APPLE__
   // MAC has has no MSG_NOSIGNAL

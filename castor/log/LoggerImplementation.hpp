@@ -232,7 +232,7 @@ private:
    *
    * @param msg The message to be logged.
    */
-  void reducedSyslog(const std::string &msg) throw();
+  void reducedSyslog(std::string msg) throw();
 
   /**
    * Closes the connection to syslog.
