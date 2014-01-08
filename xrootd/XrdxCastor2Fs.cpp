@@ -115,6 +115,7 @@ XrdxCastor2Fs::XrdxCastor2Fs():
   LogId(),
   mIssueCapability(false),
   mProc(0),
+  mStagerHost(""),
   mNohsm(false)
 {
   ConfigFN  = 0;
@@ -1838,4 +1839,3 @@ XrdxCastor2Fs::SetIdentity(const XrdSecEntity* client)
   gid_t gid;
   GetIdMapping(client, uid, gid);
 }
-

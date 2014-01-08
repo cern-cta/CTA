@@ -321,11 +321,11 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
           }
           else
           {
-            if ((!(strcmp(val, "true"))) || (!(strcmp(val, "1"))) || (!(strcmp(val, "lazy"))))
+            if (!(strcmp(val, "true")) || !(strcmp(val, "1")) || !(strcmp(val, "lazy")))
               mIssueCapability = true;
             else
             {
-              if ((!(strcmp(val, "false"))) || (!(strcmp(val, "0"))))
+              if (!(strcmp(val, "false")) || !(strcmp(val, "0")))
                 mIssueCapability = false;
               else
               {
@@ -352,7 +352,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
             
             if (msTokenLockTime == 0)
             {
-              Eroute.Emsg("Config", "argument 2 for tokenlocktime is 0/illegal. " 
+              Eroute.Emsg("Config", "argument 2 for tokenlocktime is 0/illegal. "
                           "Specify the grace period for a client to show up with "
                           "a write on a disk server in seconds.");
               NoGo = 1;
@@ -360,8 +360,23 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
           }
         }
         
+        // Get stager host
+        if (!strncmp("stagerhost", var, 10))
+        {
+          if ((!(val = config_stream.GetWord())))
+          {
+            xcastor_err("stagerhost: no host provided");
+            NoGo = 1;
+          }
+          else 
+          {
+            mStagerHost = val;
+            xcastor_info("stagerhost set to:%s", mStagerHost.c_str());
+          }          
+        }
+        
         // Get stager map configuration
-        if (!strcmp("stagermap", var))
+        if (!strncmp("stagermap", var, 9))
         {
           if ((!(val = config_stream.GetWord())))
           {
@@ -419,12 +434,15 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
           Eroute.Say("=====> xcastor2.authlib : ", auth_lib.c_str());
         }
         
-        // 
+        // Decide if authorization is enforced
         if (!strcmp("authorize", var))
         {
-          if ((!(val = config_stream.GetWord())) || (strcmp("true", val) && strcmp("false", val) && strcmp("1", val) && strcmp("0", val)))
+          if ((!(val = config_stream.GetWord())) || 
+              (strcmp("true", val) && strcmp("false", val) && 
+               strcmp("1", val) && strcmp("0", val)))
           {
-            Eroute.Emsg("Config", "argument 2 for authorize ilegal or missing. Must be <true>,<false>,<1> or <0>!");
+            Eroute.Emsg("Config", "argument 2 for authorize ilegal or missing. "
+                        "Must be <true>,<false>,<1> or <0>!");
             NoGo = 1;
           }
           else
@@ -450,6 +468,13 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
   }
   else
     Eroute.Say("=====> xcastor2.fs: ", xCastor2FsName.c_str(), "");
+
+  // Check that the stager host is set 
+  if (mStagerHost.empty())
+  {
+    Eroute.Say("Config error: no stagerhost has been defined");
+    NoGo =1;
+  }
 
   // We need to specify this if the server was not started with the explicit
   // manager option ... e.g. see XrdOfs. The variable is needed in the

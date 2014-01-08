@@ -436,6 +436,18 @@ public:
                   const char* tagert = "");
 
 
+  //----------------------------------------------------------------------------
+  //! Get stager host value 
+  //!
+  //! @return stager host 
+  //!
+  //----------------------------------------------------------------------------
+  inline const std::string& GetStagerHost() const
+  {
+    return mStagerHost;
+  }
+
+
   static xcastor::XrdxCastorClient* msCastorClient; ///< obj dealing with async requests/responses
   static  int msTokenLockTime;  ///< specifies the grace period for client to show
                                 ///< up on a disk server in seconds before the token expires
@@ -589,7 +601,7 @@ private:
   //----------------------------------------------------------------------------
   int64_t GetAdminDelay(XrdOucString& msg, bool isRW);
 
-  
+
   int mLogLevel; ///< log level from config file or set in the proc "trace" file
   std::set<std::string> mFsSet; ///< set of known diskserver hosts
   XrdSysMutex mMutexFsSet; ///< mutex for the set of known diskservers
@@ -599,6 +611,7 @@ private:
   std::map<std::string, std::string> mRoleMap; ///< user role map
   XrdSysMutex mMutexPasswd; ///< mutex for the passwd store  
   XrdAccAuthorize* mAuthorization; ///< authorization service used only by ALICE
+  std::string mStagerHost; ///< stager host to which requests are sent
   bool mNohsm; ///< if true do transparent staging
 
 };

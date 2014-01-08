@@ -113,14 +113,6 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo& error,
                                const char*    serviceclass,
                                struct RespInfo& respInfo)
 {
-  // Get stagehost variable which is the localhost 
-  std::string stagehost = castor::System::getHostName();
-
-  if (stagehost == ""){
-    xcastor_static_err("can not get local stagehost");
-    return false;
-  }  
-
   xcastor_static_debug("uid=%i, gid=%i, path=%s, sericeclass=%s",
                        uid, gid, path, serviceclass);
   // Construct the request and subrequest objects
@@ -139,7 +131,7 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo& error,
   subreq->setFileName(std::string(path));
   subreq->setModeBits(0744);
   castor::client::BaseClient cs2client(stage_getClientTimeout(), -1);
-  Opts.stage_host    = (char*)stagehost.c_str();
+  Opts.stage_host    = (char*)gMgr->GetStagerHost().c_str();
   Opts.service_class = (char*)serviceclass;
   Opts.stage_version = 2;
   Opts.stage_port    = 0;
@@ -317,11 +309,12 @@ XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
   try
   {
     // Sending asynchronous get requests
+    std::string stager_host = gMgr->GetStagerHost();
     xcastor_static_debug("op=%s path=%s, uid=%i, gid=%i, svc=%s",
                          opType.c_str(), reqInfo->mPath, reqInfo->mUid, 
                          reqInfo->mGid, reqInfo->mServiceClass);
 
-    int retc = gMgr->msCastorClient->SendAsyncRequest(user_id, 0, 
+    int retc = gMgr->msCastorClient->SendAsyncRequest(user_id, stager_host, 0,
                                                       request, rh, respvec);
 
     if (retc == SFS_ERROR)

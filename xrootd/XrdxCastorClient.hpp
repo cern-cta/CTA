@@ -84,6 +84,7 @@ public :
   //!
   //! @param iterHint hint where the element was inserted
   //! @param userId user unique id for the request
+  //! @param rhHost stager host
   //! @param rhPort port on the stager to where the req is sent 
   //! @param req request object 
   //! @param rh response handler object 
@@ -94,6 +95,7 @@ public :
   //!
   //----------------------------------------------------------------------------
   virtual int SendAsyncRequest(const std::string& userId,
+                               const std::string& rhHost,
                                unsigned int rhPort, 
                                castor::stager::Request* req,
                                castor::client::IResponseHandler* rh,
