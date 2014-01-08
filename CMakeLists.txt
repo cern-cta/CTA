@@ -361,8 +361,8 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory (tape)
   if (${COMPILE_SERVER} STREQUAL "1")
     add_subdirectory (rtcopy)
+    add_subdirectory (test)
   endif (${COMPILE_SERVER} STREQUAL "1")
-  add_subdirectory (test)
 ENDIF(DEFINED PackageOnly)
 
 
