@@ -166,30 +166,32 @@ ELSE(DEFINED PackageOnly)
   include_directories(${CMAKE_SOURCE_DIR})
   include_directories(${CMAKE_SOURCE_DIR}/h)
   
-  find_package (oracle REQUIRED)
-  
-  function (CastorAddProC _name)
-    add_custom_command (
-      OUTPUT ${_name}.c DEPENDS ${_name}.pc
-      COMMAND
-        ORACLE_HOME=${ORACLE_HOME}
-        LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}:${ORACLE_LIBDIR}
-        ${ORACLE_BIN}/proc
-        iname=${CMAKE_CURRENT_SOURCE_DIR}/${_name}.pc
-        oname=${CMAKE_CURRENT_BINARY_DIR}/${_name}.c
-        ${ORACLE_PROCINC}
-        include=${CMAKE_SOURCE_DIR}/h threads=yes
-        char_map=string
-        parse=full
-        prefetch=1000)
-  
-    # Append the oracle specific compilation flags and also use -Wno-error to
-    # override the default -Werror compilation rule in the case of source files
-    # produced by the Pro*C precompiler.  Such files contain generated code that
-    # generates warnings.
-    set_property (SOURCE ${_name}.c
-      PROPERTY COMPILE_FLAGS "${ORACLE_CPPFLAGS} -Wno-error")
-  endfunction ()
+  if (${COMPILE_SERVER} STREQUAL "1")
+    find_package (oracle REQUIRED)
+    
+    function (CastorAddProC _name)
+      add_custom_command (
+        OUTPUT ${_name}.c DEPENDS ${_name}.pc
+        COMMAND
+          ORACLE_HOME=${ORACLE_HOME}
+          LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}:${ORACLE_LIBDIR}
+          ${ORACLE_BIN}/proc
+          iname=${CMAKE_CURRENT_SOURCE_DIR}/${_name}.pc
+          oname=${CMAKE_CURRENT_BINARY_DIR}/${_name}.c
+          ${ORACLE_PROCINC}
+          include=${CMAKE_SOURCE_DIR}/h threads=yes
+          char_map=string
+          parse=full
+          prefetch=1000)
+    
+      # Append the oracle specific compilation flags and also use -Wno-error to
+      # override the default -Werror compilation rule in the case of source files
+      # produced by the Pro*C precompiler.  Such files contain generated code that
+      # generates warnings.
+      set_property (SOURCE ${_name}.c
+        PROPERTY COMPILE_FLAGS "${ORACLE_CPPFLAGS} -Wno-error")
+    endfunction ()
+  endif (${COMPILE_SERVER} STREQUAL "1")
   
   function (CastorInstallDir _name)
     install (CODE
