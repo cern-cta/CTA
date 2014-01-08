@@ -86,7 +86,7 @@ namespace ThreadedUnitTests {
     /* The effect is not immediate, wait a bit. */
     struct timespec ts;
     ts.tv_sec = 0;
-    ts.tv_nsec = 10*1000*1000;
+    ts.tv_nsec = 100*1000*1000;
     nanosleep(&ts, NULL);
     ASSERT_EQ(false, cp.running());
     EXPECT_THROW(cp.exitCode(), castor::tape::threading::ChildProcess::ProcessWasKilled);
