@@ -215,8 +215,10 @@ SCSI::DeviceInfo SCSI::DeviceVector::getDeviceInfo(const char * path) {
   {
     char rl[PATH_MAX];
     std::string lp = ret.sysfs_entry + "/generic";
-    if (-1 == m_sysWrapper.readlink(lp.c_str(), rl, sizeof (rl)))
+    ssize_t rlSize;
+    if (-1 == (rlSize = m_sysWrapper.readlink(lp.c_str(), rl, sizeof (rl) - 1)))
       throw exceptions::Errnum("Could not read link " + lp);
+    rl[rlSize] = '\0';
     std::string gl(rl);
     size_t pos = gl.find_last_of("/");
     if (pos == std::string::npos)

@@ -76,7 +76,11 @@ int System::fakeWrapper::readlink(const char* path, char* buf, size_t len) {
     return -1;
   }
   const std::string & link = m_links[std::string(path)];
-  strncpy(buf, link.c_str(), len);
+  /* Copy the link without the training \0 as it is the behavior 
+   of the real readlink */
+  size_t lenToCopy = link.size();
+  if (lenToCopy > len) lenToCopy = len;
+  link.copy(buf, lenToCopy);
   return len > link.size() ? link.size() : len;
 }
 
