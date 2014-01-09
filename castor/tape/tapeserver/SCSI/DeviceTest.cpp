@@ -101,6 +101,15 @@ TEST(castor_tape_SCSI_DeviceList, ScansCorrectly) {
   ASSERT_EQ(128, dl[1].nst.minor);
   ASSERT_EQ(  9, dl[2].nst.major);
   ASSERT_EQ(129, dl[2].nst.minor);
+  ASSERT_EQ("STK", dl[0].vendor);
+  ASSERT_EQ("STK", dl[1].vendor);
+  ASSERT_EQ("STK", dl[2].vendor);
+  ASSERT_EQ("VL32STK1", dl[0].product);
+  ASSERT_EQ("T10000B", dl[1].product);
+  ASSERT_EQ("T10000B", dl[2].product);
+  ASSERT_EQ("0104", dl[0].productRevisionLevel);
+  ASSERT_EQ("0104", dl[1].productRevisionLevel);
+  ASSERT_EQ("0104", dl[2].productRevisionLevel);
 }
 
 }
