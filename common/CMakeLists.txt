@@ -67,6 +67,10 @@ set (COMMON_LIB_SRC_FILES
   ../castor/common/CastorConfiguration.cpp)
 
 add_library (castorcommon SHARED ${COMMON_LIB_SRC_FILES})
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  set_property(SOURCE ../castor/exception/Backtrace.cpp APPEND PROPERTY COMPILE_FLAGS -DCOLLECTEXTRABACKTRACEINFOS)
+endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+target_link_libraries(castorcommon debug bfd)
 CastorSetLibraryVersions (castorcommon)
 target_link_libraries (castorcommon dl ${UUID_LIB})
 install (TARGETS castorcommon DESTINATION ${CASTOR_DEST_LIB_DIR})
