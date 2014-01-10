@@ -43,12 +43,5 @@ namespace tape {
       options m_options;
     };
   }
-  class singleThreadedSignalHandler {
-    class shutdownFunctor {
-    public:
-      virtual void operator() ()=0;
-    };
-    
-  };
 }
 }  
