@@ -27,6 +27,7 @@
 #include "castor/System.hpp"
 
 #include <signal.h>
+#include <stdio.h>
 
 //------------------------------------------------------------------------------
 // constructor
