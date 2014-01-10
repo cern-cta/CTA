@@ -62,15 +62,23 @@ public:
     throw(castor::exception::Internal, castor::exception::InvalidArgument);
 
   /**
+   * Destructor.
+   */
+  virtual ~Logger() throw() = 0;
+
+  /**
+   * Prepares the logger object for a call to fork().
+   *
+   * No further calls to logMsg() should be made after calling this method
+   * until the call to fork() has completed.
+   */
+  virtual void prepareForFork() throw(castor::exception::Internal) = 0;
+
+  /**
    * Returns the name of the program that is to  be prepended to every log
    * message.
    */
   const std::string &getProgramName() const throw();
-
-  /**
-   * Destructor.
-   */
-  virtual ~Logger() throw() = 0;
 
   /**
    * Writes a message into the CASTOR logging system. Note that no exception

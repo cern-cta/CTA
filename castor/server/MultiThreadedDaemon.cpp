@@ -1,10 +1,10 @@
-/******************************************************************************
- *                      BaseDaemon.cpp
+/*******************************************************************************
+ *                      castor/server/MultiThreadedDaemon.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
  *
- * Copyright (C) 2004  CERN
+ * Copyright (C) 2003  CERN
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -17,123 +17,36 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)BaseDaemon.cpp,v 1.8 $Release$ 2006/08/14 19:10:38 itglp
- *
- * A base multithreaded daemon supporting signal handling
- *
- * @author Giuseppe Lo Presti
- *****************************************************************************/
+ * @author castor dev team
+ ******************************************************************************/
 
-// Include Files
+#include "castor/metrics/MetricsCollector.hpp"
+#include "castor/server/MultiThreadedDaemon.hpp"
+#include "castor/server/UDPListenerThreadPool.hpp"
+#include "h/Cgetopt.h"
+#include "h/Cthread_api.h"
+
 #include <signal.h>
 #include <sys/wait.h>
-#include "castor/server/BaseDaemon.hpp"
-#include "castor/server/UDPListenerThreadPool.hpp"
-#include "castor/exception/Internal.hpp"
-#include "castor/metrics/MetricsCollector.hpp"
-#include "Cgetopt.h"
-#include "Cinit.h"
-#include "Cuuid.h"
-#include "Cthread_api.h"
-#include <sstream>
-#include <iostream>
-#include <iomanip>
-#include <vector>
-
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::server::BaseDaemon::BaseDaemon(log::Logger &logger) :
-  castor::server::BaseServer(logger),
-  m_signalMutex(0) {
-  memset(&m_signalSet, 0, sizeof(m_signalSet));
+castor::server::MultiThreadedDaemon::MultiThreadedDaemon(log::Logger &logger):
+  Daemon(logger) {
 }
 
-
 //------------------------------------------------------------------------------
-// init
+// destructor
 //------------------------------------------------------------------------------
-void castor::server::BaseDaemon::init() throw (castor::exception::Exception)
-{
-  // Server initialization (in foreground or not)
-  castor::server::BaseServer::init();
-
-  // Initialize CASTOR Thread interface
-  Cthread_init();
-
-  // Initialize mutex variable in case of a signal. Timeout = 10 seconds
-  m_signalMutex = new Mutex(0);
-
-  // Initialize errno, serrno
-  errno = serrno = 0;
-
-  // Mask all signals so that user threads are not unpredictably
-  // interrupted by them
-  sigemptyset(&m_signalSet);
-  if(m_foreground) {
-    // In foreground we catch Ctrl-C as well; we don't want to catch
-    // it in background to ease debugging with gdb, as gdb has its own
-    // SIGINT handler to pause the process anywhere. Our signal handler
-    // would override this feature and just gracefully terminate.
-    sigaddset(&m_signalSet, SIGINT);
-  }
-  sigaddset(&m_signalSet, SIGTERM);
-  sigaddset(&m_signalSet, SIGHUP);
-  sigaddset(&m_signalSet, SIGABRT);
-  sigaddset(&m_signalSet, SIGCHLD);
-  sigaddset(&m_signalSet, SIGPIPE);
-
-  int c;
-  if ((c = pthread_sigmask(SIG_BLOCK, &m_signalSet, NULL)) != 0) {
-    errno = c;
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed pthread_sigmask" << std::endl;
-    throw ex;
-  }
-
-  // Start the thread handling all the signals
-  Cthread_create_detached((void *(*)(void *))&_signalHandler, this);
+castor::server::MultiThreadedDaemon::~MultiThreadedDaemon() throw() {
 }
 
-
 //------------------------------------------------------------------------------
-// start
-//------------------------------------------------------------------------------
-void castor::server::BaseDaemon::start() throw (castor::exception::Exception)
-{
-  castor::server::BaseServer::start();
-
-  /* Wait forever on a caught signal */
-  handleSignals();
-}
-
-
-//------------------------------------------------------------------------------
-// addNotifierThreadPool
-//------------------------------------------------------------------------------
-void castor::server::BaseDaemon::addNotifierThreadPool(int port)
-{
-  if(m_threadPools['_'] != 0) delete m_threadPools['_'];   // sanity check
-
-  // This is a pool for internal use, we don't use addThreadPool
-  // so to not change the command line parsing behavior
-/*
-  m_threadPools['_'] =
-    new castor::server::UDPListenerThreadPool("_NotifierThread",
-                                              castor::server::NotifierThread::getInstance(this),
-                                              port);
-*/
-  // we run the notifier in the same thread as the listening one
-  m_threadPools['_']->setNbThreads(0);
-}
-
-
-//-----------------------------------------------------------------------------
 // parseCommandLine
-//-----------------------------------------------------------------------------
-void castor::server::BaseDaemon::parseCommandLine(int argc, char *argv[])
-{
+//------------------------------------------------------------------------------
+void castor::server::MultiThreadedDaemon::parseCommandLine(int argc,
+  char *argv[]) {
   Coptions_t* longopts = new Coptions_t[m_threadPools.size() + 5];
   char tparam[] = "Xthreads";
 
@@ -154,7 +67,6 @@ void castor::server::BaseDaemon::parseCommandLine(int argc, char *argv[])
   longopts[3].flag = NULL;
   longopts[3].val = 'h';
 
-
   std::map<const char, castor::server::BaseThreadPool*>::const_iterator tp;
   unsigned i = 4;
   for(tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++, i++) {
@@ -171,7 +83,8 @@ void castor::server::BaseDaemon::parseCommandLine(int argc, char *argv[])
   Coptreset = 1;
 
   char c;
-  while ((c = Cgetopt_long(argc, argv, (char*)m_cmdLineParams.str().c_str(), longopts, NULL)) != -1) {
+  while ((c = Cgetopt_long(argc, argv, (char*)m_cmdLineParams.str().c_str(),
+    longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
       m_foreground = true;
@@ -186,7 +99,8 @@ void castor::server::BaseDaemon::parseCommandLine(int argc, char *argv[])
       break;
     case 'm':
       // initialize the metrics collector thread
-      //castor::metrics::MetricsCollector::getInstance(this);
+      // TODO WHEN MULTITHREADED DAEMON IS THE DEFAULT
+      castor::metrics::MetricsCollector::getInstance(this);
       break;
     default:
       tp = m_threadPools.find(c);
@@ -204,11 +118,10 @@ void castor::server::BaseDaemon::parseCommandLine(int argc, char *argv[])
   delete[] longopts;
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // help
-//-----------------------------------------------------------------------------
-void castor::server::BaseDaemon::help(std::string programName)
-{
+//------------------------------------------------------------------------------
+void castor::server::MultiThreadedDaemon::help(const std::string &programName) {
   std::cout << "Usage: " << programName << " [options]\n"
     "\n"
     "where options can be:\n"
@@ -221,12 +134,89 @@ void castor::server::BaseDaemon::help(std::string programName)
     "Comments to: Castor.Support@cern.ch\n";
 }
 
+//------------------------------------------------------------------------------
+// addThreadPool
+//------------------------------------------------------------------------------
+void castor::server::MultiThreadedDaemon::addThreadPool(
+  BaseThreadPool *const pool) throw() {
+  if(pool != 0) {
+    const char id = pool->getPoolId();
+    const BaseThreadPool* p = m_threadPools[id];
+    if(p != 0) delete p;
+    m_threadPools[id] = pool;
+    m_cmdLineParams << id << ":";
+  }
+}
+
+//------------------------------------------------------------------------------
+// start
+//------------------------------------------------------------------------------
+void castor::server::MultiThreadedDaemon::start()
+  throw(castor::exception::Exception) {
+  if (m_foreground) {
+    std::cout << "Starting " << getServerName() << std::endl;
+  }
+
+  std::map<const char, castor::server::BaseThreadPool*>::const_iterator tp;
+  for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
+    tp->second->init();
+    // in case of exception, don't go further and propagate it
+  }
+
+  // daemonization
+  daemonize();
+
+  // Initialize CASTOR Thread interface
+  Cthread_init();
+
+  setupMultiThreadedSignalHandling();
+
+  // if we got here, we're ready to start all the pools and detach corresponding
+  // threads
+  for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
+    tp->second->run();  // here run returns immediately
+  }
+
+  /* Wait forever on a caught signal */
+  handleSignals();
+}
+
+//------------------------------------------------------------------------------
+// setUpMultiThreadedSignalHandling
+//------------------------------------------------------------------------------
+void castor::server::MultiThreadedDaemon::setupMultiThreadedSignalHandling()
+  throw (castor::exception::Internal) {
+  // Mask all signals so that user threads are not unpredictably
+  // interrupted by them
+  sigemptyset(&m_signalSet);
+  if(m_foreground) {
+    // In foreground we catch Ctrl-C as well; we don't want to catch
+    // it in background to ease debugging with gdb, as gdb has its own
+    // SIGINT handler to pause the process anywhere. Our signal handler
+    // would override this feature and just gracefully terminate.
+    sigaddset(&m_signalSet, SIGINT);
+  }
+  sigaddset(&m_signalSet, SIGTERM);
+  sigaddset(&m_signalSet, SIGHUP);
+  sigaddset(&m_signalSet, SIGABRT);
+  sigaddset(&m_signalSet, SIGCHLD);
+  sigaddset(&m_signalSet, SIGPIPE);
+
+  const int sigmask_rc = pthread_sigmask(SIG_BLOCK, &m_signalSet, NULL);
+  if (0 != sigmask_rc) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed pthread_sigmask" << std::endl;
+    throw ex;
+  }
+
+  // Start the thread handling all the signals
+  Cthread_create_detached((void *(*)(void *))&s_signalHandler, this);
+}
 
 //------------------------------------------------------------------------------
 // handleSignals
 //------------------------------------------------------------------------------
-void castor::server::BaseDaemon::handleSignals()
-{
+void castor::server::MultiThreadedDaemon::handleSignals() {
   while(true) {
     try {
       m_signalMutex->lock();
@@ -333,12 +323,10 @@ void castor::server::BaseDaemon::handleSignals()
   }
 }
 
-
 //------------------------------------------------------------------------------
 // waitAllThreads
 //------------------------------------------------------------------------------
-void castor::server::BaseDaemon::waitAllThreads() throw()
-{
+void castor::server::MultiThreadedDaemon::waitAllThreads() throw() {
   std::map<const char, castor::server::BaseThreadPool*>::iterator tp;
   std::vector<castor::server::BaseThreadPool*> busyTPools;
   // Shutdown and destroy all pools, but keep the busy ones
@@ -371,13 +359,66 @@ void castor::server::BaseDaemon::waitAllThreads() throw()
   }
 }
 
+//------------------------------------------------------------------------------
+// resetAllMetrics
+//------------------------------------------------------------------------------
+void castor::server::MultiThreadedDaemon::resetAllMetrics() throw() {
+  std::map<const char, castor::server::BaseThreadPool*>::const_iterator tp;
+  for (tp = m_threadPools.begin(); tp != m_threadPools.end(); tp++) {
+    try {
+      tp->second->resetMetrics();
+    } catch (castor::exception::Exception& ignore) {}
+  }
+}
 
 //------------------------------------------------------------------------------
-// _signalHandler
+// getThreadPool
 //------------------------------------------------------------------------------
-void* castor::server::BaseDaemon::_signalHandler(void* arg)
+castor::server::BaseThreadPool *
+  castor::server::MultiThreadedDaemon::getThreadPool(const char nameIn)
+  throw (castor::exception::Exception) {
+  std::map<const char, BaseThreadPool*>::const_iterator tpIt =
+    m_threadPools.find(nameIn);
+  if(tpIt == m_threadPools.end()) {
+    castor::exception::Exception notFound(ENOENT);
+    notFound.getMessage() << "No thread pool found with initial " << nameIn;
+    throw notFound;
+  }
+  return tpIt->second;
+}
+
+//------------------------------------------------------------------------------
+// addNotifierThreadPool
+//------------------------------------------------------------------------------
+void castor::server::MultiThreadedDaemon::addNotifierThreadPool(const int port)
 {
-  castor::server::BaseDaemon* daemon = (castor::server::BaseDaemon*)arg;
+  if(m_threadPools['_'] != 0) delete m_threadPools['_'];   // sanity check
+
+  // This is a pool for internal use, we don't use addThreadPool
+  // so to not change the command line parsing behavior
+  m_threadPools['_'] = new castor::server::UDPListenerThreadPool(
+    "_NotifierThread",
+    castor::server::NotifierThread::getInstance(this),
+    port);
+
+  // we run the notifier in the same thread as the listening one
+  m_threadPools['_']->setNbThreads(0);
+}
+
+//------------------------------------------------------------------------------
+// shutdownGracefully
+//------------------------------------------------------------------------------
+void castor::server::MultiThreadedDaemon::shutdownGracefully() throw() {
+  m_signalMutex->setValueNoMutex(STOP_GRACEFULLY);
+}
+
+//------------------------------------------------------------------------------
+// s_signalHandler
+//------------------------------------------------------------------------------
+void* castor::server::MultiThreadedDaemon::s_signalHandler(void* arg)
+{
+  castor::server::MultiThreadedDaemon* daemon =
+    (castor::server::MultiThreadedDaemon*)arg;
 
   // keep looping waiting signals
   int sig_number;
@@ -408,7 +449,7 @@ void* castor::server::BaseDaemon::_signalHandler(void* arg)
         break;
 
       case SIGCHLD:
-        daemon->m_signalMutex->setValueNoMutex(castor::server::CHILD_STOPPED);
+        daemon->m_signalMutex->setValueNoMutex(CHILD_STOPPED);
         break;
 
       case SIGPIPE:
@@ -425,12 +466,4 @@ void* castor::server::BaseDaemon::_signalHandler(void* arg)
     }
   }
   return 0;
-}
-
-
-//------------------------------------------------------------------------------
-// shutdownGracefully
-//------------------------------------------------------------------------------
-void castor::server::BaseDaemon::shutdownGracefully() throw() {
-  m_signalMutex->setValueNoMutex(castor::server::STOP_GRACEFULLY);
 }

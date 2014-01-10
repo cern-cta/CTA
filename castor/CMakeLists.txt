@@ -161,8 +161,10 @@ set (CLIENT_LIB_SRC_FILES
   server/BaseServer.cpp
   server/AuthListenerThreadPool.cpp
   server/BaseThreadPool.cpp
+  server/Daemon.cpp
   server/DynamicThreadPool.cpp
   server/ListenerThreadPool.cpp
+  server/MultiThreadedDaemon.cpp
   server/TCPListenerThreadPool.cpp
   server/UDPListenerThreadPool.cpp
   server/ForkedProcessPool.cpp

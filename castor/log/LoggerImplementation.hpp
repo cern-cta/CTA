@@ -57,6 +57,14 @@ public:
   ~LoggerImplementation() throw();
 
   /**
+   * Prepares the logger object for a call to fork().
+   *
+   * No further calls to logMsg() should be made after calling this method
+   * until the call to fork() has completed.
+   */
+  void prepareForFork() throw(castor::exception::Internal);
+
+  /**
    * Writes a message into the CASTOR logging system. Note that no exception
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.

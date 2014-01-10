@@ -235,10 +235,12 @@ rununittests: $(RMC_OBJECTS) \
   server_BaseThreadPool.o \
   server_BaseDaemon.o \
   server_BaseServer.o \
+  server_Daemon.o \
   server_Queue.o \
+  server_MultiThreadedDaemon.o \
   server_Mutex.o \
-  server_ThreadNotification.o \
   server_NotifierThread.o \
+  server_ThreadNotification.o \
   stager_mapper.o \
   stager_errmsg.o \
   stager_client_commandline.o \
@@ -1071,20 +1073,28 @@ server_BaseServer.o: \
   $(ROOT_DIR)/castor/server/BaseServer.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-server_Queue.o: \
-  $(ROOT_DIR)/castor/server/Queue.cpp
+server_Daemon.o: \
+  $(ROOT_DIR)/castor/server/Daemon.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_MultiThreadedDaemon.o: \
+  $(ROOT_DIR)/castor/server/MultiThreadedDaemon.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 server_Mutex.o: \
   $(ROOT_DIR)/castor/server/Mutex.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-server_ThreadNotification.o: \
-  $(ROOT_DIR)/castor/server/ThreadNotification.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 server_NotifierThread.o: \
   $(ROOT_DIR)/castor/server/NotifierThread.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_Queue.o: \
+  $(ROOT_DIR)/castor/server/Queue.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_ThreadNotification.o: \
+  $(ROOT_DIR)/castor/server/ThreadNotification.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 stager_mapper.o: $(ROOT_DIR)/client/src/stager/stager_mapper.c

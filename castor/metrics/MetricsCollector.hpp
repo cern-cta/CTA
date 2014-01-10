@@ -31,7 +31,7 @@
 #include <map>
 #include "castor/IObject.hpp"
 #include "castor/server/SignalThreadPool.hpp"
-#include "castor/server/BaseDaemon.hpp"
+#include "castor/server/MultiThreadedDaemon.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/metrics/Histogram.hpp"
 
@@ -49,7 +49,8 @@ namespace castor {
   
     public:    
       /// This class is a singleton
-      static MetricsCollector* getInstance(castor::server::BaseDaemon* daemon = 0);
+      static MetricsCollector* getInstance(
+        castor::server::MultiThreadedDaemon* daemon = 0);
   
       /// Default destructor
       virtual ~MetricsCollector() throw ();
@@ -109,13 +110,13 @@ namespace castor {
       static MetricsCollector* s_instance;
       
       /// Default constructor
-      MetricsCollector(castor::server::BaseDaemon& daemon);
+      MetricsCollector(castor::server::MultiThreadedDaemon& daemon);
       
       /// Hash map of all histograms, indexed by name
       std::map<std::string, Histogram*> m_histograms;
       
       /// Reference to the daemon for logging purposes and for resetAllMetrics
-      castor::server::BaseDaemon& m_daemon;
+      castor::server::MultiThreadedDaemon& m_daemon;
       
       /// Dump file location
       std::string m_dumpFileLocation;

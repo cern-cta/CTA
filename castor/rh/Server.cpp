@@ -283,6 +283,7 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
   
   if(metrics) {
     // initialize the metrics collector thread and add custom metrics
+/*
     castor::metrics::MetricsCollector* mc =
       castor::metrics::MetricsCollector::getInstance(this);
     mc->addHistogram(new castor::metrics::Histogram(
@@ -291,6 +292,7 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
       "SvcClasses", &castor::rh::SvcClassCounter::instantiate));
     mc->addHistogram(new castor::metrics::Histogram(
       "Users", &castor::rh::UserCounter::instantiate));
+*/
   }    
 }
 

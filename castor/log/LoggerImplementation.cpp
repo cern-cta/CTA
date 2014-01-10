@@ -165,6 +165,36 @@ castor::log::LoggerImplementation::~LoggerImplementation() throw() {
 }
 
 //------------------------------------------------------------------------------
+// prepareForFork
+//------------------------------------------------------------------------------
+void castor::log::LoggerImplementation::prepareForFork() 
+  throw(castor::exception::Internal) {
+  // Enter critical section
+  {
+    const int mutex_lock_rc = pthread_mutex_lock(&m_mutex);
+    if(0 != mutex_lock_rc) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Failed to lock mutex of logger's critcial section: "
+        << sstrerror(mutex_lock_rc);
+      throw(ex);
+    }
+  }
+
+  closeLog();
+
+  // Leave critical section.
+  {
+    const int mutex_unlock_rc = pthread_mutex_unlock(&m_mutex);
+    if(0 != mutex_unlock_rc) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Failed to unlock mutex of logger's critcial section: "
+        << sstrerror(mutex_unlock_rc);
+      throw(ex);
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
 // openLog
 //------------------------------------------------------------------------------
 void castor::log::LoggerImplementation::openLog() throw() {
@@ -383,7 +413,11 @@ void castor::log::LoggerImplementation::reducedSyslog(std::string msg)
   send_flags = MSG_NOSIGNAL;
 #endif
   // enter critical section
-  pthread_mutex_lock(&m_mutex);
+  const int mutex_lock_rc = pthread_mutex_lock(&m_mutex);
+  // Do nothing if we failed to enter the critical section
+  if(0 != mutex_lock_rc) {
+    return;
+  }
 
   // Try to connect if not already connected
   if(!m_connected) {

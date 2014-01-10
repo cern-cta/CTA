@@ -59,7 +59,7 @@ namespace castor {
        * @param nbThreads as in ListenerThreadPool. This listener is not dynamic.
        */
       UDPListenerThreadPool(const std::string poolName, castor::server::IThread* thread,
-                            int listenPort, bool waitIfBusy = false,
+                            const int listenPort, bool waitIfBusy = false,
                             unsigned nbThreads = castor::server::DEFAULT_THREAD_NUMBER) throw();
 
     protected:
