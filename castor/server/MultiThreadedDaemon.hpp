@@ -33,7 +33,7 @@ namespace castor {
 namespace server {
 
 /**
- * This concrete class represents a multi-threaded daemon.
+ * This class represents a multi-threaded daemon.
  */
 class MultiThreadedDaemon: public Daemon {
 

@@ -30,11 +30,9 @@ namespace castor {
 namespace server {
 
 /**
- * This abstract class represents a daemon and contains all of the code common
- * to both single and mutli threaded daemons.
+ * This class contains the code common to all daemon classes.
  *
- * The code common to both single and mutli-threaded daemons includes
- * daemonization and logging.
+ * The code common to all daemon classes includes daemonization and logging.
  */
 class Daemon {
 
@@ -48,9 +46,9 @@ public:
   Daemon(log::Logger &logger);
 
   /**
-   * Pure virtual destructor that purposely makes this class abstract.
+   * Destructor.
    */
-  virtual ~Daemon() throw() = 0;
+  virtual ~Daemon() throw();
 
   /**
    * Returns this server's name as used by the CASTOR logging system.
@@ -58,14 +56,6 @@ public:
   const std::string &getServerName() const throw();
 
 protected:
-
-  /**
-   * Parses a command line to set the server options.
-   *
-   * @param argc The size of the command-line vector.
-   * @param argv The command-line vector.
-   */
-  virtual void parseCommandLine(int argc, char *argv[]) = 0;
 
   /**
    * Sets the runAsStagerSuperuser flag to true.
