@@ -114,11 +114,11 @@ void castor::server::BaseDaemon::start() throw (castor::exception::Exception)
 //------------------------------------------------------------------------------
 void castor::server::BaseDaemon::addNotifierThreadPool(int port)
 {
+/*
   if(m_threadPools['_'] != 0) delete m_threadPools['_'];   // sanity check
 
   // This is a pool for internal use, we don't use addThreadPool
   // so to not change the command line parsing behavior
-/*
   m_threadPools['_'] =
     new castor::server::UDPListenerThreadPool("_NotifierThread",
                                               castor::server::NotifierThread::getInstance(this),
