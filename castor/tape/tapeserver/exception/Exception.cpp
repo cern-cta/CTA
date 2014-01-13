@@ -85,5 +85,12 @@ void exceptions::throwOnNonZeroWithErrno (int status, std::string context) {
   if (status) throw Errnum(context);
 }
 
+void exceptions::throwOnNullWithErrno (FILE * f, std::string context) {
+  if (NULL == f) throw Errnum(context);
+}
+
+void exceptions::throwOnNegativeWithErrno (int ret, std::string context) {
+  if (ret < 0) throw Errnum(context);
+}
 
 

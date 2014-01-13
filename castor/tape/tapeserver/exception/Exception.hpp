@@ -61,6 +61,8 @@ namespace tape {
     
     void throwOnReturnedErrno (int err, std::string context = "");
     void throwOnNonZeroWithErrno (int status, std::string context = "");
+    void throwOnNullWithErrno (FILE * f, std::string context = "");
+    void throwOnNegativeWithErrno (int ret, std::string context = "");
   }
 } //namespace tape
 } //namespace castor

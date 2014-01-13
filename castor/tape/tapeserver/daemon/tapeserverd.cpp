@@ -30,31 +30,69 @@
 #include <stdio.h>
 #include <sys/stat.h>
 #include <sstream>
+#include <signal.h>
 
 #include "tapeserverd.hpp"
+#include "castor/log/LoggerImplementation.hpp"
+#include "log.h"
+#include "castor/io/AbstractSocket.hpp"
 
 int main(int argc, char ** argv) {
+  return castor::tape::Server::Daemon::main(argc, argv);
+}
+
+int castor::tape::Server::Daemon::main(int argc, char ** argv) throw() {
   try {
-    castor::tape::Server::Daemon daemon(argc, argv);
+    /* Before anything, we need a logger: */
+    castor::log::LoggerImplementation logger("tapeserverd");
+    try {
+      /* Setup the object (parse command line, register logger) */
+      castor::tape::Server::Daemon daemon(argc, argv, logger);
+      /* ... and run. */
+      daemon.run();
+    /* Catch all block for any left over exception which will go to the logger */
+    } catch (std::exception & e) {
+      logger.logMsg(LOG_ALERT, std::string("Uncaught standard exception in tapeserverd:\n")+
+      e.what());
+      exit(EXIT_FAILURE);
+    } catch (...) {
+      logger.logMsg(LOG_ALERT, std::string("Uncaught non-standard exception in tapeserverd."));
+      exit(EXIT_FAILURE);
+    }
+  /* Catch-all block for before logger creation. */
   } catch (std::exception & e) {
     std::cerr << "Uncaught standard exception in tapeserverd:" << std::endl
         << e.what() << std::endl;
     exit(EXIT_FAILURE);
   } catch (...) {
-    std::cerr << "Uncaught non-standard exception in tapeserverd:" << std::endl;
+    std::cerr << "Uncaught non-standard exception in tapeserverd." << std::endl;
     exit(EXIT_FAILURE);
   }
+  return (EXIT_SUCCESS);
 }
 
-castor::tape::Server::Daemon::Daemon(int argc, char** argv) throw (castor::tape::Exception) {
-  m_options = getCommandLineOptions(argc, argv);
-  if (m_options.daemonize) daemonize();
+castor::tape::Server::Daemon::Daemon(int argc, char** argv, 
+    castor::log::Logger & logger) throw (castor::tape::Exception):
+castor::server::Daemon(logger),
+    m_option_run_directory ("/var/log/castor") {
+  parseCommandLineOptions(argc, argv);
 }
 
-castor::tape::Server::Daemon::options castor::tape::Server::Daemon::getCommandLineOptions(int argc, char** argv)
+void castor::tape::Server::Daemon::run() {
+  /* Block signals, we will handle them synchronously */
+  blockSignals();
+  /* Daemonize if requested */
+  if (!m_foreground) daemonize();
+  /* Setup the the mother forker, which will spawn and handle the tape sessions */
+  /* TODO */
+  /* Setup the listening socket for VDQM requests */
+  /* TODO */
+  /* Loop on both */
+}
+
+void castor::tape::Server::Daemon::parseCommandLineOptions(int argc, char** argv)
 throw (castor::tape::Exception)
 {
-  options ret;
   /* Expect -f or --foreground */
   struct ::option opts[] = {
     { "foreground", no_argument, 0, 'f'},
@@ -64,7 +102,7 @@ throw (castor::tape::Exception)
   while (-1 != (c = getopt_long(argc, argv, ":f", opts, NULL))) {
     switch (c) {
       case 'f':
-        ret.daemonize = false;
+        m_foreground = true;
         break;
       case ':':
       {
@@ -88,7 +126,6 @@ throw (castor::tape::Exception)
       }
     }
   }
-  return ret;
 }
 
 void castor::tape::Server::Daemon::daemonize()
@@ -99,43 +136,63 @@ void castor::tape::Server::Daemon::daemonize()
   if (getppid() == 1) return;
 
   /* Fork off the parent process */
-  pid = fork();
-  if (pid < 0) {
-    castor::tape::exceptions::Errnum e("Failed to fork in castor::tape::Server::Daemon::daemonize");
-    throw e;
-  }
+  castor::tape::exceptions::throwOnNegativeWithErrno(pid = fork(),
+    "Failed to fork in castor::tape::Server::Daemon::daemonize");
   /* If we got a good PID, then we can exit the parent process. */
   if (pid > 0) {
     exit(EXIT_SUCCESS);
   }
-
   /* Change the file mode mask */
   umask(0);
-
   /* Create a new session for the child process */
-  sid = setsid();
-  if (sid < 0) {
-    castor::tape::exceptions::Errnum e("Failed to create new session in castor::tape::Server::Daemon::daemonize");
-    throw e;
-  }
-
+  castor::tape::exceptions::throwOnNegativeWithErrno(sid = setsid(),
+    "Failed to create new session in castor::tape::Server::Daemon::daemonize");
   /* At this point we are executing as the child process, and parent process should be init */
   if (getppid() != 1) { 
     castor::tape::Exception e("Failed to detach from parent process in castor::tape::Server::Daemon::daemonize");
     throw e;
   }
-
   /* Change the current working directory.  This prevents the current
      directory from being locked; hence not being able to remove it. */
-  if ((chdir(m_options.runDirectory.c_str())) < 0) {
-    std::stringstream err("Failed to chdir in castor::tape::Server::Daemon::daemonize");
-    err << " ( destination directory: " << m_options.runDirectory << ")";
-    castor::tape::exceptions::Errnum e(err.str());
-    throw e;
-  }
-
+  castor::tape::exceptions::throwOnNegativeWithErrno(
+    chdir(m_option_run_directory.c_str()),
+    std::string("Failed to chdir in castor::tape::Server::Daemon::daemonize"
+      " ( destination directory: ") + m_option_run_directory + ")");
   /* Redirect standard files to /dev/null */
-  freopen("/dev/null", "r", stdin);
-  freopen("/dev/null", "w", stdout);
-  freopen("/dev/null", "w", stderr);
+  castor::tape::exceptions::throwOnNullWithErrno(
+    freopen("/dev/null", "r", stdin),
+    "Failed to freopen stdin in castor::tape::Server::Daemon::daemonize");
+  castor::tape::exceptions::throwOnNullWithErrno(
+    freopen("/dev/null", "r", stdout),
+    "Failed to freopen stdout in castor::tape::Server::Daemon::daemonize");
+  castor::tape::exceptions::throwOnNullWithErrno(
+    freopen("/dev/null", "r", stderr),
+    "Failed to freopen stderr in castor::tape::Server::Daemon::daemonize");
+}
+
+void castor::tape::Server::Daemon::blockSignals()
+{
+  sigset_t sigs;
+  sigemptyset(&sigs);
+  /* The list of signal that should not disturb our daemon. Some of them
+   * will be dealt with synchronously in the main loop.
+   * See signal(7) for full list.
+   */
+  sigaddset(&sigs, SIGHUP);
+  sigaddset(&sigs, SIGINT);
+  sigaddset(&sigs, SIGQUIT);
+  sigaddset(&sigs, SIGPIPE);
+  sigaddset(&sigs, SIGTERM);
+  sigaddset(&sigs, SIGUSR1);
+  sigaddset(&sigs, SIGUSR2);
+  sigaddset(&sigs, SIGCHLD);
+  sigaddset(&sigs, SIGTSTP);
+  sigaddset(&sigs, SIGTTIN);
+  sigaddset(&sigs, SIGTTOU);
+  sigaddset(&sigs, SIGPOLL);
+  sigaddset(&sigs, SIGURG);
+  sigaddset(&sigs, SIGVTALRM);
+  castor::tape::exceptions::throwOnNonZeroWithErrno(
+    sigprocmask(SIG_BLOCK, &sigs, NULL), 
+    "Failed to sigprocmask in castor::tape::Server::Daemon::blockSignals");
 }
