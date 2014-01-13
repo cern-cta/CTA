@@ -123,9 +123,9 @@ void castor::server::BaseDaemon::addNotifierThreadPool(int port)
     new castor::server::UDPListenerThreadPool("_NotifierThread",
                                               castor::server::NotifierThread::getInstance(this),
                                               port);
-*/
   // we run the notifier in the same thread as the listening one
   m_threadPools['_']->setNbThreads(0);
+*/
 }
 
 
