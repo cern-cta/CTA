@@ -282,9 +282,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
   CastorInstallExample (castor.conf /etc/castor)
   CastorInstallExample (rsyslog.conf.client /etc/castor)
   CastorInstallExample (rsyslog.conf.server /etc/castor)
-endif (${COMPILE_SERVER} STREQUAL "1")
 
-if (${COMPILE_SERVER} STREQUAL "1")
   ################################################################################
   # Installation of header files for package castor-build-headers
   ################################################################################
@@ -321,9 +319,14 @@ if (${COMPILE_SERVER} STREQUAL "1")
     exception/Exception.hpp
     exception/Internal.hpp
     exception/InvalidNbArguments.hpp
+    exception/AlreadyInitialized.hpp
+    exception/InvalidArgument.hpp
+    exception/NoEntry.hpp
+    exception/OutOfMemory.hpp
+    exception/SQLError.hpp
     DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/exception
     PERMISSIONS ${CASTOR_HEADER_PERMS})
-  
+
   install(FILES
     io/ServerSocket.hpp
     DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/io
@@ -407,15 +410,6 @@ if (${COMPILE_SERVER} STREQUAL "1")
     db/ora/OraCnvSvc.hpp
     db/ora/OraCommonSvc.hpp
     DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/db/ora
-    PERMISSIONS ${CASTOR_HEADER_PERMS})
-  
-  install(FILES
-    exception/AlreadyInitialized.hpp
-    exception/InvalidArgument.hpp
-    exception/NoEntry.hpp
-    exception/OutOfMemory.hpp
-    exception/SQLError.hpp
-    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/exception
     PERMISSIONS ${CASTOR_HEADER_PERMS})
   
   install(FILES

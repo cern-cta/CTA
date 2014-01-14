@@ -24,7 +24,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-hsmtools
 Architecture: any
 Depends: castor-lib = %{version}-%{release}
-Build-Depends: zlib-devel
+Build-Depends: zlib-devel binutils-devel
 Description: castor (Cern Advanced STORage system)
  HSM Administration tools e.g. reclaim
 

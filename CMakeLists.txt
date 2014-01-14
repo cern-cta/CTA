@@ -27,7 +27,17 @@ cmake_minimum_required (VERSION 2.6)
 
 project(castor)
 
-set(CMAKE_BUILD_TYPE Debug)
+IF(DEFINED CMAKE_BUILD_TYPE)
+  # If the user specifies -DCMAKE_BUILD_TYPE on the command line, take their definition and dump it in the cache
+  SET(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Choose the type of build.")
+ELSE()
+  # log choosen default (RelWithDebInfo) and set it
+  message(STATUS "Setting build type to 'Debug' as none was specified.")
+  message (STATUS "Override with -DCMAKE_BUILD_TYPE:STRING=RelWithDebInfo")  
+  set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+ENDIF(DEFINED CMAKE_BUILD_TYPE)
 
 if ("${CMAKE_SOURCE_DIR}" MATCHES "${CMAKE_BINARY_DIR}")
   message (SEND_ERROR "In source building not supported. Please run something like: \"mkdir ../build; ( src=`pwd`; cd ../build; cmake $src ); make -C ../build\"")

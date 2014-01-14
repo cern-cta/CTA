@@ -149,20 +149,20 @@ def _printStatusLine(subTime, lastModTime, user, machine, vid, status, total, si
       if total > 0 and status != 'STARTING':
         # Completion % takes into account each operation (recall and migration) as 1, so that e.g. a tape with half files recalled and none migrated counts as 25% done;
         # no weight is given to recalls vs. migrations nor is the file size taken into account.
-        print '%-18s%10s%17s%29s%9s%11d%12s%10d%10d%10d%10d%7d%%%11s' % (subTime, repackTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, 100-(2*toRecall+toMigr)*50.0/total, status)
+        print '%-18s%12s%17s%29s%9s%11d%12s%10d%10d%10d%10d%7d%%%11s' % (subTime, repackTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, 100-(2*toRecall+toMigr)*50.0/total, status)
       else:
-        print '%-18s%10s%17s%29s%9s%11d%12s%10d%10d%10d%10d    N/A %11s' % (subTime, repackTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, status)
+        print '%-18s%12s%17s%29s%9s%11d%12s%10d%10d%10d%10d    N/A %11s' % (subTime, repackTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, status)
     except TypeError:
       # case of reporting without details
-      print '%-18s%10s%17s%29s%9s%11d%12s%11s' % (subTime, repackTime, user, machine, vid, total, size, status)
+      print '%-18s%12s%17s%29s%9s%11d%12s%11s' % (subTime, repackTime, user, machine, vid, total, size, status)
 
 
 def _displaySummary(rows):
     '''prints a summary of all repack requests according to the given criteria'''
     # print out results
-    print '='*117
-    print 'SubmitTime        RepackTime             User                      Machine      Vid      Total        Size     Status'
-    print '-'*117
+    print '='*119
+    print 'SubmitTime          RepackTime             User                      Machine      Vid      Total        Size     Status'
+    print '-'*119
     sumTotal = sumSize = 0
     globalStatus = 2  # FINISHED
     shownVids = set()
@@ -182,7 +182,7 @@ def _displaySummary(rows):
             globalStatus = 0  # STARTING
         if (status == 1 or status == 4) and globalStatus == 2:
             globalStatus = 1  # ONGOING
-    print '-'*117
+    print '-'*119
     #  when showing full statistics, print out summary line
     if not vids and sumTotal > 0:
         _printStatusLine(time.time(), 0, '-', 'TOTAL', count, globalStatus, sumTotal, sumSize, '-', '-', '-', '-')
@@ -190,18 +190,19 @@ def _displaySummary(rows):
 def _displayDetailed(rows):
     '''prints the details of all repack requests according to the given criteria'''
     # print out results
-    print '='*165
-    print 'SubmitTime        RepackTime             User                      Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status'
-    print '-'*165
+    print '='*167
+    print 'SubmitTime          RepackTime             User                      Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status'
+    print '-'*167
     sumTotal = sumSize = sumToRecall = sumToMigr = sumFailed = sumMigrated = 0
     globalStatus = 2  # FINISHED
     shownVids = set()
     count = 0
-    for subTime, lastModTime, user, machine, vid, status, total, totsize, toRecall, toMigr, failed, migrated in rows:
+    for subTime, lastModTime, user, machine, vid, status, total, totsize, toRecall, toMigr, failed in rows:
         if not vids and vid in shownVids:
             # when showing full statistics skip the less recent requests for each VID
             continue
         shownVids.add(vid)
+        migrated = total - toRecall - toMigr - failed
         _printStatusLine(subTime, lastModTime, user, machine, vid, status, total, totsize, toRecall, toMigr, failed, migrated)
         sumTotal += total
         if totsize > 0:
@@ -216,7 +217,7 @@ def _displayDetailed(rows):
             globalStatus = 0  # STARTING
         if (status == 1 or status == 4) and globalStatus == 2:
             globalStatus = 1  # ONGOING
-    print '-'*165
+    print '-'*167
     #  when showing full statistics, print out summary line
     if not vids and sumTotal > 0:
         _printStatusLine(time.time(), 0, '-', 'TOTAL', count, globalStatus, sumTotal, sumSize, sumToRecall, sumToMigr, sumFailed, sumMigrated)
@@ -244,8 +245,7 @@ def displayStatus(detailed):
                StageRepackRequest.fileCount total, StageRepackRequest.totalSize totsize,
                SUM(CASE WHEN SubRequest.status IN (4, 5) THEN 1 ELSE 0 END) toRecall,
                SUM(CASE SubRequest.status WHEN 12 THEN 1 ELSE 0 END) toMigr,
-               SUM(CASE WHEN SubRequest.status IN (7, 9) THEN 1 ELSE 0 END) failed,
-               SUM(CASE WHEN SubRequest.status IN (8, 11) THEN 1 ELSE 0 END) migrated
+               SUM(CASE WHEN SubRequest.status IN (7, 9) THEN 1 ELSE 0 END) failed
           FROM StageRepackRequest, SubRequest
          WHERE SubRequest.request(+) = StageRepackRequest.id
         '''

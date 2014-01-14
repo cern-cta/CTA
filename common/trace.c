@@ -21,9 +21,6 @@ typedef struct trc_spec {
 	int      _trace_level ;        /* dynamic trace level          */
 	int      _indent_level ;       /* dynamic indentation level    */
 } trc_spec_t;
-#define trace_level trc->_trace_level
-#define trace_initialized trc->_trace_initialized
-#define indent_level trc->_indent_level
 
 extern  char* getenv();         /* get environment variable             */
 
@@ -31,17 +28,17 @@ void print_trace(int level, const char *label, const char *format, ...)
 {
 	va_list args;           /* arguments                            */
 	register int i;         /* general purpose index                */
-	trc_spec_t *trc;
+	void *trc;
 	int sav_errno = errno;
 	int sav_serrno = serrno;
 
     va_start(args, format);
-	Cglobals_get(&trc_key,(void **)&trc,sizeof(trc_spec_t));
-	if (trace_level < level) {
+	Cglobals_get(&trc_key,&trc,sizeof(trc_spec_t));
+	if ( ((trc_spec_t*)trc)->_trace_level < level) {
           va_end (args);
           return;
         }
-	for (i=0; i< level+indent_level ; i++)       {
+	for (i=0; i< level+ ((trc_spec_t*)trc)->_indent_level; i++) {
 		fprintf(stdout," "); /* indentation                    */
 	}
 	fprintf(stdout,"%s: ", label);
@@ -57,36 +54,36 @@ void init_trace(const char    *name)                  /* environment variable na
   /* initialize trace level               */
 {
 	register char    *p;    /* general purpose char. string pointer */
-	trc_spec_t *trc;
+	void *trc;
 	int sav_errno = errno;
 	int sav_serrno = serrno;
 
-	Cglobals_get(&trc_key,(void **)&trc,sizeof(trc_spec_t));
-	if (!trace_initialized) {
+	Cglobals_get(&trc_key,&trc,sizeof(trc_spec_t));
+	if (!((trc_spec_t*)trc)->_trace_initialized) {
 		if ((p = getenv(name)) != NULL)       {
 			if (atoi(p) != 0)       {
-				trace_level = atoi(p);
+				((trc_spec_t*)trc)->_trace_level = atoi(p);
         /* only print the trace level for levels 2 and above */
-        if (trace_level > 1) {
-          print_trace(0, "    **** ", "trace level set to %d", trace_level);
+        if (((trc_spec_t*)trc)->_trace_level > 1) {
+          print_trace(0, "    **** ", "trace level set to %d", ((trc_spec_t*)trc)->_trace_level);
         }
 			}
 		}
-		trace_initialized++;
+		(((trc_spec_t*)trc)->_trace_initialized)++;
 	}
-	indent_level++;
+	(((trc_spec_t*)trc)->_indent_level)++;
 	errno = sav_errno;
 	serrno = sav_serrno;
 }
 
 void end_trace()         /* end trace level                      */
 {
-	trc_spec_t *trc;
+	void *trc;
 	int sav_errno = errno;
 	int sav_serrno = serrno;
 
-	Cglobals_get(&trc_key,(void **)&trc,sizeof(trc_spec_t));
-	if (indent_level > 0) indent_level--;
+	Cglobals_get(&trc_key,&trc,sizeof(trc_spec_t));
+	if (((trc_spec_t*)trc)->_indent_level > 0) (((trc_spec_t*)trc)->_indent_level)--;
 	errno = sav_errno;
 	serrno = sav_serrno;
 }
@@ -108,11 +105,11 @@ void print_trace_r(void *trace, int level, const char *label, const char *format
           return;
         }
 	trc = (trc_spec_t *)trace;
-	if (trace_level < level) {
+	if (trc->_trace_level < level) {
           va_end (args);
           return;
         }
-	for (i=0; i< level+indent_level ; i++)       {
+	for (i=0; i< level+(((trc_spec_t*)trc)->_indent_level) ; i++)       {
 		fprintf(stdout," "); /* indentation                    */
 	}
 	fprintf(stdout,"%s: ", label);
@@ -136,19 +133,19 @@ void init_trace_r(  /* initialize trace level               */
 	*trace = calloc(1, sizeof(trc_spec_t));
 	if (*trace == NULL) return;
 	trc = (trc_spec_t *)*trace;
-	if (!trace_initialized) {
+	if (!((trc_spec_t*)trc)->_trace_initialized) {
 		if ((p = getenv(name)) != NULL)       {
 			if (atoi(p) != 0)       {
-				trace_level = atoi(p);
+				((trc_spec_t*)trc)->_trace_level = atoi(p);
         /* only print the trace level for levels 2 and above */
-        if (trace_level > 1) {
-          print_trace(0, "    **** ", "trace level set to %d", trace_level);
+        if (((trc_spec_t*)trc)->_trace_level > 1) {
+          print_trace(0, "    **** ", "trace level set to %d", ((trc_spec_t*)trc)->_trace_level);
         }
       }
 		}
-		trace_initialized++;
+		(((trc_spec_t*)trc)->_trace_initialized)++;
 	}
-	indent_level++;
+	(((trc_spec_t*)trc)->_indent_level)++;
 	errno = sav_errno;
 	serrno = sav_serrno;
 }
@@ -161,7 +158,7 @@ void end_trace_r(void *trace)         /* end trace level                      */
 
 	if (trace == NULL) return;
 	trc = (trc_spec_t *)trace;
-	if (indent_level > 0) indent_level--;
+	if (((trc_spec_t*)trc)->_indent_level > 0) (((trc_spec_t*)trc)->_indent_level)--;
 	errno = sav_errno;
 	serrno = sav_serrno;
 }

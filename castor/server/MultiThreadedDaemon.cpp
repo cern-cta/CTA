@@ -33,7 +33,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::MultiThreadedDaemon::MultiThreadedDaemon(log::Logger &logger):
-  Daemon(logger) {
+  Daemon(logger), m_signalMutex(NULL) {
 }
 
 //------------------------------------------------------------------------------
@@ -186,6 +186,16 @@ void castor::server::MultiThreadedDaemon::start()
 //------------------------------------------------------------------------------
 void castor::server::MultiThreadedDaemon::setupMultiThreadedSignalHandling()
   throw (castor::exception::Internal) {
+  // Initialize mutex variable in case of a signal. Timeout = 10 seconds
+  try {
+    m_signalMutex = new Mutex(0);
+  } catch(castor::exception::Internal &ie) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to create m_signalMutex: " <<
+      ie.getMessage().str();
+    throw ex;
+  }
+
   // Mask all signals so that user threads are not unpredictably
   // interrupted by them
   sigemptyset(&m_signalSet);
