@@ -86,9 +86,9 @@ static int getacct_key = -1;
 
 char *getacct()
 {
-    char *resbuf = NULL;
+    void *resbuf = NULL;
 
-    Cglobals_get(&getacct_key,(void **) &resbuf,BUFSIZ+1);
+    Cglobals_get(&getacct_key, &resbuf,BUFSIZ+1);
     if ( resbuf == NULL ) return(NULL);
 
     return(getacct_r(resbuf));

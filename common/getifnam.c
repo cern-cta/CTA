@@ -123,10 +123,10 @@ char  *getifnam_r(int     s,
 
 char *getifnam(int s)
 {
-    char *ifname = NULL;
+    void *ifname = NULL;
     size_t ifnamelen = 16;
 
-    Cglobals_get(&ifname_key,(void **)&ifname,ifnamelen);
+    Cglobals_get(&ifname_key,&ifname,ifnamelen);
 
     return(getifnam_r(s,ifname,ifnamelen));
 }
