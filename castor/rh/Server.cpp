@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
 // Constructor
 //------------------------------------------------------------------------------
 castor::rh::Server::Server(castor::log::Logger &logger) :
-  castor::server::BaseDaemon(logger),
+  castor::server::MultiThreadedDaemon(logger),
   m_port(-1),
   m_secure(false),
   m_waitIfBusy(true),
@@ -126,13 +126,13 @@ castor::rh::Server::Server(castor::log::Logger &logger) :
     // create oracle and streaming conversion service
     // so that it is not deleted and recreated all the time
     castor::ICnvSvc *svc =
-      svcs()->cnvService("DbCnvSvc", castor::SVC_DBCNV);
+      BaseObject::services()->cnvService("DbCnvSvc", castor::SVC_DBCNV);
     if (0 == svc) {
       // "Could not get Conversion Service for Database" message
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 2);
     }
     castor::ICnvSvc *svc2 =
-      svcs()->cnvService("StreamCnvSvc", castor::SVC_STREAMCNV);
+      BaseObject::services()->cnvService("StreamCnvSvc", castor::SVC_STREAMCNV);
     if (0 == svc2) {
       // "Could not get Conversion Service for Streaming" message
       castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, 3);
@@ -277,7 +277,7 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
   }
 
   if (nbThreads != -1) {
-    castor::server::BaseThreadPool* p = m_threadPools['R'];
+    castor::server::BaseThreadPool* p = getThreadPool('R');
     p->setNbThreads(nbThreads);
   }
   

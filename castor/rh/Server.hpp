@@ -26,7 +26,7 @@
 #ifndef RH_SERVER_HPP
 #define RH_SERVER_HPP 1
 
-#include "castor/server/BaseDaemon.hpp"
+#include "castor/server/MultiThreadedDaemon.hpp"
 #include "castor/exception/Exception.hpp"
 
 #define CSP_MSG_MAGIC 0xCA001
@@ -52,7 +52,7 @@ namespace castor {
      * arrive. The main task of this component is to store them
      * for future processing, after checking authc/authz.
      */
-    class Server : public castor::server::BaseDaemon {
+    class Server : public castor::server::MultiThreadedDaemon {
 
     public:
 

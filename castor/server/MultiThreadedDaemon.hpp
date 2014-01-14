@@ -79,6 +79,11 @@ public:
    */
   void addThreadPool(BaseThreadPool *const pool) throw();
 
+  /**
+   * Starts all the thread pools
+   */
+  void start() throw (castor::exception::Exception);
+
 protected:
 
   /**
@@ -88,11 +93,6 @@ protected:
    * @param argv The command-line vector.
    */
   virtual void parseCommandLine(int argc, char *argv[]);
-
-  /**
-   * Starts all the thread pools
-   */
-  void start() throw (castor::exception::Exception);
 
   /**
    * Adds a dedicated UDP thread pool for getting wakeup notifications
