@@ -54,14 +54,14 @@
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmServer::VdqmServer(log::Logger &logger)
   throw(castor::exception::Exception) :
-  castor::server::BaseDaemon(logger),
+  castor::server::MultiThreadedDaemon(logger),
   m_requestHandlerThreadNumber(REQUESTHANDLERDEFAULTTHREADNUMBER),
   m_RTCPJobSubmitterThreadNumber(RTCPJOBSUBMITTERDEFAULTTHREADNUMBER),
   m_schedulerThreadNumber(SCHEDULERDEFAULTTHREADNUMBER) {
   // Initializes the DLF logging including the definition of the predefined
   // messages.  Please not that castor::server::BaseServer::dlfInit can throw a
   // castor::exception::Exception.
-  castor::server::BaseServer::dlfInit(s_dlfMessages);
+  dlfInit(s_dlfMessages);
 }
 
 

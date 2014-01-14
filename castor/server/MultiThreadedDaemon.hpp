@@ -84,6 +84,14 @@ public:
    */
   void start() throw (castor::exception::Exception);
 
+  /**
+   * Adds a dedicated UDP thread pool for getting wakeup notifications
+   * from other Castor daemons. Those notifications are supposed to be
+   * sent using the Daemon::sendNotification() method.
+   * @param port the UDP port where to listen
+   */
+  void addNotifierThreadPool(const int port);
+
 protected:
 
   /**
@@ -93,14 +101,6 @@ protected:
    * @param argv The command-line vector.
    */
   virtual void parseCommandLine(int argc, char *argv[]);
-
-  /**
-   * Adds a dedicated UDP thread pool for getting wakeup notifications
-   * from other Castor daemons. Those notifications are supposed to be
-   * sent using the BaseServer::sendNotification method.
-   * @param port the UDP port where to listen
-   */
-  void addNotifierThreadPool(const int port);
 
   /**
    * Shuts down the daemon gracefully.
