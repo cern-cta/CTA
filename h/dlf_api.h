@@ -68,7 +68,7 @@
 
 /* Limits */
 #define DLF_MAX_PARAMNAMELEN  20    /* Maximum length of a parameter name */
-#define DLF_MAX_PARAMSTRLEN   1024  /* Maximum length of a string value */
+#define DLF_MAX_PARAMSTRLEN   2048  /* Maximum length of a string value */
 #define DLF_MAX_IDENTLEN      20    /* Maximum length of an ident/facility */
 #define DLF_MAX_LINELEN       8192  /* Maximum length of a log message */
 #define DLF_MAX_MSGTEXTS      8192  /* Maximum number of registered messages */
