@@ -27,7 +27,7 @@
 #define STAGER_MAIN_DAEMON_HPP 1
 
 
-#include "castor/server/BaseDaemon.hpp"
+#include "castor/server/MultiThreadedDaemon.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/IObject.hpp"
 
@@ -43,7 +43,7 @@ namespace castor{
     
     namespace daemon{
 
-      class StagerDaemon : public castor::server::BaseDaemon {
+      class StagerDaemon : public castor::server::MultiThreadedDaemon {
 
       public:
 

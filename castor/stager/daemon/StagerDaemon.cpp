@@ -159,7 +159,7 @@ int main(int argc, char* argv[]){
 /****************************************************************************************/
 castor::stager::daemon::StagerDaemon::StagerDaemon(log::Logger &logger)
   throw (castor::exception::Exception)
-  : castor::server::BaseDaemon(logger) {
+  : castor::server::MultiThreadedDaemon(logger) {
 
   castor::dlf::Message stagerDlfMessages[]={
 
@@ -324,6 +324,6 @@ void castor::stager::daemon::StagerDaemon::help(std::string programName)
 
 void castor::stager::daemon::StagerDaemon::waitAllThreads() throw()
 {
-  castor::server::BaseDaemon::waitAllThreads();
+  castor::server::MultiThreadedDaemon::waitAllThreads();
   castor::replier::RequestReplier::getInstance()->terminate();
 }

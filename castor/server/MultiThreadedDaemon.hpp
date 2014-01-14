@@ -92,8 +92,6 @@ public:
    */
   void addNotifierThreadPool(const int port);
 
-protected:
-
   /**
    * Parses a command line to set the server options.
    *
@@ -102,10 +100,19 @@ protected:
    */
   virtual void parseCommandLine(int argc, char *argv[]);
 
+protected:
+
   /**
    * Shuts down the daemon gracefully.
    */
   void shutdownGracefully() throw();
+
+  /**
+   * Sends a shutdown message to all thread pools, then
+   * waits for all threads to terminate before returning.
+   * This implements a graceful kill and is triggered by SIGTERM.
+   */
+  virtual void waitAllThreads() throw ();
 
 private:
 
@@ -124,13 +131,6 @@ private:
    * Called by start()
    */
   void handleSignals();
-
-  /**
-   * Sends a shutdown message to all thread pools, then
-   * waits for all threads to terminate before returning.
-   * This implements a graceful kill and is triggered by SIGTERM.
-   */
-  virtual void waitAllThreads() throw ();
 
   /**
    * Command line parameters. Includes by default a parameter
