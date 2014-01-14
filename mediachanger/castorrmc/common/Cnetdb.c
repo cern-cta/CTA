@@ -33,15 +33,15 @@ const char *name;
     static int hostdata_key = -1;
     int rc;
     struct hostent *hp;
-    struct hostent *result = (struct hostent *)NULL;
-    char *buffer = (char *)NULL;
+    void *result = NULL;
+    void *buffer = NULL;
     int bufsize = 1024;
     int h_errnoop = 0;
 
-    Cglobals_get(&hostent_key,(void **)&result,sizeof(struct hostent));
-    Cglobals_get(&hostdata_key,(void **)&buffer,bufsize);
+    Cglobals_get(&hostent_key,&result,sizeof(struct hostent));
+    Cglobals_get(&hostdata_key,&buffer,bufsize);
 
-    if ( result == (struct hostent *)NULL || buffer == (char *)NULL ) {
+    if ( result == NULL || buffer == NULL ) {
         h_errno = NO_RECOVERY;
         return(NULL);
     }
@@ -74,15 +74,15 @@ int type;
     static int hostdata_key = -1;
     int rc;
     struct hostent *hp;
-    struct hostent *result = (struct hostent *)NULL;
-    char *buffer = (char *)NULL;
+    void *result = NULL;
+    void *buffer = NULL;
     int bufsize = 1024;
     int h_errnoop = 0;
 
-    Cglobals_get(&hostent_key,(void **)&result,sizeof(struct hostent));
-    Cglobals_get(&hostdata_key,(void **)&buffer,bufsize);
+    Cglobals_get(&hostent_key,&result,sizeof(struct hostent));
+    Cglobals_get(&hostdata_key,&buffer,bufsize);
 
-    if ( result == (struct hostent *)NULL || buffer == (char *)NULL ) {
+    if ( result == NULL || buffer == NULL ) {
         h_errno = NO_RECOVERY;
         return(NULL);
     }
@@ -114,14 +114,14 @@ const char *proto;
     static int servdata_key = -1;
     int rc;
     struct servent *sp;
-    struct servent *result = (struct servent *)NULL;
-    char *buffer = (char *)NULL;
+    void *result = NULL;
+    void *buffer = NULL;
     int bufsize = 1024;
 
-    Cglobals_get(&servent_key,(void **)&result,sizeof(struct servent));
-    Cglobals_get(&servdata_key,(void **)&buffer,bufsize);
+    Cglobals_get(&servent_key,&result,sizeof(struct servent));
+    Cglobals_get(&servdata_key,&buffer,bufsize);
 
-    if ( result == (struct servent *)NULL || buffer == (char *)NULL ) {
+    if ( result == NULL || buffer == NULL ) {
         return(NULL);
     }
     rc = getservbyname_r(name,proto,result,buffer,bufsize,&sp);

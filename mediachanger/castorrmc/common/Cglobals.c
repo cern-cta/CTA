@@ -231,7 +231,7 @@ void Cglobals_getTid(int *Tid)
 
 int *C__serrno() {
     int rc;
-    int *addr;
+    void *addr;
 
     if ( local_setspec == NULL ) {
         return(&serrno);
@@ -240,10 +240,10 @@ int *C__serrno() {
         /*
          * We re-use the old single thread serrno as key
          */
-        rc = local_getspec(&serrno,(void **)&addr);
+        rc = local_getspec(&serrno,&addr);
         if ( rc == -1 || addr == NULL ) {
             addr = (int *)calloc(1,sizeof(int));
-            rc = local_setspec(&serrno,(void *)addr);
+            rc = local_setspec(&serrno,addr);
         }
         /*
          * If memory allocation failed, we can still
@@ -259,7 +259,7 @@ int *C__serrno() {
 
 int *C__rfio_errno() {
     int rc;
-    int *addr;
+    void *addr;
 
     if ( local_setspec == NULL ) {
         return(&rfio_errno);
@@ -268,10 +268,10 @@ int *C__rfio_errno() {
         /*
          * We re-use the old single thread rfio_errno as key
          */
-        rc = local_getspec(&rfio_errno,(void **)&addr);
+        rc = local_getspec(&rfio_errno,&addr);
         if ( rc == -1 || addr == NULL ) {
             addr = (int *)calloc(1,sizeof(int));
-            rc = local_setspec(&rfio_errno,(void *)addr);
+            rc = local_setspec(&rfio_errno,addr);
         }
         /*
          * If memory allocation failed, we can still
@@ -287,7 +287,7 @@ int *C__rfio_errno() {
 
 int *C__Copterr() {
     int rc;
-    int *addr;
+    void *addr;
 
     if ( local_setspec == NULL ) {
         return(&Copterr);
@@ -296,10 +296,10 @@ int *C__Copterr() {
         /*
          * We re-use the old single thread Copterr as key
          */
-        rc = local_getspec(&Copterr,(void **)&addr);
+        rc = local_getspec(&Copterr,&addr);
         if ( rc == -1 || addr == NULL ) {
             addr = (int *)calloc(1,sizeof(int));
-            rc = local_setspec(&Copterr,(void *)addr);
+            rc = local_setspec(&Copterr,addr);
         }
         /*
          * If memory allocation failed, we can still
@@ -315,7 +315,7 @@ int *C__Copterr() {
 
 int *C__Coptind() {
     int rc;
-    int *addr;
+    void *addr;
 
     if ( local_setspec == NULL ) {
         return(&Coptind);
@@ -324,10 +324,10 @@ int *C__Coptind() {
         /*
          * We re-use the old single thread rfio_errno as key
          */
-        rc = local_getspec(&Coptind,(void **)&addr);
+        rc = local_getspec(&Coptind,&addr);
         if ( rc == -1 || addr == NULL ) {
             addr = (int *)calloc(1,sizeof(int));
-            rc = local_setspec(&Coptind,(void *)addr);
+            rc = local_setspec(&Coptind,addr);
         }
         /*
          * If memory allocation failed, we can still
@@ -343,7 +343,7 @@ int *C__Coptind() {
 
 int *C__Coptopt() {
     int rc;
-    int *addr;
+    void *addr;
 
     if ( local_setspec == NULL ) {
         return(&Coptopt);
@@ -352,10 +352,10 @@ int *C__Coptopt() {
         /*
          * We re-use the old single thread rfio_errno as key
          */
-        rc = local_getspec(&Coptopt,(void **)&addr);
+        rc = local_getspec(&Coptopt,&addr);
         if ( rc == -1 || addr == NULL ) {
             addr = (int *)calloc(1,sizeof(int));
-            rc = local_setspec(&Coptopt,(void *)addr);
+            rc = local_setspec(&Coptopt,addr);
         }
         /*
          * If memory allocation failed, we can still
@@ -371,7 +371,7 @@ int *C__Coptopt() {
 
 int *C__Coptreset() {
     int rc;
-    int *addr;
+    void *addr;
 
     if ( local_setspec == NULL ) {
         return(&Coptreset);
@@ -380,10 +380,10 @@ int *C__Coptreset() {
         /*
          * We re-use the old single thread rfio_errno as key
          */
-        rc = local_getspec(&Coptreset,(void **)&addr);
+        rc = local_getspec(&Coptreset,&addr);
         if ( rc == -1 || addr == NULL ) {
             addr = (int *)calloc(1,sizeof(int));
-            rc = local_setspec(&Coptreset,(void *)addr);
+            rc = local_setspec(&Coptreset,addr);
         }
         /*
          * If memory allocation failed, we can still
@@ -399,7 +399,7 @@ int *C__Coptreset() {
 
 char **C__Coptarg() {
     int rc;
-    char **addr;
+    void *addr;
 
     if ( local_setspec == NULL ) {
         return(&Coptarg);
@@ -408,10 +408,10 @@ char **C__Coptarg() {
         /*
          * We re-use the old single thread rfio_errno as key
          */
-        rc = local_getspec(&Coptarg_key,(void **)&addr);
+        rc = local_getspec(&Coptarg_key,&addr);
         if ( rc == -1 || addr == NULL ) {
             addr = (char **)calloc(1,sizeof(char *));
-            rc = local_setspec(&Coptarg_key,(void *)addr);
+            rc = local_setspec(&Coptarg_key,addr);
         }
         /*
          * If memory allocation failed, we can still

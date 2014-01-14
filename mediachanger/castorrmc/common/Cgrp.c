@@ -29,14 +29,14 @@ const char *name;
      */
     static int grp_key = -1;
     static int grpbuf_key = -1;
-    struct group *grp = NULL;
+    void *grp = NULL;
     struct group *result = NULL;
-    char *grpbuf = NULL;
+    void *grpbuf = NULL;
     size_t grpbuflen = BUFSIZ;
     int rc;
 
-    Cglobals_get(&grp_key,(void **)&grp,sizeof(struct group));
-    Cglobals_get(&grpbuf_key,(void **)&grpbuf,grpbuflen);
+    Cglobals_get(&grp_key,&grp,sizeof(struct group));
+    Cglobals_get(&grpbuf_key,&grpbuf,grpbuflen);
 
     if ( grp == NULL || grpbuf == NULL ) {
         serrno = SEINTERNAL;
@@ -60,14 +60,14 @@ gid_t gid;
      */
     static int grp_key = -1;
     static int grpbuf_key = -1;
-    struct group *grp = NULL;
+    void *grp = NULL;
     struct group *result = NULL;
-    char *grpbuf = NULL;
+    void *grpbuf = NULL;
     size_t grpbuflen = BUFSIZ;
     int rc;
 
-    Cglobals_get(&grp_key,(void **)&grp,sizeof(struct group));
-    Cglobals_get(&grpbuf_key,(void **)&grpbuf,grpbuflen);
+    Cglobals_get(&grp_key,&grp,sizeof(struct group));
+    Cglobals_get(&grpbuf_key,&grpbuf,grpbuflen);
 
     if ( grp == NULL || grpbuf == NULL ) {
         serrno = SEINTERNAL;
