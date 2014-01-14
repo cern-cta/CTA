@@ -30,7 +30,7 @@
 
 // Include Files
 
-#include "castor/server/BaseDaemon.hpp"
+#include "castor/server/MultiThreadedDaemon.hpp"
 
 
 namespace castor {
@@ -40,7 +40,7 @@ namespace castor {
     /**
      * TapeGateway daemon.
      */
-    class TapeGatewayDaemon : public castor::server::BaseDaemon{
+    class TapeGatewayDaemon : public castor::server::MultiThreadedDaemon{
       
       /**
        * port to accept connections (environment)     

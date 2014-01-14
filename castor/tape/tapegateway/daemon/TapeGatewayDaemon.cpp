@@ -64,7 +64,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::main(int argc, char* argv[]){
 // Try to initialize the DLF logging system, quitting with an error message
   // to stderr if the initialization fails
   try {
-    castor::server::BaseServer::dlfInit(s_dlfMessages);
+    dlfInit(s_dlfMessages);
   } catch(castor::exception::Exception& ex) {
     std::cerr << std::endl <<
       "Failed to start daemon"
@@ -165,7 +165,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
 // TapeGatewayDaemon Constructor
 //------------------------------------------------------------------------------
 castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon(
-  log::Logger &logger): castor::server::BaseDaemon(logger) {
+  log::Logger &logger): castor::server::MultiThreadedDaemon(logger) {
 
   // get the port
   char* tmp=NULL;

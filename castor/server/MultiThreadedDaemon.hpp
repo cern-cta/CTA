@@ -79,7 +79,18 @@ public:
    */
   void addThreadPool(BaseThreadPool *const pool) throw();
 
-protected:
+  /**
+   * Starts all the thread pools
+   */
+  void start() throw (castor::exception::Exception);
+
+  /**
+   * Adds a dedicated UDP thread pool for getting wakeup notifications
+   * from other Castor daemons. Those notifications are supposed to be
+   * sent using the Daemon::sendNotification() method.
+   * @param port the UDP port where to listen
+   */
+  void addNotifierThreadPool(const int port);
 
   /**
    * Parses a command line to set the server options.
@@ -89,23 +100,19 @@ protected:
    */
   virtual void parseCommandLine(int argc, char *argv[]);
 
-  /**
-   * Starts all the thread pools
-   */
-  void start() throw (castor::exception::Exception);
-
-  /**
-   * Adds a dedicated UDP thread pool for getting wakeup notifications
-   * from other Castor daemons. Those notifications are supposed to be
-   * sent using the BaseServer::sendNotification method.
-   * @param port the UDP port where to listen
-   */
-  void addNotifierThreadPool(const int port);
+protected:
 
   /**
    * Shuts down the daemon gracefully.
    */
   void shutdownGracefully() throw();
+
+  /**
+   * Sends a shutdown message to all thread pools, then
+   * waits for all threads to terminate before returning.
+   * This implements a graceful kill and is triggered by SIGTERM.
+   */
+  virtual void waitAllThreads() throw ();
 
 private:
 
@@ -124,13 +131,6 @@ private:
    * Called by start()
    */
   void handleSignals();
-
-  /**
-   * Sends a shutdown message to all thread pools, then
-   * waits for all threads to terminate before returning.
-   * This implements a graceful kill and is triggered by SIGTERM.
-   */
-  virtual void waitAllThreads() throw ();
 
   /**
    * Command line parameters. Includes by default a parameter
