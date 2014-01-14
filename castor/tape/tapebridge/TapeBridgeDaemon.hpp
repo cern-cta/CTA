@@ -27,7 +27,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
-#include "castor/server/BaseDaemon.hpp"
+#include "castor/server/MultiThreadedDaemon.hpp"
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/tape/tapebridge/BulkRequestConfigParams.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
@@ -47,7 +47,7 @@ namespace tapebridge {
  * The daemon which acts as a protocol bridge between the tape-gateway daemon
  * and the legacy rtcpd daemon.
  */
-class TapeBridgeDaemon : public castor::server::BaseDaemon {
+class TapeBridgeDaemon : public castor::server::MultiThreadedDaemon {
 
 public:
 

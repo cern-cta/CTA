@@ -47,7 +47,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapebridge::TapeBridgeDaemon::TapeBridgeDaemon(
   log::Logger &logger) throw(castor::exception::Exception) :
-  castor::server::BaseDaemon(logger),
+  castor::server::MultiThreadedDaemon(logger),
   m_vdqmRequestHandlerThreadPool(0) {
 }
 
@@ -69,7 +69,7 @@ int castor::tape::tapebridge::TapeBridgeDaemon::main(const int argc,
   // to stderr if the initialization fails
   try {
 
-    castor::server::BaseServer::dlfInit(s_dlfMessages);
+    castor::server::Daemon::dlfInit(s_dlfMessages);
 
   } catch(castor::exception::Exception &ex) {
     std::cerr << std::endl <<
