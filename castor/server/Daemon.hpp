@@ -55,8 +55,6 @@ public:
    */
   const std::string &getServerName() const throw();
 
-protected:
-
   /**
    * Sets the runAsStagerSuperuser flag to true.
    *
@@ -64,6 +62,8 @@ protected:
    * false.
    */
   void runAsStagerSuperuser() throw();
+
+protected:
 
   /**
    * Initializes the DLF, both for streaming and regular messages

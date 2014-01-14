@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
 // Constructor
 //-----------------------------------------------------------------------------
 castor::gc::GcDaemon::GcDaemon(log::Logger &logger):
-  castor::server::BaseDaemon(logger) {
+  castor::server::MultiThreadedDaemon(logger) {
 
   // Now with predefined messages
   castor::dlf::Message messages[] = {
