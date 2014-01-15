@@ -171,7 +171,7 @@ namespace tape {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const throw (castor::tape::exceptions::Errnum);
+      void verify() const throw (castor::tape::Exception);
     };
 
     class EOF1 : public HDR1EOF1 {
@@ -192,7 +192,7 @@ namespace tape {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const throw (castor::tape::exceptions::Errnum);
+      void verify() const throw (castor::tape::Exception);
     };
     
     class HDR1PRELABEL : public HDR1EOF1 {
@@ -208,7 +208,7 @@ namespace tape {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const throw (castor::tape::exceptions::Errnum);
+      void verify() const throw (castor::tape::Exception);
     };
 
     // The common part of the HDR2 and EOF2 labels
@@ -245,7 +245,7 @@ namespace tape {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verifyCommon() const throw (castor::tape::exceptions::Errnum);
+      void verifyCommon() const throw (castor::tape::Exception);
     public:
       /**
        * @return    The block length 
@@ -271,7 +271,7 @@ namespace tape {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const throw (castor::tape::exceptions::Errnum);
+      void verify() const throw (castor::tape::Exception);
     };
 
     class EOF2 : public HDR2EOF2 {
@@ -290,7 +290,7 @@ namespace tape {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const throw (castor::tape::exceptions::Errnum);
+      void verify() const throw (castor::tape::Exception);
     };
 
     // The common part of the UHL1 and UTL1 labels
@@ -330,7 +330,7 @@ namespace tape {
        * Throws an exception if the common part structure does
        * not match expectations.
        */
-      void verifyCommon() const throw (castor::tape::exceptions::Errnum);
+      void verifyCommon() const throw (castor::tape::Exception);
     public:
       /**
        * @return    The block size
@@ -367,7 +367,7 @@ namespace tape {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const throw (castor::tape::exceptions::Errnum);
+      void verify() const throw (castor::tape::Exception);
     };
 
     class UTL1 : public UHL1UTL1 {
@@ -390,7 +390,7 @@ namespace tape {
       /**
        * Throws an exception if the structure does not match expectations.
        */
-      void verify() const throw (castor::tape::exceptions::Errnum);
+      void verify() const throw (castor::tape::Exception);
     };
 
     template <size_t n>

@@ -38,29 +38,29 @@ void AULFile::VOL1::fill(std::string vsn) {
 
 void AULFile::VOL1::verify() {
   if (cmpString(label, "VOL1"))
-    throw exceptions::Errnum(std::string("Failed verify for the VOL1: ") +
+    throw Exception(std::string("Failed verify for the VOL1: ") +
           AULFile::toString(label));
   if (!cmpString(VSN, ""))
-    throw exceptions::Errnum(std::string("Failed verify for the VSN: ") +
+    throw Exception(std::string("Failed verify for the VSN: ") +
           AULFile::toString(VSN));
   if (cmpString(lblStandard, "3"))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the label standard: ") +
           AULFile::toString(lblStandard));
   if (cmpString(ownerID, "CASTOR"))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the ownerID: ") +
           AULFile::toString(ownerID));
 
   /* now we verify all other fields which must be spaces */
   if (cmpString(accessibility, ""))
-    throw exceptions::Errnum("accessibility is not empty");
+    throw Exception("accessibility is not empty");
   if (cmpString(reserved1, ""))
-    throw exceptions::Errnum("reserved1 is not empty");
+    throw Exception("reserved1 is not empty");
   if (cmpString(implID, ""))
-    throw exceptions::Errnum("implID is not empty");
+    throw Exception("implID is not empty");
   if (cmpString(reserved2, ""))
-    throw exceptions::Errnum("reserved2 is not empty");
+    throw Exception("reserved2 is not empty");
 }
 
 void AULFile::HDR1EOF1::fillCommon(
@@ -89,44 +89,44 @@ void AULFile::HDR1EOF1::verifyCommon()
   const throw (exceptions::Errnum) {
 
   if (!cmpString(fileId, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the fileId: ") +
           AULFile::toString(fileId));
   if (!cmpString(VSN, ""))
-    throw exceptions::Errnum(std::string("Failed verify for the VSN: ") +
+    throw Exception(std::string("Failed verify for the VSN: ") +
           AULFile::toString(VSN));
   if (cmpString(fSec, "0001"))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the fSec: ") +
           AULFile::toString(fSec));
   if (!cmpString(fSeq, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the fSeq: ") +
           AULFile::toString(fSeq));
   if (cmpString(genNum, "0001"))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the genNum: ") +
           AULFile::toString(genNum));
   if (cmpString(verNumOfGen, "00"))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the verNumOfGen: ") +
           AULFile::toString(verNumOfGen));
   if (!cmpString(creationDate, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the creationDate: ") +
           AULFile::toString(creationDate));
   if (!cmpString(expirationDate, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the expirationDate: ") +
           AULFile::toString(expirationDate));
   if (cmpString(accessibility, ""))
-    throw exceptions::Errnum("accessibility is not empty");
+    throw Exception("accessibility is not empty");
   if (!cmpString(sysCode, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the sysCode: ") +
           AULFile::toString(sysCode));
   if (cmpString(reserved, ""))
-    throw exceptions::Errnum("reserved is not empty");
+    throw Exception("reserved is not empty");
 }
 
 void AULFile::HDR1::fill(
@@ -140,13 +140,12 @@ void AULFile::HDR1::fill(
   fillCommon(_fileId, _VSN, _fSeq);
 }
 
-void AULFile::HDR1::verify() const throw (exceptions::Errnum) {
+void AULFile::HDR1::verify() const throw (Exception) {
   if (cmpString(label, "HDR1"))
-    throw exceptions::Errnum(std::string("Failed verify for the HDR1: ") +
+    throw Exception(std::string("Failed verify for the HDR1: ") +
           AULFile::toString(label));
   if (cmpString(blockCount, "000000"))
-    throw exceptions::Errnum(
-          std::string("Failed verify for the blockCount: ") +
+    throw Exception(std::string("Failed verify for the blockCount: ") +
           AULFile::toString(blockCount));
 
   verifyCommon();
@@ -160,17 +159,17 @@ void AULFile::HDR1PRELABEL::fill(std::string _VSN) {
 }
 
 void AULFile::HDR1PRELABEL::verify()
-  const throw (exceptions::Errnum) {
+  const throw (Exception) {
 
   if (cmpString(label, "HDR1"))
-    throw exceptions::Errnum(std::string("Failed verify for the HDR1: ") +
+    throw Exception(std::string("Failed verify for the HDR1: ") +
           AULFile::toString(label));
   if (cmpString(blockCount, "000000"))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the blockCount: ") +
           AULFile::toString(blockCount));
   if (cmpString(fileId, "PRELABEL"))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the PRELABEL: ") +
           AULFile::toString(fileId));
 
@@ -186,12 +185,12 @@ void AULFile::EOF1::fill(
   fillCommon(_fileId, _VSN, _fSeq);
 }
 
-void AULFile::EOF1::verify() const throw (exceptions::Errnum) {
+void AULFile::EOF1::verify() const throw (Exception) {
   if (cmpString(label, "EOF1"))
-    throw exceptions::Errnum(std::string("Failed verify for the EOF1: ") +
+    throw Exception(std::string("Failed verify for the EOF1: ") +
           AULFile::toString(label));
   if (!cmpString(blockCount, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the blockCount: ") +
           AULFile::toString(blockCount));
 
@@ -212,30 +211,30 @@ void AULFile::HDR2EOF2::fillCommon(int _blockLength, bool driveHasCompression) {
 }
 
 void AULFile::HDR2EOF2::verifyCommon() 
-  const throw (exceptions::Errnum) {
+  const throw (Exception) {
 
   if (cmpString(recordFormat, "F"))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the recordFormat: ") +
           AULFile::toString(recordFormat));
   if (!cmpString(blockLength, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the blockLength: ") +
           AULFile::toString(blockLength));
   if (!cmpString(recordLength, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the recordLength: ") +
           AULFile::toString(recordLength));
   if (cmpString(aulId, "00"))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the aulId: ") +
           AULFile::toString(aulId));
   if (cmpString(reserved1, ""))
-    throw exceptions::Errnum("reserved1 is not empty");
+    throw Exception("reserved1 is not empty");
   if (cmpString(reserved2, ""))
-    throw exceptions::Errnum("reserved2 is not empty");
+    throw castor::tape::Exception("reserved2 is not empty");
   if (cmpString(reserved3, ""))
-    throw exceptions::Errnum("reserved2 is not empty");
+    throw castor::tape::Exception("reserved2 is not empty");
 }
 
 void AULFile::HDR2::fill(int _blockLength, bool driveHasCompression) {
@@ -243,9 +242,9 @@ void AULFile::HDR2::fill(int _blockLength, bool driveHasCompression) {
   
   fillCommon(_blockLength, driveHasCompression);
 }
-void AULFile::HDR2::verify() const throw (exceptions::Errnum) {
+void AULFile::HDR2::verify() const throw (Exception) {
   if (cmpString(label, "HDR2"))
-    throw exceptions::Errnum(std::string("Failed verify for the HDR2: ") +
+    throw Exception(std::string("Failed verify for the HDR2: ") +
           AULFile::toString(label));
 
   verifyCommon();
@@ -257,9 +256,9 @@ void AULFile::EOF2::fill(int _blockLength, bool driveHasCompression) {
   fillCommon(_blockLength, driveHasCompression);
 }
 
-void AULFile::EOF2::verify() const throw (exceptions::Errnum) {
+void AULFile::EOF2::verify() const throw (Exception) {
   if (cmpString(label, "EOF2"))
-    throw exceptions::Errnum(std::string("Failed verify for the EOF2: ") +
+    throw Exception(std::string("Failed verify for the EOF2: ") +
           AULFile::toString(label));
 
   verifyCommon();
@@ -282,38 +281,38 @@ void AULFile::UHL1UTL1::fillCommon(int fSeq,
 }
 
 void AULFile::UHL1UTL1::verifyCommon() 
-  const throw (exceptions::Errnum){  
+  const throw (Exception){  
 
   if (!cmpString(actualfSeq, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the actualfSeq: ") +
           AULFile::toString(actualfSeq));
   if (!cmpString(actualBlockSize, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the actualBlockSize: ") +
           AULFile::toString(actualBlockSize));
   if (!cmpString(actualRecordLength, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for the actualRecordLength: ") +
           AULFile::toString(actualRecordLength));
   if (!cmpString(site, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for site: ") +
           AULFile::toString(site));
   if (!cmpString(moverHost, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for moverHost: ") +
           AULFile::toString(moverHost));
   if (!cmpString(driveVendor, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for driveVendor: ") +
           AULFile::toString(driveVendor));
   if (!cmpString(driveModel, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for driveModel: ") +
           AULFile::toString(driveModel));
   if (!cmpString(serialNumber, ""))
-    throw exceptions::Errnum(
+    throw Exception(
           std::string("Failed verify for serialNumber: ") +
           AULFile::toString(serialNumber));
 }
@@ -329,9 +328,9 @@ void AULFile::UHL1::fill(int fSeq,
   fillCommon(fSeq, blockSize, siteName, hostName, deviceInfo);
 }
 
-void AULFile::UHL1::verify() const throw (exceptions::Errnum) {
+void AULFile::UHL1::verify() const throw (Exception) {
   if (cmpString(label, "UHL1"))
-    throw exceptions::Errnum(std::string("Failed verify for the UHL1: ") +
+    throw Exception(std::string("Failed verify for the UHL1: ") +
           AULFile::toString(label));
 
   verifyCommon();
@@ -348,9 +347,9 @@ void AULFile::UTL1::fill(int fSeq,
   fillCommon(fSeq, blockSize, siteName, hostName, deviceInfo);
 }
 
-void AULFile::UTL1::verify() const throw (exceptions::Errnum) {
+void AULFile::UTL1::verify() const throw (Exception) {
   if (cmpString(label, "UTL1"))
-    throw exceptions::Errnum(std::string("Failed verify for the UTL1: ") +
+    throw Exception(std::string("Failed verify for the UTL1: ") +
           AULFile::toString(label));
 
   verifyCommon();

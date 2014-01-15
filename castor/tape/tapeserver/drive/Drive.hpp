@@ -332,7 +332,6 @@ namespace drives {
      * @param fastMTEOM the option switch.
      */
     virtual void setSTFastMTEOM(bool fastMTEOM) throw (Exception);
-    void SCSI_inquiry(int fd);
   };
 
   class DriveT10000 : public DriveGeneric {

@@ -36,6 +36,7 @@
 #include "castor/log/LoggerImplementation.hpp"
 #include "log.h"
 #include "castor/io/AbstractSocket.hpp"
+#include "castor/exception/Errnum.hpp"
 
 int main(int argc, char ** argv) {
   return castor::tape::Server::Daemon::main(argc, argv);
@@ -136,7 +137,7 @@ void castor::tape::Server::Daemon::daemonize()
   if (getppid() == 1) return;
 
   /* Fork off the parent process */
-  castor::tape::exceptions::throwOnNegativeWithErrno(pid = fork(),
+  castor::exception::Errnum::throwOnNegative(pid = fork(),
     "Failed to fork in castor::tape::Server::Daemon::daemonize");
   /* If we got a good PID, then we can exit the parent process. */
   if (pid > 0) {
@@ -145,7 +146,7 @@ void castor::tape::Server::Daemon::daemonize()
   /* Change the file mode mask */
   umask(0);
   /* Create a new session for the child process */
-  castor::tape::exceptions::throwOnNegativeWithErrno(sid = setsid(),
+  castor::exception::Errnum::throwOnNegative(sid = setsid(),
     "Failed to create new session in castor::tape::Server::Daemon::daemonize");
   /* At this point we are executing as the child process, and parent process should be init */
   if (getppid() != 1) { 
@@ -154,18 +155,18 @@ void castor::tape::Server::Daemon::daemonize()
   }
   /* Change the current working directory.  This prevents the current
      directory from being locked; hence not being able to remove it. */
-  castor::tape::exceptions::throwOnNegativeWithErrno(
+  castor::exception::Errnum::throwOnNegative(
     chdir(m_option_run_directory.c_str()),
     std::string("Failed to chdir in castor::tape::Server::Daemon::daemonize"
       " ( destination directory: ") + m_option_run_directory + ")");
   /* Redirect standard files to /dev/null */
-  castor::tape::exceptions::throwOnNullWithErrno(
+  castor::exception::Errnum::throwOnNull(
     freopen("/dev/null", "r", stdin),
     "Failed to freopen stdin in castor::tape::Server::Daemon::daemonize");
-  castor::tape::exceptions::throwOnNullWithErrno(
+  castor::exception::Errnum::throwOnNull(
     freopen("/dev/null", "r", stdout),
     "Failed to freopen stdout in castor::tape::Server::Daemon::daemonize");
-  castor::tape::exceptions::throwOnNullWithErrno(
+  castor::exception::Errnum::throwOnNull(
     freopen("/dev/null", "r", stderr),
     "Failed to freopen stderr in castor::tape::Server::Daemon::daemonize");
 }
@@ -192,7 +193,7 @@ void castor::tape::Server::Daemon::blockSignals()
   sigaddset(&sigs, SIGPOLL);
   sigaddset(&sigs, SIGURG);
   sigaddset(&sigs, SIGVTALRM);
-  castor::tape::exceptions::throwOnNonZeroWithErrno(
+  castor::exception::Errnum::throwOnNonZero(
     sigprocmask(SIG_BLOCK, &sigs, NULL), 
     "Failed to sigprocmask in castor::tape::Server::Daemon::blockSignals");
 }

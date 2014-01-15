@@ -34,14 +34,18 @@
 
 castor::tape::threading::Mutex::Mutex() throw (castor::exception::Exception) {
   pthread_mutexattr_t attr;
-  throwOnReturnedErrno(pthread_mutexattr_init(&attr),
+  castor::exception::Errnum::throwOnReturnedErrno(
+    pthread_mutexattr_init(&attr),
     "Error from pthread_mutexattr_init in castor::tape::threading::Mutex::Mutex()");
-  throwOnReturnedErrno(pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK),
+  castor::exception::Errnum::throwOnReturnedErrno(
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK),
     "Error from pthread_mutexattr_settype in castor::tape::threading::Mutex::Mutex()");
-  throwOnReturnedErrno(pthread_mutex_init(&m_mutex, &attr),
+  castor::exception::Errnum::throwOnReturnedErrno(
+    pthread_mutex_init(&m_mutex, &attr),
     "Error from pthread_mutex_init in castor::tape::threading::Mutex::Mutex()");
   try {
-    throwOnReturnedErrno(pthread_mutexattr_destroy(&attr),
+    castor::exception::Errnum::throwOnReturnedErrno(
+      pthread_mutexattr_destroy(&attr),
       "Error from pthread_mutexattr_destroy in castor::tape::threading::Mutex::Mutex()");
   } catch (...) {
     pthread_mutex_destroy(&m_mutex);
@@ -54,14 +58,16 @@ castor::tape::threading::Mutex::~Mutex() {
 }
 
 void castor::tape::threading::Mutex::lock() throw (castor::exception::Exception) {
-  throwOnReturnedErrno(pthread_mutex_lock(&m_mutex),
+  castor::exception::Errnum::throwOnReturnedErrno(
+    pthread_mutex_lock(&m_mutex),
     "Error from pthread_mutex_lock in castor::tape::threading::Mutex::lock()");
 }
 
 /* PosixSemaphore */
 castor::tape::threading::PosixSemaphore::PosixSemaphore(int initial)
 throw (castor::exception::Exception) {
-  throwOnNonZeroWithErrno(sem_init(&m_sem, 0, initial),
+  castor::exception::Errnum::throwOnReturnedErrno(
+    sem_init(&m_sem, 0, initial),
     "Error from sem_init in castor::tape::threading::PosixSemaphore::PosixSemaphore()");
 }
 
@@ -79,7 +85,7 @@ throw (castor::exception::Exception) {
   /* If we receive EINTR, we should just keep trying (signal interruption) */
   while((ret = sem_wait(&m_sem)) && EINTR == errno) {}
   /* If it was not EINTR, it's a failure */
-  throwOnNonZeroWithErrno(ret,
+  castor::exception::Errnum::throwOnNonZero(ret,
     "Error from sem_wait in castor::tape::threading::PosixSemaphore::acquire()");
 }
 
@@ -88,7 +94,7 @@ throw (castor::exception::Exception) {
   int ret = sem_trywait(&m_sem);
   if (!ret) return true;
   if (ret && EAGAIN == errno) return false;
-  throwOnNonZeroWithErrno(ret,
+  castor::exception::Errnum::throwOnNonZero(ret,
     "Error from sem_trywait in castor::tape::threading::PosixSemaphore::tryAcquire()");
   /* unreacheable, just for compiler happiness */
   return false;
@@ -98,7 +104,7 @@ void castor::tape::threading::PosixSemaphore::release(int n)
 throw (castor::exception::Exception) {
   for (int i=0; i<n; i++) {
     MutexLocker ml(&m_mutexPosterProtection);
-    throwOnNonZeroWithErrno(sem_post(&m_sem),
+    castor::exception::Errnum::throwOnNonZero(sem_post(&m_sem),
       "Error from sem_post in castor::tape::threading::PosixSemaphore::release()");
   }
 }
@@ -106,9 +112,11 @@ throw (castor::exception::Exception) {
 castor::tape::threading::CondVarSemaphore::CondVarSemaphore(int initial)
 throw (castor::exception::Exception):
 m_value(initial) {
-      throwOnReturnedErrno(pthread_cond_init(&m_cond, NULL),
+      castor::exception::Errnum::throwOnReturnedErrno(
+        pthread_cond_init(&m_cond, NULL),
         "Error from pthread_cond_init in castor::tape::threading::CondVarSemaphore::CondVarSemaphore()");
-      throwOnReturnedErrno(pthread_mutex_init(&m_mutex, NULL),
+      castor::exception::Errnum::throwOnReturnedErrno(
+        pthread_mutex_init(&m_mutex, NULL),
         "Error from pthread_mutex_init in castor::tape::threading::CondVarSemaphore::CondVarSemaphore()");
     }
 
@@ -124,56 +132,66 @@ castor::tape::threading::CondVarSemaphore::~CondVarSemaphore() {
 
 void castor::tape::threading::CondVarSemaphore::acquire()
 throw (castor::exception::Exception) {
-  throwOnReturnedErrno(pthread_mutex_lock(&m_mutex),
+  castor::exception::Errnum::throwOnReturnedErrno(
+    pthread_mutex_lock(&m_mutex),
     "Error from pthread_mutex_lock in castor::tape::threading::CondVarSemaphore::acquire()");
   while (m_value <= 0) {
-    throwOnReturnedErrno(pthread_cond_wait(&m_cond, &m_mutex),
+    castor::exception::Errnum::throwOnReturnedErrno(
+      pthread_cond_wait(&m_cond, &m_mutex),
       "Error from pthread_cond_wait in castor::tape::threading::CondVarSemaphore::acquire()");
   }
   m_value--;
-  throwOnReturnedErrno(pthread_mutex_unlock(&m_mutex),
+  castor::exception::Errnum::throwOnReturnedErrno(
+    pthread_mutex_unlock(&m_mutex),
     "Error from pthread_mutex_unlock in castor::tape::threading::CondVarSemaphore::acquire()");
 }
 
 bool castor::tape::threading::CondVarSemaphore::tryAcquire()
 throw (castor::exception::Exception) {
   bool ret;
-  throwOnReturnedErrno(pthread_mutex_lock(&m_mutex),
-    "Error from pthread_mutex_lock in castor::tape::threading::CondVarSemaphore::tryAcquire()");
+  castor::exception::Errnum::throwOnReturnedErrno(
+    pthread_mutex_lock(&m_mutex),
+      "Error from pthread_mutex_lock in castor::tape::threading::CondVarSemaphore::tryAcquire()");
   if (m_value > 0) {
     ret = true;
     m_value--;
   } else {
     ret = false;
   }
-  throwOnReturnedErrno(pthread_mutex_unlock(&m_mutex),
-    "Error from pthread_mutex_unlock in castor::tape::threading::CondVarSemaphore::tryAcquire()");
+  castor::exception::Errnum::throwOnReturnedErrno(
+    pthread_mutex_unlock(&m_mutex),
+      "Error from pthread_mutex_unlock in castor::tape::threading::CondVarSemaphore::tryAcquire()");
   return ret;
 }
 
 void castor::tape::threading::CondVarSemaphore::release(int n)
 throw (castor::exception::Exception) {
   for (int i=0; i<n; i++) {
-    throwOnReturnedErrno(pthread_mutex_lock(&m_mutex),
+  castor::exception::Errnum::throwOnReturnedErrno(
+    pthread_mutex_lock(&m_mutex),
       "Error from pthread_mutex_unlock in castor::tape::threading::CondVarSemaphore::release()");
     m_value++;
-    throwOnReturnedErrno(pthread_cond_signal(&m_cond),
+  castor::exception::Errnum::throwOnReturnedErrno(
+    pthread_cond_signal(&m_cond),
       "Error from pthread_cond_signal in castor::tape::threading::CondVarSemaphore::release()");
-    throwOnReturnedErrno(pthread_mutex_unlock(&m_mutex),
+  castor::exception::Errnum::throwOnReturnedErrno(
+    pthread_mutex_unlock(&m_mutex),
       "Error from pthread_mutex_unlock in castor::tape::threading::CondVarSemaphore::release()");
   }
 }
 
 void castor::tape::threading::Thread::start()
 throw (castor::exception::Exception) {
-  throwOnReturnedErrno(pthread_create(&m_thread, NULL, pthread_runner, this),
-    "Error from pthread_create in castor::tape::threading::Thread::start()");
+  castor::exception::Errnum::throwOnReturnedErrno(
+    pthread_create(&m_thread, NULL, pthread_runner, this),
+      "Error from pthread_create in castor::tape::threading::Thread::start()");
 }
 
 void castor::tape::threading::Thread::wait()
 throw (castor::exception::Exception) {
-  throwOnReturnedErrno(pthread_join(m_thread, NULL),
-    "Error from pthread_join in castor::tape::threading::Thread::wait()");
+  castor::exception::Errnum::throwOnReturnedErrno(
+    pthread_join(m_thread, NULL),
+      "Error from pthread_join in castor::tape::threading::Thread::wait()");
   if (m_hadException) {
     std::string w = "Uncaught exception of type \"";
     w += m_type;

@@ -47,9 +47,18 @@ namespace castor {
       /**
        * Empty Constructor
        * @param serrno the serrno code of the corresponding C error
+       * @param context optional context string added to the message
+       * at initialisation time.
        */
-      Exception(int se);
+      Exception(int se, std::string context="");
 
+      /**
+       * Empty Constructor with implicit serrno = 0;
+       * @param context optional context string added to the message
+       * at initialisation time.
+       */
+      Exception(std::string context="");
+      
       /**
        * Copy Constructor
        */

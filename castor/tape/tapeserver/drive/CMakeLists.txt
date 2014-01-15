@@ -4,7 +4,7 @@ set_property(SOURCE Drive.cpp
 )
 
 add_executable(TapeDriveReadWriteTest TapeDriveReadWriteTest.cpp)
-
-target_link_libraries(TapeDriveReadWriteTest TapeDrive Exception SCSI System Utils castorcommon ${GTEST_LIBRARY} gmock pthread)
+target_link_libraries(TapeDriveReadWriteTest TapeDrive Exception SCSI System Utils 
+  castorcommon castorclient ${GTEST_LIBRARY} gmock pthread)
 #install(TARGETS TapeDriveReadWriteTest
 #  RUNTIME DESTINATION bin)

@@ -24,11 +24,8 @@
 
 #include <pthread.h>
 #include <semaphore.h>
+#include "castor/exception/Errnum.hpp"
 #include "../exception/Exception.hpp"
-
-using castor::tape::exceptions::throwOnReturnedErrno;
-using castor::tape::exceptions::throwOnNonZeroWithErrno;
-
 
 namespace castor {
 namespace tape {
@@ -43,7 +40,8 @@ namespace threading {
     ~Mutex();
     void lock() throw (castor::exception::Exception);
     void unlock() throw (castor::exception::Exception) {
-      throwOnReturnedErrno(pthread_mutex_unlock(&m_mutex),
+      castor::exception::Errnum::throwOnReturnedErrno(
+        pthread_mutex_unlock(&m_mutex),
         "Error from pthread_mutex_unlock in castor::tape::threading::Mutex::unlock()");
     }
   private:

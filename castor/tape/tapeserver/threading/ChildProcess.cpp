@@ -35,7 +35,7 @@ void castor::tape::threading::ChildProcess::start(Cleanup & cleanup) throw (cast
     exit(run());
   } else if (-1 == m_pid) {
     /* We are in the parent process, for failed */
-    throw castor::tape::exceptions::Errnum("Failed to fork a child process in castor::tape::threading::ChildProcess::ChildProcess()");
+    throw castor::exception::Errnum("Failed to fork a child process in castor::tape::threading::ChildProcess::ChildProcess()");
   }
   /* In parent process, child is OK. */
   m_started = true;
@@ -58,11 +58,10 @@ bool castor::tape::threading::ChildProcess::running() throw (castor::tape::Excep
   /* If we are not aware of process exiting, let's check and collect exit code */
   if (!m_finished) {
     /* Re-check the status now. */
-    int status;
-    int ret = waitpid(m_pid, &status, WNOHANG);
-    if (-1 == ret)
-      throw castor::tape::exceptions::Errnum("Error from waitpid in castor::tape::threading::ChildProcess::running()");
-    /* Check child status*/
+    int status, ret;
+    castor::exception::Errnum::throwOnMinusOne(
+        ret = waitpid(m_pid, &status, WNOHANG),
+        "Error from waitpid in castor::tape::threading::ChildProcess::running()");
     if (ret == m_pid) parseStatus(status);
   }
   return !m_finished;
@@ -72,10 +71,10 @@ void castor::tape::threading::ChildProcess::wait() throw (castor::tape::Exceptio
   /* Checking for a running process before starting gets an exception */
   if (!m_started) throw ProcessNeverStarted();
   if (m_finished) return;
-  int status;
-  int ret = waitpid(m_pid, &status, 0);
-  if (-1 == ret)
-    throw castor::tape::exceptions::Errnum("Error from waitpid in castor::tape::threading::ChildProcess::wait()");
+  int status, ret;
+  castor::exception::Errnum::throwOnMinusOne(
+      ret = waitpid(m_pid, &status, 0),
+      "Error from waitpid in castor::tape::threading::ChildProcess::wait()");
   /* Check child status*/
   if (ret == m_pid) parseStatus(status);
   if(!m_finished)
@@ -85,10 +84,10 @@ void castor::tape::threading::ChildProcess::wait() throw (castor::tape::Exceptio
 int castor::tape::threading::ChildProcess::exitCode() throw (castor::tape::Exception) {
   if (!m_started) throw ProcessNeverStarted();
   if (!m_finished) {
-    int status;
-    int ret = waitpid(m_pid, &status, WNOHANG);
-    if (-1 == ret)
-      throw castor::tape::exceptions::Errnum("Error from waitpid in castor::tape::threading::ChildProcess::running()");
+    int status, ret;
+    castor::exception::Errnum::throwOnMinusOne(
+        ret = waitpid(m_pid, &status, WNOHANG),
+        "Error from waitpid in castor::tape::threading::ChildProcess::running()");
     if (ret == m_pid) parseStatus(status);
   }
   /* Check child status*/

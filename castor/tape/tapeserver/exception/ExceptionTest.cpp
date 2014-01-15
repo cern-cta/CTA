@@ -23,79 +23,9 @@
  *****************************************************************************/
 
 #include "Exception.hpp"
-#include <errno.h>
 
 #include <gtest/gtest.h>
 #include <gmock/gmock-cardinalities.h>
 
 namespace UnitTests {
-  class Nested {
-  public:
-    void f1();
-    void f2();
-    Nested();
-  };
-  
-  /* Prevent inlining: it makes this test fail! */
-  void __attribute__((noinline)) Nested::f1() {
-    throw castor::tape::Exception("Throwing in Nested::f1()");
-  }
-  
-  /* Prevent inlining: it makes this test fail!
-   * Even with that, f2 does not show up in the trace */
-  void __attribute__((noinline)) Nested::f2() {
-    f1();
-  }
-  
-  /* Prevent inlining: it makes this test fail! */
-  __attribute__((noinline))  Nested::Nested() {
-    f2();
-  }
-
-  TEST(castor_tape_exceptions, stacktrace_with_demangling) {
-    try {
-      Nested x;
-    } catch (castor::tape::Exception & e) {
-      std::string bt = e.backtrace();
-      ASSERT_NE(std::string::npos, bt.find("Nested::f1"));
-      ASSERT_NE(std::string::npos, bt.find("castor::exception::Backtrace::Backtrace"));
-      ASSERT_EQ("Throwing in Nested::f1()", std::string(e.getMessageValue()));
-      std::string fullWhat(e.what());
-      ASSERT_NE(std::string::npos, fullWhat.find("Nested::f2"));
-    }
-  }
-  
-    TEST(castor_tape_exceptions, stacktrace_in_std_exception) {
-    try {
-      Nested x;
-    } catch (std::exception & e) {
-      std::string fullWhat(e.what());
-      ASSERT_NE(std::string::npos, fullWhat.find("Nested::f2"));
-      ASSERT_NE(std::string::npos, fullWhat.find("Throwing in Nested::f1()"));
-    }
-  }
-  
-  TEST(castor_tape_exceptions, errnum_throwing) {
-    /* Mickey Mouse test as we had trouble which throwing Errnum (with errno=ENOENT)*/
-    errno = ENOENT;
-    try {
-      throw castor::tape::exceptions::Errnum("Test ENOENT");
-    } catch (std::exception & e) {
-      std::string temp = e.what();
-      temp += " ";
-    }
-  }
-
-  TEST(castor_tape_exceptions, throwOnReturnedErrno) {
-    ASSERT_NO_THROW(castor::tape::exceptions::throwOnReturnedErrno(0, "Context"));
-    ASSERT_THROW(castor::tape::exceptions::throwOnReturnedErrno(ENOSPC, "Context"),
-      castor::tape::exceptions::Errnum);
-  }
-  
-  TEST(castor_tape_exceptions, throwOnNonZeroWithErrno) {
-    errno = ENOENT;
-    ASSERT_NO_THROW(castor::tape::exceptions::throwOnNonZeroWithErrno(0, "Context"));
-    ASSERT_THROW(castor::tape::exceptions::throwOnNonZeroWithErrno(-1, "Context"),
-      castor::tape::exceptions::Errnum);
-  }
 }

@@ -38,6 +38,7 @@ set (COMMON_LIB_SRC_FILES
   ../castor/exception/BadVersion.cpp
   ../castor/exception/Busy.cpp
   ../castor/exception/DismountFailed.cpp
+  ../castor/exception/Errnum.cpp
   ../castor/exception/Exception.cpp
   ../castor/exception/FailedToExecutePython.cpp
   ../castor/exception/InvalidArgument.cpp

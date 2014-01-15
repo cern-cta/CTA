@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      Exception.hpp
+ *                      Errnum.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,35 +17,35 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * 
  *
- * @author Castor Dev team, castor-dev@cern.ch
+ *
+ *
+ * @author castor dev team
  *****************************************************************************/
 
 #pragma once
-#include "../../../exception/Exception.hpp"
-#include <exception>
-#include <string>
+
+#include "Exception.hpp"
 
 namespace castor {
-namespace tape {
-  class Exception: public castor::exception::Exception {
+namespace exception {
+  class Errnum: public castor::exception::Exception {
   public:
-    Exception(const std::string& what): castor::exception::Exception(0) { setWhat(what); }
-    // Copy operator needed to throw anonymous instance (throw myClass("some failure."))
-    Exception(const Exception &ex);
-    virtual ~Exception() throw() {};
+    Errnum(std::string what = "");
+	  Errnum (int err, std::string what = "");
+    virtual ~Errnum() throw() {};
+    int ErrorNumber() { return m_errnum; }
+    std::string strError() { return m_strerror; }
+    static void throwOnReturnedErrno(int err, std::string context = "");
+    static void throwOnNonZero(int status, std::string context = "");
+    static void throwOnZero(int status, std::string context = "");
+    static void throwOnNull(void * f, std::string context = "");
+    static void throwOnNegative(int ret, std::string context = "");
+    static void throwOnMinusOne(int ret, std::string context = "");
   protected:
-    void setWhat(const std::string &w);
+	  void ErrnumConstructorBottomHalf(const std::string & what);
+    int m_errnum;
+    std::string m_strerror;
   };
-
-  namespace exceptions {
-    class Errnum: public Exception {
-    };
-    
-    class InvalidArgument: public Exception {
-    public: InvalidArgument(std::string what = ""): Exception(what) {};
-    };
-  }
-} //namespace tape
-} //namespace castor
+}
+}
