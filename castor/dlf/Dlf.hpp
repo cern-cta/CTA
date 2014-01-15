@@ -72,6 +72,26 @@ namespace castor {
      */
     std::vector<std::pair<int, castor::dlf::Message*> >&
     dlf_getPendingMessages() throw();
+ 
+    /**
+     * Helper class adding a cleanup for unclaimed pending
+     * messages. This is for the case when dlf_init never gets
+     * called (new done in castor::dlf::dlf_addMessages for 
+     * static data from castorclient (?) library.
+     */
+    class dlg_pengindMessagesVector: 
+    public std::vector<std::pair<int, castor::dlf::Message*> > {
+    public:
+      ~dlg_pengindMessagesVector() {
+        for (std::vector<std::pair<int, Message*> >::iterator it =
+               dlf_getPendingMessages().begin();
+             it != dlf_getPendingMessages().end();
+             it++) {
+          delete[](it->second);
+          it->second = NULL;
+        }
+      }
+    };
 
     /**
      * Initialization of the DLF logging system

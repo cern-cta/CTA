@@ -52,14 +52,14 @@ static struct {
   int  value;       /* The priority's numeric representation in syslog */
   char *text;       /* Textual representation of the priority */
 } prioritylist[] = {
-  { "LOG_EMERG",   LOG_EMERG,   "Emerg"  },
-  { "LOG_ALERT",   LOG_ALERT,   "Alert"  },
-  { "LOG_CRIT",    LOG_CRIT,    "Crit"   },
-  { "LOG_ERR",     LOG_ERR,     "Error"  },
-  { "LOG_WARNING", LOG_WARNING, "Warn"   },
-  { "LOG_NOTICE",  LOG_NOTICE,  "Notice" },
-  { "LOG_INFO",    LOG_INFO,    "Info"   },
-  { "LOG_DEBUG",   LOG_DEBUG,   "Debug"  },
+  { (char *)"LOG_EMERG",   LOG_EMERG,   (char *)"Emerg"  },
+  { (char *)"LOG_ALERT",   LOG_ALERT,   (char *)"Alert"  },
+  { (char *)"LOG_CRIT",    LOG_CRIT,    (char *)"Crit"   },
+  { (char *)"LOG_ERR",     LOG_ERR,     (char *)"Error"  },
+  { (char *)"LOG_WARNING", LOG_WARNING, (char *)"Warn"   },
+  { (char *)"LOG_NOTICE",  LOG_NOTICE,  (char *)"Notice" },
+  { (char *)"LOG_INFO",    LOG_INFO,    (char *)"Info"   },
+  { (char *)"LOG_DEBUG",   LOG_DEBUG,   (char *)"Debug"  },
   { NULL,          0,           NULL     }
 };
 

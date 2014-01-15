@@ -31,13 +31,12 @@
 
 #include <errno.h>
 
-
 //-----------------------------------------------------------------------------
 // dlf_getPendingMessages
 //-----------------------------------------------------------------------------
 std::vector<std::pair<int, castor::dlf::Message*> >&
 castor::dlf::dlf_getPendingMessages () throw() {
-  static std::vector<std::pair<int, castor::dlf::Message*> > pendingMessages;
+  static dlg_pengindMessagesVector pendingMessages;
   return pendingMessages;
 }
 
@@ -58,12 +57,13 @@ void castor::dlf::dlf_init
   // logging
   dlf_addMessages(0, messages);
   // Also register the pending messages
-  for (std::vector<std::pair<int, Message*> >::const_iterator it =
+  for (std::vector<std::pair<int, Message*> >::iterator it =
          dlf_getPendingMessages().begin();
        it != dlf_getPendingMessages().end();
        it++) {
     dlf_addMessages(it->first, it->second);
     delete[](it->second);
+    it->second = NULL;
   }
   dlf_getPendingMessages().clear();
 }
