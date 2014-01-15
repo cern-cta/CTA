@@ -41,7 +41,7 @@ int main(int argc,
   int errflg = 0;
   int hflg = 0;
   int i;
-  mode_t mask;
+  mode_t mask = 0;
   int mflag = 0;
   mode_t mode;
   char *p;

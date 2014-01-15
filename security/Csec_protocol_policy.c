@@ -608,7 +608,7 @@ int Csec_client_negociate_protocol(int s, int timeout, Csec_context_t *ctx) {
   csec_buffer_desc bigbuf;
   char tmpbuffer[TMPBUFSIZE+1];
   int received_token_type;
-  unsigned long l, version, failure_reason;
+  unsigned long l, version, failure_reason = 0;
   int i,j,rc;
   char *p;
 

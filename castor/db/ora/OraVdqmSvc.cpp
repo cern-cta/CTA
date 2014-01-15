@@ -2984,8 +2984,8 @@ std::vector<castor::vdqm::TapeAccessSpecification*>*
   //The result from the select statement
   oracle::occi::ResultSet *rset;
   // Execute statement and get result
-  u_signed64 id;
-  
+  u_signed64 id = 0;
+
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
   const StatementId stmtId = SELECT_TAPE_ACCESS_SPECIFICATIONS_SQL_STMT;
@@ -3031,7 +3031,7 @@ std::vector<castor::vdqm::TapeAccessSpecification*>*
   }
   
   // Now get the TapeAccessSpecification from its id
-  std::vector<castor::vdqm::TapeAccessSpecification*>* result;
+  std::vector<castor::vdqm::TapeAccessSpecification*>* result = 0;
   try {
     castor::BaseAddress ad;
     ad.setCnvSvcName("DbCnvSvc");

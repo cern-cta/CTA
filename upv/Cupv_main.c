@@ -332,7 +332,7 @@ int proclistreq(int magic,
                 char *req_data,
                 struct Cupv_srv_thread_info *thip)
 {
-  int c;
+  int c = 0;
   int new_req_type = -1;
   fd_set readfd, readmask;
   struct timeval timeval;

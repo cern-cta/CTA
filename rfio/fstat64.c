@@ -26,7 +26,7 @@ int rfio_fstat64(int            s,
 {
   int status ;
   char   * p ;
-  char * trp ;
+  char * trp = 0;
   int temp=0 ;
   char     rfio_buf[BUFSIZ];
   int s_index = -1;

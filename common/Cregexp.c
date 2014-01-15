@@ -486,7 +486,7 @@ char *_Cregexp_reg(int paren,			/* Parenthesized? */
 	char *ret;
 	char *br;
 	char *ender;
-	int parno;
+	int parno = 0;
 	int flags;
   
 	*flagp = HASWIDTH;	/* Tentatively. */

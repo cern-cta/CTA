@@ -1179,7 +1179,8 @@ XrdxCastor2FsFile::open(const char*         path,
   bool stall_comeback = XrdxCastor2FS->msCastorClient->HasSubmittedReq(map_path.c_str(), error);
 
   int aop = AOP_Read;
-  int retc, open_flag = 0;
+  int retc = 0;
+  int open_flag = 0;
   struct Cns_filestatcs buf;
   int isRW = 0;
   int isRewrite = 0;

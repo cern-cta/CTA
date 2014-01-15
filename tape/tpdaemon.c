@@ -853,7 +853,7 @@ int initrrt()
 	int errflag;
 	unsigned int i, j;
 	char prevdgn[CA_MAXDGNLEN+1];
-	unsigned int prevgrp;
+	unsigned int prevgrp = 0;
 	struct tptab *tunp;
 
 	tunp = tptabp;

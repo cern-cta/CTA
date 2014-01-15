@@ -40,9 +40,9 @@ namespace UnitTests {
      SPC-4. This test also validates the handling of multi-bytes numbers,
      as SCSI structures are big endian (and main development target is 
      little endian.  */
-    unsigned char inqBuff [100];
-    memset(inqBuff, 0, sizeof(inqBuff));
-    castor::tape::SCSI::Structures::inquiryData_t & inq = *((castor::tape::SCSI::Structures::inquiryData_t *) inqBuff);
+    castor::tape::SCSI::Structures::inquiryData_t inq;
+    unsigned char *inqBuff = (unsigned char*)&inq;
+    memset(inqBuff, 0, sizeof(inq));
     /* Peripheral device type */
     ASSERT_EQ(0, inq.perifDevType);
     inqBuff[0] |= (0x1A & 0x1F) << 0;

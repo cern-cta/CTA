@@ -18,10 +18,10 @@ int get_compression_stats(int tapefd,
                           char *devtype,
                           COMPRESSION_STATS *comp_stats)
 {
-	unsigned long kbytes_from_host;
-	unsigned long kbytes_to_tape;
-	unsigned long kbytes_from_tape;
-	unsigned long kbytes_to_host;
+	unsigned long kbytes_from_host = 0;
+	unsigned long kbytes_to_tape = 0;
+	unsigned long kbytes_from_tape = 0;
+	unsigned long kbytes_to_host = 0;
 	unsigned char *endpage;
 	unsigned char *p;
 	unsigned short pagelen;

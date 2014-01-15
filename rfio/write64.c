@@ -48,7 +48,7 @@ int rfio_write64_v2(int     s,
 {
   int status ; /* Return code of called func */
   char   * p ;  /* Pointer to buffer  */
-  char * trp ;  /* Pointer to a temp buffer */
+  char * trp=0 ;  /* Pointer to a temp buffer */
   int temp=0 ;  /* Has it been allocated ? */
   char     rfio_buf[BUFSIZ];
   int s_index;

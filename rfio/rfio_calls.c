@@ -3998,7 +3998,7 @@ void *produce_thread(int *ptr)
   int      byte_read = -1;
   int      error = 0;
   int      total_produced = 0;
-  unsigned int ckSum;
+  unsigned int ckSum = 0;
   char     ckSumbuf[CA_MAXCKSUMLEN+1]; /* max check sum 256bit 32x8+'\0'*/
   char     ckSumbufdisk[CA_MAXCKSUMLEN+1];
   char     useCksum;
@@ -4088,7 +4088,7 @@ void *consume_thread(int *ptr)
   char     *buffer_to_write;
   int      len_to_write;
   int      saved_errno;
-  unsigned int ckSum;
+  unsigned int ckSum = 0;
   char     ckSumbuf[CA_MAXCKSUMLEN+1]; /* max check sum 256bit 32x8+'\0'*/
   char     ckSumbufdisk[CA_MAXCKSUMLEN+1];
   char     useCksum;
@@ -4244,7 +4244,7 @@ void wait_consumer_thread(int cid)
   int  rcode;          /* To send back errno   */
   int  offset;         /* lseek offset         */
   char *p;             /* Pointer to buffer    */
-  char *iobuffer;
+  char *iobuffer = 0;
   off_t bytes2send;
   fd_set fdvar, fdvar2;
   extern int max_sndbuf;
@@ -4254,7 +4254,7 @@ void wait_consumer_thread(int cid)
   int join_done;
   int DISKBUFSIZE_READ = 2097152;
   int n;
-  int cid1;
+  int cid1 = 0;
   int el;
 
   (void)infop;
@@ -4560,14 +4560,14 @@ int srwrite_v3(int     s,
   int  status;         /* Return code         */
   int  rcode;          /* To send back errno  */
   char *p;             /* Pointer to buffer   */
-  char *iobuffer;
+  char *iobuffer = 0;
   fd_set fdvar, fdvar2;
   int    byte_written_by_client;
   extern int max_rcvbuf;
   int    maxseg;
   socklen_t optlen;
   int    byte_in_diskbuffer = 0;
-  char   *iobuffer_p;
+  char   *iobuffer_p = 0;
   struct timeval t;
   int    sizeofdummy;
   /*
@@ -4576,8 +4576,8 @@ int srwrite_v3(int     s,
   unsigned char *dummy;
   int DISKBUFSIZE_WRITE = 2097152;
   int el;
-  int cid2;
-  int saved_errno;
+  int cid2 = 0;
+  int saved_errno = 0;
 
   (void)infop;
   /*

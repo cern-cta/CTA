@@ -39,7 +39,7 @@ TapeFileClass = 95
 DiskOnlyFileClass = 58
 
 # Remote machine and directory to be used for testing transfers outside CASTOR
-remoteSpace = yourdiskserver.cern.ch:/var/tmp/rfiod
+remoteSpace = lxc2dev1d1.cern.ch:/var/tmp/rfiod
 
 
 # Environment to be used for the tests
@@ -48,10 +48,10 @@ remoteSpace = yourdiskserver.cern.ch:/var/tmp/rfiod
 
 # Nameserver related
 # Must use full hostname
-CNS_HOST = yournameserver.cern.ch
+CNS_HOST = lxc2dev1.cern.ch
 
 # Stager related
-STAGE_HOST = yourstager.cern.ch
+STAGE_HOST = lxc2dev1.cern.ch
 STAGE_PORT = 9002
 STAGER_TRACE = 3
 STAGE_SVCCLASS =

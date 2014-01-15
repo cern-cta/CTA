@@ -41,7 +41,7 @@ int chmoddir (char *dir,
   Cns_DIR *dirp;
   struct dirlist *dlc;        /* pointer to current directory in the list */
   struct dirlist *dlf = NULL; /* pointer to first directory in the list   */
-  struct dirlist *dll;        /* pointer to last directory in the list    */
+  struct dirlist *dll = 0;        /* pointer to last directory in the list    */
   struct Cns_direnstat *dxp;
   char fullpath[CA_MAXPATHLEN+1];
   int errflg = 0;

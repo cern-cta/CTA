@@ -1061,7 +1061,7 @@ int compute_du4dir (struct Cns_srv_thread_info *thip,
   };
   struct dirlist *dlc;  /* Pointer to current directory in the list */
   struct dirlist *dlf = NULL; /* Pointer to first directory in the list */
-  struct dirlist *dll;  /* Pointer to last directory in the list */
+  struct dirlist *dll = NULL; /* Pointer to last directory in the list */
   struct Cns_file_metadata fmd_entry;
 
   if (Cns_chkentryperm (direntry, S_IREAD|S_IEXEC, uid, gid, clienthost))
@@ -4829,11 +4829,11 @@ int Cns_srv_utime(char *req_data,
                   struct Cns_srv_thread_info *thip,
                   struct Cns_srv_request_info *reqinfo)
 {
-  time_t actime;
+  time_t actime = 0;
   u_signed64 cwd;
   struct Cns_file_metadata filentry;
   char *func = "utime";
-  time_t modtime;
+  time_t modtime = 0;
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+1];
   char *rbp;

@@ -58,7 +58,7 @@ extern "C" {
     opts.stage_port=0;
     const char* protocol = "rfio";
     int filenb = 0;
-    char* filename;
+    char* filename = 0;
  
     while ((c = Cgetopt_long (argc, argv, "M:S:P:h", longopts, NULL)) != -1) {
       switch (c) {

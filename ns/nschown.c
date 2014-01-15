@@ -47,7 +47,7 @@ int main(int argc, char **argv)
   struct group *gr;
   int i;
   gid_t newgid;
-  uid_t newuid;
+  uid_t newuid = 0;
   char *p;
   char *path;
   struct passwd *pwd;
@@ -173,7 +173,7 @@ int chowndir (char *dir, uid_t newuid, gid_t newgid)
   Cns_DIR *dirp;
   struct dirlist *dlc;  /* pointer to current directory in the list */
   struct dirlist *dlf = NULL; /* pointer to first directory in the list */
-  struct dirlist *dll;  /* pointer to last directory in the list */
+  struct dirlist *dll = NULL; /* pointer to last directory in the list */
   struct Cns_direnstat *dxp;
   char fullpath[CA_MAXPATHLEN+1];
   int errflg = 0;
