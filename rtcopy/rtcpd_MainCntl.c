@@ -137,7 +137,7 @@ int rtcpd_CheckClient(int _uid, int _gid, char *name,
                       char *acctstr, int *rc) {
   struct passwd *pw;
   struct group *gr;
-  char **gr_mem;
+  char **gr_mem = 0;
   uid_t uid;
   gid_t gid;
 
@@ -217,7 +217,8 @@ static int rtcpd_PrintCmd(tape_list_t *tape, file_list_t *file) {
   char *vsn;
   char *label;
   char logline[CA_MAXLINELEN+1], common_fid[CA_MAXFIDLEN+1];
-  int mode,fseq;
+  int mode = 0;
+  int fseq;
   u_signed64 common_sz;
 
 
@@ -1794,7 +1795,9 @@ int rtcpd_GetRequestList(int *client_socket,
   rtcpDumpTapeRequest_t dumpreq;
   rtcpHdr_t hdr;
   char acctstr[7] = "", *tmp;
-  int rc, save_serrno, reqtype, tot_reqlen, insertNew;
+  int rc;
+  int save_serrno = 0;
+  int reqtype, tot_reqlen, insertNew;
   extern int client_magic;
 
   if ( client_socket == NULL || rootTape == NULL ||

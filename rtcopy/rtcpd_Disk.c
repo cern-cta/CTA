@@ -1550,7 +1550,10 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
     diskIOstatus_t *diskIOstatus;
     thread_arg_t *tharg;
     int rc, save_serrno, indxp, offset, next_offset, last_file,end_of_tpfile;
-    int prev_bufsz, next_nb_bufs, severity, next_bufsz, thIndex, mode;
+    int prev_bufsz = 0;
+    int next_nb_bufs, severity;
+    int next_bufsz = 0;
+    int thIndex, mode;
     int nb_diskIOactive = 0;
 
     if ( client == NULL || tape == NULL || file == NULL ||

@@ -67,8 +67,8 @@ int rfio_smstat(int s,
   int     len;
   int     rc;
   char    *p=buf;
-  int     uid;
-  int     gid;
+  int     uid = 0;
+  int     gid = 0;
   int *old_uid = NULL;
   struct passwd *pw_tmp;
   struct passwd *pw = NULL;
@@ -552,8 +552,8 @@ int rfio_smstat64(int s,
   int         replen;
   int         rc;
   char        *p=buf;
-  int         uid;
-  int         gid;
+  int         uid = 0;
+  int         gid = 0;
   int         sec;
   int         m64;
   int         *old_uid = NULL;

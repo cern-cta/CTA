@@ -25,11 +25,11 @@ void stager_log(const char *func, const char *file, int line, int what, struct C
 {
   va_list args;
   char *message;
-  char *valueStr;
-  int   valueInt;
+  char *valueStr = 0;
+  int   valueInt = 0;
   char *message2;
-  char *value2Str;
-  int value2Int;
+  char *value2Str = 0;
+  int value2Int = 0;
   /* Gcc does not like statement like: xxxx ? 1 : "" */
   /* It will issue a warning about type mismatch... */
   /* So I will convert the integers to string */

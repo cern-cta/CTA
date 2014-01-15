@@ -148,7 +148,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     int rc = 0;
     int mode;
     char *p;
-    char dir_delim;
+    char dir_delim = 0;
     struct stat64 st;
     rtcpFileRequest_t *filereq;
     char errmsgtxt[CA_MAXLINELEN+1];

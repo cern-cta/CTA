@@ -31,37 +31,37 @@ int loader(){
     return -1;
   }
   dlerror(); // Clear any existing error 
-  *(void **) (&Cclient_initContext) = dlsym(handle, "Csec_client_initContext");
+  Cclient_initContext = (int (*)(Csec_context_t *,int,Csec_protocol *))dlsym(handle, "Csec_client_initContext");
   if (!Cclient_initContext) {
     fprintf (stderr, "%s\n", dlerror());
     return -1;
   }
-  *(void **) (&Cserver_initContext) = dlsym(handle, "Csec_server_initContext");
+  Cserver_initContext = (int (*)(Csec_context_t *,int,Csec_protocol *))dlsym(handle, "Csec_server_initContext");
   if (!Cserver_initContext) {
     fprintf (stderr, "%s\n", dlerror());
     return -1;
   }
-  *(void **) (&Cclient_establishContext) = dlsym(handle, "Csec_client_establishContext");
+  Cclient_establishContext = (int (*)(Csec_context_t *,int))dlsym(handle, "Csec_client_establishContext");
   if (!Cclient_establishContext) {
     fprintf (stderr, "%s\n", dlerror());
     return -1;
   }
-  *(void **) (&Cserver_establishContext) = dlsym(handle, "Csec_server_establishContext");
+  Cserver_establishContext = (int (*)(Csec_context_t *,int))dlsym(handle, "Csec_server_establishContext");
   if (!Cserver_establishContext) {
     fprintf (stderr, "%s\n", dlerror());
     return -1;
   }
-  *(void **) (&CclearContext) = dlsym(handle, "Csec_clearContext");
+  CclearContext = (int (*)(Csec_context_t *))dlsym(handle, "Csec_clearContext");
   if (!CclearContext) {
     fprintf (stderr, "%s\n", dlerror());
     return -1;
   }
-  *(void **) (&CgetClientId) = dlsym(handle, "Csec_server_getClientId");
+  CgetClientId = (int (*)(Csec_context_t *, char **, char **))dlsym(handle, "Csec_server_getClientId");
   if (!CgetClientId) {
     fprintf (stderr, "%s\n", dlerror());
     return -1;
   }
-  *(void **) (&CmapUser) = dlsym(handle, "Csec_mapToLocalUser");
+  CmapUser = (int (*)(const char *, const char *, char *, size_t, uid_t *, gid_t *))dlsym(handle, "Csec_mapToLocalUser");
   if (!CmapUser) {
     fprintf (stderr, "%s\n", dlerror());
     return -1;

@@ -286,7 +286,7 @@ int Cupv_srv_list(char *req_data,
                   int endlist)
 {
   int bol;        /* beginning of list flag */
-  int c;
+  int c = 0;
   struct Cupv_userpriv priv_entry;
   struct Cupv_userpriv filter;
 

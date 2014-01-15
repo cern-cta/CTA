@@ -151,7 +151,7 @@ int chdirclass (char *dir,int oldclass,int newclass,char *newclass_name)
   Cns_DIR *dirp;
   struct dirlist *dlc;  /* pointer to current directory in the list */
   struct dirlist *dlf = NULL; /* pointer to first directory in the list */
-  struct dirlist *dll;  /* pointer to last directory in the list */
+  struct dirlist *dll = 0;  /* pointer to last directory in the list */
   struct Cns_direnstat *dxp;
 
   classtobechanged = 1;

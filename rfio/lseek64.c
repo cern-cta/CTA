@@ -319,7 +319,7 @@ static off64_t rfio_forcelseek64(int      s,
                                  int      how)
 {
   char     * p ;             /* Pointer to buffer            */
-  char     * trp ;           /* Pointer to temporary buffer  */
+  char     * trp = 0;           /* Pointer to temporary buffer  */
   int      temp=0 ;          /* Is there a temporary buffer? */
   char     rfio_buf[BUFSIZ];
   int      s_index;

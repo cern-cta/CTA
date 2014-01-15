@@ -307,11 +307,6 @@ typedef struct file_list {
 /*
  * Macros
  */
-#define LOWERCASE(X) {char *__c; \
-    for (__c=X; *__c != '\0'; __c++) *__c=tolower(*__c); } 
-#define UPPERCASE(X) {char *__c; \
-    for (__c=X; *__c != '\0'; __c++) *__c=toupper(*__c); }
-
 #if !defined(min)
 #define min(X,Y) (X < Y ? X : Y)
 #endif /* min */

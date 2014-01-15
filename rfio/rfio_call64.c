@@ -1381,7 +1381,7 @@ int  sropen64_v3(int         s,
   long     low_port  = RFIO_LOW_PORT_RANGE;
   long     high_port = RFIO_HIGH_PORT_RANGE;
   int      sock;                         /* Control socket       */
-  int      data_s;                       /* Data    socket       */
+  int      data_s = 0;                   /* Data    socket       */
   socklen_t fromlen;
   socklen_t size_sin;
   int      port;
@@ -1980,7 +1980,7 @@ static void *produce64_thread(int *ptr)
   int      error = 0;
   off64_t  total_produced = 0;
   char     tmpbuf[21];
-  unsigned int ckSum;
+  unsigned int ckSum = 0;
   char     ckSumbuf[CA_MAXCKSUMLEN+1]; /* max check sum 256bit 32x8+'\0'*/
   char     ckSumbufdisk[CA_MAXCKSUMLEN+1];
   char     useCksum;
@@ -2084,7 +2084,7 @@ static void *consume64_thread(int *ptr)
   int      len_to_write;
   int      saved_errno;
   char     tmpbuf[21];
-  unsigned int ckSum;
+  unsigned int ckSum = 0;
   char     ckSumbuf[CA_MAXCKSUMLEN+1]; /* max check sum 256bit 32x8+'\0'*/
   char     ckSumbufdisk[CA_MAXCKSUMLEN+1];
   char     useCksum;
@@ -2348,7 +2348,7 @@ static int   readerror64_v3(int            s,
   int         rcode;               /* To send back errno         */
   off64_t     offsetout;           /* lseek offset               */
   char        *p;                  /* Pointer to buffer          */
-  char        *iobuffer;
+  char        *iobuffer = 0;
   off64_t     bytes2send;
   fd_set      fdvar, fdvar2;
   extern int  max_sndbuf;
@@ -2850,7 +2850,7 @@ int srwrite64_v3(int            s,
   int         status;        /* Return code                */
   int         rcode;         /* To send back errno         */
   char        *p;            /* Pointer to buffer          */
-  char        *iobuffer;
+  char        *iobuffer = 0;
   fd_set      fdvar;
   off64_t     byte_written_by_client = 0;
   int         eof_received       = 0;
@@ -2858,12 +2858,12 @@ int srwrite64_v3(int            s,
   int         maxseg;
   socklen_t optlen;
   int         byte_in_diskbuffer = 0;
-  char        *iobuffer_p;
+  char        *iobuffer_p = 0;
   struct      timeval t;
   int         DISKBUFSIZE_WRITE = 2097152;
   int         el;
   int         cid2 = -1;
-  int         saved_errno;
+  int         saved_errno = 0;
   char        tmpbuf[21], tmpbuf2[21];
 
   (void)infop;
