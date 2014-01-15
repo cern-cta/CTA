@@ -691,8 +691,6 @@ int tclose(
  * Closing tape file on error.
  */
 int tcloserr(int fd, tape_list_t *tape, file_list_t *file) {
-  int rc = 0;
-  int save_errno, save_serrno;
   rtcpTapeRequest_t *tapereq = NULL;
   rtcpFileRequest_t *filereq = NULL;
 
@@ -711,35 +709,31 @@ int tcloserr(int fd, tape_list_t *tape, file_list_t *file) {
                    "fd"     , TL_MSG_PARAM_INT, fd );
 
   if ( tapereq->mode == WRITE_ENABLE ) {
-    if ( file->trec > 0 ) {
-      rtcp_log(
-               LOG_INFO,
-               "tcloserr(%d) delete tape file, tape path %s\n",
-               fd,
-               filereq->tape_path
-               );
-      tl_rtcpd.tl_log( &tl_rtcpd, 10, 4, 
-                       "func"     , TL_MSG_PARAM_STR, "tcloserr",
-                       "Message"  , TL_MSG_PARAM_STR, "delete tape file",
-                       "fd"       , TL_MSG_PARAM_INT, fd,
-                       "Tape path", TL_MSG_PARAM_STR, filereq->tape_path );
-    }
     errno = serrno = 0;
-    if ( file->trec>0 && (rc = deltpfil(fd,filereq->tape_path)) < 0 ) {
-      save_errno = errno;
-      save_serrno = serrno;
-      if ( AbortFlag == 0 ) 
-        rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED | RTCP_SYERR);
-      rtcpd_AppendClientMsg(NULL,file, RT141, "CPDSKTP");
-      rtcp_log(LOG_ERR,"deltpfil(%d,%s) failed with errno=%d, serrno=%d\n",
-               fd,filereq->tape_path,save_errno,save_serrno);
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 6, 
-                       "func"     , TL_MSG_PARAM_STR, "tcloserr",
-                       "Message"  , TL_MSG_PARAM_STR, "deltpfil failed",
-                       "fd"       , TL_MSG_PARAM_INT, fd,
-                       "Tape path", TL_MSG_PARAM_STR, filereq->tape_path,
-                       "errno"    , TL_MSG_PARAM_INT, errno,     
-                       "serrno"   , TL_MSG_PARAM_INT, serrno );
+    /* file->trec is used to know how many BLOCKs have been written */
+    if ( file->trec>0 ) {
+      /* IMPORTANT                                                           */
+      /* =========                                                           */
+      /*                                                                     */
+      /* At this point in the code and before 15/01/2014 the tcloserr()      */
+      /* function used to delete files from the end of the tape in order to  */
+      /* terminate the tape with a correct label structure.  This behaviour  */
+      /* increases the risk of data loss in the presence of deferred tape    */
+      /* flushes.                                                            */
+      /*                                                                     */
+      /* The new safe course of action is to log a message stating that the  */
+      /* tape may be incorrectly terminated and to then exit the rtcpd child */
+      /* process immediately with an exit value of -1.  The child process is */
+      /* exited immediately in order to eliminate the chance of the process  */
+      /* trying to continue to write to a tape and drive that are now in     */
+      /* undefined or poorly defined states.                                 */
+      rtcp_log(LOG_ERR,
+        "Aborting and maybe leaving the tape incorrectly terminated\n");
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
+        "func"   , TL_MSG_PARAM_STR, "tcloserr",
+        "Message", TL_MSG_PARAM_STR,
+          "Aborting and maybe leaving the tape incorrectly terminated");
+      exit(-1);
     }
   }
   (void) close(fd) ;
