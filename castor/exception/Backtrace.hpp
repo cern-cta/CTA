@@ -50,19 +50,6 @@ namespace castor {
         pthread_mutex_t m_mutex;    
       };
       static mutex g_lock;
-      
-      class bfdContext {
-      public:
-        bfdContext();
-        ~bfdContext();
-        std::string collectExtraInfos(const std::string &address);
-      private:
-        mutex m_mutex;
-        bfd* m_abfd;
-        asymbol **m_syms;
-        asection *m_text;
-      };
-      static bfdContext g_bfdContext;
     };
   }
 }

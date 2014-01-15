@@ -45,7 +45,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-lib
 Architecture: any
-Build-Depends: curl-devel, python, krb5-devel, openssl-devel
+Build-Depends: curl-devel, python, krb5-devel, openssl-devel, binutils-devel
 Build-Depends-Conditional:
 # For uuid/uuid.h
 %if 0%{?rhel} >= 6

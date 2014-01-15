@@ -28,6 +28,96 @@
 #include <stdlib.h>
 #include "Backtrace.hpp"
 
+#ifdef COLLECTEXTRABACKTRACEINFOS
+namespace castor {
+  namespace exception {
+    class bfdContext {
+    public:
+      bfdContext();
+      ~bfdContext();
+      std::string collectExtraInfos(const std::string &address);
+    private:
+      class mutex {
+      public:
+        mutex() { pthread_mutex_init(&m_mutex, NULL); }
+        void lock() { pthread_mutex_lock(&m_mutex); }
+        void unlock() { pthread_mutex_unlock(&m_mutex); }
+      private:
+        pthread_mutex_t m_mutex;    
+      };
+      mutex m_mutex;
+      bfd* m_abfd;
+      asymbol **m_syms;
+      asection *m_text;
+    };
+  }
+}
+
+// code dedicated to extracting more information in the backtraces, typically
+// resolving line numbers from adresses
+// This code is compiled only in debug mode (where COLLECTEXTRABACKTRACEINFOS will be defined)
+// as it's pretty heavy
+castor::exception::bfdContext::bfdContext():
+m_abfd(NULL), m_syms(NULL), m_text(NULL)
+{
+  char ename[1024];
+  int l = readlink("/proc/self/exe",ename,sizeof(ename));
+  if (l != -1) {
+    ename[l] = 0;
+    bfd_init();
+    m_abfd = bfd_openr(ename, 0);
+    if (m_abfd) {
+      /* oddly, this is required for it to work... */
+      bfd_check_format(m_abfd,bfd_object);
+      unsigned storage_needed = bfd_get_symtab_upper_bound(m_abfd);
+      m_syms = (asymbol **) malloc(storage_needed);
+      bfd_canonicalize_symtab(m_abfd, m_syms);
+      m_text = bfd_get_section_by_name(m_abfd, ".text");
+    }
+  }
+}
+
+castor::exception::bfdContext::~bfdContext() {
+  delete[] m_syms;
+  /* According the bfd documentation, closing the bfd frees everything */
+  m_text=NULL;
+  bfd_close(m_abfd);
+}
+
+std::string castor::exception::bfdContext::collectExtraInfos(const std::string& address) {
+  std::ostringstream result;
+  m_mutex.lock();
+  if (m_abfd && m_text && m_syms) {
+    std::stringstream ss;
+    long offset;
+    ss << std::hex << address;
+    ss >> offset;
+    offset -= m_text->vma;
+    if (offset > 0) {
+      const char *file;
+      const char *func;
+      unsigned line;
+      if (bfd_find_nearest_line(m_abfd, m_text, m_syms, offset, &file, &func, &line) 
+          && file) {
+        int status(-1);
+        char * demangledFunc = abi::__cxa_demangle(func, NULL, NULL, &status);
+        result << "line " << line << " of file " << file
+               << " in " << (status?func:demangledFunc) << " (" << address << ")";
+        free (demangledFunc);
+      }
+    }
+  }
+  m_mutex.unlock();
+  return result.str();
+}
+
+namespace castor {
+  namespace exception {
+    bfdContext g_bfdContext;
+  }
+}
+#endif // COLLECTEXTRABACKTRACEINFOS
+
 castor::exception::Backtrace::Backtrace(): m_trace() {
   void * array[200];
   g_lock.lock();  
@@ -77,73 +167,3 @@ castor::exception::Backtrace::Backtrace(): m_trace() {
 
 /* Implementation of the singleton lock */
 castor::exception::Backtrace::mutex castor::exception::Backtrace::g_lock;
-
-#ifdef COLLECTEXTRABACKTRACEINFOS
-// code dedicated to extracting more information in the backtraces, typically
-// resolving line numbers from adresses
-// This code is compiled only in debug mode (where COLLECTEXTRABACKTRACEINFOS will be defined)
-// as it's pretty heavy
-castor::exception::Backtrace::bfdContext::bfdContext():
-m_abfd(NULL), m_syms(NULL), m_text(NULL)
-{
-  char ename[1024];
-  int l = readlink("/proc/self/exe",ename,sizeof(ename));
-  if (l != -1) {
-    ename[l] = 0;
-    bfd_init();
-    m_abfd = bfd_openr(ename, 0);
-    if (m_abfd) {
-      /* oddly, this is required for it to work... */
-      bfd_check_format(m_abfd,bfd_object);
-      unsigned storage_needed = bfd_get_symtab_upper_bound(m_abfd);
-      m_syms = (asymbol **) malloc(storage_needed);
-      bfd_canonicalize_symtab(m_abfd, m_syms);
-      m_text = bfd_get_section_by_name(m_abfd, ".text");
-    }
-  }
-}
-
-castor::exception::Backtrace::bfdContext::~bfdContext() {
-  delete[] m_syms;
-  /* According the bfd documentation, closing the bfd frees everything */
-  m_text=NULL;
-  bfd_close(m_abfd);
-}
-
-std::string castor::exception::Backtrace::bfdContext::collectExtraInfos(const std::string& address) {
-  std::ostringstream result;
-  m_mutex.lock();
-  if (m_abfd && m_text && m_syms) {
-    std::stringstream ss;
-    long offset;
-    ss << std::hex << address;
-    ss >> offset;
-    offset -= m_text->vma;
-    if (offset > 0) {
-      const char *file;
-      const char *func;
-      unsigned line;
-      if (bfd_find_nearest_line(m_abfd, m_text, m_syms, offset, &file, &func, &line) 
-          && file) {
-        int status(-1);
-        char * demangledFunc = abi::__cxa_demangle(func, NULL, NULL, &status);
-        result << "line " << line << " of file " << file
-               << " in " << (status?func:demangledFunc) << " (" << address << ")";
-        free (demangledFunc);
-      }
-    }
-  }
-  m_mutex.unlock();
-  return result.str();
-}
-
-
-#else // COLLECTEXTRABACKTRACEINFOS
-castor::exception::Backtrace::bfdContext::bfdContext() {};
-castor::exception::Backtrace::bfdContext::~bfdContext() {};
-std::string castor::exception::Backtrace::bfdContext::collectExtraInfos(const std::string& address) {
-  return "";
-}
-#endif // COLLECTEXTRABACKTRACEINFOS
-
-castor::exception::Backtrace::bfdContext castor::exception::Backtrace::g_bfdContext;
