@@ -42,8 +42,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamDeviceGroupNameCnv>* s_factoryStreamDeviceGroupNameCnv =
-  new castor::CnvFactory<castor::io::StreamDeviceGroupNameCnv>();
+static castor::CnvFactory<castor::io::StreamDeviceGroupNameCnv>
+  s_factoryStreamDeviceGroupNameCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

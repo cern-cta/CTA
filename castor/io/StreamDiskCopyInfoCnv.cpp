@@ -42,8 +42,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamDiskCopyInfoCnv>* s_factoryStreamDiskCopyInfoCnv =
-  new castor::CnvFactory<castor::io::StreamDiskCopyInfoCnv>();
+static castor::CnvFactory<castor::io::StreamDiskCopyInfoCnv>
+  s_factoryStreamDiskCopyInfoCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

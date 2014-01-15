@@ -44,8 +44,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamFileMigrationReportListCnv>* s_factoryStreamFileMigrationReportListCnv =
-  new castor::CnvFactory<castor::io::StreamFileMigrationReportListCnv>();
+static castor::CnvFactory<castor::io::StreamFileMigrationReportListCnv>
+  s_factoryStreamFileMigrationReportListCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

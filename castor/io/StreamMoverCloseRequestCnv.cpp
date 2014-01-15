@@ -45,8 +45,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamMoverCloseRequestCnv>* s_factoryStreamMoverCloseRequestCnv =
-  new castor::CnvFactory<castor::io::StreamMoverCloseRequestCnv>();
+static castor::CnvFactory<castor::io::StreamMoverCloseRequestCnv>
+  s_factoryStreamMoverCloseRequestCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

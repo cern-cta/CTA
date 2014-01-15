@@ -48,8 +48,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamChangePrivilegeCnv>* s_factoryStreamChangePrivilegeCnv =
-  new castor::CnvFactory<castor::io::StreamChangePrivilegeCnv>();
+static castor::CnvFactory<castor::io::StreamChangePrivilegeCnv>
+  s_factoryStreamChangePrivilegeCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

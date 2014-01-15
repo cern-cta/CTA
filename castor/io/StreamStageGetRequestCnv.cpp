@@ -47,8 +47,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamStageGetRequestCnv>* s_factoryStreamStageGetRequestCnv =
-  new castor::CnvFactory<castor::io::StreamStageGetRequestCnv>();
+static castor::CnvFactory<castor::io::StreamStageGetRequestCnv>
+  s_factoryStreamStageGetRequestCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

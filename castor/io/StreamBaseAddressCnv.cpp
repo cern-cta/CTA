@@ -42,8 +42,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamBaseAddressCnv>* s_factoryStreamBaseAddressCnv =
-  new castor::CnvFactory<castor::io::StreamBaseAddressCnv>();
+static castor::CnvFactory<castor::io::StreamBaseAddressCnv>
+  s_factoryStreamBaseAddressCnv;
 
 //------------------------------------------------------------------------------
 // Constructor
