@@ -1679,16 +1679,7 @@ void *tapeIOthread(void *arg) {
                             exit(-1);
 			}
 
-                        /* Open the tape device in order to flush            */
-                        /*                                                   */
-                        /* IMPORTANT                                         */
-                        /* =========                                         */
-                        /* Cannot use tape_fd to store the tape file         */
-                        /* because if CHECK_PROC_ERR sees it is not -1 then  */
-                        /* CHECK_PROC_ERR will call tcloserr() which will in */
-                        /* turn call deltpfile().  The deltpfile() assumes   */
-                        /* a payload file is being written and it will try   */
-                        /* to delete it and its already written header file. */
+                        /* Open the tape device in order to flush */
                         private_tape_fd_for_flush = open(tapePathForFlush,
                             O_RDWR);
                         if(-1 == private_tape_fd_for_flush) {

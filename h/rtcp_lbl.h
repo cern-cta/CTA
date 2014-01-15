@@ -47,6 +47,4 @@ int wrttrllbl(
 	const int  nblocks,
 	const uint32_t tapeFlushMode);
 
-int deltpfil (int	tapefd, char	*path);
-
 #endif /* H_RTCP_LBL_H */
