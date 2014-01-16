@@ -79,10 +79,10 @@ namespace castor {
      * called (new done in castor::dlf::dlf_addMessages for 
      * static data from castorclient (?) library.
      */
-    class dlg_pengindMessagesVector: 
+    class PendingMessagesVector: 
     public std::vector<std::pair<int, castor::dlf::Message*> > {
     public:
-      ~dlg_pengindMessagesVector() {
+      ~PendingMessagesVector() {
         for (std::vector<std::pair<int, Message*> >::iterator it =
                dlf_getPendingMessages().begin();
              it != dlf_getPendingMessages().end();

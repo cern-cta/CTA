@@ -36,7 +36,7 @@
 //-----------------------------------------------------------------------------
 std::vector<std::pair<int, castor::dlf::Message*> >&
 castor::dlf::dlf_getPendingMessages () throw() {
-  static dlg_pengindMessagesVector pendingMessages;
+  static PendingMessagesVector pendingMessages;
   return pendingMessages;
 }
 
