@@ -46,3 +46,4 @@ Exception::Exception(const Exception &ex): castor::exception::Exception(0) {
   getMessage() << ex.getMessageValue();
   m_backtrace = ex.m_backtrace;
 }
+
