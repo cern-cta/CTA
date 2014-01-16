@@ -45,42 +45,6 @@ function copyInstallPerm {
     fi
 }
 
-
-# Append sub-packages' check steps
-
-for this in `grep Package: debian/control | awk '{print $NF}'`; do
-    package=$this
-    actualPackage=$package
-
-    #
-    ## get package group if any
-    #
-    group=`cat debian/control | perl -e '
-      $package=shift;
-      $what=shift;
-      $this = do { local $/; <> };
-      $this =~ s/.*Package: $package[^\w\-]//sg;
-      $this =~ s/Package:.*//sg;
-      map {if (/([^:]+):(.+)/) {$this{$1}=$2};} split("\n",$this);
-      if (defined($this{$what})) {
-        print "$this{$what}\n";
-      }' $package XBS-Group |
-      sed 's/ //g' | sed 's/\${[^{},]*}//g' | sed 's/^,*//g' | sed 's/,,*/,/g'`
-    if [ -s "debian/$package.check" ]; then
-        echo "# Check section for package ${package}" >> $output
-        if [ "${group}" != "Client" ]; then
-            echo "%if %compile_server" >> $output # not a client package, compile only in the server case (the default)
-        fi
-        cat debian/$package.check >> $output
-        if [ "${group}" != "Client" ]; then
-            echo "%endif" >> $output # end of client compilation if
-        fi
-    fi
-done
-
-echo "# End of check section" >> $output
-echo >> $output
-
 #
 ## Append all sub-packages to CASTOR.spec
 #
