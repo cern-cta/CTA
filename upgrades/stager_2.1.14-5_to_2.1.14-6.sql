@@ -44,7 +44,7 @@ DECLARE
 BEGIN
   SELECT release INTO unused FROM CastorVersion
    WHERE schemaName = 'STAGER'
-     AND release LIKE '2_1_14_5_2%';
+     AND release LIKE '2_1_14_5%';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we cannot apply this script
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the STAGER before this one.');
@@ -71,22 +71,32 @@ BEGIN
 END;
 /
 
+-- Fix constraint - transparent thanks to the NOVALIDATE clause
+ALTER TABLE DiskCopy DROP CONSTRAINT CK_DiskCopy_GCType;
+ALTER TABLE DiskCopy
+  ADD CONSTRAINT CK_DiskCopy_GcType
+  CHECK (gcType IN (0, 1, 2, 3, 4, 5, 6, 7)) ENABLE NOVALIDATE;
+
+-- Draining schema change. Dropping the content because of the NOT NULL constraint.
+TRUNCATE TABLE DrainingErrors;
+ALTER TABLE DrainingErrors ADD (diskCopy INTEGER, timeStamp NUMBER CONSTRAINT NN_DrainingErrors_TimeStamp NOT NULL);
+
+CREATE INDEX I_DrainingErrors_DC ON DrainingErrors (diskCopy);
+ALTER TABLE DrainingErrors
+  ADD CONSTRAINT FK_DrainingErrors_DC
+    FOREIGN KEY (diskCopy)
+    REFERENCES DiskCopy (id);
+
+ALTER TABLE Disk2DiskCopyJob ADD (srcDcId INTEGER);
+
+
+XXX TODO add PL/SQL code
+
+
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
 BEGIN
-  FOR a IN (SELECT object_name, object_type
-              FROM user_objects
-             WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY')
-               AND status = 'INVALID')
-  LOOP
-    IF a.object_type = 'PACKAGE BODY' THEN a.object_type := 'PACKAGE'; END IF;
-    BEGIN
-      EXECUTE IMMEDIATE 'ALTER ' ||a.object_type||' '||a.object_name||' COMPILE';
-    EXCEPTION WHEN OTHERS THEN
-      -- ignore, so that we continue compiling the other invalid items
-      NULL;
-    END;
-  END LOOP;
+  recompileAll();
 END;
 /
 
