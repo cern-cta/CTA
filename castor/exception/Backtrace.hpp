@@ -24,8 +24,6 @@
 
 #include <string>
 #include <pthread.h>
-#include <bfd.h>
-#include <sstream>
 
 namespace castor {
   namespace exception {

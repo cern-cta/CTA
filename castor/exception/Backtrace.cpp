@@ -29,6 +29,8 @@
 #include "Backtrace.hpp"
 
 #ifdef COLLECTEXTRABACKTRACEINFOS
+#include <bfd.h>
+#include <sstream>
 namespace castor {
   namespace exception {
     class bfdContext {
