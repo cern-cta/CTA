@@ -27,7 +27,7 @@ cmake_minimum_required (VERSION 2.6)
 
 project(castor)
 
-IF(DEFINED CMAKE_BUILD_TYPE)
+IF(NOT CMAKE_BUILD_TYPE STREQUAL "")
   # If the user specifies -DCMAKE_BUILD_TYPE on the command line, take their definition and dump it in the cache
   message(STATUS "Setting build type to ${CMAKE_BUILD_TYPE} as requested.")
   SET(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Choose the type of build.")
@@ -37,8 +37,9 @@ ELSE()
   message (STATUS "Override with -DCMAKE_BUILD_TYPE:STRING=Debug")  
   set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
   # Set the possible values of build type for cmake-gui
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
-ENDIF(DEFINED CMAKE_BUILD_TYPE)
+  # this command is not yet available in SLC6's cmake 2.6
+  # set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+ENDIF(NOT CMAKE_BUILD_TYPE STREQUAL "")
 
 if ("${CMAKE_SOURCE_DIR}" MATCHES "${CMAKE_BINARY_DIR}")
   message (SEND_ERROR "In source building not supported. Please run something like: \"mkdir ../build; ( src=`pwd`; cd ../build; cmake $src ); make -C ../build\"")
