@@ -394,13 +394,11 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
   include(CPack)
   include(cmake/UseRPMTools.cmake)
   if (RPMTools_FOUND)
-    execute_process (COMMAND ${CMAKE_COMMAND} -E copy
-      ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.spec.in.head
-      ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
     message (STATUS "Generating spec file from debian package structure...")
     execute_process (
-      COMMAND ./makespec.in.sh ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in 2>&1
+      COMMAND ./makespec.py
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      OUTPUT_FILE ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in
       OUTPUT_VARIABLE result)
     if (NOT ${result} STREQUAL "")
        string (REGEX REPLACE "\n$" "" result ${result})

@@ -311,7 +311,7 @@ Architecture: any
 Depends: python, python-rpyc >= 3.1, lemon-sensor-pythonAPI
 Description: castor (Cern Advanced STORage system)
  Lemon sensor for the MAE
- 
+
 Package: castor-traffic-shaper
 Architecture: any
 Depends: bash, initscripts, chkconfig, iproute, ethtool
