@@ -2472,7 +2472,7 @@ END;
 /
 
 /* useful procedure to recompile all invalid items in the DB
-   as many times as needed, until nothing can be imprved anymore.
+   as many times as needed, until nothing can be improved anymore.
    Also reports the list of invalid items if any */
 CREATE OR REPLACE PROCEDURE recompileAll AS
   varNbInvalids INTEGER;
