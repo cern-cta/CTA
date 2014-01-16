@@ -219,22 +219,11 @@ def writePlaceHoldersForChanges(fd):
 # method revalidating all PL/SQL code
 def writePLSQLRevalidation(fd):
     '''Writes revalidation of all PL/SQL code'''
-    fd.write('''/* Recompile all invalid procedures, triggers and functions */
+    fd.write('''
+/* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
 BEGIN
-  FOR a IN (SELECT object_name, object_type
-              FROM user_objects
-             WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY')
-               AND status = 'INVALID')
-  LOOP
-    IF a.object_type = 'PACKAGE BODY' THEN a.object_type := 'PACKAGE'; END IF;
-    BEGIN
-      EXECUTE IMMEDIATE 'ALTER ' ||a.object_type||' '||a.object_name||' COMPILE';
-    EXCEPTION WHEN OTHERS THEN
-      -- ignore, so that we continue compiling the other invalid items
-      NULL;
-    END;
-  END LOOP;
+  recompileAll();
 END;
 /\n\n''')
 
