@@ -70,8 +70,8 @@ const int   castor::stager::DEFAULT_REMOTEJOBSVC_TIMEOUT = 1800;
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
-static castor::SvcFactory<castor::stager::RemoteJobSvc>* s_factoryRemoteJobSvc =
-  new castor::SvcFactory<castor::stager::RemoteJobSvc>();
+static castor::SvcFactory<castor::stager::RemoteJobSvc>
+  s_factoryRemoteJobSvc;
 
 //------------------------------------------------------------------------------
 // RemoteJobSvc

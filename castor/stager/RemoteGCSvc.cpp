@@ -73,8 +73,8 @@ const int   castor::stager::DEFAULT_REMOTEGCSVC_TIMEOUT = 1800;
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
-static castor::SvcFactory<castor::stager::RemoteGCSvc>* s_factoryRemoteGCSvc =
-  new castor::SvcFactory<castor::stager::RemoteGCSvc>();
+static castor::SvcFactory<castor::stager::RemoteGCSvc>
+  s_factoryRemoteGCSvc;
 
 //------------------------------------------------------------------------------
 // RemoteGCSvc

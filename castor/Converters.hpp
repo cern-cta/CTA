@@ -39,6 +39,7 @@ namespace castor {
    * converters on demand.
    */
   class Converters {
+    friend class ConvertersCleaner;
 
   public:
     /**

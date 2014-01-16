@@ -46,8 +46,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
-static castor::SvcFactory<castor::db::ora::OraQuerySvc>* s_factoryOraQuerySvc =
-  new castor::SvcFactory<castor::db::ora::OraQuerySvc>();
+static castor::SvcFactory<castor::db::ora::OraQuerySvc>
+  s_factoryOraQuerySvc;
 
 //------------------------------------------------------------------------------
 // Static constants initialization

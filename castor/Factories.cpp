@@ -27,7 +27,28 @@
 #include "ISvcFactory.hpp"
 
 /** the unique and single factory table */
-castor::Factories* FactoriesInstance = 0;
+castor::Factories* FactoriesInstance = NULL;
+
+/** The janitor in charge of clening up the factories instance:
+ * it might or might not give the initial kick that triggers the 
+ * lazy initialization of the factory, but he will for sure 
+ * delete it.
+ */
+namespace castor {
+  class FactoriesCleaner {
+  public:
+    FactoriesCleaner() {
+      /* This might or might not trigger the lazy initialization */
+      m_factories = castor::Factories::instance();
+    }
+    ~FactoriesCleaner() {
+      delete m_factories;
+    }
+  private:
+    Factories * m_factories;
+  };
+  static FactoriesCleaner g_factoriesCleaner;
+}
 
 //-----------------------------------------------------------------------------
 // Destructor

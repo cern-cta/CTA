@@ -78,7 +78,7 @@ m_abfd(NULL), m_syms(NULL), m_text(NULL)
 }
 
 castor::exception::bfdContext::~bfdContext() {
-  delete[] m_syms;
+  free (m_syms);
   /* According the bfd documentation, closing the bfd frees everything */
   m_text=NULL;
   bfd_close(m_abfd);

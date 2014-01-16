@@ -72,8 +72,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
-static castor::SvcFactory<castor::db::ora::OraGCSvc>* s_factoryOraGCSvc =
-  new castor::SvcFactory<castor::db::ora::OraGCSvc>();
+static castor::SvcFactory<castor::db::ora::OraGCSvc>
+  s_factoryOraGCSvc;
 
 
 //------------------------------------------------------------------------------

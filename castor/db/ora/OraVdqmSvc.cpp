@@ -52,8 +52,8 @@
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::db::ora::OraVdqmSvc>* s_factoryOraVdqmSvc =
-  new castor::SvcFactory<castor::db::ora::OraVdqmSvc>();
+static castor::SvcFactory<castor::db::ora::OraVdqmSvc>
+  s_factoryOraVdqmSvc;
 
 // -----------------------------------------------------------------------
 // Static map of SQL statement strings
