@@ -1175,8 +1175,8 @@ static int TapeToMemory(int tape_fd, int *indxp, int *firstblk,
  * is stuck. In this case the process has to be killed by a signal. 
  */
 #define CHECK_PROC_ERR(X,Y,Z) { \
-    save_errno = errno; \
-    save_serrno = serrno; \
+    const int save_errno = errno; \
+    const int save_serrno = serrno; \
     rtcpd_CheckReqStatus((X),(Y),NULL,&severity); \
     if ( rc == -1 || (severity & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 || \
         (rtcpd_CheckProcError() & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) { \
@@ -1257,7 +1257,7 @@ void *tapeIOthread(void *arg) {
     int indxp = 0;
     int firstblk = 0;
     int tape_fd = -1;
-    int rc,BroadcastInfo,mode,diskIOfinished,severity,save_errno,save_serrno;
+    int rc,BroadcastInfo,mode,diskIOfinished,severity;
     int save_rc;
     int clientIsTapeBridge = 0;
 
@@ -1394,10 +1394,13 @@ void *tapeIOthread(void *arg) {
          */
         if ( (nexttape->local_retry == 0) && 
              ((nexttape == tape) || (prevfile->eovflag == 1)) ) {
+            int save_serrno = 0;
+            int save_errno = 0;
             TP_STATUS(RTCP_PS_MOUNT);
             rc = rtcpd_Mount(nexttape);
             TP_STATUS(RTCP_PS_NOBLOCKING);
-            save_serrno = serrno; save_errno = errno;
+            save_serrno = serrno;
+            save_errno = errno;
             if ( rc == -1 ) {
                 (void)rtcpd_Deassign(-1,&tape->tapereq,NULL);
                 if ( (mode == WRITE_DISABLE) &&
@@ -1762,8 +1765,8 @@ void *tapeIOthread(void *arg) {
                 rc = rtcpd_Info(nexttape,nextfile);
                 TP_STATUS(RTCP_PS_NOBLOCKING);
                 if ( rc == -1 ) {
-                    save_errno = errno;
-                    save_serrno = serrno;
+                    const int save_errno = errno;
+                    const int save_serrno = serrno;
                     (void)Cthread_cond_broadcast_ext(proc_cntl.cntl_lock);
                     (void)Cthread_mutex_unlock_ext(proc_cntl.cntl_lock);
                     errno = save_errno;
