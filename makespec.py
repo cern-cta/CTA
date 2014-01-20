@@ -84,10 +84,12 @@ for pkg in deb822.Packages.iter_paragraphs(open('debian/control')):
     print '%defattr(-,root,root)'
     integrateDebianFile(pkg, 'manpages', None,
                         lambda x: '%%attr(0644,root,bin) %%doc %s' % x.replace('debian/castor', ''))
-    integrateDebianFile(pkg, 'dirs', None,
-                        lambda x: '%%attr(-,root,bin) %%dir /%s' % x \
-                                  if x.find('%attr') < 0 \
-                                  else x.replace(') ', ') %dir /'))
+    def convertAttr(attr):   # could be a lambda once slc5 is gone
+      if attr.find('%attr') < 0:
+        return '%%attr(-,root,bin) %%dir /%s' % attr
+      else:
+        return attr.replace(') ', ') %dir /')
+    integrateDebianFile(pkg, 'dirs', None, convertAttr)
     handleInstallFiles(pkg)
     # deal with scripts
     integrateDebianFile(pkg, 'postinst', '%%post -n %s' % pkg['Package'])
