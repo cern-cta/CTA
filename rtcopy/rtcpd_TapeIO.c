@@ -708,18 +708,21 @@ int tcloserr(int fd, tape_list_t *tape, file_list_t *file) {
       /* flushes.                                                            */
       /*                                                                     */
       /* The new safe course of action is to log a message stating that the  */
-      /* tape may be incorrectly terminated and to then exit the rtcpd child */
-      /* process immediately with an exit value of -1.  The child process is */
-      /* exited immediately in order to eliminate the chance of the process  */
-      /* trying to continue to write to a tape and drive that are now in     */
-      /* undefined or poorly defined states.                                 */
+      /* tape may be incorrectly terminated and to then let the rtcpd child  */
+      /* process gracefully finish the current tape session.  Among other    */
+      /* benefits, letting the session end gracefully gives the rtcpd child  */
+      /* process a chance to send a TAPE OVERFLOW error to its client when   */
+      /* writing has reached the physical end of a tape.  This in turn       */
+      /* allows the client to notify the vmgrd daemon that the tape in       */
+      /* question is FULL.                                                   */
       rtcp_log(LOG_ERR,
-        "Aborting and maybe leaving the tape incorrectly terminated\n");
+        "Gracefully ending tape session and maybe leaving the tape"
+        " incorrectly terminated\n");
       tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
         "func"   , TL_MSG_PARAM_STR, "tcloserr",
         "Message", TL_MSG_PARAM_STR,
-          "Aborting and maybe leaving the tape incorrectly terminated");
-      exit(-1);
+          "Gracefully ending tape session and maybe leaving the tape"
+          " incorrectly terminated");
     }
   }
   (void) close(fd) ;
