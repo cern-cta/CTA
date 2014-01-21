@@ -71,10 +71,6 @@ void castor::server::NotifierThread::run(void* param) {
 // doNotify
 //------------------------------------------------------------------------------
 void castor::server::NotifierThread::doNotify(char tpName, int nbThreads) throw () {
-/* Steven.Murray@cern.ch - This code is temporrarily commented out pending full
-   integration with the Daemon and MultiThreadedDaemon classes
-
-
   castor::server::SignalThreadPool* pool = 0;
   try {
     // first resolve the pool
@@ -127,5 +123,4 @@ void castor::server::NotifierThread::doNotify(char tpName, int nbThreads) throw 
       } catch(...) {}
     }
   }
-*/
 }

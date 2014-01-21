@@ -99,7 +99,6 @@ void castor::server::MultiThreadedDaemon::parseCommandLine(int argc,
       break;
     case 'm':
       // initialize the metrics collector thread
-      // TODO WHEN MULTITHREADED DAEMON IS THE DEFAULT
       castor::metrics::MetricsCollector::getInstance(this);
       break;
     default:
