@@ -64,11 +64,8 @@ const char *rtcpReqTypeToStr(const uint32_t type) {
   case RTCP_TAPEERR_REQ   : return "RTCP_TAPEERR_REQ";
   case RTCP_FILEERR_REQ   : return "RTCP_FILEERR_REQ";
   case RTCP_ENDOF_REQ     : return "RTCP_ENDOF_REQ";
-  case RTCP_ABORT_REQ     : return "RTCP_ABORT_REQ";
   case RTCP_DUMP_REQ      : return "RTCP_DUMP_REQ";
   case RTCP_DUMPTAPE_REQ  : return "RTCP_DUMPTAPE_REQ";
-  case RTCP_KILLJID_REQ   : return "RTCP_KILLJID_REQ";
-  case RTCP_RSLCT_REQ     : return "RTCP_RSLCT_REQ";
   case RTCP_PING_REQ      : return "RTCP_PING_REQ";
   case RTCP_HAS_MORE_WORK : return "RTCP_HAS_MORE_WORK";
   case VDQM_CLIENTINFO    : return "VDQM_CLIENTINFO";
