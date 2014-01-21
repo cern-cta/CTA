@@ -122,10 +122,3 @@ int rtcpc_finished(rtcpc_sockets_t **socks, rtcpHdr_t *hdr, tape_list_t *tape) {
   if ( save_serrno != 0 ) serrno = save_serrno;
   return(rc);
 }
-
-int rtcpc_kill() {
-  rtcpHdr_t hdr;
-  hdr.reqtype = RTCP_ABORT_REQ;
-  rtcpc_killed = 1;
-  return(rtcpc_finished(&last_socks,&hdr,last_tape));
-}

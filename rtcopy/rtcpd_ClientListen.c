@@ -34,7 +34,6 @@
 extern int success;
 extern int failure;
 extern int AbortFlag;
-extern int SHIFTclient;
 extern int Dumptape;
 static int wait_to_be_joined = FALSE;
 extern int rtcp_InitLog(char *, FILE *, FILE *, int *);
@@ -106,17 +105,6 @@ void *rtcpd_CLThread(void *arg) {
                     }
                 } else {
                     switch (hdr.reqtype) {
-                    case RTCP_ABORT_REQ:
-                        if ( (rtcpd_CheckProcError() & 
-                              (RTCP_FAILED | RTCP_RESELECT_SERV)) == 0 ) {
-                            rtcp_InitLog(NULL,NULL,NULL,NULL);
-                            rtcp_log(LOG_INFO,"request aborted by user\n");
-                            tl_rtcpd.tl_log( &tl_rtcpd, 10, 2, 
-                                             "func"    , TL_MSG_PARAM_STR, "rtcpd_CLThread", 
-                                             "Message" , TL_MSG_PARAM_STR, "request aborted by user" );
-                        }
-                        stop_request = 1;
-                        break;
                     case RTCP_ENDOF_REQ:
                         rtcp_log(LOG_INFO,"rtcp_CLThread() End Of Request received on main socket\n");
                         tl_rtcpd.tl_log( &tl_rtcpd, TL_LVL_MONITORING, 2, 
@@ -124,20 +112,6 @@ void *rtcpd_CLThread(void *arg) {
                                          "Message" , TL_MSG_PARAM_STR, "End Of Request received on main socket" );
                         stop_request = 1;
                         (void)rtcp_SendAckn(&client_socket,hdr.reqtype);
-                        break;
-                    case RTCP_KILLJID_REQ:
-                        rtcp_log(LOG_INFO,"request killed by operator\n");
-                        tl_rtcpd.tl_log( &tl_rtcpd, 10, 2, 
-                                         "func"    , TL_MSG_PARAM_STR, "rtcpd_CLThread", 
-                                         "Message" , TL_MSG_PARAM_STR, "request killed by operator" );
-                        stop_request = 1;
-                        break;
-                    case RTCP_RSLCT_REQ:
-                        rtcp_log(LOG_INFO,"reselect server request by operator\n");
-                        tl_rtcpd.tl_log( &tl_rtcpd, 10, 2, 
-                                         "func"    , TL_MSG_PARAM_STR, "rtcpd_CLThread", 
-                                         "Message" , TL_MSG_PARAM_STR, "reselect server request by operator" );
-                        stop_request = 1;
                         break;
                     case RTCP_PING_REQ:
                         rtcp_log(LOG_DEBUG,"rtcp_CLThread() ping request from client\n");
@@ -179,20 +153,11 @@ void *rtcpd_CLThread(void *arg) {
         }
     }
     if ( rc == -1 || hdr.reqtype != RTCP_ENDOF_REQ ) {
-        if ( SHIFTclient == FALSE ) {
-            if ( stop_request == 1 ) {
-                if ( hdr.reqtype != RTCP_KILLJID_REQ &&
-                     hdr.reqtype != RTCP_RSLCT_REQ ) AbortFlag = 1;
-                else AbortFlag = 2;
-            }
-            if ( hdr.reqtype != RTCP_RSLCT_REQ )
-                rtcpd_SetProcError(RTCP_FAILED | RTCP_USERR);
-            else rtcpd_SetProcError(RTCP_RESELECT_SERV);
-            rtcpd_CtapeKill();
-        } else {
-            rtcp_log = (void (*)(int, const char *, ...))log;
-            if ( stop_request == 1 ) rtcpc_kill();
+        if ( stop_request == 1 ) {
+            AbortFlag = 1;
         }
+        rtcpd_SetProcError(RTCP_FAILED | RTCP_USERR);
+        rtcpd_CtapeKill();
         if ( AbortFlag != 0 && Dumptape == TRUE ) exit(0);
     }
 

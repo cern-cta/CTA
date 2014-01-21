@@ -74,11 +74,10 @@ static int rtcp_Retval(tape_list_t *tape, file_list_t *file,
     } CLIST_ITERATE_END(tape,tl);
 
     if ( err != NULL ) {
-        if ( (err->severity & (RTCP_FAILED|RTCP_RESELECT_SERV) ) != 0 ) {
+        if ( (err->severity & RTCP_FAILED) != 0 ) {
             if ( what == map_castor ) retval = err->errorcode;
             else {
-                if ( (err->severity & RTCP_RESELECT_SERV) != 0 ) retval = RSLCT;
-                else if ( (err->severity & RTCP_USERR) != 0 ) retval = USERR;
+                if ( (err->severity & RTCP_USERR) != 0 ) retval = USERR;
                 else if ( (err->severity & RTCP_SYERR) != 0 ) retval = SYERR;
                 else if ( (err->severity & RTCP_UNERR) != 0 ) retval = UNERR;
                 else if ( (err->severity & RTCP_SEERR) != 0 ) retval = SEERR;

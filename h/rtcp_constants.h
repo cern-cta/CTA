@@ -55,11 +55,11 @@
 #define   RTCP_TAPEERR_REQ      (RTCP_BASE_REQTYPE+0x04)
 #define   RTCP_FILEERR_REQ      (RTCP_BASE_REQTYPE+0x05)
 #define   RTCP_ENDOF_REQ        (RTCP_BASE_REQTYPE+0x06)
-#define   RTCP_ABORT_REQ        (RTCP_BASE_REQTYPE+0x07)
+#define   RTCP_ABORT_REQ_NOT_USED        (RTCP_BASE_REQTYPE+0x07)
 #define   RTCP_DUMP_REQ         (RTCP_BASE_REQTYPE+0x08) /* Admin. req. */
 #define   RTCP_DUMPTAPE_REQ     (RTCP_BASE_REQTYPE+0x09)
-#define   RTCP_KILLJID_REQ      (RTCP_BASE_REQTYPE+0x0A) /* Admin. req. */
-#define   RTCP_RSLCT_REQ        (RTCP_BASE_REQTYPE+0x0B)
+#define   RTCP_KILLJID_REQ_NOT_USED      (RTCP_BASE_REQTYPE+0x0A) /* Admin. req. */
+#define   RTCP_RSLCT_REQ_NOT_USED        (RTCP_BASE_REQTYPE+0x0B)
 #define   RTCP_PING_REQ         (RTCP_BASE_REQTYPE+0x0C)
 #define   RTCP_HAS_MORE_WORK    (RTCP_BASE_REQTYPE+0x0D) /* Client signals more work to a running request*/
 #define   RTCP_REQ_MAX          (RTCP_BASE_REQTYPE+0x0E)
@@ -88,7 +88,7 @@
  */
 #define   RTCP_OK            (0x000001)
 #define   RTCP_RETRY_OK      (0x000002)
-#define   RTCP_RESELECT_SERV (0x000004)
+#define   RTCP_RESELECT_SERV_NOT_USED (0x000004)
 #define   RTCP_FAILED        (0x000008)
 #define   RTCP_SEND_OPMSG    (0x000010)
 #define   RTCP_USERR         (0x000020)
@@ -96,7 +96,7 @@
 #define   RTCP_UNERR         (0x000080)
 #define   RTCP_SEERR         (0x000100)
 #define   RTCP_NORLS         (0x000200)   /* Don't call Ctape_rls() */
-#define   RTCP_LOCAL_RETRY   (0x000400)   /* Do local retry */
+#define   RTCP_LOCAL_RETRY_NOT_USED   (0x000400)   /* Do local retry */
 #define   RTCP_NORETRY       (0x000800)   /* Don't retry at all */
 #define   RTCP_EOD           (0x001000)   /* Reached End Of Data */
 #define   RTCP_NEXTRECORD    (0x002000)   /* Skip to next record */
@@ -418,7 +418,7 @@
 #define MNYPARY 195     /* Request failed though  skip was attempted */
 #define LIMBYSZ 197     /* Status when limited by -s option value */
 #define ETMUSR  205     /* too many tape users */
-#define RSLCT   222     /* Reselect requested  */
+#define RSLCT_NOT_USED   222     /* Reselect requested  */
 #define ENDVOL  213     /* Old (SHIFT) ETEOV flag, End Of Volume hit */
 
 #endif /* RTCP_CONSTANTS_H */

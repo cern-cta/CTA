@@ -76,9 +76,6 @@ buffer_table_t **databufs;
 extern int AbortFlag;
 int AbortFlag = 0;
 
-extern int SHIFTclient;
-int SHIFTclient = FALSE;
-
 extern int Dumptape;
 int Dumptape = FALSE;
 
@@ -878,8 +875,7 @@ int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
   }
 
   rc = Cthread_mutex_lock_ext(lockaddr);
-  if ( (rtcpd_CheckProcError() &
-        (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) {
+  if ( (rtcpd_CheckProcError() & RTCP_FAILED) != 0 ) {
     *lockflag = lock;
     (void)Cthread_cond_broadcast_ext(lockaddr);
     (void)Cthread_mutex_unlock_ext(lockaddr);
@@ -948,8 +944,7 @@ int rtcpd_SerializeLock(const int lock, int *lockflag, void *lockaddr,
         }
       }
       rc = Cthread_cond_wait_ext(lockaddr);
-      if ( rc == -1 || (rtcpd_CheckProcError() &
-                        (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) {
+      if ( rc == -1 || (rtcpd_CheckProcError() & RTCP_FAILED) != 0 ) {
         *lockflag = lock;
         (*nb_waiters)--;
         for (i=0; i<proc_stat.nb_diskIO; i++) loc_wait_list[i]--;
@@ -1490,8 +1485,7 @@ static int rtcpd_ProcError(int *code) {
        * Never reset FAILED status
        */
       if ( (proc_cntl.ProcError & RTCP_FAILED) == 0 &&
-           ((proc_cntl.ProcError & RTCP_RESELECT_SERV) == 0 ||
-            AbortFlag == 0) ) {
+           (AbortFlag == 0) ) {
         proc_cntl.ProcError = *code;
       }
     }
@@ -1526,7 +1520,7 @@ void rtcpd_SetProcError(int code) {
                      "Message" , TL_MSG_PARAM_STR, "force FAILED status" );
     rc = proc_cntl.ProcError = RTCP_FAILED;
   }
-  if ( (rc & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV|RTCP_EOD)) != 0 )
+  if ( (rc & (RTCP_FAILED|RTCP_EOD)) != 0 )
     rtcpd_BroadcastException();
 
   return;
@@ -1629,10 +1623,9 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
      */
     if ( (tapereq->err.severity & RTCP_FAILED) == 0 ) {
       tapereq->err.errorcode = status;
-      if ( (severity & (RTCP_FAILED | RTCP_RESELECT_SERV | RTCP_USERR |
+      if ( (severity & (RTCP_FAILED | RTCP_USERR |
                         RTCP_SYERR | RTCP_UNERR | RTCP_SEERR)) != 0 ) {
         tapereq->err.severity = tapereq->err.severity & ~RTCP_OK;
-        tapereq->err.severity = tapereq->err.severity & ~RTCP_LOCAL_RETRY;
         tapereq->err.severity |= severity;
       } else {
         tapereq->err.severity |= severity;
@@ -1645,10 +1638,9 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
      */
     if ( (filereq->err.severity & RTCP_FAILED) == 0 ) {
       filereq->err.errorcode = status;
-      if ( (severity & (RTCP_FAILED | RTCP_RESELECT_SERV | RTCP_USERR |
+      if ( (severity & (RTCP_FAILED | RTCP_USERR |
                         RTCP_SYERR | RTCP_UNERR | RTCP_SEERR)) != 0 ) {
         filereq->err.severity = filereq->err.severity & ~RTCP_OK;
-        filereq->err.severity = filereq->err.severity & ~RTCP_LOCAL_RETRY;
         filereq->err.severity |= severity;
         fl = file;
         /*
@@ -1664,20 +1656,6 @@ void rtcpd_SetReqStatus(tape_list_t *tape,
         }
       } else {
         filereq->err.severity |= severity;
-        if ( (severity & RTCP_LOCAL_RETRY) != 0 ) {
-          fl = file;
-          /*
-           * On tape write we must set same status for all
-           * concatenated requests so far.
-           */
-          if ( file->tape->tapereq.mode == WRITE_ENABLE ) {
-            while ( fl != file->tape->file &&
-                    (fl->filereq.concat & CONCAT) != 0 ) {
-              fl = fl->prev;
-              fl->filereq.err.severity = filereq->err.severity;
-            }
-          }
-        }
       }
     }
   }
@@ -1729,8 +1707,7 @@ void rtcpd_CheckReqStatus(tape_list_t *tape,
 static int lockMoreWork() {
   int rc;
   rc = Cthread_mutex_lock_ext(proc_cntl.requestMoreWork_lock);
-  if ( (rc == -1) || (rtcpd_CheckProcError() &
-                      (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) ) {
+  if ( (rc == -1) || (rtcpd_CheckProcError() & RTCP_FAILED) ) {
     rtcp_log(LOG_ERR,"lockMoreWork(): Cthread_mutex_lock_ext(requestMoreWork_lock): rc=%d, %s\n",
              rc, sstrerror(serrno));
     tl_rtcpd.tl_log( &tl_rtcpd, 3, 4,
@@ -1753,8 +1730,7 @@ static int lockMoreWork() {
 static int unlockMoreWork() {
   int rc;
   rc = Cthread_mutex_unlock_ext(proc_cntl.requestMoreWork_lock);
-  if ( (rc == -1) || (rtcpd_CheckProcError() &
-                      (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) ) {
+  if ( (rc == -1) || (rtcpd_CheckProcError() & RTCP_FAILED) ) {
     rtcp_log(LOG_ERR,"unlockMoreWork(): Cthread_mutex_unlock_ext(requestMoreWork_lock): %s\n",
              sstrerror(serrno));
     tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
@@ -1785,8 +1761,7 @@ int rtcpd_checkMoreWork(int *client_socket,
       (void)unlockMoreWork();
       return(-1);
 
-    } else if ( (rtcpd_CheckProcError() &
-                 (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) ) {
+    } else if ( (rtcpd_CheckProcError() & RTCP_FAILED) ) {
       (void)unlockMoreWork();
       /*
        * Not our error, some other thread has failed
@@ -1835,8 +1810,7 @@ int rtcpd_waitMoreWork(file_list_t *fl) {
        * Our error
        */
       return(-1);
-    } else if ( (rtcpd_CheckProcError() &
-                 (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) ) {
+    } else if ( (rtcpd_CheckProcError() & RTCP_FAILED) ) {
       (void)unlockMoreWork();
       /*
        * Not our error, some other thread has failed
@@ -2113,8 +2087,6 @@ int rtcpd_GetRequestList(int *client_socket,
       if ( tmp != NULL ) free(tmp);
       tapereq.TStartRtcpd = (int)time(NULL);
       nexttape->tapereq = tapereq;
-      nexttape->tapereq.err.severity = nexttape->tapereq.err.severity &
-        ~RTCP_RESELECT_SERV;
       CLIST_INSERT(tape,nexttape);
       if ( tapereq.VolReqID != client->VolReqID ) {
         rtcp_log(LOG_ERR,"rtcpd_GetRequestList() wrong VolReqID %d, should be %d\n",
@@ -2195,8 +2167,6 @@ int rtcpd_GetRequestList(int *client_socket,
         if ( vdqm_tapereq != NULL ) proc_cntl.checkForMoreWork = 1;
         proc_cntl.requestMoreWork = 1;
       }
-      nextfile->filereq.err.severity = nextfile->filereq.err.severity &
-        ~RTCP_RESELECT_SERV;
       if ( !VALID_PROC_STATUS(nextfile->filereq.proc_status) ) {
         rtcp_log(LOG_DEBUG,"   Reset invalide processing status 0x%x to RTCP_WAITING (0x%x)\n",
                  nextfile->filereq.proc_status,RTCP_WAITING);
@@ -2281,7 +2251,6 @@ int rtcpd_MainCntl(int *accept_socket) {
   rtcpClientInfo_t *client = NULL;
   tape_list_t *tape = NULL;
   int rc = 0;
-  int retry = 0;
   int status = 0;
   int CLThId = 0;
   static int thPoolId = -1;
@@ -2763,7 +2732,7 @@ int rtcpd_MainCntl(int *accept_socket) {
    */
   CLThId = rtcpd_ClientListen(*client_socket);
   if ( CLThId == -1 ) {
-    (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
+    (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_FAILED);
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_ClientListen(): %s\n",
              sstrerror(serrno));
     tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
@@ -2811,7 +2780,7 @@ int rtcpd_MainCntl(int *accept_socket) {
   rc = rtcpd_AllocBuffers();
   if ( rc == -1 ) {
 		tape->tapereq.err.max_tpretry--;
-    (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
+    (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_FAILED);
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() failed to allocate buffers\n");
     tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
@@ -2828,7 +2797,7 @@ int rtcpd_MainCntl(int *accept_socket) {
    */
   if ( thPoolId == -1 ) thPoolId = rtcpd_InitDiskIO(&thPoolSz);
   if ( thPoolId == -1 || thPoolSz <= 0 ) {
-    (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
+    (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_FAILED);
     rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_InitDiskIO(0x%lx): %s\n",
              &thPoolSz,sstrerror(serrno));
     {
@@ -2861,12 +2830,7 @@ int rtcpd_MainCntl(int *accept_socket) {
                      "Pool Size", TL_MSG_PARAM_INT, thPoolSz,
                      "Error"    , TL_MSG_PARAM_STR, sstrerror(serrno) );
   }
-  /*
-   * Local retry loop to break out from
-   */
-  retry = 0;
   rtcpd_ResetRequest(tape);
-  for (;;) {
     /*
      * Start tape control and I/O thread. From now on the
      * deassign will be done in the tape IO thread.
@@ -2877,7 +2841,7 @@ int rtcpd_MainCntl(int *accept_socket) {
       tapeBridgeClientInfo2MsgBody.maxFilesBeforeFlush,
       &tapeNeedsToBeReleasedAtEndOfSession);
     if ( rc == -1 ) {
-      (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
+      (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_FAILED);
       rtcp_log(LOG_ERR,
                "rtcpd_MainCntl() failed to start Tape I/O thread\n");
       tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
@@ -2888,59 +2852,43 @@ int rtcpd_MainCntl(int *accept_socket) {
       (void)tellClient(client_socket,tape,NULL,-1);
       (void)rtcpd_Deassign(client->VolReqID,&tapereq,NULL);
       rtcpd_SetProcError(RTCP_FAILED);
-      break;
-    }
+    } else {
 
-    /*
-     * Start disk and network IO thread
-     */
-    rc = rtcpd_StartDiskIO(client,tape,tape->file,thPoolId,thPoolSz);
-    if ( rc == -1 ) {
-      (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_RESELECT_SERV);
-      rtcp_log(LOG_ERR,"rtcpd_MainCntl() failed to start disk I/O thread\n");
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
+      /*
+       * Start disk and network IO thread
+       */
+      rc = rtcpd_StartDiskIO(client,tape,tape->file,thPoolId,thPoolSz);
+      if ( rc == -1 ) {
+        (void)rtcpd_SetReqStatus(tape,NULL,serrno,RTCP_FAILED);
+        rtcp_log(LOG_ERR,"rtcpd_MainCntl() failed to start disk I/O thread\n");
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
                        "func"     , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                        "Message"  , TL_MSG_PARAM_STR, "failed to start disk I/O thread" );
-      (void)rtcpd_AppendClientMsg(tape,NULL,"rtcpd_StartDiskIO(): %s\n",
+        (void)rtcpd_AppendClientMsg(tape,NULL,"rtcpd_StartDiskIO(): %s\n",
                                   sstrerror(serrno));
-      rtcpd_SetProcError(RTCP_FAILED);
-    }
+        rtcpd_SetProcError(RTCP_FAILED);
+      }
 
-    /*
-     * Request is running to its end. Wait for the
-     * tape control and I/O thread.
-     */
-    rc = rtcpd_WaitTapeIO(&status);
-    if ( rc == -1 ) {
-      rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_WaitTapeIO(): %s\n",
+      /*
+       * Request is running to its end. Wait for the
+       * tape control and I/O thread.
+       */
+      rc = rtcpd_WaitTapeIO(&status);
+      if ( rc == -1 ) {
+        rtcp_log(LOG_ERR,"rtcpd_MainCntl() rtcpd_WaitTapeIO(): %s\n",
                sstrerror(serrno));
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
                        "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                        "Message", TL_MSG_PARAM_STR, "rtcpd_WaitTapeIO",
                        "Error"  , TL_MSG_PARAM_STR, sstrerror(serrno) );
-    }
-    rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() tape I/O thread returned status=%d\n",
+      }
+      rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() tape I/O thread returned status=%d\n",
              status);
-    tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
+      tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
                      "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
                      "Message", TL_MSG_PARAM_STR, "tape I/O thread returned",
                      "Status"  , TL_MSG_PARAM_INT, status );
-    if ( (rtcpd_CheckProcError() & RTCP_LOCAL_RETRY) != 0 ) {
-      retry++;
-      rtcp_log(LOG_INFO,"Automatic retry number %d\n",retry);
-      tl_rtcpd.tl_log( &tl_rtcpd, 10, 3,
-                       "func"   , TL_MSG_PARAM_STR, "rtcpd_MainCntl",
-                       "Message", TL_MSG_PARAM_STR, "Automatic retry number",
-                       "Retry"  , TL_MSG_PARAM_INT, retry );
-    } else break;
-    /*
-     * do a local retry
-     */
-    rtcpd_ResetRequest(tape);
-    rtcpd_SetProcError(RTCP_OK);
-    ENOSPC_occurred = FALSE;
-  } /* for (;;) */
-
+    }
     /*
      * At this stage the drive is already freed (or about to be).
      * This means that a new request may arrive and we must make sure
@@ -2969,7 +2917,7 @@ int rtcpd_MainCntl(int *accept_socket) {
                      "Message"     , TL_MSG_PARAM_STR, "rtcpd_WaitCLThread",
                      "CL Thread ID", TL_MSG_PARAM_INT, CLThId,
                      "Error"       , TL_MSG_PARAM_STR, sstrerror(serrno) );
- }
+  }
   rtcp_log(LOG_DEBUG,"rtcpd_MainCntl() Client Listen thread returned status=%d\n",
            status);
   tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,

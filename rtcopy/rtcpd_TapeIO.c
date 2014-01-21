@@ -81,7 +81,7 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
   switch(errno) {
   case ENXIO:  /* Drive not operational */
     rtcpd_AppendClientMsg(NULL, file, RT140, "CPDSKTP");
-    severity = RTCP_RESELECT_SERV | RTCP_SYERR;
+    severity = RTCP_FAILED | RTCP_SYERR;
     break;
   case EIO:    /* I/O error */
     msgaddr = NULL;
@@ -95,7 +95,7 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
       /*
        *  Try another server
        */
-      severity = RTCP_RESELECT_SERV | RTCP_SYERR;
+      severity = RTCP_FAILED | RTCP_SYERR;
       break;
     case ETUNREC:       /* Unrecoverable media error */
     case ETBLANK:       /* Blank tape                */
@@ -110,7 +110,7 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
        * for this medium errors (like sending a mail to
        * operator or raising an alarm).
        */
-      severity = RTCP_RESELECT_SERV | RTCP_USERR;
+      severity = RTCP_FAILED | RTCP_USERR;
       sprintf(confparam,"%s_ERRACTION",tapereq->dgn);
       if ( (p = getconfent("RTCOPYD",confparam,0)) != NULL ) {
         j = atoi(p);
@@ -118,7 +118,7 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
       }
       break;
     case ETNOSNS:       /* No sense data available   */
-      severity = RTCP_RESELECT_SERV | RTCP_UNERR;
+      severity = RTCP_FAILED | RTCP_UNERR;
       break;
     default :
       severity = RTCP_FAILED | RTCP_UNERR;
@@ -138,18 +138,11 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
 
   if ( filereq != NULL ) {
     rtcpd_SetReqStatus(NULL,file,status,severity);
-    if ( (severity & RTCP_NORETRY) != 0 ) {
-      /* 
-       * If configured error action says noretry we
-       * reset max_cpretry so that the client won't retry
-       * on another server
-       */
-      filereq->err.max_cpretry = 0;
-    } else {
-      if ( (severity & RTCP_LOCAL_RETRY) || 
-           (severity & RTCP_RESELECT_SERV) )
-        filereq->err.max_cpretry--;
-    }
+    /* 
+     * Reset max_cpretry so that the client won't retry
+     * on another server
+     */
+    filereq->err.max_cpretry = 0;
   }
   return(severity);
 }
@@ -196,9 +189,9 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
       switch ( errcat ) { 
       case ETPARIT:       /* Parity error              */
         if ( keepfile != 0 )
-          severity = RTCP_RESELECT_SERV | RTCP_MNYPARY;
+          severity = RTCP_FAILED | RTCP_MNYPARY;
         else
-          severity = RTCP_RESELECT_SERV | RTCP_USERR;
+          severity = RTCP_FAILED | RTCP_USERR;
 
         /*
          * Check if there is any configured error action
@@ -212,7 +205,7 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
         }
         break;
       case ETHWERR:       /* Device malfunctioning.    */
-        severity = RTCP_RESELECT_SERV | RTCP_SYERR;
+        severity = RTCP_FAILED | RTCP_SYERR;
         break;
       case ETBLANK:       /* Blank tape                */
         severity = RTCP_FAILED | RTCP_USERR;
@@ -240,7 +233,7 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
     severity = RTCP_FAILED | RTCP_USERR ;
   case ENXIO:             /* Drive not operational */
     rtcpd_AppendClientMsg(NULL , file, RT140, "CPTPDSK");
-    severity = RTCP_RESELECT_SERV | RTCP_SYERR;
+    severity = RTCP_FAILED | RTCP_SYERR;
     break;
   case ENOMEM:
   case EINVAL:
@@ -260,18 +253,11 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
   }
 
   rtcpd_SetReqStatus(NULL,file,status,severity);
-  if ( (severity & RTCP_NORETRY) != 0 ) {
-    /* 
-     * If configured error action says noretry we
-     * reset max_cpretry so that the client won't retry
-     * on another server
-     */
-    filereq->err.max_cpretry = 0;
-  } else {
-    if ( (severity & RTCP_LOCAL_RETRY) || 
-         (severity & RTCP_RESELECT_SERV) )
-      filereq->err.max_cpretry--;
-  }
+  /* 
+   * Reset max_cpretry so that the client won't retry
+   * on another server
+   */
+  filereq->err.max_cpretry = 0;
   return(severity);
 }
 

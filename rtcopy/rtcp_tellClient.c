@@ -128,9 +128,9 @@ int tellClient(
     hdr.len = 0;
   }
   if ( tapereq != NULL && filereq != NULL ) {
-    if ((tapereq->err.severity & (RTCP_FAILED|RTCP_RESELECT_SERV))!=0)
+    if ((tapereq->err.severity & RTCP_FAILED)!=0)
       filereq = NULL;
-    else if ((filereq->err.severity & (RTCP_FAILED|RTCP_RESELECT_SERV))!=0)
+    else if ((filereq->err.severity & RTCP_FAILED)!=0)
       tapereq = NULL;
   }
 
@@ -143,7 +143,7 @@ int tellClient(
       filereq = NULL;
     }
 
-    if ( (tapereq->err.severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 &&
+    if ( (tapereq->err.severity & RTCP_FAILED) != 0 &&
          *tapereq->err.errmsgtxt != '\0' ) 
       rtcp_log(
                LOG_ERR,
@@ -163,7 +163,7 @@ int tellClient(
       tapereq = NULL;
     }
 
-    if ( (filereq->err.severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 &&
+    if ( (filereq->err.severity & RTCP_FAILED) != 0 &&
          *filereq->err.errmsgtxt != '\0' ) 
       rtcp_log(
                LOG_ERR,

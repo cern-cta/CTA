@@ -384,11 +384,7 @@ int rtcpd_Reserve(tape_list_t *tape) {
                          "func"   , TL_MSG_PARAM_STR, "rtcpd_Reserve",
                          "Message", TL_MSG_PARAM_STR, "Ctape_reserve",
                          "Error"  , TL_MSG_PARAM_STR, CTP_ERRTXT );
-        if ( save_serrno == ETNDV ) {
-            rtcpd_SetReqStatus(tape,NULL,save_serrno,RTCP_RESELECT_SERV);
-        } else {
-            rtcpd_SetReqStatus(tape,NULL,save_serrno,RTCP_FAILED);
-        }
+        rtcpd_SetReqStatus(tape,NULL,save_serrno,RTCP_FAILED);
         rtcpd_AppendClientMsg(tape, NULL, "%s\n",CTP_ERRTXT);
         return(-1);
     }
@@ -614,7 +610,7 @@ int rtcpd_Mount(tape_list_t *tape) {
 
 int rtcpd_Position(tape_list_t *tape,
                    file_list_t *file) {
-    int rc, j, save_serrno, flags, do_retry, severity;
+    int rc, j, save_serrno, flags, severity;
     char *p, confparam[32];
     rtcpFileRequest_t *prevreq,*filereq;
     rtcpTapeRequest_t *tapereq;
@@ -678,8 +674,6 @@ int rtcpd_Position(tape_list_t *tape,
         }
     }
 
-    do_retry = 1;
-
     filereq->TStartPosition = (int)time(NULL);
     /*
      * We need to save tape_path for Ctape_kill() in case there is
@@ -688,7 +682,6 @@ int rtcpd_Position(tape_list_t *tape,
      * and the tape_path information gone lost.
      */
     strcpy(tape_path,filereq->tape_path);
-    while (do_retry) {
         rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position(%s,0x%x,%d,%d,%d:%d:%d:%d,%d,%d,0x%x,%s,%s,%s,%d,%d,%d,0x%x)\n",
                  filereq->tape_path,
                  filereq->position_method,
@@ -783,7 +776,7 @@ int rtcpd_Position(tape_list_t *tape,
                  * and don't release (since the drive is already
                  * down).
                  */
-                severity = RTCP_RESELECT_SERV | RTCP_NORLS;
+                severity = RTCP_FAILED | RTCP_NORLS;
                 rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
                 break;
             case ETNXPD:     /* File not expired */
@@ -840,10 +833,9 @@ int rtcpd_Position(tape_list_t *tape,
             case ETHWERR:    /* Device malfunction */
             case ETNRDY:     /* Drive not ready */
                 /*
-                 * Something is wrong with server or drive. We
-                 * tell client to retry elsewhere.
+                 * Something is wrong with server or drive.
                  */
-                severity = RTCP_RESELECT_SERV | RTCP_SYERR;
+                severity = RTCP_FAILED | RTCP_SYERR;
                 rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
                 break;
             case ETCOMPA:    /* Drive/cartridge compatibility problems */
@@ -869,7 +861,7 @@ int rtcpd_Position(tape_list_t *tape,
                 }
             case ETNOSNS:    /* No sense data available */
                 if ( !(severity & RTCP_NORETRY) ) {
-                    severity = RTCP_RESELECT_SERV | RTCP_SYERR;
+                    severity = RTCP_FAILED | RTCP_SYERR;
                 }
                 rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
                 break;
@@ -882,24 +874,12 @@ int rtcpd_Position(tape_list_t *tape,
                 rtcpd_SetReqStatus(NULL,file,save_serrno,severity);
                 break;
             }
-            if ( (severity & RTCP_NORETRY) != 0 ) {
-                /*
-                 * If configured error action says noretry we
-                 * reset max_tpretry so that the client won't retry
-                 * on another server
-                 */
-                filereq->err.max_tpretry = 0;
-                do_retry = 0;
-            } else {
-                if ( (severity & RTCP_LOCAL_RETRY) ||
-                     (severity & RTCP_RESELECT_SERV) )
-                     filereq->err.max_tpretry--;
-
-                if ( !(severity & RTCP_LOCAL_RETRY) ||
-                      (filereq->err.max_tpretry<=0) ) do_retry = 0;
-            }
-        } else do_retry = 0;
-    } /* end while (do_retry) */
+            /*
+             * Reset max_tpretry so that the client won't retry
+             * on another server
+             */
+            filereq->err.max_tpretry = 0;
+        }
     if ( rc == 0 ) {
         rtcp_log(LOG_DEBUG,"rtcpd_Position() Ctape_position() successful\n");
         tl_rtcpd.tl_log( &tl_rtcpd, 33, 4,
@@ -966,7 +946,7 @@ int rtcpd_Info(tape_list_t *tape, file_list_t *file) {
         case SENOSSERV:
         case SECOMERR:
         case ETDNP:
-            severity = RTCP_RESELECT_SERV | RTCP_SYERR;
+            severity = RTCP_FAILED | RTCP_SYERR;
             break;
         case EINTR:
             if ( filereq != NULL ) severity = RTCP_FAILED | RTCP_UNERR;
