@@ -330,21 +330,6 @@ void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int severity, const int message_no, const uint32_t volReqId,
-  const int socketFd, const legacymsg::RtcpAbortMsgBody&) throw() {
-
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("mountTransactionId", volReqId),
-    castor::dlf::Param("volReqId"          , volReqId),
-    castor::dlf::Param("socketFd"          , socketFd)};
-  castor::dlf::dlf_writep(cuuid, severity, message_no, params);
-}
-
-
-//-----------------------------------------------------------------------------
-// logMsgBody
-//-----------------------------------------------------------------------------
-void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
-  const int severity, const int message_no, const uint32_t volReqId,
   const int socketFd, const legacymsg::RtcpDumpTapeRqstMsgBody &body) throw() {
 
   castor::dlf::Param params[] = {
