@@ -34,7 +34,6 @@
 #include "castor/stager/daemon/UpdateHandler.hpp"
 
 #include "castor/BaseObject.hpp"
-#include "castor/server/BaseServer.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 
 #include "stager_constants.h"

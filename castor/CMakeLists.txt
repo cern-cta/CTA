@@ -157,8 +157,6 @@ set (CLIENT_LIB_SRC_FILES
   rh/FileQryResponse.cpp
   rh/IOResponse.cpp
   rh/BasicResponse.cpp
-  server/BaseDaemon.cpp
-  server/BaseServer.cpp
   server/AuthListenerThreadPool.cpp
   server/BaseThreadPool.cpp
   server/Daemon.cpp
@@ -435,8 +433,6 @@ if (${COMPILE_SERVER} STREQUAL "1")
     PERMISSIONS ${CASTOR_HEADER_PERMS})
   
   install(FILES
-    server/BaseDaemon.hpp
-    server/BaseServer.hpp
     server/BaseThreadPool.hpp
     server/DynamicThreadPool.hpp
     server/IThread.hpp

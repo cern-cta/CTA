@@ -233,8 +233,6 @@ rununittests: $(RMC_OBJECTS) \
   server_DynamicThreadPool.o \
   server_SignalThreadPool.o \
   server_BaseThreadPool.o \
-  server_BaseDaemon.o \
-  server_BaseServer.o \
   server_Daemon.o \
   server_Queue.o \
   server_MultiThreadedDaemon.o \
@@ -1063,14 +1061,6 @@ server_SignalThreadPool.o: \
 
 server_BaseThreadPool.o: \
   $(ROOT_DIR)/castor/server/BaseThreadPool.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-server_BaseDaemon.o: \
-  $(ROOT_DIR)/castor/server/BaseDaemon.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-server_BaseServer.o: \
-  $(ROOT_DIR)/castor/server/BaseServer.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 server_Daemon.o: \
