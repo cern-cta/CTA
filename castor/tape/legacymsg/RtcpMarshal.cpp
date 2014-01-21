@@ -628,50 +628,6 @@ size_t castor::tape::legacymsg::marshal(char *dst,
 // marshal
 //-----------------------------------------------------------------------------
 size_t castor::tape::legacymsg::marshal(char *dst,
-  const size_t dstLen, const RtcpAbortMsgBody&)
-  throw(castor::exception::Exception) {
-
-  // Calculate the length of the message body
-  const uint32_t len = 0;
-
-  // Calculate the total length of the message (header + body)
-  // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
-  const size_t totalLen = 3 * sizeof(uint32_t) + len;
-
-  // Check that the message buffer is big enough
-  if(totalLen > dstLen) {
-    TAPE_THROW_CODE(EMSGSIZE,
-      ": Buffer too small for file request message"
-      ": Required size: " << totalLen <<
-      ": Actual size: " << dstLen);
-  }
-
-  // Marshall the whole message (header + body)
-  char *p = dst;
-  marshalUint32(RTCOPY_MAGIC      , p);
-  marshalUint32(RTCP_ABORT_REQ    , p);
-  marshalUint32(len               , p);
-
-  // Calculate the number of bytes actually marshalled
-  const size_t nbBytesMarshalled = p - dst;
-
-  // Check that the number of bytes marshalled was what was expected
-  if(totalLen != nbBytesMarshalled) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Mismatch between the expected total length of the "
-      "RTCP file request message and the actual number of bytes marshalled"
-      ": Expected: " << totalLen <<
-      ": Marshalled: " << nbBytesMarshalled);
-  }
-
-  return totalLen;
-}
-
-
-//-----------------------------------------------------------------------------
-// marshal
-//-----------------------------------------------------------------------------
-size_t castor::tape::legacymsg::marshal(char *dst,
   const size_t dstLen, const RtcpDumpTapeRqstMsgBody &src)
   throw(castor::exception::Exception) {
 

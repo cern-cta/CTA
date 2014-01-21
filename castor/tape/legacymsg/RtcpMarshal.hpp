@@ -30,7 +30,6 @@
 #include "castor/tape/legacymsg/GiveOutpMsgBody.hpp"
 #include "castor/tape/legacymsg/RtcpJobReplyMsgBody.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
-#include "castor/tape/legacymsg/RtcpAbortMsgBody.hpp"
 #include "castor/tape/legacymsg/RtcpDumpTapeRqstMsgBody.hpp"
 #include "castor/tape/legacymsg/RtcpNoMoreRequestsMsgBody.hpp"
 #include "castor/tape/legacymsg/RtcpFileRqstMsgBody.hpp"
@@ -282,31 +281,6 @@ size_t marshal(char *const dst, const size_t dstLen,
 template<int n> size_t marshal(char (&dst)[n],
   const RtcpNoMoreRequestsMsgBody &src)
   throw(castor::exception::Exception) {
-  return marshal(dst, n, src);
-}
-
-/**
- * Marshalls the specified source message body structure into the
- * specified destination buffer.
- *
- * @param dst    The destination message buffer.
- * @param dstLen The length of the destination buffer.
- * @param src    The source structure.
- * @return       The total length of the message (header + body).
- */
-size_t marshal(char *const dst, const size_t dstLen,
-  const RtcpAbortMsgBody &src) throw(castor::exception::Exception);
-
-/**
- * Marshalls the specified source message body structure into the
- * specified destination buffer.
- *
- * @param dst The destination message buffer.
- * @param src The source structure.
- * @return    The total length of the message (header + body).
- */
-template<int n> size_t marshal(char (&dst)[n],
-  const RtcpAbortMsgBody &src) throw(castor::exception::Exception) {
   return marshal(dst, n, src);
 }
 

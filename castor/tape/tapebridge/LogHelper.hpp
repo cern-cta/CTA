@@ -28,7 +28,6 @@
 #include "castor/tape/legacymsg/GiveOutpMsgBody.hpp"
 #include "castor/tape/legacymsg/RtcpJobReplyMsgBody.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
-#include "castor/tape/legacymsg/RtcpAbortMsgBody.hpp"
 #include "castor/tape/legacymsg/RtcpDumpTapeRqstMsgBody.hpp"
 #include "castor/tape/legacymsg/RtcpNoMoreRequestsMsgBody.hpp"
 #include "castor/tape/legacymsg/RtcpFileRqstMsgBody.hpp"
@@ -199,24 +198,6 @@ public:
     const uint32_t                             volReqId,
     const int                                  socketFd,
     const legacymsg::RtcpNoMoreRequestsMsgBody &body) throw();
-
-  /**
-   * Logs the specified RTCP message body.
-   *
-   * @param cuuid      The uuid of the component issuing the message.
-   * @param severity   The severity of the message.
-   * @param message_no The message number in the facility.
-   * @param volReqId   The volume request ID.
-   * @param socketFd   The file descriptor of the associated TCP/IP socket.
-   * @param body       The message body.
-   */
-  static void logMsgBody(
-    const Cuuid_t                     &cuuid,
-    const int                         severity,
-    const int                         message_no,
-    const uint32_t                    volReqId,
-    const int                         socketFd,
-    const legacymsg::RtcpAbortMsgBody &body) throw();
 
   /**
    * Logs the specified RTCP message body.

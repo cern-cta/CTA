@@ -265,20 +265,6 @@ public:
     const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout)
     throw(castor::exception::Exception);
 
-  /**
-   * Send an abort message to RTCPD
-   *
-   * @param cuuid The ccuid to be used for logging.
-   * @param volReqId The volume request ID to be used for logging.
-   * @param socketFd The socket file descriptor of the connection with RTCPD.
-   * @param netReadWriteTimeout The timeout to be applied when performing
-   * network read and write operations.
-   */
-  static void tellRtcpdToAbort(const Cuuid_t &cuuid, const uint32_t volReqId,
-    const int socketFd, const int netReadWriteTimeout)
-    throw(castor::exception::Exception);
-
-
 private:
 
   /**
