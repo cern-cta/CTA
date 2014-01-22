@@ -391,7 +391,7 @@ EXCEPTION WHEN OTHERS THEN
 END;
 /
 
-/* A wrapper procedure to execute alertSignalNoLock() without taking a lock if
+/* A wrapper procedure to execute DBMS_ALERT.SIGNAL() without taking a lock if
  * already another session did it. Helps reducing contention on DBMS_ALERT_INFO.
  */
 CREATE OR REPLACE PROCEDURE alertSignalNoLock(inName IN VARCHAR2) AS

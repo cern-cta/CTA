@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 cupv_2.1.14-5_to_2.1.14-6.sql
+ *                 cupv_2.1.14-5_to_2.1.14-11.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * This script upgrades a CASTOR v2.1.14-5 CUPV database to v2.1.14-6
+ * This script upgrades a CASTOR v2.1.14-5 CUPV database to v2.1.14-11
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -32,7 +32,7 @@ BEGIN
   UPDATE UpgradeLog
      SET failureCount = failureCount + 1
    WHERE schemaVersion = '2_1_9_3'
-     AND release = '2_1_14_6'
+     AND release = '2_1_14_11'
      AND state != 'COMPLETE';
   COMMIT;
 END;
@@ -52,9 +52,53 @@ END;
 /
 
 INSERT INTO UpgradeLog (schemaVersion, release, type)
-VALUES ('2_1_9_3', '2_1_14_6', 'NON TRANSPARENT');
+VALUES ('2_1_9_3', '2_1_14_11', 'NON TRANSPARENT');
 COMMIT;
 
+/* useful procedure to recompile all invalid items in the DB
+   as many times as needed, until nothing can be improved anymore.
+   Also reports the list of invalid items if any */
+CREATE OR REPLACE PROCEDURE recompileAll AS
+  varNbInvalids INTEGER;
+  varNbInvalidsLastRun INTEGER := -1;
+BEGIN
+  WHILE varNbInvalidsLastRun != 0 LOOP
+    varNbInvalids := 0;
+    FOR a IN (SELECT object_name, object_type
+                FROM user_objects
+               WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY')
+                 AND status = 'INVALID')
+    LOOP
+      IF a.object_type = 'PACKAGE BODY' THEN a.object_type := 'PACKAGE'; END IF;
+      BEGIN
+        EXECUTE IMMEDIATE 'ALTER ' ||a.object_type||' '||a.object_name||' COMPILE';
+      EXCEPTION WHEN OTHERS THEN
+        -- ignore, so that we continue compiling the other invalid items
+        NULL;
+      END;
+    END LOOP;
+    -- check how many invalids are still around
+    SELECT count(*) INTO varNbInvalids FROM user_objects
+     WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY') AND status = 'INVALID';
+    -- should we give up ?
+    IF varNbInvalids = varNbInvalidsLastRun THEN
+      DECLARE
+        varInvalidItems VARCHAR(2048);
+      BEGIN
+        -- yes, as we did not move forward on this run
+        SELECT LISTAGG(object_name, ', ') WITHIN GROUP (ORDER BY object_name) INTO varInvalidItems
+          FROM user_objects
+         WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY') AND status = 'INVALID';
+        raise_application_error(-20000, 'Revalidation of PL/SQL code failed. Still ' ||
+                                        varNbInvalids || ' invalid items : ' || varInvalidItems);
+      END;
+    END IF;
+    -- prepare for next loop
+    varNbInvalidsLastRun := varNbInvalids;
+    varNbInvalids := 0;
+  END LOOP;
+END;
+/
 
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
@@ -66,5 +110,5 @@ END;
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
 UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
- WHERE release = '2_1_14_6';
+ WHERE release = '2_1_14_11';
 COMMIT;

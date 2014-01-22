@@ -1,3 +1,101 @@
+-------------
+- 2.1.14-11 -
+-------------
+
+  Summary
+  -------
+
+  This is a minor release bringing a number of bug fixes. Note in particular:
+  - This release is the first certified to work with the Oracle T10000D class
+    of tape drives. Previous CASTOR releases have caused DATA LOSSES and
+    MUST NOT BE USED with those drives. See bug #103642 for more details.
+  - From this release, the following configuration parameters have changed:
+
+  TransferManager     PendingTimeouts         all:120 default:120
+  TransferManager     DiskCopyPendingTimeout  7200
+
+  The new ones having DiskManager as class (see bug #103521). Please adapt your
+  configuration tools to reflect this change.
+
+  Client
+  ------
+
+    #103659: RFE: stager_get should warn/error on unknown command line arguments
+
+  Stager
+  ------
+
+    #103190: Constraint violation errors thrown by the GC
+    #103512: Incorrect handling of errors on disk-to-disk copy jobs affecting draining operations
+    #103521: RFE: rename the TransferManager/*PendingTimeout options to DiskManager/*PendingTimeout to improve usability
+    #103530: tight loop in rebalancing when no file to rebalance
+    #103715: Requests for disk-to-disk copies wait forever in status WAITTAPERECALL
+    #103792: RFE: provide the ability to selectively enable/disable protocols
+
+  Tape and Repack
+  ---------------
+
+    #103524: endTapeSession should react properly when session has disappeared
+    #103625: Incorrect logic to clean up repack requests may lead submitted requests to disappear
+    #103642: Remove the deltpfil() function
+    #103697: Repack of files in the cache may not take place
+    #103698: RFE: make deletediskcopy repack-aware
+    #103708: RFE: "light" nslisstape (skip file path)
+    #103710: RFE: VMGR should always choose the tape with the least free space for writing
+    #103729: VMGR should not set the TAPE_FULL based on estimated free space
+    #103731: Remove the getting of tape compression statistics
+    #103735: RFE: Remove the MTIOCSENSE code
+    #103738: Tape code should use a generic scsi timeout equal to that of the st driver
+    #103776: Recall mount creation is not selective enough, leading to empty mounts
+
+  Upgrade Instructions from 2.1.14-5
+  ----------------------------------
+
+    Stager
+    ------
+
+    The upgrade of the stager database to 2.1.14-11 can be performed online while the system is running.
+    The RPM upgrade can also be performed on a running system, with 2 restrictions:
+      - the restart of the RH servers may be noticable by few clients (< 1s downtime);
+      - the restart of the transfermanagers and diskmanagers should not be done concurrently.
+
+      Instructions
+      ------------
+
+       1. Upgrade the STAGER database using the stager_2.1.14-5_to_2.1.14-11.sql
+          upgrade script available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-11/dbupgrades
+
+       2. Upgrade the software on the headnodes.
+          Note: All daemons involved in the upgrade will be restarted automatically.
+
+       3. Upgrade the software on the diskservers.
+          Note: All daemons involved in the upgrade will be restarted automatically.
+
+       4. Test the instance by running the test suite available from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-11/testsuite
+
+       5. Congratulations you have successfully upgraded to the 2.1.14-11 release
+          of CASTOR.
+
+    Central services (CUPV, VMGR, VDQM, Nameserver)
+    -----------------------------------------------
+
+      The upgrade of the central databases to 2.1.14-12 can be performed online while
+      the system is running.
+
+      Instructions
+      ------------
+
+       1. Apply the appropriate database upgrade script from:
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-11/dbupgrades
+
+       2. Update the software to use the 2.1.14-11 RPMs. Note: All
+          daemons involved in the upgrade will be restarted automatically.
+
+       3. Upgrade complete.
+
+
 --------------
 - 2.1.14-5-1 -
 --------------
