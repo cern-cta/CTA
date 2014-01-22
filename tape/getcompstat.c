@@ -32,13 +32,6 @@ int get_compression_stats(int tapefd,
 	int nb_sense_ret;
 	char sense[256];	/* Sense bytes are returned in this buffer */
 
-        /* steven.murray@cern.ch - Temporarily do nothing and return */
-        comp_stats->from_host = kbytes_from_host;
-        comp_stats->to_tape = kbytes_to_tape;
-        comp_stats->from_tape = kbytes_from_tape;
-        comp_stats->to_host = kbytes_to_host;
-        return (0);
-
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0x4D;	/* LOG SENSE */
 	cdb[7] = (sizeof(buffer) & 0xFF00) >> 8;
@@ -181,9 +174,6 @@ int clear_compression_stats(int tapefd,
 	cdb[0] = 0x4C;	/* LOG SELECT */
 	cdb[1] = 0x02; /* PCR set */
 	cdb[2] = 0xC0; /* PC = 3 */
-
-/* steven.murray@cern.ch - Temporarily do nothing and return */
-	return (0);
 
 	if (send_scsi_cmd (tapefd, path, 0, cdb, 10, NULL, 0,
 	    sense, 38, 10000, SCSI_NONE, &nb_sense_ret, &msgaddr) < 0)
