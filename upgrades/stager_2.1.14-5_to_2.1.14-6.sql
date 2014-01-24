@@ -89,8 +89,30 @@ ALTER TABLE DrainingErrors
 
 ALTER TABLE Disk2DiskCopyJob ADD (srcDcId INTEGER);
 
+/* For deleteDiskCopy */
+DROP TABLE DeleteDiskCopyHelper;
+CREATE GLOBAL TEMPORARY TABLE DeleteDiskCopyHelper
+  (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, fileId INTEGER, rc INTEGER)
+  ON COMMIT PRESERVE ROWS;
+CREATE INDEX I_DDCHelper_FileId ON DeleteDiskCopyHelper(fileId);
 
-XXX TODO add PL/SQL code
+XXX add disk2DiskCopyEnded PL/SQL procedure
+
+/* Bug #103715: Requests for disk-to-disk copies wait forever in status WAITTAPERECALL.
+ * Cleanup old requests stuck in status 4. To avoid a storm in the stager, the old ones
+ * are archived straight, and only the new ones are restarted. New = more recent than 24h.
+ */
+UPDATE SubRequest SET status = 1 WHERE status = 4 AND creationTime > getTime() - 86400;
+COMMIT;
+BEGIN
+  FOR s in (SELECT id FROM SubRequest WHERE status = 4) LOOP
+    archiveSubReq(s.id, dconst.SUBREQUEST_FINISHED);
+  END LOOP;
+  COMMIT;
+END;
+/
+
+XXX TODO add ALL remaining PL/SQL code
 
 
 /* Recompile all invalid procedures, triggers and functions */

@@ -374,11 +374,11 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
   varDrainingJob VARCHAR2(2048);
 BEGIN
   BEGIN
-    IF inDestPath != '' THEN
+    IF inDestPath IS NOT NULL THEN
       -- Parse destination path
       parsePath(inDestDsName ||':'|| inDestPath, varDestFsId, varDestPath, varDestDcId, varFileId, varNsHost);
     -- ELSE we are called because of an error at start: try to gather information
-    -- from the Disk2DiskCopyJob entry or and fail accordingly.
+    -- from the Disk2DiskCopyJob entry and fail accordingly.
     END IF;
     -- Get data from the Disk2DiskCopyJob
     SELECT castorFile, ouid, ogid, destDcId, srcDcId, destSvcClass, replicationType,
@@ -461,7 +461,9 @@ BEGIN
        SET status = dconst.SUBREQUEST_RESTART,
            getNextStatus = CASE WHEN inErrorMessage IS NULL THEN dconst.GETNEXTSTATUS_FILESTAGED ELSE getNextStatus END,
            lastModificationTime = getTime()
-     WHERE status = dconst.SUBREQUEST_WAITSUBREQ
+           -- XXX due to bug #103715 requests for disk-to-disk copies actually stay in WAITTAPERECALL,
+           -- XXX so we have to restart also those. This will go with the refactoring of the stager.
+     WHERE status IN (dconst.SUBREQUEST_WAITSUBREQ, dconst.SUBREQUEST_WAITTAPERECALL)
        AND castorfile = varCfId;
     alertSignalNoLock('wakeUpJobReqSvc');
     -- delete the disk2diskCopyJob
