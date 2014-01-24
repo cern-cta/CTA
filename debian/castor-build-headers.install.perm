@@ -56,8 +56,6 @@
 %attr(0644,root,root) usr/include/castor/castor/rh/FileResponse.hpp
 %attr(0644,root,root) usr/include/castor/castor/rh/IOResponse.hpp
 %attr(0644,root,root) usr/include/castor/castor/rh/Response.hpp
-%attr(0644,root,root) usr/include/castor/castor/server/BaseDaemon.hpp
-%attr(0644,root,root) usr/include/castor/castor/server/BaseServer.hpp
 %attr(0644,root,root) usr/include/castor/castor/server/BaseThreadPool.hpp
 %attr(0644,root,root) usr/include/castor/castor/server/DynamicThreadPool.hpp
 %attr(0644,root,root) usr/include/castor/castor/server/IThread.hpp
