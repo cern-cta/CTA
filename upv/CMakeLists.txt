@@ -26,6 +26,9 @@ set (UPV_LIB_SRC_FILES Cupv_apiinit.c Cupv_errmsg.c send2Cupv.c Cupv_delete.c
 Cupv_list.c Cupv_util.c Cupv_check.c Cupv_modify.c Cupv_add.c)
 
 add_library (castorupv SHARED ${UPV_LIB_SRC_FILES})
+# Relax compilation of old code full of pointer casting. Funnily enough,
+# the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
+set_property(SOURCE Cupv_apiinit.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 CastorSetLibraryVersions (castorupv)
 target_link_libraries (castorupv castorcommon)
 install (TARGETS castorupv LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}

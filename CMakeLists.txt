@@ -35,7 +35,7 @@ ELSE()
   # log choosen default (RelWithDebInfo) and set it
   message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
   message (STATUS "Override with -DCMAKE_BUILD_TYPE:STRING=Debug")  
-  set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build." FORCE)
+  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
   # Set the possible values of build type for cmake-gui
   # this command is not yet available in SLC6's cmake 2.6
   # set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
@@ -409,16 +409,16 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
   endif (RPMTools_FOUND)
 endif (${COMPILE_PACKAGING} STREQUAL "1")
 
-add_custom_target(test test/castorUnitTests
-                    COMMENT "Not running the unit tests" VERBATIM)
-
 #add_custom_target(test test/castorUnitTests
-#                    COMMAND valgrind --leak-check=full --show-reachable=yes --error-exitcode=1 test/castorUnitTests
-#                    COMMAND test/castorThreadedUnitTests
-#                    COMMAND valgrind --leak-check=full --show-reachable=yes --error-exitcode=1 test/castorThreadedUnitTests
-#                    COMMAND valgrind --tool=helgrind --error-exitcode=1 test/castorThreadedUnitTests
-#                    COMMAND test/castorMultiprocessUnitTests
-#                    COMMAND valgrind --tool=helgrind --error-exitcode=1 test/castorMultiprocessUnitTests
-#                    DEPENDS test/castorUnitTests test/castorThreadedUnitTests test/castorMultiprocessUnitTests
-#                    COMMENT "Running unit tests" VERBATIM)
+#                    COMMENT "Not running the unit tests" VERBATIM)
+
+add_custom_target(test test/castorUnitTests
+                    COMMAND valgrind --leak-check=full --show-reachable=yes --error-exitcode=1 test/castorUnitTests
+                    COMMAND test/castorThreadedUnitTests
+                    COMMAND valgrind --leak-check=full --show-reachable=yes --error-exitcode=1 test/castorThreadedUnitTests
+                    COMMAND valgrind --tool=helgrind --error-exitcode=1 test/castorThreadedUnitTests
+                    COMMAND test/castorMultiprocessUnitTests
+                    COMMAND valgrind --tool=helgrind --error-exitcode=1 test/castorMultiprocessUnitTests
+                    DEPENDS test/castorUnitTests test/castorThreadedUnitTests test/castorMultiprocessUnitTests
+                    COMMENT "Running unit tests" VERBATIM)
 

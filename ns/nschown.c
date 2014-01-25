@@ -46,7 +46,7 @@ int main(int argc, char **argv)
   char fullpath[CA_MAXPATHLEN+1];
   struct group *gr;
   int i;
-  gid_t newgid;
+  gid_t newgid = 0;
   uid_t newuid = 0;
   char *p;
   char *path;

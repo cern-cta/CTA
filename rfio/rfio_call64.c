@@ -2344,7 +2344,7 @@ static int   readerror64_v3(int            s,
                      struct rfiostat* infop,
                      int            fd)
 {
-  int         status;              /* Return code                */
+  int         status = 0;              /* Return code                */
   int         rcode;               /* To send back errno         */
   off64_t     offsetout;           /* lseek offset               */
   char        *p;                  /* Pointer to buffer          */
@@ -2354,7 +2354,7 @@ static int   readerror64_v3(int            s,
   extern int  max_sndbuf;
   struct stat64 st;
   char        rfio_buf[BUFSIZ];
-  int         eof_met;
+  int         eof_met = 0;
   int         DISKBUFSIZE_READ = 2097152;
   int         n;
   int         cid1 = -1;
@@ -2847,8 +2847,8 @@ int srwrite64_v3(int            s,
                  struct rfiostat   *infop,
                  int            fd)
 {
-  int         status;        /* Return code                */
-  int         rcode;         /* To send back errno         */
+  int         status = 0;        /* Return code                */
+  int         rcode = 0;         /* To send back errno         */
   char        *p;            /* Pointer to buffer          */
   char        *iobuffer = 0;
   fd_set      fdvar;

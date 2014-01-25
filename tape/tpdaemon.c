@@ -1036,7 +1036,7 @@ static void procfrdrvreq(char *req_data,
 {
 	int found;
 	gid_t gid;
-	unsigned int j;
+	unsigned int j = 0;
 	int jid;
 	int rlsflags;
 	char *rbp;

@@ -68,8 +68,14 @@ set (COMMON_LIB_SRC_FILES
   ../castor/common/CastorConfiguration.cpp)
 
 add_library (castorcommon SHARED ${COMMON_LIB_SRC_FILES})
+# Relax compilation of old code full of pointer casting. Funnily enough,
+# the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
+set_property(SOURCE Cstrerror.c Cpwd.c Cgetopt.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  message(STATUS "Adding compile option for -DCOLLECTEXTRABACKTRACEINFOS Backtrace.cpp as CMAKE_BUILD_TYPE=\"${CMAKE_BUILD_TYPE}\".")
   set_property(SOURCE ../castor/exception/Backtrace.cpp APPEND PROPERTY COMPILE_FLAGS -DCOLLECTEXTRABACKTRACEINFOS)
+else(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  message(STATUS "CMAKE_BUILD_TYPE=\"${CMAKE_BUILD_TYPE}\": leaving Backtrace.cpp alone.")
 endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
 target_link_libraries(castorcommon debug bfd iberty z)
 CastorSetLibraryVersions (castorcommon)

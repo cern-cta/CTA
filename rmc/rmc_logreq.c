@@ -19,7 +19,7 @@ void rmc_logreq(const char *const func, char *const logbuf) {
 	int n1, n2;
 	char *p;
 	char savechrs1[2];
-	char savechrs2[2];
+	char savechrs2[2] = { '\0', '\0' };
 
 	n1 = RMC_LOGBUFSZ - strlen (func) - 36;
 	n2 = strlen (logbuf);

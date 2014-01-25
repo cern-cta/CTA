@@ -69,6 +69,9 @@ set (VMGR_LIB_SRC_FILES
   send2vmgr.c
   vmgrcheck.c)
 add_library (castorvmgr SHARED ${VMGR_LIB_SRC_FILES})
+# Relax compilation of old code full of pointer casting. Funnily enough,
+# the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
+set_property(SOURCE vmgr_apiinit.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 CastorSetLibraryVersions (castorvmgr)
 target_link_libraries (castorvmgr castorcommon castorupv)
 install (TARGETS castorvmgr DESTINATION ${CASTOR_DEST_LIB_DIR})

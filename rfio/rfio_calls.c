@@ -4240,7 +4240,7 @@ void wait_consumer_thread(int cid)
                    struct  rfiostat* infop,
                    int     fd)
 {
-  int  status;         /* Return code          */
+  int  status = 0;         /* Return code          */
   int  rcode;          /* To send back errno   */
   int  offset;         /* lseek offset         */
   char *p;             /* Pointer to buffer    */
@@ -4250,8 +4250,8 @@ void wait_consumer_thread(int cid)
   extern int max_sndbuf;
   struct stat st;
   char rfio_buf[BUFSIZ];
-  int eof_met;
-  int join_done;
+  int eof_met = 0;
+  int join_done = 0;
   int DISKBUFSIZE_READ = 2097152;
   int n;
   int cid1 = 0;
@@ -4557,7 +4557,7 @@ int srwrite_v3(int     s,
                struct rfiostat *infop,
                int     fd)
 {
-  int  status;         /* Return code         */
+  int  status = 0;         /* Return code         */
   int  rcode;          /* To send back errno  */
   char *p;             /* Pointer to buffer   */
   char *iobuffer = 0;

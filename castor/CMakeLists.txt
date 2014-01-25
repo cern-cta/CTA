@@ -272,6 +272,9 @@ set (CLIENT_LIB_SRC_FILES
   ../client/src/stager/stager_errmsg.c
   ../client/src/stager/stager_mapper.c)
 add_library (castorclient SHARED ${CLIENT_LIB_SRC_FILES})
+# Relax compilation of old code full of pointer casting. Funnily enough,
+# the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
+set_property(SOURCE ../client/src/stager/stager_errmsg.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 CastorSetLibraryVersions (castorclient)
 target_link_libraries (castorclient castordlf)
 install (TARGETS castorclient DESTINATION ${CASTOR_DEST_LIB_DIR})

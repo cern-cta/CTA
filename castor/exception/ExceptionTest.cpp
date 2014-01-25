@@ -39,7 +39,7 @@ namespace UnitTests {
   
   /* Prevent inlining: it makes this test fail! */
   void __attribute__((noinline)) Nested::f1() {
-    throw castor::exception::Exception("Throwing in Nested::f1()");
+    throw castor::exception::Exception("Throwing in Nested's constructor");
   }
   
   /* Prevent inlining: it makes this test fail!
@@ -60,9 +60,9 @@ namespace UnitTests {
       std::string bt = e.backtrace();
       ASSERT_NE(std::string::npos, bt.find("Nested::f1"));
       ASSERT_NE(std::string::npos, bt.find("castor::exception::Backtrace::Backtrace"));
-      ASSERT_EQ("Throwing in Nested::f1()", std::string(e.getMessageValue()));
+      ASSERT_EQ("Throwing in Nested's constructor", std::string(e.getMessageValue()));
       std::string fullWhat(e.what());
-      ASSERT_NE(std::string::npos, fullWhat.find("Nested::f2"));
+      ASSERT_NE(std::string::npos, fullWhat.find("Nested::f1"));
     }
   }
   
@@ -71,8 +71,8 @@ namespace UnitTests {
       Nested x;
     } catch (std::exception & e) {
       std::string fullWhat(e.what());
-      ASSERT_NE(std::string::npos, fullWhat.find("Nested::f2"));
-      ASSERT_NE(std::string::npos, fullWhat.find("Throwing in Nested::f1()"));
+      ASSERT_NE(std::string::npos, fullWhat.find("Nested::f1"));
+      ASSERT_NE(std::string::npos, fullWhat.find("Throwing in Nested's constructor"));
     }
   }
   
