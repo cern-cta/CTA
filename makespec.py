@@ -9,11 +9,21 @@ from debian import deb822
 # these are the ones containing /usr/lib/ except for /usr/lib/perl and /usr/lib/python
 archDepRegExp = re.compile('/usr/lib/(?!(perl|python))')
 
-def handleDebianEntry(pkg, entry, specEntry=None):
+# translation of requires that are SLC version dependent
+osDepRequireTranslator = {
+    'libuuid-devel' : '''# For uuid/uuid.h
+%if 0%{?rhel} >= 6
+Build-Depends: libuuid-devel
+%else
+Build-Depends: e2fsprogs-devel
+%endif'''
+}
+
+def handleDebianEntry(pkg, entry, specEntry=None, modifier=lambda x: x):
   if None == specEntry:
     specEntry = entry + ': '
   if entry in pkg:
-    print '%s%s' % (specEntry, pkg[entry])
+    print '%s%s' % (specEntry, modifier(pkg[entry]))
 
 
 def integrateDebianFile(pkg, fileExtension, header=None, lineModifier=lambda x: x):
@@ -57,6 +67,21 @@ def handleInstallFiles(pkg):
         print attr, fileName
       print '%endif'
 
+def translateRequires(requires):
+  reqlist = [req.strip() for req in requires.split(',')]
+  easyreqlist = []
+  osdepreqlist = []
+  for req in reqlist:
+    if req in osDepRequireTranslator:
+      osdepreqlist.append(req)
+    else:
+      easyreqlist.append(req)
+  res = ', '.join(easyreqlist)
+  if osdepreqlist:
+    for req in osdepreqlist:
+      res += '\n' + osDepRequireTranslator[req]
+  return res
+      
 # include header
 print open('castor.spec.in.head').read()
 
@@ -73,8 +98,7 @@ for pkg in deb822.Packages.iter_paragraphs(open('debian/control')):
     print 'Group: Application/Castor'
     # deal with entries of the control file
     handleDebianEntry(pkg, 'Depends', 'Requires: ')
-    handleDebianEntry(pkg, 'Build-Depends', 'BuildRequires: ')
-    handleDebianEntry(pkg, 'Build-Depends-Conditional', '')
+    handleDebianEntry(pkg, 'Build-Depends', 'BuildRequires: ', translateRequires)
     handleDebianEntry(pkg, 'Provides')
     handleDebianEntry(pkg, 'Conflicts')
     handleDebianEntry(pkg, 'XBS-Obsoletes', 'Obsoletes: ')
