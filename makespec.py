@@ -13,9 +13,9 @@ archDepRegExp = re.compile('/usr/lib/(?!(perl|python))')
 osDepRequireTranslator = {
     'libuuid-devel' : '''# For uuid/uuid.h
 %if 0%{?rhel} >= 6
-Build-Depends: libuuid-devel
+BuildRequires: libuuid-devel
 %else
-Build-Depends: e2fsprogs-devel
+BuildRequires: e2fsprogs-devel
 %endif'''
 }
 
