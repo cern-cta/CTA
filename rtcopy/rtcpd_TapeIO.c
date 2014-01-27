@@ -498,14 +498,16 @@ int tclose(
   file_list_t *const file,
   const uint32_t     tapeFlushMode) {
   int rc = 0;
-  int comp_rc = 0;
   int save_serrno = 0;
   int save_errno = 0;
   rtcpTapeRequest_t *tapereq = NULL;
   rtcpFileRequest_t *filereq = NULL;
   char *errstr = NULL;
-  COMPRESSION_STATS compstats;
-
+/**********************************************************************
+ * S. MURRAY 27/01/2014 COMMENTING OUT OF COMPRESSION STATISTICS      *
+ * int comp_rc = 0;                                                   *
+ * COMPRESSION_STATS compstats;                                       *
+ **********************************************************************/
 
   if ( tape == NULL || file == NULL ) {
     serrno = EINVAL;
@@ -586,15 +588,27 @@ int tclose(
       }
     }
   if ( (rc != -1) && (file->trec > 0) ) {
+/*******************************************************************************
+ * S. MURRAY 27/01/2014 START OF COMMENTING OUT OF COMPRESSION STATISTICS      *
+ * The gathering of compression statistics from the tape drive is not being    *
+ * carried out at the correct moment in time, in other words it is not always  *
+ * being carried out immediately after a flush of the underlying tape drive    *
+ * cache. I am therefore temporarily commenting out the compression statics    *
+ * code with the hope that one day it will either be put back in the legacy    *
+ * rtcpd daemon or even better still it will be put into the new TapeServer    *
+ * daemon currently under development.                                         *
+ *******************************************************************************
     serrno = 0;
     errno = 0;
     memset(&compstats,'\0',sizeof(compstats));
     comp_rc = get_compression_stats(fd,filereq->tape_path,
                                     tapereq->devtype,&compstats);
+*/
     /* We need to reset stats on the drive here to get correct values
     *  for the bytesWrittenToTapeByFlush in noMoreFiles section.
     *  rc means nothing here for us and we just ignore it.
     */
+/*
     clear_compression_stats(fd,filereq->tape_path,tapereq->devtype);
     if ( comp_rc == 0 ) {
       if ( tapereq->mode == WRITE_ENABLE ) {
@@ -637,6 +651,14 @@ int tclose(
       } else {
         filereq->host_bytes = filereq->bytes_in = filereq->bytes_out;
       }
+    }
+ ******************************************************************************
+ * S. MURRAY 27/01/2014 END OF COMMENTING OUT OF COMPRESSION STATISTICS       *
+ ******************************************************************************/
+    if ( tapereq->mode == WRITE_ENABLE ) {
+      filereq->host_bytes = filereq->bytes_out = filereq->bytes_in;
+    } else {
+      filereq->host_bytes = filereq->bytes_in = filereq->bytes_out;
     }
   }
   (void) close(fd) ; 
