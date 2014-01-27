@@ -1716,12 +1716,16 @@ void *tapeIOthread(void *arg) {
 
                             rtcp_log(LOG_INFO, logMsg);
                         }
-                        {
+                        /******************************************************
+                         * S. MURRAY 27/01/2014 START OF COMMENTING OUT OF    *
+                         * COMPRESSION STATISTICS                             *
+                         ******************************************************
+                        {*/
                         /*
                         *  We have to get compression statistics before closing
                         *  the tape device.
                         */  
-                            COMPRESSION_STATS compstats;
+                        /*  COMPRESSION_STATS compstats;
                             if (0 == get_compression_stats(
                                 private_tape_fd_for_flush,
                                 tapePathForFlush,
@@ -1730,6 +1734,10 @@ void *tapeIOthread(void *arg) {
                                     ((uint64_t)compstats.to_tape)*1024;
                             }
                         }
+                         ******************************************************
+                         * S. MURRAY 27/01/2014 END OF COMMENTING OUT OF      *
+                         * COMPRESSION STATISTICS                             *
+                         ******************************************************/
                         /* Close the tape device */
                         if(close(private_tape_fd_for_flush)) {
                             char errMsg[128];

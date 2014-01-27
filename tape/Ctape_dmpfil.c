@@ -530,7 +530,10 @@ int Ctape_dmpfil(char *path,
 				Ctape_dmpmsg (MSG_OUT, " ***** TAPE MARK READ *****      END OF LABEL GROUP\n");
 				Ctape_dmpmsg (MSG_OUT, " *********************************************************************************************************************\n");
 				if (dmpparm.maxfile != 0 && nfile >= dmpparm.maxfile) {
-					(void) report_comp_stats (infd, path, dmpparm.devtype);
+					/***************************************************************/
+					/* S. MURRAY 27/01/2014 COMMENTING OUT COMPRESSTION STATISTICS */
+					/*(void) report_comp_stats (infd, path, dmpparm.devtype);      */
+					/***************************************************************/
 					Ctape_dmpmsg (MSG_OUT, " DUMP - DUMPING PROGRAM COMPLETE.\n");
 					close (infd);
 					return (1);
@@ -554,7 +557,10 @@ int Ctape_dmpfil(char *path,
 					Ctape_dmpmsg (MSG_OUT, " *********************************************************************************************************************\n");
 					if (!volHasAulFormat && dmpparm.maxfile != 0 &&
 					    nfile >= dmpparm.maxfile) {
-						(void) report_comp_stats (infd, path, dmpparm.devtype);
+						/***************************************************************/
+						/* S. MURRAY 27/01/2014 COMMENTING OUT COMPRESSTION STATISTICS */
+						/* (void) report_comp_stats (infd, path, dmpparm.devtype);     */
+						/***************************************************************/
 						Ctape_dmpmsg (MSG_OUT, " DUMP - DUMPING PROGRAM COMPLETE.\n");
 						close (infd);
 						return (1);
@@ -613,7 +619,10 @@ int Ctape_dmpfil(char *path,
 	Ctape_dmpmsg (MSG_OUT, "\n ***** THE RECORDED DATA OCCUPIED %lu bytes OF A CARTRIDGE  *****\n",
 		(unsigned long)tape_used) ;
 
-	(void) report_comp_stats (infd, path, dmpparm.devtype);
+	/***************************************************************/
+	/* S. MURRAY 27/01/2014 COMMENTING OUT COMPRESSTION STATISTICS */
+	/* (void) report_comp_stats (infd, path, dmpparm.devtype);     */
+	/***************************************************************/
 	Ctape_dmpmsg (MSG_OUT, " DUMP - DUMPING PROGRAM COMPLETE.\n");
 	close (infd);
 	return (1);
