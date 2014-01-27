@@ -191,7 +191,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
           ${CMAKE_CURRENT_BINARY_DIR}/${SRC_FILE}-stk.c)
   
       set_property(SOURCE ${SRC_FILE}-stk.c
-        PROPERTY COMPILE_FLAGS "-DCDK -DLINUX -I/usr/include/CDK -fno-strict-aliasing")
+        PROPERTY COMPILE_FLAGS "-DCDK -DLINUX -I/usr/include/CDK")
     endforeach ()
   
     ############################################################################
