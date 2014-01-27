@@ -423,6 +423,10 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
         VALUES (cfId, varAllCopyNbs(i), varAllVIDs(i));
       END LOOP;
     END IF;
+    -- Reset the CastorFile as not on tape: it may have already been there before this Repack
+    -- request and with tapeStatus = ONTAPE, but now we want to have a migration.
+    UPDATE CastorFile SET tapeStatus = dconst.CASTORFILE_NOTONTAPE
+     WHERE id = cfId;
     -- all is fine, migration was triggered
     migrationTriggered := True;
   END;

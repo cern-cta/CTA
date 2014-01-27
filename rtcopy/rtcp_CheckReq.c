@@ -457,9 +457,9 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             if ( rc == -1 ) return(rc);
         }
         /*
-         * Is it a director?
+         * Is it a directory?
          */
-        rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) st_mode=0%o\n",
+        rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) (tpwrite) st_mode=0%o\n",
             filereq->tape_fseq,filereq->file_path,st.st_mode);
         if ( ((st.st_mode) & S_IFMT) == S_IFDIR ) {
             serrno = EISDIR;
@@ -470,7 +470,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         /*
          * Zero size?
          */
-        rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) st_size=%d\n",
+        rtcp_log(LOG_INFO,"rtcp_CheckFileReq(%d,%s) (tpwrite) st_size=%d\n",
             filereq->tape_fseq,filereq->file_path,(int)st.st_size);
         if ( st.st_size == 0 ) {
             sprintf(errmsgtxt,RT121,CMD(mode));

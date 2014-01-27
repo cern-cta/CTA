@@ -18,6 +18,7 @@
 #include "stager_client_commandline.h"
 #include "client/src/stager/stager_client_api_query.hpp"
 #include "castor/query/DiskPoolQueryType.hpp"
+#include "castor/stager/RequestQueryType.hpp"
 
 #define BUFSIZE 200
 
@@ -128,9 +129,11 @@ void handleDiskPoolQuery(int argc, char *argv[]);
  * @param argc the number of arguments on the command line
  * @param argv the command line
  * @param args a struct filled with the result of the parsing
+ * @param isAllSC a boolean set to true if the query is in
+ * all service classes mode, that is SRM-like
  * @return 0 if parsing succeeded
  */
-int parseCmdLineFileQuery(int argc, char *argv[], struct cmd_args *args);
+int parseCmdLineFileQuery(int argc, char *argv[], struct cmd_args *args, bool* isAllSC);
 
 /**
  * parses the command line for a diskPool query
@@ -187,6 +190,7 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
   struct  stage_filequery_resp *responses;
   int nbresps, rc, errflg, i;
   char errbuf[BUFSIZE];
+  bool isAllSC = false;
 
   args.nbreqs = nbArgs;
   args.opts.stage_host = NULL;
@@ -196,7 +200,7 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
 
   create_query_req(&(args.requests), args.nbreqs);
 
-  errflg = parseCmdLineFileQuery(argc, argv, &args);
+  errflg = parseCmdLineFileQuery(argc, argv, &args, &isAllSC);
   if (errflg != 0) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
@@ -226,10 +230,18 @@ void handleFileQuery(int argc, char *argv[], int nbArgs) {
 
   for (i=0; i<nbresps; i++) {
     if (responses[i].errorCode == 0) {
-      printf("%s %s %s",
-             responses[i].castorfilename,
-             responses[i].filename,
-             stage_fileStatusName(responses[i].status));
+      if (isAllSC) {
+        printf("%s %s:%s %s",
+               responses[i].castorfilename,
+               responses[i].filename,
+               responses[i].poolname,
+               stage_fileStatusName(responses[i].status));
+      } else {
+        printf("%s %s %s",
+               responses[i].castorfilename,
+               responses[i].filename,
+               stage_fileStatusName(responses[i].status));
+      }
     } else {
       /* a single failure in the list makes the command fail as a whole */
       rc = 1;
@@ -323,7 +335,7 @@ void handleDiskPoolQuery(int argc, char *argv[]) {
 // parseCmdLineFileQuery
 // -----------------------------------------------------------------------
 int parseCmdLineFileQuery(int argc, char *argv[],
-                          struct cmd_args *args) {
+                          struct cmd_args *args, bool* isAllSC) {
   int nbargs, errflg, getNextMode, i;
   char c;
 
@@ -332,13 +344,21 @@ int parseCmdLineFileQuery(int argc, char *argv[],
   errflg = 0;
   nbargs = 0;
   getNextMode = 0;
+  *isAllSC = false;
   while ((c = Cgetopt_long (argc, argv,
                             "M:f:E:F:U:r:nS:",
                             longopts_fileQuery, NULL)) != -1) {
     switch (c) {
     case 'M':
       args->requests[nbargs].type = BY_FILENAME;
-      args->requests[nbargs].param = (char *)strdup(Coptarg);
+      if(strstr(Coptarg, "all:") == Coptarg) {
+        // filename starts with all:/castor/...
+        args->requests[nbargs].type = castor::stager::REQUESTQUERYTYPE_FILENAME_ALLSC;
+        args->requests[nbargs].param = (char *)strdup(Coptarg + 4);
+        *isAllSC = true;
+      }
+      else
+        args->requests[nbargs].param = (char *)strdup(Coptarg);
       nbargs++;
       break;
     case 'f':
