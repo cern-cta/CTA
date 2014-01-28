@@ -128,7 +128,7 @@ int rmc_main(struct main_args *main_args)
 	strcpy (plist, "DUMMY0");
 	c = rmc_send_scsi_cmd (extended_robot_info.smc_fd,
                      extended_robot_info.smc_ldr, 0, cdb, 12, (unsigned char*)plist, 40,
-	    sense, 38, 900000, SCSI_OUT, &nb_sense_ret, &msgaddr);
+	    sense, 38, SCSI_OUT, &nb_sense_ret, &msgaddr);
 	if (c < 0) {
 		if (c == -4 && nb_sense_ret >= 14 && (sense[2] & 0xF) == 5 &&
 		    sense[12] == 0x20) {
