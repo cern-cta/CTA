@@ -36,7 +36,6 @@ int rmc_send_scsi_cmd (
   const int buflen,
   char *const sense,
   const int senselen,
-  const int timeout,   /* in milliseconds */
   const int flags,
   int *const nb_sense_ret,
   char **const msgaddr);

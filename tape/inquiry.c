@@ -35,7 +35,7 @@ int inquiry(int fd,
 	cdb[0] = 0x12;		/* inquiry */
 	cdb[4] = 36;
 	if (send_scsi_cmd (tapefd, path, 0, cdb, 6, buf, 36,
-                     sense, 38, 30000, SCSI_IN, &nb_sense_ret, &msgaddr) < 0) {
+                     sense, 38, SCSI_IN, &nb_sense_ret, &msgaddr) < 0) {
 		usrmsg (func, "%s", msgaddr);
 		RETURN (-1);
 	}
@@ -66,7 +66,7 @@ int inquiry80(int fd,
 	cdb[2] = 0x80;
 	cdb[4] = 16;
 	if ((rc = send_scsi_cmd (tapefd, path, 0, cdb, 6, buf, 16,
-                           sense, 38, 30000, SCSI_IN, &nb_sense_ret, &msgaddr)) < 0) {
+                           sense, 38, SCSI_IN, &nb_sense_ret, &msgaddr)) < 0) {
 #ifndef NOTRACE
 		if (rc != -4 || nb_sense_ret < 14 ||
 		    (sense[2] & 0xF) != 5 || sense[12] != 0x24 || sense[13] != 0)

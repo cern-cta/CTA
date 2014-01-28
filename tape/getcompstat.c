@@ -55,7 +55,7 @@ int TEMPORARILY_NOT_USED_get_compression_stats(int tapefd,
 	}
  
 	if (send_scsi_cmd (tapefd, path, 0, cdb, 10, buffer, sizeof(buffer),
-                     sense, 38, 10000, SCSI_IN, &nb_sense_ret, &msgaddr) < 0)
+                     sense, 38, SCSI_IN, &nb_sense_ret, &msgaddr) < 0)
 		return (-1);
 
 	p = buffer;
@@ -187,7 +187,7 @@ int TEMPORARILY_NOT_USED_clear_compression_stats(int tapefd,
 	cdb[2] = 0xC0; /* PC = 3 */
 
 	if (send_scsi_cmd (tapefd, path, 0, cdb, 10, NULL, 0,
-	    sense, 38, 10000, SCSI_NONE, &nb_sense_ret, &msgaddr) < 0)
+	    sense, 38, SCSI_NONE, &nb_sense_ret, &msgaddr) < 0)
 		return (-1);
 
 #endif
