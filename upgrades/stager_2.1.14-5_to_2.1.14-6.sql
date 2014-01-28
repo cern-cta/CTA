@@ -92,9 +92,10 @@ ALTER TABLE Disk2DiskCopyJob ADD (srcDcId INTEGER);
 /* For deleteDiskCopy */
 DROP TABLE DeleteDiskCopyHelper;
 CREATE GLOBAL TEMPORARY TABLE DeleteDiskCopyHelper
-  (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, fileId INTEGER, rc INTEGER)
+  (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, fileId INTEGER, fStatus CHAR(1), rc INTEGER)
   ON COMMIT PRESERVE ROWS;
 CREATE INDEX I_DDCHelper_FileId ON DeleteDiskCopyHelper(fileId);
+
 
 XXX add disk2DiskCopyEnded PL/SQL procedure
 

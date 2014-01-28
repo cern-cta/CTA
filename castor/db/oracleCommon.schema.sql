@@ -1090,8 +1090,9 @@ CREATE GLOBAL TEMPORARY TABLE SyncRunningTransfersHelper2
 
 /* For deleteDiskCopy */
 CREATE GLOBAL TEMPORARY TABLE DeleteDiskCopyHelper
-  (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, rc INTEGER)
+  (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, fileId INTEGER, fStatus CHAR(1), rc INTEGER)
   ON COMMIT PRESERVE ROWS;
+CREATE INDEX I_DDCHelper_FileId ON DeleteDiskCopyHelper(fileId);
 
 /**********/
 /* Repack */
