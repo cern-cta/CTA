@@ -513,33 +513,6 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
           pval = cfn;
         }
         // Check to see if we return information for all copies of the file
-        // first old way with CUPV check
-        else if ((ptype == REQUESTQUERYTYPE_FILENAME) &&
-                 (pval.compare(0, 4, "all:") == 0)) {
-          // Get the name of the client hostname to pass into the Cupv interface
-          const castor::rh::Client *c =
-            dynamic_cast<const castor::rh::Client*>(client);
-          std::string srcHostName =
-            castor::System::ipAddressToHostname(c->ipAddress());
-
-          // Check if the user has ADMIN privileges so that they can perform
-          // this type of query
-          int rc = Cupv_check(req->euid(), req->egid(),
-                              srcHostName.c_str(), "", P_ADMIN);
-          if ((rc < 0) && (serrno != EACCES)) {
-            castor::exception::Exception e(serrno);
-            e.getMessage() << "Failed Cupv_check call for "
-                           << req->euid() << ":" << req->egid() << " (ADMIN)";
-            throw e;
-          } else if (rc < 0) {
-            castor::exception::PermissionDenied e;
-            e.getMessage() << "Not authorized to perform this type of query";
-            throw e;
-          }
-          pval = pval.substr(4);
-          pall = true;
-        }
-        // then new way without CUPV check
         else if (ptype == REQUESTQUERYTYPE_FILENAME_ALLSC) {
           pall = true;
         }
