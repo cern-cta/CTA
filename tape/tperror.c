@@ -104,8 +104,8 @@ int gettperror(const int tapefd,
 
 	errno = save_errno;
 	{
-		char func[sizeof("getperror")];
-		strncpy(func, "getperror", sizeof(func));
+		char func[sizeof("gettperror")];
+		strncpy(func, "gettperror", sizeof(func));
 		func[sizeof(func) - 1] = '\0';
 		RETURN (rc);
 	}
