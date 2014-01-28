@@ -1,5 +1,5 @@
     **** : trace level set to 3
-    stager: stage_putDone PutRequestId=NULL
+    stager: stage_putDone PutRequestId=<uuid0>
     stager: Looking up RH host - Using <rhhost>
     stager: Looking up RH port - Using <rhport>
     stager: stage_putDone file=<noTapeFileName>
@@ -13,4 +13,3 @@
     stager: <uuid3> CBK <answer duration3> s before callback from <server ip3> was received
 Received 1 responses
 <noTapeFileName> SUBREQUEST_READY
-Stager request ID: <uuid3>

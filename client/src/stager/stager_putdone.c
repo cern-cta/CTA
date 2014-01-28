@@ -56,31 +56,27 @@ static int _fillStruct(const char *filename) {
 }
 
 
-int
-main(int argc, char *argv[]) {
+int main(int argc, char *argv[]) {
   struct stage_fileresp *responses;
   int errflg, total_nb_files, rc, nbresps, ret;
-  char *reqid;
   char errbuf[ERRBUFSIZE+1];
-  int display_reqid = 0;
-  char* usertag = NULL;
+  char* reqid = NULL;
   char* unused = NULL;
   struct stage_options opts;
   opts.stage_host = NULL;
   opts.service_class = NULL;
   opts.stage_port=0;
-  usertag = NULL;
   filenb = 0;
 
   /* Parsing command line */
-  errflg =  parseCmdLine(argc, argv, _countFiles, &opts.service_class, &usertag, &display_reqid);
+  errflg = putDone_parseCmdLine(argc, argv, _countFiles, &opts.service_class, &reqid);
   if (errflg != 0 || filenb <= 0) {
     usage (argv[0]);
     exit (EXIT_FAILURE);
   }
   total_nb_files = filenb;
 
-  ret=getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class);
+  ret = getDefaultForGlobal(&opts.stage_host,&opts.stage_port,&opts.service_class);
 
   /* Setting the error buffer and preparing the array of file requests */
   stager_seterrbuf(errbuf, sizeof(errbuf));
@@ -88,10 +84,10 @@ main(int argc, char *argv[]) {
 
   /* Iterating over the command line again to fill in the array of requests */
   filenb = 0;
-  errflg = parseCmdLine(argc, argv, _fillStruct, &unused, &unused, &display_reqid);
+  errflg = putDone_parseCmdLine(argc, argv, _fillStruct, &unused, &unused);
 
   /* Performing the actual call */
-  rc = stage_putDone(usertag,
+  rc = stage_putDone(reqid,
                      requests,
                      total_nb_files,
                      &responses,
@@ -106,10 +102,6 @@ main(int argc, char *argv[]) {
   }
 
   ret = printFileResponses(nbresps, responses);
-  if (display_reqid) {
-    printf("Stager request ID: %s\n", reqid);
-  }
-
   return ret;
 }
 

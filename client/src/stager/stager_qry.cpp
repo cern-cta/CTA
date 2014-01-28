@@ -488,6 +488,7 @@ int checkAndCountArguments(int argc, char *argv[],
                            int* count, enum queryType* type) {
   int errflg;
   char c;
+  int argscount = 1;
 
   Coptind = 1;
   Copterr = 1;
@@ -502,9 +503,11 @@ int checkAndCountArguments(int argc, char *argv[],
     case 'U':
     case 'r':
       (*count)++;
+      argscount += 2;
       break;
     case 'f':
       {
+        argscount += 2;
         FILE *infile;
         char line[CA_MAXPATHLEN+1];
         infile = fopen(Coptarg, "r");
@@ -520,15 +523,19 @@ int checkAndCountArguments(int argc, char *argv[],
       }
       break;
     case 's':
+      argscount++;
       *type = DISKPOOLQUERY;
       break;
-    case 'S':
     case 'i':
     case 'n':
-    case 'd':
     case 'H':
     case 'a':
     case 't':
+      argscount++;
+      break;
+    case 'S':
+    case 'd':
+      argscount += 2;
       break;
     case 'h':
     default:
@@ -537,6 +544,8 @@ int checkAndCountArguments(int argc, char *argv[],
     }
     if (errflg != 0) break;
   }
+  if (argscount < argc)
+    errflg++;
   if (errflg)
     return -1;
   else
@@ -551,5 +560,5 @@ void usage(char *cmd) {
   fprintf (stderr, "%s",
            "[-M hsmfile [-M ...]] [-f hsmFileList] [-F fileid@nshost] [-S svcClass] [-U usertag] [-r requestid] [-n] [-h]\n");
   fprintf (stderr, "       %s ", cmd);
-  fprintf (stderr, "%s", "-s [-S svcClass] [-d diskPool] [-H] [-i] [-h] [-a]\n");
+  fprintf (stderr, "%s", "-s [-S svcClass] [-d diskPool] [-H] [-i] [-h] [-a] [-t]\n");
 }

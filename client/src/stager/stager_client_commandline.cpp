@@ -174,9 +174,9 @@ extern "C" {
 
 /* command line parser for a generic stager command line client */
 int parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
-                          char** service_class, char** usertag, int* display_reqid)
+                 char** service_class, char** usertag, int* display_reqid)
 {
-  int Coptind, Copterr, errflg;
+  int Coptind, Copterr, errflg, argscount;
   char c;
   static struct Coptions longopts[] =
     {
@@ -192,6 +192,7 @@ int parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
   Coptind = 1;
   Copterr = 1;
   errflg = 0;
+  argscount = 1;
 
   if (0 == callback) {
     // fail if callback is null
@@ -201,10 +202,12 @@ int parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
   while ((c = Cgetopt_long (argc, argv, "f:M:S:U:rh", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
+      argscount += 2;
       callback(Coptarg);
       break;
     case 'f':
       {
+        argscount += 2;
         // loop over lines of the input file
         std::ifstream fin(Coptarg);
         if (!fin) {
@@ -219,12 +222,15 @@ int parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
       }
       break;
     case 'S':
+      argscount += 2;
       *service_class = Coptarg;
       break;
     case 'U':
+      argscount += 2;
       *usertag = Coptarg;
       break;
     case 'r':
+      argscount++;
       *display_reqid = 1;
       break;
     case 'h':
@@ -236,9 +242,77 @@ int parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
     }
     if (errflg != 0) break;
   }
-
+  if(argscount < argc) return 1;
   return errflg;
 }
+
+/* Command line parser specific to putDone. We can't use the generic one here */
+int putDone_parseCmdLine(int argc, char *argv[], int (*callback)(const char *),
+                         char** service_class, char** reqid)
+{
+  int Coptind, Copterr, errflg, argscount;
+  char c;
+  static struct Coptions longopts[] =
+    {
+      {"filename",      REQUIRED_ARGUMENT,  NULL,      'M'},
+      {"filelist",      REQUIRED_ARGUMENT,  NULL,      'f'},
+      {"service_class", REQUIRED_ARGUMENT,  NULL,      'S'},
+      {"reqid",         REQUIRED_ARGUMENT,  NULL,      'r'},
+      {"help",          NO_ARGUMENT,        NULL,      'h'},
+      {NULL,            0,                  NULL,        0}
+    };
+
+  Coptind = 1;
+  Copterr = 1;
+  errflg = 0;
+  argscount = 1;
+
+  if (0 == callback) {
+    // fail if callback is null
+    return 1;
+  }
+
+  while ((c = Cgetopt_long (argc, argv, "f:M:S:r:h", longopts, NULL)) != -1) {
+    switch (c) {
+    case 'M':
+      argscount += 2;
+      callback(Coptarg);
+      break;
+    case 'f':
+      {
+        argscount += 2;
+        // loop over lines of the input file
+        std::ifstream fin(Coptarg);
+        if (!fin) {
+          fprintf (stderr, "unable to read file %s\n", Coptarg);
+          errflg++;
+          break;
+        }
+        std::string s;
+        while (getline(fin,s)) {
+          callback(s.c_str());
+        }
+      }
+      break;
+    case 'S':
+      argscount += 2;
+      *service_class = Coptarg;
+      break;
+    case 'r':
+      argscount += 2;
+      *reqid = Coptarg;
+      break;
+    case 'h':
+      errflg++;
+      break;
+    default:
+      errflg++;
+      break;
+    }
+    if (errflg != 0) break;
+  }
+  if(argscount < argc) errflg++;
+  return errflg;
 }
 
 void printReceivedResponses(int nbresps) {
@@ -308,3 +382,4 @@ int printPrepareResponses(int nbresps, struct stage_prepareToGet_fileresp *respo
   return rc;
 }
 
+}
