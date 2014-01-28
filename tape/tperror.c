@@ -24,9 +24,6 @@
 #include "serrno.h"
 
 #include <linux/mtio.h> 
-#ifndef MTIOCSENSE
-#include "mtio_add.h"
-#endif
 
 static char bbot[] = "BOT hit";
 struct sk_info {
@@ -62,7 +59,7 @@ int mt_rescnt;
 #define TPERRMSGBUSZ 512
 static char tp_err_msgbuf[TPERRMSGBUSZ];
 
-int get_sk_msg(char *, int, int, int, char **);
+static int get_sk_msg(char *, int, int, int, char **);
 
 int gettperror(const int tapefd,
                const char *const path,
@@ -76,30 +73,16 @@ int gettperror(const int tapefd,
 #endif
 	int rc;
 	int save_errno;
-        char func[] = "getperror";
 
 	save_errno = errno;
 #ifdef NOTRACE
 	if (getlabelinfo (path, &dlip) < 0) {
 		devtype = NULL;
 		errno = save_errno;
-	} else
+	} else {
 		devtype = dlip->devtype;
-#else
-  (void)path;
+	}
 #endif
-        {
-                /* Get the sense bytes */
-                struct mtsense mt_sense;
-                int ioctl_rc;
-                
-                ioctl_rc = ioctl(tapefd, MTIOCSENSE, &mt_sense);
-
-                if ((ioctl_rc < 0) && (22 == errno)) {
-
-                        /* MTIOCSENSE is not supported, probably the patched st driver is not loaded ... */
-                        usrmsg(func, "%s", "MTIOCSENSE not supported\n");
-                        
                         /* ... fall back to the old code. */
                         {
                                 struct mtget mt_info;                
@@ -119,42 +102,17 @@ int gettperror(const int tapefd,
                                 }
                         }
 
-                } else if (ioctl_rc < 0) {
-
-                        /* MTIOCSENSE is supported, but failed */
-                        snprintf(tp_err_msgbuf, TPERRMSGBUSZ, "no sense key available: MTIOCSENSE failed with %s", 
-                                 strerror(errno));
-                        *msgaddr = tp_err_msgbuf;
-                        rc = -1;
-
-                } else {
-
-                        /* MTIOCSENSE succeeded */
-                        if (mt_sense.latest) {
-                                rc = get_sk_msg(devtype,
-                                                mt_sense.data[2] & 0xF, /* SENSE KEY   */
-                                                mt_sense.data[12],      /* ASC         */
-                                                mt_sense.data[13],      /* ASCQ        */
-                                                msgaddr);
-                                mt_rescnt =
-                                        mt_sense.data[3] << 24 |        /* INFORMATION */
-                                        mt_sense.data[4] << 16 |
-                                        mt_sense.data[5] << 8  |
-                                        mt_sense.data[6];
-                        } else {
-                                usrmsg(func, "%s", "sense data do not belong to latest SCSI command: ignored\n");
-                                rc = get_sk_msg(devtype, 0, 0, 0, msgaddr);
-                                mt_rescnt = 0;
-                        }
-                }
-        }
-
 	errno = save_errno;
-	RETURN (rc);
+	{
+		char func[sizeof("getperror")];
+		strncpy(func, "getperror", sizeof(func));
+		func[sizeof(func) - 1] = '\0';
+		RETURN (rc);
+	}
 }
 
 
-int get_sk_msg(char *devtype,
+static int get_sk_msg(char *devtype,
                int key,
                int asc,
                int ascq,
