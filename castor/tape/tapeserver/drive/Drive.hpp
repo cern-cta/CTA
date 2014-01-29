@@ -307,8 +307,9 @@ namespace drives {
      * Read a data block from tape.
      * @param data pointer the the data block
      * @param count size of the data block
+     * @return the actual size of read data
      */
-    virtual void readBlock(unsigned char * data, size_t count) throw (Exception);
+    virtual ssize_t readBlock(unsigned char * data, size_t count) throw (Exception);
 
     virtual ~DriveGeneric() {
       if (-1 != m_tapeFD)

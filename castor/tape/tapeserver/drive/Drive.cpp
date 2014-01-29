@@ -508,11 +508,12 @@ void drives::DriveGeneric::writeBlock(const unsigned char * data, size_t count) 
  * Read a data block from tape.
  * @param data pointer the the data block
  * @param count size of the data block
+ * @return the actual size of read data
  */
-void drives::DriveGeneric::readBlock(unsigned char * data, size_t count) throw (Exception) {
-  castor::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.read(m_tapeFD, data, count),
-      "Failed ST read in DriveGeneric::readBlock");
+ssize_t drives::DriveGeneric::readBlock(unsigned char * data, size_t count) throw (Exception) {
+  ssize_t res = m_sysWrapper.read(m_tapeFD, data, count);
+  castor::exception::Errnum::throwOnMinusOne(res, "Failed ST read in DriveGeneric::readBlock");
+  return res;
 }
 
 void drives::DriveGeneric::SCSI_inquiry() {
