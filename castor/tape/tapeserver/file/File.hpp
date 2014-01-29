@@ -25,98 +25,101 @@
 #pragma once
 #include <string>
 #include "Structures.hpp"
+#include "../exception/Exception.hpp"
 
-namespace Tape {
-  /**
-   * Class managing the reading and writing of files to and from tape.
-   */
-  namespace AULFile {
+namespace castor {
+  namespace tape {
     /**
-     * Class containing all the information related to a file being migrated to 
-     * tape.
+     * Class managing the reading and writing of files to and from tape.
      */
-    class Information {
-    public:
-      std::string lastKnownPath;
-      uint32_t checksum;
-      uint64_t nsFileId;
-      uint64_t size;
-      uint32_t fseq;
-    };
-    
-    class BufferTooSmall: public Tape::Exception {
-    public:
-      BufferTooSmall(const std::string & what): Exception(what) {}
-    };
-    
-    class WrongChecksum: public Tape::Exception {
-    public:
-      WrongChecksum(const std::string & what): Exception(what) {}
-    };
-    
-    class WrongSize: public Tape::Exception {
-    public:
-      WrongSize(const std::string & what): Exception(what) {}
-    };
-    
-    class NotReadingAFile: public Tape::Exception {
-    public:
-      NotReadingAFile(const std::string & what): Exception(what) {}
-    };
-    
-    /**
-     * Class keeping track of a whole tape read session over an AUL formated
-     * tape. The session will keep track of the overall coherency of the session
-     * and check for everything to be coherent. The tape should be mounted in
-     * the drive before the AULReadSession is started (i.e. constructed).
-     * Likewise, tape unmount is the business of the user.
-     */
-    class ReadSession{
-    public:
+    namespace AULFile {
       /**
-       * Constructor of the AULReadSession. It will rewind the tape, and check the 
-       * VSN value. Throws an exception in case of mismatch.
-       * @param drive
-       * @param VSN
+       * Class containing all the information related to a file being migrated to 
+       * tape.
        */
-      ReadSession(Tape::Drive & drive, std::string VSN) throw (Tape::Exception);
+      class Information {
+      public:
+        std::string lastKnownPath;
+        uint32_t checksum;
+        uint64_t nsFileId;
+        uint64_t size;
+        uint32_t fseq;
+      };
+
+      class BufferTooSmall: public Exception {
+      public:
+        BufferTooSmall(const std::string & what): Exception(what) {}
+      };
+
+      class WrongChecksum: public Exception {
+      public:
+        WrongChecksum(const std::string & what): Exception(what) {}
+      };
+
+      class WrongSize: public Exception {
+      public:
+        WrongSize(const std::string & what): Exception(what) {}
+      };
+
+      class NotReadingAFile: public Exception {
+      public:
+        NotReadingAFile(const std::string & what): Exception(what) {}
+      };
+
       /**
-       * Positions the tape for reading the file. Depending on the previous activity,
-       * it is the duty of this function to determine how to best move to the next
-       * file. The positioning will then be verified (header will be read). 
-       * As usual, exception is thrown if anything goes wrong.
-       * @param fileInfo: all relevant information passed by the stager about
-       * the file.
+       * Class keeping track of a whole tape read session over an AUL formated
+       * tape. The session will keep track of the overall coherency of the session
+       * and check for everything to be coherent. The tape should be mounted in
+       * the drive before the AULReadSession is started (i.e. constructed).
+       * Likewise, tape unmount is the business of the user.
        */
-      void position(Tape::AULFile::Information fileInfo) throw (Tape::Exception);
+      class ReadSession{
+      public:
+        /**
+         * Constructor of the AULReadSession. It will rewind the tape, and check the 
+         * VSN value. Throws an exception in case of mismatch.
+         * @param drive
+         * @param VSN
+         */
+        ReadSession(drives::Drive & drive, std::string VSN) throw (Exception);
+        /**
+         * Positions the tape for reading the file. Depending on the previous activity,
+         * it is the duty of this function to determine how to best move to the next
+         * file. The positioning will then be verified (header will be read). 
+         * As usual, exception is thrown if anything goes wrong.
+         * @param fileInfo: all relevant information passed by the stager about
+         * the file.
+         */
+        void position(Information fileInfo) throw (Exception);
+        /**
+         * After positioning at the beginning of a file for readings, this function
+         * allows the reader to know which block sizes to provide.
+         * If called before the end of a file read, the file reading will be 
+         * interrupted and positioning to the new file will occur.
+         * @return the block size in bytes.
+         */
+        size_t getBlockSize() throw (Exception);
+        /**
+         * Read data from the file. The buffer should equal to or bigger than the 
+         * block size. Will try to actually fill up the provided buffer (this
+         * function can trigger several read on the tape side).
+         * This function will throw exceptions when problems arise (especially
+         * at end of file in case of size or checksum mismatch.
+         * After end of file, a new call to read without a call to position
+         * will throw NotReadingAFile.
+         * @param buff pointer to the data buffer
+         * @param len size of the buffer
+         * @return The amount of data actually copied. Zero at end of file.
+         */
+        size_t read(void * buff, size_t len) throw (Exception);
+      };
+
       /**
-       * After positioning at the beginning of a file for readings, this function
-       * allows the reader to know which block sizes to provide.
-       * If called before the end of a file read, the file reading will be 
-       * interrupted and positioning to the new file will occur.
-       * @return the block size in bytes.
+       TODO
        */
-      size_t getBlockSize() throw (Tape::Exception);
-      /**
-       * Read data from the file. The buffer should equal to or bigger than the 
-       * block size. Will try to actually fill up the provided buffer (this
-       * function can trigger several read on the tape side).
-       * This function will throw exceptions when problems arise (especially
-       * at end of file in case of size or checksum mismatch.
-       * After end of file, a new call to read without a call to position
-       * will throw NotReadingAFile.
-       * @param buff pointer to the data buffer
-       * @param len size of the buffer
-       * @return The amount of data actually copied. Zero at end of file.
-       */
-      size_t read(void * buff, size_t len) throw (Tape::Exception);
+      class WriteSession{
+
+      };
     };
-    
-    /**
-     TODO
-     */
-    class WriteSession{
-      
-    };
-  };
+  }
 }
