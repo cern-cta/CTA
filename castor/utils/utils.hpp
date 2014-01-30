@@ -32,16 +32,11 @@
 #include "castor/exception/InvalidConfiguration.hpp"
 #include "castor/io/ServerSocket.hpp"
 
-#include <errno.h>
-#include <list>
-#include <stdint.h>
+#include <ostream>
 #include <string>
-#include <string.h>
-#include <unistd.h>
-#include <vector>
 #include <sys/time.h>
-#include <sys/types.h>
-#include <sys/stat.h>
+#include <time.h>
+#include <vector>
 
 namespace castor {
 namespace utils  {

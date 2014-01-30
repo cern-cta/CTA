@@ -22,6 +22,19 @@
 
 #include "castor/utils/utils.hpp"
 
+#include <algorithm>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <locale>
+#include <sstream>
+#include <stdio.h>
+#include <string.h>
+#include <time.h>
+#include <unistd.h>
+#include <arpa/inet.h>
+#include <sys/socket.h>
+
 //-----------------------------------------------------------------------------
 // writeTime
 //-----------------------------------------------------------------------------
@@ -37,7 +50,7 @@ void castor::utils::writeTime(std::ostream &os, const time_t time,
   const size_t n = strlen(format);
 
   if (dateWriter.put(os, os, ' ', &localTime, format, format + n).failed()){
-    os << "UKNOWN";
+    os << "UNKNOWN";
   }
 }
 
