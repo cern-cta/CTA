@@ -26,6 +26,7 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/tape/tapebridge/LogHelper.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 
 
 //-----------------------------------------------------------------------------
@@ -351,9 +352,10 @@ void castor::tape::tapebridge::LogHelper::logMsgBody(const Cuuid_t &cuuid,
   const int socketFd, const legacymsg::VmgrTapeInfoMsgBody &body,
   const timeval &connectDuration, const timeval &sendRecvDuration) throw() {
 
-  const double connectDurationDouble = utils::timevalToDouble(connectDuration);
+  const double connectDurationDouble =
+    castor::utils::timevalToDouble(connectDuration);
   const double sendRecvDurationDouble =
-    utils::timevalToDouble(sendRecvDuration);
+    castor::utils::timevalToDouble(sendRecvDuration);
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", volReqId               ),
@@ -414,9 +416,10 @@ void castor::tape::tapebridge::LogHelper::logMsg(const Cuuid_t &cuuid,
   const tapegateway::Volume &msg, const timeval &connectDuration,
   const timeval &sendRecvDuration) throw() {
 
-  const double connectDurationDouble = utils::timevalToDouble(connectDuration);
+  const double connectDurationDouble =
+    castor::utils::timevalToDouble(connectDuration);
   const double sendRecvDurationDouble =
-    utils::timevalToDouble(sendRecvDuration);
+    castor::utils::timevalToDouble(sendRecvDuration);
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", msg.mountTransactionId()),
@@ -442,9 +445,10 @@ void castor::tape::tapebridge::LogHelper::logMsg(const Cuuid_t &cuuid,
   const tapegateway::DumpParameters &msg, const timeval &connectDuration,
   const timeval &sendRecvDuration) throw() {
 
-  const double connectDurationDouble = utils::timevalToDouble(connectDuration);
+  const double connectDurationDouble =
+    castor::utils::timevalToDouble(connectDuration);
   const double sendRecvDurationDouble =
-    utils::timevalToDouble(sendRecvDuration);
+    castor::utils::timevalToDouble(sendRecvDuration);
 
   castor::dlf::Param params[] = {
     castor::dlf::Param("mountTransactionId", msg.mountTransactionId()),

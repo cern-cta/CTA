@@ -103,35 +103,6 @@ namespace tape   {
 namespace utils  {
 
 /**
- * Returns the size of the specified array.
- *
- * @param array The array whose size is to be determined.
- */
-template<class T, int n> static int arraySize(T (&)[n]) {
-  return n;
-}
-
-/**
- * Writes the specified time to the specified stream using the specified
- * format.
- *
- * @param os     The stream to be written to.
- * @param time   The time as the number of seconds since the Epoch
- *               (00:00:00 UTC, January 1, 1970).
- * @param format The time format specified using the 
- * recognized formatting characters of 'std::strftime'.
- */
-void writeTime(std::ostream &os, const time_t time, const char* const format);
-
-/**
- * Returns the string representation of the specified boolean value.
- *
- * @param value The boolean value.
- */
-const char *boolToString(const bool value);
-
-
-/**
  * Writes the hex form of the specified unsigned 32-bit integer into the
  * first 8 bytes of the specified character buffer.  The string termination
  * character '\0' is written to the ninth byte of the output buffer.
@@ -155,20 +126,6 @@ template<size_t n> void toHex(uint32_t number, char (&buf)[n])
   throw(castor::exception::InvalidArgument) {
   toHex(number, buf, n);
 }
-
-/**
- * Splits the specified string into a vector of strings using the specified
- * separator.
- *
- * Please note that the string to be split is NOT modified.
- *
- * @param str The string to be split.
- * @param separator The separator to be used to split the specified string.
- * @param result The vector when the result of spliting the string will be
- * stored.
- */
-void splitString(const std::string &str, const char separator,
-  std::vector<std::string> &result) throw();
 
 /**
  * Returns the number of occurences the specified character appears in the
@@ -310,24 +267,6 @@ const char *volumeClientTypeToString(const tapegateway::ClientType mode)
  * tapegateay::Volume message (READ, WRITE or DUMP).
  */
 const char *volumeModeToString(const tapegateway::VolumeMode mode) throw();
-
-/**
- * Checks if the specified string is a valid unsigned integer.
- *
- * @param str The string to be checked.
- * @returns true if the string is a valid unsigned integer, else false.
- */
-bool isValidUInt(const char *str) throw();
-
-/**
- * Converts the specified string to uppercase.
- */
-void toUpper(char *str);
-
-/**
- * Converts the specified string to uppercase.
- */
-void toUpper(std::string &str);
 
 /**
  * Drains (reads and discards) all data from the specified file until end of
@@ -565,7 +504,6 @@ const char *getMandatoryValueFromConfiguration(const char *const category,
  */
 bool isAnEmptyString(const char *const str) throw();
 
-
 /**
  * Returns a comma separated list string-representation of the specified vector
  * of strings.
@@ -599,34 +537,6 @@ std::string tapeBlockIdToString(
  */
 void appendPathToEnvVar(const std::string &envVarName,
   const std::string &pathToBeAppended) throw(castor::exception::Exception);
-
-
-/**
- * Compares two time-values, a and b, and returns true if time value a is
- * greater than time-value b, else returns false.
- *
- * @param a Time-value a.
- * @param b Time-value b.
- * @return True if time value a is greater than time value b, else false.
- */
-bool timevalGreaterThan(const timeval &a, const timeval &b) throw();
-
-/**
- * Calculates the absolute difference of the two specified time-values.
- *
- * @param a Time-value a.
- * @param b Time-value b.
- * @return The difference between time-values a and b.
- */
-timeval timevalAbsDiff(const timeval &a, const timeval &b) throw();
-
-/**
- * Returns the double version of the specified time-value.
- *
- * @param tv The time-value from which the double is to be calculated.
- * @param    The double version of the specified time-value.
- */
-double timevalToDouble(const timeval &tv) throw();
 
 /**
  * Simple C++ wrapper around the C function named gettimeofday.  The wrapper

@@ -32,6 +32,7 @@
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/DumpTpCommand.hpp"
 #include "castor/tape/tpcp/Helper.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/Cupv_api.h"
 #include "h/rtcp_constants.h"
@@ -146,7 +147,7 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
       break;
 
     case 'B':  // maxbytes
-      if(!utils::isValidUInt(optarg)) {
+      if(!castor::utils::isValidUInt(optarg)) {
         castor::exception::InvalidArgument ex;
         ex.getMessage() <<
           "\tThe -B,--maxbytes argument must be an unsigned integer"
@@ -157,7 +158,7 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
       break;
 
     case 'b':  // blksize
-      if(!utils::isValidUInt(optarg)) {
+      if(!castor::utils::isValidUInt(optarg)) {
         castor::exception::InvalidArgument ex;
         ex.getMessage() <<
           "\tThe -b,--blksize argument must be an unsigned integer"
@@ -175,7 +176,7 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
       break;
 
     case 'f':  // fromfile
-      if(!utils::isValidUInt(optarg)) {
+      if(!castor::utils::isValidUInt(optarg)) {
         castor::exception::InvalidArgument ex;
         ex.getMessage() <<
           "\tThe -f,--fromfile argument must be an unsigned integer"
@@ -192,7 +193,7 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
       break;
 
     case 'g':  // maxfiles
-      if(!utils::isValidUInt(optarg)) {
+      if(!castor::utils::isValidUInt(optarg)) {
         castor::exception::InvalidArgument ex;
         ex.getMessage() <<
           "\tThe -g,--maxfiles argument must be an unsigned integer"
@@ -203,7 +204,7 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
       break;
 
     case 'm':  // fromblock
-      if(!utils::isValidUInt(optarg)) {
+      if(!castor::utils::isValidUInt(optarg)) {
         castor::exception::InvalidArgument ex;
         ex.getMessage() <<
           "\tThe -m,--fromblock argument must be an unsigned integer"
@@ -220,7 +221,7 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
       break;
 
     case 'n':  // toblock
-      if(!utils::isValidUInt(optarg)) {
+      if(!castor::utils::isValidUInt(optarg)) {
         castor::exception::InvalidArgument ex;
         ex.getMessage() <<
           "\tThe -n,--toblock argument must be an unsigned integer"
@@ -422,7 +423,7 @@ void castor::tape::tpcp::DumpTpCommand::performTransfer()
   std::ostream &os = std::cout;
 
   time_t now = time(NULL);
-  utils::writeTime(os, now, TIMEFORMAT);
+  castor::utils::writeTime(os, now, TIMEFORMAT);
   os << " Finished dumping tape" << std::endl
      << std::endl;
 }

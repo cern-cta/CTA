@@ -28,6 +28,7 @@
 #include "castor/tape/Constants.hpp"
 #include "castor/tape/utils/SmartFILEPtr.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/Castor_limits.h"
 #include "h/getconfent.h"
 #include "h/rtcp_constants.h"
@@ -45,33 +46,6 @@
 #include <unistd.h>
 #include <arpa/inet.h>
 #include <sys/socket.h>
-
-
-//-----------------------------------------------------------------------------
-// writeTime
-//-----------------------------------------------------------------------------
-void castor::tape::utils::writeTime(std::ostream &os, const time_t time,
-  const char* const format) {
-
-  tm localTime;
-
-  localtime_r(&time, &localTime);
-
-  const std::time_put<char>& dateWriter =
-    std::use_facet<std::time_put<char> >(os.getloc());
-  const size_t n = strlen(format);
-
-  if (dateWriter.put(os, os, ' ', &localTime, format, format + n).failed()){
-    os << "UKNOWN";
-  }
-}
-
-//-----------------------------------------------------------------------------
-// boolToString
-//-----------------------------------------------------------------------------
-const char *castor::tape::utils::boolToString(const bool value) {
-  return value ? "TRUE" : "FALSE";
-}
 
 
 //-----------------------------------------------------------------------------
@@ -104,34 +78,6 @@ void castor::tape::utils::toHex(uint32_t number, char *buf, size_t len)
   buf[8] = '\0';
 }
 
-
-//-----------------------------------------------------------------------------
-// splitString
-//-----------------------------------------------------------------------------
-void castor::tape::utils::splitString(const std::string &str,
-  const char separator, std::vector<std::string> &result) throw() {
-
-  if(str.empty()) {
-    return;
-  }
-
-  std::string::size_type beginIndex = 0;
-  std::string::size_type endIndex   = str.find(separator);
-
-  while(endIndex != std::string::npos) {
-    result.push_back(str.substr(beginIndex, endIndex - beginIndex));
-    beginIndex = ++endIndex;
-    endIndex = str.find(separator, endIndex);
-  }
-
-  // If no separator could not be found then simply append the whole input
-  // string to the result
-  if(endIndex == std::string::npos) {
-    result.push_back(str.substr(beginIndex, str.length()));
-  }
-}
-
-
 //-----------------------------------------------------------------------------
 // countOccurrences
 //-----------------------------------------------------------------------------
@@ -149,7 +95,6 @@ int castor::tape::utils::countOccurrences(const char ch, const char *str) {
 
   return count;
 }
-
 
 //-----------------------------------------------------------------------------
 // toHex
@@ -199,7 +144,6 @@ void castor::tape::utils::toHex(const uint64_t i, char *dst,
   dst[nbDigits] = '\0';
 }
 
-
 //-----------------------------------------------------------------------------
 // copyString
 //-----------------------------------------------------------------------------
@@ -240,7 +184,6 @@ void castor::tape::utils::copyString(char *const dst, const size_t dstSize,
   *(dst + dstSize -1) = '\0'; // Ensure destination string is null terminated
 }
 
-
 //-----------------------------------------------------------------------------
 // writeStrings
 //-----------------------------------------------------------------------------
@@ -258,7 +201,6 @@ void castor::tape::utils::writeStrings(std::ostream &os,
   }
 }
 
-
 //-----------------------------------------------------------------------------
 // magicToString
 //-----------------------------------------------------------------------------
@@ -273,7 +215,6 @@ const char *castor::tape::utils::magicToString(const uint32_t magic)
   default                  : return "UNKNOWN";
   }
 }
-
 
 //-----------------------------------------------------------------------------
 // rtcopyReqTypeToString
@@ -296,7 +237,6 @@ const char *castor::tape::utils::rtcopyReqTypeToString(
   }
 }
 
-
 //-----------------------------------------------------------------------------
 // procStatusToString
 //-----------------------------------------------------------------------------
@@ -314,7 +254,6 @@ const char *castor::tape::utils::procStatusToString(
   }
 }
 
-
 //-----------------------------------------------------------------------------
 // volumeClientTypeToString
 //-----------------------------------------------------------------------------
@@ -330,7 +269,6 @@ const char *castor::tape::utils::volumeClientTypeToString(
   }
 }
 
-
 //-----------------------------------------------------------------------------
 // volumeModeToString
 //-----------------------------------------------------------------------------
@@ -344,49 +282,6 @@ const char *castor::tape::utils::volumeModeToString(
   default                : return "UKNOWN";
   }
 }
-
-
-//------------------------------------------------------------------------------
-// isValidUInt
-//------------------------------------------------------------------------------
-bool castor::tape::utils::isValidUInt(const char *str)
-  throw() {
-  // An empty string is not a valid unsigned integer
-  if(*str == '\0') {
-    return false;
-  }
-
-  // For each character in the string
-  for(;*str != '\0'; str++) {
-    // If the current character is not a valid numerical digit
-    if(*str < '0' || *str > '9') {
-      return false;
-    }
-  }
-
-  return true;
-}
-
-
-//------------------------------------------------------------------------------
-// toUpper
-//------------------------------------------------------------------------------
-void castor::tape::utils::toUpper(char *str) {
-  for(;*str != '\0'; str++) {
-    *str = toupper(*str);
-  }
-}
-
-
-//------------------------------------------------------------------------------
-// toUpper
-//------------------------------------------------------------------------------
-void castor::tape::utils::toUpper(std::string &str) {
-  for(std::string::iterator itor=str.begin(); itor!=str.end(); itor++) {
-    *itor = toupper(*itor);
-  }
-}
-
 
 //------------------------------------------------------------------------------
 // drainFile
@@ -418,7 +313,6 @@ ssize_t castor::tape::utils::drainFile(const int fd)
   return total;
 }
 
-
 //------------------------------------------------------------------------------
 // checkIdSyntax
 //------------------------------------------------------------------------------
@@ -443,7 +337,6 @@ void castor::tape::utils::checkIdSyntax(const char *idString)
   }
 }
 
-
 //------------------------------------------------------------------------------
 // checkVidSyntax
 //------------------------------------------------------------------------------
@@ -463,7 +356,6 @@ void castor::tape::utils::checkVidSyntax(const char *vid)
   checkIdSyntax(vid);
 }
 
-
 //------------------------------------------------------------------------------
 // checkDgnSyntax
 //------------------------------------------------------------------------------
@@ -482,7 +374,6 @@ void castor::tape::utils::checkDgnSyntax(const char *dgn)
 
   checkIdSyntax(dgn);
 }
-
 
 //------------------------------------------------------------------------------
 // readFileIntoList
@@ -513,7 +404,6 @@ void castor::tape::utils::readFileIntoList(const char *const filename,
   }
 }
 
-
 //------------------------------------------------------------------------------
 // parseFileList
 //------------------------------------------------------------------------------
@@ -540,7 +430,6 @@ void castor::tape::utils::parseFileList(const char *filename,
   }
 }
 
-
 //------------------------------------------------------------------------------
 // trimString
 //------------------------------------------------------------------------------
@@ -559,7 +448,6 @@ std::string castor::tape::utils::trimString(const std::string &str) throw() {
     return str.substr(start, end - start + 1);
   }
 }
-
 
 //------------------------------------------------------------------------------
 // singleSpaceString
@@ -614,7 +502,6 @@ std::string castor::tape::utils::singleSpaceString(
   return result.str();
 }
 
-
 //------------------------------------------------------------------------------
 // writeBanner
 //------------------------------------------------------------------------------
@@ -639,7 +526,6 @@ void castor::tape::utils::writeBanner(std::ostream &os,
   os << std::endl;
 }
 
-
 //------------------------------------------------------------------------------
 // getPortFromConfig
 //------------------------------------------------------------------------------
@@ -652,7 +538,7 @@ unsigned short castor::tape::utils::getPortFromConfig(
   const char *const value = getconfent(category, name, 0);
 
   if(value != NULL) {
-    if(utils::isValidUInt(value)) {
+    if(castor::utils::isValidUInt(value)) {
       port = atoi(value);
     } else {
       exception::InvalidConfigEntry ex(category, name, value);
@@ -679,7 +565,6 @@ unsigned short castor::tape::utils::getPortFromConfig(
 
   return port;
 }
-
 
 //------------------------------------------------------------------------------
 // parseTpconfigFile
@@ -749,7 +634,7 @@ void castor::tape::utils::parseTpconfigFile(const char *const filename,
 
       // Split the line into its component data-columns
       std::vector<std::string> columns;
-      splitString(line, ' ', columns);
+      castor::utils::splitString(line, ' ', columns);
 
       // Throw an exception if the number of data-columns is invalid
       if(columns.size() != NBCOLUMNS) {
@@ -793,7 +678,6 @@ void castor::tape::utils::parseTpconfigFile(const char *const filename,
   }
 }
 
-
 //------------------------------------------------------------------------------
 // extractTpconfigDriveNames
 //------------------------------------------------------------------------------
@@ -817,7 +701,6 @@ void castor::tape::utils::extractTpconfigDriveNames(
   }
 }
 
-
 //------------------------------------------------------------------------------
 // statFile
 //------------------------------------------------------------------------------
@@ -839,7 +722,6 @@ void castor::tape::utils::statFile(const char *const filename,
     throw(ex);
   }
 }
-
 
 //------------------------------------------------------------------------------
 // pthreadCreate
@@ -863,7 +745,6 @@ void castor::tape::utils::pthreadCreate(
     throw(ex);
   }
 }
-
 
 //------------------------------------------------------------------------------
 // pthreadJoin
@@ -918,14 +799,12 @@ const char *castor::tape::utils::getMandatoryValueFromConfiguration(
   return tmp;
 }
 
-
 //------------------------------------------------------------------------------
 // isAnEmptyString
 //------------------------------------------------------------------------------
 bool castor::tape::utils::isAnEmptyString(const char *const str) throw() {
   return *str == '\0';
 }
-
 
 //------------------------------------------------------------------------------
 // vectorOfStringToString
@@ -949,7 +828,6 @@ std::string castor::tape::utils::vectorOfStringToString(
   return oss.str();
 }
 
-
 //------------------------------------------------------------------------------
 // tapeBlockIdToString
 //------------------------------------------------------------------------------
@@ -968,7 +846,6 @@ std::string castor::tape::utils::tapeBlockIdToString(
 
   return oss.str();
 }
-
 
 //---------------------------------------------------------------------------
 // appendPathToEnvVar
@@ -1005,66 +882,6 @@ void castor::tape::utils::appendPathToEnvVar(const std::string &envVarName,
       ": Unknown error");
   }
 }
-
-
-//---------------------------------------------------------------------------
-// timevalGreaterThan
-//---------------------------------------------------------------------------
-bool castor::tape::utils::timevalGreaterThan(const timeval &a, const timeval &b)
-  throw() {
-  if(a.tv_sec != b.tv_sec) {
-    return a.tv_sec > b.tv_sec;
-  } else {
-    return a.tv_usec > b.tv_usec;
-  }
-}
-
-
-//---------------------------------------------------------------------------
-// timevalAbsDiff
-//---------------------------------------------------------------------------
-timeval castor::tape::utils::timevalAbsDiff(const timeval &a, const timeval &b)
-  throw() {
-  timeval bigger  = {0, 0};
-  timeval smaller = {0, 0};
-  timeval result  = {0, 0};
-
-  // If time-values a and b are equal
-  if(a.tv_sec == b.tv_sec && a.tv_usec == b.tv_usec) {
-    return result; // Result was initialised to {0, 0}
-  }
-
-  // The time-values are not equal, determine which is the bigger and which is
-  // the smaller time-value
-  if(timevalGreaterThan(a, b)) {
-    bigger  = a;
-    smaller = b;
-  } else {
-    bigger  = b;
-    smaller = a;
-  }
-
-  // Subtract the smaller time-value from the bigger time-value carrying over
-  // 1000000 micro-seconds from the seconds to the micro-seconds if necessay
-  if(bigger.tv_usec >= smaller.tv_usec) {
-    result.tv_usec = bigger.tv_usec - smaller.tv_usec;
-    result.tv_sec  = bigger.tv_sec  - smaller.tv_sec;
-  } else {
-    result.tv_usec = bigger.tv_usec + 1000000 - smaller.tv_usec;
-    result.tv_sec  = bigger.tv_sec - 1 - smaller.tv_sec;
-  }
-
-  return result;
-}
-
-
-//---------------------------------------------------------------------------
-// timevalToDouble
-//---------------------------------------------------------------------------
-double castor::tape::utils::timevalToDouble(const timeval &tv) throw() {
-  return tv.tv_sec + tv.tv_usec / 1000000.0;
-}
-
 
 //---------------------------------------------------------------------------
 // getTimeOfDay

@@ -41,6 +41,7 @@
 #include "castor/tape/tpcp/ReadTpCommand.hpp"
 #include "castor/tape/tpcp/TapeFileSequenceParser.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/Cupv_api.h"
 #include "h/rfio_api.h"
@@ -361,7 +362,7 @@ void castor::tape::tpcp::ReadTpCommand::checkAccessToDisk()
     std::ostream &os = std::cout;
     time_t       now = time(NULL);
 
-    utils::writeTime(os, now, TIMEFORMAT);
+    castor::utils::writeTime(os, now, TIMEFORMAT);
     os << " RFIO stat the directory of the first file \""
        << filepath << "\"" << std::endl;
 
@@ -469,7 +470,7 @@ void castor::tape::tpcp::ReadTpCommand::performTransfer()
   std::ostream &os = std::cout;
 
   time_t now = time(NULL);
-  utils::writeTime(os, now, TIMEFORMAT);
+  castor::utils::writeTime(os, now, TIMEFORMAT);
   os << " Finished reading from tape " << m_cmdLine.vid << std::endl
      << std::endl
      << "Number of files to be recalled = ";
@@ -642,7 +643,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFilesToRecallListRequest(
       std::ostream &os = std::cout;
 
       time_t now = time(NULL);
-      utils::writeTime(os, now, TIMEFORMAT);
+      castor::utils::writeTime(os, now, TIMEFORMAT);
       os <<
         " Recalling"
         " \"" << filename << "\"" <<
@@ -756,7 +757,7 @@ void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecall(
       FileTransfer &fileTransfer = itor->second;
 
       time_t now = time(NULL);
-      utils::writeTime(os, now, TIMEFORMAT);
+      castor::utils::writeTime(os, now, TIMEFORMAT);
       os <<
         " Recalled"
         " \"" << fileTransfer.filename << "\""

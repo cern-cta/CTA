@@ -40,6 +40,7 @@
 #include "castor/tape/tpcp/Helper.hpp"
 #include "castor/tape/tpcp/WriteTpCommand.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/Cupv_api.h"
 #include "h/rfio_api.h"
@@ -273,7 +274,7 @@ void castor::tape::tpcp::WriteTpCommand::checkAccessToDisk()
     std::ostream &os = std::cout;
     time_t       now = time(NULL);
 
-    utils::writeTime(os, now, TIMEFORMAT);
+    castor::utils::writeTime(os, now, TIMEFORMAT);
     os << " RFIO stat the first file \""
        << filename << "\"" << std::endl;
 
@@ -365,7 +366,7 @@ void castor::tape::tpcp::WriteTpCommand::checkUserHasTapeWritePermission(
     std::ostream &os = std::cout;
     time_t       now = time(NULL);
 
-    utils::writeTime(os, now, TIMEFORMAT);
+    castor::utils::writeTime(os, now, TIMEFORMAT);
     os <<
       " User can write to tape: User owns tape pool \"" << poolName << "\"" <<
       std::endl;
@@ -380,7 +381,7 @@ void castor::tape::tpcp::WriteTpCommand::checkUserHasTapeWritePermission(
       std::ostream &os = std::cout;
       time_t       now = time(NULL);
 
-      utils::writeTime(os, now, TIMEFORMAT);
+      castor::utils::writeTime(os, now, TIMEFORMAT);
       os <<
         " User can write to tape: User has ADMIN privilege" << std::endl;
     } else {
@@ -448,7 +449,7 @@ void castor::tape::tpcp::WriteTpCommand::performTransfer()
 
   {
     time_t now = time(NULL);
-    utils::writeTime(os, now, TIMEFORMAT);
+    castor::utils::writeTime(os, now, TIMEFORMAT);
   }
   os << " Writing to tape " << m_cmdLine.vid <<
     " starting at tape-file sequence-number " << m_nextTapeFseq << std::endl
@@ -464,7 +465,7 @@ void castor::tape::tpcp::WriteTpCommand::performTransfer()
 
   {
     time_t now = time(NULL);
-    utils::writeTime(os, now, TIMEFORMAT);
+    castor::utils::writeTime(os, now, TIMEFORMAT);
   }
   os << " Finished writing to tape " << m_cmdLine.vid << std::endl
      << std::endl
@@ -598,7 +599,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleFilesToMigrateListRequest(
       std::ostream &os = std::cout;
 
       time_t now = time(NULL);
-      utils::writeTime(os, now, TIMEFORMAT);
+      castor::utils::writeTime(os, now, TIMEFORMAT);
       os <<
         " Migrating"
         " \"" << filename << "\"" << std::endl;
@@ -719,7 +720,7 @@ void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigration(
     std::string  &filename = itor->second;
 
     time_t now = time(NULL);
-    utils::writeTime(os, now, TIMEFORMAT);
+    castor::utils::writeTime(os, now, TIMEFORMAT);
     os <<
        " Migrated"
        " \"" << filename << "\""

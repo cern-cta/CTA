@@ -43,6 +43,7 @@
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 
 #include <memory>
 #include <sstream>
@@ -272,7 +273,7 @@ int castor::tape::tapebridge::ClientProxy::sendFilesToMigrateListRequest(
 
   {
     const double connectDurationDouble =
-      utils::timevalToDouble(connectDuration);
+      castor::utils::timevalToDouble(connectDuration);
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", m_mountTransactionId ),
@@ -811,7 +812,7 @@ castor::IObject
         ": ClientSocket::readObject() returned null");
     }
     utils::getTimeOfDay(&sendAndReceiveEndTime, NULL);
-    sendRecvDuration = utils::timevalAbsDiff(sendAndReceiveStartTime,
+    sendRecvDuration = castor::utils::timevalAbsDiff(sendAndReceiveStartTime,
       sendAndReceiveEndTime);
   } catch(castor::exception::Exception &ex) {
 

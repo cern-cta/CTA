@@ -31,6 +31,7 @@
 #include "castor/tape/tapebridge/VmgrTxRx.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "h/getconfent.h"
 #include "h/vmgr.h"
@@ -73,7 +74,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
     char *p = NULL;
 
     if((p = getenv("VMGR_PORT")) || (p = getconfent("VMGR", "PORT", 0))) {
-      if(!utils::isValidUInt(p)) {
+      if(!castor::utils::isValidUInt(p)) {
         castor::exception::InvalidArgument ex;
 
         ex.getMessage() << "VMGR PORT is not a valid unsigned integer"
@@ -95,7 +96,8 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
     utils::getTimeOfDay(&connectStartTime, NULL);
     sock.connect();
     utils::getTimeOfDay(&connectEndTime, NULL);
-    connectDuration = utils::timevalAbsDiff(connectStartTime, connectEndTime);
+    connectDuration =
+      castor::utils::timevalAbsDiff(connectStartTime, connectEndTime);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
       ": Failed to connect to the VMGR "
@@ -254,8 +256,8 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
         net::readBytes(sock.socket(), netReadWriteTimeout, header.lenOrStatus,
           bodyBuf);
         utils::getTimeOfDay(&sendAndReceiveEndTime, NULL);
-        sendRecvDuration = utils::timevalAbsDiff(sendAndReceiveStartTime,
-          sendAndReceiveEndTime);
+        sendRecvDuration = castor::utils::timevalAbsDiff(
+          sendAndReceiveStartTime, sendAndReceiveEndTime);
       } catch (castor::exception::Exception &ex) {
         TAPE_THROW_CODE(EIO,
           ": Failed to receive message body from VMGR" <<

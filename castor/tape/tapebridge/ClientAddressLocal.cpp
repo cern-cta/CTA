@@ -26,6 +26,7 @@
 #include "castor/tape/tapebridge/ClientAddressLocal.hpp"
 #include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 
 #include <errno.h>
 #include <sstream>
@@ -112,7 +113,8 @@ int castor::tape::tapebridge::ClientAddressLocal::connectToClient(
   }
 
   utils::getTimeOfDay(&connectEndTime, NULL);
-  connectDuration = utils::timevalAbsDiff(connectStartTime, connectEndTime);
+  connectDuration =
+    castor::utils::timevalAbsDiff(connectStartTime, connectEndTime);
 
   return smartConnectSock.release();
 }

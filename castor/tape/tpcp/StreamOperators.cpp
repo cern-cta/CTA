@@ -24,6 +24,7 @@
  
 #include "castor/tape/tpcp/StreamOperators.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -57,18 +58,15 @@ std::ostream &operator<<(std::ostream &os,
 std::ostream &operator<<(std::ostream &os,
   const castor::tape::tpcp::ParsedCommandLine &value) {
 
-  using namespace castor::tape;
-  using namespace castor::tape::tpcp;
-
   os <<
     "{"
-    "debugSet="           << utils::boolToString(value.debugSet)    << ","
-    "helpSet="            << utils::boolToString(value.helpSet)     << ","
-    "vid=\""              << value.vid                              << "\","
-    "tapeFseqRanges="     << value.tapeFseqRanges                   <<","
-    "fileListSet="        << utils::boolToString(value.fileListSet) <<","
-    "fileListFilename=\"" << value.fileListFilename                 << "\","
-    "filenames="          << value.filenames                        <<
+    "debugSet="           << castor::utils::boolToString(value.debugSet) << ","
+    "helpSet="            << castor::utils::boolToString(value.helpSet)  << ","
+    "vid=\""              << value.vid                                   << "\","
+    "tapeFseqRanges="     << value.tapeFseqRanges                        <<","
+    "fileListSet="     << castor::utils::boolToString(value.fileListSet) <<","
+    "fileListFilename=\"" << value.fileListFilename                      << "\","
+    "filenames="          << value.filenames                             <<
     "}";
 
    return os;

@@ -58,6 +58,7 @@
 #include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/SmartFdList.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/getconfent.h"
 #include "h/rtcp_constants.h"
@@ -2343,7 +2344,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     connectDuration));
   {
     const double connectDurationDouble =
-      utils::timevalToDouble(connectDuration);
+      castor::utils::timevalToDouble(connectDuration);
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapebridgeTransId", tapebridgeTransId),
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
@@ -2800,7 +2801,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     connectDuration));
   {
     const double connectDurationDouble =
-      utils::timevalToDouble(connectDuration);
+      castor::utils::timevalToDouble(connectDuration);
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapebridgeTransId", tapebridgeTransId),
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId),
@@ -3593,7 +3594,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   }
   {
     const double connectDurationDouble =
-      utils::timevalToDouble(connectDuration);
+      castor::utils::timevalToDouble(connectDuration);
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId       ),
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId   ),
@@ -3668,7 +3669,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   }
   {
     const double connectDurationDouble =
-      utils::timevalToDouble(connectDuration);
+      castor::utils::timevalToDouble(connectDuration);
     castor::dlf::Param params[] = {
       castor::dlf::Param("tapebridgeTransId" , tapebridgeTransId       ),
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId   ),

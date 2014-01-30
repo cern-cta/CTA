@@ -25,6 +25,7 @@
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/tapebridge/ClientAddressTcpIp.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/Castor_limits.h"
 
 #include <sstream>
@@ -97,7 +98,8 @@ int castor::tape::tapebridge::ClientAddressTcpIp::connectToClient(
     utils::getTimeOfDay(&connectStartTime, NULL);
     sock.connect();
     utils::getTimeOfDay(&connectEndTime, NULL);
-    connectDuration = utils::timevalAbsDiff(connectStartTime, connectEndTime);
+    connectDuration =
+      castor::utils::timevalAbsDiff(connectStartTime, connectEndTime);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
       ": Failed to send message"

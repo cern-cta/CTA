@@ -27,6 +27,7 @@
 #include "castor/tape/tpcp/TapeFseqRange.hpp"
 #include "castor/tape/tpcp/TapeFseqRangeList.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 
 #include <string>
 #include <vector>
@@ -43,7 +44,7 @@ void castor::tape::tpcp::TapeFileSequenceParser::parse(char *const str,
   int nbBoundaries = 0;
 
   // Range strings are separated by commas
-  utils::splitString(str, ',', rangeStrs);
+  castor::utils::splitString(str, ',', rangeStrs);
 
   // For each range string
   for(std::vector<std::string>::const_iterator itor=rangeStrs.begin();
@@ -52,13 +53,13 @@ void castor::tape::tpcp::TapeFileSequenceParser::parse(char *const str,
     std::vector<std::string> boundaryStrs;
 
     // Lower and upper boundary strings are separated by a dash ('-')
-    utils::splitString(*itor, '-', boundaryStrs);
+    castor::utils::splitString(*itor, '-', boundaryStrs);
 
     nbBoundaries = boundaryStrs.size();
 
     switch(nbBoundaries) {
     case 1: // Range string = "n"
-      if(!utils::isValidUInt(boundaryStrs[0].c_str())) {
+      if(!castor::utils::isValidUInt(boundaryStrs[0].c_str())) {
         castor::exception::InvalidArgument ex;
         ex.getMessage() << "Invalid range string: '" << boundaryStrs[0]
           << "': Expecting an unsigned integer";
@@ -84,7 +85,7 @@ void castor::tape::tpcp::TapeFileSequenceParser::parse(char *const str,
       // At this point the range string must be either "m-n" or "m-"
 
       // Parse the "m" of "m-n" or "m-"
-      if(!utils::isValidUInt(boundaryStrs[0].c_str())) {
+      if(!castor::utils::isValidUInt(boundaryStrs[0].c_str())) {
         castor::exception::InvalidArgument ex;
         ex.getMessage() << "Invalid range string: '" << *itor
           << "': The lower boundary should be an unsigned integer";
@@ -111,7 +112,7 @@ void castor::tape::tpcp::TapeFileSequenceParser::parse(char *const str,
         } else {
 
           // Parse the "n" of "m-n"
-          if(!utils::isValidUInt(boundaryStrs[1].c_str())) {
+          if(!castor::utils::isValidUInt(boundaryStrs[1].c_str())) {
             castor::exception::InvalidArgument ex;
             ex.getMessage() << "Invalid range string: '" << *itor
               << "': The upper boundary should be an unsigned integer";

@@ -143,6 +143,19 @@ set (CLIENT_LIB_SRC_FILES
   log/LoggerImplementation.cpp
   log/Message.cpp
   log/Param.cpp
+  metrics/Counter.cpp
+  metrics/InternalCounter.cpp
+  metrics/Histogram.cpp
+  metrics/MetricsCollector.cpp
+  metrics/UpdateThread.cpp
+  metrics/ObjTypeCounter.cpp
+  query/DiskPoolQueryResponse.cpp
+  query/FileSystemDescription.cpp
+  query/DiskServerDescription.cpp
+  query/DiskPoolQuery.cpp
+  query/DiskPoolQueryType.cpp
+  query/VersionQuery.cpp
+  query/VersionResponse.cpp
   replier/ClientConnection.cpp
   replier/RequestReplier.cpp
   rh/Client.cpp
@@ -173,12 +186,6 @@ set (CLIENT_LIB_SRC_FILES
   server/SelectProcessThread.cpp
   server/ThreadNotification.cpp
   server/Queue.cpp
-  metrics/Counter.cpp
-  metrics/InternalCounter.cpp
-  metrics/Histogram.cpp
-  metrics/MetricsCollector.cpp
-  metrics/UpdateThread.cpp
-  metrics/ObjTypeCounter.cpp
   stager/CastorFile.cpp
   stager/DiskCopyInfo.cpp
   stager/DiskCopyForRecall.cpp
@@ -237,6 +244,7 @@ set (CLIENT_LIB_SRC_FILES
   stager/NsFileId.cpp
   stager/BulkRequestResult.cpp
   stager/FileResult.cpp
+  utils/utils.cpp
   vdqm/ClientIdentification.cpp
   vdqm/TapeDrive.cpp
   vdqm/DeviceGroupName.cpp
@@ -249,13 +257,6 @@ set (CLIENT_LIB_SRC_FILES
   vdqm/TapeServer.cpp
   vdqm/TapeServerStatusCodes.cpp
   vdqm/VdqmTape.cpp
-  query/DiskPoolQueryResponse.cpp
-  query/FileSystemDescription.cpp
-  query/DiskServerDescription.cpp
-  query/DiskPoolQuery.cpp
-  query/DiskPoolQueryType.cpp
-  query/VersionQuery.cpp
-  query/VersionResponse.cpp
   ../client/src/stager/stager_client_api_common.cpp
   ../client/src/stager/stager_client_commandline.cpp
   ../client/src/stager/stager_client_changePrivilege.c

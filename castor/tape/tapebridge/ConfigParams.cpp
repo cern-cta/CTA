@@ -25,6 +25,7 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/tapebridge/ConfigParams.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/getconfent.h"
 #include "h/u64subr.h"
 
@@ -53,7 +54,7 @@ void
   if(NULL != (valueCStr = getenv(envVarName.c_str()))) {
     const ConfigParamSource::Enum source =
       ConfigParamSource::ENVIRONMENT_VARIABLE;
-    if(!utils::isValidUInt(valueCStr)) {
+    if(!castor::utils::isValidUInt(valueCStr)) {
       TAPE_THROW_EX(castor::exception::InvalidArgument,
         ": Configuration parameter is not a valid unsigned integer"
         ": category=" << param.getCategory() <<
@@ -67,7 +68,7 @@ void
   } else if(NULL != (valueCStr = getconfent(param.getCategory().c_str(),
     param.getName().c_str(), 0))) {
     const ConfigParamSource::Enum source = ConfigParamSource::CASTOR_CONF;
-    if(!utils::isValidUInt(valueCStr)) {
+    if(!castor::utils::isValidUInt(valueCStr)) {
       TAPE_THROW_EX(castor::exception::InvalidArgument,
         ": Configuration parameter is not a valid unsigned integer"
         ": category=" << param.getCategory() <<
