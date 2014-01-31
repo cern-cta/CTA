@@ -42,15 +42,6 @@ namespace castor {
 namespace utils  {
 
 /**
- * Returns the size of the specified array.
- *
- * @param array The array whose size is to be determined.
- */
-template<class T, int n> static int arraySize(T (&)[n]) {
-  return n;
-}
-
-/**
  * Writes the specified time to the specified stream using the specified
  * format.
  *
