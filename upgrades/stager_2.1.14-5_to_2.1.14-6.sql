@@ -87,7 +87,11 @@ ALTER TABLE DrainingErrors
     FOREIGN KEY (diskCopy)
     REFERENCES DiskCopy (id);
 
-ALTER TABLE Disk2DiskCopyJob ADD (srcDcId INTEGER);
+ALTER TABLE Disk2DiskCopyJob RENAME COLUMN replacedDcId TO srcDcId;
+ALTER TABLE Disk2DiskCopyJob ADD (dropSource INTEGER DEFAULT 0 CONSTRAINT NN_Disk2DiskCopyJob_dropSource NOT NULL);
+ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_SrcDcId
+  FOREIGN KEY (srcDcId) REFERENCES DiskCopy(id);
+CREATE INDEX I_Disk2DiskCopyJob_SrcDC ON Disk2DiskCopyJob(srcDcId);
 
 /* For deleteDiskCopy */
 DROP TABLE DeleteDiskCopyHelper;

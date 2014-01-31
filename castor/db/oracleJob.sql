@@ -357,9 +357,9 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
   varGid INTEGER := -1;
   varDestDcId INTEGER;
   varSrcDcId INTEGER;
+  varDropSource INTEGER;
   varDestSvcClass INTEGER;
   varRepType INTEGER;
-  varReplacedDcId INTEGER;
   varRetryCounter INTEGER;
   varFileId INTEGER;
   varNsHost VARCHAR2(2048);
@@ -382,9 +382,9 @@ BEGIN
     END IF;
     -- Get data from the Disk2DiskCopyJob
     SELECT castorFile, ouid, ogid, destDcId, srcDcId, destSvcClass, replicationType,
-           replacedDcId, retryCounter, drainingJob
+           dropSource, retryCounter, drainingJob
       INTO varCfId, varUid, varGid, varDestDcId, varSrcDcId, varDestSvcClass, varRepType,
-           varReplacedDcId, varRetryCounter, varDrainingJob
+           varDropSource, varRetryCounter, varDrainingJob
       FROM Disk2DiskCopyJob
      WHERE transferId = inTransferId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -470,12 +470,13 @@ BEGIN
     DELETE FROM Disk2DiskCopyjob WHERE transferId = inTransferId;
     -- In case of valid new copy
     IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
-      -- update importance of other DiskCopies if it's an additional one
-      IF varReplacedDcId IS NOT NULL THEN
-        UPDATE DiskCopy SET importance = varDCImportance WHERE castorFile=varCfId;
+      IF varDropSource = 1 THEN
+        -- drop source if requested
+        UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID WHERE id = varSrcDcId;
+      ELSE
+        -- update importance of other DiskCopies if it's an additional one
+        UPDATE DiskCopy SET importance = varDCImportance WHERE castorFile = varCfId;
       END IF;
-      -- drop source if requested
-      UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID WHERE id = varReplacedDcId;
       -- Trigger the creation of additional copies of the file, if any
       replicateOnClose(varCfId, varUid, varGid);
     END IF;

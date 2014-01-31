@@ -56,7 +56,7 @@ BEGIN
                    ORDER BY DiskCopy.importance DESC)
                  WHERE ROWNUM <= varMaxNbOfSchedD2dPerDrain-varNbRunningJobs) LOOP
         createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
-                               dconst.REPLICATIONTYPE_DRAINING, F.dcId, dj.id, FALSE);
+                               dconst.REPLICATIONTYPE_DRAINING, F.dcId, TRUE, dj.id, FALSE);
       END LOOP;
       UPDATE DrainingJob
          SET lastModificationTime = getTime()
@@ -145,7 +145,7 @@ BEGIN
     -- create disk2DiskCopyJob for this diskCopy
     createDisk2DiskCopyJob(varCfId, varNsOpenTime, inDestSvcClassId,
                            0, 0, dconst.REPLICATIONTYPE_REBALANCE,
-                           varDcId, NULL, FALSE);
+                           varDcId, TRUE, NULL, FALSE);
   END LOOP;
   CLOSE DCcur;
   -- "rebalancing : stopping" message

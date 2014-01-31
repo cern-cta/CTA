@@ -67,7 +67,7 @@ CREATE OR REPLACE PACKAGE castorDebug AS
     nsOpenTime INTEGER,
     destSvcClassName VARCHAR2(2048),
     replicationType VARCHAR2(2048),
-    replacedDCId INTEGER,
+    srcDCId INTEGER,
     destDCId INTEGER,
     drainingJob INTEGER);
   TYPE Disk2DiskCopyJobDebug IS TABLE OF Disk2DiskCopyJobDebug_typ;
@@ -189,7 +189,7 @@ BEGIN
                    Disk2DiskCopyJob.transferId, Disk2DiskCopyJob.retryCounter,
                    Disk2DiskCopyJob.nsOpenTime, SvcClass.name as destSvcClassName,
                    getObjStatusName('Disk2DiskCopyJob', 'replicationType', Disk2DiskCopyJob.replicationType) as replicationType,
-                   Disk2DiskCopyJob.replacedDCId, Disk2DiskCopyJob.destDCId,
+                   Disk2DiskCopyJob.srcDCId, Disk2DiskCopyJob.destDCId,
                    Disk2DiskCopyJob.drainingJob
               FROM Disk2DiskCopyJob, SvcClass
              WHERE castorfile = getCF(ref)

@@ -1505,20 +1505,21 @@ END;
 CREATE OR REPLACE PROCEDURE createDisk2DiskCopyJob
 (inCfId IN INTEGER, inNsOpenTime IN INTEGER, inDestSvcClassId IN INTEGER,
  inOuid IN INTEGER, inOgid IN INTEGER, inReplicationType IN INTEGER,
- inReplacedDcId IN INTEGER, inDrainingJob IN INTEGER, inDoSignal IN BOOLEAN) AS
+ inSrcDcId IN INTEGER, inDropSource IN BOOLEAN, inDrainingJob IN INTEGER, inDoSignal IN BOOLEAN) AS
   varD2dCopyJobId INTEGER;
   varDestDcId INTEGER;
   varTransferId VARCHAR2(2048);
+  varDropSource INTEGER := CASE inDropSource WHEN TRUE THEN 1 ELSE 0 END;
 BEGIN
   varD2dCopyJobId := ids_seq.nextval();
   varDestDcId := ids_seq.nextval();
   -- Create the Disk2DiskCopyJob
   INSERT INTO Disk2DiskCopyJob (id, transferId, creationTime, status, retryCounter, ouid, ogid,
                                 destSvcClass, castorFile, nsOpenTime, replicationType,
-                                replacedDcId, destDcId, drainingJob)
+                                srcDcId, destDcId, dropSource, drainingJob)
   VALUES (varD2dCopyJobId, uuidgen(), gettime(), dconst.DISK2DISKCOPYJOB_PENDING, 0, inOuid, inOgid,
           inDestSvcClassId, inCfId, inNsOpenTime, inReplicationType,
-          inReplacedDcId, varDestDcId, inDrainingJob)
+          inSrcDcId, varDestDcId, varDropSource, inDrainingJob)
   RETURNING transferId INTO varTransferId;
 
   -- log "Created new Disk2DiskCopyJob"
@@ -1531,7 +1532,7 @@ BEGIN
              'destSvcClass=' || getSvcClassName(inDestSvcClassId) || ' nsOpenTime=' || TO_CHAR(inNsOpenTime) ||
              ' uid=' || TO_CHAR(inOuid) || ' gid=' || TO_CHAR(inOgid) || ' replicationType=' ||
              getObjStatusName('Disk2DiskCopyJob', 'replicationType', inReplicationType) ||
-             ' TransferId=' || varTransferId || ' replacedDcId=' || TO_CHAR(inReplacedDcId) ||
+             ' TransferId=' || varTransferId || ' srcDcId=' || TO_CHAR(inSrcDcId) ||
              ' DrainReq=' || TO_CHAR(inDrainingJob));
   END;
   
@@ -1652,7 +1653,7 @@ BEGIN
   LOOP
     BEGIN
       -- Trigger a replication request.
-      createDisk2DiskCopyJob(cfId, varNsOpenTime, a.id, ouid, ogid, dconst.REPLICATIONTYPE_USER, NULL, NULL, TRUE);
+      createDisk2DiskCopyJob(cfId, varNsOpenTime, a.id, ouid, ogid, dconst.REPLICATIONTYPE_USER, NULL, FALSE, NULL, TRUE);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- No copies to replicate from
     END;
@@ -2929,7 +2930,8 @@ CREATE OR REPLACE PROCEDURE deleteDiskCopiesInFSs(inDiskServers IN castor."strLi
   varDSs strListTable := strListTable();
   varFSs strListTable := strListTable();
 BEGIN
-  -- the following because SELECT FROM TABLE(inDiskServer) is not supported - and strListTable is not supported as argument type...
+  -- the following because SELECT FROM TABLE(inDiskServer) is not supported
+  -- and strListTable is not supported as argument type...
   varDSs.EXTEND(inDiskServers.COUNT);
   varFSs.EXTEND(inMountPoints.COUNT);
   FOR i IN inDiskServers.FIRST .. inDiskServers.LAST LOOP
@@ -2942,7 +2944,7 @@ BEGIN
     FROM DiskCopy, CastorFile, FileSystem, DiskServer
    WHERE DiskCopy.castorFile = CastorFile.id
      AND DiskCopy.fileSystem = FileSystem.id
-     AND FileSystem.diskServer = DiskServer.ID
+     AND FileSystem.diskServer = DiskServer.id
      AND FileSystem.mountPoint IN (SELECT * FROM TABLE(varFSs))
      AND DiskServer.name IN (SELECT * FROM TABLE(varDSs));
   IF varDCIds.COUNT > 0 THEN
@@ -3052,7 +3054,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
         BEGIN
           -- yes, we can replicate, create a replication request without waiting on it.
           createDisk2DiskCopyJob(inCfId, inNsOpenTime, inSvcClassId, inEuid, inEgid,
-                                 dconst.REPLICATIONTYPE_INTERNAL, NULL, NULL, TRUE);
+                                 dconst.REPLICATIONTYPE_INTERNAL, NULL, FALSE, NULL, FALSE);
           -- log it
           logToDLF(inReqUUID, dlf.LVL_SYSTEM, dlf.STAGER_GET_REPLICATION, inFileId, inNsHost, 'stagerd',
                    'SUBREQID=' || inSrUUID || ' svcClassId=' || getSvcClassName(inSvcClassId) ||
@@ -3084,7 +3086,7 @@ BEGIN
   IF varSrcDcId > 0 THEN
     -- create DiskCopyCopyJob and make this subRequest wait on it
     createDisk2DiskCopyJob(inCfId, inNsOpenTime, inSvcClassId, inEuid, inEgid,
-                           dconst.REPLICATIONTYPE_USER, NULL, NULL, TRUE);
+                           dconst.REPLICATIONTYPE_USER, NULL, FALSE, NULL, TRUE);
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = dconst.SUBREQUEST_WAITSUBREQ
      WHERE id = inSrId;
