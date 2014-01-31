@@ -55,13 +55,6 @@ void castor::utils::writeTime(std::ostream &os, const time_t time,
 }
 
 //-----------------------------------------------------------------------------
-// boolToString
-//-----------------------------------------------------------------------------
-const char *castor::utils::boolToString(const bool value) {
-  return value ? "TRUE" : "FALSE";
-}
-
-//-----------------------------------------------------------------------------
 // splitString
 //-----------------------------------------------------------------------------
 void castor::utils::splitString(const std::string &str,

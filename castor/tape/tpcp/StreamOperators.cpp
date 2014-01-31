@@ -26,6 +26,17 @@
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 
+/**
+ * Local help function that returns the string representation of the specified
+ * boolean value.
+ *
+ * @param value The boolean value.
+ * @return The string representation of the boolean value.
+ */
+static const char *boolToString(const bool value) {
+  return value ? "TRUE" : "FALSE";
+}
+
 
 //------------------------------------------------------------------------------
 // ostream << operator for castor::tape::tpcp::FilenameList
@@ -60,13 +71,13 @@ std::ostream &operator<<(std::ostream &os,
 
   os <<
     "{"
-    "debugSet="           << castor::utils::boolToString(value.debugSet) << ","
-    "helpSet="            << castor::utils::boolToString(value.helpSet)  << ","
-    "vid=\""              << value.vid                                   << "\","
-    "tapeFseqRanges="     << value.tapeFseqRanges                        <<","
-    "fileListSet="     << castor::utils::boolToString(value.fileListSet) <<","
-    "fileListFilename=\"" << value.fileListFilename                      << "\","
-    "filenames="          << value.filenames                             <<
+    "debugSet="           << boolToString(value.debugSet)    << ","
+    "helpSet="            << boolToString(value.helpSet)     << ","
+    "vid=\""              << value.vid                       << "\","
+    "tapeFseqRanges="     << value.tapeFseqRanges            <<","
+    "fileListSet="        << boolToString(value.fileListSet) <<","
+    "fileListFilename=\"" << value.fileListFilename          << "\","
+    "filenames="          << value.filenames                 <<
     "}";
 
    return os;

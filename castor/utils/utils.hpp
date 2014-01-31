@@ -54,13 +54,6 @@ namespace utils  {
 void writeTime(std::ostream &os, const time_t time, const char* const format);
 
 /**
- * Returns the string representation of the specified boolean value.
- *
- * @param value The boolean value.
- */
-const char *boolToString(const bool value);
-
-/**
  * Splits the specified string into a vector of strings using the specified
  * separator.
  *
