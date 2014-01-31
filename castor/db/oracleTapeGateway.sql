@@ -1103,6 +1103,7 @@ BEGIN
             SELECT vid, SUM(fileSize) dataAmount, COUNT(*) nbFiles, MIN(creationTime)
               FROM RecallJob
              WHERE recallGroup = rg.id
+               AND status = tconst.RECALLJOB_PENDING
              GROUP BY vid
             HAVING (SUM(fileSize) >= rg.minAmountDataForMount OR
                     COUNT(*) >= rg.minNbFilesForMount OR
