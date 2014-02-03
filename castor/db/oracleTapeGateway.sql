@@ -936,8 +936,8 @@ END;
 
 /* insert new Migration Mount */
 CREATE OR REPLACE PROCEDURE insertMigrationMount(inTapePoolId IN NUMBER,
-                                                 minimumAge IN INTEGER,
-                                                 outMountId OUT INTEGER) AS
+                                                   minimumAge IN INTEGER,
+                                                   outMountId OUT INTEGER) AS
   varMigJobId INTEGER;
 BEGIN
   -- Check that the mount would be honoured by running a dry-run file selection:
@@ -1075,10 +1075,49 @@ BEGIN
 END;
 /
 
+/* insert new Recall Mount */
+CREATE OR REPLACE PROCEDURE insertRecallMount(inRecallGroupId IN NUMBER,
+                                                        inVid IN VARCHAR2,
+                                                outMountCount OUT INTEGER) AS
+  varRjId INTEGER;
+BEGIN
+  -- We receive a candidate recall mount. Before actually posting the recall
+  -- mount we will make sure at least one recall would be honored from the mount
+  -- This protection mechanism will protect against unavailability of disk 
+  -- servers (this did happen during a network incident, leading to looping
+  -- mounts).
+  -- The duty of this procedure is to actually insert the recall mount and log
+  -- log it, if all is fine, and to log the problem if not. It will just report
+  -- the number of created mounts (1 or 0) to the upstream caller.
+
+  -- Last sanity check. Will give up automatically by means of exception, which
+  -- will change the return value and log.
+  SELECT rj.id INTO varRjId
+    FROM RecallJob rj
+   INNER JOIN SvcClass sc ON sc.id = rj.svcClass
+   INNER JOIN DiskPool2SvcClass dpsc ON dpsc.child = sc.id
+   INNER JOIN FileSystem fs ON fs.diskPool = dpsc.parent
+   INNER JOIN DiskServer ds ON ds.id = fs.diskServer
+   WHERE rj.vid = inVid
+     AND rj.status = tconst.RECALLJOB_PENDING
+     AND fs.status = 0 /* FILESYSTEM_PRODUCTION */
+     AND ds.status = 0 /* DISKSERVER_PRODUCTION */
+     AND ds.hwonline =  1 /* BOOLEAN */
+     AND rownum < 2;
+  -- We passed the test, insert the recall mount:
+  INSERT INTO RecallMount (id, VID, recallGroup, startTime, status)
+       VALUES (ids_seq.nextval, inVid, inRecallGroupId, gettime(), tconst.RECALLMOUNT_NEW);
+  outMountCount := 1;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  outMountCount := 0;
+END;
+/
+
 /* DB job to start new recall mounts */
 CREATE OR REPLACE PROCEDURE startRecallMounts AS
    varNbMounts INTEGER;
    varNbExtraMounts INTEGER := 0;
+   varNewMounts INTEGER;
 BEGIN
   -- loop through RecallGroups
   FOR rg IN (SELECT id, name, nbDrives, minAmountDataForMount,
@@ -1111,19 +1150,27 @@ BEGIN
                AND VID NOT IN (SELECT vid FROM RecallMount)
              ORDER BY MIN(creationTime))
            WHERE ROWNUM < 2;
-          -- trigger a new mount
-          INSERT INTO RecallMount (id, VID, recallGroup, startTime, status)
-          VALUES (ids_seq.nextval, varVid, rg.id, gettime(), tconst.RECALLMOUNT_NEW);
-          varNbExtraMounts := varNbExtraMounts + 1;
-          -- log "startRecallMounts: created new recall mount"
-          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECMOUNT_NEW_MOUNT, 0, '', 'tapegatewayd',
-                   'recallGroup=' || rg.name ||
-                   ' TPVID=' || varVid ||
-                   ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
-                   ' nbNewMountsSoFar=' || TO_CHAR(varNbExtraMounts) ||
-                   ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
-                   ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
-                   ' oldestCreationTime=' || TO_CHAR(TRUNC(varOldestCreationTime)));
+          -- trigger a new mount, with checks
+          insertRecallMount(rg.id, varVID, varNewMounts);
+          IF varNewMounts > 0 THEN
+            varNbExtraMounts := varNbExtraMounts + varNewMounts;
+            -- log "startRecallMounts: created new recall mount"
+            logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECMOUNT_NEW_MOUNT, 0, '', 'tapegatewayd',
+                     'recallGroup=' || rg.name ||
+                     ' TPVID=' || varVid ||
+                     ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
+                     ' nbNewMountsSoFar=' || TO_CHAR(varNbExtraMounts) ||
+                     ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
+                     ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
+                     ' oldestCreationTime=' || TO_CHAR(TRUNC(varOldestCreationTime)));
+          ELSE
+            -- The sanity check failed: log and report no recall mount got created for
+            -- tape.
+            -- "startRecallMounts: not creating mount that would have been empty (possible issue with destination diskpools)"
+            logToDLF(NULL, dlf.LVL_WARNING, dlf.RECMOUNT_FAILED_NEW_MOUNT, 0, '', 'tapegatewayd',
+                     'recallGroup=' || rg.name ||
+                     ' TPVID=' || varVid);
+          END IF;
         END LOOP;
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- nothing left to recall, just exit nicely
