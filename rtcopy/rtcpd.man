@@ -134,9 +134,6 @@ take precedence over "/etc/castor/castor.conf" configuration parameters.
 There are a few CASTOR configuration parameters for which there is no
 corresponding environment variable:
 .PP
-.B ACCT RTCOPY
-\- toggle RTCOPY accounting on ("YES") or off ("NO").
-.PP
 .B RTCOPYD <dgn>_ERRACTION
 \- modifies the default error action for tape media errors for the specified
 device group. For instance: \fBRTCOPYD SD3R_ERRACTION\fP sets the error
