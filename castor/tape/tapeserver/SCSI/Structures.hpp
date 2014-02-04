@@ -141,14 +141,24 @@ namespace SCSI {
     }
     
     /**
-     * Helper function to convert from little-endian to big-endian.
-     * @param t a 32 bit number in the little-endian form
-     * @return  a 32 bit number in the big-endian form
+     * Helper function to deal with endianness.
+     * @param t byte array in SCSI order representing a 16 bits number
+     * @return 
      */
-    inline uint32_t fromLtoB32(uint32_t t)
+    inline uint16_t toU16(const unsigned char(& t)[2])
     {
       /* Like network, SCSI is BigEndian */
-      return htonl(t);
+      return ntohs (*((uint16_t *) t));
+    }
+    
+    /**
+     * Helper function setting in place a 32 bits SCSI number from a value
+     * expressed in the local endianness.
+     * @param t pointer to the char array at the 32 bits value position.
+     * @param val the value.
+     */
+    inline void setU32(unsigned char(& t)[4], uint32_t val) {
+      *((uint32_t *) t) = htonl(val);
     }
     
     /**
@@ -160,18 +170,7 @@ namespace SCSI {
     inline void setU16(unsigned char(& t)[2], uint16_t val) {
       *((uint16_t *) t) = htons(val);
     }
-    
-    /**
-     * Helper function to deal with endianness.
-     * @param t byte array in SCSI order representing a 16 bits number
-     * @return 
-     */
-    inline uint16_t toU16(const unsigned char(& t)[2])
-    {
-      /* Like network, SCSI is BigEndian */
-      return ntohs (*((uint16_t *) t));
-    }
-    
+
     /**
      * Inquiry CDB as described in SPC-4.
      */
@@ -185,7 +184,7 @@ namespace SCSI {
       
       unsigned char pageCode;
       
-      char allocationLength[2];
+      unsigned char allocationLength[2];
       
       unsigned char control;
     };
@@ -514,7 +513,7 @@ namespace SCSI {
       unsigned char subPageCode ;     // Subpage code
       
       // byte4  
-      unsigned char allocationLenght; // The maximum number of bytes to be transferred
+      unsigned char allocationLength; // The maximum number of bytes to be transferred
             
       // byte 5
       unsigned char control;          // Control byte

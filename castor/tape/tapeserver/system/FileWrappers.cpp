@@ -201,9 +201,8 @@ int System::stDeviceFile::ioctlReadPosition(sg_io_hdr_t* sgio_h) {
     /* fill with internal values 
      * lastBlockLocation=firstBlockLocation as soon as Buffer is empty.
      */
-    uint32_t blkId = SCSI::Structures::fromLtoB32(blockID);
-    memcpy(positionData.firstBlockLocation, &blkId, sizeof (positionData.firstBlockLocation));
-    memcpy(positionData.lastBlockLocation, &blkId, sizeof (positionData.lastBlockLocation));
+    SCSI::Structures::setU32(positionData.firstBlockLocation, blockID);
+    SCSI::Structures::setU32(positionData.lastBlockLocation, blockID);
     SCSI::Structures::zeroStruct(positionData.blocksInBuffer);
     SCSI::Structures::zeroStruct(positionData.bytesInBuffer);
   }

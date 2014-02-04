@@ -439,9 +439,9 @@ namespace UnitTests {
     buff[3] |= 0xBC;
     ASSERT_EQ(0xBCU, modeSense6CDB.subPageCode);
            
-    ASSERT_EQ(0U, modeSense6CDB.allocationLenght);
+    ASSERT_EQ(0U, modeSense6CDB.allocationLength);
     buff[4] |= 0xAB;
-    ASSERT_EQ(0xABU, modeSense6CDB.allocationLenght);
+    ASSERT_EQ(0xABU, modeSense6CDB.allocationLength);
     
     ASSERT_EQ(0U, modeSense6CDB.control);
     buff[5] |= 0xCD;

@@ -77,6 +77,8 @@ drives::deviceInfo drives::DriveGeneric::getDeviceInfo() throw (Exception) {
   SCSI::Structures::LinuxSGIO_t sgh;
   deviceInfo devInfo;
 
+  SCSI::Structures::setU16(cdb.allocationLength, sizeof(inquiryData));
+  
   sgh.setCDB(&cdb);
   sgh.setDataBuffer(&inquiryData);
   sgh.setSenseBuffer(&senseBuff);
@@ -109,8 +111,7 @@ std::string drives::DriveGeneric::getSerialNumber() throw (Exception) {
 
   cdb.EVPD = 1; /* Enable Vital Product Data */
   cdb.pageCode = SCSI::inquiryVPDPages::unitSerialNumber;
-  cdb.allocationLength[0] = 0;
-  cdb.allocationLength[1] = sizeof (SCSI::Structures::inquiryUnitSerialNumberData_t);
+  SCSI::Structures::setU16(cdb.allocationLength, sizeof(inquirySerialData));
 
   sgh.setCDB(&cdb);
   sgh.setDataBuffer(&inquirySerialData);
@@ -139,12 +140,10 @@ std::string drives::DriveGeneric::getSerialNumber() throw (Exception) {
 void drives::DriveGeneric::positionToLogicalObject(uint32_t blockId)
 throw (Exception) {
   SCSI::Structures::locate10CDB_t cdb;
-  uint32_t blkId = SCSI::Structures::fromLtoB32(blockId);
-
-  memcpy(cdb.logicalObjectID, &blkId, sizeof (cdb.logicalObjectID));
-
   SCSI::Structures::senseData_t<255> senseBuff;
-  SCSI::Structures::LinuxSGIO_t sgh;
+  SCSI::Structures::LinuxSGIO_t sgh; 
+  
+  SCSI::Structures::setU32(cdb.logicalObjectID, blockId);
 
   sgh.setCDB(&cdb);
   sgh.setSenseBuffer(&senseBuff);
@@ -172,7 +171,10 @@ throw (Exception) {
   SCSI::Structures::LinuxSGIO_t sgh;
 
   positionInfo posInfo;
-
+  
+  // We use the short for action (default, 00h), for which allocationLength
+  // should NOT be set. (SSC-4, 7.7.1 READ POSITON)
+  
   sgh.setCDB(&cdb);
   sgh.setDataBuffer(&positionData);
   sgh.setSenseBuffer(&senseBuff);
@@ -216,12 +218,14 @@ std::vector<std::string> drives::DriveGeneric::getTapeAlerts() throw (Exception)
   /* Prepare a sense buffer of 255 bytes */
   SCSI::Structures::senseData_t<255> senseBuff;
   SCSI::Structures::logSenseCDB_t cdb;
+  SCSI::Structures::LinuxSGIO_t sgh;
+  
   cdb.pageCode = SCSI::logSensePages::tapeAlert;
   cdb.PC = 0x01; // Current Comulative Values
-  SCSI::Structures::LinuxSGIO_t sgh;
+  SCSI::Structures::setU16(cdb.allocationLength, sizeof(tal));
+  
   sgh.setCDB(&cdb);
   sgh.setDataBuffer(&tal);
-  SCSI::Structures::setU16(cdb.allocationLength, sizeof(tal));
   sgh.setSenseBuffer(&senseBuff);
   sgh.dxfer_direction = SG_DXFER_FROM_DEV;
   /* Manage both system error and SCSI errors. */
@@ -264,7 +268,7 @@ void drives::DriveGeneric::setDensityAndCompression(unsigned char densityCode,
     SCSI::Structures::LinuxSGIO_t sgh;
 
     cdb.pageCode = SCSI::modeSensePages::deviceConfiguration;
-    cdb.allocationLenght = sizeof (devConfig);
+    cdb.allocationLength = sizeof (devConfig);
 
     sgh.setCDB(&cdb);
     sgh.setDataBuffer(&devConfig);
@@ -517,23 +521,20 @@ ssize_t drives::DriveGeneric::readBlock(unsigned char * data, size_t count) thro
 }
 
 void drives::DriveGeneric::SCSI_inquiry() {
-  unsigned char dataBuff[130];
-  unsigned char senseBuff[256];
+  SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::inquiryCDB_t cdb;
+  SCSI::Structures::senseData_t<255> senseBuff;
+  unsigned char dataBuff[130];
+  
   memset(&dataBuff, 0, sizeof (dataBuff));
-  /* Build command: nothing to do. We go with defaults. */
-
-  sg_io_hdr_t sgh;
-  memset(&sgh, 0, sizeof (sgh));
-  sgh.interface_id = 'S';
-  sgh.cmdp = (unsigned char *) &cdb;
-  sgh.cmd_len = sizeof (cdb);
-  sgh.sbp = senseBuff;
-  sgh.mx_sb_len = 255;
+  
+  /* Build command: just declare the bufffer's size. */
+  SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
+  
+  sgh.setCDB(&cdb);
+  sgh.setSenseBuffer(&senseBuff);
+  sgh.setDataBuffer(dataBuff);
   sgh.dxfer_direction = SG_DXFER_FROM_DEV;
-  sgh.dxferp = dataBuff;
-  sgh.dxfer_len = sizeof (dataBuff);
-  sgh.timeout = 30000;
   castor::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(m_tapeFD, SG_IO, &sgh),
       "Failed SG_IO ioctl in DriveGeneric::SCSI_inquiry");
@@ -550,20 +551,19 @@ void drives::DriveGeneric::SCSI_inquiry() {
 }
 
 drives::compressionStats drives::DriveT10000::getCompression() throw (Exception) {
-  SCSI::Structures::logSenseCDB_t cdb;
   compressionStats driveCompressionStats;
+  
+  SCSI::Structures::LinuxSGIO_t sgh;
+  SCSI::Structures::logSenseCDB_t cdb;
+  SCSI::Structures::senseData_t<255> senseBuff;
   unsigned char dataBuff[1024];
-  unsigned char senseBuff[255];
-
+  
   memset(dataBuff, 0, sizeof (dataBuff));
-  memset(senseBuff, 0, sizeof (senseBuff));
 
   cdb.pageCode = SCSI::logSensePages::sequentialAccessDevicePage;
-  cdb.PC = 0x01; // Current Comulative Values
-  cdb.allocationLength[0] = (sizeof (dataBuff) & 0xFF00) >> 8;
-  cdb.allocationLength[1] = sizeof (dataBuff) & 0x00FF;
+  cdb.PC = 0x01; // Current Cumulative Values
+  SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
 
-  SCSI::Structures::LinuxSGIO_t sgh;
   sgh.setCDB(&cdb);
   sgh.setDataBuffer(&dataBuff);
   sgh.setSenseBuffer(&senseBuff);
@@ -608,20 +608,18 @@ drives::compressionStats drives::DriveT10000::getCompression() throw (Exception)
 }
 
 drives::compressionStats drives::DriveLTO::getCompression() throw (Exception) {
+  SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::logSenseCDB_t cdb;
   compressionStats driveCompressionStats;
   unsigned char dataBuff[1024];
-  unsigned char senseBuff[255];
+  SCSI::Structures::senseData_t<255> senseBuff;
 
   memset(dataBuff, 0, sizeof (dataBuff));
-  memset(senseBuff, 0, sizeof (senseBuff));
 
   cdb.pageCode = SCSI::logSensePages::dataCompression32h;
   cdb.PC = 0x01; // Current Comulative Values
-  cdb.allocationLength[0] = (sizeof (dataBuff) & 0xFF00) >> 8;
-  cdb.allocationLength[1] = sizeof (dataBuff) & 0x00FF;
+  SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
 
-  SCSI::Structures::LinuxSGIO_t sgh;
   sgh.setCDB(&cdb);
   sgh.setDataBuffer(&dataBuff);
   sgh.setSenseBuffer(&senseBuff);
@@ -684,20 +682,19 @@ drives::compressionStats drives::DriveLTO::getCompression() throw (Exception) {
 }
 
 drives::compressionStats drives::DriveIBM3592::getCompression() throw (Exception) {
+  SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::logSenseCDB_t cdb;
+  SCSI::Structures::senseData_t<255> senseBuff;
   compressionStats driveCompressionStats;
   unsigned char dataBuff[1024];
-  unsigned char senseBuff[255];
 
   memset(dataBuff, 0, sizeof (dataBuff));
-  memset(senseBuff, 0, sizeof (senseBuff));
 
   cdb.pageCode = SCSI::logSensePages::blockBytesTransferred;
   cdb.PC = 0x01; // Current Cumulative Values
-  cdb.allocationLength[0] = (sizeof (dataBuff) & 0xFF00) >> 8;
-  cdb.allocationLength[1] = sizeof (dataBuff) & 0x00FF;
+  SCSI::Structures::setU16(cdb.allocationLength, sizeof(dataBuff));
 
-  SCSI::Structures::LinuxSGIO_t sgh;
+
   sgh.setCDB(&cdb);
   sgh.setDataBuffer(&dataBuff);
   sgh.setSenseBuffer(&senseBuff);
