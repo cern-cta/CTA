@@ -44,7 +44,7 @@ namespace ThreadedUnitTests {
       /* Just sleep a bit so the parent process gets a chance to see us running */
       struct timespec ts;
       ts.tv_sec = 0;
-      ts.tv_nsec = 10*1000*1000;
+      ts.tv_nsec = 100*1000*1000;
       nanosleep(&ts, NULL);
       return 123;
     }
