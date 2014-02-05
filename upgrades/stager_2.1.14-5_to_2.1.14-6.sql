@@ -93,6 +93,12 @@ ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_SrcDcId
   FOREIGN KEY (srcDcId) REFERENCES DiskCopy(id);
 CREATE INDEX I_Disk2DiskCopyJob_SrcDC ON Disk2DiskCopyJob(srcDcId);
 
+/* Draining sensitivity */
+UPDATE CastorConfig
+   SET key = 'Sensitivity',
+       description = 'The rebalancing sensitivity (in percent) : if a fileSystem is at least this percentage fuller than the average of the diskpool where it lives, rebalancing will fire.'
+ WHERE key = 'Sensibility';
+        
 /* For deleteDiskCopy */
 DROP TABLE DeleteDiskCopyHelper;
 CREATE GLOBAL TEMPORARY TABLE DeleteDiskCopyHelper
