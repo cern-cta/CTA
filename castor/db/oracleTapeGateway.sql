@@ -1025,7 +1025,7 @@ BEGIN
       ELSE
         -- log "startMigrationMounts: created new migration mount"
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.MIGMOUNT_NEW_MOUNT, 0, '', 'tapegatewayd',
-                 'mountId=' || TO_CHAR(varMountId) ||
+                 'MigrationMountId=' || TO_CHAR(varMountId) ||
                  ' tapePool=' || t.name ||
                  ' nbPreExistingMounts=' || TO_CHAR(varNbPreExistingMounts) ||
                  ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
@@ -1050,7 +1050,7 @@ BEGIN
       ELSE
         -- log "startMigrationMounts: created new migration mount based on age"
         logToDLF(NULL, dlf.LVL_SYSTEM, dlf.MIGMOUNT_NEW_MOUNT_AGE, 0, '', 'tapegatewayd',
-                 'mountId=' || TO_CHAR(varMountId) ||
+                 'MigrationMountId=' || TO_CHAR(varMountId) ||
                  ' tapePool=' || t.name ||
                  ' nbPreExistingMounts=' || TO_CHAR(varNbPreExistingMounts) ||
                  ' nbMounts=' || TO_CHAR(varTotalNbMounts) ||
@@ -1103,6 +1103,7 @@ BEGIN
             SELECT vid, SUM(fileSize) dataAmount, COUNT(*) nbFiles, MIN(creationTime)
               FROM RecallJob
              WHERE recallGroup = rg.id
+               AND status = tconst.RECALLJOB_PENDING
              GROUP BY vid
             HAVING (SUM(fileSize) >= rg.minAmountDataForMount OR
                     COUNT(*) >= rg.minNbFilesForMount OR
@@ -1692,8 +1693,8 @@ BEGIN
        WHERE id = varCfId
          FOR UPDATE NOWAIT;
       -- Now that we have the lock, double check that the RecallJob is still there and
-      -- valid (due to race condition, it may have been processed in between our first select
-      -- and the takin gof the lock)
+      -- valid (due to race conditions, it may have been processed in between our first select
+      -- and the taking of the lock)
       BEGIN
         SELECT id INTO varRjId FROM RecallJob WHERE id = varRJId AND status = tconst.RECALLJOB_PENDING;
       EXCEPTION WHEN NO_DATA_FOUND THEN

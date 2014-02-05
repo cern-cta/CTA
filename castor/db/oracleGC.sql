@@ -632,6 +632,8 @@ BEGIN
          -- failed subrequests are kept according to the configured timeout
          OR (SR.status = dconst.SUBREQUEST_FAILED_FINISHED
              AND reqType != 119 AND SR.lastModificationTime < getTime() - timeOut));  -- StageRepackRequest
+  COMMIT;  -- needed otherwise the next statement raises
+           -- ORA-12838: cannot read/modify an object after modifying it in parallel
   -- 2nd part, separated from above for efficiency reasons
   INSERT /*+ APPEND */ INTO DeleteTermReqHelper (srId, cfId)
     (SELECT SR.id, castorFile FROM SubRequest SR, StageRepackRequest R
@@ -705,7 +707,7 @@ BEGIN
   -- for more than <timeOut> seconds.                              FINISHED, FAILED, ABORTED
   bulkDelete('SELECT id FROM StageRepackRequest R WHERE status IN (2, 3, 5)
     AND NOT EXISTS (SELECT 1 FROM SubRequest WHERE request = R.id)
-    AND lastModificationTime < getTime() - ' || timeOut,
+    AND lastModificationTime < getTime() - ' || timeOut || ';',
     'StageRepackRequest');
 
 END;

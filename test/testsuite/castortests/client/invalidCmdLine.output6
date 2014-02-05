@@ -1,0 +1,2 @@
+usage: stager_qry [-M hsmfile [-M ...]] [-f hsmFileList] [-F fileid@nshost] [-S svcClass] [-U usertag] [-r requestid] [-n] [-h]
+       stager_qry -s [-S svcClass] [-d diskPool] [-H] [-i] [-h] [-a] [-t]

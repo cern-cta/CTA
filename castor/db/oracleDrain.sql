@@ -56,7 +56,7 @@ BEGIN
                    ORDER BY DiskCopy.importance DESC)
                  WHERE ROWNUM <= varMaxNbOfSchedD2dPerDrain-varNbRunningJobs) LOOP
         createDisk2DiskCopyJob(F.cfId, F.nsOpenTime, dj.svcClass, dj.euid, dj.egid,
-                               dconst.REPLICATIONTYPE_DRAINING, F.dcId, dj.id, FALSE);
+                               dconst.REPLICATIONTYPE_DRAINING, F.dcId, TRUE, dj.id, FALSE);
       END LOOP;
       UPDATE DrainingJob
          SET lastModificationTime = getTime()
@@ -145,7 +145,7 @@ BEGIN
     -- create disk2DiskCopyJob for this diskCopy
     createDisk2DiskCopyJob(varCfId, varNsOpenTime, inDestSvcClassId,
                            0, 0, dconst.REPLICATIONTYPE_REBALANCE,
-                           varDcId, NULL, FALSE);
+                           varDcId, TRUE, NULL, FALSE);
   END LOOP;
   CLOSE DCcur;
   -- "rebalancing : stopping" message
@@ -159,7 +159,7 @@ END;
 /* Procedure responsible for rebalancing of data on nodes within diskpools */
 CREATE OR REPLACE PROCEDURE rebalancingManager AS
   varFreeRef NUMBER;
-  varSensibility NUMBER;
+  varSensitivity NUMBER;
   varNbDS INTEGER;
   varAlreadyRebalancing INTEGER;
 BEGIN
@@ -204,8 +204,8 @@ BEGIN
        AND FileSystem.totalSize > 0
        AND DiskServer.hwOnline = 1
      GROUP BY SC.id;
-    -- get sensibility of the rebalancing
-    varSensibility := TO_NUMBER(getConfigOption('Rebalancing', 'Sensibility', '5'))/100;
+    -- get sensitivity of the rebalancing
+    varSensitivity := TO_NUMBER(getConfigOption('Rebalancing', 'Sensitivity', '5'))/100;
     -- for each filesystem too full compared to average, rebalance
     -- note that we take the read only ones into account here
     -- also note the use of decode and the extra totalSize > 0 to protect
@@ -216,7 +216,7 @@ BEGIN
                  FROM FileSystem, DiskPool2SvcClass, DiskServer
                 WHERE DiskPool2SvcClass.parent = FileSystem.DiskPool
                   AND DiskPool2SvcClass.child = SC.id
-                  AND varFreeRef - free/totalSize > varSensibility
+                  AND varFreeRef - free/totalSize > varSensitivity
                   AND DiskServer.id = FileSystem.diskServer
                   AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
                   AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)

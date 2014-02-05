@@ -159,15 +159,7 @@ BEGIN
          AND Subrequest.CastorFile = Castorfile.id
          AND SubRequest.status IN (dconst.SUBREQUEST_WAITTAPERECALL, dconst.SUBREQUEST_START, dconst.SUBREQUEST_RESTART)
          AND Req.id = SubRequest.request
-         AND Req.svcClass = svcClassId
-     UNION
-      SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', Castorfile.fileSize, 1, -- WAITDISK2DISKCOPY
-             '', '', 0, CastorFile.lastKnownFileName, Disk2DiskCopyJob.creationTime,
-             getSvcClassName(Disk2DiskCopyJob.destSvcClass), Disk2DiskCopyJob.creationTime, -1
-        FROM CastorFile, Disk2DiskCopyJob
-       WHERE Castorfile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
-         AND Disk2DiskCopyJob.CastorFile = Castorfile.id
-         AND Disk2DiskCopyJob.destSvcClass = svcClassId)
+         AND Req.svcClass = svcClassId)
     ORDER BY fileid, nshost;
    END IF;
 END;

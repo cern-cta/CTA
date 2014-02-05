@@ -357,9 +357,9 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
   varGid INTEGER := -1;
   varDestDcId INTEGER;
   varSrcDcId INTEGER;
+  varDropSource INTEGER;
   varDestSvcClass INTEGER;
   varRepType INTEGER;
-  varReplacedDcId INTEGER;
   varRetryCounter INTEGER;
   varFileId INTEGER;
   varNsHost VARCHAR2(2048);
@@ -374,17 +374,17 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
   varDrainingJob VARCHAR2(2048);
 BEGIN
   BEGIN
-    IF inDestPath != '' THEN
+    IF inDestPath IS NOT NULL THEN
       -- Parse destination path
       parsePath(inDestDsName ||':'|| inDestPath, varDestFsId, varDestPath, varDestDcId, varFileId, varNsHost);
     -- ELSE we are called because of an error at start: try to gather information
-    -- from the Disk2DiskCopyJob entry or and fail accordingly.
+    -- from the Disk2DiskCopyJob entry and fail accordingly.
     END IF;
     -- Get data from the Disk2DiskCopyJob
     SELECT castorFile, ouid, ogid, destDcId, srcDcId, destSvcClass, replicationType,
-           replacedDcId, retryCounter, drainingJob
+           dropSource, retryCounter, drainingJob
       INTO varCfId, varUid, varGid, varDestDcId, varSrcDcId, varDestSvcClass, varRepType,
-           varReplacedDcId, varRetryCounter, varDrainingJob
+           varDropSource, varRetryCounter, varDrainingJob
       FROM Disk2DiskCopyJob
      WHERE transferId = inTransferId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -461,19 +461,22 @@ BEGIN
        SET status = dconst.SUBREQUEST_RESTART,
            getNextStatus = CASE WHEN inErrorMessage IS NULL THEN dconst.GETNEXTSTATUS_FILESTAGED ELSE getNextStatus END,
            lastModificationTime = getTime()
-     WHERE status = dconst.SUBREQUEST_WAITSUBREQ
+           -- XXX due to bug #103715 requests for disk-to-disk copies actually stay in WAITTAPERECALL,
+           -- XXX so we have to restart also those. This will go with the refactoring of the stager.
+     WHERE status IN (dconst.SUBREQUEST_WAITSUBREQ, dconst.SUBREQUEST_WAITTAPERECALL)
        AND castorfile = varCfId;
     alertSignalNoLock('wakeUpJobReqSvc');
     -- delete the disk2diskCopyJob
     DELETE FROM Disk2DiskCopyjob WHERE transferId = inTransferId;
     -- In case of valid new copy
     IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
-      -- update importance of other DiskCopies if it's an additional one
-      IF varReplacedDcId IS NOT NULL THEN
-        UPDATE DiskCopy SET importance = varDCImportance WHERE castorFile=varCfId;
+      IF varDropSource = 1 THEN
+        -- drop source if requested
+        UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID WHERE id = varSrcDcId;
+      ELSE
+        -- update importance of other DiskCopies if it's an additional one
+        UPDATE DiskCopy SET importance = varDCImportance WHERE castorFile = varCfId;
       END IF;
-      -- drop source if requested
-      UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID WHERE id = varReplacedDcId;
       -- Trigger the creation of additional copies of the file, if any
       replicateOnClose(varCfId, varUid, varGid);
     END IF;

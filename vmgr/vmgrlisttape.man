@@ -108,7 +108,9 @@ failed.
 .BR Castor_limits(4) ,
 .BR vmgr_entertape(3) ,
 .BR vmgrentertape(1) ,
-.B vmgr_listtape(3) ,
-.B vmgr_querytape(3)
+.BR vmgr_listtape(3) ,
+.BR vmgr_querytape(3) ,
+.BR nslisttape(1) ,
+.BR nslistsegs(1)
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
