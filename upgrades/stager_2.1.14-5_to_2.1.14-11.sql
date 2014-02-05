@@ -9209,10 +9209,6 @@ BEGIN
       UPDATE DeleteDiskCopyHelper
          SET rc = dconst.DELDC_ENOENT
        WHERE dcId = dc.dcId;
-=======
-      INSERT INTO DeleteDiskCopyHelper (dcId, fileId, rc)
-        VALUES (inDcIds(i), inFileIds(i), dconst.DELDC_ENOENT);
->>>>>>> Bug #103698: RFE: make deletediskcopy repack-aware
       COMMIT;
       CONTINUE;
     END;
@@ -9360,50 +9356,6 @@ BEGIN
   END IF;
 END;
 /
-
-=======
-END;
-/
-
-/* PL/SQL method to perform a deleteDiskCopies on entire filesystems: typical case,
- * the filesystem is completely corrupted and will be reformatted, so all files on it are to be dropped.
- */
-CREATE OR REPLACE PROCEDURE deleteDiskCopiesInFSs(inDiskServers IN castor."strList", inMountPoints IN castor."strList",
-                                                  inForce IN BOOLEAN, inDryRun IN BOOLEAN,
-                                                  outRes OUT castor.DiskCopyResult_Cur, outDiskPool OUT VARCHAR2) AS
-  varDCIds castor."cnumList";
-  varFileIds castor."cnumList";
-  varDSs strListTable := strListTable();
-  varFSs strListTable := strListTable();
-BEGIN
-  -- the following because SELECT FROM TABLE(inDiskServer) is not supported - and strListTable is not supported as argument type...
-  varDSs.EXTEND(inDiskServers.COUNT);
-  varFSs.EXTEND(inMountPoints.COUNT);
-  FOR i IN inDiskServers.FIRST .. inDiskServers.LAST LOOP
-    varDSs(i) := inDiskServers(i);
-    varFSs(i) := inMountPoints(i);
-  END LOOP;
-  -- select the disk copies to be deleted
-  SELECT DiskCopy.id, CastorFile.fileid
-    BULK COLLECT INTO varDCIds, varFileIds
-    FROM DiskCopy, CastorFile, FileSystem, DiskServer
-   WHERE DiskCopy.castorFile = CastorFile.id
-     AND DiskCopy.fileSystem = FileSystem.id
-     AND FileSystem.diskServer = DiskServer.ID
-     AND FileSystem.mountPoint IN (SELECT * FROM TABLE(varFSs))
-     AND DiskServer.name IN (SELECT * FROM TABLE(varDSs));
-  IF varDCIds.COUNT > 0 THEN
-    deleteDiskCopies(varDCIds, varFileIds, inForce, inDryRun, outRes, outDiskPool);
-  ELSE
-    -- nothing found, open an empty cursor for the python client
-    DELETE FROM DeleteDiskCopyHelper;
-    OPEN outRes FOR
-      SELECT dcId, fileId, rc FROM DeleteDiskCopyHelper;
-  END IF;
-END;
-/
-
->>>>>>> Bug #103698: RFE: make deletediskcopy repack-aware
 
 /* PL/SQL procedure to handle disk-to-disk copy replication */
 CREATE OR REPLACE PROCEDURE handleReplication(inSRId IN INTEGER, inFileId IN INTEGER,
