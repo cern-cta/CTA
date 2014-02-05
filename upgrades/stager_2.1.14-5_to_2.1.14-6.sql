@@ -99,6 +99,10 @@ UPDATE CastorConfig
        description = 'The rebalancing sensitivity (in percent) : if a fileSystem is at least this percentage fuller than the average of the diskpool where it lives, rebalancing will fire.'
  WHERE key = 'Sensibility';
         
+/* Bug #103792: RFE: provide the ability to selectively enable/disable protocols */
+INSERT INTO CastorConfig
+  VALUES ('Stager', 'Protocols', 'rfio rfio3 root gsiftp xroot', 'The list of protocols accepted by the system.')
+
 /* For deleteDiskCopy */
 DROP TABLE DeleteDiskCopyHelper;
 CREATE GLOBAL TEMPORARY TABLE DeleteDiskCopyHelper
