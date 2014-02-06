@@ -175,10 +175,17 @@ The layout of the main process is show in figure \ref{tsParentProcess}. The layo
 \end{figure}
 
 The data path will go to/from tape drive, through the generic SCSI interface of st driver (CAStor uses a
-mixture of both in the Tape::Drive class), then through the File structure support class, as controlled by
+mixture of both in the Tape::Drive class), then through the File structure support classes, as controlled by
 the tape thread. The tape thread will communicate the data to (or get from) the disk threads via the 
 data FIFO class. This class will in turn allocate the memory from a preallocated, pool of
 fixed sized blocks. The size of the pool will be controlled by the operators.
+
+The file structure support classes will be arranged in two layers, with two distinct 
+implementations for read and write. The lower layer, the session will be stateful, and validate
+that the conditions are correct before operations (correct tape is identified in the drive thanks 
+to volume label, and proper position is confirmed thanks to last file trailer before writing).
+Positioning can also be optimized if file to file information is retained (mostly, we should 
+avoid repositioning between consecutive files when reading).
 
 Some libraries already exist in CAStor, and will be reused, either by copying or linking from pre-compiled 
 packages. The main parts of the sessions spawner will be taken from the VDQM as well.
@@ -230,8 +237,8 @@ The SCSI commands can be found in the SCSI section of Hackipedia.org
  and the SCSI primary commands (SPC-4
       \footnote{ \href{http://hackipedia.org/Hardware/SCSI/Primary\%20Commands/SCSI\%20Primary\%20Commands\%20-\%204.pdf}
                       {http://hackipedia.org/Hardware/SCSI/Primary\%20Commands/SCSI\%20Primary\%20Commands\%20-\%204.pdf} }
-      \footnote{ Latest drafts can be downloaded from \href{http://www.t10.org/members/w_spc4.htm}
-                                                           {http://www.t10.org/members/w_spc4.htm} } ).
+      \footnote{ Latest drafts can be downloaded from \href{http://www.t10.org/members/w\_spc4.htm}
+                                                           {http://www.t10.org/members/w\_spc4.htm} } ).
 
 \subsubsection{Manufacturer's specificities}
 \label{Manufacturer's specificities}
