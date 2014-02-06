@@ -409,6 +409,28 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
       // Static user mapping
       XrdOucString* hisroles;
 
+      if ((hisroles = roletable->Find(mappedClient.name)))
+      {
+        XrdOucString allgroups;
+        XrdOucString defaultgroup;
+        XrdOucString FixedName;
+
+        if (hisroles->beginswith("static:"))
+          FixedName = hisroles->c_str() + 7;        
+        else
+          FixedName = hisroles->c_str();
+        
+
+        while ((FixedName.find(":")) != STR_NPOS)
+          FixedName.replace(":", "");
+
+        mappedClient.name = STRINGSTORE(FixedName.c_str());
+        GetAllGroups(mappedClient.name, allgroups, defaultgroup);
+        mappedClient.grps = STRINGSTORE(defaultgroup.c_str());
+        mappedClient.role = STRINGSTORE(defaultgroup.c_str());
+        break;
+      }
+
       if ((hisroles = roletable->Find("*")))
       {
         XrdOucString allgroups;
@@ -416,19 +438,13 @@ XrdxCastor2Fs::RoleMap(const XrdSecEntity* client,
         XrdOucString FixedName;
 
         if (hisroles->beginswith("static:"))
-        {
           FixedName = hisroles->c_str() + 7;
-        }
         else
-        {
           FixedName = hisroles->c_str();
-        }
 
         while ((FixedName.find(":")) != STR_NPOS)
-        {
           FixedName.replace(":", "");
-        }
-
+      
         mappedClient.name = STRINGSTORE(FixedName.c_str());
         GetAllGroups(mappedClient.name, allgroups, defaultgroup);
         mappedClient.grps = STRINGSTORE(defaultgroup.c_str());
