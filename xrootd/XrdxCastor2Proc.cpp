@@ -84,6 +84,8 @@ XrdxCastor2Proc::Handle( const char* name )
       files.Add( name, phandle );
       return phandle;
     }
+
+    delete phandle;
   }
 
   return NULL;
