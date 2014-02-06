@@ -46,7 +46,7 @@ castor::server::MultiThreadedDaemon::~MultiThreadedDaemon() throw() {
 // parseCommandLine
 //------------------------------------------------------------------------------
 void castor::server::MultiThreadedDaemon::parseCommandLine(int argc,
-  char *argv[]) {
+  char *argv[]) throw(castor::exception::Exception) {
   Coptions_t* longopts = new Coptions_t[m_threadPools.size() + 5];
   char tparam[] = "Xthreads";
 
@@ -115,12 +115,15 @@ void castor::server::MultiThreadedDaemon::parseCommandLine(int argc,
     free((char*)longopts[j].name);
   };
   delete[] longopts;
+
+  m_commandLineHasBeenParsed = true;
 }
 
 //------------------------------------------------------------------------------
 // help
 //------------------------------------------------------------------------------
-void castor::server::MultiThreadedDaemon::help(const std::string &programName) {
+void castor::server::MultiThreadedDaemon::help(const std::string &programName)
+  throw() {
   std::cout << "Usage: " << programName << " [options]\n"
     "\n"
     "where options can be:\n"

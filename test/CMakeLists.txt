@@ -27,6 +27,7 @@ cmake_minimum_required (VERSION 2.6)
 add_executable(castorUnitTests
   castorUnitTests.cpp
   ../castor/exception/ExceptionTest.cpp
+  ../castor/server/DaemonTest.cpp
   ../castor/tape/tapeserver/SCSI/DeviceTest.cpp
   ../castor/tape/tapeserver/SCSI/StructuresTest.cpp
   ../castor/tape/tapeserver/utils/RegexTest.cpp

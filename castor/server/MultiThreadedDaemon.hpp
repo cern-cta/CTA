@@ -98,7 +98,8 @@ public:
    * @param argc The size of the command-line vector.
    * @param argv The command-line vector.
    */
-  virtual void parseCommandLine(int argc, char *argv[]);
+  virtual void parseCommandLine(int argc, char *argv[])
+    throw(castor::exception::Exception);
 
 protected:
 
@@ -119,7 +120,7 @@ private:
   /**
    * Prints out the online help
    */
-  void help(const std::string &programName);
+  void help(const std::string &programName) throw();
 
   /**
    * Sets up the signal handling for this multi-threaded daemon.

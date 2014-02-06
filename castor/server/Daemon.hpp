@@ -24,6 +24,8 @@
 #define CASTOR_SERVER_DAEMON_HPP 1
 
 #include "castor/dlf/Message.hpp"
+#include "castor/exception/CommandLineNotParsed.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/log/Logger.hpp"
 
 namespace castor {
@@ -43,12 +45,26 @@ public:
    *
    * @param logger Object representing the API of the CASTOR logging system.
    */
-  Daemon(log::Logger &logger);
+  Daemon(log::Logger &logger) throw();
 
   /**
    * Destructor.
    */
   virtual ~Daemon() throw();
+
+  /**
+   * Parses a command line to set the server options.
+   *
+   * @param argc The size of the command-line vector.
+   * @param argv The command-line vector.
+   */
+  virtual void parseCommandLine(int argc, char *argv[])
+    throw(castor::exception::Exception);
+
+  /**
+   * Prints out the online help
+   */
+  virtual void help(const std::string &programName) throw();
 
   /**
    * Returns this server's name as used by the CASTOR logging system.
@@ -62,6 +78,11 @@ public:
    * false.
    */
   void runAsStagerSuperuser() throw();
+
+  /**
+   * Returns true if the daemon is configured to run in the foreground.
+   */
+  bool getForeground() const throw(castor::exception::CommandLineNotParsed);
 
 protected:
 
@@ -199,6 +220,11 @@ protected:
    * mode.
    */
   bool m_foreground;
+
+  /**
+   * True if the command-line has been parsed.
+   */
+  bool m_commandLineHasBeenParsed;
 
 private:
 
