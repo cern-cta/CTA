@@ -136,10 +136,47 @@ namespace castor {
         void checkVOL1() throw (Exception);
         
         /**
+         * Checks the field of a header comparing it with the numerical value provided
+         * @param hdr1: the hdr1 header of the current file
+         * @param fileInfo: the Information structure of the current file
+         */
+        void checkHDR1(const HDR1 &hdr1, const Information &fileInfo) const throw (Exception);
+        
+        /**
+         * Checks the uhl1
+         * @param uhl1: the uhl1 header of the current file
+         * @param fileInfo: the Information structure of the current file
+         */
+        void checkUHL1(const UHL1 &uhl1, const Information &fileInfo) const throw (Exception);
+
+        /**
+         * Set the block size member using the info contained within the uhl1
+         * @param uhl1: the uhl1 header of the current file
+         * @param fileInfo: the Information structure of the current file
+         */
+        void setBlockSize(const UHL1 &uhl1) throw (Exception);
+        
+        /**
+         * Checks the field of a header comparing it with the numerical value provided
+         * @param headerField: the string of the header that we need to check
+         * @param value: the unsigned numerical value against which we check
+         * @param is_field_hex: set to true if the value in the header is in hexadecimal and to false otherwise
+         * @param is_field_oct: set to true if the value in the header is in octal and to false otherwise
+         * @return true if the header field  matches the numerical value, false otherwise
+         */
+        bool checkHeaderNumericalField(const std::string &headerField, const uint64_t &value, bool is_field_hex=false, bool is_field_oct=false) const throw (Exception);
+        
+        /**
          * DriveGeneric object referencing the drive used during this read session
          */
         drives::DriveGeneric & dg;
+        /**
+         * Volume Serial Number
+         */
         std::string VSN;
+        /**
+         * Block size in Bytes of the current file
+         */
         size_t current_block_size;
       };
 

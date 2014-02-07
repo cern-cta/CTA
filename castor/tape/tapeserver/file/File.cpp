@@ -50,19 +50,8 @@ ReadSession::ReadSession(drives::DriveGeneric & drive, std::string volId) throw 
  */
 void ReadSession::checkVOL1() throw (Exception) {
   dg.rewind();
-  if(dg.getPositionInfo().currentPosition!=0) {
-    std::stringstream ex_str;
-    ex_str << "Cannot rewind volume " << VSN;
-    TapeMediaError(ex_str.str());
-  }
   VOL1 vol1;
-  ssize_t res = dg.readBlock((void * )&vol1, sizeof(vol1));
-  if(res!=sizeof(vol1)) {
-    dg.rewind();
-    std::stringstream ex_str;
-    ex_str << "Volume " << VSN << " label has invalid size: " << res << " instead of " << sizeof(vol1);
-    throw TapeFormatError(ex_str.str());
-  }
+  dg.readExactBlock((void * )&vol1, sizeof(vol1), "[ReadSession::checkVOL1()] - Reading VOL1");
   try {
     vol1.verify();
   } catch (std::exception & e) {
@@ -71,7 +60,73 @@ void ReadSession::checkVOL1() throw (Exception) {
   if(vol1.getVSN().compare(VSN)) {
     dg.rewind();
     std::stringstream ex_str;
-    ex_str << "VSN of tape (" << vol1.getVSN() << ") is not the one requested (" << VSN << ")";
+    ex_str << "[ReadSession::checkVOL1()] - VSN of tape (" << vol1.getVSN() << ") is not the one requested (" << VSN << ")";
+    throw TapeFormatError(ex_str.str());
+  }
+}
+
+/**
+ * Checks the field of a header comparing it with the numerical value provided
+ * @param headerField: the string of the header that we need to check
+ * @param value: the unsigned numerical value against which we check
+ * @param is_field_hex: set to true if the value in the header is in hexadecimal and to false otherwise
+ * @param is_field_oct: set to true if the value in the header is in octal and to false otherwise
+ * @return true if the header field  matches the numerical value, false otherwise
+ */
+bool ReadSession::checkHeaderNumericalField(const std::string &headerField, const uint64_t &value, bool is_field_hex, bool is_field_oct) const throw (Exception) {
+  uint64_t res = 0;
+  std::stringstream field_converter;
+  field_converter << headerField;
+  if(is_field_hex && !is_field_oct) field_converter >> std::hex >> res;
+  else if(!is_field_hex && is_field_oct) field_converter >> std::oct >> res;
+  else if(!is_field_hex && !is_field_oct) field_converter >> res;
+  else throw castor::exception::InvalidArgument();
+  return value==res;
+}
+
+/**
+ * Checks the hdr1
+ * @param hdr1: the hdr1 header of the current file
+ * @param fileInfo: the Information structure of the current file
+ */
+void ReadSession::checkHDR1(const HDR1 &hdr1, const Information &fileInfo) const throw (Exception) {
+  if(!checkHeaderNumericalField(hdr1.getFileId(), (uint64_t)fileInfo.nsFileId, true, false)) { // the nsfileid stored in HDR1 is in hexadecimal while the one supplied in the Information structure is in decimal
+    std::stringstream ex_str;
+    ex_str << "[ReadSession::checkHDR1] - Invalid fileid detected: " << hdr1.getFileId() << ". Wanted: " << fileInfo.nsFileId << std::endl;
+    throw TapeFormatError(ex_str.str());
+  }
+  
+  //the following should never ever happen... but never say never...
+  if(hdr1.getVSN().compare(VSN)) {
+    std::stringstream ex_str;
+    ex_str << "[ReadSession::checkHDR1] - Wrong volume ID info found in hdr1: " << hdr1.getVSN() << ". Wanted: " << VSN;
+    throw TapeFormatError(ex_str.str());
+  }
+}
+
+/**
+ * Checks the uhl1
+ * @param uhl1: the uhl1 header of the current file
+ * @param fileInfo: the Information structure of the current file
+ */
+void ReadSession::checkUHL1(const UHL1 &uhl1, const Information &fileInfo) const throw (Exception) {
+  if(!checkHeaderNumericalField(uhl1.getfSeq(), (uint64_t)fileInfo.fseq, true, false)) {
+    std::stringstream ex_str;
+    ex_str << "[ReadSession::checkUHL1] - Invalid fseq detected in uhl1: " << atol(uhl1.getfSeq().c_str()) << ". Wanted: " << fileInfo.fseq;
+    throw TapeFormatError(ex_str.str());
+  }
+}
+
+/**
+ * Set the block size member using the info contained within the uhl1
+ * @param uhl1: the uhl1 header of the current file
+ * @param fileInfo: the Information structure of the current file
+ */
+void ReadSession::setBlockSize(const UHL1 &uhl1) throw (Exception) {
+  current_block_size = (size_t)atol(uhl1.getBlockSize().c_str());
+  if(current_block_size<1) {
+    std::stringstream ex_str;
+    ex_str << "[ReadSession::setBlockSize] - Invalid block size in uhl1 detected: " << current_block_size;
     throw TapeFormatError(ex_str.str());
   }
 }
@@ -85,41 +140,25 @@ void ReadSession::checkVOL1() throw (Exception) {
  * the file.
  */
 void ReadSession::position(const Information &fileInfo) throw (Exception) {
+  
   if(fileInfo.checksum==0 or fileInfo.nsFileId==0 or fileInfo.size==0 or fileInfo.fseq<1) {
     throw castor::exception::InvalidArgument();
   }  
-  uint32_t destination_block = fileInfo.blockId ? fileInfo.blockId : 1; //if we want the first file on tape (fileInfo.blockId==0) we need to skip the VOL1 header
-  //we position using the sg locate because it is supposed to do the right thing possibly in a more optimized way (better than st's spaceBlocksForward/Backwards)
-  dg.positionToLogicalObject(destination_block);
-  //at this point we should be at the beginning of the headers of the desired file, so now let's check the headers...
+  
+  // if we want the first file on tape (fileInfo.blockId==0) we need to skip the VOL1 header
+  uint32_t destination_block = fileInfo.blockId ? fileInfo.blockId : 1;
+  
+  // we position using the sg locate because it is supposed to do the right thing possibly in a more optimized way (better than st's spaceBlocksForward/Backwards)
+  dg.positionToLogicalObject(destination_block);// at this point we should be at the beginning of the headers of the desired file, so now let's check the headers...
+  
   HDR1 hdr1;
   HDR2 hdr2;
   UHL1 uhl1;
-  ssize_t res = dg.readBlock((void *)&hdr1, sizeof(hdr1)); //TODO throws exception
-  if(res!=sizeof(hdr1)) {
-    std::stringstream ex_str;
-    ex_str << "Invalid hdr1 header detected at block " << fileInfo.blockId << ". The header has invalid size: " << res << " instead of " << sizeof(hdr1);
-    throw TapeFormatError(ex_str.str());
-  }
-  res = dg.readBlock((void *)&hdr2, sizeof(hdr2));
-  if(res!=sizeof(hdr2)) {
-    std::stringstream ex_str;
-    ex_str << "Invalid hdr2 header detected at block " << fileInfo.blockId << ". The header has invalid size: " << res << " instead of " << sizeof(hdr2);
-    throw TapeFormatError(ex_str.str());
-  }
-  res = dg.readBlock((void *)&uhl1, sizeof(uhl1));
-  if(res!=sizeof(uhl1)) {
-    std::stringstream ex_str;
-    ex_str << "Invalid uhl1 header detected at block " << fileInfo.blockId << ". The header has invalid size: " << res << " instead of " << sizeof(uhl1);
-    throw TapeFormatError(ex_str.str());
-  }
-  char empty[4];
-  res = dg.readBlock(empty, 4);//after this we should be where we want, i.e. at the beginning of the file
-  if(res!=0) {
-    std::stringstream ex_str;
-    ex_str << "Tape mark not found after uhl1";
-    throw TapeFormatError(ex_str.str());
-  }
+  dg.readExactBlock((void *)&hdr1, sizeof(hdr1), "[ReadSession::position] - Reading HDR1");  
+  dg.readExactBlock((void *)&hdr2, sizeof(hdr2), "[ReadSession::position] - Reading HDR2");
+  dg.readExactBlock((void *)&uhl1, sizeof(uhl1), "[ReadSession::position] - Reading UHL1");
+  dg.readFileMark("[ReadSession::position] - Reading file mark at the end of file header"); // after this we should be where we want, i.e. at the beginning of the file
+  
   //the size of the headers is fine, now let's check each header  
   try {
     hdr1.verify();
@@ -128,36 +167,13 @@ void ReadSession::position(const Information &fileInfo) throw (Exception) {
   } catch (std::exception & e) {
     throw TapeFormatError(e.what());
   }
+  
   //headers are valid here, let's see if they contain the right info, i.e. are we in the correct place?
-  //the fileid stored in HDR1 is in hex while the one supplied is in DEC
-  std::stringstream nsFileId_converter(hdr1.getFileId().c_str());
-  uint64_t nsFileId = 0;
-  nsFileId_converter >> std::hex >> nsFileId;
-  if(nsFileId!=fileInfo.nsFileId) {
-    std::stringstream ex_str;
-    ex_str << "Invalid fileid. Detected: " << nsFileId << ". Wanted: " << fileInfo.nsFileId << std::endl;
-    ex_str << "hdr1 dump: " << (char *)&hdr1 << std::endl;
-    throw TapeFormatError(ex_str.str());
-  }
-  //the following should never ever happen... but never say never...
-  if(hdr1.getVSN().compare(VSN)) {
-    std::stringstream ex_str;
-    ex_str << "Wrong volume ID info found in header. Detected: " << hdr1.getVSN() << ". Wanted: " << VSN;
-    throw TapeFormatError(ex_str.str());
-  }
-  //we disregard hdr2 on purpose as it contains no useful information, we now check that also uhl1 (hdr1 also contains fseq info but it is modulo 10000, therefore useless)
-  if((uint32_t)atol(uhl1.getfSeq().c_str())!=fileInfo.fseq) {
-    std::stringstream ex_str;
-    ex_str << "Invalid fseq in uhl1. Detected: " << atol(uhl1.getfSeq().c_str()) << ". Wanted: " << fileInfo.fseq;
-    throw TapeFormatError(ex_str.str());
-  }
-  //now that we are all happy with the information contained within the headers we finally get the block size for our file (provided it has a reasonable value)
-  current_block_size = (size_t)atol(uhl1.getBlockSize().c_str());
-  if(current_block_size<1) {
-    std::stringstream ex_str;
-    ex_str << "Invalid block size in uhl1 detected: " << current_block_size;
-    throw TapeFormatError(ex_str.str());
-  }  
+  checkHDR1(hdr1, fileInfo);
+  //we disregard hdr2 on purpose as it contains no useful information, we now check the fseq in uhl1 (hdr1 also contains fseq info but it is modulo 10000, therefore useless)
+  checkUHL1(uhl1, fileInfo);
+  //now that we are all happy with the information contained within the headers, we finally get the block size for our file (provided it has a reasonable value)
+  setBlockSize(uhl1);
 }
 
 /**
@@ -168,7 +184,7 @@ void ReadSession::position(const Information &fileInfo) throw (Exception) {
 size_t ReadSession::getBlockSize() throw (Exception) {
   if(current_block_size<1) {
     std::stringstream ex_str;
-    ex_str << "Invalid block size: " << current_block_size;
+    ex_str << "[ReadSession::getBlockSize] - Invalid block size: " << current_block_size;
     throw TapeFormatError(ex_str.str());
   }
   return current_block_size;
