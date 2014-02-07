@@ -148,7 +148,7 @@ throw (Exception) {
   sgh.setCDB(&cdb);
   sgh.setSenseBuffer(&senseBuff);
   sgh.dxfer_direction = SG_DXFER_NONE;
-  sgh.timeout = 180000; // TODO castor.conf LOCATE_TIMEOUT or default
+  //sgh.timeout = defaultTimeout; // set globally by SCSI::Structures.hpp (defaultTimeout)
 
   /* Manage both system error and SCSI errors. */
   castor::exception::Errnum::throwOnMinusOne(
@@ -322,7 +322,7 @@ void drives::DriveGeneric::setSTBufferWrite(bool bufWrite) throw (Exception) {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTSETDRVBUFFER;
   m_mtCmd.mt_count = bufWrite ? (MT_ST_SETBOOLEANS | MT_ST_BUFFER_WRITES) : (MT_ST_CLEARBOOLEANS | MT_ST_BUFFER_WRITES);
- castor::exception::Errnum::throwOnMinusOne(
+  castor::exception::Errnum::throwOnMinusOne(
      m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
      "Failed ST ioctl (MTSETDRVBUFFER) in DriveGeneric::setSTBufferWrite");
 }
@@ -340,7 +340,7 @@ void drives::DriveGeneric::spaceToEOM(void) throw (Exception) {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTEOM;
   m_mtCmd.mt_count = 1;
- castor::exception::Errnum::throwOnMinusOne(
+  castor::exception::Errnum::throwOnMinusOne(
      m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
      "Failed ST ioctl (MTEOM) in DriveGeneric::spaceToEOM");
 }
@@ -355,7 +355,7 @@ void drives::DriveGeneric::setSTFastMTEOM(bool fastMTEOM) throw (Exception) {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTSETDRVBUFFER;
   m_mtCmd.mt_count = fastMTEOM ? (MT_ST_SETBOOLEANS | MT_ST_FAST_MTEOM) : (MT_ST_CLEARBOOLEANS | MT_ST_FAST_MTEOM);
- castor::exception::Errnum::throwOnMinusOne(
+  castor::exception::Errnum::throwOnMinusOne(
      m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
      "Failed ST ioctl (MTSETDRVBUFFER) in DriveGeneric::setSTFastMTEOM");
 }
@@ -502,7 +502,7 @@ void drives::DriveGeneric::writeImmediateFileMarks(size_t count) throw (Exceptio
  * @param data pointer the the data block
  * @param count size of the data block
  */
-void drives::DriveGeneric::writeBlock(void * data, size_t count) throw (Exception) {
+void drives::DriveGeneric::writeBlock(const void * data, size_t count) throw (Exception) {
   castor::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.write(m_tapeFD, data, count),
       "Failed ST write in DriveGeneric::writeBlock");

@@ -37,13 +37,13 @@ namespace castor {
        * Class containing all the information related to a file being migrated to 
        * tape.
        */
-      class Information {
+      class Information { //no information about path and filename here as it cannot be used nor checked on tape
       public:
-        std::string lastKnownPath;
         uint32_t checksum;
         uint64_t nsFileId;
         uint64_t size;
-        uint32_t fseq;
+        uint32_t fseq; //this is the payload (i.e. real file) sequence number, not the tape file sequence number (which would include headers and trailers as well)
+        uint32_t blockId;
       };
 
       class BufferTooSmall: public Exception {
@@ -65,6 +65,16 @@ namespace castor {
       public:
         NotReadingAFile(const std::string & what): Exception(what) {}
       };
+      
+      class TapeFormatError: public Exception {
+      public:
+        TapeFormatError(const std::string & what): Exception(what) {}
+      };
+      
+      class TapeMediaError: public Exception {
+      public:
+        TapeMediaError(const std::string & what): Exception(what) {}
+      };
 
       /**
        * Class keeping track of a whole tape read session over an AUL formated
@@ -81,7 +91,8 @@ namespace castor {
          * @param drive
          * @param VSN
          */
-        ReadSession(drives::Drive & drive, std::string VSN) throw (Exception);
+        ReadSession(drives::DriveGeneric & dg, std::string volId) throw (Exception);
+        
         /**
          * Positions the tape for reading the file. Depending on the previous activity,
          * it is the duty of this function to determine how to best move to the next
@@ -90,15 +101,15 @@ namespace castor {
          * @param fileInfo: all relevant information passed by the stager about
          * the file.
          */
-        void position(Information fileInfo) throw (Exception);
+        void position(const Information &fileInfo) throw (Exception);
+        
         /**
          * After positioning at the beginning of a file for readings, this function
          * allows the reader to know which block sizes to provide.
-         * If called before the end of a file read, the file reading will be 
-         * interrupted and positioning to the new file will occur.
          * @return the block size in bytes.
          */
         size_t getBlockSize() throw (Exception);
+        
         /**
          * Read data from the file. The buffer should equal to or bigger than the 
          * block size. Will try to actually fill up the provided buffer (this
@@ -112,6 +123,24 @@ namespace castor {
          * @return The amount of data actually copied. Zero at end of file.
          */
         size_t read(void * buff, size_t len) throw (Exception);
+      
+      private:  
+        /**
+         * checks the volume label to make sure the label is valid and that we
+         * have the correct tape (checks VSN). Leaves the tape at the end of the
+         * first header block (i.e. right before the first data block) in case
+         * of success, or rewinds the tape in case of volume label problems.
+         * Might also leave the tape in unknown state in case any of the st
+         * operations fail.
+         */
+        void checkVOL1() throw (Exception);
+        
+        /**
+         * DriveGeneric object referencing the drive used during this read session
+         */
+        drives::DriveGeneric & dg;
+        std::string VSN;
+        size_t current_block_size;
       };
 
       /**

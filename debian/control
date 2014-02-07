@@ -160,6 +160,12 @@ Build-Depends: stk-ssi-devel, stk-ssi
 Description: castor (Cern Advanced STORage system)
  Tape server
 
+Package: castor-new-tape-server-development
+Architecture: any
+Depends: castor-lib = %{version}-%{release}
+Description: castor (Cern Advanced STORage system)
+ System tests for new tape server development. Not for deployment on production machines.
+
 Package: castor-tape-server-nostk
 Architecture: any
 Depends: logrotate, castor-lib = %{version}-%{release}

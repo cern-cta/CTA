@@ -142,14 +142,14 @@ namespace tape {
       }
 
       /**
-       * @return The file sequence number
+       * @return The file sequence number (modulo 10000: useless)
        */
       inline std::string getfSeq() {
         return toString(fSeq);
       }
       
       /**
-       * @return The number of block written on tape per file
+       * @return The number of block written on tape per file (only valid in trailer, fairly useless)
        */
       inline std::string getBlockCount() {
         return toString(blockCount);

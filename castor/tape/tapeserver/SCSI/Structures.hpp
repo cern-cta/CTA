@@ -39,6 +39,7 @@
 namespace castor {
 namespace tape {
 namespace SCSI {
+  const unsigned int defaultTimeout=900000; //millisecs
   /**
    * Structures as defined in the SCSI specifications, and helper functions for them.
    * SPC-4 (SCSI primary commands) can be found at:
@@ -69,7 +70,7 @@ namespace SCSI {
      */
     class LinuxSGIO_t: public sg_io_hdr_t {
     public:
-      LinuxSGIO_t() { zeroStruct(this); interface_id = 'S'; timeout = 30000; }
+      LinuxSGIO_t() { zeroStruct(this); interface_id = 'S'; timeout = defaultTimeout; }
       template <typename T>
       void setCDB(T * cdb) { cmdp = (unsigned char *)cdb; cmd_len = sizeof(T); }
       

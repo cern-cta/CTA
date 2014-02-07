@@ -100,8 +100,8 @@ int main ()
                   << "----------------------------------------------" << std::endl;
         drive.rewind();
         /* For some unexplained (TODO) reason, mhvtl does not accept blocks smaller than 4 bytes */
-        drive.writeBlock((unsigned char *)"X123", 4);
-        drive.writeBlock((unsigned char *)"Y123", 4);
+        drive.writeBlock((void *)"X123", 4);
+        drive.writeBlock((void *)"Y123", 4);
         /**
          * trying to do position to the block 2.
          */
@@ -195,7 +195,7 @@ int main ()
           
           memset(data, 'a', count-1);
           std::cout << "Writing 1st block (9 a's)..." << std::endl;
-          drive.writeBlock(data, count); // write 9 a's + string term
+          drive.writeBlock((void *)data, count); // write 9 a's + string term
           print_and_assert_position(drive, 1);
           
           std::cout << "Writing 1st Synchronous filemark..." << std::endl;
@@ -204,7 +204,7 @@ int main ()
           
           memset(data, 'b', count-1);
           std::cout << "Writing 2nd block (9 b's)..." << std::endl;
-          drive.writeBlock(data, count); // write 9 b's + string term
+          drive.writeBlock((void *)data, count); // write 9 b's + string term
           print_and_assert_position(drive, 3);
           
           std::cout << "Writing 2nd Synchronous filemark..." << std::endl;
@@ -213,7 +213,7 @@ int main ()
           
           memset(data, 'c', count-1);
           std::cout << "Writing 3rd block (9 c's)..." << std::endl;
-          drive.writeBlock(data, count); // write 9 c's + string term
+          drive.writeBlock((void *)data, count); // write 9 c's + string term
           print_and_assert_position(drive, 5);
           
           std::cout << "Writing EOD (2 filemarks)..." << std::endl;
@@ -226,37 +226,37 @@ int main ()
           
           std::cout << "Reading back 1st block 9 a's)..." << std::endl;                    
           memset(data, 0, count);
-          drive.readBlock(data, count); // read 9 a's + string term
+          drive.readBlock((void *)data, count); // read 9 a's + string term
           print_and_assert_position(drive, 1);
           print_and_assert_data("aaaaaaaaa", (const char *)data);
           
           std::cout << "Skipping first file mark..." << std::endl;                    
           memset(data, 0, count);
-          drive.readBlock(data, count);
+          drive.readBlock((void *)data, count);
           print_and_assert_position(drive, 2);
           
           std::cout << "Reading back 2nd block (9 b's)..." << std::endl;                    
           memset(data, 0, count);
-          drive.readBlock(data, count); // read 9 b's + string term
+          drive.readBlock((void *)data, count); // read 9 b's + string term
           print_and_assert_position(drive, 3);
           print_and_assert_data("bbbbbbbbb", (const char *)data);
           
           std::cout << "Skipping first file mark..." << std::endl;                    
           memset(data, 0, count);
-          drive.readBlock(data, count);
+          drive.readBlock((void *)data, count);
           print_and_assert_position(drive, 4);
           
           std::cout << "Reading back 3rd block (9 c's)..." << std::endl;          
           memset(data, 0, count);
-          drive.readBlock(data, count); // read 9 c's + string term
+          drive.readBlock((void *)data, count); // read 9 c's + string term
           print_and_assert_position(drive, 5);
           print_and_assert_data("ccccccccc", (const char *)data);
           
           std::cout << "Skipping the last two file marks..." << std::endl;          
           memset(data, 0, count);
-          drive.readBlock(data, count);
+          drive.readBlock((void *)data, count);
           memset(data, 0, count);
-          drive.readBlock(data, count);
+          drive.readBlock((void *)data, count);
           print_and_assert_position(drive, 7);
           
           std::cout << "Rewinding..." << std::endl;
@@ -297,7 +297,7 @@ int main ()
           
           memset(data, 'd', count-1);
           std::cout << "Writing 9 d's..." << std::endl;
-          drive.writeBlock(data, count); // write 9 d's + string term
+          drive.writeBlock((void *)data, count); // write 9 d's + string term
           print_and_assert_position(drive, 7);
           
           std::cout << "Writing Asynchronous filemark..." << std::endl;
@@ -306,7 +306,7 @@ int main ()
           
           memset(data, 'e', count-1);
           std::cout << "Writing 9 e's..." << std::endl;
-          drive.writeBlock(data, count); // write 9 e's + string term
+          drive.writeBlock((void *)data, count); // write 9 e's + string term
           print_and_assert_position(drive, 9);
           
           std::cout << "Writing Asynchronous EOD..." << std::endl;
@@ -324,7 +324,7 @@ int main ()
           for(int i=0; i<9; i++) {
             memset(data, '0'+i, count-1);
             std::cout << "Writing 9 " << i << "'s..." << std::endl;
-            drive.writeBlock(data, count);
+            drive.writeBlock((void *)data, count);
             print_and_assert_position(drive, i+1);
           }
           
@@ -338,7 +338,7 @@ int main ()
           
           std::cout << "Reading..." << std::endl;                    
           memset(data, 0, count);
-          drive.readBlock(data, count);
+          drive.readBlock((void *)data, count);
           print_and_assert_position(drive, 3);
           print_and_assert_data("222222222", (const char *)data);
           
@@ -356,7 +356,7 @@ int main ()
           
           std::cout << "Reading..." << std::endl;                    
           memset(data, 0, count);
-          drive.readBlock(data, count);
+          drive.readBlock((void *)data, count);
           print_and_assert_position(drive, 5);
           print_and_assert_data("444444444", (const char *)data);
           

@@ -334,7 +334,7 @@ namespace drives {
      * @param data pointer the the data block
      * @param count size of the data block
      */
-    virtual void writeBlock(void * data, size_t count) throw (Exception);
+    virtual void writeBlock(const void * data, size_t count) throw (Exception);
 
     /**
      * Read a data block from tape.
@@ -359,7 +359,7 @@ namespace drives {
      * @return the actual size of read data
      */
     virtual void readFileMark(std::string context= "") throw (Exception);
-   
+    
     virtual ~DriveGeneric() {
       if (-1 != m_tapeFD)
         m_sysWrapper.close(m_tapeFD);      

@@ -198,7 +198,7 @@ namespace UnitTests {
      to the original structure (virtual table, for example)*/
     sg_io_hdr_t & sgio_hdr = *(sg_io_hdr_t *)&lsg;
     /* Also make sure the constructor does its initialization job */
-    ASSERT_EQ(30000U, sgio_hdr.timeout);
+    ASSERT_EQ(900000U, sgio_hdr.timeout);
     ASSERT_EQ('S', sgio_hdr.interface_id);
     /* The rest is safe. It's just a struct with added functions */
   }
