@@ -94,7 +94,40 @@ namespace drives {
     std::string error;
     /* TODO: error code. See gettperror and get_sk_msg in CAStor */
   };
+  
+  /**
+   * Exception reported by drive functions when trying to read beyond
+   * end of data
+   */
+  class EndOfData: public Exception {
+  public:
+    EndOfData(const std::string w=""): Exception(w) {}
+  };
+  
+  /**
+   * Exception reported by drive functions when trying to write beyond
+   * end of medium
+   */
+  class EndOfMedium: public Exception {
+  public:
+    EndOfMedium(const std::string w=""): Exception(w) {}
+  };
+  
+  /**
+   * Exception reported by ReadExactBlock when the size is not right
+   */
+  class UnexpectedSize: public Exception {
+  public:
+    UnexpectedSize(const std::string w=""): Exception(w) {}
+  };
 
+  /**
+   * Exception reported by ReadFileMark when finding a data block
+   */
+  class NotAFileMark: public Exception {
+  public:
+    NotAFileMark(const std::string w=""): Exception(w) {}
+  };
   /**
    * Class abstracting the tape drives. This class is templated to allow the use
    * of unrelated test harness and real system. The test harness is made up of 
@@ -301,7 +334,7 @@ namespace drives {
      * @param data pointer the the data block
      * @param count size of the data block
      */
-    virtual void writeBlock(const unsigned char * data, size_t count) throw (Exception);
+    virtual void writeBlock(void * data, size_t count) throw (Exception);
 
     /**
      * Read a data block from tape.
@@ -309,8 +342,24 @@ namespace drives {
      * @param count size of the data block
      * @return the actual size of read data
      */
-    virtual ssize_t readBlock(unsigned char * data, size_t count) throw (Exception);
-
+    virtual ssize_t readBlock(void * data, size_t count) throw (Exception);
+    
+    /**
+     * Read a data block from tape. Throw an exception if the read block is not
+     * the exact size of the buffer.
+     * @param data pointer the the data block
+     * @param count size of the data block
+     * @param context optional context to be added to the thrown exception
+     * @return the actual size of read data
+     */
+    virtual void readExactBlock(void * data, size_t count, std::string context= "") throw (Exception);
+    
+    /**
+     * Read over a file mark. Throw an exception we do not read one.
+     * @return the actual size of read data
+     */
+    virtual void readFileMark(std::string context= "") throw (Exception);
+   
     virtual ~DriveGeneric() {
       if (-1 != m_tapeFD)
         m_sysWrapper.close(m_tapeFD);      

@@ -502,7 +502,7 @@ void drives::DriveGeneric::writeImmediateFileMarks(size_t count) throw (Exceptio
  * @param data pointer the the data block
  * @param count size of the data block
  */
-void drives::DriveGeneric::writeBlock(const unsigned char * data, size_t count) throw (Exception) {
+void drives::DriveGeneric::writeBlock(void * data, size_t count) throw (Exception) {
   castor::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.write(m_tapeFD, data, count),
       "Failed ST write in DriveGeneric::writeBlock");
@@ -514,11 +514,52 @@ void drives::DriveGeneric::writeBlock(const unsigned char * data, size_t count) 
  * @param count size of the data block
  * @return the actual size of read data
  */
-ssize_t drives::DriveGeneric::readBlock(unsigned char * data, size_t count) throw (Exception) {
+ssize_t drives::DriveGeneric::readBlock(void * data, size_t count) throw (Exception) {
   ssize_t res = m_sysWrapper.read(m_tapeFD, data, count);
-  castor::exception::Errnum::throwOnMinusOne(res, "Failed ST read in DriveGeneric::readBlock");
+  castor::exception::Errnum::throwOnMinusOne(res, 
+      "Failed ST read in DriveGeneric::readBlock");
   return res;
 }
+
+/**
+ * Read a data block from tape. Throw an exception if the read block is not
+ * the exact size of the buffer.
+ * @param data pointer the the data block
+ * @param count size of the data block
+ * @return the actual size of read data
+ */
+void drives::DriveGeneric::readExactBlock(void * data, size_t count, std::string context) throw (Exception) {
+  ssize_t res = m_sysWrapper.read(m_tapeFD, data, count);
+  // First handle block too big
+  if (-1 == res && ENOSPC == errno)
+    throw UnexpectedSize(context);
+  // Generic handling of other errors
+  castor::exception::Errnum::throwOnMinusOne(res, 
+      "Failed ST read in DriveGeneric::readExactBlock");
+  // Handle block too small
+  if ((size_t) res != count)
+    throw UnexpectedSize(context);
+}
+
+/**
+ * Read over a file mark. Throw an exception we do not read one.
+ * @return the actual size of read data
+ */
+void drives::DriveGeneric::readFileMark(std::string context) throw (Exception) {
+  char buff[4]; // We need to try and read at least a small amount of data
+                // due to a bug in mhvtl
+  ssize_t res = m_sysWrapper.read(m_tapeFD, buff, 4);
+  // First handle block too big: this is not a file mark (size 0)
+  if (-1 == res && ENOSPC == errno)
+    throw NotAFileMark(context);
+  // Generic handling of other errors
+  castor::exception::Errnum::throwOnMinusOne(res, 
+      "Failed ST read in DriveGeneric::readFileMark");
+  // Handle the unlikely case when the block fits
+  if (res)
+    throw NotAFileMark(context);
+}
+   
 
 void drives::DriveGeneric::SCSI_inquiry() {
   SCSI::Structures::LinuxSGIO_t sgh;
