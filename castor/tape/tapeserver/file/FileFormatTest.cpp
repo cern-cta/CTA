@@ -116,9 +116,10 @@ int main(int argc, char* argv[])
               char *buf = new char[bs];
               std::ofstream out;
               out.open("/tmp/hello", std::ofstream::trunc);
-              while(my_sess.read(buf, bs)) {
+              size_t bytes_read = 0;
+              while((bytes_read = my_sess.read(buf, bs)) != 0) {
                 std::cout << "Reading... ";
-                out.write(buf, bs);
+                out.write(buf, bytes_read);
                 std::cout << "DONE\n";
               }
               out.close();

@@ -36,7 +36,7 @@ using namespace castor::tape::AULFile;
  * @param drive
  * @param VSN
  */
-ReadSession::ReadSession(drives::DriveGeneric & drive, std::string volId) : dg(drive), VSN(volId), current_block_size(0) throw (Exception) { 
+ReadSession::ReadSession(drives::DriveGeneric & drive, std::string volId) throw (Exception) : dg(drive), VSN(volId), current_block_size(0) { 
   checkVOL1(); //after which we are at the end of VOL1 header (i.e. beginning of HDR1 of the first file) on success, or at BOT in case of exception
 }
 
@@ -88,7 +88,7 @@ void ReadSession::position(const Information &fileInfo) throw (Exception) {
   if(fileInfo.checksum==0 or fileInfo.nsFileId==0 or fileInfo.size==0 or fileInfo.fseq<1) {
     throw castor::exception::InvalidArgument();
   }  
-  uint32_t destination_block = fileInfo.blockId ? fileInfo.blockId : 0; //if we want the first file on tape (fileInfo.blockId==0) we need to skip the VOL1 header
+  uint32_t destination_block = fileInfo.blockId ? fileInfo.blockId : 1; //if we want the first file on tape (fileInfo.blockId==0) we need to skip the VOL1 header
   //we position using the sg locate because it is supposed to do the right thing possibly in a more optimized way (better than st's spaceBlocksForward/Backwards)
   dg.positionToLogicalObject(destination_block);
   //at this point we should be at the beginning of the headers of the desired file, so now let's check the headers...
@@ -114,7 +114,6 @@ void ReadSession::position(const Information &fileInfo) throw (Exception) {
     throw TapeFormatError(ex_str.str());
   }
   char empty[4];
-  dg.readBlock(empty, 4); //TODO to put inside a function
   res = dg.readBlock(empty, 4);//after this we should be where we want, i.e. at the beginning of the file
   if(res!=0) {
     std::stringstream ex_str;
