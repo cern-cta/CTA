@@ -9,44 +9,56 @@
   - This release is the first certified to work with the Oracle T10000D class
     of tape drives. Previous CASTOR releases have caused DATA LOSSES and
     MUST NOT BE USED with those drives. See bug #103642 for more details.
-  - From this release, the following configuration parameters have changed:
+  - The following configuration parameters have changed from:
 
-  TransferManager     PendingTimeouts         all:120 default:120
-  TransferManager     DiskCopyPendingTimeout  7200
+      TransferManager     PendingTimeouts         all:120 default:120
+      TransferManager     DiskCopyPendingTimeout  7200
 
-  The new ones having DiskManager as class (see bug #103521). Please adapt your
-  configuration tools to reflect this change.
+    To:
+
+      DiskManager         PendingTimeouts         all:120 default:120
+      DiskManager         DiskCopyPendingTimeout  7200
+
+    The new ones having DiskManager as class (see bug #103521). Please adapt your
+    configuration tools to reflect this change.
 
   Client
   ------
 
-    #103659: RFE: stager_get should warn/error on unknown command line arguments
+    #103659 RFE: stager_get should warn/error on unknown command line arguments
 
   Stager
   ------
 
-    #103190: Constraint violation errors thrown by the GC
-    #103512: Incorrect handling of errors on disk-to-disk copy jobs affecting draining operations
-    #103521: RFE: rename the TransferManager/*PendingTimeout options to DiskManager/*PendingTimeout to improve usability
-    #103530: tight loop in rebalancing when no file to rebalance
-    #103715: Requests for disk-to-disk copies wait forever in status WAITTAPERECALL
-    #103792: RFE: provide the ability to selectively enable/disable protocols
+    #103190 Constraint violation errors thrown by the GC
+    #103512 Incorrect handling of errors on disk-to-disk copy jobs affecting draining operations
+    #103521 RFE: rename the TransferManager/*PendingTimeout options to
+            DiskManager/*PendingTimeout to improve usability
+    #103530 tight loop in rebalancing when no file to rebalance
+    #103715 Requests for disk-to-disk copies wait forever in status WAITTAPERECALL
+    #103792 RFE: provide the ability to selectively enable/disable protocols
+
+  XROOT Protocol
+  --------------
+
+    #103804 Memory leak in the xrootd plugin in case proc files cannot be opened
+    #103813 XRootD role map enhancement
 
   Tape and Repack
   ---------------
 
-    #103524: endTapeSession should react properly when session has disappeared
-    #103625: Incorrect logic to clean up repack requests may lead submitted requests to disappear
-    #103642: Remove the deltpfil() function
-    #103697: Repack of files in the cache may not take place
-    #103698: RFE: make deletediskcopy repack-aware
-    #103708: RFE: "light" nslisstape (skip file path)
-    #103710: RFE: VMGR should always choose the tape with the least free space for writing
-    #103729: VMGR should not set the TAPE_FULL based on estimated free space
-    #103731: Remove the getting of tape compression statistics
-    #103735: RFE: Remove the MTIOCSENSE code
-    #103738: Tape code should use a generic scsi timeout equal to that of the st driver
-    #103776: Recall mount creation is not selective enough, leading to empty mounts
+    #103524 endTapeSession should react properly when session has disappeared
+    #103625 Incorrect logic to clean up repack requests may lead submitted requests to disappear
+    #103642 Remove the deltpfil() function
+    #103697 Repack of files in the cache may not take place
+    #103698 RFE: make deletediskcopy repack-aware
+    #103708 RFE: "light" nslisstape (skip file path)
+    #103710 RFE: VMGR should always choose the tape with the least free space for writing
+    #103729 VMGR should not set the TAPE_FULL based on estimated free space
+    #103731 Remove the getting of tape compression statistics
+    #103735 RFE: Remove the MTIOCSENSE code
+    #103738 Tape code should use a generic scsi timeout equal to that of the st driver
+    #103776 Recall mount creation is not selective enough, leading to empty mounts
 
   Upgrade Instructions from 2.1.14-5
   ----------------------------------
@@ -65,6 +77,8 @@
        1. Upgrade the STAGER database using the stager_2.1.14-5_to_2.1.14-11.sql
           upgrade script available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-11/dbupgrades
+          Note that as some cleanup is performed by the script, its execution may take
+          several minutes. However the service should not affected by this cleanup operation.
 
        2. Upgrade the software on the headnodes.
           Note: All daemons involved in the upgrade will be restarted automatically.
@@ -81,14 +95,14 @@
     Central services (CUPV, VMGR, VDQM, Nameserver)
     -----------------------------------------------
 
-      The upgrade of the central databases to 2.1.14-12 can be performed online while
+      The upgrade of the central databases to 2.1.14-11 can be performed online while
       the system is running.
 
       Instructions
       ------------
 
-       1. Apply the appropriate database upgrade script from:
-         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-11/dbupgrades
+       1. Apply the appropriate database upgrade scripts from:
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-11/dbupgrades
 
        2. Update the software to use the 2.1.14-11 RPMs. Note: All
           daemons involved in the upgrade will be restarted automatically.

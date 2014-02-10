@@ -101,7 +101,7 @@ UPDATE CastorConfig
         
 /* Bug #103792: RFE: provide the ability to selectively enable/disable protocols */
 INSERT INTO CastorConfig
-  VALUES ('Stager', 'Protocols', 'rfio rfio3 root gsiftp xroot', 'The list of protocols accepted by the system.')
+  VALUES ('Stager', 'Protocols', 'rfio rfio3 root gsiftp xroot', 'The list of protocols accepted by the system.');
 
 /* For deleteDiskCopy */
 DROP TABLE DeleteDiskCopyHelper;

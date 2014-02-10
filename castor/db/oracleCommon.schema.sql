@@ -138,7 +138,7 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Rebalancing', 'Sensitivity', '5', 'The rebalancing sensitivity (in percent) : if a fileSystem is at least this percentage fuller than the average of the diskpool where it lives, rebalancing will fire.');
 INSERT INTO CastorConfig
-  VALUES ('Stager', 'Protocols', 'rfio rfio3 root gsiftp xroot', 'The list of protocols accepted by the system.')
+  VALUES ('Stager', 'Protocols', 'rfio rfio3 root gsiftp xroot', 'The list of protocols accepted by the system.');
 /* Create the AdminUsers table */
 CREATE TABLE AdminUsers (euid NUMBER, egid NUMBER);
 ALTER TABLE AdminUsers ADD CONSTRAINT UN_AdminUsers_euid_egid UNIQUE (euid, egid);

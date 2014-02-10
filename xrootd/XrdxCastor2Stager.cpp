@@ -622,10 +622,10 @@ XrdxCastor2Stager::StagerQuery(XrdOucErrInfo& error,
 
     for (i = 0; i < nbresps; i++)
     {
-      xcastor_static_debug("status=%s rc=%i, path=%s:%s ( %s ) id=%i",
-                           stage_requestStatusName(resp[i].status), resp[i].errorCode,
-                           resp[i].diskserver, resp[i].filename,
-                           resp[i].castorfilename);
+      xcastor_static_debug("status=%s rc=%i, path=%s:%s ( %s )",
+                           stage_requestStatusName(resp[i].status), 
+                           resp[i].errorCode, resp[i].diskserver, 
+                           resp[i].filename, resp[i].castorfilename);
       status = stage_fileStatusName(resp[i].status);
 
       if (*resp[i].castorfilename)
