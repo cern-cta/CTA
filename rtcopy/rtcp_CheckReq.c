@@ -517,8 +517,8 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         /*
          * Zero size?
          */
-        rtcp_log(LOG_INFO,"rtcp_CheckFileReq(%d,%s) (tpwrite) st_size=%d\n",
-            filereq->tape_fseq,filereq->file_path,(int)st.st_size);
+        rtcp_log(LOG_INFO,"rtcp_CheckFileReq(%d,%s) (tpwrite) st_size=%zu\n",
+            filereq->tape_fseq,filereq->file_path,st.st_size);
         if ( st.st_size == 0 ) {
             sprintf(errmsgtxt,RT121,CMD(mode));
             serrno = EINVAL;
