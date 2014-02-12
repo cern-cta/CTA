@@ -59,6 +59,13 @@ namespace castor {
     static Services* services() throw(castor::exception::Exception);
 
     /**
+     * Static function to reset (deallocate + set the thread specific pointer
+     * to NULL) the thread-specific services. Useful in test environments and
+     * for clients which to not run the thread pools (but use the marshallers)
+     */
+    static void resetServices() throw(castor::exception::Exception);
+    
+    /**
      * Static access to the underlying thread-shared Services object
      */
     static Services* sharedServices() throw(castor::exception::Exception);

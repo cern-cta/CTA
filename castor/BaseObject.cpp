@@ -116,3 +116,20 @@ castor::Services* castor::BaseObject::services()
 
   return services;
 }
+
+//------------------------------------------------------------------------------
+// resetServices
+//------------------------------------------------------------------------------
+void castor::BaseObject::resetServices()
+  throw (castor::exception::Exception) {
+  // If the services where not allocated (unlikely), this will have the
+  // side effect of allocating them. The key will be created anyhow,
+  // which is what we need.
+  delete services();
+  const int rc = pthread_setspecific(s_servicesKey, NULL);
+  if(0 != rc) {
+    castor::exception::Exception e(rc);
+    e.getMessage() << "Failed to reset the thread's servicesKey to NULL after delete";
+    throw e;
+  }
+}
