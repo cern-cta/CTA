@@ -27,6 +27,8 @@
 #include <typeinfo>
 #include <stdlib.h>
 #include <cxxabi.h>
+#include "../../../../h/Cthread_api.h"
+#include "castor/BaseObject.hpp"
 
 /* Implmentations of the threading primitives */
 
@@ -204,6 +206,9 @@ throw (castor::exception::Exception) {
 
 void * castor::tape::threading::Thread::pthread_runner (void * arg) {
   Thread * _this = (Thread *) arg;
+  // The threading init is needing by many castor components, so better do
+  // it all the time (this should not have side effects)
+  Cthread_init();
   try {
     _this->run();
   } catch (std::exception & e) {
@@ -217,6 +222,11 @@ void * castor::tape::threading::Thread::pthread_runner (void * arg) {
     }
     free(demangled);
     _this->m_what = e.what();
+  } catch (...) {
+    _this->m_hadException = true;
+    _this->m_type = "unknown";
+    _this->m_what = "uncaught non-standard exception";
   }
+  BaseObject::resetServices();
   return NULL;
 }

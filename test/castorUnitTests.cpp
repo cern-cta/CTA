@@ -24,10 +24,18 @@
 
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
+#include "../h/Cthread_api.h"
+#include "castor/BaseObject.hpp"
 
 int main(int argc, char** argv) {
+  // The call to Cthread_init is necessary at the beginning of any program
+  // relying on the old "Cthread" collection. Calling should not have side
+  // effects.
+  Cthread_init();
   // The following line must be executed to initialize Google Mock
   // (and Google Test) before running the tests.
   ::testing::InitGoogleMock(&argc, argv);
-  return RUN_ALL_TESTS();
+  int ret = RUN_ALL_TESTS();
+  castor::BaseObject::resetServices();
+  return ret;
 }
