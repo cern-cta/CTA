@@ -78,7 +78,7 @@
           upgrade script available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-11/dbupgrades
           Note that as some cleanup is performed by the script, its execution may take
-          several minutes. However the service should not affected by this cleanup operation.
+          several minutes. However the service should not be affected by this cleanup operation.
 
        2. Upgrade the software on the headnodes.
           Note: All daemons involved in the upgrade will be restarted automatically.
@@ -95,8 +95,10 @@
     Central services (CUPV, VMGR, VDQM, Nameserver)
     -----------------------------------------------
 
-      The upgrade of the central databases to 2.1.14-11 can be performed online while
-      the system is running.
+      The upgrade of the central services to 2.1.14-11 can be performed online while
+      the system is running. The order of upgrades is not important, however it is
+      recommended to upgrade VMGR at the earliest opportunity to limit the impact
+      of bug #103729.
 
       Instructions
       ------------
