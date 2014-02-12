@@ -1,4 +1,4 @@
 nsmkdir <noTapeFileName>
 nstouch <noTapeFileName>/file
-<xrd> <stageHost> stat <noTapeFileName>
-<xrd> <stageHost> stat <noTapeFileName>/file
+<xrdfs> <stageHost> stat <noTapeFileName>
+<xrdfs> <stageHost> stat <noTapeFileName>/file
