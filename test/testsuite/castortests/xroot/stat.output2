@@ -1,2 +1,4 @@
-Id: <id> Size: 0 Flags: 19 Modtime: <modtime>
-
+Path:  <noTapeFileName>
+Id:    <id1>
+Size:  0
+Flags: 19 (XBitSet|IsDir|IsReadable)
