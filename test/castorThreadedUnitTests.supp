@@ -37,3 +37,33 @@
   fun:_ZN6castor8Services9createObjEPNS_8IAddressE
   fun:_ZN6castor2io14AbstractSocket10readObjectEv
 }
+
+{
+  helgrind-unitTest-slc5-marshaling004
+  Helgrind:Race
+  fun:getconfent_fromfile
+  fun:getconfent
+  fun:_ZN6castor2io17AbstractTCPSocket10readBufferEjPPcRi
+  fun:_ZN6castor2io14AbstractSocket10readObjectEv
+}
+
+{
+  helgrind-unitTest-slc5-marshaling005
+  Helgrind:Race
+  fun:_ZNSs9_M_mutateEjjj
+  fun:_ZrsIcSt11char_traitsIcESaIcEERN6castor2io11biniostreamES6_RSbIT_T0_T1_E
+  ...
+  fun:_ZN6castor8Services9createObjEPNS_8IAddressE
+  fun:_ZN6castor2io14AbstractSocket10readObjectEv
+}
+
+{
+  helgrind-unitTest-slc5-marshaling006
+  Helgrind:Race
+  fun:_ZNSs4swapERSs
+  fun:_ZNSt15basic_stringbufIcSt11char_traitsIcESaIcEE8overflowEi
+  ...
+  fun:getconfent_fromfile
+  fun:_ZN6castor2io17AbstractTCPSocket10readBufferEjPPcRi
+  fun:_ZN6castor2io14AbstractSocket10readObjectEv
+}
