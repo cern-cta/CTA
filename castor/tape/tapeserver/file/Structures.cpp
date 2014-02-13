@@ -26,6 +26,7 @@
 #include "../exception/Exception.hpp"
 #include <time.h>
 #include <stdio.h>
+#include "../h/patchlevel.h"
 
 using namespace castor::tape;
 
@@ -82,7 +83,7 @@ void AULFile::HDR1EOF1::fillCommon(
    * overwritten immediately.
    */
   setDate(expirationDate);
-  setString(sysCode, "CASTOR 7.7.77"); /* TODO: CASTOR BASEVERSION */
+  setString(sysCode, std::string("CASTOR ") + BASEVERSION); /* TODO: CASTOR BASEVERSION */
 }
 
 void AULFile::HDR1EOF1::verifyCommon()

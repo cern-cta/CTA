@@ -264,7 +264,7 @@ namespace tape {
        * @param blockLength  The CASTOR block size.
        * @param driveHasCompression  The boolean to set If the drive is 
        *                             configured to use compression or not.
-       *                             By default it si true.
+       *                             By default it is true.
        */
       void fill(int blockLength, bool compression = true);
 
