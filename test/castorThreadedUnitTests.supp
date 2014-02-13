@@ -1,2 +1,39 @@
 # castor unit tests suppression list
 #
+{
+  helgrind-unitTest-slc5-marshaling000
+  Helgrind:Race
+  fun:_ZNSs9_M_mutateEmmm
+  ...
+  fun:_ZN6castor8Services9createObjEPNS_8IAddressE
+  fun:_ZN6castor2io14AbstractSocket10readObjectEv
+}
+
+{
+  helgrind-unitTest-slc5-marshaling001
+  Helgrind:Race
+  fun:_ZNSt19basic_ostringstreamIcSt11char_traitsIcESaIcEEC1ERKSsSt13_Ios_Openmode
+  ...
+  fun:getconfent_fromfile
+  fun:_ZN6castor2io17AbstractTCPSocket10readBufferEjPPcRi
+}
+
+{
+  helgrind-unitTest-slc5-marshaling002
+  Helgrind:Race
+  fun:_ZNSs6appendERKSs
+  fun:_ZN6castor9exception9BacktraceC1Ev
+  ...
+  fun:getconfent_fromfile
+  fun:_ZN6castor2io17AbstractTCPSocket10readBufferEjPPcRi
+}
+
+{
+  helgrind-unitTest-slc5-marshaling003
+  Helgrind:Race
+  fun:_ZrsIcSt11char_traitsIcESaIcEERN6castor2io11biniostreamES6_RSbIT_T0_T1_E
+  fun:_ZN6castor2io15StreamVolumeCnv9createObjEPNS_8IAddressE
+  ...
+  fun:_ZN6castor8Services9createObjEPNS_8IAddressE
+  fun:_ZN6castor2io14AbstractSocket10readObjectEv
+}
