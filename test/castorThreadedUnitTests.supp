@@ -1,69 +1,66 @@
 # castor unit tests suppression list
 #
+
 {
-  helgrind-unitTest-slc5-marshaling000
+  helgrind-unitTest-slc5-marshaling007
   Helgrind:Race
-  fun:_ZNSs9_M_mutateEmmm
-  ...
-  fun:_ZN6castor8Services9createObjEPNS_8IAddressE
-  fun:_ZN6castor2io14AbstractSocket10readObjectEv
+  fun:_ZrsIcSt11char_traitsIcESaIcEERN6castor2io11biniostreamES6_RSbIT_T0_T1_E
 }
 
 {
-  helgrind-unitTest-slc5-marshaling001
+  helgrind-unitTest-slc5-biniostreamclass
   Helgrind:Race
+  fun:*castor2io11biniostream*
+}
+
+{
+  helgrind-unitTest-slc5-test-itself
+  Helgrind:Race
+  ...
+  fun:_ZN8unitTest15streamMarshaler3runEv
+}
+
+{
+  helgrind-unitTest-stream-marshalers
+  Helgrind:Race
+  ...
+  fun:_ZN6castor2io12StreamCnvSvc15unmarshalObject*
+}
+
+{
+  helgrind-unitTest-stream-biniostream-exact01
+  Helgrind:Race
+  ...
+  fun:_ZrsIcSt11char_traitsIcESaIcEERN6castor2io11biniostreamES6_RSbIT_T0_T1_E
+}
+
+{
+  helgrind-unitTest-basic-streams-in-getconfent
+  Helgrind:Race
+  ...
   fun:_ZNSt19basic_ostringstreamIcSt11char_traitsIcESaIcEEC1ERKSsSt13_Ios_Openmode
-  ...
-  fun:getconfent_fromfile
-  fun:_ZN6castor2io17AbstractTCPSocket10readBufferEjPPcRi
 }
 
 {
-  helgrind-unitTest-slc5-marshaling002
+  helgrind-unitTest-basic-streams01
+  Helgrind:Race
+  ...
+  fun:_ZNSt15basic_stringbufIcSt11char_traitsIcESaIcEE8overflowEi
+}
+
+{
+  helgrind-unitTest-string-append-in-getconfent
   Helgrind:Race
   fun:_ZNSs6appendERKSs
-  fun:_ZN6castor9exception9BacktraceC1Ev
   ...
-  fun:getconfent_fromfile
-  fun:_ZN6castor2io17AbstractTCPSocket10readBufferEjPPcRi
-}
-
-{
-  helgrind-unitTest-slc5-marshaling003
-  Helgrind:Race
-  fun:_ZrsIcSt11char_traitsIcESaIcEERN6castor2io11biniostreamES6_RSbIT_T0_T1_E
-  fun:_ZN6castor2io15StreamVolumeCnv9createObjEPNS_8IAddressE
-  ...
-  fun:_ZN6castor8Services9createObjEPNS_8IAddressE
-  fun:_ZN6castor2io14AbstractSocket10readObjectEv
-}
-
-{
-  helgrind-unitTest-slc5-marshaling004
-  Helgrind:Race
-  fun:getconfent_fromfile
   fun:getconfent
-  fun:_ZN6castor2io17AbstractTCPSocket10readBufferEjPPcRi
-  fun:_ZN6castor2io14AbstractSocket10readObjectEv
 }
 
 {
-  helgrind-unitTest-slc5-marshaling005
+  helgrind-unitTest-string-append-in-getconfent-from-file
   Helgrind:Race
-  fun:_ZNSs9_M_mutateEjjj
-  fun:_ZrsIcSt11char_traitsIcESaIcEERN6castor2io11biniostreamES6_RSbIT_T0_T1_E
-  ...
-  fun:_ZN6castor8Services9createObjEPNS_8IAddressE
-  fun:_ZN6castor2io14AbstractSocket10readObjectEv
-}
-
-{
-  helgrind-unitTest-slc5-marshaling006
-  Helgrind:Race
-  fun:_ZNSs4swapERSs
-  fun:_ZNSt15basic_stringbufIcSt11char_traitsIcESaIcEE8overflowEi
+  fun:_ZNSs6appendERKSs
   ...
   fun:getconfent_fromfile
-  fun:_ZN6castor2io17AbstractTCPSocket10readBufferEjPPcRi
-  fun:_ZN6castor2io14AbstractSocket10readObjectEv
 }
+
