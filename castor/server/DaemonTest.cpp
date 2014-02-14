@@ -26,6 +26,7 @@
 #include "castor/server/Daemon.hpp"
 
 #include <gtest/gtest.h>
+#include <sstream>
 #include <stdio.h>
 #include <string.h>
 
@@ -59,8 +60,10 @@ protected:
 };
 
 TEST_F(castor_server_DaemonTest, getForegroundBeforeParseCommandLine) {
+  std::ostringstream dummyStdOut;
+  std::ostringstream dummyStdErr;
   castor::log::DummyLogger log(m_programName);
-  castor::server::Daemon daemon(log);
+  castor::server::Daemon daemon(dummyStdOut, dummyStdErr, log);
   
   ASSERT_THROW(daemon.getForeground(), castor::exception::CommandLineNotParsed);
 }
@@ -71,8 +74,10 @@ TEST_F(castor_server_DaemonTest, parseEmptyCmdLine) {
   m_argv[1] = NULL;
   m_argc = 1;
 
+  std::ostringstream dummyStdOut;
+  std::ostringstream dummyStdErr;
   castor::log::DummyLogger log(m_programName);
-  castor::server::Daemon daemon(log);
+  castor::server::Daemon daemon(dummyStdOut, dummyStdErr, log);
 
   ASSERT_NO_THROW(daemon.parseCommandLine(m_argc, m_argv));
   ASSERT_EQ(false, daemon.getForeground());
@@ -85,8 +90,10 @@ TEST_F(castor_server_DaemonTest, parseFOnCmdLine) {
   m_argv[2] = NULL;
   m_argc = 2;
 
+  std::ostringstream dummyStdOut;
+  std::ostringstream dummyStdErr;
   castor::log::DummyLogger log(m_programName);
-  castor::server::Daemon daemon(log);
+  castor::server::Daemon daemon(dummyStdOut, dummyStdErr, log);
 
   ASSERT_NO_THROW(daemon.parseCommandLine(m_argc, m_argv));
   ASSERT_EQ(true, daemon.getForeground());

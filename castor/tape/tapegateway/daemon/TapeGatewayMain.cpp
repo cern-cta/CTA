@@ -26,13 +26,16 @@
 #include "castor/tape/tapegateway/daemon/TapeGatewayDaemon.hpp"
 #include "castor/exception/Exception.hpp"
 
+#include <iostream>
+
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 int main(int argc, char **argv) {
   try {
     castor::log::LoggerImplementation logger("tapegatewayd");
-    castor::tape::tapegateway::TapeGatewayDaemon daemon(logger);
+    castor::tape::tapegateway::TapeGatewayDaemon
+      daemon(std::cout, std::cerr, logger);
     return daemon.main(argc, argv);
   } catch (castor::exception::Exception e) {
     std::cerr << "Caught exception :\n" << e.getMessage().str() << "\nExiting" << std::endl;

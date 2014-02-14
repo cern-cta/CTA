@@ -24,6 +24,7 @@
 
 #include "castor/tape/rmc/Acs.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 
 #include <iomanip>
 #include <sstream>
@@ -41,7 +42,7 @@ castor::tape::rmc::Acs::~Acs() throw() {
 DRIVEID castor::tape::rmc::Acs::str2DriveId(const std::string &str)
   const throw(castor::exception::InvalidArgument) {
   std::vector<std::string> components;
-  utils::splitString(str, ':', components);
+  castor::utils::splitString(str, ':', components);
 
   // The drive ID should consist of 4 components: ACS, LSM, Panel and Transport
   if(4 != components.size()) {

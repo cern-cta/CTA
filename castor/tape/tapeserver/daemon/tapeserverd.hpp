@@ -28,31 +28,50 @@
 
 namespace castor {
 namespace tape {
-  namespace Server {
-    class Daemon: public castor::server::Daemon {
-    public:
-      /** Wrapper for main */
-      static int main (int argc, char ** argv) throw ();
-      /** Constructor: parse the command line */
-      Daemon (int argc, char ** argv, castor::log::Logger & logger) 
-              throw (castor::tape::Exception);
-      /** Run the daemon: daemonize if needed, and run the main loop. */
-      void run();
-      ~Daemon() throw () {}
-    private:
-      void parseCommandLineOptions(int argc, char ** argv) throw (castor::tape::Exception);
-      /** This daemonize() version has to be merged into castor::server::Daemon::daemonize
-       * which has a few things to check (error cases for fork are not handled correctly,
-       * error cases for setsid are not looked at, there is a forced switch to stager
-       * user, while taped (and children) and rtcpd (but not its children) run 
-       * as root. There is some calls to signal in daemonize for just 2 signals */
-      void daemonize();
-      /** We block all signals, so that they can be handled synchronously with 
-       * a sigtimedwait in the main loop (alternately with a poll using a
-       * non-zero timeout. */
-      void blockSignals();
-      std::string m_option_run_directory;
-    };
-  }
-}
-}  
+namespace Server {
+
+class Daemon: public castor::server::Daemon {
+public:
+
+  /** Wrapper for main */
+  static int main (int argc, char ** argv) throw ();
+
+  /**
+   * Constructor: parse the command line
+   *
+   * @param argc The number of command-line arguments.
+   * @param argv The array of command-line arguments.
+   * @param stdOut Stream representing standard out.
+   * @param stdErr Stream representing standard error.
+   * @param logger Object representing the API of the CASTOR logging system.
+   */
+  Daemon (int argc, char ** argv, std::ostream &stdOut, std::ostream &stdErr,
+    castor::log::Logger & logger) throw (castor::tape::Exception);
+
+  /** Run the daemon: daemonize if needed, and run the main loop. */
+
+  void run();
+  ~Daemon() throw () {}
+
+private:
+
+  void parseCommandLineOptions(int argc, char ** argv) throw (castor::tape::Exception);
+
+  /** This daemonize() version has to be merged into castor::server::Daemon::daemonize
+   * which has a few things to check (error cases for fork are not handled correctly,
+   * error cases for setsid are not looked at, there is a forced switch to stager
+   * user, while taped (and children) and rtcpd (but not its children) run 
+   * as root. There is some calls to signal in daemonize for just 2 signals */
+  void daemonize();
+
+  /** We block all signals, so that they can be handled synchronously with 
+   * a sigtimedwait in the main loop (alternately with a poll using a
+   * non-zero timeout. */
+  void blockSignals();
+
+  std::string m_option_run_directory;
+}; // class Daemon
+
+} // namespace castor
+} // namespace tape
+} // namespace Server

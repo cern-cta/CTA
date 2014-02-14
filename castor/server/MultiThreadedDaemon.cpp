@@ -32,8 +32,9 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::server::MultiThreadedDaemon::MultiThreadedDaemon(log::Logger &logger):
-  Daemon(logger), m_signalMutex(NULL) {
+castor::server::MultiThreadedDaemon::MultiThreadedDaemon(std::ostream &stdOut,
+  std::ostream &stdErr, log::Logger &logger) throw():
+  Daemon(stdOut, stdErr, logger), m_signalMutex(NULL) {
 }
 
 //------------------------------------------------------------------------------
@@ -91,7 +92,7 @@ void castor::server::MultiThreadedDaemon::parseCommandLine(int argc,
       break;
     case 'c':
       setenv("PATH_CONFIG", Coptarg, 1);
-      std::cout << "Using configuration file " << Coptarg << std::endl;
+      m_stdOut << "Using configuration file " << Coptarg << std::endl;
       break;
     case 'h':
       help(argv[0]);
@@ -124,7 +125,7 @@ void castor::server::MultiThreadedDaemon::parseCommandLine(int argc,
 //------------------------------------------------------------------------------
 void castor::server::MultiThreadedDaemon::help(const std::string &programName)
   throw() {
-  std::cout << "Usage: " << programName << " [options]\n"
+  m_stdOut << "Usage: " << programName << " [options]\n"
     "\n"
     "where options can be:\n"
     "\n"
@@ -156,7 +157,7 @@ void castor::server::MultiThreadedDaemon::addThreadPool(
 void castor::server::MultiThreadedDaemon::start()
   throw(castor::exception::Exception) {
   if (m_foreground) {
-    std::cout << "Starting " << getServerName() << std::endl;
+    m_stdOut << "Starting " << getServerName() << std::endl;
   }
 
   std::map<const char, castor::server::BaseThreadPool*>::const_iterator tp;

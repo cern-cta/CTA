@@ -63,7 +63,7 @@ const char *castor::rh::PORT_SEC_CONF = "SEC_PORT";
 int main(int argc, char *argv[]) {
   try {
     castor::log::LoggerImplementation logger("rhd");
-    castor::rh::Server server(logger);
+    castor::rh::Server server(std::cout, std::cerr, logger);
 
     // parse the command line
     server.parseCommandLine(argc, argv);
@@ -93,8 +93,9 @@ int main(int argc, char *argv[]) {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::rh::Server::Server(castor::log::Logger &logger) :
-  castor::server::MultiThreadedDaemon(logger),
+castor::rh::Server::Server(std::ostream &stdOut, std::ostream &stdErr,
+  castor::log::Logger &logger) :
+  castor::server::MultiThreadedDaemon(stdOut, stdErr, logger),
   m_port(-1),
   m_secure(false),
   m_waitIfBusy(true),

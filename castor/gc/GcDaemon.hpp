@@ -47,9 +47,11 @@ namespace castor {
       /**
        * Constructor
        *
+       * @param stdOut Stream representing standard out.
+       * @param stdErr Stream representing standard error.
        * @param logger Object representing the API of the CASTOR logging system.
        */
-      GcDaemon(log::Logger &logger);
+      GcDaemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &logger);
 
       /**
        * Default destructor

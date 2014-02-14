@@ -52,9 +52,9 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::vdqm::VdqmServer::VdqmServer(log::Logger &logger)
-  throw(castor::exception::Exception) :
-  castor::server::MultiThreadedDaemon(logger),
+castor::vdqm::VdqmServer::VdqmServer(std::ostream &stdOut, std::ostream &stdErr,
+  log::Logger &logger) throw(castor::exception::Exception) :
+  castor::server::MultiThreadedDaemon(stdOut, stdErr, logger),
   m_requestHandlerThreadNumber(REQUESTHANDLERDEFAULTTHREADNUMBER),
   m_RTCPJobSubmitterThreadNumber(RTCPJOBSUBMITTERDEFAULTTHREADNUMBER),
   m_schedulerThreadNumber(SCHEDULERDEFAULTTHREADNUMBER) {

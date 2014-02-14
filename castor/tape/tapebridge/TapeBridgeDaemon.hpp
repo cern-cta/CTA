@@ -54,9 +54,12 @@ public:
   /**
    * Constructor.
    *
+   * @param stdOut Stream representing standard out.
+   * @param stdErr Stream representing standard error.
    * @param logger Object representing the API of the CASTOR logging system.
    */
-  TapeBridgeDaemon(log::Logger &logger) throw(castor::exception::Exception);
+  TapeBridgeDaemon(std::ostream &stdOut, std::ostream &stdErr,
+    log::Logger &logger) throw(castor::exception::Exception);
 
   /**
    * Destructor.
@@ -79,6 +82,9 @@ private:
    * Exception throwing main() function which basically implements the
    * non-exception throwing main() function except for the initialisation of
    * DLF and the "exception catch and log" logic.
+   *
+   * @param argc The number of command-line arguments.
+   * @param argv The array of command-line arguments.
    */
   int exceptionThrowingMain(const int argc, char **argv)
     throw(castor::exception::Exception);

@@ -33,9 +33,12 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::server::Daemon::Daemon(log::Logger &logger) throw():
+castor::server::Daemon::Daemon(std::ostream &stdOut, std::ostream &stdErr,
+  log::Logger &logger) throw():
   m_foreground(false),
   m_commandLineHasBeenParsed(false),
+  m_stdOut(stdOut),
+  m_stdErr(stdErr),
   m_runAsStagerSuperuser(false),
   m_logger(logger) {
 }
@@ -82,7 +85,7 @@ void castor::server::Daemon::parseCommandLine(int argc,
       break;
     case 'c':
       setenv("PATH_CONFIG", Coptarg, 1);
-      std::cout << "Using configuration file " << Coptarg << std::endl;
+      m_stdOut << "Using configuration file " << Coptarg << std::endl;
       break;
     case 'h':
       help(argv[0]);
@@ -101,7 +104,7 @@ void castor::server::Daemon::parseCommandLine(int argc,
 //------------------------------------------------------------------------------
 void castor::server::Daemon::help(const std::string &programName)
   throw() {
-  std::cout << "Usage: " << programName << " [options]\n"
+  m_stdOut << "Usage: " << programName << " [options]\n"
     "\n"
     "where options can be:\n"
     "\n"

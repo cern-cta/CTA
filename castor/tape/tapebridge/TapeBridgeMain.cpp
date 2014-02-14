@@ -22,11 +22,10 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
  
-
-
 #include "castor/log/LoggerImplementation.hpp"
 #include "castor/tape/tapebridge/TapeBridgeDaemon.hpp"
 
+#include <iostream>
 
 //------------------------------------------------------------------------------
 // main
@@ -34,7 +33,8 @@
 int main(int argc, char **argv) {
 
   castor::log::LoggerImplementation logger("tapebridged");
-  castor::tape::tapebridge::TapeBridgeDaemon daemon(logger);
+  castor::tape::tapebridge::TapeBridgeDaemon
+    daemon(std::cout, std::cerr, logger);
 
   return daemon.main(argc, argv);
 }

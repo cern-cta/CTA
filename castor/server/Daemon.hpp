@@ -28,6 +28,8 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/log/Logger.hpp"
 
+#include <ostream>
+
 namespace castor {
 namespace server {
 
@@ -43,9 +45,12 @@ public:
   /**
    * Constructor
    *
+   * @param stdOut Stream representing standard out.
+   * @param stdErr Stream representing standard error.
    * @param logger Object representing the API of the CASTOR logging system.
    */
-  Daemon(log::Logger &logger) throw();
+  Daemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &logger)
+    throw();
 
   /**
    * Destructor.
@@ -225,6 +230,16 @@ protected:
    * True if the command-line has been parsed.
    */
   bool m_commandLineHasBeenParsed;
+
+  /**
+   * Stream representing standard out.
+   */
+  std::ostream &m_stdOut;
+
+  /**
+   * Stream reprsenting standard in.
+   */
+  std::ostream &m_stdErr;
 
 private:
 
