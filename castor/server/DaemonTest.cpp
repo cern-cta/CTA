@@ -19,7 +19,7 @@
  *
  * 
  *
- * @author Castor Dev team, castor-dev@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
 #include "castor/log/DummyLogger.hpp"
