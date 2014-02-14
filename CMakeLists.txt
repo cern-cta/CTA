@@ -417,7 +417,7 @@ add_custom_target(test test/castorUnitTests
                     COMMAND valgrind --leak-check=full --show-reachable=yes --error-exitcode=1 test/castorUnitTests
                     COMMAND test/castorThreadedUnitTests
                     COMMAND valgrind --leak-check=full --show-reachable=yes --error-exitcode=1 test/castorThreadedUnitTests
-                    COMMAND valgrind --tool=helgrind -v --demangle=no --error-exitcode=1 --suppressions=test/castorThreadedUnitTests.supp test/castorThreadedUnitTests
+                    COMMAND valgrind --tool=helgrind --error-exitcode=1 --suppressions=test/castorThreadedUnitTests.supp test/castorThreadedUnitTests
                     COMMAND test/castorMultiprocessUnitTests
                     COMMAND valgrind --tool=helgrind --error-exitcode=1 test/castorMultiprocessUnitTests
                     DEPENDS test/castorUnitTests test/castorThreadedUnitTests test/castorMultiprocessUnitTests test/castorThreadedUnitTests.supp
