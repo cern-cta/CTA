@@ -109,18 +109,24 @@ int main(int argc, char* argv[])
               std::cout << "Please enter the size of the file: ";
               std::cin >> info.size;
               std::cin.ignore();
-              my_sess.position(info);
+              castor::tape::AULFile::ReadFile file(&my_sess,info);
               std::cout << "Tape positioned at the beginning of the file\n";
-              size_t bs = my_sess.getBlockSize();
+              size_t bs = file.getBlockSize();
               std::cout << "Block size: " << bs << std::endl;
               char *buf = new char[bs];
               std::ofstream out;
               out.open("/tmp/hello", std::ofstream::trunc);
               size_t bytes_read = 0;
-              while((bytes_read = my_sess.read(buf, bs)) != 0) {
-                std::cout << "Reading... ";
-                out.write(buf, bytes_read);
-                std::cout << "DONE\n";
+              try {
+                while(true) {
+                  bytes_read = file.read(buf, bs);
+                  std::cout << "Reading... ";
+                  out.write(buf, bytes_read);
+                  std::cout << "DONE\n";
+                }
+              }
+              catch (castor::tape::AULFile::EndOfFile &e) {
+                std::cout << e.what() << std::endl;
               }
               out.close();
               delete[] buf;
@@ -129,7 +135,11 @@ int main(int argc, char* argv[])
               f=1;
             }
           }
-        } catch (std::exception & e) {
+          if(my_sess.isCorrupted()) {
+            throw castor::tape::AULFile::SessionCorrupted();
+          }
+        } 
+        catch (std::exception & e) {
           fail = 1;
           std::cout << "-- EXCEPTION ---------------------------------" << std::endl
                     << e.what() << std::endl

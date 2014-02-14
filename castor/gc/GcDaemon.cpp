@@ -33,11 +33,12 @@
 #include "castor/log/LoggerImplementation.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/BaseThreadPool.hpp"
-#include "Cgetopt.h"
-#include "getconfent.h"
+#include "h/Cgetopt.h"
+#include "h/getconfent.h"
+
+#include <iostream>
 #include <sys/time.h>
 #include <string.h>
-
 
 //-----------------------------------------------------------------------------
 // main
@@ -46,7 +47,7 @@ int main(int argc, char *argv[]) {
 
   try {
     castor::log::LoggerImplementation logger("gcd");
-    castor::gc::GcDaemon daemon(logger);
+    castor::gc::GcDaemon daemon(std::cout, std::cerr, logger);
 
     // Randomize the start-up of the daemon between 1 and 15 minutes.
     char *value;
@@ -110,8 +111,9 @@ int main(int argc, char *argv[]) {
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-castor::gc::GcDaemon::GcDaemon(log::Logger &logger):
-  castor::server::MultiThreadedDaemon(logger) {
+castor::gc::GcDaemon::GcDaemon(std::ostream &stdOut, std::ostream &stdErr,
+  log::Logger &logger):
+  castor::server::MultiThreadedDaemon(stdOut, stdErr, logger) {
 
   // Now with predefined messages
   castor::dlf::Message messages[] = {

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      GcDaemon.hpp
+ *                      CommandLineNotParsed.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,51 +17,32 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @(#)GcDaemon.hpp,v 1.2 $Release$ 2005/03/16 10:37:01 jiltsov
  *
- * Garbage collector daemon handling the deletion of local
- * files on a filesystem. Makes remote calls to the stager's
- * GC service to know what to delete and to update the catalog
  *
- * @author Sebastien Ponce
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef GC_GCDAEMON_HPP
-#define GC_GCDAEMON_HPP 1
+#ifndef CASTOR_EXCEPTION_COMMANDLINENOTPARSED_HPP 
+#define CASTOR_EXCEPTION_COMMANDLINENOTPARSED_HPP 1
 
-// Include files
-#include "castor/server/MultiThreadedDaemon.hpp"
 #include "castor/exception/Exception.hpp"
 
-namespace castor {
-
-  namespace gc {
+namespace castor { namespace exception {
 
     /**
-     * Garbage Collector daemon.
+     * CommandLineNotParsed.
      */
-    class GcDaemon: public castor::server::MultiThreadedDaemon {
-
+    class CommandLineNotParsed : public castor::exception::Exception {
+      
     public:
-
+      
       /**
        * Constructor
-       *
-       * @param stdOut Stream representing standard out.
-       * @param stdErr Stream representing standard error.
-       * @param logger Object representing the API of the CASTOR logging system.
        */
-      GcDaemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &logger);
+      CommandLineNotParsed();
 
-      /**
-       * Default destructor
-       */
-      virtual ~GcDaemon() throw() {};
+    }; // class CommandLineNotParsed
 
-    };
+} } // namespace castor exception
 
-  } // End of namespace gc
-
-} // End of namespace castor
-
-#endif // GC_GCDAEMON_HPP
+#endif // CASTOR_EXCEPTION_COMMANDLINENOTPARSED_HPP

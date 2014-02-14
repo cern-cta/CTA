@@ -78,7 +78,7 @@ namespace tape {
       /**
        * @return VSN the tape serial number
        */
-      inline std::string getVSN() {
+      inline std::string getVSN() const {
         return toString(VSN);
       }
 
@@ -130,28 +130,28 @@ namespace tape {
       /**
        * @return VSN the tape serial number
        */
-      inline std::string getVSN() {
+      inline std::string getVSN() const {
         return toString(VSN);
       }
 
       /**
        * @return The CASTOR NS file Id
        */
-      inline std::string getFileId() {
+      inline std::string getFileId() const {
         return toString(fileId);
       }
 
       /**
        * @return The file sequence number (modulo 10000: useless)
        */
-      inline std::string getfSeq() {
+      inline std::string getfSeq() const {
         return toString(fSeq);
       }
       
       /**
        * @return The number of block written on tape per file (only valid in trailer, fairly useless)
        */
-      inline std::string getBlockCount() {
+      inline std::string getBlockCount() const {
         return toString(blockCount);
       }
     };
@@ -250,7 +250,7 @@ namespace tape {
       /**
        * @return    The block length 
        */
-      inline std::string getBlockLength() {
+      inline std::string getBlockLength() const {
         return toString(blockLength);
       }
     };
@@ -264,7 +264,7 @@ namespace tape {
        * @param blockLength  The CASTOR block size.
        * @param driveHasCompression  The boolean to set If the drive is 
        *                             configured to use compression or not.
-       *                             By default it si true.
+       *                             By default it is true.
        */
       void fill(int blockLength, bool compression = true);
 
@@ -335,14 +335,14 @@ namespace tape {
       /**
        * @return    The block size
        */
-      inline std::string getBlockSize() {
+      inline std::string getBlockSize() const {
         return toString(actualBlockSize);
       }
 
       /**
        * @return The file sequence number
        */
-      inline std::string getfSeq() {
+      inline std::string getfSeq() const {
         return toString(actualfSeq);
       }
     };

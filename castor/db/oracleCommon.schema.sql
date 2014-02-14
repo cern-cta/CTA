@@ -138,7 +138,7 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Rebalancing', 'Sensitivity', '5', 'The rebalancing sensitivity (in percent) : if a fileSystem is at least this percentage fuller than the average of the diskpool where it lives, rebalancing will fire.');
 INSERT INTO CastorConfig
-  VALUES ('Stager', 'Protocols', 'rfio rfio3 root gsiftp xroot', 'The list of protocols accepted by the system.')
+  VALUES ('Stager', 'Protocols', 'rfio rfio3 root gsiftp xroot', 'The list of protocols accepted by the system.');
 /* Create the AdminUsers table */
 CREATE TABLE AdminUsers (euid NUMBER, egid NUMBER);
 ALTER TABLE AdminUsers ADD CONSTRAINT UN_AdminUsers_euid_egid UNIQUE (euid, egid);
@@ -765,7 +765,7 @@ CREATE TABLE FileMigrationResultsHelper
 CREATE INDEX I_FileMigResultsHelper_ReqId ON FileMigrationResultsHelper(ReqId);
 
 /* SQL statements for type DiskServer */
-CREATE TABLE DiskServer (name VARCHAR2(2048), lastHeartbeatTime NUMBER, id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY, status INTEGER, hwOnline INTEGER DEFAULT 0) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DiskServer (name VARCHAR2(2048), lastHeartbeatTime NUMBER DEFAULT 0, id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY, status INTEGER, hwOnline INTEGER DEFAULT 0) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
 ALTER TABLE DiskServer MODIFY
   (status CONSTRAINT NN_DiskServer_Status NOT NULL,
@@ -1176,7 +1176,6 @@ CREATE TABLE DrainingJob
    egid           INTEGER CONSTRAINT NN_DrainingJob_Egid NOT NULL,
    pid            INTEGER CONSTRAINT NN_DrainingJob_Pid NOT NULL,
    machine        VARCHAR2(2048) CONSTRAINT NN_DrainingJob_Machine NOT NULL,
-   reqId          VARCHAR2(2048) CONSTRAINT NN_DrainingJob_ReqId NOT NULL,
    creationTime   INTEGER CONSTRAINT NN_DrainingJob_CT NOT NULL,
    lastModificationTime INTEGER CONSTRAINT NN_DrainingJob_LMT NOT NULL,
    status         INTEGER CONSTRAINT NN_DrainingJob_Status NOT NULL,

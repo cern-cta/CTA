@@ -63,7 +63,7 @@ const char *castor::rh::PORT_SEC_CONF = "SEC_PORT";
 int main(int argc, char *argv[]) {
   try {
     castor::log::LoggerImplementation logger("rhd");
-    castor::rh::Server server(logger);
+    castor::rh::Server server(std::cout, std::cerr, logger);
 
     // parse the command line
     server.parseCommandLine(argc, argv);
@@ -93,8 +93,9 @@ int main(int argc, char *argv[]) {
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::rh::Server::Server(castor::log::Logger &logger) :
-  castor::server::MultiThreadedDaemon(logger),
+castor::rh::Server::Server(std::ostream &stdOut, std::ostream &stdErr,
+  castor::log::Logger &logger) :
+  castor::server::MultiThreadedDaemon(stdOut, stdErr, logger),
   m_port(-1),
   m_secure(false),
   m_waitIfBusy(true),
@@ -173,6 +174,7 @@ void castor::rh::Server::help(std::string programName)
 //------------------------------------------------------------------------------
 void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor::exception::Exception)
 {
+  bool foreground = false; // Should the daemon run in the foreground?
   Coptions_t longopts[] =
     {
       {"foreground", NO_ARGUMENT,       NULL, 'f'},
@@ -196,7 +198,7 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
   while ((c = Cgetopt_long(argc, argv, "fsR:p:c:nmh", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
-      m_foreground = true;
+      foreground = true;
       break;
     case 'c':
       {
@@ -293,7 +295,8 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     mc->addHistogram(new castor::metrics::Histogram(
       "Users", &castor::rh::UserCounter::instantiate));
 */
-  }    
+  }
+  setCommandLineHasBeenParsed(foreground);
 }
 
 //------------------------------------------------------------------------------

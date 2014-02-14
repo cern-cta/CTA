@@ -22,6 +22,12 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "tapeserverd.hpp"
+#include "castor/log/LoggerImplementation.hpp"
+#include "log.h"
+#include "castor/io/AbstractSocket.hpp"
+#include "castor/exception/Errnum.hpp"
+
 #include <iostream>
 #include <exception>
 #include <unistd.h>
@@ -32,23 +38,24 @@
 #include <sstream>
 #include <signal.h>
 
-#include "tapeserverd.hpp"
-#include "castor/log/LoggerImplementation.hpp"
-#include "log.h"
-#include "castor/io/AbstractSocket.hpp"
-#include "castor/exception/Errnum.hpp"
-
+//------------------------------------------------------------------------------
+// main
+//------------------------------------------------------------------------------
 int main(int argc, char ** argv) {
   return castor::tape::Server::Daemon::main(argc, argv);
 }
 
+//------------------------------------------------------------------------------
+// main
+//------------------------------------------------------------------------------
 int castor::tape::Server::Daemon::main(int argc, char ** argv) throw() {
   try {
     /* Before anything, we need a logger: */
     castor::log::LoggerImplementation logger("tapeserverd");
     try {
       /* Setup the object (parse command line, register logger) */
-      castor::tape::Server::Daemon daemon(argc, argv, logger);
+      castor::tape::Server::Daemon
+        daemon(argc, argv, std::cout, std::cerr, logger);
       /* ... and run. */
       daemon.run();
     /* Catch all block for any left over exception which will go to the logger */
@@ -72,18 +79,25 @@ int castor::tape::Server::Daemon::main(int argc, char ** argv) throw() {
   return (EXIT_SUCCESS);
 }
 
-castor::tape::Server::Daemon::Daemon(int argc, char** argv, 
-    castor::log::Logger & logger) throw (castor::tape::Exception):
-castor::server::Daemon(logger),
-    m_option_run_directory ("/var/log/castor") {
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::Server::Daemon::Daemon(int argc, char** argv,
+  std::ostream &stdOut, std::ostream &stdErr, castor::log::Logger & logger)
+  throw (castor::tape::Exception):
+  castor::server::Daemon(stdOut, stdErr, logger),
+  m_option_run_directory ("/var/log/castor") {
   parseCommandLineOptions(argc, argv);
 }
 
+//------------------------------------------------------------------------------
+// run
+//------------------------------------------------------------------------------
 void castor::tape::Server::Daemon::run() {
   /* Block signals, we will handle them synchronously */
   blockSignals();
   /* Daemonize if requested */
-  if (!m_foreground) daemonize();
+  if (!getForeground()) daemonize();
   /* Setup the the mother forker, which will spawn and handle the tape sessions */
   /* TODO */
   /* Setup the listening socket for VDQM requests */
@@ -91,9 +105,12 @@ void castor::tape::Server::Daemon::run() {
   /* Loop on both */
 }
 
-void castor::tape::Server::Daemon::parseCommandLineOptions(int argc, char** argv)
-throw (castor::tape::Exception)
-{
+//------------------------------------------------------------------------------
+// parseCommandLineOptions
+//------------------------------------------------------------------------------
+void castor::tape::Server::Daemon::parseCommandLineOptions(int argc,
+char** argv) throw (castor::tape::Exception) {
+  bool foreground = false; // Should the daemon run in the foreground?
   /* Expect -f or --foreground */
   struct ::option opts[] = {
     { "foreground", no_argument, 0, 'f'},
@@ -103,7 +120,7 @@ throw (castor::tape::Exception)
   while (-1 != (c = getopt_long(argc, argv, ":f", opts, NULL))) {
     switch (c) {
       case 'f':
-        m_foreground = true;
+        foreground = true;
         break;
       case ':':
       {
@@ -127,8 +144,12 @@ throw (castor::tape::Exception)
       }
     }
   }
+  setCommandLineHasBeenParsed(foreground);
 }
 
+//------------------------------------------------------------------------------
+// daemonize
+//------------------------------------------------------------------------------
 void castor::tape::Server::Daemon::daemonize()
 {
   pid_t pid, sid;
@@ -171,6 +192,9 @@ void castor::tape::Server::Daemon::daemonize()
     "Failed to freopen stderr in castor::tape::Server::Daemon::daemonize");
 }
 
+//------------------------------------------------------------------------------
+// blockSignals
+//------------------------------------------------------------------------------
 void castor::tape::Server::Daemon::blockSignals()
 {
   sigset_t sigs;

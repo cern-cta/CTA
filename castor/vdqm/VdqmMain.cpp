@@ -33,6 +33,7 @@
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/VdqmServer.hpp"
 
+#include <iostream>
 #include <stdio.h>
 #include <string>
 
@@ -43,7 +44,7 @@
 int main(int argc, char *argv[]) {
   try {
     castor::log::LoggerImplementation logger("vdqmd");
-    castor::vdqm::VdqmServer       server(logger);
+    castor::vdqm::VdqmServer       server(std::cout, std::cerr, logger);
     Cuuid_t                        cuuid                       = cuuid;
     castor::server::BaseThreadPool *requestHandlerThreadPool   = NULL;
     castor::server::BaseThreadPool *driveSchedulerThreadPool   = NULL;

@@ -48,9 +48,12 @@ namespace castor {
       /**
        * Constructor
        *
+       * @param stdOut Stream representing standard out.
+       * @param stdErr Stream representing standard error.
        * @param logger Object representing the API of the CASTOR logging system.
        */
-      VdqmServer(log::Logger &logger) throw(castor::exception::Exception);
+      VdqmServer(std::ostream &stdOut, std::ostream &stdErr,
+        log::Logger &logger) throw(castor::exception::Exception);
 
       /**
        * Logs the start of the server.

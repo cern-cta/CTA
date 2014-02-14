@@ -46,8 +46,9 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapebridge::TapeBridgeDaemon::TapeBridgeDaemon(
-  log::Logger &logger) throw(castor::exception::Exception) :
-  castor::server::MultiThreadedDaemon(logger),
+  std::ostream &stdOut, std::ostream &stdErr, log::Logger &logger)
+  throw(castor::exception::Exception) :
+  castor::server::MultiThreadedDaemon(stdOut, stdErr, logger),
   m_vdqmRequestHandlerThreadPool(0) {
 }
 
@@ -124,7 +125,7 @@ int castor::tape::tapebridge::TapeBridgeDaemon::exceptionThrowingMain(
   }
 
   // Pass the foreground option to the super class BaseDaemon
-  m_foreground = m_parsedCommandLine.foregroundOptionSet;
+  setCommandLineHasBeenParsed(m_parsedCommandLine.foregroundOptionSet);
 
   // Determine and log the configuration parameters used by the tapebridged
   // daemon to know how many files should be bulk requested per request for

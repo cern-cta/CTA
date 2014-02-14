@@ -172,7 +172,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_6');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_11');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -232,6 +232,7 @@ CREATE OR REPLACE PACKAGE castorns AS
   );
   TYPE Segment_Cur IS REF CURSOR RETURN Segment_Rec;
   TYPE Stats_Rec IS RECORD (
+    timeInterval NUMBER,
     gid INTEGER,
     maxFileId INTEGER,
     fileCount INTEGER,
@@ -331,6 +332,20 @@ END;
 CREATE OR REPLACE FUNCTION getSecs(startTime IN TIMESTAMP, endTime IN TIMESTAMP) RETURN NUMBER IS
 BEGIN
   RETURN TRUNC(EXTRACT(SECOND FROM (endTime - startTime)), 6);
+END;
+/
+
+/* Function to convert seconds into a time string using the format:
+ * DD-MON-YYYY HH24:MI:SS. If seconds is not defined then the current time
+ * will be returned.
+ */
+CREATE OR REPLACE FUNCTION getTimeString
+(seconds IN NUMBER DEFAULT NULL,
+ format  IN VARCHAR2 DEFAULT 'DD-MON-YYYY HH24:MI:SS')
+RETURN VARCHAR2 AS
+BEGIN
+  RETURN (to_char(to_date('01-JAN-1970', 'DD-MON-YYYY') +
+          nvl(seconds, getTime()) / (60 * 60 * 24), format));
 END;
 /
 
@@ -977,6 +992,7 @@ BEGIN
   -- File-level statistics
   FOR g IN (SELECT gid, MAX(fileid) maxId, COUNT(*) fileCount, SUM(filesize) fileSize
               FROM Cns_file_metadata
+             WHERE stagerTime < varTimestamp
              GROUP BY gid) LOOP
     insertNSStats(g.gid, varTimestamp, g.maxId, g.fileCount, g.fileSize, 0, 0, 0, 0, 0, 0);
   END LOOP;
@@ -985,7 +1001,8 @@ BEGIN
   FOR g IN (SELECT gid, copyNo, SUM(segSize * 100 / decode(compression,0,100,compression)) segComprSize,
                    SUM(segSize) segSize, COUNT(*) segCount
               FROM Cns_seg_metadata
-             WHERE gid IS NOT NULL    -- this will be dropped once the post-upgrade phase is completed
+             WHERE creationTime < varTimestamp
+               AND gid IS NOT NULL    -- XXX this will be dropped once the post-upgrade phase is completed
              GROUP BY gid, copyNo) LOOP
     IF g.copyNo = 1 THEN
       insertNSStats(g.gid, varTimestamp, 0, 0, 0, g.segCount, g.segSize, g.segComprSize, 0, 0, 0);
@@ -1010,7 +1027,7 @@ END;
 CREATE OR REPLACE FUNCTION NSStatsReport(inDays INTEGER) RETURN castorns.Stats PIPELINED IS
 BEGIN
   FOR l IN (
-        SELECT NewStats.gid,
+        SELECT NewStats.timestamp-OldStats.timeStamp timeInterval, NewStats.gid,
                NewStats.maxFileId, NewStats.fileCount, NewStats.fileSize,
                NewStats.segCount, NewStats.segSize, NewStats.segCompressedSize,
                NewStats.seg2Count, NewStats.seg2Size, NewStats.seg2CompressedSize,

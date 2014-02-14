@@ -71,11 +71,15 @@ BEGIN
 END;
 /
 
--- Fix constraint - transparent thanks to the NOVALIDATE clause
+-- Fix constraints - transparent thanks to the NOVALIDATE clause
 ALTER TABLE DiskCopy DROP CONSTRAINT CK_DiskCopy_GCType;
 ALTER TABLE DiskCopy
   ADD CONSTRAINT CK_DiskCopy_GcType
   CHECK (gcType IN (0, 1, 2, 3, 4, 5, 6, 7)) ENABLE NOVALIDATE;
+ALTER TABLE DiskCopy DROP CONSTRAINT CK_DiskCopy_Status;
+ALTER TABLE DiskCopy
+  ADD CONSTRAINT CK_DiskCopy_Status
+  CHECK (status IN (0, 4, 5, 6, 7, 9, 11)) ENABLE NOVALIDATE;
 
 /* D2D/Draining schema changes */
 TRUNCATE TABLE DrainingErrors;
@@ -101,7 +105,7 @@ UPDATE CastorConfig
         
 /* Bug #103792: RFE: provide the ability to selectively enable/disable protocols */
 INSERT INTO CastorConfig
-  VALUES ('Stager', 'Protocols', 'rfio rfio3 root gsiftp xroot', 'The list of protocols accepted by the system.')
+  VALUES ('Stager', 'Protocols', 'rfio rfio3 root gsiftp xroot', 'The list of protocols accepted by the system.');
 
 /* For deleteDiskCopy */
 DROP TABLE DeleteDiskCopyHelper;

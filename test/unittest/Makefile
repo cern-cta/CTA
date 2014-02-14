@@ -63,6 +63,7 @@ rununittests: $(RMC_OBJECTS) \
   castor_System.o \
   castor_IClient.o \
   castor_MessageAck.o \
+  castor_utils.o \
   client_BaseClient.o \
   client_VectorResponseHandler.o \
   common_CastorConfiguration.o \
@@ -95,6 +96,7 @@ rununittests: $(RMC_OBJECTS) \
   exception_AlreadyInitialized.o \
   exception_Backtrace.o \
   exception_Communication.o \
+  exception_CommandLineNotParsed.o \
   exception_DismountFailed.o \
   exception_Exception.o \
   exception_Internal.o \
@@ -438,6 +440,9 @@ castor_ObjectCatalog.o: $(ROOT_DIR)/castor/ObjectCatalog.cpp
 castor_ObjectSet.o: $(ROOT_DIR)/castor/ObjectSet.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+castor_utils.o: $(ROOT_DIR)/castor/utils/utils.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 client_VectorResponseHandler.o: $(ROOT_DIR)/castor/client/VectorResponseHandler.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -522,8 +527,8 @@ dlf_Dlf.o: $(ROOT_DIR)/castor/dlf/Dlf.cpp
 dlf_Param.o: $(ROOT_DIR)/castor/dlf/Param.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-dlf_dlf_lib.o: $(ROOT_DIR)/dlf/dlf_lib.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+dlf_dlf_lib.o: $(ROOT_DIR)/dlf/dlf_lib.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_AlreadyInitialized.o: \
   $(ROOT_DIR)/castor/exception/AlreadyInitialized.cpp
@@ -534,6 +539,9 @@ exception_Backtrace.o: \
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_Communication.o: $(ROOT_DIR)/castor/exception/Communication.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_CommandLineNotParsed.o: $(ROOT_DIR)/castor/exception/CommandLineNotParsed.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_DismountFailed.o: $(ROOT_DIR)/castor/exception/DismountFailed.cpp

@@ -27,6 +27,7 @@ cmake_minimum_required (VERSION 2.6)
 add_executable(castorUnitTests
   castorUnitTests.cpp
   ../castor/exception/ExceptionTest.cpp
+  ../castor/server/DaemonTest.cpp
   ../castor/tape/tapeserver/SCSI/DeviceTest.cpp
   ../castor/tape/tapeserver/SCSI/StructuresTest.cpp
   ../castor/tape/tapeserver/utils/RegexTest.cpp
@@ -34,6 +35,7 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/exception/ExceptionTest.cpp
   ../castor/tape/tapeserver/file/StructuresTest.cpp
   ../castor/tape/tapeserver/threading/ThreadingTests.cpp
+  ../castor/utils/UtilsTest.cpp
 )
 set_property(SOURCE ../SCSI/StructuresTest.cpp
   PROPERTY COMPILE_FLAGS -fno-strict-aliasing

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tapebridge/TapeBridgeMain.cpp
+ *                      CommandLineNotParsed.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,24 +17,18 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
+ * 
  *
- *
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
- 
-#include "castor/log/LoggerImplementation.hpp"
-#include "castor/tape/tapebridge/TapeBridgeDaemon.hpp"
 
-#include <iostream>
+#include "castor/exception/CommandLineNotParsed.hpp"
+#include "h/serrno.h"
 
-//------------------------------------------------------------------------------
-// main
-//------------------------------------------------------------------------------
-int main(int argc, char **argv) {
 
-  castor::log::LoggerImplementation logger("tapebridged");
-  castor::tape::tapebridge::TapeBridgeDaemon
-    daemon(std::cout, std::cerr, logger);
-
-  return daemon.main(argc, argv);
+// -----------------------------------------------------------------------------
+// Constructor
+// -----------------------------------------------------------------------------
+castor::exception::CommandLineNotParsed::CommandLineNotParsed():
+  castor::exception::Exception(SECMDLNNOTPRSD) {
 }

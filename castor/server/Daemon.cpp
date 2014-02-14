@@ -25,6 +25,7 @@
 #include "castor/server/Daemon.hpp"
 #include "castor/server/ThreadNotification.hpp"
 #include "castor/System.hpp"
+#include "h/Cgetopt.h"
 
 #include <signal.h>
 #include <stdio.h>
@@ -32,8 +33,12 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::server::Daemon::Daemon(log::Logger &logger):
+castor::server::Daemon::Daemon(std::ostream &stdOut, std::ostream &stdErr,
+  log::Logger &logger) throw():
+  m_stdOut(stdOut),
+  m_stdErr(stdErr),
   m_foreground(false),
+  m_commandLineHasBeenParsed(false),
   m_runAsStagerSuperuser(false),
   m_logger(logger) {
 }
@@ -42,6 +47,73 @@ castor::server::Daemon::Daemon(log::Logger &logger):
 // destructor
 //------------------------------------------------------------------------------
 castor::server::Daemon::~Daemon() throw() {
+}
+
+//------------------------------------------------------------------------------
+// parseCommandLine
+//------------------------------------------------------------------------------
+void castor::server::Daemon::parseCommandLine(int argc,
+  char *argv[]) throw(castor::exception::Exception) {
+  Coptions_t longopts[4];
+
+  longopts[0].name = "foreground";
+  longopts[0].has_arg = NO_ARGUMENT;
+  longopts[0].flag = NULL;
+  longopts[0].val = 'f';
+
+  longopts[1].name = "config";
+  longopts[1].has_arg = REQUIRED_ARGUMENT;
+  longopts[1].flag = NULL;
+  longopts[1].val = 'c';
+
+  longopts[2].name = "help";
+  longopts[2].has_arg = NO_ARGUMENT;
+  longopts[2].flag = NULL;
+  longopts[2].val = 'h';
+
+  longopts[3].name = 0;
+
+  Coptind = 1;
+  Copterr = 0;
+  Coptreset = 1;
+
+  char c;
+  while ((c = Cgetopt_long(argc, argv, "fc:h", longopts, NULL)) != -1) {
+    switch (c) {
+    case 'f':
+      m_foreground = true;
+      break;
+    case 'c':
+      setenv("PATH_CONFIG", Coptarg, 1);
+      m_stdOut << "Using configuration file " << Coptarg << std::endl;
+      break;
+    case 'h':
+      help(argv[0]);
+      exit(0);
+      break;
+    default:
+      break;
+    }
+  }
+
+  m_commandLineHasBeenParsed = true;
+}
+
+//------------------------------------------------------------------------------
+// help
+//------------------------------------------------------------------------------
+void castor::server::Daemon::help(const std::string &programName)
+  throw() {
+  m_stdOut << "Usage: " << programName << " [options]\n"
+    "\n"
+    "where options can be:\n"
+    "\n"
+    "\t--foreground            or -f         \tRemain in the Foreground\n"
+    "\t--config <config-file>  or -c         \tConfiguration file\n"
+    "\t--metrics               or -m         \tEnable metrics collection\n"
+    "\t--help                  or -h         \tPrint this help and exit\n"
+    "\n"
+    "Comments to: Castor.Support@cern.ch\n";
 }
 
 //------------------------------------------------------------------------------
@@ -56,6 +128,31 @@ const std::string &castor::server::Daemon::getServerName() const throw() {
 //------------------------------------------------------------------------------
 void castor::server::Daemon::runAsStagerSuperuser() throw() {
   m_runAsStagerSuperuser = true;
+}
+
+//------------------------------------------------------------------------------
+// getForeground
+//------------------------------------------------------------------------------
+bool castor::server::Daemon::getForeground() const
+  throw(castor::exception::CommandLineNotParsed) {
+  if(!m_commandLineHasBeenParsed) {
+    castor::exception::CommandLineNotParsed ex;
+    ex.getMessage() <<
+      "Failed to determine whether or not the daemon should run in the"
+      " foreground because the command-line has not yet been parsed";
+    throw ex;
+  }
+
+  return m_foreground;
+}
+
+//-----------------------------------------------------------------------------
+// setCommandLineParsed
+//-----------------------------------------------------------------------------
+void castor::server::Daemon::setCommandLineHasBeenParsed(const bool foreground)
+  throw() {
+  m_foreground = foreground;
+  m_commandLineHasBeenParsed = true;
 }
 
 //-----------------------------------------------------------------------------

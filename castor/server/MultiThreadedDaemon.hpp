@@ -50,9 +50,12 @@ public:
   /**
    * Constructor
    *
+   * @param stdOut Stream representing standard out.
+   * @param stdErr Stream representing standard error.
    * @param logger Object representing the API of the CASTOR logging system.
    */
-  MultiThreadedDaemon(log::Logger &logger);
+  MultiThreadedDaemon(std::ostream &stdOut, std::ostream &stdErr,
+    log::Logger &logger) throw();
 
   /**
    * Destructor.
@@ -98,7 +101,8 @@ public:
    * @param argc The size of the command-line vector.
    * @param argv The command-line vector.
    */
-  virtual void parseCommandLine(int argc, char *argv[]);
+  virtual void parseCommandLine(int argc, char *argv[])
+    throw(castor::exception::Exception);
 
 protected:
 
@@ -119,7 +123,7 @@ private:
   /**
    * Prints out the online help
    */
-  void help(const std::string &programName);
+  void help(const std::string &programName) throw();
 
   /**
    * Sets up the signal handling for this multi-threaded daemon.

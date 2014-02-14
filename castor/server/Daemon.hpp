@@ -24,7 +24,11 @@
 #define CASTOR_SERVER_DAEMON_HPP 1
 
 #include "castor/dlf/Message.hpp"
+#include "castor/exception/CommandLineNotParsed.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/log/Logger.hpp"
+
+#include <ostream>
 
 namespace castor {
 namespace server {
@@ -41,14 +45,31 @@ public:
   /**
    * Constructor
    *
+   * @param stdOut Stream representing standard out.
+   * @param stdErr Stream representing standard error.
    * @param logger Object representing the API of the CASTOR logging system.
    */
-  Daemon(log::Logger &logger);
+  Daemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &logger)
+    throw();
 
   /**
    * Destructor.
    */
   virtual ~Daemon() throw();
+
+  /**
+   * Parses a command line to set the server options.
+   *
+   * @param argc The size of the command-line vector.
+   * @param argv The command-line vector.
+   */
+  virtual void parseCommandLine(int argc, char *argv[])
+    throw(castor::exception::Exception);
+
+  /**
+   * Prints out the online help
+   */
+  virtual void help(const std::string &programName) throw();
 
   /**
    * Returns this server's name as used by the CASTOR logging system.
@@ -63,7 +84,22 @@ public:
    */
   void runAsStagerSuperuser() throw();
 
+  /**
+   * Returns true if the daemon is configured to run in the foreground.
+   */
+  bool getForeground() const throw(castor::exception::CommandLineNotParsed);
+
 protected:
+
+  /**
+   * Tells the daemon object that the command-line has been parsed.  This
+   * method allows subclasses to implement their own command-line parsing logic,
+   * whilst enforcing the fact that they must provide values for the options and
+   * arguments this class requires.
+   *
+   * @param foreground Set to true if the daemon should run in the foreground.
+   */
+  void setCommandLineHasBeenParsed(const bool foreground) throw();
 
   /**
    * Initializes the DLF, both for streaming and regular messages
@@ -195,12 +231,27 @@ protected:
     const std::string &msg) throw();
 
   /**
+   * Stream representing standard out.
+   */
+  std::ostream &m_stdOut;
+
+  /**
+   * Stream representing standard in.
+   */
+  std::ostream &m_stdErr;
+
+private:
+
+  /**
    * Flag indicating whether the server should run in foreground or background
    * mode.
    */
   bool m_foreground;
 
-private:
+  /**
+   * True if the command-line has been parsed.
+   */
+  bool m_commandLineHasBeenParsed;
 
   /**
    * Flag indicating whether the server should

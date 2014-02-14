@@ -37,6 +37,7 @@ set (COMMON_LIB_SRC_FILES
   ../castor/exception/Backtrace.cpp
   ../castor/exception/BadVersion.cpp
   ../castor/exception/Busy.cpp
+  ../castor/exception/CommandLineNotParsed.cpp
   ../castor/exception/DismountFailed.cpp
   ../castor/exception/Errnum.cpp
   ../castor/exception/Exception.cpp

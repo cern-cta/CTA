@@ -470,8 +470,15 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         /*
          * Zero size?
          */
-        rtcp_log(LOG_INFO,"rtcp_CheckFileReq(%d,%s) (tpwrite) st_size=%d\n",
-            filereq->tape_fseq,filereq->file_path,(int)st.st_size);
+	/* Commentimg out the following log statement because it logs     */
+	/* st_size modulus 4GB.  The log statement is therefore more      */
+	/* confusing than useful.  If anybody wishes to fix the following */
+	/* log line then they MUST test their fix by migrating a file     */
+	/* larger than 4GB and see the correct value logged.              */
+	/*
+        rtcp_log(LOG_INFO,"rtcp_CheckFileReq(%d,%s) (tpwrite) st_size=%zu\n",
+            filereq->tape_fseq,filereq->file_path,st.st_size);
+	*/
         if ( st.st_size == 0 ) {
             sprintf(errmsgtxt,RT121,CMD(mode));
             serrno = EINVAL;

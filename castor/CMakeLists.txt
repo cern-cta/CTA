@@ -317,6 +317,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
   
   install(FILES
     exception/Backtrace.hpp
+    exception/CommandLineNotParsed.hpp
     exception/Communication.hpp
     exception/Exception.hpp
     exception/Internal.hpp
