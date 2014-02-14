@@ -70,6 +70,7 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
    "Request failed",
    "Invalid number of arguments",
    "Already initialized",
+   "Command line not parsed",
    "BAD ERROR NUMBER"
   };
 
