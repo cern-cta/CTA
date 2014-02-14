@@ -81,8 +81,9 @@
 #define SEREQUESTFAILED SEBASEOFF+47    /* Request failed               */
 #define SEINVALIDNBARGS SEBASEOFF+48    /* Invalid number of arguments  */
 #define SEALREADYINIT   SEBASEOFF+49    /* Already initialized          */
+#define SECMDLNNOTPRSD  SEBASEOFF+50    /* Command line not parsed      */
 
-#define SEMAXERR        SEBASEOFF+49    /* Maximum error number         */
+#define SEMAXERR        SEBASEOFF+50    /* Maximum error number         */
 
 #define SERRNO  (serrno - SEBASEOFF)    /* User convenience             */
 /*
