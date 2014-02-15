@@ -35,10 +35,10 @@
 //------------------------------------------------------------------------------
 castor::server::Daemon::Daemon(std::ostream &stdOut, std::ostream &stdErr,
   log::Logger &logger) throw():
-  m_foreground(false),
-  m_commandLineHasBeenParsed(false),
   m_stdOut(stdOut),
   m_stdErr(stdErr),
+  m_foreground(false),
+  m_commandLineHasBeenParsed(false),
   m_runAsStagerSuperuser(false),
   m_logger(logger) {
 }
@@ -144,6 +144,15 @@ bool castor::server::Daemon::getForeground() const
   }
 
   return m_foreground;
+}
+
+//-----------------------------------------------------------------------------
+// setCommandLineParsed
+//-----------------------------------------------------------------------------
+void castor::server::Daemon::setCommandLineHasBeenParsed(const bool foreground)
+  throw() {
+  m_foreground = foreground;
+  m_commandLineHasBeenParsed = true;
 }
 
 //-----------------------------------------------------------------------------

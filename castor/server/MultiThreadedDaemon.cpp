@@ -48,6 +48,7 @@ castor::server::MultiThreadedDaemon::~MultiThreadedDaemon() throw() {
 //------------------------------------------------------------------------------
 void castor::server::MultiThreadedDaemon::parseCommandLine(int argc,
   char *argv[]) throw(castor::exception::Exception) {
+  bool foreground = false; // Should the daemon run in the foreground?
   Coptions_t* longopts = new Coptions_t[m_threadPools.size() + 5];
   char tparam[] = "Xthreads";
 
@@ -88,7 +89,7 @@ void castor::server::MultiThreadedDaemon::parseCommandLine(int argc,
     longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
-      m_foreground = true;
+      foreground = true;
       break;
     case 'c':
       setenv("PATH_CONFIG", Coptarg, 1);
@@ -117,7 +118,7 @@ void castor::server::MultiThreadedDaemon::parseCommandLine(int argc,
   };
   delete[] longopts;
 
-  m_commandLineHasBeenParsed = true;
+  setCommandLineHasBeenParsed(foreground);
 }
 
 //------------------------------------------------------------------------------
@@ -156,7 +157,7 @@ void castor::server::MultiThreadedDaemon::addThreadPool(
 //------------------------------------------------------------------------------
 void castor::server::MultiThreadedDaemon::start()
   throw(castor::exception::Exception) {
-  if (m_foreground) {
+  if (getForeground()) {
     m_stdOut << "Starting " << getServerName() << std::endl;
   }
 
@@ -202,7 +203,7 @@ void castor::server::MultiThreadedDaemon::setupMultiThreadedSignalHandling()
   // Mask all signals so that user threads are not unpredictably
   // interrupted by them
   sigemptyset(&m_signalSet);
-  if(m_foreground) {
+  if(getForeground()) {
     // In foreground we catch Ctrl-C as well; we don't want to catch
     // it in background to ease debugging with gdb, as gdb has its own
     // SIGINT handler to pause the process anywhere. Our signal handler

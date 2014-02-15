@@ -125,7 +125,7 @@ int castor::tape::tapebridge::TapeBridgeDaemon::exceptionThrowingMain(
   }
 
   // Pass the foreground option to the super class BaseDaemon
-  m_foreground = m_parsedCommandLine.foregroundOptionSet;
+  setCommandLineHasBeenParsed(m_parsedCommandLine.foregroundOptionSet);
 
   // Determine and log the configuration parameters used by the tapebridged
   // daemon to know how many files should be bulk requested per request for

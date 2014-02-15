@@ -174,6 +174,7 @@ void castor::rh::Server::help(std::string programName)
 //------------------------------------------------------------------------------
 void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor::exception::Exception)
 {
+  bool foreground = false; // Should the daemon run in the foreground?
   Coptions_t longopts[] =
     {
       {"foreground", NO_ARGUMENT,       NULL, 'f'},
@@ -197,7 +198,7 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
   while ((c = Cgetopt_long(argc, argv, "fsR:p:c:nmh", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
-      m_foreground = true;
+      foreground = true;
       break;
     case 'c':
       {
@@ -294,7 +295,8 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor:
     mc->addHistogram(new castor::metrics::Histogram(
       "Users", &castor::rh::UserCounter::instantiate));
 */
-  }    
+  }
+  setCommandLineHasBeenParsed(foreground);
 }
 
 //------------------------------------------------------------------------------

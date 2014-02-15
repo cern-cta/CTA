@@ -92,6 +92,16 @@ public:
 protected:
 
   /**
+   * Tells the daemon object that the command-line has been parsed.  This
+   * method allows subclasses to implement their own command-line parsing logic,
+   * whilst enforcing the fact that they must provide values for the options and
+   * arguments this class requires.
+   *
+   * @param foreground Set to true if the daemon should run in the foreground.
+   */
+  void setCommandLineHasBeenParsed(const bool foreground) throw();
+
+  /**
    * Initializes the DLF, both for streaming and regular messages
    * Does not create the DLF thread, this is created after daemonization
    * @param messages the messages to be passed to dlf_init
@@ -221,6 +231,18 @@ protected:
     const std::string &msg) throw();
 
   /**
+   * Stream representing standard out.
+   */
+  std::ostream &m_stdOut;
+
+  /**
+   * Stream representing standard in.
+   */
+  std::ostream &m_stdErr;
+
+private:
+
+  /**
    * Flag indicating whether the server should run in foreground or background
    * mode.
    */
@@ -230,18 +252,6 @@ protected:
    * True if the command-line has been parsed.
    */
   bool m_commandLineHasBeenParsed;
-
-  /**
-   * Stream representing standard out.
-   */
-  std::ostream &m_stdOut;
-
-  /**
-   * Stream reprsenting standard in.
-   */
-  std::ostream &m_stdErr;
-
-private:
 
   /**
    * Flag indicating whether the server should

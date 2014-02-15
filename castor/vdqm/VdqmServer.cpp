@@ -90,8 +90,9 @@ void castor::vdqm::VdqmServer::logStart(Cuuid_t &cuuid, const int argc,
 //------------------------------------------------------------------------------
 // parseCommandLine
 //------------------------------------------------------------------------------
-void castor::vdqm::VdqmServer::parseCommandLine(const int argc, char **argv) throw() {
-
+void castor::vdqm::VdqmServer::parseCommandLine(const int argc, char **argv)
+  throw() {
+  bool foreground = false; // Should the daemon run in the foreground?
   static struct Coptions longopts[] = {
     {"foreground"             , NO_ARGUMENT      , NULL, 'f'},
     {"config"                 , REQUIRED_ARGUMENT, NULL, 'c'},
@@ -109,7 +110,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(const int argc, char **argv) thr
   while((c=Cgetopt_long(argc, argv, "fc:hr:j:s:", longopts, NULL)) != -1) {
     switch (c) {
     case 'f':
-      m_foreground = true;
+      foreground = true;
       break;
     case 'c':
       {
@@ -129,7 +130,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(const int argc, char **argv) thr
             VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
 
           // Print error and usage to stderr and then abort
-          std::cerr << std::endl << "Error: " << oss.str()
+          m_stdErr << std::endl << "Error: " << oss.str()
             << std::endl << std::endl;
           usage();
           exit(1);
@@ -161,7 +162,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(const int argc, char **argv) thr
           VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
 
         // Print error and usage to stderr and then abort
-        std::cerr << std::endl << "Error: " << oss.str()
+        m_stdErr << std::endl << "Error: " << oss.str()
           << std::endl << std::endl;
         usage();
         exit(1);
@@ -178,7 +179,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(const int argc, char **argv) thr
           VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
 
         // Print error and usage to stderr and then abort
-        std::cerr << std::endl << "Error: " << oss.str()
+        m_stdErr << std::endl << "Error: " << oss.str()
           << std::endl << std::endl;
         usage();
         exit(1);
@@ -196,7 +197,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(const int argc, char **argv) thr
           VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
 
         // Print error and usage to stderr and then abort
-        std::cerr << std::endl << "Error: " << oss.str()
+        m_stdErr << std::endl << "Error: " << oss.str()
           << std::endl << std::endl;
         usage();
         exit(1);
@@ -215,7 +216,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(const int argc, char **argv) thr
       VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
 
     // Print error and usage to stderr and then abort
-    std::cerr << std::endl << "Error: " << oss.str()
+    m_stdErr << std::endl << "Error: " << oss.str()
       << std::endl << std::endl;
     usage();
     exit(1);
@@ -235,11 +236,13 @@ void castor::vdqm::VdqmServer::parseCommandLine(const int argc, char **argv) thr
       VDQM_FAILED_TO_PARSE_COMMAND_LINE, 1, params);
 
     // Print error and usage to stderr and then abort
-    std::cerr << std::endl << "Error: " << oss.str()
+    m_stdErr << std::endl << "Error: " << oss.str()
       << std::endl << std::endl;
     usage();
     exit(1);
   }
+
+  setCommandLineHasBeenParsed(foreground);
 }
 
 
@@ -248,7 +251,7 @@ void castor::vdqm::VdqmServer::parseCommandLine(const int argc, char **argv) thr
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmServer::usage()
   throw() {
-  std::cerr << "Usage: vdqmd [options]\n"
+  m_stdErr << "Usage: vdqmd [options]\n"
     "\n"
     "where options can be:\n"
     "\n"
@@ -289,7 +292,7 @@ void castor::vdqm::VdqmServer::initDatabaseService(Cuuid_t &cuuid) {
       VDQM_FAILED_TO_INIT_DB_SERVICE, 1, params);
 
     // Print error to stderr and then abort
-    std::cerr << std::endl << "Error: " << oss.str()
+    m_stdErr << std::endl << "Error: " << oss.str()
       << std::endl << std::endl;
     exit(1);
   }
@@ -310,7 +313,7 @@ void castor::vdqm::VdqmServer::initDatabaseService(Cuuid_t &cuuid) {
       VDQM_FAILED_TO_INIT_DB_SERVICE, 1, params);
 
     // Print error to stderr and then abort
-    std::cerr << std::endl << "Error: " << oss.str()
+    m_stdErr << std::endl << "Error: " << oss.str()
       << std::endl << std::endl;
     exit(1);
   }

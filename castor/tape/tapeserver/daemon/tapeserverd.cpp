@@ -97,7 +97,7 @@ void castor::tape::Server::Daemon::run() {
   /* Block signals, we will handle them synchronously */
   blockSignals();
   /* Daemonize if requested */
-  if (!m_foreground) daemonize();
+  if (!getForeground()) daemonize();
   /* Setup the the mother forker, which will spawn and handle the tape sessions */
   /* TODO */
   /* Setup the listening socket for VDQM requests */
@@ -108,9 +108,9 @@ void castor::tape::Server::Daemon::run() {
 //------------------------------------------------------------------------------
 // parseCommandLineOptions
 //------------------------------------------------------------------------------
-void castor::tape::Server::Daemon::parseCommandLineOptions(int argc, char** argv)
-throw (castor::tape::Exception)
-{
+void castor::tape::Server::Daemon::parseCommandLineOptions(int argc,
+char** argv) throw (castor::tape::Exception) {
+  bool foreground = false; // Should the daemon run in the foreground?
   /* Expect -f or --foreground */
   struct ::option opts[] = {
     { "foreground", no_argument, 0, 'f'},
@@ -120,7 +120,7 @@ throw (castor::tape::Exception)
   while (-1 != (c = getopt_long(argc, argv, ":f", opts, NULL))) {
     switch (c) {
       case 'f':
-        m_foreground = true;
+        foreground = true;
         break;
       case ':':
       {
@@ -144,6 +144,7 @@ throw (castor::tape::Exception)
       }
     }
   }
+  setCommandLineHasBeenParsed(foreground);
 }
 
 //------------------------------------------------------------------------------
