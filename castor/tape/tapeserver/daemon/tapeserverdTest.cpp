@@ -24,7 +24,7 @@
 
 #include <gtest/gtest.h>
 #include "clientSimulator.hpp"
-#include "tapeSession.hpp"
+#include "clientInterface.hpp"
 #include "../threading/Threading.hpp"
 
 using namespace castor::tape::server;
@@ -42,21 +42,32 @@ private:
 };
 
   
-TEST(tapeServer, simpleGetVol) {
+TEST(tapeServer, ClientInterfaceGoodDay) {
   // TpcpClients only supports 32 bits session number
   // This number has to be less than 2^31 as in addition there is a mix
   // of signed and unsigned numbers
   // As the current ids in prod are ~30M, we are far from overflow (Feb 2013)
+  // 1) prepare the client and run it in another thread
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
   clientSimulator sim(volReq, vid);
   struct clientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
-  tapeSession sess(clientAddr.ip, clientAddr.port, volReq);
-  sess.getVolume();
+  
+  // 2) Prepare the VDQM request
+  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
+    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "/dev/nstXXX");
+  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "TAPELIBX");
+  VDQMjob.clientPort = clientAddr.port;
+  VDQMjob.volReqId = volReq;
+  
+  // 3) Instantiate the client interface
+  ClientInterface sess(VDQMjob);
   simRun.wait();
-  ASSERT_EQ("V12345", sess.m_vid);
+  ASSERT_EQ("V12345", sess.getVid());
 }
 
 }

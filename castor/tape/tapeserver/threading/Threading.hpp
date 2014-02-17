@@ -22,6 +22,8 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#pragma once
+
 #include <pthread.h>
 #include <semaphore.h>
 #include "castor/exception/Errnum.hpp"
