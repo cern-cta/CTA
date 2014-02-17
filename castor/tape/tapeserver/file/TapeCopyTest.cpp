@@ -34,10 +34,11 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <memory>
 
 //- 1   1 V92002       1 00000000                  748 100         adler32 108deddb           5001074305 /castor/cern.ch/de
 
-void fill_info(castor::tape::AULFile::Information *fileInfo, const std::string volId, const uint32_t fseq) {
+void fill_info(castor::tape::AULFile::FileInfo *fileInfo, const std::string volId, const uint32_t fseq) {
   std::string disabled, copy_no, seg_no, volId_str, fseq_str, blockId_str, size_str, compr_fact, checksum_name, checksum_str, nsFileId_str, path;
   std::ifstream resolv;
   std::string filename("nslisttape_" + volId + ".txt");
@@ -126,23 +127,22 @@ int main(int argc, char* argv[])
   if(read_sess!=NULL and write_sess!=NULL) {
     for(unsigned int i=0; i<no_of_files; i++) {
       try {
-        castor::tape::AULFile::Information info;
+        castor::tape::AULFile::FileInfo info;
         fill_info(&info, src_tape, i);
-        castor::tape::AULFile::ReadFile input_file(read_sess, info);
+        castor::tape::AULFile::ReadFile input_file(read_sess, info, castor::tape::AULFile::ByBlockId);
         size_t blockSize = input_file.getBlockSize();
         castor::tape::AULFile::WriteFile output_file(write_sess, info, blockSize);
-        char *buf = new char[blockSize];
+        std::auto_ptr<char> buf(new char[blockSize]);
         size_t bytes_read = 0;
         try {
           while(true) {
-            bytes_read = input_file.read(buf, blockSize);
-            output_file.write(buf, bytes_read);
+            bytes_read = input_file.read(buf.get(), blockSize);
+            output_file.write(buf.get(), bytes_read);
           }
         }
         catch (castor::tape::AULFile::EndOfFile &e) {
         }
         output_file.close();
-        delete[] buf;
       }
       catch (std::exception & e) {
         fail = 1;
@@ -150,7 +150,9 @@ int main(int argc, char* argv[])
                   << e.what() << std::endl
                   << "----------------------------------------------" << std::endl;
       }
-    } 
+    }
+    delete read_sess;
+    delete write_sess;
   }
   return fail;
 }

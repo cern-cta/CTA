@@ -313,7 +313,7 @@ namespace drives {
      * Synch call to the tape drive. This function will not return before the 
      * data in the drive's buffer is actually comitted to the medium.
      */
-    virtual void sync(void) throw (Exception);
+    virtual void flush(void) throw (Exception);
 
     /**
      * Write count file marks. The function does not return before the file marks 

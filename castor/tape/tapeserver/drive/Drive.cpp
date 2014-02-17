@@ -391,12 +391,15 @@ void drives::DriveGeneric::rewind(void) throw (Exception) {
  * @param count
  */
 void drives::DriveGeneric::spaceFileMarksBackwards(size_t count) throw (Exception) {
+  size_t tobeskipped = count;
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTBSF;
-  m_mtCmd.mt_count = (int)count;
-  castor::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
-      "Failed ST ioctl (MTBSF) in DriveGeneric::spaceFileMarksBackwards");
+  while (tobeskipped > 0) {
+    size_t c = (tobeskipped > 0x7FFFFF) ? 0x7FFFFF : tobeskipped;
+    m_mtCmd.mt_count = (int)c;
+    castor::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd), "Failed ST ioctl (MTBSF) in DriveGeneric::spaceFileMarksBackwards");
+    tobeskipped -= c;
+  }  
 }
 
 /**
@@ -404,12 +407,15 @@ void drives::DriveGeneric::spaceFileMarksBackwards(size_t count) throw (Exceptio
  * @param count
  */
 void drives::DriveGeneric::spaceFileMarksForward(size_t count) throw (Exception) {
+  size_t tobeskipped = count;
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTFSF;
-  m_mtCmd.mt_count = (int)count;
-  castor::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
-      "Failed ST ioctl (MTFSF) in DriveGeneric::spaceFileMarksForward");
+  while (tobeskipped > 0) {
+    size_t c = (tobeskipped > 0x7FFFFF) ? 0x7FFFFF : tobeskipped;
+    m_mtCmd.mt_count = (int)c;
+    castor::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd), "Failed ST ioctl (MTFSF) in DriveGeneric::spaceFileMarksForward");
+    tobeskipped -= c;
+  }  
 }
 
 /**
@@ -458,15 +464,17 @@ void drives::DriveGeneric::unloadTape(void) throw (Exception) {
 
 /**
  * Synch call to the tape drive. This function will not return before the 
- * data in the drive's buffer is actually comitted to the medium.
+ * data in the drive's buffer is actually committed to the medium.
  */
-void drives::DriveGeneric::sync(void) throw (Exception) {
+void drives::DriveGeneric::flush(void) throw (Exception) {
   struct mtop m_mtCmd;
-  m_mtCmd.mt_op = MTNOP; //The side effect of the no-op is to actually flush the driver's buffer to tape (see "man st").
-  m_mtCmd.mt_count = 1;
+  m_mtCmd.mt_op = MTWEOF; //Not using MTNOP because it doesn't do what it claims (see st source code) so here we put "write sync file marks" with count set to 0.
+  // The following text is a quote from the SCSI Stream commands manual (SSC-3):
+  // NOTE 25 Upon completion of any buffered write operation, the application client may issue a WRITE FILEMARKS(16) command with the IMMED bit set to zero and the FILEMARK COUNT field set to zero to perform a synchronize operation (see 4.2.10).
+  m_mtCmd.mt_count = 0;
   castor::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
-      "Failed ST ioctl (MTNOP) in DriveGeneric::sync");
+      "Failed ST ioctl (MTWEOF) in DriveGeneric::flush");
 }
 
 /**

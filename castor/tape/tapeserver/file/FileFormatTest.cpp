@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
             std::cin.ignore();
             
             if(choice==1) {
-              castor::tape::AULFile::Information info;
+              castor::tape::AULFile::FileInfo info;
               std::cout << "Please enter the blockId: ";
               std::string blockId;
               std::cin >> blockId;
@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
               std::cout << "Please enter the size of the file: ";
               std::cin >> info.size;
               std::cin.ignore();
-              castor::tape::AULFile::ReadFile file(&my_sess,info);
+              castor::tape::AULFile::ReadFile file(&my_sess, info, castor::tape::AULFile::ByBlockId);
               std::cout << "Tape positioned at the beginning of the file\n";
               size_t bs = file.getBlockSize();
               std::cout << "Block size: " << bs << std::endl;
