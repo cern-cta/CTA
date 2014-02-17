@@ -31,6 +31,7 @@
 
 #include <signal.h>
 #include <stdio.h>
+#include <unistd.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -221,18 +222,6 @@ void castor::server::Daemon::daemonize() throw (castor::exception::Exception) {
     // Run the daemon in a new session
     castor::exception::Errnum::throwOnNegative(setsid(),
       "Failed to daemonize: Failed to run daemon is a new session");
-
-    // Sanity check - At this point we are executing as the child process, and
-    // the parent process should be init with a process ID of 1
-    {
-      const pid_t ppid = getppid();
-      if (1 != ppid) {
-        castor::exception::Internal ex;
-        ex.getMessage() << "Failed to daemonize: "
-          " Failed to detach from parent process: getppid() returned " << ppid;
-        throw ex;
-      }
-    }
 
     // Redirect standard files to /dev/null
     castor::exception::Errnum::throwOnNull(
