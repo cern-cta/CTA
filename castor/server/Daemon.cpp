@@ -21,6 +21,8 @@
  ******************************************************************************/
 
 #include "castor/dlf/Dlf.hpp"
+#include "castor/exception/Errnum.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/io/UDPSocket.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/server/ThreadNotification.hpp"
@@ -190,38 +192,59 @@ void castor::server::Daemon::dlfInit(castor::dlf::Message messages[])
 // daemonize
 //------------------------------------------------------------------------------
 void castor::server::Daemon::daemonize() throw (castor::exception::Exception) {
+  // Do nothing if already a daemon
+  if (1 == getppid())  {
+    return;
+  }
+
   // If the daemon is to be run in the background
   if (!m_foreground) {
     m_logger.prepareForFork();
 
+    {
+      pid_t pid = 0;
+      castor::exception::Errnum::throwOnNegative(pid = fork(),
+        "Failed to daemonize: Failed to fork");
+      // If we got a good PID, then we can exit the parent process
+      if (0 < pid) {
+        exit(EXIT_SUCCESS);
+      }
+    }
+
     // We could set our working directory to '/' here with a call to chdir(2).
     // For the time being we don't and leave it to the initd script to change
     // to a suitable directory for us!
-    int pid = fork();
-    if (pid < 0) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Background daemon initialization failed with result "
-                      << pid << std::endl;
-      throw ex;
-    }
-    else if (pid > 0) {
-      // The parent exits normally
-      exit(EXIT_SUCCESS);
-    }
+
+    // Change the file mode mask
+    umask(0);
 
     // Run the daemon in a new session
-    setsid();
+    castor::exception::Errnum::throwOnNegative(setsid(),
+      "Failed to daemonize: Failed to run daemon is a new session");
 
-    // Redirect the standard file descriptors to /dev/null
-    if ((freopen("/dev/null", "r", stdin)  == NULL) ||
-        (freopen("/dev/null", "w", stdout) == NULL) ||
-        (freopen("/dev/null", "w", stderr) == NULL)) {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Failed to redirect standard file descriptors to "
-                      << "/dev/null" << std::endl;
-      throw ex;
+    // Sanity check - At this point we are executing as the child process, and
+    // the parent process should be init with a process ID of 1
+    {
+      const pid_t ppid = getppid();
+      if (1 != ppid) {
+        castor::exception::Internal ex;
+        ex.getMessage() << "Failed to daemonize: "
+          " Failed to detach from parent process: getppid() returned " << ppid;
+        throw ex;
+      }
     }
-  }
+
+    // Redirect standard files to /dev/null
+    castor::exception::Errnum::throwOnNull(
+      freopen("/dev/null", "r", stdin),
+      "Failed to daemonize: Falied to freopen stdin");
+    castor::exception::Errnum::throwOnNull(
+      freopen("/dev/null", "w", stdout),
+      "Failed to daemonize: Failed to freopen stdout");
+    castor::exception::Errnum::throwOnNull(
+      freopen("/dev/null", "w", stderr),
+      "Failed to daemonize: Failed to freopen stderr");
+  } // if (!m_foreground)
 
   // Change the user of the daemon process to the Castor superuser if requested
   if (m_runAsStagerSuperuser) {
