@@ -31,7 +31,7 @@ using ::testing::AtLeast;
 using ::testing::Return;
 using ::testing::_;
 
-namespace UnitTests {
+namespace unitTests {
 castor::tape::System::mockWrapper sysWrapper;
 
 TEST(castor_tape_SCSI_DeviceList, TriesToFind) {

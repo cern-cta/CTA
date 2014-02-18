@@ -30,7 +30,7 @@
 #include <stdio.h>
 #include <string.h>
 
-namespace UnitTests {
+namespace unitTests {
 
 class castor_server_DaemonTest : public ::testing::Test {
 protected:
@@ -99,4 +99,4 @@ TEST_F(castor_server_DaemonTest, parseFOnCmdLine) {
   ASSERT_EQ(true, daemon.getForeground());
 }
 
-} // namespace UnitTests
+} // namespace unitTests
