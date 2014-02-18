@@ -121,8 +121,8 @@ castor::tape::tpcp::TpcpCommand::TpcpCommand(const char *const programName)
       ": " << sstrerror(savedErrno));
   }
 
-  utils::setBytes(m_vmgrTapeInfo, '\0');
-  utils::setBytes(m_dgn, '\0');
+  castor::utils::setBytes(m_vmgrTapeInfo, '\0');
+  castor::utils::setBytes(m_dgn, '\0');
 }
 
 

@@ -107,7 +107,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
 
   // Prepare the logical request
   legacymsg::VmgrTapeInfoRqstMsgBody request;
-  utils::setBytes(request, '\0');
+  castor::utils::setBytes(request, '\0');
   request.uid = uid;
   request.gid = gid;
   castor::utils::copyString(request.vid, vid);
@@ -140,7 +140,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
 
   // Receive header from the VMGR
   legacymsg::MessageHeader header;
-  utils::setBytes(header, '\0');
+  castor::utils::setBytes(header, '\0');
   try {
     LegacyTxRx legacyTxRx(netReadWriteTimeout);
     legacyTxRx.receiveMsgHeader(sock.socket(), header);

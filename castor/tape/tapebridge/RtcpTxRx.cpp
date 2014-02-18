@@ -62,7 +62,7 @@ void castor::tape::tapebridge::RtcpTxRx::getRequestInfoFromRtcpd(
 
   // Prepare logical request for volume request ID
   legacymsg::RtcpTapeRqstErrMsgBody request;
-  utils::setBytes(request, '\0');
+  castor::utils::setBytes(request, '\0');
 
   // Marshal the request
   char buf[RTCPMSGBUFSIZE];
@@ -106,7 +106,7 @@ void castor::tape::tapebridge::RtcpTxRx::getRequestInfoFromRtcpd(
   }
 
   // Receive reply from RTCPD
-  utils::setBytes(reply, '\0');
+  castor::utils::setBytes(reply, '\0');
   try {
     legacymsg::MessageHeader header;
     legacyTxRx.receiveMsgHeader(socketFd, header);
@@ -569,7 +569,7 @@ void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
 
   legacymsg::RtcpFileRqstErrMsgBody msgBody;
 
-  utils::setBytes(msgBody, '\0');
+  castor::utils::setBytes(msgBody, '\0');
 
   castor::utils::copyString(msgBody.rqst.recfm_noLongerUsed, "F");
 
@@ -666,7 +666,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
 
 
   // Give file information to RTCPD
-  utils::setBytes(msgBody, '\0');
+  castor::utils::setBytes(msgBody, '\0');
   castor::utils::copyString(msgBody.rqst.filePath, filePath    );
   castor::utils::copyString(msgBody.rqst.tapePath, tapePath    );
   castor::utils::copyString(msgBody.rqst.recfm_noLongerUsed, "F");

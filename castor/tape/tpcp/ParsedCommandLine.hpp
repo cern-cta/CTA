@@ -28,7 +28,7 @@
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/TapeFseqRangeList.hpp"
-#include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/Castor_limits.h"
 
 #include <list>
@@ -147,8 +147,8 @@ struct ParsedCommandLine {
     dumpTapeFromBlock(1),
     dumpTapeToBlock(1)
   {
-    utils::setBytes(server, '\0');
-    utils::setBytes(vid   , '\0');
+    castor::utils::setBytes(server, '\0');
+    castor::utils::setBytes(vid   , '\0');
   }
 }; // struct ParsedCommandLine
 

@@ -122,7 +122,7 @@ void castor::tape::utils::toHex(const uint64_t i, char *dst,
   const char hexDigits[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
     'A', 'B', 'C', 'D', 'E', 'F'};
   char backwardsHexDigits[16];
-  setBytes(backwardsHexDigits, '\0');
+  castor::utils::setBytes(backwardsHexDigits, '\0');
   uint64_t exponent = 0;
   uint64_t quotient = i;
   int nbDigits = 0;

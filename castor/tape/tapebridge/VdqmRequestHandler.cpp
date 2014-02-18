@@ -142,7 +142,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
 
   // Job request to be received from VDQM
   legacymsg::RtcpJobRqstMsgBody jobRequest;
-  utils::setBytes(jobRequest, '\0');
+  castor::utils::setBytes(jobRequest, '\0');
 
   // Receive the job request from the VDQM
   try {
@@ -253,7 +253,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
     // callback socket
     unsigned long bridgeCallbackIp = 0;
     char bridgeCallbackHost[net::HOSTNAMEBUFLEN];
-    utils::setBytes(bridgeCallbackHost, '\0');
+    castor::utils::setBytes(bridgeCallbackHost, '\0');
     unsigned short bridgeCallbackPort = 0;
     net::getSockIpHostnamePort(listenSock.get(),
       bridgeCallbackIp, bridgeCallbackHost, bridgeCallbackPort);
@@ -310,7 +310,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
     // Send a positive acknowledge to the VDQM
     {
       legacymsg::RtcpJobReplyMsgBody vdqmReply;
-      utils::setBytes(vdqmReply, '\0');
+      castor::utils::setBytes(vdqmReply, '\0');
       char vdqmReplyBuf[RTCPMSGBUFSIZE];
       const size_t vdqmReplyLen = legacymsg::marshal(vdqmReplyBuf, vdqmReply);
       net::writeBytes(vdqmSock.get(), RTCPDNETRWTIMEOUT, vdqmReplyLen,
@@ -365,8 +365,8 @@ castor::tape::legacymsg::RtcpJobReplyMsgBody
   tapeBridgeClientInfo2MsgBody_t clientInfoMsgBody;
   legacymsg::RtcpJobReplyMsgBody rtcpdReply;
 
-  utils::setBytes(clientInfoMsgBody, '\0');
-  utils::setBytes(rtcpdReply, '\0');
+  castor::utils::setBytes(clientInfoMsgBody, '\0');
+  castor::utils::setBytes(rtcpdReply, '\0');
 
   clientInfoMsgBody.volReqId = jobRequest.volReqId;
   clientInfoMsgBody.bridgeCallbackPort = bridgeCallbackPort;
@@ -543,7 +543,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
 
     // Get volume information from the VMGR
     legacymsg::VmgrTapeInfoMsgBody tapeInfo;
-    utils::setBytes(tapeInfo, '\0');
+    castor::utils::setBytes(tapeInfo, '\0');
     {
       const uint32_t uid = getuid();
       const uint32_t gid = getgid();

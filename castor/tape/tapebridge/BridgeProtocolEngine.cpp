@@ -566,7 +566,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   }
 
   legacymsg::MessageHeader header;
-  utils::setBytes(header, '\0');
+  castor::utils::setBytes(header, '\0');
 
   // Try to receive the message header which may not be possible; The file
   // descriptor may be ready because rtcpd has closed the connection
@@ -1027,7 +1027,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
 
   // Give volume to rtcpd
   legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
-  utils::setBytes(rtcpVolume, '\0');
+  castor::utils::setBytes(rtcpVolume, '\0');
   castor::utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
   castor::utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
   castor::utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
@@ -1091,7 +1091,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
     generateMigrationTapeFileId((uint64_t)firstFileToMigrate->fileid(),
       migrationTapeFileId);
     unsigned char blockId[4];
-    utils::setBytes(blockId, '\0');
+    castor::utils::setBytes(blockId, '\0');
     char nshost[CA_MAXHOSTNAMELEN+1];
     castor::utils::copyString(nshost, firstFileToMigrate->nshost().c_str());
 
@@ -1138,7 +1138,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::startRecallSession()
 
   // Give volume to rtcpd
   legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
-  utils::setBytes(rtcpVolume, '\0');
+  castor::utils::setBytes(rtcpVolume, '\0');
   castor::utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
   castor::utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
   castor::utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
@@ -1175,7 +1175,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::startDumpSession()
 
   // Give volume to rtcpd
   legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
-  utils::setBytes(rtcpVolume, '\0');
+  castor::utils::setBytes(rtcpVolume, '\0');
   castor::utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
   castor::utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
   castor::utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
@@ -1887,7 +1887,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToRecallToRtcpd(
   // Give file to recall to rtcpd
   {
     char tapeFileId[CA_MAXPATHLEN+1];
-    utils::setBytes(tapeFileId, '\0');
+    castor::utils::setBytes(tapeFileId, '\0');
     unsigned char blockId[4] = {
       fileToRecall.blockId0,
       fileToRecall.blockId1,
@@ -3033,10 +3033,10 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToMigrateToRtcpd(
   // Give file to migrate to rtcpd
   {
     char migrationTapeFileId[CA_MAXPATHLEN+1];
-    utils::setBytes(migrationTapeFileId, '\0');
+    castor::utils::setBytes(migrationTapeFileId, '\0');
     generateMigrationTapeFileId(fileToMigrate.fileId, migrationTapeFileId);
     unsigned char blockId[4];
-    utils::setBytes(blockId, '\0');
+    castor::utils::setBytes(blockId, '\0');
     char nshost[CA_MAXHOSTNAMELEN+1];
     castor::utils::copyString(nshost, fileToMigrate.nsHost.c_str());
 
@@ -3806,7 +3806,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   const char hexDigits[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
     'A', 'B', 'C', 'D', 'E', 'F'};
   char backwardsHexDigits[16];
-  utils::setBytes(backwardsHexDigits, '\0');
+  castor::utils::setBytes(backwardsHexDigits, '\0');
   uint64_t exponent = 0;
   uint64_t quotient = i;
   int nbDigits = 0;

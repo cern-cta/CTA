@@ -135,8 +135,17 @@ void copyString(char *const dst, const size_t dstSize, const char *const src)
 template<size_t dstSize> void copyString(char (&dst)[dstSize],
   const char *const src)
   throw(castor::exception::Exception) {
-
   copyString(dst, dstSize, src);
+}
+
+/**
+ * Sets all the bytes of the specified object to the value of c.
+ *
+ * @param object The object whose bytes are to be set.
+ * @param c The value to set each byte of object.
+ */
+template<typename T> void setBytes(T &object, const int c) throw() {
+  memset(&object, c, sizeof(object));
 }
 
 } // namespace utils
