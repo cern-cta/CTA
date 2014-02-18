@@ -171,6 +171,7 @@ throw (Exception) {
   SCSI::Structures::LinuxSGIO_t sgh;
 
   positionInfo posInfo;
+  SCSI::Structures::setU16(cdb.allocationLength, sizeof(positionData));
   
   // We use the short for action (default, 00h), for which allocationLength
   // should NOT be set. (SSC-4, 7.7.1 READ POSITON)
