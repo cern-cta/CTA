@@ -40,10 +40,10 @@ castor::server::Daemon::Daemon(std::ostream &stdOut, std::ostream &stdErr,
   log::Logger &logger) throw():
   m_stdOut(stdOut),
   m_stdErr(stdErr),
+  m_logger(logger),
   m_foreground(false),
   m_commandLineHasBeenParsed(false),
-  m_runAsStagerSuperuser(false),
-  m_logger(logger) {
+  m_runAsStagerSuperuser(false) {
 }
 
 //------------------------------------------------------------------------------
@@ -267,37 +267,4 @@ void castor::server::Daemon::sendNotification(const std::string &host,
   } catch(...) {
     // This is a best effort service, ignore any failure
   }
-}
-
-
-//-----------------------------------------------------------------------------
-// logMsg
-//-----------------------------------------------------------------------------
-void castor::server::Daemon::logMsg(
-  const int priority,
-  const std::string &msg,
-  const int numParams,
-  const log::Param params[],
-  const struct timeval &timeStamp) throw() {
-  m_logger.logMsg(priority, msg, numParams, params, timeStamp);
-}
-
-//-----------------------------------------------------------------------------
-// logMsg
-//-----------------------------------------------------------------------------
-void castor::server::Daemon::logMsg(
-  const int priority,
-  const std::string &msg,
-  const int numParams,
-  const log::Param params[]) throw() {
-  m_logger.logMsg(priority, msg, numParams, params);
-}
-
-//-----------------------------------------------------------------------------
-// logMsg
-//-----------------------------------------------------------------------------
-void castor::server::Daemon::logMsg(
-  const int priority,
-  const std::string &msg) throw() {
-  m_logger.logMsg(priority, msg);
 }

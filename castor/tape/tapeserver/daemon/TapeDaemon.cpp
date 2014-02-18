@@ -70,7 +70,7 @@ int castor::tape::tapeserver::daemon::TapeDaemon::main(const int argc,
     log::Param params[] = {
       log::Param("Message", msg.str()),
       log::Param("Code"   , ex.code())};
-    logMsg(LOG_INFO, msg.str(), params);
+    m_logger.logMsg(LOG_INFO, msg.str(), params);
 
     return 1;
   }
@@ -103,7 +103,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logStartOfDaemon(
 
   log::Param params[] = {
     log::Param("argv", concatenatedArgs)};
-  logMsg(LOG_INFO, msg.str(), params);
+  m_logger.logMsg(LOG_INFO, msg.str(), params);
 }
 
 //------------------------------------------------------------------------------
