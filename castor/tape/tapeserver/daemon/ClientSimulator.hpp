@@ -35,11 +35,11 @@ namespace server {
    * will hence setup a client callback socket and wait. All the tape mounting
    * logic is hence skipped. We will then in parallel start a tape session.
    */
-  class clientSimulator: public tpcp::TpcpCommand {
+  class ClientSimulator: public tpcp::TpcpCommand {
   public:
-    clientSimulator(uint32_t volReqId, std::string vid);
+    ClientSimulator(uint32_t volReqId, std::string vid);
     
-    virtual ~clientSimulator() throw () {}
+    virtual ~ClientSimulator() throw () {}
     
     struct ipPort {
       ipPort(uint32_t i, uint16_t p): ip(i), port(p) {}

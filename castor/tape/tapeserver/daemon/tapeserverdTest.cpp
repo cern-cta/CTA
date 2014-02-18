@@ -23,8 +23,8 @@
  *****************************************************************************/
 
 #include <gtest/gtest.h>
-#include "clientSimulator.hpp"
-#include "clientInterface.hpp"
+#include "ClientSimulator.hpp"
+#include "ClientInterface.hpp"
 #include "../threading/Threading.hpp"
 
 using namespace castor::tape::server;
@@ -33,12 +33,12 @@ namespace unitTest {
 
 class clientRunner: public castor::tape::threading::Thread {
 public:
-  clientRunner(clientSimulator &client): m_sim(client) {}
+  clientRunner(ClientSimulator &client): m_sim(client) {}
 private:
   void run() {
     m_sim.sessionLoop();
   }
-  clientSimulator & m_sim;
+  ClientSimulator & m_sim;
 };
 
   
@@ -50,8 +50,8 @@ TEST(tapeServer, ClientInterfaceGoodDay) {
   // 1) prepare the client and run it in another thread
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
-  clientSimulator sim(volReq, vid);
-  struct clientSimulator::ipPort clientAddr = sim.getCallbackAddress();
+  ClientSimulator sim(volReq, vid);
+  struct ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
   

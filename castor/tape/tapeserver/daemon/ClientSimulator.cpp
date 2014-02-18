@@ -25,7 +25,7 @@
 #include <typeinfo>
 #include <memory>
 
-#include "clientSimulator.hpp"
+#include "ClientSimulator.hpp"
 #include "../../tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
@@ -33,7 +33,7 @@
 using namespace castor::tape::server;
 using namespace castor::tape;
 
-clientSimulator::clientSimulator(uint32_t volReqId, std::string vid):
+ClientSimulator::ClientSimulator(uint32_t volReqId, std::string vid):
   TpcpCommand("clientSimulator::clientSimulator"), m_vid(vid)
 {
   m_volReqId = volReqId;
@@ -41,7 +41,7 @@ clientSimulator::clientSimulator(uint32_t volReqId, std::string vid):
 }
 
 
-void clientSimulator::processFirstRequest()
+void ClientSimulator::processFirstRequest()
 throw (castor::exception::Exception) {
   // Accept the next connection
   std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
@@ -88,7 +88,7 @@ throw (castor::exception::Exception) {
   clientConnection->sendObject(vol);
 }
 
-void clientSimulator::sendEndNotificationErrorReport(
+void ClientSimulator::sendEndNotificationErrorReport(
     const uint64_t tapebridgeTransactionId,
     const int errorCode,
     const std::string &errorMessage,
