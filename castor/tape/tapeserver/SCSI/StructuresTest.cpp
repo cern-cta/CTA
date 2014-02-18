@@ -314,9 +314,9 @@ namespace unitTests {
     
     buff[2] |= 0xFF; buff[3] = 0xFF; buff[4] = 0xFF; buff[5] = 0xFF; buff[6] = 0xFF;
     
-    ASSERT_EQ(0, castor::tape::SCSI::Structures::toU16(readPositionCDB.allocationLenght));
+    ASSERT_EQ(0, castor::tape::SCSI::Structures::toU16(readPositionCDB.allocationLength));
     buff[7] |= 0x0A;buff[8] |= 0xBC;
-    ASSERT_EQ(0x0ABC, castor::tape::SCSI::Structures::toU16(readPositionCDB.allocationLenght));
+    ASSERT_EQ(0x0ABC, castor::tape::SCSI::Structures::toU16(readPositionCDB.allocationLength));
            
     ASSERT_EQ(0, readPositionCDB.control);
     buff[9] |= 0xBC;

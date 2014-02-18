@@ -328,7 +328,7 @@ namespace SCSI {
       unsigned char reserved[5];           // Reserved
       
       // bytes 7-8 
-      unsigned char allocationLenght[2] ;  // used for EXTENDENT FORM
+      unsigned char allocationLength[2] ;  // used for EXTENDENT FORM
             
       // byte 9
       unsigned char control;               // Control byte
