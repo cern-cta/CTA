@@ -33,9 +33,9 @@
 //------------------------------------------------------------------------------
 int main(int argc, char **argv) {
   try {
-    castor::log::LoggerImplementation logger("tapegatewayd");
+    castor::log::LoggerImplementation log("tapegatewayd");
     castor::tape::tapegateway::TapeGatewayDaemon
-      daemon(std::cout, std::cerr, logger);
+      daemon(std::cout, std::cerr, log);
     return daemon.main(argc, argv);
   } catch (castor::exception::Exception e) {
     std::cerr << "Caught exception :\n" << e.getMessage().str() << "\nExiting" << std::endl;

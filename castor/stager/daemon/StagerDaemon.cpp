@@ -59,9 +59,9 @@
 
 int main(int argc, char* argv[]){
   try{
-    castor::log::LoggerImplementation logger("stagerd");
+    castor::log::LoggerImplementation log("stagerd");
     castor::stager::daemon::StagerDaemon
-      stagerDaemon(std::cout, std::cerr, logger);
+      stagerDaemon(std::cout, std::cerr, log);
 
     castor::stager::IStagerSvc* stgService =
       dynamic_cast<castor::stager::IStagerSvc*>
@@ -159,8 +159,8 @@ int main(int argc, char* argv[]){
 /* constructor: initiallizes the DLF logging and set the default value to its attributes */
 /*****************************************************************************************/
 castor::stager::daemon::StagerDaemon::StagerDaemon(std::ostream &stdOut,
-  std::ostream &stdErr, log::Logger &logger) throw (castor::exception::Exception)
-  : castor::server::MultiThreadedDaemon(stdOut, stdErr, logger) {
+  std::ostream &stdErr, log::Logger &log) throw (castor::exception::Exception)
+  : castor::server::MultiThreadedDaemon(stdOut, stdErr, log) {
 
   castor::dlf::Message stagerDlfMessages[]={
 

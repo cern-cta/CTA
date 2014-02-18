@@ -42,9 +42,7 @@ protected:
 
 TEST_F(castor_log_LoggerImplementationTest, testLogMsgWithAllParams) {
   using namespace castor::log;
-  std::auto_ptr<Logger> logger;
-  ASSERT_NO_THROW(logger.reset(new LoggerImplementation("unitttests")));
-
+  LoggerImplementation log("unitttests");
   const int numParams = 1;
   const Param params[1] = {Param("testParam", "valueOfTestParam")};
   struct timeval timeStamp;
@@ -52,9 +50,9 @@ TEST_F(castor_log_LoggerImplementationTest, testLogMsgWithAllParams) {
   ASSERT_EQ(0, gettimeofday(&timeStamp, NULL));
 
   ASSERT_NO_THROW(
-    logger->logMsg(
+    log(
       LOG_INFO,
-      "Calling logMsg() with all parameters",
+      "Calling logger with all parameters",
       numParams,
       params,
       timeStamp));
@@ -62,29 +60,24 @@ TEST_F(castor_log_LoggerImplementationTest, testLogMsgWithAllParams) {
 
 TEST_F(castor_log_LoggerImplementationTest, testLogMsgWithoutTimeStamp) {
   using namespace castor::log;
-  std::auto_ptr<Logger> logger;
-  ASSERT_NO_THROW(logger.reset(new LoggerImplementation("unitttests")));
-
+  LoggerImplementation log("unitttests");
   const int numParams = 1;
   const Param params[1] = {Param("testParam", "valueOfTestParam")};
 
   ASSERT_NO_THROW(
-    logger->logMsg(
+    log(
       LOG_INFO,
-      "Calling logMsg() without time stamp",
+      "Calling logger without time stamp",
       numParams,
       params));
 }
 
 TEST_F(castor_log_LoggerImplementationTest, testLogMsgWithoutParamsOrTimeStamp) {
   using namespace castor::log;
-  std::auto_ptr<Logger> logger;
-  ASSERT_NO_THROW(logger.reset(new LoggerImplementation("unitttests")));
+  LoggerImplementation log("unitttests");
 
   ASSERT_NO_THROW(
-    logger->logMsg(
-      LOG_INFO,
-      "Calling logMsg() without parameters or time stamp"));
+    log(LOG_INFO, "Calling logger without parameters or time stamp"));
 }   
 
 } // namespace unitTests

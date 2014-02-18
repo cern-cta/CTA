@@ -43,8 +43,8 @@
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
   try {
-    castor::log::LoggerImplementation logger("vdqmd");
-    castor::vdqm::VdqmServer       server(std::cout, std::cerr, logger);
+    castor::log::LoggerImplementation log("vdqmd");
+    castor::vdqm::VdqmServer       server(std::cout, std::cerr, log);
     Cuuid_t                        cuuid                       = cuuid;
     castor::server::BaseThreadPool *requestHandlerThreadPool   = NULL;
     castor::server::BaseThreadPool *driveSchedulerThreadPool   = NULL;

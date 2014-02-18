@@ -59,8 +59,8 @@ public:
   /**
    * Prepares the logger object for a call to fork().
    *
-   * No further calls to logMsg() should be made after calling this method
-   * until the call to fork() has completed.
+   * No further calls to operator() should be made after calling this
+   * method until the call to fork() has completed.
    */
   void prepareForFork() throw(castor::exception::Internal);
 
@@ -69,7 +69,7 @@ public:
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
    *
-   * Note that this version of logMsg() allows the caller to specify the
+   * Note that this version of operator() allows the caller to specify the
    * time stamp of the log message.
    *
    * @param priority the priority of the message as defined by the syslog API.
@@ -78,7 +78,7 @@ public:
    * @param params the parameters of the message.
    * @param timeStamp the time stamp of the log message.
    */
-  void logMsg(
+  void operator() (
     const int priority,
     const std::string &msg,
     const int numParams,
@@ -90,7 +90,7 @@ public:
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
    *
-   * Note that this version of logMsg() implicitly uses the current time as
+   * Note that this version of operator() implicitly uses the current time as
    * the time stamp of the message.
    *
    * @param priority the priority of the message as defined by the syslog API.
@@ -98,7 +98,7 @@ public:
    * @param numParams the number of parameters in the message.
    * @param params the parameters of the message.
    */
-  void logMsg(
+  void operator() (
     const int priority,
     const std::string &msg,
     const int numParams,
@@ -109,13 +109,13 @@ public:
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
    *
-   * Note that this version of logMsg() implicitly uses the current time as
+   * Note that this version of operator() implicitly uses the current time as
    * the time stamp of the message.
    *
    * @param priority the priority of the message as defined by the syslog API.
    * @param msg the message.
    */
-  void logMsg(
+  void operator() (
     const int priority,
     const std::string &msg) throw();
 

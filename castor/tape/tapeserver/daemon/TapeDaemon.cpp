@@ -38,9 +38,9 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(std::ostream &stdOut,
-  std::ostream &stdErr, log::Logger &logger)
+  std::ostream &stdErr, log::Logger &log)
   throw(castor::exception::Exception):
-  castor::server::Daemon(stdOut, stdErr, logger),
+  castor::server::Daemon(stdOut, stdErr, log),
   m_programName("tapeserverd") {
 }
 
@@ -70,7 +70,7 @@ int castor::tape::tapeserver::daemon::TapeDaemon::main(const int argc,
     log::Param params[] = {
       log::Param("Message", msg.str()),
       log::Param("Code"   , ex.code())};
-    m_logger.logMsg(LOG_INFO, msg.str(), params);
+    m_log(LOG_INFO, msg.str(), params);
 
     return 1;
   }
@@ -103,7 +103,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logStartOfDaemon(
 
   log::Param params[] = {
     log::Param("argv", concatenatedArgs)};
-  m_logger.logMsg(LOG_INFO, msg.str(), params);
+  m_log(LOG_INFO, msg.str(), params);
 }
 
 //------------------------------------------------------------------------------

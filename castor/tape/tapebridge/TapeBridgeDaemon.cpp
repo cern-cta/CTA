@@ -46,9 +46,9 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapebridge::TapeBridgeDaemon::TapeBridgeDaemon(
-  std::ostream &stdOut, std::ostream &stdErr, log::Logger &logger)
+  std::ostream &stdOut, std::ostream &stdErr, log::Logger &log)
   throw(castor::exception::Exception) :
-  castor::server::MultiThreadedDaemon(stdOut, stdErr, logger),
+  castor::server::MultiThreadedDaemon(stdOut, stdErr, log),
   m_vdqmRequestHandlerThreadPool(0) {
 }
 

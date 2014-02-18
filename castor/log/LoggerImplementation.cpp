@@ -251,9 +251,9 @@ void castor::log::LoggerImplementation::closeLog() throw() {
 }
 
 //-----------------------------------------------------------------------------
-// logMsg
+// operator() 
 //-----------------------------------------------------------------------------
-void castor::log::LoggerImplementation::logMsg(
+void castor::log::LoggerImplementation::operator() (
   const int priority,
   const std::string &msg,
   const int numParams,
@@ -293,7 +293,8 @@ void castor::log::LoggerImplementation::logMsg(
 #endif
 
   // Append the log level, the thread id and the message text
-  logMsg << "LVL=" << priorityText << " TID=" << tid << " MSG=\"" << msg << "\" ";
+  logMsg << "LVL=" << priorityText << " TID=" << tid << " MSG=\"" << msg <<
+    "\" ";
 
   // Process parameters
   for(int i = 0; i < numParams; i++) {
@@ -446,9 +447,9 @@ void castor::log::LoggerImplementation::reducedSyslog(std::string msg)
 }
 
 //-----------------------------------------------------------------------------
-// logMsg
+// operator() 
 //-----------------------------------------------------------------------------
-void castor::log::LoggerImplementation::logMsg(
+void castor::log::LoggerImplementation::operator() (
   const int priority,
   const std::string &msg,
   const int numParams,
@@ -457,15 +458,15 @@ void castor::log::LoggerImplementation::logMsg(
   struct timeval timeStamp;
   gettimeofday(&timeStamp, NULL);
 
-  logMsg(priority, msg, numParams, params, timeStamp);
+  operator() (priority, msg, numParams, params, timeStamp);
 }
 
 //-----------------------------------------------------------------------------
-// logMsg
+// operator() 
 //-----------------------------------------------------------------------------
-void castor::log::LoggerImplementation::logMsg(
+void castor::log::LoggerImplementation::operator() (
   const int priority,
   const std::string &msg) throw() {
   Param *emptyParams = NULL;
-  logMsg(priority, msg, 0, emptyParams);
+  operator() (priority, msg, 0, emptyParams);
 }

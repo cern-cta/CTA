@@ -37,10 +37,10 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::Daemon::Daemon(std::ostream &stdOut, std::ostream &stdErr,
-  log::Logger &logger) throw():
+  log::Logger &log) throw():
   m_stdOut(stdOut),
   m_stdErr(stdErr),
-  m_logger(logger),
+  m_log(log),
   m_foreground(false),
   m_commandLineHasBeenParsed(false),
   m_runAsStagerSuperuser(false) {
@@ -123,7 +123,7 @@ void castor::server::Daemon::help(const std::string &programName)
 // getServerName
 //------------------------------------------------------------------------------
 const std::string &castor::server::Daemon::getServerName() const throw() {
-  return m_logger.getProgramName();
+  return m_log.getProgramName();
 }
 
 //------------------------------------------------------------------------------
@@ -163,7 +163,7 @@ void castor::server::Daemon::setCommandLineHasBeenParsed(const bool foreground)
 //-----------------------------------------------------------------------------
 void castor::server::Daemon::dlfInit(castor::dlf::Message messages[])
   throw (castor::exception::Exception) {
-  castor::dlf::dlf_init((char*)m_logger.getProgramName().c_str(), messages);
+  castor::dlf::dlf_init((char*)m_log.getProgramName().c_str(), messages);
   // Add framework specific messages
   castor::dlf::Message frameworkMessages[] =
     {{  1, "Error while reading datagrams" },
@@ -200,7 +200,7 @@ void castor::server::Daemon::daemonize() throw (castor::exception::Exception) {
 
   // If the daemon is to be run in the background
   if (!m_foreground) {
-    m_logger.prepareForFork();
+    m_log.prepareForFork();
 
     {
       pid_t pid = 0;

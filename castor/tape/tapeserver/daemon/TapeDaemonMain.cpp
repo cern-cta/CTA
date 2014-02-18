@@ -33,9 +33,9 @@
 //------------------------------------------------------------------------------
 int main(const int argc, char **const argv) {
 
-  castor::log::LoggerImplementation logger("tapeserverd");
+  castor::log::LoggerImplementation log("tapeserverd");
   castor::tape::tapeserver::daemon::TapeDaemon
-    daemon(std::cout, std::cerr, logger);
+    daemon(std::cout, std::cerr, log);
 
   return daemon.main(argc, argv);
 }

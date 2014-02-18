@@ -52,11 +52,11 @@ namespace castor{
          *
          * @param stdOut Stream representing standard out.
          * @param stdErr Stream representing standard error.
-         * @param logger Object representing the API of the CASTOR logging
+         * @param log Object representing the API of the CASTOR logging
          * system.
          */
         StagerDaemon(std::ostream &stdOut, std::ostream &stdErr,
-          log::Logger &logger) throw (castor::exception::Exception);
+          log::Logger &log) throw (castor::exception::Exception);
 
         /**
          * Destructor

@@ -61,10 +61,10 @@ namespace castor {
        *
        * @param stdOut Stream representing standard out.
        * @param stdErr Stream representing standard error.
-       * @param logger Object representing the API of the CASTOR logging
+       * @param log Object representing the API of the CASTOR logging
        * system.
        */
-      Server(std::ostream &stdOut, std::ostream &stdErr, log::Logger &logger);
+      Server(std::ostream &stdOut, std::ostream &stdErr, log::Logger &log);
 
       /**
        * Destructor

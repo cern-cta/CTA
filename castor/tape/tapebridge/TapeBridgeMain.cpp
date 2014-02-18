@@ -32,9 +32,9 @@
 //------------------------------------------------------------------------------
 int main(int argc, char **argv) {
 
-  castor::log::LoggerImplementation logger("tapebridged");
+  castor::log::LoggerImplementation log("tapebridged");
   castor::tape::tapebridge::TapeBridgeDaemon
-    daemon(std::cout, std::cerr, logger);
+    daemon(std::cout, std::cerr, log);
 
   return daemon.main(argc, argv);
 }

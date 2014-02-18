@@ -56,7 +56,7 @@ public:
    * @param stdErr Stream representing standard error.
    * @param log The object representing the API of the CASTOR logging system.
    */
-  TapeDaemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &logger)
+  TapeDaemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &log)
     throw(castor::exception::Exception);
 
   /**

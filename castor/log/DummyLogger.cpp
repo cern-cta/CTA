@@ -46,9 +46,9 @@ void castor::log::DummyLogger::prepareForFork()
 }
 
 //------------------------------------------------------------------------------
-// logMsg
+// operator() 
 //------------------------------------------------------------------------------
-void castor::log::DummyLogger::logMsg(
+void castor::log::DummyLogger::operator() (
   const int priority,
   const std::string &msg,
   const int numParams,
@@ -57,9 +57,9 @@ void castor::log::DummyLogger::logMsg(
 }
 
 //------------------------------------------------------------------------------
-// logMsg
+// operator() 
 //------------------------------------------------------------------------------
-void castor::log::DummyLogger::logMsg(
+void castor::log::DummyLogger::operator() (
   const int priority,
   const std::string &msg,
   const int numParams,
@@ -67,9 +67,9 @@ void castor::log::DummyLogger::logMsg(
 }
 
 //------------------------------------------------------------------------------
-// logMsg
+// operator() 
 //------------------------------------------------------------------------------
-void castor::log::DummyLogger::logMsg(
+void castor::log::DummyLogger::operator() (
   const int priority,
   const std::string &msg) throw() {
 }

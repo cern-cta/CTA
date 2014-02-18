@@ -33,8 +33,8 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::MultiThreadedDaemon::MultiThreadedDaemon(std::ostream &stdOut,
-  std::ostream &stdErr, log::Logger &logger) throw():
-  Daemon(stdOut, stdErr, logger), m_signalMutex(NULL) {
+  std::ostream &stdErr, log::Logger &log) throw():
+  Daemon(stdOut, stdErr, log), m_signalMutex(NULL) {
 }
 
 //------------------------------------------------------------------------------

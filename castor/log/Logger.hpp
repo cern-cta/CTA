@@ -69,8 +69,8 @@ public:
   /**
    * Prepares the logger object for a call to fork().
    *
-   * No further calls to logMsg() should be made after calling this method
-   * until the call to fork() has completed.
+   * No further calls to operator() should be made after calling this
+   * method until the call to fork() has completed.
    */
   virtual void prepareForFork() throw(castor::exception::Internal) = 0;
 
@@ -85,7 +85,7 @@ public:
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
    *
-   * Note that this version of logMsg() allows the caller to specify the
+   * Note that this version of operator() allows the caller to specify the
    * time stamp of the log message.
    *
    * @param priority the priority of the message as defined by the syslog API.
@@ -94,7 +94,7 @@ public:
    * @param params the parameters of the message.
    * @param timeStamp the time stamp of the log message.
    */
-  virtual void logMsg(
+  virtual void operator() (
     const int priority,
     const std::string &msg,
     const int numParams,
@@ -106,7 +106,7 @@ public:
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
    *
-   * Note that this version of logMsg() implicitly uses the current time as
+   * Note that this version of operator() implicitly uses the current time as
    * the time stamp of the message.
    *
    * @param priority the priority of the message as defined by the syslog API.
@@ -114,7 +114,7 @@ public:
    * @param numParams the number of parameters in the message.
    * @param params the parameters of the message.
    */
-  virtual void logMsg(
+  virtual void operator() (
     const int priority,
     const std::string &msg,
     const int numParams,
@@ -125,21 +125,21 @@ public:
    * will ever be thrown in case of failure. Failures will actually be
    * silently ignored in order to not impact the processing.
    *
-   * Note that this version of logMsg() implicitly uses the current time as
+   * Note that this version of operator() implicitly uses the current time as
    * the time stamp of the message.
    *
    * @param priority the priority of the message as defined by the syslog API.
    * @param msg the message.
    */
-  virtual void logMsg(
+  virtual void operator() (
     const int priority,
     const std::string &msg) throw() = 0;
 
   /**
-   * A template function that wraps logMsg in order to get the compiler
+   * A template function that wraps operator() in order to get the compiler
    * to automatically determine the size of the params parameter, therefore
    *
-   * Note that this version of logMsg() allows the caller to specify the
+   * Note that this version of operator() allows the caller to specify the
    * time stamp of the log message.
    *
    * @param priority the priority of the message as defined by the syslog
@@ -148,20 +148,20 @@ public:
    * @param params the parameters of the message.
    * @param timeStamp the time stamp of the log message.
    */
-  template<int numParams> void logMsg(
+  template<int numParams> void operator() (
     const int priority,
     const std::string &msg,
     castor::log::Param(&params)[numParams],
     const struct timeval &timeStamp) throw() {
-    logMsg(priority, msg, numParams, params, timeStamp);
+   operator() (priority, msg, numParams, params, timeStamp);
   }
 
   /**
-   * A template function that wraps logMsg in order to get the compiler
+   * A template function that wraps operator() in order to get the compiler
    * to automatically determine the size of the params parameter, therefore
    * removing the need for the devloper to provide it explicity.
    *
-   * Note that this version of logMsg() implicitly uses the current time as
+   * Note that this version of operator() implicitly uses the current time as
    * the time stamp of the message.
    *
    * @param priority the priority of the message as defined by the syslog
@@ -169,11 +169,11 @@ public:
    * @param msg the message.
    * @param params the parameters of the message.
    */
-  template<int numParams> void logMsg(
+  template<int numParams> void operator() (
     const int priority,
     const std::string &msg,
     castor::log::Param(&params)[numParams]) throw() {
-    logMsg(priority, msg, numParams, params);
+   operator() (priority, msg, numParams, params);
   }
 
 protected:

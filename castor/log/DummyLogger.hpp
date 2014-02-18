@@ -65,13 +65,13 @@ public:
   /**
    * Prepares the logger object for a call to fork().
    *
-   * No further calls to logMsg() should be made after calling this method
-   * until the call to fork() has completed.
+   * No further calls to operator() should be made after calling this
+   * method until the call to fork() has completed.
    */
   void prepareForFork() throw(castor::exception::Internal);
 
   /**
-   * Dummy logMsg() method that does nothing.
+   * Dummy operator() method that does nothing.
    *
    * @param priority the priority of the message as defined by the syslog API.
    * @param msg the message.
@@ -79,7 +79,7 @@ public:
    * @param params the parameters of the message.
    * @param timeStamp the time stamp of the log message.
    */
-  void logMsg(
+  void operator() (
     const int priority,
     const std::string &msg,
     const int numParams,
@@ -87,26 +87,26 @@ public:
     const struct timeval &timeStamp) throw();
 
   /**
-   * Dummy logMsg() method that does nothing.
+   * Dummy operator() method that does nothing.
    *
    * @param priority the priority of the message as defined by the syslog API.
    * @param msg the message.
    * @param numParams the number of parameters in the message.
    * @param params the parameters of the message.
    */
-  void logMsg(
+  void operator() (
     const int priority,
     const std::string &msg,
     const int numParams,
     const Param params[]) throw();
 
   /**
-   * Dummy logMsg() method that does nothing.
+   * Dummy operator() method that does nothing.
    *
    * @param priority the priority of the message as defined by the syslog API.
    * @param msg the message.
    */
-  void logMsg(
+  void operator() (
     const int priority,
     const std::string &msg) throw();
 

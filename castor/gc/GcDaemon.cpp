@@ -46,8 +46,8 @@
 int main(int argc, char *argv[]) {
 
   try {
-    castor::log::LoggerImplementation logger("gcd");
-    castor::gc::GcDaemon daemon(std::cout, std::cerr, logger);
+    castor::log::LoggerImplementation log("gcd");
+    castor::gc::GcDaemon daemon(std::cout, std::cerr, log);
 
     // Randomize the start-up of the daemon between 1 and 15 minutes.
     char *value;
@@ -112,8 +112,8 @@ int main(int argc, char *argv[]) {
 // Constructor
 //-----------------------------------------------------------------------------
 castor::gc::GcDaemon::GcDaemon(std::ostream &stdOut, std::ostream &stdErr,
-  log::Logger &logger):
-  castor::server::MultiThreadedDaemon(stdOut, stdErr, logger) {
+  log::Logger &log):
+  castor::server::MultiThreadedDaemon(stdOut, stdErr, log) {
 
   // Now with predefined messages
   castor::dlf::Message messages[] = {
