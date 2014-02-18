@@ -41,8 +41,8 @@
 #include "castor/tape/tapegateway/PingNotification.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
-#include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <memory>
@@ -259,7 +259,7 @@ int castor::tape::tapebridge::ClientProxy::sendFilesToMigrateListRequest(
   request.setMaxBytes(maxBytes);
 
   // Send the request and return the socket-descriptor of the connection
-  utils::SmartFd clientSock;
+  castor::utils::SmartFd clientSock;
   timeval connectDuration = {0, 0};
   try {
     clientSock.reset(connectAndSendMessage(request, connectDuration));

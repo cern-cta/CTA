@@ -155,4 +155,4 @@ private:
 } // namespace utils
 } // namespace castor
 
-#endif // CASTOR_TAPE_UTILS_SMARTFD
+#endif // CASTOR_UTILS_SMARTFD

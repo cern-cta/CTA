@@ -24,8 +24,8 @@
 
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapebridge/ClientAddressLocal.hpp"
-#include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <errno.h>
@@ -95,7 +95,7 @@ int castor::tape::tapebridge::ClientAddressLocal::connectToClient(
   timeval connectEndTime   = {0, 0};
   utils::getTimeOfDay(&connectStartTime, NULL);
 
-  utils::SmartFd smartConnectSock;
+  castor::utils::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(net::connectWithTimeout(
       PF_LOCAL,
