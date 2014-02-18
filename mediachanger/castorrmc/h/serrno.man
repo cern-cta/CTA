@@ -202,6 +202,9 @@ The following error values might be returned by any package:
 .TP
 .B SEALREADYINIT
 (1049) Already initialized
+.TP
+.B SECMDLNNOTPRSD
+(1050) Command line not parsed
 
 .SH COPYTAPE ERRORS
 None yet
