@@ -32,6 +32,7 @@
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/common.h"
 #include "h/Ctape_constants.h"
 #include "h/rtcp.h"
@@ -570,9 +571,9 @@ void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
 
   utils::setBytes(msgBody, '\0');
 
-  utils::copyString(msgBody.rqst.recfm_noLongerUsed, "F");
+  castor::utils::copyString(msgBody.rqst.recfm_noLongerUsed, "F");
 
-  utils::copyString(msgBody.rqst.tapePath, tapePath);
+  castor::utils::copyString(msgBody.rqst.tapePath, tapePath);
   msgBody.rqst.volReqId       =  volReqId;
   msgBody.rqst.jobId          = -1;
   msgBody.rqst.stageSubReqId  = -1;
@@ -666,10 +667,10 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
 
   // Give file information to RTCPD
   utils::setBytes(msgBody, '\0');
-  utils::copyString(msgBody.rqst.filePath, filePath    );
-  utils::copyString(msgBody.rqst.tapePath, tapePath    );
-  utils::copyString(msgBody.rqst.recfm_noLongerUsed, "F");
-  utils::copyString(msgBody.rqst.fid     , tapeFileId  );
+  castor::utils::copyString(msgBody.rqst.filePath, filePath    );
+  castor::utils::copyString(msgBody.rqst.tapePath, tapePath    );
+  castor::utils::copyString(msgBody.rqst.recfm_noLongerUsed, "F");
+  castor::utils::copyString(msgBody.rqst.fid     , tapeFileId  );
 
   msgBody.rqst.volReqId             = volReqId;
   msgBody.rqst.jobId                = -1;
@@ -693,7 +694,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
   msgBody.rqst.blockId[2]           = blockId[2];
   msgBody.rqst.blockId[3]           = blockId[3];
   msgBody.rqst.bytesIn              = fileSize;
-  utils::copyString(msgBody.rqst.segAttr.nameServerHostName,
+  castor::utils::copyString(msgBody.rqst.segAttr.nameServerHostName,
     nameServerHostName);
   msgBody.rqst.segAttr.castorFileId = castorFileId;
   msgBody.err.severity              = RTCP_OK;

@@ -55,9 +55,9 @@
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
-#include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/SmartFdList.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/getconfent.h"
@@ -131,7 +131,7 @@ castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
 int castor::tape::tapebridge::BridgeProtocolEngine::acceptRtcpdConnection()
   throw(castor::exception::Exception) {
 
-  utils::SmartFd connectedSock;
+  castor::utils::SmartFd connectedSock;
   const int timeout = 5; // Seconds
 
   bool connectionAccepted = false;
@@ -716,7 +716,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   // Release the socket-descriptor from the catalogue
   uint64_t tapebridgeTransId = 0;
-  utils::SmartFd catalogueSock(
+  castor::utils::SmartFd catalogueSock(
     m_sockCatalogue.releaseClientMigrationReportSock(tapebridgeTransId));
 
   // Check for a mismatch between the pending and catalogue socket-decriptors
@@ -913,7 +913,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
     m_tapebridgeTransactionCounter.next();
   const uint64_t maxFiles = 1;
   const uint64_t maxBytes = 1;
-  utils::SmartFd clientSock(m_clientProxy.sendFilesToMigrateListRequest(
+  castor::utils::SmartFd clientSock(m_clientProxy.sendFilesToMigrateListRequest(
     tapebridgeTransId, maxFiles, maxBytes));
 
   // Receive the reply
@@ -1028,11 +1028,11 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
   // Give volume to rtcpd
   legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
   utils::setBytes(rtcpVolume, '\0');
-  utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
-  utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
-  utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
-  utils::copyString(rtcpVolume.density, m_volume.density().c_str());
-  utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
+  castor::utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
+  castor::utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
+  castor::utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
+  castor::utils::copyString(rtcpVolume.density, m_volume.density().c_str());
+  castor::utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
   rtcpVolume.volReqId       = m_jobRequest.volReqId;
   rtcpVolume.mode           = WRITE_ENABLE;
   rtcpVolume.tStartRequest  = time(NULL);
@@ -1093,7 +1093,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
     unsigned char blockId[4];
     utils::setBytes(blockId, '\0');
     char nshost[CA_MAXHOSTNAMELEN+1];
-    utils::copyString(nshost, firstFileToMigrate->nshost().c_str());
+    castor::utils::copyString(nshost, firstFileToMigrate->nshost().c_str());
 
     RtcpTxRx::giveFileToRtcpd(
       m_cuuid,
@@ -1139,11 +1139,11 @@ void castor::tape::tapebridge::BridgeProtocolEngine::startRecallSession()
   // Give volume to rtcpd
   legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
   utils::setBytes(rtcpVolume, '\0');
-  utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
-  utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
-  utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
-  utils::copyString(rtcpVolume.density, m_volume.density().c_str());
-  utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
+  castor::utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
+  castor::utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
+  castor::utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
+  castor::utils::copyString(rtcpVolume.density, m_volume.density().c_str());
+  castor::utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
   rtcpVolume.volReqId       = m_jobRequest.volReqId;
   rtcpVolume.mode           = WRITE_DISABLE;
   rtcpVolume.tStartRequest  = time(NULL);
@@ -1176,11 +1176,11 @@ void castor::tape::tapebridge::BridgeProtocolEngine::startDumpSession()
   // Give volume to rtcpd
   legacymsg::RtcpTapeRqstErrMsgBody rtcpVolume;
   utils::setBytes(rtcpVolume, '\0');
-  utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
-  utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
-  utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
-  utils::copyString(rtcpVolume.density, m_volume.density().c_str());
-  utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
+  castor::utils::copyString(rtcpVolume.vid    , m_volume.vid().c_str()    );
+  castor::utils::copyString(rtcpVolume.vsn    , EMPTYVSN                  );
+  castor::utils::copyString(rtcpVolume.label  , m_volume.label().c_str()  );
+  castor::utils::copyString(rtcpVolume.density, m_volume.density().c_str());
+  castor::utils::copyString(rtcpVolume.unit   , m_jobRequest.driveUnit    );
   rtcpVolume.volReqId       = m_jobRequest.volReqId;
   rtcpVolume.mode           = WRITE_DISABLE;
   rtcpVolume.tStartRequest  = time(NULL);
@@ -1692,7 +1692,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     tapegateway::TAPE_GATEWAY == m_volume.clientType() ?
       m_bulkRequestConfigParams.getBulkRequestMigrationMaxBytes().getValue() :
       1;
-  utils::SmartFd clientSock(m_clientProxy.sendFilesToMigrateListRequest(
+  castor::utils::SmartFd clientSock(m_clientProxy.sendFilesToMigrateListRequest(
     tapebridgeTransId, maxFiles, maxBytes));
 
   try {
@@ -1792,7 +1792,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     tapegateway::TAPE_GATEWAY == m_volume.clientType() ?
       m_bulkRequestConfigParams.getBulkRequestRecallMaxBytes().getValue() :
       1;
-  utils::SmartFd clientSock(m_clientProxy.sendFilesToRecallListRequest(
+  castor::utils::SmartFd clientSock(m_clientProxy.sendFilesToRecallListRequest(
     tapebridgeTransId, maxFiles, maxBytes));
   {
     castor::dlf::Param params[] = {
@@ -1894,7 +1894,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToRecallToRtcpd(
       fileToRecall.blockId2,
       fileToRecall.blockId3};
     char nshost[CA_MAXHOSTNAMELEN+1];
-    utils::copyString(nshost, fileToRecall.nsHost.c_str());
+    castor::utils::copyString(nshost, fileToRecall.nsHost.c_str());
 
     // The file size is not specified when recalling
     const uint64_t fileSize = 0;
@@ -2340,7 +2340,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   // Send the report to the client
   timeval connectDuration = {0, 0};
-  utils::SmartFd clientSock(m_clientProxy.connectAndSendMessage(report,
+  castor::utils::SmartFd clientSock(m_clientProxy.connectAndSendMessage(report,
     connectDuration));
   {
     const double connectDurationDouble =
@@ -2797,7 +2797,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   // Send the report message to the client (the tapegewayd daemon or the
   // writetp command-line tool
   timeval connectDuration = {0, 0};
-  utils::SmartFd clientSock(m_clientProxy.connectAndSendMessage(report,
+  castor::utils::SmartFd clientSock(m_clientProxy.connectAndSendMessage(report,
     connectDuration));
   {
     const double connectDurationDouble =
@@ -3038,7 +3038,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToMigrateToRtcpd(
     unsigned char blockId[4];
     utils::setBytes(blockId, '\0');
     char nshost[CA_MAXHOSTNAMELEN+1];
-    utils::copyString(nshost, fileToMigrate.nsHost.c_str());
+    castor::utils::copyString(nshost, fileToMigrate.nsHost.c_str());
 
     RtcpTxRx::giveFileToRtcpd(
       m_cuuid,
@@ -3583,7 +3583,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   // Send the report to the client and receive the reply
   timeval connectDuration = {0, 0};
-  utils::SmartFd clientSock(m_clientProxy.connectAndSendMessage(
+  castor::utils::SmartFd clientSock(m_clientProxy.connectAndSendMessage(
     listReport, connectDuration));
   try {
     m_clientProxy.receiveNotificationReplyAndClose(
@@ -3658,7 +3658,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   // Send the report to the client and receive the reply
   timeval connectDuration = {0, 0};
-  utils::SmartFd clientSock(m_clientProxy.connectAndSendMessage(
+  castor::utils::SmartFd clientSock(m_clientProxy.connectAndSendMessage(
     listReport, connectDuration));
   try {
     m_clientProxy.receiveNotificationReplyAndClose(tapebridgeTransId,

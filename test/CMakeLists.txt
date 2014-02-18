@@ -37,6 +37,7 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/exception/ExceptionTest.cpp
   ../castor/tape/tapeserver/file/StructuresTest.cpp
   ../castor/tape/tapeserver/threading/ThreadingTests.cpp
+  ../castor/utils/SmartFdTest.cpp
   ../castor/utils/UtilsTest.cpp
 )
 set_property(SOURCE ../SCSI/StructuresTest.cpp

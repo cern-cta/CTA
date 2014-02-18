@@ -30,7 +30,6 @@ set (TAPE_UTILS_LIB_SRC_FILES
   ShutdownBoolFunctor.cpp
   ScopedLock.cpp
   SmartFILEPtr.cpp
-  SmartFd.cpp
   SmartFdList.cpp
   Timer.cpp
   utils.cpp)

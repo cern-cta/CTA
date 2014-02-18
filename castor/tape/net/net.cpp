@@ -27,8 +27,9 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/net/net.hpp"
-#include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/SmartFd.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/serrno.h"
 #include "h/net.h"
 
@@ -71,7 +72,7 @@ int castor::tape::net::createListenerSock(
   }
 
   // Create a socket
-  utils::SmartFd sock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP));
+  castor::utils::SmartFd sock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP));
   if(sock.get() < 0) {
     const int savedErrno = errno;
 
@@ -393,7 +394,7 @@ void castor::tape::net::getSockHostName(
       ": " << gai_strerror(error));
   }
 
-  utils::copyString(buf, len, hostName);
+  castor::utils::copyString(buf, len, hostName);
 }
 
 
@@ -486,7 +487,7 @@ void castor::tape::net::getPeerHostName(
         ": " << gai_strerror(rc));
     }
 
-    utils::copyString(buf, len, hostName);
+    castor::utils::copyString(buf, len, hostName);
   }
 }
 
@@ -720,7 +721,7 @@ int castor::tape::net::connectWithTimeout(
   throw(castor::exception::TimeOut, castor::exception::Exception) {
 
   // Create the socket for the new connection
-  utils::SmartFd smartSock(socket(sockDomain, sockType, sockProtocol));
+  castor::utils::SmartFd smartSock(socket(sockDomain, sockType, sockProtocol));
   if(-1 == smartSock.get()) {
     const int socketErrno = errno;
     TAPE_THROW_CODE(errno,

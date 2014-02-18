@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/utils/SmartFd.hpp
+ *                      castor/utils/SmartFd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,14 +22,13 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_UTILS_SMARTFD
-#define CASTOR_TAPE_UTILS_SMARTFD
+#ifndef CASTOR_UTILS_SMARTFD
+#define CASTOR_UTILS_SMARTFD
 
 #include "castor/exception/Exception.hpp"
 
 
 namespace castor {
-namespace tape   {
 namespace utils  {
 
 /**
@@ -38,7 +37,6 @@ namespace utils  {
  * owns.
  */
 class SmartFd {
-
 public:
 
   /**
@@ -48,9 +46,9 @@ public:
    * Please note that any exception thrown by this function will be ignored
    * because this function maybe called by the destructor of SmartFd.
    *
-   * @param closedfd The value of the file descriptor that was closed.
+   * @param closedFd The value of the file descriptor that was closed.
    */
-  typedef void (*ClosedCallback)(int closedfd);
+  typedef void (*ClosedCallback)(int closedFd);
 
   /**
    * Constructor.
@@ -77,15 +75,13 @@ public:
    * ignored because the callback function maybe called by the destructor of
    * SmartFd.
    *
-   * @param fd             The file descriptor to be owned by the smart file
-   *                       descriptor.
    * @param closedCallback This function will be called immediately after
    *                       the SmartFd has closed the file-descriptor it owns.
    *                       Please note that any exception thrown by this
    *                       function will be ignored because this function
    *                       maybe called by the destructor of SmartFd.
    */
-  void setClosedCallback(const int fd, ClosedCallback closedCallback) throw();
+  void setClosedCallback(ClosedCallback closedCallback) throw();
 
   /**
    * Take ownership of the specified file descriptor, closing the previously
@@ -133,7 +129,6 @@ public:
    */
   int release() throw(castor::exception::Exception);
 
-
 private:
 
   /**
@@ -158,7 +153,6 @@ private:
 }; // class SmartFd
 
 } // namespace utils
-} // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_UTILS_SMARTFD
+#endif // CASTOR_UTILS_SMARTFD

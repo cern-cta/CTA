@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/utils/SmartFd.cpp
+ *                      castor/utils/SmartFd.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,41 +23,37 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/utils/SmartFd.hpp"
+#include "castor/utils/SmartFd.hpp"
 
 #include <errno.h>
 #include <unistd.h>
 
-
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFd::SmartFd() throw():
+castor::utils::SmartFd::SmartFd() throw():
   m_fd(-1), m_closedCallback(NULL) {
 }
 
-
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFd::SmartFd(const int fd) throw():
+castor::utils::SmartFd::SmartFd(const int fd) throw():
   m_fd(fd), m_closedCallback(NULL) {
 }
-
 
 //-----------------------------------------------------------------------------
 // setClosedCallback
 //-----------------------------------------------------------------------------
-void castor::tape::utils::SmartFd::setClosedCallback
-(const int, ClosedCallback closedCallback) throw() {
+void castor::utils::SmartFd::setClosedCallback(ClosedCallback closedCallback)
+  throw() {
   m_closedCallback = closedCallback;
 }
-
 
 //-----------------------------------------------------------------------------
 // reset
 //-----------------------------------------------------------------------------
-void castor::tape::utils::SmartFd::reset(const int fd = -1) throw() {
+void castor::utils::SmartFd::reset(const int fd = -1) throw() {
   // If the new file descriptor is not the one already owned
   if(fd != m_fd) {
 
@@ -80,50 +76,38 @@ void castor::tape::utils::SmartFd::reset(const int fd = -1) throw() {
   }
 }
 
-
 //-----------------------------------------------------------------------------
 // SmartFd assignment operator
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFd
-  &castor::tape::utils::SmartFd::operator=(SmartFd& obj) throw() {
-  
+castor::utils::SmartFd &castor::utils::SmartFd::operator=(SmartFd& obj)
+  throw() {
   reset(obj.release());
-
   return *this;
 }
-
 
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFd::~SmartFd() {
-
+castor::utils::SmartFd::~SmartFd() {
   reset();
 }
-
 
 //-----------------------------------------------------------------------------
 // get
 //-----------------------------------------------------------------------------
-int castor::tape::utils::SmartFd::get() const throw() {
-
+int castor::utils::SmartFd::get() const throw() {
   return m_fd;
 }
-
 
 //-----------------------------------------------------------------------------
 // release
 //-----------------------------------------------------------------------------
-int castor::tape::utils::SmartFd::release()
-  throw(castor::exception::Exception) {
-
+int castor::utils::SmartFd::release() throw(castor::exception::Exception) {
   // If this SmartFd does not own a file descriptor
   if(m_fd < 0) {
     castor::exception::Exception ex(EPERM);
-
     ex.getMessage() <<
       "Smart file-descriptor does not own a file-descriptor";
-
     throw(ex);
   }
 

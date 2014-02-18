@@ -59,7 +59,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
     char *p = NULL;
 
     if((p = getenv("VMGR_HOST")) || (p = getconfent("VMGR", "HOST", 0))) {
-      utils::copyString(vmgrHost, p);
+      castor::utils::copyString(vmgrHost, p);
     } else {
       castor::exception::Exception ex(EVMGRNOHOST);
 
@@ -110,7 +110,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
   utils::setBytes(request, '\0');
   request.uid = uid;
   request.gid = gid;
-  utils::copyString(request.vid, vid);
+  castor::utils::copyString(request.vid, vid);
   request.side = 0; // HARDCODED side
 
   // Marshal the request

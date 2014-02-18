@@ -136,7 +136,7 @@ void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
     case 's':
       m_cmdLine.serverSet = true;
       try {
-        utils::copyString(m_cmdLine.server, optarg);
+        castor::utils::copyString(m_cmdLine.server, optarg);
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_EX(castor::exception::Internal,
           ": Failed to copy the argument of the server command-line option"
@@ -222,7 +222,7 @@ void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
 
   // Parse the VID command-line argument
   try {
-    utils::copyString(m_cmdLine.vid, argv[optind]);
+    castor::utils::copyString(m_cmdLine.vid, argv[optind]);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
       ": Failed to copy VID comand-line argument into the internal data"

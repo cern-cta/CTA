@@ -46,9 +46,10 @@
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
-#include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/SmartFdList.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/SmartFd.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/common.h"
 #include "h/Ctape_constants.h"
 #include "h/rtcp_constants.h"
@@ -128,7 +129,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
   // Wrap the VDQM connection socket within a smart file-descriptor.  When the
   // smart file-descriptor goes out of scope it will close file-descriptor of
   // the socket.
-  utils::SmartFd vdqmSock;
+  castor::utils::SmartFd vdqmSock;
   {
     castor::io::ServerSocket *tmpServerSocket =
       (castor::io::ServerSocket*)param;
@@ -245,8 +246,8 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
     const unsigned short highPort = utils::getPortFromConfig(
       "TAPEBRIDGE", "RTCPDHIGHPORT", TAPEBRIDGE_RTCPDHIGHPORT);
     unsigned short chosenPort = 0;
-    utils::SmartFd listenSock(net::createListenerSock("127.0.0.1", lowPort,
-      highPort, chosenPort));
+    castor::utils::SmartFd listenSock(net::createListenerSock("127.0.0.1",
+      lowPort, highPort, chosenPort));
 
     // Get and log the IP, host name, port and socket file-descriptor of the
     // callback socket
@@ -400,11 +401,13 @@ castor::tape::legacymsg::RtcpJobReplyMsgBody
     clientInfoMsgBody.maxFilesBeforeFlush = 1;
   }
 
-  utils::copyString(clientInfoMsgBody.bridgeHost, bridgeCallbackHost);
-  utils::copyString(clientInfoMsgBody.bridgeClientHost, jobRequest.clientHost);
-  utils::copyString(clientInfoMsgBody.dgn, jobRequest.dgn);
-  utils::copyString(clientInfoMsgBody.drive, jobRequest.driveUnit);
-  utils::copyString(clientInfoMsgBody.clientName, jobRequest.clientUserName);
+  castor::utils::copyString(clientInfoMsgBody.bridgeHost, bridgeCallbackHost);
+  castor::utils::copyString(clientInfoMsgBody.bridgeClientHost,
+    jobRequest.clientHost);
+  castor::utils::copyString(clientInfoMsgBody.dgn, jobRequest.dgn);
+  castor::utils::copyString(clientInfoMsgBody.drive, jobRequest.driveUnit);
+  castor::utils::copyString(clientInfoMsgBody.clientName,
+    jobRequest.clientUserName);
 
   try {
     castor::tape::tapebridge::BridgeClientInfo2Sender::send(
@@ -436,8 +439,8 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
   // Accept the initial incoming RTCPD callback connection.
   // Wrap the socket file descriptor in a smart file descriptor so that it is
   // guaranteed to be closed if it goes out of scope.
-  utils::SmartFd rtcpdInitialSock(net::acceptConnection(bridgeCallbackSockFd,
-    RTCPDCALLBACKTIMEOUT));
+  castor::utils::SmartFd rtcpdInitialSock(
+    net::acceptConnection(bridgeCallbackSockFd, RTCPDCALLBACKTIMEOUT));
 
   // Log the initial callback connection from RTCPD
   try {

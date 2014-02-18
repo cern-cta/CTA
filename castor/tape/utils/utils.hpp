@@ -179,33 +179,6 @@ template<typename T> void setBytes(T &object, const int c) throw() {
 }
 
 /**
- * Safely copies source string into destination string.  The destination
- * will always be null terminated if this function is successful.
- *
- * @param dst     Destination string.
- * @param dstSize The size of the destination string including the terminating
- *                null character.
- * @param src     Source string.
- * destination.
- */
-void copyString(char *const dst, const size_t dstSize, const char *const src)
-  throw(castor::exception::Exception);
-
-/**
- * Safely copies source string into destination string.  The destination
- * will always be null terminated if this function is successful.
- *
- * @param dst Destination string.
- * @param src Source string.
- */
-template<size_t dstSize> void copyString(char (&dst)[dstSize],
-  const char *const src)
-  throw(castor::exception::Exception) {
-
-  copyString(dst, dstSize, src);
-}
-
-/**
  * Writes the specified array of strings to the specified output stream as a
  * list of strings separated by the specified separator.
  *
