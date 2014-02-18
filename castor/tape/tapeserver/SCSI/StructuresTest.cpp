@@ -33,7 +33,7 @@ using ::testing::AtLeast;
 using ::testing::Return;
 using ::testing::_;
 
-namespace UnitTests {
+namespace unitTests {
   TEST(castor_tape_SCSI_Structures, inquiryData_t_multi_byte_numbers_strings) {
     /* Validate the bit field behavior of the struct inquiryData_t,
      which represents the standard INQUIRY data format as defined in 

@@ -31,7 +31,7 @@ using ::testing::AtLeast;
 using ::testing::Return;
 using ::testing::_;
 
-namespace UnitTests {
+namespace unitTests {
 
 TEST(castor_tape_utils_Regex, BasicFunctionality) {
   castor::tape::utils::Regex re("a(b)");

@@ -28,7 +28,7 @@
 /* This is a collection of multi threaded unit tests, which can (and should)
  be passed through helgrind, as well as valgrind */
 
-namespace ThreadedUnitTests {
+namespace threadedUnitTests {
 
   class Thread_and_basic_locking : public castor::tape::threading::Thread {
   public:
@@ -116,5 +116,5 @@ namespace ThreadedUnitTests {
       ASSERT_NE(std::string::npos, w.find("Exception in child thread"));
     }
   }
-} // namespace ThreadedUnitTests
+} // namespace threadedUnitTests
 

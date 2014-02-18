@@ -34,7 +34,7 @@ using ::testing::Return;
 using ::testing::_;
 using ::testing::An;
 
-namespace UnitTests {
+namespace unitTests {
 
 TEST(castor_tape_drives_Drive, OpensCorrectly) {
   /* Prepare the test harness */

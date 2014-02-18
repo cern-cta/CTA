@@ -33,11 +33,25 @@ namespace castor {
      * Class managing the reading and writing of files to and from tape.
      */
     namespace AULFile {
+      
+      enum PositioningMode
+      {
+         ByBlockId,
+         ByFSeq
+      };
+      
+      enum PartOfFile
+      {
+         Header,
+         Payload,
+         Trailer
+      };
+      
       /**
        * Class containing all the information related to a file being migrated to 
        * tape.
        */
-      class Information { //no information about path and filename here as it cannot be used nor checked on tape
+      class FileInfo { //no information about path and filename here as it cannot be used nor checked on tape
       public:
         uint32_t checksum;
         uint64_t nsFileId;
@@ -81,22 +95,28 @@ namespace castor {
         ZeroFileWritten(): Exception("Trying to write a file with size 0") {}
       };
       
+      class UnsupportedPositioningMode: public Exception {
+      public:
+        UnsupportedPositioningMode(): Exception("Trying to use an unsupported positioning mode") {}
+      };
+      
       class HeaderChecker {
       public:
         
         /**
-         * Checks the field of a header comparing it with the numerical value provided
+         * Checks the hdr1
          * @param hdr1: the hdr1 header of the current file
          * @param fileInfo: the Information structure of the current file
+         * @param volId: the volume id of the tape in the drive
          */
-        static void checkHDR1(const HDR1 &hdr1, const Information &fileInfo, const std::string &volId) throw (Exception);
+        static void checkHDR1(const HDR1 &hdr1, const FileInfo &fileInfo, const std::string &volId) throw (Exception);
         
         /**
          * Checks the uhl1
          * @param uhl1: the uhl1 header of the current file
          * @param fileInfo: the Information structure of the current file
          */
-        static void checkUHL1(const UHL1 &uhl1, const Information &fileInfo) throw (Exception);
+        static void checkUHL1(const UHL1 &uhl1, const FileInfo &fileInfo) throw (Exception);
         
         /**
          * Checks the utl1
@@ -106,12 +126,9 @@ namespace castor {
         static void checkUTL1(const UTL1 &utl1, const uint32_t fseq) throw (Exception);
         
         /**
-         * checks the volume label to make sure the label is valid and that we
-         * have the correct tape (checks VSN). Leaves the tape at the end of the
-         * first header block (i.e. right before the first data block) in case
-         * of success, or rewinds the tape in case of volume label problems.
-         * Might also leave the tape in unknown state in case any of the st
-         * operations fail.
+         * Checks the vol1
+         * @param vol1: the vol1 header of the current file
+         * @param volId: the volume id of the tape in the drive
          */
         static void checkVOL1(const VOL1 &vol1, const std::string &volId) throw (Exception);
         
@@ -125,7 +142,7 @@ namespace castor {
          * @param is_field_oct: set to true if the value in the header is in octal and to false otherwise
          * @return true if the header field  matches the numerical value, false otherwise
          */
-        static bool checkHeaderNumericalField(const std::string &headerField, const uint64_t &value, bool is_field_hex=false, bool is_field_oct=false) throw (Exception);
+        static bool checkHeaderNumericalField(const std::string &headerField, const uint64_t value, const bool is_field_hex=false, const bool is_field_oct=false) throw (Exception);
       };
 
       /**
@@ -134,41 +151,68 @@ namespace castor {
        * and check for everything to be coherent. The tape should be mounted in
        * the drive before the AULReadSession is started (i.e. constructed).
        * Likewise, tape unmount is the business of the user.
-       */
-      
+       */      
       class ReadSession {
         
       public:
         
         /**
          * Constructor of the ReadSession. It will rewind the tape, and check the 
-         * VSN value. Throws an exception in case of mismatch.
+         * volId value. Throws an exception in case of mismatch.
          * @param drive: drive object to which we bind the session
-         * @param volId: volume name of the tape we would like to read from
+         * @param vid: volume name of the tape we would like to read from
          */
-        ReadSession(drives::DriveGeneric & drive, std::string volId) throw (Exception);
+        ReadSession(drives::DriveGeneric & drive, const std::string &vid) throw (Exception);
         
         /**
          * DriveGeneric object referencing the drive used during this read session
          */
-        drives::DriveGeneric & dg;
+        drives::DriveGeneric & m_drive;
         
         /**
          * Volume Serial Number
          */
-        std::string VSN;
+        const std::string m_vid;
         
-        /**
-         * Session lock to be sure that a read session is owned by maximum one ReadFile object 
-         */
-        bool lock;
-        
-        void setCorrupted() {
-          corrupted = true;
+        void setCorrupted() throw() {
+          m_corrupted = true;
         }
         
-        bool isCorrupted() {
-          return corrupted;
+        bool isCorrupted() throw() {
+          return m_corrupted;
+        }
+        
+        void lock() throw (Exception) {
+          if(m_locked) {
+            throw SessionAlreadyInUse();
+          }
+          if(m_corrupted) {
+            throw SessionCorrupted();
+          }
+          m_locked = true;
+        }
+        
+        void release() throw() {
+          if(!m_locked) {
+            m_corrupted = true;
+          }
+          m_locked = false;
+        }
+        
+        void setCurrentFseq(uint32_t fseq) {
+          m_fseq = fseq;
+        }
+        
+        uint32_t getCurrentFseq() {
+          return m_fseq;
+        }       
+        
+        void setCurrentFilePart(PartOfFile currentFilePart) {
+          m_currentFilePart = currentFilePart;
+        }
+        
+        PartOfFile getCurrentFilePart() {
+          return m_currentFilePart;
         }
         
       private:
@@ -176,7 +220,22 @@ namespace castor {
         /**
          * set to true in case the destructor of ReadFile finds a missing lock on its session
          */
-        bool corrupted;
+        bool m_corrupted;
+        
+        /**
+         * Session lock to be sure that a read session is owned by maximum one ReadFile object 
+         */
+        bool m_locked;
+        
+        /**
+         * Current fSeq, used only for positioning by fseq 
+         */
+        uint32_t m_fseq;
+        
+        /**
+         * Part of the file we are reading
+         */
+        PartOfFile m_currentFilePart;
       };
       
       class ReadFile{
@@ -188,13 +247,14 @@ namespace castor {
          * and position the tape right at the beginning of the file
          * @param rs: session to be bound to
          * @param fileInfo: information about the file we would like to read
+         * @param positioningMode: method used when positioning (see the PositioningMode enum)
          */
-        ReadFile(ReadSession *rs, const Information &fileInfo) throw (Exception);
+        ReadFile(ReadSession *rs, const FileInfo &fileInfo, const PositioningMode positioningMode) throw (Exception);
         
         /**
          * Destructor of the ReadFile. It will release the lock on the read session.
          */
-        ~ReadFile() throw (Exception);
+        ~ReadFile() throw ();
         
         /**
          * After positioning at the beginning of a file for readings, this function
@@ -204,18 +264,13 @@ namespace castor {
         size_t getBlockSize() throw (Exception);
         
         /**
-         * Read data from the file. The buffer should equal to or bigger than the 
-         * block size. Will try to actually fill up the provided buffer (this
-         * function can trigger several read on the tape side).
-         * This function will throw exceptions when problems arise (especially
-         * at end of file in case of size or checksum mismatch.
-         * After end of file, a new call to read without a call to position
-         * will throw NotReadingAFile.
-         * @param buff pointer to the data buffer
-         * @param len size of the buffer
+         * Reads data from the file. The buffer should be equal to or bigger than the 
+         * block size.
+         * @param data: pointer to the data buffer
+         * @param size: size of the buffer
          * @return The amount of data actually copied. Zero at end of file.
          */
-        size_t read(void * buff, size_t len) throw (Exception);
+        size_t read(void *data, const size_t size) throw (Exception);
       
       private:
         
@@ -224,10 +279,9 @@ namespace castor {
          * it is the duty of this function to determine how to best move to the next
          * file. The positioning will then be verified (header will be read). 
          * As usual, exception is thrown if anything goes wrong.
-         * @param fileInfo: all relevant information passed by the stager about
-         * the file.
+         * @param fileInfo: all relevant information passed by the stager about the file.
          */
-        void position(const Information &fileInfo) throw (Exception);
+        void position(const FileInfo &fileInfo) throw (Exception);
 
         /**
          * Set the block size member using the info contained within the uhl1
@@ -239,12 +293,17 @@ namespace castor {
         /**
          * Block size in Bytes of the current file
          */
-        size_t current_block_size;
+        size_t m_currentBlockSize;
         
         /**
          * Session to which we are attached to
          */
-        ReadSession *session;
+        ReadSession *m_session;
+        
+        /**
+         * Mode with which the positioning for reading a file is done
+         */
+        PositioningMode m_positioningMode;
       };
 
       /**
@@ -267,55 +326,57 @@ namespace castor {
          * @param last_fseq: fseq of the last active (undeleted) file on tape
          * @param compression: set this to true in case the drive has compression enabled (x000GC)
          */
-        WriteSession(drives::DriveGeneric & drive, std::string volId, uint32_t last_fseq, bool compression) throw (Exception);
+        WriteSession(drives::DriveGeneric & drive, const std::string &vid, const uint32_t last_fseq, const bool compression) throw (Exception);
         
         /**
          * DriveGeneric object referencing the drive used during this write session
          */
-        drives::DriveGeneric & dg;
+        drives::DriveGeneric & m_drive;
         
         /**
          * Volume Serial Number
          */
-        std::string VSN;
-        
-        /**
-         * Session lock to be sure that a write session is owned by maximum one WriteFile object 
-         */
-        bool lock;
+        std::string m_vid;
         
         /**
          * set to true if the drive has compression enabled 
          */
-        bool compressionEnabled;
+        bool m_compressionEnabled;
         
         std::string getSiteName() throw() {
-          return siteName;
+          return m_siteName;
         }
         
         std::string getHostName() throw() {
-          return hostName;
+          return m_hostName;
         }
         
-        void setCorrupted() {
-          corrupted = true;
+        void setCorrupted() throw() {
+          m_corrupted = true;
         }
         
-        bool isCorrupted() {
-          return corrupted;
+        bool isCorrupted() throw() {
+          return m_corrupted;
+        }
+        
+        void lock() throw (Exception) {
+          if(m_locked) {
+            throw SessionAlreadyInUse();
+          }
+          if(m_corrupted) {
+            throw SessionCorrupted();
+          }
+          m_locked = true;
+        }
+        
+        void release() throw() {
+          if(!m_locked) {
+            m_corrupted = true;
+          }
+          m_locked = false;
         }
         
       private:
-        
-        /**
-         * checks the volume label to make sure the label is valid and that we
-         * have the correct tape (checks VSN). Leaves the tape at the end of the
-         * first header block (i.e. right before the first data block) in case
-         * of success, or rewinds the tape in case of volume label problems.
-         * Might also leave the tape in unknown state in case any of the st
-         * operations fail.
-         */
-        void checkVOL1() throw (Exception);
         
         /**
          * looks for the site name in /etc/resolv.conf in the search line and saves the upper-cased value in siteName
@@ -330,17 +391,22 @@ namespace castor {
         /**
          * The following two variables are needed when writing the headers and trailers, sitename is grabbed from /etc/resolv.conf
          */
-        std::string siteName;
+        std::string m_siteName;
         
         /**
          * hostname is instead gotten from gethostname()
          */
-        std::string hostName;
+        std::string m_hostName;
         
         /**
          * set to true in case the write operations do (or try to do) something illegal
          */
-        bool corrupted;
+        bool m_corrupted;
+        
+        /**
+         * Session lock to be sure that a read session is owned by maximum one WriteFile object 
+         */
+        bool m_locked;
       };
       
       class WriteFile {        
@@ -353,7 +419,7 @@ namespace castor {
          * @param fileInfo: information about the file we want to read
          * @param blockSize: size of blocks we want to use in writing
          */
-        WriteFile(WriteSession *ws, Information fileinfo, size_t blockSize) throw (Exception);
+        WriteFile(WriteSession *ws, const FileInfo fileinfo, const size_t blockSize) throw (Exception);
         
         /**
          * Returns the block id of the current position
@@ -366,7 +432,7 @@ namespace castor {
          * @param data: buffer to copy the data from
          * @param size: size of the buffer
          */
-        void write(const void *data, size_t size) throw (Exception);
+        void write(const void *data, const size_t size) throw (Exception);
         
         /**
          * Closes the file by writing the corresponding trailer on tape
@@ -376,40 +442,40 @@ namespace castor {
         /**
          * Destructor of the WriteFile object. Releases the WriteSession
          */
-        ~WriteFile() throw (Exception);
+        ~WriteFile() throw ();
         
       private:
         
         /**
          * Block size in Bytes of the current file
          */
-        size_t current_block_size;
+        size_t m_currentBlockSize;
         
         /**
          * Session to which we are attached to
          */
-        WriteSession *session;
+        WriteSession *m_session;
         
         /**
          * Information that we have about the current file to be written and that
          * will be used to write appropriate headers and trailers
          */
-        Information fileinfo;
+        FileInfo m_fileinfo;
         
         /**
          * set to true whenever the constructor is called and to false when close() is called         
          */
-        bool open;
+        bool m_open;
         
         /**
          * set to false initially, set to true after at least one successful nonzero writeBlock operation         
          */
-        bool nonzero_file_written;
+        bool m_nonzeroFileWritten;
         
         /**
          * number of blocks written for the current file         
          */
-        int number_of_blocks;
+        int m_numberOfBlocks;
       };
     };
   }

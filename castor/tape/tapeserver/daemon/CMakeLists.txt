@@ -1,4 +1,4 @@
-add_executable(tapeserverd tapeserverd.cpp)
+add_executable(tapeserverd TapeDaemon.cpp TapeDaemonMain.cpp)
 
 target_link_libraries(tapeserverd Exception SCSI System Utils File castorcommon
 castorclient)

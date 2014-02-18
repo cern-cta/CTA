@@ -26,7 +26,7 @@
 #include <gmock/gmock-cardinalities.h>
 #include "Structures.hpp"
 
-namespace UnitTests {
+namespace unitTests {
 
   TEST(castor_tape_AULFile, VOL1) {
     castor::tape::AULFile::VOL1 vol1Label;

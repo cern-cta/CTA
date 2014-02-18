@@ -29,7 +29,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock-cardinalities.h>
 
-namespace UnitTests {
+namespace unitTests {
   class Nested {
   public:
     void f1();

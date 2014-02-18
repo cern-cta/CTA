@@ -30,7 +30,7 @@
 /* Note: those tests create multi threading errors on purpose and should not
  * be run in helgrind */
 
-namespace UnitTests {
+namespace unitTests {
   TEST(castor_tape_threading, Mutex_properly_throws_exceptions) {
     /* Check that we properly get exception when doing wrong semaphore 
      operations */
@@ -97,4 +97,4 @@ namespace UnitTests {
       ASSERT_NE(std::string::npos, w.find("Exception in child thread"));
     }
   }
-} // namespace UnitTests
+} // namespace unitTests

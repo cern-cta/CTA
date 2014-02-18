@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      ExceptionTest.cpp
+ *                 castor/tape/tapeserver/TapeDaemonMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,15 +17,25 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * 
  *
- * @author Castor Dev team, castor-dev@cern.ch
+ *
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
+ 
 
-#include "Exception.hpp"
 
-#include <gtest/gtest.h>
-#include <gmock/gmock-cardinalities.h>
+#include "castor/log/LoggerImplementation.hpp"
+#include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 
-namespace unitTests {
+
+//------------------------------------------------------------------------------
+// main
+//------------------------------------------------------------------------------
+int main(const int argc, char **const argv) {
+
+  castor::log::LoggerImplementation logger("tapeserverd");
+  castor::tape::tapeserver::daemon::TapeDaemon
+    daemon(std::cout, std::cerr, logger);
+
+  return daemon.main(argc, argv);
 }

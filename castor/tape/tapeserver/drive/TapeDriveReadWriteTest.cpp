@@ -314,7 +314,7 @@ int main ()
           print_and_assert_position(drive, 11);
           
           std::cout << "Synch-ing..." << std::endl;
-          drive.sync(); // flush buffer with no-op
+          drive.flush(); // flush buffer with no-op
           print_and_assert_position(drive, 11);
           
           std::cout << "Rewinding..." << std::endl;

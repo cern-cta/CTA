@@ -30,7 +30,7 @@
  be passed through helgrind, but not valgrind as the test framework creates
  many memory leaks in the child process. */
 
-namespace ThreadedUnitTests {
+namespace threadedUnitTests {
   class emptyCleanup : public castor::tape::threading::ChildProcess::Cleanup {
   public:
 
@@ -91,4 +91,4 @@ namespace ThreadedUnitTests {
     ASSERT_EQ(false, cp.running());
     EXPECT_THROW(cp.exitCode(), castor::tape::threading::ChildProcess::ProcessWasKilled);
   }
-};
+} // namespace threadedUnitTests

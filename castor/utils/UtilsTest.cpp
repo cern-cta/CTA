@@ -32,7 +32,7 @@
 #include <unistd.h>
 #include <vector>
 
-namespace UnitTests {
+namespace unitTests {
 
 /**
  * Tests the good day senario of passing a multi-column string to the
@@ -200,4 +200,4 @@ TEST(castor_utils, testTimevalToDouble) {
   ASSERT_EQ(expected, actual);
 }
 
-} // namespace UnitTests
+} // namespace unitTests
