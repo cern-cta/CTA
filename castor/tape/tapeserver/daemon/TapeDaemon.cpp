@@ -44,13 +44,11 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(std::ostrea
   m_programName("tapeserverd") {
 }
 
-
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeDaemon::~TapeDaemon() throw() {
 }
-
 
 //------------------------------------------------------------------------------
 // main
@@ -77,7 +75,6 @@ int castor::tape::tapeserver::daemon::TapeDaemon::main(const int argc,
 
   return 0;
 }
-
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain

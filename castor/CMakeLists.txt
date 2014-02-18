@@ -71,9 +71,11 @@ set (CLIENT_LIB_SRC_FILES
   io/AbstractTCPSocket.cpp
   io/AuthServerSocket.cpp
   io/AuthClientSocket.cpp
+  io/IpAndPort.cpp
   io/UDPSocket.cpp
   io/PipeSocket.cpp
   io/ClientSocket.cpp
+  io/io.cpp
   io/ServerSocket.cpp
   io/StreamAddress.cpp
   io/StreamBaseCnv.cpp
@@ -317,6 +319,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
     PERMISSIONS ${CASTOR_HEADER_PERMS})
   
   install(FILES
+    exception/AcceptConnectionInterrupted.hpp
     exception/Backtrace.hpp
     exception/CommandLineNotParsed.hpp
     exception/Communication.hpp

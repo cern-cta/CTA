@@ -27,6 +27,7 @@ cmake_minimum_required (VERSION 2.6)
 add_executable(castorUnitTests
   castorUnitTests.cpp
   ../castor/exception/ExceptionTest.cpp
+  ../castor/io/IoTest.cpp
   ../castor/log/LoggerImplementationTest.cpp
   ../castor/log/ParamTest.cpp
   ../castor/server/DaemonTest.cpp
