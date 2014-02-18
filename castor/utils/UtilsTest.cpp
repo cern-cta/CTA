@@ -34,11 +34,21 @@
 
 namespace unitTests {
 
+class castor_utils : public ::testing::Test {
+protected:
+
+  virtual void SetUp() {
+  }
+
+  virtual void TearDown() {
+  }
+};
+
 /**
  * Tests the good day senario of passing a multi-column string to the
  * splitString() method.
  */
-TEST(castor_utils, testGoodDaySplitString) {
+TEST_F(castor_utils, testGoodDaySplitString) {
   using namespace castor::utils;
   const std::string line("col0 col1 col2 col3 col4 col5 col6 col7");
   std::vector<std::string> columns;
@@ -58,7 +68,7 @@ TEST(castor_utils, testGoodDaySplitString) {
 /**
  * Test the case of an empty string being passed to the splitString() method.
  */
-TEST(castor_utls, testSplitStringWithEmptyString) {
+TEST_F(castor_utils, testSplitStringWithEmptyString) {
   using namespace castor::utils;
   const std::string emptyString;
   std::vector<std::string> columns;
@@ -71,7 +81,7 @@ TEST(castor_utls, testSplitStringWithEmptyString) {
  * Test the case of a non-empty string containing no separator character
  * passed to the splitString() method.
  */
-TEST(castor_utils, testSplitStringWithNoSeparatorInString) {
+TEST_F(castor_utils, testSplitStringWithNoSeparatorInString) {
   using namespace castor::utils;
   const std::string stringContainingNoSeparator =
     "stringContainingNoSeparator";
@@ -82,7 +92,7 @@ TEST(castor_utils, testSplitStringWithNoSeparatorInString) {
   ASSERT_EQ(stringContainingNoSeparator, columns[0]);
 }
 
-TEST(castor_utils, testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec) {
+TEST_F(castor_utils, testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec) {
   using namespace castor::utils;
   const timeval bigger   = {6, 5};
   const timeval smaller  = {5, 4};
@@ -91,7 +101,7 @@ TEST(castor_utils, testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec) {
   ASSERT_EQ(expected, timevalGreaterThan(bigger, smaller));
 }
 
-TEST(castor_utils, testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec_swapped) {
+TEST_F(castor_utils, testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec_swapped) {
   using namespace castor::utils;
   const timeval bigger   = {6, 5};
   const timeval smaller  = {5, 4};
@@ -100,7 +110,7 @@ TEST(castor_utils, testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec_swappe
   ASSERT_EQ(expected, timevalGreaterThan(smaller, bigger));
 }
 
-TEST (castor_utils, testTimevalGreaterThan_BigSecSmallSec_SmallUsecBigUsec) {
+TEST_F(castor_utils, testTimevalGreaterThan_BigSecSmallSec_SmallUsecBigUsec) {
   using namespace castor::utils;
   const timeval bigger   = {4, 3};
   const timeval smaller  = {2, 7};
@@ -109,7 +119,7 @@ TEST (castor_utils, testTimevalGreaterThan_BigSecSmallSec_SmallUsecBigUsec) {
   ASSERT_EQ(expected, timevalGreaterThan(bigger, smaller));
 }
 
-TEST(castor_utils, testTimevalGreaterThan_BigSecSmallSec_SmallUsecBigUsec_swapped) {
+TEST_F(castor_utils, testTimevalGreaterThan_BigSecSmallSec_SmallUsecBigUsec_swapped) {
   using namespace castor::utils;
   const timeval bigger   = {4, 3};
   const timeval smaller  = {2, 7};
@@ -118,7 +128,7 @@ TEST(castor_utils, testTimevalGreaterThan_BigSecSmallSec_SmallUsecBigUsec_swappe
   ASSERT_EQ(expected, timevalGreaterThan(smaller, bigger));
 }
 
-TEST(castor_utils, testTimevalGreaterThan_EqualSec_EqualUsec) {
+TEST_F(castor_utils, testTimevalGreaterThan_EqualSec_EqualUsec) {
   using namespace castor::utils;
   const timeval a         = {8, 9};
   const timeval b         = {8, 9};
@@ -127,7 +137,7 @@ TEST(castor_utils, testTimevalGreaterThan_EqualSec_EqualUsec) {
   ASSERT_EQ(expected, timevalGreaterThan(a, b));
 }
 
-TEST(castor_utils, testTimevalAbsDiff_BigSecSmallSec_BigUsecSmallUsec) {
+TEST_F(castor_utils, testTimevalAbsDiff_BigSecSmallSec_BigUsecSmallUsec) {
   using namespace castor::utils;
   const timeval bigger   = {6, 5};
   const timeval smaller  = {5, 4};
@@ -140,7 +150,7 @@ TEST(castor_utils, testTimevalAbsDiff_BigSecSmallSec_BigUsecSmallUsec) {
   ASSERT_EQ(true, isAMatch);
 }
 
-TEST(castor_utils, testTimevalAbsDiff_BigSecSmallSec_BigUsecSmallUsec_swapped) {
+TEST_F(castor_utils, testTimevalAbsDiff_BigSecSmallSec_BigUsecSmallUsec_swapped) {
   using namespace castor::utils;
   const timeval bigger   = {6, 5};
   const timeval smaller  = {5, 4};
@@ -153,7 +163,7 @@ TEST(castor_utils, testTimevalAbsDiff_BigSecSmallSec_BigUsecSmallUsec_swapped) {
   ASSERT_EQ(true, isAMatch);
 }
 
-TEST(castor_utils, testTimevalAbsDiff_BigSecSmallSec_SmallUsecBigUsec) {
+TEST_F(castor_utils, testTimevalAbsDiff_BigSecSmallSec_SmallUsecBigUsec) {
   using namespace castor::utils;
   const timeval bigger   = {4, 3};
   const timeval smaller  = {2, 7};
@@ -166,7 +176,7 @@ TEST(castor_utils, testTimevalAbsDiff_BigSecSmallSec_SmallUsecBigUsec) {
   ASSERT_EQ(true, isAMatch);
 }
 
-TEST(castor_utils, testTimevalAbsDiff_BigSecSmallSec_SmallUsecBigUsec_swapped) {
+TEST_F(castor_utils, testTimevalAbsDiff_BigSecSmallSec_SmallUsecBigUsec_swapped) {
   using namespace castor::utils;
   const timeval bigger   = {4, 3};
   const timeval smaller  = {2, 7};
@@ -179,7 +189,7 @@ TEST(castor_utils, testTimevalAbsDiff_BigSecSmallSec_SmallUsecBigUsec_swapped) {
   ASSERT_EQ(true, isAMatch);
 }
 
-TEST(castor_utils, testTimevalAbsDiff_EqualSec_EqualUsec) {
+TEST_F(castor_utils, testTimevalAbsDiff_EqualSec_EqualUsec) {
   using namespace castor::utils;
   const timeval a        = {8, 9};
   const timeval b        = {8, 9};
@@ -191,13 +201,38 @@ TEST(castor_utils, testTimevalAbsDiff_EqualSec_EqualUsec) {
   ASSERT_EQ(true, isAMatch);
 }
 
-TEST(castor_utils, testTimevalToDouble) {
+TEST_F(castor_utils, testTimevalToDouble) {
   using namespace castor::utils;
   const timeval tv       = {1234, 999992};
   const double  expected = 1234.999992;
   const double  actual   = timevalToDouble(tv);
 
   ASSERT_EQ(expected, actual);
+}
+
+TEST_F(castor_utils, testCopyStringNullDst) {
+  using namespace castor::utils;
+  char dummy[6] = "Dummy";
+
+  ASSERT_THROW(copyString(NULL, 0, dummy),
+    castor::exception::Exception);
+}
+
+TEST_F(castor_utils, testCopyStringNullSrc) {
+  using namespace castor::utils;
+  char dummy[6] = "Dummy";
+
+  ASSERT_THROW(copyString(dummy, sizeof(dummy), NULL),
+    castor::exception::Exception);
+}
+
+TEST_F(castor_utils, testCopyString) {
+  using namespace castor::utils;
+  char src[12]  = "Hello World";
+  char dst[12];
+
+  copyString(dst, src);
+  ASSERT_EQ(0, strcmp(dst, src));
 }
 
 } // namespace unitTests

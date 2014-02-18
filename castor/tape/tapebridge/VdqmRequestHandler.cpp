@@ -49,6 +49,7 @@
 #include "castor/tape/utils/SmartFdList.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFd.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/common.h"
 #include "h/Ctape_constants.h"
 #include "h/rtcp_constants.h"
@@ -400,11 +401,13 @@ castor::tape::legacymsg::RtcpJobReplyMsgBody
     clientInfoMsgBody.maxFilesBeforeFlush = 1;
   }
 
-  utils::copyString(clientInfoMsgBody.bridgeHost, bridgeCallbackHost);
-  utils::copyString(clientInfoMsgBody.bridgeClientHost, jobRequest.clientHost);
-  utils::copyString(clientInfoMsgBody.dgn, jobRequest.dgn);
-  utils::copyString(clientInfoMsgBody.drive, jobRequest.driveUnit);
-  utils::copyString(clientInfoMsgBody.clientName, jobRequest.clientUserName);
+  castor::utils::copyString(clientInfoMsgBody.bridgeHost, bridgeCallbackHost);
+  castor::utils::copyString(clientInfoMsgBody.bridgeClientHost,
+    jobRequest.clientHost);
+  castor::utils::copyString(clientInfoMsgBody.dgn, jobRequest.dgn);
+  castor::utils::copyString(clientInfoMsgBody.drive, jobRequest.driveUnit);
+  castor::utils::copyString(clientInfoMsgBody.clientName,
+    jobRequest.clientUserName);
 
   try {
     castor::tape::tapebridge::BridgeClientInfo2Sender::send(

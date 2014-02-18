@@ -29,6 +29,7 @@
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFd.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/serrno.h"
 #include "h/net.h"
 
@@ -393,7 +394,7 @@ void castor::tape::net::getSockHostName(
       ": " << gai_strerror(error));
   }
 
-  utils::copyString(buf, len, hostName);
+  castor::utils::copyString(buf, len, hostName);
 }
 
 
@@ -486,7 +487,7 @@ void castor::tape::net::getPeerHostName(
         ": " << gai_strerror(rc));
     }
 
-    utils::copyString(buf, len, hostName);
+    castor::utils::copyString(buf, len, hostName);
   }
 }
 

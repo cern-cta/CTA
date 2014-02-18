@@ -23,6 +23,7 @@
 #include "castor/utils/utils.hpp"
 
 #include <algorithm>
+#include <errno.h>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -173,4 +174,44 @@ timeval castor::utils::timevalAbsDiff(const timeval &a, const timeval &b)
 //---------------------------------------------------------------------------
 double castor::utils::timevalToDouble(const timeval &tv) throw() {
   return tv.tv_sec + tv.tv_usec / 1000000.0;
+}
+
+//-----------------------------------------------------------------------------
+// copyString
+//-----------------------------------------------------------------------------
+void castor::utils::copyString(char *const dst, const size_t dstSize,
+  const char *const src) throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __FUNCTION__
+      << ": Pointer to destination string is NULL";
+
+    throw ex;
+  }
+
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __FUNCTION__
+      << ": Pointer to source string is NULL";
+
+    throw ex;
+  }
+
+  const size_t srcLen = strlen(src);
+
+  if(srcLen >= dstSize) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << __FUNCTION__
+      << ": Source string is longer than destination.  Source length: "
+      << srcLen << " Max destination length: " << (dstSize - 1);
+
+    throw ex;
+  }
+
+  strncpy(dst, src, dstSize);
+  *(dst + dstSize -1) = '\0'; // Ensure destination string is null terminated
 }
