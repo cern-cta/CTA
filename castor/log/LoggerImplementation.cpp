@@ -256,66 +256,32 @@ void castor::log::LoggerImplementation::closeLog() throw() {
 void castor::log::LoggerImplementation::operator() (
   const int priority,
   const std::string &msg,
+  const std::vector<Param> &params,
+  const struct timeval &timeStamp) throw() {
+  operator() (priority, msg, params.begin(), params.end(), timeStamp);
+}
+
+//-----------------------------------------------------------------------------
+// operator() 
+//-----------------------------------------------------------------------------
+void castor::log::LoggerImplementation::operator() (
+  const int priority,
+  const std::string &msg,
+  const std::list<Param> &params,
+  const struct timeval &timeStamp) throw() {
+  operator() (priority, msg, params.begin(), params.end(), timeStamp);
+}
+
+//-----------------------------------------------------------------------------
+// operator() 
+//-----------------------------------------------------------------------------
+void castor::log::LoggerImplementation::operator() (
+  const int priority,
+  const std::string &msg,
   const int numParams,
   const log::Param params[],
   const struct timeval &timeStamp) throw() {
-  //---------------------------------------------------------------------------
-  // Note that we do here part of the work of the real syslog call, by building
-  // the message ourselves. We then only call a reduced version of syslog
-  // (namely reducedSyslog). The reason behind it is to be able to set the
-  // message timestamp ourselves, in case we log messages asynchronously, as
-  // we do when retrieving logs from the DB
-  //----------------------------------------------------------------------------
-
-  // Try to find the textual representation of the syslog priority
-  std::map<int, std::string>::const_iterator priorityTextPair =
-    m_priorityToText.find(priority);
-
-  // Do nothing if the log priority is not valid
-  if(m_priorityToText.end() == priorityTextPair) {
-    return;
-  }
-
-  // Safe to get a reference to the textual representation of the priority
-  const std::string &priorityText = priorityTextPair->second;
-
-  std::ostringstream logMsg;
-
-  // Start message with priority, time, program and PID (syslog standard
-  // format)
-  logMsg << buildSyslogHeader(priority | LOG_LOCAL3, timeStamp, getpid());
-
-  // Determine the thread id
-#ifdef __APPLE__
-  const int tid = mach_thread_self();
-#else
-  const int tid = syscall(__NR_gettid);
-#endif
-
-  // Append the log level, the thread id and the message text
-  logMsg << "LVL=" << priorityText << " TID=" << tid << " MSG=\"" << msg <<
-    "\" ";
-
-  // Process parameters
-  for(int i = 0; i < numParams; i++) {
-    const Param &param = params[i];
-
-    // Check the parameter name, if it's an empty string set the value to
-    // "Undefined".
-    const std::string name = param.getName() == "" ? "Undefined" :
-      cleanString(param.getName(), true);
-
-    // Process the parameter value
-    const std::string value = cleanString(param.getValue(), false);
-
-    // Write the name and value to the buffer
-    logMsg << name << "=\"" << value << "\" ";
-  }
-
-  // Terminate the string
-  logMsg << "\n";
-
-  reducedSyslog(logMsg.str());
+  operator() (priority, msg, params, params+numParams, timeStamp);
 }
 
 //-----------------------------------------------------------------------------
@@ -452,6 +418,34 @@ void castor::log::LoggerImplementation::reducedSyslog(std::string msg)
 void castor::log::LoggerImplementation::operator() (
   const int priority,
   const std::string &msg,
+  const std::vector<Param> &params) throw() {
+
+  struct timeval timeStamp;
+  gettimeofday(&timeStamp, NULL);
+
+  operator() (priority, msg, params.begin(), params.end(), timeStamp);
+}
+
+//-----------------------------------------------------------------------------
+// operator() 
+//-----------------------------------------------------------------------------
+void castor::log::LoggerImplementation::operator() (
+  const int priority,
+  const std::string &msg,
+  const std::list<Param> &params) throw() {
+
+  struct timeval timeStamp;
+  gettimeofday(&timeStamp, NULL);
+
+  operator() (priority, msg, params.begin(), params.end(), timeStamp);
+}
+
+//-----------------------------------------------------------------------------
+// operator() 
+//-----------------------------------------------------------------------------
+void castor::log::LoggerImplementation::operator() (
+  const int priority,
+  const std::string &msg,
   const int numParams,
   const log::Param params[]) throw() {
 
@@ -467,6 +461,7 @@ void castor::log::LoggerImplementation::operator() (
 void castor::log::LoggerImplementation::operator() (
   const int priority,
   const std::string &msg) throw() {
+
   Param *emptyParams = NULL;
   operator() (priority, msg, 0, emptyParams);
 }

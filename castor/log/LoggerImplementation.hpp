@@ -31,6 +31,7 @@
 #include <map>
 #include <pthread.h>
 #include <syslog.h>
+#include <sys/syscall.h>
 #include <sys/time.h>
 
 namespace castor {
@@ -74,6 +75,44 @@ public:
    *
    * @param priority the priority of the message as defined by the syslog API.
    * @param msg the message.
+   * @param params the parameters of the message.
+   * @param timeStamp the time stamp of the log message.
+   */
+  void operator() (
+    const int priority,
+    const std::string &msg,
+    const std::vector<Param> &params,
+    const struct timeval &timeStamp) throw();
+
+  /**
+   * Writes a message into the CASTOR logging system. Note that no exception
+   * will ever be thrown in case of failure. Failures will actually be
+   * silently ignored in order to not impact the processing.
+   *
+   * Note that this version of operator() allows the caller to specify the
+   * time stamp of the log message.
+   *
+   * @param priority the priority of the message as defined by the syslog API.
+   * @param msg the message.
+   * @param params the parameters of the message.
+   * @param timeStamp the time stamp of the log message.
+   */
+  void operator() (
+    const int priority,
+    const std::string &msg,
+    const std::list<Param> &params,
+    const struct timeval &timeStamp) throw();
+
+  /**
+   * Writes a message into the CASTOR logging system. Note that no exception
+   * will ever be thrown in case of failure. Failures will actually be
+   * silently ignored in order to not impact the processing.
+   *
+   * Note that this version of operator() allows the caller to specify the
+   * time stamp of the log message.
+   *
+   * @param priority the priority of the message as defined by the syslog API.
+   * @param msg the message.
    * @param numParams the number of parameters in the message.
    * @param params the parameters of the message.
    * @param timeStamp the time stamp of the log message.
@@ -84,6 +123,40 @@ public:
     const int numParams,
     const Param params[],
     const struct timeval &timeStamp) throw();
+
+  /**
+   * Writes a message into the CASTOR logging system. Note that no exception
+   * will ever be thrown in case of failure. Failures will actually be
+   * silently ignored in order to not impact the processing.
+   *
+   * Note that this version of operator() implicitly uses the current time as
+   * the time stamp of the message.
+   *
+   * @param priority the priority of the message as defined by the syslog API.
+   * @param msg the message.
+   * @param params the parameters of the message.
+   */
+  void operator() (
+    const int priority,
+    const std::string &msg,
+    const std::vector<Param> &params) throw();
+
+  /**
+   * Writes a message into the CASTOR logging system. Note that no exception
+   * will ever be thrown in case of failure. Failures will actually be
+   * silently ignored in order to not impact the processing.
+   *
+   * Note that this version of operator() implicitly uses the current time as
+   * the time stamp of the message.
+   *
+   * @param priority the priority of the message as defined by the syslog API.
+   * @param msg the message.
+   * @param params the parameters of the message.
+   */
+  void operator() (
+    const int priority,
+    const std::string &msg,
+    const std::list<Param> &params) throw();
 
   /**
    * Writes a message into the CASTOR logging system. Note that no exception
@@ -208,6 +281,85 @@ private:
    * object reflects the fact that no connection was made.
    */
   void openLog() throw();
+
+  /**
+   * Writes a message into the CASTOR logging system. Note that no exception
+   * will ever be thrown in case of failure. Failures will actually be
+   * silently ignored in order to not impact the processing.
+   *
+   * Note that this version of operator() allows the caller to specify the
+   * time stamp of the log message.
+   *
+   * @param priority the priority of the message as defined by the syslog API.
+   * @param msg the message.
+   * @param paramsBegin the first parameters of the message.
+   * @param paramsEnd one past the end of the parameters of the message.
+   * @param timeStamp the time stamp of the log message.
+   */
+  template<typename ParamIterator> void operator() (
+    const int priority,
+    const std::string &msg,
+    ParamIterator paramsBegin,
+    ParamIterator paramsEnd,
+    const struct timeval &timeStamp) throw() {
+    //-------------------------------------------------------------------------
+    // Note that we do here part of the work of the real syslog call, by
+    // building the message ourselves. We then only call a reduced version of
+    // syslog (namely reducedSyslog). The reason behind it is to be able to set
+    // the message timestamp ourselves, in case we log messages asynchronously,
+    // as we do when retrieving logs from the DB
+    //-------------------------------------------------------------------------
+
+    // Try to find the textual representation of the syslog priority
+    std::map<int, std::string>::const_iterator priorityTextPair =
+      m_priorityToText.find(priority);
+
+    // Do nothing if the log priority is not valid
+    if(m_priorityToText.end() == priorityTextPair) {
+      return;
+    }
+
+    // Safe to get a reference to the textual representation of the priority
+    const std::string &priorityText = priorityTextPair->second;
+
+    std::ostringstream logMsg;
+
+    // Start message with priority, time, program and PID (syslog standard
+    // format)
+    logMsg << buildSyslogHeader(priority | LOG_LOCAL3, timeStamp, getpid());
+
+    // Determine the thread id
+#ifdef __APPLE__
+    const int tid = mach_thread_self();
+#else
+    const int tid = syscall(__NR_gettid);
+#endif
+
+    // Append the log level, the thread id and the message text
+    logMsg << "LVL=" << priorityText << " TID=" << tid << " MSG=\"" << msg <<
+      "\" ";
+
+    // Process parameters
+    for(ParamIterator itor = paramsBegin; itor != paramsEnd; itor++) {
+      const Param &param = *itor;
+
+      // Check the parameter name, if it's an empty string set the value to
+      // "Undefined".
+      const std::string name = param.getName() == "" ? "Undefined" :
+        cleanString(param.getName(), true);
+
+      // Process the parameter value
+      const std::string value = cleanString(param.getValue(), false);
+
+      // Write the name and value to the buffer
+      logMsg << name << "=\"" << value << "\" ";
+    }
+
+    // Terminate the string
+    logMsg << "\n";
+
+    reducedSyslog(logMsg.str());
+  }
 
   /**
    * Build the header of a syslog message.

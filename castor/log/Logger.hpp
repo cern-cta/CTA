@@ -31,10 +31,12 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/log/Param.hpp"
 
+#include <list>
 #include <map>
 #include <pthread.h>
 #include <syslog.h>
 #include <sys/time.h>
+#include <vector>
 
 /**
  * It is a convention of CASTOR to use syslog level of LOG_NOTICE to label
@@ -129,6 +131,44 @@ public:
    *
    * @param priority the priority of the message as defined by the syslog API.
    * @param msg the message.
+   * @param params the parameters of the message.
+   * @param timeStamp the time stamp of the log message.
+   */
+  virtual void operator() (
+    const int priority,
+    const std::string &msg,
+    const std::vector<Param> &params,
+    const struct timeval &timeStamp) throw() = 0;
+
+  /**
+   * Writes a message into the CASTOR logging system. Note that no exception
+   * will ever be thrown in case of failure. Failures will actually be
+   * silently ignored in order to not impact the processing.
+   *
+   * Note that this version of operator() allows the caller to specify the
+   * time stamp of the log message.
+   *
+   * @param priority the priority of the message as defined by the syslog API.
+   * @param msg the message.
+   * @param params the parameters of the message.
+   * @param timeStamp the time stamp of the log message.
+   */
+  virtual void operator() (
+    const int priority,
+    const std::string &msg,
+    const std::list<Param> &params,
+    const struct timeval &timeStamp) throw() = 0;
+
+  /**
+   * Writes a message into the CASTOR logging system. Note that no exception
+   * will ever be thrown in case of failure. Failures will actually be
+   * silently ignored in order to not impact the processing.
+   *
+   * Note that this version of operator() allows the caller to specify the
+   * time stamp of the log message.
+   *
+   * @param priority the priority of the message as defined by the syslog API.
+   * @param msg the message.
    * @param numParams the number of parameters in the message.
    * @param params the parameters of the message.
    * @param timeStamp the time stamp of the log message.
@@ -139,6 +179,40 @@ public:
     const int numParams,
     const Param params[],
     const struct timeval &timeStamp) throw() = 0;
+
+  /**
+   * Writes a message into the CASTOR logging system. Note that no exception
+   * will ever be thrown in case of failure. Failures will actually be
+   * silently ignored in order to not impact the processing.
+   *
+   * Note that this version of operator() implicitly uses the current time as
+   * the time stamp of the message.
+   *
+   * @param priority the priority of the message as defined by the syslog API.
+   * @param msg the message.
+   * @param params the parameters of the message.
+   */
+  virtual void operator() (
+    const int priority,
+    const std::string &msg,
+    const std::vector<Param> &params) throw() = 0;
+
+  /**
+   * Writes a message into the CASTOR logging system. Note that no exception
+   * will ever be thrown in case of failure. Failures will actually be
+   * silently ignored in order to not impact the processing.
+   *
+   * Note that this version of operator() implicitly uses the current time as
+   * the time stamp of the message.
+   *
+   * @param priority the priority of the message as defined by the syslog API.
+   * @param msg the message.
+   * @param params the parameters of the message.
+   */
+  virtual void operator() (
+    const int priority,
+    const std::string &msg,
+    const std::list<Param> &params) throw() = 0;
 
   /**
    * Writes a message into the CASTOR logging system. Note that no exception
@@ -192,7 +266,7 @@ public:
     const std::string &msg,
     castor::log::Param(&params)[numParams],
     const struct timeval &timeStamp) throw() {
-   operator() (priority, msg, numParams, params, timeStamp);
+    operator() (priority, msg, numParams, params, timeStamp);
   }
 
   /**
@@ -212,7 +286,7 @@ public:
     const int priority,
     const std::string &msg,
     castor::log::Param(&params)[numParams]) throw() {
-   operator() (priority, msg, numParams, params);
+    operator() (priority, msg, numParams, params);
   }
 
 protected:

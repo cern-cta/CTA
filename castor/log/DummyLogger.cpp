@@ -51,9 +51,47 @@ void castor::log::DummyLogger::prepareForFork()
 void castor::log::DummyLogger::operator() (
   const int priority,
   const std::string &msg,
+  const std::vector<Param> &params,
+  const struct timeval &timeStamp) throw() {
+}
+
+//------------------------------------------------------------------------------
+// operator() 
+//------------------------------------------------------------------------------
+void castor::log::DummyLogger::operator() (
+  const int priority,
+  const std::string &msg,
+  const std::list<Param> &params,
+  const struct timeval &timeStamp) throw() {
+}
+
+//------------------------------------------------------------------------------
+// operator() 
+//------------------------------------------------------------------------------
+void castor::log::DummyLogger::operator() (
+  const int priority,
+  const std::string &msg,
   const int numParams,
   const log::Param params[],
   const struct timeval &timeStamp) throw() {
+}
+
+//------------------------------------------------------------------------------
+// operator() 
+//------------------------------------------------------------------------------
+void castor::log::DummyLogger::operator() (
+  const int priority,
+  const std::string &msg,
+  const std::vector<Param> &params) throw() {
+}
+
+//------------------------------------------------------------------------------
+// operator() 
+//------------------------------------------------------------------------------
+void castor::log::DummyLogger::operator() (
+  const int priority,
+  const std::string &msg,
+  const std::list<Param> &params) throw() {
 }
 
 //------------------------------------------------------------------------------

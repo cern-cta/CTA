@@ -40,7 +40,39 @@ protected:
   }
 }; // class LoggerImplementationTest
 
-TEST_F(castor_log_LoggerImplementationTest, testLogMsgWithAllParams) {
+TEST_F(castor_log_LoggerImplementationTest, logMsgParamsVectorAndTimeStamp) {
+  using namespace castor::log;
+  LoggerImplementation log("unitttests");
+  std::vector<Param> params;
+  params.push_back(Param("testParam", "valueOfTestParam"));
+  struct timeval timeStamp;
+
+  ASSERT_EQ(0, gettimeofday(&timeStamp, NULL));
+
+  ASSERT_NO_THROW(log(
+    LOG_INFO,
+    "castor_log_LoggerImplementationTest logMsgParamsVectorAndTimeStamp",
+    params,
+    timeStamp));
+}
+
+TEST_F(castor_log_LoggerImplementationTest, logMsgParamsListAndTimeStamp) {
+  using namespace castor::log;
+  LoggerImplementation log("unitttests");
+  std::list<Param> params;
+  params.push_back(Param("testParam", "valueOfTestParam"));
+  struct timeval timeStamp;
+
+  ASSERT_EQ(0, gettimeofday(&timeStamp, NULL));
+
+  ASSERT_NO_THROW(log(
+    LOG_INFO,
+    "castor_log_LoggerImplementationTest logMsgParamsListAndTimeStamp",
+    params,
+    timeStamp));
+}
+
+TEST_F(castor_log_LoggerImplementationTest, logMsgParamsArrayAndTimeStamp) {
   using namespace castor::log;
   LoggerImplementation log("unitttests");
   const int numParams = 1;
@@ -49,16 +81,40 @@ TEST_F(castor_log_LoggerImplementationTest, testLogMsgWithAllParams) {
 
   ASSERT_EQ(0, gettimeofday(&timeStamp, NULL));
 
+  ASSERT_NO_THROW(log(
+    LOG_INFO,
+    "castor_log_LoggerImplementationTest logMsgParamsArrayAndTimeStamp",
+    numParams,
+    params,
+    timeStamp));
+}
+
+TEST_F(castor_log_LoggerImplementationTest, logMsgAndParamsVector) {
+  using namespace castor::log;
+  LoggerImplementation log("unitttests");
+  std::vector<Param> params;
+  params.push_back(Param("testParam", "valueOfTestParam"));
+
+  ASSERT_NO_THROW(log(
+      LOG_INFO,
+      "castor_log_LoggerImplementationTest logMsgAndParamsVector",
+      params));
+}
+
+TEST_F(castor_log_LoggerImplementationTest, logMsgAndParamsList) {
+  using namespace castor::log;
+  LoggerImplementation log("unitttests");
+  std::list<Param> params;
+  params.push_back(Param("testParam", "valueOfTestParam"));
+
   ASSERT_NO_THROW(
     log(
       LOG_INFO,
-      "Calling logger with all parameters",
-      numParams,
-      params,
-      timeStamp));
+      "castor_log_LoggerImplementationTest logMsgAndParamsList",
+      params));
 }
 
-TEST_F(castor_log_LoggerImplementationTest, testLogMsgWithoutTimeStamp) {
+TEST_F(castor_log_LoggerImplementationTest, logMsgAndParamsArray) {
   using namespace castor::log;
   LoggerImplementation log("unitttests");
   const int numParams = 1;
@@ -67,12 +123,12 @@ TEST_F(castor_log_LoggerImplementationTest, testLogMsgWithoutTimeStamp) {
   ASSERT_NO_THROW(
     log(
       LOG_INFO,
-      "Calling logger without time stamp",
+      "castor_log_LoggerImplementationTest logMsgAndParamsArray",
       numParams,
       params));
 }
 
-TEST_F(castor_log_LoggerImplementationTest, testLogMsgWithoutParamsOrTimeStamp) {
+TEST_F(castor_log_LoggerImplementationTest, logMsg) {
   using namespace castor::log;
   LoggerImplementation log("unitttests");
 
