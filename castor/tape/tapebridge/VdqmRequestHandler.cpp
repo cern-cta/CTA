@@ -26,6 +26,7 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/BridgeClientInfo2Sender.hpp"
 #include "castor/tape/tapebridge/BridgeProtocolEngine.hpp"
@@ -40,7 +41,6 @@
 #include "castor/tape/tapebridge/VmgrTxRx.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/legacymsg/VmgrMarshal.hpp"
-#include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/FileMigrationReportList.hpp"
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
@@ -149,9 +149,9 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
 
     // Log the connection from the VDQM
     {
-      char hostName[net::HOSTNAMEBUFLEN];
-      const net::IpAndPort peerIpAndPort = net::getPeerIpPort(vdqmSock.get());
-      net::getPeerHostName(vdqmSock.get(), hostName);
+      char hostName[io::HOSTNAMEBUFLEN];
+      const io::IpAndPort peerIpAndPort = io::getPeerIpPort(vdqmSock.get());
+      io::getPeerHostName(vdqmSock.get(), hostName);
 
       castor::dlf::Param params[] = {
         castor::dlf::Param("IP"      ,
@@ -246,16 +246,16 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
     const unsigned short highPort = utils::getPortFromConfig(
       "TAPEBRIDGE", "RTCPDHIGHPORT", TAPEBRIDGE_RTCPDHIGHPORT);
     unsigned short chosenPort = 0;
-    castor::utils::SmartFd listenSock(net::createListenerSock("127.0.0.1",
+    castor::utils::SmartFd listenSock(io::createListenerSock("127.0.0.1",
       lowPort, highPort, chosenPort));
 
     // Get and log the IP, host name, port and socket file-descriptor of the
     // callback socket
     unsigned long bridgeCallbackIp = 0;
-    char bridgeCallbackHost[net::HOSTNAMEBUFLEN];
+    char bridgeCallbackHost[io::HOSTNAMEBUFLEN];
     castor::utils::setBytes(bridgeCallbackHost, '\0');
     unsigned short bridgeCallbackPort = 0;
-    net::getSockIpHostnamePort(listenSock.get(),
+    io::getSockIpHostnamePort(listenSock.get(),
       bridgeCallbackIp, bridgeCallbackHost, bridgeCallbackPort);
     {
       castor::dlf::Param params[] = {
@@ -313,7 +313,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
       castor::utils::setBytes(vdqmReply, '\0');
       char vdqmReplyBuf[RTCPMSGBUFSIZE];
       const size_t vdqmReplyLen = legacymsg::marshal(vdqmReplyBuf, vdqmReply);
-      net::writeBytes(vdqmSock.get(), RTCPDNETRWTIMEOUT, vdqmReplyLen,
+      io::writeBytes(vdqmSock.get(), RTCPDNETRWTIMEOUT, vdqmReplyLen,
         vdqmReplyBuf);
     }
 
@@ -359,7 +359,7 @@ castor::tape::legacymsg::RtcpJobReplyMsgBody
   const unsigned int                  rtcpdPort,
   const int                           netReadWriteTimeout,
   const legacymsg::RtcpJobRqstMsgBody &jobRequest,
-  const char                         (&bridgeCallbackHost)[net::HOSTNAMEBUFLEN],
+  const char                         (&bridgeCallbackHost)[io::HOSTNAMEBUFLEN],
   const unsigned short                bridgeCallbackPort)
   const throw(castor::exception::Exception) {
   tapeBridgeClientInfo2MsgBody_t clientInfoMsgBody;
@@ -440,15 +440,15 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
   // Wrap the socket file descriptor in a smart file descriptor so that it is
   // guaranteed to be closed if it goes out of scope.
   castor::utils::SmartFd rtcpdInitialSock(
-    net::acceptConnection(bridgeCallbackSockFd, RTCPDCALLBACKTIMEOUT));
+    io::acceptConnection(bridgeCallbackSockFd, RTCPDCALLBACKTIMEOUT));
 
   // Log the initial callback connection from RTCPD
   try {
-    char hostName[net::HOSTNAMEBUFLEN];
+    char hostName[io::HOSTNAMEBUFLEN];
 
-    const net::IpAndPort peerIpAndPort =
-      net::getPeerIpPort(rtcpdInitialSock.get());
-    net::getPeerHostName(rtcpdInitialSock.get(), hostName);
+    const io::IpAndPort peerIpAndPort =
+      io::getPeerIpPort(rtcpdInitialSock.get());
+    io::getPeerHostName(rtcpdInitialSock.get(), hostName);
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("volReqId", jobRequest.volReqId       ),

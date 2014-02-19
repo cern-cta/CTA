@@ -57,7 +57,7 @@ add_executable(castorThreadedUnitTests
 )
 target_link_libraries(castorThreadedUnitTests TapeDrive Exception SCSI System 
   Utils File castorTapeServerThreading tapeserverdTest tapeserver 
-  castortapegatewayprotocol castortapenet castortapeutils
+  castortapegatewayprotocol castortapeutils
   ${GTEST_LIBRARY} gmock pthread castorcommon castorclient castorvdqm
   castorvmgr castorrfio)
 

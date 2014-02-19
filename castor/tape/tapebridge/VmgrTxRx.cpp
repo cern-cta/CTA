@@ -24,12 +24,12 @@
 
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/LogHelper.hpp"
 #include "castor/tape/tapebridge/LegacyTxRx.hpp"
 #include "castor/tape/tapebridge/VmgrTxRx.hpp"
-#include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 #include "castor/io/ClientSocket.hpp"
@@ -131,7 +131,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
   timeval sendRecvDuration        = {0, 0};
   utils::getTimeOfDay(&sendAndReceiveStartTime, NULL);
   try {
-    net::writeBytes(sock.socket(), netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(sock.socket(), netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send request for tape information to the VMGR: "
@@ -207,7 +207,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
 
       // Receive the error string
       try {
-        net::readBytes(sock.socket(), netReadWriteTimeout, header.lenOrStatus,
+        io::readBytes(sock.socket(), netReadWriteTimeout, header.lenOrStatus,
           bodyBuf);
       } catch (castor::exception::Exception &ex) {
         TAPE_THROW_CODE(EIO,
@@ -253,7 +253,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
 
       // Receive the message body
       try {
-        net::readBytes(sock.socket(), netReadWriteTimeout, header.lenOrStatus,
+        io::readBytes(sock.socket(), netReadWriteTimeout, header.lenOrStatus,
           bodyBuf);
         utils::getTimeOfDay(&sendAndReceiveEndTime, NULL);
         sendRecvDuration = castor::utils::timevalAbsDiff(

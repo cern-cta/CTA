@@ -27,7 +27,7 @@
 #include "castor/System.hpp"
 #include "castor/exception/Internal.hpp" 
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/tape/net/net.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
@@ -360,7 +360,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     std::ostream &os = std::cout;
 
     os << "Tapebridge callback socket details = ";
-    net::writeSockDescription(os, m_callbackSock.socket());
+    io::writeSockDescription(os, m_callbackSock.socket());
     os << std::endl;
   }
 
@@ -389,7 +389,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     time_t timeout         = WAITCALLBACKTIMEOUT;
     while(waitForCallback) {
       try {
-        connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
+        connectionSockFd = io::acceptConnection(m_callbackSock.socket(),
                                                  timeout);
 
         waitForCallback = false;
@@ -407,7 +407,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
         // Wait again for the default timeout
         timeout = WAITCALLBACKTIMEOUT;
         
-      } catch(castor::exception::TapeNetAcceptInterrupted &ix) {
+      } catch(castor::exception::AcceptConnectionInterrupted &ix) {
 
         // If a SIGINT signal was received (control-c)
         if(s_receivedSigint) {
@@ -435,9 +435,9 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     castor::utils::writeTime(os, now, TIMEFORMAT);
     os << " Selected tape server is ";
 
-    char hostName[net::HOSTNAMEBUFLEN];
+    char hostName[io::HOSTNAMEBUFLEN];
 
-    net::getPeerHostName(connectionSockFd, hostName);
+    io::getPeerHostName(connectionSockFd, hostName);
 
     os << hostName << std::endl;
   }
@@ -626,7 +626,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler()
     time_t timeout         = WAITCALLBACKTIMEOUT;
     while(waitForCallback) {
       try {
-        connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
+        connectionSockFd = io::acceptConnection(m_callbackSock.socket(),
           timeout);
 
         waitForCallback = false;
@@ -644,7 +644,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler()
         // Wait again for the default timeout
         timeout = WAITCALLBACKTIMEOUT;
 
-      } catch(castor::exception::TapeNetAcceptInterrupted &ix) {
+      } catch(castor::exception::AcceptConnectionInterrupted &ix) {
 
          // If a SIGINT signal was received (control-c)
          if(s_receivedSigint) {
@@ -669,7 +669,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler()
     std::ostream &os = std::cout;
 
     os << "Tapebridge connection = ";
-    net::writeSockDescription(os, connectionSockFd);
+    io::writeSockDescription(os, connectionSockFd);
     os << std::endl;
   }
 
@@ -902,7 +902,7 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
     time_t timeout         = WAITCALLBACKTIMEOUT;
     while(waitForCallback) {
       try {
-        connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
+        connectionSockFd = io::acceptConnection(m_callbackSock.socket(),
           timeout);
 
         waitForCallback = false;
@@ -920,7 +920,7 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
         // Wait again for the default timeout
         timeout = WAITCALLBACKTIMEOUT;
 
-      } catch(castor::exception::TapeNetAcceptInterrupted &ix) {
+      } catch(castor::exception::AcceptConnectionInterrupted &ix) {
 
         // If a SIGINT signal was received (control-c)
         if(s_receivedSigint) {
@@ -947,7 +947,7 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
     std::ostream &os = std::cout;
 
     os << "Tapebridge connection = ";
-    net::writeSockDescription(os, connectionSockFd);
+    io::writeSockDescription(os, connectionSockFd);
     os << std::endl;
   }
 

@@ -46,7 +46,7 @@
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"
 
-#include "castor/tape/net/net.hpp"
+#include "castor/io/io.hpp"
 
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
@@ -106,7 +106,7 @@ void castor::tape::tapegateway::WorkerThread::run(void* arg)
     std::auto_ptr<castor::io::ServerSocket> sock((castor::io::ServerSocket*)arg); 
     try {
       sock->getPeerIp(requester.port, requester.ip);
-      net::getPeerHostName(sock->socket(), requester.hostName);
+      io::getPeerHostName(sock->socket(), requester.hostName);
     } catch(castor::exception::Exception& e) {
       // "Exception caught : ignored" message
       castor::dlf::Param params[] =

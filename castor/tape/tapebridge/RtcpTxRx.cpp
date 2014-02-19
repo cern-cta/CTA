@@ -25,11 +25,11 @@
 #include "castor/Constants.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/LegacyTxRx.hpp"
 #include "castor/tape/tapebridge/RtcpTxRx.hpp"
-#include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
@@ -77,7 +77,7 @@ void castor::tape::tapebridge::RtcpTxRx::getRequestInfoFromRtcpd(
 
   // Send the request
   try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send request for volume request ID to RTCPD: "
@@ -156,7 +156,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveVolumeToRtcpd(
 
   // Send the message
   try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send volume message to RTCPD: "
@@ -220,7 +220,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
 
   // Send the message
   try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send file message to RTCPD: "
@@ -283,7 +283,7 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdDumpTape(
 
   // Send the message
   try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send file message to RTCPD: "
@@ -353,7 +353,7 @@ void castor::tape::tapebridge::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
   }
 
   try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
       ": Failed to send the rtcpd ping message"
@@ -400,7 +400,7 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdEndOfFileList(
 
   // Send the message
   try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
       ": Failed to send file message to RTCPD"
@@ -479,7 +479,7 @@ void castor::tape::tapebridge::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    net::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(headerBuf), headerBuf);
+    io::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to read message header from remote-copy job submitter"
@@ -527,7 +527,7 @@ void castor::tape::tapebridge::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid
 
   // Read the message body
   try {
-    net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
+    io::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EIO,
          ": Failed to read message body from remote-copy job submitter"
@@ -609,7 +609,7 @@ void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
 
   // Send the message
   try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send ask RTCPD to request more "

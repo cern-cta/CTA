@@ -64,7 +64,6 @@ set (COMMON_LIB_SRC_FILES
   ../castor/exception/RequestFailed.cpp
   ../castor/exception/Security.cpp
   ../castor/exception/SQLError.cpp
-  ../castor/exception/TapeNetAcceptInterrupted.cpp
   ../castor/exception/TimeOut.cpp
   ../castor/exception/TooBig.cpp
   ../castor/common/CastorConfiguration.cpp)

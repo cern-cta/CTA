@@ -25,6 +25,7 @@
 #ifndef CASTOR_TAPE_TAPEBRIDGE_VDQMREQUESTHANDLER_HPP
 #define CASTOR_TAPE_TAPEBRIDGE_VDQMREQUESTHANDLER_HPP 1
 
+#include "castor/io/Constants.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/IThread.hpp"
 #include "castor/tape/tapebridge/BulkRequestConfigParams.hpp"
@@ -32,7 +33,6 @@
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
 #include "castor/tape/legacymsg/RtcpJobReplyMsgBody.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
-#include "castor/tape/net/Constants.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/utils/BoolFunctor.hpp"
 #include "castor/tape/utils/SmartFdList.hpp"
@@ -196,7 +196,7 @@ private:
     const unsigned int                  rtcpdPort,
     const int                           netReadWriteTimeout,
     const legacymsg::RtcpJobRqstMsgBody &jobRequest,
-    const char                       (&bridgeCallbackHost)[net::HOSTNAMEBUFLEN],
+    const char                       (&bridgeCallbackHost)[io::HOSTNAMEBUFLEN],
     const unsigned short                bridgeCallbackPort)
     const throw(castor::exception::Exception);
 

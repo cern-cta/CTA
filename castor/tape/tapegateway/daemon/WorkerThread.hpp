@@ -28,11 +28,11 @@
 #define WORKER_THREAD_HPP 1
 
 #include "castor/exception/Internal.hpp"
+#include "castor/io/Constants.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/server/IThread.hpp"
-#include "castor/tape/net/Constants.hpp"
 #include "castor/tape/utils/ShutdownBoolFunctor.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
 #include "castor/tape/tapegateway/FileMigrationReportList.hpp"
@@ -79,7 +79,7 @@ namespace tapegateway{
         hostName[0]='\0';
       };
       virtual ~requesterInfo() throw() {};
-      char hostName[castor::tape::net::HOSTNAMEBUFLEN];
+      char hostName[castor::io::HOSTNAMEBUFLEN];
       unsigned short port;
       unsigned long ip;
       // Helper converting requester structure into a context string

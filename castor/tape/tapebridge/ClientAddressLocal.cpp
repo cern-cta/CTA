@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/net/net.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/tapebridge/ClientAddressLocal.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFd.hpp"
@@ -97,7 +97,7 @@ int castor::tape::tapebridge::ClientAddressLocal::connectToClient(
 
   castor::utils::SmartFd smartConnectSock;
   try {
-    smartConnectSock.reset(net::connectWithTimeout(
+    smartConnectSock.reset(io::connectWithTimeout(
       PF_LOCAL,
       SOCK_STREAM,
       0, // sockProtocol

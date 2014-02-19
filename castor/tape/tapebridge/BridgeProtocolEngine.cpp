@@ -28,6 +28,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/PermissionDenied.hpp"
 #include "castor/exception/TimeOut.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/Constants.hpp"
 #include "castor/tape/legacymsg/TapeBridgeMarshal.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
@@ -39,7 +40,6 @@
 #include "castor/tape/tapebridge/RequestToMigrateFile.hpp"
 #include "castor/tape/tapebridge/RtcpTxRx.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
-#include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
@@ -138,7 +138,7 @@ int castor::tape::tapebridge::BridgeProtocolEngine::acceptRtcpdConnection()
   for(int i=0; i<timeout && !connectionAccepted; i++) {
     try {
       const time_t timeout = 1; // Timeout in seconds
-      connectedSock.reset(net::acceptConnection(m_sockCatalogue.getListenSock(),
+      connectedSock.reset(io::acceptConnection(m_sockCatalogue.getListenSock(),
         timeout));
       connectionAccepted = true;
     } catch(castor::exception::TimeOut &ex) {
@@ -179,10 +179,10 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   const int connectedSock)
   throw(castor::exception::Exception) {
   try {
-    char hostName[net::HOSTNAMEBUFLEN];
+    char hostName[io::HOSTNAMEBUFLEN];
 
-    const net::IpAndPort peerIpAndPort = net::getPeerIpPort(connectedSock);
-    net::getPeerHostName(connectedSock, hostName);
+    const io::IpAndPort peerIpAndPort = io::getPeerIpPort(connectedSock);
+    io::getPeerHostName(connectedSock, hostName);
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", m_jobRequest.volReqId       ),
@@ -495,7 +495,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 void castor::tape::tapebridge::BridgeProtocolEngine::checkPeerIsLocalhost(
   const int socketFd) throw(castor::exception::Exception) {
 
-  const net::IpAndPort peerIpAndPort = net::getPeerIpPort(socketFd);
+  const io::IpAndPort peerIpAndPort = io::getPeerIpPort(socketFd);
 
   // localhost = 127.0.0.1 = 0x7F000001
   if(peerIpAndPort.getIp() != 0x7F000001) {
@@ -505,7 +505,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::checkPeerIsLocalhost(
       "Peer is not local host"
       ": expected=127.0.0.1"
       ": actual=";
-    net::writeIp(os, peerIpAndPort.getIp());
+    io::writeIp(os, peerIpAndPort.getIp());
 
     throw ex;
   }
@@ -531,7 +531,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   bool rtcpdClosedConnection = false;
   try {
     char dummyBuf[1];
-    rtcpdClosedConnection = net::readBytesFromCloseable(pendingSock,
+    rtcpdClosedConnection = io::readBytesFromCloseable(pendingSock,
       RTCPDNETRWTIMEOUT, sizeof(dummyBuf), dummyBuf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,

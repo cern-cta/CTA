@@ -22,7 +22,6 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-add_subdirectory (net)
 add_subdirectory (gatewayprotocol)
 add_subdirectory (legacymsg)
 #add_subdirectory (rmc)
