@@ -48,6 +48,45 @@ namespace log {
 
 /**
  * Abstract class representing the API of the CASTOR logging system.
+ *
+ * The intended way to use the CASTOR logging API is as follows:
+ *
+ * 1. Keep a reference to a Logger object, for example:
+ * \code{.cpp}
+ *
+ * class MyClassThatWillLog {
+ * protected:
+ *   Logger & m_log;
+ *
+ * public:
+ *   MyClassThatWillLog(Logger &log): m_log(log) {
+ *     ....
+ *   }
+ * }
+ *
+ * \endcode
+ *
+ * 2. To log a message, use the reference to the Logger object like a function.
+ *    In other words the Logger object implements operator() and therefore
+ *    behaves like a functor:
+ * \code{.cpp}
+ *
+ * void MyClassThatWillLog::aMethodThatWillLog() {
+ *   ....
+ *   m_log(LOG_INFO, "My log message");
+ *   ....
+ * }
+ *
+ * \endcode
+ *
+ * The Logger object implements operator() in order to avoid the following long
+ * winded syntax (which does not work by the way, so please do NOT copy and
+ * paste the following example):
+ * \code{.cpp}
+ *
+ * m_log.logMsg(LOG_INFO, "My log message");
+ *
+ * \endcode
  */
 class Logger {
 public:
