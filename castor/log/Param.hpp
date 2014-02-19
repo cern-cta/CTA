@@ -52,6 +52,17 @@ public:
     oss << value;
     m_value = oss.str();
   }
+    
+  /**
+   * Value changer. Useful for log contexts.
+   * @param value
+   */
+  template <typename T>
+  void setValue (const T &value) throw() {
+    std::stringstream oss;
+    oss << value;
+    m_value = oss.str();
+  }
 
   /**
    * Returns a const reference to the name of the parameter.

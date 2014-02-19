@@ -30,6 +30,7 @@ add_executable(castorUnitTests
   ../castor/io/IoTest.cpp
   ../castor/log/LoggerImplementationTest.cpp
   ../castor/log/ParamTest.cpp
+  ../castor/log/LogContextTest.cpp
   ../castor/server/DaemonTest.cpp
   ../castor/tape/tapeserver/SCSI/DeviceTest.cpp
   ../castor/tape/tapeserver/SCSI/StructuresTest.cpp
