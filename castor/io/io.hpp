@@ -35,14 +35,90 @@
 #include "castor/io/IpAndPort.hpp"
 
 #include <errno.h>
-#include <string.h>
 #include <iostream>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <string>
+#include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 
 namespace castor {
 namespace io     {
+
+/**
+ * Creates a listener socket with the specified port number.
+ *
+ * This method creates the socket, binds it and marks it as a listener.  The
+ * listening port will accept connections on any of the hosts incomming
+ * interfaces.
+ *
+ * This method raises a castor::exception::InvalidArgument exception if one or
+ * more of its input parameters are invalid.
+ *
+ * This method raises a castor::exception::NoPortInRange exception if the
+ * specified port is not free.
+ *
+ * @param port The port number.
+ * @return           The socket descriptor.
+ */
+int createListenerSock(const unsigned short port)
+  throw(castor::exception::Exception);
+
+/**
+ * Creates a listener socket with a port number within the specified range.
+ *
+ * This method creates the socket, binds it and marks it as a listener.  The
+ * listening port will accept connections on any of the hosts incomming
+ * interfaces.
+ *
+ * This method raises a castor::exception::InvalidArgument exception if one or
+ * more of its input parameters are invalid.
+ *
+ * This method raises a castor::exception::NoPortInRange exception if it cannot
+ * find a free port to bind to within the specified range.
+ *
+ * @param lowPort    The inclusive low port of the port number range.  This
+ *                   parameter must be an unsigned integer greater than 0.
+ * @param highPort   The inclusive high port of the port number range.  This
+ *                   parameter must be an unsigned integer greater than 0.
+ * @param chosenPort Out parameter: The actual port that this method binds the
+ *                   socket to.
+ * @return           The socket descriptor.
+ */
+int createListenerSock(
+  const unsigned short lowPort,
+  const unsigned short highPort,
+  unsigned short       &chosenPort)
+  throw(castor::exception::Exception);
 	
+/**
+ * Creates a listener socket with a port number within the specified range.
+ *
+ * This method creates the socket, binds it and marks it as a listener.
+ *
+ * This method raises a castor::exception::InvalidArgument exception if one or
+ * more of its input parameters are invalid.
+ *
+ * This method raises a castor::exception::NoPortInRange exception if it cannot
+ * find a free port to bind to within the specified range.
+ *
+ * @param addr       The IP address as a string in dotted quad notation.
+ * @param lowPort    The inclusive low port of the port number range.  This
+ *                   parameter must be an unsigned integer greater than 0.
+ * @param highPort   The inclusive high port of the port number range.  This
+ *                   parameter must be an unsigned integer greater than 0.
+ * @param chosenPort Out parameter: The actual port that this method binds the
+ *                   socket to.
+ * @return           The socket descriptor.
+ */
+int createListenerSock(
+  const std::string    &addr,
+  const unsigned short lowPort,
+  const unsigned short highPort,
+  unsigned short       &chosenPort)
+  throw(castor::exception::Exception);
+
 /**
  * Creates a listener socket with a port number within the specified range.
  * This method creates the socket, binds it and marks it as a listener.
@@ -53,8 +129,7 @@ namespace io     {
  * This method raises a castor::exception::NoPortInRange exception if it cannot
  * find a free port to bind to within the specified range.
  *
- * @param addr       The IP address in dotted quad notation to be used by
- *                   inet_addr().
+ * @param addr       The IP address.
  * @param lowPort    The inclusive low port of the port number range.  This
  *                   parameter must be an unsigned integer greater than 0.
  * @param highPort   The inclusive high port of the port number range.  This
@@ -64,7 +139,7 @@ namespace io     {
  * @return           The socket descriptor.
  */
 int createListenerSock(
-  const char *const    addr,
+  const struct in_addr &addr,
   const unsigned short lowPort,
   const unsigned short highPort,
   unsigned short       &chosenPort)
