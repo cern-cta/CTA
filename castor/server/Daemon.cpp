@@ -190,9 +190,10 @@ void castor::server::Daemon::dlfInit(castor::dlf::Message messages[])
 }
 
 //------------------------------------------------------------------------------
-// daemonize
+// daemonizeIfNotRunInForeground
 //------------------------------------------------------------------------------
-void castor::server::Daemon::daemonize() throw (castor::exception::Exception) {
+void castor::server::Daemon::daemonizeIfNotRunInForeground()
+  throw (castor::exception::Exception) {
   // Do nothing if already a daemon
   if (1 == getppid())  {
     return;

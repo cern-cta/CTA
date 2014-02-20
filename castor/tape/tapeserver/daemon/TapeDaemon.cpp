@@ -90,7 +90,8 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
 
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
-  daemonize();
+  // Daemonize if not configiured to run in the foreground
+  daemonizeIfNotRunInForeground();
   blockSignals();
 
   castor::utils::SmartFd listenSock(

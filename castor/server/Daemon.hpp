@@ -110,7 +110,8 @@ protected:
     throw (castor::exception::Exception);
 
   /**
-   * Daemonizes the daemon.
+   * Daemonizes the daemon if it has not been configured to run in the
+   * foreground.
    *
    * Please make sure that the setForeground() and runAsStagerSuperuser()
    * methods have been called as appropriate before this method is called.
@@ -118,7 +119,7 @@ protected:
    * or background mode (m_foreground) and whether or not the user of daemon
    * should be changed to the stager superuser (m_runAsStagerSuperuser).
    */
-  void daemonize() throw(castor::exception::Exception);
+  void daemonizeIfNotRunInForeground() throw(castor::exception::Exception);
 
   /**
    * Sends a notification message to the given host,port

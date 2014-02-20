@@ -167,8 +167,8 @@ void castor::server::MultiThreadedDaemon::start()
     // in case of exception, don't go further and propagate it
   }
 
-  // daemonization
-  daemonize();
+  // Daemonize if not configiured to run in the foreground
+  daemonizeIfNotRunInForeground();
 
   // Initialize CASTOR Thread interface
   Cthread_init();
