@@ -31,8 +31,10 @@
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFd.hpp"
+#include "h/common.h"
 
 #include <algorithm>
+#include <limits.h>
 #include <memory>
 #include <poll.h>
 #include <signal.h>
@@ -43,8 +45,8 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(std::ostream &stdOut,
-  std::ostream &stdErr, log::Logger &log)
+castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
+  std::ostream &stdOut, std::ostream &stdErr, log::Logger &log)
   throw(castor::exception::Exception):
   castor::server::Daemon(stdOut, stdErr, log),
   m_programName("tapeserverd") {
@@ -163,13 +165,93 @@ void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const
 // mainEventLoop
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop(
-  const unsigned short listenSock) throw(castor::exception::Exception) {
-
+  const int listenSock) throw(castor::exception::Exception) {
   bool continueMainEventLoop = true;
 
   while(continueMainEventLoop) {
-    ::usleep(100000); // Sleep for a tenth of a second
+    handleAPossibleVdqmRequest(listenSock);
     continueMainEventLoop = handlePendingSignals();
+    ::usleep(100000); // Sleep for a tenth of a second
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleAPossibleVdqmRequest
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::handleAPossibleVdqmRequest(
+  const int listenSock) throw() {
+  struct pollfd fds[1];
+
+  // poll() of the main event loop should always look at the accept socket
+  fds[0].fd = listenSock;
+  fds[0].events = POLLRDNORM;
+  fds[0].revents = 0;
+
+  if(-1 == poll(fds, 1, 0)) {
+    const int pollErrno = errno;
+
+    log::Param params[] = {
+      log::Param("errno", pollErrno),
+      log::Param("message", sstrerror(pollErrno))};
+    m_log(LOG_INFO, "Failed to handle a pending vdqm request: poll() failed",
+      params);
+    return;
+  }
+
+  // If the vdqm daemon is connecting to the listening socket
+  if(fds[0].revents & POLLRDNORM) {
+    try {
+      castor::utils::SmartFd connection(io::acceptConnection(listenSock, 1));
+      char hostName[io::HOSTNAMEBUFLEN];
+      const io::IpAndPort peerIpAndPort = io::getPeerIpPort(connection.get());
+      io::getPeerHostName(connection.get(), hostName);
+
+      log::Param params[] = {
+        log::Param("Port"    , peerIpAndPort.getPort()),
+        log::Param("HostName", hostName),
+        log::Param("socketFd", connection.get())};
+      m_log(LOG_INFO, "Accepted vdqm connection", params);
+
+      checkIsAdminHost(connection.get());
+
+      // TEMPORARY: For now we simply close the vdqm connection
+      close(connection.release());
+    } catch(castor::exception::Exception &ex) {
+      log::Param params[] = {
+        log::Param("code", ex.code()),
+        log::Param("message", ex.getMessage().str())};
+      m_log(LOG_INFO, "Failed to handle a pending vdqm request", params);
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+// checkisAdminHost
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::checkIsAdminHost(
+  const int connection) throw(castor::exception::Exception) {
+
+  char peerHost[CA_MAXHOSTNAMELEN+1];
+
+  // isadminhost fills in peerHost
+  const int rc = isadminhost(connection, peerHost);
+
+  if(rc == -1 && serrno != SENOTADMIN) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to lookup connection: Host=" << peerHost;
+    throw ex;
+  }
+
+  if(*peerHost == '\0' ) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Peer host name is an empty string";
+    throw ex;
+  }
+
+  if(rc != 0) {
+    castor::exception::Exception ex(SENOTADMIN);
+    ex.getMessage() << "Unauthorized admin host: Host=" << peerHost;
+    throw ex;
   }
 }
 

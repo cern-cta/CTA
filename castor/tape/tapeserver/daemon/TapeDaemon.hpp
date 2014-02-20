@@ -33,6 +33,7 @@
 #include <iostream>
 #include <list>
 #include <map>
+#include <poll.h>
 #include <string>
 
 
@@ -110,8 +111,26 @@ private:
 
   /**
    * The main event loop of the tape-server daemon.
+   *
+   * @patam listenSock The file-descriptor of the listening socket.
    */
-  void mainEventLoop(const unsigned short listenSock)
+  void mainEventLoop(const int listenSock)
+    throw(castor::exception::Exception);
+
+  /**
+   * Handle a pending vdqm request if there is one.
+   *
+   * @patam listenSock The file-descriptor of the listening socket.
+   */
+  void handleAPossibleVdqmRequest(const int listenSock) throw();
+
+  /**
+   * Throws an exception if the peer host associated with the specified
+   * connection is not an admin host.
+   *
+   * @param connection The file descriptor of the connection.
+   */
+  void checkIsAdminHost(const int connection)
     throw(castor::exception::Exception);
 
   /**

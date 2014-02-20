@@ -163,9 +163,9 @@ int acceptConnection(const int listenSockFd)
  * This method accepts a timeout parameter.  If the timeout is exceeded, then
  * this method raises a castor::exception::TimeOut exception.  If this method
  * is interrupted, then this method raises a
- * castor::exception::AcceptConnectionInterrupted exception which gives the number
- * of remaining seconds when the interrupt occured.  All other errors result in
- * a castor::exception::Exception being raised.  Note that both
+ * castor::exception::AcceptConnectionInterrupted exception which gives the
+ * number of remaining seconds when the interrupt occured.  All other errors
+ * result in a castor::exception::Exception being raised.  Note that both
  * castor::exception::TimeOut and castor::exception::AcceptConnectionInterrupted
  * inherit from castor::exception::Exception so callers of the this method must
  * catch castor::exception::TimeOut and
