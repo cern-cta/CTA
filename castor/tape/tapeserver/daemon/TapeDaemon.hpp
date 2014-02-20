@@ -76,9 +76,15 @@ public:
 private:
 
   /**
+   * The TCP/IP port on which the tape server daemon listens for incoming
+   * connections from the VDQM server.
+   */
+  static const unsigned short TAPE_SERVER_LISTENING_PORT = 5003;
+
+  /**
    * Exception throwing main() function.
    */
-  int exceptionThrowingMain(const int argc, char **const argv)
+  void exceptionThrowingMain(const int argc, char **const argv)
     throw(castor::exception::Exception);
 
   /**
@@ -97,11 +103,28 @@ private:
     throw();
 
   /**
-   * We block all signals, so that they can be handled synchronously with 
-   * a sigtimedwait in the main loop (alternatively with a call to poll using a
-   * non-zero timeout).
+   * Blocks the signals that should not asynchronously disturb the tape-server
+   * daemon.
    */
   void blockSignals() const throw(castor::exception::Exception);
+
+  /**
+   * The main event loop of the tape-server daemon.
+   */
+  void mainEventLoop(const unsigned short listenSock)
+    throw(castor::exception::Exception);
+
+  /**
+   * Handles any pending signals.
+   *
+   * @return True if the main event lopp should continue, else false.
+   */
+  bool handlePendingSignals() throw();
+
+  /**
+   * Reaps any zombie processes.
+   */
+  void reapZombies() throw();
 
   /**
    * The program name of the tape daemon.

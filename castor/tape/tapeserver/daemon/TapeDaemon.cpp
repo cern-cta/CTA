@@ -27,12 +27,18 @@
 #include "castor/exception/Errnum.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/SmartFd.hpp"
 
 #include <algorithm>
 #include <memory>
+#include <poll.h>
 #include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -79,14 +85,18 @@ int castor::tape::tapeserver::daemon::TapeDaemon::main(const int argc,
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
+void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   const int argc, char **const argv) throw(castor::exception::Exception) {
 
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
+  daemonize();
   blockSignals();
 
-  return 0;
+  castor::utils::SmartFd listenSock(
+    io::createListenerSock(TAPE_SERVER_LISTENING_PORT));
+
+  mainEventLoop(listenSock.get());
 }
 
 //------------------------------------------------------------------------------
@@ -127,9 +137,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const
   throw(castor::exception::Exception) {
   sigset_t sigs;
   sigemptyset(&sigs);
-  // The list of signal that should not disturb our daemon. Some of them
-  // will be dealt with synchronously in the main loop.
-  // See signal(7) for full list.
+  // The list of signals that should not asynchronously disturb the tape-server
+  // daemon
   sigaddset(&sigs, SIGHUP);
   sigaddset(&sigs, SIGINT);
   sigaddset(&sigs, SIGQUIT);
@@ -146,5 +155,70 @@ void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const
   sigaddset(&sigs, SIGVTALRM);
   castor::exception::Errnum::throwOnNonZero(
     sigprocmask(SIG_BLOCK, &sigs, NULL),
-    "Failed to sigprocmask in castor::tape::Server::Daemon::blockSignals");
+    "Failed to block signals: sigprocmask() failed");
+}
+
+//------------------------------------------------------------------------------
+// mainEventLoop
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop(
+  const unsigned short listenSock) throw(castor::exception::Exception) {
+
+  bool continueMainEventLoop = true;
+
+  while(continueMainEventLoop) {
+    ::usleep(100000); // Sleep for a tenth of a second
+    continueMainEventLoop = handlePendingSignals();
+  }
+}
+
+//------------------------------------------------------------------------------
+// handlePendingSignals
+//------------------------------------------------------------------------------
+bool castor::tape::tapeserver::daemon::TapeDaemon::handlePendingSignals()
+  throw() {
+  bool continueMainEventLoop = true;
+  int sig = 0;
+  sigset_t allSignals;
+  siginfo_t sigInfo;
+  sigfillset(&allSignals);
+  struct timespec immedTimeout = {0, 0};
+
+  // While there is a pending signal to be handled
+  while (0 < (sig = sigtimedwait(&allSignals, &sigInfo, &immedTimeout))) {
+    switch(sig) {
+    case SIGTERM: // Signal number 15
+      m_log(LOG_INFO, "Gracefully stopping because SIGTERM was received");
+      continueMainEventLoop = false;
+      break;
+    case SIGCHLD: // Signal number 17
+      reapZombies();
+      break;
+    default:
+      {
+        log::Param params[] = {log::Param("signal", sig)};
+        m_log(LOG_INFO, "Ignoring signal", params);
+      }
+      break;
+    }
+  }
+
+  return continueMainEventLoop;
+}
+
+//------------------------------------------------------------------------------
+// reapZombies
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::reapZombies() throw() {
+  pid_t childPid = 0;
+  int stat = 0;
+
+  while (0 < (childPid = waitpid(-1, &stat, WNOHANG))) {
+    log::Param params[] = {
+      log::Param("childPid", childPid),
+      log::Param("WIFEXITED", WIFEXITED(stat)),
+      log::Param("WEXITSTATUS", WEXITSTATUS(stat)),
+      log::Param("WIFSIGNALED", WIFSIGNALED(stat))};
+    m_log(LOG_INFO, "Child process terminated", params);
+  }
 }
