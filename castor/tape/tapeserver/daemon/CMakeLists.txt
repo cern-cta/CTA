@@ -1,7 +1,20 @@
-add_executable(tapeserverd TapeDaemon.cpp TapeDaemonMain.cpp)
+add_executable(tapeserverd
+  TapeDaemon.cpp
+  TapeDaemonMain.cpp
+  Vdqm.cpp
+  VdqmAcceptHandler.cpp
+  VdqmConnectionHandler.cpp
+  VdqmImpl.cpp)
 
-target_link_libraries(tapeserverd Exception SCSI System Utils File castorcommon
-castorclient)
+target_link_libraries(tapeserverd
+  Exception
+  SCSI
+  System
+  Utils
+  File
+  castorcommon
+  castorclient
+  castortapelegacymsg)
 
 add_library(tapeserver ClientInterface.cpp MountSession.cpp)
 

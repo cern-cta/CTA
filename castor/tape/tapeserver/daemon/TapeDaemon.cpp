@@ -22,16 +22,15 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
  
- 
-#include "castor/PortNumbers.hpp"
 #include "castor/exception/Errnum.hpp"
+#include "castor/exception/BadAlloc.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/io.hpp"
+#include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
+#include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFd.hpp"
-#include "h/common.h"
 
 #include <algorithm>
 #include <limits.h>
@@ -46,9 +45,9 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
-  std::ostream &stdOut, std::ostream &stdErr, log::Logger &log)
-  throw(castor::exception::Exception):
-  castor::server::Daemon(stdOut, stdErr, log),
+  std::ostream &stdOut, std::ostream &stdErr, log::Logger &log, Vdqm &vdqm,
+  io::PollReactor &reactor) throw(castor::exception::Exception):
+  castor::server::Daemon(stdOut, stdErr, log), m_vdqm(vdqm), m_reactor(reactor),
   m_programName("tapeserverd") {
 }
 
@@ -92,14 +91,11 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
 
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
-  // Daemonize if not configiured to run in the foreground
+  parseTpconfig();
   daemonizeIfNotRunInForeground();
   blockSignals();
-
-  castor::utils::SmartFd listenSock(
-    io::createListenerSock(TAPE_SERVER_LISTENING_PORT));
-
-  mainEventLoop(listenSock.get());
+  setUpReactor();
+  mainEventLoop();
 }
 
 //------------------------------------------------------------------------------
@@ -114,6 +110,47 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logStartOfDaemon(
   log::Param params[] = {
     log::Param("argv", concatenatedArgs)};
   m_log(LOG_INFO, msg.str(), params);
+}
+
+//------------------------------------------------------------------------------
+// parseTpconfig
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::parseTpconfig()
+  throw(castor::exception::Exception) {
+  utils::TpconfigLines tpconfigLines;
+  utils::parseTpconfigFile(TPCONFIGPATH, tpconfigLines);
+  logTpconfigLines(tpconfigLines);
+
+  // Extract the tape-drive names from the TPCONFIG file
+  std::list<std::string> driveNames;
+  utils::extractTpconfigDriveNames(tpconfigLines, driveNames);
+}
+
+//------------------------------------------------------------------------------
+// logTpconfigLines
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::logTpconfigLines(
+  const utils::TpconfigLines &lines) throw() {
+  for(utils::TpconfigLines::const_iterator itor = lines.begin();
+    itor != lines.end(); itor++) {
+    logTpconfigLine(*itor);
+  }
+}
+
+//------------------------------------------------------------------------------
+// logTpconfigLine
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::logTpconfigLine(
+  const utils::TpconfigLine &line) throw() {
+  log::Param params[] = {
+    log::Param("unitName", line.mUnitName),
+    log::Param("deviceGroup", line.mDeviceGroup),
+    log::Param("systemDevice", line.mSystemDevice),
+    log::Param("density", line.mDensity),
+    log::Param("initialStatus", line.mInitialStatus),
+    log::Param("controlMethod", line.mControlMethod),
+    log::Param("devType", line.mDevType)};
+  m_log(LOG_INFO, "TPCONFIG line", params);
 }
 
 //------------------------------------------------------------------------------
@@ -162,97 +199,52 @@ void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const
 }
 
 //------------------------------------------------------------------------------
+// setUpReactor
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
+  throw(castor::exception::Exception) {
+  castor::utils::SmartFd listenSock;
+  try {
+    listenSock.reset(io::createListenerSock(TAPE_SERVER_LISTENING_PORT));
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex(ne.code());
+    ex.getMessage() << "Failed to create socket to listen for vdqm connections"
+      ": " << ne.getMessage().str();
+    throw ex;
+  }
+  std::auto_ptr<VdqmAcceptHandler> acceptHandler;
+  try {
+    acceptHandler.reset(new VdqmAcceptHandler(listenSock.get(), m_reactor,
+      m_log, m_vdqm));
+    listenSock.release();
+  } catch(std::bad_alloc &ba) {
+    castor::exception::BadAlloc ex;
+    ex.getMessage() <<
+      "Failed to create the event handler for accepting vdqm connections"
+      ": " << ba.what();
+    throw ex;
+  }
+  m_reactor.registerHandler(acceptHandler.get());
+  acceptHandler.release();
+}
+
+//------------------------------------------------------------------------------
 // mainEventLoop
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop(
-  const int listenSock) throw(castor::exception::Exception) {
-  bool continueMainEventLoop = true;
-
-  while(continueMainEventLoop) {
-    handleAPossibleVdqmRequest(listenSock);
-    continueMainEventLoop = handlePendingSignals();
-    ::usleep(100000); // Sleep for a tenth of a second
+void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop()
+  throw(castor::exception::Exception) {
+  while(handleEvents()) {
   }
 }
 
 //------------------------------------------------------------------------------
-// handleAPossibleVdqmRequest
+// handleEvents
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::handleAPossibleVdqmRequest(
-  const int listenSock) throw() {
-  struct pollfd fds[1];
-
-  // poll() of the main event loop should always look at the accept socket
-  fds[0].fd = listenSock;
-  fds[0].events = POLLRDNORM;
-  fds[0].revents = 0;
-
-  if(-1 == poll(fds, 1, 0)) {
-    const int pollErrno = errno;
-
-    log::Param params[] = {
-      log::Param("errno", pollErrno),
-      log::Param("message", sstrerror(pollErrno))};
-    m_log(LOG_ERR, "Failed to handle a pending vdqm request: poll() failed",
-      params);
-    return;
-  }
-
-  // If the vdqm daemon is connecting to the listening socket
-  if(fds[0].revents & POLLRDNORM) {
-    try {
-      castor::utils::SmartFd connection(io::acceptConnection(listenSock, 1));
-      char hostName[io::HOSTNAMEBUFLEN];
-      const io::IpAndPort peerIpAndPort = io::getPeerIpPort(connection.get());
-      io::getPeerHostName(connection.get(), hostName);
-
-      log::Param params[] = {
-        log::Param("Port"    , peerIpAndPort.getPort()),
-        log::Param("HostName", hostName),
-        log::Param("socketFd", connection.get())};
-      m_log(LOG_INFO, "Accepted vdqm connection", params);
-
-      checkIsAdminHost(connection.get());
-
-      // TEMPORARY: For now we simply close the vdqm connection
-      close(connection.release());
-    } catch(castor::exception::Exception &ex) {
-      log::Param params[] = {
-        log::Param("code", ex.code()),
-        log::Param("message", ex.getMessage().str())};
-      m_log(LOG_ERR, "Failed to handle a pending vdqm request", params);
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-// checkisAdminHost
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::checkIsAdminHost(
-  const int connection) throw(castor::exception::Exception) {
-
-  char peerHost[CA_MAXHOSTNAMELEN+1];
-
-  // isadminhost fills in peerHost
-  const int rc = isadminhost(connection, peerHost);
-
-  if(rc == -1 && serrno != SENOTADMIN) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed to lookup connection: Host=" << peerHost;
-    throw ex;
-  }
-
-  if(*peerHost == '\0' ) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage() << "Peer host name is an empty string";
-    throw ex;
-  }
-
-  if(rc != 0) {
-    castor::exception::Exception ex(SENOTADMIN);
-    ex.getMessage() << "Unauthorized admin host: Host=" << peerHost;
-    throw ex;
-  }
+bool castor::tape::tapeserver::daemon::TapeDaemon::handleEvents()
+  throw(castor::exception::Exception) {
+  const int timeout = 100; // 100 milliseconds
+  m_reactor.handleEvents(timeout);
+  return handlePendingSignals();
 }
 
 //------------------------------------------------------------------------------
@@ -270,6 +262,10 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handlePendingSignals()
   // While there is a pending signal to be handled
   while (0 < (sig = sigtimedwait(&allSignals, &sigInfo, &immedTimeout))) {
     switch(sig) {
+    case SIGINT: // Signal number 2
+      m_log(LOG_INFO, "Gracefully stopping because SIGINT was received");
+      continueMainEventLoop = false;
+      break;
     case SIGTERM: // Signal number 15
       m_log(LOG_INFO, "Gracefully stopping because SIGTERM was received");
       continueMainEventLoop = false;

@@ -27,7 +27,10 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
+#include "castor/io/PollReactor.hpp"
 #include "castor/server/Daemon.hpp"
+#include "castor/tape/tapeserver/daemon/Vdqm.hpp"
+#include "castor/tape/utils/utils.hpp"
 
 #include <stdint.h>
 #include <iostream>
@@ -56,9 +59,12 @@ public:
    * @param stdOut Stream representing standard out.
    * @param stdErr Stream representing standard error.
    * @param log The object representing the API of the CASTOR logging system.
+   * @param vdqm The object representing the vdqmd daemon.
+   * @param reactor The reactor responsible for dispatching the I/O events of
+   * the parent process of the tape server daemon.
    */
-  TapeDaemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &log)
-    throw(castor::exception::Exception);
+  TapeDaemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &log,
+    Vdqm &vdqm, io::PollReactor &reactor) throw(castor::exception::Exception);
 
   /**
    * Destructor.
@@ -77,12 +83,6 @@ public:
 private:
 
   /**
-   * The TCP/IP port on which the tape server daemon listens for incoming
-   * connections from the VDQM server.
-   */
-  static const unsigned short TAPE_SERVER_LISTENING_PORT = 5003;
-
-  /**
    * Exception throwing main() function.
    */
   void exceptionThrowingMain(const int argc, char **const argv)
@@ -92,6 +92,22 @@ private:
    * Logs the start of the daemon.
    */
   void logStartOfDaemon(const int argc, const char *const *const argv) throw();
+
+  /**
+   * Parses the /etc/castor/TPCONFIG files in order to determine the drives
+   * attached to the tape server.
+   */
+  void parseTpconfig() throw(castor::exception::Exception);
+
+  /**
+   * Writes the specified list of TPCONFIG lines to the logging system.
+   */
+  void logTpconfigLines(const utils::TpconfigLines &lines) throw();
+
+  /**
+   * Writes the specified TPCONFIG lines to the logging system.
+   */
+  void logTpconfigLine(const utils::TpconfigLine &line) throw();
 
   /**
    * Creates a string that contains the specified command-line arguments
@@ -110,33 +126,27 @@ private:
   void blockSignals() const throw(castor::exception::Exception);
 
   /**
+   * Sets up the reactor to listen for an accept connection from the vdqmd
+   * daemon.
+   */
+  void setUpReactor() throw(castor::exception::Exception);
+
+  /**
    * The main event loop of the tape-server daemon.
-   *
-   * @patam listenSock The file-descriptor of the listening socket.
    */
-  void mainEventLoop(const int listenSock)
-    throw(castor::exception::Exception);
+  void mainEventLoop() throw(castor::exception::Exception);
 
   /**
-   * Handle a pending vdqm request if there is one.
+   * Handles any pending events.
    *
-   * @patam listenSock The file-descriptor of the listening socket.
+   * @return True if the main event loop should continue, else false.
    */
-  void handleAPossibleVdqmRequest(const int listenSock) throw();
-
-  /**
-   * Throws an exception if the peer host associated with the specified
-   * connection is not an admin host.
-   *
-   * @param connection The file descriptor of the connection.
-   */
-  void checkIsAdminHost(const int connection)
-    throw(castor::exception::Exception);
+  bool handleEvents() throw(castor::exception::Exception);
 
   /**
    * Handles any pending signals.
    *
-   * @return True if the main event lopp should continue, else false.
+   * @return True if the main event loop should continue, else false.
    */
   bool handlePendingSignals() throw();
 
@@ -146,9 +156,84 @@ private:
   void reapZombies() throw();
 
   /**
+   * The object representing the vdqmd daemon.
+   */
+  Vdqm &m_vdqm;
+
+  /**
+   * The reactor responsible for dispatching the file-descriptor event-handlers
+   * of the tape server daemon.
+   */
+  io::PollReactor &m_reactor;
+
+  /**
    * The program name of the tape daemon.
    */
   const std::string m_programName;
+
+  /**
+   * The status of a drive as described by the following FSTN:
+   *
+   *              start daemon /
+   *  ------    send VDQM_UNIT_UP   ----------------
+   * | INIT |--------------------->|      DOWN      |<-------------------
+   *  ------                        ----------------                     |
+   *     |                          |              ^                     |
+   *     |                          |              |                     |
+   *     |                          | tpconfig up  | tpconfig down       |
+   *     |                          |              |                     |
+   *     |      start daemon /      v              |                     |
+   *     |   send VDQM_UNIT_DOWN    ----------------                     |
+   *      ------------------------>|      UP        |                    |
+   *                                ----------------                     |
+   *                                |              ^                     |
+   *                                |              |                     |
+   *                                | vdqm job /   | SIGCHLD [success]   |
+   *                                | fork         |                     |
+   *                                |              |                     |
+   *                                v              |                     |
+   *                                ----------------    SIGCHLD [fail]   |
+   *                               |    RUNNING     |-------------------- 
+   *                                ----------------
+   *
+   * When the tapeserverd daemon is started, depdending on the initial state
+   * column of /etc/castor/TPCONFIG, the daemon sends either a VDQM_UNIT_UP
+   * or VDQM_UNIT_DOWN status message to the vdqmd daemon.
+   *
+   * A tape operator toggle the state of tape drive between DOWN and UP
+   * using the tpconfig adminstration tool.
+   *
+   * The tape daemon can receive a job from the vdqmd daemon when the drive
+   * is in the UP state.  On reception of the job the daemon forks a child
+   * process to manage the tape mount and data transfer tasks necessary to
+   * fulfill the vdqm job.  The drive is now in the RUNNING state.
+   *
+   * Once the vdqm job has been carried out, the child process completes
+   * and the drive either returns to the UP state if there were no
+   * problems or DOWN state if there were.
+   */
+  enum DriveStatus { DRIVE_INIT, DRIVE_DOWN, DRIVE_UP, DRIVE_RUNNING };
+
+  /**
+   * Structure used to store the initial and current status of a drive.
+   *
+   * The initial status of a drive defined in the initial status column of the
+   * /etc/castor/TPCONFIG file.
+   */
+  struct InitialAndCurrentDriveStatus {
+    DriveStatus initialStatus;
+    DriveStatus currentStatus;
+  };
+
+  /**
+   * Type that maps drive unit-name to drive initial and current status.
+   */
+  typedef std::map<std::string, DriveStatus> DriveStatusMap;
+
+  /**
+   * Map from drive unit-name to drive status.
+   */
+  DriveStatusMap m_drives;
 
 }; // class TapeDaemon
 

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tapeserver/TapeDaemonMain.cpp
+ *                castor/tape/tapeserver/daemon/Vdqm.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,20 +22,10 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/log/LoggerImplementation.hpp"
-#include "castor/io/PollReactorImpl.hpp"
-#include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
-#include "castor/tape/tapeserver/daemon/VdqmImpl.hpp"
+#include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 
-//------------------------------------------------------------------------------
-// main
-//------------------------------------------------------------------------------
-int main(const int argc, char **const argv) {
-  using namespace castor::tape::tapeserver::daemon;
-  castor::log::LoggerImplementation log("tapeserverd");
-  VdqmImpl vdqm;
-  castor::io::PollReactorImpl reactor(log);
-  TapeDaemon daemon(std::cout, std::cerr, log, vdqm, reactor);
-
-  return daemon.main(argc, argv);
+//-----------------------------------------------------------------------------
+// destructor
+//-----------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::Vdqm::~Vdqm() throw() {
 }

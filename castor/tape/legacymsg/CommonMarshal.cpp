@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/legacymsg/Common.cpp
+ *                      castor/tape/legacymsg/CommonMarshal.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
