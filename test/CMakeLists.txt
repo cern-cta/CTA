@@ -22,6 +22,44 @@
 
 cmake_minimum_required (VERSION 2.6)
 
+# Try to find the four STK client libaries: libapi.so, libutl.so, libipc.so 
+# and libcl.so
+find_library (STK_API_LIB api PATHS /usr/lib64/CDK /usr/lib/CDK NO_DEFAULT_PATH)
+if (STK_API_LIB)
+  message(STATUS "Found the STK api library: ${STK_API_LIB}")
+endif (STK_API_LIB)
+find_library (STK_UTL_LIB utl PATHS /usr/lib64/CDK /usr/lib/CDK NO_DEFAULT_PATH)
+if (STK_UTL_LIB)
+  message(STATUS "Found the STK utl library: ${STK_UTL_LIB}")
+endif (STK_UTL_LIB)
+find_library (STK_IPC_LIB ipc PATHS /usr/lib64/CDK /usr/lib/CDK NO_DEFAULT_PATH)
+if (STK_IPC_LIB)
+  message(STATUS "Found the STK ipc library: ${STK_IPC_LIB}")
+endif (STK_IPC_LIB)
+find_library (STK_CL_LIB cl PATHS /usr/lib64/CDK /usr/lib/CDK NO_DEFAULT_PATH)
+if (STK_CL_LIB)
+  message(STATUS "Found the STK cl library: ${STK_CL_LIB}")
+endif (STK_CL_LIB)
+
+# Add STK related tests if all four STK client libaries
+# (libapi.so, libutl.so, libipc.so and libcl.so) have been found
+if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
+  message(STATUS "Found all four STK libraries - adding STK related unit tests")
+  set (STK_UNITTEST_SRC_FILES
+    ../castor/tape/rmc/Acs.cpp
+    ../castor/tape/rmc/AcsCmd.cpp
+    ../castor/tape/rmc/AcsDismountCmd.cpp
+    ../castor/tape/rmc/AcsDismountCmdLine.cpp
+    ../castor/tape/rmc/AcsDismountCmdLineTest.cpp
+    ../castor/tape/rmc/AcsDismountCmdTest.cpp
+    ../castor/tape/rmc/DebugBuf.cpp)
+
+  foreach(SRC_FILE ${STK_UNITTEST_SRC_FILES})
+    set_property(SOURCE ${SRC_FILE}
+      PROPERTY COMPILE_FLAGS "-DCDK -DLINUX -I/usr/include/CDK")
+  endforeach ()
+endif (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
+
 # Those tests are single threaded, functionnal and error tests. They could
 # actually fail in helgrind/drd (but memcheck is recommended)
 add_executable(castorUnitTests
@@ -41,12 +79,28 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/threading/ThreadingTests.cpp
   ../castor/utils/SmartFdTest.cpp
   ../castor/utils/UtilsTest.cpp
-)
+  ${STK_UNITTEST_SRC_FILES})
+
 set_property(SOURCE ../SCSI/StructuresTest.cpp
   PROPERTY COMPILE_FLAGS -fno-strict-aliasing
 )
-target_link_libraries(castorUnitTests TapeDrive Exception SCSI System Utils File 
-  castorTapeServerThreading ${GTEST_LIBRARY} gmock pthread castorcommon castorclient)
+target_link_libraries(castorUnitTests
+  TapeDrive
+  Exception
+  SCSI
+  System
+  Utils
+  File 
+  castorTapeServerThreading
+  ${GTEST_LIBRARY}
+  gmock
+  pthread
+  castorcommon
+  castorclient
+  ${STK_API_LIB}
+  ${STK_UTL_LIB}
+  ${STK_IPC_LIB}
+  ${STK_CL_LIB})
 
 # Those tests are multi threaded. They could should also be run in 
 # helgrind/drd (and also memcheck)
