@@ -197,4 +197,34 @@ TEST_F(castor_io_IoTest, connectWithTimeout) {
   }
 }
 
+TEST_F(castor_io_IoTest, marshalValue) {
+  using namespace castor::io;
+  const uint32_t v = 0x12345678;
+  char buf[4];
+  char *ptr = buf;
+
+  memset(buf, '\0', sizeof(buf));
+
+  ASSERT_NO_THROW(castor::io::marshalValue(v, ptr));
+  ASSERT_EQ(buf+4, ptr);
+  // Marshalled value should be big endian
+  ASSERT_EQ(0x12, buf[0]);
+  ASSERT_EQ(0x34, buf[1]);
+  ASSERT_EQ(0x56, buf[2]);
+  ASSERT_EQ(0x78, buf[3]);
+}
+
+TEST_F(castor_io_IoTest, unmarshalValue) {
+  using namespace castor::io;
+
+  char buf[] = {0x12, 0x34, 0x56, 0x78};
+  size_t bufLen = sizeof(buf);
+  const char *ptr = buf;
+  uint32_t v = 0;
+  ASSERT_NO_THROW(unmarshalValue(ptr, bufLen, v));
+  ASSERT_EQ(buf+4, ptr);
+  ASSERT_EQ((size_t)0, bufLen);
+  ASSERT_EQ((uint32_t)0x12345678, v);
+}
+
 } // namespace unitTests

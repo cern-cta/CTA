@@ -405,6 +405,80 @@ int connectWithTimeout(
   const int             timeout)
   throw(castor::exception::TimeOut, castor::exception::Exception);
 
+/**
+ * Marshals the specified src value into the specified destination buffer.
+ *
+ * @param src The source value be marshalled.
+ * @param dst In/out parameter, before invocation points to the destination
+ *            buffer where the source value should be marshalled to and on
+ * return     Points to the byte in the destination buffer immediately after
+ *            the marshalled value.
+ */
+template<typename T> void marshalValue(T src, char * &dst)
+  throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to marshal value"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  char *const src_ptr = (char *)(&src);
+
+  // src: Intel x86 (little endian)
+  // dst: Network   (big    endian)
+  for(size_t i=sizeof(src); i>0; i--) {
+    *dst++ = *(src_ptr + i - 1);
+  }
+}
+
+/**
+ * Unmarshals a value from the specified source buffer into the specified
+ * destination.
+ *
+ * @param src    In/out parameter: Before invocation points to the source
+ *               buffer where the value should be unmarshalled from and on
+ *               return points to the byte in the source buffer immediately
+ *               after the unmarshalled value.
+ * @param srcLen In/our parameter: Before invocation is the length of the
+ *               source buffer from where the value should be unmarshalled and
+ *               on return is the number of bytes remaining in the source
+ *               buffer.
+ * @param dst    Out parameter: The destination.
+ */
+template<typename T> void unmarshalValue(const char * &src,
+  size_t &srcLen, T &dst) throw(castor::exception::Exception) {
+
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to unmarshal value"
+      ": Pointer to source buffer is NULL";
+    throw ex;
+  }
+
+  if(srcLen < sizeof(dst)) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to unmarshal value"
+      ": Source buffer length is too small: expected="
+      << sizeof(dst) << " actual=" << srcLen;
+    throw ex;
+  }
+
+  char *const dst_ptr = (char *)(&dst);
+
+  // src: Network   (big    endian)
+  // dst: Intel x86 (little endian)
+  for(size_t i=sizeof(dst); i>0; i--) {
+    *(dst_ptr + i - 1) = *src++;
+  }
+
+  srcLen -= sizeof(dst);
+}
+
 } // namespace io
 } // namespace castor
 
