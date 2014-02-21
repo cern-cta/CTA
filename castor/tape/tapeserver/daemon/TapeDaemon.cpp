@@ -76,7 +76,7 @@ int castor::tape::tapeserver::daemon::TapeDaemon::main(const int argc,
     log::Param params[] = {
       log::Param("Message", msg.str()),
       log::Param("Code"   , ex.code())};
-    m_log(LOG_INFO, msg.str(), params);
+    m_log(LOG_ERR, msg.str(), params);
 
     return 1;
   }
@@ -193,7 +193,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::handleAPossibleVdqmRequest(
     log::Param params[] = {
       log::Param("errno", pollErrno),
       log::Param("message", sstrerror(pollErrno))};
-    m_log(LOG_INFO, "Failed to handle a pending vdqm request: poll() failed",
+    m_log(LOG_ERR, "Failed to handle a pending vdqm request: poll() failed",
       params);
     return;
   }
@@ -220,7 +220,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::handleAPossibleVdqmRequest(
       log::Param params[] = {
         log::Param("code", ex.code()),
         log::Param("message", ex.getMessage().str())};
-      m_log(LOG_INFO, "Failed to handle a pending vdqm request", params);
+      m_log(LOG_ERR, "Failed to handle a pending vdqm request", params);
     }
   }
 }
