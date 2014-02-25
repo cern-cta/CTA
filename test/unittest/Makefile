@@ -26,15 +26,7 @@ RMC_OBJECTS= \
   rmc_AcsMountCmdLine.o \
   rmc_AcsMountCmd.o \
   rmc_AcsQueryVolumeCmdLine.o \
-  rmc_AcsQueryVolumeCmd.o \
-  unittest_AcsCmdTest.o \
-  unittest_AcsTest.o \
-  unittest_AcsDismountCmdLineTest.o \
-  unittest_AcsDismountCmdTest.o \
-  unittest_AcsMountCmdLineTest.o \
-  unittest_AcsMountCmdTest.o \
-  unittest_AcsQueryVolumeCmdLineTest.o \
-  unittest_AcsQueryVolumeCmdTest.o
+  rmc_AcsQueryVolumeCmd.o
 endif
 ROOT_DIR=../..
 INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h $(MACPORTS_CPPUNIT_INCLUDE_OP) $(CDK_OPS)
@@ -113,7 +105,6 @@ rununittests: $(RMC_OBJECTS) \
   exception_PermissionDenied.o \
   exception_QueryVolumeFailed.o \
   exception_RequestFailed.o \
-  exception_TapeNetAcceptInterrupted.o \
   exception_TimeOut.o \
   exception_TooBig.o \
   io_AbstractSocket.o \
@@ -275,8 +266,6 @@ rununittests: $(RMC_OBJECTS) \
   tape_cvtden.o \
   tape_findpgrp.o \
   tape_initlabel.o \
-  tape_net.o \
-  tape_net_IpAndPort.o \
   tape_send2tpd.o \
   tape_usrmsg.o \
   tape_utils.o \
@@ -592,10 +581,6 @@ exception_NoPortInRange.o: $(ROOT_DIR)/castor/exception/NoPortInRange.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_NoValue.o: $(ROOT_DIR)/castor/exception/NoValue.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-exception_TapeNetAcceptInterrupted.o: \
-  $(ROOT_DIR)/castor/exception/TapeNetAcceptInterrupted.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_PermissionDenied.o: \
@@ -1217,12 +1202,6 @@ tape_findpgrp.o: $(ROOT_DIR)/tape/findpgrp.c
 tape_getcompstat.o: $(ROOT_DIR)/tape/getcompstat.c
 	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
 
-tape_net.o: $(ROOT_DIR)/castor/tape/net/net.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tape_net_IpAndPort.o: $(ROOT_DIR)/castor/tape/net/IpAndPort.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 tape_initlabel.o: $(ROOT_DIR)/tape/initlabel.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -1602,33 +1581,6 @@ unittest_SessionErrorTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/Se
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
 unittest_ClientAddressLocalTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ClientAddressLocalTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_AcsCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsCmdTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_AcsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-unittest_AcsDismountCmdLineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsDismountCmdLineTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-unittest_AcsDismountCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsDismountCmdTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-unittest_NetTest.o: $(ROOT_DIR)/test/unittest/castor/tape/net/NetTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_AcsMountCmdLineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsMountCmdLineTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_AcsMountCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsMountCmdTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_AcsQueryVolumeCmdLineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsQueryVolumeCmdLineTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_AcsQueryVolumeCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsQueryVolumeCmdTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
 unittest_FileToMigrateTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/FileToMigrateTest.cpp
