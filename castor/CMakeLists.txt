@@ -143,6 +143,7 @@ set (CLIENT_LIB_SRC_FILES
   log/DummyLogger.cpp
   log/Logger.cpp
   log/LoggerImplementation.cpp
+  log/StringLogger.cpp
   log/LogContext.cpp
   log/Message.cpp
   log/Param.cpp

@@ -73,6 +73,7 @@ add_executable(castorUnitTests
   ../castor/log/LoggerImplementationTest.cpp
   ../castor/log/ParamTest.cpp
   ../castor/log/LogContextTest.cpp
+  ../castor/log/StringLoggerTest.cpp
   ../castor/server/DaemonTest.cpp
   ../castor/tape/tapeserver/SCSI/DeviceTest.cpp
   ../castor/tape/tapeserver/SCSI/StructuresTest.cpp

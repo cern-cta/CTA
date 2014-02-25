@@ -23,10 +23,11 @@
  *****************************************************************************/
 
 #include "DummyLogger.hpp"
+#include "StringLogger.hpp"
 #include "LogContext.hpp"
+#include "log.h"
 
 #include <gtest/gtest.h>
-#include <xfs/platform_defs.h>
 
 using namespace castor::log;
 
@@ -37,14 +38,15 @@ namespace unitTests {
     lc.pushOrReplace(Param("MigrationRequestId", 123));
     ASSERT_EQ(1U, lc.size());
     {
+      // Create an anonymous variable (for its scope)
       LogContext::ScopedParam sp(lc, Param("NSFILEID", 12345));
       ASSERT_EQ(2U, lc.size());
       lc.log(LOG_DEBUG, "Two params message");
       {
         // Test that we do not allow duplicate params
-        LogContext::ScopedParam sp2(lc, Param("NSFILEID", 123456));
+        LogContext::ScopedParam sp(lc, Param("NSFILEID", 123456));
         ASSERT_EQ(2U, lc.size());
-        LogContext::ScopedParam sp3(lc, Param("VID", "T1234"));
+        LogContext::ScopedParam sp2(lc, Param("VID", "T1234"));
         ASSERT_EQ(3U, lc.size());
       }
     }
@@ -52,5 +54,26 @@ namespace unitTests {
     lc.log(LOG_DEBUG, "One param message");
     lc.erase("MigrationRequestId");
     ASSERT_EQ(0U, lc.size());
+  }
+  
+  TEST(castor_log_LogContextTest, paramsFound) {
+    StringLogger sl ("castor_log_LogContextTest");
+    LogContext lc(sl);
+    lc.pushOrReplace(Param("MigrationRequestId", 123));
+    lc.log(LOG_INFO, "First log");
+    std::string first = sl.getLog();
+    ASSERT_NE(std::string::npos, first.find("MigrationRequestId"));
+    {
+      LogContext::ScopedParam sp(lc, Param("NSFILEID", 12345));
+      lc.log(LOG_INFO, "Second log");
+    }
+    std::string second = sl.getLog();
+    ASSERT_NE(std::string::npos, second.find("NSFILEID"));
+    // We expect the NSFILEID parameter to show up only once (i.e, not after 
+    // offset, which marks the end of its first occurrence).
+    lc.log(LOG_INFO, "Third log");
+    std::string third = sl.getLog();
+    size_t offset  = third.find("NSFILEID") + strlen("NSFILEID");
+    ASSERT_EQ(std::string::npos, third.find("NSFILEID", offset));
   }
 }
