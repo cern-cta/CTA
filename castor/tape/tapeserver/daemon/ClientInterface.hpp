@@ -24,8 +24,8 @@
 
 #pragma once
 
-#include "../../legacymsg/RtcpJobRqstMsgBody.hpp"
-#include "../exception/Exception.hpp"
+#include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/ClientType.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
@@ -53,12 +53,50 @@ namespace server {
             throw (castor::tape::Exception);
     
     /**
-     * Get the VID we requested from client at construction time.
-     * @return the VID we got from the client.
+     * Class holding the timing information for the request/reply,
+     * and the message sequence Id.
      */
-    std::string getVid() throw (castor::tape::Exception) {
-      return m_vid;
-    }
+    class RequestReport {
+    public:
+      RequestReport(): transactionId(0),
+        connectDuration(0), sendRecvDuration(0) {}
+      uint32_t transactionId;
+      double connectDuration;
+      double sendRecvDuration;
+    };
+    
+    /**
+     * Class holding the result of a Volume request
+     */
+    class VolumeInfo {
+    public:
+      VolumeInfo() {};
+      /** The VID we will work on */
+      std::string vid;
+      /** The type of the session */
+      tapegateway::ClientType clientType;
+      /** The density of the volume */
+      std::string density;
+      /** The label field seems to be in disuse */
+      std::string labelObsolete;
+      /** The read/write mode */
+      tapegateway::VolumeMode volumeMode;
+    };
+    
+    /**
+     * Retrieves the volume Id from the client (with transfer direction)
+     * Throws an EndOfSession exception
+     * @param report report on timing and request Id. It will still be filled
+     * up and can be used when a exception is thrown.
+     * @return the transaction id
+     */
+    void fetchVolumeId(VolumeInfo & volInfo, RequestReport &report) throw (castor::tape::Exception);
+    
+    /**
+     * Reports end of session to the client. This should be the last call to
+     * the client.
+     */
+    void reportEndOfSession(RequestReport &report) throw (Exception);
     
     /**
      * Exception thrown when the wrong response type was received from
@@ -76,20 +114,11 @@ namespace server {
     public:
       EndOfSession(std::string w=""):castor::tape::Exception(w) {}
     };
+   
     
   private:
     /** The VDQM request that kickstarted the session */
     legacymsg::RtcpJobRqstMsgBody m_request;
-    /** The VID we will work on */
-    std::string m_vid;
-    /** The type of the session */
-    tapegateway::ClientType m_clientType;
-    /** The density of the volume */
-    std::string m_density;
-    /** The label field seems to be in disuse */
-    std::string m_labelObsolete;
-    /** */
-    tapegateway::VolumeMode m_volumeMode;
     /**
      * A helper function managing a single request-response session with the
      * client.
@@ -97,17 +126,8 @@ namespace server {
      * @return the response from the client
      */
     tapegateway::GatewayMessage * requestResponseSession(
-            const tapegateway::GatewayMessage &req) throw (castor::tape::Exception);
-    /**
-     * A helper retrieving the volume Id from the client (with transfer direction)
-     * Throws an EndOfSession exception 
-     */
-    void fetchVolumeId() throw (Exception);
-    
-    /**
-     * A helper sending an end of session to the client.
-     */
-    void reportEndOfSession() throw (Exception);
+            const tapegateway::GatewayMessage &req,
+            RequestReport & report) throw (castor::tape::Exception);
     
     /**
      * A helper class managing a thread safe message counter (we need it thread

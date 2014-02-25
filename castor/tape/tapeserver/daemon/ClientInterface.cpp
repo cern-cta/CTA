@@ -30,6 +30,7 @@
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
+#include "castor/tape/utils/Timer.hpp"
 #include <cxxabi.h>
 #include <memory>
 #include <stdlib.h>
@@ -37,17 +38,7 @@
 
 castor::tape::server::
 ClientInterface::ClientInterface(const legacymsg::RtcpJobRqstMsgBody& clientRequest)
-  throw (castor::tape::Exception): m_request(clientRequest) {
-  // 1) Placeholder: we might have to check with Cupv in the future.
-  // 2) Get the volume information from the client
-  try {
-    fetchVolumeId();
-  } catch (EndOfSession) {
-    reportEndOfSession();
-  }
-  // 3) Pre-retrieve the first file to work on in order to check we are not
-  // a blank mount.
-}
+  throw (castor::tape::Exception): m_request(clientRequest) {}
 
 castor::tape::server::ClientInterface::UnexpectedResponse::
     UnexpectedResponse(const castor::IObject* resp, const std::string & w):
@@ -63,16 +54,21 @@ castor::tape::Exception(w) {
 
 tapegateway::GatewayMessage *
   castor::tape::server::ClientInterface::requestResponseSession(
-    const tapegateway::GatewayMessage &req)
+    const tapegateway::GatewayMessage &req,
+    RequestReport & report)
 throw (castor::tape::Exception) 
 {
+  // 0) Start the stopwatch
+  castor::tape::utils::Timer timer;
   // 1) We re-open connection to client for each request-response exchange
   castor::io::ClientSocket clientConnection(m_request.clientPort, 
       m_request.clientHost);
   clientConnection.connect();
+  report.connectDuration = timer.secs();
   // 2) The actual exchange over the network.
   clientConnection.sendObject(const_cast<tapegateway::GatewayMessage &>(req));
-    std::auto_ptr<castor::IObject> resp (clientConnection.readObject());
+  std::auto_ptr<castor::IObject> resp (clientConnection.readObject());
+  report.sendRecvDuration = timer.secs();
   // 3) Check response type
   tapegateway::GatewayMessage * ret = 
       dynamic_cast<tapegateway::GatewayMessage*>(resp.get());
@@ -91,29 +87,32 @@ throw (castor::tape::Exception)
   return ret;
 }
 
-void castor::tape::server::ClientInterface::fetchVolumeId() throw (castor::tape::Exception) {
+void castor::tape::server::ClientInterface::fetchVolumeId(
+  VolumeInfo & volInfo, RequestReport &report) 
+throw (castor::tape::Exception) {
   // 1) Build the request
   castor::tape::tapegateway::VolumeRequest request;
   request.setMountTransactionId(m_request.volReqId);
   // The transaction id is auto-incremented (through the cast operator) 
   // so we just need to use it (and save the value locally if we need to reuse 
   // it)
-  request.setAggregatorTransactionId(m_transactionId);
+  report.transactionId = m_transactionId;
+  request.setAggregatorTransactionId(report.transactionId);
   request.setUnit(m_request.driveUnit);
   // 2) get the reply from the client
   std::auto_ptr<tapegateway::GatewayMessage> 
-      response (requestResponseSession(request));
+      response (requestResponseSession(request, report));
   // 3) Process the possible outputs
   tapegateway::Volume * volume;
   tapegateway::NoMoreFiles * noMore;
   tapegateway::EndNotificationErrorReport * errorReport;
   // 3) a) Volume: this is the good day answer
   if (NULL != (volume = dynamic_cast<tapegateway::Volume *>(response.get()))) {
-    m_vid = volume->vid();
-    m_clientType = volume->clientType();
-    m_density = volume->density();
-    m_labelObsolete = volume->label();
-    m_volumeMode = volume->mode();
+    volInfo.vid = volume->vid();
+    volInfo.clientType = volume->clientType();
+    volInfo.density = volume->density();
+    volInfo.labelObsolete = volume->label();
+    volInfo.volumeMode = volume->mode();
   // 3) b) Straight noMoreFiles answer: at least we know.
   } else if (NULL != (noMore = dynamic_cast<tapegateway::NoMoreFiles *>(response.get()))) {
     throw EndOfSession("Client replied noMoreFiles directly to volume request");
@@ -130,15 +129,16 @@ void castor::tape::server::ClientInterface::fetchVolumeId() throw (castor::tape:
   }
 }
 
-void castor::tape::server::ClientInterface::reportEndOfSession() 
+void castor::tape::server::ClientInterface::reportEndOfSession(
+RequestReport &transactionReport) 
 throw (castor::tape::Exception) {
   // 1) Build the report
-  castor::tape::tapegateway::EndNotification report;
-  report.setMountTransactionId(m_request.volReqId);
-  report.setAggregatorTransactionId(m_transactionId);
+  castor::tape::tapegateway::EndNotification endReport;
+  endReport.setMountTransactionId(m_request.volReqId);
+  endReport.setAggregatorTransactionId(m_transactionId);
   // 2) Send the report
   std::auto_ptr<tapegateway::GatewayMessage> ack(
-      requestResponseSession(report));
+      requestResponseSession(endReport, transactionReport));
   // 3) If we did not get a ack, complain (not much more we can do)
   // We could use the castor typing here, but we stick to case for homogeneity
   // of the code.

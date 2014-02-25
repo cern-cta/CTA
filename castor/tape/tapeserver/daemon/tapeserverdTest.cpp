@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      tapeserverdTest.hpp
+ *                      tapeserverdTest.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -26,6 +26,8 @@
 #include "ClientSimulator.hpp"
 #include "ClientInterface.hpp"
 #include "../threading/Threading.hpp"
+#include "castor/log/StringLogger.hpp"
+#include "MountSession.hpp"
 
 using namespace castor::tape::server;
 
@@ -42,7 +44,7 @@ private:
 };
 
   
-TEST(tapeServer, ClientInterfaceGoodDay) {
+TEST(tapeServer, MountSessionGoodday) {
   // TpcpClients only supports 32 bits session number
   // This number has to be less than 2^31 as in addition there is a mix
   // of signed and unsigned numbers
@@ -64,9 +66,14 @@ TEST(tapeServer, ClientInterfaceGoodDay) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   
-  // 3) Instantiate the client interface
-  ClientInterface sess(VDQMjob);
+  // 3) Prepare the necessary environment (logger), construct and
+  // run the session.
+  castor::log::StringLogger logger("tapeServerUnitTest");
+  MountSession sess(VDQMjob, logger);
+  sess.execute();
   simRun.wait();
+  std::string temp = logger.getLog();
+  temp += "";
   ASSERT_EQ("V12345", sess.getVid());
 }
 
