@@ -30,13 +30,15 @@
 #include "castor/gc/GcDaemon.hpp"
 #include "castor/gc/DeletionThread.hpp"
 #include "castor/gc/SynchronizationThread.hpp"
+#include "castor/log/LoggerImplementation.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/BaseThreadPool.hpp"
-#include "Cgetopt.h"
-#include "getconfent.h"
+#include "h/Cgetopt.h"
+#include "h/getconfent.h"
+
+#include <iostream>
 #include <sys/time.h>
 #include <string.h>
-
 
 //-----------------------------------------------------------------------------
 // main
@@ -44,7 +46,8 @@
 int main(int argc, char *argv[]) {
 
   try {
-    castor::gc::GcDaemon daemon;
+    castor::log::LoggerImplementation log("gcd");
+    castor::gc::GcDaemon daemon(std::cout, std::cerr, log);
 
     // Randomize the start-up of the daemon between 1 and 15 minutes.
     char *value;
@@ -108,7 +111,9 @@ int main(int argc, char *argv[]) {
 //-----------------------------------------------------------------------------
 // Constructor
 //-----------------------------------------------------------------------------
-castor::gc::GcDaemon::GcDaemon(): castor::server::BaseDaemon("gcd") {
+castor::gc::GcDaemon::GcDaemon(std::ostream &stdOut, std::ostream &stdErr,
+  log::Logger &log):
+  castor::server::MultiThreadedDaemon(stdOut, stdErr, log) {
 
   // Now with predefined messages
   castor::dlf::Message messages[] = {

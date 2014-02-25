@@ -26,10 +26,10 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/ClientSocket.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/RtcpJobSubmitter.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
-#include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/net.h"
 #include "h/osdep.h"
@@ -131,7 +131,7 @@ void castor::tape::tapebridge::RtcpJobSubmitter::submit(
   // Send the job submission request message to the RTCPD or tape tapebridge
   // daemon
   try {
-    net::writeBytes(sock.socket(), netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(sock.socket(), netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
       ": Failed to send the job submission request message to " <<
@@ -157,7 +157,7 @@ void castor::tape::tapebridge::RtcpJobSubmitter::readReply(
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    net::readBytes(sock.socket(), netReadWriteTimeout, sizeof(headerBuf),
+    io::readBytes(sock.socket(), netReadWriteTimeout, sizeof(headerBuf),
       headerBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
@@ -221,7 +221,7 @@ void castor::tape::tapebridge::RtcpJobSubmitter::readReply(
 
   // Read the message body
   try {
-    net::readBytes(sock.socket(), netReadWriteTimeout, header.lenOrStatus,
+    io::readBytes(sock.socket(), netReadWriteTimeout, header.lenOrStatus,
       bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,

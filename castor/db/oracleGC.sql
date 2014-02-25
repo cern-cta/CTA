@@ -378,7 +378,7 @@ BEGIN
            Castorfile.fileid, Castorfile.nshost,
            DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
            getObjStatusName('DiskCopy', 'gcType', DiskCopy.gcType),
-          getSvcClassList(FileSystem.id)
+           getSvcClassList(FileSystem.id)
       FROM CastorFile, DiskCopy, FileSystem, DiskServer
      WHERE decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
        AND DiskCopy.castorfile = CastorFile.id
@@ -480,9 +480,9 @@ BEGIN
         -- file from the nameserver. For safety, we thus keep it
         NULL;
       WHEN CONSTRAINT_VIOLATED THEN
-        IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DISK2DISKCOPYJOB_CASTORFILE) violated%' THEN
-          -- Ignore the deletion, probably some draining/rebalancing activity created a Disk2DiskCopyJob entity
-          -- while we were attempting to drop the CastorFile
+        IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_%_CASTORFILE) violated%' THEN
+          -- Ignore the deletion, probably some draining/rebalancing/recall activity created
+	  -- a new Disk2DiskCopyJob/RecallJob entity while we were attempting to drop the CastorFile
           NULL;
         ELSE
           -- Any other constraint violation is an error
@@ -592,11 +592,10 @@ END;
 /
 
 /* A generic method to delete requests of a given type */
-CREATE OR REPLACE Procedure bulkDeleteRequests(reqType IN VARCHAR, timeOut IN INTEGER) AS
+CREATE OR REPLACE Procedure bulkDeleteRequests(reqType IN VARCHAR) AS
 BEGIN
   bulkDelete('SELECT id FROM '|| reqType ||' R WHERE
-    NOT EXISTS (SELECT 1 FROM SubRequest WHERE request = R.id) AND lastModificationTime < getTime() - '
-    || timeOut ||';',
+    NOT EXISTS (SELECT 1 FROM SubRequest WHERE request = R.id);',
     reqType);
 END;
 /
@@ -604,31 +603,49 @@ END;
 /* Search and delete old archived/failed subrequests and their requests */
 CREATE OR REPLACE PROCEDURE deleteTerminatedRequests AS
   timeOut INTEGER;
+  rateDependentTimeOut INTEGER;
   rate INTEGER;
   srIds "numList";
   ct NUMBER;
 BEGIN
   -- select requested timeout from configuration table
-  timeout := 3600*TO_NUMBER(getConfigOption('cleaning', 'terminatedRequestsTimeout', '120'));
-  -- get a rough estimate of the current request processing rate
-  SELECT count(*) INTO rate
+  timeOut := 3600*TO_NUMBER(getConfigOption('cleaning', 'terminatedRequestsTimeout', '120'));
+  -- compute a rate-dependent timeout for the successful requests by looking at the
+  -- last half-hour of activity: keep max 1M of them regardless the above configured timeOut.
+  SELECT 1800 * 1000000 / (count(*)+1) INTO rateDependentTimeOut
     FROM SubRequest
-   WHERE status IN (9, 11)  -- FAILED_FINISHED, ARCHIVED
+   WHERE status = dconst.SUBREQUEST_ARCHIVED
      AND lastModificationTime > getTime() - 1800;
-  IF rate > 0 AND (1000000 / rate * 1800) < timeOut THEN
-    timeOut := 1000000 / rate * 1800;  -- keep 1M requests max
+  IF rateDependentTimeOut > timeOut THEN
+    rateDependentTimeOut := timeOut;
   END IF;
   
-  -- delete castorFiles if nothing is left for them. Here we use
+  -- Delete castorFiles if nothing is left for them. Here we use
   -- a temporary table as we need to commit every ~1000 operations
   -- and keeping a cursor opened on the original select may take
   -- too long, leading to ORA-01555 'snapshot too old' errors.
   EXECUTE IMMEDIATE 'TRUNCATE TABLE DeleteTermReqHelper';
   INSERT /*+ APPEND */ INTO DeleteTermReqHelper (srId, cfId)
-    (SELECT id, castorFile FROM SubRequest
-      WHERE status IN (9, 11)
-        AND lastModificationTime < getTime() - timeOut);
+    (SELECT SR.id, castorFile FROM SubRequest SR
+      WHERE (SR.status = dconst.SUBREQUEST_ARCHIVED
+             AND SR.lastModificationTime < getTime() - rateDependentTimeOut)
+         -- failed subrequests are kept according to the configured timeout
+         OR (SR.status = dconst.SUBREQUEST_FAILED_FINISHED
+             AND reqType != 119 AND SR.lastModificationTime < getTime() - timeOut));  -- StageRepackRequest
+  COMMIT;  -- needed otherwise the next statement raises
+           -- ORA-12838: cannot read/modify an object after modifying it in parallel
+  -- 2nd part, separated from above for efficiency reasons
+  INSERT /*+ APPEND */ INTO DeleteTermReqHelper (srId, cfId)
+    (SELECT SR.id, castorFile FROM SubRequest SR, StageRepackRequest R
+      WHERE SR.status = dconst.SUBREQUEST_FAILED_FINISHED
+         -- only for the Repack case, we keep all failed subrequests around until
+         -- the whole Repack request is over for more than <timeOut> seconds
+        AND reqType = 119 AND R.lastModificationTime < getTime() - timeOut  -- StageRepackRequest
+        AND R.id = SR.request);
   COMMIT;
+  SELECT count(*) INTO ct FROM DeleteTermReqHelper;
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETING_REQUESTS, 0, '', 'stagerd',
+    'SubRequestsCount=' || ct);
   ct := 0;
   FOR cf IN (SELECT UNIQUE cfId FROM DeleteTermReqHelper) LOOP
     deleteCastorFile(cf.cfId);
@@ -639,7 +656,7 @@ BEGIN
     END IF;
   END LOOP;
 
-  -- now delete all old subRequest. We reuse here the
+  -- Now delete all old subRequests. We reuse here the
   -- temporary table, which serves as a snapshot of the
   -- entries to be deleted, and we use the FORALL logic
   -- (cf. bulkDelete) instead of a simple DELETE ...
@@ -666,30 +683,33 @@ BEGIN
   EXECUTE IMMEDIATE 'TRUNCATE TABLE DeleteTermReqHelper';
 
   -- And then related Requests, now orphaned.
-  -- The timeout makes sure we keep very recent requests,
-  -- even if they have no subrequests. This may actually
-  -- be the case only for Repack requests, as they're
-  -- created empty and filled after querying the NS.
     ---- Get ----
-  bulkDeleteRequests('StageGetRequest', timeOut);
+  bulkDeleteRequests('StageGetRequest');
     ---- Put ----
-  bulkDeleteRequests('StagePutRequest', timeOut);
+  bulkDeleteRequests('StagePutRequest');
     ---- Update ----
-  bulkDeleteRequests('StageUpdateRequest', timeOut);
+  bulkDeleteRequests('StageUpdateRequest');
     ---- PrepareToGet -----
-  bulkDeleteRequests('StagePrepareToGetRequest', timeOut);
+  bulkDeleteRequests('StagePrepareToGetRequest');
     ---- PrepareToPut ----
-  bulkDeleteRequests('StagePrepareToPutRequest', timeOut);
+  bulkDeleteRequests('StagePrepareToPutRequest');
     ---- PrepareToUpdate ----
-  bulkDeleteRequests('StagePrepareToUpdateRequest', timeOut);
+  bulkDeleteRequests('StagePrepareToUpdateRequest');
     ---- PutDone ----
-  bulkDeleteRequests('StagePutDoneRequest', timeOut);
+  bulkDeleteRequests('StagePutDoneRequest');
     ---- Rm ----
-  bulkDeleteRequests('StageRmRequest', timeOut);
-    ---- Repack ----
-  bulkDeleteRequests('StageRepackRequest', timeOut);
+  bulkDeleteRequests('StageRmRequest');
     ---- SetGCWeight ----
-  bulkDeleteRequests('SetFileGCWeight', timeOut);
+  bulkDeleteRequests('SetFileGCWeight');
+
+  -- Finally deal with Repack: this case is different because StageRepackRequests may be empty
+  -- at the beginning. Therefore we only drop repacks that are in a completed state
+  -- for more than <timeOut> seconds.                              FINISHED, FAILED, ABORTED
+  bulkDelete('SELECT id FROM StageRepackRequest R WHERE status IN (2, 3, 5)
+    AND NOT EXISTS (SELECT 1 FROM SubRequest WHERE request = R.id)
+    AND lastModificationTime < getTime() - ' || timeOut || ';',
+    'StageRepackRequest');
+
 END;
 /
 

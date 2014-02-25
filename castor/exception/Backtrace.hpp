@@ -17,15 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- *
- *
- *
  * @author Eric Cano
  *****************************************************************************/
 
 #pragma once
 
 #include <string>
+#include <pthread.h>
 
 namespace castor {
   namespace exception {
@@ -33,8 +31,23 @@ namespace castor {
     public:
       Backtrace();
       operator std::string() const { return m_trace; }
+      Backtrace& operator= (const Backtrace& bt) { m_trace = bt.m_trace; return *this; }
     private:
       std::string m_trace;
+      /**
+       * Singleton lock around the apparently racy backtrace().
+       * We write it with no error check as it's used only here.
+       * We need a class in order to have a constructor for the global object.
+       */
+      class mutex {
+      public:
+        mutex() { pthread_mutex_init(&m_mutex, NULL); }
+        void lock() { pthread_mutex_lock(&m_mutex); }
+        void unlock() { pthread_mutex_unlock(&m_mutex); }
+      private:
+        pthread_mutex_t m_mutex;    
+      };
+      static mutex g_lock;
     };
   }
 }

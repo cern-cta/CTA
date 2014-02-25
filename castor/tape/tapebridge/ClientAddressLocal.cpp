@@ -22,10 +22,11 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/net/net.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/tapebridge/ClientAddressLocal.hpp"
-#include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/SmartFd.hpp"
+#include "castor/utils/utils.hpp"
 
 #include <errno.h>
 #include <sstream>
@@ -94,9 +95,9 @@ int castor::tape::tapebridge::ClientAddressLocal::connectToClient(
   timeval connectEndTime   = {0, 0};
   utils::getTimeOfDay(&connectStartTime, NULL);
 
-  utils::SmartFd smartConnectSock;
+  castor::utils::SmartFd smartConnectSock;
   try {
-    smartConnectSock.reset(net::connectWithTimeout(
+    smartConnectSock.reset(io::connectWithTimeout(
       PF_LOCAL,
       SOCK_STREAM,
       0, // sockProtocol
@@ -112,7 +113,8 @@ int castor::tape::tapebridge::ClientAddressLocal::connectToClient(
   }
 
   utils::getTimeOfDay(&connectEndTime, NULL);
-  connectDuration = utils::timevalAbsDiff(connectStartTime, connectEndTime);
+  connectDuration =
+    castor::utils::timevalAbsDiff(connectStartTime, connectEndTime);
 
   return smartConnectSock.release();
 }

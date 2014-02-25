@@ -2013,9 +2013,6 @@ int vmgr_srv_modifytape(char *req_data,
       need_update++;
     }
     if (status >= 0) {
-      if (side_entry.estimated_free_space_byte_u64 == 0) {
-	status |= TAPE_FULL;
-      }
       side_entry.status = status;
       need_update++;
     }
@@ -2607,9 +2604,6 @@ int vmgr_srv_updatetape(int magic,
   side_entry.nbfiles += FilesWritten;
   side_entry.status &= ~TAPE_BUSY;
   side_entry.status |= Flags;
-  if (side_entry.estimated_free_space_byte_u64 == 0) {
-    side_entry.status |= TAPE_FULL;
-  }
 
   if (vmgr_update_side_entry_byte_u64 (&thip->dbfd, &rec_addr, &side_entry))
     RETURN (serrno);

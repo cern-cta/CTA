@@ -25,13 +25,14 @@
 #include "castor/Constants.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/LegacyTxRx.hpp"
 #include "castor/tape/tapebridge/RtcpTxRx.hpp"
-#include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/common.h"
 #include "h/Ctape_constants.h"
 #include "h/rtcp.h"
@@ -61,7 +62,7 @@ void castor::tape::tapebridge::RtcpTxRx::getRequestInfoFromRtcpd(
 
   // Prepare logical request for volume request ID
   legacymsg::RtcpTapeRqstErrMsgBody request;
-  utils::setBytes(request, '\0');
+  castor::utils::setBytes(request, '\0');
 
   // Marshal the request
   char buf[RTCPMSGBUFSIZE];
@@ -76,7 +77,7 @@ void castor::tape::tapebridge::RtcpTxRx::getRequestInfoFromRtcpd(
 
   // Send the request
   try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send request for volume request ID to RTCPD: "
@@ -105,7 +106,7 @@ void castor::tape::tapebridge::RtcpTxRx::getRequestInfoFromRtcpd(
   }
 
   // Receive reply from RTCPD
-  utils::setBytes(reply, '\0');
+  castor::utils::setBytes(reply, '\0');
   try {
     legacymsg::MessageHeader header;
     legacyTxRx.receiveMsgHeader(socketFd, header);
@@ -155,7 +156,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveVolumeToRtcpd(
 
   // Send the message
   try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send volume message to RTCPD: "
@@ -219,7 +220,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
 
   // Send the message
   try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send file message to RTCPD: "
@@ -282,7 +283,7 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdDumpTape(
 
   // Send the message
   try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send file message to RTCPD: "
@@ -352,7 +353,7 @@ void castor::tape::tapebridge::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
   }
 
   try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
       ": Failed to send the rtcpd ping message"
@@ -399,7 +400,7 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdEndOfFileList(
 
   // Send the message
   try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
       ": Failed to send file message to RTCPD"
@@ -466,76 +467,6 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdEndOfFileList(
 
 
 //-----------------------------------------------------------------------------
-// tellRtcpdToAbort
-//-----------------------------------------------------------------------------
-void castor::tape::tapebridge::RtcpTxRx::tellRtcpdToAbort(const Cuuid_t &cuuid,
-  const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout)
-  throw(castor::exception::Exception) {
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId),
-      castor::dlf::Param("socketFd", socketFd)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
-      TAPEBRIDGE_TELL_RTCPD_TO_ABORT, params);
-  }
-
-  // Marshal the message
-  legacymsg::RtcpAbortMsgBody body;
-  char buf[RTCPMSGBUFSIZE];
-  size_t totalLen = 0;
-  try {
-    totalLen = legacymsg::marshal(buf, body);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
-         ": Failed to marshal \"no more requests\" message: "
-      << ex.getMessage().str());
-  }
-
-  // Send the message
-  try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(SECOMERR,
-         ": Failed to send abort message to RTCPD: "
-      << ex.getMessage().str());
-  }
-
-  // Receive acknowledge from RTCPD
-  legacymsg::MessageHeader ackMsg;
-  LegacyTxRx legacyTxRx(netReadWriteTimeout);
-  try {
-    legacyTxRx.receiveMsgHeader(socketFd, ackMsg);
-  } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_CODE(EPROTO,
-         ": Failed to receive acknowledge from RTCPD: "
-      << ex.getMessage().str());
-  }
-
-  {
-    castor::dlf::Param params[] = {
-      castor::dlf::Param("volReqId", volReqId),
-      castor::dlf::Param("socketFd", socketFd)};
-    castor::dlf::dlf_writep(cuuid, DLF_LVL_SYSTEM,
-      TAPEBRIDGE_TOLD_RTCPD_TO_ABORT, params);
-  }
-
-  checkMagic(RTCOPY_MAGIC, ackMsg.magic, __FUNCTION__);
-  checkRtcopyReqType(RTCP_NOMORE_REQ, ackMsg.reqType, __FUNCTION__);
-
-  // If the acknowledge is negative
-  if(ackMsg.lenOrStatus != 0) {
-    TAPE_THROW_CODE(ackMsg.lenOrStatus,
-      ": Received negative acknowledge from RTCPD"
-      ": Status: " << ackMsg.lenOrStatus);
-  }
-}
-
-
-
-
-
-//-----------------------------------------------------------------------------
 // receiveRtcpJobRqst
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid,
@@ -548,7 +479,7 @@ void castor::tape::tapebridge::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    net::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(headerBuf), headerBuf);
+    io::readBytes(socketFd, RTCPDNETRWTIMEOUT, sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to read message header from remote-copy job submitter"
@@ -596,7 +527,7 @@ void castor::tape::tapebridge::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid
 
   // Read the message body
   try {
-    net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
+    io::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(EIO,
          ": Failed to read message body from remote-copy job submitter"
@@ -638,11 +569,11 @@ void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
 
   legacymsg::RtcpFileRqstErrMsgBody msgBody;
 
-  utils::setBytes(msgBody, '\0');
+  castor::utils::setBytes(msgBody, '\0');
 
-  utils::copyString(msgBody.rqst.recfm_noLongerUsed, "F");
+  castor::utils::copyString(msgBody.rqst.recfm_noLongerUsed, "F");
 
-  utils::copyString(msgBody.rqst.tapePath, tapePath);
+  castor::utils::copyString(msgBody.rqst.tapePath, tapePath);
   msgBody.rqst.volReqId       =  volReqId;
   msgBody.rqst.jobId          = -1;
   msgBody.rqst.stageSubReqId  = -1;
@@ -678,7 +609,7 @@ void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
 
   // Send the message
   try {
-    net::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(socketFd, netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send ask RTCPD to request more "
@@ -735,11 +666,11 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
 
 
   // Give file information to RTCPD
-  utils::setBytes(msgBody, '\0');
-  utils::copyString(msgBody.rqst.filePath, filePath    );
-  utils::copyString(msgBody.rqst.tapePath, tapePath    );
-  utils::copyString(msgBody.rqst.recfm_noLongerUsed, "F");
-  utils::copyString(msgBody.rqst.fid     , tapeFileId  );
+  castor::utils::setBytes(msgBody, '\0');
+  castor::utils::copyString(msgBody.rqst.filePath, filePath    );
+  castor::utils::copyString(msgBody.rqst.tapePath, tapePath    );
+  castor::utils::copyString(msgBody.rqst.recfm_noLongerUsed, "F");
+  castor::utils::copyString(msgBody.rqst.fid     , tapeFileId  );
 
   msgBody.rqst.volReqId             = volReqId;
   msgBody.rqst.jobId                = -1;
@@ -763,7 +694,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
   msgBody.rqst.blockId[2]           = blockId[2];
   msgBody.rqst.blockId[3]           = blockId[3];
   msgBody.rqst.bytesIn              = fileSize;
-  utils::copyString(msgBody.rqst.segAttr.nameServerHostName,
+  castor::utils::copyString(msgBody.rqst.segAttr.nameServerHostName,
     nameServerHostName);
   msgBody.rqst.segAttr.castorFileId = castorFileId;
   msgBody.err.severity              = RTCP_OK;

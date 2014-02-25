@@ -28,7 +28,28 @@
 #include "IConverter.hpp"
 
 /** the unique and single factory table */
-castor::Converters* ConvertersInstance = 0;
+castor::Converters* ConvertersInstance = NULL;
+
+/** The janitor in charge of clening up the converters instance:
+ * it might or might not give the initial kick that triggers the 
+ * lazy initialization of the converter, but he will for sure 
+ * delete it.
+ */
+namespace castor {
+  class ConvertersCleaner {
+  public:
+    ConvertersCleaner() {
+      /* This might or might not trigger the lazy initialization */
+      m_converters = castor::Converters::instance();
+    }
+    ~ConvertersCleaner() {
+      delete m_converters;
+    }
+  private:
+    Converters * m_converters;
+  };
+  static ConvertersCleaner g_converterCleaner;
+}
 
 //-----------------------------------------------------------------------------
 // Default destructor
@@ -41,7 +62,7 @@ castor::Converters::~Converters() {
     std::map<const unsigned int, const ICnvFactory*>& convs = it->second;
     std::map<const unsigned int, const ICnvFactory*>::iterator it2;
     for (it2 = convs.begin(); it2 != convs.end(); it2++) {
-      delete it2->second;
+      // delete it2->second;
     }
     convs.erase(convs.begin(), convs.end());
   }

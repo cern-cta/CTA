@@ -35,8 +35,7 @@
 // static values initialization
 //------------------------------------------------------------------------------
 castor::Services* castor::BaseObject::s_sharedServices(0);
-pthread_key_t castor::BaseObject::s_servicesKey(0);
-pthread_once_t castor::BaseObject::s_servicesOnce = PTHREAD_ONCE_INIT;
+castor::BaseObject::pthreadKey castor::BaseObject::s_servicesKey;
 
 //------------------------------------------------------------------------------
 // constructor
@@ -69,37 +68,13 @@ castor::Services* castor::BaseObject::svcs()
 }
 
 //------------------------------------------------------------------------------
-// makeServicesKey
-//------------------------------------------------------------------------------
-void castor::BaseObject::makeServicesKey()
-  throw (castor::exception::Exception)  {
-  int rc = pthread_key_create(&s_servicesKey, NULL);
-  if (rc != 0) {
-    castor::exception::Exception e(rc);
-    e.getMessage() << "Error caught in call to pthread_key_create";
-    throw e;
-  }
-}
-
-//------------------------------------------------------------------------------
 // services
 //------------------------------------------------------------------------------
 castor::Services* castor::BaseObject::services()
   throw (castor::exception::Exception) {
-  // make a new key if we are in the first call to this
-  {
-    const int rc = pthread_once(&castor::BaseObject::s_servicesOnce,
-      castor::BaseObject::makeServicesKey);
-    if (rc != 0) {
-      castor::exception::Exception e(rc);
-      e.getMessage() << "Error caught in call to pthread_once";
-      throw e;
-    }
-  }
-
   castor::Services *services =
     (castor::Services *)pthread_getspecific(s_servicesKey);
-
+  
   // If this is the first time this thread gets the value of its
   // thread-specific s_servicesKey then create the Services object and set the
   // key to point to it
@@ -113,6 +88,23 @@ castor::Services* castor::BaseObject::services()
       throw e;
     }
   }
-
+  
   return services;
+}
+
+//------------------------------------------------------------------------------
+// resetServices
+//------------------------------------------------------------------------------
+void castor::BaseObject::resetServices()
+  throw (castor::exception::Exception) {
+  // If the services where not allocated (unlikely), this will have the
+  // side effect of allocating them. The key will be created anyhow,
+  // which is what we need.
+  delete services();
+  const int rc = pthread_setspecific(s_servicesKey, NULL);
+  if(0 != rc) {
+    castor::exception::Exception e(rc);
+    e.getMessage() << "Failed to reset the thread's servicesKey to NULL after delete";
+    throw e;
+  }
 }

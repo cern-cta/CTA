@@ -26,6 +26,21 @@
 cmake_minimum_required (VERSION 2.6)
 
 project(castor)
+
+IF(NOT CMAKE_BUILD_TYPE STREQUAL "")
+  # If the user specifies -DCMAKE_BUILD_TYPE on the command line, take their definition and dump it in the cache
+  message(STATUS "Setting build type to ${CMAKE_BUILD_TYPE} as requested.")
+  SET(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "Choose the type of build.")
+ELSE()
+  # log choosen default (RelWithDebInfo) and set it
+  message(STATUS "Setting build type to 'RelWithDebInfo' as none was specified.")
+  message (STATUS "Override with -DCMAKE_BUILD_TYPE:STRING=Debug")  
+  set(CMAKE_BUILD_TYPE RelWithDebInfo CACHE STRING "Choose the type of build." FORCE)
+  # Set the possible values of build type for cmake-gui
+  # this command is not yet available in SLC6's cmake 2.6
+  # set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "Debug" "Release" "MinSizeRel" "RelWithDebInfo")
+ENDIF(NOT CMAKE_BUILD_TYPE STREQUAL "")
+
 if ("${CMAKE_SOURCE_DIR}" MATCHES "${CMAKE_BINARY_DIR}")
   message (SEND_ERROR "In source building not supported. Please run something like: \"mkdir ../build; ( src=`pwd`; cd ../build; cmake $src ); make -C ../build\"")
   message (SEND_ERROR "Now that you reached that point you will unfortnately have to cleanup your source directory: \"rm -rf CMakeFiles/ CMakeCache.txt\". Sorry!")
@@ -163,30 +178,32 @@ ELSE(DEFINED PackageOnly)
   include_directories(${CMAKE_SOURCE_DIR})
   include_directories(${CMAKE_SOURCE_DIR}/h)
   
-  find_package (oracle REQUIRED)
-  
-  function (CastorAddProC _name)
-    add_custom_command (
-      OUTPUT ${_name}.c DEPENDS ${_name}.pc
-      COMMAND
-        ORACLE_HOME=${ORACLE_HOME}
-        LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}:${ORACLE_LIBDIR}
-        ${ORACLE_BIN}/proc
-        iname=${CMAKE_CURRENT_SOURCE_DIR}/${_name}.pc
-        oname=${CMAKE_CURRENT_BINARY_DIR}/${_name}.c
-        ${ORACLE_PROCINC}
-        include=${CMAKE_SOURCE_DIR}/h threads=yes
-        char_map=string
-        parse=full
-        prefetch=1000)
-  
-    # Append the oracle specific compilation flags and also use -Wno-error to
-    # override the default -Werror compilation rule in the case of source files
-    # produced by the Pro*C precompiler.  Such files contain generated code that
-    # generates warnings.
-    set_property (SOURCE ${_name}.c
-      PROPERTY COMPILE_FLAGS "${ORACLE_CPPFLAGS} -Wno-error")
-  endfunction ()
+  if (${COMPILE_SERVER} STREQUAL "1")
+    find_package (oracle REQUIRED)
+    
+    function (CastorAddProC _name)
+      add_custom_command (
+        OUTPUT ${_name}.c DEPENDS ${_name}.pc
+        COMMAND
+          ORACLE_HOME=${ORACLE_HOME}
+          LD_LIBRARY_PATH=$ENV{LD_LIBRARY_PATH}:${ORACLE_LIBDIR}
+          ${ORACLE_BIN}/proc
+          iname=${CMAKE_CURRENT_SOURCE_DIR}/${_name}.pc
+          oname=${CMAKE_CURRENT_BINARY_DIR}/${_name}.c
+          ${ORACLE_PROCINC}
+          include=${CMAKE_SOURCE_DIR}/h threads=yes
+          char_map=string
+          parse=full
+          prefetch=1000)
+    
+      # Append the oracle specific compilation flags and also use -Wno-error to
+      # override the default -Werror compilation rule in the case of source files
+      # produced by the Pro*C precompiler.  Such files contain generated code that
+      # generates warnings.
+      set_property (SOURCE ${_name}.c
+        PROPERTY COMPILE_FLAGS "${ORACLE_CPPFLAGS} -Wno-error")
+    endfunction ()
+  endif (${COMPILE_SERVER} STREQUAL "1")
   
   function (CastorInstallDir _name)
     install (CODE
@@ -358,6 +375,7 @@ ELSE(DEFINED PackageOnly)
   add_subdirectory (tape)
   if (${COMPILE_SERVER} STREQUAL "1")
     add_subdirectory (rtcopy)
+    add_subdirectory (test)
   endif (${COMPILE_SERVER} STREQUAL "1")
 ENDIF(DEFINED PackageOnly)
 
@@ -376,13 +394,11 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
   include(CPack)
   include(cmake/UseRPMTools.cmake)
   if (RPMTools_FOUND)
-    execute_process (COMMAND ${CMAKE_COMMAND} -E copy
-      ${CMAKE_SOURCE_DIR}/${PROJECT_NAME}.spec.in.head
-      ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
     message (STATUS "Generating spec file from debian package structure...")
     execute_process (
-      COMMAND ./makespec.in.sh ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in 2>&1
+      COMMAND ./makespec.py
       WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+      OUTPUT_FILE ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in
       OUTPUT_VARIABLE result)
     if (NOT ${result} STREQUAL "")
        string (REGEX REPLACE "\n$" "" result ${result})
@@ -392,3 +408,18 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
       ${PROJECT_NAME} ${CMAKE_BINARY_DIR}/${PROJECT_NAME}.spec.in)
   endif (RPMTools_FOUND)
 endif (${COMPILE_PACKAGING} STREQUAL "1")
+
+#add_custom_target(test test/castorUnitTests
+#                    COMMENT "Not running the unit tests" VERBATIM)
+
+configure_file(test/castorThreadedUnitTests.supp test/castorThreadedUnitTests.supp COPYONLY)
+add_custom_target(test test/castorUnitTests
+                    COMMAND valgrind --leak-check=full --show-reachable=yes --error-exitcode=1 test/castorUnitTests
+                    COMMAND test/castorThreadedUnitTests
+                    COMMAND valgrind --leak-check=full --show-reachable=yes --error-exitcode=1 test/castorThreadedUnitTests
+                    COMMAND valgrind --tool=helgrind --error-exitcode=1 --suppressions=test/castorThreadedUnitTests.supp test/castorThreadedUnitTests
+                    COMMAND test/castorMultiprocessUnitTests
+                    COMMAND valgrind --tool=helgrind --error-exitcode=1 test/castorMultiprocessUnitTests
+                    DEPENDS test/castorUnitTests test/castorThreadedUnitTests test/castorMultiprocessUnitTests test/castorThreadedUnitTests.supp
+                    COMMENT "Running unit tests" VERBATIM)
+

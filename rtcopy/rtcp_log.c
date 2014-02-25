@@ -82,13 +82,13 @@ void rtcpc_SetErrTxt(int level, char *format, ...) {
         if ( level == LOG_INFO && (strncmp(msgbuf," CP",3) != 0 &&
              strncmp(msgbuf," DUMP",5) != 0 &&
              *msgbuf != '\0' && *msgbuf != '\n') ) {
-            if ( tpread_command == TRUE ) log(LOG_INFO,"%s",msgbuf);
+            if ( tpread_command == TRUE ) (*logfunc)(LOG_INFO,"%s",msgbuf);
             RESTORE_ERRNO;
             return;
         }
 
         if ( client_socket_p != NULL && *client_socket_p != NULL ) {
-            if ( level <= LOG_ERR ) log(level,"%s",msgbuf);
+            if ( level <= LOG_ERR ) (*logfunc)(level,"%s",msgbuf);
             rtcp_ClientMsg(*client_socket_p,msgbuf);
         }
 
@@ -124,7 +124,7 @@ int rtcp_InitLog(char *msgbuf, FILE *out, FILE *err, int *client_socket) {
         }
         initlog("rtcpd",loglevel,rtcpd_logfile);
         if ( msgbuf == NULL && client_socket == NULL ) {
-            rtcp_log = (void (*)(int, const char *, ...))log;
+            rtcp_log = (void (*)(int, const char *, ...))(*logfunc);
             RESTORE_ERRNO;
             return(0);
         }

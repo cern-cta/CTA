@@ -24,13 +24,14 @@
 
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/LogHelper.hpp"
 #include "castor/tape/tapebridge/LegacyTxRx.hpp"
 #include "castor/tape/tapebridge/VmgrTxRx.hpp"
-#include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "h/getconfent.h"
 #include "h/vmgr.h"
@@ -58,7 +59,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
     char *p = NULL;
 
     if((p = getenv("VMGR_HOST")) || (p = getconfent("VMGR", "HOST", 0))) {
-      utils::copyString(vmgrHost, p);
+      castor::utils::copyString(vmgrHost, p);
     } else {
       castor::exception::Exception ex(EVMGRNOHOST);
 
@@ -73,7 +74,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
     char *p = NULL;
 
     if((p = getenv("VMGR_PORT")) || (p = getconfent("VMGR", "PORT", 0))) {
-      if(!utils::isValidUInt(p)) {
+      if(!castor::utils::isValidUInt(p)) {
         castor::exception::InvalidArgument ex;
 
         ex.getMessage() << "VMGR PORT is not a valid unsigned integer"
@@ -95,7 +96,8 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
     utils::getTimeOfDay(&connectStartTime, NULL);
     sock.connect();
     utils::getTimeOfDay(&connectEndTime, NULL);
-    connectDuration = utils::timevalAbsDiff(connectStartTime, connectEndTime);
+    connectDuration =
+      castor::utils::timevalAbsDiff(connectStartTime, connectEndTime);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(ex.code(),
       ": Failed to connect to the VMGR "
@@ -105,10 +107,10 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
 
   // Prepare the logical request
   legacymsg::VmgrTapeInfoRqstMsgBody request;
-  utils::setBytes(request, '\0');
+  castor::utils::setBytes(request, '\0');
   request.uid = uid;
   request.gid = gid;
-  utils::copyString(request.vid, vid);
+  castor::utils::copyString(request.vid, vid);
   request.side = 0; // HARDCODED side
 
   // Marshal the request
@@ -129,7 +131,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
   timeval sendRecvDuration        = {0, 0};
   utils::getTimeOfDay(&sendAndReceiveStartTime, NULL);
   try {
-    net::writeBytes(sock.socket(), netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(sock.socket(), netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
          ": Failed to send request for tape information to the VMGR: "
@@ -138,7 +140,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
 
   // Receive header from the VMGR
   legacymsg::MessageHeader header;
-  utils::setBytes(header, '\0');
+  castor::utils::setBytes(header, '\0');
   try {
     LegacyTxRx legacyTxRx(netReadWriteTimeout);
     legacyTxRx.receiveMsgHeader(sock.socket(), header);
@@ -205,7 +207,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
 
       // Receive the error string
       try {
-        net::readBytes(sock.socket(), netReadWriteTimeout, header.lenOrStatus,
+        io::readBytes(sock.socket(), netReadWriteTimeout, header.lenOrStatus,
           bodyBuf);
       } catch (castor::exception::Exception &ex) {
         TAPE_THROW_CODE(EIO,
@@ -251,11 +253,11 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
 
       // Receive the message body
       try {
-        net::readBytes(sock.socket(), netReadWriteTimeout, header.lenOrStatus,
+        io::readBytes(sock.socket(), netReadWriteTimeout, header.lenOrStatus,
           bodyBuf);
         utils::getTimeOfDay(&sendAndReceiveEndTime, NULL);
-        sendRecvDuration = utils::timevalAbsDiff(sendAndReceiveStartTime,
-          sendAndReceiveEndTime);
+        sendRecvDuration = castor::utils::timevalAbsDiff(
+          sendAndReceiveStartTime, sendAndReceiveEndTime);
       } catch (castor::exception::Exception &ex) {
         TAPE_THROW_CODE(EIO,
           ": Failed to receive message body from VMGR" <<

@@ -68,7 +68,7 @@
 
 /* Limits */
 #define DLF_MAX_PARAMNAMELEN  20    /* Maximum length of a parameter name */
-#define DLF_MAX_PARAMSTRLEN   1024  /* Maximum length of a string value */
+#define DLF_MAX_PARAMSTRLEN   2048  /* Maximum length of a string value */
 #define DLF_MAX_IDENTLEN      20    /* Maximum length of an ident/facility */
 #define DLF_MAX_LINELEN       8192  /* Maximum length of a log message */
 #define DLF_MAX_MSGTEXTS      8192  /* Maximum number of registered messages */
@@ -224,19 +224,6 @@ EXTERN_C int dlf_writep (Cuuid_t reqid,
 			 struct Cns_fileid *ns,
 			 unsigned int numparams,
 			 dlf_write_param_t params[]);
-
-/* This function is a wrapper around the dlf_writep function.
- * the only difference is that it takes a variable argument list '...'
- * rather than an array of dlf_write_param_t structures
- * This is deprecated
- */
-EXTERN_C int dlf_write (Cuuid_t reqid,
-			unsigned int priority,
-			unsigned int msgno,
-			struct Cns_fileid *ns,
-			int numparams,
-			...);
-
 
 /* Check to see if the DLF interface has been initialized
  * @returns 1 if the interface is initialized, 0 if not

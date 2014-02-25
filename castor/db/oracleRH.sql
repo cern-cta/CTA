@@ -93,7 +93,7 @@ BEGIN
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
   -- send an alert to accelerate the processing of the request
-  DBMS_ALERT.SIGNAL('wakeUpJobSvc', '');
+  alertSignalNoLock('wakeUpJobSvc');
 END;
 /
 
@@ -131,9 +131,12 @@ CREATE OR REPLACE PROCEDURE insertFileRequest
   clientId NUMBER;
   creationTime NUMBER;
   svcHandler VARCHAR2(100);
+  protocols VARCHAR2(100);
 BEGIN
   -- do prechecks and get the service class
   svcClassId := insertPreChecks(euid, egid, svcClassName, inReqType);
+  -- get the list of valid protocols
+  protocols := getConfigOption('Stager', 'Protocols', 'rfio|rfio3|gsiftp|xroot');
   -- get unique ids for the request and the client and get current time
   SELECT ids_seq.nextval INTO reqId FROM DUAL;
   SELECT ids_seq.nextval INTO clientId FROM DUAL;
@@ -177,6 +180,10 @@ BEGIN
   SELECT svcHandler INTO svcHandler FROM Type2Obj WHERE type=inReqType;
   -- Loop on subrequests
   FOR i IN srFileNames.FIRST .. srFileNames.LAST LOOP
+    -- check protocol validity
+    IF INSTR(protocols, srProtocols(i)) = 0 THEN
+      raise_application_error(-20122, 'Unsupported protocol in insertFileRequest : ' || srProtocols(i));
+    END IF;
     -- get unique ids for the subrequest
     SELECT ids_seq.nextval INTO subreqId FROM DUAL;
     -- insert the subrequest
@@ -188,15 +195,15 @@ BEGIN
   WHEN inReqType = 35 OR   -- StageGetRequest
        inReqType = 40 OR   -- StagePutRequest
        inReqType = 44 THEN -- StageUpdateRequest
-    DBMS_ALERT.SIGNAL('wakeUpJobReqSvc', '');
+    alertSignalNoLock('wakeUpJobReqSvc');
   WHEN inReqType = 36 OR   -- StagePrepareToGetRequest
        inReqType = 37 OR   -- StagePrepareToPutRequest
        inReqType = 38 THEN -- StagePrepareToUpdateRequest
-    DBMS_ALERT.SIGNAL('wakeUpPrepReqSvc', '');
+    alertSignalNoLock('wakeUpPrepReqSvc');
   WHEN inReqType = 42 OR   -- StageRmRequest
        inReqType = 39 OR   -- StagePutDoneRequest
        inReqType = 95 THEN -- SetFileGCWeight
-    DBMS_ALERT.SIGNAL('wakeUpStageReqSvc', '');
+    alertSignalNoLock('wakeUpStageReqSvc');
   END CASE;
 END;
 /
@@ -251,7 +258,7 @@ BEGIN
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
   -- send an alert to accelerate the processing of the request
-  DBMS_ALERT.SIGNAL('wakeUpJobSvc', '');
+  alertSignalNoLock('wakeUpJobSvc');
 END;
 /
 
@@ -295,7 +302,7 @@ BEGIN
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
   -- send an alert to accelerate the processing of the request
-  DBMS_ALERT.SIGNAL('wakeUpQueryReqSvc', '');
+  alertSignalNoLock('wakeUpQueryReqSvc');
 END;
 /
 
@@ -350,7 +357,7 @@ BEGIN
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
   -- send an alert to accelerate the processing of the request
-  DBMS_ALERT.SIGNAL('wakeUpQueryReqSvc', '');
+  alertSignalNoLock('wakeUpQueryReqSvc');
 END;
 /
 
@@ -396,7 +403,7 @@ BEGIN
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
   -- send an alert to accelerate the processing of the request
-  DBMS_ALERT.SIGNAL('wakeUpQueryReqSvc', '');
+  alertSignalNoLock('wakeUpQueryReqSvc');
 END;
 /
 
@@ -446,7 +453,7 @@ BEGIN
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
   -- send an alert to accelerate the processing of the request
-  DBMS_ALERT.SIGNAL('wakeUpJobSvc', '');
+  alertSignalNoLock('wakeUpJobSvc');
 END;
 /
 
@@ -490,7 +497,7 @@ BEGIN
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
   -- send an alert to accelerate the processing of the request
-  DBMS_ALERT.SIGNAL('wakeUpGCSvc', '');
+  alertSignalNoLock('wakeUpGCSvc');
 END;
 /
 
@@ -536,7 +543,7 @@ BEGIN
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
   -- send an alert to accelerate the processing of the request
-  DBMS_ALERT.SIGNAL('wakeUpQueryReqSvc', '');
+  alertSignalNoLock('wakeUpQueryReqSvc');
 END;
 /
 
@@ -593,7 +600,7 @@ BEGIN
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
   -- send an alert to accelerate the processing of the request
-  DBMS_ALERT.SIGNAL('wakeUpBulkStageReqSvc', '');
+  alertSignalNoLock('wakeUpBulkStageReqSvc');
 END;
 /
 
@@ -659,7 +666,7 @@ BEGIN
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
   -- send an alert to accelerate the processing of the request
-  DBMS_ALERT.SIGNAL('wakeUpGCSvc', '');
+  alertSignalNoLock('wakeUpGCSvc');
 END;
 /
 
@@ -723,6 +730,6 @@ BEGIN
   -- insert a row into newRequests table to trigger the processing of the request
   INSERT INTO newRequests (id, type, creation) VALUES (reqId, reqType, to_date('01011970','ddmmyyyy') + 1/24/60/60 * creationTime);
   -- send an alert to accelerate the processing of the request
-  DBMS_ALERT.SIGNAL('wakeUpQueryReqSvc', '');
+  alertSignalNoLock('wakeUpQueryReqSvc');
 END;
 /

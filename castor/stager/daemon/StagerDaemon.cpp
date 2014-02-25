@@ -35,6 +35,7 @@
 #include "castor/dlf/Message.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
+#include "castor/log/LoggerImplementation.hpp"
 #include "castor/PortNumbers.hpp"
 #include "castor/System.hpp"
 #include "castor/server/SignalThreadPool.hpp"
@@ -58,7 +59,9 @@
 
 int main(int argc, char* argv[]){
   try{
-    castor::stager::daemon::StagerDaemon stagerDaemon;
+    castor::log::LoggerImplementation log("stagerd");
+    castor::stager::daemon::StagerDaemon
+      stagerDaemon(std::cout, std::cerr, log);
 
     castor::stager::IStagerSvc* stgService =
       dynamic_cast<castor::stager::IStagerSvc*>
@@ -152,12 +155,12 @@ int main(int argc, char* argv[]){
 }// end main
 
 
-/******************************************************************************************/
+/*****************************************************************************************/
 /* constructor: initiallizes the DLF logging and set the default value to its attributes */
-/****************************************************************************************/
-castor::stager::daemon::StagerDaemon::StagerDaemon()
-  throw (castor::exception::Exception)
-  : castor::server::BaseDaemon("stagerd") {
+/*****************************************************************************************/
+castor::stager::daemon::StagerDaemon::StagerDaemon(std::ostream &stdOut,
+  std::ostream &stdErr, log::Logger &log) throw (castor::exception::Exception)
+  : castor::server::MultiThreadedDaemon(stdOut, stdErr, log) {
 
   castor::dlf::Message stagerDlfMessages[]={
 
@@ -322,6 +325,6 @@ void castor::stager::daemon::StagerDaemon::help(std::string programName)
 
 void castor::stager::daemon::StagerDaemon::waitAllThreads() throw()
 {
-  castor::server::BaseDaemon::waitAllThreads();
+  castor::server::MultiThreadedDaemon::waitAllThreads();
   castor::replier::RequestReplier::getInstance()->terminate();
 }

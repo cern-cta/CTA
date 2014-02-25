@@ -48,7 +48,7 @@ int rfio_close_v2(int     s)
   char     rfio_buf[BUFSIZ] ;
   char   * p  ;
   int status, status1;
-  char  * trp ;  /* Pointer to a temporary buffer  */
+  char  * trp = 0;  /* Pointer to a temporary buffer  */
   int temp= 0 ;  /* A temporary buffer has been allocated */
   int s_index;
 

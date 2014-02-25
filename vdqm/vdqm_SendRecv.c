@@ -155,7 +155,7 @@ static int vdqm_Transfer(vdqmnw_t *nw,
         else if ( volreq != NULL ) reqtype = VDQM_VOL_REQ;
         else if ( drvreq != NULL ) reqtype = VDQM_DRV_REQ;
         else {
-            log(LOG_ERR,"vdqm_Transfer(): cannot determine request type to send\n");
+            (*logfunc)(LOG_ERR,"vdqm_Transfer(): cannot determine request type to send\n");
             return(-1);
         }
         if ( *servername != '\0' ) {
@@ -462,77 +462,6 @@ int vdqm_SendRTCPAckn(int connect_socket,
             errmsg,whereto);
 
     rc = netwrite_timeout(connect_socket,buf,len,VDQM_TIMEOUT);
-    return(rc);
-}
-
-int vdqm_SendToRTCP(int connect_socket, vdqmVolReq_t *VolReq,
-                    vdqmDrvReq_t *DrvReq) {
-    char buf[VDQM_MSGBUFSIZ];
-    char errmsg[1024];
-    char *p;
-    int len,msglen,rc,magic,reqtype,status;
-
-    if ( VolReq == NULL || DrvReq == NULL ) return(-1);
-    p = buf;
-    len = vdqm_MarshallRTCPReq(p,VolReq,DrvReq,SendTo);
-    rc = netwrite_timeout(connect_socket,buf,len,VDQM_TIMEOUT);
-    switch (rc) {
-    case -1:
-        log(LOG_ERR,"vdqm_SendToRTCP(): netwrite() %s\n",neterror());
-        serrno = SECOMERR;
-        return(-1);
-    case 0:
-        log(LOG_ERR,"vdqm_SendToRTCP(): netwrite() connection dropped\n");
-        serrno = SECONNDROP;
-        return(-1);
-    }
- 
-    rc = netread_timeout(connect_socket,buf,LONGSIZE*3,VDQM_TIMEOUT);
-    switch (rc) {
-    case -1:
-        log(LOG_ERR,"vdqm_SendToRTCP(): netread(HDR) %s\n",neterror());
-        serrno = SECOMERR;
-        return(-1);
-    case 0:
-        log(LOG_ERR,"vdqm_SendToRTCP(): netread(HDR) connection dropped\n");
-        serrno = SECONNDROP;
-        return(-1);
-    }
-    p = buf;
-    unmarshall_LONG(p,magic);
-    unmarshall_LONG(p,reqtype);
-    unmarshall_LONG(p,len);
-    rc = 0;
-    if ( len > 0 ) {
-        if ( len > VDQM_MSGBUFSIZ - 3*LONGSIZE ) {
-            log(LOG_ERR,"vdqm_SendToRTCP() too large errmsg buffer requested %d (%d)\n",
-                len,VDQM_MSGBUFSIZ-3*LONGSIZE);
-            len = VDQM_MSGBUFSIZ - 3*LONGSIZE;
-        }
-        rc = netread_timeout(connect_socket,p,len,VDQM_TIMEOUT);
-        switch (rc) {
-        case -1:
-            log(LOG_ERR,"vdqm_SendToRTCP(): netread(REQ) %s\n",neterror());
-            serrno = SECOMERR;
-            return(-1);
-        case 0:
-            log(LOG_ERR,"vdqm_SendToRTCP(): netread(REQ) connection dropped\n");
-            serrno = SECONNDROP;
-            return(-1);
-        }
-        /*
-         * Acknowledge message
-         */
-        msglen = 1024;
-        p = buf;
-        *errmsg = '\0';
-        status = 0;
-        rc = vdqm_MarshallRTCPAckn(p,&status,&msglen,errmsg,ReceiveFrom);
-        if ( msglen > 0 ) {
-            log(LOG_ERR,"vdqm_SendToRTCP(): rtcopyd returned %d, %s\n",
-                status,errmsg);
-        }
-    }
     return(rc);
 }
 

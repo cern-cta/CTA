@@ -53,6 +53,9 @@ if (${COMPILE_SERVER} STREQUAL "1")
   set (RMCD_SRC_FILES rmc_serv.c rmc_procreq.c rmc_logit.c rmc_logreq.c
     rmc_marshall_element.c rmc_sendrep.c rmc_smcsubr.c rmc_send_scsi_cmd.c)
   add_executable (rmcd ${RMCD_SRC_FILES})
+  # Relax compilation of old code full of pointer casting. Funnily enough,
+  # the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
+  set_property(SOURCE rmc_logreq.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
   target_link_libraries (rmcd castorcommon castorupv)
   install (TARGETS rmcd DESTINATION ${CASTOR_DEST_BIN_DIR})
   CastorInstallAdmManPage (rmcd)

@@ -148,7 +148,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     int rc = 0;
     int mode;
     char *p;
-    char dir_delim;
+    char dir_delim = 0;
     struct stat64 st;
     rtcpFileRequest_t *filereq;
     char errmsgtxt[CA_MAXLINELEN+1];
@@ -457,9 +457,9 @@ static int rtcp_CheckFileReq(file_list_t *file) {
             if ( rc == -1 ) return(rc);
         }
         /*
-         * Is it a director?
+         * Is it a directory?
          */
-        rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) st_mode=0%o\n",
+        rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) (tpwrite) st_mode=0%o\n",
             filereq->tape_fseq,filereq->file_path,st.st_mode);
         if ( ((st.st_mode) & S_IFMT) == S_IFDIR ) {
             serrno = EISDIR;
@@ -470,8 +470,15 @@ static int rtcp_CheckFileReq(file_list_t *file) {
         /*
          * Zero size?
          */
-        rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) st_size=%d\n",
-            filereq->tape_fseq,filereq->file_path,(int)st.st_size);
+	/* Commentimg out the following log statement because it logs     */
+	/* st_size modulus 4GB.  The log statement is therefore more      */
+	/* confusing than useful.  If anybody wishes to fix the following */
+	/* log line then they MUST test their fix by migrating a file     */
+	/* larger than 4GB and see the correct value logged.              */
+	/*
+        rtcp_log(LOG_INFO,"rtcp_CheckFileReq(%d,%s) (tpwrite) st_size=%zu\n",
+            filereq->tape_fseq,filereq->file_path,st.st_size);
+	*/
         if ( st.st_size == 0 ) {
             sprintf(errmsgtxt,RT121,CMD(mode));
             serrno = EINVAL;

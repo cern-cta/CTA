@@ -1133,8 +1133,9 @@ XrdxCastor2Fs::stat(const char* path,
         (stage_status != "STAGEOUT"))
     {
       // This file is offline
-      buf->st_mode = (mode_t) - 1;
-      buf->st_dev   = 0;
+      buf->st_mode = static_cast<mode_t>(0);
+      buf->st_dev  = 0;
+      buf->st_ino  = 0; 
     }
 
     xcastor_debug("map_path=%s, stage_status=%s", map_path.c_str(), stage_status.c_str());

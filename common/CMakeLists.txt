@@ -33,11 +33,14 @@ set (COMMON_LIB_SRC_FILES
   socket_timeout.c u64subr.c Cinitdaemon.c Cgetopt.c
   Cregexp.c Cexportconf.c Csnprintf.c util.c
   Csecloader.c castor1compat.c
+  ../castor/exception/AcceptConnectionInterrupted.cpp
   ../castor/exception/AlreadyInitialized.cpp
   ../castor/exception/Backtrace.cpp
   ../castor/exception/BadVersion.cpp
   ../castor/exception/Busy.cpp
+  ../castor/exception/CommandLineNotParsed.cpp
   ../castor/exception/DismountFailed.cpp
+  ../castor/exception/Errnum.cpp
   ../castor/exception/Exception.cpp
   ../castor/exception/FailedToExecutePython.cpp
   ../castor/exception/InvalidArgument.cpp
@@ -61,12 +64,21 @@ set (COMMON_LIB_SRC_FILES
   ../castor/exception/RequestFailed.cpp
   ../castor/exception/Security.cpp
   ../castor/exception/SQLError.cpp
-  ../castor/exception/TapeNetAcceptInterrupted.cpp
   ../castor/exception/TimeOut.cpp
   ../castor/exception/TooBig.cpp
   ../castor/common/CastorConfiguration.cpp)
 
 add_library (castorcommon SHARED ${COMMON_LIB_SRC_FILES})
+# Relax compilation of old code full of pointer casting. Funnily enough,
+# the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
+set_property(SOURCE Cstrerror.c Cpwd.c Cgetopt.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  message(STATUS "Adding compile option for -DCOLLECTEXTRABACKTRACEINFOS Backtrace.cpp as CMAKE_BUILD_TYPE=\"${CMAKE_BUILD_TYPE}\".")
+  set_property(SOURCE ../castor/exception/Backtrace.cpp APPEND PROPERTY COMPILE_FLAGS -DCOLLECTEXTRABACKTRACEINFOS)
+else(CMAKE_BUILD_TYPE STREQUAL "Debug")
+  message(STATUS "CMAKE_BUILD_TYPE=\"${CMAKE_BUILD_TYPE}\": leaving Backtrace.cpp alone.")
+endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+target_link_libraries(castorcommon debug bfd iberty z)
 CastorSetLibraryVersions (castorcommon)
 target_link_libraries (castorcommon dl ${UUID_LIB})
 install (TARGETS castorcommon DESTINATION ${CASTOR_DEST_LIB_DIR})

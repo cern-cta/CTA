@@ -70,6 +70,7 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
    "Request failed",
    "Invalid number of arguments",
    "Already initialized",
+   "Command line not parsed",
    "BAD ERROR NUMBER"
   };
 
@@ -609,9 +610,9 @@ static int sstrerror_key = -1;
 
 char *sstrerror(int n)
 {
-  char *buf = NULL;
+  void *buf = NULL;
   int buflen = 80;
 
-  Cglobals_get(&sstrerror_key,(void **)&buf,buflen);
+  Cglobals_get(&sstrerror_key,&buf,buflen);
   return(sstrerror_r(n,buf,buflen));
 }

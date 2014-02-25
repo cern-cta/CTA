@@ -41,7 +41,7 @@ int send2nsdx(int *socketp,
   char *getconfent();
   char *getenv();
   struct hostent *hp;
-  struct Cns_linkinfo *li;
+  struct Cns_linkinfo *li = 0;
   int magic;
   int n;
   int nbretry;
@@ -50,10 +50,10 @@ int send2nsdx(int *socketp,
   char *q;
   int rep_type;
   char repbuf[REPBUFSZ];
-  int repbuf2sz;
+  int repbuf2sz = 0;
   int retrycnt = 0;
   int retryint;
-  int s;
+  int s = 0;
   struct sockaddr_in sin; /* internet socket */
   struct servent *sp,*sec_sp;
   struct Cns_api_thread_info *thip = NULL;

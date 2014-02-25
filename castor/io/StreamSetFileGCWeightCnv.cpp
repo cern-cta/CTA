@@ -47,8 +47,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamSetFileGCWeightCnv>* s_factoryStreamSetFileGCWeightCnv =
-  new castor::CnvFactory<castor::io::StreamSetFileGCWeightCnv>();
+static castor::CnvFactory<castor::io::StreamSetFileGCWeightCnv>
+  s_factoryStreamSetFileGCWeightCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

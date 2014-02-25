@@ -1,0 +1,2 @@
+%attr(0755,root,root) usr/local/bin/castor-tape-AULFileFormatTest
+%attr(0755,root,root) usr/local/bin/castor-tape-TapeCopyTest

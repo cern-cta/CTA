@@ -35,7 +35,6 @@
 #include "castor/exception/PermissionDenied.hpp"
 #include "castor/BaseAddress.hpp"
 #include "castor/PortNumbers.hpp"
-#include "castor/server/BaseServer.hpp"
 #include "castor/server/ThreadNotification.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"

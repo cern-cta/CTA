@@ -190,7 +190,7 @@ static int DiskFileOpen(int pool_index,
            (filereq->concat & (CONCAT|CONCAT_TO_EOD)) != 0 )) {
         rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
         if ( (severity & RTCP_EOD) != 0 ) return(-1);
-        log(LOG_DEBUG,"DiskFileOpen(%s) lock file for concatenation\n",
+        (*logfunc)(LOG_DEBUG,"DiskFileOpen(%s) lock file for concatenation\n",
             filereq->file_path);
         rc = LockForAppend(1);
         rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
@@ -367,12 +367,11 @@ static int DiskFileOpen(int pool_index,
         default:
           if ((save_errno == EBADF) && (save_rfio_errno == 0) && (save_serrno == 0))
                 rtcpd_SetReqStatus(NULL,file,save_rfio_errno,
-                                   RTCP_RESELECT_SERV | RTCP_UNERR);
+                                   RTCP_FAILED | RTCP_UNERR);
           else if ( (save_serrno == SETIMEDOUT) && (save_rfio_errno == 0) &&
                     (filereq->err.max_cpretry > 0) ) {
                 filereq->err.max_cpretry--;
-                rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_RESELECT_SERV|
-                                                         RTCP_UNERR);
+                rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED | RTCP_UNERR);
             } else {
                 save_rfio_errno = (save_rfio_errno > 0 ? save_rfio_errno :
                                                          save_serrno);
@@ -460,17 +459,7 @@ static int DiskFileClose(int disk_fd,
                              "Message"  , TL_MSG_PARAM_STR, "ENOSPC detected",
                              "File Path", TL_MSG_PARAM_STR, filereq->file_path );
 
-            if ( *filereq->stageID != '\0' ) {
-                rtcp_log(LOG_DEBUG,"DiskFileClose(%s) stageID=<%s>, request local retry\n",
-                          filereq->file_path,filereq->stageID);
-                tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
-                                 "func"   , TL_MSG_PARAM_STR, "DiskFileClose",
-                                 "Message", TL_MSG_PARAM_STR, "request local retry",
-                                 "stageID", TL_MSG_PARAM_STR, filereq->stageID );
-                rtcpd_SetReqStatus(NULL,file,save_rfio_errno,RTCP_LOCAL_RETRY);
-            } else {
-                rtcpd_SetReqStatus(NULL,file,save_rfio_errno,RTCP_FAILED);
-            }
+            rtcpd_SetReqStatus(NULL,file,save_rfio_errno,RTCP_FAILED);
         } else {
             save_rfio_errno = (save_rfio_errno > 0 ? save_rfio_errno : 
                                                      save_serrno);
@@ -578,7 +567,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         while ( databufs[i]->flag == BUFFER_EMPTY ) {
             rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
             if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
-                  (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV))) != 0 ) {
+                  RTCP_FAILED)) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 break;
@@ -608,7 +597,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         if ( databufs[i]->flag == BUFFER_FULL ) {
             rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
             if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
-                (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV))) != 0 ) {
+                RTCP_FAILED)) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
             }
@@ -634,8 +623,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
         /*
          * Check if reached an allowed end-of-tape
          */
-        if ( (proc_err & 
-              (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 && 
+        if ( (proc_err & RTCP_FAILED) == 0 && 
              (concat & (NOCONCAT_TO_EOD|CONCAT_TO_EOD)) != 0 ) { 
             rtcpd_CheckReqStatus(file->tape,file,NULL,&proc_err);
             if ( (proc_err = (proc_err & RTCP_EOD)) != 0 ) {
@@ -759,30 +747,10 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                                           "func"   , TL_MSG_PARAM_STR, "MemoryToDisk",
                                           "Message", TL_MSG_PARAM_STR, "ENOSPC detected",
                                           "Path"   , TL_MSG_PARAM_STR, filereq->file_path ); 
-                         if ( *filereq->stageID != '\0' ) {
-                             rtcp_log(LOG_DEBUG,"MemoryToDisk(%s) stageID=<%s>, request local retry\n",filereq->file_path,filereq->stageID);
-                             tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
-                                              "func"    , TL_MSG_PARAM_STR, "MemoryToDisk",
-                                              "Message" , TL_MSG_PARAM_STR, "request local retry",
-                                              "Path"    , TL_MSG_PARAM_STR, filereq->file_path,
-                                              "Stage ID", TL_MSG_PARAM_STR, filereq->stageID ); 
-                             rtcpd_SetReqStatus(NULL,file,save_serrno,
-                                                RTCP_LOCAL_RETRY);
-                         } else {
-                             rtcpd_SetReqStatus(NULL,file,save_serrno,
-                                                RTCP_FAILED);
-                         }
+                         rtcpd_SetReqStatus(NULL,file,save_serrno, RTCP_FAILED);
                     }
                     if ( save_serrno != ENOSPC ) {
-                        if ( last_errno == ENODEV &&
-                             filereq->err.max_cpretry > 0 ) {
-                            filereq->err.max_cpretry--;
-                            rtcpd_SetReqStatus(NULL,file,last_errno,
-                                               RTCP_LOCAL_RETRY);
-                        } else {
-                            rtcpd_SetReqStatus(NULL,file,save_serrno,
-                                               RTCP_FAILED);
-                        }
+                        rtcpd_SetReqStatus(NULL,file,save_serrno, RTCP_FAILED);
                     }
                     (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                     (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
@@ -868,17 +836,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                                      "func"   , TL_MSG_PARAM_STR, "MemoryToDisk",
                                      "Message", TL_MSG_PARAM_STR, "ENOSPC detected",
                                      "Path"   , TL_MSG_PARAM_STR, filereq->file_path );
-                    if ( *filereq->stageID != '\0' ) {
-                            rtcp_log(LOG_DEBUG,"MemoryToDisk(%s) stageID=<%s>, request local retry\n",filereq->file_path,filereq->stageID);
-                            tl_rtcpd.tl_log( &tl_rtcpd, 11, 4, 
-                                             "func"    , TL_MSG_PARAM_STR, "MemoryToDisk",
-                                             "Message" , TL_MSG_PARAM_STR, "request local retry",
-                                             "Path"    , TL_MSG_PARAM_STR, filereq->file_path,
-                                             "Stage ID", TL_MSG_PARAM_STR, filereq->stageID );
-                        rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_LOCAL_RETRY);
-                    } else {
-                        rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED);
-                    }
+                    rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED);
                 }
                 serrno = save_serrno;
                 return(-1);
@@ -894,7 +852,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
          */
         rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
         if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
-              (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV))) != 0 ) break;
+              RTCP_FAILED)) != 0 ) break;
     } /* for (;;) */
     
     if ( proc_err != 0 ) DiskFileClose(disk_fd,pool_index,tape,file);
@@ -966,7 +924,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
         while ( databufs[i]->flag == BUFFER_FULL ) {
             rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
             if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
-                  (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV))) != 0 ) {
+                  RTCP_FAILED)) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
                 break;
@@ -993,7 +951,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
         if ( databufs[i]->flag == BUFFER_EMPTY ) {
             rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
             if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
-                (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV))) != 0 ) {
+                RTCP_FAILED)) != 0 ) {
                 (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
                 (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
             }
@@ -1184,7 +1142,7 @@ static int DiskToMemory(int disk_fd, int pool_index,
          */
         rtcpd_CheckReqStatus(file->tape,file,NULL,&severity);
         if ( (proc_err = ((severity | rtcpd_CheckProcError()) & 
-              (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV))) != 0 ) break;
+              RTCP_FAILED)) != 0 ) break;
     } /* for (;;) */
     
     if ( proc_err != 0 ) DiskFileClose(disk_fd,pool_index,tape,file);
@@ -1207,8 +1165,8 @@ static int DiskToMemory(int disk_fd, int pool_index,
     save_errno = errno; \
     save_serrno = serrno; \
     rtcpd_CheckReqStatus((X),(Y),NULL,&severity); \
-    if ( rc == -1 || (severity & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 || \
-        (rtcpd_CheckProcError() & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0 ) { \
+    if ( rc == -1 || (severity & RTCP_FAILED) != 0 || \
+        (rtcpd_CheckProcError() & RTCP_FAILED) != 0 ) { \
         rtcp_log(LOG_ERR,"diskIOthread() %s, rc=%d, severity=%d, errno=%d, serrno=%d\n",\
         (Z),rc,severity,save_errno,save_serrno); \
         tl_rtcpd.tl_log( &tl_rtcpd, 3, 6, \
@@ -1219,33 +1177,23 @@ static int DiskToMemory(int disk_fd, int pool_index,
                          "errno"   , TL_MSG_PARAM_INT, save_errno, \
                          "serrno"  , TL_MSG_PARAM_INT, save_serrno ); \
         if ( mode == WRITE_DISABLE && \
-          (rc == -1 || (severity & (RTCP_LOCAL_RETRY|RTCP_FAILED|RTCP_RESELECT_SERV)) != 0) && \
-          (rtcpd_CheckProcError() & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) { \
+          (rc == -1 || (severity & RTCP_FAILED) != 0) && \
+          (rtcpd_CheckProcError() & RTCP_FAILED) == 0 ) { \
             (void)rtcpd_WaitCompletion(tape,file); \
-            if ( (severity & (RTCP_FAILED | RTCP_RESELECT_SERV)) != 0 ) \
+            if ( (severity & RTCP_FAILED) != 0 ) \
                 rtcpd_SetProcError(severity); \
-            else if ( (severity & RTCP_LOCAL_RETRY) == 0 ) \
+            else \
                 rtcpd_SetProcError(RTCP_FAILED); \
-            if ( (severity & RTCP_LOCAL_RETRY) == 0 ) { \
-                rtcp_log(LOG_DEBUG,"diskIOthread() return RC=-1 to client\n"); \
-                tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, \
-                                 "func"   , TL_MSG_PARAM_STR, "diskIOthread", \
-                                 "Message", TL_MSG_PARAM_STR, "return RC=-1 to client" ); \
-                if ( rc == 0 && AbortFlag != 0 && (severity & (RTCP_FAILED|RTCP_RESELECT_SERV)) == 0 ) \
-                    rtcpd_SetReqStatus(X,Y,(AbortFlag == 1 ? ERTUSINTR : ERTOPINTR),rtcpd_CheckProcError()); \
-                (void) tellClient(&client_socket,X,Y,-1); \
-            } else { \
-                rtcp_log(LOG_DEBUG,"diskIOthread() return RC=0 to client\n"); \
-                tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, \
-                                 "func"   , TL_MSG_PARAM_STR, "diskIOthread", \
-                                 "Message", TL_MSG_PARAM_STR, "return RC=0 to client" ); \
-                (void) tellClient(&client_socket,X,Y,0); \
-            } \
+            rtcp_log(LOG_DEBUG,"diskIOthread() return RC=-1 to client\n"); \
+            tl_rtcpd.tl_log( &tl_rtcpd, 11, 2, \
+                             "func"   , TL_MSG_PARAM_STR, "diskIOthread", \
+                             "Message", TL_MSG_PARAM_STR, "return RC=-1 to client" ); \
+            if ( rc == 0 && AbortFlag != 0 && (severity & RTCP_FAILED) == 0 ) \
+                rtcpd_SetReqStatus(X,Y,(AbortFlag == 1 ? ERTUSINTR : ERTOPINTR),rtcpd_CheckProcError()); \
+            (void) tellClient(&client_socket,X,Y,-1); \
         } \
         if ( disk_fd != -1 ) \
             (void)DiskFileClose(disk_fd,pool_index,tape,file); \
-        if ( (severity & RTCP_LOCAL_RETRY) != 0 && mode == WRITE_DISABLE ) \
-            rtcpd_SetProcError(severity); \
         if ( AbortFlag == 0 ) rtcpd_BroadcastException(); \
         DiskIOfinished(); \
         if ( rc == -1 ) return((void *)&failure); \
@@ -1550,7 +1498,10 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
     diskIOstatus_t *diskIOstatus;
     thread_arg_t *tharg;
     int rc, save_serrno, indxp, offset, next_offset, last_file,end_of_tpfile;
-    int prev_bufsz, next_nb_bufs, severity, next_bufsz, thIndex, mode;
+    int prev_bufsz = 0;
+    int next_nb_bufs, severity;
+    int next_bufsz = 0;
+    int thIndex, mode;
     int nb_diskIOactive = 0;
 
     if ( client == NULL || tape == NULL || file == NULL ||
@@ -1651,7 +1602,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 rtcpd_AppendClientMsg(NULL, nextfile, "Error assigning thread: %s\n",
                     sstrerror(save_serrno));
                 rtcpd_SetReqStatus(NULL,nextfile,save_serrno,
-                                   RTCP_SYERR | RTCP_RESELECT_SERV);
+                                   RTCP_SYERR | RTCP_FAILED);
 
                 (void)Cthread_mutex_lock_ext(proc_cntl.cntl_lock);
                 proc_cntl.diskIOfinished = 1;
@@ -1751,7 +1702,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 rtcpd_AppendClientMsg(NULL, nextfile, "Cannot lock mutex: %s\n",
                     sstrerror(save_serrno));
                 rtcpd_SetReqStatus(NULL,nextfile,save_serrno,
-                                   RTCP_RESELECT_SERV | RTCP_SYERR);
+                                   RTCP_FAILED | RTCP_SYERR);
                 rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cthread_mutex_lock_ext(): %s\n",
                     sstrerror(save_serrno));
                 tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
@@ -1761,8 +1712,6 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 serrno = save_serrno;
                 return(-1);
             }
-            if ( mode == WRITE_ENABLE ) 
-                filereq->err.severity = filereq->err.severity & ~RTCP_LOCAL_RETRY;
 
             /*
              * Check if we need to exit due to processing error
@@ -1847,7 +1796,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                     rtcpd_AppendClientMsg(NULL, nextfile, "Error on condition wait: %s\n",
                         sstrerror(save_serrno));
                     rtcpd_SetReqStatus(NULL,nextfile,save_serrno,
-                                      RTCP_SYERR | RTCP_RESELECT_SERV);
+                                      RTCP_SYERR | RTCP_FAILED);
                     rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cthread_cond_wait_ext(proc_cntl): %s\n",
                         sstrerror(save_serrno));
                     tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
@@ -1949,7 +1898,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 rtcpd_AppendClientMsg(NULL,nextfile,
                       "Cannot unlock CNTL mutex: %s\n",sstrerror(serrno));
                 rtcpd_SetReqStatus(NULL,nextfile,serrno,
-                                   RTCP_SYERR | RTCP_RESELECT_SERV);
+                                   RTCP_SYERR | RTCP_FAILED);
                 rtcp_log(LOG_ERR,
                          "rtcpd_StartDiskIO() Cthread_mutex_unlock_ext(): %s\n",
                          sstrerror(serrno));
@@ -2049,7 +1998,7 @@ int rtcpd_StartDiskIO(rtcpClientInfo_t *client,
                 rtcpd_AppendClientMsg(NULL, nextfile, "Error assigning thread: %s\n",
                     sstrerror(save_serrno));
                 rtcpd_SetReqStatus(NULL,nextfile,save_serrno,
-                                   RTCP_SYERR | RTCP_RESELECT_SERV);
+                                   RTCP_SYERR | RTCP_FAILED);
                 rtcp_log(LOG_ERR,"rtcpd_StartDiskIO() Cpool_next_index(): %s\n",
                          sstrerror(save_serrno));
                 tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 

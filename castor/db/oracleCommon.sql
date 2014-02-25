@@ -391,8 +391,23 @@ EXCEPTION WHEN OTHERS THEN
 END;
 /
 
+/* A wrapper procedure to execute DBMS_ALERT.SIGNAL() without taking a lock if
+ * already another session did it. Helps reducing contention on DBMS_ALERT_INFO.
+ */
+CREATE OR REPLACE PROCEDURE alertSignalNoLock(inName IN VARCHAR2) AS
+  unused INTEGER;
+BEGIN
+  SELECT 1 INTO unused
+    FROM SYS.DBMS_ALERT_INFO
+   WHERE name = upper(inName) AND changed = 'Y'
+     AND ROWNUM < 2;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  DBMS_ALERT.SIGNAL(inName, '');
+END;
+/
+
 /* useful procedure to recompile all invalid items in the DB
-   as many times as needed, until nothing can be imprved anymore.
+   as many times as needed, until nothing can be improved anymore.
    Also reports the list of invalid items if any */
 CREATE OR REPLACE PROCEDURE recompileAll AS
   varNbInvalids INTEGER;

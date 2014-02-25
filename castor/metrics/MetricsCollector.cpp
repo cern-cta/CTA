@@ -36,12 +36,15 @@
 #include "castor/metrics/InternalCounter.hpp"
 
 // Initialization of the singleton
-castor::metrics::MetricsCollector* castor::metrics::MetricsCollector::s_instance(0);
+castor::metrics::MetricsCollector*
+  castor::metrics::MetricsCollector::s_instance(0);
 
 //------------------------------------------------------------------------------
 // getInstance
 //------------------------------------------------------------------------------
-castor::metrics::MetricsCollector* castor::metrics::MetricsCollector::getInstance(castor::server::BaseDaemon* daemon)
+castor::metrics::MetricsCollector*
+  castor::metrics::MetricsCollector::getInstance(
+   castor::server::MultiThreadedDaemon* daemon)
 {
   if(s_instance == 0 && daemon) {
     // No need to protect this with mutexes as the instantiation
@@ -56,9 +59,9 @@ castor::metrics::MetricsCollector* castor::metrics::MetricsCollector::getInstanc
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::metrics::MetricsCollector::MetricsCollector(castor::server::BaseDaemon& daemon) :
-  castor::server::SignalThreadPool("metrics", 
-    new UpdateThread()),
+castor::metrics::MetricsCollector::MetricsCollector(
+  castor::server::MultiThreadedDaemon& daemon) :
+  castor::server::SignalThreadPool("metrics", new UpdateThread()),
   m_daemon(daemon)
 {
   m_nbThreads = 1;

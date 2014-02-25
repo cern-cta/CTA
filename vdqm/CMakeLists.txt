@@ -44,6 +44,9 @@ CastorInstallLibManPage (vdqm_UnitStatus)
 # Rules to install and build showqueues
 ################################################################################
 add_executable (showqueues showqueues.c)
+# Relax compilation of old code full of pointer casting. Funnily enough,
+# the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
+set_property(SOURCE showqueues.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 target_link_libraries (showqueues castorcommon castorvdqm)
 install (TARGETS showqueues DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallExeManPage (showqueues)

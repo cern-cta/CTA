@@ -1,0 +1,71 @@
+# castor unit tests suppression list
+#
+
+{
+  helgrind-unitTest-slc5-marshaling007
+  Helgrind:Race
+  fun:_ZrsIcSt11char_traitsIcESaIcEERN6castor2io11biniostreamES6_RSbIT_T0_T1_E
+}
+
+{
+  helgrind-unitTest-slc5-biniostreamclass
+  Helgrind:Race
+  fun:*castor2io11biniostream*
+}
+
+{
+  helgrind-unitTest-slc5-test-itself
+  Helgrind:Race
+  ...
+  fun:_ZN8unitTest15streamMarshaler3runEv
+}
+
+{
+  helgrind-unitTest-stream-marshalers
+  Helgrind:Race
+  ...
+  fun:_ZN6castor2io12StreamCnvSvc15unmarshalObject*
+}
+
+{
+  helgrind-unitTest-stream-biniostream-exact01
+  Helgrind:Race
+  ...
+  fun:_ZrsIcSt11char_traitsIcESaIcEERN6castor2io11biniostreamES6_RSbIT_T0_T1_E
+}
+
+{
+  helgrind-unitTest-basic-streams-in-getconfent
+  Helgrind:Race
+  ...
+  fun:_ZNSt19basic_ostringstreamIcSt11char_traitsIcESaIcEEC1ERKSsSt13_Ios_Openmode
+}
+
+{
+  helgrind-unitTest-basic-streams01
+  Helgrind:Race
+  ...
+  fun:_ZNSt15basic_stringbufIcSt11char_traitsIcESaIcEE8overflowEi
+}
+
+{
+  helgrind-unitTest-string-append-in-getconfent
+  Helgrind:Race
+  fun:_ZNSs6appendERKSs
+  ...
+  fun:getconfent
+}
+
+{
+  helgrind-unitTest-string-append-in-getconfent-from-file
+  Helgrind:Race
+  fun:_ZNSs6appendERKSs
+  ...
+  fun:getconfent_fromfile
+}
+
+{
+  helgrind-unitTest-iostream-getconfent-from-file
+  Helgrind:Race
+  fun:_ZStlsIcSt11char_traitsIcESaIcEERSt13basic_ostreamIT_T0_ES7_RKSbIS4_S5_T1_E
+}

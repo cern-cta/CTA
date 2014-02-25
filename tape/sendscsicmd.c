@@ -34,6 +34,7 @@
 #include "scsictl.h"
 #include "serrno.h"
 #include "Ctape.h"
+#include "h/sendscsicmd.h"
 static char tp_err_msgbuf[132];
 static char *sk_msg[] = {
         "No sense",
@@ -150,11 +151,14 @@ int send_scsi_cmd (
 	const int buflen,
 	char *const sense,
 	const int senselen,
-	const int timeout,   /* in milliseconds */
 	const int flags,
 	int *const nb_sense_ret,
 	char **const msgaddr)
 {
+	/* The timeout used when sending SCSI commands through the sg driver is in */
+	/* milliseconds and should equal that used by the st driver which on the   */
+	/* 28/01/2014 is 900 seconds and therefore 900000 milliseconds             */
+	const int timeout = 900000; /* milliseconds */
 	int fd;
 	FILE *fopen();
 	int n;

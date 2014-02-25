@@ -31,14 +31,12 @@
 #include "castor/IObject.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/server/IThread.hpp"
+#include "castor/server/MultiThreadedDaemon.hpp"
 
 namespace castor {
 
  namespace server {
    
-  // forward declaration
-  class BaseDaemon;
-
   /**
    * Notification thread for internal daemon notifications.
    * This class is a singleton.
@@ -53,7 +51,8 @@ namespace castor {
      * the singleton is not instantiated. See also BaseDaemon.addNotifierThread().
      * @return pointer to the instance if instantiated.
      */
-    static NotifierThread* getInstance(castor::server::BaseDaemon* owner = 0);
+    static NotifierThread* getInstance(
+      castor::server::MultiThreadedDaemon* owner = 0);
 
     /**
      * No initialization is needed for the notification thread.
@@ -82,7 +81,7 @@ namespace castor {
      * Initializes a notification thread.
      * @param owner the daemon which controls this thread
      */
-    NotifierThread(castor::server::BaseDaemon* owner);
+    NotifierThread(castor::server::MultiThreadedDaemon* owner);
     
     /**
      * standard destructor
@@ -90,7 +89,7 @@ namespace castor {
     virtual ~NotifierThread() throw() {};
 
     /// the daemon which controls this notification thread
-    BaseDaemon* m_owner;
+    MultiThreadedDaemon* m_owner;
     
     /// the static pointer to the singleton instance of this class
     static NotifierThread* s_Instance;

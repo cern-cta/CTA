@@ -26,15 +26,7 @@ RMC_OBJECTS= \
   rmc_AcsMountCmdLine.o \
   rmc_AcsMountCmd.o \
   rmc_AcsQueryVolumeCmdLine.o \
-  rmc_AcsQueryVolumeCmd.o \
-  unittest_AcsCmdTest.o \
-  unittest_AcsTest.o \
-  unittest_AcsDismountCmdLineTest.o \
-  unittest_AcsDismountCmdTest.o \
-  unittest_AcsMountCmdLineTest.o \
-  unittest_AcsMountCmdTest.o \
-  unittest_AcsQueryVolumeCmdLineTest.o \
-  unittest_AcsQueryVolumeCmdTest.o
+  rmc_AcsQueryVolumeCmd.o
 endif
 ROOT_DIR=../..
 INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h $(MACPORTS_CPPUNIT_INCLUDE_OP) $(CDK_OPS)
@@ -63,6 +55,7 @@ rununittests: $(RMC_OBJECTS) \
   castor_System.o \
   castor_IClient.o \
   castor_MessageAck.o \
+  castor_utils.o \
   client_BaseClient.o \
   client_VectorResponseHandler.o \
   common_CastorConfiguration.o \
@@ -93,7 +86,9 @@ rununittests: $(RMC_OBJECTS) \
   dlf_Param.o \
   dlf_dlf_lib.o \
   exception_AlreadyInitialized.o \
+  exception_Backtrace.o \
   exception_Communication.o \
+  exception_CommandLineNotParsed.o \
   exception_DismountFailed.o \
   exception_Exception.o \
   exception_Internal.o \
@@ -110,7 +105,6 @@ rununittests: $(RMC_OBJECTS) \
   exception_PermissionDenied.o \
   exception_QueryVolumeFailed.o \
   exception_RequestFailed.o \
-  exception_TapeNetAcceptInterrupted.o \
   exception_TimeOut.o \
   exception_TooBig.o \
   io_AbstractSocket.o \
@@ -145,6 +139,10 @@ rununittests: $(RMC_OBJECTS) \
   legacymsg_RtcpMarshal.o \
   legacymsg_TapeBridgeMarshal.o \
   legacymsg_VmgrMarshal.o \
+  log_Logger.o \
+  log_LoggerImplementation.o \
+  log_Message.o \
+  log_Param.o \
   metrics_Counter.o \
   metrics_Histogram.o \
   metrics_InternalCounter.o \
@@ -228,12 +226,12 @@ rununittests: $(RMC_OBJECTS) \
   server_DynamicThreadPool.o \
   server_SignalThreadPool.o \
   server_BaseThreadPool.o \
-  server_BaseDaemon.o \
-  server_BaseServer.o \
+  server_Daemon.o \
   server_Queue.o \
+  server_MultiThreadedDaemon.o \
   server_Mutex.o \
-  server_ThreadNotification.o \
   server_NotifierThread.o \
+  server_ThreadNotification.o \
   stager_mapper.o \
   stager_errmsg.o \
   stager_client_commandline.o \
@@ -268,8 +266,6 @@ rununittests: $(RMC_OBJECTS) \
   tape_cvtden.o \
   tape_findpgrp.o \
   tape_initlabel.o \
-  tape_net.o \
-  tape_net_IpAndPort.o \
   tape_send2tpd.o \
   tape_usrmsg.o \
   tape_utils.o \
@@ -362,6 +358,8 @@ rununittests: $(RMC_OBJECTS) \
   unittest_BridgeClientInfo2SenderTest.o \
   unittest_TapeFlushConfigParamsTest.o \
   unittest_LegacyTxRxTest.o \
+  unittest_LoggerImplementationTest.o \
+  unittest_ParamTest.o \
   unittest_GetMoreWorkConnectionTest.o \
   unittest_ClientAddressTcpIpTest.o \
   unittest_PendingMigrationsStoreTest.o \
@@ -429,6 +427,9 @@ castor_ObjectCatalog.o: $(ROOT_DIR)/castor/ObjectCatalog.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 castor_ObjectSet.o: $(ROOT_DIR)/castor/ObjectSet.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+castor_utils.o: $(ROOT_DIR)/castor/utils/utils.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 client_VectorResponseHandler.o: $(ROOT_DIR)/castor/client/VectorResponseHandler.cpp
@@ -515,14 +516,21 @@ dlf_Dlf.o: $(ROOT_DIR)/castor/dlf/Dlf.cpp
 dlf_Param.o: $(ROOT_DIR)/castor/dlf/Param.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-dlf_dlf_lib.o: $(ROOT_DIR)/dlf/dlf_lib.c
-	gcc -g -pthread -c $(INCLUDE_OPS) -o $@ $^
+dlf_dlf_lib.o: $(ROOT_DIR)/dlf/dlf_lib.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_AlreadyInitialized.o: \
   $(ROOT_DIR)/castor/exception/AlreadyInitialized.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+exception_Backtrace.o: \
+  $(ROOT_DIR)/castor/exception/Backtrace.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 exception_Communication.o: $(ROOT_DIR)/castor/exception/Communication.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_CommandLineNotParsed.o: $(ROOT_DIR)/castor/exception/CommandLineNotParsed.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_DismountFailed.o: $(ROOT_DIR)/castor/exception/DismountFailed.cpp
@@ -573,10 +581,6 @@ exception_NoPortInRange.o: $(ROOT_DIR)/castor/exception/NoPortInRange.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_NoValue.o: $(ROOT_DIR)/castor/exception/NoValue.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-exception_TapeNetAcceptInterrupted.o: \
-  $(ROOT_DIR)/castor/exception/TapeNetAcceptInterrupted.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_PermissionDenied.o: \
@@ -703,6 +707,18 @@ legacymsg_TapeBridgeMarshal.o: \
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 legacymsg_VmgrMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/VmgrMarshal.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+log_Logger.o: $(ROOT_DIR)/castor/log/Logger.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+log_LoggerImplementation.o: $(ROOT_DIR)/castor/log/LoggerImplementation.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+log_Message.o:  $(ROOT_DIR)/castor/log/Message.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+log_Param.o: $(ROOT_DIR)/castor/log/Param.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 metrics_Counter.o: \
@@ -1040,28 +1056,28 @@ server_BaseThreadPool.o: \
   $(ROOT_DIR)/castor/server/BaseThreadPool.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-server_BaseDaemon.o: \
-  $(ROOT_DIR)/castor/server/BaseDaemon.cpp
+server_Daemon.o: \
+  $(ROOT_DIR)/castor/server/Daemon.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-server_BaseServer.o: \
-  $(ROOT_DIR)/castor/server/BaseServer.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-server_Queue.o: \
-  $(ROOT_DIR)/castor/server/Queue.cpp
+server_MultiThreadedDaemon.o: \
+  $(ROOT_DIR)/castor/server/MultiThreadedDaemon.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 server_Mutex.o: \
   $(ROOT_DIR)/castor/server/Mutex.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
-server_ThreadNotification.o: \
-  $(ROOT_DIR)/castor/server/ThreadNotification.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
 server_NotifierThread.o: \
   $(ROOT_DIR)/castor/server/NotifierThread.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_Queue.o: \
+  $(ROOT_DIR)/castor/server/Queue.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+server_ThreadNotification.o: \
+  $(ROOT_DIR)/castor/server/ThreadNotification.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 stager_mapper.o: $(ROOT_DIR)/client/src/stager/stager_mapper.c
@@ -1185,12 +1201,6 @@ tape_findpgrp.o: $(ROOT_DIR)/tape/findpgrp.c
 
 tape_getcompstat.o: $(ROOT_DIR)/tape/getcompstat.c
 	gcc -g -pthread -D_LARGEFILE64_SOURCE -c $(INCLUDE_OPS) -o $@ $^
-
-tape_net.o: $(ROOT_DIR)/castor/tape/net/net.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-tape_net_IpAndPort.o: $(ROOT_DIR)/castor/tape/net/IpAndPort.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 tape_initlabel.o: $(ROOT_DIR)/tape/initlabel.c
 	gcc $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -1573,33 +1583,6 @@ unittest_SessionErrorTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/Se
 unittest_ClientAddressLocalTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/ClientAddressLocalTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
-unittest_AcsCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsCmdTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_AcsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-unittest_AcsDismountCmdLineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsDismountCmdLineTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-unittest_AcsDismountCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsDismountCmdTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
-
-unittest_NetTest.o: $(ROOT_DIR)/test/unittest/castor/tape/net/NetTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_AcsMountCmdLineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsMountCmdLineTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_AcsMountCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsMountCmdTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_AcsQueryVolumeCmdLineTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsQueryVolumeCmdLineTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
-unittest_AcsQueryVolumeCmdTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/AcsQueryVolumeCmdTest.cpp
-	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
- 
 unittest_FileToMigrateTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/FileToMigrateTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
@@ -1628,6 +1611,13 @@ unittest_TapeFlushConfigParamsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tape
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
 unittest_LegacyTxRxTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/LegacyTxRxTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+unittest_LoggerImplementationTest.o: \
+  $(ROOT_DIR)/test/unittest/castor/log/LoggerImplementationTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+unittest_ParamTest.o: $(ROOT_DIR)/test/unittest/castor/log/ParamTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
 unittest_GetMoreWorkConnectionTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tapebridge/GetMoreWorkConnectionTest.cpp

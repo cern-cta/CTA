@@ -23,6 +23,7 @@
  *****************************************************************************/
 
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 #include "test/unittest/test_exception.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
@@ -309,6 +310,7 @@ public:
    * splitString() method.
    */
   void testGoodDaySplitString() {
+    using namespace castor::utils;
     const std::string line("col0 col1 col2 col3 col4 col5 col6 col7");
     std::vector<std::string> columns;
 
@@ -357,6 +359,7 @@ public:
    * Test the case of an empty string being passed to the splitString() method.
    */
   void testSplitStringWithEmptyString() {
+    using namespace castor::utils;
     const std::string emptyString;
     std::vector<std::string> columns;
 
@@ -374,6 +377,7 @@ public:
    * passed to the splitString() method.
    */
   void testSplitStringWithNoSeparatorInString() {
+    using namespace castor::utils;
     const std::string stringContainingNoSeparator =
       "stringContainingNoSeparator";
     std::vector<std::string> columns;
@@ -392,6 +396,7 @@ public:
   }
 
   void testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec() {
+    using namespace castor::utils;
     const timeval bigger   = {6, 5};
     const timeval smaller  = {5, 4};
     const bool    expected = true;
@@ -404,6 +409,7 @@ public:
   }
 
   void testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec_swapped() {
+    using namespace castor::utils;
     const timeval bigger   = {6, 5};
     const timeval smaller  = {5, 4};
     const bool    expected = false;
@@ -416,6 +422,7 @@ public:
   }
 
   void testTimevalGreaterThan_BigSecSmallSec_SmallUsecBigUsec() {
+    using namespace castor::utils;
     const timeval bigger   = {4, 3};
     const timeval smaller  = {2, 7};
     const bool    expected = true;
@@ -428,6 +435,7 @@ public:
   }
 
   void testTimevalGreaterThan_BigSecSmallSec_SmallUsecBigUsec_swapped() {
+    using namespace castor::utils;
     const timeval bigger   = {4, 3};
     const timeval smaller  = {2, 7};
     const bool    expected = false;
@@ -440,6 +448,7 @@ public:
   }
 
   void testTimevalGreaterThan_EqualSec_EqualUsec()  {
+    using namespace castor::utils;
     const timeval a         = {8, 9};
     const timeval b         = {8, 9};
     const bool    expected  = false;
@@ -451,6 +460,7 @@ public:
   }
 
   void testTimevalAbsDiff_BigSecSmallSec_BigUsecSmallUsec() {
+    using namespace castor::utils;
     const timeval bigger   = {6, 5};
     const timeval smaller  = {5, 4};
     const timeval expected = {1, 1};
@@ -466,6 +476,7 @@ public:
   }
 
   void testTimevalAbsDiff_BigSecSmallSec_BigUsecSmallUsec_swapped() {
+    using namespace castor::utils;
     const timeval bigger   = {6, 5};
     const timeval smaller  = {5, 4};
     const timeval expected = {1, 1};
@@ -481,6 +492,7 @@ public:
   }
 
   void testTimevalAbsDiff_BigSecSmallSec_SmallUsecBigUsec() {
+    using namespace castor::utils;
     const timeval bigger   = {4, 3};
     const timeval smaller  = {2, 7};
     const timeval expected = {1, 999996};
@@ -496,6 +508,7 @@ public:
   }
 
   void testTimevalAbsDiff_BigSecSmallSec_SmallUsecBigUsec_swapped() {
+    using namespace castor::utils;
     const timeval bigger   = {4, 3};
     const timeval smaller  = {2, 7};
     const timeval expected = {1, 999996};
@@ -511,6 +524,7 @@ public:
   }
 
   void testTimevalAbsDiff_EqualSec_EqualUsec()  {
+    using namespace castor::utils;
     const timeval a        = {8, 9};
     const timeval b        = {8, 9};
     const timeval expected = {0, 0};
@@ -525,6 +539,7 @@ public:
   }
 
   void testTimevalToDouble() {
+    using namespace castor::utils;
     const timeval tv       = {1234, 999992};
     const double  expected = 1234.999992;
     const double  actual   = timevalToDouble(tv);
@@ -535,6 +550,7 @@ public:
   }
 
   void testGetTimeOfDay() {
+    using namespace castor::utils;
     timeval startTime    = {0, 0};
     timeval endTime      = {0, 0};
     timeval testDuration = {0, 0};

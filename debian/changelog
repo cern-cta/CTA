@@ -1,3 +1,39 @@
+castor (2.1.14-11) unstable; urgency=low
+
+  * Fifth 2.1.14 production release
+
+ -- Giuseppe Lo presti <giuseppe.lopresti@cern.ch> Wed, 12 Feb 2014 12:00:00 +0100
+
+castor (2.1.14-10) unstable; urgency=low
+
+  * Internal release
+
+ -- Steven Murray <steven.murray@cern.ch> Tue, 28 Jan 19:09:00 +0100
+
+castor (2.1.14-9) unstable; urgency=low
+
+  * Internal release
+
+ -- Steven Murray <steven.murray@cern.ch> Tue, 28 Jan 13:50:00 +0100
+
+castor (2.1.14-8) unstable; urgency=low
+
+  * Internal release
+
+ -- Steven Murray <steven.murray@cern.ch> Wed, 22 Jan 18:00:00 +0100
+
+castor (2.1.14-7) unstable; urgency=low
+
+  * Internal release
+
+ -- Steven Murray <steven.murray@cern.ch> Wed, 22 Jan 10:00:00 +0100
+
+castor (2.1.14-6) unstable; urgency=low
+
+  * Internal release
+
+ -- Steven Murray <steven.murray@cern.ch> Thu, 16 Jan 11:49:00 +0100
+
 castor (2.1.14-5) unstable; urgency=low
 
   * Fourth 2.1.14 production release

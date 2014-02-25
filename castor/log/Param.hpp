@@ -20,128 +20,49 @@
  *
  * A parameter for the CASTOR log system
  *
- * @author castor dev team
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
 #ifndef CASTOR_LOG_PARAM_HPP
 #define CASTOR_LOG_PARAM_HPP 1
 
-// Include Files
-#include "castor/IObject.hpp"
-#include "castor/stager/TapeVid.hpp"
-#include "castor/log/IPAddress.hpp"
-#include "castor/log/TimeStamp.hpp"
-#include "h/Cuuid.h"
-
+#include <sstream>
 #include <string.h>
-#include <stdlib.h>
-
-/* Parameter types */
-#define LOG_MSG_PARAM_DOUBLE  1     /* Double precision floating point value */
-#define LOG_MSG_PARAM_INT64   2     /* 64 bit integers */
-#define LOG_MSG_PARAM_STR     3     /* General purpose string */
-#define LOG_MSG_PARAM_TPVID   4     /* Tape visual identifier string */
-#define LOG_MSG_PARAM_UUID    5     /* Subrequest identifier */
-#define LOG_MSG_PARAM_FLOAT   6     /* Single precision floating point value */
-#define LOG_MSG_PARAM_INT     7     /* Integer parameter */
-#define LOG_MSG_PARAM_UID     8
-#define LOG_MSG_PARAM_GID     9
-#define LOG_MSG_PARAM_STYPE   10
-#define LOG_MSG_PARAM_SNAME   11
-#define LOG_MSG_PARAM_RAW     12    /* raw (set of) parameters, in key=value format */
 
 namespace castor {
 namespace log {
 
 /**
- * A parameter for the CASTOR logging system.
+ * A name/value parameter for the CASTOR logging system.
  */
 class Param {
 
 public:
 
   /**
-   * Constructor for strings.
+   * Constructor.
+   *
+   * @param name The name of the parameter.
+   * @param value The value of the parameter that will be converted to a string
+   * using std::ostringstream.
    */
-  Param(const std::string &name, const std::string &value) throw();
-
+  template <typename T> Param(const std::string &name, const T &value) throw():
+    m_name(name) {
+    std::stringstream oss;
+    oss << value;
+    m_value = oss.str();
+  }
+    
   /**
-   * Constructor for uuids.
+   * Value changer. Useful for log contexts.
+   * @param value
    */
-  Param(const std::string &name, const Cuuid_t value) throw();
-
-  /**
-   * Constructor for SubRequest uuids.
-   */
-  Param(const Cuuid_t &value) throw();
-
-  /**
-   * Constructor for long int.
-   */
-#if defined __x86_64__
-  Param(const std::string &name, const long int value) throw();
-#else
-  Param(const std::string &name, const long int value) throw();
-#endif
-
-  /**
-   * Constructor for long unsigned int.
-   */
-#if defined __x86_64__
-  Param(const std::string &name, const long unsigned int value) throw();
-#else
-  Param(const std::string &name, const long unsigned int value) throw();
-#endif
-
-  /**
-   * Constructor for int.
-   */
-  Param(const std::string &name, const int value) throw();
-
-  /**
-   * Constructor for unsigned int.
-   */
-  Param(const std::string &name, const unsigned int value) throw();
-
-  /**
-   * Constructor for u_signed64.
-   */
-  Param(const std::string &name, const u_signed64 value) throw();
-
-  /**
-   * Constructor for floats.
-   */
-  Param(const std::string &name, const float value) throw();
-
-  /**
-   * Constructor for doubles.
-   */
-  Param(const std::string &name, const double value) throw();
-
-  /**
-   * Constructor for Tape VIDS.
-   */
-  Param(const std::string &name, const castor::stager::TapeVid &value) throw();
-
-  /**
-   * Constructor for Raw parameters.
-   */
-  Param(const std::string &rawParams) throw();
-
-  /**
-   * Constructor for IPAddress.
-   */
-  Param(const std::string &name, const castor::log::IPAddress &value) throw();
-
-  /**
-   * Constructor for TimeStamp.
-   */
-  Param(const std::string &name, const castor::log::TimeStamp &value) throw();
-
-  /**
-   * Constructor for objects.
-   */
-  Param(const std::string &name, const castor::IObject *const value) throw();
+  template <typename T>
+  void setValue (const T &value) throw() {
+    std::stringstream oss;
+    oss << value;
+    m_value = oss.str();
+  }
 
   /**
    * Returns a const reference to the name of the parameter.
@@ -149,36 +70,9 @@ public:
   const std::string &getName() const throw();
 
   /**
-   * Returns the type of the parameter.
+   * Returns a const reference to the value of the parameter.
    */
-  int getType() const throw();
-
-  /**
-   * Returns a const refverence to the string value if there is one, else an
-   * empty string.
-   */
-  const std::string &getStrValue() const throw();
-
-  /**
-   * Returns the int value if there is one, else 0.
-   */
-  int getIntValue() const throw();
-
-  /**
-   * Returns the unsigned 64-bit int value if there is one, else 0.
-   */
-  u_signed64 getUint64Value() const throw();
-
-  /**
-   * Returns the double value if there is one, else 0.0;
-   */
-  double getDoubleValue() const throw();
-
-  /**
-   * Returns a const reference to the UUID value if there is one, else
-   * nullCuuid.
-   */
-  const Cuuid_t &getUuidValue() const throw();
+  const std::string &getValue() const throw();
 
 private:
 
@@ -188,40 +82,9 @@ private:
   std::string m_name;
 
   /**
-   * Parameter type, one of LOG_MSG_PARAM_*.
+   * The value of the parameter.
    */
-  int m_type;
-
-  /**
-   * The string value of the parameter.
-   */
-  std::string m_strValue;
-
-  /**
-   * The int value of the parameter.
-   */
-  int m_intValue;
-
-  /**
-   * The unsigned 64-bit int value of the parameter.
-   */
-  u_signed64 m_uint64Value;
-
-  /**
-   * The double value of the parameter.
-   */
-  double m_doubleValue;
-
-  /**
-   * The UUID value of the parameter.
-   */
-  Cuuid_t m_uuidValue;
-
-  /**
-   * Empty string constant used by the getStrValue() method in the case where
-   * m_type does not equal LOG_MSG_PARAM_STR.
-   */
-  const std::string m_emptyStr;
+  std::string m_value;
 
 }; // class Param
 

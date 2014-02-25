@@ -26,8 +26,8 @@
 #include "vmgr_api.h"
 #include "serrno.h"
 
-#define LOWERCASE(X) {char *__c; \
-    for (__c=X; *__c != '\0'; __c++) *__c=tolower(*__c); } 
+#define LOWERCASE(X) {char *__c; for (__c=X; *__c != '\0'; __c++) {int input = *__c; *__c=tolower(input);} } 
+#define UPPERCASE(X) {char *__c; for (__c=X; *__c != '\0'; __c++) {int input = *__c; *__c=toupper(input);} }
 
 static char vmgr_error_buffer[512];        /* Vmgr error buffer */
 

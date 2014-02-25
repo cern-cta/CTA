@@ -25,7 +25,7 @@
 #ifndef CASTOR_VDQM_VDQMSERVER_HPP
 #define CASTOR_VDQM_VDQMSERVER_HPP 1
 
-#include "castor/server/BaseDaemon.hpp"
+#include "castor/server/MultiThreadedDaemon.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
 
 #include <string>
@@ -37,7 +37,7 @@ namespace castor {
     /**
      * The Volume and Drive Queue Manager.
      */
-    class VdqmServer : public castor::server::BaseDaemon {
+    class VdqmServer : public castor::server::MultiThreadedDaemon {
     public:
     
       /**
@@ -47,8 +47,13 @@ namespace castor {
 
       /**
        * Constructor
+       *
+       * @param stdOut Stream representing standard out.
+       * @param stdErr Stream representing standard error.
+       * @param log Object representing the API of the CASTOR logging system.
        */
-      VdqmServer() throw(castor::exception::Exception);
+      VdqmServer(std::ostream &stdOut, std::ostream &stdErr,
+        log::Logger &log) throw(castor::exception::Exception);
 
       /**
        * Logs the start of the server.

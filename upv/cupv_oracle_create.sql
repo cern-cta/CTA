@@ -49,7 +49,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_5');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_11');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -89,6 +89,51 @@ AS
 /* SQL statement to populate the intial schema version */
 UPDATE UpgradeLog SET schemaVersion = '2_1_9_3'
  WHERE startDate = (SELECT max(startDate) FROM UpgradeLog);
+
+/* useful procedure to recompile all invalid items in the DB
+   as many times as needed, until nothing can be improved anymore.
+   Also reports the list of invalid items if any */
+CREATE OR REPLACE PROCEDURE recompileAll AS
+  varNbInvalids INTEGER;
+  varNbInvalidsLastRun INTEGER := -1;
+BEGIN
+  WHILE varNbInvalidsLastRun != 0 LOOP
+    varNbInvalids := 0;
+    FOR a IN (SELECT object_name, object_type
+                FROM user_objects
+               WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY')
+                 AND status = 'INVALID')
+    LOOP
+      IF a.object_type = 'PACKAGE BODY' THEN a.object_type := 'PACKAGE'; END IF;
+      BEGIN
+        EXECUTE IMMEDIATE 'ALTER ' ||a.object_type||' '||a.object_name||' COMPILE';
+      EXCEPTION WHEN OTHERS THEN
+        -- ignore, so that we continue compiling the other invalid items
+        NULL;
+      END;
+    END LOOP;
+    -- check how many invalids are still around
+    SELECT count(*) INTO varNbInvalids FROM user_objects
+     WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY') AND status = 'INVALID';
+    -- should we give up ?
+    IF varNbInvalids = varNbInvalidsLastRun THEN
+      DECLARE
+        varInvalidItems VARCHAR(2048);
+      BEGIN
+        -- yes, as we did not move forward on this run
+        SELECT LISTAGG(object_name, ', ') WITHIN GROUP (ORDER BY object_name) INTO varInvalidItems
+          FROM user_objects
+         WHERE object_type IN ('PROCEDURE', 'TRIGGER', 'FUNCTION', 'VIEW', 'PACKAGE BODY') AND status = 'INVALID';
+        raise_application_error(-20000, 'Revalidation of PL/SQL code failed. Still ' ||
+                                        varNbInvalids || ' invalid items : ' || varInvalidItems);
+      END;
+    END IF;
+    -- prepare for next loop
+    varNbInvalidsLastRun := varNbInvalids;
+    varNbInvalids := 0;
+  END LOOP;
+END;
+/
 
 /* Flag the schema creation as COMPLETE */
 UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE';

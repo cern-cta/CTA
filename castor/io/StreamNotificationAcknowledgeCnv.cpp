@@ -41,8 +41,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamNotificationAcknowledgeCnv>* s_factoryStreamNotificationAcknowledgeCnv =
-  new castor::CnvFactory<castor::io::StreamNotificationAcknowledgeCnv>();
+static castor::CnvFactory<castor::io::StreamNotificationAcknowledgeCnv>
+  s_factoryStreamNotificationAcknowledgeCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

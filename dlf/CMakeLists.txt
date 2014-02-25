@@ -25,7 +25,7 @@ cmake_minimum_required (VERSION 2.6)
 ################################################################################
 # Rules to build and install libcastordlf.so
 ################################################################################
-set (DLF_LIB_SRC_FILES dlf_lib.c)
+set (DLF_LIB_SRC_FILES dlf_lib.cpp)
 add_library (castordlf SHARED ${DLF_LIB_SRC_FILES})
 CastorSetLibraryVersions (castordlf)
 target_link_libraries (castordlf castorcommon)

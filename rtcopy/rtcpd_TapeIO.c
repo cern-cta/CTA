@@ -81,7 +81,7 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
   switch(errno) {
   case ENXIO:  /* Drive not operational */
     rtcpd_AppendClientMsg(NULL, file, RT140, "CPDSKTP");
-    severity = RTCP_RESELECT_SERV | RTCP_SYERR;
+    severity = RTCP_FAILED | RTCP_SYERR;
     break;
   case EIO:    /* I/O error */
     msgaddr = NULL;
@@ -95,7 +95,7 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
       /*
        *  Try another server
        */
-      severity = RTCP_RESELECT_SERV | RTCP_SYERR;
+      severity = RTCP_FAILED | RTCP_SYERR;
       break;
     case ETUNREC:       /* Unrecoverable media error */
     case ETBLANK:       /* Blank tape                */
@@ -110,7 +110,7 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
        * for this medium errors (like sending a mail to
        * operator or raising an alarm).
        */
-      severity = RTCP_RESELECT_SERV | RTCP_USERR;
+      severity = RTCP_FAILED | RTCP_USERR;
       sprintf(confparam,"%s_ERRACTION",tapereq->dgn);
       if ( (p = getconfent("RTCOPYD",confparam,0)) != NULL ) {
         j = atoi(p);
@@ -118,7 +118,7 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
       }
       break;
     case ETNOSNS:       /* No sense data available   */
-      severity = RTCP_RESELECT_SERV | RTCP_UNERR;
+      severity = RTCP_FAILED | RTCP_UNERR;
       break;
     default :
       severity = RTCP_FAILED | RTCP_UNERR;
@@ -138,18 +138,11 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
 
   if ( filereq != NULL ) {
     rtcpd_SetReqStatus(NULL,file,status,severity);
-    if ( (severity & RTCP_NORETRY) != 0 ) {
-      /* 
-       * If configured error action says noretry we
-       * reset max_cpretry so that the client won't retry
-       * on another server
-       */
-      filereq->err.max_cpretry = 0;
-    } else {
-      if ( (severity & RTCP_LOCAL_RETRY) || 
-           (severity & RTCP_RESELECT_SERV) )
-        filereq->err.max_cpretry--;
-    }
+    /* 
+     * Reset max_cpretry so that the client won't retry
+     * on another server
+     */
+    filereq->err.max_cpretry = 0;
   }
   return(severity);
 }
@@ -196,9 +189,9 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
       switch ( errcat ) { 
       case ETPARIT:       /* Parity error              */
         if ( keepfile != 0 )
-          severity = RTCP_RESELECT_SERV | RTCP_MNYPARY;
+          severity = RTCP_FAILED | RTCP_MNYPARY;
         else
-          severity = RTCP_RESELECT_SERV | RTCP_USERR;
+          severity = RTCP_FAILED | RTCP_USERR;
 
         /*
          * Check if there is any configured error action
@@ -212,7 +205,7 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
         }
         break;
       case ETHWERR:       /* Device malfunctioning.    */
-        severity = RTCP_RESELECT_SERV | RTCP_SYERR;
+        severity = RTCP_FAILED | RTCP_SYERR;
         break;
       case ETBLANK:       /* Blank tape                */
         severity = RTCP_FAILED | RTCP_USERR;
@@ -240,7 +233,7 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
     severity = RTCP_FAILED | RTCP_USERR ;
   case ENXIO:             /* Drive not operational */
     rtcpd_AppendClientMsg(NULL , file, RT140, "CPTPDSK");
-    severity = RTCP_RESELECT_SERV | RTCP_SYERR;
+    severity = RTCP_FAILED | RTCP_SYERR;
     break;
   case ENOMEM:
   case EINVAL:
@@ -260,18 +253,11 @@ static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
   }
 
   rtcpd_SetReqStatus(NULL,file,status,severity);
-  if ( (severity & RTCP_NORETRY) != 0 ) {
-    /* 
-     * If configured error action says noretry we
-     * reset max_cpretry so that the client won't retry
-     * on another server
-     */
-    filereq->err.max_cpretry = 0;
-  } else {
-    if ( (severity & RTCP_LOCAL_RETRY) || 
-         (severity & RTCP_RESELECT_SERV) )
-      filereq->err.max_cpretry--;
-  }
+  /* 
+   * Reset max_cpretry so that the client won't retry
+   * on another server
+   */
+  filereq->err.max_cpretry = 0;
   return(severity);
 }
 
@@ -323,7 +309,7 @@ int topen(tape_list_t *tape, file_list_t *file) {
 					       const char *,
 					       unsigned int))crc32;
     } else {
-      log(LOG_ERR,"topen() client specifies unknown cksum algorithm: %s\n",
+      (*logfunc)(LOG_ERR,"topen() client specifies unknown cksum algorithm: %s\n",
           filereq->castorSegAttr.segmCksumAlgorithm);
       tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
                        "func"   , TL_MSG_PARAM_STR, "topen",
@@ -512,14 +498,16 @@ int tclose(
   file_list_t *const file,
   const uint32_t     tapeFlushMode) {
   int rc = 0;
-  int comp_rc = 0;
   int save_serrno = 0;
   int save_errno = 0;
   rtcpTapeRequest_t *tapereq = NULL;
   rtcpFileRequest_t *filereq = NULL;
   char *errstr = NULL;
-  COMPRESSION_STATS compstats;
-
+/**********************************************************************
+ * S. MURRAY 27/01/2014 COMMENTING OUT OF COMPRESSION STATISTICS      *
+ * int comp_rc = 0;                                                   *
+ * COMPRESSION_STATS compstats;                                       *
+ **********************************************************************/
 
   if ( tape == NULL || file == NULL ) {
     serrno = EINVAL;
@@ -600,15 +588,27 @@ int tclose(
       }
     }
   if ( (rc != -1) && (file->trec > 0) ) {
+/*******************************************************************************
+ * S. MURRAY 27/01/2014 START OF COMMENTING OUT OF COMPRESSION STATISTICS      *
+ * The gathering of compression statistics from the tape drive is not being    *
+ * carried out at the correct moment in time, in other words it is not always  *
+ * being carried out immediately after a flush of the underlying tape drive    *
+ * cache. I am therefore temporarily commenting out the compression statics    *
+ * code with the hope that one day it will either be put back in the legacy    *
+ * rtcpd daemon or even better still it will be put into the new TapeServer    *
+ * daemon currently under development.                                         *
+ *******************************************************************************
     serrno = 0;
     errno = 0;
     memset(&compstats,'\0',sizeof(compstats));
     comp_rc = get_compression_stats(fd,filereq->tape_path,
                                     tapereq->devtype,&compstats);
+*/
     /* We need to reset stats on the drive here to get correct values
     *  for the bytesWrittenToTapeByFlush in noMoreFiles section.
     *  rc means nothing here for us and we just ignore it.
     */
+/*
     clear_compression_stats(fd,filereq->tape_path,tapereq->devtype);
     if ( comp_rc == 0 ) {
       if ( tapereq->mode == WRITE_ENABLE ) {
@@ -652,6 +652,14 @@ int tclose(
         filereq->host_bytes = filereq->bytes_in = filereq->bytes_out;
       }
     }
+ ******************************************************************************
+ * S. MURRAY 27/01/2014 END OF COMMENTING OUT OF COMPRESSION STATISTICS       *
+ ******************************************************************************/
+    if ( tapereq->mode == WRITE_ENABLE ) {
+      filereq->host_bytes = filereq->bytes_out = filereq->bytes_in;
+    } else {
+      filereq->host_bytes = filereq->bytes_in = filereq->bytes_out;
+    }
   }
   (void) close(fd) ; 
   filereq->TEndTransferTape = (int)time(NULL);
@@ -691,8 +699,6 @@ int tclose(
  * Closing tape file on error.
  */
 int tcloserr(int fd, tape_list_t *tape, file_list_t *file) {
-  int rc = 0;
-  int save_errno, save_serrno;
   rtcpTapeRequest_t *tapereq = NULL;
   rtcpFileRequest_t *filereq = NULL;
 
@@ -711,35 +717,34 @@ int tcloserr(int fd, tape_list_t *tape, file_list_t *file) {
                    "fd"     , TL_MSG_PARAM_INT, fd );
 
   if ( tapereq->mode == WRITE_ENABLE ) {
-    if ( file->trec > 0 ) {
-      rtcp_log(
-               LOG_INFO,
-               "tcloserr(%d) delete tape file, tape path %s\n",
-               fd,
-               filereq->tape_path
-               );
-      tl_rtcpd.tl_log( &tl_rtcpd, 10, 4, 
-                       "func"     , TL_MSG_PARAM_STR, "tcloserr",
-                       "Message"  , TL_MSG_PARAM_STR, "delete tape file",
-                       "fd"       , TL_MSG_PARAM_INT, fd,
-                       "Tape path", TL_MSG_PARAM_STR, filereq->tape_path );
-    }
     errno = serrno = 0;
-    if ( file->trec>0 && (rc = deltpfil(fd,filereq->tape_path)) < 0 ) {
-      save_errno = errno;
-      save_serrno = serrno;
-      if ( AbortFlag == 0 ) 
-        rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED | RTCP_SYERR);
-      rtcpd_AppendClientMsg(NULL,file, RT141, "CPDSKTP");
-      rtcp_log(LOG_ERR,"deltpfil(%d,%s) failed with errno=%d, serrno=%d\n",
-               fd,filereq->tape_path,save_errno,save_serrno);
-      tl_rtcpd.tl_log( &tl_rtcpd, 3, 6, 
-                       "func"     , TL_MSG_PARAM_STR, "tcloserr",
-                       "Message"  , TL_MSG_PARAM_STR, "deltpfil failed",
-                       "fd"       , TL_MSG_PARAM_INT, fd,
-                       "Tape path", TL_MSG_PARAM_STR, filereq->tape_path,
-                       "errno"    , TL_MSG_PARAM_INT, errno,     
-                       "serrno"   , TL_MSG_PARAM_INT, serrno );
+    /* file->trec is used to know how many BLOCKs have been written */
+    if ( file->trec>0 ) {
+      /* IMPORTANT                                                           */
+      /* =========                                                           */
+      /*                                                                     */
+      /* At this point in the code and before 15/01/2014 the tcloserr()      */
+      /* function used to delete files from the end of the tape in order to  */
+      /* terminate the tape with a correct label structure.  This behaviour  */
+      /* increases the risk of data loss in the presence of deferred tape    */
+      /* flushes.                                                            */
+      /*                                                                     */
+      /* The new safe course of action is to log a message stating that the  */
+      /* tape may be incorrectly terminated and to then let the rtcpd child  */
+      /* process gracefully finish the current tape session.  Among other    */
+      /* benefits, letting the session end gracefully gives the rtcpd child  */
+      /* process a chance to send a TAPE OVERFLOW error to its client when   */
+      /* writing has reached the physical end of a tape.  This in turn       */
+      /* allows the client to notify the vmgrd daemon that the tape in       */
+      /* question is FULL.                                                   */
+      rtcp_log(LOG_ERR,
+        "Gracefully ending tape session and maybe leaving the tape"
+        " incorrectly terminated\n");
+      tl_rtcpd.tl_log( &tl_rtcpd, 3, 2,
+        "func"   , TL_MSG_PARAM_STR, "tcloserr",
+        "Message", TL_MSG_PARAM_STR,
+          "Gracefully ending tape session and maybe leaving the tape"
+          " incorrectly terminated");
     }
   }
   (void) close(fd) ;

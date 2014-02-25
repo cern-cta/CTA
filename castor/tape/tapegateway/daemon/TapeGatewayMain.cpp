@@ -22,15 +22,20 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/log/LoggerImplementation.hpp"
 #include "castor/tape/tapegateway/daemon/TapeGatewayDaemon.hpp"
 #include "castor/exception/Exception.hpp"
+
+#include <iostream>
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 int main(int argc, char **argv) {
   try {
-    castor::tape::tapegateway::TapeGatewayDaemon daemon;
+    castor::log::LoggerImplementation log("tapegatewayd");
+    castor::tape::tapegateway::TapeGatewayDaemon
+      daemon(std::cout, std::cerr, log);
     return daemon.main(argc, argv);
   } catch (castor::exception::Exception e) {
     std::cerr << "Caught exception :\n" << e.getMessage().str() << "\nExiting" << std::endl;

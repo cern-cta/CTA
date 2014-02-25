@@ -25,7 +25,6 @@
 
 // Include Files
 #include "castor/server/NotifierThread.hpp"
-#include "castor/server/BaseDaemon.hpp"
 #include "castor/server/ThreadNotification.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 
@@ -36,7 +35,7 @@ castor::server::NotifierThread* castor::server::NotifierThread::s_Instance(0);
 // getInstance
 //------------------------------------------------------------------------------
 castor::server::NotifierThread* castor::server::NotifierThread::getInstance
-(castor::server::BaseDaemon* owner) {
+(castor::server::MultiThreadedDaemon* owner) {
   if (0 == s_Instance && 0 != owner) {
     // The singleton is created only when the owner parameter is supplied;
     // otherwise, getInstance(0) may return 0.
@@ -50,8 +49,9 @@ castor::server::NotifierThread* castor::server::NotifierThread::getInstance
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::server::NotifierThread::NotifierThread(castor::server::BaseDaemon* owner) :
-  m_owner(owner) {}
+castor::server::NotifierThread::NotifierThread(
+  castor::server::MultiThreadedDaemon* owner) : m_owner(owner) {
+}
 
 //------------------------------------------------------------------------------
 // run

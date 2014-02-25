@@ -59,6 +59,13 @@ namespace castor {
     static Services* services() throw(castor::exception::Exception);
 
     /**
+     * Static function to reset (deallocate + set the thread specific pointer
+     * to NULL) the thread-specific services. Useful in test environments and
+     * for clients which to not run the thread pools (but use the marshallers)
+     */
+    static void resetServices() throw(castor::exception::Exception);
+    
+    /**
      * Static access to the underlying thread-shared Services object
      */
     static Services* sharedServices() throw(castor::exception::Exception);
@@ -68,14 +75,6 @@ namespace castor {
      */
     Services* svcs() throw(castor::exception::Exception);
 
-  private:
-
-    /**
-     * small function that creates a thread-specific storage key
-     * for the services 
-     */
-    static void makeServicesKey() throw (castor::exception::Exception);
-
   protected:
 
     /**
@@ -84,17 +83,32 @@ namespace castor {
     static Services* s_sharedServices;
 
   private:
+    
+    /**
+     * A little class that will construct the pthread key at init time
+     */
+    class pthreadKey {
+    public:
+      pthreadKey() throw (castor::exception::Exception)  {
+        int rc = pthread_key_create(&m_key, NULL);
+        if (rc != 0) {
+          castor::exception::Exception e(rc);
+          e.getMessage() << "Error caught in call to pthread_key_create (from castor::BaseObject::pthreadKey::pthreadKey";
+          throw e;
+        }
+      }
+      operator pthread_key_t () const {
+        return m_key;
+      }
+    private:
+      pthread_key_t m_key;
+    };
 
     /**
      * The key to thread-specific storage for Services
      */
-    static pthread_key_t s_servicesKey;
-
-    /**
-     * The key for creating only once the thread-specific storage key for services
-     */
-    static pthread_once_t s_servicesOnce;
-
+    static pthreadKey s_servicesKey;
+    
   }; // end of class BaseObject
 
 } // end of namespace castor

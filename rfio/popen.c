@@ -35,7 +35,7 @@ RFILE *rfio_popen(char * rcom,
   char *p , *cp, *cp2    ;
   char command[MAXCOMSIZ]; /* command with remote syntax */
   struct passwd *pwuid ;
-  char *pcom  ;
+  char *pcom = 0;
   int rt   ; /* daemon is in the site or remote ? */
   int rcode, status = 0 ;
   int len  ;

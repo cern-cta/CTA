@@ -43,8 +43,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamTapeDriveCompatibilityCnv>* s_factoryStreamTapeDriveCompatibilityCnv =
-  new castor::CnvFactory<castor::io::StreamTapeDriveCompatibilityCnv>();
+static castor::CnvFactory<castor::io::StreamTapeDriveCompatibilityCnv>
+  s_factoryStreamTapeDriveCompatibilityCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

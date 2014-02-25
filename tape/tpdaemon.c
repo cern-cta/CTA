@@ -853,7 +853,7 @@ int initrrt()
 	int errflag;
 	unsigned int i, j;
 	char prevdgn[CA_MAXDGNLEN+1];
-	unsigned int prevgrp;
+	unsigned int prevgrp = 0;
 	struct tptab *tunp;
 
 	tunp = tptabp;
@@ -1036,7 +1036,7 @@ static void procfrdrvreq(char *req_data,
 {
 	int found;
 	gid_t gid;
-	unsigned int j;
+	unsigned int j = 0;
 	int jid;
 	int rlsflags;
 	char *rbp;

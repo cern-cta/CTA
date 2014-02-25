@@ -40,8 +40,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamPtrCnv>* s_factoryStreamPtrCnv =
-  new castor::CnvFactory<castor::io::StreamPtrCnv>();
+static castor::CnvFactory<castor::io::StreamPtrCnv>
+  s_factoryStreamPtrCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

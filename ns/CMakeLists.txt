@@ -93,6 +93,9 @@ set (NS_LIB_SRC_FILES
   Cns_utime.c
   send2nsd.c)
 add_library (castorns SHARED ${NS_LIB_SRC_FILES})
+# Relax compilation of old code full of pointer casting. Funnily enough,
+# the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
+set_property(SOURCE Cns_auth.c Cns_apiinit.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 CastorSetLibraryVersions (castorns)
 target_link_libraries (castorns castorsecurity)
 install (TARGETS castorns DESTINATION ${CASTOR_DEST_LIB_DIR})

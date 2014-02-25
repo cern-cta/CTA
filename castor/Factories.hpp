@@ -39,6 +39,7 @@ namespace castor {
    * to create services on demand.
    */
   class Factories {
+    friend class FactoriesCleaner;
 
   public:
 

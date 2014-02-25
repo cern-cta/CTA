@@ -28,6 +28,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/io/ClientSocket.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/LogHelper.hpp"
@@ -35,7 +36,6 @@
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/legacymsg/MessageHeader.hpp"
-#include "castor/tape/net/net.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/Cuuid.h"
 
@@ -229,7 +229,7 @@ public:
 
     // Read the message body
     try {
-      net::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
+      io::readBytes(socketFd, RTCPDNETRWTIMEOUT, header.lenOrStatus, bodyBuf);
     } catch (castor::exception::Exception &ex) {
       TAPE_THROW_CODE(EIO,
            ": Failed to read message body from RTCPD"
@@ -264,20 +264,6 @@ public:
   static void tellRtcpdEndOfFileList(const Cuuid_t &cuuid,
     const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout)
     throw(castor::exception::Exception);
-
-  /**
-   * Send an abort message to RTCPD
-   *
-   * @param cuuid The ccuid to be used for logging.
-   * @param volReqId The volume request ID to be used for logging.
-   * @param socketFd The socket file descriptor of the connection with RTCPD.
-   * @param netReadWriteTimeout The timeout to be applied when performing
-   * network read and write operations.
-   */
-  static void tellRtcpdToAbort(const Cuuid_t &cuuid, const uint32_t volReqId,
-    const int socketFd, const int netReadWriteTimeout)
-    throw(castor::exception::Exception);
-
 
 private:
 

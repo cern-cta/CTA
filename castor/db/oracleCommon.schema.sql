@@ -136,8 +136,9 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Draining', 'MaxNbSchedD2dPerDrain', '1000', 'The maximum number of disk to disk copies that each draining job should send to the scheduler concurrently.');
 INSERT INTO CastorConfig
-  VALUES ('Rebalancing', 'Sensibility', '5', 'The rebalancing sensibility (in percent) : if a fileSystem is at least this percentage fuller than the average of the diskpool where is lives, rebalancing will fire.');
-
+  VALUES ('Rebalancing', 'Sensitivity', '5', 'The rebalancing sensitivity (in percent) : if a fileSystem is at least this percentage fuller than the average of the diskpool where it lives, rebalancing will fire.');
+INSERT INTO CastorConfig
+  VALUES ('Stager', 'Protocols', 'rfio rfio3 root gsiftp xroot', 'The list of protocols accepted by the system.');
 /* Create the AdminUsers table */
 CREATE TABLE AdminUsers (euid NUMBER, egid NUMBER);
 ALTER TABLE AdminUsers ADD CONSTRAINT UN_AdminUsers_euid_egid UNIQUE (euid, egid);
@@ -506,7 +507,7 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 -- However, it is needed to avoid a table lock on RecallGroup when taking a row lock on RecallMount,
 -- via the existing foreign key. On top, this table lock is also taken in case of an update that does not
 -- touch any row while with the index, no row lock is taken at all, as one may expect
-CREATE INDEX I_RecallMount_RecallGroup ON RecallMount(recallGroup); 
+CREATE INDEX I_RecallMount_RecallGroup ON RecallMount(recallGroup);
 ALTER TABLE RecallMount ADD CONSTRAINT FK_RecallMount_RecallGroup FOREIGN KEY (recallGroup) REFERENCES RecallGroup(id);
 BEGIN
   setObjStatusName('RecallMount', 'status', tconst.RECALLMOUNT_NEW, 'RECALLMOUNT_NEW');
@@ -764,7 +765,7 @@ CREATE TABLE FileMigrationResultsHelper
 CREATE INDEX I_FileMigResultsHelper_ReqId ON FileMigrationResultsHelper(ReqId);
 
 /* SQL statements for type DiskServer */
-CREATE TABLE DiskServer (name VARCHAR2(2048), lastHeartbeatTime NUMBER, id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY, status INTEGER, hwOnline INTEGER DEFAULT 0) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DiskServer (name VARCHAR2(2048), lastHeartbeatTime NUMBER DEFAULT 0, id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY, status INTEGER, hwOnline INTEGER DEFAULT 0) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
 ALTER TABLE DiskServer MODIFY
   (status CONSTRAINT NN_DiskServer_Status NOT NULL,
@@ -877,7 +878,7 @@ END;
 /
 ALTER TABLE DiskCopy
   ADD CONSTRAINT CK_DiskCopy_Status
-  CHECK (status IN (0, 4, 5, 6, 7, 9, 10, 11));
+  CHECK (status IN (0, 4, 5, 6, 7, 9, 11));
 ALTER TABLE DiskCopy
   ADD CONSTRAINT CK_DiskCopy_GcType
   CHECK (gcType IN (0, 1, 2, 3, 4, 5, 6, 7));
@@ -1090,8 +1091,9 @@ CREATE GLOBAL TEMPORARY TABLE SyncRunningTransfersHelper2
 
 /* For deleteDiskCopy */
 CREATE GLOBAL TEMPORARY TABLE DeleteDiskCopyHelper
-  (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, rc INTEGER)
+  (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, fileId INTEGER, fStatus CHAR(1), rc INTEGER)
   ON COMMIT PRESERVE ROWS;
+CREATE INDEX I_DDCHelper_FileId ON DeleteDiskCopyHelper(fileId);
 
 /**********/
 /* Repack */
@@ -1228,15 +1230,24 @@ CREATE TABLE DrainingErrors
   (drainingJob  INTEGER CONSTRAINT NN_DrainingErrors_DJ NOT NULL,
    errorMsg     VARCHAR2(2048) CONSTRAINT NN_DrainingErrors_ErrorMsg NOT NULL,
    fileId       INTEGER CONSTRAINT NN_DrainingErrors_FileId NOT NULL,
-   nsHost       VARCHAR2(2048) CONSTRAINT NN_DrainingErrors_NsHost NOT NULL)
+   nsHost       VARCHAR2(2048) CONSTRAINT NN_DrainingErrors_NsHost NOT NULL,
+   diskCopy     INTEGER,
+   timeStamp    NUMBER CONSTRAINT NN_DrainingErrors_TimeStamp NOT NULL)
 ENABLE ROW MOVEMENT;
 
 CREATE INDEX I_DrainingErrors_DJ ON DrainingErrors (drainingJob);
+CREATE INDEX I_DrainingErrors_DC ON DrainingErrors (diskCopy);
 
 ALTER TABLE DrainingErrors
   ADD CONSTRAINT FK_DrainingErrors_DJ
   FOREIGN KEY (drainingJob)
   REFERENCES DrainingJob (id);
+
+ALTER TABLE DrainingErrors
+  ADD CONSTRAINT FK_DrainingErrors_DC
+  FOREIGN KEY (diskCopy)
+  REFERENCES DiskCopy (id);
+
 
 /* Definition of the Disk2DiskCopyJob table. Each line is a disk2diskCopy job to process
  *   id : unique DB identifier for this job
@@ -1251,8 +1262,10 @@ ALTER TABLE DrainingErrors
  *                Allows to detect if the file has been overwritten during replication
  *   destSvcClass : the destination service class
  *   replicationType : the type of replication involved (user, internal, draining or rebalancing)
- *   replacedDcId : in case of draining, the replaced diskCopy to be dropped
- *   destDcId : the destination diskCopy
+ *   srcDcId : the source diskCopy. NULL at the beginning when the source is not yet scheduled.
+ *   destDcId : the ID to be used for the destination DiskCopy. Note that the DiskCopy does not yet
+ *              exist during the lifetime of the job, therefore a FK constraint cannot be enforced.
+ *   dropSource : is the source to be dropped?
  *   drainingJob : the draining job behind this d2dJob. Not NULL only if replicationType is DRAINING'
  */
 CREATE TABLE Disk2DiskCopyJob
@@ -1268,16 +1281,18 @@ CREATE TABLE Disk2DiskCopyJob
    nsOpenTime INTEGER CONSTRAINT NN_Disk2DiskCopyJob_NSOpenTime NOT NULL,
    destSvcClass INTEGER CONSTRAINT NN_Disk2DiskCopyJob_dstSC NOT NULL,
    replicationType INTEGER CONSTRAINT NN_Disk2DiskCopyJob_Type NOT NULL,
-   replacedDcId INTEGER,
+   srcDcId INTEGER,
    destDcId INTEGER CONSTRAINT NN_Disk2DiskCopyJob_DCId NOT NULL,
+   dropSource INTEGER DEFAULT 0 CONSTRAINT NN_Disk2DiskCopyJob_dropSource NOT NULL,
    drainingJob INTEGER)
 INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_Disk2DiskCopyJob_Tid ON Disk2DiskCopyJob(transferId);
-CREATE INDEX I_Disk2DiskCopyJob_CfId ON Disk2DiskCopyJob(CastorFile);
+CREATE INDEX I_Disk2DiskCopyJob_CfId ON Disk2DiskCopyJob(castorFile);
 CREATE INDEX I_Disk2DiskCopyJob_CT_Id ON Disk2DiskCopyJob(creationTime, id);
-CREATE INDEX I_Disk2DiskCopyJob_drainJob ON Disk2DiskCopyJob(drainingJob);
+CREATE INDEX I_Disk2DiskCopyJob_DrainJob ON Disk2DiskCopyJob(drainingJob);
 CREATE INDEX I_Disk2DiskCopyJob_SC_type ON Disk2DiskCopyJob(destSvcClass, replicationType);
-CREATE INDEX I_Disk2DiskCopyJob_status_CT ON Disk2DiskCopyJob(status, creationTime);
+CREATE INDEX I_Disk2DiskCopyJob_Status_CT ON Disk2DiskCopyJob(status, creationTime);
+CREATE INDEX I_Disk2DiskCopyJob_SrcDC ON Disk2DiskCopyJob(srcDcId);
 BEGIN
   -- PENDING status is when a Disk2DiskCopyJob is created
   -- It is immediately candidate for being scheduled
@@ -1300,6 +1315,8 @@ ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_CastorFile
   FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_SvcClass
   FOREIGN KEY (destSvcClass) REFERENCES SvcClass(id);
+ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_SrcDcId
+  FOREIGN KEY (srcDcId) REFERENCES DiskCopy(id);
 ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_DrainJob
   FOREIGN KEY (drainingJob) REFERENCES DrainingJob(id);
 ALTER TABLE Disk2DiskCopyJob

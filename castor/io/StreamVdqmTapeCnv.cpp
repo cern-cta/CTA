@@ -42,8 +42,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamVdqmTapeCnv>* s_factoryStreamVdqmTapeCnv =
-  new castor::CnvFactory<castor::io::StreamVdqmTapeCnv>();
+static castor::CnvFactory<castor::io::StreamVdqmTapeCnv>
+  s_factoryStreamVdqmTapeCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

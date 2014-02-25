@@ -45,14 +45,8 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-lib
 Architecture: any
-Build-Depends: curl-devel, python, krb5-devel, openssl-devel
+Build-Depends: curl-devel, python, krb5-devel, openssl-devel, binutils-devel, libuuid-devel
 Build-Depends-Conditional:
-# For uuid/uuid.h
-%if 0%{?rhel} >= 6
-BuildRequires: libuuid-devel
-%else
-BuildRequires: e2fsprogs-devel
-%endif
 XBS-Obsoletes: castor-sysconfig, castor-rtcopy-client, castor-lib-compat, castor-dlf-server, castor-doc, castor-commands, CASTOR-client, castor-stager-clientold, castor-rtcopy-messages, castor-tape-client
 XBS-Group: Client
 Description: castor (Cern Advanced STORage system)
@@ -166,11 +160,24 @@ Build-Depends: stk-ssi-devel, stk-ssi
 Description: castor (Cern Advanced STORage system)
  Tape server
 
+Package: castor-new-tape-server-development
+Architecture: any
+Depends: castor-lib = %{version}-%{release}
+Description: castor (Cern Advanced STORage system)
+ System tests for new tape server development. Not for deployment on production machines.
+
 Package: castor-tape-server-nostk
 Architecture: any
 Depends: logrotate, castor-lib = %{version}-%{release}
 Description: castor (Cern Advanced STORage system)
  Tape server
+
+Package: castor-unit-test
+Architecture: any
+Depends: castor-lib = %{version}-%{release}
+Build-Depends: cmake >= 2.6, gtest >= 1.5.0, gmock >= 1.5.0, gtest-devel >= 1.5.0, gmock-devel  >= 1.5.0, valgrind >= 3.5.0
+Description: castor (Cern Advanced STORage system)
+ Unit tests for castor development.
 
 Package: castor-upv-client
 Architecture: any
@@ -304,7 +311,7 @@ Architecture: any
 Depends: python, python-rpyc >= 3.1, lemon-sensor-pythonAPI
 Description: castor (Cern Advanced STORage system)
  Lemon sensor for the MAE
- 
+
 Package: castor-traffic-shaper
 Architecture: any
 Depends: bash, initscripts, chkconfig, iproute, ethtool

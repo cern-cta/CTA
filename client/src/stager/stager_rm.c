@@ -97,7 +97,7 @@ int cmd_parse(int argc,
               struct stage_filereq **reqs,
               int* nbreqs,
               struct stage_options* opts) {
-  int nbfiles, Coptind, Copterr, errflg;
+  int nbfiles, Coptind, Copterr, errflg, argscount;
   char c;
 
   /* Counting the number of HSM files */
@@ -111,39 +111,44 @@ int cmd_parse(int argc,
   Copterr = 1;
   errflg = 0;
   nbfiles = 0;
+  argscount = 1;
   while ((c = Cgetopt_long
           (argc, argv, "M:f:S:ha", longopts, NULL)) != -1) {
     switch (c) {
     case 'M':
+      argscount += 2;
       (*reqs)[nbfiles].filename = Coptarg;
       nbfiles++;
       break;
     case 'f':
       {
-	FILE *infile;
-	char line[CA_MAXPATHLEN+1];
-	infile = fopen(Coptarg, "r");
-	if(NULL == infile) {
-	  fprintf (stderr, "unable to read file %s\n", Coptarg);
+        argscount += 2;
+      	FILE *infile;
+      	char line[CA_MAXPATHLEN+1];
+      	infile = fopen(Coptarg, "r");
+      	if(NULL == infile) {
+      	  fprintf (stderr, "unable to read file %s\n", Coptarg);
           errflg++;
           break;
         }
-	while (fgets(line, sizeof(line), infile) != NULL) {
-	  // drop trailing \n
-	  while (strlen(line) &&
-		 ((line[strlen(line)-1] == '\n') || (line[strlen(line)-1] == '\r'))) {
-	    line[strlen(line) - 1] = 0;
-	  }
-	  (*reqs)[nbfiles].filename = strdup(line);
-	  nbfiles++;
-	}
+      	while (fgets(line, sizeof(line), infile) != NULL) {
+      	  // drop trailing \n
+      	  while (strlen(line) &&
+      		 ((line[strlen(line)-1] == '\n') || (line[strlen(line)-1] == '\r'))) {
+      	    line[strlen(line) - 1] = 0;
+      	  }
+      	  (*reqs)[nbfiles].filename = strdup(line);
+      	  nbfiles++;
+      	}
         fclose(infile);
       }
       break;
     case 'S':
+      argscount += 2;
       opts->service_class = (char *)strdup(Coptarg);
       break;
     case 'a':
+      argscount ++;
       opts->service_class = "*";
       break;
     case 'h':
@@ -153,6 +158,7 @@ int cmd_parse(int argc,
     }
     if (errflg != 0) break;
   }
+  if(argscount < argc) errflg++;
   if (*nbreqs == 0) errflg++;
   return errflg;  
 }

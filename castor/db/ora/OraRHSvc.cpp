@@ -71,8 +71,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
-static castor::SvcFactory<castor::db::ora::OraRHSvc>* s_factoryOraRHSvc =
-  new castor::SvcFactory<castor::db::ora::OraRHSvc>();
+static castor::SvcFactory<castor::db::ora::OraRHSvc>
+  s_factoryOraRHSvc;
 
 //------------------------------------------------------------------------------
 // Static constants initialization
@@ -400,7 +400,7 @@ void castor::db::ora::OraRHSvc::storeRequest
       }
       break;
     default:
-      castor::exception::Internal ex;
+      castor::exception::InvalidArgument ex;
       ex.getMessage() << "Unsupported request type : " << req->type() << std::endl;
       throw ex;
     }
@@ -659,8 +659,18 @@ void castor::db::ora::OraRHSvc::storeFileRequest (castor::stager::FileRequest* r
     free(bufferProtocol);free(lensXsize);free(lensFlags);
     free(lensModeBits);free(bufferXsize);free(bufferFlags);
     free(bufferModeBits);
-    // rethrow, the handling is done one level up
-    throw e;
+    if (e.getErrorCode() == 20122) {
+      // custom exception, throw specific castor exception
+      std::string error = e.what();
+      castor::exception::InvalidArgument iae;
+      iae.getMessage() << error.substr(error.find("ORA-") + 11, 
+                                       error.find("ORA-", 4) - 12);
+      throw iae;
+    }
+    else {
+      // rethrow, the handling is done one level up
+      throw e;
+    }
   }
 }
 

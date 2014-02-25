@@ -25,8 +25,8 @@
 #include "castor/Constants.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
-#include "castor/tape/net/net.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/LegacyTxRx.hpp"
@@ -83,7 +83,7 @@ void castor::tape::tapebridge::LegacyTxRx::sendMsgHeader(
   }
 
   try {
-    net::writeBytes(socketFd, m_netReadWriteTimeout, totalLen, buf);
+    io::writeBytes(socketFd, m_netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
       ": Failed to send message header to RTCPD"
@@ -103,7 +103,7 @@ void castor::tape::tapebridge::LegacyTxRx::receiveMsgHeader(
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    net::readBytes(socketFd, m_netReadWriteTimeout, sizeof(headerBuf),
+    io::readBytes(socketFd, m_netReadWriteTimeout, sizeof(headerBuf),
       headerBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,
@@ -136,7 +136,7 @@ bool castor::tape::tapebridge::LegacyTxRx::receiveMsgHeaderFromCloseable(
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
   try {
-    connClosed = net::readBytesFromCloseable(socketFd, m_netReadWriteTimeout, 
+    connClosed = io::readBytesFromCloseable(socketFd, m_netReadWriteTimeout, 
       sizeof(headerBuf), headerBuf);
   } catch (castor::exception::Exception &ex) {
     TAPE_THROW_CODE(SECOMERR,

@@ -27,7 +27,7 @@
 #include "castor/System.hpp"
 #include "castor/exception/Internal.hpp" 
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/tape/net/net.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
@@ -42,6 +42,7 @@
 #include "castor/tape/tpcp/TapeFseqRangeListSequence.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/Cgetopt.h"
 #include "h/common.h"
 #include "h/Ctape_constants.h"
@@ -120,8 +121,8 @@ castor::tape::tpcp::TpcpCommand::TpcpCommand(const char *const programName)
       ": " << sstrerror(savedErrno));
   }
 
-  utils::setBytes(m_vmgrTapeInfo, '\0');
-  utils::setBytes(m_dgn, '\0');
+  castor::utils::setBytes(m_vmgrTapeInfo, '\0');
+  castor::utils::setBytes(m_dgn, '\0');
 }
 
 
@@ -207,7 +208,7 @@ void castor::tape::tpcp::TpcpCommand::displayErrorMsgCleanUpAndExit(
   // Display error message
   {
     const time_t now = time(NULL);
-    utils::writeTime(std::cerr, now, TIMEFORMAT);
+    castor::utils::writeTime(std::cerr, now, TIMEFORMAT);
     std::cerr <<
       " " << m_programName << " failed"
       ": " << msg << std::endl;
@@ -216,7 +217,7 @@ void castor::tape::tpcp::TpcpCommand::displayErrorMsgCleanUpAndExit(
   // Clean up
   if(m_gotVolReqId) {
     const time_t now = time(NULL);
-    utils::writeTime(std::cerr, now, TIMEFORMAT);
+    castor::utils::writeTime(std::cerr, now, TIMEFORMAT);
     std::cerr <<
       " Deleting volume request with ID = " << m_volReqId << std::endl;
 
@@ -226,7 +227,7 @@ void castor::tape::tpcp::TpcpCommand::displayErrorMsgCleanUpAndExit(
 
       const time_t now = time(NULL);
   
-      utils::writeTime(std::cerr, now, TIMEFORMAT);
+      castor::utils::writeTime(std::cerr, now, TIMEFORMAT);
       std::cerr << " Failed to delete VDQM volume request: "
          << ex.getMessage().str() << std::endl;
     }
@@ -359,7 +360,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     std::ostream &os = std::cout;
 
     os << "Tapebridge callback socket details = ";
-    net::writeSockDescription(os, m_callbackSock.socket());
+    io::writeSockDescription(os, m_callbackSock.socket());
     os << std::endl;
   }
 
@@ -374,7 +375,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     std::ostream &os = std::cout;
     time_t       now = time(NULL);
 
-    utils::writeTime(os, now, TIMEFORMAT);
+    castor::utils::writeTime(os, now, TIMEFORMAT);
     os << " Waiting for a drive: Volume request ID = " << m_volReqId
        << std::endl;
   }
@@ -388,7 +389,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     time_t timeout         = WAITCALLBACKTIMEOUT;
     while(waitForCallback) {
       try {
-        connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
+        connectionSockFd = io::acceptConnection(m_callbackSock.socket(),
                                                  timeout);
 
         waitForCallback = false;
@@ -398,7 +399,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
         std::ostream &os = std::cout;
         time_t       now = time(NULL);
 
-        utils::writeTime(os, now, TIMEFORMAT);
+        castor::utils::writeTime(os, now, TIMEFORMAT);
         os <<
           " Waited " << WAITCALLBACKTIMEOUT << " seconds.  "
           "Continuing to wait." <<  std::endl;
@@ -406,7 +407,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
         // Wait again for the default timeout
         timeout = WAITCALLBACKTIMEOUT;
         
-      } catch(castor::exception::TapeNetAcceptInterrupted &ix) {
+      } catch(castor::exception::AcceptConnectionInterrupted &ix) {
 
         // If a SIGINT signal was received (control-c)
         if(s_receivedSigint) {
@@ -431,12 +432,12 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     std::ostream &os = std::cout;
     time_t       now = time(NULL);
 
-    utils::writeTime(os, now, TIMEFORMAT);
+    castor::utils::writeTime(os, now, TIMEFORMAT);
     os << " Selected tape server is ";
 
-    char hostName[net::HOSTNAMEBUFLEN];
+    char hostName[io::HOSTNAMEBUFLEN];
 
-    net::getPeerHostName(connectionSockFd, hostName);
+    io::getPeerHostName(connectionSockFd, hostName);
 
     os << hostName << std::endl;
   }
@@ -625,7 +626,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler()
     time_t timeout         = WAITCALLBACKTIMEOUT;
     while(waitForCallback) {
       try {
-        connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
+        connectionSockFd = io::acceptConnection(m_callbackSock.socket(),
           timeout);
 
         waitForCallback = false;
@@ -635,7 +636,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler()
         std::ostream &os = std::cout;
         time_t       now = time(NULL);
 
-        utils::writeTime(os, now, TIMEFORMAT);
+        castor::utils::writeTime(os, now, TIMEFORMAT);
         os <<
           " Waited " << WAITCALLBACKTIMEOUT << " seconds.  "
           "Continuing to wait." <<  std::endl;
@@ -643,7 +644,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler()
         // Wait again for the default timeout
         timeout = WAITCALLBACKTIMEOUT;
 
-      } catch(castor::exception::TapeNetAcceptInterrupted &ix) {
+      } catch(castor::exception::AcceptConnectionInterrupted &ix) {
 
          // If a SIGINT signal was received (control-c)
          if(s_receivedSigint) {
@@ -668,7 +669,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler()
     std::ostream &os = std::cout;
 
     os << "Tapebridge connection = ";
-    net::writeSockDescription(os, connectionSockFd);
+    io::writeSockDescription(os, connectionSockFd);
     os << std::endl;
   }
 
@@ -817,7 +818,7 @@ void castor::tape::tpcp::TpcpCommand::handleFailedTransfer(
   std::ostream &os = std::cout;
   const time_t now = time(NULL);
 
-  utils::writeTime(os, now, TIMEFORMAT);
+  castor::utils::writeTime(os, now, TIMEFORMAT);
   os <<
     " Tapebridge encountered the following error concerning a specific file:"
     "\n\n"
@@ -858,7 +859,7 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
     std::ostream &os = std::cout;
     const time_t now = time(NULL);
 
-    utils::writeTime(os, now, TIMEFORMAT);
+    castor::utils::writeTime(os, now, TIMEFORMAT);
     os <<
       " Tapebridge encountered the following error:" << std::endl <<
       std::endl <<
@@ -901,7 +902,7 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
     time_t timeout         = WAITCALLBACKTIMEOUT;
     while(waitForCallback) {
       try {
-        connectionSockFd = net::acceptConnection(m_callbackSock.socket(),
+        connectionSockFd = io::acceptConnection(m_callbackSock.socket(),
           timeout);
 
         waitForCallback = false;
@@ -911,7 +912,7 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
         std::ostream &os = std::cout;
         time_t       now = time(NULL);
 
-        utils::writeTime(os, now, TIMEFORMAT);
+        castor::utils::writeTime(os, now, TIMEFORMAT);
         os <<
           " Waited " << WAITCALLBACKTIMEOUT << " seconds.  "
           "Continuing to wait." <<  std::endl;
@@ -919,7 +920,7 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
         // Wait again for the default timeout
         timeout = WAITCALLBACKTIMEOUT;
 
-      } catch(castor::exception::TapeNetAcceptInterrupted &ix) {
+      } catch(castor::exception::AcceptConnectionInterrupted &ix) {
 
         // If a SIGINT signal was received (control-c)
         if(s_receivedSigint) {
@@ -946,7 +947,7 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
     std::ostream &os = std::cout;
 
     os << "Tapebridge connection = ";
-    net::writeSockDescription(os, connectionSockFd);
+    io::writeSockDescription(os, connectionSockFd);
     os << std::endl;
   }
 

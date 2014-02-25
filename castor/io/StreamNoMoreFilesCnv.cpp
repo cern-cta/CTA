@@ -41,8 +41,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamNoMoreFilesCnv>* s_factoryStreamNoMoreFilesCnv =
-  new castor::CnvFactory<castor::io::StreamNoMoreFilesCnv>();
+static castor::CnvFactory<castor::io::StreamNoMoreFilesCnv>
+  s_factoryStreamNoMoreFilesCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

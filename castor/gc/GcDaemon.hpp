@@ -30,7 +30,7 @@
 #define GC_GCDAEMON_HPP 1
 
 // Include files
-#include "castor/server/BaseDaemon.hpp"
+#include "castor/server/MultiThreadedDaemon.hpp"
 #include "castor/exception/Exception.hpp"
 
 namespace castor {
@@ -40,14 +40,18 @@ namespace castor {
     /**
      * Garbage Collector daemon.
      */
-    class GcDaemon: public castor::server::BaseDaemon {
+    class GcDaemon: public castor::server::MultiThreadedDaemon {
 
     public:
 
       /**
-       * Default constructor
+       * Constructor
+       *
+       * @param stdOut Stream representing standard out.
+       * @param stdErr Stream representing standard error.
+       * @param log Object representing the API of the CASTOR logging system.
        */
-      GcDaemon();
+      GcDaemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &log);
 
       /**
        * Default destructor

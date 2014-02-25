@@ -27,7 +27,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
-#include "castor/server/BaseDaemon.hpp"
+#include "castor/server/MultiThreadedDaemon.hpp"
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/tape/tapebridge/BulkRequestConfigParams.hpp"
 #include "castor/tape/tapebridge/TapeFlushConfigParams.hpp"
@@ -47,14 +47,19 @@ namespace tapebridge {
  * The daemon which acts as a protocol bridge between the tape-gateway daemon
  * and the legacy rtcpd daemon.
  */
-class TapeBridgeDaemon : public castor::server::BaseDaemon {
+class TapeBridgeDaemon : public castor::server::MultiThreadedDaemon {
 
 public:
 
   /**
    * Constructor.
+   *
+   * @param stdOut Stream representing standard out.
+   * @param stdErr Stream representing standard error.
+   * @param log Object representing the API of the CASTOR logging system.
    */
-  TapeBridgeDaemon() throw(castor::exception::Exception);
+  TapeBridgeDaemon(std::ostream &stdOut, std::ostream &stdErr,
+    log::Logger &log) throw(castor::exception::Exception);
 
   /**
    * Destructor.
@@ -77,6 +82,9 @@ private:
    * Exception throwing main() function which basically implements the
    * non-exception throwing main() function except for the initialisation of
    * DLF and the "exception catch and log" logic.
+   *
+   * @param argc The number of command-line arguments.
+   * @param argv The array of command-line arguments.
    */
   int exceptionThrowingMain(const int argc, char **argv)
     throw(castor::exception::Exception);

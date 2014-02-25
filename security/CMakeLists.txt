@@ -59,8 +59,11 @@ set(SECURITY_PLUGIN_KRB5
   Csec_plugin_GSS.c
   Csec_plugin_GSS_mapper.c)
 add_library(castorsec_plugin_KRB5 SHARED ${SECURITY_PLUGIN_KRB5})
+
+# Relax compilation of old code full of pointer casting. Funnily enough,
+# the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
 set_property(SOURCE ${SECURITY_PLUGIN_KRB5}
-  PROPERTY COMPILE_FLAGS -DKRB5 ${KRB5_CFLAGS})
+  PROPERTY COMPILE_FLAGS "-DKRB5 ${KRB5_CFLAGS} -fno-strict-aliasing")
 target_link_libraries (castorsec_plugin_KRB5 castorcommon ${KRB5_LIBS})
 CastorSetLibraryVersions (castorsec_plugin_KRB5)
 install (TARGETS castorsec_plugin_KRB5 DESTINATION ${CASTOR_DEST_LIB_DIR})

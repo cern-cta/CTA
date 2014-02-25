@@ -45,8 +45,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamFirstByteWrittenCnv>* s_factoryStreamFirstByteWrittenCnv =
-  new castor::CnvFactory<castor::io::StreamFirstByteWrittenCnv>();
+static castor::CnvFactory<castor::io::StreamFirstByteWrittenCnv>
+  s_factoryStreamFirstByteWrittenCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

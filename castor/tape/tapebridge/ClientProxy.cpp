@@ -41,8 +41,9 @@
 #include "castor/tape/tapegateway/PingNotification.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
-#include "castor/tape/utils/SmartFd.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/SmartFd.hpp"
+#include "castor/utils/utils.hpp"
 
 #include <memory>
 #include <sstream>
@@ -258,7 +259,7 @@ int castor::tape::tapebridge::ClientProxy::sendFilesToMigrateListRequest(
   request.setMaxBytes(maxBytes);
 
   // Send the request and return the socket-descriptor of the connection
-  utils::SmartFd clientSock;
+  castor::utils::SmartFd clientSock;
   timeval connectDuration = {0, 0};
   try {
     clientSock.reset(connectAndSendMessage(request, connectDuration));
@@ -272,7 +273,7 @@ int castor::tape::tapebridge::ClientProxy::sendFilesToMigrateListRequest(
 
   {
     const double connectDurationDouble =
-      utils::timevalToDouble(connectDuration);
+      castor::utils::timevalToDouble(connectDuration);
 
     castor::dlf::Param params[] = {
       castor::dlf::Param("mountTransactionId", m_mountTransactionId ),
@@ -811,7 +812,7 @@ castor::IObject
         ": ClientSocket::readObject() returned null");
     }
     utils::getTimeOfDay(&sendAndReceiveEndTime, NULL);
-    sendRecvDuration = utils::timevalAbsDiff(sendAndReceiveStartTime,
+    sendRecvDuration = castor::utils::timevalAbsDiff(sendAndReceiveStartTime,
       sendAndReceiveEndTime);
   } catch(castor::exception::Exception &ex) {
 

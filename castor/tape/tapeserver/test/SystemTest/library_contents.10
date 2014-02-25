@@ -1,0 +1,35 @@
+
+Drive 1:
+Drive 2:
+Drive 3:
+Drive 4:
+
+Picker 1:
+
+MAP 1:
+MAP 2:
+MAP 3:
+MAP 4:
+
+# Slot 1 - ?, no gaps
+# Slot N: [barcode]
+# [barcode]
+# a barcode is comprised of three fields: [Leading] [identifier] [Trailing]
+# Leading "CLN" -- cleaning tape
+# Leading "W" -- WORM tape
+# Leading "NOBAR" -- will appear to have no barcode
+# If the barcode is at least 8 character long, then the last two characters are Trailing
+# Trailing "S3" - SDLT600
+# Trailing "X4" - AIT-4
+# Trailing "L1" - LTO 1, "L2" - LTO 2, "L3" - LTO 3, "L4" - LTO 4, "L5" - LTO 5
+# Training "LT" - LTO 3 WORM, "LU" LTO 4 WORM, "LV" LTO 5 WORM
+# Trailing "TA" - T10000+
+# Trailing "JA" - 3592+
+# Trailing "JB" - 3592E05+
+# Trailing "JW" - WORM 3592+
+# Trailing "JX" - WORM 3592E05+
+#
+Slot 1: E01001L5
+Slot 2: E01002L4
+Slot 3: E01003L4
+Slot 4: E01004L5

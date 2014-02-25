@@ -33,6 +33,28 @@ extern char localhost[CA_MAXHOSTNAMELEN+1];
 extern char nshostname[CA_MAXHOSTNAMELEN+1];
 extern int rdonly;
 
+#define RETURN(rc, loglevel)						\
+  {                                                                     \
+    if (thip->dbfd.tr_started) {                                        \
+      if (rc) {                                                         \
+        (void) Cns_abort_tr (&thip->dbfd);                              \
+      } else if (! thip->dbfd.tr_mode) {                                \
+        (void) Cns_end_tr (&thip->dbfd);                                \
+      }                                                                 \
+    }                                                                   \
+    nslogreq(reqinfo, func, rc, loglevel);				\
+    return ((rc));                                                      \
+  }
+
+#define RETURNQ(rc, loglevel)                                           \
+  {                                                                     \
+    nslogreq(reqinfo, func, rc, loglevel);                              \
+    return ((rc));                                                      \
+  }
+
+EXTERN_C int nslogreq (struct Cns_srv_request_info *, const char *, const int, const int);
+
+
 void get_cwd_path (struct Cns_srv_thread_info *thip,
                    u_signed64 cwd,
                    char *cwdpath)
@@ -139,7 +161,7 @@ int Cns_srv_aborttrans(char *req_data,
   unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   (void) Cns_abort_tr (&thip->dbfd);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_access - check accessibility of a file/directory */
@@ -164,7 +186,7 @@ int Cns_srv_access(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURNQ (SENAMETOOLONG);
+    RETURNQ (SENAMETOOLONG, LOG_ERR);
   unmarshall_LONG (rbp, amode);
 
   /* Construct log message */
@@ -173,7 +195,7 @@ int Cns_srv_access(char *req_data,
            cwdpath, path, amode);
 
   if (amode & ~(R_OK | W_OK | X_OK | F_OK))
-    RETURNQ (EINVAL);
+    RETURNQ (EINVAL, LOG_ERR);
 
   /* check parent directory components for search permission and get basename
    * entry
@@ -181,19 +203,19 @@ int Cns_srv_access(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, NULL, NULL, &fmd_entry, NULL,
                      CNS_MUST_EXIST))
-    RETURNQ (serrno);
+    RETURNQ (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Record the fileid being processed */
   reqinfo->fileid = fmd_entry.fileid;
 
   /* Check permissions for basename */
   if (amode == F_OK)
-    RETURNQ (0);
+    RETURNQ (0, LOG_INFO);
   mode = (amode & (R_OK|W_OK|X_OK)) << 6;
   if (Cns_chkentryperm (&fmd_entry, mode, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost))
-    RETURNQ (EACCES);
-  RETURNQ (0);
+    RETURNQ (EACCES, LOG_ERR);
+  RETURNQ (0, LOG_INFO);
 }
 
 /* Cns_srv_chclass - change class on directory */
@@ -222,14 +244,14 @@ int Cns_srv_chclass(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   unmarshall_LONG (rbp, classid);
   if (unmarshall_STRINGN (rbp, class_name, CA_MAXCLASNAMELEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct logging paramaters */
   get_cwd_path (thip, cwd, cwdpath);
@@ -246,7 +268,7 @@ int Cns_srv_chclass(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, NULL, NULL, &fmd_entry, &rec_addr,
                      CNS_MUST_EXIST))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Record the fileid being processed */
   reqinfo->fileid = fmd_entry.fileid;
@@ -257,21 +279,21 @@ int Cns_srv_chclass(char *req_data,
                              &new_rec_addrc)) {
       if (serrno == ENOENT) {
         sendrep (thip->s, MSG_ERR, "No such class\n");
-        RETURN (EINVAL);
+        RETURN (EINVAL, LOG_ERR);
       } else {
-        RETURN (serrno);
+        RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
       }
     }
     if (*class_name && strcmp (class_name, new_class_entry.name))
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
   } else {
     if (Cns_get_class_by_name (&thip->dbfd, class_name, &new_class_entry, 0,
                                &new_rec_addrc)) {
       if (serrno == ENOENT) {
         sendrep (thip->s, MSG_ERR, "No such class\n");
-        RETURN (EINVAL);
+        RETURN (EINVAL, LOG_ERR);
       } else {
-        RETURN (serrno);
+        RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
       }
     }
   }
@@ -285,15 +307,15 @@ int Cns_srv_chclass(char *req_data,
                     localhost, P_GRP_ADMIN) &&
         Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                     localhost, P_ADMIN))
-      RETURN (EPERM);
+      RETURN (EPERM, LOG_ERR);
   } else if (fmd_entry.filemode & S_IFREG) {
 
     /* Must be an ADMIN for file chclass */
     if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                     localhost, P_ADMIN))
-      RETURN (ENOTDIR);
+      RETURN (ENOTDIR, LOG_ERR);
   } else {
-    RETURN (ENOTDIR);
+    RETURN (ENOTDIR, LOG_ERR);
   }
 
   /* Update entries */
@@ -302,18 +324,18 @@ int Cns_srv_chclass(char *req_data,
     /* If the file has segments make sure the new fileclass allows them! */
     if (Cns_get_smd_copy_count_by_pfid
         (&thip->dbfd, fmd_entry.fileid, &count, 1))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     if (count && (new_class_entry.nbcopies == 0))
-      RETURN (ENSCLASSNOSEGS); /* File class does not allow a copy on tape */
+      RETURN (ENSCLASSNOSEGS, LOG_ERR); /* File class does not allow a copy on tape */
     if (count > new_class_entry.nbcopies)
-      RETURN (ENSTOOMANYSEGS); /* Too many copies on tape */
+      RETURN (ENSTOOMANYSEGS, LOG_ERR); /* Too many copies on tape */
 
     fmd_entry.fileclass = new_class_entry.classid;
     fmd_entry.ctime = time (0);
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   }
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_chdir - change current working directory */
@@ -338,7 +360,7 @@ int Cns_srv_chdir(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
 
   /* Construct logging paramaters */
   get_cwd_path (thip, cwd, cwdpath);
@@ -350,19 +372,19 @@ int Cns_srv_chdir(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, NULL, NULL, &direntry, NULL,
                      CNS_MUST_EXIST))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   if ((direntry.filemode & S_IFDIR) == 0)
-    RETURN (ENOTDIR);
+    RETURN (ENOTDIR, LOG_ERR);
   if (Cns_chkentryperm (&direntry, S_IEXEC, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost))
-    RETURN (EACCES);
+    RETURN (EACCES, LOG_ERR);
 
   /* Return directory fileid */
   sbp = repbuf;
   marshall_HYPER (sbp, direntry.fileid);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_chmod - change file/directory permissions */
@@ -387,15 +409,15 @@ int Cns_srv_chmod(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   unmarshall_LONG (rbp, mode);
   // Check that only expected bits are set in the mode.
   // Allowed bits are the ones to set permissions
-  if ((mode & S_PERM) != mode) RETURN (EINVAL);
+  if ((mode & S_PERM) != mode) RETURN (EINVAL, LOG_ERR);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -411,7 +433,7 @@ int Cns_srv_chmod(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, NULL, NULL, &fmd_entry, &rec_addr,
                      CNS_MUST_EXIST))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Record the fileid being processed */
   reqinfo->fileid = fmd_entry.fileid;
@@ -422,7 +444,7 @@ int Cns_srv_chmod(char *req_data,
                   localhost, P_GRP_ADMIN) &&
       Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                   localhost, P_ADMIN))
-    RETURN (EPERM);
+    RETURN (EPERM, LOG_ERR);
   if ((fmd_entry.filemode & S_IFDIR) == 0 && reqinfo->uid != 0)
     mode &= ~S_ISVTX;
   if (reqinfo->gid != fmd_entry.gid && reqinfo->uid != 0)
@@ -434,8 +456,8 @@ int Cns_srv_chmod(char *req_data,
     Cns_acl_chmod (&fmd_entry);
   fmd_entry.ctime = time (0);
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry))
-    RETURN (serrno);
-  RETURN (0);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_chown - change owner and group of a file or a directory, and update segments as well */
@@ -470,13 +492,13 @@ int Cns_srv_chown(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   unmarshall_LONG (rbp, new_uid);
   unmarshall_LONG (rbp, new_gid);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -492,7 +514,7 @@ int Cns_srv_chown(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, NULL, NULL, &fmd_entry, &rec_addr,
                      CNS_MUST_EXIST))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Record the fileid being processed */
   reqinfo->fileid = fmd_entry.fileid;
@@ -536,13 +558,13 @@ int Cns_srv_chown(char *req_data,
   if (need_p_admin) {
     if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                     localhost, P_ADMIN))
-      RETURN (EPERM);
+      RETURN (EPERM, LOG_ERR);
   } else if (need_p_expt_admin) {
     if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                     localhost, P_ADMIN) &&
         Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                     localhost, P_GRP_ADMIN))
-      RETURN (EPERM);
+      RETURN (EPERM, LOG_ERR);
   }
 
   /* Update file entry */
@@ -554,22 +576,22 @@ int Cns_srv_chown(char *req_data,
     Cns_acl_chown (&fmd_entry);
   fmd_entry.ctime = time (0);
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   /* Update segments if any */
   bof = 1;
   while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry.fileid,
                                    &smd_entry, 1, &rec_addrs, 0)) == 0) {
     smd_entry.gid = new_gid;
     if (Cns_update_smd_entry (&thip->dbfd, &rec_addrs, &smd_entry))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     bof = 0;
   }
   (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry.fileid,
                               &smd_entry, 1, &rec_addrs, 1);
   if (c < 0)
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_delete_segment_metadata - drop segment metadata entry logging all attributes */
@@ -685,22 +707,22 @@ int Cns_srv_creat(int magic,
   unmarshall_WORD (rbp, mask);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   unmarshall_LONG (rbp, mode);
   // Check that only expected bits are set in the mode.
   // Allowed bits are the ones to set permissions to files
-  if ((mode & S_PERMFILE) != mode) RETURN (EINVAL);
+  if ((mode & S_PERMFILE) != mode) RETURN (EINVAL, LOG_ERR);
   if (magic >= CNS_MAGIC2) {
     if (unmarshall_STRINGN (rbp, guid, CA_MAXGUIDLEN+1))
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
     if (uuid_parse (guid, uuid) < 0)
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
   } else
     *guid = '\0';
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -717,27 +739,27 @@ int Cns_srv_creat(int magic,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, &parent_dir, &rec_addrp, &filentry,
                      &rec_addr, 0))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
   reqinfo->fileid = filentry.fileid;
 
   if (*filentry.name == '/') /* Cns_creat / */
-    RETURN (EISDIR);
+    RETURN (EISDIR, LOG_ERR);
 
   if (filentry.fileid) { /* File exists */
     if (filentry.filemode & S_IFDIR)
-      RETURN (EISDIR);
+      RETURN (EISDIR, LOG_ERR);
     if (strcmp (filentry.guid, guid))
-      RETURN (EEXIST);
+      RETURN (EEXIST, LOG_ERR);
 
     /* Check write permission in basename entry */
     if (Cns_chkentryperm (&filentry, S_IWRITE, reqinfo->uid, reqinfo->gid,
                           reqinfo->clienthost))
-      RETURN (EACCES);
+      RETURN (EACCES, LOG_ERR);
 
     /* Delete file segments if any */
     if (Cns_delete_segs(thip, &filentry, 0) != 0)
       if (serrno != SEENTRYNFND)
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Update basename entry */
     if (*guid)
@@ -747,15 +769,15 @@ int Cns_srv_creat(int magic,
     filentry.ctime = filentry.mtime;
     filentry.status = '-';
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Amend logging paramaters */
     sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " Truncated=\"True\"");
   } else { /* Must create the file */
     if (parent_dir.fileclass <= 0)
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
     if (Cns_unique_id (&thip->dbfd, &filentry.fileid) < 0)
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     reqinfo->fileid = filentry.fileid;
 
     /* parent_fileid and name have been set by Cns_parsepath */
@@ -779,14 +801,14 @@ int Cns_srv_creat(int magic,
 
     /* Write new file entry */
     if (Cns_insert_fmd_entry (&thip->dbfd, &filentry))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Update parent directory entry */
     parent_dir.nlink++;
     parent_dir.mtime = filentry.mtime;
     parent_dir.ctime = parent_dir.mtime;
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &parent_dir))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Amend log message */
     sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " NewFile=\"True\"");
@@ -794,7 +816,7 @@ int Cns_srv_creat(int magic,
   sbp = repbuf;
   marshall_HYPER (sbp, filentry.fileid);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_delcomment - delete a comment associated with a file/directory */
@@ -819,11 +841,11 @@ int Cns_srv_delcomment(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -838,7 +860,7 @@ int Cns_srv_delcomment(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, NULL, NULL, &filentry, NULL,
                      CNS_MUST_EXIST))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Record the fileid being processed */
   reqinfo->fileid = filentry.fileid;
@@ -847,15 +869,15 @@ int Cns_srv_delcomment(char *req_data,
   if (reqinfo->uid != filentry.uid &&
       Cns_chkentryperm (&filentry, S_IWRITE, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost))
-    RETURN (EACCES);
+    RETURN (EACCES, LOG_ERR);
 
   /* Delete the comment if it exists */
   if (Cns_get_umd_by_fileid (&thip->dbfd, filentry.fileid, &umd_entry, 1,
                              &rec_addru))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   if (Cns_delete_umd_entry (&thip->dbfd, &rec_addru))
-    RETURN (serrno);
-  RETURN (0);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_deleteclass - delete a file class definition */
@@ -881,7 +903,7 @@ int Cns_srv_deleteclass(char *req_data,
   get_client_actual_id (thip);
   unmarshall_LONG (rbp, classid);
   if (unmarshall_STRINGN (rbp, class_name, CA_MAXCLASNAMELEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
 
   /* Construct log message */
   sprintf (reqinfo->logbuf, "ClassId=%d ClassName=\"%s\"", classid, class_name);
@@ -889,7 +911,7 @@ int Cns_srv_deleteclass(char *req_data,
   /* Check if the user is authorized to delete a class */
   if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                   localhost, P_ADMIN))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Start transaction */
   (void) Cns_start_tr (&thip->dbfd);
@@ -897,25 +919,25 @@ int Cns_srv_deleteclass(char *req_data,
   if (classid > 0) {
     if (Cns_get_class_by_id (&thip->dbfd, classid, &class_entry,
                              1, &rec_addr))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     if (*class_name && strcmp (class_name, class_entry.name))
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
   } else {
     if (Cns_get_class_by_name (&thip->dbfd, class_name, &class_entry,
                                1, &rec_addr))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   }
   while (Cns_get_tppool_by_cid (&thip->dbfd, bol, class_entry.classid,
                                 &tppool_entry, 1, &rec_addrt, 0) == 0) {
     if (Cns_delete_tppool_entry (&thip->dbfd, &rec_addrt))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     bol = 0;
   }
   (void) Cns_get_tppool_by_cid (&thip->dbfd, bol, class_entry.classid,
                                 &tppool_entry, 1, &rec_addrt, 1);
   if (Cns_delete_class_entry (&thip->dbfd, &rec_addr))
-    RETURN (serrno);
-  RETURN (0);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_delsegbycopyno - delete file segments by copno */
@@ -947,14 +969,14 @@ int Cns_srv_delsegbycopyno(char *req_data,
   if (fileid > 0)
     reqinfo->fileid = fileid;
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   unmarshall_LONG (rbp, copyno);
   if (copyno < 0)
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -964,7 +986,7 @@ int Cns_srv_delsegbycopyno(char *req_data,
   /* Check if the user is authorized to delete a segment by copy number */
   if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                   localhost, P_ADMIN))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Start transaction */
   (void) Cns_start_tr (&thip->dbfd);
@@ -973,7 +995,7 @@ int Cns_srv_delsegbycopyno(char *req_data,
 
     /* Get/lock basename entry */
     if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &fmd_entry, 1, &rec_addr))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   } else {
 
     /* Check parent directory components for search permission and get/lock
@@ -982,7 +1004,7 @@ int Cns_srv_delsegbycopyno(char *req_data,
     if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                        reqinfo->clienthost, NULL, NULL, &fmd_entry, &rec_addr,
                        CNS_MUST_EXIST))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Record the fileid being processed */
     reqinfo->fileid = fmd_entry.fileid;
@@ -990,15 +1012,15 @@ int Cns_srv_delsegbycopyno(char *req_data,
 
   /* Check if the entry is a regular file */
   if (fmd_entry.filemode & S_IFDIR)
-    RETURN (EISDIR);
+    RETURN (EISDIR, LOG_ERR);
   if ((fmd_entry.filemode & S_IFREG) != S_IFREG)
-    RETURN (SEINTERNAL);
+    RETURN (SEINTERNAL, LOG_ERR);
   if (*fmd_entry.name == '/')
-    RETURN (SEINTERNAL);
+    RETURN (SEINTERNAL, LOG_ERR);
 
   /* Delete file segments */
   if (Cns_delete_segs(thip, &fmd_entry, copyno) != 0)
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Count the number of file segments left */
   while ((c = Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry.fileid,
@@ -1008,16 +1030,16 @@ int Cns_srv_delsegbycopyno(char *req_data,
   (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry.fileid,
                               &smd_entry, 0, NULL, 1);
   if (c < 0)
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* If the file has no segments remove the 'm' status */
   if (bof) {
     fmd_entry.status = '-';
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   }
 
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_du - summarize file space usage */
@@ -1039,7 +1061,7 @@ int compute_du4dir (struct Cns_srv_thread_info *thip,
   };
   struct dirlist *dlc;  /* Pointer to current directory in the list */
   struct dirlist *dlf = NULL; /* Pointer to first directory in the list */
-  struct dirlist *dll;  /* Pointer to last directory in the list */
+  struct dirlist *dll = NULL; /* Pointer to last directory in the list */
   struct Cns_file_metadata fmd_entry;
 
   if (Cns_chkentryperm (direntry, S_IREAD|S_IEXEC, uid, gid, clienthost))
@@ -1104,7 +1126,7 @@ int Cns_srv_du(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURNQ (SENAMETOOLONG);
+    RETURNQ (SENAMETOOLONG, LOG_ERR);
   unmarshall_WORD (rbp, Lflag);
 
   /* Construct log message */
@@ -1112,9 +1134,9 @@ int Cns_srv_du(char *req_data,
   sprintf (reqinfo->logbuf, "Cwd=\"%s\" Path=\"%s\"", cwdpath, path);
 
   if (! cwd && *path == 0)
-    RETURNQ (ENOENT);
+    RETURNQ (ENOENT, LOG_ERR);
   if (! cwd && *path != '/')
-    RETURNQ (EINVAL);
+    RETURNQ (EINVAL, LOG_ERR);
 
   /* Check parent directory components for search permission and get basename
    * entry
@@ -1122,7 +1144,7 @@ int Cns_srv_du(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, NULL, NULL, &fmd_entry, NULL,
                      CNS_MUST_EXIST))
-    RETURNQ (serrno);
+    RETURNQ (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Record the fileid being processed */
   reqinfo->fileid = fmd_entry.fileid;
@@ -1131,7 +1153,7 @@ int Cns_srv_du(char *req_data,
     if ((c = compute_du4dir (thip, &fmd_entry, Lflag, reqinfo->uid,
                              reqinfo->gid, reqinfo->clienthost, &nbbytes,
                              &nbentries)))
-      RETURNQ (c);
+      RETURNQ (c, c?LOG_ERR:LOG_INFO);
   } else { /* Regular file */
     nbbytes += fmd_entry.filesize;
     nbentries += 1;
@@ -1140,7 +1162,7 @@ int Cns_srv_du(char *req_data,
   marshall_HYPER (sbp, nbbytes);
   marshall_HYPER (sbp, nbentries);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURNQ (0);
+  RETURNQ (0, LOG_INFO);
 }
 
 /* Cns_srv_endsess - end session */
@@ -1154,7 +1176,7 @@ int Cns_srv_endsess(char *req_data,
   unmarshall_LONG (rbp, reqinfo->uid);
   unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_endtrans - end transaction mode */
@@ -1169,7 +1191,7 @@ int Cns_srv_endtrans(char *req_data,
   unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   (void) Cns_end_tr (&thip->dbfd);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_enterclass - define a new file class */
@@ -1193,7 +1215,7 @@ int Cns_srv_enterclass(char *req_data,
   memset ((char *) &class_entry, 0, sizeof(class_entry));
   unmarshall_LONG (rbp, class_entry.classid);
   if (unmarshall_STRINGN (rbp, class_entry.name, CA_MAXCLASNAMELEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   unmarshall_LONG (rbp, class_entry.uid);
   unmarshall_LONG (rbp, class_entry.gid);
   unmarshall_LONG (rbp, class_entry.min_filesize);
@@ -1214,27 +1236,27 @@ int Cns_srv_enterclass(char *req_data,
   /* Check if the user is authorized to enter a new file class */
   if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                   localhost, P_ADMIN))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Start transaction */
   if (class_entry.classid <= 0 || *class_entry.name == '\0')
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   if (class_entry.max_filesize < class_entry.min_filesize)
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   (void) Cns_start_tr (&thip->dbfd);
 
   if (Cns_insert_class_entry (&thip->dbfd, &class_entry))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Receive/store tppool entries */
   tppool_entry.classid = class_entry.classid;
   for (i = 0; i < nbtppools; i++) {
     if (unmarshall_STRINGN (rbp, tppool_entry.tape_pool, CA_MAXPOOLNAMELEN+1))
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
     if (Cns_insert_tppool_entry (&thip->dbfd, &tppool_entry))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   }
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_getacl - get the Access Control List for a file/directory */
@@ -1262,7 +1284,7 @@ int Cns_srv_getacl(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURNQ (SENAMETOOLONG);
+    RETURNQ (SENAMETOOLONG, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -1274,7 +1296,7 @@ int Cns_srv_getacl(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, NULL, NULL, &fmd_entry, NULL,
                      CNS_MUST_EXIST))
-    RETURNQ (serrno);
+    RETURNQ (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Record the fileid being processed */
   reqinfo->fileid = fmd_entry.fileid;
@@ -1307,7 +1329,7 @@ int Cns_srv_getacl(char *req_data,
   p = repbuf;
   marshall_WORD (p, nentries);  /* Update nentries in reply */
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURNQ (0);
+  RETURNQ (0, LOG_INFO);
 }
 
 /* Cns_srv_getcomment - get the comment associated with a file/directory */
@@ -1333,7 +1355,7 @@ int Cns_srv_getcomment(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURNQ (SENAMETOOLONG);
+    RETURNQ (SENAMETOOLONG, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -1345,7 +1367,7 @@ int Cns_srv_getcomment(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, NULL, NULL, &filentry, NULL,
                      CNS_MUST_EXIST))
-    RETURNQ (serrno);
+    RETURNQ (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Record the fileid being processed */
   reqinfo->fileid = filentry.fileid;
@@ -1354,16 +1376,16 @@ int Cns_srv_getcomment(char *req_data,
   if (reqinfo->uid != filentry.uid &&
       Cns_chkentryperm (&filentry, S_IREAD, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost))
-    RETURNQ (EACCES);
+    RETURNQ (EACCES, LOG_ERR);
 
   /* Get the comment if it exists */
   if (Cns_get_umd_by_fileid (&thip->dbfd, filentry.fileid, &umd_entry, 0, NULL))
-    RETURNQ (serrno);
+    RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
 
   sbp = repbuf;
   marshall_STRING (sbp, umd_entry.comments);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURNQ (0);
+  RETURNQ (0, LOG_INFO);
 }
 
 /* Cns_srv_getlinks - get the link entries associated with a given file */
@@ -1395,9 +1417,9 @@ int Cns_srv_getlinks(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURNQ (SENAMETOOLONG);
+    RETURNQ (SENAMETOOLONG, LOG_ERR);
   if (unmarshall_STRINGN (rbp, guid, CA_MAXGUIDLEN + 1) < 0)
-    RETURNQ (EINVAL);
+    RETURNQ (EINVAL, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -1412,16 +1434,16 @@ int Cns_srv_getlinks(char *req_data,
     if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                        reqinfo->clienthost, NULL, NULL, &fmd_entry, NULL,
                        CNS_MUST_EXIST))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
     if (*guid && strcmp (guid, fmd_entry.guid))
-      RETURNQ (EINVAL);
+      RETURNQ (EINVAL, LOG_ERR);
   } else {
     if (! *guid)
-      RETURNQ (ENOENT);
+      RETURNQ (ENOENT, LOG_ERR);
 
     /* Get basename entry */
     if (Cns_get_fmd_by_guid (&thip->dbfd, guid, &fmd_entry, 0, NULL))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Do not check parent directory components for search permission as
      * symlinks can anyway point directly at a file
@@ -1434,12 +1456,12 @@ int Cns_srv_getlinks(char *req_data,
   if ((fmd_entry.filemode & S_IFMT) == S_IFLNK) {
     if (Cns_get_lnk_by_fileid (&thip->dbfd, fmd_entry.fileid,
                                &lnk_entry, 0, NULL))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
   } else {
     if (*path != '/') { /* Need to get path */
       p = tmp_path;
       if (Cns_getpath_by_fileid (&thip->dbfd, fmd_entry.fileid, &p))
-        RETURNQ (serrno);
+        RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
       strcpy (lnk_entry.linkname, p);
     } else
       strcpy (lnk_entry.linkname, path);
@@ -1450,7 +1472,7 @@ int Cns_srv_getlinks(char *req_data,
     bol = 0;
     p = tmp_path;
     if (Cns_getpath_by_fileid (&thip->dbfd, lnk_entry.fileid, &p))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
     n = strlen (p) + 1;
     if (sbp - repbuf + n > REPBUFSZ) {
       sendrep (thip->s, MSG_LINKS, sbp - repbuf, repbuf);
@@ -1461,10 +1483,10 @@ int Cns_srv_getlinks(char *req_data,
   (void) Cns_list_lnk_entry (&thip->dbfd, bol, lnk_entry.linkname, &lnk_entry,
                              1);
   if (c < 0)
-    RETURNQ (serrno);
+    RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
   if (sbp > repbuf)
     sendrep (thip->s, MSG_LINKS, sbp - repbuf, repbuf);
-  RETURNQ (0);
+  RETURNQ (0, LOG_INFO);
 }
 
 /* Cns_srv_getpath - resolve a file id to a path */
@@ -1493,7 +1515,7 @@ int Cns_srv_getpath(char *req_data,
   else {
     p = path;
     if (Cns_getpath_by_fileid (&thip->dbfd, cur_fileid, &p))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
   }
 
   /* Record the fileid being processed */
@@ -1502,7 +1524,7 @@ int Cns_srv_getpath(char *req_data,
   sbp = repbuf;
   marshall_STRING (sbp, p);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURNQ (0);
+  RETURNQ (0, LOG_INFO);
 }
 
 /* Cns_srv_getsegattrs - get file segments attributes */
@@ -1537,7 +1559,7 @@ int Cns_srv_getsegattrs(int magic,
   if (fileid > 0)
     reqinfo->fileid = fileid;
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -1547,12 +1569,12 @@ int Cns_srv_getsegattrs(int magic,
 
     /* Get basename entry */
     if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &filentry, 0, NULL))
-      RETURN (serrno);
+      RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
     /* Check parent directory components for search permission */
     if (Cns_chkbackperm (&thip->dbfd, filentry.parent_fileid,
                          reqinfo->uid, reqinfo->gid, reqinfo->clienthost))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   } else {
 
     /* Check parent directory components for search permission and get basename
@@ -1561,7 +1583,7 @@ int Cns_srv_getsegattrs(int magic,
     if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                        reqinfo->clienthost, NULL, NULL, &filentry, NULL,
                        CNS_MUST_EXIST))
-      RETURN (serrno);
+      RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
     /* Record the fileid being processed */
     reqinfo->fileid = filentry.fileid;
@@ -1569,7 +1591,7 @@ int Cns_srv_getsegattrs(int magic,
 
   /* Check if the entry is a regular file */
   if (filentry.filemode & S_IFDIR)
-    RETURN (EISDIR);
+    RETURN (EISDIR, LOG_ERR);
 
   /* Get/send file segment entries */
   sbp = repbuf;
@@ -1596,12 +1618,12 @@ int Cns_srv_getsegattrs(int magic,
   (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, filentry.fileid, &smd_entry,
                               0, NULL, 1);
   if (c < 0)
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   q = repbuf;
   marshall_WORD (q, nbseg);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_lchown - change owner and group of a symbolic link to file or a directory */
@@ -1633,13 +1655,13 @@ int Cns_srv_lchown(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   unmarshall_LONG (rbp, new_uid);
   unmarshall_LONG (rbp, new_gid);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -1655,7 +1677,7 @@ int Cns_srv_lchown(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, NULL, NULL, &fmd_entry, &rec_addr,
                      CNS_NOFOLLOW|CNS_MUST_EXIST))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Record the fileid being processed */
   reqinfo->fileid = fmd_entry.fileid;
@@ -1699,13 +1721,13 @@ int Cns_srv_lchown(char *req_data,
   if (need_p_admin) {
     if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                     localhost, P_ADMIN))
-      RETURN (EPERM);
+      RETURN (EPERM, LOG_ERR);
   } else if (need_p_expt_admin) {
     if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                     localhost, P_ADMIN) &&
         Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                     localhost, P_GRP_ADMIN))
-      RETURN (EPERM);
+      RETURN (EPERM, LOG_ERR);
   }
 
   /* Update entry */
@@ -1717,9 +1739,9 @@ int Cns_srv_lchown(char *req_data,
     Cns_acl_chmod (&fmd_entry);
   fmd_entry.ctime = time (0);
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_listclass - list file classes */
@@ -1805,7 +1827,7 @@ int Cns_srv_listclass(char *req_data,
     (void) Cns_get_tppool_by_cid (&thip->dbfd, bot, class_entry->classid,
                                   &tppool_entry, 0, NULL, 1);
     if (c < 0)
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     marshall_LONG (q, nbtppools);
     nbentries++;
@@ -1813,7 +1835,7 @@ int Cns_srv_listclass(char *req_data,
     c = Cns_list_class_entry (&thip->dbfd, bol, class_entry, endlist);
   }
   if (c < 0)
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   if (c == 1)
     eol = 1;
 
@@ -1822,7 +1844,7 @@ int Cns_srv_listclass(char *req_data,
   p = outbuf;
   marshall_WORD (p, nbentries);  /* Update nbentries in reply */
   sendrep (thip->s, MSG_DATA, sbp - outbuf, outbuf);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 int Cns_srv_listlinks(char *req_data,
@@ -1857,9 +1879,9 @@ int Cns_srv_listlinks(char *req_data,
   unmarshall_WORD (rbp, listentsz);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   if (unmarshall_STRINGN (rbp, guid, CA_MAXGUIDLEN + 1) < 0)
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   unmarshall_WORD (rbp, bol);
 
   /* Construct log message */
@@ -1880,16 +1902,16 @@ int Cns_srv_listlinks(char *req_data,
       if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                          reqinfo->clienthost, NULL, NULL, &fmd_entry, NULL,
                          CNS_MUST_EXIST|CNS_NOFOLLOW))
-        RETURN (serrno);
+        RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
       if (*guid && strcmp (guid, fmd_entry.guid))
-        RETURN (EINVAL);
+        RETURN (EINVAL, LOG_ERR);
     } else {
       if (! *guid)
-        RETURN (ENOENT);
+        RETURN (ENOENT, LOG_ERR);
 
       /* Get basename entry */
       if (Cns_get_fmd_by_guid (&thip->dbfd, guid, &fmd_entry, 0, NULL))
-        RETURN (serrno);
+        RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
       /* Do not check parent directory components for search permission as
        * symlinks can anyway point directly at a file
@@ -1898,12 +1920,12 @@ int Cns_srv_listlinks(char *req_data,
     if ((fmd_entry.filemode & S_IFMT) == S_IFLNK) {
       if (Cns_get_lnk_by_fileid (&thip->dbfd, fmd_entry.fileid,
                                  lnk_entry, 0, NULL))
-        RETURN (serrno);
+        RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
     } else {
       if (*path != '/') { /* Need to get path */
         p = tmp_path;
         if (Cns_getpath_by_fileid (&thip->dbfd, fmd_entry.fileid, &p))
-          RETURN (serrno);
+          RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
         strcpy (lnk_entry->linkname, p);
       } else
         strcpy (lnk_entry->linkname, path);
@@ -1929,7 +1951,7 @@ int Cns_srv_listlinks(char *req_data,
     if (listentsz > maxsize) break;
     p = tmp_path;
     if (Cns_getpath_by_fileid (&thip->dbfd, lnk_entry->fileid, &p))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     marshall_STRING (sbp, p);
     maxsize -= listentsz;
     nbentries++;
@@ -1938,7 +1960,7 @@ int Cns_srv_listlinks(char *req_data,
                             endlist);
   }
   if (c < 0)
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   if (c == 1)
     eol = 1;
 
@@ -1946,7 +1968,7 @@ int Cns_srv_listlinks(char *req_data,
   p = outbuf;
   marshall_WORD (p, nbentries);  /* Update nbentries in reply */
   sendrep (thip->s, MSG_DATA, sbp - outbuf, outbuf);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 int Cns_srv_lastfseq(int magic,
@@ -1969,7 +1991,7 @@ int Cns_srv_lastfseq(int magic,
   unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   if (unmarshall_STRINGN(rbp, vid, CA_MAXVIDLEN + 1)) {
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   }
   unmarshall_LONG(rbp, side);
 
@@ -1979,7 +2001,7 @@ int Cns_srv_lastfseq(int magic,
   /* Find the last file sequence number for the volume */
   c = Cns_get_last_smd_by_vid(&thip->dbfd, vid, side, &smd_entry);
   if (c < 0) {
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   }
 
   /* Marshall to segattrs structure */
@@ -2002,7 +2024,7 @@ int Cns_srv_lastfseq(int magic,
 
   /* Send response */
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 int Cns_srv_bulkexist(char *req_data,
@@ -2027,7 +2049,7 @@ int Cns_srv_bulkexist(char *req_data,
   sprintf(reqinfo->logbuf, "NbFileIds=%d LongOps=\"False\"", nbFileIds);
 
   if (nbFileIds > 3000) {
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   }
   fileIds = (u_signed64*) malloc(nbFileIds * HYPERSIZE);
   for (i = 0; i < nbFileIds; i++) {
@@ -2038,13 +2060,13 @@ int Cns_srv_bulkexist(char *req_data,
   c = Cns_count_long_ops(&thip->dbfd, &count, 1);
   if (c < 0) {
     free(fileIds);
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   } else if (count == 0) {
     /* Check file existence */
     c = Cns_check_files_exist(&thip->dbfd, fileIds, &nbFileIds);
     if (c < 0) {
       free(fileIds);
-      RETURN (serrno);
+      RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
     }
   } else {
     sprintf(reqinfo->logbuf, "NbFileIds=%d LongOps=\"True\"", nbFileIds);
@@ -2055,7 +2077,7 @@ int Cns_srv_bulkexist(char *req_data,
   repbuf = (char*) malloc(LONGSIZE + nbFileIds * HYPERSIZE);
   if (repbuf == NULL) {
     free(fileIds);
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   }
   sbp = repbuf;
   marshall_LONG(sbp, nbFileIds);
@@ -2066,7 +2088,7 @@ int Cns_srv_bulkexist(char *req_data,
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
   free(repbuf);
   free(fileIds);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 int Cns_srv_tapesum(char *req_data,
@@ -2090,7 +2112,7 @@ int Cns_srv_tapesum(char *req_data,
   unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   if (unmarshall_STRINGN(rbp, vid, CA_MAXVIDLEN + 1)) {
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   }
 
   /* Construct log message */
@@ -2100,7 +2122,7 @@ int Cns_srv_tapesum(char *req_data,
   c = Cns_get_tapesum_by_vid(&thip->dbfd, vid, &count, &size, &maxfileid,
                              &avgcompression);
   if (c < 0) {
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
   }
 
   /* Marshall response */
@@ -2112,7 +2134,7 @@ int Cns_srv_tapesum(char *req_data,
 
   /* Send response */
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 int Cns_srv_listtape(int magic,
@@ -2144,7 +2166,7 @@ int Cns_srv_listtape(int magic,
   get_client_actual_id (thip);
   unmarshall_WORD (rbp, direntsz);
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   unmarshall_WORD (rbp, bov);
   if (magic >= CNS_MAGIC5) {
     unmarshall_LONG (rbp, fseq);
@@ -2175,7 +2197,7 @@ int Cns_srv_listtape(int magic,
       /* Ignore files deleted during the listing */
       if (serrno == ENOENT)
         continue;
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     }
     if ((int) strlen (fmd_entry->name) > maxsize) break;
     marshall_DIRXT (&sbp, magic, fmd_entry, smd_entry);
@@ -2183,7 +2205,7 @@ int Cns_srv_listtape(int magic,
     maxsize -= ((direntsz + strlen (fmd_entry->name) + 8) / 8) * 8;
   }
   if (c < 0)
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   if (c == 1)
     eov = 1;
 
@@ -2191,7 +2213,7 @@ int Cns_srv_listtape(int magic,
   p = dirbuf;
   marshall_WORD (p, nbentries);  /* Update nbentries in reply */
   sendrep (thip->s, MSG_DATA, sbp - dirbuf, dirbuf);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_lstat - get information about a symbolic link */
@@ -2220,7 +2242,7 @@ int Cns_srv_lstat(char *req_data,
   if (fileid > 0)
     reqinfo->fileid = fileid;
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURNQ (SENAMETOOLONG);
+    RETURNQ (SENAMETOOLONG, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -2230,12 +2252,12 @@ int Cns_srv_lstat(char *req_data,
 
     /* Get basename entry */
     if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &fmd_entry, 0, NULL))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
     /* Check parent directory components for search permission */
     if (Cns_chkbackperm (&thip->dbfd, fmd_entry.parent_fileid, reqinfo->uid,
                          reqinfo->gid, reqinfo->clienthost))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
   } else {
 
     /* Check parent directory components for search permission and get basename
@@ -2244,7 +2266,7 @@ int Cns_srv_lstat(char *req_data,
     if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                        reqinfo->clienthost, NULL, NULL, &fmd_entry, NULL,
                        CNS_NOFOLLOW|CNS_MUST_EXIST))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
     /* Record the fileid being processed */
     reqinfo->fileid = fmd_entry.fileid;
@@ -2263,7 +2285,7 @@ int Cns_srv_lstat(char *req_data,
   marshall_WORD (sbp, fmd_entry.fileclass);
   marshall_BYTE (sbp, fmd_entry.status);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURNQ (0);
+  RETURNQ (0, LOG_INFO);
 }
 
 /* Cns_srv_mkdir - create a directory entry */
@@ -2294,22 +2316,22 @@ int Cns_srv_mkdir(int magic,
   unmarshall_WORD (rbp, mask);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   unmarshall_LONG (rbp, mode);
   // Check that only expected bits are set in the mode.
   // Allowed bits are the ones to set permissions to directories
-  if ((mode & S_PERMDIR) != mode) RETURN (EINVAL);
+  if ((mode & S_PERMDIR) != mode) RETURN (EINVAL, LOG_ERR);
   if (magic >= CNS_MAGIC2) {
     if (unmarshall_STRINGN (rbp, guid, CA_MAXGUIDLEN+1))
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
     if (uuid_parse (guid, uuid) < 0)
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
   } else
     *guid = '\0';
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -2326,18 +2348,18 @@ int Cns_srv_mkdir(int magic,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, &parent_dir, &rec_addrp, &direntry,
                      NULL, CNS_NOFOLLOW))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   if (*direntry.name == '/') /* Cns_mkdir / */
-    RETURN (EEXIST);
+    RETURN (EEXIST, LOG_ERR);
 
   /* Check if basename entry exists already */
   if (direntry.fileid)
-    RETURN (EEXIST);
+    RETURN (EEXIST, LOG_ERR);
 
   /* Build new directory entry */
   if (Cns_unique_id (&thip->dbfd, &direntry.fileid) < 0)
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* parent_fileid and name have been set by Cns_parsepath */
   strcpy (direntry.guid, guid);
@@ -2360,15 +2382,15 @@ int Cns_srv_mkdir(int magic,
 
   /* Write new directory entry */
   if (Cns_insert_fmd_entry (&thip->dbfd, &direntry))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Update parent directory entry */
   parent_dir.nlink++;
   parent_dir.mtime = direntry.mtime;
   parent_dir.ctime = parent_dir.mtime;
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &parent_dir))
-    RETURN (serrno);
-  RETURN (0);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_modifyclass - modify an existing fileclass definition */
@@ -2410,9 +2432,9 @@ int Cns_srv_modifyclass(char *req_data,
   get_client_actual_id (thip);
   unmarshall_LONG (rbp, classid);
   if (unmarshall_STRINGN (rbp, class_name, CA_MAXCLASNAMELEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   if (unmarshall_STRINGN (rbp, new_class_name, CA_MAXCLASNAMELEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   unmarshall_LONG (rbp, class_user);
   unmarshall_LONG (rbp, class_group);
   unmarshall_LONG (rbp, min_filesize);
@@ -2432,7 +2454,7 @@ int Cns_srv_modifyclass(char *req_data,
   /* Check if the user is authorized to modify a file class */
   if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                   localhost, P_ADMIN))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Start transaction */
   (void) Cns_start_tr (&thip->dbfd);
@@ -2442,13 +2464,13 @@ int Cns_srv_modifyclass(char *req_data,
   if (classid > 0) {
     if (Cns_get_class_by_id (&thip->dbfd, classid, &class_entry,
                              1, &rec_addr))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     if (*class_name && strcmp (class_name, class_entry.name))
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
   } else {
     if (Cns_get_class_by_name (&thip->dbfd, class_name, &class_entry,
                                1, &rec_addr))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   }
 
   /* Update entry */
@@ -2478,16 +2500,16 @@ int Cns_srv_modifyclass(char *req_data,
     class_entry.retenp_on_disk = retenp_on_disk;
 
   if (Cns_update_class_entry (&thip->dbfd, &rec_addr, &class_entry))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   if (nbtppools > 0) {
     if ((tppools = calloc (nbtppools, CA_MAXPOOLNAMELEN+1)) == NULL)
-      RETURN (ENOMEM);
+      RETURN (ENOMEM, LOG_ERR);
     p = tppools;
     for (i = 0; i < nbtppools; i++) {
       if (unmarshall_STRINGN (rbp, p, CA_MAXPOOLNAMELEN+1)) {
         free (tppools);
-        RETURN (EINVAL);
+        RETURN (EINVAL, LOG_ERR);
       }
       p += (CA_MAXPOOLNAMELEN+1);
     }
@@ -2503,7 +2525,7 @@ int Cns_srv_modifyclass(char *req_data,
       if (i >= nbtppools) {
         if (Cns_delete_tppool_entry (&thip->dbfd, &rec_addrt)) {
           free (tppools);
-          RETURN (serrno);
+          RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
         }
       } else
         *p = '\0';
@@ -2520,14 +2542,14 @@ int Cns_srv_modifyclass(char *req_data,
         strcpy (tppool_entry.tape_pool, p);
         if (Cns_insert_tppool_entry (&thip->dbfd, &tppool_entry)) {
           free (tppools);
-          RETURN (serrno);
+          RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
         }
       }
       p += (CA_MAXPOOLNAMELEN+1);
     }
     free (tppools);
   }
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_opendir - open a directory entry */
@@ -2554,10 +2576,10 @@ int Cns_srv_opendir(int magic,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   if (magic >= CNS_MAGIC2) {
     if (unmarshall_STRINGN (rbp, guid, CA_MAXGUIDLEN+1))
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
   } else
     *guid = '\0';
 
@@ -2570,16 +2592,16 @@ int Cns_srv_opendir(int magic,
 
     /* Get basename entry */
     if (Cns_get_fmd_by_guid (&thip->dbfd, guid, &direntry, 0, NULL))
-      RETURN (serrno);
+      RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
     /* Do not check parent directory components for search permission as
      * symlinks can anyway point directly at a file
      */
   } else {
     if (! cwd && *path == 0)
-      RETURN (ENOENT);
+      RETURN (ENOENT, LOG_ERR);
     if (! cwd && *path != '/')
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
 
     /* Check parent directory components for search permission and get basename
      * entry
@@ -2587,20 +2609,20 @@ int Cns_srv_opendir(int magic,
     if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                        reqinfo->clienthost, NULL, NULL, &direntry, NULL,
                        CNS_MUST_EXIST))
-      RETURN (serrno);
+      RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
   }
 
   if ((direntry.filemode & S_IFDIR) == 0)
-    RETURN (ENOTDIR);
+    RETURN (ENOTDIR, LOG_ERR);
   if (Cns_chkentryperm (&direntry, S_IREAD|S_IEXEC, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost))
-    RETURN (EACCES);
+    RETURN (EACCES, LOG_ERR);
 
   /* Return directory fileid */
   sbp = repbuf;
   marshall_HYPER (sbp, direntry.fileid);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_ping - check server alive and return version number */
@@ -2621,7 +2643,7 @@ int Cns_srv_ping(char *req_data,
   sbp = repbuf;
   marshall_STRING (sbp, info);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_queryclass - query about a file class */
@@ -2650,7 +2672,7 @@ int Cns_srv_queryclass(char *req_data,
   get_client_actual_id (thip);
   unmarshall_LONG (rbp, classid);
   if (unmarshall_STRINGN (rbp, class_name, CA_MAXCLASNAMELEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
 
   /* Construct log message */
   sprintf (reqinfo->logbuf, "ClassId=%d ClassName=\"%s\"", classid, class_name);
@@ -2658,12 +2680,12 @@ int Cns_srv_queryclass(char *req_data,
   memset((void *) &class_entry, 0, sizeof(struct Cns_class_metadata));
   if (classid > 0) {
     if (Cns_get_class_by_id (&thip->dbfd, classid, &class_entry, 0, NULL))
-      RETURN (serrno);
+      RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
     if (*class_name && strcmp (class_name, class_entry.name))
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
   } else {
     if (Cns_get_class_by_name (&thip->dbfd, class_name, &class_entry, 0, NULL))
-      RETURN (serrno);
+      RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
   }
 
   sbp = repbuf;
@@ -2693,11 +2715,11 @@ int Cns_srv_queryclass(char *req_data,
   (void) Cns_get_tppool_by_cid (&thip->dbfd, bol, class_entry.classid,
                                 &tppool_entry, 0, NULL, 1);
   if (c < 0)
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   marshall_LONG (q, nbtppools);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_readdir - read directory entries */
@@ -2747,7 +2769,7 @@ int Cns_srv_readdir(int magic,
   bod = *beginp; /* Do not rely on client */
   *beginp = 0;
   if (getattr == 5 && unmarshall_STRINGN (rbp, se, CA_MAXHOSTNAMELEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
 
   /* Return as many entries as possible to the client */
   if (getattr == 1 || getattr == 4)
@@ -2785,7 +2807,7 @@ int Cns_srv_readdir(int magic,
       (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry->fileid,
                                   smd_entry, 0, NULL, 1);
       if (c < 0)
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     } else if (getattr == 3) { /* readdirc */
       cml = strlen (umd_entry->comments);
       marshall_STRING (sbp, fmd_entry->name);
@@ -2831,12 +2853,12 @@ int Cns_srv_readdir(int magic,
       (void) Cns_get_smd_by_pfid (&thip->dbfd, bof, fmd_entry->fileid,
                                   smd_entry, 0, NULL, 1);
       if (c < 0)
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     } else if (getattr == 3) { /* readdirc */
       *umd_entry->comments = '\0';
       if (Cns_get_umd_by_fileid (&thip->dbfd, fmd_entry->fileid,
                                  umd_entry, 0, NULL) && serrno != ENOENT)
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
       cml = strlen (umd_entry->comments);
       if (fnl + cml + 1 >= maxsize) break;
       marshall_STRING (sbp, fmd_entry->name);
@@ -2847,7 +2869,7 @@ int Cns_srv_readdir(int magic,
       *umd_entry->comments = '\0';
       if (Cns_get_umd_by_fileid (&thip->dbfd, fmd_entry->fileid,
                                  umd_entry, 0, NULL) && serrno != ENOENT)
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
       cml = strlen (umd_entry->comments);
       if (fnl + cml + 1 >= maxsize) break;
       marshall_DIRX (&sbp, magic, fmd_entry);
@@ -2859,7 +2881,7 @@ int Cns_srv_readdir(int magic,
   }
 
   if (c < 0)
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   if (c == 1) {
     eod = 1;
 
@@ -2870,10 +2892,10 @@ int Cns_srv_readdir(int magic,
     if (!rdonly) {
       if (Cns_get_fmd_by_fileid (&thip->dbfd, dir_fileid, &direntry, 1,
                                  &rec_addr))
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
       direntry.atime = time (0);
       if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &direntry))
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     }
   }
 
@@ -2882,7 +2904,7 @@ int Cns_srv_readdir(int magic,
   p = dirbuf;
   marshall_WORD (p, nbentries);  /* Update nbentries in reply */
   sendrep (thip->s, MSG_DATA, sbp - dirbuf, dirbuf);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_readlink - read value of symbolic link */
@@ -2908,7 +2930,7 @@ int Cns_srv_readlink(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURNQ (SENAMETOOLONG);
+    RETURNQ (SENAMETOOLONG, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -2920,26 +2942,26 @@ int Cns_srv_readlink(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, NULL, NULL, &filentry, NULL,
                      CNS_MUST_EXIST|CNS_NOFOLLOW))
-    RETURNQ (serrno);
+    RETURNQ (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Check if the user is authorized to get link value for this entry */
   if (reqinfo->uid != filentry.uid &&
       Cns_chkentryperm (&filentry, S_IREAD, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost))
-    RETURNQ (EACCES);
+    RETURNQ (EACCES, LOG_ERR);
 
   if ((filentry.filemode & S_IFLNK) != S_IFLNK)
-    RETURNQ (EINVAL);
+    RETURNQ (EINVAL, LOG_ERR);
 
   /* Get link value */
   if (Cns_get_lnk_by_fileid (&thip->dbfd, filentry.fileid, &lnk_entry, 0,
                              NULL))
-    RETURNQ (serrno);
+    RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
 
   sbp = repbuf;
   marshall_STRING (sbp, lnk_entry.linkname);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURNQ (0);
+  RETURNQ (0, LOG_INFO);
 }
 
 /* Cns_srv_rename - rename a file or a directory */
@@ -2978,13 +3000,13 @@ int Cns_srv_rename(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, oldpath, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   if (unmarshall_STRINGN (rbp, newpath, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -3001,7 +3023,7 @@ int Cns_srv_rename(char *req_data,
                      reqinfo->clienthost, &old_parent_dir, &old_rec_addrp,
                      &old_fmd_entry, &old_rec_addr,
                      CNS_MUST_EXIST|CNS_NOFOLLOW))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Check 'new' parent directory components for write/search permission and
    * get/lock basename entry if it exists
@@ -3009,24 +3031,24 @@ int Cns_srv_rename(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, newpath, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, &new_parent_dir, &new_rec_addrp,
                      &new_fmd_entry, &new_rec_addr, CNS_NOFOLLOW))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   if (old_fmd_entry.fileid == new_fmd_entry.fileid)
-    RETURN (0);
+    RETURN (0, LOG_INFO);
   if (old_fmd_entry.fileid == cwd)
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
 
   if (*old_fmd_entry.name == '/' || *new_fmd_entry.name == '/') /* nsrename / */
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
 
   /* If renaming a directory, 'new' must not be a descendant of 'old' */
   if (old_fmd_entry.filemode & S_IFDIR) {
     fileid = new_fmd_entry.parent_fileid;
     while (fileid) {
       if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &tmp_fmd_entry, 0, NULL))
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
       if (old_fmd_entry.fileid == tmp_fmd_entry.fileid)
-        RETURN (EINVAL);
+        RETURN (EINVAL, LOG_ERR);
       fileid = tmp_fmd_entry.parent_fileid;
     }
   }
@@ -3037,16 +3059,16 @@ int Cns_srv_rename(char *req_data,
     /* 'old' and 'new' must be of the same type */
     if ((old_fmd_entry.filemode & S_IFDIR) == 0 &&
         new_fmd_entry.filemode & S_IFDIR)
-      RETURN (EISDIR);
+      RETURN (EISDIR, LOG_ERR);
     if (old_fmd_entry.filemode & S_IFDIR &&
         (new_fmd_entry.filemode & S_IFDIR) == 0)
-      RETURN (ENOTDIR);
+      RETURN (ENOTDIR, LOG_ERR);
 
     /* If the existing 'new' entry is a directory, the directory must be
      * empty
      */
     if (new_fmd_entry.filemode & S_IFDIR && new_fmd_entry.nlink)
-      RETURN (EEXIST);
+      RETURN (EEXIST, LOG_ERR);
 
     /* If parent of 'new' has the sticky bit set, the user must own 'new' or
      * the parent of 'new' or the basename entry must have write permission
@@ -3056,14 +3078,14 @@ int Cns_srv_rename(char *req_data,
         reqinfo->uid != new_fmd_entry.uid  &&
         Cns_chkentryperm (&new_fmd_entry, S_IWRITE, reqinfo->uid, reqinfo->gid,
                           reqinfo->clienthost))
-      RETURN (EACCES);
+      RETURN (EACCES, LOG_ERR);
   }
 
   /* if 'old' is a directory, its basename entry must have write permission */
   if (old_fmd_entry.filemode & S_IFDIR)
     if (Cns_chkentryperm (&old_fmd_entry, S_IWRITE, reqinfo->uid, reqinfo->gid,
                           reqinfo->clienthost))
-      RETURN (EACCES);
+      RETURN (EACCES, LOG_ERR);
 
   /* If parent of 'old' has the sticky bit set, the user must own 'old' or the
    * parent of 'old' or the basename entry must have write permission
@@ -3073,34 +3095,34 @@ int Cns_srv_rename(char *req_data,
       reqinfo->uid != old_fmd_entry.uid  &&
       Cns_chkentryperm (&old_fmd_entry, S_IWRITE, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost))
-    RETURN (EACCES);
+    RETURN (EACCES, LOG_ERR);
 
   if (new_exists) { /* Must remove it */
 
     /* Delete file segments if any */
     if (Cns_delete_segs(thip, &new_fmd_entry, 0) != 0)
       if (serrno != SEENTRYNFND)
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* If the existing 'new' entry is a symlink, delete it */
     if ((new_fmd_entry.filemode & S_IFLNK) == S_IFLNK) {
       if (Cns_get_lnk_by_fileid (&thip->dbfd, new_fmd_entry.fileid,
                                  &lnk_entry, 1, &rec_addrl))
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
       if (Cns_delete_lnk_entry (&thip->dbfd, &rec_addrl))
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     }
 
     /* Delete the comment if it exists */
     if (Cns_get_umd_by_fileid (&thip->dbfd, new_fmd_entry.fileid,
                                &umd_entry, 1, &rec_addru) == 0) {
       if (Cns_delete_umd_entry (&thip->dbfd, &rec_addru))
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     } else if (serrno != ENOENT)
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     if (Cns_delete_file_metadata (thip, &old_fmd_entry, &new_rec_addr))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   }
 
   /* get time to be used when updating entries */
@@ -3117,7 +3139,7 @@ int Cns_srv_rename(char *req_data,
     new_parent_dir.mtime = cur_time;
     new_parent_dir.ctime = new_parent_dir.mtime;
     if (Cns_update_fmd_entry (&thip->dbfd, &new_rec_addrp, &new_parent_dir))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   } else if (new_exists) {
 
     /* Rename within the same directory on an existing file */
@@ -3129,14 +3151,14 @@ int Cns_srv_rename(char *req_data,
   strcpy (old_fmd_entry.name, new_fmd_entry.name);
   old_fmd_entry.ctime = cur_time;
   if (Cns_update_fmd_entry (&thip->dbfd, &old_rec_addr, &old_fmd_entry))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Update parent directory entry */
   old_parent_dir.mtime = cur_time;
   old_parent_dir.ctime = old_parent_dir.mtime;
   if (Cns_update_fmd_entry (&thip->dbfd, &old_rec_addrp, &old_parent_dir))
-    RETURN (serrno);
-  RETURN (0);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_updateseg_status - updates the segment status */
@@ -3173,7 +3195,7 @@ int Cns_srv_updateseg_status(char *req_data,
   unmarshall_WORD (rbp, copyno);
   unmarshall_WORD (rbp, fsec);
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   unmarshall_WORD (rbp, side);
   unmarshall_LONG (rbp, fseq);
   unmarshall_BYTE (rbp, oldstatus);
@@ -3188,55 +3210,55 @@ int Cns_srv_updateseg_status(char *req_data,
   /* Check if the user is authorized to set segment status */
   if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                   localhost, P_ADMIN))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Check for valid status */
   if (((newstatus != '-') && (newstatus != 'D')) || (oldstatus == newstatus))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
 
   /* Start transaction */
   (void) Cns_start_tr (&thip->dbfd);
 
   /* Get/lock basename entry */
   if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &filentry, 1, &rec_addr))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Check if the entry is a regular file */
   if (filentry.filemode & S_IFDIR)
-    RETURN (EISDIR);
+    RETURN (EISDIR, LOG_ERR);
 
   /* Check if the segment is allowed to be enabled */
   if (filentry.status == 'D')
-    RETURN (EPERM);
+    RETURN (EPERM, LOG_ERR);
 
   /* Get/lock segment metadata entry to be updated */
   if (Cns_get_smd_by_fullid (&thip->dbfd, fileid, copyno, fsec,
                              &old_smd_entry, 1, &rec_addrs))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Verify that the old segment metadata is what we expected */
   if (strcmp (old_smd_entry.vid, vid) ||
       (old_smd_entry.side != side) ||
       (old_smd_entry.fseq != fseq) ||
       (old_smd_entry.s_status != oldstatus))
-    RETURN (SEENTRYNFND);
+    RETURN (SEENTRYNFND, LOG_ERR);
 
   /* Update file segment entry */
   old_smd_entry.s_status = newstatus;
   if (Cns_update_smd_entry (&thip->dbfd, &rec_addrs, &old_smd_entry))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Verify that we don't have too many enabled segments for this file */
   if (Cns_get_class_by_id
       (&thip->dbfd, filentry.fileclass, &class_entry, 0, NULL))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   if (Cns_get_smd_copy_count_by_pfid
       (&thip->dbfd, filentry.fileid, &count, 1))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   if (count > class_entry.nbcopies)
-    RETURN (ENSTOOMANYSEGS); /* Too many copies on tape */
+    RETURN (ENSTOOMANYSEGS, LOG_ERR); /* Too many copies on tape */
 
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_updateseg_checksum - updates file segment checksum
@@ -3280,25 +3302,25 @@ int Cns_srv_updateseg_checksum(int magic,
 
   /* Get/lock basename entry */
   if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &filentry, 1, &rec_addr))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Check if the entry is a regular file */
   if (filentry.filemode & S_IFDIR)
-    RETURN (EISDIR);
+    RETURN (EISDIR, LOG_ERR);
 
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   unmarshall_WORD (rbp, side);
   unmarshall_LONG (rbp, fseq);
 
   /* Get/lock segment metadata entry to be updated */
   if (Cns_get_smd_by_fullid (&thip->dbfd, fileid, copyno, fsec,
                              &old_smd_entry, 1, &rec_addrs))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   if (strcmp (old_smd_entry.vid, vid) || old_smd_entry.side != side ||
       old_smd_entry.fseq != fseq)
-    RETURN (SEENTRYNFND);
+    RETURN (SEENTRYNFND, LOG_ERR);
 
   nslogit(LOG_INFO, "MSG=\"Old segment information\" REQID=%s NSHOSTNAME=%s "
           "NSFILEID=%llu CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d "
@@ -3318,7 +3340,7 @@ int Cns_srv_updateseg_checksum(int magic,
     nslogit(LOG_ERR, "MSG=\"Missing checksum information, segment metadata cannot be "
             "updated\" REQID=%s NSHOSTNAME=%s NSFILEID=%llu ",
             reqinfo->requuid, nshostname, old_smd_entry.s_fileid);
-    RETURN(EPERM);
+    RETURN (EPERM, LOG_ERR);
   }
 
   memset ((char *) &smd_entry, 0, sizeof(smd_entry));
@@ -3367,9 +3389,9 @@ int Cns_srv_updateseg_checksum(int magic,
 
   /* Update file segment entry */
   if (Cns_update_smd_entry (&thip->dbfd, &rec_addrs, &smd_entry))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_replaceseg - replace file segment */
@@ -3416,36 +3438,36 @@ int Cns_srv_replaceseg(int magic,
   /* Check if the user is authorized to replace segment attributes */
   if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                   localhost, P_ADMIN))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Start transaction */
   (void) Cns_start_tr (&thip->dbfd);
 
   /* Get/lock basename entry */
   if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &filentry, 1, &rec_addr))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Check if the entry is a regular file */
   if (filentry.filemode & S_IFDIR)
-    RETURN (EISDIR);
+    RETURN (EISDIR, LOG_ERR);
 
   /* DON'T check for concurrent modifications in another stager:
    * we can be here only from a command line client with admin rights,
    * thus that check is not applicable. */
 
   if (unmarshall_STRINGN (rbp, vid, CA_MAXVIDLEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   unmarshall_WORD (rbp, side);
   unmarshall_LONG (rbp, fseq);
 
   /* Get/lock segment metadata entry to be updated */
   if (Cns_get_smd_by_fullid (&thip->dbfd, fileid, copyno, fsec,
                              &old_smd_entry, 1, &rec_addrs))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   if (strcmp (old_smd_entry.vid, vid) || old_smd_entry.side != side ||
       old_smd_entry.fseq != fseq)
-    RETURN (SEENTRYNFND);
+    RETURN (SEENTRYNFND, LOG_ERR);
 
   nslogit(LOG_INFO, "MSG=\"Old segment information\" REQID=%s NSHOSTNAME=%s "
           "NSFILEID=%llu CopyNo=%d Fsec=%d SegmentSize=%llu Compression=%d "
@@ -3467,7 +3489,7 @@ int Cns_srv_replaceseg(int magic,
   unmarshall_LONG (rbp, smd_entry.compression);
   smd_entry.s_status = old_smd_entry.s_status;
   if (unmarshall_STRINGN (rbp, smd_entry.vid, CA_MAXVIDLEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   unmarshall_WORD (rbp, smd_entry.side);
   unmarshall_LONG (rbp, smd_entry.fseq);
   unmarshall_OPAQUE (rbp, smd_entry.blockid, 4);
@@ -3517,9 +3539,9 @@ int Cns_srv_replaceseg(int magic,
 
   /* Update file segment entry */
   if (Cns_update_smd_entry (&thip->dbfd, &rec_addrs, &smd_entry))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_rmdir - remove a directory entry */
@@ -3547,11 +3569,11 @@ int Cns_srv_rmdir(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -3566,17 +3588,17 @@ int Cns_srv_rmdir(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, &parent_dir, &rec_addrp, &direntry,
                      &rec_addr, CNS_MUST_EXIST|CNS_NOFOLLOW))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   if (*direntry.name == '/') /* Cns_rmdir / */
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
 
   if ((direntry.filemode & S_IFDIR) == 0)
-    RETURN (ENOTDIR);
+    RETURN (ENOTDIR, LOG_ERR);
   if (direntry.fileid == cwd)
-    RETURN (EINVAL); /* Cannot remove current working directory */
+    RETURN (EINVAL, LOG_ERR); /* Cannot remove current working directory */
   if (direntry.nlink)
-    RETURN (EEXIST);
+    RETURN (EEXIST, LOG_ERR);
 
   /* If the parent has the sticky bit set, the user must own the directory or
    * the parent or the basename entry must have write permission
@@ -3585,27 +3607,27 @@ int Cns_srv_rmdir(char *req_data,
       reqinfo->uid != parent_dir.uid && reqinfo->uid != direntry.uid &&
       Cns_chkentryperm (&direntry, S_IWRITE, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost))
-    RETURN (EACCES);
+    RETURN (EACCES, LOG_ERR);
 
   /* Delete the comment if it exists */
   if (Cns_get_umd_by_fileid (&thip->dbfd, direntry.fileid, &umd_entry, 1,
                              &rec_addru) == 0) {
     if (Cns_delete_umd_entry (&thip->dbfd, &rec_addru))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   } else if (serrno != ENOENT)
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Delete directory entry */
   if (Cns_delete_fmd_entry (&thip->dbfd, &rec_addr))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Update parent directory entry */
   parent_dir.nlink--;
   parent_dir.mtime = time (0);
   parent_dir.ctime = parent_dir.mtime;
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &parent_dir))
-    RETURN (serrno);
-  RETURN (0);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_setacl - set the Access Control List for a file/directory */
@@ -3634,11 +3656,11 @@ int Cns_srv_setacl(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -3646,7 +3668,7 @@ int Cns_srv_setacl(char *req_data,
 
   unmarshall_WORD (rbp, nentries);
   if (nentries > CA_MAXACLENTRIES)
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   for (i = 0, aclp = acl; i < nentries; i++, aclp++) {
     unmarshall_BYTE (rbp, aclp->a_type);
     unmarshall_LONG (rbp, aclp->a_id);
@@ -3662,7 +3684,7 @@ int Cns_srv_setacl(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, NULL, NULL, &fmd_entry, &rec_addr,
                      CNS_MUST_EXIST))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Record the fileid being processed */
   reqinfo->fileid = fmd_entry.fileid;
@@ -3671,7 +3693,7 @@ int Cns_srv_setacl(char *req_data,
   if (reqinfo->uid != fmd_entry.uid &&
       Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                   localhost, P_GRP_ADMIN))
-    RETURN (EPERM);
+    RETURN (EPERM, LOG_ERR);
 
   qsort (acl, nentries, sizeof(struct Cns_acl), Cns_acl_compare);
   for (i = 0, aclp = acl; i < nentries; i++, aclp++) {
@@ -3681,10 +3703,10 @@ int Cns_srv_setacl(char *req_data,
       aclp->a_id = fmd_entry.gid;
     else if ((aclp->a_type & CNS_ACL_DEFAULT) &&
              (fmd_entry.filemode & S_IFDIR) == 0)
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
   }
   if (Cns_acl_validate (acl, nentries))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
 
   /* Build access ACL */
   iacl = fmd_entry.acl;
@@ -3735,8 +3757,8 @@ int Cns_srv_setacl(char *req_data,
   }
 
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry))
-    RETURN (serrno);
-  RETURN (0);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_setatime - set last access time */
@@ -3764,11 +3786,11 @@ int Cns_srv_setatime(char *req_data,
   if (fileid > 0)
     reqinfo->fileid = fileid;
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -3781,12 +3803,12 @@ int Cns_srv_setatime(char *req_data,
 
     /* Get/lock basename entry */
     if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &filentry, 1, &rec_addr))
-      RETURN (serrno);
+      RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
     /* Check parent directory components for search permission */
     if (Cns_chkbackperm (&thip->dbfd, filentry.parent_fileid,
                          reqinfo->uid, reqinfo->gid, reqinfo->clienthost))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   } else {
 
     /* Check parent directory components for search permission and get/lock
@@ -3795,7 +3817,7 @@ int Cns_srv_setatime(char *req_data,
     if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                        reqinfo->clienthost, NULL, NULL, &filentry, &rec_addr,
                        CNS_MUST_EXIST))
-      RETURN (serrno);
+      RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
     /* Record the fileid being processed */
     reqinfo->fileid = filentry.fileid;
@@ -3805,18 +3827,18 @@ int Cns_srv_setatime(char *req_data,
    * access time for this entry
    */
   if (filentry.filemode & S_IFDIR)
-    RETURN (EISDIR);
+    RETURN (EISDIR, LOG_ERR);
   if (reqinfo->uid != filentry.uid &&
       Cns_chkentryperm (&filentry, S_IREAD, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost))
-    RETURN (EACCES);
+    RETURN (EACCES, LOG_ERR);
 
   /* Update entry */
   filentry.atime = time (0);
 
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
-    RETURN (serrno);
-  RETURN (0);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_setcomment - add/replace a comment associated with a file/directory */
@@ -3843,13 +3865,13 @@ int Cns_srv_setcomment(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   if (unmarshall_STRINGN (rbp, comment, CA_MAXCOMMENTLEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -3864,7 +3886,7 @@ int Cns_srv_setcomment(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, NULL, NULL, &filentry, NULL,
                      CNS_MUST_EXIST))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Record the fileid being processed */
   reqinfo->fileid = filentry.fileid;
@@ -3875,7 +3897,7 @@ int Cns_srv_setcomment(char *req_data,
   if (reqinfo->uid != filentry.uid &&
       Cns_chkentryperm (&filentry, S_IWRITE, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost))
-    RETURN (EACCES);
+    RETURN (EACCES, LOG_ERR);
 
   if (*comment) { /* Add the comment or replace the comment if it exists */
     memset ((char *) &umd_entry, 0, sizeof(umd_entry));
@@ -3886,17 +3908,17 @@ int Cns_srv_setcomment(char *req_data,
           Cns_get_umd_by_fileid (&thip->dbfd, filentry.fileid,
                                  &old_umd_entry, 1, &rec_addru) ||
           Cns_update_umd_entry (&thip->dbfd, &rec_addru, &umd_entry))
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     }
   } else { /* Delete the comment if it exists */
     if (Cns_get_umd_by_fileid (&thip->dbfd, filentry.fileid,
                                &old_umd_entry, 1, &rec_addru)) {
       if (serrno != ENOENT)
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     } else if (Cns_delete_umd_entry (&thip->dbfd, &rec_addru))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   }
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_setfsize - set file size and last modification time */
@@ -3928,7 +3950,7 @@ int Cns_srv_setfsize(int magic,
   if (fileid > 0)
     reqinfo->fileid = fileid;
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   unmarshall_HYPER (rbp, filesize);
   if (magic >= CNS_MAGIC2) {
     unmarshall_TIME_T (rbp, new_mtime);
@@ -3937,7 +3959,7 @@ int Cns_srv_setfsize(int magic,
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -3950,7 +3972,7 @@ int Cns_srv_setfsize(int magic,
   /* Check if the user is authorized to set the file size of a file */
   if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                   localhost, P_ADMIN))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Start transaction */
   (void) Cns_start_tr (&thip->dbfd);
@@ -3959,12 +3981,12 @@ int Cns_srv_setfsize(int magic,
 
     /* Get/lock basename entry */
     if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &filentry, 1, &rec_addr))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Check parent directory components for search permission */
     if (Cns_chkbackperm (&thip->dbfd, filentry.parent_fileid,
                          reqinfo->uid, reqinfo->gid, reqinfo->clienthost))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   } else {
 
     /* Check parent directory components for search permission and get/lock
@@ -3973,7 +3995,7 @@ int Cns_srv_setfsize(int magic,
     if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                        reqinfo->clienthost, NULL, NULL, &filentry, &rec_addr,
                        CNS_MUST_EXIST))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Record the fileid being processed */
     reqinfo->fileid = filentry.fileid;
@@ -3983,11 +4005,11 @@ int Cns_srv_setfsize(int magic,
    * modification time for this entry
    */
   if (filentry.filemode & S_IFDIR)
-    RETURN (EISDIR);
+    RETURN (EISDIR, LOG_ERR);
   if (reqinfo->uid != filentry.uid &&
       Cns_chkentryperm (&filentry, S_IWRITE, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost))
-    RETURN (EACCES);
+    RETURN (EACCES, LOG_ERR);
 
   /* Update entry */
   filentry.filesize = filesize;
@@ -4001,8 +4023,8 @@ int Cns_srv_setfsize(int magic,
   *filentry.csumvalue = '\0';
 
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
-    RETURN (serrno);
-  RETURN (0);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_setfsizecs - set file size, last modification time and file checksum*/
@@ -4036,12 +4058,12 @@ int Cns_srv_setfsizecs(int magic,
   if (fileid > 0)
     reqinfo->fileid = fileid;
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   unmarshall_HYPER (rbp, filesize);
   if (unmarshall_STRINGN (rbp, csumtype, 3))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   if (magic >= CNS_MAGIC2) {
     unmarshall_TIME_T (rbp, new_mtime);
     unmarshall_TIME_T (rbp, last_mod_time);
@@ -4049,7 +4071,7 @@ int Cns_srv_setfsizecs(int magic,
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -4061,12 +4083,12 @@ int Cns_srv_setfsizecs(int magic,
 
   if (*csumtype &&
       (strcmp (csumtype, "AD") && strcmp (csumtype, "PA")))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
 
   /* Check if the user is authorized to set the file size of a file */
   if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                   localhost, P_ADMIN))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Start transaction */
   (void) Cns_start_tr (&thip->dbfd);
@@ -4075,12 +4097,12 @@ int Cns_srv_setfsizecs(int magic,
 
     /* Get/lock basename entry */
     if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &filentry, 1, &rec_addr))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Check parent directory components for search permission */
     if (Cns_chkbackperm (&thip->dbfd, filentry.parent_fileid,
                          reqinfo->uid, reqinfo->gid, reqinfo->clienthost))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   } else {
 
     /* Check parent directory components for search permission and get/lock
@@ -4089,7 +4111,7 @@ int Cns_srv_setfsizecs(int magic,
     if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                        reqinfo->clienthost, NULL, NULL, &filentry, &rec_addr,
                        CNS_MUST_EXIST))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Record the fileid being processed */
     reqinfo->fileid = filentry.fileid;
@@ -4099,11 +4121,11 @@ int Cns_srv_setfsizecs(int magic,
    * modification time for this entry
    */
   if (filentry.filemode & S_IFDIR)
-    RETURN (EISDIR);
+    RETURN (EISDIR, LOG_ERR);
   if (reqinfo->uid != filentry.uid &&
       Cns_chkentryperm (&filentry, S_IWRITE, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost))
-    RETURN (EACCES);
+    RETURN (EACCES, LOG_ERR);
 
   if ((strcmp(filentry.csumtype, "PA") == 0 && strcmp(csumtype, "AD") == 0)) {
     /* We have predefined checksums then should check them with new ones */
@@ -4113,7 +4135,7 @@ int Cns_srv_setfsizecs(int magic,
               "ExpectedChecksum=\"0x%s\"",
               reqinfo->requuid, nshostname, filentry.fileid, csumvalue,
               filentry.csumvalue);
-      RETURN (SECHECKSUM);
+      RETURN (SECHECKSUM, LOG_ERR);
     }
   }
 
@@ -4129,8 +4151,8 @@ int Cns_srv_setfsizecs(int magic,
   strcpy (filentry.csumvalue, csumvalue);
 
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
-    RETURN (serrno);
-  RETURN (0);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_dropsegs - drops all segments of a file */
@@ -4158,7 +4180,7 @@ int Cns_srv_dropsegs(char *req_data,
   if (fileid > 0)
     reqinfo->fileid = fileid;
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -4167,7 +4189,7 @@ int Cns_srv_dropsegs(char *req_data,
   /* Check if the user is authorized to drop segments */
   if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                   localhost, P_ADMIN))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Start transaction */
   (void) Cns_start_tr (&thip->dbfd);
@@ -4176,7 +4198,7 @@ int Cns_srv_dropsegs(char *req_data,
 
     /* Get/lock basename entry */
     if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &fmd_entry, 1, &rec_addr))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   } else {
 
     /* Check parent directory components for search permission and get/lock
@@ -4185,7 +4207,7 @@ int Cns_srv_dropsegs(char *req_data,
     if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                        reqinfo->clienthost, NULL, NULL, &fmd_entry, &rec_addr,
                        CNS_MUST_EXIST))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Record the fileid being processed */
     reqinfo->fileid = fmd_entry.fileid;
@@ -4193,18 +4215,18 @@ int Cns_srv_dropsegs(char *req_data,
 
   /* Check if the entry is a regular file */
   if (fmd_entry.filemode & S_IFDIR)
-    RETURN (EISDIR);
+    RETURN (EISDIR, LOG_ERR);
   if ((fmd_entry.filemode & S_IFREG) != S_IFREG)
-    RETURN (SEINTERNAL);
+    RETURN (SEINTERNAL, LOG_ERR);
   if (*fmd_entry.name == '/')
-    RETURN (SEINTERNAL);
+    RETURN (SEINTERNAL, LOG_ERR);
 
   /* Delete file segments */
   if (Cns_delete_segs(thip, &fmd_entry, 0) != 0)
     if (serrno != SEENTRYNFND)
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_startsess - start session */
@@ -4223,11 +4245,11 @@ int Cns_srv_startsess(char *req_data,
   unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   if (unmarshall_STRINGN (rbp, comment, CA_MAXCOMMENTLEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
 
   /* Construct log message */
   sprintf (reqinfo->logbuf, "Comment=\"%s\"", comment);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_starttrans - start transaction mode */
@@ -4248,7 +4270,7 @@ int Cns_srv_starttrans(int magic,
   get_client_actual_id (thip);
   if (magic >= CNS_MAGIC2) {
     if (unmarshall_STRINGN (rbp, comment, CA_MAXCOMMENTLEN+1))
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
 
     /* Construct log message */
     sprintf (reqinfo->logbuf, "Comment=\"%s\"", comment);
@@ -4256,7 +4278,7 @@ int Cns_srv_starttrans(int magic,
 
   (void) Cns_start_tr (&thip->dbfd);
   thip->dbfd.tr_mode++;
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_stat - get information about a file or a directory */
@@ -4285,7 +4307,7 @@ int Cns_srv_stat(char *req_data,
   if (fileid > 0)
     reqinfo->fileid = fileid;
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURNQ (SENAMETOOLONG);
+    RETURNQ (SENAMETOOLONG, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -4295,12 +4317,12 @@ int Cns_srv_stat(char *req_data,
 
     /* Get basename entry */
     if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &fmd_entry, 0, NULL))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Check parent directory components for search permission */
     if (Cns_chkbackperm (&thip->dbfd, fmd_entry.parent_fileid,
                          reqinfo->uid, reqinfo->gid, reqinfo->clienthost))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
   } else {
 
     /* Check parent directory components for search permission and get basename
@@ -4309,7 +4331,7 @@ int Cns_srv_stat(char *req_data,
     if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                        reqinfo->clienthost, NULL, NULL, &fmd_entry, NULL,
                        CNS_MUST_EXIST))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Record the fileid being processed */
     reqinfo->fileid = fmd_entry.fileid;
@@ -4328,7 +4350,7 @@ int Cns_srv_stat(char *req_data,
   marshall_WORD (sbp, fmd_entry.fileclass);
   marshall_BYTE (sbp, fmd_entry.status);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURNQ (0);
+  RETURNQ (0, LOG_INFO);
 }
 
 /* Cns_srv_statcs - get information about a file or a directory */
@@ -4357,7 +4379,7 @@ int Cns_srv_statcs(char *req_data,
   if (fileid > 0)
     reqinfo->fileid = fileid;
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURNQ (SENAMETOOLONG);
+    RETURNQ (SENAMETOOLONG, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -4367,12 +4389,12 @@ int Cns_srv_statcs(char *req_data,
 
     /* Get basename entry */
     if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &fmd_entry, 0, NULL))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
     /* Check parent directory components for search permission */
     if (Cns_chkbackperm (&thip->dbfd, fmd_entry.parent_fileid,
                          reqinfo->uid, reqinfo->gid, reqinfo->clienthost))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
   } else {
 
     /* Check parent directory components for search permission and get basename
@@ -4381,7 +4403,7 @@ int Cns_srv_statcs(char *req_data,
     if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                        reqinfo->clienthost, NULL, NULL, &fmd_entry, NULL,
                        CNS_MUST_EXIST))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
     /* Record the fileid being processed */
     reqinfo->fileid = fmd_entry.fileid;
@@ -4402,7 +4424,7 @@ int Cns_srv_statcs(char *req_data,
   marshall_STRING (sbp, fmd_entry.csumtype);
   marshall_STRING (sbp, fmd_entry.csumvalue);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURNQ (0);
+  RETURNQ (0, LOG_INFO);
 }
 
 /* Cns_srv_statg - get information about a file or a directory */
@@ -4428,9 +4450,9 @@ int Cns_srv_statg(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURNQ (SENAMETOOLONG);
+    RETURNQ (SENAMETOOLONG, LOG_ERR);
   if (unmarshall_STRINGN (rbp, guid, CA_MAXGUIDLEN+1))
-    RETURNQ (EINVAL);
+    RETURNQ (EINVAL, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -4445,16 +4467,16 @@ int Cns_srv_statg(char *req_data,
     if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                        reqinfo->clienthost, NULL, NULL, &fmd_entry, NULL,
                        CNS_MUST_EXIST))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
     if (*guid && strcmp (guid, fmd_entry.guid))
-      RETURNQ (EINVAL);
+      RETURNQ (EINVAL, LOG_ERR);
   } else {
     if (! *guid)
-      RETURNQ (ENOENT);
+      RETURNQ (ENOENT, LOG_ERR);
 
     /* Get basename entry */
     if (Cns_get_fmd_by_guid (&thip->dbfd, guid, &fmd_entry, 0, NULL))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Do not check parent directory components for search permission as
      * symlinks can anyway point directly at a file
@@ -4480,7 +4502,7 @@ int Cns_srv_statg(char *req_data,
   marshall_STRING (sbp, fmd_entry.csumtype);
   marshall_STRING (sbp, fmd_entry.csumvalue);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURNQ (0);
+  RETURNQ (0, LOG_INFO);
 }
 
 /* Cns_srv_symlink - make a symbolic link to a file or a directory */
@@ -4507,13 +4529,13 @@ int Cns_srv_symlink(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, target, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   if (unmarshall_STRINGN (rbp, linkname, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -4529,15 +4551,15 @@ int Cns_srv_symlink(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, linkname, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, &parent_dir, &rec_addrp, &fmd_entry,
                      NULL, CNS_NOFOLLOW))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Check if 'linkname' basename entry exists already */
   if (fmd_entry.fileid)
-    RETURN (EEXIST);
+    RETURN (EEXIST, LOG_ERR);
 
   /* Build new entry */
   if (Cns_unique_id (&thip->dbfd, &fmd_entry.fileid) < 0)
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* parent_fileid and name have been set by Cns_parsepath */
   fmd_entry.filemode = S_IFLNK | 0777;
@@ -4559,17 +4581,17 @@ int Cns_srv_symlink(char *req_data,
 
   /* Write new entry */
   if (Cns_insert_fmd_entry (&thip->dbfd, &fmd_entry))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   if (Cns_insert_lnk_entry (&thip->dbfd, &lnk_entry))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Update parent directory entry */
   parent_dir.nlink++;
   parent_dir.mtime = fmd_entry.mtime;
   parent_dir.ctime = parent_dir.mtime;
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &parent_dir))
-    RETURN (serrno);
-  RETURN (0);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_unlink - remove a file entry */
@@ -4599,11 +4621,11 @@ int Cns_srv_unlink(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -4618,16 +4640,16 @@ int Cns_srv_unlink(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, &parent_dir, &rec_addrp, &filentry,
                      &rec_addr, CNS_MUST_EXIST|CNS_NOFOLLOW))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Record the fileid being processed */
   reqinfo->fileid = filentry.fileid;
 
   if (*filentry.name == '/') /* Cns_unlink / */
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
 
   if (filentry.filemode & S_IFDIR)
-    RETURN (EPERM);
+    RETURN (EPERM, LOG_ERR);
 
   /* If the parent has the sticky bit set, the user must own the file or the
    * parent or the basename entry must have write permission
@@ -4636,41 +4658,41 @@ int Cns_srv_unlink(char *req_data,
       reqinfo->uid != parent_dir.uid && reqinfo->uid != filentry.uid &&
       Cns_chkentryperm (&filentry, S_IWRITE, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost))
-    RETURN (EACCES);
+    RETURN (EACCES, LOG_ERR);
 
   if ((filentry.filemode & S_IFLNK) == S_IFLNK) {
     if (Cns_get_lnk_by_fileid (&thip->dbfd, filentry.fileid,
                                &lnk_entry, 1, &rec_addrl))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     if (Cns_delete_lnk_entry (&thip->dbfd, &rec_addrl))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   } else {
 
     /* Delete file segments if any */
     if (Cns_delete_segs(thip, &filentry, 0) != 0)
       if (serrno != SEENTRYNFND)
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Delete the comment if it exists */
     if (Cns_get_umd_by_fileid (&thip->dbfd, filentry.fileid, &umd_entry, 1,
                                &rec_addru) == 0) {
       if (Cns_delete_umd_entry (&thip->dbfd, &rec_addru))
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     } else if (serrno != ENOENT)
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   }
 
   /* Delete file entry */
   if (Cns_delete_file_metadata (thip, &filentry, &rec_addr))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Update parent directory entry */
   parent_dir.nlink--;
   parent_dir.mtime = time (0);
   parent_dir.ctime = parent_dir.mtime;
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &parent_dir))
-    RETURN (serrno);
-  RETURN (0);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_unlinkbyvid - remove all file entries on a given volume */
@@ -4701,12 +4723,12 @@ int Cns_srv_unlinkbyvid(char *req_data,
   unmarshall_LONG (rbp, reqinfo->gid);
   get_client_actual_id (thip);
   if (unmarshall_STRINGN(rbp, vid, CA_MAXVIDLEN + 1)) {
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   }
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   sprintf (reqinfo->logbuf, "TPVID=%s", vid);
@@ -4714,7 +4736,7 @@ int Cns_srv_unlinkbyvid(char *req_data,
   /* Check if the user is authorized to unlink files by vid */
   if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                   localhost, P_ADMIN))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Delete the files on the volume */
   bov   = 1;
@@ -4733,51 +4755,51 @@ int Cns_srv_unlinkbyvid(char *req_data,
                                &fmd_entry, 1, &rec_addr) < 0) {
       if (serrno == ENOENT)
         continue;
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
     }
 
     /* Make sure this is a regular file */
     if ((fmd_entry.filemode & S_IFREG) != S_IFREG)
-      RETURNQ (SEINTERNAL);
+      RETURNQ (SEINTERNAL, LOG_ERR);
     if (*fmd_entry.name == '/')
-      RETURNQ (SEINTERNAL);
+      RETURNQ (SEINTERNAL, LOG_ERR);
 
     if (Cns_get_fmd_by_fileid (&thip->dbfd, fmd_entry.parent_fileid,
                                &dir_entry, 1, &rec_addrp) < 0) {
       if (serrno == ENOENT)
         continue;
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
     }
 
     /* Resolve fileid to filepath */
     p = path;
     if (Cns_getpath_by_fileid (&thip->dbfd, fmd_entry.fileid, &p))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Delete file segments if any */
     if (Cns_delete_segs(thip, &fmd_entry, 0) != 0) {
       if (serrno != SEENTRYNFND)
-        RETURNQ (serrno);
+        RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
     }
 
     /* Delete the comment if it exists */
     if (Cns_get_umd_by_fileid (&thip->dbfd, fmd_entry.fileid, &umd_entry, 1,
                                &rec_addru) == 0) {
       if (Cns_delete_umd_entry (&thip->dbfd, &rec_addru))
-        RETURNQ (serrno);
+        RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
     } else if (serrno != ENOENT)
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Delete file entry */
     if (Cns_delete_file_metadata (thip, &fmd_entry, &rec_addr))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Update parent directory entry */
     dir_entry.nlink--;
     dir_entry.mtime = time (0);
     dir_entry.ctime = dir_entry.mtime;
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &dir_entry))
-      RETURNQ (serrno);
+      RETURNQ (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* End transaction */
     (void) Cns_end_tr (&thip->dbfd);
@@ -4790,15 +4812,15 @@ int Cns_srv_unlinkbyvid(char *req_data,
     if (count >= 1000) {
       if ((c = Cns_get_smd_by_vid(&thip->dbfd, bov, vid, 0,
                                   &smd_entry, 0)) == 0) {
-        RETURNQ(0);
+        RETURNQ (0, LOG_INFO);
       } else {
         break;
       }
     }
   }
   if (c < 0)
-    RETURN (serrno);
-  RETURN (0);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_utime - set last access and modification times */
@@ -4807,11 +4829,11 @@ int Cns_srv_utime(char *req_data,
                   struct Cns_srv_thread_info *thip,
                   struct Cns_srv_request_info *reqinfo)
 {
-  time_t actime;
+  time_t actime = 0;
   u_signed64 cwd;
   struct Cns_file_metadata filentry;
   char *func = "utime";
-  time_t modtime;
+  time_t modtime = 0;
   char path[CA_MAXPATHLEN+1];
   char cwdpath[CA_MAXPATHLEN+1];
   char *rbp;
@@ -4825,7 +4847,7 @@ int Cns_srv_utime(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   unmarshall_LONG (rbp, user_specified_time);
   if (user_specified_time) {
     unmarshall_TIME_T (rbp, actime);
@@ -4834,7 +4856,7 @@ int Cns_srv_utime(char *req_data,
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -4854,7 +4876,7 @@ int Cns_srv_utime(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, NULL, NULL, &filentry, &rec_addr,
                      CNS_MUST_EXIST))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Record the fileid being processed */
   reqinfo->fileid = filentry.fileid;
@@ -4866,12 +4888,12 @@ int Cns_srv_utime(char *req_data,
     if (reqinfo->uid != filentry.uid &&
         Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                     localhost, P_ADMIN))
-      RETURN (EPERM);
+      RETURN (EPERM, LOG_ERR);
   } else {
     if (reqinfo->uid != filentry.uid &&
         Cns_chkentryperm (&filentry, S_IWRITE, reqinfo->uid, reqinfo->gid,
                           reqinfo->clienthost))
-      RETURN (EACCES);
+      RETURN (EACCES, LOG_ERR);
   }
 
   /* Update entry */
@@ -4885,8 +4907,8 @@ int Cns_srv_utime(char *req_data,
   }
 
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
-    RETURN (serrno);
-  RETURN (0);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_updatefile_checksum - set checksums for the file */
@@ -4915,15 +4937,15 @@ int Cns_srv_updatefile_checksum(char *req_data,
   get_client_actual_id (thip);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN+1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   if (unmarshall_STRINGN (rbp, csumtype, 3))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN+1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -4934,10 +4956,10 @@ int Cns_srv_updatefile_checksum(char *req_data,
   if (*csumtype &&
       strcmp (csumtype, "PA") &&
       strcmp (csumtype, "AD"))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   checksum = strtoul (csumvalue, &dp, 16);
   if (*dp != '\0') {
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   }
 
   /* Start transaction */
@@ -4949,14 +4971,14 @@ int Cns_srv_updatefile_checksum(char *req_data,
   if (Cns_parsepath (&thip->dbfd, cwd, path, reqinfo->uid, reqinfo->gid,
                      reqinfo->clienthost, NULL, NULL, &filentry, &rec_addr,
                      CNS_MUST_EXIST))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   /* Record the fileid being processed */
   reqinfo->fileid = filentry.fileid;
 
   /* Check if the entry is a regular file */
   if (filentry.filemode & S_IFDIR)
-    RETURN (EISDIR);
+    RETURN (EISDIR, LOG_ERR);
 
   /* Check if the user is authorized to set access/modification checksum for
    * this entry. The file must be 0 size or the user must be ADMIN. The
@@ -4966,12 +4988,12 @@ int Cns_srv_updatefile_checksum(char *req_data,
   notAdmin = Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                          localhost, P_ADMIN);
   if (filentry.filesize > 0 && notAdmin) {
-    RETURN (EPERM);
+    RETURN (EPERM, LOG_ERR);
   }
   if (notAdmin && reqinfo->uid != filentry.uid &&
       Cns_chkentryperm (&filentry, S_IWRITE, reqinfo->uid, reqinfo->gid,
                         reqinfo->clienthost)) {
-    RETURN (EACCES);
+    RETURN (EACCES, LOG_ERR);
   }
 
   /* Update entry only if not admin */
@@ -4987,8 +5009,8 @@ int Cns_srv_updatefile_checksum(char *req_data,
     sprintf(filentry.csumvalue, "%x", checksum);
   }
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &filentry))
-    RETURN (serrno);
-  RETURN (0);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_openx - open and possibly create a new CASTOR file */
@@ -5028,18 +5050,18 @@ int Cns_srv_openx(char *req_data,
   unmarshall_WORD (rbp, mask);
   unmarshall_HYPER (rbp, cwd);
   if (unmarshall_STRINGN (rbp, path, CA_MAXPATHLEN + 1))
-    RETURN (SENAMETOOLONG);
+    RETURN (SENAMETOOLONG, LOG_ERR);
   unmarshall_LONG (rbp, flags);
   flags = ntohopnflg (flags);
   unmarshall_LONG (rbp, mode);
   // Check that only expected bits are set in the mode.
   // Allowed bits are the ones to set permissions to directories
-  if ((mode & S_PERMFILE) != mode) RETURN (EINVAL);
+  if ((mode & S_PERMFILE) != mode) RETURN (EINVAL, LOG_ERR);
   unmarshall_LONG (rbp, classid);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   get_cwd_path (thip, cwd, cwdpath);
@@ -5053,7 +5075,7 @@ int Cns_srv_openx(char *req_data,
    */
   if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                   localhost, P_ADMIN))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Start transaction */
   (void) Cns_start_tr (&thip->dbfd);
@@ -5066,7 +5088,7 @@ int Cns_srv_openx(char *req_data,
                      &parent_dir, (flags & O_CREAT) ? &rec_addrp : NULL,
                      &fmd_entry,  (flags & O_TRUNC) ? &rec_addr  : NULL,
                      ((flags & O_CREAT) && (flags & O_EXCL)) ? CNS_NOFOLLOW : 0))
-    RETURN (serrno);
+    RETURN (serrno, serrno?(serrno==ENOENT?LOG_USERERR:LOG_ERR):LOG_INFO);
 
   if (fmd_entry.fileid) {  /* File exists */
     reqinfo->fileid = fmd_entry.fileid;
@@ -5079,15 +5101,15 @@ int Cns_srv_openx(char *req_data,
 
     if ((flags & O_CREAT) && (flags & O_EXCL)) {
       sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-      RETURN (EEXIST);
+      RETURN (EEXIST, LOG_ERR);
     }
     if (*fmd_entry.name == '/') { /* Cns_creat / */
       sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-      RETURN (EISDIR);
+      RETURN (EISDIR, LOG_ERR);
     }
     if ((fmd_entry.filemode & S_IFDIR) == S_IFDIR) {  /* Is a directory */
       sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-      RETURN (EISDIR);
+      RETURN (EISDIR, LOG_ERR);
     }
 
     /* Check the file permissions */
@@ -5097,7 +5119,7 @@ int Cns_srv_openx(char *req_data,
                           S_IWRITE : S_IREAD, owneruid, ownergid,
                           reqinfo->clienthost)) {
       sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-      RETURN (EACCES);
+      RETURN (EACCES, LOG_ERR);
     }
 
     /* If the file was opened with O_TRUNC and has one of the writable access
@@ -5109,7 +5131,7 @@ int Cns_srv_openx(char *req_data,
       if (Cns_delete_segs(thip, &fmd_entry, 0)) {
         if (serrno != SEENTRYNFND) {
           sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-          RETURN (serrno);
+          RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
         }
       }
 
@@ -5122,7 +5144,7 @@ int Cns_srv_openx(char *req_data,
       /* update the db and retrieve the new stagertime */
       if (Cns_update_fmd_entry_open (&thip->dbfd, &rec_addr, &fmd_entry)) {
         sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
       }
 
       /* Amend logging parameters */
@@ -5131,9 +5153,9 @@ int Cns_srv_openx(char *req_data,
     }
   } else {  /* New file */
     if ((flags & O_CREAT) == 0)
-      RETURN (ENOENT);
+      RETURN (ENOENT, LOG_ERR);
     if (parent_dir.fileclass <= 0)
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
 
     /* If a class id was supplied, verify the class exists otherwise use the
      * fileclass of the parent directory
@@ -5143,7 +5165,7 @@ int Cns_srv_openx(char *req_data,
       if (Cns_get_class_by_id (&thip->dbfd, classid, &class_entry, 0, NULL)) {
         nslogit(LOG_ERR, "MSG=\"Unable to find file class\" REQID=%s ClassId=%d "
                 "RtnCode=%d", reqinfo->requuid, classid, serrno);
-        RETURN (serrno);
+        RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
       }
       fmd_entry.fileclass = classid;
 
@@ -5154,7 +5176,7 @@ int Cns_srv_openx(char *req_data,
 
     /* Get a unique id for the file */
     if (Cns_unique_id (&thip->dbfd, &fmd_entry.fileid) < 0)
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
     reqinfo->fileid = fmd_entry.fileid;
 
     /* Set the attributes of the new file */
@@ -5179,14 +5201,14 @@ int Cns_srv_openx(char *req_data,
 
     /* Write the new file entry and retrieve stagertime from db */
     if (Cns_insert_fmd_entry (&thip->dbfd, &fmd_entry))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Update the parent directory entry */
     parent_dir.nlink++;
     parent_dir.mtime = fmd_entry.mtime;
     parent_dir.ctime = parent_dir.mtime;
     if (Cns_update_fmd_entry (&thip->dbfd, &rec_addrp, &parent_dir))
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
     /* Amend logging parameters */
     sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf),
@@ -5216,7 +5238,7 @@ int Cns_srv_openx(char *req_data,
   marshall_STRING (sbp, fmd_entry.csumvalue);
   marshall_HYPER (sbp, fmd_entry.stagertime_usec);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }
 
 /* Cns_srv_closex - close a file, setting its size and checksum attributes where appropriate */
@@ -5251,15 +5273,15 @@ int Cns_srv_closex(char *req_data,
     reqinfo->fileid = fileid;
   unmarshall_HYPER (rbp, filesize);
   if (unmarshall_STRINGN (rbp, csumtype, 3))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   if (unmarshall_STRINGN (rbp, csumvalue, CA_MAXCKSUMLEN + 1))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   unmarshall_TIME_T (rbp, new_mtime);
   unmarshall_HYPER (rbp, last_stagertime_usec);
 
   /* Check if namespace is in 'readonly' mode */
   if (rdonly)
-    RETURN (EROFS);
+    RETURN (EROFS, LOG_ERR);
 
   /* Construct log message */
   sprintf (reqinfo->logbuf,
@@ -5272,11 +5294,11 @@ int Cns_srv_closex(char *req_data,
    * and pre-adler32 (PA) are supported.
    */
   if (csumtype[0] != '\0' && strcmp(csumtype, "AD") && strcmp(csumtype, "PA"))
-    RETURN (EINVAL);
+    RETURN (EINVAL, LOG_ERR);
   if (csumvalue[0] != '\0') {
     strtoul (csumvalue, &dp, 16);
     if (*dp != '\0') {
-      RETURN (EINVAL);
+      RETURN (EINVAL, LOG_ERR);
     }
   }
 
@@ -5285,14 +5307,14 @@ int Cns_srv_closex(char *req_data,
    */
   if (Cupv_check (reqinfo->uid, reqinfo->gid, reqinfo->clienthost,
                   localhost, P_ADMIN))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Start transaction */
   (void) Cns_start_tr (&thip->dbfd);
 
   /* Get/lock basename entry */
   if (Cns_get_fmd_by_fileid (&thip->dbfd, fileid, &fmd_entry, 1, &rec_addr))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* We deliberately don't check the parent directory components for search
    * permissions as the previous call to CUPV has already verified that we are
@@ -5300,11 +5322,11 @@ int Cns_srv_closex(char *req_data,
    */
 
   if (fmd_entry.filemode & S_IFDIR) /* Operation not permitted on directories */
-    RETURN (EISDIR);
+    RETURN (EISDIR, LOG_ERR);
   
   /* Check for concurrent modifications */
   if (Cns_is_concurrent_open(&thip->dbfd, &fmd_entry, last_stagertime_usec, reqinfo->logbuf))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Check for end-to-end checksum mismatch */
   if ((strcmp (fmd_entry.csumtype, "PA") == 0) &&
@@ -5315,7 +5337,7 @@ int Cns_srv_closex(char *req_data,
               "ExpectedChecksum=\"0x%s\"",
               reqinfo->requuid, nshostname, fmd_entry.fileid, csumvalue,
               fmd_entry.csumvalue);
-      RETURN (SECHECKSUM);
+      RETURN (SECHECKSUM, LOG_ERR);
     }
   }
 
@@ -5328,12 +5350,12 @@ int Cns_srv_closex(char *req_data,
   /* Delete the segments associated to the file */
   if (Cns_delete_segs (thip, &fmd_entry, 0) != 0)
     if (serrno != SEENTRYNFND)
-      RETURN (serrno);
+      RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
   if (fmd_entry.status == 'm')
     fmd_entry.status = '-';
 
   if (Cns_update_fmd_entry (&thip->dbfd, &rec_addr, &fmd_entry))
-    RETURN (serrno);
+    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
 
   /* Marshall return value, the attributes of the file */
   sbp = repbuf;
@@ -5351,5 +5373,5 @@ int Cns_srv_closex(char *req_data,
   marshall_STRING (sbp, fmd_entry.csumtype);
   marshall_STRING (sbp, fmd_entry.csumvalue);
   sendrep (thip->s, MSG_DATA, sbp - repbuf, repbuf);
-  RETURN (0);
+  RETURN (0, LOG_INFO);
 }

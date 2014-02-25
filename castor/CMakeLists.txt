@@ -71,9 +71,11 @@ set (CLIENT_LIB_SRC_FILES
   io/AbstractTCPSocket.cpp
   io/AuthServerSocket.cpp
   io/AuthClientSocket.cpp
+  io/IpAndPort.cpp
   io/UDPSocket.cpp
   io/PipeSocket.cpp
   io/ClientSocket.cpp
+  io/io.cpp
   io/ServerSocket.cpp
   io/StreamAddress.cpp
   io/StreamBaseCnv.cpp
@@ -138,11 +140,26 @@ set (CLIENT_LIB_SRC_FILES
   io/StreamBWUserCnv.cpp
   io/StreamRequestTypeCnv.cpp
   io/StreamNsFileIdCnv.cpp
-  log/IPAddress.cpp
-  log/Log.cpp
+  log/DummyLogger.cpp
+  log/Logger.cpp
+  log/LoggerImplementation.cpp
+  log/StringLogger.cpp
+  log/LogContext.cpp
   log/Message.cpp
   log/Param.cpp
-  log/TimeStamp.cpp
+  metrics/Counter.cpp
+  metrics/InternalCounter.cpp
+  metrics/Histogram.cpp
+  metrics/MetricsCollector.cpp
+  metrics/UpdateThread.cpp
+  metrics/ObjTypeCounter.cpp
+  query/DiskPoolQueryResponse.cpp
+  query/FileSystemDescription.cpp
+  query/DiskServerDescription.cpp
+  query/DiskPoolQuery.cpp
+  query/DiskPoolQueryType.cpp
+  query/VersionQuery.cpp
+  query/VersionResponse.cpp
   replier/ClientConnection.cpp
   replier/RequestReplier.cpp
   rh/Client.cpp
@@ -157,12 +174,12 @@ set (CLIENT_LIB_SRC_FILES
   rh/FileQryResponse.cpp
   rh/IOResponse.cpp
   rh/BasicResponse.cpp
-  server/BaseDaemon.cpp
-  server/BaseServer.cpp
   server/AuthListenerThreadPool.cpp
   server/BaseThreadPool.cpp
+  server/Daemon.cpp
   server/DynamicThreadPool.cpp
   server/ListenerThreadPool.cpp
+  server/MultiThreadedDaemon.cpp
   server/TCPListenerThreadPool.cpp
   server/UDPListenerThreadPool.cpp
   server/ForkedProcessPool.cpp
@@ -173,12 +190,6 @@ set (CLIENT_LIB_SRC_FILES
   server/SelectProcessThread.cpp
   server/ThreadNotification.cpp
   server/Queue.cpp
-  metrics/Counter.cpp
-  metrics/InternalCounter.cpp
-  metrics/Histogram.cpp
-  metrics/MetricsCollector.cpp
-  metrics/UpdateThread.cpp
-  metrics/ObjTypeCounter.cpp
   stager/CastorFile.cpp
   stager/DiskCopyInfo.cpp
   stager/DiskCopyForRecall.cpp
@@ -237,6 +248,8 @@ set (CLIENT_LIB_SRC_FILES
   stager/NsFileId.cpp
   stager/BulkRequestResult.cpp
   stager/FileResult.cpp
+  utils/SmartFd.cpp
+  utils/utils.cpp
   vdqm/ClientIdentification.cpp
   vdqm/TapeDrive.cpp
   vdqm/DeviceGroupName.cpp
@@ -249,13 +262,6 @@ set (CLIENT_LIB_SRC_FILES
   vdqm/TapeServer.cpp
   vdqm/TapeServerStatusCodes.cpp
   vdqm/VdqmTape.cpp
-  query/DiskPoolQueryResponse.cpp
-  query/FileSystemDescription.cpp
-  query/DiskServerDescription.cpp
-  query/DiskPoolQuery.cpp
-  query/DiskPoolQueryType.cpp
-  query/VersionQuery.cpp
-  query/VersionResponse.cpp
   ../client/src/stager/stager_client_api_common.cpp
   ../client/src/stager/stager_client_commandline.cpp
   ../client/src/stager/stager_client_changePrivilege.c
@@ -272,6 +278,9 @@ set (CLIENT_LIB_SRC_FILES
   ../client/src/stager/stager_errmsg.c
   ../client/src/stager/stager_mapper.c)
 add_library (castorclient SHARED ${CLIENT_LIB_SRC_FILES})
+# Relax compilation of old code full of pointer casting. Funnily enough,
+# the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
+set_property(SOURCE ../client/src/stager/stager_errmsg.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 CastorSetLibraryVersions (castorclient)
 target_link_libraries (castorclient castordlf)
 install (TARGETS castorclient DESTINATION ${CASTOR_DEST_LIB_DIR})
@@ -280,9 +289,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
   CastorInstallExample (castor.conf /etc/castor)
   CastorInstallExample (rsyslog.conf.client /etc/castor)
   CastorInstallExample (rsyslog.conf.server /etc/castor)
-endif (${COMPILE_SERVER} STREQUAL "1")
 
-if (${COMPILE_SERVER} STREQUAL "1")
   ################################################################################
   # Installation of header files for package castor-build-headers
   ################################################################################
@@ -314,13 +321,21 @@ if (${COMPILE_SERVER} STREQUAL "1")
     PERMISSIONS ${CASTOR_HEADER_PERMS})
   
   install(FILES
+    exception/AcceptConnectionInterrupted.hpp
+    exception/Backtrace.hpp
+    exception/CommandLineNotParsed.hpp
     exception/Communication.hpp
     exception/Exception.hpp
     exception/Internal.hpp
     exception/InvalidNbArguments.hpp
+    exception/AlreadyInitialized.hpp
+    exception/InvalidArgument.hpp
+    exception/NoEntry.hpp
+    exception/OutOfMemory.hpp
+    exception/SQLError.hpp
     DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/exception
     PERMISSIONS ${CASTOR_HEADER_PERMS})
-  
+
   install(FILES
     io/ServerSocket.hpp
     DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/io
@@ -407,15 +422,6 @@ if (${COMPILE_SERVER} STREQUAL "1")
     PERMISSIONS ${CASTOR_HEADER_PERMS})
   
   install(FILES
-    exception/AlreadyInitialized.hpp
-    exception/InvalidArgument.hpp
-    exception/NoEntry.hpp
-    exception/OutOfMemory.hpp
-    exception/SQLError.hpp
-    DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/exception
-    PERMISSIONS ${CASTOR_HEADER_PERMS})
-  
-  install(FILES
     io/ClientSocket.hpp
     DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/io
     PERMISSIONS ${CASTOR_HEADER_PERMS})
@@ -438,8 +444,6 @@ if (${COMPILE_SERVER} STREQUAL "1")
     PERMISSIONS ${CASTOR_HEADER_PERMS})
   
   install(FILES
-    server/BaseDaemon.hpp
-    server/BaseServer.hpp
     server/BaseThreadPool.hpp
     server/DynamicThreadPool.hpp
     server/IThread.hpp

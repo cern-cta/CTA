@@ -22,11 +22,11 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-add_subdirectory (net)
 add_subdirectory (gatewayprotocol)
 add_subdirectory (legacymsg)
 #add_subdirectory (rmc)
 add_subdirectory (tapebridge)
 add_subdirectory (tapegateway)
+add_subdirectory (tapeserver)
 add_subdirectory (tpcp)
 add_subdirectory (utils)

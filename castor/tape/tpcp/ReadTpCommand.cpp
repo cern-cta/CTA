@@ -24,8 +24,8 @@
  
 #include "castor/Constants.hpp"
 #include "castor/exception/Internal.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/Constants.hpp"
-#include "castor/tape/net/net.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
@@ -41,6 +41,7 @@
 #include "castor/tape/tpcp/ReadTpCommand.hpp"
 #include "castor/tape/tpcp/TapeFileSequenceParser.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/Cupv_api.h"
 #include "h/rfio_api.h"
@@ -147,7 +148,7 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
     case 's':
       m_cmdLine.serverSet = true;
       try {
-        utils::copyString(m_cmdLine.server, optarg);
+        castor::utils::copyString(m_cmdLine.server, optarg);
       } catch(castor::exception::Exception &ex) {
         TAPE_THROW_EX(castor::exception::Internal,
           ": Failed to copy the argument of the server command-line option"
@@ -265,7 +266,7 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
 
   // Parse the VID command-line argument
   try {
-    utils::copyString(m_cmdLine.vid, argv[optind]);
+    castor::utils::copyString(m_cmdLine.vid, argv[optind]);
   } catch(castor::exception::Exception &ex) {
     TAPE_THROW_EX(castor::exception::Internal,
       ": Failed to copy VID comand-line argument into the internal data"
@@ -361,7 +362,7 @@ void castor::tape::tpcp::ReadTpCommand::checkAccessToDisk()
     std::ostream &os = std::cout;
     time_t       now = time(NULL);
 
-    utils::writeTime(os, now, TIMEFORMAT);
+    castor::utils::writeTime(os, now, TIMEFORMAT);
     os << " RFIO stat the directory of the first file \""
        << filepath << "\"" << std::endl;
 
@@ -469,7 +470,7 @@ void castor::tape::tpcp::ReadTpCommand::performTransfer()
   std::ostream &os = std::cout;
 
   time_t now = time(NULL);
-  utils::writeTime(os, now, TIMEFORMAT);
+  castor::utils::writeTime(os, now, TIMEFORMAT);
   os << " Finished reading from tape " << m_cmdLine.vid << std::endl
      << std::endl
      << "Number of files to be recalled = ";
@@ -642,7 +643,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFilesToRecallListRequest(
       std::ostream &os = std::cout;
 
       time_t now = time(NULL);
-      utils::writeTime(os, now, TIMEFORMAT);
+      castor::utils::writeTime(os, now, TIMEFORMAT);
       os <<
         " Recalling"
         " \"" << filename << "\"" <<
@@ -756,7 +757,7 @@ void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecall(
       FileTransfer &fileTransfer = itor->second;
 
       time_t now = time(NULL);
-      utils::writeTime(os, now, TIMEFORMAT);
+      castor::utils::writeTime(os, now, TIMEFORMAT);
       os <<
         " Recalled"
         " \"" << fileTransfer.filename << "\""

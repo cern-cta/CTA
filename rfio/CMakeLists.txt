@@ -36,6 +36,11 @@ set (RFIO_LIB_SRC_FILES access.c alrm.c chdir.c checkkey.c chmod.c chown.c
   xyread.c xywrite.c fopen64.c fseeko64.c fstat64.c ftello64.c lockf64.c
   lseek64.c open64.c preseek64.c read64.c stream64.c write64.c RfioTURL.c)
 add_library (castorrfio SHARED ${RFIO_LIB_SRC_FILES})
+# Relax compilation of old code full of pointer casting. Funnily enough,
+# the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
+set_property(SOURCE connect.c error.c mstat.c msymlink.c munlink.c parse.c 
+rfio_HsmIf.c stream.c RfioTURL.c
+  APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 CastorSetLibraryVersions (castorrfio)
 set_property (TARGET castorrfio
   APPEND PROPERTY COMPILE_DEFINITIONS USE_XFSPREALLOC)
@@ -87,6 +92,9 @@ if (${COMPILE_SERVER} STREQUAL "1")
     alrm.c stager_util.c stager_messages.c stager_extern_globals.c stager_uuid.c 
     rfio_alignedbuf.c rfio_xfsprealloc.c)
   add_executable(rfiod ${RFIOD_SRC_FILES})
+  # Relax compilation of old code full of pointer casting. Funnily enough,
+  # the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
+  set_property(SOURCE rfio_calls.c stager_uuid.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
   target_link_libraries(rfiod castorcommon castorns castordlf castorsecurity
     castorclient castorrfio)
   set_target_properties(rfiod PROPERTIES

@@ -32,7 +32,6 @@
 #define TPTIMEOUT   5	     /* netread timeout while receiving a request */
 #define UCHECKI    10	     /* max interval to check for drive ready or oper cancel */
 #define VDQMCHKINTVLDFT 900  /* default check interval to confirm to VDQM that drives are free */
-#define LOCATE_MIN_TIMEOUT 180000 /* lower threshold for timeouts on locate (milliseconds) */
 
 			/* label types */
 

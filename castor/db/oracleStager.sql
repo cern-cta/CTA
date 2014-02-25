@@ -93,6 +93,7 @@ CREATE OR REPLACE PACKAGE castor AS
   TYPE FileResult_Cur IS REF CURSOR RETURN FileResult;
   TYPE DiskCopyResult IS RECORD (
     dcId INTEGER,
+    fileId INTEGER,
     retCode INTEGER);
   TYPE DiskCopyResult_Cur IS REF CURSOR RETURN DiskCopyResult;
   TYPE LogEntry IS RECORD (
@@ -832,7 +833,7 @@ BEGIN
     -- commit
     COMMIT;
     -- wake up the scheduler so that it can remove the transfer from the queues
-    DBMS_ALERT.SIGNAL('transfersToAbort', '');
+    alertSignalNoLock('transfersToAbort');
     -- reset all counters
     nbItems := nbItems - nbItemsDone;
     nbItemsDone := 0;
@@ -1504,19 +1505,22 @@ END;
 CREATE OR REPLACE PROCEDURE createDisk2DiskCopyJob
 (inCfId IN INTEGER, inNsOpenTime IN INTEGER, inDestSvcClassId IN INTEGER,
  inOuid IN INTEGER, inOgid IN INTEGER, inReplicationType IN INTEGER,
- inReplacedDcId IN INTEGER, inDrainingJob IN INTEGER, inDoSignal IN BOOLEAN) AS
+ inSrcDcId IN INTEGER, inDropSource IN BOOLEAN, inDrainingJob IN INTEGER, inDoSignal IN BOOLEAN) AS
   varD2dCopyJobId INTEGER;
   varDestDcId INTEGER;
+  varTransferId VARCHAR2(2048);
+  varDropSource INTEGER := CASE inDropSource WHEN TRUE THEN 1 ELSE 0 END;
 BEGIN
   varD2dCopyJobId := ids_seq.nextval();
   varDestDcId := ids_seq.nextval();
   -- Create the Disk2DiskCopyJob
   INSERT INTO Disk2DiskCopyJob (id, transferId, creationTime, status, retryCounter, ouid, ogid,
                                 destSvcClass, castorFile, nsOpenTime, replicationType,
-                                replacedDcId, destDcId, drainingJob)
+                                srcDcId, destDcId, dropSource, drainingJob)
   VALUES (varD2dCopyJobId, uuidgen(), gettime(), dconst.DISK2DISKCOPYJOB_PENDING, 0, inOuid, inOgid,
           inDestSvcClassId, inCfId, inNsOpenTime, inReplicationType,
-          inReplacedDcId, varDestDcId, inDrainingJob);
+          inSrcDcId, varDestDcId, varDropSource, inDrainingJob)
+  RETURNING transferId INTO varTransferId;
 
   -- log "Created new Disk2DiskCopyJob"
   DECLARE
@@ -1528,13 +1532,13 @@ BEGIN
              'destSvcClass=' || getSvcClassName(inDestSvcClassId) || ' nsOpenTime=' || TO_CHAR(inNsOpenTime) ||
              ' uid=' || TO_CHAR(inOuid) || ' gid=' || TO_CHAR(inOgid) || ' replicationType=' ||
              getObjStatusName('Disk2DiskCopyJob', 'replicationType', inReplicationType) ||
-             ' TransferId=' || TO_CHAR(varD2dCopyJobId) || ' replacedDcId=' || TO_CHAR(inReplacedDcId ||
-             ' DrainReq=' || TO_CHAR(inDrainingJob)));
+             ' TransferId=' || varTransferId || ' srcDcId=' || TO_CHAR(inSrcDcId) ||
+             ' DrainReq=' || TO_CHAR(inDrainingJob));
   END;
   
   IF inDoSignal THEN
     -- wake up transfermanager
-    DBMS_ALERT.SIGNAL('d2dReadyToSchedule', '');
+    alertSignalNoLock('d2dReadyToSchedule');
   END IF;
 END;
 /
@@ -1649,7 +1653,7 @@ BEGIN
   LOOP
     BEGIN
       -- Trigger a replication request.
-      createDisk2DiskCopyJob(cfId, varNsOpenTime, a.id, ouid, ogid, dconst.REPLICATIONTYPE_USER, NULL, NULL, TRUE);
+      createDisk2DiskCopyJob(cfId, varNsOpenTime, a.id, ouid, ogid, dconst.REPLICATIONTYPE_USER, NULL, FALSE, NULL, TRUE);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       NULL;  -- No copies to replicate from
     END;
@@ -2260,7 +2264,7 @@ BEGIN
   IF dcsToRmStatus.COUNT > 0 THEN
     COMMIT;
     -- wake up the scheduler so that it can remove the transfer from the queues now
-    DBMS_ALERT.SIGNAL('transfersToAbort', '');
+    alertSignalNoLock('transfersToAbort');
   END IF;
 
   ret := 1;  -- ok
@@ -2715,9 +2719,8 @@ BEGIN
   -- trigger recall only if recall is not already ongoing
   IF varIsBeingRecalled != 0 THEN
     -- createRecallCandidate: found already running recall
-    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECALL_FOUND_ONGOING_RECALL, varFileId, varNsHost, 'stagerd',
-             'FileName=' || varFileName || ' REQID=' || varReqUUID ||
-             ' SUBREQID=' || varSubReqUUID || ' RecallGroup=' || varRecallGroupName ||
+    logToDLF(varReqUUID, dlf.LVL_SYSTEM, dlf.RECALL_FOUND_ONGOING_RECALL, varFileId, varNsHost, 'stagerd',
+             'FileName=' || varFileName || ' SUBREQID=' || varSubReqUUID || ' RecallGroup=' || varRecallGroupName ||
              ' RequestType=' || varReqType);
   ELSE
     varRc := createRecallJobs(varCfId, varFileId, varNsHost, varFileSize, varFileClassId,
@@ -2741,66 +2744,87 @@ END;
 /
 
 /* PL/SQL method to either force GC of the given diskCopies or delete them when the physical files behind have been lost */
-CREATE OR REPLACE PROCEDURE deleteDiskCopies(inDcIds IN castor."cnumList", inFileIds IN castor."cnumList", inForce IN BOOLEAN, inDryRun IN BOOLEAN, outRes OUT castor.DiskCopyResult_Cur, outDiskPool OUT VARCHAR2) AS
+CREATE OR REPLACE PROCEDURE deleteDiskCopies(inDcIds IN castor."cnumList", inFileIds IN castor."cnumList",
+                                             inForce IN BOOLEAN, inDryRun IN BOOLEAN,
+                                             outRes OUT castor.DiskCopyResult_Cur, outDiskPool OUT VARCHAR2) AS
   varNsHost VARCHAR2(100);
   varFileName VARCHAR2(2048);
   varCfId INTEGER;
   varNbRemaining INTEGER;
   varStatus INTEGER;
-  varFStatus VARCHAR2(1);
   varLogParams VARCHAR2(2048);
 BEGIN
   DELETE FROM DeleteDiskCopyHelper;
-  FOR i IN 1..inDcIds.COUNT LOOP
+  -- Insert all data in bulk for efficiency reasons
+  FORALL i IN inFileIds.FIRST .. inFileIds.LAST
+    INSERT INTO DeleteDiskCopyHelper (dcId, fileId, fStatus, rc)
+    VALUES (inDcIds(i), inFileIds(i), 'd', -1);
+  -- And now gather all remote Nameserver statuses. This could not be
+  -- incorporated in the previous query, because Oracle would give:
+  -- PLS-00739: FORALL INSERT/UPDATE/DELETE not supported on remote tables.
+  -- Note that files that are not found in the Nameserver remain with fStatus = 'd',
+  -- which means they can be safely deleted: we're anticipating the NS synch.
+  UPDATE DeleteDiskCopyHelper
+     SET fStatus = '-'
+   WHERE EXISTS (SELECT 1 FROM Cns_file_metadata@RemoteNS F
+                  WHERE status = '-' AND F.fileId IN
+                    (SELECT fileId FROM DeleteDiskCopyHelper));
+  UPDATE DeleteDiskCopyHelper
+     SET fStatus = 'm'
+   WHERE EXISTS (SELECT 1 FROM Cns_file_metadata@RemoteNS F
+                  WHERE status = 'm' AND F.fileId IN
+                    (SELECT fileId FROM DeleteDiskCopyHelper));
+  -- A better and more generic implementation would have been:
+  -- UPDATE DeleteDiskCopyHelper H
+  --    SET fStatus = nvl((SELECT F.status
+  --                         FROM Cns_file_metadata@RemoteNS F
+  --                        WHERE F.fileId = H.fileId), 'd');
+  -- Unfortunately, that one is much less efficient as Oracle does not use
+  -- the DB link in bulk, therefore making the query extremely slow (several mins)
+  -- when handling large numbers of files (e.g. an entire mount point).
+  COMMIT;
+  FOR dc IN (SELECT dcId, fileId, fStatus FROM DeleteDiskCopyHelper) LOOP
     BEGIN
       -- get data and lock
       SELECT castorFile, DiskCopy.status, DiskPool.name
         INTO varCfId, varStatus, outDiskPool
         FROM DiskPool, FileSystem, DiskCopy
-       WHERE DiskCopy.id = inDcIds(i)
+       WHERE DiskCopy.id = dc.dcId
          AND DiskCopy.fileSystem = FileSystem.id
          AND FileSystem.diskPool = DiskPool.id;
       SELECT nsHost, lastKnownFileName
         INTO varNsHost, varFileName
         FROM CastorFile
        WHERE id = varCfId
-         AND fileId = inFileIds(i)
+         AND fileId = dc.fileId
          FOR UPDATE;
       varLogParams := 'FileName="' || varFileName ||'" DiskPool="'|| outDiskPool
-        ||'" dcId='|| inDcIds(i) ||' status='
+        ||'" dcId='|| dc.dcId ||' status='
         || getObjStatusName('DiskCopy', 'status', varStatus);
     EXCEPTION WHEN NO_DATA_FOUND THEN
       -- diskcopy not found in stager
-      INSERT INTO DeleteDiskCopyHelper (dcId, rc)
-        VALUES (inDcIds(i), dconst.DELDC_ENOENT);
+      UPDATE DeleteDiskCopyHelper
+         SET rc = dconst.DELDC_ENOENT
+       WHERE dcId = dc.dcId;
       COMMIT;
       CONTINUE;
-    END;
-    BEGIN
-      -- get the Nameserver status in case we have to also drop the namespace entry
-      SELECT status INTO varFStatus FROM Cns_file_metadata@RemoteNS
-       WHERE fileid = inFileIds(i);
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- not found in the Nameserver means that we can scrap everything and there's no data loss
-      -- as we're anticipating the NS synchronization
-      varFStatus := 'd';
     END;
     -- count remaining ones
     SELECT count(*) INTO varNbRemaining FROM DiskCopy
      WHERE castorFile = varCfId
        AND status = dconst.DISKCOPY_VALID
-       AND id != inDcIds(i);
+       AND id != dc.dcId;
     -- and update their importance if needed (other copy exists and dropped one was valid)
-    IF varNbRemaining > 0 AND varStatus = dconst.DISKCOPY_VALID THEN
+    IF varNbRemaining > 0 AND varStatus = dconst.DISKCOPY_VALID AND (NOT inDryRun) THEN
       UPDATE DiskCopy SET importance = importance + 1
        WHERE castorFile = varCfId
          AND status = dconst.DISKCOPY_VALID;
     END IF;
-    IF inForce = TRUE THEN
+    IF inForce THEN
       -- the physical diskcopy is deemed lost: delete the diskcopy entry
       -- and potentially drop dangling entities
       IF NOT inDryRun THEN
-        DELETE FROM DiskCopy WHERE id = inDcIds(i);
+        DELETE FROM DiskCopy WHERE id = dc.dcId;
       END IF;
       IF varStatus = dconst.DISKCOPY_STAGEOUT THEN
         -- fail outstanding requests
@@ -2808,7 +2832,7 @@ BEGIN
            SET status = dconst.SUBREQUEST_FAILED,
                errorCode = serrno.SEINTERNAL,
                errorMessage = 'File got lost while being written to'
-         WHERE diskCopy = inDcIds(i)
+         WHERE diskCopy = dc.dcId
            AND status = dconst.SUBREQUEST_READY;
       END IF;
       -- was it the last active one?
@@ -2821,56 +2845,62 @@ BEGIN
         IF NOT inDryRun THEN
           deleteCastorFile(varCfId);
         END IF;
-        IF varFStatus = 'm' THEN
+        IF dc.fStatus = 'm' THEN
           -- file is on tape: let's recall it. This may potentially trigger a new migration
-          INSERT INTO DeleteDiskCopyHelper (dcId, rc)
-            VALUES (inDcIds(i), dconst.DELDC_RECALL);
+          UPDATE DeleteDiskCopyHelper
+             SET rc = dconst.DELDC_RECALL
+           WHERE dcId = dc.dcId;
           IF NOT inDryRun THEN
-            logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_RECALL, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+            logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_RECALL, dc.fileId, varNsHost, 'stagerd', varLogParams);
           END IF;
-        ELSIF varFStatus = 'd' THEN
+        ELSIF dc.fStatus = 'd' THEN
           -- file was dropped, report as if we have run a standard GC
-          INSERT INTO DeleteDiskCopyHelper (dcId, rc)
-            VALUES (inDcIds(i), dconst.DELDC_GC);
+          UPDATE DeleteDiskCopyHelper
+             SET rc = dconst.DELDC_GC
+           WHERE dcId = dc.dcId;
           IF NOT inDryRun THEN
-            logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_GC, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+            logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_GC, dc.fileId, varNsHost, 'stagerd', varLogParams);
           END IF;
         ELSE
           -- file is really lost, we'll remove the namespace entry afterwards
-          INSERT INTO DeleteDiskCopyHelper (dcId, rc)
-            VALUES (inDcIds(i), dconst.DELDC_LOST);
+          UPDATE DeleteDiskCopyHelper
+             SET rc = dconst.DELDC_LOST
+           WHERE dcId = dc.dcId;
           IF NOT inDryRun THEN
-            logToDLF(NULL, dlf.LVL_WARNING, dlf.DELETEDISKCOPY_LOST, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+            logToDLF(NULL, dlf.LVL_WARNING, dlf.DELETEDISKCOPY_LOST, dc.fileId, varNsHost, 'stagerd', varLogParams);
           END IF;
         END IF;
       ELSE
         -- it was not the last valid copy, replicate from another one
-        INSERT INTO DeleteDiskCopyHelper (dcId, rc)
-          VALUES (inDcIds(i), dconst.DELDC_REPLICATION);
+          UPDATE DeleteDiskCopyHelper
+             SET rc = dconst.DELDC_REPLICATION
+           WHERE dcId = dc.dcId;
         IF NOT inDryRun THEN
-          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_REPLICATION, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_REPLICATION, dc.fileId, varNsHost, 'stagerd', varLogParams);
         END IF;
       END IF;
     ELSE
       -- similarly to stageRm, check that the deletion is allowed:
       -- basically only files on tape may be dropped in case no data loss is provoked,
       -- or files already dropped from the namespace. The rest is forbidden.
-      IF (varStatus = dconst.DISKCOPY_VALID AND (varNbRemaining > 0 OR varFStatus = 'm'))
-         OR varFStatus = 'd' THEN
-        INSERT INTO DeleteDiskCopyHelper (dcId, rc)
-          VALUES (inDcIds(i), dconst.DELDC_GC);
+      IF (varStatus = dconst.DISKCOPY_VALID AND (varNbRemaining > 0 OR dc.fStatus = 'm'))
+         OR dc.fStatus = 'd' THEN
+        UPDATE DeleteDiskCopyHelper
+           SET rc = dconst.DELDC_GC
+         WHERE dcId = dc.dcId;
         IF NOT inDryRun THEN
           UPDATE DiskCopy
              SET status = dconst.DISKCOPY_INVALID, gcType = dconst.GCTYPE_ADMIN
-           WHERE id = inDcIds(i);
-           logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_GC, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+           WHERE id = dc.dcId;
+           logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_GC, dc.fileId, varNsHost, 'stagerd', varLogParams);
         END IF;
       ELSE
         -- nothing is done, just record no-action
-        INSERT INTO DeleteDiskCopyHelper (dcId, rc)
-          VALUES (inDcIds(i), dconst.DELDC_NOOP);
+        UPDATE DeleteDiskCopyHelper
+           SET rc = dconst.DELDC_NOOP
+         WHERE dcId = dc.dcId;
         IF NOT inDryRun THEN
-          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_NOOP, inFileIds(i), varNsHost, 'stagerd', varLogParams);
+          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.DELETEDISKCOPY_NOOP, dc.fileId, varNsHost, 'stagerd', varLogParams);
         END IF;
         COMMIT;
         CONTINUE;
@@ -2881,7 +2911,46 @@ BEGIN
   -- return back all results for the python script to post-process them,
   -- including performing all required actions
   OPEN outRes FOR
-    SELECT dcId, rc FROM DeleteDiskCopyHelper;
+    SELECT dcId, fileId, rc FROM DeleteDiskCopyHelper;
+END;
+/
+
+/* PL/SQL method to perform a deleteDiskCopies on entire filesystems: typical case,
+ * the filesystem is completely corrupted and will be reformatted, so all files on it are to be dropped.
+ */
+CREATE OR REPLACE PROCEDURE deleteDiskCopiesInFSs(inDiskServers IN castor."strList", inMountPoints IN castor."strList",
+                                                  inForce IN BOOLEAN, inDryRun IN BOOLEAN,
+                                                  outRes OUT castor.DiskCopyResult_Cur, outDiskPool OUT VARCHAR2) AS
+  varDCIds castor."cnumList";
+  varFileIds castor."cnumList";
+  varDSs strListTable := strListTable();
+  varFSs strListTable := strListTable();
+BEGIN
+  -- the following because SELECT FROM TABLE(inDiskServer) is not supported
+  -- and strListTable is not supported as argument type...
+  varDSs.EXTEND(inDiskServers.COUNT);
+  varFSs.EXTEND(inMountPoints.COUNT);
+  FOR i IN inDiskServers.FIRST .. inDiskServers.LAST LOOP
+    varDSs(i) := inDiskServers(i);
+    varFSs(i) := inMountPoints(i);
+  END LOOP;
+  -- select the disk copies to be deleted
+  SELECT DiskCopy.id, CastorFile.fileid
+    BULK COLLECT INTO varDCIds, varFileIds
+    FROM DiskCopy, CastorFile, FileSystem, DiskServer
+   WHERE DiskCopy.castorFile = CastorFile.id
+     AND DiskCopy.fileSystem = FileSystem.id
+     AND FileSystem.diskServer = DiskServer.id
+     AND FileSystem.mountPoint IN (SELECT * FROM TABLE(varFSs))
+     AND DiskServer.name IN (SELECT * FROM TABLE(varDSs));
+  IF varDCIds.COUNT > 0 THEN
+    deleteDiskCopies(varDCIds, varFileIds, inForce, inDryRun, outRes, outDiskPool);
+  ELSE
+    -- nothing found, open an empty cursor for the python client
+    DELETE FROM DeleteDiskCopyHelper;
+    OPEN outRes FOR
+      SELECT dcId, fileId, rc FROM DeleteDiskCopyHelper;
+  END IF;
 END;
 /
 
@@ -2937,7 +3006,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
         BEGIN
           -- yes, we can replicate, create a replication request without waiting on it.
           createDisk2DiskCopyJob(inCfId, inNsOpenTime, inSvcClassId, inEuid, inEgid,
-                                 dconst.REPLICATIONTYPE_INTERNAL, NULL, NULL, TRUE);
+                                 dconst.REPLICATIONTYPE_INTERNAL, NULL, FALSE, NULL, FALSE);
           -- log it
           logToDLF(inReqUUID, dlf.LVL_SYSTEM, dlf.STAGER_GET_REPLICATION, inFileId, inNsHost, 'stagerd',
                    'SUBREQID=' || inSrUUID || ' svcClassId=' || getSvcClassName(inSvcClassId) ||
@@ -2969,7 +3038,7 @@ BEGIN
   IF varSrcDcId > 0 THEN
     -- create DiskCopyCopyJob and make this subRequest wait on it
     createDisk2DiskCopyJob(inCfId, inNsOpenTime, inSvcClassId, inEuid, inEgid,
-                           dconst.REPLICATIONTYPE_USER, NULL, NULL, TRUE);
+                           dconst.REPLICATIONTYPE_USER, NULL, FALSE, NULL, TRUE);
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = dconst.SUBREQUEST_WAITSUBREQ
      WHERE id = inSrId;

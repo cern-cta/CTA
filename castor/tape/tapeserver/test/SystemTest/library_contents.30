@@ -1,0 +1,71 @@
+
+Drive 1:
+Drive 2:
+Drive 3:
+
+
+Picker 1:
+
+MAP 1:
+MAP 2:
+MAP 3:
+MAP 4:
+
+# Slot 1 - ?, no gaps
+# Slot N: [barcode]
+# [barcode]
+# a barcode is comprised of three fields: [Leading] [identifier] [Trailing]
+# Leading "CLN" -- cleaning tape
+# Leading "W" -- WORM tape
+# Leading "NOBAR" -- will appear to have no barcode
+# If the barcode is at least 8 character long, then the last two characters are Trailing
+# Trailing "S3" - SDLT600
+# Trailing "X4" - AIT-4
+# Trailing "L1" - LTO 1, "L2" - LTO 2, "L3" - LTO 3, "L4" - LTO 4, "L5" - LTO 5
+# Training "LT" - LTO 3 WORM, "LU" LTO 4 WORM, "LV" LTO 5 WORM
+# Trailing "TA" - T10000+
+# Trailing "JA" - 3592+
+# Trailing "JB" - 3592E05+
+# Trailing "JW" - WORM 3592+
+# Trailing "JX" - WORM 3592E05+
+#
+Slot 1: G03001TA
+Slot 2: G03002TA
+Slot 3: G03003TA
+Slot 4: G03004TA
+Slot 5: G03005TA
+Slot 6: G03006TA
+Slot 7: G03007TA
+Slot 8: G03008TA
+Slot 9: G03009TA
+Slot 10: G03010TA
+Slot 11: G03011TA
+Slot 12: G03012TA
+Slot 13: G03013TA
+Slot 14: G03014TA
+Slot 15: G03015TA
+Slot 16: G03016TA
+Slot 17: G03017TA
+Slot 18: G03018TA
+Slot 19: G03019TA
+Slot 20: G03020TA
+Slot 21: G03021TA
+Slot 22: G03022TA
+Slot 23: G03023TA
+Slot 24: G03024TA
+Slot 25: G03025TA
+Slot 26: G03026TA
+Slot 27: G03027TA
+Slot 28: G03028TA
+Slot 29: G03029TA
+Slot 30: G03030TA
+Slot 31: G03031TA
+Slot 32: G03032TA
+Slot 33: G03033TA
+Slot 34: G03034TA
+Slot 35: G03035TA
+Slot 36: G03036TA
+Slot 37: G03037TA
+Slot 38: G03038TA
+Slot 39: G03039TA
+Slot 40: CLN303TA

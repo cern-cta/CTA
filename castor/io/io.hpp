@@ -1,0 +1,485 @@
+/******************************************************************************
+ *                      castor/io/io.hpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ *
+ *
+ *
+ * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ *****************************************************************************/
+
+#ifndef CASTOR_IO_IO_HPP
+#define CASTOR_IO_IO_HPP 1
+
+#include "castor/exception/AcceptConnectionInterrupted.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/InvalidArgument.hpp"
+#include "castor/exception/NoPortInRange.hpp"
+#include "castor/exception/TimeOut.hpp"
+#include "castor/io/Constants.hpp"
+#include "castor/io/IpAndPort.hpp"
+
+#include <errno.h>
+#include <iostream>
+#include <arpa/inet.h>
+#include <netinet/in.h>
+#include <string>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+
+namespace castor {
+namespace io     {
+
+/**
+ * Creates a listener socket with the specified port number.
+ *
+ * This method creates the socket, binds it and marks it as a listener.  The
+ * listening port will accept connections on any of the hosts incomming
+ * interfaces.
+ *
+ * This method raises a castor::exception::InvalidArgument exception if one or
+ * more of its input parameters are invalid.
+ *
+ * This method raises a castor::exception::NoPortInRange exception if the
+ * specified port is not free.
+ *
+ * @param port The port number.
+ * @return           The socket descriptor.
+ */
+int createListenerSock(const unsigned short port)
+  throw(castor::exception::Exception);
+
+/**
+ * Creates a listener socket with a port number within the specified range.
+ *
+ * This method creates the socket, binds it and marks it as a listener.  The
+ * listening port will accept connections on any of the hosts incomming
+ * interfaces.
+ *
+ * This method raises a castor::exception::InvalidArgument exception if one or
+ * more of its input parameters are invalid.
+ *
+ * This method raises a castor::exception::NoPortInRange exception if it cannot
+ * find a free port to bind to within the specified range.
+ *
+ * @param lowPort    The inclusive low port of the port number range.  This
+ *                   parameter must be an unsigned integer greater than 0.
+ * @param highPort   The inclusive high port of the port number range.  This
+ *                   parameter must be an unsigned integer greater than 0.
+ * @param chosenPort Out parameter: The actual port that this method binds the
+ *                   socket to.
+ * @return           The socket descriptor.
+ */
+int createListenerSock(
+  const unsigned short lowPort,
+  const unsigned short highPort,
+  unsigned short       &chosenPort)
+  throw(castor::exception::Exception);
+	
+/**
+ * Creates a listener socket with a port number within the specified range.
+ *
+ * This method creates the socket, binds it and marks it as a listener.
+ *
+ * This method raises a castor::exception::InvalidArgument exception if one or
+ * more of its input parameters are invalid.
+ *
+ * This method raises a castor::exception::NoPortInRange exception if it cannot
+ * find a free port to bind to within the specified range.
+ *
+ * @param addr       The IP address as a string in dotted quad notation.
+ * @param lowPort    The inclusive low port of the port number range.  This
+ *                   parameter must be an unsigned integer greater than 0.
+ * @param highPort   The inclusive high port of the port number range.  This
+ *                   parameter must be an unsigned integer greater than 0.
+ * @param chosenPort Out parameter: The actual port that this method binds the
+ *                   socket to.
+ * @return           The socket descriptor.
+ */
+int createListenerSock(
+  const std::string    &addr,
+  const unsigned short lowPort,
+  const unsigned short highPort,
+  unsigned short       &chosenPort)
+  throw(castor::exception::Exception);
+
+/**
+ * Creates a listener socket with a port number within the specified range.
+ * This method creates the socket, binds it and marks it as a listener.
+ *
+ * This method raises a castor::exception::InvalidArgument exception if one or
+ * more of its input parameters are invalid.
+ *
+ * This method raises a castor::exception::NoPortInRange exception if it cannot
+ * find a free port to bind to within the specified range.
+ *
+ * @param addr       The IP address.
+ * @param lowPort    The inclusive low port of the port number range.  This
+ *                   parameter must be an unsigned integer greater than 0.
+ * @param highPort   The inclusive high port of the port number range.  This
+ *                   parameter must be an unsigned integer greater than 0.
+ * @param chosenPort Out parameter: The actual port that this method binds the
+ *                   socket to.
+ * @return           The socket descriptor.
+ */
+int createListenerSock(
+  const struct in_addr &addr,
+  const unsigned short lowPort,
+  const unsigned short highPort,
+  unsigned short       &chosenPort)
+  throw(castor::exception::Exception);
+
+/**
+ * Accepts a connection on the specified listener socket and returns the
+ * socket descriptor of the newly created and connected socket.
+ *
+ * @param listenSockFd The file descriptor of the listener socket.
+ * @return             The socket descriptor of the newly created and connected
+ *                     socket.
+ */
+int acceptConnection(const int listenSockFd)
+  throw(castor::exception::Exception);
+
+/**
+ * Accepts a connection on the specified listener socket and returns the
+ * socket descriptor of the newly created and connected socket.
+ *
+ * This method accepts a timeout parameter.  If the timeout is exceeded, then
+ * this method raises a castor::exception::TimeOut exception.  If this method
+ * is interrupted, then this method raises a
+ * castor::exception::AcceptConnectionInterrupted exception which gives the
+ * number of remaining seconds when the interrupt occured.  All other errors
+ * result in a castor::exception::Exception being raised.  Note that both
+ * castor::exception::TimeOut and castor::exception::AcceptConnectionInterrupted
+ * inherit from castor::exception::Exception so callers of the this method must
+ * catch castor::exception::TimeOut and
+ * castor::exception::AcceptConnectionInterrupted before catching
+ * castor::exception::Exception.
+ *
+ * @param listenSockFd The file descriptor of the listener socket.
+ * @param timeout      The timeout in seconds to be used when waiting for a
+ *                     connection.
+ * @return             The socket descriptor of the newly created and connected
+ *                     socket.
+ */
+int acceptConnection(
+  const int    listenSockFd,
+  const time_t timeout)
+  throw(castor::exception::TimeOut,
+    castor::exception::AcceptConnectionInterrupted,
+    castor::exception::Exception);
+
+/**
+ * Gets the locally-bound IP and port number of the specified socket.
+ *
+ * @param socketFd The socket file descriptor.
+ * @return         The IP and port number of the specified socket.
+ */
+IpAndPort getSockIpPort(const int socketFd)
+  throw(castor::exception::Exception);
+
+/**
+ * Gets the peer IP and port number of the specified socket.
+ *
+ * @param socketFd The socket file descriptor.
+ * @return         The IP and port number of the specified socket.
+ */
+IpAndPort getPeerIpPort(const int socketFd)
+  throw(castor::exception::Exception);
+
+/**
+ * Gets the locally-bound host name of the specified socket.
+ *
+ * @param socketFd The socket file descriptor.
+ * @param buf      The buffer into which the hostname should written to.
+ * @param len      The length of the buffer into which the host name should be
+ *                 written to.
+ */
+void getSockHostName(
+  const int    socketFd,
+  char *const  buf,
+  const size_t len)
+  throw(castor::exception::Exception);
+
+/**
+ * Gets the locally-bound host name of the specified socket.
+ *
+ * @param socketFd The socket file descriptor.
+ * @param buf      The buffer into which the hostname should written to.
+ */
+template<int n> static void getSockHostName(
+  const int socketFd,
+  char (&buf)[n])
+  throw(castor::exception::Exception) {
+  getSockHostName(socketFd, buf, n);
+}
+
+/**
+ * Gets the locally-bound IP, host name and port of the specified socket.
+ *
+ * @param socketFd    The socket file descriptor.
+ * @param ip          The IP to be filled.
+ * @param hostName    The buffer into which the hostname should written to.
+ * @param hostNameLen The length of the buffer into which the host name
+ *                    should be written to.
+ * @param port        The port to be filled.
+ */
+void getSockIpHostnamePort(
+  const int      socketFd,
+  unsigned long  &ip,
+  char           *const hostName,
+  const size_t   hostNameLen,
+  unsigned short &port) throw(castor::exception::Exception);
+
+/**
+ * Gets the locally-bound IP, host name and port of the specified socket.
+ *
+ * @param socketFd The socket file descriptor.
+ * @param ip       The IP to be filled.
+ * @param hostName The buffer into which the hostname should written to.
+ * @param port     The port to be filled.
+ */
+template<int n> static void getSockIpHostnamePort(
+  const int      socketFd,
+  unsigned long  &ip,
+  char           (&hostName)[n],
+  unsigned short &port)
+  throw(castor::exception::Exception) {
+  getSockIpHostnamePort(socketFd, ip, hostName, n, port);
+}
+
+/**
+ * Gets the peer host name of the specified connection.
+ *
+ * @param socketFd The socket file descriptor of the connection.
+ * @param buf      The buffer into which the hostname should written to.
+ * @param len      The length of the buffer into which the host name should be
+ *                 written to.
+ */
+void getPeerHostName(
+  const int    socketFd,
+  char *const  buf,
+  const size_t len)
+  throw(castor::exception::Exception);
+
+/**
+ * Gets the peer host name of the specified connection.
+ *
+ * @param socketFd The socket file descriptor of the connection.
+ * @param buf      The buffer into which the hostname should written to.
+ */
+template<int n> static void getPeerHostName(
+  const int socketFd,
+  char (&buf)[n])
+  throw(castor::exception::Exception) {
+  getPeerHostName(socketFd, buf, n);
+}
+
+/**
+ * Writes the string form of specified IP using the specified output
+ * stream.
+ *
+ * @param os The output stream.
+ * @param ip The IP address in host byte order.
+ */
+void writeIp(
+  std::ostream        &os,
+  const unsigned long ip)
+  throw();
+
+/**
+ * Writes a textual description of the specified socket to the specified
+ * output stream.
+ *
+ * @param os       The output stream to which the string is to be printed.
+ * @param socketFd The file descriptor of the socket whose textual
+ *                 description is to be printed to the stream.
+ */
+void writeSockDescription(
+  std::ostream &os,
+  const int socketFd)
+  throw();
+
+/**
+ * Reads the specified number of bytes from the specified socket and writes
+ * the result into the specified buffer.
+ *
+ * This operation assumes that all of the bytes can be read in.  Failure
+ * to read in all the bytes or a closed connection will result in an
+ * exception being thrown.
+ *
+ * If it is normal that the connection can be closed by the peer, for
+ * example you are using select, then please use
+ * readBytesFromCloseable().
+ *
+ * @param socketFd The file descriptor of the socket to be read from.
+ * @param timeout  The timeout in seconds.
+ * @param nbBytes  The number of bytes to be read.
+ * @param buf      The buffer into which the bytes will be written.
+ */
+void readBytes(
+  const int   socketFd,
+  const int   timeout,
+  const int   nbBytes,
+  char *const buf)
+  throw(castor::exception::Exception);
+
+/**
+ * Reads the specified number of bytes from the specified closable socket
+ * and writes the result into the specified buffer.
+ *
+ * @param socketFd   The file descriptor of the socket to be read from.
+ * @param timeout    The timeout in seconds.
+ * @param nbBytes    The number of bytes to be read.
+ * @param buf        The buffer into which the bytes will be written.
+ * @return           True if the connection was closed by the peer, else false.
+ */
+bool readBytesFromCloseable(
+  const int   socketFd, 
+  const int   timeout,
+  const int   nbBytes,
+  char *const buf) 
+  throw(castor::exception::Exception);
+
+/**
+ * Writes the specified number of bytes from the specified buffer to the
+ * specified socket.
+ *
+ * @param socketFd The file descriptor of the socket to be written to
+ * @param timeout  The timeout in seconds.
+ * @param nbBytes  The number of bytes to be written.
+ * @param buf      The buffer of bytes to be written to the socket.
+ */
+void writeBytes(
+  const int   socketFd,
+  const int   timeout,
+  const int   nbBytes,
+  char *const buf)
+  throw(castor::exception::Exception);
+
+/**
+ * Creates the specified socket and uses it to connects to the specified
+ * address within the constraints of the specified timeout.
+ *
+ * This method throws a castor::exception::TimeOut exception if a timeout
+ * occurs.
+ *
+ * This method throws a castor::exception::Exception exception if an error
+ * other than a timeout occurs.
+ *
+ * @param sockDomain   The communications domain of the socket, see
+ *                     'man 2 socket'.
+ * @param sockType     The type of the socket, see 'man 2 socket'.
+ * @param sockProtocol The protocol to be used with the socket, see
+ *                     'man 2 socket'.
+ * @param address      The address to connect to, see 'man 2 connect'.
+ * @param address_len  The length of the address to connect to, see
+ *                     'man 2 connect'.
+ * @param timeout      The maximum amount of time in seconds to wait for the
+ *                     connect to finish.
+ * @return             A file-descriptor referencing the newly created and
+ *                     connected socket.
+ */
+int connectWithTimeout(
+  const int             sockDomain,
+  const int             sockType,
+  const int             sockProtocol,
+  const struct sockaddr *address,
+  const socklen_t       address_len,
+  const int             timeout)
+  throw(castor::exception::TimeOut, castor::exception::Exception);
+
+/**
+ * Marshals the specified src value into the specified destination buffer.
+ *
+ * @param src The source value be marshalled.
+ * @param dst In/out parameter, before invocation points to the destination
+ *            buffer where the source value should be marshalled to and on
+ * return     Points to the byte in the destination buffer immediately after
+ *            the marshalled value.
+ */
+template<typename T> void marshalValue(T src, char * &dst)
+  throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to marshal value"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  char *const src_ptr = (char *)(&src);
+
+  // src: Intel x86 (little endian)
+  // dst: Network   (big    endian)
+  for(size_t i=sizeof(src); i>0; i--) {
+    *dst++ = *(src_ptr + i - 1);
+  }
+}
+
+/**
+ * Unmarshals a value from the specified source buffer into the specified
+ * destination.
+ *
+ * @param src    In/out parameter: Before invocation points to the source
+ *               buffer where the value should be unmarshalled from and on
+ *               return points to the byte in the source buffer immediately
+ *               after the unmarshalled value.
+ * @param srcLen In/our parameter: Before invocation is the length of the
+ *               source buffer from where the value should be unmarshalled and
+ *               on return is the number of bytes remaining in the source
+ *               buffer.
+ * @param dst    Out parameter: The destination.
+ */
+template<typename T> void unmarshalValue(const char * &src,
+  size_t &srcLen, T &dst) throw(castor::exception::Exception) {
+
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to unmarshal value"
+      ": Pointer to source buffer is NULL";
+    throw ex;
+  }
+
+  if(srcLen < sizeof(dst)) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to unmarshal value"
+      ": Source buffer length is too small: expected="
+      << sizeof(dst) << " actual=" << srcLen;
+    throw ex;
+  }
+
+  char *const dst_ptr = (char *)(&dst);
+
+  // src: Network   (big    endian)
+  // dst: Intel x86 (little endian)
+  for(size_t i=sizeof(dst); i>0; i--) {
+    *(dst_ptr + i - 1) = *src++;
+  }
+
+  srcLen -= sizeof(dst);
+}
+
+} // namespace io
+} // namespace castor
+
+#endif // CASTOR_IO_IO_HPP

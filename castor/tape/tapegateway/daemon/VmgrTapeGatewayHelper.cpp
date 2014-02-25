@@ -326,7 +326,7 @@ castor::tape::tapegateway::VmgrTapeGatewayHelper::getTapeInfoAssertAvailable
   // call getTapeInfo
   TapeInfo info = getTapeInfo(vid, shuttingDown);
   // Interpret the status and throw an exception for non-available tapes.
-  int err_number;
+  int err_number = 0;
   std::string statName;
   if (info.vmgrTapeInfo.status & (DISABLED|EXPORTED|ARCHIVED)){
     if (info.vmgrTapeInfo.status & DISABLED) {

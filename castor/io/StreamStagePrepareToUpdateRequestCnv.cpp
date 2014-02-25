@@ -47,8 +47,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamStagePrepareToUpdateRequestCnv>* s_factoryStreamStagePrepareToUpdateRequestCnv =
-  new castor::CnvFactory<castor::io::StreamStagePrepareToUpdateRequestCnv>();
+static castor::CnvFactory<castor::io::StreamStagePrepareToUpdateRequestCnv>
+  s_factoryStreamStagePrepareToUpdateRequestCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

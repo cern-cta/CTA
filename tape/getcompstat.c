@@ -12,16 +12,23 @@
 #include "serrno.h" 
 #include "sendscsicmd.h" 
 
+int get_compression_stats(int tapefd, char *path, char *devtype, COMPRESSION_STATS *comp_stats) {
+	comp_stats->from_host = 1;
+	comp_stats->to_tape = 1;
+	comp_stats->from_tape = 1;
+	comp_stats->to_host = 1  ;
+	return (0);
+}
 
-int get_compression_stats(int tapefd,
+int TEMPORARILY_NOT_USED_get_compression_stats(int tapefd,
                           char *path,
                           char *devtype,
                           COMPRESSION_STATS *comp_stats)
 {
-	unsigned long kbytes_from_host;
-	unsigned long kbytes_to_tape;
-	unsigned long kbytes_from_tape;
-	unsigned long kbytes_to_host;
+	unsigned long kbytes_from_host = 0;
+	unsigned long kbytes_to_tape = 0;
+	unsigned long kbytes_from_tape = 0;
+	unsigned long kbytes_to_host = 0;
 	unsigned char *endpage;
 	unsigned char *p;
 	unsigned short pagelen;
@@ -31,6 +38,7 @@ int get_compression_stats(int tapefd,
 	char *msgaddr;
 	int nb_sense_ret;
 	char sense[256];	/* Sense bytes are returned in this buffer */
+
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0x4D;	/* LOG SENSE */
 	cdb[7] = (sizeof(buffer) & 0xFF00) >> 8;
@@ -47,7 +55,7 @@ int get_compression_stats(int tapefd,
 	}
  
 	if (send_scsi_cmd (tapefd, path, 0, cdb, 10, buffer, sizeof(buffer),
-                     sense, 38, 10000, SCSI_IN, &nb_sense_ret, &msgaddr) < 0)
+                     sense, 38, SCSI_IN, &nb_sense_ret, &msgaddr) < 0)
 		return (-1);
 
 	p = buffer;
@@ -159,7 +167,11 @@ int get_compression_stats(int tapefd,
 	return (0);
 }
 
-int clear_compression_stats(int tapefd,
+int clear_compression_stats(int tapefd, char *path, char *devtype) {
+  return 0;
+}
+
+int TEMPORARILY_NOT_USED_clear_compression_stats(int tapefd,
                             char *path,
                             char *devtype)
 {
@@ -175,7 +187,7 @@ int clear_compression_stats(int tapefd,
 	cdb[2] = 0xC0; /* PC = 3 */
 
 	if (send_scsi_cmd (tapefd, path, 0, cdb, 10, NULL, 0,
-	    sense, 38, 10000, SCSI_NONE, &nb_sense_ret, &msgaddr) < 0)
+	    sense, 38, SCSI_NONE, &nb_sense_ret, &msgaddr) < 0)
 		return (-1);
 
 #endif

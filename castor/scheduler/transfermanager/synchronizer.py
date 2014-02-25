@@ -173,7 +173,7 @@ class SynchronizerThread(threading.Thread):
             # not a big deal, it may have ended in the mean time. Otherwise, we will retry later
             pass
       else:
-        # 'No disk to disk source source left behind'
+        # 'No disk to disk copy source left behind'
         dlf.writedebug(msgs.NOD2DLEFTBEHIND)
     finally:
       stcur.close()

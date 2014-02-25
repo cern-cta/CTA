@@ -39,8 +39,7 @@
 // -----------------------------------------------------------------------
 // Instantiation of a static factory class
 // -----------------------------------------------------------------------
-static castor::SvcFactory<castor::io::StreamCnvSvc>* s_factoryStreamCnvSvc =
-  new castor::SvcFactory<castor::io::StreamCnvSvc>();
+static castor::SvcFactory<castor::io::StreamCnvSvc> s_factoryStreamCnvSvc;
 
 // -----------------------------------------------------------------------
 // StreamCnvSvc

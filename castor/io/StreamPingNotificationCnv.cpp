@@ -41,8 +41,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamPingNotificationCnv>* s_factoryStreamPingNotificationCnv =
-  new castor::CnvFactory<castor::io::StreamPingNotificationCnv>();
+static castor::CnvFactory<castor::io::StreamPingNotificationCnv>
+  s_factoryStreamPingNotificationCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

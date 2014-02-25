@@ -21,7 +21,10 @@
 %attr(0644,root,root) usr/include/castor/castor/dlf/Message.hpp
 %attr(0644,root,root) usr/include/castor/castor/dlf/Param.hpp
 %attr(0644,root,root) usr/include/castor/castor/dlf/TimeStamp.hpp
+%attr(0644,root,root) usr/include/castor/castor/exception/AcceptConnectionInterrupted.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/AlreadyInitialized.hpp
+%attr(0644,root,root) usr/include/castor/castor/exception/Backtrace.hpp
+%attr(0644,root,root) usr/include/castor/castor/exception/CommandLineNotParsed.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/Communication.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/Exception.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/Internal.hpp
@@ -55,8 +58,6 @@
 %attr(0644,root,root) usr/include/castor/castor/rh/FileResponse.hpp
 %attr(0644,root,root) usr/include/castor/castor/rh/IOResponse.hpp
 %attr(0644,root,root) usr/include/castor/castor/rh/Response.hpp
-%attr(0644,root,root) usr/include/castor/castor/server/BaseDaemon.hpp
-%attr(0644,root,root) usr/include/castor/castor/server/BaseServer.hpp
 %attr(0644,root,root) usr/include/castor/castor/server/BaseThreadPool.hpp
 %attr(0644,root,root) usr/include/castor/castor/server/DynamicThreadPool.hpp
 %attr(0644,root,root) usr/include/castor/castor/server/IThread.hpp

@@ -3,7 +3,7 @@
 .\"
 .TH USRLBL "3castor" "$Date: 2003/11/12 14:55:15 $" CASTOR "Ctape Library Functions"
 .SH NAME
-.B checkeofeov, wrthdrlbl, wrttrllbl, deltpfil
+.B checkeofeov, wrthdrlbl, wrttrllbl
 \- user callable routines to check/write tape labels
 .SH SYNOPSIS
 .BI "int checkeofeov (int " tapefd ,
@@ -16,9 +16,6 @@
 .BI "char *" path ,
 .BI "char *" labelid ,
 .BI "int " nblocks )
-.LP
-.BI "int deltpfil (int " tapefd ,
-.BI "char *" path )
 .SH DESCRIPTION
 These routines check for EOF and EOV labels, get information from header labels
 and write the labels on a tape, using the information stored by
@@ -73,14 +70,6 @@ of the two tapemarks on Exabytes in 8200 mode, between the two tapemarks
 otherwise.
 The routine should be called after the last write operation on the tape file
 and before the close.
-.LP
-.B deltpfil()
-may be called after
-.B wrthdrlbl
-and eventually some writes to delete the current file on the tape.
-The tape is positionned back in front of the file label.
-If the file is the first one on the tape, the header label is rewritten
-with a retention period of 0, otherwise two tape marks are written over.
 .SH RETURN VALUE
 These routines return 0 if the operation was successful or -1 if the operation
 failed. In the latter case,

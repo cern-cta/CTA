@@ -37,7 +37,9 @@ EXTERN_C int getDefaultForGlobal (
 
 /* Common functions for command line executables */
 EXTERN_C int parseCmdLine (int argc, char *argv[], int (*cb)(const char *),
-			   char** service_class, char** usertag, int* display_reqid);
+			               char** service_class, char** usertag, int* display_reqid);
+EXTERN_C int putDone_parseCmdLine (int argc, char *argv[], int (*cb)(const char *),
+			                       char** service_class, char** reqid);
 EXTERN_C int printFileResponses (int nbresps, struct stage_fileresp* responses); 
 EXTERN_C int printPrepareResponses (int nbresps, struct stage_prepareToGet_fileresp *responses);
 EXTERN_C void printReceivedResponses (int nbresps);

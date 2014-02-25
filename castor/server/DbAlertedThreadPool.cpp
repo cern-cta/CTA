@@ -109,6 +109,7 @@ void castor::server::DbAlertedThreadPool::run()
     if (rv != 0) {
       break;
     }
+    m_nbActiveThreads++;
   }
   if (rv != 0) {
     m_stopped = true;
@@ -185,7 +186,6 @@ void* castor::server::DbAlertedThreadPool::_runner(void* param)
 
       // we are not anymore a running service
       pthread_mutex_lock(&pool->m_lock);
-      pool->m_nbActiveThreads--;
       // update shared timers
       pool->m_activeTime += activeTime;
       pool->m_idleTime += idleTime;
@@ -219,5 +219,9 @@ void* castor::server::DbAlertedThreadPool::_runner(void* param)
   } catch (...) {
     // ignore errors
   }
+  // make the pool aware that we are out
+  pthread_mutex_lock(&pool->m_lock);
+  pool->m_nbActiveThreads--;
+  pthread_mutex_unlock(&pool->m_lock);
   return 0;
 }

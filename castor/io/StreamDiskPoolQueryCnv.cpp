@@ -46,8 +46,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class - should never be used
 //------------------------------------------------------------------------------
-static castor::CnvFactory<castor::io::StreamDiskPoolQueryCnv>* s_factoryStreamDiskPoolQueryCnv =
-  new castor::CnvFactory<castor::io::StreamDiskPoolQueryCnv>();
+static castor::CnvFactory<castor::io::StreamDiskPoolQueryCnv>
+  s_factoryStreamDiskPoolQueryCnv;
 
 //------------------------------------------------------------------------------
 // Constructor

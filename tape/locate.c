@@ -24,33 +24,15 @@ int locate(int tapefd,
 	char *msgaddr;
 	int nb_sense_ret;
 	char sense[MAXSENSE];
-        int locate_timeout = LOCATE_MIN_TIMEOUT; 
         char* getconfent(); 
-        char * p = NULL;
 
 	ENTRY (locate);
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0x2B;		/* locate */
 	memcpy (&cdb[3], blockid, 4);
         
-        p = getconfent ("TAPE", "LOCATE_TIMEOUT", 0);
-        if (NULL != p) {                
-                locate_timeout = (int)atoi(p);
-                /* 
-                   atoi()'s behaviour is undefined if
-                   the value is not convertible. For 
-                   this reason (and in order to prevent
-                   to give up too early), reset the 
-                   timeout to the lower threshold if 
-                   it is too small.
-                */   
-                if (locate_timeout < LOCATE_MIN_TIMEOUT) {
-                        locate_timeout = LOCATE_MIN_TIMEOUT;
-                }
-        }
-                
 	if (send_scsi_cmd (tapefd, path, 0, cdb, 10, NULL, 0,
-	    sense, 38, locate_timeout, SCSI_NONE, &nb_sense_ret, &msgaddr) < 0) {
+	    sense, 38, SCSI_NONE, &nb_sense_ret, &msgaddr) < 0) {
 		usrmsg (func, "%s", msgaddr);
 		RETURN (-1);
 	}
@@ -72,7 +54,7 @@ int read_pos(int tapefd,
 	memset (cdb, 0, sizeof(cdb));
 	cdb[0] = 0x34;		/* read position */
 	if (send_scsi_cmd (tapefd, path, 0, cdb, 10, data, 20,
-	    sense, 38, 30000, SCSI_IN, &nb_sense_ret, &msgaddr) < 0) {
+	    sense, 38, SCSI_IN, &nb_sense_ret, &msgaddr) < 0) {
 		usrmsg (func, "%s", msgaddr);
 		RETURN (-1);
 	}

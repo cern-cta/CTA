@@ -81,8 +81,10 @@
 #define SEREQUESTFAILED SEBASEOFF+47    /* Request failed               */
 #define SEINVALIDNBARGS SEBASEOFF+48    /* Invalid number of arguments  */
 #define SEALREADYINIT   SEBASEOFF+49    /* Already initialized          */
+#define SECMDLNNOTPRSD  SEBASEOFF+50    /* Command line not parsed      */
+#define SEACCPTCONNINTR SEBASEOFF+51    /* castor::io::acceptConnection() was interrupted */
 
-#define SEMAXERR        SEBASEOFF+49    /* Maximum error number         */
+#define SEMAXERR        SEBASEOFF+51    /* Maximum error number         */
 
 #define SERRNO  (serrno - SEBASEOFF)    /* User convenience             */
 /*

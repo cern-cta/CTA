@@ -47,9 +47,18 @@ namespace castor {
       /**
        * Empty Constructor
        * @param serrno the serrno code of the corresponding C error
+       * @param context optional context string added to the message
+       * at initialisation time.
        */
-      Exception(int se);
+      Exception(int se, std::string context="");
 
+      /**
+       * Empty Constructor with implicit serrno = 0;
+       * @param context optional context string added to the message
+       * at initialisation time.
+       */
+      Exception(std::string context="");
+      
       /**
        * Copy Constructor
        */
@@ -76,6 +85,14 @@ namespace castor {
       }
       
       /**
+       * Get the value of m_message as a sting, for const-c orrectness
+       * @return the value as a string.
+       */
+      std::string getMessageValue() const {
+        return m_message.str();
+      }
+      
+      /**
        * Get the backtrace's contents
        * @return backtrace in a standard string.
        */
@@ -88,7 +105,7 @@ namespace castor {
        * the stack trace.
        * @return pointer to m_what's contents
        */
-      virtual const char * what();
+      virtual const char * what() const throw ();
 
       /**
        * gets the serrno code of the corresponding C error
@@ -108,8 +125,9 @@ namespace castor {
        * Placeholder for the what result. It has to be a member
        * of the object, and not on the stack of the "what" function.
        */
-      std::string m_what;
+      mutable std::string m_what;
       
+    protected:  
       /**
        * Backtrace object. Its constructor does the heavy lifting of
        * generating the backtrace.
