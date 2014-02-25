@@ -69,3 +69,9 @@
   Helgrind:Race
   fun:_ZStlsIcSt11char_traitsIcESaIcEERSt13basic_ostreamIT_T0_ES7_RKSbIS4_S5_T1_E
 }
+
+{
+  helgrind-unitTest-castor-tape-server-ClientInterface-fetchVolumeId
+  Helgrind:Race
+  fun:_ZN6castor4tape6server15ClientInterface13fetchVolumeIdERNS2_10VolumeInfoERNS2_13RequestReportE
+}
