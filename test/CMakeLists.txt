@@ -52,6 +52,10 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     ../castor/tape/rmc/AcsDismountCmdLine.cpp
     ../castor/tape/rmc/AcsDismountCmdLineTest.cpp
     ../castor/tape/rmc/AcsDismountCmdTest.cpp
+    ../castor/tape/rmc/AcsMountCmd.cpp
+    ../castor/tape/rmc/AcsMountCmdLine.cpp
+    ../castor/tape/rmc/AcsMountCmdLineTest.cpp
+    ../castor/tape/rmc/AcsMountCmdTest.cpp
     ../castor/tape/rmc/DebugBuf.cpp)
 
   foreach(SRC_FILE ${STK_UNITTEST_SRC_FILES})
