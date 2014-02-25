@@ -1,5 +1,5 @@
 /******************************************************************************
- *    test/unittest/castor/tape/rmc/MockAcs.hpp
+ *    castor/tape/rmc/MockAcs.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_RMC_MOCKACS_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_RMC_MOCKACS_HPP 1
+#ifndef CASTOR_TAPE_RMC_MOCKACS_HPP
+#define CASTOR_TAPE_RMC_MOCKACS_HPP 1
 
 #include "castor/tape/rmc/AcsCmd.hpp"
 
@@ -132,4 +132,4 @@ public:
 } // namespace tape
 } // namespace castor
 
-#endif // TEST_UNITTEST_CASTOR_TAPE_RMC_MOCKACS_HPP
+#endif // CASTOR_TAPE_RMC_MOCKACS_HPP

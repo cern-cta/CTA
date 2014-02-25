@@ -1,5 +1,5 @@
 /******************************************************************************
- *    castor/tape/rmc/TestingAcsDismountCmd.hpp
+ *    castor/tape/rmc/TestingAcsQueryVolumeCmd.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,18 +22,17 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_ACSDISMOUNT_TESTINGACSMOUNTCMD_HPP
-#define CASTOR_TAPE_ACSDISMOUNT_TESTINGACSMOUNTCMD_HPP 1
+#ifndef CASTOR_TAPE_RMC_TESTINGACSQUERYVOLUMECMD_HPP
+#define CASTOR_TAPE_RMC_TESTINGACSQUERYVOLUMECMD_HPP 1
 
-#include "castor/tape/rmc/AcsDismountCmd.hpp"
+#include "castor/tape/rmc/AcsQueryVolumeCmd.hpp"
 
 namespace castor {
 namespace tape {
 namespace rmc {
 
-class TestingAcsDismountCmd: public AcsDismountCmd {
+class TestingAcsQueryVolumeCmd: public AcsQueryVolumeCmd {
 public:
-
   /**
    * Constructor.
    *
@@ -42,17 +41,17 @@ public:
    * @param errStream Standard error stream.
    * @param acs Wrapper around the ACSLS C-API.
    */
-  TestingAcsDismountCmd(std::istream &inStream, std::ostream &outStream,
+  TestingAcsQueryVolumeCmd(std::istream &inStream, std::ostream &outStream,
     std::ostream &errStream, Acs &acs) throw():
-    AcsDismountCmd(inStream, outStream, errStream, acs) {
+    AcsQueryVolumeCmd(inStream, outStream, errStream, acs) {
   }
 
-  using AcsDismountCmd::parseCmdLine;
+  using AcsQueryVolumeCmd::parseCmdLine;
 
-}; // class TestingAcsDismountCmd
+}; // class TestingAcsQueryVolumeCmd
 
 } // namespace rmc
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_ACSDISMOUNT_TESTINGACSMOUNTCMD_HPP
+#endif // CASTOR_TAPE_RMC_TESTINGACSQUERYVOLUMECMD_HPP

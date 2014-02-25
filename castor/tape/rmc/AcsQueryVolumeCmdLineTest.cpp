@@ -1,5 +1,5 @@
 /******************************************************************************
- *    castor/tape/rmc/TestingAcsDismountCmd.hpp
+ *          castor/tape/dismountacs/AcsQueryVolumeCmdLineTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,37 +22,29 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_ACSDISMOUNT_TESTINGACSMOUNTCMD_HPP
-#define CASTOR_TAPE_ACSDISMOUNT_TESTINGACSMOUNTCMD_HPP 1
+#include "castor/tape/rmc/AcsQueryVolumeCmdLine.hpp"
 
-#include "castor/tape/rmc/AcsDismountCmd.hpp"
+#include <gtest/gtest.h>
 
-namespace castor {
-namespace tape {
-namespace rmc {
+namespace unitTests {
 
-class TestingAcsDismountCmd: public AcsDismountCmd {
-public:
+class castor_tape_rmc_AcsQueryVolumeCmdLineTest: public ::testing::Test {
+protected:
 
-  /**
-   * Constructor.
-   *
-   * @param inStream Standard input stream.
-   * @param outStream Standard output stream.
-   * @param errStream Standard error stream.
-   * @param acs Wrapper around the ACSLS C-API.
-   */
-  TestingAcsDismountCmd(std::istream &inStream, std::ostream &outStream,
-    std::ostream &errStream, Acs &acs) throw():
-    AcsDismountCmd(inStream, outStream, errStream, acs) {
+  virtual void SetUp() {
   }
 
-  using AcsDismountCmd::parseCmdLine;
+  virtual void TearDown() {
+  }
+}; // class castor_tape_rmc_AcsQueryVolumeCmdLineTest
 
-}; // class TestingAcsDismountCmd
+TEST_F(castor_tape_rmc_AcsQueryVolumeCmdLineTest, constructor) {
+  const castor::tape::rmc::AcsQueryVolumeCmdLine cmdLine;
+  ASSERT_EQ((BOOLEAN)FALSE, cmdLine.debug);
+  ASSERT_EQ((BOOLEAN)FALSE, cmdLine.help);
+  ASSERT_EQ(0, cmdLine.timeout);
+  ASSERT_EQ(0, cmdLine.queryInterval);
+  ASSERT_EQ('\0', cmdLine.volId.external_label[0]);
+}
 
-} // namespace rmc
-} // namespace tape
-} // namespace castor
-
-#endif // CASTOR_TAPE_ACSDISMOUNT_TESTINGACSMOUNTCMD_HPP
+} // namespace unitTests

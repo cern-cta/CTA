@@ -56,6 +56,10 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     ../castor/tape/rmc/AcsMountCmdLine.cpp
     ../castor/tape/rmc/AcsMountCmdLineTest.cpp
     ../castor/tape/rmc/AcsMountCmdTest.cpp
+    ../castor/tape/rmc/AcsQueryVolumeCmd.cpp
+    ../castor/tape/rmc/AcsQueryVolumeCmdLine.cpp
+    ../castor/tape/rmc/AcsQueryVolumeCmdLineTest.cpp
+    ../castor/tape/rmc/AcsQueryVolumeCmdTest.cpp
     ../castor/tape/rmc/AcsTest.cpp
     ../castor/tape/rmc/DebugBuf.cpp)
 
