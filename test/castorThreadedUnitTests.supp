@@ -64,3 +64,8 @@
   fun:getconfent_fromfile
 }
 
+{
+  helgrind-unitTest-iostream-getconfent-from-file
+  Helgrind:Race
+  fun:_ZStlsIcSt11char_traitsIcESaIcEERSt13basic_ostreamIT_T0_ES7_RKSbIS4_S5_T1_E
+}
