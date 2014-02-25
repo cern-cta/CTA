@@ -22,8 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "test/unittest/castor/tape/rmc/MockAcs.hpp"
-#include "test/unittest/castor/tape/rmc/TestingAcsQueryVolumeCmd.hpp"
+#include "castor/tape/rmc/MockAcs.hpp"
+#include "castor/tape/rmc/TestingAcsQueryVolumeCmd.hpp"
 
 #include <gtest/gtest.h>
 #include <list>
