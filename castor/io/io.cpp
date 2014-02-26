@@ -1048,26 +1048,3 @@ void castor::io::marshalUint64(const uint64_t src, char * &dst)
     *dst++ = *(src_ptr + i - 1);
   }
 }
-
-//-----------------------------------------------------------------------------
-// marshalTime
-//-----------------------------------------------------------------------------
-void castor::io::marshalTime(const time_t src, char * &dst)
-  throw(castor::exception::Exception) {
-  
-  if(dst == NULL) {
-    castor::exception::Exception ex(EINVAL);
-  
-    ex.getMessage() << "Failed to marshal time_t"
-      ": Pointer to destination buffer is NULL";
-    throw ex;
-  }
-  
-  char *const src_ptr = (char *)(&src);
-  
-  // src: Intel x86 (little endian)
-  // dst: Network   (big    endian)
-  for(size_t i=sizeof(src); i>0; i--) {
-    *dst++ = *(src_ptr + i - 1);
-  }
-} 

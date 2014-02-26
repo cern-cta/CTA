@@ -258,24 +258,4 @@ TEST_F(castor_io_IoTest, marshalUint64) {
   ASSERT_EQ((char)0x88, buf[7]);
 }
 
-TEST_F(castor_io_IoTest, marshalTime) {
-  const time_t v = 0x1122334455667788LL;
-  char buf[8];
-  char *ptr = buf;
-    
-  memset(buf, '\0', sizeof(buf));
-    
-  ASSERT_NO_THROW(castor::io::marshalTime(v, ptr));
-  ASSERT_EQ(buf+8, ptr);
-  // Marshalled value should be big endian
-  ASSERT_EQ(0x11, buf[0]);
-  ASSERT_EQ(0x22, buf[1]);
-  ASSERT_EQ(0x33, buf[2]);
-  ASSERT_EQ(0x44, buf[3]);
-  ASSERT_EQ(0x55, buf[4]);
-  ASSERT_EQ(0x66, buf[5]);
-  ASSERT_EQ(0x77, buf[6]);
-  ASSERT_EQ((char)0x88, buf[7]);
-}
-
 } // namespace unitTests

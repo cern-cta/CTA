@@ -456,18 +456,6 @@ void marshalUint64(const uint64_t src, char * &dst)
   throw(castor::exception::Exception);
 
 /**
- * Marshals the specified src value into the specified destination buffer.
- *
- * @param src The source value be marshalled.
- * @param dst In/out parameter, before invocation points to the destination
- *            buffer where the source value should be marshalled to and on
- * return     Points to the byte in the destination buffer immediately after
- *            the marshalled value.
- */
-void marshalTime(const time_t src, char * &dst)
-  throw(castor::exception::Exception);
-
-/**
  * Unmarshals a value from the specified source buffer into the specified
  * destination.
  *

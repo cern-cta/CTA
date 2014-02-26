@@ -134,16 +134,6 @@ void castor::tape::legacymsg::unmarshalUint64(const char * &src,
 
 
 //------------------------------------------------------------------------------
-// marshalTime
-//------------------------------------------------------------------------------
-void castor::tape::legacymsg::marshalTime(time_t src,
-  char * &dst) throw(castor::exception::Exception) {
-
-  io::marshalTime(src, dst);
-}
-
-
-//------------------------------------------------------------------------------
 // unmarshalTime
 //------------------------------------------------------------------------------
 void castor::tape::legacymsg::unmarshalTime(const char * &src,

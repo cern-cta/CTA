@@ -190,18 +190,6 @@ void unmarshalUint64(const char * &src, size_t &srcLen,
   uint64_t &dst) throw(castor::exception::Exception);
 
 /**
- * Marshals the specified time_t value into the specified destination buffer.
- *
- * @param src The time_t value to be marshalled.
- * @param dst In/out parameter, before invocation points to the destination
- * buffer where the time_t value should be marshalled to and on
- * return points to the byte in the destination buffer immediately after
- * the marshalled time_t value.
- */
-void marshalTime(time_t src, char * &dst)
-  throw(castor::exception::Exception);
-
-/**
  * Unmarshals a time_t value from the specified source buffer into the
  * specified destination.
  *
