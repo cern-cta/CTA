@@ -197,23 +197,6 @@ TEST_F(castor_io_IoTest, connectWithTimeout) {
   }
 }
 
-TEST_F(castor_io_IoTest, marshalValue) {
-  using namespace castor::io;
-  const uint32_t v = 0x12345678;
-  char buf[4];
-  char *ptr = buf;
-
-  memset(buf, '\0', sizeof(buf));
-
-  ASSERT_NO_THROW(castor::io::marshalValue(v, ptr));
-  ASSERT_EQ(buf+4, ptr);
-  // Marshalled value should be big endian
-  ASSERT_EQ(0x12, buf[0]);
-  ASSERT_EQ(0x34, buf[1]);
-  ASSERT_EQ(0x56, buf[2]);
-  ASSERT_EQ(0x78, buf[3]);
-}
-
 TEST_F(castor_io_IoTest, unmarshalValue) {
   using namespace castor::io;
 
@@ -225,6 +208,74 @@ TEST_F(castor_io_IoTest, unmarshalValue) {
   ASSERT_EQ(buf+4, ptr);
   ASSERT_EQ((size_t)0, bufLen);
   ASSERT_EQ((uint32_t)0x12345678, v);
+}
+
+TEST_F(castor_io_IoTest, marshalUint8) {
+  const uint8_t v = 0x12;
+  char buf[1];
+  char *ptr = buf;
+    
+  memset(buf, '\0', sizeof(buf));
+    
+  ASSERT_NO_THROW(castor::io::marshalUint8(v, ptr));
+  ASSERT_EQ(buf+1, ptr);
+  ASSERT_EQ(0x12, buf[0]);
+}
+
+TEST_F(castor_io_IoTest, marshalUint32) {
+  const uint32_t v = 0x12345678;
+  char buf[4];
+  char *ptr = buf;
+
+  memset(buf, '\0', sizeof(buf));
+
+  ASSERT_NO_THROW(castor::io::marshalUint32(v, ptr));
+  ASSERT_EQ(buf+4, ptr);
+  // Marshalled value should be big endian
+  ASSERT_EQ(0x12, buf[0]);
+  ASSERT_EQ(0x34, buf[1]);
+  ASSERT_EQ(0x56, buf[2]);
+  ASSERT_EQ(0x78, buf[3]);
+}
+
+TEST_F(castor_io_IoTest, marshalUint64) {
+  const uint64_t v = 0x1122334455667788;
+  char buf[8];
+  char *ptr = buf;
+    
+  memset(buf, '\0', sizeof(buf));
+    
+  ASSERT_NO_THROW(castor::io::marshalUint64(v, ptr));
+  ASSERT_EQ(buf+8, ptr);
+  // Marshalled value should be big endian
+  ASSERT_EQ(0x11, buf[0]);
+  ASSERT_EQ(0x22, buf[1]);
+  ASSERT_EQ(0x33, buf[2]);
+  ASSERT_EQ(0x44, buf[3]);
+  ASSERT_EQ(0x55, buf[4]);
+  ASSERT_EQ(0x66, buf[5]);
+  ASSERT_EQ(0x77, buf[6]);
+  ASSERT_EQ((char)0x88, buf[7]);
+}
+
+TEST_F(castor_io_IoTest, marshalTime) {
+  const time_t v = 0x1122334455667788;
+  char buf[8];
+  char *ptr = buf;
+    
+  memset(buf, '\0', sizeof(buf));
+    
+  ASSERT_NO_THROW(castor::io::marshalTime(v, ptr));
+  ASSERT_EQ(buf+8, ptr);
+  // Marshalled value should be big endian
+  ASSERT_EQ(0x11, buf[0]);
+  ASSERT_EQ(0x22, buf[1]);
+  ASSERT_EQ(0x33, buf[2]);
+  ASSERT_EQ(0x44, buf[3]);
+  ASSERT_EQ(0x55, buf[4]);
+  ASSERT_EQ(0x66, buf[5]);
+  ASSERT_EQ(0x77, buf[6]);
+  ASSERT_EQ((char)0x88, buf[7]);
 }
 
 } // namespace unitTests

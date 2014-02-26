@@ -969,3 +969,105 @@ int castor::io::connectWithTimeout(
 
   return smartSock.release();
 }
+
+//-----------------------------------------------------------------------------
+// marshalUint8
+//-----------------------------------------------------------------------------
+void castor::io::marshalUint8(const uint8_t src, char * &dst)
+  throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to marshal uint8_t"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  *dst = src;
+  dst++;
+}
+
+//-----------------------------------------------------------------------------
+// marshalUint16
+//-----------------------------------------------------------------------------
+void castor::io::marshalUint16(const uint16_t src, char * &dst)
+  throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to marshal uint16_t"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  const uint16_t netByteOrder = htons(src);
+  memcpy(dst, &netByteOrder, sizeof(uint16_t));
+  dst += sizeof(uint16_t);
+}
+
+//-----------------------------------------------------------------------------
+// marshalUint32
+//-----------------------------------------------------------------------------
+void castor::io::marshalUint32(const uint32_t src, char * &dst)
+  throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to marshal uint32_t"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  const uint32_t netByteOrder = htonl(src);
+  memcpy(dst, &netByteOrder, sizeof(uint32_t));
+  dst += sizeof(uint32_t);
+}
+
+//-----------------------------------------------------------------------------
+// marshalUint64
+//-----------------------------------------------------------------------------
+void castor::io::marshalUint64(const uint64_t src, char * &dst)
+  throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to marshal uint64_t"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  char *const src_ptr = (char *)(&src);
+
+  // src: Intel x86 (little endian)
+  // dst: Network   (big    endian)
+  for(size_t i=sizeof(src); i>0; i--) {
+    *dst++ = *(src_ptr + i - 1);
+  }
+}
+
+//-----------------------------------------------------------------------------
+// marshalTime
+//-----------------------------------------------------------------------------
+void castor::io::marshalTime(const time_t src, char * &dst)
+  throw(castor::exception::Exception) {
+  
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+  
+    ex.getMessage() << "Failed to marshal time_t"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+  
+  char *const src_ptr = (char *)(&src);
+  
+  // src: Intel x86 (little endian)
+  // dst: Network   (big    endian)
+  for(size_t i=sizeof(src); i>0; i--) {
+    *dst++ = *(src_ptr + i - 1);
+  }
+} 

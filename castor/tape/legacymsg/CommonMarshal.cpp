@@ -39,7 +39,7 @@
 void castor::tape::legacymsg::marshalUint8(uint8_t src,
   char * &dst) throw(castor::exception::Exception) {
 
-  io::marshalValue(src, dst);
+  io::marshalUint8(src, dst);
 }
 
 
@@ -59,7 +59,7 @@ void castor::tape::legacymsg::unmarshalUint8(const char * &src,
 void castor::tape::legacymsg::marshalUint16(uint16_t src,
   char * &dst) throw(castor::exception::Exception) {
 
-  io::marshalValue(src, dst);
+  io::marshalUint16(src, dst);
 }
 
 
@@ -79,7 +79,7 @@ void castor::tape::legacymsg::unmarshalUint16(const char * &src,
 void castor::tape::legacymsg::marshalUint32(uint32_t src,
   char * &dst) throw(castor::exception::Exception) {
 
-  io::marshalValue(src, dst);
+  io::marshalUint32(src, dst);
 }
 
 
@@ -99,7 +99,7 @@ void castor::tape::legacymsg::unmarshalUint32(const char * &src,
 void castor::tape::legacymsg::marshalInt32(int32_t src,
   char * &dst) throw(castor::exception::Exception) {
 
-  io::marshalValue(src, dst);
+  io::marshalUint32(src, dst);
 }
 
 
@@ -119,7 +119,7 @@ void castor::tape::legacymsg::unmarshalInt32(const char * &src,
 void castor::tape::legacymsg::marshalUint64(uint64_t src,
   char * &dst) throw(castor::exception::Exception) {
 
-  io::marshalValue(src, dst);
+  io::marshalUint64(src, dst);
 }
 
 
@@ -139,7 +139,7 @@ void castor::tape::legacymsg::unmarshalUint64(const char * &src,
 void castor::tape::legacymsg::marshalTime(time_t src,
   char * &dst) throw(castor::exception::Exception) {
 
-  io::marshalValue(src, dst);
+  io::marshalTime(src, dst);
 }
 
 

@@ -38,10 +38,12 @@
 #include <iostream>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <stdint.h>
 #include <string>
 #include <string.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <time.h>
 
 namespace castor {
 namespace io     {
@@ -414,25 +416,56 @@ int connectWithTimeout(
  * return     Points to the byte in the destination buffer immediately after
  *            the marshalled value.
  */
-template<typename T> void marshalValue(T src, char * &dst)
-  throw(castor::exception::Exception) {
+void marshalUint8(const uint8_t src, char * &dst)
+ throw(castor::exception::Exception);
 
-  if(dst == NULL) {
-    castor::exception::Exception ex(EINVAL);
+/**
+ * Marshals the specified src value into the specified destination buffer.
+ *
+ * @param src The source value be marshalled.
+ * @param dst In/out parameter, before invocation points to the destination
+ *            buffer where the source value should be marshalled to and on
+ * return     Points to the byte in the destination buffer immediately after
+ *            the marshalled value.
+ */
+void marshalUint16(const uint16_t src, char * &dst)
+ throw(castor::exception::Exception);
 
-    ex.getMessage() << "Failed to marshal value"
-      ": Pointer to destination buffer is NULL";
-    throw ex;
-  }
+/**
+ * Marshals the specified src value into the specified destination buffer.
+ *
+ * @param src The source value be marshalled.
+ * @param dst In/out parameter, before invocation points to the destination
+ *            buffer where the source value should be marshalled to and on
+ * return     Points to the byte in the destination buffer immediately after
+ *            the marshalled value.
+ */
+void marshalUint32(const uint32_t src, char * &dst)
+  throw(castor::exception::Exception);
 
-  char *const src_ptr = (char *)(&src);
+/**
+ * Marshals the specified src value into the specified destination buffer.
+ *
+ * @param src The source value be marshalled.
+ * @param dst In/out parameter, before invocation points to the destination
+ *            buffer where the source value should be marshalled to and on
+ * return     Points to the byte in the destination buffer immediately after
+ *            the marshalled value.
+ */
+void marshalUint64(const uint64_t src, char * &dst)
+  throw(castor::exception::Exception);
 
-  // src: Intel x86 (little endian)
-  // dst: Network   (big    endian)
-  for(size_t i=sizeof(src); i>0; i--) {
-    *dst++ = *(src_ptr + i - 1);
-  }
-}
+/**
+ * Marshals the specified src value into the specified destination buffer.
+ *
+ * @param src The source value be marshalled.
+ * @param dst In/out parameter, before invocation points to the destination
+ *            buffer where the source value should be marshalled to and on
+ * return     Points to the byte in the destination buffer immediately after
+ *            the marshalled value.
+ */
+void marshalTime(const time_t src, char * &dst)
+  throw(castor::exception::Exception);
 
 /**
  * Unmarshals a value from the specified source buffer into the specified
