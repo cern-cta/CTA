@@ -36,10 +36,16 @@ m_tapeFD(-1),  m_sysWrapper(sw) {
   castor::exception::Errnum::throwOnMinusOne(
       m_tapeFD = m_sysWrapper.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
       std::string("Could not open device file: ") + m_SCSIInfo.nst_dev);
+  UpdateDriveStatus();
+}
+
+void drives::DriveGeneric::UpdateDriveStatus() throw (Exception) {
   /* Read drive status */
-  castor::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &m_mtInfo),
-      std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
+  castor::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &m_mtInfo), std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
+  if(GMT_BOT(m_mtInfo.mt_gstat)) m_driveStatus.bot=true; else m_driveStatus.bot=false;
+  if(GMT_EOD(m_mtInfo.mt_gstat)) m_driveStatus.eod=true; else m_driveStatus.eod=false;
+  if(GMT_WR_PROT(m_mtInfo.mt_gstat)) m_driveStatus.writeProtection=true; else m_driveStatus.writeProtection=false;
+  if(GMT_ONLINE(m_mtInfo.mt_gstat)) m_driveStatus.ready=true; else m_driveStatus.ready=false;
 }
 
 /**
@@ -786,4 +792,173 @@ drives::compressionStats drives::DriveIBM3592::getCompression() throw (Exception
   }
 
   return driveCompressionStats;
+}
+
+/**
+ * FAKE Drive methods 
+ */
+
+const long unsigned int max_fake_drive_record_length = 1000;
+const char filemark[] = "__FILE__MARK__";
+
+drives::FakeDrive::FakeDrive() throw() : m_current_position(0) {
+  m_tape.reserve(max_fake_drive_record_length);
+}
+drives::compressionStats drives::FakeDrive::getCompression() throw (Exception) {
+  throw Exception("FakeDrive::getCompression Not implemented");
+}
+void drives::FakeDrive::clearCompressionStats() throw (Exception) {
+  throw Exception("FakeDrive::clearCompressionStats Not implemented");
+}
+drives::deviceInfo drives::FakeDrive::getDeviceInfo() throw (Exception) {
+  deviceInfo devInfo;
+  devInfo.product = "Fake Drv";
+  devInfo.productRevisionLevel = "0.1";
+  devInfo.vendor = "ACME Ind";
+  devInfo.serialNumber = "123456";
+  return devInfo;
+}
+std::string drives::FakeDrive::getSerialNumber() throw (Exception) {
+  throw Exception("FakeDrive::getSerialNumber Not implemented");
+}
+void drives::FakeDrive::positionToLogicalObject(uint32_t blockId) throw (Exception) {
+  m_current_position = blockId;
+}
+drives::positionInfo drives::FakeDrive::getPositionInfo() throw (Exception) {
+  positionInfo pos;
+  pos.currentPosition = m_current_position;
+  pos.dirtyBytesCount = 0;
+  pos.dirtyObjectsCount = 0;
+  pos.oldestDirtyObject = 0;
+  return pos;
+}
+std::vector<std::string> drives::FakeDrive::getTapeAlerts() throw (Exception) {
+  throw Exception("FakeDrive::getTapeAlerts Not implemented");
+}
+void drives::FakeDrive::setDensityAndCompression(unsigned char densityCode, bool compression) throw (Exception) {
+  throw Exception("FakeDrive::setDensityAndCompression Not implemented");
+}
+drives::driveStatus drives::FakeDrive::getDriveStatus() throw (Exception) {
+  throw Exception("FakeDrive::getDriveStatus Not implemented");
+}
+drives::tapeError drives::FakeDrive::getTapeError() throw (Exception) {
+  throw Exception("FakeDrive::getTapeError Not implemented");
+}
+void drives::FakeDrive::setSTBufferWrite(bool bufWrite) throw (Exception) {
+  throw Exception("FakeDrive::setSTBufferWrite Not implemented");
+}
+void drives::FakeDrive::fastSpaceToEOM(void) throw (Exception) {
+  m_current_position = m_tape.size()-1;
+}
+void drives::FakeDrive::rewind(void) throw (Exception) {
+  m_current_position = 0;
+}
+void drives::FakeDrive::spaceToEOM(void) throw (Exception) {
+  m_current_position = m_tape.size()-1;
+}
+void drives::FakeDrive::spaceFileMarksBackwards(size_t count) throw (Exception) {
+  if(!count) return;
+  size_t countdown = count;
+  std::vector<std::string>::size_type i=0;
+  for(i=m_current_position; i!=(std::vector<std::string>::size_type)-1 and countdown!=0; i--) {
+    if(!m_tape[i].compare(filemark)) countdown--;
+  }
+  if(countdown) {
+    throw Exception("FakeDrive::spaceFileMarksBackwards");
+  }  
+  m_current_position = i-1; //BOT side of the filemark
+}
+void drives::FakeDrive::spaceFileMarksForward(size_t count) throw (Exception) {
+  if(!count) return;
+  size_t countdown = count;
+  std::vector<std::string>::size_type i=0;
+  for(i=m_current_position; i!=m_tape.size() and countdown!=0; i++) {
+    if(!m_tape[i].compare(filemark)) countdown--;
+  }
+  if(countdown) {
+    throw Exception("Failed FakeDrive::spaceFileMarksForward");
+  }
+  m_current_position = i; //EOT side of the filemark
+}
+void drives::FakeDrive::spaceBlocksBackwards(size_t count) throw (Exception) {
+  m_current_position -= count;
+}
+void drives::FakeDrive::spaceBlocksForward(size_t count) throw (Exception) {
+  m_current_position += count;
+}
+void drives::FakeDrive::unloadTape(void) throw (Exception) {
+  throw Exception("FakeDrive::unloadTape Not implemented");
+}
+void drives::FakeDrive::flush(void) throw (Exception) {
+  //already flushing
+}
+void drives::FakeDrive::writeSyncFileMarks(size_t count) throw (Exception) {
+  if(count==0) return;
+  for(size_t i=0; i<count; ++i) {
+    if(m_current_position<m_tape.size()) {
+      m_tape[m_current_position] = filemark;
+    }
+    else {
+      m_tape.push_back(filemark);
+    }
+    m_current_position++;
+  }
+}
+void drives::FakeDrive::writeImmediateFileMarks(size_t count) throw (Exception) {
+  writeSyncFileMarks(count);
+}
+void drives::FakeDrive::writeBlock(const void * data, size_t count) throw (Exception) {  
+  m_tape.resize(m_current_position+1);
+  m_tape[m_current_position].assign((const char *)data, count);
+  m_current_position++;
+}
+ssize_t drives::FakeDrive::readBlock(void *data, size_t count) throw (Exception) {
+  if(count < m_tape[m_current_position].size()) {
+    throw Exception("Block size too small in FakeDrive::readBlock");
+  }
+  size_t bytes_copied = m_tape[m_current_position].copy((char *)data, m_tape[m_current_position].size());
+  m_current_position++;
+  return bytes_copied;
+}
+std::string drives::FakeDrive::contentToString() throw() {
+  std::stringstream exc;
+  exc << std::endl;
+  exc << "Tape position: " << m_current_position << std::endl;
+  exc << std::endl;
+  exc << "Tape contents:" << std::endl;
+  for(unsigned int i=0; i<m_tape.size(); i++) {
+    exc << i << ": " << m_tape[i] << std::endl;
+  }
+  exc << std::endl;
+  return exc.str();
+}
+void drives::FakeDrive::readExactBlock(void *data, size_t count, std::string context) throw (Exception) {
+  if(count != m_tape[m_current_position].size()) {
+    std::stringstream exc;
+    exc << "Wrong block size in FakeDrive::readExactBlock. Expected: " << count << " Found: " << m_tape[m_current_position].size() << " Position: " << m_current_position << " String: " << m_tape[m_current_position] << std::endl;
+    exc << contentToString();
+    throw Exception(exc.str());
+  }
+  if(count != m_tape[m_current_position].copy((char *)data, count)) {
+    throw Exception("Failed FakeDrive::readExactBlock");
+  }
+  m_current_position++;
+}
+void drives::FakeDrive::readFileMark(std::string context) throw (Exception) {
+  if(m_tape[m_current_position].compare(filemark)) {
+    throw Exception("Failed FakeDrive::readFileMark");
+  }
+  m_current_position++;  
+}
+bool drives::FakeDrive::isReady() throw(Exception) {
+  return true;
+}  
+bool drives::FakeDrive::isWriteProtected() throw(Exception) {
+  return false;
+}
+bool drives::FakeDrive::isAtBOT() throw(Exception) {
+  return m_current_position==0;
+}
+bool drives::FakeDrive::isAtEOD() throw(Exception) {
+  return m_current_position==m_tape.size()-1;
 }

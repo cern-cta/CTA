@@ -36,7 +36,25 @@ const unsigned short max_unix_hostname_length = 256; //255 + 1 terminating chara
 
 using namespace castor::tape::AULFile;
 
-ReadSession::ReadSession(drives::DriveGeneric & drive, const std::string &vid) throw (Exception) : m_drive(drive), m_vid(vid), m_corrupted(false), m_locked(false), m_fseq(1), m_currentFilePart(Header) { 
+LabelSession::LabelSession(drives::DriveInterface & drive, const std::string &vid, bool force) throw (Exception) {
+  drive.rewind();
+  if(!force) {
+    drive.spaceBlocksForward(1); //we are doing it the old CASTOR way (see usrreadlbl.c)
+    if(!(drive.isAtBOT() and drive.isAtEOD())) {
+      throw TapeNotEmpty();
+    }
+    drive.rewind();
+  }
+  VOL1 vol1;
+  vol1.fill(vid);
+  drive.writeBlock(&vol1, sizeof(vol1));
+  HDR1PRELABEL prelabel;
+  prelabel.fill(vid);
+  drive.writeBlock(&prelabel, sizeof(prelabel));
+  drive.writeSyncFileMarks(1);
+}
+
+ReadSession::ReadSession(drives::DriveInterface & drive, const std::string &vid) throw (Exception) : m_drive(drive), m_vid(vid), m_corrupted(false), m_locked(false), m_fseq(1), m_currentFilePart(Header) { 
   m_drive.rewind();
   VOL1 vol1;
   m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
@@ -164,7 +182,6 @@ void ReadFile::position(const FileInfo &fileInfo) throw (Exception) {
   
   //save the current fseq into the read session
   m_session->setCurrentFseq(fileInfo.fseq);
-  m_session->setCurrentFilePart(Header);
   
   HDR1 hdr1;
   HDR2 hdr2;
@@ -217,7 +234,8 @@ size_t ReadFile::read(void *data, const size_t size) throw (Exception) {
     m_session->m_drive.readExactBlock((void *)&eof1, sizeof(eof1), "[ReadFile::read] - Reading HDR1");  
     m_session->m_drive.readExactBlock((void *)&eof2, sizeof(eof2), "[ReadFile::read] - Reading HDR2");
     m_session->m_drive.readExactBlock((void *)&utl1, sizeof(utl1), "[ReadFile::read] - Reading UTL1");
-    m_session->m_drive.readFileMark("[ReadFile::read] - Reading file mark at the end of file trailer"); // after this we should be where we want, i.e. at the beginning of the file
+    m_session->m_drive.readFileMark("[ReadFile::read] - Reading file mark at the end of file trailer");
+    
     m_session->setCurrentFseq(m_session->getCurrentFseq() + 1); // moving on to the header of the next file 
     m_session->setCurrentFilePart(Header);
 
@@ -236,7 +254,7 @@ size_t ReadFile::read(void *data, const size_t size) throw (Exception) {
   return bytes_read;
 }
 
-WriteSession::WriteSession(drives::DriveGeneric & drive, const std::string &volId, const uint32_t last_fseq, const bool compression) throw (Exception) : m_drive(drive), m_vid(volId), m_compressionEnabled(compression), m_corrupted(false), m_locked(false) {
+WriteSession::WriteSession(drives::DriveInterface & drive, const std::string &volId, const uint32_t last_fseq, const bool compression) throw (Exception) : m_drive(drive), m_vid(volId), m_compressionEnabled(compression), m_corrupted(false), m_locked(false) {
 
   if(!volId.compare("")) {
     throw castor::exception::InvalidArgument();

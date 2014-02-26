@@ -82,7 +82,7 @@ namespace drives {
   /**
    * 
    */
-  class driveStatus {
+  struct driveStatus {
     bool ready;
     bool writeProtection;
     /* TODO: Error condition */
@@ -128,6 +128,88 @@ namespace drives {
   public:
     NotAFileMark(const std::string w=""): Exception(w) {}
   };
+  
+  /**
+   * Abstract class used by DriveGeneric(real stuff) and the FakeDrive(used for unit testing)
+   */
+  class DriveInterface {
+  public:
+    virtual ~DriveInterface(){};
+    virtual compressionStats getCompression() throw (Exception) = 0;
+    virtual void clearCompressionStats() throw (Exception) = 0;
+    virtual deviceInfo getDeviceInfo() throw (Exception) = 0;
+    virtual std::string getSerialNumber() throw (Exception) = 0;
+    virtual void positionToLogicalObject(uint32_t blockId) throw (Exception) = 0;
+    virtual positionInfo getPositionInfo() throw (Exception) = 0;
+    virtual std::vector<std::string> getTapeAlerts() throw (Exception) = 0;
+    virtual void setDensityAndCompression(unsigned char densityCode, bool compression) throw (Exception) = 0;
+    virtual driveStatus getDriveStatus() throw (Exception) = 0;
+    virtual tapeError getTapeError() throw (Exception) = 0;
+    virtual void setSTBufferWrite(bool bufWrite) throw (Exception) = 0;
+    virtual void fastSpaceToEOM(void) throw (Exception) = 0;
+    virtual void rewind(void) throw (Exception) = 0;
+    virtual void spaceToEOM(void) throw (Exception) = 0;
+    virtual void spaceFileMarksBackwards(size_t count) throw (Exception) = 0;
+    virtual void spaceFileMarksForward(size_t count) throw (Exception) = 0;
+    virtual void spaceBlocksBackwards(size_t count) throw (Exception) = 0;
+    virtual void spaceBlocksForward(size_t count) throw (Exception) = 0;
+    virtual void unloadTape(void) throw (Exception) = 0;
+    virtual void flush(void) throw (Exception) = 0;
+    virtual void writeSyncFileMarks(size_t count) throw (Exception) = 0;
+    virtual void writeImmediateFileMarks(size_t count) throw (Exception) = 0;
+    virtual void writeBlock(const void * data, size_t count) throw (Exception) = 0;
+    virtual ssize_t readBlock(void * data, size_t count) throw (Exception) = 0;
+    virtual void readExactBlock(void * data, size_t count, std::string context) throw (Exception) = 0;
+    virtual void readFileMark(std::string context) throw (Exception) = 0;
+    virtual bool isReady() throw(Exception) = 0;    
+    virtual bool isWriteProtected() throw(Exception) = 0;
+    virtual bool isAtBOT() throw(Exception) = 0;
+    virtual bool isAtEOD() throw(Exception) = 0;
+  };
+  
+  /**
+   * Fake drive class used for unit testing
+   */
+  class FakeDrive : public DriveInterface {
+  private:
+    std::vector<std::string> m_tape;
+    uint32_t m_current_position;
+  public:
+    std::string contentToString() throw();
+    FakeDrive() throw();
+    virtual ~FakeDrive() throw(){}
+    virtual compressionStats getCompression() throw (Exception);
+    virtual void clearCompressionStats() throw (Exception);
+    virtual deviceInfo getDeviceInfo() throw (Exception);
+    virtual std::string getSerialNumber() throw (Exception);
+    virtual void positionToLogicalObject(uint32_t blockId) throw (Exception);
+    virtual positionInfo getPositionInfo() throw (Exception);
+    virtual std::vector<std::string> getTapeAlerts() throw (Exception);
+    virtual void setDensityAndCompression(unsigned char densityCode, bool compression) throw (Exception);
+    virtual driveStatus getDriveStatus() throw (Exception);
+    virtual tapeError getTapeError() throw (Exception);
+    virtual void setSTBufferWrite(bool bufWrite) throw (Exception);
+    virtual void fastSpaceToEOM(void) throw (Exception);
+    virtual void rewind(void) throw (Exception);
+    virtual void spaceToEOM(void) throw (Exception);
+    virtual void spaceFileMarksBackwards(size_t count) throw (Exception);
+    virtual void spaceFileMarksForward(size_t count) throw (Exception);
+    virtual void spaceBlocksBackwards(size_t count) throw (Exception);
+    virtual void spaceBlocksForward(size_t count) throw (Exception);
+    virtual void unloadTape(void) throw (Exception);
+    virtual void flush(void) throw (Exception);
+    virtual void writeSyncFileMarks(size_t count) throw (Exception);
+    virtual void writeImmediateFileMarks(size_t count) throw (Exception);
+    virtual void writeBlock(const void * data, size_t count) throw (Exception);
+    virtual ssize_t readBlock(void * data, size_t count) throw (Exception);
+    virtual void readExactBlock(void * data, size_t count, std::string context) throw (Exception);
+    virtual void readFileMark(std::string context) throw (Exception);
+    virtual bool isReady() throw(Exception);    
+    virtual bool isWriteProtected() throw(Exception);
+    virtual bool isAtBOT() throw(Exception);
+    virtual bool isAtEOD() throw(Exception);
+  };
+  
   /**
    * Class abstracting the tape drives. This class is templated to allow the use
    * of unrelated test harness and real system. The test harness is made up of 
@@ -136,14 +218,14 @@ namespace drives {
    * system without paying performance price when calling system calls in the 
    * production system.
    */
-  class DriveGeneric {
+  class DriveGeneric : public DriveInterface {
   public:
     DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper & sw);
 
     /* Operations to be used by the higher levels */
 
     /**
-     * Return comulative log counter values from the log pages related to
+     * Return cumulative log counter values from the log pages related to
      * the drive statistics about data movements to/from the tape. 
      * Data fields fromHost, toDrive are related to the write operation and
      * fields toHost, fromDrive are related to the read operation.
@@ -153,7 +235,7 @@ namespace drives {
 
     /**
      * Reset all statistics about data movements on the drive.
-     * All comulative and threshold log counter values will be reset to their
+     * All cumulative and threshold log counter values will be reset to their
      * default values as specified in that pages reset behavior section.
      */
     virtual void clearCompressionStats() throw (Exception);
@@ -216,6 +298,26 @@ namespace drives {
      */
     virtual driveStatus getDriveStatus() throw (Exception) {
       throw Exception("Not implemented");
+    }
+    
+    virtual bool isReady() throw(Exception) {
+      UpdateDriveStatus();
+      return m_driveStatus.ready;
+    }
+    
+    virtual bool isWriteProtected() throw(Exception) {
+      UpdateDriveStatus();
+      return m_driveStatus.writeProtection;
+    }
+    
+    virtual bool isAtBOT() throw(Exception) {
+      UpdateDriveStatus();
+      return m_driveStatus.bot;
+    }
+    
+    virtual bool isAtEOD() throw(Exception) {
+      UpdateDriveStatus();
+      return m_driveStatus.eod;
     }
 
     /**
@@ -374,7 +476,7 @@ namespace drives {
     int m_tapeFD; 
     castor::tape::System::virtualWrapper & m_sysWrapper;
     struct mtget m_mtInfo;
-  private:
+    struct driveStatus m_driveStatus;
     /**
      * Set the MTFastEOM option of the ST driver. This function is used only internally in 
      * mounttape (in CAStor), so it could be a private function, not visible to 
@@ -382,6 +484,11 @@ namespace drives {
      * @param fastMTEOM the option switch.
      */
     virtual void setSTFastMTEOM(bool fastMTEOM) throw (Exception);
+    
+    /**
+     * Update the drive status member.
+     */
+    virtual void UpdateDriveStatus() throw (Exception);
   };
 
   class DriveT10000 : public DriveGeneric {

@@ -86,6 +86,7 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/drive/DriveTest.cpp
   ../castor/tape/tapeserver/exception/ExceptionTest.cpp
   ../castor/tape/tapeserver/file/StructuresTest.cpp
+  ../castor/tape/tapeserver/file/FileTest.cpp
   ../castor/tape/tapeserver/threading/ThreadingTests.cpp
   ../castor/utils/SmartFdTest.cpp
   ../castor/utils/UtilsTest.cpp

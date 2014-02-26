@@ -95,6 +95,11 @@ namespace castor {
         ZeroFileWritten(): Exception("Trying to write a file with size 0") {}
       };
       
+      class TapeNotEmpty: public Exception {
+      public:
+        TapeNotEmpty(): Exception("Trying to label a non-empty tape without the \"force\" setting") {}
+      };
+      
       class UnsupportedPositioningMode: public Exception {
       public:
         UnsupportedPositioningMode(): Exception("Trying to use an unsupported positioning mode") {}
@@ -144,6 +149,23 @@ namespace castor {
          */
         static bool checkHeaderNumericalField(const std::string &headerField, const uint64_t value, const bool is_field_hex=false, const bool is_field_oct=false) throw (Exception);
       };
+      
+      /**
+       * Class keeping track of a tape label session on a tape. The session will
+       * check for everything to be coherent. The tape should be mounted in
+       * the drive before the LabelSession is started (i.e. constructed).
+       */      
+      class LabelSession {        
+      public:        
+        /**
+         * Constructor of the LabelSession. It will rewind the tape, and label it.
+         * Throws an exception in case of tape is not empty and argument force is false.
+         * @param drive: drive object to which we bind the session
+         * @param vid: volume name of the tape we would like to read from
+         * @param force: force labeling even if tape is not empty
+         */
+        LabelSession(drives::DriveInterface & drive, const std::string &vid, bool force) throw (Exception);
+      };
 
       /**
        * Class keeping track of a whole tape read session over an AUL formatted
@@ -162,12 +184,12 @@ namespace castor {
          * @param drive: drive object to which we bind the session
          * @param vid: volume name of the tape we would like to read from
          */
-        ReadSession(drives::DriveGeneric & drive, const std::string &vid) throw (Exception);
+        ReadSession(drives::DriveInterface & drive, const std::string &vid) throw (Exception);
         
         /**
          * DriveGeneric object referencing the drive used during this read session
          */
-        drives::DriveGeneric & m_drive;
+        drives::DriveInterface & m_drive;
         
         /**
          * Volume Serial Number
@@ -326,12 +348,12 @@ namespace castor {
          * @param last_fseq: fseq of the last active (undeleted) file on tape
          * @param compression: set this to true in case the drive has compression enabled (x000GC)
          */
-        WriteSession(drives::DriveGeneric & drive, const std::string &vid, const uint32_t last_fseq, const bool compression) throw (Exception);
+        WriteSession(drives::DriveInterface & drive, const std::string &vid, const uint32_t last_fseq, const bool compression) throw (Exception);
         
         /**
          * DriveGeneric object referencing the drive used during this write session
          */
-        drives::DriveGeneric & m_drive;
+        drives::DriveInterface & m_drive;
         
         /**
          * Volume Serial Number

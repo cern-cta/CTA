@@ -90,6 +90,7 @@ int main(int argc, char* argv[])
   
   castor::tape::AULFile::ReadSession *read_sess = NULL;
   castor::tape::AULFile::WriteSession *write_sess = NULL;
+  castor::tape::AULFile::LabelSession *label_sess = NULL;
   
   castor::tape::SCSI::DeviceInfo read_dev;
   castor::tape::SCSI::DeviceInfo write_dev;
@@ -107,6 +108,17 @@ int main(int argc, char* argv[])
   castor::tape::drives::DriveGeneric & read_drive = read_dContainer;
   castor::tape::drives::Drive write_dContainer(write_dev, sWrapper);
   castor::tape::drives::DriveGeneric & write_drive = write_dContainer;
+  
+  try {
+    label_sess = new castor::tape::AULFile::LabelSession(write_drive, dst_tape, true);
+    std::cout << "Label session on " << dst_tape << " (" << dst_device << ") established." << std::endl;
+  } 
+  catch (std::exception & e) {
+    fail = 1;
+    std::cout << "-- EXCEPTION ---------------------------------" << std::endl
+              << e.what() << std::endl
+              << "----------------------------------------------" << std::endl;
+  }
   
   try {
     read_sess = new castor::tape::AULFile::ReadSession(read_drive, src_tape);
