@@ -106,10 +106,10 @@ size_t castor::tape::legacymsg::marshal(char *const dst,
 void castor::tape::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, RtcpJobRqstMsgBody &dst) throw(castor::exception::Exception) {
 
-  unmarshalUint32(src, srcLen, dst.volReqId);
-  unmarshalUint32(src, srcLen, dst.clientPort);
-  unmarshalUint32(src, srcLen, dst.clientEuid);
-  unmarshalUint32(src, srcLen, dst.clientEgid);
+  io::unmarshalUint32(src, srcLen, dst.volReqId);
+  io::unmarshalUint32(src, srcLen, dst.clientPort);
+  io::unmarshalUint32(src, srcLen, dst.clientEuid);
+  io::unmarshalUint32(src, srcLen, dst.clientEgid);
   unmarshalString(src, srcLen, dst.clientHost);
   unmarshalString(src, srcLen, dst.dgn);
   unmarshalString(src, srcLen, dst.driveUnit);
@@ -188,7 +188,7 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, RtcpJobReplyMsgBody &dst) throw(castor::exception::Exception) {
 
   // Unmarshal the status number
-  legacymsg::unmarshalInt32(src, srcLen, dst.status);
+  io::unmarshalInt32(src, srcLen, dst.status);
 
   // The error message will be right trimmed if it is too large
   const size_t maxBytesToUnmarshal = srcLen < sizeof(dst.errorMessage) ?
@@ -307,10 +307,10 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
 
   unmarshal(src, srcLen, (RtcpTapeRqstMsgBody&)dst);
   unmarshalString(src, srcLen, dst.err.errorMsg);
-  unmarshalUint32(src, srcLen, dst.err.severity);
-  unmarshalUint32(src, srcLen, dst.err.errorCode);
-  unmarshalInt32(src, srcLen, dst.err.maxTpRetry);
-  unmarshalInt32(src, srcLen, dst.err.maxCpRetry);
+  io::unmarshalUint32(src, srcLen, dst.err.severity);
+  io::unmarshalUint32(src, srcLen, dst.err.errorCode);
+  io::unmarshalInt32(src, srcLen, dst.err.maxTpRetry);
+  io::unmarshalInt32(src, srcLen, dst.err.maxCpRetry);
 }
 
 
@@ -327,31 +327,31 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   unmarshalString(src, srcLen, dst.devtype);
   unmarshalString(src, srcLen, dst.density);
   unmarshalString(src, srcLen, dst.unit);
-  unmarshalUint32(src, srcLen, dst.volReqId);
-  unmarshalUint32(src, srcLen, dst.jobId);
-  unmarshalUint32(src, srcLen, dst.mode);
-  unmarshalUint32(src, srcLen, dst.start_file);
-  unmarshalUint32(src, srcLen, dst.end_file);
-  unmarshalUint32(src, srcLen, dst.side);
-  unmarshalUint32(src, srcLen, dst.tprc);
-  unmarshalUint32(src, srcLen, dst.tStartRequest);
-  unmarshalUint32(src, srcLen, dst.tEndRequest);
-  unmarshalUint32(src, srcLen, dst.tStartRtcpd);
-  unmarshalUint32(src, srcLen, dst.tStartMount);
-  unmarshalUint32(src, srcLen, dst.tEndMount);
-  unmarshalUint32(src, srcLen, dst.tStartUnmount);
-  unmarshalUint32(src, srcLen, dst.tEndUnmount);
-  unmarshalUint32(src, srcLen, dst.rtcpReqId.time_low);
-  unmarshalUint16(src, srcLen, dst.rtcpReqId.time_mid);
-  unmarshalUint16(src, srcLen, dst.rtcpReqId.time_hi_and_version);
-  unmarshalUint8(src, srcLen, dst.rtcpReqId.clock_seq_hi_and_reserved);
-  unmarshalUint8(src, srcLen, dst.rtcpReqId.clock_seq_low);
-  unmarshalUint8(src, srcLen, dst.rtcpReqId.node[0]);
-  unmarshalUint8(src, srcLen, dst.rtcpReqId.node[1]);
-  unmarshalUint8(src, srcLen, dst.rtcpReqId.node[2]);
-  unmarshalUint8(src, srcLen, dst.rtcpReqId.node[3]);
-  unmarshalUint8(src, srcLen, dst.rtcpReqId.node[4]);
-  unmarshalUint8(src, srcLen, dst.rtcpReqId.node[5]);
+  io::unmarshalUint32(src, srcLen, dst.volReqId);
+  io::unmarshalUint32(src, srcLen, dst.jobId);
+  io::unmarshalUint32(src, srcLen, dst.mode);
+  io::unmarshalUint32(src, srcLen, dst.start_file);
+  io::unmarshalUint32(src, srcLen, dst.end_file);
+  io::unmarshalUint32(src, srcLen, dst.side);
+  io::unmarshalUint32(src, srcLen, dst.tprc);
+  io::unmarshalUint32(src, srcLen, dst.tStartRequest);
+  io::unmarshalUint32(src, srcLen, dst.tEndRequest);
+  io::unmarshalUint32(src, srcLen, dst.tStartRtcpd);
+  io::unmarshalUint32(src, srcLen, dst.tStartMount);
+  io::unmarshalUint32(src, srcLen, dst.tEndMount);
+  io::unmarshalUint32(src, srcLen, dst.tStartUnmount);
+  io::unmarshalUint32(src, srcLen, dst.tEndUnmount);
+  io::unmarshalUint32(src, srcLen, dst.rtcpReqId.time_low);
+  io::unmarshalUint16(src, srcLen, dst.rtcpReqId.time_mid);
+  io::unmarshalUint16(src, srcLen, dst.rtcpReqId.time_hi_and_version);
+  io::unmarshalUint8(src, srcLen, dst.rtcpReqId.clock_seq_hi_and_reserved);
+  io::unmarshalUint8(src, srcLen, dst.rtcpReqId.clock_seq_low);
+  io::unmarshalUint8(src, srcLen, dst.rtcpReqId.node[0]);
+  io::unmarshalUint8(src, srcLen, dst.rtcpReqId.node[1]);
+  io::unmarshalUint8(src, srcLen, dst.rtcpReqId.node[2]);
+  io::unmarshalUint8(src, srcLen, dst.rtcpReqId.node[3]);
+  io::unmarshalUint8(src, srcLen, dst.rtcpReqId.node[4]);
+  io::unmarshalUint8(src, srcLen, dst.rtcpReqId.node[5]);
 }
 
 
@@ -496,10 +496,10 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   throw(castor::exception::Exception) {
   unmarshal(src, srcLen, (RtcpFileRqstMsgBody&)dst);
   unmarshalString(src, srcLen, dst.err.errorMsg);
-  unmarshalUint32(src, srcLen, dst.err.severity);
-  unmarshalUint32(src, srcLen, dst.err.errorCode);
-  unmarshalInt32(src, srcLen, dst.err.maxTpRetry);
-  unmarshalInt32(src, srcLen, dst.err.maxCpRetry);
+  io::unmarshalUint32(src, srcLen, dst.err.severity);
+  io::unmarshalUint32(src, srcLen, dst.err.errorCode);
+  io::unmarshalInt32(src, srcLen, dst.err.maxTpRetry);
+  io::unmarshalInt32(src, srcLen, dst.err.maxCpRetry);
 }
 
 
@@ -516,57 +516,57 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   unmarshalString(src, srcLen, dst.rqst.fid);
   unmarshalString(src, srcLen, dst.rqst.ifce);
   unmarshalString(src, srcLen, dst.rqst.stageId);
-  unmarshalUint32(src, srcLen, dst.rqst.volReqId);
-  unmarshalInt32(src, srcLen, dst.rqst.jobId);
-  unmarshalInt32(src, srcLen, dst.rqst.stageSubReqId);
-  unmarshalUint32(src, srcLen, dst.rqst.umask);
-  unmarshalInt32(src, srcLen, dst.rqst.positionMethod);
-  unmarshalInt32(src, srcLen, dst.rqst.tapeFseq);
-  unmarshalInt32(src, srcLen, dst.rqst.diskFseq);
-  unmarshalInt32(src, srcLen, dst.rqst.blockSize);
-  unmarshalInt32(src, srcLen, dst.rqst.recordLength);
-  unmarshalInt32(src, srcLen, dst.rqst.retention);
-  unmarshalInt32(src, srcLen, dst.rqst.defAlloc);
-  unmarshalInt32(src, srcLen, dst.rqst.rtcpErrAction);
-  unmarshalInt32(src, srcLen, dst.rqst.tpErrAction);
-  unmarshalInt32(src, srcLen, dst.rqst.convert_noLongerUsed);
-  unmarshalInt32(src, srcLen, dst.rqst.checkFid);
-  unmarshalUint32(src, srcLen, dst.rqst.concat);
-  unmarshalUint32(src, srcLen, dst.rqst.procStatus);
-  unmarshalInt32(src, srcLen, dst.rqst.cprc);
-  unmarshalUint32(src, srcLen, dst.rqst.tStartPosition);
-  unmarshalUint32(src, srcLen, dst.rqst.tEndPosition);
-  unmarshalUint32(src, srcLen, dst.rqst.tStartTransferDisk);
-  unmarshalUint32(src, srcLen, dst.rqst.tEndTransferDisk);
-  unmarshalUint32(src, srcLen, dst.rqst.tStartTransferTape);
-  unmarshalUint32(src, srcLen, dst.rqst.tEndTransferTape);
-  unmarshalUint8(src, srcLen, dst.rqst.blockId[0]);
-  unmarshalUint8(src, srcLen, dst.rqst.blockId[1]);
-  unmarshalUint8(src, srcLen, dst.rqst.blockId[2]);
-  unmarshalUint8(src, srcLen, dst.rqst.blockId[3]);
-  unmarshalUint64(src, srcLen, dst.rqst.offset);
-  unmarshalUint64(src, srcLen, dst.rqst.bytesIn);
-  unmarshalUint64(src, srcLen, dst.rqst.bytesOut);
-  unmarshalUint64(src, srcLen, dst.rqst.hostBytes);
-  unmarshalUint64(src, srcLen, dst.rqst.nbRecs);
-  unmarshalUint64(src, srcLen, dst.rqst.maxNbRec);
-  unmarshalUint64(src, srcLen, dst.rqst.maxSize);
-  unmarshalUint64(src, srcLen, dst.rqst.startSize);
+  io::unmarshalUint32(src, srcLen, dst.rqst.volReqId);
+  io::unmarshalInt32(src, srcLen, dst.rqst.jobId);
+  io::unmarshalInt32(src, srcLen, dst.rqst.stageSubReqId);
+  io::unmarshalUint32(src, srcLen, dst.rqst.umask);
+  io::unmarshalInt32(src, srcLen, dst.rqst.positionMethod);
+  io::unmarshalInt32(src, srcLen, dst.rqst.tapeFseq);
+  io::unmarshalInt32(src, srcLen, dst.rqst.diskFseq);
+  io::unmarshalInt32(src, srcLen, dst.rqst.blockSize);
+  io::unmarshalInt32(src, srcLen, dst.rqst.recordLength);
+  io::unmarshalInt32(src, srcLen, dst.rqst.retention);
+  io::unmarshalInt32(src, srcLen, dst.rqst.defAlloc);
+  io::unmarshalInt32(src, srcLen, dst.rqst.rtcpErrAction);
+  io::unmarshalInt32(src, srcLen, dst.rqst.tpErrAction);
+  io::unmarshalInt32(src, srcLen, dst.rqst.convert_noLongerUsed);
+  io::unmarshalInt32(src, srcLen, dst.rqst.checkFid);
+  io::unmarshalUint32(src, srcLen, dst.rqst.concat);
+  io::unmarshalUint32(src, srcLen, dst.rqst.procStatus);
+  io::unmarshalInt32(src, srcLen, dst.rqst.cprc);
+  io::unmarshalUint32(src, srcLen, dst.rqst.tStartPosition);
+  io::unmarshalUint32(src, srcLen, dst.rqst.tEndPosition);
+  io::unmarshalUint32(src, srcLen, dst.rqst.tStartTransferDisk);
+  io::unmarshalUint32(src, srcLen, dst.rqst.tEndTransferDisk);
+  io::unmarshalUint32(src, srcLen, dst.rqst.tStartTransferTape);
+  io::unmarshalUint32(src, srcLen, dst.rqst.tEndTransferTape);
+  io::unmarshalUint8(src, srcLen, dst.rqst.blockId[0]);
+  io::unmarshalUint8(src, srcLen, dst.rqst.blockId[1]);
+  io::unmarshalUint8(src, srcLen, dst.rqst.blockId[2]);
+  io::unmarshalUint8(src, srcLen, dst.rqst.blockId[3]);
+  io::unmarshalUint64(src, srcLen, dst.rqst.offset);
+  io::unmarshalUint64(src, srcLen, dst.rqst.bytesIn);
+  io::unmarshalUint64(src, srcLen, dst.rqst.bytesOut);
+  io::unmarshalUint64(src, srcLen, dst.rqst.hostBytes);
+  io::unmarshalUint64(src, srcLen, dst.rqst.nbRecs);
+  io::unmarshalUint64(src, srcLen, dst.rqst.maxNbRec);
+  io::unmarshalUint64(src, srcLen, dst.rqst.maxSize);
+  io::unmarshalUint64(src, srcLen, dst.rqst.startSize);
   unmarshalString(src, srcLen, dst.rqst.segAttr.nameServerHostName);
   unmarshalString(src, srcLen, dst.rqst.segAttr.segmCksumAlgorithm);
-  unmarshalUint32(src, srcLen, dst.rqst.segAttr.segmCksum);
-  unmarshalUint64(src, srcLen, dst.rqst.segAttr.castorFileId);
-  unmarshalUint32(src, srcLen, dst.rqst.stgReqId.time_low);
-  unmarshalUint16(src, srcLen, dst.rqst.stgReqId.time_mid);
-  unmarshalUint16(src, srcLen, dst.rqst.stgReqId.time_hi_and_version);
-  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.clock_seq_hi_and_reserved);
-  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.clock_seq_low);
-  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[0]);
-  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[1]);
-  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[2]);
-  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[3]);
-  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[4]);
-  unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[5]);
+  io::unmarshalUint32(src, srcLen, dst.rqst.segAttr.segmCksum);
+  io::unmarshalUint64(src, srcLen, dst.rqst.segAttr.castorFileId);
+  io::unmarshalUint32(src, srcLen, dst.rqst.stgReqId.time_low);
+  io::unmarshalUint16(src, srcLen, dst.rqst.stgReqId.time_mid);
+  io::unmarshalUint16(src, srcLen, dst.rqst.stgReqId.time_hi_and_version);
+  io::unmarshalUint8(src, srcLen, dst.rqst.stgReqId.clock_seq_hi_and_reserved);
+  io::unmarshalUint8(src, srcLen, dst.rqst.stgReqId.clock_seq_low);
+  io::unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[0]);
+  io::unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[1]);
+  io::unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[2]);
+  io::unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[3]);
+  io::unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[4]);
+  io::unmarshalUint8(src, srcLen, dst.rqst.stgReqId.node[5]);
 }
 
 

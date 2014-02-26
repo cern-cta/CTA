@@ -113,19 +113,19 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   unmarshalString(src, srcLen, dst.mediaLetter       );
   unmarshalString(src, srcLen, dst.manufacturer      );
   unmarshalString(src, srcLen, dst.serialNumber      );
-  unmarshalUint16(src, srcLen, dst.nbSides           );
+  io::unmarshalUint16(src, srcLen, dst.nbSides           );
   unmarshalTime  (src, srcLen, dst.eTime             );
-  unmarshalUint16(src, srcLen, dst.side              );
+  io::unmarshalUint16(src, srcLen, dst.side              );
   unmarshalString(src, srcLen, dst.poolName          );
-  unmarshalUint32(src, srcLen, dst.estimatedFreeSpace);
-  unmarshalUint32(src, srcLen, dst.nbFiles           );
-  unmarshalUint32(src, srcLen, dst.rCount            );
-  unmarshalUint32(src, srcLen, dst.wCount            );
+  io::unmarshalUint32(src, srcLen, dst.estimatedFreeSpace);
+  io::unmarshalUint32(src, srcLen, dst.nbFiles           );
+  io::unmarshalUint32(src, srcLen, dst.rCount            );
+  io::unmarshalUint32(src, srcLen, dst.wCount            );
   unmarshalString(src, srcLen, dst.rHost             );
   unmarshalString(src, srcLen, dst.wHost             );
-  unmarshalUint32(src, srcLen, dst.rJid              );
-  unmarshalUint32(src, srcLen, dst.wJid              );
+  io::unmarshalUint32(src, srcLen, dst.rJid              );
+  io::unmarshalUint32(src, srcLen, dst.wJid              );
   unmarshalTime  (src, srcLen, dst.rTime             );
   unmarshalTime  (src, srcLen, dst.wTime             );
-  unmarshalUint32(src, srcLen, dst.status            );
+  io::unmarshalUint32(src, srcLen, dst.status            );
 }

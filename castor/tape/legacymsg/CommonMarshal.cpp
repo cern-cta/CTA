@@ -34,56 +34,6 @@
 
 
 //------------------------------------------------------------------------------
-// unmarshalUint8
-//------------------------------------------------------------------------------
-void castor::tape::legacymsg::unmarshalUint8(const char * &src,
-  size_t &srcLen, uint8_t &dst) throw(castor::exception::Exception) {
-
-  io::unmarshalUint8(src, srcLen, dst);
-}
-
-
-//------------------------------------------------------------------------------
-// unmarshalUint16
-//------------------------------------------------------------------------------
-void castor::tape::legacymsg::unmarshalUint16(const char * &src,
-  size_t &srcLen, uint16_t &dst) throw(castor::exception::Exception) {
-
-  io::unmarshalUint16(src, srcLen, dst);
-}
-
-
-//------------------------------------------------------------------------------
-// unmarshalUint32
-//------------------------------------------------------------------------------
-void castor::tape::legacymsg::unmarshalUint32(const char * &src,
-  size_t &srcLen, uint32_t &dst) throw(castor::exception::Exception) {
-
-  io::unmarshalUint32(src, srcLen, dst);
-}
-
-
-//------------------------------------------------------------------------------
-// unmarshalInt32
-//------------------------------------------------------------------------------
-void castor::tape::legacymsg::unmarshalInt32(const char * &src,
-  size_t &srcLen, int32_t &dst) throw(castor::exception::Exception) {
-
-  io::unmarshalInt32(src, srcLen, dst);
-}
-
-
-//------------------------------------------------------------------------------
-// unmarshalUint64
-//------------------------------------------------------------------------------
-void castor::tape::legacymsg::unmarshalUint64(const char * &src,
-  size_t &srcLen, uint64_t &dst) throw(castor::exception::Exception) {
-
-  io::unmarshalUint64(src, srcLen, dst);
-}
-
-
-//------------------------------------------------------------------------------
 // unmarshalTime
 //------------------------------------------------------------------------------
 void castor::tape::legacymsg::unmarshalTime(const char * &src,
@@ -237,7 +187,7 @@ size_t castor::tape::legacymsg::marshal(char *const dst,
 void castor::tape::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, MessageHeader &dst) throw(castor::exception::Exception) {
 
-  unmarshalUint32(src, srcLen, dst.magic);
-  unmarshalUint32(src, srcLen, dst.reqType);
-  unmarshalUint32(src, srcLen, dst.lenOrStatus);
+  io::unmarshalUint32(src, srcLen, dst.magic);
+  io::unmarshalUint32(src, srcLen, dst.reqType);
+  io::unmarshalUint32(src, srcLen, dst.lenOrStatus);
 }

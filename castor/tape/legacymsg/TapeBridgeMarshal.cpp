@@ -24,6 +24,7 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/TapeBridgeMarshal.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -42,7 +43,7 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, tapeBridgeFlushedToTapeMsgBody_t &dst)
   throw(castor::exception::Exception) {
 
-  unmarshalUint32(src, srcLen, dst.volReqId);
-  unmarshalUint32(src, srcLen, dst.tapeFseq);
-  unmarshalUint64(src, srcLen, dst.batchBytesToTape);
+  io::unmarshalUint32(src, srcLen, dst.volReqId);
+  io::unmarshalUint32(src, srcLen, dst.tapeFseq);
+  io::unmarshalUint64(src, srcLen, dst.batchBytesToTape);
 }
