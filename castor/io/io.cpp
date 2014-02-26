@@ -42,9 +42,9 @@
 #include <sys/types.h>
 #include <time.h>
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // createListenerSock
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::io::createListenerSock(
   const unsigned short port)
   throw(castor::exception::Exception) {
@@ -58,9 +58,9 @@ int castor::io::createListenerSock(
   return createListenerSock(networkAddress, lowPort, highPort, chosenPort);
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // createListenerSock
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::io::createListenerSock(
   const unsigned short lowPort,
   const unsigned short highPort,
@@ -73,9 +73,9 @@ int castor::io::createListenerSock(
   return createListenerSock(networkAddress, lowPort, highPort, chosenPort);
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // createListenerSock
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::io::createListenerSock(
   const std::string    &addr,
   const unsigned short lowPort,
@@ -96,9 +96,9 @@ int castor::io::createListenerSock(
   return createListenerSock(networkAddress, lowPort, highPort, chosenPort);
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // createListenerSock
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::io::createListenerSock(
   const struct in_addr &addr,
   const unsigned short lowPort,
@@ -225,9 +225,9 @@ int castor::io::createListenerSock(
   throw ex;
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // acceptConnection
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::io::acceptConnection(const int listenSocketFd)
   throw(castor::exception::Exception) {
 
@@ -268,9 +268,9 @@ int castor::io::acceptConnection(const int listenSocketFd)
   return connectedSocketFd;
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // acceptConnection
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::io::acceptConnection(const int listenSocketFd,
   const time_t timeout) throw(
     castor::exception::TimeOut,
@@ -365,9 +365,9 @@ int castor::io::acceptConnection(const int listenSocketFd,
   return connectedSocketFd;
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getSockIpPort
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::io::IpAndPort castor::io::getSockIpPort(
   const int socketFd) throw(castor::exception::Exception) {
 
@@ -398,9 +398,9 @@ castor::io::IpAndPort castor::io::getSockIpPort(
   return IpAndPort(ntohl(address.sin_addr.s_addr), ntohs(address.sin_port));
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // getPeerIpPort
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 castor::io::IpAndPort  castor::io::getPeerIpPort(
   const int socketFd) throw(castor::exception::Exception) {
 
@@ -815,9 +815,9 @@ void castor::io::writeBytes(
   }
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // connectWithTimeout
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 int castor::io::connectWithTimeout(
   const int             sockDomain,
   const int             sockType,
@@ -970,9 +970,9 @@ int castor::io::connectWithTimeout(
   return smartSock.release();
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // marshalUint8
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::io::marshalUint8(const uint8_t src, char * &dst)
   throw(castor::exception::Exception) {
 
@@ -985,12 +985,12 @@ void castor::io::marshalUint8(const uint8_t src, char * &dst)
   }
 
   *dst = src;
-  dst++;
+  dst += sizeof(src);
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // marshalUint16
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::io::marshalUint16(const uint16_t src, char * &dst)
   throw(castor::exception::Exception) {
 
@@ -1003,13 +1003,13 @@ void castor::io::marshalUint16(const uint16_t src, char * &dst)
   }
 
   const uint16_t netByteOrder = htons(src);
-  memcpy(dst, &netByteOrder, sizeof(uint16_t));
-  dst += sizeof(uint16_t);
+  memcpy(dst, &netByteOrder, sizeof(src));
+  dst += sizeof(src);
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // marshalUint32
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::io::marshalUint32(const uint32_t src, char * &dst)
   throw(castor::exception::Exception) {
 
@@ -1022,13 +1022,13 @@ void castor::io::marshalUint32(const uint32_t src, char * &dst)
   }
 
   const uint32_t netByteOrder = htonl(src);
-  memcpy(dst, &netByteOrder, sizeof(uint32_t));
-  dst += sizeof(uint32_t);
+  memcpy(dst, &netByteOrder, sizeof(src));
+  dst += sizeof(src);
 }
 
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 // marshalUint64
-//-----------------------------------------------------------------------------
+//------------------------------------------------------------------------------
 void castor::io::marshalUint64(const uint64_t src, char * &dst)
   throw(castor::exception::Exception) {
 
@@ -1047,4 +1047,156 @@ void castor::io::marshalUint64(const uint64_t src, char * &dst)
   for(size_t i=sizeof(src); i>0; i--) {
     *dst++ = *(src_ptr + i - 1);
   }
+}
+
+//------------------------------------------------------------------------------
+// unmarshalUint8
+//------------------------------------------------------------------------------
+void castor::io::unmarshalUint8(const char * &src, size_t &srcLen,
+  uint8_t &dst) throw(castor::exception::Exception) {
+
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to unmarshal uint8_t"
+      ": Pointer to source buffer is NULL";
+    throw ex;
+  }
+
+  if(srcLen < sizeof(dst)) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to unmarshal uint8_t"
+      ": Source buffer length is too small: expected="
+      << sizeof(dst) << " actual=" << srcLen;
+    throw ex;
+  }
+
+  dst = *src;
+  src += sizeof(dst);
+  srcLen -= sizeof(dst);
+}
+
+//------------------------------------------------------------------------------
+// unmarshalUint16
+//------------------------------------------------------------------------------
+void castor::io::unmarshalUint16(const char * &src, size_t &srcLen,
+  uint16_t &dst) throw(castor::exception::Exception) {
+
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to unmarshal uint16_t"
+      ": Pointer to source buffer is NULL";
+    throw ex;
+  }
+
+  if(srcLen < sizeof(dst)) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to unmarshal uint16_t"
+      ": Source buffer length is too small: expected="
+      << sizeof(dst) << " actual=" << srcLen;
+    throw ex;
+  }
+
+  uint16_t netByteOrder = 0;
+  memcpy(&netByteOrder, src, sizeof(dst));
+  dst = ntohs(netByteOrder);
+  src += sizeof(dst);
+  srcLen -= sizeof(dst);
+}
+
+//------------------------------------------------------------------------------
+// unmarshalUint32
+//------------------------------------------------------------------------------
+void castor::io::unmarshalUint32(const char * &src, size_t &srcLen,
+  uint32_t &dst) throw(castor::exception::Exception) {
+
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to unmarshal uint32_t"
+      ": Pointer to source buffer is NULL";
+    throw ex;
+  }
+
+  if(srcLen < sizeof(dst)) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to unmarshal uint32_t"
+      ": Source buffer length is too small: expected="
+      << sizeof(dst) << " actual=" << srcLen;
+    throw ex;
+  }
+
+  uint32_t netByteOrder = 0;
+  memcpy(&netByteOrder, src, sizeof(dst));
+  dst = ntohl(netByteOrder);
+  src += sizeof(dst);
+  srcLen -= sizeof(dst);
+}
+
+//------------------------------------------------------------------------------
+// unmarshalInt32
+//------------------------------------------------------------------------------
+void castor::io::unmarshalInt32(const char * &src, size_t &srcLen,
+  int32_t &dst) throw(castor::exception::Exception) {
+
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to unmarshal uint32_t"
+      ": Pointer to source buffer is NULL";
+    throw ex;
+  }
+
+  if(srcLen < sizeof(dst)) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to unmarshal uint32_t"
+      ": Source buffer length is too small: expected="
+      << sizeof(dst) << " actual=" << srcLen;
+    throw ex;
+  }
+
+  int32_t netByteOrder = 0;
+  memcpy(&netByteOrder, src, sizeof(dst));
+  dst = ntohl(netByteOrder);
+  src += sizeof(dst);
+  srcLen -= sizeof(dst);
+}
+
+//------------------------------------------------------------------------------
+// unmarshalUint64
+//------------------------------------------------------------------------------
+void castor::io::unmarshalUint64(const char * &src, size_t &srcLen,
+  uint64_t &dst) throw(castor::exception::Exception) {
+
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to unmarshal uint64_t"
+      ": Pointer to source buffer is NULL";
+    throw ex;
+  }
+
+  if(srcLen < sizeof(dst)) {
+    castor::exception::Exception ex(EINVAL);
+
+    ex.getMessage() << "Failed to unmarshal uint64_t"
+      ": Source buffer length is too small: expected="
+      << sizeof(dst) << " actual=" << srcLen;
+    throw ex;
+  }
+
+  char *const dst_ptr = (char *)(&dst);
+
+  // src: Network   (big    endian)
+  // dst: Intel x86 (little endian)
+  for(size_t i=sizeof(dst); i>0; i--) {
+    *(dst_ptr + i - 1) = *src++;
+  }
+
+  srcLen -= sizeof(dst);
 }

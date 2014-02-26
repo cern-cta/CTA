@@ -469,36 +469,76 @@ void marshalUint64(const uint64_t src, char * &dst)
  *               buffer.
  * @param dst    Out parameter: The destination.
  */
-template<typename T> void unmarshalValue(const char * &src,
-  size_t &srcLen, T &dst) throw(castor::exception::Exception) {
+void unmarshalUint8(const char * &src, size_t &srcLen, uint8_t &dst)
+  throw(castor::exception::Exception);
 
-  if(src == NULL) {
-    castor::exception::Exception ex(EINVAL);
+/**
+ * Unmarshals a value from the specified source buffer into the specified
+ * destination.
+ *
+ * @param src    In/out parameter: Before invocation points to the source
+ *               buffer where the value should be unmarshalled from and on
+ *               return points to the byte in the source buffer immediately
+ *               after the unmarshalled value.
+ * @param srcLen In/our parameter: Before invocation is the length of the
+ *               source buffer from where the value should be unmarshalled and
+ *               on return is the number of bytes remaining in the source
+ *               buffer.
+ * @param dst    Out parameter: The destination.
+ */
+void unmarshalUint16(const char * &src, size_t &srcLen, uint16_t &dst)
+  throw(castor::exception::Exception);
 
-    ex.getMessage() << "Failed to unmarshal value"
-      ": Pointer to source buffer is NULL";
-    throw ex;
-  }
+/**
+ * Unmarshals a value from the specified source buffer into the specified
+ * destination.
+ *
+ * @param src    In/out parameter: Before invocation points to the source
+ *               buffer where the value should be unmarshalled from and on
+ *               return points to the byte in the source buffer immediately
+ *               after the unmarshalled value.
+ * @param srcLen In/our parameter: Before invocation is the length of the
+ *               source buffer from where the value should be unmarshalled and
+ *               on return is the number of bytes remaining in the source
+ *               buffer.
+ * @param dst    Out parameter: The destination.
+ */
+void unmarshalUint32(const char * &src, size_t &srcLen, uint32_t &dst)
+  throw(castor::exception::Exception);
 
-  if(srcLen < sizeof(dst)) {
-    castor::exception::Exception ex(EINVAL);
+/**
+ * Unmarshals a value from the specified source buffer into the specified
+ * destination.
+ *
+ * @param src    In/out parameter: Before invocation points to the source
+ *               buffer where the value should be unmarshalled from and on
+ *               return points to the byte in the source buffer immediately
+ *               after the unmarshalled value.
+ * @param srcLen In/our parameter: Before invocation is the length of the
+ *               source buffer from where the value should be unmarshalled and
+ *               on return is the number of bytes remaining in the source
+ *               buffer.
+ * @param dst    Out parameter: The destination.
+ */
+void unmarshalInt32(const char * &src, size_t &srcLen, int32_t &dst)
+  throw(castor::exception::Exception);
 
-    ex.getMessage() << "Failed to unmarshal value"
-      ": Source buffer length is too small: expected="
-      << sizeof(dst) << " actual=" << srcLen;
-    throw ex;
-  }
-
-  char *const dst_ptr = (char *)(&dst);
-
-  // src: Network   (big    endian)
-  // dst: Intel x86 (little endian)
-  for(size_t i=sizeof(dst); i>0; i--) {
-    *(dst_ptr + i - 1) = *src++;
-  }
-
-  srcLen -= sizeof(dst);
-}
+/**
+ * Unmarshals a value from the specified source buffer into the specified
+ * destination.
+ *
+ * @param src    In/out parameter: Before invocation points to the source
+ *               buffer where the value should be unmarshalled from and on
+ *               return points to the byte in the source buffer immediately
+ *               after the unmarshalled value.
+ * @param srcLen In/our parameter: Before invocation is the length of the
+ *               source buffer from where the value should be unmarshalled and
+ *               on return is the number of bytes remaining in the source
+ *               buffer.
+ * @param dst    Out parameter: The destination.
+ */
+void unmarshalUint64(const char * &src, size_t &srcLen, uint64_t &dst)
+  throw(castor::exception::Exception);
 
 } // namespace io
 } // namespace castor

@@ -197,19 +197,6 @@ TEST_F(castor_io_IoTest, connectWithTimeout) {
   }
 }
 
-TEST_F(castor_io_IoTest, unmarshalValue) {
-  using namespace castor::io;
-
-  char buf[] = {0x12, 0x34, 0x56, 0x78};
-  size_t bufLen = sizeof(buf);
-  const char *ptr = buf;
-  uint32_t v = 0;
-  ASSERT_NO_THROW(unmarshalValue(ptr, bufLen, v));
-  ASSERT_EQ(buf+4, ptr);
-  ASSERT_EQ((size_t)0, bufLen);
-  ASSERT_EQ((uint32_t)0x12345678, v);
-}
-
 TEST_F(castor_io_IoTest, marshalUint8) {
   const uint8_t v = 0x12;
   char buf[1];
@@ -238,6 +225,20 @@ TEST_F(castor_io_IoTest, marshalUint32) {
   ASSERT_EQ(0x78, buf[3]);
 }
 
+TEST_F(castor_io_IoTest, marshalUint16) {
+  const uint16_t v = 0x1234;
+  char buf[2];
+  char *ptr = buf;
+
+  memset(buf, '\0', sizeof(buf));
+
+  ASSERT_NO_THROW(castor::io::marshalUint16(v, ptr));
+  ASSERT_EQ(buf+2, ptr);
+  // Marshalled value should be big endian
+  ASSERT_EQ(0x12, buf[0]);
+  ASSERT_EQ(0x34, buf[1]);
+}
+
 TEST_F(castor_io_IoTest, marshalUint64) {
   const uint64_t v = 0x1122334455667788LL;
   char buf[8];
@@ -257,5 +258,60 @@ TEST_F(castor_io_IoTest, marshalUint64) {
   ASSERT_EQ(0x77, buf[6]);
   ASSERT_EQ((char)0x88, buf[7]);
 }
+
+TEST_F(castor_io_IoTest, unmarshalUint8) {
+  char buf[] = {0x12};
+  size_t bufLen = sizeof(buf);
+  const char *ptr = buf;
+  uint8_t v = 0;
+  ASSERT_NO_THROW(castor::io::unmarshalUint8(ptr, bufLen, v));
+  ASSERT_EQ(buf+1, ptr);
+  ASSERT_EQ((size_t)0, bufLen);
+  ASSERT_EQ(0x12, v);
+}
+
+TEST_F(castor_io_IoTest, unmarshalUint16) {
+  char buf[] = {0x12, 0x34};
+  size_t bufLen = sizeof(buf);
+  const char *ptr = buf;
+  uint16_t v = 0;
+  ASSERT_NO_THROW(castor::io::unmarshalUint16(ptr, bufLen, v));
+  ASSERT_EQ(buf+2, ptr);
+  ASSERT_EQ((size_t)0, bufLen);
+  ASSERT_EQ((uint16_t)0x1234, v);
+}
+
+TEST_F(castor_io_IoTest, unmarshalUint32) {
+  char buf[] = {0x12, 0x34, 0x56, 0x78};
+  size_t bufLen = sizeof(buf);
+  const char *ptr = buf;
+  uint32_t v = 0;
+  ASSERT_NO_THROW(castor::io::unmarshalUint32(ptr, bufLen, v));
+  ASSERT_EQ(buf+4, ptr);
+  ASSERT_EQ((size_t)0, bufLen);
+  ASSERT_EQ((uint32_t)0x12345678, v);
+}
+
+TEST_F(castor_io_IoTest, unmarshalInt32) {
+  char buf[] = {0x12, 0x34, 0x56, 0x78};
+  size_t bufLen = sizeof(buf);
+  const char *ptr = buf;
+  int32_t v = 0;
+  ASSERT_NO_THROW(castor::io::unmarshalInt32(ptr, bufLen, v));
+  ASSERT_EQ(buf+4, ptr);
+  ASSERT_EQ((size_t)0, bufLen);
+  ASSERT_EQ((int32_t)0x12345678, v);
+}
+
+TEST_F(castor_io_IoTest, unmarshalUint64) {
+  char buf[] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
+  size_t bufLen = sizeof(buf);
+  const char *ptr = buf;
+  uint64_t v = 0;
+  ASSERT_NO_THROW(castor::io::unmarshalUint64(ptr, bufLen, v));
+  ASSERT_EQ(buf+8, ptr);
+  ASSERT_EQ((size_t)0, bufLen);
+  ASSERT_EQ((uint64_t)0x1122334455667788LL, v);
+}  
 
 } // namespace unitTests
