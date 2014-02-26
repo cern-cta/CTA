@@ -239,7 +239,7 @@ TEST_F(castor_io_IoTest, marshalUint32) {
 }
 
 TEST_F(castor_io_IoTest, marshalUint64) {
-  const uint64_t v = 0x1122334455667788;
+  const uint64_t v = (uint64_t)0x1122334455667788;
   char buf[8];
   char *ptr = buf;
     
@@ -259,7 +259,7 @@ TEST_F(castor_io_IoTest, marshalUint64) {
 }
 
 TEST_F(castor_io_IoTest, marshalTime) {
-  const time_t v = 0x1122334455667788;
+  const time_t v = (time_t)0x1122334455667788;
   char buf[8];
   char *ptr = buf;
     
