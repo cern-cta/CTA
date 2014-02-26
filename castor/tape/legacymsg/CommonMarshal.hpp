@@ -40,19 +40,6 @@ namespace tape      {
 namespace legacymsg {
   
 /**
- * Marshals the specified unsigned 8-bit integer into the specified
- * destination buffer.
- *
- * @param src The unsigned 8-bit integer to be marshalled.
- * @param dst In/out parameter, before invocation points to the destination
- * buffer where the unsigned 8-bit integer should be marshalled to and on
- * return points to the byte in the destination buffer immediately after.
- * the marshalled unsigned 8-bit integer.
- */
-void marshalUint8(uint8_t src, char * &dst)
-  throw(castor::exception::Exception);
-
-/**
  * Unmarshals an unsigned 8-bit integer from the specified source buffer
  * into the specified destination unsigned 8-bit integer.
  *
@@ -68,19 +55,6 @@ void marshalUint8(uint8_t src, char * &dst)
  */
 void unmarshalUint8(const char * &src, size_t &srcLen,
   uint8_t &dst) throw(castor::exception::Exception);
-
-/**
- * Marshals the specified unsigned 16-bit integer into the specified
- * destination buffer.
- *
- * @param src The unsigned 16-bit integer to be marshalled.
- * @param dst In/out parameter, before invocation points to the destination
- * buffer where the unsigned 16-bit integer should be marshalled to and on
- * return points to the byte in the destination buffer immediately after
- * the marshalled unsigned 16-bit integer.
- */
-void marshalUint16(uint16_t src, char * &dst)
-  throw(castor::exception::Exception);
 
 /**
  * Unmarshals an unsigned 16-bit integer from the specified source buffer
@@ -100,19 +74,6 @@ void unmarshalUint16(const char * &src, size_t &srcLen,
   uint16_t &dst) throw(castor::exception::Exception);
 
 /**
- * Marshals the specified unsigned 32-bit integer into the specified
- * destination buffer.
- *
- * @param src The unsigned 32-bit integer to be marshalled.
- * @param dst In/out parameter, before invocation points to the destination
- * buffer where the unsigned 32-bit integer should be marshalled to and on
- * return points to the byte in the destination buffer immediately after
- * the marshalled unsigned 32-bit integer.
- */
-void marshalUint32(uint32_t src, char * &dst)
-  throw(castor::exception::Exception);
-
-/**
  * Unmarshals an unsigned 32-bit integer from the specified source buffer
  * into the specified destination unsigned 32-bit integer.
  *
@@ -128,19 +89,6 @@ void marshalUint32(uint32_t src, char * &dst)
  */
 void unmarshalUint32(const char * &src, size_t &srcLen,
   uint32_t &dst) throw(castor::exception::Exception);
-
-/**
- * Marshals the specified signed 32-bit integer into the specified
- * destination buffer.
- *
- * @param src The signed 32-bit integer to be marshalled.
- * @param dst In/out parameter, before invocation points to the destination
- * buffer where the signed 32-bit integer should be marshalled to and on
- * return points to the byte in the destination buffer immediately after
- * the marshalled signed 32-bit integer.
- */
-void marshalInt32(int32_t src, char * &dst)
-  throw(castor::exception::Exception);
 
 /**
  * Unmarshals a signed 32-bit integer from the specified source buffer

@@ -24,6 +24,7 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -70,13 +71,13 @@ size_t castor::tape::legacymsg::marshal(char *const dst,
 
   // Marshall the whole message (header + body)
   char *p = dst;
-  marshalUint32(RTCOPY_MAGIC_OLD0  , p); // Magic number
-  marshalUint32(VDQM_CLIENTINFO    , p); // Request type
-  marshalUint32(len                , p); // Length of message body
-  marshalUint32(src.volReqId  , p);
-  marshalUint32(src.clientPort     , p);
-  marshalUint32(src.clientEuid     , p);
-  marshalUint32(src.clientEgid     , p);
+  io::marshalUint32(RTCOPY_MAGIC_OLD0  , p); // Magic number
+  io::marshalUint32(VDQM_CLIENTINFO    , p); // Request type
+  io::marshalUint32(len                , p); // Length of message body
+  io::marshalUint32(src.volReqId  , p);
+  io::marshalUint32(src.clientPort     , p);
+  io::marshalUint32(src.clientEuid     , p);
+  io::marshalUint32(src.clientEgid     , p);
   marshalString(src.clientHost     , p);
   marshalString(src.dgn            , p);
   marshalString(src.driveUnit      , p);
@@ -155,10 +156,10 @@ size_t castor::tape::legacymsg::marshal(char *const dst,
   const size_t totalLen = headerLen + len;
 
   char *p = dst;
-  marshalUint32(RTCOPY_MAGIC_OLD0, p); // Magic number
-  marshalUint32(VDQM_CLIENTINFO  , p); // Request type
-  marshalUint32(len              , p); // Length
-  marshalUint32(src.status       , p); // status code
+  io::marshalUint32(RTCOPY_MAGIC_OLD0, p); // Magic number
+  io::marshalUint32(VDQM_CLIENTINFO  , p); // Request type
+  io::marshalUint32(len              , p); // Length
+  io::marshalUint32(src.status       , p); // status code
 
   strncpy(p, src.errorMessage, errLenToSend);
   *(p+errLenToSend) = '0';
@@ -241,45 +242,45 @@ size_t castor::tape::legacymsg::marshal(char *dst,
 
   // Marshall the whole message (header + body)
   char *p = dst;
-  marshalUint32(RTCOPY_MAGIC                          , p);
-  marshalUint32(RTCP_TAPEERR_REQ                      , p);
-  marshalUint32(len                                   , p);
+  io::marshalUint32(RTCOPY_MAGIC                          , p);
+  io::marshalUint32(RTCP_TAPEERR_REQ                      , p);
+  io::marshalUint32(len                                   , p);
   marshalString(src.vid                               , p);
   marshalString(src.vsn                               , p);
   marshalString(src.label                             , p);
   marshalString(src.devtype                           , p);
   marshalString(src.density                           , p);
   marshalString(src.unit                              , p);
-  marshalUint32(src.volReqId                          , p);
-  marshalUint32(src.jobId                             , p);
-  marshalUint32(src.mode                              , p);
-  marshalUint32(src.start_file                        , p);
-  marshalUint32(src.end_file                          , p);
-  marshalUint32(src.side                              , p);
-  marshalUint32(src.tprc                              , p);
-  marshalUint32(src.tStartRequest                     , p);
-  marshalUint32(src.tEndRequest                       , p);
-  marshalUint32(src.tStartRtcpd                       , p);
-  marshalUint32(src.tStartMount                       , p);
-  marshalUint32(src.tEndMount                         , p);
-  marshalUint32(src.tStartUnmount                     , p);
-  marshalUint32(src.tEndUnmount                       , p);
-  marshalUint32(src.rtcpReqId.time_low                , p);
-  marshalUint16(src.rtcpReqId.time_mid                , p);
-  marshalUint16(src.rtcpReqId.time_hi_and_version     , p);
-  marshalUint8(src.rtcpReqId.clock_seq_hi_and_reserved, p);
-  marshalUint8(src.rtcpReqId.clock_seq_low            , p);
-  marshalUint8(src.rtcpReqId.node[0]                  , p);
-  marshalUint8(src.rtcpReqId.node[1]                  , p);
-  marshalUint8(src.rtcpReqId.node[2]                  , p);
-  marshalUint8(src.rtcpReqId.node[3]                  , p);
-  marshalUint8(src.rtcpReqId.node[4]                  , p);
-  marshalUint8(src.rtcpReqId.node[5]                  , p);
+  io::marshalUint32(src.volReqId                          , p);
+  io::marshalUint32(src.jobId                             , p);
+  io::marshalUint32(src.mode                              , p);
+  io::marshalUint32(src.start_file                        , p);
+  io::marshalUint32(src.end_file                          , p);
+  io::marshalUint32(src.side                              , p);
+  io::marshalUint32(src.tprc                              , p);
+  io::marshalUint32(src.tStartRequest                     , p);
+  io::marshalUint32(src.tEndRequest                       , p);
+  io::marshalUint32(src.tStartRtcpd                       , p);
+  io::marshalUint32(src.tStartMount                       , p);
+  io::marshalUint32(src.tEndMount                         , p);
+  io::marshalUint32(src.tStartUnmount                     , p);
+  io::marshalUint32(src.tEndUnmount                       , p);
+  io::marshalUint32(src.rtcpReqId.time_low                , p);
+  io::marshalUint16(src.rtcpReqId.time_mid                , p);
+  io::marshalUint16(src.rtcpReqId.time_hi_and_version     , p);
+  io::marshalUint8(src.rtcpReqId.clock_seq_hi_and_reserved, p);
+  io::marshalUint8(src.rtcpReqId.clock_seq_low            , p);
+  io::marshalUint8(src.rtcpReqId.node[0]                  , p);
+  io::marshalUint8(src.rtcpReqId.node[1]                  , p);
+  io::marshalUint8(src.rtcpReqId.node[2]                  , p);
+  io::marshalUint8(src.rtcpReqId.node[3]                  , p);
+  io::marshalUint8(src.rtcpReqId.node[4]                  , p);
+  io::marshalUint8(src.rtcpReqId.node[5]                  , p);
   marshalString(src.err.errorMsg                      , p);
-  marshalUint32(src.err.severity                      , p);
-  marshalUint32(src.err.errorCode                     , p);
-  marshalUint32(src.err.maxTpRetry                    , p);
-  marshalUint32(src.err.maxCpRetry                    , p);
+  io::marshalUint32(src.err.severity                      , p);
+  io::marshalUint32(src.err.errorCode                     , p);
+  io::marshalUint32(src.err.maxTpRetry                    , p);
+  io::marshalUint32(src.err.maxCpRetry                    , p);
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;
@@ -405,71 +406,71 @@ size_t castor::tape::legacymsg::marshal(char *dst,
   // Marshall the whole message (header + body)
   char *p = dst;
 
-  marshalUint32(RTCOPY_MAGIC                              , p);
-  marshalUint32(RTCP_FILEERR_REQ                          , p);
-  marshalUint32(len                                       , p);
+  io::marshalUint32(RTCOPY_MAGIC                              , p);
+  io::marshalUint32(RTCP_FILEERR_REQ                          , p);
+  io::marshalUint32(len                                       , p);
   marshalString(src.rqst.filePath                         , p);
   marshalString(src.rqst.tapePath                         , p);
   marshalString(src.rqst.recfm_noLongerUsed               , p);
   marshalString(src.rqst.fid                              , p);
   marshalString(src.rqst.ifce                             , p);
   marshalString(src.rqst.stageId                          , p);
-  marshalUint32(src.rqst.volReqId                         , p);
-  marshalUint32(src.rqst.jobId                            , p);
-  marshalUint32(src.rqst.stageSubReqId                    , p);
-  marshalUint32(src.rqst.umask                            , p);
-  marshalUint32(src.rqst.positionMethod                   , p);
-  marshalUint32(src.rqst.tapeFseq                         , p);
-  marshalUint32(src.rqst.diskFseq                         , p);
-  marshalUint32(src.rqst.blockSize                        , p);
-  marshalUint32(src.rqst.recordLength                     , p);
-  marshalUint32(src.rqst.retention                        , p);
-  marshalUint32(src.rqst.defAlloc                         , p);
-  marshalUint32(src.rqst.rtcpErrAction                    , p);
-  marshalUint32(src.rqst.tpErrAction                      , p);
-  marshalUint32(src.rqst.convert_noLongerUsed             , p);
-  marshalUint32(src.rqst.checkFid                         , p);
-  marshalUint32(src.rqst.concat                           , p);
-  marshalUint32(src.rqst.procStatus                       , p);
-  marshalInt32(src.rqst.cprc                              , p);
-  marshalUint32(src.rqst.tStartPosition                   , p);
-  marshalUint32(src.rqst.tEndPosition                     , p);
-  marshalUint32(src.rqst.tStartTransferDisk               , p);
-  marshalUint32(src.rqst.tEndTransferDisk                 , p);
-  marshalUint32(src.rqst.tStartTransferTape               , p);
-  marshalUint32(src.rqst.tEndTransferTape                 , p);
-  marshalUint8(src.rqst.blockId[0]                        , p);
-  marshalUint8(src.rqst.blockId[1]                        , p);
-  marshalUint8(src.rqst.blockId[2]                        , p);
-  marshalUint8(src.rqst.blockId[3]                        , p);
-  marshalUint64(src.rqst.offset                           , p);
-  marshalUint64(src.rqst.bytesIn                          , p);
-  marshalUint64(src.rqst.bytesOut                         , p);
-  marshalUint64(src.rqst.hostBytes                        , p);
-  marshalUint64(src.rqst.nbRecs                           , p);
-  marshalUint64(src.rqst.maxNbRec                         , p);
-  marshalUint64(src.rqst.maxSize                          , p);
-  marshalUint64(src.rqst.startSize                        , p);
+  io::marshalUint32(src.rqst.volReqId                         , p);
+  io::marshalUint32(src.rqst.jobId                            , p);
+  io::marshalUint32(src.rqst.stageSubReqId                    , p);
+  io::marshalUint32(src.rqst.umask                            , p);
+  io::marshalUint32(src.rqst.positionMethod                   , p);
+  io::marshalUint32(src.rqst.tapeFseq                         , p);
+  io::marshalUint32(src.rqst.diskFseq                         , p);
+  io::marshalUint32(src.rqst.blockSize                        , p);
+  io::marshalUint32(src.rqst.recordLength                     , p);
+  io::marshalUint32(src.rqst.retention                        , p);
+  io::marshalUint32(src.rqst.defAlloc                         , p);
+  io::marshalUint32(src.rqst.rtcpErrAction                    , p);
+  io::marshalUint32(src.rqst.tpErrAction                      , p);
+  io::marshalUint32(src.rqst.convert_noLongerUsed             , p);
+  io::marshalUint32(src.rqst.checkFid                         , p);
+  io::marshalUint32(src.rqst.concat                           , p);
+  io::marshalUint32(src.rqst.procStatus                       , p);
+  io::marshalUint32(src.rqst.cprc                              , p);
+  io::marshalUint32(src.rqst.tStartPosition                   , p);
+  io::marshalUint32(src.rqst.tEndPosition                     , p);
+  io::marshalUint32(src.rqst.tStartTransferDisk               , p);
+  io::marshalUint32(src.rqst.tEndTransferDisk                 , p);
+  io::marshalUint32(src.rqst.tStartTransferTape               , p);
+  io::marshalUint32(src.rqst.tEndTransferTape                 , p);
+  io::marshalUint8(src.rqst.blockId[0]                        , p);
+  io::marshalUint8(src.rqst.blockId[1]                        , p);
+  io::marshalUint8(src.rqst.blockId[2]                        , p);
+  io::marshalUint8(src.rqst.blockId[3]                        , p);
+  io::marshalUint64(src.rqst.offset                           , p);
+  io::marshalUint64(src.rqst.bytesIn                          , p);
+  io::marshalUint64(src.rqst.bytesOut                         , p);
+  io::marshalUint64(src.rqst.hostBytes                        , p);
+  io::marshalUint64(src.rqst.nbRecs                           , p);
+  io::marshalUint64(src.rqst.maxNbRec                         , p);
+  io::marshalUint64(src.rqst.maxSize                          , p);
+  io::marshalUint64(src.rqst.startSize                        , p);
   marshalString(src.rqst.segAttr.nameServerHostName       , p);
   marshalString(src.rqst.segAttr.segmCksumAlgorithm       , p);
-  marshalUint32(src.rqst.segAttr.segmCksum                , p);
-  marshalUint64(src.rqst.segAttr.castorFileId             , p);
-  marshalUint32(src.rqst.stgReqId.time_low                , p);
-  marshalUint16(src.rqst.stgReqId.time_mid                , p);
-  marshalUint16(src.rqst.stgReqId.time_hi_and_version     , p);
-  marshalUint8(src.rqst.stgReqId.clock_seq_hi_and_reserved, p);
-  marshalUint8(src.rqst.stgReqId.clock_seq_low            , p);
-  marshalUint8(src.rqst.stgReqId.node[0]                  , p);
-  marshalUint8(src.rqst.stgReqId.node[1]                  , p);
-  marshalUint8(src.rqst.stgReqId.node[2]                  , p);
-  marshalUint8(src.rqst.stgReqId.node[3]                  , p);
-  marshalUint8(src.rqst.stgReqId.node[4]                  , p);
-  marshalUint8(src.rqst.stgReqId.node[5]                  , p);
+  io::marshalUint32(src.rqst.segAttr.segmCksum                , p);
+  io::marshalUint64(src.rqst.segAttr.castorFileId             , p);
+  io::marshalUint32(src.rqst.stgReqId.time_low                , p);
+  io::marshalUint16(src.rqst.stgReqId.time_mid                , p);
+  io::marshalUint16(src.rqst.stgReqId.time_hi_and_version     , p);
+  io::marshalUint8(src.rqst.stgReqId.clock_seq_hi_and_reserved, p);
+  io::marshalUint8(src.rqst.stgReqId.clock_seq_low            , p);
+  io::marshalUint8(src.rqst.stgReqId.node[0]                  , p);
+  io::marshalUint8(src.rqst.stgReqId.node[1]                  , p);
+  io::marshalUint8(src.rqst.stgReqId.node[2]                  , p);
+  io::marshalUint8(src.rqst.stgReqId.node[3]                  , p);
+  io::marshalUint8(src.rqst.stgReqId.node[4]                  , p);
+  io::marshalUint8(src.rqst.stgReqId.node[5]                  , p);
   marshalString(src.err.errorMsg                          , p);
-  marshalUint32(src.err.severity                          , p);
-  marshalUint32(src.err.errorCode                         , p);
-  marshalUint32(src.err.maxTpRetry                        , p);
-  marshalUint32(src.err.maxCpRetry                        , p);
+  io::marshalUint32(src.err.severity                          , p);
+  io::marshalUint32(src.err.errorCode                         , p);
+  io::marshalUint32(src.err.maxTpRetry                        , p);
+  io::marshalUint32(src.err.maxCpRetry                        , p);
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;
@@ -603,9 +604,9 @@ size_t castor::tape::legacymsg::marshal(char *dst,
 
   // Marshall the whole message (header + body)
   char *p = dst;
-  marshalUint32(RTCOPY_MAGIC   , p); // Magic number
-  marshalUint32(RTCP_NOMORE_REQ, p); // Request type
-  marshalUint32(len            , p); // Length of message body
+  io::marshalUint32(RTCOPY_MAGIC   , p); // Magic number
+  io::marshalUint32(RTCP_NOMORE_REQ, p); // Request type
+  io::marshalUint32(len            , p); // Length of message body
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;
@@ -648,17 +649,17 @@ size_t castor::tape::legacymsg::marshal(char *dst,
 
   // Marshall the whole message (header + body)
   char *p = dst;
-  marshalUint32(RTCOPY_MAGIC     , p);
-  marshalUint32(RTCP_DUMPTAPE_REQ, p);
-  marshalUint32(len              , p);
-  marshalUint32(src.maxBytes     , p);
-  marshalUint32(src.blockSize    , p);
-  marshalUint32(src.convert_noLongerUsed, p);
-  marshalUint32(src.tapeErrAction, p);
-  marshalUint32(src.startFile    , p);
-  marshalUint32(src.maxFiles     , p);
-  marshalUint32(src.fromBlock    , p);
-  marshalUint32(src.toBlock      , p);
+  io::marshalUint32(RTCOPY_MAGIC     , p);
+  io::marshalUint32(RTCP_DUMPTAPE_REQ, p);
+  io::marshalUint32(len              , p);
+  io::marshalUint32(src.maxBytes     , p);
+  io::marshalUint32(src.blockSize    , p);
+  io::marshalUint32(src.convert_noLongerUsed, p);
+  io::marshalUint32(src.tapeErrAction, p);
+  io::marshalUint32(src.startFile    , p);
+  io::marshalUint32(src.maxFiles     , p);
+  io::marshalUint32(src.fromBlock    , p);
+  io::marshalUint32(src.toBlock      , p);
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;

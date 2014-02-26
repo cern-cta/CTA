@@ -24,6 +24,7 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/VmgrMarshal.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -68,16 +69,16 @@ size_t castor::tape::legacymsg::marshal(char *const dst,
 
   // Marshall the whole message (header + body)
   char *p = dst;
-  marshalUint32(VMGR_MAGIC2 , p); // Magic number
-  marshalUint32(VMGR_QRYTAPE, p); // Request type
+  io::marshalUint32(VMGR_MAGIC2 , p); // Magic number
+  io::marshalUint32(VMGR_QRYTAPE, p); // Request type
   // Marshall the total length of the message.  Please note that this is
   // different from the RTCOPY legacy protocol which marshalls the length
   // of the message body.
-  marshalUint32(totalLen    , p); // Total length (UNLIKE RTCPD)
-  marshalUint32(src.uid     , p);
-  marshalUint32(src.gid     , p);
+  io::marshalUint32(totalLen    , p); // Total length (UNLIKE RTCPD)
+  io::marshalUint32(src.uid     , p);
+  io::marshalUint32(src.gid     , p);
   marshalString(src.vid     , p);
-  marshalUint16(src.side    , p);
+  io::marshalUint16(src.side    , p);
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;

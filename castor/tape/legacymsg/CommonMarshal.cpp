@@ -34,32 +34,12 @@
 
 
 //------------------------------------------------------------------------------
-// marshalUint8
-//------------------------------------------------------------------------------
-void castor::tape::legacymsg::marshalUint8(uint8_t src,
-  char * &dst) throw(castor::exception::Exception) {
-
-  io::marshalUint8(src, dst);
-}
-
-
-//------------------------------------------------------------------------------
 // unmarshalUint8
 //------------------------------------------------------------------------------
 void castor::tape::legacymsg::unmarshalUint8(const char * &src,
   size_t &srcLen, uint8_t &dst) throw(castor::exception::Exception) {
 
   io::unmarshalValue(src, srcLen, dst);
-}
-
-
-//------------------------------------------------------------------------------
-// marshalUint16
-//------------------------------------------------------------------------------
-void castor::tape::legacymsg::marshalUint16(uint16_t src,
-  char * &dst) throw(castor::exception::Exception) {
-
-  io::marshalUint16(src, dst);
 }
 
 
@@ -74,16 +54,6 @@ void castor::tape::legacymsg::unmarshalUint16(const char * &src,
 
 
 //------------------------------------------------------------------------------
-// marshalUint32
-//------------------------------------------------------------------------------
-void castor::tape::legacymsg::marshalUint32(uint32_t src,
-  char * &dst) throw(castor::exception::Exception) {
-
-  io::marshalUint32(src, dst);
-}
-
-
-//------------------------------------------------------------------------------
 // unmarshalUint32
 //------------------------------------------------------------------------------
 void castor::tape::legacymsg::unmarshalUint32(const char * &src,
@@ -94,32 +64,12 @@ void castor::tape::legacymsg::unmarshalUint32(const char * &src,
 
 
 //------------------------------------------------------------------------------
-// marshalInt32
-//------------------------------------------------------------------------------
-void castor::tape::legacymsg::marshalInt32(int32_t src,
-  char * &dst) throw(castor::exception::Exception) {
-
-  io::marshalUint32(src, dst);
-}
-
-
-//------------------------------------------------------------------------------
 // unmarshalInt32
 //------------------------------------------------------------------------------
 void castor::tape::legacymsg::unmarshalInt32(const char * &src,
   size_t &srcLen, int32_t &dst) throw(castor::exception::Exception) {
 
   io::unmarshalValue(src, srcLen, dst);
-}
-
-
-//------------------------------------------------------------------------------
-// marshalUint64
-//------------------------------------------------------------------------------
-void castor::tape::legacymsg::marshalUint64(uint64_t src,
-  char * &dst) throw(castor::exception::Exception) {
-
-  io::marshalUint64(src, dst);
 }
 
 
@@ -259,9 +209,9 @@ size_t castor::tape::legacymsg::marshal(char *const dst,
 
   // Marshal the message header
   char *p = dst;
-  marshalUint32(src.magic      , p);
-  marshalUint32(src.reqType    , p);
-  marshalUint32(src.lenOrStatus, p);
+  io::marshalUint32(src.magic      , p);
+  io::marshalUint32(src.reqType    , p);
+  io::marshalUint32(src.lenOrStatus, p);
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;
