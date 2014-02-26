@@ -283,17 +283,17 @@ XrdxCastor2Fs::GetAllowedSvc(const char* path,
 //------------------------------------------------------------------------------
 // Get all allowed service classes for the requested path
 //------------------------------------------------------------------------------
-const std::set<std::string>&
+const std::set<std::string>*
 XrdxCastor2Fs::GetAllAllowedSvc(const char* path)
 {
   xcastor_debug("path=%s", path);
   std::string spath = path;
   std::string subpath;
-  std::set<std::string>* set_svc;
-  size_t pos = 0;
-  bool found = false;
+  std::set<std::string>* set_svc = 0;
   std::map< std::string, std::set<std::string> >::iterator iter_map;
   std::set<std::string>::iterator iter_set;
+  size_t pos = 0;
+  bool found = false;
 
   // Only mapping by path is supported
   while ((pos = spath.find("/", pos)) != std::string::npos)
@@ -319,7 +319,7 @@ XrdxCastor2Fs::GetAllAllowedSvc(const char* path)
       set_svc = &iter_map->second;
   }
 
-  return *set_svc;
+  return set_svc;
 }
 
 
@@ -1035,7 +1035,7 @@ XrdxCastor2Fs::stat(const char* path,
   XrdOucEnv Open_Env(info);
   std::string stage_status = "";
   TIMING("START", &stattiming);
-  xcastor_debug("path=%s", path);
+  xcastor_debug("path=%s info=%s", path, (info ? info : ""));
   AUTHORIZE(client, &Open_Env, AOP_Stat, "stat", path, error)
   std::string map_path = NsMapping(path);
 
@@ -1059,21 +1059,29 @@ XrdxCastor2Fs::stat(const char* path,
   {
     if (!S_ISDIR(cstat.filemode))
     {
-      // Loop over all allowed service classes to find an online one
-      std::set<std::string> set_svc = GetAllAllowedSvc(map_path.c_str());
+      // Loop over all allowed svc's to find an online one
+      const std::set<std::string>* set_svc = GetAllAllowedSvc(map_path.c_str());
+
+      if (!set_svc)
+      {
+        xcastor_err("no svc set for path:%s", path);
+        error.setErrInfo(EFAULT, "no service class set for path");
+        return SFS_ERROR;
+      }
+
       std::string allowed_svc;
       bool tried_default = false;
 
-      for (std::set<std::string>::iterator allowed_iter = set_svc.begin();
-           allowed_iter != set_svc.end(); /* no increment */)
+      for (std::set<std::string>::iterator allowed_iter = set_svc->begin();
+           allowed_iter != set_svc->end(); /* no increment */)
       {
-         // Try first the default svc
+         // Give priority to the default svc if it exists
         if (!tried_default)
         {
           tried_default = true;
-          std::set<std::string>::iterator iter_default = set_svc.find("default");
+          std::set<std::string>::iterator iter_default = set_svc->find("default");
           
-          if (iter_default != set_svc.end())
+          if (iter_default != set_svc->end())
             allowed_svc = *iter_default;
           else
             continue;
@@ -1729,7 +1737,7 @@ XrdxCastor2Fs::SetLogLevel(int logLevel)
 
 
 //------------------------------------------------------------------------------
-// Cache disk server host name with and without the domain name
+// Cache disk server hostname with and without the domain name
 //------------------------------------------------------------------------------
 void
 XrdxCastor2Fs::CacheDiskServer(const std::string& hostname)

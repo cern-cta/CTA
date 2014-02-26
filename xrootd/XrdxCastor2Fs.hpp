@@ -568,10 +568,10 @@ private:
   //!
   //! @param path path of  the request
   //!
-  //! @return set of allowed service class or empty string if none alowed
+  //! @return set of allowed service classes or NULL if none found
   //!
   //----------------------------------------------------------------------------
-  const std::set<std::string>& GetAllAllowedSvc(const char* path);
+  const std::set<std::string>* GetAllAllowedSvc(const char* path);
 
 
   //----------------------------------------------------------------------------
