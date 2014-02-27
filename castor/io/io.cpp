@@ -1040,13 +1040,10 @@ void castor::io::marshalUint64(const uint64_t src, char * &dst)
     throw ex;
   }
 
-  char *const src_ptr = (char *)(&src);
-
-  // src: Intel x86 (little endian)
-  // dst: Network   (big    endian)
-  for(size_t i=sizeof(src); i>0; i--) {
-    *dst++ = *(src_ptr + i - 1);
-  }
+  const uint32_t lowerPowersOf2  = (uint32_t)src;
+  const uint32_t higherPowersOf2 = (uint32_t)(src >> 32);
+  marshalUint32(lowerPowersOf2, dst);
+  marshalUint32(higherPowersOf2, dst);
 }
 
 //------------------------------------------------------------------------------
