@@ -1187,13 +1187,16 @@ void castor::io::unmarshalUint64(const char * &src, size_t &srcLen,
     throw ex;
   }
 
-  char *const dst_ptr = (char *)(&dst);
-
-  // src: Network   (big    endian)
-  // dst: Intel x86 (little endian)
-  for(size_t i=sizeof(dst); i>0; i--) {
-    *(dst_ptr + i - 1) = *src++;
+  try {
+    uint32_t lowerPowersOf2 = 0;
+    uint32_t higherPowersOf2 = 0;
+    unmarshalUint32(src, srcLen, lowerPowersOf2);
+    unmarshalUint32(src, srcLen, higherPowersOf2);
+    dst = ((uint64_t)higherPowersOf2 << 32) + (uint64_t)lowerPowersOf2;
+  } catch(castor::exception::Exception &se) {
+    castor::exception::Exception ex(se.code());
+    ex.getMessage() << "Failed to unmarshal uint64_t"
+      ": " << se.getMessage().str();
+    throw ex;
   }
-
-  srcLen -= sizeof(dst);
 }

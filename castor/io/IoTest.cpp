@@ -241,7 +241,7 @@ TEST_F(castor_io_IoTest, marshalUint32) {
 }
 
 TEST_F(castor_io_IoTest, marshalUint64) {
-  const uint64_t v = 0x1122334455667788LL;
+  const uint64_t v = 0x8877665544332211LL;
   char buf[8];
   char *ptr = buf;
     
@@ -249,22 +249,21 @@ TEST_F(castor_io_IoTest, marshalUint64) {
     
   ASSERT_NO_THROW(castor::io::marshalUint64(v, ptr));
   ASSERT_EQ(buf+8, ptr);
-  // Marshalled value should be big endian
-  ASSERT_EQ(0x55, buf[0]);
-  ASSERT_EQ(0x66, buf[1]);
-  ASSERT_EQ(0x77, buf[2]);
-  ASSERT_EQ((char)0x88, buf[3]);
-  ASSERT_EQ(0x11, buf[4]);
-  ASSERT_EQ(0x22, buf[5]);
-  ASSERT_EQ(0x33, buf[6]);
-  ASSERT_EQ(0x44, buf[7]);
+  ASSERT_EQ(0x44, buf[0]);
+  ASSERT_EQ(0x33, buf[1]);
+  ASSERT_EQ(0x22, buf[2]);
+  ASSERT_EQ(0x11, buf[3]);
+  ASSERT_EQ((char)0x88, buf[4]);
+  ASSERT_EQ(0x77, buf[5]);
+  ASSERT_EQ(0x66, buf[6]);
+  ASSERT_EQ(0x55, buf[7]);
 }
 
-// The folloowing test MUST be the same as the marshalUint64 test above in
+// The following test MUST be the same as the marshalUint64 test above in
 // order to prove that the new C++ marshalling code of castor::io is
 // compatible with that of the legacy code found in h/mashall.h
 TEST_F(castor_io_IoTest, marshall_HYPER) {
-  const uint64_t v = 0x1122334455667788LL;
+  const uint64_t v = 0x8877665544332211LL;
   char buf[8];
   char *ptr = buf;
 
@@ -272,15 +271,14 @@ TEST_F(castor_io_IoTest, marshall_HYPER) {
 
   marshall_HYPER(ptr, v);
   ASSERT_EQ(buf+8, ptr);
-  // Marshalled value should be big endian
-  ASSERT_EQ(0x55, buf[0]);
-  ASSERT_EQ(0x66, buf[1]);
-  ASSERT_EQ(0x77, buf[2]);
-  ASSERT_EQ((char)0x88, buf[3]);
-  ASSERT_EQ(0x11, buf[4]);
-  ASSERT_EQ(0x22, buf[5]);
-  ASSERT_EQ(0x33, buf[6]);
-  ASSERT_EQ(0x44, buf[7]);
+  ASSERT_EQ(0x44, buf[0]);
+  ASSERT_EQ(0x33, buf[1]);
+  ASSERT_EQ(0x22, buf[2]);
+  ASSERT_EQ(0x11, buf[3]);
+  ASSERT_EQ((char)0x88, buf[4]);
+  ASSERT_EQ(0x77, buf[5]);
+  ASSERT_EQ(0x66, buf[6]);
+  ASSERT_EQ(0x55, buf[7]);
 }
 
 TEST_F(castor_io_IoTest, unmarshalUint8) {
@@ -328,14 +326,26 @@ TEST_F(castor_io_IoTest, unmarshalInt32) {
 }
 
 TEST_F(castor_io_IoTest, unmarshalUint64) {
-  char buf[] = {0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88};
+  char buf[] = {0x44, 0x33, 0x22, 0x11, 0x88, 0x77, 0x66, 0x55};
   size_t bufLen = sizeof(buf);
   const char *ptr = buf;
   uint64_t v = 0;
   ASSERT_NO_THROW(castor::io::unmarshalUint64(ptr, bufLen, v));
   ASSERT_EQ(buf+8, ptr);
   ASSERT_EQ((size_t)0, bufLen);
-  ASSERT_EQ((uint64_t)0x1122334455667788LL, v);
-}  
+  ASSERT_EQ((uint64_t)0x8877665544332211LL, v);
+}
+
+// The following test MUST be the same as the unmarshalUint64 test above in
+// order to prove that the new C++ un-marshalling code of castor::io is
+// compatible with that of the legacy code found in h/mashall.h
+TEST_F(castor_io_IoTest, unmarshall_HYPER) {
+  char buf[] = {0x44, 0x33, 0x22, 0x11, 0x88, 0x77, 0x66, 0x55};
+  const char *ptr = buf;
+  uint64_t v = 0;
+  unmarshall_HYPER(ptr, v);
+  ASSERT_EQ(buf+8, ptr);
+  ASSERT_EQ((uint64_t)0x8877665544332211LL, v);
+}
 
 } // namespace unitTests
