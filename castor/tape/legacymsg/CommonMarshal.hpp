@@ -40,22 +40,6 @@ namespace tape      {
 namespace legacymsg {
   
 /**
- * Unmarshals a time_t value from the specified source buffer into the
- * specified destination.
- *
- * @param src In/out parameter, before invocation points to the source
- * buffer where the time_t value should be unmarshalled from and on return
- * points to the byte in the source buffer immediately after the unmarshalled
- * time_t value.
- * @param srcLen In/our parameter, before invocation is the length of the
- * source buffer from where the time_t value should be unmarshalled and on
- * return is the number of bytes remaining in the source buffer.
- * @param dst The destination.
- */
-void unmarshalTime(const char * &src, size_t &srcLen,
-  time_t &dst) throw(castor::exception::Exception);
-
-/**
  * Marshals the specified string into the specified destination buffer.
  *
  * @param src The string to be marshalled.

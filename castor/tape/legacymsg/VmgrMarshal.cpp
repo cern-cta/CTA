@@ -114,7 +114,7 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   unmarshalString(src, srcLen, dst.manufacturer      );
   unmarshalString(src, srcLen, dst.serialNumber      );
   io::unmarshalUint16(src, srcLen, dst.nbSides           );
-  unmarshalTime  (src, srcLen, dst.eTime             );
+  io::unmarshalUint64(src, srcLen, dst.eTime             );
   io::unmarshalUint16(src, srcLen, dst.side              );
   unmarshalString(src, srcLen, dst.poolName          );
   io::unmarshalUint32(src, srcLen, dst.estimatedFreeSpace);
@@ -125,7 +125,7 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   unmarshalString(src, srcLen, dst.wHost             );
   io::unmarshalUint32(src, srcLen, dst.rJid              );
   io::unmarshalUint32(src, srcLen, dst.wJid              );
-  unmarshalTime  (src, srcLen, dst.rTime             );
-  unmarshalTime  (src, srcLen, dst.wTime             );
+  io::unmarshalUint64(src, srcLen, dst.rTime             );
+  io::unmarshalUint64(src, srcLen, dst.wTime             );
   io::unmarshalUint32(src, srcLen, dst.status            );
 }

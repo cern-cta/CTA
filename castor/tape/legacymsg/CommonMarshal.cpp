@@ -34,18 +34,6 @@
 
 
 //------------------------------------------------------------------------------
-// unmarshalTime
-//------------------------------------------------------------------------------
-void castor::tape::legacymsg::unmarshalTime(const char * &src,
-  size_t &srcLen, time_t &dst) throw(castor::exception::Exception) {
-
-  uint64_t timeAsAUint64 = 0;
-  io::unmarshalUint64(src, srcLen, timeAsAUint64);
-  dst = timeAsAUint64;
-}
-
-
-//------------------------------------------------------------------------------
 // marshalString
 //------------------------------------------------------------------------------
 void castor::tape::legacymsg::marshalString(const char * src,

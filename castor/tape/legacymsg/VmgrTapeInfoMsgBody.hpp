@@ -49,7 +49,7 @@ namespace legacymsg {
     char     manufacturer[CA_MAXMANUFLEN+1];
     char     serialNumber[CA_MAXSNLEN+1];
     uint16_t nbSides;
-    time_t   eTime;
+    uint64_t eTime;
     uint16_t side;
     char     poolName[CA_MAXPOOLNAMELEN+1];
     uint32_t estimatedFreeSpace; // in kbytes
@@ -60,8 +60,8 @@ namespace legacymsg {
     char     wHost[CA_MAXSHORTHOSTLEN+1];
     uint32_t rJid;
     uint32_t wJid;
-    time_t   rTime; // Last access to tape in read mode
-    time_t   wTime; // Last access to tape in write mode
+    uint64_t rTime; // Last access to tape in read mode
+    uint64_t wTime; // Last access to tape in write mode
     uint32_t status; // TAPE_FULL, DISABLED, EXPORTED
   }; // struct VmgrTapeInfoMsgBody
 
