@@ -24,7 +24,9 @@ cmake_minimum_required (VERSION 2.6)
 ################################################################################
 # Rules to build and install remote tape copy daemon
 ################################################################################
-
+set_property (SOURCE
+  rtcp_SendRecv.c
+  APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 set(RTCPD_SRC_FILES rtcpd.c rtcp_CallVMGR.c rtcp_CheckReq.c rtcp_Listen.c
   rtcp_SendRecv.c rtcp_log.c rtcpd_ClientListen.c rtcpd_Ctape.c rtcpd_Disk.c
   rtcpd_MainCntl.c rtcpd_SelfMonitor.c rtcpd_Tape.c rtcpd_TapeIO.c

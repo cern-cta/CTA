@@ -25,6 +25,9 @@ cmake_minimum_required (VERSION 2.6)
 ################################################################################
 # Rules to build and install libcastorvdqm.so
 ################################################################################
+set_property (SOURCE
+  vdqm_SendRecv.c
+  APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 set (VDQM_LIB_SRC_FILES vdqmapi.c vdqm_SendRecv.c)
 add_library (castorvdqm SHARED ${VDQM_LIB_SRC_FILES})
 CastorSetLibraryVersions (castorvdqm)

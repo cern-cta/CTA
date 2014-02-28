@@ -25,6 +25,9 @@ cmake_minimum_required (VERSION 2.6)
 ################################################################################
 # Rules to build and install vdqmd
 ################################################################################
+set_property (SOURCE
+  OldProtocolInterpreter.cpp
+  APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 set (VDQMD_SRC_FILES
   CDevTools.cpp
   DatabaseHelper.cpp

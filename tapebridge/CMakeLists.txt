@@ -25,6 +25,9 @@ cmake_minimum_required (VERSION 2.6)
 ################################################################################
 # Rules to build and install libcastortapebridge.so
 ################################################################################
+set_property (SOURCE
+  tapebridge_marshall.c
+  APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 set (TAPEBRIDGE_LIB_SRC_FILES
   tapebridge_marshall.c
   tapebridge_sendTapeBridgeClientInfo2Ack.c

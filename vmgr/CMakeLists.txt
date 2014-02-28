@@ -25,6 +25,19 @@ cmake_minimum_required (VERSION 2.6)
 ################################################################################
 # Rules to build and install libcastorvmgr.so
 ################################################################################
+set_property (SOURCE
+  vmgr_enterdenmap_byte_u64.c
+  vmgr_gettape.c
+  vmgr_listdenmap_byte_u64.c
+  vmgr_listpool.c
+  vmgr_listtape.c
+  vmgr_listtape_byte_u64.c
+  vmgr_qrytapeblksize.c
+  vmgr_querypool.c
+  vmgr_querytape.c
+  vmgr_querytape_byte_u64.c
+  vmgr_updatetape.c
+  APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 set (VMGR_LIB_SRC_FILES
   vmgr_apiinit.c
   vmgr_deletedenmap.c
@@ -119,6 +132,10 @@ if (${COMPILE_SERVER} STREQUAL "1")
   # Rules to build and install vmgrd
   ##############################################################################
   CastorAddProC(vmgr_oracle_ifce)
+  set_property (SOURCE
+    vmgr_procreq.c
+    APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing
+  )
   set (VMGR_SRC_FILES vmgr_main.c vmgr_oracle_ifce.c vmgr_procreq.c sendrep.c
     vmgrlogit.c)
   add_executable(vmgrd ${VMGR_SRC_FILES})

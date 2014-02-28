@@ -25,6 +25,53 @@ cmake_minimum_required (VERSION 2.6)
 ################################################################################
 # Rules to build and install libcastorns.so
 ################################################################################
+set_property(SOURCE
+  Cns_access.c
+  Cns_bulkexist.c
+  Cns_chclass.c
+  Cns_chdir.c
+  Cns_chmod.c
+  Cns_chown.c
+  Cns_closex.c
+  Cns_creat.c
+  Cns_delcomment.c
+  Cns_delsegbycopyno.c
+  Cns_dropsegs.c
+  Cns_du.c
+  Cns_getacl.c
+  Cns_getcomment.c
+  Cns_getlinks.c
+  Cns_getpath.c
+  Cns_getsegattrs.c
+  Cns_lastfseq.c
+  Cns_listtape.c
+  Cns_listlinks.c
+  Cns_mkdir.c
+  Cns_openx.c
+  Cns_opendir.c
+  Cns_readdir.c
+  Cns_readdirc.c
+  Cns_readdirg.c
+  Cns_readdirx.c
+  Cns_readdirxc.c
+  Cns_readdirxt.c
+  Cns_readlink.c
+  Cns_rename.c
+  Cns_replaceseg.c
+  Cns_rmdir.c
+  Cns_setacl.c
+  Cns_setatime.c
+  Cns_setcomment.c
+  Cns_setfsize.c
+  Cns_stat.c
+  Cns_symlink.c
+  Cns_tapesum.c
+  Cns_unlink.c
+  Cns_updateseg_checksum.c
+  Cns_updateseg_status.c
+  Cns_updatefile_checksum.c
+  Cns_utime.c
+  APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 set (NS_LIB_SRC_FILES
   Cns_aborttrans.c
   Cns_access.c
@@ -220,6 +267,9 @@ install(TARGETS ${NSCLIENTS} DESTINATION ${CASTOR_DEST_BIN_DIR})
 
 if (${COMPILE_SERVER} STREQUAL "1")
   CastorAddProC(Cns_oracle_ifce)
+  set_property (SOURCE
+    Cns_procreq.c
+    APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
   add_executable(nsd 
     Cns_main.c
     Cns_acl.c

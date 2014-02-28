@@ -1040,10 +1040,18 @@ void castor::io::marshalUint64(const uint64_t src, char * &dst)
     throw ex;
   }
 
-  const uint32_t lowerPowersOf2  = (uint32_t)src;
-  const uint32_t higherPowersOf2 = (uint32_t)(src >> 32);
-  marshalUint32(lowerPowersOf2, dst);
-  marshalUint32(higherPowersOf2, dst);
+  // Be independent of the host's byte representation of a multi-byte integer by
+  // determining the value of each byte to be marshalled using the left-shift
+  // arithmetic-operator
+  dst[0] = src >> 56 & 0xFF;
+  dst[1] = src >> 48 & 0xFF;
+  dst[2] = src >> 40 & 0xFF;
+  dst[3] = src >> 32 & 0xFF;
+  dst[4] = src >> 24 & 0xFF;
+  dst[5] = src >> 16 & 0xFF;
+  dst[6] = src >>  8 & 0xFF;
+  dst[7] = src       & 0xFF;
+  dst += sizeof(src);
 }
 
 //------------------------------------------------------------------------------
@@ -1187,16 +1195,14 @@ void castor::io::unmarshalUint64(const char * &src, size_t &srcLen,
     throw ex;
   }
 
-  try {
-    uint32_t lowerPowersOf2 = 0;
-    uint32_t higherPowersOf2 = 0;
-    unmarshalUint32(src, srcLen, lowerPowersOf2);
-    unmarshalUint32(src, srcLen, higherPowersOf2);
-    dst = ((uint64_t)higherPowersOf2 << 32) + (uint64_t)lowerPowersOf2;
-  } catch(castor::exception::Exception &se) {
-    castor::exception::Exception ex(se.code());
-    ex.getMessage() << "Failed to unmarshal uint64_t"
-      ": " << se.getMessage().str();
-    throw ex;
-  }
+  dst  = ((uint64_t)src[0] << 56) & 0xFF00000000000000ULL;
+  dst |= ((uint64_t)src[1] << 48) & 0x00FF000000000000ULL;
+  dst |= ((uint64_t)src[2] << 40) & 0x0000FF0000000000ULL;
+  dst |= ((uint64_t)src[3] << 32) & 0x000000FF00000000ULL;
+  dst |= ((uint64_t)src[4] << 24) & 0x00000000FF000000ULL;
+  dst |= ((uint64_t)src[5] << 16) & 0x0000000000FF0000ULL;
+  dst |= ((uint64_t)src[6] << 8)  & 0x000000000000FF00ULL;
+  dst |=  (uint64_t)src[7]        & 0x00000000000000FFULL;
+  src += sizeof(dst);
+  srcLen -= sizeof(dst);
 }

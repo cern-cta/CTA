@@ -71,6 +71,9 @@ endif (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
 
 # Those tests are single threaded, functionnal and error tests. They could
 # actually fail in helgrind/drd (but memcheck is recommended)
+set_property(SOURCE
+  ../castor/io/IoTest.cpp
+APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 add_executable(castorUnitTests
   castorUnitTests.cpp
   ../castor/exception/ExceptionTest.cpp

@@ -25,6 +25,16 @@ cmake_minimum_required (VERSION 2.6)
 ################################################################################
 # Rules to build and install libcastorrfio.so
 ################################################################################
+set_property(SOURCE
+  fstat64.c
+  lockf64.c
+  lseek64.c
+  open64.c
+  preseek64.c
+  read64.c
+  stream64.c
+  write64.c
+  APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 set (RFIO_LIB_SRC_FILES access.c alrm.c chdir.c checkkey.c chmod.c chown.c
   close.c closedir.c connect.c error.c fchmod.c fchown.c fclose.c feof.c
   ferror.c fflush.c fileno.c fio.c fopen.c fread.c fseek.c fstat.c ftell.c
@@ -86,7 +96,9 @@ if (${COMPILE_SERVER} STREQUAL "1")
   ##############################################################################
   # Rules to build and install the server rfiod, man pages and config files
   ##############################################################################
-  
+  set_property (SOURCE
+    rfio_call64.c
+    APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
   set(RFIOD_SRC_FILES Csemaphore.c rfio_serv.c rfio_calls.c rfio_call64.c 
     rfio_fcalls.c rfio_callhandlers.c switch_req.c checkkey.c fio.c rfstatfs.c 
     alrm.c stager_util.c stager_messages.c stager_extern_globals.c stager_uuid.c 

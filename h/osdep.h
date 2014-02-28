@@ -19,6 +19,7 @@
  * Data representation
  */
 
+#define BYTESIZE        1
 #define WORDSIZE        2
 #define LONGSIZE        4
 #define QUADSIZE        8
@@ -31,6 +32,10 @@ typedef unsigned int    U_LONG;
 typedef          char   BYTE;
 typedef          short  WORD;
 typedef          int    LONG;
+
+#define BYTEADDR(x)     (((char *)&(x))+sizeof(BYTE)-BYTESIZE)
+#define WORDADDR(x)     (((char *)&(x))+sizeof(WORD)-WORDSIZE)
+#define LONGADDR(x)     (((char *)&(x))+sizeof(LONG)-LONGSIZE)
 
 typedef long long		signed64;
 typedef unsigned long long	u_signed64;
