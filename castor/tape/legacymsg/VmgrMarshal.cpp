@@ -77,7 +77,7 @@ size_t castor::tape::legacymsg::marshal(char *const dst,
   io::marshalUint32(totalLen    , p); // Total length (UNLIKE RTCPD)
   io::marshalUint32(src.uid     , p);
   io::marshalUint32(src.gid     , p);
-  marshalString(src.vid     , p);
+  io::marshalString(src.vid     , p);
   io::marshalUint16(src.side    , p);
 
   // Calculate the number of bytes actually marshalled
@@ -104,25 +104,25 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, VmgrTapeInfoMsgBody &dst)
   throw(castor::exception::Exception) {
 
-  unmarshalString(src, srcLen, dst.vsn               );
-  unmarshalString(src, srcLen, dst.library           );
-  unmarshalString(src, srcLen, dst.dgn               );
-  unmarshalString(src, srcLen, dst.density           );
-  unmarshalString(src, srcLen, dst.labelType         );
-  unmarshalString(src, srcLen, dst.model             );
-  unmarshalString(src, srcLen, dst.mediaLetter       );
-  unmarshalString(src, srcLen, dst.manufacturer      );
-  unmarshalString(src, srcLen, dst.serialNumber      );
+  io::unmarshalString(src, srcLen, dst.vsn               );
+  io::unmarshalString(src, srcLen, dst.library           );
+  io::unmarshalString(src, srcLen, dst.dgn               );
+  io::unmarshalString(src, srcLen, dst.density           );
+  io::unmarshalString(src, srcLen, dst.labelType         );
+  io::unmarshalString(src, srcLen, dst.model             );
+  io::unmarshalString(src, srcLen, dst.mediaLetter       );
+  io::unmarshalString(src, srcLen, dst.manufacturer      );
+  io::unmarshalString(src, srcLen, dst.serialNumber      );
   io::unmarshalUint16(src, srcLen, dst.nbSides           );
   io::unmarshalUint64(src, srcLen, dst.eTime             );
   io::unmarshalUint16(src, srcLen, dst.side              );
-  unmarshalString(src, srcLen, dst.poolName          );
+  io::unmarshalString(src, srcLen, dst.poolName          );
   io::unmarshalUint32(src, srcLen, dst.estimatedFreeSpace);
   io::unmarshalUint32(src, srcLen, dst.nbFiles           );
   io::unmarshalUint32(src, srcLen, dst.rCount            );
   io::unmarshalUint32(src, srcLen, dst.wCount            );
-  unmarshalString(src, srcLen, dst.rHost             );
-  unmarshalString(src, srcLen, dst.wHost             );
+  io::unmarshalString(src, srcLen, dst.rHost             );
+  io::unmarshalString(src, srcLen, dst.wHost             );
   io::unmarshalUint32(src, srcLen, dst.rJid              );
   io::unmarshalUint32(src, srcLen, dst.wJid              );
   io::unmarshalUint64(src, srcLen, dst.rTime             );

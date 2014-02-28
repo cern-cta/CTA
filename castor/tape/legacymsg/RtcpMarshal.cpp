@@ -78,10 +78,10 @@ size_t castor::tape::legacymsg::marshal(char *const dst,
   io::marshalUint32(src.clientPort     , p);
   io::marshalUint32(src.clientEuid     , p);
   io::marshalUint32(src.clientEgid     , p);
-  marshalString(src.clientHost     , p);
-  marshalString(src.dgn            , p);
-  marshalString(src.driveUnit      , p);
-  marshalString(src.clientUserName , p);
+  io::marshalString(src.clientHost     , p);
+  io::marshalString(src.dgn            , p);
+  io::marshalString(src.driveUnit      , p);
+  io::marshalString(src.clientUserName , p);
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;
@@ -110,10 +110,10 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   io::unmarshalUint32(src, srcLen, dst.clientPort);
   io::unmarshalUint32(src, srcLen, dst.clientEuid);
   io::unmarshalUint32(src, srcLen, dst.clientEgid);
-  unmarshalString(src, srcLen, dst.clientHost);
-  unmarshalString(src, srcLen, dst.dgn);
-  unmarshalString(src, srcLen, dst.driveUnit);
-  unmarshalString(src, srcLen, dst.clientUserName);
+  io::unmarshalString(src, srcLen, dst.clientHost);
+  io::unmarshalString(src, srcLen, dst.dgn);
+  io::unmarshalString(src, srcLen, dst.driveUnit);
+  io::unmarshalString(src, srcLen, dst.clientUserName);
 }
 
 
@@ -245,12 +245,12 @@ size_t castor::tape::legacymsg::marshal(char *dst,
   io::marshalUint32(RTCOPY_MAGIC                          , p);
   io::marshalUint32(RTCP_TAPEERR_REQ                      , p);
   io::marshalUint32(len                                   , p);
-  marshalString(src.vid                               , p);
-  marshalString(src.vsn                               , p);
-  marshalString(src.label                             , p);
-  marshalString(src.devtype                           , p);
-  marshalString(src.density                           , p);
-  marshalString(src.unit                              , p);
+  io::marshalString(src.vid                               , p);
+  io::marshalString(src.vsn                               , p);
+  io::marshalString(src.label                             , p);
+  io::marshalString(src.devtype                           , p);
+  io::marshalString(src.density                           , p);
+  io::marshalString(src.unit                              , p);
   io::marshalUint32(src.volReqId                          , p);
   io::marshalUint32(src.jobId                             , p);
   io::marshalUint32(src.mode                              , p);
@@ -276,7 +276,7 @@ size_t castor::tape::legacymsg::marshal(char *dst,
   io::marshalUint8(src.rtcpReqId.node[3]                  , p);
   io::marshalUint8(src.rtcpReqId.node[4]                  , p);
   io::marshalUint8(src.rtcpReqId.node[5]                  , p);
-  marshalString(src.err.errorMsg                      , p);
+  io::marshalString(src.err.errorMsg                      , p);
   io::marshalUint32(src.err.severity                      , p);
   io::marshalUint32(src.err.errorCode                     , p);
   io::marshalUint32(src.err.maxTpRetry                    , p);
@@ -306,7 +306,7 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   throw(castor::exception::Exception) {
 
   unmarshal(src, srcLen, (RtcpTapeRqstMsgBody&)dst);
-  unmarshalString(src, srcLen, dst.err.errorMsg);
+  io::unmarshalString(src, srcLen, dst.err.errorMsg);
   io::unmarshalUint32(src, srcLen, dst.err.severity);
   io::unmarshalUint32(src, srcLen, dst.err.errorCode);
   io::unmarshalInt32(src, srcLen, dst.err.maxTpRetry);
@@ -321,12 +321,12 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, RtcpTapeRqstMsgBody &dst)
   throw(castor::exception::Exception) {
 
-  unmarshalString(src, srcLen, dst.vid);
-  unmarshalString(src, srcLen, dst.vsn);
-  unmarshalString(src, srcLen, dst.label);
-  unmarshalString(src, srcLen, dst.devtype);
-  unmarshalString(src, srcLen, dst.density);
-  unmarshalString(src, srcLen, dst.unit);
+  io::unmarshalString(src, srcLen, dst.vid);
+  io::unmarshalString(src, srcLen, dst.vsn);
+  io::unmarshalString(src, srcLen, dst.label);
+  io::unmarshalString(src, srcLen, dst.devtype);
+  io::unmarshalString(src, srcLen, dst.density);
+  io::unmarshalString(src, srcLen, dst.unit);
   io::unmarshalUint32(src, srcLen, dst.volReqId);
   io::unmarshalUint32(src, srcLen, dst.jobId);
   io::unmarshalUint32(src, srcLen, dst.mode);
@@ -409,12 +409,12 @@ size_t castor::tape::legacymsg::marshal(char *dst,
   io::marshalUint32(RTCOPY_MAGIC                              , p);
   io::marshalUint32(RTCP_FILEERR_REQ                          , p);
   io::marshalUint32(len                                       , p);
-  marshalString(src.rqst.filePath                         , p);
-  marshalString(src.rqst.tapePath                         , p);
-  marshalString(src.rqst.recfm_noLongerUsed               , p);
-  marshalString(src.rqst.fid                              , p);
-  marshalString(src.rqst.ifce                             , p);
-  marshalString(src.rqst.stageId                          , p);
+  io::marshalString(src.rqst.filePath                         , p);
+  io::marshalString(src.rqst.tapePath                         , p);
+  io::marshalString(src.rqst.recfm_noLongerUsed               , p);
+  io::marshalString(src.rqst.fid                              , p);
+  io::marshalString(src.rqst.ifce                             , p);
+  io::marshalString(src.rqst.stageId                          , p);
   io::marshalUint32(src.rqst.volReqId                         , p);
   io::marshalUint32(src.rqst.jobId                            , p);
   io::marshalUint32(src.rqst.stageSubReqId                    , p);
@@ -451,8 +451,8 @@ size_t castor::tape::legacymsg::marshal(char *dst,
   io::marshalUint64(src.rqst.maxNbRec                         , p);
   io::marshalUint64(src.rqst.maxSize                          , p);
   io::marshalUint64(src.rqst.startSize                        , p);
-  marshalString(src.rqst.segAttr.nameServerHostName       , p);
-  marshalString(src.rqst.segAttr.segmCksumAlgorithm       , p);
+  io::marshalString(src.rqst.segAttr.nameServerHostName       , p);
+  io::marshalString(src.rqst.segAttr.segmCksumAlgorithm       , p);
   io::marshalUint32(src.rqst.segAttr.segmCksum                , p);
   io::marshalUint64(src.rqst.segAttr.castorFileId             , p);
   io::marshalUint32(src.rqst.stgReqId.time_low                , p);
@@ -466,7 +466,7 @@ size_t castor::tape::legacymsg::marshal(char *dst,
   io::marshalUint8(src.rqst.stgReqId.node[3]                  , p);
   io::marshalUint8(src.rqst.stgReqId.node[4]                  , p);
   io::marshalUint8(src.rqst.stgReqId.node[5]                  , p);
-  marshalString(src.err.errorMsg                          , p);
+  io::marshalString(src.err.errorMsg                          , p);
   io::marshalUint32(src.err.severity                          , p);
   io::marshalUint32(src.err.errorCode                         , p);
   io::marshalUint32(src.err.maxTpRetry                        , p);
@@ -495,7 +495,7 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, RtcpFileRqstErrMsgBody &dst)
   throw(castor::exception::Exception) {
   unmarshal(src, srcLen, (RtcpFileRqstMsgBody&)dst);
-  unmarshalString(src, srcLen, dst.err.errorMsg);
+  io::unmarshalString(src, srcLen, dst.err.errorMsg);
   io::unmarshalUint32(src, srcLen, dst.err.severity);
   io::unmarshalUint32(src, srcLen, dst.err.errorCode);
   io::unmarshalInt32(src, srcLen, dst.err.maxTpRetry);
@@ -510,12 +510,12 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, RtcpFileRqstMsgBody &dst)
   throw(castor::exception::Exception) {
 
-  unmarshalString(src, srcLen, dst.rqst.filePath);
-  unmarshalString(src, srcLen, dst.rqst.tapePath);
-  unmarshalString(src, srcLen, dst.rqst.recfm_noLongerUsed);
-  unmarshalString(src, srcLen, dst.rqst.fid);
-  unmarshalString(src, srcLen, dst.rqst.ifce);
-  unmarshalString(src, srcLen, dst.rqst.stageId);
+  io::unmarshalString(src, srcLen, dst.rqst.filePath);
+  io::unmarshalString(src, srcLen, dst.rqst.tapePath);
+  io::unmarshalString(src, srcLen, dst.rqst.recfm_noLongerUsed);
+  io::unmarshalString(src, srcLen, dst.rqst.fid);
+  io::unmarshalString(src, srcLen, dst.rqst.ifce);
+  io::unmarshalString(src, srcLen, dst.rqst.stageId);
   io::unmarshalUint32(src, srcLen, dst.rqst.volReqId);
   io::unmarshalInt32(src, srcLen, dst.rqst.jobId);
   io::unmarshalInt32(src, srcLen, dst.rqst.stageSubReqId);
@@ -552,8 +552,8 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
   io::unmarshalUint64(src, srcLen, dst.rqst.maxNbRec);
   io::unmarshalUint64(src, srcLen, dst.rqst.maxSize);
   io::unmarshalUint64(src, srcLen, dst.rqst.startSize);
-  unmarshalString(src, srcLen, dst.rqst.segAttr.nameServerHostName);
-  unmarshalString(src, srcLen, dst.rqst.segAttr.segmCksumAlgorithm);
+  io::unmarshalString(src, srcLen, dst.rqst.segAttr.nameServerHostName);
+  io::unmarshalString(src, srcLen, dst.rqst.segAttr.segmCksumAlgorithm);
   io::unmarshalUint32(src, srcLen, dst.rqst.segAttr.segmCksum);
   io::unmarshalUint64(src, srcLen, dst.rqst.segAttr.castorFileId);
   io::unmarshalUint32(src, srcLen, dst.rqst.stgReqId.time_low);
@@ -576,7 +576,7 @@ void castor::tape::legacymsg::unmarshal(const char * &src,
 void castor::tape::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, GiveOutpMsgBody &dst) throw(castor::exception::Exception) {
 
-  unmarshalString(src, srcLen, dst.message);
+  io::unmarshalString(src, srcLen, dst.message);
 }
 
 

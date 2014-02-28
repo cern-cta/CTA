@@ -279,6 +279,41 @@ TEST_F(castor_io_IoTest, marshall_HYPER) {
   check64BitsWereMarshalledBigEndian(buf);
 }
 
+static void checkStringWasMarshalled(const char *const buf) {
+  ASSERT_EQ('V', buf[0]);
+  ASSERT_EQ('a', buf[1]);
+  ASSERT_EQ('l', buf[2]);
+  ASSERT_EQ('u', buf[3]);
+  ASSERT_EQ('e', buf[4]);
+  ASSERT_EQ('\0', buf[5]);
+  ASSERT_EQ('E', buf[6]);
+  ASSERT_EQ('E', buf[7]);
+}
+
+TEST_F(castor_io_IoTest, marshalString) {
+  const char *const v = "Value";
+  char buf[8];
+  char *ptr = buf;
+
+  memset(buf, 'E', sizeof(buf));
+
+  ASSERT_NO_THROW(castor::io::marshalString(v, ptr));
+  ASSERT_EQ(buf+6, ptr);
+  checkStringWasMarshalled(buf);
+}
+
+TEST_F(castor_io_IoTest, marshall_STRING) {
+  const char *const v = "Value";
+  char buf[8];
+  char *ptr = buf;
+
+  memset(buf, 'E', sizeof(buf));
+
+  marshall_STRING(ptr, v);
+  ASSERT_EQ(buf+6, ptr);
+  checkStringWasMarshalled(buf);
+}
+
 TEST_F(castor_io_IoTest, unmarshalUint8) {
   char buf[] = {0x12};
   size_t bufLen = sizeof(buf);
@@ -344,6 +379,29 @@ TEST_F(castor_io_IoTest, unmarshall_HYPER) {
   unmarshall_HYPER(ptr, v);
   ASSERT_EQ(buf+8, ptr);
   ASSERT_EQ((uint64_t)0x8877665544332211LL, v);
+}
+
+TEST_F(castor_io_IoTest, unmarshalString) {
+  char src[] = {'V', 'a', 'l', 'u', 'e', '\0', 'E', 'E'};
+  size_t srcLen = sizeof(src);
+  const char *srcPtr = src;
+  char dst[6];
+  const size_t dstLen = sizeof(dst);
+
+  ASSERT_NO_THROW(castor::io::unmarshalString(srcPtr, srcLen, dst, dstLen));
+  ASSERT_EQ(src+6, srcPtr);
+  ASSERT_EQ((size_t)2, srcLen);
+  ASSERT_EQ(std::string("Value"), std::string(dst));
+}
+
+TEST_F(castor_io_IoTest, unmarshall_STRING) {
+  char src[] = {'V', 'a', 'l', 'u', 'e', '\0', 'E', 'E'};
+  const char *srcPtr = src;
+  char dst[6];
+
+  unmarshall_STRING(srcPtr, dst);
+  ASSERT_EQ(src+6, srcPtr);
+  ASSERT_EQ(std::string("Value"), std::string(dst));
 }
 
 } // namespace unitTests

@@ -456,6 +456,18 @@ void marshalUint64(const uint64_t src, char * &dst)
   throw(castor::exception::Exception);
 
 /**
+ * Marshals the specified string into the specified destination buffer.
+ *
+ * @param src The string to be marshalled.
+ * @param dst In/out parameter, before invocation points to the destination
+ * buffer where the string should be marshalled to and on return points to
+ * the byte in the destination buffer immediately after the marshalled
+ * string.
+ */
+void marshalString(const std::string &src, char * &dst)
+  throw(castor::exception::Exception);
+
+/**
  * Unmarshals a value from the specified source buffer into the specified
  * destination.
  *
@@ -539,6 +551,48 @@ void unmarshalInt32(const char * &src, size_t &srcLen, int32_t &dst)
  */
 void unmarshalUint64(const char * &src, size_t &srcLen, uint64_t &dst)
   throw(castor::exception::Exception);
+
+/**
+ * Unmarshals a string from the specified source buffer into the specified
+ * destination buffer.
+ *
+ * @param src In/out parameter, before invocation points to the source
+ * buffer where the string should be unmarshalled from and on return points
+ * to the byte in the source buffer immediately after the unmarshalled
+ * string.
+ * @param srcLen In/our parameter, before invocation is the length of the
+ * source buffer from where the string should be unmarshalled and on return
+ * is the number of bytes remaining in the source buffer
+ * @param dst In/out parameter, before invocation points to the destination
+ * buffer where the string should be unmarshalled to and on return points
+ * to the byte in the destination buffer immediately after the unmarshalled
+ * string .
+ * @param dstLen The length of the destination buffer where the string
+ * should be unmarshalled to.
+ */
+void unmarshalString(const char * &src, size_t &srcLen, char *dst,
+  const size_t dstLen) throw(castor::exception::Exception);
+
+/**
+ * Unmarshals a string from the specified source buffer into the specified
+ * destination buffer.
+ *
+ * @param src In/out parameter, before invocation points to the source
+ * buffer where the string should be unmarshalled from and on return points
+ * to the byte in the source buffer immediately after the unmarshalled
+ * string.
+ * @param srcLen In/our parameter, before invocation is the length of the
+ * source buffer from where the string should be unmarshalled and on return
+ * is the number of bytes remaining in the source buffer.
+ * @param dst In/out parameter, before invocation points to the destination
+ * buffer where the string should be unmarshalled to and on return points
+ * to the byte in the destination buffer immediately after the unmarshalled
+ * string.
+ */
+template<int n> void unmarshalString(const char * &src,
+  size_t &srcLen, char (&dst)[n]) throw(castor::exception::Exception) {
+  unmarshalString(src, srcLen, dst, n);
+}
 
 } // namespace io
 } // namespace castor

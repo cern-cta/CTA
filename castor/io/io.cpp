@@ -978,7 +978,6 @@ void castor::io::marshalUint8(const uint8_t src, char * &dst)
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
-
     ex.getMessage() << "Failed to marshal uint8_t"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -996,7 +995,6 @@ void castor::io::marshalUint16(const uint16_t src, char * &dst)
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
-
     ex.getMessage() << "Failed to marshal uint16_t"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -1015,7 +1013,6 @@ void castor::io::marshalUint32(const uint32_t src, char * &dst)
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
-
     ex.getMessage() << "Failed to marshal uint32_t"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -1034,7 +1031,6 @@ void castor::io::marshalUint64(const uint64_t src, char * &dst)
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
-
     ex.getMessage() << "Failed to marshal uint64_t"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -1055,6 +1051,24 @@ void castor::io::marshalUint64(const uint64_t src, char * &dst)
 }
 
 //------------------------------------------------------------------------------
+// marshalString
+//------------------------------------------------------------------------------
+void castor::io::marshalString(const std::string &src, char * &dst)
+  throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to marshal string"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  strcpy(dst, src.c_str());
+
+  dst += strlen(src.c_str()) + 1;
+}
+
+//------------------------------------------------------------------------------
 // unmarshalUint8
 //------------------------------------------------------------------------------
 void castor::io::unmarshalUint8(const char * &src, size_t &srcLen,
@@ -1062,7 +1076,6 @@ void castor::io::unmarshalUint8(const char * &src, size_t &srcLen,
 
   if(src == NULL) {
     castor::exception::Exception ex(EINVAL);
-
     ex.getMessage() << "Failed to unmarshal uint8_t"
       ": Pointer to source buffer is NULL";
     throw ex;
@@ -1070,7 +1083,6 @@ void castor::io::unmarshalUint8(const char * &src, size_t &srcLen,
 
   if(srcLen < sizeof(dst)) {
     castor::exception::Exception ex(EINVAL);
-
     ex.getMessage() << "Failed to unmarshal uint8_t"
       ": Source buffer length is too small: expected="
       << sizeof(dst) << " actual=" << srcLen;
@@ -1090,7 +1102,6 @@ void castor::io::unmarshalUint16(const char * &src, size_t &srcLen,
 
   if(src == NULL) {
     castor::exception::Exception ex(EINVAL);
-
     ex.getMessage() << "Failed to unmarshal uint16_t"
       ": Pointer to source buffer is NULL";
     throw ex;
@@ -1098,7 +1109,6 @@ void castor::io::unmarshalUint16(const char * &src, size_t &srcLen,
 
   if(srcLen < sizeof(dst)) {
     castor::exception::Exception ex(EINVAL);
-
     ex.getMessage() << "Failed to unmarshal uint16_t"
       ": Source buffer length is too small: expected="
       << sizeof(dst) << " actual=" << srcLen;
@@ -1120,7 +1130,6 @@ void castor::io::unmarshalUint32(const char * &src, size_t &srcLen,
 
   if(src == NULL) {
     castor::exception::Exception ex(EINVAL);
-
     ex.getMessage() << "Failed to unmarshal uint32_t"
       ": Pointer to source buffer is NULL";
     throw ex;
@@ -1128,7 +1137,6 @@ void castor::io::unmarshalUint32(const char * &src, size_t &srcLen,
 
   if(srcLen < sizeof(dst)) {
     castor::exception::Exception ex(EINVAL);
-
     ex.getMessage() << "Failed to unmarshal uint32_t"
       ": Source buffer length is too small: expected="
       << sizeof(dst) << " actual=" << srcLen;
@@ -1150,7 +1158,6 @@ void castor::io::unmarshalInt32(const char * &src, size_t &srcLen,
 
   if(src == NULL) {
     castor::exception::Exception ex(EINVAL);
-
     ex.getMessage() << "Failed to unmarshal int32_t"
       ": Pointer to source buffer is NULL";
     throw ex;
@@ -1158,7 +1165,6 @@ void castor::io::unmarshalInt32(const char * &src, size_t &srcLen,
 
   if(srcLen < sizeof(dst)) {
     castor::exception::Exception ex(EINVAL);
-
     ex.getMessage() << "Failed to unmarshal int32_t"
       ": Source buffer length is too small: expected="
       << sizeof(dst) << " actual=" << srcLen;
@@ -1180,7 +1186,6 @@ void castor::io::unmarshalUint64(const char * &src, size_t &srcLen,
 
   if(src == NULL) {
     castor::exception::Exception ex(EINVAL);
-
     ex.getMessage() << "Failed to unmarshal uint64_t"
       ": Pointer to source buffer is NULL";
     throw ex;
@@ -1188,7 +1193,6 @@ void castor::io::unmarshalUint64(const char * &src, size_t &srcLen,
 
   if(srcLen < sizeof(dst)) {
     castor::exception::Exception ex(EINVAL);
-
     ex.getMessage() << "Failed to unmarshal uint64_t"
       ": Source buffer length is too small: expected="
       << sizeof(dst) << " actual=" << srcLen;
@@ -1205,4 +1209,70 @@ void castor::io::unmarshalUint64(const char * &src, size_t &srcLen,
   dst |=  (uint64_t)src[7]        & 0x00000000000000FFULL;
   src += sizeof(dst);
   srcLen -= sizeof(dst);
+}
+
+//------------------------------------------------------------------------------
+// unmarshalString
+//------------------------------------------------------------------------------
+void castor::io::unmarshalString(const char * &src,
+  size_t &srcLen, char *dst, const size_t dstLen)
+  throw(castor::exception::Exception) {
+
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to unmarshal string"
+      ": Pointer to source buffer is NULL";
+    throw ex;
+  }
+
+  if(srcLen == 0) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to unmarshal string"
+      ": Source buffer length is 0";
+    throw ex;
+  }
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to unmarshal string"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  if(dstLen == 0) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to unmarshal string"
+      ": Destination buffer length is 0";
+    throw ex;
+  }
+
+  // Calculate the maximum number of bytes that could be unmarshalled
+  size_t maxlen = 0;
+  if(srcLen < dstLen) {
+    maxlen = srcLen;
+  } else {
+    maxlen = dstLen;
+  }
+
+  bool strTerminatorReached = false;
+
+  // While there are potential bytes to copy and the string terminator has not
+  // been reached
+  for(size_t i=0; i<maxlen && !strTerminatorReached; i++) {
+    // If the string terminator has been reached
+    if((*dst++ = *src++) == '\0') {
+      strTerminatorReached = true;
+    }
+
+    srcLen--;
+  }
+
+  // If all potential bytes were copied but the string terminator was not
+  // reached
+  if(!strTerminatorReached) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to unmarshal string"
+      ": String terminator of source buffer was not reached";
+    throw ex;
+  }
 }
