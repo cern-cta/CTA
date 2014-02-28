@@ -22,6 +22,7 @@
 #define SHORT			WORD
 /* #define U_SHORT			U_WORD */
 #define SHORTSIZE		WORDSIZE
+#define SHORTADDR		WORDADDR
 
 #define marshall_WORD		marshall_SHORT
 #define unmarshall_WORD		unmarshall_SHORT		
@@ -75,14 +76,14 @@ typedef  char*          bitvct; /* bit vector type definition           */
  */
 
 #define marshall_BYTE(ptr,n)	{ BYTE n_ = n; \
-				  (void) memcpy((ptr),&n_,1); \
-				  INC_PTR(ptr,1); \
+				  (void) memcpy((ptr),BYTEADDR(n_),BYTESIZE); \
+				  INC_PTR(ptr,BYTESIZE); \
 				} 
 
 #define unmarshall_BYTE(ptr,n)  { BYTE n_ = 0; \
-				  (void) memcpy(&n_,(ptr),1); \
+				  (void) memcpy(BYTEADDR(n_),(ptr),BYTESIZE); \
 				  n = n_; \
-				  INC_PTR(ptr,1); \
+				  INC_PTR(ptr,BYTESIZE); \
 				} 
 
 /*
@@ -90,12 +91,12 @@ typedef  char*          bitvct; /* bit vector type definition           */
  */
 
 #define marshall_SHORT(ptr,n)	{ SHORT n_ = htons((unsigned short)(n)); \
-				  (void) memcpy((ptr),&n_,SHORTSIZE); \
+				  (void) memcpy((ptr),SHORTADDR(n_),SHORTSIZE); \
 				  INC_PTR(ptr,SHORTSIZE); \
 				}
                                                                  
 #define unmarshall_SHORT(ptr,n)	{ SHORT n_ = 0;  \
-				  (void) memcpy(&n_,(ptr),SHORTSIZE); \
+				  (void) memcpy(SHORTADDR(n_),(ptr),SHORTSIZE); \
                                   n = ntohs((unsigned short)(n_)); \
 				  if ( BIT_ISSET(ptr,0) && sizeof(SHORT)-SHORTSIZE > 0 ) \
 					 (void) memset((char *)&n,255,sizeof(SHORT)-SHORTSIZE); \
@@ -107,12 +108,12 @@ typedef  char*          bitvct; /* bit vector type definition           */
  */
 
 #define marshall_LONG(ptr,n)	{ LONG n_ = htonl((unsigned long)(n)); \
-				  (void) memcpy((ptr),&n_,LONGSIZE); \
+				  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
 				  INC_PTR(ptr,LONGSIZE); \
 				}
                                                                  
 #define unmarshall_LONG(ptr,n)	{ LONG n_ = 0;  \
-				  (void) memcpy(&n_,(ptr),LONGSIZE); \
+				  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
                                   n = ntohl((unsigned long)(n_)); \
 				  if ( BIT_ISSET(ptr,0) && sizeof(LONG)-LONGSIZE > 0 ) \
 					 (void) memset((char *)&n,255,sizeof(LONG)-LONGSIZE); \
@@ -147,22 +148,23 @@ EXTERN_C int _unmarshall_STRINGN (char **, char*, int);
  */
 
 #define  marshall_HYPER(ptr,n)          { U_HYPER u_ = n; \
-					  U_LONG n_ = htonl((U_LONG)u_); \
-					  (void) memcpy((ptr),&n_,LONGSIZE); \
+					  LONG n_ = htonl(*((U_LONG *)((char *)&(u_)+LONGSIZE))); \
+					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
 					  INC_PTR(ptr,LONGSIZE); \
-					  n_ = htonl((U_LONG)(u_ >> 32)); \
-					  (void) memcpy((ptr),&n_,LONGSIZE); \
+					  n_ = htonl(*((U_LONG *)&(u_))); \
+					  (void) memcpy((ptr),LONGADDR(n_),LONGSIZE); \
 					  INC_PTR(ptr,LONGSIZE); \
 					}
 
 #define  unmarshall_HYPER(ptr,n)        { U_HYPER u_ = 0; \
-					  U_LONG n_ = 0;  \
-					  (void) memcpy(&n_,(ptr),LONGSIZE); \
-					  u_ = ntohl(n_); \
+					  LONG n_ = 0;  \
+					  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
+					  *((LONG *)((char *)&(u_)+LONGSIZE)) = \
+						ntohl((U_LONG)(n_)); \
 					  INC_PTR(ptr,LONGSIZE); \
 					  n_ = 0;  \
-					  (void) memcpy(&n_,(ptr),LONGSIZE); \
-					  u_ |= (((U_HYPER)ntohl(n_)) << 32); \
+					  (void) memcpy(LONGADDR(n_),(ptr),LONGSIZE); \
+					  *((LONG *)&(u_)) = ntohl((U_LONG)(n_)); \
 					  INC_PTR(ptr,LONGSIZE); \
 					  n = u_; \
 					}
