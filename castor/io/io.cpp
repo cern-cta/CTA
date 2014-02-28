@@ -1151,7 +1151,7 @@ void castor::io::unmarshalInt32(const char * &src, size_t &srcLen,
   if(src == NULL) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << "Failed to unmarshal uint32_t"
+    ex.getMessage() << "Failed to unmarshal int32_t"
       ": Pointer to source buffer is NULL";
     throw ex;
   }
@@ -1159,7 +1159,7 @@ void castor::io::unmarshalInt32(const char * &src, size_t &srcLen,
   if(srcLen < sizeof(dst)) {
     castor::exception::Exception ex(EINVAL);
 
-    ex.getMessage() << "Failed to unmarshal uint32_t"
+    ex.getMessage() << "Failed to unmarshal int32_t"
       ": Source buffer length is too small: expected="
       << sizeof(dst) << " actual=" << srcLen;
     throw ex;
