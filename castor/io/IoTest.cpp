@@ -199,7 +199,7 @@ TEST_F(castor_io_IoTest, connectWithTimeout) {
 }
 
 TEST_F(castor_io_IoTest, marshalUint8) {
-  const uint8_t v = 0x12;
+  const uint8_t v = 0x87;
   char buf[1];
   char *ptr = buf;
     
@@ -207,11 +207,28 @@ TEST_F(castor_io_IoTest, marshalUint8) {
     
   ASSERT_NO_THROW(castor::io::marshalUint8(v, ptr));
   ASSERT_EQ(buf+1, ptr);
-  ASSERT_EQ(0x12, buf[0]);
+  ASSERT_EQ(0x87 & 0xFF, buf[0] & 0xFF);
+}
+
+TEST_F(castor_io_IoTest, marshall_BYTE) {
+  const uint8_t v = 0x87;
+  char buf[1];
+  char *ptr = buf;
+
+  memset(buf, '\0', sizeof(buf));
+
+  marshall_BYTE(ptr, v);
+  ASSERT_EQ(buf+1, ptr);
+  ASSERT_EQ(0x87 & 0xFF, buf[0] & 0xFF);
+}
+
+static void check16BitsWereMarshalledBigEndian(const char *const buf) {
+  ASSERT_EQ(0x87 & 0xFF, buf[0] & 0xFF);
+  ASSERT_EQ(0x65 & 0xFF, buf[1] & 0xFF);
 }
 
 TEST_F(castor_io_IoTest, marshalUint16) {
-  const uint16_t v = 0x1234;
+  const uint16_t v = 0x8765;
   char buf[2];
   char *ptr = buf;
 
@@ -219,13 +236,30 @@ TEST_F(castor_io_IoTest, marshalUint16) {
 
   ASSERT_NO_THROW(castor::io::marshalUint16(v, ptr));
   ASSERT_EQ(buf+2, ptr);
-  // Marshalled value should be big endian
-  ASSERT_EQ(0x12, buf[0]);
-  ASSERT_EQ(0x34, buf[1]);
+  check16BitsWereMarshalledBigEndian(buf);
+}
+
+TEST_F(castor_io_IoTest, marshall_SHORT) {
+  const uint16_t v = 0x8765;
+  char buf[2];
+  char *ptr = buf;
+
+  memset(buf, '\0', sizeof(buf));
+
+  marshall_SHORT(ptr, v);
+  ASSERT_EQ(buf+2, ptr);
+  check16BitsWereMarshalledBigEndian(buf);
+}
+
+static void check32BitsWereMarshalledBigEndian(const char *const buf) {
+  ASSERT_EQ(0x87 & 0xFF, buf[0] & 0xFF);
+  ASSERT_EQ(0x65 & 0xFF, buf[1] & 0xFF);
+  ASSERT_EQ(0x43 & 0xFF, buf[2] & 0xFF);
+  ASSERT_EQ(0x21 & 0xFF, buf[3] & 0xFF);
 }
 
 TEST_F(castor_io_IoTest, marshalUint32) {
-  const uint32_t v = 0x12345678;
+  const uint32_t v = 0x87654321;
   char buf[4];
   char *ptr = buf;
 
@@ -233,14 +267,22 @@ TEST_F(castor_io_IoTest, marshalUint32) {
 
   ASSERT_NO_THROW(castor::io::marshalUint32(v, ptr));
   ASSERT_EQ(buf+4, ptr);
-  // Marshalled value should be big endian
-  ASSERT_EQ(0x12, buf[0]);
-  ASSERT_EQ(0x34, buf[1]);
-  ASSERT_EQ(0x56, buf[2]);
-  ASSERT_EQ(0x78, buf[3]);
+  check32BitsWereMarshalledBigEndian(buf);
 }
 
-static void check64BitsWereMarshalledBigEndian(char *buf) {
+TEST_F(castor_io_IoTest, marshall_LONG) {
+  const uint32_t v = 0x87654321;
+  char buf[4];
+  char *ptr = buf;
+
+  memset(buf, '\0', sizeof(buf));
+
+  marshall_LONG(ptr, v);
+  ASSERT_EQ(buf+4, ptr);
+  check32BitsWereMarshalledBigEndian(buf);
+}
+
+static void check64BitsWereMarshalledBigEndian(const char *const buf) {
   ASSERT_EQ(0x88 & 0xFF, buf[0] & 0xFF);
   ASSERT_EQ(0x77 & 0xFF, buf[1] & 0xFF);
   ASSERT_EQ(0x66 & 0xFF, buf[2] & 0xFF);
@@ -315,47 +357,74 @@ TEST_F(castor_io_IoTest, marshall_STRING) {
 }
 
 TEST_F(castor_io_IoTest, unmarshalUint8) {
-  char buf[] = {0x12};
+  char buf[] = {0x87};
   size_t bufLen = sizeof(buf);
   const char *ptr = buf;
   uint8_t v = 0;
   ASSERT_NO_THROW(castor::io::unmarshalUint8(ptr, bufLen, v));
   ASSERT_EQ(buf+1, ptr);
   ASSERT_EQ((size_t)0, bufLen);
-  ASSERT_EQ(0x12, v);
+  ASSERT_EQ(0x87, v);
+}
+
+TEST_F(castor_io_IoTest, unmarshall_BYTE) {
+  char buf[] = {0x87};
+  const char *ptr = buf;
+  uint8_t v = 0;
+  unmarshall_BYTE(ptr, v);
+  ASSERT_EQ(buf+1, ptr);
+  ASSERT_EQ(0x87, v);
 }
 
 TEST_F(castor_io_IoTest, unmarshalUint16) {
-  char buf[] = {0x12, 0x34};
+  char buf[] = {0x87, 0x65};
   size_t bufLen = sizeof(buf);
   const char *ptr = buf;
   uint16_t v = 0;
   ASSERT_NO_THROW(castor::io::unmarshalUint16(ptr, bufLen, v));
   ASSERT_EQ(buf+2, ptr);
   ASSERT_EQ((size_t)0, bufLen);
-  ASSERT_EQ((uint16_t)0x1234, v);
+  ASSERT_EQ((uint16_t)0x8765, v);
+}
+
+TEST_F(castor_io_IoTest, unmarshall_SHORT) {
+  char buf[] = {0x87, 0x65};
+  const char *ptr = buf;
+  uint16_t v = 0;
+  unmarshall_SHORT(ptr, v);
+  ASSERT_EQ(buf+2, ptr);
+  ASSERT_EQ((uint16_t)0x8765, v);
 }
 
 TEST_F(castor_io_IoTest, unmarshalUint32) {
-  char buf[] = {0x12, 0x34, 0x56, 0x78};
+  char buf[] = {0x87, 0x65, 0x43, 0x21};
   size_t bufLen = sizeof(buf);
   const char *ptr = buf;
   uint32_t v = 0;
   ASSERT_NO_THROW(castor::io::unmarshalUint32(ptr, bufLen, v));
   ASSERT_EQ(buf+4, ptr);
   ASSERT_EQ((size_t)0, bufLen);
-  ASSERT_EQ((uint32_t)0x12345678, v);
+  ASSERT_EQ((uint32_t)0x87654321, v);
+}
+
+TEST_F(castor_io_IoTest, unmarshall_LONG) {
+  char buf[] = {0x87, 0x65, 0x43, 0x21};
+  const char *ptr = buf;
+  uint32_t v = 0;
+  unmarshall_LONG(ptr, v);
+  ASSERT_EQ(buf+4, ptr);
+  ASSERT_EQ((uint32_t)0x87654321, v);
 }
 
 TEST_F(castor_io_IoTest, unmarshalInt32) {
-  char buf[] = {0x12, 0x34, 0x56, 0x78};
+  char buf[] = {0x87, 0x65, 0x43, 0x21};
   size_t bufLen = sizeof(buf);
   const char *ptr = buf;
   int32_t v = 0;
   ASSERT_NO_THROW(castor::io::unmarshalInt32(ptr, bufLen, v));
   ASSERT_EQ(buf+4, ptr);
   ASSERT_EQ((size_t)0, bufLen);
-  ASSERT_EQ((int32_t)0x12345678, v);
+  ASSERT_EQ((int32_t)0x87654321, v);
 }
 
 TEST_F(castor_io_IoTest, unmarshalUint64) {
