@@ -93,6 +93,7 @@ ALTER TABLE DrainingErrors
 
 ALTER TABLE Disk2DiskCopyJob RENAME COLUMN replacedDcId TO srcDcId;
 ALTER TABLE Disk2DiskCopyJob ADD (dropSource INTEGER DEFAULT 0 CONSTRAINT NN_Disk2DiskCopyJob_dropSource NOT NULL);
+DELETE FROM Disk2DiskCopyJob WHERE NOT EXISTS (SELECT 1 FROM DiskCopy WHERE id = srcDcId);
 ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_SrcDcId
   FOREIGN KEY (srcDcId) REFERENCES DiskCopy(id);
 CREATE INDEX I_Disk2DiskCopyJob_SrcDC ON Disk2DiskCopyJob(srcDcId);
@@ -301,21 +302,15 @@ BEGIN
 END;
 /
 
-/* Cleanup old requests stuck in status 4. To limit the request storm in the stager, the old ones
- * are archived straight, and only the new ones are restarted. New = more recent than 24h.
+/* Cleanup old requests stuck in status 4: recent (less than 24h old) ones are restarted
+ * and will be reprocessed by the stager, old ones are archived at the end of the upgrade (see below).
  */
 UPDATE SubRequest SET status = 1 WHERE status = 4 AND creationTime > getTime() - 86400;
 COMMIT;
-BEGIN
-  FOR s in (SELECT id FROM SubRequest WHERE status = 4) LOOP
-    archiveSubReq(s.id, dconst.SUBREQUEST_FINISHED);
-  END LOOP;
-  COMMIT;
-END;
-/
 
 /* Revalidate all PL/SQL code */
 /******************************/
+
 /*******************************************************************
  *
  *
@@ -11973,7 +11968,6 @@ END;
 /
 
 
-
 /* Recompile all invalid procedures, triggers and functions */
 /************************************************************/
 BEGIN
@@ -11986,3 +11980,12 @@ END;
 UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
  WHERE release = '2_1_14_11';
 COMMIT;
+
+/* Post-upgrade cleanup phase: archive all requests older than 24h and stuck in status 4 */
+BEGIN
+  FOR s in (SELECT id FROM SubRequest WHERE status = 4 AND creationTime < getTime() - 86400) LOOP
+    archiveSubReq(s.id, dconst.SUBREQUEST_FINISHED);
+    COMMIT;
+  END LOOP;
+END;
+/
