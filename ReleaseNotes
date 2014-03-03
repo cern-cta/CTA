@@ -74,6 +74,10 @@
       Instructions
       ------------
 
+       0. Ask your DBA to grant the following permission on the Stager database:
+
+          GRANT SELECT ON SYS.DBMS_ALERT_INFO TO <CastorStagerAccount>;
+
        1. Upgrade the STAGER database using the stager_2.1.14-5_to_2.1.14-11.sql
           upgrade script available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-11/dbupgrades
