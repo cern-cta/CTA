@@ -35,6 +35,7 @@ set (COMMON_LIB_SRC_FILES
   Csecloader.c castor1compat.c
   ../castor/exception/AcceptConnectionInterrupted.cpp
   ../castor/exception/AlreadyInitialized.cpp
+  ../castor/exception/BadAlloc.cpp
   ../castor/exception/Backtrace.cpp
   ../castor/exception/BadVersion.cpp
   ../castor/exception/Busy.cpp

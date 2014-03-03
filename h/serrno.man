@@ -205,6 +205,12 @@ The following error values might be returned by any package:
 .TP
 .B SECMDLNNOTPRSD
 (1050) Command line not parsed
+.TP
+.B SEACCPTCONNINTR
+(1051) Accept connection was interrupted
+.TP
+.B SEBADALLOC
+(1052) Failed to allocate memory
 
 .SH COPYTAPE ERRORS
 None yet

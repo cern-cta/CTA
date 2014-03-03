@@ -71,6 +71,8 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
    "Invalid number of arguments",
    "Already initialized",
    "Command line not parsed",
+   "Accept connection was interrupted",
+   "Failed to allocate memory",
    "BAD ERROR NUMBER"
   };
 

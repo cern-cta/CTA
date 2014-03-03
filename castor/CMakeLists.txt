@@ -323,6 +323,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
   install(FILES
     exception/AcceptConnectionInterrupted.hpp
     exception/Backtrace.hpp
+    exception/BadAlloc.hpp
     exception/CommandLineNotParsed.hpp
     exception/Communication.hpp
     exception/Exception.hpp
