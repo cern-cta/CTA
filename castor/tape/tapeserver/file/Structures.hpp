@@ -28,7 +28,7 @@
 
 namespace castor {
 namespace tape {
-  namespace AULFile {
+  namespace tapeFile {
 
     /**
      * Helper template to fill with space a structure. 

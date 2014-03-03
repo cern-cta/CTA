@@ -63,6 +63,7 @@ set (COMMON_LIB_SRC_FILES
   ../castor/exception/RequestCanceled.cpp
   ../castor/exception/RequestFailed.cpp
   ../castor/exception/Security.cpp
+  ../castor/exception/SErrnum.cpp
   ../castor/exception/SQLError.cpp
   ../castor/exception/TimeOut.cpp
   ../castor/exception/TooBig.cpp

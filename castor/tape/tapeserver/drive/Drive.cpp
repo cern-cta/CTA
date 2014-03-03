@@ -799,7 +799,7 @@ drives::compressionStats drives::DriveIBM3592::getCompression() throw (Exception
  */
 
 const long unsigned int max_fake_drive_record_length = 1000;
-const char filemark[] = "__FILE__MARK__";
+const char filemark[] = "";
 
 drives::FakeDrive::FakeDrive() throw() : m_current_position(0) {
   m_tape.reserve(max_fake_drive_record_length);
@@ -893,7 +893,8 @@ void drives::FakeDrive::flush(void) throw (Exception) {
   //already flushing
 }
 void drives::FakeDrive::writeSyncFileMarks(size_t count) throw (Exception) {
-  if(count==0) return;
+  if(count==0) return;  
+  m_tape.resize(m_current_position+count);
   for(size_t i=0; i<count; ++i) {
     if(m_current_position<m_tape.size()) {
       m_tape[m_current_position] = filemark;

@@ -30,28 +30,28 @@
 
 using namespace castor::tape;
 
-void AULFile::VOL1::fill(std::string vsn) {
+void tapeFile::VOL1::fill(std::string vsn) {
   setString(label, "VOL1");
   setString(VSN, vsn);
   setString(lblStandard, "3");
   setString(ownerID, "CASTOR"); /* TODO: check do we need CASTOR's STAGERSUPERUSER */
 }
 
-void AULFile::VOL1::verify() {
+void tapeFile::VOL1::verify() {
   if (cmpString(label, "VOL1"))
     throw Exception(std::string("Failed verify for the VOL1: ") +
-          AULFile::toString(label));
+          tapeFile::toString(label));
   if (!cmpString(VSN, ""))
     throw Exception(std::string("Failed verify for the VSN: ") +
-          AULFile::toString(VSN));
+          tapeFile::toString(VSN));
   if (cmpString(lblStandard, "3"))
     throw Exception(
           std::string("Failed verify for the label standard: ") +
-          AULFile::toString(lblStandard));
+          tapeFile::toString(lblStandard));
   if (cmpString(ownerID, "CASTOR"))
     throw Exception(
           std::string("Failed verify for the ownerID: ") +
-          AULFile::toString(ownerID));
+          tapeFile::toString(ownerID));
 
   /* now we verify all other fields which must be spaces */
   if (cmpString(accessibility, ""))
@@ -64,7 +64,7 @@ void AULFile::VOL1::verify() {
     throw Exception("reserved2 is not empty");
 }
 
-void AULFile::HDR1EOF1::fillCommon(
+void tapeFile::HDR1EOF1::fillCommon(
   std::string _fileId, std::string _VSN, int _fSeq) {
 
   setString(fileId, _fileId);
@@ -86,51 +86,51 @@ void AULFile::HDR1EOF1::fillCommon(
   setString(sysCode, std::string("CASTOR ") + BASEVERSION); /* TODO: CASTOR BASEVERSION */
 }
 
-void AULFile::HDR1EOF1::verifyCommon()
+void tapeFile::HDR1EOF1::verifyCommon()
   const throw (exceptions::Errnum) {
 
   if (!cmpString(fileId, ""))
     throw Exception(
           std::string("Failed verify for the fileId: ") +
-          AULFile::toString(fileId));
+          tapeFile::toString(fileId));
   if (!cmpString(VSN, ""))
     throw Exception(std::string("Failed verify for the VSN: ") +
-          AULFile::toString(VSN));
+          tapeFile::toString(VSN));
   if (cmpString(fSec, "0001"))
     throw Exception(
           std::string("Failed verify for the fSec: ") +
-          AULFile::toString(fSec));
+          tapeFile::toString(fSec));
   if (!cmpString(fSeq, ""))
     throw Exception(
           std::string("Failed verify for the fSeq: ") +
-          AULFile::toString(fSeq));
+          tapeFile::toString(fSeq));
   if (cmpString(genNum, "0001"))
     throw Exception(
           std::string("Failed verify for the genNum: ") +
-          AULFile::toString(genNum));
+          tapeFile::toString(genNum));
   if (cmpString(verNumOfGen, "00"))
     throw Exception(
           std::string("Failed verify for the verNumOfGen: ") +
-          AULFile::toString(verNumOfGen));
+          tapeFile::toString(verNumOfGen));
   if (!cmpString(creationDate, ""))
     throw Exception(
           std::string("Failed verify for the creationDate: ") +
-          AULFile::toString(creationDate));
+          tapeFile::toString(creationDate));
   if (!cmpString(expirationDate, ""))
     throw Exception(
           std::string("Failed verify for the expirationDate: ") +
-          AULFile::toString(expirationDate));
+          tapeFile::toString(expirationDate));
   if (cmpString(accessibility, ""))
     throw Exception("accessibility is not empty");
   if (!cmpString(sysCode, ""))
     throw Exception(
           std::string("Failed verify for the sysCode: ") +
-          AULFile::toString(sysCode));
+          tapeFile::toString(sysCode));
   if (cmpString(reserved, ""))
     throw Exception("reserved is not empty");
 }
 
-void AULFile::HDR1::fill(
+void tapeFile::HDR1::fill(
   std::string _fileId,
   std::string _VSN,
   int _fSeq) {
@@ -141,43 +141,43 @@ void AULFile::HDR1::fill(
   fillCommon(_fileId, _VSN, _fSeq);
 }
 
-void AULFile::HDR1::verify() const throw (Exception) {
+void tapeFile::HDR1::verify() const throw (Exception) {
   if (cmpString(label, "HDR1"))
     throw Exception(std::string("Failed verify for the HDR1: ") +
-          AULFile::toString(label));
+          tapeFile::toString(label));
   if (cmpString(blockCount, "000000"))
     throw Exception(std::string("Failed verify for the blockCount: ") +
-          AULFile::toString(blockCount));
+          tapeFile::toString(blockCount));
 
   verifyCommon();
 }
 
-void AULFile::HDR1PRELABEL::fill(std::string _VSN) {
+void tapeFile::HDR1PRELABEL::fill(std::string _VSN) {
   setString(label, "HDR1");
   setString(blockCount, "000000");
 
   fillCommon(std::string("PRELABEL"), _VSN, 1);
 }
 
-void AULFile::HDR1PRELABEL::verify()
+void tapeFile::HDR1PRELABEL::verify()
   const throw (Exception) {
 
   if (cmpString(label, "HDR1"))
     throw Exception(std::string("Failed verify for the HDR1: ") +
-          AULFile::toString(label));
+          tapeFile::toString(label));
   if (cmpString(blockCount, "000000"))
     throw Exception(
           std::string("Failed verify for the blockCount: ") +
-          AULFile::toString(blockCount));
+          tapeFile::toString(blockCount));
   if (cmpString(fileId, "PRELABEL"))
     throw Exception(
           std::string("Failed verify for the PRELABEL: ") +
-          AULFile::toString(fileId));
+          tapeFile::toString(fileId));
 
   verifyCommon();
 }
 
-void AULFile::EOF1::fill(
+void tapeFile::EOF1::fill(
   std::string _fileId, std::string _VSN, int _fSeq, int _blockCount) {
 
   setString(label, "EOF1");
@@ -186,19 +186,19 @@ void AULFile::EOF1::fill(
   fillCommon(_fileId, _VSN, _fSeq);
 }
 
-void AULFile::EOF1::verify() const throw (Exception) {
+void tapeFile::EOF1::verify() const throw (Exception) {
   if (cmpString(label, "EOF1"))
     throw Exception(std::string("Failed verify for the EOF1: ") +
-          AULFile::toString(label));
+          tapeFile::toString(label));
   if (!cmpString(blockCount, ""))
     throw Exception(
           std::string("Failed verify for the blockCount: ") +
-          AULFile::toString(blockCount));
+          tapeFile::toString(blockCount));
 
   verifyCommon();
 }
 
-void AULFile::HDR2EOF2::fillCommon(int _blockLength, bool driveHasCompression) {
+void tapeFile::HDR2EOF2::fillCommon(int _blockLength, bool driveHasCompression) {
   setString(recordFormat, "F");
   if (_blockLength < 100000) {
     setInt(blockLength, _blockLength);
@@ -211,25 +211,25 @@ void AULFile::HDR2EOF2::fillCommon(int _blockLength, bool driveHasCompression) {
   setString(aulId, "00");
 }
 
-void AULFile::HDR2EOF2::verifyCommon() 
+void tapeFile::HDR2EOF2::verifyCommon() 
   const throw (Exception) {
 
   if (cmpString(recordFormat, "F"))
     throw Exception(
           std::string("Failed verify for the recordFormat: ") +
-          AULFile::toString(recordFormat));
+          tapeFile::toString(recordFormat));
   if (!cmpString(blockLength, ""))
     throw Exception(
           std::string("Failed verify for the blockLength: ") +
-          AULFile::toString(blockLength));
+          tapeFile::toString(blockLength));
   if (!cmpString(recordLength, ""))
     throw Exception(
           std::string("Failed verify for the recordLength: ") +
-          AULFile::toString(recordLength));
+          tapeFile::toString(recordLength));
   if (cmpString(aulId, "00"))
     throw Exception(
           std::string("Failed verify for the aulId: ") +
-          AULFile::toString(aulId));
+          tapeFile::toString(aulId));
   if (cmpString(reserved1, ""))
     throw Exception("reserved1 is not empty");
   if (cmpString(reserved2, ""))
@@ -238,34 +238,34 @@ void AULFile::HDR2EOF2::verifyCommon()
     throw castor::tape::Exception("reserved2 is not empty");
 }
 
-void AULFile::HDR2::fill(int _blockLength, bool driveHasCompression) {
+void tapeFile::HDR2::fill(int _blockLength, bool driveHasCompression) {
   setString(label, "HDR2");
   
   fillCommon(_blockLength, driveHasCompression);
 }
-void AULFile::HDR2::verify() const throw (Exception) {
+void tapeFile::HDR2::verify() const throw (Exception) {
   if (cmpString(label, "HDR2"))
     throw Exception(std::string("Failed verify for the HDR2: ") +
-          AULFile::toString(label));
+          tapeFile::toString(label));
 
   verifyCommon();
 }
 
-void AULFile::EOF2::fill(int _blockLength, bool driveHasCompression) {
+void tapeFile::EOF2::fill(int _blockLength, bool driveHasCompression) {
   setString(label, "EOF2");
 
   fillCommon(_blockLength, driveHasCompression);
 }
 
-void AULFile::EOF2::verify() const throw (Exception) {
+void tapeFile::EOF2::verify() const throw (Exception) {
   if (cmpString(label, "EOF2"))
     throw Exception(std::string("Failed verify for the EOF2: ") +
-          AULFile::toString(label));
+          tapeFile::toString(label));
 
   verifyCommon();
 }
 
-void AULFile::UHL1UTL1::fillCommon(int fSeq,
+void tapeFile::UHL1UTL1::fillCommon(int fSeq,
   int blockSize,
   std::string siteName,
   std::string hostName,
@@ -281,44 +281,44 @@ void AULFile::UHL1UTL1::fillCommon(int fSeq,
   setString(serialNumber, deviceInfo.serialNumber);
 }
 
-void AULFile::UHL1UTL1::verifyCommon() 
+void tapeFile::UHL1UTL1::verifyCommon() 
   const throw (Exception){  
 
   if (!cmpString(actualfSeq, ""))
     throw Exception(
           std::string("Failed verify for the actualfSeq: ") +
-          AULFile::toString(actualfSeq));
+          tapeFile::toString(actualfSeq));
   if (!cmpString(actualBlockSize, ""))
     throw Exception(
           std::string("Failed verify for the actualBlockSize: ") +
-          AULFile::toString(actualBlockSize));
+          tapeFile::toString(actualBlockSize));
   if (!cmpString(actualRecordLength, ""))
     throw Exception(
           std::string("Failed verify for the actualRecordLength: ") +
-          AULFile::toString(actualRecordLength));
+          tapeFile::toString(actualRecordLength));
   if (!cmpString(site, ""))
     throw Exception(
           std::string("Failed verify for site: ") +
-          AULFile::toString(site));
+          tapeFile::toString(site));
   if (!cmpString(moverHost, ""))
     throw Exception(
           std::string("Failed verify for moverHost: ") +
-          AULFile::toString(moverHost));
+          tapeFile::toString(moverHost));
   if (!cmpString(driveVendor, ""))
     throw Exception(
           std::string("Failed verify for driveVendor: ") +
-          AULFile::toString(driveVendor));
+          tapeFile::toString(driveVendor));
   if (!cmpString(driveModel, ""))
     throw Exception(
           std::string("Failed verify for driveModel: ") +
-          AULFile::toString(driveModel));
+          tapeFile::toString(driveModel));
   if (!cmpString(serialNumber, ""))
     throw Exception(
           std::string("Failed verify for serialNumber: ") +
-          AULFile::toString(serialNumber));
+          tapeFile::toString(serialNumber));
 }
 
-void AULFile::UHL1::fill(int fSeq,
+void tapeFile::UHL1::fill(int fSeq,
   int blockSize,
   std::string siteName,
   std::string hostName,
@@ -329,15 +329,15 @@ void AULFile::UHL1::fill(int fSeq,
   fillCommon(fSeq, blockSize, siteName, hostName, deviceInfo);
 }
 
-void AULFile::UHL1::verify() const throw (Exception) {
+void tapeFile::UHL1::verify() const throw (Exception) {
   if (cmpString(label, "UHL1"))
     throw Exception(std::string("Failed verify for the UHL1: ") +
-          AULFile::toString(label));
+          tapeFile::toString(label));
 
   verifyCommon();
 }
 
-void AULFile::UTL1::fill(int fSeq,
+void tapeFile::UTL1::fill(int fSeq,
   int blockSize,
   std::string siteName,
   std::string hostName,
@@ -348,10 +348,10 @@ void AULFile::UTL1::fill(int fSeq,
   fillCommon(fSeq, blockSize, siteName, hostName, deviceInfo);
 }
 
-void AULFile::UTL1::verify() const throw (Exception) {
+void tapeFile::UTL1::verify() const throw (Exception) {
   if (cmpString(label, "UTL1"))
     throw Exception(std::string("Failed verify for the UTL1: ") +
-          AULFile::toString(label));
+          tapeFile::toString(label));
 
   verifyCommon();
 }

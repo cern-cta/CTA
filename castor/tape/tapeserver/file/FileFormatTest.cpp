@@ -73,7 +73,7 @@ int main(int argc, char* argv[])
        */
       if(!strcmp(dev.nst_dev.c_str(),argv[1])) {
         try {
-          castor::tape::AULFile::ReadSession my_sess(drive, argv[2]);
+          castor::tape::tapeFile::ReadSession my_sess(drive, argv[2]);
           std::cout << "Read session on " << argv[2] << " (" << argv[1] << ") established." << std::endl;
           int f=0;
           while(!f){
@@ -87,7 +87,7 @@ int main(int argc, char* argv[])
             std::cin.ignore();
             
             if(choice==1) {
-              castor::tape::AULFile::FileInfo info;
+              castor::tape::tapeFile::FileInfo info;
               std::cout << "Please enter the blockId: ";
               std::string blockId;
               std::cin >> blockId;
@@ -109,7 +109,7 @@ int main(int argc, char* argv[])
               std::cout << "Please enter the size of the file: ";
               std::cin >> info.size;
               std::cin.ignore();
-              castor::tape::AULFile::ReadFile file(&my_sess, info, castor::tape::AULFile::ByBlockId);
+              castor::tape::tapeFile::ReadFile file(&my_sess, info, castor::tape::tapeFile::ByBlockId);
               std::cout << "Tape positioned at the beginning of the file\n";
               size_t bs = file.getBlockSize();
               std::cout << "Block size: " << bs << std::endl;
@@ -125,7 +125,7 @@ int main(int argc, char* argv[])
                   std::cout << "DONE\n";
                 }
               }
-              catch (castor::tape::AULFile::EndOfFile &e) {
+              catch (castor::tape::tapeFile::EndOfFile &e) {
                 std::cout << e.what() << std::endl;
               }
               out.close();
@@ -136,7 +136,7 @@ int main(int argc, char* argv[])
             }
           }
           if(my_sess.isCorrupted()) {
-            throw castor::tape::AULFile::SessionCorrupted();
+            throw castor::tape::tapeFile::SessionCorrupted();
           }
         } 
         catch (std::exception & e) {

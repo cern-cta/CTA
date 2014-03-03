@@ -30,9 +30,9 @@
 namespace castor {
   namespace tape {
     /**
-     * Class managing the reading and writing of files to and from tape.
+     * Namespace managing the reading and writing of files to and from tape.
      */
-    namespace AULFile {
+    namespace tapeFile {
       
       enum PositioningMode
       {
@@ -103,6 +103,11 @@ namespace castor {
       class UnsupportedPositioningMode: public Exception {
       public:
         UnsupportedPositioningMode(): Exception("Trying to use an unsupported positioning mode") {}
+      };
+      
+      class WrongBlockSize: public Exception {
+      public:
+        WrongBlockSize(): Exception("Trying to use a wrong block size") {}
       };
       
       class HeaderChecker {
@@ -499,6 +504,68 @@ namespace castor {
          */
         int m_numberOfBlocks;
       };
-    };
-  }
-}
+    }
+    
+    /**
+     * Namespace managing the reading and writing of files to and from disk.
+     */
+    namespace diskFile {
+      
+      class ReadFile {
+      public:
+        
+        /**
+         * Constructor of the ReadFile class. It opens the file for reading with the O_RDONLY flag.
+         * @param url: Uniform Resource Locator of the file we want to read
+         */
+        ReadFile(const std::string &url) throw (Exception);
+        
+        /**
+         * Reads data from the file.
+         * @param data: pointer to the data buffer
+         * @param size: size of the buffer
+         * @return The amount of data actually copied. Zero at end of file.
+         */
+        size_t read(void *data, const size_t size) throw (Exception);
+        
+        /**
+         * Destructor of the ReadFile class. It closes the corresponding file descriptor.
+         */
+        ~ReadFile() throw ();
+        
+      private:
+        int m_fd;
+      };
+      
+      class WriteFile {
+      public:
+        
+        /**
+         * Constructor of the WriteFile class. It opens the file for writing with the O_WRONLY, O_CREAT and O_EXCL flags.
+         * @param url: Uniform Resource Locator of the file we want to write
+         */
+        WriteFile(const std::string &url) throw (Exception);
+        
+        /**
+         * Writes a block of data on disk
+         * @param data: buffer to copy the data from
+         * @param size: size of the buffer
+         */
+        void write(const void *data, const size_t size) throw (Exception);
+        
+        /**
+         * Closes the corresponding file descriptor, which may throw an exception.
+         */
+        void close() throw (Exception);
+        
+        /**
+         * Destructor of the WriteFile class.
+         */
+        ~WriteFile() throw ();
+        
+      private:
+        int m_fd;
+      };
+    } //end of namespace diskFile
+  } //end of namespace tape
+} //end of namespace castor

@@ -27,59 +27,191 @@
 #include "../SCSI/Device.hpp"
 #include "../drive/Drive.hpp"
 #include "File.hpp"
+#include "../exception/Exception.hpp"
+#include "castor/exception/Errnum.hpp"
 
-namespace UnitTests {  
-  TEST(castorTapeAULFile, canProperlyLabelWriteAndReadTape) {
+namespace UnitTests {
+  
+  class castorTapeFileTest : public ::testing::Test {
+  protected:
+    virtual void SetUp() {
+      block_size = 262144;
+      label = "K00001";
+      fileInfo.blockId=0;
+      fileInfo.checksum=43567;
+      fileInfo.fseq=1;
+      fileInfo.nsFileId=1;
+      fileInfo.size=500;
+
+      //Label
+      castor::tape::tapeFile::LabelSession *ls;
+      ls = new castor::tape::tapeFile::LabelSession(d, label, true);
+      delete ls;      
+    }
+    virtual void TearDown() {
+      
+    }   
     castor::tape::drives::FakeDrive d;
-    const uint32_t block_size = 1024;
-    castor::tape::AULFile::LabelSession *ls;
-    ls = new castor::tape::AULFile::LabelSession(d, "K00001", true);
-    ASSERT_NE((long int)ls, 0);
-    delete ls;
-    castor::tape::AULFile::ReadSession *rs;
-    rs = new castor::tape::AULFile::ReadSession(d, "K00001");
+    uint32_t block_size;
+    std::string label;
+    castor::tape::tapeFile::FileInfo fileInfo;
+  };
+  
+  TEST_F(castorTapeFileTest, throwsWhenLabelingANonEmptyTape) {
+    ASSERT_THROW({castor::tape::tapeFile::LabelSession *ls; ls = new castor::tape::tapeFile::LabelSession(d, label, false); delete ls;}, castor::tape::tapeFile::TapeNotEmpty); //cannot relabel a non empty tape without the 'force' setting    
+  }
+  
+  TEST_F(castorTapeFileTest, throwsWhenReadingAnEmptyTape) {    
+    castor::tape::tapeFile::ReadSession *rs;
+    rs = new castor::tape::tapeFile::ReadSession(d, label);    
     ASSERT_NE((long int)rs, 0);
-    ASSERT_EQ(rs->getCurrentFilePart(), castor::tape::AULFile::Header);
-    ASSERT_EQ(rs->getCurrentFseq(), (uint32_t)1);
-    ASSERT_EQ(rs->isCorrupted(), false);
-    ASSERT_EQ(rs->m_vid.compare("K00001"), 0);
+    ASSERT_THROW({castor::tape::tapeFile::ReadFile rf1(rs, fileInfo, castor::tape::tapeFile::ByBlockId);}, castor::exception::Exception); //cannot read a file on an empty tape
     delete rs;
-    castor::tape::AULFile::WriteSession *ws;
-    ws = new castor::tape::AULFile::WriteSession(d, "K00001", 0, true);
+  }
+   
+  TEST_F(castorTapeFileTest, throwsWhenUsingSessionTwice) {
+    const std::string testString("Hello World!");
+    castor::tape::tapeFile::WriteSession *ws;
+    ws = new castor::tape::tapeFile::WriteSession(d, label, 0, true);
     ASSERT_EQ(ws->m_compressionEnabled, true);
-    ASSERT_EQ(ws->m_vid.compare("K00001"), 0);
+    ASSERT_EQ(ws->m_vid.compare(label), 0);
     ASSERT_EQ(ws->isCorrupted(), false);
-    castor::tape::AULFile::FileInfo fileInfo;
-    fileInfo.blockId=0;
-    fileInfo.checksum=43567;
-    fileInfo.fseq=1;
-    fileInfo.nsFileId=1;
-    fileInfo.size=500;
     {
-      castor::tape::AULFile::WriteFile wf(ws, fileInfo, block_size);
-      std::string data = "Hello World!";
-      wf.write(data.c_str(),data.size());      
+      castor::tape::tapeFile::WriteFile wf(ws, fileInfo, block_size);
+      wf.write(testString.c_str(),testString.size());      
       wf.close();
     }
     delete ws;
-    rs = new castor::tape::AULFile::ReadSession(d, "K00001");
+    castor::tape::tapeFile::ReadSession *rs;
+    rs = new castor::tape::tapeFile::ReadSession(d, label);
+    {
+      castor::tape::tapeFile::ReadFile rf1(rs, fileInfo, castor::tape::tapeFile::ByBlockId);
+      ASSERT_THROW({castor::tape::tapeFile::ReadFile rf2(rs, fileInfo, castor::tape::tapeFile::ByBlockId);},castor::tape::tapeFile::SessionAlreadyInUse); //cannot have two ReadFile's on the same session
+    }
+    delete rs;
+  }
+  
+  TEST_F(castorTapeFileTest, throwsWhenWritingAnEmptyFileOrSessionCorrupted) {
+    castor::tape::tapeFile::WriteSession *ws;
+    ws = new castor::tape::tapeFile::WriteSession(d, label, 0, true);
+    ASSERT_EQ(ws->isCorrupted(), false);
+    {
+      castor::tape::tapeFile::WriteFile wf(ws, fileInfo, block_size);
+      ASSERT_THROW(wf.close(), castor::tape::tapeFile::ZeroFileWritten);
+    }
+    ASSERT_EQ(ws->isCorrupted(), true);
+    {
+      ASSERT_THROW({castor::tape::tapeFile::WriteFile wf(ws, fileInfo, block_size);}, castor::tape::tapeFile::SessionCorrupted);
+    }
+    delete ws;
+  }
+  
+  TEST_F(castorTapeFileTest, throwsWhenClosingTwice) {
+    const std::string testString("Hello World!");
+    castor::tape::tapeFile::WriteSession *ws;
+    ws = new castor::tape::tapeFile::WriteSession(d, label, 0, true);
+    {
+      castor::tape::tapeFile::WriteFile wf(ws, fileInfo, block_size);
+      wf.write(testString.c_str(),testString.size());
+      wf.close();
+      ASSERT_THROW(wf.close(), castor::tape::tapeFile::FileClosedTwice);
+    }
+    delete ws;
+  }
+  
+  TEST_F(castorTapeFileTest, throwsWhenWrongBlockSizeOrEOF) {
+    const std::string testString("Hello World!");
+    castor::tape::tapeFile::WriteSession *ws;
+    ws = new castor::tape::tapeFile::WriteSession(d, label, 0, true);
+    {
+      castor::tape::tapeFile::WriteFile wf(ws, fileInfo, block_size);
+      wf.write(testString.c_str(),testString.size());
+      wf.close();
+    }
+    delete ws;
+    
+    castor::tape::tapeFile::ReadSession *rs;
+    rs = new castor::tape::tapeFile::ReadSession(d, label);
+    {
+      castor::tape::tapeFile::ReadFile rf(rs, fileInfo, castor::tape::tapeFile::ByBlockId);
+      size_t bs = rf.getBlockSize();
+      char *data = new char[bs+1];
+      ASSERT_THROW(rf.read(data, 1), castor::tape::tapeFile::WrongBlockSize); //block size needs to be the same provided by the headers
+      ASSERT_THROW({while(true) {rf.read(data, bs);}}, castor::tape::tapeFile::EndOfFile); //it is normal to reach end of file after a loop of reads
+      delete[] data;
+    }
+    delete rs;
+  }
+  
+  TEST_F(castorTapeFileTest, canProperlyVerifyLabelWriteAndReadTape) {    
+    //Verify label
+    castor::tape::tapeFile::ReadSession *rs;
+    rs = new castor::tape::tapeFile::ReadSession(d, label);
     ASSERT_NE((long int)rs, 0);
-    ASSERT_EQ(rs->getCurrentFilePart(), castor::tape::AULFile::Header);
+    ASSERT_EQ(rs->getCurrentFilePart(), castor::tape::tapeFile::Header);
     ASSERT_EQ(rs->getCurrentFseq(), (uint32_t)1);
     ASSERT_EQ(rs->isCorrupted(), false);
-    ASSERT_EQ(rs->m_vid.compare("K00001"), 0);
-    {      
-      std::string hw = "Hello World!";
-      castor::tape::AULFile::ReadFile rf(rs, fileInfo, castor::tape::AULFile::ByBlockId);
+    ASSERT_EQ(rs->m_vid.compare(label), 0);
+    delete rs;
+    
+    //Write AULFile with Hello World
+    const std::string testString("Hello World!");
+    castor::tape::tapeFile::WriteSession *ws;
+    ws = new castor::tape::tapeFile::WriteSession(d, label, 0, true);
+    ASSERT_EQ(ws->m_compressionEnabled, true);
+    ASSERT_EQ(ws->m_vid.compare(label), 0);
+    ASSERT_EQ(ws->isCorrupted(), false);
+    {
+      castor::tape::tapeFile::WriteFile wf(ws, fileInfo, block_size);
+      wf.write(testString.c_str(),testString.size());      
+      wf.close();
+    }
+    delete ws;
+    
+    //Read it back and compare
+    rs = new castor::tape::tapeFile::ReadSession(d, label);
+    ASSERT_NE((long int)rs, 0);
+    ASSERT_EQ(rs->getCurrentFilePart(), castor::tape::tapeFile::Header);
+    ASSERT_EQ(rs->getCurrentFseq(), (uint32_t)1);
+    ASSERT_EQ(rs->isCorrupted(), false);
+    ASSERT_EQ(rs->m_vid.compare(label), 0);
+    {
+      castor::tape::tapeFile::ReadFile rf(rs, fileInfo, castor::tape::tapeFile::ByBlockId);
       size_t bs = rf.getBlockSize();
       ASSERT_EQ(bs, block_size);
       char *data = new char[bs+1];
       size_t bytes_read = rf.read(data, bs);
       data[bytes_read] = '\0';
-      ASSERT_EQ(bytes_read, (size_t)hw.size());
-      ASSERT_EQ(hw.compare(data),0);
+      ASSERT_EQ(bytes_read, (size_t)testString.size());
+      ASSERT_EQ(testString.compare(data),0);
       delete[] data;
     }
     delete rs;
+  }
+    
+  TEST(castorTapeDiskFile, canWriteAndReadDisk) {
+    const uint32_t block_size = 1024;
+    char data1[block_size];
+    char data2[block_size];
+    {
+      castor::tape::diskFile::ReadFile rf("localhost:/etc/fstab");
+      castor::tape::diskFile::WriteFile wf("localhost:/tmp/fstab");
+      size_t res=0;
+      do {
+        res = rf.read(data1, block_size);
+        wf.write(data1, res);
+      } while(res);
+      wf.close();
+    }
+    castor::tape::diskFile::ReadFile src("localhost:/tmp/fstab");
+    castor::tape::diskFile::ReadFile dst("localhost:/etc/fstab");
+    size_t res1=0;
+    size_t res2=0;
+    do {
+      res1 = src.read(data1, block_size);
+      res2 = dst.read(data2, block_size);
+      ASSERT_EQ(res1, res2);
+      ASSERT_EQ(strncmp(data1, data2, res1), 0);
+    } while(res1 || res2);
   }
 }

@@ -38,7 +38,7 @@
 
 //- 1   1 V92002       1 00000000                  748 100         adler32 108deddb           5001074305 /castor/cern.ch/de
 
-void fill_info(castor::tape::AULFile::FileInfo *fileInfo, const std::string volId, const uint32_t fseq) {
+void fill_info(castor::tape::tapeFile::FileInfo *fileInfo, const std::string volId, const uint32_t fseq) {
   std::string disabled, copy_no, seg_no, volId_str, fseq_str, blockId_str, size_str, compr_fact, checksum_name, checksum_str, nsFileId_str, path;
   std::ifstream resolv;
   std::string filename("nslisttape_" + volId + ".txt");
@@ -88,9 +88,9 @@ int main(int argc, char* argv[])
   castor::tape::System::realWrapper sWrapper;
   castor::tape::SCSI::DeviceVector dl(sWrapper);
   
-  castor::tape::AULFile::ReadSession *read_sess = NULL;
-  castor::tape::AULFile::WriteSession *write_sess = NULL;
-  castor::tape::AULFile::LabelSession *label_sess = NULL;
+  castor::tape::tapeFile::ReadSession *read_sess = NULL;
+  castor::tape::tapeFile::WriteSession *write_sess = NULL;
+  castor::tape::tapeFile::LabelSession *label_sess = NULL;
   
   castor::tape::SCSI::DeviceInfo read_dev;
   castor::tape::SCSI::DeviceInfo write_dev;
@@ -110,7 +110,7 @@ int main(int argc, char* argv[])
   castor::tape::drives::DriveGeneric & write_drive = write_dContainer;
   
   try {
-    label_sess = new castor::tape::AULFile::LabelSession(write_drive, dst_tape, true);
+    label_sess = new castor::tape::tapeFile::LabelSession(write_drive, dst_tape, true);
     std::cout << "Label session on " << dst_tape << " (" << dst_device << ") established." << std::endl;
   } 
   catch (std::exception & e) {
@@ -121,9 +121,9 @@ int main(int argc, char* argv[])
   }
   
   try {
-    read_sess = new castor::tape::AULFile::ReadSession(read_drive, src_tape);
+    read_sess = new castor::tape::tapeFile::ReadSession(read_drive, src_tape);
     std::cout << "Read session on " << src_tape << " (" << src_device << ") established." << std::endl;
-    write_sess = new castor::tape::AULFile::WriteSession(write_drive, dst_tape, 0, false);
+    write_sess = new castor::tape::tapeFile::WriteSession(write_drive, dst_tape, 0, false);
     std::cout << "Write session on " << dst_tape << " (" << dst_device << ") established." << std::endl;
   } 
   catch (std::exception & e) {
@@ -139,11 +139,11 @@ int main(int argc, char* argv[])
   if(read_sess!=NULL and write_sess!=NULL) {
     for(unsigned int i=0; i<no_of_files; i++) {
       try {
-        castor::tape::AULFile::FileInfo info;
+        castor::tape::tapeFile::FileInfo info;
         fill_info(&info, src_tape, i);
-        castor::tape::AULFile::ReadFile input_file(read_sess, info, castor::tape::AULFile::ByBlockId);
+        castor::tape::tapeFile::ReadFile input_file(read_sess, info, castor::tape::tapeFile::ByBlockId);
         size_t blockSize = input_file.getBlockSize();
-        castor::tape::AULFile::WriteFile output_file(write_sess, info, blockSize);
+        castor::tape::tapeFile::WriteFile output_file(write_sess, info, blockSize);
         std::auto_ptr<char> buf(new char[blockSize]);
         size_t bytes_read = 0;
         try {
@@ -152,7 +152,7 @@ int main(int argc, char* argv[])
             output_file.write(buf.get(), bytes_read);
           }
         }
-        catch (castor::tape::AULFile::EndOfFile &e) {
+        catch (castor::tape::tapeFile::EndOfFile &e) {
         }
         output_file.close();
       }

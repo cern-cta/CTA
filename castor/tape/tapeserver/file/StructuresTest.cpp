@@ -29,7 +29,7 @@
 namespace unitTests {
 
   TEST(castor_tape_AULFile, VOL1) {
-    castor::tape::AULFile::VOL1 vol1Label;
+    castor::tape::tapeFile::VOL1 vol1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -47,7 +47,7 @@ namespace unitTests {
   }
 
   TEST(castor_tape_AULFile, HDR1) {
-    castor::tape::AULFile::HDR1 hdr1Label;
+    castor::tape::tapeFile::HDR1 hdr1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -66,7 +66,7 @@ namespace unitTests {
     ASSERT_EQ("2345", hdr1Label.getfSeq());
   }
   TEST(castor_tape_AULFile, HDR1PRELABEL) {
-    castor::tape::AULFile::HDR1PRELABEL hdr1Prelabel;
+    castor::tape::tapeFile::HDR1PRELABEL hdr1Prelabel;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -86,7 +86,7 @@ namespace unitTests {
   }
 
   TEST(castor_tape_AULFile, EOF1) {
-    castor::tape::AULFile::EOF1 eof1Label;
+    castor::tape::tapeFile::EOF1 eof1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -107,7 +107,7 @@ namespace unitTests {
   }
 
   TEST(castor_tape_AULFile, HDR2) {
-    castor::tape::AULFile::HDR2 hdr2Label;
+    castor::tape::tapeFile::HDR2 hdr2Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -127,7 +127,7 @@ namespace unitTests {
   }
 
   TEST(castor_tape_AULFile, EOF2) {
-    castor::tape::AULFile::EOF2 eof2Label;
+    castor::tape::tapeFile::EOF2 eof2Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -147,7 +147,7 @@ namespace unitTests {
   }
 
   TEST(castor_tape_AULFile, UHL1) {
-    castor::tape::AULFile::UHL1 uhl1Label;
+    castor::tape::tapeFile::UHL1 uhl1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
@@ -171,7 +171,7 @@ namespace unitTests {
   }
 
   TEST(castor_tape_AULFile, UTL1) {
-    castor::tape::AULFile::UTL1 utl1Label;
+    castor::tape::tapeFile::UTL1 utl1Label;
     /**
      * Make sure this struct is a POD (plain old data without virtual table)
      * (and has the right size).
