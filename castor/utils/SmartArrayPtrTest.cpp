@@ -81,4 +81,19 @@ TEST_F(castor_utils_SmartArrayPtrTest, releaseNull) {
   ASSERT_THROW(smartPtr.release(), castor::exception::NotAnOwner);
 }
 
+TEST_F(castor_utils_SmartArrayPtrTest, subscript) {
+  char *ptr = new char[4];
+  ptr[0] = 'T';
+  ptr[1] = 'e';
+  ptr[2] = 's';
+  ptr[3] = 't';
+
+  castor::utils::SmartArrayPtr<char> smartPtr(ptr);
+  ASSERT_EQ(ptr, smartPtr.get());
+  ASSERT_EQ('T', smartPtr[0]);
+  ASSERT_EQ('e', smartPtr[1]);
+  ASSERT_EQ('s', smartPtr[2]);
+  ASSERT_EQ('t', smartPtr[3]);
+}
+
 } // namespace unitTests

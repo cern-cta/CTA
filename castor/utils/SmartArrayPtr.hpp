@@ -133,6 +133,13 @@ public:
     return tmpArrayPtr;
   }
 
+  /**
+   * Subscript operator.
+   */
+  T &operator[](const int i) const throw() {
+    return m_arrayPtr[i];
+  }
+
 private:
 
   /**
