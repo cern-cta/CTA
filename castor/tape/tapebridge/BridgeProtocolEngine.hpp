@@ -48,7 +48,6 @@
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/utils/BoolFunctor.hpp"
 #include "castor/tape/utils/IndexedContainer.hpp"
-#include "castor/tape/utils/SmartFdList.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
 

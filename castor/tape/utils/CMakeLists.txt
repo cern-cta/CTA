@@ -29,7 +29,6 @@ set (TAPE_UTILS_LIB_SRC_FILES
   BoolFunctor.cpp
   ShutdownBoolFunctor.cpp
   SmartFILEPtr.cpp
-  SmartFdList.cpp
   Timer.cpp
   utils.cpp)
 add_library (castortapeutils SHARED ${TAPE_UTILS_LIB_SRC_FILES})

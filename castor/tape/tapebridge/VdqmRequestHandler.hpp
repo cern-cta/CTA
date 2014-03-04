@@ -35,7 +35,6 @@
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/utils/BoolFunctor.hpp"
-#include "castor/tape/utils/SmartFdList.hpp"
 #include "h/Cuuid.h"
 
 #include <list>
