@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "File.hpp"
+#include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/exception/Errnum.hpp"
 #include "castor/exception/SErrnum.hpp"
 #include "castor/exception/Mismatch.hpp"

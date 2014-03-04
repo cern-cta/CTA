@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "Drive.hpp"
+#include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/exception/Errnum.hpp"
 
 using namespace castor::tape;

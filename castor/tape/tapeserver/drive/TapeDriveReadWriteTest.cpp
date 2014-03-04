@@ -26,9 +26,9 @@
  * Test main program. For development use.
  */
 
-#include "../system/Wrapper.hpp"
-#include "../SCSI/Device.hpp"
-#include "Drive.hpp"
+#include "castor/tape/tapeserver/SCSI/Device.hpp"
+#include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "castor/tape/tapeserver/drive/Drive.hpp"
 #include <iostream>
 #include <assert.h>
 

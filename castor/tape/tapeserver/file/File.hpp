@@ -23,9 +23,9 @@
  *****************************************************************************/
 
 #pragma once
+#include "castor/tape/tapeserver/file/Structures.hpp"
+#include "castor/exception/Exception.hpp"
 #include <string>
-#include "Structures.hpp"
-#include "../exception/Exception.hpp"
 
 namespace castor {
   namespace tape {

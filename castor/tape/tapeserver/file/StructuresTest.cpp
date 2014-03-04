@@ -22,9 +22,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/tape/tapeserver/file/Structures.hpp"
 #include <gtest/gtest.h>
 #include <gmock/gmock-cardinalities.h>
-#include "Structures.hpp"
 
 namespace unitTests {
 

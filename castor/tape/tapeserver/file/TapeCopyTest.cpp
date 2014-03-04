@@ -26,10 +26,10 @@
  * Test main program. For development use.
  */
 
-#include "../system/Wrapper.hpp"
-#include "../SCSI/Device.hpp"
-#include "File.hpp"
-#include "../drive/Drive.hpp"
+#include "castor/tape/tapeserver/SCSI/Device.hpp"
+#include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/file/File.hpp"
 #include <assert.h>
 #include <fstream>
 #include <sstream>

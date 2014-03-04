@@ -22,13 +22,13 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include <gtest/gtest.h>
-#include "../system/Wrapper.hpp"
-#include "../SCSI/Device.hpp"
-#include "../drive/Drive.hpp"
-#include "File.hpp"
-#include "../exception/Exception.hpp"
+#include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "castor/tape/tapeserver/SCSI/Device.hpp"
+#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/file/File.hpp"
+#include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/exception/Errnum.hpp"
+#include <gtest/gtest.h>
 
 namespace UnitTests {
   
@@ -101,7 +101,7 @@ namespace UnitTests {
     }
     ASSERT_EQ(ws->isCorrupted(), true);
     {
-      ASSERT_THROW({castor::tape::tapeFile::WriteFile wf(ws, fileInfo, block_size);}, castor::tape::tapeFile::SessionCorrupted);
+      ASSERT_THROW(castor::tape::tapeFile::WriteFile wf(ws, fileInfo, block_size);, castor::tape::tapeFile::SessionCorrupted);
     }
     delete ws;
   }

@@ -22,11 +22,11 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+#include "castor/tape/tapeserver/SCSI/Device.hpp"
+#include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "castor/tape/tapeserver/drive/Drive.hpp"
 #include <gtest/gtest.h>
 #include <gmock/gmock-cardinalities.h>
-#include "../SCSI/Device.hpp"
-#include "../system/Wrapper.hpp"
-#include "Drive.hpp"
 #include <typeinfo>
 
 using ::testing::AtLeast;

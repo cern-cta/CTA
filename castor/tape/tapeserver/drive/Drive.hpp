@@ -24,13 +24,12 @@
 
 #pragma once
 
-#include "../SCSI/Device.hpp"
-#include "../SCSI/Structures.hpp"
-#include "../SCSI/Exception.hpp"
-#include "../system/Wrapper.hpp"
-#include "../exception/Exception.hpp"
-
-#include "mtio_add.hpp"
+#include "castor/tape/tapeserver/SCSI/Device.hpp"
+#include "castor/tape/tapeserver/SCSI/Structures.hpp"
+#include "castor/tape/tapeserver/SCSI/Exception.hpp"
+#include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "castor/tape/tapeserver/exception/Exception.hpp"
+#include "castor/tape/tapeserver/drive/mtio_add.hpp"
 
 /**
  * Class wrapping the tape server. Has to be templated (and hence fully in .hh)

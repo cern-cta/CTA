@@ -22,11 +22,11 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "Structures.hpp"
-#include "../exception/Exception.hpp"
+#include "castor/tape/tapeserver/file/Structures.hpp"
+#include "castor/exception/Exception.hpp"
+#include "h/patchlevel.h"
 #include <time.h>
 #include <stdio.h>
-#include "../h/patchlevel.h"
 
 using namespace castor::tape;
 

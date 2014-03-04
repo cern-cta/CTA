@@ -22,9 +22,9 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #pragma once
+
+#include "castor/tape/tapeserver/drive/Drive.hpp"
 #include <string>
-#include "string.h"
-#include "../drive/Drive.hpp"
 
 namespace castor {
 namespace tape {
