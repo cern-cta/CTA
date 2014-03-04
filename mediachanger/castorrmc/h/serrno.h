@@ -84,8 +84,9 @@
 #define SECMDLNNOTPRSD  SEBASEOFF+50    /* Command line not parsed      */
 #define SEACCPTCONNINTR SEBASEOFF+51    /* Accept connection was interrupted */
 #define SEBADALLOC      SEBASEOFF+52    /* Failed to allocate memory    */
+#define SENOTANOWNER    SEBASEOFF+53    /* Not an owner                 */
 
-#define SEMAXERR        SEBASEOFF+52    /* Maximum error number         */
+#define SEMAXERR        SEBASEOFF+53    /* Maximum error number         */
 
 #define SERRNO  (serrno - SEBASEOFF)    /* User convenience             */
 /*
