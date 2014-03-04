@@ -81,7 +81,7 @@ TEST_F(castor_utils_SmartArrayPtrTest, releaseNull) {
   ASSERT_THROW(smartPtr.release(), castor::exception::NotAnOwner);
 }
 
-TEST_F(castor_utils_SmartArrayPtrTest, subscript) {
+TEST_F(castor_utils_SmartArrayPtrTest, subscriptRead) {
   char *ptr = new char[4];
   ptr[0] = 'T';
   ptr[1] = 'e';
@@ -90,10 +90,42 @@ TEST_F(castor_utils_SmartArrayPtrTest, subscript) {
 
   castor::utils::SmartArrayPtr<char> smartPtr(ptr);
   ASSERT_EQ(ptr, smartPtr.get());
+
   ASSERT_EQ('T', smartPtr[0]);
   ASSERT_EQ('e', smartPtr[1]);
   ASSERT_EQ('s', smartPtr[2]);
   ASSERT_EQ('t', smartPtr[3]);
+}
+
+TEST_F(castor_utils_SmartArrayPtrTest, subscriptAssigment) {
+  char *ptr = new char[4];
+  ptr[0] = 'T';
+  ptr[1] = 'e';
+  ptr[2] = 's';
+  ptr[3] = 't';
+
+  castor::utils::SmartArrayPtr<char> smartPtr(ptr);
+  ASSERT_EQ(ptr, smartPtr.get());
+
+  ASSERT_EQ('T', smartPtr[0]);
+  ASSERT_EQ('e', smartPtr[1]);
+  ASSERT_EQ('s', smartPtr[2]);
+  ASSERT_EQ('t', smartPtr[3]);
+
+  smartPtr[0] = '0';
+  smartPtr[1] = '1';
+  smartPtr[2] = '2';
+  smartPtr[3] = '3';
+
+  ASSERT_EQ('0', ptr[0]);
+  ASSERT_EQ('1', ptr[1]);
+  ASSERT_EQ('2', ptr[2]);
+  ASSERT_EQ('3', ptr[3]);
+
+  ASSERT_EQ('0', smartPtr[0]);
+  ASSERT_EQ('1', smartPtr[1]);
+  ASSERT_EQ('2', smartPtr[2]);
+  ASSERT_EQ('3', smartPtr[3]);
 }
 
 } // namespace unitTests
