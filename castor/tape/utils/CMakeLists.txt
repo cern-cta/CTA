@@ -28,7 +28,6 @@ cmake_minimum_required (VERSION 2.6)
 set (TAPE_UTILS_LIB_SRC_FILES
   BoolFunctor.cpp
   ShutdownBoolFunctor.cpp
-  ScopedLock.cpp
   SmartFILEPtr.cpp
   SmartFdList.cpp
   Timer.cpp
