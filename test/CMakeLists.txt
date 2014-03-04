@@ -91,6 +91,7 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/file/StructuresTest.cpp
   ../castor/tape/tapeserver/file/FileTest.cpp
   ../castor/tape/tapeserver/threading/ThreadingTests.cpp
+  ../castor/utils/SmartArrayPtrTest.cpp
   ../castor/utils/SmartFdTest.cpp
   ../castor/utils/UtilsTest.cpp
   ${STK_UNITTEST_SRC_FILES})

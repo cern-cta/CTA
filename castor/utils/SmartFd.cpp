@@ -80,7 +80,7 @@ void castor::utils::SmartFd::reset(const int fd = -1) throw() {
 // SmartFd assignment operator
 //-----------------------------------------------------------------------------
 castor::utils::SmartFd &castor::utils::SmartFd::operator=(SmartFd& obj)
-  throw() {
+  throw(castor::exception::NotAnOwner) {
   reset(obj.release());
   return *this;
 }
@@ -102,12 +102,11 @@ int castor::utils::SmartFd::get() const throw() {
 //-----------------------------------------------------------------------------
 // release
 //-----------------------------------------------------------------------------
-int castor::utils::SmartFd::release() throw(castor::exception::Exception) {
+int castor::utils::SmartFd::release() throw(castor::exception::NotAnOwner) {
   // If this SmartFd does not own a file descriptor
   if(m_fd < 0) {
-    castor::exception::Exception ex(EPERM);
-    ex.getMessage() <<
-      "Smart file-descriptor does not own a file-descriptor";
+    castor::exception::NotAnOwner ex;
+    ex.getMessage() << "Smart file-descriptor does not own a file-descriptor";
     throw(ex);
   }
 

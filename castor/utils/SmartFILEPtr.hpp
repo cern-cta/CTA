@@ -25,7 +25,7 @@
 #ifndef CASTOR_UTILS_SMARTFILEPTR
 #define CASTOR_UTILS_SMARTFILEPTR
 
-#include "castor/exception/Exception.hpp"
+#include "castor/exception/NotAnOwner.hpp"
 
 #include <stdio.h>
 
@@ -76,7 +76,7 @@ public:
    * </ul>
    */
   SmartFILEPtr &operator=(SmartFILEPtr& obj)
-    throw(castor::exception::Exception) ;
+    throw(castor::exception::NotAnOwner);
 
   /**
    * Destructor.
@@ -97,8 +97,7 @@ public:
    *
    * @return The released FILE pointer.
    */
-  FILE *release() throw(castor::exception::Exception);
-
+  FILE *release() throw(castor::exception::NotAnOwner);
 
 private:
 

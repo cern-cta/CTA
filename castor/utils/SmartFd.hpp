@@ -25,8 +25,7 @@
 #ifndef CASTOR_UTILS_SMARTFD
 #define CASTOR_UTILS_SMARTFD
 
-#include "castor/exception/Exception.hpp"
-
+#include "castor/exception/NotAnOwner.hpp"
 
 namespace castor {
 namespace utils  {
@@ -105,7 +104,7 @@ public:
    *      the previous owner (obj).
    * </ul>
    */
-  SmartFd &operator=(SmartFd& obj) throw();
+  SmartFd &operator=(SmartFd& obj) throw(castor::exception::NotAnOwner);
 
   /**
    * Destructor.
@@ -127,7 +126,7 @@ public:
    *
    * @return The released file descriptor.
    */
-  int release() throw(castor::exception::Exception);
+  int release() throw(castor::exception::NotAnOwner);
 
 private:
 
