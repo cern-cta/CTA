@@ -50,6 +50,7 @@ set (COMMON_LIB_SRC_FILES
   ../castor/exception/InvalidNbArguments.cpp
   ../castor/exception/Internal.cpp
   ../castor/exception/Mismatch.cpp
+  ../castor/exception/NotAnOwner.cpp
   ../castor/exception/NotSupported.cpp
   ../castor/exception/OutOfMemory.cpp
   ../castor/exception/QueryVolumeFailed.cpp

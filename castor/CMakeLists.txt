@@ -323,16 +323,17 @@ if (${COMPILE_SERVER} STREQUAL "1")
   
   install(FILES
     exception/AcceptConnectionInterrupted.hpp
+    exception/AlreadyInitialized.hpp
     exception/Backtrace.hpp
     exception/BadAlloc.hpp
     exception/CommandLineNotParsed.hpp
     exception/Communication.hpp
     exception/Exception.hpp
     exception/Internal.hpp
-    exception/InvalidNbArguments.hpp
-    exception/AlreadyInitialized.hpp
     exception/InvalidArgument.hpp
+    exception/InvalidNbArguments.hpp
     exception/NoEntry.hpp
+    exception/NotAnOwner.hpp
     exception/OutOfMemory.hpp
     exception/SQLError.hpp
     DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/exception

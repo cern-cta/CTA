@@ -32,6 +32,7 @@
 %attr(0644,root,root) usr/include/castor/castor/exception/InvalidArgument.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/InvalidNbArguments.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/NoEntry.hpp
+%attr(0644,root,root) usr/include/castor/castor/exception/NotAnOwner.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/OutOfMemory.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/SQLError.hpp
 %attr(0644,root,root) usr/include/castor/castor/Factories.hpp

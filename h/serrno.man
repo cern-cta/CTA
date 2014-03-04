@@ -211,6 +211,9 @@ The following error values might be returned by any package:
 .TP
 .B SEBADALLOC
 (1052) Failed to allocate memory
+.TP
+.B SENOTANOWNER
+(1053) Not an owner
 
 .SH COPYTAPE ERRORS
 None yet
