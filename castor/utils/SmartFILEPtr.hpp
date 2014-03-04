@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/utils/SmartFILEPtr.hpp
+ *                      castor/utils/SmartFILEPtr.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_UTILS_SMARTFILEPTR
-#define CASTOR_TAPE_UTILS_SMARTFILEPTR
+#ifndef CASTOR_UTILS_SMARTFILEPTR
+#define CASTOR_UTILS_SMARTFILEPTR
 
 #include "castor/exception/Exception.hpp"
 
@@ -31,8 +31,7 @@
 
 
 namespace castor {
-namespace tape   {
-namespace utils  {
+namespace utils {
 
 /**
  * A smart pointer that owns a FILE pointer.  When the smart pointer goes out
@@ -119,7 +118,6 @@ private:
 }; // class SmartFILEPtr
 
 } // namespace utils
-} // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_UTILS_SMARTFILEPTR
+#endif // CASTOR_UTILS_SMARTFILEPTR

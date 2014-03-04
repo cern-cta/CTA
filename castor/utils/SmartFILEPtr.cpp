@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/utils/SmartFILEPtr.cpp
+ *                      castor/utils/SmartFILEPtr.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,32 +23,29 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/utils/SmartFILEPtr.hpp"
+#include "castor/utils/SmartFILEPtr.hpp"
 
 #include <errno.h>
 #include <unistd.h>
 
-
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFILEPtr::SmartFILEPtr() throw() :
+castor::utils::SmartFILEPtr::SmartFILEPtr() throw() :
   m_file(NULL) {
 }
 
-
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFILEPtr::SmartFILEPtr(FILE *const file) throw() :
+castor::utils::SmartFILEPtr::SmartFILEPtr(FILE *const file) throw() :
   m_file(file) {
 }
-
 
 //-----------------------------------------------------------------------------
 // reset
 //-----------------------------------------------------------------------------
-void castor::tape::utils::SmartFILEPtr::reset(FILE *const file = NULL)
+void castor::utils::SmartFILEPtr::reset(FILE *const file = NULL)
    throw() {
   // If the new pointer is not the one already owned
   if(file != m_file) {
@@ -63,44 +60,35 @@ void castor::tape::utils::SmartFILEPtr::reset(FILE *const file = NULL)
   }
 }
 
-
 //-----------------------------------------------------------------------------
 // SmartFILEPtr assignment operator
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFILEPtr
-  &castor::tape::utils::SmartFILEPtr::operator=(SmartFILEPtr& obj)
+castor::utils::SmartFILEPtr
+  &castor::utils::SmartFILEPtr::operator=(SmartFILEPtr& obj)
   throw(castor::exception::Exception) {
-  
   reset(obj.release());
-
   return *this;
 }
-
 
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::utils::SmartFILEPtr::~SmartFILEPtr() throw() {
-
+castor::utils::SmartFILEPtr::~SmartFILEPtr() throw() {
   reset();
 }
-
 
 //-----------------------------------------------------------------------------
 // get
 //-----------------------------------------------------------------------------
-FILE *castor::tape::utils::SmartFILEPtr::get() const throw() {
-
+FILE *castor::utils::SmartFILEPtr::get() const throw() {
   return m_file;
 }
-
 
 //-----------------------------------------------------------------------------
 // release
 //-----------------------------------------------------------------------------
-FILE *castor::tape::utils::SmartFILEPtr::release()
+FILE *castor::utils::SmartFILEPtr::release()
   throw(castor::exception::Exception) {
-
   // If this smart pointer does not own a pointer
   if(m_file == NULL) {
     castor::exception::Exception ex(EPERM);
@@ -110,7 +98,6 @@ FILE *castor::tape::utils::SmartFILEPtr::release()
 
     throw(ex);
   }
-
 
   FILE *const tmp = m_file;
 
