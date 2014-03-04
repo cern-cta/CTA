@@ -76,4 +76,9 @@ TEST_F(castor_utils_SmartArrayPtrTest, assignment) {
   ASSERT_EQ(ptr, smartPtr2.get());
 }
 
+TEST_F(castor_utils_SmartArrayPtrTest, releaseNull) {
+  castor::utils::SmartArrayPtr<char> smartPtr;
+  ASSERT_THROW(smartPtr.release(), castor::exception::NotAnOwner);
+}
+
 } // namespace unitTests
