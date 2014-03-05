@@ -76,6 +76,8 @@ set (CLIENT_LIB_SRC_FILES
   io/PipeSocket.cpp
   io/ClientSocket.cpp
   io/io.cpp
+  io/PollEventHandler.cpp
+  io/PollReactor.cpp
   io/ServerSocket.cpp
   io/StreamAddress.cpp
   io/StreamBaseCnv.cpp
