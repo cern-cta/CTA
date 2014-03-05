@@ -48,7 +48,29 @@ castor::io::PollReactorImpl::~PollReactorImpl() throw() {
 //------------------------------------------------------------------------------
 void castor::io::PollReactorImpl::registerHandler(
   PollEventHandler *const handler) throw(castor::exception::Exception) {
-  m_handlers[handler->getFd()] = handler;
+  std::pair<HandlerMap::iterator, bool> insertResult =
+    m_handlers.insert(HandlerMap::value_type(handler->getFd(), handler));
+  if(!insertResult.second) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to register event handler for file descriptor "
+      << handler->getFd() << " with reactor"
+      ": File descriptor already has a registered event handler";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// removeHandler
+//------------------------------------------------------------------------------
+void castor::io::PollReactorImpl::removeHandler(
+  PollEventHandler *const handler) throw(castor::exception::Exception) {
+  const HandlerMap::size_type nbElements = m_handlers.erase(handler->getFd());
+  if(0 == nbElements) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to remove event handler for file descriptor " <<
+      handler->getFd() << " from reactor: Handler not found";
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------

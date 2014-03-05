@@ -69,6 +69,15 @@ public:
     throw(castor::exception::Exception);
 
   /**
+   * Removes the specified handler from the reactor.  This method effectively
+   * does the opposite of registerHandler().
+   *
+   * @param handler The handler to be removed.
+   */
+  void removeHandler(PollEventHandler *const handler)
+    throw(castor::exception::Exception);
+
+  /**
    * Handles any pending events.
    *
    * @param timeout Timeout in milliseconds.

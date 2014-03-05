@@ -143,7 +143,6 @@ set (CLIENT_LIB_SRC_FILES
   io/StreamBWUserCnv.cpp
   io/StreamRequestTypeCnv.cpp
   io/StreamNsFileIdCnv.cpp
-  log/DummyLogger.cpp
   log/Logger.cpp
   log/LoggerImplementation.cpp
   log/StringLogger.cpp

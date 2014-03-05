@@ -78,6 +78,9 @@ add_executable(castorUnitTests
   castorUnitTests.cpp
   ../castor/exception/ExceptionTest.cpp
   ../castor/io/IoTest.cpp
+  ../castor/io/PollReactorImplTest.cpp
+  ../castor/io/DummyPollEventHandler.cpp
+  ../castor/log/DummyLogger.cpp
   ../castor/log/LoggerImplementationTest.cpp
   ../castor/log/ParamTest.cpp
   ../castor/log/LogContextTest.cpp
