@@ -110,6 +110,7 @@ set(HSM_SCRIPTS
   diskserver_qry
   draindiskserver
   migratenewcopy
+  nslistsegs
   vdqmlistpriority
   vdqmlistrequest
   vdqmsetpriority
@@ -184,6 +185,7 @@ set(HSM_MAN_PAGES
   printtapepool
   reclaim
   repack
+  nslistsegs
   vdqmdeletepriority
   vdqmlistpriority
   vdqmlistrequest
