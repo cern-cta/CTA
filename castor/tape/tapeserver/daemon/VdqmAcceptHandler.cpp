@@ -75,7 +75,7 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
   checkHandleEventFd(fd.fd);
 
   // Do nothing if there is no data to read
-  if(fd.revents & POLLIN == 0) {
+  if(0 == (fd.revents & POLLIN)) {
     return;
   }
 
