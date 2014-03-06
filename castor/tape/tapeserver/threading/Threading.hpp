@@ -127,18 +127,19 @@ namespace threading {
    * The thread is started with start() and joined with wait().
    */
   class Thread {
-    public:
-      Thread(): m_hadException(false), m_what("") {}
-      virtual ~Thread () {}
-      void start() throw (castor::exception::Exception);
-      void wait() throw (castor::exception::Exception);
-      virtual void run () = 0;
-    private:
-      pthread_t m_thread;
-      bool m_hadException;
-      std::string m_what;
-      std::string m_type;
-      static void * pthread_runner (void * arg);
+  public:
+    Thread(): m_hadException(false), m_what("") {}
+    virtual ~Thread () {}
+    void start() throw (castor::exception::Exception);
+    void wait() throw (castor::exception::Exception);
+  protected:
+    virtual void run () = 0;
+  private:
+    pthread_t m_thread;
+    bool m_hadException;
+    std::string m_what;
+    std::string m_type;
+    static void * pthread_runner (void * arg);
   };
   
 } // namespace threading
