@@ -31,6 +31,7 @@
 #include "h/serrno.h"
 
 #include <errno.h>
+#include <memory>
 #include <string.h>
 
 //------------------------------------------------------------------------------
