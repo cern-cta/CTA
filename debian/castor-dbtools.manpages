@@ -44,3 +44,4 @@ debian/castor/usr/share/man/man1/printrecallstatus.1castor.gz
 debian/castor/usr/share/man/man1/printrecallfilestatus.1castor.gz
 debian/castor/usr/share/man/man1/printrecalltapequeue.1castor.gz
 debian/castor/usr/share/man/man1/printrecalluserqueue.1castor.gz
+debian/castor/usr/share/man/man1/nslistsegs.1castor.gz
