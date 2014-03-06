@@ -126,6 +126,7 @@ add_executable(castorThreadedUnitTests
   castorUnitTests.cpp
   ../castor/tape/tapeserver/threading/ThreadingMTTests.cpp
   ../castor/tape/tapeserver/daemon/tapeserverdTest.cpp
+  ../castor/tape/tapeserver/threading/ThreadingBlockingQTests.cpp
 )
 target_link_libraries(castorThreadedUnitTests TapeDrive Exception SCSI System 
   Utils File castorTapeServerThreading tapeserverdTest tapeserver 
