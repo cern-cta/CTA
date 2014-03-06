@@ -62,7 +62,7 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
   const struct pollfd &fd) throw(castor::exception::Exception) {
 
   // Do nothing if there is not data to be read
-  if(fd.revents & POLLIN == 0) {
+  if(0 == fd.revents & POLLIN) {
     return;
   }
 
