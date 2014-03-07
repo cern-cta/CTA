@@ -1,4 +1,5 @@
 add_executable(tapeserverd
+  DriveCatalogue.cpp
   TapeDaemon.cpp
   TapeDaemonMain.cpp
   Vdqm.cpp

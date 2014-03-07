@@ -124,6 +124,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::parseTpconfig()
   // Extract the tape-drive names from the TPCONFIG file
   std::list<std::string> driveNames;
   utils::extractTpconfigDriveNames(tpconfigLines, driveNames);
+
+  // Populate the drive catalogue
+  // TO BE DONE
 }
 
 //------------------------------------------------------------------------------
