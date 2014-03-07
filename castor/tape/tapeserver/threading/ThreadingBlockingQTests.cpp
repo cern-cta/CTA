@@ -60,7 +60,7 @@ namespace threadedUnitTests {
         pong.wait();
         ping.wait();
         
-        ASSERT_EQ(4,sharedQueue.size());
+        ASSERT_EQ(4U,sharedQueue.size());
   }
 
 }
