@@ -56,6 +56,7 @@ public:
   }
 
   using TapeDaemon::checkTpconfigDgns;
+  using TapeDaemon::checkTpconfigInitialStates;
 
 }; // class TestingTapeDaemon
 

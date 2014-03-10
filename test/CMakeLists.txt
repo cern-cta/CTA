@@ -90,8 +90,11 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
   ../castor/tape/tapeserver/daemon/DummyVdqm.cpp
+  ../castor/tape/tapeserver/daemon/TapeDaemon.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemonTest.cpp
   ../castor/tape/tapeserver/daemon/Vdqm.cpp
+  ../castor/tape/tapeserver/daemon/VdqmAcceptHandler.cpp
+  ../castor/tape/tapeserver/daemon/VdqmConnectionHandler.cpp
   ../castor/tape/tapeserver/drive/DriveTest.cpp
   ../castor/tape/tapeserver/exception/ExceptionTest.cpp
   ../castor/tape/tapeserver/file/StructuresTest.cpp
@@ -121,6 +124,7 @@ target_link_libraries(castorUnitTests
   pthread
   castorcommon
   castorclient
+  castortapeutils
   ${STK_API_LIB}
   ${STK_UTL_LIB}
   ${STK_IPC_LIB}

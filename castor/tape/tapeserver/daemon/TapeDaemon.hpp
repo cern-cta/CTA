@@ -100,20 +100,35 @@ protected:
   void parseTpconfig() throw(castor::exception::Exception);
 
   /**
-   * Writes the specified list of TPCONFIG lines to the logging system.
+   * Writes the specified TPCONFIG lines to the logging system.
+   *
+   * @param lines The lines parsed from /etc/castor/TPCONFIG.
    */
   void logTpconfigLines(const utils::TpconfigLines &lines) throw();
 
   /**
    * Writes the specified TPCONFIG lines to the logging system.
+   *
+   * @param line The line parsed from /etc/castor/TPCONFIG.
    */
   void logTpconfigLine(const utils::TpconfigLine &line) throw();
 
   /**
    * Throws an exception if the specified TPCONFIG lines define a tape drive as
    * belonging to more than one device group name (DGN).
+   *
+   * @param lines The lines parsed from /etc/castor/TPCONFIG.
    */
   void checkTpconfigDgns(const utils::TpconfigLines &lines)
+    throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if the specified TPCONFIG lines define a tape drive as
+   * having more than one value for its initial state.
+   *
+   * @param lines The lines parsed from /etc/castor/TPCONFIG.
+   */
+  void checkTpconfigInitialStates(const utils::TpconfigLines &lines)
     throw(castor::exception::Exception);
 
   /**
