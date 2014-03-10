@@ -66,30 +66,50 @@
     Stager
     ------
 
-    The upgrade of the stager database to 2.1.14-11 can be performed online while the system is running.
-    The RPM upgrade can also be performed on a running system, with 2 restrictions:
-      - the restart of the RH servers may be noticable by few clients (< 1s downtime);
-      - the restart of the transfermanagers and diskmanagers should not be done concurrently.
+    The upgrade of the stager database to 2.1.14-11 cannot be performed online: a short
+    (less than 10 minutes) downtime is required during the database upgrade.
 
       Instructions
       ------------
 
-       1. Upgrade the STAGER database using the stager_2.1.14-5_to_2.1.14-11.sql
+       0. Ask your DBA to grant the following permission on the Stager database:
+
+          GRANT SELECT ON SYS.DBMS_ALERT_INFO TO <CastorStagerAccount>;
+
+       1. Stop all daemons on the stager headnodes which have direct
+          connections to the STAGER database. This includes: rhd, stagerd,
+          transfermanagerd, and tapegatewayd.
+
+          Note: It is not necessary to stop any daemons on the diskservers.
+
+       2. Upgrade the STAGER database using the stager_2.1.14-5_to_2.1.14-11.sql
           upgrade script available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-11/dbupgrades
-          Note that as some cleanup is performed by the script, its execution may take
-          several minutes. However the service should not be affected by this cleanup operation.
+          Note that the script performs some cleanup operations at the end of its execution.
+          At this stage, you can already proceed with the following steps and restart
+          the service. The cleanup phase may take several minutes. 
 
-       2. Upgrade the software on the headnodes.
-          Note: All daemons involved in the upgrade will be restarted automatically.
+       4. Upgrade the software on the headnodes and diskservers to 2.1.14-11.
 
-       3. Upgrade the software on the diskservers.
-          Note: All daemons involved in the upgrade will be restarted automatically.
+       5. If you have an independent monitoring system to monitor CASTOR such
+          as LEMON. Please make sure to update the monitoring configuration to
+          reflect any changes in this release.
 
-       4. Test the instance by running the test suite available from:
+       6. Start all the daemons which were stopped in step 1.
+
+          Note: If you have a concept of private and public request handlers
+                you should start only the private ones to test/validate the
+                installation without user interference.
+
+       7. Wait a few seconds to give time for the diskservers to send a heartbeat
+          message to the transfermanager daemon.
+
+       8. Test the instance by running the test suite available from:
           - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-11/testsuite
 
-       5. Congratulations you have successfully upgraded to the 2.1.14-11 release
+       9. Start the public request handlers (if applicable)
+
+      10. Congratulations you have successfully upgraded to the 2.1.14-11 release
           of CASTOR.
 
     Central services (CUPV, VMGR, VDQM, Nameserver)
@@ -845,7 +865,7 @@
           as LEMON. Please make sure to update the monitoring configuration to
           reflect any changes in this release.
 
-       6. Start all the daemons which were stopped in step 2.
+       6. Start all the daemons which were stopped in step 1.
 
           Note: If you have a concept of private and public request handlers
                 you should start only the private ones to test/validate the

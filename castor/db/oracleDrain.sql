@@ -33,8 +33,13 @@ BEGIN
       CONSTRAINT_VIOLATED EXCEPTION;
       PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
     BEGIN
-      -- lock the draining Job first
-      SELECT id INTO varUnused FROM DrainingJob WHERE id = dj.id FOR UPDATE;
+      BEGIN
+        -- lock the draining job first
+        SELECT id INTO varUnused FROM DrainingJob WHERE id = dj.id FOR UPDATE;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- it was (already!) canceled, go to the next one
+        CONTINUE;
+      END;
       -- check how many disk2DiskCopyJobs are already running for this draining job
       SELECT count(*) INTO varNbRunningJobs FROM Disk2DiskCopyJob WHERE drainingJob = dj.id;
       -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running

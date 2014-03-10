@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tapeserver/TapeDaemonMain.cpp
+ *                castor/tape/tapeserver/daemon/Constants.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,25 +17,26 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- *
- *
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/log/LoggerImplementation.hpp"
-#include "castor/io/PollReactorImpl.hpp"
-#include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
-#include "castor/tape/tapeserver/daemon/VdqmImpl.hpp"
+#ifndef CASTOR_TAPE_TAPESERVER_DAEMON_CONSTANTS_HPP
+#define CASTOR_TAPE_TAPESERVER_DAEMON_CONSTANTS_HPP 1
 
-//------------------------------------------------------------------------------
-// main
-//------------------------------------------------------------------------------
-int main(const int argc, char **const argv) {
-  using namespace castor::tape::tapeserver::daemon;
-  castor::log::LoggerImplementation log("tapeserverd");
-  VdqmImpl vdqm;
-  castor::io::PollReactorImpl reactor(log);
-  TapeDaemon daemon(std::cout, std::cerr, log, vdqm, reactor);
+namespace castor     {
+namespace tape       {
+namespace tapeserver {
+namespace daemon     {
 
-  return daemon.main(argc, argv);
-}
+/**
+ * The TCP/IP port on which the tape server daemon listens for incoming
+ * connections from the VDQM server.
+ */
+const unsigned short TAPE_SERVER_LISTENING_PORT = 5070;
+
+} // namespace daemon
+} // namespace tapeserver
+} // namespace tape
+} // namespace castor
+
+#endif // CASTOR_TAPE_TAPESERVER_DAEMON_CONSTANTS_HPP
