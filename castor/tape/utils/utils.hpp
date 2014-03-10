@@ -34,6 +34,7 @@
 #include "castor/tape/Constants.hpp"
 #include "castor/tape/tapegateway/ClientType.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
+#include "castor/tape/utils/TpconfigLines.hpp"
 
 #include <errno.h>
 #include <list>
@@ -339,45 +340,6 @@ void writeBanner(std::ostream &os, const char *const title) throw();
 unsigned short getPortFromConfig(const char *const category,
   const char *const name, const unsigned short defaultPort)
   throw(exception::InvalidConfigEntry, castor::exception::Exception);
-
-/**
- * The data stored in a data-line (as opposed to a comment-line) from a
- * TPCONFIG file (/etc/castor/TPCONFIG).
- */
-struct TpconfigLine {
-  const std::string mUnitName;
-  const std::string mDeviceGroup;
-  const std::string mSystemDevice;
-  const std::string mDensity;
-  const std::string mInitialStatus;
-  const std::string mControlMethod;
-  const std::string mDevType;
-
-  /**
-   * Constructor.
-   */
-  TpconfigLine(
-    const std::string &unitName,
-    const std::string &deviceGroup,
-    const std::string &systemDevice,
-    const std::string &density,
-    const std::string &initialStatus,
-    const std::string &controlMethod,
-    const std::string &devType) :
-    mUnitName(unitName),
-    mDeviceGroup(deviceGroup),
-    mSystemDevice(systemDevice),
-    mDensity(density),
-    mInitialStatus(initialStatus),
-    mControlMethod(controlMethod),
-    mDevType(devType) {
-  }
-}; // struct TpconfigLine
-
-/**
- * A list of TPCONFIG data-lines.
- */
-typedef std::list<TpconfigLine> TpconfigLines;
 
 /**
  * Parses the specified TPCONFIG file.

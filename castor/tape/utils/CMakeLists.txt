@@ -29,6 +29,7 @@ set (TAPE_UTILS_LIB_SRC_FILES
   BoolFunctor.cpp
   ShutdownBoolFunctor.cpp
   Timer.cpp
+  TpconfigLine.cpp
   utils.cpp)
 add_library (castortapeutils SHARED ${TAPE_UTILS_LIB_SRC_FILES})
 CastorSetLibraryVersions (castortapeutils)
