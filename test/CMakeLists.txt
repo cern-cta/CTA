@@ -80,6 +80,7 @@ add_executable(castorUnitTests
   ../castor/io/IoTest.cpp
   ../castor/io/PollReactorImplTest.cpp
   ../castor/io/DummyPollEventHandler.cpp
+  ../castor/io/DummyPollReactor.cpp
   ../castor/log/DummyLogger.cpp
   ../castor/log/LoggerImplementationTest.cpp
   ../castor/log/ParamTest.cpp
@@ -88,6 +89,9 @@ add_executable(castorUnitTests
   ../castor/server/DaemonTest.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
+  ../castor/tape/tapeserver/daemon/DummyVdqm.cpp
+  ../castor/tape/tapeserver/daemon/TapeDaemonTest.cpp
+  ../castor/tape/tapeserver/daemon/Vdqm.cpp
   ../castor/tape/tapeserver/drive/DriveTest.cpp
   ../castor/tape/tapeserver/exception/ExceptionTest.cpp
   ../castor/tape/tapeserver/file/StructuresTest.cpp

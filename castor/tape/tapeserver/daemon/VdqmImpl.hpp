@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/Vdqm.hpp
+ *         castor/tape/tapeserver/daemon/VdqmImpl.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

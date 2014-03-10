@@ -157,6 +157,13 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logTpconfigLine(
 }
 
 //------------------------------------------------------------------------------
+// checkTpConfigDgns
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::checkTpconfigDgns(
+  const utils::TpconfigLines &lines) throw(castor::exception::Exception) {
+}
+
+//------------------------------------------------------------------------------
 // argvToString
 //------------------------------------------------------------------------------
 std::string castor::tape::tapeserver::daemon::TapeDaemon::argvToString(

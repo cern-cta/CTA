@@ -80,7 +80,7 @@ public:
    */
   int main(const int argc, char **const argv) throw();
 
-private:
+protected:
 
   /**
    * Exception throwing main() function.
@@ -108,6 +108,13 @@ private:
    * Writes the specified TPCONFIG lines to the logging system.
    */
   void logTpconfigLine(const utils::TpconfigLine &line) throw();
+
+  /**
+   * Throws an exception if the specified TPCONFIG lines define a tape drive as
+   * belonging to more than one device group name (DGN).
+   */
+  void checkTpconfigDgns(const utils::TpconfigLines &lines)
+    throw(castor::exception::Exception);
 
   /**
    * Creates a string that contains the specified command-line arguments
