@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tapeserver/daemon/TapeDaemon.hpp
+ *         castor/tape/tapeserver/daemon/TapeDaemon.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -29,16 +29,16 @@
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/io/PollReactor.hpp"
 #include "castor/server/Daemon.hpp"
+#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 #include "castor/tape/utils/utils.hpp"
 
-#include <stdint.h>
 #include <iostream>
 #include <list>
 #include <map>
 #include <poll.h>
+#include <stdint.h>
 #include <string>
-
 
 namespace castor     {
 namespace tape       {
@@ -156,6 +156,12 @@ private:
   void reapZombies() throw();
 
   /**
+   * Catalogue used to keep track of both the initial and current state of
+   * each tape drive being controlled by the tapeserverd daemon.
+   */
+  DriveCatalogue m_driveCatalogue;
+
+  /**
    * The object representing the vdqmd daemon.
    */
   Vdqm &m_vdqm;
@@ -171,76 +177,11 @@ private:
    */
   const std::string m_programName;
 
-  /**
-   * The status of a drive as described by the following FSTN:
-   *
-   *              start daemon /
-   *  ------    send VDQM_UNIT_UP   ----------------
-   * | INIT |--------------------->|      DOWN      |<-------------------
-   *  ------                        ----------------                     |
-   *     |                          |              ^                     |
-   *     |                          |              |                     |
-   *     |                          | tpconfig up  | tpconfig down       |
-   *     |                          |              |                     |
-   *     |      start daemon /      v              |                     |
-   *     |   send VDQM_UNIT_DOWN    ----------------                     |
-   *      ------------------------>|      UP        |                    |
-   *                                ----------------                     |
-   *                                |              ^                     |
-   *                                |              |                     |
-   *                                | vdqm job /   | SIGCHLD [success]   |
-   *                                | fork         |                     |
-   *                                |              |                     |
-   *                                v              |                     |
-   *                                ----------------    SIGCHLD [fail]   |
-   *                               |    RUNNING     |-------------------- 
-   *                                ----------------
-   *
-   * When the tapeserverd daemon is started, depdending on the initial state
-   * column of /etc/castor/TPCONFIG, the daemon sends either a VDQM_UNIT_UP
-   * or VDQM_UNIT_DOWN status message to the vdqmd daemon.
-   *
-   * A tape operator toggle the state of tape drive between DOWN and UP
-   * using the tpconfig adminstration tool.
-   *
-   * The tape daemon can receive a job from the vdqmd daemon when the drive
-   * is in the UP state.  On reception of the job the daemon forks a child
-   * process to manage the tape mount and data transfer tasks necessary to
-   * fulfill the vdqm job.  The drive is now in the RUNNING state.
-   *
-   * Once the vdqm job has been carried out, the child process completes
-   * and the drive either returns to the UP state if there were no
-   * problems or DOWN state if there were.
-   */
-  enum DriveStatus { DRIVE_INIT, DRIVE_DOWN, DRIVE_UP, DRIVE_RUNNING };
-
-  /**
-   * Structure used to store the initial and current status of a drive.
-   *
-   * The initial status of a drive defined in the initial status column of the
-   * /etc/castor/TPCONFIG file.
-   */
-  struct InitialAndCurrentDriveStatus {
-    DriveStatus initialStatus;
-    DriveStatus currentStatus;
-  };
-
-  /**
-   * Type that maps drive unit-name to drive initial and current status.
-   */
-  typedef std::map<std::string, DriveStatus> DriveStatusMap;
-
-  /**
-   * Map from drive unit-name to drive status.
-   */
-  DriveStatusMap m_drives;
-
 }; // class TapeDaemon
 
 } // namespace daemon
 } // namespace tapeserver
 } // namespace tape
 } // namespace castor
-
 
 #endif // CASTOR_TAPE_TAPESERVER_DAEMON_TAPEDAEMON_HPP

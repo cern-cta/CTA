@@ -424,7 +424,14 @@ namespace castor {
       }
       
       WriteFile::WriteFile(const std::string &url) throw (Exception) {
-        m_fd = rfio_open64((char *)url.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666); //since we are not going to use rfio in production we can allow the O_TRUNC for simplicity
+        m_fd = rfio_open64((char *)url.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666); 
+        /* 
+         * The O_TRUNC flag is here to prevent file corruption in case retrying to write a file to disk.
+         * In principle this should be totally safe as the filenames are generated using unique ids given by
+         * the database, so the protection is provided by the uniqueness of the filenames.
+         * As a side note, we tried to use the O_EXCL flag as well (which would provide additional safety)
+         * however this flag does not work with rfio_open64 as apparently it causes memory corruption.
+         */
         castor::exception::SErrnum::throwOnMinusOne(m_fd, "Failed rfio_open64() in diskFile::WriteFile::WriteFile");        
       }
       

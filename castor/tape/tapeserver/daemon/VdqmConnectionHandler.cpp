@@ -69,6 +69,9 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
   const int timeout = 1; // 1 second
   const legacymsg::RtcpJobRqstMsgBody job = m_vdqm.receiveJob(fd.fd, timeout);
   logVdqmJobReception(job);
+
+  m_reactor.removeHandler(this);
+  close(fd.fd);
 }
 
 //------------------------------------------------------------------------------

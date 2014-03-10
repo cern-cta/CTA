@@ -86,13 +86,15 @@ add_executable(castorUnitTests
   ../castor/log/LogContextTest.cpp
   ../castor/log/StringLoggerTest.cpp
   ../castor/server/DaemonTest.cpp
-  ../castor/tape/tapeserver/SCSI/DeviceTest.cpp
-  ../castor/tape/tapeserver/SCSI/StructuresTest.cpp
-  ../castor/tape/tapeserver/utils/RegexTest.cpp
+  ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
+  ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
   ../castor/tape/tapeserver/drive/DriveTest.cpp
   ../castor/tape/tapeserver/exception/ExceptionTest.cpp
   ../castor/tape/tapeserver/file/StructuresTest.cpp
   ../castor/tape/tapeserver/file/FileTest.cpp
+  ../castor/tape/tapeserver/SCSI/DeviceTest.cpp
+  ../castor/tape/tapeserver/SCSI/StructuresTest.cpp
+  ../castor/tape/tapeserver/utils/RegexTest.cpp
   ../castor/tape/tapeserver/threading/ThreadingTests.cpp
   ../castor/utils/SmartArrayPtrTest.cpp
   ../castor/utils/SmartFdTest.cpp
@@ -140,9 +142,16 @@ add_executable(castorMultiprocessUnitTests
   castorUnitTests.cpp
   ../castor/tape/tapeserver/threading/ThreadingMPTests.cpp
 )
-target_link_libraries(castorMultiprocessUnitTests TapeDrive Exception SCSI System 
+target_link_libraries(castorMultiprocessUnitTests
+  TapeDrive
+  Exception
+  SCSI
+  System 
   Utils File castorTapeServerThreading 
   ${GTEST_LIBRARY} gmock pthread castorcommon castorclient)
 
-install(TARGETS castorUnitTests castorThreadedUnitTests castorMultiprocessUnitTests
+install(TARGETS
+  castorUnitTests
+  castorThreadedUnitTests
+  castorMultiprocessUnitTests
   DESTINATION ${CASTOR_DEST_BIN_DIR})
