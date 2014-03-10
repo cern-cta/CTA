@@ -357,13 +357,13 @@ struct TpconfigLine {
    * Constructor.
    */
   TpconfigLine(
-    std::string &unitName,
-    std::string &deviceGroup,
-    std::string &systemDevice,
-    std::string &density,
-    std::string &initialStatus,
-    std::string &controlMethod,
-    std::string &devType) :
+    const std::string &unitName,
+    const std::string &deviceGroup,
+    const std::string &systemDevice,
+    const std::string &density,
+    const std::string &initialStatus,
+    const std::string &controlMethod,
+    const std::string &devType) :
     mUnitName(unitName),
     mDeviceGroup(deviceGroup),
     mSystemDevice(systemDevice),
