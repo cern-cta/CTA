@@ -38,9 +38,17 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmAcceptHandler::VdqmAcceptHandler(
-  const int listenSock, io::PollReactor &reactor, log::Logger &log, Vdqm &vdqm)
-  throw(): m_listenSock(listenSock), m_reactor(reactor), m_log(log),
-    m_vdqm(vdqm) {
+  const int listenSock,
+  io::PollReactor &reactor,
+  log::Logger &log,
+  Vdqm &vdqm,
+  DriveCatalogue &driveCatalogue)
+  throw():
+    m_listenSock(listenSock),
+    m_reactor(reactor),
+    m_log(log),
+    m_vdqm(vdqm),
+    m_driveCatalogue(driveCatalogue) {
 }
 
 //------------------------------------------------------------------------------
@@ -129,7 +137,8 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
   std::auto_ptr<VdqmConnectionHandler> connectionHandler;
   try {
     connectionHandler.reset(
-      new VdqmConnectionHandler(connection.get(), m_reactor, m_log, m_vdqm));
+      new VdqmConnectionHandler(connection.get(), m_reactor, m_log, m_vdqm,
+        m_driveCatalogue));
     connection.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;

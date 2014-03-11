@@ -26,9 +26,17 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmConnectionHandler::VdqmConnectionHandler(
-  const int connection, io::PollReactor &reactor, log::Logger &log, Vdqm &vdqm)
-  throw(): m_connection(connection), m_reactor(reactor), m_log(log),
-    m_vdqm(vdqm)  {
+  const int connection,
+  io::PollReactor &reactor,
+  log::Logger &log,
+  Vdqm &vdqm,
+  DriveCatalogue &driveCatalogue)
+  throw():
+    m_connection(connection),
+    m_reactor(reactor),
+    m_log(log),
+    m_vdqm(vdqm),
+    m_driveCatalogue(driveCatalogue) {
 }
 
 //------------------------------------------------------------------------------
