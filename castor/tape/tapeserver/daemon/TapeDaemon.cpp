@@ -147,7 +147,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logTpconfigLine(
   log::Param params[] = {
     log::Param("unitName", line.unitName),
     log::Param("dgn", line.dgn),
-    log::Param("systemDevice", line.systemDevice),
+    log::Param("devFilename", line.devFilename),
     log::Param("density", line.density),
     log::Param("initialStatus", line.initialStatus),
     log::Param("libraryDriveName", line.libraryDriveName),

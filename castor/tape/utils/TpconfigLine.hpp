@@ -39,7 +39,7 @@ namespace utils  {
 struct TpconfigLine {
   std::string unitName;
   std::string dgn;
-  std::string systemDevice;
+  std::string devFilename;
   std::string density;
   std::string initialStatus;
   std::string libraryDriveName;
@@ -51,7 +51,7 @@ struct TpconfigLine {
   TpconfigLine(
     const std::string &unitName,
     const std::string &dgn,
-    const std::string &systemDevice,
+    const std::string &devFilename,
     const std::string &density,
     const std::string &initialStatus,
     const std::string &libraryDriveName,
