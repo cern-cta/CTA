@@ -146,7 +146,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logTpconfigLine(
   const utils::TpconfigLine &line) throw() {
   log::Param params[] = {
     log::Param("unitName", line.unitName),
-    log::Param("deviceGroup", line.deviceGroup),
+    log::Param("dgn", line.dgn),
     log::Param("systemDevice", line.systemDevice),
     log::Param("density", line.density),
     log::Param("initialStatus", line.initialStatus),
@@ -166,7 +166,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::checkTpconfigDgns(
   for(utils::TpconfigLines::const_iterator lineItor = lines.begin();
     lineItor != lines.end(); lineItor++) {
     const std::string &unitName = lineItor->unitName;
-    const std::string &dgn = lineItor->deviceGroup;
+    const std::string &dgn = lineItor->dgn;
 
     UnitName2DgnMap::const_iterator maplet = unitName2Dgn.find(unitName);
 

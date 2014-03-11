@@ -30,14 +30,14 @@
 //------------------------------------------------------------------------------
 castor::tape::utils::TpconfigLine::TpconfigLine(
   const std::string &unitName,
-  const std::string &deviceGroup,
+  const std::string &dgn,
   const std::string &systemDevice,
   const std::string &density,
   const std::string &initialStatus,
   const std::string &libraryDriveName,
   const std::string &devType) throw():
   unitName(unitName),
-  deviceGroup(deviceGroup),
+  dgn(dgn),
   systemDevice(systemDevice),
   density(density),
   initialStatus(initialStatus),
