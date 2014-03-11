@@ -37,13 +37,13 @@ namespace utils  {
  * TPCONFIG file (/etc/castor/TPCONFIG).
  */
 struct TpconfigLine {
-  const std::string mUnitName;
-  const std::string mDeviceGroup;
-  const std::string mSystemDevice;
-  const std::string mDensity;
-  const std::string mInitialStatus;
-  const std::string mControlMethod;
-  const std::string mDevType;
+  std::string mUnitName;
+  std::string mDeviceGroup;
+  std::string mSystemDevice;
+  std::string mDensity;
+  std::string mInitialStatus;
+  std::string mLibraryDriveName;
+  std::string mDevType;
 
   /**
    * Constructor.
@@ -54,7 +54,7 @@ struct TpconfigLine {
     const std::string &systemDevice,
     const std::string &density,
     const std::string &initialStatus,
-    const std::string &controlMethod,
+    const std::string &libraryDriveName,
     const std::string &devType) throw();
 }; // struct TpconfigLine
 

@@ -150,7 +150,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logTpconfigLine(
     log::Param("systemDevice", line.mSystemDevice),
     log::Param("density", line.mDensity),
     log::Param("initialStatus", line.mInitialStatus),
-    log::Param("controlMethod", line.mControlMethod),
+    log::Param("libraryDriveName", line.mLibraryDriveName),
     log::Param("devType", line.mDevType)};
   m_log(LOG_INFO, "TPCONFIG line", params);
 }
