@@ -654,9 +654,9 @@ void castor::tape::utils::extractTpconfigDriveNames(
 
     // If the drive unit name of the data-line is not already in the list of
     // drive-unit names, then add it
-    if(std::find(driveNames.begin(), driveNames.end(), itor->mUnitName) ==
+    if(std::find(driveNames.begin(), driveNames.end(), itor->unitName) ==
       driveNames.end()) {
-      driveNames.push_back(itor->mUnitName);
+      driveNames.push_back(itor->unitName);
     }
   }
 }
