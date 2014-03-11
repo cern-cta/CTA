@@ -208,6 +208,22 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::
 }
 
 //-----------------------------------------------------------------------------
+// getUnitNames
+//-----------------------------------------------------------------------------
+std::list<std::string>
+  castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNames()
+  const throw(castor::exception::Exception) {
+  std::list<std::string> unitNames;
+
+  for(DriveMap::const_iterator itor = m_drives.begin();
+    itor != m_drives.end(); itor++) {
+    unitNames.push_back(itor->first);
+  }
+
+  return unitNames;
+}
+
+//-----------------------------------------------------------------------------
 // getDgn
 //-----------------------------------------------------------------------------
 const std::string &castor::tape::tapeserver::daemon::DriveCatalogue::getDgn(

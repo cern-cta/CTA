@@ -20,6 +20,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
@@ -135,4 +136,26 @@ void castor::tape::tapeserver::daemon::VdqmImpl::checkJobMsgLen(
        ": maxLen=" << maxLen << " len=" << len;
     throw ex;
   }
+}
+
+//------------------------------------------------------------------------------
+// setTapeDriveStatusDown
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusDown(
+  const std::string &unitName, const std::string &dgn) 
+  throw(castor::exception::Exception) {
+  castor::exception::Internal ex;
+  ex.getMessage() << "VdqmImpl::setTapeDriveStatusDown() is not implemented";
+  throw ex;
+}
+
+//------------------------------------------------------------------------------
+// setTapeDriveStatusUp
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusUp(
+  const std::string &unitName, const std::string &dgn)
+  throw(castor::exception::Exception) {
+  castor::exception::Internal ex;
+  ex.getMessage() << "VdqmImpl::setTapeDriveStatusUp() is not implemented";
+  throw ex;
 }

@@ -96,6 +96,7 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   m_driveCatalogue.populateCatalogue(tpconfigLines);
   daemonizeIfNotRunInForeground();
   blockSignals();
+  registerTapeDrivesWithVdqm();
   setUpReactor();
   mainEventLoop();
 }
@@ -187,6 +188,29 @@ void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const
 }
 
 //------------------------------------------------------------------------------
+// registerTapeDrivesWithVdqm
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDrivesWithVdqm()
+  throw(castor::exception::Exception) {
+  const std::list<std::string> unitNames = m_driveCatalogue.getUnitNames();
+
+  for(std::list<std::string>::const_iterator itor = unitNames.begin();
+    itor != unitNames.end(); itor++) {
+    registerTapeDriveWithVdqm(*itor);
+  }
+}
+
+//------------------------------------------------------------------------------
+// registerTapeDriveWithVdqm
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
+  const std::string &unitName) throw(castor::exception::Exception) {
+  log::Param params[] = {
+    log::Param("unitName", unitName)};
+  m_log(LOG_INFO, "Registering tape drive with vdqm", params);
+}
+
+//------------------------------------------------------------------------------
 // setUpReactor
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
@@ -200,6 +224,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
       ": " << ne.getMessage().str();
     throw ex;
   }
+  {
+    log::Param params[] = {
+      log::Param("listeningPort", TAPE_SERVER_LISTENING_PORT)};
+    m_log(LOG_INFO, "Listening for connections from the vdqmd daemon", params);
+  }
+
   std::auto_ptr<VdqmAcceptHandler> acceptHandler;
   try {
     acceptHandler.reset(new VdqmAcceptHandler(listenSock.get(), m_reactor,
