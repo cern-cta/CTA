@@ -36,11 +36,9 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::rmc::RmcDaemon::RmcDaemon(std::ostream &stdOut,
-  std::ostream &stdErr, log::Logger &logger)
+  std::ostream &stdErr, log::Logger &log)
   throw(castor::exception::Exception):
-  castor::server::BaseDaemon(logger),
-  m_stdOut(stdOut),
-  m_stdErr(stdErr) {
+  castor::server::Daemon(stdOut, stdErr, log) {
 }
 
 //------------------------------------------------------------------------------
@@ -67,7 +65,7 @@ int castor::tape::rmc::RmcDaemon::main(const int argc,
     castor::log::Param params[] = {
       log::Param("Message", ex.getMessage().str()),
       log::Param("Code"   , ex.code()            )};
-    logMsg(LOG_ERR, "Exiting due to an exception", params);
+    m_log(LOG_ERR, "Exiting due to an exception", params);
 
     return 1;
   }
@@ -82,17 +80,6 @@ int castor::tape::rmc::RmcDaemon::exceptionThrowingMain(
   const int argc, char **argv) throw(castor::exception::Exception) {
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
-
-  // Display usage message and exit if help option found on command-line
-  if(m_cmdLine.help) {
-    m_stdOut << std::endl;
-    castor::tape::rmc::RmcDaemon::usage(m_stdOut);
-    m_stdOut << std::endl;
-    return 0;
-  }
-
-  // Pass the foreground option to the super class BaseDaemon
-  m_foreground = m_cmdLine.foreground;
 
 /*
 
@@ -166,24 +153,7 @@ int castor::tape::rmc::RmcDaemon::exceptionThrowingMain(
     driveNames.size());
 */
 
-  // Start the threads
-  start();
-
   return 0;
-}
-
-//------------------------------------------------------------------------------
-// usage
-//------------------------------------------------------------------------------
-void castor::tape::rmc::RmcDaemon::usage(std::ostream &os) throw() {
-  os << "\nUsage: rmcd [options]\n"
-    "\n"
-    "where options can be:\n"
-    "\n"
-    "\t-f, --foreground Remain in the Foreground\n"
-    "\t-h, --help       Print this help and exit\n"
-    "\n"
-    "Comments to: Castor.Support@cern.ch" << std::endl;
 }
 
 //------------------------------------------------------------------------------
@@ -195,7 +165,7 @@ void castor::tape::rmc::RmcDaemon::logStartOfDaemon(
 
   log::Param params[] = {
     log::Param("argv", concatenatedArgs)};
-  logMsg(LOG_INFO, "rmcd daemon started", params);
+  m_log(LOG_INFO, "rmcd daemon started", params);
 }
 
 //------------------------------------------------------------------------------
@@ -213,74 +183,6 @@ std::string castor::tape::rmc::RmcDaemon::argvToString(const int argc,
     str += argv[i];
   }
   return str;
-}
-
-//------------------------------------------------------------------------------
-// parseCommandLine
-//------------------------------------------------------------------------------
-void castor::tape::rmc::RmcDaemon::parseCommandLine(int argc, char *argv[]) {
-  const std::string task = "parse command-line arguments";
-
-  static struct option longopts[] = {
-    {"foreground", 0, NULL, 'f'},
-    {"help"      , 0, NULL, 'h'},
-    {NULL        , 0, NULL,   0}
-  };
-  char c = '\0';
-
-  // Prevent getopt() from printing an error message if it does not recognize
-  // an option character
-  opterr = 0;
-  while ((c = getopt_long(argc, argv, "fh", longopts, NULL)) != -1) {
-    switch (c) {
-    case 'f':
-      m_cmdLine.foreground = true;
-      break;
-    case 'h':
-      m_cmdLine.help = true;
-      break;
-    case ':':
-      {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "Failed to " << task <<
-          ": The -" << (char)optopt << " option requires a parameter";
-        throw ex;
-      }
-      break;
-    case '?':
-      {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "Failed to " << task;
-
-        if(optopt == 0) {
-          ex.getMessage() << ": Unknown command-line option";
-        } else {
-          ex.getMessage() << ": Unknown command-line option: -" << (char)optopt;
-        }
-        throw ex;
-      }
-      break;
-    default:
-      {
-        castor::exception::Internal ex;
-        ex.getMessage() << "Failed to " << task <<
-          ": getopt_long returned the following unknown value: 0x" <<
-          std::hex << (int)c;
-        throw ex;
-      }
-    } // switch (c)
-  } // while ((c = getopt_long( ... )) != -1)
-
-  // Calculate the number of non-option ARGV-elements
-  const int nbArgs = argc - optind;
-
-  if(0 != nbArgs) {
-    castor::exception::InvalidNbArguments ex;
-    ex.getMessage() << "Failed to " << task <<
-      ": Invalid number of command-line arguments: expected=0 actual=" <<
-      nbArgs;
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------

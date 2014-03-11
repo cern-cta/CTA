@@ -32,7 +32,7 @@
 #include "castor/exception/InvalidNbArguments.hpp"
 #include "castor/exception/MissingOperand.hpp"
 #include "castor/log/Logger.hpp"
-#include "castor/server/BaseDaemon.hpp"
+#include "castor/server/Daemon.hpp"
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/tape/rmc/RmcdCmdLine.hpp"
 
@@ -49,7 +49,7 @@ namespace rmc    {
 /**
  * The remote media-changer daemon.
  */
-class RmcDaemon : public castor::server::BaseDaemon {
+class RmcDaemon : public castor::server::Daemon {
 
 public:
 
@@ -60,7 +60,7 @@ public:
    * @param stdErr Stream representing standard error.
    * @param log The object representing the API of the CASTOR logging system.
    */
-  RmcDaemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &logger)
+  RmcDaemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &log)
     throw(castor::exception::Exception);
 
   /**
@@ -101,37 +101,6 @@ protected:
    */
   std::string argvToString(const int argc, const char *const *const argv)
     throw();
-
-  /**
-   * Parses the specified command-line arguments and returns the result.
-   *
-   * @param argc Argument count from the executable's entry function: main().
-   * @param argv Argument vector from the executable's entry function: main().
-   */
-  void parseCommandLine(int argc, char *argv[]);
-
-  /**
-   * Writes the command-line usage message of this daemon onto the
-   * specified output stream.
-   *
-   * @param os Output stream to be written to.
-   */
-  void usage(std::ostream &os) throw();
-
-  /**
-   * Stream representing standard out.
-   */
-  std::ostream &m_stdOut;
-
-  /**
-   * Stream reprsenting standard in.
-   */
-  std::ostream &m_stdErr;
-
-  /**
-   * The results of parsing the command-line.
-   */
-  RmcdCmdLine m_cmdLine;
 
 }; // class RmcDaemon
 
