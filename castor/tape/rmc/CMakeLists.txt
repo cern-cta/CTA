@@ -98,8 +98,14 @@ if (${COMPILE_SERVER} STREQUAL "1")
     set_target_properties (castor-tape-acs-dismount PROPERTIES
       COMPILE_FLAGS -I/usr/include/CDK
       COMPILE_DEFINITIONS LINUX)
-    target_link_libraries (castor-tape-acs-dismount castorcommon castortapeutils
-      ${STK_API_LIB} ${STK_UTL_LIB} ${STK_IPC_LIB} ${STK_CL_LIB})
+    target_link_libraries (castor-tape-acs-dismount
+      castorclient
+      castorcommon
+      castortapeutils
+      ${STK_API_LIB}
+      ${STK_UTL_LIB}
+      ${STK_IPC_LIB}
+      ${STK_CL_LIB})
     install (TARGETS castor-tape-acs-dismount
       DESTINATION ${CASTOR_DEST_LIB_DIR})
     CastorInstallExeManPage(castor-tape-acs-dismount)
@@ -120,8 +126,14 @@ if (${COMPILE_SERVER} STREQUAL "1")
     set_target_properties (castor-tape-acs-mount PROPERTIES
       COMPILE_FLAGS -I/usr/include/CDK
       COMPILE_DEFINITIONS LINUX)
-    target_link_libraries (castor-tape-acs-mount castorcommon castortapeutils
-      ${STK_API_LIB} ${STK_UTL_LIB} ${STK_IPC_LIB} ${STK_CL_LIB})
+    target_link_libraries (castor-tape-acs-mount
+      castorclient
+      castorcommon
+      castortapeutils
+      ${STK_API_LIB}
+      ${STK_UTL_LIB}
+      ${STK_IPC_LIB}
+      ${STK_CL_LIB})
     install (TARGETS castor-tape-acs-mount DESTINATION ${CASTOR_DEST_LIB_DIR})
     CastorInstallExeManPage(castor-tape-acs-mount)
 
@@ -139,8 +151,13 @@ if (${COMPILE_SERVER} STREQUAL "1")
       Cmd.cpp
       DebugBuf.cpp)
     add_executable (castor-tape-acs-queryvolume ${ACS_QUERYVOLUME_SRC_FILES})
-    target_link_libraries (castor-tape-acs-queryvolume castorcommon
-      castortapeutils ${STK_API_LIB} ${STK_UTL_LIB} ${STK_IPC_LIB}
+    target_link_libraries (castor-tape-acs-queryvolume
+      castorclient
+      castorcommon
+      castortapeutils
+      ${STK_API_LIB}
+      ${STK_UTL_LIB}
+      ${STK_IPC_LIB}
       ${STK_CL_LIB})
     set_target_properties (castor-tape-acs-queryvolume PROPERTIES
       COMPILE_FLAGS -I/usr/include/CDK
