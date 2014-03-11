@@ -94,14 +94,14 @@ public:
    * @param mb: the memory block in question
    */
   virtual void pushDataBlock(MemBlock *mb) {
-    TapeMutexLocker ml(&m_producerProtection);
+    castor::tape::threading::MutexLocker ml(&m_producerProtection);
     m_fifo.pushDataBlock(mb);
   }
   
   /**
    * Destructor
    */
-  virtual ~TapeWriteFileTask() { TapeMutexLocker ml(&m_producerProtection); }
+  virtual ~TapeWriteFileTask() { castor::tape::threading::MutexLocker ml(&m_producerProtection); }
   
 private:
   
@@ -123,7 +123,7 @@ private:
   /**
    * Mutex forcing serial access to the fifo
    */
-  TapeMutex m_producerProtection;
+  castor::tape::threading::Mutex m_producerProtection;
   
   /**
    * The number of memory blocks to be used

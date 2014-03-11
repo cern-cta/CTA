@@ -25,8 +25,8 @@
 #pragma once
 
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
-#include "castor/tape/tapeserver/daemon/TapeQueue.hpp"
-#include "castor/tape/tapeserver/daemon/TapeThreading.hpp"
+#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
+#include "castor/tape/tapeserver/threading/Threading.hpp"
 #include <vector>
 
 class DiskReadThreadPool {
@@ -67,11 +67,11 @@ private:
   class endOfSession: public DiskReadTask {
     virtual bool endOfWork() { return true; }
   };
-  class DiskReadWorkerThread: private TapeThread {
+  class DiskReadWorkerThread: private castor::tape::threading::Thread {
   public:
     DiskReadWorkerThread(DiskReadThreadPool & manager): m_manager(manager) {}
-    void startThreads() { TapeThread::start(); }
-    void waitThreads() { TapeThread::wait(); }
+    void startThreads() { start(); }
+    void waitThreads() { wait(); }
   private:
     DiskReadThreadPool & m_manager;
     virtual void run() {
@@ -84,6 +84,6 @@ private:
       }
     }
   };
-  BlockingQueue<DiskReadTask *> m_tasks;
+  castor::tape::threading::BlockingQueue<DiskReadTask *> m_tasks;
   std::vector<DiskReadWorkerThread *> m_threads;
 };

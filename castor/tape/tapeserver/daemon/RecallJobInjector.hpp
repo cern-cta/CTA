@@ -42,11 +42,11 @@ public:
           m_tapeReader(tapeReader), m_diskWriter(diskWriter), 
 	  m_tapeGateway(tapeGateway) {}
   
-  ~RecallJobInjector() { TapeMutexLocker ml(&m_producerProtection); }
+  ~RecallJobInjector() { castor::tape::threading::MutexLocker ml(&m_producerProtection); }
   
   virtual void requestInjection(int maxFiles, int maxBlocks, bool lastCall) {
     printf("RecallJobInjector::requestInjection()\n");
-    TapeMutexLocker ml(&m_producerProtection);
+    castor::tape::threading::MutexLocker ml(&m_producerProtection);
     m_queue.push(Request(maxFiles, maxBlocks, lastCall));
   }
   void waitThreads() {
@@ -64,7 +64,7 @@ private:
       m_tapeReader.push(trt);
     }
   }
-  class WorkerThread: public TapeThread {
+  class WorkerThread: public castor::tape::threading::Thread {
   public:
     WorkerThread(RecallJobInjector & rji): m_parent(rji) {}
     void run() {
@@ -91,7 +91,7 @@ private:
           Request req = m_parent.m_queue.tryPop();
           printf("In RecallJobInjector::WorkerThread::run(): popping extra request (lastCall=%d)\n", req.lastCall);
         }
-      } catch (BlockingQueue<Request>::noMore) {
+      } catch (castor::tape::threading::noMore) {
         printf("In RecallJobInjector::WorkerThread::run(): Drained the request queue. We're now empty. Finishing.\n");
       }
     }
@@ -111,6 +111,6 @@ private:
   TapeReadSingleThread & m_tapeReader;
   DiskWriteThreadPool & m_diskWriter;
   MockTapeGateway & m_tapeGateway;
-  TapeMutex m_producerProtection;
-  BlockingQueue<Request> m_queue;
+  castor::tape::threading::Mutex m_producerProtection;
+  castor::tape::threading::BlockingQueue<Request> m_queue;
 };

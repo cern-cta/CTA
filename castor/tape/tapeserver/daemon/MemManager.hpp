@@ -26,8 +26,8 @@
 
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/tape/tapeserver/daemon/MemManagerClient.hpp"
-#include "castor/tape/tapeserver/daemon/TapeQueue.hpp"
-#include "castor/tape/tapeserver/daemon/TapeThreading.hpp"
+#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
+#include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/exception/Exception.hpp"
 #include <iostream>
 
@@ -35,7 +35,7 @@
  * The memory manager is responsible for allocating memory blocks and distributing
  * the free ones around to any class in need.
  */
-class MemoryManager: private TapeThread {
+class MemoryManager: private castor::tape::threading::Thread {
 public:
   
   /**
@@ -61,14 +61,14 @@ public:
    * Start serving clients (in the dedicated thread)
    */
   void startThreads() throw(castor::exception::Exception) {
-    TapeThread::start();
+    castor::tape::threading::Thread::start();
   }
   
   /**
    * Waiting for clients to finish (in the dedicated thread)
    */
   void waitThreads() throw(castor::exception::Exception) {
-    TapeThread::wait();
+    castor::tape::threading::Thread::wait();
   }
   
   /**
@@ -102,7 +102,7 @@ public:
   ~MemoryManager() throw() {
     // Make sure the thread is finished: this should be done by the caller,
     // who should have called waitThreads.
-    // TapeThread::wait();
+    // castor::tape::threading::Thread::wait();
     // we expect to be called after all users are finished. Just "free"
     // the memory blocks we still have.
     try {
@@ -110,7 +110,7 @@ public:
         m_freeBlocks.tryPop();
       }
     }
-    catch (BlockingQueue<MemBlock>::noMore) {
+    catch (castor::tape::threading::noMore) {
       //done
     } 
   }
@@ -134,13 +134,13 @@ private:
   /**
    * Container for the free blocks
    */
-  BlockingQueue<MemBlock *> m_freeBlocks;
+  castor::tape::threading::BlockingQueue<MemBlock *> m_freeBlocks;
   
   /**
    * The client queue: we will feed them as soon as blocks
    * become free. This is done in a dedicated thread.
    */
-  BlockingQueue<MemoryManagerClient *> m_clientQueue;
+   castor::tape::threading::BlockingQueue<MemoryManagerClient *> m_clientQueue;
 
   /**
    * Thread routine: pops a client and provides him blocks until he is happy!

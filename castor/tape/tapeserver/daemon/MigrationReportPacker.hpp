@@ -25,7 +25,7 @@
 #pragma once
 
 #include "castor/tape/tapeserver/daemon/MockTapeGateway.hpp"
-#include "castor/tape/tapeserver/daemon/TapeQueue.hpp"
+#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationJob.hpp"
 #include <list>
 
@@ -36,24 +36,24 @@ public:
   void reportCompletedJob(MigrationJob mj) {
     Report rep;
     rep.migrationJob = mj;
-    TapeMutexLocker ml(&m_producterProtection);
+    castor::tape::threading::MutexLocker ml(&m_producterProtection);
     m_fifo.push(rep);
   }
   void reportFlush() {
     Report rep;
     rep.flush = true;
-    TapeMutexLocker ml(&m_producterProtection);
+    castor::tape::threading::MutexLocker ml(&m_producterProtection);
     m_fifo.push(rep);
   }
   void reportEndOfSession() {
     Report rep;
     rep.EoSession = true;
-    TapeMutexLocker ml(&m_producterProtection);
+    castor::tape::threading::MutexLocker ml(&m_producterProtection);
     m_fifo.push(rep);
   }
   void startThreads() { m_workerThread.start(); }
   void waitThread() { m_workerThread.wait(); }
-  virtual ~MigrationReportPacker() { TapeMutexLocker ml(&m_producterProtection); }
+  virtual ~MigrationReportPacker() { castor::tape::threading::MutexLocker ml(&m_producterProtection); }
 private:
   class Report {
   public:
@@ -63,7 +63,7 @@ private:
     bool EoSession;
     MigrationJob migrationJob;
   };
-  class WorkerThread: public TapeThread {
+  class WorkerThread: public castor::tape::threading::Thread {
   public:
     WorkerThread(MigrationReportPacker& parent): m_parent(parent) {}
     void run() {
@@ -85,7 +85,7 @@ private:
   } m_workerThread;
   friend class WorkerThread;
   MockTapeGateway & m_tapeGateway;
-  BlockingQueue<Report> m_fifo;
+  castor::tape::threading::BlockingQueue<Report> m_fifo;
   std::list<MigrationJob> m_currentReport;
-  TapeMutex m_producterProtection;
+  castor::tape::threading::Mutex m_producterProtection;
 };

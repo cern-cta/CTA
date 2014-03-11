@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/TapeQueue.hpp"
+#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
-#include "castor/tape/tapeserver/daemon/TapeThreading.hpp"
+#include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include <iostream>
 #include <stdio.h>
@@ -43,12 +43,12 @@ private:
   class endOfSession: public TapeReadTask {
     virtual bool endOfWork() { return true; }
   };
-  class TapeReadWorkerThread : private TapeThread {
+  class TapeReadWorkerThread : private castor::tape::threading::Thread {
   public:
     TapeReadWorkerThread(TapeReadSingleThread & manager): m_manager(manager) {}
-    void startThreads() { TapeThread::start(); }
+    void startThreads() { castor::tape::threading::Thread::start(); }
     void waitThreads() {
-      TapeThread::wait();
+      castor::tape::threading::Thread::wait();
     }
   private:
     TapeReadSingleThread & m_manager;
@@ -67,5 +67,5 @@ private:
   } m_workerThread;
   friend class TapeReadWorkerThread;
   castor::tape::drives::DriveInterface & m_drive;
-  BlockingQueue<TapeReadTask *> m_tasks;
+  castor::tape::threading::BlockingQueue<TapeReadTask *> m_tasks;
 };

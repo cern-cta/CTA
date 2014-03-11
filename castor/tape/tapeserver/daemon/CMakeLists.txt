@@ -19,7 +19,7 @@ target_link_libraries(tapeserverd
 
 add_executable(tapeserver-mm tapeserver-mm.cpp)
 
-target_link_libraries(tapeserver-mm TapeDrive Exception SCSI System Utils File castorcommon castorclient)
+target_link_libraries(tapeserver-mm TapeDrive Exception SCSI System Utils File castorcommon castorclient castorTapeServerThreading)
 
 add_library(tapeserver ClientInterface.cpp MountSession.cpp)
 

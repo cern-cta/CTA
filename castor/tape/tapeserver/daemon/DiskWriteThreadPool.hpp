@@ -25,8 +25,8 @@
 #pragma once
 
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
-#include "castor/tape/tapeserver/daemon/TapeQueue.hpp"
-#include "castor/tape/tapeserver/daemon/TapeThreading.hpp"
+#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
+#include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/daemon/JobInjector.hpp"
 #include <vector>
 
@@ -61,7 +61,7 @@ public:
   }
   void push(DiskWriteTask *t) { 
     {
-      TapeMutexLocker ml(&m_counterProtection);
+      castor::tape::threading::MutexLocker ml(&m_counterProtection);
       m_filesQueued += t->files();
       m_blocksQueued += t->blocks();
     }
@@ -93,7 +93,7 @@ private:
   DiskWriteTask * popAndRequestMoreJobs() {
     DiskWriteTask * ret = m_tasks.pop();
     {
-      TapeMutexLocker ml(&m_counterProtection);
+      castor::tape::threading::MutexLocker ml(&m_counterProtection);
       /* We are about to go to empty: request a last call job injection */
       if(m_filesQueued == 1 && ret->files()) {
 	printf("In DiskWriteTask::popAndRequestMoreJobs(), requesting last call: files=%d, blocks=%d, ret->files=%d, ret->blocks=%d, maxFiles=%d, maxBlocks=%d\n", 
@@ -115,11 +115,11 @@ private:
   class endOfSession: public DiskWriteTask {
     virtual bool endOfWork() { return true; }
   };
-  class DiskWriteWorkerThread: private TapeThread {
+  class DiskWriteWorkerThread: private castor::tape::threading::Thread {
   public:
     DiskWriteWorkerThread(DiskWriteThreadPool & manager): m_manager(manager) {}
-    void startThreads() { TapeThread::start(); }
-    void waitThreads() { TapeThread::wait(); }
+    void startThreads() { castor::tape::threading::Thread::start(); }
+    void waitThreads() { castor::tape::threading::Thread::wait(); }
   private:
     DiskWriteThreadPool & m_manager;
     virtual void run() {
@@ -135,9 +135,9 @@ private:
       }
     }
   };
-  BlockingQueue<DiskWriteTask *> m_tasks;
+  castor::tape::threading::BlockingQueue<DiskWriteTask *> m_tasks;
   std::vector<DiskWriteWorkerThread *> m_threads;
-  TapeMutex m_counterProtection;
+  castor::tape::threading::Mutex m_counterProtection;
   JobInjector * m_jobInjector;
   int m_filesQueued;
   int m_blocksQueued;

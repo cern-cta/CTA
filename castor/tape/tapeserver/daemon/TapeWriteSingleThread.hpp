@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/TapeQueue.hpp"
+#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
-#include "castor/tape/tapeserver/daemon/TapeThreading.hpp"
+#include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationJob.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
@@ -48,12 +48,12 @@ private:
   class endOfSession: public TapeWriteTask {
     virtual bool endOfWork() { return true; }
   };
-  class TapeWriteWorkerThread : private TapeThread {
+  class TapeWriteWorkerThread : private castor::tape::threading::Thread {
   public:
     TapeWriteWorkerThread(TapeWriteSingleThread & manager): m_manager(manager) {}
-    void startThreads() { TapeThread::start(); }
+    void startThreads() { start(); }
     void waitThreads() {
-      TapeThread::wait();
+      wait();
     }
   private:
     TapeWriteSingleThread & m_manager;
@@ -87,7 +87,7 @@ private:
   } m_workerThread;
   friend class TapeWriteWorkerThread;
   castor::tape::drives::DriveInterface & m_drive;
-  BlockingQueue<TapeWriteTask *> m_tasks;
+  castor::tape::threading::BlockingQueue<TapeWriteTask *> m_tasks;
   int m_filesBeforeFlush;
   int m_blocksBeforeFlush;
   MigrationReportPacker & m_reportPacker;

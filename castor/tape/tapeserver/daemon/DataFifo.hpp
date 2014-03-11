@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/TapeQueue.hpp"
+#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/tape/tapeserver/daemon/MemManagerClient.hpp"
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
@@ -40,14 +40,14 @@ public:
   DataFifo(int bn) throw() : m_blocksNeeded(bn), m_freeBlocksProvided(0),
   m_dataBlocksPushed(0), m_dataBlocksPopped(0) {};
   
-  ~DataFifo() throw() { TapeMutexLocker ml(&m_freeBlockProviderProtection); }
+  ~DataFifo() throw() { castor::tape::threading::MutexLocker ml(&m_freeBlockProviderProtection); }
 
   /* Memory manager client interface implementation */
   virtual bool provideBlock(MemBlock *mb) throw(MemException) {
     bool ret;
-    TapeMutexLocker ml(&m_freeBlockProviderProtection);
+    castor::tape::threading::MutexLocker ml(&m_freeBlockProviderProtection);
     {
-      TapeMutexLocker ml(&m_countersMutex);
+      castor::tape::threading::MutexLocker ml(&m_countersMutex);
       if (m_freeBlocksProvided >= m_blocksNeeded)
         throw MemException("DataFifo overflow on free blocks");
       m_freeBlocksProvided++;
@@ -65,13 +65,13 @@ public:
 
   void pushDataBlock(MemBlock *mb) throw(castor::exception::Exception) {
     {
-      TapeMutexLocker ml(&m_countersMutex);
+      castor::tape::threading::MutexLocker ml(&m_countersMutex);
       if (m_dataBlocksPushed >= m_blocksNeeded)
         throw MemException("DataFifo overflow on data blocks");
     }
     m_dataBlocks.push(mb);
     {
-        TapeMutexLocker ml(&m_countersMutex);
+        castor::tape::threading::MutexLocker ml(&m_countersMutex);
         m_dataBlocksPushed++;
     }
   }
@@ -79,7 +79,7 @@ public:
   MemBlock * popDataBlock() throw(castor::exception::Exception) {
     MemBlock *ret = m_dataBlocks.pop();
     {
-      TapeMutexLocker ml(&m_countersMutex);
+      castor::tape::threading::MutexLocker ml(&m_countersMutex);
       m_dataBlocksPopped++;
     }
     return ret;
@@ -87,16 +87,17 @@ public:
 
   bool finished() throw() {
     // No need to lock because only one int variable is read.
+    //TODO : are we sure the operation is atomic ? It is plateform dependant
     return m_dataBlocksPopped >= m_blocksNeeded;
   }
   
 private:
-  TapeMutex m_countersMutex;
-  TapeMutex m_freeBlockProviderProtection;
+  castor::tape::threading::Mutex m_countersMutex;
+  castor::tape::threading::Mutex m_freeBlockProviderProtection;
   int m_blocksNeeded;
   volatile int m_freeBlocksProvided;
   volatile int m_dataBlocksPushed;
   volatile int m_dataBlocksPopped;
-  BlockingQueue<MemBlock *> m_freeBlocks;
-  BlockingQueue<MemBlock *> m_dataBlocks;
+  castor::tape::threading::BlockingQueue<MemBlock *> m_freeBlocks;
+  castor::tape::threading::BlockingQueue<MemBlock *> m_dataBlocks;
 };

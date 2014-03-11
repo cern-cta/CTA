@@ -87,19 +87,19 @@ public:
    * @param mb: corresponding memory block
    */
   virtual void pushDataBlock(MemBlock *mb) {
-    TapeMutexLocker ml(&m_producerProtection);
+    castor::tape::threading::MutexLocker ml(&m_producerProtection);
     m_fifo.pushDataBlock(mb);
   }
   
   /**
    * Function used to wait until the end of the write
    */
-  virtual void waitCompletion() { volatile TapeMutexLocker ml(&m_producerProtection); }
+  virtual void waitCompletion() { volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); }
   
   /**
    * Destructor (also waiting for the end of the write operation)
    */
-  virtual ~DiskWriteFileTask() { volatile TapeMutexLocker ml(&m_producerProtection); }
+  virtual ~DiskWriteFileTask() { volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); }
   
 private:
   
@@ -126,5 +126,5 @@ private:
   /**
    * Mutex forcing serial access to the fifo
    */
-  TapeMutex m_producerProtection;
+  castor::tape::threading::Mutex m_producerProtection;
 };
