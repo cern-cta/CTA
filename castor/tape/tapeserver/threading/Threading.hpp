@@ -118,7 +118,7 @@ namespace threading {
    */
   class UncaughtExceptionInThread: public castor::tape::Exception {
   public:
-    UncaughtExceptionInThread(std::string w= ""): castor::tape::Exception(w) {}
+    UncaughtExceptionInThread(const std::string& w= ""): castor::tape::Exception(w) {}
   };
 
   /**
