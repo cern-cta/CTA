@@ -25,12 +25,14 @@
 #include "castor/io/DummyPollReactor.hpp"
 #include "castor/log/DummyLogger.hpp"
 #include "castor/tape/tapeserver/daemon/DummyVdqm.hpp"
-#include "castor/tape/tapeserver/daemon/TestingTapeDaemon.hpp"
+#include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <gtest/gtest.h>
 #include <iostream>
+#include <memory>
+#include <sstream>
 
 namespace unitTests {
 
@@ -44,7 +46,9 @@ protected:
   }
 };
 
-TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, checkGoodTpconfigDgns) {
+TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
+  using namespace castor::tape::tapeserver::daemon;
+
   std::ostringstream stdOut;
   std::ostringstream stdErr;
   const std::string programName = "unittests";
@@ -58,73 +62,12 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, checkGoodTpconfigDgns) {
   castor::utils::copyString(job.dgn, "DGN");
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
-  castor::tape::tapeserver::daemon::DummyVdqm vdqm(job);
+  DummyVdqm vdqm(job);
   castor::io::DummyPollReactor reactor;
-  castor::tape::tapeserver::daemon::TestingTapeDaemon
-    daemon(stdOut, stdErr, log, vdqm, reactor);
+  std::auto_ptr<TapeDaemon> daemon;
 
-  castor::tape::utils::TpconfigLines lines;
-  lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV", "DEN", "down", "CONTROLMETHOD", "DEVTYPE"));
-  lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT2", "DGN", "DEV", "DEN", "down", "CONTROLMETHOD", "DEVTYPE"));
-  ASSERT_NO_THROW(daemon.checkTpconfigDgns(lines));
-}
-
-TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, checkTpconfigDgnMismatch) {
-  std::ostringstream stdOut;
-  std::ostringstream stdErr;
-  const std::string programName = "unittests";
-  castor::log::DummyLogger log(programName);
-  castor::tape::legacymsg::RtcpJobRqstMsgBody job;
-  job.volReqId = 1111;
-  job.clientPort = 2222;
-  job.clientEuid = 3333;
-  job.clientEgid = 4444;
-  castor::utils::copyString(job.clientHost, "CLIENT_HOST");
-  castor::utils::copyString(job.dgn, "DGN");
-  castor::utils::copyString(job.driveUnit, "UNIT");
-  castor::utils::copyString(job.clientUserName, "USER");
-  castor::tape::tapeserver::daemon::DummyVdqm vdqm(job);
-  castor::io::DummyPollReactor reactor;
-  castor::tape::tapeserver::daemon::TestingTapeDaemon
-    daemon(stdOut, stdErr, log, vdqm, reactor);
-
-  castor::tape::utils::TpconfigLines lines;
-  lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN1", "DEV", "DEN1", "down", "CONTROLMETHOD", "DEVTYPE"));
-  lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN2", "DEV", "DEN2", "down", "CONTROLMETHOD", "DEVTYPE"));
-  ASSERT_THROW(daemon.checkTpconfigDgns(lines), castor::exception::Exception);
-}
-
-TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest,
-  checkTpconfigInitialStateMismatch) {
-  std::ostringstream stdOut;
-  std::ostringstream stdErr;
-  const std::string programName = "unittests";
-  castor::log::DummyLogger log(programName);
-  castor::tape::legacymsg::RtcpJobRqstMsgBody job;
-  job.volReqId = 1111;
-  job.clientPort = 2222;
-  job.clientEuid = 3333;
-  job.clientEgid = 4444;
-  castor::utils::copyString(job.clientHost, "CLIENT_HOST");
-  castor::utils::copyString(job.dgn, "DGN");
-  castor::utils::copyString(job.driveUnit, "UNIT");
-  castor::utils::copyString(job.clientUserName, "USER");
-  castor::tape::tapeserver::daemon::DummyVdqm vdqm(job);
-  castor::io::DummyPollReactor reactor;
-  castor::tape::tapeserver::daemon::TestingTapeDaemon
-    daemon(stdOut, stdErr, log, vdqm, reactor);
-
-  castor::tape::utils::TpconfigLines lines;
-  lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV", "DEN1", "down", "CONTROLMETHOD", "DEVTYPE"));
-  lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV", "DEN2", "up", "CONTROLMETHOD", "DEVTYPE"));
-  ASSERT_THROW(daemon.checkTpconfigInitialStates(lines),
-    castor::exception::Exception);
+  ASSERT_NO_THROW(daemon.reset(
+    new TapeDaemon(stdOut, stdErr, log, vdqm, reactor)));
 }
 
 } // namespace unitTests
