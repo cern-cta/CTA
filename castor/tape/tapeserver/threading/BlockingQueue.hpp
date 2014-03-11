@@ -19,7 +19,12 @@ namespace threading {
 /**
  * Exception class used to signal there are no more elements
 */
-class noMore : public castor::tape::Exception{};
+class noMore : public castor::tape::Exception
+{
+public:
+  noMore():Exception("")
+  {} 
+};
   
 /***
  * This simple class provides a thread-safe blocking queue
@@ -56,7 +61,7 @@ public:
    * if there are no elements, throws a no noMoreElements exception 
    */
   C tryPop() {
-    if (!m_sem.tryAcquire()) throw noMoreElements();
+    if (!m_sem.tryAcquire()) throw noMore();
     return popCriticalSection();
   }
   
