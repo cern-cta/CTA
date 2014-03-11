@@ -2500,6 +2500,70 @@ XrdxCastor2Fs::chmod(const char*         path,
 
 
 //------------------------------------------------------------------------------
+// Obtain checksum information for a file.
+//------------------------------------------------------------------------------
+int
+XrdxCastor2Fs::chksum(csFunc Func,
+                      const char* csName,
+                      const char* path,
+                      XrdOucErrInfo& error,
+                      const XrdSecEntity* client,
+                      const char* opaque)
+{
+  xcastor_debug("path=%s", path);
+  static const char* epname = "exists";
+  XrdOucEnv chksum_env(opaque);
+  AUTHORIZE(client, &chksum_env, AOP_Stat, "chksum", path, error);
+  char buff[MAXPATHLEN + 8];
+
+  // Verify csName and get its size
+  if (Func == XrdSfsFileSystem::csSize)
+  {
+    if ((strlen(csName) == strlen("adler32")) &&
+        (strncmp(csName, "adler32", strlen(csName)) == 0))
+    {
+      error.setErrCode(4);
+      return SFS_OK;
+    }
+    else
+    {
+      strcpy(buff, csName);
+      strcat(buff, " checksum not supported");
+      error.setErrInfo(ENOTSUP, buff);
+      return SFS_ERROR;
+    }
+  }
+  else if ((Func == XrdSfsFileSystem::csGet) || (Func == XrdSfsFileSystem::csCalc))
+  {
+    struct Cns_filestatcs fstat;
+    XrdOucString map_path = XrdxCastor2Fs::NsMapping(path);
+
+    if (map_path == "")
+    {
+      error.setErrInfo(ENOMEDIUM, "no mapping for file");
+      return SFS_ERROR;
+    }
+
+    if (!XrdxCastor2FsUFS::Statfn(map_path.c_str(), &fstat))
+    {
+      // Return precomputed checksum value
+      strncpy(buff, fstat.csumvalue, strlen(fstat.csumvalue) + 1);
+      error.setErrInfo(0, buff);
+      return SFS_OK;
+    }
+    else
+    {
+      error.setErrInfo(EINVAL, "no such file");
+      return SFS_ERROR;
+    }
+  }
+
+  error.setErrInfo(ENOTSUP, "operation not supported");
+  return SFS_ERROR;
+}
+
+
+//------------------------------------------------------------------------------
 // Determine if file exists
 //------------------------------------------------------------------------------
 int
