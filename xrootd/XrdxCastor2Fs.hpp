@@ -572,6 +572,34 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
 
 
     //--------------------------------------------------------------------------
+    //! Obtain checksum information for a file.
+    //!
+    //! @param  Func   - The checksum operation to be performed:
+    //!                  csCalc  - (re)calculate and return the checksum value
+    //!                  csGet   - return the existing checksum value, if any
+    //!                  csSize  - return the size of the checksum value that
+    //!                            corresponds to csName (path may be null).
+    //! @param  csName - The name of the checksum value wanted.
+    //! @param  path   - Pointer to the path of the file in question.
+    //! @param  eInfo  - The object where error info or results are to be returned.
+    //! @param  client - Client's identify (see common description).
+    //! @param  opaque - Path's CGI information (see common description).
+    //!
+    //! @return One of SFS_OK, SFS_ERROR, or SFS_REDIRECT. When SFS_OK is returned,
+    //!         eInfo should contain results, as follows:
+    //!         csCalc/csGet eInfo.message - null terminated string with the checksum
+    //!         csSize       eInfo.code    - size of binary checksum value.
+    //!
+    //--------------------------------------------------------------------------
+    int chksum(csFunc Func,
+               const char* csName,
+               const char* path,
+               XrdOucErrInfo& eInfo,
+               const XrdSecEntity* client = 0,
+               const char* opaque = 0);
+
+
+    //--------------------------------------------------------------------------
     //! Change the mode on a file or directory
     //!
     //! @param path fully qualified name of the file tob created
