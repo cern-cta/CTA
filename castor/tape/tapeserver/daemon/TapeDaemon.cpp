@@ -145,13 +145,13 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logTpconfigLines(
 void castor::tape::tapeserver::daemon::TapeDaemon::logTpconfigLine(
   const utils::TpconfigLine &line) throw() {
   log::Param params[] = {
-    log::Param("unitName", line.mUnitName),
-    log::Param("deviceGroup", line.mDeviceGroup),
-    log::Param("systemDevice", line.mSystemDevice),
-    log::Param("density", line.mDensity),
-    log::Param("initialStatus", line.mInitialStatus),
-    log::Param("libraryDriveName", line.mLibraryDriveName),
-    log::Param("devType", line.mDevType)};
+    log::Param("unitName", line.unitName),
+    log::Param("deviceGroup", line.deviceGroup),
+    log::Param("systemDevice", line.systemDevice),
+    log::Param("density", line.density),
+    log::Param("initialStatus", line.initialStatus),
+    log::Param("libraryDriveName", line.libraryDriveName),
+    log::Param("devType", line.devType)};
   m_log(LOG_INFO, "TPCONFIG line", params);
 }
 
@@ -165,8 +165,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::checkTpconfigDgns(
 
   for(utils::TpconfigLines::const_iterator lineItor = lines.begin();
     lineItor != lines.end(); lineItor++) {
-    const std::string &unitName = lineItor->mUnitName;
-    const std::string &dgn = lineItor->mDeviceGroup;
+    const std::string &unitName = lineItor->unitName;
+    const std::string &dgn = lineItor->deviceGroup;
 
     UnitName2DgnMap::const_iterator maplet = unitName2Dgn.find(unitName);
 
@@ -197,8 +197,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::checkTpconfigInitialStates(
 
   for(utils::TpconfigLines::const_iterator lineItor = lines.begin();
     lineItor != lines.end(); lineItor++) {
-    const std::string &unitName = lineItor->mUnitName;
-    const std::string &initialState = lineItor->mInitialStatus;
+    const std::string &unitName = lineItor->unitName;
+    const std::string &initialState = lineItor->initialStatus;
 
     UnitName2InitialStateMap::const_iterator maplet =
       unitName2InitialState.find(unitName);
