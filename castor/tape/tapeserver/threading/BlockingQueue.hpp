@@ -16,14 +16,10 @@ namespace castor {
 namespace tape {
 namespace threading {
     
-/*
- * making it a nested class  ensures that BlockingQueue<C>::noMoreElements
- * is different from BlockingQueue<D>::noMoreElements. That way, we have more 
- * informations about the exception because we know what kind of queue thrown it
- * But it makes it more tedious to catch.
- * @TODO : decide what final thing to do
+/**
+ * Exception class used to signal there are no more elements
 */
-class noMoreElements : public std::exception {};
+class noMore : public castor::tape::Exception{};
   
 /***
  * This simple class provides a thread-safe blocking queue
