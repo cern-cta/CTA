@@ -149,7 +149,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logTpconfigLine(
     log::Param("dgn", line.dgn),
     log::Param("devFilename", line.devFilename),
     log::Param("density", line.density),
-    log::Param("initialStatus", line.initialStatus),
+    log::Param("initialState", line.initialState),
     log::Param("positionInLibrary", line.positionInLibrary),
     log::Param("devType", line.devType)};
   m_log(LOG_INFO, "TPCONFIG line", params);
@@ -198,7 +198,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::checkTpconfigInitialStates(
   for(utils::TpconfigLines::const_iterator lineItor = lines.begin();
     lineItor != lines.end(); lineItor++) {
     const std::string &unitName = lineItor->unitName;
-    const std::string &initialState = lineItor->initialStatus;
+    const std::string &initialState = lineItor->initialState;
 
     UnitName2InitialStateMap::const_iterator maplet =
       unitName2InitialState.find(unitName);
