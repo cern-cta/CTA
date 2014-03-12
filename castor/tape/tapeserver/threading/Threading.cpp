@@ -205,7 +205,12 @@ throw (castor::exception::Exception) {
 }
 
 void * castor::tape::threading::Thread::pthread_runner (void * arg) {
-  Thread * _this = (Thread *) arg;
+
+  /* static_casting a pointer to and from void* preserves the address. 
+   * See https://stackoverflow.com/questions/573294/when-to-use-reinterpret-cast
+   */ 
+  Thread * _this = static_cast<Thread *>(arg);
+   
   // The threading init is needing by many castor components, so better do
   // it all the time (this should not have side effects)
   Cthread_init();
