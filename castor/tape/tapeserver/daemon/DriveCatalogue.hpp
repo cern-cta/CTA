@@ -95,20 +95,6 @@ public:
     DRIVE_STATE_RUNNING };
 
   /**
-   * Enters the specified tape drive into the catalogue.
-   *
-   * This method throws an exception if the initial state is neither
-   * DRIVE_STATE_DOWN nor DRIVE_STATE_UP.
-   *
-   * @param unitName The unit name of the drive.
-   * @param dgn The device group name of the tape drive.
-   * @param initialState The initial state of the drive as configured in
-   * /etc/castor/TPCONFIG.
-   */
-  void enterDrive(const std::string &unitName, const std::string &dgn,
-    const DriveState initialState) throw(castor::exception::Exception);
-
-  /**
    * Poplates the catalogue using the specified parsed lines from
    * /etc/castor/TPCONFIG.
    *
@@ -203,7 +189,7 @@ public:
    *
    * This method throws an exception if the DGN field of the specified vdqm job
    * does not match the value that was entered into the catalogue with the
-   * enterDrive() method.
+   * populateCatalogue() method.
    *
    * @param unitName The unit name of the tape drive.
    * @param job The job received from the vdqmd daemon.

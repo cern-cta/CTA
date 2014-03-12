@@ -39,69 +39,6 @@ protected:
   }
 };
 
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, enterDriveDown) {
-  using namespace castor::tape::tapeserver::daemon;
-
-  const std::string unitName = "DRIVE";
-  const std::string dgn = "DGN";
-  const DriveCatalogue::DriveState initialState =
-    DriveCatalogue::DRIVE_STATE_DOWN;
-  DriveCatalogue catalogue;
-  ASSERT_NO_THROW(catalogue.enterDrive(unitName, dgn, initialState));
-  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_DOWN,
-    catalogue.getState(unitName));
-}
-
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, enterDriveUp) {
-  using namespace castor::tape::tapeserver::daemon;
-
-  const std::string unitName = "DRIVE";
-  const std::string dgn = "DGN";
-  const DriveCatalogue::DriveState initialState =
-    DriveCatalogue::DRIVE_STATE_UP;
-  DriveCatalogue catalogue;
-  ASSERT_NO_THROW(catalogue.enterDrive(unitName, dgn, initialState));
-  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP,
-    catalogue.getState(unitName));
-}
-
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, enterDriveInit) {
-  using namespace castor::tape::tapeserver::daemon;
-
-  const std::string unitName = "DRIVE";
-  const std::string dgn = "DGN";
-  const DriveCatalogue::DriveState initialState =
-    DriveCatalogue::DRIVE_STATE_INIT;
-  DriveCatalogue catalogue;
-  ASSERT_THROW(catalogue.enterDrive(unitName, dgn, initialState),
-    castor::exception::Exception);
-}
-
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, enterDriveRunning) {
-  using namespace castor::tape::tapeserver::daemon;
-
-  const std::string unitName = "DRIVE";
-  const std::string dgn = "DGN";
-  const DriveCatalogue::DriveState initialState =
-    DriveCatalogue::DRIVE_STATE_RUNNING;
-  DriveCatalogue catalogue;
-  ASSERT_THROW(catalogue.enterDrive(unitName, dgn, initialState),
-    castor::exception::Exception);
-}
-
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, enterSameDriveTwice) {
-  using namespace castor::tape::tapeserver::daemon;
-
-  const std::string unitName = "DRIVE";
-  const std::string dgn = "DGN";
-  const DriveCatalogue::DriveState initialState = 
-    DriveCatalogue::DRIVE_STATE_DOWN;
-  DriveCatalogue catalogue;
-  ASSERT_NO_THROW(catalogue.enterDrive(unitName, dgn, initialState));
-  ASSERT_THROW(catalogue.enterDrive(unitName, dgn, initialState),
-    castor::exception::Exception);
-}
-
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
   using namespace castor::tape::tapeserver::daemon;
 
@@ -308,16 +245,16 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   using namespace castor::tape::tapeserver::daemon;
 
-  const std::string unitName = "DRIVE";
-  const std::string dgn = "DGN";
-  const DriveCatalogue::DriveState initialState =
-    DriveCatalogue::DRIVE_STATE_DOWN;
+  castor::tape::utils::TpconfigLines lines;
+  lines.push_back(castor::tape::utils::TpconfigLine(
+    "UNIT", "DGN", "DEV", "DEN", "down", "POSITION", "DEVTYPE"));
+
   DriveCatalogue catalogue;
-  ASSERT_NO_THROW(catalogue.enterDrive(unitName, dgn, initialState));
-  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_DOWN, catalogue.getState(unitName));
-  ASSERT_NO_THROW(catalogue.configureUp(unitName));
+  ASSERT_NO_THROW(catalogue.populateCatalogue(lines));
+  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_DOWN, catalogue.getState("UNIT"));
+  ASSERT_NO_THROW(catalogue.configureUp("UNIT"));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP,
-    catalogue.getState(unitName));
+    catalogue.getState("UNIT"));
   castor::tape::legacymsg::RtcpJobRqstMsgBody job;
   job.volReqId = 1111;
   job.clientPort = 2222;
@@ -327,42 +264,41 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   castor::utils::copyString(job.dgn, "DGN");
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
-  ASSERT_NO_THROW(catalogue.tapeSessionStarted(unitName, job));
+  ASSERT_NO_THROW(catalogue.tapeSessionStarted("UNIT", job));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_RUNNING,
-    catalogue.getState(unitName));
-  ASSERT_EQ(job.volReqId, catalogue.getJob(unitName).volReqId);
-  ASSERT_EQ(job.clientPort, catalogue.getJob(unitName).clientPort);
-  ASSERT_EQ(job.clientEuid, catalogue.getJob(unitName).clientEuid);
-  ASSERT_EQ(job.clientEgid, catalogue.getJob(unitName).clientEgid);
+    catalogue.getState("UNIT"));
+  ASSERT_EQ(job.volReqId, catalogue.getJob("UNIT").volReqId);
+  ASSERT_EQ(job.clientPort, catalogue.getJob("UNIT").clientPort);
+  ASSERT_EQ(job.clientEuid, catalogue.getJob("UNIT").clientEuid);
+  ASSERT_EQ(job.clientEgid, catalogue.getJob("UNIT").clientEgid);
   ASSERT_EQ(std::string(job.clientHost),
-    std::string(catalogue.getJob(unitName).clientHost));
+    std::string(catalogue.getJob("UNIT").clientHost));
   ASSERT_EQ(std::string(job.dgn),
-    std::string(catalogue.getJob(unitName).dgn));
+    std::string(catalogue.getJob("UNIT").dgn));
   ASSERT_EQ(std::string(job.driveUnit),
-    std::string(catalogue.getJob(unitName).driveUnit));
+    std::string(catalogue.getJob("UNIT").driveUnit));
   ASSERT_EQ(std::string(job.clientUserName),
-    std::string(catalogue.getJob(unitName).clientUserName));
-  ASSERT_NO_THROW(catalogue.tapeSessionSuceeeded(unitName));
+    std::string(catalogue.getJob("UNIT").clientUserName));
+  ASSERT_NO_THROW(catalogue.tapeSessionSuceeeded("UNIT"));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP,
-    catalogue.getState(unitName));
-  ASSERT_NO_THROW(catalogue.configureDown(unitName));
+    catalogue.getState("UNIT"));
+  ASSERT_NO_THROW(catalogue.configureDown("UNIT"));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_DOWN,
-    catalogue.getState(unitName));
+    catalogue.getState("UNIT"));
 }
 
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
   using namespace castor::tape::tapeserver::daemon;
+  castor::tape::utils::TpconfigLines lines;
+  lines.push_back(castor::tape::utils::TpconfigLine(
+    "UNIT", "DGN1", "DEV", "DEN", "down", "POSITION", "DEVTYPE"));
 
-  const std::string unitName = "DRIVE";
-  const std::string dgn = "DGN1";
-  const DriveCatalogue::DriveState initialState = 
-    DriveCatalogue::DRIVE_STATE_DOWN;
   DriveCatalogue catalogue;
-  ASSERT_NO_THROW(catalogue.enterDrive(unitName, dgn, initialState));
-  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_DOWN, catalogue.getState(unitName));
-  ASSERT_NO_THROW(catalogue.configureUp(unitName));
+  ASSERT_NO_THROW(catalogue.populateCatalogue(lines));
+  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_DOWN, catalogue.getState("UNIT"));
+  ASSERT_NO_THROW(catalogue.configureUp("UNIT"));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP,
-    catalogue.getState(unitName));
+    catalogue.getState("UNIT"));
   castor::tape::legacymsg::RtcpJobRqstMsgBody job;
   job.volReqId = 1111;
   job.clientPort = 2222;
@@ -372,7 +308,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
   castor::utils::copyString(job.dgn, "DGN2");
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
-  ASSERT_THROW(catalogue.tapeSessionStarted(unitName, job),
+  ASSERT_THROW(catalogue.tapeSessionStarted("UNIT", job),
     castor::exception::Exception);
 }
 

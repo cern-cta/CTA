@@ -29,40 +29,12 @@
 #include <string.h>
 
 //-----------------------------------------------------------------------------
-// enterDrive
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::enterDrive(
-  const std::string &unitName, const std::string &dgn,
-  const DriveState initialState) throw(castor::exception::Exception) {
-  DriveEntry entry;
-
-  entry.state = initialState;
-  entry.dgn = dgn;
-
-  std::pair<DriveMap::iterator, bool> insertResult =
-    m_drives.insert(DriveMap::value_type(unitName, entry));
-  if(!insertResult.second) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed to enter tape drive " << unitName <<
-      " into drive catalogue: Tape drive already entered";
-    throw ex;
-  }
-
-  if(DRIVE_STATE_UP != initialState && DRIVE_STATE_DOWN != initialState) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed to enter tape drive " << unitName <<
-      " into drive catalogue: Initial state is neither up nor down";
-    throw ex;
-  }
-}
-
-//-----------------------------------------------------------------------------
 // populateCatalogue
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::populateCatalogue(
   const utils::TpconfigLines &lines) throw(castor::exception::Exception) {
 
-  // enter each TPCONFIG line into the catalogue
+  // Enter each TPCONFIG line into the catalogue
   for(utils::TpconfigLines::const_iterator itor = lines.begin();
     itor != lines.end(); itor++) {
     enterTpconfigLine(*itor);
