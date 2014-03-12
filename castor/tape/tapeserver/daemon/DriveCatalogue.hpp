@@ -27,6 +27,8 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/tape/utils/TpconfigLine.hpp"
+#include "castor/tape/utils/TpconfigLines.hpp"
 
 #include <map>
 #include <string>
@@ -93,18 +95,37 @@ public:
     DRIVE_STATE_RUNNING };
 
   /**
-   * Enters the specified tape drive into the catalogue.
-   *
-   * This method throws an exception if the initial state is neither
-   * DRIVE_STATE_DOWN nor DRIVE_STATE_UP.
-   *
-   * @param unitName The unit name of the drive.
-   * @param dgn The device group name of the tape drive.
-   * @param initialState The initial state of the drive as configured in
+   * Poplates the catalogue using the specified parsed lines from
    * /etc/castor/TPCONFIG.
+   *
+   * @param lines The lines parsed from /etc/castor/TPCONFIG.
    */
-  void enterDrive(const std::string &unitName, const std::string &dgn,
-    const DriveState initialState) throw(castor::exception::Exception);
+  void populateCatalogue(const utils::TpconfigLines &lines)
+    throw(castor::exception::Exception);
+
+  /**
+   * Returns the device group name (DGN) of the specified tape drive.
+   *
+   * @param unitName The unit name of the tape drive.
+   */
+  const std::string &getDgn(const std::string &unitName)
+    const throw(castor::exception::Exception);
+
+  /**
+   * Returns the filename of the device file of the specified tape drive.
+   *
+   * @param unitName The unit name of the tape drive.
+   */
+  const std::string &getDevFilename(const std::string &unitName)
+    const throw(castor::exception::Exception);
+
+  /**
+   * Returns the tape densities supported by the specified tape drive.
+   *
+   * @param unitName The unit name of the tape drive.
+   */
+  const std::list<std::string> &getDensities(const std::string &unitName)
+    const throw(castor::exception::Exception);
 
   /**
    * Returns the current state of the specified tape drive.
@@ -112,6 +133,22 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   DriveState getState(const std::string &unitName)
+    const throw(castor::exception::Exception);
+
+  /**
+   * Returns the position of the specified tape drive in its libary.
+   *
+   * @param unitName The unit name of the tape drive.
+   */
+  const std::string &getPositionInLibrary(const std::string &unitName)
+    const throw(castor::exception::Exception);
+
+  /**
+   * Returns the device type of the specified tape drive in its libary.
+   *
+   * @param unitName The unit name of the tape drive.
+   */
+  const std::string &getDevType(const std::string &unitName) 
     const throw(castor::exception::Exception);
 
   /**
@@ -152,7 +189,7 @@ public:
    *
    * This method throws an exception if the DGN field of the specified vdqm job
    * does not match the value that was entered into the catalogue with the
-   * enterDrive() method.
+   * populateCatalogue() method.
    *
    * @param unitName The unit name of the tape drive.
    * @param job The job received from the vdqmd daemon.
@@ -210,9 +247,30 @@ private:
     std::string dgn;
 
     /**
+     * The device file of the tape drive, for eexample: /dev/nst0
+     */
+    std::string devFilename;
+
+    /**
+     * The tape densities supported by the tape drive.
+     */
+    std::list<std::string> densities;
+
+    /**
      * The current state of the tape drive.
      */
     DriveState state;
+
+    /**
+     * The position of the tape drive within the tape library, for example:
+     * smc@localhost,0
+     */
+    std::string positionInLibrary;
+
+    /**
+     * The device type of the tape drive, for example: T10000
+     */
+    std::string devType;
 
     /**
      * The job received from the vdqmd daemon when the drive is in the
@@ -223,9 +281,9 @@ private:
 
     /**
      * Default constructor that initializes all strings to the empty string,
-     * all integers to zero and all drive states to DRIVE_STATE_INIT.  This
-     * initialization includes the individual member variables of the nested
-     * vdqm job.
+     * all integers to zero, all lists to empty and the drive state to
+     * DRIVE_STATE_INIT.  This initialization includes the individual member
+     * variables of the nested vdqm job.
      */
     DriveEntry() throw():
       state(DRIVE_STATE_INIT) {
@@ -251,6 +309,105 @@ private:
    * drive.
    */
   DriveMap m_drives;
+
+  /** 
+   * Enters the specified parsed line from /etc/castor/TPCONFIG into the
+   * catalogue.
+   *
+   * @param line The line parsed from /etc/castor/TPCONFIG.
+   */
+  void enterTpconfigLine(const utils::TpconfigLine &line)
+    throw(castor::exception::Exception);
+
+  /**
+   * Returns the equivalent DriveState value of the specified string
+   * representation of the initial state of a tape drive.
+   *
+   * This method throws an exception if the specified string is neither "up"
+   * nor "down" (case insensitive).
+   *
+   * @param initialState String representation of the initial tape-drive state.
+   */
+  DriveState str2InitialState(const std::string &initialState)
+    const throw(castor::exception::Exception);
+
+  /**
+   * Checks the semantics of the specified TPCONFIG line against the specified
+   * current catalogue entry.
+   *
+   * @param catalogueEntry The catalogue entry.
+   * @param line The line parsed from /etc/castor/TPCONFIG.
+   */
+  void checkTpconfigLine(const DriveEntry &catalogueEntry,
+    const utils::TpconfigLine &line) throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if the specified catalogue value does not match the
+   * specified TPCONFIG line value.
+   *
+   * @param catalogueDgn The DGN of the tape drive that has been retrieved from
+   * the tape-drive catalogue.
+   * @param line The line parsed from /etc/castor/TPCONFIG.
+   */
+  void checkTpconfigLineDgn(const std::string &catalogueDgn,
+    const utils::TpconfigLine &line) throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if the specified catalogue value does not match the
+   * specified TPCONFIG line value.
+   *
+   * @param catalogueDevFilename The filename of the device file of the tape
+   * drive that has been retrieved from the tape-drive catalogue.
+   * @param line The line parsed from /etc/castor/TPCONFIG.
+   */
+  void checkTpconfigLineDevFilename(const std::string &catalogueDevFilename,
+    const utils::TpconfigLine &line) throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if the specified catalogue value does not match the
+   * specified TPCONFIG line value.
+   *
+   * @param catalogueDensities The densities supported by the tape drive that
+   * have been retrived from the tape-drive catalogue.
+   * @param line The line parsed from /etc/castor/TPCONFIG.
+   */
+  void checkTpconfigLineDensity(
+    const std::list<std::string> &catalogueDensities, 
+    const utils::TpconfigLine &line) throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if the specified catalogue value does not match the
+   * specified TPCONFIG line value.
+   *
+   * @param catalogueInitialState The initial state of the tape drive that
+   * has been retrieved from the tape-drive catalogue.
+   * @param line The line parsed from /etc/castor/TPCONFIG.
+   */
+  void checkTpconfigLineInitialState(const DriveState catalogueInitialState,
+    const utils::TpconfigLine &line) throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if the specified catalogue value does not match the
+   * specified TPCONFIG line value.
+   *
+   * @param cataloguePositionInLibrary The position of the tape drive within
+   * its library that has been retrieved from tape-drive catalogue.
+   * @param line The line parsed from /etc/castor/TPCONFIG.
+   */
+  void checkTpconfigLinePositionInLibrary(
+    const std::string &cataloguePositionInLibrary,
+    const utils::TpconfigLine &line) throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if the specified catalogue value does not match the
+   * specified TPCONFIG line value.
+   *
+   * @param catalogueDevType The device type of the tape drive that has been
+   * retrieved from the tape-drive library.
+   * @param line The line parsed from /etc/castor/TPCONFIG.
+   */
+  void checkTpconfigLineDevType(const std::string &catalogueDevType,
+    const utils::TpconfigLine &line) throw(castor::exception::Exception);
 
 }; // class DriveCatalogue
 

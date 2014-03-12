@@ -88,10 +88,12 @@ int castor::tape::tapeserver::daemon::TapeDaemon::main(const int argc,
 //------------------------------------------------------------------------------
 void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   const int argc, char **const argv) throw(castor::exception::Exception) {
+  utils::TpconfigLines tpconfigLines;
 
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
-  parseTpconfig();
+  utils::parseTpconfigFile(TPCONFIGPATH, tpconfigLines);
+  m_driveCatalogue.populateCatalogue(tpconfigLines);
   daemonizeIfNotRunInForeground();
   blockSignals();
   setUpReactor();
@@ -110,22 +112,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logStartOfDaemon(
   log::Param params[] = {
     log::Param("argv", concatenatedArgs)};
   m_log(LOG_INFO, msg.str(), params);
-}
-
-//------------------------------------------------------------------------------
-// parseTpconfig
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::parseTpconfig()
-  throw(castor::exception::Exception) {
-  utils::TpconfigLines tpconfigLines;
-  utils::parseTpconfigFile(TPCONFIGPATH, tpconfigLines);
-
-  logTpconfigLines(tpconfigLines);
-  checkTpconfigDgns(tpconfigLines);
-  checkTpconfigInitialStates(tpconfigLines);
-
-  // Populate the drive catalogue
-  // TO BE DONE
 }
 
 //------------------------------------------------------------------------------
@@ -149,75 +135,10 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logTpconfigLine(
     log::Param("dgn", line.dgn),
     log::Param("devFilename", line.devFilename),
     log::Param("density", line.density),
-    log::Param("initialStatus", line.initialStatus),
-    log::Param("libraryDriveName", line.libraryDriveName),
+    log::Param("initialState", line.initialState),
+    log::Param("positionInLibrary", line.positionInLibrary),
     log::Param("devType", line.devType)};
   m_log(LOG_INFO, "TPCONFIG line", params);
-}
-
-//------------------------------------------------------------------------------
-// checkTpConfigDgns
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::checkTpconfigDgns(
-  const utils::TpconfigLines &lines) throw(castor::exception::Exception) {
-  typedef std::map<std::string, std::string> UnitName2DgnMap;
-  UnitName2DgnMap unitName2Dgn;
-
-  for(utils::TpconfigLines::const_iterator lineItor = lines.begin();
-    lineItor != lines.end(); lineItor++) {
-    const std::string &unitName = lineItor->unitName;
-    const std::string &dgn = lineItor->dgn;
-
-    UnitName2DgnMap::const_iterator maplet = unitName2Dgn.find(unitName);
-
-    // If the maplet from unit name to dgn is not in the map
-    if(unitName2Dgn.end() == maplet) {
-      // Insert it
-      unitName2Dgn[unitName] = dgn;
-    // Else there is already a maplet
-    } else {
-      // Check for a DGN mismatch
-      if(dgn != maplet->second) {
-        castor::exception::Exception ex;
-        ex.getMessage() << "Invalid /etc/castor/TPCONFIG file: Tape drive " <<
-          unitName << " is associated with more than one dgn";
-        throw ex;
-      }
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// checkTpConfigInitialStates
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::checkTpconfigInitialStates(
-  const utils::TpconfigLines &lines) throw(castor::exception::Exception) {
-  typedef std::map<std::string, std::string> UnitName2InitialStateMap;
-  UnitName2InitialStateMap unitName2InitialState;
-
-  for(utils::TpconfigLines::const_iterator lineItor = lines.begin();
-    lineItor != lines.end(); lineItor++) {
-    const std::string &unitName = lineItor->unitName;
-    const std::string &initialState = lineItor->initialStatus;
-
-    UnitName2InitialStateMap::const_iterator maplet =
-      unitName2InitialState.find(unitName);
-
-    // If the maplet from unit name to dgn is not in the map
-    if(unitName2InitialState.end() == maplet) {
-      // Insert it
-      unitName2InitialState[unitName] = initialState;
-    // Else there is already a maplet
-    } else {
-      // Check for a initial state mismatch
-      if(initialState != maplet->second) {
-        castor::exception::Exception ex;
-        ex.getMessage() << "Invalid /etc/castor/TPCONFIG file: Tape drive " <<
-          unitName << " is associated with more than one initial state";
-        throw ex;
-      }
-    }
-  }
 }
 
 //------------------------------------------------------------------------------

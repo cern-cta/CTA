@@ -614,11 +614,11 @@ void castor::tape::utils::parseTpconfigFile(const char *const filename,
       // Store the value of the data-coulmns in the output list parameter
       lines.push_back(TpconfigLine(
         columns[0], // unitName
-        columns[1], // deviceGroup
-        columns[2], // systemDevice
+        columns[1], // dgn
+        columns[2], // devFilename
         columns[3], // density
         columns[4], // initialStatus
-        columns[5], // controlMethod
+        columns[5], // positionInLibrary
         columns[6]  // devType
       ));
     }
