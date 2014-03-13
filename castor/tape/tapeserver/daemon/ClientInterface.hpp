@@ -99,6 +99,12 @@ namespace server {
     void reportEndOfSession(RequestReport &report) throw (Exception);
     
     /**
+     * Reports end of session to the client. This should be the last call to
+     * the client.
+     */
+    void reportEndOfSessionWithError(RequestReport &transactionReport, 
+      const std::string & errorMsg, int errorCode) throw (castor::tape::Exception);
+    /**
      * Exception thrown when the wrong response type was received from
      * the client after a request. Extracts the type and prints it.
      */
@@ -138,7 +144,7 @@ namespace server {
     class ThreadSafeCounter {
     public:
       ThreadSafeCounter(): m_val(0) {};
-      operator T () {
+      T operator ++ () {
         threading::MutexLocker ml(&m_mutex);
         return ++m_val;
       }

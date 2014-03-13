@@ -28,16 +28,21 @@
 #include "ClientInterface.hpp"
 #include "log.h"
 #include "stager_client_commandline.h"
+#include "castor/tape/utils/utils.hpp"
+#include "castor/System.hpp"
+#include "h/serrno.h"
 
-using namespace castor::tape::server;
+using namespace castor::tape;
 using namespace castor::log;
 
 castor::tape::server::MountSession::MountSession(
     const legacymsg::RtcpJobRqstMsgBody& clientRequest, 
-    castor::log::Logger& logger): 
-    m_request(clientRequest), m_logger(logger), m_clientIf(clientRequest) {}
+    castor::log::Logger& logger, System::virtualWrapper & sysWrapper,
+    const utils::TpconfigLines & tpConfig): 
+    m_request(clientRequest), m_logger(logger), m_clientIf(clientRequest),
+    m_sysWrapper(sysWrapper), m_tpConfig(tpConfig) {}
 
-void castor::tape::server::MountSession::execute() 
+void castor::tape::server::MountSession::execute()
 throw (castor::tape::Exception) {
   // 1) Prepare the logging environment
   LogContext lc(m_logger);
@@ -47,22 +52,12 @@ throw (castor::tape::Exception) {
   LogContext::ScopedParam sp04(lc, Param("volReqId", m_request.volReqId));
   LogContext::ScopedParam sp05(lc, Param("driveUnit", m_request.driveUnit));
   LogContext::ScopedParam sp06(lc, Param("dgn", m_request.dgn));
-  // 2) Get initial information from the client
+  // 2a) Get initial information from the client
+  ClientInterface::RequestReport reqReport;
   try {
-    ClientInterface::RequestReport reqReport;
     m_clientIf.fetchVolumeId(m_volInfo, reqReport);
-    LogContext::ScopedParam sp07(lc, Param("tapebridgeTransId", reqReport.transactionId));
-    LogContext::ScopedParam sp08(lc, Param("connectDuration", reqReport.connectDuration));
-    LogContext::ScopedParam sp09(lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
-    LogContext::ScopedParam sp10(lc, Param("TPVID", m_volInfo.vid));
-    LogContext::ScopedParam sp11(lc, Param("density", m_volInfo.vid));
-    LogContext::ScopedParam sp12(lc, Param("label", m_volInfo.vid));
-    LogContext::ScopedParam sp13(lc, Param("clientType", m_volInfo.vid));
-    LogContext::ScopedParam sp14(lc, Param("mode", m_volInfo.vid));
-    lc.log(LOG_INFO, "Got volume from client");
   } catch(ClientInterface::EndOfSession & eof) {
-    ClientInterface::RequestReport reqReport;
-    std::stringstream fullError("Failed to get volume from client");
+    std::stringstream fullError("Received end of session from client when requesting Volume");
     fullError << eof.what();
     lc.log(LOG_ERR, fullError.str());
     m_clientIf.reportEndOfSession(reqReport);
@@ -72,10 +67,83 @@ throw (castor::tape::Exception) {
     LogContext::ScopedParam sp10(lc, Param("ErrorMsg", fullError.str()));
     lc.log(LOG_ERR, "Notified client of end session with error");
     return;
+  } catch (ClientInterface::UnexpectedResponse & unexp) {
+    std::stringstream fullError("Received unexpected response from client when requesting Volume");
+    fullError << unexp.what();
+    lc.log(LOG_ERR, fullError.str());
+    m_clientIf.reportEndOfSession(reqReport);
+    LogContext::ScopedParam sp07(lc, Param("tapebridgeTransId", reqReport.transactionId));
+    LogContext::ScopedParam sp08(lc, Param("connectDuration", reqReport.connectDuration));
+    LogContext::ScopedParam sp09(lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
+    LogContext::ScopedParam sp10(lc, Param("ErrorMsg", fullError.str()));
+    lc.log(LOG_ERR, "Notified client of end session with error");
+    return;
   }
+  // 2b) ... and log.
   // Make the TPVID parameter permanent.
-  LogContext::ScopedParam sp6(lc, Param("TPVID", m_request.dgn));
+  LogContext::ScopedParam sp07(lc, Param("TPVID", m_request.dgn));
+  {
+    LogContext::ScopedParam sp08(lc, Param("tapebridgeTransId", reqReport.transactionId));
+    LogContext::ScopedParam sp09(lc, Param("connectDuration", reqReport.connectDuration));
+    LogContext::ScopedParam sp00(lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
+    LogContext::ScopedParam sp11(lc, Param("TPVID", m_volInfo.vid));
+    LogContext::ScopedParam sp12(lc, Param("density", m_volInfo.density));
+    LogContext::ScopedParam sp13(lc, Param("label", m_volInfo.labelObsolete));
+    LogContext::ScopedParam sp14(lc, Param("clientType", utils::volumeClientTypeToString(m_volInfo.clientType)));
+    LogContext::ScopedParam sp15(lc, Param("mode", utils::volumeModeToString(m_volInfo.volumeMode)));
+    lc.log(LOG_INFO, "Got volume from client");
+  }
+
   
   // Depending on the type of session, branch into the right execution
-  // TbC...
+  switch(m_volInfo.volumeMode) {
+  case tapegateway::READ:
+    executeRead(lc);
+    return;
+  case tapegateway::WRITE:
+    executeWrite(lc);
+    return;
+  case tapegateway::DUMP:
+    executeDump(lc);
+    return;
+  }
+}
+
+void castor::tape::server::MountSession::executeRead(LogContext & lc) {
+  // We are ready to start the session. In case of read there is no interest in
+  // creating the machinery before getting the tape mounted, so do it now.
+  // 1) Get hold of the drive and check it.
+  utils::TpconfigLines::iterator i;
+  for (i = m_tpConfig.begin(); i != m_tpConfig.end(); i++) {
+    if (i->unitName == m_request.driveUnit && i->density == m_volInfo.density) {
+      break;
+    }
+  }
+  // If we did not find the drive in the tpConfig, we have a problem
+  if (i == m_tpConfig.end()) {
+    LogContext::ScopedParam sp08(lc, Param("density", m_volInfo.density));
+    lc.log(LOG_ERR, "Drive unit not found");
+    
+    ClientInterface::RequestReport reqReport;
+    std::stringstream errMsg("Drive unit not found");
+    errMsg << lc;
+    m_clientIf.reportEndOfSessionWithError(reqReport, "Drive unit not found", SEINTERNAL);
+    LogContext::ScopedParam sp09(lc, Param("tapebridgeTransId", reqReport.transactionId));
+    LogContext::ScopedParam sp10(lc, Param("connectDuration", reqReport.connectDuration));
+    LogContext::ScopedParam sp11(lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
+    LogContext::ScopedParam sp12(lc, Param("errorMessage", errMsg.str()));
+    LogContext::ScopedParam sp13(lc, Param("errorCode", SEINTERNAL));
+    lc.log(LOG_ERR, "Notified client of end session with error");
+    return;
+  }
+}
+
+void castor::tape::server::MountSession::executeWrite(LogContext & lc) {
+}
+
+void castor::tape::server::MountSession::executeDump(LogContext & lc) {
+  // We are ready to start the session. In case of read there is no interest in
+  // creating the machinery before getting the tape mounted, so do it now.
+  // 1) Get hold of the drive and check it.
+  
 }

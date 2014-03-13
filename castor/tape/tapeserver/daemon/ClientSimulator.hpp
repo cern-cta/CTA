@@ -37,7 +37,8 @@ namespace server {
    */
   class ClientSimulator: public tpcp::TpcpCommand {
   public:
-    ClientSimulator(uint32_t volReqId, std::string vid);
+    ClientSimulator(uint32_t volReqId, const std::string & vid, 
+            const std::string & density);
     
     virtual ~ClientSimulator() throw () {}
     

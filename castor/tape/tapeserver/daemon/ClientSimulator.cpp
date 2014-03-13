@@ -33,8 +33,10 @@
 using namespace castor::tape::server;
 using namespace castor::tape;
 
-ClientSimulator::ClientSimulator(uint32_t volReqId, std::string vid):
-  TpcpCommand("clientSimulator::clientSimulator"), m_vid(vid)
+ClientSimulator::ClientSimulator(uint32_t volReqId, const std::string & vid, 
+    const std::string & density):
+  TpcpCommand("clientSimulator::clientSimulator"), m_vid(vid), 
+    m_density(density)
 {
   m_volReqId = volReqId;
   setupCallbackSock();

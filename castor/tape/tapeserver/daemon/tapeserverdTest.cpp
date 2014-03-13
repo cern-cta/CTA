@@ -28,6 +28,8 @@
 #include "../threading/Threading.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "MountSession.hpp"
+#include "../system/Wrapper.hpp"
+#include "Ctape.h"
 
 using namespace castor::tape::server;
 
@@ -52,7 +54,8 @@ TEST(tapeServer, MountSessionGoodday) {
   // 1) prepare the client and run it in another thread
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
-  ClientSimulator sim(volReq, vid);
+  std::string density = "8000GC";
+  ClientSimulator sim(volReq, vid, density);
   struct ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
@@ -61,15 +64,23 @@ TEST(tapeServer, MountSessionGoodday) {
   castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
-  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "/dev/nstXXX");
-  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "TAPELIBX");
+  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
+  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   
-  // 3) Prepare the necessary environment (logger), construct and
-  // run the session.
+  // 3) Prepare the necessary environment (logger, plus system wrapper), 
+  // construct and run the session.
   castor::log::StringLogger logger("tapeServerUnitTest");
-  MountSession sess(VDQMjob, logger);
+  castor::tape::System::mockWrapper mockSys;
+  mockSys.fake.setupForVirtualDriveSLC6();
+  utils::TpconfigLines tpConfig;
+  // Actual TPCONFIG lifted from prod
+  tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
+  "/dev/tape_T10D6116", "8000GC", "down", "acs0,1,1,6", "T10000"));
+  tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
+  "/dev/tape_T10D6116", "5000GC", "down", "acs0,1,1,6", "T10000"));
+  MountSession sess(VDQMjob, logger, mockSys, tpConfig);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();

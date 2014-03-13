@@ -31,6 +31,7 @@
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/utils/Timer.hpp"
+#include "castor/tape/utils/utils.hpp"
 #include <cxxabi.h>
 #include <memory>
 #include <stdlib.h>
@@ -80,7 +81,17 @@ throw (castor::tape::Exception)
   // 4) Check we get a response for the request we sent (sanity check)
   if ((ret->mountTransactionId() != m_request.volReqId) ||
       ret->aggregatorTransactionId() != req.aggregatorTransactionId()) {
-    
+    std::stringstream mess;
+    if (ret->mountTransactionId() != m_request.volReqId) {
+    mess << "In castor::tape::server::clientInterface::requestResponseSession, "
+        "expected a information about mountSessionId=" << m_request.volReqId
+        << " and received: " << ret->mountTransactionId();
+    } else {
+    mess << "In castor::tape::server::clientInterface::requestResponseSession, "
+        "expected a response for tapebridgeTransId=" << req.aggregatorTransactionId()
+        << " and received for: " << ret->aggregatorTransactionId();
+    }
+    throw UnexpectedResponse(resp.get(), mess.str());
   }
   // Slightly ugly sequence in order to not duplicate the dynamic_cast.
   resp.release();
@@ -96,7 +107,7 @@ throw (castor::tape::Exception) {
   // The transaction id is auto-incremented (through the cast operator) 
   // so we just need to use it (and save the value locally if we need to reuse 
   // it)
-  report.transactionId = m_transactionId;
+  report.transactionId = ++m_transactionId;
   request.setAggregatorTransactionId(report.transactionId);
   request.setUnit(m_request.driveUnit);
   // 2) get the reply from the client
@@ -135,7 +146,32 @@ throw (castor::tape::Exception) {
   // 1) Build the report
   castor::tape::tapegateway::EndNotification endReport;
   endReport.setMountTransactionId(m_request.volReqId);
-  endReport.setAggregatorTransactionId(m_transactionId);
+  endReport.setAggregatorTransactionId(++m_transactionId);
+  // 2) Send the report
+  std::auto_ptr<tapegateway::GatewayMessage> ack(
+      requestResponseSession(endReport, transactionReport));
+  // 3) If we did not get a ack, complain (not much more we can do)
+  // We could use the castor typing here, but we stick to case for homogeneity
+  // of the code.
+  try {
+    dynamic_cast<tapegateway::NotificationAcknowledge &>(*ack.get());
+  } catch (std::bad_cast) {
+    throw UnexpectedResponse(ack.get(), 
+        "Unexpected response when reporting end of session");
+  }
+}
+
+
+void castor::tape::server::ClientInterface::reportEndOfSessionWithError(
+RequestReport &transactionReport, const std::string & errorMsg,
+    int errorCode) 
+throw (castor::tape::Exception) {
+  // 1) Build the report
+  castor::tape::tapegateway::EndNotificationErrorReport endReport;
+  endReport.setMountTransactionId(m_request.volReqId);
+  endReport.setAggregatorTransactionId(++m_transactionId);
+  endReport.setErrorMessage(errorMsg);
+  endReport.setErrorCode(errorCode);
   // 2) Send the report
   std::auto_ptr<tapegateway::GatewayMessage> ack(
       requestResponseSession(endReport, transactionReport));
