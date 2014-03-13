@@ -53,8 +53,8 @@ namespace SCSI {
 
       /* We avoid being hit by the macros major() and minor() by using a longer syntax */
       DeviceFile() {
-        major = -1;
-        minor = -1;
+        major = 0;
+        minor = 0;
       }
       unsigned int major;
       unsigned int minor;
