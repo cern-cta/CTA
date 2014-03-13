@@ -76,3 +76,18 @@
   ...
   fun:_ZN6castor4tape6server15ClientInterface13fetchVolumeIdERNS2_10VolumeInfoERNS2_13RequestReportE
 }
+
+{
+  helgrind-unitTest-castor-stringLoggerCleanString
+  Helgrind:Race
+  ...
+  fun:_ZN6castor3log12StringLogger11cleanStringERKSsb
+}
+
+
+{
+  helgrind-unitTest-castor-basicStringClone
+  Helgrind:Race
+  fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
+}
+
