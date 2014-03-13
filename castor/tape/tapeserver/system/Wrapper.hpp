@@ -130,6 +130,7 @@ namespace System {
     std::map<std::string, stDeviceFile> m_stFiles;    
     void setupSLC5();
     void setupSLC6();
+    void setupForVirtualDriveSLC6();
     void referenceFiles();
   private:
 

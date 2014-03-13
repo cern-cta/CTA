@@ -583,3 +583,13 @@ void System::fakeWrapper::setupSLC6() {
   referenceFiles();
 }
 
+void castor::tape::System::fakeWrapper::setupForVirtualDriveSLC6() {
+  setupSLC6();
+  // Change the type of the drive to VIRTUAL so we get the proper drive for the test.
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:1/6:0:1:0/model"] = "VIRTUAL         \n";
+  m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/model"] = "VIRTUAL         \n";
+  // This simulates the result of stat with a symlink to /dev/nst0
+  m_stats["/dev/tape_T10D6116"].st_rdev = makedev(9,128);
+}
+
+
