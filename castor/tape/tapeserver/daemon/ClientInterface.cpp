@@ -145,8 +145,9 @@ RequestReport &transactionReport)
 throw (castor::tape::Exception) {
   // 1) Build the report
   castor::tape::tapegateway::EndNotification endReport;
+  transactionReport.transactionId = ++m_transactionId;
   endReport.setMountTransactionId(m_request.volReqId);
-  endReport.setAggregatorTransactionId(++m_transactionId);
+  endReport.setAggregatorTransactionId(transactionReport.transactionId);
   // 2) Send the report
   std::auto_ptr<tapegateway::GatewayMessage> ack(
       requestResponseSession(endReport, transactionReport));
@@ -167,8 +168,9 @@ const std::string & errorMsg, int errorCode, RequestReport &transactionReport)
 throw (castor::tape::Exception) {
   // 1) Build the report
   castor::tape::tapegateway::EndNotificationErrorReport endReport;
+  transactionReport.transactionId = ++m_transactionId;
   endReport.setMountTransactionId(m_request.volReqId);
-  endReport.setAggregatorTransactionId(++m_transactionId);
+  endReport.setAggregatorTransactionId(transactionReport.transactionId);
   endReport.setErrorMessage(errorMsg);
   endReport.setErrorCode(errorCode);
   // 2) Send the report
