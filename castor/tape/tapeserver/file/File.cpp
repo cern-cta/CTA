@@ -321,8 +321,9 @@ namespace castor {
         try {
           resolv.open("/etc/resolv.conf", std::ifstream::in);
           std::string buf;
+          const char * const toFind="search ";
           while(std::getline(resolv, buf)) {
-            if(std::string::npos != buf.find("search ")) {
+            if(buf.substr(0,7)==toFind) {
               m_siteName = buf.substr(7);
               m_siteName = m_siteName.substr(0, m_siteName.find("."));
               std::transform(m_siteName.begin(), m_siteName.end(), m_siteName.begin(), ::toupper);
@@ -331,8 +332,8 @@ namespace castor {
           }
           resolv.close();
         }
-        catch (std::ifstream::failure e) {
-          throw castor::exception::Exception("Error opening, reading or closing /etc/resolv.conf");
+        catch (const std::ifstream::failure& e) {
+          throw castor::exception::Exception(std::string("In /etc/resolv.conf : error opening/closing or can't find search domain [")+e.what()+"]");
         }
       }
 
