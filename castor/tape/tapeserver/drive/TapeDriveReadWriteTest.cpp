@@ -38,7 +38,7 @@
  * assertion and exits.
  * @param expected_position expected position
  */
-void print_and_assert_position(castor::tape::drives::DriveGeneric &drive, int expected_position)
+void print_and_assert_position(castor::tape::drives::DriveInterface &drive, int expected_position)
 {
   int curPos = (int)drive.getPositionInfo().currentPosition;
   std::cout << "CurrentPosition: "  << curPos << " (Expected: " << expected_position << ")" << std::endl;
@@ -73,7 +73,7 @@ int main ()
       castor::tape::drives::Drive dContainer(dev, sWrapper);
       /* Compiler cannot implicitly use the conversion operator. Create an 
        * intermediate reference*/
-      castor::tape::drives::DriveGeneric & drive = dContainer;
+      castor::tape::drives::DriveInterface & drive = dContainer;
       castor::tape::drives::deviceInfo devInfo;
 
       try {

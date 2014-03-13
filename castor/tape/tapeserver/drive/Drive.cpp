@@ -266,8 +266,8 @@ std::vector<std::string> drives::DriveGeneric::getTapeAlerts() throw (Exception)
  * @param compression  The boolean variable to enable or disable compression
  *                     on the drive for the tape. By default it is enabled.
  */
-void drives::DriveGeneric::setDensityAndCompression(unsigned char densityCode,
-    bool compression) throw (Exception) {
+void drives::DriveGeneric::setDensityAndCompression(bool compression,
+    unsigned char densityCode) throw (Exception) {
   SCSI::Structures::modeSenseDeviceConfiguration_t devConfig;
   { // get info from the drive
     SCSI::Structures::modeSense6CDB_t cdb;
@@ -835,7 +835,7 @@ drives::positionInfo drives::FakeDrive::getPositionInfo() throw (Exception) {
 std::vector<std::string> drives::FakeDrive::getTapeAlerts() throw (Exception) {
   throw Exception("FakeDrive::getTapeAlerts Not implemented");
 }
-void drives::FakeDrive::setDensityAndCompression(unsigned char densityCode, bool compression) throw (Exception) {
+void drives::FakeDrive::setDensityAndCompression(bool compression, unsigned char densityCode) throw (Exception) {
   throw Exception("FakeDrive::setDensityAndCompression Not implemented");
 }
 drives::driveStatus drives::FakeDrive::getDriveStatus() throw (Exception) {

@@ -141,7 +141,8 @@ namespace drives {
     virtual void positionToLogicalObject(uint32_t blockId) throw (Exception) = 0;
     virtual positionInfo getPositionInfo() throw (Exception) = 0;
     virtual std::vector<std::string> getTapeAlerts() throw (Exception) = 0;
-    virtual void setDensityAndCompression(unsigned char densityCode, bool compression) throw (Exception) = 0;
+    virtual void setDensityAndCompression(bool compression = true,
+        unsigned char densityCode = 0) throw (Exception) = 0;
     virtual driveStatus getDriveStatus() throw (Exception) = 0;
     virtual tapeError getTapeError() throw (Exception) = 0;
     virtual void setSTBufferWrite(bool bufWrite) throw (Exception) = 0;
@@ -184,7 +185,8 @@ namespace drives {
     virtual void positionToLogicalObject(uint32_t blockId) throw (Exception);
     virtual positionInfo getPositionInfo() throw (Exception);
     virtual std::vector<std::string> getTapeAlerts() throw (Exception);
-    virtual void setDensityAndCompression(unsigned char densityCode, bool compression) throw (Exception);
+    virtual void setDensityAndCompression(bool compression = true, 
+        unsigned char densityCode = 0) throw (Exception);
     virtual driveStatus getDriveStatus() throw (Exception);
     virtual tapeError getTapeError() throw (Exception);
     virtual void setSTBufferWrite(bool bufWrite) throw (Exception);
@@ -288,8 +290,8 @@ namespace drives {
      * @param compression  The boolean variable to enable or disable compression
      *                     on the drive for the tape. By default it is enabled.
      */
-    virtual void setDensityAndCompression(unsigned char densityCode = 0,
-            bool compression = true) throw (Exception);
+    virtual void setDensityAndCompression(bool compression = true,
+            unsigned char densityCode = 0) throw (Exception);
 
     /**
      * Get drive status.
@@ -526,6 +528,8 @@ namespace drives {
         m_drive = new DriveLTO(di, sw);
       } else if (std::string::npos != di.product.find("03592")) {
         m_drive = new DriveIBM3592(di, sw);
+      } else if (std::string::npos != di.product.find("VIRTUAL")) {
+        m_drive = new FakeDrive();
       } else {
         throw Exception(std::string("Unsupported drive type: ")+di.product);
       }
@@ -533,11 +537,11 @@ namespace drives {
     ~Drive() {
       delete m_drive;
     }
-    operator DriveGeneric &() {
+    operator DriveInterface &() {
       return *m_drive;
     }
   private:
-    DriveGeneric * m_drive;
+    DriveInterface * m_drive;
   };
   
 } // namespace drives

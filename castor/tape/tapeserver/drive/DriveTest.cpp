@@ -69,7 +69,8 @@ TEST(castor_tape_drives_Drive, OpensCorrectly) {
     if (castor::tape::SCSI::Types::tape == i->type) {
       castor::tape::drives::Drive drive(*i, sysWrapper);
       std::string expected_classid (typeid(castor::tape::drives::DriveT10000).name());
-      std::string found_classid (typeid((castor::tape::drives::DriveGeneric &)drive).name());
+      castor::tape::drives::DriveInterface & drv = drive;
+      std::string found_classid (typeid(drv).name());
       ASSERT_EQ(expected_classid, found_classid);
     }
   }
@@ -102,7 +103,7 @@ TEST(castor_tape_drives_Drive, getPositionInfoAndPositionToLogicalObject) {
       castor::tape::drives::Drive dContainer(*i, sysWrapper);
       /* Compiler cannot implicitly use the conversion operator. Create an 
        * intermediate reference*/
-      castor::tape::drives::DriveGeneric & drive = dContainer;
+      castor::tape::drives::DriveInterface & drive = dContainer;
       castor::tape::drives::positionInfo posInfo;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(1);      
@@ -153,7 +154,7 @@ TEST(castor_tape_drives_Drive, setDensityAndCompression) {
       castor::tape::drives::Drive dContainer(*i, sysWrapper);
       /* Compiler cannot implicitly use the conversion operator. Create an 
        * intermediate reference*/
-      castor::tape::drives::DriveGeneric & drive = dContainer;
+      castor::tape::drives::DriveInterface & drive = dContainer;
 
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
       drive.setDensityAndCompression();
@@ -199,7 +200,7 @@ TEST(castor_tape_drives_Drive, setStDriverOptions) {
       castor::tape::drives::Drive dContainer(*i, sysWrapper);
       /* Compiler cannot implicitly use the conversion operator. Create an 
        * intermediate reference*/
-      castor::tape::drives::DriveGeneric & drive = dContainer;
+      castor::tape::drives::DriveInterface & drive = dContainer;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<struct mtop *>())).Times(1);
       drive.setSTBufferWrite(true);
@@ -237,7 +238,7 @@ TEST(castor_tape_drives_Drive, getDeviceInfo) {
       castor::tape::drives::Drive dContainer(*i, sysWrapper);
       /* Compiler cannot implicitly use the conversion operator. Create an 
        * intermediate reference*/
-      castor::tape::drives::DriveGeneric & drive = dContainer;
+      castor::tape::drives::DriveInterface & drive = dContainer;
       castor::tape::drives::deviceInfo devInfo;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
@@ -377,7 +378,7 @@ TEST(castor_tape_drives_Drive, getTapeAlerts) {
           castor::tape::drives::Drive dContainer(*i, sysWrapper);
           /* Compiler cannot implicitly use the conversion operator. Create an 
            * intermediate reference*/
-          castor::tape::drives::DriveGeneric & drive = dContainer;
+          castor::tape::drives::DriveInterface & drive = dContainer;
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
           std::vector<std::string> alerts = drive.getTapeAlerts();
           ASSERT_EQ(3U, alerts.size());
