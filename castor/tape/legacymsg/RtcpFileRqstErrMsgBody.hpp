@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/legacymsg/RtcpFileRqstErrMsgBody.hpp
+ *         castor/tape/legacymsg/RtcpFileRqstErrMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,8 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTERRMSGBODY
-#define CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTERRMSGBODY
+#ifndef CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTERRMSGBODY_HPP
+#define CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTERRMSGBODY_HPP 1
 
 #include "castor/tape/legacymsg/RtcpErrorAppendix.hpp"
 #include "castor/tape/legacymsg/RtcpFileRqst.hpp"
@@ -38,28 +38,28 @@ namespace castor    {
 namespace tape      {
 namespace legacymsg {
 
+/**
+ * An RTCP file request with error appendix message.
+ *
+ * Please note that the presence of an error appendix does not necessarily
+ * indicate an error.
+ */
+struct RtcpFileRqstErrMsgBody {
   /**
-   * An RTCP file request with error appendix message.
-   *
-   * Please note that the presence of an error appendix does not necessarily
-   * indicate an error.
+   * The request data which is common to both an RtcpFileRqstMsgBody and an
+   * RtcpFileRqstErrMsgBody.
    */
-  struct RtcpFileRqstErrMsgBody {
-    /**
-     * The request data which is common to both an RtcpFileRqstMsgBody and an
-     * RtcpFileRqstErrMsgBody.
-     */
-    RtcpFileRqst rqst;
+  RtcpFileRqst rqst;
     
-    /**
-     * The error appendix.
-     */
-    RtcpErrorAppendix err;
+  /**
+   * The error appendix.
+   */
+  RtcpErrorAppendix err;
     
-  }; // struct RtcpFileRqstErrMsgBody
+}; // struct RtcpFileRqstErrMsgBody
 
 } // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTERRMSGBODY
+#endif // CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTERRMSGBODY_HPP

@@ -27,10 +27,21 @@ cmake_minimum_required (VERSION 2.6)
 ################################################################################
 set (TAPE_LEGACYMSG_LIB_SRC_FILES
   CommonMarshal.cpp
+  GiveOutpMsgBody.cpp
+  MessageHeader.cpp
+  RtcpDumpTapeRqstMsgBody.cpp
+  RtcpErrorAppendix.cpp
+  RtcpFileRqst.cpp
+  RtcpJobRqstMsgBody.cpp
   RtcpMarshal.cpp
+  RtcpSegmentAttributes.cpp
+  RtcpTapeRqstMsgBody.cpp
   TapeBridgeMarshal.cpp
   VdqmDrvRqstMsgBody.cpp
-  VmgrMarshal.cpp)
+  VdqmMarshal.cpp
+  VmgrMarshal.cpp
+  VmgrTapeInfoMsgBody.cpp
+  VmgrTapeInfoRqstMsgBody.cpp)
 add_library (castortapelegacymsg SHARED ${TAPE_LEGACYMSG_LIB_SRC_FILES})
 CastorSetLibraryVersions (castortapelegacymsg)
 target_link_libraries (castortapelegacymsg castorclient castorcommon

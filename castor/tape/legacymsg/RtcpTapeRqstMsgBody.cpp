@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/legacymsg/RtcpNoMoreRequestsMsgBody.hpp
+ *         castor/tape/legacymsg/RtcpTapeRqstMsgBody.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,24 +19,33 @@
  *
  *
  * 
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP
-#define CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP 1
+#include "castor/tape/legacymsg/RtcpTapeRqstMsgBody.hpp"
 
-namespace castor {
-namespace tape {
-namespace legacymsg {
+#include <string.h>
 
-/**
- * An RTCP no more request message.
- */
-struct RtcpNoMoreRequestsMsgBody {
-}; // struct RtcpNoMoreRequestsMsgBody
-
-} // namespace legacymsg
-} // namespace tape
-} // namespace castor
-
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP
+castor::tape::legacymsg::RtcpTapeRqstMsgBody::RtcpTapeRqstMsgBody() throw():
+  volReqId(0),
+  jobId(0),
+  mode(0),
+  start_file(0),
+  end_file(0),
+  side(0),
+  tprc(0),
+  tStartRequest(0),
+  tEndRequest(0),
+  tStartRtcpd(0),
+  tStartMount(0),
+  tEndMount(0),
+  tStartUnmount(0),
+  tEndUnmount(0),
+  rtcpReqId(nullCuuid) {
+  memset(vid, '\0', sizeof(vid));
+  memset(vsn, '\0', sizeof(vsn));
+  memset(label, '\0', sizeof(label));
+  memset(devtype, '\0', sizeof(devtype));
+  memset(density, '\0', sizeof(density));
+  memset(unit, '\0', sizeof(unit));
+}

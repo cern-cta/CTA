@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/legacymsg/RtcpSegmentAttributes.hpp
+ *         castor/tape/legacymsg/RtcpSegmentAttributes.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,29 +22,37 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPSEGMENTATTRIBUTES
-#define CASTOR_TAPE_LEGACYMSG_RTCPSEGMENTATTRIBUTES
+#ifndef CASTOR_TAPE_LEGACYMSG_RTCPSEGMENTATTRIBUTES_HPP
+#define CASTOR_TAPE_LEGACYMSG_RTCPSEGMENTATTRIBUTES_HPP 1
 
 #include "h/Castor_limits.h"
 
 #include <stdint.h>
 
-namespace castor     {
-namespace tape       {
+namespace castor {
+namespace tape {
 namespace legacymsg {
 
+/**
+ * Error reporting message embedded within an RTCP tape request message.
+ */
+struct RtcpSegmentAttributes {
+  char nameServerHostName[CA_MAXHOSTNAMELEN+1];  // CASTOR name server host name
+  char segmCksumAlgorithm[CA_MAXCKSUMNAMELEN+1]; // Checksum algorithm
+  uint32_t segmCksum;                            // Checksum value
+  uint64_t castorFileId;                         // CASTOR bitfile id
+
   /**
-   * Error reporting message embedded within an RTCP tape request message.
+   * Constructor.
+   *
+   * Sets all integer member-variables to 0 and all string member-variables to
+   * the empty string.
    */
-  struct RtcpSegmentAttributes {
-    char nameServerHostName[CA_MAXHOSTNAMELEN+1];  // CASTOR name server host name
-    char segmCksumAlgorithm[CA_MAXCKSUMNAMELEN+1]; // Checksum algorithm
-    uint32_t segmCksum;                            // Checksum value
-    uint64_t castorFileId;                         // CASTOR bitfile id
-  }; // struct RtcpSegmentAttributes
+  RtcpSegmentAttributes() throw();
+}; // struct RtcpSegmentAttributes
 
 } // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPSEGMENTATTRIBUTES
+#endif // CASTOR_TAPE_LEGACYMSG_RTCPSEGMENTATTRIBUTES_HPP

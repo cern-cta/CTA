@@ -22,33 +22,36 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_GIVEOUTPMSGBODY
-#define CASTOR_TAPE_LEGACYMSG_GIVEOUTPMSGBODY
+#ifndef CASTOR_TAPE_LEGACYMSG_GIVEOUTPMSGBODY_HPP
+#define CASTOR_TAPE_LEGACYMSG_GIVEOUTPMSGBODY_HPP 1
 
 #include "h/Castor_limits.h"
-#include "h/Cuuid.h"
 
-#include <stdint.h>
-
-
-namespace castor     {
-namespace tape       {
+namespace castor {
+namespace tape {
 namespace legacymsg {
 
+/**
+ * The message body of a dump tape information message.
+ */
+struct GiveOutpMsgBody {
+
   /**
-   * The message body of a dump tape information message.
+   * The dump tape message string.
    */
-  struct GiveOutpMsgBody {
+  char message[CA_MAXLINELEN+1];
 
-    /**
-     * The dump tape message string.
-     */
-    char message[CA_MAXLINELEN+1];
+  /**
+   * Constructor.
+   *
+   * Sets the string member variable to the empty string.
+   */
+  GiveOutpMsgBody() throw();
 
-  }; // struct GiveOutpMsgBody
+}; // struct GiveOutpMsgBody
 
 } // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_GIVEOUTPMSGBODY
+#endif // CASTOR_TAPE_LEGACYMSG_GIVEOUTPMSGBODY_HPP

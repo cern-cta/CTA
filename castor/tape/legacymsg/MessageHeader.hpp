@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/legacymsg/MessageHeader.hpp
+ *         castor/tape/legacymsg/MessageHeader.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,44 +22,47 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_MESSAGEHEADER
-#define CASTOR_TAPE_LEGACYMSG_MESSAGEHEADER
-
-#include "h/Castor_limits.h"
+#ifndef CASTOR_TAPE_LEGACYMSG_MESSAGEHEADER_HPP
+#define CASTOR_TAPE_LEGACYMSG_MESSAGEHEADER_HPP 1
 
 #include <stdint.h>
-#include <string>
 
-
-namespace castor    {
-namespace tape      {
+namespace castor {
+namespace tape {
 namespace legacymsg {
 
+/**
+ * A message header
+ */
+struct MessageHeader {
   /**
-   * A message header
+   * The magic number of the message.
    */
-  struct MessageHeader {
-    /**
-     * The magic number of the message.
-     */
-    uint32_t magic;
+  uint32_t magic;
 
-    /**
-     * The request type of the message.
-     */
-    uint32_t reqType;
+  /**
+   * The request type of the message.
+   */
+  uint32_t reqType;
 
-    /**
-     * The length of the message body in bytes if this is the header of any
-     * message other than an acknowledge message.  If this is the header of
-     * an acknowledge message then there is no message body and this field is
-     * used to pass the status of the acknowledge.
-     */
-    uint32_t lenOrStatus;
-  };
+  /**
+   * The length of the message body in bytes if this is the header of any
+   * message other than an acknowledge message.  If this is the header of
+   * an acknowledge message then there is no message body and this field is
+   * used to pass the status of the acknowledge.
+   */
+  uint32_t lenOrStatus;
+
+  /**
+   * Constructor.
+   *
+   * Sets all integer member-variables to 0.
+   */
+  MessageHeader() throw();
+}; // struct MessageHeader
 
 } // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_MESSAGEHEADER
+#endif // CASTOR_TAPE_LEGACYMSG_MESSAGEHEADER_HPP

@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/legacymsg/RtcpNoMoreRequestsMsgBody.hpp
+ *         castor/tape/legacymsg/RtcpJobRqstMsgBody.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,24 +19,23 @@
  *
  *
  * 
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP
-#define CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP 1
+#include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 
-namespace castor {
-namespace tape {
-namespace legacymsg {
+#include <string.h>
 
-/**
- * An RTCP no more request message.
- */
-struct RtcpNoMoreRequestsMsgBody {
-}; // struct RtcpNoMoreRequestsMsgBody
-
-} // namespace legacymsg
-} // namespace tape
-} // namespace castor
-
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::legacymsg::RtcpJobRqstMsgBody::RtcpJobRqstMsgBody() throw():
+  volReqId(0),
+  clientPort(0),
+  clientEuid(0),
+  clientEgid(0) {
+  memset(clientHost, '\0', sizeof(clientHost));
+  memset(dgn, '\0', sizeof(dgn));
+  memset(driveUnit, '\0', sizeof(driveUnit));
+  memset(clientUserName, '\0', sizeof(clientUserName));
+}

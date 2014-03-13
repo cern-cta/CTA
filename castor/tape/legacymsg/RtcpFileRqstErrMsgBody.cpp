@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/legacymsg/RtcpErrorAppendix.hpp
+ *                      castor/tape/legacymsg/RtcpFileRqstErrMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,43 +18,48 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- *
+ * 
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPERRORAPPENDIX_HPP
-#define CASTOR_TAPE_LEGACYMSG_RTCPERRORAPPENDIX_HPP 1
+#ifndef CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTERRMSGBODY
+#define CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTERRMSGBODY
 
+#include "castor/tape/legacymsg/RtcpErrorAppendix.hpp"
+#include "castor/tape/legacymsg/RtcpFileRqst.hpp"
+#include "castor/tape/legacymsg/RtcpSegmentAttributes.hpp"
 #include "h/Castor_limits.h"
+#include "h/Cuuid.h"
 
 #include <stdint.h>
 
-namespace castor {
-namespace tape {
+
+namespace castor    {
+namespace tape      {
 namespace legacymsg {
 
-/**
- * Error reporting appendix embedded within an RTCP tape and file request
- * messages.
- */
-struct RtcpErrorAppendix {
-  char     errorMsg[CA_MAXLINELEN+1];
-  uint32_t severity; // Defined in rtcp_constants.h
-  uint32_t errorCode; // Defined in rtcp_constants.h
-  int32_t  maxTpRetry; // Nb. of retries left on mount/pos
-  int32_t  maxCpRetry; // Nb. of retries left on copy
-
   /**
-   * Constructor.
+   * An RTCP file request with error appendix message.
    *
-   * Sets all integer member-variables to 0 and all string member-variables to
-   * the empty string.
+   * Please note that the presence of an error appendix does not necessarily
+   * indicate an error.
    */
-  RtcpErrorAppendix() throw();
-}; // struct RtcpErrorAppendix
+  struct RtcpFileRqstErrMsgBody {
+    /**
+     * The request data which is common to both an RtcpFileRqstMsgBody and an
+     * RtcpFileRqstErrMsgBody.
+     */
+    RtcpFileRqst rqst;
+    
+    /**
+     * The error appendix.
+     */
+    RtcpErrorAppendix err;
+    
+  }; // struct RtcpFileRqstErrMsgBody
 
 } // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPERRORAPPENDIX_HPP
+#endif // CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTERRMSGBODY

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/legacymsg/RtcpDumpTapeRqstMsgBody.hpp
+ *         castor/tape/legacymsg/RtcpDumpTapeRqstMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,31 +22,38 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPDUMPTAPERQSTMSGBODY
-#define CASTOR_TAPE_LEGACYMSG_RTCPDUMPTAPERQSTMSGBODY
+#ifndef CASTOR_TAPE_LEGACYMSG_RTCPDUMPTAPERQSTMSGBODY_HPP
+#define CASTOR_TAPE_LEGACYMSG_RTCPDUMPTAPERQSTMSGBODY_HPP 1
 
 #include <stdint.h>
 
-namespace castor     {
-namespace tape       {
+namespace castor {
+namespace tape {
 namespace legacymsg {
 
+/**
+ * An RTCP dump tape request message.
+ */
+struct RtcpDumpTapeRqstMsgBody {
+  int32_t maxBytes;
+  int32_t blockSize;
+  int32_t convert_noLongerUsed;
+  int32_t tapeErrAction;
+  int32_t startFile;
+  int32_t maxFiles;
+  int32_t fromBlock;
+  int32_t toBlock;
+
   /**
-   * An RTCP dump tape request message.
+   * Constructor.
+   *
+   * Sets all integer member-variables to 0.
    */
-  struct RtcpDumpTapeRqstMsgBody {
-    int32_t maxBytes;
-    int32_t blockSize;
-    int32_t convert_noLongerUsed;
-    int32_t tapeErrAction;
-    int32_t startFile;
-    int32_t maxFiles;
-    int32_t fromBlock;
-    int32_t toBlock;
-  }; // struct RtcpDumpTapeRqstMsgBody
+  RtcpDumpTapeRqstMsgBody() throw();
+}; // struct RtcpDumpTapeRqstMsgBody
 
 } // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPDUMPTAPERQSTMSGBODY
+#endif // CASTOR_TAPE_LEGACYMSG_RTCPDUMPTAPERQSTMSGBODY_HPP
