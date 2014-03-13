@@ -23,7 +23,8 @@
  *****************************************************************************/
 
 #pragma once
-#include <string>
+
+
 #include <vector>
 #include <regex.h>
 #include <sys/types.h>
@@ -32,6 +33,7 @@
 #include "../exception/Exception.hpp"
 #include "../utils/Regex.hpp"
 #include "Constants.hpp"
+#include <string>
 
 namespace castor {
 namespace tape {
@@ -54,11 +56,15 @@ namespace SCSI {
         major = -1;
         minor = -1;
       }
-      int major;
-      int minor;
+      unsigned int major;
+      unsigned int minor;
 
       bool operator !=(const DeviceFile& b) const {
         return major != b.major || minor != b.minor;
+      }
+      
+      bool operator ==(const struct stat & sbuff) const {
+        return major == major(sbuff.st_rdev) && minor == minor(sbuff.st_rdev);
       }
     };
     DeviceFile sg;
@@ -83,6 +89,21 @@ namespace SCSI {
      * (all code using templates must be in the header file)
      */
     DeviceVector(castor::tape::System::virtualWrapper & sysWrapper);
+    
+    /**
+     * Find an array element that shares the same device files as one pointed
+     * to as a path. This is designed to be used with a symlink like:
+     * /dev/tape_T10D6116 -> /dev/nst0
+     */
+    DeviceInfo & findBySymlink(std::string path);
+    
+    /**
+     * Exception for previous function
+     */
+    class NotFound: public castor::tape::Exception {
+    public:
+      NotFound(const std::string& what): castor::tape::Exception(what) {}
+    };
   private:
     castor::tape::System::virtualWrapper & m_sysWrapper;
 

@@ -60,6 +60,20 @@ SCSI::DeviceVector::DeviceVector(System::virtualWrapper& sysWrapper) : m_sysWrap
   sysWrapper.closedir(dirp);
 }
 
+SCSI::DeviceInfo & SCSI::DeviceVector::findBySymlink(std::string path) {
+  struct stat sbuff;
+  castor::exception::Errnum::throwOnMinusOne(
+      m_sysWrapper.stat(path.c_str(), &sbuff),
+      std::string("Could not stat path: ")+path);
+  for(std::vector<DeviceInfo>::iterator i = begin(); i!= end(); i++) {
+    if (i->nst == sbuff || i->st == sbuff) {
+      return *i;
+    }
+  }
+  throw SCSI::DeviceVector::NotFound(
+      std::string("Could not find tape device pointed to by ") + path);
+}
+
 std::string SCSI::DeviceVector::readfile(std::string path) {
   int fd;
   castor::exception::Errnum::throwOnMinusOne(
