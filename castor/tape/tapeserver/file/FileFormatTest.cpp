@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
     std::cout << std::endl << "-- SCSI device: " << dev.sg_dev << " (" << dev.nst_dev << ")" << std::endl;
     if (dev.type == castor::tape::SCSI::Types::tape) {
       castor::tape::drives::Drive dContainer(dev, sWrapper);
-      castor::tape::drives::DriveGeneric & drive = dContainer;
+      castor::tape::drives::DriveInterface & drive = dContainer;
       castor::tape::drives::deviceInfo devInfo;
       try {
         devInfo = drive.getDeviceInfo();

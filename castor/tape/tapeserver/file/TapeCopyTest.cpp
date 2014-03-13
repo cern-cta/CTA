@@ -105,9 +105,9 @@ int main(int argc, char* argv[])
   }
   
   castor::tape::drives::Drive read_dContainer(read_dev, sWrapper);
-  castor::tape::drives::DriveGeneric & read_drive = read_dContainer;
+  castor::tape::drives::DriveInterface & read_drive = read_dContainer;
   castor::tape::drives::Drive write_dContainer(write_dev, sWrapper);
-  castor::tape::drives::DriveGeneric & write_drive = write_dContainer;
+  castor::tape::drives::DriveInterface & write_drive = write_dContainer;
   
   try {
     label_sess = new castor::tape::tapeFile::LabelSession(write_drive, dst_tape, true);
