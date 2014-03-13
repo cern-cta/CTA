@@ -29,6 +29,7 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   CommonMarshal.cpp
   RtcpMarshal.cpp
   TapeBridgeMarshal.cpp
+  VdqmDrvRqstMsgBody.cpp
   VmgrMarshal.cpp)
 add_library (castortapelegacymsg SHARED ${TAPE_LEGACYMSG_LIB_SRC_FILES})
 CastorSetLibraryVersions (castortapelegacymsg)
