@@ -28,7 +28,8 @@
 
 namespace castor {
 namespace tape {
-namespace server {
+namespace tapeserver {
+namespace daemon {
   /**
    * A class, reusing code of TpcpCommand which simulates the tapebridge
    * part of the client communication with the server. The constructor
@@ -107,6 +108,7 @@ namespace server {
     std::string m_volLabel;
     std::string m_density;
   };
+}
 }
 }
 }

@@ -35,14 +35,14 @@
 using namespace castor::tape;
 using namespace castor::log;
 
-castor::tape::server::MountSession::MountSession(
+castor::tape::tapeserver::daemon::MountSession::MountSession(
     const legacymsg::RtcpJobRqstMsgBody& clientRequest, 
     castor::log::Logger& logger, System::virtualWrapper & sysWrapper,
     const utils::TpconfigLines & tpConfig): 
     m_request(clientRequest), m_logger(logger), m_clientIf(clientRequest),
     m_sysWrapper(sysWrapper), m_tpConfig(tpConfig) {}
 
-void castor::tape::server::MountSession::execute()
+void castor::tape::tapeserver::daemon::MountSession::execute()
 throw (castor::tape::Exception) {
   // 1) Prepare the logging environment
   LogContext lc(m_logger);
@@ -109,7 +109,7 @@ throw (castor::tape::Exception) {
   }
 }
 
-void castor::tape::server::MountSession::executeRead(LogContext & lc) {
+void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc) {
   // We are ready to start the session. In case of read there is no interest in
   // creating the machinery before getting the tape mounted, so do it now.
   // 1) Get hold of the drive and check it.
@@ -138,10 +138,10 @@ void castor::tape::server::MountSession::executeRead(LogContext & lc) {
   }
 }
 
-void castor::tape::server::MountSession::executeWrite(LogContext & lc) {
+void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc) {
 }
 
-void castor::tape::server::MountSession::executeDump(LogContext & lc) {
+void castor::tape::tapeserver::daemon::MountSession::executeDump(LogContext & lc) {
   // We are ready to start the session. In case of read there is no interest in
   // creating the machinery before getting the tape mounted, so do it now.
   // 1) Get hold of the drive and check it.

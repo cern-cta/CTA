@@ -30,7 +30,11 @@
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 
-using namespace castor::tape::server;
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+  
 using namespace castor::tape;
 
 ClientSimulator::ClientSimulator(uint32_t volReqId, const std::string & vid, 
@@ -101,4 +105,9 @@ throw () {
   err.setErrorCode(errorCode);
   err.setErrorMessage(errorMessage);
   sock.sendObject(err);
+}
+
+}
+}
+}
 }

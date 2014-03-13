@@ -36,7 +36,8 @@ using namespace castor::log;
 
 namespace castor {
 namespace tape {
-namespace server {
+namespace tapeserver {
+namespace daemon {
   /**
    * The main class handling a tape session. This is the main container started
    * by the master process. It will drive a separate process. Only the sub
@@ -66,6 +67,7 @@ namespace server {
     /** sub-part of execute for a dump session */
     void executeDump(LogContext & lc);
   };
+}
 }
 }
 }

@@ -37,11 +37,11 @@
 #include <stdlib.h>
 #include <typeinfo>
 
-castor::tape::server::
+castor::tape::tapeserver::daemon::
 ClientInterface::ClientInterface(const legacymsg::RtcpJobRqstMsgBody& clientRequest)
   throw (castor::tape::Exception): m_request(clientRequest) {}
 
-castor::tape::server::ClientInterface::UnexpectedResponse::
+castor::tape::tapeserver::daemon::ClientInterface::UnexpectedResponse::
     UnexpectedResponse(const castor::IObject* resp, const std::string & w):
 castor::tape::Exception(w) {
   std::string responseType = typeid(*resp).name();
@@ -54,7 +54,7 @@ castor::tape::Exception(w) {
 }
 
 tapegateway::GatewayMessage *
-  castor::tape::server::ClientInterface::requestResponseSession(
+  castor::tape::tapeserver::daemon::ClientInterface::requestResponseSession(
     const tapegateway::GatewayMessage &req,
     RequestReport & report)
 throw (castor::tape::Exception) 
@@ -98,7 +98,7 @@ throw (castor::tape::Exception)
   return ret;
 }
 
-void castor::tape::server::ClientInterface::fetchVolumeId(
+void castor::tape::tapeserver::daemon::ClientInterface::fetchVolumeId(
   VolumeInfo & volInfo, RequestReport &report) 
 throw (castor::tape::Exception) {
   // 1) Build the request
@@ -140,7 +140,7 @@ throw (castor::tape::Exception) {
   }
 }
 
-void castor::tape::server::ClientInterface::reportEndOfSession(
+void castor::tape::tapeserver::daemon::ClientInterface::reportEndOfSession(
 RequestReport &transactionReport) 
 throw (castor::tape::Exception) {
   // 1) Build the report
@@ -162,7 +162,7 @@ throw (castor::tape::Exception) {
 }
 
 
-void castor::tape::server::ClientInterface::reportEndOfSessionWithError(
+void castor::tape::tapeserver::daemon::ClientInterface::reportEndOfSessionWithError(
 RequestReport &transactionReport, const std::string & errorMsg,
     int errorCode) 
 throw (castor::tape::Exception) {

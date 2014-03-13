@@ -35,7 +35,8 @@ using namespace castor::tape;
 
 namespace castor {
 namespace tape {
-namespace server {
+namespace tapeserver {
+namespace daemon {
   /**
    * A class managing the communications with the tape server's client.
    * The client address will have been received from the VDQM by the main
@@ -157,6 +158,7 @@ namespace server {
     ThreadSafeCounter<uint32_t> m_transactionId;
   };
   
+}
 }
 }
 }

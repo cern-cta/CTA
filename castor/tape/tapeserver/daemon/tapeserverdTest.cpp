@@ -31,7 +31,7 @@
 #include "../system/Wrapper.hpp"
 #include "Ctape.h"
 
-using namespace castor::tape::server;
+using namespace castor::tape::tapeserver::daemon;
 
 namespace unitTest {
 
