@@ -998,4 +998,63 @@ will be force-closed by the TapeServer.
 
 \subsubsection{Disk write thread}
 
+\section{Compilation instructions}
 
+Install SLC 6 (or 5)
+Install cmake and git if they are not installed out of the box
+\begin{table}[h]
+\begin{lstlisting}
+yum -y install python-debian cmake git
+\end{lstlisting}
+\end{table}
+
+\begin{table}[h]
+\begin{lstlisting}
+cd 
+git clone http://git.cern.ch/pub/CASTOR castor
+mkdir build && cd build
+cmake -DPackageOnly:bool=true ../castor/
+make castor_rpm
+\end{lstlisting}
+\end{table}
+The last command will give you a list of missing packages that are needed.
+Most of them can be installed with a simple yum install.
+
+\begin{table}[h]
+\begin{lstlisting}
+yum install -y libattr-devel binutils-devel python-devel xfsprogs-devel gtest gtest-devel globus-gridftp-server-devel globus-common-devel cppunit-devel xrootd-server xrootd-client xrootd-libs-devel xrootd-client-devel xrootd-server-devel xrootd-private-devel xrootd-cl xrootd-cl-devel e2fsprogs-devel openssl-devel krb5-devel curl-devel
+\end{lstlisting}
+\end{table}
+
+
+But you need get and install manualy from swrep\footnote{http://swrep/swrep/} at least the following packages :
+\begin{itemize}[noitemsep]
+ \item gmock-1.5.0-3
+ \item gmock-devel-1.5.0-3
+ \item libmemcached-0.53-1
+ \item libmemcached-devel-0.53-1
+ \item oracle-instantclient-basic-11.2.0.3.0-5
+ \item oracle-instantclient-precomp-11.2.0.3.0-5 
+ \item oracle-instantclient-devel-11.2.0.3.0-5  
+ \item stk-ssi-devel-2.3-3.cern
+ \item stk-ssi-2.3-3.cern
+\end{itemize}
+
+
+After that, you can run again
+\begin{table}[h]
+\begin{lstlisting}
+make castor_rpm
+\end{lstlisting}
+\end{table}
+
+You should have no errors (if some packages are still missing, install it) otherwise it should compile castor and create the rpm package.
+
+A classic compilation is done with the usal \textit{make}
+\subsubsection{Compiling on SLC6}
+On SLC6, there is clash between oracle-*  and postgresql-devel packages about \textit{sqlca.h}.
+The package postgresql-devel provides a new file \textit{sqlca.h}, which has several significant 
+differences with the one provided by the oracle-* packages, thus leading the compilation to fail.
+
+\subsubsection{Compiling on SLC5}
+On SLC5, an empty line is requiered at the end of each file.
