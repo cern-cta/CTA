@@ -30,6 +30,12 @@
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
+#include "castor/tape/tapegateway/FilesToMigrateListRequest.hpp"
+#include "castor/tape/tapegateway/FilesToMigrateList.hpp"
+#include "castor/tape/tapegateway/FileMigrationReportList.hpp"
+#include "castor/tape/tapegateway/FilesToRecallListRequest.hpp"
+#include "castor/tape/tapegateway/FilesToRecallList.hpp"
+#include "castor/tape/tapegateway/FileRecallReportList.hpp"
 #include "castor/tape/utils/Timer.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include <cxxabi.h>
@@ -188,10 +194,40 @@ throw (castor::tape::Exception) {
 }
 
 
-void castor::tape::tapeserver::daemon::ClientInterface::getFilesToMigrate(
+tapegateway::FilesToMigrateList * 
+    castor::tape::tapeserver::daemon::ClientInterface::getFilesToMigrate(
 uint64_t files, uint64_t bytes, RequestReport& report) 
 throw (castor::tape::Exception) {
-  throw castor::tape::Exception("getFilesToMigrate  to be implemented");
+  // 1) Build the request
+  castor::tape::tapegateway::FilesToMigrateListRequest ftmReq;
+  report.transactionId = ++m_transactionId;
+  ftmReq.setMountTransactionId(m_request.volReqId);
+  ftmReq.setAggregatorTransactionId(report.transactionId);
+  ftmReq.setMaxBytes(files);
+  ftmReq.setMaxBytes(bytes);
+  // 2) Exchange messages with the server
+  std::auto_ptr<tapegateway::GatewayMessage> resp(
+      requestResponseSession(ftmReq, report));
+  // 3) We expect either a NoMoreFiles response or FilesToRecallList
+  // 3a) Handle the FilesToRecallListl
+  try {
+    tapegateway::FilesToMigrateList & ftm  =
+        dynamic_cast <tapegateway::FilesToMigrateList &>(*resp);
+    if (ftm.filesToMigrate().size()) {
+      resp.release();
+      return &ftm;
+    } else {
+      return NULL;
+    }
+  } catch (std::bad_cast) {}
+  // 3b) Try again with NoMoreFiles (and this time failure is fatal)
+  try {
+    dynamic_cast<tapegateway::NoMoreFiles &>(*resp);
+    return NULL;
+  } catch (std::bad_cast) {
+    throw UnexpectedResponse(resp.get(),
+        "Unexpected response to FilesToMigrateListRequest in getFilesToMigrate");
+  }
 }
 
 void castor::tape::tapeserver::daemon::ClientInterface::reportMigrationResults(
@@ -205,7 +241,7 @@ throw (castor::tape::Exception) {
   throw castor::tape::Exception("getFilesToRecall  to be implemented");
 }
 
-void castor::tape::tapeserver::daemon::ClientInterface::reportRecallResult(
+void castor::tape::tapeserver::daemon::ClientInterface::reportRecallResults(
 RequestReport& report) throw (castor::tape::Exception) {
   throw castor::tape::Exception("reportRecallResult  to be implemented");
 }
