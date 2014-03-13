@@ -76,3 +76,18 @@ castor::log::LogContext::ScopedParam::ScopedParam(
 castor::log::LogContext::ScopedParam::~ScopedParam() throw () {
   m_context.erase(m_name);
 }
+
+std::ostream & castor::log::operator << (std::ostream & os, 
+    const castor::log::LogContext & lc) {
+  bool first=true;
+  for (std::list<Param>::const_iterator p = lc.m_params.begin(); 
+      p != lc.m_params.end(); ++p) {
+    if (!first) {
+      os << " ";
+    } else {
+      first = false;
+    }
+    os << p->getName() << "=" << p->getValue();
+  }
+  return os;
+}

@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include <ostream>
 #include "castor/log/Logger.hpp"
 
 namespace castor {
@@ -35,6 +36,7 @@ namespace log {
  * parameter value per parameter name.
  */
 class LogContext {
+  friend std::ostream & operator << (std::ostream & os , const LogContext & lc);
 public:
 
   /**
@@ -128,6 +130,8 @@ private:
   Logger & m_log;
   std::list<Param> m_params;
 }; // class LogContext
+
+std::ostream & operator << (std::ostream & os , const LogContext & lc);
 
 } // namespace log
 } // namespace castor
