@@ -127,7 +127,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     ClientInterface::RequestReport reqReport;
     std::stringstream errMsg("Drive unit not found");
     errMsg << lc;
-    m_clientIf.reportEndOfSessionWithError(reqReport, "Drive unit not found", SEINTERNAL);
+    m_clientIf.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
     LogContext::ScopedParam sp09(lc, Param("tapebridgeTransId", reqReport.transactionId));
     LogContext::ScopedParam sp10(lc, Param("connectDuration", reqReport.connectDuration));
     LogContext::ScopedParam sp11(lc, Param("sendRecvDuration", reqReport.sendRecvDuration));

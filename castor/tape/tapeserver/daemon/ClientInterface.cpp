@@ -163,8 +163,7 @@ throw (castor::tape::Exception) {
 
 
 void castor::tape::tapeserver::daemon::ClientInterface::reportEndOfSessionWithError(
-RequestReport &transactionReport, const std::string & errorMsg,
-    int errorCode) 
+const std::string & errorMsg, int errorCode, RequestReport &transactionReport) 
 throw (castor::tape::Exception) {
   // 1) Build the report
   castor::tape::tapegateway::EndNotificationErrorReport endReport;
@@ -184,4 +183,27 @@ throw (castor::tape::Exception) {
     throw UnexpectedResponse(ack.get(), 
         "Unexpected response when reporting end of session");
   }
+}
+
+
+void castor::tape::tapeserver::daemon::ClientInterface::getFilesToMigrate(
+uint64_t files, uint64_t bytes, RequestReport& report) 
+throw (castor::tape::Exception) {
+  throw castor::tape::Exception("getFilesToMigrate  to be implemented");
+}
+
+void castor::tape::tapeserver::daemon::ClientInterface::reportMigrationResults(
+RequestReport& report) throw (castor::tape::Exception) {
+  throw castor::tape::Exception("reportMigrationResults  to be implemented");
+}
+
+void castor::tape::tapeserver::daemon::ClientInterface::getFilesToRecall(
+uint64_t files, uint64_t bytes, RequestReport& report) 
+throw (castor::tape::Exception) {
+  throw castor::tape::Exception("getFilesToRecall  to be implemented");
+}
+
+void castor::tape::tapeserver::daemon::ClientInterface::reportRecallResult(
+RequestReport& report) throw (castor::tape::Exception) {
+  throw castor::tape::Exception("reportRecallResult  to be implemented");
 }

@@ -102,9 +102,54 @@ namespace daemon {
     /**
      * Reports end of session to the client. This should be the last call to
      * the client.
+     * @param transactionReport Placeholder to network timing information,
+     * populated during the call and used by the caller to log performance 
+     * and context information
+     * @param errorMsg (sent to the client)
+     * @param errorCode (sent to the client)
      */
-    void reportEndOfSessionWithError(RequestReport &transactionReport, 
-      const std::string & errorMsg, int errorCode) throw (castor::tape::Exception);
+    void reportEndOfSessionWithError(const std::string & errorMsg, int errorCode, 
+    RequestReport &transactionReport) throw (castor::tape::Exception);
+    
+    /**
+     * Asks the the client for files to migrate, with at least files files, or
+     * bytes bytes of data, whichever limit is passed first.
+     * Detailed interface is still TBD.
+     * @param files files count requested.
+     * @param bytes total bytes count requested
+     * @param report Placeholder to network timing information,
+     * populated during the call and used by the caller to log performance 
+     * and context information
+     */
+    void getFilesToMigrate(uint64_t files, uint64_t bytes, RequestReport &report)
+    throw (castor::tape::Exception);
+    
+    /**
+     * Reports the result of migrations to the client.
+     * Detailed interface is still TBD.
+     * @param report Placeholder to network timing information
+     */
+    void reportMigrationResults(RequestReport &report) throw (castor::tape::Exception);
+    
+    /**
+     * Asks the the client for files to recall, with at least files files, or
+     * bytes bytes of data, whichever limit is passed first.
+     * Detailed interface is still TBD.
+     * @param files files count requested.
+     * @param bytes total bytes count requested
+     * @param report Placeholder to network timing information,
+     * populated during the call and used by the caller to log performance 
+     * and context information
+     */
+    void getFilesToRecall(uint64_t files, uint64_t bytes, RequestReport &report)
+    throw (castor::tape::Exception);
+    
+    /**
+     * Reports the result of recall to the client.
+     * Detailed interface is still TBD.
+     * @param report Placeholder to network timing information
+     */
+    void reportRecallResult(RequestReport &report) throw (castor::tape::Exception);
     /**
      * Exception thrown when the wrong response type was received from
      * the client after a request. Extracts the type and prints it.
