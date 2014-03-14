@@ -29,6 +29,13 @@
 #include "h/vdqm_constants.h"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::VdqmImpl::VdqmImpl(
+  const std::string &vdqmHostName) throw(): m_vdqmHostName(vdqmHostName) {
+}
+
+//------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmImpl::~VdqmImpl() throw() {

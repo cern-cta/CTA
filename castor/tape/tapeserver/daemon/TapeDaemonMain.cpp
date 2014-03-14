@@ -22,10 +22,24 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/common/CastorConfiguration.hpp"
 #include "castor/log/LoggerImplementation.hpp"
 #include "castor/io/PollReactorImpl.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmImpl.hpp"
+
+#include <string>
+
+//------------------------------------------------------------------------------
+// getVdqmHostName
+//
+// Tries to get the name of the host on which the vdqmd daemon is running by
+// parsing /etc/castor/castor.conf.
+//
+// This function logs the host name if it is successful, else it logs an
+// error message and returns an empty string.
+//------------------------------------------------------------------------------
+static std::string getVdqmHostName(castor::log::Logger &log) throw();
 
 //------------------------------------------------------------------------------
 // main
@@ -33,9 +47,46 @@
 int main(const int argc, char **const argv) {
   using namespace castor::tape::tapeserver::daemon;
   castor::log::LoggerImplementation log("tapeserverd");
-  VdqmImpl vdqm;
+  const std::string vdqmHostName = getVdqmHostName(log);
+  if(vdqmHostName.empty()) {
+    return 1;
+  }
+  VdqmImpl vdqm(vdqmHostName);
   castor::io::PollReactorImpl reactor(log);
   TapeDaemon daemon(std::cout, std::cerr, log, vdqm, reactor);
 
   return daemon.main(argc, argv);
+}
+
+//------------------------------------------------------------------------------
+// getVdqmHostName
+//------------------------------------------------------------------------------
+static std::string getVdqmHostName(castor::log::Logger &log) throw() {
+  using namespace castor;
+
+  common::CastorConfiguration config;
+  std::string vdqmHostName;
+
+  try {
+    config = common::CastorConfiguration::getConfig();
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {log::Param("Message", ex.getMessage().str())};
+    log(LOG_ERR, "Failed to get vdqm host-name"
+      ": Failed to get castor configuration", params);
+  }
+
+  try {
+    vdqmHostName = config.getConfEnt("VDQM", "HOST");
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {log::Param("Message", ex.getMessage().str())};
+    log(LOG_ERR, "Failed to get vdqm host-name"
+      ": Failed to get castor configuration entry VDQM:HOST", params);
+  }
+
+  if(!vdqmHostName.empty()) {
+    log::Param params[] = {log::Param("vdqmHostName", vdqmHostName)};
+    log(LOG_INFO, "Got vdqm host-name", params);
+  }
+
+  return vdqmHostName;
 }

@@ -38,6 +38,14 @@ class VdqmImpl: public Vdqm {
 public:
 
   /**
+   * Constructor.
+   *
+   * @param vdqmHostName The name of the host on which the vdqmd daemon is
+   * running.
+   */
+  VdqmImpl(const std::string &vdqmHostName) throw();
+
+  /**
    * Destructor.
    *
    * Closes the listening socket created in the constructor to listen for
@@ -129,6 +137,11 @@ private:
    */
   void checkJobMsgLen(const size_t maxLen, const size_t len) const
     throw(castor::exception::Exception);
+
+  /**
+   * The name of the host on which the vdqmd daemon is running.
+   */
+  const std::string m_vdqmHostName;
 
 }; // class VdqmImpl
 
