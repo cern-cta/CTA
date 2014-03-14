@@ -29,6 +29,7 @@
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/ClientType.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
+#include "castor/tape/tapegateway/FilesToMigrateList.hpp"
 #include "../threading/Threading.hpp"
 
 using namespace castor::tape;
@@ -120,8 +121,12 @@ namespace daemon {
      * @param report Placeholder to network timing information,
      * populated during the call and used by the caller to log performance 
      * and context information
+     * @return a pointer (to be deleted by the user) to a 
+     * tapegateway::FilesToMigrateList is non-empty or NULL if not more
+     * files could be retrieved.
      */
-    void getFilesToMigrate(uint64_t files, uint64_t bytes, RequestReport &report)
+    tapegateway::FilesToMigrateList * getFilesToMigrate(uint64_t files, 
+    uint64_t bytes, RequestReport &report)
     throw (castor::tape::Exception);
     
     /**
@@ -149,7 +154,7 @@ namespace daemon {
      * Detailed interface is still TBD.
      * @param report Placeholder to network timing information
      */
-    void reportRecallResult(RequestReport &report) throw (castor::tape::Exception);
+    void reportRecallResults(RequestReport &report) throw (castor::tape::Exception);
     /**
      * Exception thrown when the wrong response type was received from
      * the client after a request. Extracts the type and prints it.
