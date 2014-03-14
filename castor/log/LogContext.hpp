@@ -87,7 +87,7 @@ public:
    * Small introspection function to help in tests
    * @return size
    */
-  size_t size() { return m_params.size(); }
+  size_t size() const { return m_params.size(); }
 
   /**
    * Writes a message into the CASTOR logging system. Note that no exception
