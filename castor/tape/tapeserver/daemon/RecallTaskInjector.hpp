@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      RecallJobInjector.hpp
+ *                      RecallTaskInjector.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -25,92 +25,78 @@
 #pragma once
 
 #include <list>
-#include "castor/tape/tapeserver/daemon/MemManager.hpp"
-#include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
-#include "castor/tape/tapeserver/daemon/TapeReadFileTask.hpp"
-#include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
-#include "castor/tape/tapeserver/daemon/DiskWriteFileTask.hpp"
-#include "castor/tape/tapeserver/daemon/RecallJob.hpp"
-#include "castor/tape/tapeserver/daemon/TapeWriteFileTask.hpp"
-#include "castor/tape/tapeserver/daemon/MockTapeGateway.hpp"
+#include <stdint.h>
 
-class RecallJobInjector: public JobInjector {
+#include "MemManager.hpp"
+#include "TapeReadSingleThread.hpp"
+#include "TapeReadFileTask.hpp"
+#include "DiskWriteThreadPool.hpp"
+#include "DiskWriteFileTask.hpp"
+#include "RecallJob.hpp"
+#include "TapeWriteFileTask.hpp"
+#include "ClientInterface.hpp"
+#include "castor/log/LogContext.hpp"
+
+
+using castor::log::LogContext;
+
+namespace castor{
+namespace tape{
+namespace tapeserver{
+namespace daemon {
+
+/**
+ * This classis reponsible for creating the tasks in case of a recall job
+  */
+class RecallTaskInjector: public JobInjector {
 public:
-  RecallJobInjector(MemoryManager & mm, TapeReadSingleThread & tapeReader,
-  DiskWriteThreadPool & diskWriter, MockTapeGateway & tapeGateway):  
-	  m_thread(*this), m_mm(mm),
-          m_tapeReader(tapeReader), m_diskWriter(diskWriter), 
-	  m_tapeGateway(tapeGateway) {}
-  
-  ~RecallJobInjector() { castor::tape::threading::MutexLocker ml(&m_producerProtection); }
-  
-  virtual void requestInjection(int maxFiles, int maxBlocks, bool lastCall) {
-    printf("RecallJobInjector::requestInjection()\n");
-    castor::tape::threading::MutexLocker ml(&m_producerProtection);
-    m_queue.push(Request(maxFiles, maxBlocks, lastCall));
-  }
-  void waitThreads() {
-    m_thread.wait();
-  }
-  void startThreads() {
-    m_thread.start();
-  }
+
+  RecallTaskInjector(MemoryManager & mm, 
+        TapeReadSingleThread & tapeReader,
+        DiskWriteThreadPool & diskWriter,ClientInterface& client,
+        castor::log::LogContext& lc);
+
+
+  virtual void requestInjection(int maxFiles, int maxBlocks, bool lastCall);
+
+  bool synchronousInjection(uint64_t maxFiles, uint64_t maxBlocks);
+
+  void waitThreads();
+  void startThreads();
 private:
-  void injectBulkRecalls(std::list<RecallJob> jobs) {
-    for (std::list<RecallJob>::iterator i=jobs.begin(); i!= jobs.end(); i++) {
-      DiskWriteFileTask * dwt = new DiskWriteFileTask(i->fileId, i->blockCount, m_mm);
-      TapeReadFileTask * trt = new TapeReadFileTask(*dwt, i->fSeq, i->blockCount);
-      m_diskWriter.push(dwt);
-      m_tapeReader.push(trt);
-    }
-  }
-  class WorkerThread: public castor::tape::threading::Thread {
-  public:
-    WorkerThread(RecallJobInjector & rji): m_parent(rji) {}
-    void run() {
-      while (1) {
-        Request req = m_parent.m_queue.pop();
-	printf("RecallJobInjector:run: about to call gateway\n");
-        std::list<RecallJob> jobs = m_parent.m_tapeGateway.getMoreWork(req.maxFiles, req.maxBlocks);
-        if (!jobs.size()) {
-          if (req.lastCall) {
-	    printf("In RecallJobInjector::WorkerThread::run(): last call turned up empty: triggering the end of session.\n");
-            m_parent.m_tapeReader.finish();
-            m_parent.m_diskWriter.finish();
-            break;
-          } else {
-	    printf("In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.\n");
-	  }
-        } else {
-	  printf("In RecallJobInjector::WorkerThread::run(): got %zd files.\n", jobs.size());
-          m_parent.injectBulkRecalls(jobs);
-        }
-      }
-      try {
-        while(1) {
-          Request req = m_parent.m_queue.tryPop();
-          printf("In RecallJobInjector::WorkerThread::run(): popping extra request (lastCall=%d)\n", req.lastCall);
-        }
-      } catch (castor::tape::threading::noMore) {
-        printf("In RecallJobInjector::WorkerThread::run(): Drained the request queue. We're now empty. Finishing.\n");
-      }
-    }
-  private:
-    RecallJobInjector & m_parent;
-      
-  } m_thread;
-  friend class WorkerThread;
+  void injectBulkRecalls(const std::list<RecallJob>& jobs);
+
+  /**
+   * A request of files to recall
+   */
   class Request {
   public:
     Request(int mf, int mb, bool lc): maxFiles(mf), maxBlocks(mb), lastCall(lc) {}
-    int maxFiles;
-    int maxBlocks;
-    bool lastCall;
+    const int maxFiles;
+    const int maxBlocks;
+    const bool lastCall;
   };
-  MemoryManager & m_mm;
+  
+  class WorkerThread: public castor::tape::threading::Thread {
+  public:
+    WorkerThread(RecallTaskInjector & rji): _this(rji) {}
+    void run();
+  private:
+    RecallTaskInjector & _this;
+
+  } m_thread;
+
+  MemoryManager & m_memManager;
   TapeReadSingleThread & m_tapeReader;
   DiskWriteThreadPool & m_diskWriter;
-  MockTapeGateway & m_tapeGateway;
+
+  ClientInterface& m_client;
+  castor::log::LogContext& m_lc;
   castor::tape::threading::Mutex m_producerProtection;
   castor::tape::threading::BlockingQueue<Request> m_queue;
 };
+
+} //end namespace daemon
+} //end namespace tapeserver
+} //end namespace tape
+} //end namespace castor

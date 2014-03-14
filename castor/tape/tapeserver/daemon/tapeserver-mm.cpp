@@ -32,7 +32,7 @@
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadFileTask.hpp"
 #include "castor/tape/tapeserver/daemon/MockTapeGateway.hpp"
-#include "castor/tape/tapeserver/daemon/RecallJobInjector.hpp"
+#include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include <memory>
 
@@ -86,6 +86,7 @@ int main(void) {
   }
   printf("========= Switching to recall session\n");
   /* recall session */
+  /*
   {
     MockTapeGateway tg(filesNumber, modulo); 
     TapeReadSingleThread trtp(drive);
@@ -95,7 +96,7 @@ int main(void) {
     trtp.startThreads();
     dwtp.startThreads();
     rji.startThreads();
-    /* Give the initial kick to the session (it's a last call) */
+    // Give the initial kick to the session (it's a last call) 
     rji.requestInjection(maxFilesReq, maxFilesReq, true);
     trtp.waitThreads();
     printf("tape read thread complete\n");
@@ -103,7 +104,7 @@ int main(void) {
     printf("disk write threads complete\n");
     rji.waitThreads();
     printf("Recall job injector complete\n");
-  }
+  }*/
   mm.finish();
   mm.waitThreads();
   printf("memory management thread complete\n");
