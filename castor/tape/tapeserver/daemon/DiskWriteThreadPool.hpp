@@ -27,7 +27,7 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
-#include "castor/tape/tapeserver/daemon/JobInjector.hpp"
+#include "castor/tape/tapeserver/daemon/TaskInjector.hpp"
 #include <vector>
 
 class DiskWriteThreadPool {
@@ -73,7 +73,7 @@ public:
       m_tasks.push(new endOfSession);
     }
   }
-  void setJobInjector(JobInjector * ji){
+  void setJobInjector(TaskInjector * ji){
     m_jobInjector = ji;
   }
 
@@ -138,7 +138,7 @@ private:
   castor::tape::threading::BlockingQueue<DiskWriteTask *> m_tasks;
   std::vector<DiskWriteWorkerThread *> m_threads;
   castor::tape::threading::Mutex m_counterProtection;
-  JobInjector * m_jobInjector;
+  TaskInjector * m_jobInjector;
   int m_filesQueued;
   int m_blocksQueued;
   int m_maxFilesReq;

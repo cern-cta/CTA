@@ -24,8 +24,8 @@
 
 #pragma once
 
-class JobInjector{
+class TaskInjector{
 public:
   virtual void requestInjection(int maxFiles, int maxBlocks, bool lastCall) = 0;
-  virtual ~JobInjector() {}
+  virtual ~TaskInjector() {}
 };
