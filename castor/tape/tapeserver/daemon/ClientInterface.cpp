@@ -139,6 +139,7 @@ throw (castor::tape::Exception) {
     EndOfSession eos("Client replied noMoreFiles directly to volume request: ");
         eos.getMessage() << "errorCode=" << errorReport->errorCode()
         << "errorReport=\"" <<  errorReport->errorMessage() << "\"";
+        throw eos;
   // Unexpected response type  
   } else {
     throw UnexpectedResponse(response.get(), "Unexpected response from client in response "

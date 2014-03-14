@@ -25,23 +25,34 @@
 #pragma once
 
 #include "../../tpcp/TpcpCommand.hpp"
+#include <memory>
+#include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
+#include "castor/tape/tapegateway/FilesToMigrateList.hpp"
 
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
   /**
-   * A class, reusing code of TpcpCommand which simulates the tapebridge
-   * part of the client communication with the server. The constructor
-   * will hence setup a client callback socket and wait. All the tape mounting
-   * logic is hence skipped. We will then in parallel start a tape session.
+   * A templated class, reusing code of TpcpCommand which simulates the 
+   * tapegateway part of the client communication with the server. The 
+   * constructor will hence setup a client callback socket and wait. The
+   * method processRequest will wait for a message and reply with the type
+   * chosen on template implementation.
    */
-  class ClientSimulator: public tpcp::TpcpCommand {
+  template<class ReplyType>
+  class ClientSimSingleReply: public tpcp::TpcpCommand {
   public:
-    ClientSimulator(uint32_t volReqId, const std::string & vid, 
-            const std::string & density);
+    ClientSimSingleReply(uint32_t volReqId, const std::string & vid, 
+            const std::string & density, bool breakTransaction = false): 
+    TpcpCommand("clientSimulator::clientSimulator"), m_vid(vid), 
+    m_density(density), m_breakTransaction(breakTransaction)
+    {
+      m_volReqId = volReqId;
+      setupCallbackSock();
+    }
     
-    virtual ~ClientSimulator() throw () {}
+    virtual ~ClientSimSingleReply() throw () {}
     
     struct ipPort {
       ipPort(uint32_t i, uint16_t p): ip(i), port(p) {}
@@ -97,7 +108,21 @@ namespace daemon {
     
   private:
     // Process the first request which should be getVolume
-    void processFirstRequest() throw(castor::exception::Exception);
+    void processFirstRequest() throw(castor::exception::Exception) {
+      // Accept the next connection
+      std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
+      // Read in the message sent by the tapebridge
+      std::auto_ptr<castor::IObject> obj(clientConnection->readObject());
+      // Convert to a gateway message (for transactionId)
+      tapegateway::GatewayMessage & gm = 
+              dynamic_cast<tapegateway::GatewayMessage &>(*obj);
+      // Reply with our own type and transaction id
+      ReplyType repl;
+      repl.setAggregatorTransactionId(gm.aggregatorTransactionId() ^ 
+        (m_breakTransaction?666:0));
+      repl.setMountTransactionId(m_volReqId);
+      clientConnection->sendObject(repl);
+    }
     // Notify the client
     void sendEndNotificationErrorReport(
     const uint64_t             tapebridgeTransactionId,
@@ -108,7 +133,32 @@ namespace daemon {
     std::string m_vid;
     std::string m_volLabel;
     std::string m_density;
+    bool m_breakTransaction;
   };
+  
+  /**
+   * Specific version for the FilesToMigrateList: we want
+   * to pass a non empty list, so it has to be a little bit less trivial.
+   */
+  template<>
+  void ClientSimSingleReply<castor::tape::tapegateway::FilesToMigrateList>::processFirstRequest() 
+          throw(castor::exception::Exception) {
+    using namespace castor::tape::tapegateway;
+      // Accept the next connection
+      std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
+      // Read in the message sent by the tapebridge
+      std::auto_ptr<castor::IObject> obj(clientConnection->readObject());
+      // Convert to a gateway message (for transactionId)
+      GatewayMessage & gm = 
+              dynamic_cast<tapegateway::GatewayMessage &>(*obj);
+      // Reply with our own type and transaction id
+      FilesToMigrateList repl;
+      repl.setAggregatorTransactionId(gm.aggregatorTransactionId() ^ 
+        (m_breakTransaction?666:0));
+      repl.setMountTransactionId(m_volReqId);
+      repl.filesToMigrate().push_back(new FileToMigrateStruct());
+      clientConnection->sendObject(repl);
+  }
 }
 }
 }
