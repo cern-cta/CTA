@@ -27,7 +27,12 @@
 class RecallJob{
 public:
   RecallJob(int fId, int fs, int bCnt): fileId(fId), fSeq(fs), blockCount(bCnt) {}
+  //file id 
   int fileId;
+  
+  //sequence number of the file in the tape (starts at 1)
   int fSeq;
+  
+  //dummy for test
   int blockCount;
 };
