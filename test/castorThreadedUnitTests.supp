@@ -91,3 +91,9 @@
   fun:_ZNSs4_Rep8_M_cloneERKSaIcEm
 }
 
+{
+  helgrind-unitTest-castor-basicStringAppend
+  Helgrind:Race
+  fun:_ZNSs6appendERKSs
+  fun:_ZN6castor9exception9BacktraceC1Ev
+}
