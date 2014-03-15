@@ -28,6 +28,8 @@
 #include <memory>
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapegateway/FilesToMigrateList.hpp"
+#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
+#include "castor/tape/tapegateway/FilesToRecallList.hpp"
 
 namespace castor {
 namespace tape {
@@ -157,6 +159,30 @@ namespace daemon {
         (m_breakTransaction?666:0));
       repl.setMountTransactionId(m_volReqId);
       repl.filesToMigrate().push_back(new FileToMigrateStruct());
+      clientConnection->sendObject(repl);
+  }
+  
+    /**
+   * Specific version for the FilesToRecallList: we want
+   * to pass a non empty list, so it has to be a little bit less trivial.
+   */
+  template<>
+  void ClientSimSingleReply<castor::tape::tapegateway::FilesToRecallList>::processFirstRequest() 
+          throw(castor::exception::Exception) {
+    using namespace castor::tape::tapegateway;
+      // Accept the next connection
+      std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
+      // Read in the message sent by the tapebridge
+      std::auto_ptr<castor::IObject> obj(clientConnection->readObject());
+      // Convert to a gateway message (for transactionId)
+      GatewayMessage & gm = 
+              dynamic_cast<tapegateway::GatewayMessage &>(*obj);
+      // Reply with our own type and transaction id
+      FilesToRecallList repl;
+      repl.setAggregatorTransactionId(gm.aggregatorTransactionId() ^ 
+        (m_breakTransaction?666:0));
+      repl.setMountTransactionId(m_volReqId);
+      repl.filesToRecall().push_back(new FileToRecallStruct());
       clientConnection->sendObject(repl);
   }
 }

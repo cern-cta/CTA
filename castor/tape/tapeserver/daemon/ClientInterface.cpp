@@ -232,17 +232,107 @@ throw (castor::tape::Exception) {
 }
 
 void castor::tape::tapeserver::daemon::ClientInterface::reportMigrationResults(
-RequestReport& report) throw (castor::tape::Exception) {
-  throw castor::tape::Exception("reportMigrationResults  to be implemented");
+tapegateway::FileMigrationReportList & migrationReport,
+    RequestReport& report) throw (castor::tape::Exception) {
+  // 1) The request is provided already fleshed out by the user. We have to
+  // add the administrative numbering
+  migrationReport.setMountTransactionId(m_request.volReqId);
+  report.transactionId = ++m_transactionId;
+  migrationReport.setAggregatorTransactionId(report.transactionId);
+  // The next 2 parameters are currently set to hardcoded defaults (as were in
+  // the tape bridge). They were created in prevision of an evolution where
+  // mode responsibility of central servers updates was to be pushed to the 
+  // tape server.
+  migrationReport.setFseqSet(false);
+  migrationReport.setFseq(0);
+  // 2) Exchange messages with the server
+  std::auto_ptr<tapegateway::GatewayMessage> resp(
+      requestResponseSession(migrationReport, report));
+  // 3) We expect 2 types of return messages: NotificationAcknowledge and
+  // EndNotificationErrorReport.
+  // 3a) Handle the NotificationAcknowledge
+  try {
+    dynamic_cast<tapegateway::NotificationAcknowledge &>(*resp);
+    return;
+  } catch (std::bad_cast) {}
+  // 3b) Handle the end notification error report and turn it into a bare
+  // tape::exception
+  try {
+    tapegateway::EndNotificationErrorReport & err = 
+        dynamic_cast<tapegateway::EndNotificationErrorReport &> (*resp);
+    std::stringstream mess("End notification report: errorMessage=\"");
+    mess << err.errorMessage() << "\" errorCode=" << err.errorCode();
+    throw castor::tape::Exception(mess.str());
+  } catch (std::bad_cast) {
+    throw UnexpectedResponse(resp.get(),
+        "Unexpected response to FileMigrationReportList in reportMigrationResults");
+  }
 }
 
-void castor::tape::tapeserver::daemon::ClientInterface::getFilesToRecall(
+tapegateway::FilesToRecallList * 
+    castor::tape::tapeserver::daemon::ClientInterface::getFilesToRecall(
 uint64_t files, uint64_t bytes, RequestReport& report) 
 throw (castor::tape::Exception) {
-  throw castor::tape::Exception("getFilesToRecall  to be implemented");
+  // 1) Build the request
+  castor::tape::tapegateway::FilesToRecallListRequest ftrReq;
+  report.transactionId = ++m_transactionId;
+  ftrReq.setMountTransactionId(m_request.volReqId);
+  ftrReq.setAggregatorTransactionId(report.transactionId);
+  ftrReq.setMaxBytes(files);
+  ftrReq.setMaxBytes(bytes);
+  // 2) Exchange messages with the server
+  std::auto_ptr<tapegateway::GatewayMessage> resp(
+      requestResponseSession(ftrReq, report));
+  // 3) We expect either a NoMoreFiles response or FilesToRecallList
+  // 3a) Handle the FilesToRecallListl
+  try {
+    tapegateway::FilesToRecallList & ftr  =
+        dynamic_cast <tapegateway::FilesToRecallList &>(*resp);
+    if (ftr.filesToRecall().size()) {
+      resp.release();
+      return &ftr;
+    } else {
+      return NULL;
+    }
+  } catch (std::bad_cast) {}
+  // 3b) Try again with NoMoreFiles (and this time failure is fatal)
+  try {
+    dynamic_cast<tapegateway::NoMoreFiles &>(*resp);
+    return NULL;
+  } catch (std::bad_cast) {
+    throw UnexpectedResponse(resp.get(),
+        "Unexpected response to FilesToRecallListRequest in getFilesToRecall");
+  }
 }
 
 void castor::tape::tapeserver::daemon::ClientInterface::reportRecallResults(
+tapegateway::FileRecallReportList & recallReport,
 RequestReport& report) throw (castor::tape::Exception) {
-  throw castor::tape::Exception("reportRecallResult  to be implemented");
+  // 1) The request is provided already fleshed out by the user. We have to
+  // add the administrative numbering
+  recallReport.setMountTransactionId(m_request.volReqId);
+  report.transactionId = ++m_transactionId;
+  recallReport.setAggregatorTransactionId(report.transactionId);
+  // 2) Exchange messages with the server
+  std::auto_ptr<tapegateway::GatewayMessage> resp(
+      requestResponseSession(recallReport, report));
+  // 3) We expect 2 types of return messages: NotificationAcknowledge and
+  // EndNotificationErrorReport.
+  // 3a) Handle the NotificationAcknowledge
+  try {
+    dynamic_cast<tapegateway::NotificationAcknowledge &>(*resp);
+    return;
+  } catch (std::bad_cast) {}
+  // 3b) Handle the end notification error report and turn it into a bare
+  // tape::exception
+  try {
+    tapegateway::EndNotificationErrorReport & err = 
+        dynamic_cast<tapegateway::EndNotificationErrorReport &> (*resp);
+    std::stringstream mess("End notification report: errorMessage=\"");
+    mess << err.errorMessage() << "\" errorCode=" << err.errorCode();
+    throw castor::tape::Exception(mess.str());
+  } catch (std::bad_cast) {
+    throw UnexpectedResponse(resp.get(),
+        "Unexpected response to FileRecallReportList in reportRecallResults");
+  }
 }
