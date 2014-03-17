@@ -34,6 +34,10 @@
 #include <sys/syscall.h>
 #include <sys/time.h>
 
+#ifdef __APPLE__
+#include <mach/mach.h>
+#endif
+
 namespace castor {
 namespace log {
 
