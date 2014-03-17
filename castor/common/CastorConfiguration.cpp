@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      CastorConfiguration.hpp
+ *         castor/common/CastorConfiguration.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,12 +22,11 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-// includes
-#include <fstream>
-#include <algorithm>
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/NoEntry.hpp"
 
+#include <algorithm>
+#include <fstream>
 #include <errno.h>
 
 // Global configurations, indexed by original file name
@@ -42,10 +41,13 @@ static pthread_mutex_t s_globalConfigLock = PTHREAD_MUTEX_INITIALIZER;
 castor::common::CastorConfiguration&
 castor::common::CastorConfiguration::getConfig(std::string fileName)
   throw (castor::exception::Exception) {
-  // This method is non thread safe, and is protected by the s_globlaConfigLock lock
+  // This method is non thread safe, and is protected by the s_globalConfigLock
+  // lock
   int rc = pthread_mutex_lock(&s_globalConfigLock);
   if (0 != rc) {
     castor::exception::Exception e(rc);
+    e.getMessage() << "Failed to get CASTOR configuration:"
+      " Failed to take a lock on s_globalConfigLock";
     throw e;
   }
   // take care to catch all exceptions so that the lock is not leaked
@@ -53,7 +55,8 @@ castor::common::CastorConfiguration::getConfig(std::string fileName)
     // do we have this configuration already in cache ?
     if (s_castorConfigs.end() == s_castorConfigs.find(fileName)) {
       // no such configuration. Create it
-      s_castorConfigs.insert(std::make_pair(fileName, CastorConfiguration(fileName)));
+      s_castorConfigs.insert(std::make_pair(fileName,
+        CastorConfiguration(fileName)));
     }
     // we can now release the lock. Concurrent read only access is ok.
     pthread_mutex_unlock(&s_globalConfigLock);
@@ -70,11 +73,14 @@ castor::common::CastorConfiguration::getConfig(std::string fileName)
 // constructor
 //------------------------------------------------------------------------------
 castor::common::CastorConfiguration::CastorConfiguration(std::string fileName)
-  throw (castor::exception::Exception) : m_fileName(fileName), m_lastUpdateTime(0) {
-  // create internal read write lock
+  throw (castor::exception::Exception) : m_fileName(fileName),
+  m_lastUpdateTime(0) {
+  // create internal r/w lock
   int rc = pthread_rwlock_init(&m_lock, NULL);
   if (0 != rc) {
     castor::exception::Exception e(rc);
+    e.getMessage() << "CastorConfiguration constructor Failed"
+      ": Failed to create internal r/w lock";
     throw e;
   }
 }
@@ -82,13 +88,16 @@ castor::common::CastorConfiguration::CastorConfiguration(std::string fileName)
 //------------------------------------------------------------------------------
 // copy constructor
 //------------------------------------------------------------------------------
-castor::common::CastorConfiguration::CastorConfiguration(const CastorConfiguration & other)
-  throw (castor::exception::Exception): m_fileName(other.m_fileName),
-    m_lastUpdateTime(other.m_lastUpdateTime), m_config(other.m_config) {
+castor::common::CastorConfiguration::CastorConfiguration(
+  const CastorConfiguration & other) throw (castor::exception::Exception):
+  m_fileName(other.m_fileName), m_lastUpdateTime(other.m_lastUpdateTime),
+  m_config(other.m_config) {
   // create a new internal r/w lock
   int rc = pthread_rwlock_init(&m_lock, NULL);
   if (0 != rc) {
     castor::exception::Exception e(rc);
+    e.getMessage() << "CastorConfiguration copy constructor failed"
+      ": Failed to create a new internal r/w lock";
     throw e;
   }
 }
@@ -104,7 +113,9 @@ castor::common::CastorConfiguration::~CastorConfiguration() {
 //------------------------------------------------------------------------------
 // assignment operator
 //------------------------------------------------------------------------------
-castor::common::CastorConfiguration & castor::common::CastorConfiguration::operator=(const castor::common::CastorConfiguration & other)
+castor::common::CastorConfiguration &
+  castor::common::CastorConfiguration::operator=(
+    const castor::common::CastorConfiguration & other)
   throw (castor::exception::Exception) {
   m_fileName = other.m_fileName;
   m_lastUpdateTime = other.m_lastUpdateTime;
@@ -113,6 +124,8 @@ castor::common::CastorConfiguration & castor::common::CastorConfiguration::opera
   int rc = pthread_rwlock_init(&m_lock, NULL);
   if (0 != rc) {
     castor::exception::Exception e(rc);
+    e.getMessage() << "Assignment operator of CastorConfiguration object failed"
+      ": Failed to create a new internal r/w lock";
     throw e;
   }
   return *this;
@@ -133,19 +146,26 @@ castor::common::CastorConfiguration::getConfEnt(const std::string &category,
   int rc = pthread_rwlock_rdlock(&m_lock);
   if (0 != rc) {
     castor::exception::Exception e(rc);
+    e.getMessage() << "Failed to get configuration entry " << category << ":"
+      << key << ": Failed to get read lock";
     throw e;
   }
   // get the entry
   try {
-    std::map<std::string, ConfCategory>::const_iterator catIt = m_config.find(category);
+    std::map<std::string, ConfCategory>::const_iterator catIt =
+      m_config.find(category);
     if (m_config.end() == catIt) {
       castor::exception::NoEntry e;
+      e.getMessage() << "Failed to get configuration entry " << category << ":"
+        << key << ": Failed to find " << category << " category";
       throw e;
     }
     // get the entry
     ConfCategory::const_iterator entIt = catIt->second.find(key);
     if (catIt->second.end() == entIt) {
       castor::exception::NoEntry e;
+      e.getMessage() << "Failed to get configuration entry " << category << ":"
+        << key << ": Failed to find " << key << " key";
       throw e;
     }
     // release the lock
@@ -167,6 +187,8 @@ bool castor::common::CastorConfiguration::isStale()
   int rc = pthread_rwlock_rdlock(&m_lock);
   if (0 != rc) {
     castor::exception::Exception e(rc);
+    e.getMessage() << "Failed to determine if CASTOR configuration is stale"
+      ": Failed to get read lock";
     throw e;
   }
   try {
@@ -192,6 +214,8 @@ void castor::common::CastorConfiguration::tryToRenewConfig()
   int rc = pthread_rwlock_wrlock(&m_lock);
   if (0 != rc) {
     castor::exception::Exception e(rc);
+    e.getMessage() << "Failed to renew configuration cache"
+      ": Failed to take write lock";
     throw e;
   }
   // now check that we should really renew, because someone may have done it
@@ -219,7 +243,8 @@ int castor::common::CastorConfiguration::getTimeoutNolock()
   // start with the default (300s = 5mn)
   int timeout = 300;
   // get value from config
-  std::map<std::string, ConfCategory>::const_iterator catIt = m_config.find("Config");
+  std::map<std::string, ConfCategory>::const_iterator catIt =
+    m_config.find("Config");
   if (m_config.end() != catIt) {
     ConfCategory::const_iterator entIt = catIt->second.find("ExpirationDelay");
     if (catIt->second.end() != entIt) {
