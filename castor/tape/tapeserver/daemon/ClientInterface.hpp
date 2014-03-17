@@ -35,8 +35,6 @@
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
 #include "../threading/Threading.hpp"
 
-using namespace castor::tape;
-
 namespace castor {
 namespace tape {
 namespace tapeserver {

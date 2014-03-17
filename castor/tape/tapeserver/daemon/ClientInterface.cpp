@@ -43,6 +43,8 @@
 #include <stdlib.h>
 #include <typeinfo>
 
+using namespace castor::tape;
+
 castor::tape::tapeserver::daemon::
 ClientInterface::ClientInterface(const legacymsg::RtcpJobRqstMsgBody& clientRequest)
   throw (castor::tape::Exception): m_request(clientRequest) {}
