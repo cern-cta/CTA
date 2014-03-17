@@ -487,11 +487,7 @@ char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] =
  *------------------------------------------------------------------------
  */
 
-char *  sstrerror_r(n,buf,buflen)
-     int     n;
-     char    *buf;
-     size_t  buflen;
-{
+char * sstrerror_r(const int n, char *const buf, const size_t buflen) {
   char *tmpstr;
   if ( buf == NULL || buflen <= 0 ) return(NULL);
   memset(buf,'\0',buflen);

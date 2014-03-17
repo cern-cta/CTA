@@ -485,7 +485,7 @@ EXTERN_C int *C__serrno (void);
  */
 #define serrno (*C__serrno())
 
-EXTERN_C char *sstrerror_r (int,char *, size_t);
+EXTERN_C char *sstrerror_r (const int n, char *const buf, const size_t buflen);
 EXTERN_C char *sstrerror (int);
 EXTERN_C void sperror (char *);
 
