@@ -613,5 +613,5 @@ char *sstrerror(int n)
   int buflen = 80;
 
   Cglobals_get(&sstrerror_key,&buf,buflen);
-  return(sstrerror_r(n,buf,buflen));
+  return(sstrerror_r(n,(char *)buf,buflen));
 }
