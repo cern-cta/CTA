@@ -22,8 +22,10 @@
  *
  * @author castor dev team
  *****************************************************************************/
-#include "SErrnum.hpp"
-#include <serrno.h>
+
+#include "castor/exception/SErrnum.hpp"
+#include "h/serrno.h"
+
 #include <errno.h>
 #include <string.h>
 
@@ -40,9 +42,7 @@ SErrnum::SErrnum(int err, std::string what):Exception("") {
 }
 
 void SErrnum::SErrnumConstructorBottomHalf(const std::string & what) {
-  char s[1000];
-  /* _XOPEN_SOURCE seems not to work.  */
-  char * errorStr = ::sstrerror_r(m_serrnum, s, sizeof(s));
+  const char *const errorStr = sstrerror(m_serrnum);
   if (!errorStr) {
     int new_errno = errno;
     std::stringstream w;
