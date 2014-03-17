@@ -27,6 +27,15 @@ cmake_minimum_required (VERSION 2.6)
 
 project(castor)
 
+# Explicitly setting the C and C++ compiler flags for the RelWithDebInfo build
+# in order to prevent the -O2 flag from being used.
+#
+# The CASTOR executables are not running short of CPU cycles.  The extra
+# effort required to debug released binaries compiled with the -O2 option is
+# therefore not justified.
+set(CMAKE_C_FLAGS_RELWITHDEBINFO "-g")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-g")
+
 IF(NOT CMAKE_BUILD_TYPE STREQUAL "")
   # If the user specifies -DCMAKE_BUILD_TYPE on the command line, take their definition and dump it in the cache
   message(STATUS "Setting build type to ${CMAKE_BUILD_TYPE} as requested.")
