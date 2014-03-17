@@ -19,14 +19,15 @@ RecallTaskInjector::RecallTaskInjector(MemoryManager & mm,
 {}
 
 void RecallTaskInjector::requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall) {
+  //where shall we acquiere the lock ? There of just before the push ?
+  castor::tape::threading::MutexLocker ml(&m_producerProtection);
   
   LogContext::ScopedParam sp01(m_lc, Param("maxFiles", maxFiles));
   LogContext::ScopedParam sp02(m_lc, Param("byteSizeThreshold",byteSizeThreshold));
   LogContext::ScopedParam sp03(m_lc, Param("lastCall", lastCall));
 
   m_lc.log(LOG_INFO,"Request more jobs");
-  castor::tape::threading::MutexLocker ml(&m_producerProtection);
-          m_queue.push(Request(maxFiles, byteSizeThreshold, lastCall));
+  m_queue.push(Request(maxFiles, byteSizeThreshold, lastCall));
 }
 
 void RecallTaskInjector::waitThreads() {
@@ -51,6 +52,7 @@ void RecallTaskInjector::injectBulkRecalls(const std::list<RecallJob>& jobs) {
     m_tapeReader.push(trt);
   }
   LogContext::ScopedParam sp03(m_lc, Param("nbFile", jobs.size()));
+  m_lc.log(LOG_INFO, "Tasks for recalling injected");
 }
 
 bool RecallTaskInjector::synchronousInjection(uint64_t maxFiles, uint64_t byteSizeThreshold)
