@@ -86,6 +86,8 @@ static std::string getVdqmHostName(castor::log::Logger &log) throw() {
   if(!vdqmHostName.empty()) {
     log::Param params[] = {log::Param("vdqmHostName", vdqmHostName)};
     log(LOG_INFO, "Got vdqm host-name", params);
+  } else {
+    log(LOG_INFO, "Failed to get vdqm host-name");
   }
 
   return vdqmHostName;
