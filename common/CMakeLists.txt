@@ -26,7 +26,7 @@ set (COMMON_LIB_SRC_FILES
   compat.c getacct.c getacctent.c getconfent.cpp
   getifnam.c getuser.c log.c marshall.c
   readc.c remote.c
-  serror.c socket.c solveln.c trace.c
+  serror.cpp socket.c solveln.c trace.c
   ypgetacct.c ypgetacctent.c
   Cthread.c Cglobals.c Cgrp.c Cmutex.c Cuuid.c
   Cdomainname.c Cnetdb.c Cpool.c Cpwd.c Cstrerror.c

@@ -3,21 +3,25 @@
  * All rights reserved
  */
 
+/*
+ * Undefine _GNU_SOURCE and set _XOPEN_SOURCE to 600 so that the POSIX
+ * version of strerror_r() will be used
+ */
+#undef _GNU_SOURCE
+#define _XOPEN_SOURCE 600
+
 /* serror.c     Global error reporting routines                         */
+#include "h/serrno.h"   /* special error numbers and codes              */
+#include "h/Cglobals.h"
 
 #include <stdio.h>      /* standard input/output                        */
 #include <errno.h>      /* error numbers and codes                      */
 
-#include <serrno.h>     /* special error numbers and codes              */
-#include <log.h>        /* logger functions                             */
-#include <Cglobals.h>
 #include <string.h>
 
 #if !defined(linux) && !defined(__APPLE__) 
 extern int      sys_nerr;       /* number of system error messages      */
 #endif
-
-#include <net.h>                /*     networking specifics             */
 
 char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
   {"Error 0",
@@ -489,6 +493,7 @@ char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] =
 
 char * sstrerror_r(const int n, char *const buf, const size_t buflen) {
   char *tmpstr;
+  char strerror_r_buf[100];
   if ( buf == NULL || buflen <= 0 ) return(NULL);
   memset(buf,'\0',buflen);
   tmpstr = NULL;
@@ -580,8 +585,19 @@ char * sstrerror_r(const int n, char *const buf, const size_t buflen) {
              ) {
     /*
      * SYSTEM error messages
+     *
+     * Note: Explicitly store the result of strerror_r into an integer in order
+     * to make sure the XSI-compliant version is being used.  The GNU version
+     * returns a pointer to char.
      */
-    tmpstr = (char *) strerror(n);
+    const int strerror_r_rc =
+      strerror_r(n, strerror_r_buf, sizeof(strerror_r_buf));
+    if(strerror_r_rc) {
+      tmpstr = "Unknown error because call to strerror_r failed";
+    } else {
+      tmpstr = strerror_r_buf;
+    }
+    
   }
 
   if ( tmpstr != NULL ) {
