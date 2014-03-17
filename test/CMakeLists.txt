@@ -87,6 +87,7 @@ add_executable(castorUnitTests
   ../castor/log/LogContextTest.cpp
   ../castor/log/StringLoggerTest.cpp
   ../castor/server/DaemonTest.cpp
+  ../castor/tape/tapeserver/daemon/ClientInterfaceTest.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
   ../castor/tape/tapeserver/daemon/DummyVdqm.cpp
@@ -117,7 +118,10 @@ target_link_libraries(castorUnitTests
   SCSI
   System
   Utils
-  File 
+  File
+  tapeserver
+  tapeserverdTest
+  castortapegatewayprotocol
   castorTapeServerThreading
   ${GTEST_LIBRARY}
   gmock
@@ -125,6 +129,8 @@ target_link_libraries(castorUnitTests
   castorcommon
   castorclient
   castortapeutils
+  castorvmgr
+  castorvdqm
   ${STK_API_LIB}
   ${STK_UTL_LIB}
   ${STK_IPC_LIB}
