@@ -33,6 +33,8 @@
 #include <syslog.h>
 #include <sys/syscall.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 #ifdef __APPLE__
 #include <mach/mach.h>
