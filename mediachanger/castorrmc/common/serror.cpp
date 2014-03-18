@@ -19,7 +19,7 @@
 
 #include <string.h>
 
-#if !defined(linux) && !defined(__APPLE__) 
+#if !defined(linux)
 extern int      sys_nerr;       /* number of system error messages      */
 #endif
 
