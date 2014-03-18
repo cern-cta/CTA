@@ -635,7 +635,7 @@ void sperror(char    *msg)
 
 static int sstrerror_key = -1;
 
-char *sstrerror(const int n) {
+const char *sstrerror(const int n) {
   void *buf = NULL;
   int buflen = 80;
 

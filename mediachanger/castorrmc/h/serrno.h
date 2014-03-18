@@ -512,7 +512,7 @@ EXTERN_C int sstrerror_r (const int n, char *const buf, const size_t buflen);
  * @param n The numeric error code.
  * @return The string representation.
  */
-EXTERN_C char *sstrerror (const int n);
+EXTERN_C const char *sstrerror (const int n);
 
 EXTERN_C void sperror (char *);
 
