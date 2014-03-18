@@ -26,6 +26,7 @@
 #include <gmock/gmock-cardinalities.h>
 #include "Device.hpp"
 #include "../system/Wrapper.hpp"
+#include "castor/exception/Errnum.hpp"
 
 using ::testing::AtLeast;
 using ::testing::Return;
@@ -110,6 +111,38 @@ TEST(castor_tape_SCSI_DeviceList, ScansCorrectly) {
   ASSERT_EQ("0104", dl[0].productRevisionLevel);
   ASSERT_EQ("0104", dl[1].productRevisionLevel);
   ASSERT_EQ("0104", dl[2].productRevisionLevel);
+}
+
+TEST(castor_tape_SCSI_DeviceList, FindBySymlink) {
+  castor::tape::System::mockWrapper sysWrapper;
+  sysWrapper.delegateToFake();
+  sysWrapper.fake.setupForVirtualDriveSLC6();
+  
+  /* We expect the following calls: */
+  EXPECT_CALL(sysWrapper, opendir(_)).Times(AtLeast(3));
+  EXPECT_CALL(sysWrapper, readdir(_)).Times(AtLeast(30));
+  EXPECT_CALL(sysWrapper, closedir(_)).Times(AtLeast(3));
+  EXPECT_CALL(sysWrapper, realpath(_, _)).Times(AtLeast(3));
+  EXPECT_CALL(sysWrapper, open(_, _)).Times(AtLeast(20));
+  EXPECT_CALL(sysWrapper, read(_, _, _)).Times(AtLeast(38));
+  EXPECT_CALL(sysWrapper, write(_, _, _)).Times(0);
+  EXPECT_CALL(sysWrapper, close(_)).Times(AtLeast(19));
+  EXPECT_CALL(sysWrapper, readlink(_, _, _)).Times(AtLeast(3));
+  EXPECT_CALL(sysWrapper, stat(_,_)).Times(AtLeast(7));
+  
+  castor::tape::SCSI::DeviceVector dl(sysWrapper);
+  ASSERT_NO_THROW(dl.findBySymlink("/dev/tape_T10D6116"));
+  ASSERT_THROW(dl.findBySymlink("NoSuchPath"), 
+      castor::exception::Errnum);
+  ASSERT_THROW(dl.findBySymlink("/dev/noSuchTape"), 
+      castor::tape::SCSI::DeviceVector::NotFound);
+  castor::tape::SCSI::DeviceInfo & di = dl.findBySymlink("/dev/tape_T10D6116");
+  // The symlink is supposed to point to nst0 which is 9,128 (maj,min)
+  ASSERT_EQ(9, di.nst.major);
+  ASSERT_EQ(128, di.nst.minor);
+  // We expect to get a module type of "VIRTUAL" here. This will be used
+  // in other tests
+  ASSERT_EQ("VIRTUAL", di.product);
 }
 
 }

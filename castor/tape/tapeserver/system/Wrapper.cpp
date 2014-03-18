@@ -590,6 +590,7 @@ void castor::tape::System::fakeWrapper::setupForVirtualDriveSLC6() {
   m_regularFiles["/sys/devices/pseudo_0/adapter0/host6/target6:0:2/6:0:2:0/model"] = "VIRTUAL         \n";
   // This simulates the result of stat with a symlink to /dev/nst0
   m_stats["/dev/tape_T10D6116"].st_rdev = makedev(9,128);
+  m_stats["/dev/noSuchTape"].st_rdev = makedev(9,5);
 }
 
 

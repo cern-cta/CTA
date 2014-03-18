@@ -31,6 +31,7 @@
 #include "castor/tape/utils/utils.hpp"
 #include "castor/System.hpp"
 #include "h/serrno.h"
+#include "castor/tape/tapeserver/SCSI/Device.hpp"
 
 using namespace castor::tape;
 using namespace castor::log;
@@ -136,6 +137,8 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     lc.log(LOG_ERR, "Notified client of end session with error");
     return;
   }
+  // Actually find the drive.
+  castor::tape::SCSI::DeviceVector dv(m_sysWrapper);
 }
 
 void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc) {

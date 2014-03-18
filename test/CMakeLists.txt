@@ -144,8 +144,8 @@ add_executable(castorThreadedUnitTests
   ../castor/tape/tapeserver/daemon/tapeserverdTest.cpp
   ../castor/tape/tapeserver/threading/ThreadingBlockingQTests.cpp
 )
-target_link_libraries(castorThreadedUnitTests TapeDrive Exception SCSI System 
-  Utils File castorTapeServerThreading tapeserverdTest tapeserver 
+target_link_libraries(castorThreadedUnitTests TapeDrive Exception System 
+  File castorTapeServerThreading tapeserverdTest tapeserver SCSI Utils
   castortapegatewayprotocol castortapeutils
   ${GTEST_LIBRARY} gmock pthread castorcommon castorclient castorvdqm
   castorvmgr castorrfio)
