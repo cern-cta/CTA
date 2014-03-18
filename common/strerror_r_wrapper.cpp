@@ -38,6 +38,6 @@
 /*******************************************************************************
  * strerror_r_wrapper
  ******************************************************************************/
-extern "C" int strerror_r_wrapper(int errnum, char *buf, unsigned int buflen) {
+extern "C" int strerror_r_wrapper(int errnum, char *buf, size_t buflen) {
   return strerror_r(errnum, buf, buflen);
 }
