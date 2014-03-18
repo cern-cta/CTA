@@ -131,7 +131,7 @@ private:
 
   TapeReadSingleThread & m_tapeReader;
   DiskWriteThreadPool & m_diskWriter;
-  ClientInterface& m_client;
+  ClientProxy& m_client;
   
   /**
    * utility member to log some pieces of information
