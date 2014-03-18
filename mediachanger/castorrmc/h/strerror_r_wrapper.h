@@ -27,6 +27,19 @@
 
 #include <stddef.h>
 
+/* The following EXTERN_C marco has been intentionally copied from          */
+/* h/osdep.h instead of just including h/osdep.h.  The reason for this is   */
+/* this header file must include the minimum number of header files because */
+/* the implementation file common/strerror_r_wrapper.cpp will undefine      */
+/* _GNU_SOURCE and define _XOPEN_SOURCE as being 600.                       */
+/*                                                                          */
+/* Macros for externalization (UNIX) (J.-D.Durand)                          */
+#if defined(__cplusplus)
+#define EXTERN_C extern "C"
+#else
+#define EXTERN_C extern
+#endif
+
 /**
  * This function wraps the XSI compliant version of strerror_r() and therefore
  * writes the string representation of the specified error number to the
@@ -36,6 +49,6 @@
  * @param buf The buffer.
  * @param buflen The length of the buffer.
  */
-int strerror_r_wrapper(int errnum, char *buf, size_t buflen);
+EXTERN_C int strerror_r_wrapper(int errnum, char *buf, size_t buflen);
 
 #endif /* H_STRERROR_R_WRAPPER_H */
