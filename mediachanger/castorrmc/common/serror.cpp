@@ -491,10 +491,16 @@ char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] =
  *------------------------------------------------------------------------
  */
 
-char * sstrerror_r(const int n, char *const buf, const size_t buflen) {
+int sstrerror_r(const int n, char *const buf, const size_t buflen) {
   char *tmpstr;
   char strerror_r_buf[100];
-  if ( buf == NULL || buflen <= 0 ) return(NULL);
+
+  if ( buf == NULL || buflen <= 0 ) {
+    errno = EINVAL;
+    serrno = EINVAL;
+    return -1;
+  }
+
   memset(buf,'\0',buflen);
   tmpstr = NULL;
 
@@ -608,14 +614,20 @@ char * sstrerror_r(const int n, char *const buf, const size_t buflen) {
      */
     sprintf(buf, "%*s: %10d", (int)buflen-14, sys_serrlist[SEMAXERR+1-SEBASEOFF], n);
   }
-  return(buf);
+  return 0;
 }
 
 void sperror(char    *msg)
 {
   char buf[80];
   if (serrno)     {
-    fprintf(stderr,"%s: %s\n",msg,sstrerror_r(serrno,buf,80));
+    if(sstrerror_r(serrno, buf, sizeof(buf))) {
+      /* sstrerror_r() failed so just print msg */
+      fprintf(stderr,"%s\n",msg);
+    } else {
+      /* sstrerror_r() succeeded so print both msg and buf */
+      fprintf(stderr,"%s: %s\n", msg, buf);
+    }
   } else    {
     perror(msg);
   }
@@ -623,11 +635,20 @@ void sperror(char    *msg)
 
 static int sstrerror_key = -1;
 
-char *sstrerror(int n)
-{
+char *sstrerror(const int n) {
   void *buf = NULL;
   int buflen = 80;
 
-  Cglobals_get(&sstrerror_key,&buf,buflen);
-  return(sstrerror_r(n,(char *)buf,buflen));
+  if(Cglobals_get(&sstrerror_key, &buf, buflen)) {
+    return "Unknown error"
+      ": No thread specific memory to determine error string"
+      ": Cglobals_get() failed";
+  }
+
+  if(sstrerror_r(n,(char *)buf,buflen)) {
+    return "Unknown error"
+      ": sstrerror_r() failed";
+  } else {
+    return (char *)buf;
+  }
 }

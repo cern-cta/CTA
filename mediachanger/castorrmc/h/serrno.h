@@ -485,8 +485,35 @@ EXTERN_C int *C__serrno (void);
  */
 #define serrno (*C__serrno())
 
-EXTERN_C char *sstrerror_r (const int n, char *const buf, const size_t buflen);
-EXTERN_C char *sstrerror (int);
+/**
+ * Writes the string representation of the specified error code into the
+ * specified buffer.
+ *
+ * The string representation is truncated if the specified buffer is too small.
+ * In case of such a truncation the string written to the specified buffer is
+ * null terminated.
+ *
+ * @param n The numeric error code.
+ * @param buf The buffer to which the string representation should be written.
+ * @param buflen The length of the buffer.
+ * @return 0 on success or -1 on failure.  In the case of a failure both errno
+ * and serrno are set to indicate the type of error.
+ */
+EXTERN_C int sstrerror_r (const int n, char *const buf, const size_t buflen);
+
+/**
+ * Returns the string representation of the specified error code.
+ *
+ * Allocates some thread specfic memory if needed using Cglobals_get() and then
+ * passes that memory to sstrerror_r along with the specified error code.
+ *
+ * A string is always returned.  This function never returns NULL.
+ *
+ * @param n The numeric error code.
+ * @return The string representation.
+ */
+EXTERN_C char *sstrerror (const int n);
+
 EXTERN_C void sperror (char *);
 
 extern  char    *sys_serrlist[];        /* Error text array             */
