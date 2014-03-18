@@ -516,6 +516,6 @@ EXTERN_C char *sstrerror (const int n);
 
 EXTERN_C void sperror (char *);
 
-extern  char    *sys_serrlist[];        /* Error text array             */
+extern const char *sys_serrlist[]; /* Error text array             */
 
 #endif /* _SERRNO_H_INCLUDED_ */
