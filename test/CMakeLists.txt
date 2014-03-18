@@ -62,7 +62,9 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     ../castor/tape/rmc/AcsQueryVolumeCmdTest.cpp
     ../castor/tape/rmc/AcsTest.cpp
     ../castor/tape/rmc/Cmd.cpp
-    ../castor/tape/rmc/DebugBuf.cpp)
+    ../castor/tape/rmc/DebugBuf.cpp
+    ../castor/tape/rmc/RmcDaemon.cpp
+    ../castor/tape/rmc/RmcDaemonTest.cpp)
 
   foreach(SRC_FILE ${STK_UNITTEST_SRC_FILES})
     set_property(SOURCE ${SRC_FILE}
