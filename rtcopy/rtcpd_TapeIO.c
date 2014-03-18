@@ -38,7 +38,7 @@
 extern int AbortFlag;
 
 char *getconfent (char *, char *, int);
-int gettperror (const int, const char *const, char **);
+int gettperror (const int, const char *const, const char **);
 
 static char labelid[2][4] = {"EOF","EOV"} ;
 
@@ -50,7 +50,8 @@ static char cfgCksumAlgorithm[CA_MAXCKSUMNAMELEN+1];
 static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
   int errcat,j;
   int trec = 0;
-  char *msgaddr, *p;
+  const char *msgaddr = NULL;
+  char *p;
   char confparam[32];
   int severity, status;
   rtcpTapeRequest_t *tapereq = NULL;
@@ -153,7 +154,8 @@ static int twerror(int fd, tape_list_t *tape, file_list_t *file) {
 static int trerror(int fd, tape_list_t *tape, file_list_t *file) {
   int errcat, j;
   int trec = 0;
-  char *msgaddr, *p;
+  const char *msgaddr = NULL;
+  char *p;
   char confparam[32];
   int severity, status;
   int skiponerr = 0;
@@ -502,7 +504,7 @@ int tclose(
   int save_errno = 0;
   rtcpTapeRequest_t *tapereq = NULL;
   rtcpFileRequest_t *filereq = NULL;
-  char *errstr = NULL;
+  const char *errstr = NULL;
 /**********************************************************************
  * S. MURRAY 27/01/2014 COMMENTING OUT OF COMPRESSION STATISTICS      *
  * int comp_rc = 0;                                                   *
@@ -763,7 +765,6 @@ int twrite(
   file_list_t *const file,
   const uint32_t     tapeFlushMode) {
   int     rc, save_serrno, save_errno;
-  char *errstr;
   rtcpFileRequest_t *filereq = NULL;
 
   if ( tape == NULL || file == NULL ) {
@@ -794,7 +795,7 @@ int twrite(
           rtcpd_SetReqStatus(NULL,file,save_serrno,
                              RTCP_FAILED | RTCP_ENDVOL);
         } else {
-          errstr = rtcpd_CtapeErrMsg();
+          const char *errstr = rtcpd_CtapeErrMsg();
           if ( errstr != NULL && *errstr != '\0' ) {
             (void)rtcpd_AppendClientMsg(NULL, file, RT126,
                                         "CPDSKTP", errstr, file->trec+1);

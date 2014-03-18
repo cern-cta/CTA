@@ -42,7 +42,7 @@ int rtcpd_SendAckToVdqmOrTapeBridge(
   const size_t   errBufLen) {
   int  rc          = 0;
   int  save_serrno = 0;
-  char *errmsg     = NULL;
+  const char *errmsg = NULL;
 
   /* Check function-parameters */
   if(connSock == -1 ||

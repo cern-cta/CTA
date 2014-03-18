@@ -31,7 +31,7 @@ int readlbl(const int tapefd,
 {
 	/* int errcat; */
 	char func[16];
-	char *msgaddr;
+	const char *msgaddr;
 	int n;
         struct mtget mt_info;
         static struct utsname un;

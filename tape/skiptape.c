@@ -23,7 +23,7 @@ int skiptpfff(const int tapefd, const char *const path, const int n) {
 	int count;
 	int errcat;
 	char func[16];
-	char *msgaddr;
+	const char *msgaddr;
 	struct mtop mtop;
 	int tobeskipped;
         static struct utsname un;

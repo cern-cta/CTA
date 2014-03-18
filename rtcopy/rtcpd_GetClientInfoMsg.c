@@ -48,7 +48,7 @@ int rtcpd_GetClientInfoMsg(
   char                           *const errBuf,
   const size_t                   errBufLen) {
   int  rc                = 0;
-  char *errmsg           = NULL;
+  const char *errmsg     = NULL;
   int  save_serrno       = 0;
   int  netread_serrno    = 0;
   char msgBuf[RTCP_MSGBUFSIZ];
