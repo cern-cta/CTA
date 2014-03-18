@@ -28,6 +28,8 @@
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmImpl.hpp"
 
+#include "h/vdqm_constants.h"
+
 #include <string>
 
 //------------------------------------------------------------------------------
@@ -52,7 +54,8 @@ int main(const int argc, char **const argv) {
     log(LOG_ERR, "Aborting: Cannot continue without vdqm host-name");
     return 1;
   }
-  VdqmImpl vdqm(vdqmHostName);
+  const int newTimeout = 1;
+  VdqmImpl vdqm(vdqmHostName, VDQM_PORT, newTimeout);
   castor::io::PollReactorImpl reactor(log);
   TapeDaemon daemon(std::cout, std::cerr, log, vdqm, reactor);
 

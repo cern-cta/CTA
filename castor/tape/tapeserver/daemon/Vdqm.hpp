@@ -48,12 +48,10 @@ public:
    *
    * @param connection The file descriptor of the connection with the vdqm
    * daemon.
-   * @param netTimeout The timeout to be applied when performing network read
-   * and write operations.
    * @return The job request from the vdqm.
    */
-  virtual legacymsg::RtcpJobRqstMsgBody receiveJob(const int connection,
-    const int netTimeout) throw(castor::exception::Exception) = 0;
+  virtual legacymsg::RtcpJobRqstMsgBody receiveJob(const int connection)
+    throw(castor::exception::Exception) = 0;
 
   /**
    * Sets the status of the specified tape drive to down.

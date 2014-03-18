@@ -380,8 +380,8 @@ void writeBytes(
   throw(castor::exception::Exception);
 
 /**
- * Creates the specified socket and uses it to connects to the specified
- * address within the constraints of the specified timeout.
+ * Creates the specified socket and uses it to connect to the specified
+ * address within the constraint of the specified timeout.
  *
  * This method throws a castor::exception::TimeOut exception if a timeout
  * occurs.

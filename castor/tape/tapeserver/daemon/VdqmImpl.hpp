@@ -42,8 +42,12 @@ public:
    *
    * @param vdqmHostName The name of the host on which the vdqmd daemon is
    * running.
+   * @param vdqmPort The TCP/IP port on which the vdqmd daemon is listening.
+   * @param netTimeout The timeout in seconds to be applied when performing
+   * network read and write operations.
    */
-  VdqmImpl(const std::string &vdqmHostName) throw();
+  VdqmImpl(const std::string &vdqmHostName, const unsigned short vdqmPort,
+    const int netTimeout) throw();
 
   /**
    * Destructor.
@@ -59,12 +63,10 @@ public:
    *
    * @param connection The file descriptor of the connection with the vdqm
    * daemon.
-   * @param netTimeout The timeout to be applied when performing network read
-   * and write operations.
    * @return The job request from the vdqm.
    */
-  legacymsg::RtcpJobRqstMsgBody receiveJob(const int connection,
-    const int netTimeout) throw(castor::exception::Exception);
+  legacymsg::RtcpJobRqstMsgBody receiveJob(const int connection)
+    throw(castor::exception::Exception);
 
   /**
    * Sets the status of the specified tape drive to down.
@@ -92,12 +94,10 @@ private:
    *
    * @param connection The file descriptor of the connection with the vdqm
    * daemon.
-   * @param netTimeout The timeout to be applied when performing network read
-   * and write operations.
    * @return The message header.
    */
-  legacymsg::MessageHeader receiveJobMsgHeader(const int connection,
-    const int netTimeout) throw(castor::exception::Exception);
+  legacymsg::MessageHeader receiveJobMsgHeader(const int connection)
+    throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the specified magic number is invalid for a vdqm
@@ -119,14 +119,11 @@ private:
    *
    * @param connection The file descriptor of the connection with the vdqm
    * daemon.
-   * @param netTimeout The timeout to be applied when performing network read
-   * and write operations.
    * @param len The length of the message body in bytes.
    * @return The message body.
    */
   legacymsg::RtcpJobRqstMsgBody receiveJobMsgBody(const int connection,
-    const int netTimeout, const uint32_t len)
-    throw(castor::exception::Exception);
+    const uint32_t len) throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the specified message body length is invalid for
@@ -139,9 +136,39 @@ private:
     throw(castor::exception::Exception);
 
   /**
+   * Sets the status of the specified drive to the specified value.
+   *
+   * @param unitName The unit name of the tape drive. 
+   * @param dgn The device group name of the tape drive.
+   */
+  void setTapeDriveStatus(const std::string &unitName, const std::string &dgn,
+    const int status) throw(castor::exception::Exception);
+
+  /**
+   * Connects to the vdqmd daemon.
+   *
+   * @param connectDuration Out parameter: The time it took to connect to the
+   * vdqmd daemon.
+   * @return The socket-descriptor of the connection with the vdqmd daemon.
+   */
+  int connectToVdqm(timeval &connectDuration)
+    const throw(castor::exception::Exception);
+
+  /**
    * The name of the host on which the vdqmd daemon is running.
    */
   const std::string m_vdqmHostName;
+
+  /**
+   * The TCP/IP port on which the vdqmd daemon is listening.
+   */
+  const unsigned short m_vdqmPort;
+
+  /**
+   * The timeout in seconds to be applied when performing network read and
+   * write operations.
+   */
+  const int m_netTimeout;
 
 }; // class VdqmImpl
 
