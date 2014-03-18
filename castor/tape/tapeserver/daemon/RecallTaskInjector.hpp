@@ -34,7 +34,7 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteFileTask.hpp"
 #include "castor/tape/tapeserver/daemon/RecallJob.hpp"
 #include "castor/tape/tapeserver/daemon/TapeWriteFileTask.hpp"
-#include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
+#include "castor/tape/tapeserver/daemon/ClientProxy.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 
@@ -51,7 +51,7 @@ public:
 
   RecallTaskInjector(MemoryManager & mm, 
         TapeReadSingleThread & tapeReader,
-        DiskWriteThreadPool & diskWriter,ClientInterface& client,
+        DiskWriteThreadPool & diskWriter,ClientProxy& client,
         castor::log::LogContext& lc);
 
   

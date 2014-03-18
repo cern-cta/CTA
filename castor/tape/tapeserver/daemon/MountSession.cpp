@@ -25,7 +25,7 @@
 #include "MountSession.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
-#include "ClientInterface.hpp"
+#include "ClientProxy.hpp"
 #include "log.h"
 #include "stager_client_commandline.h"
 #include "castor/tape/utils/utils.hpp"
@@ -53,10 +53,10 @@ throw (castor::tape::Exception) {
   LogContext::ScopedParam sp05(lc, Param("driveUnit", m_request.driveUnit));
   LogContext::ScopedParam sp06(lc, Param("dgn", m_request.dgn));
   // 2a) Get initial information from the client
-  ClientInterface::RequestReport reqReport;
+  ClientProxy::RequestReport reqReport;
   try {
     m_clientIf.fetchVolumeId(m_volInfo, reqReport);
-  } catch(ClientInterface::EndOfSession & eof) {
+  } catch(ClientProxy::EndOfSession & eof) {
     std::stringstream fullError("Received end of session from client when requesting Volume");
     fullError << eof.what();
     lc.log(LOG_ERR, fullError.str());
@@ -67,7 +67,7 @@ throw (castor::tape::Exception) {
     LogContext::ScopedParam sp10(lc, Param("ErrorMsg", fullError.str()));
     lc.log(LOG_ERR, "Notified client of end session with error");
     return;
-  } catch (ClientInterface::UnexpectedResponse & unexp) {
+  } catch (ClientProxy::UnexpectedResponse & unexp) {
     std::stringstream fullError("Received unexpected response from client when requesting Volume");
     fullError << unexp.what();
     lc.log(LOG_ERR, fullError.str());
@@ -124,7 +124,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     LogContext::ScopedParam sp08(lc, Param("density", m_volInfo.density));
     lc.log(LOG_ERR, "Drive unit not found");
     
-    ClientInterface::RequestReport reqReport;
+    ClientProxy::RequestReport reqReport;
     std::stringstream errMsg("Drive unit not found");
     errMsg << lc;
     m_clientIf.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);

@@ -22,7 +22,7 @@ namespace daemon {
   
 RecallTaskInjector::RecallTaskInjector(MemoryManager & mm, 
         TapeReadSingleThread & tapeReader,DiskWriteThreadPool & diskWriter,
-        ClientInterface& client,castor::log::LogContext& lc) : 
+        ClientProxy& client,castor::log::LogContext& lc) : 
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
         m_client(client),m_lc(lc) 
@@ -75,7 +75,7 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
 
 bool RecallTaskInjector::synchronousInjection(uint64_t maxFiles, uint64_t byteSizeThreshold)
 {
-  ClientInterface::RequestReport reqReport;  
+  ClientProxy::RequestReport reqReport;  
 
   std::auto_ptr<castor::tape::tapegateway::FilesToRecallList> filesToRecallList(m_client.getFilesToRecall(maxFiles,byteSizeThreshold,reqReport));
   LogContext::ScopedParam sp[]={
@@ -106,7 +106,7 @@ void RecallTaskInjector::WorkerThread::run()
       while (1) {
         Request req = _this.m_queue.pop();
 	printf("RecallJobInjector:run: about to call client interface\n");
-        ClientInterface::RequestReport reqReport;
+        ClientProxy::RequestReport reqReport;
         std::auto_ptr<tapegateway::FilesToRecallList> filesToRecallList(_this.m_client.getFilesToRecall(req.nbMaxFiles, req.byteSizeThreshold,reqReport));
         
         LogContext::ScopedParam sp01(_this.m_lc, Param("transactionId", reqReport.transactionId));

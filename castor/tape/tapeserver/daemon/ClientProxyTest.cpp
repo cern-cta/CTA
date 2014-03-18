@@ -25,7 +25,7 @@
 #include <gtest/gtest.h>
 #include "ClientSimulator.hpp"
 #include "ClientSimSingleReply.hpp"
-#include "ClientInterface.hpp"
+#include "ClientProxy.hpp"
 #include "../threading/Threading.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "MountSession.hpp"
@@ -70,9 +70,9 @@ TEST(tapeServerClientInterface, VolReqVol) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   // Setup an interface to it.
-  ClientInterface cInterf(VDQMjob);
-  ClientInterface::VolumeInfo volInfo;
-  ClientInterface::RequestReport reqRep;
+  ClientProxy cInterf(VDQMjob);
+  ClientProxy::VolumeInfo volInfo;
+  ClientProxy::RequestReport reqRep;
   ASSERT_NO_THROW(cInterf.fetchVolumeId(volInfo, reqRep));
   // Cleanup
   csVolRun.wait();
@@ -98,10 +98,10 @@ TEST(tapeServerClientInterface, VolReqNoMore) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   // Setup an interface to it.
-  ClientInterface cInterf(VDQMjob);
-  ClientInterface::VolumeInfo volInfo;
-  ClientInterface::RequestReport reqRep;
-  ASSERT_THROW(cInterf.fetchVolumeId(volInfo, reqRep), ClientInterface::EndOfSession);
+  ClientProxy cInterf(VDQMjob);
+  ClientProxy::VolumeInfo volInfo;
+  ClientProxy::RequestReport reqRep;
+  ASSERT_THROW(cInterf.fetchVolumeId(volInfo, reqRep), ClientProxy::EndOfSession);
   // Cleanup
   csVolRun.wait();
 }
@@ -126,10 +126,10 @@ TEST(tapeServerClientInterface, VolReqEndError) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   // Setup an interface to it.
-  ClientInterface cInterf(VDQMjob);
-  ClientInterface::VolumeInfo volInfo;
-  ClientInterface::RequestReport reqRep;
-  ASSERT_THROW(cInterf.fetchVolumeId(volInfo, reqRep), ClientInterface::EndOfSession);
+  ClientProxy cInterf(VDQMjob);
+  ClientProxy::VolumeInfo volInfo;
+  ClientProxy::RequestReport reqRep;
+  ASSERT_THROW(cInterf.fetchVolumeId(volInfo, reqRep), ClientProxy::EndOfSession);
   // Cleanup
   csVolRun.wait();
 }
@@ -154,10 +154,10 @@ TEST(tapeServerClientInterface, VolReqVolReq) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   // Setup an interface to it.
-  ClientInterface cInterf(VDQMjob);
-  ClientInterface::VolumeInfo volInfo;
-  ClientInterface::RequestReport reqRep;
-  ASSERT_THROW(cInterf.fetchVolumeId(volInfo, reqRep), ClientInterface::UnexpectedResponse);
+  ClientProxy cInterf(VDQMjob);
+  ClientProxy::VolumeInfo volInfo;
+  ClientProxy::RequestReport reqRep;
+  ASSERT_THROW(cInterf.fetchVolumeId(volInfo, reqRep), ClientProxy::UnexpectedResponse);
   // Cleanup
   csVolRun.wait();
 }
@@ -182,10 +182,10 @@ TEST(tapeServerClientInterface, VolReqVolSeqBreak) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   // Setup an interface to it.
-  ClientInterface cInterf(VDQMjob);
-  ClientInterface::VolumeInfo volInfo;
-  ClientInterface::RequestReport reqRep;
-  ASSERT_THROW(cInterf.fetchVolumeId(volInfo, reqRep), ClientInterface::UnexpectedResponse);
+  ClientProxy cInterf(VDQMjob);
+  ClientProxy::VolumeInfo volInfo;
+  ClientProxy::RequestReport reqRep;
+  ASSERT_THROW(cInterf.fetchVolumeId(volInfo, reqRep), ClientProxy::UnexpectedResponse);
   // Cleanup
   csVolRun.wait();
 }
@@ -210,9 +210,9 @@ TEST(tapeServerClientInterface, EndSessionNotifAck) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   // Setup an interface to it.
-  ClientInterface cInterf(VDQMjob);
-  ClientInterface::VolumeInfo volInfo;
-  ClientInterface::RequestReport reqRep;
+  ClientProxy cInterf(VDQMjob);
+  ClientProxy::VolumeInfo volInfo;
+  ClientProxy::RequestReport reqRep;
   ASSERT_NO_THROW(cInterf.reportEndOfSession(reqRep));
   // Cleanup
   csVolRun.wait();
@@ -238,10 +238,10 @@ TEST(tapeServerClientInterface, EndSessionNotifAckSeqBreak) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   // Setup an interface to it.
-  ClientInterface cInterf(VDQMjob);
-  ClientInterface::VolumeInfo volInfo;
-  ClientInterface::RequestReport reqRep;
-  ASSERT_THROW(cInterf.reportEndOfSession(reqRep), ClientInterface::UnexpectedResponse);
+  ClientProxy cInterf(VDQMjob);
+  ClientProxy::VolumeInfo volInfo;
+  ClientProxy::RequestReport reqRep;
+  ASSERT_THROW(cInterf.reportEndOfSession(reqRep), ClientProxy::UnexpectedResponse);
   // Cleanup
   csVolRun.wait();
 }
@@ -266,10 +266,10 @@ TEST(tapeServerClientInterface, EndSessionVolReq) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   // Setup an interface to it.
-  ClientInterface cInterf(VDQMjob);
-  ClientInterface::VolumeInfo volInfo;
-  ClientInterface::RequestReport reqRep;
-  ASSERT_THROW(cInterf.reportEndOfSession(reqRep), ClientInterface::UnexpectedResponse);
+  ClientProxy cInterf(VDQMjob);
+  ClientProxy::VolumeInfo volInfo;
+  ClientProxy::RequestReport reqRep;
+  ASSERT_THROW(cInterf.reportEndOfSession(reqRep), ClientProxy::UnexpectedResponse);
   // Cleanup
   csVolRun.wait();
 }
@@ -294,9 +294,9 @@ TEST(tapeServerClientInterface, EndSessionErrorNotifAck) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   // Setup an interface to it.
-  ClientInterface cInterf(VDQMjob);
-  ClientInterface::VolumeInfo volInfo;
-  ClientInterface::RequestReport reqRep;
+  ClientProxy cInterf(VDQMjob);
+  ClientProxy::VolumeInfo volInfo;
+  ClientProxy::RequestReport reqRep;
   ASSERT_NO_THROW(cInterf.reportEndOfSessionWithError("SNAFU!", SEINTERNAL, reqRep));
   // Cleanup
   csVolRun.wait();
@@ -322,11 +322,11 @@ TEST(tapeServerClientInterface, EndSessionErrorVolReq) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   // Setup an interface to it.
-  ClientInterface cInterf(VDQMjob);
-  ClientInterface::VolumeInfo volInfo;
-  ClientInterface::RequestReport reqRep;
+  ClientProxy cInterf(VDQMjob);
+  ClientProxy::VolumeInfo volInfo;
+  ClientProxy::RequestReport reqRep;
   ASSERT_THROW(cInterf.reportEndOfSessionWithError("SNAFU!", SEINTERNAL, reqRep),
-  ClientInterface::UnexpectedResponse);
+  ClientProxy::UnexpectedResponse);
   // Cleanup
   csVolRun.wait();
 }
@@ -351,11 +351,11 @@ TEST(tapeServerClientInterface, EndSessionErrorNotifAckSeqBreak) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   // Setup an interface to it.
-  ClientInterface cInterf(VDQMjob);
-  ClientInterface::VolumeInfo volInfo;
-  ClientInterface::RequestReport reqRep;
+  ClientProxy cInterf(VDQMjob);
+  ClientProxy::VolumeInfo volInfo;
+  ClientProxy::RequestReport reqRep;
   ASSERT_THROW(cInterf.reportEndOfSessionWithError("SNAFU!", SEINTERNAL, reqRep),
-  ClientInterface::UnexpectedResponse);
+  ClientProxy::UnexpectedResponse);
   // Cleanup
   csVolRun.wait();
 }
@@ -380,9 +380,9 @@ TEST(tapeServerClientInterface, FilesToMigrateReqFilesToMigrate) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   // Setup an interface to it.
-  ClientInterface cInterf(VDQMjob);
-  ClientInterface::VolumeInfo volInfo;
-  ClientInterface::RequestReport reqRep;
+  ClientProxy cInterf(VDQMjob);
+  ClientProxy::VolumeInfo volInfo;
+  ClientProxy::RequestReport reqRep;
   // We are responsible for the freeing of the result: chuck it into an auto_ptr.
   std::auto_ptr<FilesToMigrateList> resp;
   ASSERT_NO_THROW(resp.reset(cInterf.getFilesToMigrate(10, 10, reqRep)));
@@ -411,9 +411,9 @@ TEST(tapeServerClientInterface, FilesToMigrateReqNoMore) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   // Setup an interface to it.
-  ClientInterface cInterf(VDQMjob);
-  ClientInterface::VolumeInfo volInfo;
-  ClientInterface::RequestReport reqRep;
+  ClientProxy cInterf(VDQMjob);
+  ClientProxy::VolumeInfo volInfo;
+  ClientProxy::RequestReport reqRep;
   // We are responsible for the freeing of the result: chuck it into an auto_ptr.
   std::auto_ptr<FilesToMigrateList> resp;
   ASSERT_NO_THROW(resp.reset(cInterf.getFilesToMigrate(10, 10, reqRep)));
@@ -442,12 +442,12 @@ TEST(tapeServerClientInterface, FilesToMigrateReqFilesToMigrateSeqBreak) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   // Setup an interface to it.
-  ClientInterface cInterf(VDQMjob);
-  ClientInterface::VolumeInfo volInfo;
-  ClientInterface::RequestReport reqRep;
+  ClientProxy cInterf(VDQMjob);
+  ClientProxy::VolumeInfo volInfo;
+  ClientProxy::RequestReport reqRep;
   // We are responsible for the freeing of the result: chuck it into an auto_ptr.
   std::auto_ptr<FilesToMigrateList> resp;
-  ASSERT_THROW(resp.reset(cInterf.getFilesToMigrate(10, 10, reqRep)),ClientInterface::UnexpectedResponse);
+  ASSERT_THROW(resp.reset(cInterf.getFilesToMigrate(10, 10, reqRep)),ClientProxy::UnexpectedResponse);
   // Cleanup
   csVolRun.wait();
 }

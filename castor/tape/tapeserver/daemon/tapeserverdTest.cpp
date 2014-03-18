@@ -25,7 +25,7 @@
 #include <gtest/gtest.h>
 #include "ClientSimulator.hpp"
 #include "ClientSimSingleReply.hpp"
-#include "ClientInterface.hpp"
+#include "ClientProxy.hpp"
 #include "../threading/Threading.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "MountSession.hpp"

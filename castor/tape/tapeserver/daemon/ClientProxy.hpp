@@ -44,7 +44,7 @@ namespace daemon {
    * The client address will have been received from the VDQM by the main
    * process. 
    */
-  class ClientInterface {
+  class ClientProxy {
   public:
     /**
      * Constructor: contact client, gather initial information about the
@@ -52,7 +52,7 @@ namespace daemon {
      * (read/write session, first file information, etc...)
      * @param clientRequest the client information as sent by VDQM.
      */
-    ClientInterface(const legacymsg::RtcpJobRqstMsgBody & clientRequest)
+    ClientProxy(const legacymsg::RtcpJobRqstMsgBody & clientRequest)
             throw (castor::tape::Exception);
     
     /**

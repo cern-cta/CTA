@@ -87,7 +87,7 @@ add_executable(castorUnitTests
   ../castor/log/LogContextTest.cpp
   ../castor/log/StringLoggerTest.cpp
   ../castor/server/DaemonTest.cpp
-  ../castor/tape/tapeserver/daemon/ClientInterfaceTest.cpp
+  ../castor/tape/tapeserver/daemon/ClientProxyTest.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
   ../castor/tape/tapeserver/daemon/DummyVdqm.cpp

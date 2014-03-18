@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      clientInterface.cpp
+ *                      ClientProxy.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "ClientInterface.hpp"
+#include "ClientProxy.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/tapegateway/VolumeRequest.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
@@ -46,10 +46,10 @@
 using namespace castor::tape;
 
 castor::tape::tapeserver::daemon::
-ClientInterface::ClientInterface(const legacymsg::RtcpJobRqstMsgBody& clientRequest)
+ClientProxy::ClientProxy(const legacymsg::RtcpJobRqstMsgBody& clientRequest)
   throw (castor::tape::Exception): m_request(clientRequest) {}
 
-castor::tape::tapeserver::daemon::ClientInterface::UnexpectedResponse::
+castor::tape::tapeserver::daemon::ClientProxy::UnexpectedResponse::
     UnexpectedResponse(const castor::IObject* resp, const std::string & w):
 castor::tape::Exception(w) {
   std::string responseType = typeid(*resp).name();
@@ -62,7 +62,7 @@ castor::tape::Exception(w) {
 }
 
 tapegateway::GatewayMessage *
-  castor::tape::tapeserver::daemon::ClientInterface::requestResponseSession(
+  castor::tape::tapeserver::daemon::ClientProxy::requestResponseSession(
     const tapegateway::GatewayMessage &req,
     RequestReport & report)
 throw (castor::tape::Exception) 
@@ -106,7 +106,7 @@ throw (castor::tape::Exception)
   return ret;
 }
 
-void castor::tape::tapeserver::daemon::ClientInterface::fetchVolumeId(
+void castor::tape::tapeserver::daemon::ClientProxy::fetchVolumeId(
   VolumeInfo & volInfo, RequestReport &report) 
 throw (castor::tape::Exception) {
   // 1) Build the request
@@ -149,7 +149,7 @@ throw (castor::tape::Exception) {
   }
 }
 
-void castor::tape::tapeserver::daemon::ClientInterface::reportEndOfSession(
+void castor::tape::tapeserver::daemon::ClientProxy::reportEndOfSession(
 RequestReport &transactionReport) 
 throw (castor::tape::Exception) {
   // 1) Build the report
@@ -172,7 +172,7 @@ throw (castor::tape::Exception) {
 }
 
 
-void castor::tape::tapeserver::daemon::ClientInterface::reportEndOfSessionWithError(
+void castor::tape::tapeserver::daemon::ClientProxy::reportEndOfSessionWithError(
 const std::string & errorMsg, int errorCode, RequestReport &transactionReport) 
 throw (castor::tape::Exception) {
   // 1) Build the report
@@ -198,7 +198,7 @@ throw (castor::tape::Exception) {
 
 
 tapegateway::FilesToMigrateList * 
-    castor::tape::tapeserver::daemon::ClientInterface::getFilesToMigrate(
+    castor::tape::tapeserver::daemon::ClientProxy::getFilesToMigrate(
 uint64_t files, uint64_t bytes, RequestReport& report) 
 throw (castor::tape::Exception) {
   // 1) Build the request
@@ -233,7 +233,7 @@ throw (castor::tape::Exception) {
   }
 }
 
-void castor::tape::tapeserver::daemon::ClientInterface::reportMigrationResults(
+void castor::tape::tapeserver::daemon::ClientProxy::reportMigrationResults(
 tapegateway::FileMigrationReportList & migrationReport,
     RequestReport& report) throw (castor::tape::Exception) {
   // 1) The request is provided already fleshed out by the user. We have to
@@ -272,7 +272,7 @@ tapegateway::FileMigrationReportList & migrationReport,
 }
 
 tapegateway::FilesToRecallList * 
-    castor::tape::tapeserver::daemon::ClientInterface::getFilesToRecall(
+    castor::tape::tapeserver::daemon::ClientProxy::getFilesToRecall(
 uint64_t files, uint64_t bytes, RequestReport& report) 
 throw (castor::tape::Exception) {
   // 1) Build the request
@@ -307,7 +307,7 @@ throw (castor::tape::Exception) {
   }
 }
 
-void castor::tape::tapeserver::daemon::ClientInterface::reportRecallResults(
+void castor::tape::tapeserver::daemon::ClientProxy::reportRecallResults(
 tapegateway::FileRecallReportList & recallReport,
 RequestReport& report) throw (castor::tape::Exception) {
   // 1) The request is provided already fleshed out by the user. We have to
