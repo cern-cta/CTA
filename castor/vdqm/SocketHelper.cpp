@@ -228,7 +228,11 @@ void castor::vdqm::SocketHelper::checkCupvPermissions(
   if(Cupv_check(uid, gid, clientHostname.c_str(), localHostname.c_str(),
     privilege)) {
     char buf[80];
-    sstrerror_r(serrno, buf, 80);
+    if(sstrerror_r(serrno, buf, sizeof(buf))) {
+      // sstrerror_r failed
+      snprintf(buf, sizeof(buf), "Unknown error");
+      buf[sizeof(buf) - 1] = '\0';
+    }
     castor::exception::PermissionDenied pe;
 
     pe.getMessage() << "Failed Cupv_check call. messageType=" << messageType

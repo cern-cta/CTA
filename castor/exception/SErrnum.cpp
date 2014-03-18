@@ -42,15 +42,18 @@ SErrnum::SErrnum(int err, std::string what):Exception("") {
 }
 
 void SErrnum::SErrnumConstructorBottomHalf(const std::string & what) {
-  const char *const errorStr = sstrerror(m_serrnum);
-  if (!errorStr) {
-    int new_errno = errno;
+  char buf[100];
+
+  if(sstrerror_r(m_serrnum, buf, sizeof(buf))) {
+    // sstrerror_r() failed
+    const int new_errno = errno;
     std::stringstream w;
-    w << "SErrno=" << m_serrnum << ". In addition, failed to read the corresponding error string (sstrerror gave errno="
+    w << "SErrno=" << m_serrnum << ". In addition, failed to read the corresponding error string (sstrerror_r gave errno="
             << new_errno << ")";
     m_sstrerror = w.str();
   } else {
-    m_sstrerror = errorStr;
+    // sstrerror_r() succeeded
+    m_sstrerror = buf;
   }
   std::stringstream w2;
   if (what.size())
