@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp
+ *         castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,34 +22,41 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPJOBRQSTMSGBODY
-#define CASTOR_TAPE_LEGACYMSG_RTCPJOBRQSTMSGBODY
+#ifndef CASTOR_TAPE_LEGACYMSG_RTCPJOBRQSTMSGBODY_HPP
+#define CASTOR_TAPE_LEGACYMSG_RTCPJOBRQSTMSGBODY_HPP 1
 
 #include "h/Castor_limits.h"
 
 #include <stdint.h>
 
-
-namespace castor    {
-namespace tape      {
+namespace castor {
+namespace tape {
 namespace legacymsg {
 
+/**
+ * An RCP job submission request message.
+ */
+struct RtcpJobRqstMsgBody {
+  uint32_t volReqId;
+  uint32_t clientPort;
+  uint32_t clientEuid;
+  uint32_t clientEgid;
+  char     clientHost[CA_MAXHOSTNAMELEN+1];
+  char     dgn[CA_MAXDGNLEN+1];
+  char     driveUnit[CA_MAXUNMLEN+1];
+  char     clientUserName[CA_MAXUSRNAMELEN+1];
+
   /**
-   * An RCP job submission request message.
+   * Constructor.
+   *
+   * Sets all integer member-variables to 0 and all string member-variables to
+   * the empty string.
    */
-  struct RtcpJobRqstMsgBody {
-    uint32_t volReqId;
-    uint32_t clientPort;
-    uint32_t clientEuid;
-    uint32_t clientEgid;
-    char     clientHost[CA_MAXHOSTNAMELEN+1];
-    char     dgn[CA_MAXDGNLEN+1];
-    char     driveUnit[CA_MAXUNMLEN+1];
-    char     clientUserName[CA_MAXUSRNAMELEN+1];
-  };
+  RtcpJobRqstMsgBody() throw();
+}; // struct RtcpJobRqstMsgBody
 
 } // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPJOBRQSTMSGBODY
+#endif // CASTOR_TAPE_LEGACYMSG_RTCPJOBRQSTMSGBODY_HPP

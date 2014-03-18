@@ -24,7 +24,7 @@
  */
 
 char *rfio_lasthost() ;
-char *rfio_serror() ;
+const char *rfio_serror() ;
 
 /*
  * Get remote error string corresponding to code.
@@ -90,7 +90,7 @@ char *rfio_errmsg(int     s,
 
 
 /* print an error message  */
-char *rfio_serror_r(char *buf,
+const char *rfio_serror_r(char *buf,
                     size_t buflen)
 {
   int          s;
@@ -177,7 +177,7 @@ int rfio_serrno()   /* get error number - return -1 if cannot get it */
 
 static int rfio_serror_key = -1;
 
-char *rfio_serror()
+const char *rfio_serror()
 {
   char *buf = NULL;
   int buflen = CA_MAXLINELEN+1;
@@ -189,7 +189,7 @@ char *rfio_serror()
 
 void rfio_perror(char *umsg)
 {
-  char *errmsg ;
+  const char *errmsg ;
   errmsg =  rfio_serror();
   if (errmsg != NULL )
     fprintf(stderr,"%s : %s\n",umsg, errmsg);

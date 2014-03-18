@@ -33,8 +33,8 @@ EXTERN_C int *C__rfio_errno (void);
 
 EXTERN_C char *rfio_errmsg_r (int, int, char*, size_t);
 EXTERN_C char *rfio_errmsg (int, int);
-EXTERN_C char *rfio_serror_r (char*, size_t);
-EXTERN_C char *rfio_serror (void);
+EXTERN_C const char *rfio_serror_r (char*, size_t);
+EXTERN_C const char *rfio_serror (void);
 EXTERN_C void rfio_perror (char *);
 
 #endif /* _RFIO_ERRNO_H_INCLUDED_ */

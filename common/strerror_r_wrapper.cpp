@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/legacymsg/RtcpNoMoreRequestsMsgBody.hpp
+ *         common/strerror_r_wrapper.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,25 +18,26 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * 
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ *
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP
-#define CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP 1
+#include "h/strerror_r_wrapper.h"
 
-namespace castor {
-namespace tape {
-namespace legacymsg {
-
-/**
- * An RTCP no more request message.
+#if defined(linux)
+/*
+ * Undefine _GNU_SOURCE and define _XOPEN_SOURCE as being 600 so that the
+ * XSI compliant version of strerror_r() will be used
  */
-struct RtcpNoMoreRequestsMsgBody {
-}; // struct RtcpNoMoreRequestsMsgBody
+#undef _GNU_SOURCE
+#define _XOPEN_SOURCE 600
+#endif
 
-} // namespace legacymsg
-} // namespace tape
-} // namespace castor
+#include <string.h>
 
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP
+/*******************************************************************************
+ * strerror_r_wrapper
+ ******************************************************************************/
+extern "C" int strerror_r_wrapper(int errnum, char *buf, size_t buflen) {
+  return strerror_r(errnum, buf, buflen);
+}

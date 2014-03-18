@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/legacymsg/RtcpErrorAppendix.hpp
+ *         castor/tape/legacymsg/VmgrTapeInfoRqstMsgBody.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,43 +18,18 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- *
+ * 
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPERRORAPPENDIX_HPP
-#define CASTOR_TAPE_LEGACYMSG_RTCPERRORAPPENDIX_HPP 1
+#include "castor/tape/legacymsg/VmgrTapeInfoRqstMsgBody.hpp"
 
-#include "h/Castor_limits.h"
+#include <string.h>
 
-#include <stdint.h>
-
-namespace castor {
-namespace tape {
-namespace legacymsg {
-
-/**
- * Error reporting appendix embedded within an RTCP tape and file request
- * messages.
- */
-struct RtcpErrorAppendix {
-  char     errorMsg[CA_MAXLINELEN+1];
-  uint32_t severity; // Defined in rtcp_constants.h
-  uint32_t errorCode; // Defined in rtcp_constants.h
-  int32_t  maxTpRetry; // Nb. of retries left on mount/pos
-  int32_t  maxCpRetry; // Nb. of retries left on copy
-
-  /**
-   * Constructor.
-   *
-   * Sets all integer member-variables to 0 and all string member-variables to
-   * the empty string.
-   */
-  RtcpErrorAppendix() throw();
-}; // struct RtcpErrorAppendix
-
-} // namespace legacymsg
-} // namespace tape
-} // namespace castor
-
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPERRORAPPENDIX_HPP
+castor::tape::legacymsg::VmgrTapeInfoRqstMsgBody::VmgrTapeInfoRqstMsgBody()
+  throw():
+  uid(0),
+  gid(0),
+  side(0) {
+  memset(vid, '\0', sizeof(vid));
+}

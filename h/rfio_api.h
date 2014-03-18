@@ -97,7 +97,7 @@ EXTERN_C int rfio_readlink (char *, char *, int);
 EXTERN_C int rfio_rename (char *, char *);
 EXTERN_C int rfio_rmdir (char *);
 EXTERN_C int rfio_serrno (void);
-EXTERN_C char *rfio_serror (void);
+EXTERN_C const char *rfio_serror (void);
 EXTERN_C int rfio_stat (char *, struct stat *);
 EXTERN_C int rfio_statfs (char *, struct rfstatfs *) ;
 EXTERN_C int rfio_symlink (char *, char *);

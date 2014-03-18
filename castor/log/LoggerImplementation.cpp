@@ -226,7 +226,7 @@ void castor::log::LoggerImplementation::openLog() throw() {
       // MAC has has no MSG_NOSIGNAL
       // but >= 10.2 comes with SO_NOSIGPIPE
       int set = 1;
-      if(0 != setsockopt(s_logFile, SOL_SOCKET, SO_NOSIGPIPE, &set,
+      if(0 != setsockopt(m_logFile, SOL_SOCKET, SO_NOSIGPIPE, &set,
         sizeof(int))) {
         close(m_logFile);
         m_logFile = -1;

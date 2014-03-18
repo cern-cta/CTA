@@ -95,7 +95,7 @@ char *rtcpd_GetVmgrErrBuf() {
     return(errbuf);
 }
 
-char *rtcpd_CtapeErrMsg() {
+const char *rtcpd_CtapeErrMsg() {
     char *errbuf;
     int save_serrno;
 

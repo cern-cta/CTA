@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/legacymsg/RtcpNoMoreRequestsMsgBody.hpp
+ *         castor/tape/legacymsg/RtcpSegmentAttributes.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,25 +18,20 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * 
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ *
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP
-#define CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP 1
+#include "castor/tape/legacymsg/RtcpSegmentAttributes.hpp"
 
-namespace castor {
-namespace tape {
-namespace legacymsg {
+#include <string.h>
 
-/**
- * An RTCP no more request message.
- */
-struct RtcpNoMoreRequestsMsgBody {
-}; // struct RtcpNoMoreRequestsMsgBody
-
-} // namespace legacymsg
-} // namespace tape
-} // namespace castor
-
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::legacymsg::RtcpSegmentAttributes::RtcpSegmentAttributes() throw():
+  segmCksum(0),
+  castorFileId(0) {
+  memset(nameServerHostName, '\0', sizeof(nameServerHostName));
+  memset(segmCksumAlgorithm, '\0', sizeof(segmCksumAlgorithm));
+}

@@ -266,12 +266,6 @@ void castor::log::StringLogger::reducedSyslog(std::string msg)
     msg[msg.length() - 1] = '\n';
   }
 
-  int send_flags = 0;
-#ifndef __APPLE__
-  // MAC has has no MSG_NOSIGNAL
-  // but >= 10.2 comes with SO_NOSIGPIPE
-  send_flags = MSG_NOSIGNAL;
-#endif
   // enter critical section
   const int mutex_lock_rc = pthread_mutex_lock(&m_mutex);
   // Do nothing if we failed to enter the critical section

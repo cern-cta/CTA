@@ -26,6 +26,7 @@
 #include "castor/io/PollEventHandler.hpp"
 #include "castor/io/PollReactor.hpp"
 #include "castor/log/Logger.hpp"
+#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 
 #include <poll.h>
@@ -49,10 +50,11 @@ public:
    * @param reactor The reactor with which this event handler is registered.
    * @param log The object representing the API of the CASTOR logging system.
    * @param vdqm The object representing the vdqmd daemon.
-   * 
+   * @param driveCatalogue The catalogue of tape drives controlled by the tape
+   * server daemon.
    */
   VdqmConnectionHandler(const int connection, io::PollReactor &reactor,
-    log::Logger &log, Vdqm &vdqm) throw();
+    log::Logger &log, Vdqm &vdqm, DriveCatalogue &driveCatalogue) throw();
 
   /**
    * Returns the integer file descriptor of this event handler.
@@ -98,6 +100,11 @@ private:
    * The object representing the vdqmd daemon.
    */
   Vdqm &m_vdqm;
+
+  /**
+   * The catalogue of tape drives controlled by the tape server daemon.
+   */
+  DriveCatalogue &m_driveCatalogue;
 
   /**
    * Logs the reception of the specified job message from the vdqmd daemon.

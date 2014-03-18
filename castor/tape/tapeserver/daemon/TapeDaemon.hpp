@@ -130,6 +130,18 @@ protected:
   void blockSignals() const throw(castor::exception::Exception);
 
   /**
+   * Registers the tape drives controlled by the tape server daemon with the
+   * vdqmd daemon.
+   */
+  void registerTapeDrivesWithVdqm() throw(castor::exception::Exception);
+
+  /**
+   * Registers the specified tape drive with ethe vdqmd daemon.
+   */
+  void registerTapeDriveWithVdqm(const std::string &unitName)
+    throw(castor::exception::Exception);
+
+  /**
    * Sets up the reactor to listen for an accept connection from the vdqmd
    * daemon.
    */

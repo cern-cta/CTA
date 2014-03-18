@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/legacymsg/VmgrTapeInfoRqstMsgBody.hpp
+ *         castor/tape/legacymsg/VmgrTapeInfoRqstMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,31 +22,38 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_VMGRTAPEINFORQSTMSGBODY
-#define CASTOR_TAPE_LEGACYMSG_VMGRTAPEINFORQSTMSGBODY
+#ifndef CASTOR_TAPE_LEGACYMSG_VMGRTAPEINFORQSTMSGBODY_HPP
+#define CASTOR_TAPE_LEGACYMSG_VMGRTAPEINFORQSTMSGBODY_HPP 1
 
 #include "h/Castor_limits.h"
-#include "h/Cuuid.h"
 
 #include <stdint.h>
 
-
-namespace castor    {
-namespace tape      {
+namespace castor {
+namespace tape {
 namespace legacymsg {
 
+/**
+ * A request for tape information from the VMGR
+ */
+struct VmgrTapeInfoRqstMsgBody {
+  uint32_t uid;
+  uint32_t gid;
+  char     vid[CA_MAXVIDLEN+1];
+  uint16_t side;
+
   /**
-   * A request for tape information from the VMGR
+   * Constructor.
+   *
+   * Sets all integer member-variables to 0 and all string member-variables to
+   * the empty string.
    */
-  struct VmgrTapeInfoRqstMsgBody {
-    uint32_t uid;
-    uint32_t gid;
-    char     vid[CA_MAXVIDLEN+1];
-    uint16_t side;
-  }; // struct VmgrTapeInfoRqstMsgBody
+  VmgrTapeInfoRqstMsgBody() throw();
+
+}; // struct VmgrTapeInfoRqstMsgBody
 
 } // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_VMGRTAPEINFORQSTMSGBODY
+#endif // CASTOR_TAPE_LEGACYMSG_VMGRTAPEINFORQSTMSGBODY_HPP

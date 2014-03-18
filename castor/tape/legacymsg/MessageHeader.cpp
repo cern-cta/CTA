@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/legacymsg/RtcpNoMoreRequestsMsgBody.hpp
+ *         castor/tape/legacymsg/MessageHeader.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,24 +19,16 @@
  *
  *
  * 
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP
-#define CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP 1
+#include "castor/tape/legacymsg/MessageHeader.hpp"
 
-namespace castor {
-namespace tape {
-namespace legacymsg {
-
-/**
- * An RTCP no more request message.
- */
-struct RtcpNoMoreRequestsMsgBody {
-}; // struct RtcpNoMoreRequestsMsgBody
-
-} // namespace legacymsg
-} // namespace tape
-} // namespace castor
-
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::legacymsg::MessageHeader::MessageHeader() throw():
+  magic(0),
+  reqType(0),
+  lenOrStatus(0) {
+}

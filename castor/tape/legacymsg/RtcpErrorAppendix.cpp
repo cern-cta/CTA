@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/legacymsg/RtcpNoMoreRequestsMsgBody.hpp
+ *         castor/tape/legacymsg/RtcpErrorAppendix.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,25 +18,21 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * 
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ *
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP
-#define CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP 1
+#include "castor/tape/legacymsg/RtcpErrorAppendix.hpp"
 
-namespace castor {
-namespace tape {
-namespace legacymsg {
+#include <string.h>
 
-/**
- * An RTCP no more request message.
- */
-struct RtcpNoMoreRequestsMsgBody {
-}; // struct RtcpNoMoreRequestsMsgBody
-
-} // namespace legacymsg
-} // namespace tape
-} // namespace castor
-
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::legacymsg::RtcpErrorAppendix::RtcpErrorAppendix() throw():
+  severity(0),
+  errorCode(0),
+  maxTpRetry(0),
+  maxCpRetry(0) {
+  memset(errorMsg, '\0', sizeof(errorMsg));
+}

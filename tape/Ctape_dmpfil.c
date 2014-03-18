@@ -324,7 +324,7 @@ int Ctape_dmpfil(char *path,
 	static int volHasAulFormat = 0;
 	int max_block_length = 0;
 	int min_block_length = 0;
-	char *msgaddr;
+	const char *msgaddr;
 	int nbytes;
 	static int nerr = 0;
 	static int nfile = 0;

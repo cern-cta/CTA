@@ -26,7 +26,7 @@ set (COMMON_LIB_SRC_FILES
   compat.c getacct.c getacctent.c getconfent.cpp
   getifnam.c getuser.c log.c marshall.c
   readc.c remote.c
-  serror.c socket.c solveln.c trace.c
+  serror.c socket.c solveln.c strerror_r_wrapper.cpp trace.c
   ypgetacct.c ypgetacctent.c
   Cthread.c Cglobals.c Cgrp.c Cmutex.c Cuuid.c
   Cdomainname.c Cnetdb.c Cpool.c Cpwd.c Cstrerror.c
@@ -78,10 +78,10 @@ set_property(SOURCE Cstrerror.c Cpwd.c Cgetopt.c APPEND PROPERTY COMPILE_FLAGS -
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
   message(STATUS "Adding compile option for -DCOLLECTEXTRABACKTRACEINFOS Backtrace.cpp as CMAKE_BUILD_TYPE=\"${CMAKE_BUILD_TYPE}\".")
   set_property(SOURCE ../castor/exception/Backtrace.cpp APPEND PROPERTY COMPILE_FLAGS -DCOLLECTEXTRABACKTRACEINFOS)
+  target_link_libraries(castorcommon debug bfd iberty z)
 else(CMAKE_BUILD_TYPE STREQUAL "Debug")
   message(STATUS "CMAKE_BUILD_TYPE=\"${CMAKE_BUILD_TYPE}\": leaving Backtrace.cpp alone.")
 endif(CMAKE_BUILD_TYPE STREQUAL "Debug")
-target_link_libraries(castorcommon debug bfd iberty z)
 CastorSetLibraryVersions (castorcommon)
 target_link_libraries (castorcommon dl ${UUID_LIB})
 install (TARGETS castorcommon DESTINATION ${CASTOR_DEST_LIB_DIR})

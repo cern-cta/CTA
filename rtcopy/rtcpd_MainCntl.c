@@ -2284,7 +2284,7 @@ int rtcpd_MainCntl(int *accept_socket) {
   rc = rtcp_CloseConnection(accept_socket);
   save_serrno = serrno;
   if(-1 == rc) {
-    char *errmsg = sstrerror(save_serrno);
+    const char *errmsg = sstrerror(save_serrno);
     if(NULL == errmsg) {
       errmsg = "Unknown error";
     }

@@ -4,22 +4,20 @@
  */
 
 /* serror.c     Global error reporting routines                         */
+#include "h/serrno.h"   /* special error numbers and codes              */
+#include "h/Cglobals.h"
+#include "h/strerror_r_wrapper.h"
 
 #include <stdio.h>      /* standard input/output                        */
 #include <errno.h>      /* error numbers and codes                      */
 
-#include <serrno.h>     /* special error numbers and codes              */
-#include <log.h>        /* logger functions                             */
-#include <Cglobals.h>
 #include <string.h>
 
-#if !defined(linux) && !defined(__APPLE__) 
+#if !defined(linux)
 extern int      sys_nerr;       /* number of system error messages      */
 #endif
 
-#include <net.h>                /*     networking specifics             */
-
-char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
+const char *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
   {"Error 0",
    "Host not known",
    "Service unknown",
@@ -86,7 +84,7 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
  * DB specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_dberrlist[EDBMAXERR-EDBBASEOFF+2] =
+const char *sys_dberrlist[EDBMAXERR-EDBBASEOFF+2] =
   {"Error 0",
    "Cdb api : invalid Cdb_sess_t parameter",
    "Cdb api : invalid Cdb_db_t parameter",
@@ -186,7 +184,7 @@ char *sys_dberrlist[EDBMAXERR-EDBBASEOFF+2] =
  * MSG daemon specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_mserrlist[EMSMAXERR-EMSBASEOFF+2] =
+const char *sys_mserrlist[EMSMAXERR-EMSBASEOFF+2] =
   {"Error 0",
    "Message daemon unable to reply",
    "Message daemon system error",
@@ -199,7 +197,7 @@ char *sys_mserrlist[EMSMAXERR-EMSBASEOFF+2] =
  * NS (Name Server) specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_nserrlist[ENSMAXERR-ENSBASEOFF+2] =
+const char *sys_nserrlist[ENSMAXERR-ENSBASEOFF+2] =
   {"Error 0",
    "Name server not active",
    "File has been overwritten, request ignored",
@@ -216,7 +214,7 @@ char *sys_nserrlist[ENSMAXERR-ENSBASEOFF+2] =
  * RFIO specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_rferrlist[ERFMAXERR-ERFBASEOFF+2] =
+const char *sys_rferrlist[ERFMAXERR-ERFBASEOFF+2] =
   {"Error 0",
    "Host did not return error number",
    "Host is not on local network and no mapping found",
@@ -230,7 +228,7 @@ char *sys_rferrlist[ERFMAXERR-ERFBASEOFF+2] =
  * RTCOPY specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_rterrlist[ERTMAXERR-ERTBASEOFF+2] =
+const char *sys_rterrlist[ERTMAXERR-ERTBASEOFF+2] =
   {"Error 0",
    "TMS error",
    "Blocks skipped in file",
@@ -254,7 +252,7 @@ char *sys_rterrlist[ERTMAXERR-ERTBASEOFF+2] =
  * STAGE specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
+const char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
   {"Error 0",
    "Aborted",
    "Enough free space",
@@ -291,7 +289,7 @@ char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
  * SYSREQ specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_sqerrlist[ESQMAXERR-ESQBASEOFF+2] =
+const char *sys_sqerrlist[ESQMAXERR-ESQBASEOFF+2] =
   {"Error 0",
    "TMS not active",
    "BAD ERROR NUMBER"
@@ -302,7 +300,7 @@ char *sys_sqerrlist[ESQMAXERR-ESQBASEOFF+2] =
  * TAPE specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_terrlist[ETMAXERR-ETBASEOFF+2] =
+const char *sys_terrlist[ETMAXERR-ETBASEOFF+2] =
   {"Error 0",
    "Tape daemon not available",
    "System error",
@@ -355,7 +353,7 @@ char *sys_terrlist[ETMAXERR-ETBASEOFF+2] =
  * VAL (Volume Allocator) specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_vaerrlist[EVMMAXERR-EVMBASEOFF+2] =
+const char *sys_vaerrlist[EVMMAXERR-EVMBASEOFF+2] =
   {"Error 0",
    "Volume manager not active",
    "VMGR HOST not set",
@@ -367,7 +365,7 @@ char *sys_vaerrlist[EVMMAXERR-EVMBASEOFF+2] =
  * UPV (User Privilege Validator) specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_uperrlist[EUPMAXERR-EUPBASEOFF+2] =
+const char *sys_uperrlist[EUPMAXERR-EUPBASEOFF+2] =
   {"Error 0",
    "UPV not active",
    "BAD ERROR NUMBER"
@@ -379,7 +377,7 @@ char *sys_uperrlist[EUPMAXERR-EUPBASEOFF+2] =
  * DNS specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_dnserrlist[EDNSMAXERR-EDNSBASEOFF+2] =
+const char *sys_dnserrlist[EDNSMAXERR-EDNSBASEOFF+2] =
   {"Error 0",
    "The specified host is unknown",
    "A temporary error occurred on an authoritative name server.  Try again later",
@@ -394,7 +392,7 @@ char *sys_dnserrlist[EDNSMAXERR-EDNSBASEOFF+2] =
  * VDQM (Volume & Drive Queue Manager) specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_vqerrlist[EVQMAXERR-EVQBASEOFF+2] =
+const char *sys_vqerrlist[EVQMAXERR-EVQBASEOFF+2] =
   {"Error 0",
    "Failed system call",
    "Internal DB inconsistency",
@@ -423,7 +421,7 @@ char *sys_vqerrlist[EVQMAXERR-EVQBASEOFF+2] =
  * RMC (Remote SCSI Media Changer server) specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_rmerrlist[ERMMAXERR-ERMBASEOFF+2] =
+const char *sys_rmerrlist[ERMMAXERR-ERMBASEOFF+2] =
   {"Error 0",
    "Remote SCSI media changer server not active",
    "Remote SCSI media changer error",
@@ -448,7 +446,7 @@ char *sys_rmerrlist[ERMMAXERR-ERMBASEOFF+2] =
  * Monitor specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_monerrlist[EMONMAXERR - EMONBASEOFF +2] =
+const char *sys_monerrlist[EMONMAXERR - EMONBASEOFF +2] =
   {"Error 0",
    "System Error",
    "Monitor Host not specified",
@@ -462,7 +460,7 @@ char *sys_monerrlist[EMONMAXERR - EMONBASEOFF +2] =
  * Security package errors
  *------------------------------------------------------------------------
  */
-char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] =
+const char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] =
   {"Error 0",
    "System error",
    "Bad credentials",
@@ -487,13 +485,16 @@ char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] =
  *------------------------------------------------------------------------
  */
 
-char *  sstrerror_r(n,buf,buflen)
-     int     n;
-     char    *buf;
-     size_t  buflen;
-{
-  char *tmpstr;
-  if ( buf == NULL || buflen <= 0 ) return(NULL);
+int sstrerror_r(const int n, char *const buf, const size_t buflen) {
+  const char *tmpstr;
+  char strerror_r_buf[100];
+
+  if ( buf == NULL || buflen <= 0 ) {
+    errno = EINVAL;
+    serrno = EINVAL;
+    return -1;
+  }
+
   memset(buf,'\0',buflen);
   tmpstr = NULL;
 
@@ -585,7 +586,14 @@ char *  sstrerror_r(n,buf,buflen)
     /*
      * SYSTEM error messages
      */
-    tmpstr = (char *) strerror(n);
+    const int strerror_r_wrapper_rc =
+      strerror_r_wrapper(n, strerror_r_buf, sizeof(strerror_r_buf));
+    if(strerror_r_wrapper_rc) {
+      tmpstr = "Unknown error because call to strerror_r_wrapper() failed";
+    } else {
+      tmpstr = strerror_r_buf;
+    }
+    
   }
 
   if ( tmpstr != NULL ) {
@@ -594,16 +602,23 @@ char *  sstrerror_r(n,buf,buflen)
     /*
      * Unknown error message
      */
-    sprintf(buf, "%*s: %10d", (int)buflen-14, sys_serrlist[SEMAXERR+1-SEBASEOFF], n);
+    sprintf(buf, "%*s: %10d", (int)buflen-14,
+      sys_serrlist[SEMAXERR+1-SEBASEOFF], n);
   }
-  return(buf);
+  return 0;
 }
 
 void sperror(char    *msg)
 {
   char buf[80];
   if (serrno)     {
-    fprintf(stderr,"%s: %s\n",msg,sstrerror_r(serrno,buf,80));
+    if(sstrerror_r(serrno, buf, sizeof(buf))) {
+      /* sstrerror_r() failed so just print msg */
+      fprintf(stderr,"%s\n",msg);
+    } else {
+      /* sstrerror_r() succeeded so print both msg and buf */
+      fprintf(stderr,"%s: %s\n", msg, buf);
+    }
   } else    {
     perror(msg);
   }
@@ -611,11 +626,20 @@ void sperror(char    *msg)
 
 static int sstrerror_key = -1;
 
-char *sstrerror(int n)
-{
+const char *sstrerror(const int n) {
   void *buf = NULL;
   int buflen = 80;
 
-  Cglobals_get(&sstrerror_key,&buf,buflen);
-  return(sstrerror_r(n,buf,buflen));
+  if(Cglobals_get(&sstrerror_key, &buf, buflen)) {
+    return "Unknown error"
+      ": No thread specific memory to determine error string"
+      ": Cglobals_get() failed";
+  }
+
+  if(sstrerror_r(n,(char *)buf,buflen)) {
+    return "Unknown error"
+      ": sstrerror_r() failed";
+  } else {
+    return (char *)buf;
+  }
 }

@@ -1370,16 +1370,18 @@ int srlockf(int     s,
 
 int   srerrmsg(int     s)
 {
-  int   code;
-  int    len;
-  char * msg;
-  char *   p;
+  int   code = 0;
+  int    len = 0;
+  char * msg = NULL;
+  char *   p = NULL;
 
   p = rqstbuf + 2*WORDSIZE;
   unmarshall_LONG(p, code);
   (*logfunc)(LOG_INFO, "rerrmsg: code: %d\n",code);
-  msg = (code > 0) ? sstrerror(code) : "Invalid error code";
-  msg = strdup(msg);
+  {
+    const char *const_msg = (code > 0) ? sstrerror(code) : "Invalid error code";
+    msg = strdup(const_msg);
+  }
   (*logfunc)(LOG_DEBUG, "rerrmsg: errmsg: %s\n",msg);
   len = strlen(msg)+1;
   p = rqstbuf;

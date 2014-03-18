@@ -22,7 +22,9 @@
  *
  * @author castor dev team
  *****************************************************************************/
-#include "Errnum.hpp"
+#include "castor/exception/Errnum.hpp"
+#include "h/serrno.h"
+
 #include <errno.h>
 #include <string.h>
 
@@ -39,17 +41,18 @@ Errnum::Errnum(int err, std::string what):Exception("") {
 }
 
 void Errnum::ErrnumConstructorBottomHalf(const std::string & what) {
-  char s[1000];
-  /* _XOPEN_SOURCE seems not to work.  */
-  char * errorStr = ::strerror_r(m_errnum, s, sizeof(s));
-  if (!errorStr) {
-    int new_errno = errno;
+  char buf[100];
+
+  if(sstrerror_r(m_errnum, buf, sizeof(buf))) {
+    // sstrerror_r() failed
+    const int new_errno = errno;
     std::stringstream w;
-    w << "Errno=" << m_errnum << ". In addition, failed to read the corresponding error string (strerror gave errno="
+    w << "Errno=" << m_errnum << ". In addition, failed to read the corresponding error string (sstrerror_r gave errno="
             << new_errno << ")";
     m_strerror = w.str();
   } else {
-    m_strerror = errorStr;
+    // sstrerror_r() succeeded
+    m_strerror = buf;
   }
   std::stringstream w2;
   if (what.size())

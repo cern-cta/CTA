@@ -225,7 +225,7 @@ int rtcpd_CtapeInit (void);
 int rtcpd_CtapeFree (void);
 int rtcpd_Assign  (tape_list_t *);
 int rtcpd_Deassign  (int, rtcpTapeRequest_t *, rtcpClientInfo_t *);
-char *rtcpd_CtapeErrMsg  (void);
+const char *rtcpd_CtapeErrMsg  (void);
 char *rtcpd_GetCtapeErrBuf (void);
 void rtcpd_CtapeKill (void);
 int rtcpd_Reserve  (tape_list_t *);

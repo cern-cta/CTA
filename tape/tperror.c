@@ -59,11 +59,11 @@ int mt_rescnt;
 #define TPERRMSGBUSZ 512
 static char tp_err_msgbuf[TPERRMSGBUSZ];
 
-static int get_sk_msg(char *, int, int, int, char **);
+static int get_sk_msg(char *, int, int, int, const char **);
 
 int gettperror(const int tapefd,
                const char *const path,
-               char **msgaddr)
+               const char **msgaddr)
 {
 #ifndef NOTRACE
 	extern char *devtype;
@@ -116,7 +116,7 @@ static int get_sk_msg(char *devtype,
                int key,
                int asc,
                int ascq,
-               char **msgaddr)
+               const char **msgaddr)
 {
 	int rc;
 	if (key >= 0 && key < 15) {
@@ -141,7 +141,7 @@ int rpttperror(const char *const func,
                const char *const path,
                const char *const cmd)
 {
-	char *msgaddr;
+	const char *msgaddr;
 	int rc;
 
 	if (errno == EIO) {

@@ -55,6 +55,15 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
   DriveCatalogue catalogue;
   ASSERT_NO_THROW(catalogue.populateCatalogue(lines));
 
+  {
+    std::list<std::string> fromCatalogue;
+    ASSERT_NO_THROW(fromCatalogue = catalogue.getUnitNames());
+    ASSERT_EQ((std::list<std::string>::size_type)2, fromCatalogue.size());
+    ASSERT_EQ(std::string("UNIT1"), fromCatalogue.front());
+    fromCatalogue.pop_front();
+    ASSERT_EQ(std::string("UNIT2"), fromCatalogue.front());
+  }
+
   ///////////////////
   // UNIT1 assertions
   ///////////////////

@@ -168,7 +168,7 @@ EXTERN_C int skiptpfff     (const int, const char *const, const int);
 #endif
 
 /* tape/tperror.c      */
-EXTERN_C int gettperror    (const int, const char *const, char **);
+EXTERN_C int gettperror    (const int, const char *const, const char **);
 EXTERN_C int rpttperror    (const char *const, const int, const char *const , const char *const);
 
 /* tape/unldtape.c     */

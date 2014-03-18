@@ -38,6 +38,14 @@ class VdqmImpl: public Vdqm {
 public:
 
   /**
+   * Constructor.
+   *
+   * @param vdqmHostName The name of the host on which the vdqmd daemon is
+   * running.
+   */
+  VdqmImpl(const std::string &vdqmHostName) throw();
+
+  /**
    * Destructor.
    *
    * Closes the listening socket created in the constructor to listen for
@@ -57,6 +65,24 @@ public:
    */
   legacymsg::RtcpJobRqstMsgBody receiveJob(const int connection,
     const int netTimeout) throw(castor::exception::Exception);
+
+  /**
+   * Sets the status of the specified tape drive to down.
+   *
+   * @param unitName The unit name of the tape drive. 
+   * @param dgn The device group name of the tape drive.
+   */
+  void setTapeDriveStatusDown(const std::string &unitName,
+    const std::string &dgn) throw(castor::exception::Exception);
+
+  /**
+   * Sets the status of the specified tape drive to up.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive.
+   */
+  void setTapeDriveStatusUp(const std::string &unitName,
+    const std::string &dgn) throw(castor::exception::Exception);
 
 private:
 
@@ -111,6 +137,11 @@ private:
    */
   void checkJobMsgLen(const size_t maxLen, const size_t len) const
     throw(castor::exception::Exception);
+
+  /**
+   * The name of the host on which the vdqmd daemon is running.
+   */
+  const std::string m_vdqmHostName;
 
 }; // class VdqmImpl
 

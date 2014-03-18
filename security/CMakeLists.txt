@@ -64,6 +64,11 @@ add_library(castorsec_plugin_KRB5 SHARED ${SECURITY_PLUGIN_KRB5})
 # the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
 set_property(SOURCE ${SECURITY_PLUGIN_KRB5}
   PROPERTY COMPILE_FLAGS "-DKRB5 ${KRB5_CFLAGS} -fno-strict-aliasing")
+# avoid deprecation warnings on MAC for gss_api
+if (APPLE)
+  set_property(SOURCE ${SECURITY_PLUGIN_KRB5} APPEND_STRING
+    PROPERTY COMPILE_FLAGS " -Wno-deprecated-declarations")
+endif (APPLE)
 target_link_libraries (castorsec_plugin_KRB5 castorcommon ${KRB5_LIBS})
 CastorSetLibraryVersions (castorsec_plugin_KRB5)
 install (TARGETS castorsec_plugin_KRB5 DESTINATION ${CASTOR_DEST_LIB_DIR})

@@ -43,3 +43,19 @@ castor::tape::legacymsg::RtcpJobRqstMsgBody
   const int netTimeout) throw(castor::exception::Exception) {
   return m_job;
 }
+
+//------------------------------------------------------------------------------
+// setTapeDriveStatusDown
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DummyVdqm::setTapeDriveStatusDown(
+  const std::string &unitName, const std::string &dgn)
+  throw(castor::exception::Exception) {
+}
+
+//------------------------------------------------------------------------------
+// setTapeDriveStatusUp
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DummyVdqm::setTapeDriveStatusUp(
+  const std::string &unitName, const std::string &dgn)
+  throw(castor::exception::Exception) {
+}
