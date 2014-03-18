@@ -23,7 +23,7 @@
 extern int      sys_nerr;       /* number of system error messages      */
 #endif
 
-char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
+const char *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
   {"Error 0",
    "Host not known",
    "Service unknown",
@@ -90,7 +90,7 @@ char    *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
  * DB specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_dberrlist[EDBMAXERR-EDBBASEOFF+2] =
+const char *sys_dberrlist[EDBMAXERR-EDBBASEOFF+2] =
   {"Error 0",
    "Cdb api : invalid Cdb_sess_t parameter",
    "Cdb api : invalid Cdb_db_t parameter",
@@ -190,7 +190,7 @@ char *sys_dberrlist[EDBMAXERR-EDBBASEOFF+2] =
  * MSG daemon specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_mserrlist[EMSMAXERR-EMSBASEOFF+2] =
+const char *sys_mserrlist[EMSMAXERR-EMSBASEOFF+2] =
   {"Error 0",
    "Message daemon unable to reply",
    "Message daemon system error",
@@ -203,7 +203,7 @@ char *sys_mserrlist[EMSMAXERR-EMSBASEOFF+2] =
  * NS (Name Server) specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_nserrlist[ENSMAXERR-ENSBASEOFF+2] =
+const char *sys_nserrlist[ENSMAXERR-ENSBASEOFF+2] =
   {"Error 0",
    "Name server not active",
    "File has been overwritten, request ignored",
@@ -220,7 +220,7 @@ char *sys_nserrlist[ENSMAXERR-ENSBASEOFF+2] =
  * RFIO specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_rferrlist[ERFMAXERR-ERFBASEOFF+2] =
+const char *sys_rferrlist[ERFMAXERR-ERFBASEOFF+2] =
   {"Error 0",
    "Host did not return error number",
    "Host is not on local network and no mapping found",
@@ -234,7 +234,7 @@ char *sys_rferrlist[ERFMAXERR-ERFBASEOFF+2] =
  * RTCOPY specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_rterrlist[ERTMAXERR-ERTBASEOFF+2] =
+const char *sys_rterrlist[ERTMAXERR-ERTBASEOFF+2] =
   {"Error 0",
    "TMS error",
    "Blocks skipped in file",
@@ -258,7 +258,7 @@ char *sys_rterrlist[ERTMAXERR-ERTBASEOFF+2] =
  * STAGE specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
+const char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
   {"Error 0",
    "Aborted",
    "Enough free space",
@@ -295,7 +295,7 @@ char *sys_sterrlist[ESTMAXERR-ESTBASEOFF+2] =
  * SYSREQ specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_sqerrlist[ESQMAXERR-ESQBASEOFF+2] =
+const char *sys_sqerrlist[ESQMAXERR-ESQBASEOFF+2] =
   {"Error 0",
    "TMS not active",
    "BAD ERROR NUMBER"
@@ -306,7 +306,7 @@ char *sys_sqerrlist[ESQMAXERR-ESQBASEOFF+2] =
  * TAPE specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_terrlist[ETMAXERR-ETBASEOFF+2] =
+const char *sys_terrlist[ETMAXERR-ETBASEOFF+2] =
   {"Error 0",
    "Tape daemon not available",
    "System error",
@@ -359,7 +359,7 @@ char *sys_terrlist[ETMAXERR-ETBASEOFF+2] =
  * VAL (Volume Allocator) specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_vaerrlist[EVMMAXERR-EVMBASEOFF+2] =
+const char *sys_vaerrlist[EVMMAXERR-EVMBASEOFF+2] =
   {"Error 0",
    "Volume manager not active",
    "VMGR HOST not set",
@@ -371,7 +371,7 @@ char *sys_vaerrlist[EVMMAXERR-EVMBASEOFF+2] =
  * UPV (User Privilege Validator) specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_uperrlist[EUPMAXERR-EUPBASEOFF+2] =
+const char *sys_uperrlist[EUPMAXERR-EUPBASEOFF+2] =
   {"Error 0",
    "UPV not active",
    "BAD ERROR NUMBER"
@@ -383,7 +383,7 @@ char *sys_uperrlist[EUPMAXERR-EUPBASEOFF+2] =
  * DNS specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_dnserrlist[EDNSMAXERR-EDNSBASEOFF+2] =
+const char *sys_dnserrlist[EDNSMAXERR-EDNSBASEOFF+2] =
   {"Error 0",
    "The specified host is unknown",
    "A temporary error occurred on an authoritative name server.  Try again later",
@@ -398,7 +398,7 @@ char *sys_dnserrlist[EDNSMAXERR-EDNSBASEOFF+2] =
  * VDQM (Volume & Drive Queue Manager) specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_vqerrlist[EVQMAXERR-EVQBASEOFF+2] =
+const char *sys_vqerrlist[EVQMAXERR-EVQBASEOFF+2] =
   {"Error 0",
    "Failed system call",
    "Internal DB inconsistency",
@@ -427,7 +427,7 @@ char *sys_vqerrlist[EVQMAXERR-EVQBASEOFF+2] =
  * RMC (Remote SCSI Media Changer server) specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_rmerrlist[ERMMAXERR-ERMBASEOFF+2] =
+const char *sys_rmerrlist[ERMMAXERR-ERMBASEOFF+2] =
   {"Error 0",
    "Remote SCSI media changer server not active",
    "Remote SCSI media changer error",
@@ -452,7 +452,7 @@ char *sys_rmerrlist[ERMMAXERR-ERMBASEOFF+2] =
  * Monitor specific error messages
  *------------------------------------------------------------------------
  */
-char *sys_monerrlist[EMONMAXERR - EMONBASEOFF +2] =
+const char *sys_monerrlist[EMONMAXERR - EMONBASEOFF +2] =
   {"Error 0",
    "System Error",
    "Monitor Host not specified",
@@ -466,7 +466,7 @@ char *sys_monerrlist[EMONMAXERR - EMONBASEOFF +2] =
  * Security package errors
  *------------------------------------------------------------------------
  */
-char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] =
+const char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] =
   {"Error 0",
    "System error",
    "Bad credentials",
@@ -492,7 +492,7 @@ char *sys_secerrlist[ESECMAXERR-ESECBASEOFF+2] =
  */
 
 int sstrerror_r(const int n, char *const buf, const size_t buflen) {
-  char *tmpstr;
+  const char *tmpstr;
   char strerror_r_buf[100];
 
   if ( buf == NULL || buflen <= 0 ) {
