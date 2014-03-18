@@ -33,6 +33,7 @@
 #include "castor/tape/tapegateway/FileMigrationReportList.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
+#include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
 #include "../threading/Threading.hpp"
 
 namespace castor {
@@ -44,7 +45,7 @@ namespace daemon {
    * The client address will have been received from the VDQM by the main
    * process. 
    */
-  class ClientProxy {
+  class ClientProxy : public ClientInterface {
   public:
     /**
      * Constructor: contact client, gather initial information about the
@@ -54,19 +55,6 @@ namespace daemon {
      */
     ClientProxy(const legacymsg::RtcpJobRqstMsgBody & clientRequest)
             throw (castor::tape::Exception);
-    
-    /**
-     * Class holding the timing information for the request/reply,
-     * and the message sequence Id.
-     */
-    class RequestReport {
-    public:
-      RequestReport(): transactionId(0),
-        connectDuration(0), sendRecvDuration(0) {}
-      uint32_t transactionId;
-      double connectDuration;
-      double sendRecvDuration;
-    };
     
     /**
      * Class holding the result of a Volume request
