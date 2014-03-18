@@ -27,15 +27,16 @@
 #include <list>
 #include <stdint.h>
 
-#include "MemManager.hpp"
-#include "TapeReadSingleThread.hpp"
-#include "TapeReadFileTask.hpp"
-#include "DiskWriteThreadPool.hpp"
-#include "DiskWriteFileTask.hpp"
-#include "RecallJob.hpp"
-#include "TapeWriteFileTask.hpp"
-#include "ClientInterface.hpp"
+#include "castor/tape/tapeserver/daemon/MemManager.hpp"
+#include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
+#include "castor/tape/tapeserver/daemon/TapeReadFileTask.hpp"
+#include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
+#include "castor/tape/tapeserver/daemon/DiskWriteFileTask.hpp"
+#include "castor/tape/tapeserver/daemon/RecallJob.hpp"
+#include "castor/tape/tapeserver/daemon/TapeWriteFileTask.hpp"
+#include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
+#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 
 namespace castor{
 namespace tape{
@@ -91,7 +92,7 @@ private:
    * Create all the tape-read and write-disk tasks for set of files to retrieve
    * @param jobs
    */
-  void injectBulkRecalls(const std::list<RecallJob>& jobs);
+  void injectBulkRecalls(const std::vector<castor::tape::tapegateway::FileToRecallStruct*>& jobs);
 
   /**
    * A request of files to recall. We request EITHER

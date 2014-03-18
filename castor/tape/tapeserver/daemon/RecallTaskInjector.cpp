@@ -1,9 +1,19 @@
 #include "RecallTaskInjector.hpp"
 #include "castor/log/LogContext.hpp"
+#include "castor/tape/tapegateway/FilesToRecallList.hpp"
+#include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
+#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include <stdint.h>
 
 using castor::log::LogContext;
 using castor::log::Param;
+
+namespace{
+  uint32_t blockID(const castor::tape::tapegateway::FileToRecallStruct& ftr)
+  {
+    return (ftr.blockId0() << 24) | (ftr.blockId1() << 16) |  (ftr.blockId2() << 8) | ftr.blockId3();
+  }
+}
 
 namespace castor{
 namespace tape{
@@ -19,7 +29,7 @@ RecallTaskInjector::RecallTaskInjector(MemoryManager & mm,
 {}
 
 void RecallTaskInjector::requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall) {
-  //where shall we acquiere the lock ? There of just before the push ?
+  //@TODO where shall we  acquire the lock ? There of just before the push ?
   castor::tape::threading::MutexLocker ml(&m_producerProtection);
   
   LogContext::ScopedParam sp01(m_lc, Param("maxFiles", maxFiles));
@@ -38,15 +48,23 @@ void RecallTaskInjector::startThreads() {
   m_thread.start();
 }
 
-void RecallTaskInjector::injectBulkRecalls(const std::list<RecallJob>& jobs) {
-  for (std::list<RecallJob>::const_iterator it = jobs.begin(); it != jobs.end(); ++it) {
+void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapegateway::FileToRecallStruct*>& jobs) {
+  for (std::vector<tapegateway::FileToRecallStruct*>::const_iterator it = jobs.begin(); it != jobs.end(); ++it) {
+
+    LogContext::ScopedParam sp[]={
+      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->id())),
+      LogContext::ScopedParam(m_lc, Param("NSFILEID2", (*it)->fileid())),
+      LogContext::ScopedParam(m_lc, Param("NSFILESEQNUMBER", (*it)->fseq())),
+      LogContext::ScopedParam(m_lc, Param("NSFILEBLOCKID", blockID(**it))),
+      LogContext::ScopedParam(m_lc, Param("NSFILENSHOST", (*it)->nshost())),
+      LogContext::ScopedParam(m_lc, Param("NSFILEPATH", (*it)->path()))
+    };
+    suppresUnusedVariable(sp[0]);
     
-    LogContext::ScopedParam sp(m_lc, Param("NSFILEID", it->fileId));
-    LogContext::ScopedParam sp2(m_lc, Param("NSFILESEQNUMBER", it->fSeq));
     m_lc.log(LOG_INFO, "Logged file to recall");
     
-    DiskWriteFileTask * dwt = new DiskWriteFileTask(it->fileId, it->blockCount, m_memManager);
-    TapeReadFileTask * trt = new TapeReadFileTask(*dwt, it->fSeq, it->blockCount);
+    DiskWriteFileTask * dwt = new DiskWriteFileTask((*it)->id(), blockID(**it), m_memManager);
+    TapeReadFileTask * trt = new TapeReadFileTask(*dwt, (*it)->fseq(), blockID(**it));
     
     m_diskWriter.push(dwt);
     m_tapeReader.push(trt);
@@ -58,21 +76,23 @@ void RecallTaskInjector::injectBulkRecalls(const std::list<RecallJob>& jobs) {
 bool RecallTaskInjector::synchronousInjection(uint64_t maxFiles, uint64_t byteSizeThreshold)
 {
   ClientInterface::RequestReport reqReport;  
-  //@TODO interface TBD   
-  LogContext::ScopedParam sp(m_lc, Param("maxFiles", maxFiles));
-  LogContext::ScopedParam sp0(m_lc, Param("byteSizeThreshold",byteSizeThreshold));
 
-  std::list<RecallJob> jobs ;/*=*/ m_client.getFilesToRecall(maxFiles, byteSizeThreshold,reqReport);
-
-  LogContext::ScopedParam sp01(m_lc, Param("transactionId", reqReport.transactionId));
-  LogContext::ScopedParam sp02(m_lc, Param("connectDuration", reqReport.connectDuration));
-  LogContext::ScopedParam sp03(m_lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
-
-  if(jobs.empty()) {
+  std::auto_ptr<castor::tape::tapegateway::FilesToRecallList> filesToRecallList(m_client.getFilesToRecall(maxFiles,byteSizeThreshold,reqReport));
+  LogContext::ScopedParam sp[]={
+    LogContext::ScopedParam(m_lc, Param("maxFiles", maxFiles)),
+    LogContext::ScopedParam(m_lc, Param("byteSizeThreshold",byteSizeThreshold)),
+    LogContext::ScopedParam(m_lc, Param("transactionId", reqReport.transactionId)),
+    LogContext::ScopedParam(m_lc, Param("connectDuration", reqReport.connectDuration)),
+    LogContext::ScopedParam(m_lc, Param("sendRecvDuration", reqReport.sendRecvDuration))
+  };
+  suppresUnusedVariable(sp);
+  
+  if(NULL==filesToRecallList.get()) { 
     m_lc.log(LOG_ERR, "Get called but no files to retrieve");
     return false;
   }
   else {
+    std::vector<tapegateway::FileToRecallStruct*>& jobs= filesToRecallList->filesToRecall();
     injectBulkRecalls(jobs);
     return true;
   }
@@ -87,13 +107,13 @@ void RecallTaskInjector::WorkerThread::run()
         Request req = _this.m_queue.pop();
 	printf("RecallJobInjector:run: about to call client interface\n");
         ClientInterface::RequestReport reqReport;
-        std::list<RecallJob> jobs ; /*=*/ _this.m_client.getFilesToRecall(req.nbMaxFiles, req.byteSizeThreshold,reqReport);
+        std::auto_ptr<tapegateway::FilesToRecallList> filesToRecallList(_this.m_client.getFilesToRecall(req.nbMaxFiles, req.byteSizeThreshold,reqReport));
         
         LogContext::ScopedParam sp01(_this.m_lc, Param("transactionId", reqReport.transactionId));
         LogContext::ScopedParam sp02(_this.m_lc, Param("connectDuration", reqReport.connectDuration));
         LogContext::ScopedParam sp03(_this.m_lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
   
-        if (jobs.empty()) {
+        if (NULL == filesToRecallList.get()) {
           if (req.lastCall) {
 	    _this.m_lc.log(LOG_INFO,"No more file to recall: triggering the end of session.\n");
             _this.m_tapeReader.finish();
@@ -103,10 +123,17 @@ void RecallTaskInjector::WorkerThread::run()
 	    printf("In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.\n");
 	  }
         } else {
+          std::vector<tapegateway::FileToRecallStruct*>& jobs= filesToRecallList->filesToRecall();
           _this.injectBulkRecalls(jobs);
         }
       } // end of while(1)
       //-------------
+  
+     /* We want to finish at the first lastCall we encounter.
+      * But even after sending finish() to m_diskWriter and to m_tapeReader,
+        m_diskWriter might still want some more task (the threshold could be crossed),
+      *  so we discard everything that might still be in the queue
+      */
       try {
         while(1) {
           Request req = _this.m_queue.tryPop();
