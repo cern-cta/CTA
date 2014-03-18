@@ -118,12 +118,12 @@ protected:
    */
   virtual void waitAllThreads() throw ();
 
-private:
-
   /**
    * Prints out the online help
    */
-  void help(const std::string &programName) throw();
+  virtual void help(const std::string &programName) throw();
+
+private:
 
   /**
    * Sets up the signal handling for this multi-threaded daemon.
