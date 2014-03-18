@@ -44,6 +44,8 @@
 #include "h/osdep.h" //for LONGSIZE
 #include "h/vdqm_constants.h"
 
+#include <stdio.h>
+
 // definition of some constants
 #define STG_CALLBACK_BACKLOG 2
 #define VDQMSERV 1
