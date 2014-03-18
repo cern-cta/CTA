@@ -27,9 +27,10 @@
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
+#include "DiskThreadPoolInterface.hpp"
 #include <vector>
 
-class DiskReadThreadPool {
+class DiskReadThreadPool : public castor::tape::tapeserver::daemon::DiskThreadPoolInterface<DiskReadTask> {
 public:
   DiskReadThreadPool(int nbThread) {
     for(int i=0; i<nbThread; i++) {
@@ -55,7 +56,7 @@ public:
       (*i)->waitThreads();
     }
   }
-  void push(DiskReadTask *t) { m_tasks.push(t); }
+  virtual void push(DiskReadTask *t) { m_tasks.push(t); }
   void finish() {
     /* Insert one endOfSession per thread */
     for (size_t i=0; i<m_threads.size(); i++) {
@@ -64,9 +65,6 @@ public:
   }
 
 private:
-  class endOfSession: public DiskReadTask {
-    virtual bool endOfWork() { return true; }
-  };
   class DiskReadWorkerThread: private castor::tape::threading::Thread {
   public:
     DiskReadWorkerThread(DiskReadThreadPool & manager): m_manager(manager) {}

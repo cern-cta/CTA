@@ -28,9 +28,10 @@
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/daemon/TaskInjector.hpp"
+#include "DiskThreadPoolInterface.hpp"
 #include <vector>
 
-class DiskWriteThreadPool {
+class DiskWriteThreadPool : public castor::tape::tapeserver::daemon::DiskThreadPoolInterface<DiskWriteTask> {
 public:
   DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq):
             m_jobInjector(NULL), m_filesQueued(0), m_blocksQueued(0), 
@@ -59,7 +60,7 @@ public:
       (*i)->waitThreads();
     }
   }
-  void push(DiskWriteTask *t) { 
+  virtual void push(DiskWriteTask *t) { 
     {
       castor::tape::threading::MutexLocker ml(&m_counterProtection);
       m_filesQueued += t->files();
@@ -112,9 +113,6 @@ private:
     return ret;
   }
   
-  class endOfSession: public DiskWriteTask {
-    virtual bool endOfWork() { return true; }
-  };
   class DiskWriteWorkerThread: private castor::tape::threading::Thread {
   public:
     DiskWriteWorkerThread(DiskWriteThreadPool & manager): m_manager(manager) {}
