@@ -28,44 +28,26 @@
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include <iostream>
 #include <stdio.h>
 
-class TapeReadSingleThread {
+class TapeReadSingleThread : public TapeSingleThreadInterface<TapeReadTask>{
 public:
-  TapeReadSingleThread(castor::tape::drives::DriveInterface & drive): m_workerThread(*this), m_drive(drive) {}
-  void startThreads() { m_workerThread.startThreads(); }
-  void waitThreads() { m_workerThread.waitThreads(); } 
-  void push(TapeReadTask * t) { m_tasks.push(t); }
-  void finish() { m_tasks.push(new endOfSession); }
-  
+  TapeReadSingleThread(castor::tape::drives::DriveInterface & drive): 
+   TapeSingleThreadInterface<TapeReadTask>(drive) {}
+
 private:
-  class endOfSession: public TapeReadTask {
-    virtual bool endOfWork() { return true; }
-  };
-  class TapeReadWorkerThread : private castor::tape::threading::Thread {
-  public:
-    TapeReadWorkerThread(TapeReadSingleThread & manager): m_manager(manager) {}
-    void startThreads() { castor::tape::threading::Thread::start(); }
-    void waitThreads() {
-      castor::tape::threading::Thread::wait();
-    }
-  private:
-    TapeReadSingleThread & m_manager;
-    virtual void run() {
+  virtual void run() {
       while(1) {
-        TapeReadTask * task = m_manager.m_tasks.pop();
+        TapeReadTask * task = m_tasks.pop();
         bool end = task->endOfWork();
-        if (!end) task->execute(m_manager.m_drive);
+        if (!end) task->execute(m_drive);
         delete task;
         if (end) {
           printf("End of TapeReadWorkerThread::run()\n");
           return;
         }
       }
-    }
-  } m_workerThread;
-  friend class TapeReadWorkerThread;
-  castor::tape::drives::DriveInterface & m_drive;
-  castor::tape::threading::BlockingQueue<TapeReadTask *> m_tasks;
+    }  
 };
