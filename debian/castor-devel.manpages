@@ -154,7 +154,6 @@ debian/castor/usr/share/man/man3/rmc_find_cartridge.3castor.gz
 debian/castor/usr/share/man/man3/rmc_get_geometry.3castor.gz
 debian/castor/usr/share/man/man3/rmc_import.3castor.gz
 debian/castor/usr/share/man/man3/rmc_mount.3castor.gz
-debian/castor/usr/share/man/man3/rmc_mnt.3castor.gz
 debian/castor/usr/share/man/man3/rmc_read_elem_status.3castor.gz
 debian/castor/usr/share/man/man3/rmc_seterrbuf.3castor.gz
 debian/castor/usr/share/man/man3/rwndtape.3castor.gz
