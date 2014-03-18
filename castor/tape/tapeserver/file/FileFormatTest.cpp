@@ -35,6 +35,7 @@
 #include <fstream>
 #include <sstream>
 #include <iomanip>
+#include <memory>
 
 int main(int argc, char* argv[])
 {
@@ -50,11 +51,11 @@ int main(int argc, char* argv[])
     castor::tape::SCSI::DeviceInfo & dev = (*i);
     std::cout << std::endl << "-- SCSI device: " << dev.sg_dev << " (" << dev.nst_dev << ")" << std::endl;
     if (dev.type == castor::tape::SCSI::Types::tape) {
-      castor::tape::drives::Drive dContainer(dev, sWrapper);
-      castor::tape::drives::DriveInterface & drive = dContainer;
-      castor::tape::drives::deviceInfo devInfo;
+      std::auto_ptr<castor::tape::drives::DriveInterface> drive (
+         castor::tape::drives::DriveFactory(dev, sWrapper));
+      castor::tape::drives::deviceInfo devInfo; 
       try {
-        devInfo = drive.getDeviceInfo();
+        devInfo = drive->getDeviceInfo();
         std::cout << "-- INFO --------------------------------------" << std::endl             
                   << "  devInfo.vendor               : '"  << devInfo.vendor << "'" << std::endl
                   << "  devInfo.product              : '" << devInfo.product << "'" << std::endl
@@ -73,7 +74,7 @@ int main(int argc, char* argv[])
        */
       if(!strcmp(dev.nst_dev.c_str(),argv[1])) {
         try {
-          castor::tape::tapeFile::ReadSession my_sess(drive, argv[2]);
+          castor::tape::tapeFile::ReadSession my_sess(*drive, argv[2]);
           std::cout << "Read session on " << argv[2] << " (" << argv[1] << ") established." << std::endl;
           int f=0;
           while(!f){

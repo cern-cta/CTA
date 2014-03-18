@@ -104,13 +104,13 @@ int main(int argc, char* argv[])
     }
   }
   
-  castor::tape::drives::Drive read_dContainer(read_dev, sWrapper);
-  castor::tape::drives::DriveInterface & read_drive = read_dContainer;
-  castor::tape::drives::Drive write_dContainer(write_dev, sWrapper);
-  castor::tape::drives::DriveInterface & write_drive = write_dContainer;
+  std::auto_ptr<castor::tape::drives::DriveInterface> read_drive(
+    castor::tape::drives::DriveFactory(read_dev, sWrapper));
+  std::auto_ptr<castor::tape::drives::DriveInterface> write_drive(
+    castor::tape::drives::DriveFactory(write_dev, sWrapper));
   
   try {
-    label_sess = new castor::tape::tapeFile::LabelSession(write_drive, dst_tape, true);
+    label_sess = new castor::tape::tapeFile::LabelSession(*write_drive, dst_tape, true);
     std::cout << "Label session on " << dst_tape << " (" << dst_device << ") established." << std::endl;
   } 
   catch (std::exception & e) {
@@ -121,9 +121,9 @@ int main(int argc, char* argv[])
   }
   
   try {
-    read_sess = new castor::tape::tapeFile::ReadSession(read_drive, src_tape);
+    read_sess = new castor::tape::tapeFile::ReadSession(*read_drive, src_tape);
     std::cout << "Read session on " << src_tape << " (" << src_device << ") established." << std::endl;
-    write_sess = new castor::tape::tapeFile::WriteSession(write_drive, dst_tape, 0, false);
+    write_sess = new castor::tape::tapeFile::WriteSession(*write_drive, dst_tape, 0, false);
     std::cout << "Write session on " << dst_tape << " (" << dst_device << ") established." << std::endl;
   } 
   catch (std::exception & e) {
