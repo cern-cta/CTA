@@ -164,7 +164,7 @@ throw (castor::tape::Exception) {
   // We could use the castor typing here, but we stick to case for homogeneity
   // of the code.
   try {
-    dynamic_cast<tapegateway::NotificationAcknowledge &>(*ack.get());
+    (void)dynamic_cast<tapegateway::NotificationAcknowledge &>(*ack.get());
   } catch (std::bad_cast) {
     throw UnexpectedResponse(ack.get(), 
         "Unexpected response when reporting end of session");
@@ -189,7 +189,7 @@ throw (castor::tape::Exception) {
   // We could use the castor typing here, but we stick to case for homogeneity
   // of the code.
   try {
-    dynamic_cast<tapegateway::NotificationAcknowledge &>(*ack.get());
+    (void)dynamic_cast<tapegateway::NotificationAcknowledge &>(*ack.get());
   } catch (std::bad_cast) {
     throw UnexpectedResponse(ack.get(), 
         "Unexpected response when reporting end of session");

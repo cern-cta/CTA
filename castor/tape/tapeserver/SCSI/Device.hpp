@@ -131,13 +131,6 @@ namespace SCSI {
 
   }; /* class DeviceVector */
 
-  class Device {
-  public:
-    Device(int fd): m_fd(fd) {};
-    
-  private:
-    int m_fd;
-  }; // class Device
 } // namespace SCSI
 } // namespace tape
 } // namespace castor
