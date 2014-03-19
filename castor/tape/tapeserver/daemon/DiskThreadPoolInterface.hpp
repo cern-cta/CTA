@@ -24,7 +24,8 @@ protected :
 public :
   virtual ~DiskThreadPoolInterface(){}
   
-  virtual void push(Task *t) =0;
+  virtual void push(Task *t)=0;
+  virtual void finish()=0;
 };
 
 }}}}
