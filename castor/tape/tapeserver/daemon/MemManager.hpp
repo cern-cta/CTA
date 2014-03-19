@@ -107,7 +107,7 @@ public:
     // the memory blocks we still have.
     try {
       while(true) {
-        m_freeBlocks.tryPop();
+        delete m_freeBlocks.tryPop();
       }
     }
     catch (castor::tape::threading::noMore) {
