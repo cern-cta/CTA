@@ -13,10 +13,6 @@
 
 #include <string.h>
 
-#if !defined(linux)
-extern int      sys_nerr;       /* number of system error messages      */
-#endif
-
 const char *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
   {"Error 0",
    "Host not known",
