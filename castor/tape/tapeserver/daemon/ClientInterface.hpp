@@ -45,6 +45,7 @@ public :
   uint64_t bytes, RequestReport &report)
   throw (castor::tape::Exception) = 0;
 
+  virtual ~ClientInterface(){}
 };
 
 }}}}
