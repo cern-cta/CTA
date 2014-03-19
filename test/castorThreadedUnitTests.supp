@@ -103,3 +103,27 @@
   Helgrind:Race
   fun:_ZNSsC1ERKSs
 }
+
+{
+  helgrind-unitTest-castor-basicStringAssign
+  Helgrind:Race
+  fun:_ZNSs6assignEPKcj
+}
+
+{
+  helgrind-unitTest-castor-basicStringSize
+  Helgrind:Race
+  fun:_ZNKSs4sizeEv
+}
+
+{
+  helgrind-unitTest-castor-basicStringsCatchAll1
+  Helgrind:Race
+  fun:_ZNSs6*
+}
+
+{
+  helgrind-unitTest-castor-basicStringsCatchAll1
+  Helgrind:Race
+  fun:_ZNSs7*
+}
