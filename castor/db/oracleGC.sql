@@ -735,9 +735,17 @@ BEGIN
       BULK COLLECT INTO cfIds
       FROM DiskCopy DC
      WHERE id IN (SELECT /*+ CARDINALITY(ids 5) */ * FROM TABLE(dcIds) ids);
-    -- drop the DiskCopies
-    FORALL i IN 1 .. dcIds.COUNT
-      DELETE FROM DiskCopy WHERE id = dcIds(i);
+    -- drop the DiskCopies - not in bulk because of the constraint violation check
+    FOR i IN 1 .. dcIds.COUNT LOOP
+      DECLARE
+        CONSTRAINT_VIOLATED EXCEPTION;
+        PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+      BEGIN
+        DELETE FROM DiskCopy WHERE id = dcIds(i);
+      EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+        NULL;   -- some other entity refers to this diskCopy, skip for now
+      END;
+    END LOOP;
     COMMIT;
     -- maybe delete the CastorFiles if nothing is left for them
     FOR i IN 1 .. cfIds.COUNT LOOP
