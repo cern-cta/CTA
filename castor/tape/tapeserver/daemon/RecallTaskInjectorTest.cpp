@@ -8,7 +8,7 @@
 namespace
 {
 using namespace castor::tape;
-const int nbFile=5;
+const unsigned int nbFile=5;
 const int blockSize=4096;
 
 class FakeClient : public tapeserver::daemon::ClientInterface
@@ -18,7 +18,7 @@ public:
   FakeClient(int nbCalls):m_current(0){
     for(int n=0;n<nbCalls;++n) {
       std::auto_ptr<tapegateway::FilesToRecallList> ptr(new tapegateway::FilesToRecallList());
-      for(int i=0;i<nbFile;++i)
+      for(unsigned int i=0;i<nbFile;++i)
       {
         ptr->filesToRecall().push_back(new tapegateway::FileToRecallStruct);
         ptr->filesToRecall().back()->setFileid(i);
@@ -119,7 +119,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   ASSERT_EQ(nbFile*nbCalls+1,diskWrite.m_tasks.size());
   ASSERT_EQ(nbFile*nbCalls+1,tapeRead.m_tasks.size());
   
-  for(int i=0;i<nbFile*nbCalls;++i)
+  for(unsigned int i=0;i<nbFile*nbCalls;++i)
   {
     delete diskWrite.m_tasks.pop();
     delete tapeRead.m_tasks.pop();
@@ -150,7 +150,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,lc);
   
   ASSERT_EQ(false,rti.synchronousInjection(6,blockSize));
-  ASSERT_EQ(0,diskWrite.m_tasks.size());
-  ASSERT_EQ(0,tapeRead.m_tasks.size());
+  ASSERT_EQ(0U,diskWrite.m_tasks.size());
+  ASSERT_EQ(0U,tapeRead.m_tasks.size());
 }
 }
