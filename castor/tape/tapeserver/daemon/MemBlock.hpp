@@ -27,13 +27,42 @@
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
 #include <memory>
 
+class Payload
+{
+public:
+  Payload(size_t capacity):
+  m_payload(new (std::nothrow) char[capacity]),m_capacity(capacity),m_size(0) {
+    if(NULL == m_payload) {
+      throw MemException("Failed to allocate memory for a new MemBlock!");
+    }
+  }
+  ~Payload(){
+    delete[] m_payload;
+  }
+  
+  size_t size() const {
+    return m_size;
+  }
+  
+  size_t capacity() const {
+    return m_capacity;
+  }
+  
+  //TODO interface TBD
+  char* get(){
+    return m_payload;
+  }
+private:
+  char* m_payload;
+  size_t m_capacity;
+  size_t m_size;
+};
+
 class MemBlock {
 public:
 
-  MemBlock(const int id, const size_t capacity) throw(MemException) : m_memoryBlockId(id), m_payload(new (std::nothrow) char[capacity]), m_payload_capacity(capacity) {
-    if(m_payload.get()==NULL) {
-      throw MemException("Failed to allocate memory for a new MemBlock!");
-    }
+  MemBlock(const int id, const size_t capacity) throw(MemException) : 
+  m_memoryBlockId(id),m_payload(capacity){
     reset();
   }
   
@@ -45,13 +74,10 @@ public:
   }
   
   int m_memoryBlockId;
-  
+  Payload m_payload;
   int m_fileid;
   int m_fileBlock;
   int m_fSeq;
   int m_tapeFileBlock;
-  
-  std::auto_ptr<char> m_payload;
-  size_t m_payload_capacity;
-  size_t m_payload_size;
+ 
 };
