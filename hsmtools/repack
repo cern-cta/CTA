@@ -161,7 +161,7 @@ def _displaySummary(rows):
     '''prints a summary of all repack requests according to the given criteria'''
     # print out results
     print '='*120
-    print 'SubmitTime          RepackTime             User                      Machine      Vid      Total        Size     Status'
+    print 'SubmitTime           RepackTime             User                      Machine      Vid      Total        Size     Status'
     print '-'*120
     sumTotal = sumSize = 0
     globalStatus = 2  # FINISHED
@@ -191,7 +191,7 @@ def _displayDetailed(rows):
     '''prints the details of all repack requests according to the given criteria'''
     # print out results
     print '='*168
-    print 'SubmitTime          RepackTime             User                      Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status'
+    print 'SubmitTime           RepackTime             User                      Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status'
     print '-'*168
     sumTotal = sumSize = sumToRecall = sumToMigr = sumFailed = sumMigrated = 0
     globalStatus = 2  # FINISHED
