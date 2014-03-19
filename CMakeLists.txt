@@ -339,15 +339,15 @@ ELSE(DEFINED PackageOnly)
   
   set_property (DIRECTORY PROPERTY COMPILE_DEFINITIONS _LARGEFILE64_SOURCE)
   
-  ################################################################################
+  ##############################################################################
   # Rules to install the shared log and spool directories
-  ################################################################################
+  ##############################################################################
   CastorInstallDir (/var/log/castor)
   CastorInstallDir (/var/log/spool/castor)
   
-  ################################################################################
+  ##############################################################################
   # Include the subdirectories of the project
-  ################################################################################
+  ##############################################################################
   
   # Some directories have client components, and get included unconditionnaly
   # inside them, we can filter further down what we need or not.

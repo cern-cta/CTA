@@ -1,0 +1,87 @@
+.\" Copyright (C) 2002 by CERN/IT/PDP/DM
+.\" All rights reserved
+.\"
+.TH RMC_MNT 3 "$Date: 2013/11/18 16:21:00 $" CASTOR "rmc Library Functions"
+.SH NAME
+rmc_mnt \- send a request to the Remote Media Changer daemon to have a volume mounted
+.SH SYNOPSIS
+.B #include <sys/types.h>
+.br
+\fB#include "rmc_api.h"\fR
+.sp
+.BI "int \fBrmc_mnt\f[](const char *const \fIvid\f[], const char *const \fIdrive\f[]);
+.SH DESCRIPTION
+.B rmc_mnt
+asks the remote media-changer daemon to mount the volume
+.I vid
+on the drive specified by
+.IR drive .
+.TP
+.I vid
+is the volume visual identifier.
+It must be at most six characters long.
+.TP
+.I drive
+specifies the drive in one of the following three forms corresponding to the three supported drive-loader types, namely acs, manual and smc:
+.RS
+.TP
+acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
+.TP
+manual
+.TP
+smc@rmc_host,drive_ordinal
+.RE
+.LP
+This function requires TP_SYSTEM privilege in the Cupv database.
+.SH RETURN VALUE
+.TP
+.B 0
+The mount operation was successful.
+.TP
+.B 1
+The mount operations is manual and the rmc_mnt() function has therefore not
+taken any further action.
+.TP
+.B -1
+The mount operation has failed and both
+.B errno
+and
+.B serrno
+have been set appropriately.
+
+.SH ERRORS
+.TP 1.8i
+.B EINVAL
+If either \fIvid\f[] or \fIdrive\f[] are passed a NULL pointer.
+.TP
+.B SECOMERR
+Communication error.
+.TP
+.B ERMCUNREC
+Unknown host or invalid drive or requester does not have
+TP_SYSTEM privilege in the Cupv database.
+.TP
+.B ERMCFASTR
+Unit attention.
+.TP
+.B ERMCOMSGR
+Hardware error or Medium Removal Prevented.
+.TP
+.B ERMCUKNLDRTYPE
+Unknown drive-loader type.
+.TP
+.B ERMCVIDTOOLONG
+VID is too long.
+.TP
+.B ERMCPARSERMCHOST
+Failed to parse RMC host.
+.TP
+.B ERMCPARSEACSDRV
+Failed to parse ACS drive id.
+.TP
+.B SEINTERNAL
+Internal error.
+.SH SEE ALSO
+.BR Cupvlist(1) ,
+.SH AUTHOR
+\fBCASTOR\fP Team <castor.support@cern.ch>

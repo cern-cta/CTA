@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/AcsMountCmd.cpp
+ *                 castor/tape/rmc/MountCmd.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,8 +22,10 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/rmc/AcsMountCmd.hpp"
+#include "castor/tape/rmc/MountCmd.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "h/rmc_api.h"
+#include "h/serrno.h"
 
 #include <getopt.h>
 #include <iostream>
@@ -31,24 +33,22 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::rmc::AcsMountCmd::AcsMountCmd(
-  std::istream &inStream, std::ostream &outStream, std::ostream &errStream,
-  Acs &acs) throw():
-  AcsCmd(inStream, outStream, errStream, acs), m_defaultQueryInterval(10),
-  m_defaultTimeout(600) {
+castor::tape::rmc::MountCmd::MountCmd(std::istream &inStream,
+  std::ostream &outStream, std::ostream &errStream) throw():
+  Cmd(inStream, outStream, errStream), m_defaultTimeout(600) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::rmc::AcsMountCmd::~AcsMountCmd() throw() {
+castor::tape::rmc::MountCmd::~MountCmd() throw() {
   // Do nothing
 }
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int castor::tape::rmc::AcsMountCmd::main(const int argc,
+int castor::tape::rmc::MountCmd::main(const int argc,
   char *const *const argv) throw() {
   try {
     m_cmdLine = parseCmdLine(argc, argv);
@@ -80,27 +80,38 @@ int castor::tape::rmc::AcsMountCmd::main(const int argc,
   // Setup debug mode to be on or off depending on the command-line arguments
   m_debugBuf.setDebug(m_cmdLine.debug);
 
-  m_dbg << "query = " << m_cmdLine.queryInterval << std::endl;
   m_dbg << "readonly = " << bool2Str(m_cmdLine.readOnly) << std::endl;
   m_dbg << "timeout = " << m_cmdLine.timeout << std::endl;
-  m_dbg << "VID = " << m_cmdLine.volId.external_label << std::endl;
-  m_dbg << "DRIVE = " << m_acs.driveId2Str(m_cmdLine.driveId) << std::endl;
+  m_dbg << "VID = " << m_cmdLine.volId << std::endl;
+  m_dbg << "DRIVE = " << m_cmdLine.driveId << std::endl;
 
-  try {
-    syncMount();
-  } catch(castor::exception::Exception &ex) {
-    m_err << "Aborting: " << ex.getMessage().str() << std::endl;
-    return 1;
+  const int rmc_mnt_rc = rmc_mnt(m_cmdLine.volId.c_str(),
+    m_cmdLine.driveId.c_str());
+  const int rmc_mnt_serrno = serrno;
+  switch(rmc_mnt_rc) {
+  case 1:
+    m_out <<
+      "You have requested a manual mount.  The castor-tape-mount command\n"
+      " does nothing for this type of mount." << std::endl;
+    return 0;
+  case 0:
+    m_out << m_cmdLine.volId << " has been mounted" << std::endl;
+    return 0;
+  case -1:
+    m_err << "Failed to mount " << m_cmdLine.volId << ": " <<
+      sstrerror(rmc_mnt_serrno) << std::endl;
+    return -1;
+  default:
+    m_err << "Internal error: rmc_mnt() returned the unexpected value of " <<
+      rmc_mnt_rc << std::endl;
+    return -1;
   }
-
-  return 0;
 }
 
 //------------------------------------------------------------------------------
 // parseCmdLine
 //------------------------------------------------------------------------------
-castor::tape::rmc::AcsMountCmdLine
-  castor::tape::rmc::AcsMountCmd::parseCmdLine(
+castor::tape::rmc::MountCmdLine castor::tape::rmc::MountCmd::parseCmdLine(
   const int argc, char *const *const argv)
   throw(castor::exception::Internal, castor::exception::InvalidArgument,
     castor::exception::MissingOperand) {
@@ -108,16 +119,12 @@ castor::tape::rmc::AcsMountCmdLine
   static struct option longopts[] = {
     {"debug", 0, NULL, 'd'},
     {"help" , 0, NULL, 'h'},
-    {"query" , required_argument, NULL, 'q'},
-    {"readonly" , 0, NULL, 'r'},
-    {"timeout" , required_argument, NULL, 't'},
+    {"readonly", 0, NULL, 'r'},
+    {"timeout", required_argument, NULL, 't'},
     {NULL, 0, NULL, 0}
   };
-  AcsMountCmdLine cmdLine;
+  MountCmdLine cmdLine;
   char c;
-
-  // Set the query option to the default value
-  cmdLine.queryInterval = m_defaultQueryInterval;
 
   // Set timeout option to the default value
   cmdLine.timeout = m_defaultTimeout;
@@ -125,7 +132,7 @@ castor::tape::rmc::AcsMountCmdLine
   // Prevent getopt() from printing an error message if it does not recognize
   // an option character
   opterr = 0;
-  while((c = getopt_long(argc, argv, ":dhq:rt:", longopts, NULL)) != -1) {
+  while((c = getopt_long(argc, argv, ":dhrt:", longopts, NULL)) != -1) {
 
     switch (c) {
     case 'd':
@@ -134,17 +141,8 @@ castor::tape::rmc::AcsMountCmdLine
     case 'h':
       cmdLine.help = true;
       break;
-    case 'q':
-      cmdLine.queryInterval = atoi(optarg);
-      if(0 >= cmdLine.queryInterval) {
-        castor::exception::InvalidArgument ex;
-        ex.getMessage() << "Query value must be an integer greater than 0"
-          ": value=" << cmdLine.queryInterval;
-        throw ex;
-      }
-      break;
     case 'r':
-      cmdLine.readOnly = TRUE;
+      cmdLine.readOnly = true;
       break;
     case 't':
       cmdLine.timeout = atoi(optarg);
@@ -202,13 +200,13 @@ castor::tape::rmc::AcsMountCmdLine
   }
 
   // Parse the VID command-line argument
-  cmdLine.volId = m_acs.str2Volid(argv[optind]);
+  cmdLine.volId = argv[optind];
 
   // Move on to the next command-line argument
   optind++;
 
   // Parse the DRIVE command-line argument
-  cmdLine.driveId = m_acs.str2DriveId(argv[optind]);
+  cmdLine.driveId = argv[optind];
 
   return cmdLine;
 }
@@ -216,31 +214,31 @@ castor::tape::rmc::AcsMountCmdLine
 //------------------------------------------------------------------------------
 // usage
 //------------------------------------------------------------------------------
-void castor::tape::rmc::AcsMountCmd::usage(std::ostream &os)
+void castor::tape::rmc::MountCmd::usage(std::ostream &os)
   const throw() {
   os <<
   "Usage:\n"
   "\n"
-  "  castor-tape-acs-mount [options] VID DRIVE\n"
+  "  castor-tape-mount [options] VID DRIVE\n"
   "\n"
   "Where:\n"
   "\n"
-  "  VID    The VID of the volume to be mounted.\n"
-  "  DRIVE  The ID of the drive into which the volume is to be mounted.\n"
-  "         The format of DRIVE is:\n"
+  "  VID   The indentifier of the volume to be mounted.\n"
   "\n"
-  "             ACS:LSM:panel:transport\n"
+  "  DRIVE The drive in one of the following three forms corresponding to the\n"
+  "        three supported drive-loader types, namely acs, manual and smc:\n"
+  "\n"
+  "             smc@rmc_host,drive_ordinal\n"
+  "\n"
+  "             manual\n"
+  "\n"
+  "             acs@rmc_host,ACS,LSM,panel,transport\n"
   "\n"
   "Options:\n"
   "\n"
   "  -d|--debug            Turn on the printing of debug information.\n"
   "\n"
   "  -h|--help             Print this help message and exit.\n"
-  "\n"
-  "  -q|--query SECONDS    Time to wait between queries to ACS for responses.\n"
-  "                        SECONDS must be an integer value greater than 0.\n"
-  "                        The default value of SECONDS is "
-    << m_defaultQueryInterval << ".\n"
   "\n"
   "  -r|--readOnly         Request the volume is mounted for read-only access\n"
   "\n"
@@ -250,64 +248,4 @@ void castor::tape::rmc::AcsMountCmd::usage(std::ostream &os)
     << m_defaultTimeout << ".\n"
   "\n"
   "Comments to: Castor.Support@cern.ch" << std::endl;
-}
-
-//------------------------------------------------------------------------------
-// syncMount
-//------------------------------------------------------------------------------
-void castor::tape::rmc::AcsMountCmd::syncMount()
-  throw(castor::exception::MountFailed) {
-  const SEQ_NO requestSeqNumber = 1;
-  ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
-
-  try {
-    sendMountRequest(requestSeqNumber);
-    requestResponsesUntilFinal(requestSeqNumber, buf, m_cmdLine.queryInterval,
-      m_cmdLine.timeout);
-    processMountResponse(buf);
-  } catch(castor::exception::Exception &ex) {
-    castor::exception::MountFailed mf;
-    mf.getMessage() << "Failed to mount volume " <<
-      m_cmdLine.volId.external_label << ": " << ex.getMessage().str();
-    throw mf;
-  }
-}
-
-//------------------------------------------------------------------------------
-// sendMountRequest
-//------------------------------------------------------------------------------
-void castor::tape::rmc::AcsMountCmd::sendMountRequest(
-  const SEQ_NO seqNumber) throw(castor::exception::MountFailed) {
-  const LOCKID lockId = 0; // No lock
-  const BOOLEAN bypass = FALSE;
-
-  m_dbg << "Calling Acs::mount()" << std::endl;
-  const STATUS s = m_acs.mount(seqNumber, lockId, m_cmdLine.volId,
-    m_cmdLine.driveId, m_cmdLine.readOnly, bypass);
-  m_dbg << "Acs::mount() returned " << acs_status(s) << std::endl;
-
-  if(STATUS_SUCCESS != s) {
-    castor::exception::MountFailed ex;
-    ex.getMessage() << "Failed to send request to mount volume " <<
-      m_cmdLine.volId.external_label << " into drive " <<
-      m_acs.driveId2Str(m_cmdLine.driveId) << ": readOnly=" <<
-      (m_cmdLine.readOnly ? "TRUE" : "FALSE") << ": " << acs_status(s);
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// processMountResponse
-//------------------------------------------------------------------------------
-void castor::tape::rmc::AcsMountCmd::processMountResponse(
-  ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
-  throw(castor::exception::MountFailed) {
-  const ACS_MOUNT_RESPONSE *const msg = (ACS_MOUNT_RESPONSE *)buf;
-
-  if(STATUS_SUCCESS != msg->mount_status) {
-    castor::exception::MountFailed ex;
-    ex.getMessage() << "Status of mount response is not success: " <<
-      acs_status(msg->mount_status);
-    throw(ex);
-  }
 }

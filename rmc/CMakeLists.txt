@@ -23,12 +23,25 @@
 cmake_minimum_required (VERSION 2.6)
 
 if (${COMPILE_SERVER} STREQUAL "1")
-  ################################################################################
+  ##############################################################################
   # Rules to build and install libcastorrmc.so
-  ################################################################################
-  set (RMC_LIB_SRC_FILES rmc_dismount.c rmc_errmsg.c rmc_export.c
-    rmc_find_cartridge.c rmc_get_geometry.c rmc_import.c rmc_mount.c
-    rmc_read_elem_status.c send2rmc.c)
+  ##############################################################################
+  set (RMC_LIB_SRC_FILES
+    rmc_dismount.c
+    rmc_errmsg.c
+    rmc_export.c
+    rmc_find_cartridge.c
+    rmc_find_char.c
+    rmc_get_geometry.c
+    rmc_get_acs_drive_id.c
+    rmc_get_rmc_host_of_drive.c
+    rmc_get_loader_type.c
+    rmc_import.c
+    rmc_mount.c
+    rmc_mnt.c
+    rmc_read_elem_status.c
+    rmc_unmnt.c
+    send2rmc.c)
   add_library (castorrmc SHARED ${RMC_LIB_SRC_FILES})
   CastorSetLibraryVersions (castorrmc)
   target_link_libraries (castorrmc castorcommon)
@@ -50,8 +63,15 @@ if (${COMPILE_SERVER} STREQUAL "1")
   ##############################################################################
   # Rules to build and install rmcd
   ##############################################################################
-  set (RMCD_SRC_FILES rmc_serv.c rmc_procreq.c rmc_logit.c rmc_logreq.c
-    rmc_marshall_element.c rmc_sendrep.c rmc_smcsubr.c rmc_send_scsi_cmd.c)
+  set (RMCD_SRC_FILES
+    rmc_serv.c
+    rmc_procreq.c
+    rmc_logit.c
+    rmc_logreq.c
+    rmc_marshall_element.c
+    rmc_sendrep.c
+    rmc_smcsubr.c
+    rmc_send_scsi_cmd.c)
   add_executable (rmcd ${RMCD_SRC_FILES})
   # Relax compilation of old code full of pointer casting. Funnily enough,
   # the compiler only complains in -O2 mode (RelWithDebInfo in cmake).

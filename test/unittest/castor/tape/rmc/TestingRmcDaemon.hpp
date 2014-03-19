@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      rmc_procreq.h
+ *    test/unittest/castor/tape/rmc/TestingRmcDaemon.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,29 +18,36 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * 
  *
- * @author Castor Dev team, castor-dev@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef _RMC_PROCREQ_H
-#define _RMC_PROCREQ_H 1
+#ifndef TEST_UNITTEST_CASTOR_TAPE_RMC_TESTINGACSMOUNTCMD_HPP
+#define TEST_UNITTEST_CASTOR_TAPE_RMC_TESTINGACSMOUNTCMD_HPP 1
 
-struct rmc_srv_rqst_context {
-  const char *localhost;
-  int rpfd;
-  char *req_data;
-  const char *clienthost;
-};
+#include "castor/tape/rmc/RmcDaemon.hpp"
 
-int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_acs_mnt(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_acs_unmnt(const struct rmc_srv_rqst_context *const rqst_context);
+namespace castor {
+namespace tape {
+namespace rmc {
 
-#endif
+class TestingRmcDaemon: public RmcDaemon {
+public:
+
+  TestingRmcDaemon(std::ostream &stdOut, std::ostream &stdIn,
+    log::Logger &logger) throw(castor::exception::Exception):
+    RmcDaemon(stdOut, stdIn, logger) {
+  }
+
+  using RmcDaemon::argvToString;
+  using RmcDaemon::m_cmdLine;
+  using RmcDaemon::parseCommandLine;
+
+
+}; // class TestingAcsCmd
+
+} // namespace rmc
+} // namespace tape
+} // namespace castor
+
+#endif // TEST_UNITTEST_CASTOR_TAPE_RMC_TESTINGACSMOUNTCMD_HPP

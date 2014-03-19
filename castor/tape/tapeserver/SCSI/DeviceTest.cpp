@@ -138,8 +138,8 @@ TEST(castor_tape_SCSI_DeviceList, FindBySymlink) {
       castor::tape::SCSI::DeviceVector::NotFound);
   castor::tape::SCSI::DeviceInfo & di = dl.findBySymlink("/dev/tape_T10D6116");
   // The symlink is supposed to point to nst0 which is 9,128 (maj,min)
-  ASSERT_EQ(9, di.nst.major);
-  ASSERT_EQ(128, di.nst.minor);
+  ASSERT_EQ(9U, di.nst.major);
+  ASSERT_EQ(128U, di.nst.minor);
   // We expect to get a module type of "VIRTUAL" here. This will be used
   // in other tests
   ASSERT_EQ("VIRTUAL", di.product);

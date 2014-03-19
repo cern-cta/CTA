@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      rmc_procreq.h
+ *                 castor/tape/rmc/RmcdMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,29 +18,36 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * 
  *
- * @author Castor Dev team, castor-dev@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
+ 
 
-#ifndef _RMC_PROCREQ_H
-#define _RMC_PROCREQ_H 1
 
-struct rmc_srv_rqst_context {
-  const char *localhost;
-  int rpfd;
-  char *req_data;
-  const char *clienthost;
-};
+#include "castor/log/LoggerImplementation.hpp"
+#include "castor/tape/rmc/RmcDaemon.hpp"
 
-int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_acs_mnt(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_acs_unmnt(const struct rmc_srv_rqst_context *const rqst_context);
+#include <iostream>
 
-#endif
+//------------------------------------------------------------------------------
+// main
+//------------------------------------------------------------------------------
+int main(const int argc, char **const argv) {
+
+  try {
+    castor::log::LoggerImplementation logger("rmcd");
+    castor::tape::rmc::RmcDaemon daemon(std::cout, std::cerr, logger);
+
+    return daemon.main(argc, argv);
+  } catch(castor::exception::Exception &ex) {
+    std::cerr << "main() caught a CASTOR exception: " << ex.getMessage().str()
+      << std::endl;
+    return 1;
+  } catch(std::exception &se) {
+    std::cerr << "main() caught a std::exception: " << se.what() << std::endl;
+    return 1;
+  } catch(...) {
+    std::cerr << "main() caught an unknown exception" << std::endl;
+    return 1;
+  }
+}

@@ -18,6 +18,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include "h/Cinit.h"
+#include "h/getconfent.h"
 #include "h/marshall.h"
 #include "h/net.h"
 #include "h/rmc_constants.h"
@@ -51,7 +52,6 @@ int rmc_main(struct main_args *main_args)
 	char domainname[CA_MAXHOSTNAMELEN+1];
 	struct sockaddr_in from;
 	socklen_t fromlen = sizeof(from);
-	char *getconfent();
 	char *msgaddr;
 	int nb_sense_ret;
 	int on = 1;	/* for REUSEADDR */
@@ -308,14 +308,12 @@ static void procreq(
 	case RMC_FINDCART:
 		c = rmc_srv_findcart (&rqst_context);
 		break;
-/*
-	case RMC_GENERICMOUNT:
-		c = rmc_srv_genericmount (localhost, rpfd, req_data, clienthost);
+	case RMC_ACS_MOUNT:
+		c = rmc_srv_acs_mnt (&rqst_context);
 		break;
-	case RMC_GENERICUNMOUNT:
-		c = rmc_srv_genericunmount (localhost, rpfd, req_data, clienthost);
+	case RMC_ACS_UNMOUNT:
+		c = rmc_srv_acs_unmnt (&rqst_context);
 		break;
-*/
 	default:
 		rmc_sendrep (rpfd, MSG_ERR, RMC03, req_type);
 		c = ERMCUNREC;

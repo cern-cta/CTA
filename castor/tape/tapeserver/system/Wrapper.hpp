@@ -166,6 +166,7 @@ namespace System {
     DIR* m_DIR;
     int m_DIRfake;
     void delegateToFake();
+    void disableGMockCallsCounting();
     fakeWrapper fake;
   };
 } // namespace System
