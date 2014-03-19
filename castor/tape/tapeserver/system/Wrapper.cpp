@@ -231,6 +231,23 @@ void System::mockWrapper::delegateToFake() {
   ON_CALL(*this, stat(_, _)).WillByDefault(Invoke(&fake, &fakeWrapper::stat));
 }
 
+void System::mockWrapper::disableGMockCallsCounting() {
+  using testing::AnyNumber;
+  EXPECT_CALL(*this, opendir(_)).Times(AnyNumber());
+  EXPECT_CALL(*this, readdir(_)).Times(AnyNumber());
+  EXPECT_CALL(*this, closedir(_)).Times(AnyNumber());
+  EXPECT_CALL(*this, realpath(_, _)).Times(AnyNumber());
+  EXPECT_CALL(*this, open(_, _)).Times(AnyNumber());
+  EXPECT_CALL(*this, read(_, _, _)).Times(AnyNumber());
+  EXPECT_CALL(*this, write(_, _, _)).Times(AnyNumber());
+  EXPECT_CALL(*this, close(_)).Times(AnyNumber());
+  EXPECT_CALL(*this, readlink(_, _, _)).Times(AnyNumber());
+  EXPECT_CALL(*this, stat(_,_)).Times(AnyNumber());
+  EXPECT_CALL(*this, ioctl(_, _, A<struct mtop *>())).Times(AnyNumber());
+  EXPECT_CALL(*this, ioctl(_, _, A<struct mtget *>())).Times(AnyNumber());
+  EXPECT_CALL(*this, ioctl(_, _, A<struct sg_io_hdr *>())).Times(AnyNumber());
+}
+
 void System::fakeWrapper::setupSLC5() {
   /*
    * Setup an tree similar to what we'll find in

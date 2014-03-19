@@ -78,6 +78,8 @@ TEST(tapeServer, MountSessionGoodday) {
   // construct and run the session.
   castor::log::StringLogger logger("tapeServerUnitTest");
   castor::tape::System::mockWrapper mockSys;
+  mockSys.delegateToFake();
+  mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
   utils::TpconfigLines tpConfig;
   // Actual TPCONFIG lifted from prod
