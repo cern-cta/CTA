@@ -239,7 +239,9 @@ throw (castor::tape::Exception) {
   } catch (std::bad_cast) {}
   // 3b) Try again with NoMoreFiles (and this time failure is fatal)
   try {
-    dynamic_cast<tapegateway::NoMoreFiles &>(*resp);
+    // As in reportEndOfSession, we are only interested in receiving a 
+    // NoMoreFiles message. (void) for picky compilers
+    (void)dynamic_cast<tapegateway::NoMoreFiles &>(*resp);
     return NULL;
   } catch (std::bad_cast) {
     throw UnexpectedResponse(resp.get(),
@@ -268,7 +270,9 @@ tapegateway::FileMigrationReportList & migrationReport,
   // EndNotificationErrorReport.
   // 3a) Handle the NotificationAcknowledge
   try {
-    dynamic_cast<tapegateway::NotificationAcknowledge &>(*resp);
+    // As in reportEndOfSession, we are only interested in receiving a 
+    // NotificationAcknowledge message. (void) for picky compilers
+    (void)dynamic_cast<tapegateway::NotificationAcknowledge &>(*resp);
     return;
   } catch (std::bad_cast) {}
   // 3b) Handle the end notification error report and turn it into a bare
@@ -313,7 +317,9 @@ throw (castor::tape::Exception) {
   } catch (std::bad_cast) {}
   // 3b) Try again with NoMoreFiles (and this time failure is fatal)
   try {
-    dynamic_cast<tapegateway::NoMoreFiles &>(*resp);
+    // As in reportEndOfSession, we are only interested in receiving a 
+    // NoMoreFiles message. (void) for picky compilers
+    (void)dynamic_cast<tapegateway::NoMoreFiles &>(*resp);
     return NULL;
   } catch (std::bad_cast) {
     throw UnexpectedResponse(resp.get(),
@@ -336,7 +342,9 @@ RequestReport& report) throw (castor::tape::Exception) {
   // EndNotificationErrorReport.
   // 3a) Handle the NotificationAcknowledge
   try {
-    dynamic_cast<tapegateway::NotificationAcknowledge &>(*resp);
+    // As in reportEndOfSession, we are only interested in receiving a 
+    // NotificationAcknowledge message. (void) for picky compilers
+    (void)dynamic_cast<tapegateway::NotificationAcknowledge &>(*resp);
     return;
   } catch (std::bad_cast) {}
   // 3b) Handle the end notification error report and turn it into a bare
