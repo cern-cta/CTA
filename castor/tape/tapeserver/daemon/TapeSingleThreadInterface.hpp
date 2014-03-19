@@ -9,6 +9,7 @@
 #define	TAPESINGLETHREADINTERFACE_HPP
 
 #include "castor/tape/tapeserver/threading/Threading.hpp"
+#include "castor/tape/tapeserver/drive/Drive.hpp"
 
 template <class Task> class TapeSingleThreadInterface : private castor::tape::threading::Thread
 {
