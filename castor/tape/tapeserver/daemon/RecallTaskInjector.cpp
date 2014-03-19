@@ -1,4 +1,5 @@
-#include "RecallTaskInjector.hpp"
+#include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
+#include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
@@ -21,8 +22,9 @@ namespace tapeserver{
 namespace daemon {
   
 RecallTaskInjector::RecallTaskInjector(MemoryManager & mm, 
-        TapeReadSingleThread & tapeReader,DiskWriteThreadPool & diskWriter,
-        ClientProxy& client,castor::log::LogContext& lc) : 
+        TapeSingleThreadInterface<TapeReadTask> & tapeReader,
+        DiskThreadPoolInterface<DiskWriteTask> & diskWriter,
+        ClientInterface& client,castor::log::LogContext& lc) : 
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
         m_client(client),m_lc(lc) 
@@ -143,6 +145,9 @@ void RecallTaskInjector::WorkerThread::run()
         printf("In RecallJobInjector::WorkerThread::run(): Drained the request queue. We're now empty. Finishing.\n");
       }
 }
+
+/*RecallTaskInjector::WorkerThread::WorkerThread(RecallTaskInjector & rji): _this(rji) 
+{}*/
 
 } //end namespace daemon
 } //end namespace tapeserver

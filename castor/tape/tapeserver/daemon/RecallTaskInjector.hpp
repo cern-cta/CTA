@@ -35,9 +35,9 @@
 #include "castor/tape/tapeserver/daemon/RecallJob.hpp"
 #include "castor/tape/tapeserver/daemon/TapeWriteFileTask.hpp"
 #include "castor/tape/tapeserver/daemon/ClientProxy.hpp"
-#include "castor/log/LogContext.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
-
+#include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
+#include "castor/log/LogContext.hpp"
 namespace castor{
 namespace tape{
 namespace tapeserver{
@@ -50,8 +50,8 @@ class RecallTaskInjector: public TaskInjector {
 public:
 
   RecallTaskInjector(MemoryManager & mm, 
-        TapeReadSingleThread & tapeReader,
-        DiskWriteThreadPool & diskWriter,ClientProxy& client,
+        TapeSingleThreadInterface<TapeReadTask> & tapeReader,
+        DiskThreadPoolInterface<DiskWriteTask> & diskWriter,ClientInterface& client,
         castor::log::LogContext& lc);
 
   
@@ -120,18 +120,17 @@ private:
   class WorkerThread: public castor::tape::threading::Thread {
   public:
     WorkerThread(RecallTaskInjector & rji): _this(rji) {}
-    void run();
+    virtual void run();
   private:
     RecallTaskInjector & _this;
-
   } m_thread;
 
   MemoryManager & m_memManager;
   
 
-  TapeReadSingleThread & m_tapeReader;
-  DiskWriteThreadPool & m_diskWriter;
-  ClientProxy& m_client;
+  TapeSingleThreadInterface<TapeReadTask> & m_tapeReader;
+  DiskThreadPoolInterface<DiskWriteTask> & m_diskWriter;
+  ClientInterface& m_client;
   
   /**
    * utility member to log some pieces of information
