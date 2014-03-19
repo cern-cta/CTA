@@ -100,6 +100,7 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/daemon/Vdqm.cpp
   ../castor/tape/tapeserver/daemon/VdqmAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/VdqmConnectionHandler.cpp
+  ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp
   ../castor/tape/tapeserver/drive/DriveTest.cpp
   ../castor/tape/tapeserver/exception/ExceptionTest.cpp
   ../castor/tape/tapeserver/file/StructuresTest.cpp
