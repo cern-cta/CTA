@@ -97,3 +97,9 @@
   fun:_ZNSs6appendERKSs
   fun:_ZN6castor9exception9BacktraceC1Ev
 }
+
+{
+  helgrind-unitTest-castor-basicStringConstructor
+  Helgrind:Race
+  fun:_ZNSsC1ERKSs
+}
