@@ -50,7 +50,7 @@ int idToSize(int id) {
 }
 
 int main(void) {
-
+  using namespace castor::tape;
   //try {
   //  while (1) new char[100000];
   //} catch (std::exception e) {
@@ -65,13 +65,13 @@ int main(void) {
     MigrationReportPacker mrp(tg);
     mrp.startThreads();
     TapeWriteSingleThread tapeThread(drive, mrp, maxFilesBeforeFlush, maxBlocksBeforeFlush);
-    DiskReadThreadPool diskThreadPool(diskThreads);
+    tapeserver::daemon::DiskReadThreadPool diskThreadPool(diskThreads);
     tapeThread.startThreads();
     diskThreadPool.startThreads();
     for (int i = 0; i < filesNumber; i++) {
       int size = idToSize(i);
-      TapeWriteFileTask * twt = new TapeWriteFileTask(i, size, mm);
-      DiskReadFileTask * dwt = new DiskReadFileTask(*twt, i + 1000, size);
+      tapeserver::daemon::TapeWriteFileTask * twt = new tapeserver::daemon::TapeWriteFileTask(i, size, mm);
+      tapeserver::daemon::DiskReadFileTask * dwt = new tapeserver::daemon::DiskReadFileTask(*twt, i + 1000, size);
       tapeThread.push(twt);
       diskThreadPool.push(dwt);
     }

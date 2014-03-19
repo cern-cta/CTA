@@ -28,12 +28,17 @@
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
 
 /**
  * The TapeWriteFileTask is responsible to write a single file onto tape as part of a migration
  * session. Being a consumer of memory blocks, it inherits from the DataConsumer class. It also
  * inherits several methods from the TapeWriteTask (TODO: do we really need this base class?).
  */
+
 class TapeWriteFileTask: public TapeWriteTask, public DataConsumer {
 public:
   /**
@@ -130,3 +135,6 @@ private:
    */
   int m_blockCount;
 };
+
+}}}}
+

@@ -29,6 +29,11 @@
 #include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+  
 /**
  * The DiskWriteFileTask is responsible to write a single file onto disk as part of a recall
  * session. Being a consumer of memory blocks, it inherits from the DataConsumer class. It also
@@ -128,3 +133,5 @@ private:
    */
   castor::tape::threading::Mutex m_producerProtection;
 };
+
+}}}}

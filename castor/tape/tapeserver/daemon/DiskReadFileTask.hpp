@@ -28,7 +28,12 @@
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 
-class DiskReadFileTask: public DiskReadTask {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+  
+class DiskReadFileTask :public DiskReadTask {
 public:
   DiskReadFileTask(DataConsumer & destination, int fileId, int nbBlocks): m_fileId(fileId),
       m_nbBlocks(nbBlocks), m_fifo(destination) {}
@@ -47,3 +52,6 @@ private:
   int m_nbBlocks;
   DataConsumer & m_fifo;
 };
+
+}}}}
+

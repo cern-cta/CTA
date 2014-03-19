@@ -27,10 +27,15 @@
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
-#include "DiskThreadPoolInterface.hpp"
+#include "castor/tape/tapeserver/daemon/DiskThreadPoolInterface.hpp"
 #include <vector>
 
-class DiskReadThreadPool : public castor::tape::tapeserver::daemon::DiskThreadPoolInterface<DiskReadTask> {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+  
+class DiskReadThreadPool : public DiskThreadPoolInterface<DiskReadTask> {
 public:
   DiskReadThreadPool(int nbThread) {
     for(int i=0; i<nbThread; i++) {
@@ -84,3 +89,5 @@ private:
   };
   std::vector<DiskReadWorkerThread *> m_threads;
 };
+
+}}}}

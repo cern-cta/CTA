@@ -7,11 +7,12 @@
 
 namespace
 {
+using namespace castor::tape::tapeserver::daemon;
 using namespace castor::tape;
 const unsigned int nbFile=5;
 const int blockSize=4096;
 
-class FakeClient : public tapeserver::daemon::ClientInterface
+class FakeClient : public ClientInterface
 {
   
 public:
@@ -50,7 +51,7 @@ private:
   int m_current;
 };
 
-class FakeDiskWriteThreadPool : public tapeserver::daemon::DiskThreadPoolInterface<DiskWriteTask>
+class FakeDiskWriteThreadPool : public DiskThreadPoolInterface<DiskWriteTask>
 {
 public:
   using tapeserver::daemon::DiskThreadPoolInterface<DiskWriteTask>::m_tasks;

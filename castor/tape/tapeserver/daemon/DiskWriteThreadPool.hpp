@@ -31,7 +31,12 @@
 #include "DiskThreadPoolInterface.hpp"
 #include <vector>
 
-class DiskWriteThreadPool : public castor::tape::tapeserver::daemon::DiskThreadPoolInterface<DiskWriteTask> {
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+
+class DiskWriteThreadPool : public DiskThreadPoolInterface<DiskWriteTask> {
 public:
   DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq):
             m_jobInjector(NULL), m_filesQueued(0), m_blocksQueued(0), 
@@ -142,3 +147,5 @@ private:
   int m_maxBlocksReq;
 
 };
+
+}}}}
