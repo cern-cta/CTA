@@ -149,20 +149,20 @@ def _printStatusLine(subTime, lastModTime, user, machine, vid, status, total, si
       if total > 0 and status != 'STARTING':
         # Completion % takes into account each operation (recall and migration) as 1, so that e.g. a tape with half files recalled and none migrated counts as 25% done;
         # no weight is given to recalls vs. migrations nor is the file size taken into account.
-        print '%-18s%12s%17s%29s%9s%11d%12s%10d%10d%10d%10d%7d%%%11s' % (subTime, repackTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, 100-(2*toRecall+toMigr)*50.0/total, status)
+        print '%-18s%13s%17s%29s%9s%11d%12s%10d%10d%10d%10d%7d%%%11s' % (subTime, repackTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, 100-(2*toRecall+toMigr)*50.0/total, status)
       else:
-        print '%-18s%12s%17s%29s%9s%11d%12s%10d%10d%10d%10d    N/A %11s' % (subTime, repackTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, status)
+        print '%-18s%13s%17s%29s%9s%11d%12s%10d%10d%10d%10d    N/A %11s' % (subTime, repackTime, user, machine, vid, total, size, toRecall, toMigr, failed, migrated, status)
     except TypeError:
       # case of reporting without details
-      print '%-18s%12s%17s%29s%9s%11d%12s%11s' % (subTime, repackTime, user, machine, vid, total, size, status)
+      print '%-18s%13s%17s%29s%9s%11d%12s%11s' % (subTime, repackTime, user, machine, vid, total, size, status)
 
 
 def _displaySummary(rows):
     '''prints a summary of all repack requests according to the given criteria'''
     # print out results
-    print '='*119
+    print '='*120
     print 'SubmitTime          RepackTime             User                      Machine      Vid      Total        Size     Status'
-    print '-'*119
+    print '-'*120
     sumTotal = sumSize = 0
     globalStatus = 2  # FINISHED
     shownVids = set()
@@ -190,9 +190,9 @@ def _displaySummary(rows):
 def _displayDetailed(rows):
     '''prints the details of all repack requests according to the given criteria'''
     # print out results
-    print '='*167
+    print '='*168
     print 'SubmitTime          RepackTime             User                      Machine      Vid      Total        Size  toRecall    toMigr    Failed  Migrated  Compl%     Status'
-    print '-'*167
+    print '-'*168
     sumTotal = sumSize = sumToRecall = sumToMigr = sumFailed = sumMigrated = 0
     globalStatus = 2  # FINISHED
     shownVids = set()
