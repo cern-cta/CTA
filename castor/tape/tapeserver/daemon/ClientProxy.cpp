@@ -164,6 +164,13 @@ throw (castor::tape::Exception) {
   // We could use the castor typing here, but we stick to case for homogeneity
   // of the code.
   try {
+    // Here we are only interested by the fact that we received a 
+    // notificationAcknowledge. The matching of the transactionId has already
+    // been checked automatically by requestResponseSession.
+    // The dynamic cast to reference will conveniently throw an exception
+    // it we did not get the acknowledgement. We cast it to void to silence
+    // some compilers (at least clang) which complain that the return value 
+    // of the cast is not used.
     (void)dynamic_cast<tapegateway::NotificationAcknowledge &>(*ack.get());
   } catch (std::bad_cast) {
     throw UnexpectedResponse(ack.get(), 
@@ -189,6 +196,13 @@ throw (castor::tape::Exception) {
   // We could use the castor typing here, but we stick to case for homogeneity
   // of the code.
   try {
+    // Here we are only interested by the fact that we received a 
+    // notificationAcknowledge. The matching of the transactionId has already
+    // been checked automatically by requestResponseSession.
+    // The dynamic cast to reference will conveniently throw an exception
+    // it we did not get the acknowledgement. We cast it to void to silence
+    // some compilers (at least clang) which complain that the return value 
+    // of the cast is not used.
     (void)dynamic_cast<tapegateway::NotificationAcknowledge &>(*ack.get());
   } catch (std::bad_cast) {
     throw UnexpectedResponse(ack.get(), 
