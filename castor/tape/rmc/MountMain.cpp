@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      rmc_procreq.h
+ *                 castor/tape/rmc/MountMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,29 +18,20 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * 
  *
- * @author Castor Dev team, castor-dev@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
+ 
+#include "castor/tape/rmc/MountCmd.hpp"
 
-#ifndef _RMC_PROCREQ_H
-#define _RMC_PROCREQ_H 1
+#include <iostream>
 
-struct rmc_srv_rqst_context {
-  const char *localhost;
-  int rpfd;
-  char *req_data;
-  const char *clienthost;
-};
+//------------------------------------------------------------------------------
+// main
+//------------------------------------------------------------------------------
+int main(const int argc, char *const *const argv) {
 
-int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_acs_mnt(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_acs_unmnt(const struct rmc_srv_rqst_context *const rqst_context);
+  castor::tape::rmc::MountCmd cmd(std::cin, std::cout, std::cerr);
 
-#endif
+  return cmd.main(argc, argv);
+}

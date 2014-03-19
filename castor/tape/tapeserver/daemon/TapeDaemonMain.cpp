@@ -49,6 +49,7 @@ int main(const int argc, char **const argv) {
   castor::log::LoggerImplementation log("tapeserverd");
   const std::string vdqmHostName = getVdqmHostName(log);
   if(vdqmHostName.empty()) {
+    log(LOG_ERR, "Aborting: Cannot continue without vdqm host-name");
     return 1;
   }
   VdqmImpl vdqm(vdqmHostName);

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/AcsDismountCmdLine.hpp
+ *                 castor/tape/rmc/MountCmdLine.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,13 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_ACSDISMOUNTCMDLINE_HPP
-#define CASTOR_TAPE_RMC_ACSDISMOUNTCMDLINE_HPP 1
-
-extern "C" {
-#include "acssys.h"
-#include "acsapi.h"
-}
+#ifndef CASTOR_TAPE_RMC_MOUNTCMDLINE_HPP
+#define CASTOR_TAPE_RMC_MOUNTCMDLINE_HPP 1
 
 #include <string>
 
@@ -39,14 +34,14 @@ namespace rmc {
 /**
  * Data type used to store the results of parsing the command-line.
  */
-struct AcsDismountCmdLine {
+struct MountCmdLine {
   /**
    * Constructor.
    *
-   * Initialises all boolean member-variables to false, all integer
+   * Initialises all bool member-variables to false, all integer
    * member-variables to 0 and the volume identifier to an empty string.
    */
-  AcsDismountCmdLine() throw();
+  MountCmdLine() throw();
 
   /**
    * True if the debug option has been set.
@@ -54,43 +49,35 @@ struct AcsDismountCmdLine {
   bool debug;
 
   /**
-   * True if the dismount should be forced.
-   *
-   * Forcing a dismount means dismounting the tape in the specified drive
-   * without checking the volume identifier of the tape.
-   */
-  BOOLEAN force;
-
-  /**
    * True if the help option has been set.
    */
   bool help;
 
   /**
-   * Time in seconds to wait between queries to ACS for responses.
+   * True if the tape is to be mount for read-only access.
    */
-  int queryInterval;
+  bool readOnly;
 
   /**
-   * Time in seconds to wait for the dismount to conclude.
+   * Time in seconds to wait for the mount to conclude.
    */
   int timeout;
 
   /**
    * The volume identifier of the tape to be mounted.
    */
-  VOLID volId;
+  std::string volId;
 
   /**
-   * The drive into which the tape is to be mounted.
+   * The identifier of the drive into which the tape is to be mounted.
    */
-  DRIVEID driveId;
+  std::string driveId;
 
-}; // class AcsDismountCmdLine
+}; // class MountCmdLine
 
 } // namespace rmc
 } // namespace tape
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_RMC_ACSDISMOUNTCMDLINE_HPP
+#endif // CASTOR_TAPE_RMC_MOUNTCMDLINE_HPP

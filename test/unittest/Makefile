@@ -17,16 +17,7 @@ RMC_OBJECTS=
 else
 CDK_OPS=-DLINUX -I/usr/include/CDK
 CDK_LIB_OPS=-L/usr/lib64/CDK -lapi -lcl -lipc -lutl
-RMC_OBJECTS= \
-  rmc_Acs.o \
-  rmc_AcsCmd.o \
-  rmc_DebugBuf.o \
-  rmc_AcsDismountCmdLine.o \
-  rmc_AcsDismountCmd.o \
-  rmc_AcsMountCmdLine.o \
-  rmc_AcsMountCmd.o \
-  rmc_AcsQueryVolumeCmdLine.o \
-  rmc_AcsQueryVolumeCmd.o
+RMC_OBJECTS=
 endif
 ROOT_DIR=../..
 INCLUDE_OPS=-I$(ROOT_DIR) -I$(ROOT_DIR)/h $(MACPORTS_CPPUNIT_INCLUDE_OP) $(CDK_OPS)
@@ -85,6 +76,8 @@ rununittests: $(RMC_OBJECTS) \
   dlf_Dlf.o \
   dlf_Param.o \
   dlf_dlf_lib.o \
+  DummyOstream.o \
+  DummyStreambuf.o \
   exception_AlreadyInitialized.o \
   exception_Backtrace.o \
   exception_Communication.o \
@@ -95,6 +88,7 @@ rununittests: $(RMC_OBJECTS) \
   exception_InvalidArgument.o \
   exception_InvalidConfigEntry.o \
   exception_InvalidConfiguration.o \
+  exception_InvalidNbArguments.o \
   exception_Mismatch.o \
   exception_MissingOperand.o \
   exception_MountFailed.o \
@@ -139,6 +133,7 @@ rununittests: $(RMC_OBJECTS) \
   legacymsg_RtcpMarshal.o \
   legacymsg_TapeBridgeMarshal.o \
   legacymsg_VmgrMarshal.o \
+  log_DummyLogger.o \
   log_Logger.o \
   log_LoggerImplementation.o \
   log_Message.o \
@@ -365,10 +360,12 @@ rununittests: $(RMC_OBJECTS) \
   unittest_PendingMigrationsStoreTest.o \
   unittest_BulkRequestConfigParamsTest.o \
   unittest_IndexedContainerTest.o \
+  unittest_RmcLibTest.o \
   unittest_TapeFseqRangeListSequenceTest.o \
   unittest_TapeFseqRangeSequenceTest.o \
   unittest_TapeFseqRangeTest.o \
   unittest_UtilsTest.o \
+  unittest_RmcDaemonTest.o \
   unittest_RtcopyTest.o \
   upv_Cupv_check.o \
   upv_send2Cupv.o \
@@ -519,6 +516,12 @@ dlf_Param.o: $(ROOT_DIR)/castor/dlf/Param.cpp
 dlf_dlf_lib.o: $(ROOT_DIR)/dlf/dlf_lib.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+DummyOstream.o: $(ROOT_DIR)/test/unittest/DummyOstream.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+DummyStreambuf.o: $(ROOT_DIR)/test/unittest/DummyStreambuf.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 exception_AlreadyInitialized.o: \
   $(ROOT_DIR)/castor/exception/AlreadyInitialized.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
@@ -563,6 +566,10 @@ exception_InvalidConfigEntry.o: \
 
 exception_InvalidConfiguration.o: \
   $(ROOT_DIR)/castor/exception/InvalidConfiguration.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+exception_InvalidNbArguments.o: \
+  $(ROOT_DIR)/castor/exception/InvalidNbArguments.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 exception_QueryVolumeFailed.o: $(ROOT_DIR)/castor/exception/QueryVolumeFailed.cpp
@@ -709,6 +716,9 @@ legacymsg_TapeBridgeMarshal.o: \
 legacymsg_VmgrMarshal.o: $(ROOT_DIR)/castor/tape/legacymsg/VmgrMarshal.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+log_DummyLogger.o: $(ROOT_DIR)/castor/log/DummyLogger.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 log_Logger.o: $(ROOT_DIR)/castor/log/Logger.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -750,6 +760,15 @@ rmc_AcsCmd.o: $(ROOT_DIR)/castor/tape/rmc/AcsCmd.cpp
 rmc_DebugBuf.o: $(ROOT_DIR)/castor/tape/rmc/DebugBuf.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
+rmc_find_char.o: $(ROOT_DIR)/rmc/rmc_find_char.c
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+rmc_get_acs_drive_id.o: $(ROOT_DIR)/rmc/rmc_get_acs_drive_id.c
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+rmc_get_rmc_host_of_drive.o: $(ROOT_DIR)/rmc/rmc_get_rmc_host_of_drive.c
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
 rmc_AcsDismountCmdLine.o: $(ROOT_DIR)/castor/tape/rmc/AcsDismountCmdLine.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
@@ -766,6 +785,15 @@ rmc_AcsQueryVolumeCmdLine.o: $(ROOT_DIR)/castor/tape/rmc/AcsQueryVolumeCmdLine.c
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 rmc_AcsQueryVolumeCmd.o: $(ROOT_DIR)/castor/tape/rmc/AcsQueryVolumeCmd.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+rmc_Cmd.o: $(ROOT_DIR)/castor/tape/rmc/Cmd.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+rmc_RmcdCmdLine.o: $(ROOT_DIR)/castor/tape/rmc/RmcdCmdLine.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+rmc_RmcDaemon.o: $(ROOT_DIR)/castor/tape/rmc/RmcDaemon.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 ns_Cns_selectsrvr.o: $(ROOT_DIR)/ns/Cns_selectsrvr.c
@@ -1633,6 +1661,12 @@ unittest_BulkRequestConfigParamsTest.o: $(ROOT_DIR)/test/unittest/castor/tape/ta
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
  
 unittest_IndexedContainerTest.o: $(ROOT_DIR)/test/unittest/castor/tape/utils/IndexedContainerTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+unittest_RmcDaemonTest.o: $(ROOT_DIR)/test/unittest/castor/tape/rmc/RmcDaemonTest.cpp
+	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
+
+unittest_RmcLibTest.o: $(ROOT_DIR)/test/unittest/rmc/RmcLibTest.cpp
 	g++ $(COMMON_OPS) -c $(INCLUDE_OPS) -o $@ $^
 
 unittest_TapeFseqRangeListSequenceTest.o: $(ROOT_DIR)/test/unittest/castor/tape/tpcp/TapeFseqRangeListSequenceTest.cpp

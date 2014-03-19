@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      rmc_procreq.h
+ *                h/rmc_get_loader_type.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,29 +18,22 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * 
  *
- * @author Castor Dev team, castor-dev@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef _RMC_PROCREQ_H
-#define _RMC_PROCREQ_H 1
+#include "h/rmc_get_loader_type.h"
 
-struct rmc_srv_rqst_context {
-  const char *localhost;
-  int rpfd;
-  char *req_data;
-  const char *clienthost;
-};
+#include <string.h>
 
-int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_acs_mnt(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_acs_unmnt(const struct rmc_srv_rqst_context *const rqst_context);
-
-#endif
+rmc_loader_type rmc_get_loader_type(const char *const drive) {
+  if(strncmp("acs@", drive, 3) == 0) {
+    return RMC_LOADER_TYPE_ACS;
+  } else if(strcmp("manual", drive) == 0) {
+    return RMC_LOADER_TYPE_MANUAL;
+  } else if(strncmp("smc@", drive, 3) == 0) {
+    return RMC_LOADER_TYPE_SMC;
+  } else {
+    return RMC_LOADER_TYPE_UNKNOWN;
+  }
+}

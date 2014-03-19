@@ -29,7 +29,7 @@
 #include "castor/exception/Mismatch.hpp"
 #include "castor/exception/RequestFailed.hpp"
 #include "castor/tape/rmc/Acs.hpp"
-#include "castor/tape/rmc/DebugBuf.hpp"
+#include "castor/tape/rmc/Cmd.hpp"
 
 #include <istream>
 #include <ostream>
@@ -48,7 +48,7 @@ namespace rmc {
  * Abstract class implementing common code and data structures for command-line
  * tools that interact with ACLS compatible tape libraries.
  */
-class AcsCmd {
+class AcsCmd: public Cmd {
 public:
   /**
    * Constructor.
@@ -69,48 +69,16 @@ public:
 protected:
 
   /**
-   * Standard input stream.
-   */
-  std::istream &m_in;
-
-  /**
-   * Standard output stream.
-   */
-  std::ostream &m_out;
-
-  /**
-   * Standard error stream.
-   */
-  std::ostream &m_err;
-
-  /**
    * Wrapper around the ACSLS C-API.
    */
   Acs &m_acs;
 
   /**
-   * Debug stream buffer that inserts a standard debug preamble before each
-   * message-line written to it.
-   */
-  DebugBuf m_debugBuf;
-
-  /**
-   * Stream used to write debug messages.
+   * Returns the string representation of the specfied boolean value.
    *
-   * This stream will insert a standard debug preamble before each message-line
-   * written to it.
+   * @param value The boolean value.
    */
-  std::ostream m_dbg;
-
-  /**
-   * Returns the string representation of the specfied boolean value.
-   */
-  std::string bool2Str(bool &value) const throw();
-
-  /**
-   * Returns the string representation of the specfied boolean value.
-   */
-  std::string bool2Str(BOOLEAN &value) const throw();
+  std::string bool2Str(const BOOLEAN value) const throw();
 
   /**
    * Requests responses from ACSLS in a loop until the RT_FINAL response is

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      rmc_procreq.h
+ *         castor/tape/rmc/RmcDaemonTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,29 +18,38 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * 
  *
- * @author Castor Dev team, castor-dev@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef _RMC_PROCREQ_H
-#define _RMC_PROCREQ_H 1
+#include "castor/log/DummyLogger.hpp"
+#include "castor/tape/rmc/RmcDaemon.hpp"
 
-struct rmc_srv_rqst_context {
-  const char *localhost;
-  int rpfd;
-  char *req_data;
-  const char *clienthost;
-};
+#include <gtest/gtest.h>
+#include <memory>
+#include <sstream>
 
-int rmc_srv_export(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_findcart(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_getgeom(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_import(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_mount(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_readelem(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_acs_mnt(const struct rmc_srv_rqst_context *const rqst_context);
-int rmc_srv_acs_unmnt(const struct rmc_srv_rqst_context *const rqst_context);
+namespace unitTest {
 
-#endif
+class castor_tape_rmc_RmcDaemonTest: public ::testing::Test {
+protected:
+
+  virtual void SetUp() {
+  }
+
+  virtual void TearDown() {
+  }
+}; // class castor_tape_rmc_RmcDaemonTest
+
+TEST_F(castor_tape_rmc_RmcDaemonTest, constructor) {
+  using namespace castor::tape::rmc;
+
+  std::ostringstream stdOut;
+  std::ostringstream stdErr;
+  castor::log::DummyLogger logger("unittest");
+  
+  std::auto_ptr<RmcDaemon> daemon;
+  daemon.reset(new RmcDaemon(stdOut, stdErr, logger));
+}
+
+} // namespace unitTests
