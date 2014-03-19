@@ -82,6 +82,5 @@ private:
       }
     }
   };
-  castor::tape::threading::BlockingQueue<DiskReadTask *> m_tasks;
   std::vector<DiskReadWorkerThread *> m_threads;
 };

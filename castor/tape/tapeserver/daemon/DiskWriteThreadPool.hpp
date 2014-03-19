@@ -133,7 +133,6 @@ private:
       }
     }
   };
-  castor::tape::threading::BlockingQueue<DiskWriteTask *> m_tasks;
   std::vector<DiskWriteWorkerThread *> m_threads;
   castor::tape::threading::Mutex m_counterProtection;
   TaskInjector * m_jobInjector;
