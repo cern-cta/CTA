@@ -31,6 +31,7 @@
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include <iostream>
 #include <assert.h>
+#include <memory>
 
 /*
  * Prints and compares the current position with the expected one. Returns on
@@ -70,14 +71,11 @@ int main ()
     std::cout << std::endl << "-- SCSI device: " 
               << dev.sg_dev << " (" << dev.nst_dev << ")" << std::endl;
     if (dev.type == castor::tape::SCSI::Types::tape) {
-      castor::tape::drives::Drive dContainer(dev, sWrapper);
-      /* Compiler cannot implicitly use the conversion operator. Create an 
-       * intermediate reference*/
-      castor::tape::drives::DriveInterface & drive = dContainer;
+      std::auto_ptr<castor::tape::drives::DriveInterface> drive(
+        castor::tape::drives::DriveFactory(dev, sWrapper));
       castor::tape::drives::deviceInfo devInfo;
-
       try {
-        devInfo = drive.getDeviceInfo();
+        devInfo = drive->getDeviceInfo();
         std::cout << "-- INFO --------------------------------------" << std::endl             
                   << "  devInfo.vendor               : '"  << devInfo.vendor << "'" << std::endl
                   << "  devInfo.product              : '" << devInfo.product << "'" << std::endl
@@ -98,14 +96,14 @@ int main ()
         std::cout << "-- INFO --------------------------------------" << std::endl             
                   << " Rewinding, writing 2 blocks and repositioning on block 2" << std::endl  
                   << "----------------------------------------------" << std::endl;
-        drive.rewind();
+        drive->rewind();
         /* For some unexplained (TODO) reason, mhvtl does not accept blocks smaller than 4 bytes */
-        drive.writeBlock((void *)"X123", 4);
-        drive.writeBlock((void *)"Y123", 4);
+        drive->writeBlock((void *)"X123", 4);
+        drive->writeBlock((void *)"Y123", 4);
         /**
          * trying to do position to the block 2.
          */
-        drive.positionToLogicalObject(2);
+        drive->positionToLogicalObject(2);
       } catch (std::exception & e) {
         fail = 1;
         std::string temp = e.what();
@@ -115,7 +113,7 @@ int main ()
       }
       
       try {
-        castor::tape::drives::positionInfo posInfo = drive.getPositionInfo();
+        castor::tape::drives::positionInfo posInfo = drive->getPositionInfo();
         std::cout << "-- INFO --------------------------------------" << std::endl 
                   << "  posInfo.currentPosition   : "  << posInfo.currentPosition <<std::endl
                   << "  posInfo.oldestDirtyObject : "<< posInfo.oldestDirtyObject <<std::endl
@@ -132,7 +130,7 @@ int main ()
       
       try {  // switch off compression on the drive
         std::cout << "** set density and compression" << std::endl;
-        drive.setDensityAndCompression(false);
+        drive->setDensityAndCompression(false);
       } catch (std::exception & e) {
         fail = 1;
         std::string temp = e.what();
@@ -143,10 +141,10 @@ int main ()
 
       try {
         /**
-         * Trying to get compression from the drive. Read or write should be
+         * Trying to get compression from the drive-> Read or write should be
          * done before to have something in the data fields.
          */
-        castor::tape::drives::compressionStats comp = drive.getCompression();
+        castor::tape::drives::compressionStats comp = drive->getCompression();
         std::cout << "-- INFO --------------------------------------" << std::endl
                 << "  fromHost : " << comp.fromHost << std::endl
                 << "  toHost   : " << comp.toHost << std::endl
@@ -155,9 +153,9 @@ int main ()
                 << "----------------------------------------------" << std::endl;
 
         std::cout << "** clear compression stats" << std::endl;
-        drive.clearCompressionStats();
+        drive->clearCompressionStats();
 
-        comp = drive.getCompression();
+        comp = drive->getCompression();
         std::cout << "-- INFO --------------------------------------" << std::endl
                 << "  fromHost : " << comp.fromHost << std::endl
                 << "  toHost   : " << comp.toHost << std::endl
@@ -172,7 +170,7 @@ int main ()
                 << "----------------------------------------------" << std::endl;
       }
       
-      std::vector<std::string> Alerts(drive.getTapeAlerts());
+      std::vector<std::string> Alerts(drive->getTapeAlerts());
       while (Alerts.size()) {
         std::cout << "Tape alert: " << Alerts.back() << std::endl;
         Alerts.pop_back();
@@ -190,179 +188,179 @@ int main ()
           std::cout << "************** BEGIN: Rewind/Read/Write/Skip Test *************" << std::endl;
           
           std::cout << "Rewinding..." << std::endl;
-          drive.rewind(); // go back to the beginning of tape after Victor's positioning
-          print_and_assert_position(drive, 0);
+          drive->rewind(); // go back to the beginning of tape after Victor's positioning
+          print_and_assert_position(*drive, 0);
           
           memset(data, 'a', count-1);
           std::cout << "Writing 1st block (9 a's)..." << std::endl;
-          drive.writeBlock((void *)data, count); // write 9 a's + string term
-          print_and_assert_position(drive, 1);
+          drive->writeBlock((void *)data, count); // write 9 a's + string term
+          print_and_assert_position(*drive, 1);
           
           std::cout << "Writing 1st Synchronous filemark..." << std::endl;
-          drive.writeSyncFileMarks(1); // filemark and flush
-          print_and_assert_position(drive, 2);
+          drive->writeSyncFileMarks(1); // filemark and flush
+          print_and_assert_position(*drive, 2);
           
           memset(data, 'b', count-1);
           std::cout << "Writing 2nd block (9 b's)..." << std::endl;
-          drive.writeBlock((void *)data, count); // write 9 b's + string term
-          print_and_assert_position(drive, 3);
+          drive->writeBlock((void *)data, count); // write 9 b's + string term
+          print_and_assert_position(*drive, 3);
           
           std::cout << "Writing 2nd Synchronous filemark..." << std::endl;
-          drive.writeSyncFileMarks(1); // filemark and flush
-          print_and_assert_position(drive, 4);
+          drive->writeSyncFileMarks(1); // filemark and flush
+          print_and_assert_position(*drive, 4);
           
           memset(data, 'c', count-1);
           std::cout << "Writing 3rd block (9 c's)..." << std::endl;
-          drive.writeBlock((void *)data, count); // write 9 c's + string term
-          print_and_assert_position(drive, 5);
+          drive->writeBlock((void *)data, count); // write 9 c's + string term
+          print_and_assert_position(*drive, 5);
           
           std::cout << "Writing EOD (2 filemarks)..." << std::endl;
-          drive.writeSyncFileMarks(2); // EOD and flush  
-          print_and_assert_position(drive, 7);
+          drive->writeSyncFileMarks(2); // EOD and flush  
+          print_and_assert_position(*drive, 7);
           
           std::cout << "Rewinding..." << std::endl;
-          drive.rewind(); // go back to the beginning of tape
-          print_and_assert_position(drive, 0);
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(*drive, 0);
           
           std::cout << "Reading back 1st block 9 a's)..." << std::endl;                    
           memset(data, 0, count);
-          drive.readBlock((void *)data, count); // read 9 a's + string term
-          print_and_assert_position(drive, 1);
+          drive->readBlock((void *)data, count); // read 9 a's + string term
+          print_and_assert_position(*drive, 1);
           print_and_assert_data("aaaaaaaaa", (const char *)data);
           
           std::cout << "Skipping first file mark..." << std::endl;                    
           memset(data, 0, count);
-          drive.readBlock((void *)data, count);
-          print_and_assert_position(drive, 2);
+          drive->readBlock((void *)data, count);
+          print_and_assert_position(*drive, 2);
           
           std::cout << "Reading back 2nd block (9 b's)..." << std::endl;                    
           memset(data, 0, count);
-          drive.readBlock((void *)data, count); // read 9 b's + string term
-          print_and_assert_position(drive, 3);
+          drive->readBlock((void *)data, count); // read 9 b's + string term
+          print_and_assert_position(*drive, 3);
           print_and_assert_data("bbbbbbbbb", (const char *)data);
           
           std::cout << "Skipping first file mark..." << std::endl;                    
           memset(data, 0, count);
-          drive.readBlock((void *)data, count);
-          print_and_assert_position(drive, 4);
+          drive->readBlock((void *)data, count);
+          print_and_assert_position(*drive, 4);
           
           std::cout << "Reading back 3rd block (9 c's)..." << std::endl;          
           memset(data, 0, count);
-          drive.readBlock((void *)data, count); // read 9 c's + string term
-          print_and_assert_position(drive, 5);
+          drive->readBlock((void *)data, count); // read 9 c's + string term
+          print_and_assert_position(*drive, 5);
           print_and_assert_data("ccccccccc", (const char *)data);
           
           std::cout << "Skipping the last two file marks..." << std::endl;          
           memset(data, 0, count);
-          drive.readBlock((void *)data, count);
+          drive->readBlock((void *)data, count);
           memset(data, 0, count);
-          drive.readBlock((void *)data, count);
-          print_and_assert_position(drive, 7);
+          drive->readBlock((void *)data, count);
+          print_and_assert_position(*drive, 7);
           
           std::cout << "Rewinding..." << std::endl;
-          drive.rewind(); // go back to the beginning of tape
-          print_and_assert_position(drive, 0);
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(*drive, 0);
           
           std::cout << "Spacing to the end of media..." << std::endl;
-          drive.spaceToEOM();
-          print_and_assert_position(drive, 7);
+          drive->spaceToEOM();
+          print_and_assert_position(*drive, 7);
           
           std::cout << "Rewinding..." << std::endl;
-          drive.rewind(); // go back to the beginning of tape
-          print_and_assert_position(drive, 0);
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(*drive, 0);
           
           std::cout << "Fast spacing to the end of media..." << std::endl;
-          drive.fastSpaceToEOM();
-          print_and_assert_position(drive, 7);
+          drive->fastSpaceToEOM();
+          print_and_assert_position(*drive, 7);
           
           std::cout << "Rewinding..." << std::endl;
-          drive.rewind(); // go back to the beginning of tape
-          print_and_assert_position(drive, 0);
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(*drive, 0);
           
           std::cout << "Spacing 2 file marks forward..." << std::endl;
-          drive.spaceFileMarksForward(2);
-          print_and_assert_position(drive, 4);
+          drive->spaceFileMarksForward(2);
+          print_and_assert_position(*drive, 4);
           
           std::cout << "Spacing 1 file mark backwards..." << std::endl;
-          drive.spaceFileMarksBackwards(1);
-          print_and_assert_position(drive, 3);
+          drive->spaceFileMarksBackwards(1);
+          print_and_assert_position(*drive, 3);
           
           std::cout << "Rewinding..." << std::endl;
-          drive.rewind(); // go back to the beginning of tape
-          print_and_assert_position(drive, 0);
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(*drive, 0);
           
           std::cout << "Spacing 3 file marks forward..." << std::endl;
-          drive.spaceFileMarksForward(3);
-          print_and_assert_position(drive, 6);
+          drive->spaceFileMarksForward(3);
+          print_and_assert_position(*drive, 6);
           
           memset(data, 'd', count-1);
           std::cout << "Writing 9 d's..." << std::endl;
-          drive.writeBlock((void *)data, count); // write 9 d's + string term
-          print_and_assert_position(drive, 7);
+          drive->writeBlock((void *)data, count); // write 9 d's + string term
+          print_and_assert_position(*drive, 7);
           
           std::cout << "Writing Asynchronous filemark..." << std::endl;
-          drive.writeImmediateFileMarks(1); // buffered filemark
-          print_and_assert_position(drive, 8);
+          drive->writeImmediateFileMarks(1); // buffered filemark
+          print_and_assert_position(*drive, 8);
           
           memset(data, 'e', count-1);
           std::cout << "Writing 9 e's..." << std::endl;
-          drive.writeBlock((void *)data, count); // write 9 e's + string term
-          print_and_assert_position(drive, 9);
+          drive->writeBlock((void *)data, count); // write 9 e's + string term
+          print_and_assert_position(*drive, 9);
           
           std::cout << "Writing Asynchronous EOD..." << std::endl;
-          drive.writeImmediateFileMarks(2); // buffered filemarks
-          print_and_assert_position(drive, 11);
+          drive->writeImmediateFileMarks(2); // buffered filemarks
+          print_and_assert_position(*drive, 11);
           
           std::cout << "Synch-ing..." << std::endl;
-          drive.flush(); // flush buffer with no-op
-          print_and_assert_position(drive, 11);
+          drive->flush(); // flush buffer with no-op
+          print_and_assert_position(*drive, 11);
           
           std::cout << "Rewinding..." << std::endl;
-          drive.rewind(); // go back to the beginning of tape
-          print_and_assert_position(drive, 0);
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(*drive, 0);
           
           for(int i=0; i<9; i++) {
             memset(data, '0'+i, count-1);
             std::cout << "Writing 9 " << i << "'s..." << std::endl;
-            drive.writeBlock((void *)data, count);
-            print_and_assert_position(drive, i+1);
+            drive->writeBlock((void *)data, count);
+            print_and_assert_position(*drive, i+1);
           }
           
           std::cout << "Rewinding..." << std::endl;
-          drive.rewind(); // go back to the beginning of tape
-          print_and_assert_position(drive, 0);
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(*drive, 0);
           
           std::cout << "Spacing 2 logical blocks forward..." << std::endl;
-          drive.spaceBlocksForward(2);
-          print_and_assert_position(drive, 2);
+          drive->spaceBlocksForward(2);
+          print_and_assert_position(*drive, 2);
           
           std::cout << "Reading..." << std::endl;                    
           memset(data, 0, count);
-          drive.readBlock((void *)data, count);
-          print_and_assert_position(drive, 3);
+          drive->readBlock((void *)data, count);
+          print_and_assert_position(*drive, 3);
           print_and_assert_data("222222222", (const char *)data);
           
           std::cout << "Spacing 1 logical block backwards..." << std::endl;
-          drive.spaceBlocksBackwards(1);
-          print_and_assert_position(drive, 2);
+          drive->spaceBlocksBackwards(1);
+          print_and_assert_position(*drive, 2);
           
           std::cout << "Spacing 5 logical blocks forward..." << std::endl;
-          drive.spaceBlocksForward(5);
-          print_and_assert_position(drive, 7);
+          drive->spaceBlocksForward(5);
+          print_and_assert_position(*drive, 7);
           
           std::cout << "Spacing 3 logical blocks backwards..." << std::endl;
-          drive.spaceBlocksBackwards(3);
-          print_and_assert_position(drive, 4);
+          drive->spaceBlocksBackwards(3);
+          print_and_assert_position(*drive, 4);
           
           std::cout << "Reading..." << std::endl;                    
           memset(data, 0, count);
-          drive.readBlock((void *)data, count);
-          print_and_assert_position(drive, 5);
+          drive->readBlock((void *)data, count);
+          print_and_assert_position(*drive, 5);
           print_and_assert_data("444444444", (const char *)data);
           
           std::cout << "Rewinding..." << std::endl;
-          drive.rewind(); // go back to the beginning of tape
-          print_and_assert_position(drive, 0);
+          drive->rewind(); // go back to the beginning of tape
+          print_and_assert_position(*drive, 0);
           
           std::cout << "TEST PASSED!" << std::endl;
           
