@@ -41,11 +41,20 @@
 
 namespace castor {
 namespace tape {
+
+/** 
+ * Forward declaration for pointer type in virutalWrapper.
+ */
+namespace drives {
+  class DriveInterface;
+}
+
 namespace System {
   /**
    * Interface class definition, allowing common ancestor between
    * realWrapper, mockWrapper and fakeWrapper
    */
+  
   class virtualWrapper {
   public:
     virtual DIR* opendir(const char *name) = 0;
@@ -64,6 +73,10 @@ namespace System {
     virtual int close(int fd) = 0;
     virtual int stat(const char * path, struct stat *buf) = 0;
     virtual ~virtualWrapper() {};
+    /** Hook allowing the pre-allocation of a tape drive in the test environment.
+     * will  */
+    virtual castor::tape::drives::DriveInterface *
+      getDriveByPath(const std::string & path) = 0;
   };
 
   
@@ -96,6 +109,8 @@ namespace System {
     virtual ssize_t write(int fd, const void *buf, size_t nbytes) { return ::write(fd, buf, nbytes); }
     virtual int close(int fd) { return ::close(fd); }
     virtual int stat(const char * path, struct stat *buf) { return ::stat(path, buf); }
+    virtual castor::tape::drives::DriveInterface * 
+      getDriveByPath(const std::string &) { return NULL; }
   };
   
   /**
@@ -121,13 +136,16 @@ namespace System {
     virtual ssize_t write(int fd, const void *buf, size_t nbytes);
     virtual int close(int fd);
     virtual int stat(const char * path, struct stat *buf);
+    virtual castor::tape::drives::DriveInterface * 
+      getDriveByPath(const std::string & path);
     std::map<std::string, std::vector<std::string> > m_directories;
     std::map<std::string, std::string> m_links;
     std::map<std::string, std::string> m_realpathes;
     std::map<std::string, vfsFile *> m_files;
     std::map<std::string, struct stat> m_stats;
     std::map<std::string, regularFile> m_regularFiles;
-    std::map<std::string, stDeviceFile> m_stFiles;    
+    std::map<std::string, stDeviceFile> m_stFiles;
+    std::map<std::string, castor::tape::drives::DriveInterface *> m_pathToDrive;
     void setupSLC5();
     void setupSLC6();
     void setupForVirtualDriveSLC6();
@@ -163,6 +181,7 @@ namespace System {
     MOCK_METHOD3(ioctl, int(int fd, unsigned long int request, sg_io_hdr_t * sgh));
     MOCK_METHOD1(close, int(int fd));
     MOCK_METHOD2(stat, int(const char *, struct stat *));
+    MOCK_METHOD1(getDriveByPath, castor::tape::drives::DriveInterface *(const std::string &));
     DIR* m_DIR;
     int m_DIRfake;
     void delegateToFake();

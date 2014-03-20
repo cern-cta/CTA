@@ -191,6 +191,20 @@ int System::fakeWrapper::stat(const char* path, struct stat* buf) {
   return 0;
 }
 
+castor::tape::drives::DriveInterface * 
+  System::fakeWrapper::getDriveByPath(const std::string & path) {
+  std::map<std::string, castor::tape::drives::DriveInterface *>::iterator drive =
+    m_pathToDrive.find(path);
+  if (m_pathToDrive.end() == drive) {
+    return NULL;
+  } else {
+    /* The drive will be deleted by the user, so we remove references to it */
+    castor::tape::drives::DriveInterface * ret = drive->second;
+    m_pathToDrive.erase(drive);
+    return ret;
+  }
+}
+
 /**
  * Function merging all types of files into a single pointer
  * based map. This allows usage of polymorphic 
@@ -229,6 +243,7 @@ void System::mockWrapper::delegateToFake() {
         static_cast<int(fakeWrapper::*)(int , unsigned long int , sg_io_hdr_t*)>(&fakeWrapper::ioctl)));
   ON_CALL(*this, close(_)).WillByDefault(Invoke(&fake, &fakeWrapper::close));
   ON_CALL(*this, stat(_, _)).WillByDefault(Invoke(&fake, &fakeWrapper::stat));
+  ON_CALL(*this, getDriveByPath(_)).WillByDefault(Invoke(&fake, &fakeWrapper::getDriveByPath));
 }
 
 void System::mockWrapper::disableGMockCallsCounting() {
@@ -246,6 +261,7 @@ void System::mockWrapper::disableGMockCallsCounting() {
   EXPECT_CALL(*this, ioctl(_, _, A<struct mtop *>())).Times(AnyNumber());
   EXPECT_CALL(*this, ioctl(_, _, A<struct mtget *>())).Times(AnyNumber());
   EXPECT_CALL(*this, ioctl(_, _, A<struct sg_io_hdr *>())).Times(AnyNumber());
+  EXPECT_CALL(*this, getDriveByPath(_)).Times(AnyNumber());
 }
 
 void System::fakeWrapper::setupSLC5() {

@@ -36,7 +36,14 @@ drives::DriveInterface * drives::DriveFactory(SCSI::DeviceInfo di,
   } else if (std::string::npos != di.product.find("03592")) {
     return new DriveIBM3592(di, sw);
   } else if (std::string::npos != di.product.find("VIRTUAL")) {
-    return new FakeDrive();
+    /* In case of a VIRTUAL drive, it could have been pre-allocated 
+     * for testing purposes (with "pre-cooked" contents). */
+    drives::DriveInterface * ret = sw.getDriveByPath(di.nst_dev);
+    if (ret) {
+      return ret;
+    } else {
+      return new FakeDrive();
+    }
   } else {
     throw Exception(std::string("Unsupported drive type: ") + di.product);
   }
