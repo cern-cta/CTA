@@ -29,6 +29,8 @@
 #include "../../tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
+#include "castor/tape/tapegateway/EndNotification.hpp"
+#include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 
 namespace castor {
 namespace tape {
@@ -92,6 +94,51 @@ throw (castor::exception::Exception) {
   vol.setMountTransactionId(m_volReqId);
   vol.setDensity(m_density);
   clientConnection->sendObject(vol);
+}
+
+void ClientSimulator::waitEndSession()
+throw (castor::exception::Exception) {
+  // Accept the next connection
+  std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
+  // Read in the message sent by the tapebridge
+  std::auto_ptr<castor::IObject> obj(clientConnection->readObject());
+  // Cast the message to a GatewayMessage or die
+  tapegateway::GatewayMessage & msg(
+      dynamic_cast<tapegateway::GatewayMessage &> (*obj.get()));
+  // Check the mount transaction ID
+  if (msg.mountTransactionId() != (uint64_t) m_volReqId) {
+    std::stringstream oss;
+    oss <<
+        "Mount transaction ID mismatch" <<
+        ": actual=" << msg.mountTransactionId() <<
+        " expected=" << m_volReqId;
+    sendEndNotificationErrorReport(msg.aggregatorTransactionId(), EBADMSG,
+        oss.str(), *clientConnection);
+    castor::exception::Exception ex(EBADMSG);
+    ex.getMessage() << oss.str();
+    throw ex;
+  }
+  // We expect with tape EndNotification or EndNotificationErrorReport
+  try {
+    (void)dynamic_cast<tapegateway::EndNotification &> (*obj);
+  } catch (std::bad_cast) {
+    try  {
+      (void)dynamic_cast<tapegateway::EndNotificationErrorReport &> (*obj);
+    } catch (std::bad_cast) {
+      std::stringstream oss;
+      oss <<
+        "Expected a tapegateway::EndNotification or tapegateway::EndNotificationErrorReport, got " << typeid (msg).name();
+        sendEndNotificationErrorReport(msg.aggregatorTransactionId(), EBADMSG,
+          oss.str(), *clientConnection);
+      castor::exception::Exception ex(EBADMSG);
+      ex.getMessage() << oss.str();
+      throw ex;
+    }
+  }
+  tapegateway::NotificationAcknowledge ack;
+  ack.setAggregatorTransactionId(msg.aggregatorTransactionId());
+  ack.setMountTransactionId(m_volReqId);
+  clientConnection->sendObject(ack);
 }
 
 void ClientSimulator::sendEndNotificationErrorReport(

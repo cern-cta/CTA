@@ -67,6 +67,7 @@ namespace daemon {
     }
     void sessionLoop() {
       processFirstRequest();
+      waitEndSession();
       m_callbackSock.close();
     }
     
@@ -98,6 +99,8 @@ namespace daemon {
   private:
     // Process the first request which should be getVolume
     void processFirstRequest() throw(castor::exception::Exception);
+    // Expect an end sessions (with or without error)
+    void waitEndSession() throw(castor::exception::Exception);
     // Notify the client
     void sendEndNotificationErrorReport(
     const uint64_t             tapebridgeTransactionId,
