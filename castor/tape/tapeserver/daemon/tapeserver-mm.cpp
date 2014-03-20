@@ -31,7 +31,6 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteFileTask.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadFileTask.hpp"
-#include "castor/tape/tapeserver/daemon/MockTapeGateway.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include <memory>
@@ -60,9 +59,10 @@ int main(void) {
   MemoryManager mm(blocks, blockSize);
   mm.startThreads();
   castor::tape::drives::FakeDrive drive;
+  /*
   {
     MockTapeGateway tg(filesNumber, modulo);
-    MigrationReportPacker mrp(tg);
+    castor::tape::tapeserver::daemon::MigrationReportPacker mrp(tg);
     mrp.startThreads();
     TapeWriteSingleThread tapeThread(drive, mrp, maxFilesBeforeFlush, maxBlocksBeforeFlush);
     tapeserver::daemon::DiskReadThreadPool diskThreadPool(diskThreads);
@@ -84,7 +84,9 @@ int main(void) {
     mrp.waitThread();
     printf("tapeGateway reporter complete\n");
   }
+  
   printf("========= Switching to recall session\n");
+  */
   /* recall session */
   /*
   {
