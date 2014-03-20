@@ -34,6 +34,11 @@
 #include <iostream>
 #include <stdio.h>
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+
 class TapeWriteSingleThread :  public TapeSingleThreadInterface<TapeWriteTask> {
 public:
   TapeWriteSingleThread(castor::tape::drives::DriveInterface & drive, MigrationReportPacker & repPacker,
@@ -49,7 +54,7 @@ private:
         TapeWriteTask * task = m_tasks.pop();
         bool end = task->endOfWork();
         if (!end) task->execute(m_drive);
-	m_reportPacker.reportCompletedJob(MigrationJob(-1, task->fSeq(), -1));
+	//m_reportPacker.reportCompletedJob(MigrationJob(-1, task->fSeq(), -1));
 	files+=task->files();
 	blocks+=task->blocks();
 	if (files >= m_filesBeforeFlush ||
@@ -75,3 +80,4 @@ private:
   
   MigrationReportPacker & m_reportPacker;
 };
+}}}}
