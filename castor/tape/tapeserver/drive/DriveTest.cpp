@@ -28,6 +28,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock-cardinalities.h>
 #include <typeinfo>
+#include <memory>
 
 using ::testing::AtLeast;
 using ::testing::Return;
@@ -67,10 +68,10 @@ TEST(castor_tape_drives_Drive, OpensCorrectly) {
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      castor::tape::drives::Drive drive(*i, sysWrapper);
       std::string expected_classid (typeid(castor::tape::drives::DriveT10000).name());
-      castor::tape::drives::DriveInterface & drv = drive;
-      std::string found_classid (typeid(drv).name());
+      std::auto_ptr<castor::tape::drives::DriveInterface>drive(
+        castor::tape::drives::DriveFactory(*i, sysWrapper));
+      std::string found_classid (typeid(*drive).name());
       ASSERT_EQ(expected_classid, found_classid);
     }
   }
@@ -100,14 +101,12 @@ TEST(castor_tape_drives_Drive, getPositionInfoAndPositionToLogicalObject) {
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      castor::tape::drives::Drive dContainer(*i, sysWrapper);
-      /* Compiler cannot implicitly use the conversion operator. Create an 
-       * intermediate reference*/
-      castor::tape::drives::DriveInterface & drive = dContainer;
+      std::auto_ptr<castor::tape::drives::DriveInterface> drive (
+        castor::tape::drives::DriveFactory(*i, sysWrapper));
       castor::tape::drives::positionInfo posInfo;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(1);      
-      posInfo = drive.getPositionInfo();
+      posInfo = drive->getPositionInfo();
 
       ASSERT_EQ(0xABCDEF12U,posInfo.currentPosition);
       ASSERT_EQ(0x12EFCDABU,posInfo.oldestDirtyObject);
@@ -115,10 +114,10 @@ TEST(castor_tape_drives_Drive, getPositionInfoAndPositionToLogicalObject) {
       ASSERT_EQ(0x12EFCDABU,posInfo.dirtyBytesCount);
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(1);      
-      drive.positionToLogicalObject(0xABCDEF0);
+      drive->positionToLogicalObject(0xABCDEF0);
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(1);
-      posInfo = drive.getPositionInfo();
+      posInfo = drive->getPositionInfo();
       
       ASSERT_EQ(0xABCDEF0U,posInfo.currentPosition);
       ASSERT_EQ(0xABCDEF0U,posInfo.oldestDirtyObject);
@@ -151,25 +150,23 @@ TEST(castor_tape_drives_Drive, setDensityAndCompression) {
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      castor::tape::drives::Drive dContainer(*i, sysWrapper);
-      /* Compiler cannot implicitly use the conversion operator. Create an 
-       * intermediate reference*/
-      castor::tape::drives::DriveInterface & drive = dContainer;
+      std::auto_ptr<castor::tape::drives::DriveInterface> drive (
+        castor::tape::drives::DriveFactory(*i, sysWrapper));
 
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
-      drive.setDensityAndCompression();
+      drive->setDensityAndCompression();
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
-      drive.setDensityAndCompression(true);
+      drive->setDensityAndCompression(true);
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
-      drive.setDensityAndCompression(false);
+      drive->setDensityAndCompression(false);
 
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
-      drive.setDensityAndCompression(0x42,true);
+      drive->setDensityAndCompression(0x42,true);
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
-      drive.setDensityAndCompression(0x46,false);
+      drive->setDensityAndCompression(0x46,false);
     }
   }
 }
@@ -197,16 +194,14 @@ TEST(castor_tape_drives_Drive, setStDriverOptions) {
   castor::tape::SCSI::DeviceVector dl(sysWrapper);
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin(); i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      castor::tape::drives::Drive dContainer(*i, sysWrapper);
-      /* Compiler cannot implicitly use the conversion operator. Create an 
-       * intermediate reference*/
-      castor::tape::drives::DriveInterface & drive = dContainer;
+      std::auto_ptr<castor::tape::drives::DriveInterface> drive (
+        castor::tape::drives::DriveFactory(*i, sysWrapper));
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<struct mtop *>())).Times(1);
-      drive.setSTBufferWrite(true);
+      drive->setSTBufferWrite(true);
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<struct mtop *>())).Times(1);
-      drive.setSTBufferWrite(false);
+      drive->setSTBufferWrite(false);
     }
   }
 }
@@ -235,14 +230,12 @@ TEST(castor_tape_drives_Drive, getDeviceInfo) {
   for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
       i != dl.end(); i++) {
     if (castor::tape::SCSI::Types::tape == i->type) {
-      castor::tape::drives::Drive dContainer(*i, sysWrapper);
-      /* Compiler cannot implicitly use the conversion operator. Create an 
-       * intermediate reference*/
-      castor::tape::drives::DriveInterface & drive = dContainer;
+      std::auto_ptr<castor::tape::drives::DriveInterface> drive (
+        castor::tape::drives::DriveFactory(*i, sysWrapper));
       castor::tape::drives::deviceInfo devInfo;
       
       EXPECT_CALL(sysWrapper, ioctl(_,_,An<sg_io_hdr_t*>())).Times(2);      
-      devInfo = drive.getDeviceInfo();
+      devInfo = drive->getDeviceInfo();
 
       ASSERT_EQ("STK     ",devInfo.vendor);
       ASSERT_EQ("T10000B         ",devInfo.product);
@@ -375,12 +368,10 @@ TEST(castor_tape_drives_Drive, getTapeAlerts) {
       for (std::vector<castor::tape::SCSI::DeviceInfo>::iterator i = dl.begin();
           i != dl.end(); i++) {
         if (castor::tape::SCSI::Types::tape == i->type) {
-          castor::tape::drives::Drive dContainer(*i, sysWrapper);
-          /* Compiler cannot implicitly use the conversion operator. Create an 
-           * intermediate reference*/
-          castor::tape::drives::DriveInterface & drive = dContainer;
+          std::auto_ptr<castor::tape::drives::DriveInterface> drive (
+            castor::tape::drives::DriveFactory(*i, sysWrapper));
           EXPECT_CALL(sysWrapper, ioctl(_, _, An<sg_io_hdr_t*>())).Times(1);
-          std::vector<std::string> alerts = drive.getTapeAlerts();
+          std::vector<std::string> alerts = drive->getTapeAlerts();
           ASSERT_EQ(3U, alerts.size());
           ASSERT_FALSE(alerts.end() == 
               find(alerts.begin(), alerts.end(), 

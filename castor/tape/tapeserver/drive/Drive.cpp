@@ -27,6 +27,21 @@
 
 using namespace castor::tape;
 
+drives::DriveInterface * drives::DriveFactory(SCSI::DeviceInfo di, 
+    System::virtualWrapper& sw) {
+  if (std::string::npos != di.product.find("T10000")) {
+    return new DriveT10000(di, sw);
+  } else if (std::string::npos != di.product.find("ULT" || std::string::npos != di.product.find("Ultrium"))) {
+    return new DriveLTO(di, sw);
+  } else if (std::string::npos != di.product.find("03592")) {
+    return new DriveIBM3592(di, sw);
+  } else if (std::string::npos != di.product.find("VIRTUAL")) {
+    return new FakeDrive();
+  } else {
+    throw Exception(std::string("Unsupported drive type: ") + di.product);
+  }
+}
+
 drives::DriveGeneric::DriveGeneric(SCSI::DeviceInfo di, System::virtualWrapper& sw) : m_SCSIInfo(di),
 m_tapeFD(-1),  m_sysWrapper(sw) {
   /* Open the device files */

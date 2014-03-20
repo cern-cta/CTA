@@ -168,6 +168,16 @@ namespace drives {
   };
   
   /**
+   * Factory function that allocated the proper drive type, based on device info
+   * @param di deviceInfo, as found in a DeviceVector.
+   * @param sw reference to the system wrapper.
+   * @return pointer to the newly allocated drive object
+   */
+  
+  DriveInterface * DriveFactory(SCSI::DeviceInfo di,
+     System::virtualWrapper & sw);
+  
+  /**
    * Fake drive class used for unit testing
    */
   class FakeDrive : public DriveInterface {
@@ -517,31 +527,6 @@ namespace drives {
     }
 
     virtual compressionStats getCompression() throw (Exception);
-  };
-  
-  class Drive {
-  public:
-    Drive(SCSI::DeviceInfo di, System::virtualWrapper & sw): m_drive(NULL) {
-      if (std::string::npos != di.product.find("T10000")) {
-        m_drive = new DriveT10000(di, sw);
-      } else if (std::string::npos != di.product.find("ULT" || std::string::npos != di.product.find("Ultrium"))) {
-        m_drive = new DriveLTO(di, sw);
-      } else if (std::string::npos != di.product.find("03592")) {
-        m_drive = new DriveIBM3592(di, sw);
-      } else if (std::string::npos != di.product.find("VIRTUAL")) {
-        m_drive = new FakeDrive();
-      } else {
-        throw Exception(std::string("Unsupported drive type: ")+di.product);
-      }
-    }
-    ~Drive() {
-      delete m_drive;
-    }
-    operator DriveInterface &() {
-      return *m_drive;
-    }
-  private:
-    DriveInterface * m_drive;
   };
   
 } // namespace drives
