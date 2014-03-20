@@ -36,9 +36,11 @@ public:
     }
     lists.push_back(NULL);
   }
+  virtual void reportMigrationResults(tapegateway::FileMigrationReportList & migrationReport,
+  RequestReport& report) throw (castor::tape::Exception){}
+  
   virtual tapegateway::FilesToRecallList * getFilesToRecall(uint64_t files,
-  uint64_t bytes, RequestReport &report)
-  throw (castor::tape::Exception) 
+  uint64_t bytes, RequestReport &report) throw (castor::tape::Exception) 
   {
     report.transactionId=666;
     report.connectDuration=42;
@@ -46,6 +48,11 @@ public:
     
     return lists[m_current++];
   }
+  
+  virtual void reportEndOfSessionWithError(const std::string & errorMsg, int errorCode, 
+  RequestReport &transactionReport) throw (castor::tape::Exception) {};
+ 
+  virtual void reportEndOfSession(RequestReport &report) throw (Exception) {}
 private:
   std::vector<tapegateway::FilesToRecallList*> lists;
   int m_current;
