@@ -21,14 +21,15 @@ add_executable(tapeserver-mm
   tapeserver-mm.cpp 
   RecallTaskInjector.cpp
   Exception.cpp
-  ClientProxy.cpp)
+  ClientProxy.cpp
+  MigrationReportPacker.cpp)
 
 target_link_libraries(tapeserver-mm 
 TapeDrive Exception SCSI System Utils File 
 castorcommon castorclient castorTapeServerThreading castortapeutils 
 castortapegatewayprotocol)
 
-add_library(tapeserver ClientProxy.cpp MountSession.cpp RecallTaskInjector.cpp)
+add_library(tapeserver ClientProxy.cpp MountSession.cpp RecallTaskInjector.cpp MigrationReportPacker.cpp)
 
 add_library(tapeserverdTest 
   ClientSimulator.cpp 

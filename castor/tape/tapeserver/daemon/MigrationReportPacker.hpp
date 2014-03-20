@@ -24,68 +24,114 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/MockTapeGateway.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationJob.hpp"
+#include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
+#include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include <list>
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+ 
 class MigrationReportPacker {
 public:
-  MigrationReportPacker(MockTapeGateway & tg): m_workerThread(*this),
-          m_tapeGateway(tg) {}
-  void reportCompletedJob(MigrationJob mj) {
-    Report rep;
-    rep.migrationJob = mj;
-    castor::tape::threading::MutexLocker ml(&m_producterProtection);
-    m_fifo.push(rep);
-  }
-  void reportFlush() {
-    Report rep;
-    rep.flush = true;
-    castor::tape::threading::MutexLocker ml(&m_producterProtection);
-    m_fifo.push(rep);
-  }
-  void reportEndOfSession() {
-    Report rep;
-    rep.EoSession = true;
-    castor::tape::threading::MutexLocker ml(&m_producterProtection);
-    m_fifo.push(rep);
-  }
+  MigrationReportPacker(ClientInterface & tg);
+  
+  /**
+   * Create into the MigrationReportPacker a report for the successful migration
+   * of migratedFile
+   * @param migratedFile the file successfully migrated
+   */
+  void reportCompletedJob(const tapegateway::FileToMigrateStruct& migratedFile);
+  
+  /**
+   * Create into the MigrationReportPacker a report for the failled migration
+   * of migratedFile
+   * @param migratedFile the file which failled 
+   */
+  void reportFailedJob(const tapegateway::FileToMigrateStruct& migratedFile,const std::string& msg,int error_code);
+     
+   /**
+   * Create into the MigrationReportPacker a report for the signaling a flusing on tape
+   */
+  void reportFlush();
+  
+  /**
+   * Create into the MigrationReportPacker a report for the nominal end of session
+   */
+  void reportEndOfSession();
+  
+  /**
+   * Create into the MigrationReportPacker a report for an erroneous end of session
+   * @param msg The error message 
+   * @param error_code The error code given by the drive
+   */
+  void reportEndOfSessionWithErrors(const std::string msg,int error_code);
+  
   void startThreads() { m_workerThread.start(); }
   void waitThread() { m_workerThread.wait(); }
-  virtual ~MigrationReportPacker() { castor::tape::threading::MutexLocker ml(&m_producterProtection); }
+  
 private:
+  
   class Report {
   public:
-    Report(): flush(false), EoSession(false), 
-	    migrationJob(-1, -1, -1) {}
-    bool flush;
-    bool EoSession;
-    MigrationJob migrationJob;
+    virtual ~Report(){}
+    virtual void execute(MigrationReportPacker& packer)=0;
   };
-  class WorkerThread: public castor::tape::threading::Thread {
+  
+  class ReportSuccessful :  public Report {
+    const tapegateway::FileToMigrateStruct& m_migratedFile;
   public:
-    WorkerThread(MigrationReportPacker& parent): m_parent(parent) {}
-    void run() {
-      while(1) {
-	MigrationReportPacker::Report rep = m_parent.m_fifo.pop();
-	if (rep.flush || rep.EoSession) {
-	  m_parent.m_tapeGateway.reportMigratedFiles(m_parent.m_currentReport);
-	  m_parent.m_currentReport.clear();
-	  if (rep.EoSession) {
-	    m_parent.m_tapeGateway.reportEndOfSession(false);
-	    return;
-	  }
-	} else {
-	  m_parent.m_currentReport.push_back(rep.migrationJob);
-	}
-      }
-    }
+    ReportSuccessful(const tapegateway::FileToMigrateStruct& file): 
+    m_migratedFile(file){}
+    virtual void execute(MigrationReportPacker& _this);
+  };
+  
+  class ReportFlush : public Report {
+    public:
+      void execute(MigrationReportPacker& _this);
+  };
+  
+  class ReportError :  public Report {
+    const tapegateway::FileToMigrateStruct& m_migratedFile;
+    const std::string m_error_msg;
+    const int m_error_code;
+  public:
+    ReportError(const tapegateway::FileToMigrateStruct& file,const std::string& msg,int error_code):
+    m_migratedFile(file),m_error_msg(msg),m_error_code(error_code){}
+    
+    virtual void execute(MigrationReportPacker& _this);
+  };
+  
+  class ReportEndofSession :  public Report {
+  public:
+    virtual void execute(MigrationReportPacker& _this);
+  };
+  
+  class ReportEndofSessionWithErrors : public Report {
+    std::string m_message;
+    int m_error_code;
+  public:
+    ReportEndofSessionWithErrors(const std::string msg,int error_code):
+    m_message(msg),m_error_code(error_code){}
+
+    virtual void execute(MigrationReportPacker& _this);
+  };
+  
+  class WorkerThread: public castor::tape::threading::Thread {
     MigrationReportPacker & m_parent;
+  public:
+    WorkerThread(MigrationReportPacker& parent);
+    virtual void run();
   } m_workerThread;
-  friend class WorkerThread;
-  MockTapeGateway & m_tapeGateway;
-  castor::tape::threading::BlockingQueue<Report> m_fifo;
-  std::list<MigrationJob> m_currentReport;
+
+  ClientInterface & m_client;
+  
+  castor::tape::threading::BlockingQueue<Report*> m_fifo;
+  tapegateway::FileMigrationReportList m_listReports;
   castor::tape::threading::Mutex m_producterProtection;
 };
+
+}}}}
