@@ -57,24 +57,6 @@ namespace daemon {
             throw (castor::tape::Exception);
     
     /**
-     * Class holding the result of a Volume request
-     */
-    class VolumeInfo {
-    public:
-      VolumeInfo() {};
-      /** The VID we will work on */
-      std::string vid;
-      /** The type of the session */
-      tapegateway::ClientType clientType;
-      /** The density of the volume */
-      std::string density;
-      /** The label field seems to be in disuse */
-      std::string labelObsolete;
-      /** The read/write mode */
-      tapegateway::VolumeMode volumeMode;
-    };
-    
-    /**
      * Retrieves the volume Id from the client (with transfer direction)
      * Throws an EndOfSession exception
      * @param report report on timing and request Id. It will still be filled
@@ -87,7 +69,7 @@ namespace daemon {
      * Reports end of session to the client. This should be the last call to
      * the client.
      */
-    void reportEndOfSession(RequestReport &report) throw (Exception);
+    virtual void reportEndOfSession(RequestReport &report) throw (Exception);
     
     /**
      * Reports end of session to the client. This should be the last call to
@@ -98,7 +80,7 @@ namespace daemon {
      * @param errorMsg (sent to the client)
      * @param errorCode (sent to the client)
      */
-    void reportEndOfSessionWithError(const std::string & errorMsg, int errorCode, 
+    virtual void reportEndOfSessionWithError(const std::string & errorMsg, int errorCode, 
     RequestReport &transactionReport) throw (castor::tape::Exception);
     
     /**

@@ -28,10 +28,10 @@ namespace daemon {
 class ClientInterface {
 
 public :
-      /**
-     * Class holding the timing information for the request/reply,
-     * and the message sequence Id.
-     */
+  /**
+   * Class holding the timing information for the request/reply,
+   * and the message sequence Id.
+   */
   class RequestReport {
   public:
     RequestReport(): transactionId(0),
@@ -40,12 +40,56 @@ public :
     double connectDuration;
     double sendRecvDuration;
   };
+  
+  /**
+   * Class holding the result of a Volume request
+   */
+    class VolumeInfo {
+    public:
+      VolumeInfo() {};
+      /** The VID we will work on */
+      std::string vid;
+      /** The type of the session */
+      tapegateway::ClientType clientType;
+      /** The density of the volume */
+      std::string density;
+      /** The label field seems to be in disuse */
+      std::string labelObsolete;
+      /** The read/write mode */
+      tapegateway::VolumeMode volumeMode;
+    };
     
-  virtual tapegateway::FilesToRecallList * getFilesToRecall(uint64_t files,
-  uint64_t bytes, RequestReport &report)
-  throw (castor::tape::Exception) = 0;
+    virtual tapegateway::FilesToRecallList* getFilesToRecall(uint64_t files,
+    uint64_t bytes, RequestReport &report) throw (castor::tape::Exception) = 0;
 
-  virtual ~ClientInterface(){}
+    /**
+     * Reports the result of migrations to the client.
+     * Detailed interface is still TBD.
+     * @param report Placeholder to network timing information
+     */
+    virtual void reportMigrationResults(tapegateway::FileMigrationReportList & migrationReport,
+    RequestReport &report) throw (castor::tape::Exception) =0;
+    
+      /**
+     * Reports end of session to the client. This should be the last call to
+     * the client.
+     * @param transactionReport Placeholder to network timing information,
+     * populated during the call and used by the caller to log performance 
+     * and context information
+     * @param errorMsg (sent to the client)
+     * @param errorCode (sent to the client)
+     */
+    virtual void reportEndOfSessionWithError(const std::string & errorMsg, int errorCode, 
+    RequestReport &transactionReport) throw (castor::tape::Exception) = 0;
+    
+    
+    /**
+     * Reports end of session to the client. This should be the last call to
+     * the client.
+     */
+    virtual void reportEndOfSession(RequestReport &report) throw (Exception) = 0;
+    
+    virtual ~ClientInterface(){}
 };
 
 }}}}
