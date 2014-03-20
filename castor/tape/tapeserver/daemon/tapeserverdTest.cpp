@@ -95,4 +95,48 @@ TEST(tapeServer, MountSessionGoodday) {
   ASSERT_EQ("V12345", sess.getVid());
 }
 
+TEST(tapeServer, MountSessionNoSuchDrive) {
+  // TpcpClients only supports 32 bits session number
+  // This number has to be less than 2^31 as in addition there is a mix
+  // of signed and unsigned numbers
+  // As the current ids in prod are ~30M, we are far from overflow (Feb 2013)
+  // 1) prepare the client and run it in another thread
+  uint32_t volReq = 0xBEEF;
+  std::string vid = "V12345";
+  std::string density = "8000GC";
+  ClientSimulator sim(volReq, vid, density);
+  struct ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
+  clientRunner simRun(sim);
+  simRun.start();
+  
+  // 2) Prepare the VDQM request
+  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
+    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
+  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
+  VDQMjob.clientPort = clientAddr.port;
+  VDQMjob.volReqId = volReq;
+  
+  // 3) Prepare the necessary environment (logger, plus system wrapper), 
+  // construct and run the session.
+  castor::log::StringLogger logger("tapeServerUnitTest");
+  castor::tape::System::mockWrapper mockSys;
+  mockSys.delegateToFake();
+  mockSys.disableGMockCallsCounting();
+  mockSys.fake.setupForVirtualDriveSLC6();
+  utils::TpconfigLines tpConfig;
+  // Actual TPCONFIG lifted from prod
+  tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
+  "/dev/noSuchTape", "8000GC", "down", "acs0,1,1,6", "T10000"));
+  tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
+  "/dev/noSuchTape", "5000GC", "down", "acs0,1,1,6", "T10000"));
+  MountSession sess(VDQMjob, logger, mockSys, tpConfig);
+  sess.execute();
+  simRun.wait();
+  std::string temp = logger.getLog();
+  temp += "";
+  ASSERT_NE(std::string::npos, logger.getLog().find("Drive not found on this path"));
+}
+
 }

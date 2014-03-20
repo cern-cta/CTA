@@ -56,7 +56,7 @@ namespace daemon {
   private:
     legacymsg::RtcpJobRqstMsgBody m_request;
     castor::log::Logger & m_logger;
-    ClientProxy m_clientIf;
+    ClientProxy m_clientProxy;
     ClientProxy::VolumeInfo m_volInfo;
     System::virtualWrapper & m_sysWrapper;
     utils::TpconfigLines m_tpConfig;
