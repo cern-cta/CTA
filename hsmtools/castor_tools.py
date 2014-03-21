@@ -597,13 +597,14 @@ def nbToAge(n):
     if n >= 60:
         s = s + str(int(n/60)) + 'mn'
         n = n % 60
-    if n > 0:
+    if n > 0 and s.find('d') == -1:
         if len(s) > 0:
-            # we have minutes, so we round to the second
+            # we have minutes and NOT days, so we round to the second
             s = s + str(int(n)) + 's'
         else:
             # only seconds, we keep 2 digits
             s = s + "%.2f" % n + 's'
+        # if we had days, we round to the minute
     if len(s) == 0:
         s = '0s'
     return s

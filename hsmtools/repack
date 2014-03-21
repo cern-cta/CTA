@@ -182,7 +182,7 @@ def _displaySummary(rows):
             globalStatus = 0  # STARTING
         if (status == 1 or status == 4) and globalStatus == 2:
             globalStatus = 1  # ONGOING
-    print '-'*119
+    print '-'*120
     #  when showing full statistics, print out summary line
     if not vids and sumTotal > 0:
         _printStatusLine(time.time(), 0, '-', 'TOTAL', count, globalStatus, sumTotal, sumSize, '-', '-', '-', '-')
@@ -217,7 +217,7 @@ def _displayDetailed(rows):
             globalStatus = 0  # STARTING
         if (status == 1 or status == 4) and globalStatus == 2:
             globalStatus = 1  # ONGOING
-    print '-'*167
+    print '-'*168
     #  when showing full statistics, print out summary line
     if not vids and sumTotal > 0:
         _printStatusLine(time.time(), 0, '-', 'TOTAL', count, globalStatus, sumTotal, sumSize, sumToRecall, sumToMigr, sumFailed, sumMigrated)
