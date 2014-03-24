@@ -408,6 +408,17 @@ int connectWithTimeout(
   throw(castor::exception::TimeOut, castor::exception::Exception);
 
 /**
+ * This C++ function wraps the C function inet_pton() and translates the errno
+ * based error reporting mechanism of the C function into the C++ exception
+ * mechanism.
+ *
+ * @param af
+ * @param src
+ */
+void inetPton(const int af, const char *const src, void *const dst)
+  throw(castor::exception::Exception);
+
+/**
  * Marshals the specified src value into the specified destination buffer.
  *
  * @param src The source value be marshalled.
