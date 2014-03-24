@@ -45,6 +45,10 @@
 #include <sys/types.h>
 #include <time.h>
 
+#include <sys/types.h>
+#include <sys/socket.h>
+#include <netdb.h>
+
 namespace castor {
 namespace io     {
 
@@ -416,6 +420,22 @@ int connectWithTimeout(
  * @param src
  */
 void inetPton(const int af, const char *const src, void *const dst)
+  throw(castor::exception::Exception);
+
+/**
+ * This C++ function wraps the C function getaddrinfo() and translates the errno
+ * based error reporting mechanism of the C function into the C++ exception
+ * mechanism.
+ * 
+ * @param node
+ * @param service
+ * @param hints
+ * @param res
+ * @return 
+ */
+void getAddrInfo(const char *node, const char *service,
+                       const struct addrinfo *hints,
+                       struct addrinfo **res)
   throw(castor::exception::Exception);
 
 /**

@@ -995,6 +995,94 @@ void castor::io::inetPton(const int af, const char *const src, void *const dst)
 }
 
 //------------------------------------------------------------------------------
+// getAddrInfoErrorString
+// 
+// Helper function used to know which string is associated with a specific errno
+// returned by getaddrinfo. This function is needed because the standard one
+// (gai_strerror) is not thread-safe on all systems.
+//------------------------------------------------------------------------------
+static void getAddrInfoErrorString(const int rc, char *buf, const size_t size) {
+  switch(rc) {
+    case EAI_BADFLAGS:
+      strncpy(buf, "Invalid value for `ai_flags' field.", size);
+      break;
+    case EAI_NONAME:
+      strncpy(buf, "NAME or SERVICE is unknown.", size);
+      break;
+    case EAI_AGAIN:
+      strncpy(buf, "Temporary failure in name resolution.", size);
+      break;
+    case EAI_FAIL:
+      strncpy(buf, "Non-recoverable failure in name res.", size);
+      break;
+    case EAI_NODATA:
+      strncpy(buf, "No address associated with NAME.", size);
+      break;
+    case EAI_FAMILY:
+      strncpy(buf, "`ai_family' not supported.", size);
+      break;
+    case EAI_SOCKTYPE:
+      strncpy(buf, "`ai_socktype' not supported.", size);
+      break;
+    case EAI_SERVICE:
+      strncpy(buf, "SERVICE not supported for `ai_socktype'.", size);
+      break;
+    case EAI_ADDRFAMILY:
+      strncpy(buf, "Address family for NAME not supported.", size);
+      break;
+    case EAI_MEMORY:
+      strncpy(buf, "Memory allocation failure.", size);
+      break;
+    case EAI_SYSTEM:
+      strncpy(buf, "System error returned in `errno'.", size);
+      break;
+    case EAI_OVERFLOW:
+      strncpy(buf, "Argument buffer overflow.", size);
+      break;
+    case EAI_INPROGRESS:
+      strncpy(buf, "Processing request in progress.", size);
+      break;
+    case EAI_CANCELED:
+      strncpy(buf, "Request canceled.", size);
+      break;
+    case EAI_NOTCANCELED:
+      strncpy(buf, "Request not canceled.", size);
+      break;
+    case EAI_ALLDONE:
+      strncpy(buf, "All requests done.", size);
+      break;
+    case EAI_INTR:
+      strncpy(buf, "Interrupted by a signal.", size);
+      break;
+    case EAI_IDN_ENCODE:
+      strncpy(buf, "IDN encoding failed.", size);
+      break;
+    default:
+      strncpy(buf, "Unknown error", size);
+      break;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getAddrInfo
+//------------------------------------------------------------------------------
+void castor::io::getAddrInfo(const char *node, const char *service,
+                       const struct addrinfo *hints,
+                       struct addrinfo **res)
+  throw(castor::exception::Exception) {
+  const int rc = getaddrinfo(node, service, hints, res);
+  
+  // If getaddrinfo() returned a negative value
+  if (0 != rc) {
+    char errBuf[100];
+    getAddrInfoErrorString(rc, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
+    ex.getMessage() << "getaddrinfo() failed: " << errBuf;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
 // marshalUint8
 //------------------------------------------------------------------------------
 void castor::io::marshalUint8(const uint8_t src, char * &dst)
