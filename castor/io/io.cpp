@@ -823,11 +823,17 @@ int castor::io::connectWithTimeout(
   const unsigned short port,
   const int            timeout)
   throw(castor::exception::TimeOut, castor::exception::Exception) {
-
-  castor::exception::Internal ex;
-
-  ex.getMessage() << "connectWithTimeout() not implemented";
-  throw ex;
+  std::ostringstream portStream;
+  portStream << port;
+  struct addrinfo *result;
+  getAddrInfo(hostName.c_str(), portStream.str().c_str(), NULL, &result);
+  return connectWithTimeout(
+          result->ai_family, 
+          result->ai_socktype,
+          result->ai_protocol, 
+          result->ai_addr,
+          result->ai_addrlen, 
+          timeout);
 }
 
 //------------------------------------------------------------------------------
