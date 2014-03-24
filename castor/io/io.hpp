@@ -389,6 +389,29 @@ void writeBytes(
  * This method throws a castor::exception::Exception exception if an error
  * other than a timeout occurs.
  *
+ * @param hostName The name of the host to connect to.
+ * @param port     The TCP/IP port number to connect to.
+ * @param timeout  The maximum amount of time in seconds to wait for the
+ *                 connect to finish.
+ * @return         A file-descriptor referencing the newly created and
+ *                 connected socket.
+ */
+int connectWithTimeout(
+  const std::string    &hostName,
+  const unsigned short port,
+  const int            timeout)
+  throw(castor::exception::TimeOut, castor::exception::Exception);
+
+/**
+ * Creates the specified socket and uses it to connect to the specified
+ * address within the constraint of the specified timeout.
+ *
+ * This method throws a castor::exception::TimeOut exception if a timeout
+ * occurs.
+ *
+ * This method throws a castor::exception::Exception exception if an error
+ * other than a timeout occurs.
+ *
  * @param sockDomain   The communications domain of the socket, see
  *                     'man 2 socket'.
  * @param sockType     The type of the socket, see 'man 2 socket'.

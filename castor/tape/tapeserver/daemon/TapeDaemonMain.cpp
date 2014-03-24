@@ -27,7 +27,6 @@
 #include "castor/io/PollReactorImpl.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmImpl.hpp"
-
 #include "h/vdqm_constants.h"
 
 #include <string>

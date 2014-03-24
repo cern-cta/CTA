@@ -819,6 +819,21 @@ void castor::io::writeBytes(
 // connectWithTimeout
 //------------------------------------------------------------------------------
 int castor::io::connectWithTimeout(
+  const std::string    &hostName,
+  const unsigned short port,
+  const int            timeout)
+  throw(castor::exception::TimeOut, castor::exception::Exception) {
+
+  castor::exception::Internal ex;
+
+  ex.getMessage() << "connectWithTimeout() not implemented";
+  throw ex;
+}
+
+//------------------------------------------------------------------------------
+// connectWithTimeout
+//------------------------------------------------------------------------------
+int castor::io::connectWithTimeout(
   const int             sockDomain,
   const int             sockType,
   const int             sockProtocol,
