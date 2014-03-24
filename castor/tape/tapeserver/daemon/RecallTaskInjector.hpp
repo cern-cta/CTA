@@ -51,7 +51,7 @@ public:
   RecallTaskInjector(MemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
         DiskThreadPoolInterface<DiskWriteTask> & diskWriter,ClientInterface& client,
-        castor::log::LogContext& lc);
+        castor::log::LogContext lc);
 
   
   /**
@@ -134,7 +134,7 @@ private:
   /**
    * utility member to log some pieces of information
    */
-  castor::log::LogContext& m_lc;
+  castor::log::LogContext m_lc;
   
   castor::tape::threading::Mutex m_producerProtection;
   castor::tape::threading::BlockingQueue<Request> m_queue;
