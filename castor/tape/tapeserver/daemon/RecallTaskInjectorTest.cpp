@@ -4,7 +4,8 @@
 #include "castor/tape/tapeserver/daemon/DiskThreadPoolInterface.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
-
+#include <gtest/gtest.h>
+#include <xfs/platform_defs-x86_64.h>
 namespace
 {
 using namespace castor::tape::tapeserver::daemon;
@@ -45,8 +46,9 @@ public:
     report.transactionId=666;
     report.connectDuration=42;
     report.sendRecvDuration=21;
-    std::cout<<m_current<<"<?"<<lists.size()<<std::endl;
+    ASSERT(m_current<lists.size());
     return lists[m_current++];
+ 
   }
   
   virtual void reportEndOfSessionWithError(const std::string & errorMsg, int errorCode, 
