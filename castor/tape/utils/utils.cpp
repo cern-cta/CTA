@@ -842,18 +842,3 @@ void castor::tape::utils::appendPathToEnvVar(const std::string &envVarName,
       ": Unknown error");
   }
 }
-
-//---------------------------------------------------------------------------
-// getTimeOfDay
-//---------------------------------------------------------------------------
-void castor::tape::utils::getTimeOfDay(struct timeval *const tv,
-  struct timezone *const tz) throw(castor::exception::Exception) {
-  if(0 != gettimeofday(tv, tz)) {
-    const int saved_errno = errno;
-
-    // Convert the error into an exception
-    TAPE_THROW_CODE(errno,
-      ": Call to gettimeofday failed"
-      ": " << sstrerror(saved_errno));
-  }
-}
