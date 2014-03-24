@@ -27,16 +27,23 @@
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
+#include <cstdio>
 
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-MigrationReportPacker::MigrationReportPacker(ClientInterface & tg):
-m_workerThread(*this),m_client(tg) {
+MigrationReportPacker::MigrationReportPacker(ClientInterface & tg,castor::log::LogContext& lc):
+m_workerThread(*this),m_client(tg),m_lc(lc),
+m_listReports(new tapegateway::FileMigrationReportList),m_errorHappened(false),m_continue(true) {
 }
 
+ MigrationReportPacker::~MigrationReportPacker(){
+    castor::tape::threading::MutexLocker ml(&m_producterProtection);
+    
+  }
+ 
 void MigrationReportPacker::reportCompletedJob(const tapegateway::FileToMigrateStruct& migratedFile) {
   std::auto_ptr<Report> rep(new ReportSuccessful(migratedFile));
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
@@ -58,7 +65,7 @@ void MigrationReportPacker::reportEndOfSession() {
     castor::tape::threading::MutexLocker ml(&m_producterProtection);
     m_fifo.push(new ReportEndofSession());
 }
-void MigrationReportPacker::reportEndOfSessionWithErrors(const std::string msg,int error_code){
+void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int error_code){
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportEndofSessionWithErrors(msg,error_code));
 }
@@ -72,29 +79,55 @@ void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& _th
   successMigration->setNshost(m_migratedFile.nshost());
   successMigration->setFileid(m_migratedFile.fileid());
   
-  _this.m_listReports.addSuccessfulMigrations(successMigration.release());
+  _this.m_listReports->addSuccessfulMigrations(successMigration.release());
 }
 
 void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& _this){
+  if(!_this.m_errorHappened){
+    _this.logReport(_this.m_listReports->successfulMigrations(),"A file was successfully written on the tape"); 
     tapeserver::daemon::ClientInterface::RequestReport chrono;
-  _this.m_client.reportMigrationResults(_this.m_listReports,chrono);
+    _this.m_client.reportMigrationResults(*(_this.m_listReports),chrono);    
+  }
+  else {
+    const std::string& msg ="A flush on tape has been reported but a writing error happened before";
+    _this.logReport(_this.m_listReports->failedMigrations(),msg); 
+    //throw castor::exception::Exception(msg);
+  }
+  //reset (ie delete and replace) the current m_listReports.
+  //Thus all current reports are deleted otherwise they would have been sent again at the next flush
+  _this.m_listReports.reset(new tapegateway::FileMigrationReportList);
 }
   
 void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& _this){
-  tapeserver::daemon::ClientInterface::RequestReport chrono;
-  _this.m_client.reportEndOfSession(chrono);
+  if(!_this.m_errorHappened){
+    tapeserver::daemon::ClientInterface::RequestReport chrono;
+    _this.m_client.reportEndOfSession(chrono);
+  }
+  else {
+     const std::string& msg ="Nominal EndofSession has been reported  but an writing error on the tape happened before";
+     _this.m_lc.log(LOG_ERR,msg);
+     //throw castor::exception::Exception(msg);
+  }
+  _this.m_continue=false;
 }
 
 void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationReportPacker& _this){
+  if(_this.m_errorHappened) {
   tapeserver::daemon::ClientInterface::RequestReport chrono;
-  _this.m_listReports.successfulMigrations().clear();
-  _this.m_client.reportEndOfSessionWithError(m_message,m_error_code,chrono);
+  _this.m_client.reportEndOfSessionWithError(m_message,m_error_code,chrono); 
+  }
+  else{
+   const std::string& msg ="EndofSessionWithErrors has been reported  but NO writing error on the tape was detected";
+   _this.m_lc.log(LOG_ERR,msg);
+   //throw castor::exception::Exception(msg);
+  }
+  _this.m_continue=false;
 }
 
 void MigrationReportPacker::ReportError::execute(MigrationReportPacker& _this){
    
   std::auto_ptr<tapegateway::FileErrorReportStruct> failedMigration(new tapegateway::FileErrorReportStruct);
-
+  //failedMigration->setFileMigrationReportList(_this.m_listReports.get());
   failedMigration->setErrorCode(m_error_code);
   failedMigration->setErrorMessage(m_error_msg);
   failedMigration->setFseq(m_migratedFile.fseq());
@@ -102,8 +135,8 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& _this){
   failedMigration->setId(m_migratedFile.id());
   failedMigration->setNshost(m_migratedFile.nshost());
   
-  _this.m_listReports.addFailedMigrations(failedMigration.release());
-   _this.reportEndOfSessionWithErrors(m_error_msg,m_error_code);
+  _this.m_listReports->addFailedMigrations(failedMigration.release());
+  _this.m_errorHappened=true;
 }
 //------------------------------------------------------------------------------
 MigrationReportPacker::WorkerThread::WorkerThread(MigrationReportPacker& parent):
@@ -111,8 +144,8 @@ m_parent(parent) {
 }
 
 void MigrationReportPacker::WorkerThread::run(){
-  while(1) {
-    std::auto_ptr<MigrationReportPacker::Report> rep (m_parent.m_fifo.pop());
+  while(m_parent.m_continue) {
+    std::auto_ptr<Report> rep (m_parent.m_fifo.pop());
     rep->execute(m_parent);
   }
 }
