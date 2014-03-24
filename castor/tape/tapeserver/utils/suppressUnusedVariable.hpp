@@ -6,9 +6,13 @@
  */
 
 #ifndef SUPPRESSUNUSEDVARIABLE_HPP
-#define	SUPPRESSUNUSEDVARIABLE_HPP
-
+namespace castor {
+namespace tape {
+namespace utils {
+  
 template <class T> void suppresUnusedVariable(const T&){}
+
+}}}
 
 #endif	/* SUPPRESSUNUSEDVARIABLE_HPP */
 

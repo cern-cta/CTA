@@ -45,7 +45,7 @@ public:
     report.transactionId=666;
     report.connectDuration=42;
     report.sendRecvDuration=21;
-    
+    std::cout<<m_current<<"<?"<<lists.size()<<std::endl;
     return lists[m_current++];
   }
   

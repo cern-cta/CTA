@@ -61,7 +61,7 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
       LogContext::ScopedParam(m_lc, Param("NSFILENSHOST", (*it)->nshost())),
       LogContext::ScopedParam(m_lc, Param("NSFILEPATH", (*it)->path()))
     };
-    suppresUnusedVariable(sp[0]);
+    tape::utils::suppresUnusedVariable(sp[0]);
     
     m_lc.log(LOG_INFO, "Logged file to recall");
     
@@ -87,7 +87,7 @@ bool RecallTaskInjector::synchronousInjection(uint64_t maxFiles, uint64_t byteSi
     LogContext::ScopedParam(m_lc, Param("connectDuration", reqReport.connectDuration)),
     LogContext::ScopedParam(m_lc, Param("sendRecvDuration", reqReport.sendRecvDuration))
   };
-  suppresUnusedVariable(sp);
+  tape::utils::suppresUnusedVariable(sp);
   
   if(NULL==filesToRecallList.get()) { 
     m_lc.log(LOG_ERR, "Get called but no files to retrieve");
