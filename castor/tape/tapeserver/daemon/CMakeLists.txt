@@ -17,6 +17,12 @@ target_link_libraries(tapeserverd
   castorclient
   castortapelegacymsg)
 
+install (TARGETS tapeserverd DESTINATION ${CASTOR_DEST_BIN_DIR})
+CastorInstallAdmManPage (tapeserverd)
+CastorInstallLogrotate (castor-tapeserver-server)
+CastorInstallSysconfigExample (tapeserverd)
+CastorInstallInitScript (tapeserverd)
+
 add_executable(tapeserver-mm 
   tapeserver-mm.cpp 
   RecallTaskInjector.cpp
