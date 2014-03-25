@@ -131,17 +131,24 @@ class XrdxCastor2FsUFS
       return 0; /* return Cns_utimes(fn,tvp);*/
     }
 
-    static DIR* OpenDir(const char* dn)
+    static Cns_DIR* OpenDir(const char* dn)
     {
-      return (DIR*)Cns_opendir(dn);
+      return Cns_opendir(dn);
     }
-    static struct dirent*  ReadDir(DIR* dp)
+
+    static struct dirent* ReadDir(Cns_DIR* dp)
     {
-      return Cns_readdir((Cns_DIR*) dp);
+      return Cns_readdir(dp);
     }
-    static int  CloseDir(DIR* dp)
+
+    static struct Cns_direnstatc* ReadDirStat(Cns_DIR* dp)
     {
-      return Cns_closedir((Cns_DIR*) dp);
+      return Cns_readdirxc(dp);
+    }
+
+    static int CloseDir(Cns_DIR* dp)
+    {
+      return Cns_closedir(dp);
     }
 };
 

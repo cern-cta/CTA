@@ -37,7 +37,9 @@ XrdxCastor2FsDirectory::XrdxCastor2FsDirectory(const char* user, int MonID) :
   XrdSfsDirectory(user, MonID),
   dh(0),
   fname(0),
-  d_pnt(0)
+  d_pnt(0),
+  ds_ptn(0),
+  mAutoStat(0)
 {
   // empty
 }
@@ -107,24 +109,73 @@ XrdxCastor2FsDirectory::nextEntry()
   if (!dh)
   {
     XrdxCastor2Fs::Emsg(epname, error, EBADF, "read directory", fname);
-    return (const char*)0;
+    return static_cast<const char*>(0);
   }
 
   if (gMgr->mProc)
     gMgr->mStats.IncReadd();
-
-  // Read the next directory entry
-  if (!(d_pnt = XrdxCastor2FsUFS::ReadDir(dh)))
+  
+  if (mAutoStat)
   {
-    if (serrno != 0)
-      XrdxCastor2Fs::Emsg(epname, error, serrno, "read directory", fname);
+    // Read the next directory entry with stat information
+    if (!(ds_ptn = XrdxCastor2FsUFS::ReadDirStat(dh)))
+    {
+      if (serrno != 0)
+        XrdxCastor2Fs::Emsg(epname, error, serrno, "read stat directory", fname);
+      
+      return static_cast<const char*>(0);
+    }
     
-    return (const char*)0;
+    memset(mAutoStat, sizeof(struct stat), 0);
+    mAutoStat->st_dev     = 0xcaff;
+    mAutoStat->st_ino     = ds_ptn->fileid;
+    mAutoStat->st_mode    = ds_ptn->filemode;
+    mAutoStat->st_nlink   = ds_ptn->nlink;
+    mAutoStat->st_uid     = ds_ptn->uid;
+    mAutoStat->st_gid     = ds_ptn->gid;
+    mAutoStat->st_rdev    = 0;     /* device type (if inode device) */
+    mAutoStat->st_size    = ds_ptn->filesize;
+    mAutoStat->st_blksize = 4096;
+    mAutoStat->st_blocks  = ds_ptn->filesize / 4096;
+    mAutoStat->st_atime   = ds_ptn->atime;
+    mAutoStat->st_mtime   = ds_ptn->mtime;
+    mAutoStat->st_ctime   = ds_ptn->ctime;
+    
+    xcastor_debug("dir next stat entry: %s", ds_ptn->d_name);
+    return static_cast<const char*>(ds_ptn->d_name);
   }
+  else 
+  {
+    // Read the next directory entry without stat information
+    if (!(d_pnt = XrdxCastor2FsUFS::ReadDir(dh)))
+    {
+      if (serrno != 0)
+        XrdxCastor2Fs::Emsg(epname, error, serrno, "read directory", fname);
+      
+      return static_cast<const char*>(0);
+    }
+    
+    xcastor_debug("dir next entry: %s", d_pnt->d_name);
+    return static_cast<const char*>(d_pnt->d_name);
+  }  
+}
 
-  entry = d_pnt->d_name;
-  xcastor_debug("dir next entry: %s", entry.c_str());
-  return (const char*)(entry.c_str());
+
+//------------------------------------------------------------------------------
+// Set stat buffer to automaticaly return stat information
+//------------------------------------------------------------------------------
+int
+XrdxCastor2FsDirectory::autoStat(struct stat *buf)
+{
+  static const char* epname = "autostat";
+
+  // Check if this directory is actually open
+  if (!dh) 
+    return XrdxCastor2Fs::Emsg(epname, error, EBADF, "autostat directory");
+  
+  // Set the auto stat buffer used for bulk requests
+  mAutoStat = buf;
+  return SFS_OK;
 }
 
 
@@ -152,7 +203,7 @@ XrdxCastor2FsDirectory::close()
     fname = 0;
   }
   
-  dh = (DIR*)0;
+  dh = (Cns_DIR*)0;
   return SFS_OK;
 }
 

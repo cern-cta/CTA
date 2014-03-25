@@ -31,6 +31,7 @@
 #include "XrdxCastorLogging.hpp"
 /*-----------------------------------------------------------------------------*/
 #include <dirent.h>
+#include "Cns_api.h"
 /*-----------------------------------------------------------------------------*/
 
 //------------------------------------------------------------------------------
@@ -77,7 +78,23 @@ public:
   //!
   //----------------------------------------------------------------------------
   const char* nextEntry();
-  
+
+
+  //----------------------------------------------------------------------------
+  //! Function: Set stat buffer to automaticaly return stat information
+  //! Input:  Pointer to stat buffer which will be filled in on each
+  //!         nextEntry() and represent stat information for that entry. 
+  //! Output: Upon success, returns zero. Upon error returns SFS_ERROR and sets 
+  //!         the error object to contain the reason.
+  //!
+  //! Notes: 1. If autoStat() is not supported he caller will need to follow up
+  //!        with a manual stat() call for the full path, a slow and tedious
+  //!        process. The autoStat function significantly reduces overhead by
+  //!        automatically providing stat information for the entry read.
+  //!
+  //----------------------------------------------------------------------------
+  int autoStat(struct stat *buf);
+ 
   
   //----------------------------------------------------------------------------
   //! Close the directory object
@@ -100,10 +117,11 @@ public:
   
 private:
   
-  DIR*           dh;    ///< directory stream handle
-  char*          fname; ///< directory name 
-  XrdOucString   entry; ///< directory entry item
-  struct dirent* d_pnt; ///< ptr to dir entry
+  Cns_DIR* dh;            ///< directory stream handle
+  char* fname;            ///< directory name 
+  struct dirent* d_pnt;   ///< ptr to dir entry
+  struct Cns_direnstatc* ds_ptn; ///< ptr dir entry with stat info
+  struct stat* mAutoStat; ///< stat buffer used for bulk dir listing
   
 };
 
