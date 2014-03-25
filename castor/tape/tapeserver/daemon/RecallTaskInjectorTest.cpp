@@ -40,6 +40,9 @@ public:
   virtual void reportMigrationResults(tapegateway::FileMigrationReportList & migrationReport,
   RequestReport& report) throw (castor::tape::Exception){}
   
+  virtual void reportRecallResults(tapegateway::FileRecallReportList & migrationReport,
+  RequestReport& report) throw (castor::tape::Exception){}
+  
   virtual tapegateway::FilesToRecallList * getFilesToRecall(uint64_t files,
   uint64_t bytes, RequestReport &report) throw (castor::tape::Exception) 
   {

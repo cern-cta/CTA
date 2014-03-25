@@ -58,6 +58,9 @@ public:
     return NULL;
   }
   
+  virtual void reportRecallResults(tapegateway::FileRecallReportList & migrationReport,
+  RequestReport& report) throw (castor::tape::Exception){}
+  
   int current_succes;
   int current_failled;
 

@@ -89,6 +89,14 @@ public :
      */
     virtual void reportEndOfSession(RequestReport &report) throw (Exception) = 0;
     
+        /**
+     * Reports the result of recall to the client.
+     * Detailed interface is still TBD.
+     * @param report Placeholder to network timing information
+     */
+    virtual void reportRecallResults(tapegateway::FileRecallReportList & recallReport,
+      RequestReport &report) throw (castor::tape::Exception) =0;
+    
     virtual ~ClientInterface(){}
 };
 
