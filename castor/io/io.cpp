@@ -825,15 +825,30 @@ int castor::io::connectWithTimeout(
   throw(castor::exception::TimeOut, castor::exception::Exception) {
   std::ostringstream portStream;
   portStream << port;
-  struct addrinfo *result;
-  getAddrInfo(hostName.c_str(), portStream.str().c_str(), NULL, &result);
-  return connectWithTimeout(
-          result->ai_family, 
-          result->ai_socktype,
-          result->ai_protocol, 
-          result->ai_addr,
-          result->ai_addrlen, 
-          timeout);
+  struct addrinfo hints;
+  memset(&hints, '\0', sizeof(hints));
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  struct addrinfo *results = NULL;
+  getAddrInfo(hostName.c_str(), portStream.str().c_str(), &hints, &results);
+  if(NULL == results) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to connect to port " << port << " of host " <<
+      hostName << ": The linked list of results from getAddrInfo() is NULL";
+    throw ex;
+  }
+
+  // The following TEMPORARY code will leak memory if connectWithTimeout()
+  // throws an exception - This code therefore needs to be fixed.
+  const int rc = connectWithTimeout(
+      results[0].ai_family, 
+      results[0].ai_socktype,
+      results[0].ai_protocol, 
+      results[0].ai_addr,
+      results[0].ai_addrlen, 
+      timeout);
+  freeaddrinfo(results);
+  return rc;
 }
 
 //------------------------------------------------------------------------------
