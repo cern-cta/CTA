@@ -22,7 +22,8 @@ add_executable(tapeserver-mm
   RecallTaskInjector.cpp
   Exception.cpp
   ClientProxy.cpp
-  MigrationReportPacker.cpp)
+  MigrationReportPacker.cpp
+  RecallReportPacker.cpp)
 
 target_link_libraries(tapeserver-mm 
 TapeDrive Exception SCSI System Utils File 
