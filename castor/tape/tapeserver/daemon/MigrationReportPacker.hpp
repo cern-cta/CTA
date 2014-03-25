@@ -28,8 +28,8 @@
 #include "castor/tape/tapeserver/daemon/MigrationJob.hpp"
 #include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
-#include "castor/log/LogContext.hpp"
-#include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
+#include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
+
 #include <list>
 #include <memory>
 
@@ -38,13 +38,13 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
  
-class MigrationReportPacker {
+class MigrationReportPacker : private ReportPackerInterface<detail::Migration> {
 public:
   /**
    * @param tg The client who is asking for a migration of his files 
    * and to whom we have to report to the status of the operations.
    */
-  MigrationReportPacker(ClientInterface & tg,log::LogContext& lc);
+  MigrationReportPacker(ClientInterface & tg,log::LogContext lc);
   
   ~MigrationReportPacker();
     
@@ -83,38 +83,15 @@ public:
   void waitThread() { m_workerThread.wait(); }
   
 private:
-  
-  /**
-   * Log a set of files independently of the success/failure 
-   * @param c The set of files to log
-   * @param msg The message to be append at the end.
-   */
-  template <class C> void logReport(const C& c,const std::string& msg){
-    using castor::log::LogContext;
-    using castor::log::Param;
-      for(typename C::const_iterator it=c.begin();it!=c.end();++it)
-      {
-        LogContext::ScopedParam sp[]={
-          LogContext::ScopedParam(m_lc, Param("ID", (*it)->id())),
-          LogContext::ScopedParam(m_lc, Param("FILEID",(*it)->fileid())),
-          LogContext::ScopedParam(m_lc, Param("FSEQ", (*it)->fseq())),
-          LogContext::ScopedParam(m_lc, Param("NSHOST", (*it)->nshost())),
-          LogContext::ScopedParam(m_lc, Param("FILETRANSACTIONID", (*it)->fileTransactionId()))
-        };
-        tape::utils::suppresUnusedVariable(sp);
-        m_lc.log(LOG_INFO,msg);
-      }
-  }
-  
   class Report {
   public:
     virtual ~Report(){}
     virtual void execute(MigrationReportPacker& packer)=0;
   };
   class ReportSuccessful :  public Report {
-    const tapegateway::FileToMigrateStruct m_migratedFile;
+    const FileStruct m_migratedFile;
   public:
-    ReportSuccessful(const tapegateway::FileToMigrateStruct& file): 
+    ReportSuccessful(const FileStruct& file): 
     m_migratedFile(file){}
     virtual void execute(MigrationReportPacker& _this);
   };
@@ -123,11 +100,11 @@ private:
       void execute(MigrationReportPacker& _this);
   };
   class ReportError : public Report {
-    const tapegateway::FileToMigrateStruct m_migratedFile;
+    const FileStruct m_migratedFile;
     const std::string m_error_msg;
     const int m_error_code;
   public:
-    ReportError(const tapegateway::FileToMigrateStruct& file,std::string msg,int error_code):
+    ReportError(const FileStruct& file,std::string msg,int error_code):
     m_migratedFile(file),m_error_msg(msg),m_error_code(error_code){}
     
     virtual void execute(MigrationReportPacker& _this);
@@ -152,20 +129,13 @@ private:
     WorkerThread(MigrationReportPacker& parent);
     virtual void run();
   } m_workerThread;
-
-  ClientInterface & m_client;
-  castor::log::LogContext& m_lc;
   
   /** 
    * m_fifo is holding all the report waiting to be processed
    */
   castor::tape::threading::BlockingQueue<Report*> m_fifo;
 
-  /** 
-   * m_listReports is holding all the report waiting to be processed
-   */
-  std::auto_ptr<tapegateway::FileMigrationReportList> m_listReports;   
-  
+
   castor::tape::threading::Mutex m_producterProtection;
   
   /** 
