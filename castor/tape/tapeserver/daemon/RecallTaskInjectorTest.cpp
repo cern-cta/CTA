@@ -5,7 +5,7 @@
 #include "castor/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include <gtest/gtest.h>
-#include <xfs/platform_defs-x86_64.h>
+
 namespace
 {
 using namespace castor::tape::tapeserver::daemon;
@@ -43,13 +43,18 @@ public:
   virtual void reportRecallResults(tapegateway::FileRecallReportList & migrationReport,
   RequestReport& report) throw (castor::tape::Exception){}
   
+  //workaround to use assertion inside a function returning something else than void
+  //see http://code.google.com/p/googletest/wiki/AdvancedGuide#Assertion_Placement
+  void assertion(){ASSERT_EQ(true,static_cast<unsigned int>(m_current)<lists.size());}
+  
   virtual tapegateway::FilesToRecallList * getFilesToRecall(uint64_t files,
   uint64_t bytes, RequestReport &report) throw (castor::tape::Exception) 
   {
+    
     report.transactionId=666;
     report.connectDuration=42;
     report.sendRecvDuration=21;
-    ASSERT(m_current<lists.size());
+    assertion();
     return lists[m_current++];
  
   }
