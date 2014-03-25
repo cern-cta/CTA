@@ -992,30 +992,6 @@ int castor::io::connectWithTimeout(
 }
 
 //------------------------------------------------------------------------------
-// inetPton
-//------------------------------------------------------------------------------
-void castor::io::inetPton(const int af, const char *const src, void *const dst)
-  throw(castor::exception::Exception) {
-  const int rc = inet_pton(af, src, dst);
-
-  // If inet_pton() returned 0
-  if(0 == rc) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "inet_pton() failed: src does not represent a valid"
-      " network address in the specified address family: src=" << src;
-    throw ex;
-
-  // Else if inet_pton() returned a negative value
-  } else if (0 > rc) {
-    char errBuf[100];
-    sstrerror_r(errno, errBuf, sizeof(errBuf));
-    castor::exception::Internal ex;
-    ex.getMessage() << "inet_pton() failed: " << errBuf;
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
 // getAddrInfoErrorString
 // 
 // Helper function used to know which string is associated with a specific errno
