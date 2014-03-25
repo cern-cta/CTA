@@ -36,9 +36,11 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmImpl::VdqmImpl(
+  log::Logger &log,
   const std::string &vdqmHostName,
   const unsigned short vdqmPort,
   const int netTimeout) throw():
+    m_log(log),
     m_vdqmHostName(vdqmHostName),
     m_vdqmPort(vdqmPort),
     m_netTimeout(netTimeout) {
@@ -158,7 +160,14 @@ void castor::tape::tapeserver::daemon::VdqmImpl::checkJobMsgLen(
 void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusDown(
   const std::string &unitName, const std::string &dgn) 
   throw(castor::exception::Exception) {
-  setTapeDriveStatus(unitName, dgn, VDQM_UNIT_DOWN);
+  try {
+    setTapeDriveStatus(unitName, dgn, VDQM_UNIT_DOWN);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to set drive status to down: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -167,7 +176,14 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusDown(
 void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusUp(
   const std::string &unitName, const std::string &dgn)
   throw(castor::exception::Exception) {
-  setTapeDriveStatus(unitName, dgn, VDQM_UNIT_UP);
+  try {
+    setTapeDriveStatus(unitName, dgn, VDQM_UNIT_UP);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to set drive status to up: " << 
+      ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -176,16 +192,15 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusUp(
 void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatus(
   const std::string &unitName, const std::string &dgn, const int status)
   throw(castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "VdqmImpl::setTapeDriveStatus() is not implemented";
-  throw ex;
+
+  castor::utils::SmartFd connection(connectToVdqm());
 }
 
 //-----------------------------------------------------------------------------
 // connectToVdqm
 //-----------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::VdqmImpl::connectToVdqm(
-  timeval &connectDuration) const throw(castor::exception::Exception) {
+int castor::tape::tapeserver::daemon::VdqmImpl::connectToVdqm()
+  const throw(castor::exception::Exception) {
 
   // Temporarily call Cgethostbyname(), this will be replaced in the future
   // by code using getaddrinfo()
@@ -210,7 +225,7 @@ int castor::tape::tapeserver::daemon::VdqmImpl::connectToVdqm(
   castor::utils::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(io::connectWithTimeout(
-      PF_LOCAL,
+      AF_INET,
       SOCK_STREAM,
       0, // sockProtocol
       (const struct sockaddr *)&networkAddress,
@@ -219,13 +234,19 @@ int castor::tape::tapeserver::daemon::VdqmImpl::connectToVdqm(
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to connect to vdqm on host " << m_vdqmHostName
-      << " port " << m_vdqmPort << ": " << ex.getMessage().str();
+      << " port " << m_vdqmPort << ": " << ne.getMessage().str();
     throw ex;
   }
 
-  utils::getTimeOfDay(&connectEndTime, NULL);
-  connectDuration =
-    castor::utils::timevalAbsDiff(connectStartTime, connectEndTime);
+  const double connectDurationSecs = castor::utils::timevalToDouble(
+    castor::utils::timevalAbsDiff(connectStartTime, connectEndTime));
+  {
+    log::Param params[] = {
+      log::Param("vdqmHostName", m_vdqmHostName),
+      log::Param("vdqmPort", m_vdqmPort),
+      log::Param("connectDurationSecs", connectDurationSecs)};
+    m_log(LOG_INFO, "Connected to vdqm", params);
+  }
 
   return smartConnectSock.release();
 }

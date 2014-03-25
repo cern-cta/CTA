@@ -628,7 +628,7 @@ const char *sstrerror(const int n) {
 
   if(Cglobals_get(&sstrerror_key, &buf, buflen)) {
     return "Unknown error"
-      ": No thread specific memory to determine error string"
+      ": No thread specific memory for error string"
       ": Cglobals_get() failed";
   }
 

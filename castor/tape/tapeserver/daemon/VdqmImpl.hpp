@@ -23,6 +23,7 @@
 #ifndef CASTOR_TAPE_TAPESERVER_DAEMON_VDQMIMPL_HPP
 #define CASTOR_TAPE_TAPESERVER_DAEMON_VDQMIMPL_HPP 1
 
+#include "castor/log/Logger.hpp"
 #include "castor/tape/legacymsg/MessageHeader.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 
@@ -40,14 +41,15 @@ public:
   /**
    * Constructor.
    *
+   * @param log The object representing the API of the CASTOR logging system.
    * @param vdqmHostName The name of the host on which the vdqmd daemon is
    * running.
    * @param vdqmPort The TCP/IP port on which the vdqmd daemon is listening.
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    */
-  VdqmImpl(const std::string &vdqmHostName, const unsigned short vdqmPort,
-    const int netTimeout) throw();
+  VdqmImpl(log::Logger &log, const std::string &vdqmHostName,
+    const unsigned short vdqmPort, const int netTimeout) throw();
 
   /**
    * Destructor.
@@ -147,12 +149,14 @@ private:
   /**
    * Connects to the vdqmd daemon.
    *
-   * @param connectDuration Out parameter: The time it took to connect to the
-   * vdqmd daemon.
    * @return The socket-descriptor of the connection with the vdqmd daemon.
    */
-  int connectToVdqm(timeval &connectDuration)
-    const throw(castor::exception::Exception);
+  int connectToVdqm() const throw(castor::exception::Exception);
+
+  /**
+   * The object representing the API of the CASTOR logging system.
+   */
+  log::Logger &m_log;
 
   /**
    * The name of the host on which the vdqmd daemon is running.
