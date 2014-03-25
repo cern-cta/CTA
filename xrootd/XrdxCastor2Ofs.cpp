@@ -48,7 +48,6 @@
 #include "XrdxCastorTiming.hpp"
 /*----------------------------------------------------------------------------*/
 
-
 XrdxCastor2Ofs* gSrv; ///< global diskserver OFS handle
 
 // extern symbols
@@ -58,6 +57,7 @@ extern XrdOssSys*  XrdOfsOss;
 extern XrdOss*     XrdOssGetSS( XrdSysLogger*, const char*, const char* );
 extern XrdOucTrace OfsTrace;
 
+XrdVERSIONINFO(XrdSfsGetFileSystem, xCastor2Ofs);
 
 //------------------------------------------------------------------------------
 // SfsGetFileSystem

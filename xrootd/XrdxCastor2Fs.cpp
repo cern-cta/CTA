@@ -62,12 +62,13 @@
 /******************************************************************************/
 /*                        G l o b a l   O b j e c t s                         */
 /******************************************************************************/
-
 XrdOucHash<XrdOucString>* XrdxCastor2Stager::msDelayStore;
 xcastor::XrdxCastorClient* XrdxCastor2Fs::msCastorClient;
 int XrdxCastor2Fs::msTokenLockTime = 5;
 XrdxCastor2Fs* gMgr;
 XrdSysError OfsEroute(0);
+
+XrdVERSIONINFO(XrdSfsGetFileSystem, xCastor2Fs);
 
 //------------------------------------------------------------------------------
 // Get file system

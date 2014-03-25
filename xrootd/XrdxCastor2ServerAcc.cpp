@@ -27,6 +27,7 @@
 #include <fcntl.h>
 #include <sstream>
 /*-----------------------------------------------------------------------------*/
+#include "XrdVersion.hh"
 #include "XrdxCastor2ServerAcc.hpp"
 #include "XrdxCastorTiming.hpp"
 /*-----------------------------------------------------------------------------*/
@@ -39,6 +40,7 @@
 /*-----------------------------------------------------------------------------*/
 
 XrdSysError TkEroute(0, "xCastorServerAcc");
+XrdVERSIONINFO(XrdAccAuthorizeObject, xCastor2ServAcc);
 
 //------------------------------------------------------------------------------
 // XrdAccAuthorizeObject() is called to obtain an instance of the auth object
