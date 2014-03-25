@@ -439,11 +439,9 @@ int connectWithTimeout(
  * based error reporting mechanism of the C function into the C++ exception
  * mechanism.
  *
- * Please note that this method is thread-safe on linux because the underlying
- * getaddrinfo() function is thread-safe on linux.  The same cannot be said to
- * be true for MAC.  If you wish to use this function in a multithreaded MAC
- * application then you will have to wrap it with the appropriate thread
- * locking mechanisms.
+ * Please note that this method is thread-safe because the underlying
+ * getaddrinfo() function is thread-safe.  This is in accordance with
+ * RFC 3493.
  *
  * @param node    If the AI_NUMERICHOST flag of hints.ai_flags is set then
  *                this parameter can be set to a numerical network address.
