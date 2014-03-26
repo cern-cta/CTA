@@ -28,6 +28,13 @@
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
+#include "castor/tape/legacymsg/MessageHeader.hpp"
+#include "castor/io/io.hpp"
+#include "castor/tape/legacymsg/CommonMarshal.hpp"
+#include "castor/tape/legacymsg/RtcpMarshal.hpp"
+#include "castor/tape/legacymsg/VdqmMarshal.hpp"
+#include "h/vdqm_constants.h"
+#include "h/rtcp_constants.h"
 
 #include <poll.h>
 
@@ -105,13 +112,77 @@ private:
    * The catalogue of tape drives controlled by the tape server daemon.
    */
   DriveCatalogue &m_driveCatalogue;
+  
+  /**
+   * The timeout in seconds to be applied when performing network read and
+   * write operations.
+   */
+  const int m_netTimeout;
 
   /**
    * Logs the reception of the specified job message from the vdqmd daemon.
    */
   void logVdqmJobReception(const legacymsg::RtcpJobRqstMsgBody &job)
     const throw();
+  
+  /**
+   * Receives a job from the specified connection with the vdqm daemon,
+   * sends back a positive acknowledgement and closes the connection.
+   *
+   * @param connection The file descriptor of the connection with the vdqm
+   * daemon.
+   * @return The job request from the vdqm.
+   */
+  legacymsg::RtcpJobRqstMsgBody receiveJob(const int connection)
+    throw(castor::exception::Exception);
+  
+  /**
+   * Receives the header of a job message from the specified connection with
+   * the vdqm daemon.
+   *
+   * @param connection The file descriptor of the connection with the vdqm
+   * daemon.
+   * @return The message header.
+   */
+  legacymsg::MessageHeader receiveJobMsgHeader(const int connection)
+    throw(castor::exception::Exception);
+  
+  /**
+   * Receives the body of a job message from the specified connection with the
+   * vdqm daemon.
+   *
+   * @param connection The file descriptor of the connection with the vdqm
+   * daemon.
+   * @param len The length of the message body in bytes.
+   * @return The message body.
+   */
+  legacymsg::RtcpJobRqstMsgBody receiveJobMsgBody(const int connection,
+    const uint32_t len) throw(castor::exception::Exception);
 
+  /**
+   * Throws an exception if the specified magic number is invalid for a vdqm
+   * job message.
+   */
+  void checkJobMsgMagic(const uint32_t magic) const
+    throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if the specified request type is invalid for a vdqm
+   * job message.
+   */
+  void checkJobMsgReqType(const uint32_t reqType) const
+    throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if the specified message body length is invalid for
+   * a vdqm job message.
+   *
+   * @param maxLen The maximum length in bytes
+   * @param len The actual length in bytes.
+   */
+  void checkJobMsgLen(const size_t maxLen, const size_t len) const
+    throw(castor::exception::Exception);
+  
 }; // class VdqmConnectionHandler
 
 } // namespace daemon

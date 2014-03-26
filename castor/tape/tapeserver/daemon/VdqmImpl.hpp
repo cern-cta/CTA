@@ -60,17 +60,6 @@ public:
   ~VdqmImpl() throw();
 
   /**
-   * Receives a job from the specified connection with the vdqm daemon,
-   * sends back a positive acknowledgement and closes the connection.
-   *
-   * @param connection The file descriptor of the connection with the vdqm
-   * daemon.
-   * @return The job request from the vdqm.
-   */
-  legacymsg::RtcpJobRqstMsgBody receiveJob(const int connection)
-    throw(castor::exception::Exception);
-
-  /**
    * Sets the status of the specified tape drive to down.
    *
    * @param server The host name of the server to which the tape drive is
@@ -95,53 +84,6 @@ public:
     throw(castor::exception::Exception);
 
 private:
-
-  /**
-   * Receives the header of a job message from the specified connection with
-   * the vdqm daemon.
-   *
-   * @param connection The file descriptor of the connection with the vdqm
-   * daemon.
-   * @return The message header.
-   */
-  legacymsg::MessageHeader receiveJobMsgHeader(const int connection)
-    throw(castor::exception::Exception);
-
-  /**
-   * Throws an exception if the specified magic number is invalid for a vdqm
-   * job message.
-   */
-  void checkJobMsgMagic(const uint32_t magic) const
-    throw(castor::exception::Exception);
-
-  /**
-   * Throws an exception if the specified request type is invalid for a vdqm
-   * job message.
-   */
-  void checkJobMsgReqType(const uint32_t reqType) const
-    throw(castor::exception::Exception);
-
-  /**
-   * Receives the body of a job message from the specified connection with the
-   * vdqm daemon.
-   *
-   * @param connection The file descriptor of the connection with the vdqm
-   * daemon.
-   * @param len The length of the message body in bytes.
-   * @return The message body.
-   */
-  legacymsg::RtcpJobRqstMsgBody receiveJobMsgBody(const int connection,
-    const uint32_t len) throw(castor::exception::Exception);
-
-  /**
-   * Throws an exception if the specified message body length is invalid for
-   * a vdqm job message.
-   *
-   * @param maxLen The maximum length in bytes
-   * @param len The actual length in bytes.
-   */
-  void checkJobMsgLen(const size_t maxLen, const size_t len) const
-    throw(castor::exception::Exception);
 
   /**
    * Sets the status of the specified drive to the specified value.
@@ -176,7 +118,7 @@ private:
    * The TCP/IP port on which the vdqmd daemon is listening.
    */
   const unsigned short m_vdqmPort;
-
+  
   /**
    * The timeout in seconds to be applied when performing network read and
    * write operations.
