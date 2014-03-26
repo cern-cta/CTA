@@ -71,8 +71,8 @@
 //------------------------------------------------------------------------------
 // Instantiation of a static factory class
 //------------------------------------------------------------------------------
-static castor::SvcFactory<castor::db::ora::OraRHSvc>* s_factoryOraRHSvc =
-  new castor::SvcFactory<castor::db::ora::OraRHSvc>();
+static castor::SvcFactory<castor::db::ora::OraRHSvc>
+  s_factoryOraRHSvc;
 
 //------------------------------------------------------------------------------
 // Static constants initialization
@@ -411,12 +411,14 @@ void castor::db::ora::OraRHSvc::storeRequest
     if (e.getErrorCode() == 20121) {
       // permission denied
       castor::exception::PermissionDenied ex;
-      throw ex;
-    } else if (e.getErrorCode() == 20113) {
-      // invalid service class
-      castor::exception::InvalidArgument ex;
       // extract the original message sent by the PL/SQL code
       // from the surrounding oracle additions
+      std::string msg = e.what();
+      ex.getMessage() << msg.substr(11,msg.find('\n')-11) << "\n";
+      throw ex;
+    } else if (e.getErrorCode() == 20113) {
+      // invalid service class - same as above
+      castor::exception::InvalidArgument ex;
       std::string msg = e.what();
       ex.getMessage() << msg.substr(11,msg.find('\n')-11) << "\n";
       throw ex;

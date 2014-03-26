@@ -28,11 +28,14 @@ CREATE OR REPLACE FUNCTION insertPreChecks
    egid IN INTEGER,
    svcClassName IN VARCHAR2,
    reqType IN INTEGER) RETURN NUMBER AS
+  reqName VARCHAR2(100);
 BEGIN
   -- Check permissions
   IF 0 != checkPermission(svcClassName, euid, egid, reqType) THEN
     -- permission denied
-    raise_application_error(-20121, 'Permission denied');
+    SELECT object INTO reqName FROM Type2Obj WHERE type = reqType;
+    raise_application_error(-20121, 'Insufficient privileges for user ' || euid ||','|| egid
+        ||' performing a '||   ||' request on svcClass '''|| svcClassName ||'''');
   END IF;  
   -- check the validity of the given service class and return its internal id
   RETURN checkForValidSvcClass(svcClassName, 1, 1);
