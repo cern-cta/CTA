@@ -9,16 +9,28 @@
 .SH SYNOPSIS
 .BI "#include <" serrno.h ">"
 
-.BI "extern int " serrno ";"
+.BI "int *C__serrno (void);"
 .br
-.BI "extern char *sstrerror(int " serrno_value " );"
+.BI "#define serrno (*C__serrno())"
 .br
-.BI "extern void sperror(char * " message " );"
+
+.BI "char *sstrerror(int " serrno_value " );"
+.br
+.BI "int sstrerror_r(const int " serrno_value ", char *const " buf ", const size_t " buflen ");"
+.br
+
+.BI "void sperror(char * " message " );"
 
 .SH DESCRIPTION
-The \fBserrno\fP variable is the CASTOR's equivalent to system error variable \fBerrno\fP. This variable, accessible only trough CASTOR API's and related functions below is guaranteed to be thread-safe.
+The \fBserrno\fP variable is the CASTOR's equivalent to system error variable \fBerrno\fP. This variable, accessible only through CASTOR API's and related functions below is guaranteed to be thread-safe.
 .br
-The serrno variable is divided into common values and per package values, that are:
+
+The \fBsstrerror()\fP and \fBsstrerror_r()\fP functions are functionally equivalent to the \fBstrerror()\fP and XSI-compliant \fBstrerror_r()\fP functions respectively, accept that they are based on possible \fBserrno\fP values.  Please note that \fBserrno\fP values are a superset of all possible \fBerrno\fP values.
+
+Please note that the \fBsstrerror()\fP and \fBsstrerror_r()\fP functions are both thread safe.  Internally the \fBsstrerror()\fP function allocates thread-specific memory using \fBCglobals_get()\fP that it then passes to a call to \fBsstrerror_r()\fP.
+.br
+
+The \fBserrno\fP variable is divided into common values and per package values, that are:
 .RS
 .TP 1.9i
 .B COPYTAPE

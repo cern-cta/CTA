@@ -93,7 +93,7 @@ int castor::tape::tapebridge::ClientAddressLocal::connectToClient(
 
   timeval connectStartTime = {0, 0};
   timeval connectEndTime   = {0, 0};
-  utils::getTimeOfDay(&connectStartTime, NULL);
+  castor::utils::getTimeOfDay(&connectStartTime, NULL);
 
   castor::utils::SmartFd smartConnectSock;
   try {
@@ -112,7 +112,7 @@ int castor::tape::tapebridge::ClientAddressLocal::connectToClient(
       ": " << ex.getMessage().str());
   }
 
-  utils::getTimeOfDay(&connectEndTime, NULL);
+  castor::utils::getTimeOfDay(&connectEndTime, NULL);
   connectDuration =
     castor::utils::timevalAbsDiff(connectStartTime, connectEndTime);
 

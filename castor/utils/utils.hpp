@@ -86,6 +86,16 @@ void toUpper(char *str);
 void toUpper(std::string &str);
 
 /**
+ * Simple C++ wrapper around the C function named gettimeofday.  The wrapper
+ * simply converts the return of -1 and the setting of errno to an exception.
+ *
+ * @param tv See the manual page for gettimeofday.
+ * @param tz See the manual page for gettimeofday.
+ */
+void getTimeOfDay(struct timeval *const tv, struct timezone *const tz)
+  throw(castor::exception::Exception);
+
+/**
  * Compares two time-values, a and b, and returns true if time value a is
  * greater than time-value b, else returns false.
  *

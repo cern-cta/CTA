@@ -1704,9 +1704,9 @@ CREATE OR REPLACE PROCEDURE internalPutDoneFunc (cfId IN INTEGER,
   ogid INTEGER;
 BEGIN
   -- compute the gc weight of the brand new diskCopy
+  gcwProc := castorGC.getUserWeight(svcClassId);
   EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:fs); END;'
     USING OUT gcw, IN fs;
-  gcwProc := castorGC.getUserWeight(svcClassId);
   -- update the DiskCopy
   UPDATE DiskCopy
      SET status = dconst.DISKCOPY_VALID,

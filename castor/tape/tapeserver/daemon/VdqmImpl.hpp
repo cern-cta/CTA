@@ -23,6 +23,7 @@
 #ifndef CASTOR_TAPE_TAPESERVER_DAEMON_VDQMIMPL_HPP
 #define CASTOR_TAPE_TAPESERVER_DAEMON_VDQMIMPL_HPP 1
 
+#include "castor/log/Logger.hpp"
 #include "castor/tape/legacymsg/MessageHeader.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 
@@ -40,10 +41,15 @@ public:
   /**
    * Constructor.
    *
+   * @param log The object representing the API of the CASTOR logging system.
    * @param vdqmHostName The name of the host on which the vdqmd daemon is
    * running.
+   * @param vdqmPort The TCP/IP port on which the vdqmd daemon is listening.
+   * @param netTimeout The timeout in seconds to be applied when performing
+   * network read and write operations.
    */
-  VdqmImpl(const std::string &vdqmHostName) throw();
+  VdqmImpl(log::Logger &log, const std::string &vdqmHostName,
+    const unsigned short vdqmPort, const int netTimeout) throw();
 
   /**
    * Destructor.
@@ -59,30 +65,34 @@ public:
    *
    * @param connection The file descriptor of the connection with the vdqm
    * daemon.
-   * @param netTimeout The timeout to be applied when performing network read
-   * and write operations.
    * @return The job request from the vdqm.
    */
-  legacymsg::RtcpJobRqstMsgBody receiveJob(const int connection,
-    const int netTimeout) throw(castor::exception::Exception);
+  legacymsg::RtcpJobRqstMsgBody receiveJob(const int connection)
+    throw(castor::exception::Exception);
 
   /**
    * Sets the status of the specified tape drive to down.
    *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
    * @param unitName The unit name of the tape drive. 
    * @param dgn The device group name of the tape drive.
    */
-  void setTapeDriveStatusDown(const std::string &unitName,
-    const std::string &dgn) throw(castor::exception::Exception);
+  void setTapeDriveStatusDown(const std::string &server,
+    const std::string &unitName, const std::string &dgn)
+    throw(castor::exception::Exception);
 
   /**
    * Sets the status of the specified tape drive to up.
    *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
    */
-  void setTapeDriveStatusUp(const std::string &unitName,
-    const std::string &dgn) throw(castor::exception::Exception);
+  void setTapeDriveStatusUp(const std::string &server,
+    const std::string &unitName, const std::string &dgn)
+    throw(castor::exception::Exception);
 
 private:
 
@@ -92,12 +102,10 @@ private:
    *
    * @param connection The file descriptor of the connection with the vdqm
    * daemon.
-   * @param netTimeout The timeout to be applied when performing network read
-   * and write operations.
    * @return The message header.
    */
-  legacymsg::MessageHeader receiveJobMsgHeader(const int connection,
-    const int netTimeout) throw(castor::exception::Exception);
+  legacymsg::MessageHeader receiveJobMsgHeader(const int connection)
+    throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the specified magic number is invalid for a vdqm
@@ -119,14 +127,11 @@ private:
    *
    * @param connection The file descriptor of the connection with the vdqm
    * daemon.
-   * @param netTimeout The timeout to be applied when performing network read
-   * and write operations.
    * @param len The length of the message body in bytes.
    * @return The message body.
    */
   legacymsg::RtcpJobRqstMsgBody receiveJobMsgBody(const int connection,
-    const int netTimeout, const uint32_t len)
-    throw(castor::exception::Exception);
+    const uint32_t len) throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the specified message body length is invalid for
@@ -139,9 +144,44 @@ private:
     throw(castor::exception::Exception);
 
   /**
+   * Sets the status of the specified drive to the specified value.
+   *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive. 
+   * @param dgn The device group name of the tape drive.
+   */
+  void setTapeDriveStatus(const std::string &server,
+    const std::string &unitName, const std::string &dgn,
+    const int status) throw(castor::exception::Exception);
+
+  /**
+   * Connects to the vdqmd daemon.
+   *
+   * @return The socket-descriptor of the connection with the vdqmd daemon.
+   */
+  int connectToVdqm() const throw(castor::exception::Exception);
+
+  /**
+   * The object representing the API of the CASTOR logging system.
+   */
+  log::Logger &m_log;
+
+  /**
    * The name of the host on which the vdqmd daemon is running.
    */
   const std::string m_vdqmHostName;
+
+  /**
+   * The TCP/IP port on which the vdqmd daemon is listening.
+   */
+  const unsigned short m_vdqmPort;
+
+  /**
+   * The timeout in seconds to be applied when performing network read and
+   * write operations.
+   */
+  const int m_netTimeout;
 
 }; // class VdqmImpl
 

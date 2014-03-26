@@ -60,30 +60,34 @@ public:
    *
    * @param connection The file descriptor of the connection with the vdqm
    * daemon.
-   * @param netTimeout The timeout to be applied when performing network read
-   * and write operations.
    * @return The job request from the vdqm.
    */
-  legacymsg::RtcpJobRqstMsgBody receiveJob(const int connection,
-    const int netTimeout) throw(castor::exception::Exception);
+  legacymsg::RtcpJobRqstMsgBody receiveJob(const int connection)
+    throw(castor::exception::Exception);
 
   /**
    * Sets the status of the specified tape drive to down.
    *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
    * @param unitName The unit name of the tape drive. 
    * @param dgn The device group name of the tape drive.
    */
-  void setTapeDriveStatusDown(const std::string &unitName,
-    const std::string &dgn) throw(castor::exception::Exception);
+  void setTapeDriveStatusDown(const std::string &server,
+    const std::string &unitName, const std::string &dgn)
+    throw(castor::exception::Exception);
 
   /**
    * Sets the status of the specified tape drive to up.
    *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
    */
-  void setTapeDriveStatusUp(const std::string &unitName,
-    const std::string &dgn) throw(castor::exception::Exception);
+  void setTapeDriveStatusUp(const std::string &server,
+    const std::string &unitName, const std::string &dgn)
+    throw(castor::exception::Exception);
 
 private:
 
