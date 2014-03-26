@@ -22,47 +22,14 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
-#include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
+#include "castor/tape/tapeserver/daemon/FakeClient.hpp"
 #include "castor/log/StringLogger.hpp"
 #include <gtest/gtest.h>
 
 namespace {
-  const int init_value=-1;
   const std::string error="ERROR_TEST";
-using namespace castor::tape;
+  using namespace castor::tape;
   
-class FakeClient : public tapeserver::daemon::ClientInterface
-{
-  
-public:
-  FakeClient():current_succes(init_value),current_failled(init_value){}
-  
-  virtual void reportMigrationResults(tapegateway::FileMigrationReportList & migrationReport,
-  RequestReport& report) throw (castor::tape::Exception){
-    current_succes=migrationReport.successfulMigrations().size();
-    current_failled=migrationReport.failedMigrations().size();
-  }
-  
-  virtual void reportEndOfSessionWithError(const std::string & errorMsg, int errorCode, 
-  RequestReport &transactionReport) throw (castor::tape::Exception) {
-    //ASSERT_EQ(0,current_succes);
-  };
- 
-  virtual void reportEndOfSession(RequestReport &report) throw (Exception) {
-    //ASSERT_EQ(0,current_failled);
-  }
-  
-  virtual tapegateway::FilesToRecallList* getFilesToRecall(uint64_t files,
-  uint64_t bytes, RequestReport &report) throw (castor::tape::Exception) 
-  {
-    return NULL;
-  }
-  
-  int current_succes;
-  int current_failled;
-
-};
-
 TEST(castor_tape_tapeserver_daemon, MigrationReportPackerNominal) {
   FakeClient client;
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerNominal");

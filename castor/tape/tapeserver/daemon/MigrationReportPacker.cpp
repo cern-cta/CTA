@@ -34,15 +34,14 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-MigrationReportPacker::MigrationReportPacker(ClientInterface & tg,castor::log::LogContext& lc):
-m_workerThread(*this),m_client(tg),m_lc(lc),
-m_listReports(new tapegateway::FileMigrationReportList),m_errorHappened(false),m_continue(true) {
+MigrationReportPacker::MigrationReportPacker(ClientInterface & tg,castor::log::LogContext lc):
+ReportPackerInterface<detail::Migration>(tg,lc),
+m_workerThread(*this),m_errorHappened(false),m_continue(true) {
 }
 
- MigrationReportPacker::~MigrationReportPacker(){
-    castor::tape::threading::MutexLocker ml(&m_producterProtection);
-    
-  }
+MigrationReportPacker::~MigrationReportPacker(){
+  castor::tape::threading::MutexLocker ml(&m_producterProtection);
+}
  
 void MigrationReportPacker::reportCompletedJob(const tapegateway::FileToMigrateStruct& migratedFile) {
   std::auto_ptr<Report> rep(new ReportSuccessful(migratedFile));
@@ -81,7 +80,6 @@ void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& _th
   
   _this.m_listReports->addSuccessfulMigrations(successMigration.release());
 }
-
 void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& _this){
   if(!_this.m_errorHappened){
     _this.logReport(_this.m_listReports->successfulMigrations(),"A file was successfully written on the tape"); 
@@ -97,7 +95,6 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& _this){
   //Thus all current reports are deleted otherwise they would have been sent again at the next flush
   _this.m_listReports.reset(new tapegateway::FileMigrationReportList);
 }
-  
 void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& _this){
   if(!_this.m_errorHappened){
     tapeserver::daemon::ClientInterface::RequestReport chrono;
@@ -139,6 +136,7 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& _this){
   _this.m_errorHappened=true;
 }
 //------------------------------------------------------------------------------
+
 MigrationReportPacker::WorkerThread::WorkerThread(MigrationReportPacker& parent):
 m_parent(parent) {
 }

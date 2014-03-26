@@ -157,6 +157,8 @@ add_executable(castorThreadedUnitTests
   ../castor/tape/tapeserver/threading/ThreadingMTTests.cpp
   ../castor/tape/tapeserver/daemon/tapeserverdTest.cpp
   ../castor/tape/tapeserver/threading/ThreadingBlockingQTests.cpp
+  ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp
+  ../castor/tape/tapeserver/daemon/MigrationReportPackerTest.cpp
 )
 
 target_link_libraries(castorThreadedUnitTests

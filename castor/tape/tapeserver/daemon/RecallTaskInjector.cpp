@@ -24,7 +24,7 @@ namespace daemon {
 RecallTaskInjector::RecallTaskInjector(MemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
         DiskThreadPoolInterface<DiskWriteTask> & diskWriter,
-        ClientInterface& client,castor::log::LogContext& lc) : 
+        ClientInterface& client,castor::log::LogContext lc) : 
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
         m_client(client),m_lc(lc) 
@@ -33,12 +33,6 @@ RecallTaskInjector::RecallTaskInjector(MemoryManager & mm,
 void RecallTaskInjector::requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall) {
   //@TODO where shall we  acquire the lock ? There of just before the push ?
   castor::tape::threading::MutexLocker ml(&m_producerProtection);
-  
-  LogContext::ScopedParam sp01(m_lc, Param("maxFiles", maxFiles));
-  LogContext::ScopedParam sp02(m_lc, Param("byteSizeThreshold",byteSizeThreshold));
-  LogContext::ScopedParam sp03(m_lc, Param("lastCall", lastCall));
-
-  m_lc.log(LOG_INFO,"Request more jobs");
   m_queue.push(Request(maxFiles, byteSizeThreshold, lastCall));
 }
 

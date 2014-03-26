@@ -1,62 +1,16 @@
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
-#include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
+
 #include "castor/tape/tapeserver/daemon/DiskThreadPoolInterface.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
-
+#include <gtest/gtest.h>
+#include "castor/tape/tapeserver/daemon/FakeClient.hpp"
 namespace
 {
 using namespace castor::tape::tapeserver::daemon;
 using namespace castor::tape;
-const unsigned int nbFile=5;
 const int blockSize=4096;
-
-class FakeClient : public ClientInterface
-{
-  
-public:
-  FakeClient(int nbCalls):m_current(0){
-    for(int n=0;n<nbCalls;++n) {
-      std::auto_ptr<tapegateway::FilesToRecallList> ptr(new tapegateway::FilesToRecallList());
-      for(unsigned int i=0;i<nbFile;++i)
-      {
-        ptr->filesToRecall().push_back(new tapegateway::FileToRecallStruct);
-        ptr->filesToRecall().back()->setFileid(i);
-        ptr->filesToRecall().back()->setBlockId0(1*i);
-        ptr->filesToRecall().back()->setBlockId1(2*i);
-        ptr->filesToRecall().back()->setBlockId2(3*i);
-        ptr->filesToRecall().back()->setBlockId3(4*i);
-        ptr->filesToRecall().back()->setFseq(255+i);
-        ptr->filesToRecall().back()->setPath("rfio:///root/bidule");
-        ptr->filesToRecall().back()->setFileTransactionId(666+i);
-        ptr->filesToRecall().back()->setFilesToRecallList(ptr.get());
-    }
-    lists.push_back(ptr.release());
-    }
-    lists.push_back(NULL);
-  }
-  virtual void reportMigrationResults(tapegateway::FileMigrationReportList & migrationReport,
-  RequestReport& report) throw (castor::tape::Exception){}
-  
-  virtual tapegateway::FilesToRecallList * getFilesToRecall(uint64_t files,
-  uint64_t bytes, RequestReport &report) throw (castor::tape::Exception) 
-  {
-    report.transactionId=666;
-    report.connectDuration=42;
-    report.sendRecvDuration=21;
-    std::cout<<m_current<<"<?"<<lists.size()<<std::endl;
-    return lists[m_current++];
-  }
-  
-  virtual void reportEndOfSessionWithError(const std::string & errorMsg, int errorCode, 
-  RequestReport &transactionReport) throw (castor::tape::Exception) {};
- 
-  virtual void reportEndOfSession(RequestReport &report) throw (Exception) {}
-private:
-  std::vector<tapegateway::FilesToRecallList*> lists;
-  int m_current;
-};
 
 class FakeDiskWriteThreadPool : public DiskThreadPoolInterface<DiskWriteTask>
 {
