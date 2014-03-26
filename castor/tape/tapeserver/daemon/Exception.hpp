@@ -46,8 +46,6 @@ private:
   std::string m_what;
 };
 
-void errnoExeptLauncher(int ret, void * obj);
-
 }
 }
 }

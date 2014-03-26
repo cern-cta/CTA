@@ -26,7 +26,6 @@ CastorInstallInitScript (tapeserverd)
 add_executable(tapeserver-mm 
   tapeserver-mm.cpp 
   RecallTaskInjector.cpp
-  Exception.cpp
   ClientProxy.cpp
   MigrationReportPacker.cpp
   RecallReportPacker.cpp)
