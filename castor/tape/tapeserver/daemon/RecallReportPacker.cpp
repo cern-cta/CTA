@@ -80,8 +80,12 @@ void RecallReportPacker::flush(){
   unsigned int totalSize = m_listReports->failedRecalls().size() +
                        m_listReports->successfulRecalls().size();
   if(totalSize > 0){
+    logReport(m_listReports->failedRecalls(),"A file failed to be recalled");
+    logReport(m_listReports->successfulRecalls(),"A file was successfully recalled");
+    
     ClientInterface::RequestReport chrono;
     m_client.reportRecallResults(*m_listReports,chrono);
+    m_listReports.reset(new FileReportList);
   }
 }
 
