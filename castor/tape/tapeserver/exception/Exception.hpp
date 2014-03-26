@@ -33,7 +33,7 @@ namespace castor {
 namespace tape {
   class Exception: public castor::exception::Exception {
   public:
-    Exception(const std::string& what): castor::exception::Exception(0) { setWhat(what); }
+    Exception(const std::string& what): castor::exception::Exception(SEINTERNAL) { setWhat(what); }
     // Copy operator needed to throw anonymous instance (throw myClass("some failure."))
     Exception(const Exception &ex);
     virtual ~Exception() throw() {};
