@@ -35,6 +35,7 @@
 #include "h/serrno.h"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "RecallTaskInjector.hpp"
 
 using namespace castor::tape;
 using namespace castor::log;
@@ -42,9 +43,10 @@ using namespace castor::log;
 castor::tape::tapeserver::daemon::MountSession::MountSession(
     const legacymsg::RtcpJobRqstMsgBody& clientRequest, 
     castor::log::Logger& logger, System::virtualWrapper & sysWrapper,
-    const utils::TpconfigLines & tpConfig): 
+    const utils::TpconfigLines & tpConfig,
+    const CastorConf & castorConf): 
     m_request(clientRequest), m_logger(logger), m_clientProxy(clientRequest),
-    m_sysWrapper(sysWrapper), m_tpConfig(tpConfig) {}
+    m_sysWrapper(sysWrapper), m_tpConfig(tpConfig), m_castorConf(castorConf) {}
 
 void castor::tape::tapeserver::daemon::MountSession::execute()
 throw (castor::tape::Exception) {
@@ -117,7 +119,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
   // We are ready to start the session. In case of read there is no interest in
   // creating the machinery before getting the tape mounted, so do it now.
   // 1) Get hold of the drive and check it.
-  utils::TpconfigLines::iterator configLine;
+  utils::TpconfigLines::const_iterator configLine;
   for (configLine = m_tpConfig.begin(); configLine != m_tpConfig.end(); configLine++) {
     if (configLine->unitName == m_request.driveUnit && configLine->density == m_volInfo.density) {
       break;
@@ -237,7 +239,18 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     lc.log(LOG_ERR, "Notified client of end session with error");
     return;
   }
-  // TBC...
+  // We can now start instantiating all the components of the data path
+  {
+    castor::tape::tapeserver::daemon::MemoryManager mm(m_castorConf.rtcopydNbBufs, 
+        m_castorConf.rtcopydBufsz);
+    castor::tape::tapeserver::daemon::TapeReadSingleThread trst(*drive);
+    castor::tape::tapeserver::daemon::DiskWriteThreadPool dwtp(
+        m_castorConf.tapeserverdDiskThreads,
+        m_castorConf.tapebridgeBulkRequestRecallMaxFiles,
+        m_castorConf.tapebridgeBulkRequestRecallMaxBytes);
+    castor::tape::tapeserver::daemon::RecallTaskInjector rti(mm, trst, 
+        dwtp, m_clientProxy, lc);
+  }
   {
     // Temporary end of session, to please the ClientSimulator
     ClientProxy::RequestReport reqReport;

@@ -30,6 +30,7 @@
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "ClientProxy.hpp"
+#include "TapeSingleThreadInterface.hpp"
 
 using namespace castor::tape;
 using namespace castor::log;
@@ -45,10 +46,51 @@ namespace daemon {
    */
   class MountSession {
   public:
+    /** Subclass holding all the contents from castor.conf file. The pre-
+     * extraction of the contents by the caller instead of direct getconfent
+     * calls allows unit testing */
+    class CastorConf {
+    public:
+      CastorConf(): rfioConnRetry(0), rfioConnRetryInt(0), rfioIOBufSize(0),
+        rtcopydBufsz(0), rtcopydNbBufs(0), tapeConfirmDriveFreeInterval(0),
+        tapeserverdDiskThreads(0) {}
+      uint32_t rfioConnRetry;
+      uint32_t rfioConnRetryInt;
+      uint32_t rfioIOBufSize;
+      uint32_t rtcopydBufsz;
+      uint32_t rtcopydNbBufs;
+      std::string tapeBadMIRHandlingRepair;
+      std::string tapeConfirmDriveFree;
+      uint32_t tapeConfirmDriveFreeInterval;
+      uint32_t tapebridgeBulkRequestMigrationMaxBytes;
+      uint32_t tapebridgeBulkRequestMigrationMaxFiles;
+      uint32_t tapebridgeBulkRequestRecallMaxBytes;
+      uint32_t tapebridgeBulkRequestRecallMaxFiles;
+// Other values found on production tape servers
+//      TAPE CRASHED_RLS_HANDLING RETRY
+//      TAPE CRASHED_RLS_HANDLING_RETRIES 3
+//      TAPE CRASHED_RLS_HANDLING_RETRY_DELAY 180
+//      TAPE DOWN_ON_TPALERT NO
+//      TAPE DOWN_ON_UNLOAD_FAILURE NO
+//      TAPEBRIDGE BULKREQUESTMIGRATIONMAXBYTES 5000000000
+//      TAPEBRIDGE BULKREQUESTMIGRATIONMAXFILES 500
+//      TAPEBRIDGE BULKREQUESTRECALLMAXBYTES 5000000000
+//      TAPEBRIDGE BULKREQUESTRECALLMAXFILES 500
+//      TAPEBRIDGE MAXBYTESBEFOREFLUSH 32000000000
+//      TAPEBRIDGE MAXFILESBEFOREFLUSH 500
+//      TAPEBRIDGE TAPEFLUSHMODE ONE_FLUSH_PER_N_FILES
+//      UPV HOST castorcupv
+//      VDQM HOST castorvdqm1
+//      VMGR HOST castorvmgr
+
+      // Additions for tapeserverd
+      uint32_t tapeserverdDiskThreads;
+    };
     /** Constructor */
     MountSession(const legacymsg::RtcpJobRqstMsgBody & clientRequest, 
             castor::log::Logger & logger, System::virtualWrapper & sysWrapper,
-            const utils::TpconfigLines & tpConfig);
+            const utils::TpconfigLines & tpConfig,
+            const CastorConf & castorConf);
     /** The only method. It will execute (like a task, that it is) */
     void execute() throw (Exception);
     /** Temporary method used for debugging while building the session class */
@@ -59,7 +101,8 @@ namespace daemon {
     ClientProxy m_clientProxy;
     ClientProxy::VolumeInfo m_volInfo;
     System::virtualWrapper & m_sysWrapper;
-    utils::TpconfigLines m_tpConfig;
+    const utils::TpconfigLines & m_tpConfig;
+    const CastorConf & m_castorConf;
     /** sub-part of execute for the read sessions */
     void executeRead(LogContext & lc);
     /** sub-part of execute for a write session */

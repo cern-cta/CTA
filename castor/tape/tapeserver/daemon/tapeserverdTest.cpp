@@ -87,7 +87,10 @@ TEST(tapeServer, MountSessionGoodday) {
   "/dev/tape_T10D6116", "8000GC", "down", "acs0,1,1,6", "T10000"));
   tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
   "/dev/tape_T10D6116", "5000GC", "down", "acs0,1,1,6", "T10000"));
-  MountSession sess(VDQMjob, logger, mockSys, tpConfig);
+  MountSession::CastorConf castorConf;
+  castorConf.rtcopydBufsz = 1024;
+  castorConf.rtcopydNbBufs = 10;
+  MountSession sess(VDQMjob, logger, mockSys, tpConfig, castorConf);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
@@ -131,7 +134,10 @@ TEST(tapeServer, MountSessionNoSuchDrive) {
   "/dev/noSuchTape", "8000GC", "down", "acs0,1,1,6", "T10000"));
   tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
   "/dev/noSuchTape", "5000GC", "down", "acs0,1,1,6", "T10000"));
-  MountSession sess(VDQMjob, logger, mockSys, tpConfig);
+  MountSession::CastorConf castorConf;
+  castorConf.rtcopydBufsz = 1024;
+  castorConf.rtcopydNbBufs = 10;
+  MountSession sess(VDQMjob, logger, mockSys, tpConfig, castorConf);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
