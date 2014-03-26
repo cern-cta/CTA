@@ -30,6 +30,8 @@
 #include "castor/tape/tapeserver/daemon/TaskInjector.hpp"
 #include "DiskThreadPoolInterface.hpp"
 #include <vector>
+#define __STDC_FORMAT_MACROS
+#include <inttypes.h>
 
 namespace castor {
 namespace tape {
@@ -40,7 +42,7 @@ class DiskWriteThreadPool : public DiskThreadPoolInterface<DiskWriteTask> {
 public:
   DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq):
             m_jobInjector(NULL), m_filesQueued(0), m_blocksQueued(0), 
-            m_maxFilesReq(maxFilesReq), m_maxBlocksReq(maxBlocksReq)
+            m_maxFilesReq(maxFilesReq), m_maxBytesReq(maxBlocksReq)
    {
     for(int i=0; i<nbThread; i++) {
       DiskWriteWorkerThread * thr = new DiskWriteWorkerThread(*this);
@@ -85,13 +87,13 @@ public:
 
 private:
   bool belowMidBlocksAfterPop(int blocksPopped) {
-    return m_blocksQueued - blocksPopped < m_maxBlocksReq/2;
+    return m_blocksQueued - blocksPopped < m_maxBytesReq/2;
   }
   bool belowMidFilesAfterPop(int filesPopped) {
     return m_filesQueued -filesPopped < m_maxFilesReq/2;
   }
    bool crossingDownBlockThreshod(int blockPopped) {
-    return (m_blocksQueued >= m_maxBlocksReq/2) && (m_blocksQueued - blockPopped < m_maxBlocksReq/2);
+    return (m_blocksQueued >= m_maxBytesReq/2) && (m_blocksQueued - blockPopped < m_maxBytesReq/2);
   }
   bool crossingDownFileThreshod(int filesPopped) {
     return (m_filesQueued >= m_maxFilesReq/2) && (m_filesQueued - filesPopped < m_maxFilesReq/2);
@@ -102,15 +104,15 @@ private:
       castor::tape::threading::MutexLocker ml(&m_counterProtection);
       /* We are about to go to empty: request a last call job injection */
       if(m_filesQueued == 1 && ret->files()) {
-	printf("In DiskWriteTask::popAndRequestMoreJobs(), requesting last call: files=%d, blocks=%d, ret->files=%d, ret->blocks=%d, maxFiles=%d, maxBlocks=%d\n", 
-                 m_filesQueued, m_blocksQueued, ret->files(), ret->blocks(), m_maxFilesReq, m_maxBlocksReq);
-        m_jobInjector->requestInjection(m_maxFilesReq, m_maxBlocksReq, true);
+	printf("In DiskWriteTask::popAndRequestMoreJobs(), requesting last call: files=%d, blocks=%d, ret->files=%d, ret->blocks=%d, maxFiles=%d, maxBlocks=%" PRIu64 "\n", 
+                 m_filesQueued, m_blocksQueued, ret->files(), ret->blocks(), m_maxFilesReq, m_maxBytesReq);
+        m_jobInjector->requestInjection(m_maxFilesReq, m_maxBytesReq, true);
       } else if (belowMidBlocksAfterPop(ret->blocks()) && belowMidFilesAfterPop(ret->files()) 
 	      && (crossingDownBlockThreshod(ret->blocks()) || crossingDownFileThreshod(ret->files()))) {
-         printf("In DiskWriteTask::popAndRequestMoreJobs(), requesting: files=%d, blocks=%d, ret->files=%d, ret->blocks=%d, maxFiles=%d, maxBlocks=%d\n", 
-                 m_filesQueued, m_blocksQueued, ret->files(), ret->blocks(), m_maxFilesReq, m_maxBlocksReq);
+         printf("In DiskWriteTask::popAndRequestMoreJobs(), requesting: files=%d, blocks=%d, ret->files=%d, ret->blocks=%d, maxFiles=%d, maxBlocks=%" PRIu64 "\n", 
+                 m_filesQueued, m_blocksQueued, ret->files(), ret->blocks(), m_maxFilesReq, m_maxBytesReq);
         /* We are crossing the half full queue threshold down: ask for more more */
-        m_jobInjector->requestInjection(m_maxFilesReq, m_maxBlocksReq, false);
+        m_jobInjector->requestInjection(m_maxFilesReq, m_maxBytesReq, false);
       }
       m_filesQueued-=ret->files();
       m_blocksQueued-=ret->blocks();
@@ -141,10 +143,10 @@ private:
   std::vector<DiskWriteWorkerThread *> m_threads;
   castor::tape::threading::Mutex m_counterProtection;
   TaskInjector * m_jobInjector;
-  int m_filesQueued;
-  int m_blocksQueued;
-  int m_maxFilesReq;
-  int m_maxBlocksReq;
+  uint32_t m_filesQueued;
+  uint32_t m_blocksQueued;
+  uint32_t m_maxFilesReq;
+  uint64_t m_maxBytesReq;
 
 };
 
