@@ -229,7 +229,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  void tapeSessionSuceeeded(const std::string &unitName)
+  void tapeSessionSucceeded(const std::string &unitName)
      throw(castor::exception::Exception);
 
   /**

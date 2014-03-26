@@ -87,7 +87,8 @@ int castor::tape::tapeserver::daemon::TapeDaemon::main(const int argc,
 
   } catch (castor::exception::Exception &ex) {
     std::ostringstream msg;
-    msg << "Caught an unexpected exception: " << ex.getMessage().str();
+    msg << "Aborting: Caught an unexpected exception: " <<
+      ex.getMessage().str();
     m_stdErr << std::endl << msg.str() << std::endl << std::endl;
 
     log::Param params[] = {

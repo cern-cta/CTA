@@ -430,9 +430,9 @@ const castor::tape::legacymsg::RtcpJobRqstMsgBody
 }
 
 //-----------------------------------------------------------------------------
-// tapeSessionSuceeeded
+// tapeSessionSucceeded
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::tapeSessionSuceeeded(
+void castor::tape::tapeserver::daemon::DriveCatalogue::tapeSessionSucceeded(
   const std::string &unitName) throw(castor::exception::Exception) {
   DriveMap::iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
