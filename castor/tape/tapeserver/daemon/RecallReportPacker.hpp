@@ -68,8 +68,8 @@ public:
    */
   void reportEndOfSessionWithErrors(const std::string msg,int error_code);
   
-  //void startThreads() { m_workerThread.start(); }
-  //void waitThread() { m_workerThread.wait(); }
+  void startThreads() { m_workerThread.start(); }
+  void waitThread() { m_workerThread.wait(); }
   
 private:
   class Report {
