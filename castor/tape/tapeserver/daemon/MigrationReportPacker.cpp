@@ -96,12 +96,14 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& _this){
   _this.m_listReports.reset(new tapegateway::FileMigrationReportList);
 }
 void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& _this){
+  tapeserver::daemon::ClientInterface::RequestReport chrono;
   if(!_this.m_errorHappened){
-    tapeserver::daemon::ClientInterface::RequestReport chrono;
+    _this.m_lc.log(LOG_INFO,"Nominal EndofSession has been reported without incident on tape-writing");
     _this.m_client.reportEndOfSession(chrono);
   }
   else {
      const std::string& msg ="Nominal EndofSession has been reported  but an writing error on the tape happened before";
+     _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono); 
      _this.m_lc.log(LOG_ERR,msg);
      //throw castor::exception::Exception(msg);
   }
@@ -109,12 +111,15 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& _
 }
 
 void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationReportPacker& _this){
-  if(_this.m_errorHappened) {
   tapeserver::daemon::ClientInterface::RequestReport chrono;
+  
+  if(_this.m_errorHappened) {
   _this.m_client.reportEndOfSessionWithError(m_message,m_error_code,chrono); 
+  _this.m_lc.log(LOG_ERR,m_message);
   }
   else{
-   const std::string& msg ="EndofSessionWithErrors has been reported  but NO writing error on the tape was detected";
+    const std::string& msg ="MigrationReportPacker::EndofSessionWithErrors has been reported  but NO writing error on the tape was detected";
+   _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono); 
    _this.m_lc.log(LOG_ERR,msg);
    //throw castor::exception::Exception(msg);
   }
