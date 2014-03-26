@@ -1340,6 +1340,8 @@ CREATE VIEW LateMigrationsView AS
      AND DC.castorFile = CF.id
      AND MJ.castorFile(+) = CF.id
      AND CF.tapeStatus = 0  -- CASTORFILE_NOTONTAPE
+     AND DC.status = 0  -- DISKCOPY_VALID
+     AND CF.fileSize > 0
      AND DC.creationTime < getTime() - 86400
   ORDER BY DC.creationTime DESC;
 
