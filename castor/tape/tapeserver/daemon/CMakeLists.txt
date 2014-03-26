@@ -30,7 +30,13 @@ TapeDrive Exception SCSI System Utils File
 castorcommon castorclient castorTapeServerThreading castortapeutils 
 castortapegatewayprotocol)
 
-add_library(tapeserver ClientProxy.cpp MountSession.cpp RecallTaskInjector.cpp MigrationReportPacker.cpp)
+add_library(tapeserver 
+  ClientProxy.cpp 
+  MountSession.cpp 
+  RecallTaskInjector.cpp 
+  ClientProxy.cpp 
+  MigrationReportPacker.cpp 
+  RecallReportPacker.cpp)
 
 add_library(tapeserverdTest 
   ClientSimulator.cpp 

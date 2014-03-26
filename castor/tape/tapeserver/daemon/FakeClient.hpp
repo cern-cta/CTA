@@ -22,7 +22,9 @@ class FakeClient : public castor::tape::tapeserver::daemon::ClientInterface
 {
 
 public:
-  FakeClient(int nbCalls=0):m_current(0),current_succes(init_value),current_failled(init_value){
+  FakeClient(int nbCalls=0):m_current(0),
+          current_succes_migration(init_value),current_failled_migration(init_value),
+          current_succes_recall(0),current_failled_recall(0){
     for(int n=0;n<nbCalls;++n) {
       std::auto_ptr<tapegateway::FilesToRecallList> ptr(new tapegateway::FilesToRecallList());
       for(unsigned int i=0;i<nbFile;++i)
@@ -44,12 +46,15 @@ public:
   }
   virtual void reportMigrationResults(tapegateway::FileMigrationReportList & migrationReport,
   RequestReport& report) throw (castor::tape::Exception){
-    current_succes=migrationReport.successfulMigrations().size();
-    current_failled=migrationReport.failedMigrations().size();
+    current_succes_migration=migrationReport.successfulMigrations().size();
+    current_failled_migration=migrationReport.failedMigrations().size();
   }
   
-  virtual void reportRecallResults(tapegateway::FileRecallReportList & migrationReport,
-  RequestReport& report) throw (castor::tape::Exception){}
+  virtual void reportRecallResults(tapegateway::FileRecallReportList & recallReport,
+  RequestReport& report) throw (castor::tape::Exception){
+    current_succes_recall=recallReport.successfulRecalls().size();
+    current_failled_recall=recallReport.failedRecalls().size();
+  }
   
   //workaround to use assertion inside a function returning something else than void
   //see http://code.google.com/p/googletest/wiki/AdvancedGuide#Assertion_Placement
@@ -68,15 +73,24 @@ public:
   }
   
   virtual void reportEndOfSessionWithError(const std::string & errorMsg, int errorCode, 
-  RequestReport &transactionReport) throw (castor::tape::Exception) {};
+  RequestReport &transactionReport) throw (castor::tape::Exception) {
+    error_code=errorCode;
+    msg_error=errorMsg;
+  };
  
   virtual void reportEndOfSession(RequestReport &report) throw (Exception) {}
 private:
   std::vector<tapegateway::FilesToRecallList*> lists;
   int m_current;
 public:
-  int current_succes;
-  int current_failled;
+  int current_succes_migration;
+  int current_failled_migration;
+  
+  int current_succes_recall;
+  int current_failled_recall;
+  
+  int error_code;
+  std::string msg_error;
 };
 }
 
