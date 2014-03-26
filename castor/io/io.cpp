@@ -41,6 +41,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <time.h>
+#include <list>
 
 //------------------------------------------------------------------------------
 // createListenerSock
@@ -819,6 +820,75 @@ void castor::io::writeBytes(
 }
 
 //------------------------------------------------------------------------------
+// getAddrInfoErrorString
+// 
+// Helper function used to know which string is associated with a specific errno
+// returned by getaddrinfo. This function is needed because the standard one
+// (gai_strerror) is not thread-safe on all systems.
+//------------------------------------------------------------------------------
+static void getAddrInfoErrorString(const int rc, char *buf, const size_t size) {
+  switch(rc) {
+    case EAI_BADFLAGS:
+      strncpy(buf, "Invalid value for `ai_flags' field.", size);
+      break;
+    case EAI_NONAME:
+      strncpy(buf, "NAME or SERVICE is unknown.", size);
+      break;
+    case EAI_AGAIN:
+      strncpy(buf, "Temporary failure in name resolution.", size);
+      break;
+    case EAI_FAIL:
+      strncpy(buf, "Non-recoverable failure in name res.", size);
+      break;
+    case EAI_NODATA:
+      strncpy(buf, "No address associated with NAME.", size);
+      break;
+    case EAI_FAMILY:
+      strncpy(buf, "`ai_family' not supported.", size);
+      break;
+    case EAI_SOCKTYPE:
+      strncpy(buf, "`ai_socktype' not supported.", size);
+      break;
+    case EAI_SERVICE:
+      strncpy(buf, "SERVICE not supported for `ai_socktype'.", size);
+      break;
+    case EAI_ADDRFAMILY:
+      strncpy(buf, "Address family for NAME not supported.", size);
+      break;
+    case EAI_MEMORY:
+      strncpy(buf, "Memory allocation failure.", size);
+      break;
+    case EAI_SYSTEM:
+      strncpy(buf, "System error returned in `errno'.", size);
+      break;
+    case EAI_OVERFLOW:
+      strncpy(buf, "Argument buffer overflow.", size);
+      break;
+    case EAI_INPROGRESS:
+      strncpy(buf, "Processing request in progress.", size);
+      break;
+    case EAI_CANCELED:
+      strncpy(buf, "Request canceled.", size);
+      break;
+    case EAI_NOTCANCELED:
+      strncpy(buf, "Request not canceled.", size);
+      break;
+    case EAI_ALLDONE:
+      strncpy(buf, "All requests done.", size);
+      break;
+    case EAI_INTR:
+      strncpy(buf, "Interrupted by a signal.", size);
+      break;
+    case EAI_IDN_ENCODE:
+      strncpy(buf, "IDN encoding failed.", size);
+      break;
+    default:
+      strncpy(buf, "Unknown error", size);
+      break;
+  }
+}
+
+//------------------------------------------------------------------------------
 // connectWithTimeout
 //------------------------------------------------------------------------------
 int castor::io::connectWithTimeout(
@@ -832,25 +902,31 @@ int castor::io::connectWithTimeout(
   memset(&hints, '\0', sizeof(hints));
   hints.ai_family = AF_INET;
   hints.ai_socktype = SOCK_STREAM;
-  struct addrinfo *results = NULL;
-  getAddrInfo(hostName.c_str(), portStream.str().c_str(), &hints, &results);
-  if(NULL == results) {
+  
+  struct addrinfo *res = NULL;
+  int rc = getaddrinfo(hostName.c_str(), portStream.str().c_str(), &hints, &res);
+  // If getaddrinfo() returned a negative value
+  if (0!=rc) {
+    char errBuf[100];
+    getAddrInfoErrorString(rc, errBuf, sizeof(errBuf));
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to connect to port " << port << " of host " <<
-      hostName << ": The linked list of results from getAddrInfo() is NULL";
+    ex.getMessage() << "getaddrinfo() failed: " << errBuf;
     throw ex;
   }
-
-  // The following TEMPORARY code will leak memory if connectWithTimeout()
-  // throws an exception - This code therefore needs to be fixed.
-  const int rc = connectWithTimeout(
-      results[0].ai_family, 
-      results[0].ai_socktype,
-      results[0].ai_protocol, 
-      results[0].ai_addr,
-      results[0].ai_addrlen, 
-      timeout);
-  freeaddrinfo(results);
+  struct sockaddr_in s_in;
+  if(AF_INET != res->ai_family or SOCK_STREAM != res->ai_socktype or sizeof(s_in) != res->ai_addrlen) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "getaddrinfo() bad result: either ai_family or ai_socktype or ai_addrlen are wrong";
+    freeaddrinfo(res);
+    throw ex;
+  }
+  memcpy(&s_in, res->ai_addr, sizeof(s_in));
+  int protocol = res->ai_protocol;
+  socklen_t length = res->ai_addrlen;
+  freeaddrinfo(res);
+  
+  rc = connectWithTimeout(AF_INET, SOCK_STREAM, protocol,
+          (struct sockaddr *)(&s_in), length, timeout);
   return rc;
 }
 
@@ -1009,94 +1085,6 @@ int castor::io::connectWithTimeout(
   }
 
   return smartSock.release();
-}
-
-//------------------------------------------------------------------------------
-// getAddrInfoErrorString
-// 
-// Helper function used to know which string is associated with a specific errno
-// returned by getaddrinfo. This function is needed because the standard one
-// (gai_strerror) is not thread-safe on all systems.
-//------------------------------------------------------------------------------
-static void getAddrInfoErrorString(const int rc, char *buf, const size_t size) {
-  switch(rc) {
-    case EAI_BADFLAGS:
-      strncpy(buf, "Invalid value for `ai_flags' field.", size);
-      break;
-    case EAI_NONAME:
-      strncpy(buf, "NAME or SERVICE is unknown.", size);
-      break;
-    case EAI_AGAIN:
-      strncpy(buf, "Temporary failure in name resolution.", size);
-      break;
-    case EAI_FAIL:
-      strncpy(buf, "Non-recoverable failure in name res.", size);
-      break;
-    case EAI_NODATA:
-      strncpy(buf, "No address associated with NAME.", size);
-      break;
-    case EAI_FAMILY:
-      strncpy(buf, "`ai_family' not supported.", size);
-      break;
-    case EAI_SOCKTYPE:
-      strncpy(buf, "`ai_socktype' not supported.", size);
-      break;
-    case EAI_SERVICE:
-      strncpy(buf, "SERVICE not supported for `ai_socktype'.", size);
-      break;
-    case EAI_ADDRFAMILY:
-      strncpy(buf, "Address family for NAME not supported.", size);
-      break;
-    case EAI_MEMORY:
-      strncpy(buf, "Memory allocation failure.", size);
-      break;
-    case EAI_SYSTEM:
-      strncpy(buf, "System error returned in `errno'.", size);
-      break;
-    case EAI_OVERFLOW:
-      strncpy(buf, "Argument buffer overflow.", size);
-      break;
-    case EAI_INPROGRESS:
-      strncpy(buf, "Processing request in progress.", size);
-      break;
-    case EAI_CANCELED:
-      strncpy(buf, "Request canceled.", size);
-      break;
-    case EAI_NOTCANCELED:
-      strncpy(buf, "Request not canceled.", size);
-      break;
-    case EAI_ALLDONE:
-      strncpy(buf, "All requests done.", size);
-      break;
-    case EAI_INTR:
-      strncpy(buf, "Interrupted by a signal.", size);
-      break;
-    case EAI_IDN_ENCODE:
-      strncpy(buf, "IDN encoding failed.", size);
-      break;
-    default:
-      strncpy(buf, "Unknown error", size);
-      break;
-  }
-}
-
-//------------------------------------------------------------------------------
-// getAddrInfo
-//------------------------------------------------------------------------------
-void castor::io::getAddrInfo(const char *node, const char *service,
-                       const struct addrinfo *hints,
-                       struct addrinfo **res)
-  throw(castor::exception::Exception) {
-  const int rc = getaddrinfo(node, service, hints, res);
-  
-  // If getaddrinfo() returned a negative value
-  if (0 != rc) {
-    char errBuf[100];
-    getAddrInfoErrorString(rc, errBuf, sizeof(errBuf));
-    castor::exception::Internal ex;
-    ex.getMessage() << "getaddrinfo() failed: " << errBuf;
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------

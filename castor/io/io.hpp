@@ -48,6 +48,7 @@
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
+#include <list>
 
 namespace castor {
 namespace io     {
@@ -433,37 +434,6 @@ int connectWithTimeout(
   const socklen_t       address_len,
   const int             timeout)
   throw(castor::exception::TimeOut, castor::exception::Exception);
-
-/**
- * This C++ function wraps the C function getaddrinfo() and translates the errno
- * based error reporting mechanism of the C function into the C++ exception
- * mechanism.
- *
- * Please note that this method is thread-safe because the underlying
- * getaddrinfo() function is thread-safe.  This is in accordance with
- * RFC 3493.
- *
- * @param node    If the AI_NUMERICHOST flag of hints.ai_flags is set then
- *                this parameter can be set to a numerical network address.
- *                The AI_NUMERICHOST flag suppresses hostname lookups.  If the
- *                AI_NUMERICHOST flag is not set then this parameter can be set
- *                to either a numerical network address or a hostname.  Either
- *                this parameter or the service parameter can be set to NULL,
- *                but both cannot be set to NULL at the same time.
- * @param service Sets the port number of each entry in the linked list of
- *                results.
- * @param hints   Specifies what kind of addresses are required.
- * @param res     Dynamically-allocated linked list of results.  This linked
- *                list should be freed using the freeaddrinfo() C function
- *                which has not been wrapped in a C++ wrapper because it cannot
- *                return any errors.
- */
-void getAddrInfo(
-  const char            *node,
-  const char            *service,
-  const struct addrinfo *hints,
-  struct addrinfo       **res)
-  throw(castor::exception::Exception);
 
 /**
  * Marshals the specified src value into the specified destination buffer.
