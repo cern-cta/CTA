@@ -226,36 +226,14 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatus(
 //-----------------------------------------------------------------------------
 int castor::tape::tapeserver::daemon::VdqmImpl::connectToVdqm()
   const throw(castor::exception::Exception) {
-
-  // Temporarily call Cgethostbyname(), this will be replaced in the future
-  // by code using getaddrinfo()
-  struct hostent *const host = Cgethostbyname(m_vdqmHostName.c_str());
-  if(NULL == host) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed to connect to vdqm on host " << m_vdqmHostName
-      << " port " << m_vdqmPort << ": Cgethostbyname() failed";
-    throw ex;
-  }
-
-  struct sockaddr_in networkAddress;
-  memset(&networkAddress, '\0', sizeof(networkAddress));
-  memcpy(&networkAddress.sin_addr, host->h_addr, host->h_length);
-  networkAddress.sin_port = htons(m_vdqmPort);
-  networkAddress.sin_family = AF_INET;
-
   timeval connectStartTime = {0, 0};
   timeval connectEndTime   = {0, 0};
   castor::utils::getTimeOfDay(&connectStartTime, NULL);
 
   castor::utils::SmartFd smartConnectSock;
   try {
-    smartConnectSock.reset(io::connectWithTimeout(
-      AF_INET,
-      SOCK_STREAM,
-      0, // sockProtocol
-      (const struct sockaddr *)&networkAddress,
-      sizeof(networkAddress),
-      m_netTimeout));
+    smartConnectSock.reset(io::connectWithTimeout(m_vdqmHostName, m_vdqmPort,
+            m_netTimeout));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to connect to vdqm on host " << m_vdqmHostName
