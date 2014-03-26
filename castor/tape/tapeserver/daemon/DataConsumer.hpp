@@ -31,6 +31,12 @@
  * has two methods: "pushDataBlock" used to put in the consumer's fifo a new full memory block
  * to consume, and "getFreeBlock" used by client code two reclaim the consumed memory block.
  */
+
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+
 class DataConsumer {
 public:
   
@@ -51,3 +57,8 @@ public:
    */
   virtual ~DataConsumer() {}
 };
+
+}
+}
+}
+}

@@ -30,6 +30,11 @@
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
 #include "castor/exception/Exception.hpp"
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+
 /* A fixed payload FIFO: at creation time, we know how many blocks will go through the FIFO.
   The provide block method return true as long as it still needs more block. False when last
   block is provided (and throws an exception after that).
@@ -101,3 +106,8 @@ private:
   castor::tape::threading::BlockingQueue<MemBlock *> m_freeBlocks;
   castor::tape::threading::BlockingQueue<MemBlock *> m_dataBlocks;
 };
+
+}
+}
+}
+}

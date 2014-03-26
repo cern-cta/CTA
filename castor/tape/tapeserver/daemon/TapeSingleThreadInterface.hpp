@@ -9,8 +9,13 @@
 #define	TAPESINGLETHREADINTERFACE_HPP
 
 #include "castor/tape/tapeserver/threading/Threading.hpp"
+#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
 template <class Task> class TapeSingleThreadInterface : private castor::tape::threading::Thread
 {
 protected:
@@ -30,5 +35,10 @@ public:
   m_drive(drive)
   {}
 };
+
+}
+}
+}
+}
 
 #endif	/* TAPESINGLETHREADINTERFACE_HPP */

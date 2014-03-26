@@ -24,8 +24,19 @@
 
 #pragma once
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+
 class TaskInjector{
 public:
   virtual void requestInjection(int maxFiles, int maxBlocks, bool lastCall) = 0;
   virtual ~TaskInjector() {}
 };
+
+}
+}
+}
+}
+

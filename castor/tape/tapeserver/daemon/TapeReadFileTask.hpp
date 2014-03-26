@@ -29,6 +29,11 @@
 #include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 
+
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
 class TapeReadFileTask: public TapeReadTask {
 public:
   TapeReadFileTask(DataConsumer & destination, int fSeq, int blockCount): m_fSeq(fSeq), 
@@ -52,3 +57,7 @@ private:
   int m_blockCount;
   DataConsumer & m_fifo;
 };
+}
+}
+}
+}

@@ -31,6 +31,10 @@
 #include "castor/exception/Exception.hpp"
 #include <iostream>
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
 /**
  * The memory manager is responsible for allocating memory blocks and distributing
  * the free ones around to any class in need.
@@ -163,3 +167,9 @@ private:
   }
   
 };
+
+}
+}
+}
+}
+
