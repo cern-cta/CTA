@@ -68,20 +68,26 @@ public:
   /**
    * Sets the status of the specified tape drive to down.
    *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
    * @param unitName The unit name of the tape drive. 
    * @param dgn The device group name of the tape drive.
    */
-  void setTapeDriveStatusDown(const std::string &unitName,
-    const std::string &dgn) throw(castor::exception::Exception);
+  void setTapeDriveStatusDown(const std::string &server,
+    const std::string &unitName, const std::string &dgn)
+    throw(castor::exception::Exception);
 
   /**
    * Sets the status of the specified tape drive to up.
    *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
    */
-  void setTapeDriveStatusUp(const std::string &unitName,
-    const std::string &dgn) throw(castor::exception::Exception);
+  void setTapeDriveStatusUp(const std::string &server,
+    const std::string &unitName, const std::string &dgn)
+    throw(castor::exception::Exception);
 
 private:
 

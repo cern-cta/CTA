@@ -48,7 +48,25 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
   std::ostream &stdOut, std::ostream &stdErr, log::Logger &log, Vdqm &vdqm,
   io::PollReactor &reactor) throw(castor::exception::Exception):
   castor::server::Daemon(stdOut, stdErr, log), m_vdqm(vdqm), m_reactor(reactor),
-  m_programName("tapeserverd") {
+  m_programName("tapeserverd"), m_hostName(getHostName()) {
+}
+
+//------------------------------------------------------------------------------
+// getHostName
+//------------------------------------------------------------------------------
+std::string
+  castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::getHostName()
+  const throw(castor::exception::Exception) {
+  char nameBuf[81];
+  if(gethostname(nameBuf, sizeof(nameBuf))) {
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to get host name: " << errBuf;
+    throw ex;
+  }
+
+  return nameBuf;
 }
 
 //------------------------------------------------------------------------------
@@ -210,6 +228,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   const std::string dgn = m_driveCatalogue.getDgn(unitName);
 
   std::list<log::Param> params;
+  params.push_back(log::Param("server", m_hostName));
   params.push_back(log::Param("unitName", unitName));
   params.push_back(log::Param("dgn", dgn));
 
@@ -217,12 +236,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   case DriveCatalogue::DRIVE_STATE_DOWN:
     params.push_back(log::Param("state", "down"));
     m_log(LOG_INFO, "Registering tape drive with vdqm", params);
-    m_vdqm.setTapeDriveStatusDown(unitName, dgn);
+    m_vdqm.setTapeDriveStatusDown(m_hostName, unitName, dgn);
     break;
   case DriveCatalogue::DRIVE_STATE_UP:
     params.push_back(log::Param("state", "up"));
     m_log(LOG_INFO, "Registering tape drive with vdqm", params);
-    m_vdqm.setTapeDriveStatusUp(unitName, dgn);
+    m_vdqm.setTapeDriveStatusUp(m_hostName, unitName, dgn);
   default:
     {
       castor::exception::Internal ex;

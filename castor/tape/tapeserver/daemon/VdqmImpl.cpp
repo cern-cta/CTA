@@ -24,6 +24,7 @@
 #include "castor/io/io.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
+#include "castor/tape/legacymsg/VdqmMarshal.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmImpl.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
@@ -158,10 +159,10 @@ void castor::tape::tapeserver::daemon::VdqmImpl::checkJobMsgLen(
 // setTapeDriveStatusDown
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusDown(
-  const std::string &unitName, const std::string &dgn) 
-  throw(castor::exception::Exception) {
+  const std::string &server, const std::string &unitName,
+  const std::string &dgn) throw(castor::exception::Exception) {
   try {
-    setTapeDriveStatus(unitName, dgn, VDQM_UNIT_DOWN);
+    setTapeDriveStatus(server, unitName, dgn, VDQM_UNIT_DOWN);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to set drive status to down: " <<
@@ -174,10 +175,10 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusDown(
 // setTapeDriveStatusUp
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusUp(
-  const std::string &unitName, const std::string &dgn)
-  throw(castor::exception::Exception) {
+  const std::string &server, const std::string &unitName,
+  const std::string &dgn) throw(castor::exception::Exception) {
   try {
-    setTapeDriveStatus(unitName, dgn, VDQM_UNIT_UP);
+    setTapeDriveStatus(server, unitName, dgn, VDQM_UNIT_UP);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to set drive status to up: " << 
@@ -190,10 +191,34 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusUp(
 // setTapeDriveStatus
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatus(
-  const std::string &unitName, const std::string &dgn, const int status)
+  const std::string &server, const std::string &unitName,
+  const std::string &dgn, const int status)
   throw(castor::exception::Exception) {
 
+  legacymsg::VdqmDrvRqstMsgBody drvRqstMsgBody;
+  drvRqstMsgBody.status = status;
+  castor::utils::copyString(drvRqstMsgBody.server, server.c_str());
+  castor::utils::copyString(drvRqstMsgBody.drive, unitName.c_str());
+  castor::utils::copyString(drvRqstMsgBody.dgn, dgn.c_str());
+  char drvRqstBuf[VDQM_MSGBUFSIZ];
+  const size_t drvRqstMsgLen = legacymsg::marshal(drvRqstBuf, drvRqstMsgBody);
+
   castor::utils::SmartFd connection(connectToVdqm());
+  io::writeBytes(connection.get(), m_netTimeout, drvRqstMsgLen, drvRqstBuf);
+
+  char ackBuf[12]; // Magic + type + status
+  legacymsg::MessageHeader ackMsg;
+  io::readBytes(connection.get(), m_netTimeout, sizeof(ackBuf), ackBuf);
+  const char *ackBufPtr = ackBuf;
+  size_t ackBufLen = sizeof(ackBuf);
+  legacymsg::unmarshal(ackBufPtr, ackBufLen, ackMsg);
+  {
+    log::Param params[] = {
+      log::Param("magic", ackMsg.magic),
+      log::Param("reqType", ackMsg.reqType),
+      log::Param("status", ackMsg.lenOrStatus)};
+    m_log(LOG_INFO, "setTapeDriveStatus() received ack from vdqm", params);
+  }
 }
 
 //-----------------------------------------------------------------------------
