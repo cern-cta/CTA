@@ -288,7 +288,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
     std::string(catalogue.getJob("UNIT").driveUnit));
   ASSERT_EQ(std::string(job.clientUserName),
     std::string(catalogue.getJob("UNIT").clientUserName));
-  ASSERT_NO_THROW(catalogue.tapeSessionSuceeeded("UNIT"));
+  ASSERT_NO_THROW(catalogue.tapeSessionSucceeded("UNIT"));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP,
     catalogue.getState("UNIT"));
   ASSERT_NO_THROW(catalogue.configureDown("UNIT"));
