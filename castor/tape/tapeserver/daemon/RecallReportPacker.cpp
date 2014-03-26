@@ -25,12 +25,16 @@
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
+#include "castor/log/Logger.hpp"
 
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
  
+using castor::log::LogContext;
+using castor::log::Param;
+
 RecallReportPacker::RecallReportPacker(ClientInterface & tg,unsigned int reportFilePeriod,log::LogContext lc):
 ReportPackerInterface<detail::Recall>(tg,lc),
         m_workerThread(*this),m_reportFilePeriod(reportFilePeriod),m_errorHappened(false),m_continue(true){
@@ -90,26 +94,31 @@ void RecallReportPacker::flush(){
 }
 
 void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& _this){
+  tapeserver::daemon::ClientInterface::RequestReport chrono;
   if(!_this.m_errorHappened){
-    tapeserver::daemon::ClientInterface::RequestReport chrono;
     _this.m_client.reportEndOfSession(chrono);
+    _this.m_lc.log(LOG_INFO,"Nominal RecallReportPacker::EndofSession has been reported");
   }
   else {
-     const std::string& msg ="Nominal EndofSession has been reported  but an writing error on the tape happened before";
+     const std::string& msg ="RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process";
      _this.m_lc.log(LOG_ERR,msg);
+     _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono);
      //throw castor::exception::Exception(msg);
   }
   _this.m_continue=false;
 }
 
 void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& _this){
-  if(_this.m_errorHappened) {
   tapeserver::daemon::ClientInterface::RequestReport chrono;
+  if(_this.m_errorHappened) {
   _this.m_client.reportEndOfSessionWithError(m_message,m_error_code,chrono); 
+  LogContext::ScopedParam(_this.m_lc,Param("errorCode",m_error_code));
+  _this.m_lc.log(LOG_ERR,m_message);
   }
   else{
-   const std::string& msg ="EndofSessionWithErrors has been reported  but NO writing error on the tape was detected";
+   const std::string& msg ="RecallReportPacker::EndofSessionWithErrors has been reported  but NO error was detected during the process";
    _this.m_lc.log(LOG_ERR,msg);
+   _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono); 
    //throw castor::exception::Exception(msg);
   }
   _this.m_continue=false;
@@ -143,7 +152,7 @@ void RecallReportPacker::WorkerThread::run(){
     unsigned int totalSize = m_parent.m_listReports->failedRecalls().size() +
                              m_parent.m_listReports->successfulRecalls().size();
     
-    if(totalSize>m_parent.m_reportFilePeriod)
+    if(totalSize >= m_parent.m_reportFilePeriod)
     {
       m_parent.flush();
     }
