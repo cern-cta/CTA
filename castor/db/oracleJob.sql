@@ -185,7 +185,7 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   -- A diskcopy was available and got disabled before this job
   -- was scheduled. Bad luck, we fail the request, the user will have to retry
   UPDATE SubRequest
-     SET status = dconst.SUBREQUEST_FAILED, errorCode = 1725, errorMessage='Request canceled while queuing'
+     SET status = dconst.SUBREQUEST_FAILED, errorCode = 1725, errorMessage = 'Request canceled while queuing'
    WHERE id = srId;
   COMMIT;
   raise_application_error(-20114, 'File invalidated while queuing in the scheduler, please try again');
@@ -598,25 +598,29 @@ END;
 CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
                                                  inFileSize IN INTEGER,
                                                  inNewTimeStamp IN NUMBER,
+                                                 inCksumType IN VARCHAR2,
+                                                 inCksumValue IN VARCHAR2,
                                                  outFileId OUT NUMBER,
                                                  outNsHost OUT VARCHAR2,
-                                                 outRC OUT INTEGER,
-                                                 outNsOpenTimeInUsec OUT INTEGER) AS
+                                                 outRC OUT INTEGER) AS
   cfId INTEGER;
   dcId INTEGER;
   svcId INTEGER;
-  realFileSize INTEGER;
+  varRealFileSize INTEGER;
   unused INTEGER;
   contextPIPP INTEGER;
-  lastUpdTime NUMBER;
+  varLastUpdTime NUMBER;
+  varLastOpenTime NUMBER;
+  varSrUuid VARCHAR2(100);
+  varMsg VARCHAR2(2048) := '';
 BEGIN
   outRC := 0;
   -- Get CastorFile
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ castorFile, diskCopy INTO cfId, dcId
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ castorFile, diskCopy, subReqId INTO cfId, dcId, varSrUuid
     FROM SubRequest WHERE id = srId;
   -- Lock the CastorFile and get the fileid and name server host
-  SELECT id, fileid, nsHost, nvl(lastUpdateTime, 0), TRUNC(nsOpenTime*1000000)
-    INTO cfId, outFileId, outNsHost, lastUpdTime, outNsOpenTimeInUsec
+  SELECT id, fileid, nsHost, nvl(lastUpdateTime, 0), nsOpenTime
+    INTO cfId, outFileId, outNsHost, varLastUpdTime, varLastOpenTime
     FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Determine the context (Put inside PrepareToPut or not)
   BEGIN
@@ -644,6 +648,7 @@ BEGIN
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- So we are in the case, we give up
     outRC := 1;
+    logToDLF(NULL, dlf.LVL_USER_ERROR, dlf.STAGER_DELETED_WRITTENTO, outFileId, outNsHost, 'stagerd', ' SUBREQID='|| varSrUuid);
     ROLLBACK;
     RETURN;
   END;
@@ -655,7 +660,21 @@ BEGIN
   END IF;
   -- If ts < lastUpdateTime, we were late and another job already updated the
   -- CastorFile. So we nevertheless retrieve the real file size.
-  SELECT fileSize INTO realFileSize FROM CastorFile WHERE id = cfId;
+  SELECT fileSize INTO varRealFileSize FROM CastorFile WHERE id = cfId;
+  -- Now close the file on the Nameserver
+  closex@remoteNS(outFileId, varRealFileSize, inCksumType, inCksumValue, inNewTimeStamp, varLastOpenTime, outRC, varMsg);
+  IF outRC = 0 THEN
+    logToDLF(NULL, dlf.LVL_SYSTEM, 'Processing complete', outFileId, outNsHost, 'nsd', varMsg || ' SUBREQID='|| varSrUuid);
+  ELSE
+    -- Nameserver error: log and fail the entire operation
+    logToDLF(NULL, dlf.LVL_USER_ERROR, 'Error closing file', outFileId, outNsHost, 'nsd', 'errorMessage="' || varMsg ||'" SUBREQID='|| varSrUuid);
+    putFailedProcExt(srId, outRC, varMsg);
+    COMMIT;
+    RETURN;
+  END IF;
+  -- Now we can safely update CastorFile's file size and time stamps
+  UPDATE CastorFile SET fileSize = inFileSize, lastUpdateTime = inNewTimeStamp
+   WHERE id = cfId;
   -- Get svcclass from Request
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ svcClass INTO svcId
     FROM SubRequest,
@@ -679,15 +698,21 @@ BEGIN
   END IF;
   -- Archive Subrequest
   archiveSubReq(srId, 8);  -- FINISHED
+  -- Log successful completion
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_PREPAREFORMIGR, outFileId, outNsHost, 'stagerd',
+    'SUBREQID='|| varSrUuid ||' ChkSumType='|| inCksumType ||' ChkSumValue='|| inCksumValue ||' fileSize='|| varRealFileSize);
 END;
 /
 
 
 /* PL/SQL method implementing getUpdateDone */
-CREATE OR REPLACE PROCEDURE getUpdateDoneProc
-(srId IN NUMBER) AS
+CREATE OR REPLACE PROCEDURE getUpdateDoneProc(srId IN NUMBER) AS
+  varSrUuid VARCHAR2(100);
 BEGIN
+  SELECT subReqId INTO varSrUuid FROM SubRequest WHERE id = srId;
   archiveSubReq(srId, 8);  -- FINISHED
+  -- Log successful completion
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETDONE, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| varSrUuid);
 END;
 /
 
@@ -696,6 +721,9 @@ END;
 CREATE OR REPLACE PROCEDURE getUpdateFailedProcExt
 (srId IN NUMBER, errno IN NUMBER, errmsg IN VARCHAR2) AS
   varCfId INTEGER;
+  varSrUuid VARCHAR2(100);
+  varFileId INTEGER;
+  varNsHost VARCHAR2(100);
 BEGIN
   -- Fail the subrequest. The stager will try and answer the client
   UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
@@ -703,13 +731,19 @@ BEGIN
          errorCode = errno,
          errorMessage = errmsg
    WHERE id = srId
-  RETURNING castorFile INTO varCfId;
+  RETURNING castorFile, subReqId INTO varCfId, varSrUuid;
   -- Wake up other waiting subrequests
   UPDATE SubRequest
      SET status = dconst.SUBREQUEST_RESTART,
          lastModificationTime = getTime()
    WHERE castorFile = varCfId
      AND status = dconst.SUBREQUEST_WAITSUBREQ;
+  SELECT fileId, nsHost INTO varFileId, varNsHost
+    FROM CastorFile
+   WHERE id = varCfId;
+  -- Log successful completion
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETFAILED, varFileId, varNsHost, 'stagerd',
+    'SUBREQID='|| varSrUuid ||' errorMessage="'|| errmsg ||'"" errorCode='|| errno);
 END;
 /
 
@@ -725,11 +759,17 @@ CREATE OR REPLACE PROCEDURE putFailedProcExt(srId IN NUMBER, errno IN NUMBER, er
   dcId INTEGER;
   cfId INTEGER;
   unused INTEGER;
+  varSrUuid VARCHAR2(100);
+  varFileId INTEGER;
+  varNsHost VARCHAR2(100);
 BEGIN
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ diskCopy, castorFile
-    INTO dcId, cfId
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ diskCopy, castorFile, subReqId
+    INTO dcId, cfId, varSrUuid
     FROM SubRequest
    WHERE id = srId;
+  SELECT fileId, nsHost INTO varFileId, varNsHost
+    FROM CastorFile
+   WHERE id = cfId;
   -- Fail the subRequest
   UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
      SET status = dconst.SUBREQUEST_FAILED,
@@ -764,6 +804,9 @@ BEGIN
     DELETE FROM DiskCopy WHERE id = dcId;
     deleteCastorFile(cfId);
   END;
+  -- Log successful completion
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_PUTFAILED, varFileId, varNsHost, 'stagerd',
+    'SUBREQID='|| varSrUuid ||' errorMessage="'|| errmsg ||'"" errorCode='|| errno);
 END;
 /
 
