@@ -1,4 +1,5 @@
 xrootd.fslib /usr/lib64/libXrdxCastor2Fs.so.2.1
+xrootd.chksum adler32
 xrd.async off
 xrd.sched mint 16 maxt 512 idle 128
 all.export /

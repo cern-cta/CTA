@@ -441,7 +441,7 @@ BEGIN
       DECLARE
         varGcwProc VARCHAR2(2048);
       BEGIN
-        varGcwProc := castorGC.getCopyWeight(varFileSize);
+        varGcwProc := castorGC.getCopyWeight(varDestSvcClass);
         EXECUTE IMMEDIATE
           'BEGIN :newGcw := ' || varGcwProc || '(:size); END;'
           USING OUT varDcGcWeight, IN varFileSize;

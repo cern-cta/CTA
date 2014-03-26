@@ -95,9 +95,9 @@ int castor::tape::tapebridge::ClientAddressTcpIp::connectToClient(
   try {
     timeval connectStartTime = {0, 0};
     timeval connectEndTime   = {0, 0};
-    utils::getTimeOfDay(&connectStartTime, NULL);
+    castor::utils::getTimeOfDay(&connectStartTime, NULL);
     sock.connect();
-    utils::getTimeOfDay(&connectEndTime, NULL);
+    castor::utils::getTimeOfDay(&connectEndTime, NULL);
     connectDuration =
       castor::utils::timevalAbsDiff(connectStartTime, connectEndTime);
   } catch(castor::exception::Exception &ex) {

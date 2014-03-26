@@ -56,7 +56,7 @@ int main(void) {
   //  printf("%s\n", e.what());
   //}
   // Allocate the memory
-  MemoryManager mm(blocks, blockSize);
+  castor::tape::tapeserver::daemon::MemoryManager mm(blocks, blockSize);
   mm.startThreads();
   castor::tape::drives::FakeDrive drive;
   /*

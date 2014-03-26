@@ -27,6 +27,11 @@
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
 #include <memory>
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+
 class Payload
 {
 public:
@@ -81,3 +86,8 @@ public:
   int m_tapeFileBlock;
  
 };
+
+}
+}
+}
+}

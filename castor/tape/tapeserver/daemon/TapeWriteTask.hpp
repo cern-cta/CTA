@@ -27,6 +27,11 @@
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+
 /**
  * Abstract class describing the interface for a task that wants to write to disk.
  * This is inherited exclusively by DiskWriteFileTask.
@@ -66,3 +71,7 @@ public:
    */
   virtual ~TapeWriteTask() {};
 };
+}
+}
+}
+}

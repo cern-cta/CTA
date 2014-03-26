@@ -83,6 +83,11 @@ public:
 protected:
 
   /**
+   * Returns the name of the host on which the tape daemon is running.
+   */
+  std::string getHostName() const throw(castor::exception::Exception);
+
+  /**
    * Exception throwing main() function.
    */
   void exceptionThrowingMain(const int argc, char **const argv)
@@ -192,6 +197,12 @@ protected:
    * The program name of the tape daemon.
    */
   const std::string m_programName;
+
+  /**
+   * The name of the host on which tape daemon is running.  This name is
+   * needed to fill in messages to be sent to the vdqmd daemon.
+   */
+  const std::string m_hostName;
 
 }; // class TapeDaemon
 

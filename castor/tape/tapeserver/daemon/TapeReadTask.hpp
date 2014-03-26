@@ -27,6 +27,10 @@
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
 class TapeReadTask {
 public:
   virtual bool endOfWork() = 0;
@@ -35,3 +39,7 @@ public:
   };
   virtual ~TapeReadTask() {}
 };
+}
+}
+}
+}

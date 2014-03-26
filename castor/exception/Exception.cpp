@@ -36,7 +36,7 @@ castor::exception::Exception::Exception(int se, std::string context) :
 // constructor
 //------------------------------------------------------------------------------
 castor::exception::Exception::Exception(std::string context) : 
-  m_message(context), m_serrno(0){}
+  m_message(context), m_serrno(SEINTERNAL){}
 
 //------------------------------------------------------------------------------
 // copy constructor

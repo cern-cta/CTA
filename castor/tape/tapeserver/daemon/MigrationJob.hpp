@@ -24,6 +24,11 @@
 
 #pragma once
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+
 class MigrationJob{
 public:
   MigrationJob(int fId, int fs, int bCnt): fileId(fId), fSeq(fs), blockCount(bCnt) {}
@@ -31,3 +36,8 @@ public:
   int fSeq;
   int blockCount;
 };
+
+}
+}
+}
+}

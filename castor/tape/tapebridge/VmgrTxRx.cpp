@@ -93,9 +93,9 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
   try {
     timeval connectStartTime = {0, 0};
     timeval connectEndTime   = {0, 0};
-    utils::getTimeOfDay(&connectStartTime, NULL);
+    castor::utils::getTimeOfDay(&connectStartTime, NULL);
     sock.connect();
-    utils::getTimeOfDay(&connectEndTime, NULL);
+    castor::utils::getTimeOfDay(&connectEndTime, NULL);
     connectDuration =
       castor::utils::timevalAbsDiff(connectStartTime, connectEndTime);
   } catch(castor::exception::Exception &ex) {
@@ -129,7 +129,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
   timeval sendAndReceiveStartTime = {0, 0};
   timeval sendAndReceiveEndTime   = {0, 0};
   timeval sendRecvDuration        = {0, 0};
-  utils::getTimeOfDay(&sendAndReceiveStartTime, NULL);
+  castor::utils::getTimeOfDay(&sendAndReceiveStartTime, NULL);
   try {
     io::writeBytes(sock.socket(), netReadWriteTimeout, totalLen, buf);
   } catch(castor::exception::Exception &ex) {
@@ -255,7 +255,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
       try {
         io::readBytes(sock.socket(), netReadWriteTimeout, header.lenOrStatus,
           bodyBuf);
-        utils::getTimeOfDay(&sendAndReceiveEndTime, NULL);
+        castor::utils::getTimeOfDay(&sendAndReceiveEndTime, NULL);
         sendRecvDuration = castor::utils::timevalAbsDiff(
           sendAndReceiveStartTime, sendAndReceiveEndTime);
       } catch (castor::exception::Exception &ex) {

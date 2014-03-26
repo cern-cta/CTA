@@ -28,6 +28,11 @@
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
 #include "castor/exception/Exception.hpp"
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+
 class MemoryManagerClient {
 public:
   virtual bool endOfWork() throw() = 0;
@@ -36,3 +41,8 @@ public:
   };
   virtual ~MemoryManagerClient() throw() {}
 };
+
+}
+}
+}
+}

@@ -30,6 +30,11 @@
 #include <string.h>
 #include <stdio.h>
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
+
 class MemException: public std::exception {
 public:
   MemException(const std::string & what): m_what(what) {}
@@ -41,4 +46,8 @@ private:
   std::string m_what;
 };
 
-void errnoExeptLauncher(int ret, void * obj);
+}
+}
+}
+}
+

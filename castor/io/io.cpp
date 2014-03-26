@@ -41,6 +41,7 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <time.h>
+#include <list>
 
 //------------------------------------------------------------------------------
 // createListenerSock
@@ -129,11 +130,10 @@ int castor::io::createListenerSock(
   // Create a socket
   utils::SmartFd sock(socket(PF_INET, SOCK_STREAM, IPPROTO_TCP));
   if(sock.get() < 0) {
-    const int savedErrno = errno;
-
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
     castor::exception::Internal ex;
-    ex.getMessage() << ": Failed to create socket"
-      ": " << sstrerror(savedErrno);
+    ex.getMessage() << ": Failed to create socket: " << errBuf;
     throw ex;
   }
 
@@ -142,8 +142,8 @@ int castor::io::createListenerSock(
     int reuseaddrOptval = 1;
     if(0 > setsockopt(sock.get(), SOL_SOCKET, SO_REUSEADDR,
       (char *)&reuseaddrOptval, sizeof(reuseaddrOptval))) {
-      const int savedErrno = errno;
-    
+      char errBuf[100];
+      sstrerror_r(errno, errBuf, sizeof(errBuf));
       castor::exception::Internal ex;
       ex.getMessage() <<
         ": Failed to set socket option"
@@ -151,7 +151,7 @@ int castor::io::createListenerSock(
         " level=SOL_SOCKET"
         " optname=SO_REUSEADDR"
         " optval=" << reuseaddrOptval <<
-        ": " << sstrerror(savedErrno);
+        ": " << errBuf;
       throw ex;
     }
   }
@@ -180,13 +180,13 @@ int castor::io::createListenerSock(
 
       // Mark the socket as being a listener
       if(listen(sock.get(), LISTENBACKLOG) < 0) {
-        const int listenErrno = errno;
-
+        char errBuf[100];
+        sstrerror_r(errno, errBuf, sizeof(errBuf));
         castor::exception::Internal ex;
         ex.getMessage() <<
           ": Failed to mark socket as being a listener"
           ": listenSocketFd=" << sock.get() <<
-          ": " << sstrerror(listenErrno);
+          ": " << errBuf;
         throw ex;
       }
 
@@ -202,11 +202,13 @@ int castor::io::createListenerSock(
 
       // Else throw an exception
       } else {
-        castor::exception::Exception ex(bindErrno);
+        char errBuf[100];
+        sstrerror_r(bindErrno, errBuf, sizeof(errBuf));
+        castor::exception::Internal ex;
         ex.getMessage() <<
           ": Failed to bind listener socket"
           ": listenSocketFd=" << sock.get() <<
-          ": " << sstrerror(bindErrno);
+          ": " << errBuf;
         throw ex;
       }
     }
@@ -257,10 +259,12 @@ int castor::io::acceptConnection(const int listenSocketFd)
     if(savedErrno == EINVAL) {
       reason << ": Socket is not listening for connections";
     } else {
-      reason << ": " << sstrerror(savedErrno);
+      char errBuf[100];
+      sstrerror_r(savedErrno, errBuf, sizeof(errBuf));
+      reason << ": " << errBuf;
     }
 
-    castor::exception::Exception ex(savedErrno);
+    castor::exception::Internal ex;
     ex.getMessage() << reason.str();
     throw ex;
   }
@@ -305,7 +309,7 @@ int castor::io::acceptConnection(const int listenSocketFd,
     {
       castor::exception::TimeOut ex;
       ex.getMessage() <<
-           ": Timed out after " << timeout
+           "Failed to accept connection: Timed out after " << timeout
         << " seconds whilst trying to accept a connection";
       throw ex;
     }
@@ -319,19 +323,19 @@ int castor::io::acceptConnection(const int listenSocketFd,
 
       throw(ex);
     } else {
-      castor::exception::Exception ex(selectErrno);
-      ex.getMessage() <<
-        ": Failed to accept connection"
-        ": Select failed: " << sstrerror(selectErrno);
+      char errBuf[100];
+      sstrerror_r(selectErrno, errBuf, sizeof(errBuf));
+      castor::exception::Internal ex;
+      ex.getMessage() << "Failed to accept connection: Select failed: " <<
+        errBuf;
       throw ex;
     }
     break;
   default: // Select found a file descriptor awaiting attention
     // If it is not the expected connection request
     if(!FD_ISSET(listenSocketFd, &fdSet)) {
-      castor::exception::Exception ex(selectErrno);
-      ex.getMessage() <<
-        ": Failed to accept connection "
+      castor::exception::Internal ex;
+      ex.getMessage() << "Failed to accept connection "
         ": Invalid file descriptor set";
       throw ex;
     }
@@ -348,16 +352,18 @@ int castor::io::acceptConnection(const int listenSocketFd,
     std::stringstream reason;
 
     reason <<
-      ": Accept failed"
+      "Failed to accept connection"
       ": listenSocketFd=" << listenSocketFd;
 
     if(acceptErrno == EINVAL) {
       reason << ": Socket is not listening for connections";
     } else {
-      reason << ": " << sstrerror(acceptErrno);
+      char errBuf[100];
+      sstrerror_r(acceptErrno, errBuf, sizeof(errBuf));
+      reason << ": " << errBuf;
     }
 
-    castor::exception::Exception ex(acceptErrno);
+    castor::exception::Internal ex;
     ex.getMessage() << reason.str();
     throw ex;
   }
@@ -385,13 +391,11 @@ castor::io::IpAndPort castor::io::getSockIpPort(
   socklen_t addressLen = sizeof(address);
 
   if(getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    const int savedErrno = errno;
-
-    castor::exception::Exception ex(savedErrno);
-    ex.getMessage() << 
-      ": Failed to get socket name"
-      ": socketFd=" << socketFd <<
-      ": " << sstrerror(savedErrno);
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to get socket name: socketFd=" << socketFd <<
+      ": " << errBuf;
     throw ex;
   }
 
@@ -418,13 +422,11 @@ castor::io::IpAndPort  castor::io::getPeerIpPort(
   socklen_t addressLen = sizeof(address);
 
   if(getpeername(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    const int savedErrno = errno;
-
-    castor::exception::Exception ex(savedErrno);
-    ex.getMessage() <<
-      ": Failed to get peer name"
-      ": socketFd=" << socketFd <<
-      ": " << sstrerror(savedErrno);
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
+    ex.getMessage() << ": Failed to get peer name: socketFd=" << socketFd <<
+      ": " << errBuf;
     throw ex;
   }
 
@@ -443,8 +445,8 @@ void castor::io::getSockHostName(
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
     castor::exception::InvalidArgument ex;
-    ex.getMessage() <<
-      "Invalid socket file-descriptor"
+    ex.getMessage() << "Failed to get socket hostname"
+      ": Invalid socket file-descriptor"
       ": socketFd=" << socketFd;
     throw ex;
   }
@@ -453,13 +455,11 @@ void castor::io::getSockHostName(
   socklen_t addressLen = sizeof(address);
 
   if(getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    const int savedErrno = errno;
-
-    castor::exception::Exception ex(savedErrno);
-    ex.getMessage() <<
-      ": Failed to get socket name"
-      ": socketFd=" << socketFd <<
-      ": " << sstrerror(savedErrno);
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to get socket hostname"
+      ": socketFd=" << socketFd << ": " << errBuf;
     throw ex;
   }
 
@@ -504,13 +504,13 @@ void castor::io::getSockIpHostnamePort(
   socklen_t addressLen = sizeof(address);
 
   if(getsockname(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    const int savedErrno = errno;
-
-    castor::exception::Exception ex(savedErrno);
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
     ex.getMessage() <<
       ": Failed to get socket name"
       ": socketFd=" << socketFd <<
-      ": " << sstrerror(savedErrno);
+      ": " << errBuf;
     throw ex;
   }
 
@@ -555,13 +555,13 @@ void castor::io::getPeerHostName(
   socklen_t addressLen = sizeof(address);
 
   if(getpeername(socketFd, (struct sockaddr*)&address, &addressLen) < 0) {
-    const int savedErrno = errno;
-
-    castor::exception::Exception ex(savedErrno);
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
     ex.getMessage() <<
       ": Failed to get peer name"
       ": socketFd=" << socketFd <<
-      ": " << sstrerror(savedErrno);
+      ": " << errBuf;
     throw ex;
   }
 
@@ -708,7 +708,9 @@ bool castor::io::readBytesFromCloseable(
         savedSerrno = SEINTERNAL;
         oss << ": Unknown error";
       } else {
-        oss << ": " << sstrerror(savedSerrno);
+        char errBuf[100];
+        sstrerror_r(savedSerrno, errBuf, sizeof(errBuf));
+        oss << ": " << errBuf;
       }
       if(SETIMEDOUT == savedSerrno) {
         oss << ": timeout=" << timeout;
@@ -778,7 +780,9 @@ void castor::io::writeBytes(
         savedSerrno = SEINTERNAL;
         oss << ": Unknown error";
       } else {
-        oss << ": " << sstrerror(savedSerrno);
+        char errBuf[100];
+        sstrerror_r(savedSerrno, errBuf, sizeof(errBuf));
+        oss << ": " << errBuf;
       }
       if(savedSerrno == SETIMEDOUT) {
         oss << ": timeout=" << timeout;
@@ -816,6 +820,117 @@ void castor::io::writeBytes(
 }
 
 //------------------------------------------------------------------------------
+// getAddrInfoErrorString
+// 
+// Helper function used to know which string is associated with a specific errno
+// returned by getaddrinfo. This function is needed because the standard one
+// (gai_strerror) is not thread-safe on all systems.
+//------------------------------------------------------------------------------
+static void getAddrInfoErrorString(const int rc, char *buf, const size_t size) {
+  switch(rc) {
+    case EAI_BADFLAGS:
+      strncpy(buf, "Invalid value for `ai_flags' field.", size);
+      break;
+    case EAI_NONAME:
+      strncpy(buf, "NAME or SERVICE is unknown.", size);
+      break;
+    case EAI_AGAIN:
+      strncpy(buf, "Temporary failure in name resolution.", size);
+      break;
+    case EAI_FAIL:
+      strncpy(buf, "Non-recoverable failure in name res.", size);
+      break;
+    case EAI_NODATA:
+      strncpy(buf, "No address associated with NAME.", size);
+      break;
+    case EAI_FAMILY:
+      strncpy(buf, "`ai_family' not supported.", size);
+      break;
+    case EAI_SOCKTYPE:
+      strncpy(buf, "`ai_socktype' not supported.", size);
+      break;
+    case EAI_SERVICE:
+      strncpy(buf, "SERVICE not supported for `ai_socktype'.", size);
+      break;
+    case EAI_ADDRFAMILY:
+      strncpy(buf, "Address family for NAME not supported.", size);
+      break;
+    case EAI_MEMORY:
+      strncpy(buf, "Memory allocation failure.", size);
+      break;
+    case EAI_SYSTEM:
+      strncpy(buf, "System error returned in `errno'.", size);
+      break;
+    case EAI_OVERFLOW:
+      strncpy(buf, "Argument buffer overflow.", size);
+      break;
+    case EAI_INPROGRESS:
+      strncpy(buf, "Processing request in progress.", size);
+      break;
+    case EAI_CANCELED:
+      strncpy(buf, "Request canceled.", size);
+      break;
+    case EAI_NOTCANCELED:
+      strncpy(buf, "Request not canceled.", size);
+      break;
+    case EAI_ALLDONE:
+      strncpy(buf, "All requests done.", size);
+      break;
+    case EAI_INTR:
+      strncpy(buf, "Interrupted by a signal.", size);
+      break;
+    case EAI_IDN_ENCODE:
+      strncpy(buf, "IDN encoding failed.", size);
+      break;
+    default:
+      strncpy(buf, "Unknown error", size);
+      break;
+  }
+}
+
+//------------------------------------------------------------------------------
+// connectWithTimeout
+//------------------------------------------------------------------------------
+int castor::io::connectWithTimeout(
+  const std::string    &hostName,
+  const unsigned short port,
+  const int            timeout)
+  throw(castor::exception::TimeOut, castor::exception::Exception) {
+  std::ostringstream portStream;
+  portStream << port;
+  struct addrinfo hints;
+  memset(&hints, '\0', sizeof(hints));
+  hints.ai_family = AF_INET;
+  hints.ai_socktype = SOCK_STREAM;
+  
+  struct addrinfo *res = NULL;
+  int rc = getaddrinfo(hostName.c_str(), portStream.str().c_str(), &hints, &res);
+  // If getaddrinfo() returned a negative value
+  if (0!=rc) {
+    char errBuf[100];
+    getAddrInfoErrorString(rc, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
+    ex.getMessage() << "getaddrinfo() failed: " << errBuf;
+    throw ex;
+  }
+  struct sockaddr_in s_in;
+  if(AF_INET != res->ai_family or SOCK_STREAM != res->ai_socktype or sizeof(s_in) != res->ai_addrlen) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "getaddrinfo() bad result: either ai_family or ai_socktype or ai_addrlen are wrong";
+    freeaddrinfo(res);
+    throw ex;
+  }
+  memcpy(&s_in, res->ai_addr, sizeof(s_in));
+  int protocol = res->ai_protocol;
+  socklen_t length = res->ai_addrlen;
+  freeaddrinfo(res);
+  
+  rc = connectWithTimeout(AF_INET, SOCK_STREAM, protocol,
+          (struct sockaddr *)(&s_in), length, timeout);
+  return rc;
+}
+
+//------------------------------------------------------------------------------
 // connectWithTimeout
 //------------------------------------------------------------------------------
 int castor::io::connectWithTimeout(
@@ -830,36 +945,36 @@ int castor::io::connectWithTimeout(
   // Create the socket for the new connection
   utils::SmartFd smartSock(socket(sockDomain, sockType, sockProtocol));
   if(-1 == smartSock.get()) {
-    const int socketErrno = errno;
-    castor::exception::Exception ex(errno);
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
     ex.getMessage() <<
       ": Failed to create socket for new connection"
-      ": Call to socket() failed"
-      ": " << sstrerror(socketErrno);
+      ": Call to socket() failed: " << errBuf;
     throw ex;
   }
 
   // Get the orginal file-control flags of the socket
   const int orginalFileControlFlags = fcntl(smartSock.get(), F_GETFL, 0);
   if(-1 == orginalFileControlFlags) {
-    const int fcntlErrno = errno;
-    castor::exception::Exception ex(fcntlErrno);
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
     ex.getMessage() <<
       ": Failed to get the original file-control flags of the socket"
-      ": Call to fcntl() failed"
-      ": " << sstrerror(fcntlErrno);
+      ": Call to fcntl() failed: " << errBuf;
     throw ex;
   }
 
   // Set the O_NONBLOCK file-control flag of the socket
   if(-1 == fcntl(smartSock.get(), F_SETFL,
     orginalFileControlFlags | O_NONBLOCK)) {
-    const int fcntlErrno = errno;
-    castor::exception::Exception ex(fcntlErrno);
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
     ex.getMessage() <<
       ": Failed to set the O_NONBLOCK file-control flag"
-      ": Call to fcntl() failed"
-      ": " << sstrerror(fcntlErrno);
+      ": Call to fcntl() failed: " << errBuf;
     throw ex;
   }
 
@@ -871,11 +986,12 @@ int castor::io::connectWithTimeout(
   // file-control flags of the socket and return it
   if(0 == connectRc) {
     if(-1 == fcntl(smartSock.get(), F_SETFL, orginalFileControlFlags)) {
-      const int fcntlErrno = errno;
-      castor::exception::Exception ex(fcntlErrno);
+      char errBuf[100];
+      sstrerror_r(errno, errBuf, sizeof(errBuf));
+      castor::exception::Internal ex;
       ex.getMessage() <<
         ": Failed to restore the file-control flags of the socket"
-        ": " << sstrerror(fcntlErrno);
+        ": " << errBuf;
       throw ex;
     }
     return smartSock.release();
@@ -884,10 +1000,10 @@ int castor::io::connectWithTimeout(
   // Throw an exception if there was any other error than
   // "operation in progress" when trying to start to connect
   if(EINPROGRESS != connectErrno) {
-    castor::exception::Exception ex(connectErrno);
-    ex.getMessage() <<
-      ": Call to connect() failed"
-      ": " << sstrerror(connectErrno);
+    char errBuf[100];
+    sstrerror_r(connectErrno, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
+    ex.getMessage() << "Call to connect() failed: " << errBuf;
     throw ex;
   }
 
@@ -905,11 +1021,10 @@ int castor::io::connectWithTimeout(
   const int selectRc = select(smartSock.get() + 1, &readFds, &writeFds, NULL,
     &selectTimeout);
   if(-1 == selectRc) {
-    const int selectErrno = errno;
-    castor::exception::Exception ex(selectErrno);
-    ex.getMessage() <<
-      ": Call to select() failed"
-      ": " << sstrerror(selectErrno);
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
+    ex.getMessage() << "Call to select() failed: " << errBuf;
     throw ex;
   }
 
@@ -943,27 +1058,29 @@ int castor::io::connectWithTimeout(
     &sockoptError, &sockoptErrorLen);
   const int getsockoptErrno = errno;
   if(-1 == getsockoptRc) { // Solaris
-    castor::exception::Exception ex(getsockoptErrno);
+    char errBuf[100];
+    sstrerror_r(getsockoptErrno, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
     ex.getMessage() <<
-      ": Connection did not complete successfully"
-      ": " << sstrerror(getsockoptErrno);
+      ": Connection did not complete successfully: " << errBuf;
     throw ex;
   }
   if(0 != sockoptError) { // BSD
-    castor::exception::Exception ex(sockoptError);
+    char errBuf[100];
+    sstrerror_r(sockoptError, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
     ex.getMessage() <<
-      ": Connection did not complete successfully"
-      ": " << sstrerror(sockoptError);
+      ": Connection did not complete successfully: " << errBuf;
     throw ex;
   }
 
   // Restore the original file-control flags of the socket
   if(-1 == fcntl(smartSock.get(), F_SETFL, orginalFileControlFlags)) {
-    const int fcntlErrno = errno;
-    castor::exception::Exception ex(fcntlErrno);
+    char errBuf[100];
+    sstrerror_r(errno,  errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
     ex.getMessage() <<
-      ": Failed to restore the file-control flags of the socket"
-      ": " << sstrerror(fcntlErrno);
+      ": Failed to restore the file-control flags of the socket: " << errBuf;
     throw ex;
   }
 

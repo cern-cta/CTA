@@ -32,6 +32,10 @@
 #include <iostream>
 #include <stdio.h>
 
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace daemon {
 class TapeReadSingleThread : public TapeSingleThreadInterface<TapeReadTask>{
 public:
   TapeReadSingleThread(castor::tape::drives::DriveInterface & drive): 
@@ -51,3 +55,8 @@ private:
       }
     }  
 };
+}
+}
+}
+}
+

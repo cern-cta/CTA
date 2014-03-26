@@ -13,10 +13,6 @@
 
 #include <string.h>
 
-#if !defined(linux)
-extern int      sys_nerr;       /* number of system error messages      */
-#endif
-
 const char *sys_serrlist[SEMAXERR-SEBASEOFF+2]=
   {"Error 0",
    "Host not known",
@@ -632,7 +628,7 @@ const char *sstrerror(const int n) {
 
   if(Cglobals_get(&sstrerror_key, &buf, buflen)) {
     return "Unknown error"
-      ": No thread specific memory to determine error string"
+      ": No thread specific memory for error string"
       ": Cglobals_get() failed";
   }
 

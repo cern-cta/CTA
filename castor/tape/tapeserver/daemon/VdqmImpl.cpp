@@ -24,7 +24,12 @@
 #include "castor/io/io.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
+#include "castor/tape/legacymsg/VdqmMarshal.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmImpl.hpp"
+#include "castor/utils/SmartFd.hpp"
+#include "castor/utils/utils.hpp"
+/* Temporarily include h/Cnetdb.h */
+#include "h/Cnetdb.h"
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
 
@@ -32,7 +37,14 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmImpl::VdqmImpl(
-  const std::string &vdqmHostName) throw(): m_vdqmHostName(vdqmHostName) {
+  log::Logger &log,
+  const std::string &vdqmHostName,
+  const unsigned short vdqmPort,
+  const int netTimeout) throw():
+    m_log(log),
+    m_vdqmHostName(vdqmHostName),
+    m_vdqmPort(vdqmPort),
+    m_netTimeout(netTimeout) {
 }
 
 //------------------------------------------------------------------------------
@@ -45,12 +57,11 @@ castor::tape::tapeserver::daemon::VdqmImpl::~VdqmImpl() throw() {
 // receiveJob
 //------------------------------------------------------------------------------
 castor::tape::legacymsg::RtcpJobRqstMsgBody
-  castor::tape::tapeserver::daemon::VdqmImpl::receiveJob(const int connection,
-    const int netTimeout) throw(castor::exception::Exception) {
-  const legacymsg::MessageHeader header =
-    receiveJobMsgHeader(connection, netTimeout);
+  castor::tape::tapeserver::daemon::VdqmImpl::receiveJob(const int connection)
+  throw(castor::exception::Exception) {
+  const legacymsg::MessageHeader header = receiveJobMsgHeader(connection);
   const legacymsg::RtcpJobRqstMsgBody body =
-    receiveJobMsgBody(connection, netTimeout, header.lenOrStatus);
+    receiveJobMsgBody(connection, header.lenOrStatus);
 
   return body;
 }
@@ -60,11 +71,10 @@ castor::tape::legacymsg::RtcpJobRqstMsgBody
 //------------------------------------------------------------------------------
 castor::tape::legacymsg::MessageHeader
   castor::tape::tapeserver::daemon::VdqmImpl::receiveJobMsgHeader(
-    const int connection, const int netTimeout)
-    throw(castor::exception::Exception) {
+    const int connection) throw(castor::exception::Exception) {
   // Read in the message header
   char buf[3 * sizeof(uint32_t)]; // magic + request type + len
-  io::readBytes(connection, netTimeout, sizeof(buf), buf);
+  io::readBytes(connection, m_netTimeout, sizeof(buf), buf);
 
   const char *bufPtr = buf;
   size_t bufLen = sizeof(buf);
@@ -115,12 +125,12 @@ void castor::tape::tapeserver::daemon::VdqmImpl::checkJobMsgReqType(
 //------------------------------------------------------------------------------
 castor::tape::legacymsg::RtcpJobRqstMsgBody
   castor::tape::tapeserver::daemon::VdqmImpl::receiveJobMsgBody(
-    const int connection, const int netTimeout, const uint32_t len)
+    const int connection, const uint32_t len)
     throw(castor::exception::Exception) {
   char buf[1024];
 
   checkJobMsgLen(sizeof(buf), len);
-  io::readBytes(connection, netTimeout, len, buf);
+  io::readBytes(connection, m_netTimeout, len, buf);
 
   legacymsg::RtcpJobRqstMsgBody body;
   memset(&body, '\0', sizeof(body));
@@ -149,20 +159,97 @@ void castor::tape::tapeserver::daemon::VdqmImpl::checkJobMsgLen(
 // setTapeDriveStatusDown
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusDown(
-  const std::string &unitName, const std::string &dgn) 
-  throw(castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "VdqmImpl::setTapeDriveStatusDown() is not implemented";
-  throw ex;
+  const std::string &server, const std::string &unitName,
+  const std::string &dgn) throw(castor::exception::Exception) {
+  try {
+    setTapeDriveStatus(server, unitName, dgn, VDQM_UNIT_DOWN);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to set drive status to down: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
 // setTapeDriveStatusUp
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusUp(
-  const std::string &unitName, const std::string &dgn)
+  const std::string &server, const std::string &unitName,
+  const std::string &dgn) throw(castor::exception::Exception) {
+  try {
+    setTapeDriveStatus(server, unitName, dgn, VDQM_UNIT_UP);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to set drive status to up: " << 
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// setTapeDriveStatus
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatus(
+  const std::string &server, const std::string &unitName,
+  const std::string &dgn, const int status)
   throw(castor::exception::Exception) {
-  castor::exception::Internal ex;
-  ex.getMessage() << "VdqmImpl::setTapeDriveStatusUp() is not implemented";
-  throw ex;
+
+  legacymsg::VdqmDrvRqstMsgBody drvRqstMsgBody;
+  drvRqstMsgBody.status = status;
+  castor::utils::copyString(drvRqstMsgBody.server, server.c_str());
+  castor::utils::copyString(drvRqstMsgBody.drive, unitName.c_str());
+  castor::utils::copyString(drvRqstMsgBody.dgn, dgn.c_str());
+  char drvRqstBuf[VDQM_MSGBUFSIZ];
+  const size_t drvRqstMsgLen = legacymsg::marshal(drvRqstBuf, drvRqstMsgBody);
+
+  castor::utils::SmartFd connection(connectToVdqm());
+  io::writeBytes(connection.get(), m_netTimeout, drvRqstMsgLen, drvRqstBuf);
+
+  char ackBuf[12]; // Magic + type + status
+  legacymsg::MessageHeader ackMsg;
+  io::readBytes(connection.get(), m_netTimeout, sizeof(ackBuf), ackBuf);
+  const char *ackBufPtr = ackBuf;
+  size_t ackBufLen = sizeof(ackBuf);
+  legacymsg::unmarshal(ackBufPtr, ackBufLen, ackMsg);
+  {
+    log::Param params[] = {
+      log::Param("magic", ackMsg.magic),
+      log::Param("reqType", ackMsg.reqType),
+      log::Param("status", ackMsg.lenOrStatus)};
+    m_log(LOG_INFO, "setTapeDriveStatus() received ack from vdqm", params);
+  }
+}
+
+//-----------------------------------------------------------------------------
+// connectToVdqm
+//-----------------------------------------------------------------------------
+int castor::tape::tapeserver::daemon::VdqmImpl::connectToVdqm()
+  const throw(castor::exception::Exception) {
+  timeval connectStartTime = {0, 0};
+  timeval connectEndTime   = {0, 0};
+  castor::utils::getTimeOfDay(&connectStartTime, NULL);
+
+  castor::utils::SmartFd smartConnectSock;
+  try {
+    smartConnectSock.reset(io::connectWithTimeout(m_vdqmHostName, m_vdqmPort,
+            m_netTimeout));
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to connect to vdqm on host " << m_vdqmHostName
+      << " port " << m_vdqmPort << ": " << ne.getMessage().str();
+    throw ex;
+  }
+
+  const double connectDurationSecs = castor::utils::timevalToDouble(
+    castor::utils::timevalAbsDiff(connectStartTime, connectEndTime));
+  {
+    log::Param params[] = {
+      log::Param("vdqmHostName", m_vdqmHostName),
+      log::Param("vdqmPort", m_vdqmPort),
+      log::Param("connectDurationSecs", connectDurationSecs)};
+    m_log(LOG_INFO, "Connected to vdqm", params);
+  }
+
+  return smartConnectSock.release();
 }
