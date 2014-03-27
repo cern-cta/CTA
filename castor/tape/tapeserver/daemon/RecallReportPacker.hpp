@@ -99,7 +99,7 @@ private:
   };
   class ReportEndofSession : public Report {
   public:
-    ReportEndofSession():Report(false){}
+    ReportEndofSession():Report(true){}
     virtual void execute(RecallReportPacker& _this);
   };
   class ReportEndofSessionWithErrors : public Report {
@@ -107,7 +107,7 @@ private:
     int m_error_code;
   public:
     ReportEndofSessionWithErrors(std::string msg,int error_code):
-    Report(false),m_message(msg),m_error_code(error_code){}
+    Report(true),m_message(msg),m_error_code(error_code){}
 
     virtual void execute(RecallReportPacker& _this);
   };
@@ -130,7 +130,6 @@ private:
   
   unsigned int m_reportFilePeriod;
   bool m_errorHappened;
-  bool m_continue;
 };
 
 }}}}

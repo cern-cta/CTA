@@ -37,7 +37,7 @@ using castor::log::Param;
 
 RecallReportPacker::RecallReportPacker(client::ClientInterface & tg,unsigned int reportFilePeriod,log::LogContext lc):
 ReportPackerInterface<detail::Recall>(tg,lc),
-        m_workerThread(*this),m_reportFilePeriod(reportFilePeriod),m_errorHappened(false),m_continue(true){
+        m_workerThread(*this),m_reportFilePeriod(reportFilePeriod),m_errorHappened(false){
 
 }
 RecallReportPacker::~RecallReportPacker(){
@@ -89,6 +89,9 @@ void RecallReportPacker::flush(){
     
     client::ClientInterface::RequestReport chrono;
     m_client.reportRecallResults(*m_listReports,chrono);
+    
+    //delete the old pointer and remplace it with the new one provided
+    //that way,  all the reports that have been send are deleted (by m_listReports's destructor)
     m_listReports.reset(new FileReportList);
   }
 }
@@ -105,7 +108,6 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& _this){
      _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono);
      //throw castor::exception::Exception(msg);
   }
-  _this.m_continue=false;
 }
 
 void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& _this){
@@ -121,7 +123,6 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
    _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono); 
    //throw castor::exception::Exception(msg);
   }
-  _this.m_continue=false;
 }
 
 void RecallReportPacker::ReportError::execute(RecallReportPacker& _this){
@@ -145,17 +146,22 @@ m_parent(parent) {
 }
 
 void RecallReportPacker::WorkerThread::run(){
-  while(m_parent.m_continue) {    
+  while(1) {    
     std::auto_ptr<Report> rep (m_parent.m_fifo.pop());    
     unsigned int totalSize = m_parent.m_listReports->failedRecalls().size() +
                              m_parent.m_listReports->successfulRecalls().size();
     
-    if(totalSize >= m_parent.m_reportFilePeriod || true==rep->goingToEnd())
+    if(totalSize >= m_parent.m_reportFilePeriod || rep->goingToEnd())
     {
       m_parent.flush();
     }
-
+    
     rep->execute(m_parent);
+    
+    if(rep->goingToEnd()) {
+      break;
+    }
+    
   }
 }
 }}}}
