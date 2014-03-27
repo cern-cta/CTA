@@ -145,24 +145,17 @@ m_parent(parent) {
 }
 
 void RecallReportPacker::WorkerThread::run(){
-  while(m_parent.m_continue) {
-    std::auto_ptr<Report> rep (m_parent.m_fifo.pop());
-    rep->execute(m_parent);
-    
+  while(m_parent.m_continue) {    
+    std::auto_ptr<Report> rep (m_parent.m_fifo.pop());    
     unsigned int totalSize = m_parent.m_listReports->failedRecalls().size() +
                              m_parent.m_listReports->successfulRecalls().size();
     
-    if(totalSize >= m_parent.m_reportFilePeriod)
+    if(totalSize >= m_parent.m_reportFilePeriod || true==rep->goingToEnd())
     {
       m_parent.flush();
     }
+
+    rep->execute(m_parent);
   }
-  
-  /*
-   * we might have stored into m_parent.m_listReports some reports between
-   * the last flush and the End of session but not reached the critical mass 
-   * required to flush. So we unconditionally flush
-  */
-  m_parent.flush();
 }
 }}}}
