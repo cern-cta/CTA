@@ -53,8 +53,7 @@ namespace client {
      * (read/write session, first file information, etc...)
      * @param clientRequest the client information as sent by VDQM.
      */
-    ClientProxy(const legacymsg::RtcpJobRqstMsgBody & clientRequest)
-            throw (castor::tape::Exception);
+    ClientProxy(const legacymsg::RtcpJobRqstMsgBody & clientRequest);
     
     /**
      * Retrieves the volume Id from the client (with transfer direction)
@@ -63,13 +62,13 @@ namespace client {
      * up and can be used when a exception is thrown.
      * @return the transaction id
      */
-    void fetchVolumeId(VolumeInfo & volInfo, RequestReport &report) throw (castor::tape::Exception);
+    void fetchVolumeId(VolumeInfo & volInfo, RequestReport &report);
     
     /**
      * Reports end of session to the client. This should be the last call to
      * the client.
      */
-    virtual void reportEndOfSession(RequestReport &report) throw (Exception);
+    virtual void reportEndOfSession(RequestReport &report);
     
     /**
      * Reports end of session to the client. This should be the last call to
@@ -81,7 +80,7 @@ namespace client {
      * @param errorCode (sent to the client)
      */
     virtual void reportEndOfSessionWithError(const std::string & errorMsg, int errorCode, 
-    RequestReport &transactionReport) throw (castor::tape::Exception);
+    RequestReport &transactionReport);
     
     /**
      * Asks the the client for files to migrate, with at least files files, or
@@ -97,8 +96,7 @@ namespace client {
      * files could be retrieved.
      */
     tapegateway::FilesToMigrateList * getFilesToMigrate(uint64_t files, 
-    uint64_t bytes, RequestReport &report)
-    throw (castor::tape::Exception);
+    uint64_t bytes, RequestReport &report);
     
     /**
      * Reports the result of migrations to the client.
@@ -106,7 +104,7 @@ namespace client {
      * @param report Placeholder to network timing information
      */
     void reportMigrationResults(tapegateway::FileMigrationReportList & migrationReport,
-      RequestReport &report) throw (castor::tape::Exception);
+      RequestReport &report);
     
     /**
      * Asks the the client for files to recall, with at least files files, or
@@ -119,8 +117,7 @@ namespace client {
      * and context information
      */
     tapegateway::FilesToRecallList * getFilesToRecall(uint64_t files,
-    uint64_t bytes, RequestReport &report)
-    throw (castor::tape::Exception);
+    uint64_t bytes, RequestReport &report);
     
     /**
      * Reports the result of recall to the client.
@@ -128,7 +125,7 @@ namespace client {
      * @param report Placeholder to network timing information
      */
     void reportRecallResults(tapegateway::FileRecallReportList & recallReport,
-      RequestReport &report) throw (castor::tape::Exception);
+      RequestReport &report) ;
     /**
      * Exception thrown when the wrong response type was received from
      * the client after a request. Extracts the type and prints it.
@@ -158,7 +155,7 @@ namespace client {
      */
     tapegateway::GatewayMessage * requestResponseSession(
             const tapegateway::GatewayMessage &req,
-            RequestReport & report) throw (castor::tape::Exception);
+            RequestReport & report);
     
     /**
      * A helper class managing a thread safe message counter (we need it thread

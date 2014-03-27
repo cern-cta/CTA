@@ -60,7 +60,7 @@ public :
     };
     
     virtual tapegateway::FilesToRecallList* getFilesToRecall(uint64_t files,
-    uint64_t bytes, RequestReport &report) throw (castor::tape::Exception) = 0;
+    uint64_t bytes, RequestReport &report)  = 0;
 
     /**
      * Reports the result of migrations to the client.
@@ -68,7 +68,7 @@ public :
      * @param report Placeholder to network timing information
      */
     virtual void reportMigrationResults(tapegateway::FileMigrationReportList & migrationReport,
-    RequestReport &report) throw (castor::tape::Exception) =0;
+    RequestReport &report)  =0;
     
       /**
      * Reports end of session to the client. This should be the last call to
@@ -80,14 +80,14 @@ public :
      * @param errorCode (sent to the client)
      */
     virtual void reportEndOfSessionWithError(const std::string & errorMsg, int errorCode, 
-    RequestReport &transactionReport) throw (castor::tape::Exception) = 0;
+    RequestReport &transactionReport)  = 0;
     
     
     /**
      * Reports end of session to the client. This should be the last call to
      * the client.
      */
-    virtual void reportEndOfSession(RequestReport &report) throw (Exception) = 0;
+    virtual void reportEndOfSession(RequestReport &report) = 0;
     
         /**
      * Reports the result of recall to the client.
@@ -95,7 +95,7 @@ public :
      * @param report Placeholder to network timing information
      */
     virtual void reportRecallResults(tapegateway::FileRecallReportList & recallReport,
-      RequestReport &report) throw (castor::tape::Exception) =0;
+      RequestReport &report)  =0;
     
     virtual ~ClientInterface(){}
 };

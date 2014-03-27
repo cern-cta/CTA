@@ -43,15 +43,14 @@
 #include <stdlib.h>
 #include <typeinfo>
 
-
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace client {
   
 
-ClientProxy::ClientProxy(const legacymsg::RtcpJobRqstMsgBody& clientRequest)
-  throw (castor::tape::Exception): m_request(clientRequest) {}
+ClientProxy::ClientProxy(const legacymsg::RtcpJobRqstMsgBody& clientRequest):
+m_request(clientRequest) {}
 
 ClientProxy::UnexpectedResponse::
     UnexpectedResponse(const castor::IObject* resp, const std::string & w):
@@ -69,7 +68,6 @@ tapegateway::GatewayMessage *
   ClientProxy::requestResponseSession(
     const tapegateway::GatewayMessage &req,
     RequestReport & report)
-throw (castor::tape::Exception) 
 {
   // 0) Start the stopwatch
   castor::tape::utils::Timer timer;
@@ -112,7 +110,7 @@ throw (castor::tape::Exception)
 
 void ClientProxy::fetchVolumeId(
   VolumeInfo & volInfo, RequestReport &report) 
-throw (castor::tape::Exception) {
+{
   // 1) Build the request
   castor::tape::tapegateway::VolumeRequest request;
   request.setMountTransactionId(m_request.volReqId);
@@ -155,7 +153,7 @@ throw (castor::tape::Exception) {
 
 void ClientProxy::reportEndOfSession(
 RequestReport &transactionReport) 
-throw (castor::tape::Exception) {
+{
   // 1) Build the report
   castor::tape::tapegateway::EndNotification endReport;
   transactionReport.transactionId = ++m_transactionId;
@@ -185,7 +183,7 @@ throw (castor::tape::Exception) {
 
 void ClientProxy::reportEndOfSessionWithError(
 const std::string & errorMsg, int errorCode, RequestReport &transactionReport) 
-throw (castor::tape::Exception) {
+{
   // 1) Build the report
   castor::tape::tapegateway::EndNotificationErrorReport endReport;
   transactionReport.transactionId = ++m_transactionId;
@@ -218,7 +216,7 @@ throw (castor::tape::Exception) {
 tapegateway::FilesToMigrateList * 
     ClientProxy::getFilesToMigrate(
 uint64_t files, uint64_t bytes, RequestReport& report) 
-throw (castor::tape::Exception) {
+{
   // 1) Build the request
   castor::tape::tapegateway::FilesToMigrateListRequest ftmReq;
   report.transactionId = ++m_transactionId;
@@ -255,7 +253,7 @@ throw (castor::tape::Exception) {
 
 void ClientProxy::reportMigrationResults(
 tapegateway::FileMigrationReportList & migrationReport,
-    RequestReport& report) throw (castor::tape::Exception) {
+    RequestReport& report) {
   // 1) The request is provided already fleshed out by the user. We have to
   // add the administrative numbering
   migrationReport.setMountTransactionId(m_request.volReqId);
@@ -296,7 +294,7 @@ tapegateway::FileMigrationReportList & migrationReport,
 tapegateway::FilesToRecallList * 
     ClientProxy::getFilesToRecall(
 uint64_t files, uint64_t bytes, RequestReport& report) 
-throw (castor::tape::Exception) {
+{
   // 1) Build the request
   castor::tape::tapegateway::FilesToRecallListRequest ftrReq;
   report.transactionId = ++m_transactionId;
@@ -333,7 +331,7 @@ throw (castor::tape::Exception) {
 
 void ClientProxy::reportRecallResults(
 tapegateway::FileRecallReportList & recallReport,
-RequestReport& report) throw (castor::tape::Exception) {
+RequestReport& report) {
   // 1) The request is provided already fleshed out by the user. We have to
   // add the administrative numbering
   recallReport.setMountTransactionId(m_request.volReqId);

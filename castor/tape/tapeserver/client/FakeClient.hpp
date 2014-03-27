@@ -12,6 +12,7 @@
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include <memory>
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 namespace{
   using namespace castor::tape;
@@ -92,6 +93,21 @@ public:
   int error_code;
   std::string msg_error;
 };
+
+
+
+
+    
+  class MockClient : public castor::tape::tapeserver::client::ClientInterface {
+  public:
+    MOCK_METHOD3(getFilesToRecall, tapegateway::FilesToRecallList* (uint64_t files,uint64_t bytes, RequestReport &report));
+    MOCK_METHOD2(reportMigrationResults, void (tapegateway::FileMigrationReportList & migrationReport,RequestReport &report));
+    
+    MOCK_METHOD3(reportEndOfSessionWithError, void(const std::string & errorMsg, int errorCode, RequestReport &transactionReport));
+    MOCK_METHOD1(reportEndOfSession, void(RequestReport &transactionReport));
+    MOCK_METHOD2(reportRecallResults,void(tapegateway::FileRecallReportList & recallReport,RequestReport &report));
+  };
+  
 }
 
 #endif	/* FAKECLIENT_HPP */
