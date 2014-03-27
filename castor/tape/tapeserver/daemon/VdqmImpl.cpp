@@ -107,10 +107,6 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatus(
 //-----------------------------------------------------------------------------
 int castor::tape::tapeserver::daemon::VdqmImpl::connectToVdqm()
   const throw(castor::exception::Exception) {
-  timeval connectStartTime = {0, 0};
-  timeval connectEndTime   = {0, 0};
-  castor::utils::getTimeOfDay(&connectStartTime, NULL);
-
   castor::utils::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(io::connectWithTimeout(m_vdqmHostName, m_vdqmPort,
@@ -120,16 +116,6 @@ int castor::tape::tapeserver::daemon::VdqmImpl::connectToVdqm()
     ex.getMessage() << "Failed to connect to vdqm on host " << m_vdqmHostName
       << " port " << m_vdqmPort << ": " << ne.getMessage().str();
     throw ex;
-  }
-
-  const double connectDurationSecs = castor::utils::timevalToDouble(
-    castor::utils::timevalAbsDiff(connectStartTime, connectEndTime));
-  {
-    log::Param params[] = {
-      log::Param("vdqmHostName", m_vdqmHostName),
-      log::Param("vdqmPort", m_vdqmPort),
-      log::Param("connectDurationSecs", connectDurationSecs)};
-    m_log(LOG_INFO, "Connected to vdqm", params);
   }
 
   return smartConnectSock.release();
