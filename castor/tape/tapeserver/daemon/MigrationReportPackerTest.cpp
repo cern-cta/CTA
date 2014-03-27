@@ -29,9 +29,14 @@
 namespace {
   const std::string error="ERROR_TEST";
   using namespace castor::tape;
+  using ::testing::_;
   
 TEST(castor_tape_tapeserver_daemon, MigrationReportPackerNominal) {
-  FakeClient client;
+  MockClient client;
+  ::testing::InSequence dummy;
+  EXPECT_CALL(client, reportMigrationResults(_,_)).Times(1);
+  EXPECT_CALL(client, reportEndOfSession(_)).Times(1);
+  
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerNominal");
   castor::log::LogContext lc(log);
   tapeserver::daemon::MigrationReportPacker mrp(client,lc);
@@ -47,13 +52,14 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerNominal) {
   
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find("A file was successfully written on the tape"));
-  
-  ASSERT_EQ(2,client.current_succes_migration);
-  ASSERT_EQ(0,client.current_failled_migration);
 }
 
 TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillure) {
-  FakeClient client;
+  testing::StrictMock<MockClient> client;
+  ::testing::InSequence dummy;
+  EXPECT_CALL(client, reportMigrationResults(_,_)).Times(0);
+  EXPECT_CALL(client, reportEndOfSessionWithError(error,-1,_)).Times(1);
+  
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFaillure");
   castor::log::LogContext lc(log);
   
@@ -72,14 +78,13 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillure) {
   
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find("A flush on tape has been reported but a writing error happened before"));
-  
-  //We expect init_value twice because nothing should have been written 
-  ASSERT_EQ(init_value,client.current_succes_migration);
-  ASSERT_EQ(init_value,client.current_failled_migration);
 } 
 
 TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillureGoodEnd) {
-  FakeClient client;
+  testing::StrictMock<MockClient> client;
+  ::testing::InSequence dummy;
+  EXPECT_CALL(client, reportMigrationResults(_,_)).Times(0);
+  EXPECT_CALL(client, reportEndOfSessionWithError(_,SEINTERNAL,_)).Times(1);
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerFaillureGoodEnd");
   castor::log::LogContext lc(log);
   
@@ -98,14 +103,15 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillureGoodEnd) {
    
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find("Nominal EndofSession has been reported  but an writing error on the tape happened before"));
-  
-  //We expect init_value twice because nothing should have been written 
-  ASSERT_EQ(init_value,client.current_succes_migration);
-  ASSERT_EQ(init_value,client.current_failled_migration);
+ 
 } 
 
 TEST(castor_tape_tapeserver_daemon, MigrationReportPackerGoodBadEnd) {
-  FakeClient client;
+  testing::StrictMock<MockClient> client;
+  ::testing::InSequence dummy;
+  EXPECT_CALL(client, reportMigrationResults(_,_)).Times(1);
+  EXPECT_CALL(client, reportEndOfSessionWithError(_,SEINTERNAL,_)).Times(1);
+  
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_MigrationReportPackerGoodBadEnd");
   castor::log::LogContext lc(log);
  
@@ -124,9 +130,5 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerGoodBadEnd) {
   
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find("EndofSessionWithErrors has been reported  but NO writing error on the tape was detected"));
-  
-  //We expect init_value twice because nothing should have been written 
-  ASSERT_EQ(3,client.current_succes_migration);
-  ASSERT_EQ(0,client.current_failled_migration);
 } 
 }

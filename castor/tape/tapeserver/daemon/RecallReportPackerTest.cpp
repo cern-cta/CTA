@@ -26,11 +26,14 @@
 #include "castor/log/StringLogger.hpp"
 #include <gtest/gtest.h>
 
+using ::testing::_;
 namespace {
-  
 TEST(castor_tape_tapeserver_daemon, RecallReportPackerNominal) {
-  FakeClient client;
-
+  MockClient client;
+  ::testing::InSequence dummy;
+  EXPECT_CALL(client, reportRecallResults(_,_)).Times(1);
+  EXPECT_CALL(client, reportEndOfSession(_)).Times(1);
+  
   castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerNominal");
   castor::log::LogContext lc(log);
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
@@ -44,13 +47,15 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerNominal) {
   
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find("Nominal RecallReportPacker::EndofSession has been reported"));
-  
-  ASSERT_EQ(2,client.current_succes_recall);
-  ASSERT_EQ(0,client.current_failled_recall);
+ 
 }
 
 TEST(castor_tape_tapeserver_daemon, RecallReportPackerCumulated) {
-  FakeClient client;
+  MockClient client;
+  ::testing::InSequence dummy;
+  EXPECT_CALL(client, reportRecallResults(_,_)).Times(2);
+  EXPECT_CALL(client, reportEndOfSession(_)).Times(1);
+  
   castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerCumulated");
   castor::log::LogContext lc(log);
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
@@ -65,22 +70,22 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerCumulated) {
 
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find("Nominal RecallReportPacker::EndofSession has been reported"));
-
-  //we except only one success file because the 2 previous have already been flushed
-  ASSERT_EQ(1,client.current_succes_recall);
-  ASSERT_EQ(0,client.current_failled_recall);
 }
 
 TEST(castor_tape_tapeserver_daemon, RecallReportPackerBadBadEnd) {
-  FakeClient client;
+  std::string error_msg="ERROR_TEST_MSG";
+  int error_code=std::numeric_limits<int>::max();
+  //FakeClient client;
+  MockClient client;
+  ::testing::InSequence dummy;
+  EXPECT_CALL(client, reportRecallResults(_,_)).Times(2);
+  EXPECT_CALL(client, reportEndOfSessionWithError(error_msg,error_code,_)).Times(1);
+  
   castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerBadBadEnd");
   castor::log::LogContext lc(log);
 
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   rrp.startThreads();
-
-  std::string error_msg="ERROR_TEST_MSG";
-  int error_code=std::numeric_limits<int>::max();
 
   tapegateway::FileToRecallStruct recalledFiled;
   rrp.reportCompletedJob(recalledFiled);
@@ -92,21 +97,24 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerBadBadEnd) {
 
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find(error_msg));
-  ASSERT_EQ(error_code,client.error_code);
-  //we except only one success file because the 2 previous have already been flushed
-  ASSERT_EQ(1,client.current_succes_recall);
-  ASSERT_EQ(1,client.current_failled_recall);
 }
 
 TEST(castor_tape_tapeserver_daemon, RecallReportPackerBadGoodEnd) {
-  FakeClient client;
+
+  std::string error_msg="ERROR_TEST_MSG";  
+
+  MockClient client;
+  ::testing::InSequence dummy;
+  EXPECT_CALL(client, reportRecallResults(_,_)).Times(2);
+  EXPECT_CALL(client, 
+  reportEndOfSessionWithError("RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process",SEINTERNAL,_)).Times(1);
+
   castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerBadBadEnd");
   castor::log::LogContext lc(log);
   
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   rrp.startThreads();
   
-  std::string error_msg="ERROR_TEST_MSG";
   
   tapegateway::FileToRecallStruct recalledFiled;
   rrp.reportCompletedJob(recalledFiled);
@@ -118,21 +126,24 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerBadGoodEnd) {
 
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find("EndofSession has been reported  but an error happened somewhere in the process"));
-  ASSERT_EQ(SEINTERNAL,client.error_code);
-  //we except only one success file because the 2 previous have already been flushed
-  ASSERT_EQ(1,client.current_succes_recall);
-  ASSERT_EQ(1,client.current_failled_recall);
 }
 TEST(castor_tape_tapeserver_daemon, RecallReportPackerGoodBadEnd) {
-  FakeClient client;
+  
+  std::string error_msg="ERROR_TEST_MSG";
+  int error_code=std::numeric_limits<int>::max();
+  
+  MockClient client;
+  ::testing::InSequence dummy;
+  EXPECT_CALL(client, reportRecallResults(_,_)).Times(1);
+  EXPECT_CALL(client, 
+  reportEndOfSessionWithError("RecallReportPacker::EndofSessionWithErrors has been reported  but NO error was detected during the process",SEINTERNAL,_)).Times(1);
+
   castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerBadBadEnd");
   castor::log::LogContext lc(log);
   
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   rrp.startThreads();
   
-  std::string error_msg="ERROR_TEST_MSG";
-  int error_code=std::numeric_limits<int>::max();
   
   tapegateway::FileToRecallStruct recalledFiled;
   rrp.reportCompletedJob(recalledFiled);
@@ -142,9 +153,5 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerGoodBadEnd) {
 
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find("EndofSessionWithErrors has been reported  but NO error was detected during the process"));
-  ASSERT_EQ(SEINTERNAL,client.error_code);
-  //we except only one success file because the 2 previous have already been flushed
-  ASSERT_EQ(2,client.current_succes_recall);
-  ASSERT_EQ(0,client.current_failled_recall);
 }
 }
