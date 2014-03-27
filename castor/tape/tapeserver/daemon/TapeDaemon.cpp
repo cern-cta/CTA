@@ -243,11 +243,13 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
     params.push_back(log::Param("state", "up"));
     m_log(LOG_INFO, "Registering tape drive", params);
     m_vdqm.setTapeDriveStatusUp(m_hostName, unitName, dgn);
+    break;
   default:
     {
       castor::exception::Internal ex;
       ex.getMessage() << "Failed to register tape drive " << unitName <<
-        " in dgn " << dgn << ": Unknown drive state: state=" << driveState;
+        " in dgn " << dgn << ": Invalid drive state: state=" <<
+        DriveCatalogue::driveState2Str(driveState);
       throw ex;
     }
   }

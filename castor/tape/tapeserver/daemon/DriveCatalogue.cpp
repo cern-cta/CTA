@@ -32,7 +32,7 @@
 // driveState2Str
 //-----------------------------------------------------------------------------
 const char *castor::tape::tapeserver::daemon::DriveCatalogue::driveState2Str(
-  const DriveState state) const throw() {
+  const DriveState state) throw() {
   switch(state) {
   case DRIVE_STATE_INIT:    return "INIT";
   case DRIVE_STATE_DOWN:    return "DOWN";

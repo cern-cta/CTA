@@ -104,7 +104,7 @@ public:
    * @param state The numerical tape-drive state.
    * @return The string representation if known else "UNKNOWN".
    */
-  const char *driveState2Str(const DriveState state) const throw();
+  static const char *driveState2Str(const DriveState state) throw();
 
   /**
    * Poplates the catalogue using the specified parsed lines from

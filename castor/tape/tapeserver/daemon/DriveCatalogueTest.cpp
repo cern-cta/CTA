@@ -42,16 +42,14 @@ protected:
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, driveState2Str) {
   using namespace castor::tape::tapeserver::daemon;
 
-  DriveCatalogue catalogue;
-
   ASSERT_EQ(std::string("INIT"),
-    catalogue.driveState2Str(DriveCatalogue::DRIVE_STATE_INIT));
+    DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_INIT));
   ASSERT_EQ(std::string("DOWN"),
-    catalogue.driveState2Str(DriveCatalogue::DRIVE_STATE_DOWN));
+    DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_DOWN));
   ASSERT_EQ(std::string("UP"),
-    catalogue.driveState2Str(DriveCatalogue::DRIVE_STATE_UP));
+    DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_UP));
   ASSERT_EQ(std::string("RUNNING"),
-    catalogue.driveState2Str(DriveCatalogue::DRIVE_STATE_RUNNING));
+    DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_RUNNING));
 }
 
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
