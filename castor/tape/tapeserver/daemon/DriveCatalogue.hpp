@@ -50,7 +50,7 @@ public:
    * The state of a drive as described by the following FSTN:
    *
    *              start daemon /
-   *  ------    send VDQM_UNIT_UP   ----------------
+   *  ------  send VDQM_UNIT_DOWN   ----------------
    * | INIT |--------------------->|      DOWN      |<-------------------
    *  ------                        ----------------                     |
    *     |                          |              ^                     |
@@ -58,7 +58,7 @@ public:
    *     |                          | tpconfig up  | tpconfig down       |
    *     |                          |              |                     |
    *     |      start daemon /      v              |                     |
-   *     |   send VDQM_UNIT_DOWN    ----------------                     |
+   *     |    send VDQM_UNIT_UP     ----------------                     |
    *      ------------------------>|      UP        |                    |
    *                                ----------------                     |
    *                                |              ^                     |
