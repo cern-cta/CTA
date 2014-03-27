@@ -26,7 +26,7 @@ CastorInstallInitScript (tapeserverd)
 add_executable(tapeserver-mm 
   tapeserver-mm.cpp 
   RecallTaskInjector.cpp
-  ClientProxy.cpp
+  ../client/ClientProxy.cpp
   MigrationReportPacker.cpp
   RecallReportPacker.cpp)
 
@@ -36,15 +36,14 @@ castorcommon castorclient castorTapeServerThreading castortapeutils
 castortapegatewayprotocol)
 
 add_library(tapeserver 
-  ClientProxy.cpp 
+  ../client/ClientProxy.cpp 
   MountSession.cpp 
   RecallTaskInjector.cpp 
-  ClientProxy.cpp 
   MigrationReportPacker.cpp 
   RecallReportPacker.cpp)
 
 add_library(tapeserverdTest 
-  ClientSimulator.cpp 
+  ../client/ClientSimulator.cpp 
   ../../tpcp/TpcpCommand.cpp
   ../../tpcp/StreamOperators.cpp
   ../../tpcp/Helper.cpp

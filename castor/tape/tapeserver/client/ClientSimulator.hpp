@@ -31,7 +31,7 @@
 namespace castor {
 namespace tape {
 namespace tapeserver {
-namespace daemon {
+namespace client {
   /**
    * A class, reusing code of TpcpCommand which simulates the tapebridge
    * part of the client communication with the server. The constructor

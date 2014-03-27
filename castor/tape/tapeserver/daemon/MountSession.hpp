@@ -29,7 +29,7 @@
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/utils/utils.hpp"
-#include "ClientProxy.hpp"
+#include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "TapeSingleThreadInterface.hpp"
 
 using namespace castor::tape;
@@ -98,8 +98,8 @@ namespace daemon {
   private:
     legacymsg::RtcpJobRqstMsgBody m_request;
     castor::log::Logger & m_logger;
-    ClientProxy m_clientProxy;
-    ClientProxy::VolumeInfo m_volInfo;
+    client::ClientProxy m_clientProxy;
+    client::ClientProxy::VolumeInfo m_volInfo;
     System::virtualWrapper & m_sysWrapper;
     const utils::TpconfigLines & m_tpConfig;
     const CastorConf & m_castorConf;

@@ -8,7 +8,7 @@
 #ifndef FAKECLIENT_HPP
 #define	FAKECLIENT_HPP
 
-#include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include <memory>
 #include <gtest/gtest.h>
@@ -18,7 +18,7 @@ namespace{
   const int init_value=-1;
   const unsigned int nbFile=5;
 
-class FakeClient : public castor::tape::tapeserver::daemon::ClientInterface
+class FakeClient : public castor::tape::tapeserver::client::ClientInterface
 {
 
 public:

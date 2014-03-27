@@ -34,7 +34,7 @@
 namespace castor {
 namespace tape {
 namespace tapeserver {
-namespace daemon {
+namespace client {
   /**
    * A templated class, reusing code of TpcpCommand which simulates the 
    * tapegateway part of the client communication with the server. The 

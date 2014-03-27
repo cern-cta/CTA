@@ -33,9 +33,9 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteFileTask.hpp"
 #include "castor/tape/tapeserver/daemon/TapeWriteFileTask.hpp"
-#include "castor/tape/tapeserver/daemon/ClientProxy.hpp"
+#include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
-#include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
 namespace castor{
 namespace tape{
@@ -50,7 +50,7 @@ public:
 
   RecallTaskInjector(MemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
-        DiskThreadPoolInterface<DiskWriteTask> & diskWriter,ClientInterface& client,
+        DiskThreadPoolInterface<DiskWriteTask> & diskWriter,client::ClientInterface& client,
         castor::log::LogContext lc);
 
   
@@ -129,7 +129,7 @@ private:
 
   TapeSingleThreadInterface<TapeReadTask> & m_tapeReader;
   DiskThreadPoolInterface<DiskWriteTask> & m_diskWriter;
-  ClientInterface& m_client;
+  client::ClientInterface& m_client;
   
   /**
    * utility member to log some pieces of information

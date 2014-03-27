@@ -27,7 +27,7 @@
 
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "castor/log/LogContext.hpp"
-#include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 
@@ -38,7 +38,7 @@ namespace daemon {
   
 class RecallReportPacker : private ReportPackerInterface<detail::Recall> {
 public:
-  RecallReportPacker(ClientInterface & tg,unsigned int reportFilePeriod,log::LogContext lc);
+  RecallReportPacker(client::ClientInterface & tg,unsigned int reportFilePeriod,log::LogContext lc);
   
   ~RecallReportPacker();
   
@@ -73,15 +73,18 @@ public:
   
 private:
   class Report {
+    const bool m_endNear;
   public:
+    Report(bool b):m_endNear(b){}
     virtual ~Report(){}
     virtual void execute(RecallReportPacker& packer)=0;
+    bool goingToEnd() const {return m_endNear;};
   };
   class ReportSuccessful :  public Report {
     const FileStruct m_migratedFile;
   public:
     ReportSuccessful(const FileStruct& file): 
-    m_migratedFile(file){}
+    Report(false),m_migratedFile(file){}
     virtual void execute(RecallReportPacker& _this);
   };
   class ReportError : public Report {
@@ -90,12 +93,13 @@ private:
     const int m_error_code;
   public:
     ReportError(const FileStruct& file,std::string msg,int error_code):
-    m_migratedFile(file),m_error_msg(msg),m_error_code(error_code){}
+    Report(false),m_migratedFile(file),m_error_msg(msg),m_error_code(error_code){}
     
     virtual void execute(RecallReportPacker& _this);
   };
   class ReportEndofSession : public Report {
   public:
+    ReportEndofSession():Report(false){}
     virtual void execute(RecallReportPacker& _this);
   };
   class ReportEndofSessionWithErrors : public Report {
@@ -103,7 +107,7 @@ private:
     int m_error_code;
   public:
     ReportEndofSessionWithErrors(std::string msg,int error_code):
-    m_message(msg),m_error_code(error_code){}
+    Report(false),m_message(msg),m_error_code(error_code){}
 
     virtual void execute(RecallReportPacker& _this);
   };

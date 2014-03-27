@@ -27,20 +27,20 @@
 #include <queue>
 
 #include "ClientSimulator.hpp"
-#include "../../tapegateway/GatewayMessage.hpp"
+#include "castor/tape/tapegateway/GatewayMessage.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapegateway/FilesToRecallListRequest.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
-#include "ReportPackerInterface.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
+#include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 
 namespace castor {
 namespace tape {
 namespace tapeserver {
-namespace daemon {
+namespace client {
   
 using namespace castor::tape;
 
