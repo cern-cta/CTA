@@ -95,6 +95,18 @@ public:
     DRIVE_STATE_RUNNING };
 
   /**
+   * Returns the string representation of the specified tape-drive state.
+   *
+   * Please note that this method does not throw an exception and to that end
+   * will return the string "UNKNOWN" if the string representation of the
+   * specified drive state is unknown.
+   *
+   * @param state The numerical tape-drive state.
+   * @return The string representation if known else "UNKNOWN".
+   */
+  const char *driveState2Str(const DriveState state) const throw();
+
+  /**
    * Poplates the catalogue using the specified parsed lines from
    * /etc/castor/TPCONFIG.
    *

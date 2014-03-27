@@ -29,6 +29,20 @@
 #include <string.h>
 
 //-----------------------------------------------------------------------------
+// driveState2Str
+//-----------------------------------------------------------------------------
+const char *castor::tape::tapeserver::daemon::DriveCatalogue::driveState2Str(
+  const DriveState state) const throw() {
+  switch(state) {
+  case DRIVE_STATE_INIT:    return "INIT";
+  case DRIVE_STATE_DOWN:    return "DOWN";
+  case DRIVE_STATE_UP:      return "UP";
+  case DRIVE_STATE_RUNNING: return "RUNNING";
+  default:                  return "UNKNOWN";
+  }
+}
+
+//-----------------------------------------------------------------------------
 // populateCatalogue
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::populateCatalogue(
