@@ -114,6 +114,14 @@ public:
    */
   void populateCatalogue(const utils::TpconfigLines &lines)
     throw(castor::exception::Exception);
+  
+  /**
+   * Returns the unit name of the drive on which the given process is running
+   * @param sessionPid
+   * @return the unit name of the drive on which the given process is running
+   */
+  std::string getUnitName(const pid_t sessionPid) 
+    throw(castor::exception::Exception);
 
   /**
    * Returns an unordered list of the unit names of all of the tape drives
@@ -215,9 +223,10 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    * @param job The job received from the vdqmd daemon.
+   * @param sessionPid The pid of the child process responsible for the tape session
    */
   void tapeSessionStarted(const std::string &unitName,
-    const legacymsg::RtcpJobRqstMsgBody &job)
+    const legacymsg::RtcpJobRqstMsgBody &job, const pid_t sessionPid)
     throw(castor::exception::Exception);
 
   /**
@@ -243,6 +252,14 @@ public:
    */
   void tapeSessionSucceeded(const std::string &unitName)
      throw(castor::exception::Exception);
+  
+  /**
+   * Same as above but one can use with the pid of the child process instead of
+   * the unit name
+   * @param pid of the child process handling the session
+   */
+  void tapeSessionSucceeded(const pid_t pid)
+     throw(castor::exception::Exception);
 
   /**
    * Moves the state of the specified tape drive from DRIVE_STATE_RUNNING to
@@ -254,6 +271,14 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   void tapeSessionFailed(const std::string &unitName)
+     throw(castor::exception::Exception);
+  
+  /**
+   * Same as above but one can use with the pid of the child process instead of
+   * the unit name
+   * @param pid of the child process handling the session
+   */
+  void tapeSessionFailed(const pid_t pid)
      throw(castor::exception::Exception);
 
 private:
@@ -300,6 +325,12 @@ private:
      * member variable is undefined.
      */
     legacymsg::RtcpJobRqstMsgBody job;
+    
+    /**
+     * The pid of the child process handling the tape session running on the 
+     * tape drive.
+     */
+    pid_t pid;
 
     /**
      * Default constructor that initializes all strings to the empty string,

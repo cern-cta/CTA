@@ -286,7 +286,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   castor::utils::copyString(job.dgn, "DGN");
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
-  ASSERT_NO_THROW(catalogue.tapeSessionStarted("UNIT", job));
+  ASSERT_NO_THROW(catalogue.tapeSessionStarted("UNIT", job, 1234));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_RUNNING,
     catalogue.getState("UNIT"));
   ASSERT_EQ(job.volReqId, catalogue.getJob("UNIT").volReqId);
@@ -330,7 +330,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
   castor::utils::copyString(job.dgn, "DGN2");
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
-  ASSERT_THROW(catalogue.tapeSessionStarted("UNIT", job),
+  ASSERT_THROW(catalogue.tapeSessionStarted("UNIT", job, 1234),
     castor::exception::Exception);
 }
 
