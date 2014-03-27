@@ -24,7 +24,9 @@
 
 #pragma once
 
-#include "../../tpcp/TpcpCommand.hpp"
+#include "castor/tape/tpcp/TpcpCommand.hpp"
+#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
+#include <queue>
 
 namespace castor {
 namespace tape {
@@ -67,8 +69,12 @@ namespace daemon {
     }
     void sessionLoop() {
       processFirstRequest();
-      waitEndSession();
+      while (processOneRequest());
       m_callbackSock.close();
+    }
+    void addFileToRecall(tapegateway::FileToRecallStruct & ftr, uint64_t size) {
+      m_filesToRecall.push(ftr);
+      m_recallSizes.push(size);
     }
     
   protected:
@@ -99,8 +105,10 @@ namespace daemon {
   private:
     // Process the first request which should be getVolume
     void processFirstRequest() throw(castor::exception::Exception);
-    // Expect an end sessions (with or without error)
-    void waitEndSession() throw(castor::exception::Exception);
+    // Process requests (recall or migration) until we receive and end of session
+    // This helper function will process one request and return true if there is 
+    // still more to process (that is if the end session is not signaled yet)
+    bool processOneRequest() throw(castor::exception::Exception);
     // Notify the client
     void sendEndNotificationErrorReport(
     const uint64_t             tapebridgeTransactionId,
@@ -111,6 +119,8 @@ namespace daemon {
     std::string m_vid;
     std::string m_volLabel;
     std::string m_density;
+    std::queue<tapegateway::FileToRecallStruct> m_filesToRecall;
+    std::queue<uint64_t> m_recallSizes;
   };
 }
 }

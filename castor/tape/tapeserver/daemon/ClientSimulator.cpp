@@ -24,6 +24,7 @@
 
 #include <typeinfo>
 #include <memory>
+#include <queue>
 
 #include "ClientSimulator.hpp"
 #include "../../tapegateway/GatewayMessage.hpp"
@@ -31,6 +32,10 @@
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
+#include "castor/tape/tapegateway/FilesToRecallListRequest.hpp"
+#include "castor/tape/tapegateway/FilesToRecallList.hpp"
+#include "ReportPackerInterface.hpp"
+#include "castor/tape/tapegateway/NoMoreFiles.hpp"
 
 namespace castor {
 namespace tape {
@@ -96,7 +101,7 @@ throw (castor::exception::Exception) {
   clientConnection->sendObject(vol);
 }
 
-void ClientSimulator::waitEndSession()
+bool ClientSimulator::processOneRequest()
 throw (castor::exception::Exception) {
   // Accept the next connection
   std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
@@ -118,6 +123,47 @@ throw (castor::exception::Exception) {
     ex.getMessage() << oss.str();
     throw ex;
   }
+  // Process all the requests we can receive
+  // Handle request for more work (Recall)
+  try {
+    tapegateway::FilesToRecallListRequest & req = 
+        dynamic_cast<tapegateway::FilesToRecallListRequest &> (*obj);
+    uint32_t files = 0;
+    uint64_t bytes = 0;
+    tapegateway::FilesToRecallList reply;
+    while (files < req.maxFiles() && bytes < req.maxBytes()) {
+      if (m_filesToRecall.size()) {
+        files ++;
+        bytes += m_recallSizes.front();
+        std::auto_ptr<tapegateway::FileToRecallStruct> ftr(new tapegateway::FileToRecallStruct);
+        *ftr = m_filesToRecall.front();
+        reply.filesToRecall().push_back(ftr.release());
+        m_filesToRecall.pop();
+        m_recallSizes.pop();
+      } else {
+        break;
+      }
+    }
+    // At this point, the reply should be populated with all the files asked for
+    // (or as much as we could provide).
+    // If not, we should send a NoMoreFiles instead of if.
+    if (reply.filesToRecall().size()) {
+      // All the information about the transaction still has to be filled up
+      reply.setAggregatorTransactionId(msg.aggregatorTransactionId());
+      reply.setMountTransactionId(m_volReqId);
+      clientConnection->sendObject(reply);
+      return true; // The end of session is not signalled here
+    } else {
+      tapegateway::NoMoreFiles noMore;
+      noMore.setAggregatorTransactionId(msg.aggregatorTransactionId());
+      noMore.setMountTransactionId(m_volReqId);
+      clientConnection->sendObject(noMore);
+      return true; // The end of session is not signalled here
+    }
+  } catch (std::bad_cast) {}
+  // TODO Same for migrations should go here....
+  
+  // Final case: end of session.
   // We expect with tape EndNotification or EndNotificationErrorReport
   try {
     (void)dynamic_cast<tapegateway::EndNotification &> (*obj);
@@ -139,6 +185,7 @@ throw (castor::exception::Exception) {
   ack.setAggregatorTransactionId(msg.aggregatorTransactionId());
   ack.setMountTransactionId(m_volReqId);
   clientConnection->sendObject(ack);
+  return false; // We are at the end of the session
 }
 
 void ClientSimulator::sendEndNotificationErrorReport(

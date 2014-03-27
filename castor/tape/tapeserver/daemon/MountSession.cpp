@@ -36,6 +36,7 @@
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "RecallTaskInjector.hpp"
+#include "RecallReportPacker.hpp"
 
 using namespace castor::tape;
 using namespace castor::log;
@@ -241,23 +242,52 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
   }
   // We can now start instantiating all the components of the data path
   {
-    castor::tape::tapeserver::daemon::MemoryManager mm(m_castorConf.rtcopydNbBufs, 
-        m_castorConf.rtcopydBufsz);
-    castor::tape::tapeserver::daemon::TapeReadSingleThread trst(*drive);
-    castor::tape::tapeserver::daemon::DiskWriteThreadPool dwtp(
-        m_castorConf.tapeserverdDiskThreads,
+    // Allocate all the elements of the memory management (in proper order
+    // to refer them to each other)
+    MemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz);
+    TapeReadSingleThread trst(*drive);
+    DiskWriteThreadPool dwtp(m_castorConf.tapeserverdDiskThreads,
         m_castorConf.tapebridgeBulkRequestRecallMaxFiles,
         m_castorConf.tapebridgeBulkRequestRecallMaxBytes);
-    castor::tape::tapeserver::daemon::RecallTaskInjector rti(mm, trst, 
-        dwtp, m_clientProxy, lc);
+    RecallReportPacker rrp(m_clientProxy,
+        m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
+        lc);
+    RecallTaskInjector rti(mm, trst, dwtp, m_clientProxy, lc);
+    dwtp.setJobInjector(&rti);
+    
+    // We are now ready to put everything in motion. First step is to check
+    // we get any concrete job to be done from the client (via the task injector)
+    if (rti.synchronousInjection(m_castorConf.tapebridgeBulkRequestRecallMaxFiles,
+        m_castorConf.tapebridgeBulkRequestRecallMaxBytes)) {
+      // We got something to recall. Time to start the machinery
+      trst.startThreads();
+      mm.startThreads();
+      dwtp.startThreads();
+      rrp.startThreads();
+      rti.startThreads();
+      // This thread is now going to be idle until the system unwinds at the end 
+      // of the session
+      // All client notifications are done by the report packer, including the
+      // end of session
+      rti.waitThreads();
+      rrp.waitThread();
+      dwtp.waitThreads();
+      mm.waitThreads();
+      trst.waitThreads();
+    } else {
+      // Just log this was an empty mount and that's it. The memory management
+      // will be deallocated automatically.
+      lc.log(LOG_ERR, "Aborting recall mount startup: empty mount");
+      ClientProxy::RequestReport reqReport;
+      m_clientProxy.reportEndOfSessionWithError("Aborted: empty recall mount", SEINTERNAL, reqReport);
+      LogContext::ScopedParam sp08(lc, Param("tapebridgeTransId", reqReport.transactionId));
+      LogContext::ScopedParam sp09(lc, Param("connectDuration", reqReport.connectDuration));
+      LogContext::ScopedParam sp10(lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
+      LogContext::ScopedParam sp11(lc, Param("errorMessage", "Aborted: empty recall mount"));
+      LogContext::ScopedParam sp12(lc, Param("errorCode", SEINTERNAL));
+      lc.log(LOG_ERR, "Notified client of end session with error");
+    }
   }
-  {
-    // Temporary end of session, to please the ClientSimulator
-    ClientProxy::RequestReport reqReport;
-    m_clientProxy.reportEndOfSession(reqReport);
-  }
-  
-  
 }
 
 void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc) {
