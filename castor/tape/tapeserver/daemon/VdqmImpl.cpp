@@ -93,30 +93,13 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatus(
   const std::string &dgn, const int status)
   throw(castor::exception::Exception) {
 
-  legacymsg::VdqmDrvRqstMsgBody drvRqstMsgBody;
-  drvRqstMsgBody.status = status;
-  castor::utils::copyString(drvRqstMsgBody.server, server.c_str());
-  castor::utils::copyString(drvRqstMsgBody.drive, unitName.c_str());
-  castor::utils::copyString(drvRqstMsgBody.dgn, dgn.c_str());
-  char drvRqstBuf[VDQM_MSGBUFSIZ];
-  const size_t drvRqstMsgLen = legacymsg::marshal(drvRqstBuf, drvRqstMsgBody);
-
   castor::utils::SmartFd connection(connectToVdqm());
-  io::writeBytes(connection.get(), m_netTimeout, drvRqstMsgLen, drvRqstBuf);
-
-  char ackBuf[12]; // Magic + type + status
-  legacymsg::MessageHeader ackMsg;
-  io::readBytes(connection.get(), m_netTimeout, sizeof(ackBuf), ackBuf);
-  const char *ackBufPtr = ackBuf;
-  size_t ackBufLen = sizeof(ackBuf);
-  legacymsg::unmarshal(ackBufPtr, ackBufLen, ackMsg);
-  {
-    log::Param params[] = {
-      log::Param("magic", ackMsg.magic),
-      log::Param("reqType", ackMsg.reqType),
-      log::Param("status", ackMsg.lenOrStatus)};
-    m_log(LOG_INFO, "setTapeDriveStatus() received ack from vdqm", params);
-  }
+  writeDriveStatusMsg(connection.get(), server, unitName, dgn, status);
+  readCommitAck(connection.get());
+  const legacymsg::MessageHeader header =
+    readDriveStatusMsgHeader(connection.get());
+  readDriveStatusMsgBody(connection.get(), header.lenOrStatus);
+  writeCommitAck(connection.get());
 }
 
 //-----------------------------------------------------------------------------
@@ -131,7 +114,7 @@ int castor::tape::tapeserver::daemon::VdqmImpl::connectToVdqm()
   castor::utils::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(io::connectWithTimeout(m_vdqmHostName, m_vdqmPort,
-            m_netTimeout));
+      m_netTimeout));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to connect to vdqm on host " << m_vdqmHostName
@@ -150,4 +133,164 @@ int castor::tape::tapeserver::daemon::VdqmImpl::connectToVdqm()
   }
 
   return smartConnectSock.release();
+}
+
+//-----------------------------------------------------------------------------
+// writeDriveStatusMsg
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmImpl::writeDriveStatusMsg(
+  const int connection, const std::string &server, const std::string &unitName,
+  const std::string &dgn, const int status)
+  throw(castor::exception::Exception) {
+  legacymsg::VdqmDrvRqstMsgBody drvRqstMsgBody;
+  drvRqstMsgBody.status = status;
+  castor::utils::copyString(drvRqstMsgBody.server, server.c_str());
+  castor::utils::copyString(drvRqstMsgBody.drive, unitName.c_str());
+  castor::utils::copyString(drvRqstMsgBody.dgn, dgn.c_str());
+  char drvRqstBuf[VDQM_MSGBUFSIZ];
+  const size_t drvRqstMsgLen = legacymsg::marshal(drvRqstBuf, drvRqstMsgBody);
+
+  try {
+    io::writeBytes(connection, m_netTimeout, drvRqstMsgLen, drvRqstBuf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to write drive status message: "
+      << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//-----------------------------------------------------------------------------
+// readCommitAck
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmImpl::readCommitAck(
+  const int connection) throw(castor::exception::Exception) {
+  char buf[12]; // Magic + type + status
+  legacymsg::MessageHeader ackMsg;
+
+  try {
+    io::readBytes(connection, m_netTimeout, sizeof(buf), buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read VDQM_COMMIT ack: "
+      << ne.getMessage().str();
+    throw ex;
+  }
+
+  const char *bufPtr = buf;
+  size_t bufLen = sizeof(buf);
+  legacymsg::unmarshal(bufPtr, bufLen, ackMsg);
+
+  if(VDQM_MAGIC != ackMsg.magic) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read VDQM_COMMIT ack: Invalid magic"
+      ": expected=0x" << std::hex << VDQM_MAGIC << " actual=" << ackMsg.magic;
+    throw ex;
+  }
+  if(VDQM_COMMIT != ackMsg.reqType) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read VDQM_COMMIT ack: Invalid request type"
+      ": expected=0x" << std::hex << VDQM_COMMIT << " actual=0x" <<
+      ackMsg.reqType;
+    throw ex;
+  }
+}
+
+//-----------------------------------------------------------------------------
+// readDriveStatusMsgHeader
+//-----------------------------------------------------------------------------
+castor::tape::legacymsg::MessageHeader
+  castor::tape::tapeserver::daemon::VdqmImpl::readDriveStatusMsgHeader(
+  const int connection) throw(castor::exception::Exception) {
+  char buf[12]; // Magic + type + len
+  legacymsg::MessageHeader header;
+
+  try {
+    io::readBytes(connection, m_netTimeout, sizeof(buf), buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read header of drive status message: "
+      << ne.getMessage().str();
+    throw ex;
+  }
+
+  const char *bufPtr = buf;
+  size_t bufLen = sizeof(buf);
+  legacymsg::unmarshal(bufPtr, bufLen, header);
+
+  if(VDQM_MAGIC != header.magic) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read header of drive status message"
+      ": Invalid magic: expected=0x" << std::hex << VDQM_MAGIC << " actual=0x"
+      << header.magic;
+    throw ex;
+  }
+  if(VDQM_DRV_REQ != header.reqType) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read header of drive status message"
+      ": Invalid request type: expected=0x" << std::hex << VDQM_DRV_REQ <<
+      " actual=0x" << header.reqType;
+    throw ex;
+  }
+
+  // The length of the message body is checked later, just before it is read in
+  // to memory
+
+  return header;
+}
+
+//-----------------------------------------------------------------------------
+// readDriveStatusMsgBody
+//-----------------------------------------------------------------------------
+castor::tape::legacymsg::VdqmDrvRqstMsgBody 
+  castor::tape::tapeserver::daemon::VdqmImpl::readDriveStatusMsgBody(
+  const int connection, const uint32_t bodyLen)
+  throw(castor::exception::Exception) {
+  char buf[VDQM_MSGBUFSIZ];
+
+  if(sizeof(buf) < bodyLen) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read body of drive status message"
+      ": Maximum body length exceeded: max=" << VDQM_MSGBUFSIZ << " actual=" <<
+      bodyLen;
+    throw ex;
+  }
+
+  try {
+    io::readBytes(connection, m_netTimeout, bodyLen, buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read body of drive status message"
+      ": " << ne.getMessage().str();
+    throw ex;
+  }
+
+  legacymsg::VdqmDrvRqstMsgBody body;
+  const char *bufPtr = buf;
+  size_t bufLen = sizeof(buf);
+  legacymsg::unmarshal(bufPtr, bufLen, body);
+  return body;
+}
+
+//-----------------------------------------------------------------------------
+// writeCommitAck
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmImpl::writeCommitAck(
+  const int connection) throw(castor::exception::Exception) {
+  legacymsg::MessageHeader ack;
+  ack.magic = VDQM_MAGIC;
+  ack.reqType = VDQM_COMMIT;
+  ack.lenOrStatus = 0;
+
+  char buf[12]; // magic + reqType + len
+  legacymsg::marshal(buf, ack);
+
+  try {
+    io::writeBytes(connection, m_netTimeout, sizeof(buf), buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to write VDQM_COMMIT ack: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
 }

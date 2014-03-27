@@ -121,7 +121,7 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
       } else if(0 != errno) {
         errorMessage = sstrerror(savedErrno);
       } else {
-        errorMessage = "UKNOWN";
+        errorMessage = "UNKNOWN";
       }
       log::Param params[] = {
         log::Param("host", peerHost[0] != '\0' ? peerHost : "UNKNOWN"),

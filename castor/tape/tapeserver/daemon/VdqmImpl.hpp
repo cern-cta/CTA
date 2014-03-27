@@ -25,6 +25,7 @@
 
 #include "castor/log/Logger.hpp"
 #include "castor/tape/legacymsg/MessageHeader.hpp"
+#include "castor/tape/legacymsg/VdqmDrvRqstMsgBody.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 
 namespace castor     {
@@ -103,6 +104,26 @@ private:
    * @return The socket-descriptor of the connection with the vdqmd daemon.
    */
   int connectToVdqm() const throw(castor::exception::Exception);
+
+  void writeDriveStatusMsg(
+    const int connection, const std::string &server,
+    const std::string &unitName, const std::string &dgn, const int status)
+    throw(castor::exception::Exception);
+
+  void readCommitAck(const int connection)
+    throw(castor::exception::Exception);
+
+  void readDriveStatusMsg(const int connection)
+    throw(castor::exception::Exception);
+
+  legacymsg::MessageHeader readDriveStatusMsgHeader(const int connection)
+    throw(castor::exception::Exception);
+
+  legacymsg::VdqmDrvRqstMsgBody readDriveStatusMsgBody(const int connection,
+    const uint32_t bodyLen) throw(castor::exception::Exception);
+
+  void writeCommitAck(const int connection)
+    throw(castor::exception::Exception);
 
   /**
    * The object representing the API of the CASTOR logging system.

@@ -30,15 +30,15 @@ castor::tape::tapeserver::daemon::VdqmConnectionHandler::VdqmConnectionHandler(
   io::PollReactor &reactor,
   log::Logger &log,
   Vdqm &vdqm,
-  DriveCatalogue &driveCatalogue)
-  throw():
+  DriveCatalogue &driveCatalogue) throw():
     m_connection(connection),
     m_reactor(reactor),
     m_log(log),
     m_vdqm(vdqm),
     m_driveCatalogue(driveCatalogue),
-    m_netTimeout(1) //hard-coded to 1 second
-{}
+    m_netTimeout(1) // 1 second
+{
+}
 
 //------------------------------------------------------------------------------
 // destructor
@@ -75,7 +75,7 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
     return;
   }
 
-  const legacymsg::RtcpJobRqstMsgBody job = receiveJob(fd.fd);
+  const legacymsg::RtcpJobRqstMsgBody job = readJobMsg(fd.fd);
   logVdqmJobReception(job);
 
   m_reactor.removeHandler(this);
@@ -101,23 +101,23 @@ void
 }
 
 //------------------------------------------------------------------------------
-// receiveJob
+// readJob
 //------------------------------------------------------------------------------
 castor::tape::legacymsg::RtcpJobRqstMsgBody
-  castor::tape::tapeserver::daemon::VdqmConnectionHandler::receiveJob(const int connection)
-  throw(castor::exception::Exception) {
-  const legacymsg::MessageHeader header = receiveJobMsgHeader(connection);
-  const legacymsg::RtcpJobRqstMsgBody body =
-    receiveJobMsgBody(connection, header.lenOrStatus);
+  castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsg(
+    const int connection) throw(castor::exception::Exception) {
+  const legacymsg::MessageHeader header = readJobMsgHeader(connection);
+  const legacymsg::RtcpJobRqstMsgBody body = readJobMsgBody(connection,
+    header.lenOrStatus);
 
   return body;
 }
 
 //------------------------------------------------------------------------------
-// receiveJobMsgHeader
+// readJobMsgHeader
 //------------------------------------------------------------------------------
 castor::tape::legacymsg::MessageHeader
-  castor::tape::tapeserver::daemon::VdqmConnectionHandler::receiveJobMsgHeader(
+  castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsgHeader(
     const int connection) throw(castor::exception::Exception) {
   // Read in the message header
   char buf[3 * sizeof(uint32_t)]; // magic + request type + len
@@ -129,8 +129,22 @@ castor::tape::legacymsg::MessageHeader
   memset(&header, '\0', sizeof(header));
   legacymsg::unmarshal(bufPtr, bufLen, header);
 
-  checkJobMsgMagic(header.magic);
-  checkJobMsgReqType(header.reqType);
+  if(RTCOPY_MAGIC_OLD0 != header.magic) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Invalid vdqm job message: Invalid magic"
+      ": expected=0x" << std::hex << RTCOPY_MAGIC_OLD0 << " actual=0x" <<
+      header.magic;
+    throw ex;
+  }
+
+  if(VDQM_CLIENTINFO != header.reqType) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Invalid vdqm job message: Invalid request type"
+       ": expected=0x" << std::hex << VDQM_CLIENTINFO << " actual=0x" <<
+       header.reqType;
+    throw ex;
+  }
+
   // The length of the message body is checked later, just before it is read in
   // to memory
 
@@ -138,66 +152,34 @@ castor::tape::legacymsg::MessageHeader
 }
 
 //------------------------------------------------------------------------------
-// receiveJobMsgBody
+// readJobMsgBody
 //------------------------------------------------------------------------------
 castor::tape::legacymsg::RtcpJobRqstMsgBody
-  castor::tape::tapeserver::daemon::VdqmConnectionHandler::receiveJobMsgBody(
+  castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsgBody(
     const int connection, const uint32_t len)
     throw(castor::exception::Exception) {
-  char buf[1024];
+  char buf[VDQM_MSGBUFSIZ];
 
-  checkJobMsgLen(sizeof(buf), len);
-  io::readBytes(connection, m_netTimeout, len, buf);
+  if(sizeof(buf) < len) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read body of job message"
+       ": Maximum body length exceeded"
+       ": max=" << sizeof(buf) << " actual=" << len;
+    throw ex;
+  }
+
+  try {
+    io::readBytes(connection, m_netTimeout, len, buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read body of job message"
+      ": " << ne.getMessage().str();
+    throw ex;
+  }
 
   legacymsg::RtcpJobRqstMsgBody body;
-  memset(&body, '\0', sizeof(body));
   const char *bufPtr = buf;
   size_t bufLen = sizeof(buf);
   legacymsg::unmarshal(bufPtr, bufLen, body);
   return body;
-}
-
-//------------------------------------------------------------------------------
-// checkJobMsgMagic
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmConnectionHandler::checkJobMsgMagic(
-  const uint32_t magic) const throw(castor::exception::Exception) {
-  const uint32_t expectedMagic = RTCOPY_MAGIC_OLD0;
-  if(expectedMagic != magic) {
-    castor::exception::Exception ex(EBADMSG);
-    ex.getMessage() << "Invalid vdqm job message: Invalid magic number"
-      ": expected=0x" << std::hex << expectedMagic <<
-      " actual: 0x" << std::hex << magic;
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// checkJobMsgReqType
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmConnectionHandler::checkJobMsgReqType(
-  const uint32_t reqType) const throw(castor::exception::Exception) {
-  const uint32_t expectedReqType = VDQM_CLIENTINFO;
-  if(expectedReqType != reqType) {
-    castor::exception::Exception ex(EBADMSG);
-    ex.getMessage() << "Invalid vdqm job message: Invalid request type"
-       ": expected=0x" << std::hex << expectedReqType <<
-       " actual=0x" << std::hex << reqType;
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// checkJobMsgLen
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmConnectionHandler::checkJobMsgLen(
-  const size_t maxLen, const size_t len) const
-  throw(castor::exception::Exception) {
-  if(maxLen < len) {
-    castor::exception::Exception ex(EBADMSG);
-    ex.getMessage() << "Invalid vdqm job message"
-       ": Maximum message length exceeded"
-       ": maxLen=" << maxLen << " len=" << len;
-    throw ex;
-  }
 }

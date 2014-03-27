@@ -126,63 +126,37 @@ private:
     const throw();
   
   /**
-   * Receives a job from the specified connection with the vdqm daemon,
-   * sends back a positive acknowledgement and closes the connection.
+   * Reads a job message from the specified connection, sends back a positive
+   * acknowledgement and closes the connection.
    *
    * @param connection The file descriptor of the connection with the vdqm
    * daemon.
    * @return The job request from the vdqm.
    */
-  legacymsg::RtcpJobRqstMsgBody receiveJob(const int connection)
+  legacymsg::RtcpJobRqstMsgBody readJobMsg(const int connection)
     throw(castor::exception::Exception);
   
   /**
-   * Receives the header of a job message from the specified connection with
-   * the vdqm daemon.
+   * Reads the header of a job message from the specified connection.
    *
    * @param connection The file descriptor of the connection with the vdqm
    * daemon.
    * @return The message header.
    */
-  legacymsg::MessageHeader receiveJobMsgHeader(const int connection)
+  legacymsg::MessageHeader readJobMsgHeader(const int connection)
     throw(castor::exception::Exception);
   
   /**
-   * Receives the body of a job message from the specified connection with the
-   * vdqm daemon.
+   * Reads the body of a job message from the specified connection.
    *
    * @param connection The file descriptor of the connection with the vdqm
    * daemon.
    * @param len The length of the message body in bytes.
    * @return The message body.
    */
-  legacymsg::RtcpJobRqstMsgBody receiveJobMsgBody(const int connection,
+  legacymsg::RtcpJobRqstMsgBody readJobMsgBody(const int connection,
     const uint32_t len) throw(castor::exception::Exception);
 
-  /**
-   * Throws an exception if the specified magic number is invalid for a vdqm
-   * job message.
-   */
-  void checkJobMsgMagic(const uint32_t magic) const
-    throw(castor::exception::Exception);
-
-  /**
-   * Throws an exception if the specified request type is invalid for a vdqm
-   * job message.
-   */
-  void checkJobMsgReqType(const uint32_t reqType) const
-    throw(castor::exception::Exception);
-
-  /**
-   * Throws an exception if the specified message body length is invalid for
-   * a vdqm job message.
-   *
-   * @param maxLen The maximum length in bytes
-   * @param len The actual length in bytes.
-   */
-  void checkJobMsgLen(const size_t maxLen, const size_t len) const
-    throw(castor::exception::Exception);
-  
 }; // class VdqmConnectionHandler
 
 } // namespace daemon
