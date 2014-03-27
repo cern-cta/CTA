@@ -27,7 +27,7 @@
 #include "MountSession.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
-#include "ClientProxy.hpp"
+#include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "log.h"
 #include "stager_client_commandline.h"
 #include "castor/tape/utils/utils.hpp"
@@ -59,10 +59,10 @@ throw (castor::tape::Exception) {
   LogContext::ScopedParam sp05(lc, Param("driveUnit", m_request.driveUnit));
   LogContext::ScopedParam sp06(lc, Param("dgn", m_request.dgn));
   // 2a) Get initial information from the client
-  ClientProxy::RequestReport reqReport;
+  client::ClientProxy::RequestReport reqReport;
   try {
     m_clientProxy.fetchVolumeId(m_volInfo, reqReport);
-  } catch(ClientProxy::EndOfSession & eof) {
+  } catch(client::ClientProxy::EndOfSession & eof) {
     std::stringstream fullError("Received end of session from client when requesting Volume");
     fullError << eof.what();
     lc.log(LOG_ERR, fullError.str());
@@ -73,7 +73,7 @@ throw (castor::tape::Exception) {
     LogContext::ScopedParam sp10(lc, Param("ErrorMsg", fullError.str()));
     lc.log(LOG_ERR, "Notified client of end session with error");
     return;
-  } catch (ClientProxy::UnexpectedResponse & unexp) {
+  } catch (client::ClientProxy::UnexpectedResponse & unexp) {
     std::stringstream fullError("Received unexpected response from client when requesting Volume");
     fullError << unexp.what();
     lc.log(LOG_ERR, fullError.str());
@@ -130,7 +130,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     LogContext::ScopedParam sp08(lc, Param("density", m_volInfo.density));
     lc.log(LOG_ERR, "Drive unit not found in TPCONFIG");
     
-    ClientProxy::RequestReport reqReport;
+    client::ClientProxy::RequestReport reqReport;
     std::stringstream errMsg("Drive unit not found in TPCONFIG");
     errMsg << lc;
     m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
@@ -153,7 +153,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     LogContext::ScopedParam sp09(lc, Param("devFilename", configLine->devFilename));
     lc.log(LOG_ERR, "Drive not found on this path");
     
-    ClientProxy::RequestReport reqReport;
+    client::ClientProxy::RequestReport reqReport;
     std::stringstream errMsg("Drive not found on this path");
     errMsg << lc;
     m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
@@ -171,7 +171,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     LogContext::ScopedParam sp10(lc, Param("errorMessage", e.getMessageValue()));
     lc.log(LOG_ERR, "Error looking to path to tape drive");
     
-    ClientProxy::RequestReport reqReport;
+    client::ClientProxy::RequestReport reqReport;
     std::stringstream errMsg("Error looking to path to tape drive: ");
     errMsg << lc;
     m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
@@ -188,7 +188,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     LogContext::ScopedParam sp09(lc, Param("devFilename", configLine->devFilename));
     lc.log(LOG_ERR, "Unexpected exception while looking for drive");
     
-    ClientProxy::RequestReport reqReport;
+    client::ClientProxy::RequestReport reqReport;
     std::stringstream errMsg("Unexpected exception while looking for drive");
     errMsg << lc;
     m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
@@ -210,7 +210,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     LogContext::ScopedParam sp10(lc, Param("errorMessage", e.getMessageValue()));
     lc.log(LOG_ERR, "Error opening tape drive");
     
-    ClientProxy::RequestReport reqReport;
+    client::ClientProxy::RequestReport reqReport;
     std::stringstream errMsg("Error opening tape drive");
     errMsg << lc;
     m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
@@ -227,7 +227,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     LogContext::ScopedParam sp09(lc, Param("devFilename", configLine->devFilename));
     lc.log(LOG_ERR, "Unexpected exception while opening drive");
     
-    ClientProxy::RequestReport reqReport;
+    client::ClientProxy::RequestReport reqReport;
     std::stringstream errMsg("Unexpected exception while opening drive");
     errMsg << lc;
     m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
@@ -253,7 +253,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
   }
   {
     // Temporary end of session, to please the ClientSimulator
-    ClientProxy::RequestReport reqReport;
+    client::ClientProxy::RequestReport reqReport;
     m_clientProxy.reportEndOfSession(reqReport);
   }
   

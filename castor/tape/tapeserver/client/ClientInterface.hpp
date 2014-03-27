@@ -22,7 +22,7 @@
 namespace castor {
 namespace tape {
 namespace tapeserver {
-namespace daemon {
+namespace client {
   
 
 class ClientInterface {

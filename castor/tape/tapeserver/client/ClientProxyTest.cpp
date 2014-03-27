@@ -28,7 +28,7 @@
 #include "ClientProxy.hpp"
 #include "../threading/Threading.hpp"
 #include "castor/log/StringLogger.hpp"
-#include "MountSession.hpp"
+#include "castor/tape/tapeserver/daemon/MountSession.hpp"
 #include "../system/Wrapper.hpp"
 #include "Ctape.h"
 #include "castor/tape/tapegateway/Volume.hpp"
@@ -36,19 +36,20 @@
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 
+using namespace castor::tape::tapeserver;
 using namespace castor::tape::tapeserver::daemon;
 
 namespace unitTest {
-
+  using namespace castor::tape::tapeserver::client;
 template <class Repl>
 class clientSingleReplRunner: public castor::tape::threading::Thread {
 public:
-  clientSingleReplRunner(ClientSimSingleReply<Repl> &client): m_sim(client) {}
+  clientSingleReplRunner(client::ClientSimSingleReply<Repl> &client): m_sim(client) {}
 private:
   void run() {
     m_sim.sessionLoop();
   }
-  ClientSimSingleReply<Repl> & m_sim;
+  client::ClientSimSingleReply<Repl> & m_sim;
 };
 
 TEST(tapeServerClientInterface, VolReqVol) {
@@ -57,8 +58,8 @@ TEST(tapeServerClientInterface, VolReqVol) {
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
   std::string density = "8000GC";
-  ClientSimSingleReply<Volume> csVol(volReq, vid, density);
-  struct ClientSimSingleReply<Volume>::ipPort clientAddr = csVol.getCallbackAddress();
+  client::ClientSimSingleReply<Volume> csVol(volReq, vid, density);
+  client::ClientSimSingleReply<Volume>::ipPort clientAddr = csVol.getCallbackAddress();
   clientSingleReplRunner<Volume> csVolRun(csVol);
   csVolRun.start();
   // Setup a clientInterface to talk to it
@@ -70,9 +71,9 @@ TEST(tapeServerClientInterface, VolReqVol) {
   VDQMjob.clientPort = clientAddr.port;
   VDQMjob.volReqId = volReq;
   // Setup an interface to it.
-  ClientProxy cInterf(VDQMjob);
-  ClientProxy::VolumeInfo volInfo;
-  ClientProxy::RequestReport reqRep;
+  client::ClientProxy cInterf(VDQMjob);
+  client::ClientProxy::VolumeInfo volInfo;
+  client::ClientProxy::RequestReport reqRep;
   ASSERT_NO_THROW(cInterf.fetchVolumeId(volInfo, reqRep));
   // Cleanup
   csVolRun.wait();
@@ -84,7 +85,7 @@ TEST(tapeServerClientInterface, VolReqNoMore) {
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
   std::string density = "8000GC";
-  ClientSimSingleReply<NoMoreFiles> csVol(volReq, vid, density);
+  client::ClientSimSingleReply<NoMoreFiles> csVol(volReq, vid, density);
   struct ClientSimSingleReply<NoMoreFiles>::ipPort clientAddr = 
   csVol.getCallbackAddress();
   clientSingleReplRunner<NoMoreFiles> csVolRun(csVol);
@@ -280,8 +281,8 @@ TEST(tapeServerClientInterface, EndSessionErrorNotifAck) {
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
   std::string density = "8000GC";
-  ClientSimSingleReply<NotificationAcknowledge> csVol(volReq, vid, density);
-  struct ClientSimSingleReply<NotificationAcknowledge>::ipPort clientAddr = 
+  client::ClientSimSingleReply<NotificationAcknowledge> csVol(volReq, vid, density);
+  client::ClientSimSingleReply<NotificationAcknowledge>::ipPort clientAddr = 
   csVol.getCallbackAddress();
   clientSingleReplRunner<NotificationAcknowledge> csVolRun(csVol);
   csVolRun.start();

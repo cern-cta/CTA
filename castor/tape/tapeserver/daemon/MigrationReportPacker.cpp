@@ -34,7 +34,7 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-MigrationReportPacker::MigrationReportPacker(ClientInterface & tg,castor::log::LogContext lc):
+MigrationReportPacker::MigrationReportPacker(client::ClientInterface & tg,castor::log::LogContext lc):
 ReportPackerInterface<detail::Migration>(tg,lc),
 m_workerThread(*this),m_errorHappened(false),m_continue(true) {
 }
@@ -83,7 +83,7 @@ void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& _th
 void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& _this){
   if(!_this.m_errorHappened){
     _this.logReport(_this.m_listReports->successfulMigrations(),"A file was successfully written on the tape"); 
-    tapeserver::daemon::ClientInterface::RequestReport chrono;
+    tapeserver::client::ClientInterface::RequestReport chrono;
     _this.m_client.reportMigrationResults(*(_this.m_listReports),chrono);    
   }
   else {
@@ -96,7 +96,7 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& _this){
   _this.m_listReports.reset(new tapegateway::FileMigrationReportList);
 }
 void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& _this){
-  tapeserver::daemon::ClientInterface::RequestReport chrono;
+  client::ClientInterface::RequestReport chrono;
   if(!_this.m_errorHappened){
     _this.m_lc.log(LOG_INFO,"Nominal EndofSession has been reported without incident on tape-writing");
     _this.m_client.reportEndOfSession(chrono);
@@ -111,7 +111,7 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& _
 }
 
 void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationReportPacker& _this){
-  tapeserver::daemon::ClientInterface::RequestReport chrono;
+  client::ClientInterface::RequestReport chrono;
   
   if(_this.m_errorHappened) {
   _this.m_client.reportEndOfSessionWithError(m_message,m_error_code,chrono); 

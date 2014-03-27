@@ -5,7 +5,7 @@
 #include "castor/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include <gtest/gtest.h>
-#include "castor/tape/tapeserver/daemon/FakeClient.hpp"
+#include "castor/tape/tapeserver/client/FakeClient.hpp"
 namespace
 {
 using namespace castor::tape::tapeserver::daemon;

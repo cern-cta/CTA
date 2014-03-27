@@ -35,7 +35,7 @@ namespace daemon {
 using castor::log::LogContext;
 using castor::log::Param;
 
-RecallReportPacker::RecallReportPacker(ClientInterface & tg,unsigned int reportFilePeriod,log::LogContext lc):
+RecallReportPacker::RecallReportPacker(client::ClientInterface & tg,unsigned int reportFilePeriod,log::LogContext lc):
 ReportPackerInterface<detail::Recall>(tg,lc),
         m_workerThread(*this),m_reportFilePeriod(reportFilePeriod),m_errorHappened(false),m_continue(true){
 
@@ -87,14 +87,14 @@ void RecallReportPacker::flush(){
     logReport(m_listReports->failedRecalls(),"A file failed to be recalled");
     logReport(m_listReports->successfulRecalls(),"A file was successfully recalled");
     
-    ClientInterface::RequestReport chrono;
+    client::ClientInterface::RequestReport chrono;
     m_client.reportRecallResults(*m_listReports,chrono);
     m_listReports.reset(new FileReportList);
   }
 }
 
 void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& _this){
-  tapeserver::daemon::ClientInterface::RequestReport chrono;
+  client::ClientInterface::RequestReport chrono;
   if(!_this.m_errorHappened){
     _this.m_client.reportEndOfSession(chrono);
     _this.m_lc.log(LOG_INFO,"Nominal RecallReportPacker::EndofSession has been reported");
@@ -109,7 +109,7 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& _this){
 }
 
 void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& _this){
-  tapeserver::daemon::ClientInterface::RequestReport chrono;
+  client::ClientInterface::RequestReport chrono;
   if(_this.m_errorHappened) {
   _this.m_client.reportEndOfSessionWithError(m_message,m_error_code,chrono); 
   LogContext::ScopedParam(_this.m_lc,Param("errorCode",m_error_code));

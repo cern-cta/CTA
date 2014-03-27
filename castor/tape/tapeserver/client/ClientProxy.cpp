@@ -43,13 +43,17 @@
 #include <stdlib.h>
 #include <typeinfo>
 
-using namespace castor::tape;
 
-castor::tape::tapeserver::daemon::
+namespace castor {
+namespace tape {
+namespace tapeserver {
+namespace client {
+  
+
 ClientProxy::ClientProxy(const legacymsg::RtcpJobRqstMsgBody& clientRequest)
   throw (castor::tape::Exception): m_request(clientRequest) {}
 
-castor::tape::tapeserver::daemon::ClientProxy::UnexpectedResponse::
+ClientProxy::UnexpectedResponse::
     UnexpectedResponse(const castor::IObject* resp, const std::string & w):
 castor::tape::Exception(w) {
   std::string responseType = typeid(*resp).name();
@@ -62,7 +66,7 @@ castor::tape::Exception(w) {
 }
 
 tapegateway::GatewayMessage *
-  castor::tape::tapeserver::daemon::ClientProxy::requestResponseSession(
+  ClientProxy::requestResponseSession(
     const tapegateway::GatewayMessage &req,
     RequestReport & report)
 throw (castor::tape::Exception) 
@@ -106,7 +110,7 @@ throw (castor::tape::Exception)
   return ret;
 }
 
-void castor::tape::tapeserver::daemon::ClientProxy::fetchVolumeId(
+void ClientProxy::fetchVolumeId(
   VolumeInfo & volInfo, RequestReport &report) 
 throw (castor::tape::Exception) {
   // 1) Build the request
@@ -149,7 +153,7 @@ throw (castor::tape::Exception) {
   }
 }
 
-void castor::tape::tapeserver::daemon::ClientProxy::reportEndOfSession(
+void ClientProxy::reportEndOfSession(
 RequestReport &transactionReport) 
 throw (castor::tape::Exception) {
   // 1) Build the report
@@ -179,7 +183,7 @@ throw (castor::tape::Exception) {
 }
 
 
-void castor::tape::tapeserver::daemon::ClientProxy::reportEndOfSessionWithError(
+void ClientProxy::reportEndOfSessionWithError(
 const std::string & errorMsg, int errorCode, RequestReport &transactionReport) 
 throw (castor::tape::Exception) {
   // 1) Build the report
@@ -212,7 +216,7 @@ throw (castor::tape::Exception) {
 
 
 tapegateway::FilesToMigrateList * 
-    castor::tape::tapeserver::daemon::ClientProxy::getFilesToMigrate(
+    ClientProxy::getFilesToMigrate(
 uint64_t files, uint64_t bytes, RequestReport& report) 
 throw (castor::tape::Exception) {
   // 1) Build the request
@@ -249,7 +253,7 @@ throw (castor::tape::Exception) {
   }
 }
 
-void castor::tape::tapeserver::daemon::ClientProxy::reportMigrationResults(
+void ClientProxy::reportMigrationResults(
 tapegateway::FileMigrationReportList & migrationReport,
     RequestReport& report) throw (castor::tape::Exception) {
   // 1) The request is provided already fleshed out by the user. We have to
@@ -290,7 +294,7 @@ tapegateway::FileMigrationReportList & migrationReport,
 }
 
 tapegateway::FilesToRecallList * 
-    castor::tape::tapeserver::daemon::ClientProxy::getFilesToRecall(
+    ClientProxy::getFilesToRecall(
 uint64_t files, uint64_t bytes, RequestReport& report) 
 throw (castor::tape::Exception) {
   // 1) Build the request
@@ -327,7 +331,7 @@ throw (castor::tape::Exception) {
   }
 }
 
-void castor::tape::tapeserver::daemon::ClientProxy::reportRecallResults(
+void ClientProxy::reportRecallResults(
 tapegateway::FileRecallReportList & recallReport,
 RequestReport& report) throw (castor::tape::Exception) {
   // 1) The request is provided already fleshed out by the user. We have to
@@ -360,3 +364,5 @@ RequestReport& report) throw (castor::tape::Exception) {
         "Unexpected response to FileRecallReportList in reportRecallResults");
   }
 }
+
+}}}}

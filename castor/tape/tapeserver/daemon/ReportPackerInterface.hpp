@@ -26,7 +26,7 @@
 #define	REPORTPACKERINTERFACE_HPP
 
 #include "castor/log/LogContext.hpp"
-#include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
@@ -72,7 +72,7 @@ public:
   typedef typename detail::HelperTrait<PlaceHolder>::FileErrorStruct FileErrorStruct;
   
 
-  ReportPackerInterface(ClientInterface & tg,log::LogContext lc):
+  ReportPackerInterface(client::ClientInterface & tg,log::LogContext lc):
   m_client(tg),m_lc(lc),m_listReports(new FileReportList)
   {}
   
@@ -98,7 +98,7 @@ public:
         m_lc.log(LOG_INFO,msg);
       }
   }  
-  ClientInterface & m_client;
+  client::ClientInterface & m_client;
   castor::log::LogContext m_lc;
   
   /** 

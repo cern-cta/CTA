@@ -33,13 +33,13 @@
 #include "castor/tape/tapegateway/FileMigrationReportList.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
-#include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "../threading/Threading.hpp"
 
 namespace castor {
 namespace tape {
 namespace tapeserver {
-namespace daemon {
+namespace client {
   /**
    * A class managing the communications with the tape server's client.
    * The client address will have been received from the VDQM by the main

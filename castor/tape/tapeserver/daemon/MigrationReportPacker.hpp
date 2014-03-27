@@ -26,7 +26,7 @@
 
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationJob.hpp"
-#include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 
@@ -44,7 +44,7 @@ public:
    * @param tg The client who is asking for a migration of his files 
    * and to whom we have to report to the status of the operations.
    */
-  MigrationReportPacker(ClientInterface & tg,log::LogContext lc);
+  MigrationReportPacker(client::ClientInterface & tg,log::LogContext lc);
   
   ~MigrationReportPacker();
     

@@ -27,7 +27,7 @@
 
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "castor/log/LogContext.hpp"
-#include "castor/tape/tapeserver/daemon/ClientInterface.hpp"
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 
@@ -38,7 +38,7 @@ namespace daemon {
   
 class RecallReportPacker : private ReportPackerInterface<detail::Recall> {
 public:
-  RecallReportPacker(ClientInterface & tg,unsigned int reportFilePeriod,log::LogContext lc);
+  RecallReportPacker(client::ClientInterface & tg,unsigned int reportFilePeriod,log::LogContext lc);
   
   ~RecallReportPacker();
   

@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
-#include "castor/tape/tapeserver/daemon/FakeClient.hpp"
+#include "castor/tape/tapeserver/client/FakeClient.hpp"
 #include "castor/log/StringLogger.hpp"
 #include <gtest/gtest.h>
 

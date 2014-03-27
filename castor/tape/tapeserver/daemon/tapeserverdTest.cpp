@@ -23,9 +23,9 @@
  *****************************************************************************/
 
 #include <gtest/gtest.h>
-#include "ClientSimulator.hpp"
-#include "ClientSimSingleReply.hpp"
-#include "ClientProxy.hpp"
+#include "castor/tape/tapeserver/client/ClientSimulator.hpp"
+#include "castor/tape/tapeserver/client/ClientSimSingleReply.hpp"
+#include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "../threading/Threading.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "MountSession.hpp"
@@ -36,18 +36,18 @@
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 
+using namespace castor::tape::tapeserver;
 using namespace castor::tape::tapeserver::daemon;
-
 namespace unitTest {
 
 class clientRunner: public castor::tape::threading::Thread {
 public:
-  clientRunner(ClientSimulator &client): m_sim(client) {}
+  clientRunner(client::ClientSimulator &client): m_sim(client) {}
 private:
   void run() {
     m_sim.sessionLoop();
   }
-  ClientSimulator & m_sim;
+  client::ClientSimulator & m_sim;
 };
 
   
@@ -60,8 +60,8 @@ TEST(tapeServer, MountSessionGoodday) {
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
   std::string density = "8000GC";
-  ClientSimulator sim(volReq, vid, density);
-  struct ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
+  client::ClientSimulator sim(volReq, vid, density);
+  client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
   
@@ -107,8 +107,8 @@ TEST(tapeServer, MountSessionNoSuchDrive) {
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
   std::string density = "8000GC";
-  ClientSimulator sim(volReq, vid, density);
-  struct ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
+  client::ClientSimulator sim(volReq, vid, density);
+  client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
   

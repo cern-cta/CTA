@@ -35,7 +35,7 @@
 namespace castor {
 namespace tape {
 namespace tapeserver {
-namespace daemon {
+namespace client {
   
 using namespace castor::tape;
 
