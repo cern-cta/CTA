@@ -27,6 +27,12 @@
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
 #include "castor/log/Logger.hpp"
 
+namespace{
+  struct failedReportRecallResult : public castor::tape::Exception{
+    failedReportRecallResult(const std::string& s): Exception(s){}
+  };
+}
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -84,30 +90,45 @@ void RecallReportPacker::flush(){
   unsigned int totalSize = m_listReports->failedRecalls().size() +
                        m_listReports->successfulRecalls().size();
   if(totalSize > 0){
-    logReport(m_listReports->failedRecalls(),"A file failed to be recalled");
-    logReport(m_listReports->successfulRecalls(),"A file was successfully recalled");
     
     client::ClientInterface::RequestReport chrono;
-    m_client.reportRecallResults(*m_listReports,chrono);
+    try{
+      m_client.reportRecallResults(*m_listReports,chrono);
+      logRequestReport(chrono,"reportRecallResults'is successful");
+      
+      logReport(m_listReports->failedRecalls(),"file failed to be recalled");
+      logReport(m_listReports->successfulRecalls(),"A file was successfully recalled");
+    }
+   catch(const castor::tape::Exception& e){
+    LogContext::ScopedParam sp[]={
+      LogContext::ScopedParam(m_lc, Param("exceptionCode",e.code())),
+      LogContext::ScopedParam(m_lc, Param("exceptionMessageValue", e.getMessageValue())),
+      LogContext::ScopedParam(m_lc, Param("exceptionWhat",e.what()))
+    };
+    tape::utils::suppresUnusedVariable(sp);
     
-    //delete the old pointer and remplace it with the new one provided
-    //that way,  all the reports that have been send are deleted (by m_listReports's destructor)
-    m_listReports.reset(new FileReportList);
+    const std::string msg_error="An exception was caught trying to call reportRecallResults";
+    m_lc.log(LOG_ERR,msg_error);
+    throw failedReportRecallResult(msg_error);
+    }
   }
+    //delete the old pointer and replace it with the new one provided
+    //that way, all the reports that have been send are deleted (by FileReportList's destructor)
+    m_listReports.reset(new FileReportList);
 }
 
 void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& _this){
   client::ClientInterface::RequestReport chrono;
-  if(!_this.m_errorHappened){
-    _this.m_client.reportEndOfSession(chrono);
-    _this.m_lc.log(LOG_INFO,"Nominal RecallReportPacker::EndofSession has been reported");
-  }
-  else {
-     const std::string& msg ="RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process";
-     _this.m_lc.log(LOG_ERR,msg);
-     _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono);
-     //throw castor::exception::Exception(msg);
-  }
+    if(!_this.m_errorHappened){
+      _this.m_client.reportEndOfSession(chrono);
+      _this.logRequestReport(chrono,"Nominal RecallReportPacker::EndofSession has been reported",LOG_INFO);
+    }
+    else {
+      const std::string& msg ="RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process";
+      _this.m_lc.log(LOG_ERR,msg);
+      _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono);
+      _this.logRequestReport(chrono,"reporting EndOfSessionWithError done",LOG_ERR);
+    }
 }
 
 void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& _this){
@@ -121,7 +142,6 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
    const std::string& msg ="RecallReportPacker::EndofSessionWithErrors has been reported  but NO error was detected during the process";
    _this.m_lc.log(LOG_ERR,msg);
    _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono); 
-   //throw castor::exception::Exception(msg);
   }
 }
 
@@ -146,22 +166,37 @@ m_parent(parent) {
 }
 
 void RecallReportPacker::WorkerThread::run(){
-  while(1) {    
-    std::auto_ptr<Report> rep (m_parent.m_fifo.pop());    
-    unsigned int totalSize = m_parent.m_listReports->failedRecalls().size() +
-                             m_parent.m_listReports->successfulRecalls().size();
-    
-    if(totalSize >= m_parent.m_reportFilePeriod || rep->goingToEnd())
-    {
-      m_parent.flush();
+  client::ClientInterface::RequestReport chrono;
+  try{
+      while(1) {    
+        std::auto_ptr<Report> rep (m_parent.m_fifo.pop());    
+        
+        unsigned int totalSize = m_parent.m_listReports->failedRecalls().size() +
+                                 m_parent.m_listReports->successfulRecalls().size();
+     
+        if(totalSize >= m_parent.m_reportFilePeriod || rep->goingToEnd() )
+        {
+        
+          try{
+          m_parent.flush();
+          }
+          catch(const failedReportRecallResult& e){
+            //got there because we failed tp report the recall results
+            //we have to try to close the connection
+            m_parent.m_client.reportEndOfSessionWithError(e.getMessageValue(),SEINTERNAL,chrono);
+            m_parent.logRequestReport(chrono,"Successfully closed client's session after the failed report RecallResult");
+          }
+        }
+        rep->execute(m_parent);
+        if(rep->goingToEnd()) {
+          break;
+        }
     }
-    
-    rep->execute(m_parent);
-    
-    if(rep->goingToEnd()) {
-      break;
-    }
-    
+  }
+  catch(const castor::tape::Exception& e){
+    //we get there because to tried to close the connection and it failed
+    //either from the catch a few lines above or directly from rep->execute
+    m_parent.logRequestReport(chrono,"tried to report endOfSession(WithError) and got an exception, cant do much more",LOG_ERR);
   }
 }
 }}}}
