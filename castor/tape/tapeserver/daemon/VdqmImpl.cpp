@@ -168,11 +168,22 @@ void castor::tape::tapeserver::daemon::VdqmImpl::readCommitAck(
       ": expected=0x" << std::hex << VDQM_MAGIC << " actual=" << ack.magic;
     throw ex;
   }
-  if(VDQM_COMMIT != ack.reqType) {
+
+  if(VDQM_COMMIT == ack.reqType) {
+    // Read a successful VDQM_COMMIT ack
+    return;
+  } else if(0 < ack.reqType) {
+    // VDQM_COMMIT ack is reporting an error
+    char errBuf[80];
+    sstrerror_r(ack.reqType, errBuf, sizeof(errBuf));
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to read VDQM_COMMIT ack: Invalid request type"
-      ": expected=0x" << std::hex << VDQM_COMMIT << " actual=0x" <<
-      ack.reqType;
+    ex.getMessage() << "VDQM_COMMIT ack reported an error: " << errBuf;
+    throw ex;
+  } else {
+    // VDQM_COMMIT ack contains an invalid request type
+    castor::exception::Internal ex;
+    ex.getMessage() << "VDQM_COMMIT ack contains an invalid request type"
+      ": reqType=" << ack.reqType;
     throw ex;
   }
 }
