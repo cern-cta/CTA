@@ -98,6 +98,20 @@ public:
         m_lc.log(LOG_INFO,msg);
       }
   }  
+  
+  void logRequestReport(const client::ClientInterface::RequestReport& chono,const std::string& msg,int level=LOG_INFO){
+    using castor::log::LogContext;
+    using castor::log::Param;
+     
+        LogContext::ScopedParam sp[]={
+          LogContext::ScopedParam(m_lc, Param("connectDuration",chono.connectDuration)),
+          LogContext::ScopedParam(m_lc, Param("sendRecvDuration",chono.sendRecvDuration)),
+          LogContext::ScopedParam(m_lc, Param("transactionId", chono.transactionId)),
+        };
+        tape::utils::suppresUnusedVariable(sp);
+        m_lc.log(level,msg);
+        
+  } 
   client::ClientInterface & m_client;
   castor::log::LogContext m_lc;
   
