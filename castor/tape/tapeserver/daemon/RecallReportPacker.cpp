@@ -33,14 +33,14 @@ namespace{
   };
 }
 
+using castor::log::LogContext;
+using castor::log::Param;
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
  
-using castor::log::LogContext;
-using castor::log::Param;
-
 RecallReportPacker::RecallReportPacker(client::ClientInterface & tg,unsigned int reportFilePeriod,log::LogContext lc):
 ReportPackerInterface<detail::Recall>(tg,lc),
         m_workerThread(*this),m_reportFilePeriod(reportFilePeriod),m_errorHappened(false){
