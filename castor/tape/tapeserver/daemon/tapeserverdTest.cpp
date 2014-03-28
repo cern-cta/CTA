@@ -22,11 +22,11 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include <gtest/gtest.h>
 #define __STDC_CONSTANT_MACROS // For using stdint macros (stdint is included
 // by inttypes.h, so we shoot first)
 #include <stdint.h>
 #include <inttypes.h>
+#include <gtest/gtest.h>
 #include "castor/tape/tapeserver/client/ClientSimulator.hpp"
 #include "castor/tape/tapeserver/client/ClientSimSingleReply.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
