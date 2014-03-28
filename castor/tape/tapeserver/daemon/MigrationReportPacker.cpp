@@ -29,6 +29,14 @@
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
 #include <cstdio>
 
+namespace{
+  struct failedMigrationRecallResult : public castor::tape::Exception{
+    failedMigrationRecallResult(const std::string& s): Exception(s){}
+  };
+}
+using castor::log::LogContext;
+using castor::log::Param;
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -84,7 +92,21 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& _this){
   if(!_this.m_errorHappened){
     _this.logReport(_this.m_listReports->successfulMigrations(),"A file was successfully written on the tape"); 
     tapeserver::client::ClientInterface::RequestReport chrono;
+    try{
     _this.m_client.reportMigrationResults(*(_this.m_listReports),chrono);    
+    }   
+    catch(const castor::tape::Exception& e){
+    LogContext::ScopedParam sp[]={
+      LogContext::ScopedParam(_this.m_lc, Param("exceptionCode",e.code())),
+      LogContext::ScopedParam(_this.m_lc, Param("exceptionMessageValue", e.getMessageValue())),
+      LogContext::ScopedParam(_this.m_lc, Param("exceptionWhat",e.what()))
+    };
+    tape::utils::suppresUnusedVariable(sp);
+    
+    const std::string msg_error="An exception was caught trying to call reportMigrationResults";
+    _this.m_lc.log(LOG_ERR,msg_error);
+    throw failedMigrationRecallResult(msg_error);
+    }
   }
   else {
     const std::string& msg ="A flush on tape has been reported but a writing error happened before";
@@ -105,7 +127,6 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& _
      const std::string& msg ="Nominal EndofSession has been reported  but an writing error on the tape happened before";
      _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono); 
      _this.m_lc.log(LOG_ERR,msg);
-     //throw castor::exception::Exception(msg);
   }
   _this.m_continue=false;
 }
@@ -147,9 +168,26 @@ m_parent(parent) {
 }
 
 void MigrationReportPacker::WorkerThread::run(){
-  while(m_parent.m_continue) {
-    std::auto_ptr<Report> rep (m_parent.m_fifo.pop());
-    rep->execute(m_parent);
+  client::ClientInterface::RequestReport chrono;
+  
+  try{
+    while(m_parent.m_continue) {
+      std::auto_ptr<Report> rep (m_parent.m_fifo.pop());
+      try{
+        rep->execute(m_parent);
+      }
+      catch(const failedMigrationRecallResult& e){
+        //here we catch a failed report MigrationResult. We try to close and it that fails too
+        //we end up in the catch below
+        m_parent.m_client.reportEndOfSessionWithError(e.getMessageValue(),SEINTERNAL,chrono);
+        m_parent.logRequestReport(chrono,"Successfully closed client's session after the failed report MigrationResult");
+      }
+    }
+  }
+  catch(const castor::tape::Exception& e){
+    //we get there because to tried to close the connection and it failed
+    //either from the catch a few lines above or directly from rep->execute
+    m_parent.logRequestReport(chrono,"tried to report endOfSession(WithError) and got an exception, cant do much more",LOG_ERR);
   }
 }
 
