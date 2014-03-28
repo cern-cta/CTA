@@ -110,18 +110,54 @@ private:
     const std::string &unitName, const std::string &dgn, const int status)
     throw(castor::exception::Exception);
 
+  /**
+   * Reads a VDQM_COMMIT ack message from the specified connection.
+   *
+   * @param connection The file-descriptor of the connection.
+   * @return The message.
+   */
   void readCommitAck(const int connection)
     throw(castor::exception::Exception);
 
+  /**
+   * Reads an ack message from the specified connection.
+   *
+   * @param connection The file-descriptor of the connection.
+   * @return The message.
+   */
+  legacymsg::MessageHeader readAck(const int connection)
+    throw(castor::exception::Exception);
+
+  /**
+   * Reads drive status message from the specified connection and discards it.
+   *
+   * @param connection The file-descriptor of the connection.
+   */
   void readDriveStatusMsg(const int connection)
     throw(castor::exception::Exception);
 
+  /**
+   * Reads the header of a drive status message from the specified connection.
+   *
+   * @param connection The file-descriptor of the connection.
+   * @return The message header.
+   */
   legacymsg::MessageHeader readDriveStatusMsgHeader(const int connection)
     throw(castor::exception::Exception);
 
+  /**
+   * Reads the body of a drive status message from the specified connection.
+   * @param connection The file-descriptor of the connection.
+   * @return The message body.
+   */
   legacymsg::VdqmDrvRqstMsgBody readDriveStatusMsgBody(const int connection,
     const uint32_t bodyLen) throw(castor::exception::Exception);
 
+  /**
+   * Writes a VDQM_COMMIT ack message to the specified connection.
+   *
+   * @param connection The file-descriptor of the connection.
+   */
   void writeCommitAck(const int connection)
     throw(castor::exception::Exception);
 

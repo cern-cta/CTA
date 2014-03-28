@@ -151,8 +151,40 @@ void castor::tape::tapeserver::daemon::VdqmImpl::writeDriveStatusMsg(
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmImpl::readCommitAck(
   const int connection) throw(castor::exception::Exception) {
-  char buf[12]; // Magic + type + status
-  legacymsg::MessageHeader ackMsg;
+  legacymsg::MessageHeader ack;
+
+  try {
+    ack = readAck(connection);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read VDQM_COMMIT ack: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+
+  if(VDQM_MAGIC != ack.magic) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read VDQM_COMMIT ack: Invalid magic"
+      ": expected=0x" << std::hex << VDQM_MAGIC << " actual=" << ack.magic;
+    throw ex;
+  }
+  if(VDQM_COMMIT != ack.reqType) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read VDQM_COMMIT ack: Invalid request type"
+      ": expected=0x" << std::hex << VDQM_COMMIT << " actual=0x" <<
+      ack.reqType;
+    throw ex;
+  }
+}
+
+//-----------------------------------------------------------------------------
+// readAck
+//-----------------------------------------------------------------------------
+castor::tape::legacymsg::MessageHeader
+  castor::tape::tapeserver::daemon::VdqmImpl::readAck(const int connection)
+  throw(castor::exception::Exception) {
+  char buf[12]; // Magic + type + len
+  legacymsg::MessageHeader ack;
 
   try {
     io::readBytes(connection, m_netTimeout, sizeof(buf), buf);
@@ -165,21 +197,9 @@ void castor::tape::tapeserver::daemon::VdqmImpl::readCommitAck(
 
   const char *bufPtr = buf;
   size_t bufLen = sizeof(buf);
-  legacymsg::unmarshal(bufPtr, bufLen, ackMsg);
+  legacymsg::unmarshal(bufPtr, bufLen, ack);
 
-  if(VDQM_MAGIC != ackMsg.magic) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed to read VDQM_COMMIT ack: Invalid magic"
-      ": expected=0x" << std::hex << VDQM_MAGIC << " actual=" << ackMsg.magic;
-    throw ex;
-  }
-  if(VDQM_COMMIT != ackMsg.reqType) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed to read VDQM_COMMIT ack: Invalid request type"
-      ": expected=0x" << std::hex << VDQM_COMMIT << " actual=0x" <<
-      ackMsg.reqType;
-    throw ex;
-  }
+  return ack;
 }
 
 //-----------------------------------------------------------------------------
