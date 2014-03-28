@@ -23,6 +23,10 @@
  *****************************************************************************/
 
 #include <gtest/gtest.h>
+#define __STDC_CONSTANT_MACROS // For using stdint macros (stdint is included
+// by inttypes.h, so we shoot first)
+#include <stdint.h>
+#include <inttypes.h>
 #include "castor/tape/tapeserver/client/ClientSimulator.hpp"
 #include "castor/tape/tapeserver/client/ClientSimSingleReply.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
@@ -90,6 +94,8 @@ TEST(tapeServer, MountSessionGoodday) {
   MountSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024;
   castorConf.rtcopydNbBufs = 10;
+  castorConf.tapebridgeBulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.tapebridgeBulkRequestRecallMaxFiles = 1000;
   MountSession sess(VDQMjob, logger, mockSys, tpConfig, castorConf);
   sess.execute();
   simRun.wait();

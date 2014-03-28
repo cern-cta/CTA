@@ -53,6 +53,10 @@ namespace daemon {
     public:
       CastorConf(): rfioConnRetry(0), rfioConnRetryInt(0), rfioIOBufSize(0),
         rtcopydBufsz(0), rtcopydNbBufs(0), tapeConfirmDriveFreeInterval(0),
+        tapebridgeBulkRequestMigrationMaxBytes(0),
+        tapebridgeBulkRequestMigrationMaxFiles(0),
+        tapebridgeBulkRequestRecallMaxBytes(0),
+        tapebridgeBulkRequestRecallMaxFiles(0),
         tapeserverdDiskThreads(0) {}
       uint32_t rfioConnRetry;
       uint32_t rfioConnRetryInt;
@@ -62,10 +66,10 @@ namespace daemon {
       std::string tapeBadMIRHandlingRepair;
       std::string tapeConfirmDriveFree;
       uint32_t tapeConfirmDriveFreeInterval;
-      uint32_t tapebridgeBulkRequestMigrationMaxBytes;
-      uint32_t tapebridgeBulkRequestMigrationMaxFiles;
-      uint32_t tapebridgeBulkRequestRecallMaxBytes;
-      uint32_t tapebridgeBulkRequestRecallMaxFiles;
+      uint64_t tapebridgeBulkRequestMigrationMaxBytes;
+      uint64_t tapebridgeBulkRequestMigrationMaxFiles;
+      uint64_t tapebridgeBulkRequestRecallMaxBytes;
+      uint64_t tapebridgeBulkRequestRecallMaxFiles;
 // Other values found on production tape servers
 //      TAPE CRASHED_RLS_HANDLING RETRY
 //      TAPE CRASHED_RLS_HANDLING_RETRIES 3
