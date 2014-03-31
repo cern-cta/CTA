@@ -181,6 +181,7 @@ void MigrationReportPacker::WorkerThread::run(){
         //we end up in the catch below
         m_parent.m_client.reportEndOfSessionWithError(e.getMessageValue(),SEINTERNAL,chrono);
         m_parent.logRequestReport(chrono,"Successfully closed client's session after the failed report MigrationResult");
+        break;
       }
     }
   }
