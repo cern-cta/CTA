@@ -211,48 +211,41 @@ std::string castor::log::StringLogger::buildSyslogHeader(
 //-----------------------------------------------------------------------------
 std::string castor::log::StringLogger::cleanString(const std::string &s,
   const bool replaceSpaces) throw() {
-  char *str = strdup(s.c_str());
-
-  // Return an empty string if the strdup() failed
-  if(NULL == str) {
-    return "";
-  }
-
-  // Variables
-  char *end = NULL;
-  char *ptr = NULL;
-
-  // Replace newline and tab with a space
-  while (((ptr = strchr(str, '\n')) != NULL) ||
-         ((ptr = strchr(str, '\t')) != NULL)) {
-    *ptr = ' ';
-  }
-
-  // Remove leading whitespace
-  while (isspace(*str)) str++;
-
-  // Remove trailing whitespace
-  end = str + strlen(str) - 1;
-  while (end > str && isspace(*end)) end--;
-
-  // Write new null terminator
-  *(end + 1) = '\0';
-
-  // Replace double quotes with single quotes
-  while ((ptr = strchr(str, '"')) != NULL) {
-    *ptr = '\'';
-  }
-
-  // Check for replacement of spaces with underscores
-  if (replaceSpaces) {
-    while ((ptr = strchr(str, ' ')) != NULL) {
-      *ptr = '_';
+  size_t beginpos = s.find_first_not_of(' ');
+  std::string::const_iterator it1;
+  if (std::string::npos != beginpos)
+    it1 = beginpos + s.begin();
+  else
+    it1 = s.begin();
+  
+  std::string::const_iterator it2;
+  size_t endpos = s.find_last_not_of(' ');
+  if (std::string::npos != endpos) 
+    it2 = endpos + 1 + s.begin();
+  else 
+    it2 = s.end();
+  
+  std::string result(it1, it2);
+  
+  //if (s.begin() == it1 && it2 == s.end()) 
+  //  result.clear();
+  
+  for (std::string::iterator it = result.begin(); it != result.end(); ++it) {
+    if (replaceSpaces) {
+      if ('\t' == *it) 
+        *it = ' ';
+      
+      if ('\n' == *it) 
+        *it = ' ';
     }
+    
+    if (' ' == *it) 
+      *it = '_';
+    if ('"' == *it) 
+      *it = '\'';
   }
-
-  std::string result(str);
-  free(str);
   return result;
+   
 }
 
 //-----------------------------------------------------------------------------
