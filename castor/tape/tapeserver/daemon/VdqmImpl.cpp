@@ -128,16 +128,16 @@ void castor::tape::tapeserver::daemon::VdqmImpl::writeDriveStatusMsg(
   const int connection, const std::string &server, const std::string &unitName,
   const std::string &dgn, const int status)
   throw(castor::exception::Exception) {
-  legacymsg::VdqmDrvRqstMsgBody drvRqstMsgBody;
-  drvRqstMsgBody.status = status;
-  castor::utils::copyString(drvRqstMsgBody.server, server.c_str());
-  castor::utils::copyString(drvRqstMsgBody.drive, unitName.c_str());
-  castor::utils::copyString(drvRqstMsgBody.dgn, dgn.c_str());
-  char drvRqstBuf[VDQM_MSGBUFSIZ];
-  const size_t drvRqstMsgLen = legacymsg::marshal(drvRqstBuf, drvRqstMsgBody);
+  legacymsg::VdqmDrvRqstMsgBody body;
+  body.status = status;
+  castor::utils::copyString(body.server, server.c_str());
+  castor::utils::copyString(body.drive, unitName.c_str());
+  castor::utils::copyString(body.dgn, dgn.c_str());
+  char buf[VDQM_MSGBUFSIZ];
+  const size_t len = legacymsg::marshal(buf, body);
 
   try {
-    io::writeBytes(connection, m_netTimeout, drvRqstMsgLen, drvRqstBuf);
+    io::writeBytes(connection, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to write drive status message: "
@@ -268,8 +268,8 @@ castor::tape::legacymsg::VdqmDrvRqstMsgBody
   if(sizeof(buf) < bodyLen) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to read body of drive status message"
-      ": Maximum body length exceeded: max=" << VDQM_MSGBUFSIZ << " actual=" <<
-      bodyLen;
+      ": Maximum body length exceeded: max=" << sizeof(buf) <<
+      " actual=" << bodyLen;
     throw ex;
   }
 

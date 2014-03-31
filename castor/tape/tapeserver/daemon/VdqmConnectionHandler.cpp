@@ -45,6 +45,7 @@ castor::tape::tapeserver::daemon::VdqmConnectionHandler::VdqmConnectionHandler(
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmConnectionHandler::
   ~VdqmConnectionHandler() throw() {
+  close(m_connection);
 }
 
 //------------------------------------------------------------------------------
@@ -77,9 +78,9 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
 
   const legacymsg::RtcpJobRqstMsgBody job = readJobMsg(fd.fd);
   logVdqmJobReception(job);
+  writeJobReplyMsg(fd.fd);
 
   m_reactor.removeHandler(this);
-  close(fd.fd);
 }
 
 //------------------------------------------------------------------------------
@@ -101,7 +102,7 @@ void
 }
 
 //------------------------------------------------------------------------------
-// readJob
+// readJobMsg
 //------------------------------------------------------------------------------
 castor::tape::legacymsg::RtcpJobRqstMsgBody
   castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsg(
@@ -158,7 +159,7 @@ castor::tape::legacymsg::RtcpJobRqstMsgBody
   castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsgBody(
     const int connection, const uint32_t len)
     throw(castor::exception::Exception) {
-  char buf[VDQM_MSGBUFSIZ];
+  char buf[1024];
 
   if(sizeof(buf) < len) {
     castor::exception::Internal ex;
@@ -182,4 +183,22 @@ castor::tape::legacymsg::RtcpJobRqstMsgBody
   size_t bufLen = sizeof(buf);
   legacymsg::unmarshal(bufPtr, bufLen, body);
   return body;
+}
+
+//------------------------------------------------------------------------------
+// writeJobReplyMsg
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmConnectionHandler::writeJobReplyMsg(
+  const int connection) throw(castor::exception::Exception) {
+  legacymsg::RtcpJobReplyMsgBody body;
+  char buf[1024];
+  const size_t len = legacymsg::marshal(buf, body);
+  try {
+    io::writeBytes(connection, m_netTimeout, len, buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to write job reply message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
 }

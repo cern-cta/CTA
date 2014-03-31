@@ -32,6 +32,7 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   RtcpDumpTapeRqstMsgBody.cpp
   RtcpErrorAppendix.cpp
   RtcpFileRqst.cpp
+  RtcpJobReplyMsgBody.cpp
   RtcpJobRqstMsgBody.cpp
   RtcpMarshal.cpp
   RtcpSegmentAttributes.cpp

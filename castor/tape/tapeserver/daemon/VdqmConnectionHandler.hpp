@@ -83,6 +83,8 @@ public:
 
   /**
    * Destructor.
+   *
+   * Closes the connection with the vdqmd daemon.
    */
   ~VdqmConnectionHandler() throw();
 
@@ -156,6 +158,15 @@ private:
    */
   legacymsg::RtcpJobRqstMsgBody readJobMsgBody(const int connection,
     const uint32_t len) throw(castor::exception::Exception);
+
+  /**
+   * Writes a job reply message to the specified connection.
+   *
+   * @param connection The file descriptor of the connection with the vdqm
+   * daemon.
+   */
+  void writeJobReplyMsg(const int connection)
+    throw(castor::exception::Exception);
 
 }; // class VdqmConnectionHandler
 
