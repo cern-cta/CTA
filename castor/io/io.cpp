@@ -1105,6 +1105,24 @@ void castor::io::marshalUint8(const uint8_t src, char * &dst)
 }
 
 //------------------------------------------------------------------------------
+// marshalInt16
+//------------------------------------------------------------------------------
+void castor::io::marshalInt16(const int16_t src, char * &dst)
+  throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to marshal int16_t"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  const int16_t netByteOrder = htons(src);
+  memcpy(dst, &netByteOrder, sizeof(src));
+  dst += sizeof(src);
+}
+
+//------------------------------------------------------------------------------
 // marshalUint16
 //------------------------------------------------------------------------------
 void castor::io::marshalUint16(const uint16_t src, char * &dst)
@@ -1207,6 +1225,34 @@ void castor::io::unmarshalUint8(const char * &src, size_t &srcLen,
   }
 
   dst = *src;
+  src += sizeof(dst);
+  srcLen -= sizeof(dst);
+}
+
+//------------------------------------------------------------------------------
+// unmarshalInt16
+//------------------------------------------------------------------------------
+void castor::io::unmarshalInt16(const char * &src, size_t &srcLen,
+  int16_t &dst) throw(castor::exception::Exception) {
+
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to unmarshal int16_t"
+      ": Pointer to source buffer is NULL";
+    throw ex;
+  }
+
+  if(srcLen < sizeof(dst)) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to unmarshal int16_t"
+      ": Source buffer length is too small: expected="
+      << sizeof(dst) << " actual=" << srcLen;
+    throw ex;
+  }
+
+  int16_t netByteOrder = 0;
+  memcpy(&netByteOrder, src, sizeof(dst));
+  dst = ntohs(netByteOrder);
   src += sizeof(dst);
   srcLen -= sizeof(dst);
 }

@@ -456,6 +456,18 @@ void marshalUint8(const uint8_t src, char * &dst)
  * return     Points to the byte in the destination buffer immediately after
  *            the marshalled value.
  */
+void marshalInt16(const int16_t src, char * &dst)
+ throw(castor::exception::Exception);
+
+/**
+ * Marshals the specified src value into the specified destination buffer.
+ *
+ * @param src The source value be marshalled.
+ * @param dst In/out parameter, before invocation points to the destination
+ *            buffer where the source value should be marshalled to and on
+ * return     Points to the byte in the destination buffer immediately after
+ *            the marshalled value.
+ */
 void marshalUint16(const uint16_t src, char * &dst)
  throw(castor::exception::Exception);
 
@@ -510,6 +522,23 @@ void marshalString(const std::string &src, char * &dst)
  * @param dst    Out parameter: The destination.
  */
 void unmarshalUint8(const char * &src, size_t &srcLen, uint8_t &dst)
+  throw(castor::exception::Exception);
+
+/**
+ * Unmarshals a value from the specified source buffer into the specified
+ * destination.
+ *
+ * @param src    In/out parameter: Before invocation points to the source
+ *               buffer where the value should be unmarshalled from and on
+ *               return points to the byte in the source buffer immediately
+ *               after the unmarshalled value.
+ * @param srcLen In/our parameter: Before invocation is the length of the
+ *               source buffer from where the value should be unmarshalled and
+ *               on return is the number of bytes remaining in the source
+ *               buffer.
+ * @param dst    Out parameter: The destination.
+ */
+void unmarshalInt16(const char * &src, size_t &srcLen, int16_t &dst)
   throw(castor::exception::Exception);
 
 /**
