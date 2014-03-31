@@ -28,8 +28,6 @@
 #include "castor/tape/tapeserver/daemon/VdqmImpl.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
-/* Temporarily include h/Cnetdb.h */
-#include "h/Cnetdb.h"
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
 
