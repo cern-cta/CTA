@@ -107,7 +107,8 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerBadGoodEnd) {
   ::testing::InSequence dummy;
   EXPECT_CALL(client, reportRecallResults(_,_)).Times(2);
   EXPECT_CALL(client, 
-  reportEndOfSessionWithError("RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process",SEINTERNAL,_)).Times(1);
+    reportEndOfSessionWithError("RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process",SEINTERNAL,_)
+          ).Times(1);
 
   castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerBadBadEnd");
   castor::log::LogContext lc(log);
@@ -136,14 +137,14 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerGoodBadEnd) {
   ::testing::InSequence dummy;
   EXPECT_CALL(client, reportRecallResults(_,_)).Times(1);
   EXPECT_CALL(client, 
-  reportEndOfSessionWithError("RecallReportPacker::EndofSessionWithErrors has been reported  but NO error was detected during the process",SEINTERNAL,_)).Times(1);
+          reportEndOfSessionWithError("RecallReportPacker::EndofSessionWithErrors has been reported  but NO error was detected during the process",SEINTERNAL,_)
+          ).Times(1);
 
   castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerBadBadEnd");
   castor::log::LogContext lc(log);
   
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   rrp.startThreads();
-  
   
   tapegateway::FileToRecallStruct recalledFiled;
   rrp.reportCompletedJob(recalledFiled);
@@ -153,5 +154,33 @@ TEST(castor_tape_tapeserver_daemon, RecallReportPackerGoodBadEnd) {
 
   std::string temp = log.getLog();
   ASSERT_NE(std::string::npos, temp.find("EndofSessionWithErrors has been reported  but NO error was detected during the process"));
+}
+
+TEST(castor_tape_tapeserver_daemon, RecallReportPackerFaillure) {
+  
+  std::string error_msg="ERROR_TEST_MSG";
+  int error_code=std::numeric_limits<int>::max();
+  
+  using namespace ::testing;
+  
+  MockClient client;
+  ::testing::InSequence dummy;
+  EXPECT_CALL(client, reportRecallResults(_,_)).WillRepeatedly(Throw(castor::tape::Exception("")));
+  EXPECT_CALL(client, reportEndOfSessionWithError(_,SEINTERNAL,_)).Times(1);
+
+  castor::log::StringLogger log("castor_tape_tapeserver_RecallReportPackerBadBadEnd");
+  castor::log::LogContext lc(log);
+  
+  tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
+  rrp.startThreads();
+  
+  tapegateway::FileToRecallStruct recalledFiled;
+  rrp.reportCompletedJob(recalledFiled);
+  rrp.reportCompletedJob(recalledFiled);
+  rrp.reportEndOfSessionWithErrors(error_msg,error_code);
+  rrp.waitThread();
+
+  std::string temp = log.getLog();
+  ASSERT_NE(std::string::npos, temp.find("Successfully closed client's session after the failed report RecallResult"));
 }
 }
