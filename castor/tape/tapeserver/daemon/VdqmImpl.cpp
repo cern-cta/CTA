@@ -201,7 +201,7 @@ castor::tape::legacymsg::MessageHeader
     io::readBytes(connection, m_netTimeout, sizeof(buf), buf);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to read VDQM_COMMIT ack: "
+    ex.getMessage() << "Failed to read ack: "
       << ne.getMessage().str();
     throw ex;
   }
