@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
+#include "castor/tape/tapeserver/daemon/DiskReadTaskInterface.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/daemon/DiskThreadPoolInterface.hpp"
@@ -35,7 +35,7 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-class DiskReadThreadPool : public DiskThreadPoolInterface<DiskReadTask> {
+class DiskReadThreadPool : public DiskThreadPoolInterface<DiskReadTaskInterface> {
 public:
   DiskReadThreadPool(int nbThread) {
     for(int i=0; i<nbThread; i++) {
@@ -61,7 +61,7 @@ public:
       (*i)->waitThreads();
     }
   }
-  virtual void push(DiskReadTask *t) { m_tasks.push(t); }
+  virtual void push(DiskReadTaskInterface *t) { m_tasks.push(t); }
   void finish() {
     /* Insert one endOfSession per thread */
     for (size_t i=0; i<m_threads.size(); i++) {
@@ -79,7 +79,7 @@ private:
     DiskReadThreadPool & m_manager;
     virtual void run() {
       while(1) {
-        DiskReadTask * task = m_manager.m_tasks.pop();
+        DiskReadTaskInterface * task = m_manager.m_tasks.pop();
         bool end = task->endOfWork();
         if (!end) task->execute();
         delete task;

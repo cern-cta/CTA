@@ -39,7 +39,7 @@ namespace daemon {
  * session. Being a consumer of memory blocks, it inherits from the DataConsumer class. It also
  * inherits several methods from the DiskWriteTask (TODO: do we really need this base class?).
  */
-class DiskWriteFileTask: public DiskWriteTask, public DataConsumer {
+class DiskWriteTask: public DiskWriteTaskInterface, public DataConsumer {
 public:
   /**
    * Constructor
@@ -47,7 +47,7 @@ public:
    * @param blockCount: number of memory blocks that will be used
    * @param mm: memory manager of the session
    */
-  DiskWriteFileTask(int fileId, int blockCount, MemoryManager& mm): m_fifo(blockCount), 
+  DiskWriteTask(int fileId, int blockCount, MemoryManager& mm): m_fifo(blockCount), 
           m_blockCount(blockCount), m_fileId(fileId), 
           m_memManager(mm) { mm.addClient(&m_fifo); }
   
@@ -104,7 +104,7 @@ public:
   /**
    * Destructor (also waiting for the end of the write operation)
    */
-  virtual ~DiskWriteFileTask() { volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); }
+  virtual ~DiskWriteTask() { volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); }
   
 private:
   

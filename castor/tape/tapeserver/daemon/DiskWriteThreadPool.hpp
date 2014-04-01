@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
+#include "castor/tape/tapeserver/daemon/DiskWriteTaskInterface.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/daemon/TaskInjector.hpp"
@@ -38,7 +38,7 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-class DiskWriteThreadPool : public DiskThreadPoolInterface<DiskWriteTask> {
+class DiskWriteThreadPool : public DiskThreadPoolInterface<DiskWriteTaskInterface> {
 public:
   DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq):
             m_jobInjector(NULL), m_filesQueued(0), m_blocksQueued(0), 
@@ -67,7 +67,7 @@ public:
       (*i)->waitThreads();
     }
   }
-  virtual void push(DiskWriteTask *t) { 
+  virtual void push(DiskWriteTaskInterface *t) { 
     {
       castor::tape::threading::MutexLocker ml(&m_counterProtection);
       m_filesQueued += t->files();
@@ -98,8 +98,8 @@ private:
   bool crossingDownFileThreshod(int filesPopped) {
     return (m_filesQueued >= m_maxFilesReq/2) && (m_filesQueued - filesPopped < m_maxFilesReq/2);
   }
-  DiskWriteTask * popAndRequestMoreJobs() {
-    DiskWriteTask * ret = m_tasks.pop();
+  DiskWriteTaskInterface * popAndRequestMoreJobs() {
+    DiskWriteTaskInterface * ret = m_tasks.pop();
     {
       castor::tape::threading::MutexLocker ml(&m_counterProtection);
       /* We are about to go to empty: request a last call job injection */
@@ -129,7 +129,7 @@ private:
     DiskWriteThreadPool & m_manager;
     virtual void run() {
       while(1) {
-        DiskWriteTask * task = m_manager.popAndRequestMoreJobs();
+        DiskWriteTaskInterface * task = m_manager.popAndRequestMoreJobs();
         bool end = task->endOfWork();
         if (!end) task->execute();
         delete task;

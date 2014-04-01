@@ -23,7 +23,7 @@ namespace daemon {
   
 RecallTaskInjector::RecallTaskInjector(MemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
-        DiskThreadPoolInterface<DiskWriteTask> & diskWriter,
+        DiskThreadPoolInterface<DiskWriteTaskInterface> & diskWriter,
         client::ClientInterface& client,castor::log::LogContext lc) : 
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
@@ -59,7 +59,7 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
     
     m_lc.log(LOG_INFO, "Logged file to recall");
     
-    DiskWriteFileTask * dwt = new DiskWriteFileTask((*it)->id(), blockID(**it), m_memManager);
+    DiskWriteTask * dwt = new DiskWriteTask((*it)->id(), blockID(**it), m_memManager);
     TapeReadFileTask * trt = new TapeReadFileTask(*dwt, (*it)->fseq(), blockID(**it));
     
     m_diskWriter.push(dwt);

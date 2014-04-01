@@ -31,13 +31,13 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-class DiskReadTask {
+class DiskReadTaskInterface {
 public:
   virtual bool endOfWork() = 0;
   virtual void execute() {
     throw MemException("Tring to execute a non-execuatble DiskReadTask"); 
   };
-  virtual ~DiskReadTask() {}
+  virtual ~DiskReadTaskInterface() {}
 };
 
 }}}}

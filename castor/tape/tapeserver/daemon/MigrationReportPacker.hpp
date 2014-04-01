@@ -25,7 +25,6 @@
 #pragma once
 
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
-#include "castor/tape/tapeserver/daemon/MigrationJob.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"

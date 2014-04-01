@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
+#include "castor/tape/tapeserver/daemon/DiskReadTaskInterface.hpp"
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 
@@ -33,9 +33,9 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-class DiskReadFileTask :public DiskReadTask {
+class DiskReadTask :public DiskReadTaskInterface {
 public:
-  DiskReadFileTask(DataConsumer & destination, int fileId, int nbBlocks): m_fileId(fileId),
+  DiskReadTask(DataConsumer & destination, int fileId, int nbBlocks): m_fileId(fileId),
       m_nbBlocks(nbBlocks), m_fifo(destination) {}
   /* Implementation of the DiskReadTask interface*/
   virtual bool endOfWork() { return false; }

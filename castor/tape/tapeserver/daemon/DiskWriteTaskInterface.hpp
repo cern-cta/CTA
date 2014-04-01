@@ -35,7 +35,7 @@ namespace daemon {
  * Abstract class describing the interface for a task that wants to write to disk.
  * This is inherited exclusively by DiskWriteFileTask.
  */
-class DiskWriteTask {
+class DiskWriteTaskInterface {
 public:
   
   /**
@@ -68,7 +68,7 @@ public:
   /**
    * Destructor
    */
-  virtual ~DiskWriteTask() {};
+  virtual ~DiskWriteTaskInterface() {};
 };
 
 }}}}

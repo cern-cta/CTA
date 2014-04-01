@@ -12,16 +12,16 @@ using namespace castor::tape::tapeserver::daemon;
 using namespace castor::tape;
 const int blockSize=4096;
 
-class FakeDiskWriteThreadPool : public DiskThreadPoolInterface<DiskWriteTask>
+class FakeDiskWriteThreadPool : public DiskThreadPoolInterface<DiskWriteTaskInterface>
 {
 public:
-  using tapeserver::daemon::DiskThreadPoolInterface<DiskWriteTask>::m_tasks;
+  using tapeserver::daemon::DiskThreadPoolInterface<DiskWriteTaskInterface>::m_tasks;
   
   virtual void finish() 
   {
     m_tasks.push(new endOfSession);
   }
-  virtual void push(DiskWriteTask* t){
+  virtual void push(DiskWriteTaskInterface* t){
       m_tasks.push(t);
   }
   ~FakeDiskWriteThreadPool(){
@@ -89,7 +89,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   
   for(int i=0;i<1;++i)
   {
-    DiskWriteTask* diskWriteTask=diskWrite.m_tasks.pop();
+    DiskWriteTaskInterface* diskWriteTask=diskWrite.m_tasks.pop();
     TapeReadTask* tapeReadTask=tapeRead.m_tasks.pop();
     
     ASSERT_EQ(diskWriteTask->endOfWork(),true);
