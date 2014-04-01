@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      DiskReadFileTask.hpp
+ *                      DiskReadTask.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,34 +24,20 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
-#include "castor/tape/tapeserver/daemon/DataFifo.hpp"
-#include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
+#include "castor/tape/tapeserver/daemon/Exception.hpp"
 
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-class DiskReadFileTask :public DiskReadTask {
+class DiskReadTask {
 public:
-  DiskReadFileTask(DataConsumer & destination, int fileId, int nbBlocks): m_fileId(fileId),
-      m_nbBlocks(nbBlocks), m_fifo(destination) {}
-  /* Implementation of the DiskReadTask interface*/
-  virtual bool endOfWork() { return false; }
+  virtual bool endOfWork() = 0;
   virtual void execute() {
-    for (int blockId=0; blockId < m_nbBlocks; blockId++) {
-      MemBlock * mb = m_fifo.getFreeBlock();
-      mb->m_fileid = m_fileId;
-      mb->m_fileBlock = blockId;
-      m_fifo.pushDataBlock(mb);
-    }
-  }
-private:
-  int m_fileId;
-  int m_nbBlocks;
-  DataConsumer & m_fifo;
+    throw MemException("Tring to execute a non-execuatble DiskReadTask"); 
+  };
+  virtual ~DiskReadTask() {}
 };
 
 }}}}
-

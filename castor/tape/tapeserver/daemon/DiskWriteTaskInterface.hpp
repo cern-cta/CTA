@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      DiskReadFileTask.hpp
+ *                      DiskWriteTask.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,34 +24,51 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
-#include "castor/tape/tapeserver/daemon/DataFifo.hpp"
-#include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
+#include "castor/tape/tapeserver/daemon/Exception.hpp"
 
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-class DiskReadFileTask :public DiskReadTask {
+/**
+ * Abstract class describing the interface for a task that wants to write to disk.
+ * This is inherited exclusively by DiskWriteFileTask.
+ */
+class DiskWriteTask {
 public:
-  DiskReadFileTask(DataConsumer & destination, int fileId, int nbBlocks): m_fileId(fileId),
-      m_nbBlocks(nbBlocks), m_fifo(destination) {}
-  /* Implementation of the DiskReadTask interface*/
-  virtual bool endOfWork() { return false; }
+  
+  /**
+   * TODO: see comment on the same function in DiskWriteFileTask.
+   */
+  virtual bool endOfWork() = 0;
+  
+  /**
+   * @return the number of memory blocks to be used
+   */
+  virtual int blocks() { return 0; }
+  
+  /**
+   * @return the number of files to write to disk
+   */
+  virtual int files() { return 0; }
+  
+  /**
+   * Main routine of the task
+   */
   virtual void execute() {
-    for (int blockId=0; blockId < m_nbBlocks; blockId++) {
-      MemBlock * mb = m_fifo.getFreeBlock();
-      mb->m_fileid = m_fileId;
-      mb->m_fileBlock = blockId;
-      m_fifo.pushDataBlock(mb);
-    }
-  }
-private:
-  int m_fileId;
-  int m_nbBlocks;
-  DataConsumer & m_fifo;
+    throw MemException("Trying to execute a non-executable DiskWriteTask"); 
+  };
+  
+  /**
+   * Wait for the end of the task
+   */
+  virtual void waitCompletion() {};
+  
+  /**
+   * Destructor
+   */
+  virtual ~DiskWriteTask() {};
 };
 
 }}}}
-

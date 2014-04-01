@@ -318,15 +318,19 @@ std::string castor::log::LoggerImplementation::buildSyslogHeader(
 //-----------------------------------------------------------------------------
 std::string castor::log::LoggerImplementation::cleanString(const std::string &s,
   const bool replaceSpaces) throw() {
-  size_t beginpos = s.find_first_not_of(' ');
+  const std::string& spaces="\t\n\v\f\r ";
+  
+  //find first non white char
+  size_t beginpos = s.find_first_not_of(spaces);
   std::string::const_iterator it1;
   if (std::string::npos != beginpos)
     it1 = beginpos + s.begin();
   else
     it1 = s.begin();
-  
+
+  //find last non white char
   std::string::const_iterator it2;
-  size_t endpos = s.find_last_not_of(' ');
+  size_t endpos = s.find_last_not_of(spaces);
   if (std::string::npos != endpos) 
     it2 = endpos + 1 + s.begin();
   else 
@@ -334,10 +338,12 @@ std::string castor::log::LoggerImplementation::cleanString(const std::string &s,
   
   std::string result(it1, it2);
   
-  //if (s.begin() == it1 && it2 == s.end()) 
-  //  result.clear();
+ // if (s.begin() == it1 && it2 == s.end()) 
+ //   result="";
   
   for (std::string::iterator it = result.begin(); it != result.end(); ++it) {
+    
+    // Replace newline and tab with a space
     if (replaceSpaces) {
       if ('\t' == *it) 
         *it = ' ';
@@ -346,8 +352,11 @@ std::string castor::log::LoggerImplementation::cleanString(const std::string &s,
         *it = ' ';
     }
     
+    // Replace spaces with underscore
     if (' ' == *it) 
       *it = '_';
+    
+    // Replace double quotes with single quotes
     if ('"' == *it) 
       *it = '\'';
   }

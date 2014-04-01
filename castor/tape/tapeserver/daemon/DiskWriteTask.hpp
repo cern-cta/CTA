@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      DiskWriteTask.hpp
+ *                      DiskWriteFileTask.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,7 +24,10 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/Exception.hpp"
+#include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
+#include "castor/tape/tapeserver/daemon/DataFifo.hpp"
+#include "castor/tape/tapeserver/daemon/MemManager.hpp"
+#include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 
 namespace castor {
 namespace tape {
@@ -32,43 +35,103 @@ namespace tapeserver {
 namespace daemon {
   
 /**
- * Abstract class describing the interface for a task that wants to write to disk.
- * This is inherited exclusively by DiskWriteFileTask.
+ * The DiskWriteFileTask is responsible to write a single file onto disk as part of a recall
+ * session. Being a consumer of memory blocks, it inherits from the DataConsumer class. It also
+ * inherits several methods from the DiskWriteTask (TODO: do we really need this base class?).
  */
-class DiskWriteTask {
+class DiskWriteFileTask: public DiskWriteTask, public DataConsumer {
 public:
+  /**
+   * Constructor
+   * @param fileId: file id of the file to write to disk
+   * @param blockCount: number of memory blocks that will be used
+   * @param mm: memory manager of the session
+   */
+  DiskWriteFileTask(int fileId, int blockCount, MemoryManager& mm): m_fifo(blockCount), 
+          m_blockCount(blockCount), m_fileId(fileId), 
+          m_memManager(mm) { mm.addClient(&m_fifo); }
   
   /**
-   * TODO: see comment on the same function in DiskWriteFileTask.
+   * TODO: Do we need this here?
+   * @return always false
    */
-  virtual bool endOfWork() = 0;
+  virtual bool endOfWork() { return false; }
+  
+  /**
+   * Return the numebr of files to write to disk
+   * @return always 1
+   */
+  virtual int files() { return 1; };
   
   /**
    * @return the number of memory blocks to be used
    */
-  virtual int blocks() { return 0; }
+  virtual int blocks() { return m_blockCount; }
   
   /**
-   * @return the number of files to write to disk
-   */
-  virtual int files() { return 0; }
-  
-  /**
-   * Main routine of the task
+   * Main routine: takes each memory block in the fifo and writes it to disk
    */
   virtual void execute() {
-    throw MemException("Trying to execute a non-executable DiskWriteTask"); 
-  };
+    int blockId  = 0;
+    while(!m_fifo.finished()) {
+      //printf("+++ In disk write file, id=%d\n",m_fileId);
+      MemBlock *mb = m_fifo.popDataBlock();
+      mb->m_fileid = m_fileId;
+      mb->m_fileBlock = blockId++;
+    }
+  }
   
   /**
-   * Wait for the end of the task
+   * Allows client code to return a reusable memory block
+   * @return the pointer to the memory block that can be reused
    */
-  virtual void waitCompletion() {};
+  virtual MemBlock *getFreeBlock() { return m_fifo.getFreeBlock(); }
   
   /**
-   * Destructor
+   * Function used to enqueue a new memory block holding data to be written to disk
+   * @param mb: corresponding memory block
    */
-  virtual ~DiskWriteTask() {};
+  virtual void pushDataBlock(MemBlock *mb) {
+    castor::tape::threading::MutexLocker ml(&m_producerProtection);
+    m_fifo.pushDataBlock(mb);
+  }
+  
+  /**
+   * Function used to wait until the end of the write
+   */
+  virtual void waitCompletion() { volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); }
+  
+  /**
+   * Destructor (also waiting for the end of the write operation)
+   */
+  virtual ~DiskWriteFileTask() { volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); }
+  
+private:
+  
+  /**
+   * The fifo containing the memory blocks holding data to be written to disk
+   */
+  DataFifo m_fifo;
+  
+  /**
+   * Number of blocks in the fifo
+   */
+  int m_blockCount;
+  
+  /**
+   * File id of the file that will be written to disk
+   */
+  int m_fileId;
+  
+  /**
+   * Reference to the Memory Manager in use
+   */
+  MemoryManager & m_memManager;
+  
+  /**
+   * Mutex forcing serial access to the fifo
+   */
+  castor::tape::threading::Mutex m_producerProtection;
 };
 
 }}}}
