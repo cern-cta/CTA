@@ -65,17 +65,17 @@ private:
 
 class MemBlock {
 public:
-
-  MemBlock(const int id, const size_t capacity) throw(MemException) : 
+  static const int uninitialised_value = -1;
+  MemBlock(const int id, const size_t capacity) : 
   m_memoryBlockId(id),m_payload(capacity){
     reset();
   }
   
   void reset() throw() {
-    m_fileid = -1;
-    m_fileBlock = -1;
-    m_fSeq = -1;
-    m_tapeFileBlock = -1;
+    m_fileid = uninitialised_value;
+    m_fileBlock = uninitialised_value;
+    m_fSeq = uninitialised_value;
+    m_tapeFileBlock = uninitialised_value;
   }
   
   int m_memoryBlockId;
