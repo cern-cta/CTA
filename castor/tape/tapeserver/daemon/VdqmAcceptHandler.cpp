@@ -27,8 +27,6 @@
 #include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmConnectionHandler.hpp"
 #include "castor/utils/SmartFd.hpp"
-#include "h/common.h"
-#include "h/serrno.h"
 
 #include <errno.h>
 #include <memory>
@@ -56,6 +54,7 @@ castor::tape::tapeserver::daemon::VdqmAcceptHandler::VdqmAcceptHandler(
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmAcceptHandler::~VdqmAcceptHandler()
   throw() {
+  close(m_listenSock);
 }
 
 //------------------------------------------------------------------------------
@@ -99,8 +98,9 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
 
   // Do nothing if there is no data to read
   //
-  // POLLIN is not being used because on SLC5 it is not the logical or of
-  // POLLRDNORM and POLLRDBAND
+  // POLLIN is unfortuntaley not the logical or of POLLRDNORM and POLLRDBAND
+  // on SLC 5.  I therefore replaced POLLIN with the logical or.  I also
+  // added POLLPRI into the mix to cover all possible types of read event.
   if(0 == (fd.revents & POLLRDNORM) && 0 == (fd.revents & POLLRDBAND) &&
     0 == (fd.revents & POLLPRI)) {
     return;
@@ -118,42 +118,6 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
   }
 
   m_log(LOG_DEBUG, "Accepted a possible vdqm connection");
-
-  // Close connection and return if connection is not from an admin host
-  {
-    // isadminhost fills in peerHost
-    char peerHost[CA_MAXHOSTNAMELEN+1];
-    memset(peerHost, '\0', sizeof(peerHost));
-
-    // Unfortunately isadminhost can either set errno or serrno
-    serrno = 0;
-    errno = 0;
-    const int rc = isadminhost(connection.get(), peerHost);
-    if(0 == rc) {
-      log::Param params[] = {
-        log::Param("host", peerHost[0] != '\0' ? peerHost : "UNKNOWN")};
-      m_log(LOG_INFO, "Received connection from authorized admin host", params);
-    } else {
-      // Give preference to serrno over errno when it comes to isadminhost()
-      const int savedErrno = errno;
-      const int savedSerrno = serrno;
-      std::string errorMessage;
-      if(0 != serrno) {
-        errorMessage = sstrerror(savedSerrno);
-      } else if(0 != errno) {
-        errorMessage = sstrerror(savedErrno);
-      } else {
-        errorMessage = "UNKNOWN";
-      }
-      log::Param params[] = {
-        log::Param("host", peerHost[0] != '\0' ? peerHost : "UNKNOWN"),
-        log::Param("message", errorMessage)};
-      m_log(LOG_ERR, "Failed to authorize vdqm host", params);
-      exception::Errnum::throwOnNegative(close(connection.release()),
-        "Failed to close unauthorized vdqm connection");
-      return;
-    }
-  }
 
   // Create a new vdqm connection handler
   std::auto_ptr<VdqmConnectionHandler> connectionHandler;

@@ -122,6 +122,18 @@ private:
   const int m_netTimeout;
 
   /**
+   * Throws an exception if the specified file-descriptor is not that of the
+   * socket listening for connections from the vdqmd daemon.
+   */
+  void checkHandleEventFd(const int fd) throw (castor::exception::Exception);
+
+  /**
+   * Returns true if the peer host of the connection being handled is
+   * authorized.
+   */
+  bool connectionIsAuthorized() throw();
+
+  /**
    * Logs the reception of the specified job message from the vdqmd daemon.
    */
   void logVdqmJobReception(const legacymsg::RtcpJobRqstMsgBody &job)

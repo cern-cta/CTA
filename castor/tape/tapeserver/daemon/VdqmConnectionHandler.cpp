@@ -21,6 +21,8 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/daemon/VdqmConnectionHandler.hpp"
+#include "h/common.h"
+#include "h/serrno.h"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -70,17 +72,93 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::fillPollFd(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
   const struct pollfd &fd) throw(castor::exception::Exception) {
+  checkHandleEventFd(fd.fd);
 
-  // Do nothing if there is not data to be read
-  if(0 == (fd.revents & POLLIN)) {
+  {
+    log::Param params[] = {
+      log::Param("POLLIN"    , fd.revents & POLLIN     ? "true" : "false"),
+      log::Param("POLLRDNORM", fd.revents & POLLRDNORM ? "true" : "false"),
+      log::Param("POLLRDBAND", fd.revents & POLLRDBAND ? "true" : "false"),
+      log::Param("POLLPRI"   , fd.revents & POLLPRI    ? "true" : "false"),
+      log::Param("POLLOUT"   , fd.revents & POLLOUT    ? "true" : "false"),
+      log::Param("POLLWRNORM", fd.revents & POLLWRNORM ? "true" : "false"),
+      log::Param("POLLWRBAND", fd.revents & POLLWRBAND ? "true" : "false"),
+      log::Param("POLLERR"   , fd.revents & POLLERR    ? "true" : "false"),
+      log::Param("POLLHUP"   , fd.revents & POLLHUP    ? "true" : "false"),
+      log::Param("POLLNVAL"  , fd.revents & POLLNVAL   ? "true" : "false")};
+    m_log(LOG_DEBUG, "VdqmConnectionHandler::handleEvent()", params);
+  }
+
+  // Do nothing if there is no data to read
+  //
+  // POLLIN is unfortuntaley not the logical or of POLLRDNORM and POLLRDBAND
+  // on SLC 5.  I therefore replaced POLLIN with the logical or.  I also
+  // added POLLPRI into the mix to cover all possible types of read event.
+  if(0 == (fd.revents & POLLRDNORM) && 0 == (fd.revents & POLLRDBAND) &&
+    0 == (fd.revents & POLLPRI)) {
     return;
   }
 
-  const legacymsg::RtcpJobRqstMsgBody job = readJobMsg(fd.fd);
-  logVdqmJobReception(job);
-  writeJobReplyMsg(fd.fd);
+  if(connectionIsAuthorized()) {
+    const legacymsg::RtcpJobRqstMsgBody job = readJobMsg(fd.fd);
+    logVdqmJobReception(job);
+    writeJobReplyMsg(fd.fd);
+  }
 
   m_reactor.removeHandler(this);
+}
+
+//------------------------------------------------------------------------------
+// checkHandleEventFd
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmConnectionHandler::
+  checkHandleEventFd(const int fd) throw (castor::exception::Exception) {
+  if(m_connection != fd) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to handle vdqm connection"
+      ": Event handler passed wrong file descriptor"
+      ": expected=" << m_connection << " actual=" << fd;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// connectionIsAuthorized
+//------------------------------------------------------------------------------
+bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::
+  connectionIsAuthorized() throw() {
+  // isadminhost fills in peerHost
+  char peerHost[CA_MAXHOSTNAMELEN+1];
+  memset(peerHost, '\0', sizeof(peerHost));
+
+  // Unfortunately isadminhost can either set errno or serrno
+  serrno = 0;
+  errno = 0;
+  const int rc = isadminhost(m_connection, peerHost);
+  if(0 == rc) {
+    log::Param params[] = {
+      log::Param("host", peerHost[0] != '\0' ? peerHost : "UNKNOWN")};
+    m_log(LOG_INFO, "Received connection from authorized admin host", params);
+    return true; // Connection is authorized
+  } else {
+    // Give preference to serrno over errno when it comes to isadminhost()
+    const int savedErrno = errno;
+    const int savedSerrno = serrno;
+    std::string errorMessage;
+    if(0 != serrno) {
+      errorMessage = sstrerror(savedSerrno);
+    } else if(0 != errno) {
+      errorMessage = sstrerror(savedErrno);
+    } else {
+      errorMessage = "UNKNOWN";
+    }
+    log::Param params[] = {
+      log::Param("host", peerHost[0] != '\0' ? peerHost : "UNKNOWN"),
+      log::Param("message", errorMessage)};
+    m_log(LOG_ERR, "Failed to authorize vdqm host", params);
+
+    return false; // Connection is not authorized
+  }
 }
 
 //------------------------------------------------------------------------------
