@@ -82,8 +82,27 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
   const struct pollfd &fd) throw(castor::exception::Exception) {
   checkHandleEventFd(fd.fd);
 
+  {
+    log::Param params[] = {
+      log::Param("POLLIN"    , fd.revents & POLLIN     ? "true" : "false"),
+      log::Param("POLLRDNORM", fd.revents & POLLRDNORM ? "true" : "false"),
+      log::Param("POLLRDBAND", fd.revents & POLLRDBAND ? "true" : "false"),
+      log::Param("POLLPRI"   , fd.revents & POLLPRI    ? "true" : "false"),
+      log::Param("POLLOUT"   , fd.revents & POLLOUT    ? "true" : "false"),
+      log::Param("POLLWRNORM", fd.revents & POLLWRNORM ? "true" : "false"),
+      log::Param("POLLWRBAND", fd.revents & POLLWRBAND ? "true" : "false"),
+      log::Param("POLLERR"   , fd.revents & POLLERR    ? "true" : "false"),
+      log::Param("POLLHUP"   , fd.revents & POLLHUP    ? "true" : "false"),
+      log::Param("POLLNVAL"  , fd.revents & POLLNVAL   ? "true" : "false")};
+    m_log(LOG_DEBUG, "VdqmAcceptHandler::handleEvent()", params);
+  }
+
   // Do nothing if there is no data to read
-  if(0 == (fd.revents & POLLIN)) {
+  //
+  // POLLIN is not being used because on SLC5 it is not the logical or of
+  // POLLRDNORM and POLLRDBAND
+  if(0 == (fd.revents & POLLRDNORM) && 0 == (fd.revents & POLLRDBAND) &&
+    0 == (fd.revents & POLLPRI)) {
     return;
   }
 
@@ -95,7 +114,10 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to accept a connection from the vdqm daemon"
       ": " << ne.getMessage().str();
+    throw ex;
   }
+
+  m_log(LOG_DEBUG, "Accepted a possible vdqm connection");
 
   // Close connection and return if connection is not from an admin host
   {
@@ -147,6 +169,8 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
     throw ex;
   }
 
+  m_log(LOG_DEBUG, "Created a new vdqm connection handler");
+
   // Register the new vdqm connection handler with the reactor
   try {
     m_reactor.registerHandler(connectionHandler.get());
@@ -156,6 +180,8 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
     ex.getMessage() << "Failed to register a new vdqm connection handler"
       ": " << ne.getMessage().str();
   }
+
+  m_log(LOG_DEBUG, "Registered the new vdqm connection handler");
 }
 
 //------------------------------------------------------------------------------
