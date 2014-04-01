@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <exception>
+#include "castor/tape/tapeserver/exception/Exception.hpp"
 #include <string>
 #include <errno.h>
 #include <string.h>
@@ -35,15 +35,10 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-class MemException: public std::exception {
+class MemException: public castor::tape::Exception {
 public:
-  MemException(const std::string & what): m_what(what) {}
+  MemException(const std::string & what): Exception(what) {}
   virtual ~MemException() throw() {}
-  virtual const char* what() const throw() {
-    return m_what.c_str();
-  } 
-private:
-  std::string m_what;
 };
 
 }
