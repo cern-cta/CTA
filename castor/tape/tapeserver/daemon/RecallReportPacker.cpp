@@ -180,7 +180,7 @@ void RecallReportPacker::WorkerThread::run(){
         {
         
           try{
-          m_parent.flush();
+            m_parent.flush();
           }
           catch(const failedReportRecallResult& e){
             //got there because we failed tp report the recall results
@@ -190,6 +190,7 @@ void RecallReportPacker::WorkerThread::run(){
             break;
           }
         }
+        
         rep->execute(m_parent);
         if(rep->goingToEnd()) {
           break;
