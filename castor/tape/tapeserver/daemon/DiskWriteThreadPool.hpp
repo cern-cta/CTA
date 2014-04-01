@@ -129,13 +129,13 @@ private:
     DiskWriteThreadPool & m_manager;
     virtual void run() {
       while(1) {
-        DiskWriteTaskInterface * task = m_manager.popAndRequestMoreJobs();
+        std::auto_ptr<DiskWriteTaskInterface>  task (m_manager.popAndRequestMoreJobs());
         bool end = task->endOfWork();
-        if (!end) task->execute();
-        delete task;
-        if (end) {
+        if (!end)
+          task->execute();
+        else {
           printf ("Disk write thread finishing\n");
-          return;
+          break;
         }
       }
     }

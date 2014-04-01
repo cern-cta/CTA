@@ -79,11 +79,13 @@ private:
     DiskReadThreadPool & m_manager;
     virtual void run() {
       while(1) {
-        DiskReadTaskInterface * task = m_manager.m_tasks.pop();
+        std::auto_ptr<DiskReadTaskInterface> task ( m_manager.m_tasks.pop());
         bool end = task->endOfWork();
-        if (!end) task->execute();
-        delete task;
-        if (end) return;
+
+        if (!end) 
+          task->execute();
+        else
+          break;
       }
     }
   };
