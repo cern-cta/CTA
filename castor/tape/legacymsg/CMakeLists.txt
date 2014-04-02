@@ -26,6 +26,7 @@ cmake_minimum_required (VERSION 2.6)
 # Rules to build and install libcastortapelegacymsg.so
 ################################################################################
 set (TAPE_LEGACYMSG_LIB_SRC_FILES
+  AdminMarshal.cpp
   CommonMarshal.cpp
   GiveOutpMsgBody.cpp
   MessageHeader.cpp
@@ -38,6 +39,7 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   RtcpSegmentAttributes.cpp
   RtcpTapeRqstMsgBody.cpp
   TapeBridgeMarshal.cpp
+  TapeMsgBody.cpp
   VdqmDrvRqstMsgBody.cpp
   VdqmMarshal.cpp
   VmgrMarshal.cpp

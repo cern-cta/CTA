@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/Constants.hpp
+ *                      castor/tape/legacymsg/AdminMarshal.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,32 +17,30 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author Steven.Murray@cern.ch
+ *
+ *
+ *
+ * @author dkruse@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_DAEMON_CONSTANTS_HPP
-#define CASTOR_TAPE_TAPESERVER_DAEMON_CONSTANTS_HPP 1
+#include "castor/exception/Internal.hpp"
+#include "castor/io/io.hpp"
+#include "castor/tape/legacymsg/CommonMarshal.hpp"
+#include "castor/tape/legacymsg/AdminMarshal.hpp"
+#include "castor/tape/utils/utils.hpp"
+#include "h/rtcp_constants.h"
+#include "h/vdqm_constants.h"
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+#include <errno.h>
+#include <string.h>
 
-/**
- * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the VDQM server.
- */
-const unsigned short TAPE_SERVER_VDQM_LISTENING_PORT = 5070;
 
-/**
- * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the tpconfig admin command.
- */
-const unsigned short TAPE_SERVER_ADMIN_LISTENING_PORT = 5011;
-
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
-} // namespace castor
-
-#endif // CASTOR_TAPE_TAPESERVER_DAEMON_CONSTANTS_HPP
+//-----------------------------------------------------------------------------
+// unmarshal
+//-----------------------------------------------------------------------------
+void castor::tape::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeMsgBody &dst) throw(castor::exception::Exception) {
+  io::unmarshalUint32(src, srcLen, dst.uid);
+  io::unmarshalUint32(src, srcLen, dst.gid);
+  io::unmarshalString(src, srcLen, dst.drive);
+  io::unmarshalInt16(src, srcLen, dst.status);
+}

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/Constants.hpp
+ *         castor/tape/legacymsg/TapeMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,32 +17,42 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author Steven.Murray@cern.ch
+ *
+ * 
+ * @author dkruse@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_DAEMON_CONSTANTS_HPP
-#define CASTOR_TAPE_TAPESERVER_DAEMON_CONSTANTS_HPP 1
+#ifndef CASTOR_TAPE_LEGACYMSG_TAPEMSGBODY_HPP
+#define CASTOR_TAPE_LEGACYMSG_TAPEMSGBODY_HPP 1
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+#include "castor/tape/legacymsg/RtcpErrorAppendix.hpp"
+#include "h/Castor_limits.h"
+#include "h/Cuuid.h"
+
+#include <stdint.h>
+
+namespace castor {
+namespace tape {
+namespace legacymsg {
 
 /**
- * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the VDQM server.
+ * An admin command message.
  */
-const unsigned short TAPE_SERVER_VDQM_LISTENING_PORT = 5070;
+struct TapeMsgBody {
+  uid_t uid;
+  gid_t gid;                       
+  char drive[CA_MAXUNMLEN+1];
+  int16_t status;
 
-/**
- * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the tpconfig admin command.
- */
-const unsigned short TAPE_SERVER_ADMIN_LISTENING_PORT = 5011;
+  /**
+   * Constructor.
+   */
+  TapeMsgBody() throw();
 
-} // namespace daemon
-} // namespace tapeserver
+}; // struct RtcpTapeRqstMsgBody
+
+} // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_DAEMON_CONSTANTS_HPP
+#endif // CASTOR_TAPE_LEGACYMSG_TAPEMSGBODY
