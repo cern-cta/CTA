@@ -70,7 +70,7 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::fillPollFd(
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
+bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
   const struct pollfd &fd) throw(castor::exception::Exception) {
   checkHandleEventFd(fd.fd);
 
@@ -96,7 +96,7 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
   // added POLLPRI into the mix to cover all possible types of read event.
   if(0 == (fd.revents & POLLRDNORM) && 0 == (fd.revents & POLLRDBAND) &&
     0 == (fd.revents & POLLPRI)) {
-    return;
+    return false; // Stay registered with the reactor
   }
 
   if(connectionIsAuthorized()) {
@@ -105,7 +105,7 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
     writeJobReplyMsg(fd.fd);
   }
 
-  m_reactor.removeHandler(this);
+  return true; // Ask reactor to remove and delete this handler
 }
 
 //------------------------------------------------------------------------------

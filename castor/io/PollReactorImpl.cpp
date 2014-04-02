@@ -139,7 +139,12 @@ void castor::io::PollReactorImpl::dispatchEventHandlers(
   for(nfds_t i=0; i<nfds; i++) {
     // Find and dispatch the appropriate handler if there is a pending event
     if(0 != fds[i].revents) {
-      findHandler(fds[i].fd)->handleEvent(fds[i]);
+      PollEventHandler *handler = findHandler(fds[i].fd);
+      const bool removeAndDeleteHandler = handler->handleEvent(fds[i]);
+      if(removeAndDeleteHandler) {
+        removeHandler(handler);
+        delete(handler);
+      }
     }
   }
 }

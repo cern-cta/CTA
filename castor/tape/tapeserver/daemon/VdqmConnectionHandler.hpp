@@ -78,7 +78,7 @@ public:
    *
    * @param fd The poll file-descriptor describing the event.
    */
-  void handleEvent(const struct pollfd &fd) throw(castor::exception::Exception);
+  bool handleEvent(const struct pollfd &fd) throw(castor::exception::Exception);
 
   /**
    * Destructor.

@@ -152,6 +152,18 @@ protected:
   void setUpReactor() throw(castor::exception::Exception);
 
   /**
+   * Creates the handler to accept connections from the vdqmd daemon and
+   * registers it with the reactor.
+   */
+  void createAndRegisterVdqmAcceptHandler() throw(castor::exception::Exception);
+
+  /**
+   * Creates the handler to accept connections from the admin commands and
+   * registers it with the reactor.
+   */
+  void createAndRegisterAdminAcceptHandler() throw(castor::exception::Exception);
+
+  /**
    * The main event loop of the tape-server daemon.
    */
   void mainEventLoop() throw(castor::exception::Exception);

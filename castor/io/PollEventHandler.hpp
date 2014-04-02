@@ -59,8 +59,10 @@ public:
    * Handles the specified event.
    *
    * @param fd The poll file-descriptor describing the event.
+   * @return true if the event handler should be removed from and deleted by
+   * the reactor.
    */
-  virtual void handleEvent(const struct pollfd &fd)
+  virtual bool handleEvent(const struct pollfd &fd)
     throw(castor::exception::Exception) = 0;
 
   /**

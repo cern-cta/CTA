@@ -77,7 +77,7 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::fillPollFd(
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
+bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
   const struct pollfd &fd) throw(castor::exception::Exception) {
   checkHandleEventFd(fd.fd);
 
@@ -103,7 +103,7 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
   // added POLLPRI into the mix to cover all possible types of read event.
   if(0 == (fd.revents & POLLRDNORM) && 0 == (fd.revents & POLLRDBAND) &&
     0 == (fd.revents & POLLPRI)) {
-    return;
+    return false; // Stay registeed with the reactor
   }
 
   // Accept the connection from the vdqmd daemon
@@ -146,6 +146,8 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
   }
 
   m_log(LOG_DEBUG, "Registered the new vdqm connection handler");
+
+  return false; // Stay registeed with the reactor
 }
 
 //------------------------------------------------------------------------------

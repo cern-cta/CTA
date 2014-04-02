@@ -86,7 +86,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillPollFd(
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
+bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
   const struct pollfd &fd) throw(castor::exception::Exception) {
   checkHandleEventFd(fd.fd);
 
@@ -97,7 +97,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
   // added POLLPRI into the mix to cover all possible types of read event.
   if(0 == (fd.revents & POLLRDNORM) && 0 == (fd.revents & POLLRDBAND) &&
     0 == (fd.revents & POLLPRI)) {
-    return;
+    return false; // Stayt registered with the reactor
   }
 
   // Accept the connection from the admin command
@@ -108,6 +108,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to accept a connection from the admin command"
       ": " << ne.getMessage().str();
+    throw ex;
   }
   
   const legacymsg::TapeMsgBody job = readJobMsg(fd.fd);
@@ -126,9 +127,8 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
     ex.getMessage() << "Wrong drive status requested:" << job.status;
     throw ex;
   }
-                               
-  m_reactor.removeHandler(this);
-  close(fd.fd);
+
+  return false; // Stay registered with the reactor
 }
 
 //------------------------------------------------------------------------------

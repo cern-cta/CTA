@@ -54,6 +54,7 @@ void castor::io::DummyPollEventHandler::fillPollFd(struct pollfd &fd) throw() {
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
-void castor::io::DummyPollEventHandler::handleEvent(const struct pollfd &fd)
+bool castor::io::DummyPollEventHandler::handleEvent(const struct pollfd &fd)
   throw(castor::exception::Exception) {
+  return false; // Stay registered with the reactor
 }

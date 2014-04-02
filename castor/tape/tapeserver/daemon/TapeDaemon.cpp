@@ -262,6 +262,14 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
   throw(castor::exception::Exception) {
+  createAndRegisterVdqmAcceptHandler();
+  createAndRegisterAdminAcceptHandler();
+}
+
+//------------------------------------------------------------------------------
+// createAndRegisterVdqmAcceptHandler
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHandler() throw(castor::exception::Exception) {
   castor::utils::SmartFd vdqmListenSock;
   try {
     vdqmListenSock.reset(io::createListenerSock(TAPE_SERVER_VDQM_LISTENING_PORT));
@@ -291,7 +299,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
   }
   m_reactor.registerHandler(vdqmAcceptHandler.get());
   vdqmAcceptHandler.release();
-  
+}
+
+//------------------------------------------------------------------------------
+// createAndRegisterVdqmAcceptHandler
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptHandler() throw(castor::exception::Exception) {
   castor::utils::SmartFd adminListenSock;
   try {
     adminListenSock.reset(io::createListenerSock(TAPE_SERVER_ADMIN_LISTENING_PORT));
