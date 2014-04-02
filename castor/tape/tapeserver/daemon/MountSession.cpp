@@ -248,7 +248,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     TapeReadSingleThread trst(*drive);
     DiskWriteThreadPool dwtp(m_castorConf.tapeserverdDiskThreads,
         m_castorConf.tapebridgeBulkRequestRecallMaxFiles,
-        m_castorConf.tapebridgeBulkRequestRecallMaxBytes);
+        m_castorConf.tapebridgeBulkRequestRecallMaxBytes,lc);
     RecallReportPacker rrp(m_clientProxy,
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
         lc);

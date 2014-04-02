@@ -29,6 +29,8 @@
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/daemon/TaskInjector.hpp"
 #include "DiskThreadPoolInterface.hpp"
+#include "castor/log/LogContext.hpp"
+#include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include <vector>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -40,9 +42,9 @@ namespace daemon {
 
 class DiskWriteThreadPool : public DiskThreadPoolInterface<DiskWriteTaskInterface> {
 public:
-  DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq):
+  DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq,castor::log::LogContext lc):
             m_jobInjector(NULL), m_filesQueued(0), m_blocksQueued(0), 
-            m_maxFilesReq(maxFilesReq), m_maxBytesReq(maxBlocksReq)
+            m_maxFilesReq(maxFilesReq), m_maxBytesReq(maxBlocksReq),m_lc(lc)
    {
     for(int i=0; i<nbThread; i++) {
       DiskWriteWorkerThread * thr = new DiskWriteWorkerThread(*this);
@@ -99,19 +101,43 @@ private:
     return (m_filesQueued >= m_maxFilesReq/2) && (m_filesQueued - filesPopped < m_maxFilesReq/2);
   }
   DiskWriteTaskInterface * popAndRequestMoreJobs() {
+    using castor::log::LogContext;
+    using castor::log::Param;
+    
     DiskWriteTaskInterface * ret = m_tasks.pop();
     {
       castor::tape::threading::MutexLocker ml(&m_counterProtection);
-      /* We are about to go to empty: request a last call job injection */
+      // We are about to go to empty: request a last call job injection 
       if(m_filesQueued == 1 && ret->files()) {
-	printf("In DiskWriteTask::popAndRequestMoreJobs(), requesting last call: files=%d, blocks=%d, ret->files=%d, ret->blocks=%d, maxFiles=%d, maxBlocks=%" PRIu64 "\n", 
-                 m_filesQueued, m_blocksQueued, ret->files(), ret->blocks(), m_maxFilesReq, m_maxBytesReq);
+        
+        LogContext::ScopedParam sp[]={
+          LogContext::ScopedParam(m_lc, Param("files",m_filesQueued)),
+          LogContext::ScopedParam(m_lc, Param("blocks", m_blocksQueued)),
+          LogContext::ScopedParam(m_lc, Param("ret->files", ret->files())),
+          LogContext::ScopedParam(m_lc, Param("ret->blocks", ret->blocks())),
+          LogContext::ScopedParam(m_lc, Param("maxFiles", m_maxFilesReq)),
+          LogContext::ScopedParam(m_lc, Param("maxBlocks", m_maxBytesReq))
+        };
+        tape::utils::suppresUnusedVariable(sp);
+    
+        m_lc.log(LOG_INFO, "In DiskWriteTaskInterface::popAndRequestMoreJobs(), requesting last call");
+    
         m_jobInjector->requestInjection(m_maxFilesReq, m_maxBytesReq, true);
+        //if we are below mid on both block and files and we are crossing a threshold 
+        //on either files of blocks, then request more jobs
       } else if (belowMidBlocksAfterPop(ret->blocks()) && belowMidFilesAfterPop(ret->files()) 
 	      && (crossingDownBlockThreshod(ret->blocks()) || crossingDownFileThreshod(ret->files()))) {
-         printf("In DiskWriteTask::popAndRequestMoreJobs(), requesting: files=%d, blocks=%d, ret->files=%d, ret->blocks=%d, maxFiles=%d, maxBlocks=%" PRIu64 "\n", 
-                 m_filesQueued, m_blocksQueued, ret->files(), ret->blocks(), m_maxFilesReq, m_maxBytesReq);
-        /* We are crossing the half full queue threshold down: ask for more more */
+        LogContext::ScopedParam sp[]={
+          LogContext::ScopedParam(m_lc, Param("files",m_filesQueued)),
+          LogContext::ScopedParam(m_lc, Param("blocks", m_blocksQueued)),
+          LogContext::ScopedParam(m_lc, Param("ret->files", ret->files())),
+          LogContext::ScopedParam(m_lc, Param("ret->blocks", ret->blocks())),
+          LogContext::ScopedParam(m_lc, Param("maxFiles", m_maxFilesReq)),
+          LogContext::ScopedParam(m_lc, Param("maxBlocks", m_maxBytesReq))
+        };
+        tape::utils::suppresUnusedVariable(sp);
+    
+        m_lc.log(LOG_INFO, "In DiskWriteTaskInterface::popAndRequestMoreJobs(), requesting: files");
         m_jobInjector->requestInjection(m_maxFilesReq, m_maxBytesReq, false);
       }
       m_filesQueued-=ret->files();
@@ -143,11 +169,15 @@ private:
   std::vector<DiskWriteWorkerThread *> m_threads;
   castor::tape::threading::Mutex m_counterProtection;
   TaskInjector * m_jobInjector;
+  //
   uint32_t m_filesQueued;
+  
+  // 
   uint32_t m_blocksQueued;
+  
   uint32_t m_maxFilesReq;
   uint64_t m_maxBytesReq;
-
+  castor::log::LogContext m_lc;
 };
 
 }}}}
