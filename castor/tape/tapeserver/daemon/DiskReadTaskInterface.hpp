@@ -33,10 +33,7 @@ namespace daemon {
   
 class DiskReadTaskInterface {
 public:
-  virtual bool endOfWork() = 0;
-  virtual void execute() {
-    throw MemException("Tring to execute a non-execuatble DiskReadTask"); 
-  };
+  virtual void execute() =0;
   virtual ~DiskReadTaskInterface() {}
 };
 
