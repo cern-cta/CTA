@@ -19,7 +19,7 @@ public:
   
   virtual void finish() 
   {
-    m_tasks.push(new endOfSession);
+    m_tasks.push(NULL);
   }
   virtual void push(DiskWriteTaskInterface* t){
       m_tasks.push(t);
@@ -92,9 +92,8 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
     DiskWriteTaskInterface* diskWriteTask=diskWrite.m_tasks.pop();
     TapeReadTask* tapeReadTask=tapeRead.m_tasks.pop();
     
-    ASSERT_EQ(diskWriteTask->endOfWork(),true);
-    ASSERT_EQ(tapeReadTask->endOfWork(),true);
-    
+    ASSERT_EQ(NULL,diskWriteTask);
+    ASSERT_EQ(true,tapeReadTask->endOfWork());
     delete diskWriteTask;
     delete tapeReadTask;
   }

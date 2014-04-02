@@ -78,7 +78,7 @@ public:
   void finish() {
     /* Insert one endOfSession per thread */
     for (size_t i=0; i<m_threads.size(); i++) {
-      m_tasks.push(new endOfSession);
+      m_tasks.push(NULL);
     }
   }
   void setJobInjector(TaskInjector * ji){
@@ -128,10 +128,10 @@ private:
   private:
     DiskWriteThreadPool & m_manager;
     virtual void run() {
+      std::auto_ptr<DiskWriteTaskInterface>  task;
       while(1) {
-        std::auto_ptr<DiskWriteTaskInterface>  task (m_manager.popAndRequestMoreJobs());
-        bool end = task->endOfWork();
-        if (!end)
+        task.reset(m_manager.popAndRequestMoreJobs());
+        if (NULL!=task.get())
           task->execute();
         else {
           printf ("Disk write thread finishing\n");
