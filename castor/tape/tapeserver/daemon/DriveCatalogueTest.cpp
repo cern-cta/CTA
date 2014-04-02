@@ -39,6 +39,19 @@ protected:
   }
 };
 
+TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, driveState2Str) {
+  using namespace castor::tape::tapeserver::daemon;
+
+  ASSERT_EQ(std::string("INIT"),
+    DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_INIT));
+  ASSERT_EQ(std::string("DOWN"),
+    DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_DOWN));
+  ASSERT_EQ(std::string("UP"),
+    DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_UP));
+  ASSERT_EQ(std::string("RUNNING"),
+    DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_RUNNING));
+}
+
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
   using namespace castor::tape::tapeserver::daemon;
 
@@ -273,7 +286,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   castor::utils::copyString(job.dgn, "DGN");
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
-  ASSERT_NO_THROW(catalogue.tapeSessionStarted("UNIT", job));
+  ASSERT_NO_THROW(catalogue.tapeSessionStarted("UNIT", job, 1234));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_RUNNING,
     catalogue.getState("UNIT"));
   ASSERT_EQ(job.volReqId, catalogue.getJob("UNIT").volReqId);
@@ -288,7 +301,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
     std::string(catalogue.getJob("UNIT").driveUnit));
   ASSERT_EQ(std::string(job.clientUserName),
     std::string(catalogue.getJob("UNIT").clientUserName));
-  ASSERT_NO_THROW(catalogue.tapeSessionSuceeeded("UNIT"));
+  ASSERT_NO_THROW(catalogue.tapeSessionSucceeded("UNIT"));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP,
     catalogue.getState("UNIT"));
   ASSERT_NO_THROW(catalogue.configureDown("UNIT"));
@@ -317,7 +330,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
   castor::utils::copyString(job.dgn, "DGN2");
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
-  ASSERT_THROW(catalogue.tapeSessionStarted("UNIT", job),
+  ASSERT_THROW(catalogue.tapeSessionStarted("UNIT", job, 1234),
     castor::exception::Exception);
 }
 

@@ -53,8 +53,8 @@ int main(const int argc, char **const argv) {
     log(LOG_ERR, "Aborting: Cannot continue without vdqm host-name");
     return 1;
   }
-  const int newTimeout = 1;
-  VdqmImpl vdqm(log, vdqmHostName, VDQM_PORT, newTimeout);
+  const int netTimeout = 10; // Timeout in seconds
+  VdqmImpl vdqm(log, vdqmHostName, VDQM_PORT, netTimeout);
   castor::io::PollReactorImpl reactor(log);
   TapeDaemon daemon(std::cout, std::cerr, log, vdqm, reactor);
 

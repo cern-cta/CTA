@@ -79,6 +79,8 @@ public:
 
   /**
    * Destructor.
+   *
+   * Closes the listen socket.
    */
   ~VdqmAcceptHandler() throw();
 

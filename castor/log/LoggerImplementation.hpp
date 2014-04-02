@@ -252,6 +252,17 @@ private:
   const std::map<int, std::string> m_priorityToText;
 
   /**
+   * Map from the possible string values of the LogMask parameters of
+   * /etc/castor.conf and their equivalent syslog priorities.
+   */
+  const std::map<std::string, int> m_configTextToPriority;
+
+  /**
+   * Returns the log mask for the program.
+   */
+  int logMask() const throw();
+
+  /**
    * Determines the maximum message length that the client syslog server can
    * handle.
    *
@@ -265,6 +276,14 @@ private:
    * textual representations.
    */
   std::map<int, std::string> generatePriorityToTextMap() const
+    throw(castor::exception::Internal);
+
+  /**
+   * Generates and returns the mapping between the possible string values
+   * of the LogMask parameters of /etc/castor.conf and their equivalent
+   * syslog priorities.
+   */
+  std::map<std::string, int> generateConfigTextToPriorityMap() const
     throw(castor::exception::Internal);
 
   /**
@@ -315,6 +334,11 @@ private:
     // the message timestamp ourselves, in case we log messages asynchronously,
     // as we do when retrieving logs from the DB
     //-------------------------------------------------------------------------
+
+    // Ignore messages whose priority is not of interest
+    if(priority > logMask()) {
+      return;
+    }
 
     // Try to find the textual representation of the syslog priority
     std::map<int, std::string>::const_iterator priorityTextPair =

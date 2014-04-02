@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/legacymsg/RtcpJobReplyMsgBody.hpp
+ *         castor/tape/legacymsg/RtcpJobReplyMsgBody.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,40 +19,17 @@
  *
  *
  * 
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPJOBREPLYMSGBODY_HPP
-#define CASTOR_TAPE_LEGACYMSG_RTCPJOBREPLYMSGBODY_HPP 1
+#include "castor/tape/legacymsg/RtcpJobReplyMsgBody.hpp"
 
-#include "h/Castor_limits.h"
+#include <string.h>
 
-#include <stdint.h>
-#include <string>
-
-
-namespace castor    {
-namespace tape      {
-namespace legacymsg {
-
-/**
- * An RCP job reply message.
- */
-struct RtcpJobReplyMsgBody {
-  int32_t status;
-  char    errorMessage[1024];
-
-  /**
-   * Constructor.
-   *
-   * Sets all integer member-variables to 0 and all string member-variables to
-   * the empty string.
-   */
-  RtcpJobReplyMsgBody() throw();
-};
-
-} // namespace legacymsg
-} // namespace tape
-} // namespace castor
-
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPJOBREPLYMSGBODY_HPP
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::legacymsg::RtcpJobReplyMsgBody::RtcpJobReplyMsgBody() throw():
+  status(0) {
+  memset(errorMessage, '\0', sizeof(errorMessage));
+}

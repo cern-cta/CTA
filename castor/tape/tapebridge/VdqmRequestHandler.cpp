@@ -309,7 +309,6 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
     // Send a positive acknowledge to the VDQM
     {
       legacymsg::RtcpJobReplyMsgBody vdqmReply;
-      castor::utils::setBytes(vdqmReply, '\0');
       char vdqmReplyBuf[RTCPMSGBUFSIZE];
       const size_t vdqmReplyLen = legacymsg::marshal(vdqmReplyBuf, vdqmReply);
       io::writeBytes(vdqmSock.get(), RTCPDNETRWTIMEOUT, vdqmReplyLen,
