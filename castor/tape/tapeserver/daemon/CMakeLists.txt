@@ -42,6 +42,8 @@ add_library(tapeserver
   MigrationReportPacker.cpp 
   RecallReportPacker.cpp)
 
+target_link_libraries(tapeserver File)
+
 add_library(tapeserverdTest 
   ../client/ClientSimulator.cpp 
   ../../tpcp/TpcpCommand.cpp

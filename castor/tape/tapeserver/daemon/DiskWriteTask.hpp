@@ -28,7 +28,7 @@
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
-
+#include "castor/tape/tapeserver/file/File.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -47,15 +47,11 @@ public:
    * @param blockCount: number of memory blocks that will be used
    * @param mm: memory manager of the session
    */
-  DiskWriteTask(int fileId, int blockCount, MemoryManager& mm): m_fifo(blockCount), 
-          m_blockCount(blockCount), m_fileId(fileId), 
-          m_memManager(mm) { mm.addClient(&m_fifo); }
-  
-  /**
-   * TODO: Do we need this here?
-   * @return always false
-   */
-  virtual bool endOfWork() { return false; }
+  DiskWriteTask(int fileId, int blockCount, const std::string& filePath,MemoryManager& mm): 
+  m_fifo(blockCount),m_blockCount(blockCount), m_fileId(fileId), 
+          m_memManager(mm),m_writer(filePath){
+    mm.addClient(&m_fifo); 
+  }
   
   /**
    * Return the numebr of files to write to disk
@@ -78,6 +74,7 @@ public:
       MemBlock *mb = m_fifo.popDataBlock();
       mb->m_fileid = m_fileId;
       mb->m_fileBlock = blockId++;
+      m_writer.write(mb->m_payload.get(),mb->m_payload.size());
     }
   }
   
@@ -132,6 +129,8 @@ private:
    * Mutex forcing serial access to the fifo
    */
   castor::tape::threading::Mutex m_producerProtection;
+  
+  tape::diskFile::WriteFile m_writer;
 };
 
 }}}}

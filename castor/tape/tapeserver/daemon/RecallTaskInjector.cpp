@@ -55,11 +55,11 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
       LogContext::ScopedParam(m_lc, Param("NSFILENSHOST", (*it)->nshost())),
       LogContext::ScopedParam(m_lc, Param("NSFILEPATH", (*it)->path()))
     };
-    tape::utils::suppresUnusedVariable(sp[0]);
+    tape::utils::suppresUnusedVariable(sp);
     
     m_lc.log(LOG_INFO, "Logged file to recall");
     
-    DiskWriteTask * dwt = new DiskWriteTask((*it)->id(), blockID(**it), m_memManager);
+    DiskWriteTask * dwt = new DiskWriteTask((*it)->id(), blockID(**it),(*it)->path() ,m_memManager);
     TapeReadFileTask * trt = new TapeReadFileTask(*dwt, (*it)->fseq(), blockID(**it));
     
     m_diskWriter.push(dwt);
