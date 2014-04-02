@@ -6,6 +6,7 @@
  */
 
 #ifndef SUPPRESSUNUSEDVARIABLE_HPP
+#define SUPPRESSUNUSEDVARIABLE_HPP
 namespace castor {
 namespace tape {
 namespace utils {
