@@ -48,7 +48,8 @@ castor::log::LoggerImplementation::LoggerImplementation(
   m_maxMsgLen(determineMaxMsgLen()),
   m_logFile(-1),
   m_connected(false),
-  m_priorityToText(generatePriorityToTextMap()) {
+  m_priorityToText(generatePriorityToTextMap()),
+  m_configTextToPriority(generateConfigTextToPriorityMap()) {
   initMutex();
 }
 
@@ -115,6 +116,34 @@ std::map<int, std::string>
   } catch(std::exception &se) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to generate priority to text mapping: " <<
+      se.what();
+    throw ex;
+  }
+
+  return m;
+}
+
+//------------------------------------------------------------------------------
+// generateConfigTextToPriorityMap
+//------------------------------------------------------------------------------
+std::map<std::string, int>
+  castor::log::LoggerImplementation::generateConfigTextToPriorityMap() const
+  throw(castor::exception::Internal) {
+  std::map<std::string, int> m;
+
+  try {
+    m["LOG_EMERG"]   = LOG_EMERG;
+    m["LOG_ALERT"]   = LOG_ALERT;
+    m["LOG_CRIT"]    = LOG_CRIT;
+    m["LOG_ERR"]     = LOG_ERR;
+    m["LOG_WARNING"] = LOG_WARNING;
+    m["LOG_NOTICE"]  = LOG_NOTICE;
+    m["LOG_INFO"]    = LOG_INFO;
+    m["LOG_DEBUG"]   = LOG_DEBUG;
+  } catch(std::exception &se) {
+    castor::exception::Internal ex;
+    ex.getMessage() <<
+      "Failed to generate configuration text to priority mapping: " <<
       se.what();
     throw ex;
   }
@@ -464,4 +493,28 @@ void castor::log::LoggerImplementation::operator() (
 
   Param *emptyParams = NULL;
   operator() (priority, msg, 0, emptyParams);
+}
+
+//------------------------------------------------------------------------------
+// logMask
+//------------------------------------------------------------------------------
+int castor::log::LoggerImplementation::logMask() const throw() {
+  const char *const p = getconfent("LogMask", m_programName.c_str(), 0);
+
+  // If the configuration file defines the log mask to use
+  if (p != NULL) {
+    // Try to find the corresponding integer priority value
+    std::map<std::string, int>::const_iterator itor =
+      m_configTextToPriority.find(p);
+
+    // Return the priority if it was found else return the default INFO level
+    if(m_configTextToPriority.end() != itor) {
+      return itor->second;
+    } else {
+      return LOG_INFO;
+    }
+  }
+
+  // If the priority wasn't found, default is INFO level
+  return LOG_INFO;
 }
