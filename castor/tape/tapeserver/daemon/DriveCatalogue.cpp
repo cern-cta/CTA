@@ -29,6 +29,20 @@
 #include <string.h>
 
 //-----------------------------------------------------------------------------
+// driveState2Str
+//-----------------------------------------------------------------------------
+const char *castor::tape::tapeserver::daemon::DriveCatalogue::driveState2Str(
+  const DriveState state) throw() {
+  switch(state) {
+  case DRIVE_STATE_INIT:    return "INIT";
+  case DRIVE_STATE_DOWN:    return "DOWN";
+  case DRIVE_STATE_UP:      return "UP";
+  case DRIVE_STATE_RUNNING: return "RUNNING";
+  default:                  return "UNKNOWN";
+  }
+}
+
+//-----------------------------------------------------------------------------
 // populateCatalogue
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::populateCatalogue(
@@ -376,7 +390,8 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::configureDown(
 // tapeSessionStarted
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::tapeSessionStarted(
-  const std::string &unitName, const legacymsg::RtcpJobRqstMsgBody &job)
+     const std::string &unitName, const legacymsg::RtcpJobRqstMsgBody &job,
+     const pid_t sessionPid)
   throw(castor::exception::Exception) {
   DriveMap::iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
@@ -403,6 +418,21 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::tapeSessionStarted(
 
   itor->second.state = DRIVE_STATE_RUNNING;
   itor->second.job = job;
+  itor->second.pid = sessionPid;
+}
+
+//-----------------------------------------------------------------------------
+// getUnitName
+//-----------------------------------------------------------------------------
+std::string castor::tape::tapeserver::daemon::DriveCatalogue::getUnitName(
+        const pid_t sessionPid) throw(castor::exception::Exception) {
+  for(DriveMap::iterator i = m_drives.begin(); i!=m_drives.end(); i++) {
+    if(sessionPid == i->second.pid) return i->first;
+  }
+  castor::exception::Internal ex;
+  ex.getMessage() << "Failed to find the unit name of the tape drive on which "
+    << "the session with pid==" << sessionPid << " is running.";
+  throw ex;
 }
 
 //-----------------------------------------------------------------------------
@@ -430,9 +460,9 @@ const castor::tape::legacymsg::RtcpJobRqstMsgBody
 }
 
 //-----------------------------------------------------------------------------
-// tapeSessionSuceeeded
+// tapeSessionSucceeded
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::tapeSessionSuceeeded(
+void castor::tape::tapeserver::daemon::DriveCatalogue::tapeSessionSucceeded(
   const std::string &unitName) throw(castor::exception::Exception) {
   DriveMap::iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
@@ -473,4 +503,20 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::tapeSessionFailed(
   }
 
   itor->second.state = DRIVE_STATE_DOWN;
+}
+
+//-----------------------------------------------------------------------------
+// tapeSessionSucceeded
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogue::tapeSessionSucceeded(
+  const pid_t pid) throw(castor::exception::Exception) {
+  tapeSessionSucceeded(getUnitName(pid));  
+}
+
+//-----------------------------------------------------------------------------
+// tapeSessionFailed
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogue::tapeSessionFailed(
+  const pid_t pid) throw(castor::exception::Exception) {
+  tapeSessionFailed(getUnitName(pid));
 }

@@ -700,7 +700,7 @@ bool castor::io::readBytesFromCloseable(
   case -1:
     {
       std::stringstream oss;
-      oss << ": Failed to read " << nbBytes << " bytes from socket: " <<
+      oss << "Failed to read " << nbBytes << " bytes from socket: " <<
         " socketFd=" << socketFd << ": ";
       writeSockDescription(oss, socketFd);
       // netread_timeout can return -1 with serrno set to 0
@@ -772,7 +772,7 @@ void castor::io::writeBytes(
   case -1:
     {
       std::stringstream oss;
-      oss << ": Failed to write " << nbBytes << " bytes to socket: " <<
+      oss << "Failed to write " << nbBytes << " bytes to socket: " <<
         " socketFd=" << socketFd << ": ";
       writeSockDescription(oss, socketFd);
       // netwrite_timeout can return -1 with serrno set to 0
@@ -795,7 +795,7 @@ void castor::io::writeBytes(
   case 0:
     {
       std::stringstream oss;
-      oss << ": Failed to write " << nbBytes << " bytes to socket: ";
+      oss << "Failed to write " << nbBytes << " bytes to socket: ";
       writeSockDescription(oss, socketFd);
       oss << ": Connection dropped";
 
@@ -806,7 +806,7 @@ void castor::io::writeBytes(
   default:
     if(rc != nbBytes) {
       std::stringstream oss;
-      oss << ": Failed to write " << nbBytes << " bytes to socket: ";
+      oss << "Failed to write " << nbBytes << " bytes to socket: ";
       writeSockDescription(oss, socketFd);
       oss
         << ": Wrote the wrong number of bytes"
@@ -949,7 +949,7 @@ int castor::io::connectWithTimeout(
     sstrerror_r(errno, errBuf, sizeof(errBuf));
     castor::exception::Internal ex;
     ex.getMessage() <<
-      ": Failed to create socket for new connection"
+      "Failed to create socket for new connection"
       ": Call to socket() failed: " << errBuf;
     throw ex;
   }
@@ -961,7 +961,7 @@ int castor::io::connectWithTimeout(
     sstrerror_r(errno, errBuf, sizeof(errBuf));
     castor::exception::Internal ex;
     ex.getMessage() <<
-      ": Failed to get the original file-control flags of the socket"
+      "Failed to get the original file-control flags of the socket"
       ": Call to fcntl() failed: " << errBuf;
     throw ex;
   }
@@ -973,7 +973,7 @@ int castor::io::connectWithTimeout(
     sstrerror_r(errno, errBuf, sizeof(errBuf));
     castor::exception::Internal ex;
     ex.getMessage() <<
-      ": Failed to set the O_NONBLOCK file-control flag"
+      "Failed to set the O_NONBLOCK file-control flag"
       ": Call to fcntl() failed: " << errBuf;
     throw ex;
   }
@@ -990,7 +990,7 @@ int castor::io::connectWithTimeout(
       sstrerror_r(errno, errBuf, sizeof(errBuf));
       castor::exception::Internal ex;
       ex.getMessage() <<
-        ": Failed to restore the file-control flags of the socket"
+        "Failed to restore the file-control flags of the socket"
         ": " << errBuf;
       throw ex;
     }
@@ -1032,7 +1032,7 @@ int castor::io::connectWithTimeout(
   if(0 == selectRc) {
     castor::exception::TimeOut ex;
     ex.getMessage() <<
-      ": Failed to connect"
+      "Failed to connect"
       ": Timed out after " << timeout << " seconds";
     throw ex;
   }
@@ -1042,7 +1042,7 @@ int castor::io::connectWithTimeout(
     !FD_ISSET(smartSock.get(), &writeFds)) {
     castor::exception::Exception ex(ECANCELED);
     ex.getMessage() <<
-      ": Failed to connect"
+      "Failed to connect"
       ": select() returned with no timneout or any descriptors set";
     throw ex;
   }
@@ -1062,7 +1062,7 @@ int castor::io::connectWithTimeout(
     sstrerror_r(getsockoptErrno, errBuf, sizeof(errBuf));
     castor::exception::Internal ex;
     ex.getMessage() <<
-      ": Connection did not complete successfully: " << errBuf;
+      "Connection did not complete successfully: " << errBuf;
     throw ex;
   }
   if(0 != sockoptError) { // BSD
@@ -1070,7 +1070,7 @@ int castor::io::connectWithTimeout(
     sstrerror_r(sockoptError, errBuf, sizeof(errBuf));
     castor::exception::Internal ex;
     ex.getMessage() <<
-      ": Connection did not complete successfully: " << errBuf;
+      "Connection did not complete successfully: " << errBuf;
     throw ex;
   }
 
@@ -1080,7 +1080,7 @@ int castor::io::connectWithTimeout(
     sstrerror_r(errno,  errBuf, sizeof(errBuf));
     castor::exception::Internal ex;
     ex.getMessage() <<
-      ": Failed to restore the file-control flags of the socket: " << errBuf;
+      "Failed to restore the file-control flags of the socket: " << errBuf;
     throw ex;
   }
 
@@ -1101,6 +1101,24 @@ void castor::io::marshalUint8(const uint8_t src, char * &dst)
   }
 
   *dst = src;
+  dst += sizeof(src);
+}
+
+//------------------------------------------------------------------------------
+// marshalInt16
+//------------------------------------------------------------------------------
+void castor::io::marshalInt16(const int16_t src, char * &dst)
+  throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to marshal int16_t"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  const int16_t netByteOrder = htons(src);
+  memcpy(dst, &netByteOrder, sizeof(src));
   dst += sizeof(src);
 }
 
@@ -1207,6 +1225,34 @@ void castor::io::unmarshalUint8(const char * &src, size_t &srcLen,
   }
 
   dst = *src;
+  src += sizeof(dst);
+  srcLen -= sizeof(dst);
+}
+
+//------------------------------------------------------------------------------
+// unmarshalInt16
+//------------------------------------------------------------------------------
+void castor::io::unmarshalInt16(const char * &src, size_t &srcLen,
+  int16_t &dst) throw(castor::exception::Exception) {
+
+  if(src == NULL) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to unmarshal int16_t"
+      ": Pointer to source buffer is NULL";
+    throw ex;
+  }
+
+  if(srcLen < sizeof(dst)) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to unmarshal int16_t"
+      ": Source buffer length is too small: expected="
+      << sizeof(dst) << " actual=" << srcLen;
+    throw ex;
+  }
+
+  int16_t netByteOrder = 0;
+  memcpy(&netByteOrder, src, sizeof(dst));
+  dst = ntohs(netByteOrder);
   src += sizeof(dst);
   srcLen -= sizeof(dst);
 }
