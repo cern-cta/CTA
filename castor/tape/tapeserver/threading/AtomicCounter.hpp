@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      DiskReadTask.hpp
+ *                      AtomicCounter.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,19 +22,38 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
+
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/Exception.hpp"
+#include "castor/tape/tapeserver/threading/Threading.hpp"
 
 namespace castor {
 namespace tape {
-namespace tapeserver {
-namespace daemon {
-  
-class DiskReadTaskInterface {
-public:
-  virtual void execute() =0;
-  virtual ~DiskReadTaskInterface() {}
+namespace threading {
+/**
+* A helper class managing a thread safe message counter (we need it thread
+* safe as the ClientInterface class will be used by both the getting of
+* the work to be done and the reporting of the completed work, in parallel
+*/
+template <class T> struct AtomicCounter{
+  AtomicCounter(T init): m_val(init) {};
+      T operator ++ () {
+        threading::MutexLocker ml(&m_mutex);
+        return ++m_val;
+      }
+      T operator -- () {
+        threading::MutexLocker ml(&m_mutex);
+        return --m_val;
+      }
+      operator T() const {
+        threading::MutexLocker ml(&m_mutex);
+        return m_val;
+      }
+      
+    private:
+      T m_val;
+      mutable threading::Mutex m_mutex;
 };
 
-}}}}
+}}}
+

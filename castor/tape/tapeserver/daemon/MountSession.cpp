@@ -248,11 +248,11 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     TapeReadSingleThread trst(*drive);
     DiskWriteThreadPool dwtp(m_castorConf.tapeserverdDiskThreads,
         m_castorConf.tapebridgeBulkRequestRecallMaxFiles,
-        m_castorConf.tapebridgeBulkRequestRecallMaxBytes);
+        m_castorConf.tapebridgeBulkRequestRecallMaxBytes,lc);
     RecallReportPacker rrp(m_clientProxy,
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
         lc);
-    RecallTaskInjector rti(mm, trst, dwtp, m_clientProxy, lc);
+    RecallTaskInjector rti(mm, trst, dwtp, m_clientProxy, rrp, lc);
     dwtp.setJobInjector(&rti);
     
     // We are now ready to put everything in motion. First step is to check

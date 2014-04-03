@@ -37,7 +37,7 @@ namespace daemon {
   
 class DiskReadThreadPool : public DiskThreadPoolInterface<DiskReadTaskInterface> {
 public:
-  DiskReadThreadPool(int nbThread) {
+  DiskReadThreadPool(int nbThread){
     for(int i=0; i<nbThread; i++) {
       DiskReadWorkerThread * thr = new DiskReadWorkerThread(*this);
       m_threads.push_back(thr);
@@ -65,7 +65,7 @@ public:
   void finish() {
     /* Insert one endOfSession per thread */
     for (size_t i=0; i<m_threads.size(); i++) {
-      m_tasks.push(new endOfSession);
+      m_tasks.push(NULL);
     }
   }
 
@@ -78,11 +78,10 @@ private:
   private:
     DiskReadThreadPool & m_manager;
     virtual void run() {
+      std::auto_ptr<DiskReadTaskInterface> task;
       while(1) {
-        std::auto_ptr<DiskReadTaskInterface> task ( m_manager.m_tasks.pop());
-        bool end = task->endOfWork();
-
-        if (!end) 
+        task.reset( m_manager.m_tasks.pop());
+        if (NULL!=task.get()) 
           task->execute();
         else
           break;

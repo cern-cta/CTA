@@ -28,7 +28,8 @@
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
-
+#include "castor/tape/tapeserver/file/File.hpp"
+#include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -47,15 +48,11 @@ public:
    * @param blockCount: number of memory blocks that will be used
    * @param mm: memory manager of the session
    */
-  DiskWriteTask(int fileId, int blockCount, MemoryManager& mm): m_fifo(blockCount), 
-          m_blockCount(blockCount), m_fileId(fileId), 
-          m_memManager(mm) { mm.addClient(&m_fifo); }
-  
-  /**
-   * TODO: Do we need this here?
-   * @return always false
-   */
-  virtual bool endOfWork() { return false; }
+  DiskWriteTask(int fileId, int blockCount, const std::string& filePath,MemoryManager& mm,RecallReportPacker& report): 
+  m_fifo(blockCount),m_blockCount(blockCount), m_fileId(fileId), 
+          m_memManager(mm),m_path(filePath),m_reporter(report){
+    mm.addClient(&m_fifo); 
+  }
   
   /**
    * Return the numebr of files to write to disk
@@ -72,12 +69,30 @@ public:
    * Main routine: takes each memory block in the fifo and writes it to disk
    */
   virtual void execute() {
-    int blockId  = 0;
-    while(!m_fifo.finished()) {
-      //printf("+++ In disk write file, id=%d\n",m_fileId);
-      MemBlock *mb = m_fifo.popDataBlock();
-      mb->m_fileid = m_fileId;
-      mb->m_fileBlock = blockId++;
+    try{
+      tape::diskFile::WriteFile writer(m_path);
+      int blockId  = 0;
+      
+      while(!m_fifo.finished()) {
+        MemBlock *mb = m_fifo.popDataBlock();
+        //TODO why are we modifying block id ?
+        mb->m_fileid = m_fileId;
+        mb->m_fileBlock = blockId++;
+        writer.write(mb->m_payload.get(),mb->m_payload.size());
+        m_memManager.releaseBlock(mb);
+      }
+      writer.close();
+      tapegateway::FileToRecallStruct recalledFile;
+      //fill recalledFile
+      //We are currently lacking of information to fill recalledFile
+      //log is done in m_reporter while processing reportCompletedJob
+      m_reporter.reportCompletedJob(recalledFile);
+    }
+    catch(const castor::exception::Exception& e){
+      tapegateway::FileToRecallStruct failedrecalledFile;
+      //fill failedrecalledFile
+      //log is done in m_reporter while processing reportFailedJob
+      m_reporter.reportFailedJob(failedrecalledFile,e.getMessageValue(),e.code());
     }
   }
   
@@ -99,12 +114,16 @@ public:
   /**
    * Function used to wait until the end of the write
    */
-  virtual void waitCompletion() { volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); }
+  virtual void waitCompletion() { 
+    volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); 
+  }
   
   /**
    * Destructor (also waiting for the end of the write operation)
    */
-  virtual ~DiskWriteTask() { volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); }
+  virtual ~DiskWriteTask() { 
+    volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); 
+  }
   
 private:
   
@@ -116,7 +135,7 @@ private:
   /**
    * Number of blocks in the fifo
    */
-  int m_blockCount;
+  const int m_blockCount;
   
   /**
    * File id of the file that will be written to disk
@@ -132,6 +151,9 @@ private:
    * Mutex forcing serial access to the fifo
    */
   castor::tape::threading::Mutex m_producerProtection;
+  
+  const std::string m_path;
+  RecallReportPacker& m_reporter;
 };
 
 }}}}

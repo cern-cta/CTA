@@ -50,7 +50,7 @@ namespace client {
   
 
 ClientProxy::ClientProxy(const legacymsg::RtcpJobRqstMsgBody& clientRequest):
-m_request(clientRequest) {}
+m_request(clientRequest),m_transactionId(0) {}
 
 ClientProxy::UnexpectedResponse::
     UnexpectedResponse(const castor::IObject* resp, const std::string & w):

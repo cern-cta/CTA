@@ -27,8 +27,11 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteTaskInterface.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
+#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
 #include "castor/tape/tapeserver/daemon/TaskInjector.hpp"
 #include "DiskThreadPoolInterface.hpp"
+#include "castor/log/LogContext.hpp"
+#include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include <vector>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -40,114 +43,47 @@ namespace daemon {
 
 class DiskWriteThreadPool : public DiskThreadPoolInterface<DiskWriteTaskInterface> {
 public:
-  DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq):
-            m_jobInjector(NULL), m_filesQueued(0), m_blocksQueued(0), 
-            m_maxFilesReq(maxFilesReq), m_maxBytesReq(maxBlocksReq)
-   {
-    for(int i=0; i<nbThread; i++) {
-      DiskWriteWorkerThread * thr = new DiskWriteWorkerThread(*this);
-      m_threads.push_back(thr);
-    }
-  }
-  ~DiskWriteThreadPool() { 
-    while (m_threads.size()) {
-      delete m_threads.back();
-      m_threads.pop_back();
-    }
-  }
-  void startThreads() {
-    for (std::vector<DiskWriteWorkerThread *>::iterator i=m_threads.begin();
-            i != m_threads.end(); i++) {
-      (*i)->startThreads();
-    }
-  }
-  void waitThreads() {
-    for (std::vector<DiskWriteWorkerThread *>::iterator i=m_threads.begin();
-            i != m_threads.end(); i++) {
-      (*i)->waitThreads();
-    }
-  }
-  virtual void push(DiskWriteTaskInterface *t) { 
-    {
-      castor::tape::threading::MutexLocker ml(&m_counterProtection);
-      m_filesQueued += t->files();
-      m_blocksQueued += t->blocks();
-    }
-    m_tasks.push(t);
-  }
-  void finish() {
-    /* Insert one endOfSession per thread */
-    for (size_t i=0; i<m_threads.size(); i++) {
-      m_tasks.push(new endOfSession);
-    }
-  }
-  void setJobInjector(TaskInjector * ji){
-    m_jobInjector = ji;
-  }
+  DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq,castor::log::LogContext lc);
+  ~DiskWriteThreadPool();
+  
+  void startThreads();
+  void waitThreads();
+  virtual void push(DiskWriteTaskInterface *t);
+  void finish();
+  void setJobInjector(TaskInjector * ji);
 
 private:
-  bool belowMidBlocksAfterPop(int blocksPopped) {
-    return m_blocksQueued - blocksPopped < m_maxBytesReq/2;
-  }
-  bool belowMidFilesAfterPop(int filesPopped) {
-    return m_filesQueued -filesPopped < m_maxFilesReq/2;
-  }
-   bool crossingDownBlockThreshod(int blockPopped) {
-    return (m_blocksQueued >= m_maxBytesReq/2) && (m_blocksQueued - blockPopped < m_maxBytesReq/2);
-  }
-  bool crossingDownFileThreshod(int filesPopped) {
-    return (m_filesQueued >= m_maxFilesReq/2) && (m_filesQueued - filesPopped < m_maxFilesReq/2);
-  }
-  DiskWriteTaskInterface * popAndRequestMoreJobs() {
-    DiskWriteTaskInterface * ret = m_tasks.pop();
-    {
-      castor::tape::threading::MutexLocker ml(&m_counterProtection);
-      /* We are about to go to empty: request a last call job injection */
-      if(m_filesQueued == 1 && ret->files()) {
-	printf("In DiskWriteTask::popAndRequestMoreJobs(), requesting last call: files=%d, blocks=%d, ret->files=%d, ret->blocks=%d, maxFiles=%d, maxBlocks=%" PRIu64 "\n", 
-                 m_filesQueued, m_blocksQueued, ret->files(), ret->blocks(), m_maxFilesReq, m_maxBytesReq);
-        m_jobInjector->requestInjection(m_maxFilesReq, m_maxBytesReq, true);
-      } else if (belowMidBlocksAfterPop(ret->blocks()) && belowMidFilesAfterPop(ret->files()) 
-	      && (crossingDownBlockThreshod(ret->blocks()) || crossingDownFileThreshod(ret->files()))) {
-         printf("In DiskWriteTask::popAndRequestMoreJobs(), requesting: files=%d, blocks=%d, ret->files=%d, ret->blocks=%d, maxFiles=%d, maxBlocks=%" PRIu64 "\n", 
-                 m_filesQueued, m_blocksQueued, ret->files(), ret->blocks(), m_maxFilesReq, m_maxBytesReq);
-        /* We are crossing the half full queue threshold down: ask for more more */
-        m_jobInjector->requestInjection(m_maxFilesReq, m_maxBytesReq, false);
-      }
-      m_filesQueued-=ret->files();
-      m_blocksQueued-=ret->blocks();
-    }
-    return ret;
-  }
+  bool belowMidBlocksAfterPop(int blocksPopped) ;
+  bool belowMidFilesAfterPop(int filesPopped) ;
+  bool crossingDownBlockThreshod(int blockPopped);
+  bool crossingDownFileThreshod(int filesPopped) ;
+  DiskWriteTaskInterface * popAndRequestMoreJobs() ;
   
   class DiskWriteWorkerThread: private castor::tape::threading::Thread {
   public:
-    DiskWriteWorkerThread(DiskWriteThreadPool & manager): m_manager(manager) {}
+    DiskWriteWorkerThread(DiskWriteThreadPool & manager): _this(manager) {
+      ++m_nbActiveThread;
+    }
     void startThreads() { castor::tape::threading::Thread::start(); }
     void waitThreads() { castor::tape::threading::Thread::wait(); }
   private:
-    DiskWriteThreadPool & m_manager;
-    virtual void run() {
-      while(1) {
-        std::auto_ptr<DiskWriteTaskInterface>  task (m_manager.popAndRequestMoreJobs());
-        bool end = task->endOfWork();
-        if (!end)
-          task->execute();
-        else {
-          printf ("Disk write thread finishing\n");
-          break;
-        }
-      }
-    }
+    static tape::threading::AtomicCounter<int> m_nbActiveThread;
+    DiskWriteThreadPool & _this;
+    virtual void run();
   };
+  
   std::vector<DiskWriteWorkerThread *> m_threads;
   castor::tape::threading::Mutex m_counterProtection;
   TaskInjector * m_jobInjector;
+  //
   uint32_t m_filesQueued;
+  
+  // 
   uint32_t m_blocksQueued;
+  
   uint32_t m_maxFilesReq;
   uint64_t m_maxBytesReq;
-
+  castor::log::LogContext m_lc;
 };
 
 }}}}

@@ -16,9 +16,6 @@ namespace daemon {
 template <class Task> class DiskThreadPoolInterface
 {
 protected :
-  class endOfSession: public Task {
-    virtual bool endOfWork() { return true; }
-  };
   castor::tape::threading::BlockingQueue<Task*> m_tasks;
   
 public :

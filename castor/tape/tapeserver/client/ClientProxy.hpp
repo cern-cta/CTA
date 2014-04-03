@@ -35,6 +35,7 @@
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "../threading/Threading.hpp"
+#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
 
 namespace castor {
 namespace tape {
@@ -157,26 +158,9 @@ namespace client {
             const tapegateway::GatewayMessage &req,
             RequestReport & report);
     
-    /**
-     * A helper class managing a thread safe message counter (we need it thread
-     * safe as the ClientInterface class will be used by both the getting of
-     * the work to be done and the reporting of the completed work, in parallel
-     */
-    template <typename T>
-    class ThreadSafeCounter {
-    public:
-      ThreadSafeCounter(): m_val(0) {};
-      T operator ++ () {
-        threading::MutexLocker ml(&m_mutex);
-        return ++m_val;
-      }
-    private:
-      T m_val;
-      threading::Mutex m_mutex;
-    };
     /** The file transaction id a.k.a. aggregator transaction id. This is the 
      * serial number of the message in the session */
-    ThreadSafeCounter<uint32_t> m_transactionId;
+    tape::threading::AtomicCounter<uint32_t> m_transactionId;
   };
   
 }

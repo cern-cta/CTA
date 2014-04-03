@@ -39,26 +39,19 @@ class DiskWriteTaskInterface {
 public:
   
   /**
-   * TODO: see comment on the same function in DiskWriteFileTask.
-   */
-  virtual bool endOfWork() = 0;
-  
-  /**
    * @return the number of memory blocks to be used
    */
-  virtual int blocks() { return 0; }
+  virtual int blocks() =0;
   
   /**
    * @return the number of files to write to disk
    */
-  virtual int files() { return 0; }
+  virtual int files() =0;
   
   /**
    * Main routine of the task
    */
-  virtual void execute() {
-    throw MemException("Trying to execute a non-executable DiskWriteTask"); 
-  };
+  virtual void execute() =0;
   
   /**
    * Wait for the end of the task

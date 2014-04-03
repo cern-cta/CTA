@@ -37,13 +37,14 @@ class DiskReadTask :public DiskReadTaskInterface {
 public:
   DiskReadTask(DataConsumer & destination, int fileId, int nbBlocks): m_fileId(fileId),
       m_nbBlocks(nbBlocks), m_fifo(destination) {}
-  /* Implementation of the DiskReadTask interface*/
-  virtual bool endOfWork() { return false; }
+
   virtual void execute() {
     for (int blockId=0; blockId < m_nbBlocks; blockId++) {
       MemBlock * mb = m_fifo.getFreeBlock();
       mb->m_fileid = m_fileId;
       mb->m_fileBlock = blockId;
+      
+      //TODO fill mb. Somehow we need a disk
       m_fifo.pushDataBlock(mb);
     }
   }

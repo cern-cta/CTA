@@ -77,12 +77,22 @@ public:
     m_fSeq = uninitialised_value;
     m_tapeFileBlock = uninitialised_value;
   }
+  //identify block id  
+  const int m_memoryBlockId;
   
-  int m_memoryBlockId;
+  //handle the raw data to be migrated/recalled
   Payload m_payload;
+  
+  //castor-internal unique id of the file
   int m_fileid;
+
+  //number of the memory-chunk of the current file we are manipulating
   int m_fileBlock;
+  
+  //order of file on the tape
   int m_fSeq;
+  
+  //number of the memory-tape-chunk of the current file we are manipulating
   int m_tapeFileBlock;
  
 };
