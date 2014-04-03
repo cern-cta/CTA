@@ -92,7 +92,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
     DiskWriteTaskInterface* diskWriteTask=diskWrite.m_tasks.pop();
     TapeReadTask* tapeReadTask=tapeRead.m_tasks.pop();
     
-    ASSERT_EQ(NULL,diskWriteTask);
+    ASSERT_EQ(static_cast<DiskWriteTaskInterface*>(NULL),diskWriteTask);
     ASSERT_EQ(true,tapeReadTask->endOfWork());
     delete diskWriteTask;
     delete tapeReadTask;
