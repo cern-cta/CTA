@@ -23,8 +23,7 @@
  *****************************************************************************/
 
 
-#ifndef ATOMICCOUNTER_HPP
-#define	ATOMICCOUNTER_HPP
+#pragma once
 
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 
@@ -57,5 +56,4 @@ template <class T> struct AtomicCounter{
 };
 
 }}}
-#endif	/* ATOMICCOUNTER_HPP */
 
