@@ -111,6 +111,7 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/SCSI/StructuresTest.cpp
   ../castor/tape/tapeserver/utils/RegexTest.cpp
   ../castor/tape/tapeserver/threading/ThreadingTests.cpp
+  ../castor/tape/tapeserver/threading/AtomicCounterTest.cpp
   ../castor/utils/SmartArrayPtrTest.cpp
   ../castor/utils/SmartFdTest.cpp
   ../castor/utils/UtilsTest.cpp
