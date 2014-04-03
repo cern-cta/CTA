@@ -11,8 +11,7 @@
  * @(#)scsictl.h	1.1 12/10/96 CERN CN-SW/SC   Fabien Collin
  */
 
-#ifndef SCSICTL_H
-#define SCSICTL_H
+#pragma once
 
 #define MAXSENSE 255
 
@@ -76,4 +75,3 @@
 #define SCSI_PERIPH_RAID             12
 #define SCSI_PERIPH_UNKNOWN          31
 
-#endif /* SCSICTL_H */

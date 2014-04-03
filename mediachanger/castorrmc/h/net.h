@@ -20,8 +20,7 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef _NET_H
-#define _NET_H
+#pragma once
 
 #include <osdep.h>
 #include <sys/types.h>
@@ -35,4 +34,3 @@ EXTERN_C ssize_t  netread_timeout (int, void *, ssize_t, int);
 EXTERN_C ssize_t  netwrite_timeout (int, void *, ssize_t, int);
 EXTERN_C int netconnect_timeout (int, struct sockaddr *, size_t, int);
 
-#endif /* _NET_H */

@@ -3,11 +3,9 @@
  * All rights reserved
  */
 
-#ifndef _RMC_MARSHALL_ELEMENT_H
-#define _RMC_MARSHALL_ELEMENT_H 1
+#pragma once
 
 #include "h/smc_struct.h"
 
 int rmc_marshall_element (char **const sbpp, const struct smc_element_info *const element_info);
 
-#endif

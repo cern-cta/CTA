@@ -7,8 +7,7 @@
  * All rights reserved
  */
 
-#ifndef _CASTOR_GLOBALS_H
-#define _CASTOR_GLOBALS_H    
+#pragma once
 
 #include <osdep.h>
 #include <stddef.h>                 /* For size_t                    */
@@ -19,4 +18,3 @@ EXTERN_C void Cglobals_init (int (*) (int *, void **),
 EXTERN_C int Cglobals_get (int *, void **, size_t size);
 EXTERN_C void Cglobals_getTid (int *);
 
-#endif /* _CASTOR_GLOBALS_H */

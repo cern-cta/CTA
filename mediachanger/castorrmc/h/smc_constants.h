@@ -3,8 +3,7 @@
  * All rights reserved
  */
 
-#ifndef _SMC_CONSTANT_H
-#define _SMC_CONSTANT_H 1
+#pragma once
 
 			/* error messages */
 
@@ -30,4 +29,3 @@
 #define	SR020	"SR020 - %s failed : %s\n"
 #define	SR021	"SR021 - specify source slot and target slot\n"
 
-#endif

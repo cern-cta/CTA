@@ -23,8 +23,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef _RMC_PROCREQ_H
-#define _RMC_PROCREQ_H 1
+#pragma once
 
 struct rmc_srv_rqst_context {
   const char *localhost;
@@ -43,4 +42,3 @@ int rmc_srv_unmount(const struct rmc_srv_rqst_context *const rqst_context);
 int rmc_srv_acs_mnt(const struct rmc_srv_rqst_context *const rqst_context);
 int rmc_srv_acs_unmnt(const struct rmc_srv_rqst_context *const rqst_context);
 
-#endif

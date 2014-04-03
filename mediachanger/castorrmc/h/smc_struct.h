@@ -3,8 +3,7 @@
  * All rights reserved
  */
 
-#ifndef _SMC_STRUCT_H
-#define _SMC_STRUCT_H 1
+#pragma once
 
 #include "h/Castor_limits.h"
 
@@ -47,4 +46,3 @@ struct smc_status {
   int skvalid;	/* sense key is valid */
 };
 
-#endif

@@ -11,8 +11,7 @@
  * @(#)Castor_limits.h,v 1.27 2004/02/12 15:38:08 CERN IT-PDP/DM Jean-Philippe Baud
  */
 
-#ifndef _CASTOR_LIMITS_H
-#define _CASTOR_LIMITS_H
+#pragma once
 
 	/* all maximum lengths defined below do not include the trailing null */
 
@@ -70,4 +69,3 @@
 /* Max allowed uid/gif */
 #define CA_MAXUID    0x7FFFFFFF /* Maximum uid */
 #define CA_MAXGID    0x7FFFFFFF /* Maximum gid */
-#endif

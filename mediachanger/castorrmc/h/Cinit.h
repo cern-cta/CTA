@@ -10,8 +10,7 @@
 /*
  */
 
-#ifndef _CINIT_H
-#define _CINIT_H
+#pragma once
 
 #include "osdep.h"
 
@@ -24,4 +23,3 @@ struct main_args {
 
 EXTERN_C int Cinitdaemon (char *, void (*) (int));
 
-#endif

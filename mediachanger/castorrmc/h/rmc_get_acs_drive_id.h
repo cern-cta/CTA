@@ -27,8 +27,7 @@
  * and its client software and should therefore not be distributed to end users
  *****************************************************************************/
 
-#ifndef RMC_GET_ACS_DRIVE_ID_H
-#define RMC_GET_ACS_DRIVE_ID_H 1
+#pragma once
 
 /**
  * Structure representing the identifier of a drive withn an ACS compatible
@@ -58,4 +57,3 @@ struct rmc_acs_drive_id {
 int rmc_get_acs_drive_id(const char *const drive,
 	struct rmc_acs_drive_id *const drive_id);
 
-#endif /* RMC_GET_ACS_DRIVE_ID_H */

@@ -3,9 +3,7 @@
  * All rights reserved
  */
 
-#ifndef _RMC_LOGIT_H
-#define _RMC_LOGIT_H 1
+#pragma once
 
 int rmc_logit(const char *const func, const char *const msg, ...);
 
-#endif

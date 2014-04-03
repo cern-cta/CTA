@@ -3,8 +3,7 @@
  * All rights reserved
  */
 
-#ifndef _RMC_SMCSUBR2_H
-#define _RMC_SMCSUBR2_H 1
+#pragma once
 
 #include "h/smc_struct.h"
 
@@ -39,4 +38,3 @@ int smc_mount (
   const char *const vid,
   const int invert);
 
-#endif

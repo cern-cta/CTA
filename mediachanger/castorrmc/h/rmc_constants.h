@@ -10,8 +10,7 @@
 /*
  */
 
-#ifndef _RMC_CONSTANTS_H
-#define _RMC_CONSTANTS_H
+#pragma once
 #include "Castor_limits.h"
 
 #define RMC_CHECKI  5   /* max interval to check for work to be done */
@@ -63,4 +62,3 @@
 #define	RMC92	"RMC92 - %s request by %d,%d from %s\n"
 #define	RMC98	"RMC98 - %s\n"
 
-#endif

@@ -12,8 +12,7 @@
 
 /* patchlevel.h                 Patch level                             */
 
-#ifndef _PATCHLEVEL_H_INCLUDED_
-#define _PATCHLEVEL_H_INCLUDED_
+#pragma once
 
 #define MAJORVERSION  @MAJOR_CASTOR_VERSION_TOP@
 #define MINORVERSION  @MAJOR_CASTOR_VERSION_BOTTOM@
@@ -23,4 +22,3 @@
 
 #define PATCHLEVEL      MINORRELEASE
 
-#endif /* _PATCHLEVEL_H_INCLUDED_ */

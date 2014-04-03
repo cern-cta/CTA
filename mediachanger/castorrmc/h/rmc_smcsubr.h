@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_RMC_SMCSUBR_H
-#define H_RMC_SMCSUBR_H 1
+#pragma once
 
 #include "h/smc_struct.h"
 
@@ -69,4 +68,3 @@ int smc_move_medium(
   const int to,
   const int invert);
 
-#endif /* H_RMC_SMCSUBR_H */
