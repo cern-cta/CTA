@@ -51,7 +51,7 @@ public:
   RecallTaskInjector(MemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
         DiskThreadPoolInterface<DiskWriteTaskInterface> & diskWriter,client::ClientInterface& client,
-        castor::log::LogContext lc);
+        RecallReportPacker& report,castor::log::LogContext lc);
 
   
   /**
@@ -138,6 +138,7 @@ private:
   
   castor::tape::threading::Mutex m_producerProtection;
   castor::tape::threading::BlockingQueue<Request> m_queue;
+  RecallReportPacker& m_report;
 };
 
 } //end namespace daemon

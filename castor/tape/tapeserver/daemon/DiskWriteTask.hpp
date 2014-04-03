@@ -29,6 +29,7 @@
 #include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
+#include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -47,9 +48,9 @@ public:
    * @param blockCount: number of memory blocks that will be used
    * @param mm: memory manager of the session
    */
-  DiskWriteTask(int fileId, int blockCount, const std::string& filePath,MemoryManager& mm): 
+  DiskWriteTask(int fileId, int blockCount, const std::string& filePath,MemoryManager& mm,RecallReportPacker& report): 
   m_fifo(blockCount),m_blockCount(blockCount), m_fileId(fileId), 
-          m_memManager(mm),m_writer(filePath){
+          m_memManager(mm),m_path(filePath),m_reporter(report){
     mm.addClient(&m_fifo); 
   }
   
@@ -96,12 +97,16 @@ public:
   /**
    * Function used to wait until the end of the write
    */
-  virtual void waitCompletion() { volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); }
+  virtual void waitCompletion() { 
+    volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); 
+  }
   
   /**
    * Destructor (also waiting for the end of the write operation)
    */
-  virtual ~DiskWriteTask() { volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); }
+  virtual ~DiskWriteTask() { 
+    volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); 
+  }
   
 private:
   
@@ -113,7 +118,7 @@ private:
   /**
    * Number of blocks in the fifo
    */
-  int m_blockCount;
+  const int m_blockCount;
   
   /**
    * File id of the file that will be written to disk
@@ -130,7 +135,8 @@ private:
    */
   castor::tape::threading::Mutex m_producerProtection;
   
-  tape::diskFile::WriteFile m_writer;
+  const std::string m_path;
+  RecallReportPacker& m_reporter;
 };
 
 }}}}
