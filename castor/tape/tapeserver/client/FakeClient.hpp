@@ -37,7 +37,7 @@ public:
         ptr->filesToRecall().back()->setBlockId2(3*i);
         ptr->filesToRecall().back()->setBlockId3(4*i);
         ptr->filesToRecall().back()->setFseq(255+i);
-        ptr->filesToRecall().back()->setPath("rfio:///root/bidule");
+        ptr->filesToRecall().back()->setPath("/tmp/pipo");
         ptr->filesToRecall().back()->setFileTransactionId(666+i);
         ptr->filesToRecall().back()->setFilesToRecallList(ptr.get());
     }
