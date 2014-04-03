@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_RTCPTXRX_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_RTCPTXRX_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -346,4 +345,3 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_RTCPTXRX_HPP

@@ -23,9 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef RFIO_ALRM_H 
-#define RFIO_ALRM_H 1
+#pragma once
 
 int rfio_alrm(int rcode, char *buf);
 
-#endif /* RFIO_ALRM_H */

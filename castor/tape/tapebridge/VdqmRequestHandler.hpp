@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_VDQMREQUESTHANDLER_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_VDQMREQUESTHANDLER_HPP 1
+#pragma once
 
 #include "castor/io/Constants.hpp"
 #include "castor/io/ServerSocket.hpp"
@@ -205,4 +204,3 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_VDQMREQUESTHANDLER_HPP

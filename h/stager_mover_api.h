@@ -52,8 +52,7 @@
  * - there is a problem with an I/O operation, for example that the disk server is full
  */
 
-#ifndef _STAGER_MOVER_API_H
-#define _STAGER_MOVER_API_H
+#pragma once
 
 #include <osdep.h>
 
@@ -164,4 +163,3 @@ EXTERN_C int stage_mover_error (void *stagerContext,
 
 /*\@}*/
 
-#endif

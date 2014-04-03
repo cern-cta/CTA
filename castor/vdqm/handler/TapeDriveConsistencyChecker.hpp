@@ -23,8 +23,7 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef _TAPEDRIVECONSISTENCYCHECKER_HPP_
-#define _TAPEDRIVECONSISTENCYCHECKER_HPP_
+#pragma once
 
 #include "BaseRequestHandler.hpp"
 
@@ -135,4 +134,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif //_TAPEDRIVECONSISTENCYCHECKER_HPP_

@@ -23,8 +23,7 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#ifndef CASTOR_SERVER_SIGNALTHREADPOOL_HPP
-#define CASTOR_SERVER_SIGNALTHREADPOOL_HPP 1
+#pragma once
 
 #include <errno.h>
 #include <sys/types.h>
@@ -127,4 +126,3 @@ namespace castor {
 } // end of namespace castor
 
 
-#endif // CASTOR_SERVER_SIGNALTHREADPOOL_HPP

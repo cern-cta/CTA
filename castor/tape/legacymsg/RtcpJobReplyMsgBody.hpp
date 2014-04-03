@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPJOBREPLYMSGBODY
-#define CASTOR_TAPE_LEGACYMSG_RTCPJOBREPLYMSGBODY
+#pragma once
 
 #include "h/Castor_limits.h"
 
@@ -31,20 +30,27 @@
 #include <string>
 
 
-namespace castor     {
-namespace tape       {
+namespace castor    {
+namespace tape      {
 namespace legacymsg {
 
+/**
+ * An RCP job reply message.
+ */
+struct RtcpJobReplyMsgBody {
+  int32_t status;
+  char    errorMessage[1024];
+
   /**
-   * An RCP job reply message.
+   * Constructor.
+   *
+   * Sets all integer member-variables to 0 and all string member-variables to
+   * the empty string.
    */
-  struct RtcpJobReplyMsgBody {
-    int32_t status;
-    char    errorMessage[1024];
-  };
+  RtcpJobReplyMsgBody() throw();
+};
 
 } // namespace legacymsg
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPJOBREPLYMSGBODY

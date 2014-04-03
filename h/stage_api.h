@@ -28,8 +28,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef H_STAGE_API_H
-#define H_STAGE_API_H 1
+#pragma once
 
 #include <pwd.h>
 #include <sys/types.h>
@@ -129,4 +128,3 @@ typedef struct stage_hsm stage_hsm_t;
 
 EXTERN_C int stage_updc_filchg (char *, stage_hsm_t *);
 
-#endif /* H_STAGE_API_H */

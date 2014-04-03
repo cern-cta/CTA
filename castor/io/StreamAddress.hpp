@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef IO_STREAMADDRESS_HPP 
-#define IO_STREAMADDRESS_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/io/biniostream.h"
@@ -75,4 +74,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // IO_STREAMADDRESS_HPP

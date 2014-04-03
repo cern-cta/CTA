@@ -2,8 +2,7 @@
  * $Id: stager_macros.h,v 1.26 2009/07/13 06:22:08 waldron Exp $
  */
 
-#ifndef __stager_macros_h
-#define __stager_macros_h
+#pragma once
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -27,4 +26,3 @@
 #define STAGER_LOG_RETURN(value) {return(value);}
 #define STAGER_NB_ELEMENTS(a) (sizeof(a)/sizeof((a)[0]))
 
-#endif /* __stager_macros_h */

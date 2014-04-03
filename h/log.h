@@ -8,8 +8,7 @@
 
 /* log.h        generalized logging facilities                          */
 
-#ifndef _LOG_H_INCLUDED_
-#define _LOG_H_INCLUDED_
+#pragma once
 
 #define LOG_NOLOG       -1      /* Don't log                            */
 #ifndef _SHIFT_H_INCLUDED_
@@ -35,4 +34,3 @@ EXTERN_C int getloglv (void);
 #define LOG_INFO        6       /* informational                        */
 #define LOG_DEBUG       7       /* debug-level messages                 */
 
-#endif /* _LOG_H_INCLUDED_ */

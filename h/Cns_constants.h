@@ -7,8 +7,7 @@
  * All rights reserved
  */
 
-#ifndef _CNS_CONSTANTS_H
-#define _CNS_CONSTANTS_H
+#pragma once
 #include "Castor_limits.h"
 
 #define DIRXSIZE (HYPERSIZE+WORDSIZE+LONGSIZE+LONGSIZE+LONGSIZE+HYPERSIZE+TIME_TSIZE+TIME_TSIZE+TIME_TSIZE+WORDSIZE+1)
@@ -79,4 +78,3 @@
 #define DEFAULT_RETRYCNT     10      /* Default retry count => 100 secs (cf. RETRYI) */
 #define DEFAULT_CONNTIMEOUT  (2*60)  /* Default connect timeout limit = 2mins. */
 
-#endif

@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef RFIO_RFIO_CALLS_H 
-#define RFIO_RFIO_CALLS_H 1
+#pragma once
 
 int  srchk(
            int     s
@@ -48,4 +47,3 @@ int   srpclose(
                int     s,
                FILE    *fs);
 
-#endif /* RFIO_RFIO_CALLS_H */

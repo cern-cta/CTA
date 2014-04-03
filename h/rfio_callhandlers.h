@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef RFIO_CALLHANDLERS_H
-#define RFIO_CALLHANDLERS_H
+#pragma once
 
 int rfio_handle_open(const char *lfn,
                      int flags,
@@ -41,4 +40,3 @@ int rfio_handle_close(void *ctx,
                       struct stat *filestat,
                       int close_status);
 
-#endif /* RFIO_CALLHANDLERS_H */

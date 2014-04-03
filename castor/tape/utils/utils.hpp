@@ -23,8 +23,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_UTILS_UTILS_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_UTILS_UTILS_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
@@ -468,4 +467,3 @@ void appendPathToEnvVar(const std::string &envVarName,
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_UTILS_UTILS_HPP

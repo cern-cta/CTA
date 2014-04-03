@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_BASESVC_HPP 
-#define CASTOR_BASESVC_HPP 1
+#pragma once
 
 // Include Files
 #include <string>
@@ -89,4 +88,3 @@ namespace castor {
   
 } // end of castor namespace
 
-#endif // CASTOR_BASESVC_HPP

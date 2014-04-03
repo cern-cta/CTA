@@ -22,8 +22,7 @@
  * @author Castor dev team
  *****************************************************************************/
 
-#ifndef CASTOR_PORTNUMBERS
-#define CASTOR_PORTNUMBERS
+#pragma once
 
 namespace castor {
 
@@ -69,4 +68,3 @@ namespace castor {
 
 } // namespace castor
 
-#endif // CASTOR_PORTNUMBERS

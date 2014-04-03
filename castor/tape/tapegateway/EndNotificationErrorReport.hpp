@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEGATEWAY_ENDNOTIFICATIONERRORREPORT_HPP
-#define CASTOR_TAPE_TAPEGATEWAY_ENDNOTIFICATIONERRORREPORT_HPP
+#pragma once
 
 // Include Files
 #include "castor/tape/tapegateway/GatewayMessage.hpp"
@@ -162,4 +161,3 @@ namespace castor {
 
 } /* end of namespace castor */
 
-#endif // CASTOR_TAPE_TAPEGATEWAY_ENDNOTIFICATIONERRORREPORT_HPP

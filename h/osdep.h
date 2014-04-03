@@ -12,8 +12,7 @@
 
 /* osdep.h      Operating system dependencies                           */
 
-#ifndef _OSDEP_H_INCLUDED_
-#define  _OSDEP_H_INCLUDED_
+#pragma once
 
 /*
  * Data representation
@@ -71,4 +70,3 @@ typedef U_HYPER TIME_T;
 #define off64_t off_t
 #endif
 
-#endif /* _OSDEP_H_INCLUDED_ */

@@ -22,8 +22,7 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_VDQMSERVER_HPP
-#define CASTOR_VDQM_VDQMSERVER_HPP 1
+#pragma once
 
 #include "castor/server/MultiThreadedDaemon.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
@@ -161,4 +160,3 @@ namespace castor {
 } // namespace castor
 
 
-#endif // CASTOR_VDQM_VDQMSERVER_HPP

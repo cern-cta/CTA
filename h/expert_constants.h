@@ -5,8 +5,7 @@
  *
  */
 
-#ifndef _EXPERT_CONSTANTS_H
-#define _EXPERT_CONSTANTS_H
+#pragma once
 #include "Castor_limits.h"
 
 
@@ -17,4 +16,3 @@
 #define	EXP_SYERR 	  2	/* system error */
 #define	EXP_CONFERR	  4	/* configuration error */
 
-#endif

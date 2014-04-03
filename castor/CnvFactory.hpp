@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_CNVFACTORY_HPP
-#define CASTOR_CNVFACTORY_HPP 1
+#pragma once
 
 // Include Files
 #include "ICnvFactory.hpp"
@@ -92,4 +91,3 @@ castor::CnvFactory<Converter>::CnvFactory() {
   castor::Converters::instance()->addFactory(this);
 }
 
-#endif // CASTOR_CNVFACTORY_HPP

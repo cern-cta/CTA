@@ -23,8 +23,7 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#ifndef EXCEPTION_SQLERROR_HPP 
-#define EXCEPTION_SQLERROR_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/exception/Exception.hpp"
@@ -57,4 +56,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // EXCEPTION_SQLERROR_HPP

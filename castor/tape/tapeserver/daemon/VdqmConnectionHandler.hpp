@@ -20,14 +20,20 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_DAEMON_VDQMCONNECTIONHANDLER_HPP
-#define CASTOR_TAPE_TAPESERVER_DAEMON_VDQMCONNECTIONHANDLER_HPP 1
+#pragma once
 
 #include "castor/io/PollEventHandler.hpp"
 #include "castor/io/PollReactor.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
+#include "castor/tape/legacymsg/MessageHeader.hpp"
+#include "castor/io/io.hpp"
+#include "castor/tape/legacymsg/CommonMarshal.hpp"
+#include "castor/tape/legacymsg/RtcpMarshal.hpp"
+#include "castor/tape/legacymsg/VdqmMarshal.hpp"
+#include "h/vdqm_constants.h"
+#include "h/rtcp_constants.h"
 
 #include <poll.h>
 
@@ -76,6 +82,8 @@ public:
 
   /**
    * Destructor.
+   *
+   * Closes the connection with the vdqmd daemon.
    */
   ~VdqmConnectionHandler() throw();
 
@@ -105,12 +113,71 @@ private:
    * The catalogue of tape drives controlled by the tape server daemon.
    */
   DriveCatalogue &m_driveCatalogue;
+  
+  /**
+   * The timeout in seconds to be applied when performing network read and
+   * write operations.
+   */
+  const int m_netTimeout;
+
+  /**
+   * Throws an exception if the specified file-descriptor is not that of the
+   * socket listening for connections from the vdqmd daemon.
+   */
+  void checkHandleEventFd(const int fd) throw (castor::exception::Exception);
+
+  /**
+   * Returns true if the peer host of the connection being handled is
+   * authorized.
+   */
+  bool connectionIsAuthorized() throw();
 
   /**
    * Logs the reception of the specified job message from the vdqmd daemon.
    */
   void logVdqmJobReception(const legacymsg::RtcpJobRqstMsgBody &job)
     const throw();
+  
+  /**
+   * Reads a job message from the specified connection, sends back a positive
+   * acknowledgement and closes the connection.
+   *
+   * @param connection The file descriptor of the connection with the vdqm
+   * daemon.
+   * @return The job request from the vdqm.
+   */
+  legacymsg::RtcpJobRqstMsgBody readJobMsg(const int connection)
+    throw(castor::exception::Exception);
+  
+  /**
+   * Reads the header of a job message from the specified connection.
+   *
+   * @param connection The file descriptor of the connection with the vdqm
+   * daemon.
+   * @return The message header.
+   */
+  legacymsg::MessageHeader readJobMsgHeader(const int connection)
+    throw(castor::exception::Exception);
+  
+  /**
+   * Reads the body of a job message from the specified connection.
+   *
+   * @param connection The file descriptor of the connection with the vdqm
+   * daemon.
+   * @param len The length of the message body in bytes.
+   * @return The message body.
+   */
+  legacymsg::RtcpJobRqstMsgBody readJobMsgBody(const int connection,
+    const uint32_t len) throw(castor::exception::Exception);
+
+  /**
+   * Writes a job reply message to the specified connection.
+   *
+   * @param connection The file descriptor of the connection with the vdqm
+   * daemon.
+   */
+  void writeJobReplyMsg(const int connection)
+    throw(castor::exception::Exception);
 
 }; // class VdqmConnectionHandler
 
@@ -119,4 +186,3 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_DAEMON_VDQMCONNECTIONHANDLER_HPP

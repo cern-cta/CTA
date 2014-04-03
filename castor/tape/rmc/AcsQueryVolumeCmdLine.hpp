@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_ACSQUERYVOLUMECMDLINE_HPP
-#define CASTOR_TAPE_RMC_ACSQUERYVOLUMECMDLINE_HPP 1
+#pragma once
 
 extern "C" {
 #include "acssys.h"
@@ -80,4 +79,3 @@ struct AcsQueryVolumeCmdLine {
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_RMC_ACSQUERYVOLUMECMDLINE_HPP

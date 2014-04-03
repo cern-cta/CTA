@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_OBJECTCATALOG_HPP 
-#define CASTOR_OBJECTCATALOG_HPP 1
+#pragma once
 
 // Include Files
 #include <map>
@@ -64,4 +63,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_OBJECTCATALOG_HPP

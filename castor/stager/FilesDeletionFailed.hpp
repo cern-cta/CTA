@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_STAGER_FILESDELETIONFAILED_HPP
-#define CASTOR_STAGER_FILESDELETIONFAILED_HPP
+#pragma once
 
 // Include Files
 #include "castor/stager/GCFileList.hpp"
@@ -124,4 +123,3 @@ namespace castor {
 
 } /* end of namespace castor */
 
-#endif // CASTOR_STAGER_FILESDELETIONFAILED_HPP

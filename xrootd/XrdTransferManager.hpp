@@ -22,8 +22,7 @@
  *
  ******************************************************************************/
 
-#ifndef __TRANSFERMANAGER_H__
-#define __TRANSFERMANAGER_H__
+#pragma once
 
 /*-----------------------------------------------------------------------------*/
 #include <uuid/uuid.h>
@@ -222,4 +221,3 @@ class XrdTransferManager
 
 };
 
-#endif

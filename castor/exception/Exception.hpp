@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef EXCEPTION_EXCEPTION_HPP
-#define EXCEPTION_EXCEPTION_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/exception/Backtrace.hpp"
@@ -141,4 +140,3 @@ namespace castor {
 } // end of castor namespace
 
 
-#endif // EXCEPTION_EXCEPTION_HPP

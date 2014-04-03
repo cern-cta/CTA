@@ -23,8 +23,7 @@
  *****************************************************************************/
 
 
-#ifndef GATEWAY_CONSTANTS_HPP
-#define GATEWAY_CONSTANTS_HPP 1
+#pragma once
 
 #include <inttypes.h>
 
@@ -58,4 +57,3 @@ namespace tapegateway {
 } // namespace tape
 } // namespace castor
 
-#endif // GATEWAY_CONSTANTS_HPP

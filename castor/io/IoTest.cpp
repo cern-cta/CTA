@@ -227,6 +227,18 @@ static void check16BitsWereMarshalledBigEndian(const char *const buf) {
   ASSERT_EQ(0x65 & 0xFF, buf[1] & 0xFF);
 }
 
+TEST_F(castor_io_IoTest, marshalInt16) {
+  const int16_t v = 0x8765;
+  char buf[2];
+  char *ptr = buf;
+
+  memset(buf, '\0', sizeof(buf));
+
+  ASSERT_NO_THROW(castor::io::marshalInt16(v, ptr));
+  ASSERT_EQ(buf+2, ptr);
+  check16BitsWereMarshalledBigEndian(buf);
+}
+
 TEST_F(castor_io_IoTest, marshalUint16) {
   const uint16_t v = 0x8765;
   char buf[2];
@@ -374,6 +386,17 @@ TEST_F(castor_io_IoTest, unmarshall_BYTE) {
   unmarshall_BYTE(ptr, v);
   ASSERT_EQ(buf+1, ptr);
   ASSERT_EQ(0x87, v);
+}
+
+TEST_F(castor_io_IoTest, unmarshalInt16) {
+  char buf[] = {0x87, 0x65};
+  size_t bufLen = sizeof(buf);
+  const char *ptr = buf;
+  int16_t v = 0;
+  ASSERT_NO_THROW(castor::io::unmarshalInt16(ptr, bufLen, v));
+  ASSERT_EQ(buf+2, ptr);
+  ASSERT_EQ((size_t)0, bufLen);
+  ASSERT_EQ((int16_t)0x8765, v);
 }
 
 TEST_F(castor_io_IoTest, unmarshalUint16) {

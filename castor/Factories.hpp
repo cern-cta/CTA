@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_FACTORIES_HPP 
-#define CASTOR_FACTORIES_HPP 1
+#pragma once
 
 //Include Files
 #include <map>
@@ -76,4 +75,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_FACTORIES_HPP

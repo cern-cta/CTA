@@ -20,8 +20,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_STAGER_ERRORFILEREQUEST_HPP
-#define CASTOR_STAGER_ERRORFILEREQUEST_HPP
+#pragma once
 
 // Include Files
 #include "castor/stager/FileRequest.hpp"
@@ -122,4 +121,3 @@ namespace castor {
 
 } /* end of namespace castor */
 
-#endif // CASTOR_STAGER_ERRORFILEREQUEST_HPP

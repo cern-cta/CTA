@@ -23,8 +23,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_IO_IPANDPORT_HPP
-#define CASTOR_IO_IPANDPORT_HPP 1
+#pragma once
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -85,4 +84,3 @@ private:
 } // namespace castor
 
 
-#endif // CASTOR_IO_IPANDPORT_HPP

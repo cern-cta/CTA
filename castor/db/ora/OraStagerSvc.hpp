@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef ORA_ORASTAGERSVC_HPP
-#define ORA_ORASTAGERSVC_HPP 1
+#pragma once
 
 // Include Files
 #include "occi.h"
@@ -511,4 +510,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // ORA_ORASTAGERSVC_HPP

@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_FILENAMELIST_HPP
-#define CASTOR_TAPE_TPCP_FILENAMELIST_HPP 1
+#pragma once
 
 #include <list>
 #include <ostream>
@@ -45,4 +44,3 @@ class FilenameList : public std::list<std::string> {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TPCP_FILENAMELIST_HPP

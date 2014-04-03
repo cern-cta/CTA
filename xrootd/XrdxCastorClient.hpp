@@ -22,8 +22,7 @@
  * 
  ******************************************************************************/
 
-#ifndef __XCASTOR_CASTORCLIENT_HH__
-#define __XCASTOR_CASTORCLIENT_HH__
+#pragma once
 
 /*----------------------------------------------------------------------------*/
 #include <unistd.h>
@@ -313,4 +312,3 @@ private:
 
 XCASTORNAMESPACE_END
 
-#endif // __XCASTOR_CASTORCLIENT_HH__

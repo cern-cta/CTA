@@ -10,8 +10,7 @@
  * rtcp.h - basic rtcopy structures and macros common to client and server
  */
 
-#if !defined(RTCP_H)
-#define RTCP_H
+#pragma once
 
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
@@ -335,4 +334,3 @@ EXTERN_C char *rtcp_voidToString (void *, int);
 EXTERN_C int rtcp_stringToVoid (char *, void *, int);
 EXTERN_C int rtcp_ClientMsg (int *, char *);
 
-#endif /* RTCP_H */

@@ -7,8 +7,7 @@
  * All rights reserved
  */
 
-#ifndef _CASTOR_MUTEX_H
-#define _CASTOR_MUTEX_H    
+#pragma once
 
 #include <osdep.h>
 
@@ -19,5 +18,4 @@ EXTERN_C int Cmutex_unlock (void *);
 
 #define Cmutex_trylock(addr) Cmutex_lock(addr,0)
 
-#endif /* _CASTOR_MUTEX_H */
 

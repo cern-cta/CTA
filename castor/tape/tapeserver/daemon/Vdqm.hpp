@@ -20,8 +20,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_DAEMON_VDQM_HPP
-#define CASTOR_TAPE_TAPESERVER_DAEMON_VDQM_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
@@ -41,17 +40,6 @@ public:
    * Destructor.
    */
   virtual ~Vdqm() throw() = 0;
-
-  /**
-   * Receives a job from the specified connection with the vdqm daemon,
-   * sends back a positive acknowledgement and closes the connection.
-   *
-   * @param connection The file descriptor of the connection with the vdqm
-   * daemon.
-   * @return The job request from the vdqm.
-   */
-  virtual legacymsg::RtcpJobRqstMsgBody receiveJob(const int connection)
-    throw(castor::exception::Exception) = 0;
 
   /**
    * Sets the status of the specified tape drive to down.
@@ -84,4 +72,3 @@ public:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_DAEMON_VDQM_HPP

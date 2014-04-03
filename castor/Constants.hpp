@@ -27,8 +27,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_CONSTANTS_HPP
-#define CASTOR_CONSTANTS_HPP 1
+#pragma once
 
 #ifdef __cplusplus
 namespace castor {
@@ -334,4 +333,3 @@ namespace castor {
 } /* end of namespace castor */
 #endif
 
-#endif /* CASTOR_CONSTANTS_HPP */

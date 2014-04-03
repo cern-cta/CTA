@@ -23,8 +23,7 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef DLF_PARAM_HPP
-#define DLF_PARAM_HPP 1
+#pragma once
 
 // Include Files
 #include "dlf_api.h"
@@ -243,4 +242,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // DLF_PARAM_HPP

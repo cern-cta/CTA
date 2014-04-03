@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef STAGERJOB_BASEPLUGIN_HPP
-#define STAGERJOB_BASEPLUGIN_HPP 1
+#pragma once
 
 // include files
 #include <string>
@@ -109,4 +108,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // STAGERJOB_BASEPLUGIN_HPP

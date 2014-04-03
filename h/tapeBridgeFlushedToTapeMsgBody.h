@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_H
-#define H_TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_H 1
+#pragma once
 
 #include "h/Castor_limits.h"
 #include "h/osdep.h"
@@ -59,4 +58,3 @@ typedef struct {
   LONGSIZE + /* tapeFseq                  */  \
   HYPERSIZE  /* bytesWrittenToTapeByFlush */)
 
-#endif /* H_TAPEBRIDGEFLUSHEDTOTAPEMSGBODY_H */

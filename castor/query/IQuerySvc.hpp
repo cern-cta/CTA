@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef QUERY_IQUERYSVC_HPP
-#define QUERY_IQUERYSVC_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/stager/ICommonSvc.hpp"
@@ -174,4 +173,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // QUERY_IQUERYSVC_HPP

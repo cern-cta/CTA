@@ -18,12 +18,10 @@
 ** In order to successfully use this ioctls, loading the appropriate st driver is required.
 */ 
 
-#ifndef _MTIO_ADD_H
-#define _MTIO_ADD_H
+#pragma once
 
 /* in case MTWEOFI is not defined in linux/mtio.h */
 #ifndef MTWEOFI
 #define MTWEOFI 35
 #endif
 
-#endif

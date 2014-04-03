@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_TESTINGBRIDGESOCKETCATALOGUE_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_TESTINGBRIDGESOCKETCATALOGUE_HPP 1
+#pragma once
 
 #include "castor/tape/tapebridge/BridgeSocketCatalogue.hpp"
 
@@ -47,4 +46,3 @@ public:
 } // namespace tape
 } // namespace castor
 
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_TESTINGBRIDGESOCKETCATALOGUE_HPP

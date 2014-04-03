@@ -22,8 +22,7 @@
  *
  ******************************************************************************/
 
-#ifndef __XCASTOR_TIMING_HH__
-#define __XCASTOR_TIMING_HH__
+#pragma once
 
 /*----------------------------------------------------------------------------*/
 #include <time.h>
@@ -118,6 +117,5 @@ public:
 
 XCASTORNAMESPACE_END
 
-#endif // __XCASTOR_TIMING_HH__
 
 

@@ -7,8 +7,7 @@
  * All rights reserved
  */
 
-#ifndef _VMGR_H
-#define _VMGR_H
+#pragma once
 
                         /* volume manager constants */
 
@@ -96,4 +95,3 @@
 #define VMG03 "VMG03 - illegal function %d\n"
 #define VMG09 "VMG09 - fatal configuration error: %s %s\n"
 #define VMG64 "VMG64 - parameter inconsistency with VMGR for vid %s: %s on request <-> %s in VMGR\n"
-#endif

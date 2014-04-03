@@ -1,5 +1,4 @@
-#ifndef CODEGENERATORS_CPPHSTREAMCNVWRITER_H 
-#define CODEGENERATORS_CPPHSTREAMCNVWRITER_H 1
+#pragma once
 
 // Include files
 
@@ -45,4 +44,3 @@ class CppHStreamCnvWriter : public CppHBaseCnvWriter {
 
 };
 
-#endif // CODEGENERATORS_CPPHSTREAMCNVWRITER_H

@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef STAGERJOB_XROOTPLUGIN_HPP
-#define STAGERJOB_XROOTPLUGIN_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/job/stagerjob/RawMoverPlugin.hpp"
@@ -113,4 +112,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // STAGERJOB_XROOTPLUGIN_HPP

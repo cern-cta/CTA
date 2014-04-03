@@ -20,8 +20,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_DAEMON_CONSTANTS_HPP
-#define CASTOR_TAPE_TAPESERVER_DAEMON_CONSTANTS_HPP 1
+#pragma once
 
 namespace castor     {
 namespace tape       {
@@ -32,11 +31,16 @@ namespace daemon     {
  * The TCP/IP port on which the tape server daemon listens for incoming
  * connections from the VDQM server.
  */
-const unsigned short TAPE_SERVER_LISTENING_PORT = 5070;
+const unsigned short TAPE_SERVER_VDQM_LISTENING_PORT = 5070;
+
+/**
+ * The TCP/IP port on which the tape server daemon listens for incoming
+ * connections from the tpconfig admin command.
+ */
+const unsigned short TAPE_SERVER_ADMIN_LISTENING_PORT = 5011;
 
 } // namespace daemon
 } // namespace tapeserver
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_DAEMON_CONSTANTS_HPP

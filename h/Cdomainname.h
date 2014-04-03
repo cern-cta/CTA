@@ -23,9 +23,7 @@
  * @author sponcec3
  *****************************************************************************/
 
-#ifndef H_CDOMAINNAME_H 
-#define H_CDOMAINNAME_H 1
+#pragma once
 
 EXTERN_C int Cdomainname (char*, int);
 
-#endif /* H_CDOMAINNAME_H */

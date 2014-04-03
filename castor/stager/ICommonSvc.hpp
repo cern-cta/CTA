@@ -24,8 +24,7 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#ifndef STAGER_ICOMMONSVC_HPP
-#define STAGER_ICOMMONSVC_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/Constants.hpp"
@@ -75,4 +74,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // STAGER_ICOMMONSVC_HPP

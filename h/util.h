@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef H_UTIL_H 
-#define H_UTIL_H 1
+#pragma once
 
 #include <osdep.h>
 
@@ -38,4 +37,3 @@
  */
 EXTERN_C int  check_for_strutou64 (char*);
 
-#endif /* H_UTIL_H */

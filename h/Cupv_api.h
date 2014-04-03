@@ -10,8 +10,7 @@
 /*
  */
 
-#ifndef _CUPV_API_H
-#define _CUPV_API_H
+#pragma once
 #include "osdep.h"
 #include <sys/types.h>
 #include "Cupv_constants.h"
@@ -48,7 +47,6 @@ EXTERN_C int Cupv_check (uid_t, gid_t, const char *, const char *, int);
 EXTERN_C int Cupv_modify (uid_t, gid_t, const char *, const char *, const char *, const char *, int);
 EXTERN_C int Cupv_delete (uid_t, gid_t, const char *, const char *);
 EXTERN_C int Cupv_seterrbuf (char *, int);
-#endif
 
 
 

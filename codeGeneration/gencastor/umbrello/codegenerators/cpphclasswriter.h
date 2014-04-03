@@ -1,5 +1,4 @@
-#ifndef CODEGENERATORS_CPPHCLASSWRITER_H 
-#define CODEGENERATORS_CPPHCLASSWRITER_H 1
+#pragma once
 
 // Include files
 
@@ -151,4 +150,3 @@ class CppHClassWriter : public CppHWriter {
 
 };
 
-#endif // CODEGENERATORS_CPPHCLASSWRITER_H

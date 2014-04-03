@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_LOGHELPER
-#define CASTOR_TAPE_TAPEBRIDGE_LOGHELPER
+#pragma once
 
 #include "castor/tape/legacymsg/GiveOutpMsgBody.hpp"
 #include "castor/tape/legacymsg/RtcpJobReplyMsgBody.hpp"
@@ -302,4 +301,3 @@ public:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_LOGHELPER

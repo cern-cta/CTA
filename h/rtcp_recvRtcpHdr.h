@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_RTCP_RECVRTCPHDR_H
-#define H_RTCP_RECVRTCPHDR_H 1
+#pragma once
 
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
@@ -49,4 +48,3 @@
 EXTERN_C int32_t rtcp_recvRtcpHdr(const int socketFd, rtcpHdr_t *const hdr,
   const int timeout);
 
-#endif /* H_RTCP_RECVRTCPHDR_H */

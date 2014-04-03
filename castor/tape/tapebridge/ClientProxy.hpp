@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_CLIENTPROXY_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_CLIENTPROXY_HPP 1
+#pragma once
 
 #include "castor/tape/tapebridge/ClientAddress.hpp"
 #include "castor/tape/tapebridge/ClientAddressLocal.hpp"
@@ -417,4 +416,3 @@ protected:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_CLIENTPROXY_HPP

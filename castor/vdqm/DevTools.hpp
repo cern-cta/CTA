@@ -23,8 +23,7 @@
  * @author Castor dev team
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_DEVTOOLS_HPP
-#define CASTOR_VDQM_DEVTOOLS_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ServerSocket.hpp"
@@ -166,4 +165,3 @@ namespace castor {
 } // namespace castor
 
 
-#endif // CASTOR_VDQM_DEVTOOLS_HPP

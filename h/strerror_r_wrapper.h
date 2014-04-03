@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_STRERROR_R_WRAPPER_H
-#define H_STRERROR_R_WRAPPER_H 1
+#pragma once
 
 #include <stddef.h>
 
@@ -61,4 +60,3 @@
  */
 EXTERN_C int strerror_r_wrapper(int errnum, char *buf, size_t buflen);
 
-#endif /* H_STRERROR_R_WRAPPER_H */

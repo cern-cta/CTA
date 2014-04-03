@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef STAGER_IGCSVC_HPP
-#define STAGER_IGCSVC_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/Constants.hpp"
@@ -131,4 +130,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // STAGER_IGCSVC_HPP

@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_VMGRTAPEINFORQSTMSGBODY_HPP
-#define CASTOR_TAPE_LEGACYMSG_VMGRTAPEINFORQSTMSGBODY_HPP 1
+#pragma once
 
 #include "h/Castor_limits.h"
 
@@ -56,4 +55,3 @@ struct VmgrTapeInfoRqstMsgBody {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_VMGRTAPEINFORQSTMSGBODY_HPP

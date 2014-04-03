@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_DAEMON_DRIVECATALOGUE_HPP
-#define CASTOR_TAPE_TAPESERVER_DAEMON_DRIVECATALOGUE_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
@@ -50,7 +49,7 @@ public:
    * The state of a drive as described by the following FSTN:
    *
    *              start daemon /
-   *  ------    send VDQM_UNIT_UP   ----------------
+   *  ------  send VDQM_UNIT_DOWN   ----------------
    * | INIT |--------------------->|      DOWN      |<-------------------
    *  ------                        ----------------                     |
    *     |                          |              ^                     |
@@ -58,7 +57,7 @@ public:
    *     |                          | tpconfig up  | tpconfig down       |
    *     |                          |              |                     |
    *     |      start daemon /      v              |                     |
-   *     |   send VDQM_UNIT_DOWN    ----------------                     |
+   *     |    send VDQM_UNIT_UP     ----------------                     |
    *      ------------------------>|      UP        |                    |
    *                                ----------------                     |
    *                                |              ^                     |
@@ -95,12 +94,32 @@ public:
     DRIVE_STATE_RUNNING };
 
   /**
+   * Returns the string representation of the specified tape-drive state.
+   *
+   * Please note that this method does not throw an exception and to that end
+   * will return the string "UNKNOWN" if the string representation of the
+   * specified drive state is unknown.
+   *
+   * @param state The numerical tape-drive state.
+   * @return The string representation if known else "UNKNOWN".
+   */
+  static const char *driveState2Str(const DriveState state) throw();
+
+  /**
    * Poplates the catalogue using the specified parsed lines from
    * /etc/castor/TPCONFIG.
    *
    * @param lines The lines parsed from /etc/castor/TPCONFIG.
    */
   void populateCatalogue(const utils::TpconfigLines &lines)
+    throw(castor::exception::Exception);
+  
+  /**
+   * Returns the unit name of the drive on which the given process is running
+   * @param sessionPid
+   * @return the unit name of the drive on which the given process is running
+   */
+  std::string getUnitName(const pid_t sessionPid) 
     throw(castor::exception::Exception);
 
   /**
@@ -203,9 +222,10 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    * @param job The job received from the vdqmd daemon.
+   * @param sessionPid The pid of the child process responsible for the tape session
    */
   void tapeSessionStarted(const std::string &unitName,
-    const legacymsg::RtcpJobRqstMsgBody &job)
+    const legacymsg::RtcpJobRqstMsgBody &job, const pid_t sessionPid)
     throw(castor::exception::Exception);
 
   /**
@@ -229,7 +249,15 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  void tapeSessionSuceeeded(const std::string &unitName)
+  void tapeSessionSucceeded(const std::string &unitName)
+     throw(castor::exception::Exception);
+  
+  /**
+   * Same as above but one can use with the pid of the child process instead of
+   * the unit name
+   * @param pid of the child process handling the session
+   */
+  void tapeSessionSucceeded(const pid_t pid)
      throw(castor::exception::Exception);
 
   /**
@@ -242,6 +270,14 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   void tapeSessionFailed(const std::string &unitName)
+     throw(castor::exception::Exception);
+  
+  /**
+   * Same as above but one can use with the pid of the child process instead of
+   * the unit name
+   * @param pid of the child process handling the session
+   */
+  void tapeSessionFailed(const pid_t pid)
      throw(castor::exception::Exception);
 
 private:
@@ -288,6 +324,12 @@ private:
      * member variable is undefined.
      */
     legacymsg::RtcpJobRqstMsgBody job;
+    
+    /**
+     * The pid of the child process handling the tape session running on the 
+     * tape drive.
+     */
+    pid_t pid;
 
     /**
      * Default constructor that initializes all strings to the empty string,
@@ -426,4 +468,3 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_DAEMON_DRIVECATALOGUE_HPP

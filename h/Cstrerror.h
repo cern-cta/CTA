@@ -7,11 +7,9 @@
  * $Id: Cstrerror.h,v 1.1 2005/08/10 09:07:58 jdurand Exp $
  */
 
-#ifndef __Cstrerror_h
-#define __Cstrerror_h
+#pragma once
 
 #include "osdep.h"
 
 EXTERN_C char *Cstrerror (int);
 
-#endif /* __Cstrerror_h */

@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_ACSMOUNTCMD_HPP
-#define CASTOR_TAPE_RMC_ACSMOUNTCMD_HPP 1
+#pragma once
 
 #include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
@@ -141,4 +140,3 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_RMC_ACSMOUNTCMD_HPP

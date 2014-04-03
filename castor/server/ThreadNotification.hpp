@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_SERVER_THREADNOTIFICATION_HPP
-#define CASTOR_SERVER_THREADNOTIFICATION_HPP
+#pragma once
 
 // Include Files
 #include "castor/IObject.hpp"
@@ -165,4 +164,3 @@ namespace castor {
 
 } /* end of namespace castor */
 
-#endif // CASTOR_SERVER_THREADNOTIFICATION_HPP

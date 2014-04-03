@@ -1,5 +1,4 @@
-#ifndef _CSEC_CONSTANTS_H
-#define _CSEC_CONSTANTS_H
+#pragma once
 
 /* Buffer sizes */
 #define ERRBUFSIZE 2000
@@ -86,4 +85,3 @@ enum Csec_service_types {
 #define CSEC_OPT_NODELEG_FLAG         0x00000002L
 
 
-#endif /* _CSEC_CONSTANTS */

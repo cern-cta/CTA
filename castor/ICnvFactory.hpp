@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_ICNVFACTORY_HPP
-#define CASTOR_ICNVFACTORY_HPP 1
+#pragma once
 
 // Include Files
 #include "IFactory.hpp"
@@ -72,4 +71,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_ICNVFACTORY_HPP

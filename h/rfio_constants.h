@@ -11,8 +11,7 @@
  * rfio_constants.h  -   Remote File Access constants
  */
 
-#ifndef _RFIO_CONSTANTS_H_INCLUDED_
-#define _RFIO_CONSTANTS_H_INCLUDED_
+#pragma once
 
 /*
  * RFIO site-wide constants
@@ -210,4 +209,3 @@
 
 #endif /* RFIO_KERNEL */
 
-#endif /* _RFIO_CONSTANTS_H_INCLUDED_ */

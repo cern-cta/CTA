@@ -25,8 +25,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEGATEWAY_RETRYPOLICYELEMENT_HPP
-#define CASTOR_TAPE_TAPEGATEWAY_RETRYPOLICYELEMENT_HPP
+#pragma once
 
 
 namespace castor {
@@ -51,4 +50,3 @@ namespace tapegateway {
 } /* end of namespace tape */
 } /* end of namespace castor */
 
-#endif // CASTOR_TAPE_TAPEGATEWAY_RETRYPOLICYELEMENT_HPP

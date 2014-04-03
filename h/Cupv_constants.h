@@ -10,8 +10,7 @@
 /*
  */
 
-#ifndef _CUPV_CONSTANTS_H
-#define _CUPV_CONSTANTS_H
+#pragma once
 #include "Castor_limits.h"
 
 #ifdef UPVCSEC
@@ -73,7 +72,6 @@
 
 #define MAXSQLSTMENTLEN    500
 
-#endif
 
 
 

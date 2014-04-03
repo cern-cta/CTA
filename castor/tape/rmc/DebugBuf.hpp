@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_DEBUGBUF_HPP
-#define CASTOR_TAPE_RMC_DEBUGBUF_HPP 1
+#pragma once
 
 #include <ostream>
 #include <streambuf>
@@ -102,4 +101,3 @@ private:
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_RMC_DEBUGBUF_HPP

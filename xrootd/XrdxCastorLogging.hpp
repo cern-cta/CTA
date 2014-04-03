@@ -22,8 +22,7 @@
  *
  ******************************************************************************/
 
-#ifndef __XCASTOR_LOGGING_HH__
-#define __XCASTOR_LOGGING_HH__
+#pragma once
 
 /*----------------------------------------------------------------------------*/
 #include <string.h>
@@ -226,4 +225,3 @@ public:
                            const char*                     msg, ...);
 };
 
-#endif // __XCASTOR_LOGGING_HH__

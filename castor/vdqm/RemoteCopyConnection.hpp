@@ -22,8 +22,7 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
-#ifndef _CASTOR_VDQM_REMOTECOPYCONNECTION_HPP_
-#define _CASTOR_VDQM_REMOTECOPYCONNECTION_HPP_
+#pragma once
 
 #include "castor/io/AbstractTCPSocket.hpp"
 
@@ -129,4 +128,3 @@ namespace castor {
 
 } // namespace castor      
 
-#endif //_CASTOR_VDQM_REMOTECOPYCONNECTION_HPP_

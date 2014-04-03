@@ -21,8 +21,7 @@
  * @author Dennis Waldron
  *****************************************************************************/
 
-#ifndef CASTOR_RH_RATINGGROUP_HPP
-#define CASTOR_RH_RATINGGROUP_HPP 1
+#pragma once
 
 // Include files
 #include "castor/exception/Exception.hpp"
@@ -105,4 +104,3 @@ namespace castor {
 
 }  // End of namespace castor
 
-#endif // CASTOR_RH_RATINGGROUP_HPP

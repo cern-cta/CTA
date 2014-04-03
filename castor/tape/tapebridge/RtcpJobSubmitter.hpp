@@ -22,8 +22,7 @@
  *
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
-#ifndef _CASTOR_TAPE_TAPEBRIDGE_RTCPJOBSUBMITTER_HPP_
-#define _CASTOR_TAPE_TAPEBRIDGE_RTCPJOBSUBMITTER_HPP_
+#pragma once
 
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
 #include "h/net.h"
@@ -113,4 +112,3 @@ namespace tapebridge {
 } // namespace tape
 } // namespace castor      
 
-#endif // _CASTOR_TAPE_TAPEBRIDGE_RTCPJOBSUBMITTER_HPP_

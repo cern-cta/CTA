@@ -279,7 +279,9 @@ throw (castor::exception::Exception) {
                       << "unauthorised drive request (0x" << std::hex << reqtype 
                       << ") for " << driveRequest->drive 
                       << "@" << driveRequest->server
-                      << " from " << driveRequest->reqhost << std::endl;
+                      << " from " << driveRequest->reqhost
+                      << ": reqhost=" << driveRequest->reqhost
+                      << " server=" << driveRequest->server << std::endl;
       throw ex;  
     }
   }

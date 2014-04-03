@@ -10,8 +10,7 @@
 /*
  */
 
-#ifndef _CTAPE_CONSTANTS_H
-#define _CTAPE_CONSTANTS_H
+#pragma once
 #include "Castor_limits.h"
 
 #ifdef TPCSEC
@@ -100,4 +99,3 @@ enum PositionCommandCode {
 /* The default blocksize in bytes to be used when migrating to a tape */
 #define DEFAULTMIGRATIONBLOCKSIZE 262144
 
-#endif

@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_TAPEFSEQRANGELISTSEQUENCE_HPP
-#define CASTOR_TAPE_TPCP_TAPEFSEQRANGELISTSEQUENCE_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tpcp/TapeFseqRangeList.hpp"
@@ -129,4 +128,3 @@ private:
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_TPCP_TAPEFSEQRANGELISTSEQUENCE_HPP

@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_EXCEPTION_FAILEDTOEXECUTEPYTHON_HPP 
-#define CASTOR_EXCEPTION_FAILEDTOEXECUTEPYTHON_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 
@@ -47,4 +46,3 @@ public:
 } // namespace exception
 } // namespace castor
 
-#endif // CASTOR_EXCEPTION_FAILEDTOEXECUTEPYTHON_HPP

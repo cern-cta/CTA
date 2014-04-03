@@ -25,8 +25,7 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef GC_GCDAEMON_SYNCHRONIZATION_THREAD_HPP
-#define GC_GCDAEMON_SYNCHRONIZATION_THREAD_HPP 1
+#pragma once
 
 // Include files
 #include "castor/exception/Exception.hpp"
@@ -142,4 +141,3 @@ namespace castor {
 
 } // End of namespace castor
 
-#endif // GC_GCDAEMON_SYNCHRONIZATION_THREAD_HPP

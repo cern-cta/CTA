@@ -1,8 +1,7 @@
 /* RFIO XFS preallocation support */
 /* 2006/02/15 KELEMEN Peter <Peter.Kelemen@cern.ch> CERN IT/FIO/LA */
 
-#ifndef RFIO_XFSPREALLOC_H
-#define RFIO_XFSPREALLOC_H
+#pragma once
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -20,6 +19,5 @@
 void rfio_xfs_resvsp64(int fd, unsigned long mbytes);
 void rfio_xfs_unresvsp64(int fd, unsigned long mbytes, off64_t written);
 
-#endif /* RFIO_XFSPREALLOC_H */
 
 /* eof */

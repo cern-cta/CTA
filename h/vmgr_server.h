@@ -7,8 +7,7 @@
  * All rights reserved
  */
 
-#ifndef _VMGR_SERVER_H
-#define _VMGR_SERVER_H
+#pragma once
 
 #ifdef VMGRCSEC
 #include "Csec_api.h"
@@ -178,4 +177,3 @@ EXTERN_C int vmgr_srv_shutdown (int, char *, struct vmgr_srv_thread_info *, stru
 EXTERN_C int vmgr_srv_tpmounted (int, char *, struct vmgr_srv_thread_info *, struct vmgr_srv_request_info *);
 EXTERN_C int vmgr_srv_updatetape (int, char *, struct vmgr_srv_thread_info *, struct vmgr_srv_request_info *);
 EXTERN_C int vmgr_srv_qrytapeblksz (const int, char *const, struct vmgr_srv_thread_info *const, struct vmgr_srv_request_info *);
-#endif

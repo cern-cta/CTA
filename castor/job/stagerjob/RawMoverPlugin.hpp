@@ -25,8 +25,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef STAGERJOB_RAWMOVERPLUGIN_HPP
-#define STAGERJOB_RAWMOVERPLUGIN_HPP 1
+#pragma once
 
 // Include Files
 #include <string>
@@ -95,4 +94,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // STAGERJOB_RAWMOVERPLUGIN_HPP

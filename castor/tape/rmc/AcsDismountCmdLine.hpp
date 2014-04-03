@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_ACSDISMOUNTCMDLINE_HPP
-#define CASTOR_TAPE_RMC_ACSDISMOUNTCMDLINE_HPP 1
+#pragma once
 
 extern "C" {
 #include "acssys.h"
@@ -93,4 +92,3 @@ struct AcsDismountCmdLine {
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_RMC_ACSDISMOUNTCMDLINE_HPP

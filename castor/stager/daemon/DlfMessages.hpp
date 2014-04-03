@@ -2,8 +2,7 @@
 /* File including the constants to represent the DLF Messages for the new */
 /*******************************************************************************/
 
-#ifndef STAGER_DLF_MESSAGES_HPP
-#define STAGER_DLF_MESSAGES_HPP 1
+#pragma once
 
 
 namespace castor{
@@ -155,5 +154,4 @@ namespace castor{
   }// end namespace stager
 }// end namespace castor
 
-#endif
 

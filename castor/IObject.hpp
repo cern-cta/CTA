@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_IOBJECT_HPP
-#define CASTOR_IOBJECT_HPP
+#pragma once
 
 // Include Files
 #include "osdep.h"
@@ -98,4 +97,3 @@ namespace castor {
  */
 std::ostream& operator<<(std::ostream& s, const castor::IObject& addr);
 
-#endif // CASTOR_IOBJECT_HPP

@@ -24,8 +24,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef WORKER_THREAD_HPP
-#define WORKER_THREAD_HPP 1
+#pragma once
 
 #include "castor/exception/Internal.hpp"
 #include "castor/io/Constants.hpp"
@@ -165,4 +164,3 @@ namespace tapegateway{
 } // end of namespace tape
 } // end of namespace castor
 
-#endif // WORKER_THREAD_HPP

@@ -716,6 +716,9 @@ END;
 ALTER TABLE MigrationJob
   ADD CONSTRAINT CK_MigrationJob_Status
   CHECK (status IN (0, 1, 3));
+ALTER TABLE MigrationJob
+  ADD CONSTRAINT CK_MigrationJob_FileSizeGT0
+  CHECK (fileSize > 0);
 
 /* Definition of the MigrationRouting table. Each line is a routing rule for migration jobs
  *   isSmallFile : whether this routing rule applies to small files. Null means it applies to all files

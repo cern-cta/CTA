@@ -11,8 +11,7 @@
  * @(#)Ctape.h,v 1.43 2004/01/23 10:08:05 CERN IT-PDP/DM Jean-Philippe Baud
  */
 
-#ifndef _CTAPE_H
-#define _CTAPE_H
+#pragma once
 
 			/* tape daemon constants and macros */
 
@@ -315,4 +314,3 @@ EXTERN_C int setlabelinfo (const char *const, const int, const int, const char *
 EXTERN_C int rmlabelinfo (const char *const, const int);
 EXTERN_C int setdevinfo (const char *const, const char *const , const int, const int);
 EXTERN_C int tplogit (const char *const, const char *const, ...);
-#endif

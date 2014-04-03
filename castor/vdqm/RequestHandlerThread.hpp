@@ -22,8 +22,7 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_REQUESTHANDLERTHREAD_HPP
-#define CASTOR_VDQM_REQUESTHANDLERTHREAD_HPP 1
+#pragma once
 
 #include "castor/server/IThread.hpp"
 
@@ -81,4 +80,3 @@ namespace castor {
 
 } //end namespace castor
 
-#endif // CASTOR_VDQM_REQUESTHANDLERTHREAD_HPP

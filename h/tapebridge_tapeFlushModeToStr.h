@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIDGE_TAPEFLUSHMODETOSTR_H
-#define H_TAPEBRIDGE_TAPEFLUSHMODETOSTR_H 1
+#pragma once
 
 #include "h/osdep.h"
 
@@ -41,4 +40,3 @@
 EXTERN_C const char *tapebridge_tapeFlushModeToStr(
   const uint32_t tapeFlushMode);
 
-#endif /* H_TAPEBRIDGE_TAPEFLUSHMODETOSTR_H */

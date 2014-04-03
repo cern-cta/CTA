@@ -23,8 +23,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_UTILS_UTILS_HPP
-#define CASTOR_UTILS_UTILS_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
@@ -161,4 +160,3 @@ template<typename T> void setBytes(T &object, const int c) throw() {
 } // namespace utils
 } // namespace castor
 
-#endif // CASTOR_UTILS_HPP

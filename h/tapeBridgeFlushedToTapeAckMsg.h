@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIDGEFLUSHEDTOTAPEACKMSG_H
-#define H_TAPEBRIDGEFLUSHEDTOTAPEACKMSG_H 1
+#pragma once
 
 #include "h/Castor_limits.h"
 
@@ -43,4 +42,3 @@ typedef struct {
     LONGSIZE + /* reqType */        \
     LONGSIZE   /* status  */        )
 
-#endif /* H_TAPEBRIDGEFLUSHEDTOTAPEACKMSG_H */

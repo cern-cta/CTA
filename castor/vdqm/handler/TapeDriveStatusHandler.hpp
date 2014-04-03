@@ -23,8 +23,7 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef _TAPEDRIVESTATUSHANDLER_HPP_
-#define _TAPEDRIVESTATUSHANDLER_HPP_
+#pragma once
 
 #include "BaseRequestHandler.hpp"
 
@@ -140,4 +139,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif //_TAPEDRIVESTATUSHANDLER_HPP_

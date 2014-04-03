@@ -40,8 +40,7 @@
  *
  */
 
-#ifndef _RFIOTURL_H 
-#define _RFIOTURL_H 1
+#pragma once
 
 #define DEFAULT_RFIO_TURL_PREFIX "rfio://"
 #define RFIO_PROTOCOL_NAME "rfio"
@@ -169,4 +168,3 @@ EXTERN_C int rfioTURLFromString (
   );
 */
 
-#endif /* _RFIOTURL_H */

@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef ORA_ORAGCSVC_HPP
-#define ORA_ORAGCSVC_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/db/ora/OraCommonSvc.hpp"
@@ -196,4 +195,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // ORA_ORAGCSVC_HPP

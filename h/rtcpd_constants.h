@@ -22,12 +22,10 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_RTCPD_CONSTANTS
-#define H_RTCPD_CONSTANTS
+#pragma once
 
 /**
  * Default number of threads an RTCPD thread pool.
  */
 #define RTCPD_THREAD_POOL 3
 
-#endif /* H_RTCPD_CONSTANTS */

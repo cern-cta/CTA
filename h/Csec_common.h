@@ -1,5 +1,4 @@
-#ifndef _CSEC_COMMON_H
-#define _CSEC_COMMON_H
+#pragma once
 
 #include <osdep.h>
 #include <Castor_limits.h>
@@ -138,4 +137,3 @@ int Csec_server_set_service_name (Csec_context_t *, int);
 int Csec_client_set_service_name (Csec_context_t *, int);
 int Csec_context_is_client (Csec_context_t *ctx);
 
-#endif /* _CSEC_COMMON_H */

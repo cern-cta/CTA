@@ -23,8 +23,7 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#ifndef RH_SERVER_HPP
-#define RH_SERVER_HPP 1
+#pragma once
 
 #include "castor/server/MultiThreadedDaemon.hpp"
 #include "castor/exception/Exception.hpp"
@@ -110,5 +109,4 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // RH_SERVER_HPP
 

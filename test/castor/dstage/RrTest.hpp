@@ -24,8 +24,7 @@
  *****************************************************************************/
 
 
-#ifndef CASTOR_RRTEST_HPP 
-#define CASTOR_RRTEST_HPP 1
+#pragma once
 
 #include "castor/BaseObject.hpp"
 
@@ -58,4 +57,3 @@ namespace test {
 
 
 } // Namespace test
-#endif // CASTOR_RRTEST_HPP

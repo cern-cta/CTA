@@ -23,8 +23,7 @@
 */
 
 
-#ifndef TPLOGGER_H
-#define TPLOGGER_H
+#pragma once
 
 #include <stdio.h>
 
@@ -185,4 +184,3 @@ EXTERN_C int tl_log_stdio          ( tplogger_t *self, unsigned short msg_no, in
 */
 EXTERN_C int tl_init_handle ( tplogger_t *self, const char *type );
 
-#endif  /* TPLOGGER_H */

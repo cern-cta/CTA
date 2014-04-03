@@ -20,8 +20,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_DB_CNV_SVCCLASS_HPP
-#define CASTOR_DB_CNV_SVCCLASS_HPP
+#pragma once
 
 // Include Files
 #include "castor/Constants.hpp"
@@ -276,4 +275,3 @@ namespace castor {
 
 } /* end of namespace castor */
 
-#endif // CASTOR_DB_CNV_SVCCLASS_HPP

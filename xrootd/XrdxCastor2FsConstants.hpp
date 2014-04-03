@@ -22,8 +22,7 @@
  * 
  ******************************************************************************/
 
-#ifndef __XCASTOR_FSCONSTANTS_HH__
-#define __XCASTOR_FSCONSTANTS_HH__
+#pragma once
 
 #define XCASTOR2FS_GRIDMAPCHECKINTERVAL     60 // in seconds
 #define XCASTOR2FS_METADATAUPDATEINTERVAL    1 // in seconds
@@ -34,4 +33,3 @@
 #define XCASTOR2FS_RESP_TIMEOUT            600 ///< timeout for async responses 
 #define XCASTOR2FS_MAX_REQUESTS           2000 ///< max no. of requests on-the-fly
 
-#endif // __XCASTOR_FSCONSTANTS_HH__

@@ -2,8 +2,7 @@
  * $Id: Cregexp_magic.h,v 1.1 2001/11/30 10:55:27 jdurand Exp $
  */
 
-#ifndef __Cregexp_magic_h
-#define __Cregexp_magic_h
+#pragma once
 
 /*
  * The first byte of the regexp internal "program" is actually this magic
@@ -15,4 +14,3 @@
 #endif
 #define	CREGEXP_MAGIC 0234
 
-#endif /* __Cregexp_magic_h */

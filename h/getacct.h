@@ -7,8 +7,7 @@
  */
 
 
-#ifndef GETACCT_H
-#define GETACCT_H
+#pragma once
 
 #define ACCOUNT_VAR	"ACCOUNT"
 
@@ -20,4 +19,3 @@
 EXTERN_C char *getacct_r (char *);
 EXTERN_C char *getacct (void);
 
-#endif /* GETACCT_H */

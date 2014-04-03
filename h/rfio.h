@@ -10,8 +10,7 @@
  * rfio.h     -  Remote File Access internal declarations
  */
 
-#ifndef _RFIO_H_INCLUDED_
-#define _RFIO_H_INCLUDED_
+#pragma once
 
 #ifdef CHECKI
 #undef CHECKI
@@ -255,5 +254,4 @@ struct rfiostat	{
 #endif /* RFIO_NOREDEFINE                         IN2P3 */
 #endif /* RFIO_KERNEL */
 
-#endif /* _RFIO_H_INCLUDED_ */
 

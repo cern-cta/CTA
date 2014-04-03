@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef __getconfent_h
-#define __getconfent_h
+#pragma once
 
 #include "osdep.h"
 
@@ -33,4 +32,3 @@ EXTERN_C int getconfent_multi (const char *, const char *, int, char ***, int *)
 EXTERN_C int getconfent_multi_fromfile (const char *, const char *, const char *, int, char ***, int *);
 EXTERN_C int getconfent_parser (char **, char ***, int *);
 
-#endif /* __getconfent_h */

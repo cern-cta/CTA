@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef IO_ISTREAMCONVERTER_HPP
-#define IO_ISTREAMCONVERTER_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/IConverter.hpp"
@@ -87,4 +86,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // IO_ISTREAMCONVERTER_HPP

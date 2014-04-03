@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_RMCDCMDLINE_HPP
-#define CASTOR_TAPE_RMC_RMCDCMDLINE_HPP 1
+#pragma once
 
 namespace castor {
 namespace tape   {
@@ -56,4 +55,3 @@ struct RmcdCmdLine {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_RMC_RMCDCMDLINE_HPP

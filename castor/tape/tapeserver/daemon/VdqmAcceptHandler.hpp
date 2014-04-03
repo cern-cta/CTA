@@ -20,8 +20,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_DAEMON_VDQMACCEPTHANDLER_HPP
-#define CASTOR_TAPE_TAPESERVER_DAEMON_VDQMACCEPTHANDLER_HPP 1
+#pragma once
 
 #include "castor/io/PollEventHandler.hpp"
 #include "castor/io/PollReactor.hpp"
@@ -79,6 +78,8 @@ public:
 
   /**
    * Destructor.
+   *
+   * Closes the listen socket.
    */
   ~VdqmAcceptHandler() throw();
 
@@ -123,4 +124,3 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_DAEMON_VDQMACCEPTHANDLER_HPP

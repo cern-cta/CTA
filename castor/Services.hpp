@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_SERVICES_HPP
-#define CASTOR_SERVICES_HPP 1
+#pragma once
 
 //Include Files
 #include <vector>
@@ -225,4 +224,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_SERVICES_HPP

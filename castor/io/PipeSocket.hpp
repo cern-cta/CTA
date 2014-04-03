@@ -24,8 +24,7 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#ifndef CASTOR_IO_PIPESOCKET_HPP
-#define CASTOR_IO_PIPESOCKET_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/io/AbstractSocket.hpp"
@@ -142,5 +141,4 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_IO_PIPESOCKET_HPP
 

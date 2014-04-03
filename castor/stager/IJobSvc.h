@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_IJOBSVC_H
-#define CASTOR_IJOBSVC_H 1
+#pragma once
 
 #include "castor/Constants.h"
 
@@ -149,4 +148,3 @@ int Cstager_IJobSvc_firstByteWritten
  int* errorCode,
  char** errorMsg);
 
-#endif /* CASTOR_IJOBSVC_H */

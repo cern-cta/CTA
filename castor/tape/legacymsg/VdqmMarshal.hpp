@@ -23,8 +23,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_VDQMMARSHAL_HPP
-#define CASTOR_TAPE_LEGACYMSG_VDQMMARSHAL_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/legacymsg/MessageHeader.hpp"
@@ -79,4 +78,3 @@ void unmarshal(const char * &src, size_t &srcLen,
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_VDQMMARSHAL_HPP

@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_IO_ABSTRACTUDPSOCKET_HPP
-#define CASTOR_IO_ABSTRACTUDPSOCKET_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/io/AbstractSocket.hpp"
@@ -129,4 +128,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_IO_ABSTRACTUDPSOCKET_HPP

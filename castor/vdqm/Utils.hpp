@@ -23,8 +23,7 @@
  * @author Castor dev team
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_UTILS_HPP
-#define CASTOR_VDQM_UTILS_HPP 1
+#pragma once
 
 
 namespace castor {
@@ -62,4 +61,3 @@ namespace castor {
 } // namespace castor
 
 
-#endif // CASTOR_VDQM_UTILS_HPP

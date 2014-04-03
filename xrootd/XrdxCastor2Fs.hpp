@@ -22,8 +22,7 @@
  * 
  ******************************************************************************/
 
-#ifndef __XCASTOR_FS_HH__
-#define __XCASTOR_FS_HH__
+#pragma once
 
 /*-----------------------------------------------------------------------------*/
 #include <sys/types.h>
@@ -1123,4 +1122,3 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
     static  XrdSysError* eDest;
 };
 
-#endif // __XCASTOR_FS_HH__

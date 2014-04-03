@@ -10,8 +10,7 @@
 /*
  */
 
-#ifndef _VMGR_API_H
-#define _VMGR_API_H
+#pragma once
 #include "osdep.h"
 #include "vmgr_constants.h"
 #include "vmgr_struct.h"
@@ -84,4 +83,3 @@ EXTERN_C int vmgr_tpmounted (const char *, int, int);
 EXTERN_C int vmgr_updatetape (const char *, int, u_signed64, int, int, int);
 EXTERN_C int vmgrcheck (char *, char *, char *, char *, char *, int, uid_t, gid_t);
 EXTERN_C int vmgrchecki (char *, char *, char *, char *, char *, int, uid_t, gid_t, char *);
-#endif

@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_TESTINGBRIDGEPROTOCOLENGINE_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_TESTINGBRIDGEPROTOCOLENGINE_HPP 1
+#pragma once
 
 #include "castor/tape/tapebridge/BridgeProtocolEngine.hpp"
 #include "test/unittest/test_exception.hpp"
@@ -159,4 +158,3 @@ public:
 } // namespace tape
 } // namespace castor
 
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_TESTINGBRIDGEPROTOCOLENGINE_HPP

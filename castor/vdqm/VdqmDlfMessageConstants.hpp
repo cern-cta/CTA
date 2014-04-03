@@ -25,8 +25,7 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_VDQMDLFMESSAGECONSTANTS_HPP
-#define CASTOR_VDQM_VDQMDLFMESSAGECONSTANTS_HPP 1
+#pragma once
 
 
 namespace castor { namespace vdqm { enum VdqmDlfMessages {
@@ -154,4 +153,3 @@ VDQM_RECEIVED_UNIT_MBCOUNT=119 /* "Received VDQM_UNIT_MBCOUNT" */
 }; } } // enum VdqmDlfMessages - namespace vdqm - namespace castor
 
 
-#endif // CASTOR_VDQM_VDQMDLFMESSAGECONSTANTS_HPP

@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef DLF_TIMESTAMP_HPP
-#define DLF_TIMESTAMP_HPP 1
+#pragma once
 
 // Include Files
 #include <time.h>
@@ -61,4 +60,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // DLF_TIMESTAMP_HPP

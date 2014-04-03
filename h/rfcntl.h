@@ -29,6 +29,8 @@
  * O_EXCL      002000   000200   004000
  */
 
+#pragma once
+
 #if defined(linux) || defined(__APPLE__)
 
 #if defined(linux)

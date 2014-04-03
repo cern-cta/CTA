@@ -10,8 +10,7 @@
 /*
  */
  
-#ifndef _CUPV_STRUCT_H
-#define _CUPV_STRUCT_H
+#pragma once
  
 #include "Castor_limits.h"
 
@@ -23,7 +22,6 @@ struct Cupv_userpriv {
   int privcat;
 };
 
-#endif
 
 
 

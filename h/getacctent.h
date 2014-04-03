@@ -7,8 +7,7 @@
  */
 
 
-#ifndef GETACCTENT_H
-#define GETACCTENT_H
+#pragma once
 #include <osdep.h>
 
 #ifndef ACCT_FILE
@@ -26,4 +25,3 @@
 
 EXTERN_C char *getacctent (struct passwd *, char *, char *, int);
 
-#endif /* GETACCTENT_H */

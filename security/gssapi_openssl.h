@@ -8,8 +8,7 @@
  */
 #endif
 
-#ifndef _GSSAPI_OPENSSL_H
-#define _GSSAPI_OPENSSL_H
+#pragma once
 
 #include "gssapi.h"
 #include "globus_gsi_gss_constants.h"
@@ -146,4 +145,3 @@ const gss_OID_desc * const              gss_proxycertinfo_extension;
 extern
 globus_thread_once_t                    once_control;
 
-#endif /* _GSSAPI_OPENSSL_H */

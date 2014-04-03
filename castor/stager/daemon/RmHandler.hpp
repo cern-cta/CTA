@@ -4,8 +4,7 @@
 /*********************************************************************************/
 
 
-#ifndef STAGER_RM_HANDLER_HPP
-#define STAGER_RM_HANDLER_HPP 1
+#pragma once
 
 #include "castor/stager/daemon/RequestHandler.hpp"
 #include "castor/stager/daemon/RequestHelper.hpp"
@@ -54,4 +53,3 @@ namespace castor{
 
 
 
-#endif
