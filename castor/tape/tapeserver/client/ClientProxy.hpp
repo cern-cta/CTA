@@ -160,7 +160,7 @@ namespace client {
     
     /** The file transaction id a.k.a. aggregator transaction id. This is the 
      * serial number of the message in the session */
-    tape::tapeserver::threading::AtomicCounter<uint32_t> m_transactionId;
+    tape::threading::AtomicCounter<uint32_t> m_transactionId;
   };
   
 }
