@@ -1,4 +1,4 @@
-#pragma once
+#ifndef GLOBUS_DONT_DOCUMENT_INTERNAL
 /**
  * @file globus_gsi_gssapi_constants.h
  * @author Sam Lang, Sam Meder
@@ -6,8 +6,9 @@
  * $Revision: 1.3 $
  * $Date: 2008/01/16 15:37:28 $
  */
+#endif
 
-#ifndef _GLOBUS_GSI_GSSAPI_CONSTANTS_H_
+#pragma once
 
 extern char *                globus_l_gsi_gssapi_error_strings[];
 

@@ -1,4 +1,4 @@
-#pragma once
+#ifndef GLOBUS_DONT_DOCUMENT_INTERNAL
 /**
  * @file globus_i_gsi_credential.h
  * Globus GSI Credential Library
@@ -8,7 +8,7 @@
  * $Date: 2008/01/16 15:37:29 $
  */
 
-#ifndef GLOBUS_I_INCLUDE_GSI_CREDENTIAL_H
+#pragma once
 
 #include "globus_gsi_credential.h"
 #include "proxycertinfo.h"
@@ -255,5 +255,5 @@ globus_i_gsi_cred_error_join_chains_result(
 
 EXTERN_C_END
 
-#endif /* GLOBUS_I_INCLUDE_GSI_CREDENTIAL_H */
 
+#endif /* GLOBUS_DONT_DOCUMENT_INTERNAL */

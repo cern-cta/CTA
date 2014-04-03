@@ -1,4 +1,4 @@
-#pragma once
+#ifndef GLOBUS_DONT_DOCUMENT_INTERNAL
 /**
  * @file gssapi_openssl.h
  * @author Sam Lang, Sam Meder
@@ -6,8 +6,9 @@
  * $Revision: 1.3 $
  * $Date: 2008/01/16 15:37:29 $
  */
+#endif
 
-#ifndef _GSSAPI_OPENSSL_H
+#pragma once
 
 #include "gssapi.h"
 #include "globus_gsi_gss_constants.h"
