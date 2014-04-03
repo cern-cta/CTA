@@ -165,7 +165,6 @@ add_executable(castorThreadedUnitTests
 
 target_link_libraries(castorThreadedUnitTests
   Exception
-  File
   castorclient
   castorcommon
   castortapegatewayprotocol
@@ -188,7 +187,8 @@ target_link_libraries(castorThreadedUnitTests
   System 
   tapeserverdTest
   tapeserver 
-  Utils)
+  Utils
+  File)
 
 # Those tests are multi threaded. They could should also be run in 
 # helgrind/drd (but not memcheck)
