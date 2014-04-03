@@ -69,13 +69,30 @@ public:
    * Main routine: takes each memory block in the fifo and writes it to disk
    */
   virtual void execute() {
-    int blockId  = 0;
-    while(!m_fifo.finished()) {
-      //printf("+++ In disk write file, id=%d\n",m_fileId);
-      MemBlock *mb = m_fifo.popDataBlock();
-      mb->m_fileid = m_fileId;
-      mb->m_fileBlock = blockId++;
-      m_writer.write(mb->m_payload.get(),mb->m_payload.size());
+    try{
+      tape::diskFile::WriteFile writer(m_path);
+      int blockId  = 0;
+      
+      while(!m_fifo.finished()) {
+        MemBlock *mb = m_fifo.popDataBlock();
+        //TODO why are we modifying block id ?
+        mb->m_fileid = m_fileId;
+        mb->m_fileBlock = blockId++;
+        writer.write(mb->m_payload.get(),mb->m_payload.size());
+        m_memManager.releaseBlock(mb);
+      }
+      writer.close();
+      tapegateway::FileToRecallStruct recalledFile;
+      //fill recalledFile
+      //We are currently lacking of information to fill recalledFile
+      //log is done in m_reporter while processing reportCompletedJob
+      m_reporter.reportCompletedJob(recalledFile);
+    }
+    catch(const castor::exception::Exception& e){
+      tapegateway::FileToRecallStruct failedrecalledFile;
+      //fill failedrecalledFile
+      //log is done in m_reporter while processing reportFailedJob
+      m_reporter.reportFailedJob(failedrecalledFile,e.getMessageValue(),e.code());
     }
   }
   
