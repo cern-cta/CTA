@@ -9,8 +9,7 @@
 
 /* trace.h      tracing routines header                                 */
 
-#ifndef _TRACE_H_INCLUDED_
-#define _TRACE_H_INCLUDED_
+#pragma once
 #ifndef _SHIFT_H_INCLUDED_
 #include <osdep.h>
 #endif
@@ -29,4 +28,3 @@ EXTERN_C int  notrace;
 #define END_TRACE       if ( !notrace ) end_trace
 #define NOTRACE         {notrace = 1;}
 
-#endif /* _TRACE_H_INCLUDED_  */

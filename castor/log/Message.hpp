@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_LOG_MESSAGE_HPP 
-#define CASTOR_LOG_MESSAGE_HPP 1
+#pragma once
 
 // Include Files
 #include <string>
@@ -47,4 +46,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_LOG_MESSAGE_HPP

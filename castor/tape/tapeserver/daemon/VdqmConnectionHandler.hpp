@@ -20,8 +20,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_DAEMON_VDQMCONNECTIONHANDLER_HPP
-#define CASTOR_TAPE_TAPESERVER_DAEMON_VDQMCONNECTIONHANDLER_HPP 1
+#pragma once
 
 #include "castor/io/PollEventHandler.hpp"
 #include "castor/io/PollReactor.hpp"
@@ -187,4 +186,3 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_DAEMON_VDQMCONNECTIONHANDLER_HPP

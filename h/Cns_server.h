@@ -3,8 +3,7 @@
  * All rights reserved
  */
 
-#ifndef _CNS_SERVER_H
-#define _CNS_SERVER_H
+#pragma once
 
 #include "Cns_struct.h"
 #include "Cuuid.h"
@@ -258,4 +257,3 @@ EXTERN_C int Cns_srv_listtape (int, char *, struct Cns_srv_thread_info *, struct
 EXTERN_C int Cns_srv_readdir (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *, struct Cns_file_metadata *, struct Cns_seg_metadata *, struct Cns_user_metadata *, int, int *);
 EXTERN_C int Cns_srv_startsess (char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
 EXTERN_C int Cns_srv_starttrans (int, char *, struct Cns_srv_thread_info *, struct Cns_srv_request_info *);
-#endif

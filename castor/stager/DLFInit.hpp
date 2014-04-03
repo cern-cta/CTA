@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef STAGER_DLFINIT_HPP 
-#define STAGER_DLFINIT_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 
@@ -47,4 +46,3 @@ namespace castor {
 
 } // namespace castor
 
-#endif // STAGER_DLFINIT_HPP

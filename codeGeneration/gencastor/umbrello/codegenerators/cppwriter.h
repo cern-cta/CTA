@@ -13,8 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef CPPWRITER_H
-#define CPPWRITER_H
+#pragma once
 
 // Local includes
 #include "cppcastorwriter.h"
@@ -91,4 +90,3 @@ class CppWriter : public CppCastorWriter {
 
 };
 
-#endif // CPPWRITER_H

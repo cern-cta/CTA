@@ -20,8 +20,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_IO_POLLEVENTHANDLER_HPP
-#define CASTOR_IO_POLLEVENTHANDLER_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 
@@ -74,4 +73,3 @@ public:
 } // namespace io
 } // namespace castor
 
-#endif // CASTOR_IO_POLLEVENTHANDLER_HPP

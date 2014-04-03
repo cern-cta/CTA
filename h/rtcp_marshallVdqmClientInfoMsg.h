@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_RTCP_MARSHALLVDQMCLIENTINFOMSG_H
-#define H_RTCP_MARSHALLVDQMCLIENTINFOMSG_H 1
+#pragma once
 
 #include "h/osdep.h"
 #include "h/vdqmClientInfoMsgBody.h"
@@ -71,4 +70,3 @@ EXTERN_C int32_t rtcp_marshallVdqmClientInfoMsg(char *const buf,
 EXTERN_C int32_t rtcp_unmarshallVdqmClientInfoMsgBody(char *const buf,
   const size_t bufLen, vdqmClientInfoMsgBody_t *const msgBody);
 
-#endif /* H_RTCP_MARSHALLVDQMCLIENTINFOMSG_H */

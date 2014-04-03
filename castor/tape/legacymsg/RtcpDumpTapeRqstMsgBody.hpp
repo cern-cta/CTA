@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPDUMPTAPERQSTMSGBODY_HPP
-#define CASTOR_TAPE_LEGACYMSG_RTCPDUMPTAPERQSTMSGBODY_HPP 1
+#pragma once
 
 #include <stdint.h>
 
@@ -56,4 +55,3 @@ struct RtcpDumpTapeRqstMsgBody {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPDUMPTAPERQSTMSGBODY_HPP

@@ -23,8 +23,7 @@
  * @author Benjamin Couturier
  *****************************************************************************/
 
-#ifndef CASTOR_CLIENT_SOCKET_HPP
-#define CASTOR_CLIENT_SOCKET_HPP 1
+#pragma once
 
 // Include Files
 #include <net.h>
@@ -86,4 +85,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_CLIENT_SOCKET_HPP

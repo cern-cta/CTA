@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPFILERQST_HPP
-#define CASTOR_TAPE_LEGACYMSG_RTCPFILERQST_HPP 1
+#pragma once
 
 #include "castor/tape/legacymsg/RtcpSegmentAttributes.hpp"
 #include "h/Castor_limits.h"
@@ -113,4 +112,3 @@ struct RtcpFileRqst {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPFILERQST_HPP

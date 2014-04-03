@@ -1,5 +1,4 @@
-#ifndef CODEGENERATORS_CPPCASTORWRITER_H 
-#define CODEGENERATORS_CPPCASTORWRITER_H 1
+#pragma once
 
 // Includes
 #include <map>
@@ -86,4 +85,3 @@ class CppCastorWriter : public SimpleCodeGenerator {
 };
 
 
-#endif // CODEGENERATORS_CPPCASTORWRITER_H

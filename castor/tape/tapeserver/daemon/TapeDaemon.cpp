@@ -29,6 +29,7 @@
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
+#include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFd.hpp"
 
@@ -261,9 +262,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
   throw(castor::exception::Exception) {
-  castor::utils::SmartFd listenSock;
+  castor::utils::SmartFd vdqmListenSock;
   try {
-    listenSock.reset(io::createListenerSock(TAPE_SERVER_LISTENING_PORT));
+    vdqmListenSock.reset(io::createListenerSock(TAPE_SERVER_VDQM_LISTENING_PORT));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex(ne.code());
     ex.getMessage() << "Failed to create socket to listen for vdqm connections"
@@ -272,15 +273,15 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
   }
   {
     log::Param params[] = {
-      log::Param("listeningPort", TAPE_SERVER_LISTENING_PORT)};
+      log::Param("listeningPort", TAPE_SERVER_VDQM_LISTENING_PORT)};
     m_log(LOG_INFO, "Listening for connections from the vdqmd daemon", params);
   }
 
-  std::auto_ptr<VdqmAcceptHandler> acceptHandler;
+  std::auto_ptr<VdqmAcceptHandler> vdqmAcceptHandler;
   try {
-    acceptHandler.reset(new VdqmAcceptHandler(listenSock.get(), m_reactor,
+    vdqmAcceptHandler.reset(new VdqmAcceptHandler(vdqmListenSock.get(), m_reactor,
       m_log, m_vdqm, m_driveCatalogue));
-    listenSock.release();
+    vdqmListenSock.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
     ex.getMessage() <<
@@ -288,8 +289,38 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
       ": " << ba.what();
     throw ex;
   }
-  m_reactor.registerHandler(acceptHandler.get());
-  acceptHandler.release();
+  m_reactor.registerHandler(vdqmAcceptHandler.get());
+  vdqmAcceptHandler.release();
+  
+  castor::utils::SmartFd adminListenSock;
+  try {
+    adminListenSock.reset(io::createListenerSock(TAPE_SERVER_ADMIN_LISTENING_PORT));
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex(ne.code());
+    ex.getMessage() << "Failed to create socket to listen for admin command connections"
+      ": " << ne.getMessage().str();
+    throw ex;
+  }
+  {
+    log::Param params[] = {
+      log::Param("listeningPort", TAPE_SERVER_ADMIN_LISTENING_PORT)};
+    m_log(LOG_INFO, "Listening for connections from the admin commands", params);
+  }
+
+  std::auto_ptr<AdminAcceptHandler> adminAcceptHandler;
+  try {
+    adminAcceptHandler.reset(new AdminAcceptHandler(adminListenSock.get(), m_reactor,
+      m_log, m_vdqm, m_driveCatalogue, m_hostName));
+    adminListenSock.release();
+  } catch(std::bad_alloc &ba) {
+    castor::exception::BadAlloc ex;
+    ex.getMessage() <<
+      "Failed to create the event handler for accepting admin connections"
+      ": " << ba.what();
+    throw ex;
+  }
+  m_reactor.registerHandler(adminAcceptHandler.get());
+  adminAcceptHandler.release();
 }
 
 //------------------------------------------------------------------------------

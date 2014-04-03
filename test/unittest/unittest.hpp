@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_UNITTEST_HPP
-#define TEST_UNITTEST_UNITTEST_HPP 1
+#pragma once
 
 #include "castor/tape/legacymsg/RtcpSegmentAttributes.hpp"
 
@@ -187,4 +186,3 @@ namespace unittest {
     throw(std::exception);
 } // namespace unittest
 
-#endif // TEST_UNITTEST_UNITTEST_HPP

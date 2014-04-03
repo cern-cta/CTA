@@ -23,8 +23,7 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#ifndef CASTOR_DBCNVSVC_HPP
-#define CASTOR_DBCNVSVC_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/db/IDbStatement.hpp"
@@ -112,4 +111,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_DBCNVSVC_HPP

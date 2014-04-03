@@ -23,8 +23,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_IO_IO_HPP
-#define CASTOR_IO_IO_HPP 1
+#pragma once
 
 #include "castor/exception/AcceptConnectionInterrupted.hpp"
 #include "castor/exception/Exception.hpp"
@@ -654,4 +653,3 @@ template<int n> void unmarshalString(const char * &src,
 } // namespace io
 } // namespace castor
 
-#endif // CASTOR_IO_IO_HPP

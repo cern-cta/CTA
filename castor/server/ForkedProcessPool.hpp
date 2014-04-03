@@ -23,8 +23,7 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#ifndef CASTOR_SERVER_FORKEDPROCESSPOOL_HPP
-#define CASTOR_SERVER_FORKEDPROCESSPOOL_HPP 1
+#pragma once
 
 #include <vector>
 
@@ -110,4 +109,3 @@ namespace castor {
 } // end of namespace castor
 
 
-#endif // CASTOR_SERVER_FORKEDPROCESSPOOL_HPP

@@ -23,8 +23,7 @@
  * @author castor-dev team
  *****************************************************************************/
 
-#ifndef CASTOR_METRICS_OBJTYPECOUNTER_HPP
-#define CASTOR_METRICS_OBJTYPECOUNTER_HPP 1
+#pragma once
 
 // Include Files
 #include <string>
@@ -60,4 +59,3 @@ namespace castor {
   
 } // end of namespace castor
 
-#endif // CASTOR_METRICS_OBJTYPECOUNTER_HPP

@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_TAPEDRIVESTATUSCODES_HPP
-#define CASTOR_VDQM_TAPEDRIVESTATUSCODES_HPP
+#pragma once
 
 #ifdef __cplusplus
 namespace castor {
@@ -59,4 +58,3 @@ namespace castor {
 } /* end of namespace castor */
 
 #endif
-#endif /* CASTOR_VDQM_TAPEDRIVESTATUSCODES_HPP */

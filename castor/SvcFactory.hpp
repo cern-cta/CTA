@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_SVCFACTORY_HPP
-#define CASTOR_SVCFACTORY_HPP 1
+#pragma once
 
 // Include Files
 #include "ISvcFactory.hpp"
@@ -78,4 +77,3 @@ inline unsigned int castor::SvcFactory<Service>::id() const {
   return Service::ID();
 }
 
-#endif // CASTOR_SVCFACTORY_HPP

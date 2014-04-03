@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_EXCEPTION_NO_PORT_IN_RANGE_HPP 
-#define CASTOR_EXCEPTION_NO_PORT_IN_RANGE_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 
@@ -83,4 +82,3 @@ private:
 } // namespace exception
 } // namespace castor
 
-#endif // CASTOR_EXCEPTION_NO_PORT_IN_RANGE_HPP

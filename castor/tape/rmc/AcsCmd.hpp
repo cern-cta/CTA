@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_ACSCMD_HPP
-#define CASTOR_TAPE_RMC_ACSCMD_HPP 1
+#pragma once
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Mismatch.hpp"
@@ -130,4 +129,3 @@ protected:
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_RMC_ACSCMD_HPP

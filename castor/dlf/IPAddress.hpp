@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef DLF_IPADDRESS_HPP
-#define DLF_IPADDRESS_HPP 1
+#pragma once
 
 namespace castor {
 
@@ -58,4 +57,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // DLF_IPADDRESS_HPP

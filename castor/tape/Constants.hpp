@@ -23,8 +23,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_CONSTANTS_HPP
-#define CASTOR_TAPE_CONSTANTS_HPP 1
+#pragma once
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -56,4 +55,3 @@ namespace tape   {
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_CONSTANTS_HPP

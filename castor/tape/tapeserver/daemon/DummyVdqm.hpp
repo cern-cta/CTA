@@ -20,8 +20,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_DAEMON_DUMMYVDQM_HPP
-#define CASTOR_TAPE_TAPESERVER_DAEMON_DUMMYVDQM_HPP 1
+#pragma once
 
 #include "castor/tape/legacymsg/MessageHeader.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
@@ -103,4 +102,3 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_DAEMON_DUMMYVDQM_HPP

@@ -10,8 +10,7 @@
  * rfio_api.h    -   Remote File Access API definitions 
  */
 
-#ifndef _RFIO_API_H_INCLUDED_
-#define _RFIO_API_H_INCLUDED_
+#pragma once
 
 #ifndef _OSDEP_H_INCLUDED_
 #include <osdep.h>
@@ -285,4 +284,3 @@ EXTERN_C int rfio_HsmIf_stat64 (const char *, struct stat64 *);
 
 #endif /* RFIO_KERNEL */
 
-#endif /* _RFIO_API_H_INCLUDED_ */

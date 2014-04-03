@@ -24,8 +24,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef STAGER_ISTAGERSVC_HPP
-#define STAGER_ISTAGERSVC_HPP 1
+#pragma once
 
 // Include Files
 #include "Cns_api.h"
@@ -376,4 +375,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // STAGER_ISTAGERSVC_HPP

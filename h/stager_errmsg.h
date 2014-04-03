@@ -2,8 +2,7 @@
  * $Id*
  */
 
-#ifndef __stager_errmsg_h
-#define __stager_errmsg_h
+#pragma once
 
 #include "osdep.h"
 
@@ -24,4 +23,3 @@
  }
 #endif
 
-#endif /* __stager_errmsg_h */

@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_ICLIENTPROXY_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_ICLIENTPROXY_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
@@ -292,4 +291,3 @@ public:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_ICLIENTPROXY_HPP

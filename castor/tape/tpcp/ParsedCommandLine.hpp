@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_PARSEDCOMMANDLINE_HPP
-#define CASTOR_TAPE_TPCP_PARSEDCOMMANDLINE_HPP 1
+#pragma once
 
 #include "castor/tape/tpcp/Constants.hpp"
 #include "castor/tape/tpcp/FilenameList.hpp"
@@ -157,4 +156,3 @@ struct ParsedCommandLine {
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_TPCP_PARSEDCOMMANDLINE_HPP

@@ -22,8 +22,7 @@
  * 
  ******************************************************************************/
 
-#ifndef __XCASTOR_PROC_HH__
-#define __XCASTOR_PROC_HH__
+#pragma once
 
 /*-----------------------------------------------------------------------------*/
 #include <sys/types.h>
@@ -165,5 +164,4 @@ class XrdxCastor2Proc
     XrdOucHash<XrdxCastor2ProcFile> files; ///< hash containing the files in the dir
 };
 
-#endif // __XCASTOR_PROC_HH__
 

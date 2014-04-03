@@ -7,8 +7,7 @@
  * All rights reserved
  */
 
-#ifndef _CNS_STRUCT_H
-#define _CNS_STRUCT_H
+#pragma once
 
 			/* structures common to Name server client and server */
 
@@ -17,4 +16,3 @@ struct Cns_acl {
 	int		a_id;
 	unsigned char	a_perm;
 };
-#endif

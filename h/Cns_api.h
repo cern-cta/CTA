@@ -7,8 +7,7 @@
  * All rights reserved
  */
 
-#ifndef _CNS_API_H
-#define _CNS_API_H
+#pragma once
 #include <utime.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -317,4 +316,3 @@ EXTERN_C int Cns_getrealid (uid_t *, gid_t *);
 EXTERN_C int Cns_unsetid ();
 EXTERN_C int send2nsdx (int *, char *, char *, int, char *, int, void **, int *);
 
-#endif

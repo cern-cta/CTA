@@ -23,8 +23,7 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef _TAPEDRIVEHANDLER_HPP_
-#define _TAPEDRIVEHANDLER_HPP_
+#pragma once
 
 #include "castor/vdqm/DeviceGroupName.hpp"
 #include "castor/vdqm/TapeAccessSpecification.hpp"
@@ -218,4 +217,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif //_TAPEDRIVEHANDLER_HPP_

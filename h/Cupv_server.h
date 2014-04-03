@@ -7,8 +7,7 @@
  * All rights reserved
  */
 
-#ifndef _CUPV_SERVER_H
-#define _CUPV_SERVER_H
+#pragma once
 
 #ifdef UPVCSEC
 #include "Csec_api.h"
@@ -102,7 +101,6 @@ EXTERN_C int Cupv_srv_add (char *, struct Cupv_srv_thread_info *, struct Cupv_sr
 EXTERN_C int Cupv_srv_delete (char *, struct Cupv_srv_thread_info *, struct Cupv_srv_request_info *);
 EXTERN_C int Cupv_srv_modify (char *, struct Cupv_srv_thread_info *, struct Cupv_srv_request_info *);
 EXTERN_C int Cupv_srv_check (char *, struct Cupv_srv_thread_info *, struct Cupv_srv_request_info *);
-#endif
 
 
 

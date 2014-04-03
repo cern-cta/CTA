@@ -23,8 +23,7 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#ifndef DB_DBBASEOBJ_HPP
-#define DB_DBBASEOBJ_HPP 1
+#pragma once
 
 // Include files
 #include "castor/BaseObject.hpp"
@@ -128,4 +127,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // DB_DBBASEOBJ_HPP

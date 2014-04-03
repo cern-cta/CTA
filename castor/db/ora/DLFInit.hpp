@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef ORA_DLFINIT_HPP 
-#define ORA_DLFINIT_HPP 1
+#pragma once
 
 namespace castor {
 
@@ -49,4 +48,3 @@ namespace castor {
 
 } // namespace castor
 
-#endif // ORA_DLFINIT_HPP

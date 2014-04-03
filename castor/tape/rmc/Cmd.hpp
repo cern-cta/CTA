@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_CMD_HPP
-#define CASTOR_TAPE_RMC_CMD_HPP 1
+#pragma once
 
 #include "castor/tape/rmc/DebugBuf.hpp"
 
@@ -100,4 +99,3 @@ protected:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_RMC_CMD_HPP

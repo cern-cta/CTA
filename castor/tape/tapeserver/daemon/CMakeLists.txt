@@ -4,6 +4,7 @@ add_executable(tapeserverd
   TapeDaemonMain.cpp
   Vdqm.cpp
   VdqmAcceptHandler.cpp
+  AdminAcceptHandler.cpp
   VdqmConnectionHandler.cpp
   VdqmImpl.cpp)
 

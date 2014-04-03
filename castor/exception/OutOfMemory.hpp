@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef EXCEPTION_OUTOFMEMORY_HPP 
-#define EXCEPTION_OUTOFMEMORY_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/exception/Exception.hpp"
@@ -51,4 +50,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // EXCEPTION_OUTOFMEMORY_HPP

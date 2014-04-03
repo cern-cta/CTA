@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_STAGER_NSFILESDELETEDRESPONSE_HPP
-#define CASTOR_STAGER_NSFILESDELETEDRESPONSE_HPP
+#pragma once
 
 // Include Files
 #include "castor/rh/Response.hpp"
@@ -159,4 +158,3 @@ namespace castor {
 
 } /* end of namespace castor */
 
-#endif // CASTOR_STAGER_NSFILESDELETEDRESPONSE_HPP

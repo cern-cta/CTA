@@ -23,8 +23,7 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#ifndef DB_DBBASECNV_HPP
-#define DB_DBBASECNV_HPP 1
+#pragma once
 
 // Include files
 #include "castor/IConverter.hpp"
@@ -82,4 +81,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // DB_DBBASECNV_HPP

@@ -8,8 +8,7 @@
  */
 #endif
 
-#ifndef _GLOBUS_GSI_GSSAPI_CONSTANTS_H_
-#define _GLOBUS_GSI_GSSAPI_CONSTANTS_H_
+#pragma once
 
 extern char *                globus_l_gsi_gssapi_error_strings[];
 
@@ -149,4 +148,3 @@ typedef enum
 #define GSS_SSL_MESSAGE_DIGEST_PADDING  12
 #define GSS_SSL3_WRITE_SEQUENCE_SIZE    8
 
-#endif

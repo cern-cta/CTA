@@ -12,8 +12,7 @@
 
 /* rfio_errno.h   Thread safe rfio_errno  */
 
-#ifndef _RFIO_ERRNO_H_INCLUDED_
-#define _RFIO_ERRNO_H_INCLUDED_
+#pragma once
 
 #ifndef _OSDEP_H_INCLUDED_
 #include <osdep.h>                  /* EXTERN_C */
@@ -37,4 +36,3 @@ EXTERN_C const char *rfio_serror_r (char*, size_t);
 EXTERN_C const char *rfio_serror (void);
 EXTERN_C void rfio_perror (char *);
 
-#endif /* _RFIO_ERRNO_H_INCLUDED_ */

@@ -23,8 +23,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_VECTORADDRESS_HPP
-#define CASTOR_VECTORADDRESS_HPP
+#pragma once
 
 // Include Files
 #include "castor/IAddress.hpp"
@@ -205,4 +204,3 @@ namespace castor {
 
 } /* end of namespace castor */
 
-#endif // CASTOR_VECTORADDRESS_HPP

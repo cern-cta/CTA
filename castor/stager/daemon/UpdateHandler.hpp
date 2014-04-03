@@ -4,8 +4,7 @@
 /*************************************************************************************************************************/
 
 
-#ifndef STAGER_UPDATE_HANDLER_HPP
-#define STAGER_UPDATE_HANDLER_HPP 1
+#pragma once
 
 
 #include "serrno.h"
@@ -52,4 +51,3 @@ namespace castor{
 
 
 
-#endif

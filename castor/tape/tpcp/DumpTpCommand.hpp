@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_READTPCOMMAND_HPP
-#define CASTOR_TAPE_TPCP_READTPCOMMAND_HPP 1
+#pragma once
 
 #include "castor/tape/tpcp/TpcpCommand.hpp"
 
@@ -181,4 +180,3 @@ private:
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_TPCP_READTPCOMMAND_HPP

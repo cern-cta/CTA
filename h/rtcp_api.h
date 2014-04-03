@@ -11,8 +11,7 @@
  * rtcp_api.h - rtcopy client API prototypes
  */
 
-#if !defined(RTCP_API_H)
-#define RTCP_API_H
+#pragma once
 
 #include <osdep.h>
 #include <Cuuid.h>
@@ -27,5 +26,4 @@ EXTERN_C int rtcp_NewFileList (
 			       int
 			       );
 
-#endif /* RTCP_API_H */
 

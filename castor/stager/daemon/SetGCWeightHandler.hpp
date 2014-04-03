@@ -5,8 +5,7 @@
 /***************************************************************************************************/
 
 
-#ifndef STAGER_SET_GC_HANDLER_HPP
-#define STAGER_SET_GC_HANDLER_HPP 1
+#pragma once
 
 #include "serrno.h"
 #include <errno.h>
@@ -44,4 +43,3 @@ namespace castor{
   }//end namespace stager
 }//end namespace castor
 
-#endif 

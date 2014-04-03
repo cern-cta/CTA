@@ -23,8 +23,7 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef STAGER_DAEMON_ERRORSVCTHREAD_HPP
-#define STAGER_DAEMON_ERRORSVCTHREAD_HPP 1
+#pragma once
 
 #include "castor/IObject.hpp"
 #include "castor/IClient.hpp"
@@ -72,4 +71,3 @@ namespace castor {
   
 } //end namespace castor
 
-#endif

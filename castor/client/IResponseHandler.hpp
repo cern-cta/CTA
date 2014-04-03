@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CLIENT_IRESPONSEHANDLER_HPP 
-#define CLIENT_IRESPONSEHANDLER_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/exception/Exception.hpp"
@@ -67,4 +66,3 @@ namespace castor {
   
 } // end of namespace castor
       
-#endif // CLIENT_IRESPONSEHANDLER_HPP

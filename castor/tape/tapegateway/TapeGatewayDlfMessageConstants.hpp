@@ -25,8 +25,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEGATEWAY_TAPEGATEWAYDLFMESSAGECONSTANTS_HPP
-#define CASTOR_TAPE_TAPEGATEWAY_TAPEGATEWAYDLFMESSAGECONSTANTS_HPP 1
+#pragma once
 
 
 namespace castor      {
@@ -199,4 +198,3 @@ WORKER_RECALL_LIST_RETRIEVED=163 /* "Worker: files to recall retrieved in bulk f
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_TAPEGATEWAY_TAPEGATEWAYDLFMESSAGECONSTANTS_HPP

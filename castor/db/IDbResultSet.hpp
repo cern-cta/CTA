@@ -23,8 +23,7 @@
  * @author Giuseppe Lo Presti, giuseppe.lopresti@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_DB_IDBRESULTSET_HPP
-#define CASTOR_DB_IDBRESULTSET_HPP
+#pragma once
 
 #include <string>
 #include "osdep.h"
@@ -75,5 +74,4 @@ namespace castor {
 
 } 
 
-#endif // CASTOR_DB_IDBRESULTSET_HPP
 

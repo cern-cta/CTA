@@ -22,8 +22,7 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef _CASTOR_VDQM_DATABASEHELPER_HPP_
-#define _CASTOR_VDQM_DATABASEHELPER_HPP_
+#pragma once
 
 #include "castor/BaseObject.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
@@ -94,4 +93,3 @@ namespace castor {
 
 } // namespace castor
 
-#endif // _CASTOR_VDQM_DATABASEHELPER_HPP_

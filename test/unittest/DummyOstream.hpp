@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_DUMMYOSTREAM_HPP
-#define TEST_UNITTEST_DUMMYOSTREAM_HPP 1
+#pragma once
 
 #include "test/unittest/DummyStreambuf.hpp"
 
@@ -52,4 +51,3 @@ private:
 
 } // namespace unittest
 
-#endif // TEST_UNITTEST_DUMMYOSTREAM_HPP

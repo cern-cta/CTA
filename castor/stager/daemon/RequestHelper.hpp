@@ -24,8 +24,7 @@
  *****************************************************************************/
 
 
-#ifndef STAGER_REQUEST_HELPER_HPP
-#define STAGER_REQUEST_HELPER_HPP 1
+#pragma once
 
 #include <vector>
 #include <iostream>
@@ -155,4 +154,3 @@ namespace castor {
   
 }//end namespace castor
 
-#endif

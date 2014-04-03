@@ -22,8 +22,7 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
-#ifndef _CASTOR_TAPE_UTILS_SHUTDOWNBOOLFUNCTOR_HPP_
-#define _CASTOR_TAPE_UTILS_SHUTDOWNBOOLFUNCTOR_HPP_
+#pragma once
 
 #include "castor/tape/utils/BoolFunctor.hpp"
 
@@ -50,4 +49,3 @@ private:
 } // namespace tape
 } // namespace castor      
 
-#endif // _CASTOR_TAPE_UTILS_SHUTDOWNBOOLFUNCTOR_HPP_

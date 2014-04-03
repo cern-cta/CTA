@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_UTILS_SMARTARRAYPTR
-#define CASTOR_UTILS_SMARTARRAYPTR
+#pragma once
 
 #include "castor/exception/NotAnOwner.hpp"
 
@@ -161,4 +160,3 @@ private:
 } // namespace utils
 } // namespace castor
 
-#endif // CASTOR_UTILS_SMARTARRAYPTR

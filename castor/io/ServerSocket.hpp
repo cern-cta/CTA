@@ -24,8 +24,7 @@
  * @author Benjamin Couturier
  *****************************************************************************/
 
-#ifndef CASTOR_SERVER_SOCKET_HPP
-#define CASTOR_SERVER_SOCKET_HPP 1
+#pragma once
 
 // Include Files
 #include <net.h>
@@ -149,4 +148,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_SERVER_SOCKET_HPP

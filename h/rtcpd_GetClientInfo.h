@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_RTCPD_GETCLIENTINFO_H
-#define H_RTCPD_GETCLIENTINFO_H 1
+#pragma once
 
 #include "h/net.h"
 #include "h/osdep.h"
@@ -72,4 +71,3 @@ EXTERN_C int rtcpd_GetClientInfo(
   char                           *const errBuf,
   const size_t                   errBufLen);
 
-#endif /* H_RTCPD_GETCLIENTINFO_H */

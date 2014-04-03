@@ -22,8 +22,7 @@
  *
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
-#ifndef CASTOR_TAPE_TAPEBRIDGE_BRIGEINFO2SENDER_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_BRIGEINFO2SENDER_HPP
+#pragma once
 
 #include "castor/io/AbstractTCPSocket.hpp"
 #include "castor/tape/legacymsg/RtcpMarshal.hpp"
@@ -85,4 +84,3 @@ namespace tapebridge {
 } // namespace tape
 } // namespace castor      
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_BRIGEINFO2SENDER_HPP

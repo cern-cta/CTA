@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_TESTINGACSMOUNTCMD_HPP
-#define CASTOR_TAPE_RMC_TESTINGACSMOUNTCMD_HPP 1
+#pragma once
 
 #include "castor/tape/rmc/AcsMountCmd.hpp"
 
@@ -54,4 +53,3 @@ public:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_RMC_TESTINGACSMOUNTCMD_HPP

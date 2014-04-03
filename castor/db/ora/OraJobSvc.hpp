@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef ORA_ORAJOBSVC_HPP
-#define ORA_ORAJOBSVC_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/BaseSvc.hpp"
@@ -264,4 +263,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // ORA_ORAJOBSVC_HPP

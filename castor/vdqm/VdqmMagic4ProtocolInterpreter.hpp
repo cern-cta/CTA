@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_VDQMMAGIC4PROTOCOLINTERPRETER_HPP
-#define CASTOR_VDQM_VDQMMAGIC4PROTOCOLINTERPRETER_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 #include "castor/io/ServerSocket.hpp"
@@ -106,4 +105,3 @@ namespace castor {
 
 } // namespace castor      
 
-#endif // CASTOR_VDQM_VDQMMAGIC4PROTOCOLINTERPRETER_HPP

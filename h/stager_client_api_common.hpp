@@ -6,8 +6,7 @@
  * only because of the bool field in stager_client_api_thread_info.
  */
 
-#ifndef STAGER_CLIENT_API_COMMON_HPP
-#define STAGER_CLIENT_API_COMMON_HPP
+#pragma once
 
 #include <sys/types.h>
 #include "osdep.h"
@@ -49,4 +48,3 @@ stage_resetid();
 int setDefaultOption(struct stage_options* opts)
   throw(castor::exception::Exception);
 
-#endif /* STAGER_CLIENT_API_COMMON_HPP */

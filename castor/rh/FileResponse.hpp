@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_RH_FILERESPONSE_HPP
-#define CASTOR_RH_FILERESPONSE_HPP
+#pragma once
 
 // Include Files
 #include "castor/rh/Response.hpp"
@@ -230,4 +229,3 @@ namespace castor {
 
 } /* end of namespace castor */
 
-#endif // CASTOR_RH_FILERESPONSE_HPP

@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef TAPEGATEWAY_NSTAPEGATEWAYHELPER_HPP
-#define TAPEGATEWAY_NSTAPEGATEWAYHELPER_HPP 
+#pragma once
 
 // Include Files
 
@@ -71,4 +70,3 @@ namespace castor {
 
 }  // end of namespace castor
 
-#endif // TAPEGATEWAY_NSTAPEGATEWAYHELPER_HPP 

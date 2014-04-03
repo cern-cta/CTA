@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_MOUNTCMDLINE_HPP
-#define CASTOR_TAPE_RMC_MOUNTCMDLINE_HPP 1
+#pragma once
 
 #include <string>
 
@@ -80,4 +79,3 @@ struct MountCmdLine {
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_RMC_MOUNTCMDLINE_HPP

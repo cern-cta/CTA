@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_DB_ORA_SMARTOCCIRESULTSET
-#define CASTOR_DB_ORA_SMARTOCCIRESULTSET
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 
@@ -140,4 +139,3 @@ private:
 } // namespace db
 } // namespace castor
 
-#endif // CASTOR_DB_ORA_SMARTOCCIRESULTSET

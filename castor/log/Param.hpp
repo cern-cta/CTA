@@ -23,8 +23,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_LOG_PARAM_HPP
-#define CASTOR_LOG_PARAM_HPP 1
+#pragma once
 
 #include <sstream>
 #include <string.h>
@@ -91,4 +90,3 @@ private:
 } // namespace log
 } // namespace castor
 
-#endif // CASTOR_LOG_PARAM_HPP

@@ -11,8 +11,7 @@
  */
 
 
-#ifndef _CGRP_H
-#define _CGRP_H
+#pragma once
 
 #include <osdep.h>
 #include <grp.h>
@@ -21,5 +20,4 @@
 EXTERN_C struct group *Cgetgrnam (const char *);
 EXTERN_C struct group *Cgetgrgid (gid_t);
 
-#endif /* _CGRP_H */
 

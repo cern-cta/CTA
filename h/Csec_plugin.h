@@ -1,5 +1,4 @@
-#ifndef _CSEC_PLUGIN_H
-#define _CSEC_PLUGIN_H
+#pragma once
 
 #include <Csec_common.h>
 #include "Cpwd.h"
@@ -172,4 +171,3 @@ static int *_Csec_plugin_serrno(FPARG) {
 #define Cgethostbyaddr (*FP->Cgethostbyaddr)
 
 #endif /* _CSEC_CALLS_PLUGIN */
-#endif /* Csec_plugin.h */

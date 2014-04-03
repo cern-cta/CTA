@@ -1,5 +1,4 @@
-#ifndef CODEGENERATORS_CPPHDBCNVWRITER_H 
-#define CODEGENERATORS_CPPHDBCNVWRITER_H 1
+#pragma once
 
 // Include files
 
@@ -52,4 +51,3 @@ class CppHDbCnvWriter : public CppHBaseCnvWriter {
     
 };
 
-#endif // CODEGENERATORS_CPPHDBCNVWRITER_H

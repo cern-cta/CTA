@@ -26,8 +26,7 @@
  * @author Dennis Waldron
  *****************************************************************************/
 
-#ifndef QUEUE_HPP
-#define QUEUE_HPP 1
+#pragma once
 
 // Include files
 #include <sys/time.h>
@@ -167,4 +166,3 @@ namespace castor {
 
 } // End of namespace castor
 
-#endif // QUEUE_HPP

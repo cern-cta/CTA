@@ -23,8 +23,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_UTILS_TPCONFIGLINE_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_UTILS_TPCONFIGLINE_HPP 1
+#pragma once
 
 #include <string>
 
@@ -62,4 +61,3 @@ struct TpconfigLine {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_UTILS_TPCONFIGLINE_HPP

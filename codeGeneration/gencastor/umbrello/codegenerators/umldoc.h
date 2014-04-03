@@ -9,8 +9,7 @@
  *   Umbrello UML Modeller Authors <uml-devel@uml.sf.net>                  *
  ***************************************************************************/
 
-#ifndef UMLDOC_H
-#define UMLDOC_H
+#pragma once
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -917,4 +916,3 @@ signals:
 
 };
 
-#endif // UMLDOC_H

@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef EXCEPTION_BUSY_HPP 
-#define EXCEPTION_BUSY_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/exception/Exception.hpp"
@@ -51,4 +50,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // EXCEPTION_BUSY_HPP

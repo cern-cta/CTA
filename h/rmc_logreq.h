@@ -3,9 +3,7 @@
  * All rights reserved
  */
 
-#ifndef _RMC_LOGREQ_H
-#define _RMC_LOGREQ_H 1
+#pragma once
 
 void rmc_logreq(const char *const func, char *const logbuf);
 
-#endif

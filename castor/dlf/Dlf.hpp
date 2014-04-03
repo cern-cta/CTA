@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef DLF_DLF_WRITE_HPP
-#define DLF_DLF_WRITE_HPP 1
+#pragma once
 
 // Include Files
 #include "dlf_api.h"
@@ -242,4 +241,3 @@ namespace castor {
 } // end of namespace castor
 
 
-#endif // DLF_DLF_WRITE_HPP

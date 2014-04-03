@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef H_RFIO_XY_H 
-#define H_RFIO_XY_H 1
+#pragma once
 
 int rfio_xysock(int lun);
 
@@ -40,4 +39,3 @@ int rfio_xyread(int lun, char* buf, int nrec, int nwant,
 int rfio_xywrite(int lun, char* buf, int nrec, int nwrit,
                  char* chopt, int *irc);
 
-#endif /* H_RFIO_XY_H */

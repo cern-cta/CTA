@@ -131,8 +131,7 @@
  *   be duly scheduled using the proper method.
  */
 
-#ifndef stager_client_api_h
-#define stager_client_api_h
+#pragma once
 
 #include <stdio.h>
 #include <osdep.h>
@@ -1594,4 +1593,3 @@ FREE_STRUCT_LIST_DECL(subrequestquery_resp)
 #define MOVER_PROTOCOL_GSIFTP "gsiftp"
 
 
-#endif /* stager_client_api_h */

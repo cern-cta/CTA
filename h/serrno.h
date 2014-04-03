@@ -9,8 +9,7 @@
 
 /* serrno.h     Special error numbers - not in errno.h                  */
 
-#ifndef _SERRNO_H_INCLUDED_
-#define _SERRNO_H_INCLUDED_
+#pragma once
 
 #ifndef _SHIFT_H_INCLUDED_
 #include <osdep.h>                      /* EXTERN_C   */
@@ -518,4 +517,3 @@ EXTERN_C void sperror (char *);
 
 extern const char *sys_serrlist[]; /* Error text array             */
 
-#endif /* _SERRNO_H_INCLUDED_ */

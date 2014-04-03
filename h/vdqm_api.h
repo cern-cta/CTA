@@ -14,8 +14,7 @@
  * vdqm_api.h - VDQM client API library definitions
  */
 
-#ifndef _VDQM_API_H
-#define _VDQM_API_H
+#pragma once
 
 #include <osdep.h>
 #include <vdqm_constants.h>
@@ -52,4 +51,3 @@ EXTERN_C int vdqm_SendDedicate (char*, char*, char*, char*);
 EXTERN_C int vdqm_CreateRequestForAggregator (vdqmnw_t *nw, int *reqID, char *VID, char *dgn, char *server, char *unit, int mode, int client_port);
 EXTERN_C int vdqm_QueueRequestForAggregator (vdqmnw_t *nw);
 
-#endif /* _VDQM_API_H */

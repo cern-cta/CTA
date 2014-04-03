@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_UTILS_INDEXEDCONTAINER_HPP
-#define CASTOR_TAPE_UTILS_INDEXEDCONTAINER_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
@@ -305,4 +304,3 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_UTILS_INDEXEDCONTAINER_HPP

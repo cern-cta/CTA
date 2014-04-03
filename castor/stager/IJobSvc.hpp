@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef STAGER_IJOBSVC_HPP
-#define STAGER_IJOBSVC_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/Constants.hpp"
@@ -180,4 +179,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // STAGER_IJOBSVC_HPP

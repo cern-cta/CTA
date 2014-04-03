@@ -20,8 +20,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_IO_DUMMYPOLLEVENTHANDLER_HPP
-#define CASTOR_IO_DUMMYPOLLEVENTHANDLER_HPP 1
+#pragma once
 
 #include "castor/io/PollEventHandler.hpp"
 
@@ -75,4 +74,3 @@ private:
 } // namespace io
 } // namespace castor
 
-#endif // CASTOR_IO_DUMMYPOLLEVENTHANDLER_HPP

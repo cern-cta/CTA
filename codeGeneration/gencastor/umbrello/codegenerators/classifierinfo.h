@@ -13,8 +13,7 @@
  *                                                                         *
  ***************************************************************************/
 
-#ifndef CLASSIFIERINFO_H
-#define CLASSIFIERINFO_H
+#pragma once
 
 #include "../umldoc.h"
 #include "../attribute.h"
@@ -238,5 +237,4 @@ class ClassifierInfo {
 
 };
 
-#endif // CLASSIFIERINFO_H
 

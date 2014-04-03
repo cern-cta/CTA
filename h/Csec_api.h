@@ -1,5 +1,4 @@
-#ifndef _CSEC_API_H
-#define _CSEC_API_H
+#pragma once
 
 #include <sys/types.h>
 #include <Csec_common.h>
@@ -66,4 +65,3 @@ int Csec_mapToLocalUser (const char *, const char *, char *, size_t, uid_t *, gi
 /* Funtion providing a default per thread context */
 Csec_context_t* Csec_get_default_context ();
 
-#endif

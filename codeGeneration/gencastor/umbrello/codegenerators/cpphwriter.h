@@ -1,5 +1,4 @@
-#ifndef CODEGENERATORS_CPPHWRITER_H 
-#define CODEGENERATORS_CPPHWRITER_H 1
+#pragma once
 
 // Include files 
 #include <qfile.h>
@@ -51,4 +50,3 @@ class CppHWriter : public CppBaseWriter {
 
 };
 
-#endif // CODEGENERATORS_CPPHWRITER_H

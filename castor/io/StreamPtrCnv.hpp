@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef IO_STREAMPTRCNV_HPP
-#define IO_STREAMPTRCNV_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/IObject.hpp"
@@ -137,4 +136,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // IO_STREAMPTRCNV_HPP

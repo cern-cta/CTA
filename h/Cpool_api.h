@@ -8,8 +8,7 @@
  * All rights reserved
  */
 
-#ifndef __cpool_api_h
-#define __cpool_api_h
+#pragma once
 
 #include <Cthread_api.h>
 
@@ -31,5 +30,4 @@ EXTERN_C int   Cpool_create_ext (int, int *, void **);
 EXTERN_C int   Cpool_assign_ext (int, void *, void *(*)(void *), void *, int);
 EXTERN_C int   Cpool_next_index_timeout_ext (int, void *, int);
 
-#endif /* __cpool_api_h */
 

@@ -23,8 +23,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef _RBTSUBR_CONSTANTS_H
-#define _RBTSUBR_CONSTANTS_H 1
+#pragma once
 
 			/* rbtsubr return codes */
 
@@ -39,4 +38,3 @@
 #define	RBT_OMSGR	8	/* Should send a msg to operator and wait */
 #define	RBT_UNLD_DMNT	9	/* Should unload the tape and retry demount */
  
-#endif

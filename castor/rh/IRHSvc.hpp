@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef RH_IRHSVC_HPP 
-#define RH_IRHSVC_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/Constants.hpp"
@@ -107,4 +106,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // RH_IRHSVC_HPP

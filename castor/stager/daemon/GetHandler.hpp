@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef STAGER_GET_HANDLER_HPP
-#define STAGER_GET_HANDLER_HPP 1
+#pragma once
 
 // Include Files
 #include "occi.h"
@@ -61,4 +60,3 @@ namespace castor{
   }//end namespace stager
 }//end namespace castor
 
-#endif

@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef TAPEGATEWAY_VDQMTAPEGATEWAYHELPER_HPP
-#define TAPEGATEWAY_VDQMTAPEGATEWAYHELPER_HPP 
+#pragma once
 
 // Include Files
 #include "vdqm.h"
@@ -97,4 +96,3 @@ namespace castor {
 
 }  // end of namespace castor
 
-#endif // TAPEGATEWAY_VDQMTAPEGATEWAYHELPER_HPP 

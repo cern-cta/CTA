@@ -15,8 +15,7 @@
 
 
 
-#ifndef SIMPLECODEGENERATOR_H
-#define SIMPLECODEGENERATOR_H
+#pragma once
 
 #include <qstring.h>
 #include <qmap.h>
@@ -124,4 +123,3 @@ public slots:
 
 };
 
-#endif // SIMPLECODEGENERATOR_H

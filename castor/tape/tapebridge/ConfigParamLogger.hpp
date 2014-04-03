@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_CONFIGPARAMLOGGER
-#define CASTOR_TAPE_TAPEBRIDGE_CONFIGPARAMLOGGER
+#pragma once
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/tape/tapebridge/ConfigParamSource.hpp"
@@ -102,4 +101,3 @@ public:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_CONFIGPARAMLOGGER

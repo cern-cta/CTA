@@ -5,8 +5,8 @@
  * Created on March 18, 2014, 10:00 AM
  */
 
-#ifndef SUPPRESSUNUSEDVARIABLE_HPP
-#define SUPPRESSUNUSEDVARIABLE_HPP
+#pragma once
+
 namespace castor {
 namespace tape {
 namespace utils {
@@ -14,6 +14,3 @@ namespace utils {
 template <class T> void suppresUnusedVariable(const T&){}
 
 }}}
-
-#endif	/* SUPPRESSUNUSEDVARIABLE_HPP */
-

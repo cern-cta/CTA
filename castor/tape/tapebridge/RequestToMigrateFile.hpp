@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_REQUESTTOMIGRATEFILE_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_REQUESTTOMIGRATEFILE_HPP 1
+#pragma once
 
 #include <stdint.h>
 #include <string>
@@ -70,4 +69,3 @@ struct RequestToMigrateFile {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_REQUESTTOMIGRATEFILE_HPP

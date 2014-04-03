@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef STAGERJOB_RFIOPLUGIN_HPP
-#define STAGERJOB_RFIOPLUGIN_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/job/stagerjob/InstrumentedMoverPlugin.hpp"
@@ -135,4 +134,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // STAGERJOB_RFIOPLUGIN_HPP

@@ -23,8 +23,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef STAGER_CLIENT_CHANGEPRIVILEGE
-#define STAGER_CLIENT_CHANGEPRIVILEGE
+#pragma once
 
 #include <sys/types.h>
 #include "osdep.h"
@@ -43,4 +42,3 @@
 EXTERN_C int changePrivilege
 (int argc, char *argv[], int isAdd);
 
-#endif  /* STAGER_CLIENT_CHANGEPRIVILEGE */

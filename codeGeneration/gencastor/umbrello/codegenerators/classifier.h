@@ -9,8 +9,7 @@
  *   Umbrello UML Modeller Authors <uml-devel@uml.sf.net>                  *
  ***************************************************************************/
 
-#ifndef CLASSIFIER__H
-#define CLASSIFIER__H
+#pragma once
 
 #include "package.h"
 #include "umlattributelist.h"
@@ -493,4 +492,3 @@ protected:
 
 };
 
-#endif // CONCEPT_H

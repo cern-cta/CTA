@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_STAGER_DISKSERVERSTATUSCODE_HPP
-#define CASTOR_STAGER_DISKSERVERSTATUSCODE_HPP
+#pragma once
 
 #ifdef __cplusplus
 namespace castor {
@@ -54,4 +53,3 @@ namespace castor {
 } /* end of namespace castor */
 
 #endif
-#endif /* CASTOR_STAGER_DISKSERVERSTATUSCODE_HPP */

@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_EXCEPTION_EXCEPTION_HPP
-#define CASTOR_EXCEPTION_EXCEPTION_HPP 1
+#pragma once
 
 #include "../../../exception/Exception.hpp"
 #include <exception>
@@ -52,4 +51,3 @@ namespace tape {
 } //namespace tape
 } //namespace castor
 
-#endif /* CASTOR_EXCEPTION_EXCEPTION_HPP */

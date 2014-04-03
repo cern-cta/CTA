@@ -23,8 +23,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_IO_CONSTANTS_HPP
-#define CASTOR_IO_CONSTANTS_HPP 1
+#pragma once
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -40,4 +39,3 @@ namespace io     {
 } // namespace castor
 
 
-#endif // CASTOR_IO_CONSTANTS_HPP

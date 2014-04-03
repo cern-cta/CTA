@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_TPCPCOMMAND_HPP
-#define CASTOR_TAPE_TPCP_TPCPCOMMAND_HPP 1
+#pragma once
 
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Internal.hpp"
@@ -492,4 +491,3 @@ private:
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_TPCP_TPCPCOMMAND_HPP

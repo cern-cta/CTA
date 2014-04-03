@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef STAGER_TAPEVID_HPP
-#define STAGER_TAPEVID_HPP 1
+#pragma once
 
 namespace castor {
 
@@ -58,4 +57,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // STAGER_TAPEVID_HPP

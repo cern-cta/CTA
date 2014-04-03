@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_CONFIGPARAM_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_CONFIGPARAM_HPP
+#pragma once
 
 #include "castor/exception/NoValue.hpp"
 #include "castor/tape/tapebridge/ConfigParamSource.hpp"
@@ -165,4 +164,3 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_CONFIGPARAM_HPP

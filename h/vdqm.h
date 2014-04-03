@@ -14,8 +14,7 @@
  * vdqm.h - Common definitions for server and client API
  */
 
-#ifndef _VDQM_H
-#define _VDQM_H
+#pragma once
 
 #include "net.h"
 #include "vdqm_messages.h"
@@ -203,4 +202,3 @@ void *vdqm_OnRollbackThread (void *);
 
 #endif /* VDQMSERV */
 
-#endif /* VDQM_H */

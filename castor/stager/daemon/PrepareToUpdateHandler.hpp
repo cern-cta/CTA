@@ -2,8 +2,7 @@
 /* PrepareToPutHandler: Constructor and implementation of the PrepareToUpdaterequest's handler */
 /****************************************************************************************************/
 
-#ifndef STAGER_PREPARE_TO_UPDATE_HANDLER_HPP
-#define STAGER_PREPARE_TO_UPDATE_HANDLER_HPP 1
+#pragma once
 
 
 #include "serrno.h"
@@ -45,4 +44,3 @@ namespace castor{
 }//end castor namespace
 
 
-#endif

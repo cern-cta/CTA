@@ -2,8 +2,7 @@
  * Csecloader.h,v 1.00 2007/12/01 
  */
 
-#ifndef _CSECLOADER_H
-#define _CSECLOADER_H
+#pragma once
 
 #include <dlfcn.h>
 #include <Csec_api.h>
@@ -18,4 +17,3 @@ int getClientId (Csec_context_t *, char **, char **);
 int getMapUser (const char *, const char *, char *, size_t, uid_t *, gid_t *);
 int getClearContext (Csec_context_t *);
 
-#endif

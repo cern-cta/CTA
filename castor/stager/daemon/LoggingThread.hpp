@@ -22,8 +22,7 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef STAGER_DAEMON_LOGGINGTHREAD_HPP
-#define STAGER_DAEMON_LOGGINGTHREAD_HPP 1
+#pragma once
 
 #include "castor/IObject.hpp"
 #include "castor/Services.hpp"
@@ -66,4 +65,3 @@ namespace castor {
   
 } //end namespace castor
 
-#endif // STAGER_DAEMON_LOGGINGTHREAD_HPP

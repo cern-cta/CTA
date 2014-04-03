@@ -23,8 +23,7 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef _PROTOCOLFACADE_HPP_
-#define _PROTOCOLFACADE_HPP_ 1
+#pragma once
 
 #include "castor/BaseObject.hpp"
 #include "castor/io/ServerSocket.hpp"
@@ -219,4 +218,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif //_PROTOCOLFACADE_HPP_

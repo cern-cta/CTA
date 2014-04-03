@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_CONFIGPARAMSOURCE_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_CONFIGPARAMSOURCE_HPP 1
+#pragma once
 
 namespace castor     {
 namespace tape       {
@@ -59,4 +58,3 @@ public:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_CONFIGPARAMSOURCE_HPP

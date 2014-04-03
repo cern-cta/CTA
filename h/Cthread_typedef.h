@@ -7,8 +7,7 @@
  * All rights reserved
  */
 
-#ifndef __Cthread_typedef_h
-#define __Cthread_typedef_h
+#pragma once
 
 #include <osdep.h>
 
@@ -111,4 +110,3 @@ struct Cthread_protect_t {
   pthread_mutex_t            mtx; /* Associated mutex */
 };
 
-#endif /* __Cthread_typedef_h */

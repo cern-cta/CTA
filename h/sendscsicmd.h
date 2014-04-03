@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef H_SENDSCSISMD_H 
-#define H_SENDSCSISMD_H 1
+#pragma once
 
 int send_scsi_cmd (
   const int tapefd,
@@ -40,4 +39,3 @@ int send_scsi_cmd (
   int *const nb_sense_ret,
   char **const msgaddr);
 
-#endif /* H_SENDSCSISMD_H */

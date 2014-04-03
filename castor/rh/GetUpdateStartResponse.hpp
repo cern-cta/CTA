@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_RH_GETUPDATESTARTRESPONSE_HPP
-#define CASTOR_RH_GETUPDATESTARTRESPONSE_HPP
+#pragma once
 
 // Include Files
 #include "castor/rh/StartResponse.hpp"
@@ -164,4 +163,3 @@ namespace castor {
 
 } /* end of namespace castor */
 
-#endif // CASTOR_RH_GETUPDATESTARTRESPONSE_HPP

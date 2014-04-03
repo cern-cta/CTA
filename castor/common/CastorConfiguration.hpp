@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef H_CASTOR_COMMON_CASTORCONFIGURATION_HPP
-#define H_CASTOR_COMMON_CASTORCONFIGURATION_HPP 1
+#pragma once
 
 // Include Files
 #include <string>
@@ -152,4 +151,3 @@ namespace castor {
   } // namespace common
 } // namespace castor  
 
-#endif /* H_CASTOR_COMMON_CASTORCONFIGURATION_HPP */

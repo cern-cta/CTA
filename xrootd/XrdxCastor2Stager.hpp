@@ -22,8 +22,7 @@
  * 
  ******************************************************************************/
 
-#ifndef __XCASTOR_STAGER_HH__
-#define __XCASTOR_STAGER_HH__
+#pragma once
 
 
 /*-----------------------------------------------------------------------------*/
@@ -258,4 +257,3 @@ class XrdxCastor2Stager : public LogId
                             const char* serviceclass );
 };
 
-#endif // __XCASTOR_STAGER_HH__

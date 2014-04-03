@@ -23,8 +23,7 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#ifndef CASTOR_SERVER_NOTIFIERTHREAD_HPP
-#define CASTOR_SERVER_NOTIFIERTHREAD_HPP 1
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -101,4 +100,3 @@ namespace castor {
 } // end of namespace castor
 
 
-#endif // CASTOR_SERVER_NOTIFIERTHREAD_HPP

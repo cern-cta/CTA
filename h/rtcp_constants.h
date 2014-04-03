@@ -12,8 +12,7 @@
  * rtcp_constants.h - basic rtcopy constants and macros
  */
 
-#if !defined(RTCP_CONSTANTS_H)
-#define RTCP_CONSTANTS_H
+#pragma once
 /*
  * Key number for communication with rtcopy daemon
  */
@@ -401,4 +400,3 @@
 #define RSLCT_NOT_USED   222     /* Reselect requested  */
 #define ENDVOL  213     /* Old (SHIFT) ETEOV flag, End Of Volume hit */
 
-#endif /* RTCP_CONSTANTS_H */

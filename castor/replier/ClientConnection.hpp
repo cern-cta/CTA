@@ -25,8 +25,7 @@
  *****************************************************************************/
 
 
-#ifndef CASTOR_CLIENTCONNECTION_HPP
-#define CASTOR_CLIENTCONNECTION_HPP 1
+#pragma once
 
 #include "castor/BaseObject.hpp"
 #include "castor/rh/Client.hpp"
@@ -242,7 +241,6 @@ namespace castor {
   } // namespace replier
 } // namespace castor
 
-#endif // CASTOR_CLIENTCONNECTION_HPP
 
 
 

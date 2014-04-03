@@ -10,8 +10,7 @@
 /*
  */
 
-#ifndef _CTAPE_API_H
-#define _CTAPE_API_H
+#pragma once
 #include "Ctape_constants.h"
 #include "osdep.h"
 
@@ -183,4 +182,3 @@ EXTERN_C int writelbl      (int, char *, char*);
 /* tape/wrttpmrk.c     */
 EXTERN_C int wrttpmrk      (int, char *, int, int);
 
-#endif

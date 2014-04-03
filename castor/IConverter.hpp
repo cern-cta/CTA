@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_ICONVERTER_HPP
-#define CASTOR_ICONVERTER_HPP 1
+#pragma once
 
 // Include Files
 #include <vector>
@@ -197,4 +196,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_ICONVERTER_HPP

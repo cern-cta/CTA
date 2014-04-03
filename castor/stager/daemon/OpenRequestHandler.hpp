@@ -1,8 +1,7 @@
 /*******************************************************************************************************/
 /* base class for the 7 job handlers(Get,PrepareToGet,Update,PrepareToUpdate,Put,PrepareToPut,Repack) */
 /*****************************************************************************************************/
-#ifndef STAGER_JOB_REQUEST_HANDLER_HPP
-#define STAGER_JOB_REQUEST_HANDLER_HPP 1
+#pragma once
 
 #include <iostream>
 #include <string>
@@ -36,4 +35,3 @@ namespace castor{
   
 } //end namespace castor
 
-#endif

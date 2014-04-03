@@ -21,8 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef _DLF_API_H
-#define _DLF_API_H 1
+#pragma once
 
 /* Include files */
 #include <syslog.h>
@@ -232,5 +231,4 @@ EXTERN_C int dlf_writep (Cuuid_t reqid,
 EXTERN_C int dlf_isinitialized (void);
 
 
-#endif /* _DLF_API_H */
 

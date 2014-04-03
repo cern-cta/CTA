@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIGE_CONSTANTS_H
-#define H_TAPEBRIGE_CONSTANTS_H 1
+#pragma once
 
 #include <stdint.h>
 
@@ -69,4 +68,3 @@
  */
 #define TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ((uint32_t)1)
 
-#endif /* H_TAPEBRIGE_CONSTANTS_H */

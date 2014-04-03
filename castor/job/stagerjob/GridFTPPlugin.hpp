@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef STAGERJOB_GRIDFTPPLUGIN_HPP
-#define STAGERJOB_GRIDFTPPLUGIN_HPP 1
+#pragma once
 
 // Include Files
 #include <string>
@@ -139,4 +138,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // STAGERJOB_GRIDFTPPLUGIN_HPP

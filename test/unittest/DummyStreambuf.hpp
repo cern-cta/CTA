@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_DUMMYSTREAMBUF_HPP
-#define TEST_UNITTEST_DUMMYSTREAMBUF_HPP 1
+#pragma once
 
 #include <iomanip>
 #include <iostream>
@@ -39,4 +38,3 @@ class DummyStreambuf: public std::streambuf {
 
 } // namespace unittest
 
-#endif // TEST_UNITTEST_DUMMYSTREAMBUF_HPP

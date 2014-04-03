@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPSEGMENTATTRIBUTES_HPP
-#define CASTOR_TAPE_LEGACYMSG_RTCPSEGMENTATTRIBUTES_HPP 1
+#pragma once
 
 #include "h/Castor_limits.h"
 
@@ -55,4 +54,3 @@ struct RtcpSegmentAttributes {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPSEGMENTATTRIBUTES_HPP

@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_VDQMCLIENTINFOMSGBODY_H
-#define H_VDQMCLIENTINFOMSGBODY_H 1
+#pragma once
 
 #include "h/Castor_limits.h"
 #include <stdint.h>
@@ -62,4 +61,3 @@ typedef struct {
     1                     + /* drive              */ \
     1)                      /* clientName         */
 
-#endif /* H_VDQMCLIENTINFOMSGBODY_H */

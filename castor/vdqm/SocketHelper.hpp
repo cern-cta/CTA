@@ -22,8 +22,7 @@
  * @author castor dev team
  *****************************************************************************/
  
-#ifndef CASTOR_VDQM_SOCKETHELPER_HPP
-#define CASTOR_VDQM_SOCKETHELPER_HPP 1
+#pragma once
 
 #include "castor/exception/PermissionDenied.hpp"
 
@@ -106,4 +105,3 @@ namespace castor {
 
 } // namespace castor
 
-#endif // CASTOR_VDQM_SOCKETHELPER_HPP

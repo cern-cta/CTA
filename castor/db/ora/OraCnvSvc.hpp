@@ -23,8 +23,7 @@
 * @author Sebastien Ponce
 *****************************************************************************/
 
-#ifndef CASTOR_ORACNVSVC_HPP
-#define CASTOR_ORACNVSVC_HPP 1
+#pragma once
 
 // Include Files
 #include "occi.h"
@@ -171,4 +170,3 @@ namespace castor {
   
 } // end of namespace castor
 
-#endif // CASTOR_ORACNVSVC_HPP

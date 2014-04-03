@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef _CASTOR_TAPE_UTILS_TIMER_HPP_
-#define _CASTOR_TAPE_UTILS_TIMER_HPP_
+#pragma once
 
 #include <sys/time.h>
 #include "osdep.h"
@@ -71,4 +70,3 @@ namespace castor {
   } // namespace tape
 } // namespace castor
 
-#endif /* _CASTOR_TAPE_UTILS_TIMER_HPP_ */

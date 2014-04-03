@@ -1,5 +1,4 @@
-#ifndef CODEGENERATORS_CPPCPPCLASSWRITER_H 
-#define CODEGENERATORS_CPPCPPCLASSWRITER_H 1
+#pragma once
 
 // Include files
 
@@ -159,4 +158,3 @@ class CppCppClassWriter : public CppCppWriter {
 
 };
 
-#endif // CODEGENERATORS_CPPCPPCLASSWRITER_H
