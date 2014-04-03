@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_FILEWRITTENNOTIFICATION_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_FILEWRITTENNOTIFICATION_HPP 1
+#pragma once
 
 #include <stdint.h>
 #include <string>
@@ -75,4 +74,3 @@ struct FileWrittenNotification {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_FILEWRITTENNOTIFICATION_HPP

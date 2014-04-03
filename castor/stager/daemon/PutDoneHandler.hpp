@@ -4,8 +4,7 @@
 /***********************************************************************************************/
 
 
-#ifndef STAGER_PUT_DONE_HANDLER_HPP
-#define STAGER_PUT_DONE_HANDLER_HPP 1
+#pragma once
 
 
 #include "castor/IObject.hpp"
@@ -48,4 +47,3 @@ namespace castor{
 
 
 
-#endif

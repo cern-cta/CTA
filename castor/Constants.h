@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_CONSTANTS_H 
-#define CASTOR_CONSTANTS_H 1
+#pragma once
 
 #define C_ObjectsIds ObjectsIds
 #define C_ServicesIds ServicesIds
@@ -56,4 +55,3 @@ const char* C_RepresentationsIdsStrings(unsigned int type);
 
 #include "Constants.hpp"
 
-#endif /* CASTOR_CONSTANTS_H */

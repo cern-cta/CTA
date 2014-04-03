@@ -22,8 +22,7 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_TAPEMSGBODY_HPP
-#define CASTOR_TAPE_LEGACYMSG_TAPEMSGBODY_HPP 1
+#pragma once
 
 #include "castor/tape/legacymsg/RtcpErrorAppendix.hpp"
 #include "h/Castor_limits.h"
@@ -55,4 +54,3 @@ struct TapeMsgBody {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_TAPEMSGBODY

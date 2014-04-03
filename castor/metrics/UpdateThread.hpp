@@ -24,8 +24,7 @@
  * @author castor-dev team
  *****************************************************************************/
 
-#ifndef CASTOR_METRICS_UPDATETHREAD_HPP
-#define CASTOR_METRICS_UPDATETHREAD_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/server/IThread.hpp"
@@ -76,4 +75,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_METRICS_UPDATETHREAD_HPP

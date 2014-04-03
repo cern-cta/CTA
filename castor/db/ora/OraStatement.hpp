@@ -23,8 +23,7 @@
  * @author Giuseppe Lo Presti, giuseppe.lopresti@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_ORASTATEMENT_HPP
-#define CASTOR_ORASTATEMENT_HPP
+#pragma once
 
 #include <string>
 #include "castor/db/IDbStatement.hpp"
@@ -158,5 +157,4 @@ namespace castor {
     }
   }
 }
-#endif // CASTOR_ORASTATEMENT_HPP
 

@@ -5,8 +5,7 @@
  *
  */
  
-#ifndef _EXPERT_DAEMON_H
-#define _EXPERT_DAEMON_H
+#pragma once
 
 
 #define CHECKI	5	/* max interval to check for work to be done */
@@ -25,4 +24,3 @@ EXTERN_C int explogit (char *, char *, ...);
 EXTERN_C int sendrep (int, int, ...);
 EXTERN_C int exp_srv_execute (int, char*, char*, int);
 
-#endif

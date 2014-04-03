@@ -8,8 +8,7 @@
  */
 
 
-#ifndef __Cthread_api_h
-#define __Cthread_api_h
+#pragma once
 
 #include <Cthread_flags.h>
 #include <osdep.h>
@@ -83,7 +82,6 @@ EXTERN_C int    Cthread_Lock_Mtx_ext (const char *, int, void *, int);
 EXTERN_C int    Cthread_Kill (const char *, int, int, int);
 EXTERN_C void   Cthread_Exit (const char *, int, void *);
 
-#endif /* __Cthread_api_h */
 
 
 

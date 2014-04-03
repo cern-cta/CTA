@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef STAGER_REMOTEGCSVC_HPP
-#define STAGER_REMOTEGCSVC_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/BaseSvc.hpp"
@@ -174,4 +173,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // STAGER_REMOTEGCSVC_HPP

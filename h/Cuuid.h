@@ -6,8 +6,7 @@
  *
  */
 
-#ifndef _CUUID_H
-#define _CUUID_H
+#pragma once
 
 #include <osdep.h>
 #include <sys/types.h>
@@ -39,4 +38,3 @@ EXTERN_C void _unmarshall_UUID (char**, Cuuid_t *);
 #define unmarshall_UUID(ptr, uuid) _unmarshall_UUID(&(ptr), &(uuid))
 #define marshall_UUID(ptr, uuid) _marshall_UUID(&(ptr), &(uuid))
 
-#endif /* _CUUID_H */

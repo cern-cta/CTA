@@ -23,8 +23,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef SCOPEDTRANSACTION_HPP_
-#define SCOPEDTRANSACTION_HPP_
+#pragma once
 
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"
 
@@ -72,4 +71,3 @@ namespace castor {
   } // namespace tape
 } // namespace castor
 
-#endif /* SCOPEDTRANSACTION_HPP_ */

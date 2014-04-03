@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_LEGACYTXRX_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_LEGACYTXRX_HPP 1
+#pragma once
 
 #include "castor/tape/tapebridge/ILegacyTxRx.hpp"
 
@@ -119,4 +118,3 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_LEGACYTXRX_HPP

@@ -23,8 +23,7 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#ifndef CASTOR_RH_SVCCLASSCOUNTER_HPP
-#define CASTOR_RH_SVCCLASSCOUNTER_HPP 1
+#pragma once
 
 // Include Files
 #include <string>
@@ -56,4 +55,3 @@ namespace castor {
   
 } // end of namespace castor
 
-#endif // CASTOR_RH_SVCCLASSCOUNTER_HPP

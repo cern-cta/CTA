@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef H_RTCP_LBL_H 
-#define H_RTCP_LBL_H 1
+#pragma once
 
 #include <stdint.h>
 
@@ -47,4 +46,3 @@ int wrttrllbl(
 	const int  nblocks,
 	const uint32_t tapeFlushMode);
 
-#endif /* H_RTCP_LBL_H */

@@ -22,8 +22,7 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_RTCPJOBSUBMITTERTHREAD_HPP
-#define CASTOR_VDQM_RTCPJOBSUBMITTERTHREAD_HPP 1
+#pragma once
 
 #include "castor/server/SelectProcessThread.hpp"
 
@@ -139,4 +138,3 @@ namespace castor {
 
 } //end namespace castor
 
-#endif // CASTOR_VDQM_RTCPJOBSUBMITTERTHREAD_HPP

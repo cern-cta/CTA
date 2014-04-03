@@ -1,4 +1,4 @@
-#ifndef GLOBUS_DONT_DOCUMENT_INTERNAL
+#pragma once
 /**
  * @file globus_gsi_gssapi_constants.h
  * @author Sam Lang, Sam Meder
@@ -6,10 +6,8 @@
  * $Revision: 1.3 $
  * $Date: 2008/01/16 15:37:28 $
  */
-#endif
 
 #ifndef _GLOBUS_GSI_GSSAPI_CONSTANTS_H_
-#define _GLOBUS_GSI_GSSAPI_CONSTANTS_H_
 
 extern char *                globus_l_gsi_gssapi_error_strings[];
 
@@ -149,4 +147,3 @@ typedef enum
 #define GSS_SSL_MESSAGE_DIGEST_PADDING  12
 #define GSS_SSL3_WRITE_SEQUENCE_SIZE    8
 
-#endif

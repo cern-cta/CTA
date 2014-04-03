@@ -2,8 +2,7 @@
  * $Id: stage_constants.h,v 1.36 2004/03/17 13:56:50 jdurand Exp $
  */
 
-#ifndef __stage_constants_h
-#define __stage_constants_h
+#pragma once
 
 /* =================================== */
 /* stage configuration default values  */
@@ -506,4 +505,3 @@
 #define	STAGE_SHUTDOWN   115
 #define	STAGE_PING       116
 
-#endif /* __stage_constants_h */

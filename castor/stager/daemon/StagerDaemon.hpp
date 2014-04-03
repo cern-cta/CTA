@@ -23,8 +23,7 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef STAGER_MAIN_DAEMON_HPP
-#define STAGER_MAIN_DAEMON_HPP 1
+#pragma once
 
 
 #include "castor/server/MultiThreadedDaemon.hpp"
@@ -77,4 +76,3 @@ namespace castor{
 
 }//end namespace castor
 
-#endif

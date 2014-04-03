@@ -23,8 +23,7 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef _OLDREQUESTFACADE_HPP_
-#define _OLDREQUESTFACADE_HPP_
+#pragma once
 
 //Include files
 #include "castor/BaseObject.hpp"
@@ -115,4 +114,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif //_OLDREQUESTFACADE_HPP_

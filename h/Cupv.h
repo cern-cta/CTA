@@ -7,8 +7,7 @@
  * All rights reserved
  */
 
-#ifndef _CUPV_H
-#define _CUPV_H
+#pragma once
 
                         /* UPV constants */
 
@@ -49,5 +48,4 @@
 #define CUP02 "CUP02 - %s error : %s\n"
 #define CUP03 "CUP03 - illegal function %d\n"
 #define CUP09 "CUP09 - fatal configuration error: %s %s\n"
-#endif
 

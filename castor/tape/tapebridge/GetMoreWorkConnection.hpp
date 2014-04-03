@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_GETMOREWORKCONNECTION_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_GETMOREWORKCONNECTION_HPP 1
+#pragma once
 
 #include "h/Castor_limits.h"
 
@@ -144,4 +143,3 @@ struct GetMoreWorkConnection {
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_GETMOREWORKCONNECTION_HPP

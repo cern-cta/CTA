@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_STREAMOPERATORS_HPP
-#define CASTOR_TAPE_TPCP_STREAMOPERATORS_HPP 1
+#pragma once
 
 #include "castor/tape/tpcp/FilenameList.hpp"
 #include "castor/tape/tpcp/ParsedCommandLine.hpp"
@@ -64,4 +63,3 @@ std::ostream &operator<<(std::ostream &os,
 std::ostream &operator<<(std::ostream &os,
   const vmgr_tape_info_byte_u64 &value);
 
-#endif // CASTOR_TAPE_TPCP_STREAMOPERATORS_HPP

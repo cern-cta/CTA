@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIDGE_MARSHALL_H
-#define H_TAPEBRIDGE_MARSHALL_H 1
+#pragma once
 
 #include "h/osdep.h"
 #include "h/tapeBridgeClientInfo2MsgBody.h"
@@ -110,4 +109,3 @@ EXTERN_C int32_t tapebridge_marshallTapeBridgeClientInfo2Ack(char *const buf,
 EXTERN_C int32_t tapebridge_marshallTapeBridgeFlushedToTapeMsg(char *const buf,
   const size_t bufLen, const tapeBridgeFlushedToTapeMsgBody_t *const msgBody);
 
-#endif /* H_TAPEBRIDGE_MARSHALL_H */

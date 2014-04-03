@@ -3,8 +3,7 @@
 /* Basically: handle() as METHOD  and  (reqHelper,reqHelper,stgReplyHelper)  as ATTRIBUTES */
 /****************************************************************************************************/
 
-#ifndef STAGER_REQUEST_HANDLER_HPP
-#define STAGER_REQUEST_HANDLER_HPP 1
+#pragma once
 
 #include <string>
 #include <iostream>
@@ -43,4 +42,3 @@ namespace castor{
   }
 }
 
-#endif

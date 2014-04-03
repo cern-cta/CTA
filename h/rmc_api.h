@@ -10,8 +10,7 @@
 /*
  */
 
-#ifndef _RMC_API_H
-#define _RMC_API_H
+#pragma once
 
 #include "h/osdep.h"
 #include "h/smc_struct.h"
@@ -31,4 +30,3 @@ EXTERN_C int send2rmc(const char *const host, const char *const reqp, const int 
 EXTERN_C int rmc_mnt(const char *const vid, const char *const drive);
 EXTERN_C int rmc_unmnt(const char *const vid, const char *const drive);
 
-#endif

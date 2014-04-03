@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef DLF_MESSAGE_HPP 
-#define DLF_MESSAGE_HPP 1
+#pragma once
 
 // Include Files
 #include <string>
@@ -47,4 +46,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // DLF_MESSAGE_HPP

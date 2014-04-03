@@ -7,8 +7,7 @@
  */
 
 
-#ifndef YPGETACCTENT_H
-#define YPGETACCTENT_H
+#pragma once
 #include <osdep.h>
 
 #define ACCT_MAP_NAME	"account"
@@ -37,4 +36,3 @@
 
 EXTERN_C char *ypgetacctent (struct passwd *, char *, char *, int);
 
-#endif /* YPGETACCTENT_H */

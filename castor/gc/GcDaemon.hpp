@@ -26,8 +26,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef GC_GCDAEMON_HPP
-#define GC_GCDAEMON_HPP 1
+#pragma once
 
 // Include files
 #include "castor/server/MultiThreadedDaemon.hpp"
@@ -64,4 +63,3 @@ namespace castor {
 
 } // End of namespace castor
 
-#endif // GC_GCDAEMON_HPP

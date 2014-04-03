@@ -6,8 +6,7 @@
 /* just in case of error, by all the handlers                                                                    */
 /****************************************************************************************************************/
 
-#ifndef STAGER_REPLY_HELPER_HPP
-#define STAGER_REPLY_HELPER_HPP 1
+#pragma once
 
 #include "castor/stager/daemon/RequestHelper.hpp"
 #include "castor/rh/IOResponse.hpp"
@@ -94,4 +93,3 @@ namespace castor{
 }//end namespace castor
 
 
-#endif

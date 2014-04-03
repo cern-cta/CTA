@@ -7,8 +7,7 @@
  * All rights reserved
  */
 
-#ifndef _CNS_H
-#define _CNS_H
+#pragma once
 
                         /* name server constants */
 
@@ -150,4 +149,3 @@
 #define NS002 "NS002 - %s error : %s\n"
 #define NS003 "NS003 - illegal function %d\n"
 #define NS009 "NS009 - fatal configuration error: %s %s\n"
-#endif

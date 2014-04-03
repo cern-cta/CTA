@@ -22,8 +22,7 @@
  *
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
-#ifndef _CASTOR_TAPE_UTILS_BOOLFUNCTOR_HPP_
-#define _CASTOR_TAPE_UTILS_BOOLFUNCTOR_HPP_
+#pragma once
 
 namespace castor {
 namespace tape   {
@@ -52,4 +51,3 @@ namespace utils  {
 } // namespace tape
 } // namespace castor      
 
-#endif // _CASTOR_TAPE_UTILS_BOOLFUNCTOR_HPP_

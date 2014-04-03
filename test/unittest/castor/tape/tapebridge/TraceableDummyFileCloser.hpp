@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_TRACEABLEDUMMYFILECLOSER_HPP
-#define TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_TRACEABLEDUMMYFILECLOSER_HPP 1
+#pragma once
 
 #include "castor/tape/tapebridge/IFileCloser.hpp"
 
@@ -53,4 +52,3 @@ public:
 } // namespace tape
 } // namespace castor
 
-#endif // TEST_UNITTEST_CASTOR_TAPE_TAPEBRIDGE_TRACEABLEDUMMYFILECLOSER_HPP

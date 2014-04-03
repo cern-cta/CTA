@@ -23,8 +23,7 @@
  * @author Castor dev team
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_CDEVTOOLS_HPP
-#define CASTOR_VDQM_CDEVTOOLS_HPP 1
+#pragma once
 
 #include <stdint.h>
 
@@ -80,4 +79,3 @@ const char *castorReqTypeToStr(const uint32_t magic, const uint32_t type);
 void printCastorMessage(const int messageWasSent,
   const int messageInNetworkByteOrder, const int socket, void* hdrbuf);
 
-#endif // CASTOR_VDQM_CDEVTOOLS_HPP

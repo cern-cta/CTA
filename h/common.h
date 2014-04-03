@@ -10,8 +10,7 @@
  * common.h   - common prototypes
  */
 
-#ifndef _COMMON_H_INCLUDED_
-#define _COMMON_H_INCLUDED_
+#pragma once
 
 #include <sys/socket.h>                 /* Socket interface             */
 #include <netinet/in.h>                 /* Internet data types          */
@@ -54,4 +53,3 @@ EXTERN_C int get_user (char *, char *, int, int, char *, int *, int *);
  */
 EXTERN_C int  check_for_strutou64 (char*);
 
-#endif /* _COMMON_H_INCLUDED_ */

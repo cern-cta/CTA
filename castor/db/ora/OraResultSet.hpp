@@ -23,8 +23,7 @@
  * @author Giuseppe Lo Presti, giuseppe.lopresti@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_ORARESULTSET_HPP
-#define CASTOR_ORARESULTSET_HPP
+#pragma once
 
 #include <string>
 #include "castor/db/IDbResultSet.hpp"
@@ -86,5 +85,4 @@ namespace castor {
     }
   }
 }
-#endif // CASTOR_ORARESULTSET_HPP
 

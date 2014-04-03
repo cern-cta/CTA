@@ -24,8 +24,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CLIENTS_BASECLIENT_HPP
-#define CLIENTS_BASECLIENT_HPP 1
+#pragma once
 
 // Include Files
 #include <unistd.h>
@@ -299,4 +298,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CLIENTS_BASECLIENT_HPP

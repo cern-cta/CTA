@@ -24,8 +24,7 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-#ifndef CASTOR_SERVER_SELECTPROCESSTHREAD_HPP
-#define CASTOR_SERVER_SELECTPROCESSTHREAD_HPP 1
+#pragma once
 
 #include "castor/IObject.hpp"
 #include "castor/BaseObject.hpp"
@@ -76,4 +75,3 @@ namespace castor {
 } // end of namespace castor
 
 
-#endif // CASTOR_SERVER_SELECTPROCESSTHREAD_HPP

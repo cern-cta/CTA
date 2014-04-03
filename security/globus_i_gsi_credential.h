@@ -1,4 +1,4 @@
-#ifndef GLOBUS_DONT_DOCUMENT_INTERNAL
+#pragma once
 /**
  * @file globus_i_gsi_credential.h
  * Globus GSI Credential Library
@@ -9,7 +9,6 @@
  */
 
 #ifndef GLOBUS_I_INCLUDE_GSI_CREDENTIAL_H
-#define GLOBUS_I_INCLUDE_GSI_CREDENTIAL_H
 
 #include "globus_gsi_credential.h"
 #include "proxycertinfo.h"
@@ -258,4 +257,3 @@ EXTERN_C_END
 
 #endif /* GLOBUS_I_INCLUDE_GSI_CREDENTIAL_H */
 
-#endif /* GLOBUS_DONT_DOCUMENT_INTERNAL */

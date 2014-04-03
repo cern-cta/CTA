@@ -10,8 +10,7 @@
 /*
  */
 
-#ifndef _CUPV_UTIL_H
-#define _CUPV_UTIL_H
+#pragma once
 #include "osdep.h"
 #include "Cupv_constants.h" 
 #include "Cupv_struct.h"
@@ -28,7 +27,6 @@ EXTERN_C int Cupv_getgid (const char *name);
 EXTERN_C char *Cupv_getuname (uid_t);
 EXTERN_C char *Cupv_getgname (gid_t);
 
-#endif
 
 
 

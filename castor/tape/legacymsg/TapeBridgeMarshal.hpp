@@ -23,8 +23,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_TAPEBRIDGEMARSHAL_HPP
-#define CASTOR_TAPE_LEGACYMSG_TAPEBRIDGEMARSHAL_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 #include "h/tapeBridgeFlushedToTapeMsgBody.h"
@@ -59,4 +58,3 @@ void unmarshal(const char * &src, size_t &srcLen,
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_LEGACYMSG_TAPEBRIDGEMARSHAL_HPP

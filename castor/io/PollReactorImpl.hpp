@@ -20,8 +20,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_IO_POLLREACTORIMPL_HPP
-#define CASTOR_IO_POLLREACTORIMPL_HPP 1
+#pragma once
 
 #include "castor/io/PollReactor.hpp"
 #include "castor/log/Logger.hpp"
@@ -129,4 +128,3 @@ private:
 } // namespace io
 } // namespace castor
 
-#endif // CASTOR_IO_POLLREACTORIMPL_HPP

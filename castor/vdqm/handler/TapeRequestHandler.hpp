@@ -23,8 +23,7 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef _TAPEREQUESTHANDLER_HPP_
-#define _TAPEREQUESTHANDLER_HPP_
+#pragma once
 
 #include "castor/vdqm/handler/BaseRequestHandler.hpp"
 #include "castor/io/ServerSocket.hpp"
@@ -119,4 +118,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif //_TAPEREQUESTHANDLER_HPP_

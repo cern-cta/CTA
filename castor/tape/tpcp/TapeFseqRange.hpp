@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_TAPEFSEQRANGE_HPP
-#define CASTOR_TAPE_TPCP_TAPEFSEQRANGE_HPP 1
+#pragma once
 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoValue.hpp"
@@ -132,4 +131,3 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TPCP_TAPEFSEQRANGE_HPP

@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP
-#define CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP 1
+#pragma once
 
 namespace castor {
 namespace tape {
@@ -39,4 +38,3 @@ struct RtcpNoMoreRequestsMsgBody {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPNOMOREREQUESTSMSGBODY_HPP

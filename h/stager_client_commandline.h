@@ -4,8 +4,7 @@
  * Internal header file for command line stager clients and for the RFIO plugin.
  */
 
-#ifndef STAGER_CLIENT_COMMANDLINE
-#define STAGER_CLIENT_COMMANDLINE
+#pragma once
 
 #include <sys/types.h>
 #include "osdep.h"
@@ -44,4 +43,3 @@ EXTERN_C int printFileResponses (int nbresps, struct stage_fileresp* responses);
 EXTERN_C int printPrepareResponses (int nbresps, struct stage_prepareToGet_fileresp *responses);
 EXTERN_C void printReceivedResponses (int nbresps);
 
-#endif  /* STAGER_CLIENT_COMMANDLINE */

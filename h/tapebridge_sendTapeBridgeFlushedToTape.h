@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIDGE_SENDTAPEBRIDGEFLUSHEDTOTAPE_H
-#define H_TAPEBRIDGE_SENDTAPEBRIDGEFLUSHEDTOTAPE_H 1
+#pragma once
 
 #include "h/osdep.h"
 #include "h/tapeBridgeFlushedToTapeMsgBody.h"
@@ -46,4 +45,3 @@ EXTERN_C int32_t tapebridge_sendTapeBridgeFlushedToTape(const int socketFd,
   const int netReadWriteTimeout,
   const tapeBridgeFlushedToTapeMsgBody_t *const msgBody);
 
-#endif /* H_TAPEBRIDGE_SENDTAPEBRIDGEFLUSHEDTOTAPE_H */

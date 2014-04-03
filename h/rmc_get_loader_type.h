@@ -27,8 +27,7 @@
  * and its client software and should therefore not be distributed to end users
  *****************************************************************************/
 
-#ifndef RMC_GET_LOADER_TYPE_H
-#define RMC_GET_LOADER_TYPE_H 1
+#pragma once
 
 typedef enum {
   RMC_LOADER_TYPE_ACS,
@@ -51,4 +50,3 @@ typedef enum {
  */
 rmc_loader_type rmc_get_loader_type(const char *const drive);
 
-#endif /* RMC_GET_LOADER_TYPE_H */

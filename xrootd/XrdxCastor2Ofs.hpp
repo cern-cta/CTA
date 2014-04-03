@@ -22,8 +22,7 @@
  * 
  ******************************************************************************/
 
-#ifndef __XCASTOR_OFS_HH__
-#define __XCASTOR_OFS_HH__
+#pragma once
 
 /*-----------------------------------------------------------------------------*/
 #include <map>
@@ -516,4 +515,3 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
 
 extern XrdxCastor2Ofs XrdxCastor2OfsFS;  ///< global instance of the Ofs subsystem
 
-#endif // __XCASTOR_OFS_HH__

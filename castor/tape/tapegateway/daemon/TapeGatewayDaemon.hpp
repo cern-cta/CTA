@@ -25,8 +25,7 @@
  *****************************************************************************/
 
 
-#ifndef TAPEGATEWAY_DAEMON_HPP
-#define TAPEGATEWAY_DAEMON_HPP 1
+#pragma once
 
 // Include Files
 
@@ -117,4 +116,3 @@ namespace castor {
   } // end of namespace tape
 } // end of namespace castor
 
-#endif // TAPEGATEWAY_DAEMON_HPP

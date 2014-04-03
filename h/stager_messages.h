@@ -2,8 +2,7 @@
  * $Id: stager_messages.h,v 1.7 2009/08/18 09:42:59 waldron Exp $
  */
 
-#ifndef __stager_messages_h
-#define __stager_messages_h
+#pragma once
 
 #include "dlf_api.h"
 
@@ -25,4 +24,3 @@ struct stagerMessages {
 
 extern struct stagerMessages stagerMessages[];
 
-#endif /* __stager_messages_h */

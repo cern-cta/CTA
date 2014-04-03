@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_ICNVSVC_HPP
-#define CASTOR_ICNVSVC_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/IService.hpp"
@@ -230,4 +229,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_ICNVSVC_HPP

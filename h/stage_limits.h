@@ -2,8 +2,7 @@
  * $Id: stage_limits.h,v 1.1 2005/06/22 11:59:18 jdurand Exp $
  */
 
-#ifndef __stage_limits_h
-#define __stage_limits_h
+#pragma once
 
 /* =================================== */
 /* stage configuration maximum values  */
@@ -38,4 +37,3 @@
 #endif
 #define ROOTGIDLIMIT 100
 
-#endif /* __stage_limits_h */

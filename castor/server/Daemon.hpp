@@ -20,8 +20,7 @@
  * @author castor dev team
  ******************************************************************************/
 
-#ifndef CASTOR_SERVER_DAEMON_HPP
-#define CASTOR_SERVER_DAEMON_HPP 1
+#pragma once
 
 #include "castor/dlf/Message.hpp"
 #include "castor/exception/CommandLineNotParsed.hpp"
@@ -172,4 +171,3 @@ private:
 } // namespace server
 } // namespace castor
 
-#endif // CASTOR_SERVER_DAEMON_HPP

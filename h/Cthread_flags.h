@@ -7,8 +7,7 @@
  * All rights reserved
  */
 
-#ifndef __Cthread_flags_h
-#define __Cthread_flags_h
+#pragma once
 
 #include <pthread.h>
 #include <stdlib.h>           /* malloc, etc... */
@@ -17,7 +16,6 @@
 #include <errno.h>            /* errno ...      */
 #include <string.h>           /* strerror ...   */
 
-#endif /* __Cthread_flags_h */
 
 
 

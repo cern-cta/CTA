@@ -21,8 +21,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef _DLF_LIB_H
-#define _DLF_LIB_H 1
+#pragma once
 
 /* Include files */
 #include <ctype.h>
@@ -64,7 +63,6 @@ static struct {
 };
 
 
-#endif /* _DLF_LIB_H */
 
 
 

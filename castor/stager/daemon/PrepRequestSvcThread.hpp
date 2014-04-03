@@ -23,8 +23,7 @@
 * @author castor dev team
 *****************************************************************************/
 
-#ifndef STAGER_DAEMON_PREPREQUESTSVCTHREAD_HPP
-#define STAGER_DAEMON_PREPREQUESTSVCTHREAD_HPP 1
+#pragma once
 
 #include "castor/stager/daemon/BaseRequestSvcThread.hpp"
 #include "castor/Constants.hpp"
@@ -56,4 +55,3 @@ namespace castor {
 
 } //end namespace castor
 
-#endif

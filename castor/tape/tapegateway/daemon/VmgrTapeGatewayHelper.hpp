@@ -21,8 +21,7 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
-#ifndef TAPEGATEWAY_VMGRTAPEGATEWAYHELPER_HPP
-#define TAPEGATEWAY_VMGRTAPEGATEWAYHELPER_HPP 
+#pragma once
 
 // Include Files
 #include "osdep.h"
@@ -106,4 +105,3 @@ namespace castor {
     } // end of namespace tapegateway
   } // end of namespace tape
 }  // end of namespace castor
-#endif // TAPEGATEWAY_VMGRTAPEGATEWAYHELPER_HPP 

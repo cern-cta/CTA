@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_MESSAGEHEADER_HPP
-#define CASTOR_TAPE_LEGACYMSG_MESSAGEHEADER_HPP 1
+#pragma once
 
 #include <stdint.h>
 
@@ -65,4 +64,3 @@ struct MessageHeader {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_MESSAGEHEADER_HPP

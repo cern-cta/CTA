@@ -8,8 +8,7 @@
 #include <unistd.h>
 #include <Cthread_api.h>
 
-#ifndef CSEMAPHORES
-#define CSEMAPHORES
+#pragma once
 
 typedef struct CSemaphore
 {
@@ -29,4 +28,3 @@ int         tw_pthread_mutex_unlock (void * m);
 int         tw_pthread_mutex_lock (void * m);
 void        do_error (char *msg);
 
-#endif /* CSEMAPHORES */

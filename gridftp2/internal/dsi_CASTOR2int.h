@@ -23,8 +23,7 @@
  * @author Victor Kotlyar, Victor.Kotlyar@cern.ch
  *****************************************************************************/
 
-#if !defined(DSI_CASTOR2INT_H)
-#define DSI_CASTOR2INT_H
+#pragma once
 
 #include "globus_gridftp_server.h"
 
@@ -86,4 +85,3 @@ static void globus_l_gfs_net_write_cb(
 
 
 
-#endif  /* DSI_CASTOR2INT_H */

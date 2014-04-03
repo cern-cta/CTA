@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef H_RMC_SEND_SCSI_CMD_H 
-#define H_RMC_SEND_SCSI_CMD_H 1
+#pragma once
 
 int rmc_send_scsi_cmd (
   const int tapefd,
@@ -40,4 +39,3 @@ int rmc_send_scsi_cmd (
   int *const nb_sense_ret,
   char **const msgaddr);
 
-#endif /* H_RMC_SEND_SCSI_CMD_H */

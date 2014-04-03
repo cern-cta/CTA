@@ -23,8 +23,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_LOG_LOGGERIMPLEMENTATION_HPP
-#define CASTOR_LOG_LOGGERIMPLEMENTATION_HPP 1
+#pragma once
 
 #include "castor/log/Logger.hpp"
 
@@ -440,4 +439,3 @@ private:
 } // namespace log
 } // namespace castor
 
-#endif // CASTOR_LOG_LOGGERIMPLEMENTATION_HPP

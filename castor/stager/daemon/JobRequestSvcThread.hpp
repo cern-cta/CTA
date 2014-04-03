@@ -23,8 +23,7 @@
 * @author castor dev team
 *****************************************************************************/
 
-#ifndef STAGER_DAEMON_JOBREQUESTSVCTHREAD_HPP
-#define STAGER_DAEMON_JOBREQUESTSVCTHREAD_HPP 1
+#pragma once
 
 #include "castor/stager/daemon/BaseRequestSvcThread.hpp"
 #include "castor/IObject.hpp"
@@ -54,4 +53,3 @@ namespace castor {
   
 } //end namespace castor
 
-#endif

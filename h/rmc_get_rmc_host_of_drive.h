@@ -27,8 +27,7 @@
  * and its client software and should therefore not be distributed to end users
  *****************************************************************************/
 
-#ifndef RMC_GET_RMC_HOST_OF_DRIVE_H
-#define RMC_GET_RMC_HOST_OF_DRIVE_H 1
+#pragma once
 
 /**
  * Returns the rmc host of the specified drive string.  The drive string either
@@ -48,4 +47,3 @@
 int rmc_get_rmc_host_of_drive(const char *const drive,
 	char *const rmc_host_buf, const int rmc_host_buflen);
 
-#endif /* RMC_GET_RMC_HOST_OF_DRIVE_H */

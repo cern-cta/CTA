@@ -23,8 +23,7 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef STAGER_DAEMON_BASEREQUESTSVCTHREAD_HPP
-#define STAGER_DAEMON_BASEREQUESTSVCTHREAD_HPP 1
+#pragma once
 
 #include "serrno.h"
 #include <errno.h>
@@ -68,4 +67,3 @@ namespace castor {
 }//end namespace castor
 
 
-#endif

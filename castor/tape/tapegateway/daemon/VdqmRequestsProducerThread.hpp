@@ -25,8 +25,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef VDQMREQUESTSPRODUCER_THREAD_HPP
-#define VDQMREQUESTSPRODUCER_THREAD_HPP 1
+#pragma once
 
 #include "castor/server/IThread.hpp"
 #include "castor/BaseObject.hpp"
@@ -137,4 +136,3 @@ namespace castor     {
   } // end of namespace tape
 } // end of namespace castor
 
-#endif // VDQMREQUESTSPRODUCER_THREAD_HPP

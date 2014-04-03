@@ -23,8 +23,7 @@
  * @author castor-dev team
  *****************************************************************************/
 
-#ifndef CASTOR_METRICS_METRICSCOLLECTOR_HPP
-#define CASTOR_METRICS_METRICSCOLLECTOR_HPP 1
+#pragma once
 
 // Include Files
 #include <string>
@@ -132,4 +131,3 @@ namespace castor {
     
 } // end of namespace castor
 
-#endif // CASTOR_METRICS_METRICSCOLLECTOR_HPP

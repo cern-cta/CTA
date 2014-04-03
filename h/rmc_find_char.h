@@ -27,8 +27,7 @@
  * and its client software and should therefore not be distributed to end users
  *****************************************************************************/
 
-#ifndef RMC_FIND_CHAR_H
-#define RMC_FIND_CHAR_H 1
+#pragma once
 
 /**
  * Returns the index of the specified character within the specified string.
@@ -41,4 +40,3 @@
  */
 int rmc_find_char(const char *const str, const char c);
 
-#endif /* RMC_FIND_CHAR_H */

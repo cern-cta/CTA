@@ -12,8 +12,7 @@
 
 /*  marshall.h   -   marshalling/unmarshalling definitions */
 
-#ifndef _MARSHALL_H_INCLUDED_
-#define _MARSHALL_H_INCLUDED_
+#pragma once
 
 #include <osdep.h>              /* Operating system dependencies        */
 #include <memory.h>             /* memory operations definition         */
@@ -196,4 +195,3 @@ EXTERN_C int _unmarshall_STRINGN (char **, char*, int);
 					   n = (time_t) _unmarshall_time_dummy; \
 					}
 
-#endif /* _MARSHALL_H_INCLUDED_ */

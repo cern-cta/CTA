@@ -12,8 +12,7 @@
 
 /* shift.h      SHIFT defines and macros for general user               */
 
-#ifndef _SHIFT_H_INCLUDED_
-#define _SHIFT_H_INCLUDED_
+#pragma once
 
 #include <shift/patchlevel.h>   /* Current version number               */
 #include <shift/osdep.h>        /* Operating System dependencies        */
@@ -26,4 +25,3 @@
 #include <shift/rfio.h>         /* Remote file I/O defines and Macros   */
 #include <shift/rfcntl.h>       /* Remote file I/O heter. file control  */
 
-#endif /* _SHIFT_H_INCLUDED_ */

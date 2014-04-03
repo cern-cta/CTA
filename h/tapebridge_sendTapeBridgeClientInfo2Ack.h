@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIDGE_SENDTAPEBRIDGECLIENTINFO2ACK_H
-#define H_TAPEBRIDGE_SENDTAPEBRIDGECLIENTINFO2ACK_H 1
+#pragma once
 
 #include "h/osdep.h"
 
@@ -51,4 +50,3 @@ EXTERN_C int32_t tapebridge_sendTapeBridgeClientInfo2Ack(const int socketFd,
   const int netReadWriteTimeout, const uint32_t ackStatus,
   const char *const ackErrMsg);
 
-#endif /* H_TAPEBRIDGE_SENDTAPEBRIDGECLIENTINFO2ACK_H */

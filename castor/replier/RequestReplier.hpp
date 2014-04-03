@@ -24,8 +24,7 @@
  *****************************************************************************/
 
 
-#ifndef CASTOR_REQUESTREPLIER_HPP
-#define CASTOR_REQUESTREPLIER_HPP 1
+#pragma once
 
 #include "castor/replier/ClientConnection.hpp"
 #include "castor/BaseObject.hpp"
@@ -226,7 +225,6 @@ namespace castor {
   } // namespace replier
 } // namespace castor
 
-#endif // CASTOR_REQUESTREPLIER_HPP
 
 
 

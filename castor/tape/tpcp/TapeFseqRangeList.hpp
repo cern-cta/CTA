@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_TAPEFSEQRANGELIST_HPP
-#define CASTOR_TAPE_TPCP_TAPEFSEQRANGELIST_HPP 1
+#pragma once
 
 #include "castor/tape/tpcp/TapeFseqRange.hpp"
 
@@ -51,4 +50,3 @@ class TapeFseqRangeList: public  std::list<TapeFseqRange> {
 std::ostream &operator<<(std::ostream &os,
   const castor::tape::tpcp::TapeFseqRangeList &list);
 
-#endif // CASTOR_TAPE_TPCP_TAPEFSEQRANGELIST_HPP

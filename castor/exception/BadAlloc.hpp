@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_EXCEPTION_BADALLOC_HPP 
-#define CASTOR_EXCEPTION_BADALLOC_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 
@@ -45,4 +44,3 @@ namespace castor { namespace exception {
 
 } } // namespace castor exception
 
-#endif // CASTOR_EXCEPTION_BADALLOC_HPP

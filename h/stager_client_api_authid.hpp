@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef H_STAGER_CLIENT_API_AUTHID_HPP 
-#define H_STAGER_CLIENT_API_AUTHID_HPP 1
+#pragma once
 
 namespace castor {
 
@@ -46,4 +45,3 @@ namespace castor {
 }
 
 
-#endif // H_STAGER_CLIENT_API_AUTHID_HPP

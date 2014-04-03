@@ -10,8 +10,7 @@
  * Cgetopt.h    - CASTOR getopt definitions
  */
 
-#ifndef __Cgetopt_h
-#define __Cgetopt_h
+#pragma once
 
 #include <osdep.h>
 
@@ -49,4 +48,3 @@ EXTERN_C char **C__Coptarg (void);
 EXTERN_C int Cgetopt (int, char * const *, const char *);
 EXTERN_C int Cgetopt_long (int, char **, const char *, Coptions_t *, int *);
 
-#endif /* __Cgetopt_h */

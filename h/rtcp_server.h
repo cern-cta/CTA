@@ -10,8 +10,7 @@
  * rtcp_server.h - rtcopy server specific definitions
  */
 
-#if !defined(RTCP_SERVER_H)
-#define RTCP_SERVER_H
+#pragma once
 
 #include "h/Castor_limits.h"
 #include "h/rtcp.h"
@@ -268,4 +267,3 @@ int rtcpd_jobID (void);
 int rtcpd_SerializeLock (int, int*, void*, int*, int*, int**);
 void rtcpd_ResetCtapeError();
 
-#endif /* RTCP_SERVER_H */

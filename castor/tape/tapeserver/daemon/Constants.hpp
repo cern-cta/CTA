@@ -20,8 +20,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_DAEMON_CONSTANTS_HPP
-#define CASTOR_TAPE_TAPESERVER_DAEMON_CONSTANTS_HPP 1
+#pragma once
 
 namespace castor     {
 namespace tape       {
@@ -45,4 +44,3 @@ const unsigned short TAPE_SERVER_ADMIN_LISTENING_PORT = 5011;
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_DAEMON_CONSTANTS_HPP

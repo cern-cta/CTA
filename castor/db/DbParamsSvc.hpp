@@ -23,8 +23,7 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef CASTOR_DB_DBPARAMSSVC_HPP
-#define CASTOR_DB_DBPARAMSSVC_HPP 1
+#pragma once
 
 // Include files
 #include <string>
@@ -108,4 +107,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_DB_DBPARAMSSVC_HPP

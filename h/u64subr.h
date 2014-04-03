@@ -6,8 +6,7 @@
 /*
  */
 
-#ifndef __u64subr_h
-#define __u64subr_h
+#pragma once
 
 #include "osdep.h"
 
@@ -22,4 +21,3 @@ EXTERN_C U_HYPER hexstrutou64 (const char *);
 EXTERN_C char * u64tostru (U_HYPER, char *, int);
 EXTERN_C char * u64tostrsi (U_HYPER, char *, int);
 
-#endif /* __u64subr_h */

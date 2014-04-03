@@ -22,8 +22,7 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_CONSTANTS_HPP
-#define CASTOR_VDQM_CONSTANTS_HPP 1
+#pragma once
 
 
 namespace castor { namespace vdqm {
@@ -81,4 +80,3 @@ namespace castor { namespace vdqm {
 } } // namespace vdqm - namespace castor
 
 
-#endif // CASTOR_VDQM_CONSTANTS_HPP

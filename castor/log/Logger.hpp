@@ -23,8 +23,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_LOG_LOGGER_HPP
-#define CASTOR_LOG_LOGGER_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/exception/Internal.hpp"
@@ -301,4 +300,3 @@ protected:
 } // namespace log
 } // namespace castor
 
-#endif // CASTOR_LOG_LOGGER_HPP

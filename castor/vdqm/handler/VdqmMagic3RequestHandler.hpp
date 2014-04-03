@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef _VDQMMAGIC3REQUESTHANDLER_HPP_
-#define _VDQMMAGIC3REQUESTHANDLER_HPP_ 1
+#pragma once
 
 
 #include "castor/exception/Exception.hpp"
@@ -74,4 +73,3 @@ namespace castor {
 
 } // namespace castor
 
-#endif // _VDQMMAGIC3REQUESTHANDLER_HPP_

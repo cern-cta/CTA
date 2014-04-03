@@ -23,8 +23,7 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef H_FIO_H 
-#define H_FIO_H 1
+#pragma once
 
 int usf_open(int *unit, char *file, int *append, int *trunc);
 int udf_open(int *unit, char *file, int *lrecl , int *trunc);
@@ -36,4 +35,3 @@ int uf_close(int *unit);
 void uf_cread(int *unit, char *buf, int *nrec, int *nwant, int *ngot, int *irc);
 
 
-#endif /* H_FIO_H */

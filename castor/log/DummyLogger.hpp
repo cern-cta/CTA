@@ -23,8 +23,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_LOG_DUMMYLOGGER_HPP
-#define CASTOR_LOG_DUMMYLOGGER_HPP 1
+#pragma once
 
 #include "castor/log/Logger.hpp"
 
@@ -167,4 +166,3 @@ public:
 } // namespace log
 } // namespace castor
 
-#endif // CASTOR_LOG_DUMMYLOGGER_HPP

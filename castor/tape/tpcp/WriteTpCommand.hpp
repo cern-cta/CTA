@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TPCP_WRITETPCOMMAND_HPP
-#define CASTOR_TAPE_TPCP_WRITETPCOMMAND_HPP 1
+#pragma once
 
 #include "castor/tape/tapegateway/FileMigratedNotificationStruct.hpp"
 #include "castor/tape/tpcp/TpcpCommand.hpp"
@@ -246,4 +245,3 @@ private:
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_TPCP_WRITETPCOMMAND_HPP

@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef IO_BINIOSTREAM_H
-#define IO_BINIOSTREAM_H 1
+#pragma once
 
 #include <sstream>
 #include "osdep.h"
@@ -311,4 +310,3 @@ template <class charT, class traits, class Allocator>
 }
 
 
-#endif // IO_BINIOSTREAM_H

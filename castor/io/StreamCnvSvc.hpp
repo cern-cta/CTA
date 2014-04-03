@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef IO_STREAMCNVSVC_HPP
-#define IO_STREAMCNVSVC_HPP 1
+#pragma once
 
 #include "castor/Constants.hpp"
 #include "castor/BaseCnvSvc.hpp"
@@ -139,4 +138,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // IO_STREAMCNVSVC_HPP

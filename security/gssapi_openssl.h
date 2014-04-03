@@ -1,4 +1,4 @@
-#ifndef GLOBUS_DONT_DOCUMENT_INTERNAL
+#pragma once
 /**
  * @file gssapi_openssl.h
  * @author Sam Lang, Sam Meder
@@ -6,10 +6,8 @@
  * $Revision: 1.3 $
  * $Date: 2008/01/16 15:37:29 $
  */
-#endif
 
 #ifndef _GSSAPI_OPENSSL_H
-#define _GSSAPI_OPENSSL_H
 
 #include "gssapi.h"
 #include "globus_gsi_gss_constants.h"
@@ -146,4 +144,3 @@ const gss_OID_desc * const              gss_proxycertinfo_extension;
 extern
 globus_thread_once_t                    once_control;
 
-#endif /* _GSSAPI_OPENSSL_H */

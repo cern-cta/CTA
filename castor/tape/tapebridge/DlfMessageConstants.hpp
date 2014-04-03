@@ -25,8 +25,7 @@
  * @author Steven Murray Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_TAPEBRIDGEDLFMESSAGECONSTANTS_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_TAPEBRIDGEDLFMESSAGECONSTANTS_HPP 1
+#pragma once
 
 
 namespace castor {
@@ -194,4 +193,3 @@ TAPEBRIDGE_EMPTY_RECALL_MOUNT=154 /* "Empty recall mount" */
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_TAPEBRIDGEDLFMESSAGECONSTANTS_HPP

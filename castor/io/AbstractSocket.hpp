@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_ABSTRACT_SOCKET_HPP
-#define CASTOR_ABSTRACT_SOCKET_HPP 1
+#pragma once
 
 // Include Files
 #include <net.h>
@@ -279,4 +278,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_ABSTRACT_SOCKET_HPP

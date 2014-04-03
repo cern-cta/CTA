@@ -1,5 +1,4 @@
-#ifndef CODEGENERATORS_CPPBASEWRITER_H 
-#define CODEGENERATORS_CPPBASEWRITER_H 1
+#pragma once
 
 // Includes
 #include <set>
@@ -514,4 +513,3 @@ class CppBaseWriter : public CppCastorWriter {
 };
 
 
-#endif // CODEGENERATORS_CPPBASEWRITER_H

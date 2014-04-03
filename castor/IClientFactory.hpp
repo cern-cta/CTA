@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef RH_CLIENTFACTORY_HPP 
-#define RH_CLIENTFACTORY_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/exception/Exception.hpp"
@@ -71,4 +70,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // RH_CLIENTFACTORY_HPP

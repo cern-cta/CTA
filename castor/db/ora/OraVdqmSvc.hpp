@@ -21,8 +21,7 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef _ORAVDQMSVC_HPP_
-#define _ORAVDQMSVC_HPP_
+#pragma once
 
 #include "castor/BaseSvc.hpp"
 #include "castor/db/DbBaseObj.hpp"
@@ -542,4 +541,3 @@ namespace castor {
 
 } // namespace castor
 
-#endif //_ORAVDQMSVC_HPP_

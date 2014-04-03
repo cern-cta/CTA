@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_STAGER_STARTREQUEST_HPP
-#define CASTOR_STAGER_STARTREQUEST_HPP
+#pragma once
 
 // Include Files
 #include "castor/stager/Request.hpp"
@@ -187,4 +186,3 @@ namespace castor {
 
 } /* end of namespace castor */
 
-#endif // CASTOR_STAGER_STARTREQUEST_HPP

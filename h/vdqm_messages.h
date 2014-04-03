@@ -7,8 +7,7 @@
  * vdqm_messages.h - Common VDQM message definitions for server and client API
  */
 
-#ifndef _VDQM_MESSAGES_H
-#define _VDQM_MESSAGES_H
+#pragma once
 
 #include "Castor_limits.h"
 
@@ -163,4 +162,3 @@ typedef struct vdqmDedicate {
   strlen(X->server) + strlen(X->drive) + strlen(X->dgn) + strlen(X->dedicate) \
   + 5 )
 
-#endif /* VDQM_MESSAGES_H */

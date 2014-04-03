@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_FILEWRITTENNOTIFICATIONLIST_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_FILEWRITTENNOTIFICATIONLIST_HPP 1
+#pragma once
 
 #include "castor/tape/tapebridge/FileWrittenNotification.hpp"
 
@@ -40,4 +39,3 @@ typedef std::list<FileWrittenNotification> FileWrittenNotificationList;
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_FILEWRITTENNOTIFICATIONLIST_HPP

@@ -14,8 +14,7 @@
  * vdqm_constants.h - definitions of all VDQM constants
  */
 
-#ifndef _VDQM_CONSTANTS_H
-#define _VDQM_CONSTANTS_H
+#pragma once
 /*
  * VDQM magic numbers
  */
@@ -223,4 +222,3 @@
 #define VALID_VDQM_MSGLEN(X) ((X)>0 && (X)<(VDQM_MSGBUFSIZ))
 #endif /* VALID_VDQM_MSGLEN */
 
-#endif /* _VDQM_CONSTANTS_H */

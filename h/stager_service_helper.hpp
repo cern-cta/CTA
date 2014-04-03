@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef H_STAGER_SERVICE_HELPER_HPP 
-#define H_STAGER_SERVICE_HELPER_HPP 1
+#pragma once
 
 #include <string>
 
@@ -57,4 +56,3 @@ namespace castor {
 
 } // End of namespace castor
 
-#endif // H_STAGER_SERVICE_HELPER_HPP

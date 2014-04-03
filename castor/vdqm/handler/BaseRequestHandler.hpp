@@ -22,8 +22,7 @@
  * @author castor dev team
  *****************************************************************************/
 
-#ifndef _BASEREQUESTHANDLER_HPP_
-#define _BASEREQUESTHANDLER_HPP_
+#pragma once
 
 #include "castor/BaseObject.hpp"
 #include "castor/Constants.hpp"
@@ -70,4 +69,3 @@ namespace castor {
 
 } // namespace castor
 
-#endif //_BASEREQUESTHANDLER_HPP_

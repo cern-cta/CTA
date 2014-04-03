@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_RTCPDISCONFIGUREDTOREUSEMOUNT_H
-#define H_RTCPDISCONFIGUREDTOREUSEMOUNT_H 1
+#pragma once
 
 #include "h/osdep.h"
 
@@ -46,4 +45,3 @@
  */
 EXTERN_C int rtcpdIsConfiguredToReuseMount();
 
-#endif /* H_RTCPDISCONFIGUREDTOREUSEMOUNT_H */

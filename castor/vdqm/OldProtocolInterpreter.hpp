@@ -23,8 +23,7 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef CASTOR_VDQM_OLDPROTOCOLINTERPRETER_HPP
-#define CASTOR_VDQM_OLDPROTOCOLINTERPRETER_HPP 1
+#pragma once
 
 #include "castor/BaseObject.hpp"
 #include "castor/io/ServerSocket.hpp"
@@ -149,4 +148,3 @@ namespace castor {
 
 } // namespace castor      
 
-#endif // CASTOR_VDQM_OLDPROTOCOLINTERPRETER_HPP

@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef H_TAPEBRIDGECLIENTINFO2MSGBODY_H
-#define H_TAPEBRIDGECLIENTINFO2MSGBODY_H 1
+#pragma once
 
 #include "h/Castor_limits.h"
 #include "h/osdep.h"
@@ -99,4 +98,3 @@ typedef struct {
     1                     + /* drive                    */ \
     1                       /* clientName               */)
 
-#endif /* H_TAPEBRIDGECLIENTINFO2MSGBODY_H */

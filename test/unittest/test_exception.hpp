@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef TEST_UNITTEST_TESTEXCEPTION_HPP
-#define TEST_UNITTEST_TESTEXCEPTION_HPP 1
+#pragma once
 
 #include <exception>
 #include <string>
@@ -44,4 +43,3 @@ public:
   const char* what() const throw();
 };
 
-#endif // TEST_UNITTEST_TESTEXCEPTION_HPP

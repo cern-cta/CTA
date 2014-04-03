@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTMSGBODY
-#define CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTMSGBODY
+#pragma once
 
 #include "castor/tape/legacymsg/RtcpErrorAppendix.hpp"
 #include "castor/tape/legacymsg/RtcpFileRqst.hpp"
@@ -53,4 +52,3 @@ namespace legacymsg {
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_LEGACYMSG_RTCPFILERQSTMSGBODY

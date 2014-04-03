@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef STAGERJOB_IPLUGIN_HPP
-#define STAGERJOB_IPLUGIN_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/exception/Exception.hpp"
@@ -106,4 +105,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // STAGERJOB_IPLUGIN_HPP

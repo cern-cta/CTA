@@ -25,8 +25,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_STAGER_DISKFILE_HPP
-#define CASTOR_STAGER_DISKFILE_HPP
+#pragma once
 
 namespace castor {
 
@@ -56,4 +55,3 @@ namespace castor {
 
 } /* end of namespace castor */
 
-#endif // CASTOR_STAGER_DISKFILE_HPP

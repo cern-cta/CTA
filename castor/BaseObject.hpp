@@ -23,8 +23,7 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef CASTOR_BASEOBJECT_HPP
-#define CASTOR_BASEOBJECT_HPP 1
+#pragma once
 
 // Include Files
 #include "castor/dlf/Dlf.hpp"
@@ -113,4 +112,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_BASEOBJECT_HPP

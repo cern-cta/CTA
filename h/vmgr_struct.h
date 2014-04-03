@@ -10,8 +10,7 @@
 /*
  */
  
-#ifndef _VMGR_STRUCT_H
-#define _VMGR_STRUCT_H
+#pragma once
 #include "Castor_limits.h"
 
                         /* structures common to volume manager client and server */
@@ -154,4 +153,3 @@ struct vmgr_tape_pool_byte_u64 {
 	u_signed64	capacity_byte_u64;
 	u_signed64	tot_free_space_byte_u64;
 };
-#endif

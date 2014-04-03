@@ -23,8 +23,7 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef _VDQMMACROS_H_
-#define _VDQMMACROS_H_
+#pragma once
 
 #include "h/vdqm_constants.h"
 #include "h/marshall.h"
@@ -59,4 +58,3 @@
  */
 typedef enum direction {SendTo, ReceiveFrom} direction_t;    
 
-#endif //_VDQMMACROS_H_

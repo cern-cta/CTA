@@ -23,11 +23,9 @@
  * @author Sebastien Ponce
  *****************************************************************************/
 
-#ifndef RFIO_CHECKKEY_H 
-#define RFIO_CHECKKEY_H 1
+#pragma once
 
 int connecttpread(char * host, u_short aport);
 
 int checkkey(int sock, u_short  key);
 
-#endif /* RFIO_CHECKKEY_H */

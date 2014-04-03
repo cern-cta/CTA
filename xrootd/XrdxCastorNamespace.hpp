@@ -26,11 +26,9 @@
 //! Macros defining the castor xrootd plugin namespace
 //------------------------------------------------------------------------------
 
-#ifndef __XCASTOR_NAMESPACE_HH__
-#define __XCASTOR_NAMESPACE_HH__
+#pragma once
 
 #define XCASTORNAMESPACE_BEGIN  namespace xcastor { 
 
 #define XCASTORNAMESPACE_END }
 
-#endif

@@ -41,8 +41,7 @@
  * are set accordingly.
  */
 
-#ifndef stager_mapper_h
-#define stager_mapper_h
+#pragma once
 
 #include <osdep.h>
 #include <sys/types.h>
@@ -95,4 +94,3 @@ EXTERN_C int just_stage_mapper (const char *username,
 				char **msvcclass);
 
 /*\@}*/
-#endif /* stager_mapper_h */

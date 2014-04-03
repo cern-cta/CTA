@@ -22,8 +22,7 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_EXCEPTION_TAPE_NOVALUE_HPP 
-#define CASTOR_EXCEPTION_TAPE_NOVALUE_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 
@@ -51,4 +50,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // CASTOR_EXCEPTION_TAPE_NOVALUE_HPP

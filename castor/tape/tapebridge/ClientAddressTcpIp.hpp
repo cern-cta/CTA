@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_CLIENTADDRESSTCPIP_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_CLIENTADDRESSTCPIP_HPP 1
+#pragma once
 
 #include "castor/tape/tapebridge/ClientAddress.hpp"
 
@@ -116,4 +115,3 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_CLIENTADDRESSTCPIP_HPP

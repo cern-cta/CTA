@@ -23,8 +23,7 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_LEGACYMSG_ADMINMARSHAL_HPP
-#define CASTOR_TAPE_LEGACYMSG_ADMINMARSHAL_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/legacymsg/TapeMsgBody.hpp"
@@ -58,4 +57,3 @@ void unmarshal(const char * &src, size_t &srcLen, TapeMsgBody &dst) throw(castor
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_LEGACYMSG_ADMINMARSHAL_HPP

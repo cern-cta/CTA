@@ -20,8 +20,7 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPESERVER_DAEMON_ADMINACCEPTHANDLER_HPP
-#define CASTOR_TAPE_TAPESERVER_DAEMON_ADMINACCEPTHANDLER_HPP 1
+#pragma once
 
 #include "castor/io/PollEventHandler.hpp"
 #include "castor/io/PollReactor.hpp"
@@ -175,4 +174,3 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPESERVER_DAEMON_ADMINACCEPTHANDLER_HPP

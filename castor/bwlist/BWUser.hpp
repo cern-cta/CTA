@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_BWLIST_BWUSER_HPP
-#define CASTOR_BWLIST_BWUSER_HPP
+#pragma once
 
 // Include Files
 #include "castor/IObject.hpp"
@@ -185,4 +184,3 @@ namespace castor {
 
 } /* end of namespace castor */
 
-#endif // CASTOR_BWLIST_BWUSER_HPP

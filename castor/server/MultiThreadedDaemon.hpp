@@ -20,8 +20,7 @@
  * @author castor dev team
  ******************************************************************************/
 
-#ifndef CASTOR_SERVER_MULTITHREADEDDAEMON_HPP
-#define CASTOR_SERVER_MULTITHREADEDDAEMON_HPP 1
+#pragma once
 
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/Daemon.hpp"
@@ -168,4 +167,3 @@ private:
 } // namespace server
 } // namespace castor
 
-#endif // CASTOR_SERVER_MULTITHREADEDDAEMON_HPP

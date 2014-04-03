@@ -1,5 +1,4 @@
-#ifndef CODEGENERATORS_CPPCPPDBCNVWRITER_H 
-#define CODEGENERATORS_CPPCPPDBCNVWRITER_H 1
+#pragma once
 
 // Include files
 
@@ -218,4 +217,3 @@ class CppCppDbCnvWriter : public CppCppBaseCnvWriter {
   bool m_firstClass;
 };
 
-#endif // CODEGENERATORS_CPPCPPDBCNVWRITER_H

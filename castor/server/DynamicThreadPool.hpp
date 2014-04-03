@@ -39,8 +39,7 @@
  * @author Dennis Waldron
  *****************************************************************************/
 
-#ifndef CASTOR_SERVER_DYNAMICTHREADPOOL_HPP
-#define CASTOR_SERVER_DYNAMICTHREADPOOL_HPP 1
+#pragma once
 
 // Include files
 #include "castor/server/BaseThreadPool.hpp"
@@ -216,4 +215,3 @@ namespace castor {
 
 } // End of namespace castor
 
-#endif // CASTOR_SERVER_DYNAMICTHREADPOOL_HPP

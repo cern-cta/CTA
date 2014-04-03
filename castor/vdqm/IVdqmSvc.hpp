@@ -23,8 +23,7 @@
  * @author Matthias Braeger
  *****************************************************************************/
 
-#ifndef VDQM_IVDQMSVC_HPP
-#define VDQM_IVDQMSVC_HPP 1
+#pragma once
 
 #include "castor/IService.hpp"
 #include "castor/vdqm/TapeDriveCompatibility.hpp"
@@ -701,4 +700,3 @@ namespace castor {
 
 } // end of namespace castor
 
-#endif // VDQM_IVDQMSVC_HPP

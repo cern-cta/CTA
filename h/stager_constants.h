@@ -2,8 +2,7 @@
  * $Id: stager_constants.h,v 1.19 2009/01/06 14:41:31 sponcec3 Exp $
  */
 
-#ifndef __stager_constants_h
-#define __stager_constants_h
+#pragma once
 
 #include "osdep.h"
 
@@ -107,4 +106,3 @@
 #define STAGER_AUTOCOMMIT_TRUE    1                      /* Util macro for catalog interface : autocommit to 1 (== yes) */
 #define STAGER_AUTOCOMMIT_FALSE   0                      /* Util macro for catalog interface : autocommit to 0 (== no)  */
 
-#endif /* __stager_constants_h */

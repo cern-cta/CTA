@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_RMC_RMCDAEMON_HPP
-#define CASTOR_TAPE_RMC_RMCDAEMON_HPP 1
+#pragma once
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Internal.hpp"
@@ -109,4 +108,3 @@ protected:
 } // namespace castor
 
 
-#endif // CASTOR_TAPE_RMC_RMCDAEMON_HPP

@@ -4,8 +4,7 @@
 
 /* Stager extern variables needed definitions because they are used in the global library */
 
-#ifndef __stager_extern_globals_h
-#define __stager_extern_globals_h
+#pragma once
 
 #include "osdep.h"
 #include "Cuuid.h"
@@ -15,4 +14,3 @@ extern int     stagerDebug;
 extern char    *stagerLog;
 extern Cuuid_t stagerUuid;
 
-#endif /* __stager_extern_globals_h */

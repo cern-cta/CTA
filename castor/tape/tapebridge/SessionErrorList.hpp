@@ -22,8 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#ifndef CASTOR_TAPE_TAPEBRIDGE_SESSIONERRORLIST_HPP
-#define CASTOR_TAPE_TAPEBRIDGE_SESSIONERRORLIST_HPP
+#pragma once
 
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapebridge/SessionError.hpp"
@@ -118,4 +117,3 @@ private:
 } // namespace tape
 } // namespace castor
 
-#endif // CASTOR_TAPE_TAPEBRIDGE_SESSIONERRORLIST_HPP
