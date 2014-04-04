@@ -37,8 +37,9 @@ public:
    * Constructor.
    *
    * @param fd File descriptor to be returned by getFd().
+   * @param returnVal The return value of the handleEvent() method.
    */
-  DummyPollEventHandler(const int fd) throw();
+  DummyPollEventHandler(const int fd, const bool returnVal) throw();
 
   /**
    * Returns the integer file descriptor of this event handler.
@@ -70,6 +71,11 @@ private:
    * File descriptor to be returned by getFd().
    */
   const int m_fd;
+
+  /**
+   * The return value of the handleEvent() method.
+   */
+  const bool m_returnVal;
 
 }; // class DummyPollEventHandler
 

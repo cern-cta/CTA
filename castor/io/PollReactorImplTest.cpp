@@ -40,17 +40,23 @@ protected:
   }
 };
 
-TEST_F(castor_io_PollReactorImplTest, goodDayRegistier) {
+TEST_F(castor_io_PollReactorImplTest, goodDayRegisterAndLeave) {
   castor::log::DummyLogger log("unittests");
   castor::io::PollReactorImpl reactor(log);
-  reactor.registerHandler(new castor::io::DummyPollEventHandler(1234));
+  reactor.registerHandler(new castor::io::DummyPollEventHandler(1234, false));
+}
+
+TEST_F(castor_io_PollReactorImplTest, goodDayRegisterAndRemove) {
+  castor::log::DummyLogger log("unittests");
+  castor::io::PollReactorImpl reactor(log);
+  reactor.registerHandler(new castor::io::DummyPollEventHandler(1234, true));
 }
 
 TEST_F(castor_io_PollReactorImplTest, registerTwiceTheSameHandler) {
   castor::log::DummyLogger log("unittests");
   castor::io::PollReactorImpl reactor(log);
   castor::io::DummyPollEventHandler *handler =
-    new castor::io::DummyPollEventHandler(1234);
+    new castor::io::DummyPollEventHandler(1234,false);
   reactor.registerHandler(handler);
   ASSERT_THROW(reactor.registerHandler(handler), castor::exception::Exception);
 }
