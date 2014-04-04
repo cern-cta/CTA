@@ -34,11 +34,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::VdqmImpl::VdqmImpl(
-  log::Logger &log,
-  const std::string &vdqmHostName,
-  const unsigned short vdqmPort,
-  const int netTimeout) throw():
+castor::tape::tapeserver::daemon::VdqmImpl::VdqmImpl(log::Logger &log, const std::string &vdqmHostName, const unsigned short vdqmPort, const int netTimeout) throw():
     m_log(log),
     m_vdqmHostName(vdqmHostName),
     m_vdqmPort(vdqmPort),
@@ -54,9 +50,7 @@ castor::tape::tapeserver::daemon::VdqmImpl::~VdqmImpl() throw() {
 //------------------------------------------------------------------------------
 // setTapeDriveStatusDown
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusDown(
-  const std::string &server, const std::string &unitName,
-  const std::string &dgn) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
   try {
     setTapeDriveStatus(server, unitName, dgn, VDQM_UNIT_DOWN);
   } catch(castor::exception::Exception &ne) {
@@ -70,9 +64,7 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusDown(
 //------------------------------------------------------------------------------
 // setTapeDriveStatusUp
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusUp(
-  const std::string &server, const std::string &unitName,
-  const std::string &dgn) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
   try {
     setTapeDriveStatus(server, unitName, dgn, VDQM_UNIT_UP);
   } catch(castor::exception::Exception &ne) {
@@ -84,13 +76,29 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusUp(
 }
 
 //------------------------------------------------------------------------------
+// setTapeDriveStatusRelease
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusRelease(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount) throw(castor::exception::Exception) {
+  int status = VDQM_UNIT_UP;
+
+  if(forceUnmount) {
+    status |= VDQM_FORCE_UNMOUNT;
+  }
+
+  try {
+    setTapeDriveStatus(server, unitName, dgn, status);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to set drive status to up: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
 // setTapeDriveStatus
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatus(
-  const std::string &server, const std::string &unitName,
-  const std::string &dgn, const int status)
-  throw(castor::exception::Exception) {
-
+void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatus(const std::string &server, const std::string &unitName, const std::string &dgn, const int status) throw(castor::exception::Exception) {
   castor::utils::SmartFd connection(connectToVdqm());
   writeDriveStatusMsg(connection.get(), server, unitName, dgn, status);
   readCommitAck(connection.get());
@@ -103,8 +111,7 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatus(
 //-----------------------------------------------------------------------------
 // connectToVdqm
 //-----------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::VdqmImpl::connectToVdqm()
-  const throw(castor::exception::Exception) {
+int castor::tape::tapeserver::daemon::VdqmImpl::connectToVdqm() const throw(castor::exception::Exception) {
   castor::utils::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(io::connectWithTimeout(m_vdqmHostName, m_vdqmPort,
@@ -122,10 +129,7 @@ int castor::tape::tapeserver::daemon::VdqmImpl::connectToVdqm()
 //-----------------------------------------------------------------------------
 // writeDriveStatusMsg
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::writeDriveStatusMsg(
-  const int connection, const std::string &server, const std::string &unitName,
-  const std::string &dgn, const int status)
-  throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmImpl::writeDriveStatusMsg(const int connection, const std::string &server, const std::string &unitName, const std::string &dgn, const int status) throw(castor::exception::Exception) {
   legacymsg::VdqmDrvRqstMsgBody body;
   body.status = status;
   castor::utils::copyString(body.server, server.c_str());
@@ -147,8 +151,7 @@ void castor::tape::tapeserver::daemon::VdqmImpl::writeDriveStatusMsg(
 //-----------------------------------------------------------------------------
 // readCommitAck
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::readCommitAck(
-  const int connection) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmImpl::readCommitAck(const int connection) throw(castor::exception::Exception) {
   legacymsg::MessageHeader ack;
 
   try {
@@ -189,9 +192,7 @@ void castor::tape::tapeserver::daemon::VdqmImpl::readCommitAck(
 //-----------------------------------------------------------------------------
 // readAck
 //-----------------------------------------------------------------------------
-castor::tape::legacymsg::MessageHeader
-  castor::tape::tapeserver::daemon::VdqmImpl::readAck(const int connection)
-  throw(castor::exception::Exception) {
+castor::tape::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmImpl::readAck(const int connection) throw(castor::exception::Exception) {
   char buf[12]; // Magic + type + len
   legacymsg::MessageHeader ack;
 
@@ -214,9 +215,7 @@ castor::tape::legacymsg::MessageHeader
 //-----------------------------------------------------------------------------
 // readDriveStatusMsgHeader
 //-----------------------------------------------------------------------------
-castor::tape::legacymsg::MessageHeader
-  castor::tape::tapeserver::daemon::VdqmImpl::readDriveStatusMsgHeader(
-  const int connection) throw(castor::exception::Exception) {
+castor::tape::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmImpl::readDriveStatusMsgHeader(const int connection) throw(castor::exception::Exception) {
   char buf[12]; // Magic + type + len
   legacymsg::MessageHeader header;
 
@@ -257,10 +256,7 @@ castor::tape::legacymsg::MessageHeader
 //-----------------------------------------------------------------------------
 // readDriveStatusMsgBody
 //-----------------------------------------------------------------------------
-castor::tape::legacymsg::VdqmDrvRqstMsgBody 
-  castor::tape::tapeserver::daemon::VdqmImpl::readDriveStatusMsgBody(
-  const int connection, const uint32_t bodyLen)
-  throw(castor::exception::Exception) {
+castor::tape::legacymsg::VdqmDrvRqstMsgBody castor::tape::tapeserver::daemon::VdqmImpl::readDriveStatusMsgBody(const int connection, const uint32_t bodyLen) throw(castor::exception::Exception) {
   char buf[VDQM_MSGBUFSIZ];
 
   if(sizeof(buf) < bodyLen) {
@@ -290,8 +286,7 @@ castor::tape::legacymsg::VdqmDrvRqstMsgBody
 //-----------------------------------------------------------------------------
 // writeCommitAck
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::writeCommitAck(
-  const int connection) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmImpl::writeCommitAck(const int connection) throw(castor::exception::Exception) {
   legacymsg::MessageHeader ack;
   ack.magic = VDQM_MAGIC;
   ack.reqType = VDQM_COMMIT;

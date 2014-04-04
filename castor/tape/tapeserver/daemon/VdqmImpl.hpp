@@ -48,8 +48,7 @@ public:
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    */
-  VdqmImpl(log::Logger &log, const std::string &vdqmHostName,
-    const unsigned short vdqmPort, const int netTimeout) throw();
+  VdqmImpl(log::Logger &log, const std::string &vdqmHostName, const unsigned short vdqmPort, const int netTimeout) throw();
 
   /**
    * Destructor.
@@ -67,9 +66,7 @@ public:
    * @param unitName The unit name of the tape drive. 
    * @param dgn The device group name of the tape drive.
    */
-  void setTapeDriveStatusDown(const std::string &server,
-    const std::string &unitName, const std::string &dgn)
-    throw(castor::exception::Exception);
+  void setTapeDriveStatusDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception);
 
   /**
    * Sets the status of the specified tape drive to up.
@@ -79,9 +76,18 @@ public:
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
    */
-  void setTapeDriveStatusUp(const std::string &server,
-    const std::string &unitName, const std::string &dgn)
-    throw(castor::exception::Exception);
+  void setTapeDriveStatusUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception);
+
+  /**
+   * Sets the status of the specified tape drive to release.
+   *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive.
+   * @param forceUnmount Set to true if the current tape mount should not be reused.
+   */
+  void setTapeDriveStatusRelease(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount) throw(castor::exception::Exception);
 
 private:
 

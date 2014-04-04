@@ -49,9 +49,7 @@ public:
    * @param unitName The unit name of the tape drive. 
    * @param dgn The device group name of the tape drive.
    */
-  virtual void setTapeDriveStatusDown(const std::string &server,
-    const std::string &unitName, const std::string &dgn)
-    throw(castor::exception::Exception) = 0;
+  virtual void setTapeDriveStatusDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) = 0;
 
   /**
    * Sets the status of the specified tape drive to up.
@@ -61,9 +59,18 @@ public:
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
    */
-  virtual void setTapeDriveStatusUp(const std::string &server,
-    const std::string &unitName, const std::string &dgn)
-    throw(castor::exception::Exception) = 0;
+  virtual void setTapeDriveStatusUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) = 0;
+
+  /**
+   * Sets the status of the specified tape drive to release.
+   *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive.
+   * @param forceUnmount Set to true if the current tape mount should not be reused.
+   */
+  virtual void setTapeDriveStatusRelease(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount) throw(castor::exception::Exception) = 0;
 
 }; // class Vdqm
 
