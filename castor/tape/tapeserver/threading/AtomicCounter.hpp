@@ -41,6 +41,10 @@ template <class T> struct AtomicCounter{
         threading::MutexLocker ml(&m_mutex);
         return ++m_val;
       }
+      T operator ++ (int) {
+        threading::MutexLocker ml(&m_mutex);
+        return m_val++;
+      }
       T operator -- () {
         threading::MutexLocker ml(&m_mutex);
         return --m_val;
