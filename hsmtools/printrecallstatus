@@ -109,26 +109,18 @@ try:
                        'SIZE_QUEUED', 'SIZE_RECALLING', 'TAPES', 'TAPES_QUEUED', 'TAPES_RECALLING',
                        'MIN_AGE_DAYS', 'MAX_AGE_DAYS']
     columnFormats = ['%*s', '%*d', '%*d', '%*d', '%*d', '%*d', '%*d', '%*d', '%*d', '%*d', '%*.2f', '%*.2f']
-    columnWidths = []
-    for k in range(0, len(columnTitles)):
-        columnWidths.append(max([len(columnTitles[k])]+[len(columnFormats[k] % (1, row[k])) for row in rows]+
-        [len(columnFormats[k] % (1, rowsTot[0][k]))]))
-    # Print header
-    for k in range(0, len(columnTitles)):
-        print '%*s' % ( columnWidths[k], columnTitles[k] ),
-    print
-    print '-' * (sum(columnWidths) +  len(columnWidths) -1)
-    # Print data
-    for row in rows:
-        for k in range(0, len(columnTitles)):
-               print columnFormats[k] % ( columnWidths[k], row[k] ),
-        print
-    # Print separator
-    print '-' * (sum(columnWidths) +  len(columnWidths) -1)
-    # Print totals
-    for k in range(0, len(columnTitles)):
-        print columnFormats[k] % ( columnWidths[k], rowsTot[0][k] ),
-    print
+    stringData = [];
+    if len(rows):
+        rows.extend(rowsTot);
+        # Format the rows into strings
+        stringData = [(recallgroup, '%d' % files, '%d' % filesQueued, '%d' % filesRecalling, '%d' % totalSize,
+                       '%d' % sizeQueued, '%d' % sizeRecalling, '%d' % tapes, '%d' % tapesQueued,
+                       '%d' % tapesRecalling, '%.2f' % minAgeDays, '%.2f' % maxAgeDays) for
+                      recallgroup, files, filesQueued, filesRecalling, totalSize, sizeQueued, sizeRecalling,
+                      tapes, tapesQueued, tapesRecalling, minAgeDays, maxAgeDays in rows];
+    else:
+        stringData = [ ('ALL', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0.00', '0.00') ];
+    castor_tools.prettyPrintTable(columnTitles, stringData, True);
     # close DB connection
     try:
         castor_tools.disconnectDB(stconn)
