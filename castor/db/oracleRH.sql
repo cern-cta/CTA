@@ -35,7 +35,7 @@ BEGIN
     -- permission denied
     SELECT object INTO reqName FROM Type2Obj WHERE type = reqType;
     raise_application_error(-20121, 'Insufficient privileges for user ' || euid ||','|| egid
-        ||' performing a '||   ||' request on svcClass '''|| svcClassName ||'''');
+        ||' performing a '|| reqName ||' request on svcClass '''|| svcClassName ||'''');
   END IF;  
   -- check the validity of the given service class and return its internal id
   RETURN checkForValidSvcClass(svcClassName, 1, 1);
