@@ -116,8 +116,8 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   m_driveCatalogue.populateCatalogue(tpconfigLines);
   daemonizeIfNotRunInForeground();
   blockSignals();
-  registerTapeDrivesWithVdqm();
   setUpReactor();
+  registerTapeDrivesWithVdqm();
   mainEventLoop();
 }
 

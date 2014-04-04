@@ -41,11 +41,8 @@ castor::tape::tapeserver::daemon::VdqmConnectionHandler::VdqmConnectionHandler(c
 // destructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmConnectionHandler::~VdqmConnectionHandler() throw() {
-  {
-    log::Param params[] = {
-      log::Param("fd", m_fd)};
-    m_log(LOG_DEBUG, "Closing vdqm fd", params);
-  }
+  log::Param params[] = {log::Param("fd", m_fd)};
+  m_log(LOG_DEBUG, "Closing vdqm connection", params);
   close(m_fd);
 }
 
@@ -69,18 +66,18 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::fillPollFd(struct 
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(const struct pollfd &fd) throw(castor::exception::Exception) {
-  log::Param params[] = {
-    log::Param("fd"        , fd.fd                                     ),
-    log::Param("POLLIN"    , fd.revents & POLLIN     ? "true" : "false"),
-    log::Param("POLLRDNORM", fd.revents & POLLRDNORM ? "true" : "false"),
-    log::Param("POLLRDBAND", fd.revents & POLLRDBAND ? "true" : "false"),
-    log::Param("POLLPRI"   , fd.revents & POLLPRI    ? "true" : "false"),
-    log::Param("POLLOUT"   , fd.revents & POLLOUT    ? "true" : "false"),
-    log::Param("POLLWRNORM", fd.revents & POLLWRNORM ? "true" : "false"),
-    log::Param("POLLWRBAND", fd.revents & POLLWRBAND ? "true" : "false"),
-    log::Param("POLLERR"   , fd.revents & POLLERR    ? "true" : "false"),
-    log::Param("POLLHUP"   , fd.revents & POLLHUP    ? "true" : "false"),
-    log::Param("POLLNVAL"  , fd.revents & POLLNVAL   ? "true" : "false")};
+  std::list<log::Param> params;
+  params.push_back(log::Param("fd"        , fd.fd                                     ));
+  params.push_back(log::Param("POLLIN"    , fd.revents & POLLIN     ? "true" : "false"));
+  params.push_back(log::Param("POLLRDNORM", fd.revents & POLLRDNORM ? "true" : "false"));
+  params.push_back(log::Param("POLLRDBAND", fd.revents & POLLRDBAND ? "true" : "false"));
+  params.push_back(log::Param("POLLPRI"   , fd.revents & POLLPRI    ? "true" : "false"));
+  params.push_back(log::Param("POLLOUT"   , fd.revents & POLLOUT    ? "true" : "false"));
+  params.push_back(log::Param("POLLWRNORM", fd.revents & POLLWRNORM ? "true" : "false"));
+  params.push_back(log::Param("POLLWRBAND", fd.revents & POLLWRBAND ? "true" : "false"));
+  params.push_back(log::Param("POLLERR"   , fd.revents & POLLERR    ? "true" : "false"));
+  params.push_back(log::Param("POLLHUP"   , fd.revents & POLLHUP    ? "true" : "false"));
+  params.push_back(log::Param("POLLNVAL"  , fd.revents & POLLNVAL   ? "true" : "false"));
   m_log(LOG_DEBUG, "VdqmConnectionHandler::handleEvent()", params);
 
   checkHandleEventFd(fd.fd);
@@ -95,13 +92,20 @@ bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(const 
     return false; // Stay registered with the reactor
   }
 
-  if(connectionIsAuthorized()) {
+  if(!connectionIsAuthorized()) {
+    return true; // Ask reactor to remove and delete this handler
+  }
+
+  try {
     const legacymsg::RtcpJobRqstMsgBody job = readJobMsg(fd.fd);
     logVdqmJobReception(job);
     writeJobReplyMsg(fd.fd);
+  } catch(castor::exception::Exception &ex) {
+    params.push_back(log::Param("message", ex.getMessage().str()));
+    m_log(LOG_ERR, "Failed to handle vdqm-connection event", params);
+    return true; // Ask reactor to remove and delete this handler
   }
 
-  m_log(LOG_DEBUG, "Asking reactor to remove and delete this VdqmConnectionHandler", params);
   return true; // Ask reactor to remove and delete this handler
 }
 
