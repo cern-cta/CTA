@@ -61,14 +61,18 @@ private:
   
   class DiskWriteWorkerThread: private castor::tape::threading::Thread {
   public:
-    DiskWriteWorkerThread(DiskWriteThreadPool & manager): _this(manager) {
-      ++m_nbActiveThread;
-    }
+    DiskWriteWorkerThread(DiskWriteThreadPool & manager):
+    threadID(m_nbActiveThread++),_this(manager)
+    {}
+    
     void startThreads() { castor::tape::threading::Thread::start(); }
     void waitThreads() { castor::tape::threading::Thread::wait(); }
   private:
+    //counter to generate threadID and to know how many thread are still doing something
     static tape::threading::AtomicCounter<int> m_nbActiveThread;
+    const int threadID;
     DiskWriteThreadPool & _this;
+    
     virtual void run();
   };
   

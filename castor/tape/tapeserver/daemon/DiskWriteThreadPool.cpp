@@ -109,26 +109,24 @@ namespace daemon {
     }
     return ret;
   }
-  
-  
-
-     void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
-      std::auto_ptr<DiskWriteTaskInterface>  task;
-      while(1) {
-        task.reset(_this.popAndRequestMoreJobs());
-        if (NULL!=task.get())
-          task->execute();
-        else {
-          printf ("Disk write thread finishing\n");
-          break;
-        }
-      }
-      if(0 == --m_nbActiveThread){
-        //Im the last Thread alive, report end of session
+  void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
+    std::auto_ptr<DiskWriteTaskInterface>  task;
+    while(1) {
+      task.reset(_this.popAndRequestMoreJobs());
+      if (NULL!=task.get())
+        task->execute(_this.m_reporter,_this.m_lc);
+      else {
+        _this.m_lc.log(LOG_INFO,"Disk write thread finishing");
+        break;
       }
     }
+    if(0 == --m_nbActiveThread){
+      //Im the last Thread alive, report end of session
+      _this.m_reporter.reportEndOfSession();
+    }
+  }
  
-tape::threading::AtomicCounter<int> DiskWriteThreadPool::DiskWriteWorkerThread::m_nbActiveThread(0);
+  tape::threading::AtomicCounter<int> DiskWriteThreadPool::DiskWriteWorkerThread::m_nbActiveThread(0);
   
 }}}}
 
