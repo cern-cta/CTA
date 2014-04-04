@@ -231,7 +231,7 @@ class ServerQueue(dict):
         if requser:
           # get user of for first location. For + break is used as set has no access to a random item
           for ds in self.transfersLocations[(transferId, transferType)]:
-            transfer = self[ds][transferId].transfer
+            transfer = self[ds][transferId]
             break
           if transfer.user != requser:
             continue
