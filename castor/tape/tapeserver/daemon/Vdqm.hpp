@@ -25,6 +25,8 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 
+#include <sys/types.h>
+
 namespace castor     {
 namespace tape       {
 namespace tapeserver {
@@ -69,8 +71,9 @@ public:
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
    * @param forceUnmount Set to true if the current tape mount should not be reused.
+   * @param childPid The process ID of the tape-server daemon's child process.
    */
-  virtual void setTapeDriveStatusRelease(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount) throw(castor::exception::Exception) = 0;
+  virtual void setTapeDriveStatusRelease(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t childPid) throw(castor::exception::Exception) = 0;
 
 }; // class Vdqm
 

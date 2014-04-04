@@ -86,8 +86,9 @@ public:
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
    * @param forceUnmount Set to true if the current tape mount should not be reused.
+   * @param childPid The process ID of the tape-server daemon's child process.
    */
-  void setTapeDriveStatusRelease(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount) throw(castor::exception::Exception);
+  void setTapeDriveStatusRelease(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t childPid) throw(castor::exception::Exception);
 
 private:
 
@@ -98,10 +99,21 @@ private:
    * attached.
    * @param unitName The unit name of the tape drive. 
    * @param dgn The device group name of the tape drive.
+   * @param status Bit-set describing the status of the tape drive.
    */
-  void setTapeDriveStatus(const std::string &server,
-    const std::string &unitName, const std::string &dgn,
-    const int status) throw(castor::exception::Exception);
+  void setTapeDriveStatus(const std::string &server, const std::string &unitName, const std::string &dgn, const int status) throw(castor::exception::Exception);
+
+  /**
+   * Sets the status of the specified drive to the specified value.
+   *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive. 
+   * @param dgn The device group name of the tape drive.
+   * @param status Bit-set describing the status of the tape drive.
+   * @param childPid The process ID of the tape-server daemon's child process.
+   */
+  void setTapeDriveStatus(const std::string &server, const std::string &unitName, const std::string &dgn, const int status, const pid_t childPid) throw(castor::exception::Exception);
 
   /**
    * Connects to the vdqmd daemon.
@@ -110,10 +122,19 @@ private:
    */
   int connectToVdqm() const throw(castor::exception::Exception);
 
-  void writeDriveStatusMsg(
-    const int connection, const std::string &server,
-    const std::string &unitName, const std::string &dgn, const int status)
-    throw(castor::exception::Exception);
+  /**
+   * Writes a drive status message with the specifed contents to the specified
+   * connection.
+   *
+   * @param connection The file descriptor of the connection.
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive. 
+   * @param dgn The device group name of the tape drive.
+   * @param status Bit-set describing the status of the tape drive.
+   * @param childPid The process ID of the tape-server daemon's child process.
+   */
+  void writeDriveStatusMsg(const int connection, const std::string &server, const std::string &unitName, const std::string &dgn, const int status, const pid_t childPid) throw(castor::exception::Exception);
 
   /**
    * Reads a VDQM_COMMIT ack message from the specified connection.

@@ -78,15 +78,15 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusUp(const std:
 //------------------------------------------------------------------------------
 // setTapeDriveStatusRelease
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusRelease(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount) throw(castor::exception::Exception) {
-  int status = VDQM_UNIT_UP;
+void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusRelease(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t childPid) throw(castor::exception::Exception) {
+  int status = VDQM_UNIT_RELEASE;
 
   if(forceUnmount) {
     status |= VDQM_FORCE_UNMOUNT;
   }
 
   try {
-    setTapeDriveStatus(server, unitName, dgn, status);
+    setTapeDriveStatus(server, unitName, dgn, status, childPid);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to set drive status to up: " <<
@@ -99,11 +99,18 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusRelease(const
 // setTapeDriveStatus
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatus(const std::string &server, const std::string &unitName, const std::string &dgn, const int status) throw(castor::exception::Exception) {
+  const pid_t childPid = 0;
+  setTapeDriveStatus(server, unitName, dgn, status, childPid);
+}
+
+//------------------------------------------------------------------------------
+// setTapeDriveStatus
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatus(const std::string &server, const std::string &unitName, const std::string &dgn, const int status, const pid_t childPid) throw(castor::exception::Exception) {
   castor::utils::SmartFd connection(connectToVdqm());
-  writeDriveStatusMsg(connection.get(), server, unitName, dgn, status);
+  writeDriveStatusMsg(connection.get(), server, unitName, dgn, status, childPid);
   readCommitAck(connection.get());
-  const legacymsg::MessageHeader header =
-    readDriveStatusMsgHeader(connection.get());
+  const legacymsg::MessageHeader header = readDriveStatusMsgHeader(connection.get());
   readDriveStatusMsgBody(connection.get(), header.lenOrStatus);
   writeCommitAck(connection.get());
 }
@@ -129,9 +136,10 @@ int castor::tape::tapeserver::daemon::VdqmImpl::connectToVdqm() const throw(cast
 //-----------------------------------------------------------------------------
 // writeDriveStatusMsg
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::writeDriveStatusMsg(const int connection, const std::string &server, const std::string &unitName, const std::string &dgn, const int status) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmImpl::writeDriveStatusMsg(const int connection, const std::string &server, const std::string &unitName, const std::string &dgn, const int status, const pid_t childPid) throw(castor::exception::Exception) {
   legacymsg::VdqmDrvRqstMsgBody body;
   body.status = status;
+  body.jobId = childPid;
   castor::utils::copyString(body.server, server.c_str());
   castor::utils::copyString(body.drive, unitName.c_str());
   castor::utils::copyString(body.dgn, dgn.c_str());
