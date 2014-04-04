@@ -29,7 +29,31 @@
 #include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
-#include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
+#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
+
+namespace {
+  
+  uint32_t blockID(const castor::tape::tapegateway::FileToRecallStruct& ftr)
+  {
+    return (ftr.blockId0() << 24) | (ftr.blockId1() << 16) |  (ftr.blockId2() << 8) | ftr.blockId3();
+  }
+  
+  /*Use RAII to make sure the memory block is released  
+   *(ie pushed back to the memory manager) in any case (exception or not)
+   */
+  class AutoReleaseBlock{
+    castor::tape::tapeserver::daemon::MemBlock *block;
+    castor::tape::tapeserver::daemon::MemoryManager& memManager;
+  public:
+    AutoReleaseBlock(castor::tape::tapeserver::daemon::MemBlock* mb, 
+            castor::tape::tapeserver::daemon::MemoryManager& mm):
+    block(mb),memManager(mm){}
+    
+    ~AutoReleaseBlock(){
+      memManager.releaseBlock(block);
+    }
+  };
+}
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -71,29 +95,34 @@ public:
     using log::LogContext;
     using log::Param;
     try{
-      tape::diskFile::WriteFile writer(m_path);
+      tape::diskFile::WriteFile writer(m_recallingFile.path());
       int blockId  = 0;
       
       while(!m_fifo.finished()) {
         MemBlock *mb = m_fifo.popDataBlock();
-        //TODO why are we modifying block id ?
-        mb->m_fileid = m_fileId;
-        mb->m_fileBlock = blockId++;
+        AutoReleaseBlock releaser(mb,m_memManager);
+        
+        if(m_recallingFile.fileid() != static_cast<unsigned int>(mb->m_fileid)
+                || blockId != mb->m_fileBlock){
+          LogContext::ScopedParam sp[]={
+            LogContext::ScopedParam(lc, Param("expectedFILEID",m_recallingFile.fileid())),
+            LogContext::ScopedParam(lc, Param("receivedFILEID", mb->m_fileid)),
+            LogContext::ScopedParam(lc, Param("expectedFBLOCKId", blockId)),
+            LogContext::ScopedParam(lc, Param("receivedFBLOCKId", mb->m_fileBlock)),
+        };
+        tape::utils::suppresUnusedVariable(sp);
+          lc.log(LOG_ERR,"received a bad block for writing");
+          throw castor::tape::Exception("received a bad block for writing");
+        }
         writer.write(mb->m_payload.get(),mb->m_payload.size());
-        m_memManager.releaseBlock(mb);
       }
       writer.close();
-      tapegateway::FileToRecallStruct recalledFile;
-      //fill recalledFile
-      //We are currently lacking of information to fill recalledFile
-      //log is done in m_reporter while processing reportCompletedJob
-      m_reporter.reportCompletedJob(recalledFile);
+      //a log is done in m_reporter while processing reportCompletedJob
+      reporter.reportCompletedJob(m_recallingFile);
     }
     catch(const castor::exception::Exception& e){
-      tapegateway::FileToRecallStruct failedrecalledFile;
-      //fill failedrecalledFile
-      //log is done in m_reporter while processing reportFailedJob
-      m_reporter.reportFailedJob(failedrecalledFile,e.getMessageValue(),e.code());
+      //a log is done in m_reporter while processing reportFailedJob    
+      reporter.reportFailedJob(m_recallingFile,e.getMessageValue(),e.code());
     }
   }
   
