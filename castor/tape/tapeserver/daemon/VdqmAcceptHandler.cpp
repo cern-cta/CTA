@@ -36,13 +36,13 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmAcceptHandler::VdqmAcceptHandler(
-  const int listenSock,
+  const int fd,
   io::PollReactor &reactor,
   log::Logger &log,
   Vdqm &vdqm,
   DriveCatalogue &driveCatalogue)
   throw():
-    m_listenSock(listenSock),
+    m_fd(fd),
     m_reactor(reactor),
     m_log(log),
     m_vdqm(vdqm),
@@ -54,14 +54,19 @@ castor::tape::tapeserver::daemon::VdqmAcceptHandler::VdqmAcceptHandler(
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmAcceptHandler::~VdqmAcceptHandler()
   throw() {
-  close(m_listenSock);
+  {
+    log::Param params[] = {
+      log::Param("fd", m_fd)};
+    m_log(LOG_DEBUG, "Closing vdqm listen socket", params);
+  }
+  close(m_fd);
 }
 
 //------------------------------------------------------------------------------
 // getFd
 //------------------------------------------------------------------------------
 int castor::tape::tapeserver::daemon::VdqmAcceptHandler::getFd() throw() {
-  return m_listenSock;
+  return m_fd;
 }
 
 //------------------------------------------------------------------------------
@@ -69,7 +74,7 @@ int castor::tape::tapeserver::daemon::VdqmAcceptHandler::getFd() throw() {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmAcceptHandler::fillPollFd(
   struct pollfd &fd) throw() {
-  fd.fd = m_listenSock;
+  fd.fd = m_fd;
   fd.events = POLLRDNORM;
   fd.revents = 0;
 }
@@ -156,11 +161,11 @@ bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmAcceptHandler::checkHandleEventFd(
   const int fd) throw (castor::exception::Exception) {
-  if(m_listenSock != fd) {
+  if(m_fd != fd) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to accept connection from vdqmd daemon"
       ": Event handler passed wrong file descriptor"
-      ": expected=" << m_listenSock << " actual=" << fd;
+      ": expected=" << m_fd << " actual=" << fd;
     throw ex;
   }
 }
