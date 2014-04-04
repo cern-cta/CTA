@@ -48,14 +48,13 @@ public:
    * @param blockCount: number of memory blocks that will be used
    * @param mm: memory manager of the session
    */
-  DiskWriteTask(int fileId, int blockCount, const std::string& filePath,MemoryManager& mm,RecallReportPacker& report): 
-  m_fifo(blockCount),m_blockCount(blockCount), m_fileId(fileId), 
-          m_memManager(mm),m_path(filePath),m_reporter(report){
+  DiskWriteTask(const tape::tapegateway::FileToRecallStruct& file,MemoryManager& mm): 
+  m_blockCount(blockID(file)),m_fifo(m_blockCount),m_recallingFile(file),m_memManager(mm){
     mm.addClient(&m_fifo); 
   }
   
   /**
-   * Return the numebr of files to write to disk
+   * Return the number of files to write to disk
    * @return always 1
    */
   virtual int files() { return 1; };
@@ -128,22 +127,21 @@ public:
   }
   
 private:
-  
-  /**
-   * The fifo containing the memory blocks holding data to be written to disk
-   */
-  DataFifo m_fifo;
-  
   /**
    * Number of blocks in the fifo
    */
   const int m_blockCount;
   
   /**
-   * File id of the file that will be written to disk
+   * The fifo containing the memory blocks holding data to be written to disk
    */
-  int m_fileId;
+  DataFifo m_fifo;
   
+  /** 
+   * All we need to know about the file we are currently recalling
+   */
+  tape::tapegateway::FileToRecallStruct m_recallingFile;
+    
   /**
    * Reference to the Memory Manager in use
    */
@@ -154,8 +152,6 @@ private:
    */
   castor::tape::threading::Mutex m_producerProtection;
   
-  const std::string m_path;
-  RecallReportPacker& m_reporter;
 };
 
 }}}}
