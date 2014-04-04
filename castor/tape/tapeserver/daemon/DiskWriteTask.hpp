@@ -68,7 +68,9 @@ public:
   /**
    * Main routine: takes each memory block in the fifo and writes it to disk
    */
-  virtual void execute() {
+  virtual void execute(RecallReportPacker& reporter,log::LogContext& lc) {
+    using log::LogContext;
+    using log::Param;
     try{
       tape::diskFile::WriteFile writer(m_path);
       int blockId  = 0;

@@ -26,11 +26,17 @@
 
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
 
+
+
+
 namespace castor {
+  namespace log{
+  class LogContext;
+  }
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-  
+class RecallReportPacker;
 /**
  * Abstract class describing the interface for a task that wants to write to disk.
  * This is inherited exclusively by DiskWriteFileTask.
@@ -51,7 +57,7 @@ public:
   /**
    * Main routine of the task
    */
-  virtual void execute() =0;
+  virtual void execute(RecallReportPacker& reporter,log::LogContext& lc) =0;
   
   /**
    * Wait for the end of the task
