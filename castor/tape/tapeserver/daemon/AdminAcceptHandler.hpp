@@ -47,7 +47,7 @@ public:
   /**
    * Constructor.
    *
-   * @param listenSock The file descriptor of the socket listening for
+   * @param fd The file descriptor of the socket listening for
    * connections from the vdqmd daemon.
    * @param reactor The reactor to which new Vdqm connection handlers are to be
    * registered.
@@ -56,7 +56,7 @@ public:
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
    */
-  AdminAcceptHandler(const int listenSock, io::PollReactor &reactor,
+  AdminAcceptHandler(const int fd, io::PollReactor &reactor,
     log::Logger &log, Vdqm &vdqm, DriveCatalogue &driveCatalogue, const std::string &hostName) throw();
 
   /**
@@ -135,7 +135,7 @@ private:
    * The file descriptor of the socket listening for connections from the vdqmd
    * daemon.
    */
-  const int m_listenSock;
+  const int m_fd;
 
   /**
    * The reactor to which new Vdqm connection handlers are to be registered.

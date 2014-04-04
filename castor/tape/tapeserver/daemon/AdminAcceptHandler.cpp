@@ -43,14 +43,14 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::AdminAcceptHandler::AdminAcceptHandler(
-  const int listenSock,
+  const int fd,
   io::PollReactor &reactor,
   log::Logger &log,
   Vdqm &vdqm,
   DriveCatalogue &driveCatalogue,
   const std::string &hostName)
   throw():
-    m_listenSock(listenSock),
+    m_fd(fd),
     m_reactor(reactor),
     m_log(log),
     m_vdqm(vdqm),
@@ -70,7 +70,7 @@ castor::tape::tapeserver::daemon::AdminAcceptHandler::~AdminAcceptHandler()
 // getFd
 //------------------------------------------------------------------------------
 int castor::tape::tapeserver::daemon::AdminAcceptHandler::getFd() throw() {
-  return m_listenSock;
+  return m_fd;
 }
 
 //------------------------------------------------------------------------------
@@ -78,7 +78,7 @@ int castor::tape::tapeserver::daemon::AdminAcceptHandler::getFd() throw() {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillPollFd(
   struct pollfd &fd) throw() {
-  fd.fd = m_listenSock;
+  fd.fd = m_fd;
   fd.events = POLLRDNORM;
   fd.revents = 0;
 }
@@ -136,11 +136,11 @@ bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::AdminAcceptHandler::checkHandleEventFd(
   const int fd) throw (castor::exception::Exception) {
-  if(m_listenSock != fd) {
+  if(m_fd != fd) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to accept connection from the admin command"
       ": Event handler passed wrong file descriptor"
-      ": expected=" << m_listenSock << " actual=" << fd;
+      ": expected=" << m_fd << " actual=" << fd;
     throw ex;
   }
 }
