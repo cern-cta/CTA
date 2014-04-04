@@ -9,12 +9,6 @@
 using castor::log::LogContext;
 using castor::log::Param;
 
-namespace{
-  uint32_t blockID(const castor::tape::tapegateway::FileToRecallStruct& ftr)
-  {
-    return (ftr.blockId0() << 24) | (ftr.blockId1() << 16) |  (ftr.blockId2() << 8) | ftr.blockId3();
-  }
-}
 
 namespace castor{
 namespace tape{
@@ -24,10 +18,10 @@ namespace daemon {
 RecallTaskInjector::RecallTaskInjector(MemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
         DiskThreadPoolInterface<DiskWriteTaskInterface> & diskWriter,
-        client::ClientInterface& client,RecallReportPacker& report,castor::log::LogContext lc) : 
+        client::ClientInterface& client,castor::log::LogContext lc) : 
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
-        m_client(client),m_lc(lc),m_report(report)
+        m_client(client),m_lc(lc)
 {}
 
 void RecallTaskInjector::requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall) {
@@ -59,7 +53,7 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
     
     m_lc.log(LOG_INFO, "Logged file to recall");
     
-    DiskWriteTask * dwt = new DiskWriteTask((*it)->id(), blockID(**it),(*it)->path() ,m_memManager,m_report);
+    DiskWriteTask * dwt = new DiskWriteTask(**it ,m_memManager);
     TapeReadFileTask * trt = new TapeReadFileTask(*dwt, (*it)->fseq(), blockID(**it));
     
     m_diskWriter.push(dwt);

@@ -66,7 +66,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   FakeDiskWriteThreadPool diskWrite;
   FakeSingleTapeReadThread tapeRead(drive);
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
-  tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,rrp,lc);
+  tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,lc);
   
   ASSERT_EQ(true,rti.synchronousInjection(6,blockSize));
   ASSERT_EQ(nbFile,diskWrite.m_tasks.size());
@@ -92,6 +92,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
     DiskWriteTaskInterface* diskWriteTask=diskWrite.m_tasks.pop();
     TapeReadTask* tapeReadTask=tapeRead.m_tasks.pop();
     
+    //static_cast is needed otherwise compilation fails on SL5 with a raw NULL
     ASSERT_EQ(static_cast<DiskWriteTaskInterface*>(NULL),diskWriteTask);
     ASSERT_EQ(true,tapeReadTask->endOfWork());
     delete diskWriteTask;
@@ -109,7 +110,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   FakeSingleTapeReadThread tapeRead(drive);
   
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
-  tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,rrp,lc);
+  tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,lc);
   
   ASSERT_EQ(false,rti.synchronousInjection(6,blockSize));
   ASSERT_EQ(0U,diskWrite.m_tasks.size());

@@ -32,6 +32,7 @@
 #include "DiskThreadPoolInterface.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
+#include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 #include <vector>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -43,7 +44,8 @@ namespace daemon {
 
 class DiskWriteThreadPool : public DiskThreadPoolInterface<DiskWriteTaskInterface> {
 public:
-  DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq,castor::log::LogContext lc);
+  DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq,
+           RecallReportPacker& report,castor::log::LogContext lc);
   ~DiskWriteThreadPool();
   
   void startThreads();
@@ -89,6 +91,7 @@ private:
  
   uint32_t m_maxFilesReq;
   uint64_t m_maxBytesReq;
+  RecallReportPacker& m_reporter;
   castor::log::LogContext m_lc;
 };
 
