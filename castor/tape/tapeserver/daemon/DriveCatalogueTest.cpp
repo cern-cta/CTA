@@ -50,6 +50,8 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, driveState2Str) {
     DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_UP));
   ASSERT_EQ(std::string("RUNNING"),
     DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_RUNNING));
+  ASSERT_EQ(std::string("WAITDOWN"),
+    DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_WAITDOWN));
 }
 
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {

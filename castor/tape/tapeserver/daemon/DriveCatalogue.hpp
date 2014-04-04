@@ -49,26 +49,34 @@ public:
    * The state of a drive as described by the following FSTN:
    *
    *              start daemon /
-   *  ------  send VDQM_UNIT_DOWN   ----------------
-   * | INIT |--------------------->|      DOWN      |<-------------------
-   *  ------                        ----------------                     |
-   *     |                          |              ^                     |
-   *     |                          |              |                     |
-   *     |                          | tpconfig up  | tpconfig down       |
-   *     |                          |              |                     |
-   *     |      start daemon /      v              |                     |
-   *     |    send VDQM_UNIT_UP     ----------------                     |
-   *      ------------------------>|      UP        |                    |
-   *                                ----------------                     |
-   *                                |              ^                     |
-   *                                |              |                     |
-   *                                | vdqm job /   | SIGCHLD [success]   |
-   *                                | fork         |                     |
-   *                                |              |                     |
-   *                                v              |                     |
-   *                                ----------------    SIGCHLD [fail]   |
-   *                               |    RUNNING     |-------------------- 
-   *                                ----------------
+   *  ------  send VDQM_UNIT_DOWN   ------------------
+   * | INIT |--------------------->|       DOWN       |<-------------------
+   *  ------                        ------------------                     |
+   *     |                          |                ^                     |
+   *     |                          |                |                     |
+   *     |                          | tpconfig up    | tpconfig down       |
+   *     |                          |                |                     |
+   *     |      start daemon /      v                |                     |
+   *     |    send VDQM_UNIT_UP     ------------------                     |
+   *      ------------------------>|       UP         |                    |
+   *                                ------------------                     |
+   *                                |                ^                     |
+   *                                |                |                     |
+   *                                | vdqm job /     | SIGCHLD [success]   |
+   *                                | fork           |                     |
+   *                                |                |                     |
+   *                                v                |                     |
+   *                                ------------------    SIGCHLD [fail]   |
+   *                               |     RUNNING      |--------------------|
+   *                                ------------------                     |
+   *                                |                ^                     |
+   *                                |                |                     |
+   *                                | tpconfig down  | tpconfig up         |
+   *                                |                |                     |
+   *                                v                |                     |
+   *                                ------------------      SIGCHLD        |
+   *                               |     WAITDOWN     |--------------------
+   *                                ------------------
    *
    * When the tapeserverd daemon is started, depending on the initial state
    * defined in /etc/castor/TPCONFIG, the daemon sends either a VDQM_UNIT_UP
@@ -89,9 +97,16 @@ public:
    * Once the vdqm job has been carried out, the child process completes
    * and the state of the tape drive either returns to DRIVE_STATE_UP if there
    * were no problems or to DRIVE_STATE_DOWN if there were.
+   *
+   * If the tape daemon receives a tpconfig down during a tape session, in
+   * other words whilst the drive in question is in the DRIVE_STATE_RUNNING
+   * state, then the state of the drive is moved to DRIVE_STATE_WAITDOWN.  The
+   * tape session continues to run in the DRIVE_STATE_WAITDOWN state, however
+   * when the tape session is finished the state of the drive is moved to
+   * DRIVE_STATE_DOWN.
    */
   enum DriveState { DRIVE_STATE_INIT, DRIVE_STATE_DOWN, DRIVE_STATE_UP,
-    DRIVE_STATE_RUNNING };
+    DRIVE_STATE_RUNNING, DRIVE_STATE_WAITDOWN };
 
   /**
    * Returns the string representation of the specified tape-drive state.
@@ -113,13 +128,13 @@ public:
    */
   void populateCatalogue(const utils::TpconfigLines &lines)
     throw(castor::exception::Exception);
-  
+
   /**
    * Returns the unit name of the drive on which the given process is running
    * @param sessionPid
    * @return the unit name of the drive on which the given process is running
    */
-  std::string getUnitName(const pid_t sessionPid) 
+  std::string getUnitName(const pid_t sessionPid)
     throw(castor::exception::Exception);
 
   /**

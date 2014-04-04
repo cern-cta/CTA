@@ -34,11 +34,12 @@
 const char *castor::tape::tapeserver::daemon::DriveCatalogue::driveState2Str(
   const DriveState state) throw() {
   switch(state) {
-  case DRIVE_STATE_INIT:    return "INIT";
-  case DRIVE_STATE_DOWN:    return "DOWN";
-  case DRIVE_STATE_UP:      return "UP";
-  case DRIVE_STATE_RUNNING: return "RUNNING";
-  default:                  return "UNKNOWN";
+  case DRIVE_STATE_INIT    : return "INIT";
+  case DRIVE_STATE_DOWN    : return "DOWN";
+  case DRIVE_STATE_UP      : return "UP";
+  case DRIVE_STATE_RUNNING : return "RUNNING";
+  case DRIVE_STATE_WAITDOWN: return "WAITDOWN";
+  default                  : return "UNKNOWN";
   }
 }
 
