@@ -15,10 +15,8 @@
 #include "vdqm_api.h"
 #include <unistd.h>
 #include "tplogger_api.h"
-#if defined(linux)
 #include <sys/ioctl.h>
 #include <linux/mtio.h>
-#endif
 int jid;
 int main(int	argc,
          char	**argv)
@@ -33,7 +31,6 @@ int main(int	argc,
 	int tapefd;
 	int vdqm_rc;
 	int vdqm_status;
-#if defined(linux)
         struct mtop mt_cmd;
         int st_buffer_writes = 0;
         int st_read_ahead = 0;
@@ -42,7 +39,7 @@ int main(int	argc,
         char *getconfent();
         int st_timeout;
         int st_long_timeout;
-#endif
+
 	ENTRY (confdrive);
 
 	if (10 != argc) {
@@ -75,7 +72,6 @@ int main(int	argc,
 			c = errno;
 		} else {
 			if (tapefd >= 0) {
-#if defined(linux)
                                 /* set st parameters (moved here from kernel patches) */
                                 mt_cmd.mt_op = MTSETDRVBUFFER;
 
@@ -222,7 +218,6 @@ int main(int	argc,
                                                             "Value",   TL_MSG_PARAM_STR, strerror(errno) );
                                         c = errno;
                                 }
-#endif /* linux */
 				close (tapefd);
 			}
 		}
