@@ -9,6 +9,12 @@
 using castor::log::LogContext;
 using castor::log::Param;
 
+namespace{
+  castor::tape::tapegateway::FileToRecallStruct* removeOwningList(castor::tape::tapegateway::FileToRecallStruct* ptr){
+    ptr->setFilesToRecallList(NULL);
+    return ptr;
+  }
+}
 
 namespace castor{
 namespace tape{
@@ -53,7 +59,7 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
     
     m_lc.log(LOG_INFO, "Logged file to recall");
     
-    DiskWriteTask * dwt = new DiskWriteTask(**it ,m_memManager);
+    DiskWriteTask * dwt = new DiskWriteTask(removeOwningList(dynamic_cast<tape::tapegateway::FileToRecallStruct*>((*it)->clone())) ,m_memManager);
     TapeReadFileTask * trt = new TapeReadFileTask(*dwt, (*it)->fseq(), blockID(**it));
     
     m_diskWriter.push(dwt);

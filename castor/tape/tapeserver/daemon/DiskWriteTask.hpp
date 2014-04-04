@@ -30,7 +30,7 @@
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
-
+#include <memory>
 namespace {
   
   uint32_t blockID(const castor::tape::tapegateway::FileToRecallStruct& ftr)
@@ -72,8 +72,8 @@ public:
    * @param blockCount: number of memory blocks that will be used
    * @param mm: memory manager of the session
    */
-  DiskWriteTask(const tape::tapegateway::FileToRecallStruct& file,MemoryManager& mm): 
-  m_blockCount(blockID(file)),m_fifo(m_blockCount),m_recallingFile(file),m_memManager(mm){
+  DiskWriteTask(tape::tapegateway::FileToRecallStruct* file,MemoryManager& mm): 
+  m_blockCount(blockID(*file)),m_fifo(m_blockCount),m_recallingFile(file),m_memManager(mm){
     mm.addClient(&m_fifo); 
   }
   
@@ -95,17 +95,17 @@ public:
     using log::LogContext;
     using log::Param;
     try{
-      tape::diskFile::WriteFile writer(m_recallingFile.path());
+      tape::diskFile::WriteFile writer(m_recallingFile->path());
       int blockId  = 0;
       
       while(!m_fifo.finished()) {
         MemBlock *mb = m_fifo.popDataBlock();
         AutoReleaseBlock releaser(mb,m_memManager);
         
-        if(m_recallingFile.fileid() != static_cast<unsigned int>(mb->m_fileid)
+        if(m_recallingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
                 || blockId != mb->m_fileBlock){
           LogContext::ScopedParam sp[]={
-            LogContext::ScopedParam(lc, Param("expectedFILEID",m_recallingFile.fileid())),
+            LogContext::ScopedParam(lc, Param("expectedFILEID",m_recallingFile->fileid())),
             LogContext::ScopedParam(lc, Param("receivedFILEID", mb->m_fileid)),
             LogContext::ScopedParam(lc, Param("expectedFBLOCKId", blockId)),
             LogContext::ScopedParam(lc, Param("receivedFBLOCKId", mb->m_fileBlock)),
@@ -118,11 +118,11 @@ public:
       }
       writer.close();
       //a log is done in m_reporter while processing reportCompletedJob
-      reporter.reportCompletedJob(m_recallingFile);
+      reporter.reportCompletedJob(*m_recallingFile);
     }
     catch(const castor::exception::Exception& e){
       //a log is done in m_reporter while processing reportFailedJob    
-      reporter.reportFailedJob(m_recallingFile,e.getMessageValue(),e.code());
+      reporter.reportFailedJob(*m_recallingFile,e.getMessageValue(),e.code());
     }
   }
   
@@ -169,7 +169,7 @@ private:
   /** 
    * All we need to know about the file we are currently recalling
    */
-  tape::tapegateway::FileToRecallStruct m_recallingFile;
+  std::auto_ptr<tape::tapegateway::FileToRecallStruct> m_recallingFile;
     
   /**
    * Reference to the Memory Manager in use
