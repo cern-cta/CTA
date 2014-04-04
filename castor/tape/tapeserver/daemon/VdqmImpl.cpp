@@ -73,7 +73,7 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusDown(const st
 void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
-    body.status = VDQM_UNIT_DOWN;
+    body.status = VDQM_UNIT_UP;
     castor::utils::copyString(body.server, server.c_str());
     castor::utils::copyString(body.drive, unitName.c_str());
     castor::utils::copyString(body.dgn, dgn.c_str());
