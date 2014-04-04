@@ -84,6 +84,18 @@ public:
   void setTapeDriveStatusUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception);
 
   /**
+   * Sets the status of the specified tape drive to assign.
+   *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive.
+   * @param mountTransactionId The mount transaction ID.
+   * @param childPid The process ID of the tape-server daemon's child process.
+   */
+  void setTapeDriveStatusAssign(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t childPid) throw(castor::exception::Exception);
+
+  /**
    * Sets the status of the specified tape drive to release.
    *
    * @param server The host name of the server to which the tape drive is

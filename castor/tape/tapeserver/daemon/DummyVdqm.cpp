@@ -54,6 +54,12 @@ void castor::tape::tapeserver::daemon::DummyVdqm::setTapeDriveStatusUp(const std
 }
 
 //------------------------------------------------------------------------------
+// setTapeDriveStatusAssign
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DummyVdqm::setTapeDriveStatusAssign(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t childPid) throw(castor::exception::Exception) {
+}
+
+//------------------------------------------------------------------------------
 // setTapeDriveStatusRelease
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DummyVdqm::setTapeDriveStatusRelease(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t childPid) throw(castor::exception::Exception) {
