@@ -92,6 +92,7 @@ public:
     m_fileBlock = uninitialised_value;
     m_fSeq = uninitialised_value;
     m_tapeFileBlock = uninitialised_value;
+    m_failled=false;
   }
   //identify block id  
   const int m_memoryBlockId;
@@ -110,6 +111,8 @@ public:
   
   //number of the memory-tape-chunk of the current file we are manipulating
   int m_tapeFileBlock;
+  
+  bool m_failled;
  
 };
 
