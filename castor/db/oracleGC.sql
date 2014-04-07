@@ -743,7 +743,14 @@ BEGIN
       BEGIN
         DELETE FROM DiskCopy WHERE id = dcIds(i);
       EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-        NULL;   -- some other entity refers to this diskCopy, skip for now
+        IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DRAININGERRORS_DC) violated%' THEN
+          -- Ignore the deletion, this diskcopy was implied in a draining action and
+          -- the draining error is still around.
+          NULL;
+        ELSE
+          -- Any other constraint violation is an error
+          RAISE;
+        END IF;
       END;
     END LOOP;
     COMMIT;
