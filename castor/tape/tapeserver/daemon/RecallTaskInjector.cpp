@@ -48,8 +48,7 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
   for (std::vector<tapegateway::FileToRecallStruct*>::const_iterator it = jobs.begin(); it != jobs.end(); ++it) {
 
     LogContext::ScopedParam sp[]={
-      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->id())),
-      LogContext::ScopedParam(m_lc, Param("NSFILEID2", (*it)->fileid())),
+      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->fileid())),
       LogContext::ScopedParam(m_lc, Param("NSFILESEQNUMBER", (*it)->fseq())),
       LogContext::ScopedParam(m_lc, Param("NSFILEBLOCKID", blockID(**it))),
       LogContext::ScopedParam(m_lc, Param("NSFILENSHOST", (*it)->nshost())),
@@ -116,7 +115,7 @@ void RecallTaskInjector::WorkerThread::run()
             _this.m_diskWriter.finish();
             break;
           } else {
-	    printf("In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.\n");
+	     _this.m_lc.log(LOG_INFO,"In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.\n");
 	  }
         } else {
           std::vector<tapegateway::FileToRecallStruct*>& jobs= filesToRecallList->filesToRecall();
@@ -133,15 +132,13 @@ void RecallTaskInjector::WorkerThread::run()
       try {
         while(1) {
           Request req = _this.m_queue.tryPop();
-          printf("In RecallJobInjector::WorkerThread::run(): popping extra request (lastCall=%d)\n", req.lastCall);
+          LogContext::ScopedParam sp(_this.m_lc, Param("lastCall", req.lastCall));
+          _this.m_lc.log(LOG_INFO,"In RecallJobInjector::WorkerThread::run(): popping extra request");
         }
       } catch (castor::tape::threading::noMore) {
-        printf("In RecallJobInjector::WorkerThread::run(): Drained the request queue. We're now empty. Finishing.\n");
+        _this.m_lc.log(LOG_INFO,"In RecallJobInjector::WorkerThread::run(): Drained the request queue. We're now empty. Finishing");
       }
 }
-
-/*RecallTaskInjector::WorkerThread::WorkerThread(RecallTaskInjector & rji): _this(rji) 
-{}*/
 
 } //end namespace daemon
 } //end namespace tapeserver
