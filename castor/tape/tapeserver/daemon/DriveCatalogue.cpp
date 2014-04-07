@@ -239,14 +239,28 @@ std::string castor::tape::tapeserver::daemon::DriveCatalogue::getUnitName(const 
 //-----------------------------------------------------------------------------
 // getUnitNames
 //-----------------------------------------------------------------------------
-std::list<std::string>
-  castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNames()
-  const throw(castor::exception::Exception) {
+std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNames() const throw(castor::exception::Exception) {
   std::list<std::string> unitNames;
 
   for(DriveMap::const_iterator itor = m_drives.begin();
     itor != m_drives.end(); itor++) {
     unitNames.push_back(itor->first);
+  }
+
+  return unitNames;
+}
+
+//-----------------------------------------------------------------------------
+// getUnitNames
+//-----------------------------------------------------------------------------
+std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNames(const DriveState state) const throw(castor::exception::Exception) {
+  std::list<std::string> unitNames;
+
+  for(DriveMap::const_iterator itor = m_drives.begin();
+    itor != m_drives.end(); itor++) {
+    if(state == itor->second.state) {
+      unitNames.push_back(itor->first);
+    }
   }
 
   return unitNames;

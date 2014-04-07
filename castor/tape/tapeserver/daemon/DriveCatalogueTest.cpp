@@ -350,4 +350,42 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
   ASSERT_THROW(catalogue.receivedVdqmJob("UNIT", job), castor::exception::Exception);
 }
 
+TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, getUnitNames) {
+  using namespace castor::tape::tapeserver::daemon;
+  castor::tape::utils::TpconfigLines lines;
+  lines.push_back(castor::tape::utils::TpconfigLine(
+    "UNIT1", "DGN1", "DEV1", "DEN1", "down", "POSITION1", "DEVTYPE1"));
+  lines.push_back(castor::tape::utils::TpconfigLine(
+    "UNIT2", "DGN2", "DEV2", "DEN2", "up", "POSITION2", "DEVTYPE2"));
+
+  DriveCatalogue catalogue;
+  ASSERT_NO_THROW(catalogue.populateCatalogue(lines));
+
+  {
+    std::list<std::string> allUnitNames;
+    ASSERT_NO_THROW(allUnitNames = catalogue.getUnitNames());
+    ASSERT_EQ((std::list<std::string>::size_type)2, allUnitNames.size());
+    const std::string firstOfAllUnitNames = allUnitNames.front();
+    allUnitNames.pop_front();
+    const std::string secondOfAllUnitNames = allUnitNames.front();
+    ASSERT_TRUE(firstOfAllUnitNames == "UNIT1" || firstOfAllUnitNames == "UNIT2");
+    ASSERT_TRUE(secondOfAllUnitNames == "UNIT1" || secondOfAllUnitNames == "UNIT2");
+    ASSERT_TRUE(firstOfAllUnitNames != secondOfAllUnitNames);
+  }
+
+  {
+    std::list<std::string> downUnitNames;
+    ASSERT_NO_THROW(downUnitNames = catalogue.getUnitNames(DriveCatalogue::DRIVE_STATE_DOWN));
+    ASSERT_EQ((std::list<std::string>::size_type)1, downUnitNames.size());
+    ASSERT_EQ(std::string("UNIT1"), downUnitNames.front());
+  }
+
+  {
+    std::list<std::string> upUnitNames;
+    ASSERT_NO_THROW(upUnitNames = catalogue.getUnitNames(DriveCatalogue::DRIVE_STATE_UP));
+    ASSERT_EQ((std::list<std::string>::size_type)1, upUnitNames.size());
+    ASSERT_EQ(std::string("UNIT2"), upUnitNames.front());
+  }
+}
+
 } // namespace unitTests

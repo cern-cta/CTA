@@ -342,6 +342,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
 void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop()
   throw(castor::exception::Exception) {
   while(handleEvents()) {
+    forkWaitingMountSessions();
   }
 }
 
@@ -408,4 +409,10 @@ void castor::tape::tapeserver::daemon::TapeDaemon::reapZombies() throw() {
       log::Param("WIFSIGNALED", WIFSIGNALED(stat))};
     m_log(LOG_INFO, "Child process terminated", params);
   }
+}
+
+//------------------------------------------------------------------------------
+// forkWaitingMountSessions
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSessions() throw() {
 }

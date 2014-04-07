@@ -188,6 +188,12 @@ protected:
   void reapZombies() throw();
 
   /**
+   * Forks a mount-session child-process for every tape drive entry in the
+   * tape drive catalogue that is waiting for such a fork to be carried out.
+   */
+  void forkWaitingMountSessions() throw();
+
+  /**
    * Catalogue used to keep track of both the initial and current state of
    * each tape drive being controlled by the tapeserverd daemon.
    */

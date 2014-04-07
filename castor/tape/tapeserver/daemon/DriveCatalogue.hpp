@@ -155,10 +155,17 @@ public:
    * Returns an unordered list of the unit names of all of the tape drives
    * stored within the tape drive catalogue.
    *
-   * @return Unordered list of the unit names of all of the tape drives stored
-   * within the tape drive catalogue.
+   * @return Unordered list of the unit names.
    */
   std::list<std::string> getUnitNames() const throw(castor::exception::Exception);
+
+  /**
+   * Returns an unordered list of the unit names of the tape drives in the
+   * specified state.
+   *
+   * @return Unordered list of the unit names.
+   */
+  std::list<std::string> getUnitNames(const DriveState state) const throw(castor::exception::Exception);
 
   /**
    * Returns the device group name (DGN) of the specified tape drive.
