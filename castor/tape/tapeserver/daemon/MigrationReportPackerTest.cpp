@@ -26,7 +26,7 @@
 #include "castor/log/StringLogger.hpp"
 #include <gtest/gtest.h>
 
-namespace {
+namespace unitTests {
   const std::string error="ERROR_TEST";
   using namespace castor::tape;
   using ::testing::_;

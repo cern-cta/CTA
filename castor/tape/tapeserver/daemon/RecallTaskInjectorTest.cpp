@@ -6,7 +6,7 @@
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include <gtest/gtest.h>
 #include "castor/tape/tapeserver/client/FakeClient.hpp"
-namespace
+namespace unitTests
 {
 using namespace castor::tape::tapeserver::daemon;
 using namespace castor::tape;

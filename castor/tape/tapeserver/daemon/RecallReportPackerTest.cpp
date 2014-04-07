@@ -27,7 +27,7 @@
 #include <gtest/gtest.h>
 
 using ::testing::_;
-namespace {
+namespace unitTests{
 TEST(castor_tape_tapeserver_daemon, RecallReportPackerNominal) {
   MockClient client;
   ::testing::InSequence dummy;

@@ -14,7 +14,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
-namespace{
+namespace unitTests{
   using namespace castor::tape;
   const int init_value=-1;
   const unsigned int nbFile=5;
