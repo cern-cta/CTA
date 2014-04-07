@@ -32,6 +32,7 @@
 #include "h/Ctape.h"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/AdminMarshal.hpp"
+#include "castor/tape/utils/utils.hpp"
 
 #include <vdqm_api.h>
 
@@ -56,7 +57,7 @@ castor::tape::tapeserver::daemon::AdminAcceptHandler::AdminAcceptHandler(
     m_vdqm(vdqm),
     m_driveCatalogue(driveCatalogue),
     m_hostName(hostName),
-    m_netTimeout(1) {
+    m_netTimeout(10) {
 }
 
 //------------------------------------------------------------------------------
@@ -83,6 +84,67 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillPollFd(
   fd.revents = 0;
 }
 
+//-----------------------------------------------------------------------------
+// marshalReplyMsg
+//-----------------------------------------------------------------------------
+size_t castor::tape::tapeserver::daemon::AdminAcceptHandler::marshalReplyMsg(char *const dst,
+  const size_t dstLen, const int rc)
+  throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    TAPE_THROW_CODE(EINVAL,
+      ": Pointer to destination buffer is NULL");
+  }
+
+  // Calculate the length of the message header
+  const uint32_t totalLen = (2 * sizeof(uint32_t)) + sizeof(int32_t);  // magic + reqType + returnCode
+
+  // Check that the message header buffer is big enough
+  if(totalLen > dstLen) {
+    TAPE_THROW_CODE(EMSGSIZE,
+      ": Buffer too small for reply message"
+      ": Required size: " << totalLen <<
+      ": Actual size: " << dstLen);
+  }
+
+  // Marshal the message header
+  char *p = dst;
+  io::marshalUint32(TPMAGIC, p);
+  io::marshalUint32(TAPERC, p);
+  io::marshalInt32(rc, p);
+
+  // Calculate the number of bytes actually marshalled
+  const size_t nbBytesMarshalled = p - dst;
+
+  // Check that the number of bytes marshalled was what was expected
+  if(totalLen != nbBytesMarshalled) {
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": Mismatch between the expected total length of the "
+      "reply message and the actual number of bytes marshalled"
+      ": Expected: " << totalLen <<
+      ": Marshalled: " << nbBytesMarshalled);
+  }
+
+  return totalLen;
+}
+
+//------------------------------------------------------------------------------
+// writeReplyMsg
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeReplyMsg(const int fd, const int rc) throw(castor::exception::Exception) {
+  legacymsg::RtcpJobReplyMsgBody body;
+  char buf[1024];
+  const size_t len = marshalReplyMsg(buf, sizeof(buf), rc);
+  try {
+    io::writeBytes(fd, m_netTimeout, len, buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to write job reply message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
@@ -92,7 +154,7 @@ bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
 
   // Do nothing if there is no data to read
   //
-  // POLLIN is unfortuntaley not the logical or of POLLRDNORM and POLLRDBAND
+  // POLLIN is unfortunately not the logical or of POLLRDNORM and POLLRDBAND
   // on SLC 5.  I therefore replaced POLLIN with the logical or.  I also
   // added POLLPRI into the mix to cover all possible types of read event.
   if(0 == (fd.revents & POLLRDNORM) && 0 == (fd.revents & POLLRDBAND) &&
@@ -111,23 +173,27 @@ bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
     throw ex;
   }
   
-  const legacymsg::TapeMsgBody job = readJobMsg(fd.fd);
+  const legacymsg::TapeMsgBody job = readJobMsg(connection.get());
   logAdminJobReception(job);
   const std::string unitName(job.drive);
   const std::string dgn = m_driveCatalogue.getDgn(unitName);
 
   if(CONF_UP==job.status) {
     m_vdqm.setDriveStatusUp(m_hostName, unitName, dgn);
+    m_driveCatalogue.configureUp(unitName);
+    m_log(LOG_INFO, "Drive is up now");
   }
   else if(CONF_DOWN==job.status) {
     m_vdqm.setDriveStatusDown(m_hostName, unitName, dgn);
+    m_driveCatalogue.configureDown(unitName);
+    m_log(LOG_INFO, "Drive is down now");
   }
   else {
     castor::exception::Internal ex;
     ex.getMessage() << "Wrong drive status requested:" << job.status;
     throw ex;
   }
-
+  writeReplyMsg(connection.get(), 0);  
   return false; // Stay registered with the reactor
 }
 
@@ -165,9 +231,9 @@ void
 castor::tape::legacymsg::TapeMsgBody
   castor::tape::tapeserver::daemon::AdminAcceptHandler::readJobMsg(
     const int connection) throw(castor::exception::Exception) {
+  
   const legacymsg::MessageHeader header = readJobMsgHeader(connection);
-  const legacymsg::TapeMsgBody body = readJobMsgBody(connection,
-    header.lenOrStatus);
+  const legacymsg::TapeMsgBody body = readJobMsgBody(connection, header.lenOrStatus-sizeof(header));
 
   return body;
 }
@@ -217,7 +283,7 @@ castor::tape::legacymsg::TapeMsgBody
   castor::tape::tapeserver::daemon::AdminAcceptHandler::readJobMsgBody(
     const int connection, const uint32_t len)
     throw(castor::exception::Exception) {
-  char buf[VDQM_MSGBUFSIZ];
+  char buf[REQBUFSZ];
 
   if(sizeof(buf) < len) {
     castor::exception::Internal ex;

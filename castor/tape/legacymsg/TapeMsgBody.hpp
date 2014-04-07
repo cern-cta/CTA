@@ -48,7 +48,7 @@ struct TapeMsgBody {
    */
   TapeMsgBody() throw();
 
-}; // struct RtcpTapeRqstMsgBody
+}; // struct TapeMsgBody
 
 } // namespace legacymsg
 } // namespace tape

@@ -86,6 +86,28 @@ public:
   ~AdminAcceptHandler() throw();
 
 private:
+  
+  /**
+   * Marshals the specified source reply message structure into the
+   * specified destination buffer.
+   *
+   * @param dst    The destination buffer.
+   * @param dstLen The length of the destination buffer.
+   * @param rc     The return code to reply.
+   * @return       The total length of the header.
+   */
+  size_t marshalReplyMsg(char *const dst, const size_t dstLen,
+    const int rc) throw(castor::exception::Exception);
+  
+  /**
+   * Writes a job reply message to the admin command connection.
+   *
+   * @param fd The file descriptor of the connection with the admin command.
+   * @param rc The return code to reply.
+   * 
+   */
+  void writeReplyMsg(const int fd, const int rc)
+    throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the specified file-descriptor is not that of the
