@@ -39,19 +39,21 @@ protected:
   }
 };
 
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, driveState2Str) {
+TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, drvState2Str) {
   using namespace castor::tape::tapeserver::daemon;
 
   ASSERT_EQ(std::string("INIT"),
-    DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_INIT));
+    DriveCatalogue::drvState2Str(DriveCatalogue::DRIVE_STATE_INIT));
   ASSERT_EQ(std::string("DOWN"),
-    DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_DOWN));
+    DriveCatalogue::drvState2Str(DriveCatalogue::DRIVE_STATE_DOWN));
   ASSERT_EQ(std::string("UP"),
-    DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_UP));
+    DriveCatalogue::drvState2Str(DriveCatalogue::DRIVE_STATE_UP));
+  ASSERT_EQ(std::string("WAITFORK"),
+    DriveCatalogue::drvState2Str(DriveCatalogue::DRIVE_STATE_WAITFORK));
   ASSERT_EQ(std::string("RUNNING"),
-    DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_RUNNING));
+    DriveCatalogue::drvState2Str(DriveCatalogue::DRIVE_STATE_RUNNING));
   ASSERT_EQ(std::string("WAITDOWN"),
-    DriveCatalogue::driveState2Str(DriveCatalogue::DRIVE_STATE_WAITDOWN));
+    DriveCatalogue::drvState2Str(DriveCatalogue::DRIVE_STATE_WAITDOWN));
 }
 
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
@@ -269,16 +271,19 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   using namespace castor::tape::tapeserver::daemon;
 
+  // Start with the tape drive in status DOWN
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
     "UNIT", "DGN", "DEV", "DEN", "down", "POSITION", "DEVTYPE"));
-
   DriveCatalogue catalogue;
   ASSERT_NO_THROW(catalogue.populateCatalogue(lines));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_DOWN, catalogue.getState("UNIT"));
+
+  // Configure the tape drive UP
   ASSERT_NO_THROW(catalogue.configureUp("UNIT"));
-  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP,
-    catalogue.getState("UNIT"));
+  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP, catalogue.getState("UNIT"));
+
+  // Receive a vdqm job
   castor::tape::legacymsg::RtcpJobRqstMsgBody job;
   job.volReqId = 1111;
   job.clientPort = 2222;
@@ -288,27 +293,38 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   castor::utils::copyString(job.dgn, "DGN");
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
-  ASSERT_NO_THROW(catalogue.tapeSessionStarted("UNIT", job, 1234));
-  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_RUNNING,
-    catalogue.getState("UNIT"));
+  ASSERT_NO_THROW(catalogue.receivedVdqmJob("UNIT", job));
+  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_WAITFORK, catalogue.getState("UNIT"));
   ASSERT_EQ(job.volReqId, catalogue.getJob("UNIT").volReqId);
   ASSERT_EQ(job.clientPort, catalogue.getJob("UNIT").clientPort);
   ASSERT_EQ(job.clientEuid, catalogue.getJob("UNIT").clientEuid);
   ASSERT_EQ(job.clientEgid, catalogue.getJob("UNIT").clientEgid);
-  ASSERT_EQ(std::string(job.clientHost),
-    std::string(catalogue.getJob("UNIT").clientHost));
-  ASSERT_EQ(std::string(job.dgn),
-    std::string(catalogue.getJob("UNIT").dgn));
-  ASSERT_EQ(std::string(job.driveUnit),
-    std::string(catalogue.getJob("UNIT").driveUnit));
-  ASSERT_EQ(std::string(job.clientUserName),
-    std::string(catalogue.getJob("UNIT").clientUserName));
-  ASSERT_NO_THROW(catalogue.tapeSessionSucceeded("UNIT"));
-  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP,
-    catalogue.getState("UNIT"));
+  ASSERT_EQ(std::string(job.clientHost), std::string(catalogue.getJob("UNIT").clientHost));
+  ASSERT_EQ(std::string(job.dgn), std::string(catalogue.getJob("UNIT").dgn));
+  ASSERT_EQ(std::string(job.driveUnit), std::string(catalogue.getJob("UNIT").driveUnit));
+  ASSERT_EQ(std::string(job.clientUserName), std::string(catalogue.getJob("UNIT").clientUserName));
+
+  // For the mount session
+  const pid_t sessionPid = 1234;
+  ASSERT_NO_THROW(catalogue.forkedMountSession("UNIT", sessionPid));
+  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_RUNNING, catalogue.getState("UNIT"));
+  ASSERT_EQ(sessionPid, catalogue.getSessionPid("UNIT"));
+
+  // Configure the tape drive DOWN whilst the mount session is running
   ASSERT_NO_THROW(catalogue.configureDown("UNIT"));
-  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_DOWN,
-    catalogue.getState("UNIT"));
+  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_WAITDOWN, catalogue.getState("UNIT"));
+
+  // Configure the tape drive back UP whilst the mount session is running
+  ASSERT_NO_THROW(catalogue.configureUp("UNIT"));
+  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_RUNNING, catalogue.getState("UNIT"));
+
+  // Complete the tape session successfully
+  ASSERT_NO_THROW(catalogue.mountSessionSucceeded("UNIT"));
+  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP, catalogue.getState("UNIT"));
+
+  // Configure the tape drive DOWN
+  ASSERT_NO_THROW(catalogue.configureDown("UNIT"));
+  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_DOWN, catalogue.getState("UNIT"));
 }
 
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
@@ -321,8 +337,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
   ASSERT_NO_THROW(catalogue.populateCatalogue(lines));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_DOWN, catalogue.getState("UNIT"));
   ASSERT_NO_THROW(catalogue.configureUp("UNIT"));
-  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP,
-    catalogue.getState("UNIT"));
+  ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP, catalogue.getState("UNIT"));
   castor::tape::legacymsg::RtcpJobRqstMsgBody job;
   job.volReqId = 1111;
   job.clientPort = 2222;
@@ -332,8 +347,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
   castor::utils::copyString(job.dgn, "DGN2");
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
-  ASSERT_THROW(catalogue.tapeSessionStarted("UNIT", job, 1234),
-    castor::exception::Exception);
+  ASSERT_THROW(catalogue.receivedVdqmJob("UNIT", job), castor::exception::Exception);
 }
 
 } // namespace unitTests

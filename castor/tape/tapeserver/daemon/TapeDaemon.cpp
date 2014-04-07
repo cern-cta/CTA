@@ -251,7 +251,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
       ex.getMessage() << "Failed to register tape drive in vdqm"
         ": server=" << m_hostName << " unitName=" << unitName << " dgn=" << dgn
         << ": Invalid drive state: state=" <<
-        DriveCatalogue::driveState2Str(driveState);
+        DriveCatalogue::drvState2Str(driveState);
       throw ex;
     }
   }
