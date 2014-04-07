@@ -373,41 +373,40 @@ AS
 CREATE OR REPLACE PACKAGE tconst
 AS
   -- TPMODE
-  WRITE_DISABLE                CONSTANT PLS_INTEGER :=  0;
-  WRITE_ENABLE                 CONSTANT PLS_INTEGER :=  1;
+  WRITE_DISABLE CONSTANT PLS_INTEGER :=  0;
+  WRITE_ENABLE  CONSTANT PLS_INTEGER :=  1;
 
-  RECALLMOUNT_NEW              CONSTANT PLS_INTEGER := 0;
-  RECALLMOUNT_WAITDRIVE        CONSTANT PLS_INTEGER := 1;
-  RECALLMOUNT_RECALLING        CONSTANT PLS_INTEGER := 2;
+  RECALLMOUNT_NEW        CONSTANT PLS_INTEGER := 0;
+  RECALLMOUNT_WAITDRIVE  CONSTANT PLS_INTEGER := 1;
+  RECALLMOUNT_RECALLING  CONSTANT PLS_INTEGER := 2;
 
-  RECALLJOB_PENDING            CONSTANT PLS_INTEGER := 1;
-  RECALLJOB_SELECTED           CONSTANT PLS_INTEGER := 2;
-  RECALLJOB_RETRYMOUNT         CONSTANT PLS_INTEGER := 3;
-  RECALLJOB_SELECTED2NDCOPY    CONSTANT PLS_INTEGER := 4;
+  RECALLJOB_PENDING      CONSTANT PLS_INTEGER := 1;
+  RECALLJOB_SELECTED     CONSTANT PLS_INTEGER := 2;
+  RECALLJOB_RETRYMOUNT   CONSTANT PLS_INTEGER := 3;
 
-  MIGRATIONMOUNT_WAITTAPE      CONSTANT PLS_INTEGER := 0;
-  MIGRATIONMOUNT_SEND_TO_VDQM  CONSTANT PLS_INTEGER := 1;
-  MIGRATIONMOUNT_WAITDRIVE     CONSTANT PLS_INTEGER := 2;
-  MIGRATIONMOUNT_MIGRATING     CONSTANT PLS_INTEGER := 3;
+  MIGRATIONMOUNT_WAITTAPE  CONSTANT PLS_INTEGER := 0;
+  MIGRATIONMOUNT_SEND_TO_VDQM CONSTANT PLS_INTEGER := 1;
+  MIGRATIONMOUNT_WAITDRIVE CONSTANT PLS_INTEGER := 2;
+  MIGRATIONMOUNT_MIGRATING CONSTANT PLS_INTEGER := 3;
 
-  MIGRATIONJOB_PENDING         CONSTANT PLS_INTEGER := 0;
-  MIGRATIONJOB_SELECTED        CONSTANT PLS_INTEGER := 1;
+  MIGRATIONJOB_PENDING   CONSTANT PLS_INTEGER := 0;
+  MIGRATIONJOB_SELECTED  CONSTANT PLS_INTEGER := 1;
   MIGRATIONJOB_WAITINGONRECALL CONSTANT PLS_INTEGER := 3;
 
-  REPACK_SUBMITTED             CONSTANT PLS_INTEGER := 6;
-  REPACK_STARTING              CONSTANT PLS_INTEGER := 0;
-  REPACK_ONGOING               CONSTANT PLS_INTEGER := 1;
-  REPACK_FINISHED              CONSTANT PLS_INTEGER := 2;
-  REPACK_FAILED                CONSTANT PLS_INTEGER := 3;
-  REPACK_ABORTING              CONSTANT PLS_INTEGER := 4;
-  REPACK_ABORTED               CONSTANT PLS_INTEGER := 5;
+  REPACK_SUBMITTED       CONSTANT PLS_INTEGER := 6;
+  REPACK_STARTING        CONSTANT PLS_INTEGER := 0;
+  REPACK_ONGOING         CONSTANT PLS_INTEGER := 1;
+  REPACK_FINISHED        CONSTANT PLS_INTEGER := 2;
+  REPACK_FAILED          CONSTANT PLS_INTEGER := 3;
+  REPACK_ABORTING        CONSTANT PLS_INTEGER := 4;
+  REPACK_ABORTED         CONSTANT PLS_INTEGER := 5;
 
-  TAPE_DISABLED                CONSTANT PLS_INTEGER := 1;
-  TAPE_EXPORTED                CONSTANT PLS_INTEGER := 2;
-  TAPE_BUSY                    CONSTANT PLS_INTEGER := 4;
-  TAPE_FULL                    CONSTANT PLS_INTEGER := 8;
-  TAPE_RDONLY                  CONSTANT PLS_INTEGER := 16;
-  TAPE_ARCHIVED                CONSTANT PLS_INTEGER := 32;
+  TAPE_DISABLED          CONSTANT PLS_INTEGER := 1;
+  TAPE_EXPORTED          CONSTANT PLS_INTEGER := 2;
+  TAPE_BUSY              CONSTANT PLS_INTEGER := 4;
+  TAPE_FULL              CONSTANT PLS_INTEGER := 8;
+  TAPE_RDONLY            CONSTANT PLS_INTEGER := 16;
+  TAPE_ARCHIVED          CONSTANT PLS_INTEGER := 32;
 END tconst;
 /
 
@@ -458,33 +457,33 @@ END;
 CREATE OR REPLACE PACKAGE dconst
 AS
 
-  CASTORFILE_NOTONTAPE        CONSTANT PLS_INTEGER :=  0;
-  CASTORFILE_ONTAPE           CONSTANT PLS_INTEGER :=  1;
-  CASTORFILE_DISKONLY         CONSTANT PLS_INTEGER :=  2;
+  CASTORFILE_NOTONTAPE       CONSTANT PLS_INTEGER :=  0;
+  CASTORFILE_ONTAPE          CONSTANT PLS_INTEGER :=  1;
+  CASTORFILE_DISKONLY        CONSTANT PLS_INTEGER :=  2;
 
-  DISKCOPY_VALID              CONSTANT PLS_INTEGER :=  0;
-  DISKCOPY_FAILED             CONSTANT PLS_INTEGER :=  4;
-  DISKCOPY_WAITFS             CONSTANT PLS_INTEGER :=  5;
-  DISKCOPY_STAGEOUT           CONSTANT PLS_INTEGER :=  6;
-  DISKCOPY_INVALID            CONSTANT PLS_INTEGER :=  7;
-  DISKCOPY_BEINGDELETED       CONSTANT PLS_INTEGER :=  9;
-  DISKCOPY_WAITFS_SCHEDULING  CONSTANT PLS_INTEGER := 11;
+  DISKCOPY_VALID             CONSTANT PLS_INTEGER :=  0;
+  DISKCOPY_FAILED            CONSTANT PLS_INTEGER :=  4;
+  DISKCOPY_WAITFS            CONSTANT PLS_INTEGER :=  5;
+  DISKCOPY_STAGEOUT          CONSTANT PLS_INTEGER :=  6;
+  DISKCOPY_INVALID           CONSTANT PLS_INTEGER :=  7;
+  DISKCOPY_BEINGDELETED      CONSTANT PLS_INTEGER :=  9;
+  DISKCOPY_WAITFS_SCHEDULING CONSTANT PLS_INTEGER := 11;
 
-  DISKSERVER_PRODUCTION       CONSTANT PLS_INTEGER := 0;
-  DISKSERVER_DRAINING         CONSTANT PLS_INTEGER := 1;
-  DISKSERVER_DISABLED         CONSTANT PLS_INTEGER := 2;
-  DISKSERVER_READONLY         CONSTANT PLS_INTEGER := 3;
+  DISKSERVER_PRODUCTION CONSTANT PLS_INTEGER := 0;
+  DISKSERVER_DRAINING   CONSTANT PLS_INTEGER := 1;
+  DISKSERVER_DISABLED   CONSTANT PLS_INTEGER := 2;
+  DISKSERVER_READONLY   CONSTANT PLS_INTEGER := 3;
 
-  FILESYSTEM_PRODUCTION       CONSTANT PLS_INTEGER := 0;
-  FILESYSTEM_DRAINING         CONSTANT PLS_INTEGER := 1;
-  FILESYSTEM_DISABLED         CONSTANT PLS_INTEGER := 2;
-  FILESYSTEM_READONLY         CONSTANT PLS_INTEGER := 3;
+  FILESYSTEM_PRODUCTION CONSTANT PLS_INTEGER := 0;
+  FILESYSTEM_DRAINING   CONSTANT PLS_INTEGER := 1;
+  FILESYSTEM_DISABLED   CONSTANT PLS_INTEGER := 2;
+  FILESYSTEM_READONLY   CONSTANT PLS_INTEGER := 3;
   
-  DRAININGJOB_SUBMITTED       CONSTANT PLS_INTEGER := 0;
-  DRAININGJOB_STARTING        CONSTANT PLS_INTEGER := 1;
-  DRAININGJOB_RUNNING         CONSTANT PLS_INTEGER := 2;
-  DRAININGJOB_FAILED          CONSTANT PLS_INTEGER := 4;
-  DRAININGJOB_FINISHED        CONSTANT PLS_INTEGER := 5;
+  DRAININGJOB_SUBMITTED    CONSTANT PLS_INTEGER := 0;
+  DRAININGJOB_STARTING     CONSTANT PLS_INTEGER := 1;
+  DRAININGJOB_RUNNING      CONSTANT PLS_INTEGER := 2;
+  DRAININGJOB_FAILED       CONSTANT PLS_INTEGER := 4;
+  DRAININGJOB_FINISHED     CONSTANT PLS_INTEGER := 5;
 
   DRAIN_FILEMASK_NOTONTAPE    CONSTANT PLS_INTEGER := 0;
   DRAIN_FILEMASK_ALL          CONSTANT PLS_INTEGER := 1;
@@ -511,33 +510,33 @@ AS
   DISKPOOLQUERYTYPE_AVAILABLE CONSTANT PLS_INTEGER :=  1;
   DISKPOOLQUERYTYPE_TOTAL     CONSTANT PLS_INTEGER :=  2;
 
-  DISKPOOLSPACETYPE_FREE      CONSTANT PLS_INTEGER :=  0;
-  DISKPOOLSPACETYPE_CAPACITY  CONSTANT PLS_INTEGER :=  1;
+  DISKPOOLSPACETYPE_FREE     CONSTANT PLS_INTEGER :=  0;
+  DISKPOOLSPACETYPE_CAPACITY CONSTANT PLS_INTEGER :=  1;
 
-  GCTYPE_AUTO                 CONSTANT PLS_INTEGER :=  0;
-  GCTYPE_USER                 CONSTANT PLS_INTEGER :=  1;
-  GCTYPE_TOOMANYREPLICAS      CONSTANT PLS_INTEGER :=  2;
-  GCTYPE_DRAINING             CONSTANT PLS_INTEGER :=  3;
-  GCTYPE_NSSYNCH              CONSTANT PLS_INTEGER :=  4;
-  GCTYPE_OVERWRITTEN          CONSTANT PLS_INTEGER :=  5;
-  GCTYPE_ADMIN                CONSTANT PLS_INTEGER :=  6;
-  GCTYPE_FAILEDD2D            CONSTANT PLS_INTEGER :=  7;
+  GCTYPE_AUTO                CONSTANT PLS_INTEGER :=  0;
+  GCTYPE_USER                CONSTANT PLS_INTEGER :=  1;
+  GCTYPE_TOOMANYREPLICAS     CONSTANT PLS_INTEGER :=  2;
+  GCTYPE_DRAINING            CONSTANT PLS_INTEGER :=  3;
+  GCTYPE_NSSYNCH             CONSTANT PLS_INTEGER :=  4;
+  GCTYPE_OVERWRITTEN         CONSTANT PLS_INTEGER :=  5;
+  GCTYPE_ADMIN               CONSTANT PLS_INTEGER :=  6;
+  GCTYPE_FAILEDD2D           CONSTANT PLS_INTEGER :=  7;
   
-  DELDC_ENOENT                CONSTANT PLS_INTEGER :=  1;
-  DELDC_RECALL                CONSTANT PLS_INTEGER :=  2;
-  DELDC_REPLICATION           CONSTANT PLS_INTEGER :=  3;
-  DELDC_LOST                  CONSTANT PLS_INTEGER :=  4;
-  DELDC_GC                    CONSTANT PLS_INTEGER :=  5;
-  DELDC_NOOP                  CONSTANT PLS_INTEGER :=  6;
+  DELDC_ENOENT               CONSTANT PLS_INTEGER :=  1;
+  DELDC_RECALL               CONSTANT PLS_INTEGER :=  2;
+  DELDC_REPLICATION          CONSTANT PLS_INTEGER :=  3;
+  DELDC_LOST                 CONSTANT PLS_INTEGER :=  4;
+  DELDC_GC                   CONSTANT PLS_INTEGER :=  5;
+  DELDC_NOOP                 CONSTANT PLS_INTEGER :=  6;
 
-  DISK2DISKCOPYJOB_PENDING    CONSTANT PLS_INTEGER :=  0;
-  DISK2DISKCOPYJOB_SCHEDULED  CONSTANT PLS_INTEGER :=  1;
-  DISK2DISKCOPYJOB_RUNNING    CONSTANT PLS_INTEGER :=  2;
+  DISK2DISKCOPYJOB_PENDING   CONSTANT PLS_INTEGER :=  0;
+  DISK2DISKCOPYJOB_SCHEDULED CONSTANT PLS_INTEGER :=  1;
+  DISK2DISKCOPYJOB_RUNNING   CONSTANT PLS_INTEGER :=  2;
 
-  REPLICATIONTYPE_USER        CONSTANT PLS_INTEGER :=  0;
-  REPLICATIONTYPE_INTERNAL    CONSTANT PLS_INTEGER :=  1;
-  REPLICATIONTYPE_DRAINING    CONSTANT PLS_INTEGER :=  2;
-  REPLICATIONTYPE_REBALANCE   CONSTANT PLS_INTEGER :=  3;
+  REPLICATIONTYPE_USER       CONSTANT PLS_INTEGER :=  0;
+  REPLICATIONTYPE_INTERNAL   CONSTANT PLS_INTEGER :=  1;
+  REPLICATIONTYPE_DRAINING   CONSTANT PLS_INTEGER :=  2;
+  REPLICATIONTYPE_REBALANCE  CONSTANT PLS_INTEGER :=  3;
 
 END dconst;
 /
@@ -574,7 +573,6 @@ AS
   MIGMOUNT_NOACTION            CONSTANT VARCHAR2(2048) := 'startMigrationMounts: no need for new migration mount';
 
   RECMOUNT_NEW_MOUNT           CONSTANT VARCHAR2(2048) := 'startRecallMounts: created new recall mount';
-  RECMOUNT_FAILED_NEW_MOUNT    CONSTANT VARCHAR2(2048) := 'startRecallMounts: not creating mount that would have been empty (possible issue with destination diskpools)';
   RECMOUNT_NOACTION_NODRIVE    CONSTANT VARCHAR2(2048) := 'startRecallMounts: not allowed to start new recall mount. Maximum nb of drives has been reached';
   RECMOUNT_NOACTION_NOCAND     CONSTANT VARCHAR2(2048) := 'startRecallMounts: no candidate found for a mount';
 
@@ -1300,7 +1298,7 @@ END;
 /
 ALTER TABLE RecallJob
   ADD CONSTRAINT CK_RecallJob_Status
-  CHECK (status IN (1, 2, 3, 4));
+  CHECK (status IN (1, 2, 3));
 
 /* Definition of the TapePool table
  *   name : the name of the TapePool
@@ -1434,9 +1432,6 @@ END;
 ALTER TABLE MigrationJob
   ADD CONSTRAINT CK_MigrationJob_Status
   CHECK (status IN (0, 1, 3));
-ALTER TABLE MigrationJob
-  ADD CONSTRAINT CK_MigrationJob_FileSizeGT0
-  CHECK (fileSize > 0);
 
 /* Definition of the MigrationRouting table. Each line is a routing rule for migration jobs
  *   isSmallFile : whether this routing rule applies to small files. Null means it applies to all files
@@ -9384,12 +9379,12 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     -- it was a recall mount
     -- find and reset the all RecallJobs of files for this VID
     UPDATE RecallJob
-       SET status = tconst.RECALLJOB_PENDING
+       SET status = tconst.RECALLJOB_PENDING,
+           fileTransactionId = NULL
      WHERE castorFile IN (SELECT castorFile
                             FROM RecallJob
                            WHERE VID = varVID
-                             AND (status = tconst.RECALLJOB_SELECTED
-                               OR status = tconst.RECALLJOB_RETRYMOUNT));
+                             AND (fileTransactionId IS NOT NULL OR status = tconst.RECALLJOB_RETRYMOUNT));
     DELETE FROM RecallMount WHERE vid = varVID;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- reaching this point means that the tape session was already ended by somebody else
@@ -9852,8 +9847,7 @@ BEGIN
      WHERE RecallMount.mountTransactionId = inMountTransactionId
        AND RecallJob.vid = RecallMount.vid
        AND RecallJob.fseq = inFseq
-       AND (RecallJob.status = tconst.RECALLJOB_SELECTED
-         OR RecallJob.status = tconst.RECALLJOB_SELECTED2NDCOPY)
+       AND RecallJob.status = tconst.RECALLJOB_SELECTED
        AND RecallJob.castorFile = CastorFile.id
        AND ROWNUM < 2
        FOR UPDATE OF CastorFile.id;
@@ -9968,7 +9962,8 @@ BEGIN
   -- increase retry counters within mount and set recallJob status to NEW
   UPDATE RecallJob
      SET nbRetriesWithinMount = nbRetriesWithinMount + 1,
-         status = tconst.RECALLJOB_PENDING
+         status = tconst.RECALLJOB_PENDING,
+         fileTransactionId = NULL
    WHERE castorFile = inCfId
      AND VID = inVID;
   -- detect the RecallJobs with too many retries within this mount
@@ -10209,8 +10204,8 @@ END;
 
 /* insert new Migration Mount */
 CREATE OR REPLACE PROCEDURE insertMigrationMount(inTapePoolId IN NUMBER,
-                                                   minimumAge IN INTEGER,
-                                                   outMountId OUT INTEGER) AS
+                                                 minimumAge IN INTEGER,
+                                                 outMountId OUT INTEGER) AS
   varMigJobId INTEGER;
 BEGIN
   -- Check that the mount would be honoured by running a dry-run file selection:
@@ -10348,49 +10343,10 @@ BEGIN
 END;
 /
 
-/* insert new Recall Mount */
-CREATE OR REPLACE PROCEDURE insertRecallMount(inRecallGroupId IN NUMBER,
-                                                        inVid IN VARCHAR2,
-                                                outMountCount OUT INTEGER) AS
-  varRjId INTEGER;
-BEGIN
-  -- We receive a candidate recall mount. Before actually posting the recall
-  -- mount we will make sure at least one recall would be honored from the mount
-  -- This protection mechanism will protect against unavailability of disk 
-  -- servers (this did happen during a network incident, leading to looping
-  -- mounts).
-  -- The duty of this procedure is to actually insert the recall mount and log
-  -- log it, if all is fine, and to log the problem if not. It will just report
-  -- the number of created mounts (1 or 0) to the upstream caller.
-
-  -- Last sanity check. Will give up automatically by means of exception, which
-  -- will change the return value and log.
-  SELECT rj.id INTO varRjId
-    FROM RecallJob rj
-   INNER JOIN SvcClass sc ON sc.id = rj.svcClass
-   INNER JOIN DiskPool2SvcClass dpsc ON dpsc.child = sc.id
-   INNER JOIN FileSystem fs ON fs.diskPool = dpsc.parent
-   INNER JOIN DiskServer ds ON ds.id = fs.diskServer
-   WHERE rj.vid = inVid
-     AND rj.status = tconst.RECALLJOB_PENDING
-     AND fs.status = 0 /* FILESYSTEM_PRODUCTION */
-     AND ds.status = 0 /* DISKSERVER_PRODUCTION */
-     AND ds.hwonline =  1 /* BOOLEAN */
-     AND rownum < 2;
-  -- We passed the test, insert the recall mount:
-  INSERT INTO RecallMount (id, VID, recallGroup, startTime, status)
-       VALUES (ids_seq.nextval, inVid, inRecallGroupId, gettime(), tconst.RECALLMOUNT_NEW);
-  outMountCount := 1;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  outMountCount := 0;
-END;
-/
-
 /* DB job to start new recall mounts */
 CREATE OR REPLACE PROCEDURE startRecallMounts AS
    varNbMounts INTEGER;
    varNbExtraMounts INTEGER := 0;
-   varNewMounts INTEGER;
 BEGIN
   -- loop through RecallGroups
   FOR rg IN (SELECT id, name, nbDrives, minAmountDataForMount,
@@ -10423,27 +10379,19 @@ BEGIN
                AND VID NOT IN (SELECT vid FROM RecallMount)
              ORDER BY MIN(creationTime))
            WHERE ROWNUM < 2;
-          -- trigger a new mount, with checks
-          insertRecallMount(rg.id, varVID, varNewMounts);
-          IF varNewMounts > 0 THEN
-            varNbExtraMounts := varNbExtraMounts + varNewMounts;
-            -- log "startRecallMounts: created new recall mount"
-            logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECMOUNT_NEW_MOUNT, 0, '', 'tapegatewayd',
-                     'recallGroup=' || rg.name ||
-                     ' TPVID=' || varVid ||
-                     ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
-                     ' nbNewMountsSoFar=' || TO_CHAR(varNbExtraMounts) ||
-                     ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
-                     ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
-                     ' oldestCreationTime=' || TO_CHAR(TRUNC(varOldestCreationTime)));
-          ELSE
-            -- The sanity check failed: log and report no recall mount got created for
-            -- tape.
-            -- "startRecallMounts: not creating mount that would have been empty (possible issue with destination diskpools)"
-            logToDLF(NULL, dlf.LVL_WARNING, dlf.RECMOUNT_FAILED_NEW_MOUNT, 0, '', 'tapegatewayd',
-                     'recallGroup=' || rg.name ||
-                     ' TPVID=' || varVid);
-          END IF;
+          -- trigger a new mount
+          INSERT INTO RecallMount (id, VID, recallGroup, startTime, status)
+          VALUES (ids_seq.nextval, varVid, rg.id, gettime(), tconst.RECALLMOUNT_NEW);
+          varNbExtraMounts := varNbExtraMounts + 1;
+          -- log "startRecallMounts: created new recall mount"
+          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECMOUNT_NEW_MOUNT, 0, '', 'tapegatewayd',
+                   'recallGroup=' || rg.name ||
+                   ' TPVID=' || varVid ||
+                   ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
+                   ' nbNewMountsSoFar=' || TO_CHAR(varNbExtraMounts) ||
+                   ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
+                   ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
+                   ' oldestCreationTime=' || TO_CHAR(TRUNC(varOldestCreationTime)));
         END LOOP;
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- nothing left to recall, just exit nicely
@@ -11038,7 +10986,7 @@ BEGIN
         RETURNING fileTransactionId INTO varFileTrId;
       -- update RecallJobs of this file. Only the recalled one gets a fileTransactionId
       UPDATE RecallJob
-         SET status = CASE WHEN id = varRjId THEN tconst.RECALLJOB_SELECTED ELSE tconst.RECALLJOB_SELECTED2NDCOPY END,
+         SET status = tconst.RECALLJOB_SELECTED,
              fileTransactionID = CASE WHEN id = varRjId THEN varFileTrId ELSE NULL END
        WHERE castorFile = varCfId;
       IF varCount >= inCount OR varTotalSize >= inTotalSize THEN
@@ -11951,9 +11899,11 @@ BEGIN
       BEGIN
         DELETE FROM DiskCopy WHERE id = dcIds(i);
       EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-        IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DRAININGERRORS_DC) violated%' THEN
-          -- Ignore the deletion, this diskcopy was implied in a draining action and
-          -- the draining error is still around.
+        IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DRAININGERRORS_DC) violated%' OR
+           sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DISK2DISKCOPYJOB_SRCDCID) violated%' THEN
+          -- Ignore the deletion, this diskcopy was either implied in a draining action and
+          -- the draining error is still around or it is the source of another d2d copy that
+          -- is not over
           NULL;
         ELSE
           -- Any other constraint violation is an error
