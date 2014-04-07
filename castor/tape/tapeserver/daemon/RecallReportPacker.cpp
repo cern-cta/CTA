@@ -100,15 +100,9 @@ void RecallReportPacker::flush(){
       logReport(m_listReports->successfulRecalls(),"A file was successfully recalled");
     }
    catch(const castor::tape::Exception& e){
-    /*LogContext::ScopedParam sp[]={
-      LogContext::ScopedParam(m_lc, Param("exceptionCode",e.code())),
-      LogContext::ScopedParam(m_lc, Param("exceptionMessageValue", e.getMessageValue())),
-      LogContext::ScopedParam(m_lc, Param("exceptionWhat",e.what()))
-    };*/
-    //tape::utils::suppresUnusedVariable(sp);
     LogContext::ScopedParam s(m_lc, Param("exceptionCode",e.code()));
-            LogContext::ScopedParam ss(m_lc, Param("exceptionMessageValue", e.getMessageValue()));
-            LogContext::ScopedParam sss(m_lc, Param("exceptionWhat",e.what()));
+    LogContext::ScopedParam ss(m_lc, Param("exceptionMessageValue", e.getMessageValue()));
+    LogContext::ScopedParam sss(m_lc, Param("exceptionWhat",e.what()));
     const std::string msg_error="An exception was caught trying to call reportRecallResults";
     m_lc.log(LOG_ERR,msg_error);
     throw failedReportRecallResult(msg_error);
