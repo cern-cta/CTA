@@ -1,6 +1,6 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include <memory>
-
+#include <sstream>
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -113,20 +113,32 @@ namespace daemon {
     std::auto_ptr<DiskWriteTaskInterface>  task;
     while(1) {
       task.reset(_this.popAndRequestMoreJobs());
-      if (NULL!=task.get())
-        task->execute(_this.m_reporter,_this.m_lc);
-      else {
-        _this.m_lc.log(LOG_INFO,"Disk write thread finishing");
-        break;
-      }
-    }
+      if (NULL!=task.get()) {
+        if(false==task->execute(_this.m_reporter,_this.m_lc)) {
+          ++failledWritting; 
+        }
+        else {
+          log::LogContext::ScopedParam(_this.m_lc, log::Param("threadID", threadID));
+          _this.m_lc.log(LOG_INFO,"Disk write thread finishing");
+          break;
+        }
+      } //end of task!=NULL
+    } //enf of while(1))
+    
     if(0 == --m_nbActiveThread){
       //Im the last Thread alive, report end of session
-      _this.m_reporter.reportEndOfSession();
+      if(failledWritting==0){
+        _this.m_reporter.reportEndOfSession();
+      }
+      else{
+        std::ostringstream ss("threadID=");
+        ss<<threadID<<" failed to write a file";
+        _this.m_reporter.reportEndOfSessionWithErrors(ss.str(),SEINTERNAL);
+      }
     }
   }
  
   tape::threading::AtomicCounter<int> DiskWriteThreadPool::DiskWriteWorkerThread::m_nbActiveThread(0);
-  
+  tape::threading::AtomicCounter<int> DiskWriteThreadPool::DiskWriteWorkerThread::failledWritting(0);
 }}}}
 

@@ -77,6 +77,7 @@ private:
   private:
     //counter to generate threadID and to know how many thread are still doing something
     static tape::threading::AtomicCounter<int> m_nbActiveThread;
+    static tape::threading::AtomicCounter<int> failledWritting;
     const int threadID;
     DiskWriteThreadPool & _this;
     
