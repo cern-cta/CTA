@@ -434,7 +434,9 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::configureDown(
 //-----------------------------------------------------------------------------
 // receivedVdqmJob
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::receivedVdqmJob(const std::string &unitName, const legacymsg::RtcpJobRqstMsgBody &job) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DriveCatalogue::receivedVdqmJob(const legacymsg::RtcpJobRqstMsgBody &job) throw(castor::exception::Exception) {
+  const std::string unitName(job.driveUnit);
+
   std::ostringstream task;
   task << "handle vdqm job for tape drive " << unitName;
 

@@ -244,13 +244,13 @@ public:
    * does not match the value that was entered into the catalogue with the
    * populateCatalogue() method.
    *
-   * @param unitName The unit name of the tape drive.
    * @param job The job received from the vdqmd daemon.
    */
-  void receivedVdqmJob(const std::string &unitName, const legacymsg::RtcpJobRqstMsgBody &job) throw(castor::exception::Exception);
+  void receivedVdqmJob(const legacymsg::RtcpJobRqstMsgBody &job) throw(castor::exception::Exception);
 
   /**
-   * Returns the job received from the vdqmd daemon for the specified tape drive.
+   * Returns the job received from the vdqmd daemon for the specified tape
+   * drive.
    *
    * This method throws an exception if the current state of the tape drive is
    * not DRIVE_STATE_WAITFORK, DRIVE_STATE_RUNNING or DRIVE_STATE_WAITDOWN.

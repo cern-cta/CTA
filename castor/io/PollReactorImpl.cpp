@@ -37,10 +37,21 @@ castor::io::PollReactorImpl::PollReactorImpl(log::Logger &log) throw():
 // destructor
 //------------------------------------------------------------------------------
 castor::io::PollReactorImpl::~PollReactorImpl() throw() {
+  clear();
+}
+
+//------------------------------------------------------------------------------
+// clear
+//------------------------------------------------------------------------------
+void castor::io::PollReactorImpl::clear() throw() {
+  // Delete all event handlers
   for(HandlerMap::const_iterator itor = m_handlers.begin();
     itor !=  m_handlers.end(); itor++) {
     delete itor->second;
   }
+
+  // Remove all event handlers
+  m_handlers.clear();
 }
 
 //------------------------------------------------------------------------------

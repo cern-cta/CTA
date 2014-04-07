@@ -57,6 +57,11 @@ public:
   ~PollReactorImpl() throw();
 
   /**
+   * Removes and deletes all of the event handlers registered with the reactor.
+   */
+  void clear() throw();
+
+  /**
    * Registers the specified handler.
    *
    * Please note that the reactor takes ownership of the handler and will

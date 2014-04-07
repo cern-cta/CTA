@@ -415,4 +415,52 @@ void castor::tape::tapeserver::daemon::TapeDaemon::reapZombies() throw() {
 // forkWaitingMountSessions
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSessions() throw() {
+  const std::list<std::string> unitNames =
+    m_driveCatalogue.getUnitNames(DriveCatalogue::DRIVE_STATE_WAITFORK);
+
+  for(std::list<std::string>::const_iterator itor = unitNames.begin();
+    itor != unitNames.end(); itor++) {
+    forkWaitingMountSession(*itor);
+  }
+}
+
+//------------------------------------------------------------------------------
+// forkWaitingMountSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSession(const std::string &unitName) throw() {
+  const pid_t sessionPid = fork();
+
+  // If fork failed
+  if(0 > sessionPid) {
+    // Log an error message and return
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    log::Param params[] = {log::Param("message", errBuf)};
+    m_log(LOG_ERR, "Failed to fork mount session for tape drive", params);
+
+  // Else if this is the parent process
+  } else if(0 < sessionPid) {
+    m_driveCatalogue.forkedMountSession(unitName, sessionPid);
+
+  // Else this is the child process
+  } else {
+    // Clear the reactor which in turn will close all of the open
+    // file-descriptors owned by the event handlers
+    m_reactor.clear();
+
+    runMountSession(unitName);
+
+    // The runMountSession() should call exit() and should therefore never
+    // return
+    m_log(LOG_ERR, "runMountSession() returned unexpectedly");
+  }
+}
+
+//------------------------------------------------------------------------------
+// runMountSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::string &unitName) throw() {
+  log::Param params[] = {log::Param("sessionPid", getpid())};
+  m_log(LOG_INFO, "Mount-session child-process started", params);
+  exit(0);
 }
