@@ -68,8 +68,7 @@ class DiskWriteTask: public DiskWriteTaskInterface, public DataConsumer {
 public:
   /**
    * Constructor
-   * @param fileId: file id of the file to write to disk
-   * @param blockCount: number of memory blocks that will be used
+   * @param file: All we need to know about the file we  are recalling
    * @param mm: memory manager of the session
    */
   DiskWriteTask(tape::tapegateway::FileToRecallStruct* file,MemoryManager& mm): 
@@ -90,8 +89,9 @@ public:
   
   /**
    * Main routine: takes each memory block in the fifo and writes it to disk
+   * @return true if the file has been successfully written false otherwise.
    */
-  virtual void execute(RecallReportPacker& reporter,log::LogContext& lc) {
+  virtual bool execute(RecallReportPacker& reporter,log::LogContext& lc) {
     using log::LogContext;
     using log::Param;
     try{
@@ -117,12 +117,12 @@ public:
         writer.write(mb->m_payload.get(),mb->m_payload.size());
       }
       writer.close();
-      //a log is done in m_reporter while processing reportCompletedJob
       reporter.reportCompletedJob(*m_recallingFile);
+      return true;
     }
     catch(const castor::exception::Exception& e){
-      //a log is done in m_reporter while processing reportFailedJob    
       reporter.reportFailedJob(*m_recallingFile,e.getMessageValue(),e.code());
+      return false;
     }
   }
   

@@ -57,7 +57,7 @@ public:
   /**
    * Main routine of the task
    */
-  virtual void execute(RecallReportPacker& reporter,log::LogContext& lc) =0;
+  virtual bool execute(RecallReportPacker& reporter,log::LogContext& lc) =0;
   
   /**
    * Wait for the end of the task
