@@ -72,8 +72,8 @@ private:
     threadID(m_nbActiveThread++),_this(manager)
     {}
     
-    void startThreads() { castor::tape::threading::Thread::start(); }
-    void waitThreads() { castor::tape::threading::Thread::wait(); }
+    void startThreads() { start(); }
+    void waitThreads() { wait(); }
   private:
     //counter to generate threadID and to know how many thread are still doing something
     static tape::threading::AtomicCounter<int> m_nbActiveThread;
@@ -93,6 +93,8 @@ private:
   uint32_t m_maxFilesReq;
   uint64_t m_maxBytesReq;
   RecallReportPacker& m_reporter;
+  
+  //logging context that will copied by each thread
   castor::log::LogContext m_lc;
 };
 
