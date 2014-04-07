@@ -37,7 +37,7 @@ namespace daemon {
   
 class DiskReadThreadPool : public DiskThreadPoolInterface<DiskReadTaskInterface> {
 public:
-  DiskReadThreadPool(int nbThread){
+  DiskReadThreadPool(int nbThread,castor::log::LogContext lc) : m_lc(lc){
     for(int i=0; i<nbThread; i++) {
       DiskReadWorkerThread * thr = new DiskReadWorkerThread(*this);
       m_threads.push_back(thr);
@@ -72,23 +72,25 @@ public:
 private:
   class DiskReadWorkerThread: private castor::tape::threading::Thread {
   public:
-    DiskReadWorkerThread(DiskReadThreadPool & manager): m_manager(manager) {}
+    DiskReadWorkerThread(DiskReadThreadPool & manager): _this(manager) {}
     void startThreads() { start(); }
     void waitThreads() { wait(); }
   private:
-    DiskReadThreadPool & m_manager;
+    DiskReadThreadPool & _this;
     virtual void run() {
+      castor::log::LogContext lc = _this.m_lc;
       std::auto_ptr<DiskReadTaskInterface> task;
       while(1) {
-        task.reset( m_manager.m_tasks.pop());
+        task.reset( _this.m_tasks.pop());
         if (NULL!=task.get()) 
-          task->execute();
+          task->execute(lc);
         else
           break;
       }
     }
   };
   std::vector<DiskReadWorkerThread *> m_threads;
+  castor::log::LogContext m_lc;
 };
 
 }}}}

@@ -27,14 +27,17 @@
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
 
 namespace castor {
+  namespace log{
+    class LogContext;
+  }
 namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-class DiskReadTaskInterface {
-public:
-  virtual void execute() =0;
-  virtual ~DiskReadTaskInterface() {}
-};
+  class DiskReadTaskInterface {
+  public:
+    virtual void execute(log::LogContext& lc) =0;
+    virtual ~DiskReadTaskInterface() {}
+  };
 
 }}}}
