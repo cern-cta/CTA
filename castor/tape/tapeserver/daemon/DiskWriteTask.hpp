@@ -95,7 +95,7 @@ public:
     using log::LogContext;
     using log::Param;
     try{
-      tape::diskFile::WriteFile writer(m_recallingFile->path());
+      tape::diskFile::WriteFile ourFile(m_recallingFile->path());
       int blockId  = 0;
       
       while(!m_fifo.finished()) {
@@ -114,9 +114,9 @@ public:
           lc.log(LOG_ERR,"received a bad block for writing");
           throw castor::tape::Exception("received a bad block for writing");
         }
-        writer.write(mb->m_payload.get(),mb->m_payload.size());
+         mb->m_payload.write(ourFile);
       }
-      writer.close();
+      ourFile.close();
       reporter.reportCompletedJob(*m_recallingFile);
       return true;
     }

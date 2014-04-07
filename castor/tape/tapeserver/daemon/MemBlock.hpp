@@ -25,6 +25,7 @@
 #pragma once
 
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
+#include "castor/tape/tapeserver/file/File.hpp"
 #include <memory>
 
 namespace castor {
@@ -57,11 +58,26 @@ public:
   char* get(){
     return m_payload;
   }
+  
+  char const*  get() const {
+    return m_payload;
+  }
+  
+  void read(tape::diskFile::ReadFile& from){
+    m_size = from.read(m_payload,m_capacity);
+  }
+  
+  void write(tape::diskFile::WriteFile& to){
+    to.write(m_payload,m_size);
+  }
+    
 private:
   char* m_payload;
   size_t m_capacity;
   size_t m_size;
 };
+
+
 
 class MemBlock {
 public:
