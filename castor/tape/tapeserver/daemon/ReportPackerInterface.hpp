@@ -88,11 +88,10 @@ public:
       for(typename C::const_iterator it=c.begin();it!=c.end();++it)
       {
         LogContext::ScopedParam sp[]={
-          LogContext::ScopedParam(m_lc, Param("ID", (*it)->id())),
-          LogContext::ScopedParam(m_lc, Param("FILEID",(*it)->fileid())),
-          LogContext::ScopedParam(m_lc, Param("FSEQ", (*it)->fseq())),
+          LogContext::ScopedParam(m_lc, Param("NSFILEID",(*it)->fileid())),
+          LogContext::ScopedParam(m_lc, Param("NSFSEQ", (*it)->fseq())),
           LogContext::ScopedParam(m_lc, Param("NSHOST", (*it)->nshost())),
-          LogContext::ScopedParam(m_lc, Param("FILETRANSACTIONID", (*it)->fileTransactionId()))
+          LogContext::ScopedParam(m_lc, Param("NSFILETRANSACTIONID", (*it)->fileTransactionId()))
         };
         tape::utils::suppresUnusedVariable(sp);
         m_lc.log(LOG_INFO,msg);
