@@ -5,8 +5,7 @@
  * Created on March 18, 2014, 3:53 PM
  */
 
-#ifndef DISKTHREADPOOLINTERFACE_H
-#define	DISKTHREADPOOLINTERFACE_H
+#pragma once
 
 namespace castor {
 namespace tape {
@@ -26,5 +25,4 @@ public :
 };
 
 }}}}
-#endif	/* DISKTHREADPOOLINTERFACE_H */
 
