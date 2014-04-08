@@ -185,8 +185,11 @@ BEGIN
       varWasRecalled NUMBER;
       varMigrationTriggered BOOLEAN := False;
     BEGIN
-      -- Commit from time to time
       IF MOD(outNbFilesProcessed, 1000) = 0 THEN
+        -- Commit from time to time. Update total counter so that the display is correct.
+        UPDATE StageRepackRequest
+           SET fileCount = outNbFilesProcessed
+         WHERE reqId = inReqUUID;
         COMMIT;
         firstCF := TRUE;
       END IF;
