@@ -64,28 +64,45 @@ public:
   virtual void setDriveStatusUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) = 0;
 
   /**
-   * Sets the status of the specified tape drive to assign.
+   * Assigns the specified mount session process to the specified tape
+   * drive and mount transaction.
    *
    * @param server The host name of the server to which the tape drive is
    * attached.
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
    * @param mountTransactionId The mount transaction ID.
-   * @param childPid The process ID of the tape-server daemon's child process.
+   * @param sessionPid The process ID of the tape-server daemon's mount-session
+   * process.
    */
-  virtual void assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t childPid) throw(castor::exception::Exception) = 0;
+  virtual void assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t sessionPid) throw(castor::exception::Exception) = 0;
 
   /**
-   * Sets the status of the specified tape drive to release.
+   * Notifies the vdqmd daemon of the specified tape mount.
    *
    * @param server The host name of the server to which the tape drive is
    * attached.
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
-   * @param forceUnmount Set to true if the current tape mount should not be reused.
-   * @param childPid The process ID of the tape-server daemon's child process.
+   * @param vid The volume identifier of the mounted tape.
+   * @param sessionPid The process ID of the tape-server daemon's mount-session
+   * process.
    */
-  virtual void releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t childPid) throw(castor::exception::Exception) = 0;
+  virtual void mountTape(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid) throw(castor::exception::Exception) = 0;
+
+  /**
+   * Releases the specified tape drive.
+   *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive.
+   * @param forceUnmount Set to true if the current tape mount should not bei
+   * reused.
+   * @param sessionPid The process ID of the tape-server daemon's mount-session
+   * process.
+   */
+  virtual void releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid) throw(castor::exception::Exception) = 0;
 
 }; // class Vdqm
 

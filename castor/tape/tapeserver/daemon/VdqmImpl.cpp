@@ -90,12 +90,12 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setDriveStatusUp(const std::str
 //------------------------------------------------------------------------------
 // assignDrive
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t childPid) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmImpl::assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t sessionPid) throw(castor::exception::Exception) {
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_UNIT_ASSIGN;
     body.volReqId = mountTransactionId;
-    body.jobId = childPid;
+    body.jobId = sessionPid;
     castor::utils::copyString(body.server, server.c_str());
     castor::utils::copyString(body.drive, unitName.c_str());
     castor::utils::copyString(body.dgn, dgn.c_str());
@@ -110,9 +110,15 @@ void castor::tape::tapeserver::daemon::VdqmImpl::assignDrive(const std::string &
 }
 
 //------------------------------------------------------------------------------
+// mountTape
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmImpl::mountTape(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid) throw(castor::exception::Exception) {
+}
+
+//------------------------------------------------------------------------------
 // releaseDrive
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t childPid) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmImpl::releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid) throw(castor::exception::Exception) {
   int status = VDQM_UNIT_RELEASE;
   if(forceUnmount) {
     status |= VDQM_FORCE_UNMOUNT;
@@ -121,7 +127,7 @@ void castor::tape::tapeserver::daemon::VdqmImpl::releaseDrive(const std::string 
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = status;
-    body.jobId = childPid;
+    body.jobId = sessionPid;
     castor::utils::copyString(body.server, server.c_str());
     castor::utils::copyString(body.drive, unitName.c_str());
     castor::utils::copyString(body.dgn, dgn.c_str());
