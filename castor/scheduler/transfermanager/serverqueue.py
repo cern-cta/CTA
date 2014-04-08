@@ -366,7 +366,7 @@ class ServerQueue(dict):
     try:
       if transfer.transferId not in self.d2dsrcrunning:
         # the transfer has already disappeared (or was never started). This
-        # can happen due to raise conditions, e.g when we get a timeout on the
+        # can happen due to race conditions, e.g when we get a timeout on the
         # start of the transfer when it has started already but the acknowledgement
         # did not yet come.
         # We can ignore these cases, but we still log
@@ -412,7 +412,11 @@ class ServerQueue(dict):
       self.d2dend(self.d2dsrcrunning[transferId].srcTransfer)
     else:
       # else discard the src transfer from the pending list in case
-      del self.transfersLocations[(transferId, TransferType.D2DSRC)]
+      try:
+        del self.transfersLocations[(transferId, TransferType.D2DSRC)]
+      except KeyError:
+        # we couldn't find the transfer at all, ignore the error
+        pass
     
   def putRunningD2dSource(self, transfer):
     '''Adds a new d2dsrc transfer to the list of runnign ones'''
