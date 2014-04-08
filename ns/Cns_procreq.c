@@ -5327,9 +5327,9 @@ int Cns_srv_closex(char *req_data,
     RETURN (EISDIR, LOG_USERERR);
   
   /* Check for concurrent modifications */
-  if (fmd_entry.stagertime_usec > last_stagertime_usec)) ) {
+  if (fmd_entry.stagertime_usec > last_stagertime_usec) {
     sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " NSLastOpenTime=%.6f",
-             ((double)fmd_entry.stagertime_usec)/1E6)));
+             ((double)fmd_entry.stagertime_usec)/1E6);
     RETURN (ENSFILECHG, LOG_USERERR);
   }
 
