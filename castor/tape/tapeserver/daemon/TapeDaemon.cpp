@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tapeserver/daemon/TapeDaemon.cpp
+ *         castor/tape/tapeserver/daemon/TapeDaemon.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -26,10 +26,12 @@
 #include "castor/exception/BadAlloc.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
+#include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "castor/tape/tapeserver/daemon/DebugMountSessionForVdqmProtocol.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
-#include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
+#include "castor/tape/tapeserver/daemon/VmgrImpl.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFd.hpp"
 
@@ -469,7 +471,13 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mountSession(const std::strin
   }
 
   try {
-    exceptionThrowingMountSession(unitName);
+    const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getJob(unitName);
+    const utils::TpconfigLines tpConfig;
+    VmgrImpl vmgr;
+    DebugMountSessionForVdqmProtocol mountSession(m_hostName, job, m_log, tpConfig, m_vdqm, vmgr);
+
+    mountSession.execute();
+
     exit(0);
   } catch(std::exception &se) {
     log::Param params[] = {
@@ -485,13 +493,4 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mountSession(const std::strin
     m_log(LOG_ERR, "Aborting mount session: Caught an unexpected and unknown exception", params);
     exit(1);
   }
-}
-
-//------------------------------------------------------------------------------
-// exceptionThrowingMountSession
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMountSession(const std::string &unitName) throw(castor::exception::Exception) {
-  const pid_t sessionPid = getpid();
-  const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getJob(unitName);
-  m_vdqm.assignDrive(m_hostName, unitName, job.dgn, job.volReqId, sessionPid);
 }

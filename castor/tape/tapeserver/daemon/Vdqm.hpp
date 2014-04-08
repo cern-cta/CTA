@@ -88,7 +88,7 @@ public:
    * @param sessionPid The process ID of the tape-server daemon's mount-session
    * process.
    */
-  virtual void mountTape(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid) throw(castor::exception::Exception) = 0;
+  virtual void tapeMounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid) throw(castor::exception::Exception) = 0;
 
   /**
    * Releases the specified tape drive.

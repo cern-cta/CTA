@@ -60,9 +60,9 @@ void castor::tape::tapeserver::daemon::DummyVdqm::assignDrive(const std::string 
 }
 
 //------------------------------------------------------------------------------
-// mountTape
+// tapeMounted
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyVdqm::mountTape(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DummyVdqm::tapeMounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
