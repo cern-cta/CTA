@@ -36,7 +36,7 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-class RecallReportPacker : private ReportPackerInterface<detail::Recall> {
+class RecallReportPacker : public ReportPackerInterface<detail::Recall> {
 public:
   RecallReportPacker(client::ClientInterface & tg,unsigned int reportFilePeriod,log::LogContext lc);
   

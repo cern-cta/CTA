@@ -8,7 +8,7 @@ namespace daemon {
 
 
   DiskWriteThreadPool::DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq,
-          RecallReportPacker& report,castor::log::LogContext lc):
+          ReportPackerInterface<detail::Recall>& report,castor::log::LogContext lc):
           m_jobInjector(NULL), m_blocksQueued(0), 
           m_maxFilesReq(maxFilesReq), m_maxBytesReq(maxBlocksReq),m_reporter(report),m_lc(lc)
    {
@@ -119,7 +119,7 @@ namespace daemon {
           ++failledWritting; 
         }
         else {
-          log::LogContext::ScopedParam(_this.m_lc, log::Param("threadID", threadID));
+          log::LogContext::ScopedParam(lc, log::Param("threadID", threadID));
           lc.log(LOG_INFO,"Disk write thread finishing");
           break;
         }
