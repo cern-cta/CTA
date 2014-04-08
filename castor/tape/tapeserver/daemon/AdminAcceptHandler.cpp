@@ -117,10 +117,10 @@ bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
   const std::string dgn = m_driveCatalogue.getDgn(unitName);
 
   if(CONF_UP==job.status) {
-    m_vdqm.setTapeDriveStatusUp(m_hostName, unitName, dgn);
+    m_vdqm.configDriveUp(m_hostName, unitName, dgn);
   }
   else if(CONF_DOWN==job.status) {
-    m_vdqm.setTapeDriveStatusDown(m_hostName, unitName, dgn);
+    m_vdqm.configDriveDown(m_hostName, unitName, dgn);
   }
   else {
     castor::exception::Internal ex;

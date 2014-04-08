@@ -48,9 +48,9 @@ castor::tape::tapeserver::daemon::VdqmImpl::~VdqmImpl() throw() {
 }
 
 //------------------------------------------------------------------------------
-// setTapeDriveStatusDown
+// configDriveDown
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmImpl::configDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_UNIT_DOWN;
@@ -68,9 +68,9 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusDown(const st
 }
 
 //------------------------------------------------------------------------------
-// setTapeDriveStatusUp
+// configDriveUp
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmImpl::configDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_UNIT_UP;
@@ -88,9 +88,9 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusUp(const std:
 }
 
 //------------------------------------------------------------------------------
-// setTapeDriveStatusAssign
+// assignDrive
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusAssign(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t childPid) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmImpl::assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t childPid) throw(castor::exception::Exception) {
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_UNIT_ASSIGN;
@@ -110,9 +110,9 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusAssign(const 
 }
 
 //------------------------------------------------------------------------------
-// setTapeDriveStatusRelease
+// releaseDrive
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatusRelease(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t childPid) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmImpl::releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t childPid) throw(castor::exception::Exception) {
   int status = VDQM_UNIT_RELEASE;
   if(forceUnmount) {
     status |= VDQM_FORCE_UNMOUNT;

@@ -238,12 +238,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   case DriveCatalogue::DRIVE_STATE_DOWN:
     params.push_back(log::Param("state", "down"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.setTapeDriveStatusDown(m_hostName, unitName, dgn);
+    m_vdqm.configDriveDown(m_hostName, unitName, dgn);
     break;
   case DriveCatalogue::DRIVE_STATE_UP:
     params.push_back(log::Param("state", "up"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.setTapeDriveStatusUp(m_hostName, unitName, dgn);
+    m_vdqm.configDriveUp(m_hostName, unitName, dgn);
     break;
   default:
     {
@@ -448,7 +448,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSession(const
     // file-descriptors owned by the event handlers
     m_reactor.clear();
 
-    runMountSession(unitName);
+    mountSession(unitName);
 
     // The runMountSession() should call exit() and should therefore never
     // return
@@ -457,10 +457,41 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSession(const
 }
 
 //------------------------------------------------------------------------------
-// runMountSession
+// mountSession
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::string &unitName) throw() {
-  log::Param params[] = {log::Param("sessionPid", getpid())};
-  m_log(LOG_INFO, "Mount-session child-process started", params);
-  exit(0);
+void castor::tape::tapeserver::daemon::TapeDaemon::mountSession(const std::string &unitName) throw() {
+  const pid_t sessionPid = getpid();
+  {
+    log::Param params[] = {
+      log::Param("sessionPid", sessionPid),
+      log::Param("unitName", unitName)};
+    m_log(LOG_INFO, "Mount-session child-process started", params);
+  }
+
+  try {
+    exceptionThrowingMountSession(unitName);
+    exit(0);
+  } catch(std::exception &se) {
+    log::Param params[] = {
+      log::Param("sessionPid", sessionPid),
+      log::Param("unitName", unitName),
+      log::Param("message", se.what())};
+    m_log(LOG_ERR, "Aborting mount session: Caught an unexpected exception", params);
+    exit(1);
+  } catch(...) {
+    log::Param params[] = {
+      log::Param("sessionPid", sessionPid),
+      log::Param("unitName", unitName)};
+    m_log(LOG_ERR, "Aborting mount session: Caught an unexpected and unknown exception", params);
+    exit(1);
+  }
+}
+
+//------------------------------------------------------------------------------
+// exceptionThrowingMountSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMountSession(const std::string &unitName) throw(castor::exception::Exception) {
+  const pid_t sessionPid = getpid();
+  const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getJob(unitName);
+  m_vdqm.assignDrive(m_hostName, unitName, job.dgn, job.volReqId, sessionPid);
 }

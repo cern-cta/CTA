@@ -71,7 +71,7 @@ public:
    * @param unitName The unit name of the tape drive. 
    * @param dgn The device group name of the tape drive.
    */
-  void setTapeDriveStatusDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception);
+  void configDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception);
 
   /**
    * Sets the status of the specified tape drive to up.
@@ -81,7 +81,7 @@ public:
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
    */
-  void setTapeDriveStatusUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception);
+  void configDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception);
 
   /**
    * Sets the status of the specified tape drive to assign.
@@ -93,7 +93,7 @@ public:
    * @param mountTransactionId The mount transaction ID.
    * @param childPid The process ID of the tape-server daemon's child process.
    */
-  void setTapeDriveStatusAssign(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t childPid) throw(castor::exception::Exception);
+  void assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t childPid) throw(castor::exception::Exception);
 
   /**
    * Sets the status of the specified tape drive to release.
@@ -105,7 +105,7 @@ public:
    * @param forceUnmount Set to true if the current tape mount should not be reused.
    * @param childPid The process ID of the tape-server daemon's child process.
    */
-  void setTapeDriveStatusRelease(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t childPid) throw(castor::exception::Exception);
+  void releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t childPid) throw(castor::exception::Exception);
 
 private:
 

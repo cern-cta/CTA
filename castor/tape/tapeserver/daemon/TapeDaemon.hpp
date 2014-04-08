@@ -204,9 +204,20 @@ protected:
    * Runs the mount session.  This method is to be called within the child
    * process responsible for running the mount session.
    *
+   * This method calls exceptionThrowingMountSession() and converts any
+   * unexpected exceptions to appropriate calls to exit().
+   *
    * @param unitName The unit name of the tape drive.
    */
-  void runMountSession(const std::string &unitName) throw();
+  void mountSession(const std::string &unitName) throw();
+
+  /**
+   * Runs the mount session.  This method is to be called within the child
+   * process responsible for running the mount session.
+   *  
+   * @param unitName The unit name of the tape drive.
+   */
+  void exceptionThrowingMountSession(const std::string &unitName) throw(castor::exception::Exception);
 
   /**
    * Catalogue used to keep track of both the initial and current state of

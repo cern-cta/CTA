@@ -42,25 +42,25 @@ castor::tape::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::Du
 }
 
 //------------------------------------------------------------------------------
-// setTapeDriveStatusDown
+// configDriveDown
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyVdqm::setTapeDriveStatusDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DummyVdqm::configDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
-// setTapeDriveStatusUp
+// configDriveUp
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyVdqm::setTapeDriveStatusUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DummyVdqm::configDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
-// setTapeDriveStatusAssign
+// assignDrive
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyVdqm::setTapeDriveStatusAssign(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t childPid) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DummyVdqm::assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t childPid) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
-// setTapeDriveStatusRelease
+// releaseDrive
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyVdqm::setTapeDriveStatusRelease(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t childPid) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DummyVdqm::releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t childPid) throw(castor::exception::Exception) {
 }
