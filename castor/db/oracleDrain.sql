@@ -134,7 +134,7 @@ BEGIN
   -- "rebalancing : starting" message
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.REBALANCING_START, 0, '', 'stagerd',
            'DiskServer=' || inDiskServerName || ' mountPoint=' || inMountPoint ||
-           ' dataTomove=' || TO_CHAR(inDataAmount));
+           ' dataToMove=' || TO_CHAR(TRUNC(inDataAmount)));
   -- Loop on candidates until we can lock one
   OPEN DCcur;
   LOOP
