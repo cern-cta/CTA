@@ -1,3 +1,20 @@
+-------------
+- 2.1.14-12 -
+-------------
+
+  Summary
+  -------
+
+  This is a minor release bringing a number of bug fixes.
+
+  Stager
+  ------
+  #104024 Incorrect log error reporting in case of invalid user
+  ... RFE: added support for querying file checksums through the xrootd interface
+  #104171 'Permission denied' message in rhd.log incomplete
+  #104257 PendingTimeout handling improvements  
+
+
 ---------------
 - 2.1.14-11-1 -
 ---------------
