@@ -3158,6 +3158,8 @@ int Cns_srv_rename(char *req_data,
   old_parent_dir.ctime = old_parent_dir.mtime;
   if (Cns_update_fmd_entry (&thip->dbfd, &old_rec_addrp, &old_parent_dir))
     RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+
+  reqinfo->fileid = old_fmd_entry.fileid;   /* for logging purposes */
   RETURN (0, LOG_INFO);
 }
 

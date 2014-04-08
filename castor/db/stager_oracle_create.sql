@@ -328,7 +328,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_11');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_12');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -3166,9 +3166,6 @@ BEGIN
   nsHostName := getConfigOption('stager', 'nsHost', '');
   -- find out the recallGroup to be used for this request
   getRecallGroup(varEuid, varEgid, varRecallGroupId, varRecallGroupName);
-  -- update potentially missing metadata introduced with v2.1.14. This will be dropped in 2.1.15.
-  update2114Data@RemoteNS(varRepackVID);
-  COMMIT;
   -- Get the list of files to repack from the NS DB via DBLink and store them in memory
   -- in a temporary table. We do that so that we do not keep an open cursor for too long
   -- in the nameserver DB
@@ -3201,8 +3198,11 @@ BEGIN
       varWasRecalled NUMBER;
       varMigrationTriggered BOOLEAN := False;
     BEGIN
-      -- Commit from time to time
       IF MOD(outNbFilesProcessed, 1000) = 0 THEN
+        -- Commit from time to time. Update total counter so that the display is correct.
+        UPDATE StageRepackRequest
+           SET fileCount = outNbFilesProcessed
+         WHERE reqId = inReqUUID;
         COMMIT;
         firstCF := TRUE;
       END IF;
@@ -6988,14 +6988,12 @@ BEGIN
     END IF;
   END;
 
-  -- We should actually check whether our disk cache is stale,
-  -- that is IF CF.nsOpenTime < inNsOpenTime THEN invalidate our diskcopies.
-  -- This is pending the full deployment of the 'new open mode' as implemented
-  -- in the fix of bug #95189: Time discrepencies between
-  -- disk servers and name servers can lead to silent data loss on input.
-  -- The problem being that in 'Compatibility' mode inNsOpenTime is the
-  -- namespace's mtime, which can be modified by nstouch,
-  -- hence nstouch followed by a Get would destroy the data on disk!
+  -- Check whether our disk cache is stale
+  IF varNsOpenTime < inNsOpenTimeInUsec/1000000 THEN
+    -- yes, invalidate our diskcopies. This may later trigger a recall.
+    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+     WHERE status = dconst.DISKCOPY_VALID AND castorFile = inCfId;
+  END IF;
 
   -- Look for available diskcopies. The status is needed for the
   -- internal replication processing, and only if count = 1, hence
@@ -9725,24 +9723,15 @@ CREATE OR REPLACE FUNCTION checkRecallInNS(inCfId IN INTEGER,
   varNSSize INTEGER;
   varNSCsumtype VARCHAR2(2048);
   varNSCsumvalue VARCHAR2(2048);
-  varOpenMode CHAR(1);
 BEGIN
-  -- retrieve data from the namespace: note that if stagerTime is (still) NULL,
-  -- we're still in compatibility mode and we resolve to using mtime.
-  -- To be dropped in 2.1.15 where stagerTime is NOT NULL by design.
-  -- Note the truncation of stagerTime to 5 digits. This is needed for consistency with
-  -- the stager code that uses the OCCI api and thus loses precision when recuperating
-  -- 64 bits integers into doubles (lack of support for 64 bits numbers in OCCI)
-  SELECT NVL(TRUNC(stagertime,5), mtime), csumtype, csumvalue, filesize
+  -- retrieve data from the namespace: note the truncation of stagerTime to 5 digits.
+  -- This is needed for consistency with the stager code that uses the OCCI API and thus
+  -- loses precision when recuperating 64 bits integers into doubles
+  -- (lack of support for 64 bits numbers in OCCI).
+  SELECT TRUNC(stagerTime,5), csumtype, csumvalue, filesize
     INTO varNSOpenTime, varNSCsumtype, varNSCsumvalue, varNSSize
     FROM Cns_File_Metadata@RemoteNS
    WHERE fileid = inFileId;
-  -- check open mode: in compatibility mode we still have only seconds precision,
-  -- hence the NS open time has to be truncated prior to comparing it with our time.
-  varOpenMode := getConfigOption@RemoteNS('stager', 'openmode', NULL);
-  IF varOpenMode = 'C' THEN
-    varNSOpenTime := TRUNC(varNSOpenTime);
-  END IF;
   -- was the file overwritten in the meantime ?
   IF varNSOpenTime > inLastOpenTime THEN
     -- yes ! reset it and thus restart the recall from scratch
@@ -10660,17 +10649,12 @@ CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHA
   varNSParams strListTable;
   varParams VARCHAR2(4000);
   varNbSentToNS INTEGER := 0;
-  -- for the compatibility mode, to be dropped in 2.1.15
-  varOpenMode CHAR(1);
   varLastUpdateTime INTEGER;
 BEGIN
   varStartTime := SYSTIMESTAMP;
   varReqId := uuidGen();
   -- Get the NS host name
   varNsHost := getConfigOption('stager', 'nsHost', '');
-  -- Get the NS open mode: if compatibility, then CF.lastUpdTime is to be used for the
-  -- concurrent modifications check like in 2.1.13, else the new CF.nsOpenTime column is used.
-  varOpenMode := getConfigOption@RemoteNS('stager', 'openmode', NULL);
   FOR i IN inFileTrIds.FIRST .. inFileTrIds.LAST LOOP
     BEGIN
       -- Collect additional data. Note that this is NOT bulk
@@ -10683,10 +10667,6 @@ BEGIN
          AND MJ.mountTransactionId = inMountTrId
          AND MJ.fileTransactionId = inFileTrIds(i)
          AND status = tconst.MIGRATIONJOB_SELECTED;
-      -- Use the correct timestamp in case of compatibility mode
-      IF varOpenMode = 'C' THEN
-        varNsOpenTime := varLastUpdateTime;
-      END IF;
         -- Store in a temporary table, to be transfered to the NS DB
       IF inErrorCodes(i) = 0 THEN
         -- Successful migration
@@ -11951,9 +11931,11 @@ BEGIN
       BEGIN
         DELETE FROM DiskCopy WHERE id = dcIds(i);
       EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-        IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DRAININGERRORS_DC) violated%' THEN
-          -- Ignore the deletion, this diskcopy was implied in a draining action and
-          -- the draining error is still around.
+        IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DRAININGERRORS_DC) violated%' OR
+           sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DISK2DISKCOPYJOB_SRCDCID) violated%' THEN
+          -- Ignore the deletion, this diskcopy was either implied in a draining action and
+          -- the draining error is still around or it is the source of another d2d copy that
+          -- is not over
           NULL;
         ELSE
           -- Any other constraint violation is an error
@@ -12216,7 +12198,7 @@ BEGIN
   -- "rebalancing : starting" message
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.REBALANCING_START, 0, '', 'stagerd',
            'DiskServer=' || inDiskServerName || ' mountPoint=' || inMountPoint ||
-           ' dataTomove=' || TO_CHAR(inDataAmount));
+           ' dataToMove=' || TO_CHAR(TRUNC(inDataAmount)));
   -- Loop on candidates until we can lock one
   OPEN DCcur;
   LOOP
@@ -12490,7 +12472,9 @@ BEGIN
                    getTimeString(DiskCopy.creationtime) AS creationtime,
                    DiskPool.name AS diskpool,
                    DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path AS location,
-                   decode(DiskServer.status, 2, 'N', decode(FileSystem.status, 2, 'N', 'Y')) AS available,
+                   decode(DiskServer.hwOnline, 0, 'N',
+                     decode(DiskServer.status, 2, 'N',
+                       decode(FileSystem.status, 2, 'N', 'Y'))) AS available,
                    DiskCopy.diskCopySize AS diskcopysize,
                    CastorFile.fileSize AS castorfilesize,
                    trunc(DiskCopy.gcWeight, 2) AS gcweight
