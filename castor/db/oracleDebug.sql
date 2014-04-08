@@ -128,7 +128,9 @@ BEGIN
                    getTimeString(DiskCopy.creationtime) AS creationtime,
                    DiskPool.name AS diskpool,
                    DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path AS location,
-                   decode(DiskServer.status, 2, 'N', decode(FileSystem.status, 2, 'N', 'Y')) AS available,
+                   decode(DiskServer.hwOnline, 0, 'N',
+                     decode(DiskServer.status, 2, 'N',
+                       decode(FileSystem.status, 2, 'N', 'Y'))) AS available,
                    DiskCopy.diskCopySize AS diskcopysize,
                    CastorFile.fileSize AS castorfilesize,
                    trunc(DiskCopy.gcWeight, 2) AS gcweight
