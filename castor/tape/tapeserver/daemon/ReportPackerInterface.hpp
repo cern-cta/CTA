@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef REPORTPACKERINTERFACE_HPP
-#define	REPORTPACKERINTERFACE_HPP
+#pragma once
 
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
@@ -151,5 +150,4 @@ public:
 
 }}}}
 
-#endif	/* REPORTPACKERINTERFACE_HPP */
 

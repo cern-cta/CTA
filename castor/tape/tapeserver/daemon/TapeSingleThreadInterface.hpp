@@ -5,8 +5,7 @@
  * Created on March 18, 2014, 4:28 PM
  */
 
-#ifndef TAPESINGLETHREADINTERFACE_HPP
-#define	TAPESINGLETHREADINTERFACE_HPP
+#pragma once
 
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
@@ -41,4 +40,3 @@ public:
 }
 }
 
-#endif	/* TAPESINGLETHREADINTERFACE_HPP */

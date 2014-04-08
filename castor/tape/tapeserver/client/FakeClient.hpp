@@ -5,8 +5,7 @@
  * Created on March 26, 2014, 9:38 AM
  */
 
-#ifndef FAKECLIENT_HPP
-#define	FAKECLIENT_HPP
+#pragma once
 
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
@@ -95,5 +94,4 @@ private:
   
 }
 
-#endif	/* FAKECLIENT_HPP */
 

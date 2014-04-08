@@ -22,8 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#ifndef RECALLREPORTPACKER_HPP
-#define	RECALLREPORTPACKER_HPP
+#pragma once
 
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
 #include "castor/log/LogContext.hpp"
@@ -134,5 +133,4 @@ private:
 
 }}}}
 
-#endif	/* RECALLREPORTPACKER_HPP */
 

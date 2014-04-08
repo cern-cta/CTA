@@ -5,8 +5,7 @@
  * Created on March 18, 2014, 12:27 PM
  */
 
-#ifndef CLIENTINTERFACE_HPP
-#define	CLIENTINTERFACE_HPP
+#pragma once
 
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
@@ -101,5 +100,4 @@ public :
 };
 
 }}}}
-#endif	/* CLIENTINTERFACE_HPP */
 
