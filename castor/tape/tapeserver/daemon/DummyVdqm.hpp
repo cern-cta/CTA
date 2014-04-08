@@ -71,7 +71,7 @@ public:
    * @param unitName The unit name of the tape drive. 
    * @param dgn The device group name of the tape drive.
    */
-  void configDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception);
+  void setDriveStatusDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception);
 
   /**
    * Sets the status of the specified tape drive to up.
@@ -81,7 +81,7 @@ public:
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
    */
-  void configDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception);
+  void setDriveStatusUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception);
 
   /**
    * Sets the status of the specified tape drive to assign.

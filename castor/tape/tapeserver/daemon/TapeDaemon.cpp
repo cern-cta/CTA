@@ -238,12 +238,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   case DriveCatalogue::DRIVE_STATE_DOWN:
     params.push_back(log::Param("state", "down"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.configDriveDown(m_hostName, unitName, dgn);
+    m_vdqm.setDriveStatusDown(m_hostName, unitName, dgn);
     break;
   case DriveCatalogue::DRIVE_STATE_UP:
     params.push_back(log::Param("state", "up"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.configDriveUp(m_hostName, unitName, dgn);
+    m_vdqm.setDriveStatusUp(m_hostName, unitName, dgn);
     break;
   default:
     {
