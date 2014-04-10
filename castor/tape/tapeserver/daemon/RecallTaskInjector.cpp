@@ -59,7 +59,7 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
     m_lc.log(LOG_INFO, "Logged file to recall");
     
     DiskWriteTask * dwt = new DiskWriteTask(removeOwningList(dynamic_cast<tape::tapegateway::FileToRecallStruct*>((*it)->clone())) ,m_memManager);
-    TapeReadFileTask * trt = new TapeReadFileTask(*dwt, (*it)->fseq(), blockID(**it));
+    TapeReadFileTask * trt = new TapeReadFileTask(m_memManager,*dwt, (*it)->fseq(), blockID(**it));
     
     m_diskWriter.push(dwt);
     m_tapeReader.push(trt);

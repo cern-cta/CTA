@@ -36,26 +36,25 @@ namespace tapeserver {
 namespace daemon {
 class TapeReadFileTask: public TapeReadTask {
 public:
-  TapeReadFileTask(DataConsumer & destination, int fSeq, int blockCount): m_fSeq(fSeq), 
-          m_blockCount(blockCount), m_fifo(destination) {}
+  TapeReadFileTask(MemoryManager & source,DataConsumer & destination, int fSeq, int blockCount): m_fSeq(fSeq), 
+          m_blockCount(blockCount), m_memManager(source),m_diskWriteTask(destination) {}
   /* Implementation of the TapeReadTask interface*/
   virtual bool endOfWork() { return false; }
   virtual void execute(castor::tape::drives::DriveInterface & td) {
-    //printf("*** In tapeReadFileTask for fSeq=%d\n", m_fSeq);
     for (int blockId = 0; blockId < m_blockCount; blockId++) {
-      //printf("**** Reading block %d\n", blockId);
-      MemBlock *mb = m_fifo.getFreeBlock();
+      MemBlock *mb = m_memManager.getFreeBlock();
       mb->m_fSeq = m_fSeq;
       mb->m_tapeFileBlock = blockId;
       //td.readBlock(mb);
-      m_fifo.pushDataBlock(mb);
+      m_diskWriteTask.pushDataBlock(mb);
     }
     //printf("*** Done.\n");
   }
 private:
   int m_fSeq;
   int m_blockCount;
-  DataConsumer & m_fifo;
+  MemoryManager & m_memManager;
+  DataConsumer & m_diskWriteTask;
 };
 }
 }
