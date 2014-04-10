@@ -36,15 +36,17 @@ namespace daemon {
     }
   }
    void DiskWriteThreadPool::push(DiskWriteTaskInterface *t) { 
-    {
-      castor::tape::threading::MutexLocker ml(&m_counterProtection);
-      //m_tasks.size() += t->files();
-      m_blocksQueued += t->blocks();
-    }
-    m_tasks.push(t);
+     {//begin of critical section
+       castor::tape::threading::MutexLocker ml(&m_counterProtection);
+       if(NULL==t){
+         throw castor::tape::Exception("NULL task should not been directly pushed into DiskWriteThreadPool");
+       }
+     }
+      m_tasks.push(t);
+      std::cout<<"size tasks "<<m_tasks.size()<<std::endl;
   }
   void DiskWriteThreadPool::finish() {
-    /* Insert one endOfSession per thread */
+    castor::tape::threading::MutexLocker ml(&m_counterProtection);
     for (size_t i=0; i<m_threads.size(); i++) {
       m_tasks.push(NULL);
     }
@@ -102,18 +104,18 @@ namespace daemon {
     std::auto_ptr<DiskWriteTaskInterface>  task;
     castor::log::LogContext lc = _this.m_lc;
     while(1) {
-      task.reset(_this.popAndRequestMoreJobs());
+      task.reset(_this. m_tasks.pop());
       if (NULL!=task.get()) {
         if(false==task->execute(_this.m_reporter,lc)) {
           ++failledWritting; 
         }
-        else {
-          log::LogContext::ScopedParam(lc, log::Param("threadID", threadID));
-          lc.log(LOG_INFO,"Disk write thread finishing");
-          break;
-        }
       } //end of task!=NULL
-    } //enf of while(1))
+      else {
+        log::LogContext::ScopedParam(lc, log::Param("threadID", threadID));
+        lc.log(LOG_INFO,"Disk write thread finishing");
+        break;
+      }
+    } //enf of while(1)
     
     if(0 == --m_nbActiveThread){
       //Im the last Thread alive, report end of session
@@ -121,9 +123,7 @@ namespace daemon {
         _this.m_reporter.reportEndOfSession();
       }
       else{
-        std::ostringstream ss("threadID=");
-        ss<<threadID<<" failed to write a file";
-        _this.m_reporter.reportEndOfSessionWithErrors(ss.str(),SEINTERNAL);
+        _this.m_reporter.reportEndOfSessionWithErrors("A thread failed to write a file"",SEINTERNAL);
       }
     }
   }
