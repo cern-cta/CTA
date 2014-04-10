@@ -696,7 +696,7 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationJob_MountTransId ON MigrationJob(mountTransactionId);
 CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(castorFile, VID);
 CREATE INDEX I_MigrationJob_TapePoolSize ON MigrationJob(tapePool, fileSize);
-CREATE UNIQUE INDEX I_MigrationJob_TPStatusId ON MigrationJob(tapePool, status, id);
+CREATE INDEX I_MigrationJob_TPStatusCT ON MigrationJob(tapePool, status, creationTime);
 CREATE UNIQUE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(castorFile, destCopyNb);
 ALTER TABLE MigrationJob ADD CONSTRAINT UN_MigrationJob_CopyNb
   UNIQUE (castorFile, destCopyNb) USING INDEX I_MigrationJob_CFCopyNb;

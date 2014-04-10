@@ -949,7 +949,7 @@ BEGIN
              USE_NL(MMigrationJob CastorFile DiskCopy FileSystem DiskServer)
              INDEX(CastorFile PK_CastorFile_Id)
              INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
-             INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusId) */
+             INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusCT) */
          MigrationJob.id mjId INTO varMigJobId
     FROM MigrationJob, DiskCopy, FileSystem, DiskServer, CastorFile
    WHERE MigrationJob.tapePool = inTapePoolId
@@ -1165,16 +1165,18 @@ CREATE OR REPLACE PROCEDURE tg_getBulkFilesToMigrate(inLogContext IN VARCHAR2,
   varMountId NUMBER;
   varCount INTEGER;
   varTotalSize INTEGER;
+  varOldestAcceptableAge NUMBER;
   varVid VARCHAR2(10);
   varNewFseq INTEGER;
   varFileTrId NUMBER;
+  varTpId INTEGER;
   varUnused INTEGER;
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -00001);
 BEGIN
   BEGIN
     -- Get id, VID and last valid fseq for this migration mount, lock
-    SELECT id, vid, lastFSeq INTO varMountId, varVid, varNewFseq
+    SELECT id, vid, tapePool, lastFSeq INTO varMountId, varVid, varTpId, varNewFseq
       FROM MigrationMount
      WHERE mountTransactionId = inMountTrId
        FOR UPDATE;
@@ -1187,22 +1189,30 @@ BEGIN
   END;
   varCount := 0;
   varTotalSize := 0;
+  SELECT TapePool.maxFileAgeBeforeMount INTO varOldestAcceptableAge
+    FROM TapePool, MigrationMount
+   WHERE MigrationMount.id = varMountId
+     AND MigrationMount.tapePool = TapePool.id;
   -- Get candidates up to inCount or inTotalSize
   FOR Cand IN (
     SELECT /*+ FIRST_ROWS(100)
-               LEADING(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer)
-               USE_NL(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer)
+               LEADING(Job CastorFile DiskCopy FileSystem DiskServer)
+               USE_NL(Job CastorFile DiskCopy FileSystem DiskServer)
                INDEX(CastorFile PK_CastorFile_Id)
-               INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
-               INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusId) */
-           MigrationJob.id mjId, DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path filePath,
+               INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
+           Job.id mjId, DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path filePath,
            CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, CastorFile.lastKnownFileName,
-           MigrationMount.VID, Castorfile.id as castorfile
-      FROM MigrationMount, MigrationJob, CastorFile, DiskCopy, FileSystem, DiskServer
-     WHERE MigrationMount.id = varMountId
-       AND MigrationJob.tapePool = MigrationMount.tapePool
-       AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
-       AND CastorFile.id = MigrationJob.castorFile
+           Castorfile.id as castorfile
+      FROM (SELECT * FROM
+             (SELECT /*+ FIRST_ROWS(100) INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusCT) */
+                     id, castorfile, destCopyNb, creationTime
+                FROM MigrationJob
+               WHERE tapePool = varTpId
+                 AND status = tconst.MIGRATIONJOB_PENDING
+               ORDER BY creationTime)
+             WHERE ROWNUM < TO_NUMBER(getConfigOption('Migration', 'NbMigCandConsidered', 10000)))
+           Job, CastorFile, DiskCopy, FileSystem, DiskServer
+     WHERE CastorFile.id = Job.castorFile
        AND CastorFile.id = DiskCopy.castorFile
        AND CastorFile.tapeStatus = dconst.CASTORFILE_NOTONTAPE
        AND DiskCopy.status = dconst.DISKCOPY_VALID
@@ -1211,12 +1221,17 @@ BEGIN
        AND DiskServer.id = FileSystem.diskServer
        AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
        AND DiskServer.hwOnline = 1
-       AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ 1
+       AND NOT EXISTS (SELECT /*+ USE_NL(MigratedSegment)
+                                  INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ 1
                          FROM MigratedSegment
-                        WHERE MigratedSegment.castorFile = MigrationJob.castorfile
-                          AND MigratedSegment.copyNb != MigrationJob.destCopyNb
-                          AND MigratedSegment.vid = MigrationMount.vid)
-       FOR UPDATE OF MigrationJob.id SKIP LOCKED)
+                        WHERE MigratedSegment.castorFile = Job.castorfile
+                          AND MigratedSegment.copyNb != Job.destCopyNb
+                          AND MigratedSegment.vid = varVid)
+       ORDER BY -- we first order by a multi-step function, which gives old guys incrasingly more priority:
+                -- migrations younger than varOldestAccep2tableAge will be taken last
+                TRUNC(Job.creationTime/varOldestAcceptableAge) ASC,
+                -- and then, for all migrations between (N-1)*varOldestAge and N*varOldestAge, by filesystem load
+                FileSystem.nbRecallerStreams + FileSystem.nbMigratorStreams ASC)
   LOOP
     -- last part of the above statement. Could not be part of it as ORACLE insisted on not
     -- optimizing properly the execution plan
@@ -1224,13 +1239,21 @@ BEGIN
       SELECT /*+ INDEX_RS_ASC(MJ I_MigrationJob_CFVID) */ 1 INTO varUnused
         FROM MigrationJob MJ
        WHERE MJ.castorFile = Cand.castorFile
-         AND MJ.vid = Cand.VID
+         AND MJ.vid = varVid
          AND MJ.vid IS NOT NULL;
       -- found one, so skip this candidate
       CONTINUE;
     EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- nothing, it's a valid candidate
-      NULL;
+      -- nothing, it's a valid candidate. Let's lock it
+      DECLARE
+        MjLocked EXCEPTION;
+        PRAGMA EXCEPTION_INIT (MjLocked, -54);
+      BEGIN
+        SELECT id INTO varUnused FROM MigrationJob WHERE id = Cand.mjId FOR UPDATE NOWAIT;
+      EXCEPTION WHEN MjLocked THEN
+        -- this migration job is already handled else where, let's go to next one
+        CONTINUE;
+      END;
     END;
     BEGIN
       -- Try to take this candidate on this mount
