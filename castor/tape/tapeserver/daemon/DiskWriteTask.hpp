@@ -113,16 +113,24 @@ public:
       return true;
     }
     catch(const castor::exception::Exception& e){
+      /*
+       *We might end up there with some blocks into m_fifo
+       * We need to empty it
+       */
+      releaseAllBlock();
+      
       reporter.reportFailedJob(*m_recallingFile,e.getMessageValue(),e.code());
       return false;
     }
   }
   
   /**
-   * Allows client code to return a reusable memory block
+   * Allows client code to return a reusable memory block. Should not been called
    * @return the pointer to the memory block that can be reused
    */
-  virtual MemBlock *getFreeBlock() { return m_fifo.pop(); }
+  virtual MemBlock *getFreeBlock() { 
+    throw castor::tape::Exception("DiskWriteTask::getFreeBlock should mot be called");
+  }
   
   /**
    * Function used to enqueue a new memory block holding data to be written to disk
@@ -142,6 +150,18 @@ public:
   
 private:
 
+  void releaseAllBlock(){
+      try
+      {
+        while(1){
+          MemBlock* mb=m_fifo.tryPop();
+          if(mb) {
+            AutoReleaseBlock(mb,m_memManager);
+          }
+        }
+      }
+      catch(const castor::tape::threading::noMore&){}   
+  }
   /**
    * The fifo containing the memory blocks holding data to be written to disk
    */
