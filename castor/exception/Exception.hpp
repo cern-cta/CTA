@@ -52,7 +52,7 @@ namespace castor {
       Exception(int se, std::string context="");
 
       /**
-       * Empty Constructor with implicit serrno = 0;
+       * Empty Constructor with implicit serrno = SEINERNAL;
        * @param context optional context string added to the message
        * at initialisation time.
        */
