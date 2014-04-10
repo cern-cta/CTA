@@ -86,29 +86,29 @@ public:
       tape::diskFile::WriteFile ourFile(m_recallingFile->path());
       int blockId  = 0;
       
-      MemBlock *mb = m_fifo.pop();
-      while(NULL!=mb){
-        
-        AutoReleaseBlock releaser(mb,m_memManager);
-        
-        if(m_recallingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
-                || blockId != mb->m_fileBlock  || mb->m_failled ){
-          LogContext::ScopedParam sp[]={
-            LogContext::ScopedParam(lc, Param("expected_NSFILEID",m_recallingFile->fileid())),
-            LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
-            LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
-            LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
-            LogContext::ScopedParam(lc, Param("failed_Status", mb->m_failled))
-          };
-          tape::utils::suppresUnusedVariable(sp);
-          lc.log(LOG_ERR,"received a bad block for writing");
-          throw castor::tape::Exception("received a bad block for writing");
+      while(1) {
+        if(MemBlock* const mb = m_fifo.pop()) {
+          AutoReleaseBlock releaser(mb,m_memManager);
+          
+          if(m_recallingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
+                  || blockId != mb->m_fileBlock  || mb->m_failled ){
+            LogContext::ScopedParam sp[]={
+              LogContext::ScopedParam(lc, Param("expected_NSFILEID",m_recallingFile->fileid())),
+              LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
+              LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
+              LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
+              LogContext::ScopedParam(lc, Param("failed_Status", mb->m_failled))
+            };
+            tape::utils::suppresUnusedVariable(sp);
+            lc.log(LOG_ERR,"received a bad block for writing");
+            throw castor::tape::Exception("received a bad block for writing");
+          }
+          mb->m_payload.write(ourFile);
+          blockId++;
         }
-        mb->m_payload.write(ourFile);
-        mb = m_fifo.pop();
-        blockId++;
-      }
-      ourFile.close();
+        else 
+          break;
+      } //end of while(1)
       reporter.reportCompletedJob(*m_recallingFile);
       return true;
     }
@@ -151,16 +151,13 @@ public:
 private:
 
   void releaseAllBlock(){
-      try
-      {
-        while(1){
-          MemBlock* mb=m_fifo.tryPop();
-          if(mb) {
-            AutoReleaseBlock(mb,m_memManager);
-          }
-        }
-      }
-      catch(const castor::tape::threading::noMore&){}   
+    while(1){
+      MemBlock* mb=m_fifo.pop();
+      if(mb)
+        AutoReleaseBlock release(mb,m_memManager);
+      else 
+        break;
+    }
   }
   /**
    * The fifo containing the memory blocks holding data to be written to disk
