@@ -565,6 +565,7 @@ namespace castor {
         
       private:
         int m_fd;
+        bool closeTried;
       };
     } //end of namespace diskFile
   } //end of namespace tape

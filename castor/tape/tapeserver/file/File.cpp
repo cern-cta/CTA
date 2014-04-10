@@ -424,7 +424,7 @@ namespace castor {
         rfio_close(m_fd);
       }
       
-      WriteFile::WriteFile(const std::string &url) throw (Exception) {
+      WriteFile::WriteFile(const std::string &url) throw (Exception) : closeTried(false){
         m_fd = rfio_open64((char *)url.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666); 
         /* 
          * The O_TRUNC flag is here to prevent file corruption in case retrying to write a file to disk.
@@ -441,11 +441,14 @@ namespace castor {
       }
       
       void WriteFile::close() throw (Exception) {
+        closeTried=true;
         castor::exception::Errnum::throwOnMinusOne(rfio_close(m_fd), "Failed rfio_close() in diskFile::WriteFile::close");        
       }
       
       WriteFile::~WriteFile() throw () {
-        // TODO: does nothing?
+        if(!closeTried){
+          rfio_close(m_fd);
+        }
       }
     } //end of namespace diskFile
   } //end of namespace tape
