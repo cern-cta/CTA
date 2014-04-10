@@ -9,8 +9,8 @@ namespace daemon {
 
   DiskWriteThreadPool::DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq,
           ReportPackerInterface<detail::Recall>& report,castor::log::LogContext lc):
-          m_jobInjector(NULL), m_blocksQueued(0), 
-          m_maxFilesReq(maxFilesReq), m_maxBytesReq(maxBlocksReq),m_reporter(report),m_lc(lc)
+          m_jobInjector(NULL),m_maxFilesReq(maxFilesReq), m_maxBytesReq(maxBlocksReq),
+          m_reporter(report),m_lc(lc)
    {
     for(int i=0; i<nbThread; i++) {
       DiskWriteWorkerThread * thr = new DiskWriteWorkerThread(*this);
@@ -53,15 +53,10 @@ namespace daemon {
     m_jobInjector = ji;
   }
 
-  bool DiskWriteThreadPool::belowMidBlocksAfterPop(int blocksPopped) const {
-    return m_blocksQueued - blocksPopped < m_maxBytesReq/2;
-  }
   bool DiskWriteThreadPool::belowMidFilesAfterPop(int filesPopped) const {
     return m_tasks.size() -filesPopped < m_maxFilesReq/2;
   }
-   bool DiskWriteThreadPool::crossingDownBlockThreshod(int blockPopped) const {
-    return (m_blocksQueued >= m_maxBytesReq/2) && (m_blocksQueued - blockPopped < m_maxBytesReq/2);
-  }
+
   bool DiskWriteThreadPool::crossingDownFileThreshod(int filesPopped) const {
     return (m_tasks.size() >= m_maxFilesReq/2) && (m_tasks.size() - filesPopped < m_maxFilesReq/2);
   }
@@ -70,42 +65,36 @@ namespace daemon {
     using castor::log::Param;
     
     DiskWriteTaskInterface * ret = m_tasks.pop();
+    if(ret)
     {
       castor::tape::threading::MutexLocker ml(&m_counterProtection);
+      std::cout<<"pop "<<m_tasks.size()<<std::endl;
       // We are about to go to empty: request a last call job injection 
-      if(m_tasks.size() == 1 && ret->files()) {
+      if(m_tasks.size() == 1) {
         
         LogContext::ScopedParam sp[]={
           LogContext::ScopedParam(m_lc, Param("files",m_tasks.size())),
-          LogContext::ScopedParam(m_lc, Param("blocks", m_blocksQueued)),
-          LogContext::ScopedParam(m_lc, Param("ret->files", ret->files())),
-          LogContext::ScopedParam(m_lc, Param("ret->blocks", ret->blocks())),
+          LogContext::ScopedParam(m_lc, Param("ret->files", 1)),
           LogContext::ScopedParam(m_lc, Param("maxFiles", m_maxFilesReq)),
           LogContext::ScopedParam(m_lc, Param("maxBlocks", m_maxBytesReq))
         };
         tape::utils::suppresUnusedVariable(sp);
     
         m_lc.log(LOG_INFO, "In DiskWriteTaskInterface::popAndRequestMoreJobs(), requesting last call");
-    
         m_jobInjector->requestInjection(m_maxFilesReq, m_maxBytesReq, true);
         //if we are below mid on both block and files and we are crossing a threshold 
         //on either files of blocks, then request more jobs
-      } else if (belowMidBlocksAfterPop(ret->blocks()) && belowMidFilesAfterPop(ret->files()) 
-	      && (crossingDownBlockThreshod(ret->blocks()) || crossingDownFileThreshod(ret->files()))) {
+      } else if ( belowMidFilesAfterPop(1) && crossingDownFileThreshod(1)) {
         LogContext::ScopedParam sp[]={
           LogContext::ScopedParam(m_lc, Param("files",m_tasks.size())),
-          LogContext::ScopedParam(m_lc, Param("blocks", m_blocksQueued)),
-          LogContext::ScopedParam(m_lc, Param("ret->files", ret->files())),
-          LogContext::ScopedParam(m_lc, Param("ret->blocks", ret->blocks())),
+          LogContext::ScopedParam(m_lc, Param("ret->files", 1)),
           LogContext::ScopedParam(m_lc, Param("maxFiles", m_maxFilesReq)),
           LogContext::ScopedParam(m_lc, Param("maxBlocks", m_maxBytesReq))
         };
         tape::utils::suppresUnusedVariable(sp);
-    
         m_lc.log(LOG_INFO, "In DiskWriteTaskInterface::popAndRequestMoreJobs(), requesting: files");
         m_jobInjector->requestInjection(m_maxFilesReq, m_maxBytesReq, false);
       }      
-      m_blocksQueued-=ret->blocks();
     }
     return ret;
   }

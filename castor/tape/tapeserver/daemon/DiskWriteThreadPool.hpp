@@ -55,9 +55,7 @@ public:
   void setJobInjector(TaskInjector * ji);
 
 private:
-  bool belowMidBlocksAfterPop(int blocksPopped) const ;
   bool belowMidFilesAfterPop(int filesPopped) const ;
-  bool crossingDownBlockThreshod(int blockPopped) const;
   bool crossingDownFileThreshod(int filesPopped) const;
   
   /**
@@ -87,8 +85,6 @@ private:
   std::vector<DiskWriteWorkerThread *> m_threads;
   castor::tape::threading::Mutex m_counterProtection;
   TaskInjector * m_jobInjector;
-  // 
-  uint32_t m_blocksQueued;
  
   uint32_t m_maxFilesReq;
   uint64_t m_maxBytesReq;
