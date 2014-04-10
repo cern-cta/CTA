@@ -48,7 +48,7 @@ namespace daemon {
 class RecallTaskInjector: public TaskInjector {  
 public:
 
-  RecallTaskInjector(MemoryManager & mm, 
+  RecallTaskInjector(RecallMemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
         DiskThreadPoolInterface<DiskWriteTaskInterface> & diskWriter,client::ClientInterface& client,
         castor::log::LogContext lc);
@@ -124,7 +124,7 @@ private:
     RecallTaskInjector & _this;
   } m_thread;
 
-  MemoryManager & m_memManager;
+  RecallMemoryManager & m_memManager;
   
 
   TapeSingleThreadInterface<TapeReadTask> & m_tapeReader;

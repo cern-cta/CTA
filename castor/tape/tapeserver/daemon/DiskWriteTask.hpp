@@ -26,7 +26,7 @@
 
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
-#include "castor/tape/tapeserver/daemon/MemManager.hpp"
+#include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
@@ -43,10 +43,10 @@ namespace {
    */
   class AutoReleaseBlock{
     castor::tape::tapeserver::daemon::MemBlock *block;
-    castor::tape::tapeserver::daemon::MemoryManager& memManager;
+    castor::tape::tapeserver::daemon::RecallMemoryManager& memManager;
   public:
     AutoReleaseBlock(castor::tape::tapeserver::daemon::MemBlock* mb, 
-            castor::tape::tapeserver::daemon::MemoryManager& mm):
+            castor::tape::tapeserver::daemon::RecallMemoryManager& mm):
     block(mb),memManager(mm){}
     
     ~AutoReleaseBlock(){
@@ -71,7 +71,7 @@ public:
    * @param file: All we need to know about the file we  are recalling
    * @param mm: memory manager of the session
    */
-  DiskWriteTask(tape::tapegateway::FileToRecallStruct* file,MemoryManager& mm): 
+  DiskWriteTask(tape::tapegateway::FileToRecallStruct* file,RecallMemoryManager& mm): 
   m_recallingFile(file),m_memManager(mm){
  
   }
@@ -171,7 +171,7 @@ private:
   /**
    * Reference to the Memory Manager in use
    */
-  MemoryManager & m_memManager;
+  RecallMemoryManager & m_memManager;
   
   /**
    * Mutex forcing serial access to the fifo

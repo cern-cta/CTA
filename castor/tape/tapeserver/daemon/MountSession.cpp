@@ -244,7 +244,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
   {
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
-    MemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz);
+    RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz);
     TapeReadSingleThread trst(*drive);
     RecallReportPacker rrp(m_clientProxy,
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
@@ -261,7 +261,6 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
         m_castorConf.tapebridgeBulkRequestRecallMaxBytes)) {
       // We got something to recall. Time to start the machinery
       trst.startThreads();
-      mm.startThreads();
       dwtp.startThreads();
       rrp.startThreads();
       rti.startThreads();
@@ -272,7 +271,6 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
       rti.waitThreads();
       rrp.waitThread();
       dwtp.waitThreads();
-      mm.waitThreads();
       trst.waitThreads();
     } else {
       // Just log this was an empty mount and that's it. The memory management

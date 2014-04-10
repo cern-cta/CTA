@@ -43,7 +43,6 @@ namespace daemon {
        }
      }
       m_tasks.push(t);
-      std::cout<<"size tasks "<<m_tasks.size()<<std::endl;
   }
   void DiskWriteThreadPool::finish() {
     castor::tape::threading::MutexLocker ml(&m_counterProtection);
@@ -121,6 +120,8 @@ namespace daemon {
       //Im the last Thread alive, report end of session
       if(failledWritting==0){
         _this.m_reporter.reportEndOfSession();
+        //TODO
+//        _this.m_jobInjector->end();
       }
       else{
         _this.m_reporter.reportEndOfSessionWithErrors("A thread failed to write a file",SEINTERNAL);

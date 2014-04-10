@@ -26,7 +26,7 @@
 
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
-#include "castor/tape/tapeserver/daemon/MemManager.hpp"
+#include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 
 
@@ -36,7 +36,7 @@ namespace tapeserver {
 namespace daemon {
 class TapeReadFileTask: public TapeReadTask {
 public:
-  TapeReadFileTask(MemoryManager & source,DataConsumer & destination, int fSeq, int blockCount): m_fSeq(fSeq), 
+  TapeReadFileTask(RecallMemoryManager & source,DataConsumer & destination, int fSeq, int blockCount): m_fSeq(fSeq), 
           m_blockCount(blockCount), m_memManager(source),m_diskWriteTask(destination) {}
   /* Implementation of the TapeReadTask interface*/
   virtual bool endOfWork() { return false; }
@@ -53,7 +53,7 @@ public:
 private:
   int m_fSeq;
   int m_blockCount;
-  MemoryManager & m_memManager;
+  RecallMemoryManager & m_memManager;
   DataConsumer & m_diskWriteTask;
 };
 }

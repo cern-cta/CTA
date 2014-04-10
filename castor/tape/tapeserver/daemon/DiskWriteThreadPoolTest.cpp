@@ -39,8 +39,7 @@ namespace unitTests{
     //EXPECT_CALL(tskInjectorl,requestInjection(_,_,_)).Times(2);
     EXPECT_CALL(report,reportEndOfSession()).Times(1);     
     
-    MemoryManager mm(10,100);
-//    mm.startThreads();
+    RecallMemoryManager mm(10,100);
     
     DiskWriteThreadPool dwtp(2,5,500,report,lc);
     dwtp.setJobInjector(&tskInjectorl);
@@ -51,7 +50,6 @@ namespace unitTests{
     file.setBlockId3(1);
        
      for(int i=0;i<5;++i){
-
        DiskWriteTask* t=new DiskWriteTask(dynamic_cast<tapegateway::FileToRecallStruct*>(file.clone()),mm);
        MemBlock* mb=mm.getFreeBlock();
        mb->m_fileid=0;
@@ -63,7 +61,6 @@ namespace unitTests{
      
     dwtp.finish();
     dwtp.waitThreads(); 
-//    mm.waitThreads();
   }
 }
 

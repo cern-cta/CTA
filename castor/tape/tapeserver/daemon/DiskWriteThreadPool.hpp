@@ -67,7 +67,7 @@ private:
   class DiskWriteWorkerThread: private castor::tape::threading::Thread {
   public:
     DiskWriteWorkerThread(DiskWriteThreadPool & manager):
-    threadID(m_nbActiveThread++),_this(manager)
+    threadID(m_nbActiveThread++),_this(manager),lc(_this.m_lc)
     {
       log::LogContext::ScopedParam param(lc, log::Param("threadID", threadID));
       lc.log(LOG_INFO,"DiskWrite Thread created");

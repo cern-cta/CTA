@@ -56,7 +56,7 @@ public:
 };
 
 TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
-  MemoryManager mm(50U,50U);
+  RecallMemoryManager mm(50U,50U);
   const int nbCalls=2;
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_RecallTaskInjectorTest");
   castor::log::LogContext lc(log);
@@ -100,7 +100,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   }
 }
 TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
-  MemoryManager mm(50U,50U);
+  RecallMemoryManager mm(50U,50U);
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_RecallTaskInjectorTest");
   castor::log::LogContext lc(log);
   

@@ -21,7 +21,7 @@ namespace tape{
 namespace tapeserver{
 namespace daemon {
   
-RecallTaskInjector::RecallTaskInjector(MemoryManager & mm, 
+RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
         DiskThreadPoolInterface<DiskWriteTaskInterface> & diskWriter,
         client::ClientInterface& client,castor::log::LogContext lc) : 
