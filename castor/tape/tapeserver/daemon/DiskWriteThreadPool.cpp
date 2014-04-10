@@ -102,7 +102,7 @@ namespace daemon {
   }
   void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
     std::auto_ptr<DiskWriteTaskInterface>  task;
-    castor::log::LogContext lc = _this.m_lc;
+    
     while(1) {
       task.reset(_this. m_tasks.pop());
       if (NULL!=task.get()) {
@@ -111,7 +111,7 @@ namespace daemon {
         }
       } //end of task!=NULL
       else {
-        log::LogContext::ScopedParam(lc, log::Param("threadID", threadID));
+        log::LogContext::ScopedParam param(lc, log::Param("threadID", threadID));
         lc.log(LOG_INFO,"Disk write thread finishing");
         break;
       }

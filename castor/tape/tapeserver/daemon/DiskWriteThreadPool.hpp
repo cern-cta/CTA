@@ -68,8 +68,11 @@ private:
   public:
     DiskWriteWorkerThread(DiskWriteThreadPool & manager):
     threadID(m_nbActiveThread++),_this(manager)
-    {}
-    
+    {
+      log::LogContext::ScopedParam param(lc, log::Param("threadID", threadID));
+      lc.log(LOG_INFO,"DiskWrite Thread created");
+    }
+      
     void startThreads() { start(); }
     void waitThreads() { wait(); }
   private:
@@ -78,7 +81,7 @@ private:
     static tape::threading::AtomicCounter<int> failledWritting;
     const int threadID;
     DiskWriteThreadPool & _this;
-    
+    castor::log::LogContext lc;
     virtual void run();
   };
   
