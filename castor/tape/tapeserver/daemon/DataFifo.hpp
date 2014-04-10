@@ -93,13 +93,14 @@ public:
   bool finished() throw() {
     // No need to lock because only one int variable is read.
     //TODO : are we sure the operation is atomic ? It is plateform dependant
+    castor::tape::threading::MutexLocker ml(&m_countersMutex);
     return m_dataBlocksPopped >= m_blocksNeeded;
   }
   
 private:
   castor::tape::threading::Mutex m_countersMutex;
   castor::tape::threading::Mutex m_freeBlockProviderProtection;
-  int m_blocksNeeded;
+  const int m_blocksNeeded;
   volatile int m_freeBlocksProvided;
   volatile int m_dataBlocksPushed;
   volatile int m_dataBlocksPopped;
