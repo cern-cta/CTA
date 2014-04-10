@@ -29,6 +29,7 @@
 #include "occi.h"
 #include "castor/db/DbCnvSvc.hpp"
 #include "castor/exception/SQLError.hpp"
+#include <map>
 
 namespace castor {
   
@@ -100,6 +101,20 @@ namespace castor {
         oracle::occi::Statement*
         createOraStatement(const std::string& stmt)
           throw (castor::exception::Exception);
+
+        /**
+         * Creates or reuses an Oracle prepared statement exposed with the Oracle API.
+         * The statement is always autocommited
+         * @param stmtStr the string statement
+         * @param wasCreated set to true if the oracle statement was just created
+         * @exception Exception throws an Exception in case of error
+         * creating the statement or establishing the underlying DB connection in case
+         * the statement did not exist yet, or reusing the stored statement.
+         * Note that statements are thread specific.
+         */
+        oracle::occi::Statement*
+        createOrReuseOraStatement(const std::string& stmtStr, bool *wasCreated)
+          throw (castor::exception::Exception);
         
         /**
          * Terminates a prepared statement created with the Oracle API
@@ -155,6 +170,11 @@ namespace castor {
          * The Oracle connection for this service
          */
         oracle::occi::Connection* m_connection;
+
+        /**
+         * Set of reusable, thread specific, prepared statements
+         */
+        std::map<std::string, oracle::occi::Statement*> m_reusableStatements;
         
         /**
          * Friend declaration for OraStatement to allow

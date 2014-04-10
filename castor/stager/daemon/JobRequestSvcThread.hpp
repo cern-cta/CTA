@@ -86,7 +86,7 @@ namespace castor {
         JobRequestSvcThread() throw (castor::exception::Exception);
 
         /** virtual destructor */
-        virtual ~JobRequestSvcThread() throw();
+        virtual ~JobRequestSvcThread() throw() {};
         
         /**
          * Select part of the service.
@@ -120,20 +120,6 @@ namespace castor {
         void answerClient(const JobRequest *sr, const struct Cns_fileid &cnsFileid,
                           const int status, const int errorCode, const std::string &errorMsg)
         throw (castor::exception::Exception);
-
-      private:
-
-        // Database conversion service. Handles DB interactions
-        castor::db::ora::OraCnvSvc* m_dbSvc;
-
-        /// SQL statement object for function jobSubRequestToDo
-        oracle::occi::Statement *m_jobSubRequestToDoStatement;
-
-        /// SQL statement object for handleGetOrPut PL/SQL calls
-        oracle::occi::Statement *m_handleGetOrPutStatement;
-
-        /// SQL statement object for function archiveSubReq
-        oracle::occi::Statement *m_archiveSubReqStatement;
 
       };
       

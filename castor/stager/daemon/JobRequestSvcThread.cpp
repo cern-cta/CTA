@@ -40,28 +40,7 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::stager::daemon::JobRequestSvcThread::JobRequestSvcThread()
-  throw (castor::exception::Exception) :
-  SelectProcessThread(), m_jobSubRequestToDoStatement(0),
-  m_handleGetOrPutStatement(0), m_archiveSubReqStatement(0) {
-  // get the DbCnvSvc for handling ORACLE statements
-  castor::IService *svc = castor::BaseObject::services()->service("DbCnvSvc", castor::SVC_DBCNV);
-  m_dbSvc = dynamic_cast<castor::db::ora::OraCnvSvc*>(svc);
-}
-
-//-----------------------------------------------------------------------------
-// destructor
-//-----------------------------------------------------------------------------
-castor::stager::daemon::JobRequestSvcThread::~JobRequestSvcThread() throw () {
- try {
-   if (m_jobSubRequestToDoStatement) m_dbSvc->terminateStatement(m_jobSubRequestToDoStatement);
- } catch (castor::exception::Exception &ignored) {};
- try {
-   if (m_handleGetOrPutStatement) m_dbSvc->terminateStatement(m_handleGetOrPutStatement);
- } catch (castor::exception::Exception &ignored) {};
- try {
-   if (m_archiveSubReqStatement) m_dbSvc->terminateStatement(m_archiveSubReqStatement);
- } catch (castor::exception::Exception &ignored) {};
-}
+  throw (castor::exception::Exception) : SelectProcessThread() {}
 
 //-----------------------------------------------------------------------------
 // select
@@ -88,39 +67,43 @@ castor::IObject* castor::stager::daemon::JobRequestSvcThread::select() throw() {
 castor::stager::daemon::JobRequest*
 castor::stager::daemon::JobRequestSvcThread::jobSubRequestToDo()
   throw(castor::exception::Exception) {
+  // get the DbCnvSvc for handling ORACLE statements
+  castor::IService *svc = castor::BaseObject::services()->service("DbCnvSvc", castor::SVC_DBCNV);
+  castor::db::ora::OraCnvSvc *dbSvc = dynamic_cast<castor::db::ora::OraCnvSvc*>(svc);
   try {
-    // Check whether the statements are ok
-    if (0 == m_jobSubRequestToDoStatement) {
-      m_jobSubRequestToDoStatement = m_dbSvc->createOraStatement
-        ("BEGIN jobSubRequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13); END;");
-      m_jobSubRequestToDoStatement->registerOutParam(1, oracle::occi::OCCIDOUBLE);
-      m_jobSubRequestToDoStatement->registerOutParam(2, oracle::occi::OCCISTRING, 2048);
-      m_jobSubRequestToDoStatement->registerOutParam(3, oracle::occi::OCCIINT);
-      m_jobSubRequestToDoStatement->registerOutParam(4, oracle::occi::OCCIINT);
-      m_jobSubRequestToDoStatement->registerOutParam(5, oracle::occi::OCCIINT);
-      m_jobSubRequestToDoStatement->registerOutParam(6, oracle::occi::OCCISTRING, 2048);
-      m_jobSubRequestToDoStatement->registerOutParam(7, oracle::occi::OCCISTRING, 2048);
-      m_jobSubRequestToDoStatement->registerOutParam(8, oracle::occi::OCCIDOUBLE);
-      m_jobSubRequestToDoStatement->registerOutParam(9, oracle::occi::OCCIINT);
-      m_jobSubRequestToDoStatement->registerOutParam(10, oracle::occi::OCCIINT);
-      m_jobSubRequestToDoStatement->registerOutParam(11, oracle::occi::OCCIINT);
-      m_jobSubRequestToDoStatement->registerOutParam(12, oracle::occi::OCCIINT);
-      m_jobSubRequestToDoStatement->registerOutParam(13, oracle::occi::OCCIINT);
-      m_jobSubRequestToDoStatement->setAutoCommit(true);
+    // retrieve or create statement
+    bool wasCreated = false;
+    oracle::occi::Statement* jobSubRequestToDoStatement = dbSvc->createOrReuseOraStatement
+      ("BEGIN jobSubRequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13); END;",
+       &wasCreated);
+    if (wasCreated) {
+      jobSubRequestToDoStatement->registerOutParam(1, oracle::occi::OCCIDOUBLE);
+      jobSubRequestToDoStatement->registerOutParam(2, oracle::occi::OCCISTRING, 2048);
+      jobSubRequestToDoStatement->registerOutParam(3, oracle::occi::OCCIINT);
+      jobSubRequestToDoStatement->registerOutParam(4, oracle::occi::OCCIINT);
+      jobSubRequestToDoStatement->registerOutParam(5, oracle::occi::OCCIINT);
+      jobSubRequestToDoStatement->registerOutParam(6, oracle::occi::OCCISTRING, 2048);
+      jobSubRequestToDoStatement->registerOutParam(7, oracle::occi::OCCISTRING, 2048);
+      jobSubRequestToDoStatement->registerOutParam(8, oracle::occi::OCCIDOUBLE);
+      jobSubRequestToDoStatement->registerOutParam(9, oracle::occi::OCCIINT);
+      jobSubRequestToDoStatement->registerOutParam(10, oracle::occi::OCCIINT);
+      jobSubRequestToDoStatement->registerOutParam(11, oracle::occi::OCCIINT);
+      jobSubRequestToDoStatement->registerOutParam(12, oracle::occi::OCCIINT);
+      jobSubRequestToDoStatement->registerOutParam(13, oracle::occi::OCCIINT);
       // also register for associated alert
       oracle::occi::Statement* registerAlertStmt = 
-        m_dbSvc->createOraStatement("BEGIN DBMS_ALERT.REGISTER('wakeUpJobReqSvc'); END;");
+        dbSvc->createOraStatement("BEGIN DBMS_ALERT.REGISTER('wakeUpJobReqSvc'); END;");
       registerAlertStmt->execute();
-      m_dbSvc->terminateStatement(registerAlertStmt);
+      dbSvc->terminateStatement(registerAlertStmt);
     }
     // execute the statement and see whether we found something
-    unsigned int rc = m_jobSubRequestToDoStatement->executeUpdate();
+    unsigned int rc = jobSubRequestToDoStatement->executeUpdate();
     if (0 == rc) {
       castor::exception::Internal e;
       e.getMessage() << "unable to get next SubRequest to process";
       throw e;
     }
-    u_signed64 srId = (u_signed64)m_jobSubRequestToDoStatement->getDouble(1);
+    u_signed64 srId = (u_signed64)jobSubRequestToDoStatement->getDouble(1);
     if (0 == srId) {
       // Found no SubRequest to handle
       return 0;
@@ -128,26 +111,26 @@ castor::stager::daemon::JobRequestSvcThread::jobSubRequestToDo()
     // Create result
     JobRequest* result = new JobRequest();
     result->requestUuid = nullCuuid;
-    std::string strUuid = m_jobSubRequestToDoStatement->getString(2);
+    std::string strUuid = jobSubRequestToDoStatement->getString(2);
     if (strUuid.length() > 0) {
       string2Cuuid(&result->requestUuid, (char*)strUuid.c_str());
     }
     result->srId = srId;
-    result->reqType = m_jobSubRequestToDoStatement->getInt(3);
-    result->euid = m_jobSubRequestToDoStatement->getInt(4);
-    result->egid = m_jobSubRequestToDoStatement->getInt(5);
-    result->fileName = m_jobSubRequestToDoStatement->getString(6);
-    result->svcClassName = m_jobSubRequestToDoStatement->getString(7);
-    result->fileClass = (u_signed64)m_jobSubRequestToDoStatement->getDouble(8);
-    result->flags = m_jobSubRequestToDoStatement->getInt(9);
-    result->modebits = m_jobSubRequestToDoStatement->getInt(10);
-    result->clientIpAddress = m_jobSubRequestToDoStatement->getInt(11);
-    result->clientPort = m_jobSubRequestToDoStatement->getInt(12);
-    result->clientVersion = m_jobSubRequestToDoStatement->getInt(13);
+    result->reqType = jobSubRequestToDoStatement->getInt(3);
+    result->euid = jobSubRequestToDoStatement->getInt(4);
+    result->egid = jobSubRequestToDoStatement->getInt(5);
+    result->fileName = jobSubRequestToDoStatement->getString(6);
+    result->svcClassName = jobSubRequestToDoStatement->getString(7);
+    result->fileClass = (u_signed64)jobSubRequestToDoStatement->getDouble(8);
+    result->flags = jobSubRequestToDoStatement->getInt(9);
+    result->modebits = jobSubRequestToDoStatement->getInt(10);
+    result->clientIpAddress = jobSubRequestToDoStatement->getInt(11);
+    result->clientPort = jobSubRequestToDoStatement->getInt(12);
+    result->clientVersion = jobSubRequestToDoStatement->getInt(13);
     // return
     return result;
   } catch (oracle::occi::SQLException &e) {
-    m_dbSvc->handleException(e);
+    dbSvc->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage() << e.getMessage();
     throw ex;
@@ -229,27 +212,30 @@ bool castor::stager::daemon::JobRequestSvcThread::handleGetOrPut(const JobReques
                                                                  u_signed64 fileSize,
                                                                  u_signed64 stagerOpentimeInUsec)
   throw (castor::exception::Exception) {
+  // get the DbCnvSvc for handling ORACLE statements
+  castor::IService *svc = castor::BaseObject::services()->service("DbCnvSvc", castor::SVC_DBCNV);
+  castor::db::ora::OraCnvSvc *dbSvc = dynamic_cast<castor::db::ora::OraCnvSvc*>(svc);
   try {
-    // Check whether the statement was created
-    if (0 == m_handleGetOrPutStatement) {
-      m_handleGetOrPutStatement = m_dbSvc->createOraStatement
-        ("BEGIN :1 := handleGetOrPut(:2, :3, :4, :5, :6, :7, :8, :9); END;");
-      m_handleGetOrPutStatement->registerOutParam(1, oracle::occi::OCCIINT);
-      m_handleGetOrPutStatement->setAutoCommit(true);
+    // retrieve or create statement
+    bool wasCreated = false;
+    oracle::occi::Statement* handleGetOrPutStatement = dbSvc->createOrReuseOraStatement
+      ("BEGIN :1 := handleGetOrPut(:2, :3, :4, :5, :6, :7, :8, :9); END;", &wasCreated);
+    if (wasCreated) {
+      handleGetOrPutStatement->registerOutParam(1, oracle::occi::OCCIINT);
     }
     // Execute statement
-    m_handleGetOrPutStatement->setInt(2, sr->reqType);
-    m_handleGetOrPutStatement->setDouble(3, sr->srId);
-    m_handleGetOrPutStatement->setDouble(4, cnsFileid.fileid);
-    m_handleGetOrPutStatement->setString(5, cnsFileid.server);
-    m_handleGetOrPutStatement->setDouble(6, sr->fileClass);
-    m_handleGetOrPutStatement->setString(7, sr->fileName.c_str());
-    m_handleGetOrPutStatement->setDouble(8, fileSize);
-    m_handleGetOrPutStatement->setDouble(9, stagerOpentimeInUsec);
-    m_handleGetOrPutStatement->executeUpdate();
-    return m_handleGetOrPutStatement->getInt(1) != 0;
+    handleGetOrPutStatement->setInt(2, sr->reqType);
+    handleGetOrPutStatement->setDouble(3, sr->srId);
+    handleGetOrPutStatement->setDouble(4, cnsFileid.fileid);
+    handleGetOrPutStatement->setString(5, cnsFileid.server);
+    handleGetOrPutStatement->setDouble(6, sr->fileClass);
+    handleGetOrPutStatement->setString(7, sr->fileName.c_str());
+    handleGetOrPutStatement->setDouble(8, fileSize);
+    handleGetOrPutStatement->setDouble(9, stagerOpentimeInUsec);
+    handleGetOrPutStatement->executeUpdate();
+    return handleGetOrPutStatement->getInt(1) != 0;
   } catch (oracle::occi::SQLException &e) {
-    m_dbSvc->handleException(e);
+    dbSvc->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage() << "Error caught in handleGetOrPut : " << e.what();
     throw ex;
@@ -261,18 +247,20 @@ bool castor::stager::daemon::JobRequestSvcThread::handleGetOrPut(const JobReques
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::JobRequestSvcThread::archiveSubReq(const u_signed64 srId, const int status)
   throw (castor::exception::Exception) {
+  // get the DbCnvSvc for handling ORACLE statements
+  castor::IService *svc = castor::BaseObject::services()->service("DbCnvSvc", castor::SVC_DBCNV);
+  castor::db::ora::OraCnvSvc *dbSvc = dynamic_cast<castor::db::ora::OraCnvSvc*>(svc);
   try {
-    // Check whether the statement was created
-    if (0 == m_archiveSubReqStatement) {
-      m_archiveSubReqStatement = m_dbSvc->createOraStatement("BEGIN archiveSubReq(:1, :2); END;");
-      m_archiveSubReqStatement->setAutoCommit(true);
-    }
+    // retrieve or create statement
+    bool wasCreated = false;
+    oracle::occi::Statement* archiveSubReqStatement = dbSvc->createOrReuseOraStatement
+      ("BEGIN archiveSubReq(:1, :2); END;", &wasCreated);
     // Execute statement
-    m_archiveSubReqStatement->setDouble(1, srId);
-    m_archiveSubReqStatement->setInt(2, status);
-    m_archiveSubReqStatement->executeUpdate();
+    archiveSubReqStatement->setDouble(1, srId);
+    archiveSubReqStatement->setInt(2, status);
+    archiveSubReqStatement->executeUpdate();
   } catch (oracle::occi::SQLException &e) {
-    m_dbSvc->handleException(e);
+    dbSvc->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage() << "Unable to archive subRequest :" << e.what();
     throw ex;
