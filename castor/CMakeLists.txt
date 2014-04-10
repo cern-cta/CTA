@@ -328,6 +328,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
     exception/AlreadyInitialized.hpp
     exception/Backtrace.hpp
     exception/BadAlloc.hpp
+    exception/BadMessage.hpp
     exception/CommandLineNotParsed.hpp
     exception/Communication.hpp
     exception/Exception.hpp
