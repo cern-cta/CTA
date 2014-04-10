@@ -70,3 +70,9 @@ void castor::tape::tapeserver::daemon::DummyVdqm::tapeMounted(const std::string 
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DummyVdqm::releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid) throw(castor::exception::Exception) {
 }
+
+//-----------------------------------------------------------------------------
+// tapeUnmounted
+//-----------------------------------------------------------------------------
+void  castor::tape::tapeserver::daemon::DummyVdqm::tapeUnmounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid) throw(castor::exception::Exception) {
+}

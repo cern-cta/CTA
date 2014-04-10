@@ -360,3 +360,27 @@ void castor::tape::tapeserver::daemon::VdqmImpl::writeCommitAck(const int fd) th
     throw ex;
   }
 }
+
+//-----------------------------------------------------------------------------
+// tapeUnmounted
+//-----------------------------------------------------------------------------
+void  castor::tape::tapeserver::daemon::VdqmImpl::tapeUnmounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid) throw(castor::exception::Exception) {
+  int status = VDQM_VOL_UNMOUNT;
+
+  try {
+    legacymsg::VdqmDrvRqstMsgBody body;
+    body.status = status;
+    castor::utils::copyString(body.volId, vid.c_str());
+    castor::utils::copyString(body.server, server.c_str());
+    castor::utils::copyString(body.drive, unitName.c_str());
+    castor::utils::copyString(body.dgn, dgn.c_str());
+
+    setTapeDriveStatus(body);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to notify vdqm that tape " << vid <<
+      " was unmounted from tape drive " << unitName << ": " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}

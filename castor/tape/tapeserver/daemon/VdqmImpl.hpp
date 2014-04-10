@@ -118,6 +118,17 @@ public:
    */
   void releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t childPid) throw(castor::exception::Exception);
 
+  /**
+   * Notifies the vdqmd daemon that the specified tape has been dismounted.
+   *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive.
+   * @param vid The volume identifier of the mounted tape.
+   */
+  void tapeUnmounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid) throw(castor::exception::Exception);
+
 private:
 
   /**

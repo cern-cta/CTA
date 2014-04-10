@@ -19,6 +19,7 @@ target_link_libraries(tapeserverd
   File
   castorcommon
   castorclient
+  castortapegatewayprotocol
   castortapelegacymsg)
 
 install (TARGETS tapeserverd DESTINATION ${CASTOR_DEST_BIN_DIR})

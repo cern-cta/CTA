@@ -27,11 +27,13 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 #include "castor/tape/tapeserver/daemon/Vmgr.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <sys/types.h>
+#include <stdint.h>
 
 namespace castor     {
 namespace tape       {
@@ -72,6 +74,11 @@ public:
 private:
 
   /**
+   * Timeout in seconds to be used for network operations.
+   */
+  const int m_netTimeout;
+
+  /**
    * The ID of the mount-session process.
    */
   const pid_t m_sessionPid;
@@ -105,6 +112,94 @@ private:
    * The object representing the vmgrd daemon.
    */
   Vmgr &m_vmgr;
+
+  /**
+   * Tells the vdqm to assign the process ID of the mount session process to
+   * the tape drive.
+   */
+  void assignSessionPidToDrive() throw (castor::exception::Exception);
+
+  /**
+   * Mounts the tape and notifies the vdqm accordingly.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  void mountTape(const std::string &vid) throw (castor::exception::Exception);
+
+  /**
+   * Transfers file to/from the tape.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  void transferFiles(const std::string &vid) throw (castor::exception::Exception);
+
+  /**
+   * Requests the vdqm to release the tape drive.
+   *
+   * @param forceUnmount Set to true if the release of the tape drive must
+   * result in the tape being unmounted.
+   */
+  void releaseDrive(const bool forceUnmount) throw (castor::exception::Exception);
+
+  /**
+   * Dismounts the specified tape.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  void unmountTape(const std::string &vid) throw (castor::exception::Exception);
+
+  /**
+   * Gets the volume to be mounted from the client.
+   *
+   * clientMsgSeqNb           Client-message sequence number.
+   *
+   * @return                  A pointer to the volume message received from the
+   *                          client or NULL if there is no volume to mount.
+   *                          The caller is responsible for deallocating the
+   *                          message.
+   */
+  tapegateway::Volume *getVolume(const uint64_t clientMsgSeqNb) const throw(castor::exception::Exception);
+
+  /**
+   * Connects to the client, sends the specified request message and then
+   * receives the reply.
+   *
+   * @param requestTypeName  The name of the type of the request.  This name
+   *                         will be used in logging messages.
+   * @param request          Out parameter: The request to be sent to the
+   *                         client.
+   * @return                 A pointer to the reply object.  It is the
+   *                         responsibility of the caller to deallocate the
+   *                         memory of the reply object.
+   */
+  IObject *connectSendRequestAndReceiveReply(const char *const requestTypeName, IObject &request) const throw(castor::exception::Exception);
+
+  /**
+   * Throws an exception if there is a mount transaction ID mismatch and/or
+   * a aggregator transaction ID mismatch.
+   *
+   * @param messageTypeName           The type name of the client message.
+   * @param actualMountTransactionId  The actual mount transaction ID.
+   * @param expectedTapebridgeTransId The expected aggregator transaction ID.
+   * @param actualTapebridgeTransId   The actual aggregator transaction ID.
+   */
+  void checkTransactionIds(
+    const char *const messageTypeName,
+    const uint32_t    actualMountTransactionId,
+    const uint64_t    expectedTapebridgeTransId,
+    const uint64_t    actualTapebridgeTransId) const
+    throw(castor::exception::Exception);
+
+  /**
+   * Translates the specified incoming EndNotificationErrorReport message into
+   * the throwing of the appropriate exception.
+   *
+   * This method is not typical because it throws an exception if it succeeds.
+   *
+   * @param obj The received IObject which represents the
+   *            OBJ_EndNotificationErrorReport message.
+   */
+  void throwEndNotificationErrorReport(IObject *const obj) const throw(castor::exception::Exception);
 
 }; // class DebugMountSessionForVdqmProtocol
 
