@@ -44,24 +44,9 @@ class DiskWriteTaskInterface {
 public:
   
   /**
-   * @return the number of memory blocks to be used
-   */
-  virtual int blocks() =0;
-  
-  /**
-   * @return the number of files to write to disk
-   */
-  virtual int files() =0;
-  
-  /**
    * Main routine of the task
    */
   virtual bool execute(ReportPackerInterface<detail::Recall>& reporter,log::LogContext& lc) =0;
-  
-  /**
-   * Wait for the end of the task
-   */
-  virtual void waitCompletion()=0;
   
   /**
    * Destructor
