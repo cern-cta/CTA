@@ -64,7 +64,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::execute
   std::auto_ptr<castor::tape::tapegateway::Volume> volume(getVolume(clientMsgSeqNb++));
   if(NULL != volume.get()) {
     mountTape(volume->vid());
-    transferFiles(volume->vid());
+    transferFiles(*(volume.get()));
   }
 
   const bool forceUnmount = true;
@@ -289,17 +289,72 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::mountTa
 //------------------------------------------------------------------------------
 // transferFiles
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::transferFiles(const std::string &vid) throw (castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::transferFiles(tapegateway::Volume &volume) throw (castor::exception::Exception) {
+  switch(volume.mode()) {
+  case tapegateway::READ:
+    recallFiles(volume.vid());
+    break;
+  case tapegateway::WRITE:
+    migrateFiles(volume.vid());
+    break;
+  case tapegateway::DUMP:
+    dumpFiles(volume.vid());
+    break;
+  default:
+    {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Failed to transfer files: Unknown mode: " << volume.mode();
+      throw ex;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// recallFiles
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::recallFiles(const std::string &vid) throw (castor::exception::Exception) {
   log::Param params[] = {
     log::Param("unitName", m_job.driveUnit),
     log::Param("TPVID", vid)};
 
-  m_log(LOG_INFO, "Starting to transfer files to/from tape", params);
+  m_log(LOG_INFO, "Starting to recall files from tape to disk", params);
 
-  // Emulate transferring files to/from tape by sleeping
+  // Emulate recalling files from tape to disk by sleeping
   ::sleep(1);
 
-  m_log(LOG_INFO, "Stopped transferring files to/from tape", params);
+  m_log(LOG_INFO, "Finished recalling files from tape to disk", params);
+}
+
+//------------------------------------------------------------------------------
+// migrateFiles
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::migrateFiles(const std::string &vid) throw (castor::exception::Exception) {
+  log::Param params[] = {
+    log::Param("unitName", m_job.driveUnit),
+    log::Param("TPVID", vid)};
+  
+  m_log(LOG_INFO, "Starting to migrate files from disk to tape", params);
+  
+  // Emulate migrating files from disk to tape by sleeping
+  ::sleep(1);
+
+  m_log(LOG_INFO, "Finished migrating files from disk to tape", params);
+}
+
+//------------------------------------------------------------------------------
+// dumpFiles
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::dumpFiles(const std::string &vid) throw (castor::exception::Exception) {
+  log::Param params[] = {
+    log::Param("unitName", m_job.driveUnit),
+    log::Param("TPVID", vid)};
+
+  m_log(LOG_INFO, "Starting to dump tape files", params);
+
+  // Emulate dumping tape files
+  ::sleep(1);
+
+  m_log(LOG_INFO, "Finished dumping tape files", params);
 }
 
 //------------------------------------------------------------------------------

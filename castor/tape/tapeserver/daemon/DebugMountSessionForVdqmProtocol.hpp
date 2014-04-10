@@ -127,11 +127,33 @@ private:
   void mountTape(const std::string &vid) throw (castor::exception::Exception);
 
   /**
-   * Transfers file to/from the tape.
+   * Transfer files.  This means either recalling files from tape to disk,
+   * migrating files from disk to tape or dumping tape files.
+   *
+   * @param volume The volume message from the client.
+   */
+  void transferFiles(tapegateway::Volume &volume) throw (castor::exception::Exception);
+
+  /**
+   * Recalls files from tape to disk.
    *
    * @param vid The volume identifier of the tape.
    */
-  void transferFiles(const std::string &vid) throw (castor::exception::Exception);
+  void recallFiles(const std::string &vid) throw (castor::exception::Exception);
+
+  /**
+   * Migrates files disk to tape.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  void migrateFiles(const std::string &vid) throw (castor::exception::Exception);
+
+  /**
+   * Dumps tape files.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  void dumpFiles(const std::string &vid) throw (castor::exception::Exception);
 
   /**
    * Requests the vdqm to release the tape drive.
