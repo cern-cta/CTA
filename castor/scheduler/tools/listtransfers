@@ -252,7 +252,7 @@ def processHostListing():
 
 def processDiskPoolListing():
   '''retrieves and display summary of the running transfers per diskpool for the given diskpool and user'''
-  summaryreport = rpconn.root.summarizeTransfersPerPool(reqdiskpool, requser, extra)
+  summaryreport, errorMsg = rpconn.root.summarizeTransfersPerPool(reqdiskpool, requser, extra)
   # compute the max length of the diskpools we got and deduce the title and printf args
   maxDiskPoolNameLen = max([0] + [len(s[0]) for s in summaryreport])
   diskpoolHead = 'DISKPOOL ' + ' '*(maxDiskPoolNameLen-5)
@@ -318,6 +318,8 @@ def processDiskPoolListing():
     print '(*) Note that these numbers are incomplete as the following machines were unreachable :'
     for p in allUnreachableMachines:
       print '  pool ' + p + ' : ' + ', '.join(allUnreachableMachines[p])
+  if errorMsg:
+      print errorMsg
 
 # connect to server and gather numbers
 try:
