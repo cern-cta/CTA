@@ -277,6 +277,9 @@ void castor::log::StringLogger::reducedSyslog(std::string msg)
 
   // Append the message to the log
   m_log << msg << std::endl;
+  
+  // Temporary hack: also print them out:
+  printf (msg.c_str());
 
   // Leave critical section.
   pthread_mutex_unlock(&m_mutex);
