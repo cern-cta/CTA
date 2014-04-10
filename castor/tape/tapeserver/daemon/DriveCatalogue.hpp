@@ -213,7 +213,9 @@ public:
    * Moves the state of the specified tape drive to DRIVE_STATE_UP.
    *
    * This method throws an exception if the current state of the tape drive is
-   * not DRIVE_STATE_DOWN or DRIVE_STATE_WAITDOWN.
+   * not DRIVE_STATE_UP, DRIVE_STATE_DOWN or DRIVE_STATE_WAITDOWN.
+   *
+   * configureUp() is idempotent.
    *
    * @param unitName The unit name of the tape drive.
    */
@@ -223,7 +225,9 @@ public:
    * Moves the state of the specified tape drive to DRIVE_STATE_DOWN.
    *
    * This method throws an exception if the current state of the tape drive is
-   * not DRIVE_STATE_UP or DRIVE_STATE_RUNNING.
+   * not DRIVE_STATE_UP, DRIVE_STATE_DOWN or DRIVE_STATE_RUNNING.
+   *
+   * configureDown() is idempotent.
    *
    * @param unitName The unit name of the tape drive.
    */
