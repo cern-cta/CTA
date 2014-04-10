@@ -123,7 +123,7 @@ namespace daemon {
         _this.m_reporter.reportEndOfSession();
       }
       else{
-        _this.m_reporter.reportEndOfSessionWithErrors("A thread failed to write a file"",SEINTERNAL);
+        _this.m_reporter.reportEndOfSessionWithErrors("A thread failed to write a file",SEINTERNAL);
       }
     }
   }
