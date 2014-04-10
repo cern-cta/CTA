@@ -468,7 +468,7 @@ class RunningTransfersSet(object):
     try:
       for tTransfer in self.tapeTransfers:
         res.append(('-', tTransfer.fileId, tTransfer.clientHost, 'stage', 'TAPE',
-                    TransferType.toStr(tTransfer.transferType), tTransfer.startTime,
+                    TapeTransferType.toStr(tTransfer.transferType), tTransfer.startTime,
                     tTransfer.startTime))
     finally:
       self.tapelock.release()
