@@ -38,9 +38,17 @@
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
-void castor::tape::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeMsgBody &dst) throw(castor::exception::Exception) {
+void castor::tape::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeConfigRequestMsgBody &dst) throw(castor::exception::Exception) {
   io::unmarshalUint32(src, srcLen, dst.uid);
   io::unmarshalUint32(src, srcLen, dst.gid);
   io::unmarshalString(src, srcLen, dst.drive);
   io::unmarshalInt16(src, srcLen, dst.status);
+}
+
+//-----------------------------------------------------------------------------
+// unmarshal
+//-----------------------------------------------------------------------------
+void castor::tape::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeStatRequestMsgBody &dst) throw(castor::exception::Exception) {
+  io::unmarshalUint32(src, srcLen, dst.uid);
+  io::unmarshalUint32(src, srcLen, dst.gid);
 }

@@ -382,6 +382,8 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::configureUp(const std::st
   }
 
   switch(itor->second.state) {
+  case DRIVE_STATE_UP:
+    break;
   case DRIVE_STATE_DOWN:
     itor->second.state = DRIVE_STATE_UP;
     break;
@@ -415,6 +417,8 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::configureDown(
   }
 
   switch(itor->second.state) {
+  case DRIVE_STATE_DOWN:
+    break;
   case DRIVE_STATE_UP:
     itor->second.state = DRIVE_STATE_DOWN;
     break;
@@ -545,12 +549,13 @@ pid_t castor::tape::tapeserver::daemon::DriveCatalogue::getSessionPid(const std:
   case DRIVE_STATE_WAITDOWN:
     return itor->second.sessionPid;
   default:
-    {
-      castor::exception::Internal ex;
-      ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
-      throw ex;
-    }
+    return 0;
+//    {
+//      castor::exception::Internal ex;
+//      ex.getMessage() << "Failed to " << task.str() <<
+//        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+//      throw ex;
+//    }
   }
 }
 

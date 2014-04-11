@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/legacymsg/TapeMsgBody.cpp
+ *         castor/tape/legacymsg/TapeStatRequestMsgBody.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,13 +22,9 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/legacymsg/TapeMsgBody.hpp"
-
+#include "castor/tape/legacymsg/TapeStatRequestMsgBody.hpp"
 #include <string.h>
 
-castor::tape::legacymsg::TapeMsgBody::TapeMsgBody() throw():
+castor::tape::legacymsg::TapeStatRequestMsgBody::TapeStatRequestMsgBody() throw():
   uid(0),
-  gid(0),
-  status(0) {
-  memset(drive, '\0', sizeof(drive));
-}
+  gid(0) {}

@@ -39,7 +39,9 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   RtcpSegmentAttributes.cpp
   RtcpTapeRqstMsgBody.cpp
   TapeBridgeMarshal.cpp
-  TapeMsgBody.cpp
+  TapeConfigRequestMsgBody.cpp
+  TapeStatRequestMsgBody.cpp
+  TapeStatReplyMsgBody.cpp
   VdqmDrvRqstMsgBody.cpp
   VdqmMarshal.cpp
   VmgrMarshal.cpp

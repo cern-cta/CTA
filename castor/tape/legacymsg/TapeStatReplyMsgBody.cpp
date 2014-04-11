@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/legacymsg/TapeMsgBody.hpp
+ *         castor/tape/legacymsg/TapeStatReplyMsgBody.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,35 +22,13 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "castor/tape/legacymsg/TapeStatReplyMsgBody.hpp"
 
-#include "castor/tape/legacymsg/RtcpErrorAppendix.hpp"
-#include "h/Castor_limits.h"
-#include "h/Cuuid.h"
+#include <string.h>
 
-#include <stdint.h>
-
-namespace castor {
-namespace tape {
-namespace legacymsg {
-
-/**
- * An admin command message.
- */
-struct TapeMsgBody {
-  uid_t uid;
-  gid_t gid;                       
-  char drive[CA_MAXUNMLEN+1];
-  int16_t status;
-
-  /**
-   * Constructor.
-   */
-  TapeMsgBody() throw();
-
-}; // struct TapeMsgBody
-
-} // namespace legacymsg
-} // namespace tape
-} // namespace castor
-
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::legacymsg::TapeStatReplyMsgBody::TapeStatReplyMsgBody() throw() {
+  memset(this, '\0', sizeof(TapeStatReplyMsgBody));
+}
