@@ -42,7 +42,7 @@ namespace castor {
       /**
        * default constructor
        */
-      InvalidArgument();
+      InvalidArgument(const std::string& what="");
 
     };
       
