@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 
-#include "castor/tape/tapeserver/daemon/TapeWriteFileTask.hpp"
+#include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"

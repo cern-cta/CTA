@@ -24,10 +24,12 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
+#include "castor/tape/tapeserver/daemon/TapeWriteTaskInterface.hpp"
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
+#include "castor/log/LogContext.hpp"
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -39,7 +41,7 @@ namespace daemon {
  * inherits several methods from the TapeWriteTask (TODO: do we really need this base class?).
  */
 
-class TapeWriteFileTask: public TapeWriteTask, public DataConsumer {
+class TapeWriteTask: public TapeWriteTaskInterface, public DataConsumer {
 public:
   /**
    * Constructor
@@ -47,68 +49,45 @@ public:
    * @param blockCount: number of memory blocks (TODO:?)
    * @param mm: reference to the memory manager in use
    */
-  TapeWriteFileTask(int fSeq, int blockCount, MemoryManager& mm): m_fSeq(fSeq),
-          m_memManager(mm), m_fifo(blockCount), m_blockCount(blockCount)
-  { mm.addClient(&m_fifo); }
+  TapeWriteTask(int fSeq, int blockCount, MemoryManager& mm);
   
-  /**
-   * TODO: see other comments
-   * @return always false
-   */
-  virtual bool endOfWork() { return false; }
-  
-  /**
-   * Returns the number of files to be written to tape
-   * @return always 1
-   */
-  virtual int files() { return 1; }
   
   /**
    * @return the number of memory blocks to be used
    */
-  virtual int blocks() { return m_blockCount; }
+  virtual int blocks();
   
   /**
    * @return the file sequence number of the file to be written on tape
    */
-  virtual int fSeq() { return m_fSeq; }
+  virtual int fSeq();
   
   /**
    * Main execution routine
    * @param td: tape drive object which will handle the file
    */
-  virtual void execute(castor::tape::drives::DriveInterface & td) {
-    int blockId  = 0;
-    while(!m_fifo.finished()) {
-      MemBlock *mb = m_fifo.popDataBlock();
-      mb->m_fSeq = m_fSeq;
-      mb->m_tapeFileBlock = blockId++;
-      //td.writeBlock(mb);
-      m_memManager.releaseBlock(mb);
-    }
-  }
+  virtual void execute(castor::tape::drives::DriveInterface & td,castor::log::LogContext& lc);
   
   /**
    * Used to reclaim used memory blocks
    * @return the recyclable memory block
    */
-  virtual MemBlock * getFreeBlock() { return m_fifo.getFreeBlock(); }
+  virtual MemBlock * getFreeBlock();
   
   /**
    * This is to enqueue one memory block full of data to be written on tape
    * @param mb: the memory block in question
    */
-  virtual void pushDataBlock(MemBlock *mb) {
-    castor::tape::threading::MutexLocker ml(&m_producerProtection);
-    m_fifo.pushDataBlock(mb);
-  }
+  virtual void pushDataBlock(MemBlock *mb) ;
   
   /**
    * Destructor
    */
-  virtual ~TapeWriteFileTask() { castor::tape::threading::MutexLocker ml(&m_producerProtection); }
+  virtual ~TapeWriteTask();
   
 private:
+  
+//  std::auto_ptr<tapegateway::FileToMigrateStruct> m_migratingFile;
   
   /**
    * The file sequence number of the file to be written on tape
