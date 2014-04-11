@@ -10553,14 +10553,21 @@ BEGIN
       -- found one, so skip this candidate
       CONTINUE;
     EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- nothing, it's a valid candidate. Let's lock it
+      -- nothing, it's a valid candidate. Let's lock it and revalidate the status
       DECLARE
         MjLocked EXCEPTION;
         PRAGMA EXCEPTION_INIT (MjLocked, -54);
       BEGIN
-        SELECT id INTO varUnused FROM MigrationJob WHERE id = Cand.mjId FOR UPDATE NOWAIT;
+        SELECT id INTO varUnused
+          FROM MigrationJob
+         WHERE id = Cand.mjId
+           AND status = tconst.MIGRATIONJOB_PENDING
+           FOR UPDATE NOWAIT;
       EXCEPTION WHEN MjLocked THEN
-        -- this migration job is already handled else where, let's go to next one
+        -- this migration job is being handled else where, let's go to next one
+        CONTINUE;
+                WHEN NO_DATA_FOUND THEN
+        -- this migration job has already been handled else where, let's go to next one
         CONTINUE;
       END;
     END;
