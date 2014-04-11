@@ -36,40 +36,28 @@ namespace daemon {
  * Abstract class describing the interface for a task that wants to write to disk.
  * This is inherited exclusively by DiskWriteFileTask.
  */
-class TapeWriteTask {
+class TapeWriteTaskInterface {
 public:
-  
-  /**
-   * TODO: see comment on the same function in DiskWriteFileTask.
-   */
-  virtual bool endOfWork() = 0;
   
   /**
    * Main routine of the task
    */
-  virtual void execute(castor::tape::drives::DriveInterface & /*td*/) { 
-    throw MemException("Tring to execute a non-execuatble TapeWriteTask"); 
-  };
-  
-  /**
-   * @return the number of files to write to disk
-   */
-  virtual int files() { return 0; }
-  
+  virtual void execute(castor::tape::drives::DriveInterface & /*td*/) =0;
+    
   /**
    * @return the number of memory blocks to be used
    */
-  virtual int blocks() { return 0; }
+  virtual int blocks() =0; 
   
   /**
    * @return the file sequence number of the file to be written on tape
    */
-  virtual int fSeq() { return -1; }
+  virtual int fSeq()=0;
   
   /**
    * Destructor
    */
-  virtual ~TapeWriteTask() {};
+  virtual ~TapeWriteTaskInterface() {};
 };
 }
 }
