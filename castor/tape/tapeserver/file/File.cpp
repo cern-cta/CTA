@@ -437,17 +437,21 @@ namespace castor {
       }
       
       void WriteFile::write(const void *data, const size_t size) throw (Exception) {
-        rfio_write(m_fd, (void *)data, size);
+        int ret = rfio_write(m_fd, (void *)data, size);
+        castor::exception::SErrnum::throwOnMinusOne(ret,"Failed rfio_write in diskFile::WriteFile::write");
       }
       
       void WriteFile::close() throw (Exception) {
         closeTried=true;
-        castor::exception::Errnum::throwOnMinusOne(rfio_close(m_fd), "Failed rfio_close() in diskFile::WriteFile::close");        
+        castor::exception::SErrnum::throwOnMinusOne(rfio_close(m_fd), "Failed rfio_close() in diskFile::WriteFile::close");        
       }
       
       WriteFile::~WriteFile() throw () {
         if(!closeTried){
+          try{
           rfio_close(m_fd);
+          }
+          catch(const castor::exception::Exception& e){}
         }
       }
     } //end of namespace diskFile
