@@ -455,6 +455,12 @@ namespace castor {
         uint32_t getPosition() throw (Exception);
         
         /**
+         * Get the block size (that was set at construction time)
+         * @return the block size in bytes.
+         */
+        size_t getBlockSize();
+        
+        /**
          * Writes a block of data on tape
          * @param data: buffer to copy the data from
          * @param size: size of the buffer

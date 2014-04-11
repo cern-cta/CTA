@@ -363,6 +363,11 @@ namespace castor {
       uint32_t WriteFile::getPosition() throw (Exception) {  
         return m_session->m_drive.getPositionInfo().currentPosition;
       }
+      
+      size_t WriteFile::getBlockSize() {
+        return m_currentBlockSize;
+      }
+
 
       void WriteFile::write(const void *data, const size_t size) throw (Exception) {
         m_session->m_drive.writeBlock(data, size);
