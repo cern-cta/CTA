@@ -63,8 +63,9 @@ public:
     return m_payload;
   }
   
-  void read(tape::diskFile::ReadFile& from){
+  size_t read(tape::diskFile::ReadFile& from){
     m_size = from.read(m_payload,m_capacity);
+    return m_size;
   }
   
   void write(tape::diskFile::WriteFile& to){
