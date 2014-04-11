@@ -27,6 +27,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 #include "castor/tape/tapeserver/daemon/Vmgr.hpp"
@@ -131,22 +132,25 @@ private:
    * migrating files from disk to tape or dumping tape files.
    *
    * @param volume The volume message from the client.
+   * @param clientMsgSeqNb In/out parameter: The message sequence number.
    */
-  void transferFiles(tapegateway::Volume &volume) throw (castor::exception::Exception);
+  void transferFiles(tapegateway::Volume &volume, uint64_t &clientMsgSeqNb) throw (castor::exception::Exception);
 
   /**
    * Recalls files from tape to disk.
    *
    * @param vid The volume identifier of the tape.
+   * @param clientMsgSeqNb In/out parameter: The message sequence number.
    */
-  void recallFiles(const std::string &vid) throw (castor::exception::Exception);
+  void recallFiles(const std::string &vid, uint64_t &clientMsgSeqNb) throw (castor::exception::Exception);
 
   /**
    * Migrates files disk to tape.
    *
    * @param vid The volume identifier of the tape.
+   * @param clientMsgSeqNb In/out parameter: The message sequence number.
    */
-  void migrateFiles(const std::string &vid) throw (castor::exception::Exception);
+  void migrateFiles(const std::string &vid, uint64_t &clientMsgSeqNb) throw (castor::exception::Exception);
 
   /**
    * Dumps tape files.
@@ -222,6 +226,102 @@ private:
    *            OBJ_EndNotificationErrorReport message.
    */
   void throwEndNotificationErrorReport(IObject *const obj) const throw(castor::exception::Exception);
+
+  /**
+   * Gets a list of files to recall.  A return value of NULL means there are
+   * no more files to recall.
+   * @param clientMsgSeqNb    The message sequence number.
+   * @param maxFiles          The maximum number of files the client can send
+   *                          in the reply.
+   * @param maxBytes          The maximum number of files the client can send
+   *                          in the reply represented indirectly by the sum
+   *                          of their file-sizes.
+   * @return                  A pointer to the file to recall message received
+   *                          from the client or NULL if there is no file to
+   *                          be recalled.  The caller is responsible for
+   *                          deallocating the message.
+   */
+  tapegateway::FilesToRecallList *getFilesToRecall(const uint64_t clientMsgSeqNb, const uint64_t maxFiles, const uint64_t maxBytes) const throw(castor::exception::Exception);
+
+  /**
+   * Sends a FilesToRecallListRequest to the client and returns the
+   * socket-descriptor of the client connection from which the reply will be
+   * read later.
+   *
+   * @param clientMsgSeqNb    The message sequence number.
+   * @param maxFiles          The maximum number of files the client can send
+   *                          in the reply.
+   * @param maxBytes          The maximum number of files the client can send
+   *                          in the reply represented indirectly by the sum
+   *                          of their file-sizes.
+   * @return                  The socket-descriptor of the tape-gateway
+   *                          connection from which the reply will be read
+   *                          later.
+   */
+  int sendFilesToRecallListRequest(
+    const uint64_t clientMsgSeqNb,
+    const uint64_t maxFiles,
+    const uint64_t maxBytes) const
+    throw(castor::exception::Exception);
+
+  /**
+   * Connects to the client and sends the specified message to the client.
+   *
+   * This methods returns the socket-descriptor of the connection with the
+   * client so the reply from the client can be read in later.
+   *
+   * @param request         Out parameter: The request to be sent to the
+   *                        client.
+   * @return                The socket-descriptor of the connection with the
+   *                        client.
+   */
+  int connectAndSendMessage(IObject &message) const throw(castor::exception::Exception);
+
+  /**
+   * Receives the reply to a FilesToRecallListRequest from the specified client
+   * socket and then closes the connection.
+   *
+   * This method throws an exception if the client replies with a
+   * FilesToRecallList containing 0 files.  If a client has no more files to
+   * recall then it must send a NoMoreFiles message.
+   *
+   * @param clientMsgSeqNb    The message sequence number.
+   * @param clientSock        The socket-descriptor of the client connection.
+   * @return                  A pointer to the file to recall message received
+   *                          from the client or NULL if there is no file to
+   *                          be recalled.  The caller is responsible for
+   *                          deallocating the message.
+   */
+  castor::tape::tapegateway::FilesToRecallList *receiveFilesToRecallListRequestReplyAndClose(const uint64_t clientMsgSeqNb, const int clientSock) const throw(castor::exception::Exception);
+
+  /**
+   * Receives a reply from the specified client socket and then closes the
+   * connection.
+   *
+   * @param clientSock The socket-descriptor of the client connection.
+   * @return           A pointer to the reply object.  It is the responsibility
+   *                   of the caller to deallocate the memory of the reply
+   *                   object.
+   */
+  IObject *receiveReplyAndClose(const int clientSock) const throw(castor::exception::Exception);
+
+  /**
+   * Notifies the client of the end of the recall/migration session.
+   * 
+   * @param clientMsgSeqNb The message sequence number.
+   */
+  void notifyEndOfSession(const uint64_t clientMsgSeqNb) const throw(castor::exception::Exception);
+
+  /**
+   * Notifies the client using the specified request message.
+   *
+   * @param clientMsgSeqNb    The message sequence number.
+   * @param requestTypeName   The name of the type of the request.  This name
+   *                          will be used in logging messages.
+   * @param request           Out parameter: The request to be sent to the
+   *                          client.
+   */
+  void notifyClient(const uint64_t clientMsgSeqNb, const char *const requestTypeName, IObject &request) const throw(castor::exception::Exception);
 
 }; // class DebugMountSessionForVdqmProtocol
 
