@@ -29,7 +29,10 @@ add_executable(tapeserver-mm
   RecallTaskInjector.cpp
   ../client/ClientProxy.cpp
   MigrationReportPacker.cpp
-  DiskWriteThreadPool.cpp)
+  DiskWriteThreadPool.cpp
+  DiskReadThreadPool.cpp
+  DiskReadTask.cpp
+  DiskWriteTask.cpp)
 
 target_link_libraries(tapeserver-mm 
 TapeDrive Exception SCSI System Utils File 
@@ -42,7 +45,10 @@ add_library(tapeserver
   RecallTaskInjector.cpp 
   MigrationReportPacker.cpp 
   RecallReportPacker.cpp
-  DiskWriteThreadPool.cpp)
+  DiskWriteThreadPool.cpp
+  DiskReadThreadPool.cpp
+  DiskReadTask.cpp
+  DiskWriteTask.cpp)
 
 
 add_library(tapeserverdTest 

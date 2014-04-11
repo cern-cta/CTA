@@ -28,6 +28,8 @@
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/daemon/DiskThreadPoolInterface.hpp"
+#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
+#include "castor/log/LogContext.hpp"
 #include <vector>
 
 namespace castor {
@@ -37,57 +39,30 @@ namespace daemon {
   
 class DiskReadThreadPool : public DiskThreadPoolInterface<DiskReadTaskInterface> {
 public:
-  DiskReadThreadPool(int nbThread,castor::log::LogContext lc) : m_lc(lc){
-    for(int i=0; i<nbThread; i++) {
-      DiskReadWorkerThread * thr = new DiskReadWorkerThread(*this);
-      m_threads.push_back(thr);
-    }
-  }
-  ~DiskReadThreadPool() { 
-    while (m_threads.size()) {
-      delete m_threads.back();
-      m_threads.pop_back();
-    }
-  }
-  void startThreads() {
-    for (std::vector<DiskReadWorkerThread *>::iterator i=m_threads.begin();
-            i != m_threads.end(); i++) {
-      (*i)->startThreads();
-    }
-  }
-  void waitThreads() {
-    for (std::vector<DiskReadWorkerThread *>::iterator i=m_threads.begin();
-            i != m_threads.end(); i++) {
-      (*i)->waitThreads();
-    }
-  }
-  virtual void push(DiskReadTaskInterface *t) { m_tasks.push(t); }
-  void finish() {
-    /* Insert one endOfSession per thread */
-    for (size_t i=0; i<m_threads.size(); i++) {
-      m_tasks.push(NULL);
-    }
-  }
+  DiskReadThreadPool(int nbThread,castor::log::LogContext lc);
+  ~DiskReadThreadPool();
+  void startThreads();
+  void waitThreads();
+  virtual void push(DiskReadTaskInterface *t);
+  void finish();
 
 private:
   class DiskReadWorkerThread: private castor::tape::threading::Thread {
   public:
-    DiskReadWorkerThread(DiskReadThreadPool & manager): _this(manager) {}
+    DiskReadWorkerThread(DiskReadThreadPool & manager):
+    threadID(m_nbActiveThread++),_this(manager),lc(_this.m_lc) {
+       log::LogContext::ScopedParam param(lc, log::Param("threadID", threadID));
+       lc.log(LOG_INFO,"DiskWrite Thread created");
+    }
     void startThreads() { start(); }
     void waitThreads() { wait(); }
   private:
+    static tape::threading::AtomicCounter<int> m_nbActiveThread;
+    const int threadID;
     DiskReadThreadPool & _this;
-    virtual void run() {
-      castor::log::LogContext lc = _this.m_lc;
-      std::auto_ptr<DiskReadTaskInterface> task;
-      while(1) {
-        task.reset( _this.m_tasks.pop());
-        if (NULL!=task.get()) 
-          task->execute(lc);
-        else
-          break;
-      }
-    }
+    castor::log::LogContext lc;
+    
+    virtual void run();
   };
   std::vector<DiskReadWorkerThread *> m_threads;
   castor::log::LogContext m_lc;
