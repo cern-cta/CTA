@@ -38,11 +38,11 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-class TapeWriteSingleThread :  public TapeSingleThreadInterface<TapeWriteTask> {
+class TapeWriteSingleThread :  public TapeSingleThreadInterface<TapeWriteTaskInterface> {
 public:
   TapeWriteSingleThread(castor::tape::drives::DriveInterface & drive, MigrationReportPacker & repPacker,
 	  int filesBeforeFlush, int blockBeforeFlush): 
-  TapeSingleThreadInterface<TapeWriteTask>(drive),
+  TapeSingleThreadInterface<TapeWriteTaskInterface>(drive),
    m_filesBeforeFlush(filesBeforeFlush),m_blocksBeforeFlush(blockBeforeFlush), m_reportPacker(repPacker) {}
 
 private:

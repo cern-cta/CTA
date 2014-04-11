@@ -32,7 +32,7 @@
 #include "castor/tape/tapeserver/daemon/TapeReadFileTask.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
-#include "castor/tape/tapeserver/daemon/TapeWriteFileTask.hpp"
+#include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
