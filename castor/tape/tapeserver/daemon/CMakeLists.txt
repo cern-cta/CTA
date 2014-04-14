@@ -31,6 +31,7 @@ add_executable(tapeserver-mm
   MigrationReportPacker.cpp
   DiskWriteThreadPool.cpp
   DiskReadThreadPool.cpp
+  TapeWriteTask.cpp
   DiskReadTask.cpp
   DiskWriteTask.cpp)
 
@@ -47,6 +48,7 @@ add_library(tapeserver
   RecallReportPacker.cpp
   DiskWriteThreadPool.cpp
   DiskReadThreadPool.cpp
+  TapeWriteTask.cpp
   DiskReadTask.cpp
   DiskWriteTask.cpp)
 
