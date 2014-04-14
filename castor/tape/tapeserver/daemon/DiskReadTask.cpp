@@ -67,8 +67,8 @@ namespace daemon {
         
         //we either read at full capacity (ie size=capacity) or if there different,
         //it should be the end => migratingFileSize should be 0. If it not, error
-        if(mb->m_payload.size() != mb->m_payload.capacity() && migratingFileSize>0){
-          mb->m_failled=true;
+        if(mb->m_payload.size() != mb->m_payload.totalCapacity() && migratingFileSize>0){
+          mb->m_failed=true;
           throw castor::tape::Exception("Error while reading a file. Did not read at full capacity but the file is not fully read");
         }
       } //end of while(migratingFileSize>0)
@@ -82,9 +82,10 @@ namespace daemon {
       
       LogContext::ScopedParam sp(lc, Param("blockID",blockId));
       lc.log(LOG_ERR,e.getMessageValue());
+      //deal here the number of mem block
       while(migratingFileSize>0) {
         MemBlock * mb = m_nextTask.getFreeBlock();
-        mb->m_failled=true;
+        mb->m_failed=true;
         m_nextTask.pushDataBlock(mb);
       } //end of while
     } //end of catch

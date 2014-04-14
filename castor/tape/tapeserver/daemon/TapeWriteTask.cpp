@@ -76,13 +76,13 @@ namespace daemon {
       MemBlock* const mb = m_fifo.popDataBlock();
       
       if(/*m_migratingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
-              || */blockId != mb->m_fileBlock  || mb->m_failled ){
+              || */blockId != mb->m_fileBlock  || mb->m_failed ){
         LogContext::ScopedParam sp[]={
           //LogContext::ScopedParam(lc, Param("expected_NSFILEID",m_recallingFile->fileid())),
           LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
           LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
           LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
-          LogContext::ScopedParam(lc, Param("failed_Status", mb->m_failled))
+          LogContext::ScopedParam(lc, Param("failed_Status", mb->m_failed))
         };
         tape::utils::suppresUnusedVariable(sp);
         lc.log(LOG_ERR,"received a bad block for writing");
