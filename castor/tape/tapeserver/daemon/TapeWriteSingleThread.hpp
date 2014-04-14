@@ -49,30 +49,32 @@ private:
   virtual void run() {
       int blocks=0;
       int files=0;
+      std::auto_ptr<TapeWriteTaskInterface> task ;
       while(1) {
-        TapeWriteTask * task = m_tasks.pop();
-        bool end = task->endOfWork();
-        if (!end) task->execute(m_drive);
-	//m_reportPacker.reportCompletedJob(MigrationJob(-1, task->fSeq(), -1));
-	files+=task->files();
-	blocks+=task->blocks();
-	if (files >= m_filesBeforeFlush ||
-		blocks >= m_blocksBeforeFlush) {
-	  printf("Flushing after %d files and %d blocks\n", files, blocks);
-	  m_reportPacker.reportFlush();
-	  files=0;
-	  blocks=0;
-	  m_drive.flush();
-	}
-        delete task;
-        if (end) {
+        task.reset(m_tasks.pop());
+        
+        if(NULL!=task.get()) {
+          task->execute(m_drive);
+          files+=1;
+          blocks+=task->blocks();
+        
+          if (files >= m_filesBeforeFlush ||
+                  blocks >= m_blocksBeforeFlush) {
+            printf("Flushing after %d files and %d blocks\n", files, blocks);
+            m_reportPacker.reportFlush();
+            files=0;
+            blocks=0;
+            m_drive.flush();
+          }
+        }
+        else{
           printf("End of TapeWriteWorkerThread::run() (flushing)\n");
 	  m_drive.flush();
 	  m_reportPacker.reportEndOfSession();
           return;
         }
       }
-    }
+  }
       
   int m_filesBeforeFlush;
   int m_blocksBeforeFlush;
