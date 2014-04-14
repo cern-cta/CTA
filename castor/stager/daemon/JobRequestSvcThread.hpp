@@ -106,19 +106,25 @@ namespace castor {
         JobRequest *jobSubRequestToDo() throw (castor::exception::Exception);
 
         /** helper function calling the PL/SQL method handleGetOrPut
-            returns whether we should reply to client
+         *  returns whether we should reply to client. Possible values are
+         *    0 : do not answer
+         *    1 : answer but this is not the last answer
+         *    2 : answer and this is the last answer
          */
-        bool handleGetOrPut(const JobRequest *sr, const struct Cns_fileid &cnsFileid,
-                            u_signed64 fileSize, u_signed64 stagerOpentimeInUsec)
+        int handleGetOrPut(const JobRequest *sr, const struct Cns_fileid &cnsFileid,
+                           u_signed64 fileSize, u_signed64 stagerOpentimeInUsec)
         throw (castor::exception::Exception);
         
-        /** helper function calling the PL/SQL method archiveSubReq */
-        void archiveSubReq(const u_signed64 srId, const int status)
+        /** helper function calling the PL/SQL method updateAndCheckSubRequest
+         * returns whether we are the last subrequest of the corresponding resquest
+         */
+        bool updateAndCheckSubRequest(const u_signed64 srId, const int status)
         throw (castor::exception::Exception);
 
         /** helper function answering the client */
         void answerClient(const JobRequest *sr, const struct Cns_fileid &cnsFileid,
-                          const int status, const int errorCode, const std::string &errorMsg)
+                          int status,  int errorCode, const std::string &errorMsg,
+                          bool isLastAnswer = false)
         throw (castor::exception::Exception);
 
       };

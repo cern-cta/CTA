@@ -157,10 +157,10 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* reque
        sr->fileClass, sr->modebits, sr->flags,
        cnsFileid, sr->fileClass, fileSize, stagerOpentimeInUsec);
     // call handleGetOrPut PL/SQL method in the stager DB
-    bool replyNeeded = handleGetOrPut(sr, cnsFileid, fileSize, stagerOpentimeInUsec);
+    int replyNeeded = handleGetOrPut(sr, cnsFileid, fileSize, stagerOpentimeInUsec);
     // reply to client when needed
     if (replyNeeded) {
-      answerClient(sr, cnsFileid, SUBREQUEST_READY, 0, "");
+      answerClient(sr, cnsFileid, SUBREQUEST_READY, 0, "", replyNeeded > 1);
     }
   } catch(castor::exception::Exception &ex) {
     try {
@@ -171,10 +171,10 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* reque
          castor::dlf::Param("ErrorMessage", ex.getMessageValue()),
          castor::dlf::Param("BackTrace", ex.backtrace())};
       castor::dlf::dlf_writep(sr->requestUuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT2, 4, params, &cnsFileid);
-      // fail subrequet in the DB
-      archiveSubReq(sr->srId, SUBREQUEST_FAILED_FINISHED);
+      // fail subrequest in the DB
+      bool isLastAnswer = updateAndCheckSubRequest(sr->srId, SUBREQUEST_FAILED_FINISHED);
       // inform the client about the error
-      answerClient(sr, cnsFileid, SUBREQUEST_FAILED, ex.code(), ex.getMessage().str());
+      answerClient(sr, cnsFileid, SUBREQUEST_FAILED, ex.code(), ex.getMessage().str(), isLastAnswer);
     } catch (castor::exception::Exception &ex2) {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
@@ -207,10 +207,10 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* reque
 //-----------------------------------------------------------------------------
 // handleGetOrPut
 //-----------------------------------------------------------------------------
-bool castor::stager::daemon::JobRequestSvcThread::handleGetOrPut(const JobRequest *sr,
-                                                                 const struct Cns_fileid &cnsFileid,
-                                                                 u_signed64 fileSize,
-                                                                 u_signed64 stagerOpentimeInUsec)
+int castor::stager::daemon::JobRequestSvcThread::handleGetOrPut(const JobRequest *sr,
+                                                                const struct Cns_fileid &cnsFileid,
+                                                                u_signed64 fileSize,
+                                                                u_signed64 stagerOpentimeInUsec)
   throw (castor::exception::Exception) {
   // get the DbCnvSvc for handling ORACLE statements
   castor::IService *svc = castor::BaseObject::services()->service("DbCnvSvc", castor::SVC_DBCNV);
@@ -233,7 +233,7 @@ bool castor::stager::daemon::JobRequestSvcThread::handleGetOrPut(const JobReques
     handleGetOrPutStatement->setDouble(8, fileSize);
     handleGetOrPutStatement->setDouble(9, stagerOpentimeInUsec);
     handleGetOrPutStatement->executeUpdate();
-    return handleGetOrPutStatement->getInt(1) != 0;
+    return handleGetOrPutStatement->getInt(1);
   } catch (oracle::occi::SQLException &e) {
     dbSvc->handleException(e);
     castor::exception::Internal ex;
@@ -243,9 +243,10 @@ bool castor::stager::daemon::JobRequestSvcThread::handleGetOrPut(const JobReques
 }
 
 //-----------------------------------------------------------------------------
-// archiveSubReq
+// updateAndCheckSubRequest
 //-----------------------------------------------------------------------------
-void castor::stager::daemon::JobRequestSvcThread::archiveSubReq(const u_signed64 srId, const int status)
+bool castor::stager::daemon::JobRequestSvcThread::updateAndCheckSubRequest
+(const u_signed64 srId, const int status)
   throw (castor::exception::Exception) {
   // get the DbCnvSvc for handling ORACLE statements
   castor::IService *svc = castor::BaseObject::services()->service("DbCnvSvc", castor::SVC_DBCNV);
@@ -253,12 +254,16 @@ void castor::stager::daemon::JobRequestSvcThread::archiveSubReq(const u_signed64
   try {
     // retrieve or create statement
     bool wasCreated = false;
-    oracle::occi::Statement* archiveSubReqStatement = dbSvc->createOrReuseOraStatement
-      ("BEGIN archiveSubReq(:1, :2); END;", &wasCreated);
+    oracle::occi::Statement* updateAndCheckSubReqStatement = dbSvc->createOrReuseOraStatement
+      ("BEGIN updateAndCheckSubRequest(:1, :2, :3); END;", &wasCreated);
+    if (wasCreated) {
+      updateAndCheckSubReqStatement->registerOutParam(3, oracle::occi::OCCIINT);
+    }
     // Execute statement
-    archiveSubReqStatement->setDouble(1, srId);
-    archiveSubReqStatement->setInt(2, status);
-    archiveSubReqStatement->executeUpdate();
+    updateAndCheckSubReqStatement->setDouble(1, srId);
+    updateAndCheckSubReqStatement->setInt(2, status);
+    updateAndCheckSubReqStatement->executeUpdate();
+    return updateAndCheckSubReqStatement->getInt(3) == 0;
   } catch (oracle::occi::SQLException &e) {
     dbSvc->handleException(e);
     castor::exception::Internal ex;
@@ -272,9 +277,10 @@ void castor::stager::daemon::JobRequestSvcThread::archiveSubReq(const u_signed64
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::JobRequestSvcThread::answerClient(const JobRequest *sr,
                                                                const struct Cns_fileid &cnsFileid,
-                                                               const int status,
-                                                               const int errorCode,
-                                                               const std::string &errorMsg)
+                                                               int status,
+                                                               int errorCode,
+                                                               const std::string &errorMsg,
+                                                               bool isLastAnswer)
   throw (castor::exception::Exception) {
   /* create client object */
   castor::rh::Client cl;
@@ -294,5 +300,5 @@ void castor::stager::daemon::JobRequestSvcThread::answerClient(const JobRequest 
   ioResponse.setErrorCode(errorCode);
   ioResponse.setErrorMessage(errorMsg);
   // effectively send the response */
-  castor::replier::RequestReplier::getInstance()->sendResponse(&cl, &ioResponse);
+  castor::replier::RequestReplier::getInstance()->sendResponse(&cl, &ioResponse, isLastAnswer);
 }

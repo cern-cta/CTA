@@ -3253,7 +3253,8 @@ BEGIN
     ELSE
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET diskCopy = varDcId, lastModificationTime = getTime(),
-             status = dconst.SUBREQUEST_READY
+             status = dconst.SUBREQUEST_READY,
+             answered = 1
        WHERE id = inSrId;
     END IF;
     -- reset the castorfile size, lastUpdateTime and nsOpenTime as the file was truncated
@@ -3263,7 +3264,24 @@ BEGIN
            nsOpenTime = inNsOpenTime
      WHERE id = inCfId;
   END;
-  RETURN (CASE WHEN inDoSchedule THEN 0 ELSE 1 END);
+  IF inDoSchedule THEN
+    RETURN 0; -- do not answer client, the diskserver will
+  ELSE
+    -- Check whether it was the last subrequest in the request
+    DECLARE
+      varRemainingSR INTEGER;
+    BEGIN
+      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Request)*/ 1 INTO result
+        FROM SubRequest
+       WHERE request = reqId
+         AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
+         AND answered = 0
+         AND ROWNUM < 2;
+      RETURN 1; -- answer but this is not the last one
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      RETURN 2; -- answer anf this is the last answer
+    END;
+  END IF;
 END;
 /
 
