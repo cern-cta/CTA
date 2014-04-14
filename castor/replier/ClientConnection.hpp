@@ -77,7 +77,7 @@ namespace castor {
      *
      * It contains a list of responses to be sent to client.
      * The order of responses is maintained to make sure
-     * that the EndResponse closes the connection.
+     * that the last response closes the connection.
      */
     class ClientConnection : public BaseObject {
  

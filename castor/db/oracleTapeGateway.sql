@@ -379,13 +379,8 @@ BEGIN
    WHERE castorFile = inCfId
      AND status = dconst.DISKCOPY_VALID;
   -- restart ongoing requests
-  -- Note that we reset the "answered" flag of the subrequest. This will potentially lead to
-  -- a wrong attempt to answer again the client (but won't harm as the client is gone in that case)
-  -- but is needed as the current implementation of the stager also uses this flag to know
-  -- whether to archive the subrequest. If we leave it to 1, the subrequests are wrongly
-  -- archived when retried, leading e.g. to failing recalls
   UPDATE SubRequest
-     SET status = dconst.SUBREQUEST_RESTART, answered = 0
+     SET status = dconst.SUBREQUEST_RESTART
    WHERE castorFile = inCfId
      AND status = dconst.SUBREQUEST_WAITTAPERECALL;
 END;

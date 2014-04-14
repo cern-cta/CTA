@@ -112,12 +112,16 @@ namespace castor {
 
         /**
          * Checks the existence of the requested file in the NameServer, and creates it if the request allows for
-         * creation. Internally sets the fileId and nsHost for the file.
-         * @return true if the file has been created
+         * creation. Returns the fileId and nsHost for the file, its size and its stagerOpenTime in microseconds
          * @throw exception in case of permission denied or non extisting file and no right to create it
          */
-        bool openNameServerFile()
-          throw(castor::exception::Exception);
+        static void openNameServerFile(const Cuuid_t &requestUuid, const uid_t euid, const gid_t egid,
+                                       const int reqType, const std::string &fileName,
+                                       const u_signed64 fileClassIfForced,
+                                       const int modebits, const int flags,
+                                       struct Cns_fileid &cnsFileid, u_signed64 &fileClass,
+                                       u_signed64 &fileSize, u_signed64 &stagerOpenTimeInUsec)
+        throw(castor::exception::Exception);
 
         /**
          * Stats the requested file in the NameServer.

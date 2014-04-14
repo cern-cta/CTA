@@ -200,36 +200,37 @@ namespace castor {
         
       /* Checks the existence of the file in the NameServer, and creates it if the request allows for
        * creation. Internally sets the fileId and nsHost for the file. */
-      bool RequestHelper::openNameServerFile() throw(castor::exception::Exception) {
+      void RequestHelper::openNameServerFile(const Cuuid_t &requestUuid, const uid_t euid, const gid_t egid,
+                                             const int reqType, const std::string &fileName,
+                                             const u_signed64 fileClassIfForced,
+                                             const int modebits, const int flags,
+                                             struct Cns_fileid &cnsFileid, u_signed64 &fileClass,
+                                             u_signed64 &fileSize, u_signed64 &stagerOpenTimeInUsec)
+        throw(castor::exception::Exception) {
         // check if the filename is valid (it has to start with /)
-        if (subrequest->fileName().empty() || subrequest->fileName().at(0) != '/') {
+        if (fileName.empty() || fileName.at(0) != '/') {
           castor::exception::Exception ex(EINVAL);
-          ex.getMessage() << "Invalid file path";
+          ex.getMessage() << "Invalid file path : '" << fileName << "'";
           throw ex;
         }
         
         // Massage the flags so that the request type always wins over them.
         // See also the stage_open API.
-        if(fileRequest->type() == OBJ_StagePutRequest || fileRequest->type() == OBJ_StagePrepareToPutRequest) {
+        int modifiedFlags = flags;
+        if (reqType == OBJ_StagePutRequest || reqType == OBJ_StagePrepareToPutRequest) {
           // a Put must (re)create and truncate, plus it's a write operation
-          subrequest->setFlags(subrequest->flags() | O_CREAT | O_TRUNC | O_WRONLY);
+          modifiedFlags |= O_CREAT | O_TRUNC | O_WRONLY;
         }
-        else if(fileRequest->type() == OBJ_StageUpdateRequest || fileRequest->type() == OBJ_StagePrepareToUpdateRequest) {
-          // an Update may recreate, plus it's a read/write operation
-          subrequest->setFlags(subrequest->flags() | O_CREAT | O_RDWR);
-        }
-        else if(fileRequest->type() == OBJ_StageGetRequest || fileRequest->type() == OBJ_StagePrepareToGetRequest) {
+        else if(reqType == OBJ_StageGetRequest || reqType == OBJ_StagePrepareToGetRequest) {
           // a Get is always a read-only operation (O_RDONLY == 0, hence the or is a no-op)
-          subrequest->setFlags((subrequest->flags() | O_RDONLY) & ~O_RDWR & ~O_WRONLY);
+          modifiedFlags = (flags | O_RDONLY) & ~O_RDWR & ~O_WRONLY;
         }
         // Open file in the NameServer. This eventually creates it when allowed according to the flags
+        struct Cns_filestatcs cnsFilestat;
         memset(&cnsFilestat, '\0', sizeof(cnsFilestat));
         serrno = 0;
-        int newFile = 0;
-        int rc = Cns_openx(fileRequest->euid(), fileRequest->egid(),
-                  subrequest->fileName().c_str(), subrequest->flags(), subrequest->modeBits(),
-                  (svcClass && svcClass->forcedFileClass() ? svcClass->forcedFileClass()->classId() : 0),
-                  &newFile, &cnsFileid, &cnsFilestat, &m_stagerOpenTimeInUsec);
+        int rc = Cns_openx(euid, egid, fileName.c_str(), modifiedFlags, modebits,
+                           fileClassIfForced, &cnsFileid, &cnsFilestat, &stagerOpenTimeInUsec);
         
         // replace for logging purposes the CNS host in case it has been overridden
         std::string cnsHost = NsOverride::getInstance()->getTargetCnsHost();
@@ -238,25 +239,29 @@ namespace castor {
           cnsFileid.server[CA_MAXHOSTNAMELEN] = 0;
         }
         
-        // Deny PrepareToPut|Update on files with preset checksums
+        // Deny PrepareToPut on files with preset checksums
         if(rc == 0 && (strncmp(cnsFilestat.csumtype, "PA", 2) == 0)
-            && (fileRequest->type() == OBJ_StagePrepareToPutRequest || fileRequest->type() == OBJ_StagePrepareToUpdateRequest)) {
+            && (reqType == OBJ_StagePrepareToPutRequest)) {
           rc = -1;
           serrno = ENOTSUP;
         }
         
+        // return fileSize and fileclass
+        fileSize = cnsFilestat.filesize;
+        fileClass = cnsFilestat.fileclass;
+
         if(rc != 0) {
           // the open failed, log it along with the fileid info in case the file existed in advance
           castor::exception::Exception ex(serrno);
           castor::dlf::Param params[] = {
-            castor::dlf::Param(subrequestUuid),
+            castor::dlf::Param(requestUuid),
             castor::dlf::Param("Type",
-                               ((unsigned)fileRequest->type() < castor::ObjectsIdsNb ?
-                                castor::ObjectsIdStrings[fileRequest->type()] : "Unknown")),
-            castor::dlf::Param("Filename", subrequest->fileName()),
+                               ((unsigned)reqType < castor::ObjectsIdsNb ?
+                                castor::ObjectsIdStrings[reqType] : "Unknown")),
+            castor::dlf::Param("Filename", fileName),
             castor::dlf::Param("uid", euid),
             castor::dlf::Param("gid", egid),
-            castor::dlf::Param("Flags", subrequest->flags()),
+            castor::dlf::Param("Flags", modifiedFlags),
             castor::dlf::Param("Function", "Cns_openx"),
             castor::dlf::Param("Error", sstrerror(ex.code()))
           };
@@ -272,13 +277,7 @@ namespace castor {
           }
           throw ex;
         }
-
-        // return true if the file has just been created
-        return newFile;
       }
-      
     } //end namespace daemon
-
   } //end namespace stager
-
 } //end namespace castor

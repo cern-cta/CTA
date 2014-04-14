@@ -129,6 +129,7 @@ namespace castor{
         /* JobSvc */
         STAGER_JOBSVC_GETSVC = 131, /* "Could not get JobSvc" */
         STAGER_JOBSVC_EXCEPT = 132, /* "Unexpected exception caught" */
+        STAGER_JOBSVC_EXCEPT2 = 149, /* "Exception caught while handling request" */
         STAGER_JOBSVC_NOSREQ = 133, /* "Could not find subrequest associated to Request" */
         STAGER_JOBSVC_BADSRT = 134, /* "Expected SubRequest in Request but found another type" */
         STAGER_JOBSVC_GETUPDS = 136, /* "Invoking getUpdateStart" */

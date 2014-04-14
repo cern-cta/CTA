@@ -98,7 +98,7 @@ static castor::SvcFactory<castor::db::ora::OraStagerSvc>
 
 /// SQL statement for subRequestToDo
 const std::string castor::db::ora::OraStagerSvc::s_subRequestToDoStatementString =
-  "BEGIN subRequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20, :21, :22, :23, :24, :25, :26, :27, :28, :29); END;";
+  "BEGIN subRequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15, :16, :17, :18, :19, :20, :21, :22, :23, :24, :25, :26, :27, :28); END;";
 
 /// SQL statement for processBulkRequest
 const std::string castor::db::ora::OraStagerSvc::s_processBulkRequestStatementString =
@@ -196,10 +196,6 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_enterPriorityStatement(0),
   m_deletePriorityStatement(0),
   m_getConfigOptionStatement(0),
-  m_handleGetStatement(0),
-  m_handlePrepareToGetStatement(0),
-  m_handlePutStatement(0),
-  m_handlePrepareToPutStatement(0),
   m_dumpDBLogsStatement(0) {
 }
 
@@ -251,10 +247,6 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_enterPriorityStatement) deleteStatement(m_enterPriorityStatement);
     if (m_deletePriorityStatement) deleteStatement(m_deletePriorityStatement);
     if (m_getConfigOptionStatement) deleteStatement(m_getConfigOptionStatement);
-    if (m_handleGetStatement) deleteStatement(m_handleGetStatement);
-    if (m_handlePrepareToGetStatement) deleteStatement(m_handlePrepareToGetStatement);
-    if (m_handlePutStatement) deleteStatement(m_handlePutStatement);
-    if (m_handlePrepareToPutStatement) deleteStatement(m_handlePrepareToPutStatement);
     if (m_dumpDBLogsStatement) deleteStatement(m_dumpDBLogsStatement);
   } catch (castor::exception::Exception& ignored) {};
 
@@ -278,10 +270,6 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_enterPriorityStatement = 0;
   m_deletePriorityStatement = 0;
   m_getConfigOptionStatement = 0;
-  m_handleGetStatement = 0;
-  m_handlePrepareToGetStatement = 0;
-  m_handlePutStatement = 0;
-  m_handlePrepareToPutStatement = 0;
   m_dumpDBLogsStatement = 0;
 }
 
@@ -316,13 +304,13 @@ castor::db::ora::OraStagerSvc::subRequestToDo
       m_subRequestToDoStatement->registerOutParam
         (10, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
-        (11, oracle::occi::OCCIINT);
+        (11, oracle::occi::OCCIDOUBLE);
       m_subRequestToDoStatement->registerOutParam
-        (12, oracle::occi::OCCIDOUBLE);
+        (12, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
-        (13, oracle::occi::OCCIINT);
+        (13, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->registerOutParam
-        (14, oracle::occi::OCCISTRING, 2048);
+        (14, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
         (15, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
@@ -330,7 +318,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
       m_subRequestToDoStatement->registerOutParam
         (17, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
-        (18, oracle::occi::OCCIINT);
+        (18, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->registerOutParam
         (19, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->registerOutParam
@@ -338,21 +326,19 @@ castor::db::ora::OraStagerSvc::subRequestToDo
       m_subRequestToDoStatement->registerOutParam
         (21, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->registerOutParam
-        (22, oracle::occi::OCCISTRING, 2048);
+        (22, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
         (23, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
-        (24, oracle::occi::OCCIINT);
+        (24, oracle::occi::OCCISTRING, 2048);
       m_subRequestToDoStatement->registerOutParam
-        (25, oracle::occi::OCCISTRING, 2048);
+        (25, oracle::occi::OCCIDOUBLE);
       m_subRequestToDoStatement->registerOutParam
-        (26, oracle::occi::OCCIDOUBLE);
+        (26, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
         (27, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->registerOutParam
         (28, oracle::occi::OCCIINT);
-      m_subRequestToDoStatement->registerOutParam
-        (29, oracle::occi::OCCIINT);
       m_subRequestToDoStatement->setAutoCommit(true);
       // also register for associated alert
       oracle::occi::Statement* registerAlertStmt = 
@@ -388,27 +374,14 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     result->setModeBits(m_subRequestToDoStatement->getInt(7));
     result->setFlags(m_subRequestToDoStatement->getInt(8));
     result->setSubreqId(m_subRequestToDoStatement->getString(9));
-    result->setAnswered(m_subRequestToDoStatement->getInt(10));
-    result->setReqType(m_subRequestToDoStatement->getInt(11));
+    result->setReqType(m_subRequestToDoStatement->getInt(10));
     castor::stager::FileRequest* req;
     switch(result->reqType()) {
-      case castor::OBJ_StageGetRequest:
-        req = new castor::stager::StageGetRequest();
-        break;
-      case castor::OBJ_StagePutRequest:
-        req = new castor::stager::StagePutRequest();
-        break;
-      case castor::OBJ_StageUpdateRequest:
-        req = new castor::stager::StageUpdateRequest();
-        break;
       case castor::OBJ_StagePrepareToGetRequest:
         req = new castor::stager::StagePrepareToGetRequest();
         break;
       case castor::OBJ_StagePrepareToPutRequest:
         req = new castor::stager::StagePrepareToPutRequest();
-        break;
-      case castor::OBJ_StagePrepareToUpdateRequest:
-        req = new castor::stager::StagePrepareToUpdateRequest();
         break;
       case castor::OBJ_StagePutDoneRequest:
         req = new castor::stager::StagePutDoneRequest();
@@ -419,7 +392,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
       case castor::OBJ_SetFileGCWeight:
         {
           castor::stager::SetFileGCWeight* greq = new castor::stager::SetFileGCWeight();
-          greq->setWeight((u_signed64)m_subRequestToDoStatement->getDouble(26));
+          greq->setWeight((u_signed64)m_subRequestToDoStatement->getDouble(25));
           req = greq;
           break;
         }
@@ -430,24 +403,24 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     }
     result->setRequest(req);
     req->addSubRequests(result);
-    req->setId((u_signed64)m_subRequestToDoStatement->getDouble(12));
-    req->setFlags(m_subRequestToDoStatement->getInt(13));
-    req->setUserName(m_subRequestToDoStatement->getString(14));
-    req->setEuid(m_subRequestToDoStatement->getInt(15));
-    req->setEgid(m_subRequestToDoStatement->getInt(16));
-    req->setMask(m_subRequestToDoStatement->getInt(17));
-    req->setPid(m_subRequestToDoStatement->getInt(18));
-    req->setMachine(m_subRequestToDoStatement->getString(19));
-    req->setSvcClassName(m_subRequestToDoStatement->getString(20));
-    req->setUserTag(m_subRequestToDoStatement->getString(21));
-    req->setReqId(m_subRequestToDoStatement->getString(22));
-    req->setCreationTime(m_subRequestToDoStatement->getInt(23));
-    req->setLastModificationTime(m_subRequestToDoStatement->getInt(24));
+    req->setId((u_signed64)m_subRequestToDoStatement->getDouble(11));
+    req->setFlags(m_subRequestToDoStatement->getInt(12));
+    req->setUserName(m_subRequestToDoStatement->getString(13));
+    req->setEuid(m_subRequestToDoStatement->getInt(14));
+    req->setEgid(m_subRequestToDoStatement->getInt(15));
+    req->setMask(m_subRequestToDoStatement->getInt(16));
+    req->setPid(m_subRequestToDoStatement->getInt(17));
+    req->setMachine(m_subRequestToDoStatement->getString(18));
+    req->setSvcClassName(m_subRequestToDoStatement->getString(19));
+    req->setUserTag(m_subRequestToDoStatement->getString(20));
+    req->setReqId(m_subRequestToDoStatement->getString(21));
+    req->setCreationTime(m_subRequestToDoStatement->getInt(22));
+    req->setLastModificationTime(m_subRequestToDoStatement->getInt(23));
     castor::rh::Client* cl = new castor::rh::Client();
     req->setClient(cl);
-    cl->setIpAddress(m_subRequestToDoStatement->getInt(27));
-    cl->setPort(m_subRequestToDoStatement->getInt(28));
-    cl->setVersion(m_subRequestToDoStatement->getInt(29));
+    cl->setIpAddress(m_subRequestToDoStatement->getInt(26));
+    cl->setPort(m_subRequestToDoStatement->getInt(27));
+    cl->setVersion(m_subRequestToDoStatement->getInt(28));
     // return
     return result;
   } catch (oracle::occi::SQLException e) {
@@ -1141,163 +1114,6 @@ std::string castor::db::ora::OraStagerSvc::getConfigOption(std::string confClass
     throw ex;
   }
 }
-
-//------------------------------------------------------------------------------
-// handleGet
-//------------------------------------------------------------------------------
-void castor::db::ora::OraStagerSvc::handleGet(u_signed64 cfId,
-                                              u_signed64 srId,
-                                              struct Cns_fileid &fileId,
-                                              u_signed64 fileSize,
-                                              u_signed64 nsOpenTimeInUsec)
-  throw (castor::exception::Exception) {
-  try {
-    // get statement if needed
-    if (0 == m_handleGetStatement) {
-      m_handleGetStatement = createStatement
-        ("BEGIN handleGet(:1, :2, :3, :4, :5, :6); END;");
-      m_handleGetStatement->setAutoCommit(true);
-    }
-    // Execute the statement
-    m_handleGetStatement->setDouble(1, cfId);
-    m_handleGetStatement->setDouble(2, srId);
-    m_handleGetStatement->setDouble(3, fileId.fileid);
-    m_handleGetStatement->setString(4, fileId.server);
-    m_handleGetStatement->setDouble(5, fileSize);
-    m_handleGetStatement->setDouble(6, nsOpenTimeInUsec);
-    m_handleGetStatement->executeUpdate();
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::dlf::Param params[]={
-      castor::dlf::Param("ErrorCode", e.getErrorCode()),
-      castor::dlf::Param("ErrorMessage", e.getMessage())
-    };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-                            castor::stager::daemon::STAGER_GET,
-                            2, params, &fileId);
-    castor::exception::Internal ex;
-    ex.getMessage() << "Error caught in handleGet : " << e.what();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// handlePrepareToGet
-//------------------------------------------------------------------------------
-castor::stager::SubRequestStatusCodes
-castor::db::ora::OraStagerSvc::handlePrepareToGet(u_signed64 cfId,
-                                                  u_signed64 srId,
-                                                  struct Cns_fileid &fileId,
-                                                  u_signed64 fileSize,
-                                                  u_signed64 nsOpenTimeInUsec)
-  throw (castor::exception::Exception) {
-  try {
-    // get statement if needed
-    if (0 == m_handlePrepareToGetStatement) {
-      m_handlePrepareToGetStatement = createStatement
-        ("BEGIN :1 := handlePrepareToGet(:2, :3, :4, :5, :6, :7); END;");
-      m_handlePrepareToGetStatement->registerOutParam(1, oracle::occi::OCCIINT);
-      m_handlePrepareToGetStatement->setAutoCommit(true);
-    }
-    // Execute the statement
-    m_handlePrepareToGetStatement->setDouble(2, cfId);
-    m_handlePrepareToGetStatement->setDouble(3, srId);
-    m_handlePrepareToGetStatement->setDouble(4, fileId.fileid);
-    m_handlePrepareToGetStatement->setString(5, fileId.server);
-    m_handlePrepareToGetStatement->setDouble(6, fileSize);
-    m_handlePrepareToGetStatement->setDouble(7, nsOpenTimeInUsec);
-    m_handlePrepareToGetStatement->executeUpdate();
-    return (castor::stager::SubRequestStatusCodes)m_handlePrepareToGetStatement->getInt(1);
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::dlf::Param params[]={
-      castor::dlf::Param("ErrorCode", e.getErrorCode()),
-      castor::dlf::Param("ErrorMessage", e.getMessage())
-    };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-                            castor::stager::daemon::STAGER_PREPARETOGET,
-                            2, params, &fileId);
-    castor::exception::Internal ex;
-    ex.getMessage() << "Error caught in handlePrepareToGet : " << e.what();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// handlePut
-//------------------------------------------------------------------------------
-void castor::db::ora::OraStagerSvc::handlePut(u_signed64 cfId,
-                                              u_signed64 srId,
-                                              struct Cns_fileid &fileId,
-                                              u_signed64 nsOpenTimeInUsec)
-  throw (castor::exception::Exception) {
-  try {
-    // get statement if needed
-    if (0 == m_handlePutStatement) {
-      m_handlePutStatement = createStatement("BEGIN handlePut(:1, :2, :3, :4, :5); END;");
-      m_handlePutStatement->setAutoCommit(true);
-    }
-    // Execute the statement
-    m_handlePutStatement->setDouble(1, cfId);
-    m_handlePutStatement->setDouble(2, srId);
-    m_handlePutStatement->setDouble(3, fileId.fileid);
-    m_handlePutStatement->setString(4, fileId.server);
-    m_handlePutStatement->setDouble(5, nsOpenTimeInUsec);
-    m_handlePutStatement->executeUpdate();
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::dlf::Param params[]={
-      castor::dlf::Param("ErrorCode", e.getErrorCode()),
-      castor::dlf::Param("ErrorMessage", e.what())
-    };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-                            castor::stager::daemon::STAGER_PUT,
-                            2, params, &fileId);
-    castor::exception::Internal ex;
-    ex.getMessage() << "Error caught in handlePut : " << e.what();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// handlePrepareToPut
-//------------------------------------------------------------------------------
-bool castor::db::ora::OraStagerSvc::handlePrepareToPut(u_signed64 cfId,
-                                                       u_signed64 srId,
-                                                       struct Cns_fileid &fileId,
-                                                       u_signed64 nsOpenTimeInUsec)
-  throw (castor::exception::Exception) {
-  // get statement if needed
-  if (0 == m_handlePrepareToPutStatement) {
-    m_handlePrepareToPutStatement = createStatement
-      ("BEGIN :1 := handlePrepareToPut(:2, :3, :4, :5, :6); END;");
-    m_handlePrepareToPutStatement->registerOutParam(1, oracle::occi::OCCIINT);
-    m_handlePrepareToPutStatement->setAutoCommit(true);
-  }
-  // Execute the statement
-  m_handlePrepareToPutStatement->setDouble(2, cfId);
-  m_handlePrepareToPutStatement->setDouble(3, srId);
-  m_handlePrepareToPutStatement->setDouble(4, fileId.fileid);
-  m_handlePrepareToPutStatement->setString(5, fileId.server);
-  m_handlePrepareToPutStatement->setDouble(6, nsOpenTimeInUsec);
-  m_handlePrepareToPutStatement->executeUpdate();
-  return (0 != m_handlePrepareToPutStatement->getInt(1));
-  try {
-  } catch (oracle::occi::SQLException e) {
-    handleException(e);
-    castor::dlf::Param params[]={
-      castor::dlf::Param("ErrorCode", e.getErrorCode()),
-      castor::dlf::Param("ErrorMessage", e.getMessage())
-    };
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-                            castor::stager::daemon::STAGER_PREPARETOPUT,
-                            2, params, &fileId);
-    castor::exception::Internal ex;
-    ex.getMessage() << "Error caught in handlePrepareToPut : " << e.what();
-    throw ex;
-  }
-}
-
 
 //------------------------------------------------------------------------------
 // dumpDBLogs

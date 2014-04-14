@@ -101,9 +101,9 @@ END;
 /
 
 /* inserts file Requests in the stager DB.
- * This handles StageGetRequest, StagePrepareToGetRequest, StagePutRequest,
- * StagePrepareToPutRequest, StageUpdateRequest, StagePrepareToUpdateRequest,
- * StagePutDoneRequest, StagePrepareToUpdateRequest, and StageRmRequest requests.
+ * This handles StageGetRequest, StagePrepareToGetRequest,
+ * StagePutRequest, StagePrepareToPutRequest,
+ * StagePutDoneRequest, and StageRmRequest requests.
  */ 	 
 CREATE OR REPLACE PROCEDURE insertFileRequest
   (userTag IN VARCHAR2,
@@ -158,12 +158,6 @@ BEGIN
     WHEN inReqType = 37 THEN -- StagePrepareToPutRequest
       INSERT INTO StagePrepareToPutRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
       VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
-    WHEN inReqType = 44 THEN -- StageUpdateRequest
-      INSERT INTO StageUpdateRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
-      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
-    WHEN inReqType = 38 THEN -- StagePrepareToUpdateRequest
-      INSERT INTO StagePrepareToUpdateRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
-      VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
     WHEN inReqType = 42 THEN -- StageRmRequest
       INSERT INTO StageRmRequest (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, id, svcClass, client)
       VALUES (flags,userName,euid,egid,mask,pid,machine,svcClassName,userTag,reqUUID,creationTime,creationTime,reqId,svcClassId,clientId);
@@ -190,18 +184,16 @@ BEGIN
     -- get unique ids for the subrequest
     SELECT ids_seq.nextval INTO subreqId FROM DUAL;
     -- insert the subrequest
-    INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, status, request, getNextStatus, reqType)
-    VALUES (0, srFileNames(i), srProtocols(i), srXsizes(i), 0, NULL, srFlags(i), srModeBits(i), creationTime, creationTime, 0, 0, '', NULL, svcHandler, subreqId, NULL, NULL, dconst.SUBREQUEST_START, reqId, 0, inReqType);
+    INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, status, request, getNextStatus, reqType)
+    VALUES (0, srFileNames(i), srProtocols(i), srXsizes(i), 0, NULL, srFlags(i), srModeBits(i), creationTime, creationTime, 0, '', NULL, svcHandler, subreqId, NULL, NULL, dconst.SUBREQUEST_START, reqId, 0, inReqType);
   END LOOP;
   -- send one single alert to accelerate the processing of the request
   CASE
   WHEN inReqType = 35 OR   -- StageGetRequest
-       inReqType = 40 OR   -- StagePutRequest
-       inReqType = 44 THEN -- StageUpdateRequest
+       inReqType = 40 THEN -- StagePutRequest
     alertSignalNoLock('wakeUpJobReqSvc');
   WHEN inReqType = 36 OR   -- StagePrepareToGetRequest
-       inReqType = 37 OR   -- StagePrepareToPutRequest
-       inReqType = 38 THEN -- StagePrepareToUpdateRequest
+       inReqType = 37 THEN -- StagePrepareToPutRequest
     alertSignalNoLock('wakeUpPrepReqSvc');
   WHEN inReqType = 42 OR   -- StageRmRequest
        inReqType = 39 OR   -- StagePutDoneRequest

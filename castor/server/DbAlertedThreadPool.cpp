@@ -178,9 +178,10 @@ void* castor::server::DbAlertedThreadPool::_runner(void* param)
           // "Exception caught in the user thread"
           castor::dlf::Param params[] =
             {castor::dlf::Param("Error", sstrerror(e.code())),
-             castor::dlf::Param("Message", e.getMessage().str())};
+             castor::dlf::Param("Message", e.getMessageValue()),
+             castor::dlf::Param("BackTrace", e.backtrace())};
           castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-                                  DLF_BASE_FRAMEWORK + 4, 2, params);
+                                  DLF_BASE_FRAMEWORK + 4, 3, params);
         }
       }
 
@@ -208,9 +209,10 @@ void* castor::server::DbAlertedThreadPool::_runner(void* param)
     // "Thread run error"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Error", sstrerror(any.code())),
-       castor::dlf::Param("Message", any.getMessage().str())};
+       castor::dlf::Param("Message", any.getMessageValue()),
+       castor::dlf::Param("BackTrace", any.backtrace())};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
-                            DLF_BASE_FRAMEWORK + 5, 2, params);
+                            DLF_BASE_FRAMEWORK + 5, 3, params);
   }
 
   try {

@@ -68,9 +68,10 @@ castor::IObject* castor::stager::daemon::BaseRequestSvcThread::select() throw() 
     // "Unexpected exception caught"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Function", "BaseRequestSvcThread::select"),
-       castor::dlf::Param("Message", e.getMessage().str()),
+       castor::dlf::Param("Message", e.getMessageValue()),
+       castor::dlf::Param("BackTrace", e.backtrace()),
        castor::dlf::Param("Code", e.code())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, castor::stager::daemon::STAGER_SERVICES_EXCEPTION, 3, params);
+    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, castor::stager::daemon::STAGER_SERVICES_EXCEPTION, 4, params);
     return 0;
   }
 }

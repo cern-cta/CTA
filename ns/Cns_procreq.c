@@ -5095,9 +5095,6 @@ int Cns_srv_openx(char *req_data,
   if (fmd_entry.fileid) {  /* File exists */
     reqinfo->fileid = fmd_entry.fileid;
 
-    /* Marshall the new file flag */
-    marshall_LONG (sbp, 0);
-
     /* Marshall the fileid */
     marshall_HYPER (sbp, fmd_entry.fileid);
 
@@ -5215,9 +5212,6 @@ int Cns_srv_openx(char *req_data,
     /* Amend logging parameters */
     sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf),
              " NSOpenTime=%.6f NewFile=\"True\"", ((double)fmd_entry.stagertime_usec)/1E6);
-
-    /* Marshall the newfile flag */
-    marshall_LONG (sbp, 1);
 
     /* Marshall the fileid */
     marshall_HYPER (sbp, fmd_entry.fileid);

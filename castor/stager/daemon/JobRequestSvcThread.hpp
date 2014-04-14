@@ -17,19 +17,21 @@
 * along with this program; if not, write to the Free Software
 * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
 *
-*
-* Service thread for handling Job oriented requests
+* Service thread for handling Job oriented requests, i.e. Gets and Puts
 *
 * @author castor dev team
 *****************************************************************************/
 
 #pragma once
 
-#include "castor/stager/daemon/BaseRequestSvcThread.hpp"
-#include "castor/IObject.hpp"
-#include "castor/Constants.hpp"
+#include "castor/server/SelectProcessThread.hpp"
 #include "castor/exception/Exception.hpp"
-
+#include "castor/IObject.hpp"
+#include "castor/db/ora/OraCnvSvc.hpp"
+#include <string>
+#include "unistd.h"
+#include "Cuuid.h"
+#include "occi.h"
 
 namespace castor {
 
@@ -37,13 +39,101 @@ namespace castor {
 
     namespace daemon {
       
-      class JobRequestSvcThread : public BaseRequestSvcThread {
+      /**
+       * a small struct containing the details of a given request
+       * and passed to the threads processing it
+       */
+      struct JobRequest : public castor::IObject {
+        // to please virtual inheritance XXX We need something better !
+        virtual ~JobRequest() throw() {};
+        virtual void setId(u_signed64 id) {};
+        virtual u_signed64 id() const { return 0; }
+        virtual int type() const { return  0; }
+        virtual IObject* clone() { return 0; }
+        virtual void print(std::ostream& stream,
+                           std::string indent,
+                           castor::ObjectSet& alreadyPrinted) const {};
+        virtual void print() const {};
+        /// identifier of the subrequest
+        u_signed64 srId;
+        /// uuid of the request
+        Cuuid_t requestUuid;
+        /// type of the request
+        int reqType;
+        /// client identification
+        uid_t euid;
+        gid_t egid;
+        /// name of the concerned file
+        std::string fileName;
+        /// name of the concerned svcClass
+        std::string svcClassName;
+        /// fileclass to be used
+        u_signed64 fileClass;
+        /// flags and modebits for file opening/creation
+        int flags;
+        int modebits;
+        /// details on how to answer the client
+        unsigned long clientIpAddress;
+        unsigned short clientPort;
+        int clientVersion;
+      };
+
+      class JobRequestSvcThread : public castor::server::SelectProcessThread {
         
       public: 
+
+        /** constructor */
         JobRequestSvcThread() throw (castor::exception::Exception);
-        ~JobRequestSvcThread() throw() {};
+
+        /** virtual destructor */
+        virtual ~JobRequestSvcThread() throw();
         
+        /**
+         * Select part of the service.
+         * @return next operation to handle, 0 if none.
+         */
+        virtual castor::IObject* select() throw();
+
+        /**
+         * Process part of the service
+         * @param param next operation to handle.
+         */
         virtual void process(castor::IObject* subRequestToProcess) throw();
+
+      private:
+
+        /** helper function calling the PL/SQL method jobSubRequestToDo */
+        JobRequest *jobSubRequestToDo() throw (castor::exception::Exception);
+
+        /** helper function calling the PL/SQL method handleGetOrPut
+            returns whether we should reply to client
+         */
+        bool handleGetOrPut(const JobRequest *sr, const struct Cns_fileid &cnsFileid,
+                            u_signed64 fileSize, u_signed64 stagerOpentimeInUsec)
+        throw (castor::exception::Exception);
+        
+        /** helper function calling the PL/SQL method archiveSubReq */
+        void archiveSubReq(const u_signed64 srId, const int status)
+        throw (castor::exception::Exception);
+
+        /** helper function answering the client */
+        void answerClient(const JobRequest *sr, const struct Cns_fileid &cnsFileid,
+                          const int status, const int errorCode, const std::string &errorMsg)
+        throw (castor::exception::Exception);
+
+      private:
+
+        // Database conversion service. Handles DB interactions
+        castor::db::ora::OraCnvSvc* m_dbSvc;
+
+        /// SQL statement object for function jobSubRequestToDo
+        oracle::occi::Statement *m_jobSubRequestToDoStatement;
+
+        /// SQL statement object for handleGetOrPut PL/SQL calls
+        oracle::occi::Statement *m_handleGetOrPutStatement;
+
+        /// SQL statement object for function archiveSubReq
+        oracle::occi::Statement *m_archiveSubReqStatement;
 
       };
       

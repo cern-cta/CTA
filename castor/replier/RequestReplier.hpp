@@ -97,14 +97,11 @@ namespace castor {
 
 
       /**
-       * Sends an EndResponse over a connection, to indicate that
-       * there are no more messages to send.
+       * Closes a connection to client if there are no more messages to send.
        * @param client The client object indicating the client address
-       * @param reqId the uuid of the corresponding request
        * @exception Exception in case of error
        */
-      void sendEndResponse(castor::IClient *client,
-                           std::string reqId)
+      void closeClientConnection(castor::IClient *client)
         throw(castor::exception::Exception);
       
 

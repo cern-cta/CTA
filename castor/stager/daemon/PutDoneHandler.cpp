@@ -35,7 +35,7 @@ namespace castor{
   namespace stager{
     namespace daemon{
       
-      bool PutDoneHandler::handle() throw(castor::exception::Exception)
+      void PutDoneHandler::handle() throw(castor::exception::Exception)
       {
         RequestHandler::handle();
 
@@ -96,7 +96,6 @@ namespace castor{
           castor::dlf::dlf_writep(reqHelper->requestUuid, DLF_LVL_ERROR, STAGER_PUTDONE, 2, params, &(reqHelper->cnsFileid));
           throw e;
         }
-        return true;
       }
       
     }//end namespace daemon
