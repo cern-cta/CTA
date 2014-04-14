@@ -28,6 +28,7 @@
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
+#include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/log/LogContext.hpp"
 
 namespace castor {
@@ -49,7 +50,7 @@ public:
    * @param blockCount: number of memory blocks (TODO:?)
    * @param mm: reference to the memory manager in use
    */
-  TapeWriteTask(int fSeq, int blockCount, MemoryManager& mm);
+  TapeWriteTask(int fSeq, int blockCount, tape::tapegateway::FileToMigrateStruct* file,MemoryManager& mm);
   
   
   /**
@@ -66,7 +67,7 @@ public:
    * Main execution routine
    * @param td: tape drive object which will handle the file
    */
-  virtual void execute(castor::tape::drives::DriveInterface & td,castor::log::LogContext& lc);
+  virtual void execute(castor::tape::tapeFile::WriteSession & session,castor::log::LogContext& lc);
   
   /**
    * Used to reclaim used memory blocks
@@ -86,13 +87,13 @@ public:
   virtual ~TapeWriteTask();
   
 private:
-  
-//  std::auto_ptr<tapegateway::FileToMigrateStruct> m_migratingFile;
-  
+    
   /**
    * The file sequence number of the file to be written on tape
    */
   int m_fSeq;
+  
+  std::auto_ptr<tapegateway::FileToMigrateStruct> m_fileToMigrate;
   
   /**
    * reference to the memory manager in use   

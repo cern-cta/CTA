@@ -28,6 +28,7 @@
 #include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
+#include "castor/tape/tapeserver/file/File.hpp" 
 
   /*Use RAII to make sure the memory block is released  
    *(ie pushed back to the memory manager) in any case (exception or not)
@@ -51,8 +52,8 @@ namespace tapeserver {
 namespace daemon {
 
 
-  TapeWriteTask::TapeWriteTask(int fSeq, int blockCount, MemoryManager& mm): 
-  m_fSeq(fSeq),m_memManager(mm), m_fifo(blockCount), m_blockCount(blockCount)
+  TapeWriteTask::TapeWriteTask(int fSeq, int blockCount, tapegateway::FileToMigrateStruct* file,MemoryManager& mm): 
+  m_fSeq(fSeq),m_fileToMigrate(file),m_memManager(mm), m_fifo(blockCount),m_blockCount(blockCount)
   {
     mm.addClient(&m_fifo); 
   }
@@ -67,34 +68,53 @@ namespace daemon {
   }
   
 
-   void TapeWriteTask::execute(castor::tape::drives::DriveInterface & td,castor::log::LogContext& lc) {
+   void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,castor::log::LogContext& lc) {
     using castor::log::LogContext;
     using castor::log::Param;
+
+    std::auto_ptr<castor::tape::tapeFile::WriteFile> output;
+    try{
+     output.reset(new tape::tapeFile::WriteFile(&session, *m_fileToMigrate));
+     lc.log(LOG_DEBUG, "Successfully opened the tape file for writing");
+    }catch(const castor::exception::Exception & ex){
+      lc.log(LOG_ERR, "Failed to open tape file for writing");
+      throw;
+    }
     
     int blockId  = 0;
-    while(!m_fifo.finished()) {
-      MemBlock* const mb = m_fifo.popDataBlock();
-      
-      if(/*m_migratingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
-              || */blockId != mb->m_fileBlock  || mb->m_failed ){
-        LogContext::ScopedParam sp[]={
-          //LogContext::ScopedParam(lc, Param("expected_NSFILEID",m_recallingFile->fileid())),
-          LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
-          LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
-          LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
-          LogContext::ScopedParam(lc, Param("failed_Status", mb->m_failed))
-        };
-        tape::utils::suppresUnusedVariable(sp);
-        lc.log(LOG_ERR,"received a bad block for writing");
-        throw castor::tape::Exception("received a bad block for writing");
+    try {
+      while(!m_fifo.finished()) {
+        MemBlock* const mb = m_fifo.popDataBlock();
+        AutoReleaseBlock releaser(mb,m_memManager);
+        
+        if(/*m_migratingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
+            *             || */blockId != mb->m_fileBlock  || mb->m_failed ){
+          LogContext::ScopedParam sp[]={
+            LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
+            LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
+            LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
+            LogContext::ScopedParam(lc, Param("failed_Status", mb->m_failed))
+          };
+          tape::utils::suppresUnusedVariable(sp);
+          lc.log(LOG_ERR,"received a bad block for writing");
+          throw castor::tape::Exception("received a bad block for writing");
+        }
+        mb->m_payload.write(output);
+        ++blockId;
       }
-      //mb->m_payload.write(td);
-      m_memManager.releaseBlock(mb);
-      ++blockId;
     }
-  }
-  
-
+    catch(const castor::tape::Exception& e){
+      lc.log(LOG_ERR,"Circulating blocks into TapeWriteTask::execute");
+      while(!m_fifo.finished()) {
+        MemBlock* const mb = m_fifo.popDataBlock();
+        if(!mb->m_failed){
+          lc.log(LOG_ERR,"Expecting a failed Memblock, did not get one");
+        }
+        m_memManager.releaseBlock(mb);
+      }
+    }
+   }
+    
   MemBlock * TapeWriteTask::getFreeBlock() { 
     return m_fifo.getFreeBlock(); 
   }

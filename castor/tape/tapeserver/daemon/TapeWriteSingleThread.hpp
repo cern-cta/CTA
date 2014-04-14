@@ -41,34 +41,49 @@ namespace daemon {
 class TapeWriteSingleThread :  public TapeSingleThreadInterface<TapeWriteTaskInterface> {
 public:
   TapeWriteSingleThread(castor::tape::drives::DriveInterface & drive, MigrationReportPacker & repPacker,
-	  int filesBeforeFlush, int blockBeforeFlush): 
+	  int filesBeforeFlush, int blockBeforeFlush,castor::log::LogContext lc): 
   TapeSingleThreadInterface<TapeWriteTaskInterface>(drive),
-   m_filesBeforeFlush(filesBeforeFlush),m_blocksBeforeFlush(blockBeforeFlush), m_reportPacker(repPacker) {}
+   m_filesBeforeFlush(filesBeforeFlush),m_blocksBeforeFlush(blockBeforeFlush), 
+      m_drive(drive),m_reportPacker(repPacker),m_lc(lc)
+  {}
 
 private:
   virtual void run() {
+    // First we have to initialise the tape read session
+    std::auto_ptr<castor::tape::tapeFile::ReadSession> rs;
+    try {
+      rs.reset(new castor::tape::tapeFile::ReadSession(m_drive, m_vid));
+      m_lc.log(LOG_INFO, "Tape Write session session successfully started");
+    }
+    catch (castor::exception::Exception & ex) {
+      m_lc.log(LOG_ERR, "Failed to start tape read session");
+      // TODO: log and unroll the session
+      // TODO: add an unroll mode to the tape read task. (Similar to exec, but pushing blocks marked in error)
+    }
+
       int blocks=0;
       int files=0;
-      std::auto_ptr<TapeWriteTaskInterface> task ;
+      std::auto_ptr<TapeWriteTaskInterface> task ;      
       while(1) {
         task.reset(m_tasks.pop());
         
         if(NULL!=task.get()) {
-          task->execute(m_drive);
-          files+=1;
+          task->execute(*rs);
+          files++;
           blocks+=task->blocks();
         
-          if (files >= m_filesBeforeFlush ||
-                  blocks >= m_blocksBeforeFlush) {
-            printf("Flushing after %d files and %d blocks\n", files, blocks);
+          if (files >= m_filesBeforeFlush || blocks >= m_blocksBeforeFlush) {
+            m_drive.flush();
+            log::LogContext::ScopedParam sp0(m_lc, log::Param("files", files));
+            log::LogContext::ScopedParam sp1(m_lc, log::Param("blocks", blocks));
+            m_lc.log(LOG_INFO,"Flushing after files and blocks");
             m_reportPacker.reportFlush();
             files=0;
             blocks=0;
-            m_drive.flush();
           }
         }
         else{
-          printf("End of TapeWriteWorkerThread::run() (flushing)\n");
+          m_lc.log(LOG_INFO,"End of TapeWriteWorkerThread::run() (flushing");
 	  m_drive.flush();
 	  m_reportPacker.reportEndOfSession();
           return;
@@ -79,6 +94,8 @@ private:
   int m_filesBeforeFlush;
   int m_blocksBeforeFlush;
   
+  castor::tape::drives::DriveInterface& m_drive;
   MigrationReportPacker & m_reportPacker;
+  castor::log::LogContext m_lc;
 };
 }}}}
