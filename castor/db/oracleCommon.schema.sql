@@ -342,18 +342,32 @@ ALTER TABLE CastorFile
   CHECK (tapeStatus IN (0, 1, 2));
 CREATE INDEX I_CastorFile_tapeStatus ON CastorFile(tapeStatus);
 
-/* SQL statement for table SubRequest */
-CREATE TABLE SubRequest
-  (retryCounter NUMBER, fileName VARCHAR2(2048), protocol VARCHAR2(2048),
-   xsize INTEGER, priority NUMBER, subreqId VARCHAR2(2048), flags NUMBER,
-   modeBits NUMBER, creationTime INTEGER CONSTRAINT NN_SubRequest_CreationTime 
-   NOT NULL, lastModificationTime INTEGER, errorCode NUMBER, 
-   errorMessage VARCHAR2(2048), id NUMBER CONSTRAINT NN_SubRequest_Id NOT NULL,
-   diskcopy INTEGER, castorFile INTEGER, status INTEGER,
-   request INTEGER, getNextStatus INTEGER, requestedFileSystems VARCHAR2(2048),
-   svcHandler VARCHAR2(2048) CONSTRAINT NN_SubRequest_SvcHandler NOT NULL,
-   reqType INTEGER CONSTRAINT NN_SubRequest_reqType NOT NULL
-  )
+/* SQL statement for table SubRequest
+ * DiskServer : the disk server serving this SubRequest. Only used in case
+ *              a DataPool is used and the DiskServer has no FileSystem
+ */
+CREATE TABLE SubRequest (retryCounter NUMBER,
+                         fileName VARCHAR2(2048),
+                         protocol VARCHAR2(2048),
+                         xsize INTEGER,
+                         priority NUMBER,
+                         subreqId VARCHAR2(2048),
+                         flags NUMBER,
+                         modeBits NUMBER,
+                         creationTime INTEGER CONSTRAINT NN_SubRequest_CreationTime NOT NULL,
+                         lastModificationTime INTEGER,
+                         errorCode NUMBER, 
+                         errorMessage VARCHAR2(2048),
+                         id NUMBER CONSTRAINT NN_SubRequest_Id NOT NULL,
+                         diskcopy INTEGER,
+                         diskServer INTEGER,
+                         castorFile INTEGER,
+                         status INTEGER,
+                         request INTEGER,
+                         getNextStatus INTEGER,
+                         requestedFileSystems VARCHAR2(2048),
+                         svcHandler VARCHAR2(2048) CONSTRAINT NN_SubRequest_SvcHandler NOT NULL,
+                         reqType INTEGER CONSTRAINT NN_SubRequest_reqType NOT NULL)
   PCTFREE 50 PCTUSED 40 INITRANS 50
   ENABLE ROW MOVEMENT
   PARTITION BY LIST (STATUS)
@@ -394,6 +408,7 @@ CREATE INDEX I_SubRequest_Req_Stat_no89 ON SubRequest (request, decode(status,8,
 
 CREATE INDEX I_SubRequest_Castorfile ON SubRequest (castorFile);
 CREATE INDEX I_SubRequest_DiskCopy ON SubRequest (diskCopy);
+CREATE INDEX I_SubRequest_DiskServer ON SubRequest (diskServer);
 CREATE INDEX I_SubRequest_Request ON SubRequest (request);
 CREATE INDEX I_SubRequest_SubReqId ON SubRequest (subReqId);
 CREATE INDEX I_SubRequest_LastModTime ON SubRequest (lastModificationTime) LOCAL;
@@ -764,14 +779,39 @@ CREATE TABLE FileMigrationResultsHelper
   comprSize NUMBER, vid VARCHAR2(6), fSeq NUMBER, blockId RAW(4), checksumType VARCHAR2(16), checksum NUMBER);
 CREATE INDEX I_FileMigResultsHelper_ReqId ON FileMigrationResultsHelper(ReqId);
 
+/* SQL statements for type DataPool */
+CREATE TABLE DataPool
+ (name VARCHAR2(2048),
+  id INTEGER CONSTRAINT PK_DataPool_Id PRIMARY KEY,
+  minAllowedFreeSpace NUMBER,
+  maxFreeSpace NUMBER,
+  totalSize INTEGER,
+  free INTEGER)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DataPool2SvcClass (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
+CREATE INDEX I_DataPool2SvcClass_C on DataPool2SvcClass (child);
+CREATE INDEX I_DataPool2SvcClass_P on DataPool2SvcClass (parent);
+ALTER TABLE DataPool2SvcClass
+  ADD CONSTRAINT FK_DataPool2SvcClass_P FOREIGN KEY (Parent) REFERENCES DataPool (id)
+  ADD CONSTRAINT FK_DataPool2SvcClass_C FOREIGN KEY (Child) REFERENCES SvcClass (id);
+
 /* SQL statements for type DiskServer */
-CREATE TABLE DiskServer (name VARCHAR2(2048), lastHeartbeatTime NUMBER DEFAULT 0, id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY, status INTEGER, hwOnline INTEGER DEFAULT 0) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DiskServer
+ (name VARCHAR2(2048),
+  lastHeartbeatTime NUMBER DEFAULT 0,
+  id INTEGER CONSTRAINT PK_DiskServer_Id PRIMARY KEY,
+  status INTEGER,
+  hwOnline INTEGER DEFAULT 0,
+  dataPool INTEGER)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE UNIQUE INDEX I_DiskServer_name ON DiskServer (name);
 ALTER TABLE DiskServer MODIFY
   (status CONSTRAINT NN_DiskServer_Status NOT NULL,
    name CONSTRAINT NN_DiskServer_Name NOT NULL,
    hwOnline CONSTRAINT NN_DiskServer_hwOnline NOT NULL);
 ALTER TABLE DiskServer ADD CONSTRAINT UN_DiskServer_Name UNIQUE (name);
+ALTER TABLE DiskServer ADD CONSTRAINT FK_DiskServer_DataPool 
+  FOREIGN KEY (dataPool) REFERENCES DataPool(id);
 
 BEGIN
   setObjStatusName('DiskServer', 'status', dconst.DISKSERVER_PRODUCTION, 'DISKSERVER_PRODUCTION');
@@ -785,7 +825,21 @@ ALTER TABLE DiskServer
   CHECK (status IN (0, 1, 2, 3));
 
 /* SQL statements for type FileSystem */
-CREATE TABLE FileSystem (free INTEGER, mountPoint VARCHAR2(2048), minAllowedFreeSpace NUMBER, maxFreeSpace NUMBER, totalSize INTEGER, nbReadStreams NUMBER, nbWriteStreams NUMBER, nbMigratorStreams NUMBER, nbRecallerStreams NUMBER, id INTEGER CONSTRAINT PK_FileSystem_Id PRIMARY KEY, diskPool INTEGER, diskserver INTEGER, status INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE FileSystem
+ (free INTEGER,
+  mountPoint VARCHAR2(2048),
+  minAllowedFreeSpace NUMBER,
+  maxFreeSpace NUMBER,
+  totalSize INTEGER,
+  nbReadStreams NUMBER,
+  nbWriteStreams NUMBER,
+  nbMigratorStreams NUMBER,
+  nbRecallerStreams NUMBER,
+  id INTEGER CONSTRAINT PK_FileSystem_Id PRIMARY KEY,
+  diskPool INTEGER,
+  diskserver INTEGER,
+  status INTEGER)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 ALTER TABLE FileSystem ADD CONSTRAINT FK_FileSystem_DiskServer 
   FOREIGN KEY (diskServer) REFERENCES DiskServer(id);
 ALTER TABLE FileSystem MODIFY
@@ -809,7 +863,10 @@ ALTER TABLE FileSystem
   CHECK (status IN (0, 1, 2, 3));
 
 /* SQL statements for type DiskPool */
-CREATE TABLE DiskPool (name VARCHAR2(2048), id INTEGER CONSTRAINT PK_DiskPool_Id PRIMARY KEY) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DiskPool
+ (name VARCHAR2(2048),
+  id INTEGER CONSTRAINT PK_DiskPool_Id PRIMARY KEY)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE TABLE DiskPool2SvcClass (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
 CREATE INDEX I_DiskPool2SvcClass_C on DiskPool2SvcClass (child);
 CREATE INDEX I_DiskPool2SvcClass_P on DiskPool2SvcClass (parent);
@@ -817,9 +874,14 @@ ALTER TABLE DiskPool2SvcClass
   ADD CONSTRAINT FK_DiskPool2SvcClass_P FOREIGN KEY (Parent) REFERENCES DiskPool (id)
   ADD CONSTRAINT FK_DiskPool2SvcClass_C FOREIGN KEY (Child) REFERENCES SvcClass (id);
 
-/* DiskCopy Table
-   - importance : the importance of this DiskCopy. The importance is always negative and the
-     algorithm to compute it is -nb_disk_copies-100*at_least_a_tape_copy_exists
+/**
+ * DiskCopy Table
+ *  - importance : the importance of this DiskCopy. The importance is always negative and the
+ *    algorithm to compute it is -nb_disk_copies-100*at_least_a_tape_copy_exists
+ *  - fileSystem : the filesystem where the DiskCopy resides if it resides on a regular
+ *    DiskServer. In case in resides in a DataPool, then this is NULL and dataPool is used
+ *  - dataPool : the dataPool where the DiskCopy resides if it resides in a pool of data
+ *    In case in resides in a regular DiskServer, then this is NULL and fileSystem is used
 */
 CREATE TABLE DiskCopy
  (path VARCHAR2(2048),
@@ -833,6 +895,7 @@ CREATE TABLE DiskCopy
   id INTEGER CONSTRAINT PK_DiskCopy_Id PRIMARY KEY,
   gcType INTEGER,
   fileSystem INTEGER,
+  dataPool INTEGER,
   castorFile INTEGER,
   status INTEGER,
   importance INTEGER CONSTRAINT NN_DiskCopy_Importance NOT NULL)
@@ -840,10 +903,13 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 CREATE INDEX I_DiskCopy_Castorfile ON DiskCopy (castorFile);
 CREATE INDEX I_DiskCopy_FileSystem ON DiskCopy (fileSystem);
+CREATE INDEX I_DiskCopy_DataPool ON DiskCopy (dataPool);
 CREATE INDEX I_DiskCopy_FS_GCW ON DiskCopy (fileSystem, gcWeight);
+CREATE INDEX I_DiskCopy_DP_GCW ON DiskCopy (dataPool, gcWeight);
 -- for queries on active statuses
 CREATE INDEX I_DiskCopy_Status_6 ON DiskCopy (decode(status,6,status,NULL));
 CREATE INDEX I_DiskCopy_Status_7_FS ON DiskCopy (decode(status,7,status,NULL), fileSystem);
+CREATE INDEX I_DiskCopy_Status_7_DP ON DiskCopy (decode(status,7,status,NULL), dataPool);
 CREATE INDEX I_DiskCopy_Status_9 ON DiskCopy (decode(status,9,status,NULL));
 -- to speed up deleteOutOfDateStageOutDCs
 CREATE INDEX I_DiskCopy_Status_Open ON DiskCopy (decode(status,6,status,decode(status,5,status,decode(status,11,status,NULL))));
@@ -855,6 +921,10 @@ ALTER TABLE DiskCopy MODIFY (nbCopyAccesses DEFAULT 0);
 ALTER TABLE DiskCopy MODIFY (gcType DEFAULT NULL);
 ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_CastorFile
   FOREIGN KEY (castorFile) REFERENCES CastorFile (id);
+ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_FileSystem
+  FOREIGN KEY (FileSystem) REFERENCES FileSystem (id);
+ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_DataPool
+  FOREIGN KEY (DataPool) REFERENCES DataPool (id);
 ALTER TABLE DiskCopy
   MODIFY (status CONSTRAINT NN_DiskCopy_Status NOT NULL);
 

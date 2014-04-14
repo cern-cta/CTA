@@ -233,16 +233,24 @@ BEGIN
         outNbFailures := outNbFailures + 1;
       ELSE
         -- find out whether this file is already on disk
-        SELECT /*+ INDEX_RS_ASC(DC I_DiskCopy_CastorFile) */
-               count(DC.id) INTO varNbCopies
-          FROM DiskCopy DC, FileSystem, DiskServer
-         WHERE DC.castorfile = cfId
-           AND DC.fileSystem = FileSystem.id
-           AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
-           AND FileSystem.diskserver = DiskServer.id
-           AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
-           AND DiskServer.hwOnline = 1
-           AND DC.status = dconst.DISKCOPY_VALID;
+        SELECT count(id) INTO varNbCopies FROM (
+          SELECT DiskCopy.id
+            FROM DiskCopy, FileSystem, DiskServer
+           WHERE DiskCopy.castorfile = cfId
+             AND DiskCopy.fileSystem = FileSystem.id
+             AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
+             AND FileSystem.diskserver = DiskServer.id
+             AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+             AND DiskServer.hwOnline = 1
+             AND DiskCopy.status = dconst.DISKCOPY_VALID
+          UNION
+          SELECT DiskCopy.id
+            FROM DiskCopy
+           WHERE DiskCopy.castorfile = cfId
+             AND DiskCopy.status = dconst.DISKCOPY_VALID
+             AND EXISTS (SELECT 1 FROM DiskServer
+                          WHERE DiskCopy.dataPool = DiskServer.DataPool
+                            AND DiskServer.hwOnline = 1));
         IF varNbCopies = 0 THEN
           -- find out whether this file is already being recalled
           SELECT count(*) INTO varWasRecalled FROM RecallJob WHERE castorfile = cfId AND ROWNUM < 2;

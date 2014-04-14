@@ -166,7 +166,7 @@ castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
     item->setCreationTime((u_signed64)rset->getDouble(11));
     item->setSvcClass(rset->getString(12));
     item->setLastAccessTime((u_signed64)rset->getDouble(13));
-    item->setHwStatus(rset->getInt(14));
+    item->setIsOnDrainingHardware(rset->getInt(14) > 0);
     result->push_back(item);
   }
   return result;

@@ -114,6 +114,30 @@ BEGIN
 END;
 /
 
+/* Function to return a comma separate list of service classes that a
+ * DataPool belongs to.
+ */
+CREATE OR REPLACE FUNCTION getSvcClassListDP(dpId NUMBER) RETURN VARCHAR2 IS
+  svcClassList VARCHAR2(4000) := NULL;
+  c INTEGER := 0;
+BEGIN
+  FOR a IN (SELECT Distinct(SvcClass.name)
+              FROM DataPool2SvcClass, SvcClass
+             WHERE DataPool2SvcClass.parent = dpId
+               AND DataPool2SvcClass.child = SvcClass.id
+             ORDER BY SvcClass.name)
+  LOOP
+    svcClassList := svcClassList || ',' || a.name;
+    c := c + 1;
+    IF c = 5 THEN
+      svcClassList := svcClassList || ',...';
+      EXIT;
+    END IF;
+  END LOOP;
+  RETURN ltrim(svcClassList, ',');
+END;
+/
+
 /* Function to extract a configuration option from the castor config
  * table.
  */
@@ -178,6 +202,7 @@ END;
 /* parse a path to give back the FileSystem and path */
 CREATE OR REPLACE PROCEDURE parsePath(inFullPath IN VARCHAR2,
                                       outFileSystem OUT INTEGER,
+                                      outDataPool OUT INTEGER,
                                       outPath OUT VARCHAR2,
                                       outDcId OUT INTEGER,
                                       outFileId OUT INTEGER,
@@ -189,50 +214,43 @@ CREATE OR REPLACE PROCEDURE parsePath(inFullPath IN VARCHAR2,
   varColonPos INTEGER;
   varDiskServerName VARCHAR2(2048);
   varMountPoint VARCHAR2(2048);
+  varDataPool VARCHAR2(2048);
 BEGIN
-  -- path starts after the second '/' from the end
-  varPathPos := INSTR(inFullPath, '/', -1, 2);
-  outPath := SUBSTR(inFullPath, varPathPos+1);
   -- DcId is the part after the last '.'
   varLastDotPos := INSTR(inFullPath, '.', -1, 1);
   outDcId := TO_NUMBER(SUBSTR(inFullPath, varLastDotPos+1));
-  -- the mountPoint is between the ':' and the start of the path
-  varColonPos := INSTR(inFullPath, ':', 1, 1);
-  varMountPoint := SUBSTR(inFullPath, varColonPos+1, varPathPos-varColonPos);
-  -- the diskserver is before the ':
-  varDiskServerName := SUBSTR(inFullPath, 1, varColonPos-1);
   -- the fileid is between last / and '@'
   varLastSlashPos := INSTR(inFullPath, '/', -1, 1);
   varAtPos := INSTR(inFullPath, '@', 1, 1);
   outFileId := TO_NUMBER(SUBSTR(inFullPath, varLastSlashPos+1, varAtPos-varLastSlashPos-1));
   -- the nsHost is between '@' and last '.'
   outNsHost := SUBSTR(inFullPath, varAtPos+1, varLastDotPos-varAtPos-1);
-  -- find out the filesystem Id
-  SELECT FileSystem.id INTO outFileSystem
-    FROM DiskServer, FileSystem
-   WHERE DiskServer.name = varDiskServerName
-     AND FileSystem.diskServer = DiskServer.id
-     AND FileSystem.mountPoint = varMountPoint;
-END;
-/
-
-/* Function to check if a diskserver and its given mountpoints have any files
- * attached to them.
- */
-CREATE OR REPLACE
-FUNCTION checkIfFilesExist(diskServerName IN VARCHAR2, mountPointName IN VARCHAR2)
-RETURN NUMBER AS
-  rtn NUMBER;
-BEGIN
-  SELECT /*+ INDEX(DiskCopy I_DiskCopy_FileSystem) */ 1 INTO rtn
-    FROM DiskCopy, FileSystem, DiskServer
-   WHERE DiskCopy.fileSystem = FileSystem.id
-     AND FileSystem.diskserver = DiskServer.id
-     AND DiskServer.name = diskServerName
-     AND (FileSystem.mountpoint = mountPointName 
-      OR  length(mountPointName) IS NULL)
-     AND rownum < 2;
-  RETURN rtn;
+  -- the diskserver is before the ':'
+  varColonPos := INSTR(inFullPath, ':', 1, 1);
+  varDiskServerName := SUBSTR(inFullPath, 1, varColonPos-1);
+  -- path starts after the second '/' from the end if we are dealing with a diskpool
+  varPathPos := INSTR(inFullPath, '/', -1, 2);
+  -- if the second '/' was not found, then we are dealing with a data pool
+  IF 0 = varPathPos THEN
+    -- the data pool id between the ':' and the only '/'
+    varPathPos := INSTR(inFullPath, '/', -1, 1);
+    varDataPool := SUBSTR(inFullPath, varColonPos+1, varPathPos-varColonPos);
+    -- find out the dataPool Id
+    SELECT id INTO outDataPool FROM DataPool WHERE name = varDataPool;
+    outFileSystem := NULL;
+  ELSE
+    -- regular disk pool
+    outPath := SUBSTR(inFullPath, varPathPos+1);
+    -- the mountPoint is between the ':' and the start of the path
+    varMountPoint := SUBSTR(inFullPath, varColonPos+1, varPathPos-varColonPos);
+    -- find out the filesystem Id
+    SELECT FileSystem.id INTO outFileSystem
+      FROM DiskServer, FileSystem
+     WHERE DiskServer.name = varDiskServerName
+       AND FileSystem.diskServer = DiskServer.id
+       AND FileSystem.mountPoint = varMountPoint;
+    outDataPool := NULL;
+  END IF;
 END;
 /
 

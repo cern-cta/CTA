@@ -13,17 +13,20 @@ CREATE OR REPLACE PROCEDURE putStart
   varCfId INTEGER;
   srStatus INTEGER;
   srSvcClass INTEGER;
-  fsId INTEGER;
-  fsStatus INTEGER;
+  fsId INTEGER := NULL;
+  varDsId INTEGER := NULL;
+  dpId INTEGER := NULL;
+  fsStatus INTEGER := dconst.FILESYSTEM_PRODUCTION;
   dsStatus INTEGER;
   varHwOnline INTEGER;
   prevFsId INTEGER;
+  prevDPId INTEGER;
 BEGIN
   -- Get diskCopy and subrequest related information
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
          SubRequest.castorFile, SubRequest.diskCopy, SubRequest.status, DiskCopy.fileSystem,
-         Request.svcClass
-    INTO varCfId, rdcId, srStatus, prevFsId, srSvcClass
+         DiskCopy.dataPool, Request.svcClass
+    INTO varCfId, rdcId, srStatus, prevFsId, prevDPId, srSvcClass
     FROM SubRequest, DiskCopy,
          (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ id, svcClass FROM StagePutRequest UNION ALL
           SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClass FROM StageGetRequest) Request
@@ -34,16 +37,23 @@ BEGIN
   IF srStatus IN (dconst.SUBREQUEST_FAILED, dconst.SUBREQUEST_FAILED_FINISHED) THEN
     raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
   END IF;
-  -- Get selected filesystem and its status
-  SELECT FileSystem.id, FileSystem.status, DiskServer.status, DiskServer.hwOnline
-    INTO fsId, fsStatus, dsStatus, varHwOnline
-    FROM DiskServer, FileSystem
-   WHERE FileSystem.diskserver = DiskServer.id
-     AND DiskServer.name = selectedDiskServer
-     AND FileSystem.mountPoint = selectedMountPoint;
+  -- Get selected filesystem/datapool
+  IF selectedMountPoint IS NULL THEN
+    SELECT dataPool, status, hwOnline, id
+      INTO dpId, dsStatus, varHwOnline, varDsId
+      FROM DiskServer
+     WHERE name = selectedDiskServer;
+  ELSE 
+    SELECT FileSystem.id, FileSystem.status, DiskServer.status, DiskServer.hwOnline
+      INTO fsId, fsStatus, dsStatus, varHwOnline
+      FROM DiskServer, FileSystem
+     WHERE FileSystem.diskserver = DiskServer.id
+       AND DiskServer.name = selectedDiskServer
+       AND FileSystem.mountPoint = selectedMountPoint;
+  END IF;
   -- Check that a job has not already started for this diskcopy. Refer to
   -- bug #14358
-  IF prevFsId > 0 AND prevFsId <> fsId THEN
+  IF (prevFsId > 0 AND prevFsId <> fsId) OR (prevDPId > 0 AND prevDPId <> dpId) THEN
     raise_application_error(-20104, 'This job has already started for this DiskCopy. Giving up.');
   END IF;
   IF fsStatus != dconst.FILESYSTEM_PRODUCTION OR dsStatus != dconst.DISKSERVER_PRODUCTION OR varHwOnline = 0 THEN
@@ -52,14 +62,16 @@ BEGIN
   -- In case the DiskCopy was in WAITFS_SCHEDULING,
   -- restart the waiting SubRequests
   UPDATE SubRequest
-     SET status = dconst.SUBREQUEST_RESTART, lastModificationTime = getTime()
+     SET status = dconst.SUBREQUEST_RESTART, lastModificationTime = getTime(),
+         diskServer = varDsId
    WHERE status = dconst.SUBREQUEST_WAITSUBREQ
      AND castorFile = varCfId;
   alertSignalNoLock('wakeUpJobReqSvc');
-  -- link DiskCopy and FileSystem and update DiskCopyStatus
+  -- link DiskCopy and FileSystem/DataPool and update DiskCopyStatus
   UPDATE DiskCopy
      SET status = 6, -- DISKCOPY_STAGEOUT
          fileSystem = fsId,
+         dataPool = dpId,
          nbCopyAccesses = nbCopyAccesses + 1
    WHERE id = rdcId
    RETURNING status, path
@@ -78,7 +90,9 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
   cfid INTEGER;
   fid INTEGER;
   dcId INTEGER;
-  fsId INTEGER;
+  fsId INTEGER := NULL;
+  varDsId INTEGER := NULL;
+  dpId INTEGER := NULL;
   dcIdInReq INTEGER;
   nh VARCHAR2(2048);
   fileSize INTEGER;
@@ -88,7 +102,7 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
   gcw NUMBER;
   gcwProc VARCHAR2(2048);
   cTime NUMBER;
-  fsStatus INTEGER;
+  fsStatus INTEGER := dconst.FILESYSTEM_PRODUCTION;
   dsStatus INTEGER;
   varHwOnline INTEGER;
 BEGIN
@@ -106,12 +120,20 @@ BEGIN
     FROM CastorFile, SubRequest
    WHERE CastorFile.id = SubRequest.castorFile
      AND SubRequest.id = srId FOR UPDATE OF CastorFile;
-  -- Get selected filesystem and its status
-  SELECT FileSystem.id, FileSystem.status, DiskServer.status, DiskServer.hwOnline INTO fsId, fsStatus, dsStatus, varHwOnline
-    FROM DiskServer, FileSystem
-   WHERE FileSystem.diskserver = DiskServer.id
-     AND DiskServer.name = selectedDiskServer
-     AND FileSystem.mountPoint = selectedMountPoint;
+  -- Get selected filesystem/datapool
+  IF selectedMountPoint IS NULL THEN
+    SELECT dataPool, status, hwOnline, id
+      INTO dpId, dsStatus, varHwOnline, varDsId
+      FROM DiskServer
+     WHERE name = selectedDiskServer;
+  ELSE 
+    SELECT FileSystem.id, FileSystem.status, DiskServer.status, DiskServer.hwOnline
+      INTO fsId, fsStatus, dsStatus, varHwOnline
+      FROM DiskServer, FileSystem
+     WHERE FileSystem.diskserver = DiskServer.id
+       AND DiskServer.name = selectedDiskServer
+       AND FileSystem.mountPoint = selectedMountPoint;
+  END IF;
   -- Now check that the hardware status is still valid for a Get request
   IF NOT (fsStatus IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY) AND
           dsStatus IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY) AND
@@ -119,11 +141,12 @@ BEGIN
     raise_application_error(-20114, 'The selected diskserver/filesystem is not in PRODUCTION or READONLY any longer. Giving up.');
   END IF;
   -- Try to find local DiskCopy
-  SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ id, nbCopyAccesses, gcWeight, creationTime
+  SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */
+         id, nbCopyAccesses, gcWeight, creationTime
     INTO dcId, nbac, gcw, cTime
     FROM DiskCopy
    WHERE DiskCopy.castorfile = cfId
-     AND DiskCopy.filesystem = fsId
+     AND (DiskCopy.filesystem = fsId OR DiskCopy.dataPool = dpId)
      AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
      AND ROWNUM < 2;
   -- We found it, so we are settled and we'll use the local copy.
@@ -155,10 +178,10 @@ BEGIN
   RETURNING id, path, status, diskCopySize INTO dci, rpath, rstatus, diskCopySize;
   -- Let's update the SubRequest and set the link with the DiskCopy
   UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-     SET DiskCopy = dci
+     SET DiskCopy = dci, DiskServer = varDsId
    WHERE id = srId RETURNING protocol INTO proto;
 EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- No disk copy found on selected FileSystem.
+  -- No disk copy found on selected FileSystem/DataPool.
   -- A diskcopy was available and got disabled before this job
   -- was scheduled. Bad luck, we fail the request, the user will have to retry
   UPDATE SubRequest
@@ -237,6 +260,7 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyEnded
   varFileSize INTEGER;
   varDestPath VARCHAR2(2048);
   varDestFsId INTEGER;
+  varDestDpId INTEGER;
   varDcGcWeight NUMBER := 0;
   varDcImportance NUMBER := 0;
   varNewDcStatus INTEGER := dconst.DISKCOPY_VALID;
@@ -247,7 +271,7 @@ BEGIN
   BEGIN
     IF inDestPath IS NOT NULL THEN
       -- Parse destination path
-      parsePath(inDestDsName ||':'|| inDestPath, varDestFsId, varDestPath, varDestDcId, varFileId, varNsHost);
+      parsePath(inDestDsName ||':'|| inDestPath, varDestFsId, varDestDpId, varDestPath, varDestDcId, varFileId, varNsHost);
     -- ELSE we are called because of an error at start: try to gather information
     -- from the Disk2DiskCopyJob entry and fail accordingly.
     END IF;
@@ -323,10 +347,14 @@ BEGIN
     END IF;
     -- create the new DiskCopy
     INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
-                          owneruid, ownergid, id, gcType, fileSystem, castorFile, status, importance)
-    VALUES (varDestPath, varDcGcWeight, getTime(), getTime(), varFileSize, 0, varUid, varGid, varDestDcId,
-            CASE varNewDcStatus WHEN dconst.DISKCOPY_INVALID THEN dconst.GCTYPE_FAILEDD2D ELSE NULL END,
-            varDestFsId, varCfId, varNewDcStatus, varDCImportance);
+                          owneruid, ownergid, id, gcType, fileSystem, datapool, castorFile,
+                          status, importance)
+    VALUES (varDestPath, varDcGcWeight, getTime(), getTime(), varFileSize, 0,
+            varUid, varGid, varDestDcId,
+            CASE varNewDcStatus WHEN dconst.DISKCOPY_INVALID
+                                THEN dconst.GCTYPE_FAILEDD2D
+                                ELSE NULL END,
+            varDestFsId, varDestDpId, varCfId, varNewDcStatus, varDCImportance);
     -- Wake up waiting subrequests
     UPDATE SubRequest
        SET status = dconst.SUBREQUEST_RESTART,
@@ -418,12 +446,13 @@ CREATE OR REPLACE PROCEDURE disk2DiskCopyStart
   varDestDcId INTEGER;
   varDestDsId INTEGER;
   varSrcDcId INTEGER;
-  varSrcFsId INTEGER;
+  varSrcFsId INTEGER := NULL;
+  varSrcDpId INTEGER := NULL;
   varNbCopies INTEGER;
-  varSrcFsStatus INTEGER;
+  varSrcFsStatus INTEGER := dconst.FILESYSTEM_PRODUCTION;
   varSrcDsStatus INTEGER;
   varSrcHwOnline INTEGER;
-  varDestFsStatus INTEGER;
+  varDestFsStatus INTEGER := dconst.FILESYSTEM_PRODUCTION;
   varDestDsStatus INTEGER;
   varDestHwOnline INTEGER;
 BEGIN
@@ -444,18 +473,28 @@ BEGIN
     raise_application_error(-20110, dlf.D2D_CANCELED_AT_START || '');
   END;
 
-  -- identify the source DiskCopy and diskserver/filesystem and check that it is still valid
+  -- identify the source DiskCopy and diskserver/filesystem/datapool and check that it is still valid
   BEGIN
-    SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
-           FileSystem.id, DiskCopy.id, FileSystem.status, DiskServer.status, DiskServer.hwOnline
-      INTO varSrcFsId, varSrcDcId, varSrcFsStatus, varSrcDsStatus, varSrcHwOnline
-      FROM DiskServer, FileSystem, DiskCopy
-     WHERE DiskServer.name = inSrcDiskServerName
-       AND DiskServer.id = FileSystem.diskServer
-       AND FileSystem.mountPoint = inSrcMountPoint
-       AND DiskCopy.FileSystem = FileSystem.id
-       AND DiskCopy.status = dconst.DISKCOPY_VALID
-       AND DiskCopy.castorFile = varCfId;
+    IF inSrcMountPoint IS NULL THEN
+      SELECT DiskServer.dataPool, DiskCopy.id, DiskServer.status, DiskServer.hwOnline
+        INTO varSrcDpId, varSrcDcId, varSrcDsStatus, varSrcHwOnline
+        FROM DiskServer, DiskCopy
+       WHERE name = inSrcDiskServerName
+         AND DiskServer.dataPool = DiskCopy.dataPool
+         AND DiskCopy.castorFile = varCfId
+         AND ROWNUM < 2;
+    ELSE
+      SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
+             FileSystem.id, DiskCopy.id, FileSystem.status, DiskServer.status, DiskServer.hwOnline
+        INTO varSrcFsId, varSrcDcId, varSrcFsStatus, varSrcDsStatus, varSrcHwOnline
+        FROM DiskServer, FileSystem, DiskCopy
+       WHERE DiskServer.name = inSrcDiskServerName
+         AND DiskServer.id = FileSystem.diskServer
+         AND FileSystem.mountPoint = inSrcMountPoint
+         AND DiskCopy.FileSystem = FileSystem.id
+         AND DiskCopy.status = dconst.DISKCOPY_VALID
+         AND DiskCopy.castorFile = varCfId;
+    END IF;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- log "disk2DiskCopyStart : Source has disappeared while queuing in scheduler, retrying"
     logToDLF(NULL, dlf.LVL_SYSTEM, dlf.D2D_SOURCE_GONE, inFileId, inNsHost, 'transfermanagerd',
@@ -490,12 +529,19 @@ BEGIN
   END IF;
 
   -- get destination diskServer/filesystem and check its status
-  SELECT DiskServer.id, DiskServer.status, FileSystem.status, DiskServer.hwOnline
-    INTO varDestDsId, varDestDsStatus, varDestFsStatus, varDestHwOnline
-    FROM DiskServer, FileSystem
-   WHERE DiskServer.name = inDestDiskServerName
-     AND FileSystem.mountPoint = inDestMountPoint
-     AND FileSystem.diskServer = DiskServer.id;
+  IF inDestMountPoint IS NULL THEN
+    SELECT DiskServer.id, DiskServer.status, DiskServer.hwOnline
+      INTO varDestDsId, varDestDsStatus, varDestHwOnline
+      FROM DiskServer
+     WHERE name = inDestDiskServerName;
+  ELSE
+    SELECT DiskServer.id, DiskServer.status, FileSystem.status, DiskServer.hwOnline
+      INTO varDestDsId, varDestDsStatus, varDestFsStatus, varDestHwOnline
+      FROM DiskServer, FileSystem
+     WHERE DiskServer.name = inDestDiskServerName
+       AND FileSystem.mountPoint = inDestMountPoint
+       AND FileSystem.diskServer = DiskServer.id;
+  END IF;
   IF (varDestDsStatus != dconst.DISKSERVER_PRODUCTION OR varDestFsStatus != dconst.FILESYSTEM_PRODUCTION
       OR varDestHwOnline = 0) THEN
     -- log "disk2DiskCopyStart : Destination diskserver/filesystem not in PRODUCTION any longer"
@@ -508,22 +554,25 @@ BEGIN
     raise_application_error(-20110, dlf.D2D_DEST_NOT_PRODUCTION);
   END IF;
 
-  -- Prevent multiple copies of the file to be created on the same diskserver
-  SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ count(*) INTO varNbCopies
-    FROM DiskCopy, FileSystem
-   WHERE DiskCopy.filesystem = FileSystem.id
-     AND FileSystem.diskserver = varDestDsId
-     AND DiskCopy.castorfile = varCfId
-     AND DiskCopy.status = dconst.DISKCOPY_VALID;
-  IF varNbCopies > 0 THEN
-    -- log "disk2DiskCopyStart : Multiple copies of this file already found on this diskserver"
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.D2D_MULTIPLE_COPIES_ON_DS, inFileId, inNsHost, 'transfermanagerd',
-             'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inDestDiskServerName);
-    -- fail d2d transfer
-    disk2DiskCopyEnded(inTransferId, '', '', 0, 0, 'Copy found on diskserver');
-    COMMIT; -- commit or raise_application_error will roll back for us :-(
-    -- raise exception
-    raise_application_error(-20110, dlf.D2D_MULTIPLE_COPIES_ON_DS);
+  IF inDestMountPoint IS NULL THEN
+    -- Prevent multiple copies of the file to be created on the same diskserver when
+    -- running in standard mode (with filesystems, no datapools)
+    SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ count(*) INTO varNbCopies
+      FROM DiskCopy, FileSystem
+     WHERE DiskCopy.filesystem = FileSystem.id
+       AND FileSystem.diskserver = varDestDsId
+       AND DiskCopy.castorfile = varCfId
+       AND DiskCopy.status = dconst.DISKCOPY_VALID;
+    IF varNbCopies > 0 THEN
+      -- log "disk2DiskCopyStart : Multiple copies of this file already found on this diskserver"
+      logToDLF(NULL, dlf.LVL_ERROR, dlf.D2D_MULTIPLE_COPIES_ON_DS, inFileId, inNsHost, 'transfermanagerd',
+               'TransferId=' || TO_CHAR(inTransferId) || ' diskServer=' || inDestDiskServerName);
+      -- fail d2d transfer
+      disk2DiskCopyEnded(inTransferId, '', '', 0, 0, 'Copy found on diskserver');
+      COMMIT; -- commit or raise_application_error will roll back for us :-(
+      -- raise exception
+      raise_application_error(-20110, dlf.D2D_MULTIPLE_COPIES_ON_DS);
+    END IF;
   END IF;
 
   -- build full path of destination copy
@@ -911,21 +960,31 @@ BEGIN
   -- note that we discard READONLY hardware and filter only the PRODUCTION one.
   FOR line IN
     (SELECT candidate FROM
-       (SELECT UNIQUE FIRST_VALUE (DiskServer.name || ':' || FileSystem.mountPoint)
-                 OVER (PARTITION BY DiskServer.id ORDER BY DBMS_Random.value) AS candidate
-          FROM DiskServer, FileSystem, DiskPool2SvcClass
-         WHERE FileSystem.diskServer = DiskServer.id
-           AND FileSystem.diskPool = DiskPool2SvcClass.parent
-           AND DiskPool2SvcClass.child = inSvcClassId
-           AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
-           AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
-           AND DiskServer.hwOnline = 1
-           AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > inMinFreeSpace
-           AND DiskServer.id NOT IN
-               (SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ diskserver FROM DiskCopy, FileSystem
-                 WHERE DiskCopy.castorFile = inCfId
-                   AND DiskCopy.status = dconst.DISKCOPY_VALID
-                   AND FileSystem.id = DiskCopy.fileSystem)
+       (SELECT * FROM
+         (SELECT UNIQUE FIRST_VALUE (DiskServer.name || ':' || FileSystem.mountPoint)
+                   OVER (PARTITION BY DiskServer.id ORDER BY DBMS_Random.value) AS candidate
+            FROM DiskServer, FileSystem, DiskPool2SvcClass
+           WHERE FileSystem.diskServer = DiskServer.id
+             AND FileSystem.diskPool = DiskPool2SvcClass.parent
+             AND DiskPool2SvcClass.child = inSvcClassId
+             AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+             AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+             AND DiskServer.hwOnline = 1
+             AND FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > inMinFreeSpace
+             AND DiskServer.id NOT IN
+                 (SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ diskserver FROM DiskCopy, FileSystem
+                   WHERE DiskCopy.castorFile = inCfId
+                     AND DiskCopy.status = dconst.DISKCOPY_VALID
+                     AND FileSystem.id = DiskCopy.fileSystem)
+           UNION
+          SELECT DiskServer.name || ':' AS candidate
+            FROM DiskServer, DataPool2SvcClass, DataPool
+           WHERE DiskServer.dataPool = DataPool2SvcClass.parent
+             AND DataPool2SvcClass.child = inSvcClassId
+             AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+             AND DiskServer.hwOnline = 1
+             AND DataPool.id = DataPool2SvcClass.parent
+             AND DataPool.free - DataPool.minAllowedFreeSpace * DataPool.totalSize > inMinFreeSpace)
          ORDER BY DBMS_Random.value)
       WHERE ROWNUM <= 3) LOOP
     IF LENGTH(varResult) IS NOT NULL THEN varResult := varResult || '|'; END IF;
@@ -942,17 +1001,26 @@ BEGIN
   -- in this case we take any non DISABLED hardware
   FOR line IN
     (SELECT candidate FROM
-       (SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ 
-               UNIQUE FIRST_VALUE (DiskServer.name || ':' || FileSystem.mountPoint)
-                 OVER (PARTITION BY DiskServer.id ORDER BY DBMS_Random.value) AS candidate
-          FROM DiskServer, FileSystem, DiskCopy
-         WHERE DiskCopy.castorFile = inCfId
-           AND DiskCopy.status = dconst.DISKCOPY_VALID
-           AND DiskCopy.fileSystem = FileSystem.id
-           AND FileSystem.diskServer = DiskServer.id
-           AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
-           AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
-           AND DiskServer.hwOnline = 1
+       (SELECT * FROM
+         (SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Castorfile) */ 
+                 UNIQUE FIRST_VALUE (DiskServer.name || ':' || FileSystem.mountPoint)
+                   OVER (PARTITION BY DiskServer.id ORDER BY DBMS_Random.value) AS candidate
+            FROM DiskServer, FileSystem, DiskCopy
+           WHERE DiskCopy.castorFile = inCfId
+             AND DiskCopy.status = dconst.DISKCOPY_VALID
+             AND DiskCopy.fileSystem = FileSystem.id
+             AND FileSystem.diskServer = DiskServer.id
+             AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
+             AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
+             AND DiskServer.hwOnline = 1
+           UNION
+          SELECT DiskServer.name || ':' AS candidate
+            FROM DiskServer, DiskCopy
+           WHERE DiskCopy.castorFile = inCfId
+             AND DiskCopy.status = dconst.DISKCOPY_VALID
+             AND DiskCopy.dataPool = DiskServer.dataPool
+             AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
+             AND DiskServer.hwOnline = 1)
          ORDER BY DBMS_Random.value)
       WHERE ROWNUM <= 3) LOOP
     IF LENGTH(varResult) IS NOT NULL THEN varResult := varResult || '|'; END IF;
@@ -1246,6 +1314,13 @@ BEGIN
                 AND Subrequest.diskCopy = DiskCopy.id
                 AND DiskCopy.fileSystem = FileSystem.id
                 AND FileSystem.diskServer = DiskServer.id
+                AND DiskServer.name = machine
+              UNION
+             SELECT SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
+               FROM SubRequest, DiskServer
+              WHERE SubRequest.status = dconst.SUBREQUEST_READY
+                AND Subrequest.reqType IN (35, 37)  -- StageGet/PutRequest
+                AND Subrequest.diskServer = DiskServer.id
                 AND DiskServer.name = machine) LOOP
     BEGIN
       -- check if they are running on the diskserver

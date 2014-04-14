@@ -12,7 +12,7 @@ CREATE OR REPLACE PACKAGE castorDebug AS
     id INTEGER,
     status VARCHAR2(2048),
     creationtime VARCHAR2(2048),
-    diskPool VARCHAR2(2048),
+    pool VARCHAR2(2048),
     location VARCHAR2(2048),
     available CHAR(1),
     diskCopySize NUMBER,
@@ -126,7 +126,7 @@ CREATE OR REPLACE FUNCTION getDCs(ref number) RETURN castorDebug.DiskCopyDebug P
 BEGIN
   FOR d IN (SELECT DiskCopy.id, getObjStatusName('DiskCopy', 'status', DiskCopy.status) AS status,
                    getTimeString(DiskCopy.creationtime) AS creationtime,
-                   DiskPool.name AS diskpool,
+                   DiskPool.name AS pool,
                    DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path AS location,
                    decode(DiskServer.hwOnline, 0, 'N',
                      decode(DiskServer.status, 2, 'N',
@@ -138,6 +138,19 @@ BEGIN
              WHERE DiskCopy.fileSystem = FileSystem.id(+)
                AND FileSystem.diskServer = diskServer.id(+)
                AND DiskPool.id(+) = fileSystem.diskPool
+               AND DiskCopy.castorFile = getCF(ref)
+               AND DiskCopy.castorFile = CastorFile.id
+            UNION
+            SELECT DiskCopy.id, getObjStatusName('DiskCopy', 'status', DiskCopy.status) AS status,
+                   getTimeString(DiskCopy.creationtime) AS creationtime,
+                   DataPool.name AS pool,
+                   'ceph:' || DiskCopy.path AS location,
+                   'Y' AS available,
+                   DiskCopy.diskCopySize AS diskcopysize,
+                   CastorFile.fileSize AS castorfilesize,
+                   trunc(DiskCopy.gcWeight, 2) AS gcweight
+              FROM DiskCopy, DataPool, CastorFile
+             WHERE DiskCopy.dataPool = DataPool.id(+)
                AND DiskCopy.castorFile = getCF(ref)
                AND DiskCopy.castorFile = CastorFile.id) LOOP
      PIPE ROW(d);

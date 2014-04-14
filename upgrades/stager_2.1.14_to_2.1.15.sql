@@ -82,6 +82,38 @@ DROP TABLE FirstByteWritten;
 DROP PROCEDURE FirstByteWrittenProc;
 DROP PROCEDURE handleProtoNoUpd;
 
+/* add DataPools */
+CREATE TABLE DataPool
+ (name VARCHAR2(2048),
+  id INTEGER CONSTRAINT PK_DataPool_Id PRIMARY KEY,
+  minAllowedFreeSpace NUMBER,
+  maxFreeSpace NUMBER,
+  totalSize INTEGER,
+  free INTEGER)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DataPool2SvcClass (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
+CREATE INDEX I_DataPool2SvcClass_C on DataPool2SvcClass (child);
+CREATE INDEX I_DataPool2SvcClass_P on DataPool2SvcClass (parent);
+ALTER TABLE DataPool2SvcClass
+  ADD CONSTRAINT FK_DataPool2SvcClass_P FOREIGN KEY (Parent) REFERENCES DataPool (id)
+  ADD CONSTRAINT FK_DataPool2SvcClass_C FOREIGN KEY (Child) REFERENCES SvcClass (id);
+
+ALTER TABLE DiskServer ADD (dataPool INTEGER);
+ALTER TABLE DiskServer ADD CONSTRAINT FK_DiskServer_DataPool 
+  FOREIGN KEY (dataPool) REFERENCES DataPool(id);
+
+ALTER TABLE DiskCopy ADD (dataPool INTEGER);
+CREATE INDEX I_DiskCopy_DataPool ON DiskCopy (dataPool);
+CREATE INDEX I_DiskCopy_DP_GCW ON DiskCopy (dataPool, gcWeight);
+CREATE INDEX I_DiskCopy_Status_7_DP ON DiskCopy (decode(status,7,status,NULL), dataPool);
+ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_FileSystem
+  FOREIGN KEY (FileSystem) REFERENCES FileSystem (id);
+ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_DataPool
+  FOREIGN KEY (DataPool) REFERENCES DataPool (id);
+
+ALTER TABLE SubRequest ADD (diskServer INTEGER);
+CREATE INDEX I_SubRequest_DiskServer ON SubRequest (diskServer);
+
 /* PL/SQL code revalidation */
 /****************************/
 

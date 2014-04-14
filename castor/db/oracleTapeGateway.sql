@@ -153,55 +153,81 @@ END;
 /* PL/SQL method implementing bestFileSystemForRecall */
 CREATE OR REPLACE PROCEDURE bestFileSystemForRecall(inCfId IN INTEGER, outFilePath OUT VARCHAR2) AS
   varCfId INTEGER;
-  varFileSystemId NUMBER := 0;
   nb NUMBER;
 BEGIN
-  -- try and select a good FileSystem for this recall
-  FOR f IN (SELECT /*+ INDEX_RS_ASC(RecallJob I_RecallJob_Castorfile_VID) */
-                   DiskServer.name ||':'|| FileSystem.mountPoint AS remotePath, FileSystem.id,
-                   FileSystem.diskserver, CastorFile.fileSize, CastorFile.fileId, CastorFile.nsHost
-              FROM DiskServer, FileSystem, DiskPool2SvcClass, CastorFile, RecallJob
-             WHERE CastorFile.id = inCfId
-               AND RecallJob.castorFile = inCfId
-               AND RecallJob.svcClass = DiskPool2SvcClass.child
-               AND FileSystem.diskPool = DiskPool2SvcClass.parent
-               -- a priori, we want to have enough free space. However, if we don't, we accept to start writing
-               -- if we have a minimum of 30GB free and count on gerbage collection to liberate space while writing
-               -- We still check that the file fit on the disk, and actually keep a 30% margin so that very recent
-               -- files can be kept
-               AND (FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > CastorFile.fileSize
-                 OR (FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > 30000000000
-                 AND FileSystem.totalSize * 0.7 > CastorFile.fileSize))
-               AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
-               AND DiskServer.id = FileSystem.diskServer
-               AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
-               AND DiskServer.hwOnline = 1
-          ORDER BY -- order by filesystem load first: this works if the feedback loop is fast enough, that is
-                   -- the transfer of the selected files in bulk does not take more than a couple of minutes
-                   FileSystem.nbMigratorStreams + FileSystem.nbRecallerStreams ASC,
-                   -- then use randomness for tie break
-                   DBMS_Random.value)
+  outFilePath := '';
+  -- try and select a good FileSystem/DataPool for this recall
+  FOR f IN (SELECT * FROM (
+              SELECT /*+ INDEX_RS_ASC(RecallJob I_RecallJob_Castorfile_VID) */
+                     DiskServer.name ||':'|| FileSystem.mountPoint AS remotePath, FileSystem.id,
+                     FileSystem.diskserver, CastorFile.fileSize, CastorFile.fileId, CastorFile.nsHost
+                FROM DiskServer, FileSystem, DiskPool2SvcClass, CastorFile, RecallJob
+               WHERE CastorFile.id = inCfId
+                 AND RecallJob.castorFile = inCfId
+                 AND RecallJob.svcClass = DiskPool2SvcClass.child
+                 AND FileSystem.diskPool = DiskPool2SvcClass.parent
+                 -- a priori, we want to have enough free space. However, if we don't, we accept to start writing
+                 -- if we have a minimum of 30GB free and count on gerbage collection to liberate space while writing
+                 -- We still check that the file fit on the disk, and actually keep a 30% margin so that very recent
+                 -- files can be kept
+                 AND (FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > CastorFile.fileSize
+                   OR (FileSystem.free - FileSystem.minAllowedFreeSpace * FileSystem.totalSize > 30000000000
+                   AND FileSystem.totalSize * 0.7 > CastorFile.fileSize))
+                 AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+                 AND DiskServer.id = FileSystem.diskServer
+                 AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+                 AND DiskServer.hwOnline = 1
+            ORDER BY -- order by filesystem load first: this works if the feedback loop is fast enough, that is
+                     -- the transfer of the selected files in bulk does not take more than a couple of minutes
+                     FileSystem.nbMigratorStreams + FileSystem.nbRecallerStreams ASC,
+                     -- then use randomness for tie break
+                     DBMS_Random.value)
+             UNION ALL
+            SELECT * FROM (
+              -- take max 3 random diskservers in the data pools involved
+              SELECT /*+ INDEX_RS_ASC(RecallJob I_RecallJob_Castorfile_VID) */
+                     DiskServer.name ||':' AS remotePath, 0 as id,
+                     DiskServer.id AS diskServer, CastorFile.fileSize,
+                     CastorFile.fileId, CastorFile.nsHost
+                FROM DiskServer, DataPool, DataPool2SvcClass, CastorFile, RecallJob
+               WHERE CastorFile.id = inCfId
+                 AND RecallJob.castorFile = inCfId
+                 AND RecallJob.svcClass = DataPool2SvcClass.child
+                 AND DiskServer.dataPool = DataPool2SvcClass.parent
+                 -- a priori, we want to have enough free space. However, if we don't, we accept to start writing
+                 -- if we have a minimum of 30GB free and count on gerbage collection to liberate space while writing
+                 -- We still check that the file fit on the disk, and actually keep a 30% margin so that very recent
+                 -- files can be kept
+                 AND (DataPool.free - DataPool.minAllowedFreeSpace * DataPool.totalSize > CastorFile.fileSize
+                   OR (DataPool.free - DataPool.minAllowedFreeSpace * DataPool.totalSize > 30000000000
+                   AND DataPool.totalSize * 0.7 > CastorFile.fileSize))
+                 AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+                 AND DiskServer.hwOnline = 1
+               ORDER BY DBMS_Random.value)
+             WHERE ROWNUM < 4)
   LOOP
-    varFileSystemId := f.id;
     buildPathFromFileId(f.fileId, f.nsHost, ids_seq.nextval, outFilePath);
     outFilePath := f.remotePath || outFilePath;
-    -- Check that we don't already have a copy of this file on this filesystem.
-    -- This will never happen in normal operations but may be the case if a filesystem
-    -- was disabled and did come back while the tape recall was waiting.
-    -- Even if we optimize by cancelling remaining unneeded tape recalls when a
-    -- fileSystem comes back, the ones running at the time of the come back will have
-    -- the problem.
-    SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ count(*) INTO nb
-      FROM DiskCopy
-     WHERE fileSystem = f.id
-       AND castorfile = inCfid
-       AND status = dconst.DISKCOPY_VALID;
-    IF nb != 0 THEN
-      raise_application_error(-20115, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
+    -- In case we selected a filesystem (and no datapool)
+    IF f.id > 0 THEN
+      -- Check that we don't already have a copy of this file on the selected filesystem.
+      -- This will never happen in normal operations but may be the case if a filesystem
+      -- was disabled and did come back while the tape recall was waiting.
+      -- Even if we optimize by cancelling remaining unneeded tape recalls when a
+      -- fileSystem comes back, the ones running at the time of the come back will have
+      -- the problem.
+      SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ count(*) INTO nb
+        FROM DiskCopy
+       WHERE fileSystem = f.id
+         AND castorfile = inCfid
+         AND status = dconst.DISKCOPY_VALID;
+      IF nb != 0 THEN
+        raise_application_error(-20115, 'Recaller could not find a FileSystem in production in the requested SvcClass and without copies of this file');
+      END IF;
+      RETURN;
     END IF;
-    RETURN;
   END LOOP;
-  IF varFileSystemId = 0 THEN
+  IF outFilePath IS NULL THEN
     raise_application_error(-20115, 'No suitable filesystem found for this recalled file');
   END IF;
 END;
@@ -534,6 +560,7 @@ CREATE OR REPLACE PROCEDURE tg_setFileRecalled(inMountTransactionId IN INTEGER,
   varLastOpenTime   NUMBER;
   varCfId           INTEGER;
   varFSId           INTEGER;
+  varDPId           INTEGER;
   varDCPath         VARCHAR2(2048);
   varDcId           INTEGER;
   varFileSize       INTEGER;
@@ -545,7 +572,7 @@ CREATE OR REPLACE PROCEDURE tg_setFileRecalled(inMountTransactionId IN INTEGER,
 BEGIN
   -- get diskserver, filesystem and path from full path in input
   BEGIN
-    parsePath(inFilePath, varFSId, varDCPath, varDCId, varFileId, varNsHost);
+    parsePath(inFilePath, varFSId, varDPId, varDCPath, varDCId, varFileId, varNsHost);
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- log "setFileRecalled : unable to parse input path. giving up"
     logToDLF(inReqId, dlf.LVL_ERROR, dlf.RECALL_INVALID_PATH, 0, '', 'tapegatewayd',
@@ -592,16 +619,23 @@ BEGIN
 
   -- compute GC weight of the recalled diskcopy
   -- first get the svcClass
-  SELECT Diskpool2SvcClass.child INTO varSvcClassId
-    FROM Diskpool2SvcClass, FileSystem
-   WHERE FileSystem.id = varFSId
-     AND Diskpool2SvcClass.parent = FileSystem.diskPool
-     AND ROWNUM < 2;
-  -- Again, the ROWNUM < 2 is worth a comment : the diskpool may be attached
+  IF varFSId > 0 THEN
+    SELECT Diskpool2SvcClass.child INTO varSvcClassId
+      FROM Diskpool2SvcClass, FileSystem
+     WHERE FileSystem.id = varFSId
+       AND Diskpool2SvcClass.parent = FileSystem.diskPool
+       AND ROWNUM < 2;
+  ELSE
+    SELECT DataPool2SvcClass.child INTO varSvcClassId
+      FROM DataPool2SvcClass
+     WHERE DataPool2SvcClass.parent = varDPId
+       AND ROWNUM < 2;
+  END IF;
+  -- Again, the ROWNUM < 2 is worth a comment : the pool may be attached
   -- to several svcClasses. However, we do not support that these different
   -- SvcClasses have different GC policies (actually the GC policy should be
-  -- moved to the DiskPool table in the future). Thus it is safe to take any
-  -- SvcClass from the list
+  -- moved to the DiskPool/DataPool table in the future). Thus it is safe
+  -- to take any SvcClass from the list
   varGcWeightProc := castorGC.getRecallWeight(varSvcClassId);
   EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || varGcWeightProc || '(:size); END;'
     USING OUT varGcWeight, IN varFileSize;
@@ -611,9 +645,10 @@ BEGIN
   BEGIN
     SELECT nbCopies INTO varNbCopiesOnTape FROM FileClass WHERE id = varFileClassId;
     INSERT INTO DiskCopy (path, gcWeight, creationTime, lastAccessTime, diskCopySize, nbCopyAccesses,
-                          ownerUid, ownerGid, id, gcType, fileSystem, castorFile, status, importance)
+                          ownerUid, ownerGid, id, gcType, fileSystem, dataPool,
+                          castorFile, status, importance)
     VALUES (varDCPath, varGcWeight, getTime(), getTime(), varFileSize, 0,
-            varEuid, varEgid, varDCId, NULL, varFSId, varCfId, dconst.DISKCOPY_VALID,
+            varEuid, varEgid, varDCId, NULL, varFSId, varDPId, varCfId, dconst.DISKCOPY_VALID,
             -1-varNbCopiesOnTape*100);
   END;
 
@@ -933,12 +968,12 @@ BEGIN
   -- This is almost a duplicate of the query in tg_getFilesToMigrate.
   SELECT /*+ FIRST_ROWS_1
              LEADING(MigrationJob CastorFile DiskCopy FileSystem DiskServer)
-             USE_NL(MMigrationJob CastorFile DiskCopy FileSystem DiskServer)
+             USE_NL(MigrationJob CastorFile DiskCopy FileSystem DiskServer)
              INDEX(CastorFile PK_CastorFile_Id)
              INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
              INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusCT) */
          MigrationJob.id mjId INTO varMigJobId
-    FROM MigrationJob, DiskCopy, FileSystem, DiskServer, CastorFile
+    FROM MigrationJob, DiskCopy, CastorFile
    WHERE MigrationJob.tapePool = inTapePoolId
      AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
      AND (minimumAge = 0 OR MigrationJob.creationTime < getTime() - minimumAge)
@@ -946,11 +981,24 @@ BEGIN
      AND CastorFile.id = DiskCopy.castorFile
      AND CastorFile.tapeStatus = dconst.CASTORFILE_NOTONTAPE
      AND DiskCopy.status = dconst.DISKCOPY_VALID
-     AND FileSystem.id = DiskCopy.fileSystem
-     AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
-     AND DiskServer.id = FileSystem.diskServer
-     AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
-     AND DiskServer.hwOnline = 1
+     AND EXISTS (SELECT 1 FROM FileSystem, DiskServer
+                  WHERE FileSystem.id = DiskCopy.fileSystem
+                    AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION,
+                                              dconst.FILESYSTEM_DRAINING,
+                                              dconst.FILESYSTEM_READONLY)
+                    AND DiskServer.id = FileSystem.diskServer
+                    AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                              dconst.DISKSERVER_DRAINING,
+                                              dconst.DISKSERVER_READONLY)
+                    AND DiskServer.hwOnline = 1
+                  UNION ALL
+                 SELECT 1 FROM DiskServer
+                  WHERE DiskServer.dataPool = diskCopy.dataPool
+                    AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                              dconst.DISKSERVER_DRAINING,
+                                              dconst.DISKSERVER_READONLY)
+                    AND DiskServer.hwOnline = 1
+                    AND ROWNUM < 2)
      AND ROWNUM < 2;
   -- The select worked out, create a mount for this tape pool
   INSERT INTO MigrationMount
@@ -1066,7 +1114,7 @@ END;
 CREATE OR REPLACE PROCEDURE insertRecallMount(inRecallGroupId IN NUMBER,
                                                         inVid IN VARCHAR2,
                                                 outMountCount OUT INTEGER) AS
-  varRjId INTEGER;
+  varUnused INTEGER;
 BEGIN
   -- We receive a candidate recall mount. Before actually posting the recall
   -- mount we will make sure at least one recall would be honored from the mount
@@ -1079,18 +1127,26 @@ BEGIN
 
   -- Last sanity check. Will give up automatically by means of exception, which
   -- will change the return value and log.
-  SELECT rj.id INTO varRjId
-    FROM RecallJob rj
-   INNER JOIN SvcClass sc ON sc.id = rj.svcClass
-   INNER JOIN DiskPool2SvcClass dpsc ON dpsc.child = sc.id
-   INNER JOIN FileSystem fs ON fs.diskPool = dpsc.parent
-   INNER JOIN DiskServer ds ON ds.id = fs.diskServer
-   WHERE rj.vid = inVid
-     AND rj.status = tconst.RECALLJOB_PENDING
-     AND fs.status = 0 /* FILESYSTEM_PRODUCTION */
-     AND ds.status = 0 /* DISKSERVER_PRODUCTION */
-     AND ds.hwonline =  1 /* BOOLEAN */
-     AND rownum < 2;
+  SELECT RecallJob.id INTO varUnused
+    FROM RecallJob, SvcClass
+   WHERE SvcClass.id = RecallJob.svcClass
+     AND RecallJob.vid = inVid
+     AND RecallJob.status = tconst.RECALLJOB_PENDING
+     AND EXISTS (SELECT 1 FROM DiskPool2SvcClass, FileSystem, DiskServer
+                  WHERE DiskPool2SvcClass.child = SvcClass.id
+                    AND FileSystem.diskPool = DiskPool2SvcClass.parent
+                    AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+                    AND DiskServer.id = FileSystem.diskServer
+                    AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+                    AND DiskServer.hwonline =  1
+                  UNION ALL
+                 SELECT 1 FROM DataPool2SvcClass, DiskServer
+                  WHERE DataPool2SvcClass.child = SvcClass.id
+                    AND DiskServer.dataPool = DataPool2SvcClass.parent
+                    AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+                    AND DiskServer.hwonline =  1
+                    AND ROWNUM < 2)
+     AND ROWNUM < 2;
   -- We passed the test, insert the recall mount:
   INSERT INTO RecallMount (id, VID, recallGroup, startTime, status)
        VALUES (ids_seq.nextval, inVid, inRecallGroupId, gettime(), tconst.RECALLMOUNT_NEW);
@@ -1230,11 +1286,10 @@ BEGIN
   -- Get candidates up to inCount or inTotalSize
   FOR Cand IN (
     SELECT /*+ FIRST_ROWS(100)
-               LEADING(Job CastorFile DiskCopy FileSystem DiskServer)
-               USE_NL(Job CastorFile DiskCopy FileSystem DiskServer)
-               INDEX(CastorFile PK_CastorFile_Id)
-               INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
-           Job.id mjId, DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path filePath,
+               LEADING(Job CastorFile Location)
+               USE_NL(Job CastorFile Location)
+               INDEX(CastorFile PK_CastorFile_Id) */
+           Job.id mjId, Location.filePath,
            CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, CastorFile.lastKnownFileName,
            Castorfile.id as castorfile
       FROM (SELECT * FROM
@@ -1245,16 +1300,36 @@ BEGIN
                  AND status = tconst.MIGRATIONJOB_PENDING
                ORDER BY creationTime)
              WHERE ROWNUM < TO_NUMBER(getConfigOption('Migration', 'NbMigCandConsidered', 10000)))
-           Job, CastorFile, DiskCopy, FileSystem, DiskServer
+           Job, CastorFile,
+           (SELECT /*+ LEADING(DiskCopy, FileSystem, DiskServer)
+                       USE_NL(DiskCopy, FileSystem, DiskServer)
+                       INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
+                   DiskCopy.castorFile,
+                   DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path AS filePath,
+                   FileSystem.nbRecallerStreams + FileSystem.nbMigratorStreams AS rate
+              FROM FileSystem, DiskServer, DiskCopy
+             WHERE DiskCopy.status = dconst.DISKCOPY_VALID
+               AND FileSystem.id = DiskCopy.fileSystem
+               AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION,
+                                         dconst.FILESYSTEM_DRAINING,
+                                         dconst.FILESYSTEM_READONLY)
+               AND DiskServer.id = FileSystem.diskServer
+               AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                         dconst.DISKSERVER_DRAINING,
+                                         dconst.DISKSERVER_READONLY)
+               AND DiskServer.hwOnline = 1
+             UNION ALL
+            SELECT DiskCopy.id, DiskServer.name || ':' || DiskCopy.path AS filePath, 0 AS rate
+              FROM DiskServer, DiskCopy
+             WHERE DiskCopy.status = dconst.DISKCOPY_VALID
+               AND DiskServer.dataPool = DiskCopy.dataPool
+               AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                         dconst.DISKSERVER_DRAINING,
+                                         dconst.DISKSERVER_READONLY)
+               AND DiskServer.hwOnline = 1) Location
      WHERE CastorFile.id = Job.castorFile
-       AND CastorFile.id = DiskCopy.castorFile
+       AND CastorFile.id = Location.castorFile
        AND CastorFile.tapeStatus = dconst.CASTORFILE_NOTONTAPE
-       AND DiskCopy.status = dconst.DISKCOPY_VALID
-       AND FileSystem.id = DiskCopy.fileSystem
-       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
-       AND DiskServer.id = FileSystem.diskServer
-       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
-       AND DiskServer.hwOnline = 1
        AND NOT EXISTS (SELECT /*+ USE_NL(MigratedSegment)
                                   INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ 1
                          FROM MigratedSegment
@@ -1265,7 +1340,7 @@ BEGIN
                 -- migrations younger than varOldestAccep2tableAge will be taken last
                 TRUNC(Job.creationTime/varOldestAcceptableAge) ASC,
                 -- and then, for all migrations between (N-1)*varOldestAge and N*varOldestAge, by filesystem load
-                FileSystem.nbRecallerStreams + FileSystem.nbMigratorStreams ASC)
+                Location.rate ASC)
   LOOP
     -- last part of the above statement. Could not be part of it as ORACLE insisted on not
     -- optimizing properly the execution plan
