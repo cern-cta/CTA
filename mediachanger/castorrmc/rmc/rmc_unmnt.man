@@ -72,7 +72,5 @@ Failed to parse ACS drive id.
 .TP
 .B SEINTERNAL
 Internal error
-.SH SEE ALSO
-.BR Cupvlist(1) ,
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>
