@@ -18,13 +18,10 @@ namespace daemon {
 template <class Task> class TapeSingleThreadInterface : private castor::tape::threading::Thread
 {
 protected:
-  class endOfSession: public Task {
-    virtual bool endOfWork() { return true; }
-  };
   castor::tape::threading::BlockingQueue<Task *> m_tasks;
   castor::tape::drives::DriveInterface & m_drive;
 public:
-  void finish() { m_tasks.push(new endOfSession); }
+  void finish() { m_tasks.push(NULL); }
   void push(Task * t) { m_tasks.push(t); }
   
   virtual void startThreads(){ start(); }

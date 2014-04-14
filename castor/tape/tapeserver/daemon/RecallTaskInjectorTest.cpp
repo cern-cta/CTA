@@ -48,7 +48,7 @@ public:
   }
    virtual void run () 
   {
-     m_tasks.push(new endOfSession);
+     m_tasks.push(NULL);
   }
   virtual void push(TapeReadTask* t){
     m_tasks.push(t);
@@ -94,7 +94,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
     
     //static_cast is needed otherwise compilation fails on SL5 with a raw NULL
     ASSERT_EQ(static_cast<DiskWriteTaskInterface*>(NULL),diskWriteTask);
-    ASSERT_EQ(true,tapeReadTask->endOfWork());
+    ASSERT_EQ(static_cast<TapeReadTask*>(NULL),tapeReadTask);
     delete diskWriteTask;
     delete tapeReadTask;
   }
