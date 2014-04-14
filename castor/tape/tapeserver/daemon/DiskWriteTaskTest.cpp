@@ -42,7 +42,7 @@ namespace unitTests{
       MemBlock* mb=mm.getFreeBlock();
       mb->m_fileid=0;
       mb->m_fileBlock=i;
-      mb->m_failled = (i==5) ? true : false;
+      mb->m_failed = (i==5) ? true : false;
       t.pushDataBlock(mb);
     }    
     MemBlock* mb=mm.getFreeBlock();

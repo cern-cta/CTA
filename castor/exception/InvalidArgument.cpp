@@ -31,5 +31,5 @@
 // -----------------------------------------------------------------------
 // Constructor
 // -----------------------------------------------------------------------
-castor::exception::InvalidArgument::InvalidArgument() :
-  castor::exception::Exception(EINVAL) {}
+castor::exception::InvalidArgument::InvalidArgument(const std::string& what) :
+  castor::exception::Exception(EINVAL, what) {}

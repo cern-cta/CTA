@@ -300,7 +300,7 @@ uint64_t files, uint64_t bytes, RequestReport& report)
   report.transactionId = ++m_transactionId;
   ftrReq.setMountTransactionId(m_request.volReqId);
   ftrReq.setAggregatorTransactionId(report.transactionId);
-  ftrReq.setMaxBytes(files);
+  ftrReq.setMaxFiles(files);
   ftrReq.setMaxBytes(bytes);
   // 2) Exchange messages with the server
   std::auto_ptr<tapegateway::GatewayMessage> resp(

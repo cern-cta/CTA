@@ -103,8 +103,7 @@ std::string castor::exception::bfdContext::collectExtraInfos(const std::string& 
           && file) {
         int status(-1);
         char * demangledFunc = abi::__cxa_demangle(func, NULL, NULL, &status);
-        result << "line " << line << " of file " << file
-               << " in " << (status?func:demangledFunc) << " (" << address << ")";
+        result << "at " << file << ":" << line << " (" << address << ")";
         free (demangledFunc);
       }
     }
