@@ -92,7 +92,7 @@ namespace castor {
         /**
          * virtual method to clone any object
          */
-        virtual castor::IObject* clone();
+        virtual FileToMigrateStruct* clone();
 
         /*********************************/
         /* End of IObject abstract class */
