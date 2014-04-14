@@ -190,11 +190,10 @@ BEGIN
   -- send one single alert to accelerate the processing of the request
   CASE
   WHEN inReqType = 35 OR   -- StageGetRequest
-       inReqType = 40 THEN -- StagePutRequest
-    alertSignalNoLock('wakeUpJobReqSvc');
-  WHEN inReqType = 36 OR   -- StagePrepareToGetRequest
+       inReqType = 40 OR   -- StagePutRequest
+       inReqType = 36 OR   -- StagePrepareToGetRequest
        inReqType = 37 THEN -- StagePrepareToPutRequest
-    alertSignalNoLock('wakeUpPrepReqSvc');
+    alertSignalNoLock('wakeUpJobReqSvc');
   WHEN inReqType = 42 OR   -- StageRmRequest
        inReqType = 39 OR   -- StagePutDoneRequest
        inReqType = 95 THEN -- SetFileGCWeight
