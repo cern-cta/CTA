@@ -41,6 +41,8 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::DebugMountSessionForVdqmProtocol(
+  const int argc,
+  char **const argv,
   const std::string &hostName,
   const legacymsg::RtcpJobRqstMsgBody &job,
   castor::log::Logger &logger,
@@ -49,6 +51,8 @@ castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::DebugMountSe
   Vmgr &vmgr) throw():
   m_netTimeout(5), // Timeout in seconds
   m_sessionPid(getpid()),
+  m_argc(argc),
+  m_argv(argv),
   m_hostName(hostName),
   m_job(job),
   m_log(logger),
@@ -61,6 +65,8 @@ castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::DebugMountSe
 // execute
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::execute() throw (castor::exception::Exception) {
+  changeProcessName();
+
   assignSessionPidToDrive();
 
   uint64_t clientMsgSeqNb = 0;
@@ -77,6 +83,14 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::execute
   if(NULL != volume.get()) {
     unmountTape(volume->vid());
   }
+}
+
+//------------------------------------------------------------------------------
+// changeProcessName
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::changeProcessName() throw() {
+  const size_t argv0Len = strlen(m_argv[0]);
+  strncpy(m_argv[0], "mtsession", argv0Len);
 }
 
 //------------------------------------------------------------------------------
@@ -343,6 +357,9 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::recallF
         log::Param("blockId2", (unsigned int)file->blockId2()),
         log::Param("blockId3", (unsigned int)file->blockId3())};
       m_log(LOG_INFO, "Pretending to recall file", params);
+
+      // Emulate the actual transfer by sleeping
+      ::sleep(1);
     }
   }
 

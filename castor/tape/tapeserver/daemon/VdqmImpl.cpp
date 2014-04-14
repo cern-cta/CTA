@@ -48,9 +48,9 @@ castor::tape::tapeserver::daemon::VdqmImpl::~VdqmImpl() throw() {
 }
 
 //------------------------------------------------------------------------------
-// setDriveStatusDown
+// setDriveDown
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::setDriveStatusDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmImpl::setDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_UNIT_DOWN;
@@ -68,9 +68,9 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setDriveStatusDown(const std::s
 }
 
 //------------------------------------------------------------------------------
-// setDriveStatusUp
+// setDriveUp
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::setDriveStatusUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmImpl::setDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_UNIT_UP;

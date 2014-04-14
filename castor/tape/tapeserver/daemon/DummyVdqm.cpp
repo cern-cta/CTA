@@ -42,15 +42,15 @@ castor::tape::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::Du
 }
 
 //------------------------------------------------------------------------------
-// setDriveStatusDown
+// setDriveDown
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyVdqm::setDriveStatusDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DummyVdqm::setDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
-// setDriveStatusUp
+// setDriveUp
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyVdqm::setDriveStatusUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DummyVdqm::setDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------

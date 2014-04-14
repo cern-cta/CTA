@@ -40,7 +40,7 @@ namespace daemon     {
  *
  * tapeserverd                         vdqm
  *      |                               |
- *      | setDriveStatusUp              |
+ *      | setDriveUp                    |
  *      |------------------------------>| Schedule drive
  *      |                               |------
  *      |                               |      |
@@ -84,7 +84,7 @@ public:
    * @param unitName The unit name of the tape drive. 
    * @param dgn The device group name of the tape drive.
    */
-  virtual void setDriveStatusDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) = 0;
+  virtual void setDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) = 0;
 
   /**
    * Sets the status of the specified tape drive to up.
@@ -94,7 +94,7 @@ public:
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
    */
-  virtual void setDriveStatusUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) = 0;
+  virtual void setDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) = 0;
 
   /**
    * Assigns the specified mount session process to the specified tape

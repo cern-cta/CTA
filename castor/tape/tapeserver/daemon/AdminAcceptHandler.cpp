@@ -333,12 +333,12 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeConfigJob(c
   const std::string dgn = m_driveCatalogue.getDgn(unitName);
 
   if(CONF_UP==body.status) {
-    m_vdqm.setDriveStatusUp(m_hostName, unitName, dgn);
+    m_vdqm.setDriveUp(m_hostName, unitName, dgn);
     m_driveCatalogue.configureUp(unitName);
     m_log(LOG_INFO, "Drive is up now");
   }
   else if(CONF_DOWN==body.status) {
-    m_vdqm.setDriveStatusDown(m_hostName, unitName, dgn);
+    m_vdqm.setDriveDown(m_hostName, unitName, dgn);
     m_driveCatalogue.configureDown(unitName);
     m_log(LOG_INFO, "Drive is down now");
   }

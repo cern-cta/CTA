@@ -52,7 +52,10 @@ public:
   /**
    * Constructor.
    *
-   * @param hostName The name of the host on which the tapeserverd daemon is running.
+   * @param argc The argc of main().
+   * @param argv The argv of main().
+   * @param hostName The name of the host on which the tapeserverd daemon is
+   * running.
    * @param job The job received from the vdwqmd daemon.
    * @param logger The interface to the CASTOR logging system.
    * @param tpConfig The contents of /etc/castor/TPCONFIG.
@@ -60,6 +63,8 @@ public:
    * @param vmgr The object representing the vmgrd daemon.
    */
   DebugMountSessionForVdqmProtocol(
+    const int argc,
+    char **const argv,
     const std::string &hostName,
     const legacymsg::RtcpJobRqstMsgBody &job,
     castor::log::Logger &logger,
@@ -83,6 +88,16 @@ private:
    * The ID of the mount-session process.
    */
   const pid_t m_sessionPid;
+
+  /**
+   * The argc of main().
+   */
+  const int m_argc;
+
+  /**
+   * The argv of main().
+   */
+  char **const m_argv;
 
   /**
    * The name of the host on which the tapeserverd daemon is running.
@@ -113,6 +128,11 @@ private:
    * The object representing the vmgrd daemon.
    */
   Vmgr &m_vmgr;
+
+  /**
+   * Changes the name of the process to reflect what the process is doing.
+   */
+  void changeProcessName() throw();
 
   /**
    * Tells the vdqm to assign the process ID of the mount session process to

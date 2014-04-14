@@ -55,6 +55,8 @@ public:
   /**
    * Constructor.
    *
+   * @param argc The argc of main().
+   * @param argv The argv of main().
    * @param stdOut Stream representing standard out.
    * @param stdErr Stream representing standard error.
    * @param log The object representing the API of the CASTOR logging system.
@@ -62,8 +64,14 @@ public:
    * @param reactor The reactor responsible for dispatching the I/O events of
    * the parent process of the tape server daemon.
    */
-  TapeDaemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &log,
-    Vdqm &vdqm, io::PollReactor &reactor) throw(castor::exception::Exception);
+  TapeDaemon(
+    const int argc,
+    char **const argv,
+    std::ostream &stdOut,
+    std::ostream &stdErr,
+    log::Logger &log,
+    Vdqm &vdqm,
+    io::PollReactor &reactor) throw(castor::exception::Exception);
 
   /**
    * Destructor.
@@ -188,6 +196,34 @@ protected:
   void reapZombies() throw();
 
   /**
+   * Reaps the specified zombie process.
+   *
+   * @param sessionPid The process ID of the zombie mount-session child-process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void reapZombie(const pid_t sessionPid, const int waitpidStat) throw();
+
+  /**
+   * Logs the fact that the specified mount-session child-process has terminated.
+   *
+   * @param sessionPid The process ID of the mount-session child-process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void logMountSessionProcessTerminated(const pid_t sessionPid, const int waitpidStat) throw();
+
+  /**
+   * Sets the state of the tape drive asscoiated with the specified
+   * mount-session process to down within the vdqmd daemon.
+   *
+   * If for any reason the state of the drive within the vdqmd daemon cannot
+   * be set to down, then this method logs an appropriate error message but
+   * does not throw an exception.
+   *
+   * @param sessionPid The process ID of the mount-session child-process.
+   */
+  void setDriveDownInVdqm(const pid_t sessionPid) throw();
+
+  /**
    * Forks a mount-session child-process for every tape drive entry in the
    * tape drive catalogue that is waiting for such a fork to be carried out.
    */
@@ -216,6 +252,17 @@ protected:
    * each tape drive being controlled by the tapeserverd daemon.
    */
   DriveCatalogue m_driveCatalogue;
+
+  
+  /**
+   * The argc of main().
+   */
+  const int m_argc;
+
+  /**
+   * The argv of main().
+   */
+  char **const m_argv;
 
   /**
    * The object representing the vdqmd daemon.

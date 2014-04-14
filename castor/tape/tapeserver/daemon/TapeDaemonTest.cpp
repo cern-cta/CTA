@@ -49,6 +49,10 @@ protected:
 TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   using namespace castor::tape::tapeserver::daemon;
 
+  int argc = 1;
+  char argv0[1024];
+  memset(argv0, '\0', sizeof(argv0));
+  char *argv[2] = {argv0, NULL};
   std::ostringstream stdOut;
   std::ostringstream stdErr;
   const std::string programName = "unittests";
@@ -67,7 +71,7 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   std::auto_ptr<TapeDaemon> daemon;
 
   ASSERT_NO_THROW(daemon.reset(
-    new TapeDaemon(stdOut, stdErr, log, vdqm, reactor)));
+    new TapeDaemon(argc, argv, stdOut, stdErr, log, vdqm, reactor)));
 }
 
 } // namespace unitTests

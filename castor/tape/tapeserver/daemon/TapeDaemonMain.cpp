@@ -56,7 +56,7 @@ int main(const int argc, char **const argv) {
   const int netTimeout = 10; // Timeout in seconds
   VdqmImpl vdqm(log, vdqmHostName, VDQM_PORT, netTimeout);
   castor::io::PollReactorImpl reactor(log);
-  TapeDaemon daemon(std::cout, std::cerr, log, vdqm, reactor);
+  TapeDaemon daemon(argc, argv, std::cout, std::cerr, log, vdqm, reactor);
 
   return daemon.main(argc, argv);
 }

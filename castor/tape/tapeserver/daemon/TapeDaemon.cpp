@@ -48,10 +48,20 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
-  std::ostream &stdOut, std::ostream &stdErr, log::Logger &log, Vdqm &vdqm,
+  const int argc,
+  char **const argv,
+  std::ostream &stdOut,
+  std::ostream &stdErr,
+  log::Logger &log,
+  Vdqm &vdqm,
   io::PollReactor &reactor) throw(castor::exception::Exception):
-  castor::server::Daemon(stdOut, stdErr, log), m_vdqm(vdqm), m_reactor(reactor),
-  m_programName("tapeserverd"), m_hostName(getHostName()) {
+  castor::server::Daemon(stdOut, stdErr, log),
+  m_argc(argc),
+  m_argv(argv),
+  m_vdqm(vdqm),
+  m_reactor(reactor),
+  m_programName("tapeserverd"),
+  m_hostName(getHostName()) {
 }
 
 //------------------------------------------------------------------------------
@@ -240,12 +250,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   case DriveCatalogue::DRIVE_STATE_DOWN:
     params.push_back(log::Param("state", "down"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.setDriveStatusDown(m_hostName, unitName, dgn);
+    m_vdqm.setDriveDown(m_hostName, unitName, dgn);
     break;
   case DriveCatalogue::DRIVE_STATE_UP:
     params.push_back(log::Param("state", "up"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.setDriveStatusUp(m_hostName, unitName, dgn);
+    m_vdqm.setDriveUp(m_hostName, unitName, dgn);
     break;
   default:
     {
@@ -400,16 +410,102 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handlePendingSignals()
 // reapZombies
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::reapZombies() throw() {
-  pid_t childPid = 0;
-  int stat = 0;
+  pid_t sessionPid = 0;
+  int waitpidStat = 0;
 
-  while (0 < (childPid = waitpid(-1, &stat, WNOHANG))) {
+  while (0 < (sessionPid = waitpid(-1, &waitpidStat, WNOHANG))) {
+    reapZombie(sessionPid, waitpidStat);
+  }
+}
+
+//------------------------------------------------------------------------------
+// reapZombie
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::reapZombie(const pid_t sessionPid, const int waitpidStat) throw() {
+  logMountSessionProcessTerminated(sessionPid, waitpidStat);
+
+  log::Param params[] = {log::Param("sessionPid", sessionPid)};
+
+  if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
+    m_driveCatalogue.mountSessionSucceeded(sessionPid);
+    m_log(LOG_INFO, "Mount session succeeded", params);
+  } else {
+    m_driveCatalogue.mountSessionFailed(sessionPid);
+    setDriveDownInVdqm(sessionPid);
+    m_log(LOG_INFO, "Mount session failed", params);
+  }
+}
+
+//------------------------------------------------------------------------------
+// logMountSessionProcessTerminated
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::logMountSessionProcessTerminated(const pid_t sessionPid, const int waitpidStat) throw() {
+  std::list<log::Param> params;
+  params.push_back(log::Param("sessionPid", sessionPid));
+
+  if(WIFEXITED(waitpidStat)) {
+    params.push_back(log::Param("WEXITSTATUS", WEXITSTATUS(waitpidStat)));
+  }
+
+  if(WIFSIGNALED(waitpidStat)) {
+    params.push_back(log::Param("WTERMSIG", WTERMSIG(waitpidStat)));
+  }
+
+  if(WCOREDUMP(waitpidStat)) {
+    params.push_back(log::Param("WCOREDUMP", "true"));
+  } else {
+    params.push_back(log::Param("WCOREDUMP", "false"));
+  }
+
+  if(WIFSTOPPED(waitpidStat)) {
+    params.push_back(log::Param("WSTOPSIG", WSTOPSIG(waitpidStat)));
+  }
+
+  if(WIFCONTINUED(waitpidStat)) {
+    params.push_back(log::Param("WIFCONTINUED", "true"));
+  } else {
+    params.push_back(log::Param("WIFCONTINUED", "false"));
+  }
+
+  m_log(LOG_INFO, "Mount-session child-process terminated", params);
+}
+
+//------------------------------------------------------------------------------
+// setDriveDownInVdqm
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(const pid_t sessionPid) throw() {
+  std::string unitName;
+  try {
+    unitName = m_driveCatalogue.getUnitName(sessionPid);
+  } catch(castor::exception::Exception &ex) {
     log::Param params[] = {
-      log::Param("childPid", childPid),
-      log::Param("WIFEXITED", WIFEXITED(stat)),
-      log::Param("WEXITSTATUS", WEXITSTATUS(stat)),
-      log::Param("WIFSIGNALED", WIFSIGNALED(stat))};
-    m_log(LOG_INFO, "Child process terminated", params);
+      log::Param("sessionPid", sessionPid),
+      log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "Failed to set tape-drive down in vdqm: Failed to get unit-name", params);
+    return;
+  }
+
+  std::string dgn;
+  try {
+    dgn = m_driveCatalogue.getDgn(unitName);
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {
+      log::Param("sessionPid", sessionPid),
+      log::Param("unitName", unitName),
+      log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "Failed to set tape-drive down in vdqm: Failed to get DGN", params);
+    return;
+  }
+
+  try {
+    m_vdqm.setDriveDown(m_hostName, unitName, dgn);
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {
+      log::Param("sessionPid", sessionPid),
+      log::Param("unitName", unitName),
+      log::Param("dgn", dgn),
+      log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "Failed to set tape-drive down in vdqm", params);
   }
 }
 
@@ -474,7 +570,15 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mountSession(const std::strin
     const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getJob(unitName);
     const utils::TpconfigLines tpConfig;
     VmgrImpl vmgr;
-    DebugMountSessionForVdqmProtocol mountSession(m_hostName, job, m_log, tpConfig, m_vdqm, vmgr);
+    DebugMountSessionForVdqmProtocol mountSession(
+      m_argc,
+      m_argv,
+      m_hostName,
+      job,
+      m_log,
+      tpConfig,
+      m_vdqm,
+      vmgr);
 
     mountSession.execute();
 
