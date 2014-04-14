@@ -47,10 +47,19 @@ public:
    * @param numberOfBlocks: number of blocks to allocate
    * @param blockSize: size of each block
    */
-  MemoryManager(const size_t numberOfBlocks, const size_t blockSize) throw(castor::exception::Exception) : m_totalNumberOfBlocks(numberOfBlocks) {
+  MemoryManager(const size_t numberOfBlocks, const size_t blockSize) throw(castor::exception::Exception) : 
+  m_blockCapacity(blockSize),m_totalNumberOfBlocks(numberOfBlocks) {
     for (size_t i = 0; i < numberOfBlocks; i++) {
       m_freeBlocks.push(new MemBlock(i, blockSize));
     }
+  }
+  
+  /**
+   * 
+   * @return the nominal capacity of one block 
+   */
+  size_t blockCapacity(){
+    return m_blockCapacity;
   }
   
   /**
@@ -132,6 +141,8 @@ private:
       return true;
     }
   };
+  
+  const size_t m_blockCapacity;
   
   /**
    * Total number of allocated memory blocks
