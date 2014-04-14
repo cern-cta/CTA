@@ -1,11 +1,13 @@
 add_executable(tapeserverd
+  AdminAcceptHandler.cpp
   DebugMountSessionForVdqmProtocol.cpp
   DriveCatalogue.cpp
+  Rmc.cpp
+  RmcImpl.cpp
   TapeDaemon.cpp
   TapeDaemonMain.cpp
   Vdqm.cpp
   VdqmAcceptHandler.cpp
-  AdminAcceptHandler.cpp
   VdqmConnectionHandler.cpp
   VdqmImpl.cpp
   Vmgr.cpp

@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/DummyVmgr.hpp
+ *                castor/tape/tapeserver/daemon/Rmc.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,10 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/Vmgr.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
+
+#include <sys/types.h>
 
 namespace castor     {
 namespace tape       {
@@ -30,19 +33,17 @@ namespace tapeserver {
 namespace daemon     {
 
 /**
- * A dummy vmgr proxy.
- *
- * The main goal of this class is to facilitate the development of unit tests.
+ * Proxy class representing the remote media-changer daemon.
  */
-class DummyVmgr: public Vmgr {
+class Rmc {
 public:
 
   /**
    * Destructor.
    */
-  ~DummyVmgr() throw();
+  virtual ~Rmc() throw() = 0;
 
-}; // class DummyVmgr
+}; // class Rmc
 
 } // namespace daemon
 } // namespace tapeserver

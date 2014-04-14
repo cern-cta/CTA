@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/DummyVmgr.hpp
+ *         castor/tape/tapeserver/daemon/RmcImpl.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/Vmgr.hpp"
+#include "castor/tape/tapeserver/daemon/Rmc.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -30,19 +30,17 @@ namespace tapeserver {
 namespace daemon     {
 
 /**
- * A dummy vmgr proxy.
- *
- * The main goal of this class is to facilitate the development of unit tests.
+ * A concrete implementation of the interface to the rmc daemon.
  */
-class DummyVmgr: public Vmgr {
+class RmcImpl: public Rmc {
 public:
 
   /**
    * Destructor.
    */
-  ~DummyVmgr() throw();
+  ~RmcImpl() throw();
 
-}; // class DummyVmgr
+}; // class RmcImpl
 
 } // namespace daemon
 } // namespace tapeserver

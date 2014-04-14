@@ -48,7 +48,8 @@ castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::DebugMountSe
   castor::log::Logger &logger,
   const utils::TpconfigLines &tpConfig,
   Vdqm &vdqm,
-  Vmgr &vmgr) throw():
+  Vmgr &vmgr,
+  Rmc &rmc) throw():
   m_netTimeout(5), // Timeout in seconds
   m_sessionPid(getpid()),
   m_argc(argc),
@@ -58,7 +59,8 @@ castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::DebugMountSe
   m_log(logger),
   m_tpConfig(tpConfig),
   m_vdqm(vdqm),
-  m_vmgr(vmgr) {
+  m_vmgr(vmgr),
+  m_rmc(rmc) {
 }
 
 //------------------------------------------------------------------------------

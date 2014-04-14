@@ -31,7 +31,7 @@ namespace tapeserver {
 namespace daemon     {
 
 /**
- * A dummy vdqm.
+ * A dummy vdqm proxy.
  *
  * The main goal of this class is to facilitate the development of unit tests.
  */

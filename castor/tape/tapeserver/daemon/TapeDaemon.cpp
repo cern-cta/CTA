@@ -29,6 +29,7 @@
 #include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/DebugMountSessionForVdqmProtocol.hpp"
+#include "castor/tape/tapeserver/daemon/RmcImpl.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/VmgrImpl.hpp"
@@ -570,6 +571,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mountSession(const std::strin
     const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getJob(unitName);
     const utils::TpconfigLines tpConfig;
     VmgrImpl vmgr;
+    RmcImpl rmc;
     DebugMountSessionForVdqmProtocol mountSession(
       m_argc,
       m_argv,
@@ -578,7 +580,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mountSession(const std::strin
       m_log,
       tpConfig,
       m_vdqm,
-      vmgr);
+      vmgr,
+      rmc);
 
     mountSession.execute();
 

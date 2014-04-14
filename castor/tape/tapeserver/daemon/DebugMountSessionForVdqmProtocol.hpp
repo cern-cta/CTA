@@ -29,6 +29,7 @@
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/tapeserver/daemon/Rmc.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 #include "castor/tape/tapeserver/daemon/Vmgr.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -61,6 +62,7 @@ public:
    * @param tpConfig The contents of /etc/castor/TPCONFIG.
    * @param vdqm The object representing the vdqmd daemon.
    * @param vmgr The object representing the vmgrd daemon.
+   * @param rmc The object representing the rmcd daemon.
    */
   DebugMountSessionForVdqmProtocol(
     const int argc,
@@ -70,7 +72,8 @@ public:
     castor::log::Logger &logger,
     const utils::TpconfigLines &tpConfig,
     Vdqm &vdqm,
-    Vmgr &vmgr) throw();
+    Vmgr &vmgr,
+    Rmc &rmc) throw();
 
   /**
    * The only method. It will execute (like a task, that it is)
@@ -128,6 +131,11 @@ private:
    * The object representing the vmgrd daemon.
    */
   Vmgr &m_vmgr;
+
+  /**
+   * The object representing the rmcd daemon.
+   */
+  Rmc &m_rmc;
 
   /**
    * Changes the name of the process to reflect what the process is doing.
