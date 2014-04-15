@@ -164,13 +164,6 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* reque
     }
   } catch(castor::exception::Exception &ex) {
     try {
-      // "Exception caught while handling request"
-      castor::dlf::Param params[] =
-        {castor::dlf::Param("Function", "JobRequestSvcThread::process"),
-         castor::dlf::Param("ErrorCode", ex.code()),
-         castor::dlf::Param("ErrorMessage", ex.getMessageValue()),
-         castor::dlf::Param("BackTrace", ex.backtrace())};
-      castor::dlf::dlf_writep(sr->requestUuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT2, 4, params, &cnsFileid);
       // fail subrequest in the DB
       bool isLastAnswer = updateAndCheckSubRequest(sr->srId, SUBREQUEST_FAILED_FINISHED);
       // inform the client about the error
