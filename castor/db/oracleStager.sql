@@ -3164,6 +3164,7 @@ CREATE OR REPLACE FUNCTION handleRawPutOrPPut(inCfId IN INTEGER, inSrId IN INTEG
                                               inReqUUID IN VARCHAR2, inSrUUID IN VARCHAR2,
                                               inDoSchedule IN BOOLEAN, inNsOpenTime IN INTEGER)
 RETURN INTEGER AS
+  varReqId INTEGER;
 BEGIN
   -- check that no concurrent put is already running
   DECLARE
@@ -3255,7 +3256,8 @@ BEGIN
          SET diskCopy = varDcId, lastModificationTime = getTime(),
              status = dconst.SUBREQUEST_READY,
              answered = 1
-       WHERE id = inSrId;
+       WHERE id = inSrId
+      RETURNING request INTO varReqId;
     END IF;
     -- reset the castorfile size, lastUpdateTime and nsOpenTime as the file was truncated
     UPDATE CastorFile
@@ -3271,9 +3273,9 @@ BEGIN
     DECLARE
       varRemainingSR INTEGER;
     BEGIN
-      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Request)*/ 1 INTO result
+      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Request)*/ 1 INTO varRemainingSR
         FROM SubRequest
-       WHERE request = reqId
+       WHERE request = varReqId
          AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
          AND answered = 0
          AND ROWNUM < 2;
