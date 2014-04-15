@@ -74,7 +74,7 @@ namespace daemon {
 
     std::auto_ptr<castor::tape::tapeFile::WriteFile> output;
     try{
-     output.reset(new tape::tapeFile::WriteFile(&session, *m_fileToMigrate));
+     output.reset(new tape::tapeFile::WriteFile(&session, *m_fileToMigrate,m_memManager.blockCapacity()));
      lc.log(LOG_DEBUG, "Successfully opened the tape file for writing");
     }catch(const castor::exception::Exception & ex){
       lc.log(LOG_ERR, "Failed to open tape file for writing");
@@ -99,7 +99,7 @@ namespace daemon {
           lc.log(LOG_ERR,"received a bad block for writing");
           throw castor::tape::Exception("received a bad block for writing");
         }
-        mb->m_payload.write(output);
+        mb->m_payload.write(*output);
         ++blockId;
       }
     }
