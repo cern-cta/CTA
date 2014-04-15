@@ -44,7 +44,7 @@ DECLARE
 BEGIN
   SELECT release INTO unused FROM CastorVersion
    WHERE schemaName = 'STAGER'
-     AND release LIKE '2_1_14_11%';
+     AND release LIKE '2_1_14_1%';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we cannot apply this script
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the STAGER before this one.');
@@ -73,6 +73,8 @@ END;
 
 /* Drop updates from Type2Obj and redirect PrepareTo requests */
 DELETE FROM Type2Obj WHERE type in (38, 44, 147);
+DELETE FROM WhiteList WHERE reqType IN (38, 44, 147);
+DELETE FROM BlackList WHERE reqType IN (38, 44, 147);
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (36, 37);
 
 /* drop updates */
@@ -81,6 +83,14 @@ DROP TABLE StageUpdateRequest;
 DROP TABLE FirstByteWritten;
 DROP PROCEDURE FirstByteWrittenProc;
 DROP PROCEDURE handleProtoNoUpd;
+DROP PROCEDURE getBestDiskCopyToRead;
+DROP PROCEDURE getUpdateDoneProc;
+DROP PROCEDURE getUpdateStart;
+DROP PROCEDURE getUpdateFailedProc;
+DROP PROCEDURE getUpdateFailedProcExt;
+DROP PROCEDURE prepareForMigration;
+DROP PROCEDURE putFailedProc;
+DROP PROCEDURE putFailedProcExt;
 
 /* add DataPools */
 CREATE TABLE DataPool
@@ -149,6 +159,6 @@ BEGIN recompileAll(); END;
 
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
-UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
- WHERE release = '2_1_14_2';
+UPDATE UpgradeLog SET endDate = SYSTIMESTAMP, state = 'COMPLETE'
+ WHERE release = '2_1_15_0';
 COMMIT;

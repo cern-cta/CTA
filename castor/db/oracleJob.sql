@@ -9,8 +9,9 @@
 /* PL/SQL method implementing putStart */
 CREATE OR REPLACE PROCEDURE putStart
         (srId IN INTEGER, selectedDiskServer IN VARCHAR2, selectedMountPoint IN VARCHAR2,
-         rdcId OUT INTEGER, rdcStatus OUT INTEGER, rdcPath OUT VARCHAR2) AS
+         outPath OUT VARCHAR2) AS
   varCfId INTEGER;
+  varDcId INTEGER;
   srStatus INTEGER;
   srSvcClass INTEGER;
   fsId INTEGER := NULL;
@@ -21,18 +22,20 @@ CREATE OR REPLACE PROCEDURE putStart
   varHwOnline INTEGER;
   prevFsId INTEGER;
   prevDPId INTEGER;
+  varFileId INTEGER;
+  varNsHost VARCHAR2(100);
 BEGIN
-  -- Get diskCopy and subrequest related information
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
-         SubRequest.castorFile, SubRequest.diskCopy, SubRequest.status, DiskCopy.fileSystem,
-         DiskCopy.dataPool, Request.svcClass
-    INTO varCfId, rdcId, srStatus, prevFsId, prevDPId, srSvcClass
-    FROM SubRequest, DiskCopy,
-         (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ id, svcClass FROM StagePutRequest UNION ALL
-          SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClass FROM StageGetRequest) Request
+  -- Get data and lock castorfile
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id) */
+         SubRequest.castorFile, DiskCopy.id, SubRequest.status, DiskCopy.fileSystem,
+         DiskCopy.dataPool, Request.svcClass, CastorFile.fileId, CastorFile.nsHost
+    INTO varCfId, varDcId, srStatus, prevFsId, prevDPId, srSvcClass, varFileid, varNsHost
+    FROM SubRequest, DiskCopy, StagePutRequest Request, CastorFile
    WHERE SubRequest.diskcopy = Diskcopy.id
      AND SubRequest.id = srId
-     AND SubRequest.request = Request.id;
+     AND SubRequest.request = Request.id
+     AND CastorFile.id = SubRequest.castorFile
+     FOR UPDATE OF CastorFile.id;
   -- Check that we did not cancel the SubRequest in the mean time
   IF srStatus IN (dconst.SUBREQUEST_FAILED, dconst.SUBREQUEST_FAILED_FINISHED) THEN
     raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
@@ -73,27 +76,24 @@ BEGIN
          fileSystem = fsId,
          dataPool = dpId,
          nbCopyAccesses = nbCopyAccesses + 1
-   WHERE id = rdcId
-   RETURNING status, path
-   INTO rdcStatus, rdcPath;
+   WHERE id = varDcId
+   RETURNING path INTO outPath;
+  -- Log successful completion
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_PUTSTART, varFileId, varNsHost, 'stagerd', '');
 EXCEPTION WHEN NO_DATA_FOUND THEN
-   raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
+  raise_application_error(-20104, 'SubRequest canceled while queuing in scheduler. Giving up.');
 END;
 /
 
-
-/* PL/SQL method implementing getUpdateStart */
-CREATE OR REPLACE PROCEDURE getUpdateStart
+/* PL/SQL method implementing getStart */
+CREATE OR REPLACE PROCEDURE getStart
         (srId IN INTEGER, selectedDiskServer IN VARCHAR2, selectedMountPoint IN VARCHAR2,
-         dci OUT INTEGER, rpath OUT VARCHAR2, rstatus OUT NUMBER, reuid OUT INTEGER,
-         regid OUT INTEGER, diskCopySize OUT NUMBER) AS
-  cfid INTEGER;
-  fid INTEGER;
+         outPath OUT VARCHAR2, outIsEmpty OUT INTEGER) AS
+  cfId INTEGER;
   dcId INTEGER;
   fsId INTEGER := NULL;
   varDsId INTEGER := NULL;
   dpId INTEGER := NULL;
-  dcIdInReq INTEGER;
   nh VARCHAR2(2048);
   fileSize INTEGER;
   srSvcClass INTEGER;
@@ -105,21 +105,22 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
   fsStatus INTEGER := dconst.FILESYSTEM_PRODUCTION;
   dsStatus INTEGER;
   varHwOnline INTEGER;
+  varDiskCopySize INTEGER;
+  varDcStatus INTEGER;
+  varFileId INTEGER;
+  varNsHost VARCHAR2(100);
 BEGIN
-  -- Get data
+  -- Get data and take a lock on the CastorFile. Associated with triggers,
+  -- this guarantees we are the only ones dealing with its copies
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)
              INDEX(StageGetRequest PK_StageGetRequest_Id) */
-         euid, egid, svcClass, diskCopy
-    INTO reuid, regid, srSvcClass, dcIdInReq
-    FROM SubRequest, StageGetRequest
-   WHERE SubRequest.request = StageGetRequest.id AND SubRequest.id = srId;
-  -- Take a lock on the CastorFile. Associated with triggers,
-  -- this guarantees we are the only ones dealing with its copies
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ CastorFile.fileSize, CastorFile.id
-    INTO fileSize, cfId
-    FROM CastorFile, SubRequest
+         CastorFile.fileSize, CastorFile.id,
+         Req.svcClass, CastorFile.fileId, CastorFile.nsHost
+    INTO fileSize, cfId, srSvcClass, varFileId, varNsHost
+    FROM CastorFile, SubRequest, StageGetRequest Req
    WHERE CastorFile.id = SubRequest.castorFile
-     AND SubRequest.id = srId FOR UPDATE OF CastorFile;
+     AND SubRequest.request = Req.id
+     AND SubRequest.id = srId FOR UPDATE OF CastorFile.id;
   -- Get selected filesystem/datapool
   IF selectedMountPoint IS NULL THEN
     SELECT dataPool, status, hwOnline, id
@@ -175,14 +176,19 @@ BEGIN
          lastAccessTime = getTime(),
          nbCopyAccesses = nbCopyAccesses + 1
    WHERE id = dcId
-  RETURNING id, path, status, diskCopySize INTO dci, rpath, rstatus, diskCopySize;
-  -- Let's update the SubRequest and set the link with the DiskCopy
+  RETURNING path, status, diskCopySize
+    INTO outPath, varDcStatus, varDiskCopySize;
+  -- Update the SubRequest and set the link with the DiskCopy
   UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-     SET DiskCopy = dci, DiskServer = varDsId
-   WHERE id = srId RETURNING protocol INTO proto;
+     SET diskCopy = dcId
+   WHERE id = srId;
+  -- Deal with recalls of empty files
+  outIsEmpty := CASE WHEN varDcStatus = dconst.DISKCOPY_VALID AND varDiskCopySize = 0 THEN 1 ELSE 0 END;
+  -- Log successful completion
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETSTART, varFileId, varNsHost, 'stagerd', '');
 EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- No disk copy found on selected FileSystem/DataPool.
-  -- A diskcopy was available and got disabled before this job
+  -- No disk copy found on selected FileSystem. This can happen if
+  -- a diskcopy was available and got disabled before this job
   -- was scheduled. Bad luck, we fail the request, the user will have to retry
   UPDATE SubRequest
      SET status = dconst.SUBREQUEST_FAILED, errorCode = 1725, errorMessage = 'Request canceled while queuing'
@@ -191,6 +197,203 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
   raise_application_error(-20114, 'File invalidated while queuing in the scheduler, please try again');
 END;
 /
+
+/* PL/SQL method implementing getEnded. The transfer is considered successful iff errno = 0 */
+CREATE OR REPLACE PROCEDURE getEnded(srId IN NUMBER, errno IN NUMBER, errmsg IN VARCHAR2) AS
+  varCfId INTEGER;
+  varSrUuid VARCHAR2(100);
+  varFileId INTEGER;
+  varNsHost VARCHAR2(100);
+BEGIN
+  -- Update the subrequest
+  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+     SET status = CASE WHEN errno > 0 THEN dconst.SUBREQUEST_FAILED ELSE dconst.SUBREQUEST_FINISHED END,
+         errorCode = errno,
+         errorMessage = errmsg
+   WHERE id = srId
+  RETURNING castorFile, subReqId INTO varCfId, varSrUuid;
+  -- Wake up other waiting subrequests
+  UPDATE SubRequest
+     SET status = dconst.SUBREQUEST_RESTART,
+         lastModificationTime = getTime()
+   WHERE castorFile = varCfId
+     AND status = dconst.SUBREQUEST_WAITSUBREQ;
+  -- for logging purposes
+  SELECT fileId, nsHost INTO varFileId, varNsHost
+    FROM CastorFile
+   WHERE id = varCfId;
+  IF errno = 0 THEN
+    -- no error, archive and log
+    archiveSubReq(srId, 8);  -- FINISHED
+    logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETENDED, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| varSrUuid);
+  ELSE
+    -- request failed, log
+    logToDLF(NULL, dlf.LVL_ERROR, dlf.STAGER_GETENDED, varFileId, varNsHost, 'stagerd',
+      'SUBREQID='|| varSrUuid ||' errorMessage="'|| errmsg ||'"" errorCode='|| errno);
+  END IF;
+END;
+/
+
+/* PL/SQL method implementing putEnded.
+ * If inoutErrorMsg is not NULL, the write operation is failed and inFileSize, inNewTimeStamp,
+ * inCksumType and inCksumValue are ignored.
+ */
+CREATE OR REPLACE PROCEDURE putEnded (srId IN INTEGER,
+                                      inFileSize IN INTEGER,
+                                      inNewTimeStamp IN NUMBER,
+                                      inCksumType IN VARCHAR2,
+                                      inCksumValue IN VARCHAR2,
+                                      inoutErrorCode IN OUT INTEGER,
+                                      inoutErrorMsg IN OUT VARCHAR2) AS
+  cfId INTEGER;
+  dcId INTEGER;
+  svcId INTEGER;
+  varRealFileSize INTEGER;
+  unused INTEGER;
+  contextPIPP INTEGER;
+  varLastUpdTime NUMBER;
+  varLastOpenTime NUMBER;
+  varSrUuid VARCHAR2(100);
+  varMsg VARCHAR2(2048) := '';
+  varFileId INTEGER;
+  varNsHost VARCHAR(2048);
+BEGIN
+  -- Get CastorFile
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ castorFile, diskCopy, subReqId INTO cfId, dcId, varSrUuid
+    FROM SubRequest WHERE id = srId;
+  -- Lock the CastorFile and get the fileid and name server host
+  SELECT id, fileid, nsHost, nvl(lastUpdateTime, 0), nsOpenTime
+    INTO cfId, varFileId, varNsHost, varLastUpdTime, varLastOpenTime
+    FROM CastorFile WHERE id = cfId FOR UPDATE;
+  -- Determine the context (Put inside PrepareToPut or not)
+  BEGIN
+    -- Check that there is a PrepareToPut going on. There can be only a
+    -- single one or none. If there was a PrepareTo, any subsequent PPut would be rejected
+    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile) INDEX(PReq PK_StagePrepareToPutRequest_Id) */
+           SubRequest.id INTO unused
+      FROM SubRequest, StagePrepareToPutRequest PReq
+     WHERE SubRequest.CastorFile = cfId
+       AND PReq.id = SubRequest.request
+       AND SubRequest.status = dconst.SUBREQUEST_READY;
+    -- If we got here, we are a Put inside a PrepareToPut
+    contextPIPP := 0;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- Here we are a standalone Put
+    contextPIPP := 1;
+  END;
+
+  -- Failure upstream?
+  IF inoutErrorCode > 0 THEN
+    -- fail the subRequest
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+       SET status = dconst.SUBREQUEST_FAILED,
+           errorCode = inoutErrorCode,
+           errorMessage = inoutErrorMsg
+     WHERE id = srId;
+    IF contextPIPP != 0 THEN
+      -- On a standalone put cleanup DiskCopy and maybe the CastorFile
+      -- (the physical file is dropped by the job)
+      DELETE FROM DiskCopy WHERE id = dcId;
+      deleteCastorFile(cfId);
+    END IF;
+    logToDLF(NULL, dlf.LVL_ERROR, dlf.STAGER_PUTENDED, varFileId, varNsHost, 'stagerd',
+      'SUBREQID='|| varSrUuid ||' errorMessage="'|| inoutErrorMsg ||'" errorCode='|| inoutErrorCode);
+    RETURN;
+  END IF;
+  -- Check whether the diskCopy is still in STAGEOUT. If not, the file
+  -- was deleted via stageRm while being written to. Thus, we should just give up
+  BEGIN
+    SELECT status INTO unused
+      FROM DiskCopy WHERE id = dcId AND status = dconst.DISKCOPY_STAGEOUT;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- So we are in the case, we give up
+    logToDLF(NULL, dlf.LVL_USER_ERROR, dlf.STAGER_DELETED_WRITTENTO, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| varSrUuid);
+    -- and fail the subRequest
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+       SET status = dconst.SUBREQUEST_FAILED,
+           errorCode = serrno.EBUSY,
+           errorMessage = dlf.STAGER_DELETED_WRITTENTO
+     WHERE id = srId;
+    IF contextPIPP != 0 THEN
+      -- On a standalone put cleanup DiskCopy and maybe the CastorFile
+      -- (the physical file is dropped by the job)
+      DELETE FROM DiskCopy WHERE id = dcId;
+      deleteCastorFile(cfId);
+    END IF;
+    RETURN;
+  END;
+  -- Check if the timestamps allow us to update
+  IF inNewTimeStamp >= varLastUpdTime THEN
+    -- Now we can safely update CastorFile's file size and time stamps
+    UPDATE CastorFile SET fileSize = inFileSize, lastUpdateTime = inNewTimeStamp
+     WHERE id = cfId;
+  END IF;
+  -- If ts < lastUpdateTime, we were late and another job already updated the
+  -- CastorFile. So we nevertheless retrieve the real file size.
+  SELECT fileSize INTO varRealFileSize FROM CastorFile WHERE id = cfId;
+  -- Now close the file on the Nameserver
+  BEGIN
+    closex@remoteNS(varFileId, varRealFileSize, inCksumType, inCksumValue, inNewTimeStamp, varLastOpenTime, inoutErrorCode, varMsg);
+    IF inoutErrorCode = 0 THEN
+      logToDLF(NULL, dlf.LVL_SYSTEM, dlf.NS_PROCESSING_COMPLETE, varFileId, varNsHost, 'nsd', varMsg || ' SUBREQID='|| varSrUuid);
+    ELSE
+      -- Nameserver error: log and fail the entire operation
+      logToDLF(NULL, dlf.LVL_USER_ERROR, dlf.NS_CLOSEX_ERROR, varFileId, varNsHost, 'nsd', 'errorMessage="' || varMsg ||'" SUBREQID='|| varSrUuid);
+      inoutErrorMsg := varMsg;
+    END IF;
+  EXCEPTION WHEN OTHERS THEN
+    inoutErrorCode := serrno.SEINTERNAL;
+    inoutErrorMsg := 'Internal error closing file in the Nameserver';
+    logToDLF(NULL, dlf.LVL_ERROR, dlf.NS_CLOSEX_ERROR, varFileId, varNsHost, 'nsd', 'errorMessage="' || SQLERRM ||'" SUBREQID='|| varSrUuid);
+  END;
+  IF inoutErrorCode != 0 THEN
+    -- fail the subRequest
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+       SET status = dconst.SUBREQUEST_FAILED,
+           errorCode = inoutErrorCode,
+           errorMessage = varMsg
+     WHERE id = srId;
+    IF contextPIPP != 0 THEN
+      -- On a standalone put cleanup DiskCopy and maybe the CastorFile
+      -- (the physical file is dropped by the job)
+      DELETE FROM DiskCopy WHERE id = dcId;
+      deleteCastorFile(cfId);
+    END IF;
+    -- No log for the stager, it would be a duplicate of the nsd one
+    RETURN;
+  END IF;
+  -- Now we can safely update CastorFile's file size and time stamps
+  UPDATE CastorFile SET fileSize = inFileSize, lastUpdateTime = inNewTimeStamp
+   WHERE id = cfId;
+  -- Get svcclass from Request
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ svcClass INTO svcId
+    FROM SubRequest,
+      (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ id, svcClass FROM StagePutRequest UNION ALL
+       SELECT /*+ INDEX(StagePutDoneRequest PK_StagePutDoneRequest_Id) */ id, svcClass FROM StagePutDoneRequest) Request
+   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
+  IF contextPIPP != 0 THEN
+    -- If not a put inside a PrepareToPut/Update, trigger migration
+    -- and update DiskCopy status
+    putDoneFunc(cfId, varRealFileSize, contextPIPP, svcId);
+  ELSE
+    -- If put inside PrepareToPut/Update, restart any PutDone currently
+    -- waiting on this put/update
+    UPDATE /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ SubRequest
+       SET status = dconst.SUBREQUEST_RESTART
+     WHERE reqType = 39  -- PutDone
+       AND castorFile = cfId
+       AND status = dconst.SUBREQUEST_WAITSUBREQ;
+    -- and wake up the stager for processing it
+    alertSignalNoLock('wakeUpStageReqSvc');
+  END IF;
+  -- Archive Subrequest
+  archiveSubReq(srId, 8);  -- FINISHED
+  -- Log successful completion
+  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_PUTENDED, varFileId, varNsHost, 'stagerd',
+    'SUBREQID='|| varSrUuid ||' ChkSumType='|| inCksumType ||' ChkSumValue='|| inCksumValue ||' fileSize='|| varRealFileSize);
+END;
+/
+
 
 /* update a drainingJob at then end of a disk2diskcopy */
 CREATE OR REPLACE PROCEDURE updateDrainingJobOnD2dEnd(inDjId IN INTEGER, inFileSize IN INTEGER,
@@ -583,237 +786,10 @@ BEGIN
   buildPathFromFileId(inFileId, inNsHost, varSrcDcId, outSrcDcPath);
   outSrcDcPath := inSrcDiskServerName || ':' || inSrcMountPoint || outSrcDcPath;
 
-  -- log "disk2DiskCopyStart called and returned successfully"
+  -- log "disk2DiskCopyStart returned successfully"
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.D2D_START_OK, inFileId, inNsHost, 'transfermanagerd',
            'TransferId=' || TO_CHAR(inTransferId) || ' srcPath=' || outSrcDcPath ||
            ' destPath=' || outDestDcPath);
-END;
-/
-
-/* PL/SQL method implementing prepareForMigration
-   returnCode can take 2 values :
-    - 0 : Nothing special
-    - 1 : The file got deleted while it was being written to
-*/
-CREATE OR REPLACE PROCEDURE prepareForMigration (srId IN INTEGER,
-                                                 inFileSize IN INTEGER,
-                                                 inNewTimeStamp IN NUMBER,
-                                                 inCksumType IN VARCHAR2,
-                                                 inCksumValue IN VARCHAR2,
-                                                 outFileId OUT NUMBER,
-                                                 outNsHost OUT VARCHAR2,
-                                                 outRC OUT INTEGER) AS
-  cfId INTEGER;
-  dcId INTEGER;
-  svcId INTEGER;
-  varRealFileSize INTEGER;
-  unused INTEGER;
-  contextPIPP INTEGER;
-  varLastUpdTime NUMBER;
-  varLastOpenTime NUMBER;
-  varSrUuid VARCHAR2(100);
-  varMsg VARCHAR2(2048) := '';
-BEGIN
-  outRC := 0;
-  -- Get CastorFile
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ castorFile, diskCopy, subReqId INTO cfId, dcId, varSrUuid
-    FROM SubRequest WHERE id = srId;
-  -- Lock the CastorFile and get the fileid and name server host
-  SELECT id, fileid, nsHost, nvl(lastUpdateTime, 0), nsOpenTime
-    INTO cfId, outFileId, outNsHost, varLastUpdTime, varLastOpenTime
-    FROM CastorFile WHERE id = cfId FOR UPDATE;
-  -- Determine the context (Put inside PrepareToPut or not)
-  BEGIN
-    -- Check that there is a PrepareToPut going on. There can be only a
-    -- single one or none. If there was a PrepareTo, any subsequent PPut would
-    -- be rejected (cf. processPrepareRequest).
-    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)
-               INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */
-           SubRequest.id INTO unused
-      FROM SubRequest, StagePrepareToPutRequest
-     WHERE SubRequest.CastorFile = cfId
-       AND StagePrepareToPutRequest.id = SubRequest.request
-       AND SubRequest.status = dconst.SUBREQUEST_READY;
-    -- If we got here, we are a Put inside a PrepareToPut
-    contextPIPP := 0;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- Here we are a standalone Put
-    contextPIPP := 1;
-  END;
-  -- Check whether the diskCopy is still in STAGEOUT. If not, the file
-  -- was deleted via stageRm while being written to. Thus, we should just give up
-  BEGIN
-    SELECT status INTO unused
-      FROM DiskCopy WHERE id = dcId AND status = dconst.DISKCOPY_STAGEOUT;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- So we are in the case, we give up
-    outRC := 1;
-    logToDLF(NULL, dlf.LVL_USER_ERROR, dlf.STAGER_DELETED_WRITTENTO, outFileId, outNsHost, 'stagerd', ' SUBREQID='|| varSrUuid);
-    ROLLBACK;
-    RETURN;
-  END;
-  -- Check if the timestamps allow us to update
-  IF inNewTimeStamp >= lastUpdTime THEN
-    -- Now we can safely update CastorFile's file size and time stamps
-    UPDATE CastorFile SET fileSize = inFileSize, lastUpdateTime = inNewTimeStamp
-     WHERE id = cfId;
-  END IF;
-  -- If ts < lastUpdateTime, we were late and another job already updated the
-  -- CastorFile. So we nevertheless retrieve the real file size.
-  SELECT fileSize INTO varRealFileSize FROM CastorFile WHERE id = cfId;
-  -- Now close the file on the Nameserver
-  closex@remoteNS(outFileId, varRealFileSize, inCksumType, inCksumValue, inNewTimeStamp, varLastOpenTime, outRC, varMsg);
-  IF outRC = 0 THEN
-    logToDLF(NULL, dlf.LVL_SYSTEM, 'Processing complete', outFileId, outNsHost, 'nsd', varMsg || ' SUBREQID='|| varSrUuid);
-  ELSE
-    -- Nameserver error: log and fail the entire operation
-    logToDLF(NULL, dlf.LVL_USER_ERROR, 'Error closing file', outFileId, outNsHost, 'nsd', 'errorMessage="' || varMsg ||'" SUBREQID='|| varSrUuid);
-    putFailedProcExt(srId, outRC, varMsg);
-    COMMIT;
-    RETURN;
-  END IF;
-  -- Now we can safely update CastorFile's file size and time stamps
-  UPDATE CastorFile SET fileSize = inFileSize, lastUpdateTime = inNewTimeStamp
-   WHERE id = cfId;
-  -- Get svcclass from Request
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ svcClass INTO svcId
-    FROM SubRequest,
-      (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ id, svcClass FROM StagePutRequest          UNION ALL
-       SELECT /*+ INDEX(StagePutDoneRequest PK_StagePutDoneRequest_Id) */ id, svcClass FROM StagePutDoneRequest) Request
-   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
-  IF contextPIPP != 0 THEN
-    -- If not a put inside a PrepareToPut, trigger migration
-    -- and update DiskCopy status
-    putDoneFunc(cfId, realFileSize, contextPIPP, svcId);
-  ELSE
-    -- If put inside PrepareToPut, restart any PutDone currently
-    -- waiting on this put
-    UPDATE /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ SubRequest
-       SET status = dconst.SUBREQUEST_RESTART
-     WHERE reqType = 39  -- PutDone
-       AND castorFile = cfId
-       AND status = dconst.SUBREQUEST_WAITSUBREQ;
-    -- and wake up the stager for processing it
-    alertSignalNoLock('wakeUpStageReqSvc');
-  END IF;
-  -- Archive Subrequest
-  archiveSubReq(srId, 8);  -- FINISHED
-  -- Log successful completion
-  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_PREPAREFORMIGR, outFileId, outNsHost, 'stagerd',
-    'SUBREQID='|| varSrUuid ||' ChkSumType='|| inCksumType ||' ChkSumValue='|| inCksumValue ||' fileSize='|| varRealFileSize);
-END;
-/
-
-
-/* PL/SQL method implementing getUpdateDone */
-CREATE OR REPLACE PROCEDURE getUpdateDoneProc(srId IN NUMBER) AS
-  varSrUuid VARCHAR2(100);
-BEGIN
-  SELECT subReqId INTO varSrUuid FROM SubRequest WHERE id = srId;
-  archiveSubReq(srId, 8);  -- FINISHED
-  -- Log successful completion
-  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETDONE, varFileId, varNsHost, 'stagerd', 'SUBREQID='|| varSrUuid);
-END;
-/
-
-
-/* PL/SQL method implementing getUpdateFailed */
-CREATE OR REPLACE PROCEDURE getUpdateFailedProcExt
-(srId IN NUMBER, errno IN NUMBER, errmsg IN VARCHAR2) AS
-  varCfId INTEGER;
-  varSrUuid VARCHAR2(100);
-  varFileId INTEGER;
-  varNsHost VARCHAR2(100);
-BEGIN
-  -- Fail the subrequest. The stager will try and answer the client
-  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-     SET status = dconst.SUBREQUEST_FAILED,
-         errorCode = errno,
-         errorMessage = errmsg
-   WHERE id = srId
-  RETURNING castorFile, subReqId INTO varCfId, varSrUuid;
-  -- Wake up other waiting subrequests
-  UPDATE SubRequest
-     SET status = dconst.SUBREQUEST_RESTART,
-         lastModificationTime = getTime()
-   WHERE castorFile = varCfId
-     AND status = dconst.SUBREQUEST_WAITSUBREQ;
-  SELECT fileId, nsHost INTO varFileId, varNsHost
-    FROM CastorFile
-   WHERE id = varCfId;
-  -- Log successful completion
-  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_GETFAILED, varFileId, varNsHost, 'stagerd',
-    'SUBREQID='|| varSrUuid ||' errorMessage="'|| errmsg ||'"" errorCode='|| errno);
-END;
-/
-
-CREATE OR REPLACE PROCEDURE getUpdateFailedProc
-(srId IN NUMBER) AS
-BEGIN
-  getUpdateFailedProcExt(srId, 1015, 'Job terminated with failure');  -- SEINTERNAL
-END;
-/
-
-/* PL/SQL method implementing putFailedProc */
-CREATE OR REPLACE PROCEDURE putFailedProcExt(srId IN NUMBER, errno IN NUMBER, errmsg IN VARCHAR2) AS
-  dcId INTEGER;
-  cfId INTEGER;
-  unused INTEGER;
-  varSrUuid VARCHAR2(100);
-  varFileId INTEGER;
-  varNsHost VARCHAR2(100);
-BEGIN
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ diskCopy, castorFile, subReqId
-    INTO dcId, cfId, varSrUuid
-    FROM SubRequest
-   WHERE id = srId;
-  SELECT fileId, nsHost INTO varFileId, varNsHost
-    FROM CastorFile
-   WHERE id = cfId;
-  -- Fail the subRequest
-  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
-     SET status = dconst.SUBREQUEST_FAILED,
-         errorCode = errno,
-         errorMessage = errmsg
-   WHERE id = srId;
-  -- Determine the context (Put inside PrepareToPut ?)
-  BEGIN
-    -- Check that there is a PrepareToPut going on. There can be only a single one
-    -- or none. If there was a PrepareTo, any subsequent PPut would be rejected
-    -- (cf. processPrepareRequest).
-    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)
-               INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id)*/
-           SubRequest.id INTO unused
-      FROM StagePrepareToPutRequest, SubRequest
-     WHERE SubRequest.castorFile = cfId
-       AND StagePrepareToPutRequest.id = SubRequest.request
-       AND SubRequest.status = 6; -- READY
-    -- The select worked out, so we have a prepareToPut
-    -- In such a case, we do not cleanup DiskCopy and CastorFile
-    -- but we have to wake up a potential waiting putDone
-    UPDATE SubRequest
-       SET status = dconst.SUBREQUEST_RESTART
-     WHERE castorFile = cfId
-       AND reqType = 39  -- PutDone
-       AND SubRequest.status = dconst.SUBREQUEST_WAITSUBREQ;
-    alertSignalNoLock('wakeUpStageReqSvc');
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- This means we are a standalone put
-    -- thus cleanup DiskCopy and maybe the CastorFile
-    -- (the physical file is dropped by the job)
-    DELETE FROM DiskCopy WHERE id = dcId;
-    deleteCastorFile(cfId);
-  END;
-  -- Log successful completion
-  logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_PUTFAILED, varFileId, varNsHost, 'stagerd',
-    'SUBREQID='|| varSrUuid ||' errorMessage="'|| errmsg ||'"" errorCode='|| errno);
-END;
-/
-
-/* PL/SQL method implementing putFailedProc */
-CREATE OR REPLACE PROCEDURE putFailedProc(srId IN NUMBER) AS
-BEGIN
-  putFailedProcExt(srId, 1015, 'Job terminated with failure');  -- SEINTERNAL
 END;
 /
 
@@ -920,9 +896,9 @@ BEGIN
       -- Call the relevant cleanup procedure for the transfer, procedures that
       -- would have been called if the transfer failed on the remote execution host.
       IF rType = 40 THEN      -- StagePutRequest
-       putFailedProcExt(srId, errnos(i), errmsgs(i));
+       putEnded(srId, 0, 0, '', '', errnos(i), errmsgs(i));
       ELSE                    -- StageGetRequest
-       getUpdateFailedProcExt(srId, errnos(i), errmsgs(i));
+       getEnded(srId, errnos(i), errmsgs(i));
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       BEGIN
@@ -962,9 +938,9 @@ BEGIN
       -- Call the relevant cleanup procedure for the transfer, procedures that
       -- would have been called if the transfer failed on the remote execution host.
       IF rType = 40 THEN      -- StagePutRequest
-        putFailedProcExt(srId, errnos(i), errmsgs(i));
+        putEnded(srId, 0, 0, '', '', errnos(i), errmsgs(i));
       ELSE                    -- StageGetRequest
-        getUpdateFailedProcExt(srId, errnos(i), errmsgs(i));
+        getEnded(srId, errnos(i), errmsgs(i));
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       BEGIN

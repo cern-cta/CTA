@@ -76,29 +76,21 @@ static castor::SvcFactory<castor::db::ora::OraJobSvc>
 // Static constants initialization
 //------------------------------------------------------------------------------
 
-/// SQL statement for getUpdateStart
-const std::string castor::db::ora::OraJobSvc::s_getUpdateStartStatementString =
-  "BEGIN getUpdateStart(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;";
+/// SQL statement for getStart
+const std::string castor::db::ora::OraJobSvc::s_getStartStatementString =
+  "BEGIN getStart(:1, :2, :3, :4, :5); END;";
 
 /// SQL statement for putStart
 const std::string castor::db::ora::OraJobSvc::s_putStartStatementString =
-  "BEGIN putStart(:1, :2, :3, :4, :5, :6); END;";
+  "BEGIN putStart(:1, :2, :3, :4); END;";
 
-/// SQL statement for prepareForMigration
-const std::string castor::db::ora::OraJobSvc::s_prepareForMigrationStatementString =
-"BEGIN prepareForMigration(:1, :2, :3, :4, :5, :6, :7); END;";
+/// SQL statement for getEnded
+const std::string castor::db::ora::OraJobSvc::s_getEndedStatementString =
+  "BEGIN getEnded(:1, :2, :3); END;";
 
-/// SQL statement for getUpdateDone
-const std::string castor::db::ora::OraJobSvc::s_getUpdateDoneStatementString =
-  "BEGIN getUpdateDoneProc(:1); END;";
-
-/// SQL statement for getUpdateFailed
-const std::string castor::db::ora::OraJobSvc::s_getUpdateFailedStatementString =
-  "BEGIN getUpdateFailedProc(:1); END;";
-
-/// SQL statement for putFailed
-const std::string castor::db::ora::OraJobSvc::s_putFailedStatementString =
-  "BEGIN putFailedProc(:1); END;";
+/// SQL statement for putEnded
+const std::string castor::db::ora::OraJobSvc::s_putEndedStatementString =
+  "BEGIN putEnded(:1, :2, :3, :4, :5, :6, :7); END;";
 
 /// SQL statement for firstByteWritten
 const std::string castor::db::ora::OraJobSvc::s_firstByteWrittenStatementString =
@@ -109,13 +101,10 @@ const std::string castor::db::ora::OraJobSvc::s_firstByteWrittenStatementString 
 //------------------------------------------------------------------------------
 castor::db::ora::OraJobSvc::OraJobSvc(const std::string name) :
   OraCommonSvc(name),
-  m_getUpdateStartStatement(0),
+  m_getStartStatement(0),
   m_putStartStatement(0),
-  m_putDoneStartStatement(0),
-  m_prepareForMigrationStatement(0),
-  m_getUpdateDoneStatement(0),
-  m_getUpdateFailedStatement(0),
-  m_putFailedStatement(0),
+  m_getEndedStatement(0),
+  m_putEndedStatement(0),
   m_firstByteWrittenStatement(0) {
 }
 
@@ -148,21 +137,17 @@ void castor::db::ora::OraJobSvc::reset() throw() {
   // If something goes wrong, we just ignore it
   OraCommonSvc::reset();
   try {
-    if (m_getUpdateStartStatement) deleteStatement(m_getUpdateStartStatement);
+    if (m_getStartStatement) deleteStatement(m_getStartStatement);
     if (m_putStartStatement) deleteStatement(m_putStartStatement);
-    if (m_prepareForMigrationStatement) deleteStatement(m_prepareForMigrationStatement);
-    if (m_getUpdateDoneStatement) deleteStatement(m_getUpdateDoneStatement);
-    if (m_getUpdateFailedStatement) deleteStatement(m_getUpdateFailedStatement);
-    if (m_putFailedStatement) deleteStatement(m_putFailedStatement);
+    if (m_getEndedStatement) deleteStatement(m_getEndedStatement);
+    if (m_putEndedStatement) deleteStatement(m_putEndedStatement);
     if (m_firstByteWrittenStatement) deleteStatement(m_firstByteWrittenStatement);
   } catch (castor::exception::Exception& ignored) {};
   // Now reset all pointers to 0
-  m_getUpdateStartStatement = 0;
+  m_getStartStatement = 0;
   m_putStartStatement = 0;
-  m_prepareForMigrationStatement = 0;
-  m_getUpdateDoneStatement = 0;
-  m_getUpdateFailedStatement = 0;
-  m_putFailedStatement = 0;
+  m_getEndedStatement = 0;
+  m_putEndedStatement = 0;
   m_firstByteWrittenStatement = 0;
 }
 
@@ -181,28 +166,20 @@ castor::db::ora::OraJobSvc::getUpdateStart
   *emptyFile = false;
   try {
     // Check whether the statements are ok
-    if (0 == m_getUpdateStartStatement) {
-      m_getUpdateStartStatement =
-        createStatement(s_getUpdateStartStatementString);
-      m_getUpdateStartStatement->registerOutParam
-        (4, oracle::occi::OCCIDOUBLE);
-      m_getUpdateStartStatement->registerOutParam
-        (5, oracle::occi::OCCISTRING, 2048);
-      m_getUpdateStartStatement->registerOutParam
-        (6, oracle::occi::OCCIINT);
-      m_getUpdateStartStatement->registerOutParam
-        (7, oracle::occi::OCCIINT);
-      m_getUpdateStartStatement->registerOutParam
-        (8, oracle::occi::OCCIINT);
-      m_getUpdateStartStatement->registerOutParam
-        (9, oracle::occi::OCCIDOUBLE);
-      m_getUpdateStartStatement->setAutoCommit(true);
+    if (0 == m_getStartStatement) {
+      m_getStartStatement =
+        createStatement(s_getStartStatementString);
+      m_getStartStatement->registerOutParam
+        (4, oracle::occi::OCCISTRING, 2048);
+      m_getStartStatement->registerOutParam
+        (5, oracle::occi::OCCIINT);
+      m_getStartStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
-    m_getUpdateStartStatement->setDouble(1, subreq->id());
-    m_getUpdateStartStatement->setString(2, diskServerName);
-    m_getUpdateStartStatement->setString(3, mountPoint);
-    unsigned int nb = m_getUpdateStartStatement->executeUpdate();
+    m_getStartStatement->setDouble(1, subreq->id());
+    m_getStartStatement->setString(2, diskServerName);
+    m_getStartStatement->setString(3, mountPoint);
+    unsigned int nb = m_getStartStatement->executeUpdate();
     if (0 == nb) {
       rollback();
       castor::exception::Internal ex;
@@ -211,24 +188,9 @@ castor::db::ora::OraJobSvc::getUpdateStart
       throw ex;
     }
 
-    // Check result
-    u_signed64 id = (u_signed64)m_getUpdateStartStatement->getDouble(4);
-    // If no DiskCopy returned, we have to wait, hence return
-    if (0 == id) {
-      return 0;
-    }
-
-    enum castor::stager::DiskCopyStatusCodes status =
-       (enum castor::stager::DiskCopyStatusCodes) m_getUpdateStartStatement->getInt(6);
-    // Deal with recalls of empty files
-    // the file may have been declared recalled without being created on disk
-    if (status == castor::stager::DISKCOPY_STAGED &&
-        0 == (u_signed64)m_getUpdateStartStatement->getDouble(9)) {
-      *emptyFile = true;
-    }
-
-    // return diskCopy Path
-    return m_getUpdateStartStatement->getString(5);
+    // get results and return
+    *emptyFile = m_getStartStatement->getInt(5) == 1;
+    return m_getStartStatement->getString(4);
   } catch (oracle::occi::SQLException e) {
     // Application specific errors
     if (e.getErrorCode() == 20114) {
@@ -264,11 +226,7 @@ castor::db::ora::OraJobSvc::putStart
       m_putStartStatement =
         createStatement(s_putStartStatementString);
       m_putStartStatement->registerOutParam
-        (4, oracle::occi::OCCIDOUBLE);
-      m_putStartStatement->registerOutParam
-        (5, oracle::occi::OCCIINT);
-      m_putStartStatement->registerOutParam
-        (6, oracle::occi::OCCISTRING, 2048);
+        (4, oracle::occi::OCCISTRING, 2048);
       m_putStartStatement->setAutoCommit(true);
     }
     // execute the statement and see whether we found something
@@ -284,7 +242,7 @@ castor::db::ora::OraJobSvc::putStart
       throw ex;
     }
     // return diskCopy Path
-    return m_putStartStatement->getString(6);
+    return m_putStartStatement->getString(4);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     // Application specific errors
@@ -315,111 +273,37 @@ void castor::db::ora::OraJobSvc::prepareForMigration
  const std::string csumtype,
  const std::string csumvalue)
   throw (castor::exception::Exception) {
-  u_signed64 lastNsOpenTimeInUsec;
   try {
     // Check whether the statements are ok
-    if (0 == m_prepareForMigrationStatement) {
-      m_prepareForMigrationStatement =
-        createStatement(s_prepareForMigrationStatementString);
-      m_prepareForMigrationStatement->setAutoCommit(false);
-      m_prepareForMigrationStatement->registerOutParam
-        (4, oracle::occi::OCCIDOUBLE);
-      m_prepareForMigrationStatement->registerOutParam
-        (5, oracle::occi::OCCISTRING, 2048);
-      m_prepareForMigrationStatement->registerOutParam
+    if (0 == m_putEndedStatement) {
+      m_putEndedStatement =
+        createStatement(s_putEndedStatementString);
+      m_putEndedStatement->registerOutParam
         (6, oracle::occi::OCCIINT);
-      m_prepareForMigrationStatement->registerOutParam
-        (7, oracle::occi::OCCIDOUBLE);
+      m_putEndedStatement->registerOutParam
+        (7, oracle::occi::OCCISTRING, 2048);
+      m_putEndedStatement->setAutoCommit(true);
     }
-    // Execute the statement and see whether we found something
-    m_prepareForMigrationStatement->setDouble(1, subReqId);
-    m_prepareForMigrationStatement->setDouble(2, fileSize);
-    m_prepareForMigrationStatement->setDouble(3, timeStamp);
-    unsigned int nb = m_prepareForMigrationStatement->executeUpdate();
-    if (0 == nb) {
-      castor::exception::Internal ex;
-      ex.getMessage()
-        << "prepareForMigration did not return any result.";
-      throw ex;
-    }
-
-    // Populate the fileid structure to be passed to Cns_closex and DLF log
-    // messages
-    struct Cns_fileid fileid;
-    fileid.fileid = (u_signed64)m_prepareForMigrationStatement->getDouble(4);
-    strncpy(fileid.server,
-            m_prepareForMigrationStatement->getString(5).c_str(),
-            CA_MAXHOSTNAMELEN);
+    // Execute the statement
+    // all error handling and logging is done in PL/SQL
+    m_putEndedStatement->setDouble(1, subReqId);
+    m_putEndedStatement->setDouble(2, fileSize);
+    m_putEndedStatement->setDouble(3, timeStamp);
+    m_putEndedStatement->setString(4, csumtype);
+    m_putEndedStatement->setString(5, csumvalue);
+    m_putEndedStatement->setInt(6, 0);
+    //m_putEndedStatement->setString(7, "");
+    m_putEndedStatement->executeUpdate();
 
     // Check for errors
-    int returnCode = m_prepareForMigrationStatement->getInt(6);
-    if (returnCode == 1) {
-      // The file got deleted while it was being written to. This by itself is
-      // not an error, but we should not take any action here.
-      // "File was deleted while it was written to. Giving up with migration."
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-                              DLF_BASE_ORACLELIB, 0, 0, &fileid);
-      return;
-    }
-    lastNsOpenTimeInUsec = (u_signed64)m_prepareForMigrationStatement->getDouble(7);
-
-    // If we got this far we need to update the file size and checksum
-    // information related to the file in the name server. By updating the
-    // size we also delete any segments associated to that file.
-
-    // Prepare the name server error buffer
-    char cns_error_buffer[512];  /* Cns error buffer */
-    *cns_error_buffer = 0;
-    if (Cns_seterrbuf(cns_error_buffer, sizeof(cns_error_buffer)) != 0) {
-      castor::exception::Exception ex(serrno);
-      ex.getMessage()
-        << "prepareForMigration: Cns_seterrbuf failed.";
-      // Rollback the prepareForMigration changes
-      cnvSvc()->rollback();
-      throw ex;
+    int returnCode = m_putEndedStatement->getInt(6);
+    if (returnCode) {
+      castor::exception::Exception e(returnCode);
+      e.getMessage() << "prepareForMigration failed: "
+                     << m_putEndedStatement->getString(7);
+      throw e;
     }
 
-    // Check if checksum information should be updated in the name space.
-    bool useChkSum = true;
-    const char *confValue = getconfent("CNS", "USE_CKSUM", 0);
-    if (confValue != NULL) {
-      if (!strncasecmp(confValue, "no", 2)) {
-        useChkSum = false;
-      }
-    }
-
-    // Call Cns_closex.
-    int rc = 0;
-    if (useChkSum) {
-      rc = Cns_closex(&fileid, fileSize, csumtype.c_str(), csumvalue.c_str(),
-                      timeStamp, lastNsOpenTimeInUsec, NULL);
-    } else {
-      rc = Cns_closex(&fileid, fileSize, "", "", timeStamp, lastNsOpenTimeInUsec, NULL);
-    }
-
-    if (rc != 0) {
-      if (serrno == ENSFILECHG) {
-        // Special case where the Cns_closex was not taken into account due to
-        // concurrent modifications of the same file. This is ok, but we still log something.
-        // "Cns_closex ignored by name server due to a concurrent file modification"
-        castor::dlf::dlf_writep(nullCuuid, DLF_LVL_WARNING, DLF_BASE_ORACLELIB + 35, 0, 0, &fileid);
-      } else {
-        castor::exception::Exception ex(serrno);
-        ex.getMessage()
-          << "prepareForMigration: Cns_closex failed: ";
-        if (!strcmp(cns_error_buffer, "")) {
-          ex.getMessage() << sstrerror(serrno);
-        } else {
-          ex.getMessage() << cns_error_buffer;
-        }
-        // Rollback the prepareForMigration changes
-        cnvSvc()->rollback();
-        throw ex;
-      }
-    }
-
-    // Commit the prepareForMigration changes
-    cnvSvc()->commit();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -439,15 +323,17 @@ void castor::db::ora::OraJobSvc::getUpdateDone
  const std::string)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
-  if (0 == m_getUpdateDoneStatement) {
-    m_getUpdateDoneStatement =
-      createStatement(s_getUpdateDoneStatementString);
-    m_getUpdateDoneStatement->setAutoCommit(true);
+  if (0 == m_getEndedStatement) {
+    m_getEndedStatement =
+      createStatement(s_getEndedStatementString);
+    m_getEndedStatement->setAutoCommit(true);
   }
   // Execute statement and get result
   try {
-    m_getUpdateDoneStatement->setDouble(1, subReqId);
-    m_getUpdateDoneStatement->executeUpdate();
+    m_getEndedStatement->setDouble(1, subReqId);
+    m_getEndedStatement->setInt(2, 0);
+    m_getEndedStatement->setString(3, "");
+    m_getEndedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -467,15 +353,17 @@ void castor::db::ora::OraJobSvc::getUpdateFailed
  const std::string)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
-  if (0 == m_getUpdateFailedStatement) {
-    m_getUpdateFailedStatement =
-      createStatement(s_getUpdateFailedStatementString);
-    m_getUpdateFailedStatement->setAutoCommit(true);
+  if (0 == m_getEndedStatement) {
+    m_getEndedStatement =
+      createStatement(s_getEndedStatementString);
+    m_getEndedStatement->setAutoCommit(true);
   }
   // Execute statement and get result
   try {
-    m_getUpdateFailedStatement->setDouble(1, subReqId);
-    m_getUpdateFailedStatement->executeUpdate();
+    m_getEndedStatement->setDouble(1, subReqId);
+    m_getEndedStatement->setInt(2, 1015);
+    m_getEndedStatement->setString(3, "Job terminated with failure");
+    m_getEndedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
@@ -487,7 +375,7 @@ void castor::db::ora::OraJobSvc::getUpdateFailed
 }
 
 //------------------------------------------------------------------------------
-// putFailed
+// putEnded
 //------------------------------------------------------------------------------
 void castor::db::ora::OraJobSvc::putFailed
 (u_signed64 subReqId,
@@ -495,15 +383,25 @@ void castor::db::ora::OraJobSvc::putFailed
  const std::string)
   throw (castor::exception::Exception) {
   // Check whether the statements are ok
-  if (0 == m_putFailedStatement) {
-    m_putFailedStatement =
-      createStatement(s_putFailedStatementString);
-    m_putFailedStatement->setAutoCommit(true);
+  if (0 == m_putEndedStatement) {
+    m_putEndedStatement =
+      createStatement(s_putEndedStatementString);
+    m_putEndedStatement->registerOutParam
+      (6, oracle::occi::OCCIINT);
+    m_putEndedStatement->registerOutParam
+      (7, oracle::occi::OCCISTRING, 2048);
+    m_putEndedStatement->setAutoCommit(true);
   }
   // Execute statement and get result
   try {
-    m_putFailedStatement->setDouble(1, subReqId);
-    m_putFailedStatement->executeUpdate();
+    m_putEndedStatement->setDouble(1, subReqId);
+    m_putEndedStatement->setDouble(2, 0);
+    m_putEndedStatement->setDouble(3, 0);
+    m_putEndedStatement->setString(4, "");
+    m_putEndedStatement->setString(5, "");
+    m_putEndedStatement->setInt(6, 1015);
+    m_putEndedStatement->setString(7, "Job terminated with failure");
+    m_putEndedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
     castor::exception::Internal ex;
