@@ -253,6 +253,7 @@ namespace castor {
         if(rc != 0) {
           // the open failed, log it along with the fileid info in case the file existed in advance
           castor::exception::Exception ex(serrno);
+          ex.getMessage() << strerror(serrno);
           castor::dlf::Param params[] = {
             castor::dlf::Param(requestUuid),
             castor::dlf::Param("Type",
