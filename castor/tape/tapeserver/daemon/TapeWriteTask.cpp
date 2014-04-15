@@ -72,17 +72,10 @@ namespace daemon {
     using castor::log::LogContext;
     using castor::log::Param;
 
-    std::auto_ptr<castor::tape::tapeFile::WriteFile> output;
-    try{
-     output.reset(new tape::tapeFile::WriteFile(&session, *m_fileToMigrate,m_memManager.blockCapacity()));
-     lc.log(LOG_DEBUG, "Successfully opened the tape file for writing");
-    }catch(const castor::exception::Exception & ex){
-      lc.log(LOG_ERR, "Failed to open tape file for writing");
-      throw;
-    }
-    
     int blockId  = 0;
+
     try {
+      std::auto_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       while(!m_fifo.finished()) {
         MemBlock* const mb = m_fifo.popDataBlock();
         AutoReleaseBlock releaser(mb,m_memManager);
@@ -104,13 +97,12 @@ namespace daemon {
       }
     }
     catch(const castor::tape::Exception& e){
+      //we can end up there because
+      //we failed to open the WriteFile
+      //we received a bad block or a block written failed
       lc.log(LOG_ERR,"Circulating blocks into TapeWriteTask::execute");
       while(!m_fifo.finished()) {
-        MemBlock* const mb = m_fifo.popDataBlock();
-        if(!mb->m_failed){
-          lc.log(LOG_ERR,"Expecting a failed Memblock, did not get one");
-        }
-        m_memManager.releaseBlock(mb);
+        m_memManager.releaseBlock(m_fifo.popDataBlock());
       }
     }
    }
@@ -130,6 +122,19 @@ namespace daemon {
     castor::tape::threading::MutexLocker ml(&m_producerProtection);
   }
 
+   std::auto_ptr<castor::tape::tapeFile::WriteFile> TapeWriteTask::openWriteFile(
+   castor::tape::tapeFile::WriteSession & session,castor::log::LogContext& lc){
+      std::auto_ptr<castor::tape::tapeFile::WriteFile> output;
+      try{
+        output.reset(new tape::tapeFile::WriteFile(&session, *m_fileToMigrate,m_memManager.blockCapacity()));
+        lc.log(LOG_DEBUG, "Successfully opened the tape file for writing");
+      }
+      catch(const castor::exception::Exception & ex){
+        lc.log(LOG_ERR, "Failed to open tape file for writing");
+        throw;
+      }
+      return output;
+    }
 }}}}
 
 

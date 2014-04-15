@@ -87,7 +87,9 @@ public:
   virtual ~TapeWriteTask();
   
 private:
-    
+  std::auto_ptr<castor::tape::tapeFile::WriteFile> openWriteFile(
+  castor::tape::tapeFile::WriteSession & session,castor::log::LogContext& lc);
+  
   /**
    * The file sequence number of the file to be written on tape
    */
