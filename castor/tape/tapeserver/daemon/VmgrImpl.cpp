@@ -23,6 +23,16 @@
 #include "castor/tape/tapeserver/daemon/VmgrImpl.hpp"
 
 //------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::VmgrImpl::VmgrImpl(log::Logger &log, const std::string &vmgrHostName, const unsigned short vmgrPort, const int netTimeout) throw():
+    m_log(log),
+    m_vmgrHostName(vmgrHostName),
+    m_vmgrPort(vmgrPort),
+    m_netTimeout(netTimeout) {
+}
+
+//------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VmgrImpl::~VmgrImpl() throw() {

@@ -29,10 +29,8 @@
 #include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/DebugMountSessionForVdqmProtocol.hpp"
-#include "castor/tape/tapeserver/daemon/RmcImpl.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
-#include "castor/tape/tapeserver/daemon/VmgrImpl.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFd.hpp"
 
@@ -55,11 +53,15 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
   std::ostream &stdErr,
   log::Logger &log,
   Vdqm &vdqm,
+  Vmgr &vmgr,
+  Rmc &rmc,
   io::PollReactor &reactor) throw(castor::exception::Exception):
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),
   m_argv(argv),
   m_vdqm(vdqm),
+  m_vmgr(vmgr),
+  m_rmc(rmc),
   m_reactor(reactor),
   m_programName("tapeserverd"),
   m_hostName(getHostName()) {
@@ -571,8 +573,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mountSession(const std::strin
   try {
     const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getJob(unitName);
     const utils::TpconfigLines tpConfig;
-    VmgrImpl vmgr;
-    RmcImpl rmc;
     DebugMountSessionForVdqmProtocol mountSession(
       m_argc,
       m_argv,
@@ -581,8 +581,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mountSession(const std::strin
       m_log,
       tpConfig,
       m_vdqm,
-      vmgr,
-      rmc);
+      m_vmgr,
+      m_rmc);
 
     mountSession.execute();
 

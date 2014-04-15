@@ -29,7 +29,9 @@
 #include "castor/io/PollReactor.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
+#include "castor/tape/tapeserver/daemon/Rmc.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
+#include "castor/tape/tapeserver/daemon/Vmgr.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <iostream>
@@ -60,7 +62,9 @@ public:
    * @param stdOut Stream representing standard out.
    * @param stdErr Stream representing standard error.
    * @param log The object representing the API of the CASTOR logging system.
-   * @param vdqm The object representing the vdqmd daemon.
+   * @param vdqm The proxy object representing the vdqmd daemon.
+   * @param vmgr The proxy object representing the vmgrd daemon.
+   * @param rmc The proxy object representing the rmcd daemon.
    * @param reactor The reactor responsible for dispatching the I/O events of
    * the parent process of the tape server daemon.
    */
@@ -71,6 +75,8 @@ public:
     std::ostream &stdErr,
     log::Logger &log,
     Vdqm &vdqm,
+    Vmgr &vmgr,
+    Rmc &rmc,
     io::PollReactor &reactor) throw(castor::exception::Exception);
 
   /**
@@ -265,9 +271,19 @@ protected:
   char **const m_argv;
 
   /**
-   * The object representing the vdqmd daemon.
+   * The proxy object representing the vdqmd daemon.
    */
   Vdqm &m_vdqm;
+
+  /**
+   * The proxy object representing the vmgrd daemon.
+   */
+  Vmgr &m_vmgr;
+
+  /**
+   * The proxy object representing the rmcd daemon.
+   */
+  Rmc &m_rmc;
 
   /**
    * The reactor responsible for dispatching the file-descriptor event-handlers

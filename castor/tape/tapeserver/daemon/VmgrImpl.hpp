@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/Vmgr.hpp"
 
 namespace castor     {
@@ -34,11 +35,45 @@ namespace daemon     {
  */
 class VmgrImpl: public Vmgr {
 public:
+  /**
+   * Constructor.
+   *
+   * @param log The object representing the API of the CASTOR logging system.
+   * @param vmgrHostName The name of the host on which the vmgrd daemon is
+   * running.
+   * @param vmgrPort The TCP/IP port on which the vmgrd daemon is listening.
+   * @param netTimeout The timeout in seconds to be applied when performing
+   * network read and write operations.
+   */
+  VmgrImpl(log::Logger &log, const std::string &vmgrHostName, const unsigned short vmgrPort, const int netTimeout) throw();
 
   /**
    * Destructor.
    */
   ~VmgrImpl() throw();
+
+private:
+
+  /**
+   * The object representing the API of the CASTOR logging system.
+   */
+  log::Logger &m_log;
+
+  /**
+   * The name of the host on which the vmgrd daemon is running.
+   */
+  const std::string m_vmgrHostName;
+
+  /**
+   * The TCP/IP port on which the vmgrd daemon is listening.
+   */
+  const unsigned short m_vmgrPort;
+
+  /**
+   * The timeout in seconds to be applied when performing network read and
+   * write operations.
+   */
+  const int m_netTimeout;
 
 }; // class VmgrImpl
 

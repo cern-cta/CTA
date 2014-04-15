@@ -22,6 +22,7 @@
 
 #pragma once
 
+#include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/Rmc.hpp"
 
 namespace castor     {
@@ -36,9 +37,142 @@ class RmcImpl: public Rmc {
 public:
 
   /**
+   * Constructor.
+   *
+   * @param log The object representing the API of the CASTOR logging system.
+   * @param rmcHostName The name of the host on which the rmcd daemon is
+   * running.
+   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
+   * @param netTimeout The timeout in seconds to be applied when performing
+   * network read and write operations.
+   */
+  RmcImpl(log::Logger &log, const std::string &rmcHostName, const unsigned short rmcPort, const int netTimeout) throw();
+
+  /**
    * Destructor.
    */
   ~RmcImpl() throw();
+
+  /**
+   * Asks the remote media-changer daemon to mount the specified tape into the
+   * specified drive.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param drive The drive in one of the following three forms corresponding
+   * to the three supported drive-loader types, namely acs, manual and smc:
+   * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
+   * "manual" or "smc@rmc_host,drive_ordinal".
+   */
+  void mountTape(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
+
+  /**
+   * Asks the remote media-changer daemon to unmount the specified tape from the
+   * specified drive.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param drive The drive in one of the following three forms corresponding
+   * to the three supported drive-loader types, namely acs, manual and smc:
+   * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
+   * "manual" or "smc@rmc_host,drive_ordinal".
+   */
+  void unmountTape(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
+
+  /**
+   * Enumeration of the different types of drive.
+   */
+  enum RmcDriveType {
+    RMC_DRIVE_TYPE_ACS,
+    RMC_DRIVE_TYPE_MANUAL,
+    RMC_DRIVE_TYPE_SCSI,
+    RMC_DRIVE_TYPE_UNKNOWN};
+
+  /**
+   * Returns the type of the specified drive.
+   *
+   * @param drive The drive in one of the following three forms corresponding
+   * to the three supported drive-loader types, namely acs, manual and smc:
+   * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
+   * "manual" or "smc@rmc_host,drive_ordinal".
+   * @return The drive type.
+   */
+  RmcDriveType getDriveType(const std::string &drive) throw();
+
+protected:
+
+  /**
+   * The object representing the API of the CASTOR logging system.
+   */
+  log::Logger &m_log;
+
+  /**
+   * The name of the host on which the rmcd daemon is running.
+   */
+  const std::string m_rmcHostName;
+
+  /**
+   * The TCP/IP port on which the rmcd daemon is listening.
+   */
+  const unsigned short m_rmcPort;
+
+  /**
+   * The timeout in seconds to be applied when performing network read and
+   * write operations.
+   */
+  const int m_netTimeout;
+
+  /**
+   * Asks the remote media-changer daemon to mount the specified tape into the
+   * specified drive in an ACS compatible tape-library.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param drive The drive in the following form:
+   * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER".
+   */
+  void mountTapeAcs(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
+
+  /**
+   * Logs a request to the tape-operator to manually mount the specified tape.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  void mountTapeManual(const std::string &vid) throw(castor::exception::Exception);
+
+  /**
+   * Asks the remote media-changer daemon to mount the specified tape into the
+   * specified drive in a SCSI compatible tape-library.
+   *    
+   * @param vid The volume identifier of the tape.
+   * @param drive The drive in the following form:
+   * "smc@rmc_host,drive_ordinal".
+   */
+  void mountTapeScsi(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
+
+  /**
+   * Asks the remote media-changer daemon to unmount the specified tape from the
+   * specified drive in an ACS compatible tape-library.
+   *
+   * @param vid The volume identifier of the tape.
+   * @param drive The drive in the following form:
+   * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER".
+   */
+  void unmountTapeAcs(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
+
+  /**
+   * Logs a request to the tape-operator to manually unmount the specified tape.
+   *
+   * @param vid The volume identifier of the tape.
+   */
+  void unmountTapeManual(const std::string &vid) throw(castor::exception::Exception);
+
+  /**
+   * Asks the remote media-changer daemon to unmount the specified tape from the
+   * specified drive in a SCSI compatible tape-library.
+   *    
+   * @param vid The volume identifier of the tape.
+   * @param drive The drive in the following form:
+   * "smc@rmc_host,drive_ordinal".
+   */
+  void unmountTapeScsi(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
 
 }; // class RmcImpl
 
