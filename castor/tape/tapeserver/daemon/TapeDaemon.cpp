@@ -527,6 +527,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSessions() th
 // forkWaitingMountSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSession(const std::string &unitName) throw() {
+  m_log.prepareForFork();
   const pid_t sessionPid = fork();
 
   // If fork failed
