@@ -31,7 +31,7 @@
 #include "h/serrno.h"
 #include "h/Ctape.h"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
-#include "castor/tape/legacymsg/AdminMarshal.hpp"
+#include "castor/tape/legacymsg/TapeMarshal.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <vdqm_api.h>

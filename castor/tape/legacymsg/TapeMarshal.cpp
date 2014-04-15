@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/tape/legacymsg/AdminMarshal.cpp
+ *                      castor/tape/legacymsg/TapeMarshal.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -26,7 +26,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
-#include "castor/tape/legacymsg/AdminMarshal.hpp"
+#include "castor/tape/legacymsg/TapeMarshal.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
