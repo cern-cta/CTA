@@ -456,9 +456,11 @@ BEGIN
     SELECT ipAddress, port, version
       INTO outClientIpAddress, outClientPort, outClientVersion
       FROM Client WHERE id = varClientId;
-    SELECT forcedFileClass, name
+    SELECT FileClass.classId, SvcClass.name
       INTO outFileClassIfForced, outSvcClassName
-      FROM SvcClass WHERE id = varSvcClassId;
+      FROM SvcClass, FileClass
+     WHERE SvcClass.id = varSvcClassId
+       AND FileClass.id(+) = SvcClass.forcedFileClass;
   EXCEPTION WHEN OTHERS THEN
     -- Something went really wrong, our subrequest does not have the corresponding request or client,
     -- Just drop it and re-raise exception. Some rare occurrences have happened in the past,
