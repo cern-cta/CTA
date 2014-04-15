@@ -36,12 +36,15 @@ namespace daemon {
   
 class DiskReadTask :public DiskReadTaskInterface {
 public:
-  DiskReadTask(DataConsumer & destination, tape::tapegateway::FileToMigrateStruct* file);
+  DiskReadTask(DataConsumer & destination, 
+          tape::tapegateway::FileToMigrateStruct* file,size_t numberOfBlock);
+  
   virtual void execute(log::LogContext& lc);
 private:
   //TW ; tape write
   DataConsumer & m_nextTask;
   std::auto_ptr<tape::tapegateway::FileToMigrateStruct> m_migratedFile;
+  size_t m_numberOfBlock;
 };
 
 }}}}

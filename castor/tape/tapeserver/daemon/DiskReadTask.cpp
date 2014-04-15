@@ -47,8 +47,10 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-  DiskReadTask::DiskReadTask(DataConsumer & destination, tape::tapegateway::FileToMigrateStruct* file):
-       m_nextTask(destination),m_migratedFile(file) {}
+  DiskReadTask::DiskReadTask(DataConsumer & destination, 
+          tape::tapegateway::FileToMigrateStruct* file,size_t numberOfBlock):
+  m_nextTask(destination),m_migratedFile(file),m_numberOfBlock(numberOfBlock) 
+  {}
 
    void DiskReadTask::execute(log::LogContext& lc) {
     size_t blockId=0;
@@ -56,7 +58,6 @@ namespace daemon {
     try{
       tape::diskFile::ReadFile sourceFile(m_migratedFile->path());
       while(migratingFileSize>0){
-        blockId++;
         MemBlock* const mb = m_nextTask.getFreeBlock();
         AutoPushBlock push(mb,m_nextTask);
         
@@ -74,7 +75,7 @@ namespace daemon {
       } //end of while(migratingFileSize>0)
     }
     catch(const castor::tape::Exception& e){
-      //we have to pump block anyway, mark them failed and then pass them to TapeWrite
+      //we have to pump the blocks anyway, mark them failed and then pass them back to TapeWrite
       //Otherwise they would be stuck into TapeWriteTask free block fifo
 
       using log::LogContext;
@@ -83,10 +84,11 @@ namespace daemon {
       LogContext::ScopedParam sp(lc, Param("blockID",blockId));
       lc.log(LOG_ERR,e.getMessageValue());
       //deal here the number of mem block
-      while(migratingFileSize>0) {
+      while(blockId<m_numberOfBlock) {
         MemBlock * mb = m_nextTask.getFreeBlock();
         mb->m_failed=true;
         m_nextTask.pushDataBlock(mb);
+        ++blockId;
       } //end of while
     } //end of catch
   }
