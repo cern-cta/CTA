@@ -30,6 +30,8 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   CommonMarshal.cpp
   GiveOutpMsgBody.cpp
   MessageHeader.cpp
+  RmcAcsMntMsgBody.cpp
+  RmcMarshal.cpp
   RtcpDumpTapeRqstMsgBody.cpp
   RtcpErrorAppendix.cpp
   RtcpFileRqst.cpp

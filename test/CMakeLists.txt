@@ -91,6 +91,7 @@ add_executable(castorUnitTests
   ../castor/log/StringLoggerTest.cpp
   ../castor/server/DaemonTest.cpp
   ../castor/tape/tapeserver/daemon/ClientProxyTest.cpp
+  ../castor/tape/legacymsg/RmcMarshalTest.cpp
   ../castor/tape/legacymsg/VdqmMarshalTest.cpp
   ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/DebugMountSessionForVdqmProtocol.cpp
