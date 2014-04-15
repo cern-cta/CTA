@@ -100,7 +100,7 @@ void RecallTaskInjector::WorkerThread::run()
   
       while (1) {
         Request req = _this.m_queue.pop();
-	printf("RecallJobInjector:run: about to call client interface\n");
+	_this.m_lc.log(LOG_INFO,"RecallJobInjector:run: about to call client interface\n");
         client::ClientProxy::RequestReport reqReport;
         std::auto_ptr<tapegateway::FilesToRecallList> filesToRecallList(_this.m_client.getFilesToRecall(req.nbMaxFiles, req.byteSizeThreshold,reqReport));
         
