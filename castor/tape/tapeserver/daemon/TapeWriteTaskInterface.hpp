@@ -25,7 +25,7 @@
 #pragma once
 
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
-#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/file/File.hpp"
 
 namespace castor {
 namespace tape {
@@ -42,7 +42,7 @@ public:
   /**
    * Main routine of the task
    */
-  virtual void execute(castor::tape::drives::DriveInterface & /*td*/) =0;
+  virtual void execute(castor::tape::tapeFile::WriteSession& /*td*/) =0;
     
   /**
    * @return the number of memory blocks to be used
