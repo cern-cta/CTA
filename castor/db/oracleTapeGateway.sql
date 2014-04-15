@@ -163,8 +163,8 @@ BEGIN
               FROM DiskServer, FileSystem, DiskPool2SvcClass, CastorFile, RecallJob
              WHERE CastorFile.id = inCfId
                AND RecallJob.castorFile = inCfId
-               AND RecallJob.svcclass = DiskPool2SvcClass.child
-               AND FileSystem.diskpool = DiskPool2SvcClass.parent
+               AND RecallJob.svcClass = DiskPool2SvcClass.child
+               AND FileSystem.diskPool = DiskPool2SvcClass.parent
                -- a priori, we want to have enough free space. However, if we don't, we accept to start writing
                -- if we have a minimum of 30GB free and count on gerbage collection to liberate space while writing
                -- We still check that the file fit on the disk, and actually keep a 30% margin so that very recent
@@ -176,9 +176,10 @@ BEGIN
                AND DiskServer.id = FileSystem.diskServer
                AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
                AND DiskServer.hwOnline = 1
-          ORDER BY -- use randomness to scatter recalls everywhere in the pool. This works unless the pool starts to be overloaded:
-                   -- once a hot spot develops, recalls start to take longer and longer and thus tend to accumulate. However,
-                   -- until we have a faster feedback system to rank filesystems, the fileSystemRate order has not proven to be better.
+          ORDER BY -- order by filesystem load first: this works if the feedback loop is fast enough, that is
+                   -- the transfer of the selected files in bulk does not take more than a couple of minutes
+                   FileSystem.nbMigratorStreams + FileSystem.nbRecallerStreams ASC,
+                   -- then use randomness for tie break
                    DBMS_Random.value)
   LOOP
     varFileSystemId := f.id;
