@@ -23,8 +23,11 @@
  *****************************************************************************/
 
 #pragma once
+
 #include "castor/tape/tapeserver/file/Structures.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
+#include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include <string>
 
 namespace castor {
@@ -34,32 +37,13 @@ namespace castor {
      */
     namespace tapeFile {
       
-      enum PositioningMode
-      {
-         ByBlockId,
-         ByFSeq
-      };
-      
       enum PartOfFile
       {
          Header,
          Payload,
          Trailer
       };
-      
-      /**
-       * Class containing all the information related to a file being migrated to 
-       * tape.
-       */
-      class FileInfo { //no information about path and filename here as it cannot be used nor checked on tape
-      public:
-        uint32_t checksum;
-        uint64_t nsFileId;
-        uint64_t size;
-        uint32_t fseq; //this is the payload (i.e. real file) sequence number, not the tape file sequence number (which would include headers and trailers as well)
-        uint32_t blockId;
-      };
-      
+
       class TapeFormatError: public Exception {
       public:
         TapeFormatError(const std::string & what): Exception(what) {}
@@ -119,14 +103,18 @@ namespace castor {
          * @param fileInfo: the Information structure of the current file
          * @param volId: the volume id of the tape in the drive
          */
-        static void checkHDR1(const HDR1 &hdr1, const FileInfo &fileInfo, const std::string &volId) throw (Exception);
+        static void checkHDR1(const HDR1 &hdr1, 
+          const castor::tape::tapegateway::FileToRecallStruct &fileToRecall, 
+          const std::string &volId) throw (Exception);
         
         /**
          * Checks the uhl1
          * @param uhl1: the uhl1 header of the current file
          * @param fileInfo: the Information structure of the current file
          */
-        static void checkUHL1(const UHL1 &uhl1, const FileInfo &fileInfo) throw (Exception);
+        static void checkUHL1(const UHL1 &uhl1, 
+          const castor::tape::tapegateway::FileToRecallStruct &fileToRecall)
+          throw (Exception);
         
         /**
          * Checks the utl1
@@ -155,6 +143,17 @@ namespace castor {
         static bool checkHeaderNumericalField(const std::string &headerField, const uint64_t value, const bool is_field_hex=false, const bool is_field_oct=false) throw (Exception);
       };
       
+      /**
+       * Class containign static helper functions that turn block id byte
+       * collections from fileToRecallStruct into uint32_t
+       */
+      
+      class BlockId {
+      public:
+        static uint32_t extract(const castor::tape::tapegateway::FileToRecallStruct &);
+        static void set(castor::tape::tapegateway::FileToRecallStruct &, 
+          uint32_t blockId);
+      }; 
       /**
        * Class keeping track of a tape label session on a tape. The session will
        * check for everything to be coherent. The tape should be mounted in
@@ -276,7 +275,9 @@ namespace castor {
          * @param fileInfo: information about the file we would like to read
          * @param positioningMode: method used when positioning (see the PositioningMode enum)
          */
-        ReadFile(ReadSession *rs, const FileInfo &fileInfo, const PositioningMode positioningMode) throw (Exception);
+        ReadFile(ReadSession *rs, 
+          const castor::tape::tapegateway::FileToRecallStruct &fileToRecall)
+          throw (Exception);
         
         /**
          * Destructor of the ReadFile. It will release the lock on the read session.
@@ -308,7 +309,9 @@ namespace castor {
          * As usual, exception is thrown if anything goes wrong.
          * @param fileInfo: all relevant information passed by the stager about the file.
          */
-        void position(const FileInfo &fileInfo) throw (Exception);
+        void position(
+          const castor::tape::tapegateway::FileToRecallStruct &fileToRecall)
+          throw (Exception);
 
         /**
          * Set the block size member using the info contained within the uhl1
@@ -326,11 +329,6 @@ namespace castor {
          * Session to which we are attached to
          */
         ReadSession *m_session;
-        
-        /**
-         * Mode with which the positioning for reading a file is done
-         */
-        PositioningMode m_positioningMode;
       };
 
       /**
@@ -446,7 +444,9 @@ namespace castor {
          * @param fileInfo: information about the file we want to read
          * @param blockSize: size of blocks we want to use in writing
          */
-        WriteFile(WriteSession *ws, const FileInfo fileinfo, const size_t blockSize) throw (Exception);
+        WriteFile(WriteSession *ws, 
+          const castor::tape::tapegateway::FileToMigrateStruct & fileToMigrate,
+          const size_t blockSize) throw (Exception);
         
         /**
          * Returns the block id of the current position
@@ -493,7 +493,7 @@ namespace castor {
          * Information that we have about the current file to be written and that
          * will be used to write appropriate headers and trailers
          */
-        FileInfo m_fileinfo;
+        const castor::tape::tapegateway::FileToMigrateStruct & m_fileToMigrate;
         
         /**
          * set to true whenever the constructor is called and to false when close() is called         
