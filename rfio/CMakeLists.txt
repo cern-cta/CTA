@@ -27,7 +27,6 @@ cmake_minimum_required (VERSION 2.6)
 ################################################################################
 set_property(SOURCE
   fstat64.c
-  lockf64.c
   lseek64.c
   open64.c
   preseek64.c
@@ -38,12 +37,12 @@ set_property(SOURCE
 set (RFIO_LIB_SRC_FILES access.c alrm.c chdir.c checkkey.c chmod.c chown.c
   close.c closedir.c connect.c error.c fchmod.c fchown.c fclose.c feof.c
   ferror.c fflush.c fileno.c fio.c fopen.c fread.c fseek.c fstat.c ftell.c
-  fwrite.c getc.c getcwd.c lockf.c lseek.c lstat.c lun2fn.c misc.c mkdir.c
+  fwrite.c getc.c getcwd.c lseek.c lstat.c lun2fn.c misc.c mkdir.c
   mstat.c msymlink.c munlink.c open.c opendir.c parse.c pclose.c popen.c
   pread.c preseek.c pwrite.c read.c readdir.c readlink.c rename.c rewinddir.c
   rfio_HsmIf.c rfio_rdirfdt.c rfio_rfilefdt.c rfstatfs.c rmdir.c setopt.c stat.c
-  statfs.c stream.c switch_req.c symlink.c unlink.c write.c xyclose.c xyopen.c
-  xyread.c xywrite.c fopen64.c fseeko64.c fstat64.c ftello64.c lockf64.c
+  statfs.c stream.c symlink.c unlink.c write.c xyclose.c xyopen.c
+  xyread.c xywrite.c fopen64.c fseeko64.c fstat64.c ftello64.c
   lseek64.c open64.c preseek64.c read64.c stream64.c write64.c RfioTURL.c)
 add_library (castorrfio SHARED ${RFIO_LIB_SRC_FILES})
 # Relax compilation of old code full of pointer casting. Funnily enough,
@@ -65,9 +64,9 @@ set (RFIO_MAN_FILES rfio_fileno rfio_read rfio_lstat rfio_readlink rfio_chown
   rfio_write rfio_unlink rfio_fseek rfio_close rfio_msymlink rfio_fread
   rfio_mstat64 rfio_open64 rfio_lseek rfio_closedir rfio_ftell rfio_stat
   rfio_perror rfio_stat64 rfio_readdir rfio_opendir rfio_fwrite rfio_rmdir
-  rfio_lstat64 rfio_lockf64 rfio_fchmod rfio_fflush rfio_preseek64 rfio_pclose
+  rfio_lstat64 rfio_fchmod rfio_fflush rfio_preseek64 rfio_pclose
   rfio_mkdir rfio_access rfio_symlink rfio_munlink rfio_open rfio_statfs
-  rfio_fstat64 rfio_fstat rfio_feof rfio_popen rfio_lockf rfio_serror
+  rfio_fstat64 rfio_fstat rfio_feof rfio_popen rfio_serror
   rfio_fclose rfio_fopen64 rfio_lseek64 rfio_ferror rfio_chmod rfio_fopen
   rfioreadopt rfiosetopt)
 foreach(MAN ${RFIO_MAN_FILES})
@@ -100,8 +99,8 @@ if (${COMPILE_SERVER} STREQUAL "1")
     rfio_call64.c
     APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
   set(RFIOD_SRC_FILES Csemaphore.c rfio_serv.c rfio_calls.c rfio_call64.c 
-    rfio_fcalls.c rfio_callhandlers.c switch_req.c checkkey.c fio.c rfstatfs.c 
-    alrm.c stager_util.c stager_messages.c stager_extern_globals.c stager_uuid.c 
+    rfio_callhandlers.c checkkey.c fio.c rfstatfs.c 
+    alrm.c stager_messages.c stager_extern_globals.c stager_uuid.c 
     rfio_alignedbuf.c rfio_xfsprealloc.c)
   add_executable(rfiod ${RFIOD_SRC_FILES})
   # Relax compilation of old code full of pointer casting. Funnily enough,
