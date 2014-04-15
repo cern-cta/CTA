@@ -71,9 +71,6 @@ END;
 /* Schema changes */
 /******************/
 
-/* Drop unused column of the SubRequest table */
-ALTER TABLE SubRequest DROP COLUMN answered;
-
 /* Drop updates from Type2Obj and redirect PrepareTo requests */
 DELETE FROM Type2Obj WHERE type in (38, 44);
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (36, 37);
