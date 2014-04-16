@@ -9,7 +9,7 @@ namespace daemon {
 
   DiskWriteThreadPool::DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq,
           ReportPackerInterface<detail::Recall>& report,castor::log::LogContext lc):
-          m_jobInjector(NULL),m_maxFilesReq(maxFilesReq), m_maxBytesReq(maxBlocksReq),
+          m_maxFilesReq(maxFilesReq), m_maxBytesReq(maxBlocksReq),
           m_reporter(report),m_lc(lc)
    {
     for(int i=0; i<nbThread; i++) {
@@ -50,9 +50,6 @@ namespace daemon {
       m_tasks.push(NULL);
     }
   }
-  void DiskWriteThreadPool::setJobInjector(TaskInjector * ji){
-    m_jobInjector = ji;
-  }
 
   bool DiskWriteThreadPool::belowMidFilesAfterPop(int filesPopped) const {
     return m_tasks.size() -filesPopped < m_maxFilesReq/2;
@@ -66,6 +63,7 @@ namespace daemon {
     using castor::log::Param;
     
     DiskWriteTaskInterface * ret = m_tasks.pop();
+    // TODO: completely remove task injection in writers, move it to readers
     if(ret)
     {
       castor::tape::threading::MutexLocker ml(&m_counterProtection);
@@ -82,7 +80,6 @@ namespace daemon {
         tape::utils::suppresUnusedVariable(sp);
     
         m_lc.log(LOG_INFO, "In DiskWriteTaskInterface::popAndRequestMoreJobs(), requesting last call");
-        m_jobInjector->requestInjection(m_maxFilesReq, m_maxBytesReq, true);
         //if we are below mid on both block and files and we are crossing a threshold 
         //on either files of blocks, then request more jobs
       } else if ( belowMidFilesAfterPop(1) && crossingDownFileThreshod(1)) {
@@ -94,7 +91,6 @@ namespace daemon {
         };
         tape::utils::suppresUnusedVariable(sp);
         m_lc.log(LOG_INFO, "In DiskWriteTaskInterface::popAndRequestMoreJobs(), requesting: files");
-        m_jobInjector->requestInjection(m_maxFilesReq, m_maxBytesReq, false);
       }      
     }
     return ret;

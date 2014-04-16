@@ -29,7 +29,6 @@ namespace unitTests{
   
   TEST(castor_tape_tapeserver_daemon, DiskWriteThreadPoolTest){
     using ::testing::_;
-    MockTaskInjector tskInjectorl;
     MockClient client;
     castor::log::StringLogger log("castor_tape_tapeserver_daemon_DiskWriteThreadPoolTest");
     castor::log::LogContext lc(log);
@@ -42,7 +41,6 @@ namespace unitTests{
     RecallMemoryManager mm(10,100);
     
     DiskWriteThreadPool dwtp(2,5,500,report,lc);
-    dwtp.setJobInjector(&tskInjectorl);
     dwtp.startThreads();
     
     castor::tape::tapegateway::FileToRecallStruct file;
