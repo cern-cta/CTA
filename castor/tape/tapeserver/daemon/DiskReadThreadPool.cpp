@@ -25,13 +25,14 @@
 #include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
 #include <memory>
 #include <sstream>
-
+#include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-  DiskReadThreadPool::DiskReadThreadPool(int nbThread,castor::log::LogContext lc) : m_lc(lc){
+  DiskReadThreadPool::DiskReadThreadPool(int nbThread, int m_maxFilesReq,int m_maxBytesReq, 
+          castor::log::LogContext lc) : m_lc(lc){
     for(int i=0; i<nbThread; i++) {
       DiskReadWorkerThread * thr = new DiskReadWorkerThread(*this);
       m_threads.push_back(thr);
@@ -64,20 +65,33 @@ namespace daemon {
       m_tasks.push(NULL);
     }
   }
-  
+  DiskReadTaskInterface* DiskReadThreadPool::popAndRequestMore(){
+    DiskReadTaskInterface* ret=m_tasks.pop();
+    castor::tape::threading::TryMutexLocker locker(&m_loopBackMutex);
+    if(locker)
+    {
+      const int remainningTasks = m_tasks.size();
+      if(1==remainningTasks){
+        m_injector->requestInjection(m_maxFilesReq, m_maxBytesReq,true);
+      }else if(remainningTasks <= m_maxFilesReq/2){
+        m_injector->requestInjection(m_maxFilesReq, m_maxBytesReq,false);
+      }
+    }
+    return ret;
+  }
   void DiskReadThreadPool::DiskReadWorkerThread::run() {
       std::auto_ptr<DiskReadTaskInterface> task;
       while(1) {
-        task.reset( _this.m_tasks.pop());
-        if (NULL!=task.get()) 
+        task.reset( _this.m_tasks.popAndRequestMore());
+        if (NULL!=task.get()) {
           task->execute(lc);
-        else
+        }
+        else {
           break;
-      }
+        }
+      } //end of while(1)
   }
   
   tape::threading::AtomicCounter<int> DiskReadThreadPool::DiskReadWorkerThread::m_nbActiveThread(0);
-
- 
 }}}}
 

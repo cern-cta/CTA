@@ -29,6 +29,7 @@
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/daemon/DiskThreadPoolInterface.hpp"
 #include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
+#include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/log/LogContext.hpp"
 #include <vector>
 
@@ -36,16 +37,20 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-  
+  class MigrationTaskInjector;
 class DiskReadThreadPool : public DiskThreadPoolInterface<DiskReadTaskInterface> {
 public:
-  DiskReadThreadPool(int nbThread,castor::log::LogContext lc);
+  DiskReadThreadPool(int nbThread, int m_maxFilesReq,int m_maxBytesReq, 
+          castor::log::LogContext lc);
   ~DiskReadThreadPool();
   void startThreads();
   void waitThreads();
   virtual void push(DiskReadTaskInterface *t);
   void finish();
-
+  void setTaskInjector(MigrationTaskInjector* injector){
+      m_injector = injector;
+  }
+  DiskReadTaskInterface* popAndRequestMore();
 private:
   class DiskReadWorkerThread: private castor::tape::threading::Thread {
   public:
@@ -66,6 +71,10 @@ private:
   };
   std::vector<DiskReadWorkerThread *> m_threads;
   castor::log::LogContext m_lc;
+  MigrationTaskInjector* m_injector;
+  int m_maxFilesReq;
+  int m_maxBytesReq;
+  tape::threading::Mutex m_loopBackMutex;
 };
 
 }}}}
