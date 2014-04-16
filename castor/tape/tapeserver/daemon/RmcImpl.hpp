@@ -23,7 +23,9 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
+#include "castor/tape/legacymsg/MessageHeader.hpp"
 #include "castor/tape/legacymsg/RmcMountMsgBody.hpp"
+#include "castor/tape/legacymsg/RmcUnmountMsgBody.hpp"
 #include "castor/tape/tapeserver/daemon/Rmc.hpp"
 
 #include <unistd.h>
@@ -192,9 +194,27 @@ protected:
    * Writes an RMC_MOUNT message with the specifed body to the specified
    * connection.
    *
-   * @param body The body of the RMC_MOUNT message.
+   * @param fd The file descriptor of the connection.
+   * @param body The body of the message.
    */
   void writeRmcMountMsg(const int fd, const legacymsg::RmcMountMsgBody &body) throw(castor::exception::Exception);
+
+  /**
+   * Reads the header of an RMC_MAGIC message from the specified connection.
+   *
+   * @param fd The file descriptor of the connection.
+   * @return The message header.
+   */
+  legacymsg::MessageHeader readRmcMsgHeader(const int fd) throw(castor::exception::Exception);
+
+  /**
+   * Writes an RMC_UNMOUNT message with the specifed body to the specified
+   * connection.
+   *
+   * @param fd The file descriptor of the connection.
+   * @param body The body of the message.
+   */
+  void writeRmcUnmountMsg(const int fd, const legacymsg::RmcUnmountMsgBody &body) throw(castor::exception::Exception);
 
 }; // class RmcImpl
 

@@ -75,8 +75,16 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::execute
 
   std::auto_ptr<castor::tape::tapegateway::Volume> volume(getVolume(clientMsgSeqNb++));
   if(NULL != volume.get()) {
+    log::Param params[] = {
+      log::Param("TPVID", volume->vid()),
+      log::Param("density", volume->density()),
+      log::Param("label", volume->label()),
+      log::Param("mode", volume->mode())};
+    m_log(LOG_INFO, "Got VID from client", params);
     mountTape(volume->vid());
     transferFiles(*(volume.get()), clientMsgSeqNb);
+  } else {
+     m_log(LOG_WARNING, "Could not get VID from client");
   }
 
   const bool forceUnmount = true;
@@ -296,14 +304,30 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::throwEn
 // mountTape
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::mountTape(const std::string &vid) throw (castor::exception::Exception) {
-  // Emulate tape mount by sleeping
-  ::sleep(1);
+  const std::string drive = getPositionInLibrary(m_job.driveUnit);
+  m_rmc.mountTape(vid, drive);
 
   log::Param params[] = {
     log::Param("unitName", m_job.driveUnit),
     log::Param("TPVID", vid)};
   m_log(LOG_INFO, "Tape mounted", params);
   m_vdqm.tapeMounted(m_hostName, m_job.driveUnit, m_job.dgn, vid, m_sessionPid);
+}
+
+//------------------------------------------------------------------------------
+// getPositionInLibrary
+//------------------------------------------------------------------------------
+std::string castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::getPositionInLibrary(const std::string &unitName)
+  throw (castor::exception::Exception) {
+  for(utils::TpconfigLines::const_iterator itor = m_tpConfig.begin(); itor != m_tpConfig.end(); itor++) {
+    if(unitName == itor->unitName) {
+      return itor->positionInLibrary;
+    }
+  }
+
+  castor::exception::Internal ex;
+  ex.getMessage() << "Failed to find library position of drive " << unitName;
+  throw ex;
 }
 
 //------------------------------------------------------------------------------
@@ -417,8 +441,8 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::release
 // unmountTape
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::unmountTape(const std::string &vid) throw (castor::exception::Exception) {
-  // Emulate tape unmount by sleeping
-  ::sleep(1);
+  const std::string drive = getPositionInLibrary(m_job.driveUnit);
+  m_rmc.unmountTape(vid, drive);
 
   log::Param params[] = {
     log::Param("unitName", m_job.driveUnit),

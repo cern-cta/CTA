@@ -132,7 +132,7 @@ TEST_F(castor_server_RmcMarshalTest, marshalRmcMountMsgBody) {
 
     ASSERT_EQ((uint32_t)RMC_MAGIC, dstHeader.magic);
     ASSERT_EQ((uint32_t)RMC_MOUNT, dstHeader.reqType);
-    ASSERT_EQ((uint32_t)17, dstHeader.lenOrStatus);
+    ASSERT_EQ((uint32_t)29, dstHeader.lenOrStatus);
   }
 
   // Unmarshall message body
