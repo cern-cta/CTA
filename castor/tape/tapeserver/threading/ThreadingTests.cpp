@@ -97,4 +97,21 @@ namespace unitTests {
       ASSERT_NE(std::string::npos, w.find("Exception in child thread"));
     }
   }
+  TEST(castor_tape_threading, TestTryMutexLocker) {
+
+    castor::tape::threading::Mutex m;
+    
+    ASSERT_EQ(true, m.trylock());
+    ASSERT_NO_THROW(m.unlock());
+
+    {
+      castor::tape::threading::TryMutexLocker l1(&m);
+      ASSERT_EQ(true, l1);
+      castor::tape::threading::TryMutexLocker l2(&m);
+      ASSERT_EQ(false, l2);
+      ASSERT_THROW(m.lock(),castor::exception::Errnum);
+    }
+    
+    ASSERT_THROW(m.unlock(),castor::exception::Errnum);
+  }
 } // namespace unitTests
