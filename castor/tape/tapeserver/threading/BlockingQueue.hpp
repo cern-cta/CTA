@@ -38,7 +38,7 @@ public:
   typedef typename std::queue<C>::value_type value_type;
   typedef typename std::queue<C>::reference reference;
   typedef typename std::queue<C>::const_reference const_reference;
-  typedef struct {C value; size_t remaining;} valueRemainingPair;
+  typedef struct valueRemainingPair {C value; size_t remaining;} valueRemainingPair;
   
   BlockingQueue(){}
   ~BlockingQueue() {}
@@ -96,7 +96,7 @@ private:
     C ret = m_queue.front();
     m_queue.pop();
     if (sz)
-      *sz = m_queue.size;
+      *sz = m_queue.size();
     return ret;
   }
   
