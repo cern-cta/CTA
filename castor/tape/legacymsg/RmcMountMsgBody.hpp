@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/legacymsg/RmcAcsMntMsgBody.hpp
+ *         castor/tape/legacymsg/RmcMountMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -33,16 +33,15 @@ namespace tape {
 namespace legacymsg {
 
 /**
- * The body of an RMC_ACS_MOUNT message.
+ * The body of an RMC_MOUNT message.
  */
-struct RmcAcsMntMsgBody {
+struct RmcMountMsgBody {
   uint32_t uid;
   uint32_t gid;
-  uint32_t acs;
-  uint32_t lsm;
-  uint32_t panel;
-  uint32_t transport;
+  char unusedLoader[1]; // Should always be set to the emtpy string
   char vid[CA_MAXVIDLEN];
+  uint16_t side;
+  uint16_t drvOrd;
 
   /**
    * Constructor.
@@ -50,8 +49,8 @@ struct RmcAcsMntMsgBody {
    * Sets all integer member-variables to 0 and all string member-variables to
    * the empty string.
    */
-  RmcAcsMntMsgBody() throw();
-}; // struct RmcAcsMntMsgBody
+  RmcMountMsgBody() throw();
+}; // struct RmcMountMsgBody
 
 } // namespace legacymsg
 } // namespace tape

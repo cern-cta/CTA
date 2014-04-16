@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/legacymsg/RmcAcsMntMsgBody.hpp
+ *         castor/tape/legacymsg/RmcMountMsgBody.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,38 +22,18 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "castor/tape/legacymsg/RmcMountMsgBody.hpp"
 
-#include "h/Castor_limits.h"
+#include <string.h>
 
-#include <stdint.h>
-
-namespace castor {
-namespace tape {
-namespace legacymsg {
-
-/**
- * The body of an RMC_ACS_MOUNT message.
- */
-struct RmcAcsMntMsgBody {
-  uint32_t uid;
-  uint32_t gid;
-  uint32_t acs;
-  uint32_t lsm;
-  uint32_t panel;
-  uint32_t transport;
-  char vid[CA_MAXVIDLEN];
-
-  /**
-   * Constructor.
-   *
-   * Sets all integer member-variables to 0 and all string member-variables to
-   * the empty string.
-   */
-  RmcAcsMntMsgBody() throw();
-}; // struct RmcAcsMntMsgBody
-
-} // namespace legacymsg
-} // namespace tape
-} // namespace castor
-
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::legacymsg::RmcMountMsgBody::RmcMountMsgBody() throw():
+  uid(0),
+  gid(0),
+  side(0),
+  drvOrd(0) {
+  memset(unusedLoader, '\0', sizeof(unusedLoader));
+  memset(vid, '\0', sizeof(vid));
+}
