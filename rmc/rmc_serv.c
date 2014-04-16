@@ -45,7 +45,7 @@ char localhost[CA_MAXHOSTNAMELEN+1];
 int maxfds;
 struct extended_robot_info extended_robot_info;
 
-int rmc_main(struct main_args *main_args)
+int rmc_main(const char *const robot)
 {
 	int c;
 	unsigned char cdb[12];
@@ -57,7 +57,6 @@ int rmc_main(struct main_args *main_args)
 	int on = 1;	/* for REUSEADDR */
 	char plist[40];
 	fd_set readfd, readmask;
-	char *robot;
 	int s;
     int n=0;
 	char sense[MAXSENSE];
@@ -82,11 +81,6 @@ int rmc_main(struct main_args *main_args)
 		strcat (localhost, domainname);
 	}
 
-	if (main_args->argc != 2) {
-		rmc_logit (func, RMC01);
-		exit (USERR);
-	}
-	robot = main_args->argv[1];
 	if (*robot == '\0' ||
 	    (strlen (robot) + (*robot == '/') ? 0 : 5) > CA_MAXRBTNAMELEN) {
 		rmc_logit (func, RMC06, "robot");
@@ -191,16 +185,99 @@ int rmc_main(struct main_args *main_args)
 	}
 }
 
-int main(int argc,
+/**
+ * Returns 1 if the rmcd daemon should run in the background or 0 if the
+ * daemon should run in the foreground.
+ */
+static int run_rmcd_in_background(const int argc, char **argv) {
+  int i = 0;
+  for(i = 1; i < argc; i++) {
+    if(0 == strcmp(argv[i], "-f")) {
+      return 0;
+    }
+  }
+
+  return 1;
+}
+
+/**
+ * Returns 1 if the specified command-line argument start with '-' else
+ * returns 0.
+ */
+static int cmdline_arg_is_an_option(const char *arg) {
+  if(strlen(arg) < 1) {
+    return 0;
+  } else {
+    if('-' == arg[0]) {
+      return 1;
+    } else {
+      return 0;
+    }
+  }
+}
+
+/**
+ * Returns the number of command-line arguments that start with '-'.
+ */
+static int get_nb_cmdline_options(const int argc, char **argv) {
+  int i = 0;
+  int nbOptions = 0;
+
+  for(i = 1; i < argc; i++) {
+    if(cmdline_arg_is_an_option(argv[i])) {
+      nbOptions++;
+    }
+  }
+
+  return nbOptions;
+}
+
+int main(const int argc,
          char **argv)
 {
-	struct main_args main_args;
+	const char *robot = "";
+	const int nb_cmdline_options = get_nb_cmdline_options(argc, argv);
 
-	main_args.argc = argc;
-	main_args.argv = argv;
-	if ((maxfds = Cinitdaemon ("rmcd", NULL)) < 0)
-		exit (SYERR);
-	exit (rmc_main (&main_args));
+	switch(argc) {
+	case 1:
+		fprintf(stderr, "RMC01 - robot parameter is mandatory\n");
+		exit (USERR);
+	case 2:
+		if(0 == nb_cmdline_options) {
+			robot = argv[1];
+		} else {
+			fprintf(stderr, "RMC01 - robot parameter is mandatory\n");
+			exit (USERR);
+		}
+		break;
+	case 3:
+		if(0 == nb_cmdline_options) {
+			fprintf(stderr, "Too many robot parameters\n");
+			exit (USERR);
+		} else if(2 == nb_cmdline_options) {
+			fprintf(stderr, "RMC01 - robot parameter is mandatory\n");
+			exit (USERR);
+		/* At this point there is one argument starting with '-' */
+		} else if(0 == strcmp(argv[1], "-f")) {
+			robot = argv[2];
+		} else if(0 == strcmp(argv[2], "-f")) {
+			robot = argv[1];
+		} else {
+			fprintf(stderr, "Unknown option\n");
+			exit (USERR);
+		}
+		break;
+	default:
+		fprintf(stderr, "Too many command-line arguments\n");
+		exit (USERR);
+	}
+
+	if(run_rmcd_in_background(argc, argv)) {
+		if ((maxfds = Cinitdaemon ("rmcd", NULL)) < 0) {
+			exit (SYERR);
+		}
+	}
+	exit (rmc_main (robot));
 }
 
 static void rmc_doit(const int rpfd)

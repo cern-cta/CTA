@@ -13,11 +13,8 @@ The
 command starts the Remote Media Changer daemon.
 .SH OPTIONS
 .TP
-\fB\-f, \-\-foreground
+\fB\-f
 Remain in the foreground.
-.TP
-\fB\-h, \-\-help
-Prints the usage message
 .SH CASTOR CONFIGURATION PARAMETERS READ BY THE SERVER
 The remote media changer daemon reads and uses the following CASTOR
 configuration parameters which are specified within the CASTOR
