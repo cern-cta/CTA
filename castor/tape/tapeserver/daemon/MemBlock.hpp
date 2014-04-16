@@ -104,8 +104,12 @@ public:
               << " (totalSize=" << m_totalCapacity << ")"; 
       throw MemException(err.str());
     }
-    size_t readSize = from.read(m_payload + m_size, from.getBlockSize());
-    if (!readSize) throw EndOfFile("In castor::tape::tapeserver::daemon::Payload::append: reached end of file");
+    size_t readSize;
+    try {
+      readSize = from.read(m_payload + m_size, from.getBlockSize());
+    } catch (castor::tape::tapeFile::EndOfFile) {
+      throw EndOfFile("In castor::tape::tapeserver::daemon::Payload::append: reached end of file");
+    }
     m_size += readSize;
     return  from.getBlockSize() <= remainingFreeSpace();
   }

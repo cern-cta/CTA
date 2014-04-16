@@ -47,9 +47,14 @@ public:
    * @param numberOfBlocks: number of blocks to allocate
    * @param blockSize: size of each block
    */
-  MemoryManager(const size_t numberOfBlocks, const size_t blockSize) throw(castor::exception::Exception) : m_totalNumberOfBlocks(numberOfBlocks) {
+  MemoryManager(const size_t numberOfBlocks, const size_t blockSize) 
+          throw(castor::exception::Exception) : 
+  m_totalNumberOfBlocks(0), m_totalMemoryAllocated(0),
+  m_blocksProvided(0), m_blocksReturned(0) {
     for (size_t i = 0; i < numberOfBlocks; i++) {
       m_freeBlocks.push(new MemBlock(i, blockSize));
+      m_totalNumberOfBlocks++;
+      m_totalMemoryAllocated+=blockSize;
     }
   }
   
@@ -90,6 +95,10 @@ public:
   void releaseBlock(MemBlock *mb) throw(castor::exception::Exception) {
     mb->reset();
     m_freeBlocks.push(mb);
+    {
+      castor::tape::threading::MutexLocker ml(&m_countersMutex);
+      m_blocksReturned++;
+    }
   }
   
   /**
@@ -139,6 +148,26 @@ private:
   size_t m_totalNumberOfBlocks;
   
   /**
+   * Total amount of memory allocated
+   */
+  size_t m_totalMemoryAllocated;
+  
+  /**
+   * Count of blocks provided
+   */
+  size_t m_blocksProvided;
+  
+  /**
+   * Count of blocks returned
+   */
+  size_t m_blocksReturned;
+  
+  /**
+   * Mutex protecting the counters
+   */
+  castor::tape::threading::Mutex m_countersMutex;
+  
+  /**
    * Container for the free blocks
    */
   castor::tape::threading::BlockingQueue<MemBlock *> m_freeBlocks;
@@ -165,7 +194,14 @@ private:
       
       /* Spin on the the client. We rely on the fact that he will want
        at least one block (which is the case currently) */
-      while (c->provideBlock(m_freeBlocks.pop()));
+      while (c->provideBlock(m_freeBlocks.pop())) {
+        {
+          castor::tape::threading::MutexLocker ml (&m_countersMutex);
+          m_blocksProvided++;
+        }
+        
+      }
+        
     }
   }
   
