@@ -33,7 +33,8 @@ add_executable(tapeserver-mm
   DiskReadThreadPool.cpp
   TapeWriteTask.cpp
   DiskReadTask.cpp
-  DiskWriteTask.cpp)
+  DiskWriteTask.cpp
+  MigrationTaskInjector.cpp)
 
 target_link_libraries(tapeserver-mm 
 TapeDrive Exception SCSI System Utils File 
@@ -50,7 +51,8 @@ add_library(tapeserver
   DiskReadThreadPool.cpp
   TapeWriteTask.cpp
   DiskReadTask.cpp
-  DiskWriteTask.cpp)
+  DiskWriteTask.cpp
+  MigrationTaskInjector.cpp)
 
 
 add_library(tapeserverdTest 
