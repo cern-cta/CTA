@@ -26,7 +26,7 @@
 
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
-
+#include "castor/log/LogContext.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -42,17 +42,12 @@ public:
   /**
    * Main routine of the task
    */
-  virtual void execute(castor::tape::tapeFile::WriteSession& /*td*/) =0;
+  virtual void execute(castor::tape::tapeFile::WriteSession& /*td*/,castor::log::LogContext& lc) =0;
     
   /**
    * @return the number of memory blocks to be used
    */
   virtual int blocks() =0; 
-  
-  /**
-   * @return the file sequence number of the file to be written on tape
-   */
-  virtual int fSeq()=0;
   
   /**
    * Destructor
