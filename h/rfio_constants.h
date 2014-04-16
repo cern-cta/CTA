@@ -135,33 +135,16 @@
 #define RQST_STAT       0x2007          /* request for stat()           */
 #define RQST_FSTAT      0x2008          /* request for fstat()          */
 #define RQST_LSEEK      0x2009          /* request for lseek()          */
-#define RQST_FIRSTSEEK  0x200a          /* request for first preseek()  */
-#define RQST_PRESEEK    0x200b          /* request for preseek()        */
-#define RQST_LASTSEEK   0x200c          /* request for last preseek()   */
-#define RQST_XYOPEN     0x3001          /* request for xyopen()         */
-#define RQST_XYREAD     0x3002          /* request for xyread()         */
-#define RQST_XYWRIT     0x3003          /* request for xywrit()         */
-#define RQST_XYCLOS     0x3004          /* request for xyclos()         */
-#define RQST_SYMLINK    0x3005          /* request for symlink()        */
 #define RQST_STATFS     0x3006          /* request for statfs()         */
 #define RQST_LSTAT      0x3007          /* request for lstat()          */
-#define RQST_POPEN      0x3008          /* request for popen()          */
-#define RQST_PCLOSE     0x3009          /* request for pclose()         */
 #define RQST_FREAD      0x300a          /* request for fread()          */
 #define RQST_FWRITE     0x300b          /* request for fwrite()         */
 #define RQST_ACCESS     0x300c          /* request for access()         */
-#define RQST_CHKCON     0x4001          /* request for connection check */
-#define RQST_READLINK   0x4002          /* request for readlink()       */
-#define RQST_MKDIR      0x4003          /* request for mkdir()          */
-#define RQST_CHOWN      0x4004          /* request for chown()          */
-#define RQST_RENAME     0x4005          /* request for rename()         */
-#define RQST_LOCKF      0x4006          /* request for lockf()          */
 #define RQST_MSTAT      0x4007          /* request for rfio_mstat()     */
 #define RQST_END        0x4008          /* request for end of rfiod     */
 #define RQST_MSTAT_SEC  0x4010          /* request for secure mstat()   */
 #define RQST_STAT_SEC   0x4011          /* request for secure stat()    */
 #define RQST_LSTAT_SEC  0x4012          /* request for secure lstat()   */
-#define RQST_MSYMLINK   0x4013          /* request for msymlink()       */
 
 #define REP_ERROR       0x5000
 #define REP_EOF         0x5001
@@ -170,14 +153,6 @@
 #define RQST_READ_V3    0x5005
 #define RQST_WRITE_V3   0x5006
 #define RQST_LSEEK_V3   0x5007
-#define RQST_FCHMOD     0x5008
-#define RQST_FCHOWN     0x5009
-#define RQST_OPENDIR    0x500a          /* request for opendir()        */
-#define RQST_READDIR    0x500b          /* request for readdir()        */
-#define RQST_CLOSEDIR   0x500c          /* request for closedir()       */
-#define RQST_REWINDDIR  0x500d          /* request for rewinddir()      */
-#define RQST_RMDIR      0x500e          /* request for rmdir()          */
-#define RQST_CHMOD      0x500f          /* request for chmod()          */
 
 #define RQST_OPEN64     0x2801          /* request for open64()         */
 #define RQST_READ64     0x2802          /* request for read64()         */
@@ -188,12 +163,10 @@
 #define RQST_STAT64     0x2807          /* request for stat64()         */
 #define RQST_FSTAT64    0x2808          /* request for fstat64()        */
 #define RQST_LSEEK64    0x2809          /* request for lseek64()        */
-#define RQST_PRESEEK64  0x280b          /* request for preseek64()      */
 #define RQST_STATFS64   0x3806          /* request for statfs64()       */
 #define RQST_LSTAT64    0x3807          /* request for lstat64()        */
 #define RQST_FREAD64    0x380a          /* request for fread64()        */
 #define RQST_FWRITE64   0x380b          /* request for fwrite64()       */
-#define RQST_LOCKF64    0x3846          /* request for lockf()          */
 #define RQST_MSTAT64    0x4807          /* request for rfio_mstat()     */
 #define RQST_OPEN64_V3  0x5803          /* request for open64_v3()      */
 #define RQST_CLOSE64_V3 0x5804          /* request for close64_v3()     */

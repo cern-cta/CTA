@@ -52,6 +52,9 @@ public:
   RequestReport& report) throw (castor::tape::Exception){
   }
   
+   tapegateway::FilesToMigrateList *getFilesToMigrate(uint64_t files, uint64_t bytes, RequestReport &report){
+     return NULL;
+  }
   //workaround to use assertion inside a function returning something else than void
   //see http://code.google.com/p/googletest/wiki/AdvancedGuide#Assertion_Placement
   void assertion(){ASSERT_EQ(true,static_cast<unsigned int>(m_current)<lists.size());}
@@ -90,6 +93,7 @@ private:
     MOCK_METHOD3(reportEndOfSessionWithError, void(const std::string & errorMsg, int errorCode, RequestReport &transactionReport));
     MOCK_METHOD1(reportEndOfSession, void(RequestReport &transactionReport));
     MOCK_METHOD2(reportRecallResults,void(tapegateway::FileRecallReportList & recallReport,RequestReport &report));
+    MOCK_METHOD3(getFilesToMigrate,tapegateway::FilesToMigrateList *(uint64_t, uint64_t, RequestReport &));
   };
   
 }

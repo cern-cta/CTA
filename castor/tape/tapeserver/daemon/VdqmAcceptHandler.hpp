@@ -45,7 +45,7 @@ public:
   /**
    * Constructor.
    *
-   * @param listenSock The file descriptor of the socket listening for
+   * @param fd The file descriptor of the socket listening for
    * connections from the vdqmd daemon.
    * @param reactor The reactor to which new Vdqm connection handlers are to be
    * registered.
@@ -54,7 +54,7 @@ public:
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
    */
-  VdqmAcceptHandler(const int listenSock, io::PollReactor &reactor,
+  VdqmAcceptHandler(const int fd, io::PollReactor &reactor,
     log::Logger &log, Vdqm &vdqm, DriveCatalogue &driveCatalogue) throw();
 
   /**
@@ -72,8 +72,10 @@ public:
    * Handles the specified event.
    *
    * @param fd The poll file-descriptor describing the event.
+   * @return true if the event handler should be removed from and deleted by
+   * the reactor.
    */
-  void handleEvent(const struct pollfd &fd)
+  bool handleEvent(const struct pollfd &fd)
     throw(castor::exception::Exception);
 
   /**
@@ -95,7 +97,7 @@ private:
    * The file descriptor of the socket listening for connections from the vdqmd
    * daemon.
    */
-  const int m_listenSock;
+  const int m_fd;
 
   /**
    * The reactor to which new Vdqm connection handlers are to be registered.

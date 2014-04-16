@@ -328,7 +328,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_11');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_12');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -373,40 +373,41 @@ AS
 CREATE OR REPLACE PACKAGE tconst
 AS
   -- TPMODE
-  WRITE_DISABLE CONSTANT PLS_INTEGER :=  0;
-  WRITE_ENABLE  CONSTANT PLS_INTEGER :=  1;
+  WRITE_DISABLE                CONSTANT PLS_INTEGER :=  0;
+  WRITE_ENABLE                 CONSTANT PLS_INTEGER :=  1;
 
-  RECALLMOUNT_NEW        CONSTANT PLS_INTEGER := 0;
-  RECALLMOUNT_WAITDRIVE  CONSTANT PLS_INTEGER := 1;
-  RECALLMOUNT_RECALLING  CONSTANT PLS_INTEGER := 2;
+  RECALLMOUNT_NEW              CONSTANT PLS_INTEGER := 0;
+  RECALLMOUNT_WAITDRIVE        CONSTANT PLS_INTEGER := 1;
+  RECALLMOUNT_RECALLING        CONSTANT PLS_INTEGER := 2;
 
-  RECALLJOB_PENDING      CONSTANT PLS_INTEGER := 1;
-  RECALLJOB_SELECTED     CONSTANT PLS_INTEGER := 2;
-  RECALLJOB_RETRYMOUNT   CONSTANT PLS_INTEGER := 3;
+  RECALLJOB_PENDING            CONSTANT PLS_INTEGER := 1;
+  RECALLJOB_SELECTED           CONSTANT PLS_INTEGER := 2;
+  RECALLJOB_RETRYMOUNT         CONSTANT PLS_INTEGER := 3;
+  RECALLJOB_SELECTED2NDCOPY    CONSTANT PLS_INTEGER := 4;
 
-  MIGRATIONMOUNT_WAITTAPE  CONSTANT PLS_INTEGER := 0;
-  MIGRATIONMOUNT_SEND_TO_VDQM CONSTANT PLS_INTEGER := 1;
-  MIGRATIONMOUNT_WAITDRIVE CONSTANT PLS_INTEGER := 2;
-  MIGRATIONMOUNT_MIGRATING CONSTANT PLS_INTEGER := 3;
+  MIGRATIONMOUNT_WAITTAPE      CONSTANT PLS_INTEGER := 0;
+  MIGRATIONMOUNT_SEND_TO_VDQM  CONSTANT PLS_INTEGER := 1;
+  MIGRATIONMOUNT_WAITDRIVE     CONSTANT PLS_INTEGER := 2;
+  MIGRATIONMOUNT_MIGRATING     CONSTANT PLS_INTEGER := 3;
 
-  MIGRATIONJOB_PENDING   CONSTANT PLS_INTEGER := 0;
-  MIGRATIONJOB_SELECTED  CONSTANT PLS_INTEGER := 1;
+  MIGRATIONJOB_PENDING         CONSTANT PLS_INTEGER := 0;
+  MIGRATIONJOB_SELECTED        CONSTANT PLS_INTEGER := 1;
   MIGRATIONJOB_WAITINGONRECALL CONSTANT PLS_INTEGER := 3;
 
-  REPACK_SUBMITTED       CONSTANT PLS_INTEGER := 6;
-  REPACK_STARTING        CONSTANT PLS_INTEGER := 0;
-  REPACK_ONGOING         CONSTANT PLS_INTEGER := 1;
-  REPACK_FINISHED        CONSTANT PLS_INTEGER := 2;
-  REPACK_FAILED          CONSTANT PLS_INTEGER := 3;
-  REPACK_ABORTING        CONSTANT PLS_INTEGER := 4;
-  REPACK_ABORTED         CONSTANT PLS_INTEGER := 5;
+  REPACK_SUBMITTED             CONSTANT PLS_INTEGER := 6;
+  REPACK_STARTING              CONSTANT PLS_INTEGER := 0;
+  REPACK_ONGOING               CONSTANT PLS_INTEGER := 1;
+  REPACK_FINISHED              CONSTANT PLS_INTEGER := 2;
+  REPACK_FAILED                CONSTANT PLS_INTEGER := 3;
+  REPACK_ABORTING              CONSTANT PLS_INTEGER := 4;
+  REPACK_ABORTED               CONSTANT PLS_INTEGER := 5;
 
-  TAPE_DISABLED          CONSTANT PLS_INTEGER := 1;
-  TAPE_EXPORTED          CONSTANT PLS_INTEGER := 2;
-  TAPE_BUSY              CONSTANT PLS_INTEGER := 4;
-  TAPE_FULL              CONSTANT PLS_INTEGER := 8;
-  TAPE_RDONLY            CONSTANT PLS_INTEGER := 16;
-  TAPE_ARCHIVED          CONSTANT PLS_INTEGER := 32;
+  TAPE_DISABLED                CONSTANT PLS_INTEGER := 1;
+  TAPE_EXPORTED                CONSTANT PLS_INTEGER := 2;
+  TAPE_BUSY                    CONSTANT PLS_INTEGER := 4;
+  TAPE_FULL                    CONSTANT PLS_INTEGER := 8;
+  TAPE_RDONLY                  CONSTANT PLS_INTEGER := 16;
+  TAPE_ARCHIVED                CONSTANT PLS_INTEGER := 32;
 END tconst;
 /
 
@@ -457,33 +458,33 @@ END;
 CREATE OR REPLACE PACKAGE dconst
 AS
 
-  CASTORFILE_NOTONTAPE       CONSTANT PLS_INTEGER :=  0;
-  CASTORFILE_ONTAPE          CONSTANT PLS_INTEGER :=  1;
-  CASTORFILE_DISKONLY        CONSTANT PLS_INTEGER :=  2;
+  CASTORFILE_NOTONTAPE        CONSTANT PLS_INTEGER :=  0;
+  CASTORFILE_ONTAPE           CONSTANT PLS_INTEGER :=  1;
+  CASTORFILE_DISKONLY         CONSTANT PLS_INTEGER :=  2;
 
-  DISKCOPY_VALID             CONSTANT PLS_INTEGER :=  0;
-  DISKCOPY_FAILED            CONSTANT PLS_INTEGER :=  4;
-  DISKCOPY_WAITFS            CONSTANT PLS_INTEGER :=  5;
-  DISKCOPY_STAGEOUT          CONSTANT PLS_INTEGER :=  6;
-  DISKCOPY_INVALID           CONSTANT PLS_INTEGER :=  7;
-  DISKCOPY_BEINGDELETED      CONSTANT PLS_INTEGER :=  9;
-  DISKCOPY_WAITFS_SCHEDULING CONSTANT PLS_INTEGER := 11;
+  DISKCOPY_VALID              CONSTANT PLS_INTEGER :=  0;
+  DISKCOPY_FAILED             CONSTANT PLS_INTEGER :=  4;
+  DISKCOPY_WAITFS             CONSTANT PLS_INTEGER :=  5;
+  DISKCOPY_STAGEOUT           CONSTANT PLS_INTEGER :=  6;
+  DISKCOPY_INVALID            CONSTANT PLS_INTEGER :=  7;
+  DISKCOPY_BEINGDELETED       CONSTANT PLS_INTEGER :=  9;
+  DISKCOPY_WAITFS_SCHEDULING  CONSTANT PLS_INTEGER := 11;
 
-  DISKSERVER_PRODUCTION CONSTANT PLS_INTEGER := 0;
-  DISKSERVER_DRAINING   CONSTANT PLS_INTEGER := 1;
-  DISKSERVER_DISABLED   CONSTANT PLS_INTEGER := 2;
-  DISKSERVER_READONLY   CONSTANT PLS_INTEGER := 3;
+  DISKSERVER_PRODUCTION       CONSTANT PLS_INTEGER := 0;
+  DISKSERVER_DRAINING         CONSTANT PLS_INTEGER := 1;
+  DISKSERVER_DISABLED         CONSTANT PLS_INTEGER := 2;
+  DISKSERVER_READONLY         CONSTANT PLS_INTEGER := 3;
 
-  FILESYSTEM_PRODUCTION CONSTANT PLS_INTEGER := 0;
-  FILESYSTEM_DRAINING   CONSTANT PLS_INTEGER := 1;
-  FILESYSTEM_DISABLED   CONSTANT PLS_INTEGER := 2;
-  FILESYSTEM_READONLY   CONSTANT PLS_INTEGER := 3;
+  FILESYSTEM_PRODUCTION       CONSTANT PLS_INTEGER := 0;
+  FILESYSTEM_DRAINING         CONSTANT PLS_INTEGER := 1;
+  FILESYSTEM_DISABLED         CONSTANT PLS_INTEGER := 2;
+  FILESYSTEM_READONLY         CONSTANT PLS_INTEGER := 3;
   
-  DRAININGJOB_SUBMITTED    CONSTANT PLS_INTEGER := 0;
-  DRAININGJOB_STARTING     CONSTANT PLS_INTEGER := 1;
-  DRAININGJOB_RUNNING      CONSTANT PLS_INTEGER := 2;
-  DRAININGJOB_FAILED       CONSTANT PLS_INTEGER := 4;
-  DRAININGJOB_FINISHED     CONSTANT PLS_INTEGER := 5;
+  DRAININGJOB_SUBMITTED       CONSTANT PLS_INTEGER := 0;
+  DRAININGJOB_STARTING        CONSTANT PLS_INTEGER := 1;
+  DRAININGJOB_RUNNING         CONSTANT PLS_INTEGER := 2;
+  DRAININGJOB_FAILED          CONSTANT PLS_INTEGER := 4;
+  DRAININGJOB_FINISHED        CONSTANT PLS_INTEGER := 5;
 
   DRAIN_FILEMASK_NOTONTAPE    CONSTANT PLS_INTEGER := 0;
   DRAIN_FILEMASK_ALL          CONSTANT PLS_INTEGER := 1;
@@ -510,33 +511,33 @@ AS
   DISKPOOLQUERYTYPE_AVAILABLE CONSTANT PLS_INTEGER :=  1;
   DISKPOOLQUERYTYPE_TOTAL     CONSTANT PLS_INTEGER :=  2;
 
-  DISKPOOLSPACETYPE_FREE     CONSTANT PLS_INTEGER :=  0;
-  DISKPOOLSPACETYPE_CAPACITY CONSTANT PLS_INTEGER :=  1;
+  DISKPOOLSPACETYPE_FREE      CONSTANT PLS_INTEGER :=  0;
+  DISKPOOLSPACETYPE_CAPACITY  CONSTANT PLS_INTEGER :=  1;
 
-  GCTYPE_AUTO                CONSTANT PLS_INTEGER :=  0;
-  GCTYPE_USER                CONSTANT PLS_INTEGER :=  1;
-  GCTYPE_TOOMANYREPLICAS     CONSTANT PLS_INTEGER :=  2;
-  GCTYPE_DRAINING            CONSTANT PLS_INTEGER :=  3;
-  GCTYPE_NSSYNCH             CONSTANT PLS_INTEGER :=  4;
-  GCTYPE_OVERWRITTEN         CONSTANT PLS_INTEGER :=  5;
-  GCTYPE_ADMIN               CONSTANT PLS_INTEGER :=  6;
-  GCTYPE_FAILEDD2D           CONSTANT PLS_INTEGER :=  7;
+  GCTYPE_AUTO                 CONSTANT PLS_INTEGER :=  0;
+  GCTYPE_USER                 CONSTANT PLS_INTEGER :=  1;
+  GCTYPE_TOOMANYREPLICAS      CONSTANT PLS_INTEGER :=  2;
+  GCTYPE_DRAINING             CONSTANT PLS_INTEGER :=  3;
+  GCTYPE_NSSYNCH              CONSTANT PLS_INTEGER :=  4;
+  GCTYPE_OVERWRITTEN          CONSTANT PLS_INTEGER :=  5;
+  GCTYPE_ADMIN                CONSTANT PLS_INTEGER :=  6;
+  GCTYPE_FAILEDD2D            CONSTANT PLS_INTEGER :=  7;
   
-  DELDC_ENOENT               CONSTANT PLS_INTEGER :=  1;
-  DELDC_RECALL               CONSTANT PLS_INTEGER :=  2;
-  DELDC_REPLICATION          CONSTANT PLS_INTEGER :=  3;
-  DELDC_LOST                 CONSTANT PLS_INTEGER :=  4;
-  DELDC_GC                   CONSTANT PLS_INTEGER :=  5;
-  DELDC_NOOP                 CONSTANT PLS_INTEGER :=  6;
+  DELDC_ENOENT                CONSTANT PLS_INTEGER :=  1;
+  DELDC_RECALL                CONSTANT PLS_INTEGER :=  2;
+  DELDC_REPLICATION           CONSTANT PLS_INTEGER :=  3;
+  DELDC_LOST                  CONSTANT PLS_INTEGER :=  4;
+  DELDC_GC                    CONSTANT PLS_INTEGER :=  5;
+  DELDC_NOOP                  CONSTANT PLS_INTEGER :=  6;
 
-  DISK2DISKCOPYJOB_PENDING   CONSTANT PLS_INTEGER :=  0;
-  DISK2DISKCOPYJOB_SCHEDULED CONSTANT PLS_INTEGER :=  1;
-  DISK2DISKCOPYJOB_RUNNING   CONSTANT PLS_INTEGER :=  2;
+  DISK2DISKCOPYJOB_PENDING    CONSTANT PLS_INTEGER :=  0;
+  DISK2DISKCOPYJOB_SCHEDULED  CONSTANT PLS_INTEGER :=  1;
+  DISK2DISKCOPYJOB_RUNNING    CONSTANT PLS_INTEGER :=  2;
 
-  REPLICATIONTYPE_USER       CONSTANT PLS_INTEGER :=  0;
-  REPLICATIONTYPE_INTERNAL   CONSTANT PLS_INTEGER :=  1;
-  REPLICATIONTYPE_DRAINING   CONSTANT PLS_INTEGER :=  2;
-  REPLICATIONTYPE_REBALANCE  CONSTANT PLS_INTEGER :=  3;
+  REPLICATIONTYPE_USER        CONSTANT PLS_INTEGER :=  0;
+  REPLICATIONTYPE_INTERNAL    CONSTANT PLS_INTEGER :=  1;
+  REPLICATIONTYPE_DRAINING    CONSTANT PLS_INTEGER :=  2;
+  REPLICATIONTYPE_REBALANCE   CONSTANT PLS_INTEGER :=  3;
 
 END dconst;
 /
@@ -573,6 +574,7 @@ AS
   MIGMOUNT_NOACTION            CONSTANT VARCHAR2(2048) := 'startMigrationMounts: no need for new migration mount';
 
   RECMOUNT_NEW_MOUNT           CONSTANT VARCHAR2(2048) := 'startRecallMounts: created new recall mount';
+  RECMOUNT_FAILED_NEW_MOUNT    CONSTANT VARCHAR2(2048) := 'startRecallMounts: not creating mount that would have been empty (possible issue with destination diskpools)';
   RECMOUNT_NOACTION_NODRIVE    CONSTANT VARCHAR2(2048) := 'startRecallMounts: not allowed to start new recall mount. Maximum nb of drives has been reached';
   RECMOUNT_NOACTION_NOCAND     CONSTANT VARCHAR2(2048) := 'startRecallMounts: no candidate found for a mount';
 
@@ -1298,7 +1300,7 @@ END;
 /
 ALTER TABLE RecallJob
   ADD CONSTRAINT CK_RecallJob_Status
-  CHECK (status IN (1, 2, 3));
+  CHECK (status IN (1, 2, 3, 4));
 
 /* Definition of the TapePool table
  *   name : the name of the TapePool
@@ -1412,7 +1414,7 @@ INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 CREATE INDEX I_MigrationJob_MountTransId ON MigrationJob(mountTransactionId);
 CREATE INDEX I_MigrationJob_CFVID ON MigrationJob(castorFile, VID);
 CREATE INDEX I_MigrationJob_TapePoolSize ON MigrationJob(tapePool, fileSize);
-CREATE UNIQUE INDEX I_MigrationJob_TPStatusId ON MigrationJob(tapePool, status, id);
+CREATE INDEX I_MigrationJob_TPStatusCT ON MigrationJob(tapePool, status, creationTime);
 CREATE UNIQUE INDEX I_MigrationJob_CFCopyNb ON MigrationJob(castorFile, destCopyNb);
 ALTER TABLE MigrationJob ADD CONSTRAINT UN_MigrationJob_CopyNb
   UNIQUE (castorFile, destCopyNb) USING INDEX I_MigrationJob_CFCopyNb;
@@ -1432,6 +1434,9 @@ END;
 ALTER TABLE MigrationJob
   ADD CONSTRAINT CK_MigrationJob_Status
   CHECK (status IN (0, 1, 3));
+ALTER TABLE MigrationJob
+  ADD CONSTRAINT CK_MigrationJob_FileSizeGT0
+  CHECK (fileSize > 0);
 
 /* Definition of the MigrationRouting table. Each line is a routing rule for migration jobs
  *   isSmallFile : whether this routing rule applies to small files. Null means it applies to all files
@@ -2056,6 +2061,8 @@ CREATE VIEW LateMigrationsView AS
      AND DC.castorFile = CF.id
      AND MJ.castorFile(+) = CF.id
      AND CF.tapeStatus = 0  -- CASTORFILE_NOTONTAPE
+     AND DC.status = 0  -- DISKCOPY_VALID
+     AND CF.fileSize > 0
      AND DC.creationTime < getTime() - 86400
   ORDER BY DC.creationTime DESC;
 
@@ -3159,9 +3166,6 @@ BEGIN
   nsHostName := getConfigOption('stager', 'nsHost', '');
   -- find out the recallGroup to be used for this request
   getRecallGroup(varEuid, varEgid, varRecallGroupId, varRecallGroupName);
-  -- update potentially missing metadata introduced with v2.1.14. This will be dropped in 2.1.15.
-  update2114Data@RemoteNS(varRepackVID);
-  COMMIT;
   -- Get the list of files to repack from the NS DB via DBLink and store them in memory
   -- in a temporary table. We do that so that we do not keep an open cursor for too long
   -- in the nameserver DB
@@ -3194,8 +3198,11 @@ BEGIN
       varWasRecalled NUMBER;
       varMigrationTriggered BOOLEAN := False;
     BEGIN
-      -- Commit from time to time
       IF MOD(outNbFilesProcessed, 1000) = 0 THEN
+        -- Commit from time to time. Update total counter so that the display is correct.
+        UPDATE StageRepackRequest
+           SET fileCount = outNbFilesProcessed
+         WHERE reqId = inReqUUID;
         COMMIT;
         firstCF := TRUE;
       END IF;
@@ -5271,9 +5278,9 @@ CREATE OR REPLACE PROCEDURE internalPutDoneFunc (cfId IN INTEGER,
   ogid INTEGER;
 BEGIN
   -- compute the gc weight of the brand new diskCopy
+  gcwProc := castorGC.getUserWeight(svcClassId);
   EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(:fs); END;'
     USING OUT gcw, IN fs;
-  gcwProc := castorGC.getUserWeight(svcClassId);
   -- update the DiskCopy
   UPDATE DiskCopy
      SET status = dconst.DISKCOPY_VALID,
@@ -6981,14 +6988,12 @@ BEGIN
     END IF;
   END;
 
-  -- We should actually check whether our disk cache is stale,
-  -- that is IF CF.nsOpenTime < inNsOpenTime THEN invalidate our diskcopies.
-  -- This is pending the full deployment of the 'new open mode' as implemented
-  -- in the fix of bug #95189: Time discrepencies between
-  -- disk servers and name servers can lead to silent data loss on input.
-  -- The problem being that in 'Compatibility' mode inNsOpenTime is the
-  -- namespace's mtime, which can be modified by nstouch,
-  -- hence nstouch followed by a Get would destroy the data on disk!
+  -- Check whether our disk cache is stale
+  IF varNsOpenTime < inNsOpenTimeInUsec/1000000 THEN
+    -- yes, invalidate our diskcopies. This may later trigger a recall.
+    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+     WHERE status = dconst.DISKCOPY_VALID AND castorFile = inCfId;
+  END IF;
 
   -- Look for available diskcopies. The status is needed for the
   -- internal replication processing, and only if count = 1, hence
@@ -7686,7 +7691,7 @@ BEGIN
       DECLARE
         varGcwProc VARCHAR2(2048);
       BEGIN
-        varGcwProc := castorGC.getCopyWeight(varFileSize);
+        varGcwProc := castorGC.getCopyWeight(varDestSvcClass);
         EXECUTE IMMEDIATE
           'BEGIN :newGcw := ' || varGcwProc || '(:size); END;'
           USING OUT varDcGcWeight, IN varFileSize;
@@ -9377,12 +9382,12 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     -- it was a recall mount
     -- find and reset the all RecallJobs of files for this VID
     UPDATE RecallJob
-       SET status = tconst.RECALLJOB_PENDING,
-           fileTransactionId = NULL
+       SET status = tconst.RECALLJOB_PENDING
      WHERE castorFile IN (SELECT castorFile
                             FROM RecallJob
                            WHERE VID = varVID
-                             AND (fileTransactionId IS NOT NULL OR status = tconst.RECALLJOB_RETRYMOUNT));
+                             AND (status = tconst.RECALLJOB_SELECTED
+                               OR status = tconst.RECALLJOB_RETRYMOUNT));
     DELETE FROM RecallMount WHERE vid = varVID;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- reaching this point means that the tape session was already ended by somebody else
@@ -9718,24 +9723,15 @@ CREATE OR REPLACE FUNCTION checkRecallInNS(inCfId IN INTEGER,
   varNSSize INTEGER;
   varNSCsumtype VARCHAR2(2048);
   varNSCsumvalue VARCHAR2(2048);
-  varOpenMode CHAR(1);
 BEGIN
-  -- retrieve data from the namespace: note that if stagerTime is (still) NULL,
-  -- we're still in compatibility mode and we resolve to using mtime.
-  -- To be dropped in 2.1.15 where stagerTime is NOT NULL by design.
-  -- Note the truncation of stagerTime to 5 digits. This is needed for consistency with
-  -- the stager code that uses the OCCI api and thus loses precision when recuperating
-  -- 64 bits integers into doubles (lack of support for 64 bits numbers in OCCI)
-  SELECT NVL(TRUNC(stagertime,5), mtime), csumtype, csumvalue, filesize
+  -- retrieve data from the namespace: note the truncation of stagerTime to 5 digits.
+  -- This is needed for consistency with the stager code that uses the OCCI API and thus
+  -- loses precision when recuperating 64 bits integers into doubles
+  -- (lack of support for 64 bits numbers in OCCI).
+  SELECT TRUNC(stagerTime,5), csumtype, csumvalue, filesize
     INTO varNSOpenTime, varNSCsumtype, varNSCsumvalue, varNSSize
     FROM Cns_File_Metadata@RemoteNS
    WHERE fileid = inFileId;
-  -- check open mode: in compatibility mode we still have only seconds precision,
-  -- hence the NS open time has to be truncated prior to comparing it with our time.
-  varOpenMode := getConfigOption@RemoteNS('stager', 'openmode', NULL);
-  IF varOpenMode = 'C' THEN
-    varNSOpenTime := TRUNC(varNSOpenTime);
-  END IF;
   -- was the file overwritten in the meantime ?
   IF varNSOpenTime > inLastOpenTime THEN
     -- yes ! reset it and thus restart the recall from scratch
@@ -9845,7 +9841,8 @@ BEGIN
      WHERE RecallMount.mountTransactionId = inMountTransactionId
        AND RecallJob.vid = RecallMount.vid
        AND RecallJob.fseq = inFseq
-       AND RecallJob.status = tconst.RECALLJOB_SELECTED
+       AND (RecallJob.status = tconst.RECALLJOB_SELECTED
+         OR RecallJob.status = tconst.RECALLJOB_SELECTED2NDCOPY)
        AND RecallJob.castorFile = CastorFile.id
        AND ROWNUM < 2
        FOR UPDATE OF CastorFile.id;
@@ -9960,8 +9957,7 @@ BEGIN
   -- increase retry counters within mount and set recallJob status to NEW
   UPDATE RecallJob
      SET nbRetriesWithinMount = nbRetriesWithinMount + 1,
-         status = tconst.RECALLJOB_PENDING,
-         fileTransactionId = NULL
+         status = tconst.RECALLJOB_PENDING
    WHERE castorFile = inCfId
      AND VID = inVID;
   -- detect the RecallJobs with too many retries within this mount
@@ -10202,8 +10198,8 @@ END;
 
 /* insert new Migration Mount */
 CREATE OR REPLACE PROCEDURE insertMigrationMount(inTapePoolId IN NUMBER,
-                                                 minimumAge IN INTEGER,
-                                                 outMountId OUT INTEGER) AS
+                                                   minimumAge IN INTEGER,
+                                                   outMountId OUT INTEGER) AS
   varMigJobId INTEGER;
 BEGIN
   -- Check that the mount would be honoured by running a dry-run file selection:
@@ -10215,7 +10211,7 @@ BEGIN
              USE_NL(MMigrationJob CastorFile DiskCopy FileSystem DiskServer)
              INDEX(CastorFile PK_CastorFile_Id)
              INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
-             INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusId) */
+             INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusCT) */
          MigrationJob.id mjId INTO varMigJobId
     FROM MigrationJob, DiskCopy, FileSystem, DiskServer, CastorFile
    WHERE MigrationJob.tapePool = inTapePoolId
@@ -10341,10 +10337,49 @@ BEGIN
 END;
 /
 
+/* insert new Recall Mount */
+CREATE OR REPLACE PROCEDURE insertRecallMount(inRecallGroupId IN NUMBER,
+                                                        inVid IN VARCHAR2,
+                                                outMountCount OUT INTEGER) AS
+  varRjId INTEGER;
+BEGIN
+  -- We receive a candidate recall mount. Before actually posting the recall
+  -- mount we will make sure at least one recall would be honored from the mount
+  -- This protection mechanism will protect against unavailability of disk 
+  -- servers (this did happen during a network incident, leading to looping
+  -- mounts).
+  -- The duty of this procedure is to actually insert the recall mount and log
+  -- log it, if all is fine, and to log the problem if not. It will just report
+  -- the number of created mounts (1 or 0) to the upstream caller.
+
+  -- Last sanity check. Will give up automatically by means of exception, which
+  -- will change the return value and log.
+  SELECT rj.id INTO varRjId
+    FROM RecallJob rj
+   INNER JOIN SvcClass sc ON sc.id = rj.svcClass
+   INNER JOIN DiskPool2SvcClass dpsc ON dpsc.child = sc.id
+   INNER JOIN FileSystem fs ON fs.diskPool = dpsc.parent
+   INNER JOIN DiskServer ds ON ds.id = fs.diskServer
+   WHERE rj.vid = inVid
+     AND rj.status = tconst.RECALLJOB_PENDING
+     AND fs.status = 0 /* FILESYSTEM_PRODUCTION */
+     AND ds.status = 0 /* DISKSERVER_PRODUCTION */
+     AND ds.hwonline =  1 /* BOOLEAN */
+     AND rownum < 2;
+  -- We passed the test, insert the recall mount:
+  INSERT INTO RecallMount (id, VID, recallGroup, startTime, status)
+       VALUES (ids_seq.nextval, inVid, inRecallGroupId, gettime(), tconst.RECALLMOUNT_NEW);
+  outMountCount := 1;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  outMountCount := 0;
+END;
+/
+
 /* DB job to start new recall mounts */
 CREATE OR REPLACE PROCEDURE startRecallMounts AS
    varNbMounts INTEGER;
    varNbExtraMounts INTEGER := 0;
+   varNewMounts INTEGER;
 BEGIN
   -- loop through RecallGroups
   FOR rg IN (SELECT id, name, nbDrives, minAmountDataForMount,
@@ -10377,19 +10412,27 @@ BEGIN
                AND VID NOT IN (SELECT vid FROM RecallMount)
              ORDER BY MIN(creationTime))
            WHERE ROWNUM < 2;
-          -- trigger a new mount
-          INSERT INTO RecallMount (id, VID, recallGroup, startTime, status)
-          VALUES (ids_seq.nextval, varVid, rg.id, gettime(), tconst.RECALLMOUNT_NEW);
-          varNbExtraMounts := varNbExtraMounts + 1;
-          -- log "startRecallMounts: created new recall mount"
-          logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECMOUNT_NEW_MOUNT, 0, '', 'tapegatewayd',
-                   'recallGroup=' || rg.name ||
-                   ' TPVID=' || varVid ||
-                   ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
-                   ' nbNewMountsSoFar=' || TO_CHAR(varNbExtraMounts) ||
-                   ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
-                   ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
-                   ' oldestCreationTime=' || TO_CHAR(TRUNC(varOldestCreationTime)));
+          -- trigger a new mount, with checks
+          insertRecallMount(rg.id, varVID, varNewMounts);
+          IF varNewMounts > 0 THEN
+            varNbExtraMounts := varNbExtraMounts + varNewMounts;
+            -- log "startRecallMounts: created new recall mount"
+            logToDLF(NULL, dlf.LVL_SYSTEM, dlf.RECMOUNT_NEW_MOUNT, 0, '', 'tapegatewayd',
+                     'recallGroup=' || rg.name ||
+                     ' TPVID=' || varVid ||
+                     ' nbExistingMounts=' || TO_CHAR(varNbMounts) ||
+                     ' nbNewMountsSoFar=' || TO_CHAR(varNbExtraMounts) ||
+                     ' dataAmountInQueue=' || TO_CHAR(varDataAmount) ||
+                     ' nbFilesInQueue=' || TO_CHAR(varNbFiles) ||
+                     ' oldestCreationTime=' || TO_CHAR(TRUNC(varOldestCreationTime)));
+          ELSE
+            -- The sanity check failed: log and report no recall mount got created for
+            -- tape.
+            -- "startRecallMounts: not creating mount that would have been empty (possible issue with destination diskpools)"
+            logToDLF(NULL, dlf.LVL_WARNING, dlf.RECMOUNT_FAILED_NEW_MOUNT, 0, '', 'tapegatewayd',
+                     'recallGroup=' || rg.name ||
+                     ' TPVID=' || varVid);
+          END IF;
         END LOOP;
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- nothing left to recall, just exit nicely
@@ -10431,16 +10474,18 @@ CREATE OR REPLACE PROCEDURE tg_getBulkFilesToMigrate(inLogContext IN VARCHAR2,
   varMountId NUMBER;
   varCount INTEGER;
   varTotalSize INTEGER;
+  varOldestAcceptableAge NUMBER;
   varVid VARCHAR2(10);
   varNewFseq INTEGER;
   varFileTrId NUMBER;
+  varTpId INTEGER;
   varUnused INTEGER;
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -00001);
 BEGIN
   BEGIN
     -- Get id, VID and last valid fseq for this migration mount, lock
-    SELECT id, vid, lastFSeq INTO varMountId, varVid, varNewFseq
+    SELECT id, vid, tapePool, lastFSeq INTO varMountId, varVid, varTpId, varNewFseq
       FROM MigrationMount
      WHERE mountTransactionId = inMountTrId
        FOR UPDATE;
@@ -10453,22 +10498,30 @@ BEGIN
   END;
   varCount := 0;
   varTotalSize := 0;
+  SELECT TapePool.maxFileAgeBeforeMount INTO varOldestAcceptableAge
+    FROM TapePool, MigrationMount
+   WHERE MigrationMount.id = varMountId
+     AND MigrationMount.tapePool = TapePool.id;
   -- Get candidates up to inCount or inTotalSize
   FOR Cand IN (
     SELECT /*+ FIRST_ROWS(100)
-               LEADING(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer)
-               USE_NL(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer)
+               LEADING(Job CastorFile DiskCopy FileSystem DiskServer)
+               USE_NL(Job CastorFile DiskCopy FileSystem DiskServer)
                INDEX(CastorFile PK_CastorFile_Id)
-               INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
-               INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusId) */
-           MigrationJob.id mjId, DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path filePath,
+               INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
+           Job.id mjId, DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path filePath,
            CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, CastorFile.lastKnownFileName,
-           MigrationMount.VID, Castorfile.id as castorfile
-      FROM MigrationMount, MigrationJob, CastorFile, DiskCopy, FileSystem, DiskServer
-     WHERE MigrationMount.id = varMountId
-       AND MigrationJob.tapePool = MigrationMount.tapePool
-       AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
-       AND CastorFile.id = MigrationJob.castorFile
+           Castorfile.id as castorfile
+      FROM (SELECT * FROM
+             (SELECT /*+ FIRST_ROWS(100) INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusCT) */
+                     id, castorfile, destCopyNb, creationTime
+                FROM MigrationJob
+               WHERE tapePool = varTpId
+                 AND status = tconst.MIGRATIONJOB_PENDING
+               ORDER BY creationTime)
+             WHERE ROWNUM < TO_NUMBER(getConfigOption('Migration', 'NbMigCandConsidered', 10000)))
+           Job, CastorFile, DiskCopy, FileSystem, DiskServer
+     WHERE CastorFile.id = Job.castorFile
        AND CastorFile.id = DiskCopy.castorFile
        AND CastorFile.tapeStatus = dconst.CASTORFILE_NOTONTAPE
        AND DiskCopy.status = dconst.DISKCOPY_VALID
@@ -10477,12 +10530,17 @@ BEGIN
        AND DiskServer.id = FileSystem.diskServer
        AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
        AND DiskServer.hwOnline = 1
-       AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ 1
+       AND NOT EXISTS (SELECT /*+ USE_NL(MigratedSegment)
+                                  INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ 1
                          FROM MigratedSegment
-                        WHERE MigratedSegment.castorFile = MigrationJob.castorfile
-                          AND MigratedSegment.copyNb != MigrationJob.destCopyNb
-                          AND MigratedSegment.vid = MigrationMount.vid)
-       FOR UPDATE OF MigrationJob.id SKIP LOCKED)
+                        WHERE MigratedSegment.castorFile = Job.castorfile
+                          AND MigratedSegment.copyNb != Job.destCopyNb
+                          AND MigratedSegment.vid = varVid)
+       ORDER BY -- we first order by a multi-step function, which gives old guys incrasingly more priority:
+                -- migrations younger than varOldestAccep2tableAge will be taken last
+                TRUNC(Job.creationTime/varOldestAcceptableAge) ASC,
+                -- and then, for all migrations between (N-1)*varOldestAge and N*varOldestAge, by filesystem load
+                FileSystem.nbRecallerStreams + FileSystem.nbMigratorStreams ASC)
   LOOP
     -- last part of the above statement. Could not be part of it as ORACLE insisted on not
     -- optimizing properly the execution plan
@@ -10490,13 +10548,28 @@ BEGIN
       SELECT /*+ INDEX_RS_ASC(MJ I_MigrationJob_CFVID) */ 1 INTO varUnused
         FROM MigrationJob MJ
        WHERE MJ.castorFile = Cand.castorFile
-         AND MJ.vid = Cand.VID
+         AND MJ.vid = varVid
          AND MJ.vid IS NOT NULL;
       -- found one, so skip this candidate
       CONTINUE;
     EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- nothing, it's a valid candidate
-      NULL;
+      -- nothing, it's a valid candidate. Let's lock it and revalidate the status
+      DECLARE
+        MjLocked EXCEPTION;
+        PRAGMA EXCEPTION_INIT (MjLocked, -54);
+      BEGIN
+        SELECT id INTO varUnused
+          FROM MigrationJob
+         WHERE id = Cand.mjId
+           AND status = tconst.MIGRATIONJOB_PENDING
+           FOR UPDATE NOWAIT;
+      EXCEPTION WHEN MjLocked THEN
+        -- this migration job is being handled else where, let's go to next one
+        CONTINUE;
+                WHEN NO_DATA_FOUND THEN
+        -- this migration job has already been handled else where, let's go to next one
+        CONTINUE;
+      END;
     END;
     BEGIN
       -- Try to take this candidate on this mount
@@ -10606,17 +10679,12 @@ CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHA
   varNSParams strListTable;
   varParams VARCHAR2(4000);
   varNbSentToNS INTEGER := 0;
-  -- for the compatibility mode, to be dropped in 2.1.15
-  varOpenMode CHAR(1);
   varLastUpdateTime INTEGER;
 BEGIN
   varStartTime := SYSTIMESTAMP;
   varReqId := uuidGen();
   -- Get the NS host name
   varNsHost := getConfigOption('stager', 'nsHost', '');
-  -- Get the NS open mode: if compatibility, then CF.lastUpdTime is to be used for the
-  -- concurrent modifications check like in 2.1.13, else the new CF.nsOpenTime column is used.
-  varOpenMode := getConfigOption@RemoteNS('stager', 'openmode', NULL);
   FOR i IN inFileTrIds.FIRST .. inFileTrIds.LAST LOOP
     BEGIN
       -- Collect additional data. Note that this is NOT bulk
@@ -10629,10 +10697,6 @@ BEGIN
          AND MJ.mountTransactionId = inMountTrId
          AND MJ.fileTransactionId = inFileTrIds(i)
          AND status = tconst.MIGRATIONJOB_SELECTED;
-      -- Use the correct timestamp in case of compatibility mode
-      IF varOpenMode = 'C' THEN
-        varNsOpenTime := varLastUpdateTime;
-      END IF;
         -- Store in a temporary table, to be transfered to the NS DB
       IF inErrorCodes(i) = 0 THEN
         -- Successful migration
@@ -10984,7 +11048,7 @@ BEGIN
         RETURNING fileTransactionId INTO varFileTrId;
       -- update RecallJobs of this file. Only the recalled one gets a fileTransactionId
       UPDATE RecallJob
-         SET status = tconst.RECALLJOB_SELECTED,
+         SET status = CASE WHEN id = varRjId THEN tconst.RECALLJOB_SELECTED ELSE tconst.RECALLJOB_SELECTED2NDCOPY END,
              fileTransactionID = CASE WHEN id = varRjId THEN varFileTrId ELSE NULL END
        WHERE castorFile = varCfId;
       IF varCount >= inCount OR varTotalSize >= inTotalSize THEN
@@ -11889,9 +11953,26 @@ BEGIN
       BULK COLLECT INTO cfIds
       FROM DiskCopy DC
      WHERE id IN (SELECT /*+ CARDINALITY(ids 5) */ * FROM TABLE(dcIds) ids);
-    -- drop the DiskCopies
-    FORALL i IN 1 .. dcIds.COUNT
-      DELETE FROM DiskCopy WHERE id = dcIds(i);
+    -- drop the DiskCopies - not in bulk because of the constraint violation check
+    FOR i IN 1 .. dcIds.COUNT LOOP
+      DECLARE
+        CONSTRAINT_VIOLATED EXCEPTION;
+        PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+      BEGIN
+        DELETE FROM DiskCopy WHERE id = dcIds(i);
+      EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+        IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DRAININGERRORS_DC) violated%' OR
+           sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_DISK2DISKCOPYJOB_SRCDCID) violated%' THEN
+          -- Ignore the deletion, this diskcopy was either implied in a draining action and
+          -- the draining error is still around or it is the source of another d2d copy that
+          -- is not over
+          NULL;
+        ELSE
+          -- Any other constraint violation is an error
+          RAISE;
+        END IF;
+      END;
+    END LOOP;
     COMMIT;
     -- maybe delete the CastorFiles if nothing is left for them
     FOR i IN 1 .. cfIds.COUNT LOOP
@@ -12046,8 +12127,13 @@ BEGIN
       CONSTRAINT_VIOLATED EXCEPTION;
       PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
     BEGIN
-      -- lock the draining Job first
-      SELECT id INTO varUnused FROM DrainingJob WHERE id = dj.id FOR UPDATE;
+      BEGIN
+        -- lock the draining job first
+        SELECT id INTO varUnused FROM DrainingJob WHERE id = dj.id FOR UPDATE;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- it was (already!) canceled, go to the next one
+        CONTINUE;
+      END;
       -- check how many disk2DiskCopyJobs are already running for this draining job
       SELECT count(*) INTO varNbRunningJobs FROM Disk2DiskCopyJob WHERE drainingJob = dj.id;
       -- Loop over the creation of Disk2DiskCopyJobs. Select max 1000 files, taking running
@@ -12142,7 +12228,7 @@ BEGIN
   -- "rebalancing : starting" message
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.REBALANCING_START, 0, '', 'stagerd',
            'DiskServer=' || inDiskServerName || ' mountPoint=' || inMountPoint ||
-           ' dataTomove=' || TO_CHAR(inDataAmount));
+           ' dataToMove=' || TO_CHAR(TRUNC(inDataAmount)));
   -- Loop on candidates until we can lock one
   OPEN DCcur;
   LOOP
@@ -12416,7 +12502,9 @@ BEGIN
                    getTimeString(DiskCopy.creationtime) AS creationtime,
                    DiskPool.name AS diskpool,
                    DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path AS location,
-                   decode(DiskServer.status, 2, 'N', decode(FileSystem.status, 2, 'N', 'Y')) AS available,
+                   decode(DiskServer.hwOnline, 0, 'N',
+                     decode(DiskServer.status, 2, 'N',
+                       decode(FileSystem.status, 2, 'N', 'Y'))) AS available,
                    DiskCopy.diskCopySize AS diskcopysize,
                    CastorFile.fileSize AS castorfilesize,
                    trunc(DiskCopy.gcWeight, 2) AS gcweight
@@ -12647,11 +12735,14 @@ CREATE OR REPLACE FUNCTION insertPreChecks
    egid IN INTEGER,
    svcClassName IN VARCHAR2,
    reqType IN INTEGER) RETURN NUMBER AS
+  reqName VARCHAR2(100);
 BEGIN
   -- Check permissions
   IF 0 != checkPermission(svcClassName, euid, egid, reqType) THEN
     -- permission denied
-    raise_application_error(-20121, 'Permission denied');
+    SELECT object INTO reqName FROM Type2Obj WHERE type = reqType;
+    raise_application_error(-20121, 'Insufficient privileges for user ' || euid ||','|| egid
+        ||' performing a '|| reqName ||' request on svcClass '''|| svcClassName ||'''');
   END IF;  
   -- check the validity of the given service class and return its internal id
   RETURN checkForValidSvcClass(svcClassName, 1, 1);

@@ -224,7 +224,6 @@ struct rfiostat	{
 #define perror          rfio_perror
 #define fstat           rfio_fstat
 #define lstat           rfio_lstat
-#define lockf           rfio_lockf
 #define lseek           rfio_lseek
 #define rename          rfio_rename
 #define unlink          rfio_unlink
@@ -245,7 +244,6 @@ struct rfiostat	{
 #define fseeko64        rfio_fseeko64
 #define fstat64         rfio_fstat64
 #define ftello64        rfio_ftello64
-#define lockf64         rfio_lockf64
 #define lseek64         rfio_lseek64
 #define lstat64         rfio_lstat64
 #define open64          rfio_open64

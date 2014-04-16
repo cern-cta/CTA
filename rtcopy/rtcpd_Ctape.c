@@ -123,58 +123,6 @@ void rtcpd_ResetVmgrError() {
     return;
 }
 
-int rtcpd_Assign(tape_list_t *tape) {
-    int rc, status, value, jobID;
-    rtcpTapeRequest_t *tapereq;
-
-    if ( tape == NULL ) {
-        serrno = EINVAL;
-        return(-1);
-    }
-    tapereq = &tape->tapereq;
-
-    /*
-     * Assign the drive to current job
-     */
-    status = VDQM_UNIT_ASSIGN;
-    value = tapereq->VolReqID;
-    jobID = rtcpd_jobID();
-
-    rtcp_log(LOG_DEBUG,"rtcpd_Assign() VolReqID=%d, dgn=%s, unit=%s, jobID=%d\n",
-        tapereq->VolReqID,tapereq->dgn,tapereq->unit,jobID);
-    tl_rtcpd.tl_log( &tl_rtcpd, 11, 5,
-                     "func"    , TL_MSG_PARAM_STR, "rtcpd_Assign",
-                     "VolReqID", TL_MSG_PARAM_INT, tapereq->VolReqID,
-                     "gdn"     , TL_MSG_PARAM_STR, tapereq->dgn,
-                     "unit"    , TL_MSG_PARAM_STR, tapereq->unit,
-                     "jobID"   , TL_MSG_PARAM_INT, jobID );
-
-    rc = vdqm_UnitStatus(NULL,NULL,tapereq->dgn,NULL,tapereq->unit,
-        &status,&value,jobID);
-
-    tapereq->tprc = rc;
-    if ( rc == -1 ) {
-        rtcp_log(LOG_ERR,"rtcpd_Assign() vdqm_UnitStatus() %s\n",
-            sstrerror(serrno));
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3,
-                         "func"    , TL_MSG_PARAM_STR, "rtcpd_Assign",
-                         "Message" , TL_MSG_PARAM_STR, "vdqm_UnitStatus",
-                         "Error"   , TL_MSG_PARAM_STR, sstrerror(serrno) );
-        return(-1);
-    }
-
-    rtcp_log(LOG_DEBUG,"rtcpd_Assign() vdqm_UnitStatus() jobID=%d\n",
-        value);
-    tl_rtcpd.tl_log( &tl_rtcpd, 11, 3,
-                     "func"    , TL_MSG_PARAM_STR, "rtcpd_Assign",
-                     "Message" , TL_MSG_PARAM_STR, "vdqm_UnitStatus",
-                     "jobID"   , TL_MSG_PARAM_INT, value );   
-
-    tapereq->jobID = value;
-
-    return(rc);
-}
-
 /*
  * To be used if request fails before any Ctape call (e.g.
  * bad request structure or client did an exit...).

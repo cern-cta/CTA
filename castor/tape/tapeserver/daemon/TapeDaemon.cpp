@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tapeserver/daemon/TapeDaemon.cpp
+ *         castor/tape/tapeserver/daemon/TapeDaemon.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -26,10 +26,11 @@
 #include "castor/exception/BadAlloc.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
+#include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "castor/tape/tapeserver/daemon/DebugMountSessionForVdqmProtocol.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
-#include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFd.hpp"
 
@@ -46,10 +47,24 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
-  std::ostream &stdOut, std::ostream &stdErr, log::Logger &log, Vdqm &vdqm,
+  const int argc,
+  char **const argv,
+  std::ostream &stdOut,
+  std::ostream &stdErr,
+  log::Logger &log,
+  Vdqm &vdqm,
+  Vmgr &vmgr,
+  Rmc &rmc,
   io::PollReactor &reactor) throw(castor::exception::Exception):
-  castor::server::Daemon(stdOut, stdErr, log), m_vdqm(vdqm), m_reactor(reactor),
-  m_programName("tapeserverd"), m_hostName(getHostName()) {
+  castor::server::Daemon(stdOut, stdErr, log),
+  m_argc(argc),
+  m_argv(argv),
+  m_vdqm(vdqm),
+  m_vmgr(vmgr),
+  m_rmc(rmc),
+  m_reactor(reactor),
+  m_programName("tapeserverd"),
+  m_hostName(getHostName()) {
 }
 
 //------------------------------------------------------------------------------
@@ -116,8 +131,8 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   m_driveCatalogue.populateCatalogue(tpconfigLines);
   daemonizeIfNotRunInForeground();
   blockSignals();
-  registerTapeDrivesWithVdqm();
   setUpReactor();
+  registerTapeDrivesWithVdqm();
   mainEventLoop();
 }
 
@@ -238,12 +253,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   case DriveCatalogue::DRIVE_STATE_DOWN:
     params.push_back(log::Param("state", "down"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.setTapeDriveStatusDown(m_hostName, unitName, dgn);
+    m_vdqm.setDriveDown(m_hostName, unitName, dgn);
     break;
   case DriveCatalogue::DRIVE_STATE_UP:
     params.push_back(log::Param("state", "up"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.setTapeDriveStatusUp(m_hostName, unitName, dgn);
+    m_vdqm.setDriveUp(m_hostName, unitName, dgn);
     break;
   default:
     {
@@ -251,7 +266,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
       ex.getMessage() << "Failed to register tape drive in vdqm"
         ": server=" << m_hostName << " unitName=" << unitName << " dgn=" << dgn
         << ": Invalid drive state: state=" <<
-        DriveCatalogue::driveState2Str(driveState);
+        DriveCatalogue::drvState2Str(driveState);
       throw ex;
     }
   }
@@ -262,6 +277,14 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
   throw(castor::exception::Exception) {
+  createAndRegisterVdqmAcceptHandler();
+  createAndRegisterAdminAcceptHandler();
+}
+
+//------------------------------------------------------------------------------
+// createAndRegisterVdqmAcceptHandler
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHandler() throw(castor::exception::Exception) {
   castor::utils::SmartFd vdqmListenSock;
   try {
     vdqmListenSock.reset(io::createListenerSock(TAPE_SERVER_VDQM_LISTENING_PORT));
@@ -291,7 +314,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
   }
   m_reactor.registerHandler(vdqmAcceptHandler.get());
   vdqmAcceptHandler.release();
-  
+}
+
+//------------------------------------------------------------------------------
+// createAndRegisterVdqmAcceptHandler
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptHandler() throw(castor::exception::Exception) {
   castor::utils::SmartFd adminListenSock;
   try {
     adminListenSock.reset(io::createListenerSock(TAPE_SERVER_ADMIN_LISTENING_PORT));
@@ -329,6 +357,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
 void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop()
   throw(castor::exception::Exception) {
   while(handleEvents()) {
+    forkWaitingMountSessions();
   }
 }
 
@@ -384,15 +413,192 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handlePendingSignals()
 // reapZombies
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::reapZombies() throw() {
-  pid_t childPid = 0;
-  int stat = 0;
+  pid_t sessionPid = 0;
+  int waitpidStat = 0;
 
-  while (0 < (childPid = waitpid(-1, &stat, WNOHANG))) {
+  while (0 < (sessionPid = waitpid(-1, &waitpidStat, WNOHANG))) {
+    reapZombie(sessionPid, waitpidStat);
+  }
+}
+
+//------------------------------------------------------------------------------
+// reapZombie
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::reapZombie(const pid_t sessionPid, const int waitpidStat) throw() {
+  logMountSessionProcessTerminated(sessionPid, waitpidStat);
+
+  log::Param params[] = {log::Param("sessionPid", sessionPid)};
+
+  if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
+    m_driveCatalogue.mountSessionSucceeded(sessionPid);
+    m_log(LOG_INFO, "Mount session succeeded", params);
+  } else {
+    m_driveCatalogue.mountSessionFailed(sessionPid);
+    setDriveDownInVdqm(sessionPid);
+    m_log(LOG_INFO, "Mount session failed", params);
+  }
+}
+
+//------------------------------------------------------------------------------
+// logMountSessionProcessTerminated
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::logMountSessionProcessTerminated(const pid_t sessionPid, const int waitpidStat) throw() {
+  std::list<log::Param> params;
+  params.push_back(log::Param("sessionPid", sessionPid));
+
+  if(WIFEXITED(waitpidStat)) {
+    params.push_back(log::Param("WEXITSTATUS", WEXITSTATUS(waitpidStat)));
+  }
+
+  if(WIFSIGNALED(waitpidStat)) {
+    params.push_back(log::Param("WTERMSIG", WTERMSIG(waitpidStat)));
+  }
+
+  if(WCOREDUMP(waitpidStat)) {
+    params.push_back(log::Param("WCOREDUMP", "true"));
+  } else {
+    params.push_back(log::Param("WCOREDUMP", "false"));
+  }
+
+  if(WIFSTOPPED(waitpidStat)) {
+    params.push_back(log::Param("WSTOPSIG", WSTOPSIG(waitpidStat)));
+  }
+
+  if(WIFCONTINUED(waitpidStat)) {
+    params.push_back(log::Param("WIFCONTINUED", "true"));
+  } else {
+    params.push_back(log::Param("WIFCONTINUED", "false"));
+  }
+
+  m_log(LOG_INFO, "Mount-session child-process terminated", params);
+}
+
+//------------------------------------------------------------------------------
+// setDriveDownInVdqm
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(const pid_t sessionPid) throw() {
+  std::string unitName;
+  try {
+    unitName = m_driveCatalogue.getUnitName(sessionPid);
+  } catch(castor::exception::Exception &ex) {
     log::Param params[] = {
-      log::Param("childPid", childPid),
-      log::Param("WIFEXITED", WIFEXITED(stat)),
-      log::Param("WEXITSTATUS", WEXITSTATUS(stat)),
-      log::Param("WIFSIGNALED", WIFSIGNALED(stat))};
-    m_log(LOG_INFO, "Child process terminated", params);
+      log::Param("sessionPid", sessionPid),
+      log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "Failed to set tape-drive down in vdqm: Failed to get unit-name", params);
+    return;
+  }
+
+  std::string dgn;
+  try {
+    dgn = m_driveCatalogue.getDgn(unitName);
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {
+      log::Param("sessionPid", sessionPid),
+      log::Param("unitName", unitName),
+      log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "Failed to set tape-drive down in vdqm: Failed to get DGN", params);
+    return;
+  }
+
+  try {
+    m_vdqm.setDriveDown(m_hostName, unitName, dgn);
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {
+      log::Param("sessionPid", sessionPid),
+      log::Param("unitName", unitName),
+      log::Param("dgn", dgn),
+      log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "Failed to set tape-drive down in vdqm", params);
+  }
+}
+
+//------------------------------------------------------------------------------
+// forkWaitingMountSessions
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSessions() throw() {
+  const std::list<std::string> unitNames =
+    m_driveCatalogue.getUnitNames(DriveCatalogue::DRIVE_STATE_WAITFORK);
+
+  for(std::list<std::string>::const_iterator itor = unitNames.begin();
+    itor != unitNames.end(); itor++) {
+    forkWaitingMountSession(*itor);
+  }
+}
+
+//------------------------------------------------------------------------------
+// forkWaitingMountSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSession(const std::string &unitName) throw() {
+  m_log.prepareForFork();
+  const pid_t sessionPid = fork();
+
+  // If fork failed
+  if(0 > sessionPid) {
+    // Log an error message and return
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    log::Param params[] = {log::Param("message", errBuf)};
+    m_log(LOG_ERR, "Failed to fork mount session for tape drive", params);
+
+  // Else if this is the parent process
+  } else if(0 < sessionPid) {
+    m_driveCatalogue.forkedMountSession(unitName, sessionPid);
+
+  // Else this is the child process
+  } else {
+    // Clear the reactor which in turn will close all of the open
+    // file-descriptors owned by the event handlers
+    m_reactor.clear();
+
+    mountSession(unitName);
+
+    // The runMountSession() should call exit() and should therefore never
+    // return
+    m_log(LOG_ERR, "runMountSession() returned unexpectedly");
+  }
+}
+
+//------------------------------------------------------------------------------
+// mountSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::mountSession(const std::string &unitName) throw() {
+  const pid_t sessionPid = getpid();
+  {
+    log::Param params[] = {
+      log::Param("sessionPid", sessionPid),
+      log::Param("unitName", unitName)};
+    m_log(LOG_INFO, "Mount-session child-process started", params);
+  }
+
+  try {
+    const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getJob(unitName);
+    const utils::TpconfigLines tpConfig;
+    DebugMountSessionForVdqmProtocol mountSession(
+      m_argc,
+      m_argv,
+      m_hostName,
+      job,
+      m_log,
+      tpConfig,
+      m_vdqm,
+      m_vmgr,
+      m_rmc);
+
+    mountSession.execute();
+
+    exit(0);
+  } catch(std::exception &se) {
+    log::Param params[] = {
+      log::Param("sessionPid", sessionPid),
+      log::Param("unitName", unitName),
+      log::Param("message", se.what())};
+    m_log(LOG_ERR, "Aborting mount session: Caught an unexpected exception", params);
+    exit(1);
+  } catch(...) {
+    log::Param params[] = {
+      log::Param("sessionPid", sessionPid),
+      log::Param("unitName", unitName)};
+    m_log(LOG_ERR, "Aborting mount session: Caught an unexpected and unknown exception", params);
+    exit(1);
   }
 }

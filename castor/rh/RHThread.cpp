@@ -70,11 +70,8 @@ castor::rh::RHThread::RHThread()
   // XXX change of how the Request Handler works.
   m_svcHandler[OBJ_StageGetRequest] = "JobReqSvc";
   m_svcHandler[OBJ_StagePutRequest] = "JobReqSvc";
-  m_svcHandler[OBJ_StageUpdateRequest] = "JobReqSvc";
-  m_svcHandler[OBJ_StagePrepareToGetRequest] = "PrepReqSvc";
-  m_svcHandler[OBJ_StagePrepareToPutRequest] = "PrepReqSvc";
-  m_svcHandler[OBJ_StagePrepareToUpdateRequest] = "PrepReqSvc";
-  m_svcHandler[OBJ_StageRepackRequest] = "PrepReqSvc";
+  m_svcHandler[OBJ_StagePrepareToGetRequest] = "JobReqSvc";
+  m_svcHandler[OBJ_StagePrepareToPutRequest] = "JobReqSvc";
   m_svcHandler[OBJ_StagePutDoneRequest] = "StageReqSvc";
   m_svcHandler[OBJ_StageRmRequest] = "StageReqSvc";
   m_svcHandler[OBJ_SetFileGCWeight] = "StageReqSvc";

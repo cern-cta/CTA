@@ -1,4 +1,45 @@
 -------------
+- 2.1.14-12 -
+-------------
+
+  Summary
+  -------
+
+  This is a minor release bringing a number of bug fixes.
+
+  Stager
+  ------
+  #104024 Incorrect log error reporting in case of invalid user
+  ... RFE: added support for querying file checksums through the xrootd interface
+  #104171 'Permission denied' message in rhd.log incomplete
+  #104257 PendingTimeout handling improvements  
+
+
+---------------
+- 2.1.14-11-1 -
+---------------
+
+  Summary
+  -------
+
+  This is a hot fix release that fixes the following bugs:
+
+    #104064 drainRunner() exception: "ORA-01403: no data found"
+    #104139 Cleaning logic should be more resilient to constraint violation errors
+    #104140 GC weight set without taking policies into account
+
+  Upgrade Instructions from 2.1.14-11
+  -----------------------------------
+
+    Stager
+    ------
+
+    The upgrade of the stager database to 2.1.14-11-1 can be performed online while the system is running.
+    Upgrade the STAGER database using the stager_2.1.14-11_to_2.1.14-11-1.sql script available from:
+      http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-11/dbupgrades.
+
+
+-------------
 - 2.1.14-11 -
 -------------
 

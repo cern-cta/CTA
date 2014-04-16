@@ -34,7 +34,6 @@
 #include "castor/io/biniostream.h"
 #include "castor/io/StreamCnvSvc.hpp"
 #include "castor/Services.hpp"
-#include "castor/rh/EndResponse.hpp"
 
 #include <sys/poll.h>
 #include <unistd.h>
@@ -889,10 +888,13 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
   }
 
   // Marshalling the response
-  castor::io::biniostream* buffer = new castor::io::biniostream();
-  castor::io::StreamAddress ad(*buffer, "StreamCnvSvc", castor::SVC_STREAMCNV);
-  svcs()->createRep(&ad, response, true);
-
+  castor::io::biniostream* buffer = 0;
+  if (0 != response) {
+    buffer = new castor::io::biniostream();
+    castor::io::StreamAddress ad(*buffer, "StreamCnvSvc", castor::SVC_STREAMCNV);
+    svcs()->createRep(&ad, response, true);
+  }
+  
   ClientResponse cr;
   castor::rh::Client* cl = dynamic_cast<castor::rh::Client*>(client);
   if (0 == cl) {
@@ -926,32 +928,6 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
 
   m_clientQueue->push(cr);
 
-  if (isLastResponse && cl->version() < 2010707) {
-    // clients >= 2.1.7-7 don't need an EndResponse
-    castor::rh::EndResponse endresp;
-    castor::io::biniostream* buffer = new castor::io::biniostream();
-    castor::io::StreamAddress ad(*buffer, "StreamCnvSvc", castor::SVC_STREAMCNV);
-    svcs()->createRep(&ad, &endresp, true);
-
-    ClientResponse cr;
-    castor::rh::Client* cl = dynamic_cast<castor::rh::Client*>(client);
-    cr.client = *cl;
-    cr.response = buffer;
-    cr.isLast = isLastResponse;
-
-    std::ostringstream buff;
-
-    // "RR: Adding EndResponse to m_ClientQueue"
-    castor::dlf::Param params1[] =
-      {castor::dlf::Param("Function", func),
-       castor::dlf::Param("IPAddress", cr.client.ipAddress()),
-       castor::dlf::Param("Port", cr.client.port())};
-    castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
-                            DLF_BASE_STAGERLIB + 45, 3, params1);
-
-    m_clientQueue->push(cr);
-  }
-
   // "RR: Unlocking m_clientQueue"
   castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG,
                           DLF_BASE_STAGERLIB + 41, 1, params);
@@ -965,32 +941,22 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
     // "RR: Error writing to communication pipe with RRThread"
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_STAGERLIB + 46);
   }
-
-  // In case of the last response, notify that an end response has been added
-  if (isLastResponse && cl->version() < 2010707) {
-    int rc = write(*m_pipeWrite, (void *)&val, sizeof(val));
-    if (rc != sizeof(val)) {
-      // "RR: Error writing to communication pipe with RRThread"
-      castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR, DLF_BASE_STAGERLIB + 46);
-    }
-  }
 }
 
 
 //-----------------------------------------------------------------------------
-// Method to add an EndResponse
+// Method to close a connection
 //-----------------------------------------------------------------------------
 void
-castor::replier::RequestReplier::sendEndResponse
-(castor::IClient *client,
- std::string reqId)
+castor::replier::RequestReplier::closeClientConnection
+(castor::IClient *client)
   throw(castor::exception::Exception) {
 
-  const char *func = "rr::sendEndResponse CLIENT";
+  const char *func = "rr::closeClientConnection CLIENT";
 
   if (0 == client) {
     castor::exception::Exception e(EINVAL);
-    e.getMessage() << "Client parameter to sendResponse is NULL";
+    e.getMessage() << "Client parameter to closeClientConnection is NULL";
     throw e;
   }
 
@@ -1000,22 +966,12 @@ castor::replier::RequestReplier::sendEndResponse
   cr.client = *cl;
   cr.isLast = true;
 
-  if(cl->version() < 2010707) {
-    castor::rh::EndResponse endresp;
-    endresp.setReqAssociated(reqId);
-    castor::io::biniostream* buffer = new castor::io::biniostream();
-    castor::io::StreamAddress ad(*buffer, "StreamCnvSvc", castor::SVC_STREAMCNV);
-    svcs()->createRep(&ad, &endresp, true);
-    cr.response = buffer;
-  }
-  else {
-    // clients >= 2.1.7-7 don't need an EndResponse, but we nevertheless
-    // create a ClientResponse with an empty buffer and flagged as 'last'
-    // to close the connection with the client.
-    // XXX this logic is to be reviewed, a better option is a bulk processing
-    // XXX of each multi-file request by the stager.
-    cr.response = 0;
-  }
+  // clients don't need an EndResponse, but we nevertheless
+  // create a ClientResponse with an empty buffer and flagged as 'last'
+  // to close the connection with the client.
+  // XXX this logic is to be reviewed, a better option is a bulk processing
+  // XXX of each multi-file request by the stager.
+  cr.response = 0;
 
   // Adding the client to the queue, taking proper lock
 

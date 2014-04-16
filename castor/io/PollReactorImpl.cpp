@@ -37,10 +37,21 @@ castor::io::PollReactorImpl::PollReactorImpl(log::Logger &log) throw():
 // destructor
 //------------------------------------------------------------------------------
 castor::io::PollReactorImpl::~PollReactorImpl() throw() {
+  clear();
+}
+
+//------------------------------------------------------------------------------
+// clear
+//------------------------------------------------------------------------------
+void castor::io::PollReactorImpl::clear() throw() {
+  // Delete all event handlers
   for(HandlerMap::const_iterator itor = m_handlers.begin();
     itor !=  m_handlers.end(); itor++) {
     delete itor->second;
   }
+
+  // Remove all event handlers
+  m_handlers.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -139,7 +150,12 @@ void castor::io::PollReactorImpl::dispatchEventHandlers(
   for(nfds_t i=0; i<nfds; i++) {
     // Find and dispatch the appropriate handler if there is a pending event
     if(0 != fds[i].revents) {
-      findHandler(fds[i].fd)->handleEvent(fds[i]);
+      PollEventHandler *handler = findHandler(fds[i].fd);
+      const bool removeAndDeleteHandler = handler->handleEvent(fds[i]);
+      if(removeAndDeleteHandler) {
+        removeHandler(handler);
+        delete(handler);
+      }
     }
   }
 }

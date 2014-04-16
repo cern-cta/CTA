@@ -58,7 +58,6 @@ extern char     *getconfent();
 
 #define SO_BUFSIZE      20*1024         /* Default socket buffer size   */
 
-extern FILE     *srpopen();             /* server remote popen()        */
 extern int      sropen();               /* server remote open()         */
 extern int      sropen_v3();            /* server remote open()         */
 extern int      srclose();              /* server remote close()        */
@@ -70,16 +69,10 @@ extern int      srread_v3();            /* server remote read()         */
 extern int      srreadahead();          /* server remote read() ahead   */
 extern int      srlseek();              /* server remote lseek()        */
 extern int      srlseek_v3();           /* server remote lseek()        */
-extern int      srpreseek();            /* server remote preseek()      */
 extern int      srstat();               /* server remote stat()         */
 extern int      srfstat();              /* server remote fstat()        */
 extern void     serrmsg();              /* server remote errmsg()       */
 extern int      srrequest();            /* server read request          */
-extern int      srmkdir();              /* server remote mkdir()        */
-extern int      srrmdir();              /* server remote rmdir()        */
-extern int      srrename();             /* server remote rename()       */
-extern int      srlockf();              /* server remote lockf()        */
-extern int      srchmod();              /* server remote chmod()        */
 
 extern int      sropen64();             /* server remote open()         */
 extern int      sropen64_v3();          /* server remote open()         */
@@ -90,26 +83,11 @@ extern int      srread64();             /* server remote read()         */
 extern int      srread64_v3();          /* server remote read()         */
 extern int      srreadahd64();          /* server remote read() ahead   */
 extern int      srlseek64();            /* server remote lseek()        */
-extern int      srpreseek64();          /* server remote preseek()      */
 extern int      srstat64();             /* server remote stat()         */
-extern int      srlockf64();            /* server remote lockf()        */
 extern int      srfstat64();            /* server remote fstat()        */
-extern int      srchown();              /* server remote chown()        */
-extern int      srfchmod();             /* server remote fchmod()       */
-extern int      srfchown();             /* server remote fchown()       */
 extern int      srlstat() ;             /* server remote lstat()        */
 extern int      srlstat64() ;           /* server remote lstat()        */
-extern int      srsymlink() ;           /* server remote symlink()      */
-extern int      srreadlink() ;          /* server remote readlink()     */
-extern DIR     *sropendir();            /* server remote opendir()      */
-extern int      srreaddir();            /* server remote readdir()      */
-extern int      srrewinddir();          /* server remote rewinddir()    */
-extern int      srclosedir();           /* server remote closedir()     */
 extern int      sraccess();             /* server remote access()       */
-extern int      srxyopen();             /* server remote xyopen()       */
-extern int      srxyclos();             /* server remote xyclos()       */
-extern int      srxywrit();             /* server remote xywrit()       */
-extern int      srxyread();             /* server remote xyread()       */
 
 static int      standalone=0;   /* standalone flag                      */
 static char     logfile[CA_MAXPATHLEN+1];   /* log file name buffer                 */
@@ -200,7 +178,6 @@ int main (int     argc,
   int      debug = 0;                /* Debug flag           */
   int      port = 0;                 /* Non-standard port    */
   int      logging = 0;              /* Default not to log   */
-  int      singlethread = 0;         /* Single threaded      */
   int      lfname = 0;               /* log file given       */
   int      nodetach = 0;             /* Default detach proces*/
   int      Socket_parent = -1;       /* Somebody's giving us a file desciptor ? */
@@ -215,7 +192,6 @@ int main (int     argc,
   struct   sockaddr_in sin, from;
   socklen_t fromlen;
   char     localhost[MAXHOSTNAMELEN];     /* Local host name      */
-  int             mode;
   register int    maxfds=0;               /* max. # of file descr.*/
 #if defined(linux)
   struct sigaction sa;
@@ -242,9 +218,6 @@ int main (int     argc,
       break;
     case 'l':
       logging++;
-      break;
-    case 't':
-      singlethread++;
       break;
     case 'T':
       select_timeout=atoi(optarg);
@@ -500,33 +473,27 @@ int main (int     argc,
             }
           }
         }
-        if (!singlethread) {
-          pid = fork();
-          switch (pid) {
-          case -1:
-            (*logfunc)(LOG_ERR,"fork(): %s \n",strerror(errno));
-            break;
-          case 0:                             /* Child  */
-            close(s);
-            mode = 0;
-            doit(ns, &from, mode, uid, gid);
-            break;
-          }
-          have_a_child = 1;
-          close(ns);                          /* Parent */
-          if ( subrequest_id > 0 ) {
-            /*
-             * If we are started by the stagerjob we don't allow for
-             * more than one connection. Close the listen socket and loop back
-             * to wait for the child we just forked.
-             */
-            close(Socket_parent);
-            s = Socket_parent = -1;
-            continue;
-          }
-        } else { /* singlethread */
-          mode = 1;
-          doit(ns, &from, mode, uid, gid);
+        pid = fork();
+        switch (pid) {
+        case -1:
+          (*logfunc)(LOG_ERR,"fork(): %s \n",strerror(errno));
+          break;
+        case 0:                             /* Child  */
+          close(s);
+          doit(ns, &from, uid, gid);
+          break;
+        }
+        have_a_child = 1;
+        close(ns);                          /* Parent */
+        if ( subrequest_id > 0 ) {
+          /*
+           * If we are started by the stagerjob we don't allow for
+           * more than one connection. Close the listen socket and loop back
+           * to wait for the child we just forked.
+           */
+          close(Socket_parent);
+          s = Socket_parent = -1;
+          continue;
         }
         FD_CLR (ns, &readfd);
       }
@@ -571,8 +538,7 @@ int main (int     argc,
       (*logfunc)(LOG_ERR, "getpeername: %s\n",strerror(errno));
       exit(1);
     }
-    mode = 0;
-    doit(0, &from, mode, uid, gid);
+    doit(0, &from, uid, gid);
   }
   exit(0);
 }
@@ -585,17 +551,13 @@ void reaper(int dummy)
 
 int doit(int      s,
          struct sockaddr_in *fromp,
-         int mode,
          uid_t uid,
          gid_t gid)
 {
   int      request;                /* Request Id  number               */
   int      status = 0;
   int      fd = -1;                /* Local fd      -> -1              */
-  DIR      *dirp = NULL;           /* Local dir ptr -> NULL            */
   struct   hostent *hp;
-  int      lun = -1;
-  int      access = -1;
   int      yes;
   struct   rfiostat info;
   int      is_remote = 0;              /* Is requestor in another site ? */
@@ -768,12 +730,11 @@ int doit(int      s,
   for (;;) {
     int bet ;
     request = srrequest(s, &bet);
-    if ( (request==RQST_OPEN || request==RQST_OPENDIR ||
-          request==RQST_XYOPEN) && !bet && is_remote ) {
+    if ( request==RQST_OPEN && !bet && is_remote ) {
       (*logfunc)(LOG_ERR,"Attempt to call daemon with expired magic from outside site\n");
       shutdown(s, 2);
       close(s);
-      if (mode) return(1); else  exit(1);
+      exit(1);
     }
     if (request < 0) {
       (*logfunc)(LOG_INFO,"drop_socket(%d): %d read, %d readahead, %d write, %d flush, %d stat, %d lseek and %d lockf\n",
@@ -785,7 +746,7 @@ int doit(int      s,
 
       shutdown(s, 2);
       close(s);
-      if (mode) return(1); else  exit(1);
+      exit(1);
     }
     switch (request) {
     case 0:
@@ -802,13 +763,7 @@ int doit(int      s,
         (*logfunc)(LOG_ERR, "error closing socket fildesc=%d, errno=%d\n", s, errno);
       else
         (*logfunc)(LOG_INFO, "closing socket fildesc=%d\n", s);
-      if( mode ) return(1); else  exit(1);
-    case RQST_CHKCON :
-      (*logfunc)(LOG_DEBUG, "request type : check connect\n");
-      srchk(s) ;
-      shutdown(s, 2); close(s);
-      if (mode) return(0); else  exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-      break;
+      exit(1);
     case RQST_OPEN  :
       (*logfunc)(LOG_DEBUG, "request type <open()>\n");
       fd = sropen(s,(bet?is_remote:0),(bet?from_host:(char *)NULL), bet);
@@ -819,26 +774,13 @@ int doit(int      s,
       fd = sropen64(s, is_remote, from_host);
       (*logfunc)(LOG_DEBUG, "ropen64() returned: %d\n",fd);
       break;
-    case RQST_OPENDIR :
-      (*logfunc)(LOG_DEBUG, "request type <opendir()>\n");
-      dirp = sropendir(s,is_remote,from_host,bet);
-      (*logfunc)(LOG_DEBUG, "ropendir() returned %x\n",dirp);
-      break;
     case RQST_CLOSE  :
       (*logfunc)(LOG_DEBUG, "request type <close()>\n");
       status = srclose(s, &info, fd);
       (*logfunc)(LOG_DEBUG,"close() returned %d\n",status);
       fd = -1;
       shutdown(s, 2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_CLOSEDIR  :
-      (*logfunc)(LOG_DEBUG, "request type <closedir()>\n");
-      status = srclosedir(s,&info,dirp);
-      (*logfunc)(LOG_DEBUG,"closedir() returned %d\n",status);
-      dirp = NULL;
-      shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-      break;
+      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_READ  :
       info.readop ++ ;
       (*logfunc)(LOG_DEBUG, "request type <read()>\n");
@@ -863,12 +805,6 @@ int doit(int      s,
       status = srreadahd64(s, &info, fd);
       (*logfunc)(LOG_DEBUG, "rreadahd64() returned: %d\n",status);
       break;
-    case RQST_READDIR :
-      info.readop++;
-      (*logfunc)(LOG_DEBUG, "request type <readdir()>\n");
-      status = srreaddir(s,&info,dirp);
-      (*logfunc)(LOG_DEBUG, "rreaddir() returned: %d\n",status);
-      break;
     case RQST_WRITE  :
       info.writop ++ ;
       (*logfunc)(LOG_DEBUG, "request type <write()>\n");
@@ -880,16 +816,6 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG, "request type <write64()>\n");
       status = srwrite64(s, &info, fd);
       (*logfunc)(LOG_DEBUG, "rwrite64() returned: %d\n",status);
-      break;
-    case RQST_FCHMOD :
-      (*logfunc)(LOG_DEBUG, "request type <fchmod()>\n");
-      status = srfchmod(s, from_host, is_remote, fd) ;
-      (*logfunc)(LOG_DEBUG, "fchmod() returned %d\n",status);
-      break;
-    case RQST_FCHOWN :
-      (*logfunc)(LOG_DEBUG, "request type <fchown()>\n");
-      status = srfchown(s, from_host, is_remote, fd) ;
-      (*logfunc)(LOG_DEBUG, "fchown() returned %d\n",status);
       break;
     case RQST_FSTAT :
       info.statop ++ ;
@@ -911,7 +837,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG, "stat() returned %d\n",status);
       if (request==RQST_STAT || request==RQST_STAT_SEC) {
         shutdown(s, 2); close(s);
-        if(mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+        exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       }  /* if request == RQST_STAT  */
       break ;
     case RQST_LSTAT_SEC:
@@ -920,7 +846,7 @@ int doit(int      s,
       status = srlstat(s,(bet?is_remote:0),(bet?from_host:(char *)NULL),bet);
       (*logfunc)(LOG_DEBUG, "lstat() returned %d\n",status);
       shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_LSEEK :
       info.seekop ++ ;
       (*logfunc)(LOG_DEBUG, "request type <lseek()>\n");
@@ -934,56 +860,17 @@ int doit(int      s,
       status = srlseek64(s, request, &info, fd);
       (*logfunc)(LOG_DEBUG, "lseek64() returned %d\n",status);
       break;
-    case RQST_PRESEEK :
-      info.presop ++ ;
-      (*logfunc)(LOG_DEBUG, "request type <preseek()>\n");
-      status = srpreseek(s, &info, fd);
-      (*logfunc)(LOG_DEBUG, "preseek() returned %d\n",status);
-      break;
-    case RQST_PRESEEK64 :
-      info.presop ++ ;
-      (*logfunc)(LOG_DEBUG, "request type <preseek64()>\n");
-      status = srpreseek64(s, &info, fd);
-      (*logfunc)(LOG_DEBUG, "preseek64() returned %d\n",status);
-      break;
     case RQST_ERRMSG :
       (*logfunc)(LOG_DEBUG, "request type <errmsg()>\n");
       srerrmsg(s);
       shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_MSYMLINK :
-    case RQST_SYMLINK :
-      (*logfunc)(LOG_DEBUG, "request type <symlink()>\n");
-      status = srsymlink(s,request,(bet?is_remote:0),(bet?from_host:(char *)NULL)) ;
-      (*logfunc)(LOG_DEBUG, "srsymlink() returned %d\n", status) ;
-      if (request==RQST_SYMLINK) {
-        shutdown(s,2); close(s);
-        if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-      }
-      break;
-    case RQST_READLINK:
-      (*logfunc)(LOG_DEBUG, "request type <readlink()>\n");
-      status = srreadlink(s,from_host,is_remote) ;
-      shutdown(s,2); close(s);
-      (*logfunc)(LOG_DEBUG, "srreadlink() returned %d\n", status) ;
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_REWINDDIR:
-      info.seekop ++;
-      (*logfunc)(LOG_DEBUG, "request type <rewinddir()>\n");
-      status = srrewinddir(s,&info,dirp);
-      (*logfunc)(LOG_DEBUG, "srrewinddir() returned %d\n",status);
-      break;
+      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_STATFS :
       (*logfunc)(LOG_DEBUG, "request type <statfs()>\n");
       status = srstatfs(s) ;
       (*logfunc)(LOG_DEBUG, "statfs() returned %d\n",status);
       shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_POPEN :
-      (*logfunc)(LOG_DEBUG, "request type <popen()>\n");
-      streamf = srpopen(s, from_host, (bet?is_remote:0) ) ;
-      (*logfunc)(LOG_DEBUG, "srpopen() returned %x\n", streamf ) ;
-      break ;
+      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_FREAD :
       (*logfunc)(LOG_DEBUG,"request type <fread()>\n");
       status = srfread(s,streamf) ;
@@ -994,62 +881,16 @@ int doit(int      s,
       status = srfwrite(s,streamf);
       (*logfunc)(LOG_DEBUG, "rfwrite() returned %d\n",status);
       break ;
-    case RQST_PCLOSE :
-      (*logfunc)(LOG_DEBUG,"request type <pclose()>\n");
-      status = srpclose(s,streamf) ;
-      (*logfunc)(LOG_DEBUG,"pclose() returned %d\n",status);
-      shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_ACCESS :
       (*logfunc)(LOG_DEBUG,"request type <access()>\n");
       status = sraccess(s, from_host, (bet?is_remote:0)) ;
       (*logfunc)(LOG_DEBUG,"raccess returned %d\n",status);
       shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_MKDIR :
-      (*logfunc)(LOG_DEBUG,"request type <mkdir()>\n");
-      status = srmkdir(s,from_host,is_remote) ;
-      (*logfunc)(LOG_DEBUG,"rmkdir returned %d\n", status);
-      shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_RMDIR :
-      (*logfunc)(LOG_DEBUG,"request type <rmdir()>\n");
-      status = srrmdir(s,from_host,is_remote) ;
-      (*logfunc)(LOG_DEBUG,"rrmdir returned %d\n", status);
-      shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_CHMOD:
-      (*logfunc)(LOG_DEBUG,"request type <chmod()>\n");
-      status = srchmod(s,from_host,is_remote) ;
-      (*logfunc)(LOG_DEBUG,"rchmod returned %d\n", status);
-      shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_CHOWN:
-      (*logfunc)(LOG_DEBUG,"request type <chown()>\n");
-      status = srchown(s,from_host,is_remote) ;
-      (*logfunc)(LOG_DEBUG,"rchown returned %d\n", status);
-      shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_RENAME:
-      (*logfunc)(LOG_DEBUG,"request type <rename()>\n");
-      status = srrename(s,from_host,is_remote) ;
-      (*logfunc)(LOG_DEBUG,"rrename returned %d\n", status);
-      shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_LOCKF:
-      (*logfunc)(LOG_DEBUG,"request type <lockf()>\n");
-      status = srlockf(s,fd) ;
-      (*logfunc)(LOG_DEBUG,"rlockf returned %d\n", status);
-      break;
-    case RQST_LOCKF64:
-      (*logfunc)(LOG_DEBUG,"request type <lockf64()>\n");
-      status = srlockf64(s, &info, fd) ;
-      (*logfunc)(LOG_DEBUG,"rlockf64 returned %d\n", status);
-      break;
+      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
     case RQST_END :
       (*logfunc)(LOG_DEBUG,"request type : end rfiod\n") ;
       shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break ;
     case RQST_OPEN_V3:
       (*logfunc)(LOG_DEBUG,"request type : open_v3\n");
@@ -1062,7 +903,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"rclose_v3 returned %d\n", status);
       fd = -1;
       shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     case RQST_READ_V3:
       (*logfunc)(LOG_DEBUG,"request type : read_v3\n");
@@ -1070,7 +911,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"rread_v3 returned %d\n",status);
       fd = -1;
       shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     case RQST_WRITE_V3:
       (*logfunc)(LOG_DEBUG,"request type : write_v3\n");
@@ -1078,7 +919,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"rwrite_v3 returned %d\n",status);
       fd = -1;
       shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     case RQST_LSEEK_V3:
       info.seekop++;
@@ -1097,7 +938,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"rclose64_v3 returned %d\n", status);
       fd = -1;
       shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     case RQST_READ64_V3:
       (*logfunc)(LOG_DEBUG,"request type : read64_v3\n");
@@ -1105,7 +946,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"rread64_v3 returned %d\n",status);
       fd = -1;
       shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     case RQST_WRITE64_V3:
       (*logfunc)(LOG_DEBUG,"request type : write64_v3\n");
@@ -1113,30 +954,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG,"rwrite64_v3 returned %d\n",status);
       fd = -1;
       shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-      break;
-    case RQST_XYOPEN  :
-      (*logfunc)(LOG_DEBUG, "request type <xyopen()>\n");
-      status = srxyopen(s, &lun, &access,(bet?is_remote:0),(bet?from_host:NULL),bet);
-      (*logfunc)(LOG_DEBUG, "xyopen(%d,%d) returned: %d\n",lun,access,status);
-      break;
-    case RQST_XYCLOS  :
-      (*logfunc)(LOG_DEBUG, "request type <xyclos(%d)>\n",lun);
-      status = srxyclos(s, &info, lun);
-      (*logfunc)(LOG_DEBUG,"xyclos() returned %d\n",status);
-      shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
-    case RQST_XYREAD  :
-      info.readop ++ ;
-      (*logfunc)(LOG_DEBUG, "request type <xyread()>\n");
-      status = srxyread(s, &info, lun, access);
-      (*logfunc)(LOG_DEBUG, "xyread() returned: %d\n",status);
-      break;
-    case RQST_XYWRIT  :
-      info.writop ++ ;
-      (*logfunc)(LOG_DEBUG, "request type <xywrit(%d, %d)>\n", lun, access);
-      status = srxywrit(s, &info, lun, access);
-      (*logfunc)(LOG_DEBUG, "xywrit() returned: %d\n",status);
+      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     case RQST_MSTAT64:
     case RQST_STAT64 :
@@ -1145,7 +963,7 @@ int doit(int      s,
       (*logfunc)(LOG_DEBUG, "stat64() returned %d\n",status);
       if (request == RQST_STAT64) {
         shutdown(s, 2); close(s);
-        if(mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+        exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       }  /* if request == RQST_STAT64  */
       break ;
     case RQST_LSTAT64 :
@@ -1153,11 +971,11 @@ int doit(int      s,
       status = srlstat64(s, is_remote, from_host);
       (*logfunc)(LOG_DEBUG, "lstat64() returned %d\n",status);
       shutdown(s,2); close(s);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     default :
       (*logfunc)(LOG_ERR, "unknown request type %x(hex)\n", request);
-      if (mode) return(0); else exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
+      exit(((subrequest_id > 0) && (forced_mover_exit_error != 0)) ? 1 : 0);
       break;
     }  /* End of switch (request) */
   }  /* End of for (;;) */

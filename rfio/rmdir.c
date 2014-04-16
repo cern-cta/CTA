@@ -19,15 +19,8 @@
 /* Remote rmdir             */
 int  rfio_rmdir(char  *dirpath)          /* remote directory path             */
 {
-  static char     buf[BUFSIZ];       /* General input/output buffer          */
-  register int    s;              /* socket descriptor            */
-  int             status;         /* remote rmdir() status        */
-  int      len;
-  char     *host,
-    *filename;
-  char     *p=buf;
-  int   rt ;
-  int   rcode, parserc ;
+  char  *host, *filename;
+  int   parserc ;
 
   INIT_TRACE("RFIO_TRACE");
   TRACE(1, "rfio", "rfio_rmdir(%s)", dirpath);
@@ -66,52 +59,9 @@ int  rfio_rmdir(char  *dirpath)          /* remote directory path             */
     return(-1);
   }
 
-  s = rfio_connect(host,&rt);
-  if (s < 0)      {
-    END_TRACE();
-    return(-1);
-  }
-
-  len = strlen(filename) + 1;
-  if ( RQSTSIZE+len > BUFSIZ ) {
-    TRACE(2,"rfio","rfio_rmdir: request too long %d (max %d)",
-          RQSTSIZE+len,BUFSIZ);
-    END_TRACE();
-    (void) close(s);
-    serrno = E2BIG;
-    return(-1);
-  }
-  marshall_WORD(p, RFIO_MAGIC);
-  marshall_WORD(p, RQST_RMDIR);
-  marshall_WORD(p, geteuid());
-  marshall_WORD(p, getegid());
-  marshall_LONG(p, len);
-  p= buf + RQSTSIZE;
-  marshall_STRING(p, filename);
-  TRACE(2,"rfio","rfio_rmdir: sending %d bytes",RQSTSIZE+len) ;
-  if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
-    TRACE(2, "rfio", "rfio_rmdir: write(): ERROR occured (errno=%d)", errno);
-    (void) close(s);
-    END_TRACE();
-    return(-1);
-  }
-  p = buf;
-  TRACE(2, "rfio", "rfio_rmdir: reading %d bytes", LONGSIZE);
-  if (netread_timeout(s, buf, 2* LONGSIZE, RFIO_CTRL_TIMEOUT) != (2 * LONGSIZE))  {
-    TRACE(2, "rfio", "rfio_rmdir: read(): ERROR occured (errno=%d)", errno);
-    (void) close(s);
-    END_TRACE();
-    return(-1);
-  }
-  unmarshall_LONG(p, status);
-  unmarshall_LONG(p, rcode);
-  TRACE(1, "rfio", "rfio_rmdir: return %d",status);
-  rfio_errno = rcode;
-  (void) close(s);
-  if (status)     {
-    END_TRACE();
-    return(-1);
-  }
+  // Remote directory. Not supported anymore
+  TRACE(1, "rfio", "rfio_rmdir: return %d", SEOPNOTSUP);
+  rfio_errno = SEOPNOTSUP;
   END_TRACE();
-  return (0);
+  return(-1);
 }

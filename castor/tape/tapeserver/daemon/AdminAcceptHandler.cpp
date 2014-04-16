@@ -31,32 +31,37 @@
 #include "h/serrno.h"
 #include "h/Ctape.h"
 #include "castor/tape/legacymsg/CommonMarshal.hpp"
-#include "castor/tape/legacymsg/AdminMarshal.hpp"
+#include "castor/tape/legacymsg/TapeMarshal.hpp"
+#include "castor/tape/utils/utils.hpp"
 
 #include <vdqm_api.h>
 
 #include <errno.h>
 #include <memory>
 #include <string.h>
+#include <list>
+#include <unistd.h>
+#include <sys/types.h>
+#include <stdio.h>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::AdminAcceptHandler::AdminAcceptHandler(
-  const int listenSock,
+  const int fd,
   io::PollReactor &reactor,
   log::Logger &log,
   Vdqm &vdqm,
   DriveCatalogue &driveCatalogue,
   const std::string &hostName)
   throw():
-    m_listenSock(listenSock),
+    m_fd(fd),
     m_reactor(reactor),
     m_log(log),
     m_vdqm(vdqm),
     m_driveCatalogue(driveCatalogue),
     m_hostName(hostName),
-    m_netTimeout(1) {
+    m_netTimeout(10) {
 }
 
 //------------------------------------------------------------------------------
@@ -70,7 +75,7 @@ castor::tape::tapeserver::daemon::AdminAcceptHandler::~AdminAcceptHandler()
 // getFd
 //------------------------------------------------------------------------------
 int castor::tape::tapeserver::daemon::AdminAcceptHandler::getFd() throw() {
-  return m_listenSock;
+  return m_fd;
 }
 
 //------------------------------------------------------------------------------
@@ -78,26 +83,191 @@ int castor::tape::tapeserver::daemon::AdminAcceptHandler::getFd() throw() {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillPollFd(
   struct pollfd &fd) throw() {
-  fd.fd = m_listenSock;
+  fd.fd = m_fd;
   fd.events = POLLRDNORM;
   fd.revents = 0;
+}
+
+//-----------------------------------------------------------------------------
+// marshalTapeConfigReplyMsg
+//-----------------------------------------------------------------------------
+size_t castor::tape::tapeserver::daemon::AdminAcceptHandler::marshalTapeRcReplyMsg(char *const dst,
+  const size_t dstLen, const int rc)
+  throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    TAPE_THROW_CODE(EINVAL,
+      ": Pointer to destination buffer is NULL");
+  }
+
+  // Calculate the length of the message header
+  const uint32_t totalLen = (2 * sizeof(uint32_t)) + sizeof(int32_t);  // magic + reqType + returnCode
+
+  // Check that the message header buffer is big enough
+  if(totalLen > dstLen) {
+    TAPE_THROW_CODE(EMSGSIZE,
+      ": Buffer too small for reply message"
+      ": Required size: " << totalLen <<
+      ": Actual size: " << dstLen);
+  }
+
+  // Marshal the message header
+  char *p = dst;
+  io::marshalUint32(TPMAGIC, p);
+  io::marshalUint32(TAPERC, p);
+  io::marshalInt32(rc, p);
+
+  // Calculate the number of bytes actually marshalled
+  const size_t nbBytesMarshalled = p - dst;
+
+  // Check that the number of bytes marshalled was what was expected
+  if(totalLen != nbBytesMarshalled) {
+    TAPE_THROW_EX(castor::exception::Internal,
+      ": Mismatch between the expected total length of the "
+      "reply message and the actual number of bytes marshalled"
+      ": Expected: " << totalLen <<
+      ": Marshalled: " << nbBytesMarshalled);
+  }
+
+  return totalLen;
+}
+
+//------------------------------------------------------------------------------
+// writeTapeConfigReplyMsg
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeRcReplyMsg(const int fd, const int rc) throw(castor::exception::Exception) {
+  char buf[REPBUFSZ];
+  const size_t len = marshalTapeRcReplyMsg(buf, sizeof(buf), rc);
+  try {
+    io::writeBytes(fd, m_netTimeout, len, buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to write job reply message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//-----------------------------------------------------------------------------
+// marshalTapeStatReplyMsg
+//-----------------------------------------------------------------------------
+size_t castor::tape::tapeserver::daemon::AdminAcceptHandler::marshalTapeStatReplyMsg(char *const dst,
+  const size_t dstLen, const legacymsg::TapeStatReplyMsgBody &body)
+  throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    TAPE_THROW_CODE(EINVAL,
+      ": Pointer to destination buffer is NULL");
+  }
+
+  size_t msg_len=(3*sizeof(uint32_t)) + sizeof(uint16_t) + body.number_of_drives*sizeof(struct castor::tape::legacymsg::TapeStatDriveEntry); // upperbound: header + number_of_drives + drive entries
+  
+  // Check that the message header buffer is big enough
+  if(msg_len > dstLen) {
+    TAPE_THROW_CODE(EMSGSIZE,
+      ": Buffer too small for reply message"
+      ": Required size: " << msg_len <<
+      ": Actual size: " << dstLen);
+  }
+  
+  // Marshal the header
+  char *p = dst;
+  io::marshalUint32(TPMAGIC, p);
+  io::marshalUint32(MSG_DATA, p);
+  char *msg_len_p = p;
+  io::marshalUint32(msg_len, p);
+  
+  // Marshal the body
+  io::marshalUint16(body.number_of_drives, p);  
+  
+  // Marshal the info of each unit
+  for(int i=0; i<body.number_of_drives; i++) {
+    io::marshalUint32(body.drives[i].uid, p);
+    io::marshalUint32(body.drives[i].jid, p);
+    io::marshalString(body.drives[i].dgn, p);
+    io::marshalUint16(body.drives[i].up, p);
+    io::marshalUint16(body.drives[i].asn, p);
+    io::marshalUint32(body.drives[i].asn_time, p);
+    io::marshalString(body.drives[i].drive, p);
+    io::marshalUint16(body.drives[i].mode, p);
+    io::marshalString(body.drives[i].lblcode, p);
+    io::marshalUint16(body.drives[i].tobemounted, p);
+    io::marshalString(body.drives[i].vid, p);
+    io::marshalString(body.drives[i].vsn, p);
+    io::marshalUint32(body.drives[i].cfseq, p);
+  }
+
+  // Calculate the number of bytes actually marshalled
+  const size_t body_length = (p - dst) - 12;  // we have to take out the header part from the count in this case
+  io::marshalUint32(body_length, msg_len_p);
+
+  const size_t total_reply_length = (p - dst);
+  return total_reply_length;
+}
+
+//------------------------------------------------------------------------------
+// writeTapeStatReplyMsg
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeStatReplyMsg(const int fd) throw(castor::exception::Exception) {
+  legacymsg::TapeStatReplyMsgBody body;
+  
+  const std::list<std::string> unitNames = m_driveCatalogue.getUnitNames();
+  if(unitNames.size()>CA_MAXNBDRIVES) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Too many drives in drive catalogue: " << unitNames.size() << ". Max allowed: " << CA_MAXNBDRIVES << ".";
+    throw ex;
+  }
+  body.number_of_drives = unitNames.size();
+  int i=0;
+  for(std::list<std::string>::const_iterator itor = unitNames.begin(); itor!=unitNames.end() and i<CA_MAXNBDRIVES; itor++) {
+    body.drives[i].uid=getuid();
+    body.drives[i].jid=m_driveCatalogue.getSessionPid(*itor);
+    strncpy(body.drives[i].dgn, m_driveCatalogue.getDgn(*itor).c_str(), CA_MAXDGNLEN);
+    body.drives[i].dgn[CA_MAXDGNLEN]='\0'; // this shouldn't be needed since we zero the structure before using it. but you never know...
+    m_driveCatalogue.getState(*itor) == DriveCatalogue::DRIVE_STATE_UP ? body.drives[i].up=1 : body.drives[i].up=0;
+    body.drives[i].asn=m_driveCatalogue.getState(*itor);
+    body.drives[i].asn_time=0; // TODO: put the real assignment timing
+    strncpy(body.drives[i].drive, (*itor).c_str(), CA_MAXUNMLEN);
+    body.drives[i].drive[CA_MAXUNMLEN]='\0';
+    body.drives[i].mode=WRITE_DISABLE;
+    strncpy(body.drives[i].lblcode, "aul", CA_MAXLBLTYPLEN); // only aul format is used
+    body.drives[i].lblcode[CA_MAXLBLTYPLEN]='\0';
+    body.drives[i].tobemounted=0; // TODO: put 1 if the tape is mounting 0 otherwise
+    strncpy(body.drives[i].vid, "XXXXXX", CA_MAXVIDLEN); // TODO: put the real tape name
+    body.drives[i].vid[CA_MAXVIDLEN]='\0';
+    strncpy(body.drives[i].vsn, "XXXXXX", CA_MAXVSNLEN); // TODO: put the real tape name
+    body.drives[i].vid[CA_MAXVSNLEN]='\0';
+    body.drives[i].cfseq=0; // TODO: put the correct fseq we are in
+    i++;
+  }
+  
+  char buf[REPBUFSZ];
+  const size_t len = marshalTapeStatReplyMsg(buf, sizeof(buf), body);
+  try {
+    io::writeBytes(fd, m_netTimeout, len, buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to write job reply message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
+bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
   const struct pollfd &fd) throw(castor::exception::Exception) {
   checkHandleEventFd(fd.fd);
 
   // Do nothing if there is no data to read
   //
-  // POLLIN is unfortuntaley not the logical or of POLLRDNORM and POLLRDBAND
+  // POLLIN is unfortunately not the logical or of POLLRDNORM and POLLRDBAND
   // on SLC 5.  I therefore replaced POLLIN with the logical or.  I also
   // added POLLPRI into the mix to cover all possible types of read event.
   if(0 == (fd.revents & POLLRDNORM) && 0 == (fd.revents & POLLRDBAND) &&
     0 == (fd.revents & POLLPRI)) {
-    return;
+    return false; // Stay registered with the reactor
   }
 
   // Accept the connection from the admin command
@@ -108,27 +278,11 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to accept a connection from the admin command"
       ": " << ne.getMessage().str();
-  }
-  
-  const legacymsg::TapeMsgBody job = readJobMsg(fd.fd);
-  logAdminJobReception(job);
-  const std::string unitName(job.drive);
-  const std::string dgn = m_driveCatalogue.getDgn(unitName);
-
-  if(CONF_UP==job.status) {
-    m_vdqm.setTapeDriveStatusUp(m_hostName, unitName, dgn);
-  }
-  else if(CONF_DOWN==job.status) {
-    m_vdqm.setTapeDriveStatusDown(m_hostName, unitName, dgn);
-  }
-  else {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Wrong drive status requested:" << job.status;
     throw ex;
   }
-                               
-  m_reactor.removeHandler(this);
-  close(fd.fd);
+  
+  dispatchJob(connection.get());  
+  return false; // Stay registered with the reactor
 }
 
 //------------------------------------------------------------------------------
@@ -136,40 +290,92 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::AdminAcceptHandler::checkHandleEventFd(
   const int fd) throw (castor::exception::Exception) {
-  if(m_listenSock != fd) {
+  if(m_fd != fd) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to accept connection from the admin command"
       ": Event handler passed wrong file descriptor"
-      ": expected=" << m_listenSock << " actual=" << fd;
+      ": expected=" << m_fd << " actual=" << fd;
     throw ex;
   }
 }
 
 //------------------------------------------------------------------------------
-// logAdminJobReception
+// logTapeConfigJobReception
 //------------------------------------------------------------------------------
 void
-  castor::tape::tapeserver::daemon::AdminAcceptHandler::logAdminJobReception(
-  const legacymsg::TapeMsgBody &job) const throw() {
+  castor::tape::tapeserver::daemon::AdminAcceptHandler::logTapeConfigJobReception(
+  const legacymsg::TapeConfigRequestMsgBody &job) const throw() {
   log::Param params[] = {
     log::Param("drive", job.drive),
     log::Param("gid", job.gid),
     log::Param("uid", job.uid),
     log::Param("status", job.status)};
-  m_log(LOG_INFO, "Received message from admin command", params);
+  m_log(LOG_INFO, "Received message from tpconfig command", params);
 }
 
 //------------------------------------------------------------------------------
-// readJob
+// logTapeStatJobReception
 //------------------------------------------------------------------------------
-castor::tape::legacymsg::TapeMsgBody
-  castor::tape::tapeserver::daemon::AdminAcceptHandler::readJobMsg(
-    const int connection) throw(castor::exception::Exception) {
-  const legacymsg::MessageHeader header = readJobMsgHeader(connection);
-  const legacymsg::TapeMsgBody body = readJobMsgBody(connection,
-    header.lenOrStatus);
+void
+  castor::tape::tapeserver::daemon::AdminAcceptHandler::logTapeStatJobReception(
+  const legacymsg::TapeStatRequestMsgBody &job) const throw() {
+  log::Param params[] = {
+    log::Param("gid", job.gid),
+    log::Param("uid", job.uid)};
+  m_log(LOG_INFO, "Received message from tpstat command", params);
+}
 
-  return body;
+//------------------------------------------------------------------------------
+// handleTapeConfigJob
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeConfigJob(const legacymsg::TapeConfigRequestMsgBody &body) throw(castor::exception::Exception) {
+  const std::string unitName(body.drive);
+  const std::string dgn = m_driveCatalogue.getDgn(unitName);
+
+  if(CONF_UP==body.status) {
+    m_vdqm.setDriveUp(m_hostName, unitName, dgn);
+    m_driveCatalogue.configureUp(unitName);
+    m_log(LOG_INFO, "Drive is up now");
+  }
+  else if(CONF_DOWN==body.status) {
+    m_vdqm.setDriveDown(m_hostName, unitName, dgn);
+    m_driveCatalogue.configureDown(unitName);
+    m_log(LOG_INFO, "Drive is down now");
+  }
+  else {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Wrong drive status requested:" << body.status;
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleTapeStatJob
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeStatJob(const legacymsg::TapeStatRequestMsgBody &body) throw(castor::exception::Exception) {
+  
+}
+
+//------------------------------------------------------------------------------
+// dispatchJob
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::AdminAcceptHandler::dispatchJob(
+    const int connection) throw(castor::exception::Exception) {
+  
+  const legacymsg::MessageHeader header = readJobMsgHeader(connection);
+  if(TPCONF == header.reqType) {
+    const legacymsg::TapeConfigRequestMsgBody body = readTapeConfigMsgBody(connection, header.lenOrStatus-sizeof(header));
+    logTapeConfigJobReception(body);
+    handleTapeConfigJob(body);
+    writeTapeRcReplyMsg(connection, 0); // 0 as return code for the tape config command, as in: "all went fine"
+  }
+  else { //TPSTAT
+    const legacymsg::TapeStatRequestMsgBody body = readTapeStatMsgBody(connection, header.lenOrStatus-sizeof(header));
+    logTapeStatJobReception(body);
+    handleTapeStatJob(body);
+    writeTapeStatReplyMsg(connection);
+    writeTapeRcReplyMsg(connection, 0); // 0 as return code for the tape config command, as in: "all went fine"
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -196,10 +402,10 @@ castor::tape::legacymsg::MessageHeader
     throw ex;
   }
 
-  if(TPCONF != header.reqType) {
+  if(TPCONF != header.reqType and TPSTAT != header.reqType) {
     castor::exception::Internal ex;
     ex.getMessage() << "Invalid admin job message: Invalid request type"
-       ": expected=0x" << std::hex << TPCONF << " actual=0x" <<
+       ": expected= 0x" << std::hex << TPCONF << " or 0x" << TPSTAT << " actual=0x" <<
        header.reqType;
     throw ex;
   }
@@ -211,13 +417,13 @@ castor::tape::legacymsg::MessageHeader
 }
 
 //------------------------------------------------------------------------------
-// readJobMsgBody
+// readTapeConfigMsgBody
 //------------------------------------------------------------------------------
-castor::tape::legacymsg::TapeMsgBody
-  castor::tape::tapeserver::daemon::AdminAcceptHandler::readJobMsgBody(
+castor::tape::legacymsg::TapeConfigRequestMsgBody
+  castor::tape::tapeserver::daemon::AdminAcceptHandler::readTapeConfigMsgBody(
     const int connection, const uint32_t len)
     throw(castor::exception::Exception) {
-  char buf[VDQM_MSGBUFSIZ];
+  char buf[REQBUFSZ];
 
   if(sizeof(buf) < len) {
     castor::exception::Internal ex;
@@ -236,7 +442,40 @@ castor::tape::legacymsg::TapeMsgBody
     throw ex;
   }
 
-  legacymsg::TapeMsgBody body;
+  legacymsg::TapeConfigRequestMsgBody body;
+  const char *bufPtr = buf;
+  size_t bufLen = sizeof(buf);
+  legacymsg::unmarshal(bufPtr, bufLen, body);
+  return body;
+}
+
+//------------------------------------------------------------------------------
+// readTapeStatMsgBody
+//------------------------------------------------------------------------------
+castor::tape::legacymsg::TapeStatRequestMsgBody
+  castor::tape::tapeserver::daemon::AdminAcceptHandler::readTapeStatMsgBody(
+    const int connection, const uint32_t len)
+    throw(castor::exception::Exception) {
+  char buf[REQBUFSZ];
+
+  if(sizeof(buf) < len) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read body of job message"
+       ": Maximum body length exceeded"
+       ": max=" << sizeof(buf) << " actual=" << len;
+    throw ex;
+  }
+
+  try {
+    io::readBytes(connection, m_netTimeout, len, buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read body of job message"
+      ": " << ne.getMessage().str();
+    throw ex;
+  }
+
+  legacymsg::TapeStatRequestMsgBody body;
   const char *bufPtr = buf;
   size_t bufLen = sizeof(buf);
   legacymsg::unmarshal(bufPtr, bufLen, body);

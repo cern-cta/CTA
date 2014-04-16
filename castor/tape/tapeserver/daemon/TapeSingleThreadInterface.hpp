@@ -21,9 +21,6 @@ template <class Task>
 class TapeSingleThreadInterface : private castor::tape::threading::Thread
 {
 protected:
-  class endOfSession: public Task {
-    virtual bool endOfWork() { return true; }
-  };
   castor::tape::threading::BlockingQueue<Task *> m_tasks;
   castor::tape::drives::DriveInterface & m_drive;
   size_t m_filesProcessed;
@@ -31,7 +28,7 @@ protected:
   castor::log::LogContext m_logContext;
   castor::tape::tapeserver::daemon::TaskInjector * m_taskInjector;
 public:
-  void finish() { m_tasks.push(new endOfSession); }
+  void finish() { m_tasks.push(NULL); }
   void push(Task * t) { m_tasks.push(t); }
   
   virtual void startThreads(){ start(); }

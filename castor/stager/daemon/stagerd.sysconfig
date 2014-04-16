@@ -2,7 +2,6 @@
 #   -c <path>      configuration file
 #   -f             keep process in the foreground, do not fork
 #   -J num	   number of threads for the Job requests service
-#   -P num         number of threads for the Prepare requests service
 #   -S num         number of threads for the Stage requests service
 #   -Q num         number of threads for the Query requests service
 #   -E num         number of threads for the Error service

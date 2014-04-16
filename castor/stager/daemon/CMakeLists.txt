@@ -27,21 +27,13 @@ cmake_minimum_required (VERSION 2.6)
 ################################################################################
 set (STAGERD_SRC_FILES
   StagerDaemon.cpp
-  GetHandler.cpp
-  OpenRequestHandler.cpp
-  PrepareToGetHandler.cpp
-  PrepareToPutHandler.cpp
-  PrepareToUpdateHandler.cpp
   PutDoneHandler.cpp
-  PutHandler.cpp
   ReplyHelper.cpp
   RequestHelper.cpp
   RmHandler.cpp
   SetGCWeightHandler.cpp
-  UpdateHandler.cpp
   RequestHandler.cpp
   BaseRequestSvcThread.cpp
-  PrepRequestSvcThread.cpp
   StageRequestSvcThread.cpp
   BulkStageReqSvcThread.cpp
   JobRequestSvcThread.cpp

@@ -24,7 +24,7 @@
 
 #include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
-#include "castor/tape/tapeserver/daemon/TapeWriteFileTask.hpp"
+#include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/DiskReadTask.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"

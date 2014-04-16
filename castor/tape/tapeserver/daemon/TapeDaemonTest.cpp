@@ -24,7 +24,9 @@
 
 #include "castor/io/DummyPollReactor.hpp"
 #include "castor/log/DummyLogger.hpp"
+#include "castor/tape/tapeserver/daemon/DummyRmc.hpp"
 #include "castor/tape/tapeserver/daemon/DummyVdqm.hpp"
+#include "castor/tape/tapeserver/daemon/DummyVmgr.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
@@ -49,6 +51,10 @@ protected:
 TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   using namespace castor::tape::tapeserver::daemon;
 
+  int argc = 1;
+  char argv0[1024];
+  memset(argv0, '\0', sizeof(argv0));
+  char *argv[2] = {argv0, NULL};
   std::ostringstream stdOut;
   std::ostringstream stdErr;
   const std::string programName = "unittests";
@@ -63,11 +69,13 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
   DummyVdqm vdqm(job);
+  DummyVmgr vmgr;
+  DummyRmc rmc;
   castor::io::DummyPollReactor reactor;
   std::auto_ptr<TapeDaemon> daemon;
 
   ASSERT_NO_THROW(daemon.reset(
-    new TapeDaemon(stdOut, stdErr, log, vdqm, reactor)));
+    new TapeDaemon(argc, argv, stdOut, stdErr, log, vdqm, vmgr, rmc, reactor)));
 }
 
 } // namespace unitTests

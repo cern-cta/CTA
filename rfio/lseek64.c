@@ -271,7 +271,7 @@ static off64_t rfio_lseekinbuf64(int      s,
        */
       rfilefdt[s_index]->nbrecord= status ;
       rfilefdt[s_index]->_iobuf.ptr= iodata(rfilefdt[s_index]) ;
-      rfilefdt[s_index]->preseek= (req == RQST_LASTSEEK) ? 2 : 1 ;
+      rfilefdt[s_index]->preseek= 1 ;
     }
     /*
      * The current record is the one we are looking for.
@@ -392,8 +392,6 @@ static off64_t rfio_forcelseek64(int      s,
       END_TRACE() ;
       return offsetout ;
     case RQST_READAHD64:
-    case RQST_LASTSEEK:
-    case RQST_PRESEEK64:
       unmarshall_LONG(p,status) ;
       unmarshall_LONG(p,rcode) ;
       unmarshall_LONG(p,msgsiz) ;

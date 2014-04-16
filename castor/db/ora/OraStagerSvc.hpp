@@ -307,67 +307,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * handles a get request
-         * @param cfId the id of the castorFile concerned
-         * @param srId the id of the subrequest concerned
-         * @param fileId the fileId of the file concerned
-         * @param fileSize the size of the file concerned
-         * @param nsOpenTimeInUsec the nsOpenTime of the file concerned, in microseconds since the Epoch
-         */
-        virtual void handleGet(u_signed64 cfId,
-                               u_signed64 srId,
-                               struct Cns_fileid &fileId,
-                               u_signed64 fileSize,
-                               u_signed64 nsOpenTimeInUsec)
-          throw (castor::exception::Exception);
-
-        /**
-         * handles a prepareToGet request and returns a subrequest's status
-         * indicating whether we are going for a recall/d2dcopy (WAITTAPERECALL),
-         * whether we failed (FAILED) or whether we foudn the file (FINISHED)
-         * @param cfId the id of the castorFile concerned
-         * @param srId the id of the subrequest concerned
-         * @param fileId the fileId of the file concerned
-         * @param fileSize the size of the file concerned
-         * @param nsOpenTimeInUsec the nsOpenTime of the file concerned, in microseconds since the Epoch
-         */
-        virtual castor::stager::SubRequestStatusCodes
-        handlePrepareToGet(u_signed64 cfId,
-                           u_signed64 srId,
-                           struct Cns_fileid &fileId,
-                           u_signed64 fileSize,
-                           u_signed64 nsOpenTimeInUsec)
-          throw (castor::exception::Exception);
-
-        /**
-         * handles a put request
-         * @param cfId the id of the castorFile concerned
-         * @param srId the id of the subrequest concerned
-         * @param fileId the fileId of the file concerned
-         * @param nsOpenTimeInUsec the nsOpenTime of the file concerned, in microseconds since the Epoch
-         */
-        virtual void handlePut(u_signed64 cfId,
-                               u_signed64 srId,
-                               struct Cns_fileid &fileId,
-                               u_signed64 nsOpenTimeInUsec)
-          throw (castor::exception::Exception);
-
-        /**
-         * handles a prepareToPut request and returns a boolean indicating
-         * whether we need to reply to the client or not
-         * @param cfId the id of the castorFile concerned
-         * @param srId the id of the subrequest concerned
-         * @param fileId the fileId of the file concerned
-         * @param fileSize the size of the file concerned
-         * @param nsOpenTimeInUsec the nsOpenTime of the file concerned, in microseconds since the Epoch 
-        */
-        virtual bool handlePrepareToPut(u_signed64 cfId,
-                                        u_signed64 srId,
-                                        struct Cns_fileid &fileId,
-                                        u_signed64 nsOpenTimeInUsec)
-          throw (castor::exception::Exception);
-
-        /**
          * Dumps the current logs from the db.
          * The content is logged in DLF and then deleted.
          */
@@ -486,15 +425,6 @@ namespace castor {
 
         /// SQL statement object for function getConfigOption
         oracle::occi::Statement *m_getConfigOptionStatement;
-
-        /// SQL statement object for handleGet function
-        oracle::occi::Statement *m_handleGetStatement;
-        /// SQL statement object for handlePrepareToGet function
-        oracle::occi::Statement *m_handlePrepareToGetStatement;
-        /// SQL statement object for handlePut function
-        oracle::occi::Statement *m_handlePutStatement;
-        /// SQL statement object for handlePrepareToPut function
-        oracle::occi::Statement *m_handlePrepareToPutStatement;
 
         /// SQL statement for dumpDBLogs function
         static const std::string s_dumpDBLogsString;

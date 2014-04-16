@@ -1,3 +1,0 @@
-rfmkdir <remoteFileName>
-rfdir <remoteFileName> | awk '{ print $1 }'
-

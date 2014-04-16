@@ -236,8 +236,6 @@ set (CLIENT_LIB_SRC_FILES
   stager/StagePrepareToGetRequest.cpp
   stager/StagePrepareToPutRequest.cpp
   stager/StagePrepareToUpdateRequest.cpp
-  stager/StageRepackRequest.cpp
-  stager/StageRepackRequestStatusCodes.cpp
   stager/StagePutDoneRequest.cpp
   stager/StagePutRequest.cpp
   stager/StageQueryResult.cpp
@@ -328,6 +326,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
     exception/AlreadyInitialized.hpp
     exception/Backtrace.hpp
     exception/BadAlloc.hpp
+    exception/BadMessage.hpp
     exception/CommandLineNotParsed.hpp
     exception/Communication.hpp
     exception/Exception.hpp

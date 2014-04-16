@@ -90,22 +90,33 @@ add_executable(castorUnitTests
   ../castor/log/LogContextTest.cpp
   ../castor/log/StringLoggerTest.cpp
   ../castor/server/DaemonTest.cpp
-  ../castor/tape/tapeserver/client/ClientProxyTest.cpp
+  ../castor/tape/legacymsg/RmcMarshalTest.cpp
   ../castor/tape/legacymsg/VdqmMarshalTest.cpp
+  ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
+  ../castor/tape/tapeserver/daemon/DebugMountSessionForVdqmProtocol.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
+  ../castor/tape/tapeserver/daemon/DummyRmc.cpp
   ../castor/tape/tapeserver/daemon/DummyVdqm.cpp
+  ../castor/tape/tapeserver/daemon/DummyVmgr.cpp
+  ../castor/tape/tapeserver/daemon/Rmc.cpp
+  ../castor/tape/tapeserver/daemon/RmcImpl.cpp
+  ../castor/tape/tapeserver/daemon/RmcImplTest.cpp
+  ../castor/tape/tapeserver/daemon/ScsiLibraryDriveName.cpp
+  ../castor/tape/tapeserver/daemon/ScsiLibraryDriveNameTest.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemon.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemonTest.cpp
   ../castor/tape/tapeserver/daemon/Vdqm.cpp
   ../castor/tape/tapeserver/daemon/VdqmAcceptHandler.cpp
-  ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/VdqmConnectionHandler.cpp
   ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp
   ../castor/tape/tapeserver/daemon/MigrationReportPackerTest.cpp
   ../castor/tape/tapeserver/daemon/RecallReportPackerTest.cpp
   ../castor/tape/tapeserver/daemon/DiskWriteThreadPoolTest.cpp
   ../castor/tape/tapeserver/daemon/DiskWriteTaskTest.cpp
+  ../castor/tape/tapeserver/daemon/VdqmImpl.cpp
+  ../castor/tape/tapeserver/daemon/Vmgr.cpp
+  ../castor/tape/tapeserver/daemon/VmgrImpl.cpp
   ../castor/tape/tapeserver/drive/DriveTest.cpp
   ../castor/tape/tapeserver/exception/ExceptionTest.cpp
   ../castor/tape/tapeserver/file/StructuresTest.cpp

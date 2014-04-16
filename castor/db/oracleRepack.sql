@@ -150,9 +150,6 @@ BEGIN
   nsHostName := getConfigOption('stager', 'nsHost', '');
   -- find out the recallGroup to be used for this request
   getRecallGroup(varEuid, varEgid, varRecallGroupId, varRecallGroupName);
-  -- update potentially missing metadata introduced with v2.1.14. This will be dropped in 2.1.15.
-  update2114Data@RemoteNS(varRepackVID);
-  COMMIT;
   -- Get the list of files to repack from the NS DB via DBLink and store them in memory
   -- in a temporary table. We do that so that we do not keep an open cursor for too long
   -- in the nameserver DB
@@ -185,8 +182,11 @@ BEGIN
       varWasRecalled NUMBER;
       varMigrationTriggered BOOLEAN := False;
     BEGIN
-      -- Commit from time to time
       IF MOD(outNbFilesProcessed, 1000) = 0 THEN
+        -- Commit from time to time. Update total counter so that the display is correct.
+        UPDATE StageRepackRequest
+           SET fileCount = outNbFilesProcessed
+         WHERE reqId = inReqUUID;
         COMMIT;
         firstCF := TRUE;
       END IF;
@@ -217,8 +217,8 @@ BEGIN
       END;
       -- create  subrequest for this file.
       -- Note that the svcHandler is not set. It will actually never be used as repacks are handled purely in PL/SQL
-      INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, answered, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, status, request, getNextStatus, reqType)
-      VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, varCreationTime, varCreationTime, 1, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, dconst.SUBREQUEST_START, varReqId, 0, 119)
+      INSERT INTO SubRequest (retryCounter, fileName, protocol, xsize, priority, subreqId, flags, modeBits, creationTime, lastModificationTime, errorCode, errorMessage, requestedFileSystems, svcHandler, id, diskcopy, castorFile, status, request, getNextStatus, reqType)
+      VALUES (0, lastKnownFileName, repackProtocol, segment.segSize, 0, uuidGen(), 0, 0, varCreationTime, varCreationTime, 0, '', NULL, 'NotNullNeeded', ids_seq.nextval, 0, cfId, dconst.SUBREQUEST_START, varReqId, 0, 119)
       RETURNING id, subReqId INTO varSubreqId, varSubreqUUID;
       -- if the file is being overwritten, fail
       SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */

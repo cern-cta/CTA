@@ -153,7 +153,7 @@ const char* castor::ObjectsIdStrings[ObjectsIdsNb] = {
   "FileQryResponse",
   "DiskPoolQueryResponse",
 
-  "StageRepackRequest",
+  "DELETED TYPE",
 
   "DELETED TYPE",
   "DELETED TYPE",

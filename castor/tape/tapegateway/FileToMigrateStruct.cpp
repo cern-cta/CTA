@@ -111,7 +111,7 @@ int castor::tape::tapegateway::FileToMigrateStruct::type() const {
 //------------------------------------------------------------------------------
 // clone
 //------------------------------------------------------------------------------
-castor::IObject* castor::tape::tapegateway::FileToMigrateStruct::clone() {
+castor::tape::tapegateway::FileToMigrateStruct* castor::tape::tapegateway::FileToMigrateStruct::clone() {
   return new FileToMigrateStruct(*this);
 }
 

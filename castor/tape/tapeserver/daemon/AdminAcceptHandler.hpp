@@ -28,7 +28,9 @@
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 #include "castor/tape/legacymsg/MessageHeader.hpp"
-#include "castor/tape/legacymsg/TapeMsgBody.hpp"
+#include "castor/tape/legacymsg/TapeConfigRequestMsgBody.hpp"
+#include "castor/tape/legacymsg/TapeStatRequestMsgBody.hpp"
+#include "castor/tape/legacymsg/TapeStatReplyMsgBody.hpp"
 
 #include <poll.h>
 
@@ -47,7 +49,7 @@ public:
   /**
    * Constructor.
    *
-   * @param listenSock The file descriptor of the socket listening for
+   * @param fd The file descriptor of the socket listening for
    * connections from the vdqmd daemon.
    * @param reactor The reactor to which new Vdqm connection handlers are to be
    * registered.
@@ -56,7 +58,7 @@ public:
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
    */
-  AdminAcceptHandler(const int listenSock, io::PollReactor &reactor,
+  AdminAcceptHandler(const int fd, io::PollReactor &reactor,
     log::Logger &log, Vdqm &vdqm, DriveCatalogue &driveCatalogue, const std::string &hostName) throw();
 
   /**
@@ -74,8 +76,10 @@ public:
    * Handles the specified event.
    *
    * @param fd The poll file-descriptor describing the event.
+   * @return true if the event handler should be removed from and deleted by
+   * the reactor.
    */
-  void handleEvent(const struct pollfd &fd)
+  bool handleEvent(const struct pollfd &fd)
     throw(castor::exception::Exception);
 
   /**
@@ -84,6 +88,50 @@ public:
   ~AdminAcceptHandler() throw();
 
 private:
+  
+  /**
+   * Marshals the specified source tape config reply message structure into the
+   * specified destination buffer.
+   *
+   * @param dst    The destination buffer.
+   * @param dstLen The length of the destination buffer.
+   * @param rc     The return code to reply.
+   * @return       The total length of the header.
+   */
+  size_t marshalTapeRcReplyMsg(char *const dst, const size_t dstLen,
+    const int rc) throw(castor::exception::Exception);
+  
+  /**
+   * Writes a job reply message to the tape config command connection.
+   *
+   * @param fd The file descriptor of the connection with the admin command.
+   * @param rc The return code to reply.
+   * 
+   */
+  void writeTapeRcReplyMsg(const int fd, const int rc)
+    throw(castor::exception::Exception);
+  
+  /**
+   * Marshals the specified source tape stat reply message structure into the
+   * specified destination buffer.
+   *
+   * @param dst    The destination buffer.
+   * @param dstLen The length of the destination buffer.
+   * @param rc     The return code to reply.
+   * @return       The total length of the header.
+   */
+  size_t marshalTapeStatReplyMsg(char *const dst, const size_t dstLen,
+    const legacymsg::TapeStatReplyMsgBody &body) throw(castor::exception::Exception);
+  
+  /**
+   * Writes a reply message to the tape stat command connection.
+   *
+   * @param fd The file descriptor of the connection with the admin command.
+   * @param rc The return code to reply.
+   * 
+   */
+  void writeTapeStatReplyMsg(const int fd)
+    throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the specified file-descriptor is not that of the
@@ -92,21 +140,39 @@ private:
   void checkHandleEventFd(const int fd) throw (castor::exception::Exception);
   
   /**
-   * Logs the reception of the specified job message from the vdqmd daemon.
+   * Logs the reception of the specified job message from the tpconfig command.
    */
-  void logAdminJobReception(const legacymsg::TapeMsgBody &job)
+  void logTapeConfigJobReception(const legacymsg::TapeConfigRequestMsgBody &job)
     const throw();
   
   /**
-   * Reads a job message from the specified connection, sends back a positive
-   * acknowledgement and closes the connection.
-   *
-   * @param connection The file descriptor of the connection with the vdqm
-   * daemon.
-   * @return The job request from the vdqm.
+   * Logs the reception of the specified job message from the tpstat command.
    */
-  legacymsg::TapeMsgBody readJobMsg(const int connection)
+  void logTapeStatJobReception(const legacymsg::TapeStatRequestMsgBody &job)
+    const throw();
+  /**
+   * Replies to the client the status of all registered drives
+   * 
+   * @param body body of the tape stat message
+   */
+  void handleTapeStatJob(const legacymsg::TapeStatRequestMsgBody &body) 
     throw(castor::exception::Exception);
+  
+  /**
+   * Carries out the required drive configuration and replies properly to the client
+   * 
+   * @param body body of the tape config message
+   */
+  void handleTapeConfigJob(const legacymsg::TapeConfigRequestMsgBody &body) 
+    throw(castor::exception::Exception);
+  
+  /**
+   * Reads a job type from the specified connection, dispatches the job to the 
+   * correct method, and then closes the connection.
+   *
+   * @param connection The file descriptor of the connection with admin command
+   */
+  void dispatchJob(const int connection) throw(castor::exception::Exception);
   
   /**
    * Reads the header of a job message from the specified connection.
@@ -121,19 +187,28 @@ private:
   /**
    * Reads the body of a job message from the specified connection.
    *
-   * @param connection The file descriptor of the connection with the vdqm
-   * daemon.
+   * @param connection The file descriptor of the connection with the command.
    * @param len The length of the message body in bytes.
    * @return The message body.
    */
-  legacymsg::TapeMsgBody readJobMsgBody(const int connection,
+  legacymsg::TapeConfigRequestMsgBody readTapeConfigMsgBody(const int connection,
+    const uint32_t len) throw(castor::exception::Exception);
+  
+  /**
+   * Reads the body of a job message from the specified connection.
+   *
+   * @param connection The file descriptor of the connection with the command.
+   * @param len The length of the message body in bytes.
+   * @return The message body.
+   */
+  legacymsg::TapeStatRequestMsgBody readTapeStatMsgBody(const int connection,
     const uint32_t len) throw(castor::exception::Exception);
 
   /**
    * The file descriptor of the socket listening for connections from the vdqmd
    * daemon.
    */
-  const int m_listenSock;
+  const int m_fd;
 
   /**
    * The reactor to which new Vdqm connection handlers are to be registered.
@@ -173,4 +248,3 @@ private:
 } // namespace tapeserver
 } // namespace tape
 } // namespace castor
-

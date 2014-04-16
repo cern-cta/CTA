@@ -242,7 +242,7 @@ class LocalQueue(Queue.Queue):
         # "Invalid DiskManager/PendingTimeouts option, ignoring entry" message
         dlf.writeerr(msgs.INVALIDTIMEOUTOPTION, SvcClass=svcclass, Timeout=timeout)
     # get the disk to disk copy timeout
-    d2dtimeout =  self.config.getValue('DiskManager', 'DiskCopyPendingTimeout', 7200, int)
+    d2dtimeout = self.config.getValue('DiskManager', 'DiskCopyPendingTimeout', 7200, int)
     # get current time and diskserver status
     currenttime = time.time()
     # loop over the transfers
@@ -262,10 +262,12 @@ class LocalQueue(Queue.Queue):
             except KeyError:
               # no timeout could be found, so we take it as infinite, meaning we do not cancel anything
               timeout = -1
+        elif transfer.transferType == TransferType.D2DDST and transfer.replicationType != D2DTransferType.USER:
+          timeout = -1     # no timeout for non-user-driven internal activities
         else:
           timeout = d2dtimeout
         # if we found a timeout, check and cancel if needed
-        if timeout >= 0 and currenttime - transfer.creationTime > timeout:
+        if timeout >= 0 and currenttime - transfer.submissionTime > timeout:
           toberemoved.append(transfer.transferId)
           if scheduler not in canceledTransfers:
             canceledTransfers[scheduler] = []

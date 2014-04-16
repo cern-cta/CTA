@@ -203,11 +203,13 @@ void castor::server::MultiThreadedDaemon::setupMultiThreadedSignalHandling()
   // Mask all signals so that user threads are not unpredictably
   // interrupted by them
   sigemptyset(&m_signalSet);
-  if(getForeground()) {
-    // In foreground we catch Ctrl-C as well; we don't want to catch
-    // it in background to ease debugging with gdb, as gdb has its own
-    // SIGINT handler to pause the process anywhere. Our signal handler
-    // would override this feature and just gracefully terminate.
+
+  // In order to facilitate debugging with gdb, only mask Ctrl-C whilst
+  // running in the background
+  //
+  // The gdb debugger has its own SIGINT handler to pause the process
+  // anywhere
+  if(!getForeground()) {
     sigaddset(&m_signalSet, SIGINT);
   }
   sigaddset(&m_signalSet, SIGTERM);

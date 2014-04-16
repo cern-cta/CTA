@@ -57,23 +57,21 @@ public:
   ~PollReactorImpl() throw();
 
   /**
+   * Removes and deletes all of the event handlers registered with the reactor.
+   */
+  void clear() throw();
+
+  /**
    * Registers the specified handler.
    *
    * Please note that the reactor takes ownership of the handler and will
    * delete it as appropriate.
    *
-   * @param handler The handler to be registered.
+   * @param handler The handler to be registered.  Please note that the handler
+   * MUST be allocated on the heap because the reactor will own the handler
+   * and therefore delete it as needed.
    */
   void registerHandler(PollEventHandler *const handler)
-    throw(castor::exception::Exception);
-
-  /**
-   * Removes the specified handler from the reactor.  This method effectively
-   * does the opposite of registerHandler().
-   *
-   * @param handler The handler to be removed.
-   */
-  void removeHandler(PollEventHandler *const handler)
     throw(castor::exception::Exception);
 
   /**
@@ -121,6 +119,15 @@ private:
    * file-descriptor.
    */
   PollEventHandler *findHandler(const int fd)
+    throw(castor::exception::Exception);
+
+  /**
+   * Removes the specified handler from the reactor.  This method effectively
+   * does the opposite of registerHandler().
+   *
+   * @param handler The handler to be removed.
+   */
+  void removeHandler(PollEventHandler *const handler)
     throw(castor::exception::Exception);
 
 }; // class PollReactorImpl

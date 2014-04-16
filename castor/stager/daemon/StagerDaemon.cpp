@@ -45,7 +45,6 @@
 
 #include "castor/stager/daemon/StagerDaemon.hpp"
 #include "castor/stager/daemon/JobRequestSvcThread.hpp"
-#include "castor/stager/daemon/PrepRequestSvcThread.hpp"
 #include "castor/stager/daemon/StageRequestSvcThread.hpp"
 #include "castor/stager/daemon/BulkStageReqSvcThread.hpp"
 #include "castor/stager/daemon/QueryRequestSvcThread.hpp"
@@ -80,11 +79,6 @@ int main(int argc, char* argv[]){
       (new castor::server::DbAlertedThreadPool
        ("JobRequestSvcThread",
 	new castor::stager::daemon::JobRequestSvcThread()));
-
-    stagerDaemon.addThreadPool
-      (new castor::server::DbAlertedThreadPool
-       ("PrepRequestSvcThread",
-	new castor::stager::daemon::PrepRequestSvcThread()));
 
     stagerDaemon.addThreadPool
       (new castor::server::DbAlertedThreadPool
@@ -124,7 +118,6 @@ int main(int argc, char* argv[]){
 	new castor::stager::daemon::LoggingThread(), 5));
 
     stagerDaemon.getThreadPool('J')->setNbThreads(10);
-    stagerDaemon.getThreadPool('P')->setNbThreads(6);
     stagerDaemon.getThreadPool('S')->setNbThreads(4);
     stagerDaemon.getThreadPool('B')->setNbThreads(3);
     stagerDaemon.getThreadPool('Q')->setNbThreads(6);
@@ -220,7 +213,6 @@ castor::stager::daemon::StagerDaemon::StagerDaemon(std::ostream &stdOut,
     /* DLF_LVL_ERROR */
     { STAGER_SERVICES_EXCEPTION, "Impossible to get the Service"},
     { STAGER_SVCCLASS_EXCEPTION, "Impossible to get the SvcClass"},
-    { STAGER_USER_INVALID, "Invalid user"},
     { STAGER_USER_PERMISSION, "User doesn't have the right permission"},
     { STAGER_USER_NONFILE, "User asking for a non existing file"},
     { STAGER_INVALID_FILESYSTEM, "Invalid fileSystem"},
@@ -276,6 +268,7 @@ castor::stager::daemon::StagerDaemon::StagerDaemon(std::ostream &stdOut,
     /* JobSvc */
     { STAGER_JOBSVC_GETSVC,  "Could not get JobSvc"},
     { STAGER_JOBSVC_EXCEPT,  "Unexpected exception caught"},
+    { STAGER_JOBSVC_EXCEPT2, "Exception caught while handling request"},
     { STAGER_JOBSVC_NOSREQ,  "Could not find subrequest associated to Request"},
     { STAGER_JOBSVC_BADSRT,  "Expected SubRequest in Request but found another type"},
     { STAGER_JOBSVC_GETUPDS, "Invoking getUpdateStart"},

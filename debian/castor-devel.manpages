@@ -114,8 +114,6 @@ debian/castor/usr/share/man/man3/rfio_fstat64.3castor.gz
 debian/castor/usr/share/man/man3/rfio_ftell.3castor.gz
 debian/castor/usr/share/man/man3/rfio_ftello64.3castor.gz
 debian/castor/usr/share/man/man3/rfio_fwrite.3castor.gz
-debian/castor/usr/share/man/man3/rfio_lockf.3castor.gz
-debian/castor/usr/share/man/man3/rfio_lockf64.3castor.gz
 debian/castor/usr/share/man/man3/rfio_lseek.3castor.gz
 debian/castor/usr/share/man/man3/rfio_lseek64.3castor.gz
 debian/castor/usr/share/man/man3/rfio_lstat.3castor.gz

@@ -171,8 +171,6 @@ int rfio_write_v2(int     s,
       END_TRACE() ;
       return status ;
     case RQST_READAHEAD:
-    case RQST_LASTSEEK:
-    case RQST_PRESEEK:
       /*
        * At this point, a temporary buffer may need to be created to
        * receive data which is going to be thrown away.

@@ -263,6 +263,20 @@ oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
 void castor::db::ora::OraCnvSvc::reset() throw() {
   // call parent method
   castor::db::DbCnvSvc::reset();
+  // drop reusable statements
+  if (0 != m_connection) {
+    for (std::map<std::string, oracle::occi::Statement*>::iterator it =
+           m_reusableStatements.begin();
+         it != m_reusableStatements.end();
+         it++) {
+      try {
+        m_connection->terminateStatement(it->second);
+      } catch(oracle::occi::SQLException e) {
+        // we've tried...
+      }
+    }
+  }
+  m_reusableStatements.clear();
   // drop the connection
   try {
     if (0 != m_connection && 0 != m_environment) {
@@ -361,6 +375,27 @@ oracle::occi::Statement* castor::db::ora::OraCnvSvc::createOraStatement(const st
     throw ex;
   }
   return 0;
+}
+
+//------------------------------------------------------------------------------
+// createOraStatement - for Oracle specific statements
+//------------------------------------------------------------------------------
+oracle::occi::Statement*
+castor::db::ora::OraCnvSvc::createOrReuseOraStatement (const std::string& stmtStr,
+                                                       bool *wasCreated)
+  throw (castor::exception::Exception) 
+{
+  *wasCreated = false;
+  std::map<std::string, oracle::occi::Statement*>::iterator it =
+    m_reusableStatements.find(stmtStr);
+  if (it == m_reusableStatements.end()) {
+    // create statement
+    oracle::occi::Statement* stmt = createOraStatement(stmtStr);
+    stmt->setAutoCommit(true);
+    m_reusableStatements[stmtStr] = stmt;
+    *wasCreated = true;
+  }
+  return m_reusableStatements[stmtStr];
 }
 
 //------------------------------------------------------------------------------

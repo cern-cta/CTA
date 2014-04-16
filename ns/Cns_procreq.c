@@ -3158,6 +3158,8 @@ int Cns_srv_rename(char *req_data,
   old_parent_dir.ctime = old_parent_dir.mtime;
   if (Cns_update_fmd_entry (&thip->dbfd, &old_rec_addrp, &old_parent_dir))
     RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+
+  reqinfo->fileid = old_fmd_entry.fileid;   /* for logging purposes */
   RETURN (0, LOG_INFO);
 }
 
@@ -5093,9 +5095,6 @@ int Cns_srv_openx(char *req_data,
   if (fmd_entry.fileid) {  /* File exists */
     reqinfo->fileid = fmd_entry.fileid;
 
-    /* Marshall the new file flag */
-    marshall_LONG (sbp, 0);
-
     /* Marshall the fileid */
     marshall_HYPER (sbp, fmd_entry.fileid);
 
@@ -5214,9 +5213,6 @@ int Cns_srv_openx(char *req_data,
     sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf),
              " NSOpenTime=%.6f NewFile=\"True\"", ((double)fmd_entry.stagertime_usec)/1E6);
 
-    /* Marshall the newfile flag */
-    marshall_LONG (sbp, 1);
-
     /* Marshall the fileid */
     marshall_HYPER (sbp, fmd_entry.fileid);
   }
@@ -5322,11 +5318,14 @@ int Cns_srv_closex(char *req_data,
    */
 
   if (fmd_entry.filemode & S_IFDIR) /* Operation not permitted on directories */
-    RETURN (EISDIR, LOG_ERR);
+    RETURN (EISDIR, LOG_USERERR);
   
   /* Check for concurrent modifications */
-  if (Cns_is_concurrent_open(&thip->dbfd, &fmd_entry, last_stagertime_usec, reqinfo->logbuf))
-    RETURN (serrno, serrno?LOG_ERR:LOG_INFO);
+  if (fmd_entry.stagertime_usec > last_stagertime_usec) {
+    sprintf (reqinfo->logbuf + strlen(reqinfo->logbuf), " NSLastOpenTime=%.6f",
+             ((double)fmd_entry.stagertime_usec)/1E6);
+    RETURN (ENSFILECHG, LOG_USERERR);
+  }
 
   /* Check for end-to-end checksum mismatch */
   if ((strcmp (fmd_entry.csumtype, "PA") == 0) &&

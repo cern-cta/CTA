@@ -618,7 +618,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
     } // End catch
   } // End loop on all diskcopies
   castor::replier::RequestReplier::getInstance()->
-    sendEndResponse(client, req->reqId());
+    closeClientConnection(client);
 }
 
 //-----------------------------------------------------------------------------
@@ -736,7 +736,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
       sendResponse(client, &res);
   }
   castor::replier::RequestReplier::getInstance()->
-    sendEndResponse(client, req->reqId());
+    closeClientConnection(client);
 }
 
 //-----------------------------------------------------------------------------
@@ -1013,8 +1013,7 @@ void castor::stager::daemon::QueryRequestSvcThread::process
     res.setErrorCode(e.code());
     res.setErrorMessage(e.getMessage().str());
     try {
-      castor::replier::RequestReplier::getInstance()->sendResponse(client, &res);
-      castor::replier::RequestReplier::getInstance()->sendEndResponse(client, req->reqId());
+      castor::replier::RequestReplier::getInstance()->sendResponse(client, &res, true);
     } catch (castor::exception::Exception& e2) {
       // log that we could not answer the client and give up
       // "Unexpected exception caught"

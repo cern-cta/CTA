@@ -27,12 +27,8 @@ namespace castor{
     namespace daemon{
 
 
-      bool RmHandler::handle() throw(castor::exception::Exception)
+      void RmHandler::handle() throw(castor::exception::Exception)
       {
-        // We completely override the inherited behavior
-        // set the username and groupname for logging
-        reqHelper->setUsernameAndGroupname();
-        
         // stat the file in the nameserver
         reqHelper->statNameServerFile();
         
@@ -96,7 +92,6 @@ namespace castor{
           castor::dlf::dlf_writep(reqHelper->requestUuid, DLF_LVL_ERROR, STAGER_RM, 2, params, &(reqHelper->cnsFileid));
           throw(e);
         }
-        return true;
       }
 
     }//end daemon

@@ -25,6 +25,8 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
 
+#include <sys/types.h>
+
 namespace castor     {
 namespace tape       {
 namespace tapeserver {
@@ -32,6 +34,41 @@ namespace daemon     {
 
 /**
  * Proxy class representing the vdqm daemon.
+ *
+ * The good-day sequence of events for a tape being mounted and then unmounted
+ * is as follows:
+ *
+ * tapeserverd                           vdqm
+ *      |                                 |
+ *      | setDriveUp                      |
+ *      |-------------------------------->| schedule drive
+ *      |                                 |------
+ *      |                                 |      |
+ *      |                         RtcpJob |<-----
+ *      |<--------------------------------|
+ *      |                                 |
+ *      | fork                            |
+ *      |----------->MountSession         |
+ *      |                 |               |
+ *      |                 | assignDrive   |
+ *      |      mount tape |-------------->|
+ *      |           ------|               |
+ *      |          |      |               |
+ *      |           ----->| tapeMounted   |
+ *      |                 |-------------->|
+ *      |  transfer files |               |
+ *      |           ------|               |
+ *      |          |      |               |
+ *      |           ----->|               |
+ *      |                 | releaseDrive  |
+ *      |    unmount tape |-------------->|
+ *      |           ------|               |
+ *      |          |      |               |
+ *      |           ----->| tapeUnmounted |
+ *      |                 |-------------->|
+ *      |                 |               |
+ *      |                                 |
+ *      |                                 |
  */
 class Vdqm {
 public:
@@ -49,9 +86,7 @@ public:
    * @param unitName The unit name of the tape drive. 
    * @param dgn The device group name of the tape drive.
    */
-  virtual void setTapeDriveStatusDown(const std::string &server,
-    const std::string &unitName, const std::string &dgn)
-    throw(castor::exception::Exception) = 0;
+  virtual void setDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) = 0;
 
   /**
    * Sets the status of the specified tape drive to up.
@@ -61,9 +96,59 @@ public:
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
    */
-  virtual void setTapeDriveStatusUp(const std::string &server,
-    const std::string &unitName, const std::string &dgn)
-    throw(castor::exception::Exception) = 0;
+  virtual void setDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) = 0;
+
+  /**
+   * Assigns the specified mount session process to the specified tape
+   * drive and mount transaction.
+   *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive.
+   * @param mountTransactionId The mount transaction ID.
+   * @param sessionPid The process ID of the tape-server daemon's mount-session
+   * process.
+   */
+  virtual void assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t sessionPid) throw(castor::exception::Exception) = 0;
+
+  /**
+   * Notifies the vdqmd daemon of the specified tape mount.
+   *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive.
+   * @param vid The volume identifier of the mounted tape.
+   * @param sessionPid The process ID of the tape-server daemon's mount-session
+   * process.
+   */
+  virtual void tapeMounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid) throw(castor::exception::Exception) = 0;
+
+  /**
+   * Releases the specified tape drive.
+   *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive.
+   * @param forceUnmount Set to true if the current tape mount should not bei
+   * reused.
+   * @param sessionPid The process ID of the tape-server daemon's mount-session
+   * process.
+   */
+  virtual void releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid) throw(castor::exception::Exception) = 0;
+
+  /**
+   * Notifies the vdqmd daemon that the specified tape has been dismounted.
+   *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive.
+   * @param vid The volume identifier of the mounted tape.
+   */
+  virtual void tapeUnmounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid) throw(castor::exception::Exception) = 0;
 
 }; // class Vdqm
 

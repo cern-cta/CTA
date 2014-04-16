@@ -49,49 +49,78 @@ public:
    * The state of a drive as described by the following FSTN:
    *
    *              start daemon /
-   *  ------  send VDQM_UNIT_DOWN   ----------------
-   * | INIT |--------------------->|      DOWN      |<-------------------
-   *  ------                        ----------------                     |
-   *     |                          |              ^                     |
-   *     |                          |              |                     |
-   *     |                          | tpconfig up  | tpconfig down       |
-   *     |                          |              |                     |
-   *     |      start daemon /      v              |                     |
-   *     |    send VDQM_UNIT_UP     ----------------                     |
-   *      ------------------------>|      UP        |                    |
-   *                                ----------------                     |
-   *                                |              ^                     |
-   *                                |              |                     |
-   *                                | vdqm job /   | SIGCHLD [success]   |
-   *                                | fork         |                     |
-   *                                |              |                     |
-   *                                v              |                     |
-   *                                ----------------    SIGCHLD [fail]   |
-   *                               |    RUNNING     |-------------------- 
-   *                                ----------------
+   *  ------  send VDQM_UNIT_DOWN   ------------------
+   * | INIT |--------------------->|       DOWN       |<-------------------
+   *  ------                        ------------------                     |
+   *     |                          |                ^                     |
+   *     |                          |                |                     |
+   *     |                          | tpconfig up    | tpconfig down       |
+   *     |                          |                |                     |
+   *     |      start daemon /      v                |                     |
+   *     |    send VDQM_UNIT_UP     ------------------                     |
+   *      ------------------------>|       UP         |                    |
+   *                                ------------------                     |
+   *                                |                ^                     |
+   *                                |                |                     |
+   *                                | vdqm job       |                     |
+   *                                |                |                     |
+   *                                v                |                     |
+   *                        ------------------       | SIGCHLD             |
+   *                       |    WAITFORK      |      | [success]           |
+   *                        ------------------       |                     |
+   *                                |                |                     |
+   *                                |                |                     |
+   *                                | forked         |                     |
+   *                                |                |                     |
+   *                                v                |                     |
+   *                                ------------------    SIGCHLD [fail]   |
+   *                               |     RUNNING      |--------------------|
+   *                                ------------------                     |
+   *                                |                ^                     |
+   *                                |                |                     |
+   *                                | tpconfig down  | tpconfig up         |
+   *                                |                |                     |
+   *                                |                |                     |
+   *                                v                |  SIGCHLD            |
+   *                                ------------------  [success of fail]  |
+   *                               |     WAITDOWN     |--------------------
+   *                                ------------------
    *
    * When the tapeserverd daemon is started, depending on the initial state
    * defined in /etc/castor/TPCONFIG, the daemon sends either a VDQM_UNIT_UP
-   * or VDQM_UNIT_DOWN status message to the vdqmd daemon.  Once sent the state
-   * of the tape drive is either DRIVE_STATE_UP or DRIVE_STATE_DOWN
-   * respectively.
+   * or VDQM_UNIT_DOWN status message to the vdqmd daemon.  The state of the
+   * tape drive is then either DRIVE_STATE_UP or DRIVE_STATE_DOWN respectively.
    *
    * A tape operator toggles the state of tape drive between DOWN and UP
    * using the tpconfig adminstration tool.
    *
-   * The tape daemon can receive a job from the vdqmd daemon when the state of
-   * tape drive is DRIVE_STATE_UP.  On reception of the job the daemon forks a
-   * child process to run a tape mount session.  A tape will be mounted and
-   * data will be transfered to and/or from that tape during the session. The
-   * tape drive is in the DRIVE_STATE_RUNNING state whilst the tape session is
-   * running.
+   * The tape daemon can receive a job from the vdqmd daemon for a tape drive
+   * when the state of that drive is DRIVE_STATE_UP.  On reception of the job
+   * the daemon prepares to fork a child process and enters the
+   * DRIVE_STATE_WAITFORK state.
+   *
+   * The DRIVE_STATE_WAIT_FORK state allows the object responsible for handling
+   * the connection from the vdqmd daemon (an instance of
+   * VdqmConnectionHandler) to delegate the task of forking of a mount session.
+   *
+   * Once the child process is forked the drive enters the DRIVE_STATE_RUNNING
+   * state.  The child process is responsible for running a mount session.
+   * During such a sesion a tape will be mounted, data will be transfered to
+   * and/or from the tape and finally the tape will be dismounted.
    *
    * Once the vdqm job has been carried out, the child process completes
    * and the state of the tape drive either returns to DRIVE_STATE_UP if there
    * were no problems or to DRIVE_STATE_DOWN if there were.
+   *
+   * If the tape daemon receives a tpconfig down during a tape session, in
+   * other words whilst the drive in question is in the DRIVE_STATE_RUNNING
+   * state, then the state of the drive is moved to DRIVE_STATE_WAITDOWN.  The
+   * tape session continues to run in the DRIVE_STATE_WAITDOWN state, however
+   * when the tape session is finished the state of the drive is moved to
+   * DRIVE_STATE_DOWN.
    */
   enum DriveState { DRIVE_STATE_INIT, DRIVE_STATE_DOWN, DRIVE_STATE_UP,
-    DRIVE_STATE_RUNNING };
+    DRIVE_STATE_WAITFORK, DRIVE_STATE_RUNNING, DRIVE_STATE_WAITDOWN };
 
   /**
    * Returns the string representation of the specified tape-drive state.
@@ -103,7 +132,7 @@ public:
    * @param state The numerical tape-drive state.
    * @return The string representation if known else "UNKNOWN".
    */
-  static const char *driveState2Str(const DriveState state) throw();
+  static const char *drvState2Str(const DriveState state) throw();
 
   /**
    * Poplates the catalogue using the specified parsed lines from
@@ -111,102 +140,101 @@ public:
    *
    * @param lines The lines parsed from /etc/castor/TPCONFIG.
    */
-  void populateCatalogue(const utils::TpconfigLines &lines)
-    throw(castor::exception::Exception);
-  
+  void populateCatalogue(const utils::TpconfigLines &lines) throw(castor::exception::Exception);
+
   /**
-   * Returns the unit name of the drive on which the given process is running
-   * @param sessionPid
-   * @return the unit name of the drive on which the given process is running
+   * Returns the unit name of the tape drive on which the specified mount
+   * session process is running.
+   *
+   * @param sessionPid The process ID of the mount session.
+   * @return the unit name of the tape drive.
    */
-  std::string getUnitName(const pid_t sessionPid) 
-    throw(castor::exception::Exception);
+  std::string getUnitName(const pid_t sessionPid) throw(castor::exception::Exception);
 
   /**
    * Returns an unordered list of the unit names of all of the tape drives
    * stored within the tape drive catalogue.
    *
-   * @return Unordered list of the unit names of all of the tape drives stored
-   * within the tape drive catalogue.
+   * @return Unordered list of the unit names.
    */
-  std::list<std::string> getUnitNames()
-    const throw(castor::exception::Exception);
+  std::list<std::string> getUnitNames() const throw(castor::exception::Exception);
+
+  /**
+   * Returns an unordered list of the unit names of the tape drives in the
+   * specified state.
+   *
+   * @return Unordered list of the unit names.
+   */
+  std::list<std::string> getUnitNames(const DriveState state) const throw(castor::exception::Exception);
 
   /**
    * Returns the device group name (DGN) of the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getDgn(const std::string &unitName)
-    const throw(castor::exception::Exception);
+  const std::string &getDgn(const std::string &unitName) const throw(castor::exception::Exception);
 
   /**
    * Returns the filename of the device file of the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getDevFilename(const std::string &unitName)
-    const throw(castor::exception::Exception);
+  const std::string &getDevFilename(const std::string &unitName) const throw(castor::exception::Exception);
 
   /**
    * Returns the tape densities supported by the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::list<std::string> &getDensities(const std::string &unitName)
-    const throw(castor::exception::Exception);
+  const std::list<std::string> &getDensities(const std::string &unitName) const throw(castor::exception::Exception);
 
   /**
    * Returns the current state of the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  DriveState getState(const std::string &unitName)
-    const throw(castor::exception::Exception);
+  DriveState getState(const std::string &unitName) const throw(castor::exception::Exception);
 
   /**
    * Returns the position of the specified tape drive in its libary.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getPositionInLibrary(const std::string &unitName)
-    const throw(castor::exception::Exception);
+  const std::string &getPositionInLibrary(const std::string &unitName) const throw(castor::exception::Exception);
 
   /**
    * Returns the device type of the specified tape drive in its libary.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getDevType(const std::string &unitName) 
-    const throw(castor::exception::Exception);
+  const std::string &getDevType(const std::string &unitName) const throw(castor::exception::Exception);
 
   /**
-   * Moves the state of the specified tape drive from DRIVE_STATE_DOWN to
-   * DRIVE_STATE_UP.
+   * Moves the state of the specified tape drive to DRIVE_STATE_UP.
    *
    * This method throws an exception if the current state of the tape drive is
-   * not DRIVE_STATE_DOWN.
+   * not DRIVE_STATE_UP, DRIVE_STATE_DOWN or DRIVE_STATE_WAITDOWN.
+   *
+   * configureUp() is idempotent.
    *
    * @param unitName The unit name of the tape drive.
    */
-  void configureUp(const std::string &unitName)
-    throw(castor::exception::Exception);
+  void configureUp(const std::string &unitName) throw(castor::exception::Exception);
 
   /**
-   * Moves the state of the specified tape drive from DRIVE_STATE_UP to
-   * DRIVE_STATE_DOWN.
+   * Moves the state of the specified tape drive to DRIVE_STATE_DOWN.
    *
    * This method throws an exception if the current state of the tape drive is
-   * not DRIVE_STATE_UP.
+   * not DRIVE_STATE_UP, DRIVE_STATE_DOWN or DRIVE_STATE_RUNNING.
+   *
+   * configureDown() is idempotent.
    *
    * @param unitName The unit name of the tape drive.
    */
-  void configureDown(const std::string &unitName)
-    throw(castor::exception::Exception);
+  void configureDown(const std::string &unitName) throw(castor::exception::Exception);
 
   /**
-   * Moves the state of the specified tape drive from DRIVE_STATE_UP to
-   * DRIVE_STATE_RUNNING.
+   * Moves the state of the specified tape drive to DRIVE_STATE_WAITFORK.
    *
    * This method throws an exception if the current state of the tape drive is
    * not DRIVE_STATE_UP.
@@ -220,65 +248,90 @@ public:
    * does not match the value that was entered into the catalogue with the
    * populateCatalogue() method.
    *
-   * @param unitName The unit name of the tape drive.
    * @param job The job received from the vdqmd daemon.
-   * @param sessionPid The pid of the child process responsible for the tape session
    */
-  void tapeSessionStarted(const std::string &unitName,
-    const legacymsg::RtcpJobRqstMsgBody &job, const pid_t sessionPid)
-    throw(castor::exception::Exception);
+  void receivedVdqmJob(const legacymsg::RtcpJobRqstMsgBody &job) throw(castor::exception::Exception);
 
   /**
-   * If the current state of the specified tape drive is DRIVE_STATE_RUNNING
-   * then this method returns the job received from the vdqmd daemon.
+   * Returns the job received from the vdqmd daemon for the specified tape
+   * drive.
    *
    * This method throws an exception if the current state of the tape drive is
-   * not DRIVE_STATE_RUNNING.
+   * not DRIVE_STATE_WAITFORK, DRIVE_STATE_RUNNING or DRIVE_STATE_WAITDOWN.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @return The job received from the vdqmd daemon.
+   */
+  const legacymsg::RtcpJobRqstMsgBody &getJob(const std::string &unitName) const throw(castor::exception::Exception);
+
+  /**
+   * Moves the state of the specified tape drive to DRIVE_STATE_RUNNING.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_WAITFORK.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param sessionPid The process ID of the child process responsible for
+   * running the mount session.
+   */
+  void forkedMountSession(const std::string &unitName, const pid_t sessionPid) throw(castor::exception::Exception); 
+
+  /**
+   * Returns the process ID of the child process responsible the mount session
+   * running on the specified tape drive.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_RUNNING or DRIVE_STATE_WAITDOWN.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @return The process ID of the child process responsible for mount session
+   * running on the specified tape drive.
+   */
+  pid_t getSessionPid(const std::string &unitName) const throw(castor::exception::Exception);
+
+  /**
+   * Moves the state of the specified tape drive to DRIVE_STATE_UP if the
+   * current state is DRIVE_STATE_RUNNING or to DRIVE_STATE_DOWN if the
+   * current state is DRIVE_STATE_WAIT_DOWN.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_RUNNING or DRIVE_STATE_WAITDOWN.
+   *
+   * @param sessionPid Process ID of the child process handling the session.
+   */
+  void mountSessionSucceeded(const pid_t sessionPid) throw(castor::exception::Exception);
+
+  /**
+   * Moves the state of the specified tape drive to DRIVE_STATE_UP if the
+   * current state is DRIVE_STATE_RUNNING or to DRIVE_STATE_DOWN if the
+   * current state is DRIVE_STATE_WAIT_DOWN.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_RUNNING or DRIVE_STATE_WAITDOWN.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const legacymsg::RtcpJobRqstMsgBody &getJob(const std::string &unitName)
-    const throw(castor::exception::Exception);
-
-  /**
-   * Moves the state of the specified tape drive from DRIVE_STATE_RUNNING to
-   * DRIVE_STATE_UP.
-   *
-   * This method throws an exception if the current state of the tape drive is
-   * not DRIVE_STATE_RUNNING.
-   *
-   * @param unitName The unit name of the tape drive.
-   */
-  void tapeSessionSucceeded(const std::string &unitName)
-     throw(castor::exception::Exception);
+  void mountSessionSucceeded(const std::string &unitName) throw(castor::exception::Exception);
   
   /**
-   * Same as above but one can use with the pid of the child process instead of
-   * the unit name
-   * @param pid of the child process handling the session
+   * Moves the state of the specified tape drive to DRIVE_STATE_DOWN.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_RUNNING.
+   *
+   * @param sessionPid Process ID of the child process handling the session.
    */
-  void tapeSessionSucceeded(const pid_t pid)
-     throw(castor::exception::Exception);
+  void mountSessionFailed(const pid_t sessionPid) throw(castor::exception::Exception);
 
   /**
-   * Moves the state of the specified tape drive from DRIVE_STATE_RUNNING to
-   * DRIVE_STATE_DOWN.
+   * Moves the state of the specified tape drive to DRIVE_STATE_DOWN.
    *
    * This method throws an exception if the current state of the tape drive is
    * not DRIVE_STATE_RUNNING.
    *
    * @param unitName The unit name of the tape drive.
    */
-  void tapeSessionFailed(const std::string &unitName)
-     throw(castor::exception::Exception);
-  
-  /**
-   * Same as above but one can use with the pid of the child process instead of
-   * the unit name
-   * @param pid of the child process handling the session
-   */
-  void tapeSessionFailed(const pid_t pid)
-     throw(castor::exception::Exception);
+  void mountSessionFailed(const std::string &unitName) throw(castor::exception::Exception);
 
 private:
 
@@ -326,10 +379,9 @@ private:
     legacymsg::RtcpJobRqstMsgBody job;
     
     /**
-     * The pid of the child process handling the tape session running on the 
-     * tape drive.
+     * The process ID of the child process running the mount session.
      */
-    pid_t pid;
+    pid_t sessionPid;
 
     /**
      * Default constructor that initializes all strings to the empty string,
@@ -368,8 +420,7 @@ private:
    *
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void enterTpconfigLine(const utils::TpconfigLine &line)
-    throw(castor::exception::Exception);
+  void enterTpconfigLine(const utils::TpconfigLine &line) throw(castor::exception::Exception);
 
   /**
    * Returns the equivalent DriveState value of the specified string
@@ -380,8 +431,7 @@ private:
    *
    * @param initialState String representation of the initial tape-drive state.
    */
-  DriveState str2InitialState(const std::string &initialState)
-    const throw(castor::exception::Exception);
+  DriveState str2InitialState(const std::string &initialState) const throw(castor::exception::Exception);
 
   /**
    * Checks the semantics of the specified TPCONFIG line against the specified
@@ -390,8 +440,7 @@ private:
    * @param catalogueEntry The catalogue entry.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLine(const DriveEntry &catalogueEntry,
-    const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLine(const DriveEntry &catalogueEntry, const utils::TpconfigLine &line) throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the specified catalogue value does not match the
@@ -401,8 +450,7 @@ private:
    * the tape-drive catalogue.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLineDgn(const std::string &catalogueDgn,
-    const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLineDgn(const std::string &catalogueDgn, const utils::TpconfigLine &line) throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the specified catalogue value does not match the
@@ -412,8 +460,7 @@ private:
    * drive that has been retrieved from the tape-drive catalogue.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLineDevFilename(const std::string &catalogueDevFilename,
-    const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLineDevFilename(const std::string &catalogueDevFilename, const utils::TpconfigLine &line) throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the specified catalogue value does not match the
@@ -423,9 +470,7 @@ private:
    * have been retrived from the tape-drive catalogue.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLineDensity(
-    const std::list<std::string> &catalogueDensities, 
-    const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLineDensity(const std::list<std::string> &catalogueDensities, const utils::TpconfigLine &line) throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the specified catalogue value does not match the
@@ -435,8 +480,7 @@ private:
    * has been retrieved from the tape-drive catalogue.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLineInitialState(const DriveState catalogueInitialState,
-    const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLineInitialState(const DriveState catalogueInitialState, const utils::TpconfigLine &line) throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the specified catalogue value does not match the
@@ -446,9 +490,7 @@ private:
    * its library that has been retrieved from tape-drive catalogue.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLinePositionInLibrary(
-    const std::string &cataloguePositionInLibrary,
-    const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLinePositionInLibrary(const std::string &cataloguePositionInLibrary, const utils::TpconfigLine &line) throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the specified catalogue value does not match the
@@ -458,8 +500,7 @@ private:
    * retrieved from the tape-drive library.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLineDevType(const std::string &catalogueDevType,
-    const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLineDevType(const std::string &catalogueDevType, const utils::TpconfigLine &line) throw(castor::exception::Exception);
 
 }; // class DriveCatalogue
 

@@ -379,13 +379,8 @@ BEGIN
    WHERE castorFile = inCfId
      AND status = dconst.DISKCOPY_VALID;
   -- restart ongoing requests
-  -- Note that we reset the "answered" flag of the subrequest. This will potentially lead to
-  -- a wrong attempt to answer again the client (but won't harm as the client is gone in that case)
-  -- but is needed as the current implementation of the stager also uses this flag to know
-  -- whether to archive the subrequest. If we leave it to 1, the subrequests are wrongly
-  -- archived when retried, leading e.g. to failing recalls
   UPDATE SubRequest
-     SET status = dconst.SUBREQUEST_RESTART, answered = 0
+     SET status = dconst.SUBREQUEST_RESTART
    WHERE castorFile = inCfId
      AND status = dconst.SUBREQUEST_WAITTAPERECALL;
 END;
@@ -452,24 +447,15 @@ CREATE OR REPLACE FUNCTION checkRecallInNS(inCfId IN INTEGER,
   varNSSize INTEGER;
   varNSCsumtype VARCHAR2(2048);
   varNSCsumvalue VARCHAR2(2048);
-  varOpenMode CHAR(1);
 BEGIN
-  -- retrieve data from the namespace: note that if stagerTime is (still) NULL,
-  -- we're still in compatibility mode and we resolve to using mtime.
-  -- To be dropped in 2.1.15 where stagerTime is NOT NULL by design.
-  -- Note the truncation of stagerTime to 5 digits. This is needed for consistency with
-  -- the stager code that uses the OCCI api and thus loses precision when recuperating
-  -- 64 bits integers into doubles (lack of support for 64 bits numbers in OCCI)
-  SELECT NVL(TRUNC(stagertime,5), mtime), csumtype, csumvalue, filesize
+  -- retrieve data from the namespace: note the truncation of stagerTime to 5 digits.
+  -- This is needed for consistency with the stager code that uses the OCCI API and thus
+  -- loses precision when recuperating 64 bits integers into doubles
+  -- (lack of support for 64 bits numbers in OCCI).
+  SELECT TRUNC(stagerTime,5), csumtype, csumvalue, filesize
     INTO varNSOpenTime, varNSCsumtype, varNSCsumvalue, varNSSize
     FROM Cns_File_Metadata@RemoteNS
    WHERE fileid = inFileId;
-  -- check open mode: in compatibility mode we still have only seconds precision,
-  -- hence the NS open time has to be truncated prior to comparing it with our time.
-  varOpenMode := getConfigOption@RemoteNS('stager', 'openmode', NULL);
-  IF varOpenMode = 'C' THEN
-    varNSOpenTime := TRUNC(varNSOpenTime);
-  END IF;
   -- was the file overwritten in the meantime ?
   IF varNSOpenTime > inLastOpenTime THEN
     -- yes ! reset it and thus restart the recall from scratch
@@ -949,7 +935,7 @@ BEGIN
              USE_NL(MMigrationJob CastorFile DiskCopy FileSystem DiskServer)
              INDEX(CastorFile PK_CastorFile_Id)
              INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
-             INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusId) */
+             INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusCT) */
          MigrationJob.id mjId INTO varMigJobId
     FROM MigrationJob, DiskCopy, FileSystem, DiskServer, CastorFile
    WHERE MigrationJob.tapePool = inTapePoolId
@@ -1212,16 +1198,18 @@ CREATE OR REPLACE PROCEDURE tg_getBulkFilesToMigrate(inLogContext IN VARCHAR2,
   varMountId NUMBER;
   varCount INTEGER;
   varTotalSize INTEGER;
+  varOldestAcceptableAge NUMBER;
   varVid VARCHAR2(10);
   varNewFseq INTEGER;
   varFileTrId NUMBER;
+  varTpId INTEGER;
   varUnused INTEGER;
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -00001);
 BEGIN
   BEGIN
     -- Get id, VID and last valid fseq for this migration mount, lock
-    SELECT id, vid, lastFSeq INTO varMountId, varVid, varNewFseq
+    SELECT id, vid, tapePool, lastFSeq INTO varMountId, varVid, varTpId, varNewFseq
       FROM MigrationMount
      WHERE mountTransactionId = inMountTrId
        FOR UPDATE;
@@ -1234,22 +1222,30 @@ BEGIN
   END;
   varCount := 0;
   varTotalSize := 0;
+  SELECT TapePool.maxFileAgeBeforeMount INTO varOldestAcceptableAge
+    FROM TapePool, MigrationMount
+   WHERE MigrationMount.id = varMountId
+     AND MigrationMount.tapePool = TapePool.id;
   -- Get candidates up to inCount or inTotalSize
   FOR Cand IN (
     SELECT /*+ FIRST_ROWS(100)
-               LEADING(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer)
-               USE_NL(MigrationMount MigrationJob CastorFile DiskCopy FileSystem DiskServer)
+               LEADING(Job CastorFile DiskCopy FileSystem DiskServer)
+               USE_NL(Job CastorFile DiskCopy FileSystem DiskServer)
                INDEX(CastorFile PK_CastorFile_Id)
-               INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile)
-               INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusId) */
-           MigrationJob.id mjId, DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path filePath,
+               INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
+           Job.id mjId, DiskServer.name || ':' || FileSystem.mountPoint || DiskCopy.path filePath,
            CastorFile.fileId, CastorFile.nsHost, CastorFile.fileSize, CastorFile.lastKnownFileName,
-           MigrationMount.VID, Castorfile.id as castorfile
-      FROM MigrationMount, MigrationJob, CastorFile, DiskCopy, FileSystem, DiskServer
-     WHERE MigrationMount.id = varMountId
-       AND MigrationJob.tapePool = MigrationMount.tapePool
-       AND MigrationJob.status = tconst.MIGRATIONJOB_PENDING
-       AND CastorFile.id = MigrationJob.castorFile
+           Castorfile.id as castorfile
+      FROM (SELECT * FROM
+             (SELECT /*+ FIRST_ROWS(100) INDEX_RS_ASC(MigrationJob I_MigrationJob_TPStatusCT) */
+                     id, castorfile, destCopyNb, creationTime
+                FROM MigrationJob
+               WHERE tapePool = varTpId
+                 AND status = tconst.MIGRATIONJOB_PENDING
+               ORDER BY creationTime)
+             WHERE ROWNUM < TO_NUMBER(getConfigOption('Migration', 'NbMigCandConsidered', 10000)))
+           Job, CastorFile, DiskCopy, FileSystem, DiskServer
+     WHERE CastorFile.id = Job.castorFile
        AND CastorFile.id = DiskCopy.castorFile
        AND CastorFile.tapeStatus = dconst.CASTORFILE_NOTONTAPE
        AND DiskCopy.status = dconst.DISKCOPY_VALID
@@ -1258,12 +1254,17 @@ BEGIN
        AND DiskServer.id = FileSystem.diskServer
        AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
        AND DiskServer.hwOnline = 1
-       AND NOT EXISTS (SELECT /*+ INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ 1
+       AND NOT EXISTS (SELECT /*+ USE_NL(MigratedSegment)
+                                  INDEX_RS_ASC(MigratedSegment I_MigratedSegment_CFCopyNBVID) */ 1
                          FROM MigratedSegment
-                        WHERE MigratedSegment.castorFile = MigrationJob.castorfile
-                          AND MigratedSegment.copyNb != MigrationJob.destCopyNb
-                          AND MigratedSegment.vid = MigrationMount.vid)
-       FOR UPDATE OF MigrationJob.id SKIP LOCKED)
+                        WHERE MigratedSegment.castorFile = Job.castorfile
+                          AND MigratedSegment.copyNb != Job.destCopyNb
+                          AND MigratedSegment.vid = varVid)
+       ORDER BY -- we first order by a multi-step function, which gives old guys incrasingly more priority:
+                -- migrations younger than varOldestAccep2tableAge will be taken last
+                TRUNC(Job.creationTime/varOldestAcceptableAge) ASC,
+                -- and then, for all migrations between (N-1)*varOldestAge and N*varOldestAge, by filesystem load
+                FileSystem.nbRecallerStreams + FileSystem.nbMigratorStreams ASC)
   LOOP
     -- last part of the above statement. Could not be part of it as ORACLE insisted on not
     -- optimizing properly the execution plan
@@ -1271,13 +1272,28 @@ BEGIN
       SELECT /*+ INDEX_RS_ASC(MJ I_MigrationJob_CFVID) */ 1 INTO varUnused
         FROM MigrationJob MJ
        WHERE MJ.castorFile = Cand.castorFile
-         AND MJ.vid = Cand.VID
+         AND MJ.vid = varVid
          AND MJ.vid IS NOT NULL;
       -- found one, so skip this candidate
       CONTINUE;
     EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- nothing, it's a valid candidate
-      NULL;
+      -- nothing, it's a valid candidate. Let's lock it and revalidate the status
+      DECLARE
+        MjLocked EXCEPTION;
+        PRAGMA EXCEPTION_INIT (MjLocked, -54);
+      BEGIN
+        SELECT id INTO varUnused
+          FROM MigrationJob
+         WHERE id = Cand.mjId
+           AND status = tconst.MIGRATIONJOB_PENDING
+           FOR UPDATE NOWAIT;
+      EXCEPTION WHEN MjLocked THEN
+        -- this migration job is being handled else where, let's go to next one
+        CONTINUE;
+                WHEN NO_DATA_FOUND THEN
+        -- this migration job has already been handled else where, let's go to next one
+        CONTINUE;
+      END;
     END;
     BEGIN
       -- Try to take this candidate on this mount
@@ -1387,17 +1403,12 @@ CREATE OR REPLACE PROCEDURE tg_setBulkFileMigrationResult(inLogContext IN VARCHA
   varNSParams strListTable;
   varParams VARCHAR2(4000);
   varNbSentToNS INTEGER := 0;
-  -- for the compatibility mode, to be dropped in 2.1.15
-  varOpenMode CHAR(1);
   varLastUpdateTime INTEGER;
 BEGIN
   varStartTime := SYSTIMESTAMP;
   varReqId := uuidGen();
   -- Get the NS host name
   varNsHost := getConfigOption('stager', 'nsHost', '');
-  -- Get the NS open mode: if compatibility, then CF.lastUpdTime is to be used for the
-  -- concurrent modifications check like in 2.1.13, else the new CF.nsOpenTime column is used.
-  varOpenMode := getConfigOption@RemoteNS('stager', 'openmode', NULL);
   FOR i IN inFileTrIds.FIRST .. inFileTrIds.LAST LOOP
     BEGIN
       -- Collect additional data. Note that this is NOT bulk
@@ -1410,10 +1421,6 @@ BEGIN
          AND MJ.mountTransactionId = inMountTrId
          AND MJ.fileTransactionId = inFileTrIds(i)
          AND status = tconst.MIGRATIONJOB_SELECTED;
-      -- Use the correct timestamp in case of compatibility mode
-      IF varOpenMode = 'C' THEN
-        varNsOpenTime := varLastUpdateTime;
-      END IF;
         -- Store in a temporary table, to be transfered to the NS DB
       IF inErrorCodes(i) = 0 THEN
         -- Successful migration

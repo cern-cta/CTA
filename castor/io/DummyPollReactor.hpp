@@ -38,6 +38,11 @@ public:
    * Destructor.
    */
   ~DummyPollReactor() throw();
+  
+  /**
+   * Removes and deletes all of the event handlers registered with the reactor.
+   */
+  void clear() throw();
 
   /**
    * Registers the specified handler.

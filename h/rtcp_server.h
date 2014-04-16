@@ -222,7 +222,6 @@ int rtcpd_WaitTapeIO  (int *);
 int rtcpd_WaitCLThread  (int, int *);
 int rtcpd_CtapeInit (void);
 int rtcpd_CtapeFree (void);
-int rtcpd_Assign  (tape_list_t *);
 int rtcpd_Deassign  (int, rtcpTapeRequest_t *, rtcpClientInfo_t *);
 const char *rtcpd_CtapeErrMsg  (void);
 char *rtcpd_GetCtapeErrBuf (void);

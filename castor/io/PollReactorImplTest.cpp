@@ -40,28 +40,25 @@ protected:
   }
 };
 
-TEST_F(castor_io_PollReactorImplTest, goodDayRegistierAndRemove) {
+TEST_F(castor_io_PollReactorImplTest, goodDayRegisterAndLeave) {
   castor::log::DummyLogger log("unittests");
   castor::io::PollReactorImpl reactor(log);
-  castor::io::DummyPollEventHandler handler(1234);
-  reactor.registerHandler(&handler);
-  reactor.removeHandler(&handler);
+  reactor.registerHandler(new castor::io::DummyPollEventHandler(1234, false));
+}
+
+TEST_F(castor_io_PollReactorImplTest, goodDayRegisterAndRemove) {
+  castor::log::DummyLogger log("unittests");
+  castor::io::PollReactorImpl reactor(log);
+  reactor.registerHandler(new castor::io::DummyPollEventHandler(1234, true));
 }
 
 TEST_F(castor_io_PollReactorImplTest, registerTwiceTheSameHandler) {
   castor::log::DummyLogger log("unittests");
   castor::io::PollReactorImpl reactor(log);
-  castor::io::DummyPollEventHandler handler(1234);
-  reactor.registerHandler(&handler);
-  ASSERT_THROW(reactor.registerHandler(&handler), castor::exception::Exception);
-  reactor.removeHandler(&handler);
-}
-
-TEST_F(castor_io_PollReactorImplTest, removeNeverRegisteredHandler) {
-  castor::log::DummyLogger log("unittests");
-  castor::io::PollReactorImpl reactor(log);
-  castor::io::DummyPollEventHandler handler(1234);
-  ASSERT_THROW(reactor.removeHandler(&handler), castor::exception::Exception);
+  castor::io::DummyPollEventHandler *handler =
+    new castor::io::DummyPollEventHandler(1234,false);
+  reactor.registerHandler(handler);
+  ASSERT_THROW(reactor.registerHandler(handler), castor::exception::Exception);
 }
 
 } // namespace unitTests

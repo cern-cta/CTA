@@ -24,12 +24,14 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
+#include "castor/tape/tapeserver/daemon/DiskWriteTaskInterface.hpp"
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
+#include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
+
 #include <memory>
 namespace {
   
@@ -38,22 +40,7 @@ namespace {
   {
     return (ftr.blockId0() << 24) | (ftr.blockId1() << 16) |  (ftr.blockId2() << 8) | ftr.blockId3();
   }
-  
-  /*Use RAII to make sure the memory block is released  
-   *(ie pushed back to the memory manager) in any case (exception or not)
-   */
-  class AutoReleaseBlock{
-    castor::tape::tapeserver::daemon::MemBlock *block;
-    castor::tape::tapeserver::daemon::RecallMemoryManager& memManager;
-  public:
-    AutoReleaseBlock(castor::tape::tapeserver::daemon::MemBlock* mb, 
-            castor::tape::tapeserver::daemon::RecallMemoryManager& mm):
-    block(mb),memManager(mm){}
-    
-    ~AutoReleaseBlock(){
-      memManager.releaseBlock(block);
-    }
-  };
+ 
 }
 namespace castor {
 namespace tape {
@@ -72,94 +59,33 @@ public:
    * @param file: All we need to know about the file we  are recalling
    * @param mm: memory manager of the session
    */
-  DiskWriteTask(tape::tapegateway::FileToRecallStruct* file,RecallMemoryManager& mm): 
-  m_recallingFile(file),m_memManager(mm){
- 
-  }
+  DiskWriteTask(tape::tapegateway::FileToRecallStruct* file,RecallMemoryManager& mm);
   /**
    * Main routine: takes each memory block in the fifo and writes it to disk
    * @return true if the file has been successfully written false otherwise.
    */
-  virtual bool execute(ReportPackerInterface<detail::Recall>& reporter,log::LogContext& lc) {
-    using log::LogContext;
-    using log::Param;
-    try{
-      tape::diskFile::WriteFile ourFile(m_recallingFile->path());
-      int blockId  = 0;
-      
-      while(1) {
-        if(MemBlock* const mb = m_fifo.pop()) {
-          AutoReleaseBlock releaser(mb,m_memManager);
-          
-          if(m_recallingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
-                  || blockId != mb->m_fileBlock  || mb->m_failed ){
-            LogContext::ScopedParam sp[]={
-              LogContext::ScopedParam(lc, Param("expected_NSFILEID",m_recallingFile->fileid())),
-              LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
-              LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
-              LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
-              LogContext::ScopedParam(lc, Param("failed_Status", mb->m_failed))
-            };
-            tape::utils::suppresUnusedVariable(sp);
-            lc.log(LOG_ERR,"received a bad block for writing");
-            throw castor::tape::Exception("received a bad block for writing");
-          }
-          mb->m_payload.write(ourFile);
-          blockId++;
-        }
-        else 
-          break;
-      } //end of while(1)
-      reporter.reportCompletedJob(*m_recallingFile);
-      return true;
-    }
-    catch(const castor::exception::Exception& e){
-      /*
-       *We might end up there with some blocks into m_fifo
-       * We need to empty it
-       */
-      releaseAllBlock();
-      
-      reporter.reportFailedJob(*m_recallingFile,e.getMessageValue(),e.code());
-      return false;
-    }
-  }
+  virtual bool execute(ReportPackerInterface<detail::Recall>& reporter,log::LogContext& lc) ;
   
   /**
    * Allows client code to return a reusable memory block. Should not been called
    * @return the pointer to the memory block that can be reused
    */
-  virtual MemBlock *getFreeBlock() { 
-    throw castor::tape::Exception("DiskWriteTask::getFreeBlock should mot be called");
-  }
+  virtual MemBlock *getFreeBlock() ;
   
   /**
    * Function used to enqueue a new memory block holding data to be written to disk
    * @param mb: corresponding memory block
    */
-  virtual void pushDataBlock(MemBlock *mb) {
-    castor::tape::threading::MutexLocker ml(&m_producerProtection);
-    m_fifo.push(mb);
-  }
+  virtual void pushDataBlock(MemBlock *mb);
 
   /**
    * Destructor (also waiting for the end of the write operation)
    */
-  virtual ~DiskWriteTask() { 
-    volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); 
-  }
+  virtual ~DiskWriteTask();
   
 private:
 
-  void releaseAllBlock(){
-    while(1){
-      MemBlock* mb=m_fifo.pop();
-      if(mb)
-        AutoReleaseBlock release(mb,m_memManager);
-      else 
-        break;
-    }
-  }
+  void releaseAllBlock();
   /**
    * The fifo containing the memory blocks holding data to be written to disk
    */

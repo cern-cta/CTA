@@ -356,13 +356,129 @@ BEGIN
 END;
 /
 
+/* PL/SQL method to get the next SubRequest to do according to the given service */
+CREATE OR REPLACE PROCEDURE jobSubRequestToDo(outSrId OUT INTEGER, outReqUuid OUT VARCHAR2,
+                                              outReqType OUT INTEGER,
+                                              outEuid OUT INTEGER, outEgid OUT INTEGER,
+                                              outFileName OUT VARCHAR2, outSvcClassName OUT VARCHAR2,
+                                              outFileClassIfForced OUT INTEGER,
+                                              outFlags OUT INTEGER, outModeBits OUT INTEGER,
+                                              outClientIpAddress OUT INTEGER,
+                                              outClientPort OUT INTEGER, outClientVersion OUT INTEGER) AS
+  CURSOR SRcur IS
+    SELECT /*+ FIRST_ROWS_10 INDEX_RS_ASC(SR I_SubRequest_RT_CT_ID) */ SR.id
+      FROM SubRequest PARTITION (P_STATUS_0_1_2) SR  -- START, RESTART, RETRY
+     WHERE SR.svcHandler = 'JobReqSvc'
+     ORDER BY SR.creationTime ASC;
+  SrLocked EXCEPTION;
+  PRAGMA EXCEPTION_INIT (SrLocked, -54);
+  varSrId INTEGER;
+  varRequestId INTEGER;
+  varSvcClassId INTEGER;
+  varClientId INTEGER;
+  varUnusedMessage VARCHAR2(2048);
+  varUnusedStatus INTEGER;
+BEGIN
+  -- Open a cursor on potential candidates
+  OPEN SRcur;
+  -- Retrieve the first candidate
+  FETCH SRCur INTO varSrId;
+  IF SRCur%NOTFOUND THEN
+    -- There is no candidate available. Wait for next alert for a maximum of 3 seconds.
+    -- We do not wait forever in order to to give the control back to the
+    -- caller daemon in case it should exit.
+    CLOSE SRCur;
+    DBMS_ALERT.WAITONE('wakeUpJobReqSvc', varUnusedMessage, varUnusedStatus, 3);
+    -- try again to find something now that we waited
+    OPEN SRCur;
+    FETCH SRCur INTO varSrId;
+    IF SRCur%NOTFOUND THEN
+      -- still nothing. We will give back the control to the application
+      -- so that it can handle cases like signals and exit. We will probably
+      -- be back soon :-)
+      RETURN;
+    END IF;
+  END IF;
+  -- Loop on candidates until we can lock one
+  LOOP
+    BEGIN
+      -- Try to take a lock on the current candidate, and revalidate its status
+      SELECT /*+ INDEX(SR PK_SubRequest_ID) */ id INTO varSrId
+        FROM SubRequest PARTITION (P_STATUS_0_1_2) SR
+       WHERE id = varSrId FOR UPDATE NOWAIT;
+      -- Since we are here, we got the lock. We have our winner, let's update it
+      UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
+         SET status = dconst.SUBREQUEST_WAITSCHED, subReqId = nvl(subReqId, uuidGen())
+       WHERE id = varSrId
+      RETURNING id, reqType, fileName, flags, modeBits, request
+        INTO outSrId, outReqType, outFileName, outFlags, outModeBits, varRequestId;
+      EXIT;
+    EXCEPTION
+      WHEN NO_DATA_FOUND THEN
+        -- Got to next candidate, this subrequest was processed already and its status changed
+        NULL;
+      WHEN SrLocked THEN
+        -- Go to next candidate, this subrequest is being processed by another thread
+        NULL;
+    END;
+    -- we are here because the current candidate could not be handled
+    -- let's go to the next one
+    FETCH SRcur INTO varSrId;
+    IF SRcur%NOTFOUND THEN
+      -- no next one ? then we can return
+      RETURN;
+    END IF;
+  END LOOP;
+  CLOSE SRcur;
+
+  BEGIN
+    -- XXX This could be done in a single EXECUTE IMMEDIATE statement, but to make it
+    -- XXX efficient we implement a CASE construct. At a later time the FileRequests should
+    -- XXX be merged in a single table (partitioned by reqType) to avoid the following block.
+    CASE
+      WHEN outReqType = 40 THEN -- StagePutRequest
+        SELECT reqId, euid, egid, svcClass, client
+          INTO outReqUuid, outEuid, outEgid, varSvcClassId, varClientId
+          FROM StagePutRequest WHERE id = varRequestId;
+      WHEN outReqType = 35 THEN -- StageGetRequest
+        SELECT reqId, euid, egid, svcClass, client
+          INTO outReqUuid, outEuid, outEgid, varSvcClassId, varClientId
+          FROM StageGetRequest WHERE id = varRequestId;
+      WHEN outReqType = 37 THEN -- StagePrepareToPutRequest
+        SELECT reqId, euid, egid, svcClass, client
+          INTO outReqUuid, outEuid, outEgid, varSvcClassId, varClientId
+          FROM StagePrepareToPutRequest WHERE id = varRequestId;
+      WHEN outReqType = 36 THEN -- StagePrepareToGetRequest
+        SELECT reqId, euid, egid, svcClass, client
+          INTO outReqUuid, outEuid, outEgid, varSvcClassId, varClientId
+          FROM StagePrepareToGetRequest WHERE id = varRequestId;
+    END CASE;
+    SELECT ipAddress, port, version
+      INTO outClientIpAddress, outClientPort, outClientVersion
+      FROM Client WHERE id = varClientId;
+    SELECT FileClass.classId, SvcClass.name
+      INTO outFileClassIfForced, outSvcClassName
+      FROM SvcClass, FileClass
+     WHERE SvcClass.id = varSvcClassId
+       AND FileClass.id(+) = SvcClass.forcedFileClass;
+  EXCEPTION WHEN OTHERS THEN
+    -- Something went really wrong, our subrequest does not have the corresponding request or client,
+    -- Just drop it and re-raise exception. Some rare occurrences have happened in the past,
+    -- this catch-all logic protects the stager-scheduling system from getting stuck with a single such case.
+    archiveSubReq(outSrId, dconst.SUBREQUEST_FAILED_FINISHED);
+    COMMIT;
+    raise_application_error(-20100, 'Request got corrupted and could not be processed : ' ||
+                                    SQLCODE || ' -ERROR- ' || SQLERRM);
+  END;
+END;
+/
 
 /* PL/SQL method to get the next SubRequest to do according to the given service */
 CREATE OR REPLACE PROCEDURE subRequestToDo(service IN VARCHAR2,
                                            srId OUT INTEGER, srRetryCounter OUT INTEGER, srFileName OUT VARCHAR2,
                                            srProtocol OUT VARCHAR2, srXsize OUT INTEGER,
                                            srModeBits OUT INTEGER, srFlags OUT INTEGER,
-                                           srSubReqId OUT VARCHAR2, srAnswered OUT INTEGER, srReqType OUT INTEGER,
+                                           srSubReqId OUT VARCHAR2, srReqType OUT INTEGER,
                                            rId OUT INTEGER, rFlags OUT INTEGER, rUsername OUT VARCHAR2, rEuid OUT INTEGER,
                                            rEgid OUT INTEGER, rMask OUT INTEGER, rPid OUT INTEGER, rMachine OUT VARCHAR2,
                                            rSvcClassName OUT VARCHAR2, rUserTag OUT VARCHAR2, rReqId OUT VARCHAR2,
@@ -414,9 +530,9 @@ BEGIN
          SET status = dconst.SUBREQUEST_WAITSCHED, subReqId = nvl(subReqId, uuidGen())
        WHERE id = varSrId
       RETURNING id, retryCounter, fileName, protocol, xsize, modeBits, flags, subReqId,
-        answered, reqType, request, (SELECT object FROM Type2Obj WHERE type = reqType)
+        reqType, request, (SELECT object FROM Type2Obj WHERE type = reqType)
         INTO srId, srRetryCounter, srFileName, srProtocol, srXsize, srModeBits, srFlags, srSubReqId,
-        srAnswered, srReqType, rId, varRName;
+        srReqType, rId, varRName;
       EXIT;
     EXCEPTION
       WHEN NO_DATA_FOUND THEN
@@ -441,34 +557,6 @@ BEGIN
     -- XXX efficient we implement a CASE construct. At a later time the FileRequests should
     -- XXX be merged in a single table (partitioned by reqType) to avoid the following block.
     CASE
-      WHEN varRName = 'StagePrepareToPutRequest' THEN
-        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
-          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
-          FROM StagePrepareToPutRequest WHERE id = rId;
-      WHEN varRName = 'StagePrepareToGetRequest' THEN
-        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
-          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
-          FROM StagePrepareToGetRequest WHERE id = rId;
-      WHEN varRName = 'StagePrepareToUpdateRequest' THEN
-        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
-          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
-          FROM StagePrepareToUpdateRequest WHERE id = rId;
-      WHEN varRName = 'StageRepackRequest' THEN
-        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, repackVid, client
-          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, rRepackVid, varClientId
-          FROM StageRepackRequest WHERE id = rId;
-      WHEN varRName = 'StagePutRequest' THEN
-        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
-          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
-          FROM StagePutRequest WHERE id = rId;
-      WHEN varRName = 'StageGetRequest' THEN
-        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
-          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
-          FROM StageGetRequest WHERE id = rId;
-      WHEN varRName = 'StageUpdateRequest' THEN
-        SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
-          INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
-          FROM StageUpdateRequest WHERE id = rId;
       WHEN varRName = 'StagePutDoneRequest' THEN
         SELECT flags, username, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, client
           INTO rFlags, rUsername, rEuid, rEgid, rMask, rPid, rMachine, rSvcClassName, rUserTag, rReqId, rCreationTime, rLastModificationTime, varClientId
@@ -1157,7 +1245,7 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER, finalStatus IN INTEGE
   rType NUMBER := 0;
   clientId INTEGER;
 BEGIN
-  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id) */ SubRequest
+  UPDATE /*+ INDEX(SubRequest PK_SubRequest_Id) */ SubRequest
      SET diskCopy = NULL,  -- unlink this subrequest as it's dead now
          lastModificationTime = getTime(),
          status = finalStatus
@@ -1874,16 +1962,16 @@ END;
 
 /* this function tries to create a CastorFile and deals with the associated race conditions
    In case race conditions are really bad, the method can fail and return False */
-CREATE OR REPLACE FUNCTION createCastorFile (fId IN INTEGER,
-                                             nh IN VARCHAR2,
-                                             fcId IN INTEGER,
-                                             fs IN INTEGER,
-                                             fn IN VARCHAR2,
-                                             srId IN NUMBER,
+CREATE OR REPLACE FUNCTION createCastorFile (inFileId IN INTEGER,
+                                             inNsHost IN VARCHAR2,
+                                             inFileClassId IN INTEGER,
+                                             inFileSize IN INTEGER,
+                                             inFileName IN VARCHAR2,
+                                             inSrId IN NUMBER,
                                              inNsOpenTime IN NUMBER,
-                                             waitForLock IN BOOLEAN,
-                                             rid OUT INTEGER,
-                                             rfs OUT INTEGER) RETURN BOOLEAN AS
+                                             inWaitForLock IN BOOLEAN,
+                                             outId OUT INTEGER,
+                                             outFileSize OUT INTEGER) RETURN BOOLEAN AS
   CONSTRAINT_VIOLATED EXCEPTION;
   PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
@@ -1893,29 +1981,29 @@ BEGIN
   -- We actually reset the lastKnownFileName of such a file if needed
   -- Note that this procedure will run in an autonomous transaction so that
   -- no dead lock can result from taking a second lock within this transaction
-  dropReusedLastKnownFileName(fn);
+  dropReusedLastKnownFileName(inFileName);
   -- insert new row (see selectCastorFile inline comments for the TRUNC() operation)
   INSERT INTO CastorFile (id, fileId, nsHost, fileClass, fileSize, creationTime,
                           lastAccessTime, lastUpdateTime, nsOpenTime, lastKnownFileName, tapeStatus)
-    VALUES (ids_seq.nextval, fId, nh, fcId, fs, getTime(), getTime(),
-            TRUNC(inNsOpenTime), inNsOpenTime, normalizePath(fn), NULL)
-    RETURNING id, fileSize INTO rid, rfs;
-  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
-   WHERE id = srId;
+    VALUES (ids_seq.nextval, inFileId, inNsHost, inFileClassId, inFileSize, getTime(), getTime(),
+            TRUNC(inNsOpenTime), inNsOpenTime, normalizePath(inFileName), NULL)
+    RETURNING id, fileSize INTO outId, outFileSize;
+  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = outId
+   WHERE id = inSrId;
   RETURN True;
 EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
   -- the violated constraint indicates that the file was created by another client
   -- while we were trying to create it ourselves. We can thus use the newly created file
   BEGIN
-    IF waitForLock THEN
-      SELECT id, fileSize INTO rid, rfs FROM CastorFile
-        WHERE fileId = fid AND nsHost = nh FOR UPDATE;
+    IF inWaitForLock THEN
+      SELECT id, fileSize INTO outId, outFileSize FROM CastorFile
+        WHERE fileId = inFileId AND nsHost = inNsHost FOR UPDATE;
     ELSE
-      SELECT id, fileSize INTO rid, rfs FROM CastorFile
-        WHERE fileId = fid AND nsHost = nh FOR UPDATE NOWAIT;
+      SELECT id, fileSize INTO outId, outFileSize FROM CastorFile
+        WHERE fileId = inFileId AND nsHost = inNsHost FOR UPDATE NOWAIT;
     END IF;
-    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = rid
-     WHERE id = srId;
+    UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest SET castorFile = outId
+     WHERE id = inSrId;
     RETURN True;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- damn, the file created by the other client already disappeared before we could use it !
@@ -1940,12 +2028,6 @@ CREATE OR REPLACE PROCEDURE selectCastorFileInternal (inFileId IN INTEGER,
   varNsOpenTime NUMBER;
   varFcId NUMBER;
 BEGIN
-  -- Resolve the fileclass
-  BEGIN
-    SELECT id INTO varFcId FROM FileClass WHERE classId = inClassId;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    RAISE_APPLICATION_ERROR (-20010, 'File class '|| inClassId ||' not found in database');
-  END;
   BEGIN
     -- try to find an existing file
     SELECT id, fileSize, lastKnownFileName, nsOpenTime
@@ -1978,6 +2060,12 @@ BEGIN
      WHERE id = inSrId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- we did not find the file, let's try to create a new one.
+    -- First resolve the fileclass
+    BEGIN
+      SELECT id INTO varFcId FROM FileClass WHERE classId = inClassId;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      RAISE_APPLICATION_ERROR (-20010, 'File class '|| inClassId ||' not found in database');
+    END;
     -- This may fail with a low probability (subtle race condition, see comments
     -- in the method), so we try in a loop
     DECLARE
@@ -1995,21 +2083,21 @@ END;
 /* PL/SQL method implementing selectCastorFile
  * This is only a wrapper on selectCastorFileInternal
  */
-CREATE OR REPLACE PROCEDURE selectCastorFile (fId IN INTEGER,
-                                              nh IN VARCHAR2,
-                                              fc IN INTEGER,
-                                              fs IN INTEGER,
-                                              fn IN VARCHAR2,
-                                              srId IN NUMBER,
+CREATE OR REPLACE PROCEDURE selectCastorFile (inFileId IN INTEGER,
+                                              inNsHost IN VARCHAR2,
+                                              inClassId IN INTEGER,
+                                              inFileSize IN INTEGER,
+                                              inFileName IN VARCHAR2,
+                                              inSrId IN NUMBER,
                                               inNsOpenTimeInUsec IN INTEGER,
-                                              rid OUT INTEGER,
-                                              rfs OUT INTEGER) AS
+                                              outId OUT INTEGER,
+                                              outFileSize OUT INTEGER) AS
   nsHostName VARCHAR2(2048);
 BEGIN
   -- Get the stager/nsHost configuration option
-  nsHostName := getConfigOption('stager', 'nsHost', nh);
+  nsHostName := getConfigOption('stager', 'nsHost', inNsHost);
   -- call internal method
-  selectCastorFileInternal(fId, nsHostName, fc, fs, fn, srId, inNsOpenTimeInUsec/1000000, TRUE, rid, rfs);
+  selectCastorFileInternal(inFileId, nsHostName, inClassId, inFileSize, inFileName, inSrId, inNsOpenTimeInUsec/1000000, TRUE, outId, outFileSize);
 END;
 /
 
@@ -3078,6 +3166,7 @@ CREATE OR REPLACE FUNCTION handleRawPutOrPPut(inCfId IN INTEGER, inSrId IN INTEG
                                               inReqUUID IN VARCHAR2, inSrUUID IN VARCHAR2,
                                               inDoSchedule IN BOOLEAN, inNsOpenTime IN INTEGER)
 RETURN INTEGER AS
+  varReqId INTEGER;
 BEGIN
   -- check that no concurrent put is already running
   DECLARE
@@ -3167,8 +3256,10 @@ BEGIN
     ELSE
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET diskCopy = varDcId, lastModificationTime = getTime(),
-             status = dconst.SUBREQUEST_READY
-       WHERE id = inSrId;
+             status = dconst.SUBREQUEST_READY,
+             answered = 1
+       WHERE id = inSrId
+      RETURNING request INTO varReqId;
     END IF;
     -- reset the castorfile size, lastUpdateTime and nsOpenTime as the file was truncated
     UPDATE CastorFile
@@ -3177,7 +3268,24 @@ BEGIN
            nsOpenTime = inNsOpenTime
      WHERE id = inCfId;
   END;
-  RETURN (CASE WHEN inDoSchedule THEN 0 ELSE 1 END);
+  IF inDoSchedule THEN
+    RETURN 0; -- do not answer client, the diskserver will
+  ELSE
+    -- Check whether it was the last subrequest in the request
+    DECLARE
+      varRemainingSR INTEGER;
+    BEGIN
+      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Request)*/ 1 INTO varRemainingSR
+        FROM SubRequest
+       WHERE request = varReqId
+         AND status IN (0, 1, 2, 3, 4, 5, 7, 10, 12, 13)   -- all but FINISHED, FAILED_FINISHED, ARCHIVED
+         AND answered = 0
+         AND ROWNUM < 2;
+      RETURN 1; -- answer but this is not the last one
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      RETURN 2; -- answer anf this is the last answer
+    END;
+  END IF;
 END;
 /
 
@@ -3273,17 +3381,15 @@ CREATE OR REPLACE PROCEDURE handlePut(inCfId IN INTEGER, inSrId IN INTEGER,
   varPrepDcid INTEGER;
 BEGIN
   -- Get fileClass and lock access to the CastorFile
-  SELECT fileclass INTO varFileClassId FROM CastorFile WHERE id = inCfId FOR UPDATE;
+  SELECT fileclass INTO varFileClassId FROM CastorFile WHERE id = inCfId;
   -- Get serviceClass and user data
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
-         Request.svcClass, euid, egid, Request.reqId, SubRequest.subreqId
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id) INDEX(StagePutRequest PK_StagePutRequest_Id) */
+         StagePutRequest.svcClass, StagePutRequest.euid, StagePutRequest.egid,
+         StagePutRequest.reqId, SubRequest.subreqId
     INTO varSvcClassId, varEuid, varEgid, varReqUUID, varSrUUID
-    FROM (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */
-                 id, svcClass, euid, egid, reqId FROM StagePutRequest UNION ALL
-          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
-                 id, svcClass, euid, egid, reqId FROM StageUpdateRequest) Request, SubRequest
+    FROM StagePutRequest, SubRequest
    WHERE SubRequest.id = inSrId
-     AND Request.id = SubRequest.request;
+     AND StagePutRequest.id = SubRequest.request;
   -- log
   logToDLF(varReqUUID, dlf.LVL_DEBUG, dlf.STAGER_PUT, inFileId, inNsHost, 'stagerd', 'SUBREQID=' || varSrUUID);
 
@@ -3364,29 +3470,21 @@ CREATE OR REPLACE PROCEDURE handleGet(inCfId IN INTEGER, inSrId IN INTEGER,
   varEuid NUMBER;
   varEgid NUMBER;
   varSvcClassId NUMBER;
-  varUpd INTEGER;
   varReqUUID VARCHAR(2048);
   varSrUUID VARCHAR(2048);
   varNbDCs INTEGER;
   varDcStatus INTEGER;
 BEGIN
-  -- lock the castorFile to be safe in case of concurrent subrequests
-  SELECT nsOpenTime INTO varNsOpenTime FROM CastorFile WHERE id = inCfId FOR UPDATE;
   -- retrieve the svcClass, user and log data for this subrequest
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
-         Request.euid, Request.egid, Request.svcClass, Request.upd,
-         Request.reqId, SubRequest.subreqId
-    INTO varEuid, varEgid, varSvcClassId, varUpd, varReqUUID, varSrUUID
-    FROM (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
-                 id, euid, egid, svcClass, 0 upd, reqId from StageGetRequest UNION ALL
-          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
-                 id, euid, egid, svcClass, 1 upd, reqId from StageUpdateRequest) Request,
-         SubRequest
-   WHERE Subrequest.request = Request.id
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id) INDEX(StageGetRequest PK_StageGetRequest_Id)*/
+         StageGetRequest.svcClass, StageGetRequest.euid, StageGetRequest.egid,
+         StageGetRequest.reqId, SubRequest.subreqId
+    INTO varSvcClassId, varEuid, varEgid, varReqUUID, varSrUUID
+    FROM StageGetRequest, SubRequest
+   WHERE Subrequest.request = StageGetRequest.id
      AND Subrequest.id = inSrId;
   -- log
-  logToDLF(varReqUUID, dlf.LVL_DEBUG, dlf.STAGER_GET, inFileId, inNsHost, 'stagerd',
-           'SUBREQID=' || varSrUUID);
+  logToDLF(varReqUUID, dlf.LVL_DEBUG, dlf.STAGER_GET, inFileId, inNsHost, 'stagerd', 'SUBREQID=' || varSrUUID);
 
   -- First see whether we should wait on an ongoing request
   DECLARE
@@ -3414,14 +3512,12 @@ BEGIN
     END IF;
   END;
 
-  -- We should actually check whether our disk cache is stale,
-  -- that is IF CF.nsOpenTime < inNsOpenTime THEN invalidate our diskcopies.
-  -- This is pending the full deployment of the 'new open mode' as implemented
-  -- in the fix of bug #95189: Time discrepencies between
-  -- disk servers and name servers can lead to silent data loss on input.
-  -- The problem being that in 'Compatibility' mode inNsOpenTime is the
-  -- namespace's mtime, which can be modified by nstouch,
-  -- hence nstouch followed by a Get would destroy the data on disk!
+  -- Check whether our disk cache is stale
+  IF varNsOpenTime < inNsOpenTimeInUsec/1000000 THEN
+    -- yes, invalidate our diskcopies. This may later trigger a recall.
+    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+     WHERE status = dconst.DISKCOPY_VALID AND castorFile = inCfId;
+  END IF;
 
   -- Look for available diskcopies. The status is needed for the
   -- internal replication processing, and only if count = 1, hence
@@ -3441,23 +3537,10 @@ BEGIN
      AND DiskServer.hwOnline = 1
      AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT);
 
-  -- we may be the first update inside a prepareToPut. Check for this case
-  IF varNbDCs = 0 AND varUpd = 1 THEN
-    SELECT COUNT(DiskCopy.id) INTO varNbDCs
-      FROM DiskCopy
-     WHERE DiskCopy.castorfile = inCfId
-       AND DiskCopy.status = dconst.DISKCOPY_WAITFS;
-    IF varNbDCs = 1 THEN
-      -- we are the first update, so we actually need to behave as a Put
-      handlePut(inCfId, inSrId, inFileId, inNsHost, inNsOpenTimeInUsec);
-      RETURN;
-    END IF;
-  END IF;
-
   -- first handle the case where we found diskcopies
   IF varNbDCs > 0 THEN
     -- We may still need to replicate the file (replication on demand)
-    IF varUpd = 0 AND (varNbDCs > 1 OR varDcStatus != dconst.DISKCOPY_STAGEOUT) THEN
+    IF varNbDCs > 1 OR varDcStatus != dconst.DISKCOPY_STAGEOUT THEN
       handleReplication(inSRId, inFileId, inNsHost, inCfId, varNsOpenTime, varSvcClassId,
                         varEuid, varEgid, varReqUUID, varSrUUID);
     END IF;
@@ -3517,6 +3600,37 @@ BEGIN
 END;
 /
 
+/* PL/SQL method implementing handleGetOrPut
+ * returns 0 for get and Put
+ *         1 if client needs to be replied to, 0 otherewise for PrepareToPut
+ *         subReqStatus for PrepareToGet
+ */
+CREATE OR REPLACE FUNCTION handleGetOrPut(inReqType IN INTEGER, inSrId IN INTEGER,
+                                          inFileId IN INTEGER, inNsHost IN VARCHAR2,
+                                          inClassId IN INTEGER, inFileName IN VARCHAR2,
+                                          inFileSize IN INTEGER, inNsOpenTimeInUsec IN INTEGER)
+RETURN INTEGER AS
+  varCfId INTEGER;
+  varFileSize INTEGER;
+BEGIN
+  -- find/create and lock the castorFile
+  selectCastorFile(inFileId, inNsHost, inClassId, inFileSize, inFileName,
+                   inSrId, inNsOpenTimeInUsec, varCfId, varFileSize);
+  -- Call the right method
+  IF inReqType = 40 THEN -- StagePutRequest THEN
+    handlePut(varCfId, inSrId, inFileId, inNsHost, inNsOpenTimeInUsec);
+  ELSE IF inReqType = 35 THEN -- StageGetRequest THEN
+    handleGet(varCfId, inSrId, inFileId, inNsHost, varFileSize, inNsOpenTimeInUsec);
+  ELSE IF inReqType = 37 THEN -- StagePrepareToPutRequest THEN
+    RETURN handlePrepareToPut(varCfId, inSrId, inFileId, inNsHost, inNsOpenTimeInUsec);
+  ELSE IF inReqType = 36 THEN -- StagePrepareGetRequest THEN
+    RETURN handlePrepareToGet(varCfId, inSrId, inFileId, inNsHost, varFileSize, inNsOpenTimeInUsec);
+  ELSE
+    raise_application_error(-20100, 'handleGetOrPut called with wrong type : ' || inReqType);     
+  END IF; END IF; END IF; END IF;
+  RETURN 0;
+END;
+/
 
 /* PL/SQL method implementing handlePrepareToGet
  * returns status of the SubRequest : FAILED, FINISHED, WAITTAPERECALL OR WAITDISKTODISKCOPY
@@ -3540,9 +3654,7 @@ BEGIN
          Request.reqId, SubRequest.subreqId
     INTO varEuid, varEgid, varSvcClassId, varReqUUID, varSrUUID
     FROM (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
-                 id, euid, egid, svcClass, reqId from StagePrepareToGetRequest UNION ALL
-          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
-                 id, euid, egid, svcClass, reqId from StagePrepareToUpdateRequest) Request,
+                 id, euid, egid, svcClass, reqId from StagePrepareToGetRequest) Request,
          SubRequest
    WHERE Subrequest.request = Request.id
      AND Subrequest.id = inSrId;
@@ -3585,18 +3697,25 @@ BEGIN
       -- some available diskcopy was found.
       logToDLF(varReqUUID, dlf.LVL_DEBUG, dlf.STAGER_DISKCOPY_FOUND, inFileId, inNsHost, 'stagerd',
               'SUBREQID=' || varSrUUID);
+      -- update SubRequest
+      archiveSubReq(inSrId, dconst.SUBREQUEST_FINISHED);
       -- last thing, check whether we should recreate missing copies
       handleReplication(inSrId, inFileId, inNsHost, inCfId, varNsOpenTime, varSvcClassId,
                         varEuid, varEgid, varReqUUID, varSrUUID);
-      RETURN dconst.SUBREQUEST_FINISHED;
+      -- all went fine, we should answer to client
+      RETURN 1;
     END IF;
   END;
 
-  RETURN CASE triggerD2dOrRecall(inCfId, varNsOpenTime, inSrId, inFileId, inNsHost, varEuid, varEgid,
-                                 varSvcClassId, inFileSize, varReqUUID, varSrUUID)
-         WHEN 0 THEN dconst.SUBREQUEST_FAILED
-         ELSE dconst.SUBREQUEST_WAITTAPERECALL
-         END;
+  IF triggerD2dOrRecall(inCfId, varNsOpenTime, inSrId, inFileId, inNsHost, varEuid, varEgid,
+                        varSvcClassId, inFileSize, varReqUUID, varSrUUID) != 0 THEN
+    -- recall started, we are done, update subrequest and answer to client
+    UPDATE SubRequest SET status = dconst.SUBREQUEST_WAITTAPERECALL WHERE id = inSrId;
+    RETURN 1;
+  ELSE
+   -- could not start recall, SubRequest has been marked as FAILED, no need to answer
+   RETURN 0;
+  END IF;
 END;
 /
 

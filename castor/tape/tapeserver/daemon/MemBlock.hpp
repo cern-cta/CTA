@@ -80,10 +80,10 @@ public:
    * Reads all the buffer in one go from a diskFile::ReadFile object 
    * @param from reference to the diskFile::ReadFile
    */
-  void read(tape::diskFile::ReadFile& from) {
+  size_t read(tape::diskFile::ReadFile& from){
     m_size = from.read(m_payload,m_totalCapacity);
+    return m_size;
   }
-  
   class EndOfFile: public castor::exception::Exception {
   public:
     EndOfFile(const std::string & w): castor::exception::Exception(w) {}
@@ -199,3 +199,4 @@ public:
 }
 }
 }
+

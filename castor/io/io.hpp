@@ -479,6 +479,18 @@ void marshalUint16(const uint16_t src, char * &dst)
  * return     Points to the byte in the destination buffer immediately after
  *            the marshalled value.
  */
+void marshalInt32(const int32_t src, char * &dst)
+  throw(castor::exception::Exception);
+
+/**
+ * Marshals the specified src value into the specified destination buffer.
+ *
+ * @param src The source value be marshalled.
+ * @param dst In/out parameter, before invocation points to the destination
+ *            buffer where the source value should be marshalled to and on
+ * return     Points to the byte in the destination buffer immediately after
+ *            the marshalled value.
+ */
 void marshalUint32(const uint32_t src, char * &dst)
   throw(castor::exception::Exception);
 

@@ -38,51 +38,103 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-class TapeWriteSingleThread :  public TapeSingleThreadInterface<TapeWriteTask> {
+class TapeWriteSingleThread :  public TapeSingleThreadInterface<TapeWriteTaskInterface> {
 public:
   TapeWriteSingleThread(castor::tape::drives::DriveInterface & drive, 
           const std::string & vid,
           castor::log::LogContext & lc,
           MigrationReportPacker & repPacker,
 	  int filesBeforeFlush, int blockBeforeFlush): 
-  TapeSingleThreadInterface<TapeWriteTask>(drive, vid, lc),
-   m_filesBeforeFlush(filesBeforeFlush),
-   m_blocksBeforeFlush(blockBeforeFlush),
-   m_reportPacker(repPacker) {}
+  TapeSingleThreadInterface<TapeWriteTaskInterface>(drive, vid, lc),
+  m_drive(drive), m_reportPacker(repPacker), m_lastFseq(0), m_compress(0) {}
 
 private:
+  /**
+   * Function to open the WriteSession 
+   * If successful, returns a std::auto_ptr on it. A copy of that std::auto_ptr
+   * will give the caller the ownership of the opened session (see auto_ptr 
+   * copy constructor, which has a move semantic)
+   * @return 
+   */
+  std::auto_ptr<castor::tape::tapeFile::WriteSession> openWriteSession() {
+    using castor::log::LogContext;
+    using castor::log::Param;
+    typedef LogContext::ScopedParam ScopedParam;
+    
+    std::auto_ptr<castor::tape::tapeFile::WriteSession> rs;
+  
+    ScopedParam sp[]={
+        ScopedParam(m_logContext, Param("vid",m_vid)),
+        ScopedParam(m_logContext, Param("lastFseq", m_lastFseq)),
+        ScopedParam(m_logContext, Param("compression", m_compress)) 
+      };
+    tape::utils::suppresUnusedVariable(sp);
+      try {
+       rs.reset(new castor::tape::tapeFile::WriteSession(m_drive,m_vid,m_lastFseq,m_compress));
+        m_logContext.log(LOG_INFO, "Tape Write session session successfully started");
+      }
+      catch (castor::exception::Exception & ex) {
+        m_logContext.log(LOG_ERR, "Failed to start tape read session");
+        // TODO: log and unroll the session
+        // TODO: add an unroll mode to the tape read task. (Similar to exec, but pushing blocks marked in error)
+        throw;
+      }
+    return rs;
+  }
+  
+  void flush(const std::string& message,int blocks,int files){
+    m_drive.flush();
+    log::LogContext::ScopedParam sp0(m_logContext, log::Param("files", files));
+    log::LogContext::ScopedParam sp1(m_logContext, log::Param("blocks", blocks));
+    m_logContext.log(LOG_INFO,message);
+    m_reportPacker.reportFlush();
+  }
+  
   virtual void run() {
+    try
+    {
+      // First we have to initialise the tape read session
+      std::auto_ptr<castor::tape::tapeFile::WriteSession> rs(openWriteSession());
+    
       int blocks=0;
       int files=0;
+      std::auto_ptr<TapeWriteTaskInterface> task ;      
       while(1) {
-        TapeWriteTask * task = m_tasks.pop();
-        bool end = task->endOfWork();
-        if (!end) task->execute(m_drive);
-	//m_reportPacker.reportCompletedJob(MigrationJob(-1, task->fSeq(), -1));
-	files+=task->files();
-	blocks+=task->blocks();
-        m_filesProcessed += task->files();
-	if (files >= m_filesBeforeFlush ||
-		blocks >= m_blocksBeforeFlush) {
-	  printf("Flushing after %d files and %d blocks\n", files, blocks);
-	  m_reportPacker.reportFlush();
-	  files=0;
-	  blocks=0;
-	  m_drive.flush();
-	}
-        delete task;
-        if (end) {
-          printf("End of TapeWriteWorkerThread::run() (flushing)\n");
-	  m_drive.flush();
-	  m_reportPacker.reportEndOfSession();
+        task.reset(m_tasks.pop());
+        
+        if(NULL!=task.get()) {
+          task->execute(*rs,m_logContext);
+          files++;
+          blocks+=task->blocks();
+          
+          if (files >= m_filesBeforeFlush || blocks >= m_blocksBeforeFlush) {
+            flush("Normal flush because thresholds was reached",blocks,files);
+            files=0;
+            blocks=0;
+          }
+        }
+        else{
+          flush("End of TapeWriteWorkerThread::run() (flushing",blocks,files);
+          m_reportPacker.reportEndOfSession();
           return;
         }
-      }
+      } 
     }
-      
+    catch(const castor::exception::Exception& e){
+      log::LogContext::ScopedParam sp1(m_logContext, log::Param("what", e.what()));
+      log::LogContext::ScopedParam sp2(m_logContext, log::Param("error_MessageValue", e.getMessageValue()));
+      m_logContext.log(LOG_INFO,"An error occurred during TapwWriteSingleThread::execute");
+      m_reportPacker.reportEndOfSessionWithErrors(e.what(),e.code());
+    }
+  }
+  
   int m_filesBeforeFlush;
   int m_blocksBeforeFlush;
   
+  castor::tape::drives::DriveInterface& m_drive;
   MigrationReportPacker & m_reportPacker;
+  const std::string m_vid;
+  const uint32_t m_lastFseq;
+  const bool m_compress;
 };
 }}}}

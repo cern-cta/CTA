@@ -58,9 +58,35 @@ public :
       tapegateway::VolumeMode volumeMode;
     };
     
+    /**
+     * Asks the the client for files to recall, with at least files files, or
+     * bytes bytes of data, whichever limit is passed first.
+     * Detailed interface is still TBD.
+     * @param files files count requested.
+     * @param bytes total bytes count requested
+     * @param report Placeholder to network timing information,
+     * populated during the call and used by the caller to log performance 
+     * and context information
+     */
     virtual tapegateway::FilesToRecallList* getFilesToRecall(uint64_t files,
     uint64_t bytes, RequestReport &report)  = 0;
 
+    /**
+     * Asks the the client for files to migrate, with at least files files, or
+     * bytes bytes of data, whichever limit is passed first.
+     * Detailed interface is still TBD.
+     * @param files files count requested.
+     * @param bytes total bytes count requested
+     * @param report Placeholder to network timing information,
+     * populated during the call and used by the caller to log performance 
+     * and context information
+     * @return a pointer (to be deleted by the user) to a 
+     * tapegateway::FilesToMigrateList is non-empty or NULL if not more
+     * files could be retrieved.
+     */
+    virtual tapegateway::FilesToMigrateList * getFilesToMigrate(uint64_t files, 
+    uint64_t bytes, RequestReport &report) =0;
+    
     /**
      * Reports the result of migrations to the client.
      * Detailed interface is still TBD.

@@ -1141,6 +1141,24 @@ void castor::io::marshalUint16(const uint16_t src, char * &dst)
 }
 
 //------------------------------------------------------------------------------
+// marshalInt32
+//------------------------------------------------------------------------------
+void castor::io::marshalInt32(const int32_t src, char * &dst)
+  throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to marshal int32_t"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  const int32_t netByteOrder = htonl(src);
+  memcpy(dst, &netByteOrder, sizeof(src));
+  dst += sizeof(src);
+}
+
+//------------------------------------------------------------------------------
 // marshalUint32
 //------------------------------------------------------------------------------
 void castor::io::marshalUint32(const uint32_t src, char * &dst)

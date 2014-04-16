@@ -113,7 +113,7 @@ int castor::tape::tapegateway::FileToRecallStruct::type() const {
 //------------------------------------------------------------------------------
 // clone
 //------------------------------------------------------------------------------
-castor::IObject* castor::tape::tapegateway::FileToRecallStruct::clone() {
+castor::tape::tapegateway::FileToRecallStruct* castor::tape::tapegateway::FileToRecallStruct::clone() {
   return new FileToRecallStruct(*this);
 }
 

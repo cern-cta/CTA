@@ -51,7 +51,7 @@ public:
   /**
    * Constructor.
    *
-   * @param connection The file descriptor of the connection with the vdqmd
+   * @param fd The file descriptor of the connection with the vdqmd
    * daemon.
    * @param reactor The reactor with which this event handler is registered.
    * @param log The object representing the API of the CASTOR logging system.
@@ -59,7 +59,7 @@ public:
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
    */
-  VdqmConnectionHandler(const int connection, io::PollReactor &reactor,
+  VdqmConnectionHandler(const int fd, io::PollReactor &reactor,
     log::Logger &log, Vdqm &vdqm, DriveCatalogue &driveCatalogue) throw();
 
   /**
@@ -78,7 +78,7 @@ public:
    *
    * @param fd The poll file-descriptor describing the event.
    */
-  void handleEvent(const struct pollfd &fd) throw(castor::exception::Exception);
+  bool handleEvent(const struct pollfd &fd) throw(castor::exception::Exception);
 
   /**
    * Destructor.
@@ -92,7 +92,7 @@ private:
   /**
    * The file descriptor of the connection with the vdqm daemon.
    */
-  const int m_connection;
+  const int m_fd;
 
   /**
    * The reactor with which this event handler is registered.
@@ -146,37 +146,37 @@ private:
    * daemon.
    * @return The job request from the vdqm.
    */
-  legacymsg::RtcpJobRqstMsgBody readJobMsg(const int connection)
+  legacymsg::RtcpJobRqstMsgBody readJobMsg(const int fd)
     throw(castor::exception::Exception);
   
   /**
    * Reads the header of a job message from the specified connection.
    *
-   * @param connection The file descriptor of the connection with the vdqm
+   * @param fd The file descriptor of the connection with the vdqm
    * daemon.
    * @return The message header.
    */
-  legacymsg::MessageHeader readJobMsgHeader(const int connection)
+  legacymsg::MessageHeader readJobMsgHeader(const int fd)
     throw(castor::exception::Exception);
   
   /**
    * Reads the body of a job message from the specified connection.
    *
-   * @param connection The file descriptor of the connection with the vdqm
+   * @param fd The file descriptor of the connection with the vdqm
    * daemon.
    * @param len The length of the message body in bytes.
    * @return The message body.
    */
-  legacymsg::RtcpJobRqstMsgBody readJobMsgBody(const int connection,
+  legacymsg::RtcpJobRqstMsgBody readJobMsgBody(const int fd,
     const uint32_t len) throw(castor::exception::Exception);
 
   /**
    * Writes a job reply message to the specified connection.
    *
-   * @param connection The file descriptor of the connection with the vdqm
+   * @param fd The file descriptor of the connection with the vdqm
    * daemon.
    */
-  void writeJobReplyMsg(const int connection)
+  void writeJobReplyMsg(const int fd)
     throw(castor::exception::Exception);
 
 }; // class VdqmConnectionHandler

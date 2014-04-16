@@ -43,23 +43,26 @@ class PollReactor {
 public:
 
   /**
+   * Destructor.
+   */
+  virtual ~PollReactor() throw() = 0;
+
+  /**
+   * Removes and deletes all of the event handlers registered with the reactor.
+   */
+  virtual void clear() throw() = 0;
+
+  /**
    * Registers the specified handler.
    *
    * Please note that the reactor takes ownership of the handler and will
    * delete it as appropriate.
    *
-   * @param handler The handler to be registered.
+   * @param handler The handler to be registered.  Please note that the handler
+   * MUST be allocated on the heap because the reactor will own the handler
+   * and therefore delete it as needed.
    */
   virtual void registerHandler(PollEventHandler *const handler)
-    throw(castor::exception::Exception) = 0;
-
-  /**
-   * Removes the specified handler from the reactor.  This method effectively
-   * does the opposite of registerHandler().
-   *
-   * @param handler The handler to be removed.
-   */
-  virtual void removeHandler(PollEventHandler *const handler)
     throw(castor::exception::Exception) = 0;
 
   /**
@@ -69,11 +72,6 @@ public:
    */
   virtual void handleEvents(const int timeout)
     throw(castor::exception::Exception) = 0;
-
-  /**
-   * Destructor.
-   */
-  virtual ~PollReactor() throw() = 0;
 
 }; // class PollReactor
 
