@@ -119,8 +119,6 @@ namespace castor {
     OBJ_FileQryResponse = 117,
     OBJ_DiskPoolQueryResponse = 118,
 
-    OBJ_StageRepackRequest = 119,
-
     OBJ_Client = 129,
 
     OBJ_JobSubmissionRequest = 130,

@@ -23,20 +23,14 @@
 int  rfio_rename(char  *fileo,  /* remote old path     */
                  char *filen)  /* remote new path              */
 {
-  char     buf[BUFSIZ];       /* General input/output buffer          */
-  register int    s;              /* socket descriptor            */
   int             status;         /* remote rename() status       */
-  int      len;
   char     hostnameo[MAXHOSTNAMELEN],
     hostnamen[MAXHOSTNAMELEN],
     filenameo[MAXFILENAMSIZE],
     filenamen[MAXFILENAMSIZE];
-  char  *host,
-    *path;
-  char     *p=buf;
-  int   rt, parserc ;
-  int   rcode ;
-  int  rpo, rpn;
+  char  *host, *path;
+  int parserc ;
+  int rpo, rpn;
 
   INIT_TRACE("RFIO_TRACE");
   TRACE(1, "rfio", "rfio_rename(%s, %s)", fileo, filen);
@@ -102,55 +96,9 @@ int  rfio_rename(char  *fileo,  /* remote old path     */
     return(status);
   }
 
-  s = rfio_connect(hostnameo,&rt);
-  if (s < 0)      {
-    END_TRACE();
-    return(-1);
-  }
-
-  len = strlen(filenameo) + strlen(filenamen) + 2;
-  if ( RQSTSIZE+len > BUFSIZ ) {
-    TRACE(2,"rfio","rfio_rename: request too long %d (max %d)",
-          RQSTSIZE+len,BUFSIZ);
-    END_TRACE();
-    (void) close(s);
-    serrno = E2BIG;
-    return(-1);
-  }
-  marshall_WORD(p, RFIO_MAGIC);
-  marshall_WORD(p, RQST_RENAME);
-  marshall_WORD(p, geteuid());
-  marshall_WORD(p, getegid());
-  marshall_LONG(p, len);
-  p= buf + RQSTSIZE;
-  marshall_STRING(p, filenameo);
-  marshall_STRING(p, filenamen);
-  TRACE(1,"rfio","rfio_rename: filenameo %s, filenamen %s",
-        filenameo, filenamen);
-  TRACE(2,"rfio","rfio_rename: sending %d bytes",RQSTSIZE+len) ;
-  if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
-    TRACE(2, "rfio", "rfio_rename: write(): ERROR occured (errno=%d)", errno);
-    (void) close(s);
-    END_TRACE();
-    return(-1);
-  }
-  p = buf;
-  TRACE(2, "rfio", "rfio_rename: reading %d bytes", LONGSIZE);
-  if (netread_timeout(s, buf, 2 * LONGSIZE, RFIO_CTRL_TIMEOUT) != (2 * LONGSIZE))  {
-    TRACE(2, "rfio", "rfio_rename: read(): ERROR occured (errno=%d)", errno);
-    (void) close(s);
-    END_TRACE();
-    return(-1);
-  }
-  unmarshall_LONG(p, status);
-  unmarshall_LONG(p, rcode);
-  TRACE(1, "rfio", "rfio_rename: return %d",status);
-  rfio_errno = rcode;
-  (void) close(s);
-  if (status)     {
-    END_TRACE();
-    return(-1);
-  }
+  // Remote call. Not supported anymore
+  TRACE(1, "rfio", "rfio_rename: return %d",SEOPNOTSUP);
+  rfio_errno = SEOPNOTSUP;
   END_TRACE();
-  return (0);
+  return(-1);
 }

@@ -35,7 +35,7 @@ namespace castor{
         ~SetGCWeightHandler() throw() {};
 
         /* SetFileGCWeight handle implementation */
-        virtual bool handle() throw(castor::exception::Exception);
+        virtual void handle() throw(castor::exception::Exception);
         
       }; //end SetGCWeightHandler class
 

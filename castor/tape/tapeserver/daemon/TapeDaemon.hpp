@@ -29,7 +29,9 @@
 #include "castor/io/PollReactor.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
+#include "castor/tape/tapeserver/daemon/Rmc.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
+#include "castor/tape/tapeserver/daemon/Vmgr.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <iostream>
@@ -55,15 +57,27 @@ public:
   /**
    * Constructor.
    *
+   * @param argc The argc of main().
+   * @param argv The argv of main().
    * @param stdOut Stream representing standard out.
    * @param stdErr Stream representing standard error.
    * @param log The object representing the API of the CASTOR logging system.
-   * @param vdqm The object representing the vdqmd daemon.
+   * @param vdqm The proxy object representing the vdqmd daemon.
+   * @param vmgr The proxy object representing the vmgrd daemon.
+   * @param rmc The proxy object representing the rmcd daemon.
    * @param reactor The reactor responsible for dispatching the I/O events of
    * the parent process of the tape server daemon.
    */
-  TapeDaemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &log,
-    Vdqm &vdqm, io::PollReactor &reactor) throw(castor::exception::Exception);
+  TapeDaemon(
+    const int argc,
+    char **const argv,
+    std::ostream &stdOut,
+    std::ostream &stdErr,
+    log::Logger &log,
+    Vdqm &vdqm,
+    Vmgr &vmgr,
+    Rmc &rmc,
+    io::PollReactor &reactor) throw(castor::exception::Exception);
 
   /**
    * Destructor.
@@ -152,6 +166,18 @@ protected:
   void setUpReactor() throw(castor::exception::Exception);
 
   /**
+   * Creates the handler to accept connections from the vdqmd daemon and
+   * registers it with the reactor.
+   */
+  void createAndRegisterVdqmAcceptHandler() throw(castor::exception::Exception);
+
+  /**
+   * Creates the handler to accept connections from the admin commands and
+   * registers it with the reactor.
+   */
+  void createAndRegisterAdminAcceptHandler() throw(castor::exception::Exception);
+
+  /**
    * The main event loop of the tape-server daemon.
    */
   void mainEventLoop() throw(castor::exception::Exception);
@@ -176,15 +202,88 @@ protected:
   void reapZombies() throw();
 
   /**
+   * Reaps the specified zombie process.
+   *
+   * @param sessionPid The process ID of the zombie mount-session child-process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void reapZombie(const pid_t sessionPid, const int waitpidStat) throw();
+
+  /**
+   * Logs the fact that the specified mount-session child-process has terminated.
+   *
+   * @param sessionPid The process ID of the mount-session child-process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void logMountSessionProcessTerminated(const pid_t sessionPid, const int waitpidStat) throw();
+
+  /**
+   * Sets the state of the tape drive asscoiated with the specified
+   * mount-session process to down within the vdqmd daemon.
+   *
+   * If for any reason the state of the drive within the vdqmd daemon cannot
+   * be set to down, then this method logs an appropriate error message but
+   * does not throw an exception.
+   *
+   * @param sessionPid The process ID of the mount-session child-process.
+   */
+  void setDriveDownInVdqm(const pid_t sessionPid) throw();
+
+  /**
+   * Forks a mount-session child-process for every tape drive entry in the
+   * tape drive catalogue that is waiting for such a fork to be carried out.
+   */
+  void forkWaitingMountSessions() throw();
+
+  /**
+   * Forks a mount-session child-process for the specified tape drive.
+   *
+   * @param unitName The unit name of the tape drive.
+   */ 
+  void forkWaitingMountSession(const std::string &unitName) throw();
+
+  /**
+   * Runs the mount session.  This method is to be called within the child
+   * process responsible for running the mount session.
+   *
+   * This method calls exceptionThrowingMountSession() and converts any
+   * unexpected exceptions to appropriate calls to exit().
+   *
+   * @param unitName The unit name of the tape drive.
+   */
+  void mountSession(const std::string &unitName) throw();
+
+  /**
    * Catalogue used to keep track of both the initial and current state of
    * each tape drive being controlled by the tapeserverd daemon.
    */
   DriveCatalogue m_driveCatalogue;
 
+  
   /**
-   * The object representing the vdqmd daemon.
+   * The argc of main().
+   */
+  const int m_argc;
+
+  /**
+   * The argv of main().
+   */
+  char **const m_argv;
+
+  /**
+   * The proxy object representing the vdqmd daemon.
    */
   Vdqm &m_vdqm;
+
+  /**
+   * The proxy object representing the vmgrd daemon.
+   */
+  Vmgr &m_vmgr;
+
+  /**
+   * The proxy object representing the rmcd daemon.
+   */
+  Rmc &m_rmc;
 
   /**
    * The reactor responsible for dispatching the file-descriptor event-handlers

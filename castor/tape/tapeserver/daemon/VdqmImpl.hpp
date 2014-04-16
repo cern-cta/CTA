@@ -48,8 +48,7 @@ public:
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    */
-  VdqmImpl(log::Logger &log, const std::string &vdqmHostName,
-    const unsigned short vdqmPort, const int netTimeout) throw();
+  VdqmImpl(log::Logger &log, const std::string &vdqmHostName, const unsigned short vdqmPort, const int netTimeout) throw();
 
   /**
    * Destructor.
@@ -67,9 +66,7 @@ public:
    * @param unitName The unit name of the tape drive. 
    * @param dgn The device group name of the tape drive.
    */
-  void setTapeDriveStatusDown(const std::string &server,
-    const std::string &unitName, const std::string &dgn)
-    throw(castor::exception::Exception);
+  void setDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception);
 
   /**
    * Sets the status of the specified tape drive to up.
@@ -79,23 +76,67 @@ public:
    * @param unitName The unit name of the tape drive.
    * @param dgn The device group name of the tape drive.
    */
-  void setTapeDriveStatusUp(const std::string &server,
-    const std::string &unitName, const std::string &dgn)
-    throw(castor::exception::Exception);
+  void setDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception);
+
+  /**
+   * Sets the status of the specified tape drive to assign.
+   *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive.
+   * @param mountTransactionId The mount transaction ID.
+   * @param sessionPid The process ID of the tape-server daemon's mount-session
+   * process.
+   */
+  void assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t sessionPid) throw(castor::exception::Exception);
+
+  /**
+   * Notifies the vdqmd daemon of the specified tape mount.
+   *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive.
+   * @param vid The volume identifier of the mounted tape.
+   * @param sessionPid The process ID of the tape-server daemon's mount-session
+   * process.
+   */
+  void tapeMounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid) throw(castor::exception::Exception);
+
+  /**
+   * Sets the status of the specified tape drive to release.
+   *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive.
+   * @param forceUnmount Set to true if the current tape mount should not be
+   * reused.
+   * @param sessionPid The process ID of the tape-server daemon's mount-session
+   * process.
+   */
+  void releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid) throw(castor::exception::Exception);
+
+  /**
+   * Notifies the vdqmd daemon that the specified tape has been dismounted.
+   *
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive.
+   * @param vid The volume identifier of the mounted tape.
+   */
+  void tapeUnmounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid) throw(castor::exception::Exception);
 
 private:
 
   /**
-   * Sets the status of the specified drive to the specified value.
+   * Sets the status of a tape drive.
    *
-   * @param server The host name of the server to which the tape drive is
-   * attached.
-   * @param unitName The unit name of the tape drive. 
-   * @param dgn The device group name of the tape drive.
+   * @param body The message body defining the drive and status.
    */
-  void setTapeDriveStatus(const std::string &server,
-    const std::string &unitName, const std::string &dgn,
-    const int status) throw(castor::exception::Exception);
+  void setDriveStatus(const legacymsg::VdqmDrvRqstMsgBody &body) throw(castor::exception::Exception);
 
   /**
    * Connects to the vdqmd daemon.
@@ -104,61 +145,58 @@ private:
    */
   int connectToVdqm() const throw(castor::exception::Exception);
 
-  void writeDriveStatusMsg(
-    const int connection, const std::string &server,
-    const std::string &unitName, const std::string &dgn, const int status)
-    throw(castor::exception::Exception);
+  /**
+   * Writes a drive status message with the specifed contents to the specified
+   * connection.
+   *
+   * @param body The message body defining the drive and status.
+   */
+  void writeDriveStatusMsg(const int fd, const legacymsg::VdqmDrvRqstMsgBody &body) throw(castor::exception::Exception);
 
   /**
    * Reads a VDQM_COMMIT ack message from the specified connection.
    *
-   * @param connection The file-descriptor of the connection.
+   * @param fd The file-descriptor of the connection.
    * @return The message.
    */
-  void readCommitAck(const int connection)
-    throw(castor::exception::Exception);
+  void readCommitAck(const int fd) throw(castor::exception::Exception);
 
   /**
    * Reads an ack message from the specified connection.
    *
-   * @param connection The file-descriptor of the connection.
+   * @param fd The file-descriptor of the connection.
    * @return The message.
    */
-  legacymsg::MessageHeader readAck(const int connection)
-    throw(castor::exception::Exception);
+  legacymsg::MessageHeader readAck(const int fd) throw(castor::exception::Exception);
 
   /**
    * Reads drive status message from the specified connection and discards it.
    *
-   * @param connection The file-descriptor of the connection.
+   * @param fd The file-descriptor of the connection.
    */
-  void readDriveStatusMsg(const int connection)
-    throw(castor::exception::Exception);
+  void readDriveStatusMsg(const int fd) throw(castor::exception::Exception);
 
   /**
    * Reads the header of a drive status message from the specified connection.
    *
-   * @param connection The file-descriptor of the connection.
+   * @param fd The file-descriptor of the connection.
    * @return The message header.
    */
-  legacymsg::MessageHeader readDriveStatusMsgHeader(const int connection)
-    throw(castor::exception::Exception);
+  legacymsg::MessageHeader readDriveStatusMsgHeader(const int fd) throw(castor::exception::Exception);
 
   /**
    * Reads the body of a drive status message from the specified connection.
-   * @param connection The file-descriptor of the connection.
+   * @param fd The file-descriptor of the connection.
    * @return The message body.
    */
-  legacymsg::VdqmDrvRqstMsgBody readDriveStatusMsgBody(const int connection,
-    const uint32_t bodyLen) throw(castor::exception::Exception);
+  legacymsg::VdqmDrvRqstMsgBody readDriveStatusMsgBody(const int fd, const uint32_t bodyLen) throw(castor::exception::Exception);
 
   /**
    * Writes a VDQM_COMMIT ack message to the specified connection.
    *
-   * @param connection The file-descriptor of the connection.
+   * @param fd The file-descriptor of the connection.
    */
-  void writeCommitAck(const int connection)
-    throw(castor::exception::Exception);
+  void writeCommitAck(const int fd) throw(castor::exception::Exception);
 
   /**
    * The object representing the API of the CASTOR logging system.

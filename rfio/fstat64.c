@@ -122,9 +122,6 @@ int rfio_fstat64(int            s,
       return status ;
     case RQST_READAHEAD:
     case RQST_READAHD64:
-    case RQST_LASTSEEK:
-    case RQST_PRESEEK:
-    case RQST_PRESEEK64:
       /*
        * At this point a temporary buffer may need to be created
        * to receive data which is going to be thrown away.

@@ -200,9 +200,12 @@ class TransferManagerService(rpyc.Service):
 
   def exposed_summarizeTransfersPerPool(self, diskPool=None, user=None, detailed=False):
     '''summarizes the number of running and pending transfers per diskpool for a given diskpool and user.
-    Returns a tuple of tuples, with the diskpool name as first item, then a list of data that depends
+    Returns a pair containing :
+      - a tuple of tuples, with the diskpool name as first item, then a list of data that depends
     on the status of the diskpool and on the value of the the detailed parameter.
-    If the diskpool is unknown or has no hosts in it, then only the diskpool name is present in each tuple.
+      - a tuple of errors
+    If the diskpool is unknown or has no hosts in it, then only the diskpool name is present
+    in each tuple of the first element.
     Else the number of unique transfers in the pool plus all values returned by each diskmanagerd
     summed up by pool are added to each tuple after the disk pool name. This last set varies depending
     on the detailed parameter.
@@ -220,11 +223,13 @@ class TransferManagerService(rpyc.Service):
     dlf.writedebug(msgs.INVOKINGSUMMARIZETRANSFERSPERPOOL, DiskPool=diskPool, Username=user, Detailed=detailed)
     # get the raw data per diskserveras a dictionnary of dictionnaries (svclass then diskserver level)
     nbs = self.dispatch('summarizeTransfers', diskPool, user, detailed)
+    errorMsg = ''
     # get the number of unique transfers running per diskpool
     try:
       nbtransfersPerPool = self._computeNbTransfersPerPool(diskPool, user)
-    except IOError:
+    except IOError, e:
       nbtransfersPerPool = None
+      errorMsg = str(e)
     # flatten all data to a list of (diskpool, (values))
     res = []
     for diskPool in nbs:
@@ -252,7 +257,7 @@ class TransferManagerService(rpyc.Service):
         res.append(tuple([diskPool, nbtransfers] + data + [tuple(unreachableMachines)]))
       else:
         res.append((diskPool,))
-    return tuple(res)
+    return (tuple(res), errorMsg)
 
   def exposed_summarizeTransfersPerHost(self, diskPool=None, user=None, detailed=False):
     '''summarizes the number of running and pending transfers per host for a given diskpool and user.

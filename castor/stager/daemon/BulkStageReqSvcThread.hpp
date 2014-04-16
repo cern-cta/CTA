@@ -35,7 +35,6 @@ namespace castor {
 
     // forward declarations
     class BulkRequestResult;
-    class StageRepackRequest;
 
     namespace daemon {
 

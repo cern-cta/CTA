@@ -27,16 +27,8 @@
 struct dirent *rfio_readdir(dirp)
      RDIR *dirp;
 {
-  int status ;  /* Status and return code from remote   */
-  int rcode;
-  int req;
-  int s;
   int s_index;
-  int namlen;
   struct dirent *de;
-  char *p;
-  extern RDIR *rdirfdt[MAXRFD];
-  char     rfio_buf[BUFSIZ];
 
   INIT_TRACE("RFIO_TRACE");
   TRACE(1, "rfio", "rfio_readdir(%x)", dirp);
@@ -63,78 +55,10 @@ struct dirent *rfio_readdir(dirp)
     return(de);
   }
 
-  s = rdirfdt[s_index]->s;
-
-  /*
-   * Associate the static dirent area allocate with this
-   * directory descriptor.
-   */
-
-  de = (struct dirent *)rdirfdt[s_index]->dp.dd_buf;
-
-  /*
-   * Checking magic number.
-   */
-  if (rdirfdt[s_index]->magic != RFIO_MAGIC) {
-    serrno = SEBADVERSION ;
-    rfio_rdirfdt_freeentry(s_index);
-    (void) close(s) ;
-    END_TRACE();
-    return(NULL);
-  }
-  p = rfio_buf;
-  marshall_WORD(p, RFIO_MAGIC);
-  marshall_WORD(p, RQST_READDIR) ;
-  TRACE(2,"rfio","rfio_readdir: writing %d bytes",RQSTSIZE) ;
-  if (netwrite_timeout(s,rfio_buf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {
-    TRACE(2,"rfio","rfio_readdir: write(): ERROR occured (errno=%d)", errno) ;
-    END_TRACE() ;
-    return(NULL) ;
-  }
-  TRACE(2, "rfio", "rfio_readdir: reading %d bytes",WORDSIZE+3*LONGSIZE) ;
-  if ( netread_timeout(s,rfio_buf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE) ) {
-    TRACE(2,"rfio","rfio_readdir: read(): ERROR occured (errno=%d)", errno);
-    END_TRACE();
-    return(NULL) ;
-  }
-  p= rfio_buf ;
-  unmarshall_WORD(p,req) ; /* RQST_READDIR */
-  unmarshall_LONG(p,status) ;
-  unmarshall_LONG(p, rcode) ;
-  unmarshall_LONG(p,namlen) ;
-  if ( status < 0 ) {
-    rfio_errno= rcode ;
-    if ( rcode == 0 )
-      serrno = SENORCODE ;
-    END_TRACE() ;
-    return(NULL) ;
-  }
-  if ( namlen > 0 ) {
-    TRACE(2, "rfio", "rfio_readdir: reading %d bytes",namlen) ;
-    memset(de->d_name,'\0',256);
-    /* Directory name is of a small size, so I put RFIO_CTRL_TIMEOUT instead */
-    /* of RFIO_DATA_TIMEOUT */
-    if ( netread_timeout(s,de->d_name,namlen,RFIO_CTRL_TIMEOUT) != namlen ) {
-      TRACE(2,"rfio","rfio_readdir: read(): ERROR occured (errno=%d)", errno);
-      END_TRACE();
-      return(NULL) ;
-    }
-    /*
-     * Update the directory offset.
-     */
-    dirp->offset++;
-    dirp->dp.dd_loc = dirp->offset;
-    de->d_reclen = sizeof(struct dirent) + namlen;
-#if !defined(linux)
-    de->d_namlen = namlen;
-#endif
-  } else {
-    TRACE(2,"rfio","rfio_readdir: no more directory entries");
-    END_TRACE();
-    return(NULL);
-  }
-  END_TRACE();
-  return(de);
+  // Remote directory. Not supported anymore
+  rfio_errno = SEOPNOTSUP;
+  END_TRACE() ;
+  return(NULL) ;
 }
 
 #if !defined(linux)

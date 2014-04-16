@@ -66,13 +66,10 @@ EXTERN_C int rfio_chown (char *, int, int);
 EXTERN_C int rfio_close (int);
 EXTERN_C int rfio_close_v3 (int);
 EXTERN_C int rfio_end (void);  /* Close connections opened by rfio_mstat() */
-EXTERN_C int rfio_symend (void); /* Close connections opened by rfio_msymlink() */
-EXTERN_C int rfio_unend (void); /* Close connections opened by rfio_munlink() */
 EXTERN_C int rfio_fchmod (int, int);
 EXTERN_C int rfio_fchown (int, int, int);
 EXTERN_C int rfio_fstat (int, struct stat *);
 EXTERN_C char *rfio_getcwd (char *, int);
-EXTERN_C int rfio_lockf (int, int, long);
 EXTERN_C off_t rfio_lseek (int, off_t, int);
 EXTERN_C int rfio_lstat (char *, struct stat *);
 EXTERN_C int rfio_mkdir (char *, int);
@@ -80,8 +77,6 @@ EXTERN_C int rfio_mstat (char *, struct stat *);
 EXTERN_C int rfio_munlink (char *);
 EXTERN_C int rfio_msymlink (char *, char *);
 EXTERN_C int rfio_mstat_reset (void);  /* Reset connections opened by rfio_mstat() [fork() case] */
-EXTERN_C int rfio_munlink_reset (void);  /* Reset connections opened by rfio_mstat() [fork() case] */
-EXTERN_C int rfio_msymlink_reset (void);  /* Reset connections opened by rfio_mstat() [fork() case] */
 #if defined(RFIO_KERNEL)
 EXTERN_C int rfio_open (char *, int, int);
 #else /* RFIO_KERNEL */
@@ -123,7 +118,6 @@ EXTERN_C int rfio_lseek_v3 (int, int, int);
 #if ! defined(linux) || defined(_LARGEFILE64_SOURCE)
 EXTERN_C int rfio_close64_v3 (int);
 EXTERN_C int rfio_fstat64 (int, struct stat64 *);
-EXTERN_C int rfio_lockf64 (int, int, off64_t);
 EXTERN_C off64_t rfio_lseek64 (int, off64_t, int);
 EXTERN_C off64_t rfio_lseek64_v3 (int, off64_t, int);
 EXTERN_C int rfio_lstat64 (char *, struct stat64 *);
@@ -154,7 +148,6 @@ EXTERN_C int rfio_feof (RFILE *);
 EXTERN_C int rfio_ferror (RFILE *);
 EXTERN_C int rfio_cleanup (int);
 EXTERN_C int rfio_cleanup_v3 (int);
-EXTERN_C int rfio_dircleanup (int);
 EXTERN_C int rfio_fflush (RFILE *);
 EXTERN_C int rfio_fileno (RFILE *);
 EXTERN_C RFILE *rfio_fopen (char *, char *);

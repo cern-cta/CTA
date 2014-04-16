@@ -1,4 +1,0 @@
-<rfcp> <localFileName> <remoteFileName>
-rfrename <remoteFileName> <remoteFileName1>
-rfdir <remoteFileName>
-rfdir <remoteFileName1>

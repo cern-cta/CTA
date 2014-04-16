@@ -18,16 +18,10 @@
 int rfio_mkdir(char  *dirpath,          /* remote directory path             */
 	       int  mode)              /* remote directory mode             */
 {
-  char     buf[BUFSIZ];       /* General input/output buffer          */
-  register int    s;              /* socket descriptor            */
   int             status;         /* remote mkdir() status        */
-  int      len;
   char     *host;
   char     *filename;
-  char     *p=buf;
-  int   rt ;
-  int   rcode, parserc ;
-  mode_t curmask;
+  int parserc ;
 
   INIT_TRACE("RFIO_TRACE");
   TRACE(1, "rfio", "rfio_mkdir(%s, %o)", dirpath, mode);
@@ -58,59 +52,9 @@ int rfio_mkdir(char  *dirpath,          /* remote directory path             */
     return(-1);
   }
 
-  /* Applies the umask to the mode                     */
-  curmask = umask(0);          /* get the mode         */
-  umask(curmask);              /* restore it           */
-  mode &= ~curmask;            /* and apply it to mode */
-
-  len = strlen(filename)+ LONGSIZE + 1;
-  if ( len > BUFSIZ ) {
-    TRACE(2, "rfio", "rfio_mkdir: request too long %d (max %d)", len, BUFSIZ);
-    rfio_errno = 0;
-    serrno = E2BIG;
-    return(-1);
-  }
-
-
-  s = rfio_connect(host,&rt);
-  if (s < 0)      {
-    END_TRACE();
-    return(-1);
-  }
-
-  marshall_WORD(p, RFIO_MAGIC);
-  marshall_WORD(p, RQST_MKDIR);
-  marshall_WORD(p, geteuid());
-  marshall_WORD(p, getegid());
-  marshall_LONG(p, len);
-  p= buf + RQSTSIZE;
-  marshall_STRING(p, filename);
-  marshall_LONG(p, mode);
-  TRACE(1,"rfio","rfio_mkdir: mode %o",mode);
-  TRACE(2,"rfio","rfio_mkdir: sending %d bytes",RQSTSIZE+len) ;
-  if (netwrite_timeout(s,buf,RQSTSIZE+len,RFIO_CTRL_TIMEOUT) != (RQSTSIZE+len)) {
-    TRACE(2, "rfio", "rfio_mkdir: write(): ERROR occured (errno=%d)", errno);
-    (void) close(s);
-    END_TRACE();
-    return(-1);
-  }
-  p = buf;
-  TRACE(2, "rfio", "rfio_mkdir: reading %d bytes", LONGSIZE);
-  if (netread_timeout(s, buf, 2* LONGSIZE, RFIO_CTRL_TIMEOUT) != (2 * LONGSIZE))  {
-    TRACE(2, "rfio", "rfio_mkdir: read(): ERROR occured (errno=%d)", errno);
-    (void) close(s);
-    END_TRACE();
-    return(-1);
-  }
-  unmarshall_LONG(p, status);
-  unmarshall_LONG(p, rcode);
-  TRACE(1, "rfio", "rfio_mkdir: return %d",status);
-  rfio_errno = rcode;
-  (void) close(s);
-  if (status)     {
-    END_TRACE();
-    return(-1);
-  }
+  // Remote directory. Not supported anymore
+  TRACE(1, "rfio", "rfio_mkdir: return %d", SEOPNOTSUP);
+  rfio_errno = SEOPNOTSUP;
   END_TRACE();
-  return (0);
+  return(-1);
 }

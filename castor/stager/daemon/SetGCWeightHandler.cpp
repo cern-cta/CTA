@@ -31,7 +31,7 @@ namespace castor{
   namespace stager{
     namespace daemon{
             
-      bool SetGCWeightHandler::handle() throw(castor::exception::Exception)
+      void SetGCWeightHandler::handle() throw(castor::exception::Exception)
       {
         RequestHandler::handle();
         
@@ -81,8 +81,8 @@ namespace castor{
                                ((unsigned)reqHelper->fileRequest->type() < castor::ObjectsIdsNb ?
                                 castor::ObjectsIdStrings[reqHelper->fileRequest->type()] : "Unknown")),
             castor::dlf::Param("Filename", reqHelper->subrequest->fileName()),
-            castor::dlf::Param("Username", reqHelper->username),
-            castor::dlf::Param("Groupname", reqHelper->groupname),
+            castor::dlf::Param("uid", reqHelper->euid),
+            castor::dlf::Param("gid", reqHelper->egid),
             castor::dlf::Param("SvcClass", reqHelper->svcClass->name()),
             castor::dlf::Param("Weight", setGCWeightReq->weight())
           };
@@ -110,7 +110,6 @@ namespace castor{
           castor::dlf::dlf_writep(reqHelper->requestUuid, DLF_LVL_ERROR, STAGER_SETGC, 2 ,params, &(reqHelper->cnsFileid));
           throw(e); 
         }
-        return true;
       }
       
     }//end namespace daemon

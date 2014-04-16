@@ -66,7 +66,7 @@ TEST_F(castor_server_VdqmMarshalTest, marshalVdqmDrvRqstMsgBody) {
     castor::utils::copyString(srcMsgBody.dedicate, "DCT");
 
     size_t bufLen = sizeof(buf);
-    size_t totalLen = 0; // Total length of message (header _ body)
+    size_t totalLen = 0; // Total length of message (header + body)
 
     ASSERT_NO_THROW(totalLen = marshal(buf, bufLen, srcMsgBody));
 

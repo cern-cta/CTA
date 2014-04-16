@@ -1,12 +1,18 @@
 add_executable(tapeserverd
+  AdminAcceptHandler.cpp
+  DebugMountSessionForVdqmProtocol.cpp
   DriveCatalogue.cpp
+  Rmc.cpp
+  RmcImpl.cpp
+  ScsiLibraryDriveName.cpp
   TapeDaemon.cpp
   TapeDaemonMain.cpp
   Vdqm.cpp
   VdqmAcceptHandler.cpp
-  AdminAcceptHandler.cpp
   VdqmConnectionHandler.cpp
-  VdqmImpl.cpp)
+  VdqmImpl.cpp
+  Vmgr.cpp
+  VmgrImpl.cpp)
 
 target_link_libraries(tapeserverd
   Exception
@@ -16,6 +22,7 @@ target_link_libraries(tapeserverd
   File
   castorcommon
   castorclient
+  castortapegatewayprotocol
   castortapelegacymsg)
 
 install (TARGETS tapeserverd DESTINATION ${CASTOR_DEST_BIN_DIR})

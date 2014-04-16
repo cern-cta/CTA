@@ -25,10 +25,6 @@
 
 #pragma once
 
-int  srchk(
-           int     s
-           );
-
 int   srerrmsg(
                int     s
                );
@@ -42,8 +38,4 @@ int   srfread(
 int   srfwrite(
                int     s,
                FILE    *fp);
-
-int   srpclose(
-               int     s,
-               FILE    *fs);
 

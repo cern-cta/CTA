@@ -270,6 +270,18 @@ static void check32BitsWereMarshalledBigEndian(const char *const buf) {
   ASSERT_EQ(0x21 & 0xFF, buf[3] & 0xFF);
 }
 
+TEST_F(castor_io_IoTest, marshalInt32) {
+  const int32_t v = 0x87654321;
+  char buf[4];
+  char *ptr = buf;
+
+  memset(buf, '\0', sizeof(buf));
+
+  ASSERT_NO_THROW(castor::io::marshalInt32(v, ptr));
+  ASSERT_EQ(buf+4, ptr);
+  check32BitsWereMarshalledBigEndian(buf);
+}
+
 TEST_F(castor_io_IoTest, marshalUint32) {
   const uint32_t v = 0x87654321;
   char buf[4];

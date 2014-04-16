@@ -36,7 +36,7 @@
 #define	CA_MAXMLLEN        1	/* maximum length for a cartridge media_letter */
 #define	CA_MAXMODELLEN     6	/* maximum length for a cartridge model */
 #define	CA_MAXNAMELEN    255	/* maximum length for a pathname component */
-#define	CA_MAXNBDRIVES    32	/* maximum number of tape drives per server */
+#define	CA_MAXNBDRIVES     4	/* maximum number of tape drives per server */
 #define	CA_MAXPATHLEN   1023	/* maximum length for a pathname */
 #define CA_MAXPOOLNAMELEN 15	/* maximum length for a pool name */
 #define CA_MAXPROTOLEN     7	/* maximum length for a protocol name */

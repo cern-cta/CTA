@@ -129,9 +129,9 @@ void castor::stager::daemon::BulkStageReqSvcThread::process
         res.setErrorCode(it->errorCode());
         res.setErrorMessage(it->errorMessage());
       }
-      rr->sendResponse(&result->client(), &res, false);
+      rr->sendResponse(&result->client(), &res);
     }
-    rr->sendEndResponse(&result->client(), result->reqId());
+    rr->closeClientConnection(&result->client());
   } catch (castor::exception::Exception& e) {
     if (0 != result) {
       for (std::vector<castor::stager::FileResult>::const_iterator it =

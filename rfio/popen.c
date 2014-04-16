@@ -31,17 +31,11 @@ RFILE *rfio_popen(char * rcom,
 
   char *host  ;
   RFILE *rfp  ;
-  int rfp_index;
-  char *p , *cp, *cp2    ;
+  char *cp, *cp2    ;
   char command[MAXCOMSIZ]; /* command with remote syntax */
-  struct passwd *pwuid ;
   char *pcom = 0;
-  int rt   ; /* daemon is in the site or remote ? */
-  int rcode, status = 0 ;
-  int len  ;
   FILE *file, *popen()  ;
   char localhost[MAXHOSTNAMELEN];
-  char buf[BUFSIZ] ;
 
   INIT_TRACE("RFIO_TRACE");
 
@@ -108,86 +102,9 @@ RFILE *rfio_popen(char * rcom,
     memcpy( &(rfp->fp), file, sizeof(FILE))  ;
     return ( rfp ) ;
   }
-  /*
-   * Parsing The command
-   */
 
-  TRACE(2,"rfio", "RFIO descriptor allocated");
-  TRACE( 3, "rfio","rfio_popen(): host <%s>, command <%s>",host, pcom);
-  if ( (rfp->s = rfio_connect(host , &rt)) < 0) {
-    TRACE(2,"rfio","freeing RFIO descriptor at 0X%X", rfp);
-    (void) free((char *)rfp);
-    END_TRACE();
-    return NULL ;
-  }
-
-  /*
-   * Remote file table is not large enough.
-   */
-  if ((rfp_index = rfio_rfilefdt_allocentry(rfp->s)) == -1) {
-    TRACE(2, "rfio", "freeing RFIO descriptor at 0X%X", rfp);
-    (void) close(rfp->s);
-    (void) free((char *)rfp);
-    END_TRACE();
-    errno= EMFILE ;
-    return NULL ;
-  }
-  rfilefdt[rfp_index]=rfp;
-
-
-  p= buf ;
-  if ( (pwuid=getpwuid(geteuid())) == NULL) {
-    TRACE(2, "rfio" ,"rfio_popen: cuserid error %s",strerror(errno));
-    (void) free((char *)rfp);
-    END_TRACE();
-    return NULL ;
-  }
-
-
-  len = 2*WORDSIZE+strlen(type)+strlen(pcom)+strlen(pwuid->pw_name)+3 ;
-  marshall_WORD(p,B_RFIO_MAGIC)  ;
-  marshall_WORD(p,RQST_POPEN)  ;
-  marshall_LONG(p,len)   ;
-  if (netwrite_timeout(rfp->s,buf, RQSTSIZE, RFIO_CTRL_TIMEOUT) != RQSTSIZE ) {
-    TRACE(2,"rfio","rfio_popen: write(): ERROR occured (errno=%d)",errno);
-    free((char *)rfp) ;
-    END_TRACE() ;
-    return NULL ;
-  }
-  p = buf ;
-  marshall_WORD(p,rfp->uid)  ;
-  marshall_WORD(p,rfp->gid)  ;
-  marshall_STRING(p,type)  ;
-  marshall_STRING(p,pcom)  ;
-  marshall_STRING(p,pwuid->pw_name) ;
-  if (netwrite_timeout(rfp->s,buf, len, RFIO_CTRL_TIMEOUT) != len ) {
-    TRACE(2,"rfio","rfio_popen: write(): ERROR occured (errno=%d)",errno);
-    free((char *)rfp) ;
-    END_TRACE() ;
-    return NULL ;
-  }
-
-  /*
-   * Getting status and current offset.
-   */
-  if (netread_timeout(rfp->s,buf, WORDSIZE+LONGSIZE, RFIO_CTRL_TIMEOUT) != (WORDSIZE+LONGSIZE)) {
-    TRACE(2, "rfio","rfio_popen: read(): ERROR occured (errno=%d)", errno);
-    free((char *)rfp);
-    END_TRACE();
-    return NULL ;
-  }
-  p = buf ;
-  unmarshall_LONG(p, status) ;
-  unmarshall_WORD(p, rcode) ;
-  TRACE(1,"rfio","rfio_popen: return status(%d), rcode(%d) for fd(%d)",status,rcode, rfp->s) ;
-
-  if (status < 0) {
-    rfio_errno= rcode ;
-    free((char *)rfp) ;
-    END_TRACE() ;
-    return NULL ;
-  }
-  else
-    return rfilefdt[rfp_index] ;
-
+  // Remote call. Not supported anymore
+  rfio_errno= SEOPNOTSUP;
+  END_TRACE();
+  return NULL;
 }

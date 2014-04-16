@@ -111,7 +111,7 @@ namespace castor{
         /* to update the subrequest on DB */
         bool requestLeft = reqHelper->stagerService->updateAndCheckSubRequest(reqHelper->subrequest);
         if(!requestLeft && reqHelper->fileRequest != 0) {
-          requestReplier->sendEndResponse(reqHelper->fileRequest->client(), reqHelper->fileRequest->reqId());
+          requestReplier->closeClientConnection(reqHelper->fileRequest->client());
         }
       }
 

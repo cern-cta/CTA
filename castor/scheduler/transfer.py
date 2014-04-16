@@ -232,7 +232,7 @@ def tupleToTransfer(t):
 class BaseTransfer(object):
   '''little container describing a basic transfer'''
   def __init__(self, transferId, reqId, fileId, euid, egid,
-               svcClassName, creationTime, transferType, diskServer, mountPoint):
+               svcClassName, creationTime, transferType, diskServer, mountPoint, submissionTime=0):
     '''constructor'''
     self.transferId = transferId
     self.reqId = reqId
@@ -241,9 +241,13 @@ class BaseTransfer(object):
     self.egid = egid
     self.svcClassName = svcClassName
     self.creationTime = creationTime
+    self.transferType = transferType
     self.diskServer = diskServer
     self.mountPoint = mountPoint
-    self.transferType = transferType
+    if submissionTime > 0:
+      self.submissionTime = submissionTime
+    else:
+      submissionTime = time.time()
 
   @property
   def user(self):
@@ -263,10 +267,10 @@ class Transfer(BaseTransfer):
   '''little container describing a regular transfer'''
   def __init__(self, transferId, reqId, fileId, euid, egid, svcClassName, creationTime,
                protocol, srId, reqType, flags, clientIpAddress, clientPort,
-               clientSecure, diskServer='', mountPoint=''):
+               clientSecure, diskServer='', mountPoint='', submissionTime=0):
     '''constructor'''
-    super(Transfer, self).__init__(transferId, reqId, fileId, euid, egid,
-                                   svcClassName, creationTime, TransferType.STD, diskServer, mountPoint)
+    super(Transfer, self).__init__(transferId, reqId, fileId, euid, egid, svcClassName,
+                                   creationTime, TransferType.STD, diskServer, mountPoint, submissionTime)
     self.protocol = protocol
     self.srId = srId
     self.reqType = reqType
@@ -279,10 +283,10 @@ class Transfer(BaseTransfer):
 class D2DTransfer(BaseTransfer):
   '''little container describing a disk to disk transfer'''
   def __init__(self, transferId, reqId, fileId, euid, egid, svcClassName, creationTime, transferType,
-               replicationType, diskServer='', mountPoint='', isSrcRunning=False):
+               replicationType, diskServer='', mountPoint='', isSrcRunning=False, submissionTime=0):
     '''constructor'''
-    super(D2DTransfer, self).__init__(transferId, reqId, fileId, euid, egid,
-                                      svcClassName, creationTime, transferType, diskServer, mountPoint)
+    super(D2DTransfer, self).__init__(transferId, reqId, fileId, euid, egid, svcClassName,
+                                      creationTime, transferType, diskServer, mountPoint, submissionTime)
     self.replicationType = replicationType
     self.isSrcRunning = isSrcRunning
 

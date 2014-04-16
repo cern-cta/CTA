@@ -524,30 +524,13 @@ static int rtcp_CheckFileReq(file_list_t *file) {
     } else {
         /*
          * Tape read:
-         * Only accept dot (".") if it is a stager + deferred request.
-         * rfiod cannot get token to write to AFS based files -> check.
          * Should we check that disk file doesn't exist...? Wasnt'
          * done before so skip that for the time being. However,
          * if it exists we must check that it is not a directory!.
          */
         rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) (tpread) stat64() remote file\n",
             filereq->tape_fseq,filereq->file_path);
-        if ( strcmp(filereq->file_path,".") == 0 ) {
-            if ( *filereq->stageID == '\0' ||
-                 filereq->def_alloc == 0 ) {
-                sprintf(errmsgtxt,"File = %s only valid for deferred stagein\n",
-                        filereq->file_path);
-                serrno = EINVAL;
-                SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
-                if ( rc == -1 ) return(rc);
-            } 
-        } else {
-            if ( strstr(filereq->file_path,":/afs") != NULL ) {
-                sprintf(errmsgtxt,RT145,CMD(mode));
-                serrno = EACCES;
-                SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
-                if ( rc == -1 ) return(rc);
-            }
+        {
             rfio_errno = serrno = 0;
             rc = rfio_mstat64(filereq->file_path,&st);
             if ( rc != -1 ) rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) st_mode=0%o\n",

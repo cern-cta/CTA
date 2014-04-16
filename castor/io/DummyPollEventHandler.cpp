@@ -25,8 +25,8 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::io::DummyPollEventHandler::DummyPollEventHandler(const int fd) throw():
-  m_fd(fd) {
+castor::io::DummyPollEventHandler::DummyPollEventHandler(const int fd, const bool returnVal) throw():
+  m_fd(fd), m_returnVal(returnVal) {
 }
 
 //------------------------------------------------------------------------------
@@ -54,6 +54,7 @@ void castor::io::DummyPollEventHandler::fillPollFd(struct pollfd &fd) throw() {
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
-void castor::io::DummyPollEventHandler::handleEvent(const struct pollfd &fd)
+bool castor::io::DummyPollEventHandler::handleEvent(const struct pollfd &fd)
   throw(castor::exception::Exception) {
+  return m_returnVal;
 }

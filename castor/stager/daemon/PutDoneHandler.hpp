@@ -37,7 +37,7 @@ namespace castor{
         ~PutDoneHandler() throw() {};
 
         /* putDone request handler */
-        virtual bool handle() throw(castor::exception::Exception);
+        virtual void handle() throw(castor::exception::Exception);
         
       }; //end PutDoneHandler class
 

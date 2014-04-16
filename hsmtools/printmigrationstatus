@@ -81,7 +81,6 @@ try:
     stcur.execute(sqlStatement)
     # get results and print them
     rows = stcur.fetchall()
-    # Compute column widths (dry-run print)
     titles = ['TAPEPOOL', 'FILES', 'FILES_MIGRATING', 'TOTAL_SIZE', 'SIZE_MIGRATING',
               'MIGRATIONS', 'MIGRATIONS_QUEUED', 'MIGRATIONS_RUNNING',
               'MIN_AGE', 'MAX_AGE']

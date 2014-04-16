@@ -406,7 +406,7 @@ static int rfio_preread64(int     s ,
       if ( status == -1 )  break ;
       rfilefdt[s_index]->nbrecord= status ;
       rfilefdt[s_index]->_iobuf.ptr= iodata(rfilefdt[s_index]) ;
-      rfilefdt[s_index]->preseek= ( req == RQST_LASTSEEK ) ? 2 : 1 ;
+      rfilefdt[s_index]->preseek= 1 ;
 
     }
   } while( rfilefdt[s_index]->preseek ) ;
@@ -546,7 +546,7 @@ int rfio_filbuf64(int     s ,
         return -1 ;
       }
     }
-  } while ( firstread && (req==RQST_READAHD64 || req==RQST_PRESEEK64 || req==RQST_LASTSEEK)) ;
+  } while ( firstread && (req==RQST_READAHD64)) ;
   /*
    * Data we were waiting for has been received.
    */

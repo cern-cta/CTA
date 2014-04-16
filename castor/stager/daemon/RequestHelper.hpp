@@ -89,9 +89,9 @@ namespace castor {
         castor::stager::SvcClass* svcClass;
         castor::stager::CastorFile* castorFile;
 
-        // resolved username and groupname        
-        std::string username;
-        std::string groupname;
+        // user and group id
+        uid_t euid;
+        gid_t egid;
       
         // for logging purposes
         Cuuid_t subrequestUuid;
@@ -112,12 +112,16 @@ namespace castor {
 
         /**
          * Checks the existence of the requested file in the NameServer, and creates it if the request allows for
-         * creation. Internally sets the fileId and nsHost for the file.
-         * @return true if the file has been created
+         * creation. Returns the fileId and nsHost for the file, its size and its stagerOpenTime in microseconds
          * @throw exception in case of permission denied or non extisting file and no right to create it
          */
-        bool openNameServerFile()
-          throw(castor::exception::Exception);
+        static void openNameServerFile(const Cuuid_t &requestUuid, const uid_t euid, const gid_t egid,
+                                       const int reqType, const std::string &fileName,
+                                       const u_signed64 fileClassIfForced,
+                                       const int modebits, const int flags,
+                                       struct Cns_fileid &cnsFileid, u_signed64 &fileClass,
+                                       u_signed64 &fileSize, u_signed64 &stagerOpenTimeInUsec)
+        throw(castor::exception::Exception);
 
         /**
          * Stats the requested file in the NameServer.
@@ -131,12 +135,6 @@ namespace castor {
          * @throw exception in case of any database error
          */
         void getCastorFile() throw(castor::exception::Exception);
-
-        /**
-         * Extracts the username and groupname from uid,gid
-         * @throw exception in case of invalid user
-         */
-        void setUsernameAndGroupname() throw(castor::exception::Exception);
 
         /**
          * Logs a standard message to DLF including all needed info (e.g. filename, svcClass, etc.)

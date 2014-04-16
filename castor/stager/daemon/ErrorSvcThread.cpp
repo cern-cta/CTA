@@ -177,7 +177,7 @@ void castor::stager::daemon::ErrorSvcThread::process
     // the last subrequest of the request
     if (!stgSvc->updateAndCheckSubRequest(subReq)) {
       if (0 != rr) {
-        rr->sendEndResponse(client, req->reqId());
+        rr->closeClientConnection(client);
       }
     }
   } catch (castor::exception::Exception& e) {

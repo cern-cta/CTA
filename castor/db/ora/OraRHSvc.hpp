@@ -55,7 +55,6 @@ namespace castor {
     class StageAbortRequest;
     class GCFileList;
     class StageFileQueryRequest;
-    class StageRepackRequest;
   }
 
   namespace query {

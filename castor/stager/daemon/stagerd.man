@@ -21,10 +21,6 @@ stagerd \- start the CASTOR Stager daemon
 .BI <nb\ threads>
 ]
 [
-.BI -P
-.BI <nb\ threads>
-]
-[
 .BI -S
 .BI <nb\ threads>
 ]
@@ -78,9 +74,6 @@ enables internal metrics collection, usually into \fI/var/spool/castor/stagerd.x
 .TP
 .BI \-J,\ \-\-Jthreads\ <nb\ threads>
 specifies the number of threads for user job oriented requests. Default is 10.
-.TP
-.BI \-P,\ \-\-Pthreads\ <nb\ threads>
-specifies the number of threads for prestage/repack requests. Default is 6.
 .TP
 .BI \-S,\ \-\-Sthreads\ <nb\ threads>
 specifies the number of threads for stager specific requests (putDone, Rm, setGCWeight). Default is 4.

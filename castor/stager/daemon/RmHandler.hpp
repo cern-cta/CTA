@@ -42,7 +42,7 @@ namespace castor{
         ~RmHandler() throw() {};
         
         /* rm subrequest handler */
-        virtual bool handle() throw(castor::exception::Exception);
+        virtual void handle() throw(castor::exception::Exception);
         
       }; // end RmHandler class
       

@@ -187,8 +187,6 @@ int rfio_write64_v2(int     s,
       END_TRACE() ;
       return status ;
     case RQST_READAHD64:
-    case RQST_LASTSEEK:
-    case RQST_PRESEEK64:
       /*
        * At this point, a temporary buffer may need to be created to
        * receive data which is going to be thrown away.
