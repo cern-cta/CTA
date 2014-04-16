@@ -48,18 +48,27 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
   for (std::vector<tapegateway::FileToRecallStruct*>::const_iterator it = jobs.begin(); it != jobs.end(); ++it) {
 
     LogContext::ScopedParam sp[]={
+      LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->nshost())),
       LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->fileid())),
-      LogContext::ScopedParam(m_lc, Param("NSFILESEQNUMBER", (*it)->fseq())),
-      LogContext::ScopedParam(m_lc, Param("NSFILEBLOCKID", blockID(**it))),
-      LogContext::ScopedParam(m_lc, Param("NSFILENSHOST", (*it)->nshost())),
-      LogContext::ScopedParam(m_lc, Param("NSFILEPATH", (*it)->path()))
+      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->fseq())),
+      LogContext::ScopedParam(m_lc, Param("blockID", blockID(**it))),
+      LogContext::ScopedParam(m_lc, Param("path", (*it)->path()))
     };
     tape::utils::suppresUnusedVariable(sp);
     
     m_lc.log(LOG_INFO, "Logged file to recall");
     
-    DiskWriteTask * dwt = new DiskWriteTask(removeOwningList(dynamic_cast<tape::tapegateway::FileToRecallStruct*>((*it)->clone())) ,m_memManager);
-    TapeReadFileTask * trt = new TapeReadFileTask(m_memManager,*dwt, (*it)->fseq(), blockID(**it));
+    DiskWriteTask * dwt = 
+      new DiskWriteTask(
+        removeOwningList(dynamic_cast<tape::tapegateway::FileToRecallStruct*>((*it)->clone())), 
+        m_memManager);
+    TapeReadFileTask * trt = 
+      new TapeReadFileTask(
+        removeOwningList(
+          dynamic_cast<tape::tapegateway::FileToRecallStruct*>((*it)->clone())), 
+          *dwt,
+          m_memManager);
+    
     
     m_diskWriter.push(dwt);
     m_tapeReader.push(trt);
