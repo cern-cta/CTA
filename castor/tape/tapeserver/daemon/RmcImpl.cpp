@@ -21,13 +21,19 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
+#include "castor/io/io.hpp"
 #include "castor/tape/tapeserver/daemon/RmcImpl.hpp"
+#include "castor/utils/SmartFd.hpp"
 #include "h/Castor_limits.h"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::RmcImpl::RmcImpl(log::Logger &log, const std::string &rmcHostName, const unsigned short rmcPort, const int netTimeout) throw():
+castor::tape::tapeserver::daemon::RmcImpl::RmcImpl(
+  log::Logger &log,
+  const std::string &rmcHostName,
+  const unsigned short rmcPort,
+  const int netTimeout) throw():
     m_log(log),
     m_rmcHostName(rmcHostName),
     m_rmcPort(rmcPort),
@@ -177,4 +183,22 @@ void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeManual(const std::str
 // unmountTapeScsi
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeScsi(const std::string &vid, const std::string &drive) throw(castor::exception::Exception) {
+}
+
+//-----------------------------------------------------------------------------
+// connectToRmc
+//-----------------------------------------------------------------------------
+int castor::tape::tapeserver::daemon::RmcImpl::connectToRmc() const throw(castor::exception::Exception) {
+  castor::utils::SmartFd smartConnectSock;
+  try {
+    smartConnectSock.reset(io::connectWithTimeout(m_rmcHostName, m_rmcPort,
+      m_netTimeout));
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to connect to rmc on host " << m_rmcHostName
+      << " port " << m_rmcPort << ": " << ne.getMessage().str();
+    throw ex;
+  }
+
+  return smartConnectSock.release();
 }

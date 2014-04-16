@@ -174,6 +174,13 @@ protected:
    */
   void unmountTapeScsi(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
 
+  /**
+   * Connects to the rmcd daemon.
+   *
+   * @return The socket-descriptor of the connection with the rmcd daemon.
+   */
+  int connectToRmc() const throw(castor::exception::Exception);
+
 }; // class RmcImpl
 
 } // namespace daemon
