@@ -247,7 +247,7 @@ class BaseTransfer(object):
     if submissionTime > 0:
       self.submissionTime = submissionTime
     else:
-      submissionTime = time.time()
+      self.submissionTime = time.time()
 
   @property
   def user(self):
