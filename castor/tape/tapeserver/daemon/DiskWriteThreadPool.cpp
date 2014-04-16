@@ -69,7 +69,6 @@ namespace daemon {
     if(ret)
     {
       castor::tape::threading::MutexLocker ml(&m_counterProtection);
-      std::cout<<"pop "<<m_tasks.size()<<std::endl;
       // We are about to go to empty: request a last call job injection 
       if(m_tasks.size() == 1) {
         
