@@ -75,6 +75,13 @@ private:
    */
   const int m_netTimeout;
 
+  /**
+   * Connects to the vmgrd daemon.
+   *
+   * @return The socket-descriptor of the connection with the vmgrd daemon.
+   */
+  int connectToVmgr() const throw(castor::exception::Exception);
+
 }; // class VmgrImpl
 
 } // namespace daemon

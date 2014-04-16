@@ -20,12 +20,18 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/io/io.hpp"
 #include "castor/tape/tapeserver/daemon/VmgrImpl.hpp"
+#include "castor/utils/SmartFd.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::VmgrImpl::VmgrImpl(log::Logger &log, const std::string &vmgrHostName, const unsigned short vmgrPort, const int netTimeout) throw():
+castor::tape::tapeserver::daemon::VmgrImpl::VmgrImpl(
+  log::Logger &log,
+  const std::string &vmgrHostName,
+  const unsigned short vmgrPort,
+  const int netTimeout) throw():
     m_log(log),
     m_vmgrHostName(vmgrHostName),
     m_vmgrPort(vmgrPort),
@@ -36,4 +42,22 @@ castor::tape::tapeserver::daemon::VmgrImpl::VmgrImpl(log::Logger &log, const std
 // destructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VmgrImpl::~VmgrImpl() throw() {
+}
+
+//-----------------------------------------------------------------------------
+// connectToVmgr
+//-----------------------------------------------------------------------------
+int castor::tape::tapeserver::daemon::VmgrImpl::connectToVmgr() const throw(castor::exception::Exception) {
+  castor::utils::SmartFd smartConnectSock;
+  try {
+    smartConnectSock.reset(io::connectWithTimeout(m_vmgrHostName, m_vmgrPort,
+      m_netTimeout));
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to connect to vmgr on host " << m_vmgrHostName
+      << " port " << m_vmgrPort << ": " << ne.getMessage().str();
+    throw ex;
+  }
+
+  return smartConnectSock.release();
 }
