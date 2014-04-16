@@ -52,8 +52,8 @@ namespace tapeserver {
 namespace daemon {
 
 
-  TapeWriteTask::TapeWriteTask(int fSeq, int blockCount, tapegateway::FileToMigrateStruct* file,MemoryManager& mm): 
-  m_fSeq(fSeq),m_fileToMigrate(file),m_memManager(mm), m_fifo(blockCount),m_blockCount(blockCount)
+  TapeWriteTask::TapeWriteTask(int blockCount, tapegateway::FileToMigrateStruct* file,MemoryManager& mm): 
+  m_fileToMigrate(file),m_memManager(mm), m_fifo(blockCount),m_blockCount(blockCount)
   {
     mm.addClient(&m_fifo); 
   }
@@ -62,12 +62,6 @@ namespace daemon {
     return m_blockCount; 
   }
   
-
-   int TapeWriteTask::fSeq() { 
-    return m_fSeq; 
-  }
-  
-
    void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,castor::log::LogContext& lc) {
     using castor::log::LogContext;
     using castor::log::Param;
@@ -122,9 +116,9 @@ namespace daemon {
     castor::tape::threading::MutexLocker ml(&m_producerProtection);
   }
 
-   std::auto_ptr<castor::tape::tapeFile::WriteFile> TapeWriteTask::openWriteFile(
-   castor::tape::tapeFile::WriteSession & session,castor::log::LogContext& lc){
-      std::auto_ptr<castor::tape::tapeFile::WriteFile> output;
+   std::auto_ptr<tapeFile::WriteFile> TapeWriteTask::openWriteFile(
+   tape::tapeFile::WriteSession & session, log::LogContext& lc){
+      std::auto_ptr<tape::tapeFile::WriteFile> output;
       try{
         output.reset(new tape::tapeFile::WriteFile(&session, *m_fileToMigrate,m_memManager.blockCapacity()));
         lc.log(LOG_DEBUG, "Successfully opened the tape file for writing");

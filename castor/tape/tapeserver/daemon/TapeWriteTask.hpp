@@ -50,19 +50,14 @@ public:
    * @param blockCount: number of memory blocks (TODO:?)
    * @param mm: reference to the memory manager in use
    */
-  TapeWriteTask(int fSeq, int blockCount, tape::tapegateway::FileToMigrateStruct* file,MemoryManager& mm);
+  TapeWriteTask(int blockCount, tape::tapegateway::FileToMigrateStruct* file,MemoryManager& mm);
   
   
   /**
    * @return the number of memory blocks to be used
    */
   virtual int blocks();
-  
-  /**
-   * @return the file sequence number of the file to be written on tape
-   */
-  virtual int fSeq();
-  
+    
   /**
    * Main execution routine
    * @param td: tape drive object which will handle the file
@@ -87,14 +82,19 @@ public:
   virtual ~TapeWriteTask();
   
 private:
+  /**
+   * Function in charge of opening the WriteFile for m_fileToMigrate
+   * Throw an exception it it fails
+   * @param session The session on which relies the WriteFile
+   * @param lc for logging purpose
+   * @return the WriteFile if everything went well
+   */
   std::auto_ptr<castor::tape::tapeFile::WriteFile> openWriteFile(
   castor::tape::tapeFile::WriteSession & session,castor::log::LogContext& lc);
-  
+
   /**
-   * The file sequence number of the file to be written on tape
+   * All we need to know about the file we are migrating
    */
-  int m_fSeq;
-  
   std::auto_ptr<tapegateway::FileToMigrateStruct> m_fileToMigrate;
   
   /**
