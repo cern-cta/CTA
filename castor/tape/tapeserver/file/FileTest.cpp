@@ -37,11 +37,20 @@ namespace UnitTests {
     virtual void SetUp() {
       block_size = 262144;
       label = "K00001";
-      fileInfo.blockId=0;
-      fileInfo.checksum=43567;
-      fileInfo.fseq=1;
-      fileInfo.nsFileId=1;
-      fileInfo.size=500;
+      fileToRecall.setBlockId0(0);
+      fileToRecall.setBlockId1(0);
+      fileToRecall.setBlockId2(0);
+      fileToRecall.setBlockId3(0);
+      fileToRecall.setFseq(1);
+      fileToRecall.setFileid(1);
+//      fileInfo.blockId=0;
+//      fileInfo.checksum=43567;
+//      fileInfo.fseq=1;
+//      fileInfo.nsFileId=1;
+//      fileInfo.size=500;
+      fileToMigrate.setFileSize(500);
+      fileToMigrate.setFileid(1);
+      fileToMigrate.setFseq(1);
 
       //Label
       castor::tape::tapeFile::LabelSession *ls;
@@ -54,7 +63,8 @@ namespace UnitTests {
     castor::tape::drives::FakeDrive d;
     uint32_t block_size;
     std::string label;
-    castor::tape::tapeFile::FileInfo fileInfo;
+    castor::tape::tapegateway::FileToRecallStruct fileToRecall;
+    castor::tape::tapegateway::FileToMigrateStruct fileToMigrate;
   };
   
   TEST_F(castorTapeFileTest, throwsWhenLabelingANonEmptyTape) {
@@ -65,7 +75,8 @@ namespace UnitTests {
     castor::tape::tapeFile::ReadSession *rs;
     rs = new castor::tape::tapeFile::ReadSession(d, label);    
     ASSERT_NE((long int)rs, 0);
-    ASSERT_THROW({castor::tape::tapeFile::ReadFile rf1(rs, fileInfo, castor::tape::tapeFile::ByBlockId);}, castor::exception::Exception); //cannot read a file on an empty tape
+    fileToRecall.setPositionCommandCode(castor::tape::tapegateway::TPPOSIT_BLKID);
+    ASSERT_THROW({castor::tape::tapeFile::ReadFile rf1(rs, fileToRecall);}, castor::exception::Exception); //cannot read a file on an empty tape
     delete rs;
   }
    
@@ -77,7 +88,7 @@ namespace UnitTests {
     ASSERT_EQ(ws->m_vid.compare(label), 0);
     ASSERT_EQ(ws->isCorrupted(), false);
     {
-      castor::tape::tapeFile::WriteFile wf(ws, fileInfo, block_size);
+      castor::tape::tapeFile::WriteFile wf(ws, fileToMigrate, block_size);
       wf.write(testString.c_str(),testString.size());      
       wf.close();
     }
@@ -85,8 +96,9 @@ namespace UnitTests {
     castor::tape::tapeFile::ReadSession *rs;
     rs = new castor::tape::tapeFile::ReadSession(d, label);
     {
-      castor::tape::tapeFile::ReadFile rf1(rs, fileInfo, castor::tape::tapeFile::ByBlockId);
-      ASSERT_THROW({castor::tape::tapeFile::ReadFile rf2(rs, fileInfo, castor::tape::tapeFile::ByBlockId);},castor::tape::tapeFile::SessionAlreadyInUse); //cannot have two ReadFile's on the same session
+      fileToRecall.setPositionCommandCode(castor::tape::tapegateway::TPPOSIT_BLKID);
+      castor::tape::tapeFile::ReadFile rf1(rs, fileToRecall);
+      ASSERT_THROW({castor::tape::tapeFile::ReadFile rf2(rs, fileToRecall);},castor::tape::tapeFile::SessionAlreadyInUse); //cannot have two ReadFile's on the same session
     }
     delete rs;
   }
@@ -96,12 +108,12 @@ namespace UnitTests {
     ws = new castor::tape::tapeFile::WriteSession(d, label, 0, true);
     ASSERT_EQ(ws->isCorrupted(), false);
     {
-      castor::tape::tapeFile::WriteFile wf(ws, fileInfo, block_size);
+      castor::tape::tapeFile::WriteFile wf(ws, fileToMigrate, block_size);
       ASSERT_THROW(wf.close(), castor::tape::tapeFile::ZeroFileWritten);
     }
     ASSERT_EQ(ws->isCorrupted(), true);
     {
-      ASSERT_THROW(castor::tape::tapeFile::WriteFile wf(ws, fileInfo, block_size);, castor::tape::tapeFile::SessionCorrupted);
+      ASSERT_THROW(castor::tape::tapeFile::WriteFile wf(ws, fileToMigrate, block_size);, castor::tape::tapeFile::SessionCorrupted);
     }
     delete ws;
   }
@@ -111,7 +123,7 @@ namespace UnitTests {
     castor::tape::tapeFile::WriteSession *ws;
     ws = new castor::tape::tapeFile::WriteSession(d, label, 0, true);
     {
-      castor::tape::tapeFile::WriteFile wf(ws, fileInfo, block_size);
+      castor::tape::tapeFile::WriteFile wf(ws, fileToMigrate, block_size);
       wf.write(testString.c_str(),testString.size());
       wf.close();
       ASSERT_THROW(wf.close(), castor::tape::tapeFile::FileClosedTwice);
@@ -124,7 +136,7 @@ namespace UnitTests {
     castor::tape::tapeFile::WriteSession *ws;
     ws = new castor::tape::tapeFile::WriteSession(d, label, 0, true);
     {
-      castor::tape::tapeFile::WriteFile wf(ws, fileInfo, block_size);
+      castor::tape::tapeFile::WriteFile wf(ws, fileToMigrate, block_size);
       wf.write(testString.c_str(),testString.size());
       wf.close();
     }
@@ -133,7 +145,8 @@ namespace UnitTests {
     castor::tape::tapeFile::ReadSession *rs;
     rs = new castor::tape::tapeFile::ReadSession(d, label);
     {
-      castor::tape::tapeFile::ReadFile rf(rs, fileInfo, castor::tape::tapeFile::ByBlockId);
+      fileToRecall.setPositionCommandCode(castor::tape::tapegateway::TPPOSIT_BLKID);
+      castor::tape::tapeFile::ReadFile rf(rs, fileToRecall);
       size_t bs = rf.getBlockSize();
       char *data = new char[bs+1];
       ASSERT_THROW(rf.read(data, 1), castor::tape::tapeFile::WrongBlockSize); //block size needs to be the same provided by the headers
@@ -162,7 +175,7 @@ namespace UnitTests {
     ASSERT_EQ(ws->m_vid.compare(label), 0);
     ASSERT_EQ(ws->isCorrupted(), false);
     {
-      castor::tape::tapeFile::WriteFile wf(ws, fileInfo, block_size);
+      castor::tape::tapeFile::WriteFile wf(ws, fileToMigrate, block_size);
       wf.write(testString.c_str(),testString.size());      
       wf.close();
     }
@@ -176,7 +189,8 @@ namespace UnitTests {
     ASSERT_EQ(rs->isCorrupted(), false);
     ASSERT_EQ(rs->m_vid.compare(label), 0);
     {
-      castor::tape::tapeFile::ReadFile rf(rs, fileInfo, castor::tape::tapeFile::ByBlockId);
+      fileToRecall.setPositionCommandCode(castor::tape::tapegateway::TPPOSIT_BLKID);
+      castor::tape::tapeFile::ReadFile rf(rs, fileToRecall);
       size_t bs = rf.getBlockSize();
       ASSERT_EQ(bs, block_size);
       char *data = new char[bs+1];
