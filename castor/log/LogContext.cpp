@@ -24,10 +24,12 @@
 
 #include <list>
 #include <algorithm>
+#include <bfd.h>
 
 #include "LogContext.hpp"
 #include "Param.hpp"
 #include "Logger.hpp"
+#include "Ctape_constants.h"
 
 castor::log::LogContext::LogContext(castor::log::Logger& logger) throw ():
 m_log(logger) {}
@@ -64,6 +66,36 @@ void castor::log::LogContext::log(const int priority, const std::string& msg) th
 void castor::log::LogContext::log(const int priority, const std::string& msg, 
     const timeval& timeStamp) throw() {
   m_log(priority, msg, m_params, timeStamp);
+}
+
+void castor::log::LogContext::logBacktrace(const int priority, 
+    const std::string& backtrace) throw () {
+  // Sanity check to prevent substr from throwing exceptions
+  if (!backtrace.size())
+    return;
+  size_t position = 0;
+  int lineNumber = 0;
+  bool stillGoing = true;
+  while(stillGoing) {
+    size_t next = backtrace.find_first_of("\n", position);
+    std::string line;
+    if(next != std::string::npos) { 
+      line = backtrace.substr(position, next - position);
+      // If our position is out of range, substr would throw an exception
+      // so we check here if we would get out of range.
+      position = next + 1;
+      if (position >= backtrace.size())
+        stillGoing = false;
+    } else {
+      stillGoing=false;
+      line = backtrace.substr(position);
+    }
+    if (line.size()) {
+      ScopedParam sp1 (*this, castor::log::Param("traceFrameNumber", lineNumber++));
+      ScopedParam sp2 (*this, castor::log::Param("traceFrame", line));
+      log(priority, "Stack trace");
+    }
+  }
 }
 
 castor::log::LogContext::ScopedParam::ScopedParam(

@@ -52,6 +52,12 @@ public:
    * Destructor.
    */
   virtual ~LogContext() throw() {};
+  
+  /**
+   * Access to the logger object.
+   * @return  reference to this context's logger
+   */
+  castor::log::Logger & logger() throw() { return m_log; }
 
   /**
    * Add a parameter to the container. Replaces any parameter going by the same
@@ -82,6 +88,16 @@ public:
   virtual void log(
     const int priority,
     const std::string &msg) throw();
+  
+  /**
+   * Logs a multiline backtrace as multiple entries in the logs, without
+   * the context
+   * @param priority the logging priority
+   * @param backtrace the multi-line (\n separated) stack trace
+   */
+  virtual void logBacktrace(
+    const int priority,
+    const std::string &backtrace) throw();
   
   /**
    * Small introspection function to help in tests

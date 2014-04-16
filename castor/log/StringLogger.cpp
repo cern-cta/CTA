@@ -243,12 +243,11 @@ std::string castor::log::StringLogger::cleanString(const std::string &s,
       
       if ('\n' == *it) 
         *it = ' ';
+      
+      // Replace spaces with underscore
+      if (' ' == *it) 
+        *it = '_';
     }
-    
-    // Replace spaces with underscore
-    if (' ' == *it) 
-      *it = '_';
-    
     // Replace double quotes with single quotes
     if ('"' == *it) 
       *it = '\'';
