@@ -123,7 +123,13 @@
 }
 
 {
-  helgrind-unitTest-castor-basicStringsCatchAll1
+  helgrind-unitTest-castor-basicStringsCatchAll2
   Helgrind:Race
   fun:_ZNSs7*
+}
+
+{
+  helgrind-unitTest-castor-basicStringsGottaCatchAll
+  Helgrind:Race
+  fun:_ZNSs*
 }
