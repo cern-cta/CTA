@@ -33,6 +33,7 @@
 # XROOTD_XRDCLIENT_LIB       - location of the XrdClient library
 # XROOTD_XRDOFS_LIB          - location of the XrdOfs library
 # XROOTD_XRDUTILS_LIB        - location of the XrdUtils library
+# XROOTD_XRDPOSIX_LIB        - location of the XrdPosix library
 
 # Be silent if XROOTD_INCLUDE_DIR is already cached
 if (XROOTD_INCLUDE_DIR)
@@ -51,13 +52,14 @@ find_library (XROOTD_XRDCL_LIB XrdCl)
 find_library (XROOTD_XRDCLIENT_LIB XrdClient)
 find_library (XROOTD_XRDOFS_LIB XrdOfs)
 find_library (XROOTD_XRDUTILS_LIB XrdUtils)
+find_library (XROOTD_XRDPOSIX_LIB XrdPosixPreload)
 
 message (STATUS "XROOTD_INCLUDE_DIR         = ${XROOTD_INCLUDE_DIR}")
 message (STATUS "XROOTD_PRIVATE_INCLUDE_DIR = ${XROOTD_PRIVATE_INCLUDE_DIR}")
 message (STATUS "XROOTD_XRDCL_LIB           = ${XROOTD_XRDCL_LIB}")
 message (STATUS "XROOTD_XRDCLIENT_LIB       = ${XROOTD_XRDCLIENT_LIB}")
 message (STATUS "XROOTD_XRDOFS_LIB          = ${XROOTD_XRDOFS_LIB}")
-message (STATUS "XROOTD_XRDUTILS_LIB        = ${XROOTD_XRDUTILS_LIB}")
+message (STATUS "XROOTD_XRDPOSIX_LIB        = ${XROOTD_XRDPOSIX_LIB}")
 
 include (FindPackageHandleStandardArgs)
 find_package_handle_standard_args (xrootd DEFAULT_MSG 
@@ -66,4 +68,5 @@ find_package_handle_standard_args (xrootd DEFAULT_MSG
   XROOTD_XRDCL_LIB
   XROOTD_XRDCLIENT_LIB
   XROOTD_XRDOFS_LIB
-  XROOTD_XRDUTILS_LIB)
+  XROOTD_XRDUTILS_LIB
+  XROOTD_XRDPOSIX_LIB)

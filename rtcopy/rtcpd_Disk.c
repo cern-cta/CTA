@@ -24,15 +24,14 @@
 #include <stdarg.h>
 #include <sys/stat.h>
 
+#include <rtcp_xroot.h>
+
 #include <pwd.h>
 #include <Castor_limits.h>
 #include <Cglobals.h>
 #include <log.h>
 #include <osdep.h>
 #include <net.h>
-#define RFIO_KERNEL 1
-#include <rfio.h>
-#include <rfio_errno.h>
 #include <Cthread_api.h>
 #include <Cpool_api.h>
 #include <vdqm_api.h>
@@ -85,6 +84,42 @@ extern int AbortFlag;
 
 int success = 0;
 int failure = -1;
+
+/**
+ * Convert the server:/path string to the CASTOR xroot
+ * root://server:port//dummy?castor2fs.pfn1=path&castor2fs.pfn2=dummy
+ * @param rtcpPath the path to be converted.
+ * @param xrootFilePath the variable to return xroot path.
+ * @return 0 if convertion succeed and -1 in error case.
+ */
+static int rtcpToCastorXroot(const char *const rtcpPath,
+                             char *const xrootFilePath) {  
+    const char *const xrootPort="1095";
+    const char *pathWithoutServer;
+    extern char *getconfent();
+    *xrootFilePath='\0';
+    if ( CA_MAXPATHLEN <
+      (strlen("root://")+strlen(xrootPort)+strlen(rtcpPath)+
+       strlen("//dummy?castor2fs.pfn1=&castor2fs.pfn2=dummy&")+
+       strlen("streamout=xxx&streamin=xxx")) ) {
+         return (-1);
+    }
+    if ( NULL == (pathWithoutServer=strchr(rtcpPath,'/'))) {
+      return (-1);
+    }
+    /* protocol */
+    strcat(xrootFilePath,"root://");
+    /* server name */
+    strncat(xrootFilePath,rtcpPath, pathWithoutServer-rtcpPath);
+    /* port */
+    strcat(xrootFilePath,xrootPort);
+    /* castor2fs.pfn1 */
+    strcat(xrootFilePath,"//dummy?castor2fs.pfn1=");
+    strcat(xrootFilePath,pathWithoutServer);
+    /* castor2fs.pfn2 */
+    strcat(xrootFilePath,"&castor2fs.pfn2=dummy");
+    return (0);
+}
 
 static int DiskIOstarted() {
     int rc;
@@ -165,11 +200,9 @@ static int DiskFileOpen(int pool_index,
                         file_list_t *file) {
     rtcpTapeRequest_t *tapereq;
     rtcpFileRequest_t *filereq;
-    int rc, irc, save_errno, save_serrno, save_rfio_errno;
-    int disk_fd, flags, use_rfioV3, severity;
+    int rc, irc, save_errno;
+    int disk_fd, flags, severity;
     diskIOstatus_t *diskIOstatus = NULL;
-    char *ifce;
-    int s;
     int binmode = 0;
 
     rc = irc = 0;
@@ -242,12 +275,6 @@ static int DiskFileOpen(int pool_index,
                 }
             }
         }
-        /* Activate new transfer mode for source file */
-        use_rfioV3 = RFIO_STREAM;
-        rfiosetopt(RFIO_READOPT,&use_rfioV3,4); 
-
-        rfio_errno = 0;
-        serrno = 0;
         errno = 0;
         rtcp_log(LOG_DEBUG,"DiskFileOpen() open(%s,0x%x)\n",filereq->file_path,
             flags);
@@ -261,36 +288,41 @@ static int DiskFileOpen(int pool_index,
                                  "Flags"    , TL_MSG_PARAM_STR, __flags );
         }
         DK_STATUS(RTCP_PS_OPEN);
-        rc = rfio_open64(filereq->file_path,flags,0666);
+
+        char xrootFilePath[CA_MAXPATHLEN+1];
+        if ( -1 == rtcpToCastorXroot(filereq->file_path,xrootFilePath) ) {
+            errno = EFAULT; /* sets  "Bad address" errno */
+            rc = -1;
+        } else {
+            rc = rtcp_xroot_open(xrootFilePath, flags, 0666); 
+            rtcp_log(LOG_DEBUG,"rtcp_xroot_open for %s\n",xrootFilePath);
+        }  
+
         DK_STATUS(RTCP_PS_NOBLOCKING);
-        if ( rc == -1 ) {
+        if ( rc == -1 ) { 
             save_errno = errno;
-            save_serrno = serrno;
-            save_rfio_errno = rfio_errno;
             rtcp_log(LOG_ERR,
-                "DiskFileOpen() rfio_open64(%s,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
-                filereq->file_path,flags,errno,serrno,rfio_errno);
+                "DiskFileOpen() open(%s,0x%x): errno = %d\n",
+                filereq->file_path,flags,errno);
             {
                     char __flags[32];
                     sprintf( __flags, "0x%x", flags );
-                    tl_rtcpd.tl_log( &tl_rtcpd, 3, 7, 
+                    tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
                                      "func"      , TL_MSG_PARAM_STR, "DiskFileOpen",
                                      "Message"   , TL_MSG_PARAM_STR, "open",
                                      "File Path" , TL_MSG_PARAM_STR, filereq->file_path,
                                      "Flags"     , TL_MSG_PARAM_STR, __flags,
-                                     "errno"     , TL_MSG_PARAM_INT, errno,
-                                     "serrno"    , TL_MSG_PARAM_INT, serrno,
-                                     "rfio_errno", TL_MSG_PARAM_INT, rfio_errno );
+                                     "errno"     , TL_MSG_PARAM_INT, errno );
             }
         } else {
             disk_fd = rc;
             rc = 0;
         }
-        rtcp_log(LOG_DEBUG,"DiskFileOpen() rfio_open() returned fd=%d\n",
+        rtcp_log(LOG_DEBUG,"DiskFileOpen() open() returned fd=%d\n",
             disk_fd);
         tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
                          "func"   , TL_MSG_PARAM_STR, "DiskFileOpen",
-                         "Message", TL_MSG_PARAM_STR, "rfio_open returned",
+                         "Message", TL_MSG_PARAM_STR, "open returned",
                          "fd"     , TL_MSG_PARAM_INT, disk_fd );                         
         if ( rc == 0 && filereq->offset > 0 ) {
 			char tmpbuf[21];
@@ -302,101 +334,68 @@ static int DiskFileOpen(int pool_index,
                              "func"   , TL_MSG_PARAM_STR, "DiskFileOpen",
                              "Message", TL_MSG_PARAM_STR, "attempt to set offset",
                              "offset" , TL_MSG_PARAM_STR, u64tostr((u_signed64) filereq->offset, tmpbuf, 0) );
-            rfio_errno = 0;
-            serrno = 0;
             errno = 0;
-            rc64 = rfio_lseek64(disk_fd,(off64_t)filereq->offset,SEEK_SET);
+
+            rc64 = rtcp_xroot_lseek(disk_fd, (off64_t)filereq->offset,SEEK_SET);
+
             if ( rc64 == -1 ) {
                 save_errno = errno;
-                save_serrno = serrno;
-                save_rfio_errno = rfio_errno;
                 rtcp_log(LOG_ERR,
-                 "DiskFileOpen() rfio_lseek64(%d,%s,0x%x): errno = %d, serrno = %d, rfio_errno = %d\n",
-                 disk_fd,u64tostr((u_signed64)filereq->offset,tmpbuf,0),SEEK_SET,errno,serrno,rfio_errno);
+                 "DiskFileOpen() lseek64(%d,%s,0x%x): errno = %d\n",
+                 disk_fd,u64tostr((u_signed64)filereq->offset,tmpbuf,0),SEEK_SET,errno);
                 {
                         char __seek_set[32];
                         sprintf( __seek_set, "0x%x", SEEK_SET );
                         tl_rtcpd.tl_log( &tl_rtcpd, 3, 8, 
                                          "func"      , TL_MSG_PARAM_STR, "DiskFileOpen",
-                                         "Message"   , TL_MSG_PARAM_STR, "rfio_lseek64",
+                                         "Message"   , TL_MSG_PARAM_STR, "lseek64",
                                          "disk_fd"   , TL_MSG_PARAM_INT, disk_fd,                                 
                                          "offset"    , TL_MSG_PARAM_STR, u64tostr((u_signed64) filereq->offset, tmpbuf, 0),
                                          "SEEK_SET"  , TL_MSG_PARAM_STR, SEEK_SET, 
-                                         "errno"     , TL_MSG_PARAM_INT, errno,
-                                         "serrno"    , TL_MSG_PARAM_INT, serrno,
-                                         "rfio_errno", TL_MSG_PARAM_INT, rfio_errno );
+                                         "errno"     , TL_MSG_PARAM_INT, errno );
                 }
                 rc = -1;
             } else if ( rc64 != (off64_t)filereq->offset ) {
                 save_errno = errno;
-                save_serrno = serrno;
-                save_rfio_errno = rfio_errno;
-                rtcp_log(LOG_ERR,"rfio_lseek64(%d,%s,%d) returned %s\n",
+                rtcp_log(LOG_ERR,"lseek64(%d,%s,%d) returned %s\n",
                          disk_fd,u64tostr((u_signed64)filereq->offset,tmpbuf,0),SEEK_SET,u64tostr((u_signed64)rc64,tmpbuf2,0));
                 {
                         char __seek_set[32];
                         sprintf( __seek_set, "0x%x", SEEK_SET );
                         tl_rtcpd.tl_log( &tl_rtcpd, 3, 6, 
                                          "func"        , TL_MSG_PARAM_STR, "DiskFileOpen",
-                                         "Message"     , TL_MSG_PARAM_STR, "rfio_lseek64 returned",
+                                         "Message"     , TL_MSG_PARAM_STR, "lseek64 returned",
                                          "disk_fd"     , TL_MSG_PARAM_INT, disk_fd,                                 
                                          "offset"      , TL_MSG_PARAM_STR, u64tostr((u_signed64) filereq->offset, tmpbuf, 0),
                                          "SEEK_SET"    , TL_MSG_PARAM_STR, SEEK_SET, 
                                          "Return Value", TL_MSG_PARAM_STR, u64tostr((u_signed64)rc64,tmpbuf2,0) );
                 }                
-                if ( save_rfio_errno == 0 && save_serrno == 0 &&
-                     save_errno == 0 ) save_rfio_errno = SEINTERNAL;
+                if ( save_errno == 0 ) save_errno = SEINTERNAL;
                 rc = -1;
             } else rc = 0;
         }
 
     if ( rc != 0 || irc != 0 ) {
         if ( tapereq->mode == WRITE_ENABLE ) 
-            rtcpd_AppendClientMsg(NULL, file,RT110,"CPDSKTP",
-                                  rfio_serror());
+            rtcpd_AppendClientMsg(NULL, file,RT110,"CPDSKTP", sstrerror(errno));
         else
-            rtcpd_AppendClientMsg(NULL, file,RT110,"CPTPDSK",
-                                  rfio_serror());
-        switch (save_rfio_errno) {
+            rtcpd_AppendClientMsg(NULL, file,RT110,"CPTPDSK", sstrerror(errno));
+        switch (save_errno) {
         case ENOENT:
         case EISDIR:
         case EPERM:
         case EACCES:
-            rtcpd_SetReqStatus(NULL,file,save_rfio_errno,RTCP_USERR | RTCP_FAILED);
+            rtcpd_SetReqStatus(NULL,file,save_errno,RTCP_USERR | RTCP_FAILED);
             break;
         default:
-          if ((save_errno == EBADF) && (save_rfio_errno == 0) && (save_serrno == 0))
-                rtcpd_SetReqStatus(NULL,file,save_rfio_errno,
-                                   RTCP_FAILED | RTCP_UNERR);
-          else if ( (save_serrno == SETIMEDOUT) && (save_rfio_errno == 0) &&
-                    (filereq->err.max_cpretry > 0) ) {
-                filereq->err.max_cpretry--;
-                rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED | RTCP_UNERR);
-            } else {
-                save_rfio_errno = (save_rfio_errno > 0 ? save_rfio_errno :
-                                                         save_serrno);
-                save_rfio_errno = (save_rfio_errno > 0 ? save_rfio_errno :
-                                                         save_errno); 
-                rtcpd_SetReqStatus(NULL,file,save_rfio_errno,
-                                   RTCP_FAILED | RTCP_UNERR);
-            }
+            rtcpd_SetReqStatus(NULL,file,save_errno, RTCP_FAILED | RTCP_UNERR);
             break;
         }
         return(-1);
     }
     if ( disk_fd != -1 ) {
-        /*
-         * Note: this works as long as rfio_open() returns a socket.
-         * If we implement internal file descriptor tables in RFIO
-         * client we must change this to call a routine to
-         * return the socket.
-         */
-        s = (int)disk_fd;
-        ifce = getifnam(s);
-        if ( ifce == NULL )
-            strcpy(filereq->ifce,"???");
-        else
-            strcpy(filereq->ifce,ifce);
+      strcpy(filereq->ifce,"Xrd");
+      /* there is no way to know interface name for XrdPosix */
     }
 
     if (disk_fd>0) {
@@ -417,7 +416,7 @@ static int DiskFileClose(int disk_fd,
                          file_list_t *file) {
     rtcpFileRequest_t *filereq;
     int rc = 0;
-    int save_rfio_errno, save_serrno, save_errno;
+    int save_errno;
 
     if ( file == NULL ) return(-1);
     filereq = &file->filereq;
@@ -430,48 +429,30 @@ static int DiskFileClose(int disk_fd,
                      "File Path"      , TL_MSG_PARAM_STR, filereq->file_path,
                      "File Descriptor", TL_MSG_PARAM_INT, disk_fd );
 
-    save_rfio_errno = rfio_errno;
-    save_serrno = serrno;
-    serrno = rfio_errno = 0;
-        rc = rfio_close(disk_fd);
-        save_errno = errno;
-        save_serrno = serrno;
-        save_rfio_errno = rfio_errno;
+    rc = rtcp_xroot_close(disk_fd);
+    save_errno = errno;
     if ( rc == -1 ) {
-        rtcpd_AppendClientMsg(NULL, file,RT108,"CPTPDSK",rfio_serror());
+      rtcpd_AppendClientMsg(NULL, file,RT108,"CPTPDSK",sstrerror(errno)); /* 0 for Xrd */
 
-        rtcp_log(LOG_ERR,"rfio_close(): errno = %d, serrno = %d, rfio_errno = %d\n",
-                 save_errno,save_serrno,save_rfio_errno);
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
+        rtcp_log(LOG_ERR,"xroot_close(): errno = %d\n",save_errno);
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
                          "func"      , TL_MSG_PARAM_STR, "DiskFileClose",
-                         "Message"   , TL_MSG_PARAM_STR, "rfio_close()",
-                         "errno"     , TL_MSG_PARAM_INT, save_errno,
-                         "serrno"    , TL_MSG_PARAM_INT, save_serrno,
-                         "rfio_errno", TL_MSG_PARAM_INT, save_rfio_errno );
+                         "Message"   , TL_MSG_PARAM_STR, "xroot_close()",
+                         "errno"     , TL_MSG_PARAM_INT, save_errno );
 
-        if ( save_rfio_errno == ENOSPC || (save_rfio_errno == 0 &&
-                                           save_errno == ENOSPC) ) {
-            save_rfio_errno = ENOSPC;
-            rtcp_log(LOG_DEBUG,"DiskFileClose(%s) ENOSPC detected\n",
-                                  filereq->file_path);
+        if (save_errno == ENOSPC) {
+            rtcp_log(LOG_DEBUG,"DiskFileClose(%s) ENOSPC detected\n", filereq->file_path);
             tl_rtcpd.tl_log( &tl_rtcpd, 11, 3, 
                              "func"     , TL_MSG_PARAM_STR, "DiskFileClose",
                              "Message"  , TL_MSG_PARAM_STR, "ENOSPC detected",
                              "File Path", TL_MSG_PARAM_STR, filereq->file_path );
-
-            rtcpd_SetReqStatus(NULL,file,save_rfio_errno,RTCP_FAILED);
+            rtcpd_SetReqStatus(NULL,file,save_errno,RTCP_FAILED);
         } else {
-            save_rfio_errno = (save_rfio_errno > 0 ? save_rfio_errno : 
-                                                     save_serrno);
-            save_rfio_errno = (save_rfio_errno > 0 ? save_rfio_errno :
-                                                     save_errno);
-            rtcpd_SetReqStatus(NULL,file,save_rfio_errno,RTCP_FAILED);
+            rtcpd_SetReqStatus(NULL,file,save_errno,RTCP_FAILED);
         }
-    } else {
-        serrno = save_serrno;
-        rfio_errno = save_rfio_errno;
     }
 
+    serrno = 0;
     if ( (tape->tapereq.mode == WRITE_DISABLE) &&
          ( (file->next->filereq.concat & CONCAT) != 0 ||
            (filereq->concat & (CONCAT|CONCAT_TO_EOD)) != 0 ) ) {
@@ -519,7 +500,7 @@ static int MemoryToDisk(int disk_fd, int pool_index,
     register int debug = Debug;
     register int concat;
     diskIOstatus_t *diskIOstatus = NULL;
-    char *bufp, save_rfio_errmsg[CA_MAXLINELEN+1];
+    char *bufp;
     rtcpFileRequest_t *filereq = NULL;
 
     if ( disk_fd < 0 || indxp == NULL || offset == NULL ||
@@ -715,31 +696,26 @@ static int MemoryToDisk(int disk_fd, int pool_index,
                  */
                     bufp = databufs[i]->buffer;
                     DK_STATUS(RTCP_PS_WRITE);
-                    if ( nb_bytes > 0 ) rc = rfio_write(disk_fd,bufp,nb_bytes);
-                    else rc = nb_bytes;
+                    if ( nb_bytes > 0 ) {
+                      rc = rtcp_xroot_write(disk_fd,bufp,nb_bytes);
+                    } else rc = nb_bytes;
                     DK_STATUS(RTCP_PS_NOBLOCKING);
                     if ( rc == -1 || rc != nb_bytes ) {
                         last_errno = errno;
-                        save_serrno = rfio_serrno();
-                        rtcp_log(LOG_ERR,"rfio_write(): errno = %d, serrno = %d, rfio_errno = %d\n",last_errno,serrno,save_serrno);
-                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
+                        rtcp_log(LOG_ERR,"write(): errno = %d\n",last_errno);
+                        tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
                                          "func"      , TL_MSG_PARAM_STR, "MemoryToDisk",
-                                         "Message"   , TL_MSG_PARAM_STR, "rfio_write",
-                                         "last_errno", TL_MSG_PARAM_INT, last_errno, 
-                                         "serrno"    , TL_MSG_PARAM_INT, serrno, 
-                                         "save_errno", TL_MSG_PARAM_INT, save_serrno );
+                                         "Message"   , TL_MSG_PARAM_STR, "write",
+                                         "last_errno", TL_MSG_PARAM_INT, last_errno );
                     }
                 if ( rc != nb_bytes ) {
-                    strncpy(save_rfio_errmsg,rfio_serror(),CA_MAXLINELEN);
                     /*
                      * In case of ENOSPC we will have to return
                      * to ask the stager for a new path
                      */
-                    rtcpd_AppendClientMsg(NULL, file,RT115,"CPTPDSK",
-                            save_rfio_errmsg);
+                    rtcpd_AppendClientMsg(NULL, file,RT115,"CPTPDSK",sstrerror(errno));
 
-                    if ( save_serrno == ENOSPC || (save_serrno == 0 &&
-                                                   last_errno == ENOSPC) ) {
+                    if (last_errno == ENOSPC) {
                          save_serrno = ENOSPC;
                          rtcp_log(LOG_DEBUG,"MemoryToDisk(%s) ENOSPC detected\n",
                                   filereq->file_path);
@@ -819,15 +795,15 @@ static int MemoryToDisk(int disk_fd, int pool_index,
             DEBUG_PRINT((LOG_DEBUG,"MemoryToDisk() close disk file fd=%d\n",
                          disk_fd));
             rc = DiskFileClose(disk_fd,pool_index,tape,file);
-            save_serrno = rfio_errno;
+            save_serrno = errno;
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"MemoryToDisk() DiskFileClose(%d): %s\n",
-                         disk_fd,rfio_serror());
+                         disk_fd,sstrerror(errno));
                 tl_rtcpd.tl_log( &tl_rtcpd, 3, 4, 
                                  "func"       , TL_MSG_PARAM_STR, "MemoryToDisk",
                                  "Message"    , TL_MSG_PARAM_STR, "DiskFileClose",
                                  "disk_fd"    , TL_MSG_PARAM_INT, disk_fd,
-                                 "rfio_serror", TL_MSG_PARAM_STR, rfio_serror() );
+                                 "error"      , TL_MSG_PARAM_STR, sstrerror(errno) );
 
                 if ( save_serrno == ENOSPC ) {
                     rtcp_log(LOG_DEBUG,"MemoryToDisk(%s) ENOSPC detected\n",
@@ -864,10 +840,10 @@ static int DiskToMemory(int disk_fd, int pool_index,
                         tape_list_t *tape,
                         file_list_t *file) {
     int rc, irc, i, blksiz, lrecl, end_of_dkfile, current_bufsz;
-    int nb_bytes, SendStartSignal, save_serrno, proc_err, severity;
+    int nb_bytes, SendStartSignal, save_errno, proc_err, severity;
     register int debug = Debug;
     diskIOstatus_t *diskIOstatus = NULL;
-    char *bufp, save_rfio_errmsg[CA_MAXLINELEN+1];
+    char *bufp;
     rtcpFileRequest_t *filereq = NULL;
 
     if ( disk_fd < 0 || indxp == NULL || offset == NULL ||
@@ -998,26 +974,22 @@ static int DiskToMemory(int disk_fd, int pool_index,
         DEBUG_PRINT((LOG_DEBUG,"DiskToMemory() read %d bytes from %s\n",
             nb_bytes,filereq->file_path));
         rc = irc = 0;
-        errno = serrno = rfio_errno = 0;
+        errno = 0;
             bufp = databufs[i]->buffer + *offset;
             DK_STATUS(RTCP_PS_READ);
-            if ( nb_bytes > 0 ) rc = rfio_read(disk_fd,bufp,nb_bytes);
-            else rc = nb_bytes;
+            if ( nb_bytes > 0 ) {
+              rc = rtcp_xroot_read(disk_fd,bufp,nb_bytes); 
+            } else rc = nb_bytes;
             DK_STATUS(RTCP_PS_NOBLOCKING);
-            if ( rc == -1 ) save_serrno = rfio_serrno();
+            if ( rc == -1 ) save_errno = errno;
         if ( rc == -1 ) {
-            rtcp_log(LOG_ERR,"DiskToMemory() rfio_read(): errno = %d, serrno = %d, rfio_errno = %d\n",
-                errno,serrno,rfio_errno);
-            tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
+            rtcp_log(LOG_ERR,"DiskToMemory() read(): errno = %d\n",errno);
+            tl_rtcpd.tl_log( &tl_rtcpd, 3, 3, 
                              "func"      , TL_MSG_PARAM_STR, "DiskToMemory",
-                             "Message"   , TL_MSG_PARAM_STR, "rfio_read",
-                             "errno"     , TL_MSG_PARAM_INT, errno,
-                             "serrno"    , TL_MSG_PARAM_INT, serrno, 
-                             "rfio_errno", TL_MSG_PARAM_INT, rfio_errno );
-            strncpy(save_rfio_errmsg,rfio_serror(),CA_MAXLINELEN);
-            rtcpd_AppendClientMsg(NULL, file,RT112,"CPDSKTP",
-                save_rfio_errmsg);
-            rtcpd_SetReqStatus(NULL,file,save_serrno,RTCP_FAILED);
+                             "Message"   , TL_MSG_PARAM_STR, "read",
+                             "errno"     , TL_MSG_PARAM_INT, errno );
+            rtcpd_AppendClientMsg(NULL, file,RT112,"CPDSKTP", sstrerror(save_errno));
+            rtcpd_SetReqStatus(NULL,file,save_errno,RTCP_FAILED);
             (void)Cthread_cond_broadcast_ext(databufs[i]->lock);
             (void)Cthread_mutex_unlock_ext(databufs[i]->lock);
             return(-1);
@@ -1117,18 +1089,18 @@ static int DiskToMemory(int disk_fd, int pool_index,
             DEBUG_PRINT((LOG_DEBUG,"DiskToMemory() close disk file fd=%d\n",
                 disk_fd));
             rc = DiskFileClose(disk_fd,pool_index,tape,file);
+            save_errno = errno;
             if ( rc == -1 ) {
                 rtcp_log(LOG_ERR,"DiskToMemory() DiskFileClose(%d), file=%s: %s\n",
-                    disk_fd,filereq->file_path,rfio_serror());
+                         disk_fd,filereq->file_path,sstrerror(save_errno));
                 tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, 
                                  "func"   , TL_MSG_PARAM_STR, "DiskToMemory",
                                  "Message", TL_MSG_PARAM_STR, "DiskFileClose",
                                  "disk_fd", TL_MSG_PARAM_INT, disk_fd,
                                  "Path"   , TL_MSG_PARAM_STR, filereq->file_path,
-                                 "Error"  , TL_MSG_PARAM_STR, rfio_serror() );
-                rtcpd_AppendClientMsg(NULL, file,RT108,"CPDSKTP",
-                        rfio_serror());
-                rtcpd_SetReqStatus(NULL,file,rfio_errno,RTCP_FAILED);
+                                 "Error"  , TL_MSG_PARAM_STR, sstrerror(save_errno) );
+                rtcpd_AppendClientMsg(NULL, file,RT108,"CPDSKTP",sstrerror(save_errno));
+                rtcpd_SetReqStatus(NULL,file,errno,RTCP_FAILED);
                 return(-1);
             }
             break;
@@ -1163,19 +1135,17 @@ static int DiskToMemory(int disk_fd, int pool_index,
  */
 #define CHECK_PROC_ERR(X,Y,Z) { \
     save_errno = errno; \
-    save_serrno = serrno; \
     rtcpd_CheckReqStatus((X),(Y),NULL,&severity); \
     if ( rc == -1 || (severity & RTCP_FAILED) != 0 || \
         (rtcpd_CheckProcError() & RTCP_FAILED) != 0 ) { \
-        rtcp_log(LOG_ERR,"diskIOthread() %s, rc=%d, severity=%d, errno=%d, serrno=%d\n",\
-        (Z),rc,severity,save_errno,save_serrno); \
-        tl_rtcpd.tl_log( &tl_rtcpd, 3, 6, \
+        rtcp_log(LOG_ERR,"diskIOthread() %s, rc=%d, severity=%d, errno=%d\n",\
+        (Z),rc,severity,save_errno); \
+        tl_rtcpd.tl_log( &tl_rtcpd, 3, 5, \
                          "func"    , TL_MSG_PARAM_STR, "diskIOthread", \
                          "Message" , TL_MSG_PARAM_STR, (Z), \
                          "rc"      , TL_MSG_PARAM_INT, rc, \
                          "severity", TL_MSG_PARAM_INT, severity, \
-                         "errno"   , TL_MSG_PARAM_INT, save_errno, \
-                         "serrno"  , TL_MSG_PARAM_INT, save_serrno ); \
+                         "errno"   , TL_MSG_PARAM_INT, save_errno ); \
         if ( mode == WRITE_DISABLE && \
           (rc == -1 || (severity & RTCP_FAILED) != 0) && \
           (rtcpd_CheckProcError() & RTCP_FAILED) == 0 ) { \
@@ -1214,7 +1184,7 @@ void *diskIOthread(void *arg) {
     int disk_fd = -1;
     int last_file = FALSE;
     int end_of_tpfile = FALSE;
-    int rc, save_rc, mode, severity, save_errno,save_serrno;
+    int rc, save_rc, mode, severity, save_errno;
     extern char *u64tostr (u_signed64, char *, int);
     extern int ENOSPC_occurred;
 

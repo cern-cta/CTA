@@ -26,8 +26,6 @@
 #include <Cmutex.h>
 #include <Cnetdb.h>
 #include <Ctape_api.h>
-#define RFIO_KERNEL 1
-#include <rfio_api.h>
 #include <log.h>
 #include <osdep.h>
 #include <net.h>

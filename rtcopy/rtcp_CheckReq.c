@@ -22,15 +22,14 @@
 #include <string.h>
 #include <sys/stat.h>
 
+#include <rtcp_xroot.h>
+
 #include <pwd.h>
 #include <Castor_limits.h>
 #include <Cglobals.h>
 #include <log.h>
 #include <osdep.h>
 #include <net.h>
-#define RFIO_KERNEL 1
-#include <rfio_api.h>
-#include <rfio_errno.h>
 #include <Cthread_api.h>
 #include <vdqm_api.h>
 #include <Cuuid.h>
@@ -57,6 +56,35 @@ static int max_tpretry = MAX_TPRETRY;
 static int max_cpretry = MAX_CPRETRY;
 extern char *getconfent(char *, char *, int);
 extern int rtcp_CallVMGR (tape_list_t *, char *);
+
+/**
+ * Convert the server:/path string to xroot root://server:port//path
+ * @param rtcpPath the path to be converted.
+ * @param xrootFilePath the variable to return xroot path.
+ * @return 0 if convertion succeed and -1 in error case.
+ */
+static int rtcpToXroot(const char *const rtcpPath,
+                       char *const xrootFilePath) {
+    const char *const xrootPort="1095";
+    const char *pathWithoutServer;
+    *xrootFilePath='\0';
+    if ( CA_MAXPATHLEN < (strlen("root://")+strlen(xrootPort)+strlen(rtcpPath)+1) ) {
+      return (-1);
+    }
+    if ( NULL == (pathWithoutServer=strchr(rtcpPath,'/'))) {
+      return (-1);
+    }
+    /* protocol */
+    strcat(xrootFilePath,"root://");
+    /* server name */
+    strncat(xrootFilePath,rtcpPath, pathWithoutServer-rtcpPath);
+    /* port */
+    strcat(xrootFilePath,xrootPort);
+    /* path itself */
+    strcat(xrootFilePath,"/");
+    strcat(xrootFilePath,pathWithoutServer);
+    return 0;
+}
 
 static int rtcp_CheckTapeReq(tape_list_t *tape) {
     file_list_t *file = NULL;
@@ -447,11 +475,21 @@ static int rtcp_CheckFileReq(file_list_t *file) {
          */
         rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) (tpwrite) stat64() remote file\n",
             filereq->tape_fseq,filereq->file_path);
-        rfio_errno = serrno = 0;
-        rc = rfio_mstat64(filereq->file_path,&st);
+
+        /* we have to convert the path to xroot */
+        struct stat xrootStat;
+        char xrootFilePath[CA_MAXPATHLEN+1];
+        if ( -1 ==  rtcpToXroot(filereq->file_path,xrootFilePath) ) {
+            serrno = EFAULT; /* sets  "Bad address" errno */
+            rc = -1;
+        } else {
+            rc = rtcp_xroot_stat(xrootFilePath,&xrootStat);
+            st.st_mode=xrootStat.st_mode;
+            st.st_size=xrootStat.st_size;
+        }
+
         if ( rc == -1 ) {
-            if ( rfio_errno != 0 ) serrno = rfio_errno;
-            else if ( serrno == 0 ) serrno = errno;
+            serrno = errno;
             sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
             SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
             if ( rc == -1 ) return(rc);
@@ -530,9 +568,17 @@ static int rtcp_CheckFileReq(file_list_t *file) {
          */
         rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) (tpread) stat64() remote file\n",
             filereq->tape_fseq,filereq->file_path);
-        {
-            rfio_errno = serrno = 0;
-            rc = rfio_mstat64(filereq->file_path,&st);
+            serrno = 0;
+            struct stat xrootStat;
+            char xrootFilePath[CA_MAXPATHLEN+1];
+            if ( -1 ==  rtcpToXroot(filereq->file_path,
+                                    xrootFilePath) ) {
+                  errno = EFAULT; /* sets  "Bad address" errno */
+                  rc = -1;
+            } else {
+                  rc = rtcp_xroot_stat(xrootFilePath,&xrootStat);
+                  st.st_mode=xrootStat.st_mode;
+            }
             if ( rc != -1 ) rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) st_mode=0%o\n",
                 filereq->tape_fseq,filereq->file_path,st.st_mode);
             if ( rc != -1 && (((st.st_mode) & S_IFMT) == S_IFDIR) ) {
@@ -552,10 +598,20 @@ static int rtcp_CheckFileReq(file_list_t *file) {
                     dir_delim = *p;
                     *p = '\0';
                 }
-                rc = rfio_mstat64(filereq->file_path,&st);
+
+                struct stat xrootStat;
+                char xrootFilePath[CA_MAXPATHLEN+1];
+                if ( -1 ==  rtcpToXroot(filereq->file_path,
+                                        xrootFilePath) ) {
+                    errno = EFAULT; /* sets  "Bad address" errno */
+                    rc = -1;
+                } else {
+                    rc = rtcp_xroot_stat(xrootFilePath,&xrootStat);
+                    st.st_mode=xrootStat.st_mode;
+                }
+
                 if ( rc == -1 ) {
-                    if ( rfio_errno != 0 ) serrno = rfio_errno;
-                    else if ( serrno == 0 ) serrno = errno;
+                    serrno = errno;
                     sprintf(errmsgtxt,RT110,CMD(mode),sstrerror(serrno));
                     if ( p != NULL ) *p = dir_delim;
                     SET_REQUEST_ERR(filereq,RTCP_USERR | RTCP_FAILED);
@@ -606,7 +662,6 @@ int rtcp_CheckReq(int *client_socket,
                   rtcpClientInfo_t *client, 
                   tape_list_t *tape) {
     int rc = 0;
-    int save_serrno;
     int nb_filereqs = 0;
     int tot_nb_filereqs = 0;
     tape_list_t *tl;
@@ -677,17 +732,6 @@ int rtcp_CheckReq(int *client_socket,
         }
         if ( rc == -1 ) break;
     } CLIST_ITERATE_END(tape,tl);
-    if ( rfio_end() < 0 && rc != -1 ) {
-        save_serrno = (errno > 0 ? errno : serrno);
-        tapereq = &tape->tapereq;
-        rtcp_log(LOG_ERR,"rtcp_CheckReq() rfio_end(): %s\n",
-                 sstrerror(save_serrno));
-        sprintf(errmsgtxt,RT136,CMD(tapereq->mode));
-        serrno = save_serrno;
-        file = NULL;
-        SET_REQUEST_ERR(tapereq,RTCP_SYERR | RTCP_FAILED);
-        tellClient(client_socket,tape,NULL,rc);
-    }
     return(rc);
 }
 
