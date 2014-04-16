@@ -59,17 +59,6 @@ static std::string getVdqmHostName(castor::log::Logger &log) throw();
 static std::string getVmgrHostName(castor::log::Logger &log) throw();
 
 //------------------------------------------------------------------------------
-// getRmcHostName
-//
-// Tries to get the name of the host on which the rmcd daemon is running by
-// parsing /etc/castor/castor.conf.
-//
-// This function logs the host name if it is successful, else it logs an
-// error message and returns an empty string.
-//------------------------------------------------------------------------------
-static std::string getRmcHostName(castor::log::Logger &log) throw();
-
-//------------------------------------------------------------------------------
 // getConfigParam
 //
 // Tries to get the value of the specified parameter from parsing
@@ -95,17 +84,12 @@ int main(const int argc, char **const argv) {
     log(LOG_ERR, "Aborting: Cannot continue without vmgr host-name");
     return 1;
   }
-  const std::string rmcHostName = getRmcHostName(log);
-  if(vmgrHostName.empty()) {
-    log(LOG_ERR, "Aborting: Cannot continue without rmc host-name");
-    return 1;
-  }
 
   // Create proxy objects for the vdqm, vmgr and rmc daemons
   const int netTimeout = 10; // Timeout in seconds
   VdqmImpl vdqm(log, vdqmHostName, VDQM_PORT, netTimeout);
   VmgrImpl vmgr(log, vmgrHostName, VMGR_PORT, netTimeout);
-  RmcImpl rmc(log, rmcHostName, RMC_PORT, netTimeout);
+  RmcImpl rmc(log, netTimeout);
 
   // Create the poll() reactor
   castor::io::PollReactorImpl reactor(log);
@@ -148,25 +132,6 @@ static std::string getVmgrHostName(castor::log::Logger &log) throw() {
     const std::string value = getConfigParam(category, name);
     log::Param params[] = {log::Param("value", value)};
     log(LOG_INFO, "VMGR HOST", params);
-    return value;
-  } catch(castor::exception::Exception &ex) {
-    log(LOG_ERR, ex.getMessage().str());
-    return "";
-  }
-}
-
-//------------------------------------------------------------------------------
-// getRmcHostName
-//------------------------------------------------------------------------------
-static std::string getRmcHostName(castor::log::Logger &log) throw() {
-  using namespace castor;
-
-  try {
-    const std::string category = "RMC";
-    const std::string name = "HOST";
-    const std::string value = getConfigParam(category, name);
-    log::Param params[] = {log::Param("value", value)};
-    log(LOG_INFO, "RMC HOST", params);
     return value;
   } catch(castor::exception::Exception &ex) {
     log(LOG_ERR, ex.getMessage().str());

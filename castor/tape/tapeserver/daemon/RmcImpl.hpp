@@ -23,7 +23,11 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
+#include "castor/tape/legacymsg/RmcMountMsgBody.hpp"
 #include "castor/tape/tapeserver/daemon/Rmc.hpp"
+
+#include <unistd.h>
+#include <sys/types.h>
 
 namespace castor     {
 namespace tape       {
@@ -40,13 +44,10 @@ public:
    * Constructor.
    *
    * @param log The object representing the API of the CASTOR logging system.
-   * @param rmcHostName The name of the host on which the rmcd daemon is
-   * running.
-   * @param rmcPort The TCP/IP port on which the rmcd daemon is listening.
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    */
-  RmcImpl(log::Logger &log, const std::string &rmcHostName, const unsigned short rmcPort, const int netTimeout) throw();
+  RmcImpl(log::Logger &log, const int netTimeout) throw();
 
   /**
    * Destructor.
@@ -78,7 +79,7 @@ public:
   void unmountTape(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
 
   /**
-   * Enumeration of the different types of drive.
+   * Enumeration of the different types of library drive-name.
    */
   enum RmcDriveType {
     RMC_DRIVE_TYPE_ACS,
@@ -87,7 +88,7 @@ public:
     RMC_DRIVE_TYPE_UNKNOWN};
 
   /**
-   * Returns the type of the specified drive.
+   * Returns the type of the specified library drive-name.
    *
    * @param drive The drive in one of the following three forms corresponding
    * to the three supported drive-loader types, namely acs, manual and smc:
@@ -100,19 +101,24 @@ public:
 protected:
 
   /**
+   * The size of buffer used to marshal or unmarshal RMC messages.
+   */
+  static const int RMC_MSGBUFSIZ = 256;
+
+  /**
+   * The user ID of the current process.
+   */
+  const uid_t m_uid;
+
+  /**
+   * The group ID of the current process.
+   */
+  const gid_t m_gid; 
+
+  /**
    * The object representing the API of the CASTOR logging system.
    */
   log::Logger &m_log;
-
-  /**
-   * The name of the host on which the rmcd daemon is running.
-   */
-  const std::string m_rmcHostName;
-
-  /**
-   * The TCP/IP port on which the rmcd daemon is listening.
-   */
-  const unsigned short m_rmcPort;
 
   /**
    * The timeout in seconds to be applied when performing network read and
@@ -177,9 +183,18 @@ protected:
   /**
    * Connects to the rmcd daemon.
    *
+   * @param hostName The name of the host on which the rmcd daemon is running.
    * @return The socket-descriptor of the connection with the rmcd daemon.
    */
-  int connectToRmc() const throw(castor::exception::Exception);
+  int connectToRmc(const std::string &hostName) const throw(castor::exception::Exception);
+
+  /**
+   * Writes an RMC_MOUNT message with the specifed body to the specified
+   * connection.
+   *
+   * @param body The body of the RMC_MOUNT message.
+   */
+  void writeRmcMountMsg(const int fd, const legacymsg::RmcMountMsgBody &body) throw(castor::exception::Exception);
 
 }; // class RmcImpl
 

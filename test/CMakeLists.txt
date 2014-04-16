@@ -103,6 +103,8 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/daemon/Rmc.cpp
   ../castor/tape/tapeserver/daemon/RmcImpl.cpp
   ../castor/tape/tapeserver/daemon/RmcImplTest.cpp
+  ../castor/tape/tapeserver/daemon/ScsiLibraryDriveName.cpp
+  ../castor/tape/tapeserver/daemon/ScsiLibraryDriveNameTest.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemon.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemonTest.cpp
   ../castor/tape/tapeserver/daemon/Vdqm.cpp

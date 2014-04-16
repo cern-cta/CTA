@@ -22,21 +22,21 @@
 
 #include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
+#include "castor/tape/legacymsg/RmcMarshal.hpp"
 #include "castor/tape/tapeserver/daemon/RmcImpl.hpp"
+#include "castor/tape/tapeserver/daemon/ScsiLibraryDriveName.hpp"
 #include "castor/utils/SmartFd.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/Castor_limits.h"
+#include "h/rmc_constants.h"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::RmcImpl::RmcImpl(
-  log::Logger &log,
-  const std::string &rmcHostName,
-  const unsigned short rmcPort,
-  const int netTimeout) throw():
+castor::tape::tapeserver::daemon::RmcImpl::RmcImpl(log::Logger &log, const int netTimeout) throw():
+    m_uid(getuid()),
+    m_gid(getgid()),
     m_log(log),
-    m_rmcHostName(rmcHostName),
-    m_rmcPort(rmcPort),
     m_netTimeout(netTimeout) {
 } 
 
@@ -121,6 +121,22 @@ void castor::tape::tapeserver::daemon::RmcImpl::mountTapeManual(const std::strin
 // mountTapeScsi
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::RmcImpl::mountTapeScsi(const std::string &vid, const std::string &drive) throw(castor::exception::Exception) {
+  ScsiLibraryDriveName parsedDrive;
+  try {
+    parsedDrive = ScsiLibraryDriveName(drive);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to mount tape in SCSI library: " << ne.getMessage().str();
+    throw ex;
+  }
+
+  castor::utils::SmartFd fd(connectToRmc(parsedDrive.rmcHostName));
+  legacymsg::RmcMountMsgBody body;
+  body.uid = m_uid;
+  body.gid = m_gid;
+  castor::utils::copyString(body.vid, vid.c_str());
+  body.drvOrd = parsedDrive.drvOrd;
+  writeRmcMountMsg(fd.get(), body);
 }
 
 //------------------------------------------------------------------------------
@@ -188,17 +204,33 @@ void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeScsi(const std::strin
 //-----------------------------------------------------------------------------
 // connectToRmc
 //-----------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::RmcImpl::connectToRmc() const throw(castor::exception::Exception) {
+int castor::tape::tapeserver::daemon::RmcImpl::connectToRmc(const std::string &hostName) const throw(castor::exception::Exception) {
   castor::utils::SmartFd smartConnectSock;
   try {
-    smartConnectSock.reset(io::connectWithTimeout(m_rmcHostName, m_rmcPort,
-      m_netTimeout));
+    smartConnectSock.reset(io::connectWithTimeout(hostName, RMC_PORT, m_netTimeout));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to connect to rmc on host " << m_rmcHostName
-      << " port " << m_rmcPort << ": " << ne.getMessage().str();
+    ex.getMessage() << "Failed to connect to rmc on host " << hostName
+      << " port " << RMC_PORT << ": " << ne.getMessage().str();
     throw ex;
   }
 
   return smartConnectSock.release();
+}
+
+//-----------------------------------------------------------------------------
+// writeRmcMountMsg
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::RmcImpl::writeRmcMountMsg(const int fd, const legacymsg::RmcMountMsgBody &body) throw(castor::exception::Exception) {
+  char buf[RMC_MSGBUFSIZ];
+  const size_t len = legacymsg::marshal(buf, body);
+
+  try {
+    io::writeBytes(fd, m_netTimeout, len, buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to write RMC_MOUNT message: "
+      << ne.getMessage().str();
+    throw ex;
+  }
 }
