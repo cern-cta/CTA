@@ -24,11 +24,12 @@
 
 #pragma once
 
+#include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
-#include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
+#include "castor/tape/tapeserver/file/File.hpp"
 #include <iostream>
 #include <stdio.h>
 
@@ -38,22 +39,57 @@ namespace tapeserver {
 namespace daemon {
 class TapeReadSingleThread : public TapeSingleThreadInterface<TapeReadTask>{
 public:
-  TapeReadSingleThread(castor::tape::drives::DriveInterface & drive): 
-   TapeSingleThreadInterface<TapeReadTask>(drive) {}
+  TapeReadSingleThread(castor::tape::drives::DriveInterface & drive,
+          const std::string vid, uint64_t maxFilesRequest,
+          castor::log::LogContext & lc): 
+   TapeSingleThreadInterface<TapeReadTask>(drive, vid, lc) {}
+   void setTaskInjector(TaskInjector * ti) { m_taskInjector = ti; }
 
 private:
+  TapeReadTask * popAndRequestMoreJobs() {
+    castor::tape::threading::BlockingQueue<TapeReadTask *>::valueRemainingPair 
+      vrp = m_tasks.popGetSize();
+    // If we just passed (down) the half full limit, ask for more
+    // (the remaining value is after pop)
+    if(vrp.remaining + 1 == m_maxFilesRequest/2) {
+      // This is not a last call
+      m_taskInjector->requestInjection(m_maxFilesRequest, 1000, false);
+    } else if (0 == vrp.remaining) {
+      // This is a last call: if the task injector comes up empty on this
+      // one, he'll call it the end.
+      m_taskInjector->requestInjection(m_maxFilesRequest, 1000, false);
+    }
+    return vrp.value;
+  }
+  
+  
+  
   virtual void run() {
-      while(1) {
-        TapeReadTask * task = m_tasks.pop();
-        bool end = task->endOfWork();
-        if (!end) task->execute(m_drive);
-        delete task;
-        if (end) {
-          printf("End of TapeReadWorkerThread::run()\n");
-          return;
-        }
+    // First we have to initialise the tape read session
+    std::auto_ptr<castor::tape::tapeFile::ReadSession> rs;
+    try {
+      rs.reset(new castor::tape::tapeFile::ReadSession(m_drive, m_vid));
+      m_logContext.log(LOG_INFO, "Tape read session session successfully started");
+    } catch (castor::exception::Exception & ex) {
+      m_logContext.log(LOG_ERR, "Failed to start tape read session");
+      // TODO: log and unroll the session
+      // TODO: add an unroll mode to the tape read task. (Similar to exec, but pushing blocks marked in error)
+    }
+    // Then we will loop on the tasks as they get from 
+    // the task injector
+    while(1) {
+      TapeReadTask * task = popAndRequestMoreJobs();
+      bool end = task->endOfWork();
+      if (!end) task->execute(*rs, m_logContext);
+      delete task;
+      m_filesProcessed++;
+      if (end) {
+        return;
       }
-    }  
+    }
+  }
+  
+  uint64_t m_maxFilesRequest;
 };
 }
 }

@@ -40,10 +40,15 @@ namespace daemon {
 
 class TapeWriteSingleThread :  public TapeSingleThreadInterface<TapeWriteTask> {
 public:
-  TapeWriteSingleThread(castor::tape::drives::DriveInterface & drive, MigrationReportPacker & repPacker,
+  TapeWriteSingleThread(castor::tape::drives::DriveInterface & drive, 
+          const std::string & vid,
+          castor::log::LogContext & lc,
+          MigrationReportPacker & repPacker,
 	  int filesBeforeFlush, int blockBeforeFlush): 
-  TapeSingleThreadInterface<TapeWriteTask>(drive),
-   m_filesBeforeFlush(filesBeforeFlush),m_blocksBeforeFlush(blockBeforeFlush), m_reportPacker(repPacker) {}
+  TapeSingleThreadInterface<TapeWriteTask>(drive, vid, lc),
+   m_filesBeforeFlush(filesBeforeFlush),
+   m_blocksBeforeFlush(blockBeforeFlush),
+   m_reportPacker(repPacker) {}
 
 private:
   virtual void run() {
@@ -56,6 +61,7 @@ private:
 	//m_reportPacker.reportCompletedJob(MigrationJob(-1, task->fSeq(), -1));
 	files+=task->files();
 	blocks+=task->blocks();
+        m_filesProcessed += task->files();
 	if (files >= m_filesBeforeFlush ||
 		blocks >= m_blocksBeforeFlush) {
 	  printf("Flushing after %d files and %d blocks\n", files, blocks);
