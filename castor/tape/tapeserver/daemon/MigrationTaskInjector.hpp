@@ -33,7 +33,7 @@
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
-
+#include "castor/tape/tapeserver/daemon/TaskInjector.hpp"
 namespace castor{
 namespace tape{
 namespace tapeserver{
@@ -66,8 +66,32 @@ public:
    * Start the inner thread 
    */
   void startThreads();
+  
+  void requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall);
 private:
- 
+   /**
+   * A request of files to migrate. We request EITHER
+   * - a maximum of nbMaxFiles files
+   * - OR at least byteSizeThreshold bytes. 
+   * That means we stop as soon as we have nbMaxFiles files or the cumulated size 
+   * is equal or above byteSizeThreshold. 
+   */
+  class Request {
+  public:
+    Request(int mf, int mb, bool lc):
+    nbMaxFiles(mf), byteSizeThreshold(mb), lastCall(lc) {}
+    
+    const int nbMaxFiles;
+    const int byteSizeThreshold;
+    
+    /** 
+     * True if it is the last call for the set of requests :it means
+     *  we don't need to try to get more files to recall 
+     *  and can send into all the different threads a signal  .
+     */
+    const bool lastCall;
+  };
+  
   class WorkerThread: public castor::tape::threading::Thread {
   public:
     WorkerThread(MigrationTaskInjector & rji): _this(rji) {}

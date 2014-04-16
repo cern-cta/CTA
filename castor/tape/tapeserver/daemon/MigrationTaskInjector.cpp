@@ -23,6 +23,7 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
+#include "castor/tape/tapegateway/FilesToMigrateList.hpp"
 
 namespace{
 
@@ -31,6 +32,9 @@ namespace{
     return ptr;
   }
 }
+
+using castor::log::LogContext;
+using castor::log::Param;
 
 namespace castor{
 namespace tape{
@@ -43,7 +47,7 @@ namespace daemon {
           TapeSingleThreadInterface<TapeWriteTask> & tapeWriter,client::ClientInterface& client,
           castor::log::LogContext lc):
           m_thread(*this),m_memManager(mm),m_tapeWriter(tapeWriter),
-          m_diskReader(diskReader),m_client(client)
+          m_diskReader(diskReader),m_client(client),m_lc(lc)
   {
     
   }
@@ -51,17 +55,29 @@ namespace daemon {
  
   /**
    * Create all the tape-read and write-disk tasks for set of files to retrieve
-   * @param jobs
+   * @param jobs to transform into tasks
    */
   void MigrationTaskInjector::injectBulkMigrations(const std::vector<tapegateway::FileToMigrateStruct*>& jobs){
-    const u_signed64 blockCapacity = m_memManager->blockCapacity();
-    for(const std::vector<tapegateway::FileToMigrateStruct*>::const_iterator it= jobs.begin();it!=jobs.end();++it){
+
+    const u_signed64 blockCapacity = m_memManager.blockCapacity();
+    for(std::vector<tapegateway::FileToMigrateStruct*>::const_iterator it= jobs.begin();it!=jobs.end();++it){
       const u_signed64 fileSize = (*it)->fileSize();
+      LogContext::ScopedParam sp[]={
+        LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->fileid())),
+        LogContext::ScopedParam(m_lc, Param("NSFILESEQNUMBER", (*it)->fseq())),
+        LogContext::ScopedParam(m_lc, Param("NSFILENSHOST", (*it)->nshost())),
+        LogContext::ScopedParam(m_lc, Param("NSFILEPATH", (*it)->path()))
+      };
+      tape::utils::suppresUnusedVariable(sp);
+      m_lc.log(LOG_INFO, "Logged file to migrate");
       
       const u_signed64 neededBlock = fileSize/blockCapacity + ((fileSize%blockCapacity==0) ? 0 : 1); 
       
-      TapeWriteTask *twt = new TapeWriteTask(,neededBlock,mm);
-      DiskReadTask *drt = new DiskReadTask(*twt,removeOwningList((*it)->clone()));
+      TapeWriteTask *twt = new TapeWriteTask(neededBlock,removeOwningList((*it)->clone()),m_memManager);
+      DiskReadTask *drt = new DiskReadTask(*twt,removeOwningList((*it)->clone()),neededBlock);
+      
+      m_tapeWriter.push(twt);
+      m_diskReader.push(drt);
     }
   }
   
@@ -78,11 +94,34 @@ namespace daemon {
   void MigrationTaskInjector::startThreads(){
     m_thread.start();
   }
-
+  
+  void MigrationTaskInjector::requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall) {
+    //@TODO where shall we  acquire the lock ? There of just before the push ?
+    castor::tape::threading::MutexLocker ml(&m_producerProtection);
+    m_queue.push(Request(maxFiles, byteSizeThreshold, lastCall));
+  }
  
+//------------------------------------------------------------------------------  
+  void MigrationTaskInjector::WorkerThread::run(){
+    while(1){
+      Request req = _this.m_queue.pop();
+      client::ClientProxy::RequestReport reqReport;
+      std::auto_ptr<tapegateway::FilesToMigrateList> filesToMigrateList(_this.m_client.getFilesToMigrate(req.nbMaxFiles, req.byteSizeThreshold,reqReport));
 
-    MigrationTaskInjector::WorkerThread::WorkerThread(MigrationTaskInjector & rji): _this(rji) {}
-    void MigrationTaskInjector::WorkerThread::run(){}
+      if(NULL==filesToMigrateList.get()){
+        if (req.lastCall) {
+          _this.m_lc.log(LOG_INFO,"No more file to migrate: triggering the end of session.\n");
+          _this.m_tapeWriter.finish();
+          _this.m_diskReader.finish();
+          break;
+        } else {
+          _this.m_lc.log(LOG_INFO,"In MigrationTaskInjector::WorkerThread::run(): got empty list, but not last call");
+        }
+      } else {
+        _this.injectBulkMigrations(filesToMigrateList->filesToMigrate());
+      }
+    }
+  }
 
 
 } //end namespace daemon
