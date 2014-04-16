@@ -136,7 +136,7 @@ private:
    *
    * @param body The message body defining the drive and status.
    */
-  void setTapeDriveStatus(const legacymsg::VdqmDrvRqstMsgBody &body) throw(castor::exception::Exception);
+  void setDriveStatus(const legacymsg::VdqmDrvRqstMsgBody &body) throw(castor::exception::Exception);
 
   /**
    * Connects to the vdqmd daemon.

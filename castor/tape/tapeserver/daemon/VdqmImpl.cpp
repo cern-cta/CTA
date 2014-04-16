@@ -58,7 +58,7 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setDriveDown(const std::string 
     castor::utils::copyString(body.drive, unitName.c_str());
     castor::utils::copyString(body.dgn, dgn.c_str());
 
-    setTapeDriveStatus(body);
+    setDriveStatus(body);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to set status of tape drive " << unitName <<
@@ -78,7 +78,7 @@ void castor::tape::tapeserver::daemon::VdqmImpl::setDriveUp(const std::string &s
     castor::utils::copyString(body.drive, unitName.c_str());
     castor::utils::copyString(body.dgn, dgn.c_str());
 
-    setTapeDriveStatus(body);
+    setDriveStatus(body);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to set status of tape drive " << unitName <<
@@ -100,7 +100,7 @@ void castor::tape::tapeserver::daemon::VdqmImpl::assignDrive(const std::string &
     castor::utils::copyString(body.drive, unitName.c_str());
     castor::utils::copyString(body.dgn, dgn.c_str());
 
-    setTapeDriveStatus(body);
+    setDriveStatus(body);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to assign mount-session with process ID " <<
@@ -122,7 +122,7 @@ void castor::tape::tapeserver::daemon::VdqmImpl::tapeMounted(const std::string &
     castor::utils::copyString(body.drive, unitName.c_str());
     castor::utils::copyString(body.dgn, dgn.c_str());
 
-    setTapeDriveStatus(body);
+    setDriveStatus(body);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to notify vdqm that tape " << vid <<
@@ -148,7 +148,7 @@ void castor::tape::tapeserver::daemon::VdqmImpl::releaseDrive(const std::string 
     castor::utils::copyString(body.drive, unitName.c_str());
     castor::utils::copyString(body.dgn, dgn.c_str());
 
-    setTapeDriveStatus(body);
+    setDriveStatus(body);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to release tape drive " << unitName << ": " <<
@@ -158,9 +158,9 @@ void castor::tape::tapeserver::daemon::VdqmImpl::releaseDrive(const std::string 
 }
 
 //------------------------------------------------------------------------------
-// setTapeDriveStatus
+// setDriveStatus
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmImpl::setTapeDriveStatus(const legacymsg::VdqmDrvRqstMsgBody &body) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmImpl::setDriveStatus(const legacymsg::VdqmDrvRqstMsgBody &body) throw(castor::exception::Exception) {
   castor::utils::SmartFd fd(connectToVdqm());
   writeDriveStatusMsg(fd.get(), body);
   readCommitAck(fd.get());
@@ -375,7 +375,7 @@ void  castor::tape::tapeserver::daemon::VdqmImpl::tapeUnmounted(const std::strin
     castor::utils::copyString(body.drive, unitName.c_str());
     castor::utils::copyString(body.dgn, dgn.c_str());
 
-    setTapeDriveStatus(body);
+    setDriveStatus(body);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to notify vdqm that tape " << vid <<
