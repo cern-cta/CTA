@@ -64,8 +64,9 @@ throw (castor::tape::Exception) {
   try {
     m_clientProxy.fetchVolumeId(m_volInfo, reqReport);
   } catch(client::ClientProxy::EndOfSession & eof) {
-    std::stringstream fullError("Received end of session from client when requesting Volume");
-    fullError << eof.what();
+    std::stringstream fullError;
+    fullError << "Received end of session from client when requesting Volume"
+      << eof.what();
     lc.log(LOG_ERR, fullError.str());
     m_clientProxy.reportEndOfSession(reqReport);
     LogContext::ScopedParam sp07(lc, Param("tapebridgeTransId", reqReport.transactionId));
@@ -75,8 +76,9 @@ throw (castor::tape::Exception) {
     lc.log(LOG_ERR, "Notified client of end session with error");
     return;
   } catch (client::ClientProxy::UnexpectedResponse & unexp) {
-    std::stringstream fullError("Received unexpected response from client when requesting Volume");
-    fullError << unexp.what();
+    std::stringstream fullError;
+    fullError << "Received unexpected response from client when requesting Volume"
+      << unexp.what();
     lc.log(LOG_ERR, fullError.str());
     m_clientProxy.reportEndOfSession(reqReport);
     LogContext::ScopedParam sp07(lc, Param("tapebridgeTransId", reqReport.transactionId));
@@ -100,7 +102,6 @@ throw (castor::tape::Exception) {
     LogContext::ScopedParam sp15(lc, Param("mode", utils::volumeModeToString(m_volInfo.volumeMode)));
     lc.log(LOG_INFO, "Got volume from client");
   }
-
   
   // Depending on the type of session, branch into the right execution
   switch(m_volInfo.volumeMode) {
@@ -132,8 +133,8 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     lc.log(LOG_ERR, "Drive unit not found in TPCONFIG");
     
     client::ClientProxy::RequestReport reqReport;
-    std::stringstream errMsg("Drive unit not found in TPCONFIG");
-    errMsg << lc;
+    std::stringstream errMsg;
+    errMsg << "Drive unit not found in TPCONFIG" << lc;
     m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
     LogContext::ScopedParam sp09(lc, Param("tapebridgeTransId", reqReport.transactionId));
     LogContext::ScopedParam sp10(lc, Param("connectDuration", reqReport.connectDuration));
@@ -155,8 +156,8 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     lc.log(LOG_ERR, "Drive not found on this path");
     
     client::ClientProxy::RequestReport reqReport;
-    std::stringstream errMsg("Drive not found on this path");
-    errMsg << lc;
+    std::stringstream errMsg;
+    errMsg << "Drive not found on this path" << lc;
     m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
     LogContext::ScopedParam sp10(lc, Param("tapebridgeTransId", reqReport.transactionId));
     LogContext::ScopedParam sp11(lc, Param("connectDuration", reqReport.connectDuration));
@@ -173,8 +174,8 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     lc.log(LOG_ERR, "Error looking to path to tape drive");
     
     client::ClientProxy::RequestReport reqReport;
-    std::stringstream errMsg("Error looking to path to tape drive: ");
-    errMsg << lc;
+    std::stringstream errMsg;
+    errMsg << "Error looking to path to tape drive: " << lc;
     m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
     LogContext::ScopedParam sp11(lc, Param("tapebridgeTransId", reqReport.transactionId));
     LogContext::ScopedParam sp12(lc, Param("connectDuration", reqReport.connectDuration));
@@ -190,8 +191,8 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     lc.log(LOG_ERR, "Unexpected exception while looking for drive");
     
     client::ClientProxy::RequestReport reqReport;
-    std::stringstream errMsg("Unexpected exception while looking for drive");
-    errMsg << lc;
+    std::stringstream errMsg;
+    errMsg << "Unexpected exception while looking for drive" << lc;
     m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
     LogContext::ScopedParam sp10(lc, Param("tapebridgeTransId", reqReport.transactionId));
     LogContext::ScopedParam sp11(lc, Param("connectDuration", reqReport.connectDuration));
@@ -212,8 +213,8 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     lc.log(LOG_ERR, "Error opening tape drive");
     
     client::ClientProxy::RequestReport reqReport;
-    std::stringstream errMsg("Error opening tape drive");
-    errMsg << lc;
+    std::stringstream errMsg;
+    errMsg << "Error opening tape drive" << lc;
     m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
     LogContext::ScopedParam sp11(lc, Param("tapebridgeTransId", reqReport.transactionId));
     LogContext::ScopedParam sp12(lc, Param("connectDuration", reqReport.connectDuration));
@@ -229,8 +230,8 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     lc.log(LOG_ERR, "Unexpected exception while opening drive");
     
     client::ClientProxy::RequestReport reqReport;
-    std::stringstream errMsg("Unexpected exception while opening drive");
-    errMsg << lc;
+    std::stringstream errMsg;
+    errMsg << "Unexpected exception while opening drive" << lc;
     m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
     LogContext::ScopedParam sp10(lc, Param("tapebridgeTransId", reqReport.transactionId));
     LogContext::ScopedParam sp11(lc, Param("connectDuration", reqReport.connectDuration));
@@ -245,15 +246,18 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz);
-    TapeReadSingleThread trst(*drive);
+    TapeReadSingleThread trst(*drive, m_volInfo.vid, 
+        m_castorConf.tapebridgeBulkRequestRecallMaxFiles, lc);
     RecallReportPacker rrp(m_clientProxy,
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
         lc);
     DiskWriteThreadPool dwtp(m_castorConf.tapeserverdDiskThreads,
         m_castorConf.tapebridgeBulkRequestRecallMaxFiles,
-        m_castorConf.tapebridgeBulkRequestRecallMaxBytes,rrp,lc);
+        m_castorConf.tapebridgeBulkRequestRecallMaxBytes,
+        rrp,
+        lc);
     RecallTaskInjector rti(mm, trst, dwtp, m_clientProxy, lc);
-    dwtp.setJobInjector(&rti);
+    trst.setTaskInjector(&rti);
     
     // We are now ready to put everything in motion. First step is to check
     // we get any concrete job to be done from the client (via the task injector)
