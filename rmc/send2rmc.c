@@ -54,11 +54,9 @@ int send2rmc(
 		sin.sin_port = htons ((unsigned short)RMC_PORT);
 		serrno = 0;
 	}
-	if (host && *host)
+	if (host && *host) {
 		strcpy (rmchost, host);
-	else if ((p = getenv ("RMC_HOST")) || (p = getconfent ("RMC", "HOST", 0)))
-		strcpy (rmchost, p);
-	else {
+	} else {
 		gethostname (rmchost, CA_MAXHOSTNAMELEN+1);
 		serrno = 0;
 	}
