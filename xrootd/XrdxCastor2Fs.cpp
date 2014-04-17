@@ -3121,41 +3121,6 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
     }
   }
 
-  // This is currently needed
-  if (oenv.Get("firstbytewritten"))
-  {
-    char cds[4096];
-    char nds[4096];
-    char* acpath;
-    TIMING("CNSSELSERV", &preparetiming);
-    Cns_selectsrvr(map_path.c_str(), cds, nds, &acpath);
-    xcastor_debug("nameserver is: %s", nds);
-    struct Cns_filestatcs cstat;
-    TIMING("CNSSTAT", &preparetiming);
-
-    if (XrdxCastor2FsUFS::Statfn(map_path.c_str(), &cstat))
-    {
-      return XrdxCastor2Fs::Emsg(epname, error, serrno, "stat", map_path.c_str());
-    }
-
-    XrdxCastor2FsUFS::SetId(geteuid(), getegid());
-    char fileid[4096];
-    sprintf(fileid, "%llu", cstat.fileid);
-    TIMING("1STBYTEW", &preparetiming);
-
-    if (!XrdxCastor2Stager::FirstWrite(error, map_path.c_str(), oenv.Get("reqid"),
-                                       fileid, nds, oenv.Get("stagehost"),
-                                       oenv.Get("serviceclass")))
-    {
-      TIMING("END", &preparetiming);
-      
-      if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)
-        preparetiming.Print();
-
-      return SFS_ERROR;
-    }
-  }
-
   TIMING("END", &preparetiming);
   
   if (XrdxCastor2FS->mLogLevel == LOG_DEBUG)

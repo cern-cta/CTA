@@ -74,7 +74,7 @@ castor::stager::daemon::JobRequestSvcThread::jobSubRequestToDo()
     // retrieve or create statement
     bool wasCreated = false;
     oracle::occi::Statement* jobSubRequestToDoStatement = dbSvc->createOrReuseOraStatement
-      ("BEGIN jobSubRequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13); END;",
+      ("BEGIN jobSubRequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15); END;",
        &wasCreated);
     if (wasCreated) {
       jobSubRequestToDoStatement->registerOutParam(1, oracle::occi::OCCIDOUBLE);
@@ -90,6 +90,8 @@ castor::stager::daemon::JobRequestSvcThread::jobSubRequestToDo()
       jobSubRequestToDoStatement->registerOutParam(11, oracle::occi::OCCIINT);
       jobSubRequestToDoStatement->registerOutParam(12, oracle::occi::OCCIINT);
       jobSubRequestToDoStatement->registerOutParam(13, oracle::occi::OCCIINT);
+      jobSubRequestToDoStatement->registerOutParam(14, oracle::occi::OCCIINT);
+      jobSubRequestToDoStatement->registerOutParam(15, oracle::occi::OCCISTRING, 2048);
       // also register for associated alert
       oracle::occi::Statement* registerAlertStmt = 
         dbSvc->createOraStatement("BEGIN DBMS_ALERT.REGISTER('wakeUpJobReqSvc'); END;");
@@ -127,6 +129,15 @@ castor::stager::daemon::JobRequestSvcThread::jobSubRequestToDo()
     result->clientIpAddress = jobSubRequestToDoStatement->getInt(11);
     result->clientPort = jobSubRequestToDoStatement->getInt(12);
     result->clientVersion = jobSubRequestToDoStatement->getInt(13);
+    // did we get an error ?
+    int errorCode = jobSubRequestToDoStatement->getInt(14);
+    if (errorCode > 0) {
+      // answer client
+      bool isLastAnswer = updateAndCheckSubRequest(result->srId, SUBREQUEST_FAILED_FINISHED);
+      answerClient(result, 0, SUBREQUEST_FAILED, errorCode,
+                   jobSubRequestToDoStatement->getString(15), isLastAnswer);
+      return 0;
+    }
     // return
     return result;
   } catch (oracle::occi::SQLException &e) {
@@ -160,14 +171,14 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* reque
     int replyNeeded = handleGetOrPut(sr, cnsFileid, fileSize, stagerOpentimeInUsec);
     // reply to client when needed
     if (replyNeeded) {
-      answerClient(sr, cnsFileid, SUBREQUEST_READY, 0, "", replyNeeded > 1);
+      answerClient(sr, cnsFileid.fileid, SUBREQUEST_READY, 0, "", replyNeeded > 1);
     }
   } catch(castor::exception::Exception &ex) {
     try {
       // fail subrequest in the DB
       bool isLastAnswer = updateAndCheckSubRequest(sr->srId, SUBREQUEST_FAILED_FINISHED);
       // inform the client about the error
-      answerClient(sr, cnsFileid, SUBREQUEST_FAILED, ex.code(), ex.getMessage().str(), isLastAnswer);
+      answerClient(sr, cnsFileid.fileid, SUBREQUEST_FAILED, ex.code(), ex.getMessage().str(), isLastAnswer);
     } catch (castor::exception::Exception &ex2) {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
@@ -175,7 +186,8 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* reque
          castor::dlf::Param("ErrorCode", ex2.code()),
          castor::dlf::Param("ErrorMessage", ex2.getMessageValue()),
          castor::dlf::Param("BackTrace", ex2.backtrace())};
-      castor::dlf::dlf_writep(sr->requestUuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params, &cnsFileid);
+      castor::dlf::dlf_writep(sr->requestUuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+                              4, params, &cnsFileid);
     }
   }
   // Calculate statistics
@@ -201,7 +213,7 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* reque
 // handleGetOrPut
 //-----------------------------------------------------------------------------
 int castor::stager::daemon::JobRequestSvcThread::handleGetOrPut(const JobRequest *sr,
-                                                                const struct Cns_fileid &cnsFileid,
+                                                                struct Cns_fileid &cnsFileid,
                                                                 u_signed64 fileSize,
                                                                 u_signed64 stagerOpentimeInUsec)
   throw (castor::exception::Exception) {
@@ -231,6 +243,18 @@ int castor::stager::daemon::JobRequestSvcThread::handleGetOrPut(const JobRequest
     dbSvc->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage() << "Error caught in handleGetOrPut : " << e.what();
+    // log "Exception caught while handling request"
+    castor::dlf::Param params[] = {
+      castor::dlf::Param(sr->requestUuid),
+      castor::dlf::Param("Type", castor::ObjectsIdStrings[sr->reqType]),
+      castor::dlf::Param("Filename", sr->fileName),
+      castor::dlf::Param("uid", sr->euid),
+      castor::dlf::Param("gid", sr->egid),
+      castor::dlf::Param("SvcClass", sr->svcClassName),
+      castor::dlf::Param("Error", e.what())
+    };
+    castor::dlf::dlf_writep(sr->requestUuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT2,
+                            7, params, &cnsFileid);
     throw ex;
   }
 }
@@ -269,7 +293,7 @@ bool castor::stager::daemon::JobRequestSvcThread::updateAndCheckSubRequest
 // answerClient
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::JobRequestSvcThread::answerClient(const JobRequest *sr,
-                                                               const struct Cns_fileid &cnsFileid,
+                                                               u_signed64 cnsFileid,
                                                                int status,
                                                                int errorCode,
                                                                const std::string &errorMsg,
@@ -288,7 +312,7 @@ void castor::stager::daemon::JobRequestSvcThread::answerClient(const JobRequest 
   Cuuid2string(uuid, CUUID_STRING_LEN+1, &sr->requestUuid);
   ioResponse.setReqAssociated(uuid);
   ioResponse.setCastorFileName(sr->fileName);
-  ioResponse.setFileId((u_signed64) cnsFileid.fileid);
+  ioResponse.setFileId(cnsFileid);
   ioResponse.setStatus(status);
   ioResponse.setErrorCode(errorCode);
   ioResponse.setErrorMessage(errorMsg);

@@ -43,7 +43,7 @@ END;
 /
 
 /* inserts simple Requests in the stager DB.
- * This handles FirstByteWritten, GetUpdateFailed, GetUpdateDone and PutFailed
+ * This handles GetUpdateFailed, GetUpdateDone and PutFailed
  * requests.
  */ 	 
 CREATE OR REPLACE PROCEDURE insertSimpleRequest
@@ -83,9 +83,6 @@ BEGIN
       VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,subReqId,fileId,nsHost,reqId,svcClassId,clientId);
     WHEN reqType = 80 THEN  -- PutFailed
       INSERT INTO PutFailed (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileId, nsHost, id, svcClass, client)
-      VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,subReqId,fileId,nsHost,reqId,svcClassId,clientId);
-    WHEN reqType = 147 THEN -- FirstByteWritten
-      INSERT INTO FirstByteWritten (flags, userName, euid, egid, mask, pid, machine, svcClassName, userTag, reqId, creationTime, lastModificationTime, subReqId, fileId, nsHost, id, svcClass, client)
       VALUES (0,userName,euid,egid,0,pid,machine,svcClassName,'',reqUUID,creationTime,creationTime,subReqId,fileId,nsHost,reqId,svcClassId,clientId);
     ELSE
       raise_application_error(-20122, 'Unsupported request type in insertSimpleRequest : ' || TO_CHAR(reqType));

@@ -38,14 +38,12 @@ namespace castor{
 
         /* JobRequestSvcThread */
         STAGER_GET = 31, /*Get Request" */
-        STAGER_UPDATE = 32, /* Update Request" */
         STAGER_PUT = 33, /* "Put Request" */
 
         /************************/
         /* PreRequestSvcThread */
         STAGER_REPACK = 34, /* "Repack Request" */
         STAGER_PREPARETOGET = 35, /* "PrepareToGet Request" */
-        STAGER_PREPARETOUPDATE = 36, /* "PrepareToUpdate Request" */
         STAGER_PREPARETOPUT = 37, /* "PrepareToPut Request" */
 
         /*************************/

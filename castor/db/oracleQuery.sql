@@ -42,13 +42,13 @@ BEGIN
                       ELSE DC.status
                       END AS status,
                  CASE WHEN DC.svcClass IS NULL THEN
-                   (SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_DiskCopy)*/ UNIQUE Req.svcClassName
-                      FROM SubRequest,
-                        (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcClassName FROM StagePrepareToPutRequest UNION ALL
-                         SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest) Req
-                          WHERE SubRequest.diskCopy = DC.id
-                            AND SubRequest.status IN (5, 6, 13)  -- WAITSUBREQ, READY, READYFORSCHED
-                            AND request = Req.id)              
+                   (SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_DiskCopy)
+                               INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id)*/
+                           UNIQUE StagePrepareToPutRequest.svcClassName
+                      FROM SubRequest, StagePrepareToPutRequest
+                     WHERE SubRequest.diskCopy = DC.id
+                       AND SubRequest.status IN (5, 6, 13)  -- WAITSUBREQ, READY, READYFORSCHED
+                       AND request = StagePrepareToPutRequest.id)
                    ELSE DC.svcClass END AS svcClass,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
                  DC.creationTime, DC.lastAccessTime, nvl(decode(DC.hwStatus, 2, dconst.DISKSERVER_DRAINING, DC.hwStatus), -1) hwStatus
@@ -80,9 +80,7 @@ BEGIN
              '', '', 0, CastorFile.lastKnownFileName, Subrequest.creationTime, Req.svcClassName, Subrequest.creationTime, -1
         FROM CastorFile, Subrequest,
              (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName FROM StagePrepareToGetRequest UNION ALL
-              SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName FROM StagePrepareToUpdateRequest UNION ALL
               SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName FROM StageGetRequest UNION ALL
-              SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClassName FROM StageUpdateRequest UNION ALL
               SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClassName FROM StageRepackRequest) Req
        WHERE Castorfile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
          AND Subrequest.CastorFile = Castorfile.id
@@ -114,13 +112,12 @@ BEGIN
                                 ELSE DC.status
                                 END
                       WHEN DC.fileSystem = 0 THEN
-                       (SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/
+                       (SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)
+                                   INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id)*/
                         UNIQUE decode(nvl(SubRequest.status, -1), -1, -1, DC.status)
-                          FROM SubRequest,
-                            (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id, svcclass, svcClassName FROM StagePrepareToPutRequest UNION ALL
-                             SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcclass, svcClassName FROM StagePrepareToUpdateRequest) Req
+                          FROM SubRequest, StagePrepareToPutRequest
                          WHERE SubRequest.CastorFile = CastorFile.id
-                           AND SubRequest.request = Req.id
+                           AND SubRequest.request = StagePrepareToPutRequest.id
                            AND SubRequest.status IN (5, 6, 13)  -- WAITSUBREQ, READY, READYFORSCHED
                            AND svcClass = svcClassId)
                       END AS status,
@@ -151,9 +148,7 @@ BEGIN
              '', '', 0, CastorFile.lastKnownFileName, Subrequest.creationTime, Req.svcClassName, Subrequest.creationTime, -1
         FROM CastorFile, Subrequest,
              (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName, svcClass FROM StagePrepareToGetRequest UNION ALL
-              SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id, svcClassName, svcClass FROM StagePrepareToUpdateRequest UNION ALL
               SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName, svcClass FROM StageGetRequest UNION ALL
-              SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClassName, svcClass FROM StageUpdateRequest UNION ALL
               SELECT /*+ INDEX(StageRepackRequest PK_StageRepackRequest_Id) */ id, svcClassName, svcClass FROM StageRepackRequest) Req
        WHERE Castorfile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
          AND Subrequest.CastorFile = Castorfile.id
@@ -258,10 +253,6 @@ BEGIN
             FROM StagePreparetoputRequest
            WHERE reqid = rid
           UNION ALL
-          SELECT /*+ INDEX(StagePrepareToUpdateRequest I_StagePTURequest_ReqId) */ id
-            FROM StagePreparetoupdateRequest
-           WHERE reqid = rid
-          UNION ALL
           SELECT /*+ INDEX(StageGetRequest I_StageGetRequest_ReqId) */ id
             FROM stageGetRequest
            WHERE reqid = rid
@@ -306,10 +297,6 @@ BEGIN
            WHERE userTag LIKE tag
           UNION ALL
           SELECT id
-            FROM StagePreparetoupdateRequest
-           WHERE userTag LIKE tag
-          UNION ALL
-          SELECT id
             FROM stageGetRequest
            WHERE userTag LIKE tag
           UNION ALL
@@ -342,10 +329,6 @@ BEGIN
             FROM StagePreparetogetRequest
            WHERE reqid = rid
           UNION ALL
-          SELECT /*+ INDEX(StagePrepareToUpdateRequest I_StagePTURequest_ReqId) */ id
-            FROM StagePreparetoupdateRequest
-           WHERE reqid = rid
-          UNION ALL
           SELECT /*+ INDEX(StageRepackRequest I_StageRepackRequest_ReqId) */ id
             FROM StageRepackRequest
            WHERE reqid = rid
@@ -376,14 +359,8 @@ CREATE OR REPLACE PROCEDURE userTagLastRecallsStageQuery
   reqs "numList";
 BEGIN
   SELECT id BULK COLLECT INTO reqs
-    FROM (SELECT id
-            FROM StagePreparetogetRequest
-           WHERE userTag LIKE tag
-          UNION ALL
-          SELECT id
-            FROM StagePreparetoupdateRequest
-           WHERE userTag LIKE tag
-          );
+    FROM StagePreparetogetRequest
+   WHERE userTag LIKE tag;
   IF reqs.COUNT > 0 THEN
     UPDATE /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Request)*/ SubRequest 
        SET getNextStatus = 2  -- GETNEXTSTATUS_NOTIFIED

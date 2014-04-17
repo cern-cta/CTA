@@ -85,10 +85,8 @@
 %attr(0644,root,root) usr/include/castor/castor/stager/StageGetRequest.hpp
 %attr(0644,root,root) usr/include/castor/castor/stager/StagePrepareToGetRequest.hpp
 %attr(0644,root,root) usr/include/castor/castor/stager/StagePrepareToPutRequest.hpp
-%attr(0644,root,root) usr/include/castor/castor/stager/StagePrepareToUpdateRequest.hpp
 %attr(0644,root,root) usr/include/castor/castor/stager/StagePutRequest.hpp
 %attr(0644,root,root) usr/include/castor/castor/stager/StageRmRequest.hpp
-%attr(0644,root,root) usr/include/castor/castor/stager/StageUpdateRequest.hpp
 %attr(0644,root,root) usr/include/castor/castor/stager/SubRequestGetNextStatusCodes.hpp
 %attr(0644,root,root) usr/include/castor/castor/stager/SubRequest.hpp
 %attr(0644,root,root) usr/include/castor/castor/stager/SubRequestStatusCodes.hpp

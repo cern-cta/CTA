@@ -6,110 +6,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *******************************************************************/
 
-
-/* This method should be called when the first byte is written to a file
- * opened with an update. This will kind of convert the update from a
- * get to a put behavior.
- */
-CREATE OR REPLACE PROCEDURE firstByteWrittenProc(srId IN INTEGER) AS
-  dcId NUMBER;
-  cfId NUMBER;
-  nbres NUMBER;
-  stat NUMBER;
-  fclassId NUMBER;
-BEGIN
-  -- Get data and lock the CastorFile
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ castorfile, diskCopy
-    INTO cfId, dcId
-    FROM SubRequest WHERE id = srId;
-  SELECT fileclass INTO fclassId FROM CastorFile WHERE id = cfId FOR UPDATE;
-  -- Check that we can indeed open the file in write mode
-  -- 4 criteria have to be met :
-  --   - we are not using a INVALID copy (we should not update an old version)
-  --   - we are not in a disk only svcClass and the file class asks for tape copy
-  --   - the filesystem/diskserver is not in READONLY state
-  --   - there is no other update/put going on or there is a prepareTo and we are
-  --     dealing with the same copy.
-  SELECT status INTO stat FROM DiskCopy WHERE id = dcId;
-  -- First the invalid case
-  IF stat = dconst.DISKCOPY_INVALID THEN
-    raise_application_error(-20106, 'Could not update an invalid copy of a file (file has been modified by somebody else concurrently)');
-  END IF;
-  -- Then the disk only check
-  IF checkNoTapeRouting(fclassId) = 1 THEN
-     raise_application_error(-20106, 'File update canceled since the file cannot be routed to tape');
-  END IF;
-  -- Then the hardware status check
-  BEGIN
-    SELECT 1 INTO nbres
-      FROM DiskServer, FileSystem, DiskCopy
-     WHERE DiskCopy.id = dcId
-       AND DiskCopy.fileSystem = FileSystem.id
-       AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
-       AND FileSystem.diskServer = DiskServer.id
-       AND DiskServer.status = dconst.DISKSERVER_PRODUCTION;
-  EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- hardware is not in PRODUCTION, prevent the writing
-    raise_application_error(-20106, 'Could not update the file, hardware was set to read-only mode by the administrator');
-  END;
-  -- Otherwise, either we are alone or we are on the right copy and we
-  -- only have to check that there is a prepareTo statement. We do the check
-  -- only when needed, that is STAGEOUT case
-  IF stat = 6 THEN -- STAGEOUT
-    BEGIN
-      -- do we have other ongoing requests ?
-      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_DiskCopy)*/ count(*) INTO nbRes
-        FROM SubRequest
-       WHERE diskCopy = dcId AND id != srId;
-      IF (nbRes > 0) THEN
-        -- do we have a prepareTo Request ? There can be only a single one
-        -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
-        -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
-        SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id INTO nbRes
-          FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id FROM StagePrepareToPutRequest UNION ALL
-                SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id FROM StagePrepareToUpdateRequest) PrepareRequest,
-               SubRequest
-         WHERE SubRequest.CastorFile = cfId
-           AND PrepareRequest.id = SubRequest.request
-           AND SubRequest.status = 6;  -- READY
-      END IF;
-      -- we do have a prepareTo, so eveything is fine
-    EXCEPTION WHEN NO_DATA_FOUND THEN
-      -- No prepareTo, so prevent the writing
-      raise_application_error(-20106, 'Could not update a file already open for write (and no prepareToPut/Update context found)');
-    END;
-  ELSE
-    -- If we are not having a STAGEOUT diskCopy, we are the only ones to write,
-    -- so we have to setup everything
-    -- invalidate all diskcopies
-    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
-     WHERE castorFile = cfId
-       AND status = dconst.DISKCOPY_VALID;
-    -- except the one we are dealing with that goes to STAGEOUT
-    UPDATE DiskCopy
-       SET status = dconst.DISKCOPY_STAGEOUT, importance = 0
-     WHERE id = dcid;
-    -- Suppress all Migration Jobs (avoid migration of previous version of the file)
-    deleteMigrationJobs(cfId);
-  END IF;
-END;
-/
-
-
-/* Checks whether the protocol used is supporting updates and when not
- * calls firstByteWrittenProc as if the file was already modified */
-CREATE OR REPLACE PROCEDURE handleProtoNoUpd
-(srId IN INTEGER, protocol VARCHAR2) AS
-BEGIN
-  IF protocol != 'rfio'  AND
-     protocol != 'rfio3' AND
-     protocol != 'xroot' THEN
-    firstByteWrittenProc(srId);
-  END IF;
-END;
-/
-
-
 /* PL/SQL method implementing putStart */
 CREATE OR REPLACE PROCEDURE putStart
         (srId IN INTEGER, selectedDiskServer IN VARCHAR2, selectedMountPoint IN VARCHAR2,
@@ -130,8 +26,7 @@ BEGIN
     INTO varCfId, rdcId, srStatus, prevFsId, srSvcClass
     FROM SubRequest, DiskCopy,
          (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ id, svcClass FROM StagePutRequest UNION ALL
-          SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClass FROM StageGetRequest UNION ALL
-          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClass FROM StageUpdateRequest) Request
+          SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClass FROM StageGetRequest) Request
    WHERE SubRequest.diskcopy = Diskcopy.id
      AND SubRequest.id = srId
      AND SubRequest.request = Request.id;
@@ -189,7 +84,6 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
   fileSize INTEGER;
   srSvcClass INTEGER;
   proto VARCHAR2(2048);
-  isUpd NUMBER;
   nbAc NUMBER;
   gcw NUMBER;
   gcwProc VARCHAR2(2048);
@@ -199,12 +93,12 @@ CREATE OR REPLACE PROCEDURE getUpdateStart
   varHwOnline INTEGER;
 BEGIN
   -- Get data
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ euid, egid, svcClass, upd, diskCopy
-    INTO reuid, regid, srSvcClass, isUpd, dcIdInReq
-    FROM SubRequest,
-        (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, euid, egid, svcClass, 0 AS upd FROM StageGetRequest UNION ALL
-         SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, euid, egid, svcClass, 1 AS upd FROM StageUpdateRequest) Request
-   WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)
+             INDEX(StageGetRequest PK_StageGetRequest_Id) */
+         euid, egid, svcClass, diskCopy
+    INTO reuid, regid, srSvcClass, dcIdInReq
+    FROM SubRequest, StageGetRequest
+   WHERE SubRequest.request = StageGetRequest.id AND SubRequest.id = srId;
   -- Take a lock on the CastorFile. Associated with triggers,
   -- this guarantees we are the only ones dealing with its copies
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ CastorFile.fileSize, CastorFile.id
@@ -263,33 +157,10 @@ BEGIN
   UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
      SET DiskCopy = dci
    WHERE id = srId RETURNING protocol INTO proto;
-  -- In case of an update, if the protocol used does not support
-  -- updates properly (via firstByteWritten call), we should
-  -- call firstByteWritten now and consider that the file is being
-  -- modified.
-  IF isUpd = 1 THEN
-    handleProtoNoUpd(srId, proto);
-  END IF;
 EXCEPTION WHEN NO_DATA_FOUND THEN
-  -- No disk copy found on selected FileSystem. This can happen in 2 cases :
-  --  + either a diskcopy was available and got disabled before this job
-  --    was scheduled. Bad luck, we fail the request, the user will have to retry
-  --  + or we are an update creating a file and there is a diskcopy in WAITFS
-  --    or WAITFS_SCHEDULING associated to us. Then we have to call putStart
-  -- So we first check the update hypothesis
-  IF isUpd = 1 AND dcIdInReq IS NOT NULL THEN
-    DECLARE
-      stat NUMBER;
-    BEGIN
-      SELECT status INTO stat FROM DiskCopy WHERE id = dcIdInReq;
-      IF stat IN (5, 11) THEN -- WAITFS, WAITFS_SCHEDULING
-        -- it is an update creating a file, let's call putStart
-        putStart(srId, selectedDiskServer, selectedMountPoint, dci, rstatus, rpath);
-        RETURN;
-      END IF;
-    END;
-  END IF;
-  -- It was not an update creating a file, so we fail
+  -- No disk copy found on selected FileSystem.
+  -- A diskcopy was available and got disabled before this job
+  -- was scheduled. Bad luck, we fail the request, the user will have to retry
   UPDATE SubRequest
      SET status = dconst.SUBREQUEST_FAILED, errorCode = 1725, errorMessage='Request canceled while queuing'
    WHERE id = srId;
@@ -700,16 +571,15 @@ BEGIN
     FROM CastorFile WHERE id = cfId FOR UPDATE;
   -- Determine the context (Put inside PrepareToPut or not)
   BEGIN
-    -- Check that there is a PrepareToPut/Update going on. There can be only a
+    -- Check that there is a PrepareToPut going on. There can be only a
     -- single one or none. If there was a PrepareTo, any subsequent PPut would
-    -- be rejected and any subsequent PUpdate would be directly archived (cf.
-    -- processPrepareRequest).
-    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile) */ SubRequest.id INTO unused
-      FROM SubRequest,
-       (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id FROM StagePrepareToPutRequest UNION ALL
-        SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id FROM StagePrepareToUpdateRequest) Request
+    -- be rejected (cf. processPrepareRequest).
+    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)
+               INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */
+           SubRequest.id INTO unused
+      FROM SubRequest, StagePrepareToPutRequest
      WHERE SubRequest.CastorFile = cfId
-       AND Request.id = SubRequest.request
+       AND StagePrepareToPutRequest.id = SubRequest.request
        AND SubRequest.status = dconst.SUBREQUEST_READY;
     -- If we got here, we are a Put inside a PrepareToPut
     contextPIPP := 0;
@@ -741,16 +611,15 @@ BEGIN
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/ svcClass INTO svcId
     FROM SubRequest,
       (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ id, svcClass FROM StagePutRequest          UNION ALL
-       SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ id, svcClass FROM StageUpdateRequest UNION ALL
        SELECT /*+ INDEX(StagePutDoneRequest PK_StagePutDoneRequest_Id) */ id, svcClass FROM StagePutDoneRequest) Request
    WHERE SubRequest.request = Request.id AND SubRequest.id = srId;
   IF contextPIPP != 0 THEN
-    -- If not a put inside a PrepareToPut/Update, trigger migration
+    -- If not a put inside a PrepareToPut, trigger migration
     -- and update DiskCopy status
     putDoneFunc(cfId, realFileSize, contextPIPP, svcId);
   ELSE
-    -- If put inside PrepareToPut/Update, restart any PutDone currently
-    -- waiting on this put/update
+    -- If put inside PrepareToPut, restart any PutDone currently
+    -- waiting on this put
     UPDATE /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ SubRequest
        SET status = dconst.SUBREQUEST_RESTART
      WHERE reqType = 39  -- PutDone
@@ -818,18 +687,19 @@ BEGIN
          errorCode = errno,
          errorMessage = errmsg
    WHERE id = srId;
-  -- Determine the context (Put inside PrepareToPut/Update ?)
+  -- Determine the context (Put inside PrepareToPut ?)
   BEGIN
-    -- Check that there is a PrepareToPut/Update going on. There can be only a single one
-    -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
-    -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
-    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id INTO unused
-      FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id FROM StagePrepareToPutRequest UNION ALL
-            SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
+    -- Check that there is a PrepareToPut going on. There can be only a single one
+    -- or none. If there was a PrepareTo, any subsequent PPut would be rejected
+    -- (cf. processPrepareRequest).
+    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)
+               INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id)*/
+           SubRequest.id INTO unused
+      FROM StagePrepareToPutRequest, SubRequest
      WHERE SubRequest.castorFile = cfId
-       AND PrepareRequest.id = SubRequest.request
+       AND StagePrepareToPutRequest.id = SubRequest.request
        AND SubRequest.status = 6; -- READY
-    -- The select worked out, so we have a prepareToPut/Update
+    -- The select worked out, so we have a prepareToPut
     -- In such a case, we do not cleanup DiskCopy and CastorFile
     -- but we have to wake up a potential waiting putDone
     UPDATE SubRequest
@@ -868,9 +738,7 @@ BEGIN
         (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */
                 id, svcClass, reqid, 40  AS reqType FROM StagePutRequest             UNION ALL
          SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
-                id, svcClass, reqid, 35  AS reqType FROM StageGetRequest             UNION ALL
-         SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
-                id, svcClass, reqid, 44  AS reqType FROM StageUpdateRequest) Request
+                id, svcClass, reqid, 35  AS reqType FROM StageGetRequest) Request
      WHERE SR.status = 6  -- READY
        AND SR.request = Request.id
        AND SR.lastModificationTime < getTime() - 300
@@ -961,7 +829,7 @@ BEGIN
       -- would have been called if the transfer failed on the remote execution host.
       IF rType = 40 THEN      -- StagePutRequest
        putFailedProcExt(srId, errnos(i), errmsgs(i));
-      ELSE                    -- StageGetRequest or StageUpdateRequest
+      ELSE                    -- StageGetRequest
        getUpdateFailedProcExt(srId, errnos(i), errmsgs(i));
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -1003,7 +871,7 @@ BEGIN
       -- would have been called if the transfer failed on the remote execution host.
       IF rType = 40 THEN      -- StagePutRequest
         putFailedProcExt(srId, errnos(i), errmsgs(i));
-      ELSE                    -- StageGetRequest or StageUpdateRequest
+      ELSE                    -- StageGetRequest
         getUpdateFailedProcExt(srId, errnos(i), errmsgs(i));
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -1201,12 +1069,7 @@ BEGIN
             SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
                    id, euid, egid, reqid, client, creationTime,
                    'r' direction, svcClass, 35 type
-              FROM StageGetRequest
-             UNION ALL
-            SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
-                   id, euid, egid, reqid, client, creationTime,
-                   'o' direction, svcClass, 44 type
-              FROM StageUpdateRequest) Request
+              FROM StageGetRequest) Request
      WHERE SubRequest.id = srId
        AND SubRequest.castorFile = CastorFile.id
        AND Request.svcClass = SvcClass.id
@@ -1379,7 +1242,7 @@ BEGIN
   FOR SR IN (SELECT SubRequest.id, SubRequest.subreqId, SubRequest.castorfile, SubRequest.request
                FROM SubRequest, DiskCopy, FileSystem, DiskServer
               WHERE SubRequest.status = dconst.SUBREQUEST_READY
-                AND Subrequest.reqType IN (35, 37, 44)  -- StageGet/Put/UpdateRequest
+                AND Subrequest.reqType IN (35, 37)  -- StageGet/PutRequest
                 AND Subrequest.diskCopy = DiskCopy.id
                 AND DiskCopy.fileSystem = FileSystem.id
                 AND FileSystem.diskServer = DiskServer.id
@@ -1395,8 +1258,7 @@ BEGIN
       BEGIN
         SELECT Request.reqId INTO varReqId FROM
           (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ reqId, id from StageGetRequest UNION ALL
-           SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ reqId, id from StagePutRequest UNION ALL
-           SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */ reqId, id from StageUpdateRequest) Request
+           SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */ reqId, id from StagePutRequest) Request
          WHERE Request.id = SR.request;
         SELECT fileid, nsHost INTO varFileid, varNsHost FROM CastorFile WHERE id = SR.castorFile;
         -- and we put it in the list of transfers to be failed with code 1015 (SEINTERNAL)

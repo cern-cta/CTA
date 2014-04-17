@@ -68,14 +68,14 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::utils::copyString(job.dgn, "DGN");
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
+  castor::tape::utils::TpconfigLines tpconfigLines;
   DummyVdqm vdqm(job);
   DummyVmgr vmgr;
   DummyRmc rmc;
   castor::io::DummyPollReactor reactor;
   std::auto_ptr<TapeDaemon> daemon;
 
-  ASSERT_NO_THROW(daemon.reset(
-    new TapeDaemon(argc, argv, stdOut, stdErr, log, vdqm, vmgr, rmc, reactor)));
+  ASSERT_NO_THROW(daemon.reset(new TapeDaemon(argc, argv, stdOut, stdErr, log, tpconfigLines, vdqm, vmgr, rmc, reactor)));
 }
 
 } // namespace unitTests

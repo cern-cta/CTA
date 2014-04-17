@@ -37,10 +37,8 @@
 #include "castor/stager/IJobSvc.hpp"
 #include "castor/stager/StagePrepareToGetRequest.hpp"
 #include "castor/stager/StagePrepareToPutRequest.hpp"
-#include "castor/stager/StagePrepareToUpdateRequest.hpp"
 #include "castor/stager/StagePutRequest.hpp"
 #include "castor/stager/StageGetRequest.hpp"
-#include "castor/stager/StageUpdateRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/rh/IOResponse.hpp"
 #include "castor/exception/Exception.hpp"
@@ -206,7 +204,6 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo& error,
 
 //------------------------------------------------------------------------------
 // Send an async request to the stager. This request can be a GET or a PUT
-// or an UPDATE.
 //------------------------------------------------------------------------------
 int 
 XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
@@ -260,11 +257,6 @@ XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
     user_tag = "xCastor2Put";
     request = new castor::stager::StagePutRequest();
     
-  }
-  else if (opType == "update")
-  {
-    user_tag = "xCastor2Update";
-    request = new castor::stager::StageUpdateRequest();
   }
   else 
   {
@@ -498,67 +490,6 @@ XrdxCastor2Stager::UpdateDone(XrdOucErrInfo& error,
   // delete cs2service;
   return true;
 }
-
-
-//------------------------------------------------------------------------------
-// First write
-//------------------------------------------------------------------------------
-bool
-XrdxCastor2Stager::FirstWrite(XrdOucErrInfo& error,
-                              const char*    path,
-                              const char*    reqid,
-                              const char*    fileid,
-                              const char*    nameserver,
-                              const char*    stagehost,
-                              const char*    serviceclass)
-{
-  //const char* tident = error.getErrUser();
-  xcastor_static_debug("path=%s, stagehost=%s, sericeclass=%s",
-                       path, stagehost, serviceclass);
-  castor::stager::SubRequest subReq;
-  subReq.setId(atoll(reqid));
-  castor::Services* cs2service = castor::BaseObject::services();
-
-  if (!cs2service)
-  {
-    error.setErrInfo(ENOMEM, "get castor2 baseobject services");
-    return false;
-  }
-
-  castor::IService* cs2iservice = cs2service->service("RemoteJobSvc",
-                                  castor::SVC_REMOTEJOBSVC);
-  castor::stager::IJobSvc* jobSvc;
-  jobSvc = dynamic_cast<castor::stager::IJobSvc*>(cs2iservice);
-
-  if (!cs2iservice)
-  {
-    error.setErrInfo(ENOMEM, "get castor2 remote job service");
-    return false;
-  }
-
-  try
-  {
-    xcastor_static_debug("Calling firstByteWritten( %s ) for: %s ", reqid, path);
-    jobSvc->firstByteWritten((unsigned long long) atoll(reqid),
-                             (unsigned long long) atoll(fileid),
-                             nameserver);
-  }
-  catch (castor::exception::Communication e)
-  {
-    xcastor_static_debug("Communications error: %s", e.getMessage().str().c_str());
-    error.setErrInfo(ECOMM, e.getMessage().str().c_str());
-    return false;
-  }
-  catch (castor::exception::Exception e)
-  {
-    xcastor_static_debug("Fatal exception: %s", e.getMessage().str().c_str());
-    error.setErrInfo(ECOMM, e.getMessage().str().c_str());
-    return false;
-  }
-
-  return true;
-}
-
 
 //------------------------------------------------------------------------------
 // Stager query

@@ -56,11 +56,9 @@ set (CNV_LIB_SRC_FILES
   DbStageGetRequestCnv.cpp
   DbStagePrepareToGetRequestCnv.cpp
   DbStagePrepareToPutRequestCnv.cpp
-  DbStagePrepareToUpdateRequestCnv.cpp
   DbStagePutDoneRequestCnv.cpp
   DbStagePutRequestCnv.cpp
   DbStageRmRequestCnv.cpp
-  DbStageUpdateRequestCnv.cpp
   DbStgFilesDeletedCnv.cpp
   DbSubRequestCnv.cpp
   DbSvcClassCnv.cpp

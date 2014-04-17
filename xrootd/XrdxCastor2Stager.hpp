@@ -243,17 +243,5 @@ class XrdxCastor2Stager : public LogId
                              const char* stagehost,
                              const char* serviceclass,
                              XrdOucString& stagestatus );
-
-
-    //--------------------------------------------------------------------------
-    //! FirstWrite
-    //--------------------------------------------------------------------------
-    static bool FirstWrite( XrdOucErrInfo& error,
-                            const char* path,
-                            const char* reqid,
-                            const char* fileid,
-                            const char* nameserver,
-                            const char* stagehost,
-                            const char* serviceclass );
 };
 

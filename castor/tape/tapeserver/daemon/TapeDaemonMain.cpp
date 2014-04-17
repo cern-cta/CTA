@@ -85,6 +85,10 @@ int main(const int argc, char **const argv) {
     return 1;
   }
 
+  // Parse /etc/castor/TPCONFIG
+  castor::tape::utils::TpconfigLines tpconfigLines;
+  castor::tape::utils::parseTpconfigFile("/etc/castor/TPCONFIG", tpconfigLines);
+
   // Create proxy objects for the vdqm, vmgr and rmc daemons
   const int netTimeout = 10; // Timeout in seconds
   VdqmImpl vdqm(log, vdqmHostName, VDQM_PORT, netTimeout);
@@ -95,7 +99,17 @@ int main(const int argc, char **const argv) {
   castor::io::PollReactorImpl reactor(log);
 
   // Create the main tapeserverd object
-  TapeDaemon daemon(argc, argv, std::cout, std::cerr, log, vdqm, vmgr, rmc, reactor);
+  TapeDaemon daemon(
+    argc,
+    argv,
+    std::cout,
+    std::cerr,
+    log,
+    tpconfigLines,
+    vdqm,
+    vmgr,
+    rmc,
+    reactor);
 
   // Run the tapeserverd daemon
   return daemon.main(argc, argv);
@@ -161,7 +175,7 @@ static std::string getConfigParam(const std::string &category, const std::string
   }
 
   try {
-    value = config.getConfEnt("RMC", "HOST");
+    value = config.getConfEnt(category.c_str(), name.c_str());
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to " << task.str() <<

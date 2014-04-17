@@ -32,6 +32,7 @@
 #include "castor/tape/tapeserver/daemon/Rmc.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 #include "castor/tape/tapeserver/daemon/Vmgr.hpp"
+#include "castor/tape/utils/TpconfigLines.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <iostream>
@@ -62,6 +63,7 @@ public:
    * @param stdOut Stream representing standard out.
    * @param stdErr Stream representing standard error.
    * @param log The object representing the API of the CASTOR logging system.
+   * @param tpconfigLines The parsed lines of /etc/castor/TPCONFIG.
    * @param vdqm The proxy object representing the vdqmd daemon.
    * @param vmgr The proxy object representing the vmgrd daemon.
    * @param rmc The proxy object representing the rmcd daemon.
@@ -74,6 +76,7 @@ public:
     std::ostream &stdOut,
     std::ostream &stdErr,
     log::Logger &log,
+    const utils::TpconfigLines &tpconfigLines,
     Vdqm &vdqm,
     Vmgr &vmgr,
     Rmc &rmc,
@@ -259,7 +262,6 @@ protected:
    */
   DriveCatalogue m_driveCatalogue;
 
-  
   /**
    * The argc of main().
    */
@@ -269,6 +271,11 @@ protected:
    * The argv of main().
    */
   char **const m_argv;
+
+  /**
+   * The parsed lines of /etc/castor/TPCONFIG.
+   */
+  const utils::TpconfigLines m_tpconfigLines;
 
   /**
    * The proxy object representing the vdqmd daemon.

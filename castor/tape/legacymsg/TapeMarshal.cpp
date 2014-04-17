@@ -30,10 +30,127 @@
 #include "castor/tape/utils/utils.hpp"
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
+#include "h/Ctape.h"
+#include "h/serrno.h"
 
 #include <errno.h>
 #include <string.h>
 
+//-----------------------------------------------------------------------------
+// marshal
+//-----------------------------------------------------------------------------
+size_t castor::tape::legacymsg::marshal(char *const dst, const size_t dstLen, const TapeStatRequestMsgBody &src) throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to marshal TapeStatRequestMsgBody"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  // Calculate the length of the message body
+  const uint32_t len =
+    sizeof(int32_t) + // uid
+    sizeof(int32_t);// gid
+
+  // Calculate the total length of the message (header + body)
+  // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
+  const size_t totalLen = 3 * sizeof(uint32_t) + len;
+
+  // Check that the message buffer is big enough
+  if(totalLen > dstLen) {
+    castor::exception::Exception ex(EMSGSIZE);
+    ex.getMessage() << "Failed to marshal TapeStatRequestMsgBody"
+      ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
+    throw ex;
+  }
+
+  // Marshall message header
+  char *p = dst;
+  io::marshalUint32(TPMAGIC , p); // Magic number
+  io::marshalUint32(TPSTAT, p); // Request type  
+  char *msg_len_field_pointer = p;  
+  io::marshalUint32(0, p); // Temporary length
+
+  // Marshall message body
+  io::marshalUint32(src.uid, p);
+  io::marshalUint32(src.gid, p);
+
+  // Calculate the number of bytes actually marshalled
+  const size_t nbBytesMarshalled = p - dst;
+  io::marshalUint32(nbBytesMarshalled, msg_len_field_pointer); // Actual length
+
+  // Check that the number of bytes marshalled was what was expected
+  if(totalLen != nbBytesMarshalled) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to marshal TapeStatRequestMsgBody"
+      ": Mismatch between expected total length and actual"
+      ": expected=" << totalLen << "actual=" << nbBytesMarshalled;
+    throw ex;
+  }
+
+  return totalLen;
+}
+
+//-----------------------------------------------------------------------------
+// marshal
+//-----------------------------------------------------------------------------
+size_t castor::tape::legacymsg::marshal(char *const dst, const size_t dstLen, const TapeConfigRequestMsgBody &src) throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to marshal TapeConfigRequestMsgBody"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  // Calculate the length of the message body
+  const uint32_t len =
+    sizeof(int32_t) + // uid
+    sizeof(int32_t) + // gid
+    strlen(src.drive) + 1 + // drive
+    sizeof(int16_t); // status
+
+  // Calculate the total length of the message (header + body)
+  // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
+  const size_t totalLen = 3 * sizeof(uint32_t) + len;
+
+  // Check that the message buffer is big enough
+  if(totalLen > dstLen) {
+    castor::exception::Exception ex(EMSGSIZE);
+    ex.getMessage() << "Failed to marshal TapeConfigRequestMsgBody"
+      ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
+    throw ex;
+  }
+
+  // Marshall message header
+  char *p = dst;
+  io::marshalUint32(TPMAGIC , p); // Magic number
+  io::marshalUint32(TPCONF, p); // Request type  
+  char *msg_len_field_pointer = p;  
+  io::marshalUint32(0, p); // Temporary length
+
+  // Marshall message body
+  io::marshalUint32(src.uid, p);
+  io::marshalUint32(src.gid, p);
+  io::marshalString(src.drive, p);
+  io::marshalUint16(src.status, p);
+
+  // Calculate the number of bytes actually marshalled
+  const size_t nbBytesMarshalled = p - dst;
+  io::marshalUint32(nbBytesMarshalled, msg_len_field_pointer); // Actual length
+
+  // Check that the number of bytes marshalled was what was expected
+  if(totalLen != nbBytesMarshalled) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to marshal TapeConfigRequestMsgBody"
+      ": Mismatch between expected total length and actual"
+      ": expected=" << totalLen << "actual=" << nbBytesMarshalled;
+    throw ex;
+  }
+
+  return totalLen;
+}
 
 //-----------------------------------------------------------------------------
 // unmarshal
