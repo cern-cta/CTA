@@ -142,7 +142,11 @@ public:
       to.write(m_payload + writePosition, m_size - writePosition);
     }
   }
-    
+   /**
+    * Compute adler32 checksum on the current data hold.
+    * @param previous The previous adler32 checksum from all previous datablock
+    * @return the updated checksum
+    */
   unsigned long  adler32(unsigned long previous){
     return ::adler32(previous,m_payload,m_size);
   }
