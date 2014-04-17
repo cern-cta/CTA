@@ -63,24 +63,26 @@ private:
    */
   DiskWriteTaskInterface * popAndRequestMoreJobs() ;
   
+  tape::threading::AtomicCounter<int> m_nbActiveThread;
+  tape::threading::AtomicCounter<int> m_failedWriteCount;
+  
   class DiskWriteWorkerThread: private castor::tape::threading::Thread {
   public:
     DiskWriteWorkerThread(DiskWriteThreadPool & manager):
-    threadID(m_nbActiveThread++),_this(manager),lc(_this.m_lc)
+    m_threadID(manager.m_nbActiveThread++),m_parentThreadPool(manager),m_lc(m_parentThreadPool.m_lc)
     {
-      log::LogContext::ScopedParam param(lc, log::Param("threadID", threadID));
-      lc.log(LOG_INFO,"DiskWrite Thread created");
+      // This thread Id will remain for the rest of the thread's lifetime (and 
+      // also context's lifetime) so ne need for a scope.
+      m_lc.pushOrReplace(log::Param("threadID", m_threadID));
+      m_lc.log(LOG_INFO,"DiskWrite Thread created");
     }
       
-    void startThreads() { start(); }
-    void waitThreads() { wait(); }
+    void start() { castor::tape::threading::Thread::start(); }
+    void wait() { castor::tape::threading::Thread::wait(); }
   private:
-    //counter to generate threadID and to know how many thread are still doing something
-    static tape::threading::AtomicCounter<int> m_nbActiveThread;
-    static tape::threading::AtomicCounter<int> failledWritting;
-    const int threadID;
-    DiskWriteThreadPool & _this;
-    castor::log::LogContext lc;
+    const int m_threadID;
+    DiskWriteThreadPool & m_parentThreadPool;
+    castor::log::LogContext m_lc;
     virtual void run();
   };
   

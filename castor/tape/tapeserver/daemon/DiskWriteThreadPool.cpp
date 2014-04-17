@@ -26,13 +26,13 @@ namespace daemon {
   void DiskWriteThreadPool::startThreads() {
     for (std::vector<DiskWriteWorkerThread *>::iterator i=m_threads.begin();
             i != m_threads.end(); i++) {
-      (*i)->startThreads();
+      (*i)->start();
     }
   }
   void DiskWriteThreadPool::waitThreads() {
     for (std::vector<DiskWriteWorkerThread *>::iterator i=m_threads.begin();
             i != m_threads.end(); i++) {
-      (*i)->waitThreads();
+      (*i)->wait();
     }
   }
    void DiskWriteThreadPool::push(DiskWriteTaskInterface *t) { 
@@ -98,33 +98,30 @@ namespace daemon {
     std::auto_ptr<DiskWriteTaskInterface>  task;
     
     while(1) {
-      task.reset(_this. m_tasks.pop());
+      task.reset(m_parentThreadPool. m_tasks.pop());
       if (NULL!=task.get()) {
-        if(false==task->execute(_this.m_reporter,lc)) {
-          ++failledWritting; 
+        if(false==task->execute(m_parentThreadPool.m_reporter,m_lc)) {
+          ++m_parentThreadPool.m_failedWriteCount; 
         }
       } //end of task!=NULL
       else {
-        log::LogContext::ScopedParam param(lc, log::Param("threadID", threadID));
-        lc.log(LOG_INFO,"Disk write thread finishing");
+        log::LogContext::ScopedParam param(m_lc, log::Param("threadID", m_threadID));
+        m_lc.log(LOG_INFO,"Disk write thread finishing");
         break;
       }
     } //enf of while(1)
     
-    if(0 == --m_nbActiveThread){
+    if(0 == --m_parentThreadPool.m_nbActiveThread){
       //Im the last Thread alive, report end of session
-      if(failledWritting==0){
-        _this.m_reporter.reportEndOfSession();
+      if(m_parentThreadPool.m_failedWriteCount==0){
+        m_parentThreadPool.m_reporter.reportEndOfSession();
         //TODO
 //        _this.m_jobInjector->end();
       }
       else{
-        _this.m_reporter.reportEndOfSessionWithErrors("A thread failed to write a file",SEINTERNAL);
+        m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("A thread failed to write a file",SEINTERNAL);
       }
     }
   }
- 
-  tape::threading::AtomicCounter<int> DiskWriteThreadPool::DiskWriteWorkerThread::m_nbActiveThread(0);
-  tape::threading::AtomicCounter<int> DiskWriteThreadPool::DiskWriteWorkerThread::failledWritting(0);
 }}}}
 
