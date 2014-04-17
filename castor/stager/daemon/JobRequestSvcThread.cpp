@@ -160,7 +160,7 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* reque
     int replyNeeded = handleGetOrPut(sr, cnsFileid, fileSize, stagerOpentimeInUsec);
     // reply to client when needed
     if (replyNeeded) {
-      answerClient(sr, cnsFileid, SUBREQUEST_READY, 0, "", replyNeeded > 1);
+      answerClient(sr, cnsFileid, SUBREQUEST_READY, 0, "", replyNeeded > 0);
     }
   } catch(castor::exception::Exception &ex) {
     try {

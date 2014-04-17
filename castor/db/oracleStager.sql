@@ -3632,7 +3632,7 @@ END;
 /
 
 /* PL/SQL method implementing handlePrepareToGet
- * returns status of the SubRequest : FAILED, FINISHED, WAITTAPERECALL OR WAITDISKTODISKCOPY
+ * returns whether the client should be answered
  */
 CREATE OR REPLACE FUNCTION handlePrepareToGet(inCfId IN INTEGER, inSrId IN INTEGER,
                                               inFileId IN INTEGER, inNsHost IN VARCHAR2,
@@ -3712,8 +3712,8 @@ BEGIN
     UPDATE SubRequest SET status = dconst.SUBREQUEST_WAITTAPERECALL WHERE id = inSrId;
     RETURN 1;
   ELSE
-   -- could not start recall, SubRequest has been marked as FAILED, no need to answer
-   RETURN 0;
+    -- could not start recall, SubRequest has been marked as FAILED, no need to answer
+    RETURN 0;
   END IF;
 END;
 /
