@@ -45,6 +45,7 @@ namespace exception {
   protected:
     void SErrnumConstructorBottomHalf(const std::string & what);
     int m_serrnum;
+    int m_errnum;
     std::string m_sstrerror;
   };
 }
