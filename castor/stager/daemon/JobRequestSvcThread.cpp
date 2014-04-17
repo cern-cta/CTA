@@ -167,19 +167,7 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* reque
       // fail subrequest in the DB
       bool isLastAnswer = updateAndCheckSubRequest(sr->srId, SUBREQUEST_FAILED_FINISHED);
       // inform the client about the error
-      answerClient(sr, cnsFileid, SUBREQUEST_FAILED, ex.code(), ex.getMessage().str(), isLastAnswer);
-      // log
-      castor::dlf::Param params[] = {
-        castor::dlf::Param(sr->requestUuid),
-        castor::dlf::Param("Type", castor::ObjectsIdStrings[sr->reqType]),
-        castor::dlf::Param("Filename", sr->fileName),
-        castor::dlf::Param("uid", sr->euid),
-        castor::dlf::Param("gid", sr->egid),
-        castor::dlf::Param("SvcClass", sr->svcClassName),
-        castor::dlf::Param("Error", ex.what())
-      };
-      castor::dlf::dlf_writep(sr->requestUuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT2,
-                              7, params, &cnsFileid);
+      answerClient(sr, cnsFileid.fileid, SUBREQUEST_FAILED, ex.code(), ex.getMessage().str(), isLastAnswer);
     } catch (castor::exception::Exception &ex2) {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
@@ -214,7 +202,7 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* reque
 // handleGetOrPut
 //-----------------------------------------------------------------------------
 int castor::stager::daemon::JobRequestSvcThread::handleGetOrPut(const JobRequest *sr,
-                                                                const struct Cns_fileid &cnsFileid,
+                                                                struct Cns_fileid &cnsFileid,
                                                                 u_signed64 fileSize,
                                                                 u_signed64 stagerOpentimeInUsec)
   throw (castor::exception::Exception) {
@@ -244,6 +232,18 @@ int castor::stager::daemon::JobRequestSvcThread::handleGetOrPut(const JobRequest
     dbSvc->handleException(e);
     castor::exception::Internal ex;
     ex.getMessage() << "Error caught in handleGetOrPut : " << e.what();
+    // log "Exception caught while handling request"
+    castor::dlf::Param params[] = {
+      castor::dlf::Param(sr->requestUuid),
+      castor::dlf::Param("Type", castor::ObjectsIdStrings[sr->reqType]),
+      castor::dlf::Param("Filename", sr->fileName),
+      castor::dlf::Param("uid", sr->euid),
+      castor::dlf::Param("gid", sr->egid),
+      castor::dlf::Param("SvcClass", sr->svcClassName),
+      castor::dlf::Param("Error", e.what())
+    };
+    castor::dlf::dlf_writep(sr->requestUuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT2,
+                            7, params, &cnsFileid);
     throw ex;
   }
 }

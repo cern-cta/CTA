@@ -111,7 +111,7 @@ namespace castor {
          *    1 : answer but this is not the last answer
          *    2 : answer and this is the last answer
          */
-        int handleGetOrPut(const JobRequest *sr, const struct Cns_fileid &cnsFileid,
+        int handleGetOrPut(const JobRequest *sr, struct Cns_fileid &cnsFileid,
                            u_signed64 fileSize, u_signed64 stagerOpentimeInUsec)
         throw (castor::exception::Exception);
         
