@@ -1674,9 +1674,7 @@ BEGIN
              AND DiskServer.id = FileSystem.diskServer
              AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
              AND DiskServer.hwOnline = 1
-        ORDER BY -- order by rate as defined by the function
-                 fileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
-                 -- finally use randomness to avoid preferring always the same FS
+        ORDER BY -- use randomness to scatter filesystem usage
                  DBMS_Random.value)
    WHERE ROWNUM < 2;
   -- compute it's gcWeight

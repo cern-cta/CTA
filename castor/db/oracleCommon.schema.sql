@@ -1053,26 +1053,6 @@ UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type IN (50, 119);
 /*********************************************************************/
 CREATE TABLE FileSystemsToCheck (FileSystem NUMBER CONSTRAINT PK_FSToCheck_FS PRIMARY KEY, ToBeChecked NUMBER);
 
-/*********************/
-/* FileSystem rating */
-/*********************/
-
-/* Computes a 'rate' for the filesystem which is an agglomeration
-   of weight and fsDeviation. The goal is to be able to classify
-   the fileSystems using a single value and to put an index on it */
-CREATE OR REPLACE FUNCTION fileSystemRate
-(nbReadStreams IN NUMBER,
- nbWriteStreams IN NUMBER)
-RETURN NUMBER DETERMINISTIC IS
-BEGIN
-  RETURN - nbReadStreams - nbWriteStreams;
-END;
-/
-
-/* FileSystem index based on the rate. */
-CREATE INDEX I_FileSystem_Rate
-    ON FileSystem(fileSystemRate(nbReadStreams, nbWriteStreams));
-
 /************/
 /* Aborting */
 /************/
