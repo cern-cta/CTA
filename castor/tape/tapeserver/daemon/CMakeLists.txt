@@ -43,10 +43,12 @@ add_executable(tapeserver-mm
   DiskWriteTask.cpp
   MigrationTaskInjector.cpp)
 
+find_package( ZLIB REQUIRED )
+
 target_link_libraries(tapeserver-mm 
 TapeDrive Exception SCSI System Utils File 
 castorcommon castorclient castorTapeServerThreading castortapeutils 
-castortapegatewayprotocol tapeserver)
+castortapegatewayprotocol tapeserver ${ZLIB_LIBRARIES} )
 
 add_library(tapeserver 
   ../client/ClientProxy.cpp 

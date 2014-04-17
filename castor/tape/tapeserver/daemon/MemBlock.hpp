@@ -27,6 +27,8 @@
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include <memory>
+#include <zlib.h>
+
 
 namespace castor {
 namespace tape {
@@ -42,7 +44,7 @@ class Payload
 {
 public:
   Payload(size_t capacity):
-  m_payload(new (std::nothrow) char[capacity]),m_totalCapacity(capacity),m_size(0) {
+  m_payload(new (std::nothrow) unsigned char[capacity]),m_totalCapacity(capacity),m_size(0) {
     if(NULL == m_payload) {
       throw MemException("Failed to allocate memory for a new MemBlock!");
     }
@@ -65,14 +67,14 @@ public:
   size_t totalCapacity() const {
     return m_totalCapacity;
   }
-  
+    
   /** Returns a pointer to the beginning of the payload block */
-  char* get(){
+  unsigned char* get(){
     return m_payload;
   }
   
   /** Returns a pointer to the beginning of the payload block (readonly version) */
-  char const*  get() const {
+  unsigned char const*  get() const {
     return m_payload;
   }
   
@@ -141,8 +143,11 @@ public:
     }
   }
     
+  unsigned long  adler32(unsigned long previous){
+    return ::adler32(previous,m_payload,m_size);
+  }
 private:
-  char* m_payload;
+  unsigned char* m_payload;
   size_t m_totalCapacity;
   size_t m_size;
 };
