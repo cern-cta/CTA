@@ -161,7 +161,7 @@ static std::string getConfigParam(const std::string &category, const std::string
   }
 
   try {
-    value = config.getConfEnt("RMC", "HOST");
+    value = config.getConfEnt(category.c_str(), name.c_str());
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to " << task.str() <<
