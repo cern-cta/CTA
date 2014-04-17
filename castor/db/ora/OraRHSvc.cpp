@@ -275,8 +275,6 @@ void castor::db::ora::OraRHSvc::storeRequest
     case castor::OBJ_StagePrepareToGetRequest:
     case castor::OBJ_StagePutRequest:
     case castor::OBJ_StagePrepareToPutRequest:
-    case castor::OBJ_StageUpdateRequest:
-    case castor::OBJ_StagePrepareToUpdateRequest:
     case castor::OBJ_StageRmRequest:
       {
         // get the FileRequest

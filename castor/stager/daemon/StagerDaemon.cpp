@@ -174,7 +174,6 @@ castor::stager::daemon::StagerDaemon::StagerDaemon(std::ostream &stdOut,
     /* JobRequestSvcThread */
     { STAGER_JOBREQSVC_CREATION, "Created new JobRequestSvc Thread"},
     { STAGER_GET, "Get Request"},
-    { STAGER_UPDATE, "Update Request"},
     { STAGER_PUT,"Put Request"},
 
     /************************/
@@ -182,7 +181,6 @@ castor::stager::daemon::StagerDaemon::StagerDaemon(std::ostream &stdOut,
     { STAGER_PREREQSVC_CREATION,"Created new PreRequestSvc Thread"},
     { STAGER_REPACK,"Repack Request"},
     { STAGER_PREPARETOGET,"PrepareToGet Request"},
-    { STAGER_PREPARETOUPDATE,"PrepareToUpdate Request"},
     { STAGER_PREPARETOPUT,"PrepareToPut Request"},
 
 

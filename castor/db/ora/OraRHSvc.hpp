@@ -131,8 +131,8 @@ namespace castor {
         /**
          * stores a file request into the stager DB.
          * This includes StageGetRequest, StagePrepareToGetRequest, StagePutRequest,
-         * StagePrepareToPutRequest, StageUpdateRequest, StagePrepareToUpdateRequest,
-         * StageRmRequest, StagePutDoneRequest and SetFileGCWeight requests
+         * StagePrepareToPutRequest, StageRmRequest, StagePutDoneRequest
+         * and SetFileGCWeight requests
          * @param request the FileRequest object
          * @param client the client object associated to the request
          * @param freeStrParam an extra string associated to the request.

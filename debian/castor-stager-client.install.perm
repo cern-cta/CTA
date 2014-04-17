@@ -1,5 +1,4 @@
 %attr(0755,root,root) usr/bin/stager_get
-%attr(0755,root,root) usr/bin/stager_update
 %attr(0755,root,root) usr/bin/stager_put
 %attr(0755,root,root) usr/bin/stager_putdone
 %attr(0755,root,root) usr/bin/stager_qry

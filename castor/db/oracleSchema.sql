@@ -69,14 +69,8 @@ CREATE TABLE StagePrepareToGetRequest (flags INTEGER, userName VARCHAR2(2048), e
 /* SQL statements for type StagePrepareToPutRequest */
 CREATE TABLE StagePrepareToPutRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StagePrepareToPutRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
-/* SQL statements for type StagePrepareToUpdateRequest */
-CREATE TABLE StagePrepareToUpdateRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StagePrepareToUpdateRequ_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
 /* SQL statements for type StagePutRequest */
 CREATE TABLE StagePutRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StagePutRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type StageUpdateRequest */
-CREATE TABLE StageUpdateRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageUpdateRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StageRmRequest */
 CREATE TABLE StageRmRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageRmRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -92,9 +86,6 @@ CREATE TABLE NsFilesDeleted (flags INTEGER, userName VARCHAR2(2048), euid NUMBER
 
 /* SQL statements for type Disk2DiskCopyStartRequest */
 CREATE TABLE Disk2DiskCopyStartRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, diskCopyId INTEGER, sourceDiskCopyId INTEGER, diskServer VARCHAR2(2048), mountPoint VARCHAR2(2048), fileId INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_Disk2DiskCopyStartReques_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
-
-/* SQL statements for type FirstByteWritten */
-CREATE TABLE FirstByteWritten (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, subReqId INTEGER, fileId INTEGER, nsHost VARCHAR2(2048), id INTEGER CONSTRAINT PK_FirstByteWritten_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
 
 /* SQL statements for type StageGetRequest */
 CREATE TABLE StageGetRequest (flags INTEGER, userName VARCHAR2(2048), euid NUMBER, egid NUMBER, mask NUMBER, pid NUMBER, machine VARCHAR2(2048), svcClassName VARCHAR2(2048), userTag VARCHAR2(2048), reqId VARCHAR2(2048), creationTime INTEGER, lastModificationTime INTEGER, id INTEGER CONSTRAINT PK_StageGetRequest_Id PRIMARY KEY, svcClass INTEGER, client INTEGER) INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
@@ -157,11 +148,9 @@ INSERT INTO Type2Obj (type, object) VALUES (33, 'StageFileQueryRequest');
 INSERT INTO Type2Obj (type, object) VALUES (35, 'StageGetRequest');
 INSERT INTO Type2Obj (type, object) VALUES (36, 'StagePrepareToGetRequest');
 INSERT INTO Type2Obj (type, object) VALUES (37, 'StagePrepareToPutRequest');
-INSERT INTO Type2Obj (type, object) VALUES (38, 'StagePrepareToUpdateRequest');
 INSERT INTO Type2Obj (type, object) VALUES (39, 'StagePutDoneRequest');
 INSERT INTO Type2Obj (type, object) VALUES (40, 'StagePutRequest');
 INSERT INTO Type2Obj (type, object) VALUES (42, 'StageRmRequest');
-INSERT INTO Type2Obj (type, object) VALUES (44, 'StageUpdateRequest');
 INSERT INTO Type2Obj (type, object) VALUES (45, 'FileRequest');
 INSERT INTO Type2Obj (type, object) VALUES (46, 'QryRequest');
 INSERT INTO Type2Obj (type, object) VALUES (50, 'StageAbortRequest');
@@ -231,7 +220,6 @@ INSERT INTO Type2Obj (type, object) VALUES (143, 'NsFilesDeletedResponse');
 INSERT INTO Type2Obj (type, object) VALUES (144, 'Disk2DiskCopyStartRequest');
 INSERT INTO Type2Obj (type, object) VALUES (145, 'Disk2DiskCopyStartResponse');
 INSERT INTO Type2Obj (type, object) VALUES (146, 'ThreadNotification');
-INSERT INTO Type2Obj (type, object) VALUES (147, 'FirstByteWritten');
 INSERT INTO Type2Obj (type, object) VALUES (148, 'VdqmTape');
 INSERT INTO Type2Obj (type, object) VALUES (149, 'StgFilesDeleted');
 INSERT INTO Type2Obj (type, object) VALUES (150, 'StgFilesDeletedResponse');

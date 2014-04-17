@@ -72,8 +72,15 @@ END;
 /******************/
 
 /* Drop updates from Type2Obj and redirect PrepareTo requests */
-DELETE FROM Type2Obj WHERE type in (38, 44);
+DELETE FROM Type2Obj WHERE type in (38, 44, 147);
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (36, 37);
+
+/* drop updates */
+DROP TABLE StagePrepareToUpdateRequest;
+DROP TABLE StageUpdateRequest;
+DROP TABLE FirstByteWritten;
+DROP PROCEDURE FirstByteWrittenProc;
+DROP PROCEDURE handleProtoNoUpd;
 
 /* PL/SQL code revalidation */
 /****************************/

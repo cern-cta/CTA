@@ -54,11 +54,12 @@ EXTERN_C int stage_open(const char *userTag,
                      opts);
   } else if (((flags & O_TRUNC) == O_TRUNC) &&
 	     ((flags & O_CREAT) == O_CREAT)) {
-    /* We should always use stage_put when O_TRUNC is requested but we do it only is O_CREAT is
-       also set. Otherwise, we do an update and it will be handled as a put due to the O_TRUNC flag.
-       The reason for this is that a put is always first removing the file before recreating it.
+    /* We should always use stage_put when O_TRUNC is requested but we do it only if O_CREAT is
+       also set. Otherwise, we were doing an update (now unsupported) that was handled as a put
+       due to the O_TRUNC flag.
+       The reason for this wass that a put is always first removing the file before recreating it.
        This leads to a problem when the O_CREAT flag is not set that the recreation fails. Thus
-       the O_CREAT flag is forced in rfio_hsmif when O_TRUNC is set. We rely here on the fact
+       the O_CREAT flag is forced in rfio_hsmif when O_TRUNC is set. We relied here on the fact
        that in case of no O_CREAT, the request is stopped at the stager level. However, this is
        not the case if we use put, only if we use update and set the flags. */
     return stage_put(userTag, 
@@ -70,17 +71,9 @@ EXTERN_C int stage_open(const char *userTag,
                      requestId, 
                      opts);
   } else {
-    /* In the rest of the cases, use stage_update, passing the flags for further
-       checks in the stager ! */
-    return stage_update(userTag, 
-                        protocol,
-                        filename, 
-                        flags,
-                        mode, 
-                        size,
-                        response,
-                        requestId, 
-                        opts);
+    /* In the rest of the cases, return EOPNOTSUPP as updates are gone */
+    errno = EOPNOTSUPP;
+    return -1;
   }
   // We should never arrive here !
   return -1;

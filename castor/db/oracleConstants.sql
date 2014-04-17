@@ -292,10 +292,8 @@ AS
 
   STAGER_GET                   CONSTANT VARCHAR2(2048) := 'Get Request';
   STAGER_PUT                   CONSTANT VARCHAR2(2048) := 'Put Request';
-  STAGER_UPDATE                CONSTANT VARCHAR2(2048) := 'Update Request';
   STAGER_PREPARETOGET          CONSTANT VARCHAR2(2048) := 'PrepareToGet Request';
   STAGER_PREPARETOPUT          CONSTANT VARCHAR2(2048) := 'PrepareToPut Request';
-  STAGER_PREPARETOUPDATE       CONSTANT VARCHAR2(2048) := 'PrepareToUpdate Request';
 
   STAGER_D2D_TRIGGERED         CONSTANT VARCHAR2(2048) := 'Triggering DiskCopy replication';
   STAGER_WAITSUBREQ            CONSTANT VARCHAR2(2048) := 'Request moved to Wait';

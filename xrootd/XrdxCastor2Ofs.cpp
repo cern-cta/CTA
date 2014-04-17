@@ -481,7 +481,6 @@ XrdxCastor2OfsFile::XrdxCastor2OfsFile( const char* user, int MonID ) :
   IsAdminStream = false;
   IsThirdPartyStream = false;
   IsThirdPartyStreamCopy = false;
-  firstWrite = true;
   hasWrite = false;
   stagehost = "none";
   serviceclass = "none";
@@ -505,7 +504,6 @@ XrdxCastor2OfsFile::XrdxCastor2OfsFile( const char* user, int MonID ) :
   isTruncate = false;
   viaDestructor = false;
   mTpcKey = "";
-  mIsUpdate = false;
 }
 
 
@@ -582,11 +580,6 @@ XrdxCastor2OfsFile::open( const char*         path,
     newopaque.erase( tried_pos, amp_pos - tried_pos );
   }
 
-  if ( newopaque.find( "castor2fs.signature=" ) == STR_NPOS ) {
-    // This is a backdoor for the tape to update files
-    firstWrite = false;
-  }
-
   // This prevents 'clever' users from faking internal opaque information
   newopaque.replace( "ofsgranted=", "notgranted=" );
   newopaque.replace( "source=", "nosource=" );
@@ -624,9 +617,6 @@ XrdxCastor2OfsFile::open( const char*         path,
        ( verifytag == "off" ) ) {
     verifyChecksum = false;
   }
-  
-  if (open_mode & SFS_O_RDWR)
-    mIsUpdate = true;
   
   open_mode |= SFS_O_MKPTH;
   create_mode |= SFS_O_MKPTH;
@@ -846,17 +836,7 @@ XrdxCastor2OfsFile::open( const char*         path,
     }
   }
 
-  if ( ( retc = XrdOfsOss->Stat( newpath.c_str(), &statinfo ) ) ) {
-    // File does not exist, keep the create flag (unless this is 
-    // an update but the file didn't exist on the disk server
-    if ( envOpaque->Get( "castor2fs.accessop" ) && 
-         ( atoi( envOpaque->Get( "castor2fs.accessop" ) ) == AOP_Update ) ) 
-      {
-        firstWrite = true;
-      } else {
-      firstWrite = false;
-    }
-  } else {
+  if ( !( retc = XrdOfsOss->Stat( newpath.c_str(), &statinfo ) ) ) {
     if ( open_mode & SFS_O_CREAT )
       open_mode -= SFS_O_CREAT;
 
@@ -952,13 +932,6 @@ XrdxCastor2OfsFile::open( const char*         path,
     if ( IsThirdPartyStream ) {
       if ( isRW ) {
         hasWrite = true;
-
-        // Here we send the update for the 1st byte written
-        if ( UpdateMeta() != SFS_OK ) {
-          return SFS_ERROR;
-        }
-
-        firstWrite = false;
       }
     }
   }
@@ -1351,14 +1324,6 @@ XrdxCastor2OfsFile::write( XrdSfsFileOffset fileOffset,
 
   hasWrite = true;
 
-  if ( firstWrite ) {
-    if ( UpdateMeta() != SFS_OK ) {
-      return SFS_ERROR;
-    }
-
-    firstWrite = false;
-  }
-
   return rc;
 }
 
@@ -1412,14 +1377,6 @@ XrdxCastor2OfsFile::write( XrdSfsAio* aioparm )
 
   int rc = XrdOfsFile::write( aioparm );
   hasWrite = true;
-
-  if ( firstWrite ) {
-    if ( UpdateMeta() != SFS_OK ) {
-      return SFS_ERROR;
-    }
-
-    firstWrite = false;
-  }
 
   return rc;
 }
@@ -1523,78 +1480,6 @@ XrdxCastor2OfsFile::Unlink()
     XrdxCastor2OfsFS.MetaMutex.UnLock();
     delete buffer;
     return XrdxCastor2OfsFS.Emsg("Unlink", error, ESHUTDOWN, "unlink ", FName());
-  }
-
-  XrdxCastor2OfsFS.MetaMutex.UnLock();
-  delete buffer;
-  return SFS_OK;
-}
-
-
-//------------------------------------------------------------------------------
-// UpdateMeta
-//------------------------------------------------------------------------------
-int
-XrdxCastor2OfsFile::UpdateMeta()
-{
-  if ( IsThirdPartyStreamCopy ) {
-    return SFS_OK;
-  }
-
-  XrdOucString preparename = envOpaque->Get( "castor2fs.sfn" );
-  xcastor_debug("haswrite=%i, firstWrite=%i, 3rd-party=%i/%i, lfn=%s",                
-                hasWrite, firstWrite, IsThirdPartyStream, IsThirdPartyStreamCopy,
-                preparename.c_str());
-
-  // Don't deal with proc requests
-  if ( procRequest != kProcNone )
-    return SFS_OK;
-
-  XrdOucString mdsaddress = "root://";
-  mdsaddress += envOpaque->Get( "castor2fs.manager" );
-  mdsaddress += "//dummy";
-  XrdCl::URL url(mdsaddress.c_str());
-  XrdCl::Buffer* buffer = 0;
-  std::vector<std::string> list;
-  
-  if (!url.IsValid()) {
-    xcastor_debug("URL is not valid: %s", mdsaddress.c_str());
-    return XrdxCastor2OfsFS.Emsg( "UpdateMeta", error, ENOENT, "URL is not valid ", "" );
-  }
-  
-  XrdCl::FileSystem* mdsclient = new XrdCl::FileSystem(url);
-
-  if (!mdsclient) {
-    xcastor_err("Could not create XrdCl::FileSystem object.");
-    return XrdxCastor2OfsFS.Emsg( "UpdateMeta", error, EHOSTUNREACH, 
-                                  "connect to the mds host (normally the manager) ", "" );
-  }
-
-  preparename += "?";
-
-  if ( mIsUpdate && firstWrite && hasWrite )
-    preparename += "&firstbytewritten=true";
-  else {
-    return SFS_OK;
-  }
-
-  preparename += "&reqid=";
-  preparename += reqid;
-  preparename += "&stagehost=";
-  preparename += stagehost;
-  preparename += "&serviceclass=";
-  preparename += serviceclass;
-  list.push_back(preparename.c_str());
-  xcastor_debug("informing about %s", preparename.c_str());
-
-  XrdxCastor2OfsFS.MetaMutex.Lock();
-  XrdCl::XRootDStatus status = mdsclient->Prepare(list, XrdCl::PrepareFlags::Stage, 1, buffer); 
-  
-  if (!status.IsOK()) {
-    xcastor_err("Prepare response invalid.");
-    XrdxCastor2OfsFS.MetaMutex.UnLock();
-    delete buffer;
-    return XrdxCastor2OfsFS.Emsg( "Unlink", error, ESHUTDOWN, "update mds size/modtime", FName());
   }
 
   XrdxCastor2OfsFS.MetaMutex.UnLock();
