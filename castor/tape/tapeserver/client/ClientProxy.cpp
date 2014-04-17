@@ -282,8 +282,9 @@ tapegateway::FileMigrationReportList & migrationReport,
   try {
     tapegateway::EndNotificationErrorReport & err = 
         dynamic_cast<tapegateway::EndNotificationErrorReport &> (*resp);
-    std::stringstream mess("End notification report: errorMessage=\"");
-    mess << err.errorMessage() << "\" errorCode=" << err.errorCode();
+    std::stringstream mess;
+    mess << "End notification report: errorMessage=\""
+        << err.errorMessage() << "\" errorCode=" << err.errorCode();
     throw castor::tape::Exception(mess.str());
   } catch (std::bad_cast) {
     throw UnexpectedResponse(resp.get(),
@@ -354,8 +355,9 @@ RequestReport& report) {
   try {
     tapegateway::EndNotificationErrorReport & err = 
         dynamic_cast<tapegateway::EndNotificationErrorReport &> (*resp);
-    std::stringstream mess("End notification report: errorMessage=\"");
-    mess << err.errorMessage() << "\" errorCode=" << err.errorCode();
+    std::stringstream mess;
+    mess << "End notification report: errorMessage=\""
+        << err.errorMessage() << "\" errorCode=" << err.errorCode();
     throw castor::tape::Exception(mess.str());
   } catch (std::bad_cast) {
     throw UnexpectedResponse(resp.get(),

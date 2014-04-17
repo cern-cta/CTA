@@ -26,6 +26,7 @@
 
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/file/File.hpp"
 
 namespace castor {
 namespace tape {
@@ -34,7 +35,8 @@ namespace daemon {
 class TapeReadTask {
 public:
   virtual bool endOfWork() = 0;
-  virtual void execute(castor::tape::drives::DriveInterface & /*td*/) { 
+  virtual void execute(castor::tape::tapeFile::ReadSession & /*rs*/,
+    castor::log::LogContext & /*lc*/) { 
     throw MemException("Tring to execute a non-execuatble TapeReadTask"); 
   };
   virtual ~TapeReadTask() {}

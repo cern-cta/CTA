@@ -52,7 +52,6 @@ public:
   void waitThreads();
   virtual void push(DiskWriteTaskInterface *t);
   void finish();
-  void setJobInjector(TaskInjector * ji);
 
 private:
   bool belowMidFilesAfterPop(int filesPopped) const ;
@@ -87,7 +86,6 @@ private:
   
   std::vector<DiskWriteWorkerThread *> m_threads;
   castor::tape::threading::Mutex m_counterProtection;
-  TaskInjector * m_jobInjector;
  
   uint32_t m_maxFilesReq;
   uint64_t m_maxBytesReq;

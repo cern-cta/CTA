@@ -39,6 +39,7 @@
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
+#include "castor/tape/tapeserver/file/File.hpp"
 
 using namespace castor::tape::tapeserver;
 using namespace castor::tape::tapeserver::daemon;
@@ -85,6 +86,41 @@ TEST(tapeServer, MountSessionGoodday) {
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::drives::FakeDrive;
+  // We can prepare files for reading on the drive
+  {
+    // Label the tape
+    castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
+        "V12345", true);
+    mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
+    // And write to it
+    castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
+        "V12345", 0, true);
+    // Write a few files on the virtual tape
+    // Prepare the data
+    uint8_t data[1000];
+    castor::tape::SCSI::Structures::zeroStruct(&data);
+    for (int fseq=1; fseq <= 10 ; fseq ++) {
+      castor::tape::tapegateway::FileToRecallStruct ftr;
+      castor::tape::tapegateway::FileToMigrateStruct ftm_temp;
+      ftr.setFseq(fseq);
+      ftm_temp.setFseq(fseq);
+      ftr.setFileid(1000 + fseq);
+      ftm_temp.setFileid(1000 + fseq);
+      castor::tape::tapeFile::WriteFile wf(&ws, ftm_temp, 256*1024);
+      // Cut up the position into the old-style BlockId0-3
+      ftr.setBlockId0(wf.getPosition() >> 24);
+      ftr.setBlockId1( (wf.getPosition() >> 16) & 0xFF);
+      ftr.setBlockId2( (wf.getPosition() >> 8) & 0xFF);
+      ftr.setBlockId3(wf.getPosition() & 0xFF);
+      // Write the data (one block)
+      wf.write(data, sizeof(data));
+      // Close the file
+      wf.close();
+      // Record the file for recall
+      sim.addFileToRecall(ftr, sizeof(data));
+    }
+  }
   utils::TpconfigLines tpConfig;
   // Actual TPCONFIG lifted from prod
   tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
@@ -92,7 +128,7 @@ TEST(tapeServer, MountSessionGoodday) {
   tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
   "/dev/tape_T10D6116", "5000GC", "down", "acs0,1,1,6", "T10000"));
   MountSession::CastorConf castorConf;
-  castorConf.rtcopydBufsz = 1024;
+  castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
   castorConf.rtcopydNbBufs = 10;
   castorConf.tapebridgeBulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.tapebridgeBulkRequestRecallMaxFiles = 1000;

@@ -131,6 +131,11 @@ namespace castor {
         static void checkVOL1(const VOL1 &vol1, const std::string &volId) throw (Exception);
         
       private:
+        typedef enum {
+          octal,
+          decimal,
+          hexadecimal
+        } headerBase;
         
         /**
          * Checks the field of a header comparing it with the numerical value provided
@@ -140,7 +145,8 @@ namespace castor {
          * @param is_field_oct: set to true if the value in the header is in octal and to false otherwise
          * @return true if the header field  matches the numerical value, false otherwise
          */
-        static bool checkHeaderNumericalField(const std::string &headerField, const uint64_t value, const bool is_field_hex=false, const bool is_field_oct=false) throw (Exception);
+        static bool checkHeaderNumericalField(const std::string &headerField,
+          const uint64_t value, const headerBase base = decimal) throw (Exception);
       };
       
       /**

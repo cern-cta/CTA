@@ -38,6 +38,7 @@ public:
   typedef typename std::queue<C>::value_type value_type;
   typedef typename std::queue<C>::reference reference;
   typedef typename std::queue<C>::const_reference const_reference;
+  typedef struct valueRemainingPair {C value; size_t remaining;} valueRemainingPair;
   
   BlockingQueue(){}
   ~BlockingQueue() {}
@@ -55,6 +56,13 @@ public:
     m_sem.acquire();
     return popCriticalSection();
   }
+  
+  valueRemainingPair popGetSize () {
+    m_sem.acquire();
+    valueRemainingPair ret;
+    ret.value = popCriticalSection(&ret.remaining);
+    return ret;
+  }
  
   /**
    * Return the next value of the queue and remove it
@@ -67,8 +75,8 @@ public:
   
   ///return the number of elements currently in the queue
   size_t size() const { 
-      MutexLocker ml(&m_mutex);
-      return m_queue.size(); 
+    MutexLocker ml(&m_mutex);
+    return m_queue.size();
   }
   
 private:  
@@ -81,12 +89,14 @@ private:
   ///used for locking-operation thus providing thread-safety
   mutable Mutex m_mutex;
 
-  ///Thread and exception safe pop
-  C popCriticalSection() {
+  ///Thread and exception safe pop. Optionally atomically extracts the size 
+  // of the queue after pop
+  C popCriticalSection(size_t * sz = NULL) {
     MutexLocker ml(&m_mutex);
     C ret = m_queue.front();
     m_queue.pop();
-    
+    if (sz)
+      *sz = m_queue.size();
     return ret;
   }
   

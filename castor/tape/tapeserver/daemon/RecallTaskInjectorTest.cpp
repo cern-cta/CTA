@@ -37,8 +37,9 @@ class FakeSingleTapeReadThread : public TapeSingleThreadInterface<TapeReadTask>
 public:
   using TapeSingleThreadInterface<TapeReadTask>::m_tasks;
   
-  FakeSingleTapeReadThread(castor::tape::drives::DriveInterface& drive):
-  TapeSingleThreadInterface<TapeReadTask>(drive){}
+  FakeSingleTapeReadThread(castor::tape::drives::DriveInterface& drive, 
+    const std::string & vid, castor::log::LogContext & lc):
+  TapeSingleThreadInterface<TapeReadTask>(drive, vid, lc){}
   
   ~FakeSingleTapeReadThread(){
     const unsigned int size= m_tasks.size();
@@ -64,7 +65,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   castor::tape::drives::FakeDrive drive;
   FakeClient client(nbCalls);
   FakeDiskWriteThreadPool diskWrite;
-  FakeSingleTapeReadThread tapeRead(drive);
+  FakeSingleTapeReadThread tapeRead(drive, "V12345", lc);
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,lc);
   
@@ -107,7 +108,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   castor::tape::drives::FakeDrive drive;
   FakeClient client(0);
   FakeDiskWriteThreadPool diskWrite;
-  FakeSingleTapeReadThread tapeRead(drive);
+  FakeSingleTapeReadThread tapeRead(drive, "V12345", lc);
   
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,lc);

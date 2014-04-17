@@ -94,14 +94,24 @@ namespace castor {
         m_session->release();
       }
 
-      bool HeaderChecker::checkHeaderNumericalField(const std::string &headerField, const uint64_t value, const bool is_field_hex, const bool is_field_oct) throw (Exception) {
+      bool HeaderChecker::checkHeaderNumericalField(const std::string &headerField, 
+        const uint64_t value, const headerBase base) throw (Exception) {
         uint64_t res = 0;
         std::stringstream field_converter;
         field_converter << headerField;
-        if(is_field_hex && !is_field_oct) field_converter >> std::hex >> res;
-        else if(!is_field_hex && is_field_oct) field_converter >> std::oct >> res;
-        else if(!is_field_hex && !is_field_oct) field_converter >> res;
-        else throw castor::exception::InvalidArgument();
+        switch(base) {
+          case octal:
+            field_converter >> std::oct >> res;
+            break;
+          case decimal:
+            field_converter >> std::dec >> res;
+            break;
+          case hexadecimal:
+            field_converter >> std::hex >> res;
+            break;
+          default:
+            throw castor::exception::InvalidArgument("Unrecognised base in HeaderChecker::checkHeaderNumericalField");
+        }
         return value==res;
       }
 
@@ -109,12 +119,12 @@ namespace castor {
         const castor::tape::tapegateway::FileToRecallStruct &filetoRecall,
         const std::string &volId) throw (Exception) {
         if(!checkHeaderNumericalField(hdr1.getFileId(), 
-            (uint64_t)filetoRecall.fileid(), true, false)) { 
-          // the nsfileid stored in HDR1 is in hexadecimal while the one
-          // supplied in the Information structure is in decimal
+            filetoRecall.fileid(), hexadecimal)) { 
+          // the nsfileid stored in HDR1 as an hexadecimal string . The one in 
+          // filetoRecall is numeric
           std::stringstream ex_str;
-          ex_str << "[HeaderChecker::checkHDR1] - Invalid fileid detected: " 
-              << hdr1.getFileId() << ". Wanted: " << std::hex 
+          ex_str << "[HeaderChecker::checkHDR1] - Invalid fileid detected: (0x)\"" 
+              << hdr1.getFileId() << "\". Wanted: 0x" << std::hex 
               << filetoRecall.fileid() << std::endl;
           throw TapeFormatError(ex_str.str());
         }
@@ -130,18 +140,19 @@ namespace castor {
 
       void HeaderChecker::checkUHL1(const UHL1 &uhl1,
         const castor::tape::tapegateway::FileToRecallStruct &fileToRecall) throw (Exception) {
-        if(!checkHeaderNumericalField(uhl1.getfSeq(), (uint64_t)fileToRecall.fseq(), true, false)) {
+        if(!checkHeaderNumericalField(uhl1.getfSeq(), fileToRecall.fseq(), decimal)) {
           std::stringstream ex_str;
-          ex_str << "[HeaderChecker::checkUHL1] - Invalid fseq detected in uhl1: " 
-              << atol(uhl1.getfSeq().c_str()) << ". Wanted: " << fileToRecall.fseq();
+          ex_str << "[HeaderChecker::checkUHL1] - Invalid fseq detected in uhl1: \"" 
+              << uhl1.getfSeq() << "\". Wanted: " << fileToRecall.fseq();
           throw TapeFormatError(ex_str.str());
         }
       }
 
       void HeaderChecker::checkUTL1(const UTL1 &utl1, const uint32_t fseq) throw (Exception) {
-        if(!checkHeaderNumericalField(utl1.getfSeq(), (uint64_t)fseq, true, false)) {
+        if(!checkHeaderNumericalField(utl1.getfSeq(), (uint64_t)fseq, decimal)) {
           std::stringstream ex_str;
-          ex_str << "[HeaderChecker::checkUTL1] - Invalid fseq detected in uhl1: " << atol(utl1.getfSeq().c_str()) << ". Wanted: " << fseq;
+          ex_str << "[HeaderChecker::checkUTL1] - Invalid fseq detected in utl1: \"" 
+                 << utl1.getfSeq() << "\". Wanted: " << fseq;
           throw TapeFormatError(ex_str.str());
         }
       }
