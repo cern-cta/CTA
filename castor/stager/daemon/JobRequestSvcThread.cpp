@@ -74,7 +74,7 @@ castor::stager::daemon::JobRequestSvcThread::jobSubRequestToDo()
     // retrieve or create statement
     bool wasCreated = false;
     oracle::occi::Statement* jobSubRequestToDoStatement = dbSvc->createOrReuseOraStatement
-      ("BEGIN jobSubRequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13); END;",
+      ("BEGIN jobSubRequestToDo(:1, :2, :3, :4, :5, :6, :7, :8, :9, :10, :11, :12, :13, :14, :15); END;",
        &wasCreated);
     if (wasCreated) {
       jobSubRequestToDoStatement->registerOutParam(1, oracle::occi::OCCIDOUBLE);
@@ -90,6 +90,8 @@ castor::stager::daemon::JobRequestSvcThread::jobSubRequestToDo()
       jobSubRequestToDoStatement->registerOutParam(11, oracle::occi::OCCIINT);
       jobSubRequestToDoStatement->registerOutParam(12, oracle::occi::OCCIINT);
       jobSubRequestToDoStatement->registerOutParam(13, oracle::occi::OCCIINT);
+      jobSubRequestToDoStatement->registerOutParam(14, oracle::occi::OCCIINT);
+      jobSubRequestToDoStatement->registerOutParam(15, oracle::occi::OCCISTRING, 2048);
       // also register for associated alert
       oracle::occi::Statement* registerAlertStmt = 
         dbSvc->createOraStatement("BEGIN DBMS_ALERT.REGISTER('wakeUpJobReqSvc'); END;");
@@ -127,6 +129,15 @@ castor::stager::daemon::JobRequestSvcThread::jobSubRequestToDo()
     result->clientIpAddress = jobSubRequestToDoStatement->getInt(11);
     result->clientPort = jobSubRequestToDoStatement->getInt(12);
     result->clientVersion = jobSubRequestToDoStatement->getInt(13);
+    // did we get an error ?
+    int errorCode = jobSubRequestToDoStatement->getInt(14);
+    if (errorCode > 0) {
+      // answer client
+      bool isLastAnswer = updateAndCheckSubRequest(result->srId, SUBREQUEST_FAILED_FINISHED);
+      answerClient(result, 0, SUBREQUEST_FAILED, errorCode,
+                   jobSubRequestToDoStatement->getString(15), isLastAnswer);
+      return 0;
+    }
     // return
     return result;
   } catch (oracle::occi::SQLException &e) {
@@ -160,7 +171,7 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* reque
     int replyNeeded = handleGetOrPut(sr, cnsFileid, fileSize, stagerOpentimeInUsec);
     // reply to client when needed
     if (replyNeeded) {
-      answerClient(sr, cnsFileid, SUBREQUEST_READY, 0, "", replyNeeded > 0);
+      answerClient(sr, cnsFileid.fileid, SUBREQUEST_READY, 0, "", replyNeeded > 1);
     }
   } catch(castor::exception::Exception &ex) {
     try {
@@ -282,7 +293,7 @@ bool castor::stager::daemon::JobRequestSvcThread::updateAndCheckSubRequest
 // answerClient
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::JobRequestSvcThread::answerClient(const JobRequest *sr,
-                                                               const struct Cns_fileid &cnsFileid,
+                                                               u_signed64 cnsFileid,
                                                                int status,
                                                                int errorCode,
                                                                const std::string &errorMsg,
@@ -301,7 +312,7 @@ void castor::stager::daemon::JobRequestSvcThread::answerClient(const JobRequest 
   Cuuid2string(uuid, CUUID_STRING_LEN+1, &sr->requestUuid);
   ioResponse.setReqAssociated(uuid);
   ioResponse.setCastorFileName(sr->fileName);
-  ioResponse.setFileId((u_signed64) cnsFileid.fileid);
+  ioResponse.setFileId(cnsFileid);
   ioResponse.setStatus(status);
   ioResponse.setErrorCode(errorCode);
   ioResponse.setErrorMessage(errorMsg);

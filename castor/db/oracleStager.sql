@@ -364,7 +364,8 @@ CREATE OR REPLACE PROCEDURE jobSubRequestToDo(outSrId OUT INTEGER, outReqUuid OU
                                               outFileClassIfForced OUT INTEGER,
                                               outFlags OUT INTEGER, outModeBits OUT INTEGER,
                                               outClientIpAddress OUT INTEGER,
-                                              outClientPort OUT INTEGER, outClientVersion OUT INTEGER) AS
+                                              outClientPort OUT INTEGER, outClientVersion OUT INTEGER,
+                                              outErrNo OUT INTEGER, outErrMsg OUT VARCHAR2) AS
   CURSOR SRcur IS
     SELECT /*+ FIRST_ROWS_10 INDEX_RS_ASC(SR I_SubRequest_RT_CT_ID) */ SR.id
       FROM SubRequest PARTITION (P_STATUS_0_1_2) SR  -- START, RESTART, RETRY
@@ -379,6 +380,7 @@ CREATE OR REPLACE PROCEDURE jobSubRequestToDo(outSrId OUT INTEGER, outReqUuid OU
   varUnusedMessage VARCHAR2(2048);
   varUnusedStatus INTEGER;
 BEGIN
+  outErrNo := 0;
   -- Open a cursor on potential candidates
   OPEN SRcur;
   -- Retrieve the first candidate
@@ -437,30 +439,35 @@ BEGIN
     -- XXX be merged in a single table (partitioned by reqType) to avoid the following block.
     CASE
       WHEN outReqType = 40 THEN -- StagePutRequest
-        SELECT reqId, euid, egid, svcClass, client
-          INTO outReqUuid, outEuid, outEgid, varSvcClassId, varClientId
+        SELECT reqId, euid, egid, svcClass, svcClassName, client
+          INTO outReqUuid, outEuid, outEgid, varSvcClassId, outSvcClassName, varClientId
           FROM StagePutRequest WHERE id = varRequestId;
       WHEN outReqType = 35 THEN -- StageGetRequest
-        SELECT reqId, euid, egid, svcClass, client
-          INTO outReqUuid, outEuid, outEgid, varSvcClassId, varClientId
+        SELECT reqId, euid, egid, svcClass, svcClassName, client
+          INTO outReqUuid, outEuid, outEgid, varSvcClassId, outSvcClassName, varClientId
           FROM StageGetRequest WHERE id = varRequestId;
       WHEN outReqType = 37 THEN -- StagePrepareToPutRequest
-        SELECT reqId, euid, egid, svcClass, client
-          INTO outReqUuid, outEuid, outEgid, varSvcClassId, varClientId
+        SELECT reqId, euid, egid, svcClass, svcClassName, client
+          INTO outReqUuid, outEuid, outEgid, varSvcClassId, outSvcClassName, varClientId
           FROM StagePrepareToPutRequest WHERE id = varRequestId;
       WHEN outReqType = 36 THEN -- StagePrepareToGetRequest
-        SELECT reqId, euid, egid, svcClass, client
-          INTO outReqUuid, outEuid, outEgid, varSvcClassId, varClientId
+        SELECT reqId, euid, egid, svcClass, svcClassName, client
+          INTO outReqUuid, outEuid, outEgid, varSvcClassId, outSvcClassName, varClientId
           FROM StagePrepareToGetRequest WHERE id = varRequestId;
     END CASE;
     SELECT ipAddress, port, version
       INTO outClientIpAddress, outClientPort, outClientVersion
       FROM Client WHERE id = varClientId;
-    SELECT FileClass.classId, SvcClass.name
-      INTO outFileClassIfForced, outSvcClassName
-      FROM SvcClass, FileClass
-     WHERE SvcClass.id = varSvcClassId
-       AND FileClass.id(+) = SvcClass.forcedFileClass;
+    BEGIN
+      SELECT FileClass.classId INTO outFileClassIfForced
+        FROM SvcClass, FileClass
+       WHERE SvcClass.id = varSvcClassId
+         AND FileClass.id(+) = SvcClass.forcedFileClass;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      archiveSubReq(outSrId, dconst.SUBREQUEST_FAILED_FINISHED);
+      outErrno := serrno.EINVAL;
+      outErrMsg := 'Invalid service class ''' || outSvcClassName || '''';
+    END;
   EXCEPTION WHEN OTHERS THEN
     -- Something went really wrong, our subrequest does not have the corresponding request or client,
     -- Just drop it and re-raise exception. Some rare occurrences have happened in the past,
