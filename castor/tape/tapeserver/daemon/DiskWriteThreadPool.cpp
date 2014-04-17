@@ -1,4 +1,5 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
+#include "log.h"
 #include <memory>
 #include <sstream>
 namespace castor {
@@ -11,24 +12,28 @@ namespace daemon {
           ReportPackerInterface<detail::Recall>& report,castor::log::LogContext lc):
           m_maxFilesReq(maxFilesReq), m_maxBytesReq(maxBlocksReq),
           m_reporter(report),m_lc(lc)
-   {
+  {
+    m_lc.pushOrReplace(castor::log::Param("threadCount", nbThread));
+    m_lc.log(LOG_INFO, "Creating threads in DiskWriteThreadPool::DiskWriteThreadPool");
     for(int i=0; i<nbThread; i++) {
       DiskWriteWorkerThread * thr = new DiskWriteWorkerThread(*this);
       m_threads.push_back(thr);
     }
   }
-  DiskWriteThreadPool::~DiskWriteThreadPool() { 
+  DiskWriteThreadPool::~DiskWriteThreadPool() {
     while (m_threads.size()) {
       delete m_threads.back();
       m_threads.pop_back();
     }
   }
   void DiskWriteThreadPool::startThreads() {
+    m_lc.log(LOG_INFO, "Starting threads in DiskWriteThreadPool::DiskWriteThreadPool");
     for (std::vector<DiskWriteWorkerThread *>::iterator i=m_threads.begin();
             i != m_threads.end(); i++) {
       (*i)->start();
     }
   }
+  
   void DiskWriteThreadPool::waitThreads() {
     for (std::vector<DiskWriteWorkerThread *>::iterator i=m_threads.begin();
             i != m_threads.end(); i++) {
@@ -95,8 +100,8 @@ namespace daemon {
     return ret;
   }
   void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
+    m_lc.log(LOG_INFO, "Starting disk write thread");
     std::auto_ptr<DiskWriteTaskInterface>  task;
-    
     while(1) {
       task.reset(m_parentThreadPool. m_tasks.pop());
       if (NULL!=task.get()) {
@@ -122,6 +127,7 @@ namespace daemon {
         m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("A thread failed to write a file",SEINTERNAL);
       }
     }
+    m_lc.log(LOG_INFO, "Disk write thread exiting");
   }
 }}}}
 
