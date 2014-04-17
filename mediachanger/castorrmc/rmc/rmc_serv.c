@@ -62,7 +62,6 @@ int rmc_main(const char *const robot)
 	char sense[MAXSENSE];
 	struct sockaddr_in sin;
 	struct smc_status smc_status;
-	struct servent *sp;
 	struct timeval timeval;
 	char func[16];
 
@@ -149,8 +148,6 @@ int rmc_main(const char *const robot)
 		const char *p;
 		if ((p = getenv ("RMC_PORT")) || (p = getconfent ("RMC", "PORT", 0))) {
 			sin.sin_port = htons ((unsigned short)atoi (p));
-		} else if ((sp = getservbyname ("rmc", "tcp"))) {
-			sin.sin_port = sp->s_port;
 		} else {
 			sin.sin_port = htons ((unsigned short)RMC_PORT);
 		}

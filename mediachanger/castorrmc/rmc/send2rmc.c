@@ -41,15 +41,11 @@ int send2rmc(
 	char rmchost[CA_MAXHOSTNAMELEN+1];
 	int s;
 	struct sockaddr_in sin; /* internet socket */
-	struct servent *sp;
 
 	strncpy (func, "send2rmc", 16);
 	sin.sin_family = AF_INET;
 	if ((p = getenv ("RMC_PORT")) || (p = getconfent ("RMC", "PORT", 0))) {
 		sin.sin_port = htons ((unsigned short)atoi (p));
-	} else if ((sp = Cgetservbyname ("rmc", "tcp"))) {
-		sin.sin_port = sp->s_port;
-		serrno = 0;
 	} else {
 		sin.sin_port = htons ((unsigned short)RMC_PORT);
 		serrno = 0;
