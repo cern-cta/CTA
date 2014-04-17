@@ -30,6 +30,9 @@ import connectionpool, dlf
 from diskmanagerdlf import msgs
 from transfer import TransferType, RunningTransfer, transferToCmdLine
 
+def buildXrootURL(diskserver, path):
+  return 'root://'+diskserver+':1095//dummy?castor2fs.pfn1='+path+'&castor2fs.pfn2=dummy'
+
 class ActivityControlThread(threading.Thread):
   '''activity control thread.
   This thread is responsible for starting new transfers when free slots are available'''
@@ -71,7 +74,8 @@ class ActivityControlThread(threading.Thread):
   def startD2DTransfer(self, scheduler, transfer, srcDcPath, destDcPath):
     '''effectively starts a disk to disk transfer'''
     # build command line
-    cmdLine = ['rfcp', srcDcPath, destDcPath]
+    srcDS, srcPath = srcDcPath.split(':',1)
+    cmdLine = ['xrdcp', buildXrootURL(srcDS, srcPath), buildXrootURL('localhost', destDcPath)]
     # start transfer process
     process = 0
     try:

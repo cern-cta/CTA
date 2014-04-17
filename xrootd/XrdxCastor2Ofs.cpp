@@ -871,55 +871,44 @@ XrdxCastor2OfsFile::open( const char*         path,
                   DiskChecksum.c_str() );
   }
 
-  // Extract the stager information
+  // Extract the stager information if any
+  StagerJob = 0;
   val = envOpaque->Get( "castor2fs.pfn2" );
-
-  if ( !( XrdxCastor2OfsFS.ThirdPartyCopy ) || ( !IsThirdPartyStreamCopy ) ) {
-    if ( !( val ) || ( !strlen( val ) ) ) {
-      return XrdxCastor2OfsFS.Emsg( "open", error, ESHUTDOWN, "reqid/pfn2 is missing", FName() );
-    }
-  } else {
-    // Third party streams don't have any req id
-    val = "";
-  }
-
-  XrdOucString reqtag = val;
-  reqid = "0";
-  stagehost = "none";
-  serviceclass = "none";
-  stagerjobport = 0;
-  SjobUuid = "";
-  int pos1;
-  int pos2;
-  int pos3;
-  int pos4;
-
-  // Syntax is reqid: <reqid:stagerhost:serviceclass:stagerjobport:stagerjobuuid>
-  if ( ( pos1 = reqtag.find( ":" ) ) != STR_NPOS ) {
-    reqid.assign( reqtag, 0, pos1 - 1 );
-
-    if ( ( pos2 = reqtag.find( ":", pos1 + 1 ) ) != STR_NPOS )  {
-      stagehost.assign( reqtag, pos1 + 1, pos2 - 1 );
-
-      if ( ( pos3 = reqtag.find( ":", pos2 + 1 ) ) != STR_NPOS ) {
-        serviceclass.assign( reqtag, pos2 + 1, pos3 - 1 );
-
-        if ( ( pos4 = reqtag.find( ":", pos3 + 1 ) ) != STR_NPOS ) {
-          XrdOucString sport;
-          sport.assign( reqtag, pos3 + 1, pos4 - 1 );
-          stagerjobport = atoi( sport.c_str() );
-          SjobUuid.assign( reqtag, pos4 + 1 );
+  if (val && strlen(val)) {
+    XrdOucString reqtag = val;
+    reqid = "0";
+    stagehost = "none";
+    serviceclass = "none";
+    stagerjobport = 0;
+    SjobUuid = "";
+    int pos1;
+    int pos2;
+    int pos3;
+    int pos4;
+    // Syntax is reqid: <reqid:stagerhost:serviceclass:stagerjobport:stagerjobuuid>
+    if ( ( pos1 = reqtag.find( ":" ) ) != STR_NPOS ) {
+      reqid.assign( reqtag, 0, pos1 - 1 );
+      if ( ( pos2 = reqtag.find( ":", pos1 + 1 ) ) != STR_NPOS )  {
+        stagehost.assign( reqtag, pos1 + 1, pos2 - 1 );
+        if ( ( pos3 = reqtag.find( ":", pos2 + 1 ) ) != STR_NPOS ) {
+          serviceclass.assign( reqtag, pos2 + 1, pos3 - 1 );
+          if ( ( pos4 = reqtag.find( ":", pos3 + 1 ) ) != STR_NPOS ) {
+            XrdOucString sport;
+            sport.assign( reqtag, pos3 + 1, pos4 - 1 );
+            stagerjobport = atoi( sport.c_str() );
+            SjobUuid.assign( reqtag, pos4 + 1 );
+            xcastor_debug("StagerJob uuid=%s, port=%i ", SjobUuid.c_str(), stagerjobport );
+            StagerJob = new XrdxCastor2Ofs2StagerJob( SjobUuid.c_str(), stagerjobport );
+          }
         }
       }
     }
   }
-
-  xcastor_debug("StagerJob uuid=%s, port=%i ", SjobUuid.c_str(), stagerjobport );
-  StagerJob = new XrdxCastor2Ofs2StagerJob( SjobUuid.c_str(), stagerjobport );
+  
 
   if ( !IsThirdPartyStreamCopy ) {
     // Send the sigusr1 to the local xcastor2job to signal the open
-    if ( !StagerJob->Open() ) {
+    if ( StagerJob && !StagerJob->Open() ) {
       // The open failed
       xcastor_err("error: open => couldn't run the Open towards StagerJob: "
                   "reqid=%s, stagerjobport=%i, stagerjobuuid=%s",
@@ -1530,10 +1519,6 @@ XrdxCastor2Ofs2StagerJob::~XrdxCastor2Ofs2StagerJob()
 bool
 XrdxCastor2Ofs2StagerJob::Open()
 {
-  // If no port is specified then we don't inform anybody
-  if ( !Port )
-    return true;
-
   Socket = new XrdNetSocket();
 
   if ( ( Socket->Open( "localhost", Port, 0, 0 ) ) < 0 ) {
@@ -1595,7 +1580,7 @@ XrdxCastor2Ofs2StagerJob::StillConnected()
 bool
 XrdxCastor2Ofs2StagerJob::Close( bool ok, bool haswrite )
 {
-  if ( !Port || !Socket || !IsConnected) {
+  if ( !Socket || !IsConnected) {
     return true;
   }
 

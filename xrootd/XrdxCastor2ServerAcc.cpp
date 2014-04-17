@@ -639,17 +639,28 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
 
     // extract core part, signature and expTime from opaque data
     std::string data = opaque;
-    size_t sfnIndex = data.find("castor2fs.sfn=");
+    size_t startIndex = data.find("castor2fs");
     size_t signIndex = data.find("&castor2fs.signature=");
-    if (sfnIndex == string::npos || signIndex == string::npos) {
+    if (startIndex == string::npos || signIndex == string::npos) {
       TkEroute.Emsg( "Access", EACCES, "decode access token for sfn=", path );
       decodeLock.UnLock();
       return XrdAccPriv_None;
     }
-    std::string core = data.substr(sfnIndex, signIndex-sfnIndex);
+    std::string core = data.substr(startIndex, signIndex-startIndex);
+
+    // Get signature
     size_t signBegin = signIndex + sizeof("&castor2fs.signature");
     size_t signEnd = data.find("&", signBegin);
     std::string sign = data.substr(signBegin, signEnd-signBegin);
+    
+    // Verify the signature
+    if ((!VerifyUnbase64(core.c_str(), (unsigned char*)sign.c_str(), path))) {
+      TkEroute.Emsg( "Access", EACCES, "verify signature in request sfn=", path );
+      decodeLock.UnLock();
+      return XrdAccPriv_None;
+    }
+
+    // get expTime info
     size_t expTimeIndex = data.find("&castor2fs.exptime=");
     if (expTimeIndex == string::npos) {
       TkEroute.Emsg( "Access", EACCES, "decode access token for sfn=", path );
@@ -659,13 +670,6 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
     size_t expTimeBegin = expTimeIndex + sizeof("&castor2fs.exptime");
     size_t expTimeEnd = data.find("&", expTimeBegin);
     time_t expTime = (time_t)strtol(data.substr(expTimeBegin, expTimeEnd-expTimeBegin).c_str(), 0, 10);
-    
-    // Verify the signature
-    if ((!VerifyUnbase64(core.c_str(), (unsigned char*)sign.c_str(), path))) {
-      TkEroute.Emsg( "Access", EACCES, "verify signature in request sfn=", path );
-      decodeLock.UnLock();
-      return XrdAccPriv_None;
-    }
 
     // Check validity time in authz 
     if (expTime < now) {
