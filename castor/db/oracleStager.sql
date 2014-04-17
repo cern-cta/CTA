@@ -3466,7 +3466,7 @@ END;
 CREATE OR REPLACE PROCEDURE handleGet(inCfId IN INTEGER, inSrId IN INTEGER,
                                       inFileId IN INTEGER, inNsHost IN VARCHAR2,
                                       inFileSize IN INTEGER, inNsOpenTimeInUsec IN INTEGER) AS
-  varNsOpenTime INTEGER;
+  varNsOpenTime NUMBER;
   varEuid NUMBER;
   varEgid NUMBER;
   varSvcClassId NUMBER;
@@ -3513,6 +3513,7 @@ BEGIN
   END;
 
   -- Check whether our disk cache is stale
+  SELECT nsOpenTime INTO varNsOpenTime FROM CastorFile WHERE id = inCfId;
   IF varNsOpenTime < inNsOpenTimeInUsec/1000000 THEN
     -- yes, invalidate our diskcopies. This may later trigger a recall.
     UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
