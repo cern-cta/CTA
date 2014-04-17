@@ -27,6 +27,8 @@
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/log/LogContext.hpp"
+#include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -42,7 +44,8 @@ public:
   /**
    * Main routine of the task
    */
-  virtual void execute(castor::tape::tapeFile::WriteSession& /*td*/,castor::log::LogContext& lc) =0;
+  virtual void execute(castor::tape::tapeFile::WriteSession&,
+          MigrationReportPacker & reportPacker,castor::log::LogContext& lc) =0;
     
   /**
    * @return the number of memory blocks to be used

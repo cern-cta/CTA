@@ -67,7 +67,8 @@ namespace daemon {
     return m_blockCount; 
   }
   
-   void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,castor::log::LogContext& lc) {
+   void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,
+           MigrationReportPacker & reportPacker,castor::log::LogContext& lc) {
     using castor::log::LogContext;
     using castor::log::Param;
     
@@ -96,6 +97,7 @@ namespace daemon {
         mb->m_payload.write(*output);
         ++blockId;
       }
+      reportPacker.reportCompletedJob(*m_fileToMigrate);
     }
     catch(const castor::tape::Exception& e){
       //we can end up there because
@@ -105,6 +107,7 @@ namespace daemon {
       while(!m_fifo.finished()) {
         m_memManager.releaseBlock(m_fifo.popDataBlock());
       }
+      reportPacker.reportFailedJob(*m_fileToMigrate,e.getMessageValue(),e.code());
     }
    }
     
