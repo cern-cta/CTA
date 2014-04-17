@@ -2567,16 +2567,16 @@ BEGIN
       varFoundSeg := TRUE;
       -- Is the segment valid
       IF varSeg.segStatus = '-' THEN
-        -- remember the copy number and tape
-        varAllCopyNbs.EXTEND;
-        varAllCopyNbs(varI) := varSeg.copyno;
-        varAllVIDs.EXTEND;
-        varAllVIDs(varI) := varSeg.vid;
-        varI := varI + 1;
         -- Is the segment on a valid tape from recall point of view ?
         IF BITAND(varSeg.tapeStatus, tconst.TAPE_DISABLED) = 0 AND
            BITAND(varSeg.tapeStatus, tconst.TAPE_EXPORTED) = 0 AND
            BITAND(varSeg.tapeStatus, tconst.TAPE_ARCHIVED) = 0 THEN
+          -- remember the copy number and tape
+          varAllCopyNbs.EXTEND;
+          varAllCopyNbs(varI) := varSeg.copyno;
+          varAllVIDs.EXTEND;
+          varAllVIDs(varI) := varSeg.vid;
+          varI := varI + 1;
           -- create recallJob
           INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
                                  vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
