@@ -168,6 +168,18 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* reque
       bool isLastAnswer = updateAndCheckSubRequest(sr->srId, SUBREQUEST_FAILED_FINISHED);
       // inform the client about the error
       answerClient(sr, cnsFileid, SUBREQUEST_FAILED, ex.code(), ex.getMessage().str(), isLastAnswer);
+      // log
+      castor::dlf::Param params[] = {
+        castor::dlf::Param(sr->requestUuid),
+        castor::dlf::Param("Type", castor::ObjectsIdStrings[sr->reqType]),
+        castor::dlf::Param("Filename", sr->fileName),
+        castor::dlf::Param("uid", sr->euid),
+        castor::dlf::Param("gid", sr->egid),
+        castor::dlf::Param("SvcClass", sr->svcClassName),
+        castor::dlf::Param("Error", ex.what())
+      };
+      castor::dlf::dlf_writep(sr->requestUuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT2,
+                              7, params, &cnsFileid);
     } catch (castor::exception::Exception &ex2) {
       // "Unexpected exception caught"
       castor::dlf::Param params[] =
@@ -175,7 +187,8 @@ void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* reque
          castor::dlf::Param("ErrorCode", ex2.code()),
          castor::dlf::Param("ErrorMessage", ex2.getMessageValue()),
          castor::dlf::Param("BackTrace", ex2.backtrace())};
-      castor::dlf::dlf_writep(sr->requestUuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT, 4, params, &cnsFileid);
+      castor::dlf::dlf_writep(sr->requestUuid, DLF_LVL_ERROR, STAGER_JOBSVC_EXCEPT,
+                              4, params, &cnsFileid);
     }
   }
   // Calculate statistics
