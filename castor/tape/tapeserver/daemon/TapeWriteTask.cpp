@@ -30,6 +30,11 @@
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/file/File.hpp" 
 
+namespace {
+   unsigned long initAdler32Checksum() {
+     return  adler32(0L,Z_NULL,0);
+   }
+  
   /*Use RAII to make sure the memory block is released  
    *(ie pushed back to the memory manager) in any case (exception or not)
    */
@@ -45,7 +50,7 @@
       memManager.releaseBlock(block);
     }
   };
-
+}
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -65,7 +70,8 @@ namespace daemon {
    void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,castor::log::LogContext& lc) {
     using castor::log::LogContext;
     using castor::log::Param;
-
+    
+    unsigned long ckSum = initAdler32Checksum();
     int blockId  = 0;
 
     try {
@@ -86,6 +92,7 @@ namespace daemon {
           lc.log(LOG_ERR,"received a bad block for writing");
           throw castor::tape::Exception("received a bad block for writing");
         }
+        ckSum =  mb->m_payload.adler32(ckSum);
         mb->m_payload.write(*output);
         ++blockId;
       }
