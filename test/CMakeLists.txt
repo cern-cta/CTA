@@ -90,7 +90,7 @@ add_executable(castorUnitTests
   ../castor/log/LogContextTest.cpp
   ../castor/log/StringLoggerTest.cpp
   ../castor/server/DaemonTest.cpp
-  ../castor/tape/tapeserver/daemon/ClientProxyTest.cpp
+  ../castor/tape/tapeserver/client/ClientProxyTest.cpp
   ../castor/tape/legacymsg/RmcMarshalTest.cpp
   ../castor/tape/legacymsg/VdqmMarshalTest.cpp
   ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
