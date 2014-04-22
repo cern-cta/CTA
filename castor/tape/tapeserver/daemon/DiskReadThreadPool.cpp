@@ -82,7 +82,7 @@ namespace daemon {
   void DiskReadThreadPool::DiskReadWorkerThread::run() {
     std::auto_ptr<DiskReadTaskInterface> task;
     while (1) {
-      task.reset(_this.popAndRequestMore());
+      task.reset(m_parent.popAndRequestMore());
       if (NULL != task.get()) {
         task->execute(lc);
       } else {
