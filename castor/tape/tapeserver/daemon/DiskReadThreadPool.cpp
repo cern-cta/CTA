@@ -66,18 +66,15 @@ namespace daemon {
     }
   }
   DiskReadTaskInterface* DiskReadThreadPool::popAndRequestMore(){
-    DiskReadTaskInterface* ret=m_tasks.pop();
-    castor::tape::threading::TryMutexLocker locker(&m_loopBackMutex);
-    if(locker)
-    {
-      const int remainningTasks = m_tasks.size();
-      if(1==remainningTasks){
-        m_injector->requestInjection(m_maxFilesReq, m_maxBytesReq,true);
-      }else if(remainningTasks <= m_maxFilesReq/2){
-        m_injector->requestInjection(m_maxFilesReq, m_maxBytesReq,false);
-      }
+    castor::tape::threading::BlockingQueue<DiskReadTaskInterface*>::valueRemainingPair 
+    vrp = m_tasks.popGetSize();
+    
+    if(0==vrp.remaining){
+      m_injector->requestInjection(m_maxFilesReq, m_maxBytesReq,true);
+    }else if(vrp.remaining + 1 ==  m_maxFilesReq/2){
+      m_injector->requestInjection(m_maxFilesReq, m_maxBytesReq,false);
     }
-    return ret;
+    return vrp.value;
   }
   void DiskReadThreadPool::DiskReadWorkerThread::run() {
     std::auto_ptr<DiskReadTaskInterface> task;
