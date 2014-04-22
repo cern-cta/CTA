@@ -61,7 +61,7 @@ add_library(tapeserver
   TapeWriteTask.cpp
   DiskReadTask.cpp
   DiskWriteTask.cpp
-  MigrationTaskInjector.cpp)
+  MigrationTaskInjector.cpp) 
 
 
 add_library(tapeserverdTest 

@@ -51,8 +51,9 @@ MigrationReportPacker::~MigrationReportPacker(){
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
 }
  
-void MigrationReportPacker::reportCompletedJob(const tapegateway::FileToMigrateStruct& migratedFile) {
-  std::auto_ptr<Report> rep(new ReportSuccessful(migratedFile));
+void MigrationReportPacker::reportCompletedJob(
+const tapegateway::FileToMigrateStruct& migratedFile,unsigned long checksum) {
+  std::auto_ptr<Report> rep(new ReportSuccessful(migratedFile,checksum));
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
@@ -85,6 +86,10 @@ void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& _th
   successMigration->setId(m_migratedFile.id());
   successMigration->setNshost(m_migratedFile.nshost());
   successMigration->setFileid(m_migratedFile.fileid());
+  successMigration->setChecksum(m_checksum);
+  
+  //WARNING; Ad-hoc name of the ChecksumName !!
+  successMigration->setChecksumName("adler32");
   
   _this.m_listReports->addSuccessfulMigrations(successMigration.release());
 }

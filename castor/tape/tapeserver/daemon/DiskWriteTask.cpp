@@ -25,6 +25,11 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
 
 namespace {
+  //todo : merge it with one of TapeWriteTask and put is somewhere 
+     unsigned long initAdler32Checksum() {
+     return  adler32(0L,Z_NULL,0);
+   }
+     
   /*Use RAII to make sure the memory block is released  
    *(ie pushed back to the memory manager) in any case (exception or not)
    */
@@ -65,7 +70,7 @@ namespace daemon {
     try{
       tape::diskFile::WriteFile ourFile(m_recallingFile->path());
       int blockId  = 0;
-      
+      unsigned long checksum = initAdler32Checksum();
       while(1) {
         if(MemBlock* const mb = m_fifo.pop()) {
           AutoReleaseBlock releaser(mb,m_memManager);
@@ -84,14 +89,15 @@ namespace daemon {
             throw castor::tape::Exception("received a bad block for writing");
           }
           mb->m_payload.write(ourFile);
+          checksum = mb->m_payload.adler32(checksum);
           blockId++;
         }
         else 
           break;
       } //end of while(1)
-      reporter.reportCompletedJob(*m_recallingFile);
+      reporter.reportCompletedJob(*m_recallingFile,checksum);
       return true;
-    }
+    } //end of try
     catch(const castor::exception::Exception& e){
       /*
        *We might end up there with some blocks into m_fifo

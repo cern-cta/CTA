@@ -46,7 +46,8 @@ public:
    * of migratedFile
    * @param migratedFile the file successfully migrated
    */
-  void reportCompletedJob(const tapegateway::FileToRecallStruct& recalledFile);
+  void reportCompletedJob(const tapegateway::FileToRecallStruct& recalledFile,
+  unsigned long checksum);
   
   /**
    * Create into the MigrationReportPacker a report for the failled migration
@@ -81,9 +82,10 @@ private:
   };
   class ReportSuccessful :  public Report {
     const FileStruct m_migratedFile;
+    unsigned long m_checksum;
   public:
-    ReportSuccessful(const FileStruct& file): 
-    Report(false),m_migratedFile(file){}
+    ReportSuccessful(const FileStruct& file,unsigned long checksum): 
+    Report(false),m_migratedFile(file),m_checksum(checksum){}
     virtual void execute(RecallReportPacker& _this);
   };
   class ReportError : public Report {

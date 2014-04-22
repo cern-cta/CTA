@@ -30,7 +30,7 @@
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/file/File.hpp" 
 
-namespace {
+namespace {  
    unsigned long initAdler32Checksum() {
      return  adler32(0L,Z_NULL,0);
    }
@@ -97,7 +97,7 @@ namespace daemon {
         mb->m_payload.write(*output);
         ++blockId;
       }
-      reportPacker.reportCompletedJob(*m_fileToMigrate);
+      reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum);
     }
     catch(const castor::tape::Exception& e){
       //we can end up there because
