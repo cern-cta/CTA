@@ -36,7 +36,7 @@ namespace threading {
 * the work to be done and the reporting of the completed work, in parallel
 */
 template <class T> struct AtomicCounter{
-  AtomicCounter(T init): m_val(init) {};
+  AtomicCounter(T init = 0): m_val(init) {};
       T operator ++ () {
         threading::MutexLocker ml(&m_mutex);
         return ++m_val;

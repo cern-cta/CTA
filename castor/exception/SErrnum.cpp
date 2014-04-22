@@ -33,33 +33,60 @@ using namespace castor::exception;
 
 SErrnum::SErrnum(std::string what):Exception("") {
   m_serrnum = serrno;
+  m_errnum = errno;
   SErrnumConstructorBottomHalf(what);
 }
 
 SErrnum::SErrnum(int err, std::string what):Exception("") {
   m_serrnum = err;
+  m_errnum = errno;
   SErrnumConstructorBottomHalf(what);
 }
 
 void SErrnum::SErrnumConstructorBottomHalf(const std::string & what) {
   char buf[100];
 
-  if(sstrerror_r(m_serrnum, buf, sizeof(buf))) {
-    // sstrerror_r() failed
-    const int new_errno = errno;
-    std::stringstream w;
-    w << "SErrno=" << m_serrnum << ". In addition, failed to read the corresponding error string (sstrerror_r gave errno="
-            << new_errno << ")";
-    m_sstrerror = w.str();
+  // Castor-style error reporting is not for the faint of the heart.
+  // If we get serrno = 0, we should rely on the errnum instead
+  if(m_serrnum) {
+    // Normal case, serrnum is not zero.
+    if(sstrerror_r(m_serrnum, buf, sizeof(buf))) {
+      // sstrerror_r() failed
+      const int new_errno = errno;
+      std::stringstream w;
+      w << "SErrno=" << m_serrnum << ". In addition, failed to read the corresponding error string (sstrerror_r gave errno="
+              << new_errno << ")";
+      m_sstrerror = w.str();
+    } else {
+      // sstrerror_r() succeeded
+      m_sstrerror = buf;
+    }
+    std::stringstream w2;
+    if (what.size())
+      w2 << what << " ";
+    w2 << "SErrno=" << m_serrnum << ": " << m_sstrerror;
+    getMessage().str(w2.str());
   } else {
-    // sstrerror_r() succeeded
-    m_sstrerror = buf;
+    // degraded case, serrnum is indeed 0, we fall back on the normal error reporting.
+    std::stringstream w;
+    w << "Serrno=0. Failling back to errno=" << m_errnum;
+    char buf[100];
+
+    if(sstrerror_r(m_errnum, buf, sizeof(buf))) {
+      // sstrerror_r() failed
+      const int new_errno = errno;
+      w << ". In addition, failed to read the corresponding error string (sstrerror_r gave errno="
+              << new_errno << ")";
+    } else {
+      // sstrerror_r() succeeded
+      w << ". "<< buf;
+    }
+    std::stringstream w2;
+    if (what.size())
+      w2 << what << " ";
+    w2 << w.str();
+    getMessage().str(w2.str());
   }
-  std::stringstream w2;
-  if (what.size())
-    w2 << what << " ";
-  w2 << "SErrno=" << m_serrnum << ": " << m_sstrerror;
-  getMessage().str(w2.str());
 }
 
 void SErrnum::throwOnReturnedErrno (int err, std::string context) {

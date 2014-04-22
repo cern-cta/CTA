@@ -132,6 +132,7 @@ TEST(tapeServer, MountSessionGoodday) {
   castorConf.rtcopydNbBufs = 10;
   castorConf.tapebridgeBulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.tapebridgeBulkRequestRecallMaxFiles = 1000;
+  castorConf.tapeserverdDiskThreads = 1;
   MountSession sess(VDQMjob, logger, mockSys, tpConfig, castorConf);
   sess.execute();
   simRun.wait();
