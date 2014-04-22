@@ -89,7 +89,7 @@ TEST_F(castor_server_TapeMarshalTest, marshalTapeConfigRequestMsgBody) {
     ASSERT_EQ((uint32_t)1, dstMsgBody.uid);
     ASSERT_EQ((uint32_t)2, dstMsgBody.gid);
     ASSERT_EQ(std::string("HELLO"), dstMsgBody.drive);
-    ASSERT_EQ((uint32_t)4, dstMsgBody.status);
+    ASSERT_EQ((int16_t)4, dstMsgBody.status);
   }
 }
 
