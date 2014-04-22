@@ -58,7 +58,8 @@ private:
   bool crossingDownFileThreshod(int filesPopped) const;
   
   /**
-   * Pop a task frem m_tasks , if 
+   * Pop a task from m_tasks. 
+   * TODO The loopBack part (AndRequestMoreJob) should move to TapeReadSingleSthread
    * @return 
    */
   DiskWriteTaskInterface * popAndRequestMoreJobs() ;
@@ -77,7 +78,11 @@ private:
   private:
     //counter to generate threadID and to know how many thread are still doing something
     static tape::threading::AtomicCounter<int> m_nbActiveThread;
+    
+    //counter to know how many files failed at writing among the different threads 
+    //and choose the right endOfsession to call (with error or not))
     static tape::threading::AtomicCounter<int> failledWritting;
+    
     const int threadID;
     DiskWriteThreadPool & _this;
     castor::log::LogContext lc;
