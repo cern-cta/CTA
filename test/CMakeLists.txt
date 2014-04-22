@@ -21,7 +21,7 @@
 #
 
 cmake_minimum_required (VERSION 2.6)
-
+find_package( ZLIB REQUIRED )
 # Try to find the four STK client libaries: libapi.so, libutl.so, libipc.so 
 # and libcl.so
 find_library (STK_API_LIB api PATHS /usr/lib64/CDK /usr/lib/CDK NO_DEFAULT_PATH)
@@ -95,6 +95,7 @@ add_executable(castorUnitTests
   ../castor/tape/legacymsg/VdqmMarshalTest.cpp
   ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/DebugMountSessionForVdqmProtocol.cpp
+  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
   ../castor/tape/tapeserver/daemon/DummyRmc.cpp
@@ -165,7 +166,8 @@ target_link_libraries(castorUnitTests
   TapeDrive
   SCSI
   System
-  Utils)
+  Utils
+  ${ZLIB_LIBRARIES})
 
 # Those tests are multi threaded. They could should also be run in 
 # helgrind/drd (and also memcheck)
@@ -203,7 +205,8 @@ target_link_libraries(castorThreadedUnitTests
   tapeserverdTest
   tapeserver 
   Utils
-  File)
+  File 
+  ${ZLIB_LIBRARIES})
 
 # Those tests are multi threaded. They could should also be run in 
 # helgrind/drd (but not memcheck)
