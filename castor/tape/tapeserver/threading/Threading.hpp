@@ -46,19 +46,6 @@ namespace threading {
         pthread_mutex_unlock(&m_mutex),
         "Error from pthread_mutex_unlock in castor::tape::threading::Mutex::unlock()");
     }
-    /**
-     * Try to aquire the mutex
-     * @return true if the mutex was succesffuly acquired, false otherwise
-     */
-    bool trylock() {
-        const int val=pthread_mutex_trylock(&m_mutex);
-        if(0==val){
-          return true;
-        }
-        else {
-          return false;
-        }
-    }
   private:
     pthread_mutex_t m_mutex;
   };
@@ -75,21 +62,6 @@ namespace threading {
     ~MutexLocker() { try { m_mutex->unlock(); } catch (...) {} }
   private:
     Mutex * m_mutex;
-  };
-  /**
-   * A simple scoped locker for mutexes. Highly recommended as
-   * the mutex will be released in all cases (exception, mid-code return, etc...)
-   * To use, simply instanciate and forget.
-   * @param m pointer to a Mutex instance
-   */
-  class TryMutexLocker {
-  public:
-    TryMutexLocker(Mutex * m) :m_mutex(m),m_succes(m->trylock()) {}
-    ~TryMutexLocker() { if(m_succes){m_mutex->unlock();} }
-    operator bool() const {return m_succes; }
-  private:
-    Mutex * m_mutex;
-    bool m_succes;
   };
   
   /**
