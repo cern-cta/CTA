@@ -37,6 +37,28 @@
 namespace castor    {
 namespace tape      {
 namespace legacymsg {
+  
+/**
+ * Marshals the specified source message body structure and its implicit
+ * header into the specified destination buffer.
+ *
+ * @param dst    The destination message buffer.
+ * @param dstLen The length of the destination buffer.
+ * @param src    The source structure.
+ * @return       The total length of the message (header + body).
+ */
+size_t marshal(char *const dst, const size_t dstLen, const TapeConfigRequestMsgBody &src) throw(castor::exception::Exception);
+
+/**
+ * Marshals the specified source message body structure and its implicit
+ * header into the specified destination buffer.
+ *
+ * @param dst    The destination message buffer.
+ * @param dstLen The length of the destination buffer.
+ * @param src    The source structure.
+ * @return       The total length of the message (header + body).
+ */
+size_t marshal(char *const dst, const size_t dstLen, const TapeStatRequestMsgBody &src) throw(castor::exception::Exception);
 
 /**
  * Unmarshals a message body with the specified destination structure type
