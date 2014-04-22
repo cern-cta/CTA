@@ -1390,37 +1390,6 @@ END;
 /
 
 
-/* PL/SQL method implementing getBestDiskCopyToRead used to return the
- * best location of a file based on monitoring information. This is
- * useful for xrootd so that it can avoid scheduling reads
- */
-CREATE OR REPLACE PROCEDURE getBestDiskCopyToRead(cfId IN NUMBER,
-                                                  svcClassId IN NUMBER,
-                                                  diskServer OUT VARCHAR2,
-                                                  filePath OUT VARCHAR2) AS
-BEGIN
-  -- Select best diskcopy
-  SELECT name, path INTO diskServer, filePath FROM (
-    SELECT DiskServer.name, FileSystem.mountpoint || DiskCopy.path AS path
-      FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
-     WHERE DiskCopy.castorfile = cfId
-       AND DiskCopy.fileSystem = FileSystem.id
-       AND FileSystem.diskpool = DiskPool2SvcClass.parent
-       AND DiskPool2SvcClass.child = svcClassId
-       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
-       AND FileSystem.diskserver = DiskServer.id
-       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
-       AND DiskServer.hwOnline = 1
-       AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
-     ORDER BY FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
-              DBMS_Random.value)
-   WHERE rownum < 2;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  RAISE; -- No file found to be read
-END;
-/
-
-
 /* PL/SQL method implementing checkForD2DCopyOrRecall
  * dcId is the DiskCopy id of the best candidate for replica, 0 if none is found (tape recall), -1 in case of user error
  */
