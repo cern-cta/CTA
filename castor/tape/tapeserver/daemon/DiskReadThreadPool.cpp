@@ -80,16 +80,15 @@ namespace daemon {
     return ret;
   }
   void DiskReadThreadPool::DiskReadWorkerThread::run() {
-      std::auto_ptr<DiskReadTaskInterface> task;
-      while(1) {
-        task.reset( _this.popAndRequestMore());
-        if (NULL!=task.get()) {
-          task->execute(lc);
-        }
-        else {
-          break;
-        }
-      } //end of while(1)
+    std::auto_ptr<DiskReadTaskInterface> task;
+    while (1) {
+      task.reset(_this.popAndRequestMore());
+      if (NULL != task.get()) {
+        task->execute(lc);
+      } else {
+        break;
+      }
+    } //end of while(1)
   }
   
   tape::threading::AtomicCounter<int> DiskReadThreadPool::DiskReadWorkerThread::m_nbActiveThread(0);
