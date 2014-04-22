@@ -120,8 +120,6 @@ namespace daemon {
       //Im the last Thread alive, report end of session
       if(m_parentThreadPool.m_failedWriteCount==0){
         m_parentThreadPool.m_reporter.reportEndOfSession();
-        //TODO
-//        _this.m_jobInjector->end();
       }
       else{
         m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("A thread failed to write a file",SEINTERNAL);
