@@ -27,136 +27,13 @@
 #include "castor/tape/tapeserver/daemon/Exception.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include <memory>
-#include <zlib.h>
+#include "castor/tape/tapeserver/daemon/Payload.hpp"
 
 
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-
-/**
- * Class managing a fixed size payload buffer. Some member functions also
- * allow read
- * @param capacity Size of the payload buffer in bytes
- */
-class Payload
-{
-public:
-  Payload(size_t capacity):
-  m_payload(new (std::nothrow) unsigned char[capacity]),m_totalCapacity(capacity),m_size(0) {
-    if(NULL == m_payload) {
-      throw MemException("Failed to allocate memory for a new MemBlock!");
-    }
-  }
-  ~Payload(){
-    delete[] m_payload;
-  }
-  
-  /** Amount of data present in the payload buffer */
-  size_t size() const {
-    return m_size;
-  }
-  
-  /** Remaining free space in the payload buffer */
-  size_t remainingFreeSpace() const {
-    return m_totalCapacity - m_size;
-  }
-  
-  /** Total size of the payload block */
-  size_t totalCapacity() const {
-    return m_totalCapacity;
-  }
-    
-  /** Returns a pointer to the beginning of the payload block */
-  unsigned char* get(){
-    return m_payload;
-  }
-  
-  /** Returns a pointer to the beginning of the payload block (readonly version) */
-  unsigned char const*  get() const {
-    return m_payload;
-  }
-  
-  /** 
-   * Reads all the buffer in one go from a diskFile::ReadFile object 
-   * @param from reference to the diskFile::ReadFile
-   */
-  size_t read(tape::diskFile::ReadFile& from){
-    m_size = from.read(m_payload,m_totalCapacity);
-    return m_size;
-  }
-  class EndOfFile: public castor::exception::Exception {
-  public:
-    EndOfFile(const std::string & w): castor::exception::Exception(w) {}
-    virtual ~EndOfFile() throw() {}
-  };
-  
-  /**
-   * Reads one block from a tapeFile::readFile
-   * @throws castor::tape::daemon::Payload::EOF
-   * @param from reference to the tapeFile::ReadFile
-   * @return whether another tape block will fit in the memory block.
-   */
-  bool append(tape::tapeFile::ReadFile & from){
-    if (from.getBlockSize() > remainingFreeSpace()) {
-      std::stringstream err;
-      err << "Trying to read a tape file block with too little space left: BlockSize="
-       << from.getBlockSize() << " remainingFreeSpace=" << remainingFreeSpace()
-              << " (totalSize=" << m_totalCapacity << ")"; 
-      throw MemException(err.str());
-    }
-    size_t readSize;
-    try {
-      readSize = from.read(m_payload + m_size, from.getBlockSize());
-    } catch (castor::tape::tapeFile::EndOfFile) {
-      throw EndOfFile("In castor::tape::tapeserver::daemon::Payload::append: reached end of file");
-    }
-    m_size += readSize;
-    return  from.getBlockSize() <= remainingFreeSpace();
-  }
-  
-  /**
-   * Write the complete buffer to a diskFile::WriteFile
-   * @param to reference to the diskFile::WriteFile
-   */
-  void write(tape::diskFile::WriteFile& to){
-    to.write(m_payload,m_size);
-  }
-  
-  /**
-   * Write the complete buffer to a tapeFile::WriteFile, tape block by
-   * tape block
-   * @param to reference to the tapeFile::WriteFile
-   */
-  void write(tape::tapeFile::WriteFile& to) {
-    size_t blockSize = to.getBlockSize();
-    size_t writePosition = 0;
-    // Write all possible full tape blocks
-    while (m_size - writePosition > blockSize) {
-      to.write(m_payload + writePosition, blockSize);
-      writePosition += blockSize;
-    }
-    // Write a remainder, if any
-    if (m_size - writePosition) {
-      to.write(m_payload + writePosition, m_size - writePosition);
-    }
-  }
-   /**
-    * Compute adler32 checksum on the current data hold.
-    * @param previous The previous adler32 checksum from all previous datablock
-    * @return the updated checksum
-    */
-  unsigned long  adler32(unsigned long previous){
-    return ::adler32(previous,m_payload,m_size);
-  }
-private:
-  unsigned char* m_payload;
-  size_t m_totalCapacity;
-  size_t m_size;
-};
-
-
 /**
  * Individual memory block with metadata
  */
