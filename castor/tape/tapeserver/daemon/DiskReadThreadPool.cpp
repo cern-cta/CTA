@@ -26,6 +26,7 @@
 #include <memory>
 #include <sstream>
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
+#include "log.h"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -80,16 +81,19 @@ namespace daemon {
     return ret;
   }
   void DiskReadThreadPool::DiskReadWorkerThread::run() {
-      std::auto_ptr<DiskReadTaskInterface> task;
-      while(1) {
-        task.reset( _this.popAndRequestMore());
-        if (NULL!=task.get()) {
-          task->execute(lc);
-        }
-        else {
-          break;
-        }
-      } //end of while(1)
+    _this.m_lc.pushOrReplace(log::Param("thread", "DiskRead"));
+    _this.m_lc.log(LOG_DEBUG, "Starting DiskReadWorkerThread");
+    std::auto_ptr<DiskReadTaskInterface> task;
+    while(1) {
+      task.reset( _this.popAndRequestMore());
+      if (NULL!=task.get()) {
+        task->execute(lc);
+      }
+      else {
+        break;
+      }
+    } //end of while(1)
+    _this.m_lc.log(LOG_DEBUG, "Finishing of DiskReadWorkerThread");
   }
   
   tape::threading::AtomicCounter<int> DiskReadThreadPool::DiskReadWorkerThread::m_nbActiveThread(0);

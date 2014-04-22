@@ -4,6 +4,7 @@
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
+#include "log.h"
 #include <stdint.h>
 
 using castor::log::LogContext;
@@ -105,6 +106,8 @@ bool RecallTaskInjector::synchronousInjection(uint64_t maxFiles, uint64_t byteSi
 void RecallTaskInjector::WorkerThread::run()
 {
   using castor::log::LogContext;
+  _this.m_lc.pushOrReplace(Param("thread", "recallTaskInjector"));
+  _this.m_lc.log(LOG_DEBUG, "Starting RecallTaskInjector thread");
   
       while (1) {
         Request req = _this.m_queue.pop();
@@ -146,6 +149,7 @@ void RecallTaskInjector::WorkerThread::run()
       } catch (castor::tape::threading::noMore) {
         _this.m_lc.log(LOG_INFO,"In RecallJobInjector::WorkerThread::run(): Drained the request queue. We're now empty. Finishing");
       }
+  _this.m_lc.log(LOG_DEBUG, "Finishing RecallTaskInjector thread");
 }
 
 } //end namespace daemon

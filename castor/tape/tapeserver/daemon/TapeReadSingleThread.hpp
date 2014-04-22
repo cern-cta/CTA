@@ -66,6 +66,7 @@ private:
   
   virtual void run() {
     // First we have to initialise the tape read session
+    m_logContext.pushOrReplace(log::Param("thread", "tapeRead"));
     std::auto_ptr<castor::tape::tapeFile::ReadSession> rs;
     try {
       rs.reset(new castor::tape::tapeFile::ReadSession(m_drive, m_vid));
