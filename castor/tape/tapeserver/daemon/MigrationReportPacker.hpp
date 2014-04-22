@@ -52,7 +52,8 @@ public:
    * of migratedFile
    * @param migratedFile the file successfully migrated
    */
-  void reportCompletedJob(const tapegateway::FileToMigrateStruct& migratedFile);
+  void reportCompletedJob(const tapegateway::FileToMigrateStruct& migratedFile,
+  unsigned long checksum);
   
   /**
    * Create into the MigrationReportPacker a report for the failled migration
@@ -89,9 +90,10 @@ private:
   };
   class ReportSuccessful :  public Report {
     const FileStruct m_migratedFile;
+    const unsigned long m_checksum;
   public:
-    ReportSuccessful(const FileStruct& file): 
-    m_migratedFile(file){}
+    ReportSuccessful(const FileStruct& file,unsigned long checksum): 
+    m_migratedFile(file),m_checksum(checksum){}
     virtual void execute(MigrationReportPacker& _this);
   };
   class ReportFlush : public Report {

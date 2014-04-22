@@ -103,7 +103,7 @@ private:
         task.reset(m_tasks.pop());
         
         if(NULL!=task.get()) {
-          task->execute(*rs,m_logContext);
+          task->execute(*rs,m_reportPacker,m_logContext);
           files++;
           blocks+=task->blocks();
           

@@ -82,7 +82,7 @@ public:
    * of migratedFile
    * @param migratedFile the file successfully migrated
    */
-  virtual void reportCompletedJob(const FileStruct&) =0;
+  virtual void reportCompletedJob(const FileStruct&,unsigned long checksum) =0;
   
   /**
    * Create into the MigrationReportPacker a report for the failled migration

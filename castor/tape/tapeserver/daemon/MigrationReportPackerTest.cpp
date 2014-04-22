@@ -44,8 +44,8 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerNominal) {
   
   tapegateway::FileToMigrateStruct migratedFile;
   
-  mrp.reportCompletedJob(migratedFile);
-  mrp.reportCompletedJob(migratedFile);
+  mrp.reportCompletedJob(migratedFile,0);
+  mrp.reportCompletedJob(migratedFile,0);
   mrp.reportFlush();
   mrp.reportEndOfSession();
   mrp.waitThread();
@@ -68,9 +68,9 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillure) {
   
   tapegateway::FileToMigrateStruct migratedFile;
   tapegateway::FileToMigrateStruct failed;
-  mrp.reportCompletedJob(migratedFile);
-  mrp.reportCompletedJob(migratedFile);  
-  mrp.reportCompletedJob(migratedFile);
+  mrp.reportCompletedJob(migratedFile,0);
+  mrp.reportCompletedJob(migratedFile,0);  
+  mrp.reportCompletedJob(migratedFile,0);
   mrp.reportFailedJob(failed,error,-1);
   mrp.reportFlush();
   mrp.reportEndOfSessionWithErrors(error,-1);
@@ -93,9 +93,9 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerFaillureGoodEnd) {
   
   tapegateway::FileToMigrateStruct migratedFile;
   tapegateway::FileToMigrateStruct failed;
-  mrp.reportCompletedJob(migratedFile);
-  mrp.reportCompletedJob(migratedFile);  
-  mrp.reportCompletedJob(migratedFile);
+  mrp.reportCompletedJob(migratedFile,0);
+  mrp.reportCompletedJob(migratedFile,0);  
+  mrp.reportCompletedJob(migratedFile,0);
   mrp.reportFailedJob(failed,error,-1);
   mrp.reportFlush();
   mrp.reportEndOfSession();
@@ -120,9 +120,9 @@ TEST(castor_tape_tapeserver_daemon, MigrationReportPackerGoodBadEnd) {
   
   tapegateway::FileToMigrateStruct migratedFile;
   tapegateway::FileToMigrateStruct failed;
-  mrp.reportCompletedJob(migratedFile);
-  mrp.reportCompletedJob(migratedFile);  
-  mrp.reportCompletedJob(migratedFile);
+  mrp.reportCompletedJob(migratedFile,0);
+  mrp.reportCompletedJob(migratedFile,0);  
+  mrp.reportCompletedJob(migratedFile,0);
 
   mrp.reportFlush();
   mrp.reportEndOfSessionWithErrors(error,-1);

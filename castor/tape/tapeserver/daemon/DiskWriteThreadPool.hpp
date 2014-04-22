@@ -58,7 +58,8 @@ private:
   bool crossingDownFileThreshod(int filesPopped) const;
   
   /**
-   * Pop a task frem m_tasks , if 
+   * Pop a task from m_tasks. 
+   * TODO The loopBack part (AndRequestMoreJob) should move to TapeReadSingleSthread
    * @return 
    */
   DiskWriteTaskInterface * popAndRequestMoreJobs() ;

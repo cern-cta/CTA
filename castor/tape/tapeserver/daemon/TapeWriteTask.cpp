@@ -30,6 +30,11 @@
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/file/File.hpp" 
 
+namespace {  
+   unsigned long initAdler32Checksum() {
+     return  adler32(0L,Z_NULL,0);
+   }
+  
   /*Use RAII to make sure the memory block is released  
    *(ie pushed back to the memory manager) in any case (exception or not)
    */
@@ -45,7 +50,7 @@
       memManager.releaseBlock(block);
     }
   };
-
+}
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -62,10 +67,12 @@ namespace daemon {
     return m_blockCount; 
   }
   
-   void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,castor::log::LogContext& lc) {
+   void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,
+           MigrationReportPacker & reportPacker,castor::log::LogContext& lc) {
     using castor::log::LogContext;
     using castor::log::Param;
-
+    
+    unsigned long ckSum = initAdler32Checksum();
     int blockId  = 0;
 
     try {
@@ -86,9 +93,11 @@ namespace daemon {
           lc.log(LOG_ERR,"received a bad block for writing");
           throw castor::tape::Exception("received a bad block for writing");
         }
+        ckSum =  mb->m_payload.adler32(ckSum);
         mb->m_payload.write(*output);
         ++blockId;
       }
+      reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum);
     }
     catch(const castor::tape::Exception& e){
       //we can end up there because
@@ -98,6 +107,7 @@ namespace daemon {
       while(!m_fifo.finished()) {
         m_memManager.releaseBlock(m_fifo.popDataBlock());
       }
+      reportPacker.reportFailedJob(*m_fileToMigrate,e.getMessageValue(),e.code());
     }
    }
     

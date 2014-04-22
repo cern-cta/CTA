@@ -81,19 +81,22 @@ namespace daemon {
     return ret;
   }
   void DiskReadThreadPool::DiskReadWorkerThread::run() {
-    _this.m_lc.pushOrReplace(log::Param("thread", "DiskRead"));
-    _this.m_lc.log(LOG_DEBUG, "Starting DiskReadWorkerThread");
+    m_lc.pushOrReplace(log::Param("thread", "DiskRead"));
+    m_lc.log(LOG_DEBUG, "Starting DiskReadWorkerThread");
     std::auto_ptr<DiskReadTaskInterface> task;
     while(1) {
-      task.reset( _this.popAndRequestMore());
+      task.reset( m_parent.popAndRequestMore());
       if (NULL!=task.get()) {
-        task->execute(lc);
+        task->execute(m_lc);
       }
       else {
         break;
       }
     } //end of while(1)
-    _this.m_lc.log(LOG_DEBUG, "Finishing of DiskReadWorkerThread");
+    // We now acknowledge to the task injector that read reached the end. There
+    // will hence be no more requests for more.
+    m_parent.m_injector->finish();
+    m_lc.log(LOG_DEBUG, "Finishing of DiskReadWorkerThread");
   }
   
   tape::threading::AtomicCounter<int> DiskReadThreadPool::DiskReadWorkerThread::m_nbActiveThread(0);

@@ -62,7 +62,8 @@ public:
    * Main execution routine
    * @param td: tape drive object which will handle the file
    */
-  virtual void execute(castor::tape::tapeFile::WriteSession & session,castor::log::LogContext& lc);
+  virtual void execute(castor::tape::tapeFile::WriteSession & session,
+   MigrationReportPacker & reportPacker,castor::log::LogContext& lc);
   
   /**
    * Used to reclaim used memory blocks

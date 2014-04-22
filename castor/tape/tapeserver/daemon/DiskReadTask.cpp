@@ -57,6 +57,8 @@ namespace daemon {
     size_t migratingFileSize=m_migratedFile->fileSize();
     try{
       tape::diskFile::ReadFile sourceFile(m_migratedFile->path());
+      log::LogContext::ScopedParam sp(lc, log::Param("filePath",m_migratedFile->path()));
+      lc.log(LOG_INFO,"Opened file on disk for migration ");
       while(migratingFileSize>0){
         MemBlock* const mb = m_nextTask.getFreeBlock();
         AutoPushBlock push(mb,m_nextTask);

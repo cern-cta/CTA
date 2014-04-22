@@ -50,8 +50,8 @@ ReportPackerInterface<detail::Recall>(tg,lc),
 RecallReportPacker::~RecallReportPacker(){
 
 }
-void RecallReportPacker::reportCompletedJob(const tapegateway::FileToRecallStruct& recalledFile){
-  std::auto_ptr<Report> rep(new ReportSuccessful(recalledFile));
+void RecallReportPacker::reportCompletedJob(const tapegateway::FileToRecallStruct& recalledFile,unsigned long checksum){
+  std::auto_ptr<Report> rep(new ReportSuccessful(recalledFile,checksum));
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
@@ -83,7 +83,10 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& _this){
   successRecall->setId(m_migratedFile.id());
   successRecall->setNshost(m_migratedFile.nshost());
   successRecall->setFileid(m_migratedFile.fileid());
+  successRecall->setChecksum(m_checksum);
   
+  //WARNING : ad hoc name of checksum algorithm
+  successRecall->setChecksumName("adler32");
   _this.m_listReports->addSuccessfulRecalls(successRecall.release());
 }
 

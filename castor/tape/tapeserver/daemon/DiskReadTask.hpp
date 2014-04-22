@@ -41,9 +41,19 @@ public:
   
   virtual void execute(log::LogContext& lc);
 private:
-  //TW ; tape write
+  /**
+   * The task (a TapeWriteTask) that will handle the read blocks
+   */
   DataConsumer & m_nextTask;
+  
+  /**
+   * All we need to know about the file we are migrating
+   */
   std::auto_ptr<tape::tapegateway::FileToMigrateStruct> m_migratedFile;
+  
+  /**
+   * The number of memory block we will need to read the whole file
+   */
   size_t m_numberOfBlock;
 };
 
