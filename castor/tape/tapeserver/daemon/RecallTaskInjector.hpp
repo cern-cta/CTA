@@ -85,6 +85,8 @@ public:
    * Start the inner thread 
    */
   void startThreads();
+  
+  void end();
 private:
   
   /**
@@ -103,8 +105,11 @@ private:
   class Request {
   public:
     Request(int mf, int mb, bool lc):
-    nbMaxFiles(mf), byteSizeThreshold(mb), lastCall(lc) {}
+    nbMaxFiles(mf), byteSizeThreshold(mb), lastCall(lc),end(false) {}
     
+    Request():
+    nbMaxFiles(-1), byteSizeThreshold(-1), lastCall(true),end(true) {}
+        
     const int nbMaxFiles;
     const int byteSizeThreshold;
     
@@ -114,6 +119,8 @@ private:
      *  and can send into all the different threads a signal  .
      */
     const bool lastCall;
+    
+    const bool end;
   };
   
   class WorkerThread: public castor::tape::threading::Thread {
