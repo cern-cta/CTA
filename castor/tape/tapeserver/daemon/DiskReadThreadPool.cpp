@@ -94,8 +94,11 @@ namespace daemon {
       }
     } //end of while(1)
     // We now acknowledge to the task injector that read reached the end. There
-    // will hence be no more requests for more.
-    m_parent.m_injector->finish();
+    // will hence be no more requests for more. (last thread turns off the light)
+    if (0 == --m_nbActiveThread) {
+      m_parent.m_injector->finish();
+      m_lc.log(LOG_DEBUG, "Signaled to task injector the end of disk read threads");
+    }
     m_lc.log(LOG_DEBUG, "Finishing of DiskReadWorkerThread");
   }
   

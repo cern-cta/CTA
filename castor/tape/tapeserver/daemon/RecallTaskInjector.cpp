@@ -148,7 +148,7 @@ void RecallTaskInjector::WorkerThread::run()
   bool stillReading =true;
   while(stillReading) {
     Request req = _this.m_queue.pop();
-    stillReading = req.end;
+    if (req.end) stillReading = false;
     LogContext::ScopedParam sp(_this.m_lc, Param("lastCall", req.lastCall));
     _this.m_lc.log(LOG_INFO,"In RecallJobInjector::WorkerThread::run(): popping extra request");
   }

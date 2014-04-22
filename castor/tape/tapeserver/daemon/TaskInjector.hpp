@@ -32,7 +32,7 @@ namespace daemon {
 class TaskInjector{
 public:
   virtual void requestInjection(int maxFiles, int maxBlocks, bool lastCall) = 0;
-  virtual void end() = 0;
+  virtual void finish() = 0;
   virtual ~TaskInjector() {}
 };
 

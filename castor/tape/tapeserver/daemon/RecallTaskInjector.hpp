@@ -86,7 +86,7 @@ public:
    */
   void startThreads();
   
-  void end();
+  void finish();
 private:
   
   /**

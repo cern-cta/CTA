@@ -82,14 +82,19 @@ private:
     while(1) {
       // NULL indicated the end of work
       TapeReadTask * task = popAndRequestMoreJobs();
+      m_logContext.log(LOG_DEBUG, "TapeReadThread: just got one more job");
       if (task) {
         task->execute(*rs, m_logContext);
         delete task;
         m_filesProcessed++;
       } else {
-        return;
+        break;
       }
     }
+    // We now acknowledge to the task injector that read reached the end. There
+    // will hence be no more requests for more. (last thread turns off the light)
+    m_taskInjector->finish();
+    m_logContext.log(LOG_DEBUG, "Finishing Tape Read Thread. Just signalled task injector of the end");
   }
   
   uint64_t m_maxFilesRequest;
