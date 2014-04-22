@@ -71,7 +71,7 @@ namespace daemon {
       tape::utils::suppresUnusedVariable(sp);
       m_lc.log(LOG_INFO, "Logged file to migrate");
       
-      const u_signed64 neededBlock = fileSize/blockCapacity + ((fileSize%blockCapacity==0) ? 0 : 1); 
+      const u_signed64 neededBlock = howManyBlocksNeeded(fileSize,blockCapacity);
       
       std::auto_ptr<TapeWriteTask> twt(new TapeWriteTask(neededBlock,removeOwningList((*it)->clone()),m_memManager));
       std::auto_ptr<DiskReadTask> drt(new DiskReadTask(*twt,removeOwningList((*it)->clone()),neededBlock));

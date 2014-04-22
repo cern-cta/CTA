@@ -69,6 +69,12 @@ public:
   
   void requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall);
 private:
+  
+  /*Compute how many blocks are needed for a file of fileSize bytes*/
+  size_t howManyBlocksNeeded(size_t fileSize,size_t blockCapacity){
+    return fileSize/blockCapacity + ((fileSize%blockCapacity==0) ? 0 : 1); 
+  }
+  
    /**
    * A request of files to migrate. We request EITHER
    * - a maximum of nbMaxFiles files
