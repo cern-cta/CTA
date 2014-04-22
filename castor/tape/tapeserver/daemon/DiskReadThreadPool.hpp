@@ -50,8 +50,8 @@ public:
   void setTaskInjector(MigrationTaskInjector* injector){
       m_injector = injector;
   }
-  DiskReadTaskInterface* popAndRequestMore();
 private:
+  DiskReadTaskInterface* popAndRequestMore();
   class DiskReadWorkerThread: private castor::tape::threading::Thread {
   public:
     DiskReadWorkerThread(DiskReadThreadPool & manager):
