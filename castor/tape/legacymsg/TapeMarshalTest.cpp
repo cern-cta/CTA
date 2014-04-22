@@ -86,10 +86,10 @@ TEST_F(castor_server_TapeMarshalTest, marshalTapeConfigRequestMsgBody) {
     ASSERT_EQ(buf + 28, bufPtr);
     ASSERT_EQ((size_t)0, bufLen);
 
-    ASSERT_EQ((int32_t)1, dstMsgBody.uid);
-    ASSERT_EQ((int32_t)2, dstMsgBody.gid);
+    ASSERT_EQ((uint32_t)1, dstMsgBody.uid);
+    ASSERT_EQ((uint32_t)2, dstMsgBody.gid);
     ASSERT_EQ(std::string("HELLO"), dstMsgBody.drive);
-    ASSERT_EQ((int32_t)4, dstMsgBody.status);
+    ASSERT_EQ((uint32_t)4, dstMsgBody.status);
   }
 }
 
@@ -134,8 +134,8 @@ TEST_F(castor_server_TapeMarshalTest, marshalTapeStatRequestMsgBody) {
     ASSERT_EQ(buf + 20, bufPtr);
     ASSERT_EQ((size_t)0, bufLen);
 
-    ASSERT_EQ((int32_t)1, dstMsgBody.uid);
-    ASSERT_EQ((int32_t)2, dstMsgBody.gid);
+    ASSERT_EQ((uint32_t)1, dstMsgBody.uid);
+    ASSERT_EQ((uint32_t)2, dstMsgBody.gid);
   }
 }
 
