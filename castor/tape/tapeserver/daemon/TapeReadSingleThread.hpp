@@ -42,7 +42,8 @@ public:
   TapeReadSingleThread(castor::tape::drives::DriveInterface & drive,
           const std::string vid, uint64_t maxFilesRequest,
           castor::log::LogContext & lc): 
-   TapeSingleThreadInterface<TapeReadTask>(drive, vid, lc) {}
+   TapeSingleThreadInterface<TapeReadTask>(drive, vid, lc),
+   m_maxFilesRequest(maxFilesRequest) {}
    void setTaskInjector(TaskInjector * ti) { m_taskInjector = ti; }
 
 private:
@@ -57,7 +58,7 @@ private:
     } else if (0 == vrp.remaining) {
       // This is a last call: if the task injector comes up empty on this
       // one, he'll call it the end.
-      m_taskInjector->requestInjection(m_maxFilesRequest, 1000, false);
+      m_taskInjector->requestInjection(m_maxFilesRequest, 1000, true);
     }
     return vrp.value;
   }
@@ -79,12 +80,13 @@ private:
     // Then we will loop on the tasks as they get from 
     // the task injector
     while(1) {
+      // NULL indicated the end of work
       TapeReadTask * task = popAndRequestMoreJobs();
-      bool end = task->endOfWork();
-      if (!end) task->execute(*rs, m_logContext);
-      delete task;
-      m_filesProcessed++;
-      if (end) {
+      if (task) {
+        task->execute(*rs, m_logContext);
+        delete task;
+        m_filesProcessed++;
+      } else {
         return;
       }
     }
