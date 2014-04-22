@@ -161,7 +161,31 @@ throw (castor::exception::Exception) {
       return true; // The end of session is not signalled here
     }
   } catch (std::bad_cast) {}
-  // TODO Same for migrations should go here....
+  
+  // Process the recall reports
+  try {
+    // Check that we
+    tapegateway::FileRecallReportList & req =
+        dynamic_cast<tapegateway::FileRecallReportList &> (*obj);
+    tapegateway::NotificationAcknowledge reply;
+    reply.setMountTransactionId(m_volReqId);
+    reply.setAggregatorTransactionId(req.aggregatorTransactionId());
+    clientConnection->sendObject(reply);
+    return true; // The end of session is not signalled here
+  } catch (std::bad_cast) {}
+  
+  // TODO Same for migrations requests should go here....
+  
+  // Process the migration reports
+  try {
+    tapegateway::FileMigrationReportList & req =
+        dynamic_cast<tapegateway::FileMigrationReportList &> (*obj);
+    tapegateway::NotificationAcknowledge reply;
+    reply.setMountTransactionId(m_volReqId);
+    reply.setAggregatorTransactionId(req.aggregatorTransactionId());
+    clientConnection->sendObject(reply);
+    return true; // The end of session is not signalled here
+  } catch (std::bad_cast) {}
   
   // Final case: end of session.
   // We expect with tape EndNotification or EndNotificationErrorReport
