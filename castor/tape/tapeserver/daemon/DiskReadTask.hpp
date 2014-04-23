@@ -36,6 +36,11 @@ namespace daemon {
   
 class DiskReadTask :public DiskReadTaskInterface {
 public:
+  /**
+   * @param destination The task that will consume data block we fill up
+   * @param file the file we are migrating. We acquire the ownership of the pointer
+   * @param numberOfBlock number of memory block we need read the whole file
+   */
   DiskReadTask(DataConsumer & destination, 
           tape::tapegateway::FileToMigrateStruct* file,size_t numberOfBlock);
   

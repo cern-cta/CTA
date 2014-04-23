@@ -64,21 +64,26 @@ namespace daemon {
     for(std::vector<tapegateway::FileToMigrateStruct*>::const_iterator it= jobs.begin();it!=jobs.end();++it){
       const u_signed64 fileSize = (*it)->fileSize();
       LogContext::ScopedParam sp[]={
-        LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->fileid())),
-        LogContext::ScopedParam(m_lc, Param("NSFILESEQNUMBER", (*it)->fseq())),
-        LogContext::ScopedParam(m_lc, Param("NSFILENSHOST", (*it)->nshost())),
-        LogContext::ScopedParam(m_lc, Param("NSFILEPATH", (*it)->path()))
+      LogContext::ScopedParam(m_lc, Param("NSHOSTNAME", (*it)->nshost())),
+      LogContext::ScopedParam(m_lc, Param("NSFILEID", (*it)->fileid())),
+      LogContext::ScopedParam(m_lc, Param("fSeq", (*it)->fseq())),
+      LogContext::ScopedParam(m_lc, Param("path", (*it)->path()))
       };
       tape::utils::suppresUnusedVariable(sp);
-      m_lc.log(LOG_INFO, "Logged file to migrate");
+      
       
       const u_signed64 neededBlock = howManyBlocksNeeded(fileSize,blockCapacity);
       
-      std::auto_ptr<TapeWriteTask> twt(new TapeWriteTask(neededBlock,removeOwningList((*it)->clone()),m_memManager));
-      std::auto_ptr<DiskReadTask> drt(new DiskReadTask(*twt,removeOwningList((*it)->clone()),neededBlock));
+      std::auto_ptr<TapeWriteTask> twt(
+        new TapeWriteTask(neededBlock,removeOwningList((*it)->clone()),m_memManager)
+      );
+      std::auto_ptr<DiskReadTask> drt(
+        new DiskReadTask(*twt,removeOwningList((*it)->clone()),neededBlock)
+      );
       
       m_tapeWriter.push(twt.release());
       m_diskReader.push(drt.release());
+      m_lc.log(LOG_INFO, "Logged file to migrate");
     }
   }
   

@@ -51,6 +51,7 @@ public:
    * Create into the MigrationReportPacker a report for the successful migration
    * of migratedFile
    * @param migratedFile the file successfully migrated
+   * @param checksum the checksum we computed of the file we have just migrated
    */
   void reportCompletedJob(const tapegateway::FileToMigrateStruct& migratedFile,
   unsigned long checksum);
@@ -59,6 +60,8 @@ public:
    * Create into the MigrationReportPacker a report for the failled migration
    * of migratedFile
    * @param migratedFile the file which failled 
+   * @param msg the error message to the failure 
+   * @param error_code the error code related to the failure 
    */
   void reportFailedJob(const tapegateway::FileToMigrateStruct& migratedFile,const std::string& msg,int error_code);
      
@@ -145,7 +148,9 @@ private:
    */
   bool m_errorHappened;
   
-  
+  /* bool to keep the inner thread running. Is set at false 
+   * when a end of session (with error) is called
+   */
   bool m_continue;
 };
 
