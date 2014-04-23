@@ -33,7 +33,7 @@ namespace tapeserver {
 namespace daemon {
   
   DiskReadThreadPool::DiskReadThreadPool(int nbThread, unsigned int maxFilesReq,unsigned int maxBytesReq, 
-          castor::log::LogContext lc) : m_lc(lc),m_maxFilesReq(maxFilesReq),m_maxBytesReq(maxBytesReq){
+          castor::log::LogContext lc) : m_lc(lc),m_maxFilesReq(maxFilesReq),m_maxBytesReq(maxBytesReq),m_nbActiveThread(0){
     for(int i=0; i<nbThread; i++) {
       DiskReadWorkerThread * thr = new DiskReadWorkerThread(*this);
       m_threads.push_back(thr);
@@ -92,13 +92,12 @@ namespace daemon {
     } //end of while(1)
     // We now acknowledge to the task injector that read reached the end. There
     // will hence be no more requests for more. (last thread turns off the light)
-    if (0 == --m_nbActiveThread) {
+    if (0 == --m_parent.m_nbActiveThread) {
       m_parent.m_injector->finish();
       m_lc.log(LOG_DEBUG, "Signaled to task injector the end of disk read threads");
     }
     m_lc.log(LOG_DEBUG, "Finishing of DiskReadWorkerThread");
   }
   
-  tape::threading::AtomicCounter<int> DiskReadThreadPool::DiskReadWorkerThread::m_nbActiveThread(0);
 }}}}
 
