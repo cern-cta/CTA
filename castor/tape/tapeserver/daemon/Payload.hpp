@@ -30,7 +30,6 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-  
 /**
  * Class managing a fixed size payload buffer. Some member functions also
  * allow read
@@ -82,12 +81,7 @@ public:
     m_size = from.read(m_payload,m_totalCapacity);
     return m_size;
   }
-  class EndOfFile: public castor::exception::Exception {
-  public:
-    EndOfFile(const std::string & w): castor::exception::Exception(w) {}
-    virtual ~EndOfFile() throw() {}
-  };
-  
+
   /**
    * Reads one block from a tapeFile::readFile
    * @throws castor::tape::daemon::Payload::EOF
@@ -106,7 +100,7 @@ public:
     try {
       readSize = from.read(m_payload + m_size, from.getBlockSize());
     } catch (castor::tape::tapeFile::EndOfFile) {
-      throw EndOfFile("In castor::tape::tapeserver::daemon::Payload::append: reached end of file");
+      throw castor::tape::exceptions::EndOfFile("In castor::tape::tapeserver::daemon::Payload::append: reached end of file");
     }
     m_size += readSize;
     return  from.getBlockSize() <= remainingFreeSpace();

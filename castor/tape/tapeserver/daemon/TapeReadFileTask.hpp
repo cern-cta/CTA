@@ -28,7 +28,7 @@
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
-
+#include "castor/tape/tapeserver/exception/Exception.hpp"
 
 
 namespace castor {
@@ -47,73 +47,51 @@ public:
     using castor::log::Param;
     typedef castor::log::LogContext::ScopedParam ScopedParam;
     // Placeholder for the tape file read
-    std::auto_ptr<castor::tape::tapeFile::ReadFile> rf;
+    
     // Set the common context for all the omming logs (file info)
     ScopedParam sp0(lc, Param("NSHOSTNAME", m_fileToRecall->nshost()));
     ScopedParam sp1(lc, Param("NSFILEID", m_fileToRecall->fileid()));
     ScopedParam sp2(lc, Param("BlockId", castor::tape::tapeFile::BlockId::extract(*m_fileToRecall)));
     ScopedParam sp3(lc, Param("fSeq", m_fileToRecall->fseq()));
     ScopedParam sp4(lc, Param("fileTransactionId", m_fileToRecall->fileTransactionId()));
-    // Open the file and manage failure (if any)
-    try {
-      rf.reset(new castor::tape::tapeFile::ReadFile(&rs, *m_fileToRecall));
-      lc.log(LOG_DEBUG, "Successfully opened the tape file");
-    } catch (castor::exception::Exception & ex) {
-      // Log the error
-      ScopedParam sp0(lc, Param("ErrorMessage", ex.getMessageValue()));
-      ScopedParam sp1(lc, Param("ErrorCode", ex.code()));
-      lc.log(LOG_ERR, "Failed to open tape file for reading");
-      // Signal the error to the client (if we manage it)
-      try {
-        // Signal that we have an error.
-        std::auto_ptr<MemBlock> mb(m_mm.getFreeBlock());
-        mb->m_fSeq = m_fileToRecall->fseq();
-        mb->m_failed = true;
-        mb->m_fileBlock = -1;
-        mb->m_fileid = m_fileToRecall->fileid();
-        mb->m_tapeFileBlock = -1;
-        m_fifo.pushDataBlock(mb.release());
-        // And that is the end of the file read.
-        m_fifo.pushDataBlock(NULL);
-      } catch (castor::exception::Exception & ex) {
-        {
-          ScopedParam sp0(lc, Param("ErrorMessage", ex.getMessageValue()));
-          ScopedParam sp1(lc, Param("ErrorCode", ex.code()));
-          lc.log(LOG_CRIT, "In TapeReadFileTask::execute, failed to signal the end of session to the disk write task (backtrace follows)");
-        }
-        lc.logBacktrace(LOG_CRIT, ex.backtrace());
-      } catch (...) {
-        lc.log(LOG_CRIT, "In TapeReadFileTask::execute, failed to signal the end of session to the disk write task, with unknown exception");
-      }
-      return;
-    }
+    
     // Read the file and transmit it
     bool stillReading = true;
     int fileBlock = 0;
     int tapeBlock = 0;
-    while (stillReading) {
-      // Get a memory block and add information to its metadata
-      std::auto_ptr<MemBlock> mb(m_mm.getFreeBlock());
-      mb->m_fSeq = m_fileToRecall->fseq();
-      mb->m_failed = false;
-      mb->m_fileBlock = fileBlock++;
-      mb->m_fileid = m_fileToRecall->fileid();
-      mb->m_tapeFileBlock = tapeBlock;
-      mb->m_tapeBlockSize = rf->getBlockSize();
-      try {
-        // Fill up the memory block with tape block
-        // append conveniently returns false when there will not be more space
-        // for an extra tape block, and throws an exception if we reached the
-        // end of file. append() also protects against reading too big tape blocks.
-        while (mb->m_payload.append(*rf)) {
+    try {
+      std::auto_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
+      while (stillReading) {
+        // Get a memory block and add information to its metadata
+        std::auto_ptr<MemBlock> mb(m_mm.getFreeBlock());
+        mb->m_fSeq = m_fileToRecall->fseq();
+        mb->m_failed = false;
+        mb->m_fileBlock = fileBlock++;
+        mb->m_fileid = m_fileToRecall->fileid();
+        mb->m_tapeFileBlock = tapeBlock;
+        mb->m_tapeBlockSize = rf->getBlockSize();
+        try {
+          // Fill up the memory block with tape block
+          // append conveniently returns false when there will not be more space
+          // for an extra tape block, and throws an exception if we reached the
+          // end of file. append() also protects against reading too big tape blocks.
+          while (mb->m_payload.append(*rf)) {
           tapeBlock++;
-        }
-        // Pass the block to the disk write task
-        m_fifo.pushDataBlock(mb.release());
-      } catch (Payload::EndOfFile) {
-        // append() signaled the end of the file.
-        stillReading = false;
-      } catch (castor::exception::Exception & ex) {
+          }
+          // Pass the block to the disk write task
+          m_fifo.pushDataBlock(mb.release());
+        } catch (const castor::tape::exceptions::EndOfFile&) {
+          // append() signaled the end of the file.
+          stillReading = false;
+        } 
+        
+      } //end of while(stillReading)
+    
+      } //end of try
+      catch (castor::exception::Exception & ex) {
+        //we end there because :
+        //openReadFile brought us here (cant put the tape into position)
+        //m_payload.append brought us here (error while reading the file)
         // This is an error case. Log and signal to the disk write task
         { 
           castor::log::LogContext::ScopedParam sp0(lc, Param("fileBlock", fileBlock));
@@ -125,6 +103,8 @@ public:
           castor::log::LogContext lc2(lc.logger());
           lc2.logBacktrace(LOG_ERR, ex.backtrace());
         }
+        
+        //write the block 
         std::auto_ptr<MemBlock> mb(m_mm.getFreeBlock());
         mb->m_fSeq = m_fileToRecall->fseq();
         mb->m_failed = true;
@@ -132,14 +112,36 @@ public:
         mb->m_fileid = m_fileToRecall->fileid();
         mb->m_tapeFileBlock = -1;
         m_fifo.pushDataBlock(mb.release());
+        m_fifo.pushDataBlock(NULL);
+        return;
       }
-    }
     // In all cases, we have to signal the end of the tape read to the disk write
     // task.
     m_fifo.pushDataBlock(NULL);
     lc.log(LOG_DEBUG, "File read completed");
   }
 private:
+  
+  // Open the file and manage failure (if any)
+  std::auto_ptr<castor::tape::tapeFile::ReadFile> openReadFile(
+  castor::tape::tapeFile::ReadSession & rs, castor::log::LogContext & lc){
+
+    using castor::log::Param;
+    typedef castor::log::LogContext::ScopedParam ScopedParam;
+
+    std::auto_ptr<castor::tape::tapeFile::ReadFile> rf;
+    try {
+      rf.reset(new castor::tape::tapeFile::ReadFile(&rs, *m_fileToRecall));
+      lc.log(LOG_DEBUG, "Successfully opened the tape file");
+    } catch (castor::exception::Exception & ex) {
+      // Log the error
+      ScopedParam sp0(lc, Param("ErrorMessage", ex.getMessageValue()));
+      ScopedParam sp1(lc, Param("ErrorCode", ex.code()));
+      lc.log(LOG_ERR, "Failed to open tape file for reading");
+      throw;
+    }
+    return rf;
+  }
   std::auto_ptr<castor::tape::tapegateway::FileToRecallStruct> m_fileToRecall;
   DataConsumer & m_fifo;
   RecallMemoryManager & m_mm;

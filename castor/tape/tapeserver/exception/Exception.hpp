@@ -45,7 +45,13 @@ namespace tape {
     };
     
     class InvalidArgument: public Exception {
-    public: InvalidArgument(std::string what = ""): Exception(what) {};
+    public: InvalidArgument(const std::string& what = ""): Exception(what) {};
+    };
+    
+    class EndOfFile: public castor::exception::Exception {
+    public:
+      EndOfFile(const std::string & w): castor::exception::Exception(w) {}
+      virtual ~EndOfFile() throw() {}
     };
   }
 } //namespace tape
