@@ -40,7 +40,7 @@ namespace daemon {
   class MigrationTaskInjector;
 class DiskReadThreadPool : public DiskThreadPoolInterface<DiskReadTaskInterface> {
 public:
-  DiskReadThreadPool(int nbThread, int m_maxFilesReq,int m_maxBytesReq, 
+  DiskReadThreadPool(int nbThread, unsigned int maxFilesReq,unsigned int maxBytesReq, 
           castor::log::LogContext lc);
   ~DiskReadThreadPool();
   void startThreads();
@@ -72,9 +72,8 @@ private:
   std::vector<DiskReadWorkerThread *> m_threads;
   castor::log::LogContext m_lc;
   MigrationTaskInjector* m_injector;
-  int m_maxFilesReq;
-  int m_maxBytesReq;
-  tape::threading::Mutex m_loopBackMutex;
+  const unsigned int m_maxFilesReq;
+  const unsigned int m_maxBytesReq;
 };
 
 }}}}

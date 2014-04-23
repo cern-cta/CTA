@@ -32,8 +32,8 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-  DiskReadThreadPool::DiskReadThreadPool(int nbThread, int m_maxFilesReq,int m_maxBytesReq, 
-          castor::log::LogContext lc) : m_lc(lc){
+  DiskReadThreadPool::DiskReadThreadPool(int nbThread, unsigned int maxFilesReq,unsigned int maxBytesReq, 
+          castor::log::LogContext lc) : m_lc(lc),m_maxFilesReq(maxFilesReq),m_maxBytesReq(maxBytesReq){
     for(int i=0; i<nbThread; i++) {
       DiskReadWorkerThread * thr = new DiskReadWorkerThread(*this);
       m_threads.push_back(thr);
