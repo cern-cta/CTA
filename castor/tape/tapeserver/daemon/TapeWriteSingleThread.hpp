@@ -46,6 +46,7 @@ public:
           MigrationReportPacker & repPacker,
 	  int filesBeforeFlush, int blockBeforeFlush): 
   TapeSingleThreadInterface<TapeWriteTaskInterface>(drive, vid, lc),
+  m_filesBeforeFlush(filesBeforeFlush),m_blocksBeforeFlush(blockBeforeFlush),
   m_drive(drive), m_reportPacker(repPacker), m_lastFseq(0), m_compress(0) {}
 
 private:
@@ -73,8 +74,10 @@ private:
        rs.reset(new castor::tape::tapeFile::WriteSession(m_drive,m_vid,m_lastFseq,m_compress));
         m_logContext.log(LOG_INFO, "Tape Write session session successfully started");
       }
-      catch (castor::exception::Exception & ex) {
-        m_logContext.log(LOG_ERR, "Failed to start tape read session");
+      catch (castor::exception::Exception & e) {
+        ScopedParam sp0(m_logContext, Param("ErrorMessage", e.getMessageValue()));
+        ScopedParam sp1(m_logContext, Param("ErrorCode", e.code()));
+        m_logContext.log(LOG_ERR, "Failed to start tape write session");
         // TODO: log and unroll the session
         // TODO: add an unroll mode to the tape read task. (Similar to exec, but pushing blocks marked in error)
         throw;
@@ -128,8 +131,8 @@ private:
     }
   }
   
-  int m_filesBeforeFlush;
-  int m_blocksBeforeFlush;
+  const int m_filesBeforeFlush;
+  const int m_blocksBeforeFlush;
   
   castor::tape::drives::DriveInterface& m_drive;
   MigrationReportPacker & m_reportPacker;
