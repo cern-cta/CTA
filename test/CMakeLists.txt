@@ -93,6 +93,7 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/client/ClientProxyTest.cpp
   ../castor/tape/legacymsg/RmcMarshalTest.cpp
   ../castor/tape/legacymsg/VdqmMarshalTest.cpp
+  ../castor/tape/legacymsg/TapeMarshalTest.cpp
   ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/DebugMountSessionForVdqmProtocol.cpp
 #  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp

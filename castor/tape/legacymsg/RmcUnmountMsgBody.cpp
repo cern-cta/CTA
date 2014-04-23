@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      JobInjector.hpp
+ *         castor/tape/legacymsg/RmcUnmountMsgBody.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,27 +17,23 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * 
  *
- * @author Castor Dev team, castor-dev@cern.ch
+ * 
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "castor/tape/legacymsg/RmcUnmountMsgBody.hpp"
 
-namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+#include <string.h>
 
-class TaskInjector{
-public:
-  virtual void requestInjection(int maxFiles, int maxBlocks, bool lastCall) = 0;
-  virtual void finish() = 0;
-  virtual ~TaskInjector() {}
-};
-
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::legacymsg::RmcUnmountMsgBody::RmcUnmountMsgBody() throw():
+  uid(0),
+  gid(0),
+  drvOrd(0),
+  force(0) {
+  memset(unusedLoader, '\0', sizeof(unusedLoader));
+  memset(vid, '\0', sizeof(vid));
 }
-}
-}
-}
-

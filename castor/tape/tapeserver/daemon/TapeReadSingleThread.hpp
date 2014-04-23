@@ -42,7 +42,8 @@ public:
   TapeReadSingleThread(castor::tape::drives::DriveInterface & drive,
           const std::string vid, uint64_t maxFilesRequest,
           castor::log::LogContext & lc): 
-   TapeSingleThreadInterface<TapeReadTask>(drive, vid, lc) {}
+   TapeSingleThreadInterface<TapeReadTask>(drive, vid, lc),
+   m_maxFilesRequest(maxFilesRequest) {}
    void setTaskInjector(TaskInjector * ti) { m_taskInjector = ti; }
 
 private:
@@ -57,7 +58,7 @@ private:
     } else if (0 == vrp.remaining) {
       // This is a last call: if the task injector comes up empty on this
       // one, he'll call it the end.
-      m_taskInjector->requestInjection(m_maxFilesRequest, 1000, false);
+      m_taskInjector->requestInjection(m_maxFilesRequest, 1000, true);
     }
     return vrp.value;
   }
@@ -66,6 +67,7 @@ private:
   
   virtual void run() {
     // First we have to initialise the tape read session
+    m_logContext.pushOrReplace(log::Param("thread", "tapeRead"));
     std::auto_ptr<castor::tape::tapeFile::ReadSession> rs;
     try {
       rs.reset(new castor::tape::tapeFile::ReadSession(m_drive, m_vid));
@@ -78,15 +80,21 @@ private:
     // Then we will loop on the tasks as they get from 
     // the task injector
     while(1) {
+      // NULL indicated the end of work
       TapeReadTask * task = popAndRequestMoreJobs();
-      bool end = task->endOfWork();
-      if (!end) task->execute(*rs, m_logContext);
-      delete task;
-      m_filesProcessed++;
-      if (end) {
-        return;
+      m_logContext.log(LOG_DEBUG, "TapeReadThread: just got one more job");
+      if (task) {
+        task->execute(*rs, m_logContext);
+        delete task;
+        m_filesProcessed++;
+      } else {
+        break;
       }
     }
+    // We now acknowledge to the task injector that read reached the end. There
+    // will hence be no more requests for more. (last thread turns off the light)
+    m_taskInjector->finish();
+    m_logContext.log(LOG_DEBUG, "Finishing Tape Read Thread. Just signalled task injector of the end");
   }
   
   uint64_t m_maxFilesRequest;

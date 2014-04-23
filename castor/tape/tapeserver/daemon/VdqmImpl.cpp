@@ -35,10 +35,10 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmImpl::VdqmImpl(log::Logger &log, const std::string &vdqmHostName, const unsigned short vdqmPort, const int netTimeout) throw():
-    m_log(log),
-    m_vdqmHostName(vdqmHostName),
-    m_vdqmPort(vdqmPort),
-    m_netTimeout(netTimeout) {
+  m_log(log),
+  m_vdqmHostName(vdqmHostName),
+  m_vdqmPort(vdqmPort),
+  m_netTimeout(netTimeout) {
 }
 
 //------------------------------------------------------------------------------

@@ -76,6 +76,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   rti.startThreads();
   rti.requestInjection(6,blockSize,false);
   rti.requestInjection(6,blockSize,true);
+  rti.finish();
   rti.waitThreads();
   
   //pushed nbFile*2 files + 1 end of Work task

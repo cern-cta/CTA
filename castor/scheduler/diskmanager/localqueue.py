@@ -60,9 +60,10 @@ class LocalQueue(Queue.Queue):
       information.
   '''
 
-  def __init__(self):
-    '''constructor'''
+  def __init__(self, runningTransfers):
+    '''constructor. Takes a reference to the set of running transfers'''
     Queue.Queue.__init__(self)
+    self.runningTransfers = runningTransfers
     # get configuration
     self.config = castor_tools.castorConf()
     # dictionnary of transfers
@@ -71,10 +72,12 @@ class LocalQueue(Queue.Queue):
     self.lock = threading.Lock()
     # set of pending disk2disk destinations
     self.pendingD2dDest = {}
-    # set of transfers to start with highest priority
+    # queue of transfers to start with highest priority
     self.priorityQueue = Queue.Queue()
-    # set of transfers to start with lower priority
+    # queue of transfers to start with lower priority
     self.backfillQueue = Queue.Queue()
+    # queue of d2d backfill transfers to hold back when busy
+    self.d2dBackfillQueue = Queue.Queue()
     # counter of scheduled regular (i.e. user driven) jobs
     self.countRegularJobs = 0
     # flag to determine whether to drain the backfill queue when no user driven jobs are present
@@ -107,6 +110,44 @@ class LocalQueue(Queue.Queue):
     finally:
       self.lock.release()
 
+  def _getBackfill(self):
+    '''internal method to get a transfer from the backfill queues,
+       managing them depending on how many slots are already taken'''
+    # are we already using too many slots? i.e. are there less than GuaranteedUserSlotsPercentage% free slots?
+    if self.runningTransfers.nbUsedSlots() <= self.config.getValue('DiskManager', 'NbSlots', 0, int) * \
+       (100 - self.config.getValue('DiskManager', 'GuaranteedUserSlotsPercentage', 50, int)) / 100:
+      # no, so we accept any kind of backfill job
+      try:
+        # first check the d2dsrc jobs in the backfill queue, without waiting
+        transferId = self.d2dBackfillQueue.get(False)
+        # found one, return it
+        return transferId
+      except Queue.Empty:
+        # nothing found: look in the regular backfill queue, don't wait
+        transferId = self.backfillQueue.get(False)
+        return transferId
+        # if nothing found, raise Queue.Empty
+    else:
+      # yes, we're 'busy'
+      while not self.backfillQueue.empty():
+        # don't wait on the backfill queue: in case nothing is found,
+        # we will be back soon and we'll block on the normal queue
+        transferId = self.backfillQueue.get(False)
+        if self.queueingTransfers[transferId].transfer.transferType == TransferType.D2DSRC and \
+           self.queueingTransfers[transferId].transfer.replicationType != D2DTransferType.USER:
+          # we got one, but it's a non-user source disk-to-disk copy and we're busy.
+          # Hence we move it to the d2dBackfillQueue to leave some room for normal
+          # transfers, otherwise d2dsrc jobs fill up all available slots, and we loop.
+          # Note that we may starve d2dsrc jobs in case of heavy user activity
+          # coupled with heavy rebalancing! In this case the d2d jobs will wait
+          # until the total activity goes below 50% of the available slots.
+          self.d2dBackfillQueue.put(transferId)
+        else:
+          # we got one, return it
+          return transferId
+      # we emptied the backfill queue or it was empty, raise to upper level
+      raise Queue.Empty
+
   def get(self):
     '''get a transfer from the queue. Times out after 1s'''
     found = False
@@ -135,11 +176,10 @@ class LocalQueue(Queue.Queue):
           try:
             self.drainBackfill = True
             self.countRegularJobs = 0
-            # don't wait on the backfill queue: in case nothing is found,
-            # we will be back soon and we'll block on the normal queue
-            transferId = self.backfillQueue.get(False)
+            # get a job from the backfill queues, without waiting
+            transferId = self._getBackfill()
           except Queue.Empty:
-            # the backfill queue is empty, so nothing to drain (any longer):
+            # the backfill queues are empty or not allowed, so nothing to drain (any longer):
             # give back priority to the user queue (potentially waiting on it) when coming back
             self.drainBackfill = False
             return None

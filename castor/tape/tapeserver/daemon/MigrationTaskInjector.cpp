@@ -24,6 +24,7 @@
 
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
 #include "castor/tape/tapegateway/FilesToMigrateList.hpp"
+#include "log.h"
 
 namespace{
 
@@ -102,6 +103,8 @@ namespace daemon {
  
 //------------------------------------------------------------------------------  
   void MigrationTaskInjector::WorkerThread::run(){
+    _this.m_lc.pushOrReplace(Param("thread", "MigrationTaskInjector"));
+    _this.m_lc.log(LOG_DEBUG, "Starting MigrationTaskInjector thread");
     while(1){
       Request req = _this.m_queue.pop();
       client::ClientProxy::RequestReport reqReport;
@@ -120,6 +123,7 @@ namespace daemon {
         _this.injectBulkMigrations(filesToMigrateList->filesToMigrate());
       }
     }
+    _this.m_lc.log(LOG_DEBUG, "Finishing MigrationTaskInjector thread");
   }
 
 

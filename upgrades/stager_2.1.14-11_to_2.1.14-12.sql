@@ -73,6 +73,12 @@ END;
 
 CREATE INDEX I_MigrationJob_TPStatusCT ON MigrationJob(tapePool, status, creationTime);
 
+XXX First put the code that uses the following
+
+DROP INDEX I_FileSystem_Rate;
+DROP FUNCTION fileSystemRate;
+
+
 /* insert new Migration Mount */
 CREATE OR REPLACE PROCEDURE insertMigrationMount(inTapePoolId IN NUMBER,
                                                  minimumAge IN INTEGER,

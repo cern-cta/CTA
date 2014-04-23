@@ -156,6 +156,12 @@ private:
   void mountTape(const std::string &vid) throw (castor::exception::Exception);
 
   /**
+   * Searches the parsed contents of /etc/castor/TPCONFIG for the position of
+   * the sepecified drive within its library.
+   */
+  std::string getPositionInLibrary(const std::string &unitName) throw (castor::exception::Exception);
+
+  /**
    * Transfer files.  This means either recalling files from tape to disk,
    * migrating files from disk to tape or dumping tape files.
    *

@@ -687,14 +687,10 @@ BEGIN
   bulkDeleteRequests('StageGetRequest');
     ---- Put ----
   bulkDeleteRequests('StagePutRequest');
-    ---- Update ----
-  bulkDeleteRequests('StageUpdateRequest');
     ---- PrepareToGet -----
   bulkDeleteRequests('StagePrepareToGetRequest');
     ---- PrepareToPut ----
   bulkDeleteRequests('StagePrepareToPutRequest');
-    ---- PrepareToUpdate ----
-  bulkDeleteRequests('StagePrepareToUpdateRequest');
     ---- PutDone ----
   bulkDeleteRequests('StagePutDoneRequest');
     ---- Rm ----
@@ -784,15 +780,15 @@ BEGIN
                    FROM SubRequest
                   WHERE castorFile = C.id
                     AND status IN (0, 1, 2, 3, 5, 6, 13) -- all active
-                    AND reqType NOT IN (37, 38))) LOOP -- ignore PrepareToPut, PrepareToUpdate
+                    AND reqType != 37)) LOOP -- ignore PrepareToPut
     IF (0 = f.fileSize) OR (f.dcStatus <> 6) THEN  -- DISKCOPY_STAGEOUT
       -- here we invalidate the diskcopy and let the GC run
       UPDATE DiskCopy SET status = 7  -- INVALID
        WHERE id = f.dcid;
-      -- and we also fail the correspondent prepareToPut/Update request if it exists
+      -- and we also fail the correspondent prepareToPut request if it exists
       BEGIN
         SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Diskcopy)*/ id
-          INTO srId   -- there can only be one outstanding PrepareToPut/Update, if any
+          INTO srId   -- there can only be one outstanding PrepareToPut, if any
           FROM SubRequest
          WHERE status = 6 AND diskCopy = f.dcid;
         archiveSubReq(srId, 9);  -- FAILED_FINISHED

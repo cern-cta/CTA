@@ -53,6 +53,8 @@ void castor::tape::tapeserver::daemon::MountSession::execute()
 throw (castor::tape::Exception) {
   // 1) Prepare the logging environment
   LogContext lc(m_logger);
+  // Create a sticky thread name, which will be overridden by the other threads
+  lc.pushOrReplace(Param("thread", "mainThread"));
   LogContext::ScopedParam sp01(lc, Param("clientHost", m_request.clientHost));
   LogContext::ScopedParam sp02(lc, Param("clientPort", m_request.clientPort));
   LogContext::ScopedParam sp03(lc, Param("mountTransactionId", m_request.volReqId));

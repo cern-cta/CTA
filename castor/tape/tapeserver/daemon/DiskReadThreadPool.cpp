@@ -26,6 +26,7 @@
 #include <memory>
 #include <sstream>
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
+#include "log.h"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -77,15 +78,25 @@ namespace daemon {
     return vrp.value;
   }
   void DiskReadThreadPool::DiskReadWorkerThread::run() {
+    m_lc.pushOrReplace(log::Param("thread", "DiskRead"));
+    m_lc.log(LOG_DEBUG, "Starting DiskReadWorkerThread");
     std::auto_ptr<DiskReadTaskInterface> task;
-    while (1) {
-      task.reset(m_parent.popAndRequestMore());
-      if (NULL != task.get()) {
-        task->execute(lc);
-      } else {
+    while(1) {
+      task.reset( m_parent.popAndRequestMore());
+      if (NULL!=task.get()) {
+        task->execute(m_lc);
+      }
+      else {
         break;
       }
     } //end of while(1)
+    // We now acknowledge to the task injector that read reached the end. There
+    // will hence be no more requests for more. (last thread turns off the light)
+    if (0 == --m_nbActiveThread) {
+      m_parent.m_injector->finish();
+      m_lc.log(LOG_DEBUG, "Signaled to task injector the end of disk read threads");
+    }
+    m_lc.log(LOG_DEBUG, "Finishing of DiskReadWorkerThread");
   }
   
   tape::threading::AtomicCounter<int> DiskReadThreadPool::DiskReadWorkerThread::m_nbActiveThread(0);

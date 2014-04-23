@@ -22,6 +22,7 @@
 
 #include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
+#include "castor/tape/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/legacymsg/RmcMarshal.hpp"
 #include "castor/tape/tapeserver/daemon/RmcImpl.hpp"
 #include "castor/tape/tapeserver/daemon/ScsiLibraryDriveName.hpp"
@@ -121,22 +122,59 @@ void castor::tape::tapeserver::daemon::RmcImpl::mountTapeManual(const std::strin
 // mountTapeScsi
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::RmcImpl::mountTapeScsi(const std::string &vid, const std::string &drive) throw(castor::exception::Exception) {
-  ScsiLibraryDriveName parsedDrive;
+  std::ostringstream task;
+  task << "mount tape " << vid << " in " << drive;
+
   try {
-    parsedDrive = ScsiLibraryDriveName(drive);
+    const ScsiLibraryDriveName libraryDriveName(drive);
+
+    castor::utils::SmartFd fd(connectToRmc(libraryDriveName.rmcHostName));
+
+    legacymsg::RmcMountMsgBody body;
+    body.uid = m_uid;
+    body.gid = m_gid;
+    castor::utils::copyString(body.vid, vid.c_str());
+    body.drvOrd = libraryDriveName.drvOrd;
+    writeRmcMountMsg(fd.get(), body);
+
+    const legacymsg::MessageHeader header = readRmcMsgHeader(fd.get());
+    switch(header.reqType) {
+    case RMC_RC:
+      if(0 != header.lenOrStatus) {
+        castor::exception::Internal ex;
+        ex.getMessage() << "Received error code from rmc running on " <<
+          libraryDriveName.rmcHostName << ": code=" << header.lenOrStatus;
+        throw ex;
+      }
+      break;
+    case MSG_ERR:
+      {
+        char errorBuf[1024];
+        const int nbBytesToRead = header.lenOrStatus > sizeof(errorBuf) ?
+          sizeof(errorBuf) : header.lenOrStatus;
+        castor::io::readBytes(fd.get(), m_netTimeout, nbBytesToRead, errorBuf);
+        errorBuf[sizeof(errorBuf) - 1] = '\0';
+        castor::exception::Internal ex;
+        ex.getMessage() << "Received error message from rmc running on " <<
+          libraryDriveName.rmcHostName << ": " << errorBuf;
+        throw ex;
+      }
+      break;
+    default:
+      {
+        castor::exception::Internal ex;
+        ex.getMessage() <<
+          "Reply message from rmc running on " << libraryDriveName.rmcHostName <<
+          " has an unexpected request type"
+          ": reqType=0x" << header.reqType;
+        throw ex;
+      }
+    }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to mount tape in SCSI library: " << ne.getMessage().str();
+    ex.getMessage() << "Failed to " << task.str() << ": " << ne.getMessage().str();
     throw ex;
   }
-
-  castor::utils::SmartFd fd(connectToRmc(parsedDrive.rmcHostName));
-  legacymsg::RmcMountMsgBody body;
-  body.uid = m_uid;
-  body.gid = m_gid;
-  castor::utils::copyString(body.vid, vid.c_str());
-  body.drvOrd = parsedDrive.drvOrd;
-  writeRmcMountMsg(fd.get(), body);
 }
 
 //------------------------------------------------------------------------------
@@ -199,6 +237,60 @@ void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeManual(const std::str
 // unmountTapeScsi
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeScsi(const std::string &vid, const std::string &drive) throw(castor::exception::Exception) {
+  std::ostringstream task;
+  task << "unmount tape " << vid << " from " << drive;
+
+  try {
+    const ScsiLibraryDriveName libraryDriveName(drive);
+
+    castor::utils::SmartFd fd(connectToRmc(libraryDriveName.rmcHostName));
+
+    legacymsg::RmcUnmountMsgBody body;
+    body.uid = m_uid;
+    body.gid = m_gid;
+    castor::utils::copyString(body.vid, vid.c_str());
+    body.drvOrd = libraryDriveName.drvOrd;
+    body.force = 0;
+    writeRmcUnmountMsg(fd.get(), body);
+
+    const legacymsg::MessageHeader header = readRmcMsgHeader(fd.get());
+    switch(header.reqType) {
+    case RMC_RC:
+      if(0 != header.lenOrStatus) {
+        castor::exception::Internal ex;
+        ex.getMessage() << "Received error code from rmc running on " <<
+          libraryDriveName.rmcHostName << ": code=" << header.lenOrStatus;
+        throw ex;
+      }
+      break;
+    case MSG_ERR:
+      {
+        char errorBuf[1024];
+        const int nbBytesToRead = header.lenOrStatus > sizeof(errorBuf) ?
+          sizeof(errorBuf) : header.lenOrStatus;
+        castor::io::readBytes(fd.get(), m_netTimeout, nbBytesToRead, errorBuf);
+        errorBuf[sizeof(errorBuf) - 1] = '\0';
+        castor::exception::Internal ex;
+        ex.getMessage() << "Received error message from rmc running on " <<
+          libraryDriveName.rmcHostName << ": " << errorBuf;
+        throw ex;
+      }
+      break;
+    default:
+      {
+        castor::exception::Internal ex;
+        ex.getMessage() <<
+          "Reply message from rmc running on " << libraryDriveName.rmcHostName <<
+          " has an unexpected request type"
+          ": reqType=0x" << header.reqType;
+        throw ex;
+      }
+    }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to " << task.str() << ": " << ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //-----------------------------------------------------------------------------
@@ -221,7 +313,8 @@ int castor::tape::tapeserver::daemon::RmcImpl::connectToRmc(const std::string &h
 //-----------------------------------------------------------------------------
 // writeRmcMountMsg
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::writeRmcMountMsg(const int fd, const legacymsg::RmcMountMsgBody &body) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::RmcImpl::writeRmcMountMsg(const int fd, const legacymsg::RmcMountMsgBody &body)
+  throw(castor::exception::Exception) {
   char buf[RMC_MSGBUFSIZ];
   const size_t len = legacymsg::marshal(buf, body);
 
@@ -230,6 +323,55 @@ void castor::tape::tapeserver::daemon::RmcImpl::writeRmcMountMsg(const int fd, c
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to write RMC_MOUNT message: "
+      << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//-----------------------------------------------------------------------------
+// readRmcMsgHeader
+//-----------------------------------------------------------------------------
+castor::tape::legacymsg::MessageHeader castor::tape::tapeserver::daemon::RmcImpl::readRmcMsgHeader(const int fd) throw(castor::exception::Exception) {
+  char buf[12]; // Magic + type + len
+  legacymsg::MessageHeader header;
+
+  try {
+    io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read message header: "
+      << ne.getMessage().str();
+    throw ex;
+  }
+
+  const char *bufPtr = buf;
+  size_t bufLen = sizeof(buf);
+  legacymsg::unmarshal(bufPtr, bufLen, header);
+
+  if(RMC_MAGIC != header.magic) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read message header: "
+      " Header contains an invalid magic number: expected=0x" << std::hex <<
+      RMC_MAGIC << " actual=0x" << header.magic;
+    throw ex;
+  }
+
+  return header;
+}
+
+//-----------------------------------------------------------------------------
+// writeRmcUnmountMsg
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::RmcImpl::writeRmcUnmountMsg(const int fd, const legacymsg::RmcUnmountMsgBody &body)
+  throw(castor::exception::Exception) {
+  char buf[RMC_MSGBUFSIZ];
+  const size_t len = legacymsg::marshal(buf, body);
+
+  try {
+    io::writeBytes(fd, m_netTimeout, len, buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to write RMC_UNMOUNT message: "
       << ne.getMessage().str();
     throw ex;
   }

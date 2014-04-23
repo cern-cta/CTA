@@ -117,11 +117,9 @@ set (CLIENT_LIB_SRC_FILES
   io/StreamStageGetRequestCnv.cpp
   io/StreamStagePrepareToGetRequestCnv.cpp
   io/StreamStagePrepareToPutRequestCnv.cpp
-  io/StreamStagePrepareToUpdateRequestCnv.cpp
   io/StreamStagePutDoneRequestCnv.cpp
   io/StreamStagePutRequestCnv.cpp
   io/StreamStageRmRequestCnv.cpp
-  io/StreamStageUpdateRequestCnv.cpp
   io/StreamThreadNotificationCnv.cpp
   io/StreamStgFilesDeletedCnv.cpp
   io/StreamStgFilesDeletedResponseCnv.cpp
@@ -235,12 +233,10 @@ set (CLIENT_LIB_SRC_FILES
   stager/StageGetRequest.cpp
   stager/StagePrepareToGetRequest.cpp
   stager/StagePrepareToPutRequest.cpp
-  stager/StagePrepareToUpdateRequest.cpp
   stager/StagePutDoneRequest.cpp
   stager/StagePutRequest.cpp
   stager/StageQueryResult.cpp
   stager/StageRmRequest.cpp
-  stager/StageUpdateRequest.cpp
   stager/SubRequest.cpp
   stager/SubRequestStatusCodes.cpp
   stager/SubRequestGetNextStatusCodes.cpp
@@ -268,7 +264,6 @@ set (CLIENT_LIB_SRC_FILES
   ../client/src/stager/stager_client_changePrivilege.c
   ../client/src/stager/stager_client_api_get.cpp
   ../client/src/stager/stager_client_api_put.cpp
-  ../client/src/stager/stager_client_api_update.cpp
   ../client/src/stager/stager_client_api_open.cpp
   ../client/src/stager/stager_client_api_query.cpp
   ../client/src/stager/stager_client_api_rm.cpp
@@ -377,8 +372,6 @@ if (${COMPILE_SERVER} STREQUAL "1")
   
   install(FILES
     stager/IJobSvc.hpp
-    stager/StagePrepareToUpdateRequest.hpp
-    stager/StageUpdateRequest.hpp
     DESTINATION ${CASTOR_DEST_CPP_HEADERS_DIR}/stager
     PERMISSIONS ${CASTOR_HEADER_PERMS})
   

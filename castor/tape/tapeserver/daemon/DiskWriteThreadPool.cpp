@@ -100,7 +100,8 @@ namespace daemon {
     return ret;
   }
   void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
-    m_lc.log(LOG_INFO, "Starting disk write thread");
+    m_lc.pushOrReplace(log::Param("thread", "diskWrite"));
+    m_lc.log(LOG_INFO, "Starting DiskWriteWorkerThread");
     std::auto_ptr<DiskWriteTaskInterface>  task;
     while(1) {
       task.reset(m_parentThreadPool. m_tasks.pop());
@@ -125,7 +126,7 @@ namespace daemon {
         m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("A thread failed to write a file",SEINTERNAL);
       }
     }
-    m_lc.log(LOG_INFO, "Disk write thread exiting");
+    m_lc.log(LOG_INFO, "Finishing DiskWriteWorkerThread");
   }
 }}}}
 

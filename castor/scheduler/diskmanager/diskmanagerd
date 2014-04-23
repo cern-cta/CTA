@@ -226,10 +226,10 @@ try:
     dlf.init('diskmanagerd')
     # 'DiskManager Daemon started'
     dlf.write(msgs.DISKMANAGERDSTARTED)
-    # create a queue of transfers to be run
-    transferQueue = localqueue.LocalQueue()
     # create a list of running Transfers
     runningTransfers = runningtransfersset.RunningTransfersSet(fake)
+    # create a queue of transfers to be run
+    transferQueue = localqueue.LocalQueue(runningTransfers)
     # initialize the queues of pending and running transfers using the knowledge of the central schedulers
     initQueues()
     # launch a processing thread that will regularly check if we need to start new transfers from the queue

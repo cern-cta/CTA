@@ -4,6 +4,7 @@
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
+#include "log.h"
 #include <stdint.h>
 
 using castor::log::LogContext;
@@ -30,7 +31,7 @@ RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm,
         m_client(client),m_lc(lc)
 {}
 
-void RecallTaskInjector::end(){
+void RecallTaskInjector::finish(){
   castor::tape::threading::MutexLocker ml(&m_producerProtection);
   m_queue.push(Request());
 }
@@ -110,6 +111,8 @@ bool RecallTaskInjector::synchronousInjection(uint64_t maxFiles, uint64_t byteSi
 void RecallTaskInjector::WorkerThread::run()
 {
   using castor::log::LogContext;
+  _this.m_lc.pushOrReplace(Param("thread", "recallTaskInjector"));
+  _this.m_lc.log(LOG_DEBUG, "Starting RecallTaskInjector thread");
   
   while (1) {
     Request req = _this.m_queue.pop();
@@ -136,7 +139,7 @@ void RecallTaskInjector::WorkerThread::run()
     }
   } // end of while(1)
   //-------------
-  
+  _this.m_lc.log(LOG_DEBUG, "Finishing RecallTaskInjector thread");
   /* We want to finish at the first lastCall we encounter.
    * But even after sending finish() to m_diskWriter and to m_tapeReader,
    * m_diskWriter might still want some more task (the threshold could be crossed),
@@ -145,7 +148,7 @@ void RecallTaskInjector::WorkerThread::run()
   bool stillReading =true;
   while(stillReading) {
     Request req = _this.m_queue.pop();
-    stillReading = req.end;
+    if (req.end) stillReading = false;
     LogContext::ScopedParam sp(_this.m_lc, Param("lastCall", req.lastCall));
     _this.m_lc.log(LOG_INFO,"In RecallJobInjector::WorkerThread::run(): popping extra request");
   }

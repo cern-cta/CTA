@@ -30,7 +30,6 @@ set(STAGER_CLIENT_EXE_SRC_FILES
   stager_addprivilege.c
   stager_get.c
   stager_listprivileges.cpp
-  stager_update.c
   stager_put.c
   stager_putdone.c
   stager_qry.cpp

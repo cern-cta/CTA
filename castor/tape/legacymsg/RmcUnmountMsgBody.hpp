@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      JobInjector.hpp
+ *         castor/tape/legacymsg/RmcUnmountMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,27 +17,42 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * 
  *
- * @author Castor Dev team, castor-dev@cern.ch
+ * 
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
 #pragma once
 
+#include "h/Castor_limits.h"
+
+#include <stdint.h>
+
 namespace castor {
 namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace legacymsg {
 
-class TaskInjector{
-public:
-  virtual void requestInjection(int maxFiles, int maxBlocks, bool lastCall) = 0;
-  virtual void finish() = 0;
-  virtual ~TaskInjector() {}
-};
+/**
+ * The body of an RMC_UNMOUNT message.
+ */
+struct RmcUnmountMsgBody {
+  uint32_t uid;
+  uint32_t gid;
+  char unusedLoader[1]; // Should always be set to the emtpy string
+  char vid[CA_MAXVIDLEN + 1];
+  uint16_t drvOrd;
+  uint16_t force;
 
-}
-}
-}
-}
+  /**
+   * Constructor.
+   *
+   * Sets all integer member-variables to 0 and all string member-variables to
+   * the empty string.
+   */
+  RmcUnmountMsgBody() throw();
+}; // struct RmcUnmountMsgBody
+
+} // namespace legacymsg
+} // namespace tape
+} // namespace castor
 

@@ -52,6 +52,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
   std::ostream &stdOut,
   std::ostream &stdErr,
   log::Logger &log,
+  const utils::TpconfigLines &tpconfigLines,
   Vdqm &vdqm,
   Vmgr &vmgr,
   Rmc &rmc,
@@ -59,6 +60,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),
   m_argv(argv),
+  m_tpconfigLines(tpconfigLines),
   m_vdqm(vdqm),
   m_vmgr(vmgr),
   m_rmc(rmc),
@@ -123,12 +125,9 @@ int castor::tape::tapeserver::daemon::TapeDaemon::main(const int argc,
 //------------------------------------------------------------------------------
 void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   const int argc, char **const argv) throw(castor::exception::Exception) {
-  utils::TpconfigLines tpconfigLines;
-
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
-  utils::parseTpconfigFile(TPCONFIGPATH, tpconfigLines);
-  m_driveCatalogue.populateCatalogue(tpconfigLines);
+  m_driveCatalogue.populateCatalogue(m_tpconfigLines);
   daemonizeIfNotRunInForeground();
   blockSignals();
   setUpReactor();
@@ -572,14 +571,13 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mountSession(const std::strin
 
   try {
     const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getJob(unitName);
-    const utils::TpconfigLines tpConfig;
     DebugMountSessionForVdqmProtocol mountSession(
       m_argc,
       m_argv,
       m_hostName,
       job,
       m_log,
-      tpConfig,
+      m_tpconfigLines,
       m_vdqm,
       m_vmgr,
       m_rmc);

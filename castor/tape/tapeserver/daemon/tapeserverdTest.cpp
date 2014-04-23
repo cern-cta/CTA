@@ -61,6 +61,9 @@ TEST(tapeServer, MountSessionGoodday) {
   // This number has to be less than 2^31 as in addition there is a mix
   // of signed and unsigned numbers
   // As the current ids in prod are ~30M, we are far from overflow (Feb 2013)
+  // 0) Prepare the logger for everyone
+  castor::log::StringLogger logger("tapeServerUnitTest");
+  
   // 1) prepare the client and run it in another thread
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
@@ -81,7 +84,6 @@ TEST(tapeServer, MountSessionGoodday) {
   
   // 3) Prepare the necessary environment (logger, plus system wrapper), 
   // construct and run the session.
-  castor::log::StringLogger logger("tapeServerUnitTest");
   castor::tape::System::mockWrapper mockSys;
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
@@ -113,6 +115,8 @@ TEST(tapeServer, MountSessionGoodday) {
       ftr.setBlockId1( (wf.getPosition() >> 16) & 0xFF);
       ftr.setBlockId2( (wf.getPosition() >> 8) & 0xFF);
       ftr.setBlockId3(wf.getPosition() & 0xFF);
+      // Set the recall destination (/dev/null)
+      ftr.setPath("/dev/null");
       // Write the data (one block)
       wf.write(data, sizeof(data));
       // Close the file

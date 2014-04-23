@@ -26,6 +26,7 @@
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
 #include "castor/log/Logger.hpp"
+#include "log.h"
 
 namespace{
   struct failedReportRecallResult : public castor::tape::Exception{
@@ -97,9 +98,9 @@ void RecallReportPacker::flush(){
     client::ClientInterface::RequestReport chrono;
     try{
       m_client.reportRecallResults(*m_listReports,chrono);
-      logRequestReport(chrono,"reportRecallResults'is successful");
-      
-      logReport(m_listReports->failedRecalls(),"file failed to be recalled");
+      logRequestReport(chrono,"RecallReportList successfully transmitted to client (contents follow)");
+
+      logReport(m_listReports->failedRecalls(),"A file failed to be recalled");
       logReport(m_listReports->successfulRecalls(),"A file was successfully recalled");
     }
    catch(const castor::tape::Exception& e){
@@ -165,6 +166,8 @@ m_parent(parent) {
 }
 
 void RecallReportPacker::WorkerThread::run(){
+  m_parent.m_lc.pushOrReplace(Param("thread", "RecallReportPacker"));
+  m_parent.m_lc.log(LOG_DEBUG, "Starting RecallReportPacker thread");
   client::ClientInterface::RequestReport chrono;
   try{
       while(1) {    
@@ -199,5 +202,6 @@ void RecallReportPacker::WorkerThread::run(){
     //either from the catch a few lines above or directly from rep->execute
     m_parent.logRequestReport(chrono,"tried to report endOfSession(WithError) and got an exception, cant do much more",LOG_ERR);
   }
+  m_parent.m_lc.log(LOG_DEBUG, "Finishing RecallReportPacker thread");
 }
 }}}}

@@ -214,13 +214,6 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
 
 
     //--------------------------------------------------------------------------
-    //! Update meta data - used to inform the manager node that the first byte 
-    //! was written
-    //--------------------------------------------------------------------------
-    int UpdateMeta();
-
-
-    //--------------------------------------------------------------------------
     //! Unlink file 
     //--------------------------------------------------------------------------
     int Unlink();
@@ -282,7 +275,6 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
     XrdOucString     DiskChecksumAlgorithm; ///<
     bool             verifyChecksum; ///<
     std::string      mTpcKey;        ///< tpc key allocated to this file
-    bool             mIsUpdate;      ///< mark if file is opened for update
 };
 
 

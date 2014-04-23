@@ -364,7 +364,8 @@ CREATE OR REPLACE PROCEDURE jobSubRequestToDo(outSrId OUT INTEGER, outReqUuid OU
                                               outFileClassIfForced OUT INTEGER,
                                               outFlags OUT INTEGER, outModeBits OUT INTEGER,
                                               outClientIpAddress OUT INTEGER,
-                                              outClientPort OUT INTEGER, outClientVersion OUT INTEGER) AS
+                                              outClientPort OUT INTEGER, outClientVersion OUT INTEGER,
+                                              outErrNo OUT INTEGER, outErrMsg OUT VARCHAR2) AS
   CURSOR SRcur IS
     SELECT /*+ FIRST_ROWS_10 INDEX_RS_ASC(SR I_SubRequest_RT_CT_ID) */ SR.id
       FROM SubRequest PARTITION (P_STATUS_0_1_2) SR  -- START, RESTART, RETRY
@@ -379,6 +380,7 @@ CREATE OR REPLACE PROCEDURE jobSubRequestToDo(outSrId OUT INTEGER, outReqUuid OU
   varUnusedMessage VARCHAR2(2048);
   varUnusedStatus INTEGER;
 BEGIN
+  outErrNo := 0;
   -- Open a cursor on potential candidates
   OPEN SRcur;
   -- Retrieve the first candidate
@@ -437,30 +439,35 @@ BEGIN
     -- XXX be merged in a single table (partitioned by reqType) to avoid the following block.
     CASE
       WHEN outReqType = 40 THEN -- StagePutRequest
-        SELECT reqId, euid, egid, svcClass, client
-          INTO outReqUuid, outEuid, outEgid, varSvcClassId, varClientId
+        SELECT reqId, euid, egid, svcClass, svcClassName, client
+          INTO outReqUuid, outEuid, outEgid, varSvcClassId, outSvcClassName, varClientId
           FROM StagePutRequest WHERE id = varRequestId;
       WHEN outReqType = 35 THEN -- StageGetRequest
-        SELECT reqId, euid, egid, svcClass, client
-          INTO outReqUuid, outEuid, outEgid, varSvcClassId, varClientId
+        SELECT reqId, euid, egid, svcClass, svcClassName, client
+          INTO outReqUuid, outEuid, outEgid, varSvcClassId, outSvcClassName, varClientId
           FROM StageGetRequest WHERE id = varRequestId;
       WHEN outReqType = 37 THEN -- StagePrepareToPutRequest
-        SELECT reqId, euid, egid, svcClass, client
-          INTO outReqUuid, outEuid, outEgid, varSvcClassId, varClientId
+        SELECT reqId, euid, egid, svcClass, svcClassName, client
+          INTO outReqUuid, outEuid, outEgid, varSvcClassId, outSvcClassName, varClientId
           FROM StagePrepareToPutRequest WHERE id = varRequestId;
       WHEN outReqType = 36 THEN -- StagePrepareToGetRequest
-        SELECT reqId, euid, egid, svcClass, client
-          INTO outReqUuid, outEuid, outEgid, varSvcClassId, varClientId
+        SELECT reqId, euid, egid, svcClass, svcClassName, client
+          INTO outReqUuid, outEuid, outEgid, varSvcClassId, outSvcClassName, varClientId
           FROM StagePrepareToGetRequest WHERE id = varRequestId;
     END CASE;
     SELECT ipAddress, port, version
       INTO outClientIpAddress, outClientPort, outClientVersion
       FROM Client WHERE id = varClientId;
-    SELECT FileClass.classId, SvcClass.name
-      INTO outFileClassIfForced, outSvcClassName
-      FROM SvcClass, FileClass
-     WHERE SvcClass.id = varSvcClassId
-       AND FileClass.id(+) = SvcClass.forcedFileClass;
+    BEGIN
+      SELECT FileClass.classId INTO outFileClassIfForced
+        FROM SvcClass, FileClass
+       WHERE SvcClass.id = varSvcClassId
+         AND FileClass.id(+) = SvcClass.forcedFileClass;
+    EXCEPTION WHEN NO_DATA_FOUND THEN
+      archiveSubReq(outSrId, dconst.SUBREQUEST_FAILED_FINISHED);
+      outErrno := serrno.EINVAL;
+      outErrMsg := 'Invalid service class ''' || outSvcClassName || '''';
+    END;
   EXCEPTION WHEN OTHERS THEN
     -- Something went really wrong, our subrequest does not have the corresponding request or client,
     -- Just drop it and re-raise exception. Some rare occurrences have happened in the past,
@@ -1135,10 +1142,6 @@ BEGIN
               SELECT reqId, client
                 INTO rReqId, varClientId
                 FROM StagePrepareToGetRequest WHERE id = varRId;
-            WHEN varRName = 'StagePrepareToUpdateRequest' THEN
-              SELECT reqId, client
-                INTO rReqId, varClientId
-                FROM StagePrepareToUpdateRequest WHERE id = varRId;
             WHEN varRName = 'StageRepackRequest' THEN
               SELECT reqId, client
                 INTO rReqId, varClientId
@@ -1151,10 +1154,6 @@ BEGIN
               SELECT reqId, client
                 INTO rReqId, varClientId
                 FROM StageGetRequest WHERE id = varRId;
-            WHEN varRName = 'StageUpdateRequest' THEN
-              SELECT reqId, client
-                INTO rReqId, varClientId
-                FROM StageUpdateRequest WHERE id = varRId;
             WHEN varRName = 'StagePutDoneRequest' THEN
               SELECT reqId, client
                 INTO rReqId, varClientId
@@ -1660,11 +1659,7 @@ BEGIN
                  (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
                          id, svcClass, euid, egid from StageGetRequest UNION ALL
                   SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */
-                         id, svcClass, euid, egid from StagePrepareToGetRequest UNION ALL
-                  SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
-                         id, svcClass, euid, egid from StageUpdateRequest UNION ALL
-                  SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */
-                         id, svcClass, euid, egid from StagePrepareToUpdateRequest) Request,
+                         id, svcClass, euid, egid from StagePrepareToGetRequest) Request,
                   SubRequest
            WHERE SubRequest.id = srId
              AND Request.id = SubRequest.request
@@ -1674,9 +1669,7 @@ BEGIN
              AND DiskServer.id = FileSystem.diskServer
              AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
              AND DiskServer.hwOnline = 1
-        ORDER BY -- order by rate as defined by the function
-                 fileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
-                 -- finally use randomness to avoid preferring always the same FS
+        ORDER BY -- use randomness to scatter filesystem usage
                  DBMS_Random.value)
    WHERE ROWNUM < 2;
   -- compute it's gcWeight
@@ -1816,22 +1809,19 @@ BEGIN
       initMigration(cfId, fs, NULL, NULL, i, tconst.MIGRATIONJOB_PENDING);
     END LOOP;
   END IF;
-  -- If we are a real PutDone (and not a put outside of a prepareToPut/Update)
-  -- then we have to archive the original prepareToPut/Update subRequest
+  -- If we are a real PutDone (and not a put outside of a prepareToPut)
+  -- then we have to archive the original prepareToPut subRequest
   IF context = 2 THEN
-    -- There can be only a single PrepareTo request: any subsequent PPut would be
-    -- rejected and any subsequent PUpdate would be directly archived
+    -- There can be only a single PrepareTo request: any subsequent PPut would be rejected
     DECLARE
       srId NUMBER;
     BEGIN
-      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ SubRequest.id INTO srId
-        FROM SubRequest,
-         (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id
-            FROM StagePrepareToPutRequest UNION ALL
-          SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id
-            FROM StagePrepareToUpdateRequest) Request
+      SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)
+                 INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id */
+             SubRequest.id INTO srId
+        FROM SubRequest, StagePrepareToPutRequest
        WHERE SubRequest.castorFile = cfId
-         AND SubRequest.request = Request.id
+         AND SubRequest.request = StagePrepareToPutRequest.id
          AND SubRequest.status = 6;  -- READY
       archiveSubReq(srId, 8);  -- FINISHED
     EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -1880,13 +1870,13 @@ BEGIN
     FROM CastorFile
    WHERE CastorFile.id = cfId FOR UPDATE;
 
-  -- Check whether there is a Put|Update going on
+  -- Check whether there is a Put going on
   -- If any, we'll wait on one of them
   BEGIN
     SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ id INTO putSubReq
       FROM SubRequest
      WHERE castorfile = cfId
-       AND reqType IN (40, 44)  -- Put, Update
+       AND reqType = 40  -- Put
        AND status IN (0, 1, 2, 3, 6, 13) -- START, RESTART, RETRY, WAITSCHED, READY, READYFORSCHED
        AND ROWNUM < 2;
     -- we've found one, we wait
@@ -2790,11 +2780,7 @@ BEGIN
     FROM (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
                  id, svcClass, euid, egid, reqId, creationTime, 'StageGetRequest' as reqtype FROM StageGetRequest UNION ALL
           SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */
-                 id, svcClass, euid, egid, reqId, creationTime, 'StagePrepareToGetRequest' as reqtype FROM StagePrepareToGetRequest UNION ALL
-          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
-                 id, svcClass, euid, egid, reqId, creationTime, 'StageUpdateRequest' as reqtype FROM StageUpdateRequest UNION ALL
-          SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequest_Id) */
-                 id, svcClass, euid, egid, reqId, creationTime, 'StagePrepareToUpdateRequest' as reqtype FROM StagePrepareToUpdateRequest) Request
+                 id, svcClass, euid, egid, reqId, creationTime, 'StagePrepareToGetRequest' as reqtype FROM StagePrepareToGetRequest) Request
    WHERE Request.id = varReqId;
   -- get the RecallGroup
   getRecallGroup(varEuid, varEgid, varRecallGroup, varRecallGroupName);
@@ -3393,25 +3379,24 @@ BEGIN
   -- log
   logToDLF(varReqUUID, dlf.LVL_DEBUG, dlf.STAGER_PUT, inFileId, inNsHost, 'stagerd', 'SUBREQID=' || varSrUUID);
 
-  -- check whether there is a PrepareToPut/Update going on. There can be only a single one
-  -- or none. If there was a PrepareTo, any subsequent PPut would be rejected and any
-  -- subsequent PUpdate would be directly archived (cf. processPrepareRequest).
+  -- check whether there is a PrepareToPut going on. There can be only a single one
+  -- or none. If there was a PrepareTo, any subsequent PPut would be rejected
+  -- (cf. processPrepareRequest).
   DECLARE
     varPrepSvcClassId INTEGER;
   BEGIN
     -- look for the (eventual) prepare request and get its service class
-    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ PrepareRequest.svcClass, SubRequest.diskCopy
+    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)
+               INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id)*/
+           StagePrepareToPutRequest.svcClass, SubRequest.diskCopy
       INTO varPrepSvcClassId, varPrepDcid
-      FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */
-                   id, svcClass FROM StagePrepareToPutRequest UNION ALL
-            SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */
-                   id, svcClass FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
+      FROM StagePrepareToPutRequest, SubRequest
      WHERE SubRequest.CastorFile = inCfId
-       AND PrepareRequest.id = SubRequest.request
+       AND StagePrepareToPutRequest.id = SubRequest.request
        AND SubRequest.status = dconst.SUBREQUEST_READY;
     -- we found a PrepareRequest, but are we in the same service class ?
     IF varSvcClassId != varPrepSvcClassId THEN
-      -- No, this means we are a Put/Update and another Prepare request
+      -- No, this means we are a Put and another Prepare request
       -- is already running in a different service class. This is forbidden
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = dconst.SUBREQUEST_FAILED,
@@ -3424,10 +3409,10 @@ BEGIN
                ' otherSvcClass=' || getSvcClassName(varPrepSvcClassId));
       RETURN;
     END IF;
-    -- if we got here, we are a Put/Update inside a Prepare request running in the same service class
+    -- if we got here, we are a Put inside a Prepare request running in the same service class
     varHasPrepareReq := True;
   EXCEPTION WHEN NO_DATA_FOUND THEN
-    -- if we got here, we are a standalone Put/Update
+    -- if we got here, we are a standalone Put
     varHasPrepareReq := False;
   END;
 
@@ -3466,7 +3451,7 @@ END;
 CREATE OR REPLACE PROCEDURE handleGet(inCfId IN INTEGER, inSrId IN INTEGER,
                                       inFileId IN INTEGER, inNsHost IN VARCHAR2,
                                       inFileSize IN INTEGER, inNsOpenTimeInUsec IN INTEGER) AS
-  varNsOpenTime INTEGER;
+  varNsOpenTime NUMBER;
   varEuid NUMBER;
   varEgid NUMBER;
   varSvcClassId NUMBER;
@@ -3513,6 +3498,7 @@ BEGIN
   END;
 
   -- Check whether our disk cache is stale
+  SELECT nsOpenTime INTO varNsOpenTime FROM CastorFile WHERE id = inCfId;
   IF varNsOpenTime < inNsOpenTimeInUsec/1000000 THEN
     -- yes, invalidate our diskcopies. This may later trigger a recall.
     UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
@@ -3522,8 +3508,8 @@ BEGIN
   -- Look for available diskcopies. The status is needed for the
   -- internal replication processing, and only if count = 1, hence
   -- the min() function does not represent anything here.
-  -- Note that we accept copies in READONLY hardware here as we're processing Get
-  -- and Update requests, and we would deny Updates switching to write mode in that case.
+  -- Note that we accept copies in READONLY hardware here as we're
+  -- processing Get requests
   SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */
          COUNT(DiskCopy.id), min(DiskCopy.status) INTO varNbDCs, varDcStatus
     FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
@@ -3633,7 +3619,7 @@ END;
 /
 
 /* PL/SQL method implementing handlePrepareToGet
- * returns status of the SubRequest : FAILED, FINISHED, WAITTAPERECALL OR WAITDISKTODISKCOPY
+ * returns whether the client should be answered
  */
 CREATE OR REPLACE FUNCTION handlePrepareToGet(inCfId IN INTEGER, inSrId IN INTEGER,
                                               inFileId IN INTEGER, inNsHost IN VARCHAR2,
@@ -3713,8 +3699,8 @@ BEGIN
     UPDATE SubRequest SET status = dconst.SUBREQUEST_WAITTAPERECALL WHERE id = inSrId;
     RETURN 1;
   ELSE
-   -- could not start recall, SubRequest has been marked as FAILED, no need to answer
-   RETURN 0;
+    -- could not start recall, SubRequest has been marked as FAILED, no need to answer
+    RETURN 0;
   END IF;
 END;
 /
@@ -3737,39 +3723,36 @@ BEGIN
   -- Get fileClass and lock access to the CastorFile
   SELECT fileclass INTO varFileClassId FROM CastorFile WHERE id = inCfId FOR UPDATE;
   -- Get serviceClass log data
-  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
-         Request.svcClass, euid, egid, Request.reqId, SubRequest.subreqId
+  SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)
+             INDEX(StagePutRequest PK_StagePutRequest_Id)*/
+         StagePrepareToPutRequest.svcClass, euid, egid,
+         StagePrepareToPutRequest.reqId, SubRequest.subreqId
     INTO varSvcClassId, varEuid, varEgid, varReqUUID, varSrUUID
-    FROM (SELECT /*+ INDEX(StagePutRequest PK_StagePutRequest_Id) */
-                 id, svcClass, euid, egid, reqId FROM StagePrepareToPutRequest UNION ALL
-          SELECT /*+ INDEX(StageUpdateRequest PK_StageUpdateRequest_Id) */
-                 id, svcClass, euid, egid, reqId FROM StagePrepareToUpdateRequest) Request, SubRequest
+    FROM StagePrepareToPutRequest, SubRequest
    WHERE SubRequest.id = inSrId
-     AND Request.id = SubRequest.request;
+     AND StagePrepareToPutRequest.id = SubRequest.request;
   -- log
   logToDLF(varReqUUID, dlf.LVL_DEBUG, dlf.STAGER_PREPARETOPUT, inFileId, inNsHost, 'stagerd',
            'SUBREQID=' || varSrUUID);
 
-  -- check whether there is another PrepareToPut/Update going on. There can be only one
+  -- check whether there is another PrepareToPut going on. There can be only one
   DECLARE
     varNbPReqs INTEGER;
   BEGIN
     -- Note that we do not select ourselves as we are in status SUBREQUEST_WAITSCHED
-    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/
+    SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)
+               INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */
            count(SubRequest.status) INTO varNbPReqs
-      FROM (SELECT /*+ INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id) */ id
-              FROM StagePrepareToPutRequest UNION ALL
-            SELECT /*+ INDEX(StagePrepareToUpdateRequest PK_StagePrepareToUpdateRequ_Id) */ id
-              FROM StagePrepareToUpdateRequest) PrepareRequest, SubRequest
+      FROM StagePrepareToPutRequest, SubRequest
      WHERE SubRequest.castorFile = inCfId
-       AND PrepareRequest.id = SubRequest.request
+       AND StagePrepareToPutRequest.id = SubRequest.request
        AND SubRequest.status IN (dconst.SUBREQUEST_READY, dconst.SUBREQUEST_READYFORSCHED);
     IF varNbPReqs > 0 THEN
       -- this means that another PrepareTo request is already running. This is forbidden
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
          SET status = dconst.SUBREQUEST_FAILED,
              errorCode = serrno.EBUSY,
-             errorMessage = 'Another prepareToPut/Update is ongoing for this file'
+             errorMessage = 'Another prepareToPut is ongoing for this file'
        WHERE id = inSrId;
       RETURN 0;
     END IF;

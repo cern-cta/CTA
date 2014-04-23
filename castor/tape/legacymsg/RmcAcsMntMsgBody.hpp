@@ -42,7 +42,7 @@ struct RmcAcsMntMsgBody {
   uint32_t lsm;
   uint32_t panel;
   uint32_t transport;
-  char vid[CA_MAXVIDLEN];
+  char vid[CA_MAXVIDLEN + 1];
 
   /**
    * Constructor.
