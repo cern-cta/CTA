@@ -29,7 +29,7 @@
 #include "castor/io/io.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/RtcpJobSubmitter.hpp"
-#include "castor/tape/legacymsg/CommonMarshal.hpp"
+#include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "h/net.h"
 #include "h/osdep.h"

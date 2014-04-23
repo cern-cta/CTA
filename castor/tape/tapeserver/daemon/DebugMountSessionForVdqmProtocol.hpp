@@ -26,7 +26,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/log/Logger.hpp"
-#include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "castor/tape/tapeserver/daemon/Rmc.hpp"

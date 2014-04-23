@@ -74,7 +74,7 @@ TEST(tapeServer, MountSessionGoodday) {
   simRun.start();
   
   // 2) Prepare the VDQM request
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
@@ -160,7 +160,7 @@ TEST(tapeServer, MountSessionNoSuchDrive) {
   simRun.start();
   
   // 2) Prepare the VDQM request
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");

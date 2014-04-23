@@ -25,7 +25,7 @@
 #pragma once
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/utils/TpconfigLine.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
 

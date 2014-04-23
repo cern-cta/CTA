@@ -22,8 +22,8 @@
 
 #include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
-#include "castor/tape/legacymsg/CommonMarshal.hpp"
-#include "castor/tape/legacymsg/RmcMarshal.hpp"
+#include "castor/legacymsg/CommonMarshal.hpp"
+#include "castor/legacymsg/RmcMarshal.hpp"
 #include "castor/tape/tapeserver/daemon/RmcImpl.hpp"
 #include "castor/tape/tapeserver/daemon/ScsiLibraryDriveName.hpp"
 #include "castor/utils/SmartFd.hpp"
@@ -331,7 +331,7 @@ void castor::tape::tapeserver::daemon::RmcImpl::writeRmcMountMsg(const int fd, c
 //-----------------------------------------------------------------------------
 // readRmcMsgHeader
 //-----------------------------------------------------------------------------
-castor::tape::legacymsg::MessageHeader castor::tape::tapeserver::daemon::RmcImpl::readRmcMsgHeader(const int fd) throw(castor::exception::Exception) {
+castor::legacymsg::MessageHeader castor::tape::tapeserver::daemon::RmcImpl::readRmcMsgHeader(const int fd) throw(castor::exception::Exception) {
   char buf[12]; // Magic + type + len
   legacymsg::MessageHeader header;
 

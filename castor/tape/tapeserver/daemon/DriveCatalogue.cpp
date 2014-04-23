@@ -475,7 +475,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedVdqmJob(const leg
 //-----------------------------------------------------------------------------
 // getJob
 //-----------------------------------------------------------------------------
-const castor::tape::legacymsg::RtcpJobRqstMsgBody &castor::tape::tapeserver::daemon::DriveCatalogue::getJob(const std::string &unitName) const throw(castor::exception::Exception) {
+const castor::legacymsg::RtcpJobRqstMsgBody &castor::tape::tapeserver::daemon::DriveCatalogue::getJob(const std::string &unitName) const throw(castor::exception::Exception) {
   std::ostringstream task;
   task << "get vdqm job for tape drive " << unitName;
 

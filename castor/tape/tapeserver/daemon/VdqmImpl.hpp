@@ -23,8 +23,8 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
-#include "castor/tape/legacymsg/MessageHeader.hpp"
-#include "castor/tape/legacymsg/VdqmDrvRqstMsgBody.hpp"
+#include "castor/legacymsg/MessageHeader.hpp"
+#include "castor/legacymsg/VdqmDrvRqstMsgBody.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 
 namespace castor     {

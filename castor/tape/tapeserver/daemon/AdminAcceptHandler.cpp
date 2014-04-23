@@ -30,8 +30,8 @@
 #include "h/common.h"
 #include "h/serrno.h"
 #include "h/Ctape.h"
-#include "castor/tape/legacymsg/CommonMarshal.hpp"
-#include "castor/tape/legacymsg/TapeMarshal.hpp"
+#include "castor/legacymsg/CommonMarshal.hpp"
+#include "castor/legacymsg/TapeMarshal.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <vdqm_api.h>
@@ -160,7 +160,7 @@ size_t castor::tape::tapeserver::daemon::AdminAcceptHandler::marshalTapeStatRepl
       ": Pointer to destination buffer is NULL");
   }
 
-  size_t msg_len=(3*sizeof(uint32_t)) + sizeof(uint16_t) + body.number_of_drives*sizeof(struct castor::tape::legacymsg::TapeStatDriveEntry); // upperbound: header + number_of_drives + drive entries
+  size_t msg_len=(3*sizeof(uint32_t)) + sizeof(uint16_t) + body.number_of_drives*sizeof(struct castor::legacymsg::TapeStatDriveEntry); // upperbound: header + number_of_drives + drive entries
   
   // Check that the message header buffer is big enough
   if(msg_len > dstLen) {
@@ -381,7 +381,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::dispatchJob(
 //------------------------------------------------------------------------------
 // readJobMsgHeader
 //------------------------------------------------------------------------------
-castor::tape::legacymsg::MessageHeader
+castor::legacymsg::MessageHeader
   castor::tape::tapeserver::daemon::AdminAcceptHandler::readJobMsgHeader(
     const int connection) throw(castor::exception::Exception) {
   // Read in the message header
@@ -419,7 +419,7 @@ castor::tape::legacymsg::MessageHeader
 //------------------------------------------------------------------------------
 // readTapeConfigMsgBody
 //------------------------------------------------------------------------------
-castor::tape::legacymsg::TapeConfigRequestMsgBody
+castor::legacymsg::TapeConfigRequestMsgBody
   castor::tape::tapeserver::daemon::AdminAcceptHandler::readTapeConfigMsgBody(
     const int connection, const uint32_t len)
     throw(castor::exception::Exception) {
@@ -452,7 +452,7 @@ castor::tape::legacymsg::TapeConfigRequestMsgBody
 //------------------------------------------------------------------------------
 // readTapeStatMsgBody
 //------------------------------------------------------------------------------
-castor::tape::legacymsg::TapeStatRequestMsgBody
+castor::legacymsg::TapeStatRequestMsgBody
   castor::tape::tapeserver::daemon::AdminAcceptHandler::readTapeStatMsgBody(
     const int connection, const uint32_t len)
     throw(castor::exception::Exception) {

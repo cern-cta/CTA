@@ -23,9 +23,9 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
-#include "castor/tape/legacymsg/MessageHeader.hpp"
-#include "castor/tape/legacymsg/RmcMountMsgBody.hpp"
-#include "castor/tape/legacymsg/RmcUnmountMsgBody.hpp"
+#include "castor/legacymsg/MessageHeader.hpp"
+#include "castor/legacymsg/RmcMountMsgBody.hpp"
+#include "castor/legacymsg/RmcUnmountMsgBody.hpp"
 #include "castor/tape/tapeserver/daemon/Rmc.hpp"
 
 #include <unistd.h>

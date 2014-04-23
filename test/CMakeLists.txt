@@ -84,6 +84,9 @@ add_executable(castorUnitTests
   ../castor/io/PollReactorImplTest.cpp
   ../castor/io/DummyPollEventHandler.cpp
   ../castor/io/DummyPollReactor.cpp
+  ../castor/legacymsg/RmcMarshalTest.cpp
+  ../castor/legacymsg/TapeMarshalTest.cpp
+  ../castor/legacymsg/VdqmMarshalTest.cpp
   ../castor/log/DummyLogger.cpp
   ../castor/log/LoggerImplementationTest.cpp
   ../castor/log/ParamTest.cpp
@@ -91,9 +94,6 @@ add_executable(castorUnitTests
   ../castor/log/StringLoggerTest.cpp
   ../castor/server/DaemonTest.cpp
   ../castor/tape/tapeserver/client/ClientProxyTest.cpp
-  ../castor/tape/legacymsg/RmcMarshalTest.cpp
-  ../castor/tape/legacymsg/VdqmMarshalTest.cpp
-  ../castor/tape/legacymsg/TapeMarshalTest.cpp
   ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/DebugMountSessionForVdqmProtocol.cpp
 #  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp

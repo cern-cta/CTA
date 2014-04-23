@@ -27,10 +27,10 @@
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
-#include "castor/tape/legacymsg/MessageHeader.hpp"
-#include "castor/tape/legacymsg/TapeConfigRequestMsgBody.hpp"
-#include "castor/tape/legacymsg/TapeStatRequestMsgBody.hpp"
-#include "castor/tape/legacymsg/TapeStatReplyMsgBody.hpp"
+#include "castor/legacymsg/MessageHeader.hpp"
+#include "castor/legacymsg/TapeConfigRequestMsgBody.hpp"
+#include "castor/legacymsg/TapeStatRequestMsgBody.hpp"
+#include "castor/legacymsg/TapeStatReplyMsgBody.hpp"
 
 #include <poll.h>
 

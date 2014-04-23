@@ -22,7 +22,7 @@
 
 #pragma once
 
-#include "castor/tape/legacymsg/MessageHeader.hpp"
+#include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 
 namespace castor     {

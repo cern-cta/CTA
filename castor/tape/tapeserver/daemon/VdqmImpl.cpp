@@ -22,9 +22,9 @@
 
 #include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
-#include "castor/tape/legacymsg/CommonMarshal.hpp"
-#include "castor/tape/legacymsg/RtcpMarshal.hpp"
-#include "castor/tape/legacymsg/VdqmMarshal.hpp"
+#include "castor/legacymsg/CommonMarshal.hpp"
+#include "castor/legacymsg/RtcpMarshal.hpp"
+#include "castor/legacymsg/VdqmMarshal.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmImpl.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
@@ -248,7 +248,7 @@ void castor::tape::tapeserver::daemon::VdqmImpl::readCommitAck(const int fd) thr
 //-----------------------------------------------------------------------------
 // readAck
 //-----------------------------------------------------------------------------
-castor::tape::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmImpl::readAck(const int fd) throw(castor::exception::Exception) {
+castor::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmImpl::readAck(const int fd) throw(castor::exception::Exception) {
   char buf[12]; // Magic + type + len
   legacymsg::MessageHeader ack;
 
@@ -271,7 +271,7 @@ castor::tape::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmImp
 //-----------------------------------------------------------------------------
 // readDriveStatusMsgHeader
 //-----------------------------------------------------------------------------
-castor::tape::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmImpl::readDriveStatusMsgHeader(const int fd) throw(castor::exception::Exception) {
+castor::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmImpl::readDriveStatusMsgHeader(const int fd) throw(castor::exception::Exception) {
   char buf[12]; // Magic + type + len
   legacymsg::MessageHeader header;
 
@@ -312,7 +312,7 @@ castor::tape::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmImp
 //-----------------------------------------------------------------------------
 // readDriveStatusMsgBody
 //-----------------------------------------------------------------------------
-castor::tape::legacymsg::VdqmDrvRqstMsgBody castor::tape::tapeserver::daemon::VdqmImpl::readDriveStatusMsgBody(const int fd, const uint32_t bodyLen) throw(castor::exception::Exception) {
+castor::legacymsg::VdqmDrvRqstMsgBody castor::tape::tapeserver::daemon::VdqmImpl::readDriveStatusMsgBody(const int fd, const uint32_t bodyLen) throw(castor::exception::Exception) {
   char buf[VDQM_MSGBUFSIZ];
 
   if(sizeof(buf) < bodyLen) {

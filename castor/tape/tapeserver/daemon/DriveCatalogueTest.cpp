@@ -292,7 +292,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   }
 
   // Receive a vdqm job
-  castor::tape::legacymsg::RtcpJobRqstMsgBody job;
+  castor::legacymsg::RtcpJobRqstMsgBody job;
   job.volReqId = 1111;
   job.clientPort = 2222;
   job.clientEuid = 3333;
@@ -362,7 +362,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_DOWN, catalogue.getState("UNIT"));
   ASSERT_NO_THROW(catalogue.configureUp("UNIT"));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP, catalogue.getState("UNIT"));
-  castor::tape::legacymsg::RtcpJobRqstMsgBody job;
+  castor::legacymsg::RtcpJobRqstMsgBody job;
   job.volReqId = 1111;
   job.clientPort = 2222;
   job.clientEuid = 3333;

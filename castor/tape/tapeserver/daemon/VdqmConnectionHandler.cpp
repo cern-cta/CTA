@@ -180,7 +180,7 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::logVdqmJobReceptio
 //------------------------------------------------------------------------------
 // readJobMsg
 //------------------------------------------------------------------------------
-castor::tape::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsg(const int fd) throw(castor::exception::Exception) {
+castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsg(const int fd) throw(castor::exception::Exception) {
   const legacymsg::MessageHeader header = readJobMsgHeader(fd);
   const legacymsg::RtcpJobRqstMsgBody body = readJobMsgBody(fd,
     header.lenOrStatus);
@@ -191,7 +191,7 @@ castor::tape::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::Vd
 //------------------------------------------------------------------------------
 // readJobMsgHeader
 //------------------------------------------------------------------------------
-castor::tape::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsgHeader(const int fd) throw(castor::exception::Exception) {
+castor::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsgHeader(const int fd) throw(castor::exception::Exception) {
   // Read in the message header
   char buf[3 * sizeof(uint32_t)]; // magic + request type + len
   io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
@@ -227,7 +227,7 @@ castor::tape::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmCon
 //------------------------------------------------------------------------------
 // readJobMsgBody
 //------------------------------------------------------------------------------
-castor::tape::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsgBody(const int fd, const uint32_t len) throw(castor::exception::Exception) {
+castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsgBody(const int fd, const uint32_t len) throw(castor::exception::Exception) {
   char buf[1024];
 
   if(sizeof(buf) < len) {

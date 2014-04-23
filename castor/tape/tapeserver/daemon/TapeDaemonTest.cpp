@@ -59,7 +59,7 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   std::ostringstream stdErr;
   const std::string programName = "unittests";
   castor::log::DummyLogger log(programName);
-  castor::tape::legacymsg::RtcpJobRqstMsgBody job;
+  castor::legacymsg::RtcpJobRqstMsgBody job;
   job.volReqId = 1111;
   job.clientPort = 2222;
   job.clientEuid = 3333;
