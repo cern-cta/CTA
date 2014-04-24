@@ -45,6 +45,12 @@ public:
     reset();
   }
   
+  
+  void markAsFailed(){
+    m_failed = true;
+    m_fileBlock = -1;
+    m_tapeFileBlock = -1;
+  }
   /**
    * Reset the values of all the 
    */
