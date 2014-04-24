@@ -475,6 +475,7 @@ namespace castor {
         
         /**
          * Closes the file by writing the corresponding trailer on tape
+         * HAS TO BE CALL EXPLICITLY
          */
         void close() throw (Exception);
         
