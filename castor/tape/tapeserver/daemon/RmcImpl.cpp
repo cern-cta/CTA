@@ -25,7 +25,7 @@
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/RmcMarshal.hpp"
 #include "castor/tape/tapeserver/daemon/RmcImpl.hpp"
-#include "castor/tape/tapeserver/daemon/ScsiLibraryDriveName.hpp"
+#include "castor/tape/tapeserver/daemon/ScsiLibrarySlot.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Castor_limits.h"
@@ -50,7 +50,7 @@ castor::tape::tapeserver::daemon::RmcImpl::~RmcImpl() throw() {
 //------------------------------------------------------------------------------
 // mountTape
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::mountTape(const std::string &vid, const std::string &drive) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::RmcImpl::mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
   // Verify parameters
   if(vid.empty()) {
     castor::exception::Internal ex;
@@ -63,53 +63,53 @@ void castor::tape::tapeserver::daemon::RmcImpl::mountTape(const std::string &vid
       ": vid=" << vid << " maxLen=" << CA_MAXVIDLEN << " actualLen=" << vid.length();
     throw ex;
   }
-  if(drive.empty()) {
+  if(librarySlot.empty()) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to mount tape: drive is an empty string"
+    ex.getMessage() << "Failed to mount tape: librarySlot is an empty string"
       ": vid=" << vid;
     throw ex;
   }
 
-  // Dispatch the appropriate helper method depending on drive type
-  switch(getDriveType(drive)) {
-  case RMC_DRIVE_TYPE_ACS:
-    mountTapeAcs(vid, drive);
+  // Dispatch the appropriate helper method depending on library slot type
+  switch(getLibrarySlotType(librarySlot)) {
+  case RMC_LIBRARY_SLOT_TYPE_ACS:
+    mountTapeAcs(vid, librarySlot);
     break;
-  case RMC_DRIVE_TYPE_MANUAL:
+  case RMC_LIBRARY_SLOT_TYPE_MANUAL:
     mountTapeManual(vid);
     break;
-  case RMC_DRIVE_TYPE_SCSI:
-    mountTapeScsi(vid, drive);
+  case RMC_LIBRARY_SLOT_TYPE_SCSI:
+    mountTapeScsi(vid, librarySlot);
     break;
   default:
     {
       castor::exception::Internal ex;
-      ex.getMessage() << "Failed to mount tape: Unknown drive type"
-        ": vid=" << vid << " drive=" << drive;
+      ex.getMessage() << "Failed to mount tape: Unknown library slot type"
+        ": vid=" << vid << " librarySlot=" << librarySlot;
       throw ex;
     }
   }
 }
 
 //------------------------------------------------------------------------------
-// getDriveType
+// getLibrarySlotType
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::RmcImpl::RmcDriveType castor::tape::tapeserver::daemon::RmcImpl::getDriveType(const std::string &drive) throw() {
-  if(0 == drive.find("acs@")) {
-    return RMC_DRIVE_TYPE_ACS;
-  } else if(0 == drive.find("manual")) {
-    return RMC_DRIVE_TYPE_MANUAL;
-  } else if(0 == drive.find("smc@")) {
-    return RMC_DRIVE_TYPE_SCSI;
+castor::tape::tapeserver::daemon::RmcImpl::RmcLibrarySlotType castor::tape::tapeserver::daemon::RmcImpl::getLibrarySlotType(const std::string &librarySlot) throw() {
+  if(0 == librarySlot.find("acs@")) {
+    return RMC_LIBRARY_SLOT_TYPE_ACS;
+  } else if(0 == librarySlot.find("manual")) {
+    return RMC_LIBRARY_SLOT_TYPE_MANUAL;
+  } else if(0 == librarySlot.find("smc@")) {
+    return RMC_LIBRARY_SLOT_TYPE_SCSI;
   } else {
-    return RMC_DRIVE_TYPE_UNKNOWN;
+    return RMC_LIBRARY_SLOT_TYPE_UNKNOWN;
   }
 }
 
 //------------------------------------------------------------------------------
 // mountTapeAcs
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::mountTapeAcs(const std::string &vid, const std::string &drive) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::RmcImpl::mountTapeAcs(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
@@ -121,20 +121,20 @@ void castor::tape::tapeserver::daemon::RmcImpl::mountTapeManual(const std::strin
 //------------------------------------------------------------------------------
 // mountTapeScsi
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::mountTapeScsi(const std::string &vid, const std::string &drive) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::RmcImpl::mountTapeScsi(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
   std::ostringstream task;
-  task << "mount tape " << vid << " in " << drive;
+  task << "mount tape " << vid << " in " << librarySlot;
 
   try {
-    const ScsiLibraryDriveName libraryDriveName(drive);
+    const ScsiLibrarySlot parsedSlot(librarySlot);
 
-    castor::utils::SmartFd fd(connectToRmc(libraryDriveName.rmcHostName));
+    castor::utils::SmartFd fd(connectToRmc(parsedSlot.rmcHostName));
 
     legacymsg::RmcMountMsgBody body;
     body.uid = m_uid;
     body.gid = m_gid;
     castor::utils::copyString(body.vid, vid.c_str());
-    body.drvOrd = libraryDriveName.drvOrd;
+    body.drvOrd = parsedSlot.drvOrd;
     writeRmcMountMsg(fd.get(), body);
 
     const legacymsg::MessageHeader header = readRmcMsgHeader(fd.get());
@@ -143,7 +143,7 @@ void castor::tape::tapeserver::daemon::RmcImpl::mountTapeScsi(const std::string 
       if(0 != header.lenOrStatus) {
         castor::exception::Internal ex;
         ex.getMessage() << "Received error code from rmc running on " <<
-          libraryDriveName.rmcHostName << ": code=" << header.lenOrStatus;
+          parsedSlot.rmcHostName << ": code=" << header.lenOrStatus;
         throw ex;
       }
       break;
@@ -156,7 +156,7 @@ void castor::tape::tapeserver::daemon::RmcImpl::mountTapeScsi(const std::string 
         errorBuf[sizeof(errorBuf) - 1] = '\0';
         castor::exception::Internal ex;
         ex.getMessage() << "Received error message from rmc running on " <<
-          libraryDriveName.rmcHostName << ": " << errorBuf;
+          parsedSlot.rmcHostName << ": " << errorBuf;
         throw ex;
       }
       break;
@@ -164,7 +164,7 @@ void castor::tape::tapeserver::daemon::RmcImpl::mountTapeScsi(const std::string 
       {
         castor::exception::Internal ex;
         ex.getMessage() <<
-          "Reply message from rmc running on " << libraryDriveName.rmcHostName <<
+          "Reply message from rmc running on " << parsedSlot.rmcHostName <<
           " has an unexpected request type"
           ": reqType=0x" << header.reqType;
         throw ex;
@@ -180,7 +180,7 @@ void castor::tape::tapeserver::daemon::RmcImpl::mountTapeScsi(const std::string 
 //------------------------------------------------------------------------------
 // unmountTape
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::unmountTape(const std::string &vid, const std::string &drive) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::RmcImpl::unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
   // Verify parameters
   if(vid.empty()) {
     castor::exception::Internal ex;
@@ -193,29 +193,29 @@ void castor::tape::tapeserver::daemon::RmcImpl::unmountTape(const std::string &v
       ": vid=" << vid << " maxLen=" << CA_MAXVIDLEN << " actualLen=" << vid.length();
     throw ex;
   }
-  if(drive.empty()) {
+  if(librarySlot.empty()) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to unmount tape: drive is an empty string"
+    ex.getMessage() << "Failed to unmount tape: librarySlot is an empty string"
       ": vid=" << vid;
     throw ex;
   }
 
-  // Dispatch the appropriate helper method depending on drive type
-  switch(getDriveType(drive)) {
-  case RMC_DRIVE_TYPE_ACS:
-    unmountTapeAcs(vid, drive);
+  // Dispatch the appropriate helper method depending on library slot type
+  switch(getLibrarySlotType(librarySlot)) {
+  case RMC_LIBRARY_SLOT_TYPE_ACS:
+    unmountTapeAcs(vid, librarySlot);
     break;
-  case RMC_DRIVE_TYPE_MANUAL:
+  case RMC_LIBRARY_SLOT_TYPE_MANUAL:
     unmountTapeManual(vid);
     break;
-  case RMC_DRIVE_TYPE_SCSI:
-    unmountTapeScsi(vid, drive);
+  case RMC_LIBRARY_SLOT_TYPE_SCSI:
+    unmountTapeScsi(vid, librarySlot);
     break;
   default:
     {
       castor::exception::Internal ex;
-      ex.getMessage() << "Failed to unmount tape: Unknown drive type"
-        ": vid=" << vid << " drive=" << drive;
+      ex.getMessage() << "Failed to unmount tape: Unknown library slot type"
+        ": vid=" << vid << " librarySlot=" << librarySlot;
       throw ex;
     }
   }
@@ -224,7 +224,7 @@ void castor::tape::tapeserver::daemon::RmcImpl::unmountTape(const std::string &v
 //------------------------------------------------------------------------------
 // unmountTapeAcs
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeAcs(const std::string &vid, const std::string &drive) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeAcs(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
@@ -236,20 +236,20 @@ void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeManual(const std::str
 //------------------------------------------------------------------------------
 // unmountTapeScsi
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeScsi(const std::string &vid, const std::string &drive) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeScsi(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
   std::ostringstream task;
-  task << "unmount tape " << vid << " from " << drive;
+  task << "unmount tape " << vid << " from " << librarySlot;
 
   try {
-    const ScsiLibraryDriveName libraryDriveName(drive);
+    const ScsiLibrarySlot parsedSlot(librarySlot);
 
-    castor::utils::SmartFd fd(connectToRmc(libraryDriveName.rmcHostName));
+    castor::utils::SmartFd fd(connectToRmc(parsedSlot.rmcHostName));
 
     legacymsg::RmcUnmountMsgBody body;
     body.uid = m_uid;
     body.gid = m_gid;
     castor::utils::copyString(body.vid, vid.c_str());
-    body.drvOrd = libraryDriveName.drvOrd;
+    body.drvOrd = parsedSlot.drvOrd;
     body.force = 0;
     writeRmcUnmountMsg(fd.get(), body);
 
@@ -259,7 +259,7 @@ void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeScsi(const std::strin
       if(0 != header.lenOrStatus) {
         castor::exception::Internal ex;
         ex.getMessage() << "Received error code from rmc running on " <<
-          libraryDriveName.rmcHostName << ": code=" << header.lenOrStatus;
+          parsedSlot.rmcHostName << ": code=" << header.lenOrStatus;
         throw ex;
       }
       break;
@@ -272,7 +272,7 @@ void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeScsi(const std::strin
         errorBuf[sizeof(errorBuf) - 1] = '\0';
         castor::exception::Internal ex;
         ex.getMessage() << "Received error message from rmc running on " <<
-          libraryDriveName.rmcHostName << ": " << errorBuf;
+          parsedSlot.rmcHostName << ": " << errorBuf;
         throw ex;
       }
       break;
@@ -280,7 +280,7 @@ void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeScsi(const std::strin
       {
         castor::exception::Internal ex;
         ex.getMessage() <<
-          "Reply message from rmc running on " << libraryDriveName.rmcHostName <<
+          "Reply message from rmc running on " << parsedSlot.rmcHostName <<
           " has an unexpected request type"
           ": reqType=0x" << header.reqType;
         throw ex;

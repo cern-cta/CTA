@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/ScsiLibraryDriveNameTest.cpp
+ *         castor/tape/tapeserver/daemon/ScsiLibrarySlotTest.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,13 +22,13 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/ScsiLibraryDriveName.hpp"
+#include "castor/tape/tapeserver/daemon/ScsiLibrarySlot.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-class castor_tape_tapeserver_daemon_ScsiLibraryDriveNameTest : public ::testing::Test {
+class castor_tape_tapeserver_daemon_ScsiLibrarySlotTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -38,24 +38,24 @@ protected:
   }
 };
 
-TEST_F(castor_tape_tapeserver_daemon_ScsiLibraryDriveNameTest, goodDayParsing) {
+TEST_F(castor_tape_tapeserver_daemon_ScsiLibrarySlotTest, goodDayParsing) {
   using namespace castor::tape::tapeserver::daemon;
  
-  ScsiLibraryDriveName drive;
-  ASSERT_EQ(std::string(""), drive.rmcHostName);
-  ASSERT_EQ((uint16_t)0, drive.drvOrd);
+  ScsiLibrarySlot slot;
+  ASSERT_EQ(std::string(""), slot.rmcHostName);
+  ASSERT_EQ((uint16_t)0, slot.drvOrd);
 
   const std::string str = "smc@rmc_host,4";
-  ASSERT_NO_THROW(drive = ScsiLibraryDriveName(str));
-  ASSERT_EQ(std::string("rmc_host"), drive.rmcHostName);
-  ASSERT_EQ((uint16_t)4, drive.drvOrd);
+  ASSERT_NO_THROW(slot = ScsiLibrarySlot(str));
+  ASSERT_EQ(std::string("rmc_host"), slot.rmcHostName);
+  ASSERT_EQ((uint16_t)4, slot.drvOrd);
 }
 
-TEST_F(castor_tape_tapeserver_daemon_ScsiLibraryDriveNameTest, badDayParsing) {
+TEST_F(castor_tape_tapeserver_daemon_ScsiLibrarySlotTest, badDayParsing) {
   using namespace castor::tape::tapeserver::daemon;
 
   const std::string str = "nonsense";
-  ASSERT_THROW(ScsiLibraryDriveName drive(str), castor::exception::Exception);
+  ASSERT_THROW(ScsiLibrarySlot slot(str), castor::exception::Exception);
 }
 
 } // namespace unitTests

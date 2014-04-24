@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/ScsiLibraryDriveName.hpp
+ *         castor/tape/tapeserver/daemon/ScsiLibrarySlot.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -33,13 +33,13 @@ namespace tapeserver {
 namespace daemon     {
 
 /**
- * Structure reprsenting a SCSI-library drive-name.
+ * Structure representing a SCSI library slot.
  */
-class ScsiLibraryDriveName {
+class ScsiLibrarySlot {
 public:
 
   /**
-   * The name of teh host on which the rmcd daemon is running.
+   * The name of the host on which the rmcd daemon is running.
    */
   std::string rmcHostName;
 
@@ -53,18 +53,18 @@ public:
    *
    * Sets all integer member-variables to 0.
    */
-  ScsiLibraryDriveName() throw();
+  ScsiLibrarySlot() throw();
 
   /**
    * Constructor.
    *
    * Initialises the member variables based on the result of parsing the
-   * specified SCSI-library drive-name.
+   * specified string representation of a SCSI library slot.
    *
-   * @param drive The SCSI-library drive-name.
+   * @param str The string representation of a SCSI library slot.
    */
-  ScsiLibraryDriveName(const std::string &drive) throw(castor::exception::Exception);
-}; // class ScsiLibraryDriveName
+  ScsiLibrarySlot(const std::string &str) throw(castor::exception::Exception);
+}; // class ScsiLibrarySlot
 
 } // namespace daemon
 } // namespace tapeserver

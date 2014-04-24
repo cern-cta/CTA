@@ -39,7 +39,7 @@ protected:
   }
 };
 
-TEST_F(castor_tape_tapeserver_daemon_RmcImplTest, getDriveType) {
+TEST_F(castor_tape_tapeserver_daemon_RmcImplTest, getLibrarySlotType) {
   using namespace castor::tape::tapeserver::daemon;
 
   const std::string programName = "unittests";
@@ -48,10 +48,10 @@ TEST_F(castor_tape_tapeserver_daemon_RmcImplTest, getDriveType) {
   
   RmcImpl rmc(log, netTimeout);
 
-  ASSERT_EQ(RmcImpl::RMC_DRIVE_TYPE_ACS, rmc.getDriveType("acs@rmc_host,1,2,3,4"));
-  ASSERT_EQ(RmcImpl::RMC_DRIVE_TYPE_MANUAL, rmc.getDriveType("manual"));
-  ASSERT_EQ(RmcImpl::RMC_DRIVE_TYPE_SCSI, rmc.getDriveType("smc@rmc_host,1"));
-  ASSERT_EQ(RmcImpl::RMC_DRIVE_TYPE_UNKNOWN, rmc.getDriveType("nonsense"));
+  ASSERT_EQ(RmcImpl::RMC_LIBRARY_SLOT_TYPE_ACS, rmc.getLibrarySlotType("acs@rmc_host,1,2,3,4"));
+  ASSERT_EQ(RmcImpl::RMC_LIBRARY_SLOT_TYPE_MANUAL, rmc.getLibrarySlotType("manual"));
+  ASSERT_EQ(RmcImpl::RMC_LIBRARY_SLOT_TYPE_SCSI, rmc.getLibrarySlotType("smc@rmc_host,1"));
+  ASSERT_EQ(RmcImpl::RMC_LIBRARY_SLOT_TYPE_UNKNOWN, rmc.getLibrarySlotType("nonsense"));
 }
 
 } // namespace unitTests

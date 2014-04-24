@@ -44,27 +44,25 @@ public:
 
   /**
    * Asks the remote media-changer daemon to mount the specified tape into the
-   * specified drive.
+   * drive in the specified library slot.
    *
    * @param vid The volume identifier of the tape.
-   * @param drive The drive in one of the following three forms corresponding
-   * to the three supported drive-loader types, namely acs, manual and smc:
+   * @param librarySlot The library slot in one of the following three forms:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
    * "manual" or "smc@rmc_host,drive_ordinal".
    */
-  void mountTape(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
+  void mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
 
   /**
    * Asks the remote media-changer daemon to unmount the specified tape from the
-   * specified drive.
+   * drive in the specified library slot.
    *
    * @param vid The volume identifier of the tape.
-   * @param drive The drive in one of the following three forms corresponding
-   * to the three supported drive-loader types, namely acs, manual and smc:
+   * @param librarySlot The library slot in one of the following three forms:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
    * "manual" or "smc@rmc_host,drive_ordinal".
    */
-  void unmountTape(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
+  void unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
 
 }; // class DummyRmc
 

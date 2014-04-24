@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/ScsiLibraryDriveName.cpp
+ *         castor/tape/tapeserver/daemon/ScsiLibrarySlot.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,34 +21,34 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
-#include "castor/tape/tapeserver/daemon/ScsiLibraryDriveName.hpp"
+#include "castor/tape/tapeserver/daemon/ScsiLibrarySlot.hpp"
 #include "castor/utils/utils.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::ScsiLibraryDriveName::ScsiLibraryDriveName()
+castor::tape::tapeserver::daemon::ScsiLibrarySlot::ScsiLibrarySlot()
   throw(): drvOrd(0) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::ScsiLibraryDriveName::ScsiLibraryDriveName(
-  const std::string &drive) throw(castor::exception::Exception): drvOrd(0) {
-  if(drive.find("smc@")) {
+castor::tape::tapeserver::daemon::ScsiLibrarySlot::ScsiLibrarySlot(
+  const std::string &str) throw(castor::exception::Exception): drvOrd(0) {
+  if(str.find("smc@")) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to construct ScsiLibraryDriveName"
-      ": Drive name must start with smc@: drive=" << drive;
+    ex.getMessage() << "Failed to construct ScsiLibrarySlot"
+      ": SCSI library slot must start with smc@: str=" << str;
     throw ex;
   }
 
-  const std::string::size_type indexOfComma = drive.find(',');
+  const std::string::size_type indexOfComma = str.find(',');
   if(std::string::npos == indexOfComma) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to construct ScsiLibraryDriveName"
-      ": Failed to find comma: Drive name must start with smc@host,"
-      ": drive=" << drive;
+    ex.getMessage() << "Failed to construct ScsiLibrarySlot"
+      ": Failed to find comma: SCSI library slot must start with smc@host,"
+      ": str=" << str;
     throw ex;
   }
 
@@ -56,26 +56,26 @@ castor::tape::tapeserver::daemon::ScsiLibraryDriveName::ScsiLibraryDriveName(
   const std::string::size_type hostLen = indexOfComma - indexOfAtSign - 1;
   if(0 == hostLen) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to construct ScsiLibraryDriveName"
-      ": Missing rmc host-name: drive=" << drive;
+    ex.getMessage() << "Failed to construct ScsiLibrarySlot"
+      ": Missing rmc host-name: str=" << str;
     throw ex;
   }
 
-  rmcHostName = drive.substr(indexOfAtSign + 1, hostLen);
+  rmcHostName = str.substr(indexOfAtSign + 1, hostLen);
 
-  const std::string::size_type drvOrdLen = drive.length() - indexOfComma;
+  const std::string::size_type drvOrdLen = str.length() - indexOfComma;
   if(0 == drvOrdLen) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to construct ScsiLibraryDriveName"
-      ": Missing drive ordinal: drive=" << drive;
+    ex.getMessage() << "Failed to construct ScsiLibrarySlot"
+      ": Missing str ordinal: str=" << str;
     throw ex;
   }
 
-  const std::string drvOrdStr = drive.substr(indexOfComma + 1, drvOrdLen);
+  const std::string drvOrdStr = str.substr(indexOfComma + 1, drvOrdLen);
   if(!castor::utils::isValidUInt(drvOrdStr.c_str())) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to construct ScsiLibraryDriveName"
-      ": Drive ordinal is not a valid unsigned integer: drive=" << drive;
+    ex.getMessage() << "Failed to construct ScsiLibrarySlot"
+      ": Drive ordinal is not a valid unsigned integer: str=" << str;
     throw ex;
   }
 

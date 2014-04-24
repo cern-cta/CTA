@@ -4,7 +4,7 @@ add_executable(tapeserverd
   DriveCatalogue.cpp
   Rmc.cpp
   RmcImpl.cpp
-  ScsiLibraryDriveName.cpp
+  ScsiLibrarySlot.cpp
   TapeDaemon.cpp
   TapeDaemonMain.cpp
   Vdqm.cpp

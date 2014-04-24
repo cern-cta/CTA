@@ -58,47 +58,44 @@ public:
 
   /**
    * Asks the remote media-changer daemon to mount the specified tape into the
-   * specified drive.
+   * drive in the specified library slot.
    *
    * @param vid The volume identifier of the tape.
-   * @param drive The drive in one of the following three forms corresponding
-   * to the three supported drive-loader types, namely acs, manual and smc:
+   * @param librarySlot The library slot in one of the following three forms:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
    * "manual" or "smc@rmc_host,drive_ordinal".
    */
-  void mountTape(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
+  void mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
 
   /**
    * Asks the remote media-changer daemon to unmount the specified tape from the
-   * specified drive.
+   * drive in the specified library slot.
    *
    * @param vid The volume identifier of the tape.
-   * @param drive The drive in one of the following three forms corresponding
-   * to the three supported drive-loader types, namely acs, manual and smc:
+   * @param librarySlot The library slot in one of the following three forms:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
    * "manual" or "smc@rmc_host,drive_ordinal".
    */
-  void unmountTape(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
+  void unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
 
   /**
-   * Enumeration of the different types of library drive-name.
+   * Enumeration of the different types of library slot.
    */
-  enum RmcDriveType {
-    RMC_DRIVE_TYPE_ACS,
-    RMC_DRIVE_TYPE_MANUAL,
-    RMC_DRIVE_TYPE_SCSI,
-    RMC_DRIVE_TYPE_UNKNOWN};
+  enum RmcLibrarySlotType {
+    RMC_LIBRARY_SLOT_TYPE_ACS,
+    RMC_LIBRARY_SLOT_TYPE_MANUAL,
+    RMC_LIBRARY_SLOT_TYPE_SCSI,
+    RMC_LIBRARY_SLOT_TYPE_UNKNOWN};
 
   /**
-   * Returns the type of the specified library drive-name.
+   * Returns the type of the specified string representation of a library slot.
    *
-   * @param drive The drive in one of the following three forms corresponding
-   * to the three supported drive-loader types, namely acs, manual and smc:
+   * @param librarySlot The library slot in one of the following three forms:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
    * "manual" or "smc@rmc_host,drive_ordinal".
-   * @return The drive type.
+   * @return The library slot type.
    */
-  RmcDriveType getDriveType(const std::string &drive) throw();
+  RmcLibrarySlotType getLibrarySlotType(const std::string &librarySlot) throw();
 
 protected:
 
@@ -130,13 +127,13 @@ protected:
 
   /**
    * Asks the remote media-changer daemon to mount the specified tape into the
-   * specified drive in an ACS compatible tape-library.
+   * tape drive located in the specified ACS library slot.
    *
    * @param vid The volume identifier of the tape.
-   * @param drive The drive in the following form:
+   * @param librarySlot The library slot in the following form:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER".
    */
-  void mountTapeAcs(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
+  void mountTapeAcs(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
 
   /**
    * Logs a request to the tape-operator to manually mount the specified tape.
@@ -147,23 +144,23 @@ protected:
 
   /**
    * Asks the remote media-changer daemon to mount the specified tape into the
-   * specified drive in a SCSI compatible tape-library.
+   * drive located in the specified SCSI library slot.
    *    
    * @param vid The volume identifier of the tape.
-   * @param drive The drive in the following form:
+   * @param librarySlot The library slot in the following form:
    * "smc@rmc_host,drive_ordinal".
    */
-  void mountTapeScsi(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
+  void mountTapeScsi(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
 
   /**
    * Asks the remote media-changer daemon to unmount the specified tape from the
-   * specified drive in an ACS compatible tape-library.
+   * drive located in the specified an ACS library slot.
    *
    * @param vid The volume identifier of the tape.
-   * @param drive The drive in the following form:
+   * @param librarySlot The library slot in the following form:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER".
    */
-  void unmountTapeAcs(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
+  void unmountTapeAcs(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
 
   /**
    * Logs a request to the tape-operator to manually unmount the specified tape.
@@ -174,13 +171,13 @@ protected:
 
   /**
    * Asks the remote media-changer daemon to unmount the specified tape from the
-   * specified drive in a SCSI compatible tape-library.
+   * drive located in the specified SCSI compatible library slot.
    *    
    * @param vid The volume identifier of the tape.
-   * @param drive The drive in the following form:
+   * @param librarySlot The library slot in the following form:
    * "smc@rmc_host,drive_ordinal".
    */
-  void unmountTapeScsi(const std::string &vid, const std::string &drive) throw(castor::exception::Exception);
+  void unmountTapeScsi(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
 
   /**
    * Connects to the rmcd daemon.

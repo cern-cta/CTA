@@ -31,11 +31,11 @@ castor::tape::tapeserver::daemon::DummyRmc::~DummyRmc() throw() {
 //------------------------------------------------------------------------------
 // mountTape
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyRmc::mountTape(const std::string &vid, const std::string &drive) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DummyRmc::mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
 // unmountTape
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyRmc::unmountTape(const std::string &vid, const std::string &drive) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DummyRmc::unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
 }
