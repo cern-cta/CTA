@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/DummyVmgr.hpp
+ *         castor/legacymsg/RmcProxyDummy.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,28 +20,22 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "castor/legacymsg/RmcProxyDummy.hpp"
 
-#include "castor/legacymsg/VmgrProxy.hpp"
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::legacymsg::RmcProxyDummy::~RmcProxyDummy() throw() {
+}
 
-namespace castor {
-namespace legacymsg {
+//------------------------------------------------------------------------------
+// mountTape
+//------------------------------------------------------------------------------
+void castor::legacymsg::RmcProxyDummy::mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+}
 
-/**
- * A dummy vmgr proxy.
- *
- * The main goal of this class is to facilitate the development of unit tests.
- */
-class DummyVmgrProxy: public VmgrProxy {
-public:
-
-  /**
-   * Destructor.
-   */
-  ~DummyVmgrProxy() throw();
-
-}; // class DummyVmgrProxy
-
-} // namespace legacymsg
-} // namespace castor
-
+//------------------------------------------------------------------------------
+// unmountTape
+//------------------------------------------------------------------------------
+void castor::legacymsg::RmcProxyDummy::unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+}

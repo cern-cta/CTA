@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/DummyRmcProxy.hpp
+ *         castor/legacymsg/DummyVmgr.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,47 +22,25 @@
 
 #pragma once
 
-#include "castor/legacymsg/RmcProxy.hpp"
+#include "castor/legacymsg/VmgrProxy.hpp"
 
 namespace castor {
 namespace legacymsg {
 
 /**
- * A dummy rmc proxy.
+ * A dummy vmgr proxy.
  *
  * The main goal of this class is to facilitate the development of unit tests.
  */
-class DummyRmcProxy: public RmcProxy {
+class VmgrProxyDummy: public VmgrProxy {
 public:
 
   /**
    * Destructor.
    */
-  ~DummyRmcProxy() throw();
+  ~VmgrProxyDummy() throw();
 
-  /**
-   * Asks the remote media-changer daemon to mount the specified tape into the
-   * drive in the specified library slot.
-   *
-   * @param vid The volume identifier of the tape.
-   * @param librarySlot The library slot in one of the following three forms:
-   * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
-   * "manual" or "smc@rmc_host,drive_ordinal".
-   */
-  void mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
-
-  /**
-   * Asks the remote media-changer daemon to unmount the specified tape from the
-   * drive in the specified library slot.
-   *
-   * @param vid The volume identifier of the tape.
-   * @param librarySlot The library slot in one of the following three forms:
-   * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
-   * "manual" or "smc@rmc_host,drive_ordinal".
-   */
-  void unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
-
-}; // class DummyRmcProxy
+}; // class VmgrProxyDummy
 
 } // namespace legacymsg
 } // namespace castor

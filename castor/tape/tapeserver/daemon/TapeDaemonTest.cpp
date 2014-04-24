@@ -23,9 +23,9 @@
  *****************************************************************************/
 
 #include "castor/io/DummyPollReactor.hpp"
-#include "castor/legacymsg/DummyRmcProxy.hpp"
-#include "castor/legacymsg/DummyVdqmProxy.hpp"
-#include "castor/legacymsg/DummyVmgrProxy.hpp"
+#include "castor/legacymsg/RmcProxyDummy.hpp"
+#include "castor/legacymsg/VdqmProxyDummy.hpp"
+#include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/log/DummyLogger.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -69,9 +69,9 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
   castor::tape::utils::TpconfigLines tpconfigLines;
-  castor::legacymsg::DummyVdqmProxy vdqm(job);
-  castor::legacymsg::DummyVmgrProxy vmgr;
-  castor::legacymsg::DummyRmcProxy rmc;
+  castor::legacymsg::VdqmProxyDummy vdqm(job);
+  castor::legacymsg::VmgrProxyDummy vmgr;
+  castor::legacymsg::RmcProxyDummy rmc;
   castor::io::DummyPollReactor reactor;
   std::auto_ptr<TapeDaemon> daemon;
 

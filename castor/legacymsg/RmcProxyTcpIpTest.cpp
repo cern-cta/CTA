@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/RmcProxyImplTest.cpp
+ *         castor/tape/tapeserver/daemon/RmcProxyTcpIpTest.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,13 +23,13 @@
  *****************************************************************************/
 
 #include "castor/log/DummyLogger.hpp"
-#include "castor/legacymsg/RmcProxyImpl.hpp"
+#include "castor/legacymsg/RmcProxyTcpIp.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-class castor_tape_tapeserver_daemon_RmcProxyImplTest : public ::testing::Test {
+class castor_tape_tapeserver_daemon_RmcProxyTcpIpTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -39,19 +39,19 @@ protected:
   }
 };
 
-TEST_F(castor_tape_tapeserver_daemon_RmcProxyImplTest, getLibrarySlotType) {
+TEST_F(castor_tape_tapeserver_daemon_RmcProxyTcpIpTest, getLibrarySlotType) {
   using namespace castor::legacymsg;
 
   const std::string programName = "unittests";
   castor::log::DummyLogger log(programName);
   const int netTimeout = 1; // Timeout in seconds
   
-  RmcProxyImpl rmc(log, netTimeout);
+  RmcProxyTcpIp rmc(log, netTimeout);
 
-  ASSERT_EQ(RmcProxyImpl::RMC_LIBRARY_SLOT_TYPE_ACS, rmc.getLibrarySlotType("acs@rmc_host,1,2,3,4"));
-  ASSERT_EQ(RmcProxyImpl::RMC_LIBRARY_SLOT_TYPE_MANUAL, rmc.getLibrarySlotType("manual"));
-  ASSERT_EQ(RmcProxyImpl::RMC_LIBRARY_SLOT_TYPE_SCSI, rmc.getLibrarySlotType("smc@rmc_host,1"));
-  ASSERT_EQ(RmcProxyImpl::RMC_LIBRARY_SLOT_TYPE_UNKNOWN, rmc.getLibrarySlotType("nonsense"));
+  ASSERT_EQ(RmcProxyTcpIp::RMC_LIBRARY_SLOT_TYPE_ACS, rmc.getLibrarySlotType("acs@rmc_host,1,2,3,4"));
+  ASSERT_EQ(RmcProxyTcpIp::RMC_LIBRARY_SLOT_TYPE_MANUAL, rmc.getLibrarySlotType("manual"));
+  ASSERT_EQ(RmcProxyTcpIp::RMC_LIBRARY_SLOT_TYPE_SCSI, rmc.getLibrarySlotType("smc@rmc_host,1"));
+  ASSERT_EQ(RmcProxyTcpIp::RMC_LIBRARY_SLOT_TYPE_UNKNOWN, rmc.getLibrarySlotType("nonsense"));
 }
 
 } // namespace unitTests

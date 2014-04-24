@@ -84,21 +84,21 @@ add_executable(castorUnitTests
   ../castor/io/PollReactorImplTest.cpp
   ../castor/io/DummyPollEventHandler.cpp
   ../castor/io/DummyPollReactor.cpp
-  ../castor/legacymsg/DummyRmcProxy.cpp
-  ../castor/legacymsg/DummyVdqmProxy.cpp
-  ../castor/legacymsg/DummyVmgrProxy.cpp
+  ../castor/legacymsg/RmcProxyDummy.cpp
+  ../castor/legacymsg/VdqmProxyDummy.cpp
+  ../castor/legacymsg/VmgrProxyDummy.cpp
   ../castor/legacymsg/RmcMarshalTest.cpp
   ../castor/legacymsg/RmcProxy.cpp
-  ../castor/legacymsg/RmcProxyImpl.cpp
-  ../castor/legacymsg/RmcProxyImplTest.cpp
+  ../castor/legacymsg/RmcProxyTcpIp.cpp
+  ../castor/legacymsg/RmcProxyTcpIpTest.cpp
   ../castor/legacymsg/ScsiLibrarySlot.cpp
   ../castor/legacymsg/ScsiLibrarySlotTest.cpp
   ../castor/legacymsg/TapeMarshalTest.cpp
   ../castor/legacymsg/VdqmMarshalTest.cpp
   ../castor/legacymsg/VdqmProxy.cpp
-  ../castor/legacymsg/VdqmProxyImpl.cpp
+  ../castor/legacymsg/VdqmProxyTcpIp.cpp
   ../castor/legacymsg/VmgrProxy.cpp
-  ../castor/legacymsg/VmgrProxyImpl.cpp
+  ../castor/legacymsg/VmgrProxyTcpIp.cpp
   ../castor/log/DummyLogger.cpp
   ../castor/log/LoggerImplementationTest.cpp
   ../castor/log/ParamTest.cpp

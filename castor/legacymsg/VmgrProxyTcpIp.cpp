@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/legacymsg/VmgrProxyImpl.cpp
+ *                castor/legacymsg/VmgrProxyTcpIp.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,13 +21,13 @@
  *****************************************************************************/
 
 #include "castor/io/io.hpp"
-#include "castor/legacymsg/VmgrProxyImpl.hpp"
+#include "castor/legacymsg/VmgrProxyTcpIp.hpp"
 #include "castor/utils/SmartFd.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::legacymsg::VmgrProxyImpl::VmgrProxyImpl(
+castor::legacymsg::VmgrProxyTcpIp::VmgrProxyTcpIp(
   log::Logger &log,
   const std::string &vmgrHostName,
   const unsigned short vmgrPort,
@@ -41,13 +41,13 @@ castor::legacymsg::VmgrProxyImpl::VmgrProxyImpl(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::legacymsg::VmgrProxyImpl::~VmgrProxyImpl() throw() {
+castor::legacymsg::VmgrProxyTcpIp::~VmgrProxyTcpIp() throw() {
 }
 
 //-----------------------------------------------------------------------------
 // connectToVmgr
 //-----------------------------------------------------------------------------
-int castor::legacymsg::VmgrProxyImpl::connectToVmgr() const throw(castor::exception::Exception) {
+int castor::legacymsg::VmgrProxyTcpIp::connectToVmgr() const throw(castor::exception::Exception) {
   castor::utils::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(io::connectWithTimeout(m_vmgrHostName, m_vmgrPort,

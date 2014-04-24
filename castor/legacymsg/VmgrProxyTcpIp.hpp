@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/VmgrProxyImpl.hpp
+ *         castor/legacymsg/VmgrProxyTcpIp.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -31,7 +31,7 @@ namespace legacymsg {
 /**
  * A concrete implementation of the interface to the vmgr daemon.
  */
-class VmgrProxyImpl: public VmgrProxy {
+class VmgrProxyTcpIp: public VmgrProxy {
 public:
   /**
    * Constructor.
@@ -43,12 +43,12 @@ public:
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    */
-  VmgrProxyImpl(log::Logger &log, const std::string &vmgrHostName, const unsigned short vmgrPort, const int netTimeout) throw();
+  VmgrProxyTcpIp(log::Logger &log, const std::string &vmgrHostName, const unsigned short vmgrPort, const int netTimeout) throw();
 
   /**
    * Destructor.
    */
-  ~VmgrProxyImpl() throw();
+  ~VmgrProxyTcpIp() throw();
 
 private:
 
@@ -80,7 +80,7 @@ private:
    */
   int connectToVmgr() const throw(castor::exception::Exception);
 
-}; // class VmgrProxyImpl
+}; // class VmgrProxyTcpIp
 
 } // namespace legacymsg
 } // namespace castor

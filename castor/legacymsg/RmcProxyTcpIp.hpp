@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/RmcProxyImpl.hpp
+ *         castor/tape/tapeserver/daemon/RmcProxyTcpIp.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -37,7 +37,7 @@ namespace legacymsg {
 /**
  * A concrete implementation of the interface to the rmc daemon.
  */
-class RmcProxyImpl: public RmcProxy {
+class RmcProxyTcpIp: public RmcProxy {
 public:
 
   /**
@@ -47,12 +47,12 @@ public:
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    */
-  RmcProxyImpl(log::Logger &log, const int netTimeout) throw();
+  RmcProxyTcpIp(log::Logger &log, const int netTimeout) throw();
 
   /**
    * Destructor.
    */
-  ~RmcProxyImpl() throw();
+  ~RmcProxyTcpIp() throw();
 
   /**
    * Asks the remote media-changer daemon to mount the specified tape into the
@@ -211,7 +211,7 @@ protected:
    */
   void writeRmcUnmountMsg(const int fd, const RmcUnmountMsgBody &body) throw(castor::exception::Exception);
 
-}; // class RmcProxyImpl
+}; // class RmcProxyTcpIp
 
 } // namespace legacymsg
 } // namespace castor

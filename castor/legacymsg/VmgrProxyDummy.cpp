@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/DummyVmgrProxy.cpp
+ *         castor/legacymsg/VmgrProxyDummy.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,10 +20,10 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/DummyVmgrProxy.hpp"
+#include "castor/legacymsg/VmgrProxyDummy.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::legacymsg::DummyVmgrProxy::~DummyVmgrProxy() throw() {
+castor::legacymsg::VmgrProxyDummy::~VmgrProxyDummy() throw() {
 }
