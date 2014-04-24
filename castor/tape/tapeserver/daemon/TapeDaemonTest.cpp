@@ -24,8 +24,8 @@
 
 #include "castor/io/DummyPollReactor.hpp"
 #include "castor/legacymsg/DummyRmcProxy.hpp"
+#include "castor/legacymsg/DummyVdqmProxy.hpp"
 #include "castor/log/DummyLogger.hpp"
-#include "castor/tape/tapeserver/daemon/DummyVdqm.hpp"
 #include "castor/tape/tapeserver/daemon/DummyVmgr.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -69,7 +69,7 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
   castor::tape::utils::TpconfigLines tpconfigLines;
-  DummyVdqm vdqm(job);
+  castor::legacymsg::DummyVdqmProxy vdqm(job);
   DummyVmgr vmgr;
   castor::legacymsg::DummyRmcProxy rmc;
   castor::io::DummyPollReactor reactor;

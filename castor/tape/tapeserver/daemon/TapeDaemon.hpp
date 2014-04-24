@@ -28,9 +28,9 @@
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/io/PollReactor.hpp"
 #include "castor/legacymsg/RmcProxy.hpp"
+#include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
-#include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 #include "castor/tape/tapeserver/daemon/Vmgr.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -77,7 +77,7 @@ public:
     std::ostream &stdErr,
     log::Logger &log,
     const utils::TpconfigLines &tpconfigLines,
-    Vdqm &vdqm,
+    legacymsg::VdqmProxy &vdqm,
     Vmgr &vmgr,
     legacymsg::RmcProxy &rmc,
     io::PollReactor &reactor) throw(castor::exception::Exception);
@@ -280,7 +280,7 @@ protected:
   /**
    * The proxy object representing the vdqmd daemon.
    */
-  Vdqm &m_vdqm;
+  legacymsg::VdqmProxy &m_vdqm;
 
   /**
    * The proxy object representing the vmgrd daemon.

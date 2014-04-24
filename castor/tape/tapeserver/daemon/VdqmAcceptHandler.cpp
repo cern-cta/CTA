@@ -39,7 +39,7 @@ castor::tape::tapeserver::daemon::VdqmAcceptHandler::VdqmAcceptHandler(
   const int fd,
   io::PollReactor &reactor,
   log::Logger &log,
-  Vdqm &vdqm,
+  legacymsg::VdqmProxy &vdqm,
   DriveCatalogue &driveCatalogue)
   throw():
     m_fd(fd),

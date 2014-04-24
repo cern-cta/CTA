@@ -22,15 +22,15 @@
 
 #pragma once
 
+#include "castor/io/io.hpp"
 #include "castor/io/PollEventHandler.hpp"
 #include "castor/io/PollReactor.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
-#include "castor/tape/tapeserver/daemon/Vdqm.hpp"
-#include "castor/legacymsg/MessageHeader.hpp"
-#include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
+#include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/legacymsg/RtcpMarshal.hpp"
+#include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/legacymsg/VdqmMarshal.hpp"
 #include "h/vdqm_constants.h"
 #include "h/rtcp_constants.h"
@@ -59,8 +59,7 @@ public:
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
    */
-  VdqmConnectionHandler(const int fd, io::PollReactor &reactor,
-    log::Logger &log, Vdqm &vdqm, DriveCatalogue &driveCatalogue) throw();
+  VdqmConnectionHandler(const int fd, io::PollReactor &reactor, log::Logger &log, legacymsg::VdqmProxy &vdqm, DriveCatalogue &driveCatalogue) throw();
 
   /**
    * Returns the integer file descriptor of this event handler.
@@ -107,7 +106,7 @@ private:
   /**
    * The object representing the vdqmd daemon.
    */
-  Vdqm &m_vdqm;
+  legacymsg::VdqmProxy &m_vdqm;
 
   /**
    * The catalogue of tape drives controlled by the tape server daemon.

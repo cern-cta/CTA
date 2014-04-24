@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/DummyVdqm.cpp
+ *         castor/legacymsg/DummyVdqmProxy.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,59 +20,59 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/DummyVdqm.hpp"
+#include "castor/legacymsg/DummyVdqmProxy.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DummyVdqm::DummyVdqm(const legacymsg::RtcpJobRqstMsgBody &job) throw(): m_job(job) {
+castor::legacymsg::DummyVdqmProxy::DummyVdqmProxy(const RtcpJobRqstMsgBody &job) throw(): m_job(job) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DummyVdqm::~DummyVdqm() throw() {
+castor::legacymsg::DummyVdqmProxy::~DummyVdqmProxy() throw() {
 }
 
 //------------------------------------------------------------------------------
 // receiveJob
 //------------------------------------------------------------------------------
-castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::DummyVdqm::receiveJob(const int connection) throw(castor::exception::Exception) {
+castor::legacymsg::RtcpJobRqstMsgBody castor::legacymsg::DummyVdqmProxy::receiveJob(const int connection) throw(castor::exception::Exception) {
   return m_job;
 }
 
 //------------------------------------------------------------------------------
 // setDriveDown
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyVdqm::setDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
+void castor::legacymsg::DummyVdqmProxy::setDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
 // setDriveUp
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyVdqm::setDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
+void castor::legacymsg::DummyVdqmProxy::setDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
 // assignDrive
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyVdqm::assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t sessionPid) throw(castor::exception::Exception) {
+void castor::legacymsg::DummyVdqmProxy::assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t sessionPid) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
 // tapeMounted
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyVdqm::tapeMounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid) throw(castor::exception::Exception) {
+void castor::legacymsg::DummyVdqmProxy::tapeMounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
 // releaseDrive
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyVdqm::releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid) throw(castor::exception::Exception) {
+void castor::legacymsg::DummyVdqmProxy::releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid) throw(castor::exception::Exception) {
 }
 
 //-----------------------------------------------------------------------------
 // tapeUnmounted
 //-----------------------------------------------------------------------------
-void  castor::tape::tapeserver::daemon::DummyVdqm::tapeUnmounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid) throw(castor::exception::Exception) {
+void  castor::legacymsg::DummyVdqmProxy::tapeUnmounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid) throw(castor::exception::Exception) {
 }

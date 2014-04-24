@@ -28,9 +28,9 @@
 #include "castor/log/Logger.hpp"
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
-#include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 #include "castor/tape/tapeserver/daemon/Vmgr.hpp"
 #include "castor/tape/utils/utils.hpp"
 
@@ -71,7 +71,7 @@ public:
     const legacymsg::RtcpJobRqstMsgBody &job,
     castor::log::Logger &logger,
     const utils::TpconfigLines &tpConfig,
-    Vdqm &vdqm,
+    legacymsg::VdqmProxy &vdqm,
     Vmgr &vmgr,
     legacymsg::RmcProxy &rmc) throw();
 
@@ -125,7 +125,7 @@ private:
   /**
    * The object representing the vdqmd daemon.
    */
-  Vdqm &m_vdqm;
+  legacymsg::VdqmProxy &m_vdqm;
 
   /**
    * The object representing the vmgrd daemon.

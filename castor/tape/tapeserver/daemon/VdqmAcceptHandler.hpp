@@ -24,9 +24,9 @@
 
 #include "castor/io/PollEventHandler.hpp"
 #include "castor/io/PollReactor.hpp"
+#include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
-#include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 
 #include <poll.h>
 
@@ -54,8 +54,7 @@ public:
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
    */
-  VdqmAcceptHandler(const int fd, io::PollReactor &reactor,
-    log::Logger &log, Vdqm &vdqm, DriveCatalogue &driveCatalogue) throw();
+  VdqmAcceptHandler(const int fd, io::PollReactor &reactor, log::Logger &log, legacymsg::VdqmProxy &vdqm, DriveCatalogue &driveCatalogue) throw();
 
   /**
    * Returns the integer file descriptor of this event handler.
@@ -112,7 +111,7 @@ private:
   /**
    * The object representing the vdqmd daemon.
    */
-  Vdqm &m_vdqm;
+  legacymsg::VdqmProxy &m_vdqm;
 
   /**
    * The catalogue of tape drives controlled by the tape server daemon.

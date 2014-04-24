@@ -4,10 +4,8 @@ add_executable(tapeserverd
   DriveCatalogue.cpp
   TapeDaemon.cpp
   TapeDaemonMain.cpp
-  Vdqm.cpp
   VdqmAcceptHandler.cpp
   VdqmConnectionHandler.cpp
-  VdqmImpl.cpp
   Vmgr.cpp
   VmgrImpl.cpp)
 

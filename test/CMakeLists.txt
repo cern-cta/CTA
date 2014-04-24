@@ -85,6 +85,7 @@ add_executable(castorUnitTests
   ../castor/io/DummyPollEventHandler.cpp
   ../castor/io/DummyPollReactor.cpp
   ../castor/legacymsg/DummyRmcProxy.cpp
+  ../castor/legacymsg/DummyVdqmProxy.cpp
   ../castor/legacymsg/RmcMarshalTest.cpp
   ../castor/legacymsg/RmcProxy.cpp
   ../castor/legacymsg/RmcProxyImpl.cpp
@@ -93,6 +94,8 @@ add_executable(castorUnitTests
   ../castor/legacymsg/ScsiLibrarySlotTest.cpp
   ../castor/legacymsg/TapeMarshalTest.cpp
   ../castor/legacymsg/VdqmMarshalTest.cpp
+  ../castor/legacymsg/VdqmProxy.cpp
+  ../castor/legacymsg/VdqmProxyImpl.cpp
   ../castor/log/DummyLogger.cpp
   ../castor/log/LoggerImplementationTest.cpp
   ../castor/log/ParamTest.cpp
@@ -105,11 +108,9 @@ add_executable(castorUnitTests
 #  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
-  ../castor/tape/tapeserver/daemon/DummyVdqm.cpp
   ../castor/tape/tapeserver/daemon/DummyVmgr.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemon.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemonTest.cpp
-  ../castor/tape/tapeserver/daemon/Vdqm.cpp
   ../castor/tape/tapeserver/daemon/VdqmAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/VdqmConnectionHandler.cpp
   ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp
@@ -117,7 +118,6 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/daemon/RecallReportPackerTest.cpp
   ../castor/tape/tapeserver/daemon/DiskWriteThreadPoolTest.cpp
   ../castor/tape/tapeserver/daemon/DiskWriteTaskTest.cpp
-  ../castor/tape/tapeserver/daemon/VdqmImpl.cpp
   ../castor/tape/tapeserver/daemon/Vmgr.cpp
   ../castor/tape/tapeserver/daemon/VmgrImpl.cpp
   ../castor/tape/tapeserver/drive/DriveTest.cpp

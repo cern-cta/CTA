@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/Vdqm.hpp
+ *                castor/legacymsg/VdqmProxy.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -27,10 +27,8 @@
 
 #include <sys/types.h>
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+namespace castor {
+namespace legacymsg {
 
 /**
  * Proxy class representing the vdqm daemon.
@@ -70,13 +68,13 @@ namespace daemon     {
  *      |                                 |
  *      |                                 |
  */
-class Vdqm {
+class VdqmProxy {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~Vdqm() throw() = 0;
+  virtual ~VdqmProxy() throw() = 0;
 
   /**
    * Sets the status of the specified tape drive to down.
@@ -150,10 +148,8 @@ public:
    */
   virtual void tapeUnmounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid) throw(castor::exception::Exception) = 0;
 
-}; // class Vdqm
+}; // class VdqmProxy
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
+} // namespace legacymsg
 } // namespace castor
 

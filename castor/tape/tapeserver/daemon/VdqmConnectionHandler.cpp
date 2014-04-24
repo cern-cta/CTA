@@ -27,7 +27,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::VdqmConnectionHandler::VdqmConnectionHandler(const int fd, io::PollReactor &reactor, log::Logger &log, Vdqm &vdqm, DriveCatalogue &driveCatalogue) throw():
+castor::tape::tapeserver::daemon::VdqmConnectionHandler::VdqmConnectionHandler(const int fd, io::PollReactor &reactor, log::Logger &log, legacymsg::VdqmProxy &vdqm, DriveCatalogue &driveCatalogue) throw():
     m_fd(fd),
     m_reactor(reactor),
     m_log(log),

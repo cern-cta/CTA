@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/Vdqm.cpp
+ *                castor/legacymsg/VdqmProxy.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,10 +22,10 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/Vdqm.hpp"
+#include "castor/legacymsg/VdqmProxy.hpp"
 
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::Vdqm::~Vdqm() throw() {
+castor::legacymsg::VdqmProxy::~VdqmProxy() throw() {
 }

@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/DummyVdqm.hpp
+ *         castor/legacymsg/VdqmProxyImpl.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,28 +22,31 @@
 
 #pragma once
 
+#include "castor/log/Logger.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
-#include "castor/tape/tapeserver/daemon/Vdqm.hpp"
+#include "castor/legacymsg/VdqmDrvRqstMsgBody.hpp"
+#include "castor/legacymsg/VdqmProxy.hpp"
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+namespace castor {
+namespace legacymsg {
 
 /**
- * A dummy vdqm proxy.
- *
- * The main goal of this class is to facilitate the development of unit tests.
+ * A concrete implementation of the interface to the vdqm daemon.
  */
-class DummyVdqm: public Vdqm {
+class VdqmProxyImpl: public VdqmProxy {
 public:
 
   /**
    * Constructor.
    *
-   * @param job The vdqm job to be returned by the receiveJob() method.
+   * @param log The object representing the API of the CASTOR logging system.
+   * @param vdqmHostName The name of the host on which the vdqmd daemon is
+   * running.
+   * @param vdqmPort The TCP/IP port on which the vdqmd daemon is listening.
+   * @param netTimeout The timeout in seconds to be applied when performing
+   * network read and write operations.
    */
-  DummyVdqm(const legacymsg::RtcpJobRqstMsgBody &job) throw();
+  VdqmProxyImpl(log::Logger &log, const std::string &vdqmHostName, const unsigned short vdqmPort, const int netTimeout) throw();
 
   /**
    * Destructor.
@@ -51,17 +54,7 @@ public:
    * Closes the listening socket created in the constructor to listen for
    * connections from the vdqmd daemon.
    */
-  ~DummyVdqm() throw();
-
-  /**
-   * Receives a job from the specified connection with the vdqm daemon,
-   * sends back a positive acknowledgement and closes the connection.
-   *
-   * @param connection The file descriptor of the connection with the vdqm
-   * daemon.
-   * @return The job request from the vdqm.
-   */
-  legacymsg::RtcpJobRqstMsgBody receiveJob(const int connection) throw(castor::exception::Exception);
+  ~VdqmProxyImpl() throw();
 
   /**
    * Sets the status of the specified tape drive to down.
@@ -137,14 +130,95 @@ public:
 private:
 
   /**
-   * The vdqm job to be returned by the receiveJob() method.
+   * Sets the status of a tape drive.
+   *
+   * @param body The message body defining the drive and status.
    */
-  legacymsg::RtcpJobRqstMsgBody m_job;
+  void setDriveStatus(const VdqmDrvRqstMsgBody &body) throw(castor::exception::Exception);
 
-}; // class DummyVdqm
+  /**
+   * Connects to the vdqmd daemon.
+   *
+   * @return The socket-descriptor of the connection with the vdqmd daemon.
+   */
+  int connectToVdqm() const throw(castor::exception::Exception);
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
+  /**
+   * Writes a drive status message with the specifed contents to the specified
+   * connection.
+   *
+   * @param body The message body defining the drive and status.
+   */
+  void writeDriveStatusMsg(const int fd, const VdqmDrvRqstMsgBody &body) throw(castor::exception::Exception);
+
+  /**
+   * Reads a VDQM_COMMIT ack message from the specified connection.
+   *
+   * @param fd The file-descriptor of the connection.
+   * @return The message.
+   */
+  void readCommitAck(const int fd) throw(castor::exception::Exception);
+
+  /**
+   * Reads an ack message from the specified connection.
+   *
+   * @param fd The file-descriptor of the connection.
+   * @return The message.
+   */
+  MessageHeader readAck(const int fd) throw(castor::exception::Exception);
+
+  /**
+   * Reads drive status message from the specified connection and discards it.
+   *
+   * @param fd The file-descriptor of the connection.
+   */
+  void readDriveStatusMsg(const int fd) throw(castor::exception::Exception);
+
+  /**
+   * Reads the header of a drive status message from the specified connection.
+   *
+   * @param fd The file-descriptor of the connection.
+   * @return The message header.
+   */
+  MessageHeader readDriveStatusMsgHeader(const int fd) throw(castor::exception::Exception);
+
+  /**
+   * Reads the body of a drive status message from the specified connection.
+   * @param fd The file-descriptor of the connection.
+   * @return The message body.
+   */
+  VdqmDrvRqstMsgBody readDriveStatusMsgBody(const int fd, const uint32_t bodyLen) throw(castor::exception::Exception);
+
+  /**
+   * Writes a VDQM_COMMIT ack message to the specified connection.
+   *
+   * @param fd The file-descriptor of the connection.
+   */
+  void writeCommitAck(const int fd) throw(castor::exception::Exception);
+
+  /**
+   * The object representing the API of the CASTOR logging system.
+   */
+  log::Logger &m_log;
+
+  /**
+   * The name of the host on which the vdqmd daemon is running.
+   */
+  const std::string m_vdqmHostName;
+
+  /**
+   * The TCP/IP port on which the vdqmd daemon is listening.
+   */
+  const unsigned short m_vdqmPort;
+  
+  /**
+   * The timeout in seconds to be applied when performing network read and
+   * write operations.
+   */
+  const int m_netTimeout;
+
+}; // class VdqmProxyImpl
+
+} // namespace legacymsg
 } // namespace castor
 

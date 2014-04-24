@@ -51,7 +51,7 @@ castor::tape::tapeserver::daemon::AdminAcceptHandler::AdminAcceptHandler(
   const int fd,
   io::PollReactor &reactor,
   log::Logger &log,
-  Vdqm &vdqm,
+  legacymsg::VdqmProxy &vdqm,
   DriveCatalogue &driveCatalogue,
   const std::string &hostName)
   throw():

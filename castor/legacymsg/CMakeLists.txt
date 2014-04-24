@@ -51,6 +51,8 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   TapeStatReplyMsgBody.cpp
   VdqmDrvRqstMsgBody.cpp
   VdqmMarshal.cpp
+  VdqmProxy.cpp
+  VdqmProxyImpl.cpp
   VmgrMarshal.cpp
   VmgrTapeInfoMsgBody.cpp
   VmgrTapeInfoRqstMsgBody.cpp)
