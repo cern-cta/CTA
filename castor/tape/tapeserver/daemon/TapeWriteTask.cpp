@@ -29,27 +29,11 @@
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/file/File.hpp" 
-
+#include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 namespace {  
    unsigned long initAdler32Checksum() {
      return  adler32(0L,Z_NULL,0);
    }
-  
-  /*Use RAII to make sure the memory block is released  
-   *(ie pushed back to the memory manager) in any case (exception or not)
-   */
-  class AutoReleaseBlock{
-    castor::tape::tapeserver::daemon::MemBlock *block;
-    castor::tape::tapeserver::daemon::MemoryManager& memManager;
-  public:
-    AutoReleaseBlock(castor::tape::tapeserver::daemon::MemBlock* mb, 
-            castor::tape::tapeserver::daemon::MemoryManager& mm):
-    block(mb),memManager(mm){}
-    
-    ~AutoReleaseBlock(){
-      memManager.releaseBlock(block);
-    }
-  };
 }
 namespace castor {
 namespace tape {
@@ -79,7 +63,7 @@ namespace daemon {
       std::auto_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       while(!m_fifo.finished()) {
         MemBlock* const mb = m_fifo.popDataBlock();
-        AutoReleaseBlock releaser(mb,m_memManager);
+        AutoReleaseBlock<MemoryManager> releaser(mb,m_memManager);
         
         if(/*m_migratingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
             *             || */blockId != mb->m_fileBlock  || mb->m_failed ){
