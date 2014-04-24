@@ -37,7 +37,8 @@ namespace tapeserver {
 namespace daemon {
 /**
  * The memory manager is responsible for allocating memory blocks and distributing
- * the free ones around to any class in need.
+ * the free ones around to any class in need. The distribution is actively run in
+ * a thread.
  */
 class MemoryManager: private castor::tape::threading::Thread {
 public:
