@@ -135,10 +135,6 @@ public:
       //done
     } 
   }
-  
-  MemBlock* getFreeBlock(){
-    return m_freeBlocks.pop();
-  }
 private:
   
   /**
