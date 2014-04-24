@@ -37,6 +37,8 @@ namespace daemon {
  */
 class Payload
 {
+  Payload(const Payload&);
+  Payload& operator=(const Payload&);
 public:
   Payload(size_t capacity):
   m_payload(new (std::nothrow) unsigned char[capacity]),m_totalCapacity(capacity),m_size(0) {

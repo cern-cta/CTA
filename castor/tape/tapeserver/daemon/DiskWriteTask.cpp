@@ -23,28 +23,12 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
-
+#include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 namespace {
   //todo : merge it with one of TapeWriteTask and put is somewhere 
      unsigned long initAdler32Checksum() {
      return  adler32(0L,Z_NULL,0);
    }
-     
-  /*Use RAII to make sure the memory block is released  
-   *(ie pushed back to the memory manager) in any case (exception or not)
-   */
-  class AutoReleaseBlock{
-    castor::tape::tapeserver::daemon::MemBlock *block;
-    castor::tape::tapeserver::daemon::RecallMemoryManager& memManager;
-  public:
-    AutoReleaseBlock(castor::tape::tapeserver::daemon::MemBlock* mb, 
-            castor::tape::tapeserver::daemon::RecallMemoryManager& mm):
-    block(mb),memManager(mm){}
-    
-    ~AutoReleaseBlock(){
-      memManager.releaseBlock(block);
-    }
-  };
 }
 namespace castor {
 namespace tape {
@@ -73,7 +57,7 @@ namespace daemon {
       unsigned long checksum = initAdler32Checksum();
       while(1) {
         if(MemBlock* const mb = m_fifo.pop()) {
-          AutoReleaseBlock releaser(mb,m_memManager);
+          AutoReleaseBlock<RecallMemoryManager> releaser(mb,m_memManager);
           
           if(m_recallingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
                   || blockId != mb->m_fileBlock  || mb->m_failed ){
@@ -129,9 +113,8 @@ namespace daemon {
 
   void DiskWriteTask::releaseAllBlock(){
     while(1){
-      MemBlock* mb=m_fifo.pop();
-      if(mb)
-        AutoReleaseBlock release(mb,m_memManager);
+      if(MemBlock* mb=m_fifo.pop())
+        AutoReleaseBlock<RecallMemoryManager> release(mb,m_memManager);
       else 
         break;
     }
