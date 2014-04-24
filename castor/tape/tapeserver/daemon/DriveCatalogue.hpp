@@ -196,11 +196,11 @@ public:
   DriveState getState(const std::string &unitName) const throw(castor::exception::Exception);
 
   /**
-   * Returns the position of the specified tape drive in its libary.
+   * Returns the library slot of the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getPositionInLibrary(const std::string &unitName) const throw(castor::exception::Exception);
+  const std::string &getLibrarySlot(const std::string &unitName) const throw(castor::exception::Exception);
 
   /**
    * Returns the device type of the specified tape drive in its libary.
@@ -361,10 +361,10 @@ private:
     DriveState state;
 
     /**
-     * The position of the tape drive within the tape library, for example:
+     * The library slot n which the tape drive is located, for example:
      * smc@localhost,0
      */
-    std::string positionInLibrary;
+    std::string librarySlot;
 
     /**
      * The device type of the tape drive, for example: T10000
@@ -486,11 +486,11 @@ private:
    * Throws an exception if the specified catalogue value does not match the
    * specified TPCONFIG line value.
    *
-   * @param cataloguePositionInLibrary The position of the tape drive within
-   * its library that has been retrieved from tape-drive catalogue.
+   * @param catalogueLibrarySlot The library slot of the tape drive that has
+   * been retrieved from the tape-drive catalogue.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLinePositionInLibrary(const std::string &cataloguePositionInLibrary, const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLineLibrarySlot(const std::string &catalogueLibrarySlot, const utils::TpconfigLine &line) throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the specified catalogue value does not match the

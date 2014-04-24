@@ -41,7 +41,7 @@ struct TpconfigLine {
   std::string devFilename;
   std::string density;
   std::string initialState;
-  std::string positionInLibrary;
+  std::string librarySlot;
   std::string devType;
 
   /**
@@ -53,7 +53,7 @@ struct TpconfigLine {
     const std::string &devFilename,
     const std::string &density,
     const std::string &initialState,
-    const std::string &positionInLibrary,
+    const std::string &librarySlot,
     const std::string &devType) throw();
 }; // struct TpconfigLine
 

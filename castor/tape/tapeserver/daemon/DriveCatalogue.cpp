@@ -73,7 +73,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::enterTpconfigLine(
     entry.devFilename = line.devFilename;
     entry.densities.push_back(line.density);
     entry.state = str2InitialState(line.initialState);
-    entry.positionInLibrary = line.positionInLibrary;
+    entry.librarySlot = line.librarySlot;
     entry.devType = line.devType;
     m_drives[line.unitName] = entry;
   // Else the drive is already in the catalogue
@@ -121,7 +121,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::checkTpconfigLine(
   checkTpconfigLineDevFilename(catalogueEntry.devFilename, line);
   checkTpconfigLineDensity(catalogueEntry.densities, line);
   checkTpconfigLineInitialState(catalogueEntry.state, line);
-  checkTpconfigLinePositionInLibrary(catalogueEntry.positionInLibrary, line);
+  checkTpconfigLineLibrarySlot(catalogueEntry.librarySlot, line);
   checkTpconfigLineDevType(catalogueEntry.devType, line);
 }
 
@@ -191,18 +191,18 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::
 }
 
 //-----------------------------------------------------------------------------
-// checkTpconfigLinePositionInLibrary
+// checkTpconfigLineLibrarySlot
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::
-  checkTpconfigLinePositionInLibrary(
-  const std::string &cataloguePositionInLibrary,
+  checkTpconfigLineLibrarySlot(
+  const std::string &catalogueLibrarySlot,
   const utils::TpconfigLine &line) throw(castor::exception::Exception) {
-  if(cataloguePositionInLibrary != line.positionInLibrary) {
+  if(catalogueLibrarySlot != line.librarySlot) {
     castor::exception::Internal ex;
     ex.getMessage() << "Invalid TPCONFIG line"
-      ": A tape drive can only have one position within its library"
-      ": cataloguePositionInLibrary=" << cataloguePositionInLibrary <<
-      " linePositionInLibrary=" << line.positionInLibrary;
+      ": A tape drive can only have one slot within its library"
+      ": catalogueLibrarySlot=" << catalogueLibrarySlot <<
+      " lineLibrarySlot=" << line.librarySlot;
     throw ex;
   }
 }
@@ -334,20 +334,20 @@ castor::tape::tapeserver::daemon::DriveCatalogue::DriveState
 }
 
 //-----------------------------------------------------------------------------
-// getPositionInLibrary
+// getLibrarySlot
 //-----------------------------------------------------------------------------
 const std::string &
-  castor::tape::tapeserver::daemon::DriveCatalogue::getPositionInLibrary(
+  castor::tape::tapeserver::daemon::DriveCatalogue::getLibrarySlot(
     const std::string &unitName) const throw(castor::exception::Exception) {
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to get position of tape drive " << unitName <<
-      " in library: Unknown drive";
+    ex.getMessage() << "Failed to get library slot of tape drive " << unitName
+      << ": Unknown drive";
     throw ex;
   }
 
-  return itor->second.positionInLibrary;
+  return itor->second.librarySlot;
 }
 
 //-----------------------------------------------------------------------------

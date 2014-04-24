@@ -156,10 +156,10 @@ private:
   void mountTape(const std::string &vid) throw (castor::exception::Exception);
 
   /**
-   * Searches the parsed contents of /etc/castor/TPCONFIG for the position of
-   * the sepecified drive within its library.
+   * Searches the parsed contents of /etc/castor/TPCONFIG for the library slot
+   * of the specified drive.
    */
-  std::string getPositionInLibrary(const std::string &unitName) throw (castor::exception::Exception);
+  std::string getLibrarySlot(const std::string &unitName) throw (castor::exception::Exception);
 
   /**
    * Transfer files.  This means either recalling files from tape to disk,

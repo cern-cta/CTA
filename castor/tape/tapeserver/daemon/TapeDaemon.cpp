@@ -171,7 +171,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logTpconfigLine(
     log::Param("devFilename", line.devFilename),
     log::Param("density", line.density),
     log::Param("initialState", line.initialState),
-    log::Param("positionInLibrary", line.positionInLibrary),
+    log::Param("librarySlot", line.librarySlot),
     log::Param("devType", line.devType)};
   m_log(LOG_INFO, "TPCONFIG line", params);
 }

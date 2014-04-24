@@ -304,7 +304,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::throwEn
 // mountTape
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::mountTape(const std::string &vid) throw (castor::exception::Exception) {
-  const std::string drive = getPositionInLibrary(m_job.driveUnit);
+  const std::string drive = getLibrarySlot(m_job.driveUnit);
   m_rmc.mountTape(vid, drive);
 
   log::Param params[] = {
@@ -315,13 +315,13 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::mountTa
 }
 
 //------------------------------------------------------------------------------
-// getPositionInLibrary
+// getLibrarySlot
 //------------------------------------------------------------------------------
-std::string castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::getPositionInLibrary(const std::string &unitName)
+std::string castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::getLibrarySlot(const std::string &unitName)
   throw (castor::exception::Exception) {
   for(utils::TpconfigLines::const_iterator itor = m_tpConfig.begin(); itor != m_tpConfig.end(); itor++) {
     if(unitName == itor->unitName) {
-      return itor->positionInLibrary;
+      return itor->librarySlot;
     }
   }
 
@@ -441,12 +441,13 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::release
 // unmountTape
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::unmountTape(const std::string &vid) throw (castor::exception::Exception) {
-  const std::string drive = getPositionInLibrary(m_job.driveUnit);
-  m_rmc.unmountTape(vid, drive);
+  const std::string librarySlot = getLibrarySlot(m_job.driveUnit);
+  m_rmc.unmountTape(vid, librarySlot);
 
   log::Param params[] = {
     log::Param("unitName", m_job.driveUnit),
-    log::Param("TPVID", vid)};
+    log::Param("TPVID", vid),
+     log::Param("librarySlot", librarySlot)};
   m_log(LOG_INFO, "Tape unmounted", params);
   m_vdqm.tapeUnmounted(m_hostName, m_job.driveUnit, m_job.dgn, vid);
 }

@@ -34,13 +34,13 @@ castor::tape::utils::TpconfigLine::TpconfigLine(
   const std::string &devFilename,
   const std::string &density,
   const std::string &initialState,
-  const std::string &positionInLibrary,
+  const std::string &librarySlot,
   const std::string &devType) throw():
   unitName(unitName),
   dgn(dgn),
   devFilename(devFilename),
   density(density),
   initialState(initialState),
-  positionInLibrary(positionInLibrary),
+  librarySlot(librarySlot),
   devType(devType) {
 }

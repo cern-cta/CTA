@@ -204,14 +204,22 @@ Here is an example of a configuration file:
 .ft CW
 # 				Tape configuration
 #
-# drive	  dev		dev		density		initial	robot/	dev
-# name	  group		name		(0 = N/A)	status	manual	type
+# drive	  dev		dev		density 	initial	library	dev
+# name	  group		name		(0 = N/A)	status	slot 	type
 #
-cart0     CART		/dev/nrmt0	0		up	manual	3480
-cart1     CART		/dev/nrmt1	0		up	manual	3480
-exab0     8500		/dev/nrmt9	8500		up	manual	8500/VB
+cart0     CART		/dev/nrmt0	0		down 	manual	3480
+cart1     CART		/dev/nrmt1	0		down 	manual	3480
+exab0     8500		/dev/nrmt9	8500		down 	manual	8500/VB
 .ft
 .fi
+
+Library slot can be in one of the following three forms for ACS, manual and SCSI libraries respectively:
+
+	acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER
+
+	manual
+
+	smc@rmc_host,drive_ordinal
 .SH SEE ALSO
 .BR Castor_limits(4) ,
 .BR msgd(1) ,
