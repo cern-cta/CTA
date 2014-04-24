@@ -88,7 +88,12 @@ TEST(tapeServer, MountSessionGoodday) {
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
+
+  //delete is unnecessary
+  //pointer with ownership will be passed to the application,
+  //which will do the delete 
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::drives::FakeDrive;
+  
   // We can prepare files for reading on the drive
   {
     // Label the tape
