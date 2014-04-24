@@ -254,7 +254,7 @@ protected:
    *
    * @param unitName The unit name of the tape drive.
    */
-  void mountSession(const std::string &unitName) throw();
+  void runMountSession(const std::string &unitName) throw();
 
   /**
    * Catalogue used to keep track of both the initial and current state of

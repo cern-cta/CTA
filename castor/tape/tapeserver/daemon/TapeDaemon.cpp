@@ -549,7 +549,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSession(const
     // file-descriptors owned by the event handlers
     m_reactor.clear();
 
-    mountSession(unitName);
+    runMountSession(unitName);
 
     // The runMountSession() should call exit() and should therefore never
     // return
@@ -558,9 +558,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSession(const
 }
 
 //------------------------------------------------------------------------------
-// mountSession
+// runMountSession
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::mountSession(const std::string &unitName) throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::string &unitName) throw() {
   const pid_t sessionPid = getpid();
   {
     log::Param params[] = {
