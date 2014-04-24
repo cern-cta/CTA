@@ -25,7 +25,7 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/log/LoggerImplementation.hpp"
 #include "castor/io/PollReactorImpl.hpp"
-#include "castor/tape/tapeserver/daemon/RmcImpl.hpp"
+#include "castor/legacymsg/RmcProxyImpl.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmImpl.hpp"
 #include "castor/tape/tapeserver/daemon/VmgrImpl.hpp"
@@ -93,7 +93,7 @@ int main(const int argc, char **const argv) {
   const int netTimeout = 10; // Timeout in seconds
   VdqmImpl vdqm(log, vdqmHostName, VDQM_PORT, netTimeout);
   VmgrImpl vmgr(log, vmgrHostName, VMGR_PORT, netTimeout);
-  RmcImpl rmc(log, netTimeout);
+  castor::legacymsg::RmcProxyImpl rmc(log, netTimeout);
 
   // Create the poll() reactor
   castor::io::PollReactorImpl reactor(log);

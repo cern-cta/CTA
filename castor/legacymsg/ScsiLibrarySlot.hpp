@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/ScsiLibrarySlot.hpp
+ *         castor/legacymsg/ScsiLibrarySlot.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -27,10 +27,8 @@
 #include <stdint.h>
 #include <string>
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+namespace castor {
+namespace legacymsg {
 
 /**
  * Structure representing a SCSI library slot.
@@ -66,8 +64,6 @@ public:
   ScsiLibrarySlot(const std::string &str) throw(castor::exception::Exception);
 }; // class ScsiLibrarySlot
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
+} // namespace legacymsg
 } // namespace castor
 

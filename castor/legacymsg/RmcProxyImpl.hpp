@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/RmcImpl.hpp
+ *         castor/tape/tapeserver/daemon/RmcProxyImpl.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -25,21 +25,19 @@
 #include "castor/log/Logger.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/legacymsg/RmcMountMsgBody.hpp"
+#include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/legacymsg/RmcUnmountMsgBody.hpp"
-#include "castor/tape/tapeserver/daemon/Rmc.hpp"
 
 #include <unistd.h>
 #include <sys/types.h>
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+namespace castor {
+namespace legacymsg {
 
 /**
  * A concrete implementation of the interface to the rmc daemon.
  */
-class RmcImpl: public Rmc {
+class RmcProxyImpl: public RmcProxy {
 public:
 
   /**
@@ -49,12 +47,12 @@ public:
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    */
-  RmcImpl(log::Logger &log, const int netTimeout) throw();
+  RmcProxyImpl(log::Logger &log, const int netTimeout) throw();
 
   /**
    * Destructor.
    */
-  ~RmcImpl() throw();
+  ~RmcProxyImpl() throw();
 
   /**
    * Asks the remote media-changer daemon to mount the specified tape into the
@@ -194,7 +192,7 @@ protected:
    * @param fd The file descriptor of the connection.
    * @param body The body of the message.
    */
-  void writeRmcMountMsg(const int fd, const legacymsg::RmcMountMsgBody &body) throw(castor::exception::Exception);
+  void writeRmcMountMsg(const int fd, const RmcMountMsgBody &body) throw(castor::exception::Exception);
 
   /**
    * Reads the header of an RMC_MAGIC message from the specified connection.
@@ -202,7 +200,7 @@ protected:
    * @param fd The file descriptor of the connection.
    * @return The message header.
    */
-  legacymsg::MessageHeader readRmcMsgHeader(const int fd) throw(castor::exception::Exception);
+  MessageHeader readRmcMsgHeader(const int fd) throw(castor::exception::Exception);
 
   /**
    * Writes an RMC_UNMOUNT message with the specifed body to the specified
@@ -211,12 +209,10 @@ protected:
    * @param fd The file descriptor of the connection.
    * @param body The body of the message.
    */
-  void writeRmcUnmountMsg(const int fd, const legacymsg::RmcUnmountMsgBody &body) throw(castor::exception::Exception);
+  void writeRmcUnmountMsg(const int fd, const RmcUnmountMsgBody &body) throw(castor::exception::Exception);
 
-}; // class RmcImpl
+}; // class RmcProxyImpl
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
+} // namespace legacymsg
 } // namespace castor
 

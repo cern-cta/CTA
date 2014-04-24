@@ -32,6 +32,8 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   RmcAcsMntMsgBody.cpp
   RmcMarshal.cpp
   RmcMountMsgBody.cpp
+  RmcProxy.cpp
+  RmcProxyImpl.cpp
   RmcUnmountMsgBody.cpp
   RtcpDumpTapeRqstMsgBody.cpp
   RtcpErrorAppendix.cpp
@@ -41,6 +43,7 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   RtcpMarshal.cpp
   RtcpSegmentAttributes.cpp
   RtcpTapeRqstMsgBody.cpp
+  ScsiLibrarySlot.cpp
   TapeBridgeMarshal.cpp
   TapeConfigRequestMsgBody.cpp
   TapeMarshal.cpp

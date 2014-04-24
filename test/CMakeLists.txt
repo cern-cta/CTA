@@ -84,7 +84,13 @@ add_executable(castorUnitTests
   ../castor/io/PollReactorImplTest.cpp
   ../castor/io/DummyPollEventHandler.cpp
   ../castor/io/DummyPollReactor.cpp
+  ../castor/legacymsg/DummyRmcProxy.cpp
   ../castor/legacymsg/RmcMarshalTest.cpp
+  ../castor/legacymsg/RmcProxy.cpp
+  ../castor/legacymsg/RmcProxyImpl.cpp
+  ../castor/legacymsg/RmcProxyImplTest.cpp
+  ../castor/legacymsg/ScsiLibrarySlot.cpp
+  ../castor/legacymsg/ScsiLibrarySlotTest.cpp
   ../castor/legacymsg/TapeMarshalTest.cpp
   ../castor/legacymsg/VdqmMarshalTest.cpp
   ../castor/log/DummyLogger.cpp
@@ -99,14 +105,8 @@ add_executable(castorUnitTests
 #  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
-  ../castor/tape/tapeserver/daemon/DummyRmc.cpp
   ../castor/tape/tapeserver/daemon/DummyVdqm.cpp
   ../castor/tape/tapeserver/daemon/DummyVmgr.cpp
-  ../castor/tape/tapeserver/daemon/Rmc.cpp
-  ../castor/tape/tapeserver/daemon/RmcImpl.cpp
-  ../castor/tape/tapeserver/daemon/RmcImplTest.cpp
-  ../castor/tape/tapeserver/daemon/ScsiLibrarySlot.cpp
-  ../castor/tape/tapeserver/daemon/ScsiLibrarySlotTest.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemon.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemonTest.cpp
   ../castor/tape/tapeserver/daemon/Vdqm.cpp

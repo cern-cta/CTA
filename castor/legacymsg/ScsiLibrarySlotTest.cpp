@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/ScsiLibrarySlotTest.cpp
+ *         castor/legacymsg/ScsiLibrarySlotTest.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/ScsiLibrarySlot.hpp"
+#include "castor/legacymsg/ScsiLibrarySlot.hpp"
 
 #include <gtest/gtest.h>
 
@@ -39,7 +39,7 @@ protected:
 };
 
 TEST_F(castor_tape_tapeserver_daemon_ScsiLibrarySlotTest, goodDayParsing) {
-  using namespace castor::tape::tapeserver::daemon;
+  using namespace castor::legacymsg;
  
   ScsiLibrarySlot slot;
   ASSERT_EQ(std::string(""), slot.rmcHostName);
@@ -52,7 +52,7 @@ TEST_F(castor_tape_tapeserver_daemon_ScsiLibrarySlotTest, goodDayParsing) {
 }
 
 TEST_F(castor_tape_tapeserver_daemon_ScsiLibrarySlotTest, badDayParsing) {
-  using namespace castor::tape::tapeserver::daemon;
+  using namespace castor::legacymsg;
 
   const std::string str = "nonsense";
   ASSERT_THROW(ScsiLibrarySlot slot(str), castor::exception::Exception);

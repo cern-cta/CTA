@@ -26,10 +26,10 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/log/Logger.hpp"
+#include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
-#include "castor/tape/tapeserver/daemon/Rmc.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 #include "castor/tape/tapeserver/daemon/Vmgr.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -73,7 +73,7 @@ public:
     const utils::TpconfigLines &tpConfig,
     Vdqm &vdqm,
     Vmgr &vmgr,
-    Rmc &rmc) throw();
+    legacymsg::RmcProxy &rmc) throw();
 
   /**
    * The only method. It will execute (like a task, that it is)
@@ -135,7 +135,7 @@ private:
   /**
    * The object representing the rmcd daemon.
    */
-  Rmc &m_rmc;
+  legacymsg::RmcProxy &m_rmc;
 
   /**
    * Changes the name of the process to reflect what the process is doing.

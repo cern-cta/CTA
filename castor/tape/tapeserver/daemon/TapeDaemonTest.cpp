@@ -23,8 +23,8 @@
  *****************************************************************************/
 
 #include "castor/io/DummyPollReactor.hpp"
+#include "castor/legacymsg/DummyRmcProxy.hpp"
 #include "castor/log/DummyLogger.hpp"
-#include "castor/tape/tapeserver/daemon/DummyRmc.hpp"
 #include "castor/tape/tapeserver/daemon/DummyVdqm.hpp"
 #include "castor/tape/tapeserver/daemon/DummyVmgr.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
@@ -71,7 +71,7 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::tape::utils::TpconfigLines tpconfigLines;
   DummyVdqm vdqm(job);
   DummyVmgr vmgr;
-  DummyRmc rmc;
+  castor::legacymsg::DummyRmcProxy rmc;
   castor::io::DummyPollReactor reactor;
   std::auto_ptr<TapeDaemon> daemon;
 

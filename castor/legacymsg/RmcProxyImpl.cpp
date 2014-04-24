@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/RmcImpl.cpp
+ *                castor/tape/tapeserver/daemon/RmcProxyImpl.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,8 +24,8 @@
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/RmcMarshal.hpp"
-#include "castor/tape/tapeserver/daemon/RmcImpl.hpp"
-#include "castor/tape/tapeserver/daemon/ScsiLibrarySlot.hpp"
+#include "castor/legacymsg/RmcProxyImpl.hpp"
+#include "castor/legacymsg/ScsiLibrarySlot.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Castor_limits.h"
@@ -34,7 +34,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::RmcImpl::RmcImpl(log::Logger &log, const int netTimeout) throw():
+castor::legacymsg::RmcProxyImpl::RmcProxyImpl(log::Logger &log, const int netTimeout) throw():
     m_uid(getuid()),
     m_gid(getgid()),
     m_log(log),
@@ -44,13 +44,13 @@ castor::tape::tapeserver::daemon::RmcImpl::RmcImpl(log::Logger &log, const int n
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::RmcImpl::~RmcImpl() throw() {
+castor::legacymsg::RmcProxyImpl::~RmcProxyImpl() throw() {
 }
 
 //------------------------------------------------------------------------------
 // mountTape
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyImpl::mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
   // Verify parameters
   if(vid.empty()) {
     castor::exception::Internal ex;
@@ -94,7 +94,7 @@ void castor::tape::tapeserver::daemon::RmcImpl::mountTape(const std::string &vid
 //------------------------------------------------------------------------------
 // getLibrarySlotType
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::RmcImpl::RmcLibrarySlotType castor::tape::tapeserver::daemon::RmcImpl::getLibrarySlotType(const std::string &librarySlot) throw() {
+castor::legacymsg::RmcProxyImpl::RmcLibrarySlotType castor::legacymsg::RmcProxyImpl::getLibrarySlotType(const std::string &librarySlot) throw() {
   if(0 == librarySlot.find("acs@")) {
     return RMC_LIBRARY_SLOT_TYPE_ACS;
   } else if(0 == librarySlot.find("manual")) {
@@ -109,19 +109,19 @@ castor::tape::tapeserver::daemon::RmcImpl::RmcLibrarySlotType castor::tape::tape
 //------------------------------------------------------------------------------
 // mountTapeAcs
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::mountTapeAcs(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyImpl::mountTapeAcs(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
 // mountTapeManual
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::mountTapeManual(const std::string &vid) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyImpl::mountTapeManual(const std::string &vid) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
 // mountTapeScsi
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::mountTapeScsi(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyImpl::mountTapeScsi(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
   std::ostringstream task;
   task << "mount tape " << vid << " in " << librarySlot;
 
@@ -130,14 +130,14 @@ void castor::tape::tapeserver::daemon::RmcImpl::mountTapeScsi(const std::string 
 
     castor::utils::SmartFd fd(connectToRmc(parsedSlot.rmcHostName));
 
-    legacymsg::RmcMountMsgBody body;
+    RmcMountMsgBody body;
     body.uid = m_uid;
     body.gid = m_gid;
     castor::utils::copyString(body.vid, vid.c_str());
     body.drvOrd = parsedSlot.drvOrd;
     writeRmcMountMsg(fd.get(), body);
 
-    const legacymsg::MessageHeader header = readRmcMsgHeader(fd.get());
+    const MessageHeader header = readRmcMsgHeader(fd.get());
     switch(header.reqType) {
     case RMC_RC:
       if(0 != header.lenOrStatus) {
@@ -180,7 +180,7 @@ void castor::tape::tapeserver::daemon::RmcImpl::mountTapeScsi(const std::string 
 //------------------------------------------------------------------------------
 // unmountTape
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyImpl::unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
   // Verify parameters
   if(vid.empty()) {
     castor::exception::Internal ex;
@@ -224,19 +224,19 @@ void castor::tape::tapeserver::daemon::RmcImpl::unmountTape(const std::string &v
 //------------------------------------------------------------------------------
 // unmountTapeAcs
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeAcs(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyImpl::unmountTapeAcs(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
 // unmountTapeManual
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeManual(const std::string &vid) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyImpl::unmountTapeManual(const std::string &vid) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
 // unmountTapeScsi
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeScsi(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyImpl::unmountTapeScsi(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
   std::ostringstream task;
   task << "unmount tape " << vid << " from " << librarySlot;
 
@@ -245,7 +245,7 @@ void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeScsi(const std::strin
 
     castor::utils::SmartFd fd(connectToRmc(parsedSlot.rmcHostName));
 
-    legacymsg::RmcUnmountMsgBody body;
+    RmcUnmountMsgBody body;
     body.uid = m_uid;
     body.gid = m_gid;
     castor::utils::copyString(body.vid, vid.c_str());
@@ -253,7 +253,7 @@ void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeScsi(const std::strin
     body.force = 0;
     writeRmcUnmountMsg(fd.get(), body);
 
-    const legacymsg::MessageHeader header = readRmcMsgHeader(fd.get());
+    const MessageHeader header = readRmcMsgHeader(fd.get());
     switch(header.reqType) {
     case RMC_RC:
       if(0 != header.lenOrStatus) {
@@ -296,7 +296,7 @@ void castor::tape::tapeserver::daemon::RmcImpl::unmountTapeScsi(const std::strin
 //-----------------------------------------------------------------------------
 // connectToRmc
 //-----------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::RmcImpl::connectToRmc(const std::string &hostName) const throw(castor::exception::Exception) {
+int castor::legacymsg::RmcProxyImpl::connectToRmc(const std::string &hostName) const throw(castor::exception::Exception) {
   castor::utils::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(io::connectWithTimeout(hostName, RMC_PORT, m_netTimeout));
@@ -313,10 +313,10 @@ int castor::tape::tapeserver::daemon::RmcImpl::connectToRmc(const std::string &h
 //-----------------------------------------------------------------------------
 // writeRmcMountMsg
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::writeRmcMountMsg(const int fd, const legacymsg::RmcMountMsgBody &body)
+void castor::legacymsg::RmcProxyImpl::writeRmcMountMsg(const int fd, const RmcMountMsgBody &body)
   throw(castor::exception::Exception) {
   char buf[RMC_MSGBUFSIZ];
-  const size_t len = legacymsg::marshal(buf, body);
+  const size_t len = marshal(buf, body);
 
   try {
     io::writeBytes(fd, m_netTimeout, len, buf);
@@ -331,9 +331,9 @@ void castor::tape::tapeserver::daemon::RmcImpl::writeRmcMountMsg(const int fd, c
 //-----------------------------------------------------------------------------
 // readRmcMsgHeader
 //-----------------------------------------------------------------------------
-castor::legacymsg::MessageHeader castor::tape::tapeserver::daemon::RmcImpl::readRmcMsgHeader(const int fd) throw(castor::exception::Exception) {
+castor::legacymsg::MessageHeader castor::legacymsg::RmcProxyImpl::readRmcMsgHeader(const int fd) throw(castor::exception::Exception) {
   char buf[12]; // Magic + type + len
-  legacymsg::MessageHeader header;
+  MessageHeader header;
 
   try {
     io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
@@ -346,7 +346,7 @@ castor::legacymsg::MessageHeader castor::tape::tapeserver::daemon::RmcImpl::read
 
   const char *bufPtr = buf;
   size_t bufLen = sizeof(buf);
-  legacymsg::unmarshal(bufPtr, bufLen, header);
+  unmarshal(bufPtr, bufLen, header);
 
   if(RMC_MAGIC != header.magic) {
     castor::exception::Internal ex;
@@ -362,10 +362,10 @@ castor::legacymsg::MessageHeader castor::tape::tapeserver::daemon::RmcImpl::read
 //-----------------------------------------------------------------------------
 // writeRmcUnmountMsg
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::RmcImpl::writeRmcUnmountMsg(const int fd, const legacymsg::RmcUnmountMsgBody &body)
+void castor::legacymsg::RmcProxyImpl::writeRmcUnmountMsg(const int fd, const RmcUnmountMsgBody &body)
   throw(castor::exception::Exception) {
   char buf[RMC_MSGBUFSIZ];
-  const size_t len = legacymsg::marshal(buf, body);
+  const size_t len = marshal(buf, body);
 
   try {
     io::writeBytes(fd, m_netTimeout, len, buf);

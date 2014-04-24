@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/DummyRmc.cpp
+ *         castor/legacymsg/DummyRmcProxy.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,22 +20,22 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/DummyRmc.hpp"
+#include "castor/legacymsg/DummyRmcProxy.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DummyRmc::~DummyRmc() throw() {
+castor::legacymsg::DummyRmcProxy::~DummyRmcProxy() throw() {
 }
 
 //------------------------------------------------------------------------------
 // mountTape
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyRmc::mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::DummyRmcProxy::mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------
 // unmountTape
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyRmc::unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::DummyRmcProxy::unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
 }

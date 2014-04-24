@@ -2,9 +2,6 @@ add_executable(tapeserverd
   AdminAcceptHandler.cpp
   DebugMountSessionForVdqmProtocol.cpp
   DriveCatalogue.cpp
-  Rmc.cpp
-  RmcImpl.cpp
-  ScsiLibrarySlot.cpp
   TapeDaemon.cpp
   TapeDaemonMain.cpp
   Vdqm.cpp

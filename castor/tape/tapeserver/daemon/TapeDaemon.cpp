@@ -55,7 +55,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
   const utils::TpconfigLines &tpconfigLines,
   Vdqm &vdqm,
   Vmgr &vmgr,
-  Rmc &rmc,
+  legacymsg::RmcProxy &rmc,
   io::PollReactor &reactor) throw(castor::exception::Exception):
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),

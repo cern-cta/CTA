@@ -27,9 +27,9 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/io/PollReactor.hpp"
+#include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
-#include "castor/tape/tapeserver/daemon/Rmc.hpp"
 #include "castor/tape/tapeserver/daemon/Vdqm.hpp"
 #include "castor/tape/tapeserver/daemon/Vmgr.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
@@ -79,7 +79,7 @@ public:
     const utils::TpconfigLines &tpconfigLines,
     Vdqm &vdqm,
     Vmgr &vmgr,
-    Rmc &rmc,
+    legacymsg::RmcProxy &rmc,
     io::PollReactor &reactor) throw(castor::exception::Exception);
 
   /**
@@ -290,7 +290,7 @@ protected:
   /**
    * The proxy object representing the rmcd daemon.
    */
-  Rmc &m_rmc;
+  legacymsg::RmcProxy &m_rmc;
 
   /**
    * The reactor responsible for dispatching the file-descriptor event-handlers

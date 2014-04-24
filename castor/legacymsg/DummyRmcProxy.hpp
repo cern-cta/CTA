@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/Rmc.hpp
+ *         castor/legacymsg/DummyRmcProxy.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,25 +22,23 @@
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
+#include "castor/legacymsg/RmcProxy.hpp"
 
-#include <string>
-
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+namespace castor {
+namespace legacymsg {
 
 /**
- * Proxy class representing the remote media-changer daemon.
+ * A dummy rmc proxy.
+ *
+ * The main goal of this class is to facilitate the development of unit tests.
  */
-class Rmc {
+class DummyRmcProxy: public RmcProxy {
 public:
 
   /**
    * Destructor.
    */
-  virtual ~Rmc() throw() = 0;
+  ~DummyRmcProxy() throw();
 
   /**
    * Asks the remote media-changer daemon to mount the specified tape into the
@@ -51,7 +49,7 @@ public:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
    * "manual" or "smc@rmc_host,drive_ordinal".
    */
-  virtual void mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) = 0;
+  void mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
 
   /**
    * Asks the remote media-changer daemon to unmount the specified tape from the
@@ -62,12 +60,10 @@ public:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
    * "manual" or "smc@rmc_host,drive_ordinal".
    */
-  virtual void unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) = 0;
+  void unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
 
-}; // class Rmc
+}; // class DummyRmcProxy
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
+} // namespace legacymsg
 } // namespace castor
 

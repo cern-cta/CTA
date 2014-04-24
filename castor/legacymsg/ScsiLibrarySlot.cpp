@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/ScsiLibrarySlot.cpp
+ *         castor/legacymsg/ScsiLibrarySlot.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,20 +21,20 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
-#include "castor/tape/tapeserver/daemon/ScsiLibrarySlot.hpp"
+#include "castor/legacymsg/ScsiLibrarySlot.hpp"
 #include "castor/utils/utils.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::ScsiLibrarySlot::ScsiLibrarySlot()
+castor::legacymsg::ScsiLibrarySlot::ScsiLibrarySlot()
   throw(): drvOrd(0) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::ScsiLibrarySlot::ScsiLibrarySlot(
+castor::legacymsg::ScsiLibrarySlot::ScsiLibrarySlot(
   const std::string &str) throw(castor::exception::Exception): drvOrd(0) {
   if(str.find("smc@")) {
     castor::exception::Internal ex;

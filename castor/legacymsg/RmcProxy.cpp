@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/Rmc.cpp
+ *                castor/legacymsg/RmcProxy.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,10 +22,10 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/Rmc.hpp"
+#include "castor/legacymsg/RmcProxy.hpp"
 
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::Rmc::~Rmc() throw() {
+castor::legacymsg::RmcProxy::~RmcProxy() throw() {
 }
