@@ -27,8 +27,8 @@
 #include "castor/io/PollReactorImpl.hpp"
 #include "castor/legacymsg/RmcProxyImpl.hpp"
 #include "castor/legacymsg/VdqmProxyImpl.hpp"
+#include "castor/legacymsg/VmgrProxyImpl.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
-#include "castor/tape/tapeserver/daemon/VmgrImpl.hpp"
 #include "h/rmc_constants.h"
 #include "h/vdqm_constants.h"
 #include "h/vmgr_constants.h"
@@ -92,7 +92,7 @@ int main(const int argc, char **const argv) {
   // Create proxy objects for the vdqm, vmgr and rmc daemons
   const int netTimeout = 10; // Timeout in seconds
   castor::legacymsg::VdqmProxyImpl vdqm(log, vdqmHostName, VDQM_PORT, netTimeout);
-  VmgrImpl vmgr(log, vmgrHostName, VMGR_PORT, netTimeout);
+  castor::legacymsg::VmgrProxyImpl vmgr(log, vmgrHostName, VMGR_PORT, netTimeout);
   castor::legacymsg::RmcProxyImpl rmc(log, netTimeout);
 
   // Create the poll() reactor

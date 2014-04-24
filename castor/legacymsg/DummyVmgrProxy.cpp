@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/Vmgr.hpp
+ *         castor/legacymsg/DummyVmgrProxy.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,33 +20,10 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "castor/legacymsg/DummyVmgrProxy.hpp"
 
-#include "castor/exception/Exception.hpp"
-#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
-
-#include <sys/types.h>
-
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
-
-/**
- * Proxy class representing the vmgr daemon.
- */
-class Vmgr {
-public:
-
-  /**
-   * Destructor.
-   */
-  virtual ~Vmgr() throw() = 0;
-
-}; // class Vmgr
-
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
-} // namespace castor
-
+//------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::legacymsg::DummyVmgrProxy::~DummyVmgrProxy() throw() {
+}

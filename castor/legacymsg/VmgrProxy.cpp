@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/DummyVmgr.cpp
+ *         castor/legacymsg/VmgrProxy.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,13 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
+ *
+ *
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/DummyVmgr.hpp"
+#include "castor/legacymsg/VmgrProxy.hpp"
 
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 // destructor
-//------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DummyVmgr::~DummyVmgr() throw() {
+//-----------------------------------------------------------------------------
+castor::legacymsg::VmgrProxy::~VmgrProxy() throw() {
 }

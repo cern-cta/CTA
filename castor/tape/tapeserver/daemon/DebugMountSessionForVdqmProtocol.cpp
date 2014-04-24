@@ -48,7 +48,7 @@ castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::DebugMountSe
   castor::log::Logger &logger,
   const utils::TpconfigLines &tpConfig,
   legacymsg::VdqmProxy &vdqm,
-  Vmgr &vmgr,
+  legacymsg::VmgrProxy &vmgr,
   legacymsg::RmcProxy &rmc) throw():
   m_netTimeout(5), // Timeout in seconds
   m_sessionPid(getpid()),

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/Vmgr.cpp
+ *                castor/legacymsg/VmgrProxy.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,15 +17,27 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- *
- *
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/Vmgr.hpp"
+#pragma once
 
-//-----------------------------------------------------------------------------
-// destructor
-//-----------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::Vmgr::~Vmgr() throw() {
-}
+namespace castor {
+namespace legacymsg {
+
+/**
+ * Proxy class representing the vmgr daemon.
+ */
+class VmgrProxy {
+public:
+
+  /**
+   * Destructor.
+   */
+  virtual ~VmgrProxy() throw() = 0;
+
+}; // class VmgrProxy
+
+} // namespace legacymsg
+} // namespace castor
+

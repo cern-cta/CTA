@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/VmgrImpl.cpp
+ *                castor/legacymsg/VmgrProxyImpl.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,13 +21,13 @@
  *****************************************************************************/
 
 #include "castor/io/io.hpp"
-#include "castor/tape/tapeserver/daemon/VmgrImpl.hpp"
+#include "castor/legacymsg/VmgrProxyImpl.hpp"
 #include "castor/utils/SmartFd.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::VmgrImpl::VmgrImpl(
+castor::legacymsg::VmgrProxyImpl::VmgrProxyImpl(
   log::Logger &log,
   const std::string &vmgrHostName,
   const unsigned short vmgrPort,
@@ -41,13 +41,13 @@ castor::tape::tapeserver::daemon::VmgrImpl::VmgrImpl(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::VmgrImpl::~VmgrImpl() throw() {
+castor::legacymsg::VmgrProxyImpl::~VmgrProxyImpl() throw() {
 }
 
 //-----------------------------------------------------------------------------
 // connectToVmgr
 //-----------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::VmgrImpl::connectToVmgr() const throw(castor::exception::Exception) {
+int castor::legacymsg::VmgrProxyImpl::connectToVmgr() const throw(castor::exception::Exception) {
   castor::utils::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(io::connectWithTimeout(m_vmgrHostName, m_vmgrPort,

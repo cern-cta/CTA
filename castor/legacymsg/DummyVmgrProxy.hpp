@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/DummyVmgr.hpp
+ *         castor/legacymsg/DummyVmgr.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,30 +22,26 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/Vmgr.hpp"
+#include "castor/legacymsg/VmgrProxy.hpp"
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+namespace castor {
+namespace legacymsg {
 
 /**
  * A dummy vmgr proxy.
  *
  * The main goal of this class is to facilitate the development of unit tests.
  */
-class DummyVmgr: public Vmgr {
+class DummyVmgrProxy: public VmgrProxy {
 public:
 
   /**
    * Destructor.
    */
-  ~DummyVmgr() throw();
+  ~DummyVmgrProxy() throw();
 
-}; // class DummyVmgr
+}; // class DummyVmgrProxy
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
+} // namespace legacymsg
 } // namespace castor
 

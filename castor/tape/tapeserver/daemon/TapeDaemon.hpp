@@ -29,9 +29,9 @@
 #include "castor/io/PollReactor.hpp"
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/legacymsg/VdqmProxy.hpp"
+#include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
-#include "castor/tape/tapeserver/daemon/Vmgr.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
 #include "castor/tape/utils/utils.hpp"
 
@@ -78,7 +78,7 @@ public:
     log::Logger &log,
     const utils::TpconfigLines &tpconfigLines,
     legacymsg::VdqmProxy &vdqm,
-    Vmgr &vmgr,
+    legacymsg::VmgrProxy &vmgr,
     legacymsg::RmcProxy &rmc,
     io::PollReactor &reactor) throw(castor::exception::Exception);
 
@@ -285,7 +285,7 @@ protected:
   /**
    * The proxy object representing the vmgrd daemon.
    */
-  Vmgr &m_vmgr;
+  legacymsg::VmgrProxy &m_vmgr;
 
   /**
    * The proxy object representing the rmcd daemon.

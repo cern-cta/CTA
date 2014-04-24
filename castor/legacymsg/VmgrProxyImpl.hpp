@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/VmgrImpl.hpp
+ *         castor/legacymsg/VmgrProxyImpl.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,18 +22,16 @@
 
 #pragma once
 
+#include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/log/Logger.hpp"
-#include "castor/tape/tapeserver/daemon/Vmgr.hpp"
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+namespace castor {
+namespace legacymsg {
 
 /**
  * A concrete implementation of the interface to the vmgr daemon.
  */
-class VmgrImpl: public Vmgr {
+class VmgrProxyImpl: public VmgrProxy {
 public:
   /**
    * Constructor.
@@ -45,12 +43,12 @@ public:
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    */
-  VmgrImpl(log::Logger &log, const std::string &vmgrHostName, const unsigned short vmgrPort, const int netTimeout) throw();
+  VmgrProxyImpl(log::Logger &log, const std::string &vmgrHostName, const unsigned short vmgrPort, const int netTimeout) throw();
 
   /**
    * Destructor.
    */
-  ~VmgrImpl() throw();
+  ~VmgrProxyImpl() throw();
 
 private:
 
@@ -82,10 +80,8 @@ private:
    */
   int connectToVmgr() const throw(castor::exception::Exception);
 
-}; // class VmgrImpl
+}; // class VmgrProxyImpl
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
+} // namespace legacymsg
 } // namespace castor
 

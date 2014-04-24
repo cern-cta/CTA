@@ -5,9 +5,7 @@ add_executable(tapeserverd
   TapeDaemon.cpp
   TapeDaemonMain.cpp
   VdqmAcceptHandler.cpp
-  VdqmConnectionHandler.cpp
-  Vmgr.cpp
-  VmgrImpl.cpp)
+  VdqmConnectionHandler.cpp)
 
 target_link_libraries(tapeserverd
   Exception
