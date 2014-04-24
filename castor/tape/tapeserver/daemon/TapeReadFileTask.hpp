@@ -29,7 +29,7 @@
 #include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
-
+#include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 
 namespace castor {
 namespace tape {
@@ -59,13 +59,14 @@ public:
     bool stillReading = true;
     int fileBlock = 0;
     int tapeBlock = 0;
+    MemBlock* mb=NULL;
     try {
       std::auto_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
       while (stillReading) {
         // Get a memory block and add information to its metadata
-        std::auto_ptr<MemBlock> mb(m_mm.getFreeBlock());
+        mb=m_mm.getFreeBlock();
+        
         mb->m_fSeq = m_fileToRecall->fseq();
-        mb->m_failed = false;
         mb->m_fileBlock = fileBlock++;
         mb->m_fileid = m_fileToRecall->fileid();
         mb->m_tapeFileBlock = tapeBlock;
@@ -75,23 +76,23 @@ public:
           // append conveniently returns false when there will not be more space
           // for an extra tape block, and throws an exception if we reached the
           // end of file. append() also protects against reading too big tape blocks.
-          while (mb->m_payload.append(*rf)) {
-          tapeBlock++;
-          }
+            while (mb->m_payload.append(*rf)) {
+              tapeBlock++;
+            }
+          } catch (const castor::tape::exceptions::EndOfFile&) {
+            // append() signaled the end of the file.
+            stillReading = false;
+          } 
+          
           // Pass the block to the disk write task
-          m_fifo.pushDataBlock(mb.release());
-        } catch (const castor::tape::exceptions::EndOfFile&) {
-          // append() signaled the end of the file.
-          stillReading = false;
-        } 
-        
-      } //end of while(stillReading)
+          m_fifo.pushDataBlock(mb);
+        } //end of while(stillReading)
     
       } //end of try
       catch (castor::exception::Exception & ex) {
-        //we end there because :
-        //openReadFile brought us here (cant put the tape into position)
-        //m_payload.append brought us here (error while reading the file)
+        //we end up there because :
+        //-- openReadFile brought us here (cant put the tape into position)
+        //-- m_payload.append brought us here (error while reading the file)
         // This is an error case. Log and signal to the disk write task
         { 
           castor::log::LogContext::ScopedParam sp0(lc, Param("fileBlock", fileBlock));
@@ -104,14 +105,17 @@ public:
           lc2.logBacktrace(LOG_ERR, ex.backtrace());
         }
         
-        //write the block 
-        std::auto_ptr<MemBlock> mb(m_mm.getFreeBlock());
-        mb->m_fSeq = m_fileToRecall->fseq();
-        mb->m_failed = true;
-        mb->m_fileBlock = -1;
-        mb->m_fileid = m_fileToRecall->fileid();
-        mb->m_tapeFileBlock = -1;
-        m_fifo.pushDataBlock(mb.release());
+        //if we end up there because openReadFile brought us here
+        //then mb is not valid, we need to get a block
+        if(!mb) {
+          mb=m_mm.getFreeBlock();
+          mb->m_fSeq = m_fileToRecall->fseq();
+          mb->m_fileid = m_fileToRecall->fileid();
+        }
+        
+        //mark the block failed and push it
+        mb->markAsFailed();
+        m_fifo.pushDataBlock(mb);
         m_fifo.pushDataBlock(NULL);
         return;
       }
