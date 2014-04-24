@@ -124,7 +124,7 @@ private:
       } 
     }
     catch(const castor::exception::Exception& e){
-      log::LogContext::ScopedParam sp1(m_logContext, log::Param("what", e.what()));
+      log::LogContext::ScopedParam sp1(m_logContext, log::Param("exceptionCode", e.code()));
       log::LogContext::ScopedParam sp2(m_logContext, log::Param("error_MessageValue", e.getMessageValue()));
       m_logContext.log(LOG_INFO,"An error occurred during TapwWriteSingleThread::execute");
       m_reportPacker.reportEndOfSessionWithErrors(e.what(),e.code());
