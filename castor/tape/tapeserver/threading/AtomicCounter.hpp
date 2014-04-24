@@ -62,5 +62,20 @@ template <class T> struct AtomicCounter{
       mutable threading::Mutex m_mutex;
 };
 
+//A 1 way flag  
+struct AtomicFlag{
+  AtomicFlag(): m_set(false) {};
+     void set()  {
+        threading::MutexLocker ml(&m_mutex);
+        m_set=true;
+      }
+     operator bool() const {
+        threading::MutexLocker ml(&m_mutex);
+        return m_set;
+      }
+    private:
+      bool m_set;
+      mutable threading::Mutex m_mutex;
+};
 }}}
 
