@@ -114,7 +114,7 @@ public:
    * See the definition of endOfClients below.
    */
   void finish() throw(castor::exception::Exception) {
-    addClient(new endOfClients());
+    addClient(NULL);
   }
 
   /**
@@ -137,14 +137,6 @@ public:
   }
 private:
   
-  /**
-   * Special token used to say that there are no more clients for this memory manager
-   */
-  class endOfClients: public MemoryManagerClient {
-    virtual bool endOfWork() throw() {
-      return true;
-    }
-  };
   
   const size_t m_blockCapacity;
   
@@ -191,10 +183,8 @@ private:
     while(true) {
       MemoryManagerClient* c = m_clientQueue.pop();
     
-      /* This is an unfortunate special case: WE allocate the end block
-       and WE have to delete it. */
-      if (c->endOfWork()) {
-        delete c;
+      // If the c is a NULL pointer, that means end of client 
+      if (!c) {
         return;
       };
       
