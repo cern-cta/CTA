@@ -24,12 +24,7 @@
 
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
-namespace {
-  //todo : merge it with one of TapeWriteTask and put is somewhere 
-     unsigned long initAdler32Checksum() {
-     return  adler32(0L,Z_NULL,0);
-   }
-}
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -54,7 +49,7 @@ namespace daemon {
     try{
       tape::diskFile::WriteFile ourFile(m_recallingFile->path());
       int blockId  = 0;
-      unsigned long checksum = initAdler32Checksum();
+      unsigned long checksum = Payload::zeroAdler32();
       while(1) {
         if(MemBlock* const mb = m_fifo.pop()) {
           AutoReleaseBlock<RecallMemoryManager> releaser(mb,m_memManager);

@@ -142,6 +142,9 @@ public:
   unsigned long  adler32(unsigned long previous){
     return ::adler32(previous,m_payload,m_size);
   }
+  static unsigned long zeroAdler32() {
+     return  ::adler32(0L,Z_NULL,0);
+   }
 private:
   unsigned char* m_payload;
   size_t m_totalCapacity;

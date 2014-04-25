@@ -60,7 +60,7 @@ namespace daemon {
     using castor::log::LogContext;
     using castor::log::Param;
     
-    unsigned long ckSum = initAdler32Checksum();
+    unsigned long ckSum = Payload::zeroAdler32();
     int blockId  = 0;
     try {
       std::auto_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
