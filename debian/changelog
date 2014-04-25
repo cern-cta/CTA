@@ -1,8 +1,8 @@
-castor (2.1.14-12) unstable; urgency=low
+castor (2.1.15-0) unstable; urgency=low
 
-  * Sixth 2.1.14 production release
+  * Placeholder for a future release
 
- -- Giuseppe Lo presti <giuseppe.lopresti@cern.ch> 12:00:00 +0200
+ -- Giuseppe Lo Presti <giuseppe.lopresti@cern.ch>
 
 castor (2.1.14-11) unstable; urgency=low
 
