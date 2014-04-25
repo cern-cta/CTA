@@ -30,7 +30,7 @@ namespace legacymsg {
 /**
  * Concrete factory for creating objects of type VmgrProxyTcpIp.
  */
-class VmgrProxyTcpIpFactory {
+class VmgrProxyTcpIpFactory: public VmgrProxyFactory {
 public:
 
   /**

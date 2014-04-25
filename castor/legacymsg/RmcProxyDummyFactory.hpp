@@ -30,7 +30,7 @@ namespace legacymsg {
 /**
  * Concrete factory for creating objects of type RmcProxyDummy.
  */
-class RmcProxyDummyFactory {
+class RmcProxyDummyFactory: public RmcProxyFactory {
 public:
 
   /**

@@ -31,7 +31,7 @@ namespace legacymsg {
 /**
  * Concrete factory for creating objects of type VdqmProxyDummy.
  */
-class VdqmProxyDummyFactory {
+class VdqmProxyDummyFactory: public VdqmProxyFactory {
 public:
   /**
    * Constructor.

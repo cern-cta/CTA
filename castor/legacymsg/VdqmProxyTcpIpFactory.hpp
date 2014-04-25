@@ -31,7 +31,7 @@ namespace legacymsg {
 /**
  * Concrete factory for creating objects of type VdqmProxyTcpIp.
  */
-class VdqmProxyTcpIpFactory {
+class VdqmProxyTcpIpFactory: public VdqmProxyFactory {
 public:
   /**
    * Constructor.

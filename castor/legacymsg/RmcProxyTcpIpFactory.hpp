@@ -30,7 +30,7 @@ namespace legacymsg {
 /**
  * Concrete factory for creating objects of type RmcProxyTcpIp.
  */
-class RmcProxyTcpIpFactory {
+class RmcProxyTcpIpFactory: public RmcProxyFactory {
 public:
 
   /**
