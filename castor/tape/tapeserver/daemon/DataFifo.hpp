@@ -61,8 +61,7 @@ public:
     m_freeBlocks.push(mb);
     return ret;
   }
-  virtual bool endOfWork() throw() { return false; }
-
+  
   /* Rest of the data Fifo interface. */
   MemBlock * getFreeBlock()  throw(castor::exception::Exception) {
     return m_freeBlocks.pop();

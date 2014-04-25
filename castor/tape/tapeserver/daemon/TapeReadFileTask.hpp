@@ -40,8 +40,7 @@ public:
   TapeReadFileTask(castor::tape::tapegateway::FileToRecallStruct * ftr,
     DataConsumer & destination, RecallMemoryManager & mm): 
     m_fileToRecall(ftr), m_fifo(destination), m_mm(mm) {}
-  /* Implementation of the TapeReadTask interface*/
-  virtual bool endOfWork() { return false; }
+    
   virtual void execute(castor::tape::tapeFile::ReadSession & rs,
     castor::log::LogContext & lc) {
     using castor::log::Param;

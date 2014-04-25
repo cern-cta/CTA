@@ -35,10 +35,7 @@ namespace daemon {
 
 class MemoryManagerClient {
 public:
-  virtual bool endOfWork() throw() = 0;
-  virtual bool provideBlock(MemBlock */*mb*/) throw(MemException) { 
-    throw MemException(std::string("Tring to provide a memory block to the wrong client")); 
-  };
+  virtual bool provideBlock(MemBlock */*mb*/) =0;
   virtual ~MemoryManagerClient() throw() {}
 };
 

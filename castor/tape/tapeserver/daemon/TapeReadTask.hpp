@@ -34,7 +34,6 @@ namespace tapeserver {
 namespace daemon {
 class TapeReadTask {
 public:
-  virtual bool endOfWork() = 0;
   virtual void execute(castor::tape::tapeFile::ReadSession & /*rs*/,
     castor::log::LogContext & /*lc*/) { 
     throw MemException("Tring to execute a non-execuatble TapeReadTask"); 
