@@ -1,3 +1,6 @@
+################################################################################
+# Location of the plugin OFS library to be loaded
+################################################################################
 xrootd.fslib /usr/lib64/libXrdxCastor2Fs.so.2.1
 xrd.async off
 xrd.sched mint 16 maxt 512 idle 128
@@ -5,30 +8,24 @@ all.export /
 all.role manager
 all.manager localhost 2131
 oss.fdlimit 16384 32768
-############################################################################
+################################################################################
 # Namespace Mapping - don't touch
+################################################################################
 xcastor2.nsmap / /
 xcastor2.fs /
 
-############################################################################
-# Scheduling Policies
-# note: syntax is <stagerhost>::<serviceclass> schedall|schedread|schedwrite[,nohsm][,mkpath]
-xcastor2.stagerpolicy localhost::* schedall
-
-############################################################################
-# plugin configuration - don't touch
+################################################################################
+# Plugin configuration - don't touch
+################################################################################
 xcastor2.targetport 1095
 xcastor2.capability true
 xcastor2.privatekey /opt/xrootd/keys/key.pem
 xcastor2.tokenlocktime 60
 xcastor2.proc /var/log/xroot/manager
 
-############################################################################
-# Log level: INFO by default
-#xcastor2.loglevel 6
-
-############################################################################
-# - Security Plugins
+################################################################################
+# Security Plugins
+################################################################################
 xrootd.seclib /usr/lib64/libXrdSec.so
 
 # UNIX authentication
@@ -50,11 +47,24 @@ sec.protocol gsi -crl:1 -cert:/etc/grid-security/xrootd-server/xrootd-server-cer
 # configure gsi+krb5 only at CERN
 #sec.protbind *.cern.ch only krb5 gsi
 
-# Gridmap and VOMS
-#xcastor2.gridmapfile /etc/grid-security/grid-mapfile
-#xcastor2.vomsmapfile /etc/grid-security/voms-mapfile
 
-############################################################################
-xcastor2.stagermap /castor/cern.ch/dev/  localhost::default,localhost::dev,localhost::diskonly
-xcastor2.stagermap default               localhost::default
+################################################################################
+# Set mapping between paths and svcClasses. The path "/" is considered as the
+# default mapping. The svcClasses need to be separated by commas and at the end 
+# there is the posibility to specify the "nohsm" option. The svcClasses are 
+# listed in order of their priority. The special character "*" means that any
+# svcClass provided by the client is accepted.
+################################################################################
+xcastor2.stagermap /castor/cern.ch/dev/  default,dev,diskonly,*   nohsm
+xcastor2.stagermap /                     default
 
+################################################################################
+# Set the stagerhost which the XRootD daemon contacts. It must be a fully 
+# qualified domain name.
+################################################################################
+xcasto2.stagerhost mystager.cern.ch
+
+################################################################################
+# Log level: INFO by default
+################################################################################
+#xcastor2.loglevel 6
