@@ -626,7 +626,7 @@ XrdxCastor2Fs::stageprepare(const char*         path,
     return XrdxCastor2Fs::Emsg(epname, error, serrno, "stat", map_path.c_str());
 
   char* val;
-  std::string desired_svc = "default";
+  std::string desired_svc = "";
 
   if ((val = Open_Env.Get("svcClass")))
     desired_svc = val;
@@ -737,38 +737,6 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
 
     if (XrdxCastor2FsUFS::Unlink(map_path.c_str()))
       return XrdxCastor2Fs::Emsg(epname, error, serrno, "unlink", map_path.c_str());
-  }
-
-  // This is currently needed
-  if (oenv.Get("firstbytewritten"))
-  {
-    char cds[4096];
-    char nds[4096];
-    char* acpath;
-    TIMING("CNSSELSERV", &preparetiming);
-    Cns_selectsrvr(map_path.c_str(), cds, nds, &acpath);
-    xcastor_debug("nameserver is: %s", nds);
-    struct Cns_filestatcs cstat;
-    TIMING("CNSSTAT", &preparetiming);
-
-    if (XrdxCastor2FsUFS::Statfn(map_path.c_str(), &cstat))
-      return XrdxCastor2Fs::Emsg(epname, error, serrno, "stat", map_path.c_str());
-
-    XrdxCastor2FsUFS::SetId(geteuid(), getegid());
-    char fileid[4096];
-    sprintf(fileid, "%llu", cstat.fileid);
-    TIMING("1STBYTEW", &preparetiming);
-
-    if (!XrdxCastor2Stager::FirstWrite(error, map_path.c_str(), oenv.Get("reqid"),
-                                       fileid, nds))
-    {
-      TIMING("END", &preparetiming);
-
-      if (gMgr->mLogLevel == LOG_DEBUG)
-        preparetiming.Print();
-
-      return SFS_ERROR;
-    }
   }
 
   TIMING("END", &preparetiming);
@@ -1058,7 +1026,7 @@ XrdxCastor2Fs::stat(const char* path,
       for (std::list<std::string>::iterator allowed_iter = list_svc->begin();
            allowed_iter != list_svc->end(); ++allowed_iter)
       {
-        if (allowed_iter == "*")
+        if (*allowed_iter == "*")
           continue;
 
         xcastor_debug("trying service class:%s", allowed_iter->c_str());

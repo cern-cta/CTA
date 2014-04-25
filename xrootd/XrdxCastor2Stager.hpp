@@ -223,16 +223,6 @@ public:
                           std::string& stagestatus);
 
 
-  //----------------------------------------------------------------------------
-  //! FirstWrite
-  //----------------------------------------------------------------------------
-  static bool FirstWrite(XrdOucErrInfo& error,
-                         const char* path,
-                         const char* reqid,
-                         const char* fileid,
-                         const char* nameserver);
-
-
   static XrdOucHash<XrdOucString>* msDelayStore; ///< delay store for each of the users
   
 private:
