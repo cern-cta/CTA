@@ -143,9 +143,8 @@ XrdxCastorClient::SendAsyncRequest(const std::string& userId,
 
   // Check if we reached the maximum allowed number of pending request and
   // if so then stall the client i.e. return a positive value which represents
-  // the number of seconds he should be back; AND do a clean-up of requests 
-  // for which we received the responses but the client never showed up to 
-  // collect them.
+  // the number of seconds of stalling; AND do a clean-up of requests for which
+  // we received the responses but the client never showed up to collect them.
   mMutexMaps.Lock();   // -->
   
   //TODO: maybe also add a time constraint i.e. do a clean-up evey 10 min?
@@ -380,7 +379,7 @@ XrdxCastorClient::GetResponse(const std::string& userId,
 
 //------------------------------------------------------------------------------
 // Check if the user has already submitted the current request. If so, this 
-// means if comes back to collect the response after a stall. 
+// means he is coming back to collect the response after a stall. 
 //------------------------------------------------------------------------------
 bool 
 XrdxCastorClient::HasSubmittedReq(const char* path, XrdOucErrInfo& error)

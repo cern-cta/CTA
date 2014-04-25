@@ -586,7 +586,7 @@ XrdxCastor2Stager::StagerQuery(XrdOucErrInfo& error,
     return false;
   }  
 
-  xcastor_static_debug("uid=%i, gid=%i, path=%s, sericeclass=%s",
+  xcastor_static_debug("uid=%i, gid=%i, path=%s, serviceclass=%s",
                        uid, gid, path, serviceclass);
   struct stage_query_req requests[1];
   struct stage_filequery_resp* resp;

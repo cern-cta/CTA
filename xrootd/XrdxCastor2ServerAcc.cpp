@@ -375,7 +375,7 @@ XrdxCastor2ServerAcc::SignBase64(unsigned char* input,
   int cnt = 0;
 
   // Remove the backslash from the signature buffer
-  for (int i = 0; i <= (bptr->length - 1); i++)
+  for (unsigned int i = 0; i <= (bptr->length - 1); i++)
   {
     if (buff[i] != '\n')
     {

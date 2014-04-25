@@ -302,7 +302,7 @@ private:
   XrdSysMutex mMutexMaps;      ///< mutex for the two maps
   XrdSysCondVar mCondResponse; ///< condition variable signalling the arrival of a response
 
-  //! Mapping from  user ids (which are obtained by concatenating the type of
+  //! Mapping from user ids (which are obtained by concatenating the type of
   //! request with the tident of the user and the path for the reuqest) to ReqElement 
   AsyncUserMap mMapUsers;
   
