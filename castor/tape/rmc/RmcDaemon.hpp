@@ -33,7 +33,6 @@
 #include "castor/log/Logger.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/server/BaseThreadPool.hpp"
-#include "castor/tape/rmc/RmcdCmdLine.hpp"
 
 #include <stdint.h>
 #include <list>

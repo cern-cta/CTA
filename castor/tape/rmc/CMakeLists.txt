@@ -28,7 +28,6 @@ if (${COMPILE_SERVER} STREQUAL "1")
   ##############################################################################
   set (RMCD_SRC_FILES
     RmcDaemon.cpp
-    RmcdCmdLine.cpp
     RmcdMain.cpp)
   add_executable (newrmcd ${RMCD_SRC_FILES})
   target_link_libraries (newrmcd castorclient castorcommon)
