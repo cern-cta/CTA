@@ -133,3 +133,9 @@
   Helgrind:Race
   fun:_ZNSs*
 }
+
+{
+  helgrind-unitTest-castor-basicStringslength
+  Helgrind:Race
+  fun: _ZNKSs6*
+}
