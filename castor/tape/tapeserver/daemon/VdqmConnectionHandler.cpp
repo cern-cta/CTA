@@ -27,11 +27,14 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::VdqmConnectionHandler::VdqmConnectionHandler(const int fd, io::PollReactor &reactor, log::Logger &log, legacymsg::VdqmProxy &vdqm, DriveCatalogue &driveCatalogue) throw():
+castor::tape::tapeserver::daemon::VdqmConnectionHandler::VdqmConnectionHandler(
+  const int fd,
+  io::PollReactor &reactor,
+  log::Logger &log,
+  DriveCatalogue &driveCatalogue) throw():
     m_fd(fd),
     m_reactor(reactor),
     m_log(log),
-    m_vdqm(vdqm),
     m_driveCatalogue(driveCatalogue),
     m_netTimeout(1) // 1 second
 {

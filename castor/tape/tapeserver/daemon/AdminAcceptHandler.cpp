@@ -30,11 +30,10 @@
 #include "h/common.h"
 #include "h/serrno.h"
 #include "h/Ctape.h"
+#include "h/vdqm_api.h"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
 #include "castor/tape/utils/utils.hpp"
-
-#include <vdqm_api.h>
 
 #include <errno.h>
 #include <memory>
@@ -51,14 +50,14 @@ castor::tape::tapeserver::daemon::AdminAcceptHandler::AdminAcceptHandler(
   const int fd,
   io::PollReactor &reactor,
   log::Logger &log,
-  legacymsg::VdqmProxy &vdqm,
+  legacymsg::VdqmProxyFactory &vdqmFactory,
   DriveCatalogue &driveCatalogue,
   const std::string &hostName)
   throw():
     m_fd(fd),
     m_reactor(reactor),
     m_log(log),
-    m_vdqm(vdqm),
+    m_vdqmFactory(vdqmFactory),
     m_driveCatalogue(driveCatalogue),
     m_hostName(hostName),
     m_netTimeout(10) {
@@ -332,13 +331,15 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeConfigJob(c
   const std::string unitName(body.drive);
   const std::string dgn = m_driveCatalogue.getDgn(unitName);
 
+  std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
+
   if(CONF_UP==body.status) {
-    m_vdqm.setDriveUp(m_hostName, unitName, dgn);
+    vdqm->setDriveUp(m_hostName, unitName, dgn);
     m_driveCatalogue.configureUp(unitName);
     m_log(LOG_INFO, "Drive is up now");
   }
   else if(CONF_DOWN==body.status) {
-    m_vdqm.setDriveDown(m_hostName, unitName, dgn);
+    vdqm->setDriveDown(m_hostName, unitName, dgn);
     m_driveCatalogue.configureDown(unitName);
     m_log(LOG_INFO, "Drive is down now");
   }

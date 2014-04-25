@@ -30,7 +30,7 @@
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/legacymsg/RtcpMarshal.hpp"
-#include "castor/legacymsg/VdqmProxy.hpp"
+#include "castor/legacymsg/VdqmProxyFactory.hpp"
 #include "castor/legacymsg/VdqmMarshal.hpp"
 #include "h/vdqm_constants.h"
 #include "h/rtcp_constants.h"
@@ -55,11 +55,14 @@ public:
    * daemon.
    * @param reactor The reactor with which this event handler is registered.
    * @param log The object representing the API of the CASTOR logging system.
-   * @param vdqm The object representing the vdqmd daemon.
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
    */
-  VdqmConnectionHandler(const int fd, io::PollReactor &reactor, log::Logger &log, legacymsg::VdqmProxy &vdqm, DriveCatalogue &driveCatalogue) throw();
+  VdqmConnectionHandler(
+    const int fd,
+    io::PollReactor &reactor,
+    log::Logger &log,
+    DriveCatalogue &driveCatalogue) throw();
 
   /**
    * Returns the integer file descriptor of this event handler.
@@ -102,11 +105,6 @@ private:
    * The object representing the API of the CASTOR logging system.
    */
   log::Logger &m_log;
-
-  /**
-   * The object representing the vdqmd daemon.
-   */
-  legacymsg::VdqmProxy &m_vdqm;
 
   /**
    * The catalogue of tape drives controlled by the tape server daemon.

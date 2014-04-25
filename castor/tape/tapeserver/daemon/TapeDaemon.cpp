@@ -53,17 +53,17 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
   std::ostream &stdErr,
   log::Logger &log,
   const utils::TpconfigLines &tpconfigLines,
-  legacymsg::VdqmProxy &vdqm,
-  legacymsg::VmgrProxy &vmgr,
-  legacymsg::RmcProxy &rmc,
+  legacymsg::VdqmProxyFactory &vdqmFactory,
+  legacymsg::VmgrProxyFactory &vmgrFactory,
+  legacymsg::RmcProxyFactory &rmcFactory,
   io::PollReactor &reactor) throw(castor::exception::Exception):
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),
   m_argv(argv),
   m_tpconfigLines(tpconfigLines),
-  m_vdqm(vdqm),
-  m_vmgr(vmgr),
-  m_rmc(rmc),
+  m_vdqmFactory(vdqmFactory),
+  m_vmgrFactory(vmgrFactory),
+  m_rmcFactory(rmcFactory),
   m_reactor(reactor),
   m_programName("tapeserverd"),
   m_hostName(getHostName()) {
@@ -246,16 +246,18 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   params.push_back(log::Param("unitName", unitName));
   params.push_back(log::Param("dgn", dgn));
 
+  std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
+
   switch(driveState) {
   case DriveCatalogue::DRIVE_STATE_DOWN:
     params.push_back(log::Param("state", "down"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.setDriveDown(m_hostName, unitName, dgn);
+    vdqm->setDriveDown(m_hostName, unitName, dgn);
     break;
   case DriveCatalogue::DRIVE_STATE_UP:
     params.push_back(log::Param("state", "up"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.setDriveUp(m_hostName, unitName, dgn);
+    vdqm->setDriveUp(m_hostName, unitName, dgn);
     break;
   default:
     {
@@ -300,7 +302,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHa
   std::auto_ptr<VdqmAcceptHandler> vdqmAcceptHandler;
   try {
     vdqmAcceptHandler.reset(new VdqmAcceptHandler(vdqmListenSock.get(), m_reactor,
-      m_log, m_vdqm, m_driveCatalogue));
+      m_log, m_driveCatalogue));
     vdqmListenSock.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
@@ -335,7 +337,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
   std::auto_ptr<AdminAcceptHandler> adminAcceptHandler;
   try {
     adminAcceptHandler.reset(new AdminAcceptHandler(adminListenSock.get(), m_reactor,
-      m_log, m_vdqm, m_driveCatalogue, m_hostName));
+      m_log, m_vdqmFactory, m_driveCatalogue, m_hostName));
     adminListenSock.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
@@ -498,7 +500,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(const pid_
   }
 
   try {
-    m_vdqm.setDriveDown(m_hostName, unitName, dgn);
+    std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
+    vdqm->setDriveDown(m_hostName, unitName, dgn);
   } catch(castor::exception::Exception &ex) {
     log::Param params[] = {
       log::Param("sessionPid", sessionPid),
@@ -569,6 +572,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
 
   try {
     const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getJob(unitName);
+    std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
+    std::auto_ptr<legacymsg::VmgrProxy> vmgr(m_vmgrFactory.create());
+    std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
     DebugMountSessionForVdqmProtocol mountSession(
       m_argc,
       m_argv,
@@ -576,9 +582,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
       job,
       m_log,
       m_tpconfigLines,
-      m_vdqm,
-      m_vmgr,
-      m_rmc);
+      *(vdqm.get()),
+      *(vmgr.get()),
+      *(rmc.get()));
 
     mountSession.execute();
 

@@ -30,7 +30,7 @@
 #include "castor/legacymsg/TapeConfigRequestMsgBody.hpp"
 #include "castor/legacymsg/TapeStatRequestMsgBody.hpp"
 #include "castor/legacymsg/TapeStatReplyMsgBody.hpp"
-#include "castor/legacymsg/VdqmProxy.hpp"
+#include "castor/legacymsg/VdqmProxyFactory.hpp"
 
 #include <poll.h>
 
@@ -51,14 +51,21 @@ public:
    *
    * @param fd The file descriptor of the socket listening for
    * connections from the vdqmd daemon.
-   * @param reactor The reactor to which new Vdqm connection handlers are to be
-   * registered.
+   * @param reactor The reactor to which new Vdqm connection handlers are to
+   * be registered.
    * @param log The object representing the API of the CASTOR logging system.
-   * @param vdqm The object representing the vdqmd daemon.
+   * @param vdqmFactory Factory to create proxy objects representing the vdqmd
+   * daemon.
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
    */
-  AdminAcceptHandler(const int fd, io::PollReactor &reactor, log::Logger &log, legacymsg::VdqmProxy &vdqm, DriveCatalogue &driveCatalogue, const std::string &hostName) throw();
+  AdminAcceptHandler(
+    const int fd,
+    io::PollReactor &reactor,
+    log::Logger &log,
+    legacymsg::VdqmProxyFactory &vdqmFactory,
+    DriveCatalogue &driveCatalogue,
+    const std::string &hostName) throw();
 
   /**
    * Returns the integer file descriptor of this event handler.
@@ -220,9 +227,9 @@ private:
   log::Logger &m_log;
 
   /**
-   * The object representing the vdqmd daemon.
+   * Factory to create proxy objects representing the vdqmd daemon.
    */
-  legacymsg::VdqmProxy &m_vdqm;
+  legacymsg::VdqmProxyFactory &m_vdqmFactory;
 
   /**
    * The catalogue of tape drives controlled by the tape server daemon.

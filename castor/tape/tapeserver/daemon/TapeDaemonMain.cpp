@@ -25,9 +25,9 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/log/LoggerImplementation.hpp"
 #include "castor/io/PollReactorImpl.hpp"
-#include "castor/legacymsg/RmcProxyTcpIp.hpp"
-#include "castor/legacymsg/VdqmProxyTcpIp.hpp"
-#include "castor/legacymsg/VmgrProxyTcpIp.hpp"
+#include "castor/legacymsg/RmcProxyTcpIpFactory.hpp"
+#include "castor/legacymsg/VdqmProxyTcpIpFactory.hpp"
+#include "castor/legacymsg/VmgrProxyTcpIpFactory.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "h/rmc_constants.h"
 #include "h/vdqm_constants.h"
@@ -91,9 +91,9 @@ int main(const int argc, char **const argv) {
 
   // Create proxy objects for the vdqm, vmgr and rmc daemons
   const int netTimeout = 10; // Timeout in seconds
-  castor::legacymsg::VdqmProxyTcpIp vdqm(log, vdqmHostName, VDQM_PORT, netTimeout);
-  castor::legacymsg::VmgrProxyTcpIp vmgr(log, vmgrHostName, VMGR_PORT, netTimeout);
-  castor::legacymsg::RmcProxyTcpIp rmc(log, netTimeout);
+  castor::legacymsg::VdqmProxyTcpIpFactory vdqmFactory(log, vdqmHostName, VDQM_PORT, netTimeout);
+  castor::legacymsg::VmgrProxyTcpIpFactory vmgrFactory(log, vmgrHostName, VMGR_PORT, netTimeout);
+  castor::legacymsg::RmcProxyTcpIpFactory rmcFactory(log, netTimeout);
 
   // Create the poll() reactor
   castor::io::PollReactorImpl reactor(log);
@@ -106,9 +106,9 @@ int main(const int argc, char **const argv) {
     std::cerr,
     log,
     tpconfigLines,
-    vdqm,
-    vmgr,
-    rmc,
+    vdqmFactory,
+    vmgrFactory,
+    rmcFactory,
     reactor);
 
   // Run the tapeserverd daemon
