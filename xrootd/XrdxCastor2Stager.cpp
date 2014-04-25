@@ -449,69 +449,6 @@ XrdxCastor2Stager::Rm(XrdOucErrInfo& error,
 
 
 //------------------------------------------------------------------------------
-// Update done
-//------------------------------------------------------------------------------
-bool
-XrdxCastor2Stager::UpdateDone(XrdOucErrInfo& error,
-                              const char*    path,
-                              const char*    reqid,
-                              const char*    fileid,
-                              const char*    nameserver,
-                              const char*    serviceclass)
-{
-  //const char* tident = error.getErrUser();
-  xcastor_static_debug("path=%s, sericeclass=%s", path, serviceclass);
-  castor::stager::SubRequest subReq;
-  subReq.setId(atoll(reqid));
-  castor::Services* cs2service = castor::BaseObject::services();
-
-  if (!cs2service)
-  {
-    error.setErrInfo(ENOMEM, "get castor2 baseobject services");
-    return false;
-  }
-
-  castor::IService* cs2iservice = cs2service->service("RemoteJobSvc", castor::SVC_REMOTEJOBSVC);
-  castor::stager::IJobSvc* jobSvc;
-  jobSvc = dynamic_cast<castor::stager::IJobSvc*>(cs2iservice);
-
-  if (!cs2iservice)
-  {
-    error.setErrInfo(ENOMEM, "get castor2 remote job service");
-    return false;
-  }
-
-  try
-  {
-    xcastor_static_debug("Calling getUpdateDone( %s ) for: %s ", reqid, path);
-    jobSvc->getUpdateDone((unsigned long long) atoll(reqid),
-                          (unsigned long long) atoll(fileid),
-                          nameserver);
-  }
-  catch (castor::exception::Communication e)
-  {
-    xcastor_static_debug("Communications error: %s", e.getMessage().str().c_str());
-    error.setErrInfo(ECOMM, e.getMessage().str().c_str());
-    // delete cs2iservice;
-    // delete cs2service;
-    return false;
-  }
-  catch (castor::exception::Exception e)
-  {
-    xcastor_static_debug("Fatal exception: %s", e.getMessage().str().c_str());
-    error.setErrInfo(ECOMM, e.getMessage().str().c_str());
-    // delete cs2iservice;
-    // delete cs2service;
-    return false;
-  }
-
-  // delete cs2iservice;
-  // delete cs2service;
-  return true;
-}
-
-
-//------------------------------------------------------------------------------
 // First write
 //------------------------------------------------------------------------------
 bool

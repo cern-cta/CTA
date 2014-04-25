@@ -211,18 +211,7 @@ public:
                  uid_t uid, gid_t gid,
                  const char* path,
                  const char* serviceclass);
-  
 
-  //----------------------------------------------------------------------------
-  //! UpdateDone
-  //----------------------------------------------------------------------------
-  static bool UpdateDone(XrdOucErrInfo& error,
-                         const char* path,
-                         const char* reqid,
-                         const char* fileid,
-                         const char* nameserver,
-                         const char* serviceclass);
-  
 
   //----------------------------------------------------------------------------
   //! StagerQuery
