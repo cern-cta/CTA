@@ -28,7 +28,7 @@
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
-
+#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -42,10 +42,13 @@ public:
    * @param numberOfBlock number of memory block we need read the whole file
    */
   DiskReadTask(DataConsumer & destination, 
-          tape::tapegateway::FileToMigrateStruct* file,size_t numberOfBlock);
+          tape::tapegateway::FileToMigrateStruct* file,size_t numberOfBlock,
+          castor::tape::threading::AtomicFlag& errorFlag);
   
   virtual void execute(log::LogContext& lc);
 private:
+  
+  void circulateAllBlocks(size_t fromBlockId);
   /**
    * The task (a TapeWriteTask) that will handle the read blocks
    */
@@ -60,6 +63,8 @@ private:
    * The number of memory block we will need to read the whole file
    */
   size_t m_numberOfBlock;
+  
+  castor::tape::threading::AtomicFlag& m_errorFlag;
 };
 
 }}}}

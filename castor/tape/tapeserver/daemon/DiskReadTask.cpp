@@ -48,8 +48,10 @@ namespace tapeserver {
 namespace daemon {
 
   DiskReadTask::DiskReadTask(DataConsumer & destination, 
-          tape::tapegateway::FileToMigrateStruct* file,size_t numberOfBlock):
-  m_nextTask(destination),m_migratedFile(file),m_numberOfBlock(numberOfBlock) 
+          tape::tapegateway::FileToMigrateStruct* file,
+          size_t numberOfBlock,castor::tape::threading::AtomicFlag& errorFlag):
+  m_nextTask(destination),m_migratedFile(file),
+          m_numberOfBlock(numberOfBlock),m_errorFlag(errorFlag)
   {}
 
    void DiskReadTask::execute(log::LogContext& lc) {
@@ -57,12 +59,20 @@ namespace daemon {
     size_t migratingFileSize=m_migratedFile->fileSize();
     try{
       tape::diskFile::ReadFile sourceFile(m_migratedFile->path());
+      
       log::LogContext::ScopedParam sp(lc, log::Param("filePath",m_migratedFile->path()));
       lc.log(LOG_INFO,"Opened file on disk for migration ");
+      
       while(migratingFileSize>0){
+        //if a task has signaled an error, we stop our job
+        if(m_errorFlag){
+          throw  castor::tape::exceptions::ErrorFlag();
+        }
+        
         MemBlock* const mb = m_nextTask.getFreeBlock();
         AutoPushBlock push(mb,m_nextTask);
         
+        //set metadata and read the data
         mb->m_fileid = m_migratedFile->fileid();
         mb->m_fileBlock = blockId++;
         
@@ -76,24 +86,39 @@ namespace daemon {
         }
       } //end of while(migratingFileSize>0)
     }
+    catch(const castor::tape::exceptions::ErrorFlag&){
+     
+      lc.log(LOG_INFO,"DiskReadTask: a previous file has failed for migration "
+      "Do nothing except circulating blocks");
+      circulateAllBlocks(blockId);
+    }
     catch(const castor::tape::Exception& e){
+      //signal to all others task that this session is screwed 
+      m_errorFlag.set();
+              
       //we have to pump the blocks anyway, mark them failed and then pass them back to TapeWrite
       //Otherwise they would be stuck into TapeWriteTask free block fifo
-
       using log::LogContext;
       using log::Param;
       
       LogContext::ScopedParam sp(lc, Param("blockID",blockId));
-      lc.log(LOG_ERR,e.getMessageValue());
+      LogContext::ScopedParam sp0(lc, Param("exceptionCode",e.code()));
+      LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
+      lc.log(LOG_ERR,"Exception while reading a file");
+      
       //deal here the number of mem block
-      while(blockId<m_numberOfBlock) {
-        MemBlock * mb = m_nextTask.getFreeBlock();
-        mb->m_failed=true;
-        m_nextTask.pushDataBlock(mb);
-        ++blockId;
-      } //end of while
+      circulateAllBlocks(blockId);
     } //end of catch
   }
 
+   void DiskReadTask::circulateAllBlocks(size_t fromBlockId){
+     size_t blockId = fromBlockId;
+     while(blockId<m_numberOfBlock) {
+       MemBlock * mb = m_nextTask.getFreeBlock();
+       mb->m_failed=true;
+       m_nextTask.pushDataBlock(mb);
+       ++blockId;
+     } //end of while
+   }
 }}}}
 

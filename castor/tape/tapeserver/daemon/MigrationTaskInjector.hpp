@@ -34,6 +34,7 @@
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/daemon/TaskInjector.hpp"
+#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
 namespace castor{
 namespace tape{
 namespace tapeserver{
@@ -100,10 +101,10 @@ private:
   
   class WorkerThread: public castor::tape::threading::Thread {
   public:
-    WorkerThread(MigrationTaskInjector & rji): _this(rji) {}
+    WorkerThread(MigrationTaskInjector & rji): m_parent(rji) {}
     virtual void run();
   private:
-    MigrationTaskInjector & _this;
+    MigrationTaskInjector & m_parent;
   } m_thread;
 
   MemoryManager & m_memManager;
@@ -120,6 +121,8 @@ private:
   
   castor::tape::threading::Mutex m_producerProtection;
   castor::tape::threading::BlockingQueue<Request> m_queue;
+  
+  castor::tape::threading::AtomicFlag m_errorFlag;
 };
 
 } //end namespace daemon

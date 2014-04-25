@@ -30,6 +30,8 @@
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/file/File.hpp" 
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
+#include "castor/tape/tapeserver/exception/Exception.hpp"
+
 namespace {  
    unsigned long initAdler32Checksum() {
      return  adler32(0L,Z_NULL,0);
@@ -41,8 +43,10 @@ namespace tapeserver {
 namespace daemon {
 
 
-  TapeWriteTask::TapeWriteTask(int blockCount, tapegateway::FileToMigrateStruct* file,MemoryManager& mm): 
-  m_fileToMigrate(file),m_memManager(mm), m_fifo(blockCount),m_blockCount(blockCount)
+  TapeWriteTask::TapeWriteTask(int blockCount, tapegateway::FileToMigrateStruct* file,
+          MemoryManager& mm,castor::tape::threading::AtomicFlag& errorFlag): 
+  m_fileToMigrate(file),m_memManager(mm), m_fifo(blockCount),
+          m_blockCount(blockCount),m_errorFlag(errorFlag)
   {
     mm.addClient(&m_fifo); 
   }
@@ -58,10 +62,12 @@ namespace daemon {
     
     unsigned long ckSum = initAdler32Checksum();
     int blockId  = 0;
-
     try {
       std::auto_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       while(!m_fifo.finished()) {
+        if(m_errorFlag){
+          throw  castor::tape::exceptions::ErrorFlag();
+        }
         MemBlock* const mb = m_fifo.popDataBlock();
         AutoReleaseBlock<MemoryManager> releaser(mb,m_memManager);
         
@@ -77,22 +83,33 @@ namespace daemon {
           lc.log(LOG_ERR,"received a bad block for writing");
           throw castor::tape::Exception("received a bad block for writing");
         }
+
+        
         ckSum =  mb->m_payload.adler32(ckSum);
         mb->m_payload.write(*output);
         ++blockId;
       }
+      output->close();
       reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum);
+    } 
+    catch(const castor::tape::exceptions::ErrorFlag&){
+     
+      lc.log(LOG_INFO,"TapeWriteTask: a previous file has failed for migration "
+      "Do nothing except circulating blocks");
+      circulateMemBlocks();
     }
     catch(const castor::tape::Exception& e){
+      m_errorFlag.set();
       //we can end up there because
       //we failed to open the WriteFile
       //we received a bad block or a block written failed
+       //close failed
+      LogContext::ScopedParam sp(lc, Param("exceptionCode",e.code()));
+      LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
       lc.log(LOG_ERR,"Circulating blocks into TapeWriteTask::execute");
-      while(!m_fifo.finished()) {
-        m_memManager.releaseBlock(m_fifo.popDataBlock());
-      }
+      circulateMemBlocks();
       reportPacker.reportFailedJob(*m_fileToMigrate,e.getMessageValue(),e.code());
-    }
+    } 
    }
     
   MemBlock * TapeWriteTask::getFreeBlock() { 
@@ -112,17 +129,22 @@ namespace daemon {
 
    std::auto_ptr<tapeFile::WriteFile> TapeWriteTask::openWriteFile(
    tape::tapeFile::WriteSession & session, log::LogContext& lc){
-      std::auto_ptr<tape::tapeFile::WriteFile> output;
-      try{
-        output.reset(new tape::tapeFile::WriteFile(&session, *m_fileToMigrate,m_memManager.blockCapacity()));
-        lc.log(LOG_DEBUG, "Successfully opened the tape file for writing");
-      }
-      catch(const castor::exception::Exception & ex){
-        lc.log(LOG_ERR, "Failed to open tape file for writing");
-        throw;
-      }
-      return output;
-    }
+     std::auto_ptr<tape::tapeFile::WriteFile> output;
+     try{
+       output.reset(new tape::tapeFile::WriteFile(&session, *m_fileToMigrate,m_memManager.blockCapacity()));
+       lc.log(LOG_DEBUG, "Successfully opened the tape file for writing");
+     }
+     catch(const castor::exception::Exception & ex){
+       lc.log(LOG_ERR, "Failed to open tape file for writing");
+       throw;
+     }
+     return output;
+   }
+   void TapeWriteTask::circulateMemBlocks(){
+     while(!m_fifo.finished()) {
+        m_memManager.releaseBlock(m_fifo.popDataBlock());
+     }
+   }
 }}}}
 
 

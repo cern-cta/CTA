@@ -75,10 +75,10 @@ namespace daemon {
       const u_signed64 neededBlock = howManyBlocksNeeded(fileSize,blockCapacity);
       
       std::auto_ptr<TapeWriteTask> twt(
-        new TapeWriteTask(neededBlock,removeOwningList((*it)->clone()),m_memManager)
+        new TapeWriteTask(neededBlock,removeOwningList((*it)->clone()),m_memManager,m_errorFlag)
       );
       std::auto_ptr<DiskReadTask> drt(
-        new DiskReadTask(*twt,removeOwningList((*it)->clone()),neededBlock)
+        new DiskReadTask(*twt,removeOwningList((*it)->clone()),neededBlock,m_errorFlag)
       );
       
       m_tapeWriter.push(twt.release());
@@ -108,27 +108,38 @@ namespace daemon {
  
 //------------------------------------------------------------------------------  
   void MigrationTaskInjector::WorkerThread::run(){
-    _this.m_lc.pushOrReplace(Param("thread", "MigrationTaskInjector"));
-    _this.m_lc.log(LOG_DEBUG, "Starting MigrationTaskInjector thread");
-    while(1){
-      Request req = _this.m_queue.pop();
-      client::ClientProxy::RequestReport reqReport;
-      std::auto_ptr<tapegateway::FilesToMigrateList> filesToMigrateList(_this.m_client.getFilesToMigrate(req.nbMaxFiles, req.byteSizeThreshold,reqReport));
-
-      if(NULL==filesToMigrateList.get()){
-        if (req.lastCall) {
-          _this.m_lc.log(LOG_INFO,"No more file to migrate: triggering the end of session.\n");
-          _this.m_tapeWriter.finish();
-          _this.m_diskReader.finish();
-          break;
-        } else {
-          _this.m_lc.log(LOG_INFO,"In MigrationTaskInjector::WorkerThread::run(): got empty list, but not last call");
+    m_parent.m_lc.pushOrReplace(Param("thread", "MigrationTaskInjector"));
+    m_parent.m_lc.log(LOG_DEBUG, "Starting MigrationTaskInjector thread");
+    try{
+      while(1){
+        if(m_parent.m_errorFlag){
+          throw castor::tape::exceptions::ErrorFlag();
         }
-      } else {
-        _this.injectBulkMigrations(filesToMigrateList->filesToMigrate());
+        Request req = m_parent.m_queue.pop();
+        client::ClientProxy::RequestReport reqReport;
+        std::auto_ptr<tapegateway::FilesToMigrateList> filesToMigrateList(m_parent.m_client.getFilesToMigrate(req.nbMaxFiles, req.byteSizeThreshold,reqReport));
+        
+        if(NULL==filesToMigrateList.get()){
+          if (req.lastCall) {
+            m_parent.m_lc.log(LOG_INFO,"No more file to migrate: triggering the end of session.\n");
+            m_parent.m_tapeWriter.finish();
+            m_parent.m_diskReader.finish();
+            break;
+          } else {
+            m_parent.m_lc.log(LOG_INFO,"In MigrationTaskInjector::WorkerThread::run(): got empty list, but not last call");
+          }
+        } else {
+          m_parent.injectBulkMigrations(filesToMigrateList->filesToMigrate());
+        }
+      } //end of while(1)
+    }//end of try
+    catch(const castor::tape::exceptions::ErrorFlag&){
+      //discard all the tasks !!
+      while(m_parent.m_queue.size()>0){
+        Request req = m_parent.m_queue.pop();
       }
     }
-    _this.m_lc.log(LOG_DEBUG, "Finishing MigrationTaskInjector thread");
+    m_parent.m_lc.log(LOG_DEBUG, "Finishing MigrationTaskInjector thread");
   }
 
 

@@ -30,7 +30,7 @@
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/log/LogContext.hpp"
-
+#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -50,7 +50,8 @@ public:
    * @param blockCount: number of memory blocks (TODO:?)
    * @param mm: reference to the memory manager in use
    */
-  TapeWriteTask(int blockCount, tape::tapegateway::FileToMigrateStruct* file,MemoryManager& mm);
+  TapeWriteTask(int blockCount, tape::tapegateway::FileToMigrateStruct* file,
+          MemoryManager& mm,castor::tape::threading::AtomicFlag& errorFlag);
   
   
   /**
@@ -83,6 +84,8 @@ public:
   virtual ~TapeWriteTask();
   
 private:
+  
+  void circulateMemBlocks();
   /**
    * Function in charge of opening the WriteFile for m_fileToMigrate
    * Throw an exception it it fails
@@ -117,6 +120,8 @@ private:
    * The number of memory blocks to be used
    */
   int m_blockCount;
+  
+  castor::tape::threading::AtomicFlag& m_errorFlag;
 };
 
 }}}}
