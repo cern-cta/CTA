@@ -63,16 +63,23 @@ namespace daemon {
     unsigned long ckSum = Payload::zeroAdler32();
     int blockId  = 0;
     try {
+      //we first check here to not even try to move the tape  if a previous task has failed
+      //because the tape- could the very reason why the previous one failed, 
+      //so dont do the same mistake twice !
+      hasAnotherTaskTailed();
+      
+      //try to open the session
       std::auto_ptr<castor::tape::tapeFile::WriteFile> output(openWriteFile(session,lc));
       while(!m_fifo.finished()) {
-        if(m_errorFlag){
-          throw  castor::tape::exceptions::ErrorFlag();
-        }
+
+        //if someone screw somewhere else, we stop
+        hasAnotherTaskTailed();
+        
         MemBlock* const mb = m_fifo.popDataBlock();
         AutoReleaseBlock<MemoryManager> releaser(mb,m_memManager);
         
-        if(/*m_migratingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
-            *             || */blockId != mb->m_fileBlock  || mb->m_failed ){
+        if(m_fileToMigrate->fileid() != static_cast<unsigned int>(mb->m_fileid)
+                         || blockId != mb->m_fileBlock  || mb->m_failed ){
           LogContext::ScopedParam sp[]={
             LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
             LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
@@ -84,11 +91,13 @@ namespace daemon {
           throw castor::tape::Exception("received a bad block for writing");
         }
 
-        
         ckSum =  mb->m_payload.adler32(ckSum);
         mb->m_payload.write(*output);
         ++blockId;
       }
+      
+      //finish the writing of the file on tape
+      //put the trailer
       output->close();
       reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum);
     } 
@@ -99,11 +108,15 @@ namespace daemon {
       circulateMemBlocks();
     }
     catch(const castor::tape::Exception& e){
-      m_errorFlag.set();
       //we can end up there because
       //we failed to open the WriteFile
       //we received a bad block or a block written failed
-       //close failed
+      //close failed
+      
+      //first set the error flag 
+      m_errorFlag.set();
+
+      //log and circulate blocks
       LogContext::ScopedParam sp(lc, Param("exceptionCode",e.code()));
       LogContext::ScopedParam sp1(lc, Param("exceptionMessage", e.getMessageValue()));
       lc.log(LOG_ERR,"Circulating blocks into TapeWriteTask::execute");

@@ -84,7 +84,13 @@ public:
   virtual ~TapeWriteTask();
   
 private:
-  
+    void hasAnotherTaskTailed() const {
+    //if a task has signaled an error, we stop our job
+    if(m_errorFlag){
+      throw  castor::tape::exceptions::ErrorFlag();
+    }
+  }
+    
   void circulateMemBlocks();
   /**
    * Function in charge of opening the WriteFile for m_fileToMigrate
