@@ -81,7 +81,7 @@ XrdxCastor2FsFile::open(const char*         path,
   const char* info;
   int qpos = 0;
 
-  // => case where open fails and client bounces back
+  // => case when open fails and client bounces back
   if ((qpos = info_str.find("?") != STR_NPOS))
     info_str.erase(qpos);
 
@@ -253,7 +253,7 @@ XrdxCastor2FsFile::open(const char*         path,
   sclient_gid += (int) client_gid;
 
   const char* val; 
-  std::string desired_svc= "default";
+  std::string desired_svc= "";
   std::string allowed_svc = "";
     
   // Try the user specified service class
@@ -263,10 +263,12 @@ XrdxCastor2FsFile::open(const char*         path,
   allowed_svc = gMgr->GetAllowedSvc(map_path.c_str(), desired_svc);
 
   if (allowed_svc.empty())
+  {
     return XrdxCastor2Fs::Emsg(epname, error, EINVAL,  "open - no valid service"
                                " class for fn=", map_path.c_str());
+  }
 
-  // Open response structure in which we initialize rpfn2 for not scheduled access
+  // Create response structure in which we initialize rpfn2 for not scheduled access
   struct XrdxCastor2Stager::RespInfo resp_info;
   resp_info.mRedirectionPfn2 = 0;
   resp_info.mRedirectionPfn2 += ":";
@@ -321,8 +323,13 @@ XrdxCastor2FsFile::open(const char*         path,
               Cns_umask(cmask);
               fpos++;
 
-              if (XrdxCastor2FsUFS::Mkdir(createpath.c_str(), S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH) && (serrno != EEXIST))
-                return XrdxCastor2Fs::Emsg(epname, error, serrno , "create path need dir = ", createpath.c_str());
+              if (XrdxCastor2FsUFS::Mkdir(createpath.c_str(),
+                                          S_IRWXU | S_IRGRP | S_IXGRP | S_IROTH | S_IXOTH)
+                  && (serrno != EEXIST))
+              {
+                return XrdxCastor2Fs::Emsg(epname, error, serrno ,
+                                           "create path need dir=", createpath.c_str());
+              }
             }
 
             const char* file_class = 0;
@@ -343,7 +350,7 @@ XrdxCastor2FsFile::open(const char*         path,
     TIMING("PUT", &opentiming);
     int status = 0;
 
-    // Create structures for request and response and call the get method
+    // Create structures for request and response and call async method
     struct XrdxCastor2Stager::ReqInfo req_info(client_uid, client_gid, 
                                                map_path.c_str(), allowed_svc.c_str());
    
@@ -412,37 +419,31 @@ XrdxCastor2FsFile::open(const char*         path,
   else
   {
     // Read operation
-    bool tried_default = false;
+    bool tried_desired = false;
     bool possible = false;
     std::string stage_status;
-    const std::set<std::string>* set_svc = gMgr->GetAllAllowedSvc(map_path.c_str());
+    bool no_hsm = false;
+    std::list<std::string>* list_svc = gMgr->GetAllAllowedSvc(map_path.c_str(), no_hsm);
     
-    for (std::set<std::string>::iterator allowed_iter = set_svc->begin(); 
-         allowed_iter != set_svc->end(); /* no increment */)
+    for (std::list<std::string>::iterator allowed_iter = list_svc->begin(); 
+         allowed_iter != list_svc->end(); /* no increment */)
     {
-      // Try first the default svc
-      if (!tried_default)
+      // Give priority to the desired svc if present
+      if (!tried_desired && (desired_svc != ""))
       {
-        tried_default = true;
-        std::set<std::string>::iterator iter_default = set_svc->find("default");
-        
-        if (iter_default != set_svc->end())
-          allowed_svc = *iter_default;
-        else 
-          continue;
+        tried_desired = true;
+        allowed_svc = desired_svc;
       }
-      else 
+      else
       {
-        if (*allowed_iter == "default")
-        {
-          ++allowed_iter;
-          continue;
-        }
-        
         allowed_svc = *allowed_iter;
         ++allowed_iter;
+        
+        // Skip the desired on as it was tried first and also "*"
+        if ((allowed_svc == desired_svc) || (allowed_svc == "*"))
+          continue;
       }
-
+      
       xcastor_debug("trying service class:%s", allowed_svc.c_str());
       TIMING("PREP2GET", &opentiming);
       
@@ -454,51 +455,21 @@ XrdxCastor2FsFile::open(const char*         path,
       }
 
       // Check if file offline and we want transparent staging
-      if (stage_status != "STAGED" && 
+      if (stage_status != "STAGED" &&
           stage_status != "CANBEMIGR" && 
-          stage_status != "STAGEOUT" && 
-          gMgr->mNohsm) 
+          stage_status != "STAGEOUT" && no_hsm) 
       {
+        xcastor_debug("stage_status=%s, continue ...", stage_status.c_str());
         continue;
       }
-
-      // Do a prepare to get for the current allowed_svc
-      if (!XrdxCastor2Stager::Prepare2Get(error, (uid_t) client_uid, (gid_t) client_gid, 
-                                          map_path.c_str(), allowed_svc.c_str(), resp_info))
+      else
       {
-        if (gMgr->mLogLevel == LOG_DEBUG)
-        {
-          TIMING("RETURN", &opentiming);
-          opentiming.Print();
-        }
-        
-        continue;
-      }
-
-      xcastor_debug("Got redirection to:%s and stagestatus is:%s", 
-                    resp_info.mRedirectionPfn1.c_str(), 
-                    resp_info.mStageStatus.c_str());
-
-      if (resp_info.mRedirectionPfn1.length() && (resp_info.mStageStatus == "READY"))
-      {
+        xcastor_debug("stage_status=%s, break ...", stage_status.c_str());
         // That is perfect, we can use the setting to read
         possible = true;
         XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
-        break;
+        break;        
       }
-
-      // We select this setting and tell the client to wait for the staging in this svcClass
-      if (resp_info.mStageStatus == "READY")
-      {
-        if (gMgr->mLogLevel == LOG_DEBUG)
-        {
-          TIMING("RETURN", &opentiming);
-          opentiming.Print();
-        }
-        
-        return gMgr->Stall(error, XrdxCastor2Stager::GetDelayValue(delaytag.c_str()), 
-                           "file is being staged in");
-      }      
     }
 
     if (!possible)
@@ -510,7 +481,8 @@ XrdxCastor2FsFile::open(const char*         path,
       }
       
       XrdxCastor2Stager::DropDelayTag(delaytag.c_str());
-      return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "access file in ANY stager (all prepare2get failed) fn = ",
+      return XrdxCastor2Fs::Emsg(epname, error, EINVAL,
+                                 "access file in ANY stager (all stager queries failed) fn=",
                                  map_path.c_str());
     }
 

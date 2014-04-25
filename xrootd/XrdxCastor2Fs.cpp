@@ -116,8 +116,7 @@ XrdxCastor2Fs::XrdxCastor2Fs():
   LogId(),
   mIssueCapability(false),
   mProc(0),
-  mStagerHost(""),
-  mNohsm(false)
+  mStagerHost("")
 {
   ConfigFN  = 0;
   mLogLevel = LOG_INFO; // default log level
@@ -176,12 +175,23 @@ XrdxCastor2Fs::newDir(char* user, int MonID)
 
 
 //------------------------------------------------------------------------------
-//! Create new file
+// Create new file
 //------------------------------------------------------------------------------
 XrdSfsFile*
 XrdxCastor2Fs::newFile(char* user, int MonID)
 {
   return (XrdSfsFile*)new XrdxCastor2FsFile((const char*)user, MonID);
+}
+
+
+//----------------------------------------------------------------------------
+// Notification to filesystem when client disconnects
+//----------------------------------------------------------------------------
+void
+XrdxCastor2Fs::Disc(const XrdSecEntity* client)
+{
+  xcastor_debug("Client diconnected - proto=%s, name=%s, host=%s",
+                client->prot, client->name, client->host);
 }
 
 
@@ -218,83 +228,66 @@ XrdxCastor2Fs::GetAllowedSvc(const char* path,
   std::string subpath;
   std::string allowed_svc = "";
   size_t pos = 0;
-  bool found = false;
-  std::map< std::string, std::set<std::string> >::iterator iter_map;
-  std::set<std::string>::iterator iter_set;
+  std::map< std::string,
+            std::pair<std::list<std::string>, bool> >::iterator iter_map;
+  std::list<std::string>::iterator iter_list;
 
   // Only mapping by path is supported
   while ((pos = spath.find("/", pos)) != std::string::npos)
   {
     subpath.assign(spath, 0, pos + 1);
-    xcastor_debug("sub_path=%s", subpath.c_str());
     iter_map = mStageMap.find(subpath);
 
     if (iter_map != mStageMap.end())
     {
-      if (desired_svc == "*")
+      allowed_svc = "";
+      
+      if (desired_svc == "")
       {
-        // Found path mapping, just return first svc
-        // TODO: prefer default ?
-        allowed_svc = *iter_map->second.begin();
-        found = true;
+        // Found path mapping, just return first svc, usually default
+        allowed_svc = *iter_map->second.first.begin();
       }
       else
       {
         // Search for a specific service map
-        iter_set = iter_map->second.find(desired_svc);
-
-        if (iter_set != iter_map->second.end())
+        bool any_allowed = false;  // look for "*" in the stagermap
+        
+        for (iter_list = iter_map->second.first.begin();
+             iter_list != iter_map->second.first.end(); ++iter_list)
         {
-          found = true;
-          allowed_svc = desired_svc;
+          if (*iter_list == desired_svc)
+            allowed_svc = desired_svc;
+          
+          if (*iter_list == "*")
+            any_allowed = true;
         }
+
+        if (any_allowed)
+          allowed_svc = desired_svc;
       }
     }
 
     pos++;
   }
 
-  // Not found using path mapping check default configuration
-  if (!found)
-  {
-    iter_map = mStageMap.find("default");
-
-    if (iter_map != mStageMap.end())
-    {
-      if (desired_svc == "*")
-      {
-        // TODO: return first svc, prefer default ?
-        allowed_svc = *iter_map->second.begin();
-      }
-      else
-      {
-        // Search for a specific service class
-        iter_set = iter_map->second.find(desired_svc);
-
-        if (iter_set != iter_map->second.end())
-          allowed_svc = desired_svc;
-      }
-    }
-  }
-
+  xcastor_debug("Allowed svc=%s", allowed_svc.c_str());
   return allowed_svc;
 }
 
 
 //------------------------------------------------------------------------------
-// Get all allowed service classes for the requested path
+// Get all allowed service classes for the requested path and also the nohsm opt.
 //------------------------------------------------------------------------------
-const std::set<std::string>*
-XrdxCastor2Fs::GetAllAllowedSvc(const char* path)
+std::list<std::string>*
+XrdxCastor2Fs::GetAllAllowedSvc(const char* path, bool& no_hsm)
 {
   xcastor_debug("path=%s", path);
   std::string spath = path;
   std::string subpath;
-  std::set<std::string>* set_svc = 0;
-  std::map< std::string, std::set<std::string> >::iterator iter_map;
-  std::set<std::string>::iterator iter_set;
+  std::list<std::string>* list_svc = 0;
+  std::map< std::string,
+            std::pair<std::list<std::string>, bool> >::iterator iter_map;
   size_t pos = 0;
-  bool found = false;
 
   // Only mapping by path is supported
   while ((pos = spath.find("/", pos)) != std::string::npos)
@@ -304,23 +297,14 @@ XrdxCastor2Fs::GetAllAllowedSvc(const char* path)
 
     if (iter_map != mStageMap.end())
     {
-      set_svc = &iter_map->second;
-      found = true;
+      list_svc = &iter_map->second.first;
+      no_hsm = iter_map->second.second;
     }
 
     pos++;
   }
 
-  // Not found using path mapping check default configuration
-  if (!found)
-  {
-    iter_map = mStageMap.find("default");
-
-    if (iter_map != mStageMap.end())
-      set_svc = &iter_map->second;
-  }
-
-  return set_svc;
+  return list_svc;
 }
 
 
@@ -874,7 +858,7 @@ XrdxCastor2Fs::rem(const char*         path,
 
 
 //------------------------------------------------------------------------------
-// Delete a file from the namespace.
+// Delete a file from the namespace
 //------------------------------------------------------------------------------
 int
 XrdxCastor2Fs::_rem(const char*         path,
@@ -1061,48 +1045,26 @@ XrdxCastor2Fs::stat(const char* path,
     if (!S_ISDIR(cstat.filemode))
     {
       // Loop over all allowed svc's to find an online one
-      const std::set<std::string>* set_svc = GetAllAllowedSvc(map_path.c_str());
+      bool no_hsm = false;
+      std::list<std::string>* list_svc = GetAllAllowedSvc(map_path.c_str(), no_hsm);
 
-      if (!set_svc)
+      if (!list_svc)
       {
         xcastor_err("no svc set for path:%s", path);
         error.setErrInfo(EFAULT, "no service class set for path");
         return SFS_ERROR;
       }
 
-      std::string allowed_svc;
-      bool tried_default = false;
-
-      for (std::set<std::string>::iterator allowed_iter = set_svc->begin();
-           allowed_iter != set_svc->end(); /* no increment */)
+      for (std::list<std::string>::iterator allowed_iter = list_svc->begin();
+           allowed_iter != list_svc->end(); ++allowed_iter)
       {
-         // Give priority to the default svc if it exists
-        if (!tried_default)
-        {
-          tried_default = true;
-          std::set<std::string>::iterator iter_default = set_svc->find("default");
-          
-          if (iter_default != set_svc->end())
-            allowed_svc = *iter_default;
-          else
-            continue;
-        }
-        else 
-        {
-          if (*allowed_iter == "default")
-          {
-            ++allowed_iter;
-            continue;
-          }
-          
-          allowed_svc = *allowed_iter;
-          ++allowed_iter;
-        }
-       
-        xcastor_debug("trying service class:%s", allowed_svc.c_str());
+        if (allowed_iter == "*")
+          continue;
+
+        xcastor_debug("trying service class:%s", allowed_iter->c_str());
         
         if (!XrdxCastor2Stager::StagerQuery(error, (uid_t) client_uid, (gid_t) client_gid,
-                                            map_path.c_str(), allowed_svc.c_str(), stage_status))
+                                            map_path.c_str(), allowed_iter->c_str(), stage_status))
         {
           stage_status = "NA";
         }

@@ -27,6 +27,7 @@
 #define __XCASTOR_FS_HH__
 
 /*-----------------------------------------------------------------------------*/
+#include <list>
 #include <set>
 #include <map>
 /*-----------------------------------------------------------------------------*/
@@ -95,6 +96,15 @@ public:
   //! Initialisation
   //----------------------------------------------------------------------------
   virtual bool Init();
+
+
+  //----------------------------------------------------------------------------
+  //! Notification to filesystem when client disconnects
+  //!
+  //! @param client - client identity
+  //!
+  //----------------------------------------------------------------------------
+  virtual void Disc(const XrdSecEntity* client = 0);
   
   
   //----------------------------------------------------------------------------
@@ -567,11 +577,12 @@ private:
   //! Get all allowed service classes for the requested path and desired svc
   //!
   //! @param path path of  the request
+  //! @param no_hsm true if option set, otherwise false
   //!
-  //! @return set of allowed service classes or NULL if none found
+  //! @return list of allowed service classes or NULL if none found
   //!
   //----------------------------------------------------------------------------
-  const std::set<std::string>* GetAllAllowedSvc(const char* path);
+  std::list<std::string>* GetAllAllowedSvc(const char* path, bool& no_hsm);
 
 
   //----------------------------------------------------------------------------
@@ -606,16 +617,15 @@ private:
   std::set<std::string> mFsSet; ///< set of known diskserver hosts
   XrdSysMutex mMutexFsSet; ///< mutex for the set of known diskservers
   std::map<std::string, std::string> mNsMap; ///< namespace mapping
-  std::map< std::string, std::set<std::string> > mStageMap;///< map path -> allowed svc
+  std::map< std::string,
+            std::pair<std::list<std::string>, bool> > mStageMap;///< map path -> allowed svc
   XrdOucHash<struct passwd>* mPasswdStore; ///< cache passwd struct info
   std::map<std::string, std::string> mRoleMap; ///< user role map
   XrdSysMutex mMutexPasswd; ///< mutex for the passwd store  
   XrdAccAuthorize* mAuthorization; ///< authorization service used only by ALICE
   std::string mStagerHost; ///< stager host to which requests are sent
-  bool mNohsm; ///< if true do transparent staging
-
 };
 
-extern XrdxCastor2Fs* gMgr; ///< globl instance of the redirector OFS subsystem
+extern XrdxCastor2Fs* gMgr; ///< global instance of the redirector OFS subsystem
 
 #endif // __XCASTOR_FS_HH__

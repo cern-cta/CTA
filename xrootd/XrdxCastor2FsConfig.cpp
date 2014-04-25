@@ -195,13 +195,6 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
           }
         }
 
-        // Get token expiration time
-        if (!strncmp("noshm", var, 5))
-        {
-          mNohsm = true;
-          Eroute.Say("=====> xcastor2.nohsm: true");
-        }
-
         // Get the target port
         if (!strcmp("targetport", var))
         {
@@ -363,7 +356,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         // Get stager host
         if (!strncmp("stagerhost", var, 10))
         {
-          if ((!(val = config_stream.GetWord())))
+          if (!(val = config_stream.GetWord()))
           {
             xcastor_err("stagerhost: no host provided");
             NoGo = 1;
@@ -378,7 +371,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
         // Get stager map configuration
         if (!strncmp("stagermap", var, 9))
         {
-          if ((!(val = config_stream.GetWord())))
+          if (!(val = config_stream.GetWord()))
           {
             xcastor_err("stagermap: provide a path and the service class(es) to assign");
             NoGo = 1;
@@ -387,7 +380,7 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
           {
             std::string stage_path = val;
             
-            if ((!(val = config_stream.GetWord())))
+            if (!(val = config_stream.GetWord()))
             {
               xcastor_err("stagermap: provide a path and the service class(es) to assign");
               NoGo = 1;
@@ -396,22 +389,56 @@ int XrdxCastor2Fs::Configure(XrdSysError& Eroute)
             {
               if (mStageMap.find(stage_path) == mStageMap.end())
               {
-                std::string list_svc = val;
-                std::istringstream sstr(list_svc);
-                std::set<std::string> set_svc;
+                bool nohsm = false;
+                std::istringstream sstr(val);
+                std::list<std::string> list_svc;
                 std::string svc;
-                list_svc = "";
-                
+                bool duplicate = false;
+                                
                 while (std::getline(sstr, svc, ','))
                 {
-                  std::pair<std::set<std::string>::iterator, bool> res = set_svc.insert(svc);
+                  duplicate = false;
                   
-                  if (res.second)
-                    list_svc += svc + ',';
+                  for (std::list<std::string>::iterator iter = list_svc.begin();
+                       iter != list_svc.end(); ++iter)
+                  {
+                    if (svc == *iter)
+                    {
+                      duplicate = true;
+                      break;
+                    }
+                  }
+
+                  if (!duplicate)
+                    list_svc.push_back(svc);
                 }
 
-                mStageMap[stage_path] = set_svc;
-                xcastor_info("stagermap: %s -> %s", stage_path.c_str(), list_svc.c_str());
+                std::ostringstream oss;
+                oss << "stagermap: " << stage_path << " => ";
+
+                for (std::list<std::string>::iterator iter = list_svc.begin();
+                     iter != list_svc.end(); ++iter)
+                {
+                  oss << *iter << ", ";
+                }
+                      
+                // Set the nohsm option if present
+                if ((val = config_stream.GetWord()))
+                {
+                  if (!strncmp("nohsm", val, 5))
+                  {
+                    nohsm = true;
+                    oss << " nohsm=" << nohsm;
+                  }
+                  else
+                  {
+                    xcastor_err("stagermap: unknown option: %s, maybe set \"nohsm\" ...", val);
+                    NoGo = 1;
+                  }
+                }
+
+                mStageMap[stage_path] = std::make_pair(list_svc, nohsm);
+                xcastor_info("%s", oss.str().c_str());
               }
               else
                 xcastor_err("stagermap: already contains stage path: %s", stage_path.c_str());
