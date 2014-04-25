@@ -90,21 +90,22 @@ public:
   /**
    * The main entry function of the daemon.
    *
-   * @param argc The number of command-line arguments.
-   * @param argv The array of command-line arguments.
-   * @return     The return code of the process.
+   * @return The return code of the process.
    */
-  int main(const int argc, char **const argv) throw();
+  int main() throw();
 
 protected:
 
   /**
-   * Returns the name of the host on which the tape daemon is running.
+   * Returns the name of the host on which the daemon is running.
    */
   std::string getHostName() const throw(castor::exception::Exception);
 
   /**
    * Exception throwing main() function.
+   *
+   * @param argc The number of command-line arguments.
+   * @param argv The array of command-line arguments.
    */
   void exceptionThrowingMain(const int argc, char **const argv)
     throw(castor::exception::Exception);
@@ -145,8 +146,7 @@ protected:
     throw();
 
   /**
-   * Blocks the signals that should not asynchronously disturb the tape-server
-   * daemon.
+   * Blocks the signals that should not asynchronously disturb the daemon.
    */
   void blockSignals() const throw(castor::exception::Exception);
 
@@ -163,8 +163,7 @@ protected:
     throw(castor::exception::Exception);
 
   /**
-   * Sets up the reactor to listen for an accept connection from the vdqmd
-   * daemon.
+   * Sets up the reactor.
    */
   void setUpReactor() throw(castor::exception::Exception);
 
@@ -181,7 +180,7 @@ protected:
   void createAndRegisterAdminAcceptHandler() throw(castor::exception::Exception);
 
   /**
-   * The main event loop of the tape-server daemon.
+   * The main event loop of the daemon.
    */
   void mainEventLoop() throw(castor::exception::Exception);
 

@@ -112,7 +112,7 @@ int main(const int argc, char **const argv) {
     reactor);
 
   // Run the tapeserverd daemon
-  return daemon.main(argc, argv);
+  return daemon.main();
 }
 
 //------------------------------------------------------------------------------

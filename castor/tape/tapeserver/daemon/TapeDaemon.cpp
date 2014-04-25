@@ -96,12 +96,10 @@ castor::tape::tapeserver::daemon::TapeDaemon::~TapeDaemon() throw() {
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::TapeDaemon::main(const int argc,
-  char **const argv) throw() {
-
+int castor::tape::tapeserver::daemon::TapeDaemon::main() throw () {
   try {
 
-    exceptionThrowingMain(argc, argv);
+    exceptionThrowingMain(m_argc, m_argv);
 
   } catch (castor::exception::Exception &ex) {
     std::ostringstream msg;
