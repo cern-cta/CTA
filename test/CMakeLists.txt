@@ -85,8 +85,11 @@ add_executable(castorUnitTests
   ../castor/io/DummyPollEventHandler.cpp
   ../castor/io/DummyPollReactor.cpp
   ../castor/legacymsg/RmcProxyDummy.cpp
+  ../castor/legacymsg/RmcProxyDummyFactory.cpp
   ../castor/legacymsg/VdqmProxyDummy.cpp
+  ../castor/legacymsg/VdqmProxyDummyFactory.cpp
   ../castor/legacymsg/VmgrProxyDummy.cpp
+  ../castor/legacymsg/VmgrProxyDummyFactory.cpp
   ../castor/legacymsg/RmcMarshalTest.cpp
   ../castor/legacymsg/RmcProxy.cpp
   ../castor/legacymsg/RmcProxyTcpIp.cpp

@@ -33,7 +33,9 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   RmcMarshal.cpp
   RmcMountMsgBody.cpp
   RmcProxy.cpp
+  RmcProxyFactory.cpp
   RmcProxyTcpIp.cpp
+  RmcProxyTcpIpFactory.cpp
   RmcUnmountMsgBody.cpp
   RtcpDumpTapeRqstMsgBody.cpp
   RtcpErrorAppendix.cpp
@@ -52,9 +54,13 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   VdqmDrvRqstMsgBody.cpp
   VdqmMarshal.cpp
   VdqmProxy.cpp
+  VdqmProxyFactory.cpp
   VdqmProxyTcpIp.cpp
+  VdqmProxyTcpIpFactory.cpp
   VmgrProxy.cpp
+  VmgrProxyFactory.cpp
   VmgrProxyTcpIp.cpp
+  VmgrProxyTcpIpFactory.cpp
   VmgrMarshal.cpp
   VmgrTapeInfoMsgBody.cpp
   VmgrTapeInfoRqstMsgBody.cpp)
