@@ -56,7 +56,7 @@ public:
   
   /**
    * Function for a feed-back loop purpose between RecallTaskInjector and 
-   * DiskWriteThreadPool. When DiskWriteThreadPool::popAndRequestMoreJobs detects 
+   * TapeReadSingleThread. When TapeReadSingleThread::popAndRequestMoreJobs detects 
    * it has not enough jobs to do to, it is class to push a request 
    * in order to (try) fill up the queue. 
    * @param maxFiles  files count requested.
@@ -66,6 +66,12 @@ public:
    */
   virtual void requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall);
 
+  /**
+   * Send an end token in the request queue. There should be no subsequent
+   * calls to requestInjection.
+   */
+  void finish();
+  
     /**
      * Contact the client to make sure there are really something to do
      * Something = recall at most  maxFiles or at least maxBytes
@@ -85,8 +91,6 @@ public:
    * Start the inner thread 
    */
   void startThreads();
-  
-  void finish();
 private:
   
   /**

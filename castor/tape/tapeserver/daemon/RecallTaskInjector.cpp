@@ -86,7 +86,8 @@ bool RecallTaskInjector::synchronousInjection(uint64_t maxFiles, uint64_t byteSi
 {
   client::ClientProxy::RequestReport reqReport;  
 
-  std::auto_ptr<castor::tape::tapegateway::FilesToRecallList> filesToRecallList(m_client.getFilesToRecall(maxFiles,byteSizeThreshold,reqReport));
+  std::auto_ptr<castor::tape::tapegateway::FilesToRecallList> 
+    filesToRecallList(m_client.getFilesToRecall(maxFiles,byteSizeThreshold,reqReport));
   LogContext::ScopedParam sp[]={
     LogContext::ScopedParam(m_lc, Param("maxFiles", maxFiles)),
     LogContext::ScopedParam(m_lc, Param("byteSizeThreshold",byteSizeThreshold)),
@@ -97,7 +98,7 @@ bool RecallTaskInjector::synchronousInjection(uint64_t maxFiles, uint64_t byteSi
   tape::utils::suppresUnusedVariable(sp);
   
   if(NULL==filesToRecallList.get()) { 
-    m_lc.log(LOG_ERR, "Get called but no files to retrieve");
+    m_lc.log(LOG_ERR, "No files to recall: empty mount");
     return false;
   }
   else {
