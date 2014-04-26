@@ -38,16 +38,17 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-class TapeWriteSingleThread :  public TapeSingleThreadInterface<TapeWriteTaskInterface> {
+class TapeWriteSingleThread :  public TapeSingleThreadInterface<TapeWriteTask> {
 public:
   TapeWriteSingleThread(castor::tape::drives::DriveInterface & drive, 
           const std::string & vid,
           castor::log::LogContext & lc,
           MigrationReportPacker & repPacker,
 	  int filesBeforeFlush, int blockBeforeFlush): 
-  TapeSingleThreadInterface<TapeWriteTaskInterface>(drive, vid, lc),
-  m_filesBeforeFlush(filesBeforeFlush),m_blocksBeforeFlush(blockBeforeFlush),
-  m_drive(drive), m_reportPacker(repPacker), m_lastFseq(0), m_compress(0) {}
+  TapeSingleThreadInterface<TapeWriteTask>(drive, vid, lc),
+  m_filesBeforeFlush(filesBeforeFlush), m_blocksBeforeFlush(blockBeforeFlush),
+  m_drive(drive), m_reportPacker(repPacker),
+  m_vid(vid), m_lastFseq(0), m_compress(0) {}
 
 private:
   /**
@@ -99,8 +100,8 @@ private:
       // First we have to initialise the tape read session
       std::auto_ptr<castor::tape::tapeFile::WriteSession> rs(openWriteSession());
     
-      int blocks=0;
-      int files=0;
+      uint64_t blocks=0;
+      uint64_t files=0;
       std::auto_ptr<TapeWriteTaskInterface> task ;      
       while(1) {
         task.reset(m_tasks.pop());
@@ -131,8 +132,8 @@ private:
     }
   }
   
-  const int m_filesBeforeFlush;
-  const int m_blocksBeforeFlush;
+  const uint64_t m_filesBeforeFlush;
+  const uint64_t m_blocksBeforeFlush;
   
   castor::tape::drives::DriveInterface& m_drive;
   MigrationReportPacker & m_reportPacker;
