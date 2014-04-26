@@ -38,6 +38,8 @@
 #include "RecallTaskInjector.hpp"
 #include "RecallReportPacker.hpp"
 #include "TapeWriteSingleThread.hpp"
+#include "DiskReadThreadPool.hpp"
+#include "MigrationTaskInjector.hpp"
 
 using namespace castor::tape;
 using namespace castor::log;
@@ -167,14 +169,21 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
       // Just log this was an empty mount and that's it. The memory management
       // will be deallocated automatically.
       lc.log(LOG_ERR, "Aborting recall mount startup: empty mount");
-      client::ClientProxy::RequestReport reqReport;
-      m_clientProxy.reportEndOfSessionWithError("Aborted: empty recall mount", SEINTERNAL, reqReport);
-      LogContext::ScopedParam sp08(lc, Param("tapebridgeTransId", reqReport.transactionId));
-      LogContext::ScopedParam sp09(lc, Param("connectDuration", reqReport.connectDuration));
-      LogContext::ScopedParam sp10(lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
-      LogContext::ScopedParam sp11(lc, Param("errorMessage", "Aborted: empty recall mount"));
-      LogContext::ScopedParam sp12(lc, Param("errorCode", SEINTERNAL));
-      lc.log(LOG_ERR, "Notified client of end session with error");
+      LogContext::ScopedParam sp1(lc, Param("errorMessage", "Aborted: empty recall mount"));
+      LogContext::ScopedParam sp2(lc, Param("errorCode", SEINTERNAL));
+      try {
+        client::ClientProxy::RequestReport reqReport;
+        m_clientProxy.reportEndOfSessionWithError("Aborted: empty recall mount", SEINTERNAL, reqReport);
+        LogContext::ScopedParam sp08(lc, Param("tapebridgeTransId", reqReport.transactionId));
+        LogContext::ScopedParam sp09(lc, Param("connectDuration", reqReport.connectDuration));
+        LogContext::ScopedParam sp10(lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
+        LogContext::ScopedParam sp11(lc, Param("errorMessage", "Aborted: empty recall mount"));
+        LogContext::ScopedParam sp12(lc, Param("errorCode", SEINTERNAL));
+        lc.log(LOG_ERR, "Notified client of end session with error");
+      } catch(castor::exception::Exception & ex) {
+        LogContext::ScopedParam sp1(lc, Param("notificationError", ex.getMessageValue()));
+        lc.log(LOG_ERR, "Failed to notified client of end session with error");
+      }
     }
   }
 }
@@ -188,15 +197,54 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
   if (!drive.get()) return;
   // Once we got hold of the drive, we can run the session
   {
-//    MemoryManager mm(m_castorConf.rtcopydNbBufs,
-//        m_castorConf.rtcopydBufsz);
-//    MigrationReportPacker mrp(m_clientProxy,
-//        lc);
-//    TapeWriteSingleThread twst(*drive.get(),
-//        m_volInfo.vid,
-//        lc,
-//        mrp,
-//        m_castorConf.<need the flushing variables here>)
+    MemoryManager mm(m_castorConf.rtcopydNbBufs,
+        m_castorConf.rtcopydBufsz);
+    MigrationReportPacker mrp(m_clientProxy,
+        lc);
+    TapeWriteSingleThread twst(*drive.get(),
+        m_volInfo.vid,
+        lc,
+        mrp,
+        m_castorConf.tapebridgeMaxFilesBeforeFlush,
+        m_castorConf.tapebridgeMaxBytesBeforeFlush/m_castorConf.rtcopydBufsz);
+    DiskReadThreadPool drtp(m_castorConf.tapeserverdDiskThreads,
+        m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
+        m_castorConf.tapebridgeBulkRequestMigrationMaxBytes,
+        lc);
+    MigrationTaskInjector mti(mm, drtp, twst, m_clientProxy, lc);
+    if (mti.synchronousInjection(m_castorConf.tapebridgeBulkRequestMigrationMaxBytes,
+        m_castorConf.tapebridgeBulkRequestMigrationMaxFiles)) {
+      // We have something to do: start the session by starting all the 
+      // threads.
+      mm.startThreads();
+      drtp.startThreads();
+      twst.startThreads();
+      mrp.startThreads();
+      mti.startThreads();
+      // Synchronise with end of threads
+      mti.waitThreads();
+      mrp.waitThread();
+      twst.waitThreads();
+      drtp.waitThreads();
+      mm.waitThreads();
+    } else {
+      // Just log this was an empty mount and that's it. The memory management
+      // will be deallocated automatically.
+      lc.log(LOG_ERR, "Aborting migration mount startup: empty mount");
+      LogContext::ScopedParam sp1(lc, Param("errorMessage", "Aborted: empty recall mount"));
+      LogContext::ScopedParam sp2(lc, Param("errorCode", SEINTERNAL));
+      try {
+        client::ClientProxy::RequestReport reqReport;
+        m_clientProxy.reportEndOfSessionWithError("Aborted: empty migration mount", SEINTERNAL, reqReport);
+        LogContext::ScopedParam sp1(lc, Param("tapebridgeTransId", reqReport.transactionId));
+        LogContext::ScopedParam sp2(lc, Param("connectDuration", reqReport.connectDuration));
+        LogContext::ScopedParam sp3(lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
+        lc.log(LOG_ERR, "Notified client of end session with error");
+      } catch(castor::exception::Exception & ex) {
+        LogContext::ScopedParam sp1(lc, Param("notificationError", ex.getMessageValue()));
+        lc.log(LOG_ERR, "Failed to notified client of end session with error");
+      }
+    }
   }
 }
 
