@@ -38,7 +38,7 @@ namespace unitTests{
     //EXPECT_CALL(tskInjectorl,requestInjection(_,_,_)).Times(2);
     EXPECT_CALL(report,reportEndOfSession()).Times(1);     
     
-    RecallMemoryManager mm(10,100);
+    RecallMemoryManager mm(10,100,lc);
     
     DiskWriteThreadPool dwtp(2,5,500,report,lc);
     dwtp.startThreads();

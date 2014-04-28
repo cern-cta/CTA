@@ -44,7 +44,7 @@ namespace daemon {
 
 
   TapeWriteTask::TapeWriteTask(int blockCount, tapegateway::FileToMigrateStruct* file,
-          MemoryManager& mm,castor::tape::threading::AtomicFlag& errorFlag): 
+          MigrationMemoryManager& mm,castor::tape::threading::AtomicFlag& errorFlag): 
   m_fileToMigrate(file),m_memManager(mm), m_fifo(blockCount),
           m_blockCount(blockCount),m_errorFlag(errorFlag)
   {
@@ -76,7 +76,7 @@ namespace daemon {
         hasAnotherTaskTailed();
         
         MemBlock* const mb = m_fifo.popDataBlock();
-        AutoReleaseBlock<MemoryManager> releaser(mb,m_memManager);
+        AutoReleaseBlock<MigrationMemoryManager> releaser(mb,m_memManager);
         
         if(m_fileToMigrate->fileid() != static_cast<unsigned int>(mb->m_fileid)
                          || blockId != mb->m_fileBlock  || mb->m_failed ){

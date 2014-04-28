@@ -51,7 +51,7 @@ public:
    * @param mm: reference to the memory manager in use
    */
   TapeWriteTask(int blockCount, tape::tapegateway::FileToMigrateStruct* file,
-          MemoryManager& mm,castor::tape::threading::AtomicFlag& errorFlag);
+          MigrationMemoryManager& mm,castor::tape::threading::AtomicFlag& errorFlag);
   
   
   /**
@@ -110,7 +110,7 @@ private:
   /**
    * reference to the memory manager in use   
    */
-  MemoryManager & m_memManager;
+  MigrationMemoryManager & m_memManager;
   
   /**
    * The fifo containing the memory blocks holding data to be written to tape

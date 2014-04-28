@@ -247,7 +247,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
   {
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
-    RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz);
+    RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
     TapeReadSingleThread trst(*drive, m_volInfo.vid, 
         m_castorConf.tapebridgeBulkRequestRecallMaxFiles, lc);
     RecallReportPacker rrp(m_clientProxy,

@@ -32,7 +32,7 @@ namespace unitTests{
     
     MockRecallReportPacker report(client,lc);
     EXPECT_CALL(report,reportFailedJob(_,_,_));
-    RecallMemoryManager mm(10,100);
+    RecallMemoryManager mm(10,100,lc);
         
     castor::tape::tapegateway::FileToRecallStruct file;
     file.setPath("/dev/null");

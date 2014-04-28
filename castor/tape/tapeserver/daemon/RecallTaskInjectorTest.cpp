@@ -57,11 +57,10 @@ public:
 };
 
 TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
-  RecallMemoryManager mm(50U,50U);
   const int nbCalls=2;
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_RecallTaskInjectorTest");
   castor::log::LogContext lc(log);
-  
+  RecallMemoryManager mm(50U,50U,lc);
   castor::tape::drives::FakeDrive drive;
   FakeClient client(nbCalls);
   FakeDiskWriteThreadPool diskWrite;
@@ -102,10 +101,9 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   }
 }
 TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
-  RecallMemoryManager mm(50U,50U);
   castor::log::StringLogger log("castor_tape_tapeserver_daemon_RecallTaskInjectorTest");
   castor::log::LogContext lc(log);
-  
+  RecallMemoryManager mm(50U,50U,lc);
   castor::tape::drives::FakeDrive drive;
   FakeClient client(0);
   FakeDiskWriteThreadPool diskWrite;

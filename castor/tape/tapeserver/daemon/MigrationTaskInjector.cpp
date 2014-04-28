@@ -43,7 +43,7 @@ namespace tapeserver{
 namespace daemon {
 
 
-  MigrationTaskInjector::MigrationTaskInjector(MemoryManager & mm, 
+  MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager & mm, 
           DiskThreadPoolInterface<DiskReadTaskInterface> & diskReader,
           TapeSingleThreadInterface<TapeWriteTask> & tapeWriter,client::ClientInterface& client,
           castor::log::LogContext lc):

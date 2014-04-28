@@ -29,6 +29,7 @@
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/log/LogContext.hpp"
 #include <iostream>
 
 namespace castor {
@@ -39,7 +40,7 @@ namespace daemon {
  * The memory manager is responsible for allocating memory blocks and distributing
  * the free ones around to any class in need.
  */
-class MemoryManager: private castor::tape::threading::Thread {
+class MigrationMemoryManager: private castor::tape::threading::Thread {
 public:
   
   /**
@@ -47,15 +48,19 @@ public:
    * @param numberOfBlocks: number of blocks to allocate
    * @param blockSize: size of each block
    */
-  MemoryManager(const size_t numberOfBlocks, const size_t blockSize) 
+  MigrationMemoryManager(const size_t numberOfBlocks, const size_t blockSize, castor::log::LogContext lc) 
           throw(castor::exception::Exception) : 
   m_blockCapacity(blockSize), m_totalNumberOfBlocks(0),
-  m_totalMemoryAllocated(0), m_blocksProvided(0), m_blocksReturned(0) {
+  m_totalMemoryAllocated(0), m_blocksProvided(0), m_blocksReturned(0),m_lc(lc) {
     for (size_t i = 0; i < numberOfBlocks; i++) {
       m_freeBlocks.push(new MemBlock(i, blockSize));
       m_totalNumberOfBlocks++;
       m_totalMemoryAllocated+=blockSize;
+      
+      m_lc.pushOrReplace(log::Param("blockId",i));
+      m_lc.log(LOG_INFO,"MigrationMemoryManager Created a block");
     }
+    m_lc.log(LOG_INFO,"MigrationMemoryManager: all blocks have been created");
   }
   
   /**
@@ -79,6 +84,7 @@ public:
    */
   void startThreads() throw(castor::exception::Exception) {
     castor::tape::threading::Thread::start();
+    m_lc.log(LOG_INFO,"MigrationMemoryManager starting thread");
   }
   
   /**
@@ -120,7 +126,7 @@ public:
   /**
    * Destructor
    */
-  ~MemoryManager() throw() {
+  ~MigrationMemoryManager() throw() {
     // Make sure the thread is finished: this should be done by the caller,
     // who should have called waitThreads.
     // castor::tape::threading::Thread::wait();
@@ -134,6 +140,7 @@ public:
     catch (castor::tape::threading::noMore) {
       //done
     } 
+    m_lc.log(LOG_INFO,"MigrationMemoryManager destruction : all memory blocks have been deleted");
   }
 private:
   
@@ -176,6 +183,12 @@ private:
    */
    castor::tape::threading::BlockingQueue<MemoryManagerClient *> m_clientQueue;
 
+   /**
+    * Logging purpose. Given the fact the class is threaded, the LogContext
+    * has to be copied.
+    */
+   castor::log::LogContext m_lc;
+    
   /**
    * Thread routine: pops a client and provides him blocks until he is happy!
    */

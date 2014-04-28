@@ -56,10 +56,10 @@ int main(void) {
   //  printf("%s\n", e.what());
   //}
   // Allocate the memory
-  castor::tape::tapeserver::daemon::MemoryManager mm(blocks, blockSize);
+  /*castor::tape::tapeserver::daemon::MigrationMemoryManager mm(blocks, blockSize);
   mm.startThreads();
   castor::tape::drives::FakeDrive drive;
-  /*
+  
   {
     MockTapeGateway tg(filesNumber, modulo);
     castor::tape::tapeserver::daemon::MigrationReportPacker mrp(tg);
@@ -106,8 +106,9 @@ int main(void) {
     printf("disk write threads complete\n");
     rji.waitThreads();
     printf("Recall job injector complete\n");
-  }*/
+  }
   mm.finish();
   mm.waitThreads();
   printf("memory management thread complete\n");
+  */
 }

@@ -48,11 +48,16 @@ public:
    * @param numberOfBlocks: number of blocks to allocate
    * @param blockSize: size of each block
    */
-  RecallMemoryManager(const size_t numberOfBlocks, const size_t blockSize) 
-  : m_totalNumberOfBlocks(numberOfBlocks) {
+  RecallMemoryManager(const size_t numberOfBlocks, const size_t blockSize,
+          castor::log::LogContext& lc) 
+  : m_totalNumberOfBlocks(numberOfBlocks),m_lc(lc) {
     for (size_t i = 0; i < numberOfBlocks; i++) {
       m_freeBlocks.push(new MemBlock(i, blockSize));
+      
+      m_lc.pushOrReplace(log::Param("blockId",i));
+      m_lc.log(LOG_INFO,"RecallMemoryManager created a block");
     }
+    m_lc.log(LOG_INFO,"RecallMemoryManager: all blocks have been created");
   }
   
   /**
@@ -68,6 +73,8 @@ public:
    * @param mb: the pointer to the block
    */
   void releaseBlock(MemBlock *mb)  {
+    m_lc.pushOrReplace(log::Param("blockId",mb->m_memoryBlockId));
+    m_lc.log(LOG_DEBUG,"RecallMemoryManager A block has been released");
     mb->reset();
     m_freeBlocks.push(mb);
   }
@@ -93,6 +100,7 @@ public:
     catch (castor::tape::threading::noMore) {
       //done
     } 
+    m_lc.log(LOG_INFO,"RecallMemoryManager destruction : all memory blocks have been deleted");
   }
   
 private:
@@ -107,6 +115,11 @@ private:
    * Container for the free blocks
    */
   castor::tape::threading::BlockingQueue<MemBlock*> m_freeBlocks;
+  
+  /**
+   * Logging. The class is not threaded, so it can be shared with its parent
+   */
+  castor::log::LogContext& m_lc;
 };
 
 }}}}
