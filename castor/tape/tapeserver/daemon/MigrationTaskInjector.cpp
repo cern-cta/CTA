@@ -103,7 +103,9 @@ namespace daemon {
   
   void MigrationTaskInjector::requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall) {
     castor::tape::threading::MutexLocker ml(&m_producerProtection);
-    m_queue.push(Request(maxFiles, byteSizeThreshold, lastCall));
+    if(!m_errorFlag) {
+      m_queue.push(Request(maxFiles, byteSizeThreshold, lastCall));
+    }
   }
  
 //------------------------------------------------------------------------------  
@@ -134,9 +136,17 @@ namespace daemon {
       } //end of while(1)
     }//end of try
     catch(const castor::tape::exceptions::ErrorFlag&){
+      //we end up there because a task screw up somewhere 
+      m_parent.m_lc.log(LOG_ERR,"In MigrationTaskInjector::WorkerThread::run(): a task screw up, "
+      "finishing and discarding all tasks ");
+      
+      //first send the end signal to the threads
+      m_parent.m_tapeWriter.finish();
+      m_parent.m_diskReader.finish();
+      
       //discard all the tasks !!
       while(m_parent.m_queue.size()>0){
-        Request req = m_parent.m_queue.pop();
+        m_parent.m_queue.pop();
       }
     }
     m_parent.m_lc.log(LOG_DEBUG, "Finishing MigrationTaskInjector thread");
