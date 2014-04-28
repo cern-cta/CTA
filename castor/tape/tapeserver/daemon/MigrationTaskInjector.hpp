@@ -67,8 +67,33 @@ public:
    * Start the inner thread 
    */
   void startThreads();
-  
+  /**
+   * Function for a feed-back loop purpose between MigrationTaskInjector and 
+   * DiskReadThreadPool. When DiskReadThreadPool::popAndRequestMoreJobs detects 
+   * it has not enough jobs to do to, it is class to push a request 
+   * in order to (try) fill up the queue. 
+   * @param maxFiles  files count requested.
+   * @param maxBlocks total bytes count at least requested
+   * @param lastCall true if we want the new request to be a last call. 
+   * See Request::lastCall 
+   */
   void requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall);
+  
+  /**
+   * Contact the client to make sure there are really something to do
+   * Something = migration at most  maxFiles or at least maxBytes
+   * 
+   * @param maxFiles files count requested.
+   * @param byteSizeThreshold total bytes count  at least requested
+   * @return true if there are jobs to be done, false otherwise 
+   */
+  bool synchronousInjection(uint64_t maxFiles, uint64_t byteSizeThreshold);
+  
+  /**
+   * Send an end token in the request queue. There should be no subsequent
+   * calls to requestInjection.
+   */
+  void finish();
 private:
   
   /*Compute how many blocks are needed for a file of fileSize bytes*/
@@ -86,7 +111,10 @@ private:
   class Request {
   public:
     Request(int mf, int mb, bool lc):
-    nbMaxFiles(mf), byteSizeThreshold(mb), lastCall(lc) {}
+    nbMaxFiles(mf), byteSizeThreshold(mb), lastCall(lc), end(false) {}
+    
+    Request():
+    nbMaxFiles(-1), byteSizeThreshold(-1), lastCall(true),end(true) {}
     
     const int nbMaxFiles;
     const int byteSizeThreshold;
@@ -97,6 +125,11 @@ private:
      *  and can send into all the different threads a signal  .
      */
     const bool lastCall;
+    
+    /**
+     * True indicates the task injector will not receive any more request.
+     */
+    const bool end;
   };
   
   class WorkerThread: public castor::tape::threading::Thread {

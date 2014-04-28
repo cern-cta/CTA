@@ -107,6 +107,27 @@ namespace daemon {
       m_queue.push(Request(maxFiles, byteSizeThreshold, lastCall));
     }
   }
+  
+  bool MigrationTaskInjector::synchronousInjection(uint64_t maxFiles,
+      uint64_t byteSizeThreshold) {
+    client::ClientProxy::RequestReport reqReport;
+    std::auto_ptr<tapegateway::FilesToMigrateList>
+      filesToMigrateList(m_client.getFilesToMigrate(maxFiles, 
+        byteSizeThreshold,reqReport));
+    if(NULL == filesToMigrateList.get()) {
+      m_lc.log(LOG_ERR, "No files to migrate: empty mount");
+      return false;
+    } else {
+      std::vector<tapegateway::FileToMigrateStruct*>& jobs=filesToMigrateList->filesToMigrate();
+      injectBulkMigrations(jobs);
+      return true;
+    }
+  }
+  
+  void MigrationTaskInjector::finish(){
+    castor::tape::threading::MutexLocker ml(&m_producerProtection);
+    m_queue.push(Request());
+  }
  
 //------------------------------------------------------------------------------  
   void MigrationTaskInjector::WorkerThread::run(){
@@ -148,8 +169,21 @@ namespace daemon {
       while(m_parent.m_queue.size()>0){
         m_parent.m_queue.pop();
       }
-    }
+    } // end of while(1)
+    //-------------
     m_parent.m_lc.log(LOG_DEBUG, "Finishing MigrationTaskInjector thread");
+    /* We want to finish at the first lastCall we encounter.
+     * But even after sending finish() to m_diskWriter and to m_tapeReader,
+     * m_diskWriter might still want some more task (the threshold could be crossed),
+     * so we discard everything that might still be in the queue
+     */
+    bool stillReading =true;
+    while(stillReading) {
+      Request req = m_parent.m_queue.pop();
+      if (req.end) stillReading = false;
+      LogContext::ScopedParam sp(m_parent.m_lc, Param("lastCall", req.lastCall));
+      m_parent.m_lc.log(LOG_INFO,"In MigrationTaskInjector::WorkerThread::run(): popping extra request");
+    }
   }
 
 
