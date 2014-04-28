@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/RmcdMain.cpp
+ *                castor/legacymsg/CupvProxyTcpIp.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,35 +21,37 @@
  *
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
- 
 
-
-#include "castor/io/PollReactorImpl.hpp"
-#include "castor/log/SyslogLogger.hpp"
-#include "castor/tape/rmc/RmcDaemon.hpp"
-
-#include <iostream>
+#include "castor/legacymsg/CupvProxyTcpIp.hpp"
 
 //------------------------------------------------------------------------------
-// main
+// constructor
 //------------------------------------------------------------------------------
-int main(const int argc, char **const argv) {
+castor::legacymsg::CupvProxyTcpIp::CupvProxyTcpIp(
+  log::Logger &log,
+  const std::string &cupvHostName,
+  const unsigned short cupvPort,
+  const int netTimeout) throw():
+  m_log(log),
+  m_cupvHostName(cupvHostName),
+  m_cupvPort(cupvPort),
+  m_netTimeout(netTimeout) {
+}
 
-  try {
-    castor::log::SyslogLogger log("rmcd");
-    castor::io::PollReactorImpl reactor(log);
-    castor::tape::rmc::RmcDaemon daemon(std::cout, std::cerr, log, reactor);
+//-----------------------------------------------------------------------------
+// destructor
+//-----------------------------------------------------------------------------
+castor::legacymsg::CupvProxyTcpIp::~CupvProxyTcpIp() throw() {
+}
 
-    return daemon.main(argc, argv);
-  } catch(castor::exception::Exception &ex) {
-    std::cerr << "main() caught a CASTOR exception: " << ex.getMessage().str()
-      << std::endl;
-    return 1;
-  } catch(std::exception &se) {
-    std::cerr << "main() caught a std::exception: " << se.what() << std::endl;
-    return 1;
-  } catch(...) {
-    std::cerr << "main() caught an unknown exception" << std::endl;
-    return 1;
-  }
+//-----------------------------------------------------------------------------
+// isGranted
+//-----------------------------------------------------------------------------
+bool castor::legacymsg::CupvProxyTcpIp::isGranted(
+  const uid_t uid,
+  const gid_t gid,
+  const std::string &sourceHost,
+  const std::string &targetHost,
+  const int privilege) throw(castor::exception::Exception) {
+  return false;
 }

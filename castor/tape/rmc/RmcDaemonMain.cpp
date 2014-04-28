@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tapeserver/TapeDaemonMain.cpp
+ *         castor/tape/rmc/RmcDaemonMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,18 +23,13 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/log/SyslogLogger.hpp"
 #include "castor/io/PollReactorImpl.hpp"
-#include "castor/legacymsg/RmcProxyTcpIpFactory.hpp"
-#include "castor/legacymsg/VdqmProxyTcpIpFactory.hpp"
-#include "castor/legacymsg/VmgrProxyTcpIpFactory.hpp"
-#include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
-#include "h/rmc_constants.h"
-#include "h/vdqm_constants.h"
-#include "h/vmgr_constants.h"
+#include "castor/legacymsg/CupvProxyTcpIp.hpp"
+#include "castor/log/SyslogLogger.hpp"
+#include "castor/tape/rmc/RmcDaemon.hpp"
+#include "h/Cupv_constants.h"
 
-#include <sstream>
-#include <string>
+#include <iostream>
 
 //------------------------------------------------------------------------------
 // getConfigParam
@@ -59,12 +54,12 @@ int main(const int argc, char **const argv) {
   using namespace castor;
 
   try {
-    log::SyslogLogger log("tapeserverd");
+    log::SyslogLogger log("rmcd");
 
     try {
       return exceptionThrowingMain(argc, argv, log);
     } catch(castor::exception::Exception &ex) {
-      log::Param params[] = {log::Param("message", ex.getMessage().str())};
+      log::Param params[] = {castor::log::Param("message", ex.getMessage().str())};
       log(LOG_ERR, "Caught an unexpected CASTOR exception", params);
       return 1;
     } catch(std::exception &se) {
@@ -95,39 +90,14 @@ int main(const int argc, char **const argv) {
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 static int exceptionThrowingMain(const int argc, char **const argv, castor::log::Logger &log) {
-  using namespace castor::tape::tapeserver::daemon;
+  const std::string cupvHostName = getConfigParam("UPV", "HOST");
 
-  const std::string vdqmHostName = getConfigParam("VDQM", "HOST");
-  const std::string vmgrHostName = getConfigParam("VMGR", "HOST");
-
-  // Parse /etc/castor/TPCONFIG
-  castor::tape::utils::TpconfigLines tpconfigLines;
-  castor::tape::utils::parseTpconfigFile("/etc/castor/TPCONFIG", tpconfigLines);
-
-  // Create proxy objects for the vdqm, vmgr and rmc daemons
-  const int netTimeout = 10; // Timeout in seconds
-  castor::legacymsg::VdqmProxyTcpIpFactory vdqmFactory(log, vdqmHostName, VDQM_PORT, netTimeout);
-  castor::legacymsg::VmgrProxyTcpIpFactory vmgrFactory(log, vmgrHostName, VMGR_PORT, netTimeout);
-  castor::legacymsg::RmcProxyTcpIpFactory rmcFactory(log, netTimeout);
-
-  // Create the poll() reactor
   castor::io::PollReactorImpl reactor(log);
+  const int netTimeout = 10; // Timeout in seconds
+  castor::legacymsg::CupvProxyTcpIp cupv(log, cupvHostName, CUPV_PORT, netTimeout);
+  castor::tape::rmc::RmcDaemon daemon(std::cout, std::cerr, log, reactor, cupv);
 
-  // Create the main tapeserverd object
-  TapeDaemon daemon(
-    argc,
-    argv,
-    std::cout,
-    std::cerr,
-    log,
-    tpconfigLines,
-    vdqmFactory,
-    vmgrFactory,
-    rmcFactory,
-    reactor);
-
-  // Run the tapeserverd daemon
-  return daemon.main();
+  return daemon.main(argc, argv);
 }
 
 //------------------------------------------------------------------------------

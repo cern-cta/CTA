@@ -25,14 +25,10 @@
 #pragma once
 
 #include "castor/exception/Exception.hpp"
+#include "castor/legacymsg/CupvProxy.hpp"
 #include "castor/io/PollReactor.hpp"
 #include "castor/server/Daemon.hpp"
 
-#include <iostream>
-#include <list>
-#include <map>
-#include <poll.h>
-#include <stdint.h>
 #include <string>
 
 namespace castor {
@@ -54,12 +50,14 @@ public:
    * @param log The object representing the API of the CASTOR logging system.
    * @param reactor The reactor responsible for dispatching the I/O events of
    * the parent process of the rmcd daemon.
+   * @param cupv Proxy object representing the cupvd daemon.
    */
   RmcDaemon(
     std::ostream &stdOut,
     std::ostream &stdErr,
     log::Logger &log,
-    io::PollReactor &reactor) throw(castor::exception::Exception);
+    io::PollReactor &reactor,
+    legacymsg::CupvProxy &cupv) throw(castor::exception::Exception);
 
   /**
    * Destructor.
@@ -193,6 +191,11 @@ protected:
    * of the rmcd daemon.
    */
   io::PollReactor &m_reactor;
+
+  /**
+   * Proxy object representing the cupvd daemon.
+   */
+  legacymsg::CupvProxy &m_cupv;
 
   /**
    * The program name of the tape daemon.

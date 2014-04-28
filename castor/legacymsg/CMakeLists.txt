@@ -27,6 +27,8 @@ cmake_minimum_required (VERSION 2.6)
 ################################################################################
 set (TAPE_LEGACYMSG_LIB_SRC_FILES
   CommonMarshal.cpp
+  CupvProxy.cpp
+  CupvProxyTcpIp.cpp
   GiveOutpMsgBody.cpp
   MessageHeader.cpp
   RmcAcsMntMsgBody.cpp

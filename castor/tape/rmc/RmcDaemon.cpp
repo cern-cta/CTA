@@ -50,9 +50,11 @@ castor::tape::rmc::RmcDaemon::RmcDaemon::RmcDaemon(
   std::ostream &stdOut,
   std::ostream &stdErr,
   log::Logger &log,
-  io::PollReactor &reactor) throw(castor::exception::Exception):
+  io::PollReactor &reactor,
+  legacymsg::CupvProxy &cupv) throw(castor::exception::Exception):
   castor::server::Daemon(stdOut, stdErr, log),
   m_reactor(reactor),
+  m_cupv(cupv),
   m_programName("rmcd"),
   m_hostName(getHostName()),
   m_rmcPort(getRmcPort()) {

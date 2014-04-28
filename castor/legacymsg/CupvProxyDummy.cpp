@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/rmc/RmcDaemonTest.hpp
+ *                castor/legacymsg/CupvProxyDummy.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,39 +22,30 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/io/DummyPollReactor.hpp"
 #include "castor/legacymsg/CupvProxyDummy.hpp"
-#include "castor/log/DummyLogger.hpp"
-#include "castor/tape/rmc/RmcDaemon.hpp"
 
-#include <gtest/gtest.h>
-#include <memory>
-#include <sstream>
-
-namespace unitTest {
-
-class castor_tape_rmc_RmcDaemonTest: public ::testing::Test {
-protected:
-
-  virtual void SetUp() {
-  }
-
-  virtual void TearDown() {
-  }
-}; // class castor_tape_rmc_RmcDaemonTest
-
-TEST_F(castor_tape_rmc_RmcDaemonTest, constructor) {
-  using namespace castor::tape::rmc;
-
-  std::ostringstream stdOut;
-  std::ostringstream stdErr;
-  castor::log::DummyLogger logger("unittest");
-  castor::io::DummyPollReactor reactor;
-  const bool isGrantedReturnValue = true;
-  castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
-  
-  std::auto_ptr<RmcDaemon> daemon;
-  daemon.reset(new RmcDaemon(stdOut, stdErr, logger, reactor, cupv));
+//-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::legacymsg::CupvProxyDummy::CupvProxyDummy(
+  const bool isGrantedReturnValue) throw():
+  m_isGrantedReturnValue(isGrantedReturnValue) {
 }
 
-} // namespace unitTests
+//-----------------------------------------------------------------------------
+// destructor
+//-----------------------------------------------------------------------------
+castor::legacymsg::CupvProxyDummy::~CupvProxyDummy() throw() {
+}
+
+//-----------------------------------------------------------------------------
+// isGranted
+//-----------------------------------------------------------------------------
+bool castor::legacymsg::CupvProxyDummy::isGranted(
+  const uid_t uid,
+  const gid_t gid,
+  const std::string &sourceHost,
+  const std::string &targetHost,
+  const int privilege) throw(castor::exception::Exception) {
+  return m_isGrantedReturnValue;
+}
