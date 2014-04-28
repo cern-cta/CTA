@@ -57,12 +57,6 @@ private:
   bool belowMidFilesAfterPop(int filesPopped) const ;
   bool crossingDownFileThreshod(int filesPopped) const;
   
-  /**
-   * Pop a task from m_tasks. 
-   * TODO The loopBack part (AndRequestMoreJob) should move to TapeReadSingleSthread
-   * @return 
-   */
-  DiskWriteTaskInterface * popAndRequestMoreJobs() ;
   
   tape::threading::AtomicCounter<int> m_nbActiveThread;
   tape::threading::AtomicCounter<int> m_failedWriteCount;
