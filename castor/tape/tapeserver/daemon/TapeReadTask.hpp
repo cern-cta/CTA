@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      TapeReadFileTask.hpp
+ *                      TapeReadTask.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
+#include "castor/tape/tapeserver/daemon/TapeReadTaskInterface.hpp"
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
@@ -35,9 +35,9 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-class TapeReadFileTask: public TapeReadTask {
+class TapeReadTask: public TapeReadTaskInterface {
 public:
-  TapeReadFileTask(castor::tape::tapegateway::FileToRecallStruct * ftr,
+  TapeReadTask(castor::tape::tapegateway::FileToRecallStruct * ftr,
     DataConsumer & destination, RecallMemoryManager & mm): 
     m_fileToRecall(ftr), m_fifo(destination), m_mm(mm) {}
     

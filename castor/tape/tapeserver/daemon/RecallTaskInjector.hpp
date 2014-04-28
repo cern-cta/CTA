@@ -29,7 +29,7 @@
 
 #include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
-#include "castor/tape/tapeserver/daemon/TapeReadFileTask.hpp"
+#include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
@@ -49,7 +49,7 @@ class RecallTaskInjector: public TaskInjector {
 public:
 
   RecallTaskInjector(RecallMemoryManager & mm, 
-        TapeSingleThreadInterface<TapeReadTask> & tapeReader,
+        TapeSingleThreadInterface<TapeReadTaskInterface> & tapeReader,
         DiskThreadPoolInterface<DiskWriteTaskInterface> & diskWriter,client::ClientInterface& client,
         castor::log::LogContext lc);
 
@@ -134,7 +134,7 @@ private:
   RecallMemoryManager & m_memManager;
   
 
-  TapeSingleThreadInterface<TapeReadTask> & m_tapeReader;
+  TapeSingleThreadInterface<TapeReadTaskInterface> & m_tapeReader;
   DiskThreadPoolInterface<DiskWriteTaskInterface> & m_diskWriter;
   client::ClientInterface& m_client;
   

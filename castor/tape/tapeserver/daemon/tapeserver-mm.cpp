@@ -30,7 +30,7 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
-#include "castor/tape/tapeserver/daemon/TapeReadFileTask.hpp"
+#include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include <memory>

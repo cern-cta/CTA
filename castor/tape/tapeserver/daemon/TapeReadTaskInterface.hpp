@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      TapeReadTask.hpp
+ *                      TapeReadTaskInterface.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -32,13 +32,13 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-class TapeReadTask {
+class TapeReadTaskInterface {
 public:
   virtual void execute(castor::tape::tapeFile::ReadSession & /*rs*/,
     castor::log::LogContext & /*lc*/) { 
     throw MemException("Tring to execute a non-execuatble TapeReadTask"); 
   };
-  virtual ~TapeReadTask() {}
+  virtual ~TapeReadTaskInterface() {}
 };
 }
 }
