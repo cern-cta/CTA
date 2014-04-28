@@ -47,7 +47,12 @@ public:
   
   virtual void execute(log::LogContext& lc);
 private:
-  
+  void hasAnotherTaskTailed() const {
+    //if a task has signaled an error, we stop our job
+    if(m_errorFlag){
+      throw  castor::tape::exceptions::ErrorFlag();
+    }
+  }
   void circulateAllBlocks(size_t fromBlockId);
   /**
    * The task (a TapeWriteTask) that will handle the read blocks

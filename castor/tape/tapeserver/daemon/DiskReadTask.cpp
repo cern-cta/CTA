@@ -58,16 +58,19 @@ namespace daemon {
     size_t blockId=0;
     size_t migratingFileSize=m_migratedFile->fileSize();
     try{
+      //we first check here to not even try to open the disk  if a previous task has failed
+      //because the disk could the very reason why the previous one failed, 
+      //so dont do the same mistake twice !
+      hasAnotherTaskTailed();
+      
       tape::diskFile::ReadFile sourceFile(m_migratedFile->path());
       
       log::LogContext::ScopedParam sp(lc, log::Param("filePath",m_migratedFile->path()));
       lc.log(LOG_INFO,"Opened file on disk for migration ");
       
       while(migratingFileSize>0){
-        //if a task has signaled an error, we stop our job
-        if(m_errorFlag){
-          throw  castor::tape::exceptions::ErrorFlag();
-        }
+
+        hasAnotherTaskTailed();
         
         MemBlock* const mb = m_nextTask.getFreeBlock();
         AutoPushBlock push(mb,m_nextTask);

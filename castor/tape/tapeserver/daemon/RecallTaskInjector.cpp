@@ -23,7 +23,7 @@ namespace tapeserver{
 namespace daemon {
   
 RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm, 
-        TapeSingleThreadInterface<TapeReadTask> & tapeReader,
+        TapeSingleThreadInterface<TapeReadTaskInterface> & tapeReader,
         DiskThreadPoolInterface<DiskWriteTaskInterface> & diskWriter,
         client::ClientInterface& client,castor::log::LogContext lc) : 
         m_thread(*this),m_memManager(mm),
@@ -68,8 +68,8 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
       new DiskWriteTask(
         removeOwningList(dynamic_cast<tape::tapegateway::FileToRecallStruct*>((*it)->clone())), 
         m_memManager);
-    TapeReadFileTask * trt = 
-      new TapeReadFileTask(
+    TapeReadTask * trt = 
+      new TapeReadTask(
         removeOwningList(
           dynamic_cast<tape::tapegateway::FileToRecallStruct*>((*it)->clone())), 
           *dwt,
