@@ -55,9 +55,9 @@ public:
   
   
   /**
-   * @return the number of memory blocks to be used
+   * @return the size of the file in byte
    */
-  virtual int blocks();
+  virtual int fileSize();
     
   /**
    * Main execution routine

@@ -51,8 +51,8 @@ namespace daemon {
     mm.addClient(&m_fifo); 
   }
 
-   int TapeWriteTask::blocks() { 
-    return m_blockCount; 
+   int TapeWriteTask::fileSize() { 
+    return m_fileToMigrate->fileSize(); 
   }
   
    void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,

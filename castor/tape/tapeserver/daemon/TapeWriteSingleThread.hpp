@@ -44,9 +44,9 @@ public:
           const std::string & vid,
           castor::log::LogContext & lc,
           MigrationReportPacker & repPacker,
-	  int filesBeforeFlush, int blockBeforeFlush): 
+	  uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
   TapeSingleThreadInterface<TapeWriteTaskInterface>(drive, vid, lc),
-  m_filesBeforeFlush(filesBeforeFlush),m_blocksBeforeFlush(blockBeforeFlush),
+  m_filesBeforeFlush(filesBeforeFlush),m_bytesBeforeFlush(bytesBeforeFlush),
   m_drive(drive), m_reportPacker(repPacker), m_lastFseq(0), m_compress(0) {}
 
 private:
@@ -99,8 +99,8 @@ private:
       // First we have to initialise the tape read session
       std::auto_ptr<castor::tape::tapeFile::WriteSession> rs(openWriteSession());
     
-      int blocks=0;
-      int files=0;
+      uint64_t bytes=0;
+      uint64_t files=0;
       std::auto_ptr<TapeWriteTaskInterface> task ;      
       while(1) {
         task.reset(m_tasks.pop());
@@ -108,16 +108,16 @@ private:
         if(NULL!=task.get()) {
           task->execute(*rs,m_reportPacker,m_logContext);
           files++;
-          blocks+=task->blocks();
+          bytes+=task->fileSize();
           
-          if (files >= m_filesBeforeFlush || blocks >= m_blocksBeforeFlush) {
-            flush("Normal flush because thresholds was reached",blocks,files);
+          if (files >= m_filesBeforeFlush || bytes >= m_bytesBeforeFlush) {
+            flush("Normal flush because thresholds was reached",bytes,files);
             files=0;
-            blocks=0;
+            bytes=0;
           }
         }
         else{
-          flush("End of TapeWriteWorkerThread::run() (flushing",blocks,files);
+          flush("End of TapeWriteWorkerThread::run() (flushing",bytes,files);
           m_reportPacker.reportEndOfSession();
           return;
         }
@@ -131,8 +131,8 @@ private:
     }
   }
   
-  const int m_filesBeforeFlush;
-  const int m_blocksBeforeFlush;
+  const uint64_t m_filesBeforeFlush;
+  const uint64_t m_bytesBeforeFlush;
   
   castor::tape::drives::DriveInterface& m_drive;
   MigrationReportPacker & m_reportPacker;

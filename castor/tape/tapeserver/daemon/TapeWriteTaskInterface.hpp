@@ -48,9 +48,9 @@ public:
           MigrationReportPacker & reportPacker,castor::log::LogContext& lc) =0;
     
   /**
-   * @return the number of memory blocks to be used
+   * @return the size of the file in byte
    */
-  virtual int blocks() =0; 
+  virtual int fileSize() =0; 
   
   /**
    * Destructor
