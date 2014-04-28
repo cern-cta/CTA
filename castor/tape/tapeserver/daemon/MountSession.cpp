@@ -197,7 +197,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
   if (!drive.get()) return;
   // Once we got hold of the drive, we can run the session
   {
-    MemoryManager mm(m_castorConf.rtcopydNbBufs,
+    MigrationMemoryManager mm(m_castorConf.rtcopydNbBufs,
         m_castorConf.rtcopydBufsz,lc);
     MigrationReportPacker mrp(m_clientProxy,
         lc);
@@ -288,7 +288,7 @@ castor::tape::tapeserver::daemon::MountSession::findDrive(LogContext& lc) {
     driveInfo = dv.findBySymlink(configLine->devFilename);
   } catch (castor::tape::SCSI::DeviceVector::NotFound & e) {
     // We could not find this drive in the system's SCSI devices
-    LogContexdoist::ScopedParam sp08(lc, Param("density", m_volInfo.density));
+    LogContext::ScopedParam sp08(lc, Param("density", m_volInfo.density));
     LogContext::ScopedParam sp09(lc, Param("devFilename", configLine->devFilename));
     lc.log(LOG_ERR, "Drive not found on this path");
     
@@ -305,12 +305,12 @@ castor::tape::tapeserver::daemon::MountSession::findDrive(LogContext& lc) {
     return NULL;
   } catch (castor::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
-    LogContext::Set the task injector ready to check if we actually have a 
+    //Set the task injector ready to check if we actually have a 
   // file to recall.
   // findDrive does not throw exceptions (it catches them to log errors)
   // A NULL pointer is returned on failure
   std::auto_ptr<castor::tape::drives::DriveInterface> drive(findDrive(lc));
-  if(!drive.get()) return;    
+  if(!drive.get()) return NULL;    
   // We can now startcopedParam sp08(lc, Param("density", m_volInfo.density));
     LogContext::ScopedParam sp09(lc, Param("devFilename", configLine->devFilename));
     LogContext::ScopedParam sp10(lc, Param("errorMessage", e.getMessageValue()));

@@ -45,7 +45,7 @@ namespace daemon {
 
   MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager & mm, 
           DiskThreadPoolInterface<DiskReadTaskInterface> & diskReader,
-          TapeSingleThreadInterface<TapeWriteTask> & tapeWriter,client::ClientInterface& client,
+          TapeSingleThreadInterface<TapeWriteTaskInterface> & tapeWriter,client::ClientInterface& client,
           castor::log::LogContext lc):
           m_thread(*this),m_memManager(mm),m_tapeWriter(tapeWriter),
           m_diskReader(diskReader),m_client(client),m_lc(lc)

@@ -48,7 +48,7 @@ public:
 
   MigrationTaskInjector(MigrationMemoryManager & mm, 
         DiskThreadPoolInterface<DiskReadTaskInterface> & diskReader,
-        TapeSingleThreadInterface<TapeWriteTask> & tapeWriter,client::ClientInterface& client,
+        TapeSingleThreadInterface<TapeWriteTaskInterface> & tapeWriter,client::ClientInterface& client,
         castor::log::LogContext lc);
 
  
@@ -143,7 +143,7 @@ private:
   MigrationMemoryManager & m_memManager;
   
 
-  TapeSingleThreadInterface<TapeWriteTask>& m_tapeWriter;
+  TapeSingleThreadInterface<TapeWriteTaskInterface>& m_tapeWriter;
   DiskThreadPoolInterface<DiskReadTaskInterface>& m_diskReader;
   client::ClientInterface& m_client;
   

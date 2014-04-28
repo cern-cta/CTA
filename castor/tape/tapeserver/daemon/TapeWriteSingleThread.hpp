@@ -38,7 +38,7 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-class TapeWriteSingleThread :  public TapeSingleThreadInterface<TapeWriteTask> {
+class TapeWriteSingleThread :  public TapeSingleThreadInterface<TapeWriteTaskInterface> {
 public:
   TapeWriteSingleThread(castor::tape::drives::DriveInterface & drive, 
           const std::string & vid,
