@@ -198,8 +198,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const
   throw(castor::exception::Exception) {
   sigset_t sigs;
   sigemptyset(&sigs);
-  // The list of signals that should not asynchronously disturb the tape-server
-  // daemon
+  // The signals that should not asynchronously disturb the daemon
   sigaddset(&sigs, SIGHUP);
   sigaddset(&sigs, SIGINT);
   sigaddset(&sigs, SIGQUIT);
@@ -284,9 +283,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
 // createAndRegisterVdqmAcceptHandler
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHandler() throw(castor::exception::Exception) {
-  castor::utils::SmartFd vdqmListenSock;
+  castor::utils::SmartFd listenSock;
   try {
-    vdqmListenSock.reset(io::createListenerSock(TAPE_SERVER_VDQM_LISTENING_PORT));
+    listenSock.reset(io::createListenerSock(TAPE_SERVER_VDQM_LISTENING_PORT));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex(ne.code());
     ex.getMessage() << "Failed to create socket to listen for vdqm connections"
@@ -301,9 +300,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHa
 
   std::auto_ptr<VdqmAcceptHandler> vdqmAcceptHandler;
   try {
-    vdqmAcceptHandler.reset(new VdqmAcceptHandler(vdqmListenSock.get(), m_reactor,
+    vdqmAcceptHandler.reset(new VdqmAcceptHandler(listenSock.get(), m_reactor,
       m_log, m_driveCatalogue));
-    vdqmListenSock.release();
+    listenSock.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
     ex.getMessage() <<
@@ -319,9 +318,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHa
 // createAndRegisterVdqmAcceptHandler
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptHandler() throw(castor::exception::Exception) {
-  castor::utils::SmartFd adminListenSock;
+  castor::utils::SmartFd listenSock;
   try {
-    adminListenSock.reset(io::createListenerSock(TAPE_SERVER_ADMIN_LISTENING_PORT));
+    listenSock.reset(io::createListenerSock(TAPE_SERVER_ADMIN_LISTENING_PORT));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex(ne.code());
     ex.getMessage() << "Failed to create socket to listen for admin command connections"
@@ -336,9 +335,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
 
   std::auto_ptr<AdminAcceptHandler> adminAcceptHandler;
   try {
-    adminAcceptHandler.reset(new AdminAcceptHandler(adminListenSock.get(), m_reactor,
+    adminAcceptHandler.reset(new AdminAcceptHandler(listenSock.get(), m_reactor,
       m_log, m_vdqmFactory, m_driveCatalogue, m_hostName));
-    adminListenSock.release();
+    listenSock.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
     ex.getMessage() <<
@@ -356,7 +355,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
 void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop()
   throw(castor::exception::Exception) {
   while(handleEvents()) {
-    forkWaitingMountSessions();
+    forkMountSessions();
   }
 }
 
@@ -513,22 +512,22 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(const pid_
 }
 
 //------------------------------------------------------------------------------
-// forkWaitingMountSessions
+// forkMountSessions
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSessions() throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSessions() throw() {
   const std::list<std::string> unitNames =
     m_driveCatalogue.getUnitNames(DriveCatalogue::DRIVE_STATE_WAITFORK);
 
   for(std::list<std::string>::const_iterator itor = unitNames.begin();
     itor != unitNames.end(); itor++) {
-    forkWaitingMountSession(*itor);
+    forkMountSession(*itor);
   }
 }
 
 //------------------------------------------------------------------------------
-// forkWaitingMountSession
+// forkMountSession
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSession(const std::string &unitName) throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSession(const std::string &unitName) throw() {
   m_log.prepareForFork();
   const pid_t sessionPid = fork();
 

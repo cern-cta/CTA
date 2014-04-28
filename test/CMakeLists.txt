@@ -46,6 +46,7 @@ endif (STK_CL_LIB)
 if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   message(STATUS "Found all four STK libraries - adding STK related unit tests")
   set (STK_UNITTEST_SRC_FILES
+    ../castor/tape/rmc/AcceptHandler.cpp
     ../castor/tape/rmc/Acs.cpp
     ../castor/tape/rmc/AcsCmd.cpp
     ../castor/tape/rmc/AcsDismountCmd.cpp
@@ -62,6 +63,7 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     ../castor/tape/rmc/AcsQueryVolumeCmdTest.cpp
     ../castor/tape/rmc/AcsTest.cpp
     ../castor/tape/rmc/Cmd.cpp
+    ../castor/tape/rmc/ConnectionHandler.cpp
     ../castor/tape/rmc/DebugBuf.cpp
     ../castor/tape/rmc/RmcDaemon.cpp
     ../castor/tape/rmc/RmcDaemonTest.cpp)

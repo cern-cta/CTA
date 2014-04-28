@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/RmcDaemon.cpp
+ *         castor/tape/tapeserver/daemon/RmcDaemon.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,23 +22,117 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
  
- 
-#include "castor/PortNumbers.hpp"
+#include "castor/common/CastorConfiguration.hpp"
+#include "castor/exception/Errnum.hpp"
+#include "castor/exception/BadAlloc.hpp"
 #include "castor/exception/Internal.hpp"
-#include "castor/exception/InvalidArgument.hpp"
-#include "castor/server/TCPListenerThreadPool.hpp"
+#include "castor/io/io.hpp"
+#include "castor/tape/rmc/AcceptHandler.hpp"
 #include "castor/tape/rmc/RmcDaemon.hpp"
-#include "h/Cuuid.h"
+#include "castor/tape/utils/utils.hpp"
+#include "castor/utils/SmartFd.hpp"
+#include "castor/utils/utils.hpp"
+#include "h/rmc_constants.h"
 
-#include <getopt.h>
+#include <algorithm>
+#include <limits.h>
+#include <memory>
+#include <poll.h>
+#include <signal.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::rmc::RmcDaemon::RmcDaemon(std::ostream &stdOut,
-  std::ostream &stdErr, log::Logger &log)
-  throw(castor::exception::Exception):
-  castor::server::Daemon(stdOut, stdErr, log) {
+castor::tape::rmc::RmcDaemon::RmcDaemon::RmcDaemon(
+  std::ostream &stdOut,
+  std::ostream &stdErr,
+  log::Logger &log,
+  io::PollReactor &reactor) throw(castor::exception::Exception):
+  castor::server::Daemon(stdOut, stdErr, log),
+  m_reactor(reactor),
+  m_programName("rmcd"),
+  m_hostName(getHostName()),
+  m_rmcPort(getRmcPort()) {
+}
+
+//------------------------------------------------------------------------------
+// getHostName
+//------------------------------------------------------------------------------
+std::string castor::tape::rmc::RmcDaemon::RmcDaemon::getHostName()
+  const throw(castor::exception::Exception) {
+  char nameBuf[81];
+  if(gethostname(nameBuf, sizeof(nameBuf))) {
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to get host name: " << errBuf;
+    throw ex;
+  }
+
+  return nameBuf;
+}
+
+//------------------------------------------------------------------------------
+// getRmcPort
+//------------------------------------------------------------------------------
+unsigned short castor::tape::rmc::RmcDaemon::getRmcPort()
+  throw(castor::exception::Exception) {
+  std::string configParamValue;
+
+  // If RMC PORT is not in /etc/castor.conf then use the compile time default
+  try {
+    const std::string category = "RMC";
+    const std::string name = "PORT";
+    configParamValue = getConfigParam(category, name);
+  } catch(castor::exception::Exception &ex) {
+    return RMC_PORT;
+  }
+
+  // If RMC PORT is in /etc/castor.conf then it must be a valid unsigned integer
+  if(!castor::utils::isValidUInt(configParamValue.c_str())) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "RMC PORT is not a valid unsigned integer";
+    throw ex;
+  }
+
+  return atoi(configParamValue.c_str());
+}
+
+//------------------------------------------------------------------------------
+// getConfigParam
+//------------------------------------------------------------------------------
+std::string castor::tape::rmc::RmcDaemon::getConfigParam(
+  const std::string &category,
+  const std::string &name)
+  throw(castor::exception::Exception) {
+  std::ostringstream task;
+  task << "get " << category << ":" << name << " from castor.conf";
+
+  common::CastorConfiguration config;
+  std::string value;
+
+  try {
+    config = common::CastorConfiguration::getConfig();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to " << task.str() <<
+      ": Failed to get castor configuration: " << ne.getMessage().str();
+    throw ex;
+  }
+
+  try {
+    value = config.getConfEnt(category.c_str(), name.c_str());
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to " << task.str() <<
+      ": Failed to get castor configuration entry: " << ne.getMessage().str();
+    throw ex;
+  }
+
+  return value;
 }
 
 //------------------------------------------------------------------------------
@@ -50,22 +144,21 @@ castor::tape::rmc::RmcDaemon::~RmcDaemon() throw() {
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int castor::tape::rmc::RmcDaemon::main(const int argc,
-  char **argv) {
-
-  // Enter the exception throwing main of the daemon
+int castor::tape::rmc::RmcDaemon::main(const int argc, char **const argv) throw () {
   try {
 
     exceptionThrowingMain(argc, argv);
 
   } catch (castor::exception::Exception &ex) {
-    // Write the exception to both standard error and the logging system
-    m_stdErr << std::endl << ex.getMessage().str() << std::endl << std::endl;
+    std::ostringstream msg;
+    msg << "Aborting: Caught an unexpected exception: " <<
+      ex.getMessage().str();
+    m_stdErr << std::endl << msg.str() << std::endl << std::endl;
 
-    castor::log::Param params[] = {
-      log::Param("Message", ex.getMessage().str()),
-      log::Param("Code"   , ex.code()            )};
-    m_log(LOG_ERR, "Exiting due to an exception", params);
+    log::Param params[] = {
+      log::Param("Message", msg.str()),
+      log::Param("Code"   , ex.code())};
+    m_log(LOG_ERR, msg.str(), params);
 
     return 1;
   }
@@ -76,84 +169,14 @@ int castor::tape::rmc::RmcDaemon::main(const int argc,
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int castor::tape::rmc::RmcDaemon::exceptionThrowingMain(
-  const int argc, char **argv) throw(castor::exception::Exception) {
+void  castor::tape::rmc::RmcDaemon::exceptionThrowingMain(
+  const int argc, char **const argv) throw(castor::exception::Exception) {
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
-
-/*
-
-  // Determine and log the configuration parameters used by the tapebridged
-  // daemon to know how many files should be bulk requested per request for
-  // migration to or recall from tape.
-  BulkRequestConfigParams bulkRequestConfigParams;
-  bulkRequestConfigParams.determineConfigParams();
-  ConfigParamLogger::writeToDlf(nullCuuid,
-    bulkRequestConfigParams.getBulkRequestMigrationMaxBytes());
-  ConfigParamLogger::writeToDlf(nullCuuid,
-    bulkRequestConfigParams.getBulkRequestMigrationMaxFiles());
-  ConfigParamLogger::writeToDlf(nullCuuid,
-    bulkRequestConfigParams.getBulkRequestRecallMaxBytes());
-  ConfigParamLogger::writeToDlf(nullCuuid,
-    bulkRequestConfigParams.getBulkRequestRecallMaxFiles());
-
-  // Determine and log the values of the tape-bridge configuration-parameters.
-  // Only log the maximum number of bytes and files before a flush to tape if
-  // the tape flush mode requires them.
-  TapeFlushConfigParams tapeFlushConfigParams;
-  tapeFlushConfigParams.determineConfigParams();
-  {
-    const char *const tapeFlushModeStr = tapebridge_tapeFlushModeToStr(
-      tapeFlushConfigParams.getTapeFlushMode().getValue());
-    ConfigParamLogger::writeToDlf(
-      nullCuuid,
-      tapeFlushConfigParams.getTapeFlushMode().getCategory(),
-      tapeFlushConfigParams.getTapeFlushMode().getName(),
-      tapeFlushModeStr,
-      tapeFlushConfigParams.getTapeFlushMode().getSource());
-  }
-  if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ==
-    tapeFlushConfigParams.getTapeFlushMode().getValue()) {
-    ConfigParamLogger::writeToDlf(nullCuuid,
-      tapeFlushConfigParams.getMaxBytesBeforeFlush());
-    ConfigParamLogger::writeToDlf(nullCuuid,
-      tapeFlushConfigParams.getMaxFilesBeforeFlush());
-  }
-
-  // Extract the tape-drive names from the TPCONFIG file
-  utils::TpconfigLines tpconfigLines;
-  utils::parseTpconfigFile(TPCONFIGPATH, tpconfigLines);
-  std::list<std::string> driveNames;
-  utils::extractTpconfigDriveNames(tpconfigLines, driveNames);
-
-  // Put the tape-drive names into a string stream ready to make a log message
-  std::stringstream driveNamesStream;
-  for(std::list<std::string>::const_iterator itor = driveNames.begin();
-    itor != driveNames.end(); itor++) {
-
-    if(itor != driveNames.begin()) {
-      driveNamesStream << ",";
-    }
-
-    driveNamesStream << *itor;
-  }
-
-  // Log the result of parsing the TPCONFIG file to extract the drive unit
-  // names 
-  castor::dlf::Param params[] = {
-    castor::dlf::Param("filename" , TPCONFIGPATH          ),
-    castor::dlf::Param("nbDrives" , driveNames.size()     ),
-    castor::dlf::Param("unitNames", driveNamesStream.str())};
-  castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM,
-    TAPEBRIDGE_PARSED_TPCONFIG, params);
-
-  createVdqmRequestHandlerPool(
-    bulkRequestConfigParams,
-    tapeFlushConfigParams,
-    driveNames.size());
-*/
-
-  return 0;
+  daemonizeIfNotRunInForeground();
+  blockSignals();
+  setUpReactor();
+  mainEventLoop();
 }
 
 //------------------------------------------------------------------------------
@@ -162,17 +185,19 @@ int castor::tape::rmc::RmcDaemon::exceptionThrowingMain(
 void castor::tape::rmc::RmcDaemon::logStartOfDaemon(
   const int argc, const char *const *const argv) throw() {
   const std::string concatenatedArgs = argvToString(argc, argv);
+  std::ostringstream msg;
+  msg << m_programName << " started";
 
   log::Param params[] = {
     log::Param("argv", concatenatedArgs)};
-  m_log(LOG_INFO, "rmcd daemon started", params);
+  m_log(LOG_INFO, msg.str(), params);
 }
 
 //------------------------------------------------------------------------------
 // argvToString
 //------------------------------------------------------------------------------
-std::string castor::tape::rmc::RmcDaemon::argvToString(const int argc,
-  const char *const *const argv) throw() {
+std::string castor::tape::rmc::RmcDaemon::argvToString(
+  const int argc, const char *const *const argv) throw() {
   std::string str;
 
   for(int i=0; i < argc; i++) {
@@ -186,38 +211,231 @@ std::string castor::tape::rmc::RmcDaemon::argvToString(const int argc,
 }
 
 //------------------------------------------------------------------------------
-// createVdqmRequestHandlerPool
+// blockSignals
 //------------------------------------------------------------------------------
-/*
-void castor::tape::rmc::RmcDaemon::
-  createVdqmRequestHandlerPool(
-  const BulkRequestConfigParams &bulkRequestConfigParams,
-  const TapeFlushConfigParams   &tapeFlushConfigParams,
-  const uint32_t                nbDrives)
+void castor::tape::rmc::RmcDaemon::blockSignals() const
   throw(castor::exception::Exception) {
+  sigset_t sigs;
+  sigemptyset(&sigs);
+  // The signals that should not asynchronously disturb the daemon
+  sigaddset(&sigs, SIGHUP);
+  sigaddset(&sigs, SIGINT);
+  sigaddset(&sigs, SIGQUIT);
+  sigaddset(&sigs, SIGPIPE);
+  sigaddset(&sigs, SIGTERM);
+  sigaddset(&sigs, SIGUSR1);
+  sigaddset(&sigs, SIGUSR2);
+  sigaddset(&sigs, SIGCHLD);
+  sigaddset(&sigs, SIGTSTP);
+  sigaddset(&sigs, SIGTTIN);
+  sigaddset(&sigs, SIGTTOU);
+  sigaddset(&sigs, SIGPOLL);
+  sigaddset(&sigs, SIGURG);
+  sigaddset(&sigs, SIGVTALRM);
+  castor::exception::Errnum::throwOnNonZero(
+    sigprocmask(SIG_BLOCK, &sigs, NULL),
+    "Failed to block signals: sigprocmask() failed");
+}
 
-  const int vdqmListenPort = utils::getPortFromConfig("TAPEBRIDGE", "VDQMPORT",
-    TAPEBRIDGE_VDQMPORT);
+//------------------------------------------------------------------------------
+// setUpReactor
+//------------------------------------------------------------------------------
+void castor::tape::rmc::RmcDaemon::setUpReactor()
+  throw(castor::exception::Exception) {
+  createAndRegisterAcceptHandler();
+}
 
-  std::auto_ptr<server::IThread>
-    thread(new castor::tape::rmc::VdqmRequestHandler(
-      bulkRequestConfigParams,
-      tapeFlushConfigParams,
-      nbDrives));
-
-  std::auto_ptr<server::BaseThreadPool>
-    threadPool(new castor::server::TCPListenerThreadPool(
-      "VdqmRequestHandlerPool", thread.release(), vdqmListenPort));
-
-  addThreadPool(threadPool.release());
-
-  m_vdqmRequestHandlerThreadPool = getThreadPool('V');
-
-  if(m_vdqmRequestHandlerThreadPool == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
-     ": Failed to get VdqmRequestHandlerPool");
+//------------------------------------------------------------------------------
+// createAndRegisterAcceptHandler
+//------------------------------------------------------------------------------
+void castor::tape::rmc::RmcDaemon::createAndRegisterAcceptHandler() throw(castor::exception::Exception) {
+  castor::utils::SmartFd listenSock;
+  try {
+    listenSock.reset(io::createListenerSock(m_rmcPort));
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex(ne.code());
+    ex.getMessage() << "Failed to create socket to listen for client connections"
+      ": " << ne.getMessage().str();
+    throw ex;
+  }
+  {
+    log::Param params[] = {
+      log::Param("listeningPort", m_rmcPort)};
+    m_log(LOG_INFO, "Listening for client connections", params);
   }
 
-  m_vdqmRequestHandlerThreadPool->setNbThreads(nbDrives);
+  std::auto_ptr<AcceptHandler> acceptHandler;
+  try {
+    acceptHandler.reset(new AcceptHandler(listenSock.get(), m_reactor, m_log));
+    listenSock.release();
+  } catch(std::bad_alloc &ba) {
+    castor::exception::BadAlloc ex;
+    ex.getMessage() <<
+      "Failed to create the event handler for accepting client connections"
+      ": " << ba.what();
+    throw ex;
+  }
+  m_reactor.registerHandler(acceptHandler.get());
+  acceptHandler.release();
 }
+
+//------------------------------------------------------------------------------
+// mainEventLoop
+//------------------------------------------------------------------------------
+void castor::tape::rmc::RmcDaemon::mainEventLoop()
+  throw(castor::exception::Exception) {
+  while(handleEvents()) {
+    forkChildProcesses();
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleEvents
+//------------------------------------------------------------------------------
+bool castor::tape::rmc::RmcDaemon::handleEvents()
+  throw(castor::exception::Exception) {
+  const int timeout = 100; // 100 milliseconds
+  m_reactor.handleEvents(timeout);
+  return handlePendingSignals();
+}
+
+//------------------------------------------------------------------------------
+// handlePendingSignals
+//------------------------------------------------------------------------------
+bool castor::tape::rmc::RmcDaemon::handlePendingSignals()
+  throw() {
+  bool continueMainEventLoop = true;
+  int sig = 0;
+  sigset_t allSignals;
+  siginfo_t sigInfo;
+  sigfillset(&allSignals);
+  struct timespec immedTimeout = {0, 0};
+
+  // While there is a pending signal to be handled
+  while (0 < (sig = sigtimedwait(&allSignals, &sigInfo, &immedTimeout))) {
+    switch(sig) {
+    case SIGINT: // Signal number 2
+      m_log(LOG_INFO, "Stopping gracefully because SIGINT was received");
+      continueMainEventLoop = false;
+      break;
+    case SIGTERM: // Signal number 15
+      m_log(LOG_INFO, "Stopping gracefully because SIGTERM was received");
+      continueMainEventLoop = false;
+      break;
+    case SIGCHLD: // Signal number 17
+      reapZombies();
+      break;
+    default:
+      {
+        log::Param params[] = {log::Param("signal", sig)};
+        m_log(LOG_INFO, "Ignoring signal", params);
+      }
+      break;
+    }
+  }
+
+  return continueMainEventLoop;
+}
+
+//------------------------------------------------------------------------------
+// reapZombies
+//------------------------------------------------------------------------------
+void castor::tape::rmc::RmcDaemon::reapZombies() throw() {
+  pid_t childPid = 0;
+  int waitpidStat = 0;
+
+  while (0 < (childPid = waitpid(-1, &waitpidStat, WNOHANG))) {
+    reapZombie(childPid, waitpidStat);
+  }
+}
+
+//------------------------------------------------------------------------------
+// reapZombie
+//------------------------------------------------------------------------------
+void castor::tape::rmc::RmcDaemon::reapZombie(const pid_t childPid, const int waitpidStat) throw() {
+  logChildProcessTerminated(childPid, waitpidStat);
+}
+
+//------------------------------------------------------------------------------
+// logChildProcessTerminated
+//------------------------------------------------------------------------------
+void castor::tape::rmc::RmcDaemon::logChildProcessTerminated(const pid_t childPid, const int waitpidStat) throw() {
+  std::list<log::Param> params;
+  params.push_back(log::Param("childPid", childPid));
+
+  if(WIFEXITED(waitpidStat)) {
+    params.push_back(log::Param("WEXITSTATUS", WEXITSTATUS(waitpidStat)));
+  }
+
+  if(WIFSIGNALED(waitpidStat)) {
+    params.push_back(log::Param("WTERMSIG", WTERMSIG(waitpidStat)));
+  }
+
+  if(WCOREDUMP(waitpidStat)) {
+    params.push_back(log::Param("WCOREDUMP", "true"));
+  } else {
+    params.push_back(log::Param("WCOREDUMP", "false"));
+  }
+
+  if(WIFSTOPPED(waitpidStat)) {
+    params.push_back(log::Param("WSTOPSIG", WSTOPSIG(waitpidStat)));
+  }
+
+  if(WIFCONTINUED(waitpidStat)) {
+    params.push_back(log::Param("WIFCONTINUED", "true"));
+  } else {
+    params.push_back(log::Param("WIFCONTINUED", "false"));
+  }
+
+  m_log(LOG_INFO, "Child-process terminated", params);
+}
+
+//------------------------------------------------------------------------------
+// forkChildProcesses
+//------------------------------------------------------------------------------
+void castor::tape::rmc::RmcDaemon::forkChildProcesses() throw() {
+/*
+  const std::list<std::string> unitNames =
+    m_driveCatalogue.getUnitNames(DriveCatalogue::DRIVE_STATE_WAITFORK);
+
+  for(std::list<std::string>::const_iterator itor = unitNames.begin();
+    itor != unitNames.end(); itor++) {
+    forkChildProcess(*itor);
+  }
 */
+}
+
+//------------------------------------------------------------------------------
+// forkChildProcess
+//------------------------------------------------------------------------------
+void castor::tape::rmc::RmcDaemon::forkChildProcess() throw() {
+/*
+  m_log.prepareForFork();
+  const pid_t childPid = fork();
+
+  // If fork failed
+  if(0 > childPid) {
+    // Log an error message and return
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    log::Param params[] = {log::Param("message", errBuf)};
+    m_log(LOG_ERR, "Failed to fork mount session for tape drive", params);
+
+  // Else if this is the parent process
+  } else if(0 < childPid) {
+    m_driveCatalogue.forkedMountSession(unitName, childPid);
+
+  // Else this is the child process
+  } else {
+    // Clear the reactor which in turn will close all of the open
+    // file-descriptors owned by the event handlers
+    m_reactor.clear();
+
+    runMountSession(unitName);
+
+    // The runMountSession() should call exit() and should therefore never
+    // return
+    m_log(LOG_ERR, "runMountSession() returned unexpectedly");
+  }
+*/
+}

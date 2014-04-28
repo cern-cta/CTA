@@ -24,6 +24,7 @@
  
 
 
+#include "castor/io/PollReactorImpl.hpp"
 #include "castor/log/LoggerImplementation.hpp"
 #include "castor/tape/rmc/RmcDaemon.hpp"
 
@@ -35,8 +36,9 @@
 int main(const int argc, char **const argv) {
 
   try {
-    castor::log::LoggerImplementation logger("rmcd");
-    castor::tape::rmc::RmcDaemon daemon(std::cout, std::cerr, logger);
+    castor::log::LoggerImplementation log("rmcd");
+    castor::io::PollReactorImpl reactor(log);
+    castor::tape::rmc::RmcDaemon daemon(std::cout, std::cerr, log, reactor);
 
     return daemon.main(argc, argv);
   } catch(castor::exception::Exception &ex) {

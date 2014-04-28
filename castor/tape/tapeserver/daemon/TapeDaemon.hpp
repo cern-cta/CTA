@@ -237,15 +237,20 @@ protected:
   /**
    * Forks a mount-session child-process for every tape drive entry in the
    * tape drive catalogue that is waiting for such a fork to be carried out.
+   *
+   * There may be more than one child-process to fork because there may be
+   * more than one tape drive connected to the tape server and the previous
+   * call to m_reactor.handleEvents() handled requests to start a mount
+   * session on more than one of the connected tape drives.
    */
-  void forkWaitingMountSessions() throw();
+  void forkMountSessions() throw();
 
   /**
    * Forks a mount-session child-process for the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */ 
-  void forkWaitingMountSession(const std::string &unitName) throw();
+  void forkMountSession(const std::string &unitName) throw();
 
   /**
    * Runs the mount session.  This method is to be called within the child
@@ -301,12 +306,12 @@ protected:
   io::PollReactor &m_reactor;
 
   /**
-   * The program name of the tape daemon.
+   * The program name of the daemon.
    */
   const std::string m_programName;
 
   /**
-   * The name of the host on which tape daemon is running.  This name is
+   * The name of the host on which the daemon is running.  This name is
    * needed to fill in messages to be sent to the vdqmd daemon.
    */
   const std::string m_hostName;

@@ -36,7 +36,7 @@ castor::tape::tapeserver::daemon::VdqmConnectionHandler::VdqmConnectionHandler(
     m_reactor(reactor),
     m_log(log),
     m_driveCatalogue(driveCatalogue),
-    m_netTimeout(1) // 1 second
+    m_netTimeout(1) // Timeout in seconds
 {
 }
 

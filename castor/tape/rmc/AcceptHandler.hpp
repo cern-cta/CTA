@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp
+ *                castor/tape/rmc/AcceptHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -25,34 +25,30 @@
 #include "castor/io/PollEventHandler.hpp"
 #include "castor/io/PollReactor.hpp"
 #include "castor/log/Logger.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 
 #include <poll.h>
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+namespace castor {
+namespace tape {
+namespace rmc {
 
 /**
- * Handles the events of the socket listening for connection from the vdqmd
- * daemon.
+ * Handles the events of the socket listening for connections from clients of
+ * the rmcd daemon.
  */
-class VdqmAcceptHandler: public io::PollEventHandler {
+class AcceptHandler: public io::PollEventHandler {
 public:
 
   /**
    * Constructor.
    *
-   * @param fd The file descriptor of the socket listening for
-   * connections from the vdqmd daemon.
-   * @param reactor The reactor to which new Vdqm connection handlers are to be
+   * @param fd The file descriptor of the socket listening for connections
+   * from clients of the rmcd daemon.
+   * @param reactor The reactor to which new connection handlers are to be
    * registered.
    * @param log The object representing the API of the CASTOR logging system.
-   * @param driveCatalogue The catalogue of tape drives controlled by the tape
-   * server daemon.
    */
-  VdqmAcceptHandler(const int fd, io::PollReactor &reactor, log::Logger &log, DriveCatalogue &driveCatalogue) throw();
+  AcceptHandler(const int fd, io::PollReactor &reactor, log::Logger &log) throw();
 
   /**
    * Returns the integer file descriptor of this event handler.
@@ -80,24 +76,23 @@ public:
    *
    * Closes the listen socket.
    */
-  ~VdqmAcceptHandler() throw();
+  ~AcceptHandler() throw();
 
 private:
 
   /**
    * Throws an exception if the specified file-descriptor is not that of the
-   * socket listening for connections from the vdqmd daemon.
+   * socket listening for client connections.
    */
   void checkHandleEventFd(const int fd) throw (castor::exception::Exception);
 
   /**
-   * The file descriptor of the socket listening for connections from the vdqmd
-   * daemon.
+   * The file descriptor of the socket listening for client connections.
    */
   const int m_fd;
 
   /**
-   * The reactor to which new Vdqm connection handlers are to be registered.
+   * The reactor to which new connection handlers are to be registered.
    */
   io::PollReactor &m_reactor;
 
@@ -106,15 +101,9 @@ private:
    */
   log::Logger &m_log;
 
-  /**
-   * The catalogue of tape drives controlled by the tape server daemon.
-   */
-  DriveCatalogue &m_driveCatalogue;
+}; // class AcceptHandler
 
-}; // class VdqmAcceptHandler
-
-} // namespace daemon
-} // namespace tapeserver
+} // namespace rmc
 } // namespace tape
 } // namespace castor
 

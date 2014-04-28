@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/VdqmConnectionHandler.hpp
+ *                castor/tape/tapeserver/daemon/ConnectionHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -26,43 +26,32 @@
 #include "castor/io/PollEventHandler.hpp"
 #include "castor/io/PollReactor.hpp"
 #include "castor/log/Logger.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
-#include "castor/legacymsg/RtcpMarshal.hpp"
-#include "castor/legacymsg/VdqmProxyFactory.hpp"
-#include "castor/legacymsg/VdqmMarshal.hpp"
-#include "h/vdqm_constants.h"
-#include "h/rtcp_constants.h"
 
 #include <poll.h>
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+namespace castor {
+namespace tape {
+namespace rmc {
 
 /**
- * Handles the events of a connection with the vdqmd daemon.
+ * Handles the events of a client connection.
  */
-class VdqmConnectionHandler: public io::PollEventHandler {
+class ConnectionHandler: public io::PollEventHandler {
 public:
 
   /**
    * Constructor.
    *
-   * @param fd The file descriptor of the connection with the vdqmd
-   * daemon.
+   * @param fd The file descriptor of the client connection.
    * @param reactor The reactor with which this event handler is registered.
    * @param log The object representing the API of the CASTOR logging system.
-   * @param driveCatalogue The catalogue of tape drives controlled by the tape
-   * server daemon.
    */
-  VdqmConnectionHandler(
+  ConnectionHandler(
     const int fd,
     io::PollReactor &reactor,
-    log::Logger &log,
-    DriveCatalogue &driveCatalogue) throw();
+    log::Logger &log) throw();
 
   /**
    * Returns the integer file descriptor of this event handler.
@@ -85,14 +74,14 @@ public:
   /**
    * Destructor.
    *
-   * Closes the connection with the vdqmd daemon.
+   * Closes the connection with the client.
    */
-  ~VdqmConnectionHandler() throw();
+  ~ConnectionHandler() throw();
 
 private:
 
   /**
-   * The file descriptor of the connection with the vdqm daemon.
+   * The file descriptor of the connection with the client.
    */
   const int m_fd;
 
@@ -106,11 +95,6 @@ private:
    */
   log::Logger &m_log;
 
-  /**
-   * The catalogue of tape drives controlled by the tape server daemon.
-   */
-  DriveCatalogue &m_driveCatalogue;
-  
   /**
    * The timeout in seconds to be applied when performing network read and
    * write operations.
@@ -129,57 +113,9 @@ private:
    */
   bool connectionIsAuthorized() throw();
 
-  /**
-   * Logs the reception of the specified job message from the vdqmd daemon.
-   */
-  void logVdqmJobReception(const legacymsg::RtcpJobRqstMsgBody &job)
-    const throw();
-  
-  /**
-   * Reads a job message from the specified connection, sends back a positive
-   * acknowledgement and closes the connection.
-   *
-   * @param connection The file descriptor of the connection with the vdqm
-   * daemon.
-   * @return The job request from the vdqm.
-   */
-  legacymsg::RtcpJobRqstMsgBody readJobMsg(const int fd)
-    throw(castor::exception::Exception);
-  
-  /**
-   * Reads the header of a job message from the specified connection.
-   *
-   * @param fd The file descriptor of the connection with the vdqm
-   * daemon.
-   * @return The message header.
-   */
-  legacymsg::MessageHeader readJobMsgHeader(const int fd)
-    throw(castor::exception::Exception);
-  
-  /**
-   * Reads the body of a job message from the specified connection.
-   *
-   * @param fd The file descriptor of the connection with the vdqm
-   * daemon.
-   * @param len The length of the message body in bytes.
-   * @return The message body.
-   */
-  legacymsg::RtcpJobRqstMsgBody readJobMsgBody(const int fd,
-    const uint32_t len) throw(castor::exception::Exception);
+}; // class ConnectionHandler
 
-  /**
-   * Writes a job reply message to the specified connection.
-   *
-   * @param fd The file descriptor of the connection with the vdqm
-   * daemon.
-   */
-  void writeJobReplyMsg(const int fd)
-    throw(castor::exception::Exception);
-
-}; // class VdqmConnectionHandler
-
-} // namespace daemon
-} // namespace tapeserver
+} // namespace rmc
 } // namespace tape
 } // namespace castor
 

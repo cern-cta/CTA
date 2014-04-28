@@ -27,6 +27,8 @@ if (${COMPILE_SERVER} STREQUAL "1")
   # Rules to build and install rmcd
   ##############################################################################
   set (RMCD_SRC_FILES
+    AcceptHandler.cpp
+    ConnectionHandler.cpp
     RmcDaemon.cpp
     RmcdMain.cpp)
   add_executable (newrmcd ${RMCD_SRC_FILES})
