@@ -141,13 +141,13 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeStatRequestMsgBody) {
 
 TEST_F(castor_legacymsg_TapeMarshalTest, marshalSetVidRequestMsgBody) {
   using namespace castor::legacymsg;
-  char buf[80]; // Expect message (header + body) to occupy exactly 80 bytes
+  char buf[25]; // Expect message (header + body) to occupy exactly 25 bytes
   SetVidRequestMsgBody srcMsgBody;
 
   // Marshal entire message (header + body)
   {
-    castor::utils::copyString(srcMsgBody.vid, "XXXXXX");
-    castor::utils::copyString(srcMsgBody.drive, "HELLO");
+    castor::utils::copyString(srcMsgBody.vid, "VIDVID");
+    castor::utils::copyString(srcMsgBody.drive, "DRIVE");
 
     size_t bufLen = sizeof(buf);
     size_t totalLen = 0; // Total length of message (header + body)
@@ -180,8 +180,8 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalSetVidRequestMsgBody) {
     ASSERT_EQ(buf + 25, bufPtr);
     ASSERT_EQ((size_t)0, bufLen);
 
-    ASSERT_EQ(std::string("XXXXXX"), dstMsgBody.drive);
-    ASSERT_EQ(std::string("HELLO"), dstMsgBody.drive);
+    ASSERT_EQ(std::string("VIDVID"), dstMsgBody.vid);
+    ASSERT_EQ(std::string("DRIVE"), dstMsgBody.drive);
   }
 }
 

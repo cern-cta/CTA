@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/TapeserverProxyImpl.cpp
+ *                castor/legacymsg/TapeserverProxyTcpIp.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,7 +24,7 @@
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
-#include "castor/tape/tapeserver/daemon/TapeserverProxyImpl.hpp"
+#include "castor/legacymsg/TapeserverProxyTcpIp.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/rtcp_constants.h"
@@ -33,7 +33,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::TapeserverProxyImpl::TapeserverProxyImpl(log::Logger &log, const unsigned short tapeserverPort, const int netTimeout) throw():
+castor::legacymsg::TapeserverProxyTcpIp::TapeserverProxyTcpIp(log::Logger &log, const unsigned short tapeserverPort, const int netTimeout) throw():
   m_log(log),
   m_tapeserverHostName("localhost"),
   m_tapeserverPort(tapeserverPort),
@@ -43,13 +43,13 @@ castor::tape::tapeserver::daemon::TapeserverProxyImpl::TapeserverProxyImpl(log::
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::TapeserverProxyImpl::~TapeserverProxyImpl() throw() {
+castor::legacymsg::TapeserverProxyTcpIp::~TapeserverProxyTcpIp() throw() {
 }
 
 //------------------------------------------------------------------------------
 // setVidInDriveCatalogue
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeserverProxyImpl::setVidInDriveCatalogue(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception) {
+void castor::legacymsg::TapeserverProxyTcpIp::setVidInDriveCatalogue(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception) {
   try {
     legacymsg::SetVidRequestMsgBody body;
     castor::utils::copyString(body.vid, vid.c_str());
@@ -68,7 +68,7 @@ void castor::tape::tapeserver::daemon::TapeserverProxyImpl::setVidInDriveCatalog
 //-----------------------------------------------------------------------------
 // connectToTapeserver
 //-----------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::TapeserverProxyImpl::connectToTapeserver() const throw(castor::exception::Exception) {
+int castor::legacymsg::TapeserverProxyTcpIp::connectToTapeserver() const throw(castor::exception::Exception) {
   castor::utils::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(io::connectWithTimeout(m_tapeserverHostName, m_tapeserverPort,
@@ -86,7 +86,7 @@ int castor::tape::tapeserver::daemon::TapeserverProxyImpl::connectToTapeserver()
 //-----------------------------------------------------------------------------
 // writeSetVidRequestMsg
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeserverProxyImpl::writeSetVidRequestMsg(const int fd, const legacymsg::SetVidRequestMsgBody &body) throw(castor::exception::Exception) {
+void castor::legacymsg::TapeserverProxyTcpIp::writeSetVidRequestMsg(const int fd, const legacymsg::SetVidRequestMsgBody &body) throw(castor::exception::Exception) {
   char buf[CA_MAXVIDLEN+1+CA_MAXUNMLEN+1];
   const size_t len = legacymsg::marshal(buf, sizeof(buf), body);
 
@@ -103,7 +103,7 @@ void castor::tape::tapeserver::daemon::TapeserverProxyImpl::writeSetVidRequestMs
 //-----------------------------------------------------------------------------
 // readCommitAck
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeserverProxyImpl::readCommitAck(const int fd) throw(castor::exception::Exception) {
+void castor::legacymsg::TapeserverProxyTcpIp::readCommitAck(const int fd) throw(castor::exception::Exception) {
   legacymsg::MessageHeader ack;
 
   try {
@@ -144,7 +144,7 @@ void castor::tape::tapeserver::daemon::TapeserverProxyImpl::readCommitAck(const 
 //-----------------------------------------------------------------------------
 // readAck
 //-----------------------------------------------------------------------------
-castor::legacymsg::MessageHeader castor::tape::tapeserver::daemon::TapeserverProxyImpl::readAck(const int fd) throw(castor::exception::Exception) {
+castor::legacymsg::MessageHeader castor::legacymsg::TapeserverProxyTcpIp::readAck(const int fd) throw(castor::exception::Exception) {
   char buf[12]; // Magic + type + len
   legacymsg::MessageHeader ack;
 

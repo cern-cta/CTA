@@ -28,11 +28,11 @@
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/io/PollReactor.hpp"
 #include "castor/legacymsg/RmcProxyFactory.hpp"
+#include "castor/legacymsg/TapeserverProxy.hpp"
 #include "castor/legacymsg/VdqmProxyFactory.hpp"
 #include "castor/legacymsg/VmgrProxyFactory.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
-#include "castor/tape/tapeserver/daemon/TapeserverProxy.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
 #include "castor/tape/utils/utils.hpp"
 
@@ -84,7 +84,7 @@ public:
     legacymsg::VdqmProxyFactory &vdqmFactory,
     legacymsg::VmgrProxyFactory &vmgrFactory,
     legacymsg::RmcProxyFactory &rmcFactory,
-    TapeserverProxy &tapeserverProxy,
+    legacymsg::TapeserverProxy &tapeserverProxy,
     io::PollReactor &reactor) throw(castor::exception::Exception);
 
   /**
@@ -310,7 +310,7 @@ protected:
   /**
    * The proxy object representing the tapeserver daemon.
    */
-  TapeserverProxy &m_tapeserverProxy;
+  legacymsg::TapeserverProxy &m_tapeserverProxy;
 
   /**
    * The reactor responsible for dispatching the file-descriptor event-handlers

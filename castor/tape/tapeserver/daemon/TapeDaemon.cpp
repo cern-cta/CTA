@@ -57,7 +57,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
   legacymsg::VdqmProxyFactory &vdqmFactory,
   legacymsg::VmgrProxyFactory &vmgrFactory,
   legacymsg::RmcProxyFactory &rmcFactory,
-  TapeserverProxy &tapeserverProxy,
+  legacymsg::TapeserverProxy &tapeserverProxy,
   io::PollReactor &reactor) throw(castor::exception::Exception):
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),

@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/TapeserverProxyImpl.hpp
+ *         castor/legacymsg/TapeserverProxyTcpIp.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -25,17 +25,16 @@
 #include "castor/log/Logger.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/legacymsg/SetVidRequestMsgBody.hpp"
-#include "castor/tape/tapeserver/daemon/TapeserverProxy.hpp"
+#include "castor/legacymsg/TapeserverProxy.hpp"
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+namespace castor {
+namespace legacymsg {
 
 /**
- * A concrete implementation of the interface to the vdqm daemon.
+ * A concrete implementation of the interface to the internal network
+ * communications of the tapeserverd daemon.
  */
-class TapeserverProxyImpl: public TapeserverProxy {
+class TapeserverProxyTcpIp: public TapeserverProxy {
 public:
 
   /**
@@ -48,7 +47,7 @@ public:
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    */
-  TapeserverProxyImpl(log::Logger &log, const unsigned short tapeserverPort, const int netTimeout) throw();
+  TapeserverProxyTcpIp(log::Logger &log, const unsigned short tapeserverPort, const int netTimeout) throw();
 
   /**
    * Destructor.
@@ -56,7 +55,7 @@ public:
    * Closes the listening socket created in the constructor to listen for
    * connections from the vdqmd daemon.
    */
-  ~TapeserverProxyImpl() throw();
+  ~TapeserverProxyTcpIp() throw();
 
   /**
    * Sets the VID of the tape mounted in the specified tape drive.
@@ -120,10 +119,8 @@ private:
    */
   const int m_netTimeout;
 
-}; // class TapeserverProxyImpl
+}; // class TapeserverProxyTcpIp
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
+} // namespace legacymsg
 } // namespace castor
 

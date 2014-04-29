@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/DummyTapeserver.cpp
+ *         castor/legacymsg/TapeserverProxyDummy.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,22 +20,22 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/DummyTapeserver.hpp"
+#include "castor/legacymsg/TapeserverProxyDummy.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DummyTapeserver::DummyTapeserver() throw() {
+castor::legacymsg::TapeserverProxyDummy::TapeserverProxyDummy() throw() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DummyTapeserver::~DummyTapeserver() throw() {
+castor::legacymsg::TapeserverProxyDummy::~TapeserverProxyDummy() throw() {
 }
 
 //------------------------------------------------------------------------------
 // setVidInDriveCatalogue
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DummyTapeserver::setVidInDriveCatalogue(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception) {
+void castor::legacymsg::TapeserverProxyDummy::setVidInDriveCatalogue(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception) {
 }

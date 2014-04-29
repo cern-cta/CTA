@@ -101,6 +101,9 @@ add_executable(castorUnitTests
   ../castor/legacymsg/ScsiLibrarySlot.cpp
   ../castor/legacymsg/ScsiLibrarySlotTest.cpp
   ../castor/legacymsg/TapeMarshalTest.cpp
+  ../castor/legacymsg/TapeserverProxy.cpp
+  ../castor/legacymsg/TapeserverProxyDummy.cpp
+  ../castor/legacymsg/TapeserverProxyTcpIp.cpp
   ../castor/legacymsg/VdqmMarshalTest.cpp
   ../castor/legacymsg/VdqmProxy.cpp
   ../castor/legacymsg/VdqmProxyTcpIp.cpp
@@ -118,12 +121,9 @@ add_executable(castorUnitTests
 #  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
-  ../castor/tape/tapeserver/daemon/DummyTapeserver.cpp
   ../castor/tape/tapeserver/daemon/MountSessionAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemon.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemonTest.cpp
-  ../castor/tape/tapeserver/daemon/TapeserverProxy.cpp
-  ../castor/tape/tapeserver/daemon/TapeserverProxyImpl.cpp
   ../castor/tape/tapeserver/daemon/VdqmAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/VdqmConnectionHandler.cpp
   ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp

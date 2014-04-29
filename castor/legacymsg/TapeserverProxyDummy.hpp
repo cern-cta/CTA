@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/TapeserverProxy.hpp
+ *         castor/legacymsg/TapeserverProxyDummy.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,20 +22,21 @@
 
 #pragma once
 
-#include "castor/log/Logger.hpp"
-#include "castor/legacymsg/MessageHeader.hpp"
-#include "castor/legacymsg/SetVidRequestMsgBody.hpp"
+#include "castor/legacymsg/TapeserverProxy.hpp"
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+namespace castor {
+namespace legacymsg {
 
 /**
- * A concrete implementation of the interface to the vdqm daemon.
+ * A dummy tapeserverd-proxy.
  */
-class TapeserverProxy {
+class TapeserverProxyDummy: public TapeserverProxy {
 public:
+
+  /**
+   * Constructor.
+   */
+  TapeserverProxyDummy() throw();
 
   /**
    * Destructor.
@@ -43,7 +44,7 @@ public:
    * Closes the listening socket created in the constructor to listen for
    * connections from the vdqmd daemon.
    */
-  virtual ~TapeserverProxy() throw() = 0;
+  ~TapeserverProxyDummy() throw();
 
   /**
    * Sets the VID of the tape mounted in the specified tape drive.
@@ -51,12 +52,10 @@ public:
    * @param vid The Volume ID of the tape in the tape drive
    * @param unitName The unit name of the tape drive.
    */
-  virtual void setVidInDriveCatalogue(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception) = 0;
+  void setVidInDriveCatalogue(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception);
 
-}; // class TapeserverProxy
+}; // class TapeserverProxyDummy
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
+} // namespace legacymsg
 } // namespace castor
 
