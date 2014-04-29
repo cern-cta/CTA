@@ -35,7 +35,7 @@ int rmc_mount(
 
 	sbp = sendbuf;
 	marshall_LONG (sbp, RMC_MAGIC);
-	marshall_LONG (sbp, RMC_MOUNT);
+	marshall_LONG (sbp, RMC_SCSI_MOUNT);
 	q = sbp;	/* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
 	marshall_LONG (sbp, msglen);

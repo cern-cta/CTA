@@ -39,7 +39,7 @@ int rmc_read_elem_status(
 
 	sbp = sendbuf;
 	marshall_LONG (sbp, RMC_MAGIC);
-	marshall_LONG (sbp, RMC_READELEM);
+	marshall_LONG (sbp, RMC_SCSI_READELEM);
 	q = sbp;	/* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
 	marshall_LONG (sbp, msglen);
