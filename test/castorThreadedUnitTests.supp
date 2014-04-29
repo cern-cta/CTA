@@ -137,10 +137,5 @@
 {
   helgrind-unitTest-castor-basicStringslength
   Helgrind:Race
-  fun: _ZNKSs6*
-}
-{
-  helgrind-unitTest-castor-basicStringsMutate
-  Helgrind:Race
-  fun: _ZNSs9_M_mutateEjjj
+  fun:_ZNKSs6*
 }
