@@ -26,6 +26,7 @@
 
 #include "castor/tape/tpcp/TpcpCommand.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
+#include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include <queue>
 
 namespace castor {
@@ -41,7 +42,8 @@ namespace client {
   class ClientSimulator: public tpcp::TpcpCommand {
   public:
     ClientSimulator(uint32_t volReqId, const std::string & vid, 
-            const std::string & density);
+            const std::string & density, tapegateway::ClientType clientType,
+            tapegateway::VolumeMode volumeMode);
     
     virtual ~ClientSimulator() throw () {}
     
@@ -76,7 +78,15 @@ namespace client {
       m_filesToRecall.push(ftr);
       m_recallSizes.push(size);
     }
+    void addFileToMigrate(tapegateway::FileToMigrateStruct & ftm) {
+      m_filesToMigrate.push(ftm);
+    }
     
+    /**
+     * Container where the migration result pairs (fseq, checksum) are 
+     * stored.
+     */
+    std::map<uint64_t, uint64_t> m_receivedChecksums;
   protected:
     // Place holders for pure virtual members of TpcpCommand we don't
     // use in the simulator
@@ -116,11 +126,14 @@ namespace client {
     const std::string          &errorMessage,
     castor::io::AbstractSocket &sock)
     throw();
-    std::string m_vid;
-    std::string m_volLabel;
-    std::string m_density;
+    const std::string m_vid;
+    const std::string m_volLabel;
+    const std::string m_density;
     std::queue<tapegateway::FileToRecallStruct> m_filesToRecall;
     std::queue<uint64_t> m_recallSizes;
+    std::queue<tapegateway::FileToMigrateStruct> m_filesToMigrate;
+    const castor::tape::tapegateway::ClientType m_clientType;
+    const castor::tape::tapegateway::VolumeMode m_volumeMode;
   };
 }
 }

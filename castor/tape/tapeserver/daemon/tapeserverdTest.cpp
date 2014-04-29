@@ -68,7 +68,8 @@ TEST(tapeServer, MountSessionGoodday) {
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
   std::string density = "8000GC";
-  client::ClientSimulator sim(volReq, vid, density);
+  client::ClientSimulator sim(volReq, vid, density, tapegateway::READ_TP,
+    tapegateway::READ);
   client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
@@ -159,7 +160,8 @@ TEST(tapeServer, MountSessionNoSuchDrive) {
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
   std::string density = "8000GC";
-  client::ClientSimulator sim(volReq, vid, density);
+  client::ClientSimulator sim(volReq, vid, density, tapegateway::READ_TP,
+    tapegateway::READ);
   client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();

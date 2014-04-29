@@ -36,6 +36,8 @@
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/NoMoreFiles.hpp"
 #include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
+#include "castor/tape/tapegateway/FilesToMigrateListRequest.hpp"
+#include "castor/tape/tapegateway/FileMigrationReportList.hpp"
 
 namespace castor {
 namespace tape {
@@ -45,9 +47,10 @@ namespace client {
 using namespace castor::tape;
 
 ClientSimulator::ClientSimulator(uint32_t volReqId, const std::string & vid, 
-    const std::string & density):
+    const std::string & density, tapegateway::ClientType clientType,
+    tapegateway::VolumeMode volumeMode):
   TpcpCommand("clientSimulator::clientSimulator"), m_vid(vid), 
-    m_density(density)
+    m_density(density), m_clientType(clientType), m_volumeMode(volumeMode)
 {
   m_volReqId = volReqId;
   setupCallbackSock();
@@ -93,8 +96,8 @@ throw (castor::exception::Exception) {
   tapegateway::Volume vol;
   vol.setAggregatorTransactionId(vReq.aggregatorTransactionId());
   vol.setVid(m_vid);
-  vol.setClientType(tapegateway::READ_TP);
-  vol.setMode(castor::tape::tapegateway::READ);
+  vol.setClientType(m_clientType);
+  vol.setMode(m_volumeMode);
   vol.setLabel(m_volLabel);
   vol.setMountTransactionId(m_volReqId);
   vol.setDensity(m_density);
@@ -160,11 +163,11 @@ throw (castor::exception::Exception) {
       clientConnection->sendObject(noMore);
       return true; // The end of session is not signalled here
     }
-  } catch (std::bad_cast) {}
+  } catch (std::bad_cast&) {}
   
   // Process the recall reports
   try {
-    // Check that we
+    // Check that we get a recall report and simply acknowledge
     tapegateway::FileRecallReportList & req =
         dynamic_cast<tapegateway::FileRecallReportList &> (*obj);
     tapegateway::NotificationAcknowledge reply;
@@ -172,9 +175,43 @@ throw (castor::exception::Exception) {
     reply.setAggregatorTransactionId(req.aggregatorTransactionId());
     clientConnection->sendObject(reply);
     return true; // The end of session is not signalled here
-  } catch (std::bad_cast) {}
+  } catch (std::bad_cast&) {}
   
-  // TODO Same for migrations requests should go here....
+  // Handle request for more work (migration)
+  try {
+    tapegateway::FilesToMigrateListRequest & req =
+        dynamic_cast<tapegateway::FilesToMigrateListRequest &> (*obj);
+    uint32_t files = 0;
+    uint64_t bytes = 0;
+    tapegateway::FilesToMigrateList reply;
+    while (files < req.maxFiles() && bytes < req.maxFiles()) {
+      if (m_filesToMigrate.size()) {
+        files++;
+        std::auto_ptr<tapegateway::FileToMigrateStruct> ftm(new tapegateway::FileToMigrateStruct);
+        *ftm = m_filesToMigrate.front();
+        bytes += ftm->fileSize();
+        reply.filesToMigrate().push_back(ftm.release());
+        m_filesToMigrate.pop();
+      } else {
+        break;
+      }
+    }
+    // At this point, the reply should be populated with all the files asked for
+    // (or as much as we could provide).
+    // If not, we should send a NoMoreFiles instead of if.
+    if(reply.filesToMigrate().size()) {
+      reply.setAggregatorTransactionId(msg.aggregatorTransactionId());
+      reply.setMountTransactionId(m_volReqId);
+      clientConnection->sendObject(reply);
+      return true; // The end of session is not signalled here
+    } else {
+      tapegateway::NoMoreFiles noMore;
+      noMore.setAggregatorTransactionId(msg.aggregatorTransactionId());
+      noMore.setMountTransactionId(m_volReqId);
+      clientConnection->sendObject(noMore);
+      return true; // The end of session is not signalled here
+    }
+  } catch(std::bad_cast&) {}
   
   // Process the migration reports
   try {
@@ -184,6 +221,13 @@ throw (castor::exception::Exception) {
     reply.setMountTransactionId(m_volReqId);
     reply.setAggregatorTransactionId(req.aggregatorTransactionId());
     clientConnection->sendObject(reply);
+    req.successfulMigrations();
+    // We will now record the fseqs and checksums reported:
+    for(std::vector<tapegateway::FileMigratedNotificationStruct*>::iterator i =
+        req.successfulMigrations().begin(); i!=req.successfulMigrations().end();
+        i++) {
+      m_receivedChecksums[(*i)->fseq()] = (*i)->checksum();
+    }
     return true; // The end of session is not signalled here
   } catch (std::bad_cast) {}
   
