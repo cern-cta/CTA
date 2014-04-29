@@ -33,7 +33,7 @@
 
 namespace unitTests {
 
-class castor_server_TapeMarshalTest : public ::testing::Test {
+class castor_legacymsg_TapeMarshalTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -43,7 +43,7 @@ protected:
   }
 };
 
-TEST_F(castor_server_TapeMarshalTest, marshalTapeConfigRequestMsgBody) {
+TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeConfigRequestMsgBody) {
   using namespace castor::legacymsg;
   char buf[80]; // Expect message (header + body) to occupy exactly 80 bytes
   TapeConfigRequestMsgBody srcMsgBody;
@@ -93,7 +93,7 @@ TEST_F(castor_server_TapeMarshalTest, marshalTapeConfigRequestMsgBody) {
   }
 }
 
-TEST_F(castor_server_TapeMarshalTest, marshalTapeStatRequestMsgBody) {
+TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeStatRequestMsgBody) {
   using namespace castor::legacymsg;
   char buf[80]; // Expect message (header + body) to occupy exactly 80 bytes
   TapeStatRequestMsgBody srcMsgBody;

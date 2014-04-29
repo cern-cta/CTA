@@ -31,7 +31,7 @@
 
 namespace unitTests {
 
-class castor_server_RmcMarshalTest : public ::testing::Test {
+class castor_legacymsg_RmcMarshalTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -41,7 +41,7 @@ protected:
   }
 };
 
-TEST_F(castor_server_RmcMarshalTest, marshalRmcAcsMntMsgBody) {
+TEST_F(castor_legacymsg_RmcMarshalTest, marshalRmcAcsMntMsgBody) {
   using namespace castor::legacymsg;
   char buf[40]; // Expect message (header + body) to occupy exactly 40 bytes
 
@@ -99,7 +99,7 @@ TEST_F(castor_server_RmcMarshalTest, marshalRmcAcsMntMsgBody) {
   }
 }
 
-TEST_F(castor_server_RmcMarshalTest, marshalRmcMountMsgBody) {
+TEST_F(castor_legacymsg_RmcMarshalTest, marshalRmcMountMsgBody) {
   using namespace castor::legacymsg;
   char buf[29]; // Expect message (header + body) to occupy exactly 29 bytes
 

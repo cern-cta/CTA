@@ -31,7 +31,7 @@
 
 namespace unitTests {
 
-class castor_server_VdqmMarshalTest : public ::testing::Test {
+class castor_legacymsg_VdqmMarshalTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -41,7 +41,7 @@ protected:
   }
 };
 
-TEST_F(castor_server_VdqmMarshalTest, marshalVdqmDrvRqstMsgBody) {
+TEST_F(castor_legacymsg_VdqmMarshalTest, marshalVdqmDrvRqstMsgBody) {
   using namespace castor::legacymsg;
   char buf[80]; // Expect message (header + body) to occupy exactly 80 bytes
 
