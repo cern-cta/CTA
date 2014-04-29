@@ -197,6 +197,47 @@ public:
     const int priority,
     const std::string &msg) throw();
 
+  /**
+   * A template function that wraps operator() in order to get the compiler
+   * to automatically determine the size of the params parameter, therefore
+   *
+   * Note that this version of operator() allows the caller to specify the
+   * time stamp of the log message.
+   *
+   * @param priority the priority of the message as defined by the syslog
+   * API.
+   * @param msg the message.
+   * @param params the parameters of the message.
+   * @param timeStamp the time stamp of the log message.
+   */
+  template<int numParams> void operator() (
+    const int priority,
+    const std::string &msg,
+    castor::log::Param(&params)[numParams],
+    const struct timeval &timeStamp) throw() {
+    operator() (priority, msg, numParams, params, timeStamp);
+  }
+
+  /**
+   * A template function that wraps operator() in order to get the compiler
+   * to automatically determine the size of the params parameter, therefore
+   * removing the need for the devloper to provide it explicity.
+   *
+   * Note that this version of operator() implicitly uses the current time as
+   * the time stamp of the message.
+   *
+   * @param priority the priority of the message as defined by the syslog
+   * API.
+   * @param msg the message.
+   * @param params the parameters of the message.
+   */
+  template<int numParams> void operator() (
+    const int priority,
+    const std::string &msg,
+    castor::log::Param(&params)[numParams]) throw() {
+    operator() (priority, msg, numParams, params);
+  }
+
 private:
 
   /**
