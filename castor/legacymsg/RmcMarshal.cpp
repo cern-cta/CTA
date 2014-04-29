@@ -143,7 +143,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Rm
   // Marshall message header
   char *p = dst;
   io::marshalUint32(RMC_MAGIC , p); // Magic number
-  io::marshalUint32(RMC_MOUNT, p); // Request type
+  io::marshalUint32(RMC_SCSI_MOUNT, p); // Request type
   io::marshalUint32(totalLen, p); // Length of message header + body
 
   // Marshall message body
@@ -216,7 +216,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Rm
   // Marshall message header
   char *p = dst;
   io::marshalUint32(RMC_MAGIC , p); // Magic number
-  io::marshalUint32(RMC_UNMOUNT, p); // Request type
+  io::marshalUint32(RMC_SCSI_UNMOUNT, p); // Request type
   io::marshalUint32(totalLen, p); // Length of message header + body
 
   // Marshall message body

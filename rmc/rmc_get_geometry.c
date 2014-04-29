@@ -34,7 +34,7 @@ int rmc_get_geometry(
 
 	sbp = sendbuf;
 	marshall_LONG (sbp, RMC_MAGIC);
-	marshall_LONG (sbp, RMC_GETGEOM);
+	marshall_LONG (sbp, RMC_SCSI_GETGEOM);
 	q = sbp;	/* save pointer. The next field will be updated */
 	msglen = 3 * LONGSIZE;
 	marshall_LONG (sbp, msglen);

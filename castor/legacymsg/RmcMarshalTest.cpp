@@ -131,7 +131,7 @@ TEST_F(castor_legacymsg_RmcMarshalTest, marshalRmcMountMsgBody) {
     ASSERT_EQ((size_t)0, bufLen);
 
     ASSERT_EQ((uint32_t)RMC_MAGIC, dstHeader.magic);
-    ASSERT_EQ((uint32_t)RMC_MOUNT, dstHeader.reqType);
+    ASSERT_EQ((uint32_t)RMC_SCSI_MOUNT, dstHeader.reqType);
     ASSERT_EQ((uint32_t)29, dstHeader.lenOrStatus);
   }
 

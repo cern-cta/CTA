@@ -186,7 +186,7 @@ protected:
   int connectToRmc(const std::string &hostName) const throw(castor::exception::Exception);
 
   /**
-   * Writes an RMC_MOUNT message with the specifed body to the specified
+   * Writes an RMC_SCSI_MOUNT message with the specifed body to the specified
    * connection.
    *
    * @param fd The file descriptor of the connection.
@@ -203,7 +203,7 @@ protected:
   MessageHeader readRmcMsgHeader(const int fd) throw(castor::exception::Exception);
 
   /**
-   * Writes an RMC_UNMOUNT message with the specifed body to the specified
+   * Writes an RMC_SCSI_UNMOUNT message with the specifed body to the specified
    * connection.
    *
    * @param fd The file descriptor of the connection.

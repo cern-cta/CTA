@@ -322,7 +322,7 @@ void castor::legacymsg::RmcProxyTcpIp::writeRmcMountMsg(const int fd, const RmcM
     io::writeBytes(fd, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to write RMC_MOUNT message: "
+    ex.getMessage() << "Failed to write RMC_SCSI_MOUNT message: "
       << ne.getMessage().str();
     throw ex;
   }
@@ -371,7 +371,7 @@ void castor::legacymsg::RmcProxyTcpIp::writeRmcUnmountMsg(const int fd, const Rm
     io::writeBytes(fd, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to write RMC_UNMOUNT message: "
+    ex.getMessage() << "Failed to write RMC_SCSI_UNMOUNT message: "
       << ne.getMessage().str();
     throw ex;
   }

@@ -32,7 +32,7 @@ namespace castor {
 namespace legacymsg {
 
 /**
- * The body of an RMC_MOUNT message.
+ * The body of an RMC_SCSI_MOUNT message.
  */
 struct RmcMountMsgBody {
   uint32_t uid;
