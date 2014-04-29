@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/log/LoggerImplementation.cpp
+ *                      castor/log/SyslogLogger.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/log/LoggerImplementation.hpp"
+#include "castor/log/SyslogLogger.hpp"
 #include "h/Castor_limits.h"
 #include "h/getconfent.h"
 
@@ -41,7 +41,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::log::LoggerImplementation::LoggerImplementation(
+castor::log::SyslogLogger::SyslogLogger(
   const std::string &programName)
   throw(castor::exception::Internal, castor::exception::InvalidArgument):
   Logger(programName),
@@ -56,7 +56,7 @@ castor::log::LoggerImplementation::LoggerImplementation(
 //------------------------------------------------------------------------------
 // determineMaxMsgLen
 //------------------------------------------------------------------------------
-size_t castor::log::LoggerImplementation::determineMaxMsgLen() const throw() {
+size_t castor::log::SyslogLogger::determineMaxMsgLen() const throw() {
   const char *p = NULL;
   size_t msgSize = 0;
 
@@ -100,7 +100,7 @@ size_t castor::log::LoggerImplementation::determineMaxMsgLen() const throw() {
 // generatePriorityToTextMap
 //------------------------------------------------------------------------------
 std::map<int, std::string>
-  castor::log::LoggerImplementation::generatePriorityToTextMap() const 
+  castor::log::SyslogLogger::generatePriorityToTextMap() const 
   throw(castor::exception::Internal) {
   std::map<int, std::string> m;
 
@@ -127,7 +127,7 @@ std::map<int, std::string>
 // generateConfigTextToPriorityMap
 //------------------------------------------------------------------------------
 std::map<std::string, int>
-  castor::log::LoggerImplementation::generateConfigTextToPriorityMap() const
+  castor::log::SyslogLogger::generateConfigTextToPriorityMap() const
   throw(castor::exception::Internal) {
   std::map<std::string, int> m;
 
@@ -154,7 +154,7 @@ std::map<std::string, int>
 //------------------------------------------------------------------------------
 // initMutex
 //------------------------------------------------------------------------------
-void castor::log::LoggerImplementation::initMutex()
+void castor::log::SyslogLogger::initMutex()
   throw(castor::exception::Internal) {
   pthread_mutexattr_t attr;
   int rc = pthread_mutexattr_init(&attr);
@@ -190,13 +190,13 @@ void castor::log::LoggerImplementation::initMutex()
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::log::LoggerImplementation::~LoggerImplementation() throw() {
+castor::log::SyslogLogger::~SyslogLogger() throw() {
 }
 
 //------------------------------------------------------------------------------
 // prepareForFork
 //------------------------------------------------------------------------------
-void castor::log::LoggerImplementation::prepareForFork() 
+void castor::log::SyslogLogger::prepareForFork() 
   throw(castor::exception::Internal) {
   // Enter critical section
   {
@@ -226,7 +226,7 @@ void castor::log::LoggerImplementation::prepareForFork()
 //------------------------------------------------------------------------------
 // openLog
 //------------------------------------------------------------------------------
-void castor::log::LoggerImplementation::openLog() throw() {
+void castor::log::SyslogLogger::openLog() throw() {
   if(-1 == m_logFile) {
     struct sockaddr_un syslogAddr;
     syslogAddr.sun_family = AF_UNIX;
@@ -270,7 +270,7 @@ void castor::log::LoggerImplementation::openLog() throw() {
 //------------------------------------------------------------------------------
 // closeLog
 //------------------------------------------------------------------------------
-void castor::log::LoggerImplementation::closeLog() throw() {
+void castor::log::SyslogLogger::closeLog() throw() {
   if(!m_connected) {
     return;
   }
@@ -282,7 +282,7 @@ void castor::log::LoggerImplementation::closeLog() throw() {
 //-----------------------------------------------------------------------------
 // operator() 
 //-----------------------------------------------------------------------------
-void castor::log::LoggerImplementation::operator() (
+void castor::log::SyslogLogger::operator() (
   const int priority,
   const std::string &msg,
   const std::vector<Param> &params,
@@ -293,7 +293,7 @@ void castor::log::LoggerImplementation::operator() (
 //-----------------------------------------------------------------------------
 // operator() 
 //-----------------------------------------------------------------------------
-void castor::log::LoggerImplementation::operator() (
+void castor::log::SyslogLogger::operator() (
   const int priority,
   const std::string &msg,
   const std::list<Param> &params,
@@ -304,7 +304,7 @@ void castor::log::LoggerImplementation::operator() (
 //-----------------------------------------------------------------------------
 // operator() 
 //-----------------------------------------------------------------------------
-void castor::log::LoggerImplementation::operator() (
+void castor::log::SyslogLogger::operator() (
   const int priority,
   const std::string &msg,
   const int numParams,
@@ -316,7 +316,7 @@ void castor::log::LoggerImplementation::operator() (
 //-----------------------------------------------------------------------------
 // buildSyslogHeader
 //-----------------------------------------------------------------------------
-std::string castor::log::LoggerImplementation::buildSyslogHeader(
+std::string castor::log::SyslogLogger::buildSyslogHeader(
   const int priority,
   const struct timeval &timeStamp,
   const int pid) const throw() {
@@ -345,7 +345,7 @@ std::string castor::log::LoggerImplementation::buildSyslogHeader(
 //-----------------------------------------------------------------------------
 // cleanString
 //-----------------------------------------------------------------------------
-std::string castor::log::LoggerImplementation::cleanString(const std::string &s,
+std::string castor::log::SyslogLogger::cleanString(const std::string &s,
   const bool replaceSpaces) throw() {
   const std::string& spaces="\t\n\v\f\r ";
   
@@ -395,7 +395,7 @@ std::string castor::log::LoggerImplementation::cleanString(const std::string &s,
 //-----------------------------------------------------------------------------
 // reducedSyslog
 //-----------------------------------------------------------------------------
-void castor::log::LoggerImplementation::reducedSyslog(std::string msg)
+void castor::log::SyslogLogger::reducedSyslog(std::string msg)
   throw() {
   // Truncate the log message if it exceeds the permitted maximum
   if(msg.length() > m_maxMsgLen) {
@@ -445,7 +445,7 @@ void castor::log::LoggerImplementation::reducedSyslog(std::string msg)
 //-----------------------------------------------------------------------------
 // operator() 
 //-----------------------------------------------------------------------------
-void castor::log::LoggerImplementation::operator() (
+void castor::log::SyslogLogger::operator() (
   const int priority,
   const std::string &msg,
   const std::vector<Param> &params) throw() {
@@ -459,7 +459,7 @@ void castor::log::LoggerImplementation::operator() (
 //-----------------------------------------------------------------------------
 // operator() 
 //-----------------------------------------------------------------------------
-void castor::log::LoggerImplementation::operator() (
+void castor::log::SyslogLogger::operator() (
   const int priority,
   const std::string &msg,
   const std::list<Param> &params) throw() {
@@ -473,7 +473,7 @@ void castor::log::LoggerImplementation::operator() (
 //-----------------------------------------------------------------------------
 // operator() 
 //-----------------------------------------------------------------------------
-void castor::log::LoggerImplementation::operator() (
+void castor::log::SyslogLogger::operator() (
   const int priority,
   const std::string &msg,
   const int numParams,
@@ -488,7 +488,7 @@ void castor::log::LoggerImplementation::operator() (
 //-----------------------------------------------------------------------------
 // operator() 
 //-----------------------------------------------------------------------------
-void castor::log::LoggerImplementation::operator() (
+void castor::log::SyslogLogger::operator() (
   const int priority,
   const std::string &msg) throw() {
 
@@ -499,7 +499,7 @@ void castor::log::LoggerImplementation::operator() (
 //------------------------------------------------------------------------------
 // logMask
 //------------------------------------------------------------------------------
-int castor::log::LoggerImplementation::logMask() const throw() {
+int castor::log::SyslogLogger::logMask() const throw() {
   const char *const p = getconfent("LogMask", m_programName.c_str(), 0);
 
   // If the configuration file defines the log mask to use

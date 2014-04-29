@@ -27,7 +27,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/server/AuthListenerThreadPool.hpp"
-#include "castor/log/LoggerImplementation.hpp"
+#include "castor/log/SyslogLogger.hpp"
 #include "castor/metrics/MetricsCollector.hpp"
 #include "castor/metrics/ObjTypeCounter.hpp"
 #include "castor/rh/UserCounter.hpp"
@@ -62,7 +62,7 @@ const char *castor::rh::PORT_SEC_CONF = "SEC_PORT";
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
   try {
-    castor::log::LoggerImplementation log("rhd");
+    castor::log::SyslogLogger log("rhd");
     castor::rh::Server server(std::cout, std::cerr, log);
 
     // parse the command line

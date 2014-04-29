@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/log/LoggerImplementation.hpp"
+#include "castor/log/SyslogLogger.hpp"
 #include "castor/io/PollReactorImpl.hpp"
 #include "castor/legacymsg/RmcProxyTcpIpFactory.hpp"
 #include "castor/legacymsg/VdqmProxyTcpIpFactory.hpp"
@@ -71,7 +71,7 @@ static std::string getConfigParam(const std::string &category, const std::string
 //------------------------------------------------------------------------------
 int main(const int argc, char **const argv) {
   using namespace castor::tape::tapeserver::daemon;
-  castor::log::LoggerImplementation log("tapeserverd");
+  castor::log::SyslogLogger log("tapeserverd");
 
   // Get the names of the hosts on which the vdqm, vmgr and rmc daemons are running
   const std::string vdqmHostName = getVdqmHostName(log);

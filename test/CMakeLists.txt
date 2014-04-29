@@ -105,10 +105,10 @@ add_executable(castorUnitTests
   ../castor/legacymsg/VmgrProxy.cpp
   ../castor/legacymsg/VmgrProxyTcpIp.cpp
   ../castor/log/DummyLogger.cpp
-  ../castor/log/LoggerImplementationTest.cpp
   ../castor/log/ParamTest.cpp
   ../castor/log/LogContextTest.cpp
   ../castor/log/StringLoggerTest.cpp
+  ../castor/log/SyslogLoggerTest.cpp
   ../castor/server/DaemonTest.cpp
   ../castor/tape/tapeserver/client/ClientProxyTest.cpp
   ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp

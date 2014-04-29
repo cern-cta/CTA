@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/log/LoggerImplementation.hpp
+ *                      castor/log/SyslogLogger.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -45,7 +45,7 @@ namespace log {
 /**
  * Class implementaing the API of the CASTOR logging system.
  */
-class LoggerImplementation: public Logger {
+class SyslogLogger: public Logger {
 public:
 
   /**
@@ -54,13 +54,13 @@ public:
    * @param programName The name of the program to be prepended to every log
    * message.
    */
-  LoggerImplementation(const std::string &programName)
+  SyslogLogger(const std::string &programName)
     throw(castor::exception::Internal, castor::exception::InvalidArgument);
 
   /**
    * Destructor.
    */
-  ~LoggerImplementation() throw();
+  ~SyslogLogger() throw();
 
   /**
    * Prepares the logger object for a call to fork().
@@ -271,7 +271,7 @@ private:
   const size_t m_maxMsgLen;
 
   /**
-   * Mutex used to protect the critical section of the LoggerImplementation
+   * Mutex used to protect the critical section of the SyslogLogger
    * object.
    */
   pthread_mutex_t m_mutex;
@@ -328,7 +328,7 @@ private:
 
   /**
    * Initializes the mutex used to protect the critical section of the
-   * LoggerImplementation object.
+   * SyslogLogger object.
    */
   void initMutex() throw(castor::exception::Internal);
 
@@ -336,13 +336,13 @@ private:
    * Connects to syslog.
    *
    * Please note that this method must be called from within the critical
-   * section of the LoggerImplementation object.
+   * section of the SyslogLogger object.
    *
    * If the connection with syslog is already open then this method does
    * nothing.
    *
    * This method does not throw an exception if the connection cannot be made
-   * to syslog.  In this case the internal state of the LoggerImplementation
+   * to syslog.  In this case the internal state of the SyslogLogger
    * object reflects the fact that no connection was made.
    */
   void openLog() throw();
@@ -468,14 +468,14 @@ private:
    * Closes the connection to syslog.
    *
    * Please note that this method must be called from within the critical
-   * section of the LoggerImplementation object.
+   * section of the SyslogLogger object.
    *
    * If the connection to syslog is already closed then this method does
    * nothing.
    */
   void closeLog() throw();
 
-}; // class LoggerImplementation
+}; // class SyslogLogger
 
 } // namespace log
 } // namespace castor

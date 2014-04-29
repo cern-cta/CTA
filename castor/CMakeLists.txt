@@ -143,8 +143,8 @@ set (CLIENT_LIB_SRC_FILES
   io/StreamRequestTypeCnv.cpp
   io/StreamNsFileIdCnv.cpp
   log/Logger.cpp
-  log/LoggerImplementation.cpp
   log/StringLogger.cpp
+  log/SyslogLogger.cpp
   log/LogContext.cpp
   log/Message.cpp
   log/Param.cpp
