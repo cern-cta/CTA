@@ -24,9 +24,9 @@
 
 #pragma once
 
-#include <list>
 #include <stdint.h>
 
+#include <list>
 #include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
@@ -51,7 +51,7 @@ public:
   RecallTaskInjector(RecallMemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTaskInterface> & tapeReader,
         DiskThreadPoolInterface<DiskWriteTaskInterface> & diskWriter,client::ClientInterface& client,
-        castor::log::LogContext lc);
+        uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc);
 
   
   /**
@@ -59,12 +59,11 @@ public:
    * TapeReadSingleThread. When TapeReadSingleThread::popAndRequestMoreJobs detects 
    * it has not enough jobs to do to, it is class to push a request 
    * in order to (try) fill up the queue. 
-   * @param maxFiles  files count requested.
-   * @param maxBlocks total bytes count at least requested
+
    * @param lastCall true if we want the new request to be a last call. 
    * See Request::lastCall 
    */
-  virtual void requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall);
+  virtual void requestInjection(bool lastCall);
 
   /**
    * Send an end token in the request queue. There should be no subsequent
@@ -80,7 +79,7 @@ public:
      * @param byteSizeThreshold total bytes count  at least requested
      * @return true if there are jobs to be done, false otherwise 
      */
-  bool synchronousInjection(uint64_t maxFiles, uint64_t byteSizeThreshold);
+  bool synchronousInjection();
 
   /**
    * Wait for the inner thread to finish
@@ -108,14 +107,13 @@ private:
    */
   class Request {
   public:
-    Request(int mf, int mb, bool lc):
+    Request(uint64_t mf, uint64_t mb, bool lc):
     nbMaxFiles(mf), byteSizeThreshold(mb), lastCall(lc),end(false) {}
     
     Request():
-    nbMaxFiles(-1), byteSizeThreshold(-1), lastCall(true),end(true) {}
-        
-    const int nbMaxFiles;
-    const int byteSizeThreshold;
+    nbMaxFiles(0), byteSizeThreshold(0), lastCall(true),end(true) {}
+    const uint64_t nbMaxFiles;
+    const uint64_t byteSizeThreshold;
     
     /** 
      * True if it is the last call for the set of requests :it means
@@ -149,6 +147,13 @@ private:
   
   castor::tape::threading::Mutex m_producerProtection;
   castor::tape::threading::BlockingQueue<Request> m_queue;
+  
+
+  //maximal number of files requested. at once
+  const uint64_t m_maxFiles;
+  
+  //maximal number of cumulated byte requested. at once
+  const uint64_t m_byteSizeThreshold;
 };
 
 } //end namespace daemon

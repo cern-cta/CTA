@@ -78,10 +78,10 @@ namespace daemon {
     log::LogContext::ScopedParam sp0(m_lc, log::Param("m_maxBytesReq", m_maxBytesReq));
 
     if(0==vrp.remaining){
-      m_injector->requestInjection(m_maxFilesReq, m_maxBytesReq,true);
+      m_injector->requestInjection(true);
       m_lc.log(LOG_DEBUG, "Requested injection from MigrationTaskInjector (with last call)");
     }else if(vrp.remaining + 1 ==  m_maxFilesReq/2){
-      m_injector->requestInjection(m_maxFilesReq, m_maxBytesReq,false);
+      m_injector->requestInjection(false);
       m_lc.log(LOG_DEBUG, "Requested injection from MigrationTaskInjector (without last call)");
     }
     return vrp.value;

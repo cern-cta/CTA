@@ -54,11 +54,11 @@ private:
     // (the remaining value is after pop)
     if(vrp.remaining + 1 == m_maxFilesRequest/2) {
       // This is not a last call
-      m_taskInjector->requestInjection(m_maxFilesRequest, 1000, false);
+      m_taskInjector->requestInjection(false);
     } else if (0 == vrp.remaining) {
       // This is a last call: if the task injector comes up empty on this
       // one, he'll call it the end.
-      m_taskInjector->requestInjection(m_maxFilesRequest, 1000, true);
+      m_taskInjector->requestInjection(true);
     }
     return vrp.value;
   }

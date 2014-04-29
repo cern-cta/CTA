@@ -145,13 +145,14 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
         m_castorConf.tapebridgeBulkRequestRecallMaxBytes,
         rrp,
         lc);
-    RecallTaskInjector rti(mm, trst, dwtp, m_clientProxy, lc);
+    RecallTaskInjector rti(mm, trst, dwtp, m_clientProxy,
+            m_castorConf.tapebridgeBulkRequestRecallMaxFiles,
+            m_castorConf.tapebridgeBulkRequestRecallMaxBytes,lc);
     trst.setTaskInjector(&rti);
     
     // We are now ready to put everything in motion. First step is to check
     // we get any concrete job to be done from the client (via the task injector)
-    if (rti.synchronousInjection(m_castorConf.tapebridgeBulkRequestRecallMaxFiles,
-        m_castorConf.tapebridgeBulkRequestRecallMaxBytes)) {
+    if (rti.synchronousInjection()) {
       // We got something to recall. Time to start the machinery
       trst.startThreads();
       dwtp.startThreads();
@@ -211,9 +212,10 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
         m_castorConf.tapebridgeBulkRequestMigrationMaxBytes,
         lc);
-    MigrationTaskInjector mti(mm, drtp, twst, m_clientProxy, lc);
-    if (mti.synchronousInjection(m_castorConf.tapebridgeBulkRequestMigrationMaxBytes,
-        m_castorConf.tapebridgeBulkRequestMigrationMaxFiles)) {
+    MigrationTaskInjector mti(mm, drtp, twst, m_clientProxy, 
+            m_castorConf.tapebridgeBulkRequestMigrationMaxBytes,
+            m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,lc);
+    if (mti.synchronousInjection()) {
       // We have something to do: start the session by starting all the 
       // threads.
       mm.startThreads();
