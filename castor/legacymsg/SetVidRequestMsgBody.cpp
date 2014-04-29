@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/Constants.hpp
+ *         castor/legacymsg/SetVidRequestMsgBody.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,36 +17,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author Steven.Murray@cern.ch
+ *
+ * 
+ * @author dkruse@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "castor/legacymsg/SetVidRequestMsgBody.hpp"
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+#include <string.h>
 
-/**
- * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the VDQM server.
- */
-const unsigned short TAPE_SERVER_VDQM_LISTENING_PORT = 5070;
-
-/**
- * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the tpconfig admin command.
- */
-const unsigned short TAPE_SERVER_ADMIN_LISTENING_PORT = 5011;
-
-/**
- * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the mount session.
- */
-const unsigned short TAPE_SERVER_MOUNTSESSION_LISTENING_PORT = 54321;
-
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
-} // namespace castor
-
+castor::legacymsg::SetVidRequestMsgBody::SetVidRequestMsgBody() throw() {
+  memset(vid, '\0', sizeof(vid));
+  memset(drive, '\0', sizeof(drive));
+}

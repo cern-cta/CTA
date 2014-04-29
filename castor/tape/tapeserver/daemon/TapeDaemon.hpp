@@ -32,6 +32,7 @@
 #include "castor/legacymsg/VmgrProxyFactory.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
+#include "castor/tape/tapeserver/daemon/TapeserverProxy.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
 #include "castor/tape/utils/utils.hpp"
 
@@ -83,6 +84,7 @@ public:
     legacymsg::VdqmProxyFactory &vdqmFactory,
     legacymsg::VmgrProxyFactory &vmgrFactory,
     legacymsg::RmcProxyFactory &rmcFactory,
+    TapeserverProxy &tapeserverProxy,
     io::PollReactor &reactor) throw(castor::exception::Exception);
 
   /**
@@ -181,6 +183,12 @@ protected:
    * registers it with the reactor.
    */
   void createAndRegisterAdminAcceptHandler() throw(castor::exception::Exception);
+  
+  /**
+   * Creates the handler to accept connections from the mount session(s) and
+   * registers it with the reactor.
+   */
+  void createAndRegisterMountSessionAcceptHandler() throw(castor::exception::Exception);
 
   /**
    * The main event loop of the daemon.
@@ -298,6 +306,11 @@ protected:
    * Factory to create proxy objects representing the rmcd daemon.
    */
   legacymsg::RmcProxyFactory &m_rmcFactory;
+  
+  /**
+   * The proxy object representing the tapeserver daemon.
+   */
+  TapeserverProxy &m_tapeserverProxy;
 
   /**
    * The reactor responsible for dispatching the file-descriptor event-handlers

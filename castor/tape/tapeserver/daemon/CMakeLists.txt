@@ -1,11 +1,14 @@
 add_executable(tapeserverd
   AdminAcceptHandler.cpp
+  MountSessionAcceptHandler.cpp
   DebugMountSessionForVdqmProtocol.cpp
   DriveCatalogue.cpp
   TapeDaemon.cpp
   TapeDaemonMain.cpp
   VdqmAcceptHandler.cpp
-  VdqmConnectionHandler.cpp)
+  VdqmConnectionHandler.cpp
+  TapeserverProxy.cpp
+  TapeserverProxyImpl.cpp)
 
 target_link_libraries(tapeserverd
   Exception

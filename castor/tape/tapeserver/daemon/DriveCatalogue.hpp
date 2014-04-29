@@ -332,6 +332,14 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   void mountSessionFailed(const std::string &unitName) throw(castor::exception::Exception);
+  
+  /**
+   * Updates the vid and assignment time of the specified drive
+   * 
+   * @param vid Volume ID of the tape mounted
+   * @param unitName Name of the drive
+   */
+  void updateVidAssignment(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception);
 
 private:
 
@@ -344,9 +352,19 @@ private:
      * /etc/castor/TPCONFIG.
      */
     std::string dgn;
-
+    
     /**
-     * The device file of the tape drive, for eexample: /dev/nst0
+     * The Volume ID of the tape mounted in the drive. Empty string if drive is empty.
+     */
+    std::string vid;
+    
+    /**
+     * The point in time when the drive has been assigned a tape
+     */
+    time_t assignment_time;
+    
+    /**
+     * The device file of the tape drive, for example: /dev/nst0
      */
     std::string devFilename;
 

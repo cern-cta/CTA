@@ -139,4 +139,50 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeStatRequestMsgBody) {
   }
 }
 
+TEST_F(castor_legacymsg_TapeMarshalTest, marshalSetVidRequestMsgBody) {
+  using namespace castor::legacymsg;
+  char buf[80]; // Expect message (header + body) to occupy exactly 80 bytes
+  SetVidRequestMsgBody srcMsgBody;
+
+  // Marshal entire message (header + body)
+  {
+    castor::utils::copyString(srcMsgBody.vid, "XXXXXX");
+    castor::utils::copyString(srcMsgBody.drive, "HELLO");
+
+    size_t bufLen = sizeof(buf);
+    size_t totalLen = 0; // Total length of message (header + body)
+
+    ASSERT_NO_THROW(totalLen = marshal(buf, bufLen, srcMsgBody));
+    ASSERT_EQ((uint32_t)25, totalLen);
+  }
+
+  // Unmarshall message header
+  {
+    MessageHeader dstHeader;
+    const char *bufPtr = buf;
+    size_t bufLen = 12; // Length of the message header
+    ASSERT_NO_THROW(unmarshal(bufPtr, bufLen, dstHeader));
+    ASSERT_EQ(buf + 12, bufPtr);
+    ASSERT_EQ((size_t)0, bufLen);
+
+    ASSERT_EQ((uint32_t)TPMAGIC, dstHeader.magic);
+    ASSERT_EQ((uint32_t)SETVID, dstHeader.reqType);
+    ASSERT_EQ((uint32_t)25, dstHeader.lenOrStatus);
+  }
+
+  // Unmarshall message body
+  {
+    SetVidRequestMsgBody dstMsgBody;
+
+    const char *bufPtr = buf + 12; // Point at beginning of message body
+    size_t bufLen = 13; // Length of the message body
+    ASSERT_NO_THROW(unmarshal(bufPtr, bufLen, dstMsgBody));
+    ASSERT_EQ(buf + 25, bufPtr);
+    ASSERT_EQ((size_t)0, bufLen);
+
+    ASSERT_EQ(std::string("XXXXXX"), dstMsgBody.drive);
+    ASSERT_EQ(std::string("HELLO"), dstMsgBody.drive);
+  }
+}
+
 } // namespace unitTests

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/Constants.hpp
+ *         castor/legacymsg/SetVidRequestMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,36 +17,42 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author Steven.Murray@cern.ch
+ *
+ * 
+ * @author dkruse@cern.ch
  *****************************************************************************/
 
 #pragma once
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+#include "h/Castor_limits.h"
+
+#include <stdint.h>
+
+namespace castor {
+namespace legacymsg {
 
 /**
- * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the VDQM server.
+ * An update-VID message, used to update the drive catalogue with the contents of a drive.
  */
-const unsigned short TAPE_SERVER_VDQM_LISTENING_PORT = 5070;
+struct SetVidRequestMsgBody {
+  
+  /**
+   * The VID of the tape inside the drive ("" if empty)
+   */
+  char vid[CA_MAXVIDLEN+1];
+  
+  /**
+   * The drive name (a.k.a. unit name)
+   */
+  char drive[CA_MAXUNMLEN+1];
 
-/**
- * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the tpconfig admin command.
- */
-const unsigned short TAPE_SERVER_ADMIN_LISTENING_PORT = 5011;
+  /**
+   * Constructor: zeroes the two strings.
+   */
+  SetVidRequestMsgBody() throw();
 
-/**
- * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the mount session.
- */
-const unsigned short TAPE_SERVER_MOUNTSESSION_LISTENING_PORT = 54321;
+}; // struct SetVidRequestMsgBody
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
+} // namespace legacymsg
 } // namespace castor
 

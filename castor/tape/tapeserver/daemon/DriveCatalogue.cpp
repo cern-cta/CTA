@@ -27,6 +27,7 @@
 #include "castor/utils/utils.hpp"
 
 #include <string.h>
+#include <time.h>
 
 //-----------------------------------------------------------------------------
 // drvState2Str
@@ -359,12 +360,30 @@ const std::string &
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to get devide type of tape drive " << unitName <<
+    ex.getMessage() << "Failed to get device type of tape drive " << unitName <<
       ": Unknown drive";
     throw ex;
   }
 
   return itor->second.devType;
+}
+
+//-----------------------------------------------------------------------------
+// updateVidAssignment
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogue::updateVidAssignment(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception) {
+  std::ostringstream task;
+  task << "update the VID of tape drive " << unitName;
+
+  DriveMap::iterator itor = m_drives.find(unitName);
+  if(m_drives.end() == itor) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to " << task.str() << ": Unknown drive";
+    throw ex;
+  }
+  
+  itor->second.vid = vid;
+  itor->second.assignment_time = time(0); // set to "now"
 }
 
 //-----------------------------------------------------------------------------

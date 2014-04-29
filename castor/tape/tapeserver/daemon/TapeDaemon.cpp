@@ -27,6 +27,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
+#include "castor/tape/tapeserver/daemon/MountSessionAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/DebugMountSessionForVdqmProtocol.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
@@ -56,6 +57,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
   legacymsg::VdqmProxyFactory &vdqmFactory,
   legacymsg::VmgrProxyFactory &vmgrFactory,
   legacymsg::RmcProxyFactory &rmcFactory,
+  TapeserverProxy &tapeserverProxy,
   io::PollReactor &reactor) throw(castor::exception::Exception):
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),
@@ -64,6 +66,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
   m_vdqmFactory(vdqmFactory),
   m_vmgrFactory(vmgrFactory),
   m_rmcFactory(rmcFactory),
+  m_tapeserverProxy(tapeserverProxy),
   m_reactor(reactor),
   m_programName("tapeserverd"),
   m_hostName(getHostName()) {
@@ -277,6 +280,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
   throw(castor::exception::Exception) {
   createAndRegisterVdqmAcceptHandler();
   createAndRegisterAdminAcceptHandler();
+  createAndRegisterMountSessionAcceptHandler();
 }
 
 //------------------------------------------------------------------------------
@@ -347,6 +351,41 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
   }
   m_reactor.registerHandler(adminAcceptHandler.get());
   adminAcceptHandler.release();
+}
+
+//------------------------------------------------------------------------------
+// createAndRegisterVdqmAcceptHandler
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterMountSessionAcceptHandler() throw(castor::exception::Exception) {
+  castor::utils::SmartFd mountSessionListenSock;
+  try {
+    mountSessionListenSock.reset(io::createListenerSock(TAPE_SERVER_MOUNTSESSION_LISTENING_PORT));
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex(ne.code());
+    ex.getMessage() << "Failed to create socket to listen for mount session connections"
+      ": " << ne.getMessage().str();
+    throw ex;
+  }
+  {
+    log::Param params[] = {
+      log::Param("listeningPort", TAPE_SERVER_MOUNTSESSION_LISTENING_PORT)};
+    m_log(LOG_INFO, "Listening for connections from the mount sessions", params);
+  }
+
+  std::auto_ptr<MountSessionAcceptHandler> mountSessionAcceptHandler;
+  try {
+    mountSessionAcceptHandler.reset(new MountSessionAcceptHandler(mountSessionListenSock.get(), m_reactor,
+      m_log, m_driveCatalogue, m_hostName));
+    mountSessionListenSock.release();
+  } catch(std::bad_alloc &ba) {
+    castor::exception::BadAlloc ex;
+    ex.getMessage() <<
+      "Failed to create the event handler for accepting admin connections"
+      ": " << ba.what();
+    throw ex;
+  }
+  m_reactor.registerHandler(mountSessionAcceptHandler.get());
+  mountSessionAcceptHandler.release();
 }
 
 //------------------------------------------------------------------------------

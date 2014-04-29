@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/Constants.hpp
+ *         castor/tape/tapeserver/daemon/DummyTapeserver.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,10 +17,15 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author Steven.Murray@cern.ch
+ * @author dkruse@cern.ch
  *****************************************************************************/
 
 #pragma once
+
+#include "castor/log/Logger.hpp"
+#include "castor/legacymsg/MessageHeader.hpp"
+#include "castor/legacymsg/SetVidRequestMsgBody.hpp"
+#include "castor/tape/tapeserver/daemon/TapeserverProxy.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -28,22 +33,33 @@ namespace tapeserver {
 namespace daemon     {
 
 /**
- * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the VDQM server.
+ * A concrete implementation of the interface to the vdqm daemon.
  */
-const unsigned short TAPE_SERVER_VDQM_LISTENING_PORT = 5070;
+class DummyTapeserver: public TapeserverProxy {
+public:
 
-/**
- * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the tpconfig admin command.
- */
-const unsigned short TAPE_SERVER_ADMIN_LISTENING_PORT = 5011;
+  /**
+   * Constructor.
+   */
+  DummyTapeserver() throw();
 
-/**
- * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the mount session.
- */
-const unsigned short TAPE_SERVER_MOUNTSESSION_LISTENING_PORT = 54321;
+  /**
+   * Destructor.
+   *
+   * Closes the listening socket created in the constructor to listen for
+   * connections from the vdqmd daemon.
+   */
+  ~DummyTapeserver() throw();
+
+  /**
+   * Sets the VID of the tape mounted in the specified tape drive.
+   *
+   * @param vid The Volume ID of the tape in the tape drive
+   * @param unitName The unit name of the tape drive.
+   */
+  void setVidInDriveCatalogue(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception);
+
+}; // class TapeserverProxyImpl
 
 } // namespace daemon
 } // namespace tapeserver

@@ -153,6 +153,70 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
 }
 
 //-----------------------------------------------------------------------------
+// marshal
+//-----------------------------------------------------------------------------
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const SetVidRequestMsgBody &src) throw(castor::exception::Exception) {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to marshal TapeConfigRequestMsgBody"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  // Calculate the length of the message body
+  const uint32_t len =
+    strlen(src.vid) + 1 + // vid
+    strlen(src.drive) + 1; // drive
+
+  // Calculate the total length of the message (header + body)
+  // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
+  const size_t totalLen = 3 * sizeof(uint32_t) + len;
+
+  // Check that the message buffer is big enough
+  if(totalLen > dstLen) {
+    castor::exception::Exception ex(EMSGSIZE);
+    ex.getMessage() << "Failed to marshal TapeConfigRequestMsgBody"
+      ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
+    throw ex;
+  }
+
+  // Marshall message header
+  char *p = dst;
+  io::marshalUint32(TPMAGIC, p); // Magic number
+  io::marshalUint32(SETVID, p); // Request type  
+  char *msg_len_field_pointer = p;  
+  io::marshalUint32(0, p); // Temporary length
+
+  // Marshall message body
+  io::marshalString(src.vid, p);
+  io::marshalString(src.drive, p);
+
+  // Calculate the number of bytes actually marshalled
+  const size_t nbBytesMarshalled = p - dst;
+  io::marshalUint32(nbBytesMarshalled, msg_len_field_pointer); // Actual length
+
+  // Check that the number of bytes marshalled was what was expected
+  if(totalLen != nbBytesMarshalled) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to marshal SetVidRequestMsgBody"
+      ": Mismatch between expected total length and actual"
+      ": expected=" << totalLen << "actual=" << nbBytesMarshalled;
+    throw ex;
+  }
+
+  return totalLen;
+}
+
+//-----------------------------------------------------------------------------
+// unmarshal
+//-----------------------------------------------------------------------------
+void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, SetVidRequestMsgBody &dst) throw(castor::exception::Exception) {
+  io::unmarshalString(src, srcLen, dst.vid);
+  io::unmarshalString(src, srcLen, dst.drive);  
+}
+
+//-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeConfigRequestMsgBody &dst) throw(castor::exception::Exception) {
