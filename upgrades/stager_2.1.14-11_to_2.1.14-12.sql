@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 stager_2.1.14-5_to_2.1.14-11.sql
+ *                 stager_2.1.14-11_to_2.1.14-12.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * This script upgrades a CASTOR v2.1.14-5 STAGER database to v2.1.14-11
+ * This script upgrades a CASTOR v2.1.14-11 STAGER database to v2.1.14-12
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -44,7 +44,7 @@ DECLARE
 BEGIN
   SELECT release INTO unused FROM CastorVersion
    WHERE schemaName = 'STAGER'
-     AND release LIKE '2_1_14_11-1%';
+     AND release LIKE '2_1_14_11%';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we cannot apply this script
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the STAGER before this one.');
