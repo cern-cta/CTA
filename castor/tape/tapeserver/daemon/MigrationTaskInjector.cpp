@@ -132,7 +132,7 @@ namespace daemon {
 //------------------------------------------------------------------------------  
   void MigrationTaskInjector::WorkerThread::run(){
     m_parent.m_lc.pushOrReplace(Param("thread", "MigrationTaskInjector"));
-    m_parent.m_lc.log(LOG_DEBUG, "Starting MigrationTaskInjector thread");
+    m_parent.m_lc.log(LOG_INFO, "Starting MigrationTaskInjector thread");
     try{
       while(1){
         if(m_parent.m_errorFlag){
@@ -171,7 +171,7 @@ namespace daemon {
       }
     } // end of while(1)
     //-------------
-    m_parent.m_lc.log(LOG_DEBUG, "Finishing MigrationTaskInjector thread");
+    m_parent.m_lc.log(LOG_INFO, "Finishing MigrationTaskInjector thread");
     /* We want to finish at the first lastCall we encounter.
      * But even after sending finish() to m_diskWriter and to m_tapeReader,
      * m_diskWriter might still want some more task (the threshold could be crossed),

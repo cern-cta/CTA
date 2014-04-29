@@ -55,7 +55,7 @@ public:
       m_freeBlocks.push(new MemBlock(i, blockSize));
       
       m_lc.pushOrReplace(log::Param("blockId",i));
-      m_lc.log(LOG_INFO,"RecallMemoryManager created a block");
+      m_lc.log(LOG_DEBUG,"RecallMemoryManager created a block");
     }
     m_lc.log(LOG_INFO,"RecallMemoryManager: all blocks have been created");
   }

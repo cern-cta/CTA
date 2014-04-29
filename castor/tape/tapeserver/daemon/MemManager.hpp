@@ -59,7 +59,7 @@ public:
       m_totalMemoryAllocated+=blockSize;
       
       m_lc.pushOrReplace(log::Param("blockId",i));
-      m_lc.log(LOG_INFO,"MigrationMemoryManager Created a block");
+      m_lc.log(LOG_DEBUG,"MigrationMemoryManager Created a block");
     }
     m_lc.log(LOG_INFO,"MigrationMemoryManager: all blocks have been created");
   }
