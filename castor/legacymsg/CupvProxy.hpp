@@ -43,23 +43,21 @@ public:
   /**
    * Returns true if the specified authorization is granted else false.
    *
-   * @param uid The unix user-ID of the user for whom the authorization is
-   * requested.
-   * @param gid The unix group-ID of the user for whom the authorization is
-   * requested.
-   * @param sourceHost The source host.
-   * @param tagertHost The target host.
-   * @param privilege The privilege which must be one of the following:
+   * @param privUid The user ID of the privilege.
+   * @param privGid The group ID of the privilege.
+   * @param srcHost The source host.
+   * @param tgtHost The target host.
+   * @param priv The privilege which must be one of the following:
    * P_ADMIN, P_GRP_ADMIN, P_OPERATOR, P_TAPE_OPERATOR, P_TAPE_SYSTEM or
    * P_UPV_ADMIN.
    * @return True if the specified authorization is granted else false.
    */
   virtual bool isGranted(
-    const uid_t uid,
-    const gid_t gid,
-    const std::string &sourceHost,
-    const std::string &targetHost,
-    const int privilege) throw(castor::exception::Exception) = 0;
+    const uid_t privUid,
+    const gid_t privGid,
+    const std::string &srcHost,
+    const std::string &tgtHost,
+    const int priv) throw(castor::exception::Exception) = 0;
 
 }; // class CupvProxy
 

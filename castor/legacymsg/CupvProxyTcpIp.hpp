@@ -23,7 +23,9 @@
 #pragma once
 
 #include "castor/exception/Exception.hpp"
+#include "castor/legacymsg/CupvCheckMsgBody.hpp"
 #include "castor/legacymsg/CupvProxy.hpp"
+#include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/log/Logger.hpp"
 
 #include <string>
@@ -58,22 +60,20 @@ public:
   /**
    * Returns true if the specified authorization is granted else false.
    *
-   * @param uid The unix user-ID of the user for whom the authorization is
-   * requested.
-   * @param gid The unix group-ID of the user for whom the authorization is
-   * requested.
-   * @param sourceHost The source host.
-   * @param tagertHost The target host.
-   * @param privilege The privilege which must be one of the following:
+   * @param privUid The user ID of the privilege.
+   * @param privGid The group ID of the privilege.
+   * @param srcHost The source host.
+   * @param tgtHost The target host.
+   * @param priv The privilege which must be one of the following:
    * P_ADMIN, P_GRP_ADMIN, P_OPERATOR, P_TAPE_OPERATOR, P_TAPE_SYSTEM or
    * P_UPV_ADMIN.
    * @return True if the specified authorization is granted else false.
    */
   bool isGranted(
-    const uid_t uid,
-    const gid_t gid,
-    const std::string &sourceHost,
-    const std::string &targetHost,
+    const uid_t privUid,
+    const gid_t privGid,
+    const std::string &srcHost,
+    const std::string &tgtHost,
     const int privilege) throw(castor::exception::Exception);
 
 private:
@@ -98,6 +98,29 @@ private:
    * write operations.
    */
   const int m_netTimeout;
+
+  /**
+   * Connects to the cupvd daemon.
+   *
+   * @return The socket-descriptor of the connection with the vdqmd daemon.
+   */
+  int connectToCupv() const throw(castor::exception::Exception);
+
+  /**
+   * Writes a CUPV_CHECK message with the specifed contents to the specified
+   * connection.
+   *
+   * @param body The message body.
+   */
+  void writeCupvCheckMsg(const int fd, const CupvCheckMsgBody &body) throw(castor::exception::Exception);
+
+  /**
+   * Reads the header of an CUPV_MAGIC message from the specified connection.
+   *
+   * @param fd The file descriptor of the connection.
+   * @return The message header.
+   */
+  MessageHeader readCupvMsgHeader(const int fd) throw(castor::exception::Exception);
 
 }; // class CupvProxyTcpIp
 

@@ -42,10 +42,10 @@ castor::legacymsg::CupvProxyDummy::~CupvProxyDummy() throw() {
 // isGranted
 //-----------------------------------------------------------------------------
 bool castor::legacymsg::CupvProxyDummy::isGranted(
-  const uid_t uid,
-  const gid_t gid,
-  const std::string &sourceHost,
-  const std::string &targetHost,
-  const int privilege) throw(castor::exception::Exception) {
+  const uid_t privUid,
+  const gid_t privGid,
+  const std::string &srcHost,
+  const std::string &tgtHost,
+  const int priv) throw(castor::exception::Exception) {
   return m_isGrantedReturnValue;
 }
