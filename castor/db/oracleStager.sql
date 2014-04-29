@@ -1325,7 +1325,7 @@ BEGIN
        AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
        AND DiskServer.hwOnline = 1
        AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
-     ORDER BY FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
+     ORDER BY FileSystem.nbReadStreams + FileSystem.nbWriteStreams ASC,
               DBMS_Random.value)
    WHERE rownum < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -3465,7 +3465,7 @@ BEGIN
       -- List available diskcopies for job scheduling
       SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) INDEX(Subrequest PK_Subrequest_Id)*/ 
              LISTAGG(DiskServer.name || ':' || FileSystem.mountPoint, '|')
-             WITHIN GROUP (ORDER BY FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams))
+             WITHIN GROUP (ORDER BY FileSystem.nbReadStreams + FileSystem.nbWriteStreams)
         INTO varDcList
         FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
        WHERE DiskCopy.castorfile = inCfId
