@@ -77,6 +77,22 @@ template<int n> size_t marshal(char (&dst)[n],
  * @param dst The destination message body structure.
  */
 void unmarshal(const char * &src, size_t &srcLen,
+  VmgrTapeInfoRqstMsgBody &dst) throw(castor::exception::Exception);
+
+/**
+ * Unmarshals a message body with the specified destination structure type
+ * from the specified source buffer.
+ *
+ * @param src In/out parameter, before invocation points to the source
+ * buffer where the message body should be unmarshalled from and on return
+ * points to the byte in the source buffer immediately after the
+ * unmarshalled message body.
+ * @param srcLen In/our parameter, before invocation is the length of the
+ * source buffer from where the message body should be unmarshalled and on
+ * return is the number of bytes remaining in the source buffer.
+ * @param dst The destination message body structure.
+ */
+void unmarshal(const char * &src, size_t &srcLen,
   VmgrTapeInfoMsgBody &dst) throw(castor::exception::Exception);
 
 } // namespace legacymsg

@@ -87,7 +87,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Cu
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to marshal CupvCheckMsgBody"
       ": Mismatch between expected total length and actual"
-      ": expected=" << totalLen << "actual=" << nbBytesMarshalled;
+      ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
     throw ex;
   }
 

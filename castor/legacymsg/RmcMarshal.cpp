@@ -88,7 +88,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Rm
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to marshal RmcAcsMntMsgBody"
       ": Mismatch between expected total length and actual"
-      ": expected=" << totalLen << "actual=" << nbBytesMarshalled;
+      ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
     throw ex;
   }
 
@@ -162,7 +162,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Rm
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to marshal RmcMountMsgBody"
       ": Mismatch between expected total length and actual"
-      ": expected=" << totalLen << "actual=" << nbBytesMarshalled;
+      ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
     throw ex;
   }
 
@@ -235,7 +235,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Rm
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to marshal RmcUnmountMsgBody"
       ": Mismatch between expected total length and actual"
-      ": expected=" << totalLen << "actual=" << nbBytesMarshalled;
+      ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
     throw ex;
   }
 

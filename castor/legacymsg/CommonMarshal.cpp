@@ -36,13 +36,14 @@
 //-----------------------------------------------------------------------------
 // marshal
 //-----------------------------------------------------------------------------
-size_t castor::legacymsg::marshal(char *const dst,
-  const size_t dstLen, const MessageHeader &src)
-  throw(castor::exception::Exception) {
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
+  const MessageHeader &src) throw(castor::exception::Exception) {
 
   if(dst == NULL) {
-    TAPE_THROW_CODE(EINVAL,
-      ": Pointer to destination buffer is NULL");
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to marshal MessageHeader"
+      << ": Pointer to destination buffer is NULL";
+    throw ex;
   }
 
   // Calculate the length of the message header
@@ -50,10 +51,10 @@ size_t castor::legacymsg::marshal(char *const dst,
 
   // Check that the message header buffer is big enough
   if(totalLen > dstLen) {
-    TAPE_THROW_CODE(EMSGSIZE,
-      ": Buffer too small for message header"
-      ": Required size: " << totalLen <<
-      ": Actual size: " << dstLen);
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to marshal MessageHeader"
+      ": Buffer too small : required=" << totalLen << " actual=" << dstLen;
+    throw ex;
   }
 
   // Marshal the message header
@@ -67,11 +68,11 @@ size_t castor::legacymsg::marshal(char *const dst,
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Mismatch between the expected total length of the "
-      "message header and the actual number of bytes marshalled"
-      ": Expected: " << totalLen <<
-      ": Marshalled: " << nbBytesMarshalled);
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to marshal MessageHeader"
+      ": Mismatch between expected total length and actual"
+      ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
+    throw ex;
   }
 
   return totalLen;
@@ -81,8 +82,8 @@ size_t castor::legacymsg::marshal(char *const dst,
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
-void castor::legacymsg::unmarshal(const char * &src,
-  size_t &srcLen, MessageHeader &dst) throw(castor::exception::Exception) {
+void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen,
+  MessageHeader &dst) throw(castor::exception::Exception) {
 
   io::unmarshalUint32(src, srcLen, dst.magic);
   io::unmarshalUint32(src, srcLen, dst.reqType);

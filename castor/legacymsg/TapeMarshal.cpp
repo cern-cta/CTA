@@ -83,7 +83,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to marshal TapeStatRequestMsgBody"
       ": Mismatch between expected total length and actual"
-      ": expected=" << totalLen << "actual=" << nbBytesMarshalled;
+      ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
     throw ex;
   }
 
@@ -144,7 +144,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to marshal TapeConfigRequestMsgBody"
       ": Mismatch between expected total length and actual"
-      ": expected=" << totalLen << "actual=" << nbBytesMarshalled;
+      ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
     throw ex;
   }
 
@@ -200,7 +200,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Se
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to marshal SetVidRequestMsgBody"
       ": Mismatch between expected total length and actual"
-      ": expected=" << totalLen << "actual=" << nbBytesMarshalled;
+      ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
     throw ex;
   }
 

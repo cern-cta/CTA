@@ -38,13 +38,14 @@
 //-----------------------------------------------------------------------------
 // marshal
 //-----------------------------------------------------------------------------
-size_t castor::legacymsg::marshal(char *const dst,
-  const size_t dstLen, const VmgrTapeInfoRqstMsgBody &src)
-  throw(castor::exception::Exception) {
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
+  const VmgrTapeInfoRqstMsgBody &src) throw(castor::exception::Exception) {
 
   if(dst == NULL) {
-    TAPE_THROW_CODE(EINVAL,
-      ": Pointer to destination buffer is NULL");
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to marshal VmgrTapeInfoRqstMsgBody"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
   }
 
   // Calculate the length of the message body
@@ -61,10 +62,10 @@ size_t castor::legacymsg::marshal(char *const dst,
 
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
-    TAPE_THROW_CODE(EMSGSIZE,
-      ": Buffer too small for VMGR tape information request message"
-      ": Required size: " << totalLen <<
-      ": Actual size: " << dstLen);
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to marshal VmgrTapeInfoRqstMsgBody"
+      ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
+    throw ex;
   }
 
   // Marshall the whole message (header + body)
@@ -85,17 +86,27 @@ size_t castor::legacymsg::marshal(char *const dst,
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Mismatch between the expected total length of the "
-      "VMGR tape inforomation request message and the actual number of bytes "
-      "marshalled"
-      ": Expected: " << totalLen <<
-      ": Marshalled: " << nbBytesMarshalled);
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to marshal VmgrTapeInfoRqstMsgBody"
+      ": Mismatch between expected total length and actual"
+      ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
+    throw ex;
   }
 
   return totalLen;
 }
 
+//-----------------------------------------------------------------------------
+// unmarshal
+//-----------------------------------------------------------------------------
+void castor::legacymsg::unmarshal(const char * &src,
+  size_t &srcLen, VmgrTapeInfoRqstMsgBody &dst)
+  throw(castor::exception::Exception) {
+  io::unmarshalUint32(src, srcLen, dst.uid);
+  io::unmarshalUint32(src, srcLen, dst.gid);
+  io::unmarshalString(src, srcLen, dst.vid);
+  io::unmarshalUint16(src, srcLen, dst.side);
+}
 
 //-----------------------------------------------------------------------------
 // unmarshal

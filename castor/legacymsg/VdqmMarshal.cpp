@@ -110,7 +110,7 @@ size_t castor::legacymsg::marshal(char *const dst,
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to marshal VdqmDrvRqstMsgBody"
       ": Mismatch between expected total length and actual"
-      ": expected=" << totalLen << "actual=" << nbBytesMarshalled;
+      ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
     throw ex;
   }
 
