@@ -93,42 +93,11 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillPollFd(
 size_t castor::tape::tapeserver::daemon::AdminAcceptHandler::marshalTapeRcReplyMsg(char *const dst,
   const size_t dstLen, const int rc)
   throw(castor::exception::Exception) {
-
-  if(dst == NULL) {
-    TAPE_THROW_CODE(EINVAL,
-      ": Pointer to destination buffer is NULL");
-  }
-
-  // Calculate the length of the message header
-  const uint32_t totalLen = (2 * sizeof(uint32_t)) + sizeof(int32_t);  // magic + reqType + returnCode
-
-  // Check that the message header buffer is big enough
-  if(totalLen > dstLen) {
-    TAPE_THROW_CODE(EMSGSIZE,
-      ": Buffer too small for reply message"
-      ": Required size: " << totalLen <<
-      ": Actual size: " << dstLen);
-  }
-
-  // Marshal the message header
-  char *p = dst;
-  io::marshalUint32(TPMAGIC, p);
-  io::marshalUint32(TAPERC, p);
-  io::marshalInt32(rc, p);
-
-  // Calculate the number of bytes actually marshalled
-  const size_t nbBytesMarshalled = p - dst;
-
-  // Check that the number of bytes marshalled was what was expected
-  if(totalLen != nbBytesMarshalled) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Mismatch between the expected total length of the "
-      "reply message and the actual number of bytes marshalled"
-      ": Expected: " << totalLen <<
-      ": Marshalled: " << nbBytesMarshalled);
-  }
-
-  return totalLen;
+  legacymsg::MessageHeader src;
+  src.magic = TPMAGIC;
+  src.reqType = TAPERC;
+  src.lenOrStatus = rc;  
+  return legacymsg::marshal(dst, dstLen, src);
 }
 
 //------------------------------------------------------------------------------
@@ -223,20 +192,20 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeStatReplyMsg
     body.drives[i].jid=m_driveCatalogue.getSessionPid(*itor);
     strncpy(body.drives[i].dgn, m_driveCatalogue.getDgn(*itor).c_str(), CA_MAXDGNLEN);
     body.drives[i].dgn[CA_MAXDGNLEN]='\0'; // this shouldn't be needed since we zero the structure before using it. but you never know...
-    m_driveCatalogue.getState(*itor) == DriveCatalogue::DRIVE_STATE_UP ? body.drives[i].up=1 : body.drives[i].up=0;
+    (m_driveCatalogue.getState(*itor) == DriveCatalogue::DRIVE_STATE_UP) ? body.drives[i].up=1 : body.drives[i].up=0;
     body.drives[i].asn=m_driveCatalogue.getState(*itor);
-    body.drives[i].asn_time=0; // TODO: put the real assignment timing
+    body.drives[i].asn_time=m_driveCatalogue.getAssignmentTime(*itor);
     strncpy(body.drives[i].drive, (*itor).c_str(), CA_MAXUNMLEN);
     body.drives[i].drive[CA_MAXUNMLEN]='\0';
     body.drives[i].mode=WRITE_DISABLE;
     strncpy(body.drives[i].lblcode, "aul", CA_MAXLBLTYPLEN); // only aul format is used
     body.drives[i].lblcode[CA_MAXLBLTYPLEN]='\0';
     body.drives[i].tobemounted=0; // TODO: put 1 if the tape is mounting 0 otherwise
-    strncpy(body.drives[i].vid, "XXXXXX", CA_MAXVIDLEN); // TODO: put the real tape name
+    strncpy(body.drives[i].vid, m_driveCatalogue.getVid(*itor).c_str(), CA_MAXVIDLEN);
     body.drives[i].vid[CA_MAXVIDLEN]='\0';
-    strncpy(body.drives[i].vsn, "XXXXXX", CA_MAXVSNLEN); // TODO: put the real tape name
+    strncpy(body.drives[i].vsn, m_driveCatalogue.getVid(*itor).c_str(), CA_MAXVSNLEN);
     body.drives[i].vid[CA_MAXVSNLEN]='\0';
-    body.drives[i].cfseq=0; // TODO: put the correct fseq we are in
+    body.drives[i].cfseq=0; // the fseq is ignored by tpstat, so we leave it empty
     i++;
   }
   

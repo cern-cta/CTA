@@ -284,6 +284,38 @@ const std::string &castor::tape::tapeserver::daemon::DriveCatalogue::getDgn(
 }
 
 //-----------------------------------------------------------------------------
+// getVid
+//-----------------------------------------------------------------------------
+const std::string &castor::tape::tapeserver::daemon::DriveCatalogue::getVid(
+  const std::string &unitName) const throw(castor::exception::Exception) {
+  DriveMap::const_iterator itor = m_drives.find(unitName);
+  if(m_drives.end() == itor) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to get VID of tape drive " <<
+      unitName << ": Unknown drive";
+    throw ex;
+  }
+
+  return itor->second.vid;
+}
+
+//-----------------------------------------------------------------------------
+// getAssignmentTime
+//-----------------------------------------------------------------------------
+time_t castor::tape::tapeserver::daemon::DriveCatalogue::getAssignmentTime(
+  const std::string &unitName) const throw(castor::exception::Exception) {
+  DriveMap::const_iterator itor = m_drives.find(unitName);
+  if(m_drives.end() == itor) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to get the assignment time of tape drive " <<
+      unitName << ": Unknown drive";
+    throw ex;
+  }
+
+  return itor->second.assignment_time;
+}
+
+//-----------------------------------------------------------------------------
 // getDevFilename
 //-----------------------------------------------------------------------------
 const std::string
@@ -402,6 +434,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::configureUp(const std::st
 
   switch(itor->second.state) {
   case DRIVE_STATE_UP:
+  case DRIVE_STATE_RUNNING:
     break;
   case DRIVE_STATE_DOWN:
     itor->second.state = DRIVE_STATE_UP;

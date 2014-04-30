@@ -57,7 +57,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
   legacymsg::VdqmProxyFactory &vdqmFactory,
   legacymsg::VmgrProxyFactory &vmgrFactory,
   legacymsg::RmcProxyFactory &rmcFactory,
-  legacymsg::TapeserverProxy &tapeserverProxy,
+  legacymsg::TapeserverProxyFactory &tapeserverFactory,
   io::PollReactor &reactor) throw(castor::exception::Exception):
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),
@@ -66,7 +66,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
   m_vdqmFactory(vdqmFactory),
   m_vmgrFactory(vmgrFactory),
   m_rmcFactory(rmcFactory),
-  m_tapeserverProxy(tapeserverProxy),
+  m_tapeserverFactory(tapeserverFactory),
   m_reactor(reactor),
   m_programName("tapeserverd"),
   m_hostName(getHostName()) {
@@ -613,6 +613,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
     std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
     std::auto_ptr<legacymsg::VmgrProxy> vmgr(m_vmgrFactory.create());
     std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
+    std::auto_ptr<legacymsg::TapeserverProxy> tapeserver(m_tapeserverFactory.create());
     DebugMountSessionForVdqmProtocol mountSession(
       m_argc,
       m_argv,
@@ -622,7 +623,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
       m_tpconfigLines,
       *(vdqm.get()),
       *(vmgr.get()),
-      *(rmc.get()));
+      *(rmc.get()),
+      *(tapeserver.get())
+    );
 
     mountSession.execute();
 

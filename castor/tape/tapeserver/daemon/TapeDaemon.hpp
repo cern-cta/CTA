@@ -28,7 +28,7 @@
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/io/PollReactor.hpp"
 #include "castor/legacymsg/RmcProxyFactory.hpp"
-#include "castor/legacymsg/TapeserverProxy.hpp"
+#include "castor/legacymsg/TapeserverProxyFactory.hpp"
 #include "castor/legacymsg/VdqmProxyFactory.hpp"
 #include "castor/legacymsg/VmgrProxyFactory.hpp"
 #include "castor/server/Daemon.hpp"
@@ -84,7 +84,7 @@ public:
     legacymsg::VdqmProxyFactory &vdqmFactory,
     legacymsg::VmgrProxyFactory &vmgrFactory,
     legacymsg::RmcProxyFactory &rmcFactory,
-    legacymsg::TapeserverProxy &tapeserverProxy,
+    legacymsg::TapeserverProxyFactory &tapeserverProxyFactory,
     io::PollReactor &reactor) throw(castor::exception::Exception);
 
   /**
@@ -310,7 +310,7 @@ protected:
   /**
    * The proxy object representing the tapeserver daemon.
    */
-  legacymsg::TapeserverProxy &m_tapeserverProxy;
+  legacymsg::TapeserverProxyFactory &m_tapeserverFactory;
 
   /**
    * The reactor responsible for dispatching the file-descriptor event-handlers

@@ -103,6 +103,7 @@ add_executable(castorUnitTests
   ../castor/legacymsg/TapeMarshalTest.cpp
   ../castor/legacymsg/TapeserverProxy.cpp
   ../castor/legacymsg/TapeserverProxyDummy.cpp
+  ../castor/legacymsg/TapeserverProxyDummyFactory.cpp
   ../castor/legacymsg/TapeserverProxyTcpIp.cpp
   ../castor/legacymsg/VdqmMarshalTest.cpp
   ../castor/legacymsg/VdqmProxy.cpp

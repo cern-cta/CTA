@@ -29,6 +29,7 @@
 #include "castor/utils/utils.hpp"
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
+#include "h/Ctape.h"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -56,7 +57,7 @@ void castor::legacymsg::TapeserverProxyTcpIp::setVidInDriveCatalogue(const std::
     castor::utils::copyString(body.drive, unitName.c_str()); 
     castor::utils::SmartFd fd(connectToTapeserver());
     writeSetVidRequestMsg(fd.get(), body);
-    readCommitAck(fd.get());  
+    readSetVidReplyMsg(fd.get());  
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to set vid of tape drive " << unitName <<
@@ -87,7 +88,7 @@ int castor::legacymsg::TapeserverProxyTcpIp::connectToTapeserver() const throw(c
 // writeSetVidRequestMsg
 //-----------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::writeSetVidRequestMsg(const int fd, const legacymsg::SetVidRequestMsgBody &body) throw(castor::exception::Exception) {
-  char buf[CA_MAXVIDLEN+1+CA_MAXUNMLEN+1];
+  char buf[3 * sizeof(uint32_t) + sizeof(body)]; // header + body
   const size_t len = legacymsg::marshal(buf, sizeof(buf), body);
 
   try {
@@ -101,65 +102,31 @@ void castor::legacymsg::TapeserverProxyTcpIp::writeSetVidRequestMsg(const int fd
 }
 
 //-----------------------------------------------------------------------------
-// readCommitAck
+// readSetVidReplyMsg
 //-----------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyTcpIp::readCommitAck(const int fd) throw(castor::exception::Exception) {
-  legacymsg::MessageHeader ack;
-
-  try {
-    ack = readAck(fd);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed to read VDQM_COMMIT ack: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-
-  if(VDQM_MAGIC != ack.magic) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed to read VDQM_COMMIT ack: Invalid magic"
-      ": expected=0x" << std::hex << VDQM_MAGIC << " actual=" << ack.magic;
-    throw ex;
-  }
-
-  if(VDQM_COMMIT == ack.reqType) {
-    // Read a successful VDQM_COMMIT ack
-    return;
-  } else if(0 < ack.reqType) {
-    // VDQM_COMMIT ack is reporting an error
-    char errBuf[80];
-    sstrerror_r(ack.reqType, errBuf, sizeof(errBuf));
-    castor::exception::Internal ex;
-    ex.getMessage() << "VDQM_COMMIT ack reported an error: " << errBuf;
-    throw ex;
-  } else {
-    // VDQM_COMMIT ack contains an invalid request type
-    castor::exception::Internal ex;
-    ex.getMessage() << "VDQM_COMMIT ack contains an invalid request type"
-      ": reqType=" << ack.reqType;
-    throw ex;
-  }
-}
-
-//-----------------------------------------------------------------------------
-// readAck
-//-----------------------------------------------------------------------------
-castor::legacymsg::MessageHeader castor::legacymsg::TapeserverProxyTcpIp::readAck(const int fd) throw(castor::exception::Exception) {
-  char buf[12]; // Magic + type + len
-  legacymsg::MessageHeader ack;
-
-  try {
-    io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed to read ack: "
-      << ne.getMessage().str();
-    throw ex;
-  }
+void castor::legacymsg::TapeserverProxyTcpIp::readSetVidReplyMsg(const int fd) throw(castor::exception::Exception) {
+  
+  char buf[3 * sizeof(uint32_t)]; // magic + request type + len
+  io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
 
   const char *bufPtr = buf;
   size_t bufLen = sizeof(buf);
-  legacymsg::unmarshal(bufPtr, bufLen, ack);
+  legacymsg::MessageHeader header;
+  memset(&header, '\0', sizeof(header));
+  legacymsg::unmarshal(bufPtr, bufLen, header);
 
-  return ack;
+  if(TPMAGIC != header.magic) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Invalid mount session message: Invalid magic"
+      ": expected=0x" << std::hex << TPMAGIC << " actual=0x" <<
+      header.magic;
+    throw ex;
+  }
+  
+  if(0 != header.lenOrStatus) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "\"Set Vid\" failed. Return code: "
+      << header.lenOrStatus;
+    throw ex;
+  }
 }

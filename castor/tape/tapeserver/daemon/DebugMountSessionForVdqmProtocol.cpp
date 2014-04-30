@@ -49,7 +49,8 @@ castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::DebugMountSe
   const utils::TpconfigLines &tpConfig,
   legacymsg::VdqmProxy &vdqm,
   legacymsg::VmgrProxy &vmgr,
-  legacymsg::RmcProxy &rmc) throw():
+  legacymsg::RmcProxy &rmc,
+  legacymsg::TapeserverProxy &tps) throw():
   m_netTimeout(5), // Timeout in seconds
   m_sessionPid(getpid()),
   m_argc(argc),
@@ -60,7 +61,8 @@ castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::DebugMountSe
   m_tpConfig(tpConfig),
   m_vdqm(vdqm),
   m_vmgr(vmgr),
-  m_rmc(rmc) {
+  m_rmc(rmc),
+  m_tps(tps) {
 }
 
 //------------------------------------------------------------------------------
@@ -81,6 +83,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::execute
       log::Param("label", volume->label()),
       log::Param("mode", volume->mode())};
     m_log(LOG_INFO, "Got VID from client", params);
+    m_tps.setVidInDriveCatalogue(volume->vid(), m_job.driveUnit);
     mountTape(volume->vid());
     transferFiles(*(volume.get()), clientMsgSeqNb);
   } else {

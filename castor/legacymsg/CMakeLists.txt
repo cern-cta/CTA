@@ -55,7 +55,9 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   TapeConfigRequestMsgBody.cpp
   TapeMarshal.cpp
   TapeserverProxy.cpp
+  TapeserverProxyFactory.cpp
   TapeserverProxyTcpIp.cpp
+  TapeserverProxyTcpIpFactory.cpp
   TapeStatRequestMsgBody.cpp
   TapeStatReplyMsgBody.cpp
   VdqmDrvRqstMsgBody.cpp

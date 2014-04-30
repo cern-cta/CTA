@@ -89,42 +89,11 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::fillPollFd(
 size_t castor::tape::tapeserver::daemon::MountSessionAcceptHandler::marshalSetVidReplyMsg(char *const dst, const size_t dstLen,
     const int rc)
   throw(castor::exception::Exception) {
-
-  if(dst == NULL) {
-    TAPE_THROW_CODE(EINVAL,
-      ": Pointer to destination buffer is NULL");
-  }
-
-  // Calculate the length of the message header
-  const uint32_t totalLen = (2 * sizeof(uint32_t)) + sizeof(int32_t);  // magic + reqType + returnCode
-
-  // Check that the message header buffer is big enough
-  if(totalLen > dstLen) {
-    TAPE_THROW_CODE(EMSGSIZE,
-      ": Buffer too small for reply message"
-      ": Required size: " << totalLen <<
-      ": Actual size: " << dstLen);
-  }
-
-  // Marshal the message header
-  char *p = dst;
-  io::marshalUint32(TPMAGIC, p);
-  io::marshalUint32(TAPERC, p);
-  io::marshalInt32(rc, p);
-
-  // Calculate the number of bytes actually marshalled
-  const size_t nbBytesMarshalled = p - dst;
-
-  // Check that the number of bytes marshalled was what was expected
-  if(totalLen != nbBytesMarshalled) {
-    TAPE_THROW_EX(castor::exception::Internal,
-      ": Mismatch between the expected total length of the "
-      "reply message and the actual number of bytes marshalled"
-      ": Expected: " << totalLen <<
-      ": Marshalled: " << nbBytesMarshalled);
-  }
-
-  return totalLen;
+  legacymsg::MessageHeader src;
+  src.magic = TPMAGIC;
+  src.reqType = TAPERC;
+  src.lenOrStatus = rc;  
+  return legacymsg::marshal(dst, dstLen, src);
 }
 
 //------------------------------------------------------------------------------

@@ -173,6 +173,20 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   const std::string &getDgn(const std::string &unitName) const throw(castor::exception::Exception);
+  
+  /**
+   * Returns the VID of the tape mounted on the specified tape drive.
+   *
+   * @param unitName The unit name of the tape drive.
+   */
+  const std::string &getVid(const std::string &unitName) const throw(castor::exception::Exception);
+  
+  /**
+   * Returns the time when the tape was mounted on the specified tape drive.
+   *
+   * @param unitName The unit name of the tape drive.
+   */
+  time_t getAssignmentTime(const std::string &unitName) const throw(castor::exception::Exception);
 
   /**
    * Returns the filename of the device file of the specified tape drive.

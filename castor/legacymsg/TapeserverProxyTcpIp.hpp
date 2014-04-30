@@ -88,15 +88,7 @@ private:
    * @param fd The file-descriptor of the connection.
    * @return The message.
    */
-  void readCommitAck(const int fd) throw(castor::exception::Exception);
-
-  /**
-   * Reads an ack message from the specified connection.
-   *
-   * @param fd The file-descriptor of the connection.
-   * @return The message.
-   */
-  legacymsg::MessageHeader readAck(const int fd) throw(castor::exception::Exception);
+  void readSetVidReplyMsg(const int fd) throw(castor::exception::Exception);
 
   /**
    * The object representing the API of the CASTOR logging system.
