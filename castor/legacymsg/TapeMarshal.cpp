@@ -39,7 +39,8 @@
 //-----------------------------------------------------------------------------
 // marshal
 //-----------------------------------------------------------------------------
-size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const TapeStatRequestMsgBody &src) throw(castor::exception::Exception) {
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
+  const TapeStatRequestMsgBody &src) throw(castor::exception::Exception) {
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -48,14 +49,13 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
     throw ex;
   }
 
-  // Calculate the length of the message body
-  const uint32_t len =
-    sizeof(int32_t) + // uid
-    sizeof(int32_t);// gid
-
   // Calculate the total length of the message (header + body)
-  // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
-  const size_t totalLen = 3 * sizeof(uint32_t) + len;
+  const size_t totalLen =
+    sizeof(uint32_t) + // Magic
+    sizeof(uint32_t) + // Request type
+    sizeof(uint32_t) + // Length of header + body
+    sizeof(src.uid) +
+    sizeof(src.gid);
 
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
@@ -69,8 +69,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
   char *p = dst;
   io::marshalUint32(TPMAGIC , p); // Magic number
   io::marshalUint32(TPSTAT, p); // Request type  
-  char *msg_len_field_pointer = p;  
-  io::marshalUint32(0, p); // Temporary length
+  io::marshalUint32(totalLen, p); // Length of header + body
 
   // Marshall message body
   io::marshalUint32(src.uid, p);
@@ -78,7 +77,6 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;
-  io::marshalUint32(nbBytesMarshalled, msg_len_field_pointer); // Actual length
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
@@ -95,7 +93,8 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
 //-----------------------------------------------------------------------------
 // marshal
 //-----------------------------------------------------------------------------
-size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const TapeConfigRequestMsgBody &src) throw(castor::exception::Exception) {
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
+  const TapeConfigRequestMsgBody &src) throw(castor::exception::Exception) {
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
