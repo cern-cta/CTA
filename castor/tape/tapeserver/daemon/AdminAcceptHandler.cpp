@@ -124,18 +124,20 @@ size_t castor::tape::tapeserver::daemon::AdminAcceptHandler::marshalTapeStatRepl
   throw(castor::exception::Exception) {
 
   if(dst == NULL) {
-    TAPE_THROW_CODE(EINVAL,
-      ": Pointer to destination buffer is NULL");
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to marshal TapeStatReplyMsgBody"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
   }
 
   size_t msg_len=(3*sizeof(uint32_t)) + sizeof(uint16_t) + body.number_of_drives*sizeof(struct castor::legacymsg::TapeStatDriveEntry); // upperbound: header + number_of_drives + drive entries
   
   // Check that the message header buffer is big enough
   if(msg_len > dstLen) {
-    TAPE_THROW_CODE(EMSGSIZE,
-      ": Buffer too small for reply message"
-      ": Required size: " << msg_len <<
-      ": Actual size: " << dstLen);
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to marshal TapeStatReplyMsgBody"
+      ": Buffer too small: required=" << msg_len << " actual=" << dstLen;
+    throw ex;
   }
   
   // Marshal the header
