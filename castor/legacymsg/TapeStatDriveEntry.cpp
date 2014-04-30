@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/TapeStatReplyMsgBody.cpp
+ *         castor/legacymsg/TapeStatDriveEntry.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,13 +22,25 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/TapeStatReplyMsgBody.hpp"
+#include "castor/legacymsg/TapeStatDriveEntry.hpp"
 
 #include <string.h>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::legacymsg::TapeStatReplyMsgBody::TapeStatReplyMsgBody() throw():
-  number_of_drives(0) {
-}
+castor::legacymsg::TapeStatDriveEntry::TapeStatDriveEntry() throw():
+  uid(0),
+  jid(0),
+  up(0),
+  asn(0),
+  asn_time(0),
+  mode(0),
+  tobemounted(0),
+  cfseq(0) {
+  memset(dgn, '\0', sizeof(dgn));
+  memset(drive, '\0', sizeof(drive));
+  memset(lblcode, '\0', sizeof(lblcode));
+  memset(vid, '\0', sizeof(vid));
+  memset(vsn, '\0', sizeof(vsn));
+}  

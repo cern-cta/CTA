@@ -53,6 +53,7 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   SetVidRequestMsgBody.cpp
   TapeBridgeMarshal.cpp
   TapeConfigRequestMsgBody.cpp
+  TapeStatDriveEntry.cpp
   TapeMarshal.cpp
   TapeserverProxy.cpp
   TapeserverProxyFactory.cpp

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/legacymsg/TapeStatReplyMsgBody.hpp
+ *         castor/legacymsg/TapeStatDriveEntry.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,22 +24,30 @@
 
 #pragma once
 
-#include "castor/legacymsg/TapeStatDriveEntry.hpp"
 #include "h/Castor_limits.h"
 
 #include <stdint.h>
-#include <string>
-
 
 namespace castor    {
 namespace legacymsg {
 
 /**
- * A Tape Stat reply message.
+ * Structure defining a drive entry within the body of a TPSTAT message.
  */
-struct TapeStatReplyMsgBody {
-  uint16_t number_of_drives;
-  struct TapeStatDriveEntry drives[CA_MAXNBDRIVES];
+struct TapeStatDriveEntry {
+  uint32_t uid;
+  uint32_t jid;                        // process group id or session id
+  char     dgn[CA_MAXDGNLEN+1];        // device group name
+  uint16_t up;                         // drive status: down = 0, up = 1
+  uint16_t asn;                        // assign flag: assigned = 1
+  uint32_t asn_time;                   // timestamp of drive assignment
+  char     drive[CA_MAXUNMLEN+1];      // drive name
+  uint16_t mode;                       // WRITE_DISABLE or WRITE_ENABLE
+  char     lblcode[CA_MAXLBLTYPLEN+1]; // label code: AUL or DMP
+  uint16_t tobemounted;                // 1 means tape to be mounted
+  char     vid[CA_MAXVIDLEN+1];
+  char     vsn[CA_MAXVSNLEN+1];
+  uint32_t cfseq;                      // current file sequence number
 
   /**
    * Constructor.
@@ -47,8 +55,8 @@ struct TapeStatReplyMsgBody {
    * Sets all integer member-variables to 0 and all string member-variables to
    * the empty string.
    */
-  TapeStatReplyMsgBody() throw();
-};
+  TapeStatDriveEntry() throw();
+};  
 
 } // namespace legacymsg
 } // namespace castor
