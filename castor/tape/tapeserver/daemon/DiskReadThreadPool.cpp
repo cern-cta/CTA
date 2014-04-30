@@ -71,27 +71,28 @@ namespace daemon {
       m_tasks.push(NULL);
     }
   }
-  DiskReadTaskInterface* DiskReadThreadPool::popAndRequestMore(){
+  DiskReadTaskInterface* DiskReadThreadPool::popAndRequestMore(castor::log::LogContext &lc){
     castor::tape::threading::BlockingQueue<DiskReadTaskInterface*>::valueRemainingPair 
     vrp = m_tasks.popGetSize();
-    log::LogContext::ScopedParam sp(m_lc, log::Param("m_maxFilesReq", m_maxFilesReq));
-    log::LogContext::ScopedParam sp0(m_lc, log::Param("m_maxBytesReq", m_maxBytesReq));
+    log::LogContext::ScopedParam sp(lc, log::Param("m_maxFilesReq", m_maxFilesReq));
+    log::LogContext::ScopedParam sp0(lc, log::Param("m_maxBytesReq", m_maxBytesReq));
 
     if(0==vrp.remaining){
       m_injector->requestInjection(true);
-      m_lc.log(LOG_DEBUG, "Requested injection from MigrationTaskInjector (with last call)");
+      lc.log(LOG_DEBUG, "Requested injection from MigrationTaskInjector (with last call)");
     }else if(vrp.remaining + 1 ==  m_maxFilesReq/2){
       m_injector->requestInjection(false);
-      m_lc.log(LOG_DEBUG, "Requested injection from MigrationTaskInjector (without last call)");
+      lc.log(LOG_DEBUG, "Requested injection from MigrationTaskInjector (without last call)");
     }
     return vrp.value;
   }
   void DiskReadThreadPool::DiskReadWorkerThread::run() {
+    m_lc.pushOrReplace(log::Param("thread", "DiskRead"));
     m_lc.pushOrReplace(log::Param("threadID",m_threadID));
     m_lc.log(LOG_DEBUG, "DiskReadWorkerThread Running");
     std::auto_ptr<DiskReadTaskInterface> task;
     while(1) {
-      task.reset( m_parent.popAndRequestMore());
+      task.reset( m_parent.popAndRequestMore(m_lc));
       if (NULL!=task.get()) {
         task->execute(m_lc);
       }

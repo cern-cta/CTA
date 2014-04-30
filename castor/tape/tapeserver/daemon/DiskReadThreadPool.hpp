@@ -66,7 +66,7 @@ private:
    * it will ask the TaskInjector to get more job 
    * @return the next task to execute
    */
-  DiskReadTaskInterface* popAndRequestMore();
+  DiskReadTaskInterface* popAndRequestMore(castor::log::LogContext & lc);
   
   class DiskReadWorkerThread: private castor::tape::threading::Thread {
   public:
