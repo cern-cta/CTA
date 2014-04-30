@@ -49,7 +49,7 @@ namespace daemon {
            uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc):
           m_thread(*this),m_memManager(mm),m_tapeWriter(tapeWriter),
           m_diskReader(diskReader),m_client(client),m_lc(lc),
-           m_maxFiles(maxFiles),  m_maxByte(byteSizeThreshold)
+          m_maxFiles(maxFiles),  m_maxByte(byteSizeThreshold)
   {
     
   }
@@ -147,6 +147,7 @@ namespace daemon {
             m_parent.m_lc.log(LOG_INFO,"No more file to migrate: triggering the end of session.\n");
             m_parent.m_tapeWriter.finish();
             m_parent.m_diskReader.finish();
+            m_parent.m_memManager.finish();
             break;
           } else {
             m_parent.m_lc.log(LOG_INFO,"In MigrationTaskInjector::WorkerThread::run(): got empty list, but not last call");

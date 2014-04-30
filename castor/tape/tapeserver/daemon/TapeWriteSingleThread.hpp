@@ -46,7 +46,8 @@ public:
 	  uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
   TapeSingleThreadInterface<TapeWriteTaskInterface>(drive, vid, lc),
   m_filesBeforeFlush(filesBeforeFlush),m_bytesBeforeFlush(bytesBeforeFlush),
-  m_drive(drive), m_reportPacker(repPacker), m_lastFseq(0), m_compress(0) {}
+  m_drive(drive), m_reportPacker(repPacker), m_vid(vid), m_lastFseq(0),
+  m_compress(0) {}
 
 private:
   /**
@@ -95,7 +96,9 @@ private:
   virtual void run() {
     try
     {
+      m_logContext.pushOrReplace(log::Param("thread", "TapeWrite"));
       // First we have to initialise the tape read session
+      m_logContext.log(LOG_DEBUG, "Starting tape write thread");
       std::auto_ptr<castor::tape::tapeFile::WriteSession> rs(openWriteSession());
     
       uint64_t bytes=0;
@@ -118,6 +121,7 @@ private:
         else{
           flush("End of TapeWriteWorkerThread::run() (flushing",bytes,files);
           m_reportPacker.reportEndOfSession();
+          m_logContext.log(LOG_DEBUG, "Finishing tape write thread");
           return;
         }
       } 

@@ -48,7 +48,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <xfs/platform_defs-x86_64.h>
 
 
 using namespace castor::tape::tapeserver;
@@ -334,16 +333,16 @@ TEST(tapeServer, MountSessionGooddayMigration) {
   MountSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
   castorConf.rtcopydNbBufs = 10;
-  castorConf.tapebridgeBulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
-  castorConf.tapebridgeBulkRequestRecallMaxFiles = 1000;
+  castorConf.tapebridgeBulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.tapebridgeBulkRequestMigrationMaxFiles = 1000;
   castorConf.tapeserverdDiskThreads = 1;
   MountSession sess(VDQMjob, logger, mockSys, tpConfig, castorConf);
   sess.execute();
   simRun.wait();
-//  for (std::vector<struct expectedResult>::iterator i = expected.begin();
-//      i != expected.end(); i++) {
-//    ASSERT_EQ(i->checksum, sim.m_receivedChecksums[i->fSeq]);
-//  }
+  for (std::vector<struct expectedResult>::iterator i = expected.begin();
+      i != expected.end(); i++) {
+    ASSERT_EQ(i->checksum, sim.m_receivedChecksums[i->fSeq]);
+  }
 }
 
 }

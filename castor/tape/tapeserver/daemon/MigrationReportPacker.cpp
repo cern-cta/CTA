@@ -173,6 +173,7 @@ m_parent(parent) {
 }
 
 void MigrationReportPacker::WorkerThread::run(){
+  m_parent.m_lc.pushOrReplace(log::Param("thread", "ReportPacker"));
   client::ClientInterface::RequestReport chrono;
   
   try{
