@@ -2730,16 +2730,16 @@ BEGIN
       varFoundSeg := TRUE;
       -- Is the segment valid
       IF varSeg.segStatus = '-' THEN
-        -- remember the copy number and tape
-        varAllCopyNbs.EXTEND;
-        varAllCopyNbs(varI) := varSeg.copyno;
-        varAllVIDs.EXTEND;
-        varAllVIDs(varI) := varSeg.vid;
-        varI := varI + 1;
         -- Is the segment on a valid tape from recall point of view ?
         IF BITAND(varSeg.tapeStatus, tconst.TAPE_DISABLED) = 0 AND
            BITAND(varSeg.tapeStatus, tconst.TAPE_EXPORTED) = 0 AND
            BITAND(varSeg.tapeStatus, tconst.TAPE_ARCHIVED) = 0 THEN
+          -- remember the copy number and tape
+          varAllCopyNbs.EXTEND;
+          varAllCopyNbs(varI) := varSeg.copyno;
+          varAllVIDs.EXTEND;
+          varAllVIDs(varI) := varSeg.vid;
+          varI := varI + 1;
           -- create recallJob
           INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
                                  vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
@@ -3657,9 +3657,15 @@ BEGIN
       varDcList VARCHAR2(2048);
     BEGIN
       -- List available diskcopies for job scheduling
+<<<<<<< HEAD
       -- in case of datapools, we take a maximum of 3 random diskservers
       SELECT LISTAGG(dsName || ':' || fsMountPoint, '|')
              WITHIN GROUP (ORDER BY DBMS_Random.value)
+=======
+      SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) INDEX(Subrequest PK_Subrequest_Id)*/ 
+             LISTAGG(DiskServer.name || ':' || FileSystem.mountPoint, '|')
+             WITHIN GROUP (ORDER BY FileSystem.nbReadStreams + FileSystem.nbWriteStreams)
+>>>>>>> origin/v2_1_14Version
         INTO varDcList
         FROM (SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) INDEX(Subrequest PK_Subrequest_Id)*/
                      DiskServer.name AS dsname, FileSystem.mountPoint AS fsMountPoint
