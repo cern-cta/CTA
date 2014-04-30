@@ -230,6 +230,7 @@ public:
       m_checksum = adler32(m_checksum, (const Bytef *)buff, size);
       close(randomFd);
       close(tmpFileFd);
+      delete[] buff;
     } catch (...) {
       delete[] buff;
       unlink(m_path.c_str());
