@@ -48,7 +48,6 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include <xfs/platform_defs-x86_64.h>
 
 
 using namespace castor::tape::tapeserver;
@@ -347,4 +346,4 @@ TEST(tapeServer, MountSessionGooddayMigration) {
 }
 
 }
- 
+
