@@ -59,7 +59,7 @@ public:
       m_totalMemoryAllocated+=blockSize;
       
       m_lc.pushOrReplace(log::Param("blockId",i));
-      m_lc.log(LOG_INFO,"MigrationMemoryManager Created a block");
+      m_lc.log(LOG_DEBUG,"MigrationMemoryManager Created a block");
     }
     m_lc.log(LOG_INFO,"MigrationMemoryManager: all blocks have been created");
   }
@@ -133,14 +133,12 @@ public:
     // castor::tape::threading::Thread::wait();
     // we expect to be called after all users are finished. Just "free"
     // the memory blocks we still have.
-    try {
-      while(true) {
-        delete m_freeBlocks.tryPop();
-      }
-    }
-    catch (castor::tape::threading::noMore) {
-      //done
-    } 
+    castor::tape::threading::BlockingQueue<MemBlock*>::valueRemainingPair ret;
+    do{
+      ret=m_freeBlocks.popGetSize();
+      delete ret.value;
+    }while(ret.remaining>0);
+    
     m_lc.log(LOG_INFO,"MigrationMemoryManager destruction : all memory blocks have been deleted");
   }
 private:

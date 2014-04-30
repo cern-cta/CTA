@@ -49,7 +49,7 @@ public:
   MigrationTaskInjector(MigrationMemoryManager & mm, 
         DiskThreadPoolInterface<DiskReadTaskInterface> & diskReader,
         TapeSingleThreadInterface<TapeWriteTaskInterface> & tapeWriter,client::ClientInterface& client,
-        castor::log::LogContext lc);
+        uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc);
 
  
   /**
@@ -77,7 +77,7 @@ public:
    * @param lastCall true if we want the new request to be a last call. 
    * See Request::lastCall 
    */
-  void requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall);
+  void requestInjection(bool lastCall);
   
   /**
    * Contact the client to make sure there are really something to do
@@ -87,7 +87,7 @@ public:
    * @param byteSizeThreshold total bytes count  at least requested
    * @return true if there are jobs to be done, false otherwise 
    */
-  bool synchronousInjection(uint64_t maxFiles, uint64_t byteSizeThreshold);
+  bool synchronousInjection();
   
   /**
    * Send an end token in the request queue. There should be no subsequent
@@ -156,6 +156,12 @@ private:
   castor::tape::threading::BlockingQueue<Request> m_queue;
   
   castor::tape::threading::AtomicFlag m_errorFlag;
+
+  //maximal number of files requested. at once
+  const uint64_t m_maxFiles;
+  
+  //maximal number of cumulated byte requested. at once
+  const uint64_t m_maxByte;
 };
 
 } //end namespace daemon

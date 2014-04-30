@@ -37,6 +37,8 @@ namespace daemon {
     for(int i=0; i<nbThread; i++) {
       DiskReadWorkerThread * thr = new DiskReadWorkerThread(*this);
       m_threads.push_back(thr);
+      m_lc.pushOrReplace(log::Param("threadID",i));
+      m_lc.log(LOG_INFO, "DiskReadWorkerThread created");
     }
   }
   DiskReadThreadPool::~DiskReadThreadPool() { 
@@ -44,12 +46,14 @@ namespace daemon {
       delete m_threads.back();
       m_threads.pop_back();
     }
+    m_lc.log(LOG_INFO, "All the DiskReadWorkerThreads have been destroyed");
   }
   void DiskReadThreadPool::startThreads() {
     for (std::vector<DiskReadWorkerThread *>::iterator i=m_threads.begin();
             i != m_threads.end(); i++) {
       (*i)->startThreads();
     }
+    m_lc.log(LOG_INFO, "All the DiskReadWorkerThreads are started");
   }
   void DiskReadThreadPool::waitThreads() {
     for (std::vector<DiskReadWorkerThread *>::iterator i=m_threads.begin();
@@ -59,6 +63,7 @@ namespace daemon {
   }
   void DiskReadThreadPool::push(DiskReadTaskInterface *t) { 
     m_tasks.push(t); 
+    m_lc.log(LOG_INFO, "Push a task into the DiskReadThreadPool");
   }
   void DiskReadThreadPool::finish() {
     /* Insert one endOfSession per thread */
@@ -69,17 +74,21 @@ namespace daemon {
   DiskReadTaskInterface* DiskReadThreadPool::popAndRequestMore(){
     castor::tape::threading::BlockingQueue<DiskReadTaskInterface*>::valueRemainingPair 
     vrp = m_tasks.popGetSize();
-    
+    log::LogContext::ScopedParam sp(m_lc, log::Param("m_maxFilesReq", m_maxFilesReq));
+    log::LogContext::ScopedParam sp0(m_lc, log::Param("m_maxBytesReq", m_maxBytesReq));
+
     if(0==vrp.remaining){
-      m_injector->requestInjection(m_maxFilesReq, m_maxBytesReq,true);
+      m_injector->requestInjection(true);
+      m_lc.log(LOG_DEBUG, "Requested injection from MigrationTaskInjector (with last call)");
     }else if(vrp.remaining + 1 ==  m_maxFilesReq/2){
-      m_injector->requestInjection(m_maxFilesReq, m_maxBytesReq,false);
+      m_injector->requestInjection(false);
+      m_lc.log(LOG_DEBUG, "Requested injection from MigrationTaskInjector (without last call)");
     }
     return vrp.value;
   }
   void DiskReadThreadPool::DiskReadWorkerThread::run() {
-    m_lc.pushOrReplace(log::Param("thread", "DiskRead"));
-    m_lc.log(LOG_DEBUG, "Starting DiskReadWorkerThread");
+    m_lc.pushOrReplace(log::Param("threadID",m_threadID));
+    m_lc.log(LOG_DEBUG, "DiskReadWorkerThread Running");
     std::auto_ptr<DiskReadTaskInterface> task;
     while(1) {
       task.reset( m_parent.popAndRequestMore());
@@ -94,9 +103,9 @@ namespace daemon {
     // will hence be no more requests for more. (last thread turns off the light)
     if (0 == --m_parent.m_nbActiveThread) {
       m_parent.m_injector->finish();
-      m_lc.log(LOG_DEBUG, "Signaled to task injector the end of disk read threads");
+      m_lc.log(LOG_INFO, "Signaled to task injector the end of disk read threads");
     }
-    m_lc.log(LOG_DEBUG, "Finishing of DiskReadWorkerThread");
+    m_lc.log(LOG_INFO, "Finishing of DiskReadWorkerThread");
   }
   
 }}}}

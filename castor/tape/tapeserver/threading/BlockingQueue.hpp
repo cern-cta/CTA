@@ -15,17 +15,7 @@
 namespace castor {
 namespace tape {
 namespace threading {
-    
-/**
- * Exception class used to signal there are no more elements
-*/
-class noMore : public castor::tape::Exception
-{
-public:
-  noMore():Exception("")
-  {} 
-};
-  
+      
 /***
  * This simple class provides a thread-safe blocking queue
  *  
@@ -56,21 +46,18 @@ public:
     m_sem.acquire();
     return popCriticalSection();
   }
-  
+  /**
+   * Atomically pop the element of the top of the pile AND return it with the 
+   * number of remaining elements in the queue 
+   * @return a struct holding the popped element (into ret.value) and the number of elements 
+   * remaining (into ret.remaining)
+   * 
+   */
   valueRemainingPair popGetSize () {
     m_sem.acquire();
     valueRemainingPair ret;
     ret.value = popCriticalSection(&ret.remaining);
     return ret;
-  }
- 
-  /**
-   * Return the next value of the queue and remove it
-   * if there are no elements, throws a no noMoreElements exception 
-   */
-  C tryPop() {
-    if (!m_sem.tryAcquire()) throw noMore();
-    return popCriticalSection();
   }
   
   ///return the number of elements currently in the queue

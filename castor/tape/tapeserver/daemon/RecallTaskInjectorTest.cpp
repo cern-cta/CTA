@@ -66,15 +66,15 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   FakeDiskWriteThreadPool diskWrite;
   FakeSingleTapeReadThread tapeRead(drive, "V12345", lc);
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
-  tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,lc);
+  tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);
   
-  ASSERT_EQ(true,rti.synchronousInjection(6,blockSize));
+  ASSERT_EQ(true,rti.synchronousInjection());
   ASSERT_EQ(nbFile,diskWrite.m_tasks.size());
   ASSERT_EQ(nbFile,tapeRead.m_tasks.size());
   
   rti.startThreads();
-  rti.requestInjection(6,blockSize,false);
-  rti.requestInjection(6,blockSize,true);
+  rti.requestInjection(false);
+  rti.requestInjection(true);
   rti.finish();
   rti.waitThreads();
   
@@ -110,9 +110,9 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   FakeSingleTapeReadThread tapeRead(drive, "V12345", lc);
   
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
-  tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,lc);
+  tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);
   
-  ASSERT_EQ(false,rti.synchronousInjection(6,blockSize));
+  ASSERT_EQ(false,rti.synchronousInjection());
   ASSERT_EQ(0U,diskWrite.m_tasks.size());
   ASSERT_EQ(0U,tapeRead.m_tasks.size());
 }

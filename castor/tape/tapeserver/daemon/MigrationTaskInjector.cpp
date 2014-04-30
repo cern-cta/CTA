@@ -46,9 +46,10 @@ namespace daemon {
   MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager & mm, 
           DiskThreadPoolInterface<DiskReadTaskInterface> & diskReader,
           TapeSingleThreadInterface<TapeWriteTaskInterface> & tapeWriter,client::ClientInterface& client,
-          castor::log::LogContext lc):
+           uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc):
           m_thread(*this),m_memManager(mm),m_tapeWriter(tapeWriter),
-          m_diskReader(diskReader),m_client(client),m_lc(lc)
+          m_diskReader(diskReader),m_client(client),m_lc(lc),
+           m_maxFiles(maxFiles),  m_maxByte(byteSizeThreshold)
   {
     
   }
@@ -101,19 +102,18 @@ namespace daemon {
     m_thread.start();
   }
   
-  void MigrationTaskInjector::requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall) {
+  void MigrationTaskInjector::requestInjection( bool lastCall) {
     castor::tape::threading::MutexLocker ml(&m_producerProtection);
     if(!m_errorFlag) {
-      m_queue.push(Request(maxFiles, byteSizeThreshold, lastCall));
+      m_queue.push(Request(m_maxFiles, m_maxByte, lastCall));
     }
   }
   
-  bool MigrationTaskInjector::synchronousInjection(uint64_t maxFiles,
-      uint64_t byteSizeThreshold) {
+  bool MigrationTaskInjector::synchronousInjection() {
     client::ClientProxy::RequestReport reqReport;
     std::auto_ptr<tapegateway::FilesToMigrateList>
-      filesToMigrateList(m_client.getFilesToMigrate(maxFiles, 
-        byteSizeThreshold,reqReport));
+      filesToMigrateList(m_client.getFilesToMigrate(m_maxFiles, 
+        m_maxByte,reqReport));
     if(NULL == filesToMigrateList.get()) {
       m_lc.log(LOG_ERR, "No files to migrate: empty mount");
       return false;
@@ -132,7 +132,7 @@ namespace daemon {
 //------------------------------------------------------------------------------  
   void MigrationTaskInjector::WorkerThread::run(){
     m_parent.m_lc.pushOrReplace(Param("thread", "MigrationTaskInjector"));
-    m_parent.m_lc.log(LOG_DEBUG, "Starting MigrationTaskInjector thread");
+    m_parent.m_lc.log(LOG_INFO, "Starting MigrationTaskInjector thread");
     try{
       while(1){
         if(m_parent.m_errorFlag){
@@ -171,7 +171,7 @@ namespace daemon {
       }
     } // end of while(1)
     //-------------
-    m_parent.m_lc.log(LOG_DEBUG, "Finishing MigrationTaskInjector thread");
+    m_parent.m_lc.log(LOG_INFO, "Finishing MigrationTaskInjector thread");
     /* We want to finish at the first lastCall we encounter.
      * But even after sending finish() to m_diskWriter and to m_tapeReader,
      * m_diskWriter might still want some more task (the threshold could be crossed),

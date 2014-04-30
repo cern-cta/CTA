@@ -63,42 +63,7 @@ namespace daemon {
   bool DiskWriteThreadPool::crossingDownFileThreshod(int filesPopped) const {
     return (m_tasks.size() >= m_maxFilesReq/2) && (m_tasks.size() - filesPopped < m_maxFilesReq/2);
   }
-  DiskWriteTaskInterface * DiskWriteThreadPool::popAndRequestMoreJobs() {
-    using castor::log::LogContext;
-    using castor::log::Param;
-    
-    DiskWriteTaskInterface * ret = m_tasks.pop();
-    // TODO: completely remove task injection in writers, move it to readers
-    if(ret)
-    {
-      castor::tape::threading::MutexLocker ml(&m_counterProtection);
-      // We are about to go to empty: request a last call job injection 
-      if(m_tasks.size() == 1) {
-        
-        LogContext::ScopedParam sp[]={
-          LogContext::ScopedParam(m_lc, Param("files",m_tasks.size())),
-          LogContext::ScopedParam(m_lc, Param("ret->files", 1)),
-          LogContext::ScopedParam(m_lc, Param("maxFiles", m_maxFilesReq)),
-          LogContext::ScopedParam(m_lc, Param("maxBlocks", m_maxBytesReq))
-        };
-        tape::utils::suppresUnusedVariable(sp);
-    
-        m_lc.log(LOG_INFO, "In DiskWriteTaskInterface::popAndRequestMoreJobs(), requesting last call");
-        //if we are below mid on both block and files and we are crossing a threshold 
-        //on either files of blocks, then request more jobs
-      } else if ( belowMidFilesAfterPop(1) && crossingDownFileThreshod(1)) {
-        LogContext::ScopedParam sp[]={
-          LogContext::ScopedParam(m_lc, Param("files",m_tasks.size())),
-          LogContext::ScopedParam(m_lc, Param("ret->files", 1)),
-          LogContext::ScopedParam(m_lc, Param("maxFiles", m_maxFilesReq)),
-          LogContext::ScopedParam(m_lc, Param("maxBlocks", m_maxBytesReq))
-        };
-        tape::utils::suppresUnusedVariable(sp);
-        m_lc.log(LOG_INFO, "In DiskWriteTaskInterface::popAndRequestMoreJobs(), requesting: files");
-      }      
-    }
-    return ret;
-  }
+  
   void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
     m_lc.pushOrReplace(log::Param("thread", "diskWrite"));
     m_lc.log(LOG_INFO, "Starting DiskWriteWorkerThread");

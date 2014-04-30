@@ -25,10 +25,11 @@ namespace daemon {
 RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTaskInterface> & tapeReader,
         DiskThreadPoolInterface<DiskWriteTaskInterface> & diskWriter,
-        client::ClientInterface& client,castor::log::LogContext lc) : 
+        client::ClientInterface& client,
+        uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc) : 
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
-        m_client(client),m_lc(lc)
+        m_client(client),m_lc(lc),m_maxFiles(maxFiles),m_byteSizeThreshold(byteSizeThreshold)
 {}
 
 void RecallTaskInjector::finish(){
@@ -36,10 +37,10 @@ void RecallTaskInjector::finish(){
   m_queue.push(Request());
 }
 
-void RecallTaskInjector::requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall) {
+void RecallTaskInjector::requestInjection(bool lastCall) {
   //@TODO where shall we  acquire the lock ? There of just before the push ?
   castor::tape::threading::MutexLocker ml(&m_producerProtection);
-  m_queue.push(Request(maxFiles, byteSizeThreshold, lastCall));
+  m_queue.push(Request(m_maxFiles, m_byteSizeThreshold, lastCall));
 }
 
 void RecallTaskInjector::waitThreads() {
@@ -82,15 +83,15 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
   m_lc.log(LOG_INFO, "Tasks for recalling injected");
 }
 
-bool RecallTaskInjector::synchronousInjection(uint64_t maxFiles, uint64_t byteSizeThreshold)
+bool RecallTaskInjector::synchronousInjection()
 {
   client::ClientProxy::RequestReport reqReport;  
 
   std::auto_ptr<castor::tape::tapegateway::FilesToRecallList> 
-    filesToRecallList(m_client.getFilesToRecall(maxFiles,byteSizeThreshold,reqReport));
+    filesToRecallList(m_client.getFilesToRecall(m_maxFiles,m_byteSizeThreshold,reqReport));
   LogContext::ScopedParam sp[]={
-    LogContext::ScopedParam(m_lc, Param("maxFiles", maxFiles)),
-    LogContext::ScopedParam(m_lc, Param("byteSizeThreshold",byteSizeThreshold)),
+    LogContext::ScopedParam(m_lc, Param("maxFiles", m_maxFiles)),
+    LogContext::ScopedParam(m_lc, Param("byteSizeThreshold",m_byteSizeThreshold)),
     LogContext::ScopedParam(m_lc, Param("transactionId", reqReport.transactionId)),
     LogContext::ScopedParam(m_lc, Param("connectDuration", reqReport.connectDuration)),
     LogContext::ScopedParam(m_lc, Param("sendRecvDuration", reqReport.sendRecvDuration))
