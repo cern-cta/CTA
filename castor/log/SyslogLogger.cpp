@@ -23,6 +23,7 @@
  *****************************************************************************/
 
 #include "castor/log/SyslogLogger.hpp"
+#include "castor/utils/utils.hpp"
 #include "h/Castor_limits.h"
 #include "h/getconfent.h"
 
@@ -346,57 +347,35 @@ std::string castor::log::SyslogLogger::buildSyslogHeader(
 // cleanString
 //-----------------------------------------------------------------------------
 std::string castor::log::SyslogLogger::cleanString(const std::string &s,
-  const bool replaceSpaces) throw() {
-  const std::string& spaces="\t\n\v\f\r ";
-  
-  //find first non white char
-  size_t beginpos = s.find_first_not_of(spaces);
-  std::string::const_iterator it1;
-  if (std::string::npos != beginpos)
-    it1 = beginpos + s.begin();
-  else
-    it1 = s.begin();
-
-  //find last non white char
-  std::string::const_iterator it2;
-  size_t endpos = s.find_last_not_of(spaces);
-  if (std::string::npos != endpos) 
-    it2 = endpos + 1 + s.begin();
-  else 
-    it2 = s.end();
-  
-  std::string result(it1, it2);
-  
- // if (s.begin() == it1 && it2 == s.end()) 
- //   result="";
+  const bool replaceUnderscores) const throw() {
+  // Trim both left and right white-space
+  std::string result = utils::trimString(s);
   
   for (std::string::iterator it = result.begin(); it != result.end(); ++it) {
-    
-    // Replace newline and tab with a space
-    if (replaceSpaces) {
-      if ('\t' == *it) 
-        *it = ' ';
-      
-      if ('\n' == *it) 
-        *it = ' ';
+
+    // Replace double quote with single quote
+    if ('"' == *it) {
+      *it = '\'';
     }
     
-    // Replace spaces with underscore
-    if (' ' == *it) 
+    // Replace newline and tab with a space
+    if ('\t' == *it || '\n' == *it) {
+      *it = ' ';
+    }
+
+    // If requested, replace spaces with underscores
+    if(replaceUnderscores && ' ' == *it) {
       *it = '_';
-    
-    // Replace double quotes with single quotes
-    if ('"' == *it) 
-      *it = '\'';
+    }
   }
+
   return result;
 }
 
 //-----------------------------------------------------------------------------
 // reducedSyslog
 //-----------------------------------------------------------------------------
-void castor::log::SyslogLogger::reducedSyslog(std::string msg)
-  throw() {
+void castor::log::SyslogLogger::reducedSyslog(std::string msg) throw() {
   // Truncate the log message if it exceeds the permitted maximum
   if(msg.length() > m_maxMsgLen) {
     msg.resize(m_maxMsgLen);

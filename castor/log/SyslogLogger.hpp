@@ -238,7 +238,7 @@ public:
     operator() (priority, msg, numParams, params);
   }
 
-private:
+protected:
 
   /**
    * Default size of a syslog message.
@@ -448,12 +448,12 @@ private:
    * Creates a clean version of the specified string ready for use with syslog.
    *
    * @param s The string to be cleaned.
-   * @param replaceSpaces Set to true if spaces should be replaced by
+   * @param replaceUnderscores Set to true if spaces should be replaced by
    * underscores.
    * @return A cleaned version of the string.
    */
-  std::string cleanString(const std::string &s, const bool replaceSpaces)
-    throw();
+  std::string cleanString(const std::string &s, const bool replaceUnderscores)
+    const throw();
 
   /**
    * A reduced version of syslog.  This method is able to set the message
