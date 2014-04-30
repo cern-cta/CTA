@@ -70,16 +70,16 @@ private:
   
   class DiskReadWorkerThread: private castor::tape::threading::Thread {
   public:
-    DiskReadWorkerThread(DiskReadThreadPool & manager):
-    m_threadID(m_parent.m_nbActiveThread++),m_parent(manager),m_lc(m_parent.m_lc) {
+    DiskReadWorkerThread(DiskReadThreadPool & parent):
+    m_parent(parent),m_threadID(parent.m_nbActiveThread++),m_lc(m_parent.m_lc) {
        log::LogContext::ScopedParam param(m_lc, log::Param("threadID", m_threadID));
        m_lc.log(LOG_INFO,"DiskWrite Thread created");
     }
     void startThreads() { start(); }
     void waitThreads() { wait(); }
   private:
-    const int m_threadID;
     DiskReadThreadPool & m_parent;
+    const int m_threadID;
     castor::log::LogContext m_lc;
     
     virtual void run();
