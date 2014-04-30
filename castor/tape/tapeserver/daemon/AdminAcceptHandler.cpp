@@ -130,24 +130,47 @@ size_t castor::tape::tapeserver::daemon::AdminAcceptHandler::marshalTapeStatRepl
     throw ex;
   }
 
-  size_t msg_len=(3*sizeof(uint32_t)) + sizeof(uint16_t) + body.number_of_drives*sizeof(struct castor::legacymsg::TapeStatDriveEntry); // upperbound: header + number_of_drives + drive entries
+  // Calculate the length of the message body
+  uint32_t len = sizeof(body.number_of_drives);
+  for(uint16_t i = 0; i<body.number_of_drives; i++) {
+    len +=
+      sizeof(body.drives[i].uid)         +
+      sizeof(body.drives[i].jid)         +
+      strlen(body.drives[i].dgn) + 1     +
+      sizeof(body.drives[i].up)          +
+      sizeof(body.drives[i].asn)         +
+      sizeof(body.drives[i].asn_time)    +
+      strlen(body.drives[i].drive) + 1   +
+      sizeof(body.drives[i].mode)        +
+      strlen(body.drives[i].lblcode) + 1 +
+      sizeof(body.drives[i].tobemounted) +
+      strlen(body.drives[i].vid) + 1     +
+      strlen(body.drives[i].vsn) + 1     +
+      sizeof(body.drives[i].cfseq);
+  }
+
+  // Calculate the total length of the message (header + body)
+  size_t totalLen =
+    sizeof(uint32_t) + // Magic number
+    sizeof(uint32_t) + // Request type
+    sizeof(uint32_t) + // Length of message body
+    len;
   
   // Check that the message header buffer is big enough
-  if(msg_len > dstLen) {
+  if(totalLen > dstLen) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to marshal TapeStatReplyMsgBody"
-      ": Buffer too small: required=" << msg_len << " actual=" << dstLen;
+      ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
   }
   
-  // Marshal the header
+  // Marshal message header
   char *p = dst;
-  io::marshalUint32(TPMAGIC, p);
-  io::marshalUint32(MSG_DATA, p);
-  char *msg_len_p = p;
-  io::marshalUint32(msg_len, p);
+  io::marshalUint32(TPMAGIC, p); // Magic number
+  io::marshalUint32(MSG_DATA, p); // Request type
+  io::marshalUint32(len, p); // Length of message body
   
-  // Marshal the body
+  // Marshal message body
   io::marshalUint16(body.number_of_drives, p);  
   
   // Marshal the info of each unit
@@ -168,11 +191,18 @@ size_t castor::tape::tapeserver::daemon::AdminAcceptHandler::marshalTapeStatRepl
   }
 
   // Calculate the number of bytes actually marshalled
-  const size_t body_length = (p - dst) - 12;  // we have to take out the header part from the count in this case
-  io::marshalUint32(body_length, msg_len_p);
+  const size_t nbBytesMarshalled = p - dst;
 
-  const size_t total_reply_length = (p - dst);
-  return total_reply_length;
+  // Check that the number of bytes marshalled was what was expected
+  if(totalLen != nbBytesMarshalled) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to marshal TapeStatReplyMsgBody"
+      ": Mismatch between expected total length and actual"
+      ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
+    throw ex;
+  }
+
+  return totalLen;
 }
 
 //------------------------------------------------------------------------------
