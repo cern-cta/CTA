@@ -45,7 +45,7 @@ public:
           tape::tapegateway::FileToMigrateStruct* file,size_t numberOfBlock,
           castor::tape::threading::AtomicFlag& errorFlag);
   
-  virtual void execute(log::LogContext& lc);
+  void execute(log::LogContext& lc);
 private:
   void hasAnotherTaskTailed() const {
     //if a task has signaled an error, we stop our job

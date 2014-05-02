@@ -77,7 +77,7 @@ public:
    * with finish() as the task injection is done from a single thread (the task
    * injector)
    */
-  virtual void push(DiskReadTask *task);
+  void push(DiskReadTask *task);
   
   /**
    * Injects as many "end" tasks as there are threads in the thread pool.

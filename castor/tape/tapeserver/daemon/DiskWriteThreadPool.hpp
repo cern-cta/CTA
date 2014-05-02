@@ -49,7 +49,7 @@ public:
   
   void startThreads();
   void waitThreads();
-  virtual void push(DiskWriteTask *t);
+  void push(DiskWriteTask *t);
   void finish();
 
 private:
