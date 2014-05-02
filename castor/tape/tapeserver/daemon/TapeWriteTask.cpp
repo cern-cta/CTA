@@ -32,11 +32,7 @@
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 
-namespace {  
-   unsigned long initAdler32Checksum() {
-     return  adler32(0L,Z_NULL,0);
-   }
-}
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
