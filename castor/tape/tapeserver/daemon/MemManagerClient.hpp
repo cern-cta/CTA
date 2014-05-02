@@ -25,7 +25,7 @@
 #pragma once
 
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/tape/tapeserver/daemon/Exception.hpp"
+#include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/exception/Exception.hpp"
 
 namespace castor {

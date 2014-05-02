@@ -26,7 +26,6 @@ protected:
   size_t m_filesProcessed;
   std::string m_vid;
   castor::log::LogContext m_logContext;
-  castor::tape::tapeserver::daemon::TaskInjector * m_taskInjector;
 public:
   void finish() { m_tasks.push(NULL); }
   void push(Task * t) { m_tasks.push(t); }

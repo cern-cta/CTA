@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/Exception.hpp"
+#include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 
@@ -36,7 +36,7 @@ class TapeReadTaskInterface {
 public:
   virtual void execute(castor::tape::tapeFile::ReadSession & /*rs*/,
     castor::log::LogContext & /*lc*/) { 
-    throw MemException("Tring to execute a non-execuatble TapeReadTask"); 
+    throw castor::tape::exceptions::MemException("Tring to execute a non-execuatble TapeReadTask"); 
   };
   virtual ~TapeReadTaskInterface() {}
 };

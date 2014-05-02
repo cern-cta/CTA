@@ -37,16 +37,36 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
+  
+  /**
+   * This class will execute the different tape read tasks.
+   * 
+   */
 class TapeReadSingleThread : public TapeSingleThreadInterface<TapeReadTaskInterface>{
 public:
+  /**
+   * 
+   * @param drive The drive which holds all we need in order to read later data from it
+   * @param vid Volume ID (tape number)
+   * @param maxFilesRequest : the maximul number of file the task injector may 
+   * ask to the client in a single requiest, this is used for the feedback loop
+   * @param lc : log context, for logging purpose
+   */
   TapeReadSingleThread(castor::tape::drives::DriveInterface & drive,
           const std::string vid, uint64_t maxFilesRequest,
           castor::log::LogContext & lc): 
    TapeSingleThreadInterface<TapeReadTaskInterface>(drive, vid, lc),
    m_maxFilesRequest(maxFilesRequest) {}
+   
    void setTaskInjector(TaskInjector * ti) { m_taskInjector = ti; }
 
 private:
+  
+  /**
+   * Pop a task from its tasks and if there is not enought tasks left, it will 
+   * ask the task injector for more 
+   * @return m_tasks.pop();
+   */
   TapeReadTaskInterface * popAndRequestMoreJobs() {
     castor::tape::threading::BlockingQueue<TapeReadTaskInterface *>::valueRemainingPair 
       vrp = m_tasks.popGetSize();
@@ -98,6 +118,8 @@ private:
   }
   
   uint64_t m_maxFilesRequest;
+  
+  castor::tape::tapeserver::daemon::TaskInjector * m_taskInjector;
 };
 }
 }

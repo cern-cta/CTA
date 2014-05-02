@@ -35,19 +35,37 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
+  
+  /**
+   * This class is in charge of 
+   * 
+   */
 class TapeReadTask: public TapeReadTaskInterface {
 public:
+  /**
+   * COnstructor
+   * @param ftr The file being recalled. We acquire the ownership on the pointer
+   * @param destination the task that will consume the memory blocks
+   * @param mm The memory manager to get free block
+   */
   TapeReadTask(castor::tape::tapegateway::FileToRecallStruct * ftr,
     DataConsumer & destination, RecallMemoryManager & mm): 
     m_fileToRecall(ftr), m_fifo(destination), m_mm(mm) {}
     
+    /**
+     * @param rs the read session holding all we need to be able to read from the tape
+     * @param lc the log context for .. logging purpose
+     * The actual function that will do the job.
+     * The main loop is :
+     * Acquire a free memory block from the memory manager , fill it, push it 
+     */
   virtual void execute(castor::tape::tapeFile::ReadSession & rs,
     castor::log::LogContext & lc) {
+
     using castor::log::Param;
     typedef castor::log::LogContext::ScopedParam ScopedParam;
-    // Placeholder for the tape file read
     
-    // Set the common context for all the omming logs (file info)
+    // Set the common context for all the coming logs (file info)
     ScopedParam sp0(lc, Param("NSHOSTNAME", m_fileToRecall->nshost()));
     ScopedParam sp1(lc, Param("NSFILEID", m_fileToRecall->fileid()));
     ScopedParam sp2(lc, Param("BlockId", castor::tape::tapeFile::BlockId::extract(*m_fileToRecall)));
@@ -56,8 +74,11 @@ public:
     
     // Read the file and transmit it
     bool stillReading = true;
+    //for counting how many mem blocks have used and how many tape blocks
+    //(because one mem block can hold several tape blocks
     int fileBlock = 0;
     int tapeBlock = 0;
+    
     MemBlock* mb=NULL;
     try {
       std::auto_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
@@ -125,7 +146,12 @@ public:
   }
 private:
   
-  // Open the file and manage failure (if any)
+  /** 
+   * Open the file on the tape. In case of failure, log and throw
+   * Copying the auto_ptr on the calling point will give us the ownership of the 
+   * object.
+   * @return if successful, return an auto_ptr on the ReadFile we want
+   */
   std::auto_ptr<castor::tape::tapeFile::ReadFile> openReadFile(
   castor::tape::tapeFile::ReadSession & rs, castor::log::LogContext & lc){
 
@@ -145,8 +171,20 @@ private:
     }
     return rf;
   }
+  
+  /**
+   * All we need to know about the file we are recalling
+   */
   std::auto_ptr<castor::tape::tapegateway::FileToRecallStruct> m_fileToRecall;
+  
+  /**
+   * The task (seen as a Y) that will consume all the blocks we read
+   */
   DataConsumer & m_fifo;
+  
+  /**
+   *  The MemoryManager from whom we get free memory blocks 
+   */
   RecallMemoryManager & m_mm;
 
 };

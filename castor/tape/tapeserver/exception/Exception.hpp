@@ -53,12 +53,22 @@ namespace tape {
       EndOfFile(const std::string & w): castor::exception::Exception(w) {}
       virtual ~EndOfFile() throw() {}
     };
-    
+    /**
+     * Used
+     */
     class ErrorFlag : public castor::exception::Exception {
     public:
       ErrorFlag(): castor::exception::Exception("Internal exception, should not be seen") {}
       virtual ~ErrorFlag() throw() {}
     };
+    
+    
+    class MemException: public castor::tape::Exception {
+    public:
+      MemException(const std::string & what): Exception(what) {}
+      virtual ~MemException() throw() {}
+    };
+
   }
 } //namespace tape
 } //namespace castor
