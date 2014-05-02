@@ -127,6 +127,10 @@ private:
    */
   int m_blockCount;
   
+  /**
+   * A shared flag among the the tasks and the task injector, set as true as soon
+   * as task failed to do its job 
+   */
   castor::tape::threading::AtomicFlag& m_errorFlag;
 };
 

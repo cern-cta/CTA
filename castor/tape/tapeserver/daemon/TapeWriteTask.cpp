@@ -38,19 +38,26 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-
+//------------------------------------------------------------------------------
+// Constructor
+//------------------------------------------------------------------------------
   TapeWriteTask::TapeWriteTask(int blockCount, tapegateway::FileToMigrateStruct* file,
           MigrationMemoryManager& mm,castor::tape::threading::AtomicFlag& errorFlag): 
   m_fileToMigrate(file),m_memManager(mm), m_fifo(blockCount),
           m_blockCount(blockCount),m_errorFlag(errorFlag)
   {
+    //register its fifo to the memory manager as a client in order to get mem block
     mm.addClient(&m_fifo); 
   }
-
+//------------------------------------------------------------------------------
+// fileSize
+//------------------------------------------------------------------------------
    int TapeWriteTask::fileSize() { 
     return m_fileToMigrate->fileSize(); 
   }
-  
+//------------------------------------------------------------------------------
+// execute
+//------------------------------------------------------------------------------  
    void TapeWriteTask::execute(castor::tape::tapeFile::WriteSession & session,
            MigrationReportPacker & reportPacker,castor::log::LogContext& lc) {
     using castor::log::LogContext;
@@ -120,22 +127,30 @@ namespace daemon {
       reportPacker.reportFailedJob(*m_fileToMigrate,e.getMessageValue(),e.code());
     } 
    }
-    
+//------------------------------------------------------------------------------
+// getFreeBlock
+//------------------------------------------------------------------------------    
   MemBlock * TapeWriteTask::getFreeBlock() { 
     return m_fifo.getFreeBlock(); 
   }
   
-
+//------------------------------------------------------------------------------
+// pushDataBlock
+//------------------------------------------------------------------------------   
    void TapeWriteTask::pushDataBlock(MemBlock *mb) {
     castor::tape::threading::MutexLocker ml(&m_producerProtection);
     m_fifo.pushDataBlock(mb);
   }
   
-
+//------------------------------------------------------------------------------
+// Destructor
+//------------------------------------------------------------------------------   
    TapeWriteTask::~TapeWriteTask() {
     castor::tape::threading::MutexLocker ml(&m_producerProtection);
   }
-
+//------------------------------------------------------------------------------
+// openWriteFile
+//------------------------------------------------------------------------------   
    std::auto_ptr<tapeFile::WriteFile> TapeWriteTask::openWriteFile(
    tape::tapeFile::WriteSession & session, log::LogContext& lc){
      std::auto_ptr<tape::tapeFile::WriteFile> output;
