@@ -24,17 +24,17 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/DiskReadTaskInterface.hpp"
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
+#include "castor/log/LogContext.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-class DiskReadTask :public DiskReadTaskInterface {
+class DiskReadTask {
 public:
   /**
    * @param destination The task that will consume data block we fill up

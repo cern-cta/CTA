@@ -40,7 +40,7 @@ namespace daemon {
       (*i)->wait();
     }
   }
-   void DiskWriteThreadPool::push(DiskWriteTaskInterface *t) { 
+   void DiskWriteThreadPool::push(DiskWriteTask *t) { 
      {//begin of critical section
        castor::tape::threading::MutexLocker ml(&m_counterProtection);
        if(NULL==t){
@@ -67,7 +67,7 @@ namespace daemon {
   void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
     m_lc.pushOrReplace(log::Param("thread", "diskWrite"));
     m_lc.log(LOG_INFO, "Starting DiskWriteWorkerThread");
-    std::auto_ptr<DiskWriteTaskInterface>  task;
+    std::auto_ptr<DiskWriteTask>  task;
     while(1) {
       task.reset(m_parentThreadPool. m_tasks.pop());
       if (NULL!=task.get()) {

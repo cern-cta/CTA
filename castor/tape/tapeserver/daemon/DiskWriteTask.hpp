@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/DiskWriteTaskInterface.hpp"
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
@@ -52,7 +51,7 @@ namespace daemon {
  * session. Being a consumer of memory blocks, it inherits from the DataConsumer class. It also
  * inherits several methods from the DiskWriteTask (TODO: do we really need this base class?).
  */
-class DiskWriteTask: public DiskWriteTaskInterface, public DataConsumer {
+class DiskWriteTask: public DataConsumer {
 public:
   /**
    * Constructor

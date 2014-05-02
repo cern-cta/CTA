@@ -1,7 +1,5 @@
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
-
-#include "castor/tape/tapeserver/daemon/DiskThreadPoolInterface.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include <gtest/gtest.h>
@@ -12,24 +10,13 @@ using namespace castor::tape::tapeserver::daemon;
 using namespace castor::tape;
 const int blockSize=4096;
 
-class FakeDiskWriteThreadPool : public DiskThreadPoolInterface<DiskWriteTaskInterface>
+class FakeDiskWriteThreadPool: public DiskWriteThreadPool
 {
 public:
-  using tapeserver::daemon::DiskThreadPoolInterface<DiskWriteTaskInterface>::m_tasks;
-  
-  virtual void finish() 
-  {
-    m_tasks.push(NULL);
-  }
-  virtual void push(DiskWriteTaskInterface* t){
-      m_tasks.push(t);
-  }
-  ~FakeDiskWriteThreadPool(){
-    const unsigned int size= m_tasks.size();
-    for(unsigned int i=0;i<size;++i){
-      delete m_tasks.pop();
-    }
-  }
+  using DiskWriteThreadPool::m_tasks;
+  FakeDiskWriteThreadPool(castor::log::LogContext & lc):
+    DiskWriteThreadPool(1,0,0,*((ReportPackerInterface<detail::Recall>*)NULL), lc){}
+  virtual ~FakeDiskWriteThreadPool() {};
 };
      
 class FakeSingleTapeReadThread : public TapeSingleThreadInterface<TapeReadTaskInterface>
@@ -63,7 +50,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   RecallMemoryManager mm(50U,50U,lc);
   castor::tape::drives::FakeDrive drive;
   FakeClient client(nbCalls);
-  FakeDiskWriteThreadPool diskWrite;
+  FakeDiskWriteThreadPool diskWrite(lc);
   FakeSingleTapeReadThread tapeRead(drive, "V12345", lc);
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);
@@ -78,7 +65,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   rti.finish();
   rti.waitThreads();
   
-  //pushed nbFile*2 files + 1 end of Work task
+  //pushed nbFile*2 files + 1 end of work
   ASSERT_EQ(nbFile*nbCalls+1,diskWrite.m_tasks.size());
   ASSERT_EQ(nbFile*nbCalls+1,tapeRead.m_tasks.size());
   
@@ -90,11 +77,11 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   
   for(int i=0;i<1;++i)
   {
-    DiskWriteTaskInterface* diskWriteTask=diskWrite.m_tasks.pop();
+    DiskWriteTask* diskWriteTask=diskWrite.m_tasks.pop();
     TapeReadTaskInterface* tapeReadTask=tapeRead.m_tasks.pop();
     
     //static_cast is needed otherwise compilation fails on SL5 with a raw NULL
-    ASSERT_EQ(static_cast<DiskWriteTaskInterface*>(NULL),diskWriteTask);
+    ASSERT_EQ(static_cast<DiskWriteTask*>(NULL),diskWriteTask);
     ASSERT_EQ(static_cast<TapeReadTaskInterface*>(NULL),tapeReadTask);
     delete diskWriteTask;
     delete tapeReadTask;
@@ -106,7 +93,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   RecallMemoryManager mm(50U,50U,lc);
   castor::tape::drives::FakeDrive drive;
   FakeClient client(0);
-  FakeDiskWriteThreadPool diskWrite;
+  FakeDiskWriteThreadPool diskWrite(lc);
   FakeSingleTapeReadThread tapeRead(drive, "V12345", lc);
   
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);

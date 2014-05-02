@@ -30,6 +30,7 @@
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/exception/Exception.hpp"
+#include "castor/log/LogContext.hpp"
 #include <iostream>
 
 namespace castor {

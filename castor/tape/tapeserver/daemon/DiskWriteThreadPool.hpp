@@ -24,15 +24,14 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/DiskWriteTaskInterface.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
 #include "castor/tape/tapeserver/daemon/TaskInjector.hpp"
-#include "DiskThreadPoolInterface.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
+#include "DiskWriteTask.hpp"
 #include <vector>
 #define __STDC_FORMAT_MACROS
 #include <inttypes.h>
@@ -42,7 +41,7 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-class DiskWriteThreadPool : public DiskThreadPoolInterface<DiskWriteTaskInterface> {
+class DiskWriteThreadPool {
 public:
   DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq,
            ReportPackerInterface<detail::Recall>& report,castor::log::LogContext lc);
@@ -50,7 +49,7 @@ public:
   
   void startThreads();
   void waitThreads();
-  virtual void push(DiskWriteTaskInterface *t);
+  virtual void push(DiskWriteTask *t);
   void finish();
 
 private:
@@ -83,7 +82,9 @@ private:
   
   std::vector<DiskWriteWorkerThread *> m_threads;
   castor::tape::threading::Mutex m_counterProtection;
- 
+protected:
+  castor::tape::threading::BlockingQueue<DiskWriteTask*> m_tasks;
+private:
   uint32_t m_maxFilesReq;
   uint64_t m_maxBytesReq;
   ReportPackerInterface<detail::Recall>& m_reporter;

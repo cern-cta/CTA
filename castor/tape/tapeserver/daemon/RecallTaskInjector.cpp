@@ -24,7 +24,7 @@ namespace daemon {
   
 RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTaskInterface> & tapeReader,
-        DiskThreadPoolInterface<DiskWriteTaskInterface> & diskWriter,
+        DiskWriteThreadPool & diskWriter,
         client::ClientInterface& client,
         uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc) : 
         m_thread(*this),m_memManager(mm),

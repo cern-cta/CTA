@@ -47,7 +47,7 @@ class MigrationTaskInjector: public TaskInjector {
 public:
 
   MigrationTaskInjector(MigrationMemoryManager & mm, 
-        DiskThreadPoolInterface<DiskReadTaskInterface> & diskReader,
+        DiskReadThreadPool & diskReader,
         TapeSingleThreadInterface<TapeWriteTaskInterface> & tapeWriter,client::ClientInterface& client,
         uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc);
 
@@ -144,7 +144,7 @@ private:
   
 
   TapeSingleThreadInterface<TapeWriteTaskInterface>& m_tapeWriter;
-  DiskThreadPoolInterface<DiskReadTaskInterface>& m_diskReader;
+  DiskReadThreadPool & m_diskReader;
   client::ClientInterface& m_client;
   
   /**

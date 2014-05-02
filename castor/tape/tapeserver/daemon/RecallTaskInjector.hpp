@@ -50,7 +50,7 @@ public:
 
   RecallTaskInjector(RecallMemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTaskInterface> & tapeReader,
-        DiskThreadPoolInterface<DiskWriteTaskInterface> & diskWriter,client::ClientInterface& client,
+        DiskWriteThreadPool & diskWriter,client::ClientInterface& client,
         uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc);
 
   
@@ -137,7 +137,7 @@ private:
   
 
   TapeSingleThreadInterface<TapeReadTaskInterface> & m_tapeReader;
-  DiskThreadPoolInterface<DiskWriteTaskInterface> & m_diskWriter;
+  DiskWriteThreadPool & m_diskWriter;
   client::ClientInterface& m_client;
   
   /**
