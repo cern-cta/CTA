@@ -43,7 +43,7 @@ public:
   Payload(size_t capacity):
   m_payload(new (std::nothrow) unsigned char[capacity]),m_totalCapacity(capacity),m_size(0) {
     if(NULL == m_payload) {
-      throw MemException("Failed to allocate memory for a new MemBlock!");
+      throw castor::tape::exceptions::MemException("Failed to allocate memory for a new MemBlock!");
     }
   }
   ~Payload(){
@@ -96,7 +96,7 @@ public:
       err << "Trying to read a tape file block with too little space left: BlockSize="
        << from.getBlockSize() << " remainingFreeSpace=" << remainingFreeSpace()
               << " (totalSize=" << m_totalCapacity << ")"; 
-      throw MemException(err.str());
+      throw castor::tape::exceptions::MemException(err.str());
     }
     size_t readSize;
     try {

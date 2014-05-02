@@ -27,7 +27,7 @@
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include "castor/tape/tapeserver/daemon/MemManagerClient.hpp"
-#include "castor/tape/tapeserver/daemon/Exception.hpp"
+#include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/exception/Exception.hpp"
 
 namespace castor {
@@ -48,13 +48,13 @@ public:
   ~DataFifo() throw() { castor::tape::threading::MutexLocker ml(&m_freeBlockProviderProtection); }
 
   /* Memory manager client interface implementation */
-  virtual bool provideBlock(MemBlock *mb) throw(MemException) {
+  virtual bool provideBlock(MemBlock *mb)  {
     bool ret;
     castor::tape::threading::MutexLocker ml(&m_freeBlockProviderProtection);
     {
       castor::tape::threading::MutexLocker ml(&m_countersMutex);
       if (m_freeBlocksProvided >= m_blocksNeeded)
-        throw MemException("DataFifo overflow on free blocks");
+        throw castor::tape::exceptions::MemException("DataFifo overflow on free blocks");
       m_freeBlocksProvided++;
       ret = m_freeBlocksProvided < m_blocksNeeded;
     }
@@ -71,7 +71,7 @@ public:
     {
       castor::tape::threading::MutexLocker ml(&m_countersMutex);
       if (m_dataBlocksPushed >= m_blocksNeeded)
-        throw MemException("DataFifo overflow on data blocks");
+        throw castor::tape::exceptions::MemException("DataFifo overflow on data blocks");
     }
     m_dataBlocks.push(mb);
     {

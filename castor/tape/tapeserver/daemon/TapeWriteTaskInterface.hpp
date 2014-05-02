@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/Exception.hpp"
+#include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
