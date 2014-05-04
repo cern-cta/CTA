@@ -123,6 +123,29 @@ void unmarshal(const char * &src, size_t &srcLen, TapeStatRequestMsgBody &dst) t
  * @param src    The source structure.
  * @return       The total length of the message (header + body).
  */
+size_t marshal(char *const dst, const size_t dstLen, const TapeStatReplyMsgBody &src) throw(castor::exception::Exception);
+
+/**
+ * Marshals the specified source message body structure and its implicit
+ * header into the specified destination buffer.
+ *
+ * @param dst The destination message buffer.
+ * @param src The source structure.
+ * @return    The total length of the message (header + body).
+ */
+template<int n> size_t marshal(char (&dst)[n], const TapeStatReplyMsgBody &src) throw(castor::exception::Exception) {
+  return marshal(dst, n, src);
+}
+
+/**
+ * Marshals the specified source message body structure and its implicit
+ * header into the specified destination buffer.
+ *
+ * @param dst    The destination message buffer.
+ * @param dstLen The length of the destination buffer.
+ * @param src    The source structure.
+ * @return       The total length of the message (header + body).
+ */
 size_t marshal(char *const dst, const size_t dstLen, const SetVidRequestMsgBody &src) throw(castor::exception::Exception);
 
 /**

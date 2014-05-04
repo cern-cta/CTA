@@ -118,18 +118,6 @@ private:
     throw(castor::exception::Exception);
   
   /**
-   * Marshals the specified source tape stat reply message structure into the
-   * specified destination buffer.
-   *
-   * @param dst    The destination buffer.
-   * @param dstLen The length of the destination buffer.
-   * @param rc     The return code to reply.
-   * @return       The total length of the header.
-   */
-  size_t marshalTapeStatReplyMsg(char *const dst, const size_t dstLen,
-    const legacymsg::TapeStatReplyMsgBody &body) throw(castor::exception::Exception);
-  
-  /**
    * Writes a reply message to the tape stat command connection.
    *
    * @param fd The file descriptor of the connection with the admin command.
