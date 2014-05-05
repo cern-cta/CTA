@@ -46,9 +46,9 @@ public:
   RecallReportPacker(client::ClientInterface & tg,unsigned int reportFilePeriod,
           log::LogContext lc);
   
-  ~RecallReportPacker();
+  virtual ~RecallReportPacker();
   
-  /**
+ /**
    * Create into the MigrationReportPacker a report for the successful migration
    * of migratedFile
    * @param migratedFile the file successfully migrated
