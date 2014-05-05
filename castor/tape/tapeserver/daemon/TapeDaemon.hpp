@@ -264,12 +264,35 @@ protected:
    * Runs the mount session.  This method is to be called within the child
    * process responsible for running the mount session.
    *
-   * This method calls exceptionThrowingMountSession() and converts any
-   * unexpected exceptions to appropriate calls to exit().
-   *
    * @param unitName The unit name of the tape drive.
    */
   void runMountSession(const std::string &unitName) throw();
+
+  /**
+   * Forks a label-session child-process for every tape drive entry in the
+   * tape drive catalogue that is waiting for such a fork to be carried out.
+   *
+   * There may be more than one child-process to fork because there may be
+   * more than one tape drive connected to the tape server and the previous
+   * call to m_reactor.handleEvents() handled requests to start a label
+   * session on more than one of the connected tape drives.
+   */
+  void forkLabelSessions() throw();
+
+  /**
+   * Forks a label-session child-process for the specified tape drive.
+   *
+   * @param unitName The unit name of the tape drive.
+   */
+  void forkLabelSession(const std::string &unitName) throw();
+
+  /**
+   * Runs the label session.  This method is to be called within the child
+   * process responsible for running the label session.
+   *
+   * @param unitName The unit name of the tape drive.
+   */
+  void runLabelSession(const std::string &unitName) throw();
 
   /**
    * Catalogue used to keep track of both the initial and current state of

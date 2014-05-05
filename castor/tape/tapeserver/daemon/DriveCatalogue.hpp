@@ -26,6 +26,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/tape/utils/TpconfigLine.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
 
@@ -120,7 +121,8 @@ public:
    * DRIVE_STATE_DOWN.
    */
   enum DriveState { DRIVE_STATE_INIT, DRIVE_STATE_DOWN, DRIVE_STATE_UP,
-    DRIVE_STATE_WAITFORK, DRIVE_STATE_RUNNING, DRIVE_STATE_WAITDOWN };
+    DRIVE_STATE_WAITFORK, DRIVE_STATE_WAITLABEL, DRIVE_STATE_RUNNING,
+    DRIVE_STATE_WAITDOWN };
 
   /**
    * Returns the string representation of the specified tape-drive state.
@@ -267,6 +269,25 @@ public:
   void receivedVdqmJob(const legacymsg::RtcpJobRqstMsgBody &job) throw(castor::exception::Exception);
 
   /**
+   * Moves the state of the specified tape drive to DRIVE_STATE_WAITLABEL.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_UP.
+   *
+   * The unit name of a tape drive is unique for a given host.  No two drives
+   * on the same host can have the same unit name.
+   *
+   * A tape drive cannot be a member of more than one device group name (DGN).
+   *
+   * This method throws an exception if the DGN field of the specified vdqm job
+   * does not match the value that was entered into the catalogue with the
+   * populateCatalogue() method.
+   *
+   * @param job The label job.
+   */
+  void receivedLabelJob(const legacymsg::TapeLabelRqstMsgBody &job) throw(castor::exception::Exception);
+
+  /**
    * Returns the job received from the vdqmd daemon for the specified tape
    * drive.
    *
@@ -289,6 +310,18 @@ public:
    * running the mount session.
    */
   void forkedMountSession(const std::string &unitName, const pid_t sessionPid) throw(castor::exception::Exception); 
+
+  /**
+   * Moves the state of the specified tape drive to DRIVE_STATE_RUNNING.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_WAITLABEL.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param sessionPid The process ID of the child process responsible for
+   * running the label session.
+   */
+  void forkedLabelSession(const std::string &unitName, const pid_t sessionPid) throw(castor::exception::Exception);
 
   /**
    * Returns the process ID of the child process responsible the mount session

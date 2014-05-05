@@ -395,6 +395,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop()
   throw(castor::exception::Exception) {
   while(handleEvents()) {
     forkMountSessions();
+    forkLabelSessions();
   }
 }
 
@@ -644,4 +645,56 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
     m_log(LOG_ERR, "Aborting mount session: Caught an unexpected and unknown exception", params);
     exit(1);
   }
+}
+
+//------------------------------------------------------------------------------
+// forkLabelSessions
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSessions() throw() {
+  const std::list<std::string> unitNames =
+    m_driveCatalogue.getUnitNames(DriveCatalogue::DRIVE_STATE_WAITLABEL);
+
+  for(std::list<std::string>::const_iterator itor = unitNames.begin();
+    itor != unitNames.end(); itor++) {
+    forkLabelSession(*itor);
+  }
+}
+
+//------------------------------------------------------------------------------
+// forkLabelSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(const std::string &unitName) throw() {
+  m_log.prepareForFork();
+  const pid_t sessionPid = fork();
+
+  // If fork failed
+  if(0 > sessionPid) {
+    // Log an error message and return
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    log::Param params[] = {log::Param("message", errBuf)};
+    m_log(LOG_ERR, "Failed to fork label session for tape drive", params);
+
+  // Else if this is the parent process
+  } else if(0 < sessionPid) {
+    m_driveCatalogue.forkedLabelSession(unitName, sessionPid);
+
+  // Else this is the child process
+  } else {
+    // Clear the reactor which in turn will close all of the open
+    // file-descriptors owned by the event handlers
+    m_reactor.clear();
+
+    runLabelSession(unitName);
+
+    // The runLabelSession() should call exit() and should therefore never
+    // return
+    m_log(LOG_ERR, "runLabelSession() returned unexpectedly");
+  }
+}
+
+//------------------------------------------------------------------------------
+// runLabelSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(const std::string &unitName) throw() {
 }

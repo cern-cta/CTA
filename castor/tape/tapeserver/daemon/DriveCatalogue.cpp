@@ -35,13 +35,14 @@
 const char *castor::tape::tapeserver::daemon::DriveCatalogue::drvState2Str(
   const DriveState state) throw() {
   switch(state) {
-  case DRIVE_STATE_INIT    : return "INIT";
-  case DRIVE_STATE_DOWN    : return "DOWN";
-  case DRIVE_STATE_UP      : return "UP";
-  case DRIVE_STATE_WAITFORK: return "WAITFORK";
-  case DRIVE_STATE_RUNNING : return "RUNNING";
-  case DRIVE_STATE_WAITDOWN: return "WAITDOWN";
-  default                  : return "UNKNOWN";
+  case DRIVE_STATE_INIT     : return "INIT";
+  case DRIVE_STATE_DOWN     : return "DOWN";
+  case DRIVE_STATE_UP       : return "UP";
+  case DRIVE_STATE_WAITFORK : return "WAITFORK";
+  case DRIVE_STATE_WAITLABEL: return "WAITLABEL";
+  case DRIVE_STATE_RUNNING  : return "RUNNING";
+  case DRIVE_STATE_WAITDOWN : return "WAITDOWN";
+  default                   : return "UNKNOWN";
   }
 }
 
@@ -525,6 +526,12 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedVdqmJob(const leg
 }
 
 //-----------------------------------------------------------------------------
+// receivedLabelJob
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogue::receivedLabelJob(const legacymsg::TapeLabelRqstMsgBody &job) throw(castor::exception::Exception) {
+}
+
+//-----------------------------------------------------------------------------
 // getJob
 //-----------------------------------------------------------------------------
 const castor::legacymsg::RtcpJobRqstMsgBody &castor::tape::tapeserver::daemon::DriveCatalogue::getJob(const std::string &unitName) const throw(castor::exception::Exception) {
@@ -580,6 +587,12 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::forkedMountSession(const 
       throw ex;
     }
   }
+}
+
+//-----------------------------------------------------------------------------
+// forkedLabelSession
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogue::forkedLabelSession(const std::string &unitName, const pid_t sessionPid) throw(castor::exception::Exception) {
 }
 
 //-----------------------------------------------------------------------------
