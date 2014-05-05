@@ -61,21 +61,21 @@ public:
    *     |    send VDQM_UNIT_UP     ------------------                     |
    *      ------------------------>|       UP         |                    |
    *                                ------------------                     |
-   *                                |                ^                     |
-   *                                |                |                     |
-   *                                | vdqm job       |                     |
-   *                                |                |                     |
-   *                                v                |                     |
-   *                        ------------------       | SIGCHLD             |
-   *                       |    WAITFORK      |      | [success]           |
-   *                        ------------------       |                     |
-   *                                |                |                     |
-   *                                |                |                     |
-   *                                | forked         |                     |
-   *                                |                |                     |
-   *                                v                |                     |
-   *                                ------------------    SIGCHLD [fail]   |
-   *                               |     RUNNING      |--------------------|
+   *                                |  |             ^                     |
+   *              -----------------    |             |                     |
+   *             | label job           | vdqm job    |                     |
+   *             |                     |             |                     |
+   *             v                     v             |                     |
+   *        -----------        ------------------    | SIGCHLD             |
+   *       | WAITLABEL |      |    WAITFORK      |   | [success]           |
+   *        -----------        ------------------    |                     |
+   *             |                  |                |                     |
+   *             |                  |                |                     |
+   *             | forked           | forked         |                     |
+   *             |                  |                |                     |
+   *             |                  v                |                     |
+   *             |                  ------------------    SIGCHLD [fail]   |
+   *              ---------------->|     RUNNING      |--------------------|
    *                                ------------------                     |
    *                                |                ^                     |
    *                                |                |                     |
@@ -119,6 +119,16 @@ public:
    * tape session continues to run in the DRIVE_STATE_WAITDOWN state, however
    * when the tape session is finished the state of the drive is moved to
    * DRIVE_STATE_DOWN.
+   *
+   * The tape daemon can receive a job to label a tape in a drive from an
+   * administration client when the state of that drive is DRIVE_STATE_UP.  On
+   * reception of the job the daemon prepares to fork a child process and
+   * enters the DRIVE_STATE_WAITLABEL state.
+   *
+   * Once the child process is forked the drive enters the DRIVE_STATE_RUNNING
+   * state.  The child process is responsible for running a label session.
+   * During such a sesion a tape will be mounted, the tape will be labeled and
+   * finally the tape will be dismounted.
    */
   enum DriveState { DRIVE_STATE_INIT, DRIVE_STATE_DOWN, DRIVE_STATE_UP,
     DRIVE_STATE_WAITFORK, DRIVE_STATE_WAITLABEL, DRIVE_STATE_RUNNING,
