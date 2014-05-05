@@ -35,9 +35,7 @@ namespace daemon {
 class TapeReadTaskInterface {
 public:
   virtual void execute(castor::tape::tapeFile::ReadSession & /*rs*/,
-    castor::log::LogContext & /*lc*/) { 
-    throw castor::tape::exceptions::MemException("Tring to execute a non-execuatble TapeReadTask"); 
-  };
+    castor::log::LogContext & /*lc*/) =0;
   virtual ~TapeReadTaskInterface() {}
 };
 }
