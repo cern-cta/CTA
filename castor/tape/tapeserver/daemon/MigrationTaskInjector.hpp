@@ -46,18 +46,26 @@ namespace daemon {
 class MigrationTaskInjector: public TaskInjector {  
 public:
 
+  /**
+   * Constructor
+   * @param mm The memory manager for accessing memory blocks. 
+   * The Newly created tapeWriter Tasks will register themselves 
+   * as a client to it. 
+   * @param diskReader the one object that will hold all the threads which will be executing 
+   * disk-reading tasks
+   * @param tapeWriter the one object that will hold the thread which will be executing 
+   * tape-writing tasks
+   * @param client The one that will give us files to migrate 
+   * @param maxFiles maximal number of files we may request to the client at once 
+   * @param byteSizeThreshold maximal number of cumulated byte 
+   * we may request to the client. at once
+   * @param lc log context, copied because of the threading mechanism 
+   */
   MigrationTaskInjector(MigrationMemoryManager & mm, 
         DiskReadThreadPool & diskReader,
         TapeSingleThreadInterface<TapeWriteTaskInterface> & tapeWriter,client::ClientInterface& client,
         uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc);
 
- 
-  /**
-   * Create all the tape-read and write-disk tasks for set of files to retrieve
-   * @param jobs
-   */
-  void injectBulkMigrations(const std::vector<castor::tape::tapegateway::FileToMigrateStruct*>& jobs);
-  
   /**
    * Wait for the inner thread to finish
    */
@@ -72,8 +80,6 @@ public:
    * DiskReadThreadPool. When DiskReadThreadPool::popAndRequestMoreJobs detects 
    * it has not enough jobs to do to, it is class to push a request 
    * in order to (try) fill up the queue. 
-   * @param maxFiles  files count requested.
-   * @param maxBlocks total bytes count at least requested
    * @param lastCall true if we want the new request to be a last call. 
    * See Request::lastCall 
    */
@@ -83,8 +89,6 @@ public:
    * Contact the client to make sure there are really something to do
    * Something = migration at most  maxFiles or at least maxBytes
    * 
-   * @param maxFiles files count requested.
-   * @param byteSizeThreshold total bytes count  at least requested
    * @return true if there are jobs to be done, false otherwise 
    */
   bool synchronousInjection();
@@ -95,6 +99,11 @@ public:
    */
   void finish();
 private:
+  /**
+   * Create all the tape-read and write-disk tasks for set of files to retrieve
+   * @param jobs the list of FileToMigrateStructs we have to transform in a pair of task
+   */
+  void injectBulkMigrations(const std::vector<castor::tape::tapegateway::FileToMigrateStruct*>& jobs);
   
   /*Compute how many blocks are needed for a file of fileSize bytes*/
   size_t howManyBlocksNeeded(size_t fileSize,size_t blockCapacity){
@@ -139,12 +148,18 @@ private:
   private:
     MigrationTaskInjector & m_parent;
   } m_thread;
-
+  ///The memory manager for accessing memory blocks. 
   MigrationMemoryManager & m_memManager;
   
-
+  ///the one object that will hold the thread which will be executing 
+  ///tape-writing tasks
   TapeSingleThreadInterface<TapeWriteTaskInterface>& m_tapeWriter;
+  
+  ///the one object that will hold all the threads which will be executing 
+  ///disk-reading tasks
   DiskReadThreadPool & m_diskReader;
+  
+  /// the client who is sending us jobs
   client::ClientInterface& m_client;
   
   /**
@@ -153,14 +168,20 @@ private:
   castor::log::LogContext m_lc;
   
   castor::tape::threading::Mutex m_producerProtection;
+  
+  ///all the requests for work we will forward to the client.
   castor::tape::threading::BlockingQueue<Request> m_queue;
   
+  /** a shared flag among the all tasks related to migration, set as true 
+   * as soon a single task encounters a failure. That way we go into a degraded mode
+   * where we only circulate memory without writing anything on tape
+   */
   castor::tape::threading::AtomicFlag m_errorFlag;
 
-  //maximal number of files requested. at once
+  /// maximal number of files requested. at once
   const uint64_t m_maxFiles;
   
-  //maximal number of cumulated byte requested. at once
+  /// maximal number of cumulated byte requested. at once
   const uint64_t m_maxByte;
 };
 

@@ -11,7 +11,7 @@ namespace daemon {
 // constructor
 //------------------------------------------------------------------------------
 DiskWriteThreadPool::DiskWriteThreadPool(int nbThread,
-        ReportPackerInterface<detail::Recall>& report,castor::log::LogContext lc):
+        RecallReportPacker& report,castor::log::LogContext lc):
         m_reporter(report),m_lc(lc)
 {
   m_lc.pushOrReplace(castor::log::Param("threadCount", nbThread));

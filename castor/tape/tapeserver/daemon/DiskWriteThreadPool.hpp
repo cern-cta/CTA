@@ -57,7 +57,7 @@ public:
    * be no side effect on the caller's logs.
    */
   DiskWriteThreadPool(int nbThread, 
-          ReportPackerInterface<detail::Recall>& reportPacker,
+          RecallReportPacker& reportPacker,
           castor::log::LogContext lc);
   /**
    * Destructor: we suppose the threads are no running (waitThreads() should
@@ -128,7 +128,7 @@ protected:
 private:
   /** Reference to the report packer where tasks report the result of their 
    * individual files and the end of session (for the last thread) */
-  ReportPackerInterface<detail::Recall>& m_reporter;
+  RecallReportPacker& m_reporter;
   
   /** logging context that will be copied by each thread for individual context */
   castor::log::LogContext m_lc;
