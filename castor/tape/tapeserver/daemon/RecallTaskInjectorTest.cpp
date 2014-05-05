@@ -15,7 +15,7 @@ class FakeDiskWriteThreadPool: public DiskWriteThreadPool
 public:
   using DiskWriteThreadPool::m_tasks;
   FakeDiskWriteThreadPool(castor::log::LogContext & lc):
-    DiskWriteThreadPool(1,0,0,*((ReportPackerInterface<detail::Recall>*)NULL), lc){}
+    DiskWriteThreadPool(1,*((ReportPackerInterface<detail::Recall>*)NULL), lc){}
   virtual ~FakeDiskWriteThreadPool() {};
 };
      
