@@ -50,13 +50,13 @@ ReportPackerInterface<detail::Recall>(tg,lc),
 RecallReportPacker::~RecallReportPacker(){
 
 }
-void RecallReportPacker::reportCompletedJob(const tapegateway::FileToRecallStruct& recalledFile,unsigned long checksum){
+void RecallReportPacker::reportCompletedJob(const FileStruct& recalledFile,unsigned long checksum){
   std::auto_ptr<Report> rep(new ReportSuccessful(recalledFile,checksum));
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
   
-void RecallReportPacker::reportFailedJob(const tapegateway::FileToRecallStruct & recalledFile
+void RecallReportPacker::reportFailedJob(const FileStruct & recalledFile
 ,const std::string& msg,int error_code){
   std::auto_ptr<Report> rep(new ReportError(recalledFile,msg,error_code));
   castor::tape::threading::MutexLocker ml(&m_producterProtection);

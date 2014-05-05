@@ -9,7 +9,7 @@ namespace daemon {
 
 
   DiskWriteThreadPool::DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq,
-          ReportPackerInterface<detail::Recall>& report,castor::log::LogContext lc):
+         RecallReportPacker& report,castor::log::LogContext lc):
           m_maxFilesReq(maxFilesReq), m_maxBytesReq(maxBlocksReq),
           m_reporter(report),m_lc(lc)
   {

@@ -44,7 +44,7 @@ namespace daemon {
 class DiskWriteThreadPool {
 public:
   DiskWriteThreadPool(int nbThread, int maxFilesReq, int maxBlocksReq,
-           ReportPackerInterface<detail::Recall>& report,castor::log::LogContext lc);
+          RecallReportPacker& report,castor::log::LogContext lc);
   ~DiskWriteThreadPool();
   
   void startThreads();
@@ -87,7 +87,7 @@ protected:
 private:
   uint32_t m_maxFilesReq;
   uint64_t m_maxBytesReq;
-  ReportPackerInterface<detail::Recall>& m_reporter;
+ RecallReportPacker& m_reporter;
   
   //logging context that will copied by each thread
   castor::log::LogContext m_lc;

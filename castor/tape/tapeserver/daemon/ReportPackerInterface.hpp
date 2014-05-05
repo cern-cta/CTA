@@ -41,7 +41,7 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-  
+    
 namespace detail{
   struct Recall{};
   struct Migration{};
@@ -64,47 +64,17 @@ namespace detail{
 }
   
 template <class PlaceHolder> class ReportPackerInterface{
-public:
+  protected :
   typedef typename detail::HelperTrait<PlaceHolder>::FileReportList FileReportList;
   typedef typename detail::HelperTrait<PlaceHolder>::FileStruct FileStruct;
   typedef typename detail::HelperTrait<PlaceHolder>::FileSuccessStruct FileSuccessStruct;
   typedef typename detail::HelperTrait<PlaceHolder>::FileErrorStruct FileErrorStruct;
-  
 
-  ReportPackerInterface(client::ClientInterface & tg,log::LogContext lc):
+
+    ReportPackerInterface(client::ClientInterface & tg,log::LogContext lc):
   m_client(tg),m_lc(lc),m_listReports(new FileReportList)
   {}
   
-  virtual ~ReportPackerInterface(){}
-  
-  /**
-   * Create into the MigrationReportPacker a report for the successful migration
-   * of migratedFile
-   * @param migratedFile the file successfully migrated
-   */
-  virtual void reportCompletedJob(const FileStruct&,unsigned long checksum) =0;
-  
-  /**
-   * Create into the MigrationReportPacker a report for the failled migration
-   * of migratedFile
-   * @param migratedFile the file which failled 
-   */
-  virtual void reportFailedJob(const FileStruct& ,const std::string&,int)=0;
-       
-  /**
-   * Create into the MigrationReportPacker a report for the nominal end of session
-   */
-  virtual void reportEndOfSession() =0;
-  
-  /**
-   * Create into the MigrationReportPacker a report for an erroneous end of session
-   * @param msg The error message 
-   * @param error_code The error code given by the drive
-   */
-  virtual void reportEndOfSessionWithErrors(const std::string,int) =0;
-  
-  
-  protected:
   /**
    * Log a set of files independently of the success/failure 
    * @param c The set of files to log

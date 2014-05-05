@@ -35,9 +35,10 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-class RecallReportPacker : public ReportPackerInterface<detail::Recall> {
+class RecallReportPacker : protected ReportPackerInterface<detail::Recall> {
 public:
-  RecallReportPacker(client::ClientInterface & tg,unsigned int reportFilePeriod,log::LogContext lc);
+  RecallReportPacker(client::ClientInterface & tg,unsigned int reportFilePeriod,
+          log::LogContext lc);
   
   ~RecallReportPacker();
   
@@ -46,27 +47,27 @@ public:
    * of migratedFile
    * @param migratedFile the file successfully migrated
    */
-  void reportCompletedJob(const tapegateway::FileToRecallStruct& recalledFile,
+  virtual void reportCompletedJob(const FileStruct& recalledFile,
   unsigned long checksum);
   
   /**
-   * Create into the MigrationReportPacker a report for the failled migration
+   * Create into the MigrationReportPacker a report for the failed migration
    * of migratedFile
-   * @param migratedFile the file which failled 
+   * @param migratedFile the file which failed 
    */
-  void reportFailedJob(const tapegateway::FileToRecallStruct & recalledFile,const std::string& msg,int error_code);
+  virtual void reportFailedJob(const FileStruct & recalledFile,const std::string& msg,int error_code);
        
   /**
    * Create into the MigrationReportPacker a report for the nominal end of session
    */
-  void reportEndOfSession();
+  virtual void reportEndOfSession();
   
   /**
    * Create into the MigrationReportPacker a report for an erroneous end of session
    * @param msg The error message 
    * @param error_code The error code given by the drive
    */
-  void reportEndOfSessionWithErrors(const std::string msg,int error_code);
+  virtual void reportEndOfSessionWithErrors(const std::string msg,int error_code);
   
   void startThreads() { m_workerThread.start(); }
   void waitThread() { m_workerThread.wait(); }
@@ -95,7 +96,7 @@ private:
   public:
     ReportError(const FileStruct& file,std::string msg,int error_code):
     Report(false),m_migratedFile(file),m_error_msg(msg),m_error_code(error_code){}
-    
+
     virtual void execute(RecallReportPacker& _this);
   };
   class ReportEndofSession : public Report {
@@ -109,7 +110,7 @@ private:
   public:
     ReportEndofSessionWithErrors(std::string msg,int error_code):
     Report(true),m_message(msg),m_error_code(error_code){}
-
+  
     virtual void execute(RecallReportPacker& _this);
   };
   
