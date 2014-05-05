@@ -35,19 +35,40 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-/* A fixed payload FIFO: at creation time, we know how many blocks will go through the FIFO.
-  The provide block method return true as long as it still needs more block. False when last
-  block is provided (and throws an exception after that).
+/* A fixed payload FIFO: at creation time, we know how many blocks will go 
+ * through the FIFO (its size). The provide block method return true as long as 
+ * it still needs more block. False when last block is provided (and throws an 
+ * exception after that).
+
+ * Sum up                                                                               
+                                          
+                +------------------------------+                |
+    getFreeBlock|                              |  provideBlock  |
+     <----------+                              <----------------+   
+                |      DataFifo                |              
+                |                              |              
+     +---------->                              +--------------->   
+  pushDataBlock +------------------------------+  getDataBlock 
+                                                                 
  */
 class DataFifo : public MemoryManagerClient {
 public:
-
-  DataFifo(int bn) throw() : m_blocksNeeded(bn), m_freeBlocksProvided(0),
+ /**
+  * Constructor
+  * @param bn :how many memory block we want in the fifo (its size)
+  */
+  DataFifo(int bn)  : m_blocksNeeded(bn), m_freeBlocksProvided(0),
   m_dataBlocksPushed(0), m_dataBlocksPopped(0) {};
   
-  ~DataFifo() throw() { castor::tape::threading::MutexLocker ml(&m_freeBlockProviderProtection); }
+  ~DataFifo() throw() { 
+    castor::tape::threading::MutexLocker ml(&m_freeBlockProviderProtection); 
+  }
 
-  /* Memory manager client interface implementation */
+  /* 
+   * Return a memory block to the object
+   * @param mb : the memory block to be returned 
+   * @return true   true if not all the needed blocks has not yet been provided 
+   */
   virtual bool provideBlock(MemBlock *mb)  {
     bool ret;
     castor::tape::threading::MutexLocker ml(&m_freeBlockProviderProtection);
@@ -62,12 +83,20 @@ public:
     return ret;
   }
   
-  /* Rest of the data Fifo interface. */
-  MemBlock * getFreeBlock()  throw(castor::exception::Exception) {
+  /* 
+   * Get a free block 
+   * @return a free block
+   */
+  MemBlock * getFreeBlock() {
     return m_freeBlocks.pop();
   }
 
-  void pushDataBlock(MemBlock *mb) throw(castor::exception::Exception) {
+  /**
+   * Push into the object a memory block that has been filled somehow  :
+   * tape/disk reading
+   * @param mb the block we want to push back 
+   */
+  void pushDataBlock(MemBlock *mb)  {
     {
       castor::tape::threading::MutexLocker ml(&m_countersMutex);
       if (m_dataBlocksPushed >= m_blocksNeeded)
@@ -80,7 +109,12 @@ public:
     }
   }
 
-  MemBlock * popDataBlock() throw(castor::exception::Exception) {
+  /**
+   * Push into the object a memory block that has been filled somehow  :
+   * tape/disk reading
+   * @param mb the block we want to push back 
+   */
+  MemBlock * popDataBlock() {
     MemBlock *ret = m_dataBlocks.pop();
     {
       castor::tape::threading::MutexLocker ml(&m_countersMutex);
@@ -89,7 +123,11 @@ public:
     return ret;
   }
 
-  bool finished() throw() {
+  /**
+   * Check if we have finish
+   * @return Return true if we have popped more data blocks than its size
+   */
+  bool finished() {
     // No need to lock because only one int variable is read.
     //TODO : are we sure the operation is atomic ? It is plateform dependant
     castor::tape::threading::MutexLocker ml(&m_countersMutex);
@@ -99,11 +137,23 @@ public:
 private:
   castor::tape::threading::Mutex m_countersMutex;
   castor::tape::threading::Mutex m_freeBlockProviderProtection;
+  
+  ///the number of memory blocks we want to be provided to the object (its size).
   const int m_blocksNeeded;
+  
+  ///how many blocks have been currently provided 
   volatile int m_freeBlocksProvided;
+  
+  ///how many data blocks have been currently pushed
   volatile int m_dataBlocksPushed;
+
+  ///how many data blocks have been currently taken
   volatile int m_dataBlocksPopped;
+  
+    ///thread sage storage of all free blocks
   castor::tape::threading::BlockingQueue<MemBlock *> m_freeBlocks;
+  
+  ///thread sage storage of all blocks filled with data
   castor::tape::threading::BlockingQueue<MemBlock *> m_dataBlocks;
 };
 

@@ -37,6 +37,12 @@ namespace daemon {
   
 class RecallReportPacker : protected ReportPackerInterface<detail::Recall> {
 public:
+  /**
+   * Constructor
+   * @param tg the client to whom we report the success/failures 
+   * @param reportFilePeriod how often  do we report to the client
+   * @param lc log context, copied du to threads
+   */
   RecallReportPacker(client::ClientInterface & tg,unsigned int reportFilePeriod,
           log::LogContext lc);
   
@@ -46,6 +52,7 @@ public:
    * Create into the MigrationReportPacker a report for the successful migration
    * of migratedFile
    * @param migratedFile the file successfully migrated
+   * @param checksum the checksum the DWT has computed for the file 
    */
   virtual void reportCompletedJob(const FileStruct& recalledFile,
   unsigned long checksum);
@@ -54,6 +61,8 @@ public:
    * Create into the MigrationReportPacker a report for the failed migration
    * of migratedFile
    * @param migratedFile the file which failed 
+   * @param msg the message error with the failure 
+   * @param error_code the error code with the failure 
    */
   virtual void reportFailedJob(const FileStruct & recalledFile,const std::string& msg,int error_code);
        
@@ -68,11 +77,18 @@ public:
    * @param error_code The error code given by the drive
    */
   virtual void reportEndOfSessionWithErrors(const std::string msg,int error_code);
-  
+  /**
+   * Start the inner thread
+   */
   void startThreads() { m_workerThread.start(); }
+  
+  /**
+   * Stop the inner thread
+   */
   void waitThread() { m_workerThread.wait(); }
   
 private:
+  //inner classes use to store content while receiving a report 
   class Report {
     const bool m_endNear;
   public:
@@ -121,6 +137,9 @@ private:
     virtual void run();
   } m_workerThread;
   
+  /**
+   * Function periodically called to report the results to the client
+   */
   void flush();
   
   castor::tape::threading::Mutex m_producterProtection;
@@ -130,7 +149,16 @@ private:
    */
   castor::tape::threading::BlockingQueue<Report*> m_fifo;
   
+  /**
+   How often do we report to the client
+   */
   unsigned int m_reportFilePeriod;
+  
+  /**
+   * Is set as true as soon as we process a reportFailedJob
+   * That we can do a sanity check to make sure we always call 
+   * the right end of the session  
+   */
   bool m_errorHappened;
 };
 

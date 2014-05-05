@@ -47,7 +47,19 @@ namespace daemon {
  */
 class RecallTaskInjector: public TaskInjector {  
 public:
-
+ /**
+  * Constructor
+  * @param mm the memory manager from whom the TRT will be pulling blocks
+  * @param tapeReader the one object that will hold the thread which will be executing 
+  * tape-reading tasks
+  * @param diskWriter the one object that will hold all the threads which will be executing 
+  * disk-writing tasks
+  * @param client The one that will give us files to recall 
+  * @param maxFiles maximal number of files we may request to the client at once 
+  * @param byteSizeThreshold maximal number of cumulated byte 
+  * we may request to the client. at once
+  * @param lc  copied because of the threading mechanism 
+  */
   RecallTaskInjector(RecallMemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTaskInterface> & tapeReader,
         DiskWriteThreadPool & diskWriter,client::ClientInterface& client,
@@ -122,6 +134,9 @@ private:
      */
     const bool lastCall;
     
+    /**
+     * Set as true if the loop back process notified to us the end 
+     */
     const bool end;
   };
   
@@ -132,12 +147,18 @@ private:
   private:
     RecallTaskInjector & _this;
   } m_thread;
-
+  ///The memory manager for accessing memory blocks. 
   RecallMemoryManager & m_memManager;
   
-
+  ///the one object that will hold the thread which will be executing 
+  ///tape-reading tasks
   TapeSingleThreadInterface<TapeReadTaskInterface> & m_tapeReader;
+  
+  ///the one object that will hold all the threads which will be executing 
+  ///disk-writing tasks
   DiskWriteThreadPool & m_diskWriter;
+  
+  /// the client who is sending us jobs
   client::ClientInterface& m_client;
   
   /**

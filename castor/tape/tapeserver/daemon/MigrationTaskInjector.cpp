@@ -27,7 +27,14 @@
 #include "log.h"
 
 namespace{
-
+  /*
+   * function to set a NULL the owning FilesToMigrateList  of a FileToMigrateStruct
+   * Indeed, a clone of a structure will only do a shallow copy (sic).
+   * Otherwise at the second destruction the object will try to remove itself 
+   * from the owning list and then boom !
+   * @param ptr a pointer to an object to change
+   * @return the parameter ptr 
+   */
   castor::tape::tapegateway::FileToMigrateStruct* removeOwningList(castor::tape::tapegateway::FileToMigrateStruct* ptr){
     ptr->setFilesToMigrateList(0);
     return ptr;
@@ -42,7 +49,9 @@ namespace tape{
 namespace tapeserver{
 namespace daemon {
 
-
+//------------------------------------------------------------------------------
+//Constructor
+//------------------------------------------------------------------------------
   MigrationTaskInjector::MigrationTaskInjector(MigrationMemoryManager & mm, 
           DiskReadThreadPool & diskReader,
           TapeSingleThreadInterface<TapeWriteTaskInterface> & tapeWriter,client::ClientInterface& client,
@@ -55,11 +64,11 @@ namespace daemon {
   }
   
  
-  /**
-   * Create all the tape-read and write-disk tasks for set of files to retrieve
-   * @param jobs to transform into tasks
-   */
-  void MigrationTaskInjector::injectBulkMigrations(const std::vector<tapegateway::FileToMigrateStruct*>& jobs){
+//------------------------------------------------------------------------------
+//injectBulkMigrations
+//------------------------------------------------------------------------------
+  void MigrationTaskInjector::injectBulkMigrations(
+  const std::vector<tapegateway::FileToMigrateStruct*>& jobs){
 
     const u_signed64 blockCapacity = m_memManager.blockCapacity();
     for(std::vector<tapegateway::FileToMigrateStruct*>::const_iterator it= jobs.begin();it!=jobs.end();++it){
@@ -88,27 +97,32 @@ namespace daemon {
     }
   }
   
-  /**
-   * Wait for the inner thread to finish
-   */
+//------------------------------------------------------------------------------
+//injectBulkMigrations
+//------------------------------------------------------------------------------
   void MigrationTaskInjector::waitThreads(){
     m_thread.wait();
   }
   
-  /**
-   * Start the inner thread 
-   */
+//------------------------------------------------------------------------------
+//injectBulkMigrations
+//------------------------------------------------------------------------------
   void MigrationTaskInjector::startThreads(){
     m_thread.start();
   }
   
+//------------------------------------------------------------------------------
+//requestInjection
+//------------------------------------------------------------------------------
   void MigrationTaskInjector::requestInjection( bool lastCall) {
     castor::tape::threading::MutexLocker ml(&m_producerProtection);
     if(!m_errorFlag) {
       m_queue.push(Request(m_maxFiles, m_maxByte, lastCall));
     }
   }
-  
+//------------------------------------------------------------------------------
+//synchronousInjection
+//------------------------------------------------------------------------------ 
   bool MigrationTaskInjector::synchronousInjection() {
     client::ClientProxy::RequestReport reqReport;
     std::auto_ptr<tapegateway::FilesToMigrateList>
@@ -123,13 +137,17 @@ namespace daemon {
       return true;
     }
   }
-  
+//------------------------------------------------------------------------------
+//finish
+//------------------------------------------------------------------------------ 
   void MigrationTaskInjector::finish(){
     castor::tape::threading::MutexLocker ml(&m_producerProtection);
     m_queue.push(Request());
   }
  
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
+//WorkerThread::run
+//------------------------------------------------------------------------------
   void MigrationTaskInjector::WorkerThread::run(){
     m_parent.m_lc.pushOrReplace(Param("thread", "MigrationTaskInjector"));
     m_parent.m_lc.log(LOG_INFO, "Starting MigrationTaskInjector thread");

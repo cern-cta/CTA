@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      RecallReportPacker.hpp
+ *                      RecallReportPacker.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -41,39 +41,56 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
- 
-RecallReportPacker::RecallReportPacker(client::ClientInterface & tg,unsigned int reportFilePeriod,log::LogContext lc):
+//------------------------------------------------------------------------------
+//Constructor
+//------------------------------------------------------------------------------
+RecallReportPacker::RecallReportPacker(client::ClientInterface & tg,
+        unsigned int reportFilePeriod,log::LogContext lc):
 ReportPackerInterface<detail::Recall>(tg,lc),
         m_workerThread(*this),m_reportFilePeriod(reportFilePeriod),m_errorHappened(false){
 
 }
+//------------------------------------------------------------------------------
+//Destructor
+//------------------------------------------------------------------------------
 RecallReportPacker::~RecallReportPacker(){
-
+  castor::tape::threading::MutexLocker ml(&m_producterProtection);
 }
+//------------------------------------------------------------------------------
+//reportCompletedJob
+//------------------------------------------------------------------------------
 void RecallReportPacker::reportCompletedJob(const FileStruct& recalledFile,unsigned long checksum){
   std::auto_ptr<Report> rep(new ReportSuccessful(recalledFile,checksum));
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
-  
+//------------------------------------------------------------------------------
+//reportFailedJob
+//------------------------------------------------------------------------------  
 void RecallReportPacker::reportFailedJob(const FileStruct & recalledFile
 ,const std::string& msg,int error_code){
   std::auto_ptr<Report> rep(new ReportError(recalledFile,msg,error_code));
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
-
+//------------------------------------------------------------------------------
+//reportEndOfSession
+//------------------------------------------------------------------------------
 void RecallReportPacker::reportEndOfSession(){
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportEndofSession());
 }
   
-
+//------------------------------------------------------------------------------
+//reportEndOfSessionWithErrors
+//------------------------------------------------------------------------------
 void RecallReportPacker::reportEndOfSessionWithErrors(const std::string msg,int error_code){
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportEndofSessionWithErrors(msg,error_code));
 }
  
+//------------------------------------------------------------------------------
+//ReportSuccessful::execute
 //------------------------------------------------------------------------------
 void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& _this){
   std::auto_ptr<FileSuccessStruct> successRecall(new FileSuccessStruct);
@@ -89,11 +106,10 @@ void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& _this){
   successRecall->setChecksumName("adler32");
   _this.m_listReports->addSuccessfulRecalls(successRecall.release());
 }
-
+//------------------------------------------------------------------------------
+//flush
+//------------------------------------------------------------------------------
 void RecallReportPacker::flush(){
-  unsigned int totalSize = m_listReports->failedRecalls().size() +
-                       m_listReports->successfulRecalls().size();
-  if(totalSize > 0){
     
     client::ClientInterface::RequestReport chrono;
     try{
@@ -111,12 +127,13 @@ void RecallReportPacker::flush(){
     m_lc.log(LOG_ERR,msg_error);
     throw failedReportRecallResult(msg_error);
     }
-  }
     //delete the old pointer and replace it with the new one provided
     //that way, all the reports that have been send are deleted (by FileReportList's destructor)
     m_listReports.reset(new FileReportList);
 }
-
+//------------------------------------------------------------------------------
+//ReportEndofSession::execute
+//------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& _this){
   client::ClientInterface::RequestReport chrono;
     if(!_this.m_errorHappened){
@@ -130,7 +147,9 @@ void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& _this){
       _this.logRequestReport(chrono,"reporting EndOfSessionWithError done",LOG_ERR);
     }
 }
-
+//------------------------------------------------------------------------------
+//ReportEndofSessionWithErrors::execute
+//------------------------------------------------------------------------------
 void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& _this){
   client::ClientInterface::RequestReport chrono;
   if(_this.m_errorHappened) {
@@ -144,7 +163,9 @@ void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacke
    _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono); 
   }
 }
-
+//------------------------------------------------------------------------------
+//ReportError::execute
+//------------------------------------------------------------------------------
 void RecallReportPacker::ReportError::execute(RecallReportPacker& _this){
    
   std::auto_ptr<FileErrorStruct> failed(new FileErrorStruct);
@@ -160,11 +181,14 @@ void RecallReportPacker::ReportError::execute(RecallReportPacker& _this){
   _this.m_errorHappened=true;
 }
 //------------------------------------------------------------------------------
-
+//WorkerThread::WorkerThread
+//------------------------------------------------------------------------------
 RecallReportPacker::WorkerThread::WorkerThread(RecallReportPacker& parent):
 m_parent(parent) {
 }
-
+//------------------------------------------------------------------------------
+//WorkerThread::run
+//------------------------------------------------------------------------------
 void RecallReportPacker::WorkerThread::run(){
   m_parent.m_lc.pushOrReplace(Param("thread", "RecallReportPacker"));
   m_parent.m_lc.log(LOG_DEBUG, "Starting RecallReportPacker thread");
@@ -173,9 +197,11 @@ void RecallReportPacker::WorkerThread::run(){
       while(1) {    
         std::auto_ptr<Report> rep (m_parent.m_fifo.pop());    
         
+        //how mane files we have globally treated 
         unsigned int totalSize = m_parent.m_listReports->failedRecalls().size() +
                                  m_parent.m_listReports->successfulRecalls().size();
-     
+        //If we have enough reports or we are going to end the loop
+        //then we flush        
         if(totalSize >= m_parent.m_reportFilePeriod || rep->goingToEnd() )
         {
         
@@ -183,8 +209,9 @@ void RecallReportPacker::WorkerThread::run(){
             m_parent.flush();
           }
           catch(const failedReportRecallResult& e){
-            //got there because we failed tp report the recall results
-            //we have to try to close the connection
+            //got there because we failed to report the recall results
+            //we have to try to close the connection. 
+            //reportEndOfSessionWithError might throw 
             m_parent.m_client.reportEndOfSessionWithError(e.getMessageValue(),SEINTERNAL,chrono);
             m_parent.logRequestReport(chrono,"Successfully closed client's session after the failed report RecallResult");
             break;
