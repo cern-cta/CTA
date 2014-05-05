@@ -13,8 +13,6 @@ tplabel \- initialize a new blank tape
 ] [
 .BI -g " device_group_name"
 ] [
-.BI -H " number_headers"
-] [
 .BI -l " label_type"
 ] [
 .B -T
