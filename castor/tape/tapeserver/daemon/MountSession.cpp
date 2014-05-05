@@ -215,6 +215,8 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
             m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,lc);
     drtp.setTaskInjector(&mti);
     if (mti.synchronousInjection()) {
+      twst.setlastFseq(mti.lastFSeq());
+
       // We have something to do: start the session by starting all the 
       // threads.
       mm.startThreads();

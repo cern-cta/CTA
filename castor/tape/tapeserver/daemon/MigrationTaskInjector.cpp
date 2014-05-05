@@ -133,6 +133,7 @@ namespace daemon {
       return false;
     } else {
       std::vector<tapegateway::FileToMigrateStruct*>& jobs=filesToMigrateList->filesToMigrate();
+      m_lastFseq = jobs.front()->fseq() -1;
       injectBulkMigrations(jobs);
       return true;
     }
