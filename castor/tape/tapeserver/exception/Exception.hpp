@@ -53,8 +53,9 @@ namespace tape {
       EndOfFile(const std::string & w): castor::exception::Exception(w) {}
       virtual ~EndOfFile() throw() {}
     };
+    
     /**
-     * Used
+     * Used to signal an error has happened during the migration process 
      */
     class ErrorFlag : public castor::exception::Exception {
     public:
@@ -62,7 +63,9 @@ namespace tape {
       virtual ~ErrorFlag() throw() {}
     };
     
-    
+    /**
+     * A generic exception thrown when there is something wrong with the memory
+     */
     class MemException: public castor::tape::Exception {
     public:
       MemException(const std::string & what): Exception(what) {}
