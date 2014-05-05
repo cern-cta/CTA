@@ -26,7 +26,6 @@
 
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/tape/tapeserver/daemon/MemManagerClient.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/exception/Exception.hpp"
 
@@ -51,7 +50,7 @@ namespace daemon {
   pushDataBlock +------------------------------+  getDataBlock 
                                                                  
  */
-class DataFifo : public MemoryManagerClient {
+class DataFifo {
 public:
  /**
   * Constructor

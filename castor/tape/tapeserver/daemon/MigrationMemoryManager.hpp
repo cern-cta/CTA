@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      MemManager.hpp
+ *                      MigrationMemoryManager.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,18 +24,22 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/tape/tapeserver/daemon/MemManagerClient.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/log/LogContext.hpp"
-#include <iostream>
 
 namespace castor {
+namespace exception {
+// Forward declaration  
+class Exception;
+}
 namespace tape {
 namespace tapeserver {
 namespace daemon {
+// Forward declaration
+class TapeWriteTask;
+class MemBlock;
+class DataFifo;
 /**
  * The memory manager is responsible for allocating memory blocks and distributing
  * the free ones around to any class in need. The distribution is actively run in
@@ -49,98 +53,54 @@ public:
    * @param numberOfBlocks: number of blocks to allocate
    * @param blockSize: size of each block
    */
-  MigrationMemoryManager(const size_t numberOfBlocks, const size_t blockSize, castor::log::LogContext lc) 
-          throw(castor::exception::Exception) : 
-  m_blockCapacity(blockSize), m_totalNumberOfBlocks(0),
-  m_totalMemoryAllocated(0), m_blocksProvided(0), m_blocksReturned(0),m_lc(lc) {
-    for (size_t i = 0; i < numberOfBlocks; i++) {
-      m_freeBlocks.push(new MemBlock(i, blockSize));
-      m_totalNumberOfBlocks++;
-      m_totalMemoryAllocated+=blockSize;
-      
-      m_lc.pushOrReplace(log::Param("blockId",i));
-      m_lc.log(LOG_DEBUG,"MigrationMemoryManager Created a block");
-    }
-    m_lc.log(LOG_INFO,"MigrationMemoryManager: all blocks have been created");
-  }
+  MigrationMemoryManager(const size_t numberOfBlocks, const size_t blockSize, 
+          castor::log::LogContext lc) 
+          throw(castor::exception::Exception);
   
   /**
    * 
    * @return the nominal capacity of one block 
    */
-  size_t blockCapacity(){
-    return m_blockCapacity;
-  }
+  size_t blockCapacity();
   
   /**
    * Are all sheep back to the farm?
    * @return 
    */
-  bool areBlocksAllBack() throw() {
-    return m_totalNumberOfBlocks==m_freeBlocks.size();
-  }
+  bool areBlocksAllBack() throw();
   
   /**
    * Start serving clients (in the dedicated thread)
    */
-  void startThreads() throw(castor::exception::Exception) {
-    castor::tape::threading::Thread::start();
-    m_lc.log(LOG_INFO,"MigrationMemoryManager starting thread");
-  }
+  void startThreads() throw(castor::exception::Exception);
   
   /**
    * Waiting for clients to finish (in the dedicated thread)
    */
-  void waitThreads() throw(castor::exception::Exception) {
-    castor::tape::threading::Thread::wait();
-  }
+  void waitThreads() throw(castor::exception::Exception);
   
   /**
    * Adds a new client in need for free memory blocks
    * @param c: the new client
    */
-  void addClient(MemoryManagerClient* c) throw(castor::exception::Exception) {
-    m_clientQueue.push(c);
-  }
+  void addClient(DataFifo* c) throw(castor::exception::Exception);
   
   /**
    * Takes back a block which has been released by one of the clients
    * @param mb: the pointer to the block
    */
-  void releaseBlock(MemBlock *mb) throw(castor::exception::Exception) {
-    mb->reset();
-    m_freeBlocks.push(mb);
-    {
-      castor::tape::threading::MutexLocker ml(&m_countersMutex);
-      m_blocksReturned++;
-    }
-  }
+  void releaseBlock(MemBlock *mb) throw(castor::exception::Exception);
   
   /**
    * Function used to specify that there are no more clients for this memory manager.
    * See the definition of endOfClients below.
    */
-  void finish() throw(castor::exception::Exception) {
-    addClient(NULL);
-  }
+  void finish() throw(castor::exception::Exception);
 
   /**
    * Destructor
    */
-  ~MigrationMemoryManager() throw() {
-    // Make sure the thread is finished: this should be done by the caller,
-    // who should have called waitThreads.
-    // castor::tape::threading::Thread::wait();
-    // we expect to be called after all users are finished. Just "free"
-    // the memory blocks we still have.
-    castor::tape::threading::BlockingQueue<MemBlock*>::valueRemainingPair ret;
-    do{
-      ret=m_freeBlocks.popGetSize();
-      delete ret.value;
-    }while(ret.remaining>0);
-    
-    m_lc.log(LOG_INFO,"MigrationMemoryManager destruction : all memory blocks have been deleted");
-  }
+  ~MigrationMemoryManager() throw();
 private:
   
   
@@ -180,7 +140,7 @@ private:
    * The client queue: we will feed them as soon as blocks
    * become free. This is done in a dedicated thread.
    */
-   castor::tape::threading::BlockingQueue<MemoryManagerClient *> m_clientQueue;
+   castor::tape::threading::BlockingQueue<DataFifo *> m_clientQueue;
 
    /**
     * Logging purpose. Given the fact the class is threaded, the LogContext
@@ -191,27 +151,7 @@ private:
   /**
    * Thread routine: pops a client and provides him blocks until he is happy!
    */
-  void run() throw(castor::exception::Exception) {
-    while(true) {
-      MemoryManagerClient* c = m_clientQueue.pop();
-    
-      // If the c is a NULL pointer, that means end of client 
-      if (!c) {
-        return;
-      };
-      
-      /* Spin on the the client. We rely on the fact that he will want
-       at least one block (which is the case currently) */
-      while (c->provideBlock(m_freeBlocks.pop())) {
-        {
-          castor::tape::threading::MutexLocker ml (&m_countersMutex);
-          m_blocksProvided++;
-        }
-        
-      }
-        
-    }
-  }
+  void run() throw(castor::exception::Exception);
   
 };
 

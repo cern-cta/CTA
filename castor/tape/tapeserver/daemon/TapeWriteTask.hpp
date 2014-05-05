@@ -26,7 +26,7 @@
 
 #include "castor/tape/tapeserver/daemon/TapeWriteTaskInterface.hpp"
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
-#include "castor/tape/tapeserver/daemon/MemManager.hpp"
+#include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/log/LogContext.hpp"

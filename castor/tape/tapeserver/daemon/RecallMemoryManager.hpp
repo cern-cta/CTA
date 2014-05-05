@@ -24,19 +24,20 @@
 
 #pragma once
 
-
-#include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/tape/tapeserver/daemon/MemManagerClient.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
-#include "castor/exception/Exception.hpp"
 #include "castor/log/LogContext.hpp"
-#include <iostream>
 
 namespace castor {
+namespace exception {
+// Forward declaration  
+class Exception;    
+}
 namespace tape {
 namespace tapeserver {
 namespace daemon {
+// Forward declaration  
+class MemBlock;
 /**
  * The memory manager is responsible for allocating memory blocks and distributing
  * the free ones around to any class in need.
@@ -50,62 +51,32 @@ public:
    * @param blockSize: size of each block
    */
   RecallMemoryManager(const size_t numberOfBlocks, const size_t blockSize,
-          castor::log::LogContext& lc) 
-  : m_totalNumberOfBlocks(numberOfBlocks),m_lc(lc) {
-    for (size_t i = 0; i < numberOfBlocks; i++) {
-      m_freeBlocks.push(new MemBlock(i, blockSize));
-      
-      m_lc.pushOrReplace(log::Param("blockId",i));
-      m_lc.log(LOG_DEBUG,"RecallMemoryManager created a block");
-    }
-    m_lc.log(LOG_INFO,"RecallMemoryManager: all blocks have been created");
-  }
+          castor::log::LogContext& lc);
   
   /**
    * Are all sheep back to the farm?
    * @return 
    */
-  bool areBlocksAllBack() throw() {
-    return m_totalNumberOfBlocks==m_freeBlocks.size();
-  }
+  bool areBlocksAllBack() throw();
   
   /**
    * Takes back a block which has been released by one of the clients
    * @param mb: the pointer to the block
    */
-  void releaseBlock(MemBlock *mb)  {
-    m_lc.pushOrReplace(log::Param("blockId",mb->m_memoryBlockId));
-    m_lc.log(LOG_DEBUG,"RecallMemoryManager A block has been released");
-    mb->reset();
-    m_freeBlocks.push(mb);
-  }
+  void releaseBlock(MemBlock *mb);
   
-  MemBlock* getFreeBlock(){
-    return m_freeBlocks.pop();
-  }
+  /**
+   * Pop a free block from the free block queue of the memory manager
+   * @return pointer to a free block
+   */
+  MemBlock* getFreeBlock();
   
   /**
    * Destructor
    */
-  ~RecallMemoryManager() {
-    // Make sure the thread is finished: this should be done by the caller,
-    // who should have called waitThreads.
-    // castor::tape::threading::Thread::wait();
-    // we expect to be called after all users are finished. Just "free"
-    // the memory blocks we still have.
-    
-    castor::tape::threading::BlockingQueue<MemBlock*>::valueRemainingPair ret;
-    do{
-      ret=m_freeBlocks.popGetSize();
-      delete ret.value;
-    }while(ret.remaining>0);
-    
-    m_lc.log(LOG_INFO,"RecallMemoryManager destruction : all memory blocks have been deleted");
-  }
+  ~RecallMemoryManager();
   
 private:
-  
-  
   /**
    * Total number of allocated memory blocks
    */
