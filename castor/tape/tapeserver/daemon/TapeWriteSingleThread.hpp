@@ -45,10 +45,19 @@ public:
           castor::log::LogContext & lc, MigrationReportPacker & repPacker,
 	  uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
   TapeSingleThreadInterface<TapeWriteTaskInterface>(drive, vid, lc),
-  m_filesBeforeFlush(filesBeforeFlush),m_bytesBeforeFlush(bytesBeforeFlush),
-  m_drive(drive), m_reportPacker(repPacker), m_vid(vid), m_lastFseq(0),
-  m_compress(0) {}
-
+          m_filesBeforeFlush(filesBeforeFlush),
+          m_bytesBeforeFlush(bytesBeforeFlush),
+          m_drive(drive), m_reportPacker(repPacker), m_vid(vid), 
+          m_lastFseq(-1),
+          m_compress(true) {}
+  
+  /**
+   * 
+   * @param lastFseq
+   */
+  void setlastFseq(uint64_t lastFseq){
+    m_lastFseq=lastFseq;
+  }
 private:
   /**
    * Function to open the WriteSession 
@@ -141,7 +150,23 @@ private:
   castor::tape::drives::DriveInterface& m_drive;
   MigrationReportPacker & m_reportPacker;
   const std::string m_vid;
-  const uint32_t m_lastFseq;
+  
+  /**
+   * the last fseq that has been written on the tape = the starting point 
+   * of our session. The last Fseq is computed by subtracting 1 to fSeg
+   * of the first file to migrate we receive. That part is done by the 
+   * MigrationTaskInjector.::synchronousInjection. Thus, we compute it into 
+   * that function and retrieve/set it within MountSession executeWrite
+   * after we make sure synchronousInjection returned true. 
+   * 
+   * It should be const, but it cant 
+   * (because there is no mutable function member in c++)
+   */
+   uint64_t m_lastFseq;
+
+  /**
+   * Should the compression be enabled ? This is currently hard coded to true 
+   */
   const bool m_compress;
 };
 }}}}

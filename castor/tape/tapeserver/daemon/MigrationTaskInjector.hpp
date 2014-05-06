@@ -98,6 +98,10 @@ public:
    * calls to requestInjection.
    */
   void finish();
+  
+  uint64_t lastFSeq() const {
+    return m_lastFseq;
+  }
 private:
   /**
    * Create all the tape-read and write-disk tasks for set of files to retrieve
@@ -183,6 +187,16 @@ private:
   
   /// maximal number of cumulated byte requested. at once
   const uint64_t m_maxByte;
+  
+  /**The last fseq used on the tape. We should not see this but 
+   * IT is computed by subtracting 1 to fSeg  of the first file to migrate we 
+   * receive. That part is done by the 
+   * MigrationTaskInjector.::synchronousInjection. Thus, we compute it into 
+   * that function and retrieve/set it within MountSession executeWrite
+   * after we make sure synchronousInjection returned true. To do so, we
+   *  need to store it
+   */
+  uint64_t m_lastFseq;
 };
 
 } //end namespace daemon
