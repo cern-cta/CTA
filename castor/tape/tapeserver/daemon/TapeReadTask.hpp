@@ -59,7 +59,7 @@ public:
      * The main loop is :
      * Acquire a free memory block from the memory manager , fill it, push it 
      */
-  virtual void execute(castor::tape::tapeFile::ReadSession & rs,
+   void execute(castor::tape::tapeFile::ReadSession & rs,
     castor::log::LogContext & lc) {
 
     using castor::log::Param;
