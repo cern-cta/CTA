@@ -68,7 +68,7 @@ public:
    * @param mb : the memory block to be returned 
    * @return true   true if not all the needed blocks has not yet been provided 
    */
-  virtual bool provideBlock(MemBlock *mb)  {
+  bool provideBlock(MemBlock *mb)  {
     bool ret;
     castor::tape::threading::MutexLocker ml(&m_freeBlockProviderProtection);
     {
