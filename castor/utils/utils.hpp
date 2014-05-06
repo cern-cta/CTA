@@ -67,6 +67,15 @@ void splitString(const std::string &str, const char separator,
   std::vector<std::string> &result) throw();
 
 /**
+ * Returns the result of trimming both left and right white-space from the
+ * specified string.
+ *
+ * @param s The string to be trimmed.
+ * @return The result of trimming the string.
+ */
+std::string trimString(const std::string &s) throw();
+
+/**
  * Checks if the specified string is a valid unsigned integer.
  *
  * @param str The string to be checked.

@@ -25,7 +25,7 @@
 #pragma once
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/legacymsg/MessageHeader.hpp"
+#include "castor/legacymsg/MessageHeader.hpp"
 
 namespace castor     {
 namespace tape       {

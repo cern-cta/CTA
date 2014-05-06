@@ -25,7 +25,7 @@
 #pragma once
 
 #include "castor/io/AbstractTCPSocket.hpp"
-#include "castor/tape/legacymsg/RtcpMarshal.hpp"
+#include "castor/legacymsg/RtcpMarshal.hpp"
 #include "h/tapebridge_marshall.h"
 
 namespace castor {

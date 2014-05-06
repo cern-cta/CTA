@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/tape/tapebridge/SessionError.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
 #include "h/Cuuid.h"

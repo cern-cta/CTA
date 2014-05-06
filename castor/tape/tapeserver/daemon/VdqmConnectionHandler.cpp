@@ -27,13 +27,16 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::VdqmConnectionHandler::VdqmConnectionHandler(const int fd, io::PollReactor &reactor, log::Logger &log, Vdqm &vdqm, DriveCatalogue &driveCatalogue) throw():
+castor::tape::tapeserver::daemon::VdqmConnectionHandler::VdqmConnectionHandler(
+  const int fd,
+  io::PollReactor &reactor,
+  log::Logger &log,
+  DriveCatalogue &driveCatalogue) throw():
     m_fd(fd),
     m_reactor(reactor),
     m_log(log),
-    m_vdqm(vdqm),
     m_driveCatalogue(driveCatalogue),
-    m_netTimeout(1) // 1 second
+    m_netTimeout(1) // Timeout in seconds
 {
 }
 
@@ -180,7 +183,7 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::logVdqmJobReceptio
 //------------------------------------------------------------------------------
 // readJobMsg
 //------------------------------------------------------------------------------
-castor::tape::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsg(const int fd) throw(castor::exception::Exception) {
+castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsg(const int fd) throw(castor::exception::Exception) {
   const legacymsg::MessageHeader header = readJobMsgHeader(fd);
   const legacymsg::RtcpJobRqstMsgBody body = readJobMsgBody(fd,
     header.lenOrStatus);
@@ -191,7 +194,7 @@ castor::tape::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::Vd
 //------------------------------------------------------------------------------
 // readJobMsgHeader
 //------------------------------------------------------------------------------
-castor::tape::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsgHeader(const int fd) throw(castor::exception::Exception) {
+castor::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsgHeader(const int fd) throw(castor::exception::Exception) {
   // Read in the message header
   char buf[3 * sizeof(uint32_t)]; // magic + request type + len
   io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
@@ -227,7 +230,7 @@ castor::tape::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmCon
 //------------------------------------------------------------------------------
 // readJobMsgBody
 //------------------------------------------------------------------------------
-castor::tape::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsgBody(const int fd, const uint32_t len) throw(castor::exception::Exception) {
+castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsgBody(const int fd, const uint32_t len) throw(castor::exception::Exception) {
   char buf[1024];
 
   if(sizeof(buf) < len) {

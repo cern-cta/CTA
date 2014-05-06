@@ -27,11 +27,12 @@ if (${COMPILE_SERVER} STREQUAL "1")
   # Rules to build and install rmcd
   ##############################################################################
   set (RMCD_SRC_FILES
+    AcceptHandler.cpp
+    ConnectionHandler.cpp
     RmcDaemon.cpp
-    RmcdCmdLine.cpp
-    RmcdMain.cpp)
+    RmcDaemonMain.cpp)
   add_executable (newrmcd ${RMCD_SRC_FILES})
-  target_link_libraries (newrmcd castorclient castorcommon)
+  target_link_libraries (newrmcd castorclient castorcommon castortapelegacymsg)
   #install (TARGETS newrmcd DESTINATION ${CASTOR_DEST_LIB_DIR})
   #CastorInstallExeManPage(newrmcd)
 

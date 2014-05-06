@@ -31,7 +31,7 @@ CREATE OR REPLACE PACKAGE castor AS
     creationTime INTEGER,
     svcClass VARCHAR2(2048),
     lastAccessTime INTEGER,
-    hwStatus INTEGER);
+    isOnDrainingHardware INTEGER);
   TYPE QueryLine_Cur IS REF CURSOR RETURN QueryLine;
   TYPE FileList IS RECORD (
     fileId NUMBER,
@@ -269,20 +269,31 @@ BEGIN
     -- online.
     FOR b IN (SELECT id FROM (
                 SELECT rownum ind, id FROM (
-                  SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_Castorfile) */ DiskCopy.id
-                    FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass,
-                         DiskServer
-                   WHERE DiskCopy.filesystem = FileSystem.id
-                     AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                     AND FileSystem.diskserver = DiskServer.id
-                     AND DiskPool2SvcClass.child = SvcClass.id
-                     AND DiskCopy.castorfile = a.castorfile
-                     AND DiskCopy.status = dconst.DISKCOPY_VALID
-                     AND SvcClass.id = a.svcclass
+                  SELECT * FROM (
+                    SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_Castorfile) */
+                           FileSystem.status AS FsStatus, DiskServer.status AS DsStatus,
+                           DiskCopy.gcWeight, DiskCopy.id
+                      FROM DiskCopy, FileSystem, DiskPool2SvcClass,
+                           DiskServer
+                     WHERE DiskCopy.filesystem = FileSystem.id
+                       AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                       AND FileSystem.diskserver = DiskServer.id
+                       AND DiskPool2SvcClass.child = a.svcclass
+                       AND DiskCopy.castorfile = a.castorfile
+                       AND DiskCopy.status = dconst.DISKCOPY_VALID
+                     UNION ALL
+                    SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_Castorfile) */
+                           0 AS FsStatus,
+                           (SELECT MIN(status) FROM DiskServer
+                             WHERE dataPool = DiskCopy.dataPool) AS DsStatus,
+                           DiskCopy.gcWeight, DiskCopy.id
+                      FROM DiskCopy, DataPool2SvcClass
+                     WHERE DiskCopy.dataPool = DataPool2SvcClass.parent
+                       AND DataPool2SvcClass.child = a.svcclass
+                       AND DiskCopy.castorfile = a.castorfile
+                       AND DiskCopy.status = dconst.DISKCOPY_VALID)
                    -- Select non-PRODUCTION hardware first
-                   ORDER BY decode(FileSystem.status, 0,
-                            decode(DiskServer.status, 0, 0, 1), 1) ASC,
-                            DiskCopy.gcWeight DESC))
+                   ORDER BY decode(fsStatus, 0, decode(dsStatus, 0, 0, 1), 1) ASC, gcWeight DESC))
                WHERE ind > maxReplicaNb)
     LOOP
       -- Sanity check, make sure that the last copy is never dropped!
@@ -336,13 +347,17 @@ BEGIN
   -- do the work of that trigger here as it would result in
   -- `ORA-04091: table is mutating, trigger/function` errors
   BEGIN
-    SELECT SvcClass.id INTO svcId
-      FROM FileSystem, DiskPool2SvcClass, SvcClass
-     WHERE FileSystem.diskpool = DiskPool2SvcClass.parent
-       AND DiskPool2SvcClass.child = SvcClass.id
-       AND FileSystem.id = :new.filesystem;
+    SELECT child INTO svcId FROM (
+      SELECT DiskPool2SvcClass.child
+        FROM FileSystem, DiskPool2SvcClass
+       WHERE FileSystem.diskpool = DiskPool2SvcClass.parent
+         AND FileSystem.id = :new.filesystem
+       UNION ALL
+      SELECT child
+        FROM DataPool2SvcClass
+       WHERE parent = :new.dataPool);
   EXCEPTION WHEN TOO_MANY_ROWS THEN
-    -- The filesystem belongs to multiple service classes which is not
+    -- The DiskCopy belongs to multiple service classes which is not
     -- supported by the replica management trigger.
     RETURN;
   END;
@@ -1246,6 +1261,7 @@ CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER, finalStatus IN INTEGE
 BEGIN
   UPDATE /*+ INDEX(SubRequest PK_SubRequest_Id) */ SubRequest
      SET diskCopy = NULL,  -- unlink this subrequest as it's dead now
+         diskServer = NULL,
          lastModificationTime = getTime(),
          status = finalStatus
    WHERE id = srId
@@ -1312,8 +1328,8 @@ BEGIN
   -- Check that the pool has space, taking into account current
   -- availability and space reserved by Put requests in the queue
   IF (failJobsFlag = 1) THEN
-    SELECT count(*), sum(free - totalSize * minAllowedFreeSpace)
-      INTO c, availSpace
+    -- Deal With FileSystems
+    SELECT count(*) INTO c
       FROM DiskPool2SvcClass, FileSystem, DiskServer
      WHERE DiskPool2SvcClass.child = svcClassId
        AND DiskPool2SvcClass.parent = FileSystem.diskPool
@@ -1321,7 +1337,16 @@ BEGIN
        AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
        AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
        AND DiskServer.hwOnline = 1
-       AND totalSize * minAllowedFreeSpace < free - defFileSize;
+       AND FileSystem.totalSize * FileSystem.minAllowedFreeSpace < FileSystem.free - defFileSize;
+    -- deal with DataPools
+    SELECT c+count(*) INTO c
+      FROM DataPool2SvcClass, DataPool, DiskServer
+     WHERE DataPool2SvcClass.child = svcClassId
+       AND DataPool2SvcClass.parent = DiskServer.dataPool
+       AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+       AND DiskServer.hwOnline = 1
+       AND DataPool2SvcClass.parent = DataPool.id
+       AND DataPool.totalSize * DataPool.minAllowedFreeSpace < DataPool.free - defFileSize;
     IF (c = 0) THEN
       RETURN 1;
     END IF;
@@ -1382,44 +1407,31 @@ BEGIN
          -- file from the source service class. Note: instead of using a
          -- StageGetRequest type here we use a StagDiskCopyReplicaRequest type
          -- to be able to distinguish between and read and replication requst.
-         AND checkPermission(SvcClass.name, reuid, regid, 133) = 0)
+         AND checkPermission(SvcClass.name, reuid, regid, 133) = 0
+       UNION ALL
+      SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */ DiskCopy.id, SvcClass.id srcSvcClassId
+        FROM DiskCopy, DataPool2SvcClass, SvcClass
+       WHERE DiskCopy.castorfile = cfId
+         AND DiskCopy.status = dconst.DISKCOPY_VALID
+         AND DiskCopy.dataPool = DataPool2SvcClass.parent
+         AND DataPool2SvcClass.child = SvcClass.id
+         -- Check that the user has the necessary access rights to replicate a
+         -- file from the source service class. Note: instead of using a
+         -- StageGetRequest type here we use a StagDiskCopyReplicaRequest type
+         -- to be able to distinguish between and read and replication requst.
+         AND checkPermission(SvcClass.name, reuid, regid, 133) = 0
+         -- check the dataPool has available diskServer(s)
+         AND EXISTS (SELECT 1 FROM DiskServer
+                      WHERE DiskServer.dataPool = DiskCopy.dataPool
+                        AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                                  dconst.DISKSERVER_DRAINING,
+                                                  dconst.DISKSERVER_READONLY)
+                        AND DiskServer.hwOnline = 1))
    WHERE ROWNUM < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN
   RAISE; -- No diskcopy found that could be replicated
 END;
 /
-
-
-/* PL/SQL method implementing getBestDiskCopyToRead used to return the
- * best location of a file based on monitoring information. This is
- * useful for xrootd so that it can avoid scheduling reads
- */
-CREATE OR REPLACE PROCEDURE getBestDiskCopyToRead(cfId IN NUMBER,
-                                                  svcClassId IN NUMBER,
-                                                  diskServer OUT VARCHAR2,
-                                                  filePath OUT VARCHAR2) AS
-BEGIN
-  -- Select best diskcopy
-  SELECT name, path INTO diskServer, filePath FROM (
-    SELECT DiskServer.name, FileSystem.mountpoint || DiskCopy.path AS path
-      FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
-     WHERE DiskCopy.castorfile = cfId
-       AND DiskCopy.fileSystem = FileSystem.id
-       AND FileSystem.diskpool = DiskPool2SvcClass.parent
-       AND DiskPool2SvcClass.child = svcClassId
-       AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
-       AND FileSystem.diskserver = DiskServer.id
-       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
-       AND DiskServer.hwOnline = 1
-       AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
-     ORDER BY FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
-              DBMS_Random.value)
-   WHERE rownum < 2;
-EXCEPTION WHEN NO_DATA_FOUND THEN
-  RAISE; -- No file found to be read
-END;
-/
-
 
 /* PL/SQL method implementing checkForD2DCopyOrRecall
  * dcId is the DiskCopy id of the best candidate for replica, 0 if none is found (tape recall), -1 in case of user error
@@ -1506,19 +1518,25 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     dsStatus NUMBER;
     varNbCopies NUMBER;
   BEGIN
-    SELECT DiskCopy.status, nvl(FileSystem.status, dconst.FILESYSTEM_PRODUCTION),
-           nvl(DiskServer.status, dconst.DISKSERVER_PRODUCTION)
-      INTO dcStatus, fsStatus, dsStatus
-      FROM DiskCopy, FileSystem, DiskServer, CastorFile
-     WHERE DiskCopy.castorfile = cfId
-       AND Castorfile.id = cfId
-       AND (DiskCopy.status IN (dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_STAGEOUT,
-                                dconst.DISKCOPY_WAITFS_SCHEDULING)
-            OR (DiskCopy.status = dconst.DISKCOPY_VALID AND
-                CastorFile.tapeStatus = dconst.CASTORFILE_NOTONTAPE))
-       AND FileSystem.id(+) = DiskCopy.fileSystem
-       AND DiskServer.id(+) = FileSystem.diskserver
-       AND ROWNUM < 2;
+    SELECT * INTO dcStatus, fsStatus, dsStatus FROM (
+      SELECT DiskCopy.status, dconst.FILESYSTEM_PRODUCTION, dconst.DISKSERVER_PRODUCTION AS dsStatus
+        FROM DiskCopy, CastorFile
+       WHERE DiskCopy.castorfile = cfId
+         AND Castorfile.id = cfId
+         AND DiskCopy.status IN (dconst.DISKCOPY_WAITFS, dconst.DISKCOPY_WAITFS_SCHEDULING)
+       UNION ALL
+      SELECT DiskCopy.status, nvl(FileSystem.status, dconst.FILESYSTEM_PRODUCTION),
+             DiskServer.status AS dsStatus
+        FROM DiskCopy, FileSystem, DiskServer, CastorFile
+       WHERE DiskCopy.castorfile = cfId
+         AND Castorfile.id = cfId
+         AND (DiskCopy.status = dconst.DISKCOPY_STAGEOUT
+              OR (DiskCopy.status = dconst.DISKCOPY_VALID AND
+                  CastorFile.tapeStatus = dconst.CASTORFILE_NOTONTAPE))
+         AND FileSystem.id(+) = DiskCopy.fileSystem
+         AND (DiskServer.id = FileSystem.diskserver OR DiskServer.dataPool = DiskCopy.dataPool)
+       ORDER BY dsStatus ASC) -- PRODUCTION first (useful for datapool cases)
+     WHERE ROWNUM < 2;
     -- We are in one of the 3 first special cases. Don't schedule, don't recall
     dcId := -1;
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
@@ -1638,6 +1656,7 @@ CREATE OR REPLACE PROCEDURE createEmptyFile
   gcw NUMBER;
   gcwProc VARCHAR(2048);
   fsId NUMBER;
+  dpId NUMBER;
   dcId NUMBER;
   svcClassId NUMBER;
   ouid INTEGER;
@@ -1651,10 +1670,11 @@ BEGIN
   -- compute the DiskCopy Path
   buildPathFromFileId(fileId, nsHost, dcId, dcPath);
   -- find a fileSystem for this empty file
-  SELECT id, svcClass, euid, egid, name || ':' || mountpoint
-    INTO fsId, svcClassId, ouid, ogid, fsPath
+  SELECT fsId, dpId, svcClass, euid, egid, name || ':' || mountpoint
+    INTO fsId, dpId, svcClassId, ouid, ogid, fsPath
     FROM (SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
-                 FileSystem.id, Request.svcClass, Request.euid, Request.egid, DiskServer.name, FileSystem.mountpoint
+                 FileSystem.id AS FsId, NULL AS dpId, Request.svcClass,
+                 Request.euid, Request.egid, DiskServer.name, FileSystem.mountpoint
             FROM DiskServer, FileSystem, DiskPool2SvcClass,
                  (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
                          id, svcClass, euid, egid from StageGetRequest UNION ALL
@@ -1669,7 +1689,23 @@ BEGIN
              AND DiskServer.id = FileSystem.diskServer
              AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
              AND DiskServer.hwOnline = 1
-        ORDER BY -- use randomness to scatter filesystem usage
+           UNION ALL
+          SELECT /*+ INDEX(Subrequest PK_Subrequest_Id)*/
+                 NULL AS FsId, DataPool2SvcClass.parent AS dpId,
+                 Request.svcClass, Request.euid, Request.egid, DiskServer.name, ''
+            FROM DiskServer, DataPool2SvcClass,
+                 (SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */
+                         id, svcClass, euid, egid from StageGetRequest UNION ALL
+                  SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */
+                         id, svcClass, euid, egid from StagePrepareToGetRequest) Request,
+                  SubRequest
+           WHERE SubRequest.id = srId
+             AND Request.id = SubRequest.request
+             AND Request.svcclass = DataPool2SvcClass.child
+             AND DiskServer.datapool = DataPool2SvcClass.parent
+             AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+             AND DiskServer.hwOnline = 1
+        ORDER BY -- use randomness to scatter filesystem/DiskServer usage
                  DBMS_Random.value)
    WHERE ROWNUM < 2;
   -- compute it's gcWeight
@@ -1678,9 +1714,9 @@ BEGIN
     USING OUT gcw;
   -- then create the DiskCopy
   INSERT INTO DiskCopy
-    (path, id, filesystem, castorfile, status, importance,
+    (path, id, filesystem, dataPool, castorfile, status, importance,
      creationTime, lastAccessTime, gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid)
-  VALUES (dcPath, dcId, fsId, cfId, dconst.DISKCOPY_VALID, -1,
+  VALUES (dcPath, dcId, fsId, dpId, cfId, dconst.DISKCOPY_VALID, -1,
           getTime(), getTime(), GCw, 0, 0, ouid, ogid);
   -- link to the SubRequest and schedule an access if requested
   IF schedule = 0 THEN
@@ -1711,24 +1747,35 @@ BEGIN
   FOR a IN (SELECT SvcClass.id FROM (
               -- Determine the number of copies of the file in all service classes
               SELECT * FROM (
-                SELECT  /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
-                       SvcClass.id, count(*) available
-                  FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass, SvcClass
-                 WHERE DiskCopy.filesystem = FileSystem.id
-                   AND DiskCopy.castorfile = cfId
-                   AND FileSystem.diskpool = DiskPool2SvcClass.parent
-                   AND DiskPool2SvcClass.child = SvcClass.id
-                   AND DiskCopy.status = dconst.DISKCOPY_VALID
-                   AND FileSystem.status IN
-                       (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
-                   AND DiskServer.id = FileSystem.diskserver
-                   AND DiskServer.status IN
-                       (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
-                 GROUP BY SvcClass.id)
-             ) results, SvcClass
+                SELECT child, sum(available) AS available FROM (
+                  SELECT  /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
+                         DiskPool2SvcClass.child, 1 available
+                    FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+                   WHERE DiskCopy.filesystem = FileSystem.id
+                     AND DiskCopy.castorfile = cfId
+                     AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                     AND DiskCopy.status = dconst.DISKCOPY_VALID
+                     AND FileSystem.status IN
+                         (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
+                     AND DiskServer.id = FileSystem.diskserver
+                     AND DiskServer.status IN
+                         (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
+                   UNION ALL
+                  SELECT  /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
+                         DataPool2SvcClass.child, 1 available
+                    FROM DiskCopy, DataPool2SvcClass
+                   WHERE DiskCopy.castorfile = cfId
+                     AND DiskCopy.status = dconst.DISKCOPY_VALID
+                     AND DiskCopy.dataPool = DataPool2SvcClass.parent
+                     AND EXISTS (SELECT 1 FROM DiskServer
+                                  WHERE DiskServer.dataPool = DiskCopy.dataPool
+                                    AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                                              dconst.DISKSERVER_DRAINING,
+                                                              dconst.DISKSERVER_READONLY)))
+                 GROUP by child)) results, SvcClass
              -- Join the results with the service class table and determine if
              -- additional copies need to be created
-             WHERE results.id = SvcClass.id
+             WHERE results.child = SvcClass.id
                AND SvcClass.replicateOnClose = 1
                AND results.available < SvcClass.maxReplicaNb)
   LOOP
@@ -1891,14 +1938,23 @@ BEGIN
     -- regardless their status, accepting Disabled ones
     -- as there's no real IO activity involved. However the
     -- risk is that the file might not come back and it's lost!
-    SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ COUNT(DiskCopy.id) INTO nbDCs
-      FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
-     WHERE DiskCopy.castorfile = cfId
-       AND DiskCopy.fileSystem = FileSystem.id
-       AND FileSystem.diskpool = DiskPool2SvcClass.parent
-       AND DiskPool2SvcClass.child = svcClassId
-       AND FileSystem.diskserver = DiskServer.id
-       AND DiskCopy.status = dconst.DISKCOPY_STAGEOUT;
+    SELECT SUM(nbIds) INTO nbDCs FROM (
+      SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
+             COUNT(DiskCopy.id) AS nbIds
+        FROM DiskCopy, FileSystem, DiskPool2SvcClass
+       WHERE DiskCopy.castorfile = cfId
+         AND DiskCopy.fileSystem = FileSystem.id
+         AND FileSystem.diskpool = DiskPool2SvcClass.parent
+         AND DiskPool2SvcClass.child = svcClassId
+         AND DiskCopy.status = dconst.DISKCOPY_STAGEOUT
+       UNION ALL
+      SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */
+             COUNT(DiskCopy.id) AS nbIds
+        FROM DiskCopy, DataPool2SvcClass
+       WHERE DiskCopy.castorfile = cfId
+         AND DiskCopy.dataPool = DataPool2SvcClass.parent
+         AND DataPool2SvcClass.child = svcClassId
+         AND DiskCopy.status = dconst.DISKCOPY_STAGEOUT);
     IF nbDCs = 0 THEN
       -- This is a PutDone without a put (otherwise we would have found
       -- a DiskCopy on a FileSystem), so we fail the subrequest.
@@ -2220,15 +2276,25 @@ BEGIN
   -- select the list of DiskCopies to be deleted
   SELECT id, status, tapeStatus BULK COLLECT INTO dcsToRm, dcsToRmStatus, dcsToRmCfStatus FROM (
     -- first physical diskcopies
-    SELECT /*+ INDEX_RS_ASC(DC I_DiskCopy_CastorFile) */ DC.id, DC.status, CastorFile.tapeStatus
-      FROM DiskCopy DC, FileSystem, DiskPool2SvcClass DP2SC, CastorFile
-     WHERE DC.castorFile = cfId
-       AND DC.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
-       AND DC.fileSystem = FileSystem.id
-       AND FileSystem.diskPool = DP2SC.parent
-       AND (DP2SC.child = svcClassId OR svcClassId = 0)
+    SELECT /*+ INDEX_RS_ASC(DC I_DiskCopy_CastorFile) */
+           DiskCopy.id, DiskCopy.status, CastorFile.tapeStatus
+      FROM DiskCopy, FileSystem, DiskPool2SvcClass, CastorFile
+     WHERE DiskCopy.castorFile = cfId
+       AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
+       AND DiskCopy.fileSystem = FileSystem.id
+       AND FileSystem.diskPool = DiskPool2SvcClass.parent
+       AND (DiskPool2SvcClass.child = svcClassId OR svcClassId = 0)
        AND CastorFile.id = cfId)
-  UNION ALL
+     UNION ALL
+    SELECT /*+ INDEX_RS_ASC(DC I_DiskCopy_CastorFile) */
+           DiskCopy.id, DiskCopy.status, CastorFile.tapeStatus
+      FROM DiskCopy, DataPool2SvcClass, CastorFile
+     WHERE DiskCopy.castorFile = cfId
+       AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
+       AND DiskCopy.dataPool = DataPool2SvcClass.parent
+       AND (DataPool2SvcClass.child = svcClassId OR svcClassId = 0)
+       AND CastorFile.id = cfId
+     UNION ALL
     -- and then diskcopies resulting from ongoing requests, for which the previous
     -- query wouldn't return any entry because of e.g. missing filesystem
     SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ DC.id, DC.status, CastorFile.tapeStatus
@@ -2354,16 +2420,16 @@ END;
 CREATE OR REPLACE PROCEDURE setFileGCWeightProc
 (fid IN NUMBER, nh IN VARCHAR2, svcClassId IN NUMBER, weight IN FLOAT, ret OUT INTEGER) AS
   CURSOR dcs IS
-  SELECT DiskCopy.id, gcWeight
+  SELECT DiskCopy.id, DiskCopy.gcWeight
     FROM DiskCopy, CastorFile
    WHERE castorFile.id = diskcopy.castorFile
      AND fileid = fid
      AND nshost = getConfigOption('stager', 'nsHost', nh)
-     AND fileSystem IN (
-       SELECT FileSystem.id
-         FROM FileSystem, DiskPool2SvcClass D2S
-        WHERE FileSystem.diskPool = D2S.parent
-          AND D2S.child = svcClassId);
+     AND (fileSystem IN (SELECT FileSystem.id
+                           FROM FileSystem, DiskPool2SvcClass
+                          WHERE FileSystem.diskPool = DiskPool2SvcClass.parent
+                            AND DiskPool2SvcClass.child = svcClassId) OR
+          dataPool IN (SELECT parent FROM DataPool2SvcClass WHERE child = svcClassId));
   gcwProc VARCHAR(2048);
   gcw NUMBER;
 BEGIN
@@ -2436,6 +2502,7 @@ CREATE OR REPLACE PROCEDURE storeReports
  inNumParams IN castor."cnumList") AS
  varDsId NUMBER;
  varFsId NUMBER;
+ varDpId NUMBER;
  varHeartbeatTimeout NUMBER;
  emptyReport BOOLEAN := False;
 BEGIN
@@ -2473,27 +2540,43 @@ BEGIN
          VALUES (inStrParams(2*i+1), ids_seq.nextval, dconst.DISKSERVER_DISABLED, 1, getTime())
         RETURNING id INTO varDsId;
       END IF;
-      -- update FileSystem
-      varFsId := NULL;
-      UPDATE FileSystem
-         SET maxFreeSpace = inNumParams(8*i+1),
-             minAllowedFreeSpace = inNumParams(8*i+2),
-             totalSize = inNumParams(8*i+3),
-             free = inNumParams(8*i+4),
-             nbReadStreams = inNumParams(8*i+5),
-             nbWriteStreams = inNumParams(8*i+6),
-             nbRecallerStreams = inNumParams(8*i+7),
-             nbMigratorStreams = inNumParams(8*i+8)
-       WHERE diskServer=varDsId AND mountPoint=inStrParams(2*i+2)
-      RETURNING id INTO varFsId;
-      -- if it did not exist, create it
-      IF varFsId IS NULL THEN
-        INSERT INTO FileSystem (mountPoint, maxFreeSpace, minAllowedFreeSpace, totalSize, free,
-                                nbReadStreams, nbWriteStreams, nbRecallerStreams, nbMigratorStreams,
-                                id, diskPool, diskserver, status)
-        VALUES (inStrParams(2*i+2), inNumParams(8*i+1), inNumParams(8*i+2), inNumParams(8*i+3),
-                inNumParams(8*i+4), inNumParams(8*i+5), inNumParams(8*i+6), inNumParams(8*i+7),
-                inNumParams(8*i+8), ids_seq.nextval, 0, varDsId, dconst.FILESYSTEM_DISABLED);
+      -- update FileSystem or data pool
+      IF SUBSTR(inStrParams(2*i+2),0,1) = '/' THEN
+        varFsId := NULL;
+        UPDATE FileSystem
+           SET maxFreeSpace = inNumParams(8*i+1),
+               minAllowedFreeSpace = inNumParams(8*i+2),
+               totalSize = inNumParams(8*i+3),
+               free = inNumParams(8*i+4),
+               nbReadStreams = inNumParams(8*i+5),
+               nbWriteStreams = inNumParams(8*i+6),
+               nbRecallerStreams = inNumParams(8*i+7),
+               nbMigratorStreams = inNumParams(8*i+8)
+         WHERE diskServer=varDsId AND mountPoint=inStrParams(2*i+2)
+        RETURNING id INTO varFsId;
+        -- if it did not exist, create it
+        IF varFsId IS NULL THEN
+          INSERT INTO FileSystem (mountPoint, maxFreeSpace, minAllowedFreeSpace, totalSize, free,
+                                  nbReadStreams, nbWriteStreams, nbRecallerStreams, nbMigratorStreams,
+                                  id, diskPool, diskserver, status)
+          VALUES (inStrParams(2*i+2), inNumParams(8*i+1), inNumParams(8*i+2), inNumParams(8*i+3),
+                  inNumParams(8*i+4), inNumParams(8*i+5), inNumParams(8*i+6), inNumParams(8*i+7),
+                  inNumParams(8*i+8), ids_seq.nextval, 0, varDsId, dconst.FILESYSTEM_DISABLED);
+        END IF;
+      ELSE
+        UPDATE DataPool
+           SET maxFreeSpace = inNumParams(8*i+1),
+               minAllowedFreeSpace = inNumParams(8*i+2),
+               totalSize = inNumParams(8*i+3),
+               free = inNumParams(8*i+4)
+         WHERE name = inStrParams(2*i+2)
+        RETURNING id INTO varDpId;
+        -- if it did not exist, create it
+        IF varDpId IS NULL THEN
+          INSERT INTO DataPool (maxFreeSpace, minAllowedFreeSpace, totalSize, free, id, name)
+          VALUES (inNumParams(8*i+1), inNumParams(8*i+2), inNumParams(8*i+3),
+                  inNumParams(8*i+4), ids_seq.nextval, inStrParams(2*i+2));
+        END IF;
       END IF;
     END LOOP;
   END IF;
@@ -2647,16 +2730,16 @@ BEGIN
       varFoundSeg := TRUE;
       -- Is the segment valid
       IF varSeg.segStatus = '-' THEN
-        -- remember the copy number and tape
-        varAllCopyNbs.EXTEND;
-        varAllCopyNbs(varI) := varSeg.copyno;
-        varAllVIDs.EXTEND;
-        varAllVIDs(varI) := varSeg.vid;
-        varI := varI + 1;
         -- Is the segment on a valid tape from recall point of view ?
         IF BITAND(varSeg.tapeStatus, tconst.TAPE_DISABLED) = 0 AND
            BITAND(varSeg.tapeStatus, tconst.TAPE_EXPORTED) = 0 AND
            BITAND(varSeg.tapeStatus, tconst.TAPE_ARCHIVED) = 0 THEN
+          -- remember the copy number and tape
+          varAllCopyNbs.EXTEND;
+          varAllCopyNbs(varI) := varSeg.copyno;
+          varAllVIDs.EXTEND;
+          varAllVIDs(varI) := varSeg.vid;
+          varI := varI + 1;
           -- create recallJob
           INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
                                  vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
@@ -3049,33 +3132,54 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
     varNbDCs INTEGER;
     varMaxDCs INTEGER;
     varNbDss INTEGER;
+    varDPinvolved INTEGER;
   BEGIN
-    SELECT COUNT(*), max(maxReplicaNb) INTO varNbDCs, varMaxDCs FROM (
-      SELECT DiskCopy.id, maxReplicaNb
+    SELECT COUNT(*), max(maxReplicaNb), sum(isDataPool)
+      INTO varNbDCs, varMaxDCs, varDPinvolved FROM (
+      SELECT DiskCopy.id, SvcClass.maxReplicaNb, 0 AS isDataPool
         FROM DiskCopy, FileSystem, DiskPool2SvcClass, SvcClass
        WHERE DiskCopy.castorfile = inCfId
          AND DiskCopy.fileSystem = FileSystem.id
          AND FileSystem.diskpool = DiskPool2SvcClass.parent
          AND DiskPool2SvcClass.child = SvcClass.id
          AND SvcClass.id = inSvcClassId
+         AND DiskCopy.status = dconst.DISKCOPY_VALID
+       UNION ALL
+      SELECT DiskCopy.id, SvcClass.maxReplicaNb, 1 AS isDatapool
+        FROM DiskCopy, DataPool2SvcClass, SvcClass
+       WHERE DiskCopy.castorfile = inCfId
+         AND DiskCopy.dataPool = DataPool2SvcClass.parent
+         AND DataPool2SvcClass.child = SvcClass.id
+         AND SvcClass.id = inSvcClassId
          AND DiskCopy.status = dconst.DISKCOPY_VALID);
     IF varNbDCs < varMaxDCs OR varMaxDCs = 0 THEN
-      -- we have to replicate. But we should ony do it if we have enough available diskservers.
-      SELECT COUNT(DISTINCT(DiskServer.name)) INTO varNbDSs
-        FROM DiskServer, FileSystem, DiskPool2SvcClass
-       WHERE FileSystem.diskServer = DiskServer.id
-         AND FileSystem.diskPool = DiskPool2SvcClass.parent
-         AND DiskPool2SvcClass.child = inSvcClassId
-         AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
-         AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
-         AND DiskServer.hwOnline = 1
-         AND DiskServer.id NOT IN (
-           SELECT /*+ INDEX(DiskCopy I_DiskCopy_CastorFile) */ DISTINCT(DiskServer.id)
-             FROM DiskCopy, FileSystem, DiskServer
-            WHERE DiskCopy.castorfile = inCfId
-              AND DiskCopy.fileSystem = FileSystem.id
-              AND FileSystem.diskserver = DiskServer.id
-              AND DiskCopy.status = dconst.DISKCOPY_VALID);
+      -- we have to replicate. But in case we have only filesystem based DiskPool,
+      -- we should only do it if we have enough available diskservers
+      -- In case of datapools, we only need one DiskServer available
+      IF varDPinvolved = 0 THEN
+        SELECT COUNT(DISTINCT(DiskServer.name)) INTO varNbDSs
+          FROM DiskServer, FileSystem, DiskPool2SvcClass
+         WHERE FileSystem.diskServer = DiskServer.id
+           AND FileSystem.diskPool = DiskPool2SvcClass.parent
+           AND DiskPool2SvcClass.child = inSvcClassId
+           AND FileSystem.status = dconst.FILESYSTEM_PRODUCTION
+           AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+           AND DiskServer.hwOnline = 1
+           AND DiskServer.id NOT IN (
+             SELECT /*+ INDEX(DiskCopy I_DiskCopy_CastorFile) */ DISTINCT(DiskServer.id)
+               FROM DiskCopy, FileSystem, DiskServer
+              WHERE DiskCopy.castorfile = inCfId
+                AND DiskCopy.fileSystem = FileSystem.id
+                AND FileSystem.diskserver = DiskServer.id
+                AND DiskCopy.status = dconst.DISKCOPY_VALID);
+      ELSE
+        SELECT COUNT(DISTINCT(DiskServer.name)) INTO varNbDSs
+          FROM DiskServer, DataPool2SvcClass
+         WHERE DiskServer.dataPool = DataPool2SvcClass.parent
+           AND DataPool2SvcClass.child = inSvcClassId
+           AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+           AND DiskServer.hwOnline = 1;
+      END IF;
       IF varNbDSs > 0 THEN
         BEGIN
           -- yes, we can replicate, create a replication request without waiting on it.
@@ -3227,7 +3331,7 @@ BEGIN
     buildPathFromFileId(inFileId, inNsHost, varDcId, varPath);
     INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, lastAccessTime,
                           gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid, importance)
-    VALUES (varPath, varDcId, 0, inCfId, dconst.DISKCOPY_WAITFS, getTime(), getTime(), 0, 0, 0, inEuid, inEgid, 0);
+    VALUES (varPath, varDcId, NULL, inCfId, dconst.DISKCOPY_WAITFS, getTime(), getTime(), 0, 0, 0, inEuid, inEgid, 0);
     -- update and schedule the subRequest if needed
     IF inDoSchedule THEN
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
@@ -3282,11 +3386,14 @@ CREATE OR REPLACE PROCEDURE handlePutInsidePrepareToPut(inCfId IN INTEGER, inSrI
                                                         inReqUUID IN VARCHAR2, inSrUUID IN VARCHAR2,
                                                         inNsOpenTime IN INTEGER) AS
   varFsId INTEGER;
+  varDpId INTEGER;
   varStatus INTEGER;
 BEGIN
   BEGIN
     -- Retrieve the infos about the DiskCopy to be used
-    SELECT fileSystem, status INTO varFsId, varStatus FROM DiskCopy WHERE id = inDcId;
+    SELECT fileSystem, dataPool, status INTO varFsId, varDpId, varStatus
+      FROM DiskCopy
+     WHERE id = inDcId;
   EXCEPTION WHEN NO_DATA_FOUND THEN
     -- The DiskCopy has disappeared in the mean time, removed by another request
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
@@ -3299,9 +3406,9 @@ BEGIN
     RETURN;
   END;
 
-  -- handle the case where another concurrent Put|Update request overtook us
+  -- handle the case where another concurrent Put request overtook us
   IF varStatus = dconst.DISKCOPY_WAITFS_SCHEDULING THEN
-    -- another Put|Update request was faster, subRequest needs to wait on it
+    -- another Put request was faster, subRequest needs to wait on it
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = dconst.SUBREQUEST_WAITSUBREQ
      WHERE id = inSrId;
@@ -3330,6 +3437,15 @@ BEGIN
         FROM FileSystem, DiskServer
        WHERE FileSystem.id = varFsId
          AND DiskServer.id = FileSystem.diskServer;
+    END IF;
+    -- in case of datapool, take a random diskServer
+    IF varDpId != 0 THEN
+      SELECT name || ':' INTO varReqFileSystem FROM (
+        SELECT diskServer.name
+          FROM DiskServer
+         WHERE DiskServer.dataPool = varDpId
+         ORDER BY DBMS_Random.value)
+       WHERE ROWNUM < 2;
     END IF;
     -- update and schedule the subRequest
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
@@ -3475,15 +3591,11 @@ BEGIN
   DECLARE
     varDcIds "numList";
   BEGIN
-    SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */ DiskCopy.id BULK COLLECT INTO varDcIds
-      FROM DiskCopy, FileSystem, DiskServer
-     WHERE inCfId = DiskCopy.castorFile
-       AND FileSystem.id(+) = DiskCopy.fileSystem
-       AND nvl(FileSystem.status, 0) IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
-       AND DiskServer.id(+) = FileSystem.diskServer
-       AND nvl(DiskServer.status, 0) IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
-       AND nvl(DiskServer.hwOnline, 1) = 1
-       AND DiskCopy.status = dconst.DISKCOPY_WAITFS_SCHEDULING;
+    SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */
+           id BULK COLLECT INTO varDcIds
+      FROM DiskCopy
+     WHERE castorFile = inCfId
+       AND status = dconst.DISKCOPY_WAITFS_SCHEDULING;
     IF varDcIds.COUNT > 0 THEN
       -- DiskCopy is in WAIT*, make SubRequest wait on previous subrequest and do not schedule
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
@@ -3511,22 +3623,33 @@ BEGIN
   -- Note that we accept copies in READONLY hardware here as we're
   -- processing Get requests
   SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) */
-         COUNT(DiskCopy.id), min(DiskCopy.status) INTO varNbDCs, varDcStatus
-    FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
-   WHERE DiskCopy.castorfile = inCfId
-     AND DiskCopy.fileSystem = FileSystem.id
-     AND FileSystem.diskpool = DiskPool2SvcClass.parent
-     AND DiskPool2SvcClass.child = varSvcClassId
-     AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
-     AND FileSystem.diskserver = DiskServer.id
-     AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
-     AND DiskServer.hwOnline = 1
-     AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT);
-
+         COUNT(id), min(status) INTO varNbDCs, varDcStatus
+    FROM (SELECT DiskCopy.id, DiskCopy.status
+            FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+           WHERE DiskCopy.castorfile = inCfId
+             AND DiskCopy.fileSystem = FileSystem.id
+             AND FileSystem.diskpool = DiskPool2SvcClass.parent
+             AND DiskPool2SvcClass.child = varSvcClassId
+             AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
+             AND FileSystem.diskserver = DiskServer.id
+             AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+             AND DiskServer.hwOnline = 1
+             AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
+           UNION ALL
+          SELECT DiskCopy.id, DiskCopy.status
+            FROM DiskCopy, DataPool2SvcClass
+           WHERE DiskCopy.castorfile = inCfId
+             AND DiskCopy.dataPool = DataPool2SvcClass.parent
+             AND DataPool2SvcClass.child = varSvcClassId
+             AND EXISTS (SELECT 1 FROM DiskServer
+                          WHERE DiskServer.dataPool = DiskCopy.dataPool
+                            AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                                      dconst.DISKSERVER_READONLY)
+                            AND DiskServer.hwOnline = 1));
   -- first handle the case where we found diskcopies
   IF varNbDCs > 0 THEN
     -- We may still need to replicate the file (replication on demand)
-    IF varNbDCs > 1 OR varDcStatus != dconst.DISKCOPY_STAGEOUT THEN
+    IF varDcStatus != dconst.DISKCOPY_STAGEOUT THEN
       handleReplication(inSRId, inFileId, inNsHost, inCfId, varNsOpenTime, varSvcClassId,
                         varEuid, varEgid, varReqUUID, varSrUUID);
     END IF;
@@ -3534,20 +3657,42 @@ BEGIN
       varDcList VARCHAR2(2048);
     BEGIN
       -- List available diskcopies for job scheduling
+<<<<<<< HEAD
+      -- in case of datapools, we take a maximum of 3 random diskservers
+      SELECT LISTAGG(dsName || ':' || fsMountPoint, '|')
+             WITHIN GROUP (ORDER BY DBMS_Random.value)
+=======
       SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) INDEX(Subrequest PK_Subrequest_Id)*/ 
              LISTAGG(DiskServer.name || ':' || FileSystem.mountPoint, '|')
-             WITHIN GROUP (ORDER BY FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams))
+             WITHIN GROUP (ORDER BY FileSystem.nbReadStreams + FileSystem.nbWriteStreams)
+>>>>>>> origin/v2_1_14Version
         INTO varDcList
-        FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
-       WHERE DiskCopy.castorfile = inCfId
-         AND FileSystem.diskpool = DiskPool2SvcClass.parent
-         AND DiskPool2SvcClass.child = varSvcClassId
-         AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
-         AND FileSystem.id = DiskCopy.fileSystem
-         AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
-         AND DiskServer.id = FileSystem.diskServer
-         AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
-         AND DiskServer.hwOnline = 1;
+        FROM (SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) INDEX(Subrequest PK_Subrequest_Id)*/
+                     DiskServer.name AS dsname, FileSystem.mountPoint AS fsMountPoint
+                FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
+               WHERE DiskCopy.castorfile = inCfId
+                 AND FileSystem.diskpool = DiskPool2SvcClass.parent
+                 AND DiskPool2SvcClass.child = varSvcClassId
+                 AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
+                 AND FileSystem.id = DiskCopy.fileSystem
+                 AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
+                 AND DiskServer.id = FileSystem.diskServer
+                 AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+                 AND DiskServer.hwOnline = 1
+               UNION ALL
+              SELECT *
+                FROM (SELECT DiskServer.name AS dsname, '' AS fsMountPoint
+                        FROM DiskCopy, DiskServer, DataPool2SvcClass
+                       WHERE DiskCopy.castorfile = inCfId
+                         AND DiskCopy.datapool = DataPool2SvcClass.parent
+                         AND DataPool2SvcClass.child = varSvcClassId
+                         AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
+                         AND DiskServer.dataPool = DiskCopy.dataPool
+                         AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                                   dconst.DISKSERVER_READONLY)
+                         AND DiskServer.hwOnline = 1
+                       ORDER BY DBMS_Random.value)
+               WHERE ROWNUM < 4);
       -- mark subrequest for scheduling
       UPDATE SubRequest
          SET requestedFileSystems = varDcList,
@@ -3673,6 +3818,17 @@ BEGIN
          AND FileSystem.diskserver = DiskServer.id
          AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
          AND DiskServer.hwOnline = 1
+         AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
+       UNION ALL
+      SELECT DiskCopy.id
+        FROM DiskCopy, DataPool2SvcClass
+       WHERE DiskCopy.castorfile = inCfId
+         AND DiskCopy.dataPool = DataPool2SvcClass.parent
+         AND DataPool2SvcClass.child = varSvcClassId
+         AND EXISTS (SELECT 1 FROM DiskServer
+                     WHERE DiskServer.dataPool = DiskCopy.dataPool
+                       AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                                 dconst.DISKSERVER_READONLY))
          AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
        UNION ALL
       SELECT id

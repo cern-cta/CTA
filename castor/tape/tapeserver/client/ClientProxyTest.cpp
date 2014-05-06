@@ -63,7 +63,7 @@ TEST(tapeServerClientInterface, VolReqVol) {
   clientSingleReplRunner<Volume> csVolRun(csVol);
   csVolRun.start();
   // Setup a clientInterface to talk to it
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
@@ -91,7 +91,7 @@ TEST(tapeServerClientInterface, VolReqNoMore) {
   clientSingleReplRunner<NoMoreFiles> csVolRun(csVol);
   csVolRun.start();
   // Setup a clientInterface to talk to it
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
@@ -119,7 +119,7 @@ TEST(tapeServerClientInterface, VolReqEndError) {
   clientSingleReplRunner<EndNotificationErrorReport> csVolRun(csVol);
   csVolRun.start();
   // Setup a clientInterface to talk to it
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
@@ -147,7 +147,7 @@ TEST(tapeServerClientInterface, VolReqVolReq) {
   clientSingleReplRunner<VolumeRequest> csVolRun(csVol);
   csVolRun.start();
   // Setup a clientInterface to talk to it
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
@@ -175,7 +175,7 @@ TEST(tapeServerClientInterface, VolReqVolSeqBreak) {
   clientSingleReplRunner<VolumeRequest> csVolRun(csVol);
   csVolRun.start();
   // Setup a clientInterface to talk to it
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
@@ -203,7 +203,7 @@ TEST(tapeServerClientInterface, EndSessionNotifAck) {
   clientSingleReplRunner<NotificationAcknowledge> csVolRun(csVol);
   csVolRun.start();
   // Setup a clientInterface to talk to it
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
@@ -231,7 +231,7 @@ TEST(tapeServerClientInterface, EndSessionNotifAckSeqBreak) {
   clientSingleReplRunner<NotificationAcknowledge> csVolRun(csVol);
   csVolRun.start();
   // Setup a clientInterface to talk to it
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
@@ -259,7 +259,7 @@ TEST(tapeServerClientInterface, EndSessionVolReq) {
   clientSingleReplRunner<VolumeRequest> csVolRun(csVol);
   csVolRun.start();
   // Setup a clientInterface to talk to it
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
@@ -287,7 +287,7 @@ TEST(tapeServerClientInterface, EndSessionErrorNotifAck) {
   clientSingleReplRunner<NotificationAcknowledge> csVolRun(csVol);
   csVolRun.start();
   // Setup a clientInterface to talk to it
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
@@ -315,7 +315,7 @@ TEST(tapeServerClientInterface, EndSessionErrorVolReq) {
   clientSingleReplRunner<VolumeRequest> csVolRun(csVol);
   csVolRun.start();
   // Setup a clientInterface to talk to it
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
@@ -344,7 +344,7 @@ TEST(tapeServerClientInterface, EndSessionErrorNotifAckSeqBreak) {
   clientSingleReplRunner<NotificationAcknowledge> csVolRun(csVol);
   csVolRun.start();
   // Setup a clientInterface to talk to it
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
@@ -373,7 +373,7 @@ TEST(tapeServerClientInterface, FilesToMigrateReqFilesToMigrate) {
   clientSingleReplRunner<FilesToMigrateList> csVolRun(csVol);
   csVolRun.start();
   // Setup a clientInterface to talk to it
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
@@ -404,7 +404,7 @@ TEST(tapeServerClientInterface, FilesToMigrateReqNoMore) {
   clientSingleReplRunner<NoMoreFiles> csVolRun(csVol);
   csVolRun.start();
   // Setup a clientInterface to talk to it
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
@@ -435,7 +435,7 @@ TEST(tapeServerClientInterface, FilesToMigrateReqFilesToMigrateSeqBreak) {
   clientSingleReplRunner<FilesToMigrateList> csVolRun(csVol);
   csVolRun.start();
   // Setup a clientInterface to talk to it
-  castor::tape::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
   snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
     clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
   snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");

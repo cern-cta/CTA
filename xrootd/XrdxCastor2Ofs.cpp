@@ -862,17 +862,6 @@ XrdxCastor2OfsFile::open( const char*         path,
                   DiskChecksum.c_str() );
   }
 
-  uid_t sec_uid = 0;
-  uid_t sec_gid = 0;
-
-  if ( envOpaque->Get( "castor2fs.client_sec_uid" ) ) {
-    sec_uid = atoi( envOpaque->Get( "castor2fs.client_sec_uid" ) );
-  }
-
-  if ( envOpaque->Get( "castor2fs.client_sec_gid" ) ) {
-    sec_gid = atoi( envOpaque->Get( "castor2fs.client_sec_gid" ) );
-  }
-
   // Extract the stager information
   val = envOpaque->Get( "castor2fs.pfn2" );
 

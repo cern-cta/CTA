@@ -54,7 +54,7 @@ tm	timestamp of drive assignment
 .nf
 .ft CW
 userid     jid  dgn        stat dvn                 rl  vsn    vid
-toto     16280  DLT        assn dlt01@shd34         os EF1234 EF1234 06:56:04
+toto     16280  DLT        assn dlt01@shd34         oa EF1234 EF1234 06:56:04
                 DLT        idle dlt02@shd34                          
                 DLT        idle dlt03@shd34                          
 .ft

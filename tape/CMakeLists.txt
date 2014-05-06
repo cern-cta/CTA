@@ -53,7 +53,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
   ################################################################################
   set (TAPE_LIB_SRC_FILES Ctape_config.c Ctape_devinfo.c Ctape_dmpfil.c
     Ctape_errmsg.c Ctape_info.c Ctape_kill.c Ctape_label.c Ctape_mount.c
-    Ctape_position.c Ctape_reserve.c Ctape_rls.c Ctape_rstatus.c Ctape_status.c
+    Ctape_position.c Ctape_reserve.c Ctape_rls.c Ctape_status.c
     chkdirw.c cvtden.c findpgrp.c getcompstat.c initlabel.c
     send2tpd.c usrlbl.c tplogger.c tplogger_messages.c sendscsicmd.c)
   add_library (castortape SHARED ${TAPE_LIB_SRC_FILES} ${TAPE_LIB_USR_SRC_FILES})
@@ -64,7 +64,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
 endif (${COMPILE_SERVER} STREQUAL "1")
 
 set (TAPE_LIB_MAN_PAGES Ctape_dmpfil Ctape_info Ctape_kill Ctape_label
-  Ctape_mount Ctape_position Ctape_reserve Ctape_rls Ctape_rstatus Ctape_status
+  Ctape_mount Ctape_position Ctape_reserve Ctape_rls Ctape_status
   getcompstat readlbl rwndtape skiptape usrlbl wrttpmrk)
 foreach (MAN_PAGE ${TAPE_LIB_MAN_PAGES})
   CastorInstallLibManPage (${MAN_PAGE})

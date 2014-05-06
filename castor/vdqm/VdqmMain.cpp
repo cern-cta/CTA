@@ -23,7 +23,7 @@
  *****************************************************************************/
  
 #include "castor/dlf/Dlf.hpp"
-#include "castor/log/LoggerImplementation.hpp"
+#include "castor/log/SyslogLogger.hpp"
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
@@ -43,7 +43,7 @@
 //------------------------------------------------------------------------------
 int main(int argc, char *argv[]) {
   try {
-    castor::log::LoggerImplementation log("vdqmd");
+    castor::log::SyslogLogger log("vdqmd");
     castor::vdqm::VdqmServer       server(std::cout, std::cerr, log);
     Cuuid_t                        cuuid                       = cuuid;
     castor::server::BaseThreadPool *requestHandlerThreadPool   = NULL;

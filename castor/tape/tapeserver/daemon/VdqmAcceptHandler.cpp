@@ -39,13 +39,11 @@ castor::tape::tapeserver::daemon::VdqmAcceptHandler::VdqmAcceptHandler(
   const int fd,
   io::PollReactor &reactor,
   log::Logger &log,
-  Vdqm &vdqm,
   DriveCatalogue &driveCatalogue)
   throw():
     m_fd(fd),
     m_reactor(reactor),
     m_log(log),
-    m_vdqm(vdqm),
     m_driveCatalogue(driveCatalogue) {
 }
 
@@ -128,9 +126,8 @@ bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
   // Create a new vdqm connection handler
   std::auto_ptr<VdqmConnectionHandler> connectionHandler;
   try {
-    connectionHandler.reset(
-      new VdqmConnectionHandler(connection.get(), m_reactor, m_log, m_vdqm,
-        m_driveCatalogue));
+    connectionHandler.reset(new VdqmConnectionHandler(connection.get(),
+      m_reactor, m_log, m_driveCatalogue));
     connection.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;

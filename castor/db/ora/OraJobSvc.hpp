@@ -208,10 +208,10 @@ namespace castor {
       private:
 
         /// SQL statement for function getUpdateStart
-        static const std::string s_getUpdateStartStatementString;
+        static const std::string s_getStartStatementString;
 
         /// SQL statement object for function getUpdateStart
-        oracle::occi::Statement *m_getUpdateStartStatement;
+        oracle::occi::Statement *m_getStartStatement;
 
         /// SQL statement for function putStart
         static const std::string s_putStartStatementString;
@@ -219,35 +219,13 @@ namespace castor {
         /// SQL statement object for function putStart
         oracle::occi::Statement *m_putStartStatement;
 
-        /// SQL statement for function putDoneStart
-        static const std::string s_putDoneStartStatementString;
+        static const std::string s_getEndedStatementString;
 
-        /// SQL statement object for function putDoneStart
-        oracle::occi::Statement *m_putDoneStartStatement;
+        oracle::occi::Statement *m_getEndedStatement;
 
-        /// SQL statement for function prepareForMigration
-        static const std::string s_prepareForMigrationStatementString;
+        static const std::string s_putEndedStatementString;
 
-        /// SQL statement object for function prepareForMigration
-        oracle::occi::Statement *m_prepareForMigrationStatement;
-
-        /// SQL statement for function getUpdateDone
-        static const std::string s_getUpdateDoneStatementString;
-
-        /// SQL statement object for function getUpdateDone
-        oracle::occi::Statement *m_getUpdateDoneStatement;
-
-        /// SQL statement for function getUpdateFailed
-        static const std::string s_getUpdateFailedStatementString;
-
-        /// SQL statement object for function getUpdateFailed
-        oracle::occi::Statement *m_getUpdateFailedStatement;
-
-        /// SQL statement for function putFailed
-        static const std::string s_putFailedStatementString;
-
-        /// SQL statement object for function putFailed
-        oracle::occi::Statement *m_putFailedStatement;
+        oracle::occi::Statement *m_putEndedStatement;
 
         /// SQL statement for function firstByteWritten
         static const std::string s_firstByteWrittenStatementString;

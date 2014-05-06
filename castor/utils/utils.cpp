@@ -82,6 +82,33 @@ void castor::utils::splitString(const std::string &str,
   }
 }
 
+//-----------------------------------------------------------------------------
+// trimString
+//-----------------------------------------------------------------------------
+std::string castor::utils::trimString(const std::string &s) throw() {
+  const std::string& spaces="\t\n\v\f\r ";
+
+  // Find first non white character
+  size_t beginpos = s.find_first_not_of(spaces);
+  std::string::const_iterator it1;
+  if (std::string::npos != beginpos) {
+    it1 = beginpos + s.begin();
+  } else {
+    it1 = s.begin();
+  }
+
+  // Find last non white chararacter
+  std::string::const_iterator it2;
+  size_t endpos = s.find_last_not_of(spaces);
+  if (std::string::npos != endpos) {
+    it2 = endpos + 1 + s.begin();
+  } else {
+    it2 = s.end();
+  }
+
+  return std::string(it1, it2);
+}
+
 //------------------------------------------------------------------------------
 // isValidUInt
 //------------------------------------------------------------------------------

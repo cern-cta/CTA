@@ -22,6 +22,8 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
+#include "castor/io/DummyPollReactor.hpp"
+#include "castor/legacymsg/CupvProxyDummy.hpp"
 #include "castor/log/DummyLogger.hpp"
 #include "castor/tape/rmc/RmcDaemon.hpp"
 
@@ -47,9 +49,12 @@ TEST_F(castor_tape_rmc_RmcDaemonTest, constructor) {
   std::ostringstream stdOut;
   std::ostringstream stdErr;
   castor::log::DummyLogger logger("unittest");
+  castor::io::DummyPollReactor reactor;
+  const bool isGrantedReturnValue = true;
+  castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
   
   std::auto_ptr<RmcDaemon> daemon;
-  daemon.reset(new RmcDaemon(stdOut, stdErr, logger));
+  daemon.reset(new RmcDaemon(stdOut, stdErr, logger, reactor, cupv));
 }
 
 } // namespace unitTests

@@ -818,7 +818,7 @@ reply:
 	exit (0);
 }
 
-int Ctape_updvsn(uid_t uid,
+static int Ctape_updvsn(uid_t uid,
                  gid_t gid,
                  int jid,
                  int ux,

@@ -30,7 +30,7 @@
 #include "castor/gc/GcDaemon.hpp"
 #include "castor/gc/DeletionThread.hpp"
 #include "castor/gc/SynchronizationThread.hpp"
-#include "castor/log/LoggerImplementation.hpp"
+#include "castor/log/SyslogLogger.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/BaseThreadPool.hpp"
 #include "h/Cgetopt.h"
@@ -46,7 +46,7 @@
 int main(int argc, char *argv[]) {
 
   try {
-    castor::log::LoggerImplementation log("gcd");
+    castor::log::SyslogLogger log("gcd");
     castor::gc::GcDaemon daemon(std::cout, std::cerr, log);
 
     // Randomize the start-up of the daemon between 1 and 15 minutes.

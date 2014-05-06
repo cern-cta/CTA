@@ -94,7 +94,6 @@ static void procposreq( char*, char* );
 static void procrlsreq( char*, char* );
 static void procrsltreq( char*, char* );
 static void procrsvreq( char*, char* );
-static void procrstatreq( char*, char* );
 
 char *getconfent();
 
@@ -915,9 +914,6 @@ static void procreq(int req_type,
 		break;
 	case TPSTAT:
 		procstatreq (req_data, clienthost);
-		break;
-	case TPRSTAT:
-		procrstatreq (req_data, clienthost);
 		break;
 	case TPCONF:
 		procconfreq (req_data, clienthost);
@@ -2346,49 +2342,6 @@ reply:
 		}
 	}
 	sendrep (rpfd, TAPERC, c);
-}
-
-static void procrstatreq(char *req_data,
-                  char *clienthost)
-{
-	gid_t gid;
-	unsigned int j;
-	char *rbp;
-	char repbuf[REPBUFSZ];
-	struct tprrt *rrtp;
-	char *sbp;
-	uid_t uid;
-
-	rbp = req_data;
-	unmarshall_LONG (rbp, uid);
-	unmarshall_LONG (rbp, gid);
-
-	RESETID(uid,gid);
-
-	tplogit (func, TP056, "reservation status", uid, gid, clienthost);
-        tl_tpdaemon.tl_log( &tl_tpdaemon, 56, 5,
-                            "func",       TL_MSG_PARAM_STR, func,
-                            "Message",    TL_MSG_PARAM_STR, "reservation status",
-                            "UID",        TL_MSG_PARAM_UID, uid,
-                            "GID",        TL_MSG_PARAM_GID, gid,
-                            "Clienthost", TL_MSG_PARAM_STR, clienthost );                        
-
-	sbp = repbuf;
-	rrtp = &tpdrrt;
-	marshall_WORD (sbp, nbjobs);
-	while (rrtp) {
-		marshall_LONG (sbp, rrtp->uid);
-		marshall_LONG (sbp, rrtp->jid);
-		marshall_WORD (sbp, nbdgp);
-		for (j = 0; j < nbdgp; j++) {
-			marshall_STRING (sbp, rrtp->dg[j].name);
-			marshall_WORD (sbp, rrtp->dg[j].rsvd);
-			marshall_WORD (sbp, rrtp->dg[j].used);
-		}
-		rrtp = rrtp->next;
-	}
-	sendrep (rpfd, MSG_DATA, sbp - repbuf, repbuf);
-	sendrep (rpfd, TAPERC, 0);
 }
 
 static void procstatreq(char *req_data,

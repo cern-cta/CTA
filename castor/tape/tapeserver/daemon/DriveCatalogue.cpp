@@ -27,6 +27,7 @@
 #include "castor/utils/utils.hpp"
 
 #include <string.h>
+#include <time.h>
 
 //-----------------------------------------------------------------------------
 // drvState2Str
@@ -34,13 +35,14 @@
 const char *castor::tape::tapeserver::daemon::DriveCatalogue::drvState2Str(
   const DriveState state) throw() {
   switch(state) {
-  case DRIVE_STATE_INIT    : return "INIT";
-  case DRIVE_STATE_DOWN    : return "DOWN";
-  case DRIVE_STATE_UP      : return "UP";
-  case DRIVE_STATE_WAITFORK: return "WAITFORK";
-  case DRIVE_STATE_RUNNING : return "RUNNING";
-  case DRIVE_STATE_WAITDOWN: return "WAITDOWN";
-  default                  : return "UNKNOWN";
+  case DRIVE_STATE_INIT     : return "INIT";
+  case DRIVE_STATE_DOWN     : return "DOWN";
+  case DRIVE_STATE_UP       : return "UP";
+  case DRIVE_STATE_WAITFORK : return "WAITFORK";
+  case DRIVE_STATE_WAITLABEL: return "WAITLABEL";
+  case DRIVE_STATE_RUNNING  : return "RUNNING";
+  case DRIVE_STATE_WAITDOWN : return "WAITDOWN";
+  default                   : return "UNKNOWN";
   }
 }
 
@@ -73,7 +75,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::enterTpconfigLine(
     entry.devFilename = line.devFilename;
     entry.densities.push_back(line.density);
     entry.state = str2InitialState(line.initialState);
-    entry.positionInLibrary = line.positionInLibrary;
+    entry.librarySlot = line.librarySlot;
     entry.devType = line.devType;
     m_drives[line.unitName] = entry;
   // Else the drive is already in the catalogue
@@ -121,7 +123,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::checkTpconfigLine(
   checkTpconfigLineDevFilename(catalogueEntry.devFilename, line);
   checkTpconfigLineDensity(catalogueEntry.densities, line);
   checkTpconfigLineInitialState(catalogueEntry.state, line);
-  checkTpconfigLinePositionInLibrary(catalogueEntry.positionInLibrary, line);
+  checkTpconfigLineLibrarySlot(catalogueEntry.librarySlot, line);
   checkTpconfigLineDevType(catalogueEntry.devType, line);
 }
 
@@ -191,18 +193,18 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::
 }
 
 //-----------------------------------------------------------------------------
-// checkTpconfigLinePositionInLibrary
+// checkTpconfigLineLibrarySlot
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::
-  checkTpconfigLinePositionInLibrary(
-  const std::string &cataloguePositionInLibrary,
+  checkTpconfigLineLibrarySlot(
+  const std::string &catalogueLibrarySlot,
   const utils::TpconfigLine &line) throw(castor::exception::Exception) {
-  if(cataloguePositionInLibrary != line.positionInLibrary) {
+  if(catalogueLibrarySlot != line.librarySlot) {
     castor::exception::Internal ex;
     ex.getMessage() << "Invalid TPCONFIG line"
-      ": A tape drive can only have one position within its library"
-      ": cataloguePositionInLibrary=" << cataloguePositionInLibrary <<
-      " linePositionInLibrary=" << line.positionInLibrary;
+      ": A tape drive can only have one slot within its library"
+      ": catalogueLibrarySlot=" << catalogueLibrarySlot <<
+      " lineLibrarySlot=" << line.librarySlot;
     throw ex;
   }
 }
@@ -283,6 +285,38 @@ const std::string &castor::tape::tapeserver::daemon::DriveCatalogue::getDgn(
 }
 
 //-----------------------------------------------------------------------------
+// getVid
+//-----------------------------------------------------------------------------
+const std::string &castor::tape::tapeserver::daemon::DriveCatalogue::getVid(
+  const std::string &unitName) const throw(castor::exception::Exception) {
+  DriveMap::const_iterator itor = m_drives.find(unitName);
+  if(m_drives.end() == itor) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to get VID of tape drive " <<
+      unitName << ": Unknown drive";
+    throw ex;
+  }
+
+  return itor->second.vid;
+}
+
+//-----------------------------------------------------------------------------
+// getAssignmentTime
+//-----------------------------------------------------------------------------
+time_t castor::tape::tapeserver::daemon::DriveCatalogue::getAssignmentTime(
+  const std::string &unitName) const throw(castor::exception::Exception) {
+  DriveMap::const_iterator itor = m_drives.find(unitName);
+  if(m_drives.end() == itor) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to get the assignment time of tape drive " <<
+      unitName << ": Unknown drive";
+    throw ex;
+  }
+
+  return itor->second.assignment_time;
+}
+
+//-----------------------------------------------------------------------------
 // getDevFilename
 //-----------------------------------------------------------------------------
 const std::string
@@ -334,20 +368,20 @@ castor::tape::tapeserver::daemon::DriveCatalogue::DriveState
 }
 
 //-----------------------------------------------------------------------------
-// getPositionInLibrary
+// getLibrarySlot
 //-----------------------------------------------------------------------------
 const std::string &
-  castor::tape::tapeserver::daemon::DriveCatalogue::getPositionInLibrary(
+  castor::tape::tapeserver::daemon::DriveCatalogue::getLibrarySlot(
     const std::string &unitName) const throw(castor::exception::Exception) {
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to get position of tape drive " << unitName <<
-      " in library: Unknown drive";
+    ex.getMessage() << "Failed to get library slot of tape drive " << unitName
+      << ": Unknown drive";
     throw ex;
   }
 
-  return itor->second.positionInLibrary;
+  return itor->second.librarySlot;
 }
 
 //-----------------------------------------------------------------------------
@@ -359,12 +393,30 @@ const std::string &
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to get devide type of tape drive " << unitName <<
+    ex.getMessage() << "Failed to get device type of tape drive " << unitName <<
       ": Unknown drive";
     throw ex;
   }
 
   return itor->second.devType;
+}
+
+//-----------------------------------------------------------------------------
+// updateVidAssignment
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogue::updateVidAssignment(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception) {
+  std::ostringstream task;
+  task << "update the VID of tape drive " << unitName;
+
+  DriveMap::iterator itor = m_drives.find(unitName);
+  if(m_drives.end() == itor) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to " << task.str() << ": Unknown drive";
+    throw ex;
+  }
+  
+  itor->second.vid = vid;
+  itor->second.assignment_time = time(0); // set to "now"
 }
 
 //-----------------------------------------------------------------------------
@@ -383,6 +435,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::configureUp(const std::st
 
   switch(itor->second.state) {
   case DRIVE_STATE_UP:
+  case DRIVE_STATE_RUNNING:
     break;
   case DRIVE_STATE_DOWN:
     itor->second.state = DRIVE_STATE_UP;
@@ -473,9 +526,15 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedVdqmJob(const leg
 }
 
 //-----------------------------------------------------------------------------
+// receivedLabelJob
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogue::receivedLabelJob(const legacymsg::TapeLabelRqstMsgBody &job) throw(castor::exception::Exception) {
+}
+
+//-----------------------------------------------------------------------------
 // getJob
 //-----------------------------------------------------------------------------
-const castor::tape::legacymsg::RtcpJobRqstMsgBody &castor::tape::tapeserver::daemon::DriveCatalogue::getJob(const std::string &unitName) const throw(castor::exception::Exception) {
+const castor::legacymsg::RtcpJobRqstMsgBody &castor::tape::tapeserver::daemon::DriveCatalogue::getJob(const std::string &unitName) const throw(castor::exception::Exception) {
   std::ostringstream task;
   task << "get vdqm job for tape drive " << unitName;
 
@@ -528,6 +587,12 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::forkedMountSession(const 
       throw ex;
     }
   }
+}
+
+//-----------------------------------------------------------------------------
+// forkedLabelSession
+//-----------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::DriveCatalogue::forkedLabelSession(const std::string &unitName, const pid_t sessionPid) throw(castor::exception::Exception) {
 }
 
 //-----------------------------------------------------------------------------

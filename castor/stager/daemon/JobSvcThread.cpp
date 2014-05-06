@@ -240,7 +240,6 @@ void castor::stager::daemon::JobSvcThread::handleMoverCloseRequest
           castor::dlf::dlf_writep(uuid, DLF_LVL_USER_ERROR,
                                   e.code() == ENOENT ? STAGER_JOBSVC_DELWWR : STAGER_JOBSVC_CHKMISMATCH,
                                   fileId, nsHost, 1, params);
-        jobSvc->putFailed(mcReq->subReqId(), fileId, nsHost);
       } catch (castor::exception::Exception& e) {
         // "Unexpected exception caught"
         castor::dlf::Param params[] =

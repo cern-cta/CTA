@@ -239,6 +239,12 @@ BEGIN
               WHERE SvcClass.id = D2S.child
                 AND D2S.parent = FileSystem.diskPool
                 AND FileSystem.diskServer = DiskServer.id
+                AND DiskServer.name = diskServerName
+              UNION ALL
+             SELECT disk1Behavior
+               FROM SvcClass, DataPool2SvcClass, DiskServer
+              WHERE SvcClass.id = DataPool2SvcClass.child
+                AND DataPool2SvcClass.parent = DiskServer.dataPool
                 AND DiskServer.name = diskServerName) LOOP
     -- If any of the service classes to which we belong (normally a single one)
     -- say this is Disk1, we don't GC files.
@@ -248,21 +254,24 @@ BEGIN
     END IF;
   END LOOP;
 
-  -- Loop on all concerned fileSystems in a random order.
+  -- Loop on all concerned fileSystems/DataPools in a random order.
   totalCount := 0;
-  FOR fs IN (SELECT FileSystem.id
-               FROM FileSystem, DiskServer
-              WHERE FileSystem.diskServer = DiskServer.id
-                AND DiskServer.name = diskServerName
+  FOR fs IN (SELECT * FROM (SELECT FileSystem.id AS fsId, 0 AS dpId
+                              FROM FileSystem, DiskServer
+                             WHERE FileSystem.diskServer = DiskServer.id
+                               AND DiskServer.name = diskServerName
+                             UNION ALL
+                            SELECT 0 AS fsId, DiskServer.dataPool AS dpId
+                              FROM DiskServer
+                             WHERE DiskServer.name = diskServerName)
              ORDER BY dbms_random.value) LOOP
-
     -- Count the number of diskcopies on this filesystem that are in a
     -- BEINGDELETED state. These need to be reselected in any case.
     freed := 0;
     SELECT totalCount + count(*), nvl(sum(DiskCopy.diskCopySize), 0)
       INTO totalCount, freed
       FROM DiskCopy
-     WHERE DiskCopy.fileSystem = fs.id
+     WHERE (fileSystem = fs.fsId OR dataPool = fs.dpId)
        AND decode(status, 9, status, NULL) = 9;  -- BEINGDELETED (decode used to use function-based index)
 
     -- estimate the number of GC running the "long" query, that is the one dealing with the GCing of
@@ -275,7 +284,7 @@ BEGIN
     UPDATE /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_Status_7_FS)) */ DiskCopy
        SET status = 9, -- BEINGDELETED
            gcType = decode(gcType, NULL, dconst.GCTYPE_USER, gcType)
-     WHERE fileSystem = fs.id
+     WHERE (fileSystem = fs.fsId OR dataPool = fs.dpId)
        AND decode(status, 7, status, NULL) = 7  -- INVALID (decode used to use function-based index)
        AND rownum <= 10000 - totalCount
     RETURNING id BULK COLLECT INTO dcIds;
@@ -295,13 +304,22 @@ BEGIN
     IF dontGC = 0 AND backoff < 4 THEN
       -- Do not delete VALID files from non production hardware
       BEGIN
-        SELECT FileSystem.id INTO unused
-          FROM DiskServer, FileSystem
-         WHERE FileSystem.id = fs.id
-           AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
-           AND FileSystem.diskserver = DiskServer.id
-           AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
-           AND DiskServer.hwOnline = 1;
+        IF fs.fsId > 0 THEN
+          SELECT FileSystem.id INTO unused
+            FROM DiskServer, FileSystem
+           WHERE FileSystem.id = fs.fsId
+             AND FileSystem.status IN (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_READONLY)
+             AND FileSystem.diskserver = DiskServer.id
+             AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+             AND DiskServer.hwOnline = 1;
+        ELSE
+          SELECT DiskServer.id INTO unused
+            FROM DiskServer
+           WHERE dataPool = fs.dpId
+             AND status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
+             AND hwOnline = 1
+             AND ROWNUM < 2;
+        END IF;
       EXCEPTION WHEN NO_DATA_FOUND THEN
         EXIT;
       END;
@@ -315,17 +333,24 @@ BEGIN
                 FROM TABLE(dcIds) dcidTable);
       END IF;
       -- Get the amount of space to be liberated
-      SELECT decode(sign(maxFreeSpace * totalSize - free), -1, 0, maxFreeSpace * totalSize - free)
-        INTO toBeFreed
-        FROM FileSystem
-       WHERE id = fs.id;
+      IF fs.fsId > 0 THEN
+        SELECT decode(sign(maxFreeSpace * totalSize - free), -1, 0, maxFreeSpace * totalSize - free)
+          INTO toBeFreed
+          FROM FileSystem
+         WHERE id = fs.fsId;
+      ELSE
+        SELECT decode(sign(maxFreeSpace * totalSize - free), -1, 0, maxFreeSpace * totalSize - free)
+          INTO toBeFreed
+          FROM DataPool
+         WHERE id = fs.dpId;
+      END IF;
       -- If space is still required even after removal of INVALID files, consider
       -- removing VALID files until we are below the free space watermark
       IF freed < toBeFreed THEN
         -- Loop on file deletions
         FOR dc IN (SELECT /*+ INDEX_RS_ASC(DiskCopy I_DiskCopy_FS_GCW) */ DiskCopy.id, castorFile
                      FROM DiskCopy, CastorFile
-                    WHERE fileSystem = fs.id
+                    WHERE (fileSystem = fs.fsId OR dataPool = fs.dpId)
                       AND status = dconst.DISKCOPY_VALID
                       AND CastorFile.id = DiskCopy.castorFile
                       AND CastorFile.tapeStatus IN (dconst.CASTORFILE_DISKONLY, dconst.CASTORFILE_ONTAPE)
@@ -373,18 +398,34 @@ BEGIN
 
   -- Now select all the BEINGDELETED diskcopies in this diskserver for the GC daemon
   OPEN files FOR
-    SELECT /*+ INDEX(CastorFile PK_CastorFile_ID) */ FileSystem.mountPoint || DiskCopy.path,
-           DiskCopy.id,
+    SELECT /*+ INDEX(CastorFile PK_CastorFile_ID) */
+           DC.path, DC.id,
            Castorfile.fileid, Castorfile.nshost,
-           DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
-           getObjStatusName('DiskCopy', 'gcType', DiskCopy.gcType),
-           getSvcClassList(FileSystem.id)
-      FROM CastorFile, DiskCopy, FileSystem, DiskServer
-     WHERE decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
-       AND DiskCopy.castorfile = CastorFile.id
-       AND DiskCopy.fileSystem = FileSystem.id
-       AND FileSystem.diskServer = DiskServer.id
-       AND DiskServer.name = diskServerName
+           DC.lastAccessTime, DC.nbCopyAccesses, DC.gcWeight,
+           DC.gcType, DC.svcClassList
+      FROM CastorFile,
+           (SELECT DiskCopy.castorFile,
+                   FileSystem.mountPoint || DiskCopy.path AS path, DiskCopy.id,
+                   DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
+                   getObjStatusName('DiskCopy', 'gcType', DiskCopy.gcType) AS gcType,
+                   getSvcClassList(FileSystem.id) AS svcClassList
+              FROM FileSystem, DiskServer, DiskCopy
+             WHERE decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
+               AND DiskCopy.fileSystem = FileSystem.id
+               AND FileSystem.diskServer = DiskServer.id
+               AND DiskServer.name = diskServerName
+             UNION ALL
+            SELECT DiskCopy.castorFile,
+                   DiskCopy.path AS path, DiskCopy.id,
+                   DiskCopy.lastAccessTime, DiskCopy.nbCopyAccesses, DiskCopy.gcWeight,
+                   getObjStatusName('DiskCopy', 'gcType', DiskCopy.gcType) AS gcType,
+                   getSvcClassListDP(DiskServer.dataPool) AS svcClassList
+              FROM DiskServer, DiskCopy
+             WHERE decode(DiskCopy.status, 9, DiskCopy.status, NULL) = 9 -- BEINGDELETED
+               AND DiskCopy.dataPool = DiskServer.dataPool
+               AND DiskServer.name = diskServerName
+               AND ROWNUM < 2) DC
+     WHERE DC.castorfile = CastorFile.id
        AND rownum <= 10000;
 END;
 /

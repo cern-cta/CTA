@@ -47,9 +47,10 @@ castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::DebugMountSe
   const legacymsg::RtcpJobRqstMsgBody &job,
   castor::log::Logger &logger,
   const utils::TpconfigLines &tpConfig,
-  Vdqm &vdqm,
-  Vmgr &vmgr,
-  Rmc &rmc) throw():
+  legacymsg::VdqmProxy &vdqm,
+  legacymsg::VmgrProxy &vmgr,
+  legacymsg::RmcProxy &rmc,
+  legacymsg::TapeserverProxy &tps) throw():
   m_netTimeout(5), // Timeout in seconds
   m_sessionPid(getpid()),
   m_argc(argc),
@@ -60,7 +61,8 @@ castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::DebugMountSe
   m_tpConfig(tpConfig),
   m_vdqm(vdqm),
   m_vmgr(vmgr),
-  m_rmc(rmc) {
+  m_rmc(rmc),
+  m_tps(tps) {
 }
 
 //------------------------------------------------------------------------------
@@ -81,6 +83,24 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::execute
       log::Param("label", volume->label()),
       log::Param("mode", volume->mode())};
     m_log(LOG_INFO, "Got VID from client", params);
+    switch(volume->mode()) {
+    case tapegateway::READ:
+      m_tps.gotReadMountDetailsFromClient(m_job.driveUnit, volume->vid());
+      break;
+    case tapegateway::WRITE:
+      m_tps.gotWriteMountDetailsFromClient(m_job.driveUnit, volume->vid());
+      break;
+    case tapegateway::DUMP:
+      m_tps.gotDumpMountDetailsFromClient(m_job.driveUnit, volume->vid());
+      break;
+    default:
+      {
+        castor::exception::Internal ex;
+        ex.getMessage() << "Got an unknown volume-mode from the client: vid="
+          << volume->vid() << " mode=" << volume->mode();
+        throw ex;
+      }
+    }
     mountTape(volume->vid());
     transferFiles(*(volume.get()), clientMsgSeqNb);
   } else {
@@ -304,7 +324,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::throwEn
 // mountTape
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::mountTape(const std::string &vid) throw (castor::exception::Exception) {
-  const std::string drive = getPositionInLibrary(m_job.driveUnit);
+  const std::string drive = getLibrarySlot(m_job.driveUnit);
   m_rmc.mountTape(vid, drive);
 
   log::Param params[] = {
@@ -315,13 +335,13 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::mountTa
 }
 
 //------------------------------------------------------------------------------
-// getPositionInLibrary
+// getLibrarySlot
 //------------------------------------------------------------------------------
-std::string castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::getPositionInLibrary(const std::string &unitName)
+std::string castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::getLibrarySlot(const std::string &unitName)
   throw (castor::exception::Exception) {
   for(utils::TpconfigLines::const_iterator itor = m_tpConfig.begin(); itor != m_tpConfig.end(); itor++) {
     if(unitName == itor->unitName) {
-      return itor->positionInLibrary;
+      return itor->librarySlot;
     }
   }
 
@@ -441,12 +461,13 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::release
 // unmountTape
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::unmountTape(const std::string &vid) throw (castor::exception::Exception) {
-  const std::string drive = getPositionInLibrary(m_job.driveUnit);
-  m_rmc.unmountTape(vid, drive);
+  const std::string librarySlot = getLibrarySlot(m_job.driveUnit);
+  m_rmc.unmountTape(vid, librarySlot);
 
   log::Param params[] = {
     log::Param("unitName", m_job.driveUnit),
-    log::Param("TPVID", vid)};
+    log::Param("TPVID", vid),
+     log::Param("librarySlot", librarySlot)};
   m_log(LOG_INFO, "Tape unmounted", params);
   m_vdqm.tapeUnmounted(m_hostName, m_job.driveUnit, m_job.dgn, vid);
 }
