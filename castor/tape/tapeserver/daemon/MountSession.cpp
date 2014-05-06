@@ -141,8 +141,6 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
         lc);
     DiskWriteThreadPool dwtp(m_castorConf.tapeserverdDiskThreads,
-        m_castorConf.tapebridgeBulkRequestRecallMaxFiles,
-        m_castorConf.tapebridgeBulkRequestRecallMaxBytes,
         rrp,
         lc);
     RecallTaskInjector rti(mm, trst, dwtp, m_clientProxy,

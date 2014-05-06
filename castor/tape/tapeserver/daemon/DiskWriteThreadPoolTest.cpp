@@ -40,7 +40,7 @@ namespace unitTests{
     
     RecallMemoryManager mm(10,100,lc);
     
-    DiskWriteThreadPool dwtp(2,5,500,report,lc);
+    DiskWriteThreadPool dwtp(2,report,lc);
     dwtp.startThreads();
     
     castor::tape::tapegateway::FileToRecallStruct file;
