@@ -213,8 +213,8 @@ uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatE
   switch(state) {
     case DriveCatalogue::DRIVE_STATE_INIT:
     case DriveCatalogue::DRIVE_STATE_DOWN:
-      return 0;
     case DriveCatalogue::DRIVE_STATE_UP:
+      return 0;
     case DriveCatalogue::DRIVE_STATE_WAITFORK:
     case DriveCatalogue::DRIVE_STATE_WAITLABEL:
     case DriveCatalogue::DRIVE_STATE_RUNNING:
