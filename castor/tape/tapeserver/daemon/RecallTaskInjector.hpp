@@ -25,7 +25,6 @@
 #pragma once
 
 #include <stdint.h>
-
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/log/LogContext.hpp"
 namespace castor{

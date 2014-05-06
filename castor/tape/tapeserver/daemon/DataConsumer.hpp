@@ -24,18 +24,18 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-
 /**
  * Abstract class used as a base class for the disk/tape write file tasks. The data consumer
  * has two methods: "pushDataBlock" used to put in the consumer's fifo a new full memory block
  * to consume, and "getFreeBlock" used by client code two reclaim the consumed memory block.
  */
-
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
+  
+// Antcipated declaration to hasten compilation
+class MemBlock;
 
 class DataConsumer {
 public:

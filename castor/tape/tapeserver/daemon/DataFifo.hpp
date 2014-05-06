@@ -26,7 +26,6 @@
 
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/tape/tapeserver/daemon/MemManagerClient.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/exception/Exception.hpp"
 
@@ -51,7 +50,7 @@ namespace daemon {
   pushDataBlock +------------------------------+  getDataBlock 
                                                                  
  */
-class DataFifo : public MemoryManagerClient {
+class DataFifo {
 public:
  /**
   * Constructor
@@ -69,7 +68,7 @@ public:
    * @param mb : the memory block to be returned 
    * @return true   true if not all the needed blocks has not yet been provided 
    */
-  virtual bool provideBlock(MemBlock *mb)  {
+  bool provideBlock(MemBlock *mb)  {
     bool ret;
     castor::tape::threading::MutexLocker ml(&m_freeBlockProviderProtection);
     {
