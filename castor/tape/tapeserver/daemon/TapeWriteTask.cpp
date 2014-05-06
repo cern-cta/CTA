@@ -105,7 +105,8 @@ namespace daemon {
       reportPacker.reportCompletedJob(*m_fileToMigrate,ckSum);
     } 
     catch(const castor::tape::exceptions::ErrorFlag&){
-     
+     //we end up there because another task has failed 
+      //so we just log, circulate blocks and don't even send a report 
       lc.log(LOG_INFO,"TapeWriteTask: a previous file has failed for migration "
       "Do nothing except circulating blocks");
       circulateMemBlocks();
@@ -150,7 +151,7 @@ namespace daemon {
   }
 //------------------------------------------------------------------------------
 // openWriteFile
-//------------------------------------------------------------------------------   
+//------------------------------------------------------------------------------
    std::auto_ptr<tapeFile::WriteFile> TapeWriteTask::openWriteFile(
    tape::tapeFile::WriteSession & session, log::LogContext& lc){
      std::auto_ptr<tape::tapeFile::WriteFile> output;
@@ -164,6 +165,9 @@ namespace daemon {
      }
      return output;
    }
+//------------------------------------------------------------------------------
+// circulateMemBlocks
+//------------------------------------------------------------------------------   
    void TapeWriteTask::circulateMemBlocks(){
      while(!m_fifo.finished()) {
         m_memManager.releaseBlock(m_fifo.popDataBlock());

@@ -45,7 +45,7 @@ namespace daemon {
 class TapeReadSingleThread : public TapeSingleThreadInterface<TapeReadTaskInterface>{
 public:
   /**
-   * 
+   * Constructor 
    * @param drive The drive which holds all we need in order to read later data from it
    * @param vid Volume ID (tape number)
    * @param maxFilesRequest : the maximul number of file the task injector may 
@@ -56,14 +56,21 @@ public:
           const std::string vid, uint64_t maxFilesRequest,
           castor::log::LogContext & lc): 
    TapeSingleThreadInterface<TapeReadTaskInterface>(drive, vid, lc),
-   m_maxFilesRequest(maxFilesRequest) {}
+   m_maxFilesRequest(maxFilesRequest),m_filesProcessed(0) {}
    
-   void setTaskInjector(TaskInjector * ti) { m_taskInjector = ti; }
+   /**
+    * Set the task injector. Has to be done that way (and not in the constructor)
+    *  because there is a dependency 
+    * @param ti the task injector 
+    */
+   void setTaskInjector(TaskInjector * ti) { 
+     m_taskInjector = ti; 
+   }
 
 private:
   
   /**
-   * Pop a task from its tasks and if there is not enought tasks left, it will 
+   * Pop a task from its tasks and if there is not enough tasks left, it will 
    * ask the task injector for more 
    * @return m_tasks.pop();
    */
@@ -84,7 +91,9 @@ private:
   }
   
   
-  
+  /**
+   * This function is from Thread, it is the function that will do all the job
+   */
   virtual void run() {
     // First we have to initialise the tape read session
     m_logContext.pushOrReplace(log::Param("thread", "tapeRead"));
@@ -117,9 +126,17 @@ private:
     m_logContext.log(LOG_DEBUG, "Finishing Tape Read Thread. Just signalled task injector of the end");
   }
   
-  uint64_t m_maxFilesRequest;
+  /**
+   * Number of files a single request to the client might give us.
+   * Used in the loop-back function to ask the task injector to request more job
+   */
+  const uint64_t m_maxFilesRequest;
   
+  ///a pointer to task injector, thus we can ask him for more tasks
   castor::tape::tapeserver::daemon::TaskInjector * m_taskInjector;
+  
+  ///how many files have we already processed(for loopback purpose)
+  size_t m_filesProcessed;
 };
 }
 }
