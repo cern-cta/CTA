@@ -4,6 +4,8 @@ add_executable(tapeserverd
   DebugMountSessionForVdqmProtocol.cpp
   DriveCatalogue.cpp
   TapeDaemon.cpp
+  LabelSession.cpp
+  ../drive/Drive.cpp
   TapeDaemonMain.cpp
   VdqmAcceptHandler.cpp
   VdqmConnectionHandler.cpp)
@@ -46,7 +48,8 @@ castortapegatewayprotocol tapeserver ${ZLIB_LIBRARIES} )
 
 add_library(tapeserver 
   ../client/ClientProxy.cpp 
-  MountSession.cpp 
+  MountSession.cpp
+  LabelSession.cpp
   RecallTaskInjector.cpp 
   MigrationReportPacker.cpp 
   RecallReportPacker.cpp

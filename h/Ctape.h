@@ -132,6 +132,7 @@
 #define TPPOS		14	/* position tape and check HDR1/HDR2 */
 #define DRVINFO		15	/* get info for a given drive */
 #define SETVID  	16      /* set the vid of the tape in the drive in the drive catalogue */
+#define TPLABEL  	17      /* label a tape */
 
 			/* tape daemon reply types */
 

@@ -33,4 +33,7 @@ castor::legacymsg::TapeLabelRqstMsgBody::TapeLabelRqstMsgBody() throw():
   uid(0),
   gid(0) {
   memset(vid, '\0', sizeof(vid));
+  memset(drive, '\0', sizeof(drive));
+  memset(dgn, '\0', sizeof(dgn));
+  memset(density, '\0', sizeof(density));
 }

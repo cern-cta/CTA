@@ -32,8 +32,10 @@
 #include "castor/tape/tapeserver/daemon/DebugMountSessionForVdqmProtocol.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
+#include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFd.hpp"
+#include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 
 #include <algorithm>
 #include <limits.h>
@@ -610,7 +612,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
   }
 
   try {
-    const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getJob(unitName);
+    const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getVdqmJob(unitName);
     std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
     std::auto_ptr<legacymsg::VmgrProxy> vmgr(m_vmgrFactory.create());
     std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
@@ -697,4 +699,35 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(const std::s
 // runLabelSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(const std::string &unitName) throw() {
+  const pid_t sessionPid = getpid();
+  {
+    log::Param params[] = {
+      log::Param("sessionPid", sessionPid),
+      log::Param("unitName", unitName)};
+    m_log(LOG_INFO, "Label-session child-process started", params);
+  }
+
+  try {
+    const legacymsg::TapeLabelRqstMsgBody job = m_driveCatalogue.getLabelJob(unitName);
+    std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
+    castor::tape::System::realWrapper sWrapper;
+    
+    //TODO pass the rmc object to the labelsession and to the mounting and unmounting there
+    castor::tape::tapeserver::daemon::LabelSession labelsession(job, m_log, sWrapper, m_tpconfigLines, true);
+    
+    exit(0);
+  } catch(std::exception &se) {
+    log::Param params[] = {
+      log::Param("sessionPid", sessionPid),
+      log::Param("unitName", unitName),
+      log::Param("message", se.what())};
+    m_log(LOG_ERR, "Aborting label session: Caught an unexpected exception", params);
+    exit(1);
+  } catch(...) {
+    log::Param params[] = {
+      log::Param("sessionPid", sessionPid),
+      log::Param("unitName", unitName)};
+    m_log(LOG_ERR, "Aborting label session: Caught an unexpected and unknown exception", params);
+    exit(1);
+  }
 }

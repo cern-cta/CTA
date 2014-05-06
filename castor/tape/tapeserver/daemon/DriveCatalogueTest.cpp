@@ -303,14 +303,14 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   castor::utils::copyString(job.clientUserName, "USER");
   ASSERT_NO_THROW(catalogue.receivedVdqmJob(job));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_WAITFORK, catalogue.getState("UNIT"));
-  ASSERT_EQ(job.volReqId, catalogue.getJob("UNIT").volReqId);
-  ASSERT_EQ(job.clientPort, catalogue.getJob("UNIT").clientPort);
-  ASSERT_EQ(job.clientEuid, catalogue.getJob("UNIT").clientEuid);
-  ASSERT_EQ(job.clientEgid, catalogue.getJob("UNIT").clientEgid);
-  ASSERT_EQ(std::string(job.clientHost), std::string(catalogue.getJob("UNIT").clientHost));
-  ASSERT_EQ(std::string(job.dgn), std::string(catalogue.getJob("UNIT").dgn));
-  ASSERT_EQ(std::string(job.driveUnit), std::string(catalogue.getJob("UNIT").driveUnit));
-  ASSERT_EQ(std::string(job.clientUserName), std::string(catalogue.getJob("UNIT").clientUserName));
+  ASSERT_EQ(job.volReqId, catalogue.getVdqmJob("UNIT").volReqId);
+  ASSERT_EQ(job.clientPort, catalogue.getVdqmJob("UNIT").clientPort);
+  ASSERT_EQ(job.clientEuid, catalogue.getVdqmJob("UNIT").clientEuid);
+  ASSERT_EQ(job.clientEgid, catalogue.getVdqmJob("UNIT").clientEgid);
+  ASSERT_EQ(std::string(job.clientHost), std::string(catalogue.getVdqmJob("UNIT").clientHost));
+  ASSERT_EQ(std::string(job.dgn), std::string(catalogue.getVdqmJob("UNIT").dgn));
+  ASSERT_EQ(std::string(job.driveUnit), std::string(catalogue.getVdqmJob("UNIT").driveUnit));
+  ASSERT_EQ(std::string(job.clientUserName), std::string(catalogue.getVdqmJob("UNIT").clientUserName));
 
   // Check that there is one tape drive waiting for a mount session to be forked
   {
