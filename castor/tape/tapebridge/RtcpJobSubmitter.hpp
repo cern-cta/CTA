@@ -24,7 +24,7 @@
  *****************************************************************************/
 #pragma once
 
-#include "castor/tape/legacymsg/RtcpMarshal.hpp"
+#include "castor/legacymsg/RtcpMarshal.hpp"
 #include "h/net.h"
 
 #include <string>

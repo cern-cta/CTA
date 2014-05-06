@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/RmcDaemon.hpp
+ *         castor/tape/rmc/RmcDaemon.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -25,28 +25,18 @@
 #pragma once
 
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
-#include "castor/exception/InvalidArgument.hpp"
-#include "castor/exception/InvalidConfigEntry.hpp"
-#include "castor/exception/InvalidNbArguments.hpp"
-#include "castor/exception/MissingOperand.hpp"
-#include "castor/log/Logger.hpp"
+#include "castor/legacymsg/CupvProxy.hpp"
+#include "castor/io/PollReactor.hpp"
 #include "castor/server/Daemon.hpp"
-#include "castor/server/BaseThreadPool.hpp"
-#include "castor/tape/rmc/RmcdCmdLine.hpp"
 
-#include <stdint.h>
-#include <list>
-#include <map>
-#include <ostream>
 #include <string>
 
 namespace castor {
-namespace tape   {
-namespace rmc    {
+namespace tape {
+namespace rmc {
 
 /**
- * The remote media-changer daemon.
+ * Daemon responsible for mounting and unmount tapes.
  */
 class RmcDaemon : public castor::server::Daemon {
 
@@ -58,9 +48,16 @@ public:
    * @param stdOut Stream representing standard out.
    * @param stdErr Stream representing standard error.
    * @param log The object representing the API of the CASTOR logging system.
+   * @param reactor The reactor responsible for dispatching the I/O events of
+   * the parent process of the rmcd daemon.
+   * @param cupv Proxy object representing the cupvd daemon.
    */
-  RmcDaemon(std::ostream &stdOut, std::ostream &stdErr, log::Logger &log)
-    throw(castor::exception::Exception);
+  RmcDaemon(
+    std::ostream &stdOut,
+    std::ostream &stdErr,
+    log::Logger &log,
+    io::PollReactor &reactor,
+    legacymsg::CupvProxy &cupv) throw(castor::exception::Exception);
 
   /**
    * Destructor.
@@ -74,16 +71,37 @@ public:
    * @param argv The array of command-line arguments.
    * @return     The return code of the process.
    */
-  int main(const int argc, char **argv);
+  int main(const int argc, char **const argv) throw();
 
 protected:
 
   /**
-   * Exception throwing main() function which basically implements the
-   * non-exception throwing main() function except for the initialisation of
-   * DLF and the "exception catch and log" logic.
+   * Returns the name of the host on which the daemon is running.
    */
-  int exceptionThrowingMain(const int argc, char **argv)
+  std::string getHostName() const throw(castor::exception::Exception);
+
+  /**
+   * Determines and returns the TCP/IP port onwhich the rmcd daemon should
+   * listen for client connections.
+   */
+  unsigned short getRmcPort() throw(castor::exception::Exception);
+
+  /**
+   * Tries to get the value of the specified parameter from parsing
+   * /etc/castor/castor.conf.
+   *
+   * @param category The category of the configuration parameter.
+   * @param name The name of the configuration parameter.
+   */
+  std::string getConfigParam(const std::string &category, const std::string &name) throw(castor::exception::Exception);
+
+  /**
+   * Exception throwing main() function.
+   *
+   * @param argc The number of command-line arguments.
+   * @param argv The array of command-line arguments.
+   */
+  void exceptionThrowingMain(const int argc, char **const argv)
     throw(castor::exception::Exception);
 
   /**
@@ -101,10 +119,102 @@ protected:
   std::string argvToString(const int argc, const char *const *const argv)
     throw();
 
+  /**
+   * Blocks the signals that should not asynchronously disturb the daemon.
+   */
+  void blockSignals() const throw(castor::exception::Exception);
+
+  /**
+   * Sets up the reactor.
+   */
+  void setUpReactor() throw(castor::exception::Exception);
+
+  /**
+   * Creates the handler to accept client connections and registers it with
+   * the reactor.
+   */
+  void createAndRegisterAcceptHandler() throw(castor::exception::Exception);
+
+  /**
+   * The main event loop of the daemon.
+   */
+  void mainEventLoop() throw(castor::exception::Exception);
+
+  /**
+   * Handles any pending events.
+   *
+   * @return True if the main event loop should continue, else false.
+   */
+  bool handleEvents() throw(castor::exception::Exception);
+
+  /**
+   * Handles any pending signals.
+   *
+   * @return True if the main event loop should continue, else false.
+   */
+  bool handlePendingSignals() throw();
+
+  /**
+   * Reaps any zombie processes.
+   */
+  void reapZombies() throw();
+
+  /**
+   * Reaps the specified zombie process.
+   *
+   * @param childPid The process ID of the zombie child-process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void reapZombie(const pid_t childPid, const int waitpidStat) throw();
+
+  /**
+   * Logs the fact that the specified child-process has terminated.
+   *
+   * @param childPid The process ID of the child-process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void logChildProcessTerminated(const pid_t childPid, const int waitpidStat) throw();
+
+  /**
+   * Forks a child-process for every pending tape mount/unmount request
+   * handled by the previous call to m_reactor.handleEvebts().
+   */
+  void forkChildProcesses() throw();
+
+  /**
+   * Forks a child-process to mount/unmount a tape.
+   */ 
+  void forkChildProcess() throw();
+
+  /**
+   * The reactor responsible for dispatching the file-descriptor event-handlers
+   * of the rmcd daemon.
+   */
+  io::PollReactor &m_reactor;
+
+  /**
+   * Proxy object representing the cupvd daemon.
+   */
+  legacymsg::CupvProxy &m_cupv;
+
+  /**
+   * The program name of the tape daemon.
+   */
+  const std::string m_programName;
+
+  /**
+   * The name of the host on which the daemon is running.
+   */
+  const std::string m_hostName;
+
+  /**
+   * The TCP/IP port on which the rmcd daemon listens for client connections.
+   */
+  const unsigned short m_rmcPort;
+
 }; // class RmcDaemon
 
 } // namespace rmc
 } // namespace tape
 } // namespace castor
-
 

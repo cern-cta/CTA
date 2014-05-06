@@ -26,7 +26,7 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
-#include "castor/tape/legacymsg/CommonMarshal.hpp"
+#include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapebridge/LegacyTxRx.hpp"

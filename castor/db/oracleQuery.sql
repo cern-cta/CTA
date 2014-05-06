@@ -30,7 +30,7 @@ BEGIN
     OPEN result FOR
      SELECT * FROM (
       SELECT fileId, nsHost, dcId, path, fileSize, status, machine, mountPoint, nbCopyAccesses,
-             lastKnownFileName, creationTime, svcClass, lastAccessTime, hwStatus
+             lastKnownFileName, creationTime, svcClass, lastAccessTime, isOnDrainingHardware
         FROM (
           SELECT UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id AS dcId,
                  DC.path, CastorFile.fileSize,
@@ -51,17 +51,17 @@ BEGIN
                        AND request = StagePrepareToPutRequest.id)
                    ELSE DC.svcClass END AS svcClass,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
-                 DC.creationTime, DC.lastAccessTime, nvl(decode(DC.hwStatus, 2, dconst.DISKSERVER_DRAINING, DC.hwStatus), -1) hwStatus
+                 DC.creationTime, DC.lastAccessTime, DC.isOnDrainingHardware
             FROM CastorFile,
               (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name AS machine, FileSystem.mountPoint,
-                      SvcClass.name AS svcClass, DiskCopy.filesystem, DiskCopy.castorFile, 
-                      DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime,
-                      decode(FileSystem.status, dconst.DISKSERVER_READONLY, dconst.DISKSERVER_PRODUCTION, FileSystem.status) +  -- READONLY == PRODUCTION
-                      decode(DiskServer.status, dconst.FILESYSTEM_READONLY, dconst.FILESYSTEM_PRODUCTION, DiskServer.status) AS hwStatus
+                      SvcClass.name AS svcClass, DiskCopy.castorFile, DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime,
+                      decode(FileSystem.status, dconst.FILESYSTEM_DRAINING, 1, 0) +
+                      decode(DiskServer.status, dconst.DISKSERVER_DRAINING, 1, 0) AS isOnDrainingHardware
                  FROM FileSystem, DiskServer, DiskPool2SvcClass, SvcClass, DiskCopy
                 WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                   AND Diskcopy.status IN (0, 1, 4, 5, 6, 7, 10, 11) -- search for diskCopies not BEINGDELETED
                   AND FileSystem.id(+) = DiskCopy.fileSystem
+                  AND DiskCopy.dataPool IS NULL
                   AND nvl(FileSystem.status, 0) IN
                       (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
                   AND DiskServer.id(+) = FileSystem.diskServer
@@ -72,12 +72,30 @@ BEGIN
                   AND SvcClass.id(+) = DiskPool2SvcClass.child
                   AND (euid = 0 OR SvcClass.id IS NULL OR   -- if euid > 0 check read permissions for srmLs (see bug #69678)
                        checkPermission(SvcClass.name, euid, egid, 35) = 0)   -- OBJ_StageGetRequest
-                 ) DC
+                UNION ALL
+               SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DataPool.name AS machine, '' AS mountPoint,
+                      SvcClass.name AS svcClass, DiskCopy.castorFile, DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime,
+                      0 AS isOnDrainingHardware
+                 FROM DataPool2SvcClass, DataPool, SvcClass, DiskCopy
+                WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
+                  AND Diskcopy.status IN (0, 1, 4, 5, 6, 7, 10, 11) -- search for diskCopies not BEINGDELETED
+                  AND EXISTS (SELECT 1 FROM DiskServer
+                               WHERE DiskServer.dataPool = DiskCopy.dataPool
+                                 AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                                           dconst.DISKSERVER_DRAINING,
+                                                           dconst.DISKSERVER_READONLY)
+                                 AND DiskServer.hwOnline = 1)
+                  AND DataPool2SvcClass.parent = Diskcopy.dataPool
+                  AND SvcClass.id = DataPool2SvcClass.child
+                  AND (euid = 0 OR   -- if euid > 0 check read permissions for srmLs (see bug #69678)
+                       checkPermission(SvcClass.name, euid, egid, 35) = 0)   -- OBJ_StageGetRequest
+                  AND DataPool.id = Diskcopy.dataPool) DC
            WHERE CastorFile.id = DC.castorFile)
        WHERE status IS NOT NULL    -- search for valid diskcopies
      UNION
       SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', Castorfile.fileSize, 2, -- WAITTAPERECALL
-             '', '', 0, CastorFile.lastKnownFileName, Subrequest.creationTime, Req.svcClassName, Subrequest.creationTime, -1
+             '', '', 0, CastorFile.lastKnownFileName, Subrequest.creationTime, Req.svcClassName,
+             Subrequest.creationTime, 0 AS isOnDrainingHardware
         FROM CastorFile, Subrequest,
              (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName FROM StagePrepareToGetRequest UNION ALL
               SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName FROM StageGetRequest UNION ALL
@@ -89,7 +107,7 @@ BEGIN
      UNION
       SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', Castorfile.fileSize, 1, -- WAITDISK2DISKCOPY
              '', '', 0, CastorFile.lastKnownFileName, Disk2DiskCopyJob.creationTime,
-             getSvcClassName(Disk2DiskCopyJob.destSvcClass), Disk2DiskCopyJob.creationTime, -1
+             getSvcClassName(Disk2DiskCopyJob.destSvcClass), Disk2DiskCopyJob.creationTime, 0 AS isOnDrainingHardware
         FROM CastorFile, Disk2DiskCopyJob
        WHERE Castorfile.id IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
          AND Disk2DiskCopyJob.CastorFile = Castorfile.id)
@@ -99,7 +117,7 @@ BEGIN
      SELECT * FROM (
       SELECT fileId, nsHost, dcId, path, fileSize, status, machine, mountPoint, nbCopyAccesses,
              lastKnownFileName, creationTime, (SELECT name FROM svcClass WHERE id = svcClassId),
-             lastAccessTime, hwStatus
+             lastAccessTime, isOnDrainingHardware
         FROM (
           SELECT UNIQUE CastorFile.id, CastorFile.fileId, CastorFile.nsHost, DC.id AS dcId,
                  DC.path, CastorFile.fileSize,
@@ -111,7 +129,7 @@ BEGIN
                                           END
                                 ELSE DC.status
                                 END
-                      WHEN DC.fileSystem = 0 THEN
+                      WHEN DC.dcSvcClass IS NULL THEN
                        (SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)
                                    INDEX(StagePrepareToPutRequest PK_StagePrepareToPutRequest_Id)*/
                         UNIQUE decode(nvl(SubRequest.status, -1), -1, -1, DC.status)
@@ -122,30 +140,46 @@ BEGIN
                            AND svcClass = svcClassId)
                       END AS status,
                  DC.machine, DC.mountPoint, DC.nbCopyAccesses, CastorFile.lastKnownFileName,
-                 DC.creationTime, DC.lastAccessTime, nvl(decode(DC.hwStatus, 2, dconst.DISKSERVER_DRAINING, DC.hwStatus), -1) hwStatus
+                 DC.creationTime, DC.lastAccessTime, isOnDrainingHardware
             FROM CastorFile,
               (SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DiskServer.name AS machine, FileSystem.mountPoint,
-                      DiskPool2SvcClass.child AS dcSvcClass, DiskCopy.filesystem, DiskCopy.CastorFile, 
-                      DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime,
-                      decode(FileSystem.status, dconst.DISKSERVER_READONLY, dconst.DISKSERVER_PRODUCTION, FileSystem.status) +  -- READONLY == PRODUCTION
-                      decode(DiskServer.status, dconst.FILESYSTEM_READONLY, dconst.FILESYSTEM_PRODUCTION, DiskServer.status) AS hwStatus
+                      DiskPool2SvcClass.child AS dcSvcClass, DiskCopy.castorFile, DiskCopy.nbCopyAccesses, DiskCopy.creationTime, DiskCopy.lastAccessTime,
+                      decode(FileSystem.status, dconst.FILESYSTEM_DRAINING, 1, 0) +
+                      decode(DiskServer.status, dconst.DISKSERVER_DRAINING, 1, 0) AS isOnDrainingHardware
                  FROM FileSystem, DiskServer, DiskPool2SvcClass, DiskCopy
                 WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
                   AND DiskCopy.status IN (0, 1, 4, 5, 6, 7, 10, 11)  -- search for diskCopies not GCCANDIDATE or BEINGDELETED
                   AND FileSystem.id(+) = DiskCopy.fileSystem
+                  AND DiskCopy.dataPool IS NULL
                   AND nvl(FileSystem.status, 0) IN
                       (dconst.FILESYSTEM_PRODUCTION, dconst.FILESYSTEM_DRAINING, dconst.FILESYSTEM_READONLY)
                   AND DiskServer.id(+) = FileSystem.diskServer
                   AND nvl(DiskServer.status, 0) IN
                       (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_DRAINING, dconst.DISKSERVER_READONLY)
                   AND nvl(DiskServer.hwOnline, 1) = 1
-                  AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool) DC
+                  AND DiskPool2SvcClass.parent(+) = FileSystem.diskPool
+                UNION ALL
+               SELECT DiskCopy.id, DiskCopy.path, DiskCopy.status, DataPool.name AS machine, '' AS mountPoint,
+                      DataPool2SvcClass.child AS dcSvcClass, DiskCopy.castorFile, DiskCopy.nbCopyAccesses, DiskCopy.creationTime,
+                       DiskCopy.lastAccessTime, 0 AS isOnDrainingHardware
+                 FROM DataPool2SvcClass, DataPool, DiskCopy
+                WHERE Diskcopy.castorFile IN (SELECT /*+ CARDINALITY(cfidTable 5) */ * FROM TABLE(cfs) cfidTable)
+                  AND DiskCopy.status IN (0, 1, 4, 5, 6, 7, 10, 11)  -- search for diskCopies not GCCANDIDATE or BEINGDELETED
+                  AND EXISTS (SELECT 1 FROM DiskServer
+                               WHERE DiskServer.dataPool = DiskCopy.dataPool
+                                 AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION,
+                                                           dconst.DISKSERVER_DRAINING,
+                                                           dconst.DISKSERVER_READONLY)
+                                 AND DiskServer.hwOnline = 1)
+                  AND DataPool2SvcClass.parent = DiskCopy.dataPool
+                  AND DataPool.id = Diskcopy.dataPool) DC
                   -- No extra check on read permissions here, it is not relevant
            WHERE CastorFile.id = DC.castorFile)
        WHERE status IS NOT NULL     -- search for valid diskcopies
      UNION
       SELECT CastorFile.fileId, CastorFile.nsHost, 0, '', Castorfile.fileSize, 2, -- WAITTAPERECALL
-             '', '', 0, CastorFile.lastKnownFileName, Subrequest.creationTime, Req.svcClassName, Subrequest.creationTime, -1
+             '', '', 0, CastorFile.lastKnownFileName, Subrequest.creationTime, Req.svcClassName,
+             Subrequest.creationTime, 0 AS isOnDrainingHardware
         FROM CastorFile, Subrequest,
              (SELECT /*+ INDEX(StagePrepareToGetRequest PK_StagePrepareToGetRequest_Id) */ id, svcClassName, svcClass FROM StagePrepareToGetRequest UNION ALL
               SELECT /*+ INDEX(StageGetRequest PK_StageGetRequest_Id) */ id, svcClassName, svcClass FROM StageGetRequest UNION ALL
@@ -174,15 +208,10 @@ CREATE OR REPLACE PROCEDURE fileNameStageQuery
   cfIds "numList";
 BEGIN
   IF substr(fn, -1, 1) = '/' THEN  -- files in a 'subdirectory'
-    SELECT /*+ INDEX_RS_ASC(CastorFile I_CastorFile_LastKnownFileName) INDEX_RS_ASC(DiskCopy I_DiskCopy_CastorFile) */ 
-           CastorFile.id
-      BULK COLLECT INTO cfIds
-      FROM DiskCopy, FileSystem, DiskPool2SvcClass, CastorFile
-     WHERE CastorFile.lastKnownFileName LIKE normalizePath(fn)||'%'
-       AND DiskCopy.castorFile = CastorFile.id
-       AND DiskCopy.fileSystem = FileSystem.id
-       AND FileSystem.diskPool = DiskPool2SvcClass.parent
-       AND (DiskPool2SvcClass.child = svcClassId OR svcClassId = 0)
+    SELECT /*+ INDEX_RS_ASC(CastorFile I_CastorFile_LastKnownFileName) */ 
+           id BULK COLLECT INTO cfIds
+      FROM CastorFile
+     WHERE lastKnownFileName LIKE normalizePath(fn)||'%'
        AND ROWNUM <= maxNbResponses + 1;
   -- ELSE exact match, not implemented here any longer but in fileIdStageQuery 
   END IF;
@@ -408,66 +437,105 @@ BEGIN
   -- lines for easy detection in the C++ code
   IF svcClassName = '*' THEN
     OPEN result FOR
-      SELECT grouping(ds.name) AS IsDSGrouped,
-             grouping(fs.mountPoint) AS IsFSGrouped,
-             dp.name, ds.name, max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)), fs.mountPoint,
-             sum(getSpace(fs.status + ds.status, ds.hwOnline,
-                          fs.free - fs.minAllowedFreeSpace * fs.totalSize,
-                          queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
-             sum(getSpace(fs.status + ds.status, ds.hwOnline,
-                          fs.totalSize,
-                          queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
-             0, fs.maxFreeSpace, fs.status
-        FROM FileSystem fs, DiskServer ds, DiskPool dp
-       WHERE dp.id = fs.diskPool
-         AND ds.id = fs.diskServer
-         GROUP BY grouping sets(
-             (dp.name, ds.name, ds.status, fs.mountPoint,
-              getSpace(fs.status + ds.status, ds.hwOnline,
-                       fs.free - fs.minAllowedFreeSpace * fs.totalSize,
-                       queryType, dconst.DISKPOOLSPACETYPE_FREE),
-              getSpace(fs.status + ds.status, ds.hwOnline,
-                       fs.totalSize,
-                       queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
-              fs.maxFreeSpace, fs.status),
-             (dp.name, ds.name),
-             (dp.name)
-            )
-         ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint;
+      SELECT * FROM (
+        SELECT grouping(ds.name) AS IsDSGrouped,
+               grouping(fs.mountPoint) AS IsFSGrouped,
+               dp.name AS dpName, ds.name AS dsName,
+               max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)),
+               fs.mountPoint,
+               sum(getSpace(fs.status + ds.status, ds.hwOnline,
+                            fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                            queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
+               sum(getSpace(fs.status + ds.status, ds.hwOnline,
+                            fs.totalSize,
+                            queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
+               0, fs.maxFreeSpace, fs.status
+          FROM FileSystem fs, DiskServer ds, DiskPool dp
+         WHERE dp.id = fs.diskPool
+           AND ds.id = fs.diskServer
+           GROUP BY grouping sets(
+               (dp.name, ds.name, ds.status, fs.mountPoint,
+                getSpace(fs.status + ds.status, ds.hwOnline,
+                         fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                         queryType, dconst.DISKPOOLSPACETYPE_FREE),
+                getSpace(fs.status + ds.status, ds.hwOnline,
+                         fs.totalSize,
+                         queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
+                fs.maxFreeSpace, fs.status),
+               (dp.name, ds.name),
+               (dp.name)
+              )
+           ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint)
+       UNION ALL
+      SELECT 1 AS IsDSGrouped, 1 AS IsFSGrouped, name, '', status, '',
+             getSpace(status, 1, free, queryType, dconst.DISKPOOLSPACETYPE_FREE) AS freeSpace,
+             getSpace(status, 1, totalSize, queryType, dconst.DISKPOOLSPACETYPE_CAPACITY) AS totalSize,
+             0, maxFreeSpace, 0
+        FROM (SELECT name, free - minAllowedFreeSpace * totalSize AS free, totalSize, maxFreeSpace,
+                     CASE WHEN EXISTS (SELECT 1 FROM DiskServer
+                                        WHERE DiskServer.dataPool = DataPool.id
+                                          AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+                                          AND DiskServer.hwOnline = 1)
+                     THEN dconst.DISKSERVER_PRODUCTION
+                     ELSE dconst.DISKSERVER_DISABLED END AS status
+               FROM DataPool
+              ORDER BY name);
   ELSE 
     OPEN result FOR
-      SELECT grouping(ds.name) AS IsDSGrouped,
-             grouping(fs.mountPoint) AS IsFSGrouped,
-             dp.name, ds.name, max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)), fs.mountPoint,
-             sum(getSpace(fs.status + ds.status, ds.hwOnline,
-                          fs.free - fs.minAllowedFreeSpace * fs.totalSize,
-                          queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
-             sum(getSpace(fs.status + ds.status, ds.hwOnline,
-                          fs.totalSize,
-                          queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
-             0, fs.maxFreeSpace, fs.status
-        FROM FileSystem fs, DiskServer ds, DiskPool dp,
-             DiskPool2SvcClass d2s, SvcClass sc
-       WHERE sc.name = svcClassName
-         AND sc.id = d2s.child
-         AND checkPermission(sc.name, reqEuid, reqEgid, 195) = 0
-         AND d2s.parent = dp.id
-         AND dp.id = fs.diskPool
-         AND ds.id = fs.diskServer
-         GROUP BY grouping sets(
-             (dp.name, ds.name, fs.mountPoint,
-              getSpace(fs.status + ds.status, ds.hwOnline,
-                       fs.free - fs.minAllowedFreeSpace * fs.totalSize,
-                       queryType, dconst.DISKPOOLSPACETYPE_FREE),
-              getSpace(fs.status + ds.status, ds.hwOnline,
-                       fs.totalSize,
-                       queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
-              fs.maxFreeSpace, fs.status),
-             (dp.name, ds.name),
-             (dp.name)
-            )
-         ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint;
-  END IF;
+      SELECT * FROM (
+        SELECT grouping(ds.name) AS IsDSGrouped,
+               grouping(fs.mountPoint) AS IsFSGrouped,
+               dp.name AS dpName, ds.name AS dsName,
+               max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)),
+               fs.mountPoint,
+               sum(getSpace(fs.status + ds.status, ds.hwOnline,
+                            fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                            queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
+               sum(getSpace(fs.status + ds.status, ds.hwOnline,
+                            fs.totalSize,
+                            queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
+               0, fs.maxFreeSpace, fs.status
+          FROM FileSystem fs, DiskServer ds, DiskPool dp,
+               DiskPool2SvcClass d2s, SvcClass sc
+         WHERE sc.name = svcClassName
+           AND sc.id = d2s.child
+           AND checkPermission(sc.name, reqEuid, reqEgid, 195) = 0
+           AND d2s.parent = dp.id
+           AND dp.id = fs.diskPool
+           AND ds.id = fs.diskServer
+           GROUP BY grouping sets(
+               (dp.name, ds.name, fs.mountPoint,
+                getSpace(fs.status + ds.status, ds.hwOnline,
+                         fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                         queryType, dconst.DISKPOOLSPACETYPE_FREE),
+                getSpace(fs.status + ds.status, ds.hwOnline,
+                         fs.totalSize,
+                         queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
+                fs.maxFreeSpace, fs.status),
+               (dp.name, ds.name),
+               (dp.name)
+              )
+           ORDER BY dp.name, IsDSGrouped DESC, ds.name, IsFSGrouped DESC, fs.mountpoint)
+       UNION ALL
+      SELECT 1 AS IsDSGrouped, 1 AS IsFSGrouped, name, '', status, '',
+             getSpace(status, 1, free, queryType, dconst.DISKPOOLSPACETYPE_FREE) AS freeSpace,
+             getSpace(status, 1, totalSize, queryType, dconst.DISKPOOLSPACETYPE_CAPACITY) AS totalSize,
+             0, maxFreeSpace, 0
+        FROM (SELECT DataPool.name, DataPool.free - DataPool.minAllowedFreeSpace * DataPool.totalSize AS free,
+                     DataPool.totalSize, DataPool.maxFreeSpace,
+                     CASE WHEN EXISTS (SELECT 1 FROM DiskServer
+                                        WHERE DiskServer.dataPool = DataPool.id
+                                          AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+                                          AND DiskServer.hwOnline = 1)
+                     THEN dconst.DISKSERVER_PRODUCTION
+                     ELSE dconst.DISKSERVER_DISABLED END AS status
+               FROM DataPool, DataPool2SvcClass, SvcClass
+              WHERE SvcClass.name = svcClassName
+                AND SvcClass.id = DataPool2SvcClass.child
+                AND DataPool2SvcClass.parent = DataPool.id
+                AND checkPermission(SvcClass.name, reqEuid, reqEgid, 195) = 0
+              ORDER BY name);
+    END IF;
   -- If no results are available, check to see if any diskpool exists and if
   -- access to view all the diskpools has been revoked. The information extracted
   -- here will be used to send an appropriate error message to the client.
@@ -498,66 +566,100 @@ BEGIN
   -- lines for easy detection in the C++ code
   IF svcClassName = '*' THEN
     OPEN result FOR
-      SELECT grouping(ds.name) AS IsDSGrouped,
-             grouping(fs.mountPoint) AS IsGrouped,
-             ds.name, max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)), fs.mountPoint,
-             sum(getSpace(fs.status + ds.status, ds.hwOnline,
-                          fs.free - fs.minAllowedFreeSpace * fs.totalSize,
-                          queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
-             sum(getSpace(fs.status + ds.status, ds.hwOnline,
-                          fs.totalSize,
-                          queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
-             0, fs.maxFreeSpace, fs.status
-        FROM FileSystem fs, DiskServer ds, DiskPool dp
-       WHERE dp.id = fs.diskPool
-         AND ds.id = fs.diskServer
-         AND dp.name = diskPoolName
-         GROUP BY grouping sets(
-             (ds.name, fs.mountPoint,
-              getSpace(fs.status + ds.status, ds.hwOnline,
-                       fs.free - fs.minAllowedFreeSpace * fs.totalSize,
-                       queryType, dconst.DISKPOOLSPACETYPE_FREE),
-              getSpace(fs.status + ds.status, ds.hwOnline,
-                       fs.totalSize,
-                       queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
-              fs.maxFreeSpace, fs.status),
-             (ds.name),
-             (dp.name)
-            )
-         ORDER BY IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
+      SELECT * FROM (
+        SELECT grouping(ds.name) AS IsDSGrouped,
+               grouping(fs.mountPoint) AS IsGrouped,
+               ds.name, max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)), fs.mountPoint,
+               sum(getSpace(fs.status + ds.status, ds.hwOnline,
+                            fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                            queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
+               sum(getSpace(fs.status + ds.status, ds.hwOnline,
+                            fs.totalSize,
+                            queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
+               0, fs.maxFreeSpace, fs.status
+          FROM FileSystem fs, DiskServer ds, DiskPool dp
+         WHERE dp.id = fs.diskPool
+           AND ds.id = fs.diskServer
+           AND dp.name = diskPoolName
+           GROUP BY grouping sets(
+               (ds.name, fs.mountPoint,
+                getSpace(fs.status + ds.status, ds.hwOnline,
+                         fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                         queryType, dconst.DISKPOOLSPACETYPE_FREE),
+                getSpace(fs.status + ds.status, ds.hwOnline,
+                         fs.totalSize,
+                         queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
+                fs.maxFreeSpace, fs.status),
+               (ds.name),
+               (dp.name)
+              )
+           ORDER BY IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint)
+       UNION ALL
+      SELECT 1 AS IsDSGrouped, 1 AS IsFSGrouped, '', status, '',
+             getSpace(status, 1, free, queryType, dconst.DISKPOOLSPACETYPE_FREE) AS freeSpace,
+             getSpace(status, 1, totalSize, queryType, dconst.DISKPOOLSPACETYPE_CAPACITY) AS totalSize,
+             0, maxFreeSpace, 0
+        FROM (SELECT name, free - minAllowedFreeSpace * totalSize AS free, totalSize, maxFreeSpace,
+                     CASE WHEN EXISTS (SELECT 1 FROM DiskServer
+                                        WHERE DiskServer.dataPool = DataPool.id
+                                          AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+                                          AND DiskServer.hwOnline = 1)
+                     THEN dconst.DISKSERVER_PRODUCTION
+                     ELSE dconst.DISKSERVER_DISABLED END AS status
+               FROM DataPool
+              WHERE name = diskPoolName);
   ELSE
     OPEN result FOR
-      SELECT grouping(ds.name) AS IsDSGrouped,
-             grouping(fs.mountPoint) AS IsGrouped,
-             ds.name, max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)), fs.mountPoint,
-             sum(getSpace(fs.status + ds.status, ds.hwOnline,
-                          fs.free - fs.minAllowedFreeSpace * fs.totalSize,
-                          queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
-             sum(getSpace(fs.status + ds.status, ds.hwOnline,
-                          fs.totalSize,
-                          queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
-             0, fs.maxFreeSpace, fs.status
-        FROM FileSystem fs, DiskServer ds, DiskPool dp,
-             DiskPool2SvcClass d2s, SvcClass sc
-       WHERE sc.name = svcClassName
-         AND sc.id = d2s.child
-         AND d2s.parent = dp.id
-         AND dp.id = fs.diskPool
-         AND ds.id = fs.diskServer
-         AND dp.name = diskPoolName
-         GROUP BY grouping sets(
-             (ds.name, fs.mountPoint,
-              getSpace(fs.status + ds.status, ds.hwOnline,
-                       fs.free - fs.minAllowedFreeSpace * fs.totalSize,
-                       queryType, dconst.DISKPOOLSPACETYPE_FREE),
-              getSpace(fs.status + ds.status, ds.hwOnline,
-                       fs.totalSize,
-                       queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
-              fs.maxFreeSpace, fs.status),
-             (ds.name),
-             (dp.name)
-            )
-         ORDER BY IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint;
+      SELECT * FROM (
+        SELECT grouping(ds.name) AS IsDSGrouped,
+               grouping(fs.mountPoint) AS IsGrouped,
+               ds.name, max(decode(ds.hwOnline, 0, dconst.DISKSERVER_DISABLED, ds.status)), fs.mountPoint,
+               sum(getSpace(fs.status + ds.status, ds.hwOnline,
+                            fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                            queryType, dconst.DISKPOOLSPACETYPE_FREE)) AS freeSpace,
+               sum(getSpace(fs.status + ds.status, ds.hwOnline,
+                            fs.totalSize,
+                            queryType, dconst.DISKPOOLSPACETYPE_CAPACITY)) AS totalSize,
+               0, fs.maxFreeSpace, fs.status
+          FROM FileSystem fs, DiskServer ds, DiskPool dp,
+               DiskPool2SvcClass d2s, SvcClass sc
+         WHERE sc.name = svcClassName
+           AND sc.id = d2s.child
+           AND d2s.parent = dp.id
+           AND dp.id = fs.diskPool
+           AND ds.id = fs.diskServer
+           AND dp.name = diskPoolName
+           GROUP BY grouping sets(
+               (ds.name, fs.mountPoint,
+                getSpace(fs.status + ds.status, ds.hwOnline,
+                         fs.free - fs.minAllowedFreeSpace * fs.totalSize,
+                         queryType, dconst.DISKPOOLSPACETYPE_FREE),
+                getSpace(fs.status + ds.status, ds.hwOnline,
+                         fs.totalSize,
+                         queryType, dconst.DISKPOOLSPACETYPE_CAPACITY),
+                fs.maxFreeSpace, fs.status),
+               (ds.name),
+               (dp.name)
+              )
+           ORDER BY IsDSGrouped DESC, ds.name, IsGrouped DESC, fs.mountpoint)
+       UNION ALL
+      SELECT 1 AS IsDSGrouped, 1 AS IsFSGrouped, '', status, '',
+             getSpace(status, 1, free, queryType, dconst.DISKPOOLSPACETYPE_FREE) AS freeSpace,
+             getSpace(status, 1, totalSize, queryType, dconst.DISKPOOLSPACETYPE_CAPACITY) AS totalSize,
+             0, maxFreeSpace, 0
+        FROM (SELECT DataPool.name, DataPool.free - DataPool.minAllowedFreeSpace * DataPool.totalSize AS free,
+                     DataPool.totalSize, DataPool.maxFreeSpace,
+                     CASE WHEN EXISTS (SELECT 1 FROM DiskServer
+                                        WHERE DiskServer.dataPool = DataPool.id
+                                          AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
+                                          AND DiskServer.hwOnline = 1)
+                     THEN dconst.DISKSERVER_PRODUCTION
+                     ELSE dconst.DISKSERVER_DISABLED END AS status
+               FROM DataPool, DataPool2SvcClass, SvcClass
+              WHERE SvcClass.name = svcClassName
+                AND SvcClass.id = DataPool2SvcClass.child
+                AND DataPool2SvcClass.parent = DataPool.id
+                AND DataPool.name = diskPoolName);
   END IF;
   -- If no results are available, check to see if any diskpool exists and if
   -- access to view all the diskpools has been revoked. The information extracted

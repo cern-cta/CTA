@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"

@@ -39,8 +39,8 @@
 #include "castor/tape/tapebridge/SystemFileCloser.hpp"
 #include "castor/tape/tapebridge/VdqmRequestHandler.hpp"
 #include "castor/tape/tapebridge/VmgrTxRx.hpp"
-#include "castor/tape/legacymsg/RtcpMarshal.hpp"
-#include "castor/tape/legacymsg/VmgrMarshal.hpp"
+#include "castor/legacymsg/RtcpMarshal.hpp"
+#include "castor/legacymsg/VmgrMarshal.hpp"
 #include "castor/tape/tapegateway/FileMigrationReportList.hpp"
 #include "castor/tape/tapegateway/FileRecallReportList.hpp"
 #include "castor/tape/tapegateway/FileErrorReportStruct.hpp"
@@ -351,7 +351,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
 //-----------------------------------------------------------------------------
 // sendClientInfoToRtcpd
 //-----------------------------------------------------------------------------
-castor::tape::legacymsg::RtcpJobReplyMsgBody
+castor::legacymsg::RtcpJobReplyMsgBody
   castor::tape::tapebridge::VdqmRequestHandler::sendClientInfoToRtcpd(
   const std::string                   rtcpdHost,
   const unsigned int                  rtcpdPort,

@@ -69,7 +69,6 @@ VALUES ('2_1_15_0', '2_1_15_0', 'TRANSPARENT');
 COMMIT;
 
 -- Not needed any longer
-DELETE FROM CastorConfig WHERE key = 'openmode';
 DROP PROCEDURE update2114Data;
 
 -- enforce constraint on stagerTime. NOVALIDATE makes the operation transparent.
@@ -77,7 +76,7 @@ ALTER TABLE Cns_file_metadata MODIFY (stagerTime CONSTRAINT NN_File_stagerTime N
 
 
 /* PL/SQL code update */
-
+XXX insert closex procedure here
 
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/

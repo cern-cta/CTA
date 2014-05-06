@@ -46,6 +46,7 @@ endif (STK_CL_LIB)
 if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   message(STATUS "Found all four STK libraries - adding STK related unit tests")
   set (STK_UNITTEST_SRC_FILES
+    ../castor/tape/rmc/AcceptHandler.cpp
     ../castor/tape/rmc/Acs.cpp
     ../castor/tape/rmc/AcsCmd.cpp
     ../castor/tape/rmc/AcsDismountCmd.cpp
@@ -62,6 +63,7 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
     ../castor/tape/rmc/AcsQueryVolumeCmdTest.cpp
     ../castor/tape/rmc/AcsTest.cpp
     ../castor/tape/rmc/Cmd.cpp
+    ../castor/tape/rmc/ConnectionHandler.cpp
     ../castor/tape/rmc/DebugBuf.cpp
     ../castor/tape/rmc/RmcDaemon.cpp
     ../castor/tape/rmc/RmcDaemonTest.cpp)
@@ -84,32 +86,47 @@ add_executable(castorUnitTests
   ../castor/io/PollReactorImplTest.cpp
   ../castor/io/DummyPollEventHandler.cpp
   ../castor/io/DummyPollReactor.cpp
+  ../castor/legacymsg/CommonMarshalTest.cpp
+  ../castor/legacymsg/CupvMarshalTest.cpp
+  ../castor/legacymsg/CupvProxyDummy.cpp
+  ../castor/legacymsg/RmcProxyDummy.cpp
+  ../castor/legacymsg/RmcProxyDummyFactory.cpp
+  ../castor/legacymsg/VdqmProxyDummy.cpp
+  ../castor/legacymsg/VdqmProxyDummyFactory.cpp
+  ../castor/legacymsg/VmgrMarshalTest.cpp
+  ../castor/legacymsg/VmgrProxyDummy.cpp
+  ../castor/legacymsg/VmgrProxyDummyFactory.cpp
+  ../castor/legacymsg/RmcMarshalTest.cpp
+  ../castor/legacymsg/RmcProxy.cpp
+  ../castor/legacymsg/RmcProxyTcpIp.cpp
+  ../castor/legacymsg/RmcProxyTcpIpTest.cpp
+  ../castor/legacymsg/ScsiLibrarySlot.cpp
+  ../castor/legacymsg/ScsiLibrarySlotTest.cpp
+  ../castor/legacymsg/TapeMarshalTest.cpp
+  ../castor/legacymsg/TapeserverProxy.cpp
+  ../castor/legacymsg/TapeserverProxyDummy.cpp
+  ../castor/legacymsg/TapeserverProxyDummyFactory.cpp
+  ../castor/legacymsg/TapeserverProxyTcpIp.cpp
+  ../castor/legacymsg/VdqmMarshalTest.cpp
+  ../castor/legacymsg/VdqmProxy.cpp
+  ../castor/legacymsg/VdqmProxyTcpIp.cpp
+  ../castor/legacymsg/VmgrProxy.cpp
+  ../castor/legacymsg/VmgrProxyTcpIp.cpp
   ../castor/log/DummyLogger.cpp
-  ../castor/log/LoggerImplementationTest.cpp
   ../castor/log/ParamTest.cpp
   ../castor/log/LogContextTest.cpp
   ../castor/log/StringLoggerTest.cpp
+  ../castor/log/SyslogLoggerTest.cpp
   ../castor/server/DaemonTest.cpp
   ../castor/tape/tapeserver/client/ClientProxyTest.cpp
-  ../castor/tape/legacymsg/RmcMarshalTest.cpp
-  ../castor/tape/legacymsg/VdqmMarshalTest.cpp
-  ../castor/tape/legacymsg/TapeMarshalTest.cpp
   ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/DebugMountSessionForVdqmProtocol.cpp
 #  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
-  ../castor/tape/tapeserver/daemon/DummyRmc.cpp
-  ../castor/tape/tapeserver/daemon/DummyVdqm.cpp
-  ../castor/tape/tapeserver/daemon/DummyVmgr.cpp
-  ../castor/tape/tapeserver/daemon/Rmc.cpp
-  ../castor/tape/tapeserver/daemon/RmcImpl.cpp
-  ../castor/tape/tapeserver/daemon/RmcImplTest.cpp
-  ../castor/tape/tapeserver/daemon/ScsiLibraryDriveName.cpp
-  ../castor/tape/tapeserver/daemon/ScsiLibraryDriveNameTest.cpp
+  ../castor/tape/tapeserver/daemon/MountSessionAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemon.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemonTest.cpp
-  ../castor/tape/tapeserver/daemon/Vdqm.cpp
   ../castor/tape/tapeserver/daemon/VdqmAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/VdqmConnectionHandler.cpp
   ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp
@@ -117,9 +134,6 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/daemon/RecallReportPackerTest.cpp
   ../castor/tape/tapeserver/daemon/DiskWriteThreadPoolTest.cpp
   ../castor/tape/tapeserver/daemon/DiskWriteTaskTest.cpp
-  ../castor/tape/tapeserver/daemon/VdqmImpl.cpp
-  ../castor/tape/tapeserver/daemon/Vmgr.cpp
-  ../castor/tape/tapeserver/daemon/VmgrImpl.cpp
   ../castor/tape/tapeserver/drive/DriveTest.cpp
   ../castor/tape/tapeserver/exception/ExceptionTest.cpp
   ../castor/tape/tapeserver/file/StructuresTest.cpp

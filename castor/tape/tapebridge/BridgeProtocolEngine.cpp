@@ -30,7 +30,7 @@
 #include "castor/exception/TimeOut.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/Constants.hpp"
-#include "castor/tape/legacymsg/TapeBridgeMarshal.hpp"
+#include "castor/legacymsg/TapeBridgeMarshal.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/BridgeProtocolEngine.hpp"
 #include "castor/tape/tapebridge/ClientProxy.hpp"

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                test/unittest/castor/log/LoggerImplementationTest.hpp
+ *                test/unittest/castor/log/SyslogLoggerTest.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/log/LoggerImplementation.hpp"
+#include "castor/log/SyslogLogger.hpp"
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <memory>
@@ -31,7 +31,7 @@
 namespace castor {
 namespace log {
 
-class LoggerImplementationTest: public CppUnit::TestFixture {
+class SyslogLoggerTest: public CppUnit::TestFixture {
 public:
 
   void setUp() {
@@ -44,7 +44,7 @@ public:
     std::auto_ptr<Logger> logger;
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
       "Constructing logger",
-      logger.reset(new LoggerImplementation("unitttests")));
+      logger.reset(new SyslogLogger("unitttests")));
 
     const int numParams = 1;
     const Param params[1] = {Param("testParam", "valueOfTestParam")};
@@ -69,7 +69,7 @@ public:
     std::auto_ptr<Logger> logger;
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
       "Constructing logger",
-      logger.reset(new LoggerImplementation("unitttests")));
+      logger.reset(new SyslogLogger("unitttests")));
 
     const int numParams = 1;
     const Param params[1] = {Param("testParam", "valueOfTestParam")};
@@ -87,7 +87,7 @@ public:
     std::auto_ptr<Logger> logger;
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
       "Constructing logger",
-      logger.reset(new LoggerImplementation("unitttests")));
+      logger.reset(new SyslogLogger("unitttests")));
   
     CPPUNIT_ASSERT_NO_THROW_MESSAGE(
       "Calling logMsg() without parameters or time stamp",
@@ -96,14 +96,14 @@ public:
         "Calling logMsg() without parameters or time stamp"));
   }   
 
-  CPPUNIT_TEST_SUITE(LoggerImplementationTest);
+  CPPUNIT_TEST_SUITE(SyslogLoggerTest);
   CPPUNIT_TEST(testLogMsgWithAllParams);
   CPPUNIT_TEST(testLogMsgWithoutTimeStamp);
   CPPUNIT_TEST(testLogMsgWithoutParamsOrTimeStamp);
   CPPUNIT_TEST_SUITE_END();
 };
 
-CPPUNIT_TEST_SUITE_REGISTRATION(LoggerImplementationTest);
+CPPUNIT_TEST_SUITE_REGISTRATION(SyslogLoggerTest);
 
 } // namespace log
 } // namespace castor

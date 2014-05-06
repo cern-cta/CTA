@@ -71,7 +71,6 @@ debian/castor/usr/share/man/man3/Ctape_mount.3castor.gz
 debian/castor/usr/share/man/man3/Ctape_position.3castor.gz
 debian/castor/usr/share/man/man3/Ctape_reserve.3castor.gz
 debian/castor/usr/share/man/man3/Ctape_rls.3castor.gz
-debian/castor/usr/share/man/man3/Ctape_rstatus.3castor.gz
 debian/castor/usr/share/man/man3/Ctape_status.3castor.gz
 debian/castor/usr/share/man/man3/Cthread.3castor.gz
 debian/castor/usr/share/man/man3/Cupv_add.3castor.gz

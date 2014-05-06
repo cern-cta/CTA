@@ -107,15 +107,14 @@ void castor::stager::daemon::QueryRequestSvcThread::setFileResponseStatus
     break;
 
   case DISKCOPY_STAGED:
-    st = dc->hwStatus() == castor::stager::DISKSERVER_DRAINING ?
-      FILE_STAGEABLE : FILE_STAGED;
+    st = dc->isOnDrainingHardware() ? FILE_STAGEABLE : FILE_STAGED;
     diskServer = dc->diskServer();
     break;
 
   case DISKCOPY_WAITFS:
   case DISKCOPY_WAITFS_SCHEDULING:
   case DISKCOPY_STAGEOUT:
-    if(dc->hwStatus() == castor::stager::DISKSERVER_DRAINING) {
+    if(dc->isOnDrainingHardware()) {
       // Don't show unaccessible STAGEOUT files
       return;
     }
@@ -124,8 +123,7 @@ void castor::stager::daemon::QueryRequestSvcThread::setFileResponseStatus
     break;
 
   case DISKCOPY_CANBEMIGR:
-    st = dc->hwStatus() == castor::stager::DISKSERVER_DRAINING ?
-      FILE_STAGEABLE : FILE_CANBEMIGR;
+    st = dc->isOnDrainingHardware() ? FILE_STAGEABLE : FILE_CANBEMIGR;
     diskServer = dc->diskServer();
     break;
   }
@@ -221,7 +219,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
       foundDiskCopy = false;
     } else {
       // Group responses, and discard diskcopies on DRAINING hardware
-      if (diskcopy->hwStatus() == castor::stager::DISKSERVER_DRAINING) {
+      if (diskcopy->isOnDrainingHardware()) {
         continue;
       }
       if (diskcopy->fileId() != fileid ||
@@ -313,7 +311,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
          = result->begin();
        dcit != result->end();
        ++dcit) {
-    if (!all && (*dcit)->hwStatus() == castor::stager::DISKSERVER_DRAINING) {
+    if (!all && (*dcit)->isOnDrainingHardware()) {
       continue;
     }
     setFileResponseStatus(&res, *dcit, foundDiskCopy);

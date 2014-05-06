@@ -23,10 +23,11 @@
  *****************************************************************************/
 
 #include "castor/io/DummyPollReactor.hpp"
+#include "castor/legacymsg/RmcProxyDummyFactory.hpp"
+#include "castor/legacymsg/TapeserverProxyDummyFactory.hpp"
+#include "castor/legacymsg/VdqmProxyDummyFactory.hpp"
+#include "castor/legacymsg/VmgrProxyDummyFactory.hpp"
 #include "castor/log/DummyLogger.hpp"
-#include "castor/tape/tapeserver/daemon/DummyRmc.hpp"
-#include "castor/tape/tapeserver/daemon/DummyVdqm.hpp"
-#include "castor/tape/tapeserver/daemon/DummyVmgr.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
@@ -59,7 +60,7 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   std::ostringstream stdErr;
   const std::string programName = "unittests";
   castor::log::DummyLogger log(programName);
-  castor::tape::legacymsg::RtcpJobRqstMsgBody job;
+  castor::legacymsg::RtcpJobRqstMsgBody job;
   job.volReqId = 1111;
   job.clientPort = 2222;
   job.clientEuid = 3333;
@@ -69,13 +70,14 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
   castor::tape::utils::TpconfigLines tpconfigLines;
-  DummyVdqm vdqm(job);
-  DummyVmgr vmgr;
-  DummyRmc rmc;
+  castor::legacymsg::VdqmProxyDummyFactory vdqmFactory(job);
+  castor::legacymsg::VmgrProxyDummyFactory vmgrFactory;
+  castor::legacymsg::RmcProxyDummyFactory rmcFactory;
+  castor::legacymsg::TapeserverProxyDummyFactory tpsFactory;
   castor::io::DummyPollReactor reactor;
   std::auto_ptr<TapeDaemon> daemon;
-
-  ASSERT_NO_THROW(daemon.reset(new TapeDaemon(argc, argv, stdOut, stdErr, log, tpconfigLines, vdqm, vmgr, rmc, reactor)));
+  ASSERT_NO_THROW(daemon.reset(new TapeDaemon(argc, argv, stdOut, stdErr, log,
+    tpconfigLines, vdqmFactory, vmgrFactory, rmcFactory, tpsFactory, reactor)));
 }
 
 } // namespace unitTests

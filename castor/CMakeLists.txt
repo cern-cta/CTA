@@ -27,6 +27,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
   add_subdirectory (gc)
   add_subdirectory (rh)
   add_subdirectory (job)
+  add_subdirectory (legacymsg)
   add_subdirectory (scheduler)
   add_subdirectory (stager/daemon)
   add_subdirectory (tape)
@@ -142,8 +143,8 @@ set (CLIENT_LIB_SRC_FILES
   io/StreamRequestTypeCnv.cpp
   io/StreamNsFileIdCnv.cpp
   log/Logger.cpp
-  log/LoggerImplementation.cpp
   log/StringLogger.cpp
+  log/SyslogLogger.cpp
   log/LogContext.cpp
   log/Message.cpp
   log/Param.cpp

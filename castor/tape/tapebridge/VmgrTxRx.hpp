@@ -25,7 +25,7 @@
 #pragma once
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/legacymsg/VmgrMarshal.hpp"
+#include "castor/legacymsg/VmgrMarshal.hpp"
 #include "h/Castor_limits.h"
 #include "h/Cuuid.h"
 

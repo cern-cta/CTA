@@ -170,22 +170,6 @@ namespace castor {
           throw (castor::exception::Exception);
 
         /**
-         * Retrieves the location of the best diskcopy to read from
-         * given by the castorfile and service class where the file
-         * is requested.
-         * @param castorFile the file to lookup
-         * @param svcClass the service class where the file is requested
-         * @return The information about the diskcopy or 0 if none is
-         * found. Note: not all attributes of the DiskCopyInfo class are
-         * provided.
-         * @exception Exception in case of error
-         */
-        virtual castor::stager::DiskCopyInfo* getBestDiskCopyToRead
-        (const castor::stager::CastorFile *castorFile,
-         const castor::stager::SvcClass *svcClass)
-          throw (castor::exception::Exception);
-
-        /**
          * Updates a SubRequest status in the DB, including
          * the answered flag that is set to 1 and tells
          * whether the request to which it belongs still
@@ -368,12 +352,6 @@ namespace castor {
 
         /// SQL statement object for function selectCastorFile
         oracle::occi::Statement *m_selectCastorFileStatement;
-
-        /// SQL statement for function getBestDiskCopyToRead
-        static const std::string s_getBestDiskCopyToReadStatementString;
-
-        /// SQL statement object for function getBestDiskCopyToRead
-        oracle::occi::Statement *m_getBestDiskCopyToReadStatement;
 
         /// SQL statement for function updateAndCheckSubRequest
         static const std::string s_updateAndCheckSubRequestStatementString;

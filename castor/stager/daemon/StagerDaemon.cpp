@@ -35,7 +35,7 @@
 #include "castor/dlf/Message.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/log/LoggerImplementation.hpp"
+#include "castor/log/SyslogLogger.hpp"
 #include "castor/PortNumbers.hpp"
 #include "castor/System.hpp"
 #include "castor/server/SignalThreadPool.hpp"
@@ -58,7 +58,7 @@
 
 int main(int argc, char* argv[]){
   try{
-    castor::log::LoggerImplementation log("stagerd");
+    castor::log::SyslogLogger log("stagerd");
     castor::stager::daemon::StagerDaemon
       stagerDaemon(std::cout, std::cerr, log);
 

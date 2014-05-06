@@ -361,25 +361,25 @@ static void procreq(
 	rqst_context.clienthost = clienthost;
 
 	switch (req_type) {
-	case RMC_MOUNT:
+	case RMC_SCSI_MOUNT:
 		c = rmc_srv_mount (&rqst_context);
 		break;
-	case RMC_UNMOUNT:
+	case RMC_SCSI_UNMOUNT:
 		c = rmc_srv_unmount (&rqst_context);
 		break;
-	case RMC_EXPORT:
+	case RMC_SCSI_EXPORT:
 		c = rmc_srv_export (&rqst_context);
 		break;
-	case RMC_IMPORT:
+	case RMC_SCSI_IMPORT:
 		c = rmc_srv_import (&rqst_context);
 		break;
-	case RMC_GETGEOM:
+	case RMC_SCSI_GETGEOM:
 		c = rmc_srv_getgeom (&rqst_context);
 		break;
-	case RMC_READELEM:
+	case RMC_SCSI_READELEM:
 		c = rmc_srv_readelem (&rqst_context);
 		break;
-	case RMC_FINDCART:
+	case RMC_SCSI_FINDCART:
 		c = rmc_srv_findcart (&rqst_context);
 		break;
 	case RMC_ACS_MOUNT:
