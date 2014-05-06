@@ -26,22 +26,23 @@
 
 #include <stdint.h>
 
-#include <list>
-#include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
-#include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
-#include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
-#include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
-#include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
-#include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
 namespace castor{
 namespace tape{
+  //forward declarations
+  namespace tapegateway {
+    class FileToRecallStruct;
+  }
 namespace tapeserver{
+  namespace client {
+    class ClientInterface;
+  }
 namespace daemon {
-
+  
+  class RecallMemoryManager;
+  class DiskWriteThreadPool;
+  class TapeReadTaskInterface;
 /**
  * This classis responsible for creating the tasks in case of a recall job
  */

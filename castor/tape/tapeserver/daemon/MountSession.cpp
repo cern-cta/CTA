@@ -40,6 +40,7 @@
 #include "TapeWriteSingleThread.hpp"
 #include "DiskReadThreadPool.hpp"
 #include "MigrationTaskInjector.hpp"
+#include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 
 using namespace castor::tape;
 using namespace castor::log;

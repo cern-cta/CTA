@@ -32,6 +32,7 @@
 #include "castor/tape/tapeserver/file/File.hpp"
 #include <iostream>
 #include <stdio.h>
+#include <memory>
 
 namespace castor {
 namespace tape {

@@ -43,11 +43,17 @@ namespace tapeserver {
 namespace daemon {
     
 namespace detail{
+  //nameholder
   struct Recall{};
   struct Migration{};
-  
+  /**
+   * template class without definition == forward declaration
+   * that way if we try to use it with another type than the ones
+   * it is specialised, you get an compile timne error 
+   */
   template <class> struct HelperTrait;
   
+  //full template specialisation
  template <> struct HelperTrait<Migration>{
     typedef tapegateway::FileMigrationReportList FileReportList;
     typedef tapegateway::FileToMigrateStruct FileStruct;
@@ -62,9 +68,14 @@ namespace detail{
     typedef tapegateway::FileErrorReportStruct FileErrorStruct;
   };
 }
-  
+ 
+/**
+ * Utility class that should be inherited privately/protectedly 
+ * the type PlaceHolder is either detail::Recall or detail::Migration
+ */
 template <class PlaceHolder> class ReportPackerInterface{
   protected :
+    //some inner typedef to have shorter (and unified) types inside the class
   typedef typename detail::HelperTrait<PlaceHolder>::FileReportList FileReportList;
   typedef typename detail::HelperTrait<PlaceHolder>::FileStruct FileStruct;
   typedef typename detail::HelperTrait<PlaceHolder>::FileSuccessStruct FileSuccessStruct;
@@ -96,6 +107,12 @@ template <class PlaceHolder> class ReportPackerInterface{
       }
   }  
   
+  /**
+   * Utility function used to log  a ClientInterface::RequestReport 
+   * @param chono the time report to log 
+   * @param msg the message we want to have in the log 
+   * @param level the log level wanted
+   */
   void logRequestReport(const client::ClientInterface::RequestReport& chono,const std::string& msg,int level=LOG_INFO){
     using castor::log::LogContext;
     using castor::log::Param;
@@ -109,7 +126,14 @@ template <class PlaceHolder> class ReportPackerInterface{
         m_lc.log(level,msg);
         
   } 
+  /**
+   * The client of the session to who; we will report
+   */
   client::ClientInterface & m_client;
+  
+  /**
+   * The  log context, copied du to threads
+   */
   castor::log::LogContext m_lc;
   
   /** 

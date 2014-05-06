@@ -4,6 +4,10 @@
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
+#include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
+#include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
+#include "castor/tape/tapeserver/client/ClientProxy.hpp"
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "log.h"
 #include <stdint.h>
 

@@ -4,6 +4,7 @@
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include <gtest/gtest.h>
 #include "castor/tape/tapeserver/client/FakeClient.hpp"
+#include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 namespace unitTests
 {
 using namespace castor::tape::tapeserver::daemon;
