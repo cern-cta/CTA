@@ -34,6 +34,7 @@
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 
 #include <errno.h>
 #include <memory>
@@ -131,24 +132,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeStatReplyMsg
   body.number_of_drives = unitNames.size();
   int i=0;
   for(std::list<std::string>::const_iterator itor = unitNames.begin(); itor!=unitNames.end() and i<CA_MAXNBDRIVES; itor++) {
-    body.drives[i].uid=getuid();
-    body.drives[i].jid=m_driveCatalogue.getSessionPid(*itor);
-    strncpy(body.drives[i].dgn, m_driveCatalogue.getDgn(*itor).c_str(), CA_MAXDGNLEN);
-    body.drives[i].dgn[CA_MAXDGNLEN]='\0'; // this shouldn't be needed since we zero the structure before using it. but you never know...
-    (m_driveCatalogue.getState(*itor) == DriveCatalogue::DRIVE_STATE_UP) ? body.drives[i].up=1 : body.drives[i].up=0;
-    body.drives[i].asn=m_driveCatalogue.getState(*itor);
-    body.drives[i].asn_time=m_driveCatalogue.getAssignmentTime(*itor);
-    strncpy(body.drives[i].drive, (*itor).c_str(), CA_MAXUNMLEN);
-    body.drives[i].drive[CA_MAXUNMLEN]='\0';
-    body.drives[i].mode=WRITE_DISABLE;
-    strncpy(body.drives[i].lblcode, "aul", CA_MAXLBLTYPLEN); // only aul format is used
-    body.drives[i].lblcode[CA_MAXLBLTYPLEN]='\0';
-    body.drives[i].tobemounted=0; // TODO: put 1 if the tape is mounting 0 otherwise
-    strncpy(body.drives[i].vid, m_driveCatalogue.getVid(*itor).c_str(), CA_MAXVIDLEN);
-    body.drives[i].vid[CA_MAXVIDLEN]='\0';
-    strncpy(body.drives[i].vsn, m_driveCatalogue.getVid(*itor).c_str(), CA_MAXVSNLEN);
-    body.drives[i].vid[CA_MAXVSNLEN]='\0';
-    body.drives[i].cfseq=0; // the fseq is ignored by tpstat, so we leave it empty
+    fillTapeStatDriveEntry(body.drives[i], *itor);
     i++;
   }
   
@@ -161,6 +145,89 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeStatReplyMsg
     ex.getMessage() << "Failed to write job reply message: " <<
       ne.getMessage().str();
     throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// fillTapeStatDriveEntry
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillTapeStatDriveEntry(
+  legacymsg::TapeStatDriveEntry &entry, const std::string &unitName)
+  throw (castor::exception::Exception) {
+  try {
+    entry.uid = getuid();
+    entry.jid = m_driveCatalogue.getSessionPid(unitName);
+    castor::utils::copyString(entry.dgn, m_driveCatalogue.getDgn(unitName).c_str());
+    const DriveCatalogue::DriveState driveState = m_driveCatalogue.getState(unitName);
+    entry.up = driveStateToStatEntryUp(driveState);
+    entry.asn = driveStateToStatEntryAsn(driveState);
+    entry.asn_time = m_driveCatalogue.getAssignmentTime(unitName);
+    castor::utils::copyString(entry.drive, unitName.c_str());
+    entry.mode = WRITE_DISABLE; // TODO: SetVidRequestMsgBody needs to be augmented
+    castor::utils::copyString(entry.lblcode, "aul"); // only aul format is used
+    entry.tobemounted = 0; // TODO: put 1 if the tape is mounting 0 otherwise
+    castor::utils::copyString(entry.vid, m_driveCatalogue.getVid(unitName).c_str());
+    castor::utils::copyString(entry.vsn, entry.vid);
+    entry.cfseq = 0; // the fseq is ignored by tpstat, so we leave it empty
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to fill TapeStatDriveEntry: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// driveStateToStatEntryUp
+//------------------------------------------------------------------------------
+uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatEntryUp(
+  const DriveCatalogue::DriveState state) throw(castor::exception::Exception) {
+  switch(state) {
+    case DriveCatalogue::DRIVE_STATE_INIT:
+    case DriveCatalogue::DRIVE_STATE_DOWN:
+    case DriveCatalogue::DRIVE_STATE_WAITDOWN:
+      return 0;
+      break;
+    case DriveCatalogue::DRIVE_STATE_UP:
+    case DriveCatalogue::DRIVE_STATE_WAITFORK:
+    case DriveCatalogue::DRIVE_STATE_WAITLABEL:
+    case DriveCatalogue::DRIVE_STATE_RUNNING:
+      return 1;
+      break;
+    default:
+      {
+        castor::exception::Internal ex;
+        ex.getMessage() <<
+          "Failed to translate drive state to TapeStatDriveEntry.up"
+          ": Unknown drive-state: state=" << state;
+        throw ex;
+      }
+  }
+}
+
+//------------------------------------------------------------------------------
+// driveStateToStatEntryAsn
+//------------------------------------------------------------------------------
+uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatEntryAsn(
+  const DriveCatalogue::DriveState state) throw(castor::exception::Exception) {
+  switch(state) {
+    case DriveCatalogue::DRIVE_STATE_INIT:
+    case DriveCatalogue::DRIVE_STATE_DOWN:
+      return 0;
+    case DriveCatalogue::DRIVE_STATE_UP:
+    case DriveCatalogue::DRIVE_STATE_WAITFORK:
+    case DriveCatalogue::DRIVE_STATE_WAITLABEL:
+    case DriveCatalogue::DRIVE_STATE_RUNNING:
+    case DriveCatalogue::DRIVE_STATE_WAITDOWN:
+      return 1;
+    default:
+      {
+        castor::exception::Internal ex;
+        ex.getMessage() <<
+          "Failed to translate drive state to TapeStatDriveEntry.asn"
+          ": Unknown drive-state: state=" << state;
+        throw ex;
+      }
   }
 }
 

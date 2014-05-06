@@ -128,6 +128,36 @@ private:
     throw(castor::exception::Exception);
 
   /**
+   * Fills the specified TapeStatDriveEntry with the information correpsonding
+   * to the tape drive with specified unit name.
+   *
+   * @param entry Output parameter: The TapeStatDriveEntry.
+   * @param unitName The unit name of the tape drive.
+   */
+  void fillTapeStatDriveEntry(legacymsg::TapeStatDriveEntry &entry,
+    const std::string &unitName) throw (castor::exception::Exception);
+
+  /**
+   * Translates the specified tape-drive state into the corresponding value for
+   * the up field of TapeStatDriveEntry.
+   *
+   * @param state The state of the tape drive.
+   * @return The translated value.
+   */
+  uint16_t driveStateToStatEntryUp(const DriveCatalogue::DriveState state)
+    throw(castor::exception::Exception);
+
+  /**
+   * Translates the specified tape-drive state into the corresponding value for
+   * the asn field of TapeStatDriveEntry.
+   *
+   * @param state The state of the tape drive.
+   * @return The translated value.
+   */
+  uint16_t driveStateToStatEntryAsn(const DriveCatalogue::DriveState state) 
+    throw(castor::exception::Exception);
+
+  /**
    * Throws an exception if the specified file-descriptor is not that of the
    * socket listening for connections from the vdqmd daemon.
    */

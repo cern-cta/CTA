@@ -130,9 +130,14 @@ public:
    * During such a sesion a tape will be mounted, the tape will be labeled and
    * finally the tape will be dismounted.
    */
-  enum DriveState { DRIVE_STATE_INIT, DRIVE_STATE_DOWN, DRIVE_STATE_UP,
-    DRIVE_STATE_WAITFORK, DRIVE_STATE_WAITLABEL, DRIVE_STATE_RUNNING,
-    DRIVE_STATE_WAITDOWN };
+  enum DriveState {
+    DRIVE_STATE_INIT,
+    DRIVE_STATE_DOWN,
+    DRIVE_STATE_UP,
+    DRIVE_STATE_WAITFORK,
+    DRIVE_STATE_WAITLABEL,
+    DRIVE_STATE_RUNNING,
+    DRIVE_STATE_WAITDOWN};
 
   /**
    * Returns the string representation of the specified tape-drive state.
