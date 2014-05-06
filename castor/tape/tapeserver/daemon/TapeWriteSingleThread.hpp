@@ -38,7 +38,7 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-class TapeWriteSingleThread :  public TapeSingleThreadInterface<TapeWriteTaskInterface> {
+class TapeWriteSingleThread :  public TapeSingleThreadInterface<TapeWriteTask> {
 public:
   /**
    * Constructor
@@ -55,7 +55,7 @@ public:
           const std::string & vid,
           castor::log::LogContext & lc, MigrationReportPacker & repPacker,
 	  uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
-  TapeSingleThreadInterface<TapeWriteTaskInterface>(drive, vid, lc),
+  TapeSingleThreadInterface<TapeWriteTask>(drive, vid, lc),
           m_filesBeforeFlush(filesBeforeFlush),
           m_bytesBeforeFlush(bytesBeforeFlush),
           m_drive(drive), m_reportPacker(repPacker), m_vid(vid), 
@@ -130,7 +130,7 @@ private:
     
       uint64_t bytes=0;
       uint64_t files=0;
-      std::auto_ptr<TapeWriteTaskInterface> task ;      
+      std::auto_ptr<TapeWriteTask> task ;      
       while(1) {
         
         //get a task

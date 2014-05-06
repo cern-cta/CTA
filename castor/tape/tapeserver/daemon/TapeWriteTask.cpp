@@ -31,7 +31,7 @@
 #include "castor/tape/tapeserver/file/File.hpp" 
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
-
+#include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 
 namespace castor {
 namespace tape {

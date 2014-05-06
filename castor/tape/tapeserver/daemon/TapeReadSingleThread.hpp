@@ -26,7 +26,7 @@
 
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
-#include "castor/tape/tapeserver/daemon/TapeReadTaskInterface.hpp"
+#include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
@@ -43,7 +43,7 @@ namespace daemon {
    * This class will execute the different tape read tasks.
    * 
    */
-class TapeReadSingleThread : public TapeSingleThreadInterface<TapeReadTaskInterface>{
+class TapeReadSingleThread : public TapeSingleThreadInterface<TapeReadTask>{
 public:
   /**
    * Constructor 
@@ -56,7 +56,7 @@ public:
   TapeReadSingleThread(castor::tape::drives::DriveInterface & drive,
           const std::string vid, uint64_t maxFilesRequest,
           castor::log::LogContext & lc): 
-   TapeSingleThreadInterface<TapeReadTaskInterface>(drive, vid, lc),
+   TapeSingleThreadInterface<TapeReadTask>(drive, vid, lc),
    m_maxFilesRequest(maxFilesRequest),m_filesProcessed(0) {}
    
    /**
@@ -75,8 +75,8 @@ private:
    * ask the task injector for more 
    * @return m_tasks.pop();
    */
-  TapeReadTaskInterface * popAndRequestMoreJobs() {
-    castor::tape::threading::BlockingQueue<TapeReadTaskInterface *>::valueRemainingPair 
+  TapeReadTask * popAndRequestMoreJobs() {
+    castor::tape::threading::BlockingQueue<TapeReadTask *>::valueRemainingPair 
       vrp = m_tasks.popGetSize();
     // If we just passed (down) the half full limit, ask for more
     // (the remaining value is after pop)
@@ -111,7 +111,7 @@ private:
     // the task injector
     while(1) {
       // NULL indicated the end of work
-      TapeReadTaskInterface * task = popAndRequestMoreJobs();
+      TapeReadTask * task = popAndRequestMoreJobs();
       m_logContext.log(LOG_DEBUG, "TapeReadThread: just got one more job");
       if (task) {
         task->execute(*rs, m_logContext);

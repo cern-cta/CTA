@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/TapeReadTaskInterface.hpp"
+
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
@@ -40,7 +40,7 @@ namespace daemon {
    * This class is in charge of 
    * 
    */
-class TapeReadTask: public TapeReadTaskInterface {
+class TapeReadTask {
 public:
   /**
    * COnstructor

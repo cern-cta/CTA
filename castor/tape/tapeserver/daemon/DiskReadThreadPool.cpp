@@ -27,6 +27,8 @@
 #include <sstream>
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
 #include "log.h"
+#include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
+
 namespace castor {
 namespace tape {
 namespace tapeserver {

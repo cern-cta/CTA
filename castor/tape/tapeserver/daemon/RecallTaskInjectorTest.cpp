@@ -20,14 +20,14 @@ public:
   virtual ~FakeDiskWriteThreadPool() {};
 };
      
-class FakeSingleTapeReadThread : public TapeSingleThreadInterface<TapeReadTaskInterface>
+class FakeSingleTapeReadThread : public TapeSingleThreadInterface<TapeReadTask>
 {
 public:
-  using TapeSingleThreadInterface<TapeReadTaskInterface>::m_tasks;
+  using TapeSingleThreadInterface<TapeReadTask>::m_tasks;
   
   FakeSingleTapeReadThread(castor::tape::drives::DriveInterface& drive, 
     const std::string & vid, castor::log::LogContext & lc):
-  TapeSingleThreadInterface<TapeReadTaskInterface>(drive, vid, lc){}
+  TapeSingleThreadInterface<TapeReadTask>(drive, vid, lc){}
   
   ~FakeSingleTapeReadThread(){
     const unsigned int size= m_tasks.size();
@@ -39,7 +39,7 @@ public:
   {
      m_tasks.push(NULL);
   }
-  virtual void push(TapeReadTaskInterface* t){
+  virtual void push(TapeReadTask* t){
     m_tasks.push(t);
   }
 };
@@ -79,11 +79,11 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   for(int i=0;i<1;++i)
   {
     DiskWriteTask* diskWriteTask=diskWrite.m_tasks.pop();
-    TapeReadTaskInterface* tapeReadTask=tapeRead.m_tasks.pop();
+    TapeReadTask* tapeReadTask=tapeRead.m_tasks.pop();
     
     //static_cast is needed otherwise compilation fails on SL5 with a raw NULL
     ASSERT_EQ(static_cast<DiskWriteTask*>(NULL),diskWriteTask);
-    ASSERT_EQ(static_cast<TapeReadTaskInterface*>(NULL),tapeReadTask);
+    ASSERT_EQ(static_cast<TapeReadTask*>(NULL),tapeReadTask);
     delete diskWriteTask;
     delete tapeReadTask;
   }

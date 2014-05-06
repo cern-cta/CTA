@@ -42,7 +42,7 @@ namespace daemon {
   
   class RecallMemoryManager;
   class DiskWriteThreadPool;
-  class TapeReadTaskInterface;
+  class TapeReadTask;
 /**
  * This classis responsible for creating the tasks in case of a recall job
  */
@@ -62,7 +62,7 @@ public:
   * @param lc  copied because of the threading mechanism 
   */
   RecallTaskInjector(RecallMemoryManager & mm, 
-        TapeSingleThreadInterface<TapeReadTaskInterface> & tapeReader,
+        TapeSingleThreadInterface<TapeReadTask> & tapeReader,
         DiskWriteThreadPool & diskWriter,client::ClientInterface& client,
         uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc);
 
@@ -153,7 +153,7 @@ private:
   
   ///the one object that will hold the thread which will be executing 
   ///tape-reading tasks
-  TapeSingleThreadInterface<TapeReadTaskInterface> & m_tapeReader;
+  TapeSingleThreadInterface<TapeReadTask> & m_tapeReader;
   
   ///the one object that will hold all the threads which will be executing 
   ///disk-writing tasks

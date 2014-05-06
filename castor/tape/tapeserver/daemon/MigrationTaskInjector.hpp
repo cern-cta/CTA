@@ -63,7 +63,7 @@ public:
    */
   MigrationTaskInjector(MigrationMemoryManager & mm, 
         DiskReadThreadPool & diskReader,
-        TapeSingleThreadInterface<TapeWriteTaskInterface> & tapeWriter,client::ClientInterface& client,
+        TapeSingleThreadInterface<TapeWriteTask> & tapeWriter,client::ClientInterface& client,
         uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc);
 
   /**
@@ -157,7 +157,7 @@ private:
   
   ///the one object that will hold the thread which will be executing 
   ///tape-writing tasks
-  TapeSingleThreadInterface<TapeWriteTaskInterface>& m_tapeWriter;
+  TapeSingleThreadInterface<TapeWriteTask>& m_tapeWriter;
   
   ///the one object that will hold all the threads which will be executing 
   ///disk-reading tasks
