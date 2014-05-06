@@ -139,10 +139,10 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeStatRequestMsgBody) {
   }
 }
 
-TEST_F(castor_legacymsg_TapeMarshalTest, marshalSetVidRequestMsgBody) {
+TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeUpdateDriveRqstMsgBody) {
   using namespace castor::legacymsg;
   char buf[25]; // Expect message (header + body) to occupy exactly 25 bytes
-  SetVidRequestMsgBody srcMsgBody;
+  TapeUpdateDriveRqstMsgBody srcMsgBody;
 
   // Marshal entire message (header + body)
   {
@@ -172,7 +172,7 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalSetVidRequestMsgBody) {
 
   // Unmarshall message body
   {
-    SetVidRequestMsgBody dstMsgBody;
+    TapeUpdateDriveRqstMsgBody dstMsgBody;
 
     const char *bufPtr = buf + 12; // Point at beginning of message body
     size_t bufLen = 13; // Length of the message body

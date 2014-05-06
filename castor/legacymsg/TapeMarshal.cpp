@@ -242,7 +242,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 //-----------------------------------------------------------------------------
 // marshal
 //-----------------------------------------------------------------------------
-size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const SetVidRequestMsgBody &src) throw(castor::exception::Exception) {
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const TapeUpdateDriveRqstMsgBody &src) throw(castor::exception::Exception) {
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -286,7 +286,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Se
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to marshal SetVidRequestMsgBody"
+    ex.getMessage() << "Failed to marshal TapeUpdateDriveRqstMsgBody"
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
     throw ex;
@@ -298,7 +298,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Se
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
-void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, SetVidRequestMsgBody &dst) throw(castor::exception::Exception) {
+void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeUpdateDriveRqstMsgBody &dst) throw(castor::exception::Exception) {
   io::unmarshalString(src, srcLen, dst.vid);
   io::unmarshalString(src, srcLen, dst.drive);  
 }

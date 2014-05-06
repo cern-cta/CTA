@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/SetVidRequestMsgBody.hpp
+ *         castor/legacymsg/TapeUpdateDriveRqstMsgBody.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,37 +22,11 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 
-#include "h/Castor_limits.h"
+#include <string.h>
 
-#include <stdint.h>
-
-namespace castor {
-namespace legacymsg {
-
-/**
- * An update-VID message, used to update the drive catalogue with the contents of a drive.
- */
-struct SetVidRequestMsgBody {
-  
-  /**
-   * The VID of the tape inside the drive ("" if empty)
-   */
-  char vid[CA_MAXVIDLEN+1];
-  
-  /**
-   * The drive name (a.k.a. unit name)
-   */
-  char drive[CA_MAXUNMLEN+1];
-
-  /**
-   * Constructor: zeroes the two strings.
-   */
-  SetVidRequestMsgBody() throw();
-
-}; // struct SetVidRequestMsgBody
-
-} // namespace legacymsg
-} // namespace castor
-
+castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeUpdateDriveRqstMsgBody() throw() {
+  memset(vid, '\0', sizeof(vid));
+  memset(drive, '\0', sizeof(drive));
+}

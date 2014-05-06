@@ -29,7 +29,7 @@
 #include "castor/legacymsg/TapeConfigRequestMsgBody.hpp"
 #include "castor/legacymsg/TapeStatReplyMsgBody.hpp"
 #include "castor/legacymsg/TapeStatRequestMsgBody.hpp"
-#include "castor/legacymsg/SetVidRequestMsgBody.hpp"
+#include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 
 #include <errno.h>
 #include <stdint.h>
@@ -146,7 +146,7 @@ template<int n> size_t marshal(char (&dst)[n], const TapeStatReplyMsgBody &src) 
  * @param src    The source structure.
  * @return       The total length of the message (header + body).
  */
-size_t marshal(char *const dst, const size_t dstLen, const SetVidRequestMsgBody &src) throw(castor::exception::Exception);
+size_t marshal(char *const dst, const size_t dstLen, const TapeUpdateDriveRqstMsgBody &src) throw(castor::exception::Exception);
 
 /**
  * Marshals the specified source message body structure and its implicit
@@ -156,7 +156,7 @@ size_t marshal(char *const dst, const size_t dstLen, const SetVidRequestMsgBody 
  * @param src The source structure.
  * @return    The total length of the message (header + body).
  */
-template<int n> size_t marshal(char (&dst)[n], const SetVidRequestMsgBody &src) throw(castor::exception::Exception) {
+template<int n> size_t marshal(char (&dst)[n], const TapeUpdateDriveRqstMsgBody &src) throw(castor::exception::Exception) {
   return marshal(dst, n, src);
 }
 
@@ -173,7 +173,7 @@ template<int n> size_t marshal(char (&dst)[n], const SetVidRequestMsgBody &src) 
  * return is the number of bytes remaining in the source buffer.
  * @param dst The destination message body structure.
  */
-void unmarshal(const char * &src, size_t &srcLen, SetVidRequestMsgBody &dst) throw(castor::exception::Exception);
+void unmarshal(const char * &src, size_t &srcLen, TapeUpdateDriveRqstMsgBody &dst) throw(castor::exception::Exception);
 
 } // namespace legacymsg
 } // namespace castor

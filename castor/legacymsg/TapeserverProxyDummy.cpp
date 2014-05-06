@@ -35,7 +35,28 @@ castor::legacymsg::TapeserverProxyDummy::~TapeserverProxyDummy() throw() {
 }
 
 //------------------------------------------------------------------------------
-// setVidInDriveCatalogue
+// gotReadMountDetailsFromClient
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyDummy::setVidInDriveCatalogue(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception) {
+void castor::legacymsg::TapeserverProxyDummy::gotReadMountDetailsFromClient(
+  const std::string &unitName,
+  const std::string &vid)
+  throw(castor::exception::Exception) {
+}
+
+//------------------------------------------------------------------------------
+// gotWriteMountDetailsFromClient
+//------------------------------------------------------------------------------
+void castor::legacymsg::TapeserverProxyDummy::gotWriteMountDetailsFromClient(
+  const std::string &unitName,
+  const std::string &vid)
+  throw(castor::exception::Exception) {
+}
+
+//------------------------------------------------------------------------------
+// gotDumpMountDetailsFromClient
+//------------------------------------------------------------------------------
+void castor::legacymsg::TapeserverProxyDummy::gotDumpMountDetailsFromClient(
+  const std::string &unitName,
+  const std::string &vid)
+  throw(castor::exception::Exception) {
 }

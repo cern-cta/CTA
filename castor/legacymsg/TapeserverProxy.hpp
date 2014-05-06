@@ -24,7 +24,7 @@
 
 #include "castor/log/Logger.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
-#include "castor/legacymsg/SetVidRequestMsgBody.hpp"
+#include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 
 namespace castor {
 namespace legacymsg {
@@ -35,7 +35,6 @@ namespace legacymsg {
  */
 class TapeserverProxy {
 public:
-
   /**
    * Destructor.
    *
@@ -45,12 +44,40 @@ public:
   virtual ~TapeserverProxy() throw() = 0;
 
   /**
-   * Sets the VID of the tape mounted in the specified tape drive.
+   * Informs the tapeserverd daemon that the mount-session child-process got
+   * the mount details from the client.
    *
-   * @param vid The Volume ID of the tape in the tape drive
    * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
    */
-  virtual void setVidInDriveCatalogue(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception) = 0;
+  virtual void gotReadMountDetailsFromClient(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception) = 0;
+
+  /**
+   * Informs the tapeserverd daemon that the mount-session child-process got
+   * the mount details from the client.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
+   */
+  virtual void gotWriteMountDetailsFromClient(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception) = 0;
+
+  /**
+   * Informs the tapeserverd daemon that the mount-session child-process got
+   * the mount details from the client.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
+   */
+  virtual void gotDumpMountDetailsFromClient(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception) = 0;
 
 }; // class TapeserverProxy
 

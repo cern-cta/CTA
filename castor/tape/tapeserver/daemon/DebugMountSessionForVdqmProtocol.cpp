@@ -83,7 +83,24 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::execute
       log::Param("label", volume->label()),
       log::Param("mode", volume->mode())};
     m_log(LOG_INFO, "Got VID from client", params);
-    m_tps.setVidInDriveCatalogue(volume->vid(), m_job.driveUnit);
+    switch(volume->mode()) {
+    case tapegateway::READ:
+      m_tps.gotReadMountDetailsFromClient(m_job.driveUnit, volume->vid());
+      break;
+    case tapegateway::WRITE:
+      m_tps.gotWriteMountDetailsFromClient(m_job.driveUnit, volume->vid());
+      break;
+    case tapegateway::DUMP:
+      m_tps.gotDumpMountDetailsFromClient(m_job.driveUnit, volume->vid());
+      break;
+    default:
+      {
+        castor::exception::Internal ex;
+        ex.getMessage() << "Got an unknown volume-mode from the client: vid="
+          << volume->vid() << " mode=" << volume->mode();
+        throw ex;
+      }
+    }
     mountTape(volume->vid());
     transferFiles(*(volume.get()), clientMsgSeqNb);
   } else {

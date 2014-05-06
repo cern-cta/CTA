@@ -48,20 +48,67 @@ castor::legacymsg::TapeserverProxyTcpIp::~TapeserverProxyTcpIp() throw() {
 }
 
 //------------------------------------------------------------------------------
-// setVidInDriveCatalogue
+// gotReadMountDetailsFromClient
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyTcpIp::setVidInDriveCatalogue(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception) {
+void castor::legacymsg::TapeserverProxyTcpIp::gotReadMountDetailsFromClient(
+  const std::string &unitName,
+  const std::string &vid)
+  throw(castor::exception::Exception) {
   try {
-    legacymsg::SetVidRequestMsgBody body;
+    legacymsg::TapeUpdateDriveRqstMsgBody body;
     castor::utils::copyString(body.vid, vid.c_str());
     castor::utils::copyString(body.drive, unitName.c_str()); 
     castor::utils::SmartFd fd(connectToTapeserver());
-    writeSetVidRequestMsg(fd.get(), body);
-    readSetVidReplyMsg(fd.get());  
+    writeTapeUpdateDriveRqstMsg(fd.get(), body);
+    readReplyMsg(fd.get());  
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to set vid of tape drive " << unitName <<
-      " to: " << vid << ". Error msg: " << ne.getMessage().str();
+    ex.getMessage() << "Failed to notify tapeserverd of read mount: unitName="
+      << unitName << " vid=" << vid << ": " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// gotWriteMountDetailsFromClient
+//------------------------------------------------------------------------------
+void castor::legacymsg::TapeserverProxyTcpIp::gotWriteMountDetailsFromClient(
+  const std::string &unitName,
+  const std::string &vid)
+  throw(castor::exception::Exception) {
+  try {
+    legacymsg::TapeUpdateDriveRqstMsgBody body;
+    castor::utils::copyString(body.vid, vid.c_str());
+    castor::utils::copyString(body.drive, unitName.c_str());
+    castor::utils::SmartFd fd(connectToTapeserver());
+    writeTapeUpdateDriveRqstMsg(fd.get(), body);
+    readReplyMsg(fd.get());
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to notify tapeserverd of read mount: unitName=" 
+      << unitName << " vid=" << vid << ": " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// gotDumpMountDetailsFromClient
+//------------------------------------------------------------------------------
+void castor::legacymsg::TapeserverProxyTcpIp::gotDumpMountDetailsFromClient(
+  const std::string &unitName,
+  const std::string &vid)
+  throw(castor::exception::Exception) {
+  try {
+    legacymsg::TapeUpdateDriveRqstMsgBody body;
+    castor::utils::copyString(body.vid, vid.c_str());
+    castor::utils::copyString(body.drive, unitName.c_str());
+    castor::utils::SmartFd fd(connectToTapeserver());
+    writeTapeUpdateDriveRqstMsg(fd.get(), body);
+    readReplyMsg(fd.get());
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to notify tapeserverd of read mount: unitName=" 
+      << unitName << " vid=" << vid << ": " << ne.getMessage().str();
     throw ex;
   }
 }
@@ -85,9 +132,11 @@ int castor::legacymsg::TapeserverProxyTcpIp::connectToTapeserver() const throw(c
 }
 
 //-----------------------------------------------------------------------------
-// writeSetVidRequestMsg
+// writeTapeUpdateDriveRqstMsg
 //-----------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyTcpIp::writeSetVidRequestMsg(const int fd, const legacymsg::SetVidRequestMsgBody &body) throw(castor::exception::Exception) {
+void castor::legacymsg::TapeserverProxyTcpIp::writeTapeUpdateDriveRqstMsg(
+  const int fd, const legacymsg::TapeUpdateDriveRqstMsgBody &body)
+  throw(castor::exception::Exception) {
   char buf[3 * sizeof(uint32_t) + sizeof(body)]; // header + body
   const size_t len = legacymsg::marshal(buf, sizeof(buf), body);
 
@@ -102,9 +151,9 @@ void castor::legacymsg::TapeserverProxyTcpIp::writeSetVidRequestMsg(const int fd
 }
 
 //-----------------------------------------------------------------------------
-// readSetVidReplyMsg
+// readReplyMsg
 //-----------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyTcpIp::readSetVidReplyMsg(const int fd) throw(castor::exception::Exception) {
+void castor::legacymsg::TapeserverProxyTcpIp::readReplyMsg(const int fd) throw(castor::exception::Exception) {
   
   char buf[3 * sizeof(uint32_t)]; // magic + request type + len
   io::readBytes(fd, m_netTimeout, sizeof(buf), buf);

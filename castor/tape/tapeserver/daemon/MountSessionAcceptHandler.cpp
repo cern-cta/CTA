@@ -162,7 +162,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::checkHandleEve
 // logTapeConfigJobReception
 //------------------------------------------------------------------------------
 void
-  castor::tape::tapeserver::daemon::MountSessionAcceptHandler::logSetVidJobReception(const legacymsg::SetVidRequestMsgBody &job) const throw() {
+  castor::tape::tapeserver::daemon::MountSessionAcceptHandler::logSetVidJobReception(const legacymsg::TapeUpdateDriveRqstMsgBody &job) const throw() {
   log::Param params[] = {
     log::Param("drive", job.drive),
     log::Param("vid", job.vid)};
@@ -177,7 +177,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleSetVidJo
   const legacymsg::MessageHeader header = readJobMsgHeader(connection);
   
   if(SETVID == header.reqType) {
-    const legacymsg::SetVidRequestMsgBody body = readSetVidMsgBody(connection, header.lenOrStatus-sizeof(header));
+    const legacymsg::TapeUpdateDriveRqstMsgBody body = readSetVidMsgBody(connection, header.lenOrStatus-sizeof(header));
     logSetVidJobReception(body);
     m_driveCatalogue.updateVidAssignment(body.vid, body.drive);
     writeSetVidReplyMsg(connection, 0); // 0 as return code for the tape config command, as in: "all went fine"
@@ -222,7 +222,7 @@ castor::legacymsg::MessageHeader
 //------------------------------------------------------------------------------
 // readTapeConfigMsgBody
 //------------------------------------------------------------------------------
-castor::legacymsg::SetVidRequestMsgBody
+castor::legacymsg::TapeUpdateDriveRqstMsgBody
   castor::tape::tapeserver::daemon::MountSessionAcceptHandler::readSetVidMsgBody(const int connection,
     const uint32_t len)
     throw(castor::exception::Exception) {
@@ -245,7 +245,7 @@ castor::legacymsg::SetVidRequestMsgBody
     throw ex;
   }
 
-  legacymsg::SetVidRequestMsgBody body;
+  legacymsg::TapeUpdateDriveRqstMsgBody body;
   const char *bufPtr = buf;
   size_t bufLen = sizeof(buf);
   legacymsg::unmarshal(bufPtr, bufLen, body);

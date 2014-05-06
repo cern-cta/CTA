@@ -47,12 +47,40 @@ public:
   ~TapeserverProxyDummy() throw();
 
   /**
-   * Sets the VID of the tape mounted in the specified tape drive.
+   * Informs the tapeserverd daemon that the mount-session child-process got
+   * the mount details from the client.
    *
-   * @param vid The Volume ID of the tape in the tape drive
    * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
    */
-  void setVidInDriveCatalogue(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception);
+  void gotReadMountDetailsFromClient(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception);
+
+  /**
+   * Informs the tapeserverd daemon that the mount-session child-process got
+   * the mount details from the client.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
+   */
+  void gotWriteMountDetailsFromClient(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception);
+
+  /**
+   * Informs the tapeserverd daemon that the mount-session child-process got
+   * the mount details from the client.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
+   */
+  void gotDumpMountDetailsFromClient(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception);
 
 }; // class TapeserverProxyDummy
 

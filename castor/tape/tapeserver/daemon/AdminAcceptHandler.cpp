@@ -163,7 +163,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillTapeStatDriveEntr
     entry.asn = driveStateToStatEntryAsn(driveState);
     entry.asn_time = m_driveCatalogue.getAssignmentTime(unitName);
     castor::utils::copyString(entry.drive, unitName.c_str());
-    entry.mode = WRITE_DISABLE; // TODO: SetVidRequestMsgBody needs to be augmented
+    entry.mode = WRITE_DISABLE; // TODO: TapeUpdateDriveRqstMsgBody needs to be augmented
     castor::utils::copyString(entry.lblcode, "aul"); // only aul format is used
     entry.tobemounted = 0; // TODO: put 1 if the tape is mounting 0 otherwise
     castor::utils::copyString(entry.vid, m_driveCatalogue.getVid(unitName).c_str());

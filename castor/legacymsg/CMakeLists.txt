@@ -50,7 +50,7 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   RtcpSegmentAttributes.cpp
   RtcpTapeRqstMsgBody.cpp
   ScsiLibrarySlot.cpp
-  SetVidRequestMsgBody.cpp
+  TapeUpdateDriveRqstMsgBody.cpp
   TapeBridgeMarshal.cpp
   TapeConfigRequestMsgBody.cpp
   TapeLabelRqstMsgBody.cpp

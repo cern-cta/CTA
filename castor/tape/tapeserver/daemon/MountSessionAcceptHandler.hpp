@@ -27,7 +27,7 @@
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
-#include "castor/legacymsg/SetVidRequestMsgBody.hpp"
+#include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 
 #include <poll.h>
 
@@ -115,7 +115,7 @@ private:
   /**
    * Logs the reception of the specified job message from the tpconfig command.
    */
-  void logSetVidJobReception(const legacymsg::SetVidRequestMsgBody &job)
+  void logSetVidJobReception(const legacymsg::TapeUpdateDriveRqstMsgBody &job)
     const throw();
   
   /**
@@ -143,7 +143,7 @@ private:
    * @param len The length of the message body in bytes.
    * @return The message body.
    */
-  legacymsg::SetVidRequestMsgBody readSetVidMsgBody(const int connection,
+  legacymsg::TapeUpdateDriveRqstMsgBody readSetVidMsgBody(const int connection,
     const uint32_t len) throw(castor::exception::Exception);
 
   /**

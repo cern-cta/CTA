@@ -24,7 +24,7 @@
 
 #include "castor/log/Logger.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
-#include "castor/legacymsg/SetVidRequestMsgBody.hpp"
+#include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeserverProxy.hpp"
 
 namespace castor {
@@ -58,12 +58,40 @@ public:
   ~TapeserverProxyTcpIp() throw();
 
   /**
-   * Sets the VID of the tape mounted in the specified tape drive.
+   * Informs the tapeserverd daemon that the mount-session child-process got
+   * the mount details from the client.
    *
-   * @param vid The Volume ID of the tape in the tape drive
    * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
    */
-  void setVidInDriveCatalogue(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception);
+  void gotReadMountDetailsFromClient(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception);
+
+  /**
+   * Informs the tapeserverd daemon that the mount-session child-process got
+   * the mount details from the client.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
+   */
+  void gotWriteMountDetailsFromClient(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception);
+
+  /**
+   * Informs the tapeserverd daemon that the mount-session child-process got
+   * the mount details from the client.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
+   */
+  void gotDumpMountDetailsFromClient(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception);
 
 private:
 
@@ -75,20 +103,18 @@ private:
   int connectToTapeserver() const throw(castor::exception::Exception);
 
   /**
-   * Writes a drive status message with the specifed contents to the specified
-   * connection.
+   * Writes the specified message to the specified connection.
    *
-   * @param body The message body defining the drive and status.
+   * @param body The body of the message.
    */
-  void writeSetVidRequestMsg(const int fd, const legacymsg::SetVidRequestMsgBody &body) throw(castor::exception::Exception);
+  void writeTapeUpdateDriveRqstMsg(const int fd, const legacymsg::TapeUpdateDriveRqstMsgBody &body) throw(castor::exception::Exception);
 
   /**
-   * Reads a VDQM_COMMIT ack message from the specified connection.
+   * Reads a reply message from the specified connection.
    *
    * @param fd The file-descriptor of the connection.
-   * @return The message.
    */
-  void readSetVidReplyMsg(const int fd) throw(castor::exception::Exception);
+  void readReplyMsg(const int fd) throw(castor::exception::Exception);
 
   /**
    * The object representing the API of the CASTOR logging system.
