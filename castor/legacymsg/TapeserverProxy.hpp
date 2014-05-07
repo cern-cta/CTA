@@ -44,7 +44,7 @@ public:
   virtual ~TapeserverProxy() throw() = 0;
 
   /**
-   * Informs the tapeserverd daemon that the mount-session child-process got
+   * Notifies the tapeserverd daemon that the mount-session child-process got
    * the mount details from the client.
    *
    * @param unitName The unit name of the tape drive.
@@ -56,7 +56,7 @@ public:
     throw(castor::exception::Exception) = 0;
 
   /**
-   * Informs the tapeserverd daemon that the mount-session child-process got
+   * Notifies the tapeserverd daemon that the mount-session child-process got
    * the mount details from the client.
    *
    * @param unitName The unit name of the tape drive.
@@ -68,13 +68,46 @@ public:
     throw(castor::exception::Exception) = 0;
 
   /**
-   * Informs the tapeserverd daemon that the mount-session child-process got
+   * Notifies the tapeserverd daemon that the mount-session child-process got
    * the mount details from the client.
    *
    * @param unitName The unit name of the tape drive.
    * @param vid The Volume ID of the tape to be mounted.
    */
   virtual void gotDumpMountDetailsFromClient(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception) = 0;
+
+  /**
+   * Notifies the tapeserverd daemon that the specified tape has been mounted.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
+   */
+  virtual void tapeMountedForRead(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception) = 0;
+
+  /**
+   * Notifies the tapeserverd daemon that the specified tape has been mounted.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
+   */
+  virtual void tapeMountedForWrite(
+    const std::string &unitName, 
+    const std::string &vid)
+    throw(castor::exception::Exception) = 0;
+
+  /**
+   * Notifies the tapeserverd daemon that the specified tape has been unmounted.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
+   */
+  virtual void tapeUnmounted(
     const std::string &unitName,
     const std::string &vid)
     throw(castor::exception::Exception) = 0;

@@ -40,6 +40,24 @@ public:
    */
   ~VmgrProxyDummy() throw();
 
+  /**
+   * Notifies the vmgrd daemon that the specified tape has been mounted for read.
+   *
+   * @param vid The volume identifier of the mounted tape.
+   * @param
+   */
+  void tapeMountedForRead(const std::string &vid)
+    throw (castor::exception::Exception);
+
+  /**
+   * Notifies the vmgrd daemon that the specified tape has been mounted for read.
+   *
+   * @param vid The volume identifier of the mounted tape.
+   * @param
+   */
+  void tapeMountedForWrite(const std::string &vid)
+    throw (castor::exception::Exception);
+
 }; // class VmgrProxyDummy
 
 } // namespace legacymsg

@@ -82,6 +82,39 @@ public:
     const std::string &vid)
     throw(castor::exception::Exception);
 
+  /**
+   * Notifies the tapeserverd daemon that the specified tape has been mounted.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
+   */
+  void tapeMountedForRead(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception);
+
+  /**
+   * Notifies the tapeserverd daemon that the specified tape has been mounted.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
+   */
+  void tapeMountedForWrite(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception);
+
+  /**
+   * Notifies the tapeserverd daemon that the specified tape has been unmounted.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
+   */
+ void tapeUnmounted(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception);
+
 }; // class TapeserverProxyDummy
 
 } // namespace legacymsg

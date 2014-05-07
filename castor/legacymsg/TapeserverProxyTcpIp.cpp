@@ -113,6 +113,33 @@ void castor::legacymsg::TapeserverProxyTcpIp::gotDumpMountDetailsFromClient(
   }
 }
 
+//------------------------------------------------------------------------------
+// tapeMountedForRead
+//------------------------------------------------------------------------------
+void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForRead(
+  const std::string &unitName,
+  const std::string &vid)
+  throw(castor::exception::Exception) {
+}
+
+//------------------------------------------------------------------------------
+// tapeMountedForWrite
+//------------------------------------------------------------------------------
+void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForWrite(
+  const std::string &unitName,
+  const std::string &vid)
+  throw(castor::exception::Exception) {
+} 
+
+//------------------------------------------------------------------------------
+// tapeUnmounted
+//------------------------------------------------------------------------------
+void castor::legacymsg::TapeserverProxyTcpIp::tapeUnmounted(
+  const std::string &unitName,
+  const std::string &vid)
+  throw(castor::exception::Exception) {
+}
+
 //-----------------------------------------------------------------------------
 // connectToTapeserver
 //-----------------------------------------------------------------------------
