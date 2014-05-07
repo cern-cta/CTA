@@ -124,6 +124,9 @@ ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_DataPool
 ALTER TABLE SubRequest ADD (diskServer INTEGER);
 CREATE INDEX I_SubRequest_DiskServer ON SubRequest (diskServer);
 
+ALTER TABLE DeleteDiskCopyHelper ADD (msg VARCHAR2(2048));
+DROP PROCEDURE deleteDiskCopiesInFSs;
+
 /* PL/SQL code revalidation */
 /****************************/
 

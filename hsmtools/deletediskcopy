@@ -31,7 +31,7 @@ from cStringIO import StringIO
 # usage function
 def usage(exitCode):
     '''usage'''
-    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--force] [-d|--dry-run] [-n|--no-restage] [<fullPhysicalPath>|<mountPoint> [...]]'
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--force] [-d|--dry-run] [<fullPhysicalPath>|<mountPoint> [...]]'
     print '        fullPhysicalPath must follow the CASTOR internal format host:/mountpoint/path/fileid@nameserver.diskcopyid'
     print '        alternatively, mountPoint shall be specified as host:/mountpoint/ to include all its files. Use with care!'
     sys.exit(exitCode)
@@ -40,18 +40,15 @@ def usage(exitCode):
 def enum(**enums):
     return type('Enum', (), enums)
 
-rcs = enum(ENOENT=1, RECALL=2, REPLICATION=3, LOST=4, GC=5, NOOP=6)
-
 # first parse the options
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'hfdnv', ['help', 'force', 'dry-run', 'no-restage', 'verbose'])
+    options, args = getopt.getopt(sys.argv[1:], 'hfdnv', ['help', 'force', 'dry-run', 'verbose'])
 except Exception, e:
     print e
     usage(1)
 force = False
 dryrun = False
 verbose = False
-noRestage = False
 for f, v in options:
     if f == '-h' or f == '--help':
         usage(0)
@@ -59,118 +56,57 @@ for f, v in options:
         force = True
     elif f == '-d' or f == '--dry-run':
         dryrun = True
-    elif f == '-n' or f == '--no-restage':
-        noRestage = True
     elif f == '-v' or f == '--verbose':
         verbose = True
     else:
         print "unknown option : " + f
         usage(1)
 
-# deal with arguments
-dcIds = []
-fileIds = []
-diskServers = []
-mountPoints = []
-if len(args) > 0:
-    for p in args:
-        if 0 in [c in p for c in ':/.']:
-            print 'incorrect/incomplete value found as argument, ignoring', p
-            continue
-        tok = re.compile('[:\/@\.]').split(p)
-        if len(tok) - tok.index('') > 5:
-            # minimum 5 elements are expected in a CASTOR physical path after the FQDN:
-            # the mount point, the path, the fileid, the nshost, and the dcId
-            dcIds += [int(tok[-1])]
-            fileIds += [int(tok[-3])]
-        else:   # try to use it as a mount point
-            if len(tok[tok.index('')+1:]) > 1 and tok[::-1].index('') == 0:   # we want a non-empty mountpoint and its last character = '/'
-                diskServers.append('.'.join(tok[:tok.index('')]))
-                mountPoints.append('/'.join(tok[tok.index(''):]))
-            else:
-                print 'incorrect/incomplete value found as argument, ignoring', p
-                continue
-if len(dcIds) == 0 and len(mountPoints) == 0:
+if len(args) == 0 == 0:
     print 'missing argument(s)'
     usage(1)
-if len(dcIds) > 0 and len(mountPoints) > 0:
-    print 'mixing mount points and full physical paths is not supported'
-    usage(1)
 
+nsstats = {}
+def dealWithLostFile(fileId):
+    global nsstats
+    try:
+      castorFilename = subprocess.Popen(['nsgetpath', str(fileId)], stdout=subprocess.PIPE).stdout.read().rstrip()
+      # get metadata and drop from namespace. It is assumed the user has full rights to do so
+      nsstat = subprocess.Popen(['nsls', '-li', '--class', '--checksum', castorFilename],
+                                stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
+      u = nsstat.split()[4]  # collect outputs per user
+      try:
+        nsstats[u].write(nsstat)
+      except KeyError:
+        nsstats[u] = StringIO()
+        nsstats[u].write(nsstat)
+      if not dryrun:
+        p = subprocess.Popen(['nsrm', '-r', castorFilename], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        p.wait()
+        if p.returncode:
+          print 'Error removing file', castorFilename, ':', p.stdout.read()
+    except Exception, e:
+      print '*** failed to get nameserver metadata:', e
+      if verbose:
+        import traceback
+        traceback.print_exc()
+    
 try:
     if dryrun:
       print 'DRY RUN option enabled, no modification will actually take place!'
-    nsstats = {}
-    counter = 0
     # connect to stager and prepare statement
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
     rescur = stconn.cursor()
     rescur.arraysize = 10000
-    diskPool = stcur.var(cx_Oracle.STRING)
-    if len(dcIds) > 0:
-        stcur.callproc('deleteDiskCopies', [dcIds, fileIds, force, dryrun, rescur, diskPool])
-    else:
-        stcur.callproc('deleteDiskCopiesInFSs', [diskServers, mountPoints, force, dryrun, rescur, diskPool])
+    stcur.callproc('deleteDiskCopies', [args, force, dryrun, rescur])
     # fetch results and display
-    for (dcId, fileId, rc) in rescur.fetchall():
+    counter = 0
+    for (dcId, fileId, msg, rc) in rescur.fetchall():
       counter += 1
-      if rc == rcs.ENOENT:
-        print dcId, 'not found in stager, skipping'
-
-      elif rc == rcs.RECALL or rc == rcs.REPLICATION:
-        if noRestage:
-          print dcId, 'dropped from disk pool and no restage will take place'
-        else:
-          try:
-            print dcId, 'dropped from disk pool, restaging'
-            castorFilename = subprocess.Popen(['nsgetpath', str(fileId)], stdout=subprocess.PIPE).stdout.read().rstrip()
-            # issue the restaging command: we deliberately use diskPool as the service class name
-            if not dryrun:
-              p = subprocess.Popen(['stager_get', '-M', castorFilename, '-S', diskPool.getvalue()],
-                                   stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-              p.wait()
-              if p.returncode:
-                print 'Error restaging file', castorFilename, ':', p.stdout.read()
-          except Exception, e:
-            print '*** failed to trigger restaging:', e
-            if verbose:
-              import traceback
-              traceback.print_exc()
-
-      elif rc == rcs.LOST:
-        print dcId, 'dropped LAST COPY from stager, file is LOST'
-        try:
-          castorFilename = subprocess.Popen(['nsgetpath', str(fileId)], stdout=subprocess.PIPE).stdout.read().rstrip()
-          # get metadata and drop from namespace. It is assumed the user has full rights to do so
-          nsstat = subprocess.Popen(['nsls', '-li', '--class', '--checksum', castorFilename],
-                                    stdout=subprocess.PIPE, stderr=subprocess.STDOUT).stdout.read()
-          u = nsstat.split()[4]  # collect outputs per user
-          try:
-            nsstats[u].write(nsstat)
-          except KeyError:
-            nsstats[u] = StringIO()
-            nsstats[u].write(nsstat)
-          if not dryrun:
-            p = subprocess.Popen(['nsrm', '-r', castorFilename], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-            p.wait()
-            if p.returncode:
-              print 'Error removing file', castorFilename, ':', p.stdout.read()
-        except Exception, e:
-          print '*** failed to get nameserver metadata:', e
-          if verbose:
-            import traceback
-            traceback.print_exc()
-
-      elif rc == rcs.GC:
-        print dcId, 'garbage collected from stager'
-
-      elif rc == rcs.NOOP:
-        print dcId, 'NOT garbage collected from stager'
-
-      else:
-        print 'Unknown return code', rc, 'for diskcopy', dcId
-
+      print dcId, msg
+      if rc == 4: # LOST file
+        dealWithLostFile(fileId)
     # close and print statistics
     castor_tools.disconnectDB(stconn)
     if nsstats:
@@ -182,6 +118,16 @@ try:
       print 'Removal of %d disk copies completed, no file got lost' % counter
 
 except Exception, e:
+    # detect special error raised by the code
+    if isinstance(e, cx_Oracle.Error):
+        error, = e.args
+        if isinstance(error, cx_Oracle._Error):
+            errorcode = error.code
+            if (errorcode == 20100):
+                # print only useful part of message
+                print error.message.split('\n')[0].replace('ORA-20100: ','')
+                sys.exit(-1)
+    # internal error
     print e
     if verbose:
         import traceback
