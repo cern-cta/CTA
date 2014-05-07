@@ -235,7 +235,7 @@ END;
 /
 
 /* PL/SQL method implementing putEnded.
- * If inoutErrorMsg is not NULL, the write operation is failed and inFileSize, inNewTimeStamp,
+ * If inoutErrorCode is > 0, the write operation is failed and inFileSize, inNewTimeStamp,
  * inCksumType and inCksumValue are ignored.
  */
 CREATE OR REPLACE PROCEDURE putEnded (srId IN INTEGER,
@@ -296,7 +296,7 @@ BEGIN
       DELETE FROM DiskCopy WHERE id = dcId;
       deleteCastorFile(cfId);
     END IF;
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.STAGER_PUTENDED, varFileId, varNsHost, 'stagerd',
+    logToDLF(NULL, dlf.LVL_NOTICE, dlf.STAGER_PUTENDED, varFileId, varNsHost, 'stagerd',
       'SUBREQID='|| varSrUuid ||' errorMessage="'|| inoutErrorMsg ||'" errorCode='|| inoutErrorCode);
     RETURN;
   END IF;
@@ -875,6 +875,8 @@ PROCEDURE transferFailedSafe(subReqIds IN castor."strList",
   dcId  NUMBER;
   cfId  NUMBER;
   rType NUMBER;
+  errNo INTEGER;
+  errMsg VARCHAR2(2048);
 BEGIN
   -- give up if nothing to be done
   IF subReqIds.COUNT = 0 THEN RETURN; END IF;
@@ -895,10 +897,12 @@ BEGIN
        WHERE id = srId AND status = dconst.SUBREQUEST_READY;
       -- Call the relevant cleanup procedure for the transfer, procedures that
       -- would have been called if the transfer failed on the remote execution host.
+      errNo := errnos(i);
+      errMsg := errmsgs(i);
       IF rType = 40 THEN      -- StagePutRequest
-       putEnded(srId, 0, 0, '', '', errnos(i), errmsgs(i));
+       putEnded(srId, 0, 0, '', '', errNo, errMsg);
       ELSE                    -- StageGetRequest
-       getEnded(srId, errnos(i), errmsgs(i));
+       getEnded(srId, errNo, errMsg);
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       BEGIN
@@ -926,6 +930,8 @@ AS
   srId  NUMBER;
   dcId  NUMBER;
   rType NUMBER;
+  errNo INTEGER;
+  errMsg VARCHAR2(2048);
 BEGIN
   FOR i IN subReqId.FIRST .. subReqId.LAST LOOP
     BEGIN
@@ -937,10 +943,12 @@ BEGIN
          AND status = dconst.SUBREQUEST_READY;
       -- Call the relevant cleanup procedure for the transfer, procedures that
       -- would have been called if the transfer failed on the remote execution host.
+      errNo := errnos(i);
+      errMsg := errmsgs(i);
       IF rType = 40 THEN      -- StagePutRequest
-        putEnded(srId, 0, 0, '', '', errnos(i), errmsgs(i));
+        putEnded(srId, 0, 0, '', '', errNo, errMsg);
       ELSE                    -- StageGetRequest
-        getEnded(srId, errnos(i), errmsgs(i));
+        getEnded(srId, errNo, errMsg);
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       BEGIN
