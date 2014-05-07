@@ -1,5 +1,5 @@
 #
-#                      castor/tape/CMakeLists.txt
+#         castor/tape/label/CMakeLists.txt
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -22,11 +22,12 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-add_subdirectory (gatewayprotocol)
-add_subdirectory (label)
-add_subdirectory (rmc)
-add_subdirectory (tapebridge)
-add_subdirectory (tapegateway)
-add_subdirectory (tapeserver)
-add_subdirectory (tpcp)
-add_subdirectory (utils)
+################################################################################
+# Rules to build and install castor-tape-label
+################################################################################
+set (LABEL_SRC_FILES
+  LabelCmd.cpp)
+add_executable (castor-tape-label ${LABEL_SRC_FILES})
+target_link_libraries (castor-tape-label castorclient)
+#install (TARGETS castor-tape-label DESTINATION ${CASTOR_DEST_BIN_DIR})
+#CastorInstallExeManPage (castor-tape-label)
