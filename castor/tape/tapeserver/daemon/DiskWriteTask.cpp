@@ -23,119 +23,103 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
+#include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
 
-namespace {
-  //todo : merge it with one of TapeWriteTask and put is somewhere 
-     unsigned long initAdler32Checksum() {
-     return  adler32(0L,Z_NULL,0);
-   }
-     
-  /*Use RAII to make sure the memory block is released  
-   *(ie pushed back to the memory manager) in any case (exception or not)
-   */
-  class AutoReleaseBlock{
-    castor::tape::tapeserver::daemon::MemBlock *block;
-    castor::tape::tapeserver::daemon::RecallMemoryManager& memManager;
-  public:
-    AutoReleaseBlock(castor::tape::tapeserver::daemon::MemBlock* mb, 
-            castor::tape::tapeserver::daemon::RecallMemoryManager& mm):
-    block(mb),memManager(mm){}
-    
-    ~AutoReleaseBlock(){
-      memManager.releaseBlock(block);
-    }
-  };
-}
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-  /**
-   * Constructor
-   * @param file: All we need to know about the file we  are recalling
-   * @param mm: memory manager of the session
-   */
-  DiskWriteTask::DiskWriteTask(tape::tapegateway::FileToRecallStruct* file,RecallMemoryManager& mm): 
-  m_recallingFile(file),m_memManager(mm){
- 
-  }
-  /**
-   * Main routine: takes each memory block in the fifo and writes it to disk
-   * @return true if the file has been successfully written false otherwise.
-   */
-   bool DiskWriteTask::execute(ReportPackerInterface<detail::Recall>& reporter,log::LogContext& lc) {
-    using log::LogContext;
-    using log::Param;
-    try{
-      tape::diskFile::WriteFile ourFile(m_recallingFile->path());
-      int blockId  = 0;
-      unsigned long checksum = initAdler32Checksum();
-      while(1) {
-        if(MemBlock* const mb = m_fifo.pop()) {
-          AutoReleaseBlock releaser(mb,m_memManager);
-          
-          if(m_recallingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
-                  || blockId != mb->m_fileBlock  || mb->m_failed ){
-            LogContext::ScopedParam sp[]={
-              LogContext::ScopedParam(lc, Param("expected_NSFILEID",m_recallingFile->fileid())),
-              LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
-              LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
-              LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
-              LogContext::ScopedParam(lc, Param("failed_Status", mb->m_failed))
-            };
-            tape::utils::suppresUnusedVariable(sp);
-            lc.log(LOG_ERR,"received a bad block for writing");
-            throw castor::tape::Exception("received a bad block for writing");
-          }
-          mb->m_payload.write(ourFile);
-          checksum = mb->m_payload.adler32(checksum);
-          blockId++;
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+DiskWriteTask::DiskWriteTask(tape::tapegateway::FileToRecallStruct* file,RecallMemoryManager& mm): 
+m_recallingFile(file),m_memManager(mm){
+
+}
+
+//------------------------------------------------------------------------------
+// DiskWriteTask::execute
+//------------------------------------------------------------------------------
+bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
+  using log::LogContext;
+  using log::Param;
+  try{
+    tape::diskFile::WriteFile ourFile(m_recallingFile->path());
+    int blockId  = 0;
+    unsigned long checksum = Payload::zeroAdler32();
+    while(1) {
+      if(MemBlock* const mb = m_fifo.pop()) {
+        AutoReleaseBlock<RecallMemoryManager> releaser(mb,m_memManager);
+        
+        if(m_recallingFile->fileid() != static_cast<unsigned int>(mb->m_fileid)
+                || blockId != mb->m_fileBlock  || mb->m_failed ){
+          LogContext::ScopedParam sp[]={
+            LogContext::ScopedParam(lc, Param("expected_NSFILEID",m_recallingFile->fileid())),
+            LogContext::ScopedParam(lc, Param("received_NSFILEID", mb->m_fileid)),
+            LogContext::ScopedParam(lc, Param("expected_NSFBLOCKId", blockId)),
+            LogContext::ScopedParam(lc, Param("received_NSFBLOCKId", mb->m_fileBlock)),
+            LogContext::ScopedParam(lc, Param("failed_Status", mb->m_failed))
+          };
+          tape::utils::suppresUnusedVariable(sp);
+          lc.log(LOG_ERR,"received a bad block for writing");
+          throw castor::tape::Exception("received a bad block for writing");
         }
-        else 
-          break;
-      } //end of while(1)
-      reporter.reportCompletedJob(*m_recallingFile,checksum);
-      return true;
-    } //end of try
-    catch(const castor::exception::Exception& e){
-      /*
-       *We might end up there with some blocks into m_fifo
-       * We need to empty it
-       */
-      releaseAllBlock();
-      
-      reporter.reportFailedJob(*m_recallingFile,e.getMessageValue(),e.code());
-      return false;
-    }
-  }
-  
-  /**
-   * Allows client code to return a reusable memory block. Should not been called
-   * @return the pointer to the memory block that can be reused
-   */
-   MemBlock *DiskWriteTask::getFreeBlock() { 
-    throw castor::tape::Exception("DiskWriteTask::getFreeBlock should mot be called");
-  }
-  
-   void DiskWriteTask::pushDataBlock(MemBlock *mb) {
-    castor::tape::threading::MutexLocker ml(&m_producerProtection);
-    m_fifo.push(mb);
-  }
-
-   DiskWriteTask::~DiskWriteTask() { 
-    volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); 
-  }
-
-  void DiskWriteTask::releaseAllBlock(){
-    while(1){
-      MemBlock* mb=m_fifo.pop();
-      if(mb)
-        AutoReleaseBlock release(mb,m_memManager);
+        mb->m_payload.write(ourFile);
+        checksum = mb->m_payload.adler32(checksum);
+        blockId++;
+      }
       else 
         break;
-    }
+    } //end of while(1)
+    reporter.reportCompletedJob(*m_recallingFile,checksum);
+    return true;
+  } //end of try
+  catch(const castor::exception::Exception& e){
+    /*
+     *We might end up there with some blocks into m_fifo
+     * We need to empty it
+     */
+    releaseAllBlock();
+    
+    reporter.reportFailedJob(*m_recallingFile,e.getMessageValue(),e.code());
+    return false;
   }
+}
+
+//------------------------------------------------------------------------------
+// DiskWriteTask::getFreeBlock
+//------------------------------------------------------------------------------
+MemBlock *DiskWriteTask::getFreeBlock() { 
+  throw castor::tape::Exception("DiskWriteTask::getFreeBlock should mot be called");
+}
+
+//------------------------------------------------------------------------------
+// DiskWriteTask::pushDataBlock
+//------------------------------------------------------------------------------
+void DiskWriteTask::pushDataBlock(MemBlock *mb) {
+  castor::tape::threading::MutexLocker ml(&m_producerProtection);
+  m_fifo.push(mb);
+}
+
+//------------------------------------------------------------------------------
+// DiskWriteTask::~DiskWriteTask
+//------------------------------------------------------------------------------
+DiskWriteTask::~DiskWriteTask() { 
+  volatile castor::tape::threading::MutexLocker ml(&m_producerProtection); 
+}
+
+//------------------------------------------------------------------------------
+// DiskWriteTask::releaseAllBlock
+//------------------------------------------------------------------------------
+void DiskWriteTask::releaseAllBlock(){
+  while(1){
+    if(MemBlock* mb=m_fifo.pop())
+      AutoReleaseBlock<RecallMemoryManager> release(mb,m_memManager);
+    else 
+      break;
+  }
+}
 
 }}}}
 

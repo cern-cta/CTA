@@ -41,13 +41,19 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-  
+    
 namespace detail{
+  //nameholder
   struct Recall{};
   struct Migration{};
-  
+  /**
+   * template class without definition == forward declaration
+   * that way if we try to use it with another type than the ones
+   * it is specialised, you get an compile timne error 
+   */
   template <class> struct HelperTrait;
   
+  //full template specialisation
  template <> struct HelperTrait<Migration>{
     typedef tapegateway::FileMigrationReportList FileReportList;
     typedef tapegateway::FileToMigrateStruct FileStruct;
@@ -62,49 +68,24 @@ namespace detail{
     typedef tapegateway::FileErrorReportStruct FileErrorStruct;
   };
 }
-  
+ 
+/**
+ * Utility class that should be inherited privately/protectedly 
+ * the type PlaceHolder is either detail::Recall or detail::Migration
+ */
 template <class PlaceHolder> class ReportPackerInterface{
-public:
+  protected :
+    //some inner typedef to have shorter (and unified) types inside the class
   typedef typename detail::HelperTrait<PlaceHolder>::FileReportList FileReportList;
   typedef typename detail::HelperTrait<PlaceHolder>::FileStruct FileStruct;
   typedef typename detail::HelperTrait<PlaceHolder>::FileSuccessStruct FileSuccessStruct;
   typedef typename detail::HelperTrait<PlaceHolder>::FileErrorStruct FileErrorStruct;
-  
 
-  ReportPackerInterface(client::ClientInterface & tg,log::LogContext lc):
+
+    ReportPackerInterface(client::ClientInterface & tg,log::LogContext lc):
   m_client(tg),m_lc(lc),m_listReports(new FileReportList)
   {}
   
-  virtual ~ReportPackerInterface(){}
-  
-  /**
-   * Create into the MigrationReportPacker a report for the successful migration
-   * of migratedFile
-   * @param migratedFile the file successfully migrated
-   */
-  virtual void reportCompletedJob(const FileStruct&,unsigned long checksum) =0;
-  
-  /**
-   * Create into the MigrationReportPacker a report for the failled migration
-   * of migratedFile
-   * @param migratedFile the file which failled 
-   */
-  virtual void reportFailedJob(const FileStruct& ,const std::string&,int)=0;
-       
-  /**
-   * Create into the MigrationReportPacker a report for the nominal end of session
-   */
-  virtual void reportEndOfSession() =0;
-  
-  /**
-   * Create into the MigrationReportPacker a report for an erroneous end of session
-   * @param msg The error message 
-   * @param error_code The error code given by the drive
-   */
-  virtual void reportEndOfSessionWithErrors(const std::string,int) =0;
-  
-  
-  protected:
   /**
    * Log a set of files independently of the success/failure 
    * @param c The set of files to log
@@ -126,6 +107,12 @@ public:
       }
   }  
   
+  /**
+   * Utility function used to log  a ClientInterface::RequestReport 
+   * @param chono the time report to log 
+   * @param msg the message we want to have in the log 
+   * @param level the log level wanted
+   */
   void logRequestReport(const client::ClientInterface::RequestReport& chono,const std::string& msg,int level=LOG_INFO){
     using castor::log::LogContext;
     using castor::log::Param;
@@ -139,7 +126,14 @@ public:
         m_lc.log(level,msg);
         
   } 
+  /**
+   * The client of the session to who; we will report
+   */
   client::ClientInterface & m_client;
+  
+  /**
+   * The  log context, copied du to threads
+   */
   castor::log::LogContext m_lc;
   
   /** 

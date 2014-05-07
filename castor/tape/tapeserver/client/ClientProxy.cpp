@@ -222,13 +222,13 @@ uint64_t files, uint64_t bytes, RequestReport& report)
   report.transactionId = ++m_transactionId;
   ftmReq.setMountTransactionId(m_request.volReqId);
   ftmReq.setAggregatorTransactionId(report.transactionId);
-  ftmReq.setMaxBytes(files);
+  ftmReq.setMaxFiles(files);
   ftmReq.setMaxBytes(bytes);
   // 2) Exchange messages with the server
   std::auto_ptr<tapegateway::GatewayMessage> resp(
       requestResponseSession(ftmReq, report));
-  // 3) We expect either a NoMoreFiles response or FilesToRecallList
-  // 3a) Handle the FilesToRecallListl
+  // 3) We expect either a NoMoreFiles response or FilesToMigrateList
+  // 3a) Handle the FilesToMigrateList
   try {
     tapegateway::FilesToMigrateList & ftm  =
         dynamic_cast <tapegateway::FilesToMigrateList &>(*resp);

@@ -46,8 +46,33 @@ namespace tape {
     };
     
     class InvalidArgument: public Exception {
-    public: InvalidArgument(std::string what = ""): Exception(what) {};
+    public: InvalidArgument(const std::string& what = ""): Exception(what) {};
     };
+    
+    class EndOfFile: public castor::exception::Exception {
+    public:
+      EndOfFile(const std::string & w): castor::exception::Exception(w) {}
+      virtual ~EndOfFile() throw() {}
+    };
+    
+    /**
+     * Used to signal an error has happened during the migration process 
+     */
+    class ErrorFlag : public castor::exception::Exception {
+    public:
+      ErrorFlag(): castor::exception::Exception("Internal exception, should not be seen") {}
+      virtual ~ErrorFlag() throw() {}
+    };
+    
+    /**
+     * A generic exception thrown when there is something wrong with the memory
+     */
+    class MemException: public castor::tape::Exception {
+    public:
+      MemException(const std::string & what): Exception(what) {}
+      virtual ~MemException() throw() {}
+    };
+
   }
 } //namespace tape
 } //namespace castor

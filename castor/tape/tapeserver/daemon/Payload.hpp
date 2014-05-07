@@ -30,7 +30,6 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-  
 /**
  * Class managing a fixed size payload buffer. Some member functions also
  * allow read
@@ -38,11 +37,13 @@ namespace daemon {
  */
 class Payload
 {
+  Payload(const Payload&);
+  Payload& operator=(const Payload&);
 public:
   Payload(size_t capacity):
   m_payload(new (std::nothrow) unsigned char[capacity]),m_totalCapacity(capacity),m_size(0) {
     if(NULL == m_payload) {
-      throw MemException("Failed to allocate memory for a new MemBlock!");
+      throw castor::tape::exceptions::MemException("Failed to allocate memory for a new MemBlock!");
     }
   }
   ~Payload(){
@@ -82,12 +83,7 @@ public:
     m_size = from.read(m_payload,m_totalCapacity);
     return m_size;
   }
-  class EndOfFile: public castor::exception::Exception {
-  public:
-    EndOfFile(const std::string & w): castor::exception::Exception(w) {}
-    virtual ~EndOfFile() throw() {}
-  };
-  
+
   /**
    * Reads one block from a tapeFile::readFile
    * @throws castor::tape::daemon::Payload::EOF
@@ -100,13 +96,13 @@ public:
       err << "Trying to read a tape file block with too little space left: BlockSize="
        << from.getBlockSize() << " remainingFreeSpace=" << remainingFreeSpace()
               << " (totalSize=" << m_totalCapacity << ")"; 
-      throw MemException(err.str());
+      throw castor::tape::exceptions::MemException(err.str());
     }
     size_t readSize;
     try {
       readSize = from.read(m_payload + m_size, from.getBlockSize());
     } catch (castor::tape::tapeFile::EndOfFile) {
-      throw EndOfFile("In castor::tape::tapeserver::daemon::Payload::append: reached end of file");
+      throw castor::tape::exceptions::EndOfFile("In castor::tape::tapeserver::daemon::Payload::append: reached end of file");
     }
     m_size += readSize;
     return  from.getBlockSize() <= remainingFreeSpace();
@@ -146,6 +142,9 @@ public:
   unsigned long  adler32(unsigned long previous){
     return ::adler32(previous,m_payload,m_size);
   }
+  static unsigned long zeroAdler32() {
+     return  ::adler32(0L,Z_NULL,0);
+   }
 private:
   unsigned char* m_payload;
   size_t m_totalCapacity;

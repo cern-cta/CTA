@@ -41,42 +41,60 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-  
+//------------------------------------------------------------------------------
+//Constructor
+//------------------------------------------------------------------------------
 MigrationReportPacker::MigrationReportPacker(client::ClientInterface & tg,castor::log::LogContext lc):
 ReportPackerInterface<detail::Migration>(tg,lc),
 m_workerThread(*this),m_errorHappened(false),m_continue(true) {
 }
-
+//------------------------------------------------------------------------------
+//Destructore
+//------------------------------------------------------------------------------
 MigrationReportPacker::~MigrationReportPacker(){
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
 }
- 
+//------------------------------------------------------------------------------
+//reportCompletedJob
+//------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportCompletedJob(
 const tapegateway::FileToMigrateStruct& migratedFile,unsigned long checksum) {
   std::auto_ptr<Report> rep(new ReportSuccessful(migratedFile,checksum));
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
-
+//------------------------------------------------------------------------------
+//reportFailedJob
+//------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportFailedJob(const tapegateway::FileToMigrateStruct& migratedFile,
         const std::string& msg,int error_code){
   std::auto_ptr<Report> rep(new ReportError(migratedFile,msg,error_code));
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
   m_fifo.push(rep.release());
 }
+//------------------------------------------------------------------------------
+//reportFlush
+//------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportFlush() {
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportFlush());
 }
-
+//------------------------------------------------------------------------------
+//reportEndOfSession
+//------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportEndOfSession() {
     castor::tape::threading::MutexLocker ml(&m_producterProtection);
     m_fifo.push(new ReportEndofSession());
 }
+//------------------------------------------------------------------------------
+//reportEndOfSessionWithErrors
+//------------------------------------------------------------------------------ 
 void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int error_code){
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportEndofSessionWithErrors(msg,error_code));
 }
+//------------------------------------------------------------------------------
+//ReportSuccessful::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& _this){
   std::auto_ptr<tapegateway::FileMigratedNotificationStruct> successMigration(new tapegateway::FileMigratedNotificationStruct);
@@ -93,6 +111,9 @@ void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& _th
   
   _this.m_listReports->addSuccessfulMigrations(successMigration.release());
 }
+//------------------------------------------------------------------------------
+//ReportFlush::execute
+//------------------------------------------------------------------------------
 void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& _this){
   if(!_this.m_errorHappened){
     _this.logReport(_this.m_listReports->successfulMigrations(),"A file was successfully written on the tape"); 
@@ -122,6 +143,10 @@ void MigrationReportPacker::ReportFlush::execute(MigrationReportPacker& _this){
   //Thus all current reports are deleted otherwise they would have been sent again at the next flush
   _this.m_listReports.reset(new tapegateway::FileMigrationReportList);
 }
+
+//------------------------------------------------------------------------------
+//ReportEndofSession::execute
+//------------------------------------------------------------------------------
 void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& _this){
   client::ClientInterface::RequestReport chrono;
   if(!_this.m_errorHappened){
@@ -135,7 +160,9 @@ void MigrationReportPacker::ReportEndofSession::execute(MigrationReportPacker& _
   }
   _this.m_continue=false;
 }
-
+//------------------------------------------------------------------------------
+//ReportEndofSessionWithErrors::execute
+//------------------------------------------------------------------------------
 void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationReportPacker& _this){
   client::ClientInterface::RequestReport chrono;
   
@@ -151,7 +178,9 @@ void MigrationReportPacker::ReportEndofSessionWithErrors::execute(MigrationRepor
   }
   _this.m_continue=false;
 }
-
+//------------------------------------------------------------------------------
+//ReportError::execute
+//------------------------------------------------------------------------------
 void MigrationReportPacker::ReportError::execute(MigrationReportPacker& _this){
    
   std::auto_ptr<tapegateway::FileErrorReportStruct> failedMigration(new tapegateway::FileErrorReportStruct);
@@ -166,13 +195,18 @@ void MigrationReportPacker::ReportError::execute(MigrationReportPacker& _this){
   _this.m_listReports->addFailedMigrations(failedMigration.release());
   _this.m_errorHappened=true;
 }
-//------------------------------------------------------------------------------
 
+//------------------------------------------------------------------------------
+//WorkerThread::WorkerThread
+//------------------------------------------------------------------------------
 MigrationReportPacker::WorkerThread::WorkerThread(MigrationReportPacker& parent):
 m_parent(parent) {
 }
-
+//------------------------------------------------------------------------------
+//WorkerThread::run
+//------------------------------------------------------------------------------
 void MigrationReportPacker::WorkerThread::run(){
+  m_parent.m_lc.pushOrReplace(log::Param("thread", "ReportPacker"));
   client::ClientInterface::RequestReport chrono;
   
   try{

@@ -32,21 +32,49 @@
 #include "castor/tape/tapeserver/file/File.hpp"
 #include <iostream>
 #include <stdio.h>
+#include <memory>
 
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
+  
+  /**
+   * This class will execute the different tape read tasks.
+   * 
+   */
 class TapeReadSingleThread : public TapeSingleThreadInterface<TapeReadTask>{
 public:
+  /**
+   * Constructor 
+   * @param drive The drive which holds all we need in order to read later data from it
+   * @param vid Volume ID (tape number)
+   * @param maxFilesRequest : the maximul number of file the task injector may 
+   * ask to the client in a single requiest, this is used for the feedback loop
+   * @param lc : log context, for logging purpose
+   */
   TapeReadSingleThread(castor::tape::drives::DriveInterface & drive,
           const std::string vid, uint64_t maxFilesRequest,
           castor::log::LogContext & lc): 
    TapeSingleThreadInterface<TapeReadTask>(drive, vid, lc),
-   m_maxFilesRequest(maxFilesRequest) {}
-   void setTaskInjector(TaskInjector * ti) { m_taskInjector = ti; }
+   m_maxFilesRequest(maxFilesRequest),m_filesProcessed(0) {}
+   
+   /**
+    * Set the task injector. Has to be done that way (and not in the constructor)
+    *  because there is a dependency 
+    * @param ti the task injector 
+    */
+   void setTaskInjector(TaskInjector * ti) { 
+     m_taskInjector = ti; 
+   }
 
 private:
+  
+  /**
+   * Pop a task from its tasks and if there is not enough tasks left, it will 
+   * ask the task injector for more 
+   * @return m_tasks.pop();
+   */
   TapeReadTask * popAndRequestMoreJobs() {
     castor::tape::threading::BlockingQueue<TapeReadTask *>::valueRemainingPair 
       vrp = m_tasks.popGetSize();
@@ -54,17 +82,19 @@ private:
     // (the remaining value is after pop)
     if(vrp.remaining + 1 == m_maxFilesRequest/2) {
       // This is not a last call
-      m_taskInjector->requestInjection(m_maxFilesRequest, 1000, false);
+      m_taskInjector->requestInjection(false);
     } else if (0 == vrp.remaining) {
       // This is a last call: if the task injector comes up empty on this
       // one, he'll call it the end.
-      m_taskInjector->requestInjection(m_maxFilesRequest, 1000, true);
+      m_taskInjector->requestInjection(true);
     }
     return vrp.value;
   }
   
   
-  
+  /**
+   * This function is from Thread, it is the function that will do all the job
+   */
   virtual void run() {
     // First we have to initialise the tape read session
     m_logContext.pushOrReplace(log::Param("thread", "tapeRead"));
@@ -97,7 +127,17 @@ private:
     m_logContext.log(LOG_DEBUG, "Finishing Tape Read Thread. Just signalled task injector of the end");
   }
   
-  uint64_t m_maxFilesRequest;
+  /**
+   * Number of files a single request to the client might give us.
+   * Used in the loop-back function to ask the task injector to request more job
+   */
+  const uint64_t m_maxFilesRequest;
+  
+  ///a pointer to task injector, thus we can ask him for more tasks
+  castor::tape::tapeserver::daemon::TaskInjector * m_taskInjector;
+  
+  ///how many files have we already processed(for loopback purpose)
+  size_t m_filesProcessed;
 };
 }
 }

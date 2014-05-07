@@ -40,6 +40,15 @@
 #include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
 #include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
+#include "castor/tape/tapegateway/RetryPolicyElement.hpp"
+#include "smc_struct.h"
+#include <sys/mman.h>
+#include <zlib.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 
 using namespace castor::tape::tapeserver;
 using namespace castor::tape::tapeserver::daemon;
@@ -56,7 +65,7 @@ private:
 };
 
   
-TEST(tapeServer, MountSessionGoodday) {
+TEST(tapeServer, MountSessionGooddayRecall) {
   // TpcpClients only supports 32 bits session number
   // This number has to be less than 2^31 as in addition there is a mix
   // of signed and unsigned numbers
@@ -68,7 +77,8 @@ TEST(tapeServer, MountSessionGoodday) {
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
   std::string density = "8000GC";
-  client::ClientSimulator sim(volReq, vid, density);
+  client::ClientSimulator sim(volReq, vid, density, tapegateway::READ_TP,
+    tapegateway::READ);
   client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
@@ -88,7 +98,12 @@ TEST(tapeServer, MountSessionGoodday) {
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
+
+  //delete is unnecessary
+  //pointer with ownership will be passed to the application,
+  //which will do the delete 
   mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::drives::FakeDrive;
+  
   // We can prepare files for reading on the drive
   {
     // Label the tape
@@ -154,7 +169,8 @@ TEST(tapeServer, MountSessionNoSuchDrive) {
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
   std::string density = "8000GC";
-  client::ClientSimulator sim(volReq, vid, density);
+  client::ClientSimulator sim(volReq, vid, density, tapegateway::READ_TP,
+    tapegateway::READ);
   client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
@@ -192,4 +208,142 @@ TEST(tapeServer, MountSessionNoSuchDrive) {
   ASSERT_NE(std::string::npos, logger.getLog().find("Drive not found on this path"));
 }
 
+class tempFile {
+public:
+  tempFile(size_t size): m_size(size) {
+    // Create a temporary file
+    int randomFd = open("/dev/urandom", 0);
+    castor::exception::Errnum::throwOnMinusOne(randomFd, "Error opening /dev/urandom");
+    char path[100];
+    strncpy(path, "/tmp/castorUnitTestMigrationSourceXXXXXX", 100);
+    int tmpFileFd = mkstemp(path);
+    castor::exception::Errnum::throwOnMinusOne(tmpFileFd, "Error creating a temporary file");
+    m_path = path;
+    char * buff = NULL;
+    try {
+      buff = new char[size];
+      if(!buff) { throw castor::exception::Exception("Failed to allocate memory to read /dev/urandom"); }
+      castor::exception::Errnum::throwOnMinusOne(read(randomFd, buff, size));
+      castor::exception::Errnum::throwOnMinusOne(write(tmpFileFd, buff, size));
+      m_checksum = adler32(0L, Z_NULL, 0);
+      m_checksum = adler32(m_checksum, (const Bytef *)buff, size);
+      close(randomFd);
+      close(tmpFileFd);
+      delete[] buff;
+    } catch (...) {
+      delete[] buff;
+      unlink(m_path.c_str());
+      throw;
+    }
+  }
+  
+  ~tempFile() {
+    unlink(m_path.c_str());
+  }
+  const size_t m_size;
+  const std::string path() const { return m_path; }
+  uint32_t checksum() const { return m_checksum; }
+private:
+  std::string m_path;
+  uint32_t m_checksum;
+};
+
+class tempFileVector: public std::vector<tempFile *> {
+public:
+  ~tempFileVector() {
+    while(size()) {
+      delete back();
+      pop_back();
+    }
+  }
+};
+
+struct expectedResult {
+  expectedResult(int fs, uint32_t cs): fSeq(fs), checksum(cs) {}
+  int fSeq;
+  uint32_t checksum;
+};
+
+TEST(tapeServer, MountSessionGooddayMigration) {
+  // TpcpClients only supports 32 bits session number
+  // This number has to be less than 2^31 as in addition there is a mix
+  // of signed and unsigned numbers
+  // As the current ids in prod are ~30M, we are far from overflow (Feb 2013)
+  // 0) Prepare the logger for everyone
+  castor::log::StringLogger logger("tapeServerUnitTest");
+  
+  // 1) prepare the client and run it in another thread
+  uint32_t volReq = 0xBEEF;
+  std::string vid = "V12345";
+  std::string density = "8000GC";
+  client::ClientSimulator sim(volReq, vid, density, tapegateway::WRITE_TP,
+    tapegateway::WRITE);
+  client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
+  clientRunner simRun(sim);
+  simRun.start();
+  
+  // 2) Prepare the VDQM request
+  castor::legacymsg::RtcpJobRqstMsgBody VDQMjob;
+  snprintf(VDQMjob.clientHost, CA_MAXHOSTNAMELEN+1, "%d.%d.%d.%d",
+    clientAddr.a, clientAddr.b, clientAddr.c, clientAddr.d);
+  snprintf(VDQMjob.driveUnit, CA_MAXUNMLEN+1, "T10D6116");
+  snprintf(VDQMjob.dgn, CA_MAXDGNLEN+1, "LIBXX");
+  VDQMjob.clientPort = clientAddr.port;
+  VDQMjob.volReqId = volReq;
+  
+  // 3) Prepare the necessary environment (logger, plus system wrapper), 
+  // construct and run the session.
+  castor::tape::System::mockWrapper mockSys;
+  mockSys.delegateToFake();
+  mockSys.disableGMockCallsCounting();
+  mockSys.fake.setupForVirtualDriveSLC6();
+
+  //delete is unnecessary
+  //pointer with ownership will be passed to the application,
+  //which will do the delete 
+  mockSys.fake.m_pathToDrive["/dev/nst0"] = new castor::tape::drives::FakeDrive;
+  
+  // Just label the tape
+  castor::tape::tapeFile::LabelSession ls(*mockSys.fake.m_pathToDrive["/dev/nst0"], 
+      "V12345", true);
+  mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
+  
+  tempFileVector tempFiles;
+  std::vector<expectedResult> expected;
+  // Prepare the files (in real filesystem as they will be opened by the rfio client)
+  for (int fseq=1; fseq<=10; fseq++) {
+    // Create the file from which we will recall
+    std::auto_ptr<tempFile> tf(new tempFile(1000));
+    // Prepare the migrationRequest
+    castor::tape::tapegateway::FileToMigrateStruct ftm;
+    ftm.setFileSize(tf->m_size);
+    ftm.setFileid(1000 + fseq);
+    ftm.setFseq(fseq);
+    ftm.setPath(tf->path());
+    sim.addFileToMigrate(ftm);
+    expected.push_back(expectedResult(fseq, tf->checksum()));
+    tempFiles.push_back(tf.release());
+  }
+  utils::TpconfigLines tpConfig;
+  // Actual TPCONFIG lifted from prod
+  tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
+  "/dev/tape_T10D6116", "8000GC", "down", "acs0,1,1,6", "T10000"));
+  tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
+  "/dev/tape_T10D6116", "5000GC", "down", "acs0,1,1,6", "T10000"));
+  MountSession::CastorConf castorConf;
+  castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
+  castorConf.rtcopydNbBufs = 10;
+  castorConf.tapebridgeBulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
+  castorConf.tapebridgeBulkRequestMigrationMaxFiles = 1000;
+  castorConf.tapeserverdDiskThreads = 1;
+  MountSession sess(VDQMjob, logger, mockSys, tpConfig, castorConf);
+  sess.execute();
+  simRun.wait();
+  for (std::vector<struct expectedResult>::iterator i = expected.begin();
+      i != expected.end(); i++) {
+    ASSERT_EQ(i->checksum, sim.m_receivedChecksums[i->fSeq]);
+  }
 }
+
+}
+

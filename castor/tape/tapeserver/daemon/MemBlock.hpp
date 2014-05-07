@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/Exception.hpp"
+#include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include <memory>
 #include "castor/tape/tapeserver/daemon/Payload.hpp"
@@ -39,20 +39,35 @@ namespace daemon {
  */
 class MemBlock {
 public:
-  static const int uninitialised_value = -1;
+  /**
+   * COnstrucor 
+   * @param id the block ID for its whole life
+   * @param capacity the capacity (in byte) of the embed payload 
+   */
   MemBlock(const int id, const size_t capacity) : 
   m_memoryBlockId(id),m_payload(capacity){
     reset();
   }
   
   /**
-   * Reset the values of all the 
+   * Mark this block as failed ie 
+   * m_failed is true, m_fileBlock and m_tapeFileBlock are set at -1
+   * Other members do not change
+   */
+  void markAsFailed(){
+    m_failed = true;
+    m_fileBlock = -1;
+    m_tapeFileBlock = -1;
+  }
+  /**
+   * Reset all the members.
+   * Numerical ones are set at -1.and m_failed to false.
    */
   void reset() throw() {
-    m_fileid = uninitialised_value;
-    m_fileBlock = uninitialised_value;
-    m_fSeq = uninitialised_value;
-    m_tapeFileBlock = uninitialised_value;
+    m_fileid = -1;
+    m_fileBlock = -1;
+    m_fSeq = -1;
+    m_tapeFileBlock = -1;
     m_failed=false;
   }
   /** Unique memory block id */

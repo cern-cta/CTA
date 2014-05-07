@@ -27,25 +27,6 @@ CastorInstallLogrotate (castor-tapeserver-server)
 CastorInstallSysconfigExample (tapeserverd)
 CastorInstallInitScript (tapeserverd)
 
-add_executable(tapeserver-mm 
-  tapeserver-mm.cpp 
-  RecallTaskInjector.cpp
-  ../client/ClientProxy.cpp
-  MigrationReportPacker.cpp
-  DiskWriteThreadPool.cpp
-  DiskReadThreadPool.cpp
-  TapeWriteTask.cpp
-  DiskReadTask.cpp
-  DiskWriteTask.cpp
-  MigrationTaskInjector.cpp)
-
-find_package( ZLIB REQUIRED )
-
-target_link_libraries(tapeserver-mm 
-TapeDrive Exception SCSI System Utils File 
-castorcommon castorclient castorTapeServerThreading castortapeutils 
-castortapegatewayprotocol tapeserver ${ZLIB_LIBRARIES} )
-
 add_library(tapeserver 
   ../client/ClientProxy.cpp 
   MountSession.cpp
@@ -58,7 +39,9 @@ add_library(tapeserver
   TapeWriteTask.cpp
   DiskReadTask.cpp
   DiskWriteTask.cpp
-  MigrationTaskInjector.cpp) 
+  MigrationTaskInjector.cpp
+  MigrationMemoryManager.cpp
+  RecallMemoryManager.cpp) 
 
 
 add_library(tapeserverdTest 

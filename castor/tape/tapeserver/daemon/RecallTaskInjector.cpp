@@ -4,6 +4,10 @@
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
+#include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
+#include "castor/tape/tapeserver/daemon/TapeReadTask.hpp"
+#include "castor/tape/tapeserver/client/ClientProxy.hpp"
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "log.h"
 #include <stdint.h>
 
@@ -11,6 +15,14 @@ using castor::log::LogContext;
 using castor::log::Param;
 
 namespace{
+  /**
+   *  function to set a NULL the owning FilesToMigrateList  of a FileToMigrateStruct
+   *   Indeed, a clone of a structure will only do a shallow copy (sic).
+   *   Otherwise at the second destruction the object will try to remove itself 
+   *   from the owning list and then boom !
+   * @param ptr a pointer to an object to change
+   * @return the parameter ptr 
+   */
   castor::tape::tapegateway::FileToRecallStruct* removeOwningList(castor::tape::tapegateway::FileToRecallStruct* ptr){
     ptr->setFilesToRecallList(NULL);
     return ptr;
@@ -24,32 +36,44 @@ namespace daemon {
   
 RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
-        DiskThreadPoolInterface<DiskWriteTaskInterface> & diskWriter,
-        client::ClientInterface& client,castor::log::LogContext lc) : 
+        DiskWriteThreadPool & diskWriter,
+        client::ClientInterface& client,
+        uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc) : 
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
-        m_client(client),m_lc(lc)
+        m_client(client),m_lc(lc),m_maxFiles(maxFiles),m_byteSizeThreshold(byteSizeThreshold)
 {}
+//------------------------------------------------------------------------------
+//finish
+//------------------------------------------------------------------------------
 
 void RecallTaskInjector::finish(){
   castor::tape::threading::MutexLocker ml(&m_producerProtection);
   m_queue.push(Request());
 }
-
-void RecallTaskInjector::requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall) {
+//------------------------------------------------------------------------------
+//requestInjection
+//------------------------------------------------------------------------------
+void RecallTaskInjector::requestInjection(bool lastCall) {
   //@TODO where shall we  acquire the lock ? There of just before the push ?
   castor::tape::threading::MutexLocker ml(&m_producerProtection);
-  m_queue.push(Request(maxFiles, byteSizeThreshold, lastCall));
+  m_queue.push(Request(m_maxFiles, m_byteSizeThreshold, lastCall));
 }
-
+//------------------------------------------------------------------------------
+//waitThreads
+//------------------------------------------------------------------------------
 void RecallTaskInjector::waitThreads() {
   m_thread.wait();
 }
-
+//------------------------------------------------------------------------------
+//startThreads
+//------------------------------------------------------------------------------
 void RecallTaskInjector::startThreads() {
   m_thread.start();
 }
-
+//------------------------------------------------------------------------------
+//injectBulkRecalls
+//------------------------------------------------------------------------------
 void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapegateway::FileToRecallStruct*>& jobs) {
   for (std::vector<tapegateway::FileToRecallStruct*>::const_iterator it = jobs.begin(); it != jobs.end(); ++it) {
 
@@ -68,8 +92,8 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
       new DiskWriteTask(
         removeOwningList(dynamic_cast<tape::tapegateway::FileToRecallStruct*>((*it)->clone())), 
         m_memManager);
-    TapeReadFileTask * trt = 
-      new TapeReadFileTask(
+    TapeReadTask * trt = 
+      new TapeReadTask(
         removeOwningList(
           dynamic_cast<tape::tapegateway::FileToRecallStruct*>((*it)->clone())), 
           *dwt,
@@ -81,15 +105,18 @@ void RecallTaskInjector::injectBulkRecalls(const std::vector<castor::tape::tapeg
   LogContext::ScopedParam sp03(m_lc, Param("nbFile", jobs.size()));
   m_lc.log(LOG_INFO, "Tasks for recalling injected");
 }
-
-bool RecallTaskInjector::synchronousInjection(uint64_t maxFiles, uint64_t byteSizeThreshold)
+//------------------------------------------------------------------------------
+//synchronousInjection
+//------------------------------------------------------------------------------
+bool RecallTaskInjector::synchronousInjection()
 {
   client::ClientProxy::RequestReport reqReport;  
 
-  std::auto_ptr<castor::tape::tapegateway::FilesToRecallList> filesToRecallList(m_client.getFilesToRecall(maxFiles,byteSizeThreshold,reqReport));
+  std::auto_ptr<castor::tape::tapegateway::FilesToRecallList> 
+    filesToRecallList(m_client.getFilesToRecall(m_maxFiles,m_byteSizeThreshold,reqReport));
   LogContext::ScopedParam sp[]={
-    LogContext::ScopedParam(m_lc, Param("maxFiles", maxFiles)),
-    LogContext::ScopedParam(m_lc, Param("byteSizeThreshold",byteSizeThreshold)),
+    LogContext::ScopedParam(m_lc, Param("maxFiles", m_maxFiles)),
+    LogContext::ScopedParam(m_lc, Param("byteSizeThreshold",m_byteSizeThreshold)),
     LogContext::ScopedParam(m_lc, Param("transactionId", reqReport.transactionId)),
     LogContext::ScopedParam(m_lc, Param("connectDuration", reqReport.connectDuration)),
     LogContext::ScopedParam(m_lc, Param("sendRecvDuration", reqReport.sendRecvDuration))
@@ -97,7 +124,7 @@ bool RecallTaskInjector::synchronousInjection(uint64_t maxFiles, uint64_t byteSi
   tape::utils::suppresUnusedVariable(sp);
   
   if(NULL==filesToRecallList.get()) { 
-    m_lc.log(LOG_ERR, "Get called but no files to retrieve");
+    m_lc.log(LOG_ERR, "No files to recall: empty mount");
     return false;
   }
   else {
@@ -106,8 +133,9 @@ bool RecallTaskInjector::synchronousInjection(uint64_t maxFiles, uint64_t byteSi
     return true;
   }
 }
-
-//--------------------------------------
+//------------------------------------------------------------------------------
+//WorkerThread::run
+//------------------------------------------------------------------------------
 void RecallTaskInjector::WorkerThread::run()
 {
   using castor::log::LogContext;

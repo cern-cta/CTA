@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      MemManagerClient.hpp
+ *                      Payload.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,27 +22,49 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#pragma once
-
+#pragma once 
+#include <memory>
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/tape/tapeserver/daemon/Exception.hpp"
-#include "castor/exception/Exception.hpp"
 
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-class MemoryManagerClient {
-public:
-  virtual bool endOfWork() throw() = 0;
-  virtual bool provideBlock(MemBlock */*mb*/) throw(MemException) { 
-    throw MemException(std::string("Tring to provide a memory block to the wrong client")); 
+/*
+ * Use RAII to make sure the memory block is released  
+ *(ie pushed back to the memory manager) in any case (exception or not)
+ * Example of use 
+ * {
+ *   MemBlock* block = getItFromSomewhere()
+ *   {Recall/Migration}MemoryManager mm;
+ *   AutoReleaseBlock releaser(block,mm);
+ * }
+ */
+ template <class MemManagerT> class AutoReleaseBlock {
+   /**
+    * The block to release
+    */
+   MemBlock* const m_block;
+   
+   /**
+    * To whom it should be given back
+    */
+   MemManagerT& memManager;
+  public:
+    /**
+     * 
+     * @param mb he block to release
+     * @param mm To whom it should be given back
+     */
+    AutoReleaseBlock(MemBlock* const mb,MemManagerT& mm):
+    m_block(mb),memManager(mm){}
+        
+    //let the magic begin 
+    ~AutoReleaseBlock(){
+      memManager.releaseBlock(m_block);
+    } 
   };
-  virtual ~MemoryManagerClient() throw() {}
-};
+  
+}}}}
 
-}
-}
-}
-}

@@ -24,25 +24,27 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/TapeWriteTaskInterface.hpp"
+
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
-#include "castor/tape/tapeserver/daemon/MemManager.hpp"
+#include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/log/LogContext.hpp"
-
+#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
 
+  class MigrationReportPacker;
+  
 /**
  * The TapeWriteFileTask is responsible to write a single file onto tape as part of a migration
  * session. Being a consumer of memory blocks, it inherits from the DataConsumer class. It also
  * inherits several methods from the TapeWriteTask (TODO: do we really need this base class?).
  */
 
-class TapeWriteTask: public TapeWriteTaskInterface, public DataConsumer {
+class TapeWriteTask : public DataConsumer {
 public:
   /**
    * Constructor
@@ -50,13 +52,14 @@ public:
    * @param blockCount: number of memory blocks (TODO:?)
    * @param mm: reference to the memory manager in use
    */
-  TapeWriteTask(int blockCount, tape::tapegateway::FileToMigrateStruct* file,MemoryManager& mm);
+  TapeWriteTask(int blockCount, tape::tapegateway::FileToMigrateStruct* file,
+          MigrationMemoryManager& mm,castor::tape::threading::AtomicFlag& errorFlag);
   
   
   /**
-   * @return the number of memory blocks to be used
+   * @return the size of the file in byte
    */
-  virtual int blocks();
+  virtual int fileSize();
     
   /**
    * Main execution routine
@@ -83,6 +86,14 @@ public:
   virtual ~TapeWriteTask();
   
 private:
+    void hasAnotherTaskTailed() const {
+    //if a task has signaled an error, we stop our job
+    if(m_errorFlag){
+      throw  castor::tape::exceptions::ErrorFlag();
+    }
+  }
+    
+  void circulateMemBlocks();
   /**
    * Function in charge of opening the WriteFile for m_fileToMigrate
    * Throw an exception it it fails
@@ -101,7 +112,7 @@ private:
   /**
    * reference to the memory manager in use   
    */
-  MemoryManager & m_memManager;
+  MigrationMemoryManager & m_memManager;
   
   /**
    * The fifo containing the memory blocks holding data to be written to tape
@@ -117,6 +128,12 @@ private:
    * The number of memory blocks to be used
    */
   int m_blockCount;
+  
+  /**
+   * A shared flag among the the tasks and the task injector, set as true as soon
+   * as task failed to do its job 
+   */
+  castor::tape::threading::AtomicFlag& m_errorFlag;
 };
 
 }}}}

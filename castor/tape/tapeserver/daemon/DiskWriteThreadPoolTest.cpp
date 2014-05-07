@@ -8,19 +8,20 @@
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/log/StringLogger.hpp"
-#include "castor/tape/tapeserver/daemon/MemManager.hpp"
+#include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
+#include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include <gtest/gtest.h>
 
 namespace unitTests{
   using namespace castor::tape::tapeserver::daemon;
   using namespace castor::tape::tapeserver::client;
-  struct MockRecallReportPacker : public ReportPackerInterface<detail::Recall>{
+  struct MockRecallReportPacker : public RecallReportPacker {
     MOCK_METHOD2(reportCompletedJob,void(const FileStruct&,unsigned long));
     MOCK_METHOD3(reportFailedJob, void(const FileStruct& ,const std::string&,int));
     MOCK_METHOD0(reportEndOfSession, void());
     MOCK_METHOD2(reportEndOfSessionWithErrors, void(const std::string,int));
     MockRecallReportPacker(ClientInterface& client,castor::log::LogContext lc):
-      ReportPackerInterface<detail::Recall>(client,lc){}
+    RecallReportPacker(client,1,lc){}
   };
   
   struct MockTaskInjector : public TaskInjector{
@@ -38,9 +39,9 @@ namespace unitTests{
     //EXPECT_CALL(tskInjectorl,requestInjection(_,_,_)).Times(2);
     EXPECT_CALL(report,reportEndOfSession()).Times(1);     
     
-    RecallMemoryManager mm(10,100);
+    RecallMemoryManager mm(10,100,lc);
     
-    DiskWriteThreadPool dwtp(2,5,500,report,lc);
+    DiskWriteThreadPool dwtp(2,report,lc);
     dwtp.startThreads();
     
     castor::tape::tapegateway::FileToRecallStruct file;

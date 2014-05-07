@@ -24,23 +24,36 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/DiskReadTaskInterface.hpp"
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
-
+#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
+#include "castor/log/LogContext.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-class DiskReadTask :public DiskReadTaskInterface {
+class DiskReadTask {
 public:
+  /**
+   * @param destination The task that will consume data block we fill up
+   * @param file the file we are migrating. We acquire the ownership of the pointer
+   * @param numberOfBlock number of memory block we need read the whole file
+   */
   DiskReadTask(DataConsumer & destination, 
-          tape::tapegateway::FileToMigrateStruct* file,size_t numberOfBlock);
+          tape::tapegateway::FileToMigrateStruct* file,size_t numberOfBlock,
+          castor::tape::threading::AtomicFlag& errorFlag);
   
-  virtual void execute(log::LogContext& lc);
+  void execute(log::LogContext& lc);
 private:
+  void hasAnotherTaskTailed() const {
+    //if a task has signaled an error, we stop our job
+    if(m_errorFlag){
+      throw  castor::tape::exceptions::ErrorFlag();
+    }
+  }
+  void circulateAllBlocks(size_t fromBlockId);
   /**
    * The task (a TapeWriteTask) that will handle the read blocks
    */
@@ -55,6 +68,8 @@ private:
    * The number of memory block we will need to read the whole file
    */
   size_t m_numberOfBlock;
+  
+  castor::tape::threading::AtomicFlag& m_errorFlag;
 };
 
 }}}}

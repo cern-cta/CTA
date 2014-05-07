@@ -24,13 +24,12 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/DiskWriteTaskInterface.hpp"
 #include "castor/tape/tapeserver/daemon/DataFifo.hpp"
 #include "castor/tape/tapeserver/daemon/RecallMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
-#include "castor/tape/tapeserver/daemon/ReportPackerInterface.hpp"
+#include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
 
 #include <memory>
 namespace {
@@ -52,7 +51,7 @@ namespace daemon {
  * session. Being a consumer of memory blocks, it inherits from the DataConsumer class. It also
  * inherits several methods from the DiskWriteTask (TODO: do we really need this base class?).
  */
-class DiskWriteTask: public DiskWriteTaskInterface, public DataConsumer {
+class DiskWriteTask: public DataConsumer {
 public:
   /**
    * Constructor
@@ -64,7 +63,7 @@ public:
    * Main routine: takes each memory block in the fifo and writes it to disk
    * @return true if the file has been successfully written false otherwise.
    */
-  virtual bool execute(ReportPackerInterface<detail::Recall>& reporter,log::LogContext& lc) ;
+  virtual bool execute(RecallReportPacker& reporter,log::LogContext& lc) ;
   
   /**
    * Allows client code to return a reusable memory block. Should not been called

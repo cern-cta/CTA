@@ -24,48 +24,65 @@
 
 #pragma once
 
-#include <list>
 #include <stdint.h>
-
-#include "castor/tape/tapeserver/daemon/MemManager.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
-#include "castor/tape/tapeserver/daemon/TapeReadFileTask.hpp"
-#include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
-#include "castor/tape/tapeserver/daemon/DiskWriteTask.hpp"
-#include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
-#include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
-#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
 namespace castor{
 namespace tape{
+  //forward declarations
+  namespace tapegateway {
+    class FileToRecallStruct;
+  }
 namespace tapeserver{
+  namespace client {
+    class ClientInterface;
+  }
 namespace daemon {
-
+  
+  class RecallMemoryManager;
+  class DiskWriteThreadPool;
+  class TapeReadTask;
 /**
  * This classis responsible for creating the tasks in case of a recall job
  */
 class RecallTaskInjector: public TaskInjector {  
 public:
-
+ /**
+  * Constructor
+  * @param mm the memory manager from whom the TRT will be pulling blocks
+  * @param tapeReader the one object that will hold the thread which will be executing 
+  * tape-reading tasks
+  * @param diskWriter the one object that will hold all the threads which will be executing 
+  * disk-writing tasks
+  * @param client The one that will give us files to recall 
+  * @param maxFiles maximal number of files we may request to the client at once 
+  * @param byteSizeThreshold maximal number of cumulated byte 
+  * we may request to the client. at once
+  * @param lc  copied because of the threading mechanism 
+  */
   RecallTaskInjector(RecallMemoryManager & mm, 
         TapeSingleThreadInterface<TapeReadTask> & tapeReader,
-        DiskThreadPoolInterface<DiskWriteTaskInterface> & diskWriter,client::ClientInterface& client,
-        castor::log::LogContext lc);
+        DiskWriteThreadPool & diskWriter,client::ClientInterface& client,
+        uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc);
 
   
   /**
    * Function for a feed-back loop purpose between RecallTaskInjector and 
-   * DiskWriteThreadPool. When DiskWriteThreadPool::popAndRequestMoreJobs detects 
+   * TapeReadSingleThread. When TapeReadSingleThread::popAndRequestMoreJobs detects 
    * it has not enough jobs to do to, it is class to push a request 
    * in order to (try) fill up the queue. 
-   * @param maxFiles  files count requested.
-   * @param maxBlocks total bytes count at least requested
+
    * @param lastCall true if we want the new request to be a last call. 
    * See Request::lastCall 
    */
-  virtual void requestInjection(int maxFiles, int byteSizeThreshold, bool lastCall);
+  virtual void requestInjection(bool lastCall);
 
+  /**
+   * Send an end token in the request queue. There should be no subsequent
+   * calls to requestInjection.
+   */
+  void finish();
+  
     /**
      * Contact the client to make sure there are really something to do
      * Something = recall at most  maxFiles or at least maxBytes
@@ -74,7 +91,7 @@ public:
      * @param byteSizeThreshold total bytes count  at least requested
      * @return true if there are jobs to be done, false otherwise 
      */
-  bool synchronousInjection(uint64_t maxFiles, uint64_t byteSizeThreshold);
+  bool synchronousInjection();
 
   /**
    * Wait for the inner thread to finish
@@ -85,8 +102,6 @@ public:
    * Start the inner thread 
    */
   void startThreads();
-  
-  void finish();
 private:
   
   /**
@@ -104,14 +119,13 @@ private:
    */
   class Request {
   public:
-    Request(int mf, int mb, bool lc):
+    Request(uint64_t mf, uint64_t mb, bool lc):
     nbMaxFiles(mf), byteSizeThreshold(mb), lastCall(lc),end(false) {}
     
     Request():
-    nbMaxFiles(-1), byteSizeThreshold(-1), lastCall(true),end(true) {}
-        
-    const int nbMaxFiles;
-    const int byteSizeThreshold;
+    nbMaxFiles(0), byteSizeThreshold(0), lastCall(true),end(true) {}
+    const uint64_t nbMaxFiles;
+    const uint64_t byteSizeThreshold;
     
     /** 
      * True if it is the last call for the set of requests :it means
@@ -120,6 +134,9 @@ private:
      */
     const bool lastCall;
     
+    /**
+     * Set as true if the loop back process notified to us the end 
+     */
     const bool end;
   };
   
@@ -130,12 +147,18 @@ private:
   private:
     RecallTaskInjector & _this;
   } m_thread;
-
+  ///The memory manager for accessing memory blocks. 
   RecallMemoryManager & m_memManager;
   
-
+  ///the one object that will hold the thread which will be executing 
+  ///tape-reading tasks
   TapeSingleThreadInterface<TapeReadTask> & m_tapeReader;
-  DiskThreadPoolInterface<DiskWriteTaskInterface> & m_diskWriter;
+  
+  ///the one object that will hold all the threads which will be executing 
+  ///disk-writing tasks
+  DiskWriteThreadPool & m_diskWriter;
+  
+  /// the client who is sending us jobs
   client::ClientInterface& m_client;
   
   /**
@@ -145,6 +168,13 @@ private:
   
   castor::tape::threading::Mutex m_producerProtection;
   castor::tape::threading::BlockingQueue<Request> m_queue;
+  
+
+  //maximal number of files requested. at once
+  const uint64_t m_maxFiles;
+  
+  //maximal number of cumulated byte requested. at once
+  const uint64_t m_byteSizeThreshold;
 };
 
 } //end namespace daemon

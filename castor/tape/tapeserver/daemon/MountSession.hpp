@@ -57,6 +57,8 @@ namespace daemon {
         tapebridgeBulkRequestMigrationMaxFiles(0),
         tapebridgeBulkRequestRecallMaxBytes(0),
         tapebridgeBulkRequestRecallMaxFiles(0),
+        tapebridgeMaxBytesBeforeFlush(0),
+        tapebridgeMaxFilesBeforeFlush(0),
         tapeserverdDiskThreads(0) {}
       uint32_t rfioConnRetry;
       uint32_t rfioConnRetryInt;
@@ -70,6 +72,8 @@ namespace daemon {
       uint64_t tapebridgeBulkRequestMigrationMaxFiles;
       uint64_t tapebridgeBulkRequestRecallMaxBytes;
       uint64_t tapebridgeBulkRequestRecallMaxFiles;
+      uint64_t tapebridgeMaxBytesBeforeFlush;
+      uint64_t tapebridgeMaxFilesBeforeFlush;
 // Other values found on production tape servers
 //      TAPE CRASHED_RLS_HANDLING RETRY
 //      TAPE CRASHED_RLS_HANDLING_RETRIES 3
@@ -107,6 +111,10 @@ namespace daemon {
     System::virtualWrapper & m_sysWrapper;
     const utils::TpconfigLines & m_tpConfig;
     const CastorConf & m_castorConf;
+    /** utility to find the drive on the system. This function logs 
+     * all errors and hence does not throw exceptions. It returns NULL
+     * in case of failure. */
+    castor::tape::drives::DriveInterface * findDrive(LogContext & lc);
     /** sub-part of execute for the read sessions */
     void executeRead(LogContext & lc);
     /** sub-part of execute for a write session */

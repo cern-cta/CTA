@@ -24,18 +24,20 @@
 
 #pragma once
 
-
-#include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/tape/tapeserver/daemon/MemManagerClient.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
-#include "castor/exception/Exception.hpp"
-#include <iostream>
+#include "castor/log/LogContext.hpp"
 
 namespace castor {
+namespace exception {
+// Forward declaration  
+class Exception;    
+}
 namespace tape {
 namespace tapeserver {
 namespace daemon {
+// Forward declaration  
+class MemBlock;
 /**
  * The memory manager is responsible for allocating memory blocks and distributing
  * the free ones around to any class in need.
@@ -48,56 +50,33 @@ public:
    * @param numberOfBlocks: number of blocks to allocate
    * @param blockSize: size of each block
    */
-  RecallMemoryManager(const size_t numberOfBlocks, const size_t blockSize) 
-  : m_totalNumberOfBlocks(numberOfBlocks) {
-    for (size_t i = 0; i < numberOfBlocks; i++) {
-      m_freeBlocks.push(new MemBlock(i, blockSize));
-    }
-  }
+  RecallMemoryManager(const size_t numberOfBlocks, const size_t blockSize,
+          castor::log::LogContext& lc);
   
   /**
    * Are all sheep back to the farm?
    * @return 
    */
-  bool areBlocksAllBack() throw() {
-    return m_totalNumberOfBlocks==m_freeBlocks.size();
-  }
+  bool areBlocksAllBack() throw();
   
   /**
    * Takes back a block which has been released by one of the clients
    * @param mb: the pointer to the block
    */
-  void releaseBlock(MemBlock *mb)  {
-    mb->reset();
-    m_freeBlocks.push(mb);
-  }
+  void releaseBlock(MemBlock *mb);
   
-  MemBlock* getFreeBlock(){
-    return m_freeBlocks.pop();
-  }
+  /**
+   * Pop a free block from the free block queue of the memory manager
+   * @return pointer to a free block
+   */
+  MemBlock* getFreeBlock();
   
   /**
    * Destructor
    */
-  ~RecallMemoryManager() {
-    // Make sure the thread is finished: this should be done by the caller,
-    // who should have called waitThreads.
-    // castor::tape::threading::Thread::wait();
-    // we expect to be called after all users are finished. Just "free"
-    // the memory blocks we still have.
-    try {
-      while(true) {
-        delete m_freeBlocks.tryPop();
-      }
-    }
-    catch (castor::tape::threading::noMore) {
-      //done
-    } 
-  }
+  ~RecallMemoryManager();
   
 private:
-  
-  
   /**
    * Total number of allocated memory blocks
    */
@@ -107,6 +86,11 @@ private:
    * Container for the free blocks
    */
   castor::tape::threading::BlockingQueue<MemBlock*> m_freeBlocks;
+  
+  /**
+   * Logging. The class is not threaded, so it can be shared with its parent
+   */
+  castor::log::LogContext& m_lc;
 };
 
 }}}}
