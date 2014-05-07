@@ -3657,15 +3657,9 @@ BEGIN
       varDcList VARCHAR2(2048);
     BEGIN
       -- List available diskcopies for job scheduling
-<<<<<<< HEAD
       -- in case of datapools, we take a maximum of 3 random diskservers
       SELECT LISTAGG(dsName || ':' || fsMountPoint, '|')
              WITHIN GROUP (ORDER BY DBMS_Random.value)
-=======
-      SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) INDEX(Subrequest PK_Subrequest_Id)*/ 
-             LISTAGG(DiskServer.name || ':' || FileSystem.mountPoint, '|')
-             WITHIN GROUP (ORDER BY FileSystem.nbReadStreams + FileSystem.nbWriteStreams)
->>>>>>> origin/v2_1_14Version
         INTO varDcList
         FROM (SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) INDEX(Subrequest PK_Subrequest_Id)*/
                      DiskServer.name AS dsname, FileSystem.mountPoint AS fsMountPoint
