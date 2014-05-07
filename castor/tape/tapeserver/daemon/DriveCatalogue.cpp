@@ -47,6 +47,19 @@ const char *castor::tape::tapeserver::daemon::DriveCatalogue::drvState2Str(
 }
 
 //-----------------------------------------------------------------------------
+// mountSessionType2Str
+//-----------------------------------------------------------------------------
+const char *castor::tape::tapeserver::daemon::DriveCatalogue::sessionType2Str(
+  const SessionType sessionType) throw() {
+  switch(sessionType) {
+  case SESSION_TYPE_NONE        : return "NONE";
+  case SESSION_TYPE_DATATRANSFER: return "DATATRANSFER";
+  case SESSION_TYPE_LABEL       : return "LABEL";
+  default                       : return "UNKNOWN";
+  }
+}
+
+//-----------------------------------------------------------------------------
 // populateCatalogue
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::populateCatalogue(
@@ -228,8 +241,10 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::
 //-----------------------------------------------------------------------------
 // getUnitName
 //-----------------------------------------------------------------------------
-std::string castor::tape::tapeserver::daemon::DriveCatalogue::getUnitName(const pid_t sessionPid) throw(castor::exception::Exception) {
-  for(DriveMap::iterator i = m_drives.begin(); i!=m_drives.end(); i++) {
+std::string castor::tape::tapeserver::daemon::DriveCatalogue::getUnitName(
+  const pid_t sessionPid) const throw(castor::exception::Exception) {
+
+  for(DriveMap::const_iterator i = m_drives.begin(); i!=m_drives.end(); i++) {
     if(sessionPid == i->second.sessionPid) return i->first;
   }
   castor::exception::Internal ex;
@@ -351,6 +366,35 @@ const std::list<std::string>
 }
 
 //-----------------------------------------------------------------------------
+// getSessionType
+//-----------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::DriveCatalogue::SessionType
+  castor::tape::tapeserver::daemon::DriveCatalogue::getSessionType(
+  const pid_t sessionPid) const throw(castor::exception::Exception) {
+  std::ostringstream task;
+  task << "get the type of the session with pid " << sessionPid;
+
+  std::string unitName;
+  try {
+    unitName = getUnitName(sessionPid);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to " << task.str() << ": " << ne.getMessage();
+    throw ex;
+  }
+
+  DriveMap::const_iterator itor = m_drives.find(unitName);
+  if(m_drives.end() == itor) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to " << task.str() << ": unit name " <<
+      unitName << " is not known";
+    throw ex;
+  }
+
+  return itor->second.sessionType;
+}
+
+//-----------------------------------------------------------------------------
 // getState
 //-----------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogue::DriveState
@@ -404,7 +448,9 @@ const std::string &
 //-----------------------------------------------------------------------------
 // updateVidAssignment
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::updateVidAssignment(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DriveCatalogue::updateVidAssignment(
+  const std::string &vid, const std::string &unitName)
+  throw(castor::exception::Exception) {
   std::ostringstream task;
   task << "update the VID of tape drive " << unitName;
 
@@ -417,6 +463,49 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::updateVidAssignment(const
   
   itor->second.vid = vid;
   itor->second.assignment_time = time(0); // set to "now"
+}
+
+//-----------------------------------------------------------------------------
+// getLabelCmdConnection
+//-----------------------------------------------------------------------------
+int castor::tape::tapeserver::daemon::DriveCatalogue::getLabelCmdConnection(
+  const pid_t sessionPid) throw(castor::exception::Exception) {
+  std::ostringstream task;
+  task << "get the file-descriptor of the connection with the label command"
+    " associated with the session with pid " << sessionPid;
+
+  std::string unitName;
+  try {
+    unitName = getUnitName(sessionPid);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to " << task.str() << ": " << ne.getMessage();
+    throw ex;
+  }
+
+  DriveMap::const_iterator itor = m_drives.find(unitName);
+  if(m_drives.end() == itor) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to " << task.str() << ": unit name " <<
+      unitName << " is not known";
+    throw ex;
+  }
+
+  const DriveState driveState = itor->second.state;
+  const SessionType sessionType = itor->second.sessionType;
+  if(DRIVE_STATE_WAITLABEL != driveState &&
+    DRIVE_STATE_RUNNING != driveState &&
+    DRIVE_STATE_WAITDOWN != driveState &&
+    SESSION_TYPE_LABEL != sessionType) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to " << task.str() <<
+      ": Invalid drive state and session type: driveState=" <<
+      drvState2Str(driveState) << " sessionType=" <<
+      sessionType2Str(sessionType);
+    throw ex;
+  }
+
+  return itor->second.labelCmdConnection;
 }
 
 //-----------------------------------------------------------------------------
@@ -528,7 +617,9 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedVdqmJob(const leg
 //-----------------------------------------------------------------------------
 // receivedLabelJob
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::receivedLabelJob(const legacymsg::TapeLabelRqstMsgBody &job) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DriveCatalogue::receivedLabelJob(
+  const legacymsg::TapeLabelRqstMsgBody &job, const int labelCmdConnection)
+  throw(castor::exception::Exception) {
   const std::string unitName(job.drive);
 
   std::ostringstream task;
@@ -550,6 +641,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedLabelJob(const le
       throw ex;
     }
     itor->second.labelJob = job;
+    itor->second.labelCmdConnection = labelCmdConnection;
     itor->second.state = DRIVE_STATE_WAITLABEL;
     break;
   default:
@@ -637,6 +729,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::forkedMountSession(const 
   switch(itor->second.state) {
   case DRIVE_STATE_WAITFORK:
     itor->second.sessionPid = sessionPid;
+    itor->second.sessionType = SESSION_TYPE_DATATRANSFER;
     itor->second.state = DRIVE_STATE_RUNNING;
     break;
   default:
@@ -652,7 +745,9 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::forkedMountSession(const 
 //-----------------------------------------------------------------------------
 // forkedLabelSession
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::forkedLabelSession(const std::string &unitName, const pid_t sessionPid) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DriveCatalogue::forkedLabelSession(
+  const std::string &unitName, const pid_t sessionPid)
+  throw(castor::exception::Exception) {
   std::ostringstream task;
   task << "handle fork of label session for tape drive " << unitName;
 
@@ -666,6 +761,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::forkedLabelSession(const 
   switch(itor->second.state) {
   case DRIVE_STATE_WAITLABEL:
     itor->second.sessionPid = sessionPid;
+    itor->second.sessionType = SESSION_TYPE_LABEL;
     itor->second.state = DRIVE_STATE_RUNNING;
     break;
   default:
@@ -681,7 +777,8 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::forkedLabelSession(const 
 //-----------------------------------------------------------------------------
 // getSessionPid
 //-----------------------------------------------------------------------------
-pid_t castor::tape::tapeserver::daemon::DriveCatalogue::getSessionPid(const std::string &unitName) const throw(castor::exception::Exception) {
+pid_t castor::tape::tapeserver::daemon::DriveCatalogue::getSessionPid(
+  const std::string &unitName) const throw(castor::exception::Exception) {
   std::ostringstream task;
   task << "get process ID of mount session for tape drive " << unitName;
 
@@ -697,13 +794,12 @@ pid_t castor::tape::tapeserver::daemon::DriveCatalogue::getSessionPid(const std:
   case DRIVE_STATE_WAITDOWN:
     return itor->second.sessionPid;
   default:
-    return 0;
-//    {
-//      castor::exception::Internal ex;
-//      ex.getMessage() << "Failed to " << task.str() <<
-//        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
-//      throw ex;
-//    }
+    {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Failed to " << task.str() <<
+        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+      throw ex;
+    }
   }
 }
 
@@ -711,7 +807,18 @@ pid_t castor::tape::tapeserver::daemon::DriveCatalogue::getSessionPid(const std:
 // mountSessionSucceeded
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::mountSessionSucceeded(const pid_t sessionPid) throw(castor::exception::Exception) {
-  mountSessionSucceeded(getUnitName(sessionPid));  
+  std::string unitName;
+  try {
+    unitName = getUnitName(sessionPid);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() <<
+      "Failed to record tape session succeeded for session with pid " <<
+      sessionPid << ": " << ne.getMessage();
+    throw ex;
+  }
+
+  mountSessionSucceeded(unitName);  
 }
 
 //-----------------------------------------------------------------------------

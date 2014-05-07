@@ -231,6 +231,22 @@ protected:
   void logMountSessionProcessTerminated(const pid_t sessionPid, const int waitpidStat) throw();
 
   /**
+   * Does the required post processing for the specified reaped session.
+   *
+   * @param sessionPid The process ID of the session child-process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void postProcessReapedDataTransferSession(const pid_t sessionPid, const int waitpidStat) throw();
+
+  /**
+   * Does the required post processing for the specified reaped session.
+   *
+   * @param sessionPid The process ID of the session child-process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void postProcessReapedLabelSession(const pid_t sessionPid, const int waitpidStat) throw();
+
+  /**
    * Sets the state of the tape drive asscoiated with the specified
    * mount-session process to down within the vdqmd daemon.
    *

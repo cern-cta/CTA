@@ -199,8 +199,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
   else if(TPLABEL == header.reqType) {
     const legacymsg::TapeLabelRqstMsgBody body = readLabelRqstMsgBody(connection, header.lenOrStatus-sizeof(header));
     logLabelJobReception(body);
-    m_driveCatalogue.receivedLabelJob(body);
-    // TODO reply only when done.
+    m_driveCatalogue.receivedLabelJob(body, connection);
   }
   else {
     castor::exception::Internal ex;

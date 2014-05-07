@@ -467,15 +467,28 @@ void castor::tape::tapeserver::daemon::TapeDaemon::reapZombies() throw() {
 void castor::tape::tapeserver::daemon::TapeDaemon::reapZombie(const pid_t sessionPid, const int waitpidStat) throw() {
   logMountSessionProcessTerminated(sessionPid, waitpidStat);
 
-  log::Param params[] = {log::Param("sessionPid", sessionPid)};
+  std::list<log::Param> params;
+  params.push_back(log::Param("sessionPid", sessionPid));
 
-  if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
-    m_driveCatalogue.mountSessionSucceeded(sessionPid);
-    m_log(LOG_INFO, "Mount session succeeded", params);
-  } else {
-    m_driveCatalogue.mountSessionFailed(sessionPid);
-    setDriveDownInVdqm(sessionPid);
-    m_log(LOG_INFO, "Mount session failed", params);
+  DriveCatalogue::SessionType sessionType;
+  try {
+    sessionType = m_driveCatalogue.getSessionType(sessionPid);
+    params.push_back(log::Param("sessionType", DriveCatalogue::sessionType2Str(sessionType)));
+  } catch(castor::exception::Exception &ex) {
+    params.push_back(log::Param("message", ex.getMessage().str()));
+    m_log(LOG_ERR, "Failed to get the type of the reaped session", params);
+    return;
+  }
+
+  switch(sessionType) {
+  case DriveCatalogue::SESSION_TYPE_DATATRANSFER:
+    return postProcessReapedDataTransferSession(sessionPid, waitpidStat);
+  case DriveCatalogue::SESSION_TYPE_LABEL:
+    return postProcessReapedLabelSession(sessionPid, waitpidStat);
+  default:
+    m_log(LOG_ERR, "Failed to perform post processing of reaped process"
+      ": Unexpected session type", params);
+    return;
   }
 }
 
@@ -511,6 +524,40 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logMountSessionProcessTermina
   }
 
   m_log(LOG_INFO, "Mount-session child-process terminated", params);
+}
+
+//------------------------------------------------------------------------------
+// postProcessReapedDataTransferSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedDataTransferSession(
+  const pid_t sessionPid, const int waitpidStat) throw() {
+  log::Param params[] = {log::Param("sessionPid", sessionPid)};
+
+  if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
+    m_driveCatalogue.mountSessionSucceeded(sessionPid);
+    m_log(LOG_INFO, "Mount session succeeded", params);
+  } else {
+    m_driveCatalogue.mountSessionFailed(sessionPid);
+    setDriveDownInVdqm(sessionPid);
+    m_log(LOG_INFO, "Mount session failed", params);
+  }
+}
+
+//------------------------------------------------------------------------------
+// postProcessReapedLabelSession 
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession(
+  const pid_t sessionPid, const int waitpidStat) throw() {
+  log::Param params[] = {log::Param("sessionPid", sessionPid)};
+
+  if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
+    m_driveCatalogue.mountSessionSucceeded(sessionPid);
+    m_log(LOG_INFO, "Label session succeeded", params);
+  } else {
+    m_driveCatalogue.mountSessionFailed(sessionPid);
+    setDriveDownInVdqm(sessionPid);
+    m_log(LOG_INFO, "Label session failed", params);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -665,7 +712,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSessions() throw() {
 //------------------------------------------------------------------------------
 // forkLabelSession
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(const std::string &unitName) throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
+  const std::string &unitName) throw() {
   m_log.prepareForFork();
   const pid_t sessionPid = fork();
 
