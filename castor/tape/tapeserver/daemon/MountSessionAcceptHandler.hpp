@@ -85,7 +85,7 @@ public:
 private:
   
   /**
-   * Marshals the specified source tape config reply message structure into the
+   * Marshals the specified source reply message structure into the
    * specified destination buffer.
    *
    * @param dst    The destination buffer.
@@ -93,17 +93,39 @@ private:
    * @param rc     The return code to reply.
    * @return       The total length of the header.
    */
-  size_t marshalSetVidReplyMsg(char *const dst, const size_t dstLen,
+  size_t marshalRcReplyMsg(char *const dst, const size_t dstLen,
     const int rc) throw(castor::exception::Exception);
   
   /**
-   * Writes a job reply message to the tape config command connection.
+   * Writes a job reply message to the specified connection.
+   *
+   * @param fd The file descriptor of the connection
+   * @param rc The return code to reply.
+   * 
+   */
+  void writeRcReplyMsg(const int fd, const int rc)
+    throw(castor::exception::Exception);
+  
+  /**
+   * Marshals the specified source tape label reply message structure into the
+   * specified destination buffer.
+   *
+   * @param dst    The destination buffer.
+   * @param dstLen The length of the destination buffer.
+   * @param rc     The return code to reply.
+   * @return       The total length of the header.
+   */
+  size_t marshalLabelReplyMsg(char *const dst, const size_t dstLen,
+    const int rc) throw(castor::exception::Exception);
+  
+  /**
+   * Writes a job reply message to the tape label command connection.
    *
    * @param fd The file descriptor of the connection with the admin command.
    * @param rc The return code to reply.
    * 
    */
-  void writeSetVidReplyMsg(const int fd, const int rc)
+  void writeLabelReplyMsg(const int fd, const int rc)
     throw(castor::exception::Exception);
   
   /**
@@ -119,12 +141,18 @@ private:
     const throw();
   
   /**
-   * Replies to the client the status of all registered drives
+   * Handles incoming jobs and dispatches them to the proper functions
    * 
-   * @param body body of the tape stat message
+   * @param connection
    */
-  void handleSetVidJob(const int connection) 
+  void handleIncomingJob(const int connection) 
     throw(castor::exception::Exception);
+  
+  /**
+   * Logs the reception of the specified job message from the tplabel command.
+   */
+  void logLabelJobReception(const legacymsg::TapeLabelRqstMsgBody &job)
+    const throw();
   
   /**
    * Reads the header of a job message from the specified connection.
@@ -144,6 +172,16 @@ private:
    * @return The message body.
    */
   legacymsg::TapeUpdateDriveRqstMsgBody readSetVidMsgBody(const int connection,
+    const uint32_t len) throw(castor::exception::Exception);
+  
+  /**
+   * Reads the body of a job message from the specified connection.
+   *
+   * @param connection The file descriptor of the connection with the command.
+   * @param len The length of the message body in bytes.
+   * @return The message body.
+   */
+  legacymsg::TapeLabelRqstMsgBody readLabelRqstMsgBody(const int connection,
     const uint32_t len) throw(castor::exception::Exception);
 
   /**

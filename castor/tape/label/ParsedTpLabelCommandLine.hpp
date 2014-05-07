@@ -44,11 +44,6 @@ struct ParsedTpLabelCommandLine {
   /**
    * The filename of the "file list" file.
    */
-  char density[CA_MAXDENLEN+1];
-
-  /**
-   * The filename of the "file list" file.
-   */
   char dgn[CA_MAXDGNLEN+1];
 
   /**
@@ -57,29 +52,28 @@ struct ParsedTpLabelCommandLine {
   char vid[CA_MAXVIDLEN+1];
   
   bool driveIsSet;
-  bool densityIsSet;
   bool dgnIsSet;
   bool vidIsSet;
   bool helpIsSet;
+  bool debugIsSet;
 
   /**
    * Constructor.
    */
   ParsedTpLabelCommandLine() :
   driveIsSet(false),
-  densityIsSet(false),
   dgnIsSet(false),
   vidIsSet(false),
-  helpIsSet(false)
+  helpIsSet(false),
+  debugIsSet(false)
   {
     castor::utils::setBytes(drive, '\0');
-    castor::utils::setBytes(density, '\0');
     castor::utils::setBytes(dgn, '\0');
     castor::utils::setBytes(vid, '\0');
   }
   
   bool allCompulsoryOptionsSet() {
-    return driveIsSet && densityIsSet && dgnIsSet && vidIsSet;
+    return driveIsSet && dgnIsSet && vidIsSet;
   }
 }; // struct ParsedTpLabelCommandLine
 

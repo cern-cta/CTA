@@ -84,9 +84,9 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::fillPollFd(
 }
 
 //-----------------------------------------------------------------------------
-// marshalTapeConfigReplyMsg
+// marshalRcReplyMsg
 //-----------------------------------------------------------------------------
-size_t castor::tape::tapeserver::daemon::MountSessionAcceptHandler::marshalSetVidReplyMsg(char *const dst, const size_t dstLen,
+size_t castor::tape::tapeserver::daemon::MountSessionAcceptHandler::marshalRcReplyMsg(char *const dst, const size_t dstLen,
     const int rc)
   throw(castor::exception::Exception) {
   legacymsg::MessageHeader src;
@@ -97,16 +97,16 @@ size_t castor::tape::tapeserver::daemon::MountSessionAcceptHandler::marshalSetVi
 }
 
 //------------------------------------------------------------------------------
-// writeTapeConfigReplyMsg
+// writeRcReplyMsg
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::writeSetVidReplyMsg(const int fd, const int rc) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::writeRcReplyMsg(const int fd, const int rc) throw(castor::exception::Exception) {
   char buf[REPBUFSZ];
-  const size_t len = marshalSetVidReplyMsg(buf, sizeof(buf), rc);
+  const size_t len = marshalRcReplyMsg(buf, sizeof(buf), rc);
   try {
     io::writeBytes(fd, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to write \"set vid\" job reply message: " <<
+    ex.getMessage() << "Failed to write job reply message: " <<
       ne.getMessage().str();
     throw ex;
   }
@@ -140,7 +140,7 @@ bool castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleEvent(
     throw ex;
   }
   
-  handleSetVidJob(connection.get());  
+  handleIncomingJob(connection.get());  
   return false; // Stay registered with the reactor
 }
 
@@ -170,9 +170,23 @@ void
 }
 
 //------------------------------------------------------------------------------
-// handleTapeConfigJob
+// logLabelJobReception
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleSetVidJob(const int connection) throw(castor::exception::Exception) {
+void
+  castor::tape::tapeserver::daemon::MountSessionAcceptHandler::logLabelJobReception(const legacymsg::TapeLabelRqstMsgBody &job) const throw() {
+  log::Param params[] = {
+    log::Param("drive", job.drive),
+    log::Param("vid", job.vid),
+    log::Param("dgn", job.dgn),
+    log::Param("uid", job.uid),
+    log::Param("gid", job.gid)};
+  m_log(LOG_INFO, "Received message to label a tape", params);
+}
+
+//------------------------------------------------------------------------------
+// handleIncomingJob
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingJob(const int connection) throw(castor::exception::Exception) {
   
   const legacymsg::MessageHeader header = readJobMsgHeader(connection);
   
@@ -180,7 +194,13 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleSetVidJo
     const legacymsg::TapeUpdateDriveRqstMsgBody body = readSetVidMsgBody(connection, header.lenOrStatus-sizeof(header));
     logSetVidJobReception(body);
     m_driveCatalogue.updateVidAssignment(body.vid, body.drive);
-    writeSetVidReplyMsg(connection, 0); // 0 as return code for the tape config command, as in: "all went fine"
+    writeRcReplyMsg(connection, 0); // 0 as return code for the tape config command, as in: "all went fine"
+  }
+  else if(TPLABEL == header.reqType) {
+    const legacymsg::TapeLabelRqstMsgBody body = readLabelRqstMsgBody(connection, header.lenOrStatus-sizeof(header));
+    logLabelJobReception(body);
+    m_driveCatalogue.receivedLabelJob(body);
+    // TODO reply only when done.
   }
   else {
     castor::exception::Internal ex;
@@ -220,7 +240,7 @@ castor::legacymsg::MessageHeader
 }
 
 //------------------------------------------------------------------------------
-// readTapeConfigMsgBody
+// readSetVidMsgBody
 //------------------------------------------------------------------------------
 castor::legacymsg::TapeUpdateDriveRqstMsgBody
   castor::tape::tapeserver::daemon::MountSessionAcceptHandler::readSetVidMsgBody(const int connection,
@@ -246,6 +266,39 @@ castor::legacymsg::TapeUpdateDriveRqstMsgBody
   }
 
   legacymsg::TapeUpdateDriveRqstMsgBody body;
+  const char *bufPtr = buf;
+  size_t bufLen = sizeof(buf);
+  legacymsg::unmarshal(bufPtr, bufLen, body);
+  return body;
+}
+
+//------------------------------------------------------------------------------
+// readLabelRqstMsgBody
+//------------------------------------------------------------------------------
+castor::legacymsg::TapeLabelRqstMsgBody
+  castor::tape::tapeserver::daemon::MountSessionAcceptHandler::readLabelRqstMsgBody(const int connection,
+    const uint32_t len)
+    throw(castor::exception::Exception) {
+  char buf[REQBUFSZ];
+
+  if(sizeof(buf) < len) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read body of job message"
+       ": Maximum body length exceeded"
+       ": max=" << sizeof(buf) << " actual=" << len;
+    throw ex;
+  }
+
+  try {
+    io::readBytes(connection, m_netTimeout, len, buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read body of job message"
+      ": " << ne.getMessage().str();
+    throw ex;
+  }
+
+  legacymsg::TapeLabelRqstMsgBody body;
   const char *bufPtr = buf;
   size_t bufLen = sizeof(buf);
   legacymsg::unmarshal(bufPtr, bufLen, body);

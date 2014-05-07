@@ -47,11 +47,11 @@ castor::tape::label::ParsedTpLabelCommandLine
   ParsedTpLabelCommandLine cmdLine;
 
   static struct option longopts[] = {
-    {"drive", 0, NULL, 'D'},
-    {"density", 1, NULL, 'd'},
-    {"dgn", 0, NULL, 'g'},
+    {"unitname", 1, NULL, 'u'},
+    {"dgn", 1, NULL, 'g'},
     {"vid", 1, NULL, 'V'},
     {"help", 0, NULL, 'h'},
+    {"debug", 0, NULL, 'd'},
     {NULL, 0, NULL,  0 }
   };
 
@@ -60,31 +60,17 @@ castor::tape::label::ParsedTpLabelCommandLine
 
   char c;
 
-  while((c = getopt_long(argc, argv, "D:d:g:V:h", longopts, NULL)) != -1) {
+  while((c = getopt_long(argc, argv, "u:g:V:hd", longopts, NULL)) != -1) {
 
     switch (c) {
-    case 'D':
+    case 'u':
       cmdLine.driveIsSet = true;
       try {
         castor::utils::copyString(cmdLine.drive, optarg);
       } catch(castor::exception::Exception &ex) {
         castor::exception::Internal ex;
         ex.getMessage() <<
-          "Failed to copy the argument of the drive command-line option"
-          " into the internal data structures"
-          ": " << ex.getMessage().str();
-        throw ex;
-      }
-      break;
-
-    case 'd':
-      cmdLine.densityIsSet = true;
-      try {
-        castor::utils::copyString(cmdLine.density, optarg);
-      } catch(castor::exception::Exception &ex) {
-        castor::exception::Internal ex;
-        ex.getMessage() <<
-          "Failed to copy the argument of the density command-line option"
+          "Failed to copy the argument of the unit name command-line option"
           " into the internal data structures"
           ": " << ex.getMessage().str();
         throw ex;
@@ -130,6 +116,10 @@ castor::tape::label::ParsedTpLabelCommandLine
 
     case 'h':
       cmdLine.helpIsSet = true;
+      break;
+      
+    case 'd':
+      cmdLine.debugIsSet = true;
       break;
 
     case ':':
@@ -185,15 +175,15 @@ castor::tape::label::ParsedTpLabelCommandLine
 void castor::tape::label::LabelCmd::usage(std::ostream &os) const throw() {
   os <<
     "Usage:\n"
-    "\t" << m_programName << " -D drive -d density -g dgn -V vid [-h]\n"
+    "\t" << m_programName << " -u unitname -g dgn -V vid [-h] [-d]\n"
     "\n"
     "Where:\n"
     "\n"
-    "\t-D, --drive   <drive>   Explicit name of drive to be used.\n"
-    "\t-d, --density <density> Tape density.\n"
-    "\t-g, --dgn     <dgn>     Device group name of the tape.\n"
-    "\t-V, --vid     <vid>     Volume ID of the tape.\n"
-    "\t-h, --help              Print this help message and exit.\n"
+    "\t-u, --unitname <unitname>   Explicit name of drive to be used.\n"
+    "\t-g, --dgn      <dgn>        Device group name of the tape.\n"
+    "\t-V, --vid     <vid>         Volume ID of the tape.\n"
+    "\t-h, --help                  Print this help message and exit.\n"
+    "\t-d, --debug                 Debug mode on (default off).\n"
     "\n"
     "Constraints:\n"
     "\n"
@@ -201,7 +191,7 @@ void castor::tape::label::LabelCmd::usage(std::ostream &os) const throw() {
     "\n"
     "Example:\n"
     "\n"
-    "\t" << m_programName << " -D T10D6515 -d 8000GC -g T10KD6 -V T54321\n"
+    "\t" << m_programName << " -u T10D6515 -g T10KD6 -V T54321\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }

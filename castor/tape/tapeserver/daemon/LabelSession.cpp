@@ -67,7 +67,7 @@ void castor::tape::tapeserver::daemon::LabelSession::executeLabel(LogContext & l
   // Get hold of the drive and check it.
   utils::TpconfigLines::const_iterator configLine;
   for (configLine = m_tpConfig.begin(); configLine != m_tpConfig.end(); configLine++) {
-    if (configLine->unitName == m_request.drive && configLine->density == m_request.density) {
+    if (configLine->unitName == m_request.drive) {
       break;
     }
   }

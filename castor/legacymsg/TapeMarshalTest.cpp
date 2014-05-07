@@ -187,7 +187,7 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeUpdateDriveRqstMsgBody) {
 
 TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeLabelRqstMsgBody) {
   using namespace castor::legacymsg;
-  char buf[52]; // Expect message (header + body) to occupy exactly 27 bytes
+  char buf[43]; // Expect message (header + body) to occupy exactly 27 bytes
   TapeLabelRqstMsgBody srcMsgBody;
 
   // Marshal entire message (header + body)
@@ -197,13 +197,12 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeLabelRqstMsgBody) {
     castor::utils::copyString(srcMsgBody.vid, "VIDVID");
     castor::utils::copyString(srcMsgBody.drive, "DRIVE001");
     castor::utils::copyString(srcMsgBody.dgn, "DGNDGN");
-    castor::utils::copyString(srcMsgBody.density, "999999GC");
 
     size_t bufLen = sizeof(buf);
     size_t totalLen = 0; // Total length of message (header + body)
 
     ASSERT_NO_THROW(totalLen = marshal(buf, bufLen, srcMsgBody));
-    ASSERT_EQ((uint32_t)52, totalLen);
+    ASSERT_EQ((uint32_t)43, totalLen);
   }
 
   // Unmarshall message header
@@ -217,7 +216,7 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeLabelRqstMsgBody) {
 
     ASSERT_EQ((uint32_t)TPMAGIC, dstHeader.magic);
     ASSERT_EQ((uint32_t)TPLABEL, dstHeader.reqType);
-    ASSERT_EQ((uint32_t)52, dstHeader.lenOrStatus);
+    ASSERT_EQ((uint32_t)43, dstHeader.lenOrStatus);
   }
 
   // Unmarshall message body
@@ -225,9 +224,9 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeLabelRqstMsgBody) {
     TapeLabelRqstMsgBody dstMsgBody;
 
     const char *bufPtr = buf + 12; // Point at beginning of message body
-    size_t bufLen = 40; // Length of the message body
+    size_t bufLen = 31; // Length of the message body
     ASSERT_NO_THROW(unmarshal(bufPtr, bufLen, dstMsgBody));
-    ASSERT_EQ(buf + 52, bufPtr);
+    ASSERT_EQ(buf + 43, bufPtr);
     ASSERT_EQ((size_t)0, bufLen);
 
     ASSERT_EQ((uint32_t)3, dstMsgBody.uid);
@@ -235,7 +234,6 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeLabelRqstMsgBody) {
     ASSERT_EQ(std::string("VIDVID"), dstMsgBody.vid);
     ASSERT_EQ(std::string("DRIVE001"), dstMsgBody.drive);
     ASSERT_EQ(std::string("DGNDGN"), dstMsgBody.dgn);
-    ASSERT_EQ(std::string("999999GC"), dstMsgBody.density);
   }
 }
 
