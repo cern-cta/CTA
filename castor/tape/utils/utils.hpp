@@ -240,35 +240,6 @@ const char *volumeModeToString(const tapegateway::VolumeMode mode) throw();
 ssize_t drainFile(const int fd) throw(castor::exception::Exception);
 
 /**
- * Throws an InvalidArgument exception if the specified identifier string is
- * syntactically incorrect.
- *
- * The indentifier string is valid if each character is either a number (0-9),   * a letter (a-z, A-Z) or an underscore.
- *
- * @param idString The  to be checked.
- */
-void checkIdSyntax(const char *idString)
-  throw(castor::exception::InvalidArgument);
-
-/**
- * Throws an InvalidArgument exception if the specified VID is syntactically
- * invalid.
- *
- * @param vid The VID to be checked.
- */
-void checkVidSyntax(const char *vid)
-  throw(castor::exception::InvalidArgument);
-
-/**
- * Throws an InvalidArgument exception if the specified DGN is syntactically
- * invalid.
- *
- * @param vid The DGN to be checked.
- */
-void checkDgnSyntax(const char *dgn)
-  throw(castor::exception::InvalidArgument);
-
-/**
  * Appends each line of the specified file to the specified list of lines.
  * The new-line characters are extracted from the file, but they are not
  * stored in the lines appended to the list.

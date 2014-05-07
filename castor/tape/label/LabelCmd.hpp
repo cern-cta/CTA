@@ -25,7 +25,8 @@
 #pragma once
 
 #include "castor/legacymsg/TapeserverProxy.hpp"
-#include "castor/tape/rmc/DebugBuf.hpp"
+#include "castor/tape/label/ParsedTpLabelCommandLine.hpp"
+#include "castor/utils/DebugBuf.hpp"
 
 #include <istream>
 #include <ostream>
@@ -51,7 +52,20 @@ public:
   LabelCmd(std::istream &inStream, std::ostream &outStream,
     std::ostream &errStream, legacymsg::TapeserverProxy &tapeserver) throw();
 
+  /**
+   * The entry function of the command.
+   *
+   * @param argc The number of command-line arguments.
+   * @param argv The command-line arguments.
+   */
+  int main(const int argc, char **argv) throw();
+
 protected:
+
+  /**
+   * The name of the program.
+   */
+  const std::string m_programName;
 
   /**
    * Standard input stream.
@@ -69,10 +83,15 @@ protected:
   std::ostream &m_err;
 
   /**
+   * Proxy object representing the tapeserverd daemon.
+   */
+  legacymsg::TapeserverProxy &m_tapeserver;
+
+  /**
    * Debug stream buffer that inserts a standard debug preamble before each
    * message-line written to it.
    */
-  DebugBuf m_debugBuf;
+  utils::DebugBuf m_debugBuf;
 
   /**
    * Stream used to write debug messages.
@@ -83,16 +102,27 @@ protected:
   std::ostream m_dbg;
 
   /**
-   * Proxy object representing the tapeserverd daemon.
-   */
-  legacymsg::TapeserverProxy &m_tapeserver
-
-  /**
    * Returns the string representation of the specfied boolean value.
    *
    * @param value The boolean value.
    */
   std::string bool2Str(const bool value) const throw();
+
+  /**
+   * Parses the specified command-line arguments.
+   *
+   * @param argc Argument count from the executable's entry function: main().
+   * @param argv Argument vector from the executable's entry function: main().
+   */
+  ParsedTpLabelCommandLine parseCommandLine(const int argc, char **argv)
+    throw(castor::exception::Exception);
+
+  /**
+   * Writes the command-line usage message of to the specified output stream.
+   *
+   * @param os Output stream to be written to.
+   */
+  void usage(std::ostream &os) const throw();
 
 }; // class LabelCmd
 

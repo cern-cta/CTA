@@ -258,3 +258,65 @@ void castor::utils::copyString(char *const dst, const size_t dstSize,
   strncpy(dst, src, dstSize);
   *(dst + dstSize -1) = '\0'; // Ensure destination string is null terminated
 }
+
+//------------------------------------------------------------------------------
+// checkIdSyntax
+//------------------------------------------------------------------------------
+void castor::utils::checkIdSyntax(const char *idString)
+  throw(castor::exception::InvalidArgument) {
+
+  const size_t len   = strlen(idString);
+  char         c     = '\0';
+  bool         valid = false;
+
+  // For each character
+  for(size_t i=0; i<len; i++) {
+    c = idString[i];
+    valid = (c >= '0' && c <='9') || (c >= 'a' && c <= 'z') ||
+      (c >= 'A' && c <= 'Z') || c == '_';
+
+    if(!valid) {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << "Invalid character: " << c;
+      throw ex;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkVidSyntax
+//------------------------------------------------------------------------------
+void castor::utils::checkVidSyntax(const char *vid)
+  throw(castor::exception::InvalidArgument) {
+
+  const size_t len = strlen(vid);
+
+  if(len > CA_MAXVIDLEN) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() << "VID is too long: Actual=" << len
+      << " Expected maximum=" << CA_MAXVIDLEN;
+    throw ex;
+  }
+
+  checkIdSyntax(vid);
+}
+
+//------------------------------------------------------------------------------
+// checkDgnSyntax
+//------------------------------------------------------------------------------
+void castor::utils::checkDgnSyntax(const char *dgn)
+  throw(castor::exception::InvalidArgument) {
+
+  const size_t len = strlen(dgn);
+
+  if(len > CA_MAXDGNLEN) {
+    castor::exception::InvalidArgument ex;
+
+    ex.getMessage() << "DGN is too long: Actual=" << len
+      << " Expected maximum=" << CA_MAXVIDLEN;
+    throw ex;
+  }
+
+  checkIdSyntax(dgn);
+}

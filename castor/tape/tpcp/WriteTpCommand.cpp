@@ -210,7 +210,7 @@ void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
 
   // Check the first command-line argument is syntactically a valid VID
   try {
-    utils::checkVidSyntax(argv[optind]);
+    castor::utils::checkVidSyntax(argv[optind]);
   } catch(castor::exception::InvalidArgument &ex) {
     castor::exception::InvalidArgument ex2;
 

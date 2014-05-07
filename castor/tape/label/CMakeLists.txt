@@ -26,7 +26,8 @@ cmake_minimum_required (VERSION 2.6)
 # Rules to build and install castor-tape-label
 ################################################################################
 set (LABEL_SRC_FILES
-  LabelCmd.cpp)
+  LabelCmd.cpp
+  LabelMain.cpp)
 add_executable (castor-tape-label ${LABEL_SRC_FILES})
 target_link_libraries (castor-tape-label castorclient)
 #install (TARGETS castor-tape-label DESTINATION ${CASTOR_DEST_BIN_DIR})

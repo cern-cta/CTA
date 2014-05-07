@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/tpcp/LabelTpMain.cpp
+ *                 castor/tape/label/LabelTpMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,7 +22,8 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
  
-#include "castor/tape/tpcp/LabelTpCommand.hpp"
+#include "castor/tape/label/LabelCmd.hpp"
+#include "castor/legacymsg/TapeserverProxyTcpIp.hpp"
 
 
 //------------------------------------------------------------------------------
@@ -30,7 +31,11 @@
 //------------------------------------------------------------------------------
 int main(int argc, char **argv) {
 
-  castor::tape::tpcp::LabelTpCommand command;
+  /*
+  castor::legacymsg::TapeserverProxyTcpIp tapesever(....
+  castor::tape::label::LabelCmd command(tapeserver;
 
   return command.main(argc, argv);
+  */
+  return 0; // ALWAYS SMILE
 }

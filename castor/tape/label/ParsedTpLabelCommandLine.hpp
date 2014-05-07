@@ -28,8 +28,8 @@
 #include "h/Castor_limits.h"
 
 namespace castor {
-namespace tape   {
-namespace tpcp   {
+namespace tape {
+namespace label {
 
 /**
  * Data type used to store the results of parsing the tplabel command-line.
@@ -56,21 +56,21 @@ struct ParsedTpLabelCommandLine {
    */
   char vid[CA_MAXVIDLEN+1];
   
-  bool drive_is_set;
-  bool density_is_set;
-  bool dgn_is_set;
-  bool vid_is_set;
-  bool help_needed;
+  bool driveIsSet;
+  bool densityIsSet;
+  bool dgnIsSet;
+  bool vidIsSet;
+  bool helpIsSet;
 
   /**
    * Constructor.
    */
-  ParsedCommandLine() :
-  drive_is_set(false),
-  density_is_set(false),
-  dgn_is_set(false),
-  vid_is_set(false),
-  help_needed(false)
+  ParsedTpLabelCommandLine() :
+  driveIsSet(false),
+  densityIsSet(false),
+  dgnIsSet(false),
+  vidIsSet(false),
+  helpIsSet(false)
   {
     castor::utils::setBytes(drive, '\0');
     castor::utils::setBytes(density, '\0');
@@ -78,13 +78,11 @@ struct ParsedTpLabelCommandLine {
     castor::utils::setBytes(vid, '\0');
   }
   
-  bool is_all_set() {
-    return drive_is_set and density_is_set and dgn_is_set and vid_is_set;
+  bool allCompulsoryOptionsSet() {
+    return driveIsSet && densityIsSet && dgnIsSet && vidIsSet;
   }
 }; // struct ParsedTpLabelCommandLine
 
-} // namespace tpcp
+} // namespace label
 } // namespace tape
 } // namespace castor
-
-
