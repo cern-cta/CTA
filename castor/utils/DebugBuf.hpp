@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 castor/tape/rmc/DebugBuf.hpp
+ *                 castor/utils/DebugBuf.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -28,8 +28,7 @@
 #include <streambuf>
 
 namespace castor {
-namespace tape {
-namespace rmc {
+namespace utils {
 
 /**
  * Stream buffer class used to prepend a standard preamble to debug
@@ -96,8 +95,5 @@ private:
 
 }; // class DebugBuf
 
-} // namespace rmc
-} // namespace tape
+} // namespace utils
 } // namespace castor
-
-

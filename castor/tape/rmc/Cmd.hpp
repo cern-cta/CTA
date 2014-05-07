@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include "castor/tape/rmc/DebugBuf.hpp"
+#include "castor/utils/DebugBuf.hpp"
 
 #include <istream>
 #include <ostream>
@@ -76,7 +76,7 @@ protected:
    * Debug stream buffer that inserts a standard debug preamble before each
    * message-line written to it.
    */
-  DebugBuf m_debugBuf;
+  utils::DebugBuf m_debugBuf;
 
   /**
    * Stream used to write debug messages.
