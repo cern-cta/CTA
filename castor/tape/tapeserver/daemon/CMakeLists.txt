@@ -38,7 +38,8 @@ add_library(tapeserver
   DiskWriteTask.cpp
   MigrationTaskInjector.cpp
   MigrationMemoryManager.cpp
-  RecallMemoryManager.cpp) 
+  RecallMemoryManager.cpp
+  GlobalStatusReporter.cpp) 
 
 
 add_library(tapeserverdTest 
