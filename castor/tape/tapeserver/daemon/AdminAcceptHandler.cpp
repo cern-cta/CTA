@@ -154,11 +154,19 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeStatReplyMsg
 void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillTapeStatDriveEntry(
   legacymsg::TapeStatDriveEntry &entry, const std::string &unitName)
   throw (castor::exception::Exception) {
+  // If there is no process ID available then just put 0
+  try {
+    entry.jid = m_driveCatalogue.getSessionPid(unitName);
+  } catch(castor::exception::Exception) {
+    entry.jid = 0;
+  }
+
   try {
     entry.uid = getuid();
-    entry.jid = m_driveCatalogue.getSessionPid(unitName);
-    castor::utils::copyString(entry.dgn, m_driveCatalogue.getDgn(unitName).c_str());
-    const DriveCatalogue::DriveState driveState = m_driveCatalogue.getState(unitName);
+    castor::utils::copyString(entry.dgn,
+      m_driveCatalogue.getDgn(unitName).c_str());
+    const DriveCatalogue::DriveState driveState =
+      m_driveCatalogue.getState(unitName);
     entry.up = driveStateToStatEntryUp(driveState);
     entry.asn = driveStateToStatEntryAsn(driveState);
     entry.asn_time = m_driveCatalogue.getAssignmentTime(unitName);

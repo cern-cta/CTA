@@ -804,9 +804,9 @@ pid_t castor::tape::tapeserver::daemon::DriveCatalogue::getSessionPid(
 }
 
 //-----------------------------------------------------------------------------
-// mountSessionSucceeded
+// sessionSucceeded
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::mountSessionSucceeded(const pid_t sessionPid) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DriveCatalogue::sessionSucceeded(const pid_t sessionPid) throw(castor::exception::Exception) {
   std::string unitName;
   try {
     unitName = getUnitName(sessionPid);
@@ -818,13 +818,13 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::mountSessionSucceeded(con
     throw ex;
   }
 
-  mountSessionSucceeded(unitName);  
+  sessionSucceeded(unitName);  
 }
 
 //-----------------------------------------------------------------------------
-// mountSessionSucceeded
+// sessionSucceeded
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::mountSessionSucceeded(const std::string &unitName) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DriveCatalogue::sessionSucceeded(const std::string &unitName) throw(castor::exception::Exception) {
   std::ostringstream task;
   task << "record tape session succeeded for tape drive " << unitName;
 
@@ -853,16 +853,27 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::mountSessionSucceeded(con
 }
 
 //-----------------------------------------------------------------------------
-// mountSessionFailed
+// sessionFailed
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::mountSessionFailed(const pid_t sessionPid) throw(castor::exception::Exception) {
-  mountSessionFailed(getUnitName(sessionPid));
+void castor::tape::tapeserver::daemon::DriveCatalogue::sessionFailed(const pid_t sessionPid) throw(castor::exception::Exception) {
+  std::string unitName;
+  try {
+    unitName = getUnitName(sessionPid);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() <<
+      "Failed to record tape session failed for session with pid " <<
+      sessionPid << ": " << ne.getMessage();
+    throw ex;
+  }
+
+  sessionFailed(unitName);
 }
 
 //-----------------------------------------------------------------------------
-// mountSessionFailed
+// sessionFailed
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::mountSessionFailed(const std::string &unitName) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DriveCatalogue::sessionFailed(const std::string &unitName) throw(castor::exception::Exception) {
   std::ostringstream task;
   task << "record tape session failed for tape drive " << unitName;
 

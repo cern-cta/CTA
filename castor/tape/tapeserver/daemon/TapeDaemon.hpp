@@ -239,14 +239,6 @@ protected:
   void postProcessReapedDataTransferSession(const pid_t sessionPid, const int waitpidStat) throw();
 
   /**
-   * Does the required post processing for the specified reaped session.
-   *
-   * @param sessionPid The process ID of the session child-process.
-   * @param waitpidStat The status information given by a call to waitpid().
-   */
-  void postProcessReapedLabelSession(const pid_t sessionPid, const int waitpidStat) throw();
-
-  /**
    * Sets the state of the tape drive asscoiated with the specified
    * mount-session process to down within the vdqmd daemon.
    *
@@ -257,6 +249,24 @@ protected:
    * @param sessionPid The process ID of the mount-session child-process.
    */
   void setDriveDownInVdqm(const pid_t sessionPid) throw();
+
+  /**
+   * Does the required post processing for the specified reaped session.
+   *
+   * @param sessionPid The process ID of the session child-process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void postProcessReapedLabelSession(const pid_t sessionPid, const int waitpidStat) throw();
+
+  /**
+   * Notifies the associated client label-command of the end of the label
+   * session.
+   *
+   * @param sessionPid The process ID of the session child-process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void notifyLabelCmdOfEndOfSession(const pid_t sessionPid, const int waitpidStat)
+    throw(castor::exception::Exception);
 
   /**
    * Forks a mount-session child-process for every tape drive entry in the

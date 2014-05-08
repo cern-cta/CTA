@@ -534,29 +534,13 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedDataTransfer
   log::Param params[] = {log::Param("sessionPid", sessionPid)};
 
   if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
-    m_driveCatalogue.mountSessionSucceeded(sessionPid);
+    m_driveCatalogue.sessionSucceeded(sessionPid);
     m_log(LOG_INFO, "Mount session succeeded", params);
+    //m_vdqm.tapeUnmounted(m_hostName, m_job.driveUnit, m_job.dgn, vid);
   } else {
-    m_driveCatalogue.mountSessionFailed(sessionPid);
+    m_driveCatalogue.sessionFailed(sessionPid);
     setDriveDownInVdqm(sessionPid);
     m_log(LOG_INFO, "Mount session failed", params);
-  }
-}
-
-//------------------------------------------------------------------------------
-// postProcessReapedLabelSession 
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession(
-  const pid_t sessionPid, const int waitpidStat) throw() {
-  log::Param params[] = {log::Param("sessionPid", sessionPid)};
-
-  if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
-    m_driveCatalogue.mountSessionSucceeded(sessionPid);
-    m_log(LOG_INFO, "Label session succeeded", params);
-  } else {
-    m_driveCatalogue.mountSessionFailed(sessionPid);
-    setDriveDownInVdqm(sessionPid);
-    m_log(LOG_INFO, "Label session failed", params);
   }
 }
 
@@ -598,6 +582,44 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(const pid_
       log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "Failed to set tape-drive down in vdqm", params);
   }
+}
+
+//------------------------------------------------------------------------------
+// postProcessReapedLabelSession 
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession(
+  const pid_t sessionPid, const int waitpidStat) throw() {
+  std::list<log::Param> params;
+  params.push_back(log::Param("sessionPid", sessionPid));
+
+  // Try to notify the client label-command of the end of the session and
+  // continue even in the event of failure
+  try {
+    notifyLabelCmdOfEndOfSession(sessionPid, waitpidStat);
+  } catch(castor::exception::Exception ex) {
+    std::list<log::Param> errorParams = params;
+    params.push_back(log::Param("message", ex.getMessage().str()));
+    m_log(LOG_ERR, "Failed to notify client label-command of end of session",
+      errorParams);
+  }
+
+  if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
+    m_driveCatalogue.sessionSucceeded(sessionPid);
+    m_log(LOG_INFO, "Label session succeeded", params);
+  } else {
+    m_driveCatalogue.sessionFailed(sessionPid);
+    setDriveDownInVdqm(sessionPid);
+    m_log(LOG_INFO, "Label session failed", params);
+  }
+}
+
+//------------------------------------------------------------------------------
+// notifyLabelCmdOfEndOfSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::notifyLabelCmdOfEndOfSession(
+  const pid_t sessionPid, const int waitpidStat) throw(castor::exception::Exception) {
+  //const int labelCmdConnection = m_driveCatalogue.getLabelCmdConnection(sessionPid);
+  // TO BE DONE
 }
 
 //------------------------------------------------------------------------------

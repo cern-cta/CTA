@@ -423,7 +423,7 @@ public:
    *
    * @param sessionPid Process ID of the child process handling the session.
    */
-  void mountSessionSucceeded(const pid_t sessionPid) throw(castor::exception::Exception);
+  void sessionSucceeded(const pid_t sessionPid) throw(castor::exception::Exception);
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_UP if the
@@ -435,7 +435,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  void mountSessionSucceeded(const std::string &unitName) throw(castor::exception::Exception);
+  void sessionSucceeded(const std::string &unitName) throw(castor::exception::Exception);
   
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_DOWN.
@@ -445,7 +445,7 @@ public:
    *
    * @param sessionPid Process ID of the child process handling the session.
    */
-  void mountSessionFailed(const pid_t sessionPid) throw(castor::exception::Exception);
+  void sessionFailed(const pid_t sessionPid) throw(castor::exception::Exception);
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_DOWN.
@@ -455,7 +455,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  void mountSessionFailed(const std::string &unitName) throw(castor::exception::Exception);
+  void sessionFailed(const std::string &unitName) throw(castor::exception::Exception);
   
   /**
    * Updates the vid and assignment time of the specified drive
