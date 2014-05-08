@@ -469,7 +469,6 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::unmount
     log::Param("TPVID", vid),
      log::Param("librarySlot", librarySlot)};
   m_log(LOG_INFO, "Tape unmounted", params);
-  m_vdqm.tapeUnmounted(m_hostName, m_job.driveUnit, m_job.dgn, vid);
 }
 
 //-----------------------------------------------------------------------------

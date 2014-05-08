@@ -259,6 +259,14 @@ protected:
   void postProcessReapedLabelSession(const pid_t sessionPid, const int waitpidStat) throw();
 
   /**
+   * Notifies the vdqm that the tape associated with the session child-process
+   * with the specified process ID has been unmounted.
+   *
+   * @param sessionPid The process ID of the session child-process.
+   */
+  void notifyVdqmTapeUnmounted(const pid_t sessionPid) throw();
+
+  /**
    * Notifies the associated client label-command of the end of the label
    * session.
    *

@@ -536,11 +536,38 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedDataTransfer
   if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
     m_driveCatalogue.sessionSucceeded(sessionPid);
     m_log(LOG_INFO, "Mount session succeeded", params);
-    //m_vdqm.tapeUnmounted(m_hostName, m_job.driveUnit, m_job.dgn, vid);
+    notifyVdqmTapeUnmounted(sessionPid);
   } else {
     m_driveCatalogue.sessionFailed(sessionPid);
-    setDriveDownInVdqm(sessionPid);
     m_log(LOG_INFO, "Mount session failed", params);
+    setDriveDownInVdqm(sessionPid);
+  }
+}
+
+//------------------------------------------------------------------------------
+// notifyVdqmTapeUnmounted
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::notifyVdqmTapeUnmounted(const pid_t sessionPid) throw() {
+  std::list<log::Param> params;
+  try {
+    params.push_back(log::Param("sessionPid", sessionPid));
+
+    const std::string unitName = m_driveCatalogue.getUnitName(sessionPid);
+    params.push_back(log::Param("unitName", unitName));
+
+    const std::string vid = m_driveCatalogue.getVid(unitName);
+    params.push_back(log::Param("vid", unitName));
+
+    const std::string dgn = m_driveCatalogue.getDgn(unitName);
+    params.push_back(log::Param("dgn", unitName));
+
+    std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
+    vdqm->tapeUnmounted(m_hostName, unitName, dgn, vid);
+    m_log(LOG_INFO, "Notified vdqm that a tape was unmounted", params);
+  } catch(castor::exception::Exception &ex) {
+    params.push_back(log::Param("message", ex.getMessage().str()));
+    m_log(LOG_ERR, "Failed to notify vdqm that a tape was unmounted", params);
+    return;
   }
 }
 
@@ -548,39 +575,23 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedDataTransfer
 // setDriveDownInVdqm
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(const pid_t sessionPid) throw() {
-  std::string unitName;
+  std::list<log::Param> params;
   try {
-    unitName = m_driveCatalogue.getUnitName(sessionPid);
-  } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {
-      log::Param("sessionPid", sessionPid),
-      log::Param("message", ex.getMessage().str())};
-    m_log(LOG_ERR, "Failed to set tape-drive down in vdqm: Failed to get unit-name", params);
-    return;
-  }
+    params.push_back(log::Param("sessionPid", sessionPid));
 
-  std::string dgn;
-  try {
-    dgn = m_driveCatalogue.getDgn(unitName);
-  } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {
-      log::Param("sessionPid", sessionPid),
-      log::Param("unitName", unitName),
-      log::Param("message", ex.getMessage().str())};
-    m_log(LOG_ERR, "Failed to set tape-drive down in vdqm: Failed to get DGN", params);
-    return;
-  }
+    const std::string unitName = m_driveCatalogue.getUnitName(sessionPid);
+    params.push_back(log::Param("unitName", unitName));
 
-  try {
+    const std::string dgn = m_driveCatalogue.getDgn(unitName);
+    params.push_back(log::Param("dgn", unitName));
+
     std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
     vdqm->setDriveDown(m_hostName, unitName, dgn);
+    m_log(LOG_INFO, "Set tape-drive down in vdqm", params);
   } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {
-      log::Param("sessionPid", sessionPid),
-      log::Param("unitName", unitName),
-      log::Param("dgn", dgn),
-      log::Param("message", ex.getMessage().str())};
+    params.push_back(log::Param("message", ex.getMessage().str()));
     m_log(LOG_ERR, "Failed to set tape-drive down in vdqm", params);
+    return;
   }
 }
 
@@ -606,10 +617,11 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession
   if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
     m_driveCatalogue.sessionSucceeded(sessionPid);
     m_log(LOG_INFO, "Label session succeeded", params);
+    notifyVdqmTapeUnmounted(sessionPid);
   } else {
     m_driveCatalogue.sessionFailed(sessionPid);
-    setDriveDownInVdqm(sessionPid);
     m_log(LOG_INFO, "Label session failed", params);
+    setDriveDownInVdqm(sessionPid);
   }
 }
 

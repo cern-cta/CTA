@@ -314,26 +314,34 @@ void
 //------------------------------------------------------------------------------
 // handleTapeConfigJob
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeConfigJob(const legacymsg::TapeConfigRequestMsgBody &body) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeConfigJob(
+  const legacymsg::TapeConfigRequestMsgBody &body) throw(castor::exception::Exception) {
   const std::string unitName(body.drive);
   const std::string dgn = m_driveCatalogue.getDgn(unitName);
 
+  log::Param params[] = {
+    log::Param("unitName", unitName),
+    log::Param("dgn", dgn)};
+
   std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
 
-  if(CONF_UP==body.status) {
+  switch(body.status) {
+  case CONF_UP:
     vdqm->setDriveUp(m_hostName, unitName, dgn);
     m_driveCatalogue.configureUp(unitName);
-    m_log(LOG_INFO, "Drive is up now");
-  }
-  else if(CONF_DOWN==body.status) {
+    m_log(LOG_INFO, "Drive configured up", params);
+    break;
+  case CONF_DOWN:
     vdqm->setDriveDown(m_hostName, unitName, dgn);
     m_driveCatalogue.configureDown(unitName);
-    m_log(LOG_INFO, "Drive is down now");
-  }
-  else {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Wrong drive status requested:" << body.status;
-    throw ex;
+    m_log(LOG_INFO, "Drive configured down", params);
+    break;
+  default:
+    {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Wrong drive status requested: " << body.status;
+      throw ex;
+    }
   }
 }
 
