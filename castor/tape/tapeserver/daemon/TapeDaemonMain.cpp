@@ -53,19 +53,17 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char **const argv) {
-  using namespace castor;
-
   try {
-    log::SyslogLogger log("tapeserverd");
+    castor::log::SyslogLogger log("tapeserverd");
 
     try {
       return exceptionThrowingMain(argc, argv, log);
     } catch(castor::exception::Exception &ex) {
-      log::Param params[] = {log::Param("message", ex.getMessage().str())};
+      castor::log::Param params[] = {castor::log::Param("message", ex.getMessage().str())};
       log(LOG_ERR, "Caught an unexpected CASTOR exception", params);
       return 1;
     } catch(std::exception &se) {
-      log::Param params[] = {log::Param("what", se.what())};
+      castor::log::Param params[] = {castor::log::Param("what", se.what())};
       log(LOG_ERR, "Caught an unexpected standard exception", params);
       return 1;
     } catch(...) {

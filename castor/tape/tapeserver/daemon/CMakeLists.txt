@@ -1,3 +1,5 @@
+find_package( ZLIB REQUIRED )
+
 add_library(castorTapeServerDaemon 
   ../client/ClientProxy.cpp 
   LabelSession.cpp
@@ -41,7 +43,8 @@ target_link_libraries(tapeserverd
   castorclient
   castortapegatewayprotocol
   castortapelegacymsg
-  castorTapeServerThreading)
+  castorTapeServerThreading
+  ${ZLIB_LIBRARIES})
 
 install (TARGETS tapeserverd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (tapeserverd)
