@@ -165,6 +165,9 @@ namespace drives {
     virtual bool isWriteProtected() throw(Exception) = 0;
     virtual bool isAtBOT() throw(Exception) = 0;
     virtual bool isAtEOD() throw(Exception) = 0;
+    /** Member string allowing the convenient storage of the string describing
+     * drive location for the mount system (we get the information from TPCONFIG*/
+    std::string librarySlot;
   };
   
   /**

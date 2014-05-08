@@ -353,7 +353,10 @@ castor::tape::tapeserver::daemon::MountSession::findDrive(LogContext& lc) {
     return NULL;
   }
   try {
-    return castor::tape::drives::DriveFactory(driveInfo, m_sysWrapper);
+    std::auto_ptr<castor::tape::drives::DriveInterface> drive;
+    drive.reset(castor::tape::drives::DriveFactory(driveInfo, m_sysWrapper));
+    if (drive.get()) drive->librarySlot = configLine->librarySlot;
+    return drive.release();
   } catch (castor::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
     LogContext::ScopedParam sp08(lc, Param("density", m_volInfo.density));
