@@ -24,7 +24,8 @@
 
 #pragma once
 
-#include "../../../exception/Exception.hpp"
+#include "castor/exception/Exception.hpp"
+
 #include <exception>
 #include <string>
 

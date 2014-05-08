@@ -242,11 +242,75 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 //-----------------------------------------------------------------------------
 // marshal
 //-----------------------------------------------------------------------------
-size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const TapeUpdateDriveRqstMsgBody &src) throw(castor::exception::Exception) {
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
+  const TapeLabelRqstMsgBody &src) throw(castor::exception::Exception) {
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
-    ex.getMessage() << "Failed to marshal TapeConfigRequestMsgBody"
+    ex.getMessage() << "Failed to marshal TapeLabelRqstMsgBody"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  // Calculate the length of the message body
+  const uint32_t len =
+    sizeof(int32_t) + // uid
+    sizeof(int32_t) + // gid
+    strlen(src.vid) + 1 + // vid
+    strlen(src.drive) + 1 + // drive
+    strlen(src.dgn) + 1 + // dgn
+    strlen(src.density) + 1; // density
+
+  // Calculate the total length of the message (header + body)
+  // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
+  const size_t totalLen = 3 * sizeof(uint32_t) + len;
+
+  // Check that the message buffer is big enough
+  if(totalLen > dstLen) {
+    castor::exception::Exception ex(EMSGSIZE);
+    ex.getMessage() << "Failed to marshal TapeLabelRqstMsgBody"
+      ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
+    throw ex;
+  }
+
+  // Marshall message header
+  char *p = dst;
+  io::marshalUint32(TPMAGIC , p); // Magic number
+  io::marshalUint32(TPLABEL, p); // Request type  
+  char *msg_len_field_pointer = p;  
+  io::marshalUint32(0, p); // Temporary length
+
+  // Marshall message body
+  io::marshalUint32(src.uid, p);
+  io::marshalUint32(src.gid, p);
+  io::marshalString(src.vid, p);
+  io::marshalString(src.drive, p);
+  io::marshalString(src.dgn, p);
+  io::marshalString(src.density, p);
+
+  // Calculate the number of bytes actually marshalled
+  const size_t nbBytesMarshalled = p - dst;
+  io::marshalUint32(nbBytesMarshalled, msg_len_field_pointer); // Actual length
+
+  // Check that the number of bytes marshalled was what was expected
+  if(totalLen != nbBytesMarshalled) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to marshal TapeLabelRqstMsgBody"
+      ": Mismatch between expected total length and actual"
+      ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
+    throw ex;
+  }
+
+  return totalLen;
+}
+
+//-----------------------------------------------------------------------------
+// marshal
+//-----------------------------------------------------------------------------
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const TapeUpdateDriveRqstMsgBody &src) throw(castor::exception::Exception) {
+  if(dst == NULL) {
+    castor::exception::Exception ex(EINVAL);
+    ex.getMessage() << "Failed to marshal TapeUpdateDriveRqstMsgBody"
       ": Pointer to destination buffer is NULL";
     throw ex;
   }
@@ -263,7 +327,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
     castor::exception::Exception ex(EMSGSIZE);
-    ex.getMessage() << "Failed to marshal TapeConfigRequestMsgBody"
+    ex.getMessage() << "Failed to marshal TapeUpdateDriveRqstMsgBody"
       ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
   }
@@ -298,6 +362,28 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
+void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeStatReplyMsgBody &dst) throw(castor::exception::Exception) {
+  io::unmarshalUint16(src, srcLen, dst.number_of_drives);
+  for(int i=0; i<dst.number_of_drives; i++) {
+    io::unmarshalUint32(src, srcLen, dst.drives[i].uid);
+    io::unmarshalUint32(src, srcLen, dst.drives[i].jid);
+    io::unmarshalString(src, srcLen, dst.drives[i].dgn);
+    io::unmarshalUint16(src, srcLen, dst.drives[i].up);
+    io::unmarshalUint16(src, srcLen, dst.drives[i].asn);
+    io::unmarshalUint32(src, srcLen, dst.drives[i].asn_time);
+    io::unmarshalString(src, srcLen, dst.drives[i].drive);
+    io::unmarshalUint16(src, srcLen, dst.drives[i].mode);
+    io::unmarshalString(src, srcLen, dst.drives[i].lblcode);
+    io::unmarshalUint16(src, srcLen, dst.drives[i].tobemounted);
+    io::unmarshalString(src, srcLen, dst.drives[i].vid);
+    io::unmarshalString(src, srcLen, dst.drives[i].vsn);
+    io::unmarshalUint32(src, srcLen, dst.drives[i].cfseq);
+  }
+}
+
+//-----------------------------------------------------------------------------
+// unmarshal
+//-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeUpdateDriveRqstMsgBody &dst) throw(castor::exception::Exception) {
   io::unmarshalString(src, srcLen, dst.vid);
   io::unmarshalString(src, srcLen, dst.drive);  
@@ -311,6 +397,18 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeConfigR
   io::unmarshalUint32(src, srcLen, dst.gid);
   io::unmarshalString(src, srcLen, dst.drive);
   io::unmarshalInt16(src, srcLen, dst.status);
+}
+
+//-----------------------------------------------------------------------------
+// unmarshal
+//-----------------------------------------------------------------------------
+void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeLabelRqstMsgBody &dst) throw(castor::exception::Exception) {
+  io::unmarshalUint32(src, srcLen, dst.uid);
+  io::unmarshalUint32(src, srcLen, dst.gid);
+  io::unmarshalString(src, srcLen, dst.vid);
+  io::unmarshalString(src, srcLen, dst.drive);
+  io::unmarshalString(src, srcLen, dst.dgn);
+  io::unmarshalString(src, srcLen, dst.density);
 }
 
 //-----------------------------------------------------------------------------

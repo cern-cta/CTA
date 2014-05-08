@@ -1,33 +1,8 @@
-add_executable(tapeserverd
-  AdminAcceptHandler.cpp
-  MountSessionAcceptHandler.cpp
-  DebugMountSessionForVdqmProtocol.cpp
-  DriveCatalogue.cpp
-  TapeDaemon.cpp
-  TapeDaemonMain.cpp
-  VdqmAcceptHandler.cpp
-  VdqmConnectionHandler.cpp)
+find_package( ZLIB REQUIRED )
 
-target_link_libraries(tapeserverd
-  Exception
-  SCSI
-  System
-  Utils
-  File
-  castorcommon
-  castorclient
-  castortapegatewayprotocol
-  castortapelegacymsg)
-
-install (TARGETS tapeserverd DESTINATION ${CASTOR_DEST_BIN_DIR})
-CastorInstallAdmManPage (tapeserverd)
-CastorInstallLogrotate (castor-tapeserver-server)
-CastorInstallSysconfigExample (tapeserverd)
-CastorInstallInitScript (tapeserverd)
-
-add_library(tapeserver 
+add_library(castorTapeServerDaemon 
   ../client/ClientProxy.cpp 
-  MountSession.cpp 
+  LabelSession.cpp
   RecallTaskInjector.cpp 
   MigrationReportPacker.cpp 
   RecallReportPacker.cpp
@@ -39,12 +14,41 @@ add_library(tapeserver
   MigrationTaskInjector.cpp
   MigrationMemoryManager.cpp
   RecallMemoryManager.cpp
-  GlobalStatusReporter.cpp) 
+  MountSession.cpp
+  AdminAcceptHandler.cpp
+  MountSessionAcceptHandler.cpp
+  DriveCatalogue.cpp
+  ../drive/Drive.cpp
+  TapeDaemonMain.cpp
+  VdqmAcceptHandler.cpp
+  VdqmConnectionHandler.cpp
+  GlobalStatusReporter.cpp)
 
-
-add_library(tapeserverdTest 
+add_library(castorTapeServerDaemonTestDummies
   ../client/ClientSimulator.cpp 
   ../../tpcp/TpcpCommand.cpp
   ../../tpcp/StreamOperators.cpp
   ../../tpcp/Helper.cpp
   ../../tpcp/TapeFseqRange.cpp)
+
+add_executable(tapeserverd TapeDaemon.cpp)
+
+target_link_libraries(tapeserverd
+  castorTapeServerDaemon
+  Exception
+  SCSI
+  System
+  Utils
+  File
+  castorcommon
+  castorclient
+  castortapegatewayprotocol
+  castortapelegacymsg
+  castorTapeServerThreading
+  ${ZLIB_LIBRARIES})
+
+install (TARGETS tapeserverd DESTINATION ${CASTOR_DEST_BIN_DIR})
+CastorInstallAdmManPage (tapeserverd)
+CastorInstallLogrotate (castor-tapeserver-server)
+CastorInstallSysconfigExample (tapeserverd)
+CastorInstallInitScript (tapeserverd)

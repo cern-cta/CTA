@@ -46,12 +46,21 @@ using namespace castor::tape;
 using namespace castor::log;
 
 castor::tape::tapeserver::daemon::MountSession::MountSession(
+    int argc,
+    char ** argv,
+    const std::string & hostname,
     const legacymsg::RtcpJobRqstMsgBody& clientRequest, 
     castor::log::Logger& logger, System::virtualWrapper & sysWrapper,
     const utils::TpconfigLines & tpConfig,
+    castor::legacymsg::VdqmProxy & vdqm,
+    castor::legacymsg::VmgrProxy & vmgr,
+    castor::legacymsg::RmcProxy & rmc,
+    castor::legacymsg::TapeserverProxy & initialProcess,
     const CastorConf & castorConf): 
     m_request(clientRequest), m_logger(logger), m_clientProxy(clientRequest),
-    m_sysWrapper(sysWrapper), m_tpConfig(tpConfig), m_castorConf(castorConf) {}
+    m_sysWrapper(sysWrapper), m_tpConfig(tpConfig), m_castorConf(castorConf), 
+    m_vdqm(vdqm), m_vmgr(vmgr), m_rmc(rmc), m_intialProcess(initialProcess), 
+    m_argc(argc), m_argv(argv) {}
 
 void castor::tape::tapeserver::daemon::MountSession::execute()
 throw (castor::tape::Exception) {

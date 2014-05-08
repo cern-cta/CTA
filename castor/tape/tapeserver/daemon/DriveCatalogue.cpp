@@ -512,7 +512,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedVdqmJob(const leg
         ": DGN mistatch: catalogueDgn=" << itor->second.dgn << " vdqmJobDgn=" << job.dgn;
       throw ex;
     }
-    itor->second.job = job;
+    itor->second.vdqmJob = job;
     itor->second.state = DRIVE_STATE_WAITFORK;
     break;
   default:
@@ -529,12 +529,43 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedVdqmJob(const leg
 // receivedLabelJob
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::receivedLabelJob(const legacymsg::TapeLabelRqstMsgBody &job) throw(castor::exception::Exception) {
+  const std::string unitName(job.drive);
+
+  std::ostringstream task;
+  task << "handle label job for tape drive " << unitName;
+
+  DriveMap::iterator itor = m_drives.find(unitName);
+  if(m_drives.end() == itor) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to " << task.str() << ": Unknown drive";
+    throw ex;
+  }
+
+  switch(itor->second.state) {
+  case DRIVE_STATE_UP:
+    if(std::string(job.dgn) != itor->second.dgn) {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Failed to " << task.str() <<
+        ": DGN mistatch: catalogueDgn=" << itor->second.dgn << " vdqmJobDgn=" << job.dgn;
+      throw ex;
+    }
+    itor->second.labelJob = job;
+    itor->second.state = DRIVE_STATE_WAITLABEL;
+    break;
+  default:
+    {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Failed to " << task.str() <<
+        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+      throw ex;
+    }
+  }
 }
 
 //-----------------------------------------------------------------------------
-// getJob
+// getVdqmJob
 //-----------------------------------------------------------------------------
-const castor::legacymsg::RtcpJobRqstMsgBody &castor::tape::tapeserver::daemon::DriveCatalogue::getJob(const std::string &unitName) const throw(castor::exception::Exception) {
+const castor::legacymsg::RtcpJobRqstMsgBody &castor::tape::tapeserver::daemon::DriveCatalogue::getVdqmJob(const std::string &unitName) const throw(castor::exception::Exception) {
   std::ostringstream task;
   task << "get vdqm job for tape drive " << unitName;
 
@@ -549,7 +580,36 @@ const castor::legacymsg::RtcpJobRqstMsgBody &castor::tape::tapeserver::daemon::D
   case DRIVE_STATE_WAITFORK:
   case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
-    return itor->second.job;
+    return itor->second.vdqmJob;
+  default:
+    {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Failed to " << task.str() <<
+        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+      throw ex;
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
+// getLabelJob
+//-----------------------------------------------------------------------------
+const castor::legacymsg::TapeLabelRqstMsgBody &castor::tape::tapeserver::daemon::DriveCatalogue::getLabelJob(const std::string &unitName) const throw(castor::exception::Exception) {
+  std::ostringstream task;
+  task << "get label job for tape drive " << unitName;
+
+  DriveMap::const_iterator itor = m_drives.find(unitName);
+  if(m_drives.end() == itor) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to " << task.str() << ": Unknown drive";
+    throw ex;
+  }
+
+  switch(itor->second.state) {
+  case DRIVE_STATE_WAITFORK:
+  case DRIVE_STATE_RUNNING:
+  case DRIVE_STATE_WAITDOWN:
+    return itor->second.labelJob;
   default:
     {
       castor::exception::Internal ex;
@@ -593,6 +653,29 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::forkedMountSession(const 
 // forkedLabelSession
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::forkedLabelSession(const std::string &unitName, const pid_t sessionPid) throw(castor::exception::Exception) {
+  std::ostringstream task;
+  task << "handle fork of label session for tape drive " << unitName;
+
+  DriveMap::iterator itor = m_drives.find(unitName);
+  if(m_drives.end() == itor) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to " << task.str() << ": Unknown drive";
+    throw ex;
+  }
+
+  switch(itor->second.state) {
+  case DRIVE_STATE_WAITLABEL:
+    itor->second.sessionPid = sessionPid;
+    itor->second.state = DRIVE_STATE_RUNNING;
+    break;
+  default:
+    {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Failed to " << task.str() <<
+        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+      throw ex;
+    }
+  }
 }
 
 //-----------------------------------------------------------------------------
