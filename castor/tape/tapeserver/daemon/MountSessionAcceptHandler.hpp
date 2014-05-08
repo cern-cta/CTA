@@ -142,11 +142,19 @@ private:
   
   /**
    * Handles incoming jobs and dispatches them to the proper functions
+   *
+   * Please note that this method takes ownership of the specified
+   * TCP/IP connection.
    * 
-   * @param connection
+   * @param clientConnection The file descriptor of the TCP/IP connection with
+   * the client.
    */
-  void handleIncomingJob(const int connection) 
+  void handleIncomingJob(const int clientConnection)
     throw(castor::exception::Exception);
+
+  void handleIncomingSetVidJob(const int clientConnection, const uint32_t bodyLen) throw(castor::exception::Exception);
+
+  void handleIncomingLabelJob(const int clientConnection, const uint32_t bodyLen) throw(castor::exception::Exception);
   
   /**
    * Logs the reception of the specified job message from the tplabel command.

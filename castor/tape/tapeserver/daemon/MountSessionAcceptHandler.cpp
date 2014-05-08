@@ -130,9 +130,9 @@ bool castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleEvent(
   }
 
   // Accept the connection from the admin command
-  castor::utils::SmartFd connection;
+  int connection = -1;
   try {
-    connection.reset(io::acceptConnection(fd.fd, 1));
+    connection = io::acceptConnection(fd.fd, 1);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to accept a connection from the admin command"
@@ -140,7 +140,8 @@ bool castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleEvent(
     throw ex;
   }
   
-  handleIncomingJob(connection.get());  
+  // handleIncomingJob() takes ownership of the client connection
+  handleIncomingJob(connection);  
   return false; // Stay registered with the reactor
 }
 
@@ -186,26 +187,50 @@ void
 //------------------------------------------------------------------------------
 // handleIncomingJob
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingJob(const int connection) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingJob(const int clientConnection) throw(castor::exception::Exception) {
+  castor::utils::SmartFd connection(clientConnection);
+
+  const legacymsg::MessageHeader header = readJobMsgHeader(connection.get());
   
-  const legacymsg::MessageHeader header = readJobMsgHeader(connection);
-  
-  if(SETVID == header.reqType) {
-    const legacymsg::TapeUpdateDriveRqstMsgBody body = readSetVidMsgBody(connection, header.lenOrStatus-sizeof(header));
-    logSetVidJobReception(body);
-    m_driveCatalogue.updateVidAssignment(body.vid, body.drive);
-    writeRcReplyMsg(connection, 0); // 0 as return code for the tape config command, as in: "all went fine"
+  switch(header.reqType) {
+  case SETVID:
+    handleIncomingSetVidJob(clientConnection, header.lenOrStatus - 3 * sizeof(uint32_t));
+    break;
+  case TPLABEL:
+    handleIncomingLabelJob(clientConnection, header.lenOrStatus - 3 * sizeof(uint32_t));
+    break;
+  default:
+    {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Unknown request type: " << header.reqType << ". Expected: " << SETVID << "(SETVID)";
+      throw ex;
+    }
   }
-  else if(TPLABEL == header.reqType) {
-    const legacymsg::TapeLabelRqstMsgBody body = readLabelRqstMsgBody(connection, header.lenOrStatus-sizeof(header));
-    logLabelJobReception(body);
-    m_driveCatalogue.receivedLabelJob(body, connection);
-  }
-  else {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Unknown request type: " << header.reqType << ". Expected: " << SETVID << "(SETVID)";
-    throw ex;
-  }
+}
+
+//------------------------------------------------------------------------------
+// handleIncomingSetVidJob
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingSetVidJob(const int clientConnection, const uint32_t bodyLen) throw(castor::exception::Exception) {
+  castor::utils::SmartFd connection(clientConnection);
+
+  const legacymsg::TapeUpdateDriveRqstMsgBody body = readSetVidMsgBody(connection.get(), bodyLen);
+  logSetVidJobReception(body);
+  m_driveCatalogue.updateVidAssignment(body.vid, body.drive);
+  writeRcReplyMsg(connection.get(), 0); // 0 as return code for the tape config command, as in: "all went fine"
+
+  close(connection.release());
+}
+
+//------------------------------------------------------------------------------
+// handleIncomingLabelJob
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingLabelJob(const int clientConnection, const uint32_t bodyLen) throw(castor::exception::Exception) {
+  castor::utils::SmartFd connection(clientConnection);
+
+  const legacymsg::TapeLabelRqstMsgBody body = readLabelRqstMsgBody(connection.get(), bodyLen);
+  logLabelJobReception(body);
+  m_driveCatalogue.receivedLabelJob(body, connection.release());
 }
 
 //------------------------------------------------------------------------------

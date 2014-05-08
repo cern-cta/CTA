@@ -26,6 +26,8 @@
 #include "castor/exception/BadAlloc.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
+#include "castor/legacymsg/CommonMarshal.hpp"
+#include "castor/legacymsg/TapeMarshal.hpp"
 #include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/MountSessionAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
@@ -36,6 +38,7 @@
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
+#include "h/Ctape.h"
 
 #include <algorithm>
 #include <limits.h>
@@ -625,13 +628,48 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession
   }
 }
 
+//-----------------------------------------------------------------------------
+// marshalTapeRcReplyMsg
+//-----------------------------------------------------------------------------
+size_t castor::tape::tapeserver::daemon::TapeDaemon::marshalTapeRcReplyMsg(char *const dst,
+  const size_t dstLen, const int rc)
+  throw(castor::exception::Exception) {
+  legacymsg::MessageHeader src;
+  src.magic = TPMAGIC;
+  src.reqType = TAPERC;
+  src.lenOrStatus = rc;  
+  return legacymsg::marshal(dst, dstLen, src);
+}
+
+//------------------------------------------------------------------------------
+// writeTapeRcReplyMsg
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::writeTapeRcReplyMsg(const int fd, const int rc) throw(castor::exception::Exception) {
+  char buf[REPBUFSZ];
+  const size_t len = marshalTapeRcReplyMsg(buf, sizeof(buf), rc);
+  const int timeout = 10; //seconds
+  try {
+    io::writeBytes(fd, timeout, len, buf); // TODO: put the 10 seconds of
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to write job reply message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
 //------------------------------------------------------------------------------
 // notifyLabelCmdOfEndOfSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::notifyLabelCmdOfEndOfSession(
   const pid_t sessionPid, const int waitpidStat) throw(castor::exception::Exception) {
-  //const int labelCmdConnection = m_driveCatalogue.getLabelCmdConnection(sessionPid);
-  // TO BE DONE
+  const int labelCmdConnection = m_driveCatalogue.getLabelCmdConnection(sessionPid);
+  
+  if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
+    writeTapeRcReplyMsg(labelCmdConnection, 0); // success
+  } else {
+    writeTapeRcReplyMsg(labelCmdConnection, 1); // failure
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -793,10 +831,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(const std::st
     const legacymsg::TapeLabelRqstMsgBody job = m_driveCatalogue.getLabelJob(unitName);
     std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
     castor::tape::System::realWrapper sWrapper;
-    
-    //TODO pass the rmc object to the labelsession and to the mounting and unmounting there
-    castor::tape::tapeserver::daemon::LabelSession labelsession(job, m_log, sWrapper, m_tpconfigLines, true);
-    
+    castor::tape::tapeserver::daemon::LabelSession labelsession(*(rmc.get()), job, m_log, sWrapper, m_tpconfigLines, true);    
     exit(0);
   } catch(std::exception &se) {
     log::Param params[] = {

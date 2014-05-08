@@ -249,6 +249,28 @@ protected:
    * @param sessionPid The process ID of the mount-session child-process.
    */
   void setDriveDownInVdqm(const pid_t sessionPid) throw();
+  
+  /**
+   * Marshals the specified source tape rc reply message structure into the
+   * specified destination buffer.
+   *
+   * @param dst    The destination buffer.
+   * @param dstLen The length of the destination buffer.
+   * @param rc     The return code to reply.
+   * @return       The total length of the header.
+   */
+  size_t marshalTapeRcReplyMsg(char *const dst, const size_t dstLen,
+    const int rc) throw(castor::exception::Exception);
+  
+  /**
+   * Writes a job reply message to the specified connection.
+   *
+   * @param fd The file descriptor of the connection with the admin command.
+   * @param rc The return code to reply.
+   * 
+   */
+  void writeTapeRcReplyMsg(const int fd, const int rc)
+    throw(castor::exception::Exception);
 
   /**
    * Does the required post processing for the specified reaped session.
