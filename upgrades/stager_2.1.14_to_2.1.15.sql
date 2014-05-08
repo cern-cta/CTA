@@ -44,7 +44,7 @@ DECLARE
 BEGIN
   SELECT release INTO unused FROM CastorVersion
    WHERE schemaName = 'STAGER'
-     AND release LIKE '2_1_14_11%';
+     AND release LIKE '2_1_14_1%';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we cannot apply this script
   raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the STAGER before this one.');
@@ -73,6 +73,8 @@ END;
 
 /* Drop updates from Type2Obj and redirect PrepareTo requests */
 DELETE FROM Type2Obj WHERE type in (38, 44, 147);
+DELETE FROM WhiteList WHERE reqType IN (38, 44, 147);
+DELETE FROM BlackList WHERE reqType IN (38, 44, 147);
 UPDATE Type2Obj SET svcHandler = 'JobReqSvc' WHERE type IN (36, 37);
 
 /* drop updates */
@@ -81,6 +83,46 @@ DROP TABLE StageUpdateRequest;
 DROP TABLE FirstByteWritten;
 DROP PROCEDURE FirstByteWrittenProc;
 DROP PROCEDURE handleProtoNoUpd;
+DROP PROCEDURE getBestDiskCopyToRead;
+DROP PROCEDURE getUpdateDoneProc;
+DROP PROCEDURE getUpdateStart;
+DROP PROCEDURE getUpdateFailedProc;
+DROP PROCEDURE getUpdateFailedProcExt;
+DROP PROCEDURE prepareForMigration;
+DROP PROCEDURE putFailedProc;
+DROP PROCEDURE putFailedProcExt;
+
+/* add DataPools */
+CREATE TABLE DataPool
+ (name VARCHAR2(2048),
+  id INTEGER CONSTRAINT PK_DataPool_Id PRIMARY KEY,
+  minAllowedFreeSpace NUMBER,
+  maxFreeSpace NUMBER,
+  totalSize INTEGER,
+  free INTEGER)
+INITRANS 50 PCTFREE 50 ENABLE ROW MOVEMENT;
+CREATE TABLE DataPool2SvcClass (Parent INTEGER, Child INTEGER) INITRANS 50 PCTFREE 50;
+CREATE INDEX I_DataPool2SvcClass_C on DataPool2SvcClass (child);
+CREATE INDEX I_DataPool2SvcClass_P on DataPool2SvcClass (parent);
+ALTER TABLE DataPool2SvcClass
+  ADD CONSTRAINT FK_DataPool2SvcClass_P FOREIGN KEY (Parent) REFERENCES DataPool (id)
+  ADD CONSTRAINT FK_DataPool2SvcClass_C FOREIGN KEY (Child) REFERENCES SvcClass (id);
+
+ALTER TABLE DiskServer ADD (dataPool INTEGER);
+ALTER TABLE DiskServer ADD CONSTRAINT FK_DiskServer_DataPool 
+  FOREIGN KEY (dataPool) REFERENCES DataPool(id);
+
+ALTER TABLE DiskCopy ADD (dataPool INTEGER);
+CREATE INDEX I_DiskCopy_DataPool ON DiskCopy (dataPool);
+CREATE INDEX I_DiskCopy_DP_GCW ON DiskCopy (dataPool, gcWeight);
+CREATE INDEX I_DiskCopy_Status_7_DP ON DiskCopy (decode(status,7,status,NULL), dataPool);
+ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_FileSystem
+  FOREIGN KEY (FileSystem) REFERENCES FileSystem (id);
+ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_DataPool
+  FOREIGN KEY (DataPool) REFERENCES DataPool (id);
+
+ALTER TABLE SubRequest ADD (diskServer INTEGER);
+CREATE INDEX I_SubRequest_DiskServer ON SubRequest (diskServer);
 
 /* PL/SQL code revalidation */
 /****************************/
@@ -117,6 +159,6 @@ BEGIN recompileAll(); END;
 
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
-UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
- WHERE release = '2_1_14_2';
+UPDATE UpgradeLog SET endDate = SYSTIMESTAMP, state = 'COMPLETE'
+ WHERE release = '2_1_15_0';
 COMMIT;

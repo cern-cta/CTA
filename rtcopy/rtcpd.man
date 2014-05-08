@@ -42,7 +42,7 @@ local CASTOR configuration file "/etc/castor/castor.conf".
 The following configuration variables are available:
 .PP
 .B RTCOPYD_BUFSZ
-\- Size of individual memory buffers (default=4MB).
+\- Size of individual memory buffers (default=5MB).
 .PP
 .B RTCOPYD_NB_BUFS
 \- Number of individual memory buffers (default=32). Note that the

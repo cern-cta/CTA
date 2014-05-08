@@ -1,18 +1,12 @@
 add_executable(tapeserverd
   AdminAcceptHandler.cpp
+  MountSessionAcceptHandler.cpp
   DebugMountSessionForVdqmProtocol.cpp
   DriveCatalogue.cpp
-  Rmc.cpp
-  RmcImpl.cpp
-  ScsiLibraryDriveName.cpp
   TapeDaemon.cpp
   TapeDaemonMain.cpp
-  Vdqm.cpp
   VdqmAcceptHandler.cpp
-  VdqmConnectionHandler.cpp
-  VdqmImpl.cpp
-  Vmgr.cpp
-  VmgrImpl.cpp)
+  VdqmConnectionHandler.cpp)
 
 target_link_libraries(tapeserverd
   Exception
@@ -42,7 +36,9 @@ add_library(tapeserver
   TapeWriteTask.cpp
   DiskReadTask.cpp
   DiskWriteTask.cpp
-  MigrationTaskInjector.cpp) 
+  MigrationTaskInjector.cpp
+  MigrationMemoryManager.cpp
+  RecallMemoryManager.cpp) 
 
 
 add_library(tapeserverdTest 

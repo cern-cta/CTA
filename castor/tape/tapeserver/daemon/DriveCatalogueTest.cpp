@@ -61,13 +61,13 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
 
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN1", "DEV1", "DEN11", "down", "POSITION1", "DEVTYPE1"));
+    "UNIT1", "DGN1", "DEV1", "DEN11", "down", "SLOT1", "DEVTYPE1"));
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN1", "DEV1", "DEN12", "down", "POSITION1", "DEVTYPE1"));
+    "UNIT1", "DGN1", "DEV1", "DEN12", "down", "SLOT1", "DEVTYPE1"));
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT2", "DGN2", "DEV2", "DEN21", "up", "POSITION2", "DEVTYPE2"));
+    "UNIT2", "DGN2", "DEV2", "DEN21", "up", "SLOT2", "DEVTYPE2"));
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT2", "DGN2", "DEV2", "DEN22", "up", "POSITION2", "DEVTYPE2"));
+    "UNIT2", "DGN2", "DEV2", "DEN22", "up", "SLOT2", "DEVTYPE2"));
 
   DriveCatalogue catalogue;
   ASSERT_NO_THROW(catalogue.populateCatalogue(lines));
@@ -115,8 +115,8 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
 
   {
     std::string fromCatalogue;
-    ASSERT_NO_THROW(fromCatalogue = catalogue.getPositionInLibrary("UNIT1"));
-    ASSERT_EQ(std::string("POSITION1"), fromCatalogue);
+    ASSERT_NO_THROW(fromCatalogue = catalogue.getLibrarySlot("UNIT1"));
+    ASSERT_EQ(std::string("SLOT1"), fromCatalogue);
   }
 
   {
@@ -159,8 +159,8 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
 
   {
     std::string fromCatalogue;
-    ASSERT_NO_THROW(fromCatalogue = catalogue.getPositionInLibrary("UNIT2"));
-    ASSERT_EQ(std::string("POSITION2"), fromCatalogue);
+    ASSERT_NO_THROW(fromCatalogue = catalogue.getLibrarySlot("UNIT2"));
+    ASSERT_EQ(std::string("SLOT2"), fromCatalogue);
   }
 
   {
@@ -176,7 +176,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
   
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT", "DGN", "DEV", "DEN", "invalid", "POSITION", "DEVTYPE"));
+    "UNIT", "DGN", "DEV", "DEN", "invalid", "SLOT", "DEVTYPE"));
     
   DriveCatalogue catalogue; 
   ASSERT_THROW(catalogue.populateCatalogue(lines),
@@ -189,9 +189,9 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
 
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN1", "DEV", "DEN1", "down", "POSITION", "DEVTYPE"));
+    "UNIT1", "DGN1", "DEV", "DEN1", "down", "SLOT", "DEVTYPE"));
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN2", "DEV", "DEN2", "down", "POSITION", "DEVTYPE"));
+    "UNIT1", "DGN2", "DEV", "DEN2", "down", "SLOT", "DEVTYPE"));
 
   DriveCatalogue catalogue;
   ASSERT_THROW(catalogue.populateCatalogue(lines),
@@ -204,9 +204,9 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
 
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV", "DEN1", "down", "POSITION", "DEVTYPE"));
+    "UNIT1", "DGN", "DEV", "DEN1", "down", "SLOT", "DEVTYPE"));
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV", "DEN2", "up", "POSITION", "DEVTYPE"));
+    "UNIT1", "DGN", "DEV", "DEN2", "up", "SLOT", "DEVTYPE"));
 
   DriveCatalogue catalogue;
   ASSERT_THROW(catalogue.populateCatalogue(lines),
@@ -219,9 +219,9 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
 
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV1", "DEN1", "down", "POSITION", "DEVTYPE"));
+    "UNIT1", "DGN", "DEV1", "DEN1", "down", "SLOT", "DEVTYPE"));
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV2", "DEN2", "down", "POSITION", "DEVTYPE"));
+    "UNIT1", "DGN", "DEV2", "DEN2", "down", "SLOT", "DEVTYPE"));
 
   DriveCatalogue catalogue;
   ASSERT_THROW(catalogue.populateCatalogue(lines),
@@ -229,14 +229,14 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
 }
 
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
-  positionInLibraryMismatchPopulate) {
+  librarySlotMismatchPopulate) {
   using namespace castor::tape::tapeserver::daemon;
   
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV", "DEN1", "down", "POSITION1", "DEVTYPE"));
+    "UNIT1", "DGN", "DEV", "DEN1", "down", "SLOT1", "DEVTYPE"));
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV", "DEN2", "down", "POSITION2", "DEVTYPE"));
+    "UNIT1", "DGN", "DEV", "DEN2", "down", "SLOT2", "DEVTYPE"));
     
   DriveCatalogue catalogue;
   ASSERT_THROW(catalogue.populateCatalogue(lines),
@@ -249,9 +249,9 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
 
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV", "DEN1", "down", "POSITION", "DEVTYPE1"));
+    "UNIT1", "DGN", "DEV", "DEN1", "down", "SLOT", "DEVTYPE1"));
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV", "DEN2", "down", "POSITION", "DEVTYPE2"));
+    "UNIT1", "DGN", "DEV", "DEN2", "down", "SLOT", "DEVTYPE2"));
 
   DriveCatalogue catalogue;
   ASSERT_THROW(catalogue.populateCatalogue(lines),
@@ -274,7 +274,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   // Start with the tape drive in status DOWN
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT", "DGN", "DEV", "DEN", "down", "POSITION", "DEVTYPE"));
+    "UNIT", "DGN", "DEV", "DEN", "down", "SLOT", "DEVTYPE"));
   DriveCatalogue catalogue;
   ASSERT_NO_THROW(catalogue.populateCatalogue(lines));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_DOWN, catalogue.getState("UNIT"));
@@ -292,7 +292,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   }
 
   // Receive a vdqm job
-  castor::tape::legacymsg::RtcpJobRqstMsgBody job;
+  castor::legacymsg::RtcpJobRqstMsgBody job;
   job.volReqId = 1111;
   job.clientPort = 2222;
   job.clientEuid = 3333;
@@ -355,14 +355,14 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
   using namespace castor::tape::tapeserver::daemon;
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT", "DGN1", "DEV", "DEN", "down", "POSITION", "DEVTYPE"));
+    "UNIT", "DGN1", "DEV", "DEN", "down", "SLOT", "DEVTYPE"));
 
   DriveCatalogue catalogue;
   ASSERT_NO_THROW(catalogue.populateCatalogue(lines));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_DOWN, catalogue.getState("UNIT"));
   ASSERT_NO_THROW(catalogue.configureUp("UNIT"));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP, catalogue.getState("UNIT"));
-  castor::tape::legacymsg::RtcpJobRqstMsgBody job;
+  castor::legacymsg::RtcpJobRqstMsgBody job;
   job.volReqId = 1111;
   job.clientPort = 2222;
   job.clientEuid = 3333;
@@ -378,9 +378,9 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, getUnitNames) {
   using namespace castor::tape::tapeserver::daemon;
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN1", "DEV1", "DEN1", "down", "POSITION1", "DEVTYPE1"));
+    "UNIT1", "DGN1", "DEV1", "DEN1", "down", "SLOT1", "DEVTYPE1"));
   lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT2", "DGN2", "DEV2", "DEN2", "up", "POSITION2", "DEVTYPE2"));
+    "UNIT2", "DGN2", "DEV2", "DEN2", "up", "SLOT2", "DEVTYPE2"));
 
   DriveCatalogue catalogue;
   ASSERT_NO_THROW(catalogue.populateCatalogue(lines));

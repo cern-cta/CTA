@@ -92,6 +92,90 @@ TEST_F(castor_utils, testSplitStringWithNoSeparatorInString) {
   ASSERT_EQ(stringContainingNoSeparator, columns[0]);
 }
 
+TEST_F(castor_utils, testTrimStringWithEmptyString) {
+  using namespace castor::utils;
+  const std::string s;
+  const std::string trimmedString = trimString(s);
+  ASSERT_EQ(s, trimmedString);
+}
+
+TEST_F(castor_utils, testTrimStringContainingNoSpaces) {
+  using namespace castor::utils;
+  const std::string s("NO_SPACES");
+  const std::string trimmedString = trimString(s);
+  ASSERT_EQ(s, trimmedString);
+}
+
+TEST_F(castor_utils, testTrimStringContainingLeftSpace) {
+  using namespace castor::utils;
+  const std::string s(" VALUE");
+  const std::string trimmedString = trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(castor_utils, testTrimStringContainingRightSpace) {
+  using namespace castor::utils;
+  const std::string s("VALUE ");
+  const std::string trimmedString = trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(castor_utils, testTrimStringContainingLeftAndRightSpace) {
+  using namespace castor::utils;
+  const std::string s(" VALUE ");
+  const std::string trimmedString = trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(castor_utils, testTrimStringContainingLeftTab) {
+  using namespace castor::utils;
+  const std::string s("\tVALUE");
+  const std::string trimmedString = trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(castor_utils, testTrimStringContainingRightTab) {
+  using namespace castor::utils;
+  const std::string s("VALUE\t");
+  const std::string trimmedString = trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(castor_utils, testTrimStringContainingLeftAndRightTab) {
+  using namespace castor::utils;
+  const std::string s("\tVALUE\t");
+  const std::string trimmedString = trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(castor_utils, testTrimStringContainingLeftNewLine) {
+  using namespace castor::utils;
+  const std::string s("\nVALUE");
+  const std::string trimmedString = trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(castor_utils, testTrimStringContainingRightNewLine) {
+  using namespace castor::utils;
+  const std::string s("VALUE\n");
+  const std::string trimmedString = trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(castor_utils, testTrimStringContainingLeftAndRightNewLine) {
+  using namespace castor::utils;
+  const std::string s("\nVALUE\n");
+  const std::string trimmedString = trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
+TEST_F(castor_utils, testTrimStringContainingLeftAndRightWhiteSpace) {
+  using namespace castor::utils;
+  const std::string s("  \t\t\n\nVALUE  \t\t\n\n");
+  const std::string trimmedString = trimString(s);
+  ASSERT_EQ(std::string("VALUE"), trimmedString);
+}
+
 TEST_F(castor_utils, testTimevalGreaterThan_BigSecSmallSec_BigUsecSmallUsec) {
   using namespace castor::utils;
   const timeval bigger   = {6, 5};

@@ -39,6 +39,12 @@ const unsigned short TAPE_SERVER_VDQM_LISTENING_PORT = 5070;
  */
 const unsigned short TAPE_SERVER_ADMIN_LISTENING_PORT = 5011;
 
+/**
+ * The TCP/IP port on which the tape server daemon listens for incoming
+ * connections from the mount session.
+ */
+const unsigned short TAPE_SERVER_MOUNTSESSION_LISTENING_PORT = 54321;
+
 } // namespace daemon
 } // namespace tapeserver
 } // namespace tape

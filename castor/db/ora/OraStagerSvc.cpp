@@ -130,10 +130,6 @@ const std::string castor::db::ora::OraStagerSvc::s_createRecallCandidateStatemen
 const std::string castor::db::ora::OraStagerSvc::s_selectCastorFileStatementString =
 "BEGIN selectCastorFile(:1, :2, :3, :4, :5, :6, :7, :8, :9); END;";
 
-/// SQL statement for getBestDiskCopyToRead
-const std::string castor::db::ora::OraStagerSvc::s_getBestDiskCopyToReadStatementString =
-  "BEGIN getBestDiskCopyToRead(:1, :2, :3, :4); END;";
-
 /// SQL statement for updateAndCheckSubRequest
 const std::string castor::db::ora::OraStagerSvc::s_updateAndCheckSubRequestStatementString =
   "BEGIN updateAndCheckSubRequest(:1, :2, :3); END;";
@@ -184,7 +180,6 @@ castor::db::ora::OraStagerSvc::OraStagerSvc(const std::string name) :
   m_createEmptyFileStatement(0),
   m_createRecallCandidateStatement(0),
   m_selectCastorFileStatement(0),
-  m_getBestDiskCopyToReadStatement(0),
   m_updateAndCheckSubRequestStatement(0),
   m_archiveSubReqStatement(0),
   m_stageRmStatement(0),
@@ -235,7 +230,6 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
     if (m_createEmptyFileStatement) deleteStatement(m_createEmptyFileStatement);
     if (m_createRecallCandidateStatement) deleteStatement(m_createRecallCandidateStatement);
     if (m_selectCastorFileStatement) deleteStatement(m_selectCastorFileStatement);
-    if (m_getBestDiskCopyToReadStatement) deleteStatement(m_getBestDiskCopyToReadStatement);
     if (m_updateAndCheckSubRequestStatement) deleteStatement(m_updateAndCheckSubRequestStatement);
     if (m_archiveSubReqStatement) deleteStatement(m_archiveSubReqStatement);
     if (m_stageRmStatement) deleteStatement(m_stageRmStatement);
@@ -258,7 +252,6 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
   m_createEmptyFileStatement = 0;
   m_createRecallCandidateStatement = 0;
   m_selectCastorFileStatement = 0;
-  m_getBestDiskCopyToReadStatement = 0;
   m_updateAndCheckSubRequestStatement = 0;
   m_archiveSubReqStatement = 0;
   m_stageRmStatement = 0;
@@ -850,67 +843,6 @@ castor::db::ora::OraStagerSvc::selectCastorFile(castor::stager::SubRequest* subr
     ex.getMessage()
       << "Unable to select castorFile by fileId :"
       << std::endl << e.getMessage();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// getBestDiskCopyToRead
-//------------------------------------------------------------------------------
-castor::stager::DiskCopyInfo*
-castor::db::ora::OraStagerSvc::getBestDiskCopyToRead
-(const castor::stager::CastorFile *castorFile,
- const castor::stager::SvcClass *svcClass)
-  throw (castor::exception::Exception) {
-  // Check whether the statements are ok
-  castor::stager::DiskCopyInfo *result = 0;
-  try {
-    if (0 == m_getBestDiskCopyToReadStatement) {
-      m_getBestDiskCopyToReadStatement =
-	createStatement(s_getBestDiskCopyToReadStatementString);
-      m_getBestDiskCopyToReadStatement->registerOutParam
-	(3, oracle::occi::OCCISTRING, 2048);
-      m_getBestDiskCopyToReadStatement->registerOutParam
-	(4, oracle::occi::OCCISTRING, 2048);
-      m_getBestDiskCopyToReadStatement->setAutoCommit(true);
-    }
-    // Execute statement and get result
-    m_getBestDiskCopyToReadStatement->setDouble(1, castorFile->id());
-    m_getBestDiskCopyToReadStatement->setDouble(2, svcClass->id());
-
-    int nb = m_getBestDiskCopyToReadStatement->executeUpdate();
-    if (0 == nb) {
-      // Nothing found, throw exception
-      castor::exception::Internal e;
-      e.getMessage()
-        << "getBestDiskCopyToRead returned no DiskCopyInfo";
-      throw e;
-    }
-
-    // Found the CastorFile, so create it in memory
-    result = new castor::stager::DiskCopyInfo();
-    result->setDiskServer(m_getBestDiskCopyToReadStatement->getString(3));
-    result->setDiskCopyPath(m_getBestDiskCopyToReadStatement->getString(4));
-    result->setFileId(castorFile->fileId());
-    result->setNsHost(castorFile->nsHost());
-    result->setSize(castorFile->fileSize());
-    return result;
-
-  } catch (oracle::occi::SQLException e) {
-    // Free resources
-    if (result) {
-      delete result;
-      result = 0;
-    };
-    // Ignore ORA-01403: no data found
-    if (1403 == e.getErrorCode()) {
-      return result;
-    }
-    handleException(e);
-    castor::exception::Internal ex;
-    ex.getMessage()
-      << "Error caught in getDiskCopyToRead."
-      << std::endl << e.what();
     throw ex;
   }
 }

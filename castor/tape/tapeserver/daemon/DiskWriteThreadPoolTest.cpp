@@ -8,7 +8,8 @@
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/log/StringLogger.hpp"
-#include "castor/tape/tapeserver/daemon/MemManager.hpp"
+#include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
+#include "castor/tape/tapeserver/daemon/MemBlock.hpp"
 #include <gtest/gtest.h>
 
 namespace unitTests{

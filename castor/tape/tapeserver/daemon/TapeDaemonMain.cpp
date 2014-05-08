@@ -23,40 +23,21 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/log/LoggerImplementation.hpp"
+#include "castor/log/SyslogLogger.hpp"
 #include "castor/io/PollReactorImpl.hpp"
-#include "castor/tape/tapeserver/daemon/RmcImpl.hpp"
+#include "castor/legacymsg/RmcProxyTcpIpFactory.hpp"
+#include "castor/legacymsg/TapeserverProxyTcpIpFactory.hpp"
+#include "castor/legacymsg/VdqmProxyTcpIpFactory.hpp"
+#include "castor/legacymsg/VmgrProxyTcpIpFactory.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
-#include "castor/tape/tapeserver/daemon/VdqmImpl.hpp"
-#include "castor/tape/tapeserver/daemon/VmgrImpl.hpp"
 #include "h/rmc_constants.h"
 #include "h/vdqm_constants.h"
 #include "h/vmgr_constants.h"
+#include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "castor/legacymsg/TapeserverProxyTcpIpFactory.hpp"
 
 #include <sstream>
 #include <string>
-
-//------------------------------------------------------------------------------
-// getVdqmHostName
-//
-// Tries to get the name of the host on which the vdqmd daemon is running by
-// parsing /etc/castor/castor.conf.
-//
-// This function logs the host name if it is successful, else it logs an
-// error message and returns an empty string.
-//------------------------------------------------------------------------------
-static std::string getVdqmHostName(castor::log::Logger &log) throw();
-
-//------------------------------------------------------------------------------
-// getVmgrHostName
-//
-// Tries to get the name of the host on which the vdqmd daemon is running by
-// parsing /etc/castor/castor.conf.
-//
-// This function logs the host name if it is successful, else it logs an
-// error message and returns an empty string.
-//------------------------------------------------------------------------------
-static std::string getVmgrHostName(castor::log::Logger &log) throw();
 
 //------------------------------------------------------------------------------
 // getConfigParam
@@ -67,23 +48,60 @@ static std::string getVmgrHostName(castor::log::Logger &log) throw();
 static std::string getConfigParam(const std::string &category, const std::string &name) throw(castor::exception::Exception);
 
 //------------------------------------------------------------------------------
+// exceptionThrowingMain
+//
+// The main() function delegates the bulk of its implementation to this
+// exception throwing version.
+//------------------------------------------------------------------------------
+static int exceptionThrowingMain(const int argc, char **const argv, castor::log::Logger &log);
+
+//------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char **const argv) {
-  using namespace castor::tape::tapeserver::daemon;
-  castor::log::LoggerImplementation log("tapeserverd");
+  using namespace castor;
 
-  // Get the names of the hosts on which the vdqm, vmgr and rmc daemons are running
-  const std::string vdqmHostName = getVdqmHostName(log);
-  if(vdqmHostName.empty()) {
-    log(LOG_ERR, "Aborting: Cannot continue without vdqm host-name");
+  try {
+    log::SyslogLogger log("tapeserverd");
+
+    try {
+      return exceptionThrowingMain(argc, argv, log);
+    } catch(castor::exception::Exception &ex) {
+      log::Param params[] = {log::Param("message", ex.getMessage().str())};
+      log(LOG_ERR, "Caught an unexpected CASTOR exception", params);
+      return 1;
+    } catch(std::exception &se) {
+      log::Param params[] = {log::Param("what", se.what())};
+      log(LOG_ERR, "Caught an unexpected standard exception", params);
+      return 1;
+    } catch(...) {
+      log(LOG_ERR, "Caught an unexpected and unknown exception");
+      return 1;
+    }
+  } catch(castor::exception::Exception &ex) {
+    std::cerr << "Failed to instantiate object representing CASTOR logging system"
+      ": " << ex.getMessage().str() << std::endl;
+    return 1;
+  } catch(std::exception &se) {
+    std::cerr << "Failed to instantiate object representing CASTOR logging system"
+      ": " << se.what() << std::endl;
+    return 1;
+  } catch(...) {
+    std::cerr << "Failed to instantiate object representing CASTOR logging system"
+      ": Caught an unknown exception" << std::endl;
     return 1;
   }
-  const std::string vmgrHostName = getVmgrHostName(log);
-  if(vmgrHostName.empty()) {
-    log(LOG_ERR, "Aborting: Cannot continue without vmgr host-name");
-    return 1;
-  }
+  return 0;
+}
+
+//------------------------------------------------------------------------------
+// exceptionThrowingMain
+//------------------------------------------------------------------------------
+static int exceptionThrowingMain(const int argc, char **const argv, castor::log::Logger &log) {
+  using namespace castor::tape::tapeserver::daemon;
+
+  const std::string vdqmHostName = getConfigParam("VDQM", "HOST");
+  const std::string vmgrHostName = getConfigParam("VMGR", "HOST");
 
   // Parse /etc/castor/TPCONFIG
   castor::tape::utils::TpconfigLines tpconfigLines;
@@ -91,9 +109,10 @@ int main(const int argc, char **const argv) {
 
   // Create proxy objects for the vdqm, vmgr and rmc daemons
   const int netTimeout = 10; // Timeout in seconds
-  VdqmImpl vdqm(log, vdqmHostName, VDQM_PORT, netTimeout);
-  VmgrImpl vmgr(log, vmgrHostName, VMGR_PORT, netTimeout);
-  RmcImpl rmc(log, netTimeout);
+  castor::legacymsg::VdqmProxyTcpIpFactory vdqmFactory(log, vdqmHostName, VDQM_PORT, netTimeout);
+  castor::legacymsg::VmgrProxyTcpIpFactory vmgrFactory(log, vmgrHostName, VMGR_PORT, netTimeout);
+  castor::legacymsg::RmcProxyTcpIpFactory rmcFactory(log, netTimeout);
+  castor::legacymsg::TapeserverProxyTcpIpFactory tapeserverFactory(log, TAPE_SERVER_MOUNTSESSION_LISTENING_PORT, netTimeout);
 
   // Create the poll() reactor
   castor::io::PollReactorImpl reactor(log);
@@ -106,51 +125,14 @@ int main(const int argc, char **const argv) {
     std::cerr,
     log,
     tpconfigLines,
-    vdqm,
-    vmgr,
-    rmc,
+    vdqmFactory,
+    vmgrFactory,
+    rmcFactory,
+    tapeserverFactory,
     reactor);
 
   // Run the tapeserverd daemon
-  return daemon.main(argc, argv);
-}
-
-//------------------------------------------------------------------------------
-// getVdqmHostName
-//------------------------------------------------------------------------------
-static std::string getVdqmHostName(castor::log::Logger &log) throw() {
-  using namespace castor;
-
-  try {
-    const std::string category = "VDQM";
-    const std::string name = "HOST";
-    const std::string value = getConfigParam(category, name);
-    log::Param params[] = {log::Param("value", value)};
-    log(LOG_INFO, "VDQM HOST", params);
-    return value;
-  } catch(castor::exception::Exception &ex) {
-    log(LOG_ERR, ex.getMessage().str());
-    return "";
-  }
-}
-
-//------------------------------------------------------------------------------
-// getVmgrHostName
-//------------------------------------------------------------------------------
-static std::string getVmgrHostName(castor::log::Logger &log) throw() {
-  using namespace castor;
-
-  try {
-    const std::string category = "VMGR";
-    const std::string name = "HOST";
-    const std::string value = getConfigParam(category, name);
-    log::Param params[] = {log::Param("value", value)};
-    log(LOG_INFO, "VMGR HOST", params);
-    return value;
-  } catch(castor::exception::Exception &ex) {
-    log(LOG_ERR, ex.getMessage().str());
-    return "";
-  }
+  return daemon.main();
 }
 
 //------------------------------------------------------------------------------

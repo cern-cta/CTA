@@ -25,7 +25,8 @@
 #pragma once
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/tape/utils/TpconfigLine.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
 
@@ -60,21 +61,21 @@ public:
    *     |    send VDQM_UNIT_UP     ------------------                     |
    *      ------------------------>|       UP         |                    |
    *                                ------------------                     |
-   *                                |                ^                     |
-   *                                |                |                     |
-   *                                | vdqm job       |                     |
-   *                                |                |                     |
-   *                                v                |                     |
-   *                        ------------------       | SIGCHLD             |
-   *                       |    WAITFORK      |      | [success]           |
-   *                        ------------------       |                     |
-   *                                |                |                     |
-   *                                |                |                     |
-   *                                | forked         |                     |
-   *                                |                |                     |
-   *                                v                |                     |
-   *                                ------------------    SIGCHLD [fail]   |
-   *                               |     RUNNING      |--------------------|
+   *                                |  |             ^                     |
+   *              -----------------    |             |                     |
+   *             | label job           | vdqm job    |                     |
+   *             |                     |             |                     |
+   *             v                     v             |                     |
+   *        -----------        ------------------    | SIGCHLD             |
+   *       | WAITLABEL |      |    WAITFORK      |   | [success]           |
+   *        -----------        ------------------    |                     |
+   *             |                  |                |                     |
+   *             |                  |                |                     |
+   *             | forked           | forked         |                     |
+   *             |                  |                |                     |
+   *             |                  v                |                     |
+   *             |                  ------------------    SIGCHLD [fail]   |
+   *              ---------------->|     RUNNING      |--------------------|
    *                                ------------------                     |
    *                                |                ^                     |
    *                                |                |                     |
@@ -118,9 +119,25 @@ public:
    * tape session continues to run in the DRIVE_STATE_WAITDOWN state, however
    * when the tape session is finished the state of the drive is moved to
    * DRIVE_STATE_DOWN.
+   *
+   * The tape daemon can receive a job to label a tape in a drive from an
+   * administration client when the state of that drive is DRIVE_STATE_UP.  On
+   * reception of the job the daemon prepares to fork a child process and
+   * enters the DRIVE_STATE_WAITLABEL state.
+   *
+   * Once the child process is forked the drive enters the DRIVE_STATE_RUNNING
+   * state.  The child process is responsible for running a label session.
+   * During such a sesion a tape will be mounted, the tape will be labeled and
+   * finally the tape will be dismounted.
    */
-  enum DriveState { DRIVE_STATE_INIT, DRIVE_STATE_DOWN, DRIVE_STATE_UP,
-    DRIVE_STATE_WAITFORK, DRIVE_STATE_RUNNING, DRIVE_STATE_WAITDOWN };
+  enum DriveState {
+    DRIVE_STATE_INIT,
+    DRIVE_STATE_DOWN,
+    DRIVE_STATE_UP,
+    DRIVE_STATE_WAITFORK,
+    DRIVE_STATE_WAITLABEL,
+    DRIVE_STATE_RUNNING,
+    DRIVE_STATE_WAITDOWN};
 
   /**
    * Returns the string representation of the specified tape-drive state.
@@ -173,6 +190,20 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   const std::string &getDgn(const std::string &unitName) const throw(castor::exception::Exception);
+  
+  /**
+   * Returns the VID of the tape mounted on the specified tape drive.
+   *
+   * @param unitName The unit name of the tape drive.
+   */
+  const std::string &getVid(const std::string &unitName) const throw(castor::exception::Exception);
+  
+  /**
+   * Returns the time when the tape was mounted on the specified tape drive.
+   *
+   * @param unitName The unit name of the tape drive.
+   */
+  time_t getAssignmentTime(const std::string &unitName) const throw(castor::exception::Exception);
 
   /**
    * Returns the filename of the device file of the specified tape drive.
@@ -196,11 +227,11 @@ public:
   DriveState getState(const std::string &unitName) const throw(castor::exception::Exception);
 
   /**
-   * Returns the position of the specified tape drive in its libary.
+   * Returns the library slot of the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getPositionInLibrary(const std::string &unitName) const throw(castor::exception::Exception);
+  const std::string &getLibrarySlot(const std::string &unitName) const throw(castor::exception::Exception);
 
   /**
    * Returns the device type of the specified tape drive in its libary.
@@ -253,6 +284,25 @@ public:
   void receivedVdqmJob(const legacymsg::RtcpJobRqstMsgBody &job) throw(castor::exception::Exception);
 
   /**
+   * Moves the state of the specified tape drive to DRIVE_STATE_WAITLABEL.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_UP.
+   *
+   * The unit name of a tape drive is unique for a given host.  No two drives
+   * on the same host can have the same unit name.
+   *
+   * A tape drive cannot be a member of more than one device group name (DGN).
+   *
+   * This method throws an exception if the DGN field of the specified vdqm job
+   * does not match the value that was entered into the catalogue with the
+   * populateCatalogue() method.
+   *
+   * @param job The label job.
+   */
+  void receivedLabelJob(const legacymsg::TapeLabelRqstMsgBody &job) throw(castor::exception::Exception);
+
+  /**
    * Returns the job received from the vdqmd daemon for the specified tape
    * drive.
    *
@@ -275,6 +325,18 @@ public:
    * running the mount session.
    */
   void forkedMountSession(const std::string &unitName, const pid_t sessionPid) throw(castor::exception::Exception); 
+
+  /**
+   * Moves the state of the specified tape drive to DRIVE_STATE_RUNNING.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_WAITLABEL.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param sessionPid The process ID of the child process responsible for
+   * running the label session.
+   */
+  void forkedLabelSession(const std::string &unitName, const pid_t sessionPid) throw(castor::exception::Exception);
 
   /**
    * Returns the process ID of the child process responsible the mount session
@@ -332,6 +394,14 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   void mountSessionFailed(const std::string &unitName) throw(castor::exception::Exception);
+  
+  /**
+   * Updates the vid and assignment time of the specified drive
+   * 
+   * @param vid Volume ID of the tape mounted
+   * @param unitName Name of the drive
+   */
+  void updateVidAssignment(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception);
 
 private:
 
@@ -344,9 +414,19 @@ private:
      * /etc/castor/TPCONFIG.
      */
     std::string dgn;
-
+    
     /**
-     * The device file of the tape drive, for eexample: /dev/nst0
+     * The Volume ID of the tape mounted in the drive. Empty string if drive is empty.
+     */
+    std::string vid;
+    
+    /**
+     * The point in time when the drive has been assigned a tape
+     */
+    time_t assignment_time;
+    
+    /**
+     * The device file of the tape drive, for example: /dev/nst0
      */
     std::string devFilename;
 
@@ -361,10 +441,10 @@ private:
     DriveState state;
 
     /**
-     * The position of the tape drive within the tape library, for example:
+     * The library slot n which the tape drive is located, for example:
      * smc@localhost,0
      */
-    std::string positionInLibrary;
+    std::string librarySlot;
 
     /**
      * The device type of the tape drive, for example: T10000
@@ -486,11 +566,11 @@ private:
    * Throws an exception if the specified catalogue value does not match the
    * specified TPCONFIG line value.
    *
-   * @param cataloguePositionInLibrary The position of the tape drive within
-   * its library that has been retrieved from tape-drive catalogue.
+   * @param catalogueLibrarySlot The library slot of the tape drive that has
+   * been retrieved from the tape-drive catalogue.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLinePositionInLibrary(const std::string &cataloguePositionInLibrary, const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLineLibrarySlot(const std::string &catalogueLibrarySlot, const utils::TpconfigLine &line) throw(castor::exception::Exception);
 
   /**
    * Throws an exception if the specified catalogue value does not match the

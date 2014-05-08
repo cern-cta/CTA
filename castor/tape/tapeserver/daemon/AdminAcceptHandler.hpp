@@ -26,11 +26,11 @@
 #include "castor/io/PollReactor.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
-#include "castor/tape/tapeserver/daemon/Vdqm.hpp"
-#include "castor/tape/legacymsg/MessageHeader.hpp"
-#include "castor/tape/legacymsg/TapeConfigRequestMsgBody.hpp"
-#include "castor/tape/legacymsg/TapeStatRequestMsgBody.hpp"
-#include "castor/tape/legacymsg/TapeStatReplyMsgBody.hpp"
+#include "castor/legacymsg/MessageHeader.hpp"
+#include "castor/legacymsg/TapeConfigRequestMsgBody.hpp"
+#include "castor/legacymsg/TapeStatRequestMsgBody.hpp"
+#include "castor/legacymsg/TapeStatReplyMsgBody.hpp"
+#include "castor/legacymsg/VdqmProxyFactory.hpp"
 
 #include <poll.h>
 
@@ -51,15 +51,21 @@ public:
    *
    * @param fd The file descriptor of the socket listening for
    * connections from the vdqmd daemon.
-   * @param reactor The reactor to which new Vdqm connection handlers are to be
-   * registered.
+   * @param reactor The reactor to which new Vdqm connection handlers are to
+   * be registered.
    * @param log The object representing the API of the CASTOR logging system.
-   * @param vdqm The object representing the vdqmd daemon.
+   * @param vdqmFactory Factory to create proxy objects representing the vdqmd
+   * daemon.
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
    */
-  AdminAcceptHandler(const int fd, io::PollReactor &reactor,
-    log::Logger &log, Vdqm &vdqm, DriveCatalogue &driveCatalogue, const std::string &hostName) throw();
+  AdminAcceptHandler(
+    const int fd,
+    io::PollReactor &reactor,
+    log::Logger &log,
+    legacymsg::VdqmProxyFactory &vdqmFactory,
+    DriveCatalogue &driveCatalogue,
+    const std::string &hostName) throw();
 
   /**
    * Returns the integer file descriptor of this event handler.
@@ -112,18 +118,6 @@ private:
     throw(castor::exception::Exception);
   
   /**
-   * Marshals the specified source tape stat reply message structure into the
-   * specified destination buffer.
-   *
-   * @param dst    The destination buffer.
-   * @param dstLen The length of the destination buffer.
-   * @param rc     The return code to reply.
-   * @return       The total length of the header.
-   */
-  size_t marshalTapeStatReplyMsg(char *const dst, const size_t dstLen,
-    const legacymsg::TapeStatReplyMsgBody &body) throw(castor::exception::Exception);
-  
-  /**
    * Writes a reply message to the tape stat command connection.
    *
    * @param fd The file descriptor of the connection with the admin command.
@@ -131,6 +125,36 @@ private:
    * 
    */
   void writeTapeStatReplyMsg(const int fd)
+    throw(castor::exception::Exception);
+
+  /**
+   * Fills the specified TapeStatDriveEntry with the information correpsonding
+   * to the tape drive with specified unit name.
+   *
+   * @param entry Output parameter: The TapeStatDriveEntry.
+   * @param unitName The unit name of the tape drive.
+   */
+  void fillTapeStatDriveEntry(legacymsg::TapeStatDriveEntry &entry,
+    const std::string &unitName) throw (castor::exception::Exception);
+
+  /**
+   * Translates the specified tape-drive state into the corresponding value for
+   * the up field of TapeStatDriveEntry.
+   *
+   * @param state The state of the tape drive.
+   * @return The translated value.
+   */
+  uint16_t driveStateToStatEntryUp(const DriveCatalogue::DriveState state)
+    throw(castor::exception::Exception);
+
+  /**
+   * Translates the specified tape-drive state into the corresponding value for
+   * the asn field of TapeStatDriveEntry.
+   *
+   * @param state The state of the tape drive.
+   * @return The translated value.
+   */
+  uint16_t driveStateToStatEntryAsn(const DriveCatalogue::DriveState state) 
     throw(castor::exception::Exception);
 
   /**
@@ -221,9 +245,9 @@ private:
   log::Logger &m_log;
 
   /**
-   * The object representing the vdqmd daemon.
+   * Factory to create proxy objects representing the vdqmd daemon.
    */
-  Vdqm &m_vdqm;
+  legacymsg::VdqmProxyFactory &m_vdqmFactory;
 
   /**
    * The catalogue of tape drives controlled by the tape server daemon.

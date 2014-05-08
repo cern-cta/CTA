@@ -37,7 +37,7 @@ namespace daemon {
 //------------------------------------------------------------------------------
 // DiskReadThreadPool constructor
 //------------------------------------------------------------------------------
-DiskReadThreadPool::DiskReadThreadPool(int nbThread, unsigned int maxFilesReq,unsigned int maxBytesReq, 
+DiskReadThreadPool::DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq, 
         castor::log::LogContext lc) : m_lc(lc),m_maxFilesReq(maxFilesReq),m_maxBytesReq(maxBytesReq),m_nbActiveThread(0){
   for(int i=0; i<nbThread; i++) {
     DiskReadWorkerThread * thr = new DiskReadWorkerThread(*this);

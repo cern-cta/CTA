@@ -27,11 +27,12 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/io/PollReactor.hpp"
+#include "castor/legacymsg/RmcProxyFactory.hpp"
+#include "castor/legacymsg/TapeserverProxyFactory.hpp"
+#include "castor/legacymsg/VdqmProxyFactory.hpp"
+#include "castor/legacymsg/VmgrProxyFactory.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
-#include "castor/tape/tapeserver/daemon/Rmc.hpp"
-#include "castor/tape/tapeserver/daemon/Vdqm.hpp"
-#include "castor/tape/tapeserver/daemon/Vmgr.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
 #include "castor/tape/utils/utils.hpp"
 
@@ -64,9 +65,12 @@ public:
    * @param stdErr Stream representing standard error.
    * @param log The object representing the API of the CASTOR logging system.
    * @param tpconfigLines The parsed lines of /etc/castor/TPCONFIG.
-   * @param vdqm The proxy object representing the vdqmd daemon.
-   * @param vmgr The proxy object representing the vmgrd daemon.
-   * @param rmc The proxy object representing the rmcd daemon.
+   * @param vdqmFactory Factory to create proxy objects representing the vdqmd
+   * daemon.
+   * @param vmgrFactory Factory to create proxy objects representing the vmgrd
+   * daemon.
+   * @param rmcFactory Factory to create proxy objects representing the rmcd
+   * daemon.
    * @param reactor The reactor responsible for dispatching the I/O events of
    * the parent process of the tape server daemon.
    */
@@ -77,9 +81,10 @@ public:
     std::ostream &stdErr,
     log::Logger &log,
     const utils::TpconfigLines &tpconfigLines,
-    Vdqm &vdqm,
-    Vmgr &vmgr,
-    Rmc &rmc,
+    legacymsg::VdqmProxyFactory &vdqmFactory,
+    legacymsg::VmgrProxyFactory &vmgrFactory,
+    legacymsg::RmcProxyFactory &rmcFactory,
+    legacymsg::TapeserverProxyFactory &tapeserverProxyFactory,
     io::PollReactor &reactor) throw(castor::exception::Exception);
 
   /**
@@ -90,21 +95,22 @@ public:
   /**
    * The main entry function of the daemon.
    *
-   * @param argc The number of command-line arguments.
-   * @param argv The array of command-line arguments.
-   * @return     The return code of the process.
+   * @return The return code of the process.
    */
-  int main(const int argc, char **const argv) throw();
+  int main() throw();
 
 protected:
 
   /**
-   * Returns the name of the host on which the tape daemon is running.
+   * Returns the name of the host on which the daemon is running.
    */
   std::string getHostName() const throw(castor::exception::Exception);
 
   /**
    * Exception throwing main() function.
+   *
+   * @param argc The number of command-line arguments.
+   * @param argv The array of command-line arguments.
    */
   void exceptionThrowingMain(const int argc, char **const argv)
     throw(castor::exception::Exception);
@@ -145,8 +151,7 @@ protected:
     throw();
 
   /**
-   * Blocks the signals that should not asynchronously disturb the tape-server
-   * daemon.
+   * Blocks the signals that should not asynchronously disturb the daemon.
    */
   void blockSignals() const throw(castor::exception::Exception);
 
@@ -163,8 +168,7 @@ protected:
     throw(castor::exception::Exception);
 
   /**
-   * Sets up the reactor to listen for an accept connection from the vdqmd
-   * daemon.
+   * Sets up the reactor.
    */
   void setUpReactor() throw(castor::exception::Exception);
 
@@ -179,9 +183,15 @@ protected:
    * registers it with the reactor.
    */
   void createAndRegisterAdminAcceptHandler() throw(castor::exception::Exception);
+  
+  /**
+   * Creates the handler to accept connections from the mount session(s) and
+   * registers it with the reactor.
+   */
+  void createAndRegisterMountSessionAcceptHandler() throw(castor::exception::Exception);
 
   /**
-   * The main event loop of the tape-server daemon.
+   * The main event loop of the daemon.
    */
   void mainEventLoop() throw(castor::exception::Exception);
 
@@ -235,26 +245,54 @@ protected:
   /**
    * Forks a mount-session child-process for every tape drive entry in the
    * tape drive catalogue that is waiting for such a fork to be carried out.
+   *
+   * There may be more than one child-process to fork because there may be
+   * more than one tape drive connected to the tape server and the previous
+   * call to m_reactor.handleEvents() handled requests to start a mount
+   * session on more than one of the connected tape drives.
    */
-  void forkWaitingMountSessions() throw();
+  void forkMountSessions() throw();
 
   /**
    * Forks a mount-session child-process for the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */ 
-  void forkWaitingMountSession(const std::string &unitName) throw();
+  void forkMountSession(const std::string &unitName) throw();
 
   /**
    * Runs the mount session.  This method is to be called within the child
    * process responsible for running the mount session.
    *
-   * This method calls exceptionThrowingMountSession() and converts any
-   * unexpected exceptions to appropriate calls to exit().
+   * @param unitName The unit name of the tape drive.
+   */
+  void runMountSession(const std::string &unitName) throw();
+
+  /**
+   * Forks a label-session child-process for every tape drive entry in the
+   * tape drive catalogue that is waiting for such a fork to be carried out.
+   *
+   * There may be more than one child-process to fork because there may be
+   * more than one tape drive connected to the tape server and the previous
+   * call to m_reactor.handleEvents() handled requests to start a label
+   * session on more than one of the connected tape drives.
+   */
+  void forkLabelSessions() throw();
+
+  /**
+   * Forks a label-session child-process for the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  void mountSession(const std::string &unitName) throw();
+  void forkLabelSession(const std::string &unitName) throw();
+
+  /**
+   * Runs the label session.  This method is to be called within the child
+   * process responsible for running the label session.
+   *
+   * @param unitName The unit name of the tape drive.
+   */
+  void runLabelSession(const std::string &unitName) throw();
 
   /**
    * Catalogue used to keep track of both the initial and current state of
@@ -278,19 +316,24 @@ protected:
   const utils::TpconfigLines m_tpconfigLines;
 
   /**
-   * The proxy object representing the vdqmd daemon.
+   * Factory to create proxy objects representing the vdqmd daemon.
    */
-  Vdqm &m_vdqm;
+  legacymsg::VdqmProxyFactory &m_vdqmFactory;
 
   /**
-   * The proxy object representing the vmgrd daemon.
+   * Factory to create proxy objects representing the vmgrd daemon.
    */
-  Vmgr &m_vmgr;
+  legacymsg::VmgrProxyFactory &m_vmgrFactory;
 
   /**
-   * The proxy object representing the rmcd daemon.
+   * Factory to create proxy objects representing the rmcd daemon.
    */
-  Rmc &m_rmc;
+  legacymsg::RmcProxyFactory &m_rmcFactory;
+  
+  /**
+   * The proxy object representing the tapeserver daemon.
+   */
+  legacymsg::TapeserverProxyFactory &m_tapeserverFactory;
 
   /**
    * The reactor responsible for dispatching the file-descriptor event-handlers
@@ -299,12 +342,12 @@ protected:
   io::PollReactor &m_reactor;
 
   /**
-   * The program name of the tape daemon.
+   * The program name of the daemon.
    */
   const std::string m_programName;
 
   /**
-   * The name of the host on which tape daemon is running.  This name is
+   * The name of the host on which the daemon is running.  This name is
    * needed to fill in messages to be sent to the vdqmd daemon.
    */
   const std::string m_hostName;

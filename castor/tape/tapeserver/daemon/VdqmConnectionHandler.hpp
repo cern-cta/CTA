@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/VdqmConnectionHandler.hpp
+ *         castor/tape/tapeserver/daemon/VdqmConnectionHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,16 +22,16 @@
 
 #pragma once
 
+#include "castor/io/io.hpp"
 #include "castor/io/PollEventHandler.hpp"
 #include "castor/io/PollReactor.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
-#include "castor/tape/tapeserver/daemon/Vdqm.hpp"
-#include "castor/tape/legacymsg/MessageHeader.hpp"
-#include "castor/io/io.hpp"
-#include "castor/tape/legacymsg/CommonMarshal.hpp"
-#include "castor/tape/legacymsg/RtcpMarshal.hpp"
-#include "castor/tape/legacymsg/VdqmMarshal.hpp"
+#include "castor/legacymsg/CommonMarshal.hpp"
+#include "castor/legacymsg/MessageHeader.hpp"
+#include "castor/legacymsg/RtcpMarshal.hpp"
+#include "castor/legacymsg/VdqmProxyFactory.hpp"
+#include "castor/legacymsg/VdqmMarshal.hpp"
 #include "h/vdqm_constants.h"
 #include "h/rtcp_constants.h"
 
@@ -55,12 +55,14 @@ public:
    * daemon.
    * @param reactor The reactor with which this event handler is registered.
    * @param log The object representing the API of the CASTOR logging system.
-   * @param vdqm The object representing the vdqmd daemon.
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
    */
-  VdqmConnectionHandler(const int fd, io::PollReactor &reactor,
-    log::Logger &log, Vdqm &vdqm, DriveCatalogue &driveCatalogue) throw();
+  VdqmConnectionHandler(
+    const int fd,
+    io::PollReactor &reactor,
+    log::Logger &log,
+    DriveCatalogue &driveCatalogue) throw();
 
   /**
    * Returns the integer file descriptor of this event handler.
@@ -105,11 +107,6 @@ private:
   log::Logger &m_log;
 
   /**
-   * The object representing the vdqmd daemon.
-   */
-  Vdqm &m_vdqm;
-
-  /**
    * The catalogue of tape drives controlled by the tape server daemon.
    */
   DriveCatalogue &m_driveCatalogue;
@@ -122,7 +119,7 @@ private:
 
   /**
    * Throws an exception if the specified file-descriptor is not that of the
-   * socket listening for connections from the vdqmd daemon.
+   * connection with the client.
    */
   void checkHandleEventFd(const int fd) throw (castor::exception::Exception);
 

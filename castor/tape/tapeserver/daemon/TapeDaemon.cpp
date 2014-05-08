@@ -27,6 +27,7 @@
 #include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
+#include "castor/tape/tapeserver/daemon/MountSessionAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/DebugMountSessionForVdqmProtocol.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
@@ -53,17 +54,19 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
   std::ostream &stdErr,
   log::Logger &log,
   const utils::TpconfigLines &tpconfigLines,
-  Vdqm &vdqm,
-  Vmgr &vmgr,
-  Rmc &rmc,
+  legacymsg::VdqmProxyFactory &vdqmFactory,
+  legacymsg::VmgrProxyFactory &vmgrFactory,
+  legacymsg::RmcProxyFactory &rmcFactory,
+  legacymsg::TapeserverProxyFactory &tapeserverFactory,
   io::PollReactor &reactor) throw(castor::exception::Exception):
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),
   m_argv(argv),
   m_tpconfigLines(tpconfigLines),
-  m_vdqm(vdqm),
-  m_vmgr(vmgr),
-  m_rmc(rmc),
+  m_vdqmFactory(vdqmFactory),
+  m_vmgrFactory(vmgrFactory),
+  m_rmcFactory(rmcFactory),
+  m_tapeserverFactory(tapeserverFactory),
   m_reactor(reactor),
   m_programName("tapeserverd"),
   m_hostName(getHostName()) {
@@ -96,12 +99,10 @@ castor::tape::tapeserver::daemon::TapeDaemon::~TapeDaemon() throw() {
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::TapeDaemon::main(const int argc,
-  char **const argv) throw() {
-
+int castor::tape::tapeserver::daemon::TapeDaemon::main() throw () {
   try {
 
-    exceptionThrowingMain(argc, argv);
+    exceptionThrowingMain(m_argc, m_argv);
 
   } catch (castor::exception::Exception &ex) {
     std::ostringstream msg;
@@ -171,7 +172,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logTpconfigLine(
     log::Param("devFilename", line.devFilename),
     log::Param("density", line.density),
     log::Param("initialState", line.initialState),
-    log::Param("positionInLibrary", line.positionInLibrary),
+    log::Param("librarySlot", line.librarySlot),
     log::Param("devType", line.devType)};
   m_log(LOG_INFO, "TPCONFIG line", params);
 }
@@ -200,8 +201,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const
   throw(castor::exception::Exception) {
   sigset_t sigs;
   sigemptyset(&sigs);
-  // The list of signals that should not asynchronously disturb the tape-server
-  // daemon
+  // The signals that should not asynchronously disturb the daemon
   sigaddset(&sigs, SIGHUP);
   sigaddset(&sigs, SIGINT);
   sigaddset(&sigs, SIGQUIT);
@@ -248,16 +248,18 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   params.push_back(log::Param("unitName", unitName));
   params.push_back(log::Param("dgn", dgn));
 
+  std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
+
   switch(driveState) {
   case DriveCatalogue::DRIVE_STATE_DOWN:
     params.push_back(log::Param("state", "down"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.setDriveDown(m_hostName, unitName, dgn);
+    vdqm->setDriveDown(m_hostName, unitName, dgn);
     break;
   case DriveCatalogue::DRIVE_STATE_UP:
     params.push_back(log::Param("state", "up"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
-    m_vdqm.setDriveUp(m_hostName, unitName, dgn);
+    vdqm->setDriveUp(m_hostName, unitName, dgn);
     break;
   default:
     {
@@ -278,15 +280,16 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
   throw(castor::exception::Exception) {
   createAndRegisterVdqmAcceptHandler();
   createAndRegisterAdminAcceptHandler();
+  createAndRegisterMountSessionAcceptHandler();
 }
 
 //------------------------------------------------------------------------------
 // createAndRegisterVdqmAcceptHandler
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHandler() throw(castor::exception::Exception) {
-  castor::utils::SmartFd vdqmListenSock;
+  castor::utils::SmartFd listenSock;
   try {
-    vdqmListenSock.reset(io::createListenerSock(TAPE_SERVER_VDQM_LISTENING_PORT));
+    listenSock.reset(io::createListenerSock(TAPE_SERVER_VDQM_LISTENING_PORT));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex(ne.code());
     ex.getMessage() << "Failed to create socket to listen for vdqm connections"
@@ -301,9 +304,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHa
 
   std::auto_ptr<VdqmAcceptHandler> vdqmAcceptHandler;
   try {
-    vdqmAcceptHandler.reset(new VdqmAcceptHandler(vdqmListenSock.get(), m_reactor,
-      m_log, m_vdqm, m_driveCatalogue));
-    vdqmListenSock.release();
+    vdqmAcceptHandler.reset(new VdqmAcceptHandler(listenSock.get(), m_reactor,
+      m_log, m_driveCatalogue));
+    listenSock.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
     ex.getMessage() <<
@@ -319,9 +322,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHa
 // createAndRegisterVdqmAcceptHandler
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptHandler() throw(castor::exception::Exception) {
-  castor::utils::SmartFd adminListenSock;
+  castor::utils::SmartFd listenSock;
   try {
-    adminListenSock.reset(io::createListenerSock(TAPE_SERVER_ADMIN_LISTENING_PORT));
+    listenSock.reset(io::createListenerSock(TAPE_SERVER_ADMIN_LISTENING_PORT));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex(ne.code());
     ex.getMessage() << "Failed to create socket to listen for admin command connections"
@@ -336,9 +339,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
 
   std::auto_ptr<AdminAcceptHandler> adminAcceptHandler;
   try {
-    adminAcceptHandler.reset(new AdminAcceptHandler(adminListenSock.get(), m_reactor,
-      m_log, m_vdqm, m_driveCatalogue, m_hostName));
-    adminListenSock.release();
+    adminAcceptHandler.reset(new AdminAcceptHandler(listenSock.get(), m_reactor,
+      m_log, m_vdqmFactory, m_driveCatalogue, m_hostName));
+    listenSock.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
     ex.getMessage() <<
@@ -351,12 +354,48 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
 }
 
 //------------------------------------------------------------------------------
+// createAndRegisterVdqmAcceptHandler
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterMountSessionAcceptHandler() throw(castor::exception::Exception) {
+  castor::utils::SmartFd mountSessionListenSock;
+  try {
+    mountSessionListenSock.reset(io::createListenerSock(TAPE_SERVER_MOUNTSESSION_LISTENING_PORT));
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex(ne.code());
+    ex.getMessage() << "Failed to create socket to listen for mount session connections"
+      ": " << ne.getMessage().str();
+    throw ex;
+  }
+  {
+    log::Param params[] = {
+      log::Param("listeningPort", TAPE_SERVER_MOUNTSESSION_LISTENING_PORT)};
+    m_log(LOG_INFO, "Listening for connections from the mount sessions", params);
+  }
+
+  std::auto_ptr<MountSessionAcceptHandler> mountSessionAcceptHandler;
+  try {
+    mountSessionAcceptHandler.reset(new MountSessionAcceptHandler(mountSessionListenSock.get(), m_reactor,
+      m_log, m_driveCatalogue, m_hostName));
+    mountSessionListenSock.release();
+  } catch(std::bad_alloc &ba) {
+    castor::exception::BadAlloc ex;
+    ex.getMessage() <<
+      "Failed to create the event handler for accepting admin connections"
+      ": " << ba.what();
+    throw ex;
+  }
+  m_reactor.registerHandler(mountSessionAcceptHandler.get());
+  mountSessionAcceptHandler.release();
+}
+
+//------------------------------------------------------------------------------
 // mainEventLoop
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop()
   throw(castor::exception::Exception) {
   while(handleEvents()) {
-    forkWaitingMountSessions();
+    forkMountSessions();
+    forkLabelSessions();
   }
 }
 
@@ -500,7 +539,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(const pid_
   }
 
   try {
-    m_vdqm.setDriveDown(m_hostName, unitName, dgn);
+    std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
+    vdqm->setDriveDown(m_hostName, unitName, dgn);
   } catch(castor::exception::Exception &ex) {
     log::Param params[] = {
       log::Param("sessionPid", sessionPid),
@@ -512,22 +552,22 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(const pid_
 }
 
 //------------------------------------------------------------------------------
-// forkWaitingMountSessions
+// forkMountSessions
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSessions() throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSessions() throw() {
   const std::list<std::string> unitNames =
     m_driveCatalogue.getUnitNames(DriveCatalogue::DRIVE_STATE_WAITFORK);
 
   for(std::list<std::string>::const_iterator itor = unitNames.begin();
     itor != unitNames.end(); itor++) {
-    forkWaitingMountSession(*itor);
+    forkMountSession(*itor);
   }
 }
 
 //------------------------------------------------------------------------------
-// forkWaitingMountSession
+// forkMountSession
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSession(const std::string &unitName) throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSession(const std::string &unitName) throw() {
   m_log.prepareForFork();
   const pid_t sessionPid = fork();
 
@@ -549,7 +589,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSession(const
     // file-descriptors owned by the event handlers
     m_reactor.clear();
 
-    mountSession(unitName);
+    runMountSession(unitName);
 
     // The runMountSession() should call exit() and should therefore never
     // return
@@ -558,9 +598,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkWaitingMountSession(const
 }
 
 //------------------------------------------------------------------------------
-// mountSession
+// runMountSession
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::mountSession(const std::string &unitName) throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::string &unitName) throw() {
   const pid_t sessionPid = getpid();
   {
     log::Param params[] = {
@@ -571,6 +611,10 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mountSession(const std::strin
 
   try {
     const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getJob(unitName);
+    std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
+    std::auto_ptr<legacymsg::VmgrProxy> vmgr(m_vmgrFactory.create());
+    std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
+    std::auto_ptr<legacymsg::TapeserverProxy> tapeserver(m_tapeserverFactory.create());
     DebugMountSessionForVdqmProtocol mountSession(
       m_argc,
       m_argv,
@@ -578,9 +622,11 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mountSession(const std::strin
       job,
       m_log,
       m_tpconfigLines,
-      m_vdqm,
-      m_vmgr,
-      m_rmc);
+      *(vdqm.get()),
+      *(vmgr.get()),
+      *(rmc.get()),
+      *(tapeserver.get())
+    );
 
     mountSession.execute();
 
@@ -599,4 +645,56 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mountSession(const std::strin
     m_log(LOG_ERR, "Aborting mount session: Caught an unexpected and unknown exception", params);
     exit(1);
   }
+}
+
+//------------------------------------------------------------------------------
+// forkLabelSessions
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSessions() throw() {
+  const std::list<std::string> unitNames =
+    m_driveCatalogue.getUnitNames(DriveCatalogue::DRIVE_STATE_WAITLABEL);
+
+  for(std::list<std::string>::const_iterator itor = unitNames.begin();
+    itor != unitNames.end(); itor++) {
+    forkLabelSession(*itor);
+  }
+}
+
+//------------------------------------------------------------------------------
+// forkLabelSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(const std::string &unitName) throw() {
+  m_log.prepareForFork();
+  const pid_t sessionPid = fork();
+
+  // If fork failed
+  if(0 > sessionPid) {
+    // Log an error message and return
+    char errBuf[100];
+    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    log::Param params[] = {log::Param("message", errBuf)};
+    m_log(LOG_ERR, "Failed to fork label session for tape drive", params);
+
+  // Else if this is the parent process
+  } else if(0 < sessionPid) {
+    m_driveCatalogue.forkedLabelSession(unitName, sessionPid);
+
+  // Else this is the child process
+  } else {
+    // Clear the reactor which in turn will close all of the open
+    // file-descriptors owned by the event handlers
+    m_reactor.clear();
+
+    runLabelSession(unitName);
+
+    // The runLabelSession() should call exit() and should therefore never
+    // return
+    m_log(LOG_ERR, "runLabelSession() returned unexpectedly");
+  }
+}
+
+//------------------------------------------------------------------------------
+// runLabelSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(const std::string &unitName) throw() {
 }

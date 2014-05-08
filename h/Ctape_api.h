@@ -71,7 +71,6 @@ EXTERN_C int Ctape_mount (char *, char *, int, char *, char *, char *, int, char
 EXTERN_C int Ctape_position (char *, int, int, int, unsigned char *, int, int, int, char *, char *, int, int, int, int);
 EXTERN_C int Ctape_reserve (int, struct dgn_rsv *);
 EXTERN_C int Ctape_rls (char *, int);
-EXTERN_C int Ctape_rstatus (char *, struct rsv_status *, int, int);
 EXTERN_C void Ctape_seterrbuf (char *, int);
 EXTERN_C int Ctape_status (char *, struct drv_status *, int);
 EXTERN_C int send2tpd (char *, char *, int, char *, int);

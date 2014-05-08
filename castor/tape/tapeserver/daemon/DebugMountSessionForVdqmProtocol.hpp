@@ -26,12 +26,13 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/log/Logger.hpp"
-#include "castor/tape/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/legacymsg/RmcProxy.hpp"
+#include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/legacymsg/VdqmProxy.hpp"
+#include "castor/legacymsg/VmgrProxy.hpp"
+#include "castor/legacymsg/TapeserverProxy.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
 #include "castor/tape/tapegateway/Volume.hpp"
-#include "castor/tape/tapeserver/daemon/Rmc.hpp"
-#include "castor/tape/tapeserver/daemon/Vdqm.hpp"
-#include "castor/tape/tapeserver/daemon/Vmgr.hpp"
 #include "castor/tape/utils/utils.hpp"
 
 #include <sys/types.h>
@@ -71,9 +72,10 @@ public:
     const legacymsg::RtcpJobRqstMsgBody &job,
     castor::log::Logger &logger,
     const utils::TpconfigLines &tpConfig,
-    Vdqm &vdqm,
-    Vmgr &vmgr,
-    Rmc &rmc) throw();
+    legacymsg::VdqmProxy &vdqm,
+    legacymsg::VmgrProxy &vmgr,
+    legacymsg::RmcProxy &rmc,
+    legacymsg::TapeserverProxy &tps) throw();
 
   /**
    * The only method. It will execute (like a task, that it is)
@@ -125,17 +127,22 @@ private:
   /**
    * The object representing the vdqmd daemon.
    */
-  Vdqm &m_vdqm;
+  legacymsg::VdqmProxy &m_vdqm;
 
   /**
    * The object representing the vmgrd daemon.
    */
-  Vmgr &m_vmgr;
+  legacymsg::VmgrProxy &m_vmgr;
 
   /**
    * The object representing the rmcd daemon.
    */
-  Rmc &m_rmc;
+  legacymsg::RmcProxy &m_rmc;
+  
+  /**
+   * The object representing the rmcd daemon.
+   */
+  legacymsg::TapeserverProxy &m_tps;
 
   /**
    * Changes the name of the process to reflect what the process is doing.
@@ -156,10 +163,10 @@ private:
   void mountTape(const std::string &vid) throw (castor::exception::Exception);
 
   /**
-   * Searches the parsed contents of /etc/castor/TPCONFIG for the position of
-   * the sepecified drive within its library.
+   * Searches the parsed contents of /etc/castor/TPCONFIG for the library slot
+   * of the specified drive.
    */
-  std::string getPositionInLibrary(const std::string &unitName) throw (castor::exception::Exception);
+  std::string getLibrarySlot(const std::string &unitName) throw (castor::exception::Exception);
 
   /**
    * Transfer files.  This means either recalling files from tape to disk,
