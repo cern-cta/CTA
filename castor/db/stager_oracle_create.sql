@@ -846,6 +846,8 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Migration', 'SizeThreshold', '300000000', 'The threshold to consider a file "small" or "large" when routing it to tape');
 INSERT INTO CastorConfig
+  VALUES ('Migration', 'NbMigCandConsidered', '10000', 'The number of migration jobs considered in time order by each selection of the best files to migrate');
+INSERT INTO CastorConfig
   VALUES ('D2dCopy', 'MaxNbRetries', '2', 'The maximum number of retries for disk to disk copies before it is considered failed. Here 2 means we will do in total 3 attempts.');
 INSERT INTO CastorConfig
   VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to offline.');
@@ -1766,26 +1768,6 @@ UPDATE Type2Obj SET svcHandler = 'BulkStageReqSvc' WHERE type IN (50, 119);
 /* when they change status                                           */
 /*********************************************************************/
 CREATE TABLE FileSystemsToCheck (FileSystem NUMBER CONSTRAINT PK_FSToCheck_FS PRIMARY KEY, ToBeChecked NUMBER);
-
-/*********************/
-/* FileSystem rating */
-/*********************/
-
-/* Computes a 'rate' for the filesystem which is an agglomeration
-   of weight and fsDeviation. The goal is to be able to classify
-   the fileSystems using a single value and to put an index on it */
-CREATE OR REPLACE FUNCTION fileSystemRate
-(nbReadStreams IN NUMBER,
- nbWriteStreams IN NUMBER)
-RETURN NUMBER DETERMINISTIC IS
-BEGIN
-  RETURN - nbReadStreams - nbWriteStreams;
-END;
-/
-
-/* FileSystem index based on the rate. */
-CREATE INDEX I_FileSystem_Rate
-    ON FileSystem(fileSystemRate(nbReadStreams, nbWriteStreams));
 
 /************/
 /* Aborting */
@@ -4897,7 +4879,7 @@ BEGIN
        AND DiskServer.status IN (dconst.DISKSERVER_PRODUCTION, dconst.DISKSERVER_READONLY)
        AND DiskServer.hwOnline = 1
        AND DiskCopy.status IN (dconst.DISKCOPY_VALID, dconst.DISKCOPY_STAGEOUT)
-     ORDER BY FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
+     ORDER BY FileSystem.nbReadStreams + FileSystem.nbWriteStreams ASC,
               DBMS_Random.value)
    WHERE rownum < 2;
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -5158,9 +5140,7 @@ BEGIN
              AND DiskServer.id = FileSystem.diskServer
              AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
              AND DiskServer.hwOnline = 1
-        ORDER BY -- order by rate as defined by the function
-                 fileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams) DESC,
-                 -- finally use randomness to avoid preferring always the same FS
+        ORDER BY -- use randomness to scatter filesystem usage
                  DBMS_Random.value)
    WHERE ROWNUM < 2;
   -- compute it's gcWeight
@@ -6141,16 +6121,16 @@ BEGIN
       varFoundSeg := TRUE;
       -- Is the segment valid
       IF varSeg.segStatus = '-' THEN
-        -- remember the copy number and tape
-        varAllCopyNbs.EXTEND;
-        varAllCopyNbs(varI) := varSeg.copyno;
-        varAllVIDs.EXTEND;
-        varAllVIDs(varI) := varSeg.vid;
-        varI := varI + 1;
         -- Is the segment on a valid tape from recall point of view ?
         IF BITAND(varSeg.tapeStatus, tconst.TAPE_DISABLED) = 0 AND
            BITAND(varSeg.tapeStatus, tconst.TAPE_EXPORTED) = 0 AND
            BITAND(varSeg.tapeStatus, tconst.TAPE_ARCHIVED) = 0 THEN
+          -- remember the copy number and tape
+          varAllCopyNbs.EXTEND;
+          varAllCopyNbs(varI) := varSeg.copyno;
+          varAllVIDs.EXTEND;
+          varAllVIDs(varI) := varSeg.vid;
+          varI := varI + 1;
           -- create recallJob
           INSERT INTO RecallJob (id, castorFile, copyNb, recallGroup, svcClass, euid, egid,
                                  vid, fseq, status, fileSize, creationTime, blockId, fileTransactionId)
@@ -7039,7 +7019,7 @@ BEGIN
       -- List available diskcopies for job scheduling
       SELECT /*+ INDEX_RS_ASC (DiskCopy I_DiskCopy_CastorFile) INDEX(Subrequest PK_Subrequest_Id)*/ 
              LISTAGG(DiskServer.name || ':' || FileSystem.mountPoint, '|')
-             WITHIN GROUP (ORDER BY FileSystemRate(FileSystem.nbReadStreams, FileSystem.nbWriteStreams))
+             WITHIN GROUP (ORDER BY FileSystem.nbReadStreams + FileSystem.nbWriteStreams)
         INTO varDcList
         FROM DiskCopy, FileSystem, DiskServer, DiskPool2SvcClass
        WHERE DiskCopy.castorfile = inCfId
@@ -9434,8 +9414,8 @@ BEGIN
               FROM DiskServer, FileSystem, DiskPool2SvcClass, CastorFile, RecallJob
              WHERE CastorFile.id = inCfId
                AND RecallJob.castorFile = inCfId
-               AND RecallJob.svcclass = DiskPool2SvcClass.child
-               AND FileSystem.diskpool = DiskPool2SvcClass.parent
+               AND RecallJob.svcClass = DiskPool2SvcClass.child
+               AND FileSystem.diskPool = DiskPool2SvcClass.parent
                -- a priori, we want to have enough free space. However, if we don't, we accept to start writing
                -- if we have a minimum of 30GB free and count on gerbage collection to liberate space while writing
                -- We still check that the file fit on the disk, and actually keep a 30% margin so that very recent
@@ -9447,9 +9427,10 @@ BEGIN
                AND DiskServer.id = FileSystem.diskServer
                AND DiskServer.status = dconst.DISKSERVER_PRODUCTION
                AND DiskServer.hwOnline = 1
-          ORDER BY -- use randomness to scatter recalls everywhere in the pool. This works unless the pool starts to be overloaded:
-                   -- once a hot spot develops, recalls start to take longer and longer and thus tend to accumulate. However,
-                   -- until we have a faster feedback system to rank filesystems, the fileSystemRate order has not proven to be better.
+          ORDER BY -- order by filesystem load first: this works if the feedback loop is fast enough, that is
+                   -- the transfer of the selected files in bulk does not take more than a couple of minutes
+                   FileSystem.nbMigratorStreams + FileSystem.nbRecallerStreams ASC,
+                   -- then use randomness for tie break
                    DBMS_Random.value)
   LOOP
     varFileSystemId := f.id;

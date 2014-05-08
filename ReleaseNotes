@@ -25,6 +25,11 @@
 
     #104444 RFE: add support for querying file checksums through the xrootd interface
 
+  Nameserver
+  ----------
+
+    #104447 nschown uses the incorrect Cns API
+
   Upgrade Instructions from 2.1.14-11
   -----------------------------------
 
