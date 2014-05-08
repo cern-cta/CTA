@@ -27,18 +27,19 @@
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/log/LogContext.hpp"
-#include <list>
 #include <memory>
+#include <string>
+#include <stdint.h>
 
 namespace castor {
-namespace tape {
-  
-  namespace legacymsg{
+    namespace legacymsg{
     class VmgrProxy;
     class VdqmProxy;
     class TapeserverProxy;
     class RmcProxy;
   };
+  
+namespace tape {
 namespace tapeserver {
 namespace daemon {
  
@@ -63,11 +64,55 @@ public:
    * 
    */      
   void finish();
+  /**
+   * Will call  VdqmProxy::assignDrive
+   * @param server The host name of the server to which the tape drive is
+   * attached.
+   * @param unitName The unit name of the tape drive.
+   * @param dgn The device group name of the tape drive.
+   * @param mountTransactionId The mount transaction ID.
+   * @param sessionPid The process ID of the tape-server daemon's mount-session
+   * process.
+   */
+  void reportNowOccupiedDrive(const std::string &server,const std::string &unitName, 
+  const std::string &dgn, const uint32_t mountTransactionId, 
+  const pid_t sessionPid);
+  
+  /**
+   * Will call TapeserverProxy::gotWriteMountDetailsFromClient
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
+   */
+  void gotReadMountDetailsFromClient(const std::string &unitName,
+  const std::string &vid);
+  
 private:
   class Report {
   public:
     virtual ~Report(){}
     virtual void execute(GlobalStatusReporter&)=0;
+  };
+  class ReportAssignDrive : public Report {
+    const std::string server;
+    const std::string unitName;
+    const std::string dgn;
+    const uint32_t mountTransactionId; 
+    const pid_t sessionPid;
+  public:
+    ReportAssignDrive(const std::string &server,const std::string &unitName, 
+            const std::string &dgn, const uint32_t mountTransactionId,
+            const pid_t sessionPid);
+    virtual ~ReportAssignDrive(){}
+    virtual void execute(GlobalStatusReporter&);
+  };
+  class ReportGotDetailsFromClient : public Report {
+    const std::string &unitName;
+    const std::string &vid;
+  public:
+    ReportGotDetailsFromClient(const std::string &unitName,
+  const std::string &vid);
+    virtual ~ReportGotDetailsFromClient(){}
+    virtual void execute(GlobalStatusReporter&);
   };
   /**
    * Inherited from Thread, it will do the job : pop a request, execute it 
