@@ -74,6 +74,22 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   endforeach ()
 endif (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
 
+# Create a shared librbary for the dummies supporting the tests
+add_library(TestDummies
+  ../castor/io/DummyPollEventHandler.cpp
+  ../castor/io/DummyPollReactor.cpp
+  ../castor/legacymsg/CupvProxyDummy.cpp
+  ../castor/legacymsg/RmcProxyDummy.cpp
+  ../castor/legacymsg/RmcProxyDummyFactory.cpp
+  ../castor/legacymsg/VdqmProxyDummy.cpp
+  ../castor/legacymsg/VdqmProxyDummyFactory.cpp
+  ../castor/legacymsg/VmgrProxyDummy.cpp
+  ../castor/legacymsg/VmgrProxyDummyFactory.cpp
+  ../castor/legacymsg/TapeserverProxyDummy.cpp
+  ../castor/legacymsg/TapeserverProxyDummyFactory.cpp
+  ../castor/log/DummyLogger.cpp
+)
+
 # Those tests are single threaded, functionnal and error tests. They could
 # actually fail in helgrind/drd (but memcheck is recommended)
 set_property(SOURCE
@@ -84,18 +100,9 @@ add_executable(castorUnitTests
   ../castor/exception/ExceptionTest.cpp
   ../castor/io/IoTest.cpp
   ../castor/io/PollReactorImplTest.cpp
-  ../castor/io/DummyPollEventHandler.cpp
-  ../castor/io/DummyPollReactor.cpp
   ../castor/legacymsg/CommonMarshalTest.cpp
   ../castor/legacymsg/CupvMarshalTest.cpp
-  ../castor/legacymsg/CupvProxyDummy.cpp
-  ../castor/legacymsg/RmcProxyDummy.cpp
-  ../castor/legacymsg/RmcProxyDummyFactory.cpp
-  ../castor/legacymsg/VdqmProxyDummy.cpp
-  ../castor/legacymsg/VdqmProxyDummyFactory.cpp
   ../castor/legacymsg/VmgrMarshalTest.cpp
-  ../castor/legacymsg/VmgrProxyDummy.cpp
-  ../castor/legacymsg/VmgrProxyDummyFactory.cpp
   ../castor/legacymsg/RmcMarshalTest.cpp
   ../castor/legacymsg/RmcProxy.cpp
   ../castor/legacymsg/RmcProxyTcpIp.cpp
@@ -104,15 +111,12 @@ add_executable(castorUnitTests
   ../castor/legacymsg/ScsiLibrarySlotTest.cpp
   ../castor/legacymsg/TapeMarshalTest.cpp
   ../castor/legacymsg/TapeserverProxy.cpp
-  ../castor/legacymsg/TapeserverProxyDummy.cpp
-  ../castor/legacymsg/TapeserverProxyDummyFactory.cpp
   ../castor/legacymsg/TapeserverProxyTcpIp.cpp
   ../castor/legacymsg/VdqmMarshalTest.cpp
   ../castor/legacymsg/VdqmProxy.cpp
   ../castor/legacymsg/VdqmProxyTcpIp.cpp
   ../castor/legacymsg/VmgrProxy.cpp
   ../castor/legacymsg/VmgrProxyTcpIp.cpp
-  ../castor/log/DummyLogger.cpp
   ../castor/log/ParamTest.cpp
   ../castor/log/LogContextTest.cpp
   ../castor/log/StringLoggerTest.cpp
@@ -120,7 +124,6 @@ add_executable(castorUnitTests
   ../castor/server/DaemonTest.cpp
   ../castor/tape/tapeserver/client/ClientProxyTest.cpp
   ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
-  ../castor/tape/tapeserver/daemon/DebugMountSessionForVdqmProtocol.cpp
 #  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
@@ -162,10 +165,11 @@ target_link_libraries(castorUnitTests
   System
   Utils
   File
-  tapeserver
-  tapeserverdTest
+  TestDummies
   castortapegatewayprotocol
   castorTapeServerThreading
+  castorTapeServerDaemonTestDummies
+  castorTapeServerDaemon
   ${GTEST_LIBRARY}
   gmock
   pthread
@@ -202,11 +206,13 @@ target_link_libraries(castorThreadedUnitTests
   castortapegatewayprotocol
   castortapelegacymsg
   castorTapeServerThreading
-  tapeserverdTest
-  tapeserver
+  castorTapeServerDaemonTestDummies
+  castorTapeServerDaemon
+  TestDummies
   SCSI
   Utils
   castortapegatewayprotocol
+  castortapelegacymsg
   castortapeutils
   castorvdqm
   castorvmgr
@@ -217,8 +223,6 @@ target_link_libraries(castorThreadedUnitTests
   TapeDrive
   SCSI
   System 
-  tapeserverdTest
-  tapeserver 
   Utils
   File 
   ${ZLIB_LIBRARIES})

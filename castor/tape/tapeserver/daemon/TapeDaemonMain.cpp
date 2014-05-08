@@ -35,17 +35,11 @@
 #include "h/vmgr_constants.h"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/legacymsg/TapeserverProxyTcpIpFactory.hpp"
+#include "MountSession.hpp"
+#include "castor/utils/utils.hpp"
 
 #include <sstream>
 #include <string>
-
-//------------------------------------------------------------------------------
-// getConfigParam
-//
-// Tries to get the value of the specified parameter from parsing
-// /etc/castor/castor.conf.
-//------------------------------------------------------------------------------
-static std::string getConfigParam(const std::string &category, const std::string &name) throw(castor::exception::Exception);
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
@@ -100,8 +94,8 @@ int main(const int argc, char **const argv) {
 static int exceptionThrowingMain(const int argc, char **const argv, castor::log::Logger &log) {
   using namespace castor::tape::tapeserver::daemon;
 
-  const std::string vdqmHostName = getConfigParam("VDQM", "HOST");
-  const std::string vmgrHostName = getConfigParam("VMGR", "HOST");
+  const std::string vdqmHostName = TapeDaemon::getConfigString("VDQM", "HOST");
+  const std::string vmgrHostName = TapeDaemon::getConfigString("VMGR", "HOST");
 
   // Parse /etc/castor/TPCONFIG
   castor::tape::utils::TpconfigLines tpconfigLines;
@@ -135,35 +129,4 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
   return daemon.main();
 }
 
-//------------------------------------------------------------------------------
-// getConfigParam
-//------------------------------------------------------------------------------
-static std::string getConfigParam(const std::string &category, const std::string &name) throw(castor::exception::Exception) {
-  using namespace castor;
 
-  std::ostringstream task;
-  task << "get " << category << ":" << name << " from castor.conf";
-
-  common::CastorConfiguration config;
-  std::string value;
-
-  try {
-    config = common::CastorConfiguration::getConfig();
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed to " << task.str() <<
-      ": Failed to get castor configuration: " << ne.getMessage().str();
-    throw ex;
-  }
-
-  try {
-    value = config.getConfEnt(category.c_str(), name.c_str());
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Failed to " << task.str() <<
-      ": Failed to get castor configuration entry: " << ne.getMessage().str();
-    throw ex;
-  }
-
-  return value;
-}

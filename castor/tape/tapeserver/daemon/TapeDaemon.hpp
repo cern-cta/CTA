@@ -35,6 +35,7 @@
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/utils.hpp"
 
 #include <iostream>
 #include <list>
@@ -98,6 +99,35 @@ public:
    * @return The return code of the process.
    */
   int main() throw();
+  
+  /**
+   * Tries to get the value of the specified parameter from parsing (string)
+   * /etc/castor/castor.conf.
+   * @param category category of the configuration parameter
+   * @param name category of the configuration parameter
+   * @return string from castor.conf for this paramter
+   */
+  static std::string getConfigString(const std::string &category, const std::string &name) 
+  throw(castor::exception::Exception);
+  
+  /**
+   * Tries to get the value of the specified parameter from parsing (integer)
+   * /etc/castor/castor.conf.
+   * @param category category of the configuration parameter
+   * @param name category of the configuration parameter
+   * @return string from castor.conf for this paramter
+   */
+  template<typename T>
+  static T getConfig(const std::string &category, const std::string &name) throw(castor::exception::Exception) {
+    std::string strVal = getConfigString(category, name);
+    if (!castor::utils::isValidUInt(strVal.c_str()))
+      throw castor::exception::InvalidConfigEntry(category.c_str(), name.c_str(), strVal.c_str());
+    T val;
+    std::stringstream ss;
+    ss << strVal.c_str();
+    ss >> val;
+    return val;
+  }
 
 protected:
 

@@ -29,13 +29,15 @@
 #include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/MountSessionAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
-#include "castor/tape/tapeserver/daemon/DebugMountSessionForVdqmProtocol.hpp"
+#include "castor/tape/tapeserver/daemon/MountSession.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
+#include "castor/utils/utils.hpp"
+#include "castor/common/CastorConfiguration.hpp"
 
 #include <algorithm>
 #include <limits.h>
@@ -49,7 +51,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
+castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   const int argc,
   char **const argv,
   std::ostream &stdOut,
@@ -78,7 +80,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::TapeDaemon(
 // getHostName
 //------------------------------------------------------------------------------
 std::string
-  castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon::getHostName()
+  castor::tape::tapeserver::daemon::TapeDaemon::getHostName()
   const throw(castor::exception::Exception) {
   char nameBuf[81];
   if(gethostname(nameBuf, sizeof(nameBuf))) {
@@ -137,6 +139,40 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   registerTapeDrivesWithVdqm();
   mainEventLoop();
 }
+//------------------------------------------------------------------------------
+// getConfigString
+//------------------------------------------------------------------------------
+std::string castor::tape::tapeserver::daemon::TapeDaemon::getConfigString(
+  const std::string &category, const std::string &name) throw(castor::exception::Exception) {
+  using namespace castor;
+
+  std::ostringstream task;
+  task << "get " << category << ":" << name << " from castor.conf";
+
+  common::CastorConfiguration config;
+  std::string value;
+
+  try {
+    config = common::CastorConfiguration::getConfig();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to " << task.str() <<
+      ": Failed to get castor configuration: " << ne.getMessage().str();
+    throw ex;
+  }
+
+  try {
+    value = config.getConfEnt(category.c_str(), name.c_str());
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to " << task.str() <<
+      ": Failed to get castor configuration entry: " << ne.getMessage().str();
+    throw ex;
+  }
+
+  return value;
+}
+
 
 //------------------------------------------------------------------------------
 // logStartOfDaemon
@@ -611,23 +647,52 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
     m_log(LOG_INFO, "Mount-session child-process started", params);
   }
 
-  try {
+  try {  
+    MountSession::CastorConf castorConf;
+    castorConf.rfioConnRetry =    getConfig<uint32_t>("RFIO", "CONRETRY");
+    castorConf.rfioConnRetryInt = getConfig<uint32_t>("RFIO", "CONRETRY");
+    castorConf.rfioIOBufSize =    getConfig<uint32_t>("RFIO", "IOBUFSIZE");
+    castorConf.rtcopydBufsz =     getConfig<uint32_t>("RTCOPYD", "BUFSZ");
+    castorConf.rtcopydNbBufs =    getConfig<uint32_t>("RTCOPYD", "NB_BUFS");
+    castorConf.tapeBadMIRHandlingRepair = 
+                     getConfigString("TAPE", "BADMIR_HANDLING");
+    castorConf.tapeConfirmDriveFree = 
+                     getConfigString("TAPE", "CONFIRM_DRIVE_FREE");
+    castorConf.tapeConfirmDriveFreeInterval = 
+                     getConfig<uint32_t>("TAPE", "CONFIRM_DRIVE_FREE_INTVL");
+    castorConf.tapebridgeBulkRequestMigrationMaxBytes = 
+                     getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXBYTES");
+    castorConf.tapebridgeBulkRequestMigrationMaxFiles = 
+                     getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXFILES");
+    castorConf.tapebridgeBulkRequestRecallMaxBytes = 
+                     getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTRECALLMAXBYTES");
+    castorConf.tapebridgeBulkRequestRecallMaxFiles = 
+                     getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTRECALLMAXFILES");
+    castorConf.tapebridgeMaxBytesBeforeFlush = 
+                     getConfig<uint64_t>("TAPEBRIDGE", "MAXBYTESBEFOREFLUSH");
+    castorConf.tapebridgeMaxFilesBeforeFlush = 
+                     getConfig<uint64_t>("TAPEBRIDGE", "MAXFILESBEFOREFLUSH");
+    castorConf.tapeserverdDiskThreads = 
+                     getConfig<uint32_t>("TAPEBRIDGE", "THREAD_POOL");
+    castor::tape::System::realWrapper sysWrapper;
     const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getVdqmJob(unitName);
     std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
     std::auto_ptr<legacymsg::VmgrProxy> vmgr(m_vmgrFactory.create());
     std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
     std::auto_ptr<legacymsg::TapeserverProxy> tapeserver(m_tapeserverFactory.create());
-    DebugMountSessionForVdqmProtocol mountSession(
+    MountSession mountSession(
       m_argc,
       m_argv,
       m_hostName,
       job,
       m_log,
+      sysWrapper,
       m_tpconfigLines,
       *(vdqm.get()),
       *(vmgr.get()),
       *(rmc.get()),
-      *(tapeserver.get())
+      *(tapeserver.get()),
+      castorConf
     );
 
     mountSession.execute();
