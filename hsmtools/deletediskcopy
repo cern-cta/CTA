@@ -81,8 +81,16 @@ if len(args) > 0:
         if len(tok) - tok.index('') > 5:
             # minimum 5 elements are expected in a CASTOR physical path after the FQDN:
             # the mount point, the path, the fileid, the nshost, and the dcId
-            dcIds += [int(tok[-1])]
-            fileIds += [int(tok[-3])]
+            index = -1
+            dcIds += [int(tok[index])]
+            while True:
+               index -= 1
+               try:
+                  fileId = int(tok[index])
+                  break
+               except ValueError:
+                  continue
+            fileIds += [fileId]
         else:   # try to use it as a mount point
             if len(tok[tok.index('')+1:]) > 1 and tok[::-1].index('') == 0:   # we want a non-empty mountpoint and its last character = '/'
                 diskServers.append('.'.join(tok[:tok.index('')]))
