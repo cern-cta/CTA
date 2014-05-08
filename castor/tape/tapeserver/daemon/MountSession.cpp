@@ -145,7 +145,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
-    TapeReadSingleThread trst(*drive, m_volInfo.vid, 
+    TapeReadSingleThread trst(*drive, m_rmc, m_volInfo.vid, 
         m_castorConf.tapebridgeBulkRequestRecallMaxFiles, lc);
     RecallReportPacker rrp(m_clientProxy,
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
@@ -211,6 +211,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
     MigrationReportPacker mrp(m_clientProxy,
         lc);
     TapeWriteSingleThread twst(*drive.get(),
+        m_rmc,
         m_volInfo.vid,
         lc,
         mrp,

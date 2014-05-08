@@ -30,6 +30,7 @@
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
+#include "castor/legacymsg/RmcProxy.hpp"
 #include <iostream>
 #include <stdio.h>
 
@@ -52,10 +53,11 @@ public:
    * @param lastFseq the last fSeq 
    */
   TapeWriteSingleThread(castor::tape::drives::DriveInterface & drive, 
+          castor::legacymsg::RmcProxy & rmc,
           const std::string & vid,
           castor::log::LogContext & lc, MigrationReportPacker & repPacker,
 	  uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
-  TapeSingleThreadInterface<TapeWriteTask>(drive, vid, lc),
+  TapeSingleThreadInterface<TapeWriteTask>(drive, rmc, vid, lc),
           m_filesBeforeFlush(filesBeforeFlush),
           m_bytesBeforeFlush(bytesBeforeFlush),
           m_drive(drive), m_reportPacker(repPacker), m_vid(vid), 
@@ -124,7 +126,9 @@ private:
     try
     {
       m_logContext.pushOrReplace(log::Param("thread", "TapeWrite"));
-      // First we have to initialise the tape read session
+      // Before anything, the tape should be mounted
+      m_rmc.mountTape(m_vid, m_drive.librarySlot);
+      // Then we have to initialise the tape write session
       m_logContext.log(LOG_DEBUG, "Starting tape write thread");
       std::auto_ptr<castor::tape::tapeFile::WriteSession> rs(openWriteSession());
     
@@ -158,6 +162,10 @@ private:
           
           //end of session + log 
           m_reportPacker.reportEndOfSession();
+          // Do the final cleanup
+          m_drive.unloadTape();
+          // And return the tape to the library
+          m_rmc.unmountTape(m_vid, m_drive.librarySlot);
           m_logContext.log(LOG_DEBUG, "Finishing tape write thread");
           return;
         }
@@ -168,6 +176,10 @@ private:
       log::LogContext::ScopedParam sp2(m_logContext, log::Param("error_MessageValue", e.getMessageValue()));
       m_logContext.log(LOG_ERR,"An error occurred during TapwWriteSingleThread::execute");
       m_reportPacker.reportEndOfSessionWithErrors(e.what(),e.code());
+      // Do the final cleanup
+      m_drive.unloadTape();
+      // And return the tape to the library
+      m_rmc.unmountTape(m_vid, m_drive.librarySlot);
     }
   }
   

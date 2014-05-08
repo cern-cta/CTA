@@ -5,6 +5,8 @@
 #include <gtest/gtest.h>
 #include "castor/tape/tapeserver/client/FakeClient.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
+#include "castor/legacymsg/RmcProxy.hpp"
+#include "castor/legacymsg/RmcProxyDummy.hpp"
 namespace unitTests
 {
 using namespace castor::tape::tapeserver::daemon;
@@ -25,9 +27,10 @@ class FakeSingleTapeReadThread : public TapeSingleThreadInterface<TapeReadTask>
 public:
   using TapeSingleThreadInterface<TapeReadTask>::m_tasks;
   
-  FakeSingleTapeReadThread(castor::tape::drives::DriveInterface& drive, 
+  FakeSingleTapeReadThread(castor::tape::drives::DriveInterface& drive,
+    castor::legacymsg::RmcProxy & rmc,
     const std::string & vid, castor::log::LogContext & lc):
-  TapeSingleThreadInterface<TapeReadTask>(drive, vid, lc){}
+  TapeSingleThreadInterface<TapeReadTask>(drive, rmc, vid, lc){}
   
   ~FakeSingleTapeReadThread(){
     const unsigned int size= m_tasks.size();
@@ -52,7 +55,8 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   castor::tape::drives::FakeDrive drive;
   FakeClient client(nbCalls);
   FakeDiskWriteThreadPool diskWrite(lc);
-  FakeSingleTapeReadThread tapeRead(drive, "V12345", lc);
+  castor::legacymsg::RmcProxyDummy rmc;
+  FakeSingleTapeReadThread tapeRead(drive, rmc, "V12345", lc);
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);
   
@@ -95,7 +99,8 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   castor::tape::drives::FakeDrive drive;
   FakeClient client(0);
   FakeDiskWriteThreadPool diskWrite(lc);
-  FakeSingleTapeReadThread tapeRead(drive, "V12345", lc);
+  castor::legacymsg::RmcProxyDummy rmc;
+  FakeSingleTapeReadThread tapeRead(drive, rmc, "V12345", lc);
   
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);

@@ -909,7 +909,6 @@ void drives::FakeDrive::spaceBlocksForward(size_t count) throw (Exception) {
   m_current_position += count;
 }
 void drives::FakeDrive::unloadTape(void) throw (Exception) {
-  throw Exception("FakeDrive::unloadTape Not implemented");
 }
 void drives::FakeDrive::flush(void) throw (Exception) {
   //already flushing
