@@ -318,13 +318,7 @@ castor::tape::tapeserver::daemon::MountSession::findDrive(LogContext& lc) {
     return NULL;
   } catch (castor::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
-    //Set the task injector ready to check if we actually have a 
-  // file to recall.
-  // findDrive does not throw exceptions (it catches them to log errors)
-  // A NULL pointer is returned on failure
-  std::auto_ptr<castor::tape::drives::DriveInterface> drive(findDrive(lc));
-  if(!drive.get()) return NULL;    
-  // We can now startcopedParam sp08(lc, Param("density", m_volInfo.density));
+    LogContext::ScopedParam sp08(lc, Param("density", m_volInfo.density));
     LogContext::ScopedParam sp09(lc, Param("devFilename", configLine->devFilename));
     LogContext::ScopedParam sp10(lc, Param("errorMessage", e.getMessageValue()));
     lc.log(LOG_ERR, "Error looking to path to tape drive");
