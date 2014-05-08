@@ -123,14 +123,14 @@ private:
    */
   class Request {
   public:
-    Request(int mf, int mb, bool lc):
+    Request(uint64_t mf, uint64_t mb, bool lc):
     nbMaxFiles(mf), byteSizeThreshold(mb), lastCall(lc), end(false) {}
     
     Request():
     nbMaxFiles(-1), byteSizeThreshold(-1), lastCall(true),end(true) {}
     
-    const int nbMaxFiles;
-    const int byteSizeThreshold;
+    const uint64_t nbMaxFiles;
+    const uint64_t byteSizeThreshold;
     
     /** 
      * True if it is the last call for the set of requests :it means
@@ -182,10 +182,10 @@ private:
    */
   castor::tape::threading::AtomicFlag m_errorFlag;
 
-  /// maximal number of files requested. at once
+  /// The maximum number of files we ask per request. 
   const uint64_t m_maxFiles;
   
-  /// maximal number of cumulated byte requested. at once
+  /// Same as m_maxFilesReq for size per request. (in bytes))
   const uint64_t m_maxByte;
   
   /**The last fseq used on the tape. We should not see this but 
