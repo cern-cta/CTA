@@ -49,7 +49,7 @@ public:
    *  within a single request a single request to the task injectore
    * @param lc log context fpr logging purpose
    */
-  DiskReadThreadPool(int nbThread, unsigned int maxFilesReq,unsigned int maxBytesReq, 
+  DiskReadThreadPool(int nbThread, uint64_t maxFilesReq,uint64_t maxBytesReq, 
           castor::log::LogContext lc);
   
   /**
@@ -119,37 +119,48 @@ private:
     void start() { castor::tape::threading::Thread::start(); }
     void wait() { castor::tape::threading::Thread::wait(); }
   private:
+    
     /** Pointer to the thread pool, allowing calls to popAndRequestMore,
      * and calling finish() on the task injector when the last thread
      * is finishing (thanks to the actomic counter m_parent.m_nbActiveThread) */
     DiskReadThreadPool & m_parent;
+    
     /** The sequential ID of the thread, used in logs */
     const int m_threadID;
+    
     /** The local copy of the log context, allowing race-free logging with context
      between threads. */
     castor::log::LogContext m_lc;
+    
     /** The execution thread: pops and executes tasks (potentially asking for
      more) and calls task injector's finish() on exit of the last thread. */
     virtual void run();
   };
+  
   /** Container for the threads */
   std::vector<DiskReadWorkerThread *> m_threads;
+  
   /** The queue of pointer to tasks to be executed. We own the tasks (they are 
    * deleted by the threads after execution) */
   castor::tape::threading::BlockingQueue<DiskReadTask *> m_tasks;
+  
   /** The log context. This is copied on construction to prevent interferences
    * between threads.
    */
   castor::log::LogContext m_lc;
+  
   /** Pointer to the task injector allowing request for more work, and 
-   * termination signalling */
+   * termination signaling */
   MigrationTaskInjector* m_injector;
+  
   /** The maximum number of files we ask per request. This value is also used as
-   * a threashold (half of it, indeed) to trigger the request for more work. 
+   * a threshold (half of it, indeed) to trigger the request for more work. 
    * Another request for more work is also triggered when the task FIFO gets empty.*/
   const uint64_t m_maxFilesReq;
-  /** Same as  m_maxFilesReq for size per request. */
+  
+  /** Same as m_maxFilesReq for size per request. */
   const uint64_t m_maxBytesReq;
+  
   /** An atomic (i.e. thread safe) counter of the current number of thread (they
    are counted up at creation time and down at completion time) */
   tape::threading::AtomicCounter<int> m_nbActiveThread;
