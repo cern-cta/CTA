@@ -167,15 +167,12 @@ template<typename T> void setBytes(T &object, const int c) throw() {
 }
 
 /**
- * Throws an InvalidArgument exception if the specified identifier string is
- * syntactically incorrect.
+ * Throws an InvalidArgument exception if the specified DGN is syntactically
+ * invalid.
  *
- * The indentifier string is valid if each character is either a number (0-9),
- * a letter (a-z, A-Z) or an underscore.
- *
- * @param idString The  to be checked.
+ * @param dgn The DGN to be checked.
  */
-void checkIdSyntax(const char *idString)
+void checkDgnSyntax(const char *dgn)
   throw(castor::exception::InvalidArgument);
 
 /**
@@ -185,15 +182,6 @@ void checkIdSyntax(const char *idString)
  * @param vid The VID to be checked.
  */
 void checkVidSyntax(const char *vid)
-  throw(castor::exception::InvalidArgument);
-
-/**
- * Throws an InvalidArgument exception if the specified DGN is syntactically
- * invalid.
- *
- * @param dgn The DGN to be checked.
- */
-void checkDgnSyntax(const char *dgn)
   throw(castor::exception::InvalidArgument);
 
 } // namespace utils
