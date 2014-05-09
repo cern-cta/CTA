@@ -7,6 +7,10 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/legacymsg/RmcProxyDummy.hpp"
+#include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
+#include "castor/legacymsg/VmgrProxyDummy.hpp"
+#include "castor/legacymsg/VdqmProxyDummy.hpp"
+#include "castor/legacymsg/TapeserverProxyDummy.hpp"
 namespace unitTests
 {
 using namespace castor::tape::tapeserver::daemon;
@@ -29,8 +33,9 @@ public:
   
   FakeSingleTapeReadThread(castor::tape::drives::DriveInterface& drive,
     castor::legacymsg::RmcProxy & rmc,
+    castor::tape::tapeserver::daemon::GlobalStatusReporter & gsr,
     const std::string & vid, castor::log::LogContext & lc):
-  TapeSingleThreadInterface<TapeReadTask>(drive, rmc, vid, lc){}
+  TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr, vid, lc){}
   
   ~FakeSingleTapeReadThread(){
     const unsigned int size= m_tasks.size();
@@ -56,7 +61,11 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   FakeClient client(nbCalls);
   FakeDiskWriteThreadPool diskWrite(lc);
   castor::legacymsg::RmcProxyDummy rmc;
-  FakeSingleTapeReadThread tapeRead(drive, rmc, "V12345", lc);
+  castor::legacymsg::VmgrProxyDummy vmgr;
+  castor::legacymsg::VdqmProxyDummy vdqm;
+  castor::legacymsg::TapeserverProxyDummy initialProcess;
+  castor::tape::tapeserver::daemon::GlobalStatusReporter gsr(initialProcess, vdqm, vmgr, rmc, lc);
+  FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, "V12345", lc);
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);
   
@@ -100,7 +109,10 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   FakeClient client(0);
   FakeDiskWriteThreadPool diskWrite(lc);
   castor::legacymsg::RmcProxyDummy rmc;
-  FakeSingleTapeReadThread tapeRead(drive, rmc, "V12345", lc);
+  castor::legacymsg::VmgrProxyDummy vmgr;
+  castor::legacymsg::VdqmProxyDummy vdqm;
+  castor::legacymsg::TapeserverProxyDummy initialProcess;
+  castor::tape::tapeserver::daemon::GlobalStatusReporter gsr(initialProcess, vdqm, vmgr, rmc, lc);  FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, "V12345", lc);
   
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);

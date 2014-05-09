@@ -59,7 +59,6 @@ public:
           legacymsg::VmgrProxy& vmgrProxy,
           legacymsg::RmcProxy& rmcProxy,log::LogContext lc);
   
-  ~GlobalStatusReporter();
   /**
    * 
    */      

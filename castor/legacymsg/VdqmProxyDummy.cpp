@@ -25,7 +25,13 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::legacymsg::VdqmProxyDummy::VdqmProxyDummy(const RtcpJobRqstMsgBody &job) throw(): m_job(job) {
+castor::legacymsg::VdqmProxyDummy::VdqmProxyDummy() throw(): m_job(), m_hasJob(false) {
+}
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::legacymsg::VdqmProxyDummy::VdqmProxyDummy(const RtcpJobRqstMsgBody &job) throw(): m_job(job), m_hasJob(true) {
 }
 
 //------------------------------------------------------------------------------
@@ -38,6 +44,7 @@ castor::legacymsg::VdqmProxyDummy::~VdqmProxyDummy() throw() {
 // receiveJob
 //------------------------------------------------------------------------------
 castor::legacymsg::RtcpJobRqstMsgBody castor::legacymsg::VdqmProxyDummy::receiveJob(const int connection) throw(castor::exception::Exception) {
+  if(!m_hasJob) throw castor::exception::Exception("In castor::legacymsg::VdqmProxyDummy::receiveJob: this object was constructed without a job.");
   return m_job;
 }
 

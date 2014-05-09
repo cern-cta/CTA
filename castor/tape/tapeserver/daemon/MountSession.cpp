@@ -41,6 +41,7 @@
 #include "DiskReadThreadPool.hpp"
 #include "MigrationTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
+#include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
 
 using namespace castor::tape;
 using namespace castor::log;
@@ -49,7 +50,7 @@ castor::tape::tapeserver::daemon::MountSession::MountSession(
     int argc,
     char ** argv,
     const std::string & hostname,
-    const legacymsg::RtcpJobRqstMsgBody& clientRequest, 
+    const legacymsg::RtcpJobRqstMsgBody & clientRequest, 
     castor::log::Logger& logger, System::virtualWrapper & sysWrapper,
     const utils::TpconfigLines & tpConfig,
     castor::legacymsg::VdqmProxy & vdqm,
@@ -145,7 +146,8 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
-    TapeReadSingleThread trst(*drive, m_rmc, m_volInfo.vid, 
+    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, m_vmgr, m_rmc, lc);
+    TapeReadSingleThread trst(*drive, m_rmc, gsr, m_volInfo.vid, 
         m_castorConf.tapebridgeBulkRequestRecallMaxFiles, lc);
     RecallReportPacker rrp(m_clientProxy,
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
@@ -206,12 +208,14 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
   if (!drive.get()) return;
   // Once we got hold of the drive, we can run the session
   {
+    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, m_vmgr, m_rmc, lc);
     MigrationMemoryManager mm(m_castorConf.rtcopydNbBufs,
         m_castorConf.rtcopydBufsz,lc);
     MigrationReportPacker mrp(m_clientProxy,
         lc);
     TapeWriteSingleThread twst(*drive.get(),
         m_rmc,
+        gsr,
         m_volInfo.vid,
         lc,
         mrp,

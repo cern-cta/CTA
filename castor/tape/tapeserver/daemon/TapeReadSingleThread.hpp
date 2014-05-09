@@ -39,7 +39,10 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-  
+
+//forward declaration
+class GlobalStatusReporter;
+
   /**
    * This class will execute the different tape read tasks.
    * 
@@ -56,9 +59,10 @@ public:
    */
   TapeReadSingleThread(castor::tape::drives::DriveInterface & drive,
           castor::legacymsg::RmcProxy & rmc,
+          GlobalStatusReporter & gsr,
           const std::string vid, uint64_t maxFilesRequest,
           castor::log::LogContext & lc): 
-   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, vid, lc),
+   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr, vid, lc),
    m_maxFilesRequest(maxFilesRequest),m_filesProcessed(0) {}
    
    /**
