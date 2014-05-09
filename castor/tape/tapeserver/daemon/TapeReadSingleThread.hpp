@@ -30,6 +30,7 @@
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
+#include "castor/legacymsg/RmcProxy.hpp"
 #include <iostream>
 #include <stdio.h>
 #include <memory>
@@ -38,7 +39,10 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-  
+
+//forward declaration
+class GlobalStatusReporter;
+
   /**
    * This class will execute the different tape read tasks.
    * 
@@ -54,9 +58,11 @@ public:
    * @param lc : log context, for logging purpose
    */
   TapeReadSingleThread(castor::tape::drives::DriveInterface & drive,
+          castor::legacymsg::RmcProxy & rmc,
+          GlobalStatusReporter & gsr,
           const std::string vid, uint64_t maxFilesRequest,
           castor::log::LogContext & lc): 
-   TapeSingleThreadInterface<TapeReadTask>(drive, vid, lc),
+   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr, vid, lc),
    m_maxFilesRequest(maxFilesRequest),m_filesProcessed(0) {}
    
    /**
@@ -96,8 +102,10 @@ private:
    * This function is from Thread, it is the function that will do all the job
    */
   virtual void run() {
-    // First we have to initialise the tape read session
     m_logContext.pushOrReplace(log::Param("thread", "tapeRead"));
+    // Before anything, the tape should be mounted
+    m_rmc.mountTape(m_vid, m_drive.librarySlot);
+    // Then we have to initialise the tape read session
     std::auto_ptr<castor::tape::tapeFile::ReadSession> rs;
     try {
       rs.reset(new castor::tape::tapeFile::ReadSession(m_drive, m_vid));
@@ -124,6 +132,10 @@ private:
     // We now acknowledge to the task injector that read reached the end. There
     // will hence be no more requests for more. (last thread turns off the light)
     m_taskInjector->finish();
+    // Do the final cleanup
+    m_drive.unloadTape();
+    // And return the tape to the library
+    m_rmc.unmountTape(m_vid, m_drive.librarySlot);
     m_logContext.log(LOG_DEBUG, "Finishing Tape Read Thread. Just signalled task injector of the end");
   }
   

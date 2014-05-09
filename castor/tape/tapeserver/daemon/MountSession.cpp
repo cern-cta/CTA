@@ -41,17 +41,27 @@
 #include "DiskReadThreadPool.hpp"
 #include "MigrationTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
+#include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
 
 using namespace castor::tape;
 using namespace castor::log;
 
 castor::tape::tapeserver::daemon::MountSession::MountSession(
-    const legacymsg::RtcpJobRqstMsgBody& clientRequest, 
+    int argc,
+    char ** argv,
+    const std::string & hostname,
+    const legacymsg::RtcpJobRqstMsgBody & clientRequest, 
     castor::log::Logger& logger, System::virtualWrapper & sysWrapper,
     const utils::TpconfigLines & tpConfig,
+    castor::legacymsg::VdqmProxy & vdqm,
+    castor::legacymsg::VmgrProxy & vmgr,
+    castor::legacymsg::RmcProxy & rmc,
+    castor::legacymsg::TapeserverProxy & initialProcess,
     const CastorConf & castorConf): 
     m_request(clientRequest), m_logger(logger), m_clientProxy(clientRequest),
-    m_sysWrapper(sysWrapper), m_tpConfig(tpConfig), m_castorConf(castorConf) {}
+    m_sysWrapper(sysWrapper), m_tpConfig(tpConfig), m_castorConf(castorConf), 
+    m_vdqm(vdqm), m_vmgr(vmgr), m_rmc(rmc), m_intialProcess(initialProcess), 
+    m_argc(argc), m_argv(argv) {}
 
 void castor::tape::tapeserver::daemon::MountSession::execute()
 throw (castor::tape::Exception) {
@@ -136,7 +146,8 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
-    TapeReadSingleThread trst(*drive, m_volInfo.vid, 
+    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, m_vmgr, lc);
+    TapeReadSingleThread trst(*drive, m_rmc, gsr, m_volInfo.vid, 
         m_castorConf.tapebridgeBulkRequestRecallMaxFiles, lc);
     RecallReportPacker rrp(m_clientProxy,
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
@@ -197,11 +208,14 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
   if (!drive.get()) return;
   // Once we got hold of the drive, we can run the session
   {
+    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, m_vmgr, lc);
     MigrationMemoryManager mm(m_castorConf.rtcopydNbBufs,
         m_castorConf.rtcopydBufsz,lc);
     MigrationReportPacker mrp(m_clientProxy,
         lc);
     TapeWriteSingleThread twst(*drive.get(),
+        m_rmc,
+        gsr,
         m_volInfo.vid,
         lc,
         mrp,
@@ -309,13 +323,7 @@ castor::tape::tapeserver::daemon::MountSession::findDrive(LogContext& lc) {
     return NULL;
   } catch (castor::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
-    //Set the task injector ready to check if we actually have a 
-  // file to recall.
-  // findDrive does not throw exceptions (it catches them to log errors)
-  // A NULL pointer is returned on failure
-  std::auto_ptr<castor::tape::drives::DriveInterface> drive(findDrive(lc));
-  if(!drive.get()) return NULL;    
-  // We can now startcopedParam sp08(lc, Param("density", m_volInfo.density));
+    LogContext::ScopedParam sp08(lc, Param("density", m_volInfo.density));
     LogContext::ScopedParam sp09(lc, Param("devFilename", configLine->devFilename));
     LogContext::ScopedParam sp10(lc, Param("errorMessage", e.getMessageValue()));
     lc.log(LOG_ERR, "Error looking to path to tape drive");
@@ -350,7 +358,10 @@ castor::tape::tapeserver::daemon::MountSession::findDrive(LogContext& lc) {
     return NULL;
   }
   try {
-    return castor::tape::drives::DriveFactory(driveInfo, m_sysWrapper);
+    std::auto_ptr<castor::tape::drives::DriveInterface> drive;
+    drive.reset(castor::tape::drives::DriveFactory(driveInfo, m_sysWrapper));
+    if (drive.get()) drive->librarySlot = configLine->librarySlot;
+    return drive.release();
   } catch (castor::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
     LogContext::ScopedParam sp08(lc, Param("density", m_volInfo.density));

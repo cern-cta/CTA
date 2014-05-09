@@ -21,7 +21,7 @@
  *****************************************************************************/
 
 #pragma once
-
+#include <string>
 namespace castor {
 namespace legacymsg {
 
@@ -35,6 +35,11 @@ public:
    * Destructor.
    */
   virtual ~VmgrProxy() throw() = 0;
+  
+  /**
+   * TODO 
+   */
+  void tapeMountedForRead();
 
 }; // class VmgrProxy
 

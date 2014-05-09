@@ -14,9 +14,14 @@
 #include "castor/log/LogContext.hpp"
 
 namespace castor {
+namespace legacymsg {
+  class RmcProxy;
+}
 namespace tape {
 namespace tapeserver {
 namespace daemon {
+  // Forward declaration
+  class GlobalStatusReporter;
   /** 
    * This class is the base class for the 2 classes that will be executing 
    * all tape-{read|write} tasks. The template parameter Task is the type of 
@@ -34,6 +39,12 @@ protected:
    * with the requested vid 
    */
   castor::tape::drives::DriveInterface & m_drive;
+  
+  /** Reference to the mount interface */
+  castor::legacymsg::RmcProxy & m_rmc;
+  
+  /** Reference to the Global reporting interface */
+  GlobalStatusReporter & m_gsr;
   
   ///The volumeID of the tape on which we want to operate  
   const std::string m_vid;
@@ -69,8 +80,10 @@ public:
    * @param lc The log context, later on copied
    */
   TapeSingleThreadInterface(castor::tape::drives::DriveInterface & drive,
+    castor::legacymsg::RmcProxy & rmc,
+    GlobalStatusReporter & gsr,
     const std::string & vid, castor::log::LogContext & lc):
-  m_drive(drive), m_vid(vid), m_logContext(lc) {}
+  m_drive(drive), m_rmc(rmc), m_gsr(gsr), m_vid(vid), m_logContext(lc) {}
 };
 
 }

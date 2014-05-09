@@ -312,7 +312,19 @@ public:
    * @param unitName The unit name of the tape drive.
    * @return The job received from the vdqmd daemon.
    */
-  const legacymsg::RtcpJobRqstMsgBody &getJob(const std::string &unitName) const throw(castor::exception::Exception);
+  const legacymsg::RtcpJobRqstMsgBody &getVdqmJob(const std::string &unitName) const throw(castor::exception::Exception);
+  
+  /**
+   * Returns the job received from the vdqmd daemon for the specified tape
+   * drive.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_WAITFORK, DRIVE_STATE_RUNNING or DRIVE_STATE_WAITDOWN.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @return The job received from the vdqmd daemon.
+   */
+  const legacymsg::TapeLabelRqstMsgBody &getLabelJob(const std::string &unitName) const throw(castor::exception::Exception);
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_RUNNING.
@@ -456,7 +468,14 @@ private:
      * DRIVE_STATE_RUNNING state.  In all other states the value of this
      * member variable is undefined.
      */
-    legacymsg::RtcpJobRqstMsgBody job;
+    legacymsg::RtcpJobRqstMsgBody vdqmJob;
+    
+    /**
+     * The label job received from the tape label command when the drive is in the
+     * DRIVE_STATE_RUNNING state.  In all other states the value of this
+     * member variable is undefined.
+     */
+    legacymsg::TapeLabelRqstMsgBody labelJob;
     
     /**
      * The process ID of the child process running the mount session.
@@ -471,14 +490,17 @@ private:
      */
     DriveEntry() throw():
       state(DRIVE_STATE_INIT) {
-      job.volReqId = 0;
-      job.clientPort = 0;
-      job.clientEuid = 0;
-      job.clientEgid = 0;
-      memset(job.clientHost, '\0', sizeof(job.clientHost));
-      memset(job.dgn, '\0', sizeof(job.dgn));
-      memset(job.driveUnit, '\0', sizeof(job.driveUnit));
-      memset(job.clientUserName, '\0', sizeof(job.clientUserName));
+      labelJob.gid = 0;
+      labelJob.uid = 0;
+      memset(labelJob.vid, '\0', sizeof(labelJob.vid));
+      vdqmJob.volReqId = 0;
+      vdqmJob.clientPort = 0;
+      vdqmJob.clientEuid = 0;
+      vdqmJob.clientEgid = 0;
+      memset(vdqmJob.clientHost, '\0', sizeof(vdqmJob.clientHost));
+      memset(vdqmJob.dgn, '\0', sizeof(vdqmJob.dgn));
+      memset(vdqmJob.driveUnit, '\0', sizeof(vdqmJob.driveUnit));
+      memset(vdqmJob.clientUserName, '\0', sizeof(vdqmJob.clientUserName));
     }
   };
 
