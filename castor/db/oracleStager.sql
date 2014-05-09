@@ -1596,17 +1596,6 @@ EXCEPTION WHEN NO_DATA_FOUND THEN
 END;
 /
 
-
-/* Build diskCopy path from fileId */
-CREATE OR REPLACE PROCEDURE buildPathFromFileId(fid IN INTEGER,
-                                                nsHost IN VARCHAR2,
-                                                dcid IN INTEGER,
-                                                path OUT VARCHAR2) AS
-BEGIN
-  path := TO_CHAR(MOD(fid,100),'FM09') || '/' || TO_CHAR(fid) || '@' || nsHost || '.' || TO_CHAR(dcid);
-END;
-/
-
 /* PL/SQL method implementing createDisk2DiskCopyJob */
 CREATE OR REPLACE PROCEDURE createDisk2DiskCopyJob
 (inCfId IN INTEGER, inNsOpenTime IN INTEGER, inDestSvcClassId IN INTEGER,
@@ -1668,8 +1657,6 @@ BEGIN
   UPDATE CastorFile SET fileSize = 0 WHERE id = cfId;
   -- get an id for our new DiskCopy
   dcId := ids_seq.nextval();
-  -- compute the DiskCopy Path
-  buildPathFromFileId(fileId, nsHost, dcId, dcPath);
   -- find a fileSystem for this empty file
   SELECT fsId, dpId, svcClass, euid, egid, name || ':' || mountpoint
     INTO fsId, dpId, svcClassId, ouid, ogid, fsPath
@@ -1713,6 +1700,8 @@ BEGIN
   gcwProc := castorGC.getRecallWeight(svcClassId);
   EXECUTE IMMEDIATE 'BEGIN :newGcw := ' || gcwProc || '(0); END;'
     USING OUT gcw;
+  -- compute the DiskCopy Path
+  buildPathFromFileId(fileId, nsHost, dcId, dcPath, fsId IS NOT NULL);
   -- then create the DiskCopy
   INSERT INTO DiskCopy
     (path, id, filesystem, dataPool, castorfile, status, importance,
@@ -3325,16 +3314,14 @@ BEGIN
   -- create new DiskCopy, associate it to SubRequest and schedule
   DECLARE
     varDcId INTEGER;
-    varPath VARCHAR2(2048);
   BEGIN
     logToDLF(inReqUUID, dlf.LVL_SYSTEM, dlf.STAGER_CASTORFILE_RECREATION, inFileId, inNsHost, 'stagerd',
              'SUBREQID=' || inSrUUID || ' svcClassId=' || getSvcClassName(inSvcClassId));
     -- DiskCopy creation
     varDcId := ids_seq.nextval();
-    buildPathFromFileId(inFileId, inNsHost, varDcId, varPath);
     INSERT INTO DiskCopy (path, id, FileSystem, castorFile, status, creationTime, lastAccessTime,
                           gcWeight, diskCopySize, nbCopyAccesses, owneruid, ownergid, importance)
-    VALUES (varPath, varDcId, NULL, inCfId, dconst.DISKCOPY_WAITFS, getTime(), getTime(), 0, 0, 0, inEuid, inEgid, 0);
+    VALUES ('', varDcId, NULL, inCfId, dconst.DISKCOPY_WAITFS, getTime(), getTime(), 0, 0, 0, inEuid, inEgid, 0);
     -- update and schedule the subRequest if needed
     IF inDoSchedule THEN
       UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
