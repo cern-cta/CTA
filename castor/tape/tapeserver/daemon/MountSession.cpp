@@ -146,7 +146,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
-    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, m_vmgr, m_rmc, lc);
+    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, m_vmgr, lc);
     TapeReadSingleThread trst(*drive, m_rmc, gsr, m_volInfo.vid, 
         m_castorConf.tapebridgeBulkRequestRecallMaxFiles, lc);
     RecallReportPacker rrp(m_clientProxy,
@@ -208,7 +208,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
   if (!drive.get()) return;
   // Once we got hold of the drive, we can run the session
   {
-    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, m_vmgr, m_rmc, lc);
+    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, m_vmgr, lc);
     MigrationMemoryManager mm(m_castorConf.rtcopydNbBufs,
         m_castorConf.rtcopydBufsz,lc);
     MigrationReportPacker mrp(m_clientProxy,

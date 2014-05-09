@@ -57,7 +57,7 @@ public:
   GlobalStatusReporter(legacymsg::TapeserverProxy& tapeserverProxy,
           legacymsg::VdqmProxy& vdqmProxy,
           legacymsg::VmgrProxy& vmgrProxy,
-          legacymsg::RmcProxy& rmcProxy,log::LogContext lc);
+          log::LogContext lc);
   
   /**
    * 
@@ -172,7 +172,6 @@ private:
   legacymsg::TapeserverProxy& m_tapeserverProxy;
   legacymsg::VdqmProxy& m_vdqmProxy;
   legacymsg::VmgrProxy& m_vmgrProxy;
-  legacymsg::RmcProxy& m_rmcProxy;
   
   log::LogContext m_lc;
 };

@@ -14,7 +14,7 @@ namespace daemon {
   GlobalStatusReporter::GlobalStatusReporter(
   legacymsg::TapeserverProxy& tapeserverProxy,
   legacymsg::VdqmProxy& vdqmProxy,legacymsg::VmgrProxy& vmgrProxy,
-          legacymsg::RmcProxy& rmcProxy,log::LogContext lc):
+          log::LogContext lc):
           m_tapeserverProxy(tapeserverProxy),m_vdqmProxy(vdqmProxy),
           m_vmgrProxy(vmgrProxy),m_rmcProxy(rmcProxy),m_lc(lc){
   }
