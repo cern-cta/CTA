@@ -93,30 +93,64 @@ public:
   const std::string &vid);
   
   /**
-   * Will call TapeserverProxy::tapeUnmounted (and VdqmProx::tapeUnmounted() ??)
+   * Will call TapeserverProxy::tapeUnmounted and VdqmProx::tapeUnmounted()
    * 
    */
-  void tapeUnmounted();
+  void tapeUnmounted(const std::string &server, const std::string &unitName, 
+  const std::string &dgn, const std::string &vid);
 //------------------------------------------------------------------------------
     /**
-   * Will call VmgrProxy::tapeMountedForRead, parameters TBD
+   * Will call VmgrProxy::tapeMountedForRead and TapeserverProxy::tapeMountedForRead,
+   * parameters TBD
    */
-  void tapeMountedForRead();
+  void tapeMountedForRead(const std::string& vid);
   
   
 private:
   class Report {
+  protected :
+    /**
+     * Bunch of parameters that are globally shared amon the different reports
+     */
+    const std::string server;
+    const std::string unitName;
+    const std::string dgn;
+    const uint32_t mountTransactionId; 
+    const pid_t sessionPid;
+  
+    /**
+     * Constructor for ReportAssignDrive
+     */
+    Report(const std::string &_server,const std::string &_unitName, 
+            const std::string &_dgn, const uint32_t _mountTransactionId,
+            const pid_t _sessionPid);
+    
+    /**
+     * Constructor for ReportReleaseDrive
+     */
+    Report(const std::string &_server,const std::string &_unitName, 
+            const std::string &_dgn,const pid_t _sessionPid);
+    
+    /**
+     * Constructor for ReportTapeUnmounted
+     */
+    Report(const std::string &_server,const std::string &_unitName, 
+            const std::string &_dgn);
+    /**
+     * Constructor for ReportGotDetailsFromClient
+     */
+    Report(const std::string &_unitName);
+    /**
+     * Temporary?? constructor for ReportTapeMountedForRead  ?
+     */
+    Report():server(""),unitName(""),dgn(""),mountTransactionId(0),sessionPid(0)
+    {}
   public:
     virtual ~Report(){}
     virtual void execute(GlobalStatusReporter&)=0;
   };
   //vdqm proxy stuff
   class ReportAssignDrive : public Report {
-    const std::string server;
-    const std::string unitName;
-    const std::string dgn;
-    const uint32_t mountTransactionId; 
-    const pid_t sessionPid;
   public:
     ReportAssignDrive(const std::string &server,const std::string &unitName, 
             const std::string &dgn, const uint32_t mountTransactionId,
@@ -125,11 +159,7 @@ private:
     virtual void execute(GlobalStatusReporter&);
   };
   class ReportReleaseDrive : public Report {
-    const std::string server;
-    const std::string unitName;
-    const std::string dgn;
     const bool forceUnmount;
-    const pid_t sessionPid;
   public:
     ReportReleaseDrive(const std::string &server,const std::string &unitName, 
             const std::string &dgn, bool forceUnmount,
@@ -139,19 +169,26 @@ private:
   };
 
   class ReportGotDetailsFromClient : public Report {
-    const std::string &unitName;
-    const std::string &vid;
+    const std::string vid;
   public:
     ReportGotDetailsFromClient(const std::string &unitName,
   const std::string &vid);
     virtual ~ReportGotDetailsFromClient(){}
     virtual void execute(GlobalStatusReporter&);
   };
-  
   class ReportTapeMountedForRead : public Report {
+    const std::string vid;
   public:
-    ReportTapeMountedForRead();
+    ReportTapeMountedForRead(const std::string& vid);
     virtual ~ReportTapeMountedForRead(){}
+    virtual void execute(GlobalStatusReporter&);
+  };
+  class ReportTapeUnmounted : public Report {
+     const std::string vid;
+  public:
+    ReportTapeUnmounted(const std::string &server,const std::string &unitName, 
+            const std::string &dgn,const std::string &vid);
+    virtual ~ReportTapeUnmounted(){}
     virtual void execute(GlobalStatusReporter&);
   };
   /**
