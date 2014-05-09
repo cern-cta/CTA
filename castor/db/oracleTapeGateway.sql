@@ -160,7 +160,8 @@ BEGIN
   FOR f IN (SELECT * FROM (
               SELECT /*+ INDEX_RS_ASC(RecallJob I_RecallJob_Castorfile_VID) */
                      DiskServer.name ||':'|| FileSystem.mountPoint AS remotePath, FileSystem.id,
-                     FileSystem.diskserver, CastorFile.fileSize, CastorFile.fileId, CastorFile.nsHost
+                     FileSystem.diskserver, CastorFile.fileSize, CastorFile.fileId, CastorFile.nsHost,
+                     1 isDiskPool
                 FROM DiskServer, FileSystem, DiskPool2SvcClass, CastorFile, RecallJob
                WHERE CastorFile.id = inCfId
                  AND RecallJob.castorFile = inCfId
@@ -188,7 +189,7 @@ BEGIN
               SELECT /*+ INDEX_RS_ASC(RecallJob I_RecallJob_Castorfile_VID) */
                      DiskServer.name ||':' AS remotePath, 0 as id,
                      DiskServer.id AS diskServer, CastorFile.fileSize,
-                     CastorFile.fileId, CastorFile.nsHost
+                     CastorFile.fileId, CastorFile.nsHost, 0 isDiskPool
                 FROM DiskServer, DataPool, DataPool2SvcClass, CastorFile, RecallJob
                WHERE CastorFile.id = inCfId
                  AND RecallJob.castorFile = inCfId
@@ -206,7 +207,7 @@ BEGIN
                ORDER BY DBMS_Random.value)
              WHERE ROWNUM < 4)
   LOOP
-    buildPathFromFileId(f.fileId, f.nsHost, ids_seq.nextval, outFilePath);
+    buildPathFromFileId(f.fileId, f.nsHost, ids_seq.nextval, outFilePath, f.isDiskPool = 1);
     outFilePath := f.remotePath || outFilePath;
     -- In case we selected a filesystem (and no datapool)
     IF f.id > 0 THEN

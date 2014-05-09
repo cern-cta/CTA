@@ -70,14 +70,16 @@ BEGIN
    WHERE status = dconst.SUBREQUEST_WAITSUBREQ
      AND castorFile = varCfId;
   alertSignalNoLock('wakeUpJobReqSvc');
+  -- compute path of this diskcopy
+  buildPathFromFileId(varFileId, varNsHost, varDcId, outPath, selectedMountPoint IS NOT NULL);
   -- link DiskCopy and FileSystem/DataPool and update DiskCopyStatus
   UPDATE DiskCopy
      SET status = 6, -- DISKCOPY_STAGEOUT
+         path = outPath,
          fileSystem = fsId,
          dataPool = dpId,
          nbCopyAccesses = nbCopyAccesses + 1
-   WHERE id = varDcId
-   RETURNING path INTO outPath;
+   WHERE id = varDcId;
   -- Log successful completion
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_PUTSTART, varFileId, varNsHost, 'stagerd', '');
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -779,11 +781,11 @@ BEGIN
   END IF;
 
   -- build full path of destination copy
-  buildPathFromFileId(inFileId, inNsHost, varDestDcId, outDestDcPath);
+  buildPathFromFileId(inFileId, inNsHost, varDestDcId, outDestDcPath, inDestMountPoint IS NOT NULL);
   outDestDcPath := inDestMountPoint || outDestDcPath;
 
   -- build full path of source copy
-  buildPathFromFileId(inFileId, inNsHost, varSrcDcId, outSrcDcPath);
+  buildPathFromFileId(inFileId, inNsHost, varSrcDcId, outSrcDcPath, inSrcMountPoint IS NOT NULL);
   outSrcDcPath := inSrcDiskServerName || ':' || inSrcMountPoint || outSrcDcPath;
 
   -- log "disk2DiskCopyStart returned successfully"

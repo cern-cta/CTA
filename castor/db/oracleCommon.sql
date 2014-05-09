@@ -199,6 +199,20 @@ BEGIN
 END;
 /
 
+/* Build diskCopy path from fileId */
+CREATE OR REPLACE PROCEDURE buildPathFromFileId(fid IN INTEGER,
+                                                nsHost IN VARCHAR2,
+                                                dcid IN INTEGER,
+                                                path OUT VARCHAR2,
+                                                isDiskPool BOOLEAN) AS
+BEGIN
+  path := TO_CHAR(fid) || '@' || nsHost || '.' || TO_CHAR(dcid);
+  IF isDiskPool THEN
+    path := TO_CHAR(MOD(fid,100),'FM09') || '/' || path;
+  END IF;
+END;
+/
+
 /* parse a path to give back the FileSystem and path */
 CREATE OR REPLACE PROCEDURE parsePath(inFullPath IN VARCHAR2,
                                       outFileSystem OUT INTEGER,
@@ -219,12 +233,12 @@ BEGIN
   -- DcId is the part after the last '.'
   varLastDotPos := INSTR(inFullPath, '.', -1, 1);
   outDcId := TO_NUMBER(SUBSTR(inFullPath, varLastDotPos+1));
+  -- the nsHost is between '@' and last '.'
+  varAtPos := INSTR(inFullPath, '@', 1, 1);
+  outNsHost := SUBSTR(inFullPath, varAtPos+1, varLastDotPos-varAtPos-1);
   -- the fileid is between last / and '@'
   varLastSlashPos := INSTR(inFullPath, '/', -1, 1);
-  varAtPos := INSTR(inFullPath, '@', 1, 1);
   outFileId := TO_NUMBER(SUBSTR(inFullPath, varLastSlashPos+1, varAtPos-varLastSlashPos-1));
-  -- the nsHost is between '@' and last '.'
-  outNsHost := SUBSTR(inFullPath, varAtPos+1, varLastDotPos-varAtPos-1);
   -- the diskserver is before the ':'
   varColonPos := INSTR(inFullPath, ':', 1, 1);
   varDiskServerName := SUBSTR(inFullPath, 1, varColonPos-1);
@@ -233,8 +247,9 @@ BEGIN
   -- if the second '/' was not found, then we are dealing with a data pool
   IF 0 = varPathPos THEN
     -- the data pool id between the ':' and the only '/'
-    varPathPos := INSTR(inFullPath, '/', -1, 1);
-    varDataPool := SUBSTR(inFullPath, varColonPos+1, varPathPos-varColonPos);
+    varDataPool := SUBSTR(inFullPath, varColonPos+1, varLastSlashPos-varColonPos);
+    -- the file name is after the only '/'
+    outPath := SUBSTR(inFullPath, varLastSlashPos+1);
     -- find out the dataPool Id
     SELECT id INTO outDataPool FROM DataPool WHERE name = varDataPool;
     outFileSystem := NULL;
