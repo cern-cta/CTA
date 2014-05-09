@@ -42,8 +42,8 @@ states = ['Production', 'Draining', 'Disabled', 'Readonly']
 
 # first parse the options
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'hvs:m:d:R',
-                                  ['help', 'verbose', 'state=', 'mountpoints=', 'diskpool=', 'recursive'])
+    options, args = getopt.getopt(sys.argv[1:], 'hvs:m:d:p:R',
+                                  ['help', 'verbose', 'state=', 'mountpoints=', 'diskpool=', 'datapool=', 'recursive'])
 except Exception, e:
     print e
     usage(1)
@@ -51,6 +51,7 @@ verbose = False
 state = None
 mountPoints = None
 diskPool = None
+dataPool = None
 isRecursive = False
 for f, v in options:
     if f == '-h' or f == '--help':
@@ -66,6 +67,8 @@ for f, v in options:
         mountPoints = tuple(v.split(':'))
     elif f == '-d' or f == '--diskpool':
         diskPool = v
+    elif f == '-p' or f == '--pool':
+        dataPool = v
     elif f == '-R' or f == '--recursive':
         isRecursive = True
     else:
@@ -73,7 +76,7 @@ for f, v in options:
         usage(1)
 
 # some consistency checks
-if not state and not diskPool:
+if not state and not diskPool and not dataPool:
     print 'Nothing to do. Please specify at least one of options -s,--state and -d,--diskpool'
     usage(1)
 if len(args) == 0:
@@ -89,7 +92,7 @@ try:
     conf = castor_tools.castorConf()
     rpycconn = rpyc.connect(conf.getValue('DiskManager', 'ServerHosts').split()[0],
                             conf.getValue('TransferManager', 'Port', 15011, int))
-    returnMsg = rpycconn.root.modifyDiskServers(args, state, mountPoints, diskPool, isRecursive)
+    returnMsg = rpycconn.root.modifyDiskServers(args, state, mountPoints, diskPool, dataPool, isRecursive)
     print returnMsg
 except ValueError, e:
     print e

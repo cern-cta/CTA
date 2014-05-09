@@ -25,7 +25,7 @@ name of service classes to delete. Several names can be given, colon separated
 .ft CW
 
 #printsvcclass -a
-    NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+    NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY     POOLS ID LASTEDITOR          LASTEDITION
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
  default           10MiB                True            2               -            False         False  dropall              -   default 15   sponcec3 30-Aug-2011 17:10:39
      dev           10MiB                True            1               -            False         False        -              -     extra 16   sponcec3 30-Aug-2011 17:02:05
@@ -35,7 +35,7 @@ diskonly           10MiB                True            1            temp       
 successfully dropped the following service class(es) : default, dev
 
 #printsvcclass -a
-    NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+    NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY RECALLERPOLICY     POOLS ID LASTEDITOR          LASTEDITION
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 diskonly           10MiB                True            1            temp            False          True        -              -     extra 17   sponcec3 30-Aug-2011 17:02:10
 
@@ -51,7 +51,7 @@ Configuration for the database access is taken from castor.conf.
 .BR entersvcclass
 .BR modifysvcclass
 .BR printsvcclass
-.BR deletediskpool
+.BR deletepool
 .BR deletemigrationroute
 .BR adminMultiInstance
 

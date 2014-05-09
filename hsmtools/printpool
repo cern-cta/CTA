@@ -1,0 +1,125 @@
+#!/usr/bin/python
+#/******************************************************************************
+# *                      printpool
+# *
+# * This file is part of the Castor project.
+# * See http://castor.web.cern.ch/castor
+# *
+# * Copyright (C) 2003  CERN
+# * This program is free software; you can redistribute it and/or
+# * modify it under the terms of the GNU General Public License
+# * as published by the Free Software Foundation; either version 2
+# * of the License, or (at your option) any later version.
+# * This program is distributed in the hope that it will be useful,
+# * but WITHOUT ANY WARRANTY; without even the implied warranty of
+# * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# * GNU General Public License for more details.
+# * You should have received a copy of the GNU General Public License
+# * along with this program; if not, write to the Free Software
+# * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+# *
+# * @author Castor Dev team, castor-dev@cern.ch
+# *****************************************************************************/
+
+'''command line printing the given pool(s)'''
+
+import sys
+import getopt
+import castor_tools
+
+# usage function
+def usage(exitCode):
+    '''prints usage'''
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] <poolName> [...]'
+    sys.exit(exitCode)
+
+# first parse the options
+try:
+    options, args = getopt.getopt(sys.argv[1:], 'hv', ['help', 'verbose'])
+except Exception, e:
+    print e
+    usage(1)
+verbose = False
+for f, v in options:
+    if f == '-h' or f == '--help':
+        usage(0)
+    elif f == '-v' or f == '--verbose':
+        verbose = True
+    else:
+        print "unknown option : " + f
+        usage(1)
+
+# Deal with arguments
+pools = None
+if len(args) != 0:
+    pools = set(args)
+
+try:
+    # connect to stager and prepare statements
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    sqlStatement = '''
+    SELECT DiskPool.name, nvl(DiskServers.nbDiskServers,0), NULL, NULL,
+           SvcClasses.names, DiskPool.id
+      FROM DiskPool,
+           (SELECT diskPool, count(DISTINCT DiskServer.id) nbDiskServers
+              FROM FileSystem, DiskServer
+             WHERE FileSystem.diskServer = DiskServer.id
+             GROUP BY diskPool) DiskServers,
+           (SELECT DiskPool2SvcClass.parent AS diskPoolId,
+                   cast(collect(SvcClass.name) AS strListTable) AS names
+              FROM DiskPool2SvcClass, SvcClass
+             WHERE SvcClass.id = DiskPool2SvcClass.child
+             GROUP BY parent) SvcClasses
+     WHERE DiskPool.id = SvcClasses.diskPoolId(+)
+       AND DiskPool.id = DiskServers.diskPool(+)'''
+    if pools:
+        sqlStatement += " AND DiskPool.name IN ('" + "', '".join(pools) + "')"
+    sqlStatement += '''
+     UNION ALL
+    SELECT DataPool.name, nvl(DiskServers.nbDiskServers,0), DataPool.free, DataPool.totalSize,
+           SvcClasses.names, DataPool.id
+      FROM DataPool,
+           (SELECT dataPool, count(DiskServer.id) nbDiskServers
+              FROM DiskServer
+             GROUP BY dataPool) DiskServers,
+           (SELECT DataPool2SvcClass.parent AS dataPoolId,
+                   cast(collect(SvcClass.name) AS strListTable) AS names
+              FROM DataPool2SvcClass, SvcClass
+             WHERE SvcClass.id = DataPool2SvcClass.child
+             GROUP BY parent) SvcClasses
+     WHERE DataPool.id = SvcClasses.dataPoolId(+)
+       AND DataPool.id = DiskServers.dataPool(+)'''
+    if pools:
+        sqlStatement += " AND DataPool.name IN ('" + "', '".join(pools) + "')"
+    stcur.execute(sqlStatement)
+    # get results
+    rows = stcur.fetchall()
+    existingPools = set([row[0] for row in rows])
+    if pools:
+        unknownPools = pools - existingPools
+    # loop over pools and print them
+    if existingPools:
+        titles = ('NAME', 'NBDISKSERVERS', 'FREE', '%FREE', 'SIZE', 'SVCCLASSES', 'ID')
+        data = []
+        for name, nbds, free, size, svcclasses, dpId in rows:
+            data.append((name, nbds,
+                         castor_tools.nbToDataAmount(free) if free else '-',
+                         castor_tools.printPercentage(free, size) if free else '-',
+                         castor_tools.nbToDataAmount(size) if size else '-',
+                         ','.join(svcclasses) if svcclasses else '-', dpId))
+        castor_tools.prettyPrintTable(titles, data)
+    # check unknown pools
+    if pools and unknownPools:
+        print 'WARNING : the following pools do not exist : ' + ', '.join(unknownPools)
+    # close DB connections
+    try:
+        castor_tools.disconnectDB(stconn)
+    except Exception:
+        pass
+except Exception, e:
+    print e
+    if verbose:
+        import traceback
+        traceback.print_exc()
+    sys.exit(-1)

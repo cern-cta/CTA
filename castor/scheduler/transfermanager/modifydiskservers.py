@@ -29,11 +29,13 @@
 
 import castor_tools
 
-def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool, isRecursive):
+def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool, dataPool, isRecursive):
     '''modifies the properties of a set of diskservers'''
-    # consistency check
+    # consistency checks
     if len(targets) == 0 and len(mountPoints) > 0:
         raise ValueError('targets are mandatory when mountPoints are given')
+    if dataPool and diskPool:
+        raise ValueError('It is not allowed to specify both a diskPool and a dataPool')
     # check target diskpool if any
     stcur = dbconn.cursor()
     if diskPool:
@@ -43,11 +45,20 @@ def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool, isRecursive
         if not rows:
             raise ValueError('DiskPool %s does not exist. Giving up' % diskPool)
         diskPoolId = rows[0][0]
-    # get list of target diskservers rfom the mix diskpool/diskserver targets
+    # check target datapool if any
+    stcur = dbconn.cursor()
+    if dataPool:
+        sqlStatement = "SELECT id, name FROM DataPool WHERE name = :dataPool"
+        stcur.execute(sqlStatement, dataPool=dataPool)
+        rows = stcur.fetchall()
+        if not rows:
+            raise ValueError('DataPool %s does not exist. Giving up' % dataPool)
+        dataPoolId = rows[0][0]
+    # get list of target diskservers from the mix diskpool/datapool/diskserver targets
     unknownTargets, diskServerIds = castor_tools.parseAndCheckTargets(targets, stcur)
     # and complain in case of problem
     if not diskServerIds:
-         raise ValueError('None of the provided diskpools/diskservers could be found. Giving up')
+         raise ValueError('None of the provided diskpools/datapools/diskservers could be found. Giving up')
     # go for the update
     returnMsg = []
     mountPointIds = []
@@ -62,6 +73,16 @@ def modifyDiskServers(dbconn, targets, state, mountPoints, diskPool, isRecursive
             sqlStatement = '''UPDATE FileSystem SET diskPool = :diskPoolId
                                WHERE diskServer IN (''' + ', '.join([str(x) for x in diskServerIds]) + ')'
             stcur.execute(sqlStatement, diskPoolId=diskPoolId)
+        # update diskServer for DataPool - check first that it has no filesystem
+        if dataPool:
+            sqlStatement = '''SELECT id FROM FileSystem
+                               WHERE diskServer IN (''' + ', '.join([str(x) for x in diskServerIds]) + ')'
+            stcur.execute(sqlStatement)
+            if len(stcur.fetchall()) > 0:
+                raise ValueError('Some of the DiskServers to be moved to dataPool %s have FileSystems. This is not allowed. No move will be processed.' % dataPool)
+            sqlStatement = '''UPDATE DiskServer SET dataPool = :dataPoolId
+                               WHERE id IN (''' + ', '.join([str(x) for x in diskServerIds]) + ')'
+            stcur.execute(sqlStatement, dataPoolId=dataPoolId)
         returnMsg.append('Diskserver(s) modified successfully')
         # in case we are running in recursive mode, list mountPoints
         if isRecursive:

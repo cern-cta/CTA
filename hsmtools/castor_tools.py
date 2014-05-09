@@ -581,7 +581,7 @@ def printPercentage(portion, total):
     if total == 0:
         return 'N/A'
     perc = portion*100.0/total
-    return "%.1f %%" % perc
+    return "%.1f%%" % perc
 
 def nbToAge(n):
     '''converts a number of seconds into a readable age'''
@@ -759,12 +759,13 @@ def parseTimeDuration(name, svalue):
 
 def parseAndCheckTargets(targets, stcur):
     '''extracts list of concerned diskservers from a list of targets that can mix diskservers
-       and diskpools. Checks them and returns a tuple of a set and a list :
+       and diskpools/datapools. Checks them and returns a tuple of a set and a list :
          - a set of unknown targets
          - a list of diskServer ids'''
     # check target diskpools
     sqlStatement = 'SELECT id, name FROM DiskPool WHERE name = :dpname'
     diskPools = set([])
+    dataPools = set([])
     diskPoolIds = []
     for target in targets:
         stcur.execute(sqlStatement, dpname=target)
@@ -772,6 +773,16 @@ def parseAndCheckTargets(targets, stcur):
         if row:
             diskPoolIds.append(row[0])
             diskPools.add(row[1])
+    # check target datapools
+    sqlStatement = 'SELECT id, name FROM DataPool WHERE name = :dpname'
+    dataPools = set([])
+    dataPoolIds = []
+    for target in targets:
+        stcur.execute(sqlStatement, dpname=target)
+        row = stcur.fetchone()
+        if row:
+            dataPoolIds.append(row[0])
+            dataPools.add(row[1])
     # check target diskservers
     sqlStatement = 'SELECT id, name FROM DiskServer WHERE name = :dsname'
     diskServers = set([])
@@ -782,13 +793,21 @@ def parseAndCheckTargets(targets, stcur):
         if row:
             diskServerIds.append(row[0])
             diskServers.add(row[1])
-    unknownTargets = set(t for t in targets) - diskPools - diskServers
+    unknownTargets = set(t for t in targets) - diskPools - diskServers - dataPools
     # get diskservers of the diskpools
     if diskPools:
         sqlStatement = '''SELECT UNIQUE DiskServer.id FROM DiskServer, FileSystem
                            WHERE DiskServer.id = FileSystem.diskServer
                              AND FileSystem.diskPool IN (''' + \
                        ', '.join([str(x) for x in diskPoolIds]) + ')'
+        stcur.execute(sqlStatement)
+        rows = stcur.fetchall()
+        diskServerIds.extend([row[0] for row in rows])
+    # get diskservers of the datapools
+    if dataPools:
+        sqlStatement = '''SELECT UNIQUE DiskServer.id FROM DiskServer
+                           WHERE DiskServer.dataPool IN (''' + \
+                       ', '.join([str(x) for x in dataPoolIds]) + ')'
         stcur.execute(sqlStatement)
         rows = stcur.fetchall()
         diskServerIds.extend([row[0] for row in rows])

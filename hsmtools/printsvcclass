@@ -61,13 +61,18 @@ try:
     sqlstatement = '''
     SELECT SvcClass.name, SvcClass.defaultfilesize, SvcClass.failjobswhennospace, SvcClass.gcPolicy,
            SvcClass.maxReplicaNb, FileClass.name, SvcClass.replicateonclose,
-           SvcClass.disk1behavior, SvcClass.id, DiskPools.names, SvcClass.lastEditor, SvcClass.lastEditionTime
+           SvcClass.disk1behavior, SvcClass.id, Pools.names, SvcClass.lastEditor, SvcClass.lastEditionTime
       FROM SvcClass, FileClass,
-           (SELECT DiskPool2SvcClass.child AS svcClassId, cast(collect(DiskPool.name) AS strListTable) AS names
-              FROM DiskPool2SvcClass, DiskPool
-             WHERE DiskPool.id = DiskPool2SvcClass.parent
-             GROUP BY child) DiskPools
-     WHERE SvcClass.id = DiskPools.svcClassId(+)
+           (SELECT svcClassId, cast(collect(poolName) AS strListTable) AS names
+              FROM (SELECT DiskPool2SvcClass.child svcClassId, DiskPool.name poolName
+                      FROM DiskPool2SvcClass, DiskPool
+                     WHERE DiskPool.id = DiskPool2SvcClass.parent
+                     UNION ALL
+                    SELECT DataPool2SvcClass.child svcClassId, DataPool.name poolName
+                      FROM DataPool2SvcClass, DataPool
+                     WHERE DataPool.id = DataPool2SvcClass.parent)
+             GROUP BY svcClassId) Pools
+     WHERE SvcClass.id = Pools.svcClassId(+)
        AND SvcClass.forcedFileClass = FileClass.id(+)'''
     if svcClasses:
         sqlstatement = sqlstatement + " AND SvcClass.name IN ('" + "', '".join(svcClasses) + "')"
@@ -81,15 +86,15 @@ try:
     if existingSvcClasses:
         titles = ('NAME', 'DEFAULTFILESIZE', 'FAILJOBSWHENNOSPACE', 'MAXREPLICANB',
                   'FORCEDFILECLASS', 'REPLICATEONCLOSE', 'DISK1BEHAVIOR', 'GCPOLICY',
-                  'DISKPOOLS', 'ID', 'LASTEDITOR', 'LASTEDITION')
+                  'POOLS', 'ID', 'LASTEDITOR', 'LASTEDITION')
         data = []
         for name, defaultfilesize, failjobswhennospace, gcPolicy, maxReplicaNb, \
-                forcedFileClass, replicateonclose, disk1behavior, scId, diskPools, \
+                forcedFileClass, replicateonclose, disk1behavior, scId, pools, \
                 lastEditor, lastEdition in rows:
-            if diskPools:
+            if pools:
                 data.append((name, castor_tools.nbToDataAmount(defaultfilesize), bool(failjobswhennospace),
                              maxReplicaNb, forcedFileClass or '-', bool(replicateonclose),
-                             bool(disk1behavior), gcPolicy, ','.join(diskPools),
+                             bool(disk1behavior), gcPolicy, ','.join(pools),
                              scId, lastEditor, castor_tools.secsToDate(lastEdition)))
             else:
                 data.append((name, castor_tools.nbToDataAmount(defaultfilesize), bool(failjobswhennospace),

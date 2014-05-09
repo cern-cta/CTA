@@ -5,9 +5,9 @@
 %attr(0755,root,root) usr/bin/modifysvcclass
 %attr(0755,root,root) usr/bin/deletesvcclass
 %attr(0755,root,root) usr/bin/printsvcclass
-%attr(0755,root,root) usr/bin/enterdiskpool
-%attr(0755,root,root) usr/bin/deletediskpool
-%attr(0755,root,root) usr/bin/printdiskpool
+%attr(0755,root,root) usr/bin/enterpool
+%attr(0755,root,root) usr/bin/deletepool
+%attr(0755,root,root) usr/bin/printpool
 %attr(0755,root,root) usr/bin/enterrecallgroup
 %attr(0755,root,root) usr/bin/modifyrecallgroup
 %attr(0755,root,root) usr/bin/deleterecallgroup

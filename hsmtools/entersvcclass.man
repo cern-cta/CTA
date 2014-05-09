@@ -33,8 +33,8 @@ entersvcclass \- define a new service class in the stager catalog
 .BI --gcpolicy 
 <gcPolicyName>
 [
-.BI --diskpools 
-<diskPoolName>:[...]
+.BI --pools 
+<poolName>:[...]
 ]
 <svcClassName>
 
@@ -88,9 +88,9 @@ Specifies the name of the garbage collection policy to be used for this service 
 This value is irrelevant if Disk1Behavior is set thus you can omit it in that case and "default" will then be used.
 When Disk1Behavior is not true, this option is mandatory.
 .TP
-.BI \-\-diskpools\ <diskPool1:diskPool2:...>
-Lists the names of the disk pools that this service class is allowed to use.
-More than one disk pool can be specified, colon separated. All specified disk
+.BI \-\-pools\ <pool1:pool2:...>
+Lists the names of the pools that this service class is allowed to use.
+More than one pool can be specified, colon separated. All specified
 pools must already exist.
 .TP
 .BI\ <svcClassName>
@@ -99,15 +99,15 @@ name of the service class to create.
 .SH EXAMPLES
 .nf
 .ft CW
-#entersvcclass --diskpools default --defaultfilesize 2GiB public
+#entersvcclass --pools default --defaultfilesize 2GiB public
 inserted service class public successfully
 
 #printsvcclass -a
-  NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+  NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY     POOLS ID LASTEDITOR          LASTEDITION
 ------------------------------------------------------------------------------------------------------------------------------------------------------------
 public         2048MiB                True            1               -            False         False        -   default 13   sponcec3 30-Aug-2011 16:59:13
 
-#entersvcclass --diskpools default public
+#entersvcclass --pools default public
 SvcClass public already exists in the stager DB
 Giving up
 
@@ -119,7 +119,7 @@ Configuration for the database accesses is taken from castor.conf.
 .BR modifysvcclass
 .BR deletesvcclass
 .BR printsvcclass
-.BR enterdiskpool
+.BR enterpool
 .BR adminMultiInstance
 
 .SH AUTHOR

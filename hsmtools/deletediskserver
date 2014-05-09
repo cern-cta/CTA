@@ -96,7 +96,7 @@ try:
     print 'successfully dropped the following disk servers : ' + ', '.join(existingDiskServers)
     # warn for non existing disk pools
     if nonexitingDiskServers:
-        print 'WARNING : some disk pool(s) did not exist : ' + ', '.join(nonexitingDiskServers)
+        print 'WARNING : some disk server(s) did not exist : ' + ', '.join(nonexitingDiskServers)
     # close DB connections
     try:
         castor_tools.disconnectDB(stconn)

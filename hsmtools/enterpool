@@ -1,6 +1,6 @@
 #!/usr/bin/python
 #/******************************************************************************
-# *                      enterdiskpool
+# *                      enterpool
 # *
 # * This file is part of the Castor project.
 # * See http://castor.web.cern.ch/castor
@@ -62,12 +62,19 @@ try:
     # connect to stager
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
-    # check that the disk pool does exist
+    # check that the disk pool does not exist
     stcur.execute('SELECT id FROM DiskPool WHERE name=:name', name=diskPoolName)
     rows = stcur.fetchall()
     if len(rows) != 0:
         print 'DiskPool %s already exists in the stager DB' % diskPoolName
         print 'You may want to use modifydiskpool'
+        sys.exit(1)
+    # check that the disk pool does not clash with a data pool name
+    stcur.execute('SELECT id FROM DataPool WHERE name=:name', name=diskPoolName)
+    rows = stcur.fetchall()
+    if len(rows) != 0:
+        print 'DiskPool %s clashes with a DataPool using the same name' % diskPoolName
+        print 'You may want to drop the dataPool first or rename your diskPool'
         sys.exit(1)
     # insert new diskpool
     stcur.execute('INSERT INTO DiskPool (name, id) VALUES (:name, ids_seq.nextval)', name=diskPoolName)
