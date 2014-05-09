@@ -74,9 +74,9 @@ set(HSM_SCRIPTS
   deletesvcclass
   printsvcclass
   
-  enterdiskpool
-  deletediskpool
-  printdiskpool
+  enterpool
+  deletepool
+  printpool
   
   enterrecallgroup
   modifyrecallgroup
@@ -144,7 +144,7 @@ set(HSM_MAN_PAGES
   adminMultiInstance
   c2probe
   deletediskcopy
-  deletediskpool
+  deletepool
   deletediskserver
   deletefileclass
   deletemigrationroute
@@ -154,7 +154,7 @@ set(HSM_MAN_PAGES
   deletetapepool
   diskserver_qry
   draindiskserver
-  enterdiskpool
+  enterpool
   enterfileclass
   entermigrationroute
   enterrecallgroup
@@ -170,7 +170,7 @@ set(HSM_MAN_PAGES
   modifysvcclass
   modifytapepool
   printdbconfig
-  printdiskpool
+  printpool
   printdiskserver
   printfileclass
   printmigrationroute
