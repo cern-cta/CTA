@@ -64,6 +64,7 @@ public:
    * 
    */      
   void finish();
+//------------------------------------------------------------------------------
   /**
    * Will call  VdqmProxy::assignDrive
    * @param server The host name of the server to which the tape drive is
@@ -78,6 +79,12 @@ public:
   const std::string &dgn, const uint32_t mountTransactionId, 
   const pid_t sessionPid);
   
+    /**
+   * Will call VdqmProxy::releaseDrive
+   */
+  void releaseDrive(const std::string &server, const std::string &unitName, 
+  const std::string &dgn, const bool forceUnmount, const pid_t sessionPid);
+//------------------------------------------------------------------------------
   /**
    * Will call TapeserverProxy::gotWriteMountDetailsFromClient
    * @param unitName The unit name of the tape drive.
@@ -86,12 +93,25 @@ public:
   void gotReadMountDetailsFromClient(const std::string &unitName,
   const std::string &vid);
   
+  /**
+   * Will call TapeserverProxy::tapeUnmounted (and VdqmProx::tapeUnmounted() ??)
+   * 
+   */
+  void tapeUnmounted();
+//------------------------------------------------------------------------------
+    /**
+   * Will call VmgrProxy::tapeMountedForRead, parameters TBD
+   */
+  void tapeMountedForRead();
+  
+  
 private:
   class Report {
   public:
     virtual ~Report(){}
     virtual void execute(GlobalStatusReporter&)=0;
   };
+  //vdqm proxy stuff
   class ReportAssignDrive : public Report {
     const std::string server;
     const std::string unitName;
@@ -105,6 +125,20 @@ private:
     virtual ~ReportAssignDrive(){}
     virtual void execute(GlobalStatusReporter&);
   };
+  class ReportReleaseDrive : public Report {
+    const std::string server;
+    const std::string unitName;
+    const std::string dgn;
+    const bool forceUnmount;
+    const pid_t sessionPid;
+  public:
+    ReportReleaseDrive(const std::string &server,const std::string &unitName, 
+            const std::string &dgn, bool forceUnmount,
+            const pid_t sessionPid);
+    virtual ~ReportReleaseDrive(){}
+    virtual void execute(GlobalStatusReporter&);
+  };
+
   class ReportGotDetailsFromClient : public Report {
     const std::string &unitName;
     const std::string &vid;
@@ -112,6 +146,13 @@ private:
     ReportGotDetailsFromClient(const std::string &unitName,
   const std::string &vid);
     virtual ~ReportGotDetailsFromClient(){}
+    virtual void execute(GlobalStatusReporter&);
+  };
+  
+  class ReportTapeMountedForRead : public Report {
+  public:
+    ReportTapeMountedForRead();
+    virtual ~ReportTapeMountedForRead(){}
     virtual void execute(GlobalStatusReporter&);
   };
   /**
