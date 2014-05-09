@@ -38,6 +38,9 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
+  
+// forward declaration
+class GlobalStatusReporter;
 
 class TapeWriteSingleThread :  public TapeSingleThreadInterface<TapeWriteTask> {
 public:
@@ -54,10 +57,11 @@ public:
    */
   TapeWriteSingleThread(castor::tape::drives::DriveInterface & drive, 
           castor::legacymsg::RmcProxy & rmc,
+          GlobalStatusReporter & gsr,
           const std::string & vid,
           castor::log::LogContext & lc, MigrationReportPacker & repPacker,
 	  uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
-  TapeSingleThreadInterface<TapeWriteTask>(drive, rmc, vid, lc),
+  TapeSingleThreadInterface<TapeWriteTask>(drive, rmc, gsr, vid, lc),
           m_filesBeforeFlush(filesBeforeFlush),
           m_bytesBeforeFlush(bytesBeforeFlush),
           m_drive(drive), m_reportPacker(repPacker), m_vid(vid), 

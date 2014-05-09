@@ -37,6 +37,11 @@ class VdqmProxyDummy: public VdqmProxy {
 public:
 
   /**
+   * Empty constructor. receiveJob will fail in this case (this is for tests).
+   */
+  VdqmProxyDummy() throw();
+  
+  /**
    * Constructor.
    *
    * @param job The vdqm job to be returned by the receiveJob() method.
@@ -138,6 +143,8 @@ private:
    * The vdqm job to be returned by the receiveJob() method.
    */
   RtcpJobRqstMsgBody m_job;
+  /** Did we construct with a job? */
+  const bool m_hasJob;
 
 }; // class VdqmProxyDummy
 
