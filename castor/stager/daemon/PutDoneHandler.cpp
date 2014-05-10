@@ -11,7 +11,6 @@
 #include "castor/BaseObject.hpp"
 #include "castor/IService.hpp"
 #include "castor/stager/IJobSvc.hpp"
-#include "stager_uuid.h"
 #include "stager_constants.h"
 #include "castor/Constants.hpp"
 #include "Cns_api.h"

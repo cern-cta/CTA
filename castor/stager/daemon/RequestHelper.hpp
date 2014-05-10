@@ -35,7 +35,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
-#include "stager_uuid.h"
+#include "Cuuid.h"
 #include "stager_constants.h"
 #include "Cns_api.h"
 #include "Cpwd.h"

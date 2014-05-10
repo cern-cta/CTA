@@ -100,12 +100,12 @@ if (${COMPILE_SERVER} STREQUAL "1")
     APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
   set(RFIOD_SRC_FILES Csemaphore.c rfio_serv.c rfio_calls.c rfio_call64.c 
     rfio_callhandlers.c checkkey.c fio.c rfstatfs.c 
-    alrm.c stager_uuid.c 
+    alrm.c
     rfio_alignedbuf.c rfio_xfsprealloc.c)
   add_executable(rfiod ${RFIOD_SRC_FILES})
   # Relax compilation of old code full of pointer casting. Funnily enough,
   # the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
-  set_property(SOURCE rfio_calls.c stager_uuid.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
+  set_property(SOURCE rfio_calls.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
   target_link_libraries(rfiod castorcommon castorns castordlf castorsecurity
     castorclient castorrfio)
   set_target_properties(rfiod PROPERTIES
