@@ -100,7 +100,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
     APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
   set(RFIOD_SRC_FILES Csemaphore.c rfio_serv.c rfio_calls.c rfio_call64.c 
     rfio_callhandlers.c checkkey.c fio.c rfstatfs.c 
-    alrm.c stager_messages.c stager_extern_globals.c stager_uuid.c 
+    alrm.c stager_uuid.c 
     rfio_alignedbuf.c rfio_xfsprealloc.c)
   add_executable(rfiod ${RFIOD_SRC_FILES})
   # Relax compilation of old code full of pointer casting. Funnily enough,
