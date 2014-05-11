@@ -53,7 +53,6 @@
 
 #include "rfio_callhandlers.h"
 #include "checkkey.h"
-#include "alrm.h"
 #include "rfio_calls.h"
 
 extern int forced_umask;
@@ -1391,12 +1390,8 @@ int  sropen(int     s,
             (*logfunc)(LOG_DEBUG, "ropen: open(%s,%d,%d) returned %x (hex)\n", CORRECT_FILENAME(ofilename), flags, mode, fd);
           }
           if (fd < 0) {
-            char alarmbuf[1024];
-            sprintf(alarmbuf,"sropen(): %s",CORRECT_FILENAME(filename));
             status= -1;
-            rcode= errno;
-            (*logfunc)(LOG_DEBUG,"ropen: open: %s\n",strerror(errno));
-            rfio_alrm(rcode,alarmbuf);
+            (*logfunc)(LOG_DEBUG,"ropen: open: %s -> %s\n",CORRECT_FILENAME(filename),strerror(errno));
           }
           else {
             /*
@@ -1524,11 +1519,6 @@ int srwrite(int     s,
   status = write(fd,p,size);
   rcode= ( status < 0 ) ? errno : 0;
 
-  if ( status < 0 ) {
-    char alarmbuf[1024];
-    sprintf(alarmbuf,"srwrite(): %s",filename);
-    rfio_alrm(rcode,alarmbuf);
-  }
   if (rfio_calls_answer_client_internal(rqstbuf, rcode, status, s) < 0) {
     return -1;
   }
@@ -1611,11 +1601,8 @@ int srread(int     s,
   p = iobuffer + WORDSIZE + 3*LONGSIZE;
   status = read(fd, p, size);
   if ( status < 0 ) {
-    char alarmbuf[1024];
-    sprintf(alarmbuf,"srread(): %s",filename);
     rcode= errno;
     msgsiz= WORDSIZE+3*LONGSIZE;
-    rfio_alrm(rcode,alarmbuf);
   }  else  {
     rcode= 0;
     infop->rnbr+= status;
@@ -2382,12 +2369,9 @@ int  sropen_v3(int     s,
             (*logfunc)(LOG_DEBUG,"ropen_v3: open(%s,%d,%d) returned %x (hex)\n",CORRECT_FILENAME(ofilename),flags,mode,fd);
           }
           if (fd < 0)  {
-            char alarmbuf[1024];
-            sprintf(alarmbuf,"sropen_v3: %s",CORRECT_FILENAME(filename));
             status= -1;
             rcode= errno;
-            (*logfunc)(LOG_DEBUG,"ropen_v3: open: %s\n",strerror(errno));
-            /* rfio_alrm(rcode,alarmbuf); */
+            (*logfunc)(LOG_DEBUG,"ropen_v3: open: %s -> %s\n", CORRECT_FILENAME(filename), strerror(errno));
           }
           else  {
             /*
