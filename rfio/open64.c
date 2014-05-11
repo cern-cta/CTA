@@ -172,7 +172,7 @@ int rfio_open64_ext(char    * filepath,
     TRACE(1,"rfio","rfio_open64_ext: %s is a local path",
           filename);
     END_TRACE();
-    status = open64(filename, flags, mode) ;
+    status = open(filename, flags, mode) ;
     if ( status < 0 ) serrno = 0;
     rfio_errno = 0;
     END_TRACE() ;

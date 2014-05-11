@@ -585,8 +585,8 @@ int  sropen64(int     s,
 
           errno = 0;
           if (forced_filename!=NULL || !check_path_whitelist(host, pfn, perm_array, ofilename, sizeof(ofilename),1)) {
-            fd = open64((forced_filename!=NULL)?pfn:ofilename, ntohopnflg(flags),
-                        ((forced_filename != NULL) && (((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
+            fd = open((forced_filename!=NULL)?pfn:ofilename, ntohopnflg(flags),
+                      ((forced_filename != NULL) && (((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
             (*logfunc)(LOG_DEBUG, "sropen64: open64(%s,0%o,0%o) returned %x (hex)\n",
                 CORRECT_FILENAME(filename), flags, mode, fd);
           }
@@ -1386,8 +1386,8 @@ int  sropen64_v3(int         s,
             strcpy(ofilename, filename);
             fd = -1;
             if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-              fd = open64(CORRECT_FILENAME(ofilename), flags,
-                          ((forced_filename != NULL) && ((flags & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
+              fd = open(CORRECT_FILENAME(ofilename), flags,
+                        ((forced_filename != NULL) && ((flags & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
             }
           }
           if (fd < 0)  {
