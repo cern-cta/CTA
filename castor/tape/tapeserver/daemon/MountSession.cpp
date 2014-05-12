@@ -46,7 +46,9 @@
 
 using namespace castor::tape;
 using namespace castor::log;
-
+//------------------------------------------------------------------------------
+//Constructor
+//------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::MountSession::MountSession(
     int argc,
     char ** argv,
@@ -64,7 +66,11 @@ castor::tape::tapeserver::daemon::MountSession::MountSession(
     m_vdqm(vdqm), m_vmgr(vmgr), m_rmc(rmc), m_intialProcess(initialProcess), 
     m_argc(argc), m_argv(argv) {}
 
+//------------------------------------------------------------------------------
+//MountSession::execute
+//------------------------------------------------------------------------------
 /**
+ * Function's synopsis 
  * 1) Prepare the logging environment
  *  Create a sticky thread name, which will be overridden by the other threads
  * 2a) Get initial information from the client
@@ -140,7 +146,9 @@ throw (castor::tape::Exception) {
     return;
   }
 }
-
+//------------------------------------------------------------------------------
+//MountSession::executeRead
+//------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc) {
   // We are ready to start the session. We need to create the whole machinery 
   // in order to get the task injector ready to check if we actually have a 
@@ -206,7 +214,9 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     }
   }
 }
-
+//------------------------------------------------------------------------------
+//MountSession::executeWrite
+//------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc) {
   // We are ready to start the session. We need to create the whole machinery 
   // in order to get the task injector ready to check if we actually have a 
@@ -273,18 +283,19 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
     }
   }
 }
-
+//------------------------------------------------------------------------------
+//MountSession::executeDump
+//------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::MountSession::executeDump(LogContext & lc) {
   // We are ready to start the session. In case of read there is no interest in
   // creating the machinery before getting the tape mounted, so do it now.
   // 1) Get hold of the drive and check it.
   
 }
-/**
- * Try to find the drive that is described by m_request.driveUnit and m_volInfo.density
- * @param lc For logging purpose
- * @return the drive if found, NULL otherwise
- */
+
+//------------------------------------------------------------------------------
+//MountSession::findDrive
+//------------------------------------------------------------------------------
 /*
  * Function synopsis  :
  *  1) Get hold of the drive and check it.
@@ -292,6 +303,11 @@ void castor::tape::tapeserver::daemon::MountSession::executeDump(LogContext & lc
  *  2) Try to find the drive 
  *    Log if we do not find it
  *  3) Try to open it, log if we fail
+ */
+/**
+ * Try to find the drive that is described by m_request.driveUnit and m_volInfo.density
+ * @param lc For logging purpose
+ * @return the drive if found, NULL otherwise
  */
 castor::tape::drives::DriveInterface *
 castor::tape::tapeserver::daemon::MountSession::findDrive(LogContext& lc) {

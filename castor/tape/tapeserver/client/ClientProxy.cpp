@@ -48,10 +48,15 @@ namespace tape {
 namespace tapeserver {
 namespace client {
   
-
+//------------------------------------------------------------------------------
+//ClientProxy constructor
+//------------------------------------------------------------------------------
 ClientProxy::ClientProxy(const legacymsg::RtcpJobRqstMsgBody& clientRequest):
 m_request(clientRequest),m_transactionId(0) {}
 
+//------------------------------------------------------------------------------
+//UnexpectedResponse::UnexpectedResponse
+//------------------------------------------------------------------------------
 ClientProxy::UnexpectedResponse::
     UnexpectedResponse(const castor::IObject* resp, const std::string & w):
 castor::tape::Exception(w) {
@@ -63,7 +68,9 @@ castor::tape::Exception(w) {
   free(demangled);
   getMessage() << " Response type was: " << responseType;
 }
-
+//------------------------------------------------------------------------------
+//requestResponseSession
+//------------------------------------------------------------------------------
 tapegateway::GatewayMessage *
   ClientProxy::requestResponseSession(
     const tapegateway::GatewayMessage &req,
@@ -107,7 +114,9 @@ tapegateway::GatewayMessage *
   resp.release();
   return ret;
 }
-
+//------------------------------------------------------------------------------
+//fetchVolumeId
+//------------------------------------------------------------------------------
 void ClientProxy::fetchVolumeId(
   VolumeInfo & volInfo, RequestReport &report) 
 {
@@ -150,7 +159,9 @@ void ClientProxy::fetchVolumeId(
         "to a volume request");
   }
 }
-
+//------------------------------------------------------------------------------
+//reportEndOfSession
+//------------------------------------------------------------------------------
 void ClientProxy::reportEndOfSession(
 RequestReport &transactionReport) 
 {
@@ -180,7 +191,9 @@ RequestReport &transactionReport)
   }
 }
 
-
+//------------------------------------------------------------------------------
+//reportEndOfSessionWithError
+//------------------------------------------------------------------------------
 void ClientProxy::reportEndOfSessionWithError(
 const std::string & errorMsg, int errorCode, RequestReport &transactionReport) 
 {
@@ -212,7 +225,9 @@ const std::string & errorMsg, int errorCode, RequestReport &transactionReport)
   }
 }
 
-
+//------------------------------------------------------------------------------
+//getFilesToMigrate
+//------------------------------------------------------------------------------
 tapegateway::FilesToMigrateList * 
     ClientProxy::getFilesToMigrate(
 uint64_t files, uint64_t bytes, RequestReport& report) 
@@ -250,7 +265,9 @@ uint64_t files, uint64_t bytes, RequestReport& report)
         "Unexpected response to FilesToMigrateListRequest in getFilesToMigrate");
   }
 }
-
+//------------------------------------------------------------------------------
+//reportMigrationResults
+//------------------------------------------------------------------------------
 void ClientProxy::reportMigrationResults(
 tapegateway::FileMigrationReportList & migrationReport,
     RequestReport& report) {
@@ -291,7 +308,9 @@ tapegateway::FileMigrationReportList & migrationReport,
         "Unexpected response to FileMigrationReportList in reportMigrationResults");
   }
 }
-
+//------------------------------------------------------------------------------
+//getFilesToRecall
+//------------------------------------------------------------------------------
 tapegateway::FilesToRecallList * 
     ClientProxy::getFilesToRecall(
 uint64_t files, uint64_t bytes, RequestReport& report) 
@@ -329,7 +348,9 @@ uint64_t files, uint64_t bytes, RequestReport& report)
         "Unexpected response to FilesToRecallListRequest in getFilesToRecall");
   }
 }
-
+//------------------------------------------------------------------------------
+//reportRecallResults
+//------------------------------------------------------------------------------
 void ClientProxy::reportRecallResults(
 tapegateway::FileRecallReportList & recallReport,
 RequestReport& report) {

@@ -45,7 +45,9 @@ namespace tapeserver {
 namespace client {
   
 using namespace castor::tape;
-
+//------------------------------------------------------------------------------
+//constructor
+//------------------------------------------------------------------------------
 ClientSimulator::ClientSimulator(uint32_t volReqId, const std::string & vid, 
     const std::string & density, tapegateway::ClientType clientType,
     tapegateway::VolumeMode volumeMode):
@@ -56,7 +58,9 @@ ClientSimulator::ClientSimulator(uint32_t volReqId, const std::string & vid,
   setupCallbackSock();
 }
 
-
+//------------------------------------------------------------------------------
+//processFirstRequest
+//------------------------------------------------------------------------------
 void ClientSimulator::processFirstRequest()
 throw (castor::exception::Exception) {
   // Accept the next connection
@@ -103,7 +107,9 @@ throw (castor::exception::Exception) {
   vol.setDensity(m_density);
   clientConnection->sendObject(vol);
 }
-
+//------------------------------------------------------------------------------
+//processOneRequest
+//------------------------------------------------------------------------------
 bool ClientSimulator::processOneRequest()
 throw (castor::exception::Exception) {
   // Accept the next connection
@@ -255,7 +261,9 @@ throw (castor::exception::Exception) {
   clientConnection->sendObject(ack);
   return false; // We are at the end of the session
 }
-
+//------------------------------------------------------------------------------
+//sendEndNotificationErrorReport
+//------------------------------------------------------------------------------
 void ClientSimulator::sendEndNotificationErrorReport(
     const uint64_t tapebridgeTransactionId,
     const int errorCode,
