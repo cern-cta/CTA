@@ -504,7 +504,7 @@ int castor::tape::tapeserver::daemon::DriveCatalogue::getLabelCmdConnection(
       sessionType2Str(sessionType);
     throw ex;
   }
-
+  
   return itor->second.labelCmdConnection;
 }
 
@@ -598,7 +598,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedVdqmJob(const leg
     if(std::string(job.dgn) != itor->second.dgn) {
       castor::exception::Internal ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": DGN mistatch: catalogueDgn=" << itor->second.dgn << " vdqmJobDgn=" << job.dgn;
+        ": DGN mismatch: catalogueDgn=" << itor->second.dgn << " vdqmJobDgn=" << job.dgn;
       throw ex;
     }
     itor->second.vdqmJob = job;
@@ -637,7 +637,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedLabelJob(
     if(std::string(job.dgn) != itor->second.dgn) {
       castor::exception::Internal ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": DGN mistatch: catalogueDgn=" << itor->second.dgn << " vdqmJobDgn=" << job.dgn;
+        ": DGN mismatch: catalogueDgn=" << itor->second.dgn << " labelJobDgn=" << job.dgn;
       throw ex;
     }
     itor->second.labelJob = job;
@@ -698,7 +698,7 @@ const castor::legacymsg::TapeLabelRqstMsgBody &castor::tape::tapeserver::daemon:
   }
 
   switch(itor->second.state) {
-  case DRIVE_STATE_WAITFORK:
+  case DRIVE_STATE_WAITLABEL:
   case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
     return itor->second.labelJob;

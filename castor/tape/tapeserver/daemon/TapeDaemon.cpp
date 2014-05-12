@@ -831,7 +831,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(const std::st
     const legacymsg::TapeLabelRqstMsgBody job = m_driveCatalogue.getLabelJob(unitName);
     std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
     castor::tape::System::realWrapper sWrapper;
-    castor::tape::tapeserver::daemon::LabelSession labelsession(*(rmc.get()), job, m_log, sWrapper, m_tpconfigLines, true);    
+    castor::tape::tapeserver::daemon::LabelSession labelsession(*(rmc.get()), job, m_log, sWrapper, m_tpconfigLines, true);
+    labelsession.execute();
     exit(0);
   } catch(std::exception &se) {
     log::Param params[] = {

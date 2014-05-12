@@ -23,7 +23,6 @@
  *****************************************************************************/
 
 #include "castor/tape/tapeserver/drive/Drive.hpp"
-#include "castor/exception/Errnum.hpp"
 
 using namespace castor::tape;
 

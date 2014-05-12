@@ -19,32 +19,37 @@
  *
  *
  *
- * @author Steven.Murray@cern.ch
+ * @author dkruse@cern.ch
  *****************************************************************************/
 
 #include "castor/tape/label/LabelCmd.hpp"
 #include "castor/tape/label/ParsedTpLabelCommandLine.hpp"
+#include "castor/tape/tpcp/Constants.hpp"
+#include "castor/legacymsg/CommonMarshal.hpp"
+#include "castor/legacymsg/TapeMarshal.hpp"
+#include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
+#include "castor/io/io.hpp"
+#include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "h/Ctape.h"
+#include "castor/tape/tpcp/Constants.hpp"
 
 #include <getopt.h>
+#include <iostream>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::label::LabelCmd::LabelCmd(std::istream &inStream,
-  std::ostream &outStream, std::ostream &errStream,
-  legacymsg::TapeserverProxy &tapeserver) throw():
-  m_programName("castor-tape-label"),
-  m_in(inStream), m_out(outStream), m_err(errStream), m_tapeserver(tapeserver),
-  m_debugBuf(outStream), m_dbg(&m_debugBuf) {
+castor::tape::label::LabelCmd::LabelCmd() throw():
+  m_userId(getuid()),
+  m_groupId(getgid()),
+  m_programName("castor-tape-label") {
+  
 }
 
 //------------------------------------------------------------------------------
 // parseCommandLine
 //------------------------------------------------------------------------------
-castor::tape::label::ParsedTpLabelCommandLine
-  castor::tape::label::LabelCmd::parseCommandLine(const int argc,
-  char **argv) throw(castor::exception::Exception) {
-  ParsedTpLabelCommandLine cmdLine;
+void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv) throw(castor::exception::Exception) {
 
   static struct option longopts[] = {
     {"unitname", 1, NULL, 'u'},
@@ -64,9 +69,9 @@ castor::tape::label::ParsedTpLabelCommandLine
 
     switch (c) {
     case 'u':
-      cmdLine.driveIsSet = true;
+      m_cmdLine.driveIsSet = true;
       try {
-        castor::utils::copyString(cmdLine.drive, optarg);
+        castor::utils::copyString(m_cmdLine.drive, optarg);
       } catch(castor::exception::Exception &ex) {
         castor::exception::Internal ex;
         ex.getMessage() <<
@@ -78,9 +83,9 @@ castor::tape::label::ParsedTpLabelCommandLine
       break;
 
     case 'g':
-      cmdLine.dgnIsSet = true;
+      m_cmdLine.dgnIsSet = true;
       try {
-        castor::utils::copyString(cmdLine.dgn, optarg);
+        castor::utils::copyString(m_cmdLine.dgn, optarg);
       } catch(castor::exception::Exception &ex) {
         castor::exception::Internal ex;
         ex.getMessage() <<
@@ -92,7 +97,7 @@ castor::tape::label::ParsedTpLabelCommandLine
       break;
 
     case 'V':
-      cmdLine.vidIsSet = true;
+      m_cmdLine.vidIsSet = true;
       try {
         utils::checkVidSyntax(optarg);
       } catch(castor::exception::InvalidArgument &ex) {
@@ -103,7 +108,7 @@ castor::tape::label::ParsedTpLabelCommandLine
         throw ex2;
       }
       try {
-        castor::utils::copyString(cmdLine.vid, optarg);
+        castor::utils::copyString(m_cmdLine.vid, optarg);
       } catch(castor::exception::Exception &ex) {
         castor::exception::Internal ex;
         ex.getMessage() <<
@@ -115,11 +120,11 @@ castor::tape::label::ParsedTpLabelCommandLine
       break;
 
     case 'h':
-      cmdLine.helpIsSet = true;
+      m_cmdLine.helpIsSet = true;
       break;
       
     case 'd':
-      cmdLine.debugIsSet = true;
+      m_cmdLine.debugIsSet = true;
       break;
 
     case ':':
@@ -156,17 +161,15 @@ castor::tape::label::ParsedTpLabelCommandLine
   }
 
   // There is no need to continue parsing when the help option is set
-  if(cmdLine.helpIsSet) {
-    return cmdLine;
+  if(m_cmdLine.helpIsSet) {
+    return;
   }
 
-  if(!cmdLine.allCompulsoryOptionsSet()) {
+  if(!m_cmdLine.allCompulsoryOptionsSet()) {
     castor::exception::Internal ex;
     ex.getMessage() << "Not all compulsory options have been set";
     throw ex;
   }
-
-  return cmdLine;
 }
 
 //------------------------------------------------------------------------------
@@ -197,8 +200,156 @@ void castor::tape::label::LabelCmd::usage(std::ostream &os) const throw() {
 }
 
 //------------------------------------------------------------------------------
-// bool2Str
+// main
 //------------------------------------------------------------------------------
-std::string castor::tape::label::LabelCmd::bool2Str(const bool value) const throw() {
-  return value ? "TRUE" : "FALSE";
+int castor::tape::label::LabelCmd::main(const int argc, char **argv) throw() {
+
+  // Parse the command line
+  try {
+    parseCommandLine(argc, argv);
+  } catch (castor::exception::Exception &ex) {
+    std::cerr
+      << std::endl
+      << "Failed to parse the command-line:\n\n"
+      << ex.getMessage().str() << std::endl
+      << std::endl;
+    usage(std::cerr);
+    std::cerr << std::endl;
+    return 1;
+  }
+
+  // If debug, then display parsed command-line arguments
+  if(m_cmdLine.debugIsSet) {
+    std::cout << "Parsed command-line =\n" 
+            << "m_cmdLine.drive: " << m_cmdLine.drive << std::endl  
+            << "m_cmdLine.dgn: " << m_cmdLine.dgn << std::endl 
+            << "m_cmdLine.vid: " << m_cmdLine.vid << std::endl 
+            << "m_cmdLine.debugIsSet: " << m_cmdLine.debugIsSet << std::endl 
+            << "m_cmdLine.helpIsSet: " << m_cmdLine.helpIsSet << std::endl;
+  }
+
+  // Display usage message and exit if help option found on command-line
+  if(m_cmdLine.helpIsSet) {
+    std::cout << std::endl;
+    usage(std::cout);
+    std::cout << std::endl;
+    return 0;
+  }
+
+  int rc = 1;
+  
+  // Execute the command
+  try {
+    rc = executeCommand();
+  } catch(castor::exception::Exception &ex) {
+    displayErrorMsgAndExit(ex.getMessage().str().c_str());
+  } catch(std::exception &se) {
+    displayErrorMsgAndExit(se.what());
+  } catch(...) {
+    displayErrorMsgAndExit("Caught unknown exception");
+  }
+
+  return rc;
+}
+
+int castor::tape::label::LabelCmd::executeCommand() throw(castor::exception::Exception) {
+  
+  // Get the local hostname
+  gethostname(m_hostname, sizeof(m_hostname));    
+
+  // Check if the hostname of the machine is set to "localhost"
+  if(strcmp(m_hostname, "localhost") == 0) {
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      m_programName << " cannot be ran on a machine where hostname is set to "
+      "\"localhost\"";
+    throw ex;
+  }
+
+  // This command cannot be ran as root
+  if(m_userId == 0 && m_groupId == 0) {
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      m_programName << " cannot be ran as root";
+    throw ex;
+  }
+  
+  const int writeRequestTimeout = 10;
+  const int readReplyTimeout = 300; // 5 minutes
+  
+  writeTapeLabelRequest(writeRequestTimeout);
+  legacymsg::MessageHeader replymsg = readTapeLabelReply(readReplyTimeout);
+
+  return replymsg.lenOrStatus;
+}
+
+//------------------------------------------------------------------------------
+// writeTapeLabelRequest
+//------------------------------------------------------------------------------
+void castor::tape::label::LabelCmd::writeTapeLabelRequest(const int timeout) {
+  castor::legacymsg::TapeLabelRqstMsgBody body;
+  body.uid = m_userId;
+  body.gid = m_groupId;
+  castor::utils::copyString(body.drive, sizeof(body.drive), m_cmdLine.drive);
+  castor::utils::copyString(body.dgn, sizeof(body.dgn), m_cmdLine.dgn);
+  castor::utils::copyString(body.vid, sizeof(body.vid), m_cmdLine.vid);
+  
+  char buf[REQBUFSZ];
+  const size_t len = castor::legacymsg::marshal(buf, sizeof(buf), body);
+  m_smartClientConnectionSock.reset(castor::io::connectWithTimeout(m_hostname, castor::tape::tapeserver::daemon::TAPE_SERVER_MOUNTSESSION_LISTENING_PORT, timeout));
+  
+  try {
+    castor::io::writeBytes(m_smartClientConnectionSock.get(), timeout, len, buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to write label request message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// readTapeLabelReply
+//------------------------------------------------------------------------------
+castor::legacymsg::MessageHeader castor::tape::label::LabelCmd::readTapeLabelReply(const int timeout) {
+  char buf[3 * sizeof(uint32_t)]; // magic + request type + rc
+  size_t bufLen = sizeof(buf);
+  memset(buf, '\0', bufLen);
+  try {
+    castor::io::readBytes(m_smartClientConnectionSock.get(), timeout, bufLen, buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read label reply message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+  
+  const char *bufPtr = buf;
+  castor::legacymsg::MessageHeader replymsg;
+  memset(&replymsg, '\0', sizeof(replymsg));
+  castor::legacymsg::unmarshal(bufPtr, bufLen, replymsg);
+  
+  if(TAPERC != replymsg.reqType || TPMAGIC != replymsg.magic) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Wrong reply type or magic # in label reply message. replymsg.reqType: " << replymsg.reqType << " replymsg.magic: " << replymsg.magic;
+    throw ex;
+  }
+  
+  return replymsg;
+}
+
+//------------------------------------------------------------------------------
+// displayErrorMsgAndExit
+//------------------------------------------------------------------------------
+void castor::tape::label::LabelCmd::displayErrorMsgAndExit(const char *msg) throw() {
+
+  // Display error message
+  {
+    const time_t now = time(NULL);
+    castor::utils::writeTime(std::cerr, now, castor::tape::tpcp::TIMEFORMAT);
+    std::cerr <<
+      " " << m_programName << " failed"
+      ": " << msg << std::endl;
+  }
+  exit(1); // Error
 }

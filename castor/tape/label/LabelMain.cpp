@@ -31,11 +31,7 @@
 //------------------------------------------------------------------------------
 int main(int argc, char **argv) {
 
-  /*
-  castor::legacymsg::TapeserverProxyTcpIp tapesever(....
-  castor::tape::label::LabelCmd command(tapeserver;
-
+  castor::tape::label::LabelCmd command;
+  
   return command.main(argc, argv);
-  */
-  return 0; // ALWAYS SMILE
 }

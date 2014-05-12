@@ -43,6 +43,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -141,7 +143,7 @@ bool castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleEvent(
   }
   
   // handleIncomingJob() takes ownership of the client connection
-  handleIncomingJob(connection);  
+  handleIncomingJob(connection);
   return false; // Stay registered with the reactor
 }
 
@@ -188,9 +190,7 @@ void
 // handleIncomingJob
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingJob(const int clientConnection) throw(castor::exception::Exception) {
-  castor::utils::SmartFd connection(clientConnection);
-
-  const legacymsg::MessageHeader header = readJobMsgHeader(connection.get());
+  const legacymsg::MessageHeader header = readJobMsgHeader(clientConnection);
   
   switch(header.reqType) {
   case SETVID:

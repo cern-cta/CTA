@@ -19,7 +19,7 @@
  *
  *
  *
- * @author Steven.Murray@cern.ch
+ * @author dkruse@cern.ch
  *****************************************************************************/
 
 #pragma once
@@ -27,6 +27,7 @@
 #include "castor/legacymsg/TapeserverProxy.hpp"
 #include "castor/tape/label/ParsedTpLabelCommandLine.hpp"
 #include "castor/utils/DebugBuf.hpp"
+#include "castor/utils/SmartFd.hpp"
 
 #include <istream>
 #include <ostream>
@@ -49,8 +50,7 @@ public:
    * @param errStream Standard error stream.
    * @param tapeserver Proxy object representing the tapeserverd daemon.
    */
-  LabelCmd(std::istream &inStream, std::ostream &outStream,
-    std::ostream &errStream, legacymsg::TapeserverProxy &tapeserver) throw();
+  LabelCmd() throw();
 
   /**
    * The entry function of the command.
@@ -61,6 +61,21 @@ public:
   int main(const int argc, char **argv) throw();
 
 protected:
+  
+  /**
+   * The hostname of the machine.
+   */
+  char m_hostname[CA_MAXHOSTNAMELEN+1];
+  
+  /**
+   * The ID of the user running the tpcp command.
+   */
+  const uid_t m_userId;
+
+  /**
+   * The ID of default group of the user running the tpcp command.
+   */
+  const gid_t m_groupId;
 
   /**
    * The name of the program.
@@ -68,53 +83,12 @@ protected:
   const std::string m_programName;
 
   /**
-   * Standard input stream.
-   */
-  std::istream &m_in;
-
-  /**
-   * Standard output stream.
-   */
-  std::ostream &m_out;
-
-  /**
-   * Standard error stream.
-   */
-  std::ostream &m_err;
-
-  /**
-   * Proxy object representing the tapeserverd daemon.
-   */
-  legacymsg::TapeserverProxy &m_tapeserver;
-
-  /**
-   * Debug stream buffer that inserts a standard debug preamble before each
-   * message-line written to it.
-   */
-  utils::DebugBuf m_debugBuf;
-
-  /**
-   * Stream used to write debug messages.
-   *
-   * This stream will insert a standard debug preamble before each message-line
-   * written to it.
-   */
-  std::ostream m_dbg;
-
-  /**
-   * Returns the string representation of the specfied boolean value.
-   *
-   * @param value The boolean value.
-   */
-  std::string bool2Str(const bool value) const throw();
-
-  /**
    * Parses the specified command-line arguments.
    *
    * @param argc Argument count from the executable's entry function: main().
    * @param argv Argument vector from the executable's entry function: main().
    */
-  ParsedTpLabelCommandLine parseCommandLine(const int argc, char **argv)
+  void parseCommandLine(const int argc, char **argv)
     throw(castor::exception::Exception);
 
   /**
@@ -123,6 +97,42 @@ protected:
    * @param os Output stream to be written to.
    */
   void usage(std::ostream &os) const throw();
+  
+  /**
+   * Displays the error message passed as string and exits with exit code 1.
+   * 
+   * @param msg The string containing the error message
+   */
+  void displayErrorMsgAndExit(const char *msg) throw();
+  
+  /**
+   * Sends the label request and waits for the reply
+   * 
+   * @return the return code contained in the reply message
+   */
+  int executeCommand() throw(castor::exception::Exception);
+  
+  /**
+   * The command line structure
+   */
+  ParsedTpLabelCommandLine m_cmdLine;
+  
+  /**
+   * Sends the tape label request to the tapeserver
+   */
+  void writeTapeLabelRequest(const int timeout);
+  
+  /**
+   * Reads the reply coming from the tapeserver containing the return code of the labeling process
+   * 
+   * @return the reply structure
+   */
+  legacymsg::MessageHeader readTapeLabelReply(const int timeout);
+  
+  /**
+   * File descriptor of the connection with the tapeserver
+   */
+  castor::utils::SmartFd m_smartClientConnectionSock;
 
 }; // class LabelCmd
 

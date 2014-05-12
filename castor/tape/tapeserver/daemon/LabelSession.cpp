@@ -86,6 +86,25 @@ void castor::tape::tapeserver::daemon::LabelSession::executeLabel(LogContext & l
     return;
   }
   
+  // Let's mount the tape now
+  try {
+    m_rmc.mountTape(m_request.vid, configLine->librarySlot);
+    LogContext::ScopedParam sp01(lc, Param("m_request.vid", m_request.vid));
+    LogContext::ScopedParam sp02(lc, Param("configLine->librarySlot", configLine->librarySlot));
+    lc.log(LOG_INFO, "Tape mounted for labeling");
+  } catch (castor::exception::Exception & e) { // mount failed
+    LogContext::ScopedParam sp01(lc, Param("m_request.vid", m_request.vid));
+    LogContext::ScopedParam sp02(lc, Param("configLine->librarySlot", configLine->librarySlot));
+    LogContext::ScopedParam sp03(lc, Param("errorMessage", e.getMessageValue()));
+    lc.log(LOG_ERR, "Error mounting tape");
+    std::stringstream errMsg;
+    errMsg << "Error mounting tape" << lc;
+    LogContext::ScopedParam sp04(lc, Param("errorMessage", errMsg.str()));
+    LogContext::ScopedParam sp05(lc, Param("errorCode", SEINTERNAL));
+    lc.log(LOG_ERR, "End session with error");
+    return;
+  }
+  
   // Actually find the drive.
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);
   castor::tape::SCSI::DeviceInfo driveInfo;
@@ -151,26 +170,25 @@ void castor::tape::tapeserver::daemon::LabelSession::executeLabel(LogContext & l
     return;
   }
   
-  // Let's mount the tape now
-  try {
-    m_rmc.mountTape(m_request.vid, configLine->librarySlot);
-    lc.log(LOG_INFO, "Tape mounted for labeling");
-  } catch (castor::exception::Exception & e) { // mount failed
-    LogContext::ScopedParam sp01(lc, Param("m_request.vid", m_request.vid));
-    LogContext::ScopedParam sp02(lc, Param("configLine->librarySlot", configLine->librarySlot));
-    LogContext::ScopedParam sp03(lc, Param("errorMessage", e.getMessageValue()));
-    lc.log(LOG_ERR, "Error mounting tape");
-    std::stringstream errMsg;
-    errMsg << "Error mounting tape" << lc;
-    LogContext::ScopedParam sp04(lc, Param("errorMessage", errMsg.str()));
-    LogContext::ScopedParam sp05(lc, Param("errorCode", SEINTERNAL));
-    lc.log(LOG_ERR, "End session with error");
+  // check that drive is not write protected
+  if(drive.get()->isWriteProtected()) {
+    LogContext::ScopedParam sp01(lc, Param("m_request.drive", m_request.drive));
+    lc.log(LOG_ERR, "Failed to label the tape: drive is write protected");
     return;
   }
+  
+  // wait until drive is ready
+  while(!(drive.get()->isReady())) {
+    LogContext::ScopedParam sp01(lc, Param("m_request.drive", m_request.drive));
+    lc.log(LOG_INFO, "Drive not ready yet...");
+  }  
+  
   // We can now start labeling
   std::auto_ptr<castor::tape::tapeFile::LabelSession> ls;
   try {
-    ls.reset(new castor::tape::tapeFile::LabelSession(*drive, m_request.vid, m_force));
+    ls.reset(new castor::tape::tapeFile::LabelSession(*(drive.get()), m_request.vid, m_force));
+    LogContext::ScopedParam sp01(lc, Param("m_request.vid", m_request.vid));
+    LogContext::ScopedParam sp02(lc, Param("m_force", m_force));
     lc.log(LOG_INFO, "Tape label session session successfully completed");
   } catch (castor::exception::Exception & ex) {// labeling failed
     LogContext::ScopedParam sp01(lc, Param("m_request.vid", m_request.vid));
@@ -183,10 +201,12 @@ void castor::tape::tapeserver::daemon::LabelSession::executeLabel(LogContext & l
     LogContext::ScopedParam sp05(lc, Param("errorCode", SEINTERNAL));
     lc.log(LOG_ERR, "End session with error");
   }
-  
+
   // We are done: unmount the tape now
   try {
     m_rmc.unmountTape(m_request.vid, configLine->librarySlot);
+    LogContext::ScopedParam sp01(lc, Param("m_request.vid", m_request.vid));
+    LogContext::ScopedParam sp02(lc, Param("configLine->librarySlot", configLine->librarySlot));
     lc.log(LOG_INFO, "Tape unmounted after labeling");
   } catch (castor::exception::Exception & e) { // unmount failed
     LogContext::ScopedParam sp01(lc, Param("m_request.vid", m_request.vid));
@@ -200,4 +220,5 @@ void castor::tape::tapeserver::daemon::LabelSession::executeLabel(LogContext & l
     lc.log(LOG_ERR, "End session with error");
     return;
   }
+  
 }
