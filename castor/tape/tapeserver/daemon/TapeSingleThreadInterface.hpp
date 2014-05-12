@@ -10,7 +10,7 @@
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
-#include "castor/tape/tapeserver/daemon/TaskInjector.hpp"
+
 #include "castor/log/LogContext.hpp"
 
 namespace castor {

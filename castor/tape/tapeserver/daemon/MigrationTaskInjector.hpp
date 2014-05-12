@@ -33,7 +33,7 @@
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
-#include "castor/tape/tapeserver/daemon/TaskInjector.hpp"
+
 #include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
 namespace castor{
 namespace tape{
@@ -43,7 +43,7 @@ namespace daemon {
 /**
  * This classis responsible for creating the tasks in case of a recall job
  */
-class MigrationTaskInjector: public TaskInjector {  
+class MigrationTaskInjector /*: public TaskInjector*/ {  
 public:
 
   /**

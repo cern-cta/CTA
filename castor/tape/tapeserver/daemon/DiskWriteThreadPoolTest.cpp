@@ -24,7 +24,7 @@ namespace unitTests{
     RecallReportPacker(client,1,lc){}
   };
   
-  struct MockTaskInjector : public TaskInjector{
+  struct MockTaskInjector : public RecallTaskInjector{
     MOCK_METHOD3(requestInjection, void(int maxFiles, int maxBlocks, bool lastCall));
   };
   

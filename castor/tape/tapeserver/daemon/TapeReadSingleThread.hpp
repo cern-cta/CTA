@@ -34,6 +34,7 @@
 #include <iostream>
 #include <stdio.h>
 #include <memory>
+#include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 
 namespace castor {
 namespace tape {
@@ -70,7 +71,7 @@ public:
     *  because there is a dependency 
     * @param ti the task injector 
     */
-   void setTaskInjector(TaskInjector * ti) { 
+   void setTaskInjector(RecallTaskInjector * ti) { 
      m_taskInjector = ti; 
    }
 
@@ -146,7 +147,7 @@ private:
   const uint64_t m_maxFilesRequest;
   
   ///a pointer to task injector, thus we can ask him for more tasks
-  castor::tape::tapeserver::daemon::TaskInjector * m_taskInjector;
+  castor::tape::tapeserver::daemon::RecallTaskInjector * m_taskInjector;
   
   ///how many files have we already processed(for loopback purpose)
   size_t m_filesProcessed;

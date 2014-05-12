@@ -37,6 +37,7 @@
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "RecallTaskInjector.hpp"
 #include "RecallReportPacker.hpp"
+#include "castor/tape/tapeserver/file/File.hpp"
 
 using namespace castor::tape;
 using namespace castor::log;

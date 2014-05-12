@@ -25,8 +25,10 @@
 #pragma once
 
 #include <stdint.h>
-#include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/log/LogContext.hpp"
+#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
+#include "castor/tape/tapeserver/threading/Threading.hpp"
+
 namespace castor{
 namespace tape{
   //forward declarations
@@ -38,14 +40,18 @@ namespace tapeserver{
     class ClientInterface;
   }
 namespace daemon {
-  
+
+  //forward declaration
   class RecallMemoryManager;
   class DiskWriteThreadPool;
   class TapeReadTask;
+  //forward declaration of template class
+  template <class T> class TapeSingleThreadInterface;
+  
 /**
  * This classis responsible for creating the tasks in case of a recall job
  */
-class RecallTaskInjector: public TaskInjector {  
+class RecallTaskInjector /*: public TaskInjector*/ {  
 public:
  /**
   * Constructor
@@ -65,12 +71,13 @@ public:
         DiskWriteThreadPool & diskWriter,client::ClientInterface& client,
         uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc);
 
+  virtual ~RecallTaskInjector();
   
   /**
    * Function for a feed-back loop purpose between RecallTaskInjector and 
    * TapeReadSingleThread. When TapeReadSingleThread::popAndRequestMoreJobs detects 
-   * it has not enough jobs to do to, it is class to push a request 
-   * in order to (try) fill up the queue. 
+   * it has not enough jobs to do to, it will push a request, that when executed 
+   * will ask the client to try to fill up the queue. 
 
    * @param lastCall true if we want the new request to be a last call. 
    * See Request::lastCall 

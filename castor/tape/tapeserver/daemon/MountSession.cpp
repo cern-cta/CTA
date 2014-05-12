@@ -42,6 +42,7 @@
 #include "MigrationTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
+#include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 
 using namespace castor::tape;
 using namespace castor::log;

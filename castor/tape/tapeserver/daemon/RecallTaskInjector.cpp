@@ -9,6 +9,7 @@
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "log.h"
+#include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include <stdint.h>
 
 using castor::log::LogContext;
@@ -43,6 +44,11 @@ RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm,
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
         m_client(client),m_lc(lc),m_maxFiles(maxFiles),m_byteSizeThreshold(byteSizeThreshold)
 {}
+//------------------------------------------------------------------------------
+//destructor
+//------------------------------------------------------------------------------
+RecallTaskInjector::~RecallTaskInjector(){
+}
 //------------------------------------------------------------------------------
 //finish
 //------------------------------------------------------------------------------

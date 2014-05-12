@@ -27,7 +27,7 @@
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
-#include "castor/tape/tapeserver/daemon/TaskInjector.hpp"
+
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/utils/suppressUnusedVariable.hpp"
 #include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
