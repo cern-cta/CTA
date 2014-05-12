@@ -196,3 +196,4 @@ void  castor::legacymsg::TapeserverProxyTcpIp:: tapeMountedForRead(
 const std::string &vid) {
     throw castor::exception::Exception(SEINTERNAL,"TapeserverProxyTcpIp::tapeMountedForRead TODO");
 }
+

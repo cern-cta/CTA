@@ -76,3 +76,4 @@ void castor::legacymsg::TapeserverProxyDummy::tapeMountedForRead(
 const std::string &vid) {
   
 }
+
