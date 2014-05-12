@@ -415,8 +415,31 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop()
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::TapeDaemon::handleEvents()
   throw(castor::exception::Exception) {
-  const int timeout = 100; // 100 milliseconds
-  m_reactor.handleEvents(timeout);
+  // With our current understanding we see no reason for an exception from the
+  // reactor to be used as a reason to stop the tapeserverd daemon.
+  //
+  // In the future, one or more specific exception types could be introduced
+  // with their own catch clauses that do in fact require the tapeserverd daemon
+  // to be stopped.
+  try {
+    const int timeout = 100; // 100 milliseconds
+    m_reactor.handleEvents(timeout);
+  } catch(castor::exception::Exception &ex) {
+    // Log exception and continue
+    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "Unexpected exception thrown when handling an I/O event",
+      params);
+  } catch(std::exception &se) {
+    // Log exception and continue
+    log::Param params[] = {log::Param("message", se.what())};
+    m_log(LOG_ERR, "Unexpected exception thrown when handling an I/O event",
+      params);
+  } catch(...) {
+    // Log exception and continue
+    m_log(LOG_ERR,
+      "Unexpected and unknown exception thrown when handling an I/O event");
+  }
+
   return handlePendingSignals();
 }
 
