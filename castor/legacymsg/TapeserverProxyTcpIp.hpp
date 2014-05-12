@@ -93,6 +93,16 @@ public:
     const std::string &vid)
     throw(castor::exception::Exception);
 
+  
+  /**
+   * Interface TBD
+   */
+  virtual void tapeUnmounted(const std::string &vid);
+  
+  /**
+   * Interface TBD
+   */
+  virtual void tapeMountedForRead(const std::string &vid);
 private:
 
   /**
