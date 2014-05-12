@@ -21,6 +21,7 @@
  *****************************************************************************/
 
 #include "castor/exception/Internal.hpp"
+#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
@@ -178,4 +179,20 @@ void castor::legacymsg::TapeserverProxyTcpIp::readReplyMsg(const int fd) throw(c
       << header.lenOrStatus;
     throw ex;
   }
+}
+
+//------------------------------------------------------------------------------
+// tapeUnmounted
+//------------------------------------------------------------------------------
+void castor::legacymsg::TapeserverProxyTcpIp::tapeUnmounted(
+const std::string &vid) {
+  throw castor::exception::Exception(SEINTERNAL,"TapeserverProxyTcpIp::tapeUnmounted TODO");
+}
+  
+//------------------------------------------------------------------------------
+// tapeMountedForRead
+//------------------------------------------------------------------------------
+void  castor::legacymsg::TapeserverProxyTcpIp:: tapeMountedForRead(
+const std::string &vid) {
+    throw castor::exception::Exception(SEINTERNAL,"TapeserverProxyTcpIp::tapeMountedForRead TODO");
 }

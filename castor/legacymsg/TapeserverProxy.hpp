@@ -79,6 +79,15 @@ public:
     const std::string &vid)
     throw(castor::exception::Exception) = 0;
 
+  /**
+   * Interface TBD
+   */
+  virtual void tapeUnmounted(const std::string &vid) =0;
+  
+   /**
+   * Interface TBD
+   */
+  virtual void tapeMountedForRead(const std::string &vid)=0;
 }; // class TapeserverProxy
 
 } // namespace legacymsg

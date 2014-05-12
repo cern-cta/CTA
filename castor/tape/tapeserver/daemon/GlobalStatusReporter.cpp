@@ -8,31 +8,33 @@ namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-  
+//------------------------------------------------------------------------------
+//GlobalStatusReporter::Report:: Constructors
+//------------------------------------------------------------------------------  
 GlobalStatusReporter::Report::Report(const std::string &_server,const std::string &_unitName, 
         const std::string &_dgn, const uint32_t _mountTransactionId,
         const pid_t _sessionPid):
         server(_server),unitName(_unitName),dgn(_dgn),
         mountTransactionId(_mountTransactionId),sessionPid(_sessionPid)
-{}
+  {}
   
  GlobalStatusReporter::Report::Report(const std::string &_server,const std::string &_unitName, 
             const std::string &_dgn,const pid_t _sessionPid):
             server(_server),unitName(_unitName),dgn(_dgn),
          mountTransactionId(0),sessionPid(_sessionPid)
-    {}
+  {}
  
  GlobalStatusReporter::Report::Report(const std::string &_server,
       const std::string &_unitName, const std::string &_dgn):
       server(_server),unitName(_unitName),dgn(_dgn),mountTransactionId(0),sessionPid(0)
- {}
+  {}
  
   GlobalStatusReporter::Report::Report(const std::string &_unitName):
   server(""),unitName(_unitName),
           dgn(""),mountTransactionId(0),sessionPid(0)
-    {}
+  {}
 //------------------------------------------------------------------------------
-//Constructor
+//GlobalStatusReporter::GlobalStatusReporter
 //------------------------------------------------------------------------------  
   GlobalStatusReporter::GlobalStatusReporter(
   legacymsg::TapeserverProxy& tapeserverProxy,
@@ -47,7 +49,7 @@ GlobalStatusReporter::Report::Report(const std::string &_server,const std::strin
 //------------------------------------------------------------------------------
    void GlobalStatusReporter::finish(){
         m_fifo.push(NULL);
-   }
+  }
 //------------------------------------------------------------------------------
 //reportNowOccupiedDrive
 //------------------------------------------------------------------------------   
@@ -80,8 +82,10 @@ GlobalStatusReporter::Report::Report(const std::string &_server,const std::strin
 //------------------------------------------------------------------------------
 //tapeMountedForRead
 //------------------------------------------------------------------------------  
-   void GlobalStatusReporter::tapeMountedForRead(const std::string &vid){
-     m_fifo.push(new ReportTapeMountedForRead(vid));
+   void GlobalStatusReporter::tapeMountedForRead(const std::string &server, 
+           const std::string &unitName,const std::string &dgn, 
+           const std::string &vid, const pid_t sessionPid){
+     m_fifo.push(new ReportTapeMountedForRead(server,unitName,dgn,vid,sessionPid));
    }
 //------------------------------------------------------------------------------
 //tapeUnmounted
@@ -134,7 +138,7 @@ GlobalStatusReporter::Report::Report(const std::string &_server,const std::strin
     void GlobalStatusReporter::ReportReleaseDrive::
     execute(GlobalStatusReporter& parent){
       parent.m_vdqmProxy.releaseDrive(server,unitName,dgn, forceUnmount,sessionPid);
-    }
+  }
 //------------------------------------------------------------------------------
 // ReportGotDetailsFromClient::ReportGotDetailsFromClient
 //------------------------------------------------------------------------------
@@ -152,7 +156,10 @@ GlobalStatusReporter::Report::Report(const std::string &_server,const std::strin
 // ReportTapeMountedForRead::ReportTapeMountedForRead
 //------------------------------------------------------------------------------    
     GlobalStatusReporter::ReportTapeMountedForRead::
-    ReportTapeMountedForRead(const std::string& _vid):vid(_vid){
+    ReportTapeMountedForRead(const std::string &server, 
+           const std::string &unitName,const std::string &dgn, 
+           const std::string &_vid, const pid_t sessionPid):
+           Report(server,unitName,dgn,sessionPid),vid(_vid){
     
     }
 //------------------------------------------------------------------------------
@@ -161,8 +168,8 @@ GlobalStatusReporter::Report::Report(const std::string &_server,const std::strin
     void GlobalStatusReporter::ReportTapeMountedForRead::
     execute(GlobalStatusReporter& parent){
       throw castor::tape::Exception("TODO ReportTapeMountedForRead::execute");
-//      parent.m_tapeserverProxy.tapeMountedForRead();
-//      parent.m_vdqmProxy.tapeMountedForRead();
+      parent.m_tapeserverProxy.tapeMountedForRead(vid);
+      parent.m_vdqmProxy.tapeMounted(server,unitName,dgn,vid,sessionPid);
     }
     //------------------------------------------------------------------------------
 // ReportTapeUnmounted::ReportTapeUnmounted
@@ -179,7 +186,7 @@ GlobalStatusReporter::Report::Report(const std::string &_server,const std::strin
     void GlobalStatusReporter::ReportTapeUnmounted::
     execute(GlobalStatusReporter& parent){
       throw castor::tape::Exception("TODO ReportTapeUnmounted::execute");
-//      parent.m_tapeserverProxy.tapeUnmounted();
+      parent.m_tapeserverProxy.tapeUnmounted(vid);
       parent.m_vdqmProxy.tapeUnmounted(server,unitName,dgn,vid);
     }
 }}}}

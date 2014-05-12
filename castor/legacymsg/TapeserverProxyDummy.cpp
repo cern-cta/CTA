@@ -60,3 +60,19 @@ void castor::legacymsg::TapeserverProxyDummy::gotDumpMountDetailsFromClient(
   const std::string &vid)
   throw(castor::exception::Exception) {
 }
+
+//------------------------------------------------------------------------------
+// tapeUnmounted
+//------------------------------------------------------------------------------
+void castor::legacymsg::TapeserverProxyDummy::tapeUnmounted(
+const std::string &vid) {
+
+}
+  
+//------------------------------------------------------------------------------
+// tapeMountedForRead
+//------------------------------------------------------------------------------
+void castor::legacymsg::TapeserverProxyDummy::tapeMountedForRead(
+const std::string &vid) {
+  
+}

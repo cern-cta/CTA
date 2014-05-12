@@ -103,7 +103,8 @@ public:
    * Will call VmgrProxy::tapeMountedForRead and TapeserverProxy::tapeMountedForRead,
    * parameters TBD
    */
-  void tapeMountedForRead(const std::string& vid);
+  void tapeMountedForRead(const std::string &server, const std::string &unitName,
+  const std::string &dgn, const std::string &vid, const pid_t sessionPid);
   
   
 private:
@@ -177,9 +178,10 @@ private:
     virtual void execute(GlobalStatusReporter&);
   };
   class ReportTapeMountedForRead : public Report {
-    const std::string vid;
   public:
-    ReportTapeMountedForRead(const std::string& vid);
+    const std::string vid;
+    ReportTapeMountedForRead(const std::string &server, const std::string &unitName,
+  const std::string &dgn, const std::string &vid, const pid_t sessionPid);
     virtual ~ReportTapeMountedForRead(){}
     virtual void execute(GlobalStatusReporter&);
   };

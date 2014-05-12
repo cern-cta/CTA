@@ -70,6 +70,15 @@ else (NOT DEFINED COMPILE_SERVER)
   message (STATUS "Already set: COMPILE_SERVER=${COMPILE_SERVER}")
 endif (NOT DEFINED COMPILE_SERVER)
 
+# Generate the compilation variables, if needed
+if (NOT DEFINED SKIP_UNIT_TESTS)
+  message (STATUS "Setting SKIP_UNIT_TESTS to the value of 0")
+  message (STATUS "Override with -DSKIP_UNIT_TESTS:STRING=1")
+  set(SKIP_UNIT_TESTS 0)
+else (NOT DEFINED SKIP_UNIT_TESTS)
+  message (STATUS "Already set: SKIP_UNIT_TESTS=${SKIP_UNIT_TESTS}")
+endif (NOT DEFINED SKIP_UNIT_TESTS)
+
 IF(DEFINED PackageOnly)
   message (STATUS "Running CMake in package-only mode")
    set(COMPILE_PACKAGING "1") 
