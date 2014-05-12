@@ -223,12 +223,12 @@ protected:
   void reapZombie(const pid_t sessionPid, const int waitpidStat) throw();
 
   /**
-   * Logs the fact that the specified mount-session child-process has terminated.
+   * Logs the fact that the specified session child-process has terminated.
    *
-   * @param sessionPid The process ID of the mount-session child-process.
+   * @param sessionPid The process ID of the session child-process.
    * @param waitpidStat The status information given by a call to waitpid().
    */
-  void logMountSessionProcessTerminated(const pid_t sessionPid, const int waitpidStat) throw();
+  void logSessionProcessTerminated(const pid_t sessionPid, const int waitpidStat) throw();
 
   /**
    * Does the required post processing for the specified reaped session.

@@ -467,8 +467,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::reapZombies() throw() {
 //------------------------------------------------------------------------------
 // reapZombie
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::reapZombie(const pid_t sessionPid, const int waitpidStat) throw() {
-  logMountSessionProcessTerminated(sessionPid, waitpidStat);
+void castor::tape::tapeserver::daemon::TapeDaemon::reapZombie(
+  const pid_t sessionPid, const int waitpidStat) throw() {
+  logSessionProcessTerminated(sessionPid, waitpidStat);
 
   std::list<log::Param> params;
   params.push_back(log::Param("sessionPid", sessionPid));
@@ -496,9 +497,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::reapZombie(const pid_t sessio
 }
 
 //------------------------------------------------------------------------------
-// logMountSessionProcessTerminated
+// logSessionProcessTerminated
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::logMountSessionProcessTerminated(const pid_t sessionPid, const int waitpidStat) throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::logSessionProcessTerminated(const pid_t sessionPid, const int waitpidStat) throw() {
   std::list<log::Param> params;
   params.push_back(log::Param("sessionPid", sessionPid));
 
@@ -526,7 +527,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logMountSessionProcessTermina
     params.push_back(log::Param("WIFCONTINUED", "false"));
   }
 
-  m_log(LOG_INFO, "Mount-session child-process terminated", params);
+  m_log(LOG_INFO, "Session child-process terminated", params);
 }
 
 //------------------------------------------------------------------------------
