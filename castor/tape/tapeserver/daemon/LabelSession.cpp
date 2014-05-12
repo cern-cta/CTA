@@ -41,6 +41,9 @@
 using namespace castor::tape;
 using namespace castor::log;
 
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::LabelSession::LabelSession(
     legacymsg::RmcProxy &rmc,
     const legacymsg::TapeLabelRqstMsgBody& clientRequest, 
@@ -49,6 +52,9 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
     m_rmc(rmc), m_request(clientRequest), m_logger(logger),
     m_sysWrapper(sysWrapper), m_tpConfig(tpConfig), m_force(force) {}
 
+//------------------------------------------------------------------------------
+// execute
+//------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::execute() throw (castor::tape::Exception) {
   
   // 1) Prepare the logging environment
@@ -65,6 +71,9 @@ void castor::tape::tapeserver::daemon::LabelSession::execute() throw (castor::ta
   executeLabel(lc);
 }
 
+//------------------------------------------------------------------------------
+// executeLabel
+//------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::executeLabel(LogContext & lc) {
   
   // Get hold of the drive and check it.

@@ -63,11 +63,6 @@ public:
 protected:
   
   /**
-   * The hostname of the machine.
-   */
-  char m_hostname[CA_MAXHOSTNAMELEN+1];
-  
-  /**
    * The ID of the user running the tpcp command.
    */
   const uid_t m_userId;

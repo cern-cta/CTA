@@ -252,20 +252,10 @@ int castor::tape::label::LabelCmd::main(const int argc, char **argv) throw() {
   return rc;
 }
 
+//------------------------------------------------------------------------------
+// executeCommand
+//------------------------------------------------------------------------------
 int castor::tape::label::LabelCmd::executeCommand() throw(castor::exception::Exception) {
-  
-  // Get the local hostname
-  gethostname(m_hostname, sizeof(m_hostname));    
-
-  // Check if the hostname of the machine is set to "localhost"
-  if(strcmp(m_hostname, "localhost") == 0) {
-    castor::exception::Exception ex(ECANCELED);
-    ex.getMessage() <<
-      m_programName << " cannot be ran on a machine where hostname is set to "
-      "\"localhost\"";
-    throw ex;
-  }
-
   // This command cannot be ran as root
   if(m_userId == 0 && m_groupId == 0) {
     castor::exception::Exception ex(ECANCELED);
@@ -296,7 +286,8 @@ void castor::tape::label::LabelCmd::writeTapeLabelRequest(const int timeout) {
   
   char buf[REQBUFSZ];
   const size_t len = castor::legacymsg::marshal(buf, sizeof(buf), body);
-  m_smartClientConnectionSock.reset(castor::io::connectWithTimeout(m_hostname, castor::tape::tapeserver::daemon::TAPE_SERVER_MOUNTSESSION_LISTENING_PORT, timeout));
+  m_smartClientConnectionSock.reset(castor::io::connectWithTimeout("127.0.0.1",
+    castor::tape::tapeserver::daemon::TAPE_SERVER_MOUNTSESSION_LISTENING_PORT, timeout));
   
   try {
     castor::io::writeBytes(m_smartClientConnectionSock.get(), timeout, len, buf);

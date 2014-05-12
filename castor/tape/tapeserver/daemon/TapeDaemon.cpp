@@ -315,7 +315,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHa
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
     ex.getMessage() <<
-      "Failed to create the event handler for accepting vdqm connections"
+      "Failed to create event handler for accepting vdqm connections"
       ": " << ba.what();
     throw ex;
   }
@@ -324,7 +324,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHa
 }
 
 //------------------------------------------------------------------------------
-// createAndRegisterVdqmAcceptHandler
+// createAndRegisterAdminAcceptHandler
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptHandler() throw(castor::exception::Exception) {
   castor::utils::SmartFd listenSock;
@@ -332,14 +332,16 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
     listenSock.reset(io::createListenerSock(TAPE_SERVER_ADMIN_LISTENING_PORT));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex(ne.code());
-    ex.getMessage() << "Failed to create socket to listen for admin command connections"
+    ex.getMessage() <<
+      "Failed to create socket to listen for admin command connections"
       ": " << ne.getMessage().str();
     throw ex;
   }
   {
     log::Param params[] = {
       log::Param("listeningPort", TAPE_SERVER_ADMIN_LISTENING_PORT)};
-    m_log(LOG_INFO, "Listening for connections from the admin commands", params);
+    m_log(LOG_INFO, "Listening for connections from the admin commands",
+      params);
   }
 
   std::auto_ptr<AdminAcceptHandler> adminAcceptHandler;
@@ -350,7 +352,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
     ex.getMessage() <<
-      "Failed to create the event handler for accepting admin connections"
+      "Failed to create event handler for accepting admin connections"
       ": " << ba.what();
     throw ex;
   }
@@ -359,33 +361,37 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
 }
 
 //------------------------------------------------------------------------------
-// createAndRegisterVdqmAcceptHandler
+// createAndRegisterMountSessionAcceptHandler
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterMountSessionAcceptHandler() throw(castor::exception::Exception) {
   castor::utils::SmartFd mountSessionListenSock;
   try {
-    mountSessionListenSock.reset(io::createListenerSock(TAPE_SERVER_MOUNTSESSION_LISTENING_PORT));
+    mountSessionListenSock.reset(
+      io::createLocalhostListenerSock(TAPE_SERVER_MOUNTSESSION_LISTENING_PORT));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex(ne.code());
-    ex.getMessage() << "Failed to create socket to listen for mount session connections"
+    ex.getMessage() <<
+      "Failed to create socket to listen for mount session connections"
       ": " << ne.getMessage().str();
     throw ex;
   }
   {
     log::Param params[] = {
       log::Param("listeningPort", TAPE_SERVER_MOUNTSESSION_LISTENING_PORT)};
-    m_log(LOG_INFO, "Listening for connections from the mount sessions", params);
+    m_log(LOG_INFO,
+      "Listening for connections from the mount sessions", params);
   }
 
   std::auto_ptr<MountSessionAcceptHandler> mountSessionAcceptHandler;
   try {
-    mountSessionAcceptHandler.reset(new MountSessionAcceptHandler(mountSessionListenSock.get(), m_reactor,
-      m_log, m_driveCatalogue, m_hostName));
+    mountSessionAcceptHandler.reset(new MountSessionAcceptHandler(
+      mountSessionListenSock.get(), m_reactor, m_log, m_driveCatalogue,
+      m_hostName));
     mountSessionListenSock.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
     ex.getMessage() <<
-      "Failed to create the event handler for accepting admin connections"
+      "Failed to create event handler for accepting mount-session connections"
       ": " << ba.what();
     throw ex;
   }
@@ -621,7 +627,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession
   if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
     m_driveCatalogue.sessionSucceeded(sessionPid);
     m_log(LOG_INFO, "Label session succeeded", params);
-    notifyVdqmTapeUnmounted(sessionPid);
   } else {
     m_driveCatalogue.sessionFailed(sessionPid);
     m_log(LOG_INFO, "Label session failed", params);
