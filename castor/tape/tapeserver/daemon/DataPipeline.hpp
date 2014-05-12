@@ -34,32 +34,32 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-/* A fixed payload FIFO: at creation time, we know how many blocks will go 
- * through the FIFO (its size). The provide block method return true as long as 
- * it still needs more block. False when last block is provided (and throws an 
- * exception after that).
+/* A double fixed payload pipeline: at creation time, we know how many blocks 
+ * will go through the FIFO (its size). The provide block method return true as 
+ * long as it still needs more block. False when last block is provided (and 
+ * throws an exception after that).
 
  * Sum up                                                                               
                                           
                 +------------------------------+                |
     getFreeBlock|                              |  provideBlock  |
      <----------+                              <----------------+   
-                |      DataFifo                |              
+                |      DataPipeline            |              
                 |                              |              
      +---------->                              +--------------->   
   pushDataBlock +------------------------------+  getDataBlock 
                                                                  
  */
-class DataFifo {
+class DataPipeline {
 public:
  /**
   * Constructor
   * @param bn :how many memory block we want in the fifo (its size)
   */
-  DataFifo(int bn)  : m_blocksNeeded(bn), m_freeBlocksProvided(0),
+  DataPipeline(int bn)  : m_blocksNeeded(bn), m_freeBlocksProvided(0),
   m_dataBlocksPushed(0), m_dataBlocksPopped(0) {};
   
-  ~DataFifo() throw() { 
+  ~DataPipeline() throw() { 
     castor::tape::threading::MutexLocker ml(&m_freeBlockProviderProtection); 
   }
 

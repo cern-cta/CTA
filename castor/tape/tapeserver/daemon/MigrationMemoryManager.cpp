@@ -24,7 +24,7 @@
 
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/MemBlock.hpp"
-#include "castor/tape/tapeserver/daemon/DataFifo.hpp"
+#include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
 
 namespace castor {
 namespace tape {
@@ -88,7 +88,7 @@ void MigrationMemoryManager::waitThreads() throw(castor::exception::Exception) {
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::addClient
 //------------------------------------------------------------------------------
-void MigrationMemoryManager::addClient(DataFifo* c)
+void MigrationMemoryManager::addClient(DataPipeline* c)
 throw(castor::exception::Exception) {
   m_clientQueue.push(c);
 }
@@ -134,7 +134,7 @@ throw(castor::exception::Exception) {
 //------------------------------------------------------------------------------
 void MigrationMemoryManager::run() throw(castor::exception::Exception) {
   while (true) {
-    DataFifo* c = m_clientQueue.pop();
+    DataPipeline* c = m_clientQueue.pop();
     // If the c is a NULL pointer, that means end of clients
     if (!c) return;
     // Spin on the the client. We rely on the fact that he will want

@@ -25,7 +25,7 @@
 #pragma once
 
 
-#include "castor/tape/tapeserver/daemon/DataFifo.hpp"
+#include "castor/tape/tapeserver/daemon/DataPipeline.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationMemoryManager.hpp"
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
@@ -117,7 +117,7 @@ private:
   /**
    * The fifo containing the memory blocks holding data to be written to tape
    */
-  DataFifo m_fifo;
+  DataPipeline m_fifo;
   
   /**
    * Mutex forcing serial access to the fifo

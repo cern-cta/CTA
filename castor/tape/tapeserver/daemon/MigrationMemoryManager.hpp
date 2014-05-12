@@ -39,7 +39,7 @@ namespace daemon {
 // Forward declaration
 class TapeWriteTask;
 class MemBlock;
-class DataFifo;
+class DataPipeline;
 /**
  * The memory manager is responsible for allocating memory blocks and distributing
  * the free ones around to any class in need. The distribution is actively run in
@@ -83,7 +83,7 @@ public:
    * Adds a new client in need for free memory blocks
    * @param c: the new client
    */
-  void addClient(DataFifo* c) throw(castor::exception::Exception);
+  void addClient(DataPipeline* c) throw(castor::exception::Exception);
   
   /**
    * Takes back a block which has been released by one of the clients
@@ -140,7 +140,7 @@ private:
    * The client queue: we will feed them as soon as blocks
    * become free. This is done in a dedicated thread.
    */
-   castor::tape::threading::BlockingQueue<DataFifo *> m_clientQueue;
+   castor::tape::threading::BlockingQueue<DataPipeline *> m_clientQueue;
 
    /**
     * Logging purpose. Given the fact the class is threaded, the LogContext
