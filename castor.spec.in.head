@@ -21,6 +21,10 @@
 %define mydist %{?dist}
 %endif
 
+# Skipping unit tests (for developpers)
+#--------------------------------------
+%define skip_unit_tests @SKIP_UNIT_TESTS@
+
 # General settings
 #-----------------
 Summary: Cern Advanced mass STORage
@@ -85,8 +89,10 @@ cd build
 
 %check
 %if 0%{compile_server} > 0
+%if "%{skip_unit_tests}" == "0"
 cd build
 %{__make} test
+%endif
 %endif
 
 # The following will be filled dynamically with the rule: makespec.in.sh
