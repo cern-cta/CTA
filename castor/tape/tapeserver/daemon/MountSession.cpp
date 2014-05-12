@@ -63,6 +63,13 @@ castor::tape::tapeserver::daemon::MountSession::MountSession(
     m_vdqm(vdqm), m_vmgr(vmgr), m_rmc(rmc), m_intialProcess(initialProcess), 
     m_argc(argc), m_argv(argv) {}
 
+/**
+ * 1) Prepare the logging environment
+ *  Create a sticky thread name, which will be overridden by the other threads
+ * 2a) Get initial information from the client
+ * 2b) Log The result
+ * Then branch to the right execution
+ */
 void castor::tape::tapeserver::daemon::MountSession::execute()
 throw (castor::tape::Exception) {
   // 1) Prepare the logging environment
@@ -272,7 +279,19 @@ void castor::tape::tapeserver::daemon::MountSession::executeDump(LogContext & lc
   // 1) Get hold of the drive and check it.
   
 }
-
+/**
+ * Try to find the drive that is described by m_request.driveUnit and m_volInfo.density
+ * @param lc For logging purpose
+ * @return the drive if found, NULL otherwise
+ */
+/*
+ * Function synopsis  :
+ *  1) Get hold of the drive and check it.
+ *  --- Check If we did not find the drive in the tpConfig, we have a problem
+ *  2) Try to find the drive 
+ *    Log if we do not find it
+ *  3) Try to open it, log if we fail
+ */
 castor::tape::drives::DriveInterface *
 castor::tape::tapeserver::daemon::MountSession::findDrive(LogContext& lc) {
   // 1) Get hold of the drive and check it.
