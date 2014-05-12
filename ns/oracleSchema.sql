@@ -117,6 +117,10 @@ CREATE TABLE CastorConfig
    description VARCHAR2(1000));
 ALTER TABLE CastorConfig ADD CONSTRAINT UN_CastorConfig_class_key UNIQUE (class, key);
 
+-- Populate configuration
+INSERT INTO CastorConfig (class, key, value, description)
+  VALUES ('stager', 'openmode', 'N', 'Mode for stager open/close operations: C for Compatibility (pre 2.1.14), N for New (from 2.1.14 onwards)');
+
 -- A synonym allowing to acces the VMGR_TAPE_SIDE table from within the nameserver DB.
 -- Note that the VMGR schema shall grant read access to the NS account with something like:
 -- GRANT SELECT ON Vmgr_Tape_Side TO <CastorNsAccount>;

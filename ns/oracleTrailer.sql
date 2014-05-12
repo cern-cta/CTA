@@ -297,7 +297,6 @@ CREATE OR REPLACE PROCEDURE setSegmentForFile(inSegEntry IN castorns.Segment_Rec
   varNb INTEGER;
   varBlockId VARCHAR2(8);
   varParams VARCHAR2(2048);
-  varOpenMode CHAR(1);
   varLastOpenTimeFromClient NUMBER;
   varSegCreationTime NUMBER;
   -- Trap `ORA-00001: unique constraint violated` errors
@@ -306,34 +305,14 @@ CREATE OR REPLACE PROCEDURE setSegmentForFile(inSegEntry IN castorns.Segment_Rec
 BEGIN
   rc := 0;
   msg := '';
-  -- Retrieve open mode flag. To be dropped after v2.1.14 is in production.
-  varOpenMode := getConfigOption('stager', 'openmode', NULL);
-  -- Get file data and lock the entry, exit if not found
-  IF varOpenMode = 'C' THEN
-    SELECT fileId, filemode, mtime, fileClass, fileSize, csumType, csumValue, gid
-      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
-      FROM Cns_file_metadata
-     WHERE fileId = inSegEntry.fileId FOR UPDATE;
-    -- in compatibility mode we only have second precision, thus we have to ceil
-    -- the given lastOpenTime for a safe comparison with mtime
-    varLastOpenTimeFromClient := CEIL(inSegEntry.lastOpenTime);
-  ELSIF varOpenMode = 'N' THEN
-    -- We truncate to 5 decimal digits, which is the precision of the lastOpenTime we get from the stager.
-    -- Note this is just fitting the mantissa precision of a double, and it is due to the fact
-    -- that those numbers go through OCI as double.
-    SELECT fileId, filemode, TRUNC(stagertime, 5), fileClass, fileSize, csumType, csumValue, gid
-      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
-      FROM Cns_file_metadata
-     WHERE fileId = inSegEntry.fileId FOR UPDATE;
-    varLastOpenTimeFromClient := inSegEntry.lastOpenTime;
-  ELSE
-    -- sanity check, should never happen
-    rc := serrno.EINVAL;
-    msg := 'Incorrect value found for openmode in CastorConfig: found '
-            || varOpenMode ||', expected either C or N';
-    ROLLBACK;
-    RETURN;
-  END IF;
+  -- We truncate stagertime to 5 decimal digits, which is the precision of the lastOpenTime we get from the stager.
+  -- Note this is just fitting the mantissa precision of a double, and it is due to the fact
+  -- that those numbers go through OCI as double.
+  SELECT fileId, filemode, TRUNC(stagertime, 5), fileClass, fileSize, csumType, csumValue, gid
+    INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
+    FROM Cns_file_metadata
+   WHERE fileId = inSegEntry.fileId FOR UPDATE;
+  varLastOpenTimeFromClient := inSegEntry.lastOpenTime;
   -- Is it a directory?
   IF bitand(varFmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
     rc := serrno.EISDIR;
@@ -464,7 +443,6 @@ CREATE OR REPLACE PROCEDURE replaceSegmentForFile(inOldCopyNo IN INTEGER, inSegE
   varRepSeg castorns.Segment_Rec;
   varStatus CHAR(1);
   varParams VARCHAR2(2048);
-  varOpenMode CHAR(1);
   varLastOpenTimeFromClient NUMBER;
   varSegCreationTime NUMBER;
   -- Trap `ORA-00001: unique constraint violated` errors
@@ -473,34 +451,14 @@ CREATE OR REPLACE PROCEDURE replaceSegmentForFile(inOldCopyNo IN INTEGER, inSegE
 BEGIN
   rc := 0;
   msg := '';
-  -- Retrieve open mode flag
-  varOpenMode := getConfigOption('stager', 'openmode', NULL);
-  -- Get file data and lock the entry, exit if not found
-  IF varOpenMode = 'C' THEN
-    SELECT fileId, filemode, mtime, fileClass, fileSize, csumType, csumValue, gid
-      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
-      FROM Cns_file_metadata
-     WHERE fileId = inSegEntry.fileId FOR UPDATE;
-    -- in compatibility mode we only have second precision, thus we have to ceil
-    -- the given lastOpenTime for a safe comparison with mtime
-    varLastOpenTimeFromClient := CEIL(inSegEntry.lastOpenTime);
-  ELSIF varOpenMode = 'N' THEN
-    -- We truncate to 5 decimal digits, which is the precision of the lastOpenTime we get from the stager.
-    -- Note this is just fitting the mantissa precision of a double, and it is due to the fact
-    -- that those numbers go through OCI as double.
-    SELECT fileId, filemode, TRUNC(stagertime, 5), fileClass, fileSize, csumType, csumValue, gid
-      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
-      FROM Cns_file_metadata
-     WHERE fileId = inSegEntry.fileId FOR UPDATE;
-    varLastOpenTimeFromClient := inSegEntry.lastOpenTime;
-  ELSE
-    -- sanity check, should never happen
-    rc := serrno.EINVAL;
-    msg := 'Incorrect value found for openmode in CastorConfig: found '
-            || varOpenMode ||', expected either C or N';
-    ROLLBACK;
-    RETURN;
-  END IF;
+  -- We truncate stagertime to 5 decimal digits, which is the precision of the lastOpenTime we get from the stager.
+  -- Note this is just fitting the mantissa precision of a double, and it is due to the fact
+  -- that those numbers go through OCI as double.
+  SELECT fileId, filemode, TRUNC(stagertime, 5), fileClass, fileSize, csumType, csumValue, gid
+    INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
+    FROM Cns_file_metadata
+   WHERE fileId = inSegEntry.fileId FOR UPDATE;
+  varLastOpenTimeFromClient := inSegEntry.lastOpenTime;
   -- Is it a directory?
   IF bitand(varFmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
     rc := serrno.EISDIR;

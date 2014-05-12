@@ -120,9 +120,9 @@ CREATE TABLE CastorConfig
    description VARCHAR2(1000));
 ALTER TABLE CastorConfig ADD CONSTRAINT UN_CastorConfig_class_key UNIQUE (class, key);
 
--- Provide a default configuration
+-- Populate configuration
 INSERT INTO CastorConfig (class, key, value, description)
-  VALUES ('stager', 'openmode', 'C', 'Mode for stager open/close operations: C for Compatibility (pre 2.1.14), N for New (from 2.1.14 onwards)');
+  VALUES ('stager', 'openmode', 'N', 'Mode for stager open/close operations: C for Compatibility (pre 2.1.14), N for New (from 2.1.14 onwards)');
 
 -- A synonym allowing to acces the VMGR_TAPE_SIDE table from within the nameserver DB.
 -- Note that the VMGR schema shall grant read access to the NS account with something like:
@@ -172,7 +172,7 @@ ALTER TABLE UpgradeLog
   CHECK (type IN ('TRANSPARENT', 'NON TRANSPARENT'));
 
 /* SQL statement to populate the intial release value */
-INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_14_11');
+INSERT INTO UpgradeLog (schemaVersion, release) VALUES ('-', '2_1_15_0');
 
 /* SQL statement to create the CastorVersion view */
 CREATE OR REPLACE VIEW CastorVersion
@@ -485,7 +485,6 @@ CREATE OR REPLACE PROCEDURE setSegmentForFile(inSegEntry IN castorns.Segment_Rec
   varNb INTEGER;
   varBlockId VARCHAR2(8);
   varParams VARCHAR2(2048);
-  varOpenMode CHAR(1);
   varLastOpenTimeFromClient NUMBER;
   varSegCreationTime NUMBER;
   -- Trap `ORA-00001: unique constraint violated` errors
@@ -494,34 +493,14 @@ CREATE OR REPLACE PROCEDURE setSegmentForFile(inSegEntry IN castorns.Segment_Rec
 BEGIN
   rc := 0;
   msg := '';
-  -- Retrieve open mode flag. To be dropped after v2.1.14 is in production.
-  varOpenMode := getConfigOption('stager', 'openmode', NULL);
-  -- Get file data and lock the entry, exit if not found
-  IF varOpenMode = 'C' THEN
-    SELECT fileId, filemode, mtime, fileClass, fileSize, csumType, csumValue, gid
-      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
-      FROM Cns_file_metadata
-     WHERE fileId = inSegEntry.fileId FOR UPDATE;
-    -- in compatibility mode we only have second precision, thus we have to ceil
-    -- the given lastOpenTime for a safe comparison with mtime
-    varLastOpenTimeFromClient := CEIL(inSegEntry.lastOpenTime);
-  ELSIF varOpenMode = 'N' THEN
-    -- We truncate to 5 decimal digits, which is the precision of the lastOpenTime we get from the stager.
-    -- Note this is just fitting the mantissa precision of a double, and it is due to the fact
-    -- that those numbers go through OCI as double.
-    SELECT fileId, filemode, TRUNC(stagertime, 5), fileClass, fileSize, csumType, csumValue, gid
-      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
-      FROM Cns_file_metadata
-     WHERE fileId = inSegEntry.fileId FOR UPDATE;
-    varLastOpenTimeFromClient := inSegEntry.lastOpenTime;
-  ELSE
-    -- sanity check, should never happen
-    rc := serrno.EINVAL;
-    msg := 'Incorrect value found for openmode in CastorConfig: found '
-            || varOpenMode ||', expected either C or N';
-    ROLLBACK;
-    RETURN;
-  END IF;
+  -- We truncate stagertime to 5 decimal digits, which is the precision of the lastOpenTime we get from the stager.
+  -- Note this is just fitting the mantissa precision of a double, and it is due to the fact
+  -- that those numbers go through OCI as double.
+  SELECT fileId, filemode, TRUNC(stagertime, 5), fileClass, fileSize, csumType, csumValue, gid
+    INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
+    FROM Cns_file_metadata
+   WHERE fileId = inSegEntry.fileId FOR UPDATE;
+  varLastOpenTimeFromClient := inSegEntry.lastOpenTime;
   -- Is it a directory?
   IF bitand(varFmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
     rc := serrno.EISDIR;
@@ -652,7 +631,6 @@ CREATE OR REPLACE PROCEDURE replaceSegmentForFile(inOldCopyNo IN INTEGER, inSegE
   varRepSeg castorns.Segment_Rec;
   varStatus CHAR(1);
   varParams VARCHAR2(2048);
-  varOpenMode CHAR(1);
   varLastOpenTimeFromClient NUMBER;
   varSegCreationTime NUMBER;
   -- Trap `ORA-00001: unique constraint violated` errors
@@ -661,34 +639,14 @@ CREATE OR REPLACE PROCEDURE replaceSegmentForFile(inOldCopyNo IN INTEGER, inSegE
 BEGIN
   rc := 0;
   msg := '';
-  -- Retrieve open mode flag
-  varOpenMode := getConfigOption('stager', 'openmode', NULL);
-  -- Get file data and lock the entry, exit if not found
-  IF varOpenMode = 'C' THEN
-    SELECT fileId, filemode, mtime, fileClass, fileSize, csumType, csumValue, gid
-      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
-      FROM Cns_file_metadata
-     WHERE fileId = inSegEntry.fileId FOR UPDATE;
-    -- in compatibility mode we only have second precision, thus we have to ceil
-    -- the given lastOpenTime for a safe comparison with mtime
-    varLastOpenTimeFromClient := CEIL(inSegEntry.lastOpenTime);
-  ELSIF varOpenMode = 'N' THEN
-    -- We truncate to 5 decimal digits, which is the precision of the lastOpenTime we get from the stager.
-    -- Note this is just fitting the mantissa precision of a double, and it is due to the fact
-    -- that those numbers go through OCI as double.
-    SELECT fileId, filemode, TRUNC(stagertime, 5), fileClass, fileSize, csumType, csumValue, gid
-      INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
-      FROM Cns_file_metadata
-     WHERE fileId = inSegEntry.fileId FOR UPDATE;
-    varLastOpenTimeFromClient := inSegEntry.lastOpenTime;
-  ELSE
-    -- sanity check, should never happen
-    rc := serrno.EINVAL;
-    msg := 'Incorrect value found for openmode in CastorConfig: found '
-            || varOpenMode ||', expected either C or N';
-    ROLLBACK;
-    RETURN;
-  END IF;
+  -- We truncate stagertime to 5 decimal digits, which is the precision of the lastOpenTime we get from the stager.
+  -- Note this is just fitting the mantissa precision of a double, and it is due to the fact
+  -- that those numbers go through OCI as double.
+  SELECT fileId, filemode, TRUNC(stagertime, 5), fileClass, fileSize, csumType, csumValue, gid
+    INTO varFid, varFmode, varFLastMTime, varFClassId, varFSize, varFCksumName, varFCksum, varFGid
+    FROM Cns_file_metadata
+   WHERE fileId = inSegEntry.fileId FOR UPDATE;
+  varLastOpenTimeFromClient := inSegEntry.lastOpenTime;
   -- Is it a directory?
   IF bitand(varFmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
     rc := serrno.EISDIR;
@@ -935,29 +893,91 @@ BEGIN
 END;
 /
 
-/* This procedure is used by repack to update the new 2.1.14 metadata (file.stagerTime, seg.creationTime,
- * seg.lastAccessTime, seg.gid) should they be missing. It shall be dropped on 2.1.15 after dropping
- * the compatibility mode code. The NS post-upgrade script runs a job that populates the same data
- * for all files.
- */
-CREATE OR REPLACE PROCEDURE update2114Data(inVid IN VARCHAR2) AS
+/* This procedure implements the Cns_closex API */
+CREATE OR REPLACE PROCEDURE closex(inFid IN INTEGER,
+                                   inFileSize IN INTEGER,
+                                   inCksumType IN VARCHAR2,
+                                   inCksumValue IN VARCHAR2,
+                                   inMTime IN INTEGER,
+                                   inLastOpenTime IN NUMBER,
+                                   outRC OUT INTEGER,
+                                   outMsg OUT VARCHAR2) AS
+  -- the autonomous transaction is needed because we commit AND we have OUT parameters,
+  -- otherwise we would get an ORA-02064 distributed operation not supported error.
   PRAGMA AUTONOMOUS_TRANSACTION;
+  varFmode NUMBER(6);
+  varFLastOpenTime NUMBER;
+  varFCksumName VARCHAR2(2);
+  varFCksum VARCHAR2(32);
+  varUnused INTEGER;
 BEGIN
-  FOR f IN (SELECT fileid, mtime, f.gid FROM Cns_file_metadata f, Cns_seg_metadata s
-                         WHERE f.fileid = s.s_fileid AND s.vid = inVid
-                           AND f.stagertime IS NULL) LOOP
-    UPDATE Cns_file_metadata
-       SET stagerTime = mtime
-     WHERE fileid = f.fileid;
-    UPDATE Cns_seg_metadata
-       SET creationTime = f.mtime,
-           lastModificationTime = f.mtime,
-           gid = f.gid
-     WHERE s_fileid = f.fileid;
-    COMMIT;
-  END LOOP;
+  outRC := 0;
+  outMsg := '';
+  -- We truncate to 5 decimal digits, which is the precision of the lastOpenTime we get from the stager.
+  -- Note this is just fitting the mantissa precision of a double, and it is due to the fact
+  -- that those numbers go through OCI as double.
+  SELECT filemode, TRUNC(stagertime, 5), csumType, csumValue
+    INTO varFmode, varFLastOpenTime, varFCksumName, varFCksum
+    FROM Cns_file_metadata
+   WHERE fileId = inFid FOR UPDATE;
+  -- Is it a directory?
+  IF bitand(varFmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
+    outRC := serrno.EISDIR;
+    outMsg := serrno.EISDIR_MSG;
+    ROLLBACK;
+    RETURN;
+  END IF;
+  -- Has the file been changed meanwhile?
+  IF varFLastOpenTime > inLastOpenTime THEN
+    outRC := serrno.ENSFILECHG;
+    outMsg := serrno.ENSFILECHG_MSG ||' : NSLastOpenTime='|| varFLastOpenTime
+      ||', StagerLastOpenTime='|| inLastOpenTime;
+    ROLLBACK;
+    RETURN;
+  END IF;
+  -- Validate checksum type
+  IF inCksumType != 'AD' THEN
+    outRC := serrno.EINVAL;
+    outMsg := serrno.EINVAL_MSG ||' : incorrect checksum type detected '|| inCksumType;
+    ROLLBACK;
+    RETURN;
+  END IF;
+  -- Validate checksum value
+  BEGIN
+    SELECT to_number(inCksumValue, 'XXXXXXXX') INTO varUnused FROM Dual;
+  EXCEPTION WHEN INVALID_NUMBER THEN
+    outRC := serrno.EINVAL;
+    outMsg := serrno.EINVAL_MSG ||' : incorrect checksum value detected '|| inCksumValue;
+    ROLLBACK;
+    RETURN;
+  END;
+  -- Cross check file checksums when preset-adler32 (PA in the file entry):
+  IF varFCksumName = 'PA' AND
+     to_number(inCksumValue, 'XXXXXXXX') != to_number(varFCksum, 'XXXXXXXX') THEN
+    outRC := serrno.SECHECKSUM;
+    outMsg := 'Predefined file checksum mismatch : preset='|| varFCksum ||', actual='|| inCksumValue;
+    ROLLBACK;
+    RETURN;
+  END IF;
+  -- All right, update file size and other metadata
+  UPDATE Cns_file_metadata
+     SET fileSize = inFileSize,
+         csumType = inCksumType,
+         csumValue = inCksumValue,
+         ctime = inMTime,
+         mtime = inMTime
+   WHERE fileId = inFid;
+  outMsg := 'Function="closex" FileSize=' || inFileSize
+    ||' ChecksumType="'|| inCksumType ||'" ChecksumValue="'|| inCksumValue
+    ||'" NewModTime=' || inMTime ||' StagerLastOpenTime='|| inLastOpenTime ||' RtnCode=0';
+  COMMIT;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- The file entry was not found, just give up
+  outRC := serrno.ENOENT;
+  outMsg := serrno.ENOENT_MSG;
 END;
 /
+
 
 CREATE OR REPLACE PROCEDURE insertNSStats(inGid IN INTEGER, inTimestamp IN NUMBER,
                                           inMaxFileId IN INTEGER, inFileCount IN INTEGER, inFileSize IN INTEGER,
@@ -1002,7 +1022,6 @@ BEGIN
                    SUM(segSize) segSize, COUNT(*) segCount
               FROM Cns_seg_metadata
              WHERE creationTime < varTimestamp
-               AND gid IS NOT NULL    -- XXX this will be dropped once the post-upgrade phase is completed
              GROUP BY gid, copyNo) LOOP
     IF g.copyNo = 1 THEN
       insertNSStats(g.gid, varTimestamp, 0, 0, 0, g.segCount, g.segSize, g.segComprSize, 0, 0, 0);
