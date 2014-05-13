@@ -95,13 +95,9 @@ set(SHIFT_SUBHEADERS
   stager_client_api.h
   stager_constants.h
   stager_errmsg.h
-  stager_extern_globals.h
-  stager_macros.h
   stager_mapper.h
-  stager_messages.h
   stager_mover_api.h
   stager_util.h
-  stager_uuid.h
   trace.h
   u64subr.h
   util.h
@@ -164,7 +160,6 @@ if (${COMPILE_SERVER} STREQUAL "1")
     rfio_constants.h
     rfio_errno.h
     stager_mapper.h
-    stager_uuid.h
     trace.h
     u64subr.h
     vmgr_api.h
