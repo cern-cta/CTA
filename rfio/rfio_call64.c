@@ -560,11 +560,8 @@ int  sropen64(int     s,
                             &handler_context,
                             &need_user_check);
       if (rc < 0) {
-        char alarmbuf[1024];
-        sprintf(alarmbuf,"sropen64(): %s",CORRECT_FILENAME(filename));
-        (*logfunc)(LOG_DEBUG, "sropen64: rfio_handler_open refused open: %s\n", sstrerror(serrno));
+        (*logfunc)(LOG_DEBUG, "sropen64: rfio_handler_open refused open: %s\n", CORRECT_FILENAME(filename), sstrerror(serrno));
         rcode = serrno;
-        rfio_alrm(rcode,alarmbuf);
       }
 
       if (need_user_check &&  ((status=check_user_perm(&uid,&gid,host,&rcode,(((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
@@ -1351,11 +1348,8 @@ int  sropen64_v3(int         s,
                                 &handler_context,
                                 &unused_dummy);
           if (rc < 0) {
-            char alarmbuf[1024];
-            sprintf(alarmbuf,"sropen64_v3: %s",CORRECT_FILENAME(filename));
-            (*logfunc)(LOG_DEBUG, "ropen64_v3: rfio_handler_open refused open: %s\n", sstrerror(serrno));
+            (*logfunc)(LOG_DEBUG, "ropen64_v3: rfio_handler_open refused open: %s\n", CORRECT_FILENAME(filename), sstrerror(serrno));
             rcode = serrno;
-            rfio_alrm(rcode,alarmbuf);
           }
 
           /* NOTE(fuji): from now on, flags is in host byte-order... */
