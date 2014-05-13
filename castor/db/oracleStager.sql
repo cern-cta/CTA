@@ -3603,7 +3603,12 @@ BEGIN
   SELECT nsOpenTime INTO varNsOpenTime FROM CastorFile WHERE id = inCfId;
   IF varNsOpenTime < inNsOpenTimeInUsec/1000000 THEN
     -- yes, invalidate our diskcopies. This may later trigger a recall.
-    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+    logToDLF(varReqUUID, dlf.LVL_SYSTEM, 'Invalidating all valid DiskCopy(ies)', inFileId, inNsHost, 'stagerd',
+             'SUBREQID=' || varSrUUID || ' svcClassId=' || getSvcClassName(varSvcClassId) ||
+             ' reason="Outdated according to timestamp"' || ' cfId=' || TO_CHAR(inCfId) ||
+             ' nsTime(us)=' || TO_CHAR(inNsOpenTimeInUsec) ||
+             ' stagerTime=' || TO_CHAR(varNsOpenTime)); 
+    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID, gcType=dconst.GCTYPE_OVERWRITTEN
      WHERE status = dconst.DISKCOPY_VALID AND castorFile = inCfId;
   END IF;
 

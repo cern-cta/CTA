@@ -576,7 +576,9 @@ BEGIN
     IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
       IF varDropSource = 1 THEN
         -- drop source if requested
-        UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID WHERE id = varSrcDcId;
+        UPDATE DiskCopy
+           SET status = dconst.DISKCOPY_INVALID, gcType=dconst.GCTYPE_DRAINING
+         WHERE id = varSrcDcId;
       ELSE
         -- update importance of other DiskCopies if it's an additional one
         UPDATE DiskCopy SET importance = varDCImportance WHERE castorFile = varCfId;

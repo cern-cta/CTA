@@ -1716,7 +1716,7 @@ BEGIN
   -- Log depending on the error: some are not pathological and have dedicated handling
   IF varErrorCode = serrno.ENOENT OR varErrorCode = serrno.ENSFILECHG OR varErrorCode = serrno.ENSNOSEG THEN
     -- in this case, disk cache is stale
-    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID
+    UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID, gcType=GCTYPE_OVERWRITTEN
      WHERE status = dconst.DISKCOPY_VALID
        AND castorFile = varCfId;
     -- cleanup other migration jobs for that file if any

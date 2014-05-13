@@ -138,6 +138,7 @@ BEGIN
              WHERE DiskCopy.fileSystem = FileSystem.id(+)
                AND FileSystem.diskServer = diskServer.id(+)
                AND DiskPool.id(+) = fileSystem.diskPool
+               AND DiskCopy.dataPool IS NULL
                AND DiskCopy.castorFile = getCF(ref)
                AND DiskCopy.castorFile = CastorFile.id
             UNION
@@ -150,7 +151,7 @@ BEGIN
                    CastorFile.fileSize AS castorfilesize,
                    trunc(DiskCopy.gcWeight, 2) AS gcweight
               FROM DiskCopy, DataPool, CastorFile
-             WHERE DiskCopy.dataPool = DataPool.id(+)
+             WHERE DiskCopy.dataPool = DataPool.id
                AND DiskCopy.castorFile = getCF(ref)
                AND DiskCopy.castorFile = CastorFile.id) LOOP
      PIPE ROW(d);
