@@ -271,10 +271,12 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
 //------------------------------------------------------------------------------
 castor::legacymsg::MessageHeader
   castor::tape::tapeserver::daemon::MountSessionAcceptHandler::readJobMsgHeader(
-    const int connection) throw(castor::exception::Exception) {
+    const int clientConnection) throw(castor::exception::Exception) {
+  castor::utils::SmartFd connection(clientConnection);
+  
   // Read in the message header
   char buf[3 * sizeof(uint32_t)]; // magic + request type + len
-  io::readBytes(connection, m_netTimeout, sizeof(buf), buf);
+  io::readBytes(connection.get(), m_netTimeout, sizeof(buf), buf);
 
   const char *bufPtr = buf;
   size_t bufLen = sizeof(buf);
@@ -293,6 +295,7 @@ castor::legacymsg::MessageHeader
   // The length of the message body is checked later, just before it is read in
   // to memory
 
+  connection.release();
   return header;
 }
 
