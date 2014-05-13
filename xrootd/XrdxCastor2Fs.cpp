@@ -1160,15 +1160,15 @@ XrdxCastor2FsFile::open(const char*         path,
   int qpos = 0;
 
   // => case where open fails and client bounces back
-  if ((qpos = sinfo.find("?") != STR_NPOS))
+  if ((qpos = sinfo.find("?")) != STR_NPOS)
     sinfo.erase(qpos);
 
   // If the clients sends tried info, we have to erase it
-  if ((qpos = sinfo.find("tried") != STR_NPOS))
+  if ((qpos = sinfo.find("tried")) != STR_NPOS)
     sinfo.erase(qpos);
 
   // If the clients send old redirection info, we have to erase it
-  if ((qpos = sinfo.find("castor2fs.sfn=")))
+  if ((qpos = sinfo.find("castor2fs.sfn=")) != STR_NPOS)
     sinfo.erase(qpos);
 
   if (ininfo)
