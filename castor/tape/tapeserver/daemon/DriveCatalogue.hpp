@@ -341,6 +341,12 @@ public:
    * does not match the value that was entered into the catalogue with the
    * populateCatalogue() method.
    *
+   * PLEASE NOTE: If this method throws an exception then it does NOT close
+   * the file descriptor of the TCP/IP connection with the tape labeling
+   * command-line tool castor-tape-label.  The caller of this method is left
+   * to close the connection because this gives them the opportunity to send
+   * an approprioate error message to the client.
+   *
    * @param job The label job.
    * @param labelCmdConnection The file descriptor of the TCP/IP connection
    * with the tape labeling command-line tool castor-tape-label.

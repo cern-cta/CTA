@@ -141,20 +141,55 @@ private:
     const throw();
   
   /**
-   * Handles incoming jobs and dispatches them to the proper functions
+   * Handles an incoming job.
    *
    * Please note that this method takes ownership of the specified
    * TCP/IP connection.
+   *
+   * PLEASE NOTE: If this method throws an exception then it WILL have closed
+   * the specified TCP/IP connection.
    * 
+   * @param header The header of the incoming job message that has already been
+   * read out from the client connection and un-marshalled.
    * @param clientConnection The file descriptor of the TCP/IP connection with
    * the client.
    */
-  void handleIncomingJob(const int clientConnection)
-    throw(castor::exception::Exception);
+  void handleIncomingJob(const legacymsg::MessageHeader &header,
+    const int clientConnection) throw(castor::exception::Exception);
 
-  void handleIncomingSetVidJob(const int clientConnection, const uint32_t bodyLen) throw(castor::exception::Exception);
+  /**
+   * Handles an incoming job.
+   *
+   * Please note that this method takes ownership of the specified
+   * TCP/IP connection.
+   *
+   * PLEASE NOTE: If this method throws an exception then it WILL have closed
+   * the specified TCP/IP connection.
+   *
+   * @param header The header of the incoming job message that has already been
+   * read out from the client connection and un-marshalled.
+   * @param clientConnection The file descriptor of the TCP/IP connection with
+   * the client.
+   */
+  void handleIncomingSetVidJob(const legacymsg::MessageHeader &header,
+    const int clientConnection) throw(castor::exception::Exception);
 
-  void handleIncomingLabelJob(const int clientConnection, const uint32_t bodyLen) throw(castor::exception::Exception);
+  /**
+   * Handles an incoming job.
+   *
+   * Please note that this method takes ownership of the specified
+   * TCP/IP connection.
+   *
+   * PLEASE NOTE: If this method throws an exception then it WILL have closed
+   * the specified TCP/IP connection.
+   *
+   * @param header The header of the incoming job message that has already been
+   * read out from the client connection and un-marshalled.
+   * @param clientConnection The file descriptor of the TCP/IP connection with
+   * the client.
+   */
+  void handleIncomingLabelJob(const legacymsg::MessageHeader &header,
+    const int clientConnection) throw(castor::exception::Exception);
   
   /**
    * Logs the reception of the specified job message from the tplabel command.

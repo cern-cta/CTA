@@ -132,18 +132,25 @@ bool castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleEvent(
   }
 
   // Accept the connection from the admin command
-  int connection = -1;
+  castor::utils::SmartFd connection;
   try {
-    connection = io::acceptConnection(fd.fd, 1);
+    const time_t acceptTimeout  = 1; // Timeout in seconds
+    connection.reset(io::acceptConnection(fd.fd, acceptTimeout));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to accept a connection from the admin command"
       ": " << ne.getMessage().str();
     throw ex;
   }
+
+  // Read in the message header
+  const legacymsg::MessageHeader header = readJobMsgHeader(connection.get());
   
-  // handleIncomingJob() takes ownership of the client connection
-  handleIncomingJob(connection);
+  // handleIncomingJob() takes ownership of the client connection because in
+  // the good-day scenario it will pass the client connection to the catalogue
+  // of tape drives
+  handleIncomingJob(header, connection.release());
+
   return false; // Stay registered with the reactor
 }
 
@@ -164,8 +171,8 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::checkHandleEve
 //------------------------------------------------------------------------------
 // logTapeConfigJobReception
 //------------------------------------------------------------------------------
-void
-  castor::tape::tapeserver::daemon::MountSessionAcceptHandler::logSetVidJobReception(const legacymsg::TapeUpdateDriveRqstMsgBody &job) const throw() {
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::logSetVidJobReception(
+  const legacymsg::TapeUpdateDriveRqstMsgBody &job) const throw() {
   log::Param params[] = {
     log::Param("drive", job.drive),
     log::Param("vid", job.vid)};
@@ -189,18 +196,25 @@ void
 //------------------------------------------------------------------------------
 // handleIncomingJob
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingJob(const int clientConnection) throw(castor::exception::Exception) {
-  const legacymsg::MessageHeader header = readJobMsgHeader(clientConnection);
-  
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingJob(
+  const legacymsg::MessageHeader &header, const int clientConnection)
+  throw(castor::exception::Exception) {
+
   switch(header.reqType) {
   case SETVID:
-    handleIncomingSetVidJob(clientConnection, header.lenOrStatus - 3 * sizeof(uint32_t));
+    // handleIncomingSetVidJob takes ownership of the client connection
+    handleIncomingSetVidJob(header, clientConnection);
     break;
   case TPLABEL:
-    handleIncomingLabelJob(clientConnection, header.lenOrStatus - 3 * sizeof(uint32_t));
+    // handleIncomingSetVidJob takes ownership of the client connection
+    handleIncomingLabelJob(header, clientConnection);
     break;
   default:
     {
+      // Close the client connection because this method still owns the
+      // connection and has not been able to pass it on
+      close(clientConnection);
+
       castor::exception::Internal ex;
       ex.getMessage() << "Unknown request type: " << header.reqType << ". Expected: " << SETVID << "(SETVID)";
       throw ex;
@@ -211,13 +225,17 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
 //------------------------------------------------------------------------------
 // handleIncomingSetVidJob
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingSetVidJob(const int clientConnection, const uint32_t bodyLen) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingSetVidJob(
+  const legacymsg::MessageHeader &header, const int clientConnection)
+  throw(castor::exception::Exception) {
   castor::utils::SmartFd connection(clientConnection);
 
+  const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
   const legacymsg::TapeUpdateDriveRqstMsgBody body = readSetVidMsgBody(connection.get(), bodyLen);
   logSetVidJobReception(body);
   m_driveCatalogue.updateVidAssignment(body.vid, body.drive);
-  writeRcReplyMsg(connection.get(), 0); // 0 as return code for the tape config command, as in: "all went fine"
+  // 0 as return code for the tape config command, as in: "all went fine"
+  writeRcReplyMsg(connection.get(), 0);
 
   close(connection.release());
 }
@@ -225,12 +243,27 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
 //------------------------------------------------------------------------------
 // handleIncomingLabelJob
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingLabelJob(const int clientConnection, const uint32_t bodyLen) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingLabelJob(
+  const legacymsg::MessageHeader &header, const int clientConnection)
+  throw(castor::exception::Exception) {
   castor::utils::SmartFd connection(clientConnection);
 
+  const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
   const legacymsg::TapeLabelRqstMsgBody body = readLabelRqstMsgBody(connection.get(), bodyLen);
   logLabelJobReception(body);
-  m_driveCatalogue.receivedLabelJob(body, connection.release());
+
+  // Try to inform the drive catalogue of the reception of the label job
+  //
+  // PLEASE NOTE that this method must keep ownership of the client connection
+  // whilst informing the drive catalogue of the reception of the label job.
+  // If the drive catalogue throws an exception whilst evaluating the drive
+  // state-change then the catalogue will NOT have closed the connection.
+  m_driveCatalogue.receivedLabelJob(body, connection.get());
+
+  // The drive catalogue will now remember the client connection, therefore it
+  // is now safe and necessary for this method to relinquish ownership of the
+  // connection
+  connection.release();
 }
 
 //------------------------------------------------------------------------------
