@@ -129,7 +129,6 @@
 %attr(0644,root,root) usr/include/castor/h/stager_client_api.h
 %attr(0644,root,root) usr/include/castor/h/stager_errmsg.h
 %attr(0644,root,root) usr/include/castor/h/stager_mapper.h
-%attr(0644,root,root) usr/include/castor/h/stager_uuid.h
 %attr(0644,root,root) usr/include/castor/h/trace.h
 %attr(0644,root,root) usr/include/castor/h/u64subr.h
 %attr(0644,root,root) usr/include/castor/h/vmgr_api.h
