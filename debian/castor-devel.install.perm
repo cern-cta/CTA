@@ -67,13 +67,9 @@
 %attr(0644,root,root) usr/include/shift/stager_client_api.h
 %attr(0644,root,root) usr/include/shift/stager_constants.h
 %attr(0644,root,root) usr/include/shift/stager_errmsg.h
-%attr(0644,root,root) usr/include/shift/stager_extern_globals.h
-%attr(0644,root,root) usr/include/shift/stager_macros.h
 %attr(0644,root,root) usr/include/shift/stager_mapper.h
-%attr(0644,root,root) usr/include/shift/stager_messages.h
 %attr(0644,root,root) usr/include/shift/stager_mover_api.h
 %attr(0644,root,root) usr/include/shift/stager_util.h
-%attr(0644,root,root) usr/include/shift/stager_uuid.h
 %attr(0644,root,root) usr/include/shift/trace.h
 %attr(0644,root,root) usr/include/shift/u64subr.h
 %attr(0644,root,root) usr/include/shift/util.h
