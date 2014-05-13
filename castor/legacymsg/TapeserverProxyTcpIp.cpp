@@ -114,6 +114,33 @@ void castor::legacymsg::TapeserverProxyTcpIp::gotDumpMountDetailsFromClient(
   }
 }
 
+//------------------------------------------------------------------------------
+// tapeMountedForRead
+//------------------------------------------------------------------------------
+void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForRead(
+  const std::string &unitName,
+  const std::string &vid)
+  throw(castor::exception::Exception) {
+}
+
+//------------------------------------------------------------------------------
+// tapeMountedForWrite
+//------------------------------------------------------------------------------
+void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForWrite(
+  const std::string &unitName,
+  const std::string &vid)
+  throw(castor::exception::Exception) {
+} 
+
+//------------------------------------------------------------------------------
+// tapeUnmounted
+//------------------------------------------------------------------------------
+void castor::legacymsg::TapeserverProxyTcpIp::tapeUnmounted(
+  const std::string &unitName,
+  const std::string &vid)
+  throw(castor::exception::Exception) {
+}
+
 //-----------------------------------------------------------------------------
 // connectToTapeserver
 //-----------------------------------------------------------------------------
@@ -180,20 +207,3 @@ void castor::legacymsg::TapeserverProxyTcpIp::readReplyMsg(const int fd) throw(c
     throw ex;
   }
 }
-
-//------------------------------------------------------------------------------
-// tapeUnmounted
-//------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyTcpIp::tapeUnmounted(
-const std::string &vid) {
-  throw castor::exception::Exception(SEINTERNAL,"TapeserverProxyTcpIp::tapeUnmounted TODO");
-}
-  
-//------------------------------------------------------------------------------
-// tapeMountedForRead
-//------------------------------------------------------------------------------
-void  castor::legacymsg::TapeserverProxyTcpIp:: tapeMountedForRead(
-const std::string &vid) {
-    throw castor::exception::Exception(SEINTERNAL,"TapeserverProxyTcpIp::tapeMountedForRead TODO");
-}
-

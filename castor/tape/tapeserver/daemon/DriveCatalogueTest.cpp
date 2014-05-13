@@ -343,7 +343,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_RUNNING, catalogue.getState("UNIT"));
 
   // Complete the tape session successfully
-  ASSERT_NO_THROW(catalogue.mountSessionSucceeded("UNIT"));
+  ASSERT_NO_THROW(catalogue.sessionSucceeded("UNIT"));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP, catalogue.getState("UNIT"));
 
   // Configure the tape drive DOWN

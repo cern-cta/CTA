@@ -152,12 +152,31 @@ public:
   static const char *drvState2Str(const DriveState state) throw();
 
   /**
+   * Enumeration of the possible types of session.
+   */
+  enum SessionType {
+    SESSION_TYPE_NONE,
+    SESSION_TYPE_DATATRANSFER,
+    SESSION_TYPE_LABEL};
+
+  /**
+   * Always returns a string representation of the specified session type.
+   * If the session type is unknown then an appropriately worded string
+   * representation is returned and no exception is thrown.
+   *
+   * @param sessionType The numerical sessionType.
+   * @return The string representation if known else "UNKNOWN".
+   */
+  static const char *sessionType2Str(const SessionType sessionType) throw();
+
+  /**
    * Poplates the catalogue using the specified parsed lines from
    * /etc/castor/TPCONFIG.
    *
    * @param lines The lines parsed from /etc/castor/TPCONFIG.
    */
-  void populateCatalogue(const utils::TpconfigLines &lines) throw(castor::exception::Exception);
+  void populateCatalogue(const utils::TpconfigLines &lines)
+    throw(castor::exception::Exception);
 
   /**
    * Returns the unit name of the tape drive on which the specified mount
@@ -166,7 +185,7 @@ public:
    * @param sessionPid The process ID of the mount session.
    * @return the unit name of the tape drive.
    */
-  std::string getUnitName(const pid_t sessionPid) throw(castor::exception::Exception);
+  std::string getUnitName(const pid_t sessionPid) const throw(castor::exception::Exception);
 
   /**
    * Returns an unordered list of the unit names of all of the tape drives
@@ -182,63 +201,86 @@ public:
    *
    * @return Unordered list of the unit names.
    */
-  std::list<std::string> getUnitNames(const DriveState state) const throw(castor::exception::Exception);
+  std::list<std::string> getUnitNames(const DriveState state)
+    const throw(castor::exception::Exception);
 
   /**
    * Returns the device group name (DGN) of the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getDgn(const std::string &unitName) const throw(castor::exception::Exception);
+  const std::string &getDgn(const std::string &unitName)
+    const throw(castor::exception::Exception);
   
   /**
    * Returns the VID of the tape mounted on the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getVid(const std::string &unitName) const throw(castor::exception::Exception);
+  const std::string &getVid(const std::string &unitName)
+    const throw(castor::exception::Exception);
   
   /**
    * Returns the time when the tape was mounted on the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  time_t getAssignmentTime(const std::string &unitName) const throw(castor::exception::Exception);
+  time_t getAssignmentTime(const std::string &unitName)
+    const throw(castor::exception::Exception);
 
   /**
    * Returns the filename of the device file of the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getDevFilename(const std::string &unitName) const throw(castor::exception::Exception);
+  const std::string &getDevFilename(const std::string &unitName)
+    const throw(castor::exception::Exception);
 
   /**
    * Returns the tape densities supported by the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::list<std::string> &getDensities(const std::string &unitName) const throw(castor::exception::Exception);
+  const std::list<std::string> &getDensities(const std::string &unitName)
+    const throw(castor::exception::Exception);
+
+  /**
+   * Returns the type of the specified session.
+   *
+   * @param sessionPid The process ID of the session.
+   */
+  SessionType getSessionType(const pid_t sessionPid)
+    const throw(castor::exception::Exception);
 
   /**
    * Returns the current state of the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  DriveState getState(const std::string &unitName) const throw(castor::exception::Exception);
+  DriveState getState(const std::string &unitName)
+    const throw(castor::exception::Exception);
 
   /**
    * Returns the library slot of the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getLibrarySlot(const std::string &unitName) const throw(castor::exception::Exception);
+  const std::string &getLibrarySlot(const std::string &unitName)
+    const throw(castor::exception::Exception);
 
   /**
    * Returns the device type of the specified tape drive in its libary.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getDevType(const std::string &unitName) const throw(castor::exception::Exception);
+  const std::string &getDevType(const std::string &unitName)
+    const throw(castor::exception::Exception);
+
+  /**
+   * Returns the file descriptor of the connection with the command-line
+   * tool castor-tape-label.
+   */
+  int getLabelCmdConnection(const pid_t sessionPid) throw(castor::exception::Exception);
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_UP.
@@ -281,7 +323,8 @@ public:
    *
    * @param job The job received from the vdqmd daemon.
    */
-  void receivedVdqmJob(const legacymsg::RtcpJobRqstMsgBody &job) throw(castor::exception::Exception);
+  void receivedVdqmJob(const legacymsg::RtcpJobRqstMsgBody &job)
+    throw(castor::exception::Exception);
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_WAITLABEL.
@@ -298,9 +341,18 @@ public:
    * does not match the value that was entered into the catalogue with the
    * populateCatalogue() method.
    *
+   * PLEASE NOTE: If this method throws an exception then it does NOT close
+   * the file descriptor of the TCP/IP connection with the tape labeling
+   * command-line tool castor-tape-label.  The caller of this method is left
+   * to close the connection because this gives them the opportunity to send
+   * an approprioate error message to the client.
+   *
    * @param job The label job.
+   * @param labelCmdConnection The file descriptor of the TCP/IP connection
+   * with the tape labeling command-line tool castor-tape-label.
    */
-  void receivedLabelJob(const legacymsg::TapeLabelRqstMsgBody &job) throw(castor::exception::Exception);
+  void receivedLabelJob(const legacymsg::TapeLabelRqstMsgBody &job,
+    const int labelCmdConnection) throw(castor::exception::Exception);
 
   /**
    * Returns the job received from the vdqmd daemon for the specified tape
@@ -312,7 +364,8 @@ public:
    * @param unitName The unit name of the tape drive.
    * @return The job received from the vdqmd daemon.
    */
-  const legacymsg::RtcpJobRqstMsgBody &getVdqmJob(const std::string &unitName) const throw(castor::exception::Exception);
+  const legacymsg::RtcpJobRqstMsgBody &getVdqmJob(const std::string &unitName)
+    const throw(castor::exception::Exception);
   
   /**
    * Returns the job received from the vdqmd daemon for the specified tape
@@ -324,7 +377,8 @@ public:
    * @param unitName The unit name of the tape drive.
    * @return The job received from the vdqmd daemon.
    */
-  const legacymsg::TapeLabelRqstMsgBody &getLabelJob(const std::string &unitName) const throw(castor::exception::Exception);
+  const legacymsg::TapeLabelRqstMsgBody &getLabelJob(const std::string &unitName)
+    const throw(castor::exception::Exception);
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_RUNNING.
@@ -336,7 +390,8 @@ public:
    * @param sessionPid The process ID of the child process responsible for
    * running the mount session.
    */
-  void forkedMountSession(const std::string &unitName, const pid_t sessionPid) throw(castor::exception::Exception); 
+  void forkedMountSession(const std::string &unitName, const pid_t sessionPid)
+    throw(castor::exception::Exception); 
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_RUNNING.
@@ -348,7 +403,8 @@ public:
    * @param sessionPid The process ID of the child process responsible for
    * running the label session.
    */
-  void forkedLabelSession(const std::string &unitName, const pid_t sessionPid) throw(castor::exception::Exception);
+  void forkedLabelSession(const std::string &unitName, const pid_t sessionPid)
+    throw(castor::exception::Exception);
 
   /**
    * Returns the process ID of the child process responsible the mount session
@@ -373,7 +429,7 @@ public:
    *
    * @param sessionPid Process ID of the child process handling the session.
    */
-  void mountSessionSucceeded(const pid_t sessionPid) throw(castor::exception::Exception);
+  void sessionSucceeded(const pid_t sessionPid) throw(castor::exception::Exception);
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_UP if the
@@ -385,7 +441,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  void mountSessionSucceeded(const std::string &unitName) throw(castor::exception::Exception);
+  void sessionSucceeded(const std::string &unitName) throw(castor::exception::Exception);
   
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_DOWN.
@@ -395,7 +451,7 @@ public:
    *
    * @param sessionPid Process ID of the child process handling the session.
    */
-  void mountSessionFailed(const pid_t sessionPid) throw(castor::exception::Exception);
+  void sessionFailed(const pid_t sessionPid) throw(castor::exception::Exception);
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_DOWN.
@@ -405,7 +461,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  void mountSessionFailed(const std::string &unitName) throw(castor::exception::Exception);
+  void sessionFailed(const std::string &unitName) throw(castor::exception::Exception);
   
   /**
    * Updates the vid and assignment time of the specified drive
@@ -448,6 +504,11 @@ private:
     std::list<std::string> densities;
 
     /**
+     * The type of mount session.
+     */
+    SessionType sessionType;
+
+    /**
      * The current state of the tape drive.
      */
     DriveState state;
@@ -483,13 +544,25 @@ private:
     pid_t sessionPid;
 
     /**
+     * If the drive state is either DRIVE_WAITLABEL, DRIVE_STATE_RUNNING or
+     * DRIVE_STATE_WAITDOWN and the type of the session is SESSION_TYPE_LABEL
+     * then this is the file descriptor of the TCP/IP connection with the tape
+     * labeling command-line tool castor-tape-label.  In any other state, the
+     * value of this filed is undefined.
+     */
+    int labelCmdConnection;
+
+    /**
      * Default constructor that initializes all strings to the empty string,
-     * all integers to zero, all lists to empty and the drive state to
-     * DRIVE_STATE_INIT.  This initialization includes the individual member
+     * all integers to zero, all file descriptors to -1, all lists to empty,
+     * the drive state to DRIVE_STATE_INIT and the sessionType to
+     * SESSION_TYPE_NONE.  This initialization includes the individual member
      * variables of the nested vdqm job.
      */
     DriveEntry() throw():
-      state(DRIVE_STATE_INIT) {
+      sessionType(SESSION_TYPE_NONE),
+      state(DRIVE_STATE_INIT),
+      labelCmdConnection(-1) {
       labelJob.gid = 0;
       labelJob.uid = 0;
       memset(labelJob.vid, '\0', sizeof(labelJob.vid));

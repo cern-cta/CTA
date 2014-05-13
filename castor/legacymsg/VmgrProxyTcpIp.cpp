@@ -44,6 +44,20 @@ castor::legacymsg::VmgrProxyTcpIp::VmgrProxyTcpIp(
 castor::legacymsg::VmgrProxyTcpIp::~VmgrProxyTcpIp() throw() {
 }
 
+//------------------------------------------------------------------------------
+// tapeMountedForRead
+//------------------------------------------------------------------------------
+void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForRead(const std::string &vid) 
+  throw (castor::exception::Exception) {
+}
+
+//------------------------------------------------------------------------------
+// tapeMountedForWrite
+//------------------------------------------------------------------------------
+void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForWrite(const std::string &vid)
+  throw (castor::exception::Exception) {
+}
+
 //-----------------------------------------------------------------------------
 // connectToVmgr
 //-----------------------------------------------------------------------------

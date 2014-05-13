@@ -70,14 +70,16 @@ BEGIN
    WHERE status = dconst.SUBREQUEST_WAITSUBREQ
      AND castorFile = varCfId;
   alertSignalNoLock('wakeUpJobReqSvc');
+  -- compute path of this diskcopy
+  buildPathFromFileId(varFileId, varNsHost, varDcId, outPath, selectedMountPoint IS NOT NULL);
   -- link DiskCopy and FileSystem/DataPool and update DiskCopyStatus
   UPDATE DiskCopy
      SET status = 6, -- DISKCOPY_STAGEOUT
+         path = outPath,
          fileSystem = fsId,
          dataPool = dpId,
          nbCopyAccesses = nbCopyAccesses + 1
-   WHERE id = varDcId
-   RETURNING path INTO outPath;
+   WHERE id = varDcId;
   -- Log successful completion
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_PUTSTART, varFileId, varNsHost, 'stagerd', '');
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -235,7 +237,7 @@ END;
 /
 
 /* PL/SQL method implementing putEnded.
- * If inoutErrorMsg is not NULL, the write operation is failed and inFileSize, inNewTimeStamp,
+ * If inoutErrorCode is > 0, the write operation is failed and inFileSize, inNewTimeStamp,
  * inCksumType and inCksumValue are ignored.
  */
 CREATE OR REPLACE PROCEDURE putEnded (srId IN INTEGER,
@@ -296,7 +298,7 @@ BEGIN
       DELETE FROM DiskCopy WHERE id = dcId;
       deleteCastorFile(cfId);
     END IF;
-    logToDLF(NULL, dlf.LVL_ERROR, dlf.STAGER_PUTENDED, varFileId, varNsHost, 'stagerd',
+    logToDLF(NULL, dlf.LVL_NOTICE, dlf.STAGER_PUTENDED, varFileId, varNsHost, 'stagerd',
       'SUBREQID='|| varSrUuid ||' errorMessage="'|| inoutErrorMsg ||'" errorCode='|| inoutErrorCode);
     RETURN;
   END IF;
@@ -574,7 +576,9 @@ BEGIN
     IF varNewDcStatus = dconst.DISKCOPY_VALID THEN
       IF varDropSource = 1 THEN
         -- drop source if requested
-        UPDATE DiskCopy SET status = dconst.DISKCOPY_INVALID WHERE id = varSrcDcId;
+        UPDATE DiskCopy
+           SET status = dconst.DISKCOPY_INVALID, gcType=dconst.GCTYPE_DRAINING
+         WHERE id = varSrcDcId;
       ELSE
         -- update importance of other DiskCopies if it's an additional one
         UPDATE DiskCopy SET importance = varDCImportance WHERE castorFile = varCfId;
@@ -779,11 +783,11 @@ BEGIN
   END IF;
 
   -- build full path of destination copy
-  buildPathFromFileId(inFileId, inNsHost, varDestDcId, outDestDcPath);
+  buildPathFromFileId(inFileId, inNsHost, varDestDcId, outDestDcPath, inDestMountPoint IS NOT NULL);
   outDestDcPath := inDestMountPoint || outDestDcPath;
 
   -- build full path of source copy
-  buildPathFromFileId(inFileId, inNsHost, varSrcDcId, outSrcDcPath);
+  buildPathFromFileId(inFileId, inNsHost, varSrcDcId, outSrcDcPath, inSrcMountPoint IS NOT NULL);
   outSrcDcPath := inSrcDiskServerName || ':' || inSrcMountPoint || outSrcDcPath;
 
   -- log "disk2DiskCopyStart returned successfully"
@@ -875,6 +879,8 @@ PROCEDURE transferFailedSafe(subReqIds IN castor."strList",
   dcId  NUMBER;
   cfId  NUMBER;
   rType NUMBER;
+  errNo INTEGER;
+  errMsg VARCHAR2(2048);
 BEGIN
   -- give up if nothing to be done
   IF subReqIds.COUNT = 0 THEN RETURN; END IF;
@@ -895,10 +901,12 @@ BEGIN
        WHERE id = srId AND status = dconst.SUBREQUEST_READY;
       -- Call the relevant cleanup procedure for the transfer, procedures that
       -- would have been called if the transfer failed on the remote execution host.
+      errNo := errnos(i);
+      errMsg := errmsgs(i);
       IF rType = 40 THEN      -- StagePutRequest
-       putEnded(srId, 0, 0, '', '', errnos(i), errmsgs(i));
+       putEnded(srId, 0, 0, '', '', errNo, errMsg);
       ELSE                    -- StageGetRequest
-       getEnded(srId, errnos(i), errmsgs(i));
+       getEnded(srId, errNo, errMsg);
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       BEGIN
@@ -926,6 +934,8 @@ AS
   srId  NUMBER;
   dcId  NUMBER;
   rType NUMBER;
+  errNo INTEGER;
+  errMsg VARCHAR2(2048);
 BEGIN
   FOR i IN subReqId.FIRST .. subReqId.LAST LOOP
     BEGIN
@@ -937,10 +947,12 @@ BEGIN
          AND status = dconst.SUBREQUEST_READY;
       -- Call the relevant cleanup procedure for the transfer, procedures that
       -- would have been called if the transfer failed on the remote execution host.
+      errNo := errnos(i);
+      errMsg := errmsgs(i);
       IF rType = 40 THEN      -- StagePutRequest
-        putEnded(srId, 0, 0, '', '', errnos(i), errmsgs(i));
+        putEnded(srId, 0, 0, '', '', errNo, errMsg);
       ELSE                    -- StageGetRequest
-        getEnded(srId, errnos(i), errmsgs(i));
+        getEnded(srId, errNo, errMsg);
       END IF;
     EXCEPTION WHEN NO_DATA_FOUND THEN
       BEGIN

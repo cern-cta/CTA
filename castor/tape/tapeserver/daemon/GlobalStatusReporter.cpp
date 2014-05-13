@@ -168,7 +168,7 @@ GlobalStatusReporter::Report::Report(const std::string &_server,const std::strin
     void GlobalStatusReporter::ReportTapeMountedForRead::
     execute(GlobalStatusReporter& parent){
       throw castor::tape::Exception("TODO ReportTapeMountedForRead::execute");
-      parent.m_tapeserverProxy.tapeMountedForRead(vid);
+      parent.m_tapeserverProxy.tapeMountedForRead(unitName,vid);
       parent.m_vdqmProxy.tapeMounted(server,unitName,dgn,vid,sessionPid);
     }
     //------------------------------------------------------------------------------
@@ -186,7 +186,7 @@ GlobalStatusReporter::Report::Report(const std::string &_server,const std::strin
     void GlobalStatusReporter::ReportTapeUnmounted::
     execute(GlobalStatusReporter& parent){
       throw castor::tape::Exception("TODO ReportTapeUnmounted::execute");
-      parent.m_tapeserverProxy.tapeUnmounted(vid);
+      parent.m_tapeserverProxy.tapeUnmounted(unitName,vid);
       parent.m_vdqmProxy.tapeUnmounted(server,unitName,dgn,vid);
     }
 }}}}

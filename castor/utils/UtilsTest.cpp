@@ -319,4 +319,74 @@ TEST_F(castor_utils, testCopyString) {
   ASSERT_EQ(0, strcmp(dst, src));
 }
 
+TEST_F(castor_utils, testCheckDgnSyntaxGoodDay) {
+  using namespace castor::utils;
+
+  std::ostringstream dgn;
+  for(int i=0; i<CA_MAXDGNLEN; i++) {
+    dgn << 'D';
+  }
+
+  ASSERT_NO_THROW(checkDgnSyntax(dgn.str().c_str()));
+}
+
+TEST_F(castor_utils, testCheckDgnSyntaxTooLong) {
+  using namespace castor::utils;
+
+  std::ostringstream dgn;
+  for(int i=0; i<=CA_MAXDGNLEN; i++) {
+    dgn << 'D';
+  }
+
+  ASSERT_THROW(checkDgnSyntax(dgn.str().c_str()),
+    castor::exception::InvalidArgument);
+}
+
+TEST_F(castor_utils, testCheckDgnSyntaxInvalidCharacter) {
+  using namespace castor::utils;
+
+  std::ostringstream dgn;
+  for(int i=0; i<CA_MAXDGNLEN; i++) {
+    dgn << ' '; // Spaces are not allowed
+  }
+
+  ASSERT_THROW(checkDgnSyntax(dgn.str().c_str()),
+    castor::exception::InvalidArgument);
+}
+
+TEST_F(castor_utils, testCheckVidSyntaxGoodDay) {
+  using namespace castor::utils;
+
+  std::ostringstream vid;
+  for(int i=0; i<CA_MAXVIDLEN; i++) {
+    vid << 'V';
+  }
+
+  ASSERT_NO_THROW(checkVidSyntax(vid.str().c_str()));
+}
+
+TEST_F(castor_utils, testCheckVidSyntaxTooLong) {
+  using namespace castor::utils;
+
+  std::ostringstream vid;
+  for(int i=0; i<=CA_MAXVIDLEN; i++) {
+    vid << 'V';
+  }
+
+  ASSERT_THROW(checkVidSyntax(vid.str().c_str()),
+    castor::exception::InvalidArgument);
+}
+
+TEST_F(castor_utils, testCheckVidSyntaxInvalidCharacter) {
+  using namespace castor::utils;
+
+  std::ostringstream vid;
+  for(int i=0; i<CA_MAXVIDLEN; i++) {
+    vid << ' '; // Spaces are not allowed
+  }
+
+  ASSERT_THROW(checkVidSyntax(vid.str().c_str()),
+    castor::exception::InvalidArgument);
+}
+
 } // namespace unitTests

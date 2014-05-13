@@ -21,7 +21,12 @@
  *****************************************************************************/
 
 #pragma once
+
+
+#include "castor/exception/Exception.hpp"
+
 #include <string>
+
 namespace castor {
 namespace legacymsg {
 
@@ -40,6 +45,24 @@ public:
    * TODO 
    */
   void tapeMountedForRead();
+
+  /**
+   * Notifies the vmgrd daemon that the specified tape has been mounted for read.
+   *
+   * @param vid The volume identifier of the mounted tape.
+   * @param
+   */
+  virtual void tapeMountedForRead(const std::string &vid)
+    throw (castor::exception::Exception) = 0;
+
+  /**
+   * Notifies the vmgrd daemon that the specified tape has been mounted for read.
+   *
+   * @param vid The volume identifier of the mounted tape.
+   * @param
+   */
+  virtual void tapeMountedForWrite(const std::string &vid)
+    throw (castor::exception::Exception) = 0;
 
 }; // class VmgrProxy
 

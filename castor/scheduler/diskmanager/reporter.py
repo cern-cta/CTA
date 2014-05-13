@@ -28,6 +28,7 @@
 import threading, socket, os, time
 import connectionpool
 import dlf
+import subprocess, json
 from diskmanagerdlf import msgs
 
 class StreamCount(object):
@@ -64,6 +65,7 @@ class ReporterThread(threading.Thread):
     maxFreeSpace = self.configuration.getValue('DiskManager', 'FSMaxFreeSpace', 0.05, float)
     minAllowedFreeSpace = self.configuration.getValue('DiskManager', 'FSMinAllowedFreeSpace', 0.02, float)
     mountPoints = set(self.configuration.getValue('DiskManager', 'MountPoints', '').split())
+    dataPools = set(self.configuration.getValue('DiskManager', 'DataPools', '').split())
     streamCount = self.runningTransfers.getStreamCount()
     reports = []
     for mountPoint in mountPoints:
@@ -91,6 +93,30 @@ class ReporterThread(threading.Thread):
         # no, then let's create the missing directories
         for i in range(100):
           os.mkdir(os.sep.join([mountPoint, '%02d' % i]))
+    # now handle dataPools if any
+    if dataPools:
+      # get numbers from ceph
+      jsonoutput = subprocess.Popen(['ceph', 'df', '-f', 'json'],
+                                    stdout=subprocess.PIPE).communicate()[0]
+      pyoutput = json.loads(jsonoutput)
+      usedSpace = dict([(entry['name'], entry['stats']['bytes_used'])
+                        for entry in pyoutput['pools']
+                        if entry['name'] in dataPools])
+      jsonoutput = subprocess.Popen(['ceph', 'osd', 'dump', '-f', 'json'],
+                                    stdout=subprocess.PIPE).communicate()[0]
+      pyoutput = json.loads(jsonoutput)
+      quotas = dict([(entry['pool_name'], entry['quota_max_bytes'])
+                     for entry in pyoutput['pools']
+                     if entry['pool_name'] in dataPools])
+      for dataPool in dataPools:
+          try:
+                totalSpace = quotas[dataPool]
+                freeSpace = totalSpace - usedSpace[dataPool]
+                # fill report
+                reports.append((diskServerName, dataPool, maxFreeSpace, minAllowedFreeSpace,
+                                totalSpace, freeSpace, 0, 0, 0, 0))
+          except KeyError:
+                raise Exception("No data found for datapool %s - May be missing quota" % dataPool)
     return tuple(reports)
 
   def run(self):

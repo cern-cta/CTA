@@ -70,6 +70,7 @@ try:
     # drop svcclasses
     if existingSvcClasses:
         stcur.execute('DELETE FROM DiskPool2SvcClass WHERE child IN (' + svcClassIds + ')')
+        stcur.execute('DELETE FROM DataPool2SvcClass WHERE child IN (' + svcClassIds + ')')
         stcur.execute('DELETE FROM SvcClass WHERE id IN (' + svcClassIds + ')')
         stcur.execute("DELETE FROM WhiteList WHERE svcClass IN ('" + "', '".join(svcClasses) + "')")
         stcur.execute("DELETE FROM BlackList WHERE svcClass IN ('" + "', '".join(svcClasses) + "')")

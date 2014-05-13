@@ -43,12 +43,31 @@ public:
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    */
-  VmgrProxyTcpIp(log::Logger &log, const std::string &vmgrHostName, const unsigned short vmgrPort, const int netTimeout) throw();
+  VmgrProxyTcpIp(log::Logger &log, const std::string &vmgrHostName,
+    const unsigned short vmgrPort, const int netTimeout) throw();
 
   /**
    * Destructor.
    */
   ~VmgrProxyTcpIp() throw();
+
+  /**
+   * Notifies the vmgrd daemon that the specified tape has been mounted for read.
+   *
+   * @param vid The volume identifier of the mounted tape.
+   * @param
+   */
+  void tapeMountedForRead(const std::string &vid)
+    throw (castor::exception::Exception);
+
+  /**
+   * Notifies the vmgrd daemon that the specified tape has been mounted for read.
+   *
+   * @param vid The volume identifier of the mounted tape.
+   * @param
+   */
+  void tapeMountedForWrite(const std::string &vid)
+    throw (castor::exception::Exception);
 
 private:
 

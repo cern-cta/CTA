@@ -26,6 +26,8 @@
 #include "castor/exception/BadAlloc.hpp"
 #include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
+#include "castor/legacymsg/CommonMarshal.hpp"
+#include "castor/legacymsg/TapeMarshal.hpp"
 #include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/MountSessionAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
@@ -38,7 +40,7 @@
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/utils/utils.hpp"
 #include "castor/common/CastorConfiguration.hpp"
-
+#include "h/Ctape.h"
 #include <algorithm>
 #include <limits.h>
 #include <memory>
@@ -348,7 +350,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHa
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
     ex.getMessage() <<
-      "Failed to create the event handler for accepting vdqm connections"
+      "Failed to create event handler for accepting vdqm connections"
       ": " << ba.what();
     throw ex;
   }
@@ -357,7 +359,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHa
 }
 
 //------------------------------------------------------------------------------
-// createAndRegisterVdqmAcceptHandler
+// createAndRegisterAdminAcceptHandler
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptHandler() throw(castor::exception::Exception) {
   castor::utils::SmartFd listenSock;
@@ -365,14 +367,16 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
     listenSock.reset(io::createListenerSock(TAPE_SERVER_ADMIN_LISTENING_PORT));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex(ne.code());
-    ex.getMessage() << "Failed to create socket to listen for admin command connections"
+    ex.getMessage() <<
+      "Failed to create socket to listen for admin command connections"
       ": " << ne.getMessage().str();
     throw ex;
   }
   {
     log::Param params[] = {
       log::Param("listeningPort", TAPE_SERVER_ADMIN_LISTENING_PORT)};
-    m_log(LOG_INFO, "Listening for connections from the admin commands", params);
+    m_log(LOG_INFO, "Listening for connections from the admin commands",
+      params);
   }
 
   std::auto_ptr<AdminAcceptHandler> adminAcceptHandler;
@@ -383,7 +387,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
     ex.getMessage() <<
-      "Failed to create the event handler for accepting admin connections"
+      "Failed to create event handler for accepting admin connections"
       ": " << ba.what();
     throw ex;
   }
@@ -392,33 +396,37 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
 }
 
 //------------------------------------------------------------------------------
-// createAndRegisterVdqmAcceptHandler
+// createAndRegisterMountSessionAcceptHandler
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterMountSessionAcceptHandler() throw(castor::exception::Exception) {
   castor::utils::SmartFd mountSessionListenSock;
   try {
-    mountSessionListenSock.reset(io::createListenerSock(TAPE_SERVER_MOUNTSESSION_LISTENING_PORT));
+    mountSessionListenSock.reset(
+      io::createLocalhostListenerSock(TAPE_SERVER_MOUNTSESSION_LISTENING_PORT));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex(ne.code());
-    ex.getMessage() << "Failed to create socket to listen for mount session connections"
+    ex.getMessage() <<
+      "Failed to create socket to listen for mount session connections"
       ": " << ne.getMessage().str();
     throw ex;
   }
   {
     log::Param params[] = {
       log::Param("listeningPort", TAPE_SERVER_MOUNTSESSION_LISTENING_PORT)};
-    m_log(LOG_INFO, "Listening for connections from the mount sessions", params);
+    m_log(LOG_INFO,
+      "Listening for connections from the mount sessions", params);
   }
 
   std::auto_ptr<MountSessionAcceptHandler> mountSessionAcceptHandler;
   try {
-    mountSessionAcceptHandler.reset(new MountSessionAcceptHandler(mountSessionListenSock.get(), m_reactor,
-      m_log, m_driveCatalogue, m_hostName));
+    mountSessionAcceptHandler.reset(new MountSessionAcceptHandler(
+      mountSessionListenSock.get(), m_reactor, m_log, m_driveCatalogue,
+      m_hostName));
     mountSessionListenSock.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
     ex.getMessage() <<
-      "Failed to create the event handler for accepting admin connections"
+      "Failed to create event handler for accepting mount-session connections"
       ": " << ba.what();
     throw ex;
   }
@@ -442,8 +450,31 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop()
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::TapeDaemon::handleEvents()
   throw(castor::exception::Exception) {
-  const int timeout = 100; // 100 milliseconds
-  m_reactor.handleEvents(timeout);
+  // With our current understanding we see no reason for an exception from the
+  // reactor to be used as a reason to stop the tapeserverd daemon.
+  //
+  // In the future, one or more specific exception types could be introduced
+  // with their own catch clauses that do in fact require the tapeserverd daemon
+  // to be stopped.
+  try {
+    const int timeout = 100; // 100 milliseconds
+    m_reactor.handleEvents(timeout);
+  } catch(castor::exception::Exception &ex) {
+    // Log exception and continue
+    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "Unexpected exception thrown when handling an I/O event",
+      params);
+  } catch(std::exception &se) {
+    // Log exception and continue
+    log::Param params[] = {log::Param("message", se.what())};
+    m_log(LOG_ERR, "Unexpected exception thrown when handling an I/O event",
+      params);
+  } catch(...) {
+    // Log exception and continue
+    m_log(LOG_ERR,
+      "Unexpected and unknown exception thrown when handling an I/O event");
+  }
+
   return handlePendingSignals();
 }
 
@@ -500,25 +531,39 @@ void castor::tape::tapeserver::daemon::TapeDaemon::reapZombies() throw() {
 //------------------------------------------------------------------------------
 // reapZombie
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::reapZombie(const pid_t sessionPid, const int waitpidStat) throw() {
-  logMountSessionProcessTerminated(sessionPid, waitpidStat);
+void castor::tape::tapeserver::daemon::TapeDaemon::reapZombie(
+  const pid_t sessionPid, const int waitpidStat) throw() {
+  logSessionProcessTerminated(sessionPid, waitpidStat);
 
-  log::Param params[] = {log::Param("sessionPid", sessionPid)};
+  std::list<log::Param> params;
+  params.push_back(log::Param("sessionPid", sessionPid));
 
-  if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
-    m_driveCatalogue.mountSessionSucceeded(sessionPid);
-    m_log(LOG_INFO, "Mount session succeeded", params);
-  } else {
-    m_driveCatalogue.mountSessionFailed(sessionPid);
-    setDriveDownInVdqm(sessionPid);
-    m_log(LOG_INFO, "Mount session failed", params);
+  DriveCatalogue::SessionType sessionType;
+  try {
+    sessionType = m_driveCatalogue.getSessionType(sessionPid);
+    params.push_back(log::Param("sessionType", DriveCatalogue::sessionType2Str(sessionType)));
+  } catch(castor::exception::Exception &ex) {
+    params.push_back(log::Param("message", ex.getMessage().str()));
+    m_log(LOG_ERR, "Failed to get the type of the reaped session", params);
+    return;
+  }
+
+  switch(sessionType) {
+  case DriveCatalogue::SESSION_TYPE_DATATRANSFER:
+    return postProcessReapedDataTransferSession(sessionPid, waitpidStat);
+  case DriveCatalogue::SESSION_TYPE_LABEL:
+    return postProcessReapedLabelSession(sessionPid, waitpidStat);
+  default:
+    m_log(LOG_ERR, "Failed to perform post processing of reaped process"
+      ": Unexpected session type", params);
+    return;
   }
 }
 
 //------------------------------------------------------------------------------
-// logMountSessionProcessTerminated
+// logSessionProcessTerminated
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::logMountSessionProcessTerminated(const pid_t sessionPid, const int waitpidStat) throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::logSessionProcessTerminated(const pid_t sessionPid, const int waitpidStat) throw() {
   std::list<log::Param> params;
   params.push_back(log::Param("sessionPid", sessionPid));
 
@@ -546,46 +591,148 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logMountSessionProcessTermina
     params.push_back(log::Param("WIFCONTINUED", "false"));
   }
 
-  m_log(LOG_INFO, "Mount-session child-process terminated", params);
+  m_log(LOG_INFO, "Session child-process terminated", params);
+}
+
+//------------------------------------------------------------------------------
+// postProcessReapedDataTransferSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedDataTransferSession(
+  const pid_t sessionPid, const int waitpidStat) throw() {
+  log::Param params[] = {log::Param("sessionPid", sessionPid)};
+
+  if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
+    m_driveCatalogue.sessionSucceeded(sessionPid);
+    m_log(LOG_INFO, "Mount session succeeded", params);
+    notifyVdqmTapeUnmounted(sessionPid);
+  } else {
+    m_driveCatalogue.sessionFailed(sessionPid);
+    m_log(LOG_INFO, "Mount session failed", params);
+    setDriveDownInVdqm(sessionPid);
+  }
+}
+
+//------------------------------------------------------------------------------
+// notifyVdqmTapeUnmounted
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::notifyVdqmTapeUnmounted(const pid_t sessionPid) throw() {
+  std::list<log::Param> params;
+  try {
+    params.push_back(log::Param("sessionPid", sessionPid));
+
+    const std::string unitName = m_driveCatalogue.getUnitName(sessionPid);
+    params.push_back(log::Param("unitName", unitName));
+
+    const std::string vid = m_driveCatalogue.getVid(unitName);
+    params.push_back(log::Param("vid", unitName));
+
+    const std::string dgn = m_driveCatalogue.getDgn(unitName);
+    params.push_back(log::Param("dgn", unitName));
+
+    std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
+    vdqm->tapeUnmounted(m_hostName, unitName, dgn, vid);
+    m_log(LOG_INFO, "Notified vdqm that a tape was unmounted", params);
+  } catch(castor::exception::Exception &ex) {
+    params.push_back(log::Param("message", ex.getMessage().str()));
+    m_log(LOG_ERR, "Failed to notify vdqm that a tape was unmounted", params);
+    return;
+  }
 }
 
 //------------------------------------------------------------------------------
 // setDriveDownInVdqm
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(const pid_t sessionPid) throw() {
-  std::string unitName;
+  std::list<log::Param> params;
   try {
-    unitName = m_driveCatalogue.getUnitName(sessionPid);
-  } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {
-      log::Param("sessionPid", sessionPid),
-      log::Param("message", ex.getMessage().str())};
-    m_log(LOG_ERR, "Failed to set tape-drive down in vdqm: Failed to get unit-name", params);
-    return;
-  }
+    params.push_back(log::Param("sessionPid", sessionPid));
 
-  std::string dgn;
-  try {
-    dgn = m_driveCatalogue.getDgn(unitName);
-  } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {
-      log::Param("sessionPid", sessionPid),
-      log::Param("unitName", unitName),
-      log::Param("message", ex.getMessage().str())};
-    m_log(LOG_ERR, "Failed to set tape-drive down in vdqm: Failed to get DGN", params);
-    return;
-  }
+    const std::string unitName = m_driveCatalogue.getUnitName(sessionPid);
+    params.push_back(log::Param("unitName", unitName));
 
-  try {
+    const std::string dgn = m_driveCatalogue.getDgn(unitName);
+    params.push_back(log::Param("dgn", unitName));
+
     std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
     vdqm->setDriveDown(m_hostName, unitName, dgn);
+    m_log(LOG_INFO, "Set tape-drive down in vdqm", params);
   } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {
-      log::Param("sessionPid", sessionPid),
-      log::Param("unitName", unitName),
-      log::Param("dgn", dgn),
-      log::Param("message", ex.getMessage().str())};
+    params.push_back(log::Param("message", ex.getMessage().str()));
     m_log(LOG_ERR, "Failed to set tape-drive down in vdqm", params);
+    return;
+  }
+}
+
+//------------------------------------------------------------------------------
+// postProcessReapedLabelSession 
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession(
+  const pid_t sessionPid, const int waitpidStat) throw() {
+  std::list<log::Param> params;
+  params.push_back(log::Param("sessionPid", sessionPid));
+
+  // Try to notify the client label-command of the end of the session and
+  // continue even in the event of failure
+  try {
+    notifyLabelCmdOfEndOfSession(sessionPid, waitpidStat);
+  } catch(castor::exception::Exception ex) {
+    std::list<log::Param> errorParams = params;
+    params.push_back(log::Param("message", ex.getMessage().str()));
+    m_log(LOG_ERR, "Failed to notify client label-command of end of session",
+      errorParams);
+  }
+
+  if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
+    m_driveCatalogue.sessionSucceeded(sessionPid);
+    m_log(LOG_INFO, "Label session succeeded", params);
+  } else {
+    m_driveCatalogue.sessionFailed(sessionPid);
+    m_log(LOG_INFO, "Label session failed", params);
+    setDriveDownInVdqm(sessionPid);
+  }
+}
+
+//-----------------------------------------------------------------------------
+// marshalTapeRcReplyMsg
+//-----------------------------------------------------------------------------
+size_t castor::tape::tapeserver::daemon::TapeDaemon::marshalTapeRcReplyMsg(char *const dst,
+  const size_t dstLen, const int rc)
+  throw(castor::exception::Exception) {
+  legacymsg::MessageHeader src;
+  src.magic = TPMAGIC;
+  src.reqType = TAPERC;
+  src.lenOrStatus = rc;  
+  return legacymsg::marshal(dst, dstLen, src);
+}
+
+//------------------------------------------------------------------------------
+// writeTapeRcReplyMsg
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::writeTapeRcReplyMsg(const int fd, const int rc) throw(castor::exception::Exception) {
+  char buf[REPBUFSZ];
+  const size_t len = marshalTapeRcReplyMsg(buf, sizeof(buf), rc);
+  const int timeout = 10; //seconds
+  try {
+    io::writeBytes(fd, timeout, len, buf); // TODO: put the 10 seconds of
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to write job reply message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// notifyLabelCmdOfEndOfSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::notifyLabelCmdOfEndOfSession(
+  const pid_t sessionPid, const int waitpidStat) throw(castor::exception::Exception) {
+  const int labelCmdConnection = m_driveCatalogue.getLabelCmdConnection(sessionPid);
+  
+  if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
+    writeTapeRcReplyMsg(labelCmdConnection, 0); // success
+  } else {
+    writeTapeRcReplyMsg(labelCmdConnection, 1); // failure
   }
 }
 
@@ -730,7 +877,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSessions() throw() {
 //------------------------------------------------------------------------------
 // forkLabelSession
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(const std::string &unitName) throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
+  const std::string &unitName) throw() {
   m_log.prepareForFork();
   const pid_t sessionPid = fork();
 
@@ -776,10 +924,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(const std::st
     const legacymsg::TapeLabelRqstMsgBody job = m_driveCatalogue.getLabelJob(unitName);
     std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
     castor::tape::System::realWrapper sWrapper;
-    
-    //TODO pass the rmc object to the labelsession and to the mounting and unmounting there
-    castor::tape::tapeserver::daemon::LabelSession labelsession(job, m_log, sWrapper, m_tpconfigLines, true);
-    
+    castor::tape::tapeserver::daemon::LabelSession labelsession(*(rmc.get()), job, m_log, sWrapper, m_tpconfigLines, true);
+    labelsession.execute();
     exit(0);
   } catch(std::exception &se) {
     log::Param params[] = {

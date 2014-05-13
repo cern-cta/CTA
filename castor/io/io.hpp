@@ -152,6 +152,27 @@ int createListenerSock(
   throw(castor::exception::Exception);
 
 /**
+ * Creates a listener socket with the specified port number that is bound to
+ * localhost, in other words the socket can only accept connections originating
+ * from the local host.
+ *
+ * This method creates the socket, binds it and marks it as a listener.  The
+ * listening port will accept connections on any of the hosts incomming
+ * interfaces.
+ *
+ * This method raises a castor::exception::InvalidArgument exception if one or
+ * more of its input parameters are invalid.
+ *
+ * This method raises a castor::exception::NoPortInRange exception if the
+ * specified port is not free.
+ *
+ * @param port The port number.
+ * @return     The socket descriptor.
+ */
+int createLocalhostListenerSock(const unsigned short port)
+  throw(castor::exception::Exception);
+
+/**
  * Accepts a connection on the specified listener socket and returns the
  * socket descriptor of the newly created and connected socket.
  *

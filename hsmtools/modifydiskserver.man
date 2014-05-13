@@ -11,6 +11,9 @@ modifydiskserver \- modifies existing disk servers in the stager catalog
 |
 .BI -d|--diskpool
 \<diskPoolName>
+|
+.BI -p|--pool
+\<dataPoolName>
 [
 .BI -m|--mountpoints
 \<mountPoint>[:...]
@@ -38,6 +41,9 @@ Allows to change the diskservers/filesystems state to the given value.
 .TP
 .BI \-d,\-\-diskpool\ <diskPoolName>
 Allows to move the filesystems given, or all filesystem of the given diskservers to a new diskPool.
+.TP
+.BI \-p,\-\-pool\ <dataPoolName>
+Allows to move the diskServers given to a new dataPool.
 .TP
 .BI \-m,\-\-mountpoints\ <mountPoint>[:...]
 If given, applies the changes to this set of mountpoints rather than to the diskservers.

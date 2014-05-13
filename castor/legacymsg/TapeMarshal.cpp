@@ -258,8 +258,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
     sizeof(int32_t) + // gid
     strlen(src.vid) + 1 + // vid
     strlen(src.drive) + 1 + // drive
-    strlen(src.dgn) + 1 + // dgn
-    strlen(src.density) + 1; // density
+    strlen(src.dgn) + 1; // dgn
 
   // Calculate the total length of the message (header + body)
   // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
@@ -286,7 +285,6 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
   io::marshalString(src.vid, p);
   io::marshalString(src.drive, p);
   io::marshalString(src.dgn, p);
-  io::marshalString(src.density, p);
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;
@@ -408,7 +406,6 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeLabelRq
   io::unmarshalString(src, srcLen, dst.vid);
   io::unmarshalString(src, srcLen, dst.drive);
   io::unmarshalString(src, srcLen, dst.dgn);
-  io::unmarshalString(src, srcLen, dst.density);
 }
 
 //-----------------------------------------------------------------------------

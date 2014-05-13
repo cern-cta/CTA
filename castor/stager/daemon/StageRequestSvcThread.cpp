@@ -47,7 +47,6 @@
 #include "Cnetdb.h"
 #include "Cpwd.h"
 #include "Cgrp.h"
-#include "stager_uuid.h"
 #include "Cuuid.h"
 #include "u64subr.h"
 #include "marshall.h"

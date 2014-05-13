@@ -253,12 +253,20 @@ protected:
   void reapZombie(const pid_t sessionPid, const int waitpidStat) throw();
 
   /**
-   * Logs the fact that the specified mount-session child-process has terminated.
+   * Logs the fact that the specified session child-process has terminated.
    *
-   * @param sessionPid The process ID of the mount-session child-process.
+   * @param sessionPid The process ID of the session child-process.
    * @param waitpidStat The status information given by a call to waitpid().
    */
-  void logMountSessionProcessTerminated(const pid_t sessionPid, const int waitpidStat) throw();
+  void logSessionProcessTerminated(const pid_t sessionPid, const int waitpidStat) throw();
+
+  /**
+   * Does the required post processing for the specified reaped session.
+   *
+   * @param sessionPid The process ID of the session child-process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void postProcessReapedDataTransferSession(const pid_t sessionPid, const int waitpidStat) throw();
 
   /**
    * Sets the state of the tape drive asscoiated with the specified
@@ -271,6 +279,54 @@ protected:
    * @param sessionPid The process ID of the mount-session child-process.
    */
   void setDriveDownInVdqm(const pid_t sessionPid) throw();
+  
+  /**
+   * Marshals the specified source tape rc reply message structure into the
+   * specified destination buffer.
+   *
+   * @param dst    The destination buffer.
+   * @param dstLen The length of the destination buffer.
+   * @param rc     The return code to reply.
+   * @return       The total length of the header.
+   */
+  size_t marshalTapeRcReplyMsg(char *const dst, const size_t dstLen,
+    const int rc) throw(castor::exception::Exception);
+  
+  /**
+   * Writes a job reply message to the specified connection.
+   *
+   * @param fd The file descriptor of the connection with the admin command.
+   * @param rc The return code to reply.
+   * 
+   */
+  void writeTapeRcReplyMsg(const int fd, const int rc)
+    throw(castor::exception::Exception);
+
+  /**
+   * Does the required post processing for the specified reaped session.
+   *
+   * @param sessionPid The process ID of the session child-process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void postProcessReapedLabelSession(const pid_t sessionPid, const int waitpidStat) throw();
+
+  /**
+   * Notifies the vdqm that the tape associated with the session child-process
+   * with the specified process ID has been unmounted.
+   *
+   * @param sessionPid The process ID of the session child-process.
+   */
+  void notifyVdqmTapeUnmounted(const pid_t sessionPid) throw();
+
+  /**
+   * Notifies the associated client label-command of the end of the label
+   * session.
+   *
+   * @param sessionPid The process ID of the session child-process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void notifyLabelCmdOfEndOfSession(const pid_t sessionPid, const int waitpidStat)
+    throw(castor::exception::Exception);
 
   /**
    * Forks a mount-session child-process for every tape drive entry in the

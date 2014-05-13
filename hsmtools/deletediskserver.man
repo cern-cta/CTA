@@ -12,8 +12,9 @@ deletediskserver \- deletes existing disk servers from the stager catalogue
 
 .SH DESCRIPTION
 .B deletediskserver
-deletes existing disk servers ad associated filesystems from the CASTOR stager catalog.
-It first checks that the diskservers are empty.
+deletes existing disk servers and associated filesystems from the CASTOR stager catalog.
+It first checks that the diskservers are empty or are diskservers attached to dataPools
+with no fileSystem.
 .LP
 .BI \-h,\ \-\-help
 Get usage information

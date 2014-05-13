@@ -46,14 +46,14 @@
 //------------------------------------------------------------------------------
 // createListenerSock
 //------------------------------------------------------------------------------
-int castor::io::createListenerSock(
-  const unsigned short port)
+int castor::io::createListenerSock(const unsigned short port)
   throw(castor::exception::Exception) {
   const unsigned short lowPort = port;
   const unsigned short highPort = port;
   unsigned short chosenPort = 0;
 
   struct in_addr networkAddress;
+  memset(&networkAddress, '\0', sizeof(networkAddress));
   networkAddress.s_addr = INADDR_ANY;
 
   return createListenerSock(networkAddress, lowPort, highPort, chosenPort);
@@ -69,6 +69,7 @@ int castor::io::createListenerSock(
   throw(castor::exception::Exception) {
 
   struct in_addr networkAddress;
+  memset(&networkAddress, '\0', sizeof(networkAddress));
   networkAddress.s_addr = INADDR_ANY;
 
   return createListenerSock(networkAddress, lowPort, highPort, chosenPort);
@@ -225,6 +226,28 @@ int castor::io::createListenerSock(
     ": highPort=" << highPort;
 
   throw ex;
+}
+
+//------------------------------------------------------------------------------
+// createLocalhostListenerSockBoundToLocalhost
+//------------------------------------------------------------------------------
+int castor::io::createLocalhostListenerSock(const unsigned short port)
+  throw(castor::exception::Exception) {
+  const unsigned short lowPort = port;
+  const unsigned short highPort = port;
+  unsigned short chosenPort = 0;
+
+  const char *addr = "127.0.0.1";
+  struct in_addr networkAddress;
+  const int rc = inet_pton(AF_INET, addr, &networkAddress);
+  if(0 >= rc) {
+    castor::exception::Exception ex(errno);
+    ex.getMessage() << "Failed to create listener socket:"
+      " Failed to convert string to network address: value=" << addr;
+    throw ex;
+  }
+
+  return createListenerSock(networkAddress, lowPort, highPort, chosenPort);
 }
 
 //------------------------------------------------------------------------------

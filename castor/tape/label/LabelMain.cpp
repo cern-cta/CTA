@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      alrm.h
+ *                 castor/tape/label/LabelTpMain.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,12 +18,20 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * function declarations for alrm
  *
- * @author Sebastien Ponce
+ * @author dkruse@cern.ch
  *****************************************************************************/
+ 
+#include "castor/tape/label/LabelCmd.hpp"
+#include "castor/legacymsg/TapeserverProxyTcpIp.hpp"
 
-#pragma once
 
-int rfio_alrm(int rcode, char *buf);
+//------------------------------------------------------------------------------
+// main
+//------------------------------------------------------------------------------
+int main(int argc, char **argv) {
 
+  castor::tape::label::LabelCmd command;
+  
+  return command.main(argc, argv);
+}

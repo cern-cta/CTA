@@ -42,13 +42,20 @@
 using namespace castor::tape;
 using namespace castor::log;
 
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::LabelSession::LabelSession(
+    legacymsg::RmcProxy &rmc,
     const legacymsg::TapeLabelRqstMsgBody& clientRequest, 
     castor::log::Logger& logger, System::virtualWrapper & sysWrapper,
     const utils::TpconfigLines & tpConfig, const bool force):     
-    m_request(clientRequest), m_logger(logger),
+    m_rmc(rmc), m_request(clientRequest), m_logger(logger),
     m_sysWrapper(sysWrapper), m_tpConfig(tpConfig), m_force(force) {}
 
+//------------------------------------------------------------------------------
+// execute
+//------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::execute() throw (castor::tape::Exception) {
   
   // 1) Prepare the logging environment
@@ -59,16 +66,21 @@ void castor::tape::tapeserver::daemon::LabelSession::execute() throw (castor::ta
   LogContext::ScopedParam sp01(lc, Param("uid", m_request.uid));
   LogContext::ScopedParam sp02(lc, Param("gid", m_request.gid));
   LogContext::ScopedParam sp03(lc, Param("vid", m_request.vid));
+  LogContext::ScopedParam sp04(lc, Param("drive", m_request.drive));
+  LogContext::ScopedParam sp05(lc, Param("dgn", m_request.dgn));
   
   executeLabel(lc);
 }
 
+//------------------------------------------------------------------------------
+// executeLabel
+//------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::executeLabel(LogContext & lc) {
   
   // Get hold of the drive and check it.
   utils::TpconfigLines::const_iterator configLine;
   for (configLine = m_tpConfig.begin(); configLine != m_tpConfig.end(); configLine++) {
-    if (configLine->unitName == m_request.drive && configLine->density == m_request.density) {
+    if (configLine->unitName == m_request.drive) {
       break;
     }
   }
@@ -80,6 +92,25 @@ void castor::tape::tapeserver::daemon::LabelSession::executeLabel(LogContext & l
     errMsg << "Drive unit not found in TPCONFIG" << lc;
     LogContext::ScopedParam sp12(lc, Param("errorMessage", errMsg.str()));
     LogContext::ScopedParam sp13(lc, Param("errorCode", SEINTERNAL));
+    lc.log(LOG_ERR, "End session with error");
+    return;
+  }
+  
+  // Let's mount the tape now
+  try {
+    m_rmc.mountTape(m_request.vid, configLine->librarySlot);
+    LogContext::ScopedParam sp01(lc, Param("m_request.vid", m_request.vid));
+    LogContext::ScopedParam sp02(lc, Param("configLine->librarySlot", configLine->librarySlot));
+    lc.log(LOG_INFO, "Tape mounted for labeling");
+  } catch (castor::exception::Exception & e) { // mount failed
+    LogContext::ScopedParam sp01(lc, Param("m_request.vid", m_request.vid));
+    LogContext::ScopedParam sp02(lc, Param("configLine->librarySlot", configLine->librarySlot));
+    LogContext::ScopedParam sp03(lc, Param("errorMessage", e.getMessageValue()));
+    lc.log(LOG_ERR, "Error mounting tape");
+    std::stringstream errMsg;
+    errMsg << "Error mounting tape" << lc;
+    LogContext::ScopedParam sp04(lc, Param("errorMessage", errMsg.str()));
+    LogContext::ScopedParam sp05(lc, Param("errorCode", SEINTERNAL));
     lc.log(LOG_ERR, "End session with error");
     return;
   }
@@ -149,12 +180,55 @@ void castor::tape::tapeserver::daemon::LabelSession::executeLabel(LogContext & l
     return;
   }
   
+  // check that drive is not write protected
+  if(drive.get()->isWriteProtected()) {
+    LogContext::ScopedParam sp01(lc, Param("m_request.drive", m_request.drive));
+    lc.log(LOG_ERR, "Failed to label the tape: drive is write protected");
+    return;
+  }
+  
+  // wait until drive is ready
+  while(!(drive.get()->isReady())) {
+    LogContext::ScopedParam sp01(lc, Param("m_request.drive", m_request.drive));
+    lc.log(LOG_INFO, "Drive not ready yet...");
+  }  
+  
   // We can now start labeling
   std::auto_ptr<castor::tape::tapeFile::LabelSession> ls;
   try {
-    ls.reset(new castor::tape::tapeFile::LabelSession(*drive, m_request.vid, m_force));
+    ls.reset(new castor::tape::tapeFile::LabelSession(*(drive.get()), m_request.vid, m_force));
+    LogContext::ScopedParam sp01(lc, Param("m_request.vid", m_request.vid));
+    LogContext::ScopedParam sp02(lc, Param("m_force", m_force));
     lc.log(LOG_INFO, "Tape label session session successfully completed");
-  } catch (castor::exception::Exception & ex) {
+  } catch (castor::exception::Exception & ex) {// labeling failed
+    LogContext::ScopedParam sp01(lc, Param("m_request.vid", m_request.vid));
+    LogContext::ScopedParam sp02(lc, Param("m_force", m_force));
+    LogContext::ScopedParam sp03(lc, Param("errorMessage", ex.getMessageValue()));
     lc.log(LOG_ERR, "Failed tape label session");
+    std::stringstream errMsg;
+    errMsg << "Error labeling tape" << lc;
+    LogContext::ScopedParam sp04(lc, Param("errorMessage", errMsg.str()));
+    LogContext::ScopedParam sp05(lc, Param("errorCode", SEINTERNAL));
+    lc.log(LOG_ERR, "End session with error");
   }
+
+  // We are done: unmount the tape now
+  try {
+    m_rmc.unmountTape(m_request.vid, configLine->librarySlot);
+    LogContext::ScopedParam sp01(lc, Param("m_request.vid", m_request.vid));
+    LogContext::ScopedParam sp02(lc, Param("configLine->librarySlot", configLine->librarySlot));
+    lc.log(LOG_INFO, "Tape unmounted after labeling");
+  } catch (castor::exception::Exception & e) { // unmount failed
+    LogContext::ScopedParam sp01(lc, Param("m_request.vid", m_request.vid));
+    LogContext::ScopedParam sp02(lc, Param("configLine->librarySlot", configLine->librarySlot));
+    LogContext::ScopedParam sp03(lc, Param("errorMessage", e.getMessageValue()));
+    lc.log(LOG_ERR, "Error unmounting tape");
+    std::stringstream errMsg;
+    errMsg << "Error unmounting tape" << lc;
+    LogContext::ScopedParam sp04(lc, Param("errorMessage", errMsg.str()));
+    LogContext::ScopedParam sp05(lc, Param("errorCode", SEINTERNAL));
+    lc.log(LOG_ERR, "End session with error");
+    return;
+  }
+  
 }

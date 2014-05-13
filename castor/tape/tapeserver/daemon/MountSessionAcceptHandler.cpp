@@ -43,6 +43,8 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <stdio.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -84,9 +86,9 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::fillPollFd(
 }
 
 //-----------------------------------------------------------------------------
-// marshalTapeConfigReplyMsg
+// marshalRcReplyMsg
 //-----------------------------------------------------------------------------
-size_t castor::tape::tapeserver::daemon::MountSessionAcceptHandler::marshalSetVidReplyMsg(char *const dst, const size_t dstLen,
+size_t castor::tape::tapeserver::daemon::MountSessionAcceptHandler::marshalRcReplyMsg(char *const dst, const size_t dstLen,
     const int rc)
   throw(castor::exception::Exception) {
   legacymsg::MessageHeader src;
@@ -97,16 +99,16 @@ size_t castor::tape::tapeserver::daemon::MountSessionAcceptHandler::marshalSetVi
 }
 
 //------------------------------------------------------------------------------
-// writeTapeConfigReplyMsg
+// writeRcReplyMsg
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::writeSetVidReplyMsg(const int fd, const int rc) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::writeRcReplyMsg(const int fd, const int rc) throw(castor::exception::Exception) {
   char buf[REPBUFSZ];
-  const size_t len = marshalSetVidReplyMsg(buf, sizeof(buf), rc);
+  const size_t len = marshalRcReplyMsg(buf, sizeof(buf), rc);
   try {
     io::writeBytes(fd, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
-    ex.getMessage() << "Failed to write \"set vid\" job reply message: " <<
+    ex.getMessage() << "Failed to write job reply message: " <<
       ne.getMessage().str();
     throw ex;
   }
@@ -132,15 +134,23 @@ bool castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleEvent(
   // Accept the connection from the admin command
   castor::utils::SmartFd connection;
   try {
-    connection.reset(io::acceptConnection(fd.fd, 1));
+    const time_t acceptTimeout  = 1; // Timeout in seconds
+    connection.reset(io::acceptConnection(fd.fd, acceptTimeout));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Internal ex;
     ex.getMessage() << "Failed to accept a connection from the admin command"
       ": " << ne.getMessage().str();
     throw ex;
   }
+
+  // Read in the message header
+  const legacymsg::MessageHeader header = readJobMsgHeader(connection.get());
   
-  handleSetVidJob(connection.get());  
+  // handleIncomingJob() takes ownership of the client connection because in
+  // the good-day scenario it will pass the client connection to the catalogue
+  // of tape drives
+  handleIncomingJob(header, connection.release());
+
   return false; // Stay registered with the reactor
 }
 
@@ -161,8 +171,8 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::checkHandleEve
 //------------------------------------------------------------------------------
 // logTapeConfigJobReception
 //------------------------------------------------------------------------------
-void
-  castor::tape::tapeserver::daemon::MountSessionAcceptHandler::logSetVidJobReception(const legacymsg::TapeUpdateDriveRqstMsgBody &job) const throw() {
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::logSetVidJobReception(
+  const legacymsg::TapeUpdateDriveRqstMsgBody &job) const throw() {
   log::Param params[] = {
     log::Param("drive", job.drive),
     log::Param("vid", job.vid)};
@@ -170,23 +180,90 @@ void
 }
 
 //------------------------------------------------------------------------------
-// handleTapeConfigJob
+// logLabelJobReception
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleSetVidJob(const int connection) throw(castor::exception::Exception) {
-  
-  const legacymsg::MessageHeader header = readJobMsgHeader(connection);
-  
-  if(SETVID == header.reqType) {
-    const legacymsg::TapeUpdateDriveRqstMsgBody body = readSetVidMsgBody(connection, header.lenOrStatus-sizeof(header));
-    logSetVidJobReception(body);
-    m_driveCatalogue.updateVidAssignment(body.vid, body.drive);
-    writeSetVidReplyMsg(connection, 0); // 0 as return code for the tape config command, as in: "all went fine"
+void
+  castor::tape::tapeserver::daemon::MountSessionAcceptHandler::logLabelJobReception(const legacymsg::TapeLabelRqstMsgBody &job) const throw() {
+  log::Param params[] = {
+    log::Param("drive", job.drive),
+    log::Param("vid", job.vid),
+    log::Param("dgn", job.dgn),
+    log::Param("uid", job.uid),
+    log::Param("gid", job.gid)};
+  m_log(LOG_INFO, "Received message to label a tape", params);
+}
+
+//------------------------------------------------------------------------------
+// handleIncomingJob
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingJob(
+  const legacymsg::MessageHeader &header, const int clientConnection)
+  throw(castor::exception::Exception) {
+
+  switch(header.reqType) {
+  case SETVID:
+    // handleIncomingSetVidJob takes ownership of the client connection
+    handleIncomingSetVidJob(header, clientConnection);
+    break;
+  case TPLABEL:
+    // handleIncomingSetVidJob takes ownership of the client connection
+    handleIncomingLabelJob(header, clientConnection);
+    break;
+  default:
+    {
+      // Close the client connection because this method still owns the
+      // connection and has not been able to pass it on
+      close(clientConnection);
+
+      castor::exception::Internal ex;
+      ex.getMessage() << "Unknown request type: " << header.reqType << ". Expected: " << SETVID << "(SETVID)";
+      throw ex;
+    }
   }
-  else {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Unknown request type: " << header.reqType << ". Expected: " << SETVID << "(SETVID)";
-    throw ex;
-  }
+}
+
+//------------------------------------------------------------------------------
+// handleIncomingSetVidJob
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingSetVidJob(
+  const legacymsg::MessageHeader &header, const int clientConnection)
+  throw(castor::exception::Exception) {
+  castor::utils::SmartFd connection(clientConnection);
+
+  const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
+  const legacymsg::TapeUpdateDriveRqstMsgBody body = readSetVidMsgBody(connection.get(), bodyLen);
+  logSetVidJobReception(body);
+  m_driveCatalogue.updateVidAssignment(body.vid, body.drive);
+  // 0 as return code for the tape config command, as in: "all went fine"
+  writeRcReplyMsg(connection.get(), 0);
+
+  close(connection.release());
+}
+
+//------------------------------------------------------------------------------
+// handleIncomingLabelJob
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingLabelJob(
+  const legacymsg::MessageHeader &header, const int clientConnection)
+  throw(castor::exception::Exception) {
+  castor::utils::SmartFd connection(clientConnection);
+
+  const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
+  const legacymsg::TapeLabelRqstMsgBody body = readLabelRqstMsgBody(connection.get(), bodyLen);
+  logLabelJobReception(body);
+
+  // Try to inform the drive catalogue of the reception of the label job
+  //
+  // PLEASE NOTE that this method must keep ownership of the client connection
+  // whilst informing the drive catalogue of the reception of the label job.
+  // If the drive catalogue throws an exception whilst evaluating the drive
+  // state-change then the catalogue will NOT have closed the connection.
+  m_driveCatalogue.receivedLabelJob(body, connection.get());
+
+  // The drive catalogue will now remember the client connection, therefore it
+  // is now safe and necessary for this method to relinquish ownership of the
+  // connection
+  connection.release();
 }
 
 //------------------------------------------------------------------------------
@@ -220,7 +297,7 @@ castor::legacymsg::MessageHeader
 }
 
 //------------------------------------------------------------------------------
-// readTapeConfigMsgBody
+// readSetVidMsgBody
 //------------------------------------------------------------------------------
 castor::legacymsg::TapeUpdateDriveRqstMsgBody
   castor::tape::tapeserver::daemon::MountSessionAcceptHandler::readSetVidMsgBody(const int connection,
@@ -246,6 +323,39 @@ castor::legacymsg::TapeUpdateDriveRqstMsgBody
   }
 
   legacymsg::TapeUpdateDriveRqstMsgBody body;
+  const char *bufPtr = buf;
+  size_t bufLen = sizeof(buf);
+  legacymsg::unmarshal(bufPtr, bufLen, body);
+  return body;
+}
+
+//------------------------------------------------------------------------------
+// readLabelRqstMsgBody
+//------------------------------------------------------------------------------
+castor::legacymsg::TapeLabelRqstMsgBody
+  castor::tape::tapeserver::daemon::MountSessionAcceptHandler::readLabelRqstMsgBody(const int connection,
+    const uint32_t len)
+    throw(castor::exception::Exception) {
+  char buf[REQBUFSZ];
+
+  if(sizeof(buf) < len) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read body of job message"
+       ": Maximum body length exceeded"
+       ": max=" << sizeof(buf) << " actual=" << len;
+    throw ex;
+  }
+
+  try {
+    io::readBytes(connection, m_netTimeout, len, buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Internal ex;
+    ex.getMessage() << "Failed to read body of job message"
+      ": " << ne.getMessage().str();
+    throw ex;
+  }
+
+  legacymsg::TapeLabelRqstMsgBody body;
   const char *bufPtr = buf;
   size_t bufLen = sizeof(buf);
   legacymsg::unmarshal(bufPtr, bufLen, body);

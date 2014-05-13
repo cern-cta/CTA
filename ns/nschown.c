@@ -19,8 +19,7 @@
 #include "Cgetopt.h"
 #include "serrno.h"
 
-int hflag;
-int Rflag;
+int hflag = 0;
 int chowndir (char *dir,uid_t newuid,gid_t newgid);
 
 void usage(int status, char *name) {
@@ -41,8 +40,8 @@ int main(int argc, char **argv)
 {
   int c;
   char *dp;
+  int Rflag = 0;
   int errflg = 0;
-  int hflg = 0;
   char fullpath[CA_MAXPATHLEN+1];
   struct group *gr;
   int i;
@@ -54,7 +53,7 @@ int main(int argc, char **argv)
   struct Cns_filestat statbuf;
 
   Coptions_t longopts[] = {
-    { "help", NO_ARGUMENT, &hflg, 1  },
+    { "help", NO_ARGUMENT, &hflag, 1  },
     { NULL,   0,           NULL,  0  }
   };
 
@@ -75,7 +74,7 @@ int main(int argc, char **argv)
       break;
     }
   }
-  if (hflg) {
+  if (hflag) {
     usage (0, argv[0]);
   }
   if (errflg || Coptind >= argc - 1) {

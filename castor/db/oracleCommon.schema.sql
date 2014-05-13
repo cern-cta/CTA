@@ -130,6 +130,8 @@ INSERT INTO CastorConfig
 INSERT INTO CastorConfig
   VALUES ('Migration', 'SizeThreshold', '300000000', 'The threshold to consider a file "small" or "large" when routing it to tape');
 INSERT INTO CastorConfig
+  VALUES ('Migration', 'NbMigCandConsidered', '10000', 'The number of migration jobs considered in time order by each selection of the best files to migrate');
+INSERT INTO CastorConfig
   VALUES ('D2dCopy', 'MaxNbRetries', '2', 'The maximum number of retries for disk to disk copies before it is considered failed. Here 2 means we will do in total 3 attempts.');
 INSERT INTO CastorConfig
   VALUES ('DiskServer', 'HeartbeatTimeout', '180', 'The maximum amount of time in seconds that a diskserver can spend without sending any hearbeat before it is automatically set to offline.');
@@ -1139,7 +1141,11 @@ CREATE GLOBAL TEMPORARY TABLE SyncRunningTransfersHelper2
 
 /* For deleteDiskCopy */
 CREATE GLOBAL TEMPORARY TABLE DeleteDiskCopyHelper
-  (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY, fileId INTEGER, fStatus CHAR(1), rc INTEGER)
+  (dcId INTEGER CONSTRAINT PK_DDCHelper_dcId PRIMARY KEY,
+   fileId INTEGER,
+   fStatus CHAR(1),
+   msg VARCHAR2(2048),
+   rc INTEGER)
   ON COMMIT PRESERVE ROWS;
 CREATE INDEX I_DDCHelper_FileId ON DeleteDiskCopyHelper(fileId);
 

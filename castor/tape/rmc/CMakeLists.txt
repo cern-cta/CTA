@@ -40,13 +40,12 @@ if (${COMPILE_SERVER} STREQUAL "1")
   # Rules to build and install castor-tape-mount
   ##############################################################################
   set (MOUNT_SRC_FILES
-    DebugBuf.cpp
     Cmd.cpp
     MountCmd.cpp
     MountCmdLine.cpp
     MountMain.cpp)
   add_executable (castor-tape-mount ${MOUNT_SRC_FILES})
-  target_link_libraries (castor-tape-mount castorcommon castorrmc)
+  target_link_libraries (castor-tape-mount castorclient castorcommon castorrmc)
   #install (TARGETS castor-tape-mount DESTINATION ${CASTOR_DEST_LIB_DIR})
   #CastorInstallExeManPage(castor-tape-mount)
 
@@ -93,8 +92,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
       AcsDismountCmd.cpp
       AcsDismountCmdLine.cpp
       AcsDismountMain.cpp
-      Cmd.cpp
-      DebugBuf.cpp)
+      Cmd.cpp)
     add_executable (castor-tape-acs-dismount ${ACS_DISMOUNT_SRC_FILES})
     set_target_properties (castor-tape-acs-dismount PROPERTIES
       COMPILE_FLAGS -I/usr/include/CDK
@@ -121,8 +119,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
       AcsMountCmd.cpp
       AcsMountCmdLine.cpp
       AcsMountMain.cpp
-      Cmd.cpp
-      DebugBuf.cpp)
+      Cmd.cpp)
     add_executable (castor-tape-acs-mount ${ACS_MOUNT_SRC_FILES})
     set_target_properties (castor-tape-acs-mount PROPERTIES
       COMPILE_FLAGS -I/usr/include/CDK
@@ -149,8 +146,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
       AcsQueryVolumeCmd.cpp
       AcsQueryVolumeCmdLine.cpp
       AcsQueryVolumeMain.cpp
-      Cmd.cpp
-      DebugBuf.cpp)
+      Cmd.cpp)
     add_executable (castor-tape-acs-queryvolume ${ACS_QUERYVOLUME_SRC_FILES})
     target_link_libraries (castor-tape-acs-queryvolume
       castorclient

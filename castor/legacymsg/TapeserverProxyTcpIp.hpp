@@ -47,7 +47,8 @@ public:
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    */
-  TapeserverProxyTcpIp(log::Logger &log, const unsigned short tapeserverPort, const int netTimeout) throw();
+  TapeserverProxyTcpIp(log::Logger &log, const unsigned short tapeserverPort,
+    const int netTimeout) throw();
 
   /**
    * Destructor.
@@ -93,16 +94,39 @@ public:
     const std::string &vid)
     throw(castor::exception::Exception);
 
+  /**
+   * Notifies the tapeserverd daemon that the specified tape has been mounted.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
+   */
+  void tapeMountedForRead(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception);
+
+  /**
+   * Notifies the tapeserverd daemon that the specified tape has been mounted.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
+   */
+  void tapeMountedForWrite(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception);
   
   /**
-   * Interface TBD
+   * Notifies the tapeserverd daemon that the specified tape has been unmounted.
+   *
+   * @param unitName The unit name of the tape drive.
+   * @param vid The Volume ID of the tape to be mounted.
    */
-  virtual void tapeUnmounted(const std::string &vid);
-  
-  /**
-   * Interface TBD
-   */
-  virtual void tapeMountedForRead(const std::string &vid);
+ void tapeUnmounted(
+    const std::string &unitName,
+    const std::string &vid)
+    throw(castor::exception::Exception);
+
 private:
 
   /**

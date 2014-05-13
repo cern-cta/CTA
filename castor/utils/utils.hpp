@@ -166,6 +166,24 @@ template<typename T> void setBytes(T &object, const int c) throw() {
   memset(&object, c, sizeof(object));
 }
 
+/**
+ * Throws an InvalidArgument exception if the specified DGN is syntactically
+ * invalid.
+ *
+ * @param dgn The DGN to be checked.
+ */
+void checkDgnSyntax(const char *dgn)
+  throw(castor::exception::InvalidArgument);
+
+/**
+ * Throws an InvalidArgument exception if the specified VID is syntactically
+ * invalid.
+ *
+ * @param vid The VID to be checked.
+ */
+void checkVidSyntax(const char *vid)
+  throw(castor::exception::InvalidArgument);
+
 } // namespace utils
 } // namespace castor
 

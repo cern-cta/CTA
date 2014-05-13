@@ -258,3 +258,63 @@ void castor::utils::copyString(char *const dst, const size_t dstSize,
   strncpy(dst, src, dstSize);
   *(dst + dstSize -1) = '\0'; // Ensure destination string is null terminated
 }
+
+//------------------------------------------------------------------------------
+// Tape DGNs and VIDs have the same rules about what characters they may
+// contain.  This static and therefore hidden function implements this
+// commonality.
+//
+// This function throws an InvalidArgument exception if the specified identifier
+// string is syntactically incorrect.
+//  
+// The indentifier string is valid if each character is either a number (0-9),
+// a letter (a-z, A-Z) or an underscore.
+//    
+// @param idTypeName The type name of the identifier, usually "DGN" or "VID".
+// @param id The indentifier string to be checked.
+// @param maxSize The maximum length the identifier string is permitted to have.
+//------------------------------------------------------------------------------
+static void checkDgnVidSyntax(const char *const idTypeName, const char *id,
+  const size_t maxLen) throw(castor::exception::InvalidArgument) {
+
+  // Check the length of the identifier string
+  const size_t len   = strlen(id);
+  if(len > maxLen) {
+    castor::exception::InvalidArgument ex;
+    ex.getMessage() << idTypeName << " exceeds maximum length: actual=" << len
+      << " max=" << maxLen;
+    throw ex;
+  }
+
+  // Check each character of the identifier string
+  char         c     = '\0';
+  bool         valid = false;
+  for(size_t i=0; i<len; i++) {
+    c = id[i];
+    valid = (c >= '0' && c <='9') || (c >= 'a' && c <= 'z') ||
+      (c >= 'A' && c <= 'Z') || c == '_';
+
+    if(!valid) {
+      castor::exception::InvalidArgument ex;
+      ex.getMessage() << idTypeName << " contains the invalid character '" << c
+        << "'";
+      throw ex;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// checkDgnSyntax
+//------------------------------------------------------------------------------
+void castor::utils::checkDgnSyntax(const char *dgn)
+  throw(castor::exception::InvalidArgument) {
+  checkDgnVidSyntax("DGN", dgn, CA_MAXDGNLEN);
+}
+
+//------------------------------------------------------------------------------
+// checkVidSyntax
+//------------------------------------------------------------------------------
+void castor::utils::checkVidSyntax(const char *vid)
+  throw(castor::exception::InvalidArgument) {
+  checkDgnVidSyntax("VID", vid, CA_MAXVIDLEN);
+}

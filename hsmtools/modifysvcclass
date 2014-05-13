@@ -23,7 +23,7 @@
 
 '''allows to modify an existing service class in the castor stager'''
 
-import sys, re, os
+import sys
 import getopt
 import castor_tools
 
@@ -35,7 +35,7 @@ def usage(exitCode):
           '[--failjobswhennospace <[yes|no]>] [--disk1behavior <[yes|no]>] ' + \
           '[--forcedfileclass <forcedFileClass>] [--replicateonclose <[yes|no]>] ' + \
           '[--gcpolicy <gcPolicyName>] ' + \
-          '[--adddiskpools <diskPoolName>:[...]] [--removediskpools <diskPoolName>:[...]] <svcClassName>'
+          '[--addpools <poolName>:[...]] [--removepools <poolName>:[...]] <svcClassName>'
     sys.exit(exitCode)
 
 # first parse the options
@@ -44,7 +44,7 @@ try:
                                   ['help', 'verbose', 'defaultfilesize=', 'maxreplicanb=',
                                    'failjobswhennospace=', 'disk1behavior=', 'forcedfileclass=',
                                    'replicateonclose=', 'gcpolicy=',
-                                   'adddiskpools=', 'removediskpools='])
+                                   'addpools=', 'removepools='])
 except Exception, e:
     print e
     usage(1)
@@ -57,8 +57,8 @@ forcedfileclass = None
 forcedfileclassset = False
 replicateonclose = None
 gcpolicy = None
-adddiskpools = None
-removediskpools = None
+addpools = None
+removepools = None
 try:
     for f, v in options:
         if f == '-h' or f == '--help':
@@ -80,10 +80,10 @@ try:
             replicateonclose = castor_tools.parseBool('replicateonclose', v)
         elif f == '--gcpolicy':
             gcpolicy = v
-        elif f == '--adddiskpools':
-            adddiskpools = set(v.split(':'))
-        elif f == '--removediskpools':
-            removediskpools = set(v.split(':'))
+        elif f == '--addpools':
+            addpools = set(v.split(':'))
+        elif f == '--removepools':
+            removepools = set(v.split(':'))
         else:
             print "unknown option : " + f
             usage(1)
@@ -104,7 +104,7 @@ else:
 # check we have something to do
 if defaultfilesize == None and maxreplicanb == None and failjobswhennospace == None and \
    disk1behavior == None and forcedfileclass == None and replicateonclose == None and gcpolicy == None and \
-   adddiskpools == None and removediskpools == None:
+   addpools == None and removepools == None:
     print 'Nothing to modify. Did you forget some argument ?'
     usage(1)
 
@@ -118,6 +118,7 @@ try:
     if len(rows) == 0:
         print 'SvcClass %s does not exist in the stager DB' % svcclassname
         print 'Please use entersvcclass if you would like to create it'
+        print 'Giving up'
         sys.exit(1)
     svcClassId = rows[0][0]
     # deal with standard columns
@@ -142,70 +143,135 @@ try:
         rows = stcur.fetchall()
         if len(rows) == 0:
             print 'GcPolicy %s does not exist in the stager DB' % gcpolicy
+            print 'Giving up'
             sys.exit(1)
         # update svcclass
         stcur.execute('UPDATE SvcClass SET gcpolicy=:value WHERE id = :svcClassId',
                       value=gcpolicy, svcClassId=svcClassId)
-    # Deal with adddiskpools
-    if adddiskpools != None:
+    # Deal with addpools
+    if addpools != None:
         # check existence, and get ids
-        stcur.execute("SELECT name, id FROM DiskPool WHERE name IN ('" + "', '".join(adddiskpools) + "')")
+        stcur.execute("SELECT name, id FROM DiskPool WHERE name IN ('" + "', '".join(addpools) + "')")
         rows = stcur.fetchall()
         existingdiskpools = set([row[0] for row in rows])
-        nonexistingdiskpools = adddiskpools - existingdiskpools
-        if nonexistingdiskpools:
-            print 'Invalid or non existent diskpool(s) given : %s' % (', '.join(nonexistingdiskpools))
-            sys.exit(1)
-        adddiskpools = dict([(dpId, dpName) for dpName, dpId in rows])
-        # check that they are not yet linked to the service class
-        stcur.execute("SELECT parent FROM DiskPool2SvcClass WHERE parent IN (" + \
-                      ', '.join([str(k) for k in adddiskpools.keys()]) + ") AND child=:scId", scId=svcClassId)
+        addDiskPoolIds = dict([(dpId, dpName) for dpName, dpId in rows])
+        stcur.execute("SELECT name, id FROM DataPool WHERE name IN ('" + "', '".join(addpools) + "')")
         rows = stcur.fetchall()
-        if len(rows) > 0:
-            print 'The following diskpool(s) is(are) already linked to %s service class : %s' % \
-                  (svcclassname, ', '.join([adddiskpools[dpId] for dpId, in rows]))
+        existingdatapools = set([row[0] for row in rows])
+        addDataPoolIds = dict([(dpId, dpName) for dpName, dpId in rows])
+        nonexistingpools = addpools - existingdiskpools - existingdatapools
+        if nonexistingpools:
+            print 'Invalid or non existent pool(s) given : %s' % (', '.join(nonexistingpools))
+            print 'Giving up'
             sys.exit(1)
-        # add diskpools
+        # check that disk pools are not yet linked to the service class
+        if addDiskPoolIds:
+            stcur.execute("SELECT parent FROM DiskPool2SvcClass WHERE parent IN (" + \
+                          ', '.join([str(k) for k in addDiskPoolIds.keys()]) + ") AND child=:scId", scId=svcClassId)
+            rows = stcur.fetchall()
+            if len(rows) > 0:
+                print 'The following diskpool(s) is(are) already linked to %s service class : %s' % \
+                  (svcclassname, ', '.join([addDiskPoolIds[dpId] for dpId, in rows]))
+                print 'Giving up'
+                sys.exit(1)
+        # check that data pools are not yet linked to the service class
+        if addDataPoolIds:
+            stcur.execute("SELECT parent FROM DataPool2SvcClass WHERE parent IN (" + \
+                          ', '.join([str(k) for k in addDataPoolIds.keys()]) + ") AND child=:scId", scId=svcClassId)
+            rows = stcur.fetchall()
+            if len(rows) > 0:
+                print 'The following datapool(s) is(are) already linked to %s service class : %s' % \
+                  (svcclassname, ', '.join([addDataPoolIds[dpId] for dpId, in rows]))
+                print 'Giving up'
+                sys.exit(1)
+        # Oracle needs at least one element...
+        if not addDiskPoolIds:
+            addDiskPoolIds = {-1:-1}
+        if not addDataPoolIds:
+            addDataPoolIds = {-1:-1}
+        # add pools
         sql = '''
         DECLARE
           diskPoolIds castor."cnumList" := :diskPoolIds;
+          dataPoolIds castor."cnumList" := :dataPoolIds;
         BEGIN
-          FORALL i IN diskPoolIds.FIRST .. diskPoolIds.LAST
-            INSERT INTO DiskPool2SvcClass (parent, child) VALUES (diskPoolIds(i), :scId);
+          IF diskPoolIds.COUNT != 1 OR diskPoolIds(1) != -1 THEN
+            FORALL i IN diskPoolIds.FIRST .. diskPoolIds.LAST
+              INSERT INTO DiskPool2SvcClass (parent, child) VALUES (diskPoolIds(i), :scId);
+          END IF;
+          IF dataPoolIds.COUNT != 1 OR dataPoolIds(1) != -1 THEN
+            FORALL i IN dataPoolIds.FIRST .. dataPoolIds.LAST
+              INSERT INTO DataPool2SvcClass (parent, child) VALUES (dataPoolIds(i), :scId);
+          END IF;
         END;'''
-        stcur.execute(sql, diskPoolIds=adddiskpools.keys(), scId=svcClassId)
-    # Deal with removediskpools
-    if removediskpools != None:
+        stcur.execute(sql, diskPoolIds=addDiskPoolIds.keys(),
+                      dataPoolIds=addDataPoolIds.keys(), scId=svcClassId)
+    # Deal with removepools
+    if removepools != None:
         # check existence, and get ids
-        stcur.execute("SELECT name, id FROM DiskPool WHERE name IN ('" + "', '".join(removediskpools) + "')")
+        stcur.execute("SELECT name, id FROM DiskPool WHERE name IN ('" + "', '".join(removepools) + "')")
         rows = stcur.fetchall()
         existingdiskpools = set([row[0] for row in rows])
-        nonexistingdiskpools = removediskpools - existingdiskpools
-        if nonexistingdiskpools:
-            print 'Invalid or non existent diskpool(s) given : %s' % (', '.join(nonexistingdiskpools))
-            sys.exit(1)
-        removediskpools = dict([(dpId, dpName) for dpName, dpId in rows])
-        # check that they are linked to the service class
-        stcur.execute("SELECT parent FROM DiskPool2SvcClass WHERE parent IN (" + \
-                      ', '.join([str(k) for k in removediskpools.keys()]) + ") AND child=:scId",
-                      scId=svcClassId)
+        removeDiskPoolIds = dict([(dpId, dpName) for dpName, dpId in rows])
+        stcur.execute("SELECT name, id FROM DataPool WHERE name IN ('" + "', '".join(removepools) + "')")
         rows = stcur.fetchall()
-        linkeddiskpools = set([row[0] for row in rows])
-        nonlinkeddiskpools = set(removediskpools.keys()) - linkeddiskpools
-        if nonlinkeddiskpools:
-            print 'The following diskpool(s) is(are) not linked to %s service class : %s' % \
-                  (svcclassname, ', '.join([removediskpools[dpId] for dpId in nonlinkeddiskpools]))
-            print 'Thus they can not be unlinked'
+        existingdatapools = set([row[0] for row in rows])
+        removeDataPoolIds = dict([(dpId, dpName) for dpName, dpId in rows])
+        nonexistingpools = removepools - existingdiskpools - existingdatapools
+        if nonexistingpools:
+            print 'Invalid or non existent pool(s) given : %s' % (', '.join(nonexistingpools))
+            print 'Giving up'
             sys.exit(1)
-        # remove diskpools
+        # check that disk pools are linked to the service class
+        if removeDiskPoolIds:
+            stcur.execute("SELECT parent FROM DiskPool2SvcClass WHERE parent IN (" + \
+                          ', '.join([str(k) for k in removeDiskPoolIds.keys()]) + ") AND child=:scId",
+                          scId=svcClassId)
+            rows = stcur.fetchall()
+            linkeddiskpools = set([row[0] for row in rows])
+            nonlinkeddiskpools = set(removeDiskPoolIds.keys()) - linkeddiskpools
+            if nonlinkeddiskpools:
+                print 'The following diskpool(s) is(are) not linked to %s service class : %s' % \
+                      (svcclassname, ', '.join([removeDiskPoolIds[dpId] for dpId in nonlinkeddiskpools]))
+                print 'Thus they can not be unlinked'
+                print 'Giving up'
+                sys.exit(1)
+        # check that data pools are linked to the service class
+        if removeDataPoolIds:
+            stcur.execute("SELECT parent FROM DataPool2SvcClass WHERE parent IN (" + \
+                          ', '.join([str(k) for k in removeDataPoolIds.keys()]) + ") AND child=:scId",
+                          scId=svcClassId)
+            rows = stcur.fetchall()
+            linkeddatapools = set([row[0] for row in rows])
+            nonlinkeddatapools = set(removeDataPoolIds.keys()) - linkeddatapools
+            if nonlinkeddatapools:
+                print 'The following datapool(s) is(are) not linked to %s service class : %s' % \
+                      (svcclassname, ', '.join([removeDataPoolIds[dpId] for dpId in nonlinkeddatapools]))
+                print 'Thus they can not be unlinked'
+                print 'Giving up'
+                sys.exit(1)
+        # Oracle needs at least one element...
+        if not removeDiskPoolIds:
+            removeDiskPoolIds = {-1:-1}
+        if not removeDataPoolIds:
+            removeDataPoolIds = {-1:-1}
+        # remove pools
         sql = '''
         DECLARE
           diskPoolIds castor."cnumList" := :diskPoolIds;
+          dataPoolIds castor."cnumList" := :dataPoolIds;
         BEGIN
-          FORALL i IN diskPoolIds.FIRST .. diskPoolIds.LAST
-            DELETE FROM DiskPool2SvcClass WHERE parent=diskPoolIds(i) AND child=:scId;
+          IF diskPoolIds.COUNT != 1 OR diskPoolIds(1) != -1 THEN
+            FORALL i IN diskPoolIds.FIRST .. diskPoolIds.LAST
+              DELETE FROM DiskPool2SvcClass WHERE parent=diskPoolIds(i) AND child=:scId;
+          END IF;
+          IF dataPoolIds.COUNT != 1 OR dataPoolIds(1) != -1 THEN
+            FORALL i IN dataPoolIds.FIRST .. dataPoolIds.LAST
+              DELETE FROM DataPool2SvcClass WHERE parent=dataPoolIds(i) AND child=:scId;
+          END IF;
         END;'''
-        stcur.execute(sql, diskPoolIds=removediskpools.keys(), scId=svcClassId)
+        stcur.execute(sql, diskPoolIds=removeDiskPoolIds.keys(),
+                      dataPoolIds=removeDataPoolIds.keys(), scId=svcClassId)
     # check that the forced file class does exist, and retrieve its id
     if forcedfileclassset:
         if forcedfileclass:

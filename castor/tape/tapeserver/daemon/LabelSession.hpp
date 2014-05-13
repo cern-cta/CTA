@@ -26,6 +26,7 @@
 
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/log/Logger.hpp"
+#include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -50,7 +51,7 @@ namespace daemon {
     /**
      *  Constructor 
      */
-    LabelSession(const legacymsg::TapeLabelRqstMsgBody & clientRequest, 
+    LabelSession(legacymsg::RmcProxy &rmc, const legacymsg::TapeLabelRqstMsgBody & clientRequest, 
             castor::log::Logger & logger, System::virtualWrapper & sysWrapper,
             const utils::TpconfigLines & tpConfig, const bool force);
     
@@ -60,6 +61,11 @@ namespace daemon {
     void execute() throw (Exception);
     
   private:
+    
+    /**
+     * The object representing the rmcd daemon.
+     */
+    legacymsg::RmcProxy &m_rmc;
     
     /**
      * The label request message body

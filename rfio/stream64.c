@@ -170,7 +170,7 @@ int rfio_open64_ext_v3(char    * filepath,
       rfio_errno = 0;
       return(rfio_HsmIf_open(filename,flags,mode,1,1));
     }
-    status= open64(filename, flags, mode) ;
+    status= open(filename, flags, mode) ;
     END_TRACE() ;
     rfio_errno = 0;
     return status ;

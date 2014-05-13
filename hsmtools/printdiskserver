@@ -30,7 +30,7 @@ import castor_tools
 # usage function
 def usage(exitCode):
     '''prints usage'''
-    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--filesystems] <diskpool>|<diskServerName> [...]]'
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-f|--filesystems] <diskpool>|<datapool>|<diskServerName> [...]]'
     sys.exit(exitCode)
 
 # first parse the options
@@ -58,46 +58,36 @@ targets = None
 if len(args) != 0:
     targets = set(args)
 
-try:
-    # connect to stager and prepare statements
-    stconn = castor_tools.connectToStager()
-    stcur = stconn.cursor()
-    if targets:
-        # check diskpools
-        sqlStatement = 'SELECT id, name FROM DiskPool WHERE name = :dpname'
-        diskPoolIds = []
-        diskPools = set([])
-        for target in targets:
-            stcur.execute(sqlStatement, dpname=target)
-            row = stcur.fetchone()
-            if row:
-                diskPoolIds.append(row[0])
-                diskPools.add(row[1])
-        # check diskservers
-        sqlStatement = 'SELECT id, name FROM DiskServer WHERE name = :dsname'
-        diskServerIds = []
-        diskServers = set([])
-        for target in targets:
-            stcur.execute(sqlStatement, dsname=target)
-            row = stcur.fetchone()
-            if row:
-                diskServerIds.append(row[0])
-                diskServers.add(row[1])
-        unknownTargets = targets - diskPools - diskServers
-        if not diskPools and not diskServers:
-            print 'None of the provided diskpools/diskservers could be found. Giving up'
-            usage(1)
-    # build statement
+def sqlRowToPrintRow(sqlrow, displayFS):
+    dsname, fsmountpoint, nbmountpoints, status, hwOnline, free, \
+      minfree, maxfree, size, nbrd, nbwr, nbmigr, nbrec, diskpools, dsid, summary = sqlrow
+    if displayFS:
+        return (dsname or '', fsmountpoint or '',
+                status or '', hwOnline or '',
+                castor_tools.nbToDataAmount(free),
+                minfree, maxfree, castor_tools.printPercentage(free or 0, size or 0),
+                castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec,
+                ','.join(diskpools), dsid or '')
+    else:
+        return (dsname or '', nbmountpoints,
+                status or '', hwOnline or '',
+                castor_tools.nbToDataAmount(free),
+                castor_tools.printPercentage(free or 0, size or 0),
+                castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec, ','.join(diskpools),
+                dsid or '')
+
+def getFSRelatedItems(diskServerIds, diskPoolIds):
+    # build statement for filesystem based pools/diskservers
     sqlStatement = '''
     SELECT CASE WHEN GROUPING(DiskServer.name) = 1
-                THEN 'TOTAL NB : '||TO_CHAR(COUNT(UNIQUE DiskServer.name))
+                THEN TO_CHAR(COUNT(UNIQUE DiskServer.name))
                 ELSE CASE WHEN GROUPING(FileSystem.mountPoint) = 1
                           THEN DiskServer.name
                           ELSE ''
                      END
                 END name,
            CASE WHEN GROUPING(DiskServer.name) = 1
-                THEN 'TOTAL NB : '||TO_CHAR(COUNT(FileSystem.mountPoint))
+                THEN TO_CHAR(COUNT(FileSystem.mountPoint))
                 ELSE FileSystem.mountPoint
                 END mountPoint,
            COUNT(FileSystem.mountPoint),
@@ -125,8 +115,10 @@ try:
            GROUPING(DiskServer.name)
       FROM DiskServer, FileSystem, DiskPool
      WHERE DiskServer.id = FileSystem.diskServer(+)
-       AND FileSystem.diskPool = DiskPool.id (+)'''
-    if targets:
+       AND FileSystem.diskPool = DiskPool.id (+)
+       AND (DiskServer.dataPool IS NULL OR
+            EXISTS (SELECT 1 FROM FileSystem WHERE diskserver=DiskServer.id))'''
+    if diskServerIds or diskPoolIds:
         sqlStatement += 'AND ('
         if diskServerIds:
             sqlStatement += 'DiskServer.id IN (' + ', '.join([str(x) for x in diskServerIds]) + ')'
@@ -139,39 +131,130 @@ try:
      GROUP BY GROUPING SETS ((DiskServer.name, FileSystem.mountPoint),
            (DiskServer.name), ())
      ORDER BY DiskServer.name, grouping(DiskServer.name), grouping(FileSystem.mountPoint) DESC'''
+    stcur.execute(sqlStatement)    
+    # get results
+    return stcur.fetchall()
+
+def getDataPoolRelatedData(diskServerIds, dataPoolIds):
+    # build statement for diskServers in dataPools
+    sqlStatement = '''
+    SELECT DiskServer.name,
+           getObjStatusName('DiskServer','status', Diskserver.status) status,
+           CASE WHEN Diskserver.hwOnline = 1 THEN 'YES' ELSE 'NO' END hwOnline,
+           CAST(COLLECT(DISTINCT DataPool.name) AS strListTable) AS names,
+           Diskserver.id
+      FROM DiskServer, DataPool
+     WHERE DiskServer.dataPool = DataPool.id'''
+    if diskServerIds or dataPoolIds:
+        sqlStatement += ' AND ('
+        if dataPoolIds:
+            sqlStatement += 'DiskServer.dataPool IN (' + \
+                            ', '.join([str(x) for x in dataPoolIds]) + ')'
+        if diskServerIds:
+            sqlStatement += 'DiskServer.id IN (' + \
+                            ', '.join([str(x) for x in diskServerIds]) + ')'
+        sqlStatement += ')'
+    sqlStatement += '''
+     GROUP BY DiskServer.name, DiskServer.status, Diskserver.hwOnline, Diskserver.id
+     ORDER BY DiskServer.name DESC'''
     stcur.execute(sqlStatement)
-    # display results
-    rows = stcur.fetchall()
-    # loop over disk pools and print them
-    if rows:
+    # get results
+    DSRows = stcur.fetchall()
+    # Get pools details
+    sqlStatement = '''SELECT SUM(free), SUM(totalSize),
+                             CAST(COLLECT(name) AS strListTable) FROM DataPool'''
+    if dataPoolIds:
+        sqlStatement += ' WHERE id IN (' + ', '.join([str(x) for x in dataPoolIds]) + ') '
+    stcur.execute(sqlStatement)
+    dataPoolFree, dataPoolSpace, dataPools = stcur.fetchone()
+    return DSRows, dataPoolFree, dataPoolSpace, dataPools
+
+try:
+    # connect to stager and prepare statements
+    stconn = castor_tools.connectToStager()
+    stcur = stconn.cursor()
+    diskPoolIds = []
+    dataPoolIds = []
+    diskServerIds = []
+    if targets:
+        # check diskpools
+        sqlStatement = 'SELECT id, name FROM DiskPool WHERE name = :dpname'
+        diskPools = set([])
+        for target in targets:
+            stcur.execute(sqlStatement, dpname=target)
+            row = stcur.fetchone()
+            if row:
+                diskPoolIds.append(row[0])
+                diskPools.add(row[1])
+        # check datapools
+        sqlStatement = 'SELECT id, name FROM DataPool WHERE name = :dpname'
+        dataPools = set([])
+        for target in targets:
+            stcur.execute(sqlStatement, dpname=target)
+            row = stcur.fetchone()
+            if row:
+                dataPoolIds.append(row[0])
+                dataPools.add(row[1])
+        # check diskservers
+        sqlStatement = 'SELECT id, name FROM DiskServer WHERE name = :dsname'
+        diskServers = set([])
+        for target in targets:
+            stcur.execute(sqlStatement, dsname=target)
+            row = stcur.fetchone()
+            if row:
+                diskServerIds.append(row[0])
+                diskServers.add(row[1])
+        unknownTargets = targets - diskPools - dataPools - diskServers
+        if not diskPools and not dataPools and not diskServers:
+            print 'None of the provided diskpools/datapools/diskservers could be found. Giving up'
+            usage(1)
+    # get filesystem related list
+    FSRows = []
+    if diskServerIds or diskPoolIds or not dataPoolIds:
+        FSRows = getFSRelatedItems(diskServerIds, diskPoolIds)
+    # get datapool related data
+    DSRows = []
+    if dataPoolIds or diskServerIds or not diskPoolIds:
+        DSRows, dataPoolFree, dataPoolSpace, dataPools = getDataPoolRelatedData(diskServerIds, dataPoolIds)
+    # loop over disk pools and print them    
+    data = []
+    summary = []
+    if displayFS:
+        titles = ('DSNAME', 'MOUNTPOINT', 'STATUS', 'ONLINE', 'FREE', 'MINFREE', 'MAXFREE',
+                  '%FREE', 'SIZE', 'NBRD', 'NBWR', 'NBMIGR', 'NBREC', 'POOL', 'ID')
+    else:
+        titles = ('DSNAME', 'NBMOUNTPOINTS', 'STATUS', 'ONLINE', 'FREE', '%FREE', 'SIZE', 'NBRD',
+                  'NBWR', 'NBMIGR', 'NBREC', 'POOL', 'ID')
+    if FSRows:
+        summary = FSRows[-1]
         if displayFS:
-            titles = ('DSNAME', 'MOUNTPOINT', 'STATUS', 'ONLINE', 'FREE', 'MINFREE', 'MAXFREE',
-                      '%FREE', 'SIZE', 'NBRD', 'NBWR', 'NBMIGR', 'NBREC', 'DISKPOOL', 'ID')
-            data = [(dsname or '', fsmountpoint or '',
-                     status or '', adminstatus or '',
-                     castor_tools.nbToDataAmount(free),
-                     minfree, maxfree, castor_tools.printPercentage(free, size),
-                     castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec,
-                     ','.join(diskpools), dsid or '')
-                    for dsname, fsmountpoint, nbmountpoints, status, adminstatus, free,
-                        minfree, maxfree, size, nbrd, nbwr, nbmigr, nbrec, diskpools, dsid, summary in rows
-                    if summary or fsmountpoint or dsname]
+            data = [sqlRowToPrintRow(row, True) for row in FSRows[:-1]
+                    if row[-1] or row[0] or row[1]]
         else:
-            titles = ('DSNAME', 'NBMOUNTPOINTS', 'STATUS', 'ONLINE', 'FREE', '%FREE', 'SIZE', 'NBRD',
-                      'NBWR', 'NBMIGR', 'NBREC', 'DISKPOOL', 'ID')
-            data = [(dsname or '', nbmountpoints,
-                     status or '', adminstatus or '',
-                     castor_tools.nbToDataAmount(free),
-                     castor_tools.printPercentage(free, size),
-                     castor_tools.nbToDataAmount(size), nbrd, nbwr, nbmigr, nbrec, ','.join(diskpools),
-                     dsid or '')
-                    for dsname, fsmountpoint, nbmountpoints, status, adminstatus, free,
-                        minfree, maxfree, size, nbrd, nbwr, nbmigr, nbrec, diskpools, dsid, summary in rows
-                    if (not fsmountpoint and dsname) or summary]
+            data = [sqlRowToPrintRow(row, False) for row in FSRows[:-1]
+                    if (not row[1] and row[0]) or row[-1]]
+    if DSRows:
+        if summary:
+            summary = [c for c in summary]
+            summary[0] = str(int(summary[0])+len(DSRows))
+            summary[5] += dataPoolFree
+            summary[8] += dataPoolSpace
+            summary[-3] += dataPools
+        else:
+            summary = ('', '', 0, '', '', dataPoolFree, '', '',
+                       dataPoolSpace, 0, 0, 0, 0, dataPools, '', '')
+        data.extend([(dsname, '', status, hwOnline, '-') + 
+                      (('-', '-') if displayFS else ()) +
+                      ('-', '-', '-', '-', '-', '-',
+                      ','.join(datapools), dsid)
+                     for dsname, status, hwOnline, datapools, dsid in DSRows])
+    summary = sqlRowToPrintRow(summary, displayFS)
+    data.append(summary)
+    if FSRows or DSRows:
         castor_tools.prettyPrintTable(titles, data, hasSummary=True)
     # mention unknown targets
     if targets and unknownTargets:
-        print 'WARNING : the following diskpools/diskservers do not exist : ' + ', '.join(unknownTargets)
+        print 'WARNING : the following diskpools/datapools/diskservers do not exist : ' + ', '.join(unknownTargets)
     # close DB connections
     try:
         castor_tools.disconnectDB(stconn)

@@ -30,6 +30,7 @@
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/tapeserver/drive/mtio_add.hpp"
+#include "castor/exception/Errnum.hpp"
 
 /**
  * Class wrapping the tape server. Has to be templated (and hence fully in .hh)
@@ -315,6 +316,12 @@ namespace drives {
     }
     
     virtual bool isReady() throw(Exception) {
+      // we need to reopen the drive to have the GMT_ONLINE check working (see "man st")
+      castor::exception::Errnum::throwOnMinusOne(m_sysWrapper.close(m_tapeFD),
+      std::string("Could not close device file: ") + m_SCSIInfo.nst_dev);
+      castor::exception::Errnum::throwOnMinusOne(
+      m_tapeFD = m_sysWrapper.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
+      std::string("Could not open device file: ") + m_SCSIInfo.nst_dev);
       UpdateDriveStatus();
       return m_driveStatus.ready;
     }

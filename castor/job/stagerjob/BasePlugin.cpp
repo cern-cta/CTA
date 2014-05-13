@@ -63,7 +63,7 @@ bool castor::job::stagerjob::BasePlugin::waitForChild
   // Wait for all child to exit
   while (1) {
     int term_status = -1;
-    pid_t childPid = waitpid(-1, &term_status, WNOHANG);
+    pid_t childPid = waitpid(-1, &term_status, 0);
     if (childPid < 0) {
       break;
     }
@@ -99,7 +99,6 @@ bool castor::job::stagerjob::BasePlugin::waitForChild
         childFailed = true;
       }
     }
-    sleep(1);
   }
   return childFailed;
 }

@@ -25,14 +25,14 @@ If no service class name is given, all service class definitions are printed.
 .nf
 .ft CW
 # printsvcclass
-    NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+    NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY     POOLS ID LASTEDITOR          LASTEDITION
 --------------------------------------------------------------------------------------------------------------------------------------------------------------
  default           10MiB                True            1               -            False         False        -   default 15   sponcec3 30-Aug-2011 17:02:00
      dev           10MiB                True            1               -            False         False        -     extra 16   sponcec3 30-Aug-2011 17:02:05
 diskonly           10MiB                True            1            temp            False          True        -     extra 17   sponcec3 30-Aug-2011 17:02:10
 
 # printsvcclass dev nonexisting
-NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY DISKPOOLS ID LASTEDITOR          LASTEDITION
+NAME DEFAULTFILESIZE FAILJOBSWHENNOSPACE MAXREPLICANB FORCEDFILECLASS REPLICATEONCLOSE DISK1BEHAVIOR GCPOLICY     POOLS ID LASTEDITOR          LASTEDITION
 ----------------------------------------------------------------------------------------------------------------------------------------------------------
  dev           10MiB                True            1               -            False         False        -     extra 16   sponcec3 30-Aug-2011 17:02:05
 WARNING : the following service classes do not exist : nonexisting
@@ -45,7 +45,7 @@ Configuration for the database access is taken from castor.conf.
 .BR entersvcclass
 .BR modifysvcclass
 .BR deletesvcclass
-.BR printdiskpool
+.BR printpool
 .BR adminMultiInstance
 
 .SH AUTHOR

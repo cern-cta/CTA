@@ -52,7 +52,6 @@
 
 #include "rfio_callhandlers.h"
 #include "checkkey.h"
-#include "alrm.h"
 #include <fcntl.h>
 
 extern int forced_umask;
@@ -561,11 +560,8 @@ int  sropen64(int     s,
                             &handler_context,
                             &need_user_check);
       if (rc < 0) {
-        char alarmbuf[1024];
-        sprintf(alarmbuf,"sropen64(): %s",CORRECT_FILENAME(filename));
-        (*logfunc)(LOG_DEBUG, "sropen64: rfio_handler_open refused open: %s\n", sstrerror(serrno));
+        (*logfunc)(LOG_DEBUG, "sropen64: rfio_handler_open refused open: %s\n", CORRECT_FILENAME(filename), sstrerror(serrno));
         rcode = serrno;
-        rfio_alrm(rcode,alarmbuf);
       }
 
       if (need_user_check &&  ((status=check_user_perm(&uid,&gid,host,&rcode,(((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0) ? "WTRUST" : "RTRUST")) < 0) &&
@@ -586,18 +582,15 @@ int  sropen64(int     s,
 
           errno = 0;
           if (forced_filename!=NULL || !check_path_whitelist(host, pfn, perm_array, ofilename, sizeof(ofilename),1)) {
-            fd = open64((forced_filename!=NULL)?pfn:ofilename, ntohopnflg(flags),
-                        ((forced_filename != NULL) && (((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
+            fd = open((forced_filename!=NULL)?pfn:ofilename, ntohopnflg(flags),
+                      ((forced_filename != NULL) && (((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
             (*logfunc)(LOG_DEBUG, "sropen64: open64(%s,0%o,0%o) returned %x (hex)\n",
                 CORRECT_FILENAME(filename), flags, mode, fd);
           }
           if (fd < 0) {
-            char alarmbuf[1024];
-            sprintf(alarmbuf,"sropen64: %s", CORRECT_FILENAME(filename));
             status= -1;
             rcode= errno;
-            (*logfunc)(LOG_DEBUG, "sropen64: open64: %s\n", strerror(errno));
-            rfio_alrm(rcode,alarmbuf);
+            (*logfunc)(LOG_DEBUG, "sropen64: open64: %s -> %s\n", CORRECT_FILENAME(filename), strerror(errno));
           }
           else {
             /*
@@ -747,11 +740,6 @@ int srwrite64(int     s,
   status = write(fd,p,size);
   rcode= ( status < 0 ) ? errno : 0;
 
-  if ( status < 0 ) {
-    char alarmbuf[1024];
-    sprintf(alarmbuf,"srwrite64(): %s",filename);
-    rfio_alrm(rcode,alarmbuf);
-  }
   if (rfio_call64_answer_client_internal(rqstbuf, rcode, status, s) < 0) {
     return -1;
   }
@@ -848,11 +836,8 @@ int srread64(int     s,
   p = iobuffer + replen;
   status = read(fd, p, size);
   if ( status < 0 ) {
-    char alarmbuf[1024];
-    sprintf(alarmbuf,"srread64(): %s",filename);
     rcode= errno;
     msgsiz= replen;
-    rfio_alrm(rcode,alarmbuf);
   }  else  {
     rcode= 0;
     infop->rnbr+= status;
@@ -1363,11 +1348,8 @@ int  sropen64_v3(int         s,
                                 &handler_context,
                                 &unused_dummy);
           if (rc < 0) {
-            char alarmbuf[1024];
-            sprintf(alarmbuf,"sropen64_v3: %s",CORRECT_FILENAME(filename));
-            (*logfunc)(LOG_DEBUG, "ropen64_v3: rfio_handler_open refused open: %s\n", sstrerror(serrno));
+            (*logfunc)(LOG_DEBUG, "ropen64_v3: rfio_handler_open refused open: %s\n", CORRECT_FILENAME(filename), sstrerror(serrno));
             rcode = serrno;
-            rfio_alrm(rcode,alarmbuf);
           }
 
           /* NOTE(fuji): from now on, flags is in host byte-order... */
@@ -1398,8 +1380,8 @@ int  sropen64_v3(int         s,
             strcpy(ofilename, filename);
             fd = -1;
             if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-              fd = open64(CORRECT_FILENAME(ofilename), flags,
-                          ((forced_filename != NULL) && ((flags & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
+              fd = open(CORRECT_FILENAME(ofilename), flags,
+                        ((forced_filename != NULL) && ((flags & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
             }
           }
           if (fd < 0)  {

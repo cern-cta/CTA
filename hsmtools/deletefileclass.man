@@ -35,7 +35,7 @@ Configuration for the database access is taken from castor.conf.
 .SH SEE ALSO
 .BR enterfileclass
 .BR printfileclass
-.BR deletediskpool
+.BR deletepool
 .BR deletemigrationroute
 .BR adminMultiInstance
 

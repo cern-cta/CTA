@@ -154,11 +154,19 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeStatReplyMsg
 void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillTapeStatDriveEntry(
   legacymsg::TapeStatDriveEntry &entry, const std::string &unitName)
   throw (castor::exception::Exception) {
+  // If there is no process ID available then just put 0
+  try {
+    entry.jid = m_driveCatalogue.getSessionPid(unitName);
+  } catch(castor::exception::Exception) {
+    entry.jid = 0;
+  }
+
   try {
     entry.uid = getuid();
-    entry.jid = m_driveCatalogue.getSessionPid(unitName);
-    castor::utils::copyString(entry.dgn, m_driveCatalogue.getDgn(unitName).c_str());
-    const DriveCatalogue::DriveState driveState = m_driveCatalogue.getState(unitName);
+    castor::utils::copyString(entry.dgn,
+      m_driveCatalogue.getDgn(unitName).c_str());
+    const DriveCatalogue::DriveState driveState =
+      m_driveCatalogue.getState(unitName);
     entry.up = driveStateToStatEntryUp(driveState);
     entry.asn = driveStateToStatEntryAsn(driveState);
     entry.asn_time = m_driveCatalogue.getAssignmentTime(unitName);
@@ -306,26 +314,34 @@ void
 //------------------------------------------------------------------------------
 // handleTapeConfigJob
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeConfigJob(const legacymsg::TapeConfigRequestMsgBody &body) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeConfigJob(
+  const legacymsg::TapeConfigRequestMsgBody &body) throw(castor::exception::Exception) {
   const std::string unitName(body.drive);
   const std::string dgn = m_driveCatalogue.getDgn(unitName);
 
+  log::Param params[] = {
+    log::Param("unitName", unitName),
+    log::Param("dgn", dgn)};
+
   std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
 
-  if(CONF_UP==body.status) {
+  switch(body.status) {
+  case CONF_UP:
     vdqm->setDriveUp(m_hostName, unitName, dgn);
     m_driveCatalogue.configureUp(unitName);
-    m_log(LOG_INFO, "Drive is up now");
-  }
-  else if(CONF_DOWN==body.status) {
+    m_log(LOG_INFO, "Drive configured up", params);
+    break;
+  case CONF_DOWN:
     vdqm->setDriveDown(m_hostName, unitName, dgn);
     m_driveCatalogue.configureDown(unitName);
-    m_log(LOG_INFO, "Drive is down now");
-  }
-  else {
-    castor::exception::Internal ex;
-    ex.getMessage() << "Wrong drive status requested:" << body.status;
-    throw ex;
+    m_log(LOG_INFO, "Drive configured down", params);
+    break;
+  default:
+    {
+      castor::exception::Internal ex;
+      ex.getMessage() << "Wrong drive status requested: " << body.status;
+      throw ex;
+    }
   }
 }
 
