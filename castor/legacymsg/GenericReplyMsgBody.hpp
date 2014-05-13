@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/TapeConfigRequestMsgBody.hpp
+ *         castor/legacymsg/GenericReplyMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,7 +19,7 @@
  *
  *
  * 
- * @author dkruse@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
 #pragma once
@@ -32,23 +32,38 @@ namespace castor {
 namespace legacymsg {
 
 /**
- * An admin command message.
+ * The body of a reply message that gives a status code and in the case of an
+ * error an error message.
+ *
+ * In the case of success, the status field should be set to 0 and the
+ * errorMessage field should be set to the empty string.
+ *
+ * In the case of an error, the status field should be set to a value greater
+ * than zero and the errorMessage field should contain an appropriate error
+ * message.
  */
-struct TapeConfigRequestMsgBody {
-  uint32_t uid;
-  uint32_t gid;                       
-  char drive[CA_MAXUNMLEN+1];
-  int16_t status;
+struct GenericReplyMsgBody {
+  /**
+   * The return status.  A value of zero signifies success and a value greater
+   * than zero signifies an error.
+   */
+  uint32_t status;
+
+  /**
+   * In the case of success this field should be set to the empty string and in
+   * the case of an error it should contain an appropriate error message.
+   */
+  char errorMessage[CA_MAXLINELEN+1];
 
   /**
    * Constructor.
    *
-   * Sets all integer member-variables to 0 and all string member-variables to
+   * Sets all integer member-variables to 0, and all string member-varibles to
    * the empty string.
    */
-  TapeConfigRequestMsgBody() throw();
+  GenericReplyMsgBody() throw();
 
-}; // struct TapeConfigRequestMsgBody
+}; // struct GenericReplyMsgBody
 
 } // namespace legacymsg
 } // namespace castor

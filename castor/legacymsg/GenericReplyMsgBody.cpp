@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/TapeConfigRequestMsgBody.hpp
+ *         castor/legacymsg/GenericReplyMsgBody.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,37 +19,17 @@
  *
  *
  * 
- * @author dkruse@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "castor/legacymsg/GenericReplyMsgBody.hpp"
 
-#include "h/Castor_limits.h"
+#include <string.h>
 
-#include <stdint.h>
-
-namespace castor {
-namespace legacymsg {
-
-/**
- * An admin command message.
- */
-struct TapeConfigRequestMsgBody {
-  uint32_t uid;
-  uint32_t gid;                       
-  char drive[CA_MAXUNMLEN+1];
-  int16_t status;
-
-  /**
-   * Constructor.
-   *
-   * Sets all integer member-variables to 0 and all string member-variables to
-   * the empty string.
-   */
-  TapeConfigRequestMsgBody() throw();
-
-}; // struct TapeConfigRequestMsgBody
-
-} // namespace legacymsg
-} // namespace castor
-
+//-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::legacymsg::GenericReplyMsgBody::GenericReplyMsgBody() throw():
+  status(0) {
+  memset(errorMessage, '\0', sizeof(errorMessage));
+}

@@ -88,6 +88,7 @@ add_executable(castorUnitTests
   ../castor/legacymsg/CommonMarshalTest.cpp
   ../castor/legacymsg/CupvMarshalTest.cpp
   ../castor/legacymsg/CupvProxyDummy.cpp
+  ../castor/legacymsg/GenericMarshalTest.cpp
   ../castor/legacymsg/RmcProxyDummy.cpp
   ../castor/legacymsg/RmcProxyDummyFactory.cpp
   ../castor/legacymsg/VdqmProxyDummy.cpp

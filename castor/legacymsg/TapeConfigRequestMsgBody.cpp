@@ -26,6 +26,9 @@
 
 #include <string.h>
 
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
 castor::legacymsg::TapeConfigRequestMsgBody::TapeConfigRequestMsgBody() throw():
   uid(0),
   gid(0),
