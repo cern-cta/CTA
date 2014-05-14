@@ -29,7 +29,6 @@
 %attr(0644,root,root) usr/include/castor/castor/exception/CommandLineNotParsed.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/Communication.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/Exception.hpp
-%attr(0644,root,root) usr/include/castor/castor/exception/Internal.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/InvalidArgument.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/InvalidNbArguments.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/NoEntry.hpp
