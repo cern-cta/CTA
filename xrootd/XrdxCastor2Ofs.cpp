@@ -485,7 +485,7 @@ XrdxCastor2OfsFile::XrdxCastor2OfsFile( const char* user, int MonID ) :
   stagehost = "none";
   serviceclass = "none";
   reqid = "0";
-  hasadler = 1;
+  hasadler = true;
   adler = adler32( 0L, Z_NULL, 0 );
   adleroffset = 0;
   DiskChecksum = "";
@@ -783,6 +783,15 @@ XrdxCastor2OfsFile::open( const char*         path,
                                   "no tpc.key in the opaque info for file: ",
                                   newpath.c_str() );
   }
+  else if (newopaque.find("tpc.src") != STR_NPOS)
+  {
+    // This is a TPC destination and we force the recomputation of the checksum
+    // at the end since all writes go directly to the file without passing through
+    // the write method in OFS.
+    hasWrite = true;
+    hasadler = false;
+  }
+   
 
   TIMING("PROCBLOCK", &opentiming);
 
@@ -1085,9 +1094,11 @@ XrdxCastor2OfsFile::close()
   char* ckSumalg = "ADLER32";
   XrdOucString newpath = "";
   newpath = envOpaque->Get( "castor2fs.pfn1" );
-
+  
   if ( hasWrite ) {
-    if ( XrdxCastor2OfsFS.doChecksumUpdates && ( !hasadler ) ) {
+    if ((XrdxCastor2OfsFS.doChecksumStreaming || XrdxCastor2OfsFS.doChecksumUpdates) &&
+        (!hasadler))
+    {
       xcastor::Timing checksumtiming( "ofsf::checksum" );
       TIMING("START", &checksumtiming);
       char chcksumbuf[64 * 1024];
