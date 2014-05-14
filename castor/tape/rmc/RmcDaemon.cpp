@@ -25,7 +25,6 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Errnum.hpp"
 #include "castor/exception/BadAlloc.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/rmc/AcceptHandler.hpp"
 #include "castor/tape/rmc/RmcDaemon.hpp"
@@ -69,7 +68,7 @@ std::string castor::tape::rmc::RmcDaemon::RmcDaemon::getHostName()
   if(gethostname(nameBuf, sizeof(nameBuf))) {
     char errBuf[100];
     sstrerror_r(errno, errBuf, sizeof(errBuf));
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to get host name: " << errBuf;
     throw ex;
   }
@@ -95,7 +94,7 @@ unsigned short castor::tape::rmc::RmcDaemon::getRmcPort()
 
   // If RMC PORT is in /etc/castor.conf then it must be a valid unsigned integer
   if(!castor::utils::isValidUInt(configParamValue.c_str())) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "RMC PORT is not a valid unsigned integer";
     throw ex;
   }
@@ -119,7 +118,7 @@ std::string castor::tape::rmc::RmcDaemon::getConfigParam(
   try {
     config = common::CastorConfiguration::getConfig();
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
       ": Failed to get castor configuration: " << ne.getMessage().str();
     throw ex;
@@ -128,7 +127,7 @@ std::string castor::tape::rmc::RmcDaemon::getConfigParam(
   try {
     value = config.getConfEnt(category.c_str(), name.c_str());
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
       ": Failed to get castor configuration entry: " << ne.getMessage().str();
     throw ex;

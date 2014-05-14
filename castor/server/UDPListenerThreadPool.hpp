@@ -65,7 +65,7 @@ namespace castor {
 
       /**
        * Binds a standard UDPSocket to the given port.
-       * @throw castor::exception::Internal if the port is busy.
+       * @throw castor::exception::Exception if the port is busy.
        */
       virtual void bind() throw (castor::exception::Exception);
 

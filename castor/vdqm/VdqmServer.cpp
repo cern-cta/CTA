@@ -26,7 +26,6 @@
 
 #include "castor/Services.hpp"
 #include "castor/db/DbParamsSvc.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/vdqm/Constants.hpp"

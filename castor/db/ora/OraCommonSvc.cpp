@@ -39,7 +39,6 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Busy.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include "castor/BaseAddress.hpp"
@@ -150,7 +149,7 @@ castor::db::ora::OraCommonSvc::requestToDo(std::string service)
     // Create result
     IObject* obj = cnvSvc()->getObjFromId(id, type);
     if (0 == obj) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "requestToDo : could not retrieve object for id "
         << id;
@@ -159,7 +158,7 @@ castor::db::ora::OraCommonSvc::requestToDo(std::string service)
     castor::stager::Request* result =
       dynamic_cast<castor::stager::Request*>(obj);
     if (0 == result) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "requestToDo : object retrieved for id "
         << id << " was a "
@@ -172,7 +171,7 @@ castor::db::ora::OraCommonSvc::requestToDo(std::string service)
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in requestToDo."
       << std::endl << e.what();

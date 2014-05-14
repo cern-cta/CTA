@@ -23,7 +23,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/io/io.hpp"
@@ -203,7 +202,7 @@ void castor::tape::tapebridge::BridgeClientInfo2Sender::readReply(
     size_t     remainingLen = header.lenOrStatus;
     legacymsg::unmarshal(p, remainingLen, reply);
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": Failed to unmarshal job submission reply"
       ": " << ex.getMessage().str());
   }

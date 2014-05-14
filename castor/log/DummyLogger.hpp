@@ -54,7 +54,7 @@ public:
    * message.
    */
   DummyLogger(const std::string &programName)
-    throw(castor::exception::Internal, castor::exception::InvalidArgument);
+    throw(castor::exception::Exception, castor::exception::InvalidArgument);
 
   /**
    * Destructor.
@@ -67,7 +67,7 @@ public:
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  void prepareForFork() throw(castor::exception::Internal);
+  void prepareForFork() throw(castor::exception::Exception);
 
   /**
    * Dummy operator() method that does nothing.

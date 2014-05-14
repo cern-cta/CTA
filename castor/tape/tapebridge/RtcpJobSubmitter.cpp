@@ -23,7 +23,6 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/io/io.hpp"
@@ -109,7 +108,7 @@ void castor::tape::tapebridge::RtcpJobSubmitter::submit(
   try {
     totalLen = legacymsg::marshal(buf, request);
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": Failed to marshal RCP job submission request message"
       ": " << ex.getMessage().str());
   }
@@ -235,7 +234,7 @@ void castor::tape::tapebridge::RtcpJobSubmitter::readReply(
     size_t     remainingLen = header.lenOrStatus;
     legacymsg::unmarshal(p, remainingLen, reply);
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": Failed to unmarshal job submission reply"
       ": " << ex.getMessage().str());
   }

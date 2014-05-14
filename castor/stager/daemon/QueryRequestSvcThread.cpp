@@ -35,7 +35,6 @@
 #include "castor/IClient.hpp"
 #include "castor/IService.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/PermissionDenied.hpp"

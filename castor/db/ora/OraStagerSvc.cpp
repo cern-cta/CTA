@@ -55,7 +55,6 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Busy.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
@@ -341,7 +340,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     // execute the statement and see whether we found something
     unsigned int rc = m_subRequestToDoStatement->executeUpdate();
     if (0 == rc) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "subRequestToDo : "
         << "unable to get next SubRequest to process.";
@@ -416,7 +415,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in subRequestToDo."
       << std::endl << e.what();
@@ -466,7 +465,7 @@ castor::db::ora::OraStagerSvc::processBulkRequest
     // execute the statement and see whether we found something
     unsigned int rc = m_processBulkRequestStatement->executeUpdate();
     if (0 == rc) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "processBulkRequest : unable to process bulk request.";
       throw ex;
@@ -501,7 +500,7 @@ castor::db::ora::OraStagerSvc::processBulkRequest
     }
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in processBulkRequest."
       << std::endl << e.what();
@@ -550,7 +549,7 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
     unsigned int rc =
       m_subRequestFailedToDoStatement->executeUpdate();
     if (0 == rc) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "subRequestFailedToDo : "
         << "unable to get next SubRequest to process.";
@@ -590,7 +589,7 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in subRequestFailedToDo."
       << std::endl << e.what();
@@ -617,7 +616,7 @@ int castor::db::ora::OraStagerSvc::processPrepareRequest
     unsigned int nb =
       m_processPrepareRequestStatement->executeUpdate();
     if (0 == nb) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "processPrepareRequest : unable to perform the processing.";
       throw ex;
@@ -634,7 +633,7 @@ int castor::db::ora::OraStagerSvc::processPrepareRequest
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in processPrepareRequest."
       << std::endl << e.what();
@@ -662,7 +661,7 @@ int castor::db::ora::OraStagerSvc::processPutDoneRequest
     unsigned int nb =
       m_processPutDoneRequestStatement->executeUpdate();
     if (0 == nb) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "processPutDoneRequest : unable to perform the processing.";
       throw ex;
@@ -674,7 +673,7 @@ int castor::db::ora::OraStagerSvc::processPutDoneRequest
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in processPutDoneRequest."
       << std::endl << e.what();
@@ -709,14 +708,14 @@ void castor::db::ora::OraStagerSvc::createDiskCopyReplicaRequest
     unsigned int rc =
       m_createDiskCopyReplicaRequestStatement->executeUpdate();
     if (0 == rc) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "createDiskCopyReplicaRequest : unable to create the request.";
       throw ex;
     }
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in createDiskCopyReplicaRequest."
       << std::endl << e.what();
@@ -747,14 +746,14 @@ void castor::db::ora::OraStagerSvc::createEmptyFile
     unsigned int rc =
       m_createEmptyFileStatement->executeUpdate();
     if (0 == rc) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "createEmptyFile : unable to create the empty file.";
       throw ex;
     }
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in createEmptyFile."
       << std::endl << e.what();
@@ -783,7 +782,7 @@ castor::db::ora::OraStagerSvc::createRecallCandidate(u_signed64 srId)
     return (castor::stager::SubRequestStatusCodes)m_createRecallCandidateStatement->getInt(1);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Error caught in createRecallCandidate."
                     << std::endl << e.what();
     throw ex;
@@ -822,7 +821,7 @@ castor::db::ora::OraStagerSvc::selectCastorFile(castor::stager::SubRequest* subr
     int nb  = m_selectCastorFileStatement->executeUpdate();
     if (0 == nb) {
       // Nothing found, throw exception
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage()
         << "selectCastorFile returned no CastorFile";
       throw e;
@@ -839,7 +838,7 @@ castor::db::ora::OraStagerSvc::selectCastorFile(castor::stager::SubRequest* subr
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Unable to select castorFile by fileId :"
       << std::endl << e.getMessage();
@@ -867,7 +866,7 @@ bool castor::db::ora::OraStagerSvc::updateAndCheckSubRequest
     m_updateAndCheckSubRequestStatement->setInt(2, subreq->status());
     unsigned int nb = m_updateAndCheckSubRequestStatement->executeUpdate();
     if (0 == nb) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "updateAndCheckSubRequest did not return any result.";
       throw ex;
@@ -876,7 +875,7 @@ bool castor::db::ora::OraStagerSvc::updateAndCheckSubRequest
     return m_updateAndCheckSubRequestStatement->getDouble(3) != 0;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in updateAndCheckSubRequest."
       << std::endl << e.what();
@@ -903,7 +902,7 @@ void castor::db::ora::OraStagerSvc::archiveSubReq
     m_archiveSubReqStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Unable to archive subRequest :"
       << std::endl << e.what();
@@ -934,7 +933,7 @@ int castor::db::ora::OraStagerSvc::stageRm
     m_stageRmStatement->setDouble(4, svcClassId);
     unsigned int nb = m_stageRmStatement->executeUpdate();
     if (0 == nb) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "stageRm : No return code after PL/SQL call.";
       throw ex;
@@ -943,7 +942,7 @@ int castor::db::ora::OraStagerSvc::stageRm
     return m_stageRmStatement->getInt(5);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in stageRm."
       << std::endl << e.what();
@@ -971,7 +970,7 @@ void castor::db::ora::OraStagerSvc::renamedFileCleanup
     m_renamedFileCleanupStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Error caught in renamedFileCleanup." << std::endl << e.what();
     throw ex;
   }
@@ -1002,7 +1001,7 @@ int castor::db::ora::OraStagerSvc::setFileGCWeight
     return m_setFileGCWeightStatement->getInt(5);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in setFileGCWeight."
       << std::endl << e.what();
@@ -1036,7 +1035,7 @@ std::string castor::db::ora::OraStagerSvc::getConfigOption(std::string confClass
     return res;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in getConfigOption(): confClass = "
       << confClass << ", confKey = " << confKey
@@ -1099,7 +1098,7 @@ void castor::db::ora::OraStagerSvc::dumpDBLogs()
     commit();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Oracle exception caught: " << e.what();
     throw ex;
   }

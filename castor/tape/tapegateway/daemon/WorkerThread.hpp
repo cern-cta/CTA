@@ -26,7 +26,6 @@
 
 #pragma once
 
-#include "castor/exception/Internal.hpp"
 #include "castor/io/Constants.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/tape/tapegateway/daemon/ITapeGatewaySvc.hpp"

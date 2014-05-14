@@ -734,7 +734,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
     // 2.2.1 Check continuity
     if (highestFseq - lowestFseq + 1 !=
         (int) fileMigrationReportList.successfulMigrations().size()) {
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage() << "In handleFileMigrationReportList, mismatching "
           << "fSeqs and number of successes: lowestFseq=" << lowestFseq
           << " highestFseq=" << highestFseq << " expectedNumber="
@@ -755,7 +755,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
         f < fileMigrationReportList.failedMigrations().end();
         f++) {
       if ( (*f)->fseq() <= highestFseq) {
-        castor::exception::Internal e;
+        castor::exception::Exception e;
         e.getMessage() << "In handleFileMigrationReportList, mismatching "
             << "fSeqs for failure, lower than highest success fSeq: failureFSeq="
             << (*f)->fseq() << " failureNsFileId=" << (*f)->fileid()
@@ -908,7 +908,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileRecallRepor
   } catch (castor::exception::Exception e) {
     logInternalError (e, requester, fileRecallReportList);
   } catch (std::bad_cast bc) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Got a bad cast exception in handleFileRecallReportList: "
         << bc.what();
     logInternalError (e, requester, fileRecallReportList);

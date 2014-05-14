@@ -35,7 +35,6 @@
 #include "castor/bwlist/RequestType.hpp"
 #include "castor/db/DbCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/OutOfMemory.hpp"
@@ -170,7 +169,7 @@ void castor::db::cnv::DbRequestTypeCnv::fillRep(castor::IAddress*,
       cnvSvc()->commit();
     }
   } catch (castor::exception::SQLError& e) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Error in fillRep for type " << type
                     << std::endl << e.getMessage().str() << std::endl;
     throw ex;

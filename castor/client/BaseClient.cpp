@@ -52,7 +52,6 @@
 #include "castor/client/IResponseHandler.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Communication.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "stager_client_api_common.hpp"
 
@@ -191,7 +190,7 @@ castor::IClient* castor::client::BaseClient::createClient()
   throw (castor::exception::Exception) {
   // if no callbackSocket
   if (0 == m_callbackSocket) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "No call back socket available";
     throw ex;
   }
@@ -599,7 +598,7 @@ void castor::client::BaseClient::pollAnswersFromStager
 
   // Check parameters
   if ((req == NULL) || (req->client() == NULL)) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Passed Request is NULL" << std::endl;
     throw ex;
   }

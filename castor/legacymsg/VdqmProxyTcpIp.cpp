@@ -20,7 +20,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/RtcpMarshal.hpp"
@@ -178,7 +177,7 @@ int castor::legacymsg::VdqmProxyTcpIp::connectToVdqm() const throw(castor::excep
     smartConnectSock.reset(io::connectWithTimeout(m_vdqmHostName, m_vdqmPort,
       m_netTimeout));
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to connect to vdqm on host " << m_vdqmHostName
       << " port " << m_vdqmPort << ": " << ne.getMessage().str();
     throw ex;
@@ -197,7 +196,7 @@ void castor::legacymsg::VdqmProxyTcpIp::writeDriveStatusMsg(const int fd, const 
   try {
     io::writeBytes(fd, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to write drive status message: "
       << ne.getMessage().str();
     throw ex;
@@ -213,14 +212,14 @@ void castor::legacymsg::VdqmProxyTcpIp::readCommitAck(const int fd) throw(castor
   try {
     ack = readAck(fd);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read VDQM_COMMIT ack: " <<
       ne.getMessage().str();
     throw ex;
   }
 
   if(VDQM_MAGIC != ack.magic) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read VDQM_COMMIT ack: Invalid magic"
       ": expected=0x" << std::hex << VDQM_MAGIC << " actual=" << ack.magic;
     throw ex;
@@ -233,12 +232,12 @@ void castor::legacymsg::VdqmProxyTcpIp::readCommitAck(const int fd) throw(castor
     // VDQM_COMMIT ack is reporting an error
     char errBuf[80];
     sstrerror_r(ack.reqType, errBuf, sizeof(errBuf));
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "VDQM_COMMIT ack reported an error: " << errBuf;
     throw ex;
   } else {
     // VDQM_COMMIT ack contains an invalid request type
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "VDQM_COMMIT ack contains an invalid request type"
       ": reqType=" << ack.reqType;
     throw ex;
@@ -255,7 +254,7 @@ castor::legacymsg::MessageHeader castor::legacymsg::VdqmProxyTcpIp::readAck(cons
   try {
     io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read ack: "
       << ne.getMessage().str();
     throw ex;
@@ -278,7 +277,7 @@ castor::legacymsg::MessageHeader castor::legacymsg::VdqmProxyTcpIp::readDriveSta
   try {
     io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read header of drive status message: "
       << ne.getMessage().str();
     throw ex;
@@ -289,14 +288,14 @@ castor::legacymsg::MessageHeader castor::legacymsg::VdqmProxyTcpIp::readDriveSta
   legacymsg::unmarshal(bufPtr, bufLen, header);
 
   if(VDQM_MAGIC != header.magic) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read header of drive status message"
       ": Invalid magic: expected=0x" << std::hex << VDQM_MAGIC << " actual=0x"
       << header.magic;
     throw ex;
   }
   if(VDQM_DRV_REQ != header.reqType) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read header of drive status message"
       ": Invalid request type: expected=0x" << std::hex << VDQM_DRV_REQ <<
       " actual=0x" << header.reqType;
@@ -316,7 +315,7 @@ castor::legacymsg::VdqmDrvRqstMsgBody castor::legacymsg::VdqmProxyTcpIp::readDri
   char buf[VDQM_MSGBUFSIZ];
 
   if(sizeof(buf) < bodyLen) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read body of drive status message"
       ": Maximum body length exceeded: max=" << sizeof(buf) <<
       " actual=" << bodyLen;
@@ -326,7 +325,7 @@ castor::legacymsg::VdqmDrvRqstMsgBody castor::legacymsg::VdqmProxyTcpIp::readDri
   try {
     io::readBytes(fd, m_netTimeout, bodyLen, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read body of drive status message"
       ": " << ne.getMessage().str();
     throw ex;

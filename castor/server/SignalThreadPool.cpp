@@ -26,7 +26,6 @@
 // Include Files
 #include "castor/server/SignalThreadPool.hpp"
 #include "castor/Services.hpp"
-#include "castor/exception/Internal.hpp"
 #include <sys/time.h>
 
 extern "C" {
@@ -107,7 +106,7 @@ void castor::server::SignalThreadPool::run()
     }
   }
   if (n == 0) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to create pool " << m_poolName;
     throw ex;
   }

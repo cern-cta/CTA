@@ -33,7 +33,6 @@
 #include "castor/Services.hpp"
 #include "castor/IService.hpp"
 
-#include "castor/exception/Internal.hpp"
 
 #include "castor/vdqm/TapeRequest.hpp"
 #include "castor/vdqm/TapeDrive.hpp"
@@ -66,7 +65,7 @@ throw(castor::exception::Exception)
 
     if (0 == svc)
     {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Could not get DbVdqmSvc" << std::endl;
 
       throw ex;
@@ -80,7 +79,7 @@ throw(castor::exception::Exception)
   }
   catch (...)
   {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
 
     ex.getMessage() << "Could not get DbVdqmSvc"      << std::endl;
     ex.getMessage() << "Caught and unknown exception" << std::endl;
@@ -92,7 +91,7 @@ throw(castor::exception::Exception)
 
   if(0 == ptr_IVdqmService)
   {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
 
     ex.getMessage() << "Got a bad DbVdqmSvc: "
       << "ID=" << svc->id()

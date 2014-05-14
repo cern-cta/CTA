@@ -105,7 +105,7 @@ namespace castor {
     /**
      * Binds a socket to the given port. Children classes must implement
      * this method according to the type of socket they need to use.
-     * @throw castor::exception::Internal if the port is busy.
+     * @throw castor::exception::Exception if the port is busy.
      */
     virtual void bind() throw (castor::exception::Exception) = 0;
 

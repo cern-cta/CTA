@@ -74,7 +74,7 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
       try {
         castor::utils::copyString(m_cmdLine.drive, optarg);
       } catch(castor::exception::Exception &ex) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "Failed to copy the argument of the unit name command-line option"
           " into the internal data structures"
@@ -88,7 +88,7 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
       try {
         castor::utils::copyString(m_cmdLine.dgn, optarg);
       } catch(castor::exception::Exception &ex) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "Failed to copy the argument of the dgn command-line option"
           " into the internal data structures"
@@ -111,7 +111,7 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
       try {
         castor::utils::copyString(m_cmdLine.vid, optarg);
       } catch(castor::exception::Exception &ex) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "Failed to copy the argument of the vid command-line option"
           " into the internal data structures"
@@ -156,7 +156,7 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
 
     default:
       {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "getopt_long returned the following unknown value: 0x" <<
           std::hex << (int)c;
@@ -171,7 +171,7 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
   }
 
   if(!m_cmdLine.allCompulsoryOptionsSet()) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Not all compulsory options have been set";
     throw ex;
   }
@@ -300,7 +300,7 @@ void castor::tape::label::LabelCmd::writeTapeLabelRequest(const int timeout) {
   try {
     castor::io::writeBytes(m_smartClientConnectionSock.get(), timeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to write label request message: " <<
       ne.getMessage().str();
     throw ex;
@@ -317,7 +317,7 @@ castor::legacymsg::MessageHeader castor::tape::label::LabelCmd::readTapeLabelRep
   try {
     castor::io::readBytes(m_smartClientConnectionSock.get(), timeout, bufLen, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read label reply message: " <<
       ne.getMessage().str();
     throw ex;
@@ -329,7 +329,7 @@ castor::legacymsg::MessageHeader castor::tape::label::LabelCmd::readTapeLabelRep
   castor::legacymsg::unmarshal(bufPtr, bufLen, replymsg);
   
   if(TAPERC != replymsg.reqType || TPMAGIC != replymsg.magic) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Wrong reply type or magic # in label reply message. replymsg.reqType: " << replymsg.reqType << " replymsg.magic: " << replymsg.magic;
     throw ex;
   }

@@ -25,7 +25,6 @@
 #pragma once
 
 #include "castor/BaseObject.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/PermissionDenied.hpp"
 #include "castor/io/ServerSocket.hpp"
@@ -389,7 +388,7 @@ protected:
       sendEndNotificationErrorReport(tapebridgeTransactionId, SEINTERNAL,
         oss.str(), sock);
 
-      TAPE_THROW_EX(castor::exception::Internal, oss.str());
+      TAPE_THROW_EX(castor::exception::Exception, oss.str());
     }
   }
 

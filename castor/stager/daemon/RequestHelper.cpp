@@ -31,7 +31,6 @@
 #include "castor/stager/IStagerSvc.hpp"
 #include "castor/db/DbCnvSvc.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/daemon/NsOverride.hpp"
 #include "castor/stager/daemon/RequestHelper.hpp"

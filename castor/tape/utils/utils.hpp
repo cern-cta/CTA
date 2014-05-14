@@ -63,7 +63,7 @@
  * The TAPE_THROW_EX macro throws an exception and automatically adds file,
  * line and function strings to the message of the exception.  Example usage:
  *
- * TAPE_THROW_EX(castor::exception::Internal,
+ * TAPE_THROW_EX(castor::exception::Exception,
  *   ": Failed to down cast reply object to tapegateway::FileToRecall");
  */
 #define TAPE_THROW_EX(EXCEPTION, MSG) { \

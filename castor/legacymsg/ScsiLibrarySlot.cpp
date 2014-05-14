@@ -20,7 +20,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Internal.hpp"
 #include "castor/legacymsg/ScsiLibrarySlot.hpp"
 #include "castor/utils/utils.hpp"
 
@@ -37,7 +36,7 @@ castor::legacymsg::ScsiLibrarySlot::ScsiLibrarySlot()
 castor::legacymsg::ScsiLibrarySlot::ScsiLibrarySlot(
   const std::string &str) throw(castor::exception::Exception): drvOrd(0) {
   if(str.find("smc@")) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot"
       ": SCSI library slot must start with smc@: str=" << str;
     throw ex;
@@ -45,7 +44,7 @@ castor::legacymsg::ScsiLibrarySlot::ScsiLibrarySlot(
 
   const std::string::size_type indexOfComma = str.find(',');
   if(std::string::npos == indexOfComma) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot"
       ": Failed to find comma: SCSI library slot must start with smc@host,"
       ": str=" << str;
@@ -55,7 +54,7 @@ castor::legacymsg::ScsiLibrarySlot::ScsiLibrarySlot(
   const std::string::size_type indexOfAtSign = 3;  // smc@
   const std::string::size_type hostLen = indexOfComma - indexOfAtSign - 1;
   if(0 == hostLen) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot"
       ": Missing rmc host-name: str=" << str;
     throw ex;
@@ -65,7 +64,7 @@ castor::legacymsg::ScsiLibrarySlot::ScsiLibrarySlot(
 
   const std::string::size_type drvOrdLen = str.length() - indexOfComma;
   if(0 == drvOrdLen) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot"
       ": Missing str ordinal: str=" << str;
     throw ex;
@@ -73,7 +72,7 @@ castor::legacymsg::ScsiLibrarySlot::ScsiLibrarySlot(
 
   const std::string drvOrdStr = str.substr(indexOfComma + 1, drvOrdLen);
   if(!castor::utils::isValidUInt(drvOrdStr.c_str())) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot"
       ": Drive ordinal is not a valid unsigned integer: str=" << str;
     throw ex;

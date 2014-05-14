@@ -38,7 +38,6 @@
 #include <sys/select.h>
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/TooBig.hpp"
 #include "castor/exception/OutOfMemory.hpp"
 #include "castor/io/UDPSocket.hpp"
@@ -152,7 +151,7 @@ void castor::io::UDPSocket::readBuffer(const unsigned int magic,
     delete [] internalBuf;
     throw ex;
   } else if (ret < (int)(2*sizeof(unsigned int))) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Received datagram is too short : only "
                     << ret << " bytes";
     delete [] internalBuf;
@@ -161,7 +160,7 @@ void castor::io::UDPSocket::readBuffer(const unsigned int magic,
   // Check magic number
   unsigned int *recvMagic = (unsigned int*)internalBuf;
   if (*recvMagic != magic) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Bad magic number : 0x" << std::hex
                     << *recvMagic << " instead of 0x"
                     << std::hex << magic;

@@ -35,7 +35,6 @@
 #include "castor/bwlist/ListPrivileges.hpp"
 #include "castor/bwlist/Privilege.hpp"
 #include "castor/rh/BasicResponse.hpp"
-#include "castor/exception/Internal.hpp"
 #include <vector>
 #include <string.h>
 
@@ -62,7 +61,7 @@ public:
     castor::bwlist::ListPrivilegesResponse *resp =
       dynamic_cast<castor::bwlist::ListPrivilegesResponse*>(&r);
     if (0 == resp) {
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage() << "Could not cast response into ListPrivilegesResponse";
       throw e;
     }

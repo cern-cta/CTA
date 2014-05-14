@@ -28,7 +28,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::log::DummyLogger::DummyLogger(const std::string &programName)
-  throw(castor::exception::Internal, castor::exception::InvalidArgument):
+  throw(castor::exception::Exception, castor::exception::InvalidArgument):
   Logger(programName) {
 }
 
@@ -42,7 +42,7 @@ castor::log::DummyLogger::~DummyLogger() throw() {
 // prepareForFork
 //------------------------------------------------------------------------------
 void castor::log::DummyLogger::prepareForFork()
-  throw(castor::exception::Internal) {
+  throw(castor::exception::Exception) {
 }
 
 //------------------------------------------------------------------------------

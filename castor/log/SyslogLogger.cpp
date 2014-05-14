@@ -44,7 +44,7 @@
 //------------------------------------------------------------------------------
 castor::log::SyslogLogger::SyslogLogger(
   const std::string &programName)
-  throw(castor::exception::Internal, castor::exception::InvalidArgument):
+  throw(castor::exception::Exception, castor::exception::InvalidArgument):
   Logger(programName),
   m_maxMsgLen(determineMaxMsgLen()),
   m_logFile(-1),
@@ -102,7 +102,7 @@ size_t castor::log::SyslogLogger::determineMaxMsgLen() const throw() {
 //------------------------------------------------------------------------------
 std::map<int, std::string>
   castor::log::SyslogLogger::generatePriorityToTextMap() const 
-  throw(castor::exception::Internal) {
+  throw(castor::exception::Exception) {
   std::map<int, std::string> m;
 
   try {
@@ -115,7 +115,7 @@ std::map<int, std::string>
     m[LOG_INFO]    = "Info";
     m[LOG_DEBUG]   = "Debug";
   } catch(std::exception &se) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to generate priority to text mapping: " <<
       se.what();
     throw ex;
@@ -129,7 +129,7 @@ std::map<int, std::string>
 //------------------------------------------------------------------------------
 std::map<std::string, int>
   castor::log::SyslogLogger::generateConfigTextToPriorityMap() const
-  throw(castor::exception::Internal) {
+  throw(castor::exception::Exception) {
   std::map<std::string, int> m;
 
   try {
@@ -142,7 +142,7 @@ std::map<std::string, int>
     m["LOG_INFO"]    = LOG_INFO;
     m["LOG_DEBUG"]   = LOG_DEBUG;
   } catch(std::exception &se) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to generate configuration text to priority mapping: " <<
       se.what();
@@ -156,32 +156,32 @@ std::map<std::string, int>
 // initMutex
 //------------------------------------------------------------------------------
 void castor::log::SyslogLogger::initMutex()
-  throw(castor::exception::Internal) {
+  throw(castor::exception::Exception) {
   pthread_mutexattr_t attr;
   int rc = pthread_mutexattr_init(&attr);
   if(0 != rc) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to initialize mutex attribute for m_mutex: " <<
       sstrerror(rc);
     throw ex;
   }
   rc = pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
   if(0 != rc) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to set mutex type of m_mutex: " <<
       sstrerror(rc);
     throw ex;
   }
   rc = pthread_mutex_init(&m_mutex, NULL);
    if(0 != rc) {
-     castor::exception::Internal ex;
+     castor::exception::Exception ex;
      ex.getMessage() << "Failed to initialize m_mutex: " << sstrerror(rc);
      throw ex;
    }
   rc = pthread_mutexattr_destroy(&attr);
   if(0 != rc) {
     pthread_mutex_destroy(&m_mutex);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to destroy mutex attribute of m_mutex: " <<
       sstrerror(rc);
     throw ex;
@@ -198,12 +198,12 @@ castor::log::SyslogLogger::~SyslogLogger() throw() {
 // prepareForFork
 //------------------------------------------------------------------------------
 void castor::log::SyslogLogger::prepareForFork() 
-  throw(castor::exception::Internal) {
+  throw(castor::exception::Exception) {
   // Enter critical section
   {
     const int mutex_lock_rc = pthread_mutex_lock(&m_mutex);
     if(0 != mutex_lock_rc) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Failed to lock mutex of logger's critcial section: "
         << sstrerror(mutex_lock_rc);
       throw(ex);
@@ -216,7 +216,7 @@ void castor::log::SyslogLogger::prepareForFork()
   {
     const int mutex_unlock_rc = pthread_mutex_unlock(&m_mutex);
     if(0 != mutex_unlock_rc) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Failed to unlock mutex of logger's critcial section: "
         << sstrerror(mutex_unlock_rc);
       throw(ex);

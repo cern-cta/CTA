@@ -150,7 +150,7 @@ static std::string getConfigParam(const std::string &category, const std::string
   try {
     config = common::CastorConfiguration::getConfig();
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
       ": Failed to get castor configuration: " << ne.getMessage().str();
     throw ex;
@@ -159,7 +159,7 @@ static std::string getConfigParam(const std::string &category, const std::string
   try {
     value = config.getConfEnt(category.c_str(), name.c_str());
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
       ": Failed to get castor configuration entry: " << ne.getMessage().str();
     throw ex;

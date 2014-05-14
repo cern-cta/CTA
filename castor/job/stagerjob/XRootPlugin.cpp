@@ -26,7 +26,6 @@
 // Include Files
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/XRootPlugin.hpp"
 #include "castor/rh/IOResponse.hpp"
@@ -78,7 +77,7 @@ void castor::job::stagerjob::XRootPlugin::recvMessage
     ex.getMessage() << "Unable to receive message body";
     throw ex;
   } else if (n != len) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() <<"Received message body is too short : only " << n
                     << " bytes of " << len << " transferred";
     throw ex;
@@ -158,7 +157,7 @@ void castor::job::stagerjob::XRootPlugin::preForkHook
   rc = select(context.socket + 1, &read_set,
               (fd_set *)NULL, (fd_set *)NULL, &timeval);
   if (rc == 0) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Timeout waiting for xrootd callback";
     throw ex;
   } else if (rc < 0) {

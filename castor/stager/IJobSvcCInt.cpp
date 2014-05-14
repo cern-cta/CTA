@@ -27,7 +27,6 @@
 #include "castor/stager/IJobSvc.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/Services.hpp"
-#include "castor/exception/Internal.hpp"
 #include <string>
 
 extern "C" {
@@ -39,13 +38,13 @@ extern "C" {
     castor::IService *remsvc = castor::BaseObject::services()->service
       ("RemoteJobSvc", castor::SVC_REMOTEJOBSVC);
     if (remsvc == 0) {
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage() << "Unable to get RemoteJobSvc";
       throw e;
     }
     castor::stager::IJobSvc *jobSvc = dynamic_cast<castor::stager::IJobSvc *>(remsvc);
     if (jobSvc == 0) {
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage() << "Could not convert newly retrieved service into IJobSvc";
       throw e;
     }

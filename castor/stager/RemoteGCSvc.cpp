@@ -55,7 +55,6 @@
 #include "castor/rh/GCFilesResponse.hpp"
 #include "castor/rh/StartResponse.hpp"
 #include "castor/exception/NotSupported.hpp"
-#include "castor/exception/Internal.hpp"
 #include <errno.h>
 #include <list>
 #include <vector>
@@ -160,7 +159,7 @@ public:
     castor::rh::GCFilesResponse *resp =
       dynamic_cast<castor::rh::GCFilesResponse*>(&r);
     if (0 == resp) {
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage() << "Could not cast response into GCFilesResponse";
       throw e;
     }
@@ -284,7 +283,7 @@ public:
     castor::stager::NsFilesDeletedResponse *resp =
       dynamic_cast<castor::stager::NsFilesDeletedResponse*>(&r);
     if (0 == resp) {
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage() << "Could not cast response into NsFilesDeletedResponse";
       throw e;
     }
@@ -368,7 +367,7 @@ public:
     castor::stager::StgFilesDeletedResponse *resp =
       dynamic_cast<castor::stager::StgFilesDeletedResponse*>(&r);
     if (0 == resp) {
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage() << "Could not cast response into StgFilesDeletedResponse";
       throw e;
     }

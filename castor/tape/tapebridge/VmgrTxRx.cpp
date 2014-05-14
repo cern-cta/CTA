@@ -22,7 +22,6 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
@@ -119,7 +118,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
   try {
     totalLen = legacymsg::marshal(buf, request);
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": Failed to marshal request for tape information"
       ": vid=" << vid <<
       ": " << ex.getMessage().str());
@@ -272,7 +271,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
         size_t     remainingLen = header.lenOrStatus;
         legacymsg::unmarshal(p, remainingLen, reply);
       } catch(castor::exception::Exception &ex) {
-        TAPE_THROW_EX(castor::exception::Internal,
+        TAPE_THROW_EX(castor::exception::Exception,
           ": Failed to unmarshal message body from VMGR" <<
           ": reqType=MSG_DATA"
           ": vid=" << vid <<

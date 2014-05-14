@@ -27,7 +27,6 @@
 #include "castor/IService.hpp"
 #include "castor/PortNumbers.hpp"
 #include "castor/Services.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/vdqm/ClientIdentification.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
 #include "castor/vdqm/DeviceGroupName.hpp"
@@ -191,7 +190,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
 
   // If the dynamic cast failed
   if(request.get() == NULL) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
 
     e.getMessage()
       << "Failed to cast param to castor::vdqm::TapeRequest*";
@@ -378,7 +377,7 @@ castor::vdqm::IVdqmSvc *castor::vdqm::RTCPJobSubmitterThread::getDbVdqmSvc()
   castor::vdqm::IVdqmSvc *vdqmSvc = dynamic_cast<castor::vdqm::IVdqmSvc*>(svc);
 
   if (0 == vdqmSvc) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Failed to cast castor::IService* to castor::vdqm::IVdqmSvc*";
 
@@ -408,7 +407,7 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJob(const Cuuid_t &cuuid,
   } else if(remoteCopyType == "AGGREGATOR" || remoteCopyType == "TAPEBRIDGE") {
     port = TAPEBRIDGE_VDQMPORT;
   } else {
-    castor::exception::Internal ie;
+    castor::exception::Exception ie;
 
     ie.getMessage() << "Invalid remoteCopyType: " << remoteCopyType;
 
@@ -420,7 +419,7 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJob(const Cuuid_t &cuuid,
   try {
     connection.connect();
   } catch (castor::exception::Exception& e) {
-    castor::exception::Internal ie;
+    castor::exception::Exception ie;
 
     ie.getMessage()
       << "Failed to connect to " << remoteCopyType << ": "
@@ -458,7 +457,7 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJob(const Cuuid_t &cuuid,
       client->userName(), client->machine(), client->port(), client->euid(),
       client->egid(), dgn->dgName(), tapeDrive->driveName());
   } catch (castor::exception::Exception& e) {
-    castor::exception::Internal ie;
+    castor::exception::Exception ie;
 
     ie.getMessage()
       << "Failed to send job to " << remoteCopyType << ": "
@@ -468,7 +467,7 @@ void castor::vdqm::RTCPJobSubmitterThread::submitJob(const Cuuid_t &cuuid,
   }
 
   if(!acknSucc) {
-    castor::exception::Internal ie;
+    castor::exception::Exception ie;
 
     ie.getMessage() <<
       "Did not receive an acknSucc from sending a job to " << remoteCopyType;

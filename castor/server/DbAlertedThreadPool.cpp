@@ -28,7 +28,6 @@
 #include <sys/time.h>
 
 #include "castor/Services.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/server/DbAlertedThreadPool.hpp"
 
 extern "C" {

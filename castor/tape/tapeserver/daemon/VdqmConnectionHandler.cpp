@@ -118,7 +118,7 @@ bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(const 
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmConnectionHandler::checkHandleEventFd(const int fd) throw (castor::exception::Exception) {
   if(m_fd != fd) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle vdqm connection"
       ": Event handler passed wrong file descriptor"
       ": expected=" << m_fd << " actual=" << fd;
@@ -206,7 +206,7 @@ castor::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmConnectio
   legacymsg::unmarshal(bufPtr, bufLen, header);
 
   if(RTCOPY_MAGIC_OLD0 != header.magic) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Invalid vdqm job message: Invalid magic"
       ": expected=0x" << std::hex << RTCOPY_MAGIC_OLD0 << " actual=0x" <<
       header.magic;
@@ -214,7 +214,7 @@ castor::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmConnectio
   }
 
   if(VDQM_CLIENTINFO != header.reqType) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Invalid vdqm job message: Invalid request type"
        ": expected=0x" << std::hex << VDQM_CLIENTINFO << " actual=0x" <<
        header.reqType;
@@ -234,7 +234,7 @@ castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConn
   char buf[1024];
 
   if(sizeof(buf) < len) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read body of job message"
        ": Maximum body length exceeded"
        ": max=" << sizeof(buf) << " actual=" << len;
@@ -244,7 +244,7 @@ castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConn
   try {
     io::readBytes(fd, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read body of job message"
       ": " << ne.getMessage().str();
     throw ex;
@@ -267,7 +267,7 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::writeJobReplyMsg(c
   try {
     io::writeBytes(fd, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to write job reply message: " <<
       ne.getMessage().str();
     throw ex;

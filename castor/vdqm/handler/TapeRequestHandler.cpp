@@ -30,7 +30,6 @@
 #include <string.h>
 
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/vdqm/ClientIdentification.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
 
@@ -277,7 +276,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
   // Sanity check - make sure the TapeRequest object has its associated
   // ClientIdentification object
   if(tapeReq->client() == NULL) {
-    castor::exception::Internal ie;
+    castor::exception::Exception ie;
 
     ie.getMessage() <<
       "Failed to delete tape request"

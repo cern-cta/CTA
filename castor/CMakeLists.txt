@@ -327,7 +327,6 @@ if (${COMPILE_SERVER} STREQUAL "1")
     exception/CommandLineNotParsed.hpp
     exception/Communication.hpp
     exception/Exception.hpp
-    exception/Internal.hpp
     exception/InvalidArgument.hpp
     exception/InvalidNbArguments.hpp
     exception/NoEntry.hpp

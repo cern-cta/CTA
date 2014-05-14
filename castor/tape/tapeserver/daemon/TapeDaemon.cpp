@@ -24,7 +24,6 @@
  
 #include "castor/exception/Errnum.hpp"
 #include "castor/exception/BadAlloc.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
@@ -87,7 +86,7 @@ std::string
   if(gethostname(nameBuf, sizeof(nameBuf))) {
     char errBuf[100];
     sstrerror_r(errno, errBuf, sizeof(errBuf));
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to get host name: " << errBuf;
     throw ex;
   }
@@ -268,7 +267,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
     break;
   default:
     {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Failed to register tape drive in vdqm"
         ": server=" << m_hostName << " unitName=" << unitName << " dgn=" << dgn
         << ": Invalid drive state: state=" <<
@@ -680,7 +679,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::writeTapeRcReplyMsg(const int
   try {
     io::writeBytes(fd, timeout, len, buf); // TODO: put the 10 seconds of
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to write job reply message: " <<
       ne.getMessage().str();
     throw ex;

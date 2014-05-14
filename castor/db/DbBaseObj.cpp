@@ -28,7 +28,6 @@
 #include "castor/IObject.hpp"
 #include "castor/Services.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 
 // Local Files
 #include "DbBaseObj.hpp"
@@ -51,7 +50,7 @@ void castor::db::DbBaseObj::initCnvSvc()
   m_cnvSvc = dynamic_cast<castor::db::DbCnvSvc*>
     (svcs()->cnvService(m_cnvSvcName, SVC_DBCNV));
   if (!m_cnvSvc) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "No DbCnvSvc available";
     throw ex;
   }

@@ -29,7 +29,6 @@
 #include "h/tapebridge_constants.h"
 #include "h/tapebridge_marshall.h"
 #include "h/vdqm_api.h"
-#include "castor/exception/Internal.hpp"
 #include "castor/tape/net/net.hpp"
 #include "castor/tape/tapebridge/BridgeClientInfo2Sender.hpp"
 #include "castor/tape/utils/SmartFd.hpp"

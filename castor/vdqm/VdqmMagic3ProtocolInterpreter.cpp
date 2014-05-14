@@ -23,7 +23,6 @@
  *****************************************************************************/
 
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/vdqm/vdqmMacros.h"
 #include "castor/vdqm/VdqmMagic3ProtocolInterpreter.hpp"
 #include "h/vdqm_constants.h"

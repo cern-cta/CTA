@@ -23,7 +23,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CupvMarshal.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -37,7 +36,7 @@
 size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const CupvCheckMsgBody &src) throw(castor::exception::Exception) {
 
   if(dst == NULL) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal CupvCheckMsgBody"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -58,7 +57,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Cu
 
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal CupvCheckMsgBody"
       ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
@@ -84,7 +83,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Cu
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal CupvCheckMsgBody"
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << " actual=" << nbBytesMarshalled;

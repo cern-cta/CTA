@@ -32,7 +32,6 @@
 #include "castor/IService.hpp"
 #include "castor/stager/IGCSvc.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/GCFileList.hpp"

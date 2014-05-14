@@ -29,7 +29,6 @@
 #include "castor/SvcFactory.hpp"
 #include "castor/stager/SvcClass.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/PermissionDenied.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/OutOfMemory.hpp"
@@ -233,7 +232,7 @@ void castor::db::ora::OraRHSvc::storeRequest
     // get the corresponding client object
     castor::rh::Client* client = dynamic_cast<castor::rh::Client*>(req->client());
     if (0 == client) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Unable to cast client object to castor::rh::Client" << std::endl;
       throw ex;
     }
@@ -425,7 +424,7 @@ void castor::db::ora::OraRHSvc::storeRequest
       std::ostringstream ss;
       castor::ObjectSet objset;
       req->print(ss, "", objset);
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "unexpected ORACLE exception caught while inserting request : "
                       << e.what() << std::endl
                       << "Original request : "
@@ -468,7 +467,7 @@ void castor::db::ora::OraRHSvc::storeSimpleRequest (const castor::stager::Reques
   m_storeSimpleRequestStatement->setString(15, nsHost);
   unsigned int rc = m_storeSimpleRequestStatement->executeUpdate();
   if (0 == rc) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Unable to store simple request";
     throw ex;
   }
@@ -493,7 +492,7 @@ void castor::db::ora::OraRHSvc::storeFileRequest (castor::stager::FileRequest* r
     // Deal with exception (in particular see whether we should reconnect)
     handleException(e);
     // Send generic errors
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Error caught in storeFileRequest."
                     << std::endl << e.what();
     throw ex;
@@ -649,7 +648,7 @@ void castor::db::ora::OraRHSvc::storeFileRequest (castor::stager::FileRequest* r
     // check whether the statement was successful
     if (0 == rc) {
       // throw exception
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "storeFileRequest : unable to store file request";
       throw ex;
     }
@@ -706,7 +705,7 @@ void castor::db::ora::OraRHSvc::storeStartRequest (castor::stager::StartRequest*
   m_storeStartRequestStatement->setString(17, req->nsHost());
   unsigned int rc = m_storeStartRequestStatement->executeUpdate();
   if (0 == rc) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Unable to store start request";
     throw ex;
   }
@@ -739,7 +738,7 @@ void castor::db::ora::OraRHSvc::storeVersionQueryRequest (castor::query::Version
   m_storeVersionQueryStatement->setInt(12, client->secure());
   unsigned int rc = m_storeVersionQueryStatement->executeUpdate();
   if (0 == rc) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Unable to store VersionQuery request";
     throw ex;
   }
@@ -842,7 +841,7 @@ void castor::db::ora::OraRHSvc::storeStageFileQueryRequest (castor::stager::Stag
     free(lensQueryType);free(lensValue);free(bufferValue);free(bufferQueryType);
     // check whether the statement was successful
     if (0 == rc) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Unable to store FileQuery request";
       throw ex;
     }
@@ -883,7 +882,7 @@ void castor::db::ora::OraRHSvc::storeDiskPoolQueryRequest (castor::query::DiskPo
   m_storeDiskPoolQueryStatement->setInt(14, req->queryType());
   unsigned int rc = m_storeDiskPoolQueryStatement->executeUpdate();
   if (0 == rc) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Unable to store DiskPoolQuery request";
     throw ex;
   }
@@ -923,7 +922,7 @@ void castor::db::ora::OraRHSvc::storeMoverCloseRequest (castor::stager::MoverClo
   m_storeMoverCloseRequestStatement->setString(19, req->csumValue());
   unsigned int rc = m_storeMoverCloseRequestStatement->executeUpdate();
   if (0 == rc) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Unable to store MoverClose request";
     throw ex;
   }
@@ -957,7 +956,7 @@ void castor::db::ora::OraRHSvc::storeFiles2DeleteRequest (castor::stager::Files2
   m_storeFiles2DeleteStatement->setString(13, req->diskServer());
   unsigned int rc = m_storeFiles2DeleteStatement->executeUpdate();
   if (0 == rc) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Unable to store Files2Delete request";
     throw ex;
   }
@@ -993,7 +992,7 @@ void castor::db::ora::OraRHSvc::storeListPrivilegesRequest (castor::bwlist::List
   m_storeListPrivilegesStatement->setInt(15, req->requestType());
   unsigned int rc = m_storeListPrivilegesStatement->executeUpdate();
   if (0 == rc) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Unable to store ListPrivileges request";
     throw ex;
   }
@@ -1100,7 +1099,7 @@ void castor::db::ora::OraRHSvc::storeStageAbortRequest (castor::stager::StageAbo
     free(lensFileId);free(lensNsHost);free(bufferNsHost);free(bufferFileId);
     // check whether the statement was successful
     if (0 == rc) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Unable to store Abort request";
       throw ex;
     }
@@ -1217,7 +1216,7 @@ void castor::db::ora::OraRHSvc::storeChangePrivilegeRequest (castor::bwlist::Cha
     free(lensUid);free(bufferUid);free(lensGid);free(bufferGid);free(lensReqType);free(bufferReqType);
     // check whether the statement was successful
     if (0 == rc) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Unable to store ChangePrivilege request";
       throw ex;
     }
@@ -1291,7 +1290,7 @@ void castor::db::ora::OraRHSvc::storeGCRequest (castor::stager::GCFileList* req,
     free(lensDiskCopyId);free(bufferDiskCopyId);
     // check whether the statement was successful
     if (0 == rc) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Unable to store GC request";
       throw ex;
     }
@@ -1407,7 +1406,7 @@ void castor::db::ora::OraRHSvc::changePrivilege
       ex.getMessage() << msg.substr(11,msg.find('\n')-11) << "\n";
       throw ex;
     } else {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "Error caught in changePrivilege."
         << std::endl << e.what();
@@ -1464,7 +1463,7 @@ castor::db::ora::OraRHSvc::listPrivileges
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in listPrivileges."
       << std::endl << e.what();

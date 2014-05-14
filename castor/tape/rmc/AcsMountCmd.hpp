@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/MissingOperand.hpp"
 #include "castor/exception/MountFailed.hpp"
@@ -77,7 +76,7 @@ protected:
    * @return The parsed command-line.
    */
   AcsMountCmdLine parseCmdLine(const int argc, char *const *const argv)
-    throw(castor::exception::Internal, castor::exception::InvalidArgument,
+    throw(castor::exception::Exception, castor::exception::InvalidArgument,
       castor::exception::MissingOperand);
 
   /**

@@ -29,7 +29,6 @@
 #include "castor/db/ora/OraQuerySvc.hpp"
 #include "castor/stager/StageQueryResult.hpp"
 #include "castor/stager/Request.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/TooBig.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
@@ -223,7 +222,7 @@ castor::db::ora::OraQuerySvc::diskCopies4FileName
     m_diskCopies4FileNameStatement->setInt(5, maxNbResponses);
     unsigned int nb = m_diskCopies4FileNameStatement->executeUpdate();
     if (0 == nb) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "diskCopies4FileName : Unable to execute query.";
       throw ex;
@@ -242,7 +241,7 @@ castor::db::ora::OraQuerySvc::diskCopies4FileName
       throw ex;
     } else {
       handleException(e);
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Error caught in diskCopies4FileName."
                       << std::endl << e.what();
       throw ex;
@@ -275,7 +274,7 @@ castor::db::ora::OraQuerySvc::diskCopies4File
     m_diskCopies4FileStatement->setString(6, fileName);
     unsigned int nb = m_diskCopies4FileStatement->executeUpdate();
     if (0 == nb) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "diskCopies4File : Unable to execute query.";
       throw ex;
@@ -287,7 +286,7 @@ castor::db::ora::OraQuerySvc::diskCopies4File
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Error caught in diskCopies4File."
                     << std::endl << e.what();
     throw ex;
@@ -345,7 +344,7 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
         requestStatement = m_diskCopies4UserTagLastRecallsStatement;
         break;
       default:
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage()
           << "diskCopies4Request: request type " << reqType << " not allowed.";
         throw ex;
@@ -356,7 +355,7 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
     requestStatement->setDouble(2, svcClassId);
     unsigned int nb = requestStatement->executeUpdate();
     if(0 == nb) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "diskCopies4Request: unable to execute query.";
       throw ex;
@@ -369,7 +368,7 @@ castor::db::ora::OraQuerySvc::diskCopies4Request
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Error caught in diskCopies4Request."
                     << std::endl << e.what();
     throw ex;
@@ -404,7 +403,7 @@ castor::db::ora::OraQuerySvc::describeDiskPools
     m_describeDiskPoolsStatement->setInt(4, queryType);
     unsigned int nb = m_describeDiskPoolsStatement->executeUpdate();
     if(0 == nb) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "describeDiskPools : unable to execute query.";
       throw ex;
@@ -472,7 +471,7 @@ castor::db::ora::OraQuerySvc::describeDiskPools
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Error caught in describeDiskPools."
                     << std::endl << e.what();
     throw ex;
@@ -506,7 +505,7 @@ castor::db::ora::OraQuerySvc::describeDiskPool
     castor::query::DiskPoolQueryResponse* result = 0;
     unsigned int nb = m_describeDiskPoolStatement->executeUpdate();
     if(0 == nb) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "describeDiskPool : unable to execute query.";
       throw ex;
@@ -566,7 +565,7 @@ castor::db::ora::OraQuerySvc::describeDiskPool
     return result;
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Error caught in describeDiskPool."
                     << std::endl << e.what();
     throw ex;

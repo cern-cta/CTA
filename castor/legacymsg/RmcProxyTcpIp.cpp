@@ -20,7 +20,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/RmcMarshal.hpp"
@@ -53,18 +52,18 @@ castor::legacymsg::RmcProxyTcpIp::~RmcProxyTcpIp() throw() {
 void castor::legacymsg::RmcProxyTcpIp::mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
   // Verify parameters
   if(vid.empty()) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to mount tape: VID is an empty string";
     throw ex;
   }
   if(CA_MAXVIDLEN < vid.length()) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to mount tape: VID is too long"
       ": vid=" << vid << " maxLen=" << CA_MAXVIDLEN << " actualLen=" << vid.length();
     throw ex;
   }
   if(librarySlot.empty()) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to mount tape: librarySlot is an empty string"
       ": vid=" << vid;
     throw ex;
@@ -83,7 +82,7 @@ void castor::legacymsg::RmcProxyTcpIp::mountTape(const std::string &vid, const s
     break;
   default:
     {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Failed to mount tape: Unknown library slot type"
         ": vid=" << vid << " librarySlot=" << librarySlot;
       throw ex;
@@ -141,7 +140,7 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid, con
     switch(header.reqType) {
     case RMC_RC:
       if(0 != header.lenOrStatus) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Received error code from rmc running on " <<
           parsedSlot.rmcHostName << ": code=" << header.lenOrStatus;
         throw ex;
@@ -154,7 +153,7 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid, con
           sizeof(errorBuf) : header.lenOrStatus;
         castor::io::readBytes(fd.get(), m_netTimeout, nbBytesToRead, errorBuf);
         errorBuf[sizeof(errorBuf) - 1] = '\0';
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Received error message from rmc running on " <<
           parsedSlot.rmcHostName << ": " << errorBuf;
         throw ex;
@@ -162,7 +161,7 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid, con
       break;
     default:
       {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "Reply message from rmc running on " << parsedSlot.rmcHostName <<
           " has an unexpected request type"
@@ -171,7 +170,7 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid, con
       }
     }
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() << ": " << ne.getMessage().str();
     throw ex;
   }
@@ -183,18 +182,18 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid, con
 void castor::legacymsg::RmcProxyTcpIp::unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
   // Verify parameters
   if(vid.empty()) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to unmount tape: VID is an empty string";
     throw ex;
   }
   if(CA_MAXVIDLEN < vid.length()) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to nmount tape: VID is too long"
       ": vid=" << vid << " maxLen=" << CA_MAXVIDLEN << " actualLen=" << vid.length();
     throw ex;
   }
   if(librarySlot.empty()) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to unmount tape: librarySlot is an empty string"
       ": vid=" << vid;
     throw ex;
@@ -213,7 +212,7 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTape(const std::string &vid, const
     break;
   default:
     {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Failed to unmount tape: Unknown library slot type"
         ": vid=" << vid << " librarySlot=" << librarySlot;
       throw ex;
@@ -257,7 +256,7 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid, c
     switch(header.reqType) {
     case RMC_RC:
       if(0 != header.lenOrStatus) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Received error code from rmc running on " <<
           parsedSlot.rmcHostName << ": code=" << header.lenOrStatus;
         throw ex;
@@ -270,7 +269,7 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid, c
           sizeof(errorBuf) : header.lenOrStatus;
         castor::io::readBytes(fd.get(), m_netTimeout, nbBytesToRead, errorBuf);
         errorBuf[sizeof(errorBuf) - 1] = '\0';
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Received error message from rmc running on " <<
           parsedSlot.rmcHostName << ": " << errorBuf;
         throw ex;
@@ -278,7 +277,7 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid, c
       break;
     default:
       {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "Reply message from rmc running on " << parsedSlot.rmcHostName <<
           " has an unexpected request type"
@@ -287,7 +286,7 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid, c
       }
     }
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() << ": " << ne.getMessage().str();
     throw ex;
   }
@@ -301,7 +300,7 @@ int castor::legacymsg::RmcProxyTcpIp::connectToRmc(const std::string &hostName) 
   try {
     smartConnectSock.reset(io::connectWithTimeout(hostName, RMC_PORT, m_netTimeout));
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to connect to rmc on host " << hostName
       << " port " << RMC_PORT << ": " << ne.getMessage().str();
     throw ex;
@@ -321,7 +320,7 @@ void castor::legacymsg::RmcProxyTcpIp::writeRmcMountMsg(const int fd, const RmcM
   try {
     io::writeBytes(fd, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to write RMC_SCSI_MOUNT message: "
       << ne.getMessage().str();
     throw ex;
@@ -338,7 +337,7 @@ castor::legacymsg::MessageHeader castor::legacymsg::RmcProxyTcpIp::readRmcMsgHea
   try {
     io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read message header: "
       << ne.getMessage().str();
     throw ex;
@@ -349,7 +348,7 @@ castor::legacymsg::MessageHeader castor::legacymsg::RmcProxyTcpIp::readRmcMsgHea
   unmarshal(bufPtr, bufLen, header);
 
   if(RMC_MAGIC != header.magic) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read message header: "
       " Header contains an invalid magic number: expected=0x" << std::hex <<
       RMC_MAGIC << " actual=0x" << header.magic;
@@ -370,7 +369,7 @@ void castor::legacymsg::RmcProxyTcpIp::writeRmcUnmountMsg(const int fd, const Rm
   try {
     io::writeBytes(fd, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to write RMC_SCSI_UNMOUNT message: "
       << ne.getMessage().str();
     throw ex;

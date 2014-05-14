@@ -36,7 +36,6 @@
 #include "castor/Services.hpp"
 
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 
@@ -237,7 +236,7 @@ void castor::tape::tapegateway::TapeMigrationMountLinkerThread::run(void*)
         bs != blockingSessions.end(); bs++) {
       // If we successfully ping this session, we have a problem, as it is still active
       if (vdqm_PingServer(NULL, NULL, bs->vdqmReqId) >= 0) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Trying to link a tape already involved in an active session: vdqmrequestId="
             << bs->vdqmReqId << " TPVID=" << bs->vid;
         throw ex;

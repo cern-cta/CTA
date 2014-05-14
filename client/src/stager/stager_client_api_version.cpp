@@ -16,7 +16,6 @@
 #include "castor/query/VersionResponse.hpp"
 #include "castor/query/VersionQuery.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/Communication.hpp"
 
 /* ================= */
@@ -51,7 +50,7 @@ EXTERN_C int stage_version(int *majorVersion,
     // Parsing the responses which have been stored in the vector
     int nbResponses =  respvec.size();
     if (nbResponses <= 0) {
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage() << "No responses received";
       throw e;
     }

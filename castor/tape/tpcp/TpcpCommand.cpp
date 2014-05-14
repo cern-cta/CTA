@@ -25,7 +25,6 @@
 #include "castor/Constants.hpp"
 #include "castor/PortNumbers.hpp"
 #include "castor/System.hpp"
-#include "castor/exception/Internal.hpp" 
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
@@ -706,7 +705,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler()
       sendEndNotificationErrorReport(tapebridgeTransactionId, SEINTERNAL,
         oss.str(), sock);
 
-      TAPE_THROW_EX(castor::exception::Internal, oss.str());
+      TAPE_THROW_EX(castor::exception::Exception, oss.str());
     }
 
     // Check the mount transaction ID

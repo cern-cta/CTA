@@ -33,7 +33,6 @@
 #include "castor/VectorAddress.hpp"
 #include "castor/exception/BadVersion.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include <iomanip>

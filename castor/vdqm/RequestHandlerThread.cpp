@@ -22,7 +22,6 @@
  * @author castor dev team
  *****************************************************************************/
 
-#include "castor/exception/Internal.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/server/NotifierThread.hpp"
 #include "castor/vdqm/ProtocolFacade.hpp"
@@ -111,7 +110,7 @@ void castor::vdqm::RequestHandlerThread::handleRequest(Cuuid_t &cuuid,
 
   } catch(castor::exception::Exception &e) {
 
-    castor::exception::Internal ie;
+    castor::exception::Exception ie;
 
     ie.getMessage() << "Failed to get peer port and IP: "
       << e.getMessage().str();
@@ -135,7 +134,7 @@ void castor::vdqm::RequestHandlerThread::handleRequest(Cuuid_t &cuuid,
     protocolFacade.handleProtocolVersion();
 
   } catch(castor::exception::Exception &e) {
-    castor::exception::Internal ie;
+    castor::exception::Exception ie;
 
     ie.getMessage() << "Caught ProtocolFacade exception: "
       << e.getMessage().str();

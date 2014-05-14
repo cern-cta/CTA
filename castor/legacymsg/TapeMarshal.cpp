@@ -23,7 +23,6 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
@@ -44,7 +43,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
   const char *const task = "marshal TapeStatRequestMsgBody";
 
   if(dst == NULL) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -64,7 +63,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
@@ -79,7 +78,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
     io::marshalUint32(reqType, p);
     io::marshalUint32(totalLen, p);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task << ": Failed to marshal header: "
       << ne.getMessage().str();
     throw ex;
@@ -90,7 +89,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
     io::marshalUint32(src.uid, p);
     io::marshalUint32(src.gid, p);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex; 
+    castor::exception::Exception ex; 
     ex.getMessage() << "Failed to " << task << ": Failed to marshal body: "
       << ne.getMessage().str();
     throw ex;
@@ -101,7 +100,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
@@ -119,7 +118,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
   const char *const task = "marshall TapeStatReplyMsgBody";
 
   if(dst == NULL) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -153,7 +152,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Check that the message header buffer is big enough
   if(totalLen > dstLen) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
@@ -168,7 +167,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
     io::marshalUint32(reqType, p);
     io::marshalUint32(bodyLen, p);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task << ": Failed to marshal header: "
       << ne.getMessage().str();
     throw ex;
@@ -194,7 +193,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
       io::marshalUint32(body.drives[i].cfseq, p);
     }
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task << ": Failed to marshal body: "
       << ne.getMessage().str();
     throw ex;
@@ -205,7 +204,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal TapeStatReplyMsgBody"
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
@@ -223,7 +222,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
   const char *const task = "marshal TapeConfigRequestMsgBody";
 
   if(dst == NULL) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -245,7 +244,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
@@ -260,7 +259,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
     io::marshalUint32(reqType, p);
     io::marshalUint32(totalLen, p);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task << ": Failed to marshal header: "
       << ne.getMessage().str();
     throw ex;
@@ -273,7 +272,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
     io::marshalString(src.drive, p);
     io::marshalUint16(src.status, p);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task << ": Failed to marshal body: "
       << ne.getMessage().str();
     throw ex;
@@ -284,7 +283,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
@@ -302,7 +301,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
   const char *const task = "marshal TapeLabelRqstMsgBody";
 
   if(dst == NULL) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -326,7 +325,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
@@ -341,7 +340,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
     io::marshalUint32(reqType, p);
     io::marshalUint32(totalLen, p);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task << ": Failed to marshal header: "
       << ne.getMessage().str();
     throw ex;
@@ -356,7 +355,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
     io::marshalString(src.drive, p);
     io::marshalString(src.dgn, p);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task << ": Failed to marshal body: "
       << ne.getMessage().str();
     throw ex;
@@ -367,7 +366,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
@@ -384,7 +383,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
   const char *task = "marshal TapeUpdateDriveRqstMsgBody";
 
   if(dst == NULL) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -404,7 +403,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
 
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
@@ -419,7 +418,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
     io::marshalUint32(reqType, p);
     io::marshalUint32(totalLen, p);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task << ": Failed to marshal header: "
       << ne.getMessage().str();
     throw ex;
@@ -430,7 +429,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
     io::marshalString(src.vid, p);
     io::marshalString(src.drive, p);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task << ": Failed to marshal body: "
       << ne.getMessage().str();
     throw ex;
@@ -441,7 +440,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task <<
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
@@ -473,7 +472,7 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeStatRep
       io::unmarshalUint32(src, srcLen, dst.drives[i].cfseq);
     }
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal TapeStatReplyMsgBody: " <<
       ne.getMessage().str();
     throw ex;
@@ -488,7 +487,7 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeUpdateD
     io::unmarshalString(src, srcLen, dst.vid);
     io::unmarshalString(src, srcLen, dst.drive);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal TapeUpdateDriveRqstMsgBody: " << 
       ne.getMessage().str();
     throw ex;
@@ -505,7 +504,7 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeConfigR
     io::unmarshalString(src, srcLen, dst.drive);
     io::unmarshalInt16(src, srcLen, dst.status);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal TapeConfigRequestMsgBody: " <<
       ne.getMessage().str();
     throw ex;
@@ -524,7 +523,7 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeLabelRq
     io::unmarshalString(src, srcLen, dst.drive);
     io::unmarshalString(src, srcLen, dst.dgn);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal TapeLabelRqstMsgBody: " <<
       ne.getMessage().str();
     throw ex;
@@ -539,7 +538,7 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeStatReq
     io::unmarshalUint32(src, srcLen, dst.uid);
     io::unmarshalUint32(src, srcLen, dst.gid);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to unmarshal TapeStatRequestMsgBody: " <<
       ne.getMessage().str();
     throw ex;

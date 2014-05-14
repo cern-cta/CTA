@@ -20,7 +20,6 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
@@ -149,7 +148,7 @@ int castor::legacymsg::TapeserverProxyTcpIp::connectToTapeserver() const throw(c
     smartConnectSock.reset(io::connectWithTimeout(m_tapeserverHostName, m_tapeserverPort,
       m_netTimeout));
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to connect to tapeserver on host " << m_tapeserverHostName
       << " port " << m_tapeserverPort << ": " << ne.getMessage().str();
     throw ex;
@@ -170,7 +169,7 @@ void castor::legacymsg::TapeserverProxyTcpIp::writeTapeUpdateDriveRqstMsg(
   try {
     io::writeBytes(fd, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to write drive status message: "
       << ne.getMessage().str();
     throw ex;
@@ -192,7 +191,7 @@ void castor::legacymsg::TapeserverProxyTcpIp::readReplyMsg(const int fd) throw(c
   legacymsg::unmarshal(bufPtr, bufLen, header);
 
   if(TPMAGIC != header.magic) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Invalid mount session message: Invalid magic"
       ": expected=0x" << std::hex << TPMAGIC << " actual=0x" <<
       header.magic;
@@ -200,7 +199,7 @@ void castor::legacymsg::TapeserverProxyTcpIp::readReplyMsg(const int fd) throw(c
   }
   
   if(0 != header.lenOrStatus) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "\"Set Vid\" failed. Return code: "
       << header.lenOrStatus;
     throw ex;

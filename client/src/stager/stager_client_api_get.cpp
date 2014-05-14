@@ -32,7 +32,6 @@
 #include "castor/rh/FileResponse.hpp"
 #include "castor/rh/IOResponse.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/Communication.hpp"
 #include "stager_client_api_common.hpp"
 
@@ -257,7 +256,7 @@ EXTERN_C int stage_get(const char *userTag,
     int nbResponses =  respvec.size();
 
     if (nbResponses <= 0) {
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage() << "No responses received";
       throw e;
     }

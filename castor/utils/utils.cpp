@@ -20,7 +20,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Internal.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <algorithm>
@@ -156,7 +155,7 @@ void castor::utils::getTimeOfDay(struct timeval *const tv,
   if(0 != gettimeofday(tv, tz)) {
     const int savedErrno = errno;
     char errBuf[100];
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Call to gettimeofday() failed: " <<
       sstrerror_r(savedErrno, errBuf, sizeof(errBuf));
     throw ex;

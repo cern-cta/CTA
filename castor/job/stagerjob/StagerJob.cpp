@@ -48,7 +48,6 @@
 #include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/exception/Internal.hpp"
 
 // Static map s_plugins
 static std::map<std::string, castor::job::stagerjob::IPlugin*> *s_plugins = 0;
@@ -93,14 +92,14 @@ castor::stager::IJobSvc* getJobSvc()
     castor::BaseObject::services()->service
     ("RemoteJobSvc", castor::SVC_REMOTEJOBSVC);
   if (remsvc == 0) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Unable to get RemoteJobSvc";
     throw e;
   }
   castor::stager::IJobSvc *jobSvc =
     dynamic_cast<castor::stager::IJobSvc *>(remsvc);
   if (jobSvc == 0) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Could not convert newly retrieved service into IJobSvc";
     throw e;
   }
@@ -448,7 +447,7 @@ void castor::job::stagerjob::sendResponse
   throw (castor::exception::Exception) {
   castor::rh::Client* rhc = dynamic_cast<castor::rh::Client*>(client);
   if (0 == rhc) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Unable to reply to client, unknown client type : "
                    << client->type();
     throw e;

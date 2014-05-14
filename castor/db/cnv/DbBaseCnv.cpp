@@ -24,7 +24,6 @@
  *****************************************************************************/
 
 // Include Files
-#include "castor/exception/Internal.hpp"
 #include "castor/db/DbCnvSvc.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IObject.hpp"

@@ -25,7 +25,6 @@
 #pragma once
 
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
@@ -241,7 +240,7 @@ public:
       size_t     remainingLen = header.lenOrStatus;
       legacymsg::unmarshal(p, remainingLen, body);
     } catch(castor::exception::Exception &ex) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Failed to unmarshal message body from RTCPD" <<
         ": "<< ex.getMessage().str());
     }

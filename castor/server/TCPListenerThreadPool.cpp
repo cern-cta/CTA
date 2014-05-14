@@ -27,7 +27,6 @@
 #include <signal.h>
 #include "castor/server/ListenerThreadPool.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include <errno.h>
 

@@ -27,7 +27,6 @@
 #include <signal.h>
 #include "castor/server/ListenerThreadPool.hpp"
 #include "castor/server/UDPListenerThreadPool.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/UDPSocket.hpp"
 #include <errno.h>
 

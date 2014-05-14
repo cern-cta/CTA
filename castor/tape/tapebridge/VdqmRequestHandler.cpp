@@ -25,7 +25,6 @@
 #include "castor/PortNumbers.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/BridgeClientInfo2Sender.hpp"
@@ -646,7 +645,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::
   const int rc = isadminhost(socketFd, peerHost);
 
   if(rc == -1 && serrno != SENOTADMIN) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
          ": Failed to lookup connection"
       << ": Peer Host: " << peerHost);
   }

@@ -61,7 +61,6 @@
 #include "castor/Constants.hpp"
 
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 
 #include "serrno.h"
 #include <errno.h>
@@ -102,7 +101,7 @@ void castor::stager::daemon::StageRequestSvcThread::process(castor::IObject* sub
       break;
 
       default:
-        castor::exception::Internal e;
+        castor::exception::Exception e;
         e.getMessage() << "Request type " << typeRequest << " not correct for stager svc " << m_name;
         reqHelper->logToDlf(DLF_LVL_ERROR, STAGER_INVALID_TYPE, 0);
         throw e;

@@ -53,7 +53,6 @@
 #include "castor/rh/GCFilesResponse.hpp"
 #include "castor/rh/StartResponse.hpp"
 #include "castor/exception/NotSupported.hpp"
-#include "castor/exception/Internal.hpp"
 #include <errno.h>
 #include <list>
 
@@ -203,7 +202,7 @@ public:
     castor::rh::StartResponse *resp =
       dynamic_cast<castor::rh::StartResponse*>(&r);
     if (0 == resp) {
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage() << "PutStartResponseHandler ; invalid repsonse type\n"
 		     << "Was expecting StartResponse, got "
 		     << castor::ObjectsIdStrings[r.type()];

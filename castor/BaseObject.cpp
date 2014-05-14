@@ -28,7 +28,6 @@
 #include "castor/Services.hpp"
 #include "castor/BaseObject.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include <Cmutex.h>
 
 //------------------------------------------------------------------------------

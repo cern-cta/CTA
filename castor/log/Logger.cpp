@@ -28,7 +28,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::log::Logger::Logger(const std::string &programName)
-  throw(castor::exception::Internal, castor::exception::InvalidArgument):
+  throw(castor::exception::Exception, castor::exception::InvalidArgument):
   m_programName(programName) {
 }
 

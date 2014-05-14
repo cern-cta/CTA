@@ -22,7 +22,6 @@
 
 #include "castor/exception/BadAlloc.hpp"
 #include "castor/exception/Errnum.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/rmc/AcceptHandler.hpp"
 #include "castor/tape/rmc/ConnectionHandler.hpp"
@@ -108,7 +107,7 @@ bool castor::tape::rmc::AcceptHandler::handleEvent(
   try {
     connection.reset(io::acceptConnection(fd.fd, 1));
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept a connection: " << ne.getMessage().str();
     throw ex;
   }
@@ -135,7 +134,7 @@ bool castor::tape::rmc::AcceptHandler::handleEvent(
     m_reactor.registerHandler(connectionHandler.get());
     connectionHandler.release();
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to register a new connection handler"
       ": " << ne.getMessage().str();
   }
@@ -151,7 +150,7 @@ bool castor::tape::rmc::AcceptHandler::handleEvent(
 void castor::tape::rmc::AcceptHandler::checkHandleEventFd(
   const int fd) throw (castor::exception::Exception) {
   if(m_fd != fd) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept connection from client"
       ": Event handler passed wrong file descriptor"
       ": expected=" << m_fd << " actual=" << fd;
