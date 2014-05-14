@@ -30,6 +30,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::legacymsg::TapeLabelRqstMsgBody::TapeLabelRqstMsgBody() throw():
+  force(0),
   uid(0),
   gid(0) {
   memset(vid, '\0', sizeof(vid));

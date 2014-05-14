@@ -56,6 +56,7 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
     {"dgn", 1, NULL, 'g'},
     {"vid", 1, NULL, 'V'},
     {"help", 0, NULL, 'h'},
+    {"force", 0, NULL, 'f'},
     {"debug", 0, NULL, 'd'},
     {NULL, 0, NULL,  0 }
   };
@@ -65,7 +66,7 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
 
   char c;
 
-  while((c = getopt_long(argc, argv, "u:g:V:hd", longopts, NULL)) != -1) {
+  while((c = getopt_long(argc, argv, "u:g:V:hfd", longopts, NULL)) != -1) {
 
     switch (c) {
     case 'u':
@@ -123,6 +124,10 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
       m_cmdLine.helpIsSet = true;
       break;
       
+    case 'f':
+      m_cmdLine.forceIsSet = true;
+      break;
+      
     case 'd':
       m_cmdLine.debugIsSet = true;
       break;
@@ -178,23 +183,24 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
 void castor::tape::label::LabelCmd::usage(std::ostream &os) const throw() {
   os <<
     "Usage:\n"
-    "\t" << m_programName << " -u unitname -g dgn -V vid [-h] [-d]\n"
+    "\t" << m_programName << " -u unitname -g dgn -V vid [-h] [-f] [-d]\n"
     "\n"
     "Where:\n"
     "\n"
     "\t-u, --unitname <unitname>   Explicit name of drive to be used.\n"
     "\t-g, --dgn      <dgn>        Device group name of the tape.\n"
-    "\t-V, --vid     <vid>         Volume ID of the tape.\n"
+    "\t-V, --vid      <vid>        Volume ID of the tape.\n"
     "\t-h, --help                  Print this help message and exit.\n"
+    "\t-f, --force                 Use this option to label a non-blank tape\n"
     "\t-d, --debug                 Debug mode on (default off).\n"
     "\n"
     "Constraints:\n"
     "\n"
-    "\tAll arguments, except -h, are mandatory!\n"
+    "\tAll arguments, except -h -f -d, are mandatory!\n"
     "\n"
     "Example:\n"
     "\n"
-    "\t" << m_programName << " -u T10D6515 -g T10KD6 -V T54321\n"
+    "\t" << m_programName << " -u T10D6515 -g T10KD6 -V T54321 -f\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
@@ -225,6 +231,7 @@ int castor::tape::label::LabelCmd::main(const int argc, char **argv) throw() {
             << "m_cmdLine.dgn: " << m_cmdLine.dgn << std::endl 
             << "m_cmdLine.vid: " << m_cmdLine.vid << std::endl 
             << "m_cmdLine.debugIsSet: " << m_cmdLine.debugIsSet << std::endl 
+            << "m_cmdLine.forceIsSet: " << m_cmdLine.forceIsSet << std::endl
             << "m_cmdLine.helpIsSet: " << m_cmdLine.helpIsSet << std::endl;
   }
 
@@ -280,6 +287,7 @@ void castor::tape::label::LabelCmd::writeTapeLabelRequest(const int timeout) {
   castor::legacymsg::TapeLabelRqstMsgBody body;
   body.uid = m_userId;
   body.gid = m_groupId;
+  body.force = m_cmdLine.forceIsSet ? 1 : 0;
   castor::utils::copyString(body.drive, sizeof(body.drive), m_cmdLine.drive);
   castor::utils::copyString(body.dgn, sizeof(body.dgn), m_cmdLine.dgn);
   castor::utils::copyString(body.vid, sizeof(body.vid), m_cmdLine.vid);

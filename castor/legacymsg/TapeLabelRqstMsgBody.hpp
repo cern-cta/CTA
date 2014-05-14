@@ -35,6 +35,7 @@ namespace legacymsg {
  * The body of an RMC_SCSI_MOUNT message.
  */
 struct TapeLabelRqstMsgBody {
+  uint16_t force; // set to 1 if force==true, 0 otherwise
   uint32_t uid;
   uint32_t gid;
   char vid[CA_MAXVIDLEN + 1];

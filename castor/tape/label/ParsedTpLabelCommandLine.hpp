@@ -55,6 +55,7 @@ struct ParsedTpLabelCommandLine {
   bool dgnIsSet;
   bool vidIsSet;
   bool helpIsSet;
+  bool forceIsSet;
   bool debugIsSet;
 
   /**
@@ -65,6 +66,7 @@ struct ParsedTpLabelCommandLine {
   dgnIsSet(false),
   vidIsSet(false),
   helpIsSet(false),
+  forceIsSet(false),
   debugIsSet(false)
   {
     castor::utils::setBytes(drive, '\0');
