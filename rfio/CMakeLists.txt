@@ -95,20 +95,18 @@ if (${COMPILE_SERVER} STREQUAL "1")
   ##############################################################################
   # Rules to build and install the server rfiod, man pages and config files
   ##############################################################################
-  set_property (SOURCE
-    rfio_call64.c
-    APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
+  find_package (ceph REQUIRED)
+  include_directories(${RADOS_INCLUDE_DIR})
+  set_property(SOURCE rfio_calls.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
+  set_property (SOURCE rfio_call64.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
   set(RFIOD_SRC_FILES Csemaphore.c rfio_serv.c rfio_calls.c rfio_call64.c 
-    rfio_callhandlers.c checkkey.c fio.c rfstatfs.c 
-    rfio_alignedbuf.c rfio_xfsprealloc.c)
+                      rfio_callhandlers.c checkkey.c fio.c rfstatfs.c rfio_localio.cpp
+                      rfio_alignedbuf.c rfio_xfsprealloc.c)
   add_executable(rfiod ${RFIOD_SRC_FILES})
   # Relax compilation of old code full of pointer casting. Funnily enough,
   # the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
-  set_property(SOURCE rfio_calls.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
-  target_link_libraries(rfiod castorcommon castorns castordlf castorsecurity
-    castorclient castorrfio)
-  set_target_properties(rfiod PROPERTIES
-    LINK_FLAGS "-lcrypto -ldl -lz")
+  target_link_libraries(rfiod castorcommon castorns castordlf castorsecurity castorclient castorrfio ${RADOS_LIBS})
+  set_target_properties(rfiod PROPERTIES LINK_FLAGS "-lcrypto -ldl -lz")
   install(TARGETS rfiod DESTINATION ${CASTOR_DEST_BIN_DIR})
   
   CastorInstallExeManPage(rfiod)
