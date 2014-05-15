@@ -47,6 +47,14 @@ class DriveCatalogue {
 public:
 
   /**
+   * Destructor.
+   *
+   * Closes the connection with the label command if the drive catalogue owns
+   * the connection at the time of destruction.
+   */
+  ~DriveCatalogue() throw();
+
+  /**
    * The state of a drive as described by the following FSTN:
    *
    *              start daemon /
@@ -277,10 +285,13 @@ public:
     const ;
 
   /**
-   * Returns the file descriptor of the connection with the command-line
-   * tool castor-tape-label.
+   * Releases and returns the file descriptor of the connection with the
+   * command-line tool castor-tape-label.
+   *
+   * @param unitName The unit name of the tape drive.
    */
-  int getLabelCmdConnection(const pid_t sessionPid) ;
+
+  int releaseLabelCmdConnection(const std::string &unitName);
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_UP.

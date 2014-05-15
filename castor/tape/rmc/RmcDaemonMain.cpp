@@ -37,7 +37,7 @@
 // Tries to get the value of the specified parameter from parsing
 // /etc/castor/castor.conf.
 //------------------------------------------------------------------------------
-static std::string getConfigParam(const std::string &category, const std::string &name) throw castor::exception::Exception;
+static std::string getConfigParam(const std::string &category, const std::string &name);
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
