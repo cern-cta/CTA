@@ -120,14 +120,13 @@ bool RecallTaskInjector::synchronousInjection()
 
   std::auto_ptr<castor::tape::tapegateway::FilesToRecallList> 
     filesToRecallList(m_client.getFilesToRecall(m_maxFiles,m_byteSizeThreshold,reqReport));
-  LogContext::ScopedParam sp[]={
-    LogContext::ScopedParam(m_lc, Param("maxFiles", m_maxFiles)),
-    LogContext::ScopedParam(m_lc, Param("byteSizeThreshold",m_byteSizeThreshold)),
-    LogContext::ScopedParam(m_lc, Param("transactionId", reqReport.transactionId)),
-    LogContext::ScopedParam(m_lc, Param("connectDuration", reqReport.connectDuration)),
-    LogContext::ScopedParam(m_lc, Param("sendRecvDuration", reqReport.sendRecvDuration))
-  };
-  tape::utils::suppresUnusedVariable(sp);
+  
+  castor::log::ScopedParamContainer scoped(m_lc); 
+  scoped.add("sendRecvDuration", reqReport.sendRecvDuration)
+        .add("byteSizeThreshold",m_byteSizeThreshold)
+        .add("transactionId", reqReport.transactionId)
+        .add("sendRecvDuration", reqReport.sendRecvDuration)
+        .add("maxFiles", m_maxFiles);
   
   if(NULL==filesToRecallList.get()) { 
     m_lc.log(LOG_ERR, "No files to recall: empty mount");

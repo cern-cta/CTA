@@ -106,7 +106,7 @@ castor::log::LogContext::ScopedParam::ScopedParam(
 }
 
 castor::log::LogContext::ScopedParam::~ScopedParam() throw () {
-  m_context.erase(m_name);
+   m_context.erase(m_name);
 }
 
 std::ostream & castor::log::operator << (std::ostream & os, 

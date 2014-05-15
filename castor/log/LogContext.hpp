@@ -38,7 +38,6 @@ namespace log {
 class LogContext {
   friend std::ostream & operator << (std::ostream & os , const LogContext & lc);
 public:
-
   /**
    * Constructor
    *
@@ -146,6 +145,26 @@ private:
   Logger & m_log;
   std::list<Param> m_params;
 }; // class LogContext
+
+class ScopedParamContainer{
+  public:
+    ScopedParamContainer(LogContext & context):m_context(context) {}
+    ~ScopedParamContainer() {
+      for(std::vector<std::string>::const_iterator it=m_names.begin();it!=m_names.end();++it)
+      {  m_context.erase(*it);
+      }
+    }
+
+    template <class T> ScopedParamContainer& add(const std::string& s,const T& t){
+      m_context.pushOrReplace(Param(s,t));
+      m_names.push_back(s);
+      return *this;
+    }
+  private:
+        
+    LogContext & m_context;
+    std::vector<std::string> m_names;
+};
 
 std::ostream & operator << (std::ostream & os , const LogContext & lc);
 
