@@ -63,7 +63,8 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   legacymsg::VmgrProxyFactory &vmgrFactory,
   legacymsg::RmcProxyFactory &rmcFactory,
   legacymsg::TapeserverProxyFactory &tapeserverFactory,
-  io::PollReactor &reactor) :
+  legacymsg::NsProxyFactory &nsFactory,
+  io::PollReactor &reactor) throw(castor::exception::Exception):
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),
   m_argv(argv),
@@ -72,6 +73,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   m_vmgrFactory(vmgrFactory),
   m_rmcFactory(rmcFactory),
   m_tapeserverFactory(tapeserverFactory),
+  m_nsFactory(nsFactory),
   m_reactor(reactor),
   m_programName("tapeserverd"),
   m_hostName(getHostName()) {
@@ -881,11 +883,13 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(
     const legacymsg::TapeLabelRqstMsgBody job =
       m_driveCatalogue.getLabelJob(unitName);
     std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
+    std::auto_ptr<legacymsg::NsProxy> ns(m_nsFactory.create());
     castor::tape::System::realWrapper sWrapper;
     bool force = job.force==1 ? true : false;
     castor::tape::tapeserver::daemon::LabelSession labelsession(
       labelCmdConnection,
       *(rmc.get()),
+      *(ns.get()),
       job,
       m_log,
       sWrapper,

@@ -340,6 +340,36 @@ void drives::DriveGeneric::setDensityAndCompression(bool compression,
   }
 }
 
+
+/**
+ * Function that checks if a tape is blank (contains no records) 
+ * @return true if tape is blank, false otherwise
+ */      
+bool drives::DriveGeneric::isTapeBlank() {
+  struct mtop mtCmd1;
+  mtCmd1.mt_op = MTREW;
+  mtCmd1.mt_count = 1;
+  
+  struct mtop mtCmd2;
+  mtCmd2.mt_op = MTFSR;
+  mtCmd2.mt_count = 1;
+ 
+  if((0 == m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd1)) && (0 != m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd2))) { //we are doing it the old CASTOR way (see readlbl.c)
+    if(m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &m_mtInfo)>=0) {
+      if(GMT_EOD(m_mtInfo.mt_gstat) && GMT_BOT(m_mtInfo.mt_gstat)) {
+        return true;
+      }
+    }    
+  }
+  
+  struct mtop mtCmd3;
+  mtCmd3.mt_op = MTREW;
+  mtCmd3.mt_count = 1;
+  m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &mtCmd3);
+  
+  return false;
+}
+
 /**
  * Set the buffer write switch in the st driver. This is directly matching a configuration
  * parameter in CASTOR, so this function has to be public and usable by a higher level
@@ -982,4 +1012,8 @@ bool drives::FakeDrive::isAtBOT()  {
 }
 bool drives::FakeDrive::isAtEOD()  {
   return m_current_position==m_tape.size()-1;
+}
+
+bool drives::FakeDrive::isTapeBlank() {
+  return m_tape.empty();
 }

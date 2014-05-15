@@ -31,6 +31,7 @@
 #include "castor/legacymsg/TapeserverProxyFactory.hpp"
 #include "castor/legacymsg/VdqmProxyFactory.hpp"
 #include "castor/legacymsg/VmgrProxyFactory.hpp"
+#include "castor/legacymsg/NsProxyFactory.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
@@ -86,7 +87,8 @@ public:
     legacymsg::VmgrProxyFactory &vmgrFactory,
     legacymsg::RmcProxyFactory &rmcFactory,
     legacymsg::TapeserverProxyFactory &tapeserverProxyFactory,
-    io::PollReactor &reactor) ;
+    legacymsg::NsProxyFactory &nsProxyFactory,
+    io::PollReactor &reactor) throw(castor::exception::Exception);
 
   /**
    * Destructor.
@@ -402,6 +404,11 @@ protected:
    * The proxy object representing the tapeserver daemon.
    */
   legacymsg::TapeserverProxyFactory &m_tapeserverFactory;
+  
+  /**
+   * The proxy object representing the nameserver daemon.
+   */
+  legacymsg::NsProxyFactory &m_nsFactory;
 
   /**
    * The reactor responsible for dispatching the file-descriptor event-handlers

@@ -17,7 +17,7 @@
 #include "serrno.h"
 
 struct Cns_direntape *
-Cns_listtape(char *server, char *vid, int flags, Cns_list *listp, int fseq)
+Cns_listtape(char *server, const char *vid, int flags, Cns_list *listp, int fseq)
 {
   int bov = 0;
   int c;

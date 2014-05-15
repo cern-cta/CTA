@@ -31,6 +31,7 @@
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
+#include "castor/legacymsg/NsProxyDummyFactory.hpp"
 
 #include <gtest/gtest.h>
 #include <iostream>
@@ -74,10 +75,11 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::legacymsg::VmgrProxyDummyFactory vmgrFactory;
   castor::legacymsg::RmcProxyDummyFactory rmcFactory;
   castor::legacymsg::TapeserverProxyDummyFactory tpsFactory;
+  castor::legacymsg::NsProxyDummyFactory nsFactory;
   castor::io::DummyPollReactor reactor;
   std::auto_ptr<TapeDaemon> daemon;
   ASSERT_NO_THROW(daemon.reset(new TapeDaemon(argc, argv, stdOut, stdErr, log,
-    tpconfigLines, vdqmFactory, vmgrFactory, rmcFactory, tpsFactory, reactor)));
+    tpconfigLines, vdqmFactory, vmgrFactory, rmcFactory, tpsFactory, nsFactory, reactor)));
 }
 
 } // namespace unitTests
