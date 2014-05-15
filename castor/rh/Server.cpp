@@ -24,7 +24,6 @@
 // Include Files
 #include "castor/rh/Server.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/server/AuthListenerThreadPool.hpp"
 #include "castor/log/SyslogLogger.hpp"

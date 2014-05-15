@@ -24,7 +24,6 @@
  
 #include "castor/exception/Errnum.hpp"
 #include "castor/exception/BadAlloc.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
@@ -88,7 +87,7 @@ std::string
   if(gethostname(nameBuf, sizeof(nameBuf))) {
     char errBuf[100];
     sstrerror_r(errno, errBuf, sizeof(errBuf));
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to get host name: " << errBuf;
     throw ex;
   }
@@ -157,7 +156,7 @@ std::string castor::tape::tapeserver::daemon::TapeDaemon::getConfigString(
   try {
     config = common::CastorConfiguration::getConfig();
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
       ": Failed to get castor configuration: " << ne.getMessage().str();
     throw ex;
@@ -166,7 +165,7 @@ std::string castor::tape::tapeserver::daemon::TapeDaemon::getConfigString(
   try {
     value = config.getConfEnt(category.c_str(), name.c_str());
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
       ": Failed to get castor configuration entry: " << ne.getMessage().str();
     throw ex;
@@ -303,7 +302,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
     break;
   default:
     {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Failed to register tape drive in vdqm"
         ": server=" << m_hostName << " unitName=" << unitName << " dgn=" << dgn
         << ": Invalid drive state: state=" <<
@@ -715,7 +714,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::writeTapeRcReplyMsg(const int
   try {
     io::writeBytes(fd, timeout, len, buf); // TODO: put the 10 seconds of
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to write job reply message: " <<
       ne.getMessage().str();
     throw ex;
@@ -924,7 +923,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(const std::st
     const legacymsg::TapeLabelRqstMsgBody job = m_driveCatalogue.getLabelJob(unitName);
     std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
     castor::tape::System::realWrapper sWrapper;
-    castor::tape::tapeserver::daemon::LabelSession labelsession(*(rmc.get()), job, m_log, sWrapper, m_tpconfigLines, true);
+    bool force = job.force==1 ? true : false;
+    castor::tape::tapeserver::daemon::LabelSession labelsession(*(rmc.get()), job, m_log, sWrapper, m_tpconfigLines, force);
     labelsession.execute();
     exit(0);
   } catch(std::exception &se) {

@@ -29,7 +29,6 @@
 #include "castor/IClient.hpp"
 #include "castor/rh/Client.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/Constants.hpp"
 #include "castor/io/biniostream.h"
 #include "castor/io/StreamCnvSvc.hpp"
@@ -898,7 +897,7 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
   ClientResponse cr;
   castor::rh::Client* cl = dynamic_cast<castor::rh::Client*>(client);
   if (0 == cl) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Could not cast IClient to client";
     Cthread_mutex_unlock(&m_clientQueue);
     throw e;

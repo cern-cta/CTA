@@ -26,7 +26,6 @@
 #include "castor/BaseAddress.hpp"
 #include "castor/Constants.hpp"
 #include "castor/Services.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include "castor/server/NotifierThread.hpp"

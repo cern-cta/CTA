@@ -24,7 +24,6 @@
  *****************************************************************************/
 
 #include "castor/Constants.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/System.hpp"

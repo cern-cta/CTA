@@ -65,7 +65,7 @@ int castor::tape::rmc::AcsQueryVolumeCmd::main(const int argc,
     m_err << std::endl;
     usage(m_err);
     return 1;
-  } catch(castor::exception::Internal &ie) {
+  } catch(castor::exception::Exception &ie) {
     m_err << "Aborting: Internal error: " << ie.getMessage().str() <<
       std::endl;
     return 1;
@@ -101,7 +101,7 @@ int castor::tape::rmc::AcsQueryVolumeCmd::main(const int argc,
 castor::tape::rmc::AcsQueryVolumeCmdLine
   castor::tape::rmc::AcsQueryVolumeCmd::parseCmdLine(
   const int argc, char *const *const argv)
-  throw(castor::exception::Internal, castor::exception::InvalidArgument,
+  throw(castor::exception::Exception, castor::exception::InvalidArgument,
     castor::exception::MissingOperand) {
 
   static struct option longopts[] = {
@@ -172,7 +172,7 @@ castor::tape::rmc::AcsQueryVolumeCmdLine
       break;
     default:
       {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "getopt_long returned the following unknown value: 0x" <<
           std::hex << (int)c;

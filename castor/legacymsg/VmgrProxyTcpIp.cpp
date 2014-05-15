@@ -67,7 +67,7 @@ int castor::legacymsg::VmgrProxyTcpIp::connectToVmgr() const throw(castor::excep
     smartConnectSock.reset(io::connectWithTimeout(m_vmgrHostName, m_vmgrPort,
       m_netTimeout));
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to connect to vmgr on host " << m_vmgrHostName
       << " port " << m_vmgrPort << ": " << ne.getMessage().str();
     throw ex;

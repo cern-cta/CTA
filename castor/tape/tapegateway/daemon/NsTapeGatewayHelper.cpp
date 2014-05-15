@@ -35,7 +35,6 @@
 #include "rfio_api.h"
 
 #include "castor/exception/OutOfMemory.hpp"
-#include "castor/exception/Internal.hpp"
 
 #include "castor/tape/tapegateway/PositionCommandCode.hpp"
 

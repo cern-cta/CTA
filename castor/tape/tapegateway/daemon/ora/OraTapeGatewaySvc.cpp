@@ -43,7 +43,6 @@
 #include "castor/IFactory.hpp"
 #include "castor/SvcFactory.hpp"
 
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/OutOfMemory.hpp"
 
 #include "castor/tape/tapegateway/ClientType.hpp"
@@ -217,14 +216,14 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountsWithou
   } catch (oracle::occi::SQLException& e) {
     if (rs) m_getMigrationMountsWithoutTapesStatement->closeResultSet(rs);
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in getMigrationMountsWithoutTapes"
       << std::endl << e.what();
     throw ex;
   } catch (std::exception& e) {
     if (rs) m_getMigrationMountsWithoutTapesStatement->closeResultSet(rs);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in getMigrationMountsWithoutTapes"
       << std::endl << e.what();
@@ -241,7 +240,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountReqsFor
     std::list<blockingSessionInfo>& blockingSessions)
 throw (castor::exception::Exception) {
   if (!blockingSessions.empty()) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
           << "Error in getMigrationMountReqsForVids: blockingSessions container not empty on call";
     throw ex;
@@ -274,7 +273,7 @@ throw (castor::exception::Exception) {
     rs.close();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in getMigrationMountReqsForVids"
       << std::endl << e.what();
@@ -347,7 +346,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToMigMounts(c
       if (bufferMigrationMountIds != 0) free(bufferMigrationMountIds);
       if (lensFseqs != 0 ) free(lensFseqs);
       if (bufferFseqs != 0 ) free(bufferFseqs);
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "invalid VID in attachTapesToMigMounts"
                       << std::endl;
       throw ex;
@@ -409,7 +408,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToMigMounts(c
     if (lensFseqs != 0 ) free(lensFseqs);
     if (bufferFseqs != 0 ) free(bufferFseqs);
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in attachTapesToMigMounts"
       << std::endl << e.what();
@@ -447,7 +446,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapeWithoutDriveReq
     mode = m_getTapeWithoutDriveReqStatement->getInt(3);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Error caught in getTapeWithoutDriveReq"
                     << std::endl << e.what();
     throw ex;
@@ -477,7 +476,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachDriveReq
     m_attachDriveReqStatement->executeUpdate(); 
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in attachDriveReq"
       << std::endl << e.what();
@@ -520,7 +519,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapesWithDriveReqs
     m_getTapesWithDriveReqsStatement->closeResultSet(rs);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in getTapesWithDriveReqs"
       << std::endl << e.what();
@@ -581,7 +580,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::restartLostReqs
     if (bufferMountTransactionIds != 0) free(bufferMountTransactionIds);
     // handle exception
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in restartLostReqs "
       << std::endl << e.what();
@@ -636,14 +635,14 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(
   } catch (oracle::occi::SQLException& e) {
     if (rs) m_getFailedMigrationsStatement->closeResultSet(rs);
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in getFailedMigrations"
       << std::endl << e.what();
     throw ex;
   } catch (std::exception &e) { // This case is almost identical to the previous one, but does not call handleException
     if (rs) m_getFailedMigrationsStatement->closeResultSet(rs);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in getFailedMigrations"
       << std::endl << e.what();
@@ -760,7 +759,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(const
     if (bufferRetry != 0) free(bufferRetry);
 
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in setMigRetryResult"
       << std::endl << e.what();
@@ -816,7 +815,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::startTapeSession(const c
     volume.setMountTransactionId(startRequest.mountTransactionId());
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in startTapeSession"
       << std::endl << e.what();
@@ -842,7 +841,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTapeSession
     m_endTapeSessionStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Error caught in failTapeSession" << std::endl << e.what();
     throw ex;
   }
@@ -866,7 +865,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTapeSessionAutonomous
     m_endTapeSessionAutonomousStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Error caught in failTapeSessionAutonomous" << std::endl << e.what();
     throw ex;
   }
@@ -895,7 +894,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapeToRelease
     tape.full = m_getTapeToReleaseStatement->getInt(4);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in getTapeToRelease"
       << std::endl << e.what();
@@ -927,7 +926,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::cancelMigrationOrRecall
     m_cancelMigrationOrRecallStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in cancelMigrationOrRecall"
       << std::endl << e.what();
@@ -951,7 +950,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::deleteMigrationMountWith
     m_deleteMigrationMountWithBadTapePoolStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in deleteMigrationMountWithBadTapePool"
       << std::endl << e.what();
@@ -980,7 +979,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::flagTapeFullForMigration
     m_flagTapeFullForMigrationSession->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in flagTapeFullForMigrationSession"
       << std::endl << e.what();
@@ -1009,7 +1008,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountVid(con
     tapePool = m_getMigrationMountVid->getString(3);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in getMigrationMountVid"
       << std::endl << e.what();
@@ -1027,7 +1026,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToMigrate (
   throw (castor::exception::Exception){
   // container for result should be clean!
   if (!filesToMigrate.empty()) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
           << "Error in getBulkFilesToMigrate: filesToMigrate container not empty on call";
     throw ex;
@@ -1078,7 +1077,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToMigrate (
   } catch (oracle::occi::SQLException e) {
     cnvSvc()->rollback();
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in getBulkFilesToMigrate"
       << std::endl << e.what();
@@ -1099,7 +1098,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToRecall (
   throw (castor::exception::Exception){
   // container for result should be clean!
   if (!filesToRecall.empty()) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
           << "Error in getBulkFilesToRecall: filesToRecall container not empty on call";
     throw ex;
@@ -1174,7 +1173,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToRecall (
   } catch (oracle::occi::SQLException e) {
     cnvSvc()->rollback();
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in getBulkFilesToRecall"
       << std::endl << e.what();
@@ -1275,7 +1274,7 @@ throw (castor::exception::Exception){
     m_setBulkFileMigrationResult->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
           << "Error caught in setBulkFileMigrationResult"
           << std::endl << e.what();
@@ -1360,7 +1359,7 @@ throw (castor::exception::Exception){
     m_setBulkFileRecallResult->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
           << "Error caught in setBulkFileRecallResult"
           << std::endl << e.what();

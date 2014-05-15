@@ -27,7 +27,6 @@
 // Include Files
 
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 
 #include "castor/PortNumbers.hpp"
@@ -102,7 +101,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
   // Throw an exception if the Oracle database service could not
   // be obtained
   if (0 == oraSvc) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to get  TapeGateway Oracle database service";
     throw(ex);
@@ -177,13 +176,13 @@ castor::tape::tapegateway::TapeGatewayDaemon::TapeGatewayDaemon(
     char* dp = tmp;
     m_listenPort = strtoul(tmp, &dp, 0);
     if (*dp != 0) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Bad port value in enviroment variable "
                         << tmp << std::endl;
         throw ex;
     }
     if ( m_listenPort > 65535 ){
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Given port no. in enviroment variable "
                         << "exceeds 65535 !"<< std::endl;
         throw ex;

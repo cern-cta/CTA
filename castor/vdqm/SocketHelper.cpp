@@ -33,7 +33,6 @@
 #include <string>
 
 #include "castor/System.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/ServerSocket.hpp"
 #include "castor/vdqm/DevTools.hpp"
 #include "castor/vdqm/SocketHelper.hpp"
@@ -77,7 +76,7 @@ unsigned int castor::vdqm::SocketHelper::readMagicNumber(
     }
   case 0:
     {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       std::ostream &os = ex.getMessage();
       os << "Failed to read Magic Number from socket: ";
       castor::vdqm::DevTools::printSocketDescription(os, socket);
@@ -86,7 +85,7 @@ unsigned int castor::vdqm::SocketHelper::readMagicNumber(
     }
   default:
     if (rc != sizeof(unsigned int)) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       std::ostream &os = ex.getMessage();
       os << "Failed to read Magic Number from socket: ";
       castor::vdqm::DevTools::printSocketDescription(os, socket);

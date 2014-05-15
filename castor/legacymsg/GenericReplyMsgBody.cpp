@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      Internal.cpp
+ *         castor/legacymsg/GenericReplyMsgBody.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,16 +19,17 @@
  *
  *
  * 
- *
- * @author Sebastien Ponce
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-// Include Files
-#include "serrno.h"
-#include "castor/exception/Internal.hpp"
+#include "castor/legacymsg/GenericReplyMsgBody.hpp"
 
-// -----------------------------------------------------------------------
-// Constructor
-// -----------------------------------------------------------------------
-castor::exception::Internal::Internal() :
-  castor::exception::Exception(SEINTERNAL) {}
+#include <string.h>
+
+//-----------------------------------------------------------------------------
+// constructor
+//-----------------------------------------------------------------------------
+castor::legacymsg::GenericReplyMsgBody::GenericReplyMsgBody() throw():
+  status(0) {
+  memset(errorMessage, '\0', sizeof(errorMessage));
+}

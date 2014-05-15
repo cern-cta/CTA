@@ -25,7 +25,6 @@
 
 #include "castor/Constants.hpp"
 #include "castor/dlf/Dlf.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/PermissionDenied.hpp"
 #include "castor/exception/TimeOut.hpp"
 #include "castor/io/io.hpp"
@@ -241,11 +240,11 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       // Simply rethrow as there is no need to convert exception type
       throw ex;
     } catch(std::exception &e) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Caught a std::exception"
         ": what=" << e.what());
     } catch(...) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Caught an unknown exception");
     }
   } catch(SessionException &se) {
@@ -443,7 +442,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
   BridgeSocketCatalogue::SocketType sockType = BridgeSocketCatalogue::LISTEN;
   const int pendingSock = m_sockCatalogue.getAPendingSock(readFdSet, sockType);
   if(pendingSock == -1) {
-    TAPE_THROW_EX(exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": Lost pending file descriptor");
   }
 
@@ -464,7 +463,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
     processPendingClientMigrationReportSocket(pendingSock);
     break;
   default:
-    TAPE_THROW_EX(exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       "Unknown socket type"
       ": socketType = " << sockType);
   }
@@ -533,7 +532,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     rtcpdClosedConnection = io::readBytesFromCloseable(pendingSock,
       RTCPDNETRWTIMEOUT, sizeof(dummyBuf), dummyBuf);
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": Failed to determine why the socket of the initial rtcpd connection"
       " has become pending"
       ": " << ex.getMessage().str());
@@ -623,7 +622,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   // Check the pending socket is the one to be expected
   if(pendingSock != getMoreWorkConnection.clientSock) {
     // This should never happen
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": pendingSock is not equal to getMoreWorkConnection.clientSock"
       ": pendingSock=" << pendingSock <<
       " getMoreWorkConnection.clientSock=" <<
@@ -720,7 +719,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   // Check for a mismatch between the pending and catalogue socket-decriptors
   if(pendingSock != catalogueSock.get()) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Client migration-report socket-descriptor mismatch"
         ": pendingSock=" << pendingSock <<
         ": catalogueSock=" << catalogueSock.get());
@@ -826,7 +825,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startRtcpdSession()
         rtcpdSessionStarted = true;
         break;
       default:
-        TAPE_THROW_EX(castor::exception::Internal,
+        TAPE_THROW_EX(castor::exception::Exception,
           ": Unknown VolumeMode"
           ": Actual=" << m_volume.mode());
       }
@@ -837,11 +836,11 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startRtcpdSession()
       // Simply rethrow as there is no need to convert exception type
       throw ex;
     } catch(std::exception &e) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Caught a std::exception"
         ": what=" << e.what());
     } catch(...) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Caught an unknown exception");
     }
 
@@ -1233,7 +1232,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::endRtcpdSession() throw() {
         // Do nothing
         break;
       default:
-        TAPE_THROW_EX(castor::exception::Internal,
+        TAPE_THROW_EX(castor::exception::Exception,
           ": Unknown VolumeMode"
           ": Actual=" << m_volume.mode());
       }
@@ -1241,11 +1240,11 @@ void castor::tape::tapebridge::BridgeProtocolEngine::endRtcpdSession() throw() {
       // Simply rethrow as there is no need to convert exception type
       throw ex;
     } catch(std::exception &se) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Caught a std::exception"
         ": what=" << se.what());
     } catch(...) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Caught an unknown exception");
     }
 
@@ -1721,7 +1720,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   if(m_filesToMigrate.empty()) {
     // This should never happen
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": There are no files to migrate in the cache");
   }
 
@@ -1844,7 +1843,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   if(m_filesToRecall.empty()) {
     // This should never happen
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": There are no files to recall in the cache");
   }
 
@@ -2861,7 +2860,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     dynamic_cast<tapegateway::FilesToMigrateList*>(obj);
 
   if(reply == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": Failed to " << task <<
       ": Failed to down cast reply object to"
       " tapegateway::FilesToMigrateList");
@@ -2925,7 +2924,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::addFilesToMigrateToCache(
 
     if(NULL == clientFileToMigrate) {
       // Should never happen
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": fileToMigrate is a null pointer");
     }
 
@@ -3141,7 +3140,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     dynamic_cast<tapegateway::FilesToRecallList*>(obj);
 
   if(reply == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": Failed to " << task <<
       ": Failed to down cast reply object to tapegateway::FilesToRecallList");
   }
@@ -3174,7 +3173,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 
   if(0 == reply->filesToRecall().size()) {
     // Should never happen
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": Failed to " << task <<
       ": FilesToRecallList contains 0 files to recall");
   }
@@ -3209,7 +3208,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::addFilesToRecallToCache(
 
     if(NULL == clientFileToRecall) {
       // Should never happen
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": fileToRecall is a null pointer");
     }
 
@@ -3256,7 +3255,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     dynamic_cast<const tapegateway::NoMoreFiles*>(obj);
 
   if(reply == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": Failed to down cast reply object to tapegateway::NoMoreFiles");
   }
 
@@ -3366,7 +3365,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
     dynamic_cast<const tapegateway::EndNotificationErrorReport*>(obj);
 
   if(reply == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": Failed to down cast reply object to "
       "tapegateway::EndNotificationErrorReport");
   }
@@ -3504,7 +3503,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
           // Do nothing
           break;
         default:
-          TAPE_THROW_EX(castor::exception::Internal,
+          TAPE_THROW_EX(castor::exception::Exception,
             ": Unknown VolumeMode"
             ": Actual=" << m_volume.mode());
         }
@@ -3515,11 +3514,11 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
       // also-std::exception-exception
       throw ex;
     } catch(std::exception &se) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Caught a std::exception"
         ": what=" << se.what());
     } catch(...) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Caught an unknown exception");
     }
 
@@ -3565,7 +3564,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   for(std::list<SessionError>::const_iterator itor = sessionErrors.begin();
     itor != sessionErrors.end(); itor++) {
     if(SessionError::FILE_SCOPE != itor->getErrorScope()) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Failed to notifyClientOfFailedMigrations"
         ": Scope of SessionError is not FILE_SCOPE");
     }
@@ -3640,7 +3639,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   for(std::list<SessionError>::const_iterator itor = sessionErrors.begin();
     itor != sessionErrors.end(); itor++) {
     if(SessionError::FILE_SCOPE != itor->getErrorScope()) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Failed to notifyClientOfFailedMigrations"
         ": Scope of SessionError is not FILE_SCOPE");
     }
@@ -3727,11 +3726,11 @@ void castor::tape::tapebridge::BridgeProtocolEngine::notifyClientEndOfSession()
       // Add some context information and rethrow exception
       TAPE_THROW_CODE(ex.code(), ": " << ex.getMessage().str());
     } catch(std::exception &se) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Caught a std::exception"
         ": what=" << se.what());
     } catch(...) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Caught an unknown exception");
     }
   } catch(castor::exception::Exception &ex) {

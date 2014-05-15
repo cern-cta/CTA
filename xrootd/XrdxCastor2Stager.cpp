@@ -42,7 +42,6 @@
 #include "castor/stager/SubRequest.hpp"
 #include "castor/rh/IOResponse.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/Communication.hpp"
 #include "stager_client_api_common.hpp"
 #include "stager_api.h"

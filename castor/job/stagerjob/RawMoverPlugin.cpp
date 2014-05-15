@@ -40,7 +40,6 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/rh/IOResponse.hpp"
 #include "castor/stager/IJobSvc.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/TimeOut.hpp"
 #include "castor/exception/NoValue.hpp"
 #include "castor/exception/Exception.hpp"
@@ -256,7 +255,7 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
       // and call putFailed
       context.jobSvc->putFailed
         (args.subRequestId, args.fileId.fileid, args.fileId.server);
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage() << "stat64 error";
       throw e;
     }

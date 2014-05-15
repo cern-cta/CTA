@@ -28,7 +28,6 @@
 #include "castor/CnvFactory.hpp"
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/IAddress.hpp"
 #include "castor/IConverter.hpp"
 #include "castor/ICnvFactory.hpp"
@@ -78,7 +77,7 @@ void castor::io::StreamPtrCnv::createRep(castor::IAddress*,
                                          unsigned int)
   throw (castor::exception::Exception) {
   // This is normally never called, so just raise an exception
-  castor::exception::Internal ex;
+  castor::exception::Exception ex;
   ex.getMessage() << "castor::io::StreamPtrCnv::createRep "
                   << "should never be called";
   throw ex;
@@ -90,7 +89,7 @@ void castor::io::StreamPtrCnv::createRep(castor::IAddress*,
 castor::IObject* castor::io::StreamPtrCnv::createObj
 (castor::IAddress*)
   throw (castor::exception::Exception) {
-  castor::exception::Internal ex;
+  castor::exception::Exception ex;
   ex.getMessage() << "castor::io::StreamPtrCnv::createObj "
                   << "should never be called";
   throw ex;
@@ -105,7 +104,7 @@ void castor::io::StreamPtrCnv::marshalObject(castor::IObject* object,
   throw (castor::exception::Exception) {
   if (0 != object) {
     // This is normally never called, so just raise an exception
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "castor::io::StreamPtrCnv::marshalObject "
                     << "should only be called with null objects";
     throw ex;
@@ -131,7 +130,7 @@ castor::IObject* castor::io::StreamPtrCnv::unmarshalObject(castor::io::biniostre
   if (newlyCreated.find(id) != newlyCreated.end()) {
     return newlyCreated[id];
   }
-  castor::exception::Internal ex;
+  castor::exception::Exception ex;
   ex.getMessage() << "Deserialization error : wrong id found in stream : "
                   << id;
   throw ex;

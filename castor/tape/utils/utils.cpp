@@ -23,7 +23,6 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/tape/Constants.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -259,7 +258,7 @@ ssize_t castor::tape::utils::drainFile(const int fd)
     const int savedErrno = errno;
 
     if(rc == -1) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Failed to drain file"
         ": fd=" << fd <<
         ": Error=" << sstrerror(savedErrno));
@@ -768,14 +767,14 @@ void castor::tape::utils::appendPathToEnvVar(const std::string &envVarName,
   const int overwrite = 1;
   const int rc = setenv(envVarName.c_str(), newPath.c_str(), overwrite);
   if(rc == -1) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": setenv() call failed" <<
       ": Insufficient space in the environment" <<
       ": name=" << envVarName <<
       " value=" << newPath <<
       " overwrite=" << overwrite);
   } else if(rc != 0) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": setenv() call failed" <<
       ": Unknown error");
   }

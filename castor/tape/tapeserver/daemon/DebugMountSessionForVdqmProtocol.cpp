@@ -95,7 +95,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::execute
       break;
     default:
       {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Got an unknown volume-mode from the client: vid="
           << volume->vid() << " mode=" << volume->mode();
         throw ex;
@@ -151,7 +151,7 @@ castor::tape::tapegateway::Volume *castor::tape::tapeserver::daemon::DebugMountS
         dynamic_cast<tapegateway::Volume*>(obj.get());
 
       if(reply == NULL) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Failed to get volume"
           ": Failed to down cast reply object to tapegateway::Volume";
         throw ex;
@@ -161,7 +161,7 @@ castor::tape::tapegateway::Volume *castor::tape::tapeserver::daemon::DebugMountS
         checkTransactionIds("Volume", reply->mountTransactionId(),
           clientMsgSeqNb, reply->aggregatorTransactionId());
       } catch(castor::exception::Exception &ne) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Failed to get volume"
           ": " << ne.getMessage().str();
         throw ex;
@@ -179,7 +179,7 @@ castor::tape::tapegateway::Volume *castor::tape::tapeserver::daemon::DebugMountS
         dynamic_cast<tapegateway::NoMoreFiles*>(obj.get());
 
       if(reply == NULL) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Failed to get volume"
           ": Failed to down cast reply object to tapegateway::NoMoreFiles";
         throw ex;
@@ -189,7 +189,7 @@ castor::tape::tapegateway::Volume *castor::tape::tapeserver::daemon::DebugMountS
         checkTransactionIds("NoMoreFiles", reply->mountTransactionId(),
           clientMsgSeqNb, reply->aggregatorTransactionId());
       } catch(castor::exception::Exception &ne) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Failed to get volume: " << ne.getMessage().str();
         throw ex;
       }
@@ -202,7 +202,7 @@ castor::tape::tapegateway::Volume *castor::tape::tapeserver::daemon::DebugMountS
 
   default:
     {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Failed to get volume: Unknown reply type " << obj->type();
       throw ex;
     }
@@ -225,7 +225,7 @@ castor::IObject *castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProto
   try {
     sock.sendObject(request);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to send request and receive reply"
       ": Failed to send "  << requestTypeName << " to client"
       ": " << ne.getMessage().str();
@@ -239,13 +239,13 @@ castor::IObject *castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProto
     obj.reset(sock.readObject());
 
     if(obj.get() == NULL) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Failed to send request and receive reply"
         ": ClientSocket::readObject() returned null";
       throw ex;
     }
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() <<  "Failed to send request and receive reply"
       ": Failed to read " <<  requestTypeName << " reply from client"
       ": " << ne.getMessage().str();
@@ -274,7 +274,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::checkTr
   throw(castor::exception::Exception) {
 
   int nbErrors = 0;
-  castor::exception::Internal ex;
+  castor::exception::Exception ex;
   ex.getMessage() << "Mismatch detected";
 
   if(m_job.volReqId != actualMountTransactionId) {
@@ -309,13 +309,13 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::throwEn
     dynamic_cast<tapegateway::EndNotificationErrorReport*>(obj);
 
   if(reply == NULL) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to down cast reply object to tapegateway::EndNotificationErrorReport";
     throw ex;
   }
 
   // Translate the reception of the error report into a C++ exception
-  castor::exception::Internal ex;
+  castor::exception::Exception ex;
   ex.getMessage() << "Client error report: " << reply->errorMessage();
   throw ex;
 }
@@ -345,7 +345,7 @@ std::string castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::
     }
   }
 
-  castor::exception::Internal ex;
+  castor::exception::Exception ex;
   ex.getMessage() << "Failed to find library position of drive " << unitName;
   throw ex;
 }
@@ -366,7 +366,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::transfe
     break;
   default:
     {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Failed to transfer files: Unknown mode: " << volume.mode();
       throw ex;
     }
@@ -391,7 +391,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::recallF
     for(std::vector<tapegateway::FileToRecallStruct*>::const_iterator itor = files.begin(); itor != files.end(); itor++) {
       const tapegateway::FileToRecallStruct *const file = *itor;
       if(NULL == file) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Failed to recall files: FileToRecallStruct pointer is NULL";
         throw ex;
       }
@@ -487,13 +487,13 @@ int castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::sendFile
 
   // Check method arguments
   if(maxFiles == 0) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to send FilesToRecallListRequest"
       ": Invalid argument: maxFiles is 0";
     throw ex;
   }
   if(maxBytes == 0) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to send FilesToRecallListRequest"
       ": Invalid argument: maxBytes is 0";
     throw ex;
@@ -510,7 +510,7 @@ int castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::sendFile
   try {
     return connectAndSendMessage(request);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to send FilesToRecallListRequest"
       ": maxFiles=" << maxFiles << " maxBytes=" << maxBytes <<
       ": " << ne.getMessage().str();
@@ -531,7 +531,7 @@ int castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::connectA
   try {
     sock.sendObject(message);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to send message"
       ": Failed to send request to client"
       ": clientHost=" << m_job.clientHost << " clientPort=" << m_job.clientPort <<
@@ -559,7 +559,7 @@ castor::tape::tapegateway::FilesToRecallList *castor::tape::tapeserver::daemon::
   try {
     obj.reset(receiveReplyAndClose(clientSock));
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task << ": " << ne.getMessage().str();
     throw ex;
   }
@@ -572,7 +572,7 @@ castor::tape::tapegateway::FilesToRecallList *castor::tape::tapeserver::daemon::
         dynamic_cast<tapegateway::FilesToRecallList*>(obj.get());
 
       if(reply == NULL) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Failed to " << task << ": Failed to down cast reply object to tapegateway::FilesToRecallList";
         throw ex;
       }
@@ -581,7 +581,7 @@ castor::tape::tapegateway::FilesToRecallList *castor::tape::tapeserver::daemon::
         checkTransactionIds("FilesToRecallList", reply->mountTransactionId(),
           clientMsgSeqNb, reply->aggregatorTransactionId());
       } catch(castor::exception::Exception &ne) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Failed to " << task << ": " << ne.getMessage().str();
         throw ex;
       }
@@ -599,7 +599,7 @@ castor::tape::tapegateway::FilesToRecallList *castor::tape::tapeserver::daemon::
         dynamic_cast<tapegateway::NoMoreFiles*>(obj.get());
 
       if(reply == NULL) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Failed to " << task << ": Failed to down cast reply object to tapegateway::NoMoreFiles";
         throw ex;
       }
@@ -608,7 +608,7 @@ castor::tape::tapegateway::FilesToRecallList *castor::tape::tapeserver::daemon::
         checkTransactionIds("NoMoreFiles", reply->mountTransactionId(),
           clientMsgSeqNb, reply->aggregatorTransactionId());
       } catch(castor::exception::Exception &ne) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Failed to " << task << ": " << ne.getMessage().str();
         throw ex;
       }
@@ -621,7 +621,7 @@ castor::tape::tapegateway::FilesToRecallList *castor::tape::tapeserver::daemon::
 
   default:
     {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task << ": Unknown reply type"
         ": Reply type = " << obj->type();
       throw ex;
@@ -645,12 +645,12 @@ castor::IObject *castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProto
     obj.reset(sock.readObject());
 
     if(NULL == obj.get()) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task << ": ClientSocket::readObject() returned null";
       throw ex;
     }
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task << ": Failed to read reply from client"
       ": " << ne.getMessage().str();
 
@@ -700,7 +700,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::notifyC
         dynamic_cast<tapegateway::NotificationAcknowledge*>(obj.get());
 
       if(reply == NULL) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Failed to notify client: Failed to down cast reply object to tapegateway::NotificationAcknowledge";
         throw ex;
       }
@@ -717,7 +717,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::notifyC
 
   default:
     {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Failed to notify client: Unknown reply type : Reply type = " << obj->type();
       throw ex;
     }

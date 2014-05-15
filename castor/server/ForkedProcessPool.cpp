@@ -39,7 +39,6 @@
 // Include Files
 #include "castor/server/ForkedProcessPool.hpp"
 #include "castor/Services.hpp"
-#include "castor/exception/Internal.hpp"
 
 // We use a global variable here to indicate whether the child should stop or
 // countinue waiting for requests from the dispatcher.
@@ -116,7 +115,7 @@ void castor::server::ForkedProcessPool::init()
     int pid = fork();
 
     if(pid < 0) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Failed to fork in pool " << m_poolName;
       throw ex;
     }
@@ -189,7 +188,7 @@ void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
     timeout.tv_usec = 0;
     rc = select(m_writeHighFd + 1, NULL, &writepipes, NULL, &timeout);
     if ((rc == 0) && (m_stopped)) {
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage() << "ForkedProcessPool: shutdown detected";
       throw e;
     }

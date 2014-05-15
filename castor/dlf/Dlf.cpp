@@ -27,7 +27,6 @@
 // Include Files
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 
 #include <errno.h>
 
@@ -48,7 +47,7 @@ void castor::dlf::dlf_init
   throw (castor::exception::Exception) {
   // Initialise the DLF interface
   if (::dlf_init(facilityName) != 0) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Unable to initialize DLF: " << sstrerror(errno);
     throw ex;
   }

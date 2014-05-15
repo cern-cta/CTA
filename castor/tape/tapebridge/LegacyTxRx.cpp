@@ -24,7 +24,6 @@
 
 #include "castor/Constants.hpp"
 #include "castor/dlf/Dlf.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
@@ -77,7 +76,7 @@ void castor::tape::tapebridge::LegacyTxRx::sendMsgHeader(
   try {
     totalLen = legacymsg::marshal(buf, header);
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
          ": Failed to marshal RCP acknowledge message: "
       << ex.getMessage().str());
   }

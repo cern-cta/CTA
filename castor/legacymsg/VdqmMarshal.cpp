@@ -23,7 +23,6 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/VdqmMarshal.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -107,7 +106,7 @@ size_t castor::legacymsg::marshal(char *const dst,
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal VdqmDrvRqstMsgBody"
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << " actual=" << nbBytesMarshalled;

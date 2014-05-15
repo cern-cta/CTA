@@ -30,7 +30,6 @@
 /*-----------------------------------------------------------------------------*/
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Communication.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/System.hpp"
 #include "castor/IClient.hpp"
@@ -253,7 +252,7 @@ XrdxCastorClient::SendAsyncRequest(const std::string& userId,
       {
         // If user exists already, remove the request from the map
         mMapRequests.erase(req_insert.first);
-        castor::exception::Internal e;
+        castor::exception::Exception e;
         e.getMessage() << "Fatal error: the user we are trying to register "
                        << "exists already in the map ";
         throw e; 
@@ -261,7 +260,7 @@ XrdxCastorClient::SendAsyncRequest(const std::string& userId,
     }
     else 
     {
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage() << "Fatal error: the request we are trying to submit "
                      << "exists already in the map ";
       throw e; 

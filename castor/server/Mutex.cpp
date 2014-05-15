@@ -26,7 +26,6 @@
 // Include Files
 #include <signal.h>
 #include "castor/server/Mutex.hpp"
-#include "castor/exception/Internal.hpp"
 #include "Cthread_api.h"
 
 //------------------------------------------------------------------------------
@@ -37,7 +36,7 @@ castor::server::Mutex::Mutex(int value, unsigned int timeout)
   m_var(value), m_timeout(timeout), m_mutexCthread(0)
 {
   if(createLock() != 0) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to create mutex";
     throw ex;
   }
@@ -122,7 +121,7 @@ void castor::server::Mutex::lock() throw (castor::exception::Exception)
 {
   if (m_mutexCthread == 0 ||
       Cthread_mutex_timedlock_ext(m_mutexCthread, m_timeout) != 0) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to lock mutex";
     throw ex;
   }
@@ -134,7 +133,7 @@ void castor::server::Mutex::lock() throw (castor::exception::Exception)
 void castor::server::Mutex::release() throw (castor::exception::Exception)
 {
   if(Cthread_mutex_unlock_ext(m_mutexCthread) != 0) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to release mutex";
     throw ex;
   }
@@ -147,7 +146,7 @@ void castor::server::Mutex::signal() throw (castor::exception::Exception)
 {
   if (m_mutexCthread == 0 ||
       Cthread_cond_signal_ext(m_mutexCthread) != 0) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to signal mutex";
     throw ex;
   }

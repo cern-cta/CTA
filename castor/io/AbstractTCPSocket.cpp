@@ -36,7 +36,6 @@
 #include <sys/types.h>
 #include "castor/Constants.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "getconfent.h"
 #include <limits.h>
 
@@ -180,14 +179,14 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
       ex.getMessage() << "Unable to receive header";
       throw ex;
     } else {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Received header is too short : only "
                       << ret << " bytes";
       throw ex;
     }
   }
   if (header[0] != magic) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Bad magic number : 0x" << std::hex
                     << header[0] << " instead of 0x"
                     << std::hex << magic;
@@ -212,7 +211,7 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
   ret = netread_timeout(m_socket, *buf, n, m_timeout);
   if (ret != n) {
     if (0 == ret) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Unable to receive message body\n"
                       << "The connection was closed by remote end";
       throw ex;
@@ -221,7 +220,7 @@ void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
       ex.getMessage() << "Unable to receive message body";
       throw ex;
     } else {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Received message body is too short : only "
                       << ret << " bytes of " << n << " transferred";
       throw ex;

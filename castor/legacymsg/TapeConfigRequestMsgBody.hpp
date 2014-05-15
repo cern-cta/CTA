@@ -24,9 +24,7 @@
 
 #pragma once
 
-#include "castor/legacymsg/RtcpErrorAppendix.hpp"
 #include "h/Castor_limits.h"
-#include "h/Cuuid.h"
 
 #include <stdint.h>
 
@@ -37,13 +35,16 @@ namespace legacymsg {
  * An admin command message.
  */
 struct TapeConfigRequestMsgBody {
-  uid_t uid;
-  gid_t gid;                       
+  uint32_t uid;
+  uint32_t gid;                       
   char drive[CA_MAXUNMLEN+1];
   int16_t status;
 
   /**
    * Constructor.
+   *
+   * Sets all integer member-variables to 0 and all string member-variables to
+   * the empty string.
    */
   TapeConfigRequestMsgBody() throw();
 

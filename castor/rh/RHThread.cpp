@@ -30,7 +30,6 @@
 #include "castor/System.hpp"
 #include "castor/metrics/MetricsCollector.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/PermissionDenied.hpp"
 #include "castor/BaseAddress.hpp"
@@ -349,7 +348,7 @@ void castor::rh::RHThread::run(void* param) {
       // Complete its client field
       if (0 == client) {
         delete fr;
-        castor::exception::Internal e;
+        castor::exception::Exception e;
         e.getMessage() << "Request arrived with no client object.";
         throw e;
       }
@@ -554,7 +553,7 @@ unsigned int castor::rh::RHThread::handleRequest(castor::stager::Request* fr)
     castor::BaseObject::services()->service("DbRhSvc", castor::SVC_DBRHSVC);
   m_rhSvc = dynamic_cast<castor::rh::IRHSvc*>(svc);
   if (0 == m_rhSvc) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Couldn't load the request handler service" << std::endl;
     throw ex;
   }

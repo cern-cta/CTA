@@ -19,7 +19,6 @@
 #include "castor/stager/SubRequestStatusCodes.hpp"
 
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 
 #include "serrno.h"
 #include "Cns_struct.h"
@@ -69,7 +68,7 @@ namespace castor{
         throw(castor::exception::Exception)
       {
         if(!reqHelper->fileRequest) {
-          castor::exception::Internal e;
+          castor::exception::Exception e;
           e.getMessage() << "No request available, cannot answer to client";
           throw e;
         }

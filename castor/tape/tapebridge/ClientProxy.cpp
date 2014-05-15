@@ -23,7 +23,6 @@
  *****************************************************************************/
 
 #include "castor/Constants.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/ClientSocket.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/ClientAddressLocal.hpp"
@@ -155,7 +154,7 @@ castor::tape::tapegateway::Volume
         dynamic_cast<tapegateway::Volume*>(obj.get());
 
       if(reply == NULL) {
-        TAPE_THROW_EX(castor::exception::Internal,
+        TAPE_THROW_EX(castor::exception::Exception,
           ": Failed to get volume"
           ": Failed to down cast reply object to tapegateway::Volume");
       }
@@ -188,7 +187,7 @@ castor::tape::tapegateway::Volume
         dynamic_cast<tapegateway::NoMoreFiles*>(obj.get());
 
       if(reply == NULL) {
-        TAPE_THROW_EX(castor::exception::Internal,
+        TAPE_THROW_EX(castor::exception::Exception,
           ": Failed to get volume"
           ": Failed to down cast reply object to tapegateway::NoMoreFiles");
       }
@@ -328,7 +327,7 @@ castor::tape::tapegateway::FilesToMigrateList
         dynamic_cast<tapegateway::FilesToMigrateList*>(obj.get());
 
       if(reply == NULL) {
-        TAPE_THROW_EX(castor::exception::Internal,
+        TAPE_THROW_EX(castor::exception::Exception,
           ": Failed to " << task <<
           ": Failed to down cast reply object to"
           " tapegateway::FilesToMigrateList");
@@ -363,7 +362,7 @@ castor::tape::tapegateway::FilesToMigrateList
         dynamic_cast<tapegateway::NoMoreFiles*>(obj.get());
 
       if(reply == NULL) {
-        TAPE_THROW_EX(castor::exception::Internal,
+        TAPE_THROW_EX(castor::exception::Exception,
           ": Failed to " << task <<
           ": Failed to down cast reply object to tapegateway::NoMoreFiles");
       }
@@ -467,7 +466,7 @@ castor::tape::tapegateway::FilesToRecallList
         dynamic_cast<tapegateway::FilesToRecallList*>(obj.get());
 
       if(reply == NULL) {
-        TAPE_THROW_EX(castor::exception::Internal,
+        TAPE_THROW_EX(castor::exception::Exception,
           ": Failed to " << task <<
           ": Failed to down cast reply object to"
           " tapegateway::FilesToRecallList");
@@ -495,7 +494,7 @@ castor::tape::tapegateway::FilesToRecallList
         dynamic_cast<tapegateway::NoMoreFiles*>(obj.get());
 
       if(reply == NULL) {
-        TAPE_THROW_EX(castor::exception::Internal,
+        TAPE_THROW_EX(castor::exception::Exception,
           ": Failed to " << task <<
           ": Failed to down cast reply object to tapegateway::NoMoreFiles");
       }
@@ -568,7 +567,7 @@ castor::tape::tapegateway::DumpParameters
         dynamic_cast<tapegateway::DumpParameters*>(obj.get());
 
       if(reply == NULL) {
-        TAPE_THROW_EX(castor::exception::Internal,
+        TAPE_THROW_EX(castor::exception::Exception,
           ": Failed to get dump parameters"
           ": Failed to down cast reply object to tapegateway::DumpParameters");
       }
@@ -744,7 +743,7 @@ castor::IObject *castor::tape::tapebridge::ClientProxy::receiveReplyAndClose(
     obj.reset(sock.readObject());
 
     if(NULL == obj.get()) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Failed to receive reply and close connection"
         ": ClientSocket::readObject() returned null");
     }
@@ -807,7 +806,7 @@ castor::IObject
     obj.reset(sock.readObject());
 
     if(obj.get() == NULL) {
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Failed to send request and receive reply"
         ": ClientSocket::readObject() returned null");
     }
@@ -866,7 +865,7 @@ void castor::tape::tapebridge::ClientProxy::receiveNotificationReplyAndClose(
         dynamic_cast<tapegateway::NotificationAcknowledge*>(obj.get());
 
       if(reply == NULL) {
-        TAPE_THROW_EX(castor::exception::Internal,
+        TAPE_THROW_EX(castor::exception::Exception,
           ": Failed to " << task <<
           ": Failed to down cast reply object to "
           "tapegateway::NotificationAcknowledge");
@@ -922,7 +921,7 @@ void castor::tape::tapebridge::ClientProxy::notifyClient(
         dynamic_cast<tapegateway::NotificationAcknowledge*>(obj.get());
 
       if(reply == NULL) {
-        TAPE_THROW_EX(castor::exception::Internal,
+        TAPE_THROW_EX(castor::exception::Exception,
           ": Failed to notify client"
           ": Failed to down cast reply object to "
           "tapegateway::NotificationAcknowledge");
@@ -961,7 +960,7 @@ void  castor::tape::tapebridge::ClientProxy::throwEndNotificationErrorReport(
     dynamic_cast<tapegateway::EndNotificationErrorReport*>(obj);
 
   if(reply == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": Failed to down cast reply object to "
       "tapegateway::EndNotificationErrorReport");
   }

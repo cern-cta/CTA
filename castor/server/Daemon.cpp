@@ -22,7 +22,6 @@
 
 #include "castor/dlf/Dlf.hpp"
 #include "castor/exception/Errnum.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/UDPSocket.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/server/ThreadNotification.hpp"

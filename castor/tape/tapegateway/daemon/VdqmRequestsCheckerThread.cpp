@@ -34,7 +34,6 @@
 #include "castor/Services.hpp"
 
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 
 #include "castor/tape/tapegateway/TapeGatewayDlfMessageConstants.hpp"
 #include "castor/stager/TapeTpModeCodes.hpp"

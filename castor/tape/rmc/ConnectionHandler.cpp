@@ -103,7 +103,7 @@ bool castor::tape::rmc::ConnectionHandler::handleEvent(const struct pollfd &fd) 
 //------------------------------------------------------------------------------
 void castor::tape::rmc::ConnectionHandler::checkHandleEventFd(const int fd) throw (castor::exception::Exception) {
   if(m_fd != fd) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle client connection"
       ": Event handler passed wrong file descriptor"
       ": expected=" << m_fd << " actual=" << fd;

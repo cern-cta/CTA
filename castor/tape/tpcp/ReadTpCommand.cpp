@@ -23,7 +23,6 @@
  *****************************************************************************/
  
 #include "castor/Constants.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/Constants.hpp"
 #include "castor/tape/tapegateway/EndNotification.hpp"
@@ -150,7 +149,7 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
       try {
         castor::utils::copyString(m_cmdLine.server, optarg);
       } catch(castor::exception::Exception &ex) {
-        TAPE_THROW_EX(castor::exception::Internal,
+        TAPE_THROW_EX(castor::exception::Exception,
           ": Failed to copy the argument of the server command-line option"
           " into the internal data structures"
           ": " << ex.getMessage().str());
@@ -185,7 +184,7 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
 
     default:
       {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "\tgetopt_long returned the following unknown value: 0x" <<
           std::hex << (int)c;
@@ -268,7 +267,7 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
   try {
     castor::utils::copyString(m_cmdLine.vid, argv[optind]);
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": Failed to copy VID comand-line argument into the internal data"
       " structures"
       ": " << ex.getMessage().str());
@@ -351,7 +350,7 @@ void castor::tape::tpcp::ReadTpCommand::checkAccessToDisk()
 
     // Sanity check - there should be at least one file to be migrated
     if(itor == m_filenames.end()) {
-      TAPE_THROW_EX(exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": List of filenames to be processed is unexpectedly empty");
     }
 

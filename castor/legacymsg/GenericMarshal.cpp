@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/legacymsg/CommonMarshal.cpp
+ *                      castor/legacymsg/RmcMarshal.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,47 +20,73 @@
  *
  *
  *
- * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
 #include "castor/io/io.hpp"
-#include "castor/legacymsg/CommonMarshal.hpp"
+#include "castor/legacymsg/GenericMarshal.hpp"
 #include "castor/tape/utils/utils.hpp"
 
-#include <errno.h>
-#include <iostream>
 #include <string.h>
-
 
 //-----------------------------------------------------------------------------
 // marshal
 //-----------------------------------------------------------------------------
 size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
-  const MessageHeader &src) throw(castor::exception::Exception) {
+  const uint32_t srcMagic, const uint32_t srcReqType,
+  const GenericReplyMsgBody &srcBody) throw(castor::exception::Exception) {
+  const char *const task = "marshal GenericReplyMsgBody";
 
   if(dst == NULL) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal MessageHeader"
-      << ": Pointer to destination buffer is NULL";
+    ex.getMessage() << "Failed to " << task <<
+      ": Pointer to destination buffer is NULL";
     throw ex;
   }
 
-  // Calculate the length of the message header
-  const uint32_t totalLen = 3 * sizeof(uint32_t);  // magic + reqType + len
+  // Calculate the length of the message body
+  const uint32_t bodyLen =
+    sizeof(srcBody.status) +
+    strlen(srcBody.errorMessage) + 1;
 
-  // Check that the message header buffer is big enough
+  // Calculate the total length of the message (header + body)
+  const uint32_t totalLen =
+    sizeof(uint32_t) + // magic
+    sizeof(uint32_t) + // reqType
+    sizeof(uint32_t) + // len
+    bodyLen;
+
+  // Check that the message buffer is big enough
   if(totalLen > dstLen) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal MessageHeader"
-      ": Buffer too small : required=" << totalLen << " actual=" << dstLen;
+    ex.getMessage() << "Failed to " << task <<
+      ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
   }
 
-  // Marshal the message header
+  // Marshal message header
   char *p = dst;
-  io::marshalUint32(src.magic      , p);
-  io::marshalUint32(src.reqType    , p);
-  io::marshalUint32(src.lenOrStatus, p);
+  try {
+    io::marshalUint32(srcMagic, p);
+    io::marshalUint32(srcReqType, p);
+    io::marshalUint32(bodyLen, p);
+  } catch(castor::exception::Exception &ne) { 
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << task << ": Failed to marshal header: "
+      << ne.getMessage().str();
+    throw ex;
+  }
+
+  // Marshal message body
+  try {
+    io::marshalUint32(srcBody.status, p);
+    io::marshalString(srcBody.errorMessage, p);
+  } catch(castor::exception::Exception &ne) { 
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << task << ": Failed to marshal body: "
+      << ne.getMessage().str();
+    throw ex;
+  }
 
   // Calculate the number of bytes actually marshalled
   const size_t nbBytesMarshalled = p - dst;
@@ -68,7 +94,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to marshal MessageHeader"
+    ex.getMessage() << "Failed to " << task <<
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
     throw ex;
@@ -77,14 +103,18 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
   return totalLen;
 }
 
-
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen,
-  MessageHeader &dst) throw(castor::exception::Exception) {
-
-  io::unmarshalUint32(src, srcLen, dst.magic);
-  io::unmarshalUint32(src, srcLen, dst.reqType);
-  io::unmarshalUint32(src, srcLen, dst.lenOrStatus);
+  GenericReplyMsgBody &dst) throw(castor::exception::Exception) {
+  try {
+    io::unmarshalUint32(src, srcLen, dst.status);
+    io::unmarshalString(src, srcLen, dst.errorMessage);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to unmarshal GenericReplyMsgBody: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
 }

@@ -35,7 +35,6 @@
 #include "castor/IService.hpp"
 #include "castor/stager/IJobSvc.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/RequestCanceled.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/BaseObject.hpp"

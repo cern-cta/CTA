@@ -31,7 +31,6 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/Constants.hpp"
 #include "castor/IClientFactory.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/job/stagerjob/StagerJob.hpp"
 #include "castor/job/stagerjob/InputArguments.hpp"

@@ -24,7 +24,6 @@
  *****************************************************************************/
 
  
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/vdqm/ClientIdentification.hpp"
 #include "castor/vdqm/VdqmTape.hpp"
@@ -96,21 +95,21 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleOldStatus()
 
     // Check for inconsistent status mask
     if(volMount && volUnmount) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "TapeDriveStatusHandler::handleOldStatus(): "
         "Invalid status mask.  A tape cannot be simultaneously mounted and "
         "unmounted.";
       throw ex;
     }
     if(volMount && unitRelease) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "TapeDriveStatusHandler::handleOldStatus(): "
         "Invalid status mask.  A tape cannot be simultaneously mounted and "
         "its unit released.";
       throw ex;
     }
     if(volUnmount && unitRelease) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "TapeDriveStatusHandler::handleOldStatus(): "
         "Invalid status mask.  A tape cannot be simultaneously unmounted and "
         "its unit released.";

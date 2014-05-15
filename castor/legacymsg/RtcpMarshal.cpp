@@ -23,7 +23,6 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/RtcpMarshal.hpp"
@@ -43,7 +42,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
   const RtcpJobRqstMsgBody &src) throw(castor::exception::Exception) {
 
   if(dst == NULL) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpJobRqstMsgBody"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -64,7 +63,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpJobRqstMsgBody"
       ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
@@ -89,7 +88,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpJobRqstMsgBody"
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
@@ -125,7 +124,7 @@ size_t castor::legacymsg::marshal(char *const dst,
   throw(castor::exception::Exception) {
 
   if(dst == NULL) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpJobReplyMsgBody"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -135,7 +134,7 @@ size_t castor::legacymsg::marshal(char *const dst,
   // + terminating null character
   const size_t minimumLen = 4*sizeof(uint32_t) + 1;
   if(dstLen < minimumLen) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpJobReplyMsgBody"
       ": Buffer too small: required=" << minimumLen << " actual=" << dstLen;
     throw ex;
@@ -172,7 +171,7 @@ size_t castor::legacymsg::marshal(char *const dst,
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpJobReplyMsgBody"
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << " actual=" << nbBytesMarshalled;
@@ -216,7 +215,7 @@ size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
   const RtcpTapeRqstErrMsgBody &src) throw(castor::exception::Exception) {
 
   if(dst == NULL) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpTapeRqstErrMsgBody"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -242,7 +241,7 @@ size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
 
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpTapeRqstErrMsgBody"
       ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
@@ -295,7 +294,7 @@ size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpTapeRqstErrMsgBody"
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << "actual=" << nbBytesMarshalled;
@@ -368,7 +367,7 @@ size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
   const RtcpFileRqstErrMsgBody &src) throw(castor::exception::Exception) {
 
   if(dst == NULL) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpFileRqstErrMsgBody"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -409,7 +408,7 @@ size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
 
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpFileRqstErrMsgBody"
       ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
@@ -489,7 +488,7 @@ size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpFileRqstErrMsgBody"
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << "actual=" << nbBytesMarshalled;
@@ -599,7 +598,7 @@ size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
   const RtcpNoMoreRequestsMsgBody&) throw(castor::exception::Exception) {
 
   if(dst == NULL) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpNoMoreRequestsMsgBody"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -614,7 +613,7 @@ size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
 
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpNoMoreRequestsMsgBody"
       ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
@@ -631,7 +630,7 @@ size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpNoMoreRequestsMsgBody"
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << "actual=" << nbBytesMarshalled;
@@ -649,7 +648,7 @@ size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
   const RtcpDumpTapeRqstMsgBody &src) throw(castor::exception::Exception) {
 
   if(dst == NULL) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpDumpTapeRqstMsgBody"
       ": Pointer to destination buffer is NULL";
     throw ex;
@@ -664,7 +663,7 @@ size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
 
   // Check that the message buffer is big enough
   if(totalLen > dstLen) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpDumpTapeRqstMsgBody"
       ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
     throw ex;
@@ -689,7 +688,7 @@ size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
 
   // Check that the number of bytes marshalled was what was expected
   if(totalLen != nbBytesMarshalled) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to marshal RtcpDumpTapeRqstMsgBody"
       ": Mismatch between expected total length and actual"
       ": expected=" << totalLen << "actual=" << nbBytesMarshalled;

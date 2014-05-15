@@ -29,7 +29,6 @@
 #include <sys/wait.h>
 #include "castor/IClient.hpp"
 #include "castor/dlf/Dlf.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/job/stagerjob/BasePlugin.hpp"
 #include "castor/job/stagerjob/InputArguments.hpp"

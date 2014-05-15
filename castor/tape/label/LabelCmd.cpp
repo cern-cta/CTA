@@ -56,6 +56,7 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
     {"dgn", 1, NULL, 'g'},
     {"vid", 1, NULL, 'V'},
     {"help", 0, NULL, 'h'},
+    {"force", 0, NULL, 'f'},
     {"debug", 0, NULL, 'd'},
     {NULL, 0, NULL,  0 }
   };
@@ -65,7 +66,7 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
 
   char c;
 
-  while((c = getopt_long(argc, argv, "u:g:V:hd", longopts, NULL)) != -1) {
+  while((c = getopt_long(argc, argv, "u:g:V:hfd", longopts, NULL)) != -1) {
 
     switch (c) {
     case 'u':
@@ -73,7 +74,7 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
       try {
         castor::utils::copyString(m_cmdLine.drive, optarg);
       } catch(castor::exception::Exception &ex) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "Failed to copy the argument of the unit name command-line option"
           " into the internal data structures"
@@ -87,7 +88,7 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
       try {
         castor::utils::copyString(m_cmdLine.dgn, optarg);
       } catch(castor::exception::Exception &ex) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "Failed to copy the argument of the dgn command-line option"
           " into the internal data structures"
@@ -110,7 +111,7 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
       try {
         castor::utils::copyString(m_cmdLine.vid, optarg);
       } catch(castor::exception::Exception &ex) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "Failed to copy the argument of the vid command-line option"
           " into the internal data structures"
@@ -121,6 +122,10 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
 
     case 'h':
       m_cmdLine.helpIsSet = true;
+      break;
+      
+    case 'f':
+      m_cmdLine.forceIsSet = true;
       break;
       
     case 'd':
@@ -151,7 +156,7 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
 
     default:
       {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "getopt_long returned the following unknown value: 0x" <<
           std::hex << (int)c;
@@ -166,7 +171,7 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
   }
 
   if(!m_cmdLine.allCompulsoryOptionsSet()) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Not all compulsory options have been set";
     throw ex;
   }
@@ -178,23 +183,24 @@ void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv
 void castor::tape::label::LabelCmd::usage(std::ostream &os) const throw() {
   os <<
     "Usage:\n"
-    "\t" << m_programName << " -u unitname -g dgn -V vid [-h] [-d]\n"
+    "\t" << m_programName << " -u unitname -g dgn -V vid [-h] [-f] [-d]\n"
     "\n"
     "Where:\n"
     "\n"
     "\t-u, --unitname <unitname>   Explicit name of drive to be used.\n"
     "\t-g, --dgn      <dgn>        Device group name of the tape.\n"
-    "\t-V, --vid     <vid>         Volume ID of the tape.\n"
+    "\t-V, --vid      <vid>        Volume ID of the tape.\n"
     "\t-h, --help                  Print this help message and exit.\n"
+    "\t-f, --force                 Use this option to label a non-blank tape\n"
     "\t-d, --debug                 Debug mode on (default off).\n"
     "\n"
     "Constraints:\n"
     "\n"
-    "\tAll arguments, except -h, are mandatory!\n"
+    "\tAll arguments, except -h -f -d, are mandatory!\n"
     "\n"
     "Example:\n"
     "\n"
-    "\t" << m_programName << " -u T10D6515 -g T10KD6 -V T54321\n"
+    "\t" << m_programName << " -u T10D6515 -g T10KD6 -V T54321 -f\n"
     "\n"
     "Comments to: Castor.Support@cern.ch" << std::endl;
 }
@@ -225,6 +231,7 @@ int castor::tape::label::LabelCmd::main(const int argc, char **argv) throw() {
             << "m_cmdLine.dgn: " << m_cmdLine.dgn << std::endl 
             << "m_cmdLine.vid: " << m_cmdLine.vid << std::endl 
             << "m_cmdLine.debugIsSet: " << m_cmdLine.debugIsSet << std::endl 
+            << "m_cmdLine.forceIsSet: " << m_cmdLine.forceIsSet << std::endl
             << "m_cmdLine.helpIsSet: " << m_cmdLine.helpIsSet << std::endl;
   }
 
@@ -280,6 +287,7 @@ void castor::tape::label::LabelCmd::writeTapeLabelRequest(const int timeout) {
   castor::legacymsg::TapeLabelRqstMsgBody body;
   body.uid = m_userId;
   body.gid = m_groupId;
+  body.force = m_cmdLine.forceIsSet ? 1 : 0;
   castor::utils::copyString(body.drive, sizeof(body.drive), m_cmdLine.drive);
   castor::utils::copyString(body.dgn, sizeof(body.dgn), m_cmdLine.dgn);
   castor::utils::copyString(body.vid, sizeof(body.vid), m_cmdLine.vid);
@@ -292,7 +300,7 @@ void castor::tape::label::LabelCmd::writeTapeLabelRequest(const int timeout) {
   try {
     castor::io::writeBytes(m_smartClientConnectionSock.get(), timeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to write label request message: " <<
       ne.getMessage().str();
     throw ex;
@@ -309,7 +317,7 @@ castor::legacymsg::MessageHeader castor::tape::label::LabelCmd::readTapeLabelRep
   try {
     castor::io::readBytes(m_smartClientConnectionSock.get(), timeout, bufLen, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read label reply message: " <<
       ne.getMessage().str();
     throw ex;
@@ -321,7 +329,7 @@ castor::legacymsg::MessageHeader castor::tape::label::LabelCmd::readTapeLabelRep
   castor::legacymsg::unmarshal(bufPtr, bufLen, replymsg);
   
   if(TAPERC != replymsg.reqType || TPMAGIC != replymsg.magic) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Wrong reply type or magic # in label reply message. replymsg.reqType: " << replymsg.reqType << " replymsg.magic: " << replymsg.magic;
     throw ex;
   }

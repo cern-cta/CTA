@@ -36,7 +36,6 @@
 #include "Cgrp.h"
 #include "Cnetdb.h"
 #include "common.h"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/OutOfMemory.hpp"
 
 //------------------------------------------------------------------------------
@@ -162,27 +161,27 @@ void castor::System::switchToCastorSuperuser()
 
   // Get information on generic stage account from password file
   if ((stage_passwd = Cgetpwnam(STAGERSUPERUSER)) == NULL) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Castor super user " << STAGERSUPERUSER
                    << " not found in password file";
     throw e;
   }
   // verify existence of its primary group id
   if (Cgetgrgid(stage_passwd->pw_gid) == NULL) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Castor super user group does not exist";
     throw e;
   }
   // Get information on generic stage account from group file
   if ((stage_group = Cgetgrnam(STAGERSUPERGROUP)) == NULL) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Castor super user group " << STAGERSUPERGROUP
                    << " not found in group file";
     throw e;
   }
   // Verify consistency
   if (stage_group->gr_gid != stage_passwd->pw_gid) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Inconsistent password file. The group of the "
                    << "castor superuser " << STAGERSUPERUSER
                    << " should be " << stage_group->gr_gid
@@ -192,25 +191,25 @@ void castor::System::switchToCastorSuperuser()
   }
   // Undo group privilege
   if (setregid (egid, rgid) < 0) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Unable to undo group privilege";
     throw e;
   }
   // Undo user privilege
   if (setreuid (euid, ruid) < 0) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Unable to undo user privilege";
     throw e;
   }
   // set the effective privileges to superuser
   if (setegid(stage_passwd->pw_gid) < 0) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Unable to set group privileges of Castor Superuser. "
                    << "You may want to check that the suid bit is set properly";
     throw e;
   }
   if (seteuid(stage_passwd->pw_uid) < 0) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Unable to set privileges of Castor Superuser.";
     throw e;
   }

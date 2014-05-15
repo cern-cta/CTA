@@ -35,7 +35,6 @@
 #include "castor/dlf/Dlf.hpp"
 #include "castor/rh/IOResponse.hpp"
 #include "castor/stager/IJobSvc.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
@@ -121,7 +120,7 @@ void castor::job::stagerjob::InstrumentedMoverPlugin::waitChildAndInformStager
         // and call putFailed
         context.jobSvc->putFailed
           (args.subRequestId, args.fileId.fileid, args.fileId.server);
-        castor::exception::Internal e;
+        castor::exception::Exception e;
         e.getMessage() << "No data transferred";
         throw e;
       }
@@ -136,7 +135,7 @@ void castor::job::stagerjob::InstrumentedMoverPlugin::waitChildAndInformStager
       // and call putFailed
       context.jobSvc->putFailed
         (args.subRequestId, args.fileId.fileid, args.fileId.server);
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage() << "stat64 error";
       throw e;
     }

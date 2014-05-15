@@ -27,7 +27,6 @@
 #include "castor/Constants.hpp"
 #include "castor/IService.hpp"
 #include "castor/Services.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/server/NotifierThread.hpp"
 #include "castor/vdqm/DriveSchedulerThread.hpp"
 #include "castor/vdqm/IVdqmSvc.hpp"
@@ -160,7 +159,7 @@ castor::vdqm::IVdqmSvc *castor::vdqm::DriveSchedulerThread::getDbVdqmSvc()
   castor::vdqm::IVdqmSvc *vdqmSvc = dynamic_cast<castor::vdqm::IVdqmSvc*>(svc);
 
   if (0 == vdqmSvc) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Failed to cast castor::IService* to castor::vdqm::IVdqmSvc*";
 

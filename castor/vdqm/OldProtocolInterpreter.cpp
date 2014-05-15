@@ -41,7 +41,6 @@
 #include <common.h>
 
 #include "castor/exception/InvalidArgument.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/vdqm/OldProtocolInterpreter.hpp"
 #include "castor/vdqm/VdqmDlfMessageConstants.hpp"
 #include "castor/vdqm/vdqmMacros.h"  // Needed for marshalling
@@ -122,7 +121,7 @@ throw (castor::exception::Exception) {
       header->len = len;
   } 
   else {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "OldProtocolInterpreter::readProtocol(): "
                     << "header struct == NULL" << std::endl;
     throw ex;
@@ -160,7 +159,7 @@ throw (castor::exception::Exception) {
   rc = getpeername(m_socket.socket(), (struct sockaddr *)&from,
     (socklen_t *)&fromlen);
   if ( rc == -1 ) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "OldProtocolInterpreter::readProtocol() getpeername(): "
                     << neterror() << std::endl;      
     throw ex;
@@ -169,7 +168,7 @@ throw (castor::exception::Exception) {
   if ( (hp = Cgethostbyaddr((void *)&(from.sin_addr), 
                             sizeof(struct in_addr),
                             from.sin_family)) == NULL ) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "OldProtocolInterpreter::readProtocol() Cgethostbyaddr(): " 
                     << "h_errno = " << h_errno << neterror() << std::endl;
     throw ex;
@@ -189,7 +188,7 @@ throw (castor::exception::Exception) {
     strcpy(driveRequest->reqhost,hp->h_name);
     if ( isremote(from.sin_addr, driveRequest->reqhost) == 1 &&
           getconfent("VDQM", "REMOTE_ACCESS", 1) == NULL ) {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "OldProtocolInterpreter::readProtocol(): " 
                       << "remote access attempted, host = " 
                       << driveRequest->reqhost << std::endl;
@@ -318,7 +317,7 @@ throw (castor::exception::Exception) {
   else if ( driveRequest != NULL ) reqtype = VDQM_DRV_REQ;
   else {
     serrno = SECOMERR;
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "OldProtocolInterpreter::sendToOldClient(): "
                     << "cannot determine request type to send" 
                     << std::endl;
@@ -407,7 +406,7 @@ throw (castor::exception::Exception) {
   try {
     SocketHelper::netWriteVdqmHeader(m_socket, hdrbuf);
   } catch(castor::exception::Exception &ex) {
-    castor::exception::Internal ie;
+    castor::exception::Exception ie;
 
     ie.getMessage() << "Failed to write VDQM header to client: "
       << ex.getMessage().str();
@@ -467,7 +466,7 @@ throw (castor::exception::Exception) {
   try {
     SocketHelper::netWriteVdqmHeader(m_socket, hdrbuf);
   } catch(castor::exception::Exception &ex) {
-    castor::exception::Internal ie;
+    castor::exception::Exception ie;
 
     ie.getMessage() << "Failed to send achknowledge to client: "
       << ex.getMessage().str();
@@ -494,7 +493,7 @@ throw (castor::exception::Exception) {
   try {
     SocketHelper::netReadVdqmHeader(m_socket, hdrbuf);
   } catch(castor::exception::Exception &ex) {
-    castor::exception::Internal ie;
+    castor::exception::Exception ie;
 
     ie.getMessage() << "Failed to read acknowledge from client: "
       << ex.getMessage().str();
@@ -533,7 +532,7 @@ throw (castor::exception::Exception) {
   try {
     SocketHelper::netWriteVdqmHeader(m_socket, hdrbuf);
   } catch(castor::exception::Exception &ex) {
-    castor::exception::Internal ie;
+    castor::exception::Exception ie;
 
     ie.getMessage() << "Failed to write acknowledge ping to client: "
       << ex.getMessage().str();
@@ -572,7 +571,7 @@ throw (castor::exception::Exception) {
   try {
     SocketHelper::netWriteVdqmHeader(m_socket, hdrbuf);
   } catch(castor::exception::Exception &ex) {
-    castor::exception::Internal ie;
+    castor::exception::Exception ie;
 
     ie.getMessage() << "Failed to write acknowledge rollback to client: "
       << ex.getMessage().str();

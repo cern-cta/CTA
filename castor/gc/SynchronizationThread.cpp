@@ -31,7 +31,6 @@
 #include "castor/stager/IGCSvc.hpp"
 #include "castor/System.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 #include "getconfent.h"
 
 #include <sys/types.h>
@@ -354,7 +353,7 @@ castor::gc::SynchronizationThread::diskCopyIdFromFileName(std::string fileName)
   // us the fileid
   std::string::size_type p = fileName.find('@', 0);
   if (p == std::string::npos) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Unable to parse filename : '" << fileName << "'";
     throw e;
   }
@@ -363,7 +362,7 @@ castor::gc::SynchronizationThread::diskCopyIdFromFileName(std::string fileName)
   std::string fidStr = fileName.substr(0, p);
   if ((strspn(fidStr.c_str(), "0123456789") != fidStr.length()) ||
       (fidStr.length() <= 0)) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Unable to parse filename : '" << fileName << "'";
     throw e;
   }
@@ -371,7 +370,7 @@ castor::gc::SynchronizationThread::diskCopyIdFromFileName(std::string fileName)
   // Now extract the nameserver host, everything up to the last '.'
   std::string::size_type q = fileName.find_last_of('.', fileName.length());
   if (q == std::string::npos) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Unable to parse filename : '" << fileName << "'";
     throw e;
   }
@@ -381,7 +380,7 @@ castor::gc::SynchronizationThread::diskCopyIdFromFileName(std::string fileName)
   std::string dcIdStr = fileName.substr(q + 1, fileName.length());
   if ((strspn(dcIdStr.c_str(), "0123456789") != dcIdStr.length()) ||
       (dcIdStr.length() <= 0)) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Unable to parse filename : '" << fileName << "'";
     throw e;
   }
@@ -401,7 +400,7 @@ castor::gc::SynchronizationThread::fileIdFromFilePath(std::string filePath)
   // Extract the filename
   std::string::size_type f = filePath.find_last_of('/', filePath.length());
   if (f == std::string::npos) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Unable to parse filepath : '" << filePath << "'";
     throw e;
   }
@@ -411,7 +410,7 @@ castor::gc::SynchronizationThread::fileIdFromFilePath(std::string filePath)
   // us the fileid
   std::string::size_type p = fileName.find('@', 0);
   if (p == std::string::npos) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Unable to parse filename : '" << fileName << "'";
     throw e;
   }
@@ -420,7 +419,7 @@ castor::gc::SynchronizationThread::fileIdFromFilePath(std::string filePath)
   std::string fidStr = fileName.substr(0, p);
   if ((strspn(fidStr.c_str(), "0123456789") != fidStr.length()) ||
       (fidStr.length() <= 0)) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Unable to parse filename : '" << fileName << "'";
     throw e;
   }
@@ -439,7 +438,7 @@ castor::gc::SynchronizationThread::getFilesBeingWrittenTo(char* mountPoint)
   // loop through the /proc/*/fd directories
   DIR *procDir = opendir("/proc");
   if (0 == procDir) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "Unable to open /proc directory";
     throw e;
   }

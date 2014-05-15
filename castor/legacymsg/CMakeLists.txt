@@ -31,6 +31,8 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   CupvMarshal.cpp
   CupvProxy.cpp
   CupvProxyTcpIp.cpp
+  GenericMarshal.cpp
+  GenericReplyMsgBody.cpp
   GiveOutpMsgBody.cpp
   MessageHeader.cpp
   RmcAcsMntMsgBody.cpp

@@ -101,6 +101,12 @@ add_executable(castorUnitTests
   ../castor/io/PollReactorImplTest.cpp
   ../castor/legacymsg/CommonMarshalTest.cpp
   ../castor/legacymsg/CupvMarshalTest.cpp
+  ../castor/legacymsg/CupvProxyDummy.cpp
+  ../castor/legacymsg/GenericMarshalTest.cpp
+  ../castor/legacymsg/RmcProxyDummy.cpp
+  ../castor/legacymsg/RmcProxyDummyFactory.cpp
+  ../castor/legacymsg/VdqmProxyDummy.cpp
+  ../castor/legacymsg/VdqmProxyDummyFactory.cpp
   ../castor/legacymsg/VmgrMarshalTest.cpp
   ../castor/legacymsg/RmcMarshalTest.cpp
   ../castor/legacymsg/RmcProxy.cpp

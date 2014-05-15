@@ -29,7 +29,6 @@
 %attr(0644,root,root) usr/include/castor/castor/exception/CommandLineNotParsed.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/Communication.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/Exception.hpp
-%attr(0644,root,root) usr/include/castor/castor/exception/Internal.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/InvalidArgument.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/InvalidNbArguments.hpp
 %attr(0644,root,root) usr/include/castor/castor/exception/NoEntry.hpp
@@ -129,7 +128,6 @@
 %attr(0644,root,root) usr/include/castor/h/stager_client_api.h
 %attr(0644,root,root) usr/include/castor/h/stager_errmsg.h
 %attr(0644,root,root) usr/include/castor/h/stager_mapper.h
-%attr(0644,root,root) usr/include/castor/h/stager_uuid.h
 %attr(0644,root,root) usr/include/castor/h/trace.h
 %attr(0644,root,root) usr/include/castor/h/u64subr.h
 %attr(0644,root,root) usr/include/castor/h/vmgr_api.h

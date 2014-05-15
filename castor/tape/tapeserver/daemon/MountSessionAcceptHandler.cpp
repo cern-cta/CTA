@@ -22,7 +22,6 @@
 
 #include "castor/exception/BadAlloc.hpp"
 #include "castor/exception/Errnum.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/tapeserver/daemon/MountSessionAcceptHandler.hpp"
 #include "castor/utils/SmartFd.hpp"
@@ -107,7 +106,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::writeRcReplyMs
   try {
     io::writeBytes(fd, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to write job reply message: " <<
       ne.getMessage().str();
     throw ex;
@@ -137,7 +136,7 @@ bool castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleEvent(
     const time_t acceptTimeout  = 1; // Timeout in seconds
     connection.reset(io::acceptConnection(fd.fd, acceptTimeout));
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept a connection from the admin command"
       ": " << ne.getMessage().str();
     throw ex;
@@ -160,7 +159,7 @@ bool castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleEvent(
 void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::checkHandleEventFd(
   const int fd) throw (castor::exception::Exception) {
   if(m_fd != fd) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept connection from the admin command"
       ": Event handler passed wrong file descriptor"
       ": expected=" << m_fd << " actual=" << fd;
@@ -215,7 +214,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
       // connection and has not been able to pass it on
       close(clientConnection);
 
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Unknown request type: " << header.reqType << ". Expected: " << SETVID << "(SETVID)";
       throw ex;
     }
@@ -271,10 +270,12 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
 //------------------------------------------------------------------------------
 castor::legacymsg::MessageHeader
   castor::tape::tapeserver::daemon::MountSessionAcceptHandler::readJobMsgHeader(
-    const int connection) throw(castor::exception::Exception) {
+    const int clientConnection) throw(castor::exception::Exception) {
+  castor::utils::SmartFd connection(clientConnection);
+  
   // Read in the message header
   char buf[3 * sizeof(uint32_t)]; // magic + request type + len
-  io::readBytes(connection, m_netTimeout, sizeof(buf), buf);
+  io::readBytes(connection.get(), m_netTimeout, sizeof(buf), buf);
 
   const char *bufPtr = buf;
   size_t bufLen = sizeof(buf);
@@ -283,7 +284,7 @@ castor::legacymsg::MessageHeader
   legacymsg::unmarshal(bufPtr, bufLen, header);
 
   if(TPMAGIC != header.magic) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Invalid admin job message: Invalid magic"
       ": expected=0x" << std::hex << TPMAGIC << " actual=0x" <<
       header.magic;
@@ -293,6 +294,7 @@ castor::legacymsg::MessageHeader
   // The length of the message body is checked later, just before it is read in
   // to memory
 
+  connection.release();
   return header;
 }
 
@@ -306,7 +308,7 @@ castor::legacymsg::TapeUpdateDriveRqstMsgBody
   char buf[REQBUFSZ];
 
   if(sizeof(buf) < len) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read body of job message"
        ": Maximum body length exceeded"
        ": max=" << sizeof(buf) << " actual=" << len;
@@ -316,7 +318,7 @@ castor::legacymsg::TapeUpdateDriveRqstMsgBody
   try {
     io::readBytes(connection, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read body of job message"
       ": " << ne.getMessage().str();
     throw ex;
@@ -339,7 +341,7 @@ castor::legacymsg::TapeLabelRqstMsgBody
   char buf[REQBUFSZ];
 
   if(sizeof(buf) < len) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read body of job message"
        ": Maximum body length exceeded"
        ": max=" << sizeof(buf) << " actual=" << len;
@@ -349,7 +351,7 @@ castor::legacymsg::TapeLabelRqstMsgBody
   try {
     io::readBytes(connection, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read body of job message"
       ": " << ne.getMessage().str();
     throw ex;

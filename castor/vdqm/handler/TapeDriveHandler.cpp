@@ -26,7 +26,6 @@
 #include <sys/types.h> // For VMGR
 #include <string.h>
 
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/vdqm/ClientIdentification.hpp"
 #include "castor/vdqm/DatabaseHelper.hpp"
@@ -469,7 +468,7 @@ int castor::vdqm::handler::TapeDriveHandler::tapeDriveStatus2Bitset(
     return VDQM_UNIT_UNKNOWN;
     break;
   default:
-    castor::exception::Internal ie;
+    castor::exception::Exception ie;
     ie.getMessage() << "Unknown drive status: " << status << std::endl;
     throw ie;
   }

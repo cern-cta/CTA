@@ -127,4 +127,3 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
   return daemon.main();
 }
 
-

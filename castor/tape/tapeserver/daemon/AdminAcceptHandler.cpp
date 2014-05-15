@@ -22,7 +22,6 @@
 
 #include "castor/exception/BadAlloc.hpp"
 #include "castor/exception/Errnum.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmConnectionHandler.hpp"
@@ -110,7 +109,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeRcReplyMsg(c
   try {
     io::writeBytes(fd, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to write job reply message: " <<
       ne.getMessage().str();
     throw ex;
@@ -125,7 +124,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeStatReplyMsg
   
   const std::list<std::string> unitNames = m_driveCatalogue.getUnitNames();
   if(unitNames.size()>CA_MAXNBDRIVES) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Too many drives in drive catalogue: " << unitNames.size() << ". Max allowed: " << CA_MAXNBDRIVES << ".";
     throw ex;
   }
@@ -141,7 +140,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeStatReplyMsg
   try {
     io::writeBytes(fd, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to write job reply message: " <<
       ne.getMessage().str();
     throw ex;
@@ -178,7 +177,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillTapeStatDriveEntr
     castor::utils::copyString(entry.vsn, entry.vid);
     entry.cfseq = 0; // the fseq is ignored by tpstat, so we leave it empty
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to fill TapeStatDriveEntry: " <<
       ne.getMessage().str();
     throw ex;
@@ -204,7 +203,7 @@ uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatE
       break;
     default:
       {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "Failed to translate drive state to TapeStatDriveEntry.up"
           ": Unknown drive-state: state=" << state;
@@ -230,7 +229,7 @@ uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatE
       return 1;
     default:
       {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "Failed to translate drive state to TapeStatDriveEntry.asn"
           ": Unknown drive-state: state=" << state;
@@ -261,7 +260,7 @@ bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
   try {
     connection.reset(io::acceptConnection(fd.fd, 1));
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept a connection from the admin command"
       ": " << ne.getMessage().str();
     throw ex;
@@ -277,7 +276,7 @@ bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
 void castor::tape::tapeserver::daemon::AdminAcceptHandler::checkHandleEventFd(
   const int fd) throw (castor::exception::Exception) {
   if(m_fd != fd) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept connection from the admin command"
       ": Event handler passed wrong file descriptor"
       ": expected=" << m_fd << " actual=" << fd;
@@ -338,7 +337,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeConfigJob(
     break;
   default:
     {
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "Wrong drive status requested: " << body.status;
       throw ex;
     }
@@ -391,7 +390,7 @@ castor::legacymsg::MessageHeader
   legacymsg::unmarshal(bufPtr, bufLen, header);
 
   if(TPMAGIC != header.magic) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Invalid admin job message: Invalid magic"
       ": expected=0x" << std::hex << TPMAGIC << " actual=0x" <<
       header.magic;
@@ -399,7 +398,7 @@ castor::legacymsg::MessageHeader
   }
 
   if(TPCONF != header.reqType and TPSTAT != header.reqType) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Invalid admin job message: Invalid request type"
        ": expected= 0x" << std::hex << TPCONF << " or 0x" << TPSTAT << " actual=0x" <<
        header.reqType;
@@ -422,7 +421,7 @@ castor::legacymsg::TapeConfigRequestMsgBody
   char buf[REQBUFSZ];
 
   if(sizeof(buf) < len) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read body of job message"
        ": Maximum body length exceeded"
        ": max=" << sizeof(buf) << " actual=" << len;
@@ -432,7 +431,7 @@ castor::legacymsg::TapeConfigRequestMsgBody
   try {
     io::readBytes(connection, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read body of job message"
       ": " << ne.getMessage().str();
     throw ex;
@@ -455,7 +454,7 @@ castor::legacymsg::TapeStatRequestMsgBody
   char buf[REQBUFSZ];
 
   if(sizeof(buf) < len) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read body of job message"
        ": Maximum body length exceeded"
        ": max=" << sizeof(buf) << " actual=" << len;
@@ -465,7 +464,7 @@ castor::legacymsg::TapeStatRequestMsgBody
   try {
     io::readBytes(connection, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read body of job message"
       ": " << ne.getMessage().str();
     throw ex;

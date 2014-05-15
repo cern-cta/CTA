@@ -49,7 +49,6 @@ set (COMMON_LIB_SRC_FILES
   ../castor/exception/InvalidConfigEntry.cpp
   ../castor/exception/InvalidConfiguration.cpp
   ../castor/exception/InvalidNbArguments.cpp
-  ../castor/exception/Internal.cpp
   ../castor/exception/Mismatch.cpp
   ../castor/exception/NotAnOwner.cpp
   ../castor/exception/NotSupported.cpp

@@ -27,7 +27,6 @@
 #include <vector>
 #include <map>
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 
 // Local Includes
 #include "ICnvFactory.hpp"
@@ -99,7 +98,7 @@ castor::IConverter* castor::BaseCnvSvc::converter
   const castor::ICnvFactory* fac =
     castor::Converters::instance()->cnvFactory(repType(), objType);
   if (0 == fac) {
-    castor::exception::Internal e;
+    castor::exception::Exception e;
     e.getMessage() << "No factory found for object type "
                    << objType << " and representation type "
                    << repType();
@@ -108,7 +107,7 @@ castor::IConverter* castor::BaseCnvSvc::converter
   m_converters[objType] = fac->instantiate(this);
   if (0!= m_converters[objType]) return m_converters[objType];
   // Throw an exception since we did not find any suitable converter
-  castor::exception::Internal e;
+  castor::exception::Exception e;
   e.getMessage() << "No converter for object type "
                  << objType << " and representation type "
                  << repType();

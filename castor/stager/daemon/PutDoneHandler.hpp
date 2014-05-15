@@ -10,7 +10,6 @@
 #include "castor/IObject.hpp"
 #include "castor/ObjectSet.hpp"
 #include "castor/exception/Exception.hpp"
-#include "castor/exception/Internal.hpp"
 
 #include "serrno.h"
 #include <errno.h>

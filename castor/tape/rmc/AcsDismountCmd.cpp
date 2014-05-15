@@ -63,7 +63,7 @@ int castor::tape::rmc::AcsDismountCmd::main(const int argc,
     m_err << std::endl;
     usage(m_err);
     return 1;
-  } catch(castor::exception::Internal &ie) {
+  } catch(castor::exception::Exception &ie) {
     m_err << "Aborting: Internal error: " << ie.getMessage().str() <<
       std::endl;
     return 1;
@@ -141,7 +141,7 @@ void castor::tape::rmc::AcsDismountCmd::usage(std::ostream &os)
 castor::tape::rmc::AcsDismountCmdLine
   castor::tape::rmc::AcsDismountCmd::parseCmdLine(
   const int argc, char *const *const argv)
-  throw(castor::exception::Internal, castor::exception::InvalidArgument,
+  throw(castor::exception::Exception, castor::exception::InvalidArgument,
     castor::exception::MissingOperand) {
 
   static struct option longopts[] = {
@@ -216,7 +216,7 @@ castor::tape::rmc::AcsDismountCmdLine
       break;
     default:
       {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "getopt_long returned the following unknown value: 0x" <<
           std::hex << (int)c;

@@ -127,7 +127,7 @@ private:
   /**
    * Sets up the signal handling for this multi-threaded daemon.
    */
-  void setupMultiThreadedSignalHandling() throw(castor::exception::Internal);
+  void setupMultiThreadedSignalHandling() throw(castor::exception::Exception);
 
   /**
    * Handles signals and performs graceful/immediate stop.

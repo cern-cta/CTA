@@ -34,7 +34,6 @@
 #include "serrno.h"
 #include "castor/server/BaseThreadPool.hpp"
 #include "castor/Services.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/metrics/MetricsCollector.hpp"
 #include "castor/metrics/InternalCounter.hpp"
 
@@ -97,7 +96,7 @@ void castor::server::BaseThreadPool::init() throw (castor::exception::Exception)
 //------------------------------------------------------------------------------
 void castor::server::BaseThreadPool::run() throw (castor::exception::Exception)
 {
-  castor::exception::Internal notImpl;
+  castor::exception::Exception notImpl;
   notImpl.getMessage() <<
     "BaseThreadPool is (pseudo)abstract, you must use its derived classes";
   throw notImpl;

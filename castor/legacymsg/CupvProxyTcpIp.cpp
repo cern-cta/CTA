@@ -83,7 +83,7 @@ bool castor::legacymsg::CupvProxyTcpIp::isGranted(
       return true;
     case CUPV_RC:
       if(0 != header.lenOrStatus) {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Received error code from cupv running on " <<
           m_cupvHostName << ": code=" << header.lenOrStatus;
         throw ex;
@@ -96,7 +96,7 @@ bool castor::legacymsg::CupvProxyTcpIp::isGranted(
           sizeof(errorBuf) : header.lenOrStatus;
         castor::io::readBytes(fd.get(), m_netTimeout, nbBytesToRead, errorBuf);
         errorBuf[sizeof(errorBuf) - 1] = '\0';
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() << "Received error message from cupv running on " <<
           m_cupvHostName << ": " << errorBuf;
         throw ex;
@@ -104,7 +104,7 @@ bool castor::legacymsg::CupvProxyTcpIp::isGranted(
       break;
     default:
       {
-        castor::exception::Internal ex;
+        castor::exception::Exception ex;
         ex.getMessage() <<
           "Reply message from cupv running on " << m_cupvHostName <<
           " has an unexpected request type"
@@ -114,7 +114,7 @@ bool castor::legacymsg::CupvProxyTcpIp::isGranted(
     }
 
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() << ": " << ne.getMessage().str();
     throw ex;
   }
@@ -130,7 +130,7 @@ int castor::legacymsg::CupvProxyTcpIp::connectToCupv() const throw(castor::excep
     smartConnectSock.reset(io::connectWithTimeout(m_cupvHostName, m_cupvPort,
       m_netTimeout));
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to connect to cupv on host " << m_cupvHostName
       << " port " << m_cupvPort << ": " << ne.getMessage().str();
     throw ex;
@@ -149,7 +149,7 @@ void castor::legacymsg::CupvProxyTcpIp::writeCupvCheckMsg(const int fd, const le
   try {
     io::writeBytes(fd, m_netTimeout, len, buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to write CUPV_CHECK message: "
       << ne.getMessage().str();
     throw ex;
@@ -166,7 +166,7 @@ castor::legacymsg::MessageHeader castor::legacymsg::CupvProxyTcpIp::readCupvMsgH
   try {
     io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read message header: "
       << ne.getMessage().str();
     throw ex;
@@ -177,7 +177,7 @@ castor::legacymsg::MessageHeader castor::legacymsg::CupvProxyTcpIp::readCupvMsgH
   unmarshal(bufPtr, bufLen, header);
 
   if(CUPV_MAGIC != header.magic) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to read message header: "
       " Header contains an invalid magic number: expected=0x" << std::hex <<
       CUPV_MAGIC << " actual=0x" << header.magic;

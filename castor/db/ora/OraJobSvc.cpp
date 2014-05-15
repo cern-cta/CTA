@@ -48,7 +48,6 @@
 #include "castor/db/ora/OraJobSvc.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Busy.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/RequestCanceled.hpp"
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/stager/DiskCopyStatusCodes.hpp"
@@ -182,7 +181,7 @@ castor::db::ora::OraJobSvc::getUpdateStart
     unsigned int nb = m_getStartStatement->executeUpdate();
     if (0 == nb) {
       rollback();
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "getUpdateStart : unable to schedule SubRequest.";
       throw ex;
@@ -201,7 +200,7 @@ castor::db::ora::OraJobSvc::getUpdateStart
       throw ex;
     }
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in getUpdateStart."
       << std::endl << e.what();
@@ -236,7 +235,7 @@ castor::db::ora::OraJobSvc::putStart
     unsigned int nb = m_putStartStatement->executeUpdate();
     if (0 == nb) {
       rollback();
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage()
         << "putStart : unable to schedule SubRequest.";
       throw ex;
@@ -253,7 +252,7 @@ castor::db::ora::OraJobSvc::putStart
                                       error.find("ORA-", 4) - 12);
       throw ex;
     }
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in putStart."
       << std::endl << e.what();
@@ -306,7 +305,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
 
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in prepareForMigration."
       << std::endl << e.what();
@@ -336,7 +335,7 @@ void castor::db::ora::OraJobSvc::getUpdateDone
     m_getEndedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Unable to clean Get/Update subRequest :"
       << std::endl << e.getMessage();
@@ -366,7 +365,7 @@ void castor::db::ora::OraJobSvc::getUpdateFailed
     m_getEndedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Unable to mark subRequest as FAILED :"
       << std::endl << e.getMessage();
@@ -404,7 +403,7 @@ void castor::db::ora::OraJobSvc::putFailed
     m_putEndedStatement->executeUpdate();
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Unable to clean Put subRequest :"
       << std::endl << e.getMessage();
@@ -440,7 +439,7 @@ void castor::db::ora::OraJobSvc::firstByteWritten
                                       error.find("ORA-", 4) - 12);
       throw ex;
     }
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Error caught in firstByteWritten."
       << std::endl << e.what();

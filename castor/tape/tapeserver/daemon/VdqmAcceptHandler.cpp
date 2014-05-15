@@ -22,7 +22,6 @@
 
 #include "castor/exception/BadAlloc.hpp"
 #include "castor/exception/Errnum.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmConnectionHandler.hpp"
@@ -115,7 +114,7 @@ bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
   try {
     connection.reset(io::acceptConnection(fd.fd, 1));
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept a connection from the vdqm daemon"
       ": " << ne.getMessage().str();
     throw ex;
@@ -143,7 +142,7 @@ bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
     m_reactor.registerHandler(connectionHandler.get());
     connectionHandler.release();
   } catch(castor::exception::Exception &ne) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to register a new vdqm connection handler"
       ": " << ne.getMessage().str();
   }
@@ -159,7 +158,7 @@ bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
 void castor::tape::tapeserver::daemon::VdqmAcceptHandler::checkHandleEventFd(
   const int fd) throw (castor::exception::Exception) {
   if(m_fd != fd) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept connection from vdqmd daemon"
       ": Event handler passed wrong file descriptor"
       ": expected=" << m_fd << " actual=" << fd;

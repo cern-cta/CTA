@@ -26,7 +26,6 @@
  *****************************************************************************/
 
 // Include files
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/OutOfMemory.hpp"
 #include "Cgrp.h"
 #include "Cpwd.h"
@@ -105,7 +104,7 @@ void castor::rh::RateLimiter::init()
   // Push the list of servers into the memcached structure.
   memcached_return rc = memcached_server_push(m_memc, m_servers);
   if (rc != MEMCACHED_SUCCESS) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failure in call to memcached_server_push: "
                     << memcached_strerror(m_memc, rc);
     throw ex;
@@ -115,7 +114,7 @@ void castor::rh::RateLimiter::init()
   // memcached increment and decrement methods later.
   rc = memcached_behavior_set(m_memc, MEMCACHED_BEHAVIOR_BINARY_PROTOCOL, 1);
   if (rc != MEMCACHED_SUCCESS) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failure in call to "
                     << "memcached_behavior_set(BINARY_PROTOCOL, 1): "
                     << memcached_strerror(m_memc, rc);

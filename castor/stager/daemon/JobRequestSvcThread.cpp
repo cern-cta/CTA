@@ -31,7 +31,6 @@
 #include "castor/db/DbCnvSvc.hpp"
 #include "castor/dlf/Dlf.hpp"
 #include "castor/dlf/Param.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/replier/RequestReplier.hpp"
 #include "castor/stager/daemon/RequestHelper.hpp"
 #include <sys/time.h>
@@ -101,7 +100,7 @@ castor::stager::daemon::JobRequestSvcThread::jobSubRequestToDo()
     // execute the statement and see whether we found something
     unsigned int rc = jobSubRequestToDoStatement->executeUpdate();
     if (0 == rc) {
-      castor::exception::Internal e;
+      castor::exception::Exception e;
       e.getMessage() << "unable to get next SubRequest to process";
       throw e;
     }
@@ -142,7 +141,7 @@ castor::stager::daemon::JobRequestSvcThread::jobSubRequestToDo()
     return result;
   } catch (oracle::occi::SQLException &e) {
     dbSvc->handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << e.getMessage();
     throw ex;
   }
@@ -241,7 +240,7 @@ int castor::stager::daemon::JobRequestSvcThread::handleGetOrPut(const JobRequest
     return handleGetOrPutStatement->getInt(1);
   } catch (oracle::occi::SQLException &e) {
     dbSvc->handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Error caught in handleGetOrPut : " << e.what();
     // log "Exception caught while handling request"
     castor::dlf::Param params[] = {
@@ -283,7 +282,7 @@ bool castor::stager::daemon::JobRequestSvcThread::updateAndCheckSubRequest
     return updateAndCheckSubReqStatement->getInt(3) == 0;
   } catch (oracle::occi::SQLException &e) {
     dbSvc->handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Unable to archive subRequest :" << e.what();
     throw ex;
   }

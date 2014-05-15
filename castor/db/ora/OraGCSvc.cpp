@@ -49,7 +49,6 @@
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/Busy.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/NoEntry.hpp"
 #include "castor/exception/NotSupported.hpp"
 #include "castor/exception/OutOfMemory.hpp"
@@ -216,7 +215,7 @@ castor::db::ora::OraGCSvc::selectFiles2Delete(std::string diskServer)
     m_selectFiles2DeleteStatement->closeResultSet(rset);
     return result;
   } catch (oracle::occi::SQLException e) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Unable to select files to delete :\n"
       << e.getMessage();
@@ -266,7 +265,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
       {castor::dlf::Param("Function", "OraGCSvc::filesDeleted")};
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_ERROR,
 			    DLF_BASE_ORACLELIB + 28, 1, params);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Error caught when calling Cns_seterrbuf";
     throw ex;
   }
@@ -306,7 +305,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
     m_filesDeletedStatement->executeUpdate();
     if (0 == nb) {
       // we want to commit anyway to release locks
-      castor::exception::Internal ex;
+      castor::exception::Exception ex;
       ex.getMessage() << "filesDeleted : no rows returned.";
       //free allocated memory
       free(lens);
@@ -381,7 +380,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
                               DLF_BASE_ORACLELIB + 31, 1, params);
     }
   } catch (oracle::occi::SQLException e) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Unable to remove deleted files :\n"
       << e.getMessage();
@@ -442,7 +441,7 @@ void castor::db::ora::OraGCSvc::filesDeletionFailed
     free(buffer);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage()
       << "Unable to remove files for which deletion failed :"
       << std::endl << e.getMessage();
@@ -622,7 +621,7 @@ void castor::db::ora::OraGCSvc::removeTerminatedRequests()
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, DLF_BASE_ORACLELIB + 3);
   } catch (oracle::occi::SQLException e) {
     handleException(e);
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     // "Cleaning of archived requests failed"
     castor::dlf::Param params[] =
       {castor::dlf::Param("Message", e.getMessage())};

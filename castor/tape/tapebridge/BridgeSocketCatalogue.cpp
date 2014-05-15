@@ -22,7 +22,6 @@
  * @author Nicola.Bessone@cern.ch Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/exception/Internal.hpp"
 #include "castor/tape/tapebridge/BridgeSocketCatalogue.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -265,7 +264,7 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::buildReadFdSet(
 
     if(0 > *itor || FD_SETSIZE <= *itor) {
       // This should never happen
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Failed to " << task <<
         ": Tried to add an invalid file-descriptor to the select read-set"
         ": fd=" << *itor);

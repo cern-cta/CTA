@@ -189,12 +189,12 @@ void castor::server::MultiThreadedDaemon::start()
 // setUpMultiThreadedSignalHandling
 //------------------------------------------------------------------------------
 void castor::server::MultiThreadedDaemon::setupMultiThreadedSignalHandling()
-  throw (castor::exception::Internal) {
+  throw (castor::exception::Exception) {
   // Initialize mutex variable in case of a signal. Timeout = 10 seconds
   try {
     m_signalMutex = new Mutex(0);
-  } catch(castor::exception::Internal &ie) {
-    castor::exception::Internal ex;
+  } catch(castor::exception::Exception &ie) {
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed to create m_signalMutex: " <<
       ie.getMessage().str();
     throw ex;
@@ -220,7 +220,7 @@ void castor::server::MultiThreadedDaemon::setupMultiThreadedSignalHandling()
 
   const int sigmask_rc = pthread_sigmask(SIG_BLOCK, &m_signalSet, NULL);
   if (0 != sigmask_rc) {
-    castor::exception::Internal ex;
+    castor::exception::Exception ex;
     ex.getMessage() << "Failed pthread_sigmask" << std::endl;
     throw ex;
   }

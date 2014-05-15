@@ -278,7 +278,7 @@ namespace castor      {
             // Look for a given column in the metadata array.
             int findColumnIndex (const std::string& colName, int colType)
             // We could throw std::exception for the STL, or a castor exception.
-            const throw (std::exception, castor::exception::Internal) {
+            const throw (std::exception, castor::exception::Exception) {
               for (unsigned int i=0; i<m_rsStruct.size(); i++) {
                 if (colName == m_rsStruct[i].getString(oracle::occi::MetaData::ATTR_NAME) &&
                     colType == m_rsStruct[i].getInt(oracle::occi::MetaData::ATTR_DATA_TYPE))
@@ -286,7 +286,7 @@ namespace castor      {
               }
               // getting here means we did not find the column.
               // We will dump all names and type (in numeric form) in the exception to ease diagnostic.
-              castor::exception::Internal ex;
+              castor::exception::Exception ex;
               ex.getMessage() << "resultSetIntrospector could not find column " << colName << " of type " << colType
                   << " columns are: ";
               for (unsigned int i=0; i<m_rsStruct.size(); i++) {

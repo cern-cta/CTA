@@ -24,7 +24,6 @@
 
 #include "castor/Constants.hpp"
 #include "castor/dlf/Dlf.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
@@ -70,7 +69,7 @@ void castor::tape::tapebridge::RtcpTxRx::getRequestInfoFromRtcpd(
   try {
     totalLen = legacymsg::marshal(buf, request);
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
          ": Failed to marshal request for volume request ID: "
       << ex.getMessage().str());
   }
@@ -149,7 +148,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveVolumeToRtcpd(
   try {
     totalLen = legacymsg::marshal(buf, request);
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
          ": Failed to marshal volume message: "
       << ex.getMessage().str());
   }
@@ -213,7 +212,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
   try {
     totalLen = legacymsg::marshal(buf, request);
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
          ": Failed to marshal file message: "
       << ex.getMessage().str());
   }
@@ -276,7 +275,7 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdDumpTape(
   try {
     totalLen = legacymsg::marshal(buf, request);
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
          ": Failed to marshal file message: "
       << ex.getMessage().str());
   }
@@ -338,7 +337,7 @@ void castor::tape::tapebridge::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
     // The ping message is bodiless
     totalLen = legacymsg::marshal(buf, header);
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
          ": Failed to marshal rtcpd ping message : "
       << ex.getMessage().str());
   }
@@ -393,7 +392,7 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdEndOfFileList(
   try {
     totalLen = legacymsg::marshal(buf, body);
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
          ": Failed to marshal \"no more requests\" message: "
       << ex.getMessage().str());
   }
@@ -451,7 +450,7 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdEndOfFileList(
   default:
     {
       // Should never reach this point
-      TAPE_THROW_EX(castor::exception::Internal,
+      TAPE_THROW_EX(castor::exception::Exception,
         ": Unknown RTCOPY_MAGIC request type after successful call to "
         "checkRtcopyReqType");
     }
@@ -540,7 +539,7 @@ void castor::tape::tapebridge::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid
     size_t     remainingLen = header.lenOrStatus;
     legacymsg::unmarshal(p, remainingLen, request);
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
          ": Failed to unmarshal message body from remote-copy job submitter"
       << ": "<< ex.getMessage().str());
   }
@@ -601,7 +600,7 @@ void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
   try {
     totalLen = legacymsg::marshal(buf, msgBody);
   } catch(castor::exception::Exception &ex) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
          ": Failed to marshal ask RTCPD to request more "
       << (mode == WRITE_ENABLE ? "migrate" : "recall") << " work message: "
       << ex.getMessage().str());

@@ -24,7 +24,6 @@
  
  
 #include "castor/PortNumbers.hpp"
-#include "castor/exception/Internal.hpp"
 #include "castor/exception/InvalidArgument.hpp"
 #include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/tape/tapebridge/DlfMessageConstants.hpp"
@@ -313,7 +312,7 @@ void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
           ": value=0x" << std::hex << (int)c;
 
         // Throw an exception
-        TAPE_THROW_EX(castor::exception::Internal,
+        TAPE_THROW_EX(castor::exception::Exception,
           ": " << oss.str());
       }
     }
@@ -327,7 +326,7 @@ void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
       ": Coptind=" << Coptind;
 
     // Throw an exception
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
       ": " << oss.str());
   }
 
@@ -376,7 +375,7 @@ void castor::tape::tapebridge::TapeBridgeDaemon::
   m_vdqmRequestHandlerThreadPool = getThreadPool('V');
 
   if(m_vdqmRequestHandlerThreadPool == NULL) {
-    TAPE_THROW_EX(castor::exception::Internal,
+    TAPE_THROW_EX(castor::exception::Exception,
      ": Failed to get VdqmRequestHandlerPool");
   }
 
