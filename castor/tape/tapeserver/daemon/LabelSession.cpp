@@ -22,37 +22,45 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#include <memory>
-
-#include "castor/tape/tapeserver/daemon/LabelSession.hpp"
+#include "castor/io/io.hpp"
+#include "castor/legacymsg/legacymsg.hpp"
+#include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/log/LogContext.hpp"
+#include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "log.h"
 #include "stager_client_commandline.h"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/System.hpp"
-#include "h/serrno.h"
-#include "castor/tape/tapeserver/SCSI/Device.hpp"
+#include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
+#include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
-#include "RecallTaskInjector.hpp"
-#include "RecallReportPacker.hpp"
+#include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "h/Cns.h"
 #include "h/getconfent.h"
+#include "h/serrno.h"
 
-using namespace castor::tape;
-using namespace castor::log;
+#include <memory>
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::LabelSession::LabelSession(
-    legacymsg::RmcProxy &rmc,
-    const legacymsg::TapeLabelRqstMsgBody& clientRequest, 
-    castor::log::Logger& logger, System::virtualWrapper & sysWrapper,
-    const utils::TpconfigLines & tpConfig, const bool force):     
-    m_rmc(rmc), m_request(clientRequest), m_logger(logger),
-    m_sysWrapper(sysWrapper), m_tpConfig(tpConfig), m_force(force) {}
+  const int labelCmdConnection,
+  legacymsg::RmcProxy &rmc,
+  const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
+  castor::log::Logger &logger,
+  System::virtualWrapper &sysWrapper,
+  const utils::TpconfigLines &tpConfig,
+  const bool force):     
+  m_labelCmdConnection(labelCmdConnection),
+  m_rmc(rmc),
+  m_request(clientRequest),
+  m_logger(logger),
+  m_sysWrapper(sysWrapper),
+  m_tpConfig(tpConfig),
+  m_force(force) {
+}
 
 //------------------------------------------------------------------------------
 // execute
@@ -70,7 +78,12 @@ void castor::tape::tapeserver::daemon::LabelSession::execute() throw (castor::ta
   LogContext::ScopedParam sp04(lc, Param("drive", m_request.drive));
   LogContext::ScopedParam sp05(lc, Param("dgn", m_request.dgn));
   
-  executeLabel(lc);
+  try {
+    executeLabel(lc);
+    legacymsg::writeTapeRcReplyMsg(m_labelCmdConnection, 0);
+  } catch(castor::exception::Exception &ex) {
+    legacymsg::writeTapeRcReplyMsg(m_labelCmdConnection, 1);
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -258,5 +271,4 @@ void castor::tape::tapeserver::daemon::LabelSession::executeLabel(LogContext & l
     lc.log(LOG_ERR, "End session with error");
     return;
   }
-  
 }

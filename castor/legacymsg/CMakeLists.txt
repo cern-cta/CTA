@@ -34,6 +34,7 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   GenericMarshal.cpp
   GenericReplyMsgBody.cpp
   GiveOutpMsgBody.cpp
+  legacymsg.cpp
   MessageHeader.cpp
   RmcAcsMntMsgBody.cpp
   RmcMarshal.cpp

@@ -23,15 +23,16 @@
 #include "castor/exception/BadAlloc.hpp"
 #include "castor/exception/Errnum.hpp"
 #include "castor/io/io.hpp"
+#include "castor/legacymsg/CommonMarshal.hpp"
+#include "castor/legacymsg/legacymsg.hpp"
+#include "castor/legacymsg/TapeMarshal.hpp"
+#include "castor/tape/utils/utils.hpp"
+#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/tapeserver/daemon/MountSessionAcceptHandler.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "h/common.h"
 #include "h/serrno.h"
 #include "h/Ctape.h"
-#include "castor/legacymsg/CommonMarshal.hpp"
-#include "castor/legacymsg/TapeMarshal.hpp"
-#include "castor/tape/utils/utils.hpp"
-#include "DriveCatalogue.hpp"
 
 #include <vdqm_api.h>
 
@@ -49,15 +50,14 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::MountSessionAcceptHandler::MountSessionAcceptHandler(
-        const int fd, io::PollReactor &reactor, log::Logger &log,
-        DriveCatalogue &driveCatalogue, const std::string &hostName)
-  throw():
-    m_fd(fd),
-    m_reactor(reactor),
-    m_log(log),
-    m_driveCatalogue(driveCatalogue),
-    m_hostName(hostName),
-    m_netTimeout(10) {
+  const int fd, io::PollReactor &reactor, log::Logger &log,
+  DriveCatalogue &driveCatalogue, const std::string &hostName) throw():
+  m_fd(fd),
+  m_reactor(reactor),
+  m_log(log),
+  m_driveCatalogue(driveCatalogue),
+  m_hostName(hostName),
+  m_netTimeout(10) {
 }
 
 //------------------------------------------------------------------------------
@@ -82,35 +82,6 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::fillPollFd(
   fd.fd = m_fd;
   fd.events = POLLRDNORM;
   fd.revents = 0;
-}
-
-//-----------------------------------------------------------------------------
-// marshalRcReplyMsg
-//-----------------------------------------------------------------------------
-size_t castor::tape::tapeserver::daemon::MountSessionAcceptHandler::marshalRcReplyMsg(char *const dst, const size_t dstLen,
-    const int rc)
-  throw(castor::exception::Exception) {
-  legacymsg::MessageHeader src;
-  src.magic = TPMAGIC;
-  src.reqType = TAPERC;
-  src.lenOrStatus = rc;  
-  return legacymsg::marshal(dst, dstLen, src);
-}
-
-//------------------------------------------------------------------------------
-// writeRcReplyMsg
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::writeRcReplyMsg(const int fd, const int rc) throw(castor::exception::Exception) {
-  char buf[REPBUFSZ];
-  const size_t len = marshalRcReplyMsg(buf, sizeof(buf), rc);
-  try {
-    io::writeBytes(fd, m_netTimeout, len, buf);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to write job reply message: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
 }
 
 //------------------------------------------------------------------------------
@@ -234,7 +205,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
   logSetVidJobReception(body);
   m_driveCatalogue.updateVidAssignment(body.vid, body.drive);
   // 0 as return code for the tape config command, as in: "all went fine"
-  writeRcReplyMsg(connection.get(), 0);
+  legacymsg::writeTapeRcReplyMsg(connection.get(), 0);
 
   close(connection.release());
 }
@@ -257,12 +228,23 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
   // whilst informing the drive catalogue of the reception of the label job.
   // If the drive catalogue throws an exception whilst evaluating the drive
   // state-change then the catalogue will NOT have closed the connection.
-  m_driveCatalogue.receivedLabelJob(body, connection.get());
+  try {
+    m_driveCatalogue.receivedLabelJob(body, connection.get());
 
-  // The drive catalogue will now remember the client connection, therefore it
-  // is now safe and necessary for this method to relinquish ownership of the
-  // connection
-  connection.release();
+    // The drive catalogue will now remember the client connection, therefore it
+    // is now safe and necessary for this method to relinquish ownership of the
+    // connection
+    connection.release();
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "Informing client label-command of error", params);
+
+    // Tell the client there was an error
+    legacymsg::writeTapeRcReplyMsg(connection.get(), 1);
+  }
+
+  // Explicitly close the client connection for readability
+  close(connection.release());
 }
 
 //------------------------------------------------------------------------------

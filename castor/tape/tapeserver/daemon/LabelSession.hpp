@@ -40,20 +40,32 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   /**
-   * The main class handling a tape label session. This is the main container started
-   * by the master process. It will drive a separate process. Only the sub
-   * process interface is not included here to allow testability.
+   * Class responsible for handling a tape label session.
    */
   class LabelSession {
-    
   public:
     
     /**
      *  Constructor 
+     *
+     * @param labelCmdConnection The file descriptor of the connection with the
+     * label command.
+     * @param rmc Proxy object representing the rmcd daemon.
+     * @param clientRequest The request to label a tape received from the label
+     * tape command.
+     * @param logger Object reprsenting the API to the CASTOR logging system.
+     * @param sysWrapper Object representing the operating system.
+     * @param tpConfig The parsed lines of /etc/castor/TPCONFIG.
+     * @param force The flag that, if set to true, allows labeling a non-blank
+     * tape.
      */
-    LabelSession(legacymsg::RmcProxy &rmc, const legacymsg::TapeLabelRqstMsgBody & clientRequest, 
-            castor::log::Logger & logger, System::virtualWrapper & sysWrapper,
-            const utils::TpconfigLines & tpConfig, const bool force);
+    LabelSession(
+      const int labelCmdConnection,
+      legacymsg::RmcProxy &rmc,
+      const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
+      castor::log::Logger & logger, System::virtualWrapper & sysWrapper,
+      const utils::TpconfigLines &tpConfig,
+      const bool force);
     
     /**
      *  The only method. It will call executeLabel to do the actual job 
@@ -61,6 +73,11 @@ namespace daemon {
     void execute() throw (Exception);
     
   private:
+
+    /**
+     * The file descriptor of the connection with the label command.
+     */
+    int m_labelCmdConnection;
     
     /**
      * The object representing the rmcd daemon.
@@ -98,8 +115,10 @@ namespace daemon {
      * @param lc the log context
      */
     void executeLabel(LogContext & lc);
-  };
-}
-}
-}
-}
+
+ }; // class LabelSession
+
+} // namespace daemon
+} // namespace tapeserver
+} // namespace tape
+} // namespace castor

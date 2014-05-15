@@ -635,17 +635,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession
   std::list<log::Param> params;
   params.push_back(log::Param("sessionPid", sessionPid));
 
-  // Try to notify the client label-command of the end of the session and
-  // continue even in the event of failure
-  try {
-    notifyLabelCmdOfEndOfSession(sessionPid, waitpidStat);
-  } catch(castor::exception::Exception ex) {
-    std::list<log::Param> errorParams = params;
-    params.push_back(log::Param("message", ex.getMessage().str()));
-    m_log(LOG_ERR, "Failed to notify client label-command of end of session",
-      errorParams);
-  }
-
   if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
     m_driveCatalogue.sessionSucceeded(sessionPid);
     m_log(LOG_INFO, "Label session succeeded", params);
@@ -653,50 +642,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession
     m_driveCatalogue.sessionFailed(sessionPid);
     m_log(LOG_INFO, "Label session failed", params);
     setDriveDownInVdqm(sessionPid);
-  }
-}
-
-//-----------------------------------------------------------------------------
-// marshalTapeRcReplyMsg
-//-----------------------------------------------------------------------------
-size_t castor::tape::tapeserver::daemon::TapeDaemon::marshalTapeRcReplyMsg(char *const dst,
-  const size_t dstLen, const int rc)
-  throw(castor::exception::Exception) {
-  legacymsg::MessageHeader src;
-  src.magic = TPMAGIC;
-  src.reqType = TAPERC;
-  src.lenOrStatus = rc;  
-  return legacymsg::marshal(dst, dstLen, src);
-}
-
-//------------------------------------------------------------------------------
-// writeTapeRcReplyMsg
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::writeTapeRcReplyMsg(const int fd, const int rc) throw(castor::exception::Exception) {
-  char buf[REPBUFSZ];
-  const size_t len = marshalTapeRcReplyMsg(buf, sizeof(buf), rc);
-  const int timeout = 10; //seconds
-  try {
-    io::writeBytes(fd, timeout, len, buf); // TODO: put the 10 seconds of
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to write job reply message: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// notifyLabelCmdOfEndOfSession
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::notifyLabelCmdOfEndOfSession(
-  const pid_t sessionPid, const int waitpidStat) throw(castor::exception::Exception) {
-  const int labelCmdConnection = m_driveCatalogue.getLabelCmdConnection(sessionPid);
-  
-  if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
-    writeTapeRcReplyMsg(labelCmdConnection, 0); // success
-  } else {
-    writeTapeRcReplyMsg(labelCmdConnection, 1); // failure
   }
 }
 
@@ -814,6 +759,19 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSessions() throw() {
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
   const std::string &unitName) throw() {
+  std::list<log::Param> params;
+  params.push_back(log::Param("unitName", unitName));
+
+  // Release the connection with the label command from the drive catalogue
+  castor::utils::SmartFd labelCmdConnection;
+  try {
+    labelCmdConnection.reset(m_driveCatalogue.releaseLabelCmdConnection(unitName));
+  } catch(castor::exception::Exception &ne) {
+    params.push_back(log::Param("message", ne.getMessage().str()));
+    m_log(LOG_ERR, "Failed to fork label session", params);
+    return;
+  }
+
   m_log.prepareForFork();
   const pid_t sessionPid = fork();
 
@@ -822,11 +780,15 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
     // Log an error message and return
     char errBuf[100];
     sstrerror_r(errno, errBuf, sizeof(errBuf));
-    log::Param params[] = {log::Param("message", errBuf)};
-    m_log(LOG_ERR, "Failed to fork label session for tape drive", params);
+    params.push_back(log::Param("message", errBuf));
+    m_log(LOG_ERR, "Failed to fork label session", params);
 
   // Else if this is the parent process
   } else if(0 < sessionPid) {
+    // Only the child process should have the connection with the label-command
+    // open
+    close(labelCmdConnection.release());
+
     m_driveCatalogue.forkedLabelSession(unitName, sessionPid);
 
   // Else this is the child process
@@ -835,46 +797,47 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
     // file-descriptors owned by the event handlers
     m_reactor.clear();
 
-    runLabelSession(unitName);
-
-    // The runLabelSession() should call exit() and should therefore never
-    // return
-    m_log(LOG_ERR, "runLabelSession() returned unexpectedly");
+    runLabelSession(unitName, labelCmdConnection.release());
   }
 }
 
 //------------------------------------------------------------------------------
 // runLabelSession
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(const std::string &unitName) throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(
+  const std::string &unitName, const int labelCmdConnection) throw() {
   const pid_t sessionPid = getpid();
-  {
-    log::Param params[] = {
-      log::Param("sessionPid", sessionPid),
-      log::Param("unitName", unitName)};
-    m_log(LOG_INFO, "Label-session child-process started", params);
-  }
+  std::list<log::Param> params;
+  params.push_back(log::Param("sessionPid", sessionPid));
+  params.push_back(log::Param("unitName", unitName));
+
+  m_log(LOG_INFO, "Label-session child-process started", params);
 
   try {
-    const legacymsg::TapeLabelRqstMsgBody job = m_driveCatalogue.getLabelJob(unitName);
+    const legacymsg::TapeLabelRqstMsgBody job =
+      m_driveCatalogue.getLabelJob(unitName);
     std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
     castor::tape::System::realWrapper sWrapper;
     bool force = job.force==1 ? true : false;
-    castor::tape::tapeserver::daemon::LabelSession labelsession(*(rmc.get()), job, m_log, sWrapper, m_tpconfigLines, force);
+    castor::tape::tapeserver::daemon::LabelSession labelsession(
+      labelCmdConnection,
+      *(rmc.get()),
+      job,
+      m_log,
+      sWrapper,
+      m_tpconfigLines,
+      force);
     labelsession.execute();
     exit(0);
   } catch(std::exception &se) {
-    log::Param params[] = {
-      log::Param("sessionPid", sessionPid),
-      log::Param("unitName", unitName),
-      log::Param("message", se.what())};
-    m_log(LOG_ERR, "Aborting label session: Caught an unexpected exception", params);
+    params.push_back(log::Param("message", se.what()));
+    m_log(LOG_ERR, "Aborting label session: Caught an unexpected exception",
+      params);
     exit(1);
   } catch(...) {
-    log::Param params[] = {
-      log::Param("sessionPid", sessionPid),
-      log::Param("unitName", unitName)};
-    m_log(LOG_ERR, "Aborting label session: Caught an unexpected and unknown exception", params);
+    m_log(LOG_ERR,
+      "Aborting label session: Caught an unexpected and unknown exception",
+      params);
     exit(1);
   }
 }

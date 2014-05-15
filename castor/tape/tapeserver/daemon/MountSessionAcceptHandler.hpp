@@ -85,28 +85,6 @@ public:
 private:
   
   /**
-   * Marshals the specified source reply message structure into the
-   * specified destination buffer.
-   *
-   * @param dst    The destination buffer.
-   * @param dstLen The length of the destination buffer.
-   * @param rc     The return code to reply.
-   * @return       The total length of the header.
-   */
-  size_t marshalRcReplyMsg(char *const dst, const size_t dstLen,
-    const int rc) throw(castor::exception::Exception);
-  
-  /**
-   * Writes a job reply message to the specified connection.
-   *
-   * @param fd The file descriptor of the connection
-   * @param rc The return code to reply.
-   * 
-   */
-  void writeRcReplyMsg(const int fd, const int rc)
-    throw(castor::exception::Exception);
-  
-  /**
    * Marshals the specified source tape label reply message structure into the
    * specified destination buffer.
    *

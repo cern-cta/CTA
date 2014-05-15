@@ -263,16 +263,6 @@ protected:
     const int rc) throw(castor::exception::Exception);
   
   /**
-   * Writes a job reply message to the specified connection.
-   *
-   * @param fd The file descriptor of the connection with the admin command.
-   * @param rc The return code to reply.
-   * 
-   */
-  void writeTapeRcReplyMsg(const int fd, const int rc)
-    throw(castor::exception::Exception);
-
-  /**
    * Does the required post processing for the specified reaped session.
    *
    * @param sessionPid The process ID of the session child-process.
@@ -287,16 +277,6 @@ protected:
    * @param sessionPid The process ID of the session child-process.
    */
   void notifyVdqmTapeUnmounted(const pid_t sessionPid) throw();
-
-  /**
-   * Notifies the associated client label-command of the end of the label
-   * session.
-   *
-   * @param sessionPid The process ID of the session child-process.
-   * @param waitpidStat The status information given by a call to waitpid().
-   */
-  void notifyLabelCmdOfEndOfSession(const pid_t sessionPid, const int waitpidStat)
-    throw(castor::exception::Exception);
 
   /**
    * Forks a mount-session child-process for every tape drive entry in the
@@ -347,8 +327,10 @@ protected:
    * process responsible for running the label session.
    *
    * @param unitName The unit name of the tape drive.
+   * @param labelCmdConnection The file descriptor of the connection with the
+   * command-line tool castor-tape-label.
    */
-  void runLabelSession(const std::string &unitName) throw();
+  void runLabelSession(const std::string &unitName, const int labelCmdConnection) throw();
 
   /**
    * Catalogue used to keep track of both the initial and current state of

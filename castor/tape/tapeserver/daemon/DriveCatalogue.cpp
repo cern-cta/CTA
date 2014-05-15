@@ -29,6 +29,26 @@
 #include <time.h>
 
 //-----------------------------------------------------------------------------
+// destructor
+//-----------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::DriveCatalogue::~DriveCatalogue() throw() {
+  // Close any label-command connections that are still owned by the
+  // tape-drive catalogue
+  for(DriveMap::const_iterator itor = m_drives.begin(); itor != m_drives.end();
+     itor++) {
+    const DriveState driveState = itor->second.state;
+    const SessionType sessionType = itor->second.sessionType;
+    const int labelCmdConnection = itor->second.labelCmdConnection;
+
+    if(DRIVE_STATE_WAITLABEL == driveState &&
+      SESSION_TYPE_LABEL == sessionType &&
+      -1 != labelCmdConnection) {
+      close(labelCmdConnection);
+    }
+  }
+}
+
+//-----------------------------------------------------------------------------
 // drvState2Str
 //-----------------------------------------------------------------------------
 const char *castor::tape::tapeserver::daemon::DriveCatalogue::drvState2Str(
@@ -465,24 +485,15 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::updateVidAssignment(
 }
 
 //-----------------------------------------------------------------------------
-// getLabelCmdConnection
+// releaseLabelCmdConnection
 //-----------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::DriveCatalogue::getLabelCmdConnection(
-  const pid_t sessionPid) throw(castor::exception::Exception) {
+int castor::tape::tapeserver::daemon::DriveCatalogue::releaseLabelCmdConnection(
+  const std::string &unitName) throw(castor::exception::Exception) {
   std::ostringstream task;
   task << "get the file-descriptor of the connection with the label command"
-    " associated with the session with pid " << sessionPid;
+    " associated with tape drive " << unitName;
 
-  std::string unitName;
-  try {
-    unitName = getUnitName(sessionPid);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task.str() << ": " << ne.getMessage();
-    throw ex;
-  }
-
-  DriveMap::const_iterator itor = m_drives.find(unitName);
+  DriveMap::iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() << ": unit name " <<
@@ -493,8 +504,6 @@ int castor::tape::tapeserver::daemon::DriveCatalogue::getLabelCmdConnection(
   const DriveState driveState = itor->second.state;
   const SessionType sessionType = itor->second.sessionType;
   if(DRIVE_STATE_WAITLABEL != driveState &&
-    DRIVE_STATE_RUNNING != driveState &&
-    DRIVE_STATE_WAITDOWN != driveState &&
     SESSION_TYPE_LABEL != sessionType) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
@@ -503,8 +512,18 @@ int castor::tape::tapeserver::daemon::DriveCatalogue::getLabelCmdConnection(
       sessionType2Str(sessionType);
     throw ex;
   }
+
+  if(-1 == itor->second.labelCmdConnection) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << task.str() <<
+      ": Connection with label command already released";
+    throw ex;
+  }
+
+  const int labelCmdConnection = itor->second.labelCmdConnection;
+  itor->second.labelCmdConnection = -1;
   
-  return itor->second.labelCmdConnection;
+  return labelCmdConnection;
 }
 
 //-----------------------------------------------------------------------------
@@ -637,6 +656,12 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedLabelJob(
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
         ": DGN mismatch: catalogueDgn=" << itor->second.dgn << " labelJobDgn=" << job.dgn;
+      throw ex;
+    }
+    if(-1 != itor->second.labelCmdConnection) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to " << task.str() <<
+        ": Drive catalogue already owns a label-command connection";
       throw ex;
     }
     itor->second.labelJob = job;
