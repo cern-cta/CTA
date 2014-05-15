@@ -12,6 +12,8 @@
 #include <radosstriper/libradosstriper.hpp>
 #include <map>
 #include <string>
+#include "log.h"
+#include <sys/xattr.h>
 
 /// small structs to store file data, either for CEPH or for a local file
 struct CephFileRef {
@@ -41,8 +43,21 @@ static libradosstriper::RadosStriper* getRadosStriper(std::string pool) {
   if (it == g_radosStripers.end()) {
     // we need to create a new radosStriper
     librados::Rados cluster;
+    int rc = cluster.init(0);
+    if (rc) return 0;
+    rc = cluster.conf_read_file(NULL);
+    if (rc) {
+      cluster.shutdown();
+      return 0;
+    }
+    cluster.conf_parse_env(NULL);
+    rc = cluster.connect();
+    if (rc) {
+      cluster.shutdown();
+      return 0;
+    }
     librados::IoCtx ioctx;
-    int rc = cluster.ioctx_create(pool.c_str(), ioctx);
+    rc = cluster.ioctx_create(pool.c_str(), ioctx);
     if (rc != 0) return 0;
     libradosstriper::RadosStriper *newStriper;
     rc = libradosstriper::RadosStriper::striper_create(ioctx, newStriper);
@@ -57,7 +72,7 @@ void ceph_open(CephFileRef &fr, const char *pathname, int flags, mode_t mode) {
   std::string path = pathname;
   int slashPos = path.find('/');
   fr.pool = path.substr(0,slashPos);
-  fr.name = path.substr(slashPos);
+  fr.name = path.substr(slashPos+1);
   fr.flags = flags;
   fr.mode = mode;
   fr.offset = 0;
@@ -190,7 +205,7 @@ int ceph_fsetxattr(CephFileRef &fr, const char* name, const char* value,
   return 0;
 }
   
-int ceph_removexattr(CephFileRef &fr, const char* name) {
+int ceph_fremovexattr(CephFileRef &fr, const char* name) {
   libradosstriper::RadosStriper *striper = getRadosStriper(fr.pool);
   if (0 == striper) {
     errno = EINVAL;
@@ -211,9 +226,11 @@ extern "C" {
     if (pathname[0] != '/') {
       // only allocate a file descriptor and remember the open parameters
       fr.isCeph = true;
+      (*logfunc)(LOG_DEBUG,(char*)"ceph_open: fd %d associated to %s\n", g_nextCephFd, pathname);
       ceph_open(fr.cephFile, pathname, flags, mode);
     } else {
       fr.isCeph = false;
+      (*logfunc)(LOG_DEBUG,(char*)"local_open: fd %d associated to %s\n", g_nextCephFd, pathname);
       fr.fd = open(pathname, flags, mode);
       if (fr.fd < 0) return fr.fd;
     }
@@ -228,12 +245,31 @@ extern "C" {
       FileRef &fr = it->second;
       int rc;
       if (fr.isCeph) {
+        (*logfunc)(LOG_DEBUG,(char*)"ceph_close: closed fd %d\n", fd);
         rc = ceph_close(fr.cephFile);
-      } else {
+     } else {
+        (*logfunc)(LOG_DEBUG,(char*)"local_close: closed fd %d\n", fd);
         rc = close(fr.fd);
       }
       g_fds.erase(it);
       return rc;
+    } else {
+      errno = EBADF;
+      return -1;
+    }
+  }
+
+  off_t generic_lseek(int fd, off_t offset, int whence) {
+    std::map<unsigned int, FileRef>::iterator it = g_fds.find(fd);
+    if (it != g_fds.end()) {
+      FileRef &fr = it->second;
+      if (fr.isCeph) {
+        (*logfunc)(LOG_DEBUG,(char*)"ceph_lseek: for fd %d, offset=%d, whence=%d\n", fd, offset, whence);
+        return (off_t)ceph_lseek64(fr.cephFile, offset, whence);
+      } else {
+        (*logfunc)(LOG_DEBUG,(char*)"local_lseek: for fd %d, offset=%d, whence=%d\n", fd, offset, whence);
+        return lseek(fr.fd, offset, whence);
+      }
     } else {
       errno = EBADF;
       return -1;
@@ -245,8 +281,10 @@ extern "C" {
     if (it != g_fds.end()) {
       FileRef &fr = it->second;
       if (fr.isCeph) {
+        (*logfunc)(LOG_DEBUG,(char*)"ceph_lseek64: for fd %d, offset=%d, whence=%d\n", fd, offset, whence);
         return ceph_lseek64(fr.cephFile, offset, whence);
       } else {
+        (*logfunc)(LOG_DEBUG,(char*)"local_lseek64: for fd %d, offset=%d, whence=%d\n", fd, offset, whence);
         return lseek64(fr.fd, offset, whence);
       }
     } else {
@@ -260,8 +298,10 @@ extern "C" {
     if (it != g_fds.end()) {
       FileRef &fr = it->second;
       if (fr.isCeph) {
+        (*logfunc)(LOG_DEBUG,(char*)"ceph_write: for fd %d, count=%d\n", fd, count);
         return ceph_write(fr.cephFile, (const char*)buf, count);
       } else {
+        (*logfunc)(LOG_DEBUG,(char*)"local_write: for fd %d, count=%d\n", fd, count);
         return write(fr.fd, buf, count);
       }
     } else {
@@ -275,9 +315,11 @@ extern "C" {
     if (it != g_fds.end()) {
       FileRef &fr = it->second;
       if (fr.isCeph) {
+        (*logfunc)(LOG_DEBUG,(char*)"ceph_read: for fd %d, count=%d\n", fd, count);
         return ceph_read(fr.cephFile, (char*)buf, count);
       } else {
-        return write(fr.fd, buf, count);
+        (*logfunc)(LOG_DEBUG,(char*)"local_read: for fd %d, count=%d\n", fd, count);
+        return read(fr.fd, buf, count);
       }
     } else {
       errno = EBADF;
@@ -290,8 +332,10 @@ extern "C" {
     if (it != g_fds.end()) {
       FileRef &fr = it->second;
       if (fr.isCeph) {
+        (*logfunc)(LOG_DEBUG,(char*)"ceph_stat: fd %d\n", fd);
         return ceph_fstat(fr.cephFile, buf);
       } else {
+        (*logfunc)(LOG_DEBUG,(char*)"local_stat: fd %d\n", fd);
         return fstat(fr.fd, buf);
       }
     } else {
@@ -305,8 +349,10 @@ extern "C" {
     if (it != g_fds.end()) {
       FileRef &fr = it->second;
       if (fr.isCeph) {
+        (*logfunc)(LOG_DEBUG,(char*)"ceph_stat64: fd %d\n", fd);
         return ceph_fstat64(fr.cephFile, buf);
       } else {
+        (*logfunc)(LOG_DEBUG,(char*)"local_stat64: fd %d\n", fd);
         return fstat64(fr.fd, buf);
       }
     } else {
@@ -320,8 +366,10 @@ extern "C" {
     if (it != g_fds.end()) {
       FileRef &fr = it->second;
       if (fr.isCeph) {
+        (*logfunc)(LOG_DEBUG,(char*)"ceph_sync: fd %d\n", fd);
         return 0;
       } else {
+        (*logfunc)(LOG_DEBUG,(char*)"local_sync: fd %d\n", fd);
         return fsync(fr.fd);
       }
     } else {
@@ -335,8 +383,10 @@ extern "C" {
     if (it != g_fds.end()) {
       FileRef &fr = it->second;
       if (fr.isCeph) {
+        (*logfunc)(LOG_DEBUG,(char*)"ceph_fcntl: fd %d cmd=%d\n", fd, cmd);
         return ceph_fcntl(fr.cephFile, cmd);
       } else {
+        (*logfunc)(LOG_DEBUG,(char*)"local_fcntl: fd %d cmd=%d\n", fd, cmd);
         va_list arg;
         va_start(arg, cmd);
         int rc = fcntl(fr.fd, cmd, arg);
@@ -349,13 +399,15 @@ extern "C" {
     }
   }
 
-  ssize_t fgetxattr(int fd, const char* name, void* value, size_t size) {
+  ssize_t generic_fgetxattr(int fd, const char* name, void* value, size_t size) {
     std::map<unsigned int, FileRef>::iterator it = g_fds.find(fd);
     if (it != g_fds.end()) {
       FileRef &fr = it->second;
       if (fr.isCeph) {
+        (*logfunc)(LOG_DEBUG,(char*)"ceph_fgetxattr: fd %d name=%s\n", fd, name);
         return ceph_fgetxattr(fr.cephFile, name, (char*)value, size);
       } else {
+        (*logfunc)(LOG_DEBUG,(char*)"local_fgetxattr: fd %d name=%s\n", fd, name);
         return fgetxattr(fr.fd, name, value, size);
       }
     } else {
@@ -364,14 +416,16 @@ extern "C" {
     }
   }
 
-  int fsetxattr(int fd, const char* name, const void* value,
-                size_t size, int flags)  {
+  int generic_fsetxattr(int fd, const char* name, const void* value,
+                        size_t size, int flags)  {
     std::map<unsigned int, FileRef>::iterator it = g_fds.find(fd);
     if (it != g_fds.end()) {
       FileRef &fr = it->second;
       if (fr.isCeph) {
+        (*logfunc)(LOG_DEBUG,(char*)"ceph_fsetxattr: fd %d name=%s value=%s\n", fd, name, value);
         return ceph_fsetxattr(fr.cephFile, name, (const char*)value, size, flags);
       } else {
+        (*logfunc)(LOG_DEBUG,(char*)"local_fsetxattr: fd %d name=%s value=%s\n", fd, name, value);
         return fsetxattr(fr.fd, name, (const char*)value, size, flags);
       }
     } else {
@@ -380,14 +434,16 @@ extern "C" {
     }
   }
   
-  int removexattr(int fd, const char* name) {
+  int generic_fremovexattr(int fd, const char* name) {
     std::map<unsigned int, FileRef>::iterator it = g_fds.find(fd);
     if (it != g_fds.end()) {
       FileRef &fr = it->second;
       if (fr.isCeph) {
-        return ceph_removexattr(fr.cephFile, name);
+        (*logfunc)(LOG_DEBUG,(char*)"ceph_removexattr: fd %d name=%s\n", fd, name);
+        return ceph_fremovexattr(fr.cephFile, name);
       } else {
-        return removexattr(fr.fd, name);
+        (*logfunc)(LOG_DEBUG,(char*)"local_removexattr: fd %d name=%s\n", fd, name);
+        return fremovexattr(fr.fd, name);
       }
     } else {
       errno = EBADF;
