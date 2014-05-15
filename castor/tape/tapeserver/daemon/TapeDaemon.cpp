@@ -60,6 +60,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   std::ostream &stdErr,
   log::Logger &log,
   const utils::TpconfigLines &tpconfigLines,
+  const utils::DriveConfigMap &driveConfigs,
   legacymsg::VdqmProxy &vdqm,
   legacymsg::VmgrProxy &vmgr,
   legacymsg::RmcProxyFactory &rmcFactory,
@@ -71,6 +72,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   m_argc(argc),
   m_argv(argv),
   m_tpconfigLines(tpconfigLines),
+  m_driveConfigs(driveConfigs),
   m_vdqm(vdqm),
   m_vmgr(vmgr),
   m_rmcFactory(rmcFactory),
@@ -770,7 +772,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSessions() throw() {
 //------------------------------------------------------------------------------
 // forkMountSession
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSession(const std::string &unitName) throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSession(
+  const std::string &unitName) throw() {
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", unitName));
 
@@ -784,6 +787,24 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSession(const std::s
     params.push_back(log::Param("message", ex.getMessage().str()));
     m_log(LOG_ERR, "Failed to fork mount-session"
       ": Failed to retrieve VDQM job from drive catalogue", params);
+    return;
+  }
+
+  // Get the configuration of the tap drive to be used during the session
+  utils::DriveConfigMap::const_iterator driveConfigItor =
+    m_driveConfigs.find(unitName);
+  if(m_driveConfigs.end() == driveConfigItor) {
+    m_log(LOG_ERR, "Failed to fork mount-session"
+      ": Failed to find the configuration of the tape drive");
+    return;
+  }
+  const utils::DriveConfig &driveConfig = driveConfigItor->second;
+  if(unitName != driveConfig.unitName) {
+    params.push_back(log::Param("driveConfig.unitName",
+      driveConfig.unitName));
+    // This should never happen, but let's check to sure
+    m_log(LOG_ERR, "Failed to fork mount-session"
+      ": Unit name within drive configuration is incorrect", params);
     return;
   }
 
@@ -829,28 +850,30 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSession(const std::s
         params);
     }
 
-    runMountSession(unitName);
+    runMountSession(driveConfig);
   }
 }
 
 //------------------------------------------------------------------------------
 // runMountSession
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::string &unitName) throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
+  const utils::DriveConfig &driveConfig) throw() {
   const pid_t sessionPid = getpid();
-  {
-    log::Param params[] = {
-      log::Param("sessionPid", sessionPid),
-      log::Param("unitName", unitName)};
-    m_log(LOG_INFO, "Mount-session child-process started", params);
-  }
+
+  std::list<log::Param> params;
+  params.push_back(log::Param("sessionPid", sessionPid));
+  params.push_back(log::Param("unitName", driveConfig.unitName));
+
+  m_log(LOG_INFO, "Mount-session child-process started", params);
 
   try {
     MountSession::CastorConf castorConf;
     // This try bloc will allow us to send a failure notification to the client
     // if we fail before the MountSession has an opportunity to do so.
     std::auto_ptr<MountSession> mountSession;
-    const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getVdqmJob(unitName);
+    const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getVdqmJob(
+      driveConfig.unitName);
     castor::tape::System::realWrapper sysWrapper;
     std::auto_ptr<legacymsg::RmcProxy> rmc;
     std::auto_ptr<legacymsg::TapeserverProxy> tapeserver;
@@ -890,7 +913,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
         job,
         m_log,
         sysWrapper,
-        m_tpconfigLines,
+        driveConfig,
         *(rmc.get()),
         *(tapeserver.get()),
         m_capUtils,
@@ -902,12 +925,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
         client::ClientInterface::RequestReport rep;
         cl.reportEndOfSessionWithError(ex.getMessageValue(), ex.code(), rep);
       } catch (...) {
-        log::Param params[] = {
-          log::Param("sessionPid", sessionPid),
-          log::Param("unitName", unitName),
-          log::Param("errorMessage", ex.getMessageValue()),
-          log::Param("errorCode", ex.code())
-        };
+        params.push_back(log::Param("errorMessage", ex.getMessageValue()));
+        params.push_back(log::Param("errorCode", ex.code()));
         m_log(LOG_ERR, "Failed to notify the client of the failed session when setting up the mount session", params);
       }
       throw;
@@ -917,11 +936,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
         client::ClientInterface::RequestReport rep;
         cl.reportEndOfSessionWithError("Non-Castor exception when setting up the mount session", SEINTERNAL, rep);
       } catch (...) {
-        log::Param params[] = {
-          log::Param("sessionPid", sessionPid),
-          log::Param("unitName", unitName),
-          log::Param("errorMessage", "Non-Castor exception when setting up the mount session")
-        };
+        params.push_back(log::Param("errorMessage",
+          "Non-Castor exception when setting up the mount session"));
         m_log(LOG_ERR, "Failed to notify the client of the failed session when setting up the mount session", params);
       }
       throw;
@@ -929,16 +945,10 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
     
     exit (mountSession->execute());
   } catch(std::exception &se) {
-    log::Param params[] = {
-      log::Param("sessionPid", sessionPid),
-      log::Param("unitName", unitName),
-      log::Param("message", se.what())};
+    params.push_back(log::Param("message", se.what()));
     m_log(LOG_ERR, "Aborting mount session: Caught an unexpected exception", params);
     exit(1);
   } catch(...) {
-    log::Param params[] = {
-      log::Param("sessionPid", sessionPid),
-      log::Param("unitName", unitName)};
     m_log(LOG_ERR, "Aborting mount session: Caught an unexpected and unknown exception", params);
     exit(1);
   }

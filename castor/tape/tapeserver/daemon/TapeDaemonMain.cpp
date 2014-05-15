@@ -99,6 +99,8 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
   // Parse /etc/castor/TPCONFIG
   castor::tape::utils::TpconfigLines tpconfigLines;
   castor::tape::utils::parseTpconfigFile("/etc/castor/TPCONFIG", tpconfigLines);
+  castor::tape::utils::DriveConfigMap driveConfigs;
+  driveConfigs.enterTpconfigLines(tpconfigLines);
 
   // Create proxy objects for the vdqm, vmgr and rmc daemons
   const int netTimeout = 10; // Timeout in seconds
@@ -122,6 +124,7 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
     std::cerr,
     log,
     tpconfigLines,
+    driveConfigs,
     vdqm,
     vmgr,
     rmcFactory,

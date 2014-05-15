@@ -27,6 +27,7 @@
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
+#include "castor/tape/utils/DriveConfig.hpp"
 #include "castor/log/LogContext.hpp"
 #include <memory>
 #include <string>
@@ -38,9 +39,6 @@ namespace castor {
   };
   
 namespace tape {
-  namespace utils{
-    class TpconfigLine;
-  }
 namespace tapeserver {
 namespace daemon {
 
@@ -50,16 +48,14 @@ public:
   /**
    * COnstructor
    * @param tapeserverProxy
-   * @param vdqmProxy
-   * @param vmgrProxy
-   * @param configLineThe configuration line of the drive we are using. 
-   * Used to gather several information (unitName, dgn,...)
+   * @param driveConfig The configuration of the tape drive we are using.
    * @param hostname The host name of the computer
    * @param volume The volume information from the client
    * @param lc 
    */
-  GlobalStatusReporter(legacymsg::TapeserverProxy& tapeserverProxy,
-    const tape::utils::TpconfigLine& configLine,
+  GlobalStatusReporter(
+    legacymsg::TapeserverProxy& tapeserverProxy,
+    const tape::utils::DriveConfig &driveConfig,
     const std::string &hostname,
     const castor::tape::tapeserver::client::ClientInterface::VolumeInfo &volume,
     log::LogContext lc);

@@ -35,6 +35,7 @@
 #include "castor/server/Daemon.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
+#include "castor/tape/utils/DriveConfigMap.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
@@ -68,6 +69,7 @@ public:
    * @param stdErr Stream representing standard error.
    * @param log The object representing the API of the CASTOR logging system.
    * @param tpconfigLines The parsed lines of /etc/castor/TPCONFIG.
+   * @param driveConfig The configuration of the tape drives.
    * @param vdqm Proxy object representing the vdqmd daemon.
    * @param vmgr Proxy object representing the vmgrd daemon.
    * @param rmcFactory Factory to create proxy objects representing the rmcd
@@ -83,6 +85,7 @@ public:
     std::ostream &stdErr,
     log::Logger &log,
     const utils::TpconfigLines &tpconfigLines,
+    const utils::DriveConfigMap &driveConfigs,
     legacymsg::VdqmProxy &vdqm,
     legacymsg::VmgrProxy &vmgr,
     legacymsg::RmcProxyFactory &rmcFactory,
@@ -344,9 +347,10 @@ protected:
    * Runs the mount session.  This method is to be called within the child
    * process responsible for running the mount session.
    *
-   * @param unitName The unit name of the tape drive.
+   * @param driveConfig The configuration of the tape drive to be used during
+   * the session.
    */
-  void runMountSession(const std::string &unitName) throw();
+  void runMountSession(const utils::DriveConfig &driveConfig) throw();
 
   /**
    * Forks a label-session child-process for every tape drive entry in the
@@ -397,6 +401,11 @@ protected:
    * The parsed lines of /etc/castor/TPCONFIG.
    */
   const utils::TpconfigLines m_tpconfigLines;
+
+  /**
+   * The configuration of the tape drives.
+   */
+  const utils::DriveConfigMap m_driveConfigs;
 
   /**
    * Proxy object representing the vdqmd daemon.

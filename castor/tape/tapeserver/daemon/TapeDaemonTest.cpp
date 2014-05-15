@@ -72,6 +72,7 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
   castor::tape::utils::TpconfigLines tpconfigLines;
+  castor::tape::utils::DriveConfigMap driveConfigs;
   castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::RmcProxyDummyFactory rmcFactory;
@@ -81,8 +82,8 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   CapabilityUtilsDummy capUtils;
   std::auto_ptr<TapeDaemon> daemon;
   ASSERT_NO_THROW(daemon.reset(new TapeDaemon(argc, argv, stdOut, stdErr, log,
-    tpconfigLines, vdqm, vmgr, rmcFactory, tpsFactory, nsFactory, reactor,
-    capUtils)));
+    tpconfigLines, driveConfigs, vdqm, vmgr, rmcFactory, tpsFactory, nsFactory,
+    reactor, capUtils)));
 }
 
 } // namespace unitTests
