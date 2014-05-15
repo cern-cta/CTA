@@ -102,7 +102,7 @@ namespace castor {
      */
     void dlf_init(const char* facilityName,
                   Message messages[])
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * Adds messages to the current DLF facility.

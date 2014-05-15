@@ -52,7 +52,7 @@ namespace castor {
        * @exception In case that one of the parameter is NULL
        */
       ProtocolFacade(castor::io::ServerSocket &socket, const Cuuid_t &cuuid)
-      throw (castor::exception::Exception);
+      ;
       
       /**
        * Destructor
@@ -67,7 +67,7 @@ namespace castor {
        * @exception Throws an exception in case of errors
        */
       void handleProtocolVersion()
-      throw (castor::exception::Exception);      
+      ;      
       
         
     private:
@@ -105,7 +105,7 @@ namespace castor {
        * to complete the message header.
        */
       void handleOldVdqmRequest(const unsigned int magicNumber)
-      throw (castor::exception::Exception);
+      ;
 
       /**
        * Handles a VDQM message with a magic number of VDQM_MAGIC2.
@@ -136,7 +136,7 @@ namespace castor {
        * to complete the message header.
        */
       void handleVdqmMagic2Request(const unsigned int magicNumber)
-      throw (castor::exception::Exception);
+      ;
 
       /**
        * Handles a VDQM message with a magic number of VDQM_MAGIC3.
@@ -167,7 +167,7 @@ namespace castor {
        * to complete the message header.
        */
       void handleVdqmMagic3Request(const unsigned int magicNumber)
-      throw (castor::exception::Exception);
+      ;
 
       /**
        * Handles a VDQM message with a magic number of VDQM_MAGIC4.
@@ -200,7 +200,7 @@ namespace castor {
        * to complete the message header.
        */
       void handleVdqmMagic4Request(const unsigned int magicNumber)
-      throw (castor::exception::Exception);
+      ;
 
       /**
        * The object which includes the socket connection to the client

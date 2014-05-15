@@ -56,7 +56,7 @@ namespace castor {
        * @exception throws Exception in case of errors, in particular in case of permission denial
        */
       virtual void storeRequest(castor::stager::Request* req)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * change privileges for some users
@@ -77,7 +77,7 @@ namespace castor {
        std::vector<castor::bwlist::BWUser*> users,
        std::vector<castor::bwlist::RequestType*> requestTypes,
        bool isAdd)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * list privileges
@@ -98,7 +98,7 @@ namespace castor {
       listPrivileges
       (const std::string svcClassName, const int user,
        const int group, const int requestType)
-	throw (castor::exception::Exception) = 0;
+	 = 0;
 
     }; // end of class IRHSvc
 

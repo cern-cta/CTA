@@ -832,14 +832,14 @@ void
 castor::replier::RequestReplier::replyToClient(castor::IClient *client,
                                                castor::IObject *response,
                                                bool isLastResponse)
-  throw(castor::exception::Exception) {
+   {
   sendResponse(client, response, isLastResponse);
 }
 
 
 void
 castor::replier::RequestReplier::setCallback(void (*callback)(castor::IClient *, MajorConnectionStatus))
-  throw(castor::exception::Exception) {
+   {
 
   const char *func = "rr::setCallback CLIENT";
 
@@ -874,7 +874,7 @@ void
 castor::replier::RequestReplier::sendResponse(castor::IClient *client,
                                               castor::IObject *response,
                                               bool isLastResponse)
-  throw(castor::exception::Exception) {
+   {
 
   const char *func = "rr::sendResponse CLIENT";
 
@@ -949,7 +949,7 @@ castor::replier::RequestReplier::sendResponse(castor::IClient *client,
 void
 castor::replier::RequestReplier::closeClientConnection
 (castor::IClient *client)
-  throw(castor::exception::Exception) {
+   {
 
   const char *func = "rr::closeClientConnection CLIENT";
 

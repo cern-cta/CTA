@@ -259,7 +259,7 @@ castor::tape::rmc::AcsDismountCmdLine
 // syncDismount
 //------------------------------------------------------------------------------
 void castor::tape::rmc::AcsDismountCmd::syncDismount()
-  throw(castor::exception::DismountFailed) {
+   {
   const SEQ_NO requestSeqNumber = 1;
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
 
@@ -280,7 +280,7 @@ void castor::tape::rmc::AcsDismountCmd::syncDismount()
 // sendDismountRequest
 //------------------------------------------------------------------------------
 void castor::tape::rmc::AcsDismountCmd::sendDismountRequest(
-  const SEQ_NO seqNumber) throw (castor::exception::DismountFailed) {
+  const SEQ_NO seqNumber)  {
   const LOCKID lockId = 0; // No lock
 
   m_dbg << "Calling Acs::dismount()" << std::endl;
@@ -293,7 +293,7 @@ void castor::tape::rmc::AcsDismountCmd::sendDismountRequest(
       m_cmdLine.volId.external_label << " from drive " <<
       m_acs.driveId2Str(m_cmdLine.driveId) << ": force=" <<
       (m_cmdLine.force ? "TRUE" : "FALSE") << ": " << acs_status(s);
-    throw(ex);
+    throw ex;
   }
 }
 
@@ -302,13 +302,13 @@ void castor::tape::rmc::AcsDismountCmd::sendDismountRequest(
 //------------------------------------------------------------------------------
 void castor::tape::rmc::AcsDismountCmd::processDismountResponse(
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
-  throw(castor::exception::DismountFailed) {
+   {
   const ACS_DISMOUNT_RESPONSE *const msg = (ACS_DISMOUNT_RESPONSE *)buf;
 
   if(STATUS_SUCCESS != msg->dismount_status) {
     castor::exception::DismountFailed ex;
     ex.getMessage() << "Status of dismount response is not success: " <<
       acs_status(msg->dismount_status);
-    throw(ex);
+    throw ex;
   }
 }

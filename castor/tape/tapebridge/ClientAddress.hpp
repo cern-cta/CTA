@@ -58,12 +58,12 @@ public:
    * address represented by this object is invalid.
    */
   virtual void checkValidity()
-    const throw(castor::exception::InvalidArgument) = 0;
+    const  = 0;
 
   /**
    * Returns a human-readable description of the client address.
    */
-  const std::string &getDescription() const throw ();
+  const std::string &getDescription() const throw();
 
   /**
    * Connects to the client at the address represented by this object.
@@ -78,7 +78,7 @@ public:
   virtual int connectToClient(
     const int netTimeout,
     timeval   &connectDuration)
-    const throw(castor::exception::Exception) = 0;
+    const  = 0;
 
 private:
 

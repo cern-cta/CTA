@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 
-void castor::tape::threading::ChildProcess::start(Cleanup & cleanup) throw (castor::tape::Exception) {
+void castor::tape::threading::ChildProcess::start(Cleanup & cleanup)  {
   m_pid = fork();
   if (!m_pid) {
     /* We are the child process. Do our stuff and exit. */
@@ -52,7 +52,7 @@ void castor::tape::threading::ChildProcess::parseStatus(int status) {
   }
 }
 
-bool castor::tape::threading::ChildProcess::running() throw (castor::tape::Exception) {
+bool castor::tape::threading::ChildProcess::running()  {
   /* Checking for a running process before starting gets an exception */
   if (!m_started) throw ProcessNeverStarted();
   /* If we are not aware of process exiting, let's check and collect exit code */
@@ -67,7 +67,7 @@ bool castor::tape::threading::ChildProcess::running() throw (castor::tape::Excep
   return !m_finished;
 }
 
-void castor::tape::threading::ChildProcess::wait() throw (castor::tape::Exception) {
+void castor::tape::threading::ChildProcess::wait()  {
   /* Checking for a running process before starting gets an exception */
   if (!m_started) throw ProcessNeverStarted();
   if (m_finished) return;
@@ -81,7 +81,7 @@ void castor::tape::threading::ChildProcess::wait() throw (castor::tape::Exceptio
     throw castor::tape::Exception("Process did not exit after waitpid().");
 }
 
-int castor::tape::threading::ChildProcess::exitCode() throw (castor::tape::Exception) {
+int castor::tape::threading::ChildProcess::exitCode()  {
   if (!m_started) throw ProcessNeverStarted();
   if (!m_finished) {
     int status, ret;
@@ -100,7 +100,7 @@ int castor::tape::threading::ChildProcess::exitCode() throw (castor::tape::Excep
   return m_exitCode;
 }
 
-void castor::tape::threading::ChildProcess::kill() throw (castor::tape::Exception) {
+void castor::tape::threading::ChildProcess::kill()  {
   if (!m_started) throw ProcessNeverStarted();
   ::kill(m_pid, SIGTERM);
 }

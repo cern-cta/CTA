@@ -72,7 +72,7 @@ namespace castor {
          * @return true, if there were no complications
          */
         bool handleRequestType(OldProtocolInterpreter* oldProtInterpreter,
-          const Cuuid_t cuuid) throw (castor::exception::Exception);
+          const Cuuid_t cuuid) ;
        
         /**
          * Throws an exception if the request type is invalid.
@@ -80,12 +80,12 @@ namespace castor {
          * @param cuuid The unique id of the request. Needed for dlf.
          */
         void checkRequestType(const Cuuid_t cuuid) 
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Destructor.
          */
-        ~OldRequestFacade() throw ();
+        ~OldRequestFacade() throw();
       
       
       private:

@@ -49,7 +49,7 @@ static bool _childStop = false;
 //------------------------------------------------------------------------------
 castor::server::ForkedProcessPool::ForkedProcessPool
 (const std::string poolName, castor::server::IThread* thread)
-  throw(castor::exception::Exception) :
+   :
   BaseThreadPool(poolName, thread),
   m_childPid(0),
   m_writeHighFd(0) {
@@ -95,7 +95,7 @@ bool castor::server::ForkedProcessPool::shutdown(bool) throw()
 // init
 //------------------------------------------------------------------------------
 void castor::server::ForkedProcessPool::init()
-  throw (castor::exception::Exception)
+  
 {
   castor::server::BaseThreadPool::init();
 
@@ -153,7 +153,7 @@ void castor::server::ForkedProcessPool::init()
 // run
 //------------------------------------------------------------------------------
 void castor::server::ForkedProcessPool::run()
-  throw (castor::exception::Exception)
+  
 {
   // we already forked all processes, so not much to do here
   // open dispatch
@@ -173,7 +173,7 @@ void castor::server::ForkedProcessPool::run()
 // dispatch
 //------------------------------------------------------------------------------
 void castor::server::ForkedProcessPool::dispatch(castor::IObject& obj)
-  throw (castor::exception::Exception)
+  
 {
   if (m_stopped) {
     return;

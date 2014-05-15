@@ -256,7 +256,7 @@ void castor::tape::rmc::AcsMountCmd::usage(std::ostream &os)
 // syncMount
 //------------------------------------------------------------------------------
 void castor::tape::rmc::AcsMountCmd::syncMount()
-  throw(castor::exception::MountFailed) {
+   {
   const SEQ_NO requestSeqNumber = 1;
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
 
@@ -277,7 +277,7 @@ void castor::tape::rmc::AcsMountCmd::syncMount()
 // sendMountRequest
 //------------------------------------------------------------------------------
 void castor::tape::rmc::AcsMountCmd::sendMountRequest(
-  const SEQ_NO seqNumber) throw(castor::exception::MountFailed) {
+  const SEQ_NO seqNumber)  {
   const LOCKID lockId = 0; // No lock
   const BOOLEAN bypass = FALSE;
 
@@ -301,13 +301,13 @@ void castor::tape::rmc::AcsMountCmd::sendMountRequest(
 //------------------------------------------------------------------------------
 void castor::tape::rmc::AcsMountCmd::processMountResponse(
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
-  throw(castor::exception::MountFailed) {
+   {
   const ACS_MOUNT_RESPONSE *const msg = (ACS_MOUNT_RESPONSE *)buf;
 
   if(STATUS_SUCCESS != msg->mount_status) {
     castor::exception::MountFailed ex;
     ex.getMessage() << "Status of mount response is not success: " <<
       acs_status(msg->mount_status);
-    throw(ex);
+    throw ex;
   }
 }

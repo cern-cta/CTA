@@ -50,7 +50,7 @@ namespace castor {
                            unsigned int listenPort,
                            bool waitIfBusy = true,
                            unsigned int nbThreads = DEFAULT_THREAD_NUMBER)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * Inherited constructor, see TCPListenerThreadPool
@@ -61,7 +61,7 @@ namespace castor {
                            unsigned int initThreads, unsigned int maxThreads,
                            unsigned int threshold = DEFAULT_THRESHOLD,
                            unsigned int maxTasks  = DEFAULT_MAXTASKS)      
-      throw (castor::exception::Exception);               
+      ;               
 
     /**
      * Destructor
@@ -73,7 +73,7 @@ namespace castor {
     /**
      * Performs the bind with an AuthServerSocket here
      */
-    virtual void bind() throw (castor::exception::Exception);
+    virtual void bind() ;
 
   };
 

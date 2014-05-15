@@ -45,11 +45,11 @@ public:
     lists.push_back(NULL);
   }
   virtual void reportMigrationResults(tapegateway::FileMigrationReportList & migrationReport,
-  RequestReport& report) throw (castor::tape::Exception){
+  RequestReport& report) {
   }
   
   virtual void reportRecallResults(tapegateway::FileRecallReportList & recallReport,
-  RequestReport& report) throw (castor::tape::Exception){
+  RequestReport& report) {
   }
   
    tapegateway::FilesToMigrateList *getFilesToMigrate(uint64_t files, uint64_t bytes, RequestReport &report){
@@ -60,7 +60,7 @@ public:
   void assertion(){ASSERT_EQ(true,static_cast<unsigned int>(m_current)<lists.size());}
   
   virtual tapegateway::FilesToRecallList * getFilesToRecall(uint64_t files,
-  uint64_t bytes, RequestReport &report) throw (castor::tape::Exception) 
+  uint64_t bytes, RequestReport &report)  
   {
     
     report.transactionId=666;
@@ -72,10 +72,10 @@ public:
   }
   
   virtual void reportEndOfSessionWithError(const std::string & errorMsg, int errorCode, 
-  RequestReport &transactionReport) throw (castor::tape::Exception) {
+  RequestReport &transactionReport)  {
   };
  
-  virtual void reportEndOfSession(RequestReport &report) throw (Exception) {}
+  virtual void reportEndOfSession(RequestReport &report)  {}
 private:
   std::vector<tapegateway::FilesToRecallList*> lists;
   int m_current;

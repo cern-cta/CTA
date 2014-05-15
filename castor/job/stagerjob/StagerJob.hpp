@@ -135,7 +135,7 @@ namespace castor {
        * @param protocol the requested protocol
        */
       IPlugin* getPlugin(std::string protocol)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Registers a new plugin
@@ -154,7 +154,7 @@ namespace castor {
        */
       void sendResponse(castor::IClient *client,
                         castor::rh::IOResponse &response)
-        throw (castor::exception::Exception);
+        ;
 
     } // end of namespace stagerjob
 

@@ -45,7 +45,7 @@ castor::server::UDPListenerThreadPool::UDPListenerThreadPool
 // bind
 //------------------------------------------------------------------------------
 void castor::server::UDPListenerThreadPool::bind()
-  throw (castor::exception::Exception) {
+   {
   m_sock = new castor::io::UDPSocket(m_port, true, true);
 }
 

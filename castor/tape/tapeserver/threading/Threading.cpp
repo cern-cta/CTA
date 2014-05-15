@@ -34,7 +34,7 @@
 
 /* Mutex */
 
-castor::tape::threading::Mutex::Mutex() throw (castor::exception::Exception) {
+castor::tape::threading::Mutex::Mutex()  {
   pthread_mutexattr_t attr;
   castor::exception::Errnum::throwOnReturnedErrno(
     pthread_mutexattr_init(&attr),
@@ -59,7 +59,7 @@ castor::tape::threading::Mutex::~Mutex() {
   pthread_mutex_destroy(&m_mutex);
 }
 
-void castor::tape::threading::Mutex::lock() throw (castor::exception::Exception) {
+void castor::tape::threading::Mutex::lock()  {
   castor::exception::Errnum::throwOnReturnedErrno(
     pthread_mutex_lock(&m_mutex),
     "Error from pthread_mutex_lock in castor::tape::threading::Mutex::lock()");
@@ -67,7 +67,7 @@ void castor::tape::threading::Mutex::lock() throw (castor::exception::Exception)
 
 /* PosixSemaphore */
 castor::tape::threading::PosixSemaphore::PosixSemaphore(int initial)
-throw (castor::exception::Exception) {
+ {
   castor::exception::Errnum::throwOnReturnedErrno(
     sem_init(&m_sem, 0, initial),
     "Error from sem_init in castor::tape::threading::PosixSemaphore::PosixSemaphore()");
@@ -82,7 +82,7 @@ castor::tape::threading::PosixSemaphore::~PosixSemaphore() {
 }
 
 void castor::tape::threading::PosixSemaphore::acquire()
-throw (castor::exception::Exception) {
+ {
   int ret;
   /* If we receive EINTR, we should just keep trying (signal interruption) */
   while((ret = sem_wait(&m_sem)) && EINTR == errno) {}
@@ -92,7 +92,7 @@ throw (castor::exception::Exception) {
 }
 
 bool castor::tape::threading::PosixSemaphore::tryAcquire()
-throw (castor::exception::Exception) {
+ {
   int ret = sem_trywait(&m_sem);
   if (!ret) return true;
   if (ret && EAGAIN == errno) return false;
@@ -103,7 +103,7 @@ throw (castor::exception::Exception) {
 }
 
 void castor::tape::threading::PosixSemaphore::release(int n)
-throw (castor::exception::Exception) {
+ {
   for (int i=0; i<n; i++) {
     MutexLocker ml(&m_mutexPosterProtection);
     castor::exception::Errnum::throwOnNonZero(sem_post(&m_sem),
@@ -112,7 +112,7 @@ throw (castor::exception::Exception) {
 }
 
 castor::tape::threading::CondVarSemaphore::CondVarSemaphore(int initial)
-throw (castor::exception::Exception):
+:
 m_value(initial) {
       castor::exception::Errnum::throwOnReturnedErrno(
         pthread_cond_init(&m_cond, NULL),
@@ -133,7 +133,7 @@ castor::tape::threading::CondVarSemaphore::~CondVarSemaphore() {
     }
 
 void castor::tape::threading::CondVarSemaphore::acquire()
-throw (castor::exception::Exception) {
+ {
   castor::exception::Errnum::throwOnReturnedErrno(
     pthread_mutex_lock(&m_mutex),
     "Error from pthread_mutex_lock in castor::tape::threading::CondVarSemaphore::acquire()");
@@ -149,7 +149,7 @@ throw (castor::exception::Exception) {
 }
 
 bool castor::tape::threading::CondVarSemaphore::tryAcquire()
-throw (castor::exception::Exception) {
+ {
   bool ret;
   castor::exception::Errnum::throwOnReturnedErrno(
     pthread_mutex_lock(&m_mutex),
@@ -167,7 +167,7 @@ throw (castor::exception::Exception) {
 }
 
 void castor::tape::threading::CondVarSemaphore::release(int n)
-throw (castor::exception::Exception) {
+ {
   for (int i=0; i<n; i++) {
   castor::exception::Errnum::throwOnReturnedErrno(
     pthread_mutex_lock(&m_mutex),
@@ -183,14 +183,14 @@ throw (castor::exception::Exception) {
 }
 
 void castor::tape::threading::Thread::start()
-throw (castor::exception::Exception) {
+ {
   castor::exception::Errnum::throwOnReturnedErrno(
     pthread_create(&m_thread, NULL, pthread_runner, this),
       "Error from pthread_create in castor::tape::threading::Thread::start()");
 }
 
 void castor::tape::threading::Thread::wait()
-throw (castor::exception::Exception) {
+ {
   castor::exception::Errnum::throwOnReturnedErrno(
     pthread_join(m_thread, NULL),
       "Error from pthread_join in castor::tape::threading::Thread::wait()");

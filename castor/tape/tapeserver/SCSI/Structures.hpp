@@ -75,7 +75,7 @@ namespace SCSI {
       void setCDB(T * cdb) { cmdp = (unsigned char *)cdb; cmd_len = sizeof(T); }
       
       template <typename T>
-      void setSenseBuffer(T * senseBuff) throw (Exception) 
+      void setSenseBuffer(T * senseBuff)  
       { 
         if (sizeof(T) > UCHAR_MAX)
           throw Exception("sense structure too big in LinuxSGIO_t::setSense");
@@ -712,7 +712,7 @@ namespace SCSI {
        * length in bytes (as found in the struct) in a parameter count.
        * @return number of parameters.
        */
-      unsigned int parameterNumber() throw (Exception) {
+      unsigned int parameterNumber()  {
         unsigned int numFromLength = SCSI::Structures::toU16(pageLength) / sizeof (tapeAlertLogParameter_t);
         return numFromLength;
       }

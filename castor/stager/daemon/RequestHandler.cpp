@@ -11,7 +11,7 @@ namespace castor{
     namespace daemon{
       
       /* function to perform the common flow for all the handlers */
-      void RequestHandler::handle() throw(castor::exception::Exception)
+      void RequestHandler::handle() 
       {
         // get the svcClass and eventually the forced fileClass
         reqHelper->resolveSvcClass();

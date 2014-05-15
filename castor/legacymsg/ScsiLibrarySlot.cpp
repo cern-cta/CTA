@@ -34,7 +34,7 @@ castor::legacymsg::ScsiLibrarySlot::ScsiLibrarySlot()
 // constructor
 //------------------------------------------------------------------------------
 castor::legacymsg::ScsiLibrarySlot::ScsiLibrarySlot(
-  const std::string &str) throw(castor::exception::Exception): drvOrd(0) {
+  const std::string &str) : drvOrd(0) {
   if(str.find("smc@")) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to construct ScsiLibrarySlot"

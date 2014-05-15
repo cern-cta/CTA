@@ -37,7 +37,7 @@
 //------------------------------------------------------------------------------
 // inc
 //------------------------------------------------------------------------------
-void castor::metrics::Counter::inc(int value) throw (castor::exception::Exception)
+void castor::metrics::Counter::inc(int value) 
 {
   m_mutex.lock();
   m_value += value;

@@ -46,7 +46,7 @@
 // createListenerSock
 //------------------------------------------------------------------------------
 int castor::io::createListenerSock(const unsigned short port)
-  throw(castor::exception::Exception) {
+   {
   const unsigned short lowPort = port;
   const unsigned short highPort = port;
   unsigned short chosenPort = 0;
@@ -65,7 +65,7 @@ int castor::io::createListenerSock(
   const unsigned short lowPort,
   const unsigned short highPort,
   unsigned short       &chosenPort)
-  throw(castor::exception::Exception) {
+   {
 
   struct in_addr networkAddress;
   memset(&networkAddress, '\0', sizeof(networkAddress));
@@ -82,7 +82,7 @@ int castor::io::createListenerSock(
   const unsigned short lowPort,
   const unsigned short highPort,
   unsigned short       &chosenPort)
-  throw(castor::exception::Exception) {
+   {
 
   struct in_addr networkAddress;
 
@@ -105,7 +105,7 @@ int castor::io::createListenerSock(
   const unsigned short lowPort,
   const unsigned short highPort,
   unsigned short       &chosenPort)
-  throw(castor::exception::Exception) {
+   {
 
   // Check range validity
   if(lowPort < 1) {
@@ -231,7 +231,7 @@ int castor::io::createListenerSock(
 // createLocalhostListenerSockBoundToLocalhost
 //------------------------------------------------------------------------------
 int castor::io::createLocalhostListenerSock(const unsigned short port)
-  throw(castor::exception::Exception) {
+   {
   const unsigned short lowPort = port;
   const unsigned short highPort = port;
   unsigned short chosenPort = 0;
@@ -253,7 +253,7 @@ int castor::io::createLocalhostListenerSock(const unsigned short port)
 // acceptConnection
 //------------------------------------------------------------------------------
 int castor::io::acceptConnection(const int listenSocketFd)
-  throw(castor::exception::Exception) {
+   {
 
   // Throw an exception if listenSocketFd is invalid
   if(listenSocketFd < 0) {
@@ -343,7 +343,7 @@ int castor::io::acceptConnection(const int listenSocketFd,
 
       castor::exception::AcceptConnectionInterrupted ex(remainingTime);
 
-      throw(ex);
+      throw ex;
     } else {
       char errBuf[100];
       sstrerror_r(selectErrno, errBuf, sizeof(errBuf));
@@ -397,7 +397,7 @@ int castor::io::acceptConnection(const int listenSocketFd,
 // getSockIpPort
 //------------------------------------------------------------------------------
 castor::io::IpAndPort castor::io::getSockIpPort(
-  const int socketFd) throw(castor::exception::Exception) {
+  const int socketFd)  {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -428,7 +428,7 @@ castor::io::IpAndPort castor::io::getSockIpPort(
 // getPeerIpPort
 //------------------------------------------------------------------------------
 castor::io::IpAndPort  castor::io::getPeerIpPort(
-  const int socketFd) throw(castor::exception::Exception) {
+  const int socketFd)  {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -462,7 +462,7 @@ void castor::io::getSockHostName(
   const int    socketFd,
   char *const  buf,
   const size_t len)
-  throw(castor::exception::Exception) {
+   {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -511,7 +511,7 @@ void castor::io::getSockIpHostnamePort(
   char *const    hostName,
   const size_t   hostNameLen,
   unsigned short &port)
-  throw(castor::exception::Exception) {
+   {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -562,7 +562,7 @@ void castor::io::getPeerHostName(
   const int    socketFd,
   char *const  buf,
   const size_t len)
-  throw(castor::exception::Exception) {
+   {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -669,7 +669,7 @@ void castor::io::readBytes(
   const int   timeout,
   const int   nbBytes,
   char *const buf)
-  throw(castor::exception::Exception) {
+   {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -703,7 +703,7 @@ bool castor::io::readBytesFromCloseable(
   const int   timeout,
   const int   nbBytes,
   char *const buf)
-  throw(castor::exception::Exception) {
+   {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -776,7 +776,7 @@ void castor::io::writeBytes(
   const int   timeout,
   const int   nbBytes,
   char *const buf)
-  throw(castor::exception::Exception) {
+   {
 
   // Throw an exception if socketFd is invalid
   if(socketFd < 0) {
@@ -1113,7 +1113,7 @@ int castor::io::connectWithTimeout(
 // marshalUint8
 //------------------------------------------------------------------------------
 void castor::io::marshalUint8(const uint8_t src, char * &dst)
-  throw(castor::exception::Exception) {
+   {
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -1130,7 +1130,7 @@ void castor::io::marshalUint8(const uint8_t src, char * &dst)
 // marshalInt16
 //------------------------------------------------------------------------------
 void castor::io::marshalInt16(const int16_t src, char * &dst)
-  throw(castor::exception::Exception) {
+   {
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -1148,7 +1148,7 @@ void castor::io::marshalInt16(const int16_t src, char * &dst)
 // marshalUint16
 //------------------------------------------------------------------------------
 void castor::io::marshalUint16(const uint16_t src, char * &dst)
-  throw(castor::exception::Exception) {
+   {
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -1166,7 +1166,7 @@ void castor::io::marshalUint16(const uint16_t src, char * &dst)
 // marshalInt32
 //------------------------------------------------------------------------------
 void castor::io::marshalInt32(const int32_t src, char * &dst)
-  throw(castor::exception::Exception) {
+   {
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -1184,7 +1184,7 @@ void castor::io::marshalInt32(const int32_t src, char * &dst)
 // marshalUint32
 //------------------------------------------------------------------------------
 void castor::io::marshalUint32(const uint32_t src, char * &dst)
-  throw(castor::exception::Exception) {
+   {
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -1202,7 +1202,7 @@ void castor::io::marshalUint32(const uint32_t src, char * &dst)
 // marshalUint64
 //------------------------------------------------------------------------------
 void castor::io::marshalUint64(const uint64_t src, char * &dst)
-  throw(castor::exception::Exception) {
+   {
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -1229,7 +1229,7 @@ void castor::io::marshalUint64(const uint64_t src, char * &dst)
 // marshalString
 //------------------------------------------------------------------------------
 void castor::io::marshalString(const std::string &src, char * &dst)
-  throw(castor::exception::Exception) {
+   {
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -1247,7 +1247,7 @@ void castor::io::marshalString(const std::string &src, char * &dst)
 // unmarshalUint8
 //------------------------------------------------------------------------------
 void castor::io::unmarshalUint8(const char * &src, size_t &srcLen,
-  uint8_t &dst) throw(castor::exception::Exception) {
+  uint8_t &dst)  {
 
   if(src == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -1273,7 +1273,7 @@ void castor::io::unmarshalUint8(const char * &src, size_t &srcLen,
 // unmarshalInt16
 //------------------------------------------------------------------------------
 void castor::io::unmarshalInt16(const char * &src, size_t &srcLen,
-  int16_t &dst) throw(castor::exception::Exception) {
+  int16_t &dst)  {
 
   if(src == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -1301,7 +1301,7 @@ void castor::io::unmarshalInt16(const char * &src, size_t &srcLen,
 // unmarshalUint16
 //------------------------------------------------------------------------------
 void castor::io::unmarshalUint16(const char * &src, size_t &srcLen,
-  uint16_t &dst) throw(castor::exception::Exception) {
+  uint16_t &dst)  {
 
   if(src == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -1329,7 +1329,7 @@ void castor::io::unmarshalUint16(const char * &src, size_t &srcLen,
 // unmarshalUint32
 //------------------------------------------------------------------------------
 void castor::io::unmarshalUint32(const char * &src, size_t &srcLen,
-  uint32_t &dst) throw(castor::exception::Exception) {
+  uint32_t &dst)  {
 
   if(src == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -1357,7 +1357,7 @@ void castor::io::unmarshalUint32(const char * &src, size_t &srcLen,
 // unmarshalInt32
 //------------------------------------------------------------------------------
 void castor::io::unmarshalInt32(const char * &src, size_t &srcLen,
-  int32_t &dst) throw(castor::exception::Exception) {
+  int32_t &dst)  {
 
   if(src == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -1385,7 +1385,7 @@ void castor::io::unmarshalInt32(const char * &src, size_t &srcLen,
 // unmarshalUint64
 //------------------------------------------------------------------------------
 void castor::io::unmarshalUint64(const char * &src, size_t &srcLen,
-  uint64_t &dst) throw(castor::exception::Exception) {
+  uint64_t &dst)  {
 
   if(src == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -1419,7 +1419,7 @@ void castor::io::unmarshalUint64(const char * &src, size_t &srcLen,
 //------------------------------------------------------------------------------
 void castor::io::unmarshalString(const char * &src,
   size_t &srcLen, char *dst, const size_t dstLen)
-  throw(castor::exception::Exception) {
+   {
 
   if(src == NULL) {
     castor::exception::Exception ex(EINVAL);

@@ -56,24 +56,24 @@ namespace castor      {
           virtual ~OraTapeGatewaySvc() throw();
           virtual inline unsigned int id() const;
           static unsigned int ID();
-          void reset() throw ();
+          void reset() throw();
 
         public:
 
           // To get all the migration mount without a Tape associated to it
           virtual void  getMigrationMountsWithoutTapes(std::list<castor::tape::tapegateway::ITapeGatewaySvc::migrationMountParameters>& migrationMounts)
-          throw (castor::exception::Exception);
+          ;
 
           // Find vdqm request Ids for migration mounts still referencing those tapes.
           virtual void getMigrationMountReqsForVids(const std::list<std::string>& vids,
                                                             std::list<blockingSessionInfo>& blockingSessions)
-            throw (castor::exception::Exception);
+            ;
 
           // To create the db link between a Tape and a migrationMountParameters
           virtual void attachTapesToMigMounts(const std::list<u_signed64>& strIds,
               const std::list<std::string>& vids,
               const std::list<int>& fseqs)
-          throw (castor::exception::Exception);
+          ;
 
           /** get a tape for which a VDQM request si needed
            * @param vid a string filled with the VID of the selected tape
@@ -84,7 +84,7 @@ namespace castor      {
           virtual void getTapeWithoutDriveReq(std::string &vid,
                                               int &vdqmPriority,
                                               int &mode)
-          throw (castor::exception::Exception);
+          ;
 
           /** updates the db with the VDQM mountTransaction id
            * after we have sent a recall or migration request to VDQM
@@ -100,7 +100,7 @@ namespace castor      {
               const int mode,
               const char *label,
               const char *density)
-          throw (castor::exception::Exception);
+          ;
 
           /** To get the transactionids and vids of all ongoing recall or migrations
            * for which there should be a VDQM request
@@ -110,29 +110,29 @@ namespace castor      {
            */
           virtual void getTapesWithDriveReqs(std::list<struct TapeRequest>& requests,
               const u_signed64& timeOut)
-          throw (castor::exception::Exception);
+          ;
 
           /** restarts requests lost by VDQM or a request which was processed
            * while the tapegateway was down
            * @param mountTransactionIds the transaction ids of the requests to be restarted
            */
           virtual void restartLostReqs(const std::list<int>& mountTransactionIds)
-          throw (castor::exception::Exception);
+          ;
 
           // To get the tapecopies which faced a migration failure
           virtual void  getFailedMigrations(std::list<castor::tape::tapegateway::RetryPolicyElement>& candidates)
-          throw (castor::exception::Exception);
+          ;
 
           // To update the db using the retry migration policy returned values
           virtual void  setMigRetryResult(const std::list<u_signed64>& mjToRetry,
               const std::list<u_signed64>& mjToFail )
-          throw (castor::exception::Exception);
+          ;
 
           // To update the database when the tapebridge allows
           // us to serve a request
           virtual void  startTapeSession(const castor::tape::tapegateway::VolumeRequest& startReq,
               castor::tape::tapegateway::Volume& volume)
-          throw (castor::exception::Exception);
+          ;
 
           /** Ends a tape session by dropping it from the DB. If the tapebridge
            * comes afterwards asking for more data on the dropped session, it will
@@ -144,7 +144,7 @@ namespace castor      {
            */
           virtual void endTapeSession(const u_signed64 mountTransactionId,
               const int errorCode = 0)
-          throw (castor::exception::Exception);
+          ;
 
 
           /** Ends a tape session by dropping it from the DB. If the tapebridge
@@ -159,12 +159,12 @@ namespace castor      {
            */
         virtual void endTapeSessionAutonomous(const u_signed64 mountTransactionId,
                                     const int errorCode = 0)
-          throw (castor::exception::Exception);
+          ;
 
           // To get tapes to release in vmgr */
           virtual void  getTapeToRelease(const u_signed64& mountTransactionId,
               castor::tape::tapegateway::ITapeGatewaySvc::TapeToReleaseInfo& tape)
-          throw (castor::exception::Exception);
+          ;
 
           /** cancels a migration or recall for the given tape
            * @param mode the request mode (WRITE_DISABLE for Recalls, WRITE_ENABLE for Migrations)
@@ -177,12 +177,12 @@ namespace castor      {
               const std::string &vid,
               const int errorCode,
               const std::string &errorMsg)
-          throw (castor::exception::Exception);
+          ;
 
           // To delete migartion mounts with wrong tapepool
           virtual void deleteMigrationMountWithBadTapePool(
               const u_signed64 migrationMountId)
-          throw (castor::exception::Exception);
+          ;
 
           // Find the VID (and just it) for a migration mount.
           // This allows a safer update for the VMGR's fseq on this tape.
@@ -195,7 +195,7 @@ namespace castor      {
           // error so that we remember to make the tape as full at the end of
           // the session. Session is passed by VDQM request id (like for end/failSession).
           virtual void flagTapeFullForMigrationSession(const u_signed64& tapeRequestId)
-          throw (castor::exception::Exception);
+          ;
 
           /**
            * Get the next best files to migrate
@@ -203,7 +203,7 @@ namespace castor      {
           virtual void getBulkFilesToMigrate (const std::string & context,
               u_signed64 mountTransactionId, u_signed64 maxFiles, u_signed64 maxBytes,
               std::queue<castor::tape::tapegateway::FileToMigrateStruct>& filesToMigrate)
-          throw (castor::exception::Exception);
+          ;
 
           /**
            * Get the next best files to recall
@@ -211,7 +211,7 @@ namespace castor      {
           virtual void getBulkFilesToRecall (const std::string & context,
               u_signed64 mountTransactionId, u_signed64 maxFiles, u_signed64 maxBytes,
               std::queue<castor::tape::tapegateway::ITapeGatewaySvc::FileToRecallStructWithContext>& filesToRecall)
-          throw (castor::exception::Exception);
+          ;
 
           /**
            * Check and update the NS and then the stager DB accordingly from migration result
@@ -221,7 +221,7 @@ namespace castor      {
               const std::string & context, u_signed64 mountTransactionId,
               std::vector<FileMigratedNotificationStruct *>& successes,
               std::vector<FileErrorReportStruct *>& failures)
-          throw (castor::exception::Exception);
+          ;
 
           /**
            * Check the NS and update the stager DB accordingly for files from recall result
@@ -231,15 +231,15 @@ namespace castor      {
               const std::string & context, u_signed64 mountTransactionId,
               std::vector<FileRecalledNotificationStruct *>& successes,
               std::vector<FileErrorReportStruct *>& failures)
-          throw (castor::exception::Exception);
+          ;
 
           // To directly commit
           virtual void commit()
-          throw (castor::exception::Exception);
+          ;
 
           // To direcly rollback
           virtual void rollback()
-          throw (castor::exception::Exception);
+          ;
 
         private:
 
@@ -272,7 +272,7 @@ namespace castor      {
           public:
             // At construction time, extract the metadata from result set.
             // both STL and OCCI throw (sub classes of) std::exception.
-            resultSetIntrospector(oracle::occi::ResultSet *rs) throw (std::exception): m_rsStruct(rs->getColumnListMetaData()){}
+            resultSetIntrospector(oracle::occi::ResultSet *rs) : m_rsStruct(rs->getColumnListMetaData()){}
             // Trivial destructor.
             virtual ~resultSetIntrospector() {};
             // Look for a given column in the metadata array.

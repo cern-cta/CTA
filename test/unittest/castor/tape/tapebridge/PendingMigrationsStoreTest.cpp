@@ -618,12 +618,12 @@ private:
   castor::tape::tapebridge::FileWrittenNotificationList
     dataFlushedToTape(
     castor::tape::tapebridge::PendingMigrationsStore &store,
-    const uint32_t tapeFseqOfFlush) throw(std::exception) {
+    const uint32_t tapeFseqOfFlush)  {
     try {
       return store.dataFlushedToTape(tapeFseqOfFlush);
     } catch(castor::exception::Exception &ex) {
       test_exception te(ex.getMessage().str());
-      throw(te);
+      throw te;
     }
   }
 
@@ -634,12 +634,12 @@ private:
   void fileWrittenWithoutFlush(
     castor::tape::tapebridge::PendingMigrationsStore &store,
     const castor::tape::tapebridge::FileWrittenNotification
-      &notification) throw(std::exception) {
+      &notification)  {
     try {
       store.fileWrittenWithoutFlush(notification);
     } catch(castor::exception::Exception &ex) {
       test_exception te(ex.getMessage().str());
-      throw(te);
+      throw te;
     }
   }
 }; // class PendingMigrationsStoreTest

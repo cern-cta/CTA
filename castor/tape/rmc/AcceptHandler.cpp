@@ -73,7 +73,7 @@ void castor::tape::rmc::AcceptHandler::fillPollFd(
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::rmc::AcceptHandler::handleEvent(
-  const struct pollfd &fd) throw(castor::exception::Exception) {
+  const struct pollfd &fd)  {
   {
     log::Param params[] = {
       log::Param("fd"        , fd.fd                                     ),
@@ -148,7 +148,7 @@ bool castor::tape::rmc::AcceptHandler::handleEvent(
 // checkHandleEventFd
 //------------------------------------------------------------------------------
 void castor::tape::rmc::AcceptHandler::checkHandleEventFd(
-  const int fd) throw (castor::exception::Exception) {
+  const int fd)  {
   if(m_fd != fd) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept connection from client"

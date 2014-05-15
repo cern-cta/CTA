@@ -230,7 +230,7 @@ void CppHClassWriter::writeClassDecl(UMLClassifier *c,
 void CppHClassWriter::writeConstructorDecls(QTextStream &stream) {
   if (!m_classInfo->isInterface) {
     writeDocumentation("", "Empty Constructor", "", stream);
-    stream << getIndent() << m_classInfo->className << "() throw();"
+    stream << getIndent() << m_classInfo->className << "() throw ;"
            << endl << endl;
   }
   writeDocumentation("", "Empty Destructor", "", stream);

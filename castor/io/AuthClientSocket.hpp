@@ -56,7 +56,7 @@ namespace castor {
        * Constructor building a Socket objet around a regular socket
        * @param socket the regular socket used
        */
-      AuthClientSocket(int socket) throw (castor::exception::Exception);
+      AuthClientSocket(int socket) ;
 
       /**
        * Constructor building a socket on a given port of a given host
@@ -68,7 +68,7 @@ namespace castor {
       AuthClientSocket(const unsigned short port,
 		       const std::string host,
 		       int service_type = CSEC_SERVICE_TYPE_HOST )
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Constructor building a socket on a given port of a given host
@@ -80,7 +80,7 @@ namespace castor {
       AuthClientSocket(const unsigned short port,
 		       const unsigned long ip,
 		       int service_type = CSEC_SERVICE_TYPE_HOST )
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Destructor
@@ -91,7 +91,7 @@ namespace castor {
        * Connects the socket to the given address
        */
        virtual void connect()
-	 throw (castor::exception::Exception);
+	 ;
 
     protected:
 

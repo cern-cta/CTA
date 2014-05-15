@@ -184,7 +184,7 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::fillRep(castor::IAddress*,
                                                         castor::IObject* object,
                                                         unsigned int type,
                                                         bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::FilesDeletionFailed* obj = 
     dynamic_cast<castor::stager::FilesDeletionFailed*>(object);
   try {
@@ -220,7 +220,7 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::fillRep(castor::IAddress*,
 // fillRepGCFile
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbFilesDeletionFailedCnv::fillRepGCFile(castor::stager::FilesDeletionFailed* obj)
-  throw (castor::exception::Exception) {
+   {
   // check select statement
   if (0 == m_selectGCFileStatement) {
     m_selectGCFileStatement = createStatement(s_selectGCFileStatementString);
@@ -273,7 +273,7 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::fillRepGCFile(castor::stager::Fi
 // fillRepSvcClass
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbFilesDeletionFailedCnv::fillRepSvcClass(castor::stager::FilesDeletionFailed* obj)
-  throw (castor::exception::Exception) {
+   {
   if (0 != obj->svcClass()) {
     // Check checkSvcClassExist statement
     if (0 == m_checkSvcClassExistStatement) {
@@ -305,7 +305,7 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::fillRepSvcClass(castor::stager::
 // fillRepIClient
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbFilesDeletionFailedCnv::fillRepIClient(castor::stager::FilesDeletionFailed* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check update statement
   if (0 == m_updateIClientStatement) {
     m_updateIClientStatement = createStatement(s_updateIClientStatementString);
@@ -323,7 +323,7 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::fillObj(castor::IAddress*,
                                                         castor::IObject* object,
                                                         unsigned int type,
                                                         bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::FilesDeletionFailed* obj = 
     dynamic_cast<castor::stager::FilesDeletionFailed*>(object);
   switch (type) {
@@ -352,7 +352,7 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::fillObj(castor::IAddress*,
 // fillObjGCFile
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbFilesDeletionFailedCnv::fillObjGCFile(castor::stager::FilesDeletionFailed* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check select statement
   if (0 == m_selectGCFileStatement) {
     m_selectGCFileStatement = createStatement(s_selectGCFileStatementString);
@@ -404,7 +404,7 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::fillObjGCFile(castor::stager::Fi
 // fillObjSvcClass
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbFilesDeletionFailedCnv::fillObjSvcClass(castor::stager::FilesDeletionFailed* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -442,7 +442,7 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::fillObjSvcClass(castor::stager::
 // fillObjIClient
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbFilesDeletionFailedCnv::fillObjIClient(castor::stager::FilesDeletionFailed* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -483,7 +483,7 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::createRep(castor::IAddress*,
                                                           castor::IObject* object,
                                                           bool endTransaction,
                                                           unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::FilesDeletionFailed* obj = 
     dynamic_cast<castor::stager::FilesDeletionFailed*>(object);
   // check whether something needs to be done
@@ -558,7 +558,7 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::bulkCreateRep(castor::IAddress*,
                                                               std::vector<castor::IObject*> &objects,
                                                               bool endTransaction,
                                                               unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   // check whether something needs to be done
   int nb = objects.size();
   if (0 == nb) return;
@@ -941,7 +941,7 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::bulkCreateRep(castor::IAddress*,
 void castor::db::cnv::DbFilesDeletionFailedCnv::updateRep(castor::IAddress*,
                                                           castor::IObject* object,
                                                           bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::FilesDeletionFailed* obj = 
     dynamic_cast<castor::stager::FilesDeletionFailed*>(object);
   // check whether something needs to be done
@@ -989,7 +989,7 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::updateRep(castor::IAddress*,
 void castor::db::cnv::DbFilesDeletionFailedCnv::deleteRep(castor::IAddress*,
                                                           castor::IObject* object,
                                                           bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::FilesDeletionFailed* obj = 
     dynamic_cast<castor::stager::FilesDeletionFailed*>(object);
   // check whether something needs to be done
@@ -1032,7 +1032,7 @@ void castor::db::cnv::DbFilesDeletionFailedCnv::deleteRep(castor::IAddress*,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::cnv::DbFilesDeletionFailedCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   castor::BaseAddress* ad = 
     dynamic_cast<castor::BaseAddress*>(address);
   try {
@@ -1082,7 +1082,7 @@ castor::IObject* castor::db::cnv::DbFilesDeletionFailedCnv::createObj(castor::IA
 //------------------------------------------------------------------------------
 std::vector<castor::IObject*>
 castor::db::cnv::DbFilesDeletionFailedCnv::bulkCreateObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Prepare result
   std::vector<castor::IObject*> res;
   // check whether something needs to be done
@@ -1142,7 +1142,7 @@ castor::db::cnv::DbFilesDeletionFailedCnv::bulkCreateObj(castor::IAddress* addre
 // updateObj
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbFilesDeletionFailedCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {

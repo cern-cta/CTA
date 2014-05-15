@@ -163,7 +163,7 @@ void castor::db::cnv::DbPutFailedCnv::fillRep(castor::IAddress*,
                                               castor::IObject* object,
                                               unsigned int type,
                                               bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::PutFailed* obj = 
     dynamic_cast<castor::stager::PutFailed*>(object);
   try {
@@ -196,7 +196,7 @@ void castor::db::cnv::DbPutFailedCnv::fillRep(castor::IAddress*,
 // fillRepSvcClass
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbPutFailedCnv::fillRepSvcClass(castor::stager::PutFailed* obj)
-  throw (castor::exception::Exception) {
+   {
   if (0 != obj->svcClass()) {
     // Check checkSvcClassExist statement
     if (0 == m_checkSvcClassExistStatement) {
@@ -228,7 +228,7 @@ void castor::db::cnv::DbPutFailedCnv::fillRepSvcClass(castor::stager::PutFailed*
 // fillRepIClient
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbPutFailedCnv::fillRepIClient(castor::stager::PutFailed* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check update statement
   if (0 == m_updateIClientStatement) {
     m_updateIClientStatement = createStatement(s_updateIClientStatementString);
@@ -246,7 +246,7 @@ void castor::db::cnv::DbPutFailedCnv::fillObj(castor::IAddress*,
                                               castor::IObject* object,
                                               unsigned int type,
                                               bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::PutFailed* obj = 
     dynamic_cast<castor::stager::PutFailed*>(object);
   switch (type) {
@@ -272,7 +272,7 @@ void castor::db::cnv::DbPutFailedCnv::fillObj(castor::IAddress*,
 // fillObjSvcClass
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbPutFailedCnv::fillObjSvcClass(castor::stager::PutFailed* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -310,7 +310,7 @@ void castor::db::cnv::DbPutFailedCnv::fillObjSvcClass(castor::stager::PutFailed*
 // fillObjIClient
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbPutFailedCnv::fillObjIClient(castor::stager::PutFailed* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -351,7 +351,7 @@ void castor::db::cnv::DbPutFailedCnv::createRep(castor::IAddress*,
                                                 castor::IObject* object,
                                                 bool endTransaction,
                                                 unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::PutFailed* obj = 
     dynamic_cast<castor::stager::PutFailed*>(object);
   // check whether something needs to be done
@@ -432,7 +432,7 @@ void castor::db::cnv::DbPutFailedCnv::bulkCreateRep(castor::IAddress*,
                                                     std::vector<castor::IObject*> &objects,
                                                     bool endTransaction,
                                                     unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   // check whether something needs to be done
   int nb = objects.size();
   if (0 == nb) return;
@@ -877,7 +877,7 @@ void castor::db::cnv::DbPutFailedCnv::bulkCreateRep(castor::IAddress*,
 void castor::db::cnv::DbPutFailedCnv::updateRep(castor::IAddress*,
                                                 castor::IObject* object,
                                                 bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::PutFailed* obj = 
     dynamic_cast<castor::stager::PutFailed*>(object);
   // check whether something needs to be done
@@ -928,7 +928,7 @@ void castor::db::cnv::DbPutFailedCnv::updateRep(castor::IAddress*,
 void castor::db::cnv::DbPutFailedCnv::deleteRep(castor::IAddress*,
                                                 castor::IObject* object,
                                                 bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::PutFailed* obj = 
     dynamic_cast<castor::stager::PutFailed*>(object);
   // check whether something needs to be done
@@ -966,7 +966,7 @@ void castor::db::cnv::DbPutFailedCnv::deleteRep(castor::IAddress*,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::cnv::DbPutFailedCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   castor::BaseAddress* ad = 
     dynamic_cast<castor::BaseAddress*>(address);
   try {
@@ -1019,7 +1019,7 @@ castor::IObject* castor::db::cnv::DbPutFailedCnv::createObj(castor::IAddress* ad
 //------------------------------------------------------------------------------
 std::vector<castor::IObject*>
 castor::db::cnv::DbPutFailedCnv::bulkCreateObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Prepare result
   std::vector<castor::IObject*> res;
   // check whether something needs to be done
@@ -1082,7 +1082,7 @@ castor::db::cnv::DbPutFailedCnv::bulkCreateObj(castor::IAddress* address)
 // updateObj
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbPutFailedCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {

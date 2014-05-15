@@ -38,7 +38,7 @@
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TapeFileSequenceParser::parse(char *const str,
   TapeFseqRangeList &tapeFseqRanges)
-  throw (castor::exception::InvalidArgument) {
+   {
 
   std::vector<std::string> rangeStrs;
   int nbBoundaries = 0;

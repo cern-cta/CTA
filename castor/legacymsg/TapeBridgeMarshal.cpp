@@ -40,7 +40,7 @@
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, tapeBridgeFlushedToTapeMsgBody_t &dst)
-  throw(castor::exception::Exception) {
+   {
 
   io::unmarshalUint32(src, srcLen, dst.volReqId);
   io::unmarshalUint32(src, srcLen, dst.tapeFseq);

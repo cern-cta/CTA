@@ -41,7 +41,7 @@ namespace legacymsg {
  * @param src    The source structure.
  * @return       The total length of the message (header + body).
  */
-size_t marshal(char *const dst, const size_t dstLen, const CupvCheckMsgBody &src) throw(castor::exception::Exception);
+size_t marshal(char *const dst, const size_t dstLen, const CupvCheckMsgBody &src) ;
 
 /**
  * Marshals the specified source message body structure and its implicit
@@ -51,7 +51,7 @@ size_t marshal(char *const dst, const size_t dstLen, const CupvCheckMsgBody &src
  * @param src The source structure.
  * @return    The total length of the message (header + body).
  */
-template<int n> size_t marshal(char (&dst)[n], const CupvCheckMsgBody &src) throw(castor::exception::Exception) {
+template<int n> size_t marshal(char (&dst)[n], const CupvCheckMsgBody &src)  {
   return marshal(dst, n, src);
 }
 
@@ -68,7 +68,7 @@ template<int n> size_t marshal(char (&dst)[n], const CupvCheckMsgBody &src) thro
  * return is the number of bytes remaining in the source buffer.
  * @param dst The destination message body structure.
  */
-void unmarshal(const char * &src, size_t &srcLen, CupvCheckMsgBody &dst) throw(castor::exception::Exception);
+void unmarshal(const char * &src, size_t &srcLen, CupvCheckMsgBody &dst) ;
 
 } // namespace legacymsg
 } // namespace castor

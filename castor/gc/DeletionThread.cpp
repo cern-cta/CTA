@@ -279,7 +279,7 @@ void castor::gc::DeletionThread::run(void*) {
 //-----------------------------------------------------------------------------
 void castor::gc::DeletionThread::gcRemoveFilePath
 (std::string filepath, u_signed64 &filesize, u_signed64 &fileage)
-  throw (castor::exception::Exception) {
+   {
   struct stat64 fileinfo;
   if (::stat64(filepath.c_str(), &fileinfo) ) {
     castor::exception::Exception e(errno);

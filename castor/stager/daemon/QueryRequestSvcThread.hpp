@@ -89,7 +89,7 @@ namespace castor {
                                               castor::stager::StageFileQueryRequest& req,
                                               Cuuid_t uuid,
                                               bool all)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Handles a filequery by fileId and replies to client.
@@ -103,7 +103,7 @@ namespace castor {
                                             castor::stager::StageFileQueryRequest& req,
                                             Cuuid_t uuid,
                                             bool all)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Handles a filequery by reqId/userTag or getLastRecalls version and replies to client.
@@ -115,7 +115,7 @@ namespace castor {
                                              u_signed64 svcClassId,
                                              castor::stager::StageFileQueryRequest& req,
                                              Cuuid_t uuid)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Handles a fileQueryRequest and replies to client.
@@ -128,7 +128,7 @@ namespace castor {
                                     castor::IClient *client,
                                     castor::query::IQuerySvc* qrySvc,
                                     Cuuid_t uuid)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Handles a DiskPoolQuery and replies to client.
@@ -141,7 +141,7 @@ namespace castor {
                                  castor::IClient *client,
                                  castor::query::IQuerySvc* qrySvc,
                                  Cuuid_t uuid)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Handles a ChangePrivilege Request and replies to client.
@@ -154,7 +154,7 @@ namespace castor {
                                    castor::IClient *client,
                                    castor::rh::IRHSvc* rhSvc,
                                    Cuuid_t uuid)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Handles a ListPrivilege Request and replies to client.
@@ -167,7 +167,7 @@ namespace castor {
                                   castor::IClient *client,
                                   castor::rh::IRHSvc* rhSvc,
                                   Cuuid_t uuid)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Handles a VersionQuery and replies to client.
@@ -178,7 +178,7 @@ namespace castor {
         void handleVersionQuery(castor::stager::Request* req,
                                 castor::IClient *client,
                                 Cuuid_t uuid)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * helper method for cleaning up a request and releasing

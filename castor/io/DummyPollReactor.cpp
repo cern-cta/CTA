@@ -39,19 +39,19 @@ void castor::io::DummyPollReactor::clear() throw() {
 // registerHandler
 //------------------------------------------------------------------------------
 void castor::io::DummyPollReactor::registerHandler(
-  PollEventHandler *const handler) throw(castor::exception::Exception) {
+  PollEventHandler *const handler)  {
 }
 
 //------------------------------------------------------------------------------
 // removeHandler
 //------------------------------------------------------------------------------
 void castor::io::DummyPollReactor::removeHandler(
-  PollEventHandler *const handler) throw(castor::exception::Exception) {
+  PollEventHandler *const handler)  {
 }
 
 //------------------------------------------------------------------------------
 // handleEvents
 //------------------------------------------------------------------------------
 void castor::io::DummyPollReactor::handleEvents(const int timeout)
-  throw(castor::exception::Exception) {
+   {
 }

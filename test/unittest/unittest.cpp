@@ -47,7 +47,7 @@
 // createLocalListenSocket
 //-----------------------------------------------------------------------------
 int unittest::createLocalListenSocket(const char *const listenSockPath)
-  throw (std::exception) {
+   {
   using namespace castor::tape;
 
   // Delete the file to be used for the socket if the file already exists
@@ -201,7 +201,7 @@ void unittest::writeRtcopyAck(
   const int      sockFd,
   const uint32_t magic,
   const uint32_t reqType)
-  throw(std::exception) {
+   {
   using namespace castor::tape;
 
   char ackBuf[12];
@@ -222,7 +222,7 @@ void unittest::writeRtcopyAck(
 // connectionHasBeenClosedByPeer
 //-----------------------------------------------------------------------------
 bool unittest::connectionHasBeenClosedByPeer(const int sockFd)
-  throw(std::exception) {
+   {
   fd_set readFds;
   FD_ZERO(&readFds);
   FD_SET(sockFd, &readFds);
@@ -246,7 +246,7 @@ bool unittest::connectionHasBeenClosedByPeer(const int sockFd)
       }
 
       test_exception te(errorMessage + strerrbuf);
-      throw(te);
+      throw te;
     }
   }
 
@@ -277,7 +277,7 @@ bool unittest::connectionHasBeenClosedByPeer(const int sockFd)
       }
 
       test_exception te(errorMessage + strerrbuf);
-      throw(te);
+      throw te;
     }
   }
 
@@ -297,7 +297,7 @@ void unittest::readAck(
   const uint32_t magic,
   const uint32_t reqType,
   const uint32_t status)
-  throw(std::exception) {
+   {
   using namespace castor::tape;
 
   const int netReadWriteTimeout = 1;
@@ -333,7 +333,7 @@ void unittest::readAck(
       ": expected=0x" << std::hex << magic <<
       " actual=0x" << header.magic;
     test_exception te(errorMessage.str());
-    throw(te);
+    throw te;
   }
 
   if(reqType != header.reqType) {
@@ -344,7 +344,7 @@ void unittest::readAck(
       ": expected=0x" << std::hex << reqType <<
       " actual=0x" << header.reqType;
     test_exception te(errorMessage.str());
-    throw(te);
+    throw te;
   }
 
   if(status != header.lenOrStatus) {
@@ -355,7 +355,7 @@ void unittest::readAck(
       ": expected=" << status <<
       " actual=" << header.lenOrStatus;
     test_exception te(errorMessage.str());
-    throw(te);
+    throw te;
   }
 }
 
@@ -367,7 +367,7 @@ void unittest::writeRTCP_REQUEST_MORE_WORK(
   const int         sockFd,
   const uint32_t    volReqId,
   const char *const tapePath)
-  throw(std::exception) {
+   {
   using namespace castor::tape;
 
   legacymsg::RtcpFileRqstErrMsgBody msgBody;
@@ -423,7 +423,7 @@ void unittest::writeRTCP_REQUEST_MORE_WORK(
 // writeRTCP_ENDOF_REQ
 //-----------------------------------------------------------------------------
 void unittest::writeRTCP_ENDOF_REQ(const int sockFd)
-  throw(std::exception) {
+   {
   using namespace castor::tape;
 
   castor::tape::legacymsg::MessageHeader endofReqMsg;
@@ -475,7 +475,7 @@ void unittest::writeRTCP_FINISHED(
   const uint64_t    bytesIn,
   const uint64_t    bytesOut,
   const struct castor::tape::legacymsg::RtcpSegmentAttributes &segAttr)
-  throw(std::exception) {
+   {
   using namespace castor::tape;
 
   legacymsg::RtcpFileRqstErrMsgBody msgBody;
@@ -536,7 +536,7 @@ void unittest::writeRTCP_FINISHED(
 int unittest::netAcceptConnection(
     const int    listenSockFd,
     const time_t &timeout) 
-    throw(std::exception) {
+     {
   using namespace castor::tape;
 
   try {

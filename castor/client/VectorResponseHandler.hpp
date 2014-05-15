@@ -49,13 +49,13 @@ namespace castor {
       public:
 
         VectorResponseHandler(std::vector<castor::rh::Response *> *vector)
-          throw (castor::exception::Exception);
+          ;
 
         virtual void handleResponse(castor::rh::Response& r)
-          throw (castor::exception::Exception);
+          ;
         
         virtual void terminate()
-          throw (castor::exception::Exception) {
+           {
         };
 
 

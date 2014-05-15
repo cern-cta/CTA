@@ -31,11 +31,11 @@ castor::legacymsg::RmcProxyDummy::~RmcProxyDummy() throw() {
 //------------------------------------------------------------------------------
 // mountTape
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyDummy::mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyDummy::mountTape(const std::string &vid, const std::string &librarySlot)  {
 }
 
 //------------------------------------------------------------------------------
 // unmountTape
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyDummy::unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyDummy::unmountTape(const std::string &vid, const std::string &librarySlot)  {
 }

@@ -86,7 +86,7 @@ namespace castor {
                           unsigned int *chunkSize,
                           bool *disableStagerSync,
                           bool firstTime = false)
-	throw(castor::exception::Exception);
+	;
 
       /**
        * Parse a fileName and extract the diskCopyId
@@ -97,7 +97,7 @@ namespace castor {
        */
       std::pair<std::string, u_signed64>
       diskCopyIdFromFileName(std::string fileName)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Parse a filePath and extract the fileId
@@ -107,7 +107,7 @@ namespace castor {
        * syntax
        */
       u_signed64 fileIdFromFilePath(std::string filePath)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * gets a list of files open for write in the given mountPoint
@@ -115,7 +115,7 @@ namespace castor {
        * @throw exception in case of error
        */
       std::set<std::string> getFilesBeingWrittenTo(char* mountPoint)
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Synchronizes a list of files from a given filesystem with the nameserver and stager catalog

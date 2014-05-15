@@ -49,7 +49,7 @@ namespace castor {
       /**
        * Constructor
        */
-      RHThread() throw (castor::exception::Exception);
+      RHThread() ;
 
       /**
        * Destructor. See the cpp file for details.
@@ -78,7 +78,7 @@ namespace castor {
        * small function that creates a thread-specific storage key
        * for the rate limiter
        */
-      static void makeRateLimiterKey() throw (castor::exception::Exception);
+      static void makeRateLimiterKey() ;
 
       /**
        * Return a RateLimiter object from thread local storage
@@ -86,7 +86,7 @@ namespace castor {
        * @return a RateLimiter object
        */
       castor::rh::RateLimiter *getRateLimiterFromTLS()
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Handles an incoming request
@@ -95,7 +95,7 @@ namespace castor {
        * @return the number of subrequests involved
        */
       unsigned int handleRequest(castor::stager::Request* fr)
-        throw (castor::exception::Exception);
+        ;
 
       /// Hash table for mapping requests to svc handlers
       std::map<int, std::string> m_svcHandler;

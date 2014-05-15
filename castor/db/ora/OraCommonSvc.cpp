@@ -120,7 +120,7 @@ void castor::db::ora::OraCommonSvc::reset() throw() {
 //------------------------------------------------------------------------------
 castor::stager::Request*
 castor::db::ora::OraCommonSvc::requestToDo(std::string service)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statements are ok
     if (0 == m_requestToDoStatement) {
@@ -207,7 +207,7 @@ void castor::db::ora::OraCommonSvc::rollback() {
 //  handleException
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCommonSvc::handleException
-  (oracle::occi::SQLException& e) throw () {
+  (oracle::occi::SQLException& e) throw() {
   try {
     dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc())->handleException(e);
   } catch (castor::exception::Exception &) {
@@ -223,7 +223,7 @@ void castor::db::ora::OraCommonSvc::handleException
 //------------------------------------------------------------------------------
 oracle::occi::Statement*
 castor::db::ora::OraCommonSvc::createStatement (const std::string &stmtString)
-  throw (castor::exception::Exception) {
+   {
     return dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc())->createOraStatement(stmtString);
 }
 
@@ -231,6 +231,6 @@ castor::db::ora::OraCommonSvc::createStatement (const std::string &stmtString)
 // deleteStatement - for Oracle specific statements
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCommonSvc::deleteStatement(oracle::occi::Statement* stmt)
-  throw (castor::exception::Exception) {
+   {
   dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc())->terminateStatement(stmt);
 }

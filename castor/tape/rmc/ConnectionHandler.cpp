@@ -64,7 +64,7 @@ void castor::tape::rmc::ConnectionHandler::fillPollFd(struct pollfd &fd) throw()
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
-bool castor::tape::rmc::ConnectionHandler::handleEvent(const struct pollfd &fd) throw(castor::exception::Exception) {
+bool castor::tape::rmc::ConnectionHandler::handleEvent(const struct pollfd &fd)  {
   std::list<log::Param> params;
   params.push_back(log::Param("fd"        , fd.fd                                     ));
   params.push_back(log::Param("POLLIN"    , fd.revents & POLLIN     ? "true" : "false"));
@@ -101,7 +101,7 @@ bool castor::tape::rmc::ConnectionHandler::handleEvent(const struct pollfd &fd) 
 //------------------------------------------------------------------------------
 // checkHandleEventFd
 //------------------------------------------------------------------------------
-void castor::tape::rmc::ConnectionHandler::checkHandleEventFd(const int fd) throw (castor::exception::Exception) {
+void castor::tape::rmc::ConnectionHandler::checkHandleEventFd(const int fd)  {
   if(m_fd != fd) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle client connection"

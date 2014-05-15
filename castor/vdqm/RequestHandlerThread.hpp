@@ -72,7 +72,7 @@ namespace castor {
        * @param sock The socket
        */
       void handleRequest(Cuuid_t &cuuid, castor::io::ServerSocket &sock)
-        throw(castor::exception::Exception);
+        ;
 
     }; // class RequestHandlerThread
 

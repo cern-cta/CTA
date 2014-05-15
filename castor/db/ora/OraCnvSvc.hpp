@@ -75,14 +75,14 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void commit()
-          throw (castor::exception::Exception);
+          ;
         
         /**
          * Forces the rollback of the last changes
          * @exception Exception throws an Exception in case of error
          */
         virtual void rollback()
-          throw (castor::exception::Exception);
+          ;
         
         /**
          * Creates an Oracle prepared statement wrapped with the
@@ -90,7 +90,7 @@ namespace castor {
          * @param stmt the string statement to be prepared 
          */
         virtual castor::db::IDbStatement* createStatement(const std::string& stmt)
-          throw (castor::exception::Exception);
+          ;
         
         /**
          * Creates an Oracle prepared statement exposed with the Oracle API
@@ -100,7 +100,7 @@ namespace castor {
          */
         oracle::occi::Statement*
         createOraStatement(const std::string& stmt)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Creates or reuses an Oracle prepared statement exposed with the Oracle API.
@@ -114,7 +114,7 @@ namespace castor {
          */
         oracle::occi::Statement*
         createOrReuseOraStatement(const std::string& stmtStr, bool *wasCreated)
-          throw (castor::exception::Exception);
+          ;
         
         /**
          * Terminates a prepared statement created with the Oracle API
@@ -124,7 +124,7 @@ namespace castor {
          * the DB connection was not initialized.
          */
         void terminateStatement(oracle::occi::Statement* oraStmt)
-          throw (castor::exception::Exception);
+          ;
         
         /**
          * Resets the service. In particular, drops the connection to the database
@@ -150,7 +150,7 @@ namespace castor {
          * when the connection couldn't be established
          */
         oracle::occi::Connection* getConnection()
-          throw (castor::exception::Exception);
+          ;
         
         /// Oracle user name
         std::string m_user;

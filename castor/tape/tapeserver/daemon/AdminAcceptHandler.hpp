@@ -86,7 +86,7 @@ public:
    * the reactor.
    */
   bool handleEvent(const struct pollfd &fd)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Destructor.
@@ -105,7 +105,7 @@ private:
    * @return       The total length of the header.
    */
   size_t marshalTapeRcReplyMsg(char *const dst, const size_t dstLen,
-    const int rc) throw(castor::exception::Exception);
+    const int rc) ;
   
   /**
    * Writes a job reply message to the tape config command connection.
@@ -115,7 +115,7 @@ private:
    * 
    */
   void writeTapeRcReplyMsg(const int fd, const int rc)
-    throw(castor::exception::Exception);
+    ;
   
   /**
    * Writes a reply message to the tape stat command connection.
@@ -125,7 +125,7 @@ private:
    * 
    */
   void writeTapeStatReplyMsg(const int fd)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Fills the specified TapeStatDriveEntry with the information correpsonding
@@ -135,7 +135,7 @@ private:
    * @param unitName The unit name of the tape drive.
    */
   void fillTapeStatDriveEntry(legacymsg::TapeStatDriveEntry &entry,
-    const std::string &unitName) throw (castor::exception::Exception);
+    const std::string &unitName) ;
 
   /**
    * Translates the specified tape-drive state into the corresponding value for
@@ -145,7 +145,7 @@ private:
    * @return The translated value.
    */
   uint16_t driveStateToStatEntryUp(const DriveCatalogue::DriveState state)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Translates the specified tape-drive state into the corresponding value for
@@ -155,13 +155,13 @@ private:
    * @return The translated value.
    */
   uint16_t driveStateToStatEntryAsn(const DriveCatalogue::DriveState state) 
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Throws an exception if the specified file-descriptor is not that of the
    * socket listening for connections from the vdqmd daemon.
    */
-  void checkHandleEventFd(const int fd) throw (castor::exception::Exception);
+  void checkHandleEventFd(const int fd) ;
   
   /**
    * Logs the reception of the specified job message from the tpconfig command.
@@ -180,7 +180,7 @@ private:
    * @param body body of the tape stat message
    */
   void handleTapeStatJob(const legacymsg::TapeStatRequestMsgBody &body) 
-    throw(castor::exception::Exception);
+    ;
   
   /**
    * Carries out the required drive configuration and replies properly to the client
@@ -188,7 +188,7 @@ private:
    * @param body body of the tape config message
    */
   void handleTapeConfigJob(const legacymsg::TapeConfigRequestMsgBody &body) 
-    throw(castor::exception::Exception);
+    ;
   
   /**
    * Reads a job type from the specified connection, dispatches the job to the 
@@ -196,7 +196,7 @@ private:
    *
    * @param connection The file descriptor of the connection with admin command
    */
-  void dispatchJob(const int connection) throw(castor::exception::Exception);
+  void dispatchJob(const int connection) ;
   
   /**
    * Reads the header of a job message from the specified connection.
@@ -206,7 +206,7 @@ private:
    * @return The message header.
    */
   legacymsg::MessageHeader readJobMsgHeader(const int connection)
-    throw(castor::exception::Exception);
+    ;
   
   /**
    * Reads the body of a job message from the specified connection.
@@ -216,7 +216,7 @@ private:
    * @return The message body.
    */
   legacymsg::TapeConfigRequestMsgBody readTapeConfigMsgBody(const int connection,
-    const uint32_t len) throw(castor::exception::Exception);
+    const uint32_t len) ;
   
   /**
    * Reads the body of a job message from the specified connection.
@@ -226,7 +226,7 @@ private:
    * @return The message body.
    */
   legacymsg::TapeStatRequestMsgBody readTapeStatMsgBody(const int connection,
-    const uint32_t len) throw(castor::exception::Exception);
+    const uint32_t len) ;
 
   /**
    * The file descriptor of the socket listening for connections from the vdqmd

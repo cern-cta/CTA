@@ -144,7 +144,7 @@ void castor::db::ora::OraQuerySvc::reset() throw() {
 //------------------------------------------------------------------------------
 std::list<castor::stager::StageQueryResult*>*
 castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
-  throw (oracle::occi::SQLException) {
+   {
   // Gather the results
   std::list<castor::stager::StageQueryResult*>* result =
     new std::list<castor::stager::StageQueryResult*>();
@@ -177,7 +177,7 @@ castor::db::ora::OraQuerySvc::gatherResults(oracle::occi::ResultSet *rset)
 std::list<castor::stager::StageQueryResult*>*
 castor::db::ora::OraQuerySvc::diskCopies4FileName
 (std::string fileName, u_signed64 svcClassId, unsigned euid, unsigned egid)
-  throw (castor::exception::Exception) {
+   {
   // default value for the maximal number of responses to give
   unsigned long maxNbResponses = 10000;
   try {
@@ -256,7 +256,7 @@ std::list<castor::stager::StageQueryResult*>*
 castor::db::ora::OraQuerySvc::diskCopies4File
 (u_signed64 fileId, std::string nsHost,
  u_signed64 svcClassId, unsigned euid, unsigned egid, std::string& fileName)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statements are ok
     if (0 == m_diskCopies4FileStatement) {
@@ -299,7 +299,7 @@ castor::db::ora::OraQuerySvc::diskCopies4File
 std::list<castor::stager::StageQueryResult*>*
 castor::db::ora::OraQuerySvc::diskCopies4Request
 (castor::stager::RequestQueryType reqType, std::string param, u_signed64 svcClassId)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statements are ok
     if(0 == m_diskCopies4ReqIdStatement) {
@@ -385,7 +385,7 @@ castor::db::ora::OraQuerySvc::describeDiskPools
  unsigned long egid,
  bool detailed,
  enum castor::query::DiskPoolQueryType queryType)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statements are ok
     if(0 == m_describeDiskPoolsStatement) {
@@ -487,7 +487,7 @@ castor::db::ora::OraQuerySvc::describeDiskPool
  std::string svcClass,
  bool detailed,
  enum castor::query::DiskPoolQueryType queryType)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statements are ok
     if(0 == m_describeDiskPoolStatement) {

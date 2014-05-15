@@ -56,7 +56,7 @@ namespace castor {
        * @exception In case that one of the parameters is NULL
        */
       OldProtocolInterpreter(castor::io::ServerSocket &socket,
-        const Cuuid_t &cuuid) throw (castor::exception::Exception);
+        const Cuuid_t &cuuid) ;
           
       /**
        * Destructor
@@ -78,7 +78,7 @@ namespace castor {
        */
       int readProtocol(vdqmHdr_t *header, vdqmVolReq_t *volumeRequest, 
         vdqmDrvReq_t *driveRequest) 
-      throw (castor::exception::Exception);
+      ;
                   
       /**
        * Sends the request back to the client with its corresponding ID. 
@@ -88,7 +88,7 @@ namespace castor {
        */        
       int sendToOldClient(vdqmHdr_t *header, vdqmVolReq_t *volumeRequest,
         vdqmDrvReq_t *driveRequest) 
-      throw (castor::exception::Exception);
+      ;
                           
       /**
        * Sends a VDQM_COMMIT back to the client.
@@ -96,7 +96,7 @@ namespace castor {
        * @exception In case of error
        */                  
       void sendAcknCommit() 
-      throw (castor::exception::Exception);
+      ;
           
       /**
        * Waits for an acknowledgement of the old tape daemon, that the
@@ -106,7 +106,7 @@ namespace castor {
        * @exception In case of error
        */  
       int recvAcknFromOldClient()
-      throw (castor::exception::Exception);
+      ;
           
       /**
        * Sends a commit for a ping request back to the client and informes about
@@ -116,7 +116,7 @@ namespace castor {
        * @exception In case of error
        */
       void sendAcknPing(int queuePosition) 
-      throw (castor::exception::Exception);
+      ;
         
       /**
        * This funtion is used in case of errors to send back the error code
@@ -127,7 +127,7 @@ namespace castor {
        * @exception In case of error
        */
       void sendAcknRollback(int errorCode) 
-      throw (castor::exception::Exception);          
+      ;          
           
 
       private:      

@@ -78,7 +78,7 @@ void castor::io::StreamClientIdentificationCnv::createRep(castor::IAddress* addr
                                                           castor::IObject* object,
                                                           bool,
                                                           unsigned int)
-  throw (castor::exception::Exception) {
+   {
   castor::vdqm::ClientIdentification* obj = 
     dynamic_cast<castor::vdqm::ClientIdentification*>(object);
   StreamAddress* ad = 
@@ -97,7 +97,7 @@ void castor::io::StreamClientIdentificationCnv::createRep(castor::IAddress* addr
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamClientIdentificationCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
@@ -133,7 +133,7 @@ castor::IObject* castor::io::StreamClientIdentificationCnv::createObj(castor::IA
 void castor::io::StreamClientIdentificationCnv::marshalObject(castor::IObject* object,
                                                               castor::io::StreamAddress* address,
                                                               castor::ObjectSet& alreadyDone)
-  throw (castor::exception::Exception) {
+   {
   castor::vdqm::ClientIdentification* obj = 
     dynamic_cast<castor::vdqm::ClientIdentification*>(object);
   if (0 == obj) {
@@ -155,7 +155,7 @@ void castor::io::StreamClientIdentificationCnv::marshalObject(castor::IObject* o
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamClientIdentificationCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                             castor::ObjectCatalog& newlyCreated)
-  throw (castor::exception::Exception) {
+   {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created

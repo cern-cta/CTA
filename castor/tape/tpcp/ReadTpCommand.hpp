@@ -69,7 +69,7 @@ protected:
    * @param argv Argument vector from the executable's entry function: main().
    */
   void parseCommandLine(const int argc, char **argv)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Checks the disk files can be accessed.
@@ -77,7 +77,7 @@ protected:
    * @throw A castor::exception::Exception exception if the disk files cannot
    *        be accessed.
    */
-  void checkAccessToDisk() const throw(castor::exception::Exception);
+  void checkAccessToDisk() const ;
 
   /**
    * Checks the tape can be accessed.
@@ -85,7 +85,7 @@ protected:
    * @throw A castor::exception::Exception exception if the tape cannot be
    *        accessed.
    */
-  void checkAccessToTape() const throw(castor::exception::Exception);
+  void checkAccessToTape() const ;
 
   /**
    * Request a drive connected to the specified tape-server from the VDQM.
@@ -95,7 +95,7 @@ protected:
    *                   scheduling of the VDQM.
    */
   void requestDriveFromVdqm(char *const tapeServer)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Sends the volume message to the tapebridged daemon.
@@ -108,12 +108,12 @@ protected:
   void sendVolumeToTapeBridge(
     const tapegateway::VolumeRequest &volumeRequest,
     castor::io::AbstractTCPSocket    &connection)
-    const throw(castor::exception::Exception);
+    const ;
 
   /**
    * Performs the tape copy whether it be DUMP, READ or WRITE.
    */
-  void performTransfer() throw(castor::exception::Exception);
+  void performTransfer() ;
 
   /**
    * Dispatches the appropriate handler for the specified tape-gateway message.
@@ -124,7 +124,7 @@ protected:
    * @return     True if there is more work to be done, else false.
    */
   bool dispatchMsgHandler(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
 
 private:
@@ -135,7 +135,7 @@ private:
    *
    * @return The number of ranges that contain the upper boundary "end of tape".
    */
-  unsigned int countNbRangesWithEnd() throw (castor::exception::Exception);
+  unsigned int countNbRangesWithEnd() ;
 
   /**
    * The umask of the process.
@@ -187,7 +187,7 @@ private:
    * @return     True if there is more work to be done else false.
    */
   bool handleFilesToRecallListRequest(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
   /**
    * FileRecallReportList message handler.
@@ -197,7 +197,7 @@ private:
    * @return     True if there is more work to be done else false.
    */
   bool handleFileRecallReportList(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
   /**
    * Handles the specified successful recalls of files from tape.
@@ -210,7 +210,7 @@ private:
   void handleSuccessfulRecalls(
     const uint64_t tapebridgeTransId,
     const std::vector<tapegateway::FileRecalledNotificationStruct*> &files,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
   /**
    * Handles the successfull recall of a file from tape.
@@ -223,7 +223,7 @@ private:
   void handleSuccessfulRecall(
     const uint64_t tapebridgeTransId,
     const tapegateway::FileRecalledNotificationStruct &file,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
   /**
    * EndNotification message handler.
@@ -233,7 +233,7 @@ private:
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotification(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
   /**
    * EndNotificationErrorReport message handler.
@@ -243,7 +243,7 @@ private:
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotificationErrorReport(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
   /**
    * PingNotification message handler.
@@ -253,7 +253,7 @@ private:
    * @return     True if there is more work to be done else false.
    */
   bool handlePingNotification(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
 }; // class ReadTpCommand
 

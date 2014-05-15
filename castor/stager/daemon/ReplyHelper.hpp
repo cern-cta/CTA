@@ -47,7 +47,7 @@ namespace castor{
         /**
          * constructor
          */
-        ReplyHelper() throw(castor::exception::Exception);
+        ReplyHelper() ;
 
         /**
          * destructor
@@ -76,13 +76,13 @@ namespace castor{
          int errorCode,
          std::string errorMessage,
          const castor::stager::DiskCopyInfo* diskCopy = 0)
-          throw(castor::exception::Exception);       
+          ;       
         
         
         /*********************************************************************************************/
         /* check if there is any subrequest left and send the endResponse to client if it is needed */
         /*******************************************************************************************/
-        void endReplyToClient(RequestHelper* reqHelper) throw(castor::exception::Exception);
+        void endReplyToClient(RequestHelper* reqHelper) ;
         
         
       }; // end ReplyHelper  

@@ -54,7 +54,7 @@ void castor::tape::tapebridge::BridgeClientInfo2Sender::send(
   const int                      netReadWriteTimeout,
   tapeBridgeClientInfo2MsgBody_t &msgBody,
   legacymsg::RtcpJobReplyMsgBody &reply)
-  throw(castor::exception::Exception) {
+   {
 
   if(rtcpdHost.length() == 0) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
@@ -107,7 +107,7 @@ void castor::tape::tapebridge::BridgeClientInfo2Sender::readReply(
   castor::io::AbstractTCPSocket  &sock,
   const int                      netReadWriteTimeout,
   legacymsg::RtcpJobReplyMsgBody &reply)
-  throw(castor::exception::Exception) {
+   {
 
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len

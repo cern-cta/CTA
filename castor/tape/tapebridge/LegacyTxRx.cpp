@@ -68,7 +68,7 @@ int castor::tape::tapebridge::LegacyTxRx::getNetReadWriteTimeout() const
 void castor::tape::tapebridge::LegacyTxRx::sendMsgHeader(
   const int                      socketFd,
   const legacymsg::MessageHeader &header)
-  throw(castor::exception::Exception) {
+   {
 
   char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
@@ -97,7 +97,7 @@ void castor::tape::tapebridge::LegacyTxRx::sendMsgHeader(
 void castor::tape::tapebridge::LegacyTxRx::receiveMsgHeader(
   const int                socketFd,
   legacymsg::MessageHeader &header)
-  throw(castor::exception::Exception) {
+   {
 
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len
@@ -128,7 +128,7 @@ void castor::tape::tapebridge::LegacyTxRx::receiveMsgHeader(
 //-----------------------------------------------------------------------------
 bool castor::tape::tapebridge::LegacyTxRx::receiveMsgHeaderFromCloseable(
   const int                socketFd,
-  legacymsg::MessageHeader &header) throw(castor::exception::Exception) {
+  legacymsg::MessageHeader &header)  {
 
   bool connClosed = false;
 

@@ -75,7 +75,7 @@ public:
    * the reactor.
    */
   bool handleEvent(const struct pollfd &fd)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Destructor.
@@ -94,7 +94,7 @@ private:
    * @return       The total length of the header.
    */
   size_t marshalRcReplyMsg(char *const dst, const size_t dstLen,
-    const int rc) throw(castor::exception::Exception);
+    const int rc) ;
   
   /**
    * Writes a job reply message to the specified connection.
@@ -104,7 +104,7 @@ private:
    * 
    */
   void writeRcReplyMsg(const int fd, const int rc)
-    throw(castor::exception::Exception);
+    ;
   
   /**
    * Marshals the specified source tape label reply message structure into the
@@ -116,7 +116,7 @@ private:
    * @return       The total length of the header.
    */
   size_t marshalLabelReplyMsg(char *const dst, const size_t dstLen,
-    const int rc) throw(castor::exception::Exception);
+    const int rc) ;
   
   /**
    * Writes a job reply message to the tape label command connection.
@@ -126,13 +126,13 @@ private:
    * 
    */
   void writeLabelReplyMsg(const int fd, const int rc)
-    throw(castor::exception::Exception);
+    ;
   
   /**
    * Throws an exception if the specified file-descriptor is not that of the
    * socket listening for connections from the mount session.
    */
-  void checkHandleEventFd(const int fd) throw (castor::exception::Exception);
+  void checkHandleEventFd(const int fd) ;
   
   /**
    * Logs the reception of the specified job message from the tpconfig command.
@@ -155,7 +155,7 @@ private:
    * the client.
    */
   void handleIncomingJob(const legacymsg::MessageHeader &header,
-    const int clientConnection) throw(castor::exception::Exception);
+    const int clientConnection) ;
 
   /**
    * Handles an incoming job.
@@ -172,7 +172,7 @@ private:
    * the client.
    */
   void handleIncomingSetVidJob(const legacymsg::MessageHeader &header,
-    const int clientConnection) throw(castor::exception::Exception);
+    const int clientConnection) ;
 
   /**
    * Handles an incoming job.
@@ -189,7 +189,7 @@ private:
    * the client.
    */
   void handleIncomingLabelJob(const legacymsg::MessageHeader &header,
-    const int clientConnection) throw(castor::exception::Exception);
+    const int clientConnection) ;
   
   /**
    * Logs the reception of the specified job message from the tplabel command.
@@ -205,7 +205,7 @@ private:
    * @return The message header.
    */
   legacymsg::MessageHeader readJobMsgHeader(const int connection)
-    throw(castor::exception::Exception);
+    ;
   
   /**
    * Reads the body of a job message from the specified connection.
@@ -215,7 +215,7 @@ private:
    * @return The message body.
    */
   legacymsg::TapeUpdateDriveRqstMsgBody readSetVidMsgBody(const int connection,
-    const uint32_t len) throw(castor::exception::Exception);
+    const uint32_t len) ;
   
   /**
    * Reads the body of a job message from the specified connection.
@@ -225,7 +225,7 @@ private:
    * @return The message body.
    */
   legacymsg::TapeLabelRqstMsgBody readLabelRqstMsgBody(const int connection,
-    const uint32_t len) throw(castor::exception::Exception);
+    const uint32_t len) ;
 
   /**
    * The file descriptor of the socket listening for connections from the vdqmd

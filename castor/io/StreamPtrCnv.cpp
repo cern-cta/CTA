@@ -75,7 +75,7 @@ void castor::io::StreamPtrCnv::createRep(castor::IAddress*,
                                          castor::IObject*,
                                          bool,
                                          unsigned int)
-  throw (castor::exception::Exception) {
+   {
   // This is normally never called, so just raise an exception
   castor::exception::Exception ex;
   ex.getMessage() << "castor::io::StreamPtrCnv::createRep "
@@ -88,7 +88,7 @@ void castor::io::StreamPtrCnv::createRep(castor::IAddress*,
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamPtrCnv::createObj
 (castor::IAddress*)
-  throw (castor::exception::Exception) {
+   {
   castor::exception::Exception ex;
   ex.getMessage() << "castor::io::StreamPtrCnv::createObj "
                   << "should never be called";
@@ -101,7 +101,7 @@ castor::IObject* castor::io::StreamPtrCnv::createObj
 void castor::io::StreamPtrCnv::marshalObject(castor::IObject* object,
                                              castor::io::StreamAddress* address,
                                              castor::ObjectSet&)
-  throw (castor::exception::Exception) {
+   {
   if (0 != object) {
     // This is normally never called, so just raise an exception
     castor::exception::Exception ex;
@@ -118,7 +118,7 @@ void castor::io::StreamPtrCnv::marshalObject(castor::IObject* object,
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamPtrCnv::unmarshalObject(castor::io::biniostream& stream,
                                                            castor::ObjectCatalog& newlyCreated)
-  throw (castor::exception::Exception) {
+   {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", SVC_STREAMCNV);
   // Just retrieve the object from the newlyCreated catalog
   // using the id stored in the stream

@@ -58,7 +58,7 @@ castor::tape::tapebridge::ClientProxy::ClientProxy(
   const ClientAddress    &clientAddress,
   const std::string      &dgn,
   const std::string      &driveUnit)
-  throw(castor::exception::InvalidArgument):
+  :
   m_cuuid(cuuid),
   m_mountTransactionId(mountTransactionId),
   m_netTimeout(netTimeout),
@@ -120,7 +120,7 @@ castor::tape::tapebridge::ClientProxy::~ClientProxy() throw() {
 castor::tape::tapegateway::Volume
   *castor::tape::tapebridge::ClientProxy::getVolume(
   const uint64_t tapebridgeTransId)
-  throw(castor::exception::Exception) {
+   {
 
   {
     castor::dlf::Param params[] = {
@@ -238,7 +238,7 @@ int castor::tape::tapebridge::ClientProxy::sendFilesToMigrateListRequest(
   const uint64_t tapebridgeTransId,
   const uint64_t maxFiles,
   const uint64_t maxBytes) const
-  throw(castor::exception::Exception) {
+   {
 
   // Check method arguments
   if(maxFiles == 0) {
@@ -304,7 +304,7 @@ castor::tape::tapegateway::FilesToMigrateList
   receiveFilesToMigrateListRequestReplyAndClose(
   const uint64_t tapebridgeTransId,
   const int      clientSock) const
-  throw(castor::exception::Exception) {
+   {
 
   const char *const task = "receive reply to FilesToMigrateListRequest and"
     " close connection";
@@ -403,7 +403,7 @@ int castor::tape::tapebridge::ClientProxy::sendFilesToRecallListRequest(
   const uint64_t tapebridgeTransId,
   const uint64_t maxFiles,
   const uint64_t maxBytes) const
-  throw(castor::exception::Exception) {
+   {
 
   // Check method arguments
   if(maxFiles == 0) {
@@ -443,7 +443,7 @@ castor::tape::tapegateway::FilesToRecallList
   receiveFilesToRecallListRequestReplyAndClose(
   const uint64_t tapebridgeTransId,
   const int      clientSock) const
-  throw(castor::exception::Exception) {
+   {
 
   const char *const task = "receive reply to FilesToRecallListRequest and"
     " close connection";
@@ -534,7 +534,7 @@ castor::tape::tapegateway::FilesToRecallList
 castor::tape::tapegateway::DumpParameters
   *castor::tape::tapebridge::ClientProxy::getDumpParameters(
   const uint64_t tapebridgeTransId) const
-  throw(castor::exception::Exception) {
+   {
 
   {
     castor::dlf::Param params[] = {
@@ -613,7 +613,7 @@ castor::tape::tapegateway::DumpParameters
 void castor::tape::tapebridge::ClientProxy::notifyDumpMessage(
   const uint64_t tapebridgeTransId,
   const char     (&message)[CA_MAXLINELEN+1]) const
-  throw(castor::exception::Exception) {
+   {
 
   {
     castor::dlf::Param params[] = {
@@ -657,7 +657,7 @@ void castor::tape::tapebridge::ClientProxy::notifyDumpMessage(
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::ClientProxy::ping(
   const uint64_t tapebridgeTransId) const
-  throw(castor::exception::Exception) {
+   {
 
   {
     castor::dlf::Param params[] = {
@@ -699,7 +699,7 @@ void castor::tape::tapebridge::ClientProxy::ping(
 int castor::tape::tapebridge::ClientProxy::connectAndSendMessage(
   IObject &message,
   timeval &connectDuration) const
-  throw(castor::exception::Exception) {
+   {
 
   castor::io::ClientSocket
     sock(m_clientAddress.connectToClient(m_netTimeout, connectDuration));
@@ -733,7 +733,7 @@ int castor::tape::tapebridge::ClientProxy::connectAndSendMessage(
 //-----------------------------------------------------------------------------
 castor::IObject *castor::tape::tapebridge::ClientProxy::receiveReplyAndClose(
   const int clientSock) const
-  throw(castor::exception::Exception) {
+   {
 
   // Receive the reply object
   castor::io::AbstractTCPSocket sock(clientSock);
@@ -779,7 +779,7 @@ castor::IObject
   IObject           &request,
   timeval           &connectDuration,
   timeval           &sendRecvDuration) const
-  throw(castor::exception::Exception) {
+   {
 
   castor::io::ClientSocket
     sock(m_clientAddress.connectToClient(m_netTimeout, connectDuration));
@@ -842,7 +842,7 @@ castor::IObject
 void castor::tape::tapebridge::ClientProxy::receiveNotificationReplyAndClose(
   const uint64_t tapebridgeTransId,
   const int      clientSock) const
-  throw(castor::exception::Exception) {
+   {
 
   const char *const task = "receive notification reply and close connection";
 
@@ -905,7 +905,7 @@ void castor::tape::tapebridge::ClientProxy::notifyClient(
   const uint64_t    tapebridgeTransId,
   const char *const requestTypeName,
   IObject&          request) const
-  throw(castor::exception::Exception) {
+   {
 
   // Send the request and receive the reply
   timeval connectDuration  = {0, 0};
@@ -953,7 +953,7 @@ void castor::tape::tapebridge::ClientProxy::notifyClient(
 //-----------------------------------------------------------------------------
 void  castor::tape::tapebridge::ClientProxy::throwEndNotificationErrorReport(
   IObject *const obj) const
-  throw(castor::exception::Exception) {
+   {
 
   // Down cast the reply to its specific class
   tapegateway::EndNotificationErrorReport *reply =
@@ -980,7 +980,7 @@ void castor::tape::tapebridge::ClientProxy::checkTransactionIds(
   const uint32_t    actualMountTransactionId,
   const uint64_t    expectedTapebridgeTransId,
   const uint64_t    actualTapebridgeTransId) const
-  throw(castor::exception::Exception) {
+   {
 
   int nbErrors = 0;
   std::stringstream errorMessage;
@@ -1014,7 +1014,7 @@ void castor::tape::tapebridge::ClientProxy::checkTransactionIds(
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::ClientProxy::notifyEndOfSession(
   const uint64_t tapebridgeTransId) const
-  throw(castor::exception::Exception) {
+   {
 
   {
     castor::dlf::Param params[] = {
@@ -1057,7 +1057,7 @@ void castor::tape::tapebridge::ClientProxy::notifyEndOfFailedSession(
   const uint64_t    tapebridgeTransId,
   const int         errorCode,
   const std::string &errorMessage) const
-  throw(castor::exception::Exception) {
+   {
 
   {
     castor::dlf::Param params[] = {

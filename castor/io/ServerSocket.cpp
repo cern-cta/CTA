@@ -56,7 +56,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::io::ServerSocket::ServerSocket(int socket) throw () :
+castor::io::ServerSocket::ServerSocket(int socket) throw() :
   AbstractTCPSocket(socket),
   m_listening(false) {
   srand(time(NULL));
@@ -67,7 +67,7 @@ castor::io::ServerSocket::ServerSocket(int socket) throw () :
 // constructor
 //------------------------------------------------------------------------------
 castor::io::ServerSocket::ServerSocket(const bool reusable)
-  throw (castor::exception::Exception) :
+   :
   AbstractTCPSocket(reusable),
   m_listening(false) {
   srand(time(NULL));
@@ -81,7 +81,7 @@ castor::io::ServerSocket::ServerSocket(const bool reusable)
 //------------------------------------------------------------------------------
 castor::io::ServerSocket::ServerSocket(const unsigned short port,
                                        const bool reusable)
-  throw (castor::exception::Exception) :
+   :
   AbstractTCPSocket(port, reusable),
   m_listening(false) {
   srand(time(NULL));
@@ -97,7 +97,7 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
 castor::io::ServerSocket::ServerSocket(const unsigned short port,
                                        const std::string host,
                                        const bool reusable)
-  throw (castor::exception::Exception) :
+   :
   AbstractTCPSocket(port, host, reusable),
   m_listening(false) {
   srand(time(NULL));
@@ -113,7 +113,7 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
 castor::io::ServerSocket::ServerSocket(const unsigned short port,
                                        const unsigned long ip,
                                        const bool reusable)
-  throw (castor::exception::Exception) :
+   :
   AbstractTCPSocket(port, ip, reusable),
   m_listening(false) {
   m_lowPort = m_highPort = -1;
@@ -127,7 +127,7 @@ castor::io::ServerSocket::ServerSocket(const unsigned short port,
 // listen
 //------------------------------------------------------------------------------
 void castor::io::ServerSocket::listen()
-  throw(castor::exception::Exception) {
+   {
 
   // watch out sometimes for high-stress tests the listen may not return
   // error code  EADDRINUSE
@@ -157,7 +157,7 @@ void castor::io::ServerSocket::listen()
 // accept
 //------------------------------------------------------------------------------
 castor::io::ServerSocket* castor::io::ServerSocket::accept()
-  throw(castor::exception::Exception) {
+   {
   // Check if listen was called, if not, call it
   if (!m_listening) {
     listen();
@@ -187,7 +187,7 @@ castor::io::ServerSocket* castor::io::ServerSocket::accept()
 // bind
 //------------------------------------------------------------------------------
 void castor::io::ServerSocket::bind(int lowPort, int highPort)
-  throw (castor::exception::Exception) {
+   {
   // check range validity
   if (lowPort < 1024 || highPort > 65535 || lowPort > highPort) {
     castor::exception::Exception ex(errno);
@@ -205,7 +205,7 @@ void castor::io::ServerSocket::bind(int lowPort, int highPort)
 // bind
 //------------------------------------------------------------------------------
 void castor::io::ServerSocket::bind()
-  throw (castor::exception::Exception) {
+   {
   int rc = -1;
   int port;
 

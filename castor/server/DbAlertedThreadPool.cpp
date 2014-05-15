@@ -41,7 +41,7 @@ extern "C" {
 castor::server::DbAlertedThreadPool::DbAlertedThreadPool(const std::string poolName,
     castor::server::SelectProcessThread* thread,
     const unsigned int nbThreads)
-  throw(castor::exception::Exception) :
+   :
   BaseThreadPool(poolName, thread, nbThreads)
 {
   // Initialize global mutexes
@@ -94,7 +94,7 @@ bool castor::server::DbAlertedThreadPool::shutdown(bool wait) throw()
 // run
 //------------------------------------------------------------------------------
 void castor::server::DbAlertedThreadPool::run()
-  throw (castor::exception::Exception)
+  
 {
   if(m_nbThreads == 0) {
     return;

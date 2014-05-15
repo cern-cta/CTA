@@ -61,7 +61,7 @@ public:
    *
    * @param str The string representation of a SCSI library slot.
    */
-  ScsiLibrarySlot(const std::string &str) throw(castor::exception::Exception);
+  ScsiLibrarySlot(const std::string &str) ;
 }; // class ScsiLibrarySlot
 
 } // namespace legacymsg

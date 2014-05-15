@@ -134,7 +134,7 @@ castor::job::stagerjob::RootPlugin::getPortRange
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::RootPlugin::preForkHook
 (InputArguments &args, PluginContext &context)
-  throw(castor::exception::Exception) {
+   {
   // Set the default time out for select
   char *value = getconfent("ROOT", "TIMEOUT", 0);
   int t = SELECT_TIMEOUT_ROOT;
@@ -213,7 +213,7 @@ void castor::job::stagerjob::RootPlugin::preForkHook
 void castor::job::stagerjob::RootPlugin::postForkHook
 (InputArguments &args, PluginContext &context,
  bool /*useChksSum*/, int /*moverStatus*/)
-  throw(castor::exception::Exception) {
+   {
   // Get ROOTSYS
   const char *rootsys_default = "/usr/local/bin";
   const char *rootsys = getenv("ROOTSYS");
@@ -277,7 +277,7 @@ void castor::job::stagerjob::RootPlugin::postForkHook
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::RootPlugin::execMover
 (InputArguments &args, PluginContext &context)
-  throw(castor::exception::Exception) {
+   {
   // Get ROOTSYS
   const char *rootsys_default = "/usr/local/bin";
   const char *rootsys = getenv("ROOTSYS");

@@ -68,7 +68,7 @@ castor::tape::tapebridge::ClientAddressTcpIp::~ClientAddressTcpIp() throw() {
 // checkValidity
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::ClientAddressTcpIp::checkValidity()
-  const throw(castor::exception::InvalidArgument) {
+  const  {
   if(getHostname().empty()) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
       ": Client address is invalid"
@@ -89,7 +89,7 @@ void castor::tape::tapebridge::ClientAddressTcpIp::checkValidity()
 int castor::tape::tapebridge::ClientAddressTcpIp::connectToClient(
   const int netTimeout,
   timeval   &connectDuration)
-  const throw(castor::exception::Exception) {
+  const  {
   castor::io::ClientSocket sock(getPort(), getHostname());
   sock.setTimeout(netTimeout);
   try {
@@ -133,6 +133,6 @@ const std::string &castor::tape::tapebridge::ClientAddressTcpIp::getHostname()
 // getPort
 //-----------------------------------------------------------------------------
 uint32_t castor::tape::tapebridge::ClientAddressTcpIp::getPort()
-  const throw () {
+  const throw() {
   return m_port;
 }

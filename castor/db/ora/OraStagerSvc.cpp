@@ -269,7 +269,7 @@ void castor::db::ora::OraStagerSvc::reset() throw() {
 castor::stager::SubRequest*
 castor::db::ora::OraStagerSvc::subRequestToDo
 (const std::string service)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statements are ok
     if (0 == m_subRequestToDoStatement) {
@@ -429,7 +429,7 @@ castor::db::ora::OraStagerSvc::subRequestToDo
 castor::IObject*
 castor::db::ora::OraStagerSvc::processBulkRequest
 (const std::string service)
-  throw (castor::exception::Exception) {
+   {
   IObject *retObj = 0;
   try {
     // Check whether the statements are ok
@@ -514,7 +514,7 @@ castor::db::ora::OraStagerSvc::processBulkRequest
 //------------------------------------------------------------------------------
 castor::stager::SubRequest*
 castor::db::ora::OraStagerSvc::subRequestFailedToDo()
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statements are ok
     if (0 == m_subRequestFailedToDoStatement) {
@@ -602,7 +602,7 @@ castor::db::ora::OraStagerSvc::subRequestFailedToDo()
 //------------------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::processPrepareRequest
 (castor::stager::SubRequest* subreq)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_processPrepareRequestStatement) {
@@ -646,7 +646,7 @@ int castor::db::ora::OraStagerSvc::processPrepareRequest
 //------------------------------------------------------------------------------
 int castor::db::ora::OraStagerSvc::processPutDoneRequest
 (castor::stager::SubRequest* subreq)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_processPutDoneRequestStatement) {
@@ -690,7 +690,7 @@ void castor::db::ora::OraStagerSvc::createDiskCopyReplicaRequest
  const castor::stager::SvcClass* srcSc,
  const castor::stager::SvcClass* destSc,
  const bool internal)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_createDiskCopyReplicaRequestStatement) {
@@ -729,7 +729,7 @@ void castor::db::ora::OraStagerSvc::createDiskCopyReplicaRequest
 void castor::db::ora::OraStagerSvc::createEmptyFile
 (castor::stager::SubRequest* subreq,
  bool schedule)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_createEmptyFileStatement) {
@@ -766,7 +766,7 @@ void castor::db::ora::OraStagerSvc::createEmptyFile
 //------------------------------------------------------------------------------
 castor::stager::SubRequestStatusCodes
 castor::db::ora::OraStagerSvc::createRecallCandidate(u_signed64 srId)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_createRecallCandidateStatement) {
@@ -797,7 +797,7 @@ castor::db::ora::OraStagerSvc::selectCastorFile(castor::stager::SubRequest* subr
 						const Cns_fileid* cnsFileId,
 						const Cns_filestatcs* cnsFileStat,
 						const u_signed64 nsOpenTimeInUsec)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statements are ok
   if (0 == m_selectCastorFileStatement) {
     m_selectCastorFileStatement =
@@ -851,7 +851,7 @@ castor::db::ora::OraStagerSvc::selectCastorFile(castor::stager::SubRequest* subr
 //------------------------------------------------------------------------------
 bool castor::db::ora::OraStagerSvc::updateAndCheckSubRequest
 (castor::stager::SubRequest* subreq)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statements are ok
     if (0 == m_updateAndCheckSubRequestStatement) {
@@ -888,7 +888,7 @@ bool castor::db::ora::OraStagerSvc::updateAndCheckSubRequest
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::archiveSubReq
 (u_signed64 subReqId, castor::stager::SubRequestStatusCodes finalStatus)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statements are ok
   if (0 == m_archiveSubReqStatement) {
     m_archiveSubReqStatement =
@@ -916,7 +916,7 @@ void castor::db::ora::OraStagerSvc::archiveSubReq
 int castor::db::ora::OraStagerSvc::stageRm
 (castor::stager::SubRequest* subreq, const u_signed64 fileId,
  const std::string nsHost, const u_signed64 svcClassId)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statements are ok
     if (0 == m_stageRmStatement) {
@@ -956,7 +956,7 @@ int castor::db::ora::OraStagerSvc::stageRm
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::renamedFileCleanup
 (const std::string &fileName, const u_signed64 subReqId)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_renamedFileCleanupStatement) {
@@ -982,7 +982,7 @@ void castor::db::ora::OraStagerSvc::renamedFileCleanup
 int castor::db::ora::OraStagerSvc::setFileGCWeight
 (const u_signed64 fileId, const std::string nsHost,
  const u_signed64 svcClassId, const float weight)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_setFileGCWeightStatement) {
@@ -1015,7 +1015,7 @@ int castor::db::ora::OraStagerSvc::setFileGCWeight
 std::string castor::db::ora::OraStagerSvc::getConfigOption(std::string confClass,
                                                            std::string confKey,
                                                            std::string defaultValue)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statements are ok
     if (0 == m_getConfigOptionStatement) {
@@ -1048,7 +1048,7 @@ std::string castor::db::ora::OraStagerSvc::getConfigOption(std::string confClass
 // dumpDBLogs
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStagerSvc::dumpDBLogs()
-  throw (castor::exception::Exception) {
+   {
   try {
     if (0 == m_dumpDBLogsStatement) {
       m_dumpDBLogsStatement = createStatement(s_dumpDBLogsString);

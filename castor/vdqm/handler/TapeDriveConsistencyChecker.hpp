@@ -62,7 +62,7 @@ namespace castor {
            * 
            * @exception If the consistency is not given
            */
-          void checkConsistency() throw (castor::exception::Exception);
+          void checkConsistency() ;
   
   
         protected:
@@ -77,7 +77,7 @@ namespace castor {
           TapeDriveConsistencyChecker(
             castor::vdqm::TapeDrive *const tapeDrive, 
             vdqmDrvReq_t *const driveRequest, const Cuuid_t cuuid)
-            throw(castor::exception::Exception);
+            ;
           
           /**
            * Destructor
@@ -99,7 +99,7 @@ namespace castor {
            * It is only used internally from checkConsistency.
            */
           void deleteOldRequest() 
-            throw (castor::exception::Exception);
+            ;
             
           /**
            * This function is written, to check the consistency, if the
@@ -107,7 +107,7 @@ namespace castor {
            * It is only used internally from checkConsistency.
            */
           void checkBusyConsistency() 
-            throw (castor::exception::Exception);
+            ;
             
           /**
            * This function is written, to check the consistency, if the
@@ -115,7 +115,7 @@ namespace castor {
            * It is only used internally from checkConsistency.
            */
           void checkFreeConsistency() 
-            throw (castor::exception::Exception);
+            ;
             
           /**
            * This function is written, to check the consistency, if the
@@ -124,7 +124,7 @@ namespace castor {
            * It is only used internally from checkConsistency.
            */
           void checkAssignConsistency() 
-            throw (castor::exception::Exception);                      
+            ;                      
                         
       }; // class TapeDriveConsistencyChecker
     

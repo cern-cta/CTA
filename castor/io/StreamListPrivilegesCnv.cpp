@@ -81,7 +81,7 @@ void castor::io::StreamListPrivilegesCnv::createRep(castor::IAddress* address,
                                                     castor::IObject* object,
                                                     bool,
                                                     unsigned int)
-  throw (castor::exception::Exception) {
+   {
   castor::bwlist::ListPrivileges* obj = 
     dynamic_cast<castor::bwlist::ListPrivileges*>(object);
   StreamAddress* ad = 
@@ -109,7 +109,7 @@ void castor::io::StreamListPrivilegesCnv::createRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamListPrivilegesCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
@@ -173,7 +173,7 @@ castor::IObject* castor::io::StreamListPrivilegesCnv::createObj(castor::IAddress
 void castor::io::StreamListPrivilegesCnv::marshalObject(castor::IObject* object,
                                                         castor::io::StreamAddress* address,
                                                         castor::ObjectSet& alreadyDone)
-  throw (castor::exception::Exception) {
+   {
   castor::bwlist::ListPrivileges* obj = 
     dynamic_cast<castor::bwlist::ListPrivileges*>(object);
   if (0 == obj) {
@@ -197,7 +197,7 @@ void castor::io::StreamListPrivilegesCnv::marshalObject(castor::IObject* object,
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamListPrivilegesCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                       castor::ObjectCatalog& newlyCreated)
-  throw (castor::exception::Exception) {
+   {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created

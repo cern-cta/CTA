@@ -34,7 +34,7 @@
 castor::db::ora::SmartOcciResultSet::SmartOcciResultSet(
   oracle::occi::Statement *const statement,
   oracle::occi::ResultSet *const resultSet)
-  throw(castor::exception::Exception) :
+   :
   m_statement(statement),
   m_resultSet(resultSet),
   m_resultSetIsOpen(true) {
@@ -47,7 +47,7 @@ castor::db::ora::SmartOcciResultSet::SmartOcciResultSet(
       "Failed to create SmartOcciResultSet"
       ": statement argument to the constructor is NULL";
 
-    throw(ex);
+    throw ex;
   }
   if(resultSet == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -56,7 +56,7 @@ castor::db::ora::SmartOcciResultSet::SmartOcciResultSet(
       "Failed to create SmartOcciResultSet"
       ": resultSet argument to the constructor is NULL";
 
-    throw(ex);
+    throw ex;
   }
 }
 
@@ -92,7 +92,7 @@ void castor::db::ora::SmartOcciResultSet::close()
       "Failed to close result-set"
       ": Result-set already closed";
 
-    throw (ex);
+    throw ex;
   }
 
   m_statement->closeResultSet(m_resultSet);
@@ -105,7 +105,7 @@ void castor::db::ora::SmartOcciResultSet::close()
 //-----------------------------------------------------------------------------
 oracle::occi::ResultSet
   *castor::db::ora::SmartOcciResultSet::operator->() const
-  throw(castor::exception::Exception) {
+   {
   return get();
 }
 
@@ -114,7 +114,7 @@ oracle::occi::ResultSet
 //-----------------------------------------------------------------------------
 oracle::occi::ResultSet
   *castor::db::ora::SmartOcciResultSet::get() const
-  throw(castor::exception::Exception) {
+   {
 
   // Throw an exception if 
   if(!m_resultSetIsOpen) {
@@ -124,7 +124,7 @@ oracle::occi::ResultSet
       "Failed to dereference SmartOcciResultSet"
       ": Owned result-set has been closed";
 
-    throw(ex);
+    throw ex;
   }
 
   return m_resultSet;

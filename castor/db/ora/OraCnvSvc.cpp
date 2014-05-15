@@ -101,7 +101,7 @@ unsigned int castor::db::ora::OraCnvSvc::getPhysRepType() const {
 // getConnection
 //------------------------------------------------------------------------------
 oracle::occi::Connection* castor::db::ora::OraCnvSvc::getConnection()
-  throw (castor::exception::Exception) {
+   {
   // Quick answer if connection available
   if (0 != m_connection) return m_connection;
 
@@ -311,7 +311,7 @@ void castor::db::ora::OraCnvSvc::reset() throw() {
 // commit
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCnvSvc::commit()
-  throw (castor::exception::Exception) {
+   {
   try {
     if (0 != m_connection) {
       m_connection->commit();
@@ -328,7 +328,7 @@ void castor::db::ora::OraCnvSvc::commit()
 // rollback
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCnvSvc::rollback()
-  throw (castor::exception::Exception) {
+   {
   try {
     if (0 != m_connection) {
       m_connection->rollback();
@@ -345,7 +345,7 @@ void castor::db::ora::OraCnvSvc::rollback()
 // createStatement - the real one!
 //------------------------------------------------------------------------------
 castor::db::IDbStatement* castor::db::ora::OraCnvSvc::createStatement(const std::string& stmt)
-  throw (castor::exception::Exception) {
+   {
   try {
     oracle::occi::Statement* statement = getConnection()->createStatement(stmt);
     return new castor::db::ora::OraStatement(statement, this);
@@ -363,7 +363,7 @@ castor::db::IDbStatement* castor::db::ora::OraCnvSvc::createStatement(const std:
 // createOraStatement - for Oracle specific statements
 //------------------------------------------------------------------------------
 oracle::occi::Statement* castor::db::ora::OraCnvSvc::createOraStatement(const std::string& stmt)
-  throw (castor::exception::Exception) {
+   {
   try {
     oracle::occi::Statement* oraStmt = getConnection()->createStatement(stmt);
     return oraStmt;
@@ -382,7 +382,7 @@ oracle::occi::Statement* castor::db::ora::OraCnvSvc::createOraStatement(const st
 oracle::occi::Statement*
 castor::db::ora::OraCnvSvc::createOrReuseOraStatement (const std::string& stmtStr,
                                                        bool *wasCreated)
-  throw (castor::exception::Exception) 
+   
 {
   *wasCreated = false;
   std::map<std::string, oracle::occi::Statement*>::iterator it =
@@ -401,7 +401,7 @@ castor::db::ora::OraCnvSvc::createOrReuseOraStatement (const std::string& stmtSt
 // terminateStatement
 //------------------------------------------------------------------------------
 void castor::db::ora::OraCnvSvc::terminateStatement(oracle::occi::Statement* oraStmt)
-  throw (castor::exception::Exception) {
+   {
   try {
     if(0 == m_connection) {
       castor::exception::SQLError ex;

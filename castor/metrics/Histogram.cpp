@@ -51,7 +51,7 @@ castor::metrics::Histogram::~Histogram()
 // notifyNewValue
 //------------------------------------------------------------------------------
 void castor::metrics::Histogram::notifyNewValue(castor::IObject* obj)
-  throw (castor::exception::Exception)
+  
 {
   if(m_instantiator != 0) {
     try {
@@ -88,7 +88,7 @@ void castor::metrics::Histogram::notifyNewValue(castor::IObject* obj)
 // printXml
 //------------------------------------------------------------------------------
 std::string castor::metrics::Histogram::printXml(std::string counterName)
-  throw (castor::exception::Exception)
+  
 {
   std::ostringstream ss;
   ss << "<histogram name='" << m_name << "'>\n";

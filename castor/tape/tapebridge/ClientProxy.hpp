@@ -83,7 +83,7 @@ public:
     const ClientAddress    &clientAddress,
     const std::string      &dgn,
     const std::string      &driveUnit)
-    throw(castor::exception::InvalidArgument);
+    ;
 
   /**
    * Destructor.
@@ -102,7 +102,7 @@ public:
    */
   tapegateway::Volume *getVolume(
     const uint64_t tapebridgeTransId)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Sends a FilesToMigrateListRequest to the client and returns the
@@ -123,7 +123,7 @@ public:
     const uint64_t tapebridgeTransId,
     const uint64_t maxFiles,
     const uint64_t maxBytes) const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Receives the reply to a FilesToMigrateListRequest from the specified
@@ -145,7 +145,7 @@ public:
     *receiveFilesToMigrateListRequestReplyAndClose(
     const uint64_t tapebridgeTransId,
     const int      clientSock) const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Sends a FilesToRecallListRequest to the client and returns the
@@ -169,7 +169,7 @@ public:
     const uint64_t tapebridgeTransId,
     const uint64_t maxFiles,
     const uint64_t maxBytes) const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Receives the reply to a FilesToRecallListRequest from the specified client
@@ -191,7 +191,7 @@ public:
     *receiveFilesToRecallListRequestReplyAndClose(
     const uint64_t tapebridgeTransId,
     const int      clientSock) const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Receives the reply to a FileMigrationReportList or a FileRecallReportList
@@ -204,7 +204,7 @@ public:
   void receiveNotificationReplyAndClose(
     const uint64_t tapebridgeTransId,
     const int      clientSock) const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Gets the parameters to be used when dumping a tape.
@@ -217,7 +217,7 @@ public:
    */
   tapegateway::DumpParameters *getDumpParameters(
     const uint64_t tapebridgeTransId) const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Notifies the client of a dump tape message string.
@@ -229,7 +229,7 @@ public:
   void notifyDumpMessage(
     const uint64_t tapebridgeTransId,
     const char     (&message)[CA_MAXLINELEN+1]) const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Pings the client and throws an exception if the ping has failed.
@@ -239,7 +239,7 @@ public:
    */
   void ping(
     const uint64_t tapebridgeTransId) const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Receives a reply from the specified client socket and then closes the
@@ -251,7 +251,7 @@ public:
    *                   object.
    */
   IObject *receiveReplyAndClose(const int clientSock) const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Throws an exception if there is a mount transaction ID mismatch and/or
@@ -267,7 +267,7 @@ public:
     const uint32_t    actualMountTransactionId,
     const uint64_t    expectedTapebridgeTransId,
     const uint64_t    actualTapebridgeTransId) const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Notifies the client of the end of the recall/migration session.
@@ -277,7 +277,7 @@ public:
    */
   void notifyEndOfSession(
     const uint64_t tapebridgeTransId) const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Notifies the client of the end of the recall/migration session due to an
@@ -292,7 +292,7 @@ public:
     const uint64_t    tapebridgeTransId,
     const int         errorCode,
     const std::string &errorMessage) const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Connects to the client and sends the specified message to the client.
@@ -310,7 +310,7 @@ public:
   int connectAndSendMessage(
     IObject &message,
     timeval &connectDuration) const
-    throw(castor::exception::Exception);
+    ;
 
 protected:
 
@@ -335,7 +335,7 @@ protected:
     IObject           &request,
     timeval           &connectDuration,
     timeval           &sendRecvDuration) const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Notifies the client using the specified request message.
@@ -351,7 +351,7 @@ protected:
     const uint64_t    tapebridgeTransId,
     const char *const requestTypeName,
     IObject           &request) const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Translates the specified incoming EndNotificationErrorReport message into
@@ -363,7 +363,7 @@ protected:
    *            OBJ_EndNotificationErrorReport message.
    */
   void throwEndNotificationErrorReport(IObject *const obj) const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * The cuuid to be used for logging.

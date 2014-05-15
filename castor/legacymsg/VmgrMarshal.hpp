@@ -48,7 +48,7 @@ namespace legacymsg {
  * @return       The total length of the message (header + body).
  */
 size_t marshal(char *const dst, const size_t dstLen,
-  const VmgrTapeInfoRqstMsgBody &src) throw(castor::exception::Exception);
+  const VmgrTapeInfoRqstMsgBody &src) ;
 
 /**
  * Marshalls the specified source message body structure into the
@@ -59,7 +59,7 @@ size_t marshal(char *const dst, const size_t dstLen,
  * @return    The total length of the message (header + body).
  */
 template<int n> size_t marshal(char (&dst)[n],
-  const VmgrTapeInfoRqstMsgBody &src) throw(castor::exception::Exception) {
+  const VmgrTapeInfoRqstMsgBody &src)  {
   return marshal(dst, n, src);
 }
 
@@ -77,7 +77,7 @@ template<int n> size_t marshal(char (&dst)[n],
  * @param dst The destination message body structure.
  */
 void unmarshal(const char * &src, size_t &srcLen,
-  VmgrTapeInfoRqstMsgBody &dst) throw(castor::exception::Exception);
+  VmgrTapeInfoRqstMsgBody &dst) ;
 
 /**
  * Unmarshals a message body with the specified destination structure type
@@ -93,7 +93,7 @@ void unmarshal(const char * &src, size_t &srcLen,
  * @param dst The destination message body structure.
  */
 void unmarshal(const char * &src, size_t &srcLen,
-  VmgrTapeInfoMsgBody &dst) throw(castor::exception::Exception);
+  VmgrTapeInfoMsgBody &dst) ;
 
 } // namespace legacymsg
 } // namespace castor

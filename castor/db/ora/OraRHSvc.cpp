@@ -227,7 +227,7 @@ void castor::db::ora::OraRHSvc::reset() throw() {
 //------------------------------------------------------------------------------
 void castor::db::ora::OraRHSvc::storeRequest
 (castor::stager::Request* req)
-  throw (castor::exception::Exception) {
+   {
   try {
     // get the corresponding client object
     castor::rh::Client* client = dynamic_cast<castor::rh::Client*>(req->client());
@@ -1337,7 +1337,7 @@ void castor::db::ora::OraRHSvc::changePrivilege
  std::vector<castor::bwlist::BWUser*> users,
  std::vector<castor::bwlist::RequestType*> requestTypes,
  bool isAdd)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (isAdd){
@@ -1422,7 +1422,7 @@ std::vector<castor::bwlist::Privilege*>
 castor::db::ora::OraRHSvc::listPrivileges
 (const std::string svcClassName, const int user,
  const int group, const int requestType)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_listPrivilegesStatement) {

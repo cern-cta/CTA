@@ -89,7 +89,7 @@ public:
    * </ul>
    */
   SmartArrayPtr &operator=(SmartArrayPtr& obj)
-    throw(castor::exception::NotAnOwner) {
+     {
     reset(obj.release());
     return *this;
   }
@@ -117,7 +117,7 @@ public:
    *
    * @return The released pointer.
    */
-  T *release() throw(castor::exception::NotAnOwner) {
+  T *release()  {
     // If this smart pointer does not own a pointer
     if(NULL == m_arrayPtr) {
       castor::exception::NotAnOwner ex;

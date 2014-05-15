@@ -53,7 +53,7 @@ public:
    * @param handler The handler to be registered.
    */
   void registerHandler(PollEventHandler *const handler)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Removes the specified handler from the reactor.  This method effectively
@@ -62,14 +62,14 @@ public:
    * @param handler The handler to be removed.
    */
   void removeHandler(PollEventHandler *const handler)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Handles any pending events.
    *
    * @param timeout Timeout in milliseconds.
    */
-  void handleEvents(const int timeout) throw(castor::exception::Exception);
+  void handleEvents(const int timeout) ;
 
 }; // class DummyPollReactor
 

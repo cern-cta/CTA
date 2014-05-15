@@ -136,7 +136,7 @@ void castor::db::cnv::DbClientIdentificationCnv::fillRep(castor::IAddress*,
                                                          castor::IObject* object,
                                                          unsigned int type,
                                                          bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::vdqm::ClientIdentification* obj = 
     dynamic_cast<castor::vdqm::ClientIdentification*>(object);
   try {
@@ -166,7 +166,7 @@ void castor::db::cnv::DbClientIdentificationCnv::fillObj(castor::IAddress*,
                                                          castor::IObject* object,
                                                          unsigned int type,
                                                          bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::vdqm::ClientIdentification* obj = 
     dynamic_cast<castor::vdqm::ClientIdentification*>(object);
   switch (type) {
@@ -189,7 +189,7 @@ void castor::db::cnv::DbClientIdentificationCnv::createRep(castor::IAddress*,
                                                            castor::IObject* object,
                                                            bool endTransaction,
                                                            unsigned int)
-  throw (castor::exception::Exception) {
+   {
   castor::vdqm::ClientIdentification* obj = 
     dynamic_cast<castor::vdqm::ClientIdentification*>(object);
   // check whether something needs to be done
@@ -242,7 +242,7 @@ void castor::db::cnv::DbClientIdentificationCnv::bulkCreateRep(castor::IAddress*
                                                                std::vector<castor::IObject*> &objects,
                                                                bool endTransaction,
                                                                unsigned int)
-  throw (castor::exception::Exception) {
+   {
   // check whether something needs to be done
   int nb = objects.size();
   if (0 == nb) return;
@@ -432,7 +432,7 @@ void castor::db::cnv::DbClientIdentificationCnv::bulkCreateRep(castor::IAddress*
 void castor::db::cnv::DbClientIdentificationCnv::updateRep(castor::IAddress*,
                                                            castor::IObject* object,
                                                            bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::vdqm::ClientIdentification* obj = 
     dynamic_cast<castor::vdqm::ClientIdentification*>(object);
   // check whether something needs to be done
@@ -475,7 +475,7 @@ void castor::db::cnv::DbClientIdentificationCnv::updateRep(castor::IAddress*,
 void castor::db::cnv::DbClientIdentificationCnv::deleteRep(castor::IAddress*,
                                                            castor::IObject* object,
                                                            bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::vdqm::ClientIdentification* obj = 
     dynamic_cast<castor::vdqm::ClientIdentification*>(object);
   // check whether something needs to be done
@@ -510,7 +510,7 @@ void castor::db::cnv::DbClientIdentificationCnv::deleteRep(castor::IAddress*,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::cnv::DbClientIdentificationCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   castor::BaseAddress* ad = 
     dynamic_cast<castor::BaseAddress*>(address);
   try {
@@ -554,7 +554,7 @@ castor::IObject* castor::db::cnv::DbClientIdentificationCnv::createObj(castor::I
 //------------------------------------------------------------------------------
 std::vector<castor::IObject*>
 castor::db::cnv::DbClientIdentificationCnv::bulkCreateObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Prepare result
   std::vector<castor::IObject*> res;
   // check whether something needs to be done
@@ -608,7 +608,7 @@ castor::db::cnv::DbClientIdentificationCnv::bulkCreateObj(castor::IAddress* addr
 // updateObj
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbClientIdentificationCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {

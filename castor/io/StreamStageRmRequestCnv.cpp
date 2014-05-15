@@ -83,7 +83,7 @@ void castor::io::StreamStageRmRequestCnv::createRep(castor::IAddress* address,
                                                     castor::IObject* object,
                                                     bool,
                                                     unsigned int)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StageRmRequest* obj = 
     dynamic_cast<castor::stager::StageRmRequest*>(object);
   StreamAddress* ad = 
@@ -108,7 +108,7 @@ void castor::io::StreamStageRmRequestCnv::createRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamStageRmRequestCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
@@ -163,7 +163,7 @@ castor::IObject* castor::io::StreamStageRmRequestCnv::createObj(castor::IAddress
 void castor::io::StreamStageRmRequestCnv::marshalObject(castor::IObject* object,
                                                         castor::io::StreamAddress* address,
                                                         castor::ObjectSet& alreadyDone)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StageRmRequest* obj = 
     dynamic_cast<castor::stager::StageRmRequest*>(object);
   if (0 == obj) {
@@ -193,7 +193,7 @@ void castor::io::StreamStageRmRequestCnv::marshalObject(castor::IObject* object,
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamStageRmRequestCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                       castor::ObjectCatalog& newlyCreated)
-  throw (castor::exception::Exception) {
+   {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created

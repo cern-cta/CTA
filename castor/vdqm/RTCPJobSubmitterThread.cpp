@@ -49,7 +49,7 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::vdqm::RTCPJobSubmitterThread::RTCPJobSubmitterThread()
-  throw () {
+  throw() {
 }
 
 
@@ -57,7 +57,7 @@ castor::vdqm::RTCPJobSubmitterThread::RTCPJobSubmitterThread()
 // destructor
 //-----------------------------------------------------------------------------
 castor::vdqm::RTCPJobSubmitterThread::~RTCPJobSubmitterThread()
-  throw () {
+  throw() {
 }
 
 
@@ -370,7 +370,7 @@ void castor::vdqm::RTCPJobSubmitterThread::process(castor::IObject *param)
 // getDbVdqmSvc
 //-----------------------------------------------------------------------------
 castor::vdqm::IVdqmSvc *castor::vdqm::RTCPJobSubmitterThread::getDbVdqmSvc()
-  throw(castor::exception::Exception)
+  
 {
   castor::Services *svcs = castor::BaseObject::services();
   castor::IService *svc = svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);
@@ -393,7 +393,7 @@ castor::vdqm::IVdqmSvc *castor::vdqm::RTCPJobSubmitterThread::getDbVdqmSvc()
 //-----------------------------------------------------------------------------
 void castor::vdqm::RTCPJobSubmitterThread::submitJob(const Cuuid_t &cuuid,
   castor::vdqm::TapeRequest *request)
-  throw(castor::exception::Exception) {
+   {
   castor::vdqm::ClientIdentification *client = request->client();
   castor::vdqm::TapeDrive *tapeDrive  = request->tapeDrive();
   castor::vdqm::DeviceGroupName *dgn = tapeDrive->deviceGroupName();

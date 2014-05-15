@@ -30,7 +30,7 @@ void CppHBaseCnvWriter::writeMethods (bool delUpMethods) {
             << " cnvSvc);" << endl << endl;
   writeDocumentation("", "Destructor", "", *m_stream);
   *m_stream << getIndent() << "virtual " << "~" << m_prefix
-            << m_classInfo->className << "Cnv() throw();" << endl
+            << m_classInfo->className << "Cnv() throw ;" << endl
             << endl;
   // Methods concerning object type
   writeDocumentation

@@ -176,7 +176,7 @@ void castor::db::ora::OraGCSvc::reset() throw() {
 //------------------------------------------------------------------------------
 std::vector<castor::stager::GCLocalFile*>*
 castor::db::ora::OraGCSvc::selectFiles2Delete(std::string diskServer)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statements are ok
   if (0 == m_selectFiles2DeleteStatement) {
     m_selectFiles2DeleteStatement =
@@ -239,7 +239,7 @@ castor::db::ora::OraGCSvc::selectFiles2Delete(std::string diskServer)
 //------------------------------------------------------------------------------
 void castor::db::ora::OraGCSvc::filesDeleted
 (std::vector<u_signed64*>& diskCopyIds)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statements are ok
   if (0 == m_filesDeletedStatement) {
     m_filesDeletedStatement =
@@ -397,7 +397,7 @@ void castor::db::ora::OraGCSvc::filesDeleted
 //------------------------------------------------------------------------------
 void castor::db::ora::OraGCSvc::filesDeletionFailed
 (std::vector<u_signed64*>& diskCopyIds)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statements are ok
   if (0 == m_filesDeletionFailedStatement) {
     m_filesDeletionFailedStatement =
@@ -602,7 +602,7 @@ std::vector<u_signed64> castor::db::ora::OraGCSvc::stgFilesDeleted
 // removeTerminatedRequests
 //------------------------------------------------------------------------------
 void castor::db::ora::OraGCSvc::removeTerminatedRequests()
-  throw (castor::exception::Exception) {
+   {
   try {
     if (0 == m_removeTerminatedRequestsStatement) {
       m_removeTerminatedRequestsStatement =

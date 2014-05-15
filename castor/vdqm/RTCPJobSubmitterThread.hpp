@@ -121,7 +121,7 @@ namespace castor {
        * @param request the tape request
        */
       void submitJob(const Cuuid_t &cuuid, castor::vdqm::TapeRequest *request)
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Returns a pointer to the DbVdqmSvc or throws an exception if it cannot.
@@ -130,7 +130,7 @@ namespace castor {
        * non-zero pointer or it throws an exception.
        */
       castor::vdqm::IVdqmSvc *getDbVdqmSvc()
-        throw(castor::exception::Exception);
+        ;
 
     }; // class RTCPJobSubmitterThread
 

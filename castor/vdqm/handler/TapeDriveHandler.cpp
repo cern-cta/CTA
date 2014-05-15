@@ -129,7 +129,7 @@ throw() {
 //------------------------------------------------------------------------------
 castor::vdqm::handler::TapeDriveHandler::TapeDriveHandler(
   vdqmHdr_t *const header, vdqmDrvReq_t *const driveRequest, 
-  const Cuuid_t cuuid) throw(castor::exception::Exception) :
+  const Cuuid_t cuuid)  :
   ptr_header(header), ptr_driveRequest(driveRequest), m_cuuid(cuuid){
     
   if ( header == NULL || driveRequest == NULL ) {
@@ -151,7 +151,7 @@ castor::vdqm::handler::TapeDriveHandler::~TapeDriveHandler() throw() {
 // newTapeDriveRequest
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest() 
-  throw (castor::exception::Exception) {
+   {
 
   // XXX: This log doesn't appear in the log!
   //"The parameters of the old vdqm DrvReq Request" message
@@ -245,7 +245,7 @@ void castor::vdqm::handler::TapeDriveHandler::newTapeDriveRequest()
 // deleteTapeDrive
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveHandler::deleteTapeDrive() 
-  throw (castor::exception::Exception) {
+   {
 
   ptr_IVdqmService->deleteDrive(ptr_driveRequest->drive,
     ptr_driveRequest->server, ptr_driveRequest->dgn);    
@@ -257,7 +257,7 @@ void castor::vdqm::handler::TapeDriveHandler::deleteTapeDrive()
 //------------------------------------------------------------------------------
 castor::vdqm::TapeDrive* 
   castor::vdqm::handler::TapeDriveHandler::getTapeDrive(TapeServer* tapeServer) 
-  throw (castor::exception::Exception) {
+   {
     
     castor::vdqm::TapeDrive* tapeDrive = NULL;
     castor::vdqm::DeviceGroupName* dgName = NULL;
@@ -374,7 +374,7 @@ castor::vdqm::TapeDrive*
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
   TapeDrive* tapeDrive) 
-  throw (castor::exception::Exception) {
+   {
   if (tapeDrive == NULL) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "The tapeDrive argument is NULL" << std::endl;
@@ -438,7 +438,7 @@ void castor::vdqm::handler::TapeDriveHandler::copyTapeDriveInformations(
 // tapeDriveStatus2Bitset
 //------------------------------------------------------------------------------
 int castor::vdqm::handler::TapeDriveHandler::tapeDriveStatus2Bitset(
-  const TapeDriveStatusCodes status) throw (castor::exception::Exception) {
+  const TapeDriveStatusCodes status)  {
 
   switch(status) {
   case UNIT_UP:
@@ -481,7 +481,7 @@ int castor::vdqm::handler::TapeDriveHandler::tapeDriveStatus2Bitset(
 void castor::vdqm::handler::TapeDriveHandler::printStatus(
   const int oldProtocolStatus, 
   const int newActStatus) 
-  throw (castor::exception::Exception) {  
+   {  
   
   std::string oldStatusString;
   
@@ -585,7 +585,7 @@ void castor::vdqm::handler::TapeDriveHandler::printStatus(
 void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
   const vdqmVolReq_t *const,
   castor::vdqm::OldProtocolInterpreter *const oldProtInterpreter) 
-  throw (castor::exception::Exception) {
+   {
 
   std::string dgn    = "";
   std::string server = "";
@@ -640,7 +640,7 @@ void castor::vdqm::handler::TapeDriveHandler::sendTapeDriveQueue(
 // dedicateTapeDrive
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveHandler::dedicateTapeDrive()
-  throw (castor::exception::Exception) {
+   {
 
   // Try to dedicate the drive
   ptr_IVdqmService->dedicateDrive(
@@ -656,7 +656,7 @@ void castor::vdqm::handler::TapeDriveHandler::dedicateTapeDrive()
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveHandler::handleTapeDriveCompatibilities(
   castor::vdqm::TapeDrive *newTapeDrive, std::string driveModel) 
-  throw (castor::exception::Exception) {
+   {
     
   castor::vdqm::DeviceGroupName *dgName = NULL;
   castor::vdqm::TapeDriveCompatibility *driveCompatibility = NULL;

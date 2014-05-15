@@ -63,13 +63,13 @@ public:
    * name. Does not throw exceptions (fails silently).
    * @param param
    */
-  void pushOrReplace(const Param & param) throw ();
+  void pushOrReplace(const Param & param) throw();
 
   /**
    * Removes a parameter from the list.
    * @param paramName value of param.getName();
    */
-  void erase(const std::string & paramName) throw ();
+  void erase(const std::string & paramName) throw();
 
   /**
    * Writes a message into the CASTOR logging system. Note that no exception
@@ -123,8 +123,8 @@ public:
    */
   class ParamNameMatcher {
   public:
-    ParamNameMatcher(const std::string & name) throw (): m_name(name) {}
-    bool operator() (const Param & p) throw () { return m_name == p.getName(); }
+    ParamNameMatcher(const std::string & name) throw(): m_name(name) {}
+    bool operator() (const Param & p) throw() { return m_name == p.getName(); }
   private:
     std::string m_name;
   };

@@ -161,7 +161,7 @@ castor::db::ora::OraJobSvc::getUpdateStart
  bool* emptyFile,
  u_signed64,
  const std::string)
-  throw (castor::exception::Exception) {
+   {
   *emptyFile = false;
   try {
     // Check whether the statements are ok
@@ -218,7 +218,7 @@ castor::db::ora::OraJobSvc::putStart
  std::string mountPoint,
  u_signed64,
  const std::string)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statements are ok
     if (0 == m_putStartStatement) {
@@ -271,7 +271,7 @@ void castor::db::ora::OraJobSvc::prepareForMigration
  const std::string,
  const std::string csumtype,
  const std::string csumvalue)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statements are ok
     if (0 == m_putEndedStatement) {
@@ -320,7 +320,7 @@ void castor::db::ora::OraJobSvc::getUpdateDone
 (u_signed64 subReqId,
  u_signed64,
  const std::string)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statements are ok
   if (0 == m_getEndedStatement) {
     m_getEndedStatement =
@@ -350,7 +350,7 @@ void castor::db::ora::OraJobSvc::getUpdateFailed
 (u_signed64 subReqId,
  u_signed64,
  const std::string)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statements are ok
   if (0 == m_getEndedStatement) {
     m_getEndedStatement =
@@ -380,7 +380,7 @@ void castor::db::ora::OraJobSvc::putFailed
 (u_signed64 subReqId,
  u_signed64,
  const std::string)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statements are ok
   if (0 == m_putEndedStatement) {
     m_putEndedStatement =
@@ -418,7 +418,7 @@ void castor::db::ora::OraJobSvc::firstByteWritten
 (u_signed64 subRequestId,
  u_signed64,
  const std::string)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statements are ok
     if (0 == m_firstByteWrittenStatement) {

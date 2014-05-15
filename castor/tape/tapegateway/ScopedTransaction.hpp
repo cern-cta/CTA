@@ -53,10 +53,10 @@ namespace castor {
         virtual ~ScopedTransaction();
 
         /* commits the transaction */
-        void commit() throw (castor::exception::Exception);
+        void commit() ;
 
         /* explicitely rollbacks the transaction */
-        void rollback() throw (castor::exception::Exception);
+        void rollback() ;
 
       private:
 

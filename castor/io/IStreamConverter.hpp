@@ -66,7 +66,7 @@ namespace castor {
     virtual void marshalObject(castor::IObject* obj,
                                castor::io::StreamAddress* address,
                                castor::ObjectSet& alreadyDone)
-      throw (castor::exception::Exception) = 0;
+       = 0;
 
     /**
      * Unmarshals an object from a StreamAddress
@@ -80,7 +80,7 @@ namespace castor {
      */
     virtual castor::IObject* unmarshalObject(castor::io::biniostream& stream,
                                              castor::ObjectCatalog& newlyCreated)
-      throw (castor::exception::Exception) = 0;
+       = 0;
 
   };
 

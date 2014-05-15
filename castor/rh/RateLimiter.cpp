@@ -45,7 +45,7 @@
 // Constructor
 //-----------------------------------------------------------------------------
 castor::rh::RateLimiter::RateLimiter()
-  throw(castor::exception::Exception) :
+   :
   m_memc(0),
   m_servers(0),
   m_init(false) {}
@@ -77,7 +77,7 @@ castor::rh::RateLimiter::~RateLimiter()
 // Init
 //-----------------------------------------------------------------------------
 void castor::rh::RateLimiter::init()
-  throw(castor::exception::Exception) {
+   {
 
   // Extract the RH/RateLimitServerList from castor.conf. This variable defines
   // a string of servers that the memcached library should use when storing
@@ -185,7 +185,7 @@ castor::rh::RatingGroup *
 castor::rh::RateLimiter::checkAndUpdateLimit(const std::string user,
                                              const std::string group,
                                              const uint64_t nbRequests)
-  throw (castor::exception::Exception) {
+   {
 
   // Initialized ?
   if (!m_init) {
@@ -336,7 +336,7 @@ castor::rh::RatingGroup *
 castor::rh::RateLimiter::checkAndUpdateLimit(const int euid,
                                              const int egid,
                                              const uint64_t nbRequests)
-  throw (castor::exception::Exception) {
+   {
 
   // Initialized ?
   if (!m_init) {

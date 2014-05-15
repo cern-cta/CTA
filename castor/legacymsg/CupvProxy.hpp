@@ -57,7 +57,7 @@ public:
     const gid_t privGid,
     const std::string &srcHost,
     const std::string &tgtHost,
-    const int priv) throw(castor::exception::Exception) = 0;
+    const int priv)  = 0;
 
 }; // class CupvProxy
 

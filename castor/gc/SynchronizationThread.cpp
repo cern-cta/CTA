@@ -264,7 +264,7 @@ void castor::gc::SynchronizationThread::readConfigFile
  unsigned int *chunkSize,
  bool *disableStagerSync,
  bool firstTime)
-  throw(castor::exception::Exception) {
+   {
 
   // Synchronization interval
   char* value;
@@ -347,7 +347,7 @@ void castor::gc::SynchronizationThread::readConfigFile
 //-----------------------------------------------------------------------------
 std::pair<std::string, u_signed64>
 castor::gc::SynchronizationThread::diskCopyIdFromFileName(std::string fileName)
-  throw (castor::exception::Exception) {
+   {
 
   // Locate the beginning of the nameserver host in the filename, this gives
   // us the fileid
@@ -395,7 +395,7 @@ castor::gc::SynchronizationThread::diskCopyIdFromFileName(std::string fileName)
 //-----------------------------------------------------------------------------
 u_signed64
 castor::gc::SynchronizationThread::fileIdFromFilePath(std::string filePath)
-  throw (castor::exception::Exception) {
+   {
 
   // Extract the filename
   std::string::size_type f = filePath.find_last_of('/', filePath.length());
@@ -433,7 +433,7 @@ castor::gc::SynchronizationThread::fileIdFromFilePath(std::string filePath)
 //-----------------------------------------------------------------------------
 std::set<std::string>
 castor::gc::SynchronizationThread::getFilesBeingWrittenTo(char* mountPoint)
-  throw(castor::exception::Exception) {
+   {
   std::set<std::string> files;
   // loop through the /proc/*/fd directories
   DIR *procDir = opendir("/proc");

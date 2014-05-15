@@ -49,7 +49,7 @@ castor::tape::label::LabelCmd::LabelCmd() throw():
 //------------------------------------------------------------------------------
 // parseCommandLine
 //------------------------------------------------------------------------------
-void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv) throw(castor::exception::Exception) {
+void castor::tape::label::LabelCmd::parseCommandLine(const int argc, char **argv)  {
 
   static struct option longopts[] = {
     {"unitname", 1, NULL, 'u'},
@@ -262,7 +262,7 @@ int castor::tape::label::LabelCmd::main(const int argc, char **argv) throw() {
 //------------------------------------------------------------------------------
 // executeCommand
 //------------------------------------------------------------------------------
-int castor::tape::label::LabelCmd::executeCommand() throw(castor::exception::Exception) {
+int castor::tape::label::LabelCmd::executeCommand()  {
   // This command cannot be ran as root
   if(m_userId == 0 && m_groupId == 0) {
     castor::exception::Exception ex(ECANCELED);

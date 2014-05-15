@@ -58,7 +58,7 @@ namespace tapebridge {
       const int                      netReadWriteTimeout,
       tapeBridgeClientInfo2MsgBody_t &msgBody,
       legacymsg::RtcpJobReplyMsgBody &reply)
-      throw(castor::exception::Exception);    
+      ;    
 
       
   private:
@@ -76,7 +76,7 @@ namespace tapebridge {
       castor::io::AbstractTCPSocket  &sock,
       const int                      netReadWriteTimeout,
       legacymsg::RtcpJobReplyMsgBody &reply)
-      throw(castor::exception::Exception);    
+      ;    
 
   }; // class BridgeClientInfo2Sender
 

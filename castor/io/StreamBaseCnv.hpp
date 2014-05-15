@@ -91,7 +91,7 @@ namespace castor {
 				 std::vector<castor::IObject*> &objects,
 				 bool endTransaction,
 				 unsigned int type)
-	throw (castor::exception::Exception);
+	;
 
       /**
        * Updates foreign representation from a C++ Object.
@@ -100,7 +100,7 @@ namespace castor {
       virtual void updateRep(castor::IAddress* address,
                              castor::IObject* object,
                              bool endTransaction)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Deletes foreign representation of a C++ Object.
@@ -109,7 +109,7 @@ namespace castor {
       virtual void deleteRep(castor::IAddress* address,
                              castor::IObject* object,
                              bool endTransaction)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * create C++ objects from foreign representations
@@ -121,14 +121,14 @@ namespace castor {
        * @exception Exception throws an Exception in case of error
        */
       std::vector<IObject*> bulkCreateObj(castor::IAddress* address)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Updates C++ object from its foreign representation.
        * This streaming implementation always throws an exception.
        */
       virtual void updateObj(castor::IObject* obj)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Fill the foreign representation with some of the objects
@@ -139,7 +139,7 @@ namespace castor {
                            castor::IObject* object,
                            unsigned int type,
                            bool endTransaction = false)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Retrieve from the foreign representation some of the
@@ -150,7 +150,7 @@ namespace castor {
                            castor::IObject* object,
                            unsigned int type,
                            bool endTransaction = false)
-        throw (castor::exception::Exception);
+        ;
 
     protected:
 

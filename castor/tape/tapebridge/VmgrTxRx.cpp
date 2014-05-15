@@ -50,7 +50,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
   const uint32_t                 gid,
   const char                     *const vid,
   legacymsg::VmgrTapeInfoMsgBody &reply)
-  throw(castor::exception::Exception) {
+   {
 
   // Determine the VMGR host
   char vmgrHost[CA_MAXHOSTNAMELEN+1];
@@ -63,7 +63,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
       castor::exception::Exception ex(EVMGRNOHOST);
 
       ex.getMessage() << "VMGR HOST not set";
-      throw(ex);
+      throw ex;
     }
   }
 
@@ -78,7 +78,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
 
         ex.getMessage() << "VMGR PORT is not a valid unsigned integer"
           ": Value=" << p;
-        throw(ex);
+        throw ex;
       }
 
       vmgrPort = atoi(p);
@@ -178,7 +178,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
         ": reqType=VMGR_RC"
         ": vid=" << vid <<
         ": VMGR error code=" << header.lenOrStatus;
-      throw(ex);
+      throw ex;
     }
     break;
 
@@ -201,7 +201,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
           ": receive buffer size=" << sizeof(bodyBuf) << " bytes"
           ": error string size including null terminator=" <<
           header.lenOrStatus << " bytes";
-        throw(ex);
+        throw ex;
       }
 
       // Receive the error string
@@ -226,7 +226,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
         ": reqType=MSG_ERR"
         ": vid=" << vid <<
         ": VMGR error string=" << bodyBuf;
-      throw(ex);
+      throw ex;
     }
 
   // The VMGR returned the tape information
@@ -247,7 +247,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
           ": vid=" << vid <<
           ": receive buffer size=" << sizeof(bodyBuf) << " bytes"
           ": message body size=" << header.lenOrStatus << " bytes";
-        throw(ex);
+        throw ex;
       }
 
       // Receive the message body
@@ -294,7 +294,7 @@ void castor::tape::tapebridge::VmgrTxRx::getTapeInfoFromVmgr(
         ": reqType=" << header.reqType <<
         ": vid=" << vid;
 
-      throw(ex);
+      throw ex;
     }
   } // switch(header.reqType)
 }

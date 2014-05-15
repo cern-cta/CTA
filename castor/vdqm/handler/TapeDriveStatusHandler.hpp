@@ -58,7 +58,7 @@ namespace castor {
            * 
            * @exception In case of error
            */
-          void handleOldStatus() throw (castor::exception::Exception);
+          void handleOldStatus() ;
   
   
         protected:
@@ -80,7 +80,7 @@ namespace castor {
           TapeDriveStatusHandler(castor::vdqm::TapeDrive *const tapeDrive, 
             vdqmDrvReq_t *const driveRequest, const Cuuid_t &cuuid,
             u_signed64 *const newRequestId) 
-            throw(castor::exception::Exception);
+            ;
           
           /**
            * Destructor
@@ -102,7 +102,7 @@ namespace castor {
            * 
            * @exception In case of error
            */
-          void handleVolMountStatus() throw (castor::exception::Exception);
+          void handleVolMountStatus() ;
           
           /**
            * This function is only used internally from handleOldStatus() to 
@@ -111,7 +111,7 @@ namespace castor {
            * 
            * @exception In case of error
            */
-          void handleVolUnmountStatus() throw (castor::exception::Exception);
+          void handleVolUnmountStatus() ;
           
           /**
            * This function is only used internally from handleOldStatus() to 
@@ -120,7 +120,7 @@ namespace castor {
            * 
            * @exception In case of error
            */
-          void handleUnitReleaseStatus() throw (castor::exception::Exception);                    
+          void handleUnitReleaseStatus() ;                    
           
           /**
            * This function is only used internally from handleOldStatus() to 
@@ -129,7 +129,7 @@ namespace castor {
            * 
            * @exception In case of error
            */
-          void handleUnitFreeStatus() throw (castor::exception::Exception);          
+          void handleUnitFreeStatus() ;          
                         
       }; // class TapeDriveStatusHandler
     

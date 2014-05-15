@@ -58,7 +58,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::stager::daemon::JobSvcThread::JobSvcThread() throw () :
+castor::stager::daemon::JobSvcThread::JobSvcThread() throw() :
   BaseRequestSvcThread("JobSvc", "DbJobSvc", castor::SVC_DBJOBSVC) {}
 
 

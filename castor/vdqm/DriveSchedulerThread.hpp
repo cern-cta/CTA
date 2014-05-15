@@ -78,7 +78,7 @@ namespace castor {
        * non-zero pointer or it throws an exception.
        */
       castor::vdqm::IVdqmSvc *getDbVdqmSvc()
-        throw(castor::exception::Exception);
+        ;
 
     }; // class DriveSchedulerThread
 

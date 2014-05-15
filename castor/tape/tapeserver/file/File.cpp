@@ -41,7 +41,7 @@ namespace castor {
   namespace tape {
     namespace tapeFile {
 
-      LabelSession::LabelSession(drives::DriveInterface & drive, const std::string &vid, bool force) throw (Exception) {
+      LabelSession::LabelSession(drives::DriveInterface & drive, const std::string &vid, bool force)  {
         drive.rewind();
         if(!force) {
           drive.spaceBlocksForward(1); //we are doing it the old CASTOR way (see usrreadlbl.c)
@@ -59,7 +59,7 @@ namespace castor {
         drive.writeSyncFileMarks(1);
       }
 
-      ReadSession::ReadSession(drives::DriveInterface & drive, const std::string &vid) throw (Exception) : m_drive(drive), m_vid(vid), m_corrupted(false), m_locked(false), m_fseq(1), m_currentFilePart(Header) { 
+      ReadSession::ReadSession(drives::DriveInterface & drive, const std::string &vid)  : m_drive(drive), m_vid(vid), m_corrupted(false), m_locked(false), m_fseq(1), m_currentFilePart(Header) { 
         m_drive.rewind();
         VOL1 vol1;
         m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
@@ -71,7 +71,7 @@ namespace castor {
         HeaderChecker::checkVOL1(vol1, vid); //after which we are at the end of VOL1 header (i.e. beginning of HDR1 of the first file) on success, or at BOT in case of exception
       }
 
-      void HeaderChecker::checkVOL1(const VOL1 &vol1, const std::string &volId) throw (Exception) {
+      void HeaderChecker::checkVOL1(const VOL1 &vol1, const std::string &volId)  {
         if(vol1.getVSN().compare(volId)) {
           std::stringstream ex_str;
           ex_str << "[HeaderChecker::checkVOL1()] - VSN of tape (" << vol1.getVSN() << ") is not the one requested (" << volId << ")";
@@ -81,7 +81,7 @@ namespace castor {
 
       ReadFile::ReadFile(ReadSession *rs,
         const castor::tape::tapegateway::FileToRecallStruct &fileToRecall)
-        throw (Exception) : m_currentBlockSize(0), m_session(rs)
+         : m_currentBlockSize(0), m_session(rs)
       {
         if(m_session->isCorrupted()) {
           throw SessionCorrupted();
@@ -90,12 +90,12 @@ namespace castor {
         position(fileToRecall);
       }
 
-      ReadFile::~ReadFile() throw () {
+      ReadFile::~ReadFile() throw() {
         m_session->release();
       }
 
       bool HeaderChecker::checkHeaderNumericalField(const std::string &headerField, 
-        const uint64_t value, const headerBase base) throw (Exception) {
+        const uint64_t value, const headerBase base)  {
         uint64_t res = 0;
         std::stringstream field_converter;
         field_converter << headerField;
@@ -117,7 +117,7 @@ namespace castor {
 
       void HeaderChecker::checkHDR1(const HDR1 &hdr1,
         const castor::tape::tapegateway::FileToRecallStruct &filetoRecall,
-        const std::string &volId) throw (Exception) {
+        const std::string &volId)  {
         if(!checkHeaderNumericalField(hdr1.getFileId(), 
             filetoRecall.fileid(), hexadecimal)) { 
           // the nsfileid stored in HDR1 as an hexadecimal string . The one in 
@@ -139,7 +139,7 @@ namespace castor {
       }
 
       void HeaderChecker::checkUHL1(const UHL1 &uhl1,
-        const castor::tape::tapegateway::FileToRecallStruct &fileToRecall) throw (Exception) {
+        const castor::tape::tapegateway::FileToRecallStruct &fileToRecall)  {
         if(!checkHeaderNumericalField(uhl1.getfSeq(), fileToRecall.fseq(), decimal)) {
           std::stringstream ex_str;
           ex_str << "[HeaderChecker::checkUHL1] - Invalid fseq detected in uhl1: \"" 
@@ -148,7 +148,7 @@ namespace castor {
         }
       }
 
-      void HeaderChecker::checkUTL1(const UTL1 &utl1, const uint32_t fseq) throw (Exception) {
+      void HeaderChecker::checkUTL1(const UTL1 &utl1, const uint32_t fseq)  {
         if(!checkHeaderNumericalField(utl1.getfSeq(), (uint64_t)fseq, decimal)) {
           std::stringstream ex_str;
           ex_str << "[HeaderChecker::checkUTL1] - Invalid fseq detected in utl1: \"" 
@@ -169,7 +169,7 @@ namespace castor {
         ftr.setBlockId3((blockId) & 0xFF);
       }
 
-      void ReadFile::setBlockSize(const UHL1 &uhl1) throw (Exception) {
+      void ReadFile::setBlockSize(const UHL1 &uhl1)  {
         m_currentBlockSize = (size_t)atol(uhl1.getBlockSize().c_str());
         if(m_currentBlockSize<1) {
           std::stringstream ex_str;
@@ -179,7 +179,7 @@ namespace castor {
       }
 
       void ReadFile::position(
-        const castor::tape::tapegateway::FileToRecallStruct &fileToRecall) throw (Exception) {  
+        const castor::tape::tapegateway::FileToRecallStruct &fileToRecall)  {  
         if(0==fileToRecall.fileid() or fileToRecall.fseq()<1) {
           std::stringstream err;
           err << "Unexpected fileId in ReadFile::position (expected != 0, got: "
@@ -257,7 +257,7 @@ namespace castor {
         setBlockSize(uhl1);
       }
 
-      size_t ReadFile::getBlockSize() throw (Exception) {
+      size_t ReadFile::getBlockSize()  {
         if(m_currentBlockSize<1) {
           std::stringstream ex_str;
           ex_str << "[ReadFile::getBlockSize] - Invalid block size: " << m_currentBlockSize;
@@ -266,7 +266,7 @@ namespace castor {
         return m_currentBlockSize;
       }
 
-      size_t ReadFile::read(void *data, const size_t size) throw (Exception) {
+      size_t ReadFile::read(void *data, const size_t size)  {
         if(size!=m_currentBlockSize) {
           throw WrongBlockSize();
         }
@@ -301,7 +301,7 @@ namespace castor {
         return bytes_read;
       }
 
-      WriteSession::WriteSession(drives::DriveInterface & drive, const std::string &volId, const uint32_t last_fseq, const bool compression) throw (Exception) : m_drive(drive), m_vid(volId), m_compressionEnabled(compression), m_corrupted(false), m_locked(false) {
+      WriteSession::WriteSession(drives::DriveInterface & drive, const std::string &volId, const uint32_t last_fseq, const bool compression)  : m_drive(drive), m_vid(volId), m_compressionEnabled(compression), m_corrupted(false), m_locked(false) {
 
         if(!volId.compare("")) {
           throw castor::exception::InvalidArgument();
@@ -350,7 +350,7 @@ namespace castor {
         setHostName();
       }
 
-      void WriteSession::setHostName() throw (Exception) {
+      void WriteSession::setHostName()  {
         char hostname_cstr[max_unix_hostname_length];
         castor::exception::Errnum::throwOnMinusOne(gethostname(hostname_cstr, max_unix_hostname_length), "Failed gethostname() in WriteFile::setHostName");
         m_hostName = hostname_cstr;
@@ -358,7 +358,7 @@ namespace castor {
         m_hostName = m_hostName.substr(0, m_hostName.find("."));
       }
 
-      void WriteSession::setSiteName() throw (Exception) {
+      void WriteSession::setSiteName()  {
         std::ifstream resolv;
         resolv.exceptions(std::ifstream::failbit|std::ifstream::badbit);
         try {
@@ -382,7 +382,7 @@ namespace castor {
 
       WriteFile::WriteFile(WriteSession *ws, 
         const castor::tape::tapegateway::FileToMigrateStruct & ftm,
-        const size_t blockSize) throw (Exception) : 
+        const size_t blockSize)  : 
         m_currentBlockSize(blockSize), m_session(ws), m_fileToMigrate(ftm),
         m_open(false), m_nonzeroFileWritten(false), m_numberOfBlocks(0)
       {
@@ -417,7 +417,7 @@ namespace castor {
         m_open=true;
       }
 
-      uint32_t WriteFile::getPosition() throw (Exception) {  
+      uint32_t WriteFile::getPosition()  {  
         return m_session->m_drive.getPositionInfo().currentPosition;
       }
       
@@ -426,7 +426,7 @@ namespace castor {
       }
 
 
-      void WriteFile::write(const void *data, const size_t size) throw (Exception) {
+      void WriteFile::write(const void *data, const size_t size)  {
         m_session->m_drive.writeBlock(data, size);
         if(size>0) {
           m_nonzeroFileWritten = true;
@@ -434,7 +434,7 @@ namespace castor {
         }
       }
 
-      void WriteFile::close() throw (Exception) {
+      void WriteFile::close()  {
         if(!m_open) {
           m_session->setCorrupted();
           throw FileClosedTwice();
@@ -463,7 +463,7 @@ namespace castor {
         m_open=false;
       }
 
-      WriteFile::~WriteFile() throw () {
+      WriteFile::~WriteFile() throw() {
         if(m_open) {
           m_session->setCorrupted();
         }
@@ -474,20 +474,20 @@ namespace castor {
 
     namespace diskFile { //toy example using rfio, will not use rfio in production probably xroot or ceph protocols
       
-      ReadFile::ReadFile(const std::string &url) throw (Exception) {
+      ReadFile::ReadFile(const std::string &url)  {
         m_fd = rfio_open64((char *)url.c_str(), O_RDONLY);
         castor::exception::SErrnum::throwOnMinusOne(m_fd, "Failed rfio_open64() in diskFile::ReadFile::ReadFile");
       }
       
-      size_t ReadFile::read(void *data, const size_t size) throw (Exception) {
+      size_t ReadFile::read(void *data, const size_t size)  {
         return rfio_read(m_fd, data, size);
       }
       
-      ReadFile::~ReadFile() throw () {
+      ReadFile::~ReadFile() throw() {
         rfio_close(m_fd);
       }
       
-      WriteFile::WriteFile(const std::string &url) throw (Exception) : closeTried(false){
+      WriteFile::WriteFile(const std::string &url)  : closeTried(false){
         m_fd = rfio_open64((char *)url.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0666); 
         /* 
          * The O_TRUNC flag is here to prevent file corruption in case retrying to write a file to disk.
@@ -499,16 +499,16 @@ namespace castor {
         castor::exception::SErrnum::throwOnMinusOne(m_fd, "Failed rfio_open64() in diskFile::WriteFile::WriteFile");        
       }
       
-      void WriteFile::write(const void *data, const size_t size) throw (Exception) {
+      void WriteFile::write(const void *data, const size_t size)  {
         rfio_write(m_fd, (void *)data, size);
       }
       
-      void WriteFile::close() throw (Exception) {
+      void WriteFile::close()  {
         closeTried=true;
         castor::exception::Errnum::throwOnMinusOne(rfio_close(m_fd), "Failed rfio_close() in diskFile::WriteFile::close");        
       }
       
-      WriteFile::~WriteFile() throw () {
+      WriteFile::~WriteFile() throw() {
         if(!closeTried){
           rfio_close(m_fd);
         }

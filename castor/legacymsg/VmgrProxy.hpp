@@ -53,7 +53,7 @@ public:
    * @param
    */
   virtual void tapeMountedForRead(const std::string &vid)
-    throw (castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Notifies the vmgrd daemon that the specified tape has been mounted for read.
@@ -62,7 +62,7 @@ public:
    * @param
    */
   virtual void tapeMountedForWrite(const std::string &vid)
-    throw (castor::exception::Exception) = 0;
+     = 0;
 
 }; // class VmgrProxy
 

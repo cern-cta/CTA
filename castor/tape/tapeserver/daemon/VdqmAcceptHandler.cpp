@@ -80,7 +80,7 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::fillPollFd(
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
-  const struct pollfd &fd) throw(castor::exception::Exception) {
+  const struct pollfd &fd)  {
   {
     log::Param params[] = {
       log::Param("fd"        , fd.fd                                     ),
@@ -156,7 +156,7 @@ bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
 // checkHandleEventFd
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmAcceptHandler::checkHandleEventFd(
-  const int fd) throw (castor::exception::Exception) {
+  const int fd)  {
   if(m_fd != fd) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept connection from vdqmd daemon"

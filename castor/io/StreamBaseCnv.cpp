@@ -73,7 +73,7 @@ void castor::io::StreamBaseCnv::bulkCreateRep(castor::IAddress*,
 					      std::vector<castor::IObject*> &,
 					      bool,
 					      unsigned int)
-  throw (castor::exception::Exception) {
+   {
   castor::exception::Exception ex;
   ex.getMessage() << "Bulk operations are not supported for streaming."
                   << std::endl;
@@ -86,7 +86,7 @@ void castor::io::StreamBaseCnv::bulkCreateRep(castor::IAddress*,
 void castor::io::StreamBaseCnv::updateRep(castor::IAddress*,
                                           castor::IObject*,
                                           bool)
-  throw (castor::exception::Exception) {
+   {
   castor::exception::Exception ex;
   ex.getMessage() << "Cannot update representation in case of streaming."
                   << std::endl;
@@ -99,7 +99,7 @@ void castor::io::StreamBaseCnv::updateRep(castor::IAddress*,
 void castor::io::StreamBaseCnv::deleteRep(castor::IAddress*,
                                           castor::IObject*,
                                           bool)
-  throw (castor::exception::Exception) {
+   {
   castor::exception::Exception ex;
   ex.getMessage() << "Cannot delete representation in case of streaming."
                   << std::endl;
@@ -111,7 +111,7 @@ void castor::io::StreamBaseCnv::deleteRep(castor::IAddress*,
 //------------------------------------------------------------------------------
 std::vector<castor::IObject*>
 castor::io::StreamBaseCnv::bulkCreateObj(castor::IAddress*)
-  throw (castor::exception::Exception) {
+   {
   castor::exception::Exception ex;
   ex.getMessage() << "Bulk operations are not supported for streaming."
                   << std::endl;
@@ -122,7 +122,7 @@ castor::io::StreamBaseCnv::bulkCreateObj(castor::IAddress*)
 // updateObj
 //------------------------------------------------------------------------------
 void castor::io::StreamBaseCnv::updateObj(castor::IObject*)
-  throw (castor::exception::Exception) {
+   {
   castor::exception::Exception ex;
   ex.getMessage() << "Cannot update object in case of streaming."
                   << std::endl;
@@ -136,7 +136,7 @@ void castor::io::StreamBaseCnv::fillRep(castor::IAddress*,
                                         castor::IObject*,
                                         unsigned int,
                                         bool)
-  throw (castor::exception::Exception) {
+   {
   castor::exception::Exception ex;
   ex.getMessage() << "fillRep should never be called in case of streaming."
                   << std::endl;
@@ -150,7 +150,7 @@ void castor::io::StreamBaseCnv::fillObj(castor::IAddress*,
                                         castor::IObject*,
                                         unsigned int,
                                         bool)
-  throw (castor::exception::Exception) {
+   {
   castor::exception::Exception ex;
   ex.getMessage() << "fillObj should never be called in case of streaming."
                   << std::endl;

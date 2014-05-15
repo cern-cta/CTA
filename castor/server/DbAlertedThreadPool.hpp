@@ -67,7 +67,7 @@ namespace castor {
     DbAlertedThreadPool(const std::string poolName,
                      castor::server::SelectProcessThread* thread,
                      const unsigned int nbThreads = DEFAULT_THREAD_NUMBER)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * Destructor
@@ -77,7 +77,7 @@ namespace castor {
     /**
      * Creates and runs the pool starting the threads in detached mode.
      */
-    virtual void run() throw (castor::exception::Exception);
+    virtual void run() ;
 
     /**
      * Shutdowns the pool.
@@ -85,7 +85,7 @@ namespace castor {
      * pool to terminate.
      * @return true iff no thread is active (i.e. m_nbActiveThreads == 0).
      */
-    virtual bool shutdown(bool wait = true) throw ();
+    virtual bool shutdown(bool wait = true) throw();
 
   private:
 

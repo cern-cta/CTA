@@ -91,7 +91,7 @@ castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
   const bool                          checkRtcpdIsConnectingFromLocalHost,
   IClientProxy                        &clientProxy,
   ILegacyTxRx                         &legacyTxRx)
-  throw(castor::exception::Exception) :
+   :
   m_fileCloser(fileCloser),
   m_bulkRequestConfigParams(bulkRequestConfigParams),
   m_tapeFlushConfigParams(tapeFlushConfigParams),
@@ -127,7 +127,7 @@ castor::tape::tapebridge::BridgeProtocolEngine::BridgeProtocolEngine(
 // acceptRtcpdConnection
 //-----------------------------------------------------------------------------
 int castor::tape::tapebridge::BridgeProtocolEngine::acceptRtcpdConnection()
-  throw(castor::exception::Exception) {
+   {
 
   castor::utils::SmartFd connectedSock;
   const int timeout = 5; // Seconds
@@ -148,7 +148,7 @@ int castor::tape::tapebridge::BridgeProtocolEngine::acceptRtcpdConnection()
       castor::exception::Exception ex(ECANCELED);
 
       ex.getMessage() << "Stopping gracefully";
-      throw(ex);
+      throw ex;
     }
   }
 
@@ -175,7 +175,7 @@ int castor::tape::tapebridge::BridgeProtocolEngine::acceptRtcpdConnection()
 void castor::tape::tapebridge::BridgeProtocolEngine::
   logCallbackConnectionFromRtcpd(
   const int connectedSock)
-  throw(castor::exception::Exception) {
+   {
   try {
     char hostName[io::HOSTNAMEBUFLEN];
 
@@ -322,7 +322,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processSocksInALoop()
       castor::exception::Exception ex(ECANCELED);
 
       ex.getMessage() << "Stopping gracefully";
-      throw(ex);
+      throw ex;
     }
 
     handleSelectEvents(selectTimeout);
@@ -474,7 +474,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processAPendingSocket(
 // processPendingListenSocket
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::
-  processPendingListenSocket() throw(castor::exception::Exception) {
+  processPendingListenSocket()  {
   const int acceptedConnection = acceptRtcpdConnection();
 
   // Accept the connection
@@ -491,7 +491,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 // checkPeerIsLocalhost
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::checkPeerIsLocalhost(
-  const int socketFd) throw(castor::exception::Exception) {
+  const int socketFd)  {
 
   const io::IpAndPort peerIpAndPort = io::getPeerIpPort(socketFd);
 
@@ -515,7 +515,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::checkPeerIsLocalhost(
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::
   processPendingInitialRtcpdSocket(const int pendingSock)
-  throw(castor::exception::Exception) {
+   {
 
   // Check function arguments
   if(pendingSock < 0) {
@@ -1003,7 +1003,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
       ": expected=" << (m_nextDestinationTapeFSeq) <<
       ": actual=" << firstFileToMigrate->fseq();
 
-    throw(ex);
+    throw ex;
   }
 
   m_nextDestinationTapeFSeq++;
@@ -1020,7 +1020,7 @@ bool castor::tape::tapebridge::BridgeProtocolEngine::startMigrationSession()
     ex2.getMessage() <<
       "Failed to " << task <<
       ": " << ex.getMessage().str();
-    throw(ex2);
+    throw ex2;
   }
 
   // Give volume to rtcpd
@@ -1504,7 +1504,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpFileErrReqDump(
 void castor::tape::tapebridge::BridgeProtocolEngine::processRtcpWaiting(
   const legacymsg::MessageHeader &header,
   legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
-  throw(castor::exception::Exception) {
+   {
 
   // Reply to rtcpd with a positive acknowledgement
   legacymsg::MessageHeader ackMsg;
@@ -1677,7 +1677,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   const legacymsg::MessageHeader    &header,
   legacymsg::RtcpFileRqstErrMsgBody &body,
   const int                         rtcpdSock)
-  throw(castor::exception::Exception) {
+   {
 
   const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
   // Only the tapegatewayd daemon supports the bulk prototcol
@@ -1777,7 +1777,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   const legacymsg::MessageHeader    &header,
   legacymsg::RtcpFileRqstErrMsgBody &body,
   const int                         rtcpdSock)
-  throw(castor::exception::Exception) {
+   {
 
   const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
   // Only the tapegatewayd daemon supports the bulk prototcol
@@ -1839,7 +1839,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   const uint32_t    rtcpdReqMagic,
   const uint32_t    rtcpdReqType,
   const std::string &rtcpdReqTapePath)
-  throw(castor::exception::Exception) {
+   {
 
   if(m_filesToRecall.empty()) {
     // This should never happen
@@ -1868,7 +1868,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToRecallToRtcpd(
   const uint32_t     rtcpdReqMagic,
   const uint32_t     rtcpdReqType,
   const std::string  &rtcpdReqTapePath)
-  throw(castor::exception::Exception) {
+   {
 
   // Remember the file transaction ID and get its unique index to be
   // passed to rtcpd through the "rtcpFileRequest.disk_fseq" message
@@ -1979,7 +1979,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::sendFileToRecallToRtcpd(
 void castor::tape::tapebridge::BridgeProtocolEngine::
   processRtcpFilePositionedRequest(const legacymsg::MessageHeader &header,
   legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
-  throw(castor::exception::Exception) {
+   {
 
   // Reply to rtcpd with a positive acknowledgement
   legacymsg::MessageHeader ackMsg;
@@ -2078,7 +2078,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 void castor::tape::tapebridge::BridgeProtocolEngine::
   processRtcpFileFinishedRequest(const legacymsg::MessageHeader &header,
   legacymsg::RtcpFileRqstErrMsgBody &body, const int rtcpdSock)
-  throw(castor::exception::Exception) {
+   {
 
   // Reply to rtcpd with a positive acknowledgement
   legacymsg::MessageHeader ackMsg;
@@ -2249,7 +2249,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   processSuccessfullRtcpFileFinishedRequest(
   const uint64_t                          fileTransactonId,
   const legacymsg::RtcpFileRqstErrMsgBody &body)
-  throw(castor::exception::Exception) {
+   {
 
   // If migrating
   if(m_volume.mode() == tapegateway::WRITE) {
@@ -2269,7 +2269,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   processSuccessfullRtcpWriteFileFinishedRequest(
   const uint64_t                          fileTransactonId,
   const legacymsg::RtcpFileRqstErrMsgBody &body)
-  throw(castor::exception::Exception) {
+   {
   // Mark the migrated file as written but not yet flushed to tape.  This
   // includes created the file-migrated notification message that will be
   // sent to the tapegatewayd daemon once the rtcpd daemon has
@@ -2314,7 +2314,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   processSuccessfullRtcpRecallFileFinishedRequest(
   const uint64_t                          fileTransactonId,
   const legacymsg::RtcpFileRqstErrMsgBody &body)
-  throw(castor::exception::Exception) {
+   {
   const uint64_t fileSize = body.rqst.bytesOut; // "out" from the tape
   const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
 
@@ -2448,7 +2448,7 @@ void
 // rtcpEndOfReqRtcpdCallback
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::rtcpEndOfReqRtcpdCallback(
-  const int socketFd) throw(castor::exception::Exception) {
+  const int socketFd)  {
 
   // Reply to rtcpd with a positive acknowledgement
   legacymsg::MessageHeader ackMsg;
@@ -2735,7 +2735,7 @@ double castor::tape::tapebridge::BridgeProtocolEngine::
 // calcSumOfFileSizes
 //-----------------------------------------------------------------------------
 uint64_t castor::tape::tapebridge::BridgeProtocolEngine::calcSumOfFileSizes(
-  const FileWrittenNotificationList &migrations) throw () {
+  const FileWrittenNotificationList &migrations) throw() {
   uint64_t totalFileSize = 0;
 
   for(FileWrittenNotificationList::const_iterator itor = migrations.begin();
@@ -2755,7 +2755,7 @@ uint64_t castor::tape::tapebridge::BridgeProtocolEngine::calcSumOfFileSizes(
 void castor::tape::tapebridge::BridgeProtocolEngine::
   sendFlushedMigrationsToClient(
     const FileWrittenNotificationList &notifications)
-    throw (castor::exception::Exception) {
+     {
 
   // Get the next tape-bridge (aggregator) transaction id
   const uint64_t tapebridgeTransId = m_tapebridgeTransactionCounter.next();
@@ -2832,7 +2832,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 void castor::tape::tapebridge::BridgeProtocolEngine::giveOutpRtcpdCallback(
   const legacymsg::MessageHeader &header,
   const int                      socketFd)
-  throw(castor::exception::Exception) {
+   {
 
   legacymsg::GiveOutpMsgBody body;
 
@@ -3248,7 +3248,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   noMoreFilesClientCallback(
   IObject *const              obj,
   const GetMoreWorkConnection &getMoreWorkConnection)
-  throw(castor::exception::Exception) {
+   {
 
   // Down cast the reply to its specific class
   const tapegateway::NoMoreFiles *reply =
@@ -3314,7 +3314,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   const int      rtcpdSock,
   const uint32_t rtcpdReqMagic,
   const uint32_t rtcpdReqType)
-  throw(castor::exception::Exception) {
+   {
 
   // If migrating files to tape, then notify the internal pending-migration
   // store that there are no more files to migrate.
@@ -3358,7 +3358,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   endNotificationErrorReportForGetMoreWorkClientCallback(
   IObject *const              obj,
   const GetMoreWorkConnection &getMoreWorkConnection)
-  throw(castor::exception::Exception) {
+   {
 
   // Down cast the reply to its specific class
   const tapegateway::EndNotificationErrorReport *reply =
@@ -3422,7 +3422,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 // notifyRtcpdEndOfSession
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeProtocolEngine::notifyRtcpdEndOfSession()
-  throw(castor::exception::Exception) {
+   {
 
   // Send an RTCP_ENDOF_REQ message to rtcpd via the initial callback
   // connection
@@ -3547,7 +3547,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 void castor::tape::tapebridge::BridgeProtocolEngine::
   notifyClientOfFailedMigrations(const Cuuid_t &cuuid,
   const std::list<SessionError> &sessionErrors)
-  throw(castor::exception::Exception) {
+   {
 
   // Return if there are no errors to report
   if(sessionErrors.empty()) {
@@ -3622,7 +3622,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
 void castor::tape::tapebridge::BridgeProtocolEngine::
   notifyClientOfFailedRecalls(const Cuuid_t &cuuid,
   const std::list<SessionError> &sessionErrors)
-  throw(castor::exception::Exception) {
+   {
 
   // Return if there are no errors to report
   if(sessionErrors.empty()) {
@@ -3799,7 +3799,7 @@ void castor::tape::tapebridge::BridgeProtocolEngine::
   generateMigrationTapeFileId(
   const uint64_t i, 
   char           (&dst)[CA_MAXPATHLEN+1])
-  const throw(castor::exception::Exception) {
+  const  {
 
   const char hexDigits[16] = {'0', '1', '2', '3', '4', '5', '6', '7', '8', '9',
     'A', 'B', 'C', 'D', 'E', 'F'};

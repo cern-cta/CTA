@@ -83,7 +83,7 @@ namespace tapebridge {
       const std::string              &dgn,
       const std::string              &driveUnit,
       legacymsg::RtcpJobReplyMsgBody &reply)
-      throw(castor::exception::Exception);    
+      ;    
 
       
   private:
@@ -104,7 +104,7 @@ namespace tapebridge {
       const int                      netReadWriteTimeout,
       const char                     *remoteCopyType,
       legacymsg::RtcpJobReplyMsgBody &reply)
-      throw(castor::exception::Exception);    
+      ;    
 
   }; // class RtcpJobSubmitter
 

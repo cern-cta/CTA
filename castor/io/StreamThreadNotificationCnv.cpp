@@ -77,7 +77,7 @@ void castor::io::StreamThreadNotificationCnv::createRep(castor::IAddress* addres
                                                         castor::IObject* object,
                                                         bool,
                                                         unsigned int)
-  throw (castor::exception::Exception) {
+   {
   castor::server::ThreadNotification* obj = 
     dynamic_cast<castor::server::ThreadNotification*>(object);
   StreamAddress* ad = 
@@ -92,7 +92,7 @@ void castor::io::StreamThreadNotificationCnv::createRep(castor::IAddress* addres
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamThreadNotificationCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
@@ -116,7 +116,7 @@ castor::IObject* castor::io::StreamThreadNotificationCnv::createObj(castor::IAdd
 void castor::io::StreamThreadNotificationCnv::marshalObject(castor::IObject* object,
                                                             castor::io::StreamAddress* address,
                                                             castor::ObjectSet& alreadyDone)
-  throw (castor::exception::Exception) {
+   {
   castor::server::ThreadNotification* obj = 
     dynamic_cast<castor::server::ThreadNotification*>(object);
   if (0 == obj) {
@@ -138,7 +138,7 @@ void castor::io::StreamThreadNotificationCnv::marshalObject(castor::IObject* obj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamThreadNotificationCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                           castor::ObjectCatalog& newlyCreated)
-  throw (castor::exception::Exception) {
+   {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created

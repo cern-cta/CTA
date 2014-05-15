@@ -86,7 +86,7 @@ public:
     legacymsg::VmgrProxyFactory &vmgrFactory,
     legacymsg::RmcProxyFactory &rmcFactory,
     legacymsg::TapeserverProxyFactory &tapeserverProxyFactory,
-    io::PollReactor &reactor) throw(castor::exception::Exception);
+    io::PollReactor &reactor) ;
 
   /**
    * Destructor.
@@ -108,7 +108,7 @@ public:
    * @return string from castor.conf for this paramter
    */
   static std::string getConfigString(const std::string &category, const std::string &name) 
-  throw(castor::exception::Exception);
+  ;
   
   /**
    * Tries to get the value of the specified parameter from parsing (integer)
@@ -118,7 +118,7 @@ public:
    * @return string from castor.conf for this paramter
    */
   template<typename T>
-  static T getConfig(const std::string &category, const std::string &name) throw(castor::exception::Exception) {
+  static T getConfig(const std::string &category, const std::string &name)  {
     std::string strVal = getConfigString(category, name);
     if (!castor::utils::isValidUInt(strVal.c_str()))
       throw castor::exception::InvalidConfigEntry(category.c_str(), name.c_str(), strVal.c_str());
@@ -134,7 +134,7 @@ protected:
   /**
    * Returns the name of the host on which the daemon is running.
    */
-  std::string getHostName() const throw(castor::exception::Exception);
+  std::string getHostName() const ;
 
   /**
    * Exception throwing main() function.
@@ -143,7 +143,7 @@ protected:
    * @param argv The array of command-line arguments.
    */
   void exceptionThrowingMain(const int argc, char **const argv)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Logs the start of the daemon.
@@ -154,7 +154,7 @@ protected:
    * Parses the /etc/castor/TPCONFIG files in order to determine the drives
    * attached to the tape server.
    */
-  void parseTpconfig() throw(castor::exception::Exception);
+  void parseTpconfig() ;
 
   /**
    * Writes the specified TPCONFIG lines to the logging system.
@@ -183,54 +183,54 @@ protected:
   /**
    * Blocks the signals that should not asynchronously disturb the daemon.
    */
-  void blockSignals() const throw(castor::exception::Exception);
+  void blockSignals() const ;
 
   /**
    * Registers the tape drives controlled by the tape server daemon with the
    * vdqmd daemon.
    */
-  void registerTapeDrivesWithVdqm() throw(castor::exception::Exception);
+  void registerTapeDrivesWithVdqm() ;
 
   /**
    * Registers the specified tape drive with ethe vdqmd daemon.
    */
   void registerTapeDriveWithVdqm(const std::string &unitName)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Sets up the reactor.
    */
-  void setUpReactor() throw(castor::exception::Exception);
+  void setUpReactor() ;
 
   /**
    * Creates the handler to accept connections from the vdqmd daemon and
    * registers it with the reactor.
    */
-  void createAndRegisterVdqmAcceptHandler() throw(castor::exception::Exception);
+  void createAndRegisterVdqmAcceptHandler() ;
 
   /**
    * Creates the handler to accept connections from the admin commands and
    * registers it with the reactor.
    */
-  void createAndRegisterAdminAcceptHandler() throw(castor::exception::Exception);
+  void createAndRegisterAdminAcceptHandler() ;
   
   /**
    * Creates the handler to accept connections from the mount session(s) and
    * registers it with the reactor.
    */
-  void createAndRegisterMountSessionAcceptHandler() throw(castor::exception::Exception);
+  void createAndRegisterMountSessionAcceptHandler() ;
 
   /**
    * The main event loop of the daemon.
    */
-  void mainEventLoop() throw(castor::exception::Exception);
+  void mainEventLoop() ;
 
   /**
    * Handles any pending events.
    *
    * @return True if the main event loop should continue, else false.
    */
-  bool handleEvents() throw(castor::exception::Exception);
+  bool handleEvents() ;
 
   /**
    * Handles any pending signals.
@@ -290,7 +290,7 @@ protected:
    * @return       The total length of the header.
    */
   size_t marshalTapeRcReplyMsg(char *const dst, const size_t dstLen,
-    const int rc) throw(castor::exception::Exception);
+    const int rc) ;
   
   /**
    * Writes a job reply message to the specified connection.
@@ -300,7 +300,7 @@ protected:
    * 
    */
   void writeTapeRcReplyMsg(const int fd, const int rc)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Does the required post processing for the specified reaped session.
@@ -326,7 +326,7 @@ protected:
    * @param waitpidStat The status information given by a call to waitpid().
    */
   void notifyLabelCmdOfEndOfSession(const pid_t sessionPid, const int waitpidStat)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Forks a mount-session child-process for every tape drive entry in the

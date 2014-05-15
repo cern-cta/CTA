@@ -34,7 +34,7 @@ class TestingRmcDaemon: public RmcDaemon {
 public:
 
   TestingRmcDaemon(std::ostream &stdOut, std::ostream &stdIn,
-    log::Logger &logger) throw(castor::exception::Exception):
+    log::Logger &logger) :
     RmcDaemon(stdOut, stdIn, logger) {
   }
 

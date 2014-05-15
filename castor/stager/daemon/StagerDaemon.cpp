@@ -152,7 +152,7 @@ int main(int argc, char* argv[]){
 /* constructor: initiallizes the DLF logging and set the default value to its attributes */
 /*****************************************************************************************/
 castor::stager::daemon::StagerDaemon::StagerDaemon(std::ostream &stdOut,
-  std::ostream &stdErr, log::Logger &log) throw (castor::exception::Exception)
+  std::ostream &stdErr, log::Logger &log) 
   : castor::server::MultiThreadedDaemon(stdOut, stdErr, log) {
 
   castor::dlf::Message stagerDlfMessages[]={

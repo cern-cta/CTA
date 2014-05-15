@@ -55,24 +55,24 @@ namespace castor {
     /**
      * Static access to the underlying thread-safe Services object
      */
-    static Services* services() throw(castor::exception::Exception);
+    static Services* services() ;
 
     /**
      * Static function to reset (deallocate + set the thread specific pointer
      * to NULL) the thread-specific services. Useful in test environments and
      * for clients which to not run the thread pools (but use the marshallers)
      */
-    static void resetServices() throw(castor::exception::Exception);
+    static void resetServices() ;
     
     /**
      * Static access to the underlying thread-shared Services object
      */
-    static Services* sharedServices() throw(castor::exception::Exception);
+    static Services* sharedServices() ;
 
     /**
      * Non static access to the underlying Services object
      */
-    Services* svcs() throw(castor::exception::Exception);
+    Services* svcs() ;
 
   protected:
 
@@ -88,7 +88,7 @@ namespace castor {
      */
     class pthreadKey {
     public:
-      pthreadKey() throw (castor::exception::Exception)  {
+      pthreadKey()   {
         int rc = pthread_key_create(&m_key, NULL);
         if (rc != 0) {
           castor::exception::Exception e(rc);

@@ -49,7 +49,7 @@ namespace legacymsg {
  */
 size_t marshal(char *const dst, const size_t dstLen, const uint32_t srcMagic,
   const uint32_t srcReqType, const GenericReplyMsgBody &srcBody)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Marshals the specified source message into the specified destination buffer.
@@ -65,7 +65,7 @@ size_t marshal(char *const dst, const size_t dstLen, const uint32_t srcMagic,
  */
 template<int n> size_t marshal(char (&dst)[n], const uint32_t srcMagic,
   const uint32_t srcReqType, const GenericReplyMsgBody &srcBody)
-  throw(castor::exception::Exception) {
+   {
   return marshal(dst, n, srcMagic, srcReqType, srcBody);
 }
 
@@ -82,7 +82,7 @@ template<int n> size_t marshal(char (&dst)[n], const uint32_t srcMagic,
  * return is the number of bytes remaining in the source buffer.
  * @param dst The destination message body structure.
  */
-void unmarshal(const char * &src, size_t &srcLen, GenericReplyMsgBody &dst) throw(castor::exception::Exception);
+void unmarshal(const char * &src, size_t &srcLen, GenericReplyMsgBody &dst) ;
 
 } // namespace legacymsg
 } // namespace castor

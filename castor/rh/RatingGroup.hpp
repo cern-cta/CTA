@@ -43,7 +43,7 @@ namespace castor {
        * @exception Exception in case of error
        */
       RatingGroup(const std::string name)
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Default destructor

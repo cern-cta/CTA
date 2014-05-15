@@ -69,7 +69,7 @@ public:
   static void getRequestInfoFromRtcpd(const Cuuid_t &cuuid,
     const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout,
     legacymsg::RtcpTapeRqstErrMsgBody &reply)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Gives information about a volume to RTCPD by sending and receiving the
@@ -87,7 +87,7 @@ public:
   static void giveVolumeToRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId,
     const int socketFd, const int netReadWriteTimeout,
     legacymsg::RtcpTapeRqstErrMsgBody &request)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Pings RTCPD using the specified socket.
@@ -100,7 +100,7 @@ public:
    */
   static void pingRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId,
     const int socketFd, const int netReadWriteTimeout)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Receives an RTCP job submission message.
@@ -115,7 +115,7 @@ public:
    */
   static void receiveRtcpJobRqst(const Cuuid_t &cuuid, const int socketFd,
     const int netReadWriteTimeout, legacymsg::RtcpJobRqstMsgBody &request)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Asks RTCPD to request more work in the future.
@@ -135,7 +135,7 @@ public:
   static void askRtcpdToRequestMoreWork(const Cuuid_t &cuuid,
     const uint32_t volReqId, const char *const tapePath, const int socketFd,
     const int netReadWriteTimeout, const uint32_t mode)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Gives the specified file list of one and only one actual file description
@@ -168,7 +168,7 @@ public:
     const int32_t positionMethod, const int32_t tapeFseq,
     const int32_t diskFseq, char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1],
     const uint64_t castorFileId, unsigned char (&blockId)[4]) 
-    throw(castor::exception::Exception);
+    ;
 
 
   /**
@@ -184,7 +184,7 @@ public:
   static void tellRtcpdDumpTape(const Cuuid_t &cuuid, const uint32_t volReqId,
     const int socketFd, const int netReadWriteTimeout,
     legacymsg::RtcpDumpTapeRqstMsgBody &request)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Receives a message body from RTCPD.
@@ -204,7 +204,7 @@ public:
     const int socketFd,
     const int,
     const legacymsg::MessageHeader &header,
-    T &body) throw(castor::exception::Exception) {
+    T &body)  {
 
     // Length of body buffer = Length of message buffer - length of header
     char bodyBuf[RTCPMSGBUFSIZE - 3 * sizeof(uint32_t)];
@@ -261,7 +261,7 @@ public:
    */
   static void tellRtcpdEndOfFileList(const Cuuid_t &cuuid,
     const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout)
-    throw(castor::exception::Exception);
+    ;
 
 private:
 
@@ -286,7 +286,7 @@ private:
   static void giveFileToRtcpd(const Cuuid_t &cuuid, const uint32_t volReqId,
     const int socketFd, const int netReadWriteTimeout, const uint32_t mode,
     legacymsg::RtcpFileRqstErrMsgBody &request)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Throws an exception if the expected magic number is not equal to the
@@ -297,7 +297,7 @@ private:
    * @param function The name of the caller function.
    */
   static void checkMagic(const uint32_t expected, const uint32_t actual,
-    const char *function) throw(castor::exception::Exception);
+    const char *function) ;
 
   /**
    * Throws an exception if the expected RTCOPY_MAGIC request type is not equal
@@ -309,7 +309,7 @@ private:
    */
   static void checkRtcopyReqType(const uint32_t expected,
     const uint32_t actual, const char *function)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Throws an exception if one of the expected RTCOPY_MAGIC request types is
@@ -322,7 +322,7 @@ private:
    */
   static void checkRtcopyReqType(const uint32_t *expected,
     const size_t nbExpected, const uint32_t actual, const char *function)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Throws an exception if one of the expected RTCOPY_MAGIC request types is
@@ -334,7 +334,7 @@ private:
    */
   template <size_t n> static void checkRtcopyReqType(
     const uint32_t (&expected)[n], const uint32_t actual, const char *function)
-    throw(castor::exception::Exception) {
+     {
     checkRtcopyReqType(expected, n, actual, function);
   }
 

@@ -37,7 +37,7 @@
 void castor::vdqm::handler::VdqmMagic4RequestHandler::handleAggregatorVolReq(
   castor::io::ServerSocket&, const Cuuid_t &cuuid,
   const vdqmHdr_t &header, vdqmVolReq_t &msg)
-  throw (castor::exception::Exception) {
+   {
 
   castor::dlf::Param param[] = {
     castor::dlf::Param("VolReqID" , msg.VolReqID),

@@ -96,7 +96,7 @@ namespace castor {
          */
         virtual TapeServer* selectOrCreateTapeServer(
           const std::string serverName, bool withTapeDrive)
-          throw (castor::exception::Exception) = 0;
+           = 0;
           
         /**
          * Checks, if there is already an entry for that tapeRequest. The entry
@@ -105,7 +105,7 @@ namespace castor {
          * @return true, if the request does not exist.
          */
         virtual bool checkTapeRequest(const TapeRequest *const newTapeRequest)
-          throw (castor::exception::Exception) = 0;
+           = 0;
         
         /**
          * Returns the queue position of the tape request.
@@ -113,7 +113,7 @@ namespace castor {
          * @return The row number or -1 if there is no entry for it.
          */  
         virtual int getQueuePosition(const u_signed64 tapeRequestId)
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /**
          * Sets the priority of a volume.
@@ -133,7 +133,7 @@ namespace castor {
         virtual void setVolPriority(const int priority, const int clientUID,
           const int clientGID, const std::string clientHost,
           const std::string vid, const int tpMode, const int lifespanType)
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /**
          * Deletes the specified volume priority if it exists, else does
@@ -152,7 +152,7 @@ namespace castor {
           const int tpMode, const int lifespanType, int *const priority,
           int *const clientUID, int *const clientGID,
           std::string *const clientHost)
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /**
          * Deletes volume priorities older than the specfied age.
@@ -162,7 +162,7 @@ namespace castor {
          * @return the number of volume priorities deleted.
          */
         virtual unsigned int deleteOldVolPriorities(const unsigned int maxAge)
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /**
          * Inner class used to return the result of listVolPriorities.
@@ -188,7 +188,7 @@ namespace castor {
          * Note that the returned list should be deallocated by the caller.
          */
         virtual void getAllVolPriorities(std::list<VolPriority> &priorities)
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /**
          * Gets the list of effective volume priorities.
@@ -199,7 +199,7 @@ namespace castor {
          */
         virtual void getEffectiveVolPriorities(
           std::list<VolPriority> &priorities)
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /**
          * Gets the list of volume priorities with the specified lifespan type.
@@ -211,7 +211,7 @@ namespace castor {
          * Note that the returned list should be deallocated by the caller.
          */
         virtual void getVolPriorities(std::list<VolPriority> &priorities,
-          const int lifespanType) throw (castor::exception::Exception) = 0;
+          const int lifespanType)  = 0;
 
         /**
          * Inner class used together with VolRequestList to return the result
@@ -270,7 +270,7 @@ namespace castor {
          */
         virtual void getVolRequestsPriorityOrder(VolRequestList &requests,
           const std::string dgn, const std::string requestedSrv)
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /**
          * Tries to allocate in the database a free tape drive to a pending
@@ -301,7 +301,7 @@ namespace castor {
        virtual int allocateDrive(u_signed64 *tapeDriveId,
          std::string *tapeDriveName, u_signed64 *tapeRequestId,
          std::string *tapeRequestVid)
-         throw (castor::exception::Exception) = 0;
+          = 0;
 
        /**
         * Tries to re-use a drive allocation.
@@ -329,14 +329,14 @@ namespace castor {
        virtual int reuseDriveAllocation(castor::vdqm::VdqmTape *const tape,
          castor::vdqm::TapeDrive *const drive, const int accessMode,
          u_signed64 *const tapeRequestId)
-         throw (castor::exception::Exception) = 0;
+          = 0;
 
        /**
         * Returns a matched "tape drive / tape request" pair if one exists,
         * else NULL.
         */
        virtual castor::vdqm::TapeRequest *requestToSubmit()
-         throw (castor::exception::Exception) = 0;
+          = 0;
 
         /**
          * Looks, whether the specific tape access exist in the db. If not the
@@ -352,7 +352,7 @@ namespace castor {
           const int accessMode,
           const std::string density,
           const std::string tapeModel) 
-          throw (castor::exception::Exception) = 0;
+           = 0;
           
         /**
          * Looks, if the specified dgName exists in the database. 
@@ -364,7 +364,7 @@ namespace castor {
          */  
         virtual DeviceGroupName* selectDeviceGroupName(
           const std::string dgName) 
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /**
          * Inner class used to help manage the allocated memory associated with
@@ -403,7 +403,7 @@ namespace castor {
          */
         virtual void getTapeRequestQueue(VolReqMsgList &requests,
           const std::string dgn, const std::string requestedSrv)
-          throw (castor::exception::Exception) = 0;   
+           = 0;   
           
         /**
          * Gets the tape drives queue with the specified dgn and server.
@@ -422,7 +422,7 @@ namespace castor {
          */
         virtual void getTapeDriveQueue(std::list<vdqmDrvReq_t> &drvReqs,
           const std::string dgn, const std::string requestedSrv)
-          throw (castor::exception::Exception) = 0;    
+           = 0;    
                                        
         /**
          * Manages the casting of VolReqID, to find also tape requests, which
@@ -432,7 +432,7 @@ namespace castor {
          * @return The tape request and its ClientIdentification, or NULL
          */
         virtual TapeRequest* selectTapeRequest(const int volReqID)
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /**
          * Selects the tape request with the specified id for update.
@@ -441,7 +441,7 @@ namespace castor {
          * @return true if tape request exists, else false.
          */
         virtual bool selectTapeRequestForUpdate(const int volReqID) 
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /**
          * Retrieves a tapeDrive from the database based on its struct 
@@ -459,7 +459,7 @@ namespace castor {
         virtual TapeDrive* selectTapeDrive(
           const vdqmDrvReq_t* driveRequest,
           TapeServer* tapeServer)
-          throw (castor::exception::Exception) = 0;  
+           = 0;  
 
         /**
          * Inserts the specified dedications for the specified drive into the
@@ -472,7 +472,7 @@ namespace castor {
          */
         virtual void dedicateDrive(const std::string driveName,
           const std::string serverName, const std::string dgName,
-          const std::string dedicate) throw (castor::exception::Exception) = 0;
+          const std::string dedicate)  = 0;
 
         /**
          * Deletes the specified drive from the database;
@@ -482,7 +482,7 @@ namespace castor {
          * @dgName     device group name
          */
         virtual void deleteDrive(std::string driveName, std::string serverName,
-          std::string dgName) throw (castor::exception::Exception) = 0;
+          std::string dgName)  = 0;
                   
         /**
          * Retrieves a tape from the database based on its vid.  If no tape is
@@ -499,7 +499,7 @@ namespace castor {
          * several tapes found, DB problem, etc...)
          */
         virtual castor::vdqm::VdqmTape* selectOrCreateTape(
-          const std::string vid) throw (castor::exception::Exception) = 0;
+          const std::string vid)  = 0;
 
         /**
          * Check whether another request is currently
@@ -515,7 +515,7 @@ namespace castor {
          */
         virtual bool existTapeDriveWithTapeInUse(
           const std::string volid)
-          throw (castor::exception::Exception) = 0;
+           = 0;
           
         /**
          * Check whether the tape, specified by the vid is mounted
@@ -528,7 +528,7 @@ namespace castor {
          */          
         virtual bool existTapeDriveWithTapeMounted(
           const std::string volid)
-          throw (castor::exception::Exception) = 0;
+           = 0;
         
         /**
          * Returns the tape with this vid
@@ -540,7 +540,7 @@ namespace castor {
          */  
         virtual castor::vdqm::VdqmTape* selectTapeByVid(
           const std::string vid)
-          throw (castor::exception::Exception) = 0;
+           = 0;
           
         /**
          * Looks through the tape requests, whether there is one for the
@@ -553,7 +553,7 @@ namespace castor {
          */  
         virtual TapeRequest* selectTapeReqForMountedTape(
           const TapeDrive* tapeDrive)
-          throw (castor::exception::Exception) = 0;  
+           = 0;  
           
         /**
          * Selects from the TapeDriveCompatibility table all entries for the
@@ -564,7 +564,7 @@ namespace castor {
          */
         virtual void selectCompatibilitiesForDriveModel(
           TapeDrive *const tapeDrive, const std::string tapeDriveModel)
-          throw (castor::exception::Exception) = 0;
+           = 0;
         
         /**
          * Selects from the TapeAccessSpecification table all entries for the
@@ -578,7 +578,7 @@ namespace castor {
          */  
         virtual std::vector<TapeAccessSpecification*>*
           selectTapeAccessSpecifications(const std::string tapeModel)
-          throw (castor::exception::Exception) = 0;                  
+           = 0;                  
 
         /**
          * Tries to move a the state of the specified request from
@@ -637,7 +637,7 @@ namespace castor {
           int              &requestStatusAfter,
           u_signed64       &requestDriveIdBefore,
           u_signed64       &requestDriveIdAfter)
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /**
          * Resets the specified drive and request.
@@ -692,7 +692,7 @@ namespace castor {
           int              &requestStatusAfter,
           u_signed64       &requestDriveIdBefore,
           u_signed64       &requestDriveIdAfter)
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
     }; // end of class IVdqmSvc
 

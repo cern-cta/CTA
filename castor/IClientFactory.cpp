@@ -38,7 +38,7 @@
 //------------------------------------------------------------------------------
 const std::string castor::IClientFactory::client2String
 (const castor::IClient &cl)
-  throw (castor::exception::Exception) {
+   {
   switch (cl.type()) {
   case castor::OBJ_Client :
     {
@@ -67,7 +67,7 @@ const std::string castor::IClientFactory::client2String
 // string2Client
 //------------------------------------------------------------------------------
 castor::IClient* castor::IClientFactory::string2Client(const std::string &st)
-  throw (castor::exception::Exception) {
+   {
   std::istringstream in(st);
   unsigned int type;
   in >> type;

@@ -79,7 +79,7 @@ void castor::io::StreamTapeDriveDedicationCnv::createRep(castor::IAddress* addre
                                                          castor::IObject* object,
                                                          bool,
                                                          unsigned int)
-  throw (castor::exception::Exception) {
+   {
   castor::vdqm::TapeDriveDedication* obj = 
     dynamic_cast<castor::vdqm::TapeDriveDedication*>(object);
   StreamAddress* ad = 
@@ -100,7 +100,7 @@ void castor::io::StreamTapeDriveDedicationCnv::createRep(castor::IAddress* addre
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamTapeDriveDedicationCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
@@ -142,7 +142,7 @@ castor::IObject* castor::io::StreamTapeDriveDedicationCnv::createObj(castor::IAd
 void castor::io::StreamTapeDriveDedicationCnv::marshalObject(castor::IObject* object,
                                                              castor::io::StreamAddress* address,
                                                              castor::ObjectSet& alreadyDone)
-  throw (castor::exception::Exception) {
+   {
   castor::vdqm::TapeDriveDedication* obj = 
     dynamic_cast<castor::vdqm::TapeDriveDedication*>(object);
   if (0 == obj) {
@@ -165,7 +165,7 @@ void castor::io::StreamTapeDriveDedicationCnv::marshalObject(castor::IObject* ob
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamTapeDriveDedicationCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                            castor::ObjectCatalog& newlyCreated)
-  throw (castor::exception::Exception) {
+   {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created

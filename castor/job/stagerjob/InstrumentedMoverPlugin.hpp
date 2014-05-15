@@ -73,7 +73,7 @@ namespace castor {
                                   PluginContext &context,
                                   bool useChksSum = false,
                                   int moverStatus = -1)
-          throw (castor::exception::Exception);
+          ;
 
       protected :
 
@@ -87,7 +87,7 @@ namespace castor {
          */
         void waitChildAndInformStager(InputArguments &args,
                                       PluginContext &context)
-          throw (castor::exception::Exception);
+          ;
 
       }; // end of class InstrumentedMoverPlugin
 

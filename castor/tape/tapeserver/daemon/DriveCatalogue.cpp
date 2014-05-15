@@ -62,7 +62,7 @@ const char *castor::tape::tapeserver::daemon::DriveCatalogue::sessionType2Str(
 // populateCatalogue
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::populateCatalogue(
-  const utils::TpconfigLines &lines) throw(castor::exception::Exception) {
+  const utils::TpconfigLines &lines)  {
 
   // Enter each TPCONFIG line into the catalogue
   for(utils::TpconfigLines::const_iterator itor = lines.begin();
@@ -75,7 +75,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::populateCatalogue(
 // enterTpconfigLine
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::enterTpconfigLine(
-  const utils::TpconfigLine &line) throw(castor::exception::Exception) {
+  const utils::TpconfigLine &line)  {
 
   DriveMap::iterator itor = m_drives.find(line.unitName);
 
@@ -107,7 +107,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::enterTpconfigLine(
 //-----------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogue::DriveState
   castor::tape::tapeserver::daemon::DriveCatalogue::str2InitialState(
-  const std::string &initialState) const throw(castor::exception::Exception) {
+  const std::string &initialState) const  {
   std::string upperCaseInitialState = initialState;
   castor::utils::toUpper(upperCaseInitialState);
 
@@ -130,7 +130,7 @@ castor::tape::tapeserver::daemon::DriveCatalogue::DriveState
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::checkTpconfigLine(
   const DriveEntry &catalogueEntry, const utils::TpconfigLine &line)
-  throw(castor::exception::Exception) {
+   {
   checkTpconfigLineDgn(catalogueEntry.dgn, line);
   checkTpconfigLineDevFilename(catalogueEntry.devFilename, line);
   checkTpconfigLineDensity(catalogueEntry.densities, line);
@@ -144,7 +144,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::checkTpconfigLine(
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::checkTpconfigLineDgn(
   const std::string &catalogueDgn, const utils::TpconfigLine &line)
-  throw(castor::exception::Exception) {
+   {
   if(catalogueDgn != line.dgn) {
     castor::exception::Exception ex;
     ex.getMessage() << "Invalid TPCONFIG line"
@@ -159,7 +159,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::checkTpconfigLineDgn(
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::
   checkTpconfigLineDevFilename(const std::string &catalogueDevFilename,
-  const utils::TpconfigLine &line) throw(castor::exception::Exception) {
+  const utils::TpconfigLine &line)  {
   if(catalogueDevFilename != line.devFilename) {
     castor::exception::Exception ex;
     ex.getMessage() << "Invalid TPCONFIG line"
@@ -175,7 +175,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::checkTpconfigLineDensity(
   const std::list<std::string> &catalogueDensities,
-  const utils::TpconfigLine &line) throw(castor::exception::Exception) {
+  const utils::TpconfigLine &line)  {
   for(std::list<std::string>::const_iterator itor = catalogueDensities.begin();
     itor != catalogueDensities.end(); itor++) {
     if((*itor) == line.density) {
@@ -193,7 +193,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::checkTpconfigLineDensity(
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::
   checkTpconfigLineInitialState(const DriveState catalogueInitialState,
-  const utils::TpconfigLine &line) throw(castor::exception::Exception) {
+  const utils::TpconfigLine &line)  {
   if(catalogueInitialState != str2InitialState(line.initialState)) {
     castor::exception::Exception ex;
     ex.getMessage() << "Invalid TPCONFIG line"
@@ -210,7 +210,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::
 void castor::tape::tapeserver::daemon::DriveCatalogue::
   checkTpconfigLineLibrarySlot(
   const std::string &catalogueLibrarySlot,
-  const utils::TpconfigLine &line) throw(castor::exception::Exception) {
+  const utils::TpconfigLine &line)  {
   if(catalogueLibrarySlot != line.librarySlot) {
     castor::exception::Exception ex;
     ex.getMessage() << "Invalid TPCONFIG line"
@@ -226,7 +226,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::
   checkTpconfigLineDevType(const std::string &catalogueDevType,
-  const utils::TpconfigLine &line) throw(castor::exception::Exception) {
+  const utils::TpconfigLine &line)  {
   if(catalogueDevType != line.devType) {
     castor::exception::Exception ex;
     ex.getMessage() << "Invalid TPCONFIG line"
@@ -241,7 +241,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::
 // getUnitName
 //-----------------------------------------------------------------------------
 std::string castor::tape::tapeserver::daemon::DriveCatalogue::getUnitName(
-  const pid_t sessionPid) const throw(castor::exception::Exception) {
+  const pid_t sessionPid) const  {
 
   for(DriveMap::const_iterator i = m_drives.begin(); i!=m_drives.end(); i++) {
     if(sessionPid == i->second.sessionPid) return i->first;
@@ -255,7 +255,7 @@ std::string castor::tape::tapeserver::daemon::DriveCatalogue::getUnitName(
 //-----------------------------------------------------------------------------
 // getUnitNames
 //-----------------------------------------------------------------------------
-std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNames() const throw(castor::exception::Exception) {
+std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNames() const  {
   std::list<std::string> unitNames;
 
   for(DriveMap::const_iterator itor = m_drives.begin();
@@ -269,7 +269,7 @@ std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnit
 //-----------------------------------------------------------------------------
 // getUnitNames
 //-----------------------------------------------------------------------------
-std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNames(const DriveState state) const throw(castor::exception::Exception) {
+std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNames(const DriveState state) const  {
   std::list<std::string> unitNames;
 
   for(DriveMap::const_iterator itor = m_drives.begin();
@@ -286,7 +286,7 @@ std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnit
 // getDgn
 //-----------------------------------------------------------------------------
 const std::string &castor::tape::tapeserver::daemon::DriveCatalogue::getDgn(
-  const std::string &unitName) const throw(castor::exception::Exception) {
+  const std::string &unitName) const  {
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Exception ex;
@@ -302,7 +302,7 @@ const std::string &castor::tape::tapeserver::daemon::DriveCatalogue::getDgn(
 // getVid
 //-----------------------------------------------------------------------------
 const std::string &castor::tape::tapeserver::daemon::DriveCatalogue::getVid(
-  const std::string &unitName) const throw(castor::exception::Exception) {
+  const std::string &unitName) const  {
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Exception ex;
@@ -318,7 +318,7 @@ const std::string &castor::tape::tapeserver::daemon::DriveCatalogue::getVid(
 // getAssignmentTime
 //-----------------------------------------------------------------------------
 time_t castor::tape::tapeserver::daemon::DriveCatalogue::getAssignmentTime(
-  const std::string &unitName) const throw(castor::exception::Exception) {
+  const std::string &unitName) const  {
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Exception ex;
@@ -335,7 +335,7 @@ time_t castor::tape::tapeserver::daemon::DriveCatalogue::getAssignmentTime(
 //-----------------------------------------------------------------------------
 const std::string
   &castor::tape::tapeserver::daemon::DriveCatalogue::getDevFilename(
-    const std::string &unitName) const throw(castor::exception::Exception) {
+    const std::string &unitName) const  {
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Exception ex;
@@ -352,7 +352,7 @@ const std::string
 //-----------------------------------------------------------------------------
 const std::list<std::string>
   &castor::tape::tapeserver::daemon::DriveCatalogue::getDensities(
-    const std::string &unitName) const throw(castor::exception::Exception) {
+    const std::string &unitName) const  {
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Exception ex;
@@ -369,7 +369,7 @@ const std::list<std::string>
 //-----------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogue::SessionType
   castor::tape::tapeserver::daemon::DriveCatalogue::getSessionType(
-  const pid_t sessionPid) const throw(castor::exception::Exception) {
+  const pid_t sessionPid) const  {
   std::ostringstream task;
   task << "get the type of the session with pid " << sessionPid;
 
@@ -398,7 +398,7 @@ castor::tape::tapeserver::daemon::DriveCatalogue::SessionType
 //-----------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogue::DriveState
   castor::tape::tapeserver::daemon::DriveCatalogue::getState(
-  const std::string &unitName) const throw(castor::exception::Exception) {
+  const std::string &unitName) const  {
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Exception ex;
@@ -415,7 +415,7 @@ castor::tape::tapeserver::daemon::DriveCatalogue::DriveState
 //-----------------------------------------------------------------------------
 const std::string &
   castor::tape::tapeserver::daemon::DriveCatalogue::getLibrarySlot(
-    const std::string &unitName) const throw(castor::exception::Exception) {
+    const std::string &unitName) const  {
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Exception ex;
@@ -432,7 +432,7 @@ const std::string &
 //-----------------------------------------------------------------------------
 const std::string &
   castor::tape::tapeserver::daemon::DriveCatalogue::getDevType(
-    const std::string &unitName) const throw(castor::exception::Exception) {
+    const std::string &unitName) const  {
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Exception ex;
@@ -449,7 +449,7 @@ const std::string &
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::updateVidAssignment(
   const std::string &vid, const std::string &unitName)
-  throw(castor::exception::Exception) {
+   {
   std::ostringstream task;
   task << "update the VID of tape drive " << unitName;
 
@@ -468,7 +468,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::updateVidAssignment(
 // getLabelCmdConnection
 //-----------------------------------------------------------------------------
 int castor::tape::tapeserver::daemon::DriveCatalogue::getLabelCmdConnection(
-  const pid_t sessionPid) throw(castor::exception::Exception) {
+  const pid_t sessionPid)  {
   std::ostringstream task;
   task << "get the file-descriptor of the connection with the label command"
     " associated with the session with pid " << sessionPid;
@@ -510,7 +510,7 @@ int castor::tape::tapeserver::daemon::DriveCatalogue::getLabelCmdConnection(
 //-----------------------------------------------------------------------------
 // configureUp
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::configureUp(const std::string &unitName) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DriveCatalogue::configureUp(const std::string &unitName)  {
   std::ostringstream task;
   task << "configure tape drive " << unitName << " up";
 
@@ -545,7 +545,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::configureUp(const std::st
 // configureDown
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::configureDown(
-  const std::string &unitName) throw(castor::exception::Exception) {
+  const std::string &unitName)  {
   std::ostringstream task;
   task << "configure tape drive " << unitName << " down";
 
@@ -579,7 +579,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::configureDown(
 //-----------------------------------------------------------------------------
 // receivedVdqmJob
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::receivedVdqmJob(const legacymsg::RtcpJobRqstMsgBody &job) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DriveCatalogue::receivedVdqmJob(const legacymsg::RtcpJobRqstMsgBody &job)  {
   const std::string unitName(job.driveUnit);
 
   std::ostringstream task;
@@ -618,7 +618,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedVdqmJob(const leg
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::receivedLabelJob(
   const legacymsg::TapeLabelRqstMsgBody &job, const int labelCmdConnection)
-  throw(castor::exception::Exception) {
+   {
   const std::string unitName(job.drive);
 
   std::ostringstream task;
@@ -656,7 +656,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedLabelJob(
 //-----------------------------------------------------------------------------
 // getVdqmJob
 //-----------------------------------------------------------------------------
-const castor::legacymsg::RtcpJobRqstMsgBody &castor::tape::tapeserver::daemon::DriveCatalogue::getVdqmJob(const std::string &unitName) const throw(castor::exception::Exception) {
+const castor::legacymsg::RtcpJobRqstMsgBody &castor::tape::tapeserver::daemon::DriveCatalogue::getVdqmJob(const std::string &unitName) const  {
   std::ostringstream task;
   task << "get vdqm job for tape drive " << unitName;
 
@@ -685,7 +685,7 @@ const castor::legacymsg::RtcpJobRqstMsgBody &castor::tape::tapeserver::daemon::D
 //-----------------------------------------------------------------------------
 // getLabelJob
 //-----------------------------------------------------------------------------
-const castor::legacymsg::TapeLabelRqstMsgBody &castor::tape::tapeserver::daemon::DriveCatalogue::getLabelJob(const std::string &unitName) const throw(castor::exception::Exception) {
+const castor::legacymsg::TapeLabelRqstMsgBody &castor::tape::tapeserver::daemon::DriveCatalogue::getLabelJob(const std::string &unitName) const  {
   std::ostringstream task;
   task << "get label job for tape drive " << unitName;
 
@@ -714,7 +714,7 @@ const castor::legacymsg::TapeLabelRqstMsgBody &castor::tape::tapeserver::daemon:
 //-----------------------------------------------------------------------------
 // forkedMountSession
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::forkedMountSession(const std::string &unitName, const pid_t sessionPid) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DriveCatalogue::forkedMountSession(const std::string &unitName, const pid_t sessionPid)  {
   std::ostringstream task;
   task << "handle fork of mount session for tape drive " << unitName;
 
@@ -746,7 +746,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::forkedMountSession(const 
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::forkedLabelSession(
   const std::string &unitName, const pid_t sessionPid)
-  throw(castor::exception::Exception) {
+   {
   std::ostringstream task;
   task << "handle fork of label session for tape drive " << unitName;
 
@@ -777,7 +777,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::forkedLabelSession(
 // getSessionPid
 //-----------------------------------------------------------------------------
 pid_t castor::tape::tapeserver::daemon::DriveCatalogue::getSessionPid(
-  const std::string &unitName) const throw(castor::exception::Exception) {
+  const std::string &unitName) const  {
   std::ostringstream task;
   task << "get process ID of mount session for tape drive " << unitName;
 
@@ -805,7 +805,7 @@ pid_t castor::tape::tapeserver::daemon::DriveCatalogue::getSessionPid(
 //-----------------------------------------------------------------------------
 // sessionSucceeded
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::sessionSucceeded(const pid_t sessionPid) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DriveCatalogue::sessionSucceeded(const pid_t sessionPid)  {
   std::string unitName;
   try {
     unitName = getUnitName(sessionPid);
@@ -823,7 +823,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::sessionSucceeded(const pi
 //-----------------------------------------------------------------------------
 // sessionSucceeded
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::sessionSucceeded(const std::string &unitName) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DriveCatalogue::sessionSucceeded(const std::string &unitName)  {
   std::ostringstream task;
   task << "record tape session succeeded for tape drive " << unitName;
 
@@ -854,7 +854,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::sessionSucceeded(const st
 //-----------------------------------------------------------------------------
 // sessionFailed
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::sessionFailed(const pid_t sessionPid) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DriveCatalogue::sessionFailed(const pid_t sessionPid)  {
   std::string unitName;
   try {
     unitName = getUnitName(sessionPid);
@@ -872,7 +872,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::sessionFailed(const pid_t
 //-----------------------------------------------------------------------------
 // sessionFailed
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::sessionFailed(const std::string &unitName) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DriveCatalogue::sessionFailed(const std::string &unitName)  {
   std::ostringstream task;
   task << "record tape session failed for tape drive " << unitName;
 

@@ -64,7 +64,7 @@ void usage(char* cmd) {
 }
 
 void parseFileIdNshost(std::string input, castor::stager::NsFileId &nsFileId)
-  throw (castor::exception::Exception) {
+   {
   std::string::size_type p = input.find('@', 0);
   if (p == std::string::npos) {
     castor::exception::InvalidArgument e;
@@ -87,7 +87,7 @@ void parseFileIdNshost(std::string input, castor::stager::NsFileId &nsFileId)
 void cmd_parse(int argc,
                char *argv[],
                castor::stager::StageAbortRequest &req)
-  throw (castor::exception::Exception) {
+   {
   bool gotUuid = false;
   Coptind = 1;
   Copterr = 1;

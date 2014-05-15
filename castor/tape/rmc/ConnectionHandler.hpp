@@ -69,7 +69,7 @@ public:
    *
    * @param fd The poll file-descriptor describing the event.
    */
-  bool handleEvent(const struct pollfd &fd) throw(castor::exception::Exception);
+  bool handleEvent(const struct pollfd &fd) ;
 
   /**
    * Destructor.
@@ -105,7 +105,7 @@ private:
    * Throws an exception if the specified file-descriptor is not that of the
    * connection with the client.
    */
-  void checkHandleEventFd(const int fd) throw (castor::exception::Exception);
+  void checkHandleEventFd(const int fd) ;
 
   /**
    * Returns true if the peer host of the connection being handled is

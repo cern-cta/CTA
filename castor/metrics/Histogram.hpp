@@ -69,7 +69,7 @@ namespace castor {
        * @throw exception in case of mutex errors
        */
       virtual void notifyNewValue(castor::IObject* obj)
-        throw (castor::exception::Exception);
+        ;
       
       /**
        * Returns an XML representation of this histogram
@@ -77,7 +77,7 @@ namespace castor {
        * @throw castor::exception::Exception(ENOENT) when counter not found
        */      
       std::string printXml(std::string counterName)
-        throw (castor::exception::Exception);
+        ;
       
       /// Gets this histogram's name
       std::string getName() {

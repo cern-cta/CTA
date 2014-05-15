@@ -53,7 +53,7 @@ namespace castor {
          */
         void handleDelDrv(castor::io::ServerSocket &socket,
           const Cuuid_t &cuuid, vdqmDelDrv_t &msg)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Handlers the specified dedicate message.
@@ -63,7 +63,7 @@ namespace castor {
          */
         void handleDedicate(castor::io::ServerSocket &socket,
           const Cuuid_t &cuuid, vdqmDedicate_t &msg)
-          throw (castor::exception::Exception);
+          ;
 
       }; // class VdqmMagic3RequestHandler
 

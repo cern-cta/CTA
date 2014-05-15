@@ -103,7 +103,7 @@ public:
    *      the previous owner (obj).
    * </ul>
    */
-  SmartFd &operator=(SmartFd& obj) throw(castor::exception::NotAnOwner);
+  SmartFd &operator=(SmartFd& obj) ;
 
   /**
    * Destructor.
@@ -125,7 +125,7 @@ public:
    *
    * @return The released file descriptor.
    */
-  int release() throw(castor::exception::NotAnOwner);
+  int release() ;
 
 private:
 

@@ -101,7 +101,7 @@ void toUpper(std::string &str);
  * @param tz See the manual page for gettimeofday.
  */
 void getTimeOfDay(struct timeval *const tv, struct timezone *const tz)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Compares two time-values, a and b, and returns true if time value a is
@@ -141,7 +141,7 @@ double timevalToDouble(const timeval &tv) throw();
  * destination.
  */
 void copyString(char *const dst, const size_t dstSize, const char *const src)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Safely copies source string into destination string.  The destination
@@ -152,7 +152,7 @@ void copyString(char *const dst, const size_t dstSize, const char *const src)
  */
 template<size_t dstSize> void copyString(char (&dst)[dstSize],
   const char *const src)
-  throw(castor::exception::Exception) {
+   {
   copyString(dst, dstSize, src);
 }
 
@@ -173,7 +173,7 @@ template<typename T> void setBytes(T &object, const int c) throw() {
  * @param dgn The DGN to be checked.
  */
 void checkDgnSyntax(const char *dgn)
-  throw(castor::exception::InvalidArgument);
+  ;
 
 /**
  * Throws an InvalidArgument exception if the specified VID is syntactically
@@ -182,7 +182,7 @@ void checkDgnSyntax(const char *dgn)
  * @param vid The VID to be checked.
  */
 void checkVidSyntax(const char *vid)
-  throw(castor::exception::InvalidArgument);
+  ;
 
 } // namespace utils
 } // namespace castor

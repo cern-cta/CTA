@@ -92,7 +92,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillPollFd(
 //-----------------------------------------------------------------------------
 size_t castor::tape::tapeserver::daemon::AdminAcceptHandler::marshalTapeRcReplyMsg(char *const dst,
   const size_t dstLen, const int rc)
-  throw(castor::exception::Exception) {
+   {
   legacymsg::MessageHeader src;
   src.magic = TPMAGIC;
   src.reqType = TAPERC;
@@ -103,7 +103,7 @@ size_t castor::tape::tapeserver::daemon::AdminAcceptHandler::marshalTapeRcReplyM
 //------------------------------------------------------------------------------
 // writeTapeConfigReplyMsg
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeRcReplyMsg(const int fd, const int rc) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeRcReplyMsg(const int fd, const int rc)  {
   char buf[REPBUFSZ];
   const size_t len = marshalTapeRcReplyMsg(buf, sizeof(buf), rc);
   try {
@@ -119,7 +119,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeRcReplyMsg(c
 //------------------------------------------------------------------------------
 // writeTapeStatReplyMsg
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeStatReplyMsg(const int fd) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeStatReplyMsg(const int fd)  {
   legacymsg::TapeStatReplyMsgBody body;
   
   const std::list<std::string> unitNames = m_driveCatalogue.getUnitNames();
@@ -152,7 +152,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeStatReplyMsg
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillTapeStatDriveEntry(
   legacymsg::TapeStatDriveEntry &entry, const std::string &unitName)
-  throw (castor::exception::Exception) {
+   {
   // If there is no process ID available then just put 0
   try {
     entry.jid = m_driveCatalogue.getSessionPid(unitName);
@@ -188,7 +188,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillTapeStatDriveEntr
 // driveStateToStatEntryUp
 //------------------------------------------------------------------------------
 uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatEntryUp(
-  const DriveCatalogue::DriveState state) throw(castor::exception::Exception) {
+  const DriveCatalogue::DriveState state)  {
   switch(state) {
     case DriveCatalogue::DRIVE_STATE_INIT:
     case DriveCatalogue::DRIVE_STATE_DOWN:
@@ -216,7 +216,7 @@ uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatE
 // driveStateToStatEntryAsn
 //------------------------------------------------------------------------------
 uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatEntryAsn(
-  const DriveCatalogue::DriveState state) throw(castor::exception::Exception) {
+  const DriveCatalogue::DriveState state)  {
   switch(state) {
     case DriveCatalogue::DRIVE_STATE_INIT:
     case DriveCatalogue::DRIVE_STATE_DOWN:
@@ -242,7 +242,7 @@ uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatE
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
-  const struct pollfd &fd) throw(castor::exception::Exception) {
+  const struct pollfd &fd)  {
   checkHandleEventFd(fd.fd);
 
   // Do nothing if there is no data to read
@@ -274,7 +274,7 @@ bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
 // checkHandleEventFd
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::AdminAcceptHandler::checkHandleEventFd(
-  const int fd) throw (castor::exception::Exception) {
+  const int fd)  {
   if(m_fd != fd) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept connection from the admin command"
@@ -314,7 +314,7 @@ void
 // handleTapeConfigJob
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeConfigJob(
-  const legacymsg::TapeConfigRequestMsgBody &body) throw(castor::exception::Exception) {
+  const legacymsg::TapeConfigRequestMsgBody &body)  {
   const std::string unitName(body.drive);
   const std::string dgn = m_driveCatalogue.getDgn(unitName);
 
@@ -347,7 +347,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeConfigJob(
 //------------------------------------------------------------------------------
 // handleTapeStatJob
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeStatJob(const legacymsg::TapeStatRequestMsgBody &body) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeStatJob(const legacymsg::TapeStatRequestMsgBody &body)  {
   
 }
 
@@ -355,7 +355,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeStatJob(con
 // dispatchJob
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::AdminAcceptHandler::dispatchJob(
-    const int connection) throw(castor::exception::Exception) {
+    const int connection)  {
   
   const legacymsg::MessageHeader header = readJobMsgHeader(connection);
   if(TPCONF == header.reqType) {
@@ -378,7 +378,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::dispatchJob(
 //------------------------------------------------------------------------------
 castor::legacymsg::MessageHeader
   castor::tape::tapeserver::daemon::AdminAcceptHandler::readJobMsgHeader(
-    const int connection) throw(castor::exception::Exception) {
+    const int connection)  {
   // Read in the message header
   char buf[3 * sizeof(uint32_t)]; // magic + request type + len
   io::readBytes(connection, m_netTimeout, sizeof(buf), buf);
@@ -417,7 +417,7 @@ castor::legacymsg::MessageHeader
 castor::legacymsg::TapeConfigRequestMsgBody
   castor::tape::tapeserver::daemon::AdminAcceptHandler::readTapeConfigMsgBody(
     const int connection, const uint32_t len)
-    throw(castor::exception::Exception) {
+     {
   char buf[REQBUFSZ];
 
   if(sizeof(buf) < len) {
@@ -450,7 +450,7 @@ castor::legacymsg::TapeConfigRequestMsgBody
 castor::legacymsg::TapeStatRequestMsgBody
   castor::tape::tapeserver::daemon::AdminAcceptHandler::readTapeStatMsgBody(
     const int connection, const uint32_t len)
-    throw(castor::exception::Exception) {
+     {
   char buf[REQBUFSZ];
 
   if(sizeof(buf) < len) {

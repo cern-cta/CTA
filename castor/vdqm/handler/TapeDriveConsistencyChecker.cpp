@@ -47,7 +47,7 @@
 castor::vdqm::handler::TapeDriveConsistencyChecker::TapeDriveConsistencyChecker(
   castor::vdqm::TapeDrive *const tapeDrive, 
   vdqmDrvReq_t *const driveRequest, const Cuuid_t cuuid)
-  throw(castor::exception::Exception) : ptr_tapeDrive(tapeDrive),
+   : ptr_tapeDrive(tapeDrive),
   ptr_driveRequest(driveRequest), m_cuuid(cuuid) {
   
   if ( tapeDrive == NULL || driveRequest == NULL ) {
@@ -71,7 +71,7 @@ castor::vdqm::handler::TapeDriveConsistencyChecker::
 // checkConsistency
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency() 
-  throw (castor::exception::Exception) {
+   {
   
   TapeServer* tapeServer = ptr_tapeDrive->tapeServer();
   
@@ -194,7 +194,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkConsistency()
 // deleteOldRequest
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveConsistencyChecker::deleteOldRequest() 
-  throw (castor::exception::Exception) {
+   {
 
   TapeRequest* runningTapeReq = ptr_tapeDrive->runningTapeReq();
 
@@ -239,7 +239,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::deleteOldRequest()
 // checkBusyConsistency
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveConsistencyChecker::checkBusyConsistency() 
-  throw (castor::exception::Exception) {
+   {
 
   /*
    * Consistency check
@@ -292,7 +292,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkBusyConsistency()
 // checkFreeConsistency
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveConsistencyChecker::checkFreeConsistency() 
-  throw (castor::exception::Exception) {
+   {
   
   castor::vdqm::VdqmTape* tape;
    TapeServer* tapeServer = ptr_tapeDrive->tapeServer(); 
@@ -334,7 +334,7 @@ void castor::vdqm::handler::TapeDriveConsistencyChecker::checkFreeConsistency()
 // checkAssignConsistency
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveConsistencyChecker::
-  checkAssignConsistency() throw (castor::exception::Exception) {
+  checkAssignConsistency()  {
 
   TapeRequest* tapeRequest;
   TapeServer* tapeServer = ptr_tapeDrive->tapeServer(); 

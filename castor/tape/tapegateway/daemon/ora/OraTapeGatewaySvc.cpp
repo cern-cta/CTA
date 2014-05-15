@@ -181,7 +181,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::reset() throw() {
 
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountsWithoutTapes
 (std::list<castor::tape::tapegateway::ITapeGatewaySvc::migrationMountParameters>& migrationMounts)
-  throw (castor::exception::Exception){
+  {
   oracle::occi::ResultSet *rs = NULL;
   try {
     // Check whether the statements are ok
@@ -238,7 +238,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountsWithou
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getMigrationMountReqsForVids(
     const std::list<std::string>& vids,
     std::list<blockingSessionInfo>& blockingSessions)
-throw (castor::exception::Exception) {
+ {
   if (!blockingSessions.empty()) {
     castor::exception::Exception ex;
     ex.getMessage()
@@ -286,7 +286,7 @@ throw (castor::exception::Exception) {
 //----------------------------------------------------------------------------
 
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToMigMounts(const std::list<u_signed64>& MMIds,const std::list<std::string>& vids, const std::list<int>& fseqs)
-          throw (castor::exception::Exception){
+          {
   unsigned char (*bufferFseqs)[21]=NULL;
   ub2 *lensFseqs=NULL;
   unsigned char (*bufferMigrationMountIds)[21]=NULL;
@@ -428,7 +428,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachTapesToMigMounts(c
 //----------------------------------------------------------------------------
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapeWithoutDriveReq
 (std::string &vid, int &vdqmPriority, int &mode)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statements are ok
     if (0 == m_getTapeWithoutDriveReqStatement) {
@@ -459,7 +459,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapeWithoutDriveReq
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachDriveReq
 (const std::string &vid, const u_signed64 mountTransactionId, const int mode,
  const char *label, const char *density)
-  throw (castor::exception::Exception){
+  {
   try {
     // Check whether the statements are ok
     if (0 == m_attachDriveReqStatement) {
@@ -491,7 +491,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::attachDriveReq
 void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapesWithDriveReqs
 (std::list<TapeRequest>& requests,
  const u_signed64& timeOut) 
-  throw (castor::exception::Exception){
+  {
   try {
     // Check whether the statements are ok
     if (0 == m_getTapesWithDriveReqsStatement) {
@@ -533,7 +533,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapesWithDriveReqs
 //----------------------------------------------------------------------------
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::restartLostReqs
 (const std::list<int>& mountTransactionIds)
-  throw (castor::exception::Exception){
+  {
   unsigned char (*bufferMountTransactionIds)[21]=NULL;
   ub2 *lensMountTransactionIds=NULL;
   try {
@@ -594,7 +594,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::restartLostReqs
 
 void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(
     std::list<castor::tape::tapegateway::RetryPolicyElement>& candidates)
-          throw (castor::exception::Exception)
+          
 {
   oracle::occi::ResultSet *rs = NULL;
   try {
@@ -655,7 +655,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::getFailedMigrations(
 // setMigRetryResult
 //----------------------------------------------------------------------------
 
-void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(const std::list<u_signed64>& mjToRetry, const std::list<u_signed64>&  mjToFail ) throw (castor::exception::Exception) {
+void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(const std::list<u_signed64>& mjToRetry, const std::list<u_signed64>&  mjToFail )  {
 
   
  unsigned char (*bufferRetry)[21]=NULL;
@@ -776,7 +776,7 @@ void  castor::tape::tapegateway::ora::OraTapeGatewaySvc::setMigRetryResult(const
 //--------------------------------------------------------------------------
 // startTapeSession
 //--------------------------------------------------------------------------
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::startTapeSession(const castor::tape::tapegateway::VolumeRequest& startRequest, castor::tape::tapegateway::Volume& volume ) throw (castor::exception::Exception) {
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::startTapeSession(const castor::tape::tapegateway::VolumeRequest& startRequest, castor::tape::tapegateway::Volume& volume )  {
   try {
     // Check whether the statements are ok
     if (0 == m_startTapeSessionStatement) {
@@ -828,7 +828,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::startTapeSession(const c
 //----------------------------------------------------------------------------
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTapeSession
 (const u_signed64 mountTransactionId, const int errorCode)
-  throw (castor::exception::Exception){
+  {
   try {
     // Check whether the statements are ok
     if (0 == m_endTapeSessionStatement) {
@@ -852,7 +852,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTapeSession
 //----------------------------------------------------------------------------
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTapeSessionAutonomous
 (const u_signed64 mountTransactionId, const int errorCode)
-  throw (castor::exception::Exception){
+  {
   try {
     // Check whether the statements are ok
     if (0 == m_endTapeSessionAutonomousStatement) {
@@ -877,7 +877,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::endTapeSessionAutonomous
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getTapeToRelease
 (const u_signed64& mountTransactionId, 
  castor::tape::tapegateway::ITapeGatewaySvc::TapeToReleaseInfo& tape)
-  throw (castor::exception::Exception){  
+  {  
   try {
     // Check whether the statements are ok
     if (0 == m_getTapeToReleaseStatement) {
@@ -910,7 +910,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::cancelMigrationOrRecall
  const std::string &vid,
  const int errorCode,
  const std::string &errorMsg)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statements are ok
     if (0 == m_cancelMigrationOrRecallStatement) {
@@ -938,7 +938,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::cancelMigrationOrRecall
 // deleteMigrationMountWithBadTapePool
 //----------------------------------------------------------------------------
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::deleteMigrationMountWithBadTapePool(const u_signed64 migrationMountId) 
-  throw (castor::exception::Exception){
+  {
   try {
     // Check whether the statements are ok
     if (0 == m_deleteMigrationMountWithBadTapePoolStatement) {
@@ -962,7 +962,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::deleteMigrationMountWith
 // flagTapeFullForMigrationSession
 //----------------------------------------------------------------------------
 
-void castor::tape::tapegateway::ora::OraTapeGatewaySvc::flagTapeFullForMigrationSession(const u_signed64& tapeRequestId)throw (castor::exception::Exception){
+void castor::tape::tapegateway::ora::OraTapeGatewaySvc::flagTapeFullForMigrationSession(const u_signed64& tapeRequestId){
   try {
     // Check whether the statements are ok
 
@@ -1023,7 +1023,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToMigrate (
     const std::string & context,
     u_signed64 mountTransactionId, u_signed64 maxFiles, u_signed64 maxBytes,
     std::queue<castor::tape::tapegateway::FileToMigrateStruct>& filesToMigrate)
-  throw (castor::exception::Exception){
+  {
   // container for result should be clean!
   if (!filesToMigrate.empty()) {
     castor::exception::Exception ex;
@@ -1095,7 +1095,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::getBulkFilesToRecall (
     const std::string & context,
     u_signed64 mountTransactionId, u_signed64 maxFiles, u_signed64 maxBytes,
     std::queue<castor::tape::tapegateway::ITapeGatewaySvc::FileToRecallStructWithContext>& filesToRecall)
-  throw (castor::exception::Exception){
+  {
   // container for result should be clean!
   if (!filesToRecall.empty()) {
     castor::exception::Exception ex;
@@ -1191,7 +1191,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setBulkFileMigrationResu
     const std::string & context, u_signed64 mountTransactionId,
     std::vector<FileMigratedNotificationStruct *>& successes,
     std::vector<FileErrorReportStruct *>& failures)
-throw (castor::exception::Exception){
+{
   try {
     if (!m_setBulkFileMigrationResult) {
       m_setBulkFileMigrationResult =
@@ -1289,7 +1289,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::setBulkFileRecallResult 
     const std::string & context, u_signed64 mountTransactionId,
     std::vector<FileRecalledNotificationStruct *>& successes,
     std::vector<FileErrorReportStruct *>& failures)
-throw (castor::exception::Exception){
+{
   try {
     if (!m_setBulkFileRecallResult) {
       m_setBulkFileRecallResult =
@@ -1373,7 +1373,7 @@ throw (castor::exception::Exception){
 //----------------------------------------------------------------------------
 
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::commit()
-  throw (castor::exception::Exception)
+  
 {
   cnvSvc()->commit();
 }
@@ -1383,7 +1383,7 @@ void castor::tape::tapegateway::ora::OraTapeGatewaySvc::commit()
 //----------------------------------------------------------------------------
 
 void castor::tape::tapegateway::ora::OraTapeGatewaySvc::rollback()
-  throw (castor::exception::Exception)
+  
 {
   cnvSvc()->rollback();
 }

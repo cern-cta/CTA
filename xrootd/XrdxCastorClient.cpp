@@ -52,7 +52,7 @@ XCASTORNAMESPACE_BEGIN
 // Constructor
 //------------------------------------------------------------------------------
 XrdxCastorClient::XrdxCastorClient() 
-  throw(castor::exception::Exception):
+  :
   LogId(),
   mNfds(0),
   mDoStop(false),
@@ -102,7 +102,7 @@ XrdxCastorClient::XrdxCastorClient()
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-XrdxCastorClient::~XrdxCastorClient() throw ()
+XrdxCastorClient::~XrdxCastorClient() throw()
 {
   if (0 != mCallbackSocket) delete mCallbackSocket;
 }
@@ -136,7 +136,7 @@ XrdxCastorClient::SendAsyncRequest(const std::string& userId,
                                    castor::stager::Request* req,
                                    castor::client::IResponseHandler* rh,
                                    std::vector<castor::rh::Response*>* respvec)
-  throw(castor::exception::Exception)
+  
 {  
   int ret = SFS_OK;
 

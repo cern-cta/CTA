@@ -41,7 +41,7 @@ castor::server::SignalThreadPool::SignalThreadPool(const std::string poolName,
                                                    const int timeout,
                                                    const unsigned int nbThreads,
                                                    const unsigned int startingThreads)
-  throw(castor::exception::Exception) :
+   :
   BaseThreadPool(poolName, thread, nbThreads),
   m_poolMutex(-1, (unsigned)timeout), m_notified(startingThreads)
 {}
@@ -91,7 +91,7 @@ bool castor::server::SignalThreadPool::shutdown(bool wait) throw()
 // run
 //------------------------------------------------------------------------------
 void castor::server::SignalThreadPool::run()
-  throw (castor::exception::Exception)
+  
 {
   if(m_nbThreads == 0) {
     return;
@@ -130,7 +130,7 @@ void castor::server::SignalThreadPool::run()
 // waitSignalOrTimeout
 //------------------------------------------------------------------------------
 void castor::server::SignalThreadPool::waitSignalOrTimeout()
-  throw (castor::exception::Exception)
+  
 {
   m_poolMutex.lock();
 

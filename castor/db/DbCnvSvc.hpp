@@ -76,7 +76,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         castor::IObject* getObjFromId (u_signed64 id, int objType)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Get a set of objects from a set of ids.
@@ -88,7 +88,7 @@ namespace castor {
          */
         std::vector<castor::IObject*>
         getObjsFromIds(std::vector<u_signed64> &ids, int objType)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Handles database exceptions and make sure everything is reset

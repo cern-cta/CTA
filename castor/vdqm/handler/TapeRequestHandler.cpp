@@ -71,7 +71,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::vdqm::handler::TapeRequestHandler::TapeRequestHandler() 
-  throw(castor::exception::Exception) {
+   {
 }
 
 
@@ -86,7 +86,7 @@ castor::vdqm::handler::TapeRequestHandler::~TapeRequestHandler() throw() {
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
   const vdqmHdr_t &header, vdqmVolReq_t &msg, const Cuuid_t &cuuid)
-  throw (castor::exception::Exception) {
+   {
   
   // Used to get information about the tape
   struct vmgr_tape_info_byte_u64 tape_info;
@@ -248,7 +248,7 @@ void castor::vdqm::handler::TapeRequestHandler::newTapeRequest(
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
   const vdqmVolReq_t *const volumeRequest, const Cuuid_t cuuid,
-  castor::io::ServerSocket &sock) throw (castor::exception::Exception) {
+  castor::io::ServerSocket &sock)  {
 
   // The tape request may be associated with a drive, and if so a lock will
   // be required on both the request and the drive.  Care must be taken as
@@ -429,7 +429,7 @@ void castor::vdqm::handler::TapeRequestHandler::deleteTapeRequest(
 //------------------------------------------------------------------------------
 int castor::vdqm::handler::TapeRequestHandler::getQueuePosition(
   const vdqmVolReq_t *const volumeRequest, const Cuuid_t cuuid) 
-  throw (castor::exception::Exception) {
+   {
     
   //To store the db related informations
   int queuePosition = 
@@ -460,7 +460,7 @@ int castor::vdqm::handler::TapeRequestHandler::getQueuePosition(
 void castor::vdqm::handler::TapeRequestHandler::sendTapeRequestQueue(
   vdqmHdr_t *const header, vdqmVolReq_t *const volumeRequest,
   castor::vdqm::OldProtocolInterpreter *const oldProtInterpreter,
-  const Cuuid_t) throw (castor::exception::Exception) {
+  const Cuuid_t)  {
 
   std::string dgn    = "";
   std::string server = "";

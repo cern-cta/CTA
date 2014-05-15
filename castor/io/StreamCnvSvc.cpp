@@ -87,7 +87,7 @@ void castor::io::StreamCnvSvc::createRep(castor::IAddress* address,
                                          castor::IObject* object,
                                          bool,
                                          unsigned int)
-  throw (castor::exception::Exception) {
+   {
   castor::io::StreamAddress* ad =
     dynamic_cast <castor::io::StreamAddress*>(address);
   ObjectSet alreadyDone;
@@ -99,7 +99,7 @@ void castor::io::StreamCnvSvc::createRep(castor::IAddress* address,
 // -----------------------------------------------------------------------
 castor::IObject* castor::io::StreamCnvSvc::createObj
 (castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   castor::io::StreamAddress* ad =
     dynamic_cast<castor::io::StreamAddress*>(address);
   ObjectCatalog newlyCreated;
@@ -112,7 +112,7 @@ castor::IObject* castor::io::StreamCnvSvc::createObj
 void castor::io::StreamCnvSvc::marshalObject(castor::IObject* object,
                                              castor::io::StreamAddress* address,
                                              castor::ObjectSet& alreadyDone)
-  throw (castor::exception::Exception) {
+   {
   // Look for an adapted converter
   IConverter* conv;
   if (0 != object) {
@@ -134,7 +134,7 @@ void castor::io::StreamCnvSvc::marshalObject(castor::IObject* object,
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamCnvSvc::unmarshalObject(castor::io::StreamAddress& address,
                                                            castor::ObjectCatalog& newlyCreated)
-  throw (castor::exception::Exception) {
+   {
   // If the address has no type, find it out
   if (OBJ_INVALID == address.objType()) {
     int objType;

@@ -38,7 +38,7 @@
 // connectToVdqm
 //------------------------------------------------------------------------------
 void castor::tape::tapegateway::VdqmTapeGatewayHelper::connectToVdqm()
-  throw (castor::exception::Exception) {
+   {
   serrno=0;
   m_connection=NULL;
   int rc = vdqm_Connect(&m_connection);
@@ -57,7 +57,7 @@ void castor::tape::tapegateway::VdqmTapeGatewayHelper::connectToVdqm()
 //------------------------------------------------------------------------------
 int castor::tape::tapegateway::VdqmTapeGatewayHelper::createRequestForAggregator
 (const std::string &vid, const char *dgn, const int mode, const int port, const int priority)
-  throw (castor::exception::Exception) {
+   {
   // Due to historical compoenents, we first send the priority of the future
   // request (set on the VID only) and only then we create the request
   serrno = 0;
@@ -88,7 +88,7 @@ int castor::tape::tapegateway::VdqmTapeGatewayHelper::createRequestForAggregator
 // confirmRequestToVdqm
 //------------------------------------------------------------------------------
 void castor::tape::tapegateway::VdqmTapeGatewayHelper::confirmRequestToVdqm()
-  throw (castor::exception::Exception) {
+   {
   // after saving the transaction id in the db I send the confirmation to vdqm
   serrno=0;
   int ret = vdqm_QueueRequestForAggregator(m_connection);
@@ -107,7 +107,7 @@ void castor::tape::tapegateway::VdqmTapeGatewayHelper::confirmRequestToVdqm()
 //------------------------------------------------------------------------------
 void castor::tape::tapegateway::VdqmTapeGatewayHelper::checkVdqmForRequest
 (const int mountTransactionId)
-  throw (castor::exception::Exception) {
+   {
   serrno=0;
   int rc = vdqm_PingServer(NULL,NULL,mountTransactionId); // dgn is not given
   if (rc < 0) {
@@ -123,7 +123,7 @@ void castor::tape::tapegateway::VdqmTapeGatewayHelper::checkVdqmForRequest
 // disconnectFromVdqm
 //------------------------------------------------------------------------------
 void castor::tape::tapegateway::VdqmTapeGatewayHelper::disconnectFromVdqm()
-  throw (castor::exception::Exception) {
+   {
   serrno=0;
   int rc = vdqm_Disconnect(&m_connection);
   if (rc<0) {

@@ -44,7 +44,7 @@
 // is not strictly greater than the highest know Fseq for this tape in the name
 // server (meaning an overwrite).
 void castor::tape::tapegateway::NsTapeGatewayHelper::checkFseqForWrite (const std::string &vid, int Fseq)
-     throw (castor::exception::Exception) {
+      {
   struct Cns_segattrs segattrs;
   memset (&segattrs, 0, sizeof(struct Cns_segattrs));
   int rc = Cns_lastfseq (vid.c_str(), 0, &segattrs); // side = 0 hardcoded

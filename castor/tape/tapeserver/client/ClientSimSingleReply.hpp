@@ -54,7 +54,7 @@ namespace client {
       setupCallbackSock();
     }
     
-    virtual ~ClientSimSingleReply() throw () {}
+    virtual ~ClientSimSingleReply() throw() {}
     
     struct ipPort {
       ipPort(uint32_t i, uint16_t p): ip(i), port(p) {}
@@ -86,31 +86,31 @@ namespace client {
   protected:
     // Place holders for pure virtual members of TpcpCommand we don't
     // use in the simulator
-    virtual void usage(std::ostream &) const throw () {}
+    virtual void usage(std::ostream &) const throw() {}
     virtual void parseCommandLine(const int, char **)
-      throw(castor::exception::Exception) {}
+       {}
     virtual void checkAccessToDisk()
-      const throw(castor::exception::Exception) {}
+      const  {}
     virtual void checkAccessToTape()
-      const throw(castor::exception::Exception) {}
+      const  {}
     virtual void requestDriveFromVdqm(char *const)
-      throw(castor::exception::Exception) {}
-    virtual void performTransfer() throw(castor::exception::Exception) {}
+       {}
+    virtual void performTransfer()  {}
     
     
     // The functions we actually implement in the simulator
     virtual void sendVolumeToTapeBridge(
       const tapegateway::VolumeRequest &volumeRequest,
       castor::io::AbstractTCPSocket    &connection)
-      const throw(castor::exception::Exception) {}
+      const  {}
     virtual bool dispatchMsgHandler(castor::IObject *const obj,
-      castor::io::AbstractSocket &sock) throw(castor::exception::Exception) {
+      castor::io::AbstractSocket &sock)  {
       return false;
     }
     
   private:
     // Process the first request which should be getVolume
-    void processFirstRequest() throw(castor::exception::Exception) {
+    void processFirstRequest()  {
       // Accept the next connection
       std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
       // Read in the message sent by the tapebridge
@@ -144,7 +144,7 @@ namespace client {
    */
   template<>
   void ClientSimSingleReply<castor::tape::tapegateway::FilesToMigrateList>::processFirstRequest() 
-          throw(castor::exception::Exception) {
+           {
     using namespace castor::tape::tapegateway;
       // Accept the next connection
       std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
@@ -168,7 +168,7 @@ namespace client {
    */
   template<>
   void ClientSimSingleReply<castor::tape::tapegateway::FilesToRecallList>::processFirstRequest() 
-          throw(castor::exception::Exception) {
+           {
     using namespace castor::tape::tapegateway;
       // Accept the next connection
       std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());

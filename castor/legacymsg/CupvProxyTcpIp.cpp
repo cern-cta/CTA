@@ -59,7 +59,7 @@ bool castor::legacymsg::CupvProxyTcpIp::isGranted(
   const gid_t privGid,
   const std::string &srcHost,
   const std::string &tgtHost,
-  const int priv) throw(castor::exception::Exception) {
+  const int priv)  {
   std::ostringstream task;
   task << "check privilege privUid=" << privUid << " privGid=" << privGid <<
     " srcHost=" << srcHost << " tgtHost=" << tgtHost << " priv=" << priv;
@@ -124,7 +124,7 @@ bool castor::legacymsg::CupvProxyTcpIp::isGranted(
 //-----------------------------------------------------------------------------
 // connectToCupv
 //-----------------------------------------------------------------------------
-int castor::legacymsg::CupvProxyTcpIp::connectToCupv() const throw(castor::exception::Exception) {
+int castor::legacymsg::CupvProxyTcpIp::connectToCupv() const  {
   castor::utils::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(io::connectWithTimeout(m_cupvHostName, m_cupvPort,
@@ -142,7 +142,7 @@ int castor::legacymsg::CupvProxyTcpIp::connectToCupv() const throw(castor::excep
 //-----------------------------------------------------------------------------
 // writeCupvCheckMsg
 //-----------------------------------------------------------------------------
-void castor::legacymsg::CupvProxyTcpIp::writeCupvCheckMsg(const int fd, const legacymsg::CupvCheckMsgBody &body) throw(castor::exception::Exception) {
+void castor::legacymsg::CupvProxyTcpIp::writeCupvCheckMsg(const int fd, const legacymsg::CupvCheckMsgBody &body)  {
   char buf[REQBUFSZ];
   const size_t len = legacymsg::marshal(buf, body);
 
@@ -159,7 +159,7 @@ void castor::legacymsg::CupvProxyTcpIp::writeCupvCheckMsg(const int fd, const le
 //-----------------------------------------------------------------------------
 // readCupvMsgHeader
 //-----------------------------------------------------------------------------
-castor::legacymsg::MessageHeader castor::legacymsg::CupvProxyTcpIp::readCupvMsgHeader(const int fd) throw(castor::exception::Exception) {
+castor::legacymsg::MessageHeader castor::legacymsg::CupvProxyTcpIp::readCupvMsgHeader(const int fd)  {
   char buf[12]; // Magic + type + len
   MessageHeader header;
 

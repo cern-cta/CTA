@@ -68,7 +68,7 @@ castor::tape::tapebridge::ClientAddressLocal::~ClientAddressLocal() throw() {
 // checkValidity
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::ClientAddressLocal::checkValidity()
-  const throw(castor::exception::InvalidArgument) {
+  const  {
   if(m_filename.empty()) {
     TAPE_THROW_EX(castor::exception::InvalidArgument,
     ": Client address is invalid"
@@ -83,7 +83,7 @@ void castor::tape::tapebridge::ClientAddressLocal::checkValidity()
 int castor::tape::tapebridge::ClientAddressLocal::connectToClient(
   const int netTimeout,
   timeval   &connectDuration)
-  const throw(castor::exception::Exception) {
+  const  {
 
   struct sockaddr_un address;
   const socklen_t    address_len  = sizeof(address);

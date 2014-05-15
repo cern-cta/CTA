@@ -50,7 +50,7 @@ namespace castor {
         * Empty Destructor, explicitely non-throwing (needed for std::exception
         * inheritance)
         */
-      virtual ~Communication() throw () {}
+      virtual ~Communication() throw() {}
 
       std::string getRequestId();
 

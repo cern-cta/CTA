@@ -36,7 +36,7 @@
 // marshal
 //-----------------------------------------------------------------------------
 size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
-  const MessageHeader &src) throw(castor::exception::Exception) {
+  const MessageHeader &src)  {
 
   if(dst == NULL) {
     castor::exception::Exception ex;
@@ -82,7 +82,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 // unmarshal
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen,
-  MessageHeader &dst) throw(castor::exception::Exception) {
+  MessageHeader &dst)  {
 
   io::unmarshalUint32(src, srcLen, dst.magic);
   io::unmarshalUint32(src, srcLen, dst.reqType);

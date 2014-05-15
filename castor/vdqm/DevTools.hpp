@@ -85,7 +85,7 @@ namespace castor {
        */
       static void printMessage(std::ostream &os, const bool messageWasSent,
         const bool messageInNetworkByteOrder, const int socket, void* hdrbuf)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Prints the string form of the specified tape drive status bitset using

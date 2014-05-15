@@ -60,7 +60,7 @@ void castor::tape::tapebridge::PendingMigrationsStore::
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::PendingMigrationsStore::
   checkRequestToMigrateFile(const RequestToMigrateFile &request)
-  throw(SessionException) {
+   {
   // Throw an exception if the tape-file sequence-number of the request is zero
   if(0 == request.tapeFSeq) {
     SessionError sError;
@@ -130,7 +130,7 @@ void castor::tape::tapebridge::PendingMigrationsStore::
 // noMoreFilesToMigrate
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::PendingMigrationsStore::noMoreFilesToMigrate()
-  throw(castor::exception::Exception) {
+   {
   const bool endOfSessionFileIsKnown = 0 != m_tapeFSeqOfEndOfSessionFile;
 
   if(endOfSessionFileIsKnown) {
@@ -148,7 +148,7 @@ void castor::tape::tapebridge::PendingMigrationsStore::noMoreFilesToMigrate()
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::PendingMigrationsStore::fileWrittenWithoutFlush(
   const FileWrittenNotification &notification)
-  throw(castor::exception::Exception) {
+   {
 
   const char *const task = "mark file-migration as written without flush";
 
@@ -263,7 +263,7 @@ void castor::tape::tapebridge::PendingMigrationsStore::fileWrittenWithoutFlush(
 void castor::tape::tapebridge::PendingMigrationsStore::checkForMismatches(
   const RequestToMigrateFile    &request,
   const FileWrittenNotification &notification)
-  const throw(castor::exception::Exception) {
+  const  {
 
   bool foundMismatch = false;
   std::ostringstream oss;
@@ -327,7 +327,7 @@ void castor::tape::tapebridge::PendingMigrationsStore::checkForMismatches(
 //------------------------------------------------------------------------------
 castor::tape::tapebridge::FileWrittenNotificationList
   castor::tape::tapebridge::PendingMigrationsStore::dataFlushedToTape(
-  const int32_t tapeFSeqOfFlush) throw(castor::exception::Exception) {
+  const int32_t tapeFSeqOfFlush)  {
   const char *const methodTask = "accept flush to tape";
   FileWrittenNotificationList outputList;
 
@@ -423,7 +423,7 @@ void castor::tape::tapebridge::PendingMigrationsStore::clear() {
 // getMaxBytesBeforeFlush
 //------------------------------------------------------------------------------
 uint64_t castor::tape::tapebridge::PendingMigrationsStore::
-  getMaxBytesBeforeFlush() const throw(castor::exception::Exception) {
+  getMaxBytesBeforeFlush() const  {
   if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ==
     m_tapeFlushConfigParams.getTapeFlushMode().getValue()) {
     return m_tapeFlushConfigParams.getMaxBytesBeforeFlush().getValue();
@@ -436,7 +436,7 @@ uint64_t castor::tape::tapebridge::PendingMigrationsStore::
 // getMaxFilesBeforeFlush
 //------------------------------------------------------------------------------
 uint64_t castor::tape::tapebridge::PendingMigrationsStore::
-  getMaxFilesBeforeFlush() const throw(castor::exception::Exception) {
+  getMaxFilesBeforeFlush() const  {
   if(TAPEBRIDGE_ONE_FLUSH_PER_N_FILES ==
     m_tapeFlushConfigParams.getTapeFlushMode().getValue()) {
     return m_tapeFlushConfigParams.getMaxFilesBeforeFlush().getValue();

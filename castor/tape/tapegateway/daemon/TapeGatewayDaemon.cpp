@@ -91,7 +91,7 @@ try {
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc,char **argv) throw(castor::exception::Exception) {
+int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc,char **argv)  {
   // Log the start of the daemon
   logStart(argc, argv);
   // Check the service to access the database can be obtained
@@ -104,7 +104,7 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to get  TapeGateway Oracle database service";
-    throw(ex);
+    throw ex;
   }
 
   // Get the min and max number of thread used by the Worker

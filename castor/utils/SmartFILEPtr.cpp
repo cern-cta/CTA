@@ -65,7 +65,7 @@ void castor::utils::SmartFILEPtr::reset(FILE *const file = NULL)
 //-----------------------------------------------------------------------------
 castor::utils::SmartFILEPtr
   &castor::utils::SmartFILEPtr::operator=(SmartFILEPtr& obj)
-  throw(castor::exception::NotAnOwner) {
+   {
   reset(obj.release());
   return *this;
 }
@@ -88,12 +88,12 @@ FILE *castor::utils::SmartFILEPtr::get() const throw() {
 // release
 //-----------------------------------------------------------------------------
 FILE *castor::utils::SmartFILEPtr::release()
-  throw(castor::exception::NotAnOwner) {
+   {
   // If this smart pointer does not own a pointer
   if(m_file == NULL) {
     castor::exception::NotAnOwner ex;
     ex.getMessage() << "Smart pointer does not own a FILE pointer";
-    throw(ex);
+    throw ex;
   }
 
   FILE *const tmp = m_file;

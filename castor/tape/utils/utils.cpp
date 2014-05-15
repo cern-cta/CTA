@@ -51,7 +51,7 @@
 // toHex
 //-----------------------------------------------------------------------------
 void castor::tape::utils::toHex(uint32_t number, char *buf, size_t len)
-  throw(castor::exception::InvalidArgument) {
+   {
 
   if(len < 9) {
     castor::exception::InvalidArgument ex;
@@ -61,7 +61,7 @@ void castor::tape::utils::toHex(uint32_t number, char *buf, size_t len)
       ": The output string is too small: Actual=" << len <<
       " Minimum=9";
 
-    throw(ex);
+    throw ex;
   }
 
   int digitAsInt = 0;
@@ -99,7 +99,7 @@ int castor::tape::utils::countOccurrences(const char ch, const char *str) {
 // toHex
 //-----------------------------------------------------------------------------
 void castor::tape::utils::toHex(const uint64_t i, char *dst,
-  size_t dstLen) throw(castor::exception::Exception) {
+  size_t dstLen)  {
 
   // The largest 64-bit hexadecimal string "FFFFFFFFFFFFFFFF" would ocuppy 17
   // characters (17 characters = 16 x 'F' + 1 x '\0')
@@ -246,7 +246,7 @@ const char *castor::tape::utils::volumeModeToString(
 // drainFile
 //------------------------------------------------------------------------------
 ssize_t castor::tape::utils::drainFile(const int fd)
-  throw(castor::exception::Exception) {
+   {
 
   char buf[1024];
 
@@ -276,7 +276,7 @@ ssize_t castor::tape::utils::drainFile(const int fd)
 // readFileIntoList
 //------------------------------------------------------------------------------
 void castor::tape::utils::readFileIntoList(const char *const filename,
-  std::list<std::string> &lines) throw(castor::exception::Exception) {
+  std::list<std::string> &lines)  {
 
   std::ifstream file(filename);
 
@@ -305,7 +305,7 @@ void castor::tape::utils::readFileIntoList(const char *const filename,
 // parseFileList
 //------------------------------------------------------------------------------
 void castor::tape::utils::parseFileList(const char *filename,
-  std::list<std::string> &list) throw (castor::exception::Exception) {
+  std::list<std::string> &list)  {
 
   readFileIntoList(filename, list);
 
@@ -445,7 +445,7 @@ unsigned short castor::tape::utils::getPortFromConfig(
         ": Value should be an unsigned integer greater than 0"
         ": Value='" << value << "'";
 
-      throw(ex);
+      throw ex;
     }
 
     if(port == 0) {
@@ -456,7 +456,7 @@ unsigned short castor::tape::utils::getPortFromConfig(
         ": Value should be an unsigned integer greater than 0"
         ": Value='" << value << "'";
 
-      throw(ex);
+      throw ex;
     }
   }
 
@@ -467,7 +467,7 @@ unsigned short castor::tape::utils::getPortFromConfig(
 // parseTpconfigFile
 //------------------------------------------------------------------------------
 void castor::tape::utils::parseTpconfigFile(const char *const filename,
-  TpconfigLines &lines) throw (castor::exception::Exception) {
+  TpconfigLines &lines)  {
 
   // The expected number of data-columns in a TPCONFIG data-line
   const unsigned int NBCOLUMNS = 7;
@@ -487,7 +487,7 @@ void castor::tape::utils::parseTpconfigFile(const char *const filename,
         ": filename='" << filename << "'"
         ": " << sstrerror(savedErrno);
 
-      throw(ex);
+      throw ex;
     }
   }
 
@@ -545,7 +545,7 @@ void castor::tape::utils::parseTpconfigFile(const char *const filename,
           ": actualNbColumns=" << columns.size() <<
           ": lineNb=" << lineNb;
 
-        throw(ex);
+        throw ex;
       }
 
       // Store the value of the data-coulmns in the output list parameter
@@ -571,7 +571,7 @@ void castor::tape::utils::parseTpconfigFile(const char *const filename,
       ": filename='" << filename << "'"
       ": " << sstrerror(fgetsErrno);
 
-    throw(ex);
+    throw ex;
   }
 }
 
@@ -602,7 +602,7 @@ void castor::tape::utils::extractTpconfigDriveNames(
 // statFile
 //------------------------------------------------------------------------------
 void castor::tape::utils::statFile(const char *const filename,
-  struct stat &buf) throw(castor::exception::Exception) {
+  struct stat &buf)  {
 
   const int rc         = stat(filename, &buf);
   const int savedErrno = errno;
@@ -616,7 +616,7 @@ void castor::tape::utils::statFile(const char *const filename,
       ": filename=" << filename <<
       ": " << sstrerror(savedErrno);
 
-    throw(ex);
+    throw ex;
   }
 }
 
@@ -628,7 +628,7 @@ void castor::tape::utils::pthreadCreate(
   const pthread_attr_t *const attr,
   void *(*const startRoutine)(void*),
   void *const arg)
-  throw(castor::exception::Exception) {
+   {
 
   const int rc = pthread_create(thread, attr, startRoutine, arg);
 
@@ -639,7 +639,7 @@ void castor::tape::utils::pthreadCreate(
       "pthread_create() call failed" <<
       ": " << sstrerror(rc);
 
-    throw(ex);
+    throw ex;
   }
 }
 
@@ -647,7 +647,7 @@ void castor::tape::utils::pthreadCreate(
 // pthreadJoin
 //------------------------------------------------------------------------------
 void castor::tape::utils::pthreadJoin(pthread_t thread, void **const valuePtr)
-  throw(castor::exception::Exception) {
+   {
 
   const int rc = pthread_join(thread, valuePtr);
 
@@ -658,7 +658,7 @@ void castor::tape::utils::pthreadJoin(pthread_t thread, void **const valuePtr)
       "pthread_join() call failed" <<
       ": " << sstrerror(rc);
 
-    throw(ex);
+    throw ex;
   }
 }
 
@@ -667,7 +667,7 @@ void castor::tape::utils::pthreadJoin(pthread_t thread, void **const valuePtr)
 //------------------------------------------------------------------------------
 const char *castor::tape::utils::getMandatoryValueFromConfiguration(
   const char *const category, const char *const name)
-  throw(castor::exception::InvalidConfiguration) {
+   {
 
   const char *const tmp = getconfent(category, name, 0);
 
@@ -679,7 +679,7 @@ const char *castor::tape::utils::getMandatoryValueFromConfiguration(
       category << "/" << name <<
       ": The parameter is not specified in castor.conf";
 
-    throw(ex);
+    throw ex;
   }
 
   if(isAnEmptyString(tmp)) {
@@ -690,7 +690,7 @@ const char *castor::tape::utils::getMandatoryValueFromConfiguration(
       category << "/" << name <<
       ": The value of the parameter is an empty string";
 
-    throw(ex);
+    throw ex;
   }
 
   return tmp;
@@ -748,7 +748,7 @@ std::string castor::tape::utils::tapeBlockIdToString(
 // appendPathToEnvVar
 //---------------------------------------------------------------------------
 void castor::tape::utils::appendPathToEnvVar(const std::string &envVarName,
-  const std::string &pathToBeAppended) throw(castor::exception::Exception) {
+  const std::string &pathToBeAppended)  {
 
   // Get the current value of the enviornment variable (there may not be one)
   const char *const currentPath = getenv(envVarName.c_str());

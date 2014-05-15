@@ -239,7 +239,7 @@ std::string castor::tape::tapegateway::WorkerThread::requesterInfo::str ()
 
 castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc,
-    requesterInfo& requester  ) throw(castor::exception::Exception){
+    requesterInfo& requester  ) {
 
   // I received a start worker request
   Volume* response=new Volume();
@@ -335,7 +335,7 @@ castor::IObject* castor::tape::tapegateway::WorkerThread::handleStartWorker(
 
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker(
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
-    requesterInfo& requester) throw(castor::exception::Exception){
+    requesterInfo& requester) {
   // I received an EndTransferRequest, I send back an EndTransferResponse
   std::auto_ptr <NotificationAcknowledge> response(new NotificationAcknowledge());
   EndNotification * pEndRep =  dynamic_cast<EndNotification *>(&obj);
@@ -476,7 +476,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleEndWorker(
 
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker(
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
-    requesterInfo& requester ) throw(castor::exception::Exception){
+    requesterInfo& requester ) {
   // We received an EndNotificationErrorReport
   EndNotificationErrorReport *pEndErrRep =  dynamic_cast<EndNotificationErrorReport *>(&obj);
   if (!pEndErrRep) {
@@ -618,7 +618,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFailWorker(
 
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationReportList(
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
-    requesterInfo& requester ) throw(castor::exception::Exception){
+    requesterInfo& requester ) {
   // first check we are called with the proper class
   FileMigrationReportList* rep = dynamic_cast<FileMigrationReportList *>(&obj);
   if (!rep) {
@@ -861,7 +861,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileMigrationRe
 
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileRecallReportList(
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
-    requesterInfo& requester ) throw(castor::exception::Exception){
+    requesterInfo& requester ) {
   // Unlike the migrations, which are linked by the sequential writing, the recalls
   // Can be considered as independent entities.
   // We can then push the data to the DB blindly in both success and failure cases.
@@ -934,7 +934,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFileRecallRepor
 
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToMigrateListRequest(
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
-    requesterInfo& requester ) throw(castor::exception::Exception){
+    requesterInfo& requester ) {
   // first check we are called with the proper class
   FilesToMigrateListRequest* req_p = dynamic_cast <FilesToMigrateListRequest *>(&obj);
   if (!req_p) {
@@ -1061,7 +1061,7 @@ castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToMigrateL
 
 castor::IObject*  castor::tape::tapegateway::WorkerThread::handleFilesToRecallListRequest(
     castor::IObject&  obj, castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
-    requesterInfo& requester ) throw(castor::exception::Exception){
+    requesterInfo& requester ) {
   // first check we are called with the proper class
   FilesToRecallListRequest * req = dynamic_cast <FilesToRecallListRequest *>(&obj);
   if (!req) {
@@ -1211,7 +1211,7 @@ void castor::tape::tapegateway::WorkerThread::setSessionToClosing (
     castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
     castor::tape::tapegateway::WorkerThread::requesterInfo& requester,
     u_signed64 mountTransactionId)
-throw ()
+throw()
 {
   try {
     oraSvc.endTapeSession(mountTransactionId);
@@ -1234,7 +1234,7 @@ throw ()
 }
 
 castor::tape::tapegateway::WorkerThread::fileErrorClassification
-castor::tape::tapegateway::WorkerThread::classifyBridgeMigrationFileError(int errorCode) throw () {
+castor::tape::tapegateway::WorkerThread::classifyBridgeMigrationFileError(int errorCode) throw() {
   // We rely on the default for the return values:
   //fileInvolved(true),
   //fileRetryable(true),
@@ -1248,7 +1248,7 @@ castor::tape::tapegateway::WorkerThread::classifyBridgeMigrationFileError(int er
 }
 
 castor::tape::tapegateway::WorkerThread::fileErrorClassification
-castor::tape::tapegateway::WorkerThread::classifyBridgeRecallFileError(int /*errorCode*/) throw () {
+castor::tape::tapegateway::WorkerThread::classifyBridgeRecallFileError(int /*errorCode*/) throw() {
   // We rely on the default for the return values:
   //fileInvolved(true),
   //fileRetryable(true),
@@ -1259,7 +1259,7 @@ castor::tape::tapegateway::WorkerThread::classifyBridgeRecallFileError(int /*err
 
 void castor::tape::tapegateway::WorkerThread::logInternalError (
     castor::exception::Exception e, requesterInfo& requester,
-    FileMigrationReportList & fileMigrationReportList) throw () {
+    FileMigrationReportList & fileMigrationReportList) throw() {
   castor::dlf::Param params[] ={
       castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
       castor::dlf::Param("Port",requester.port),
@@ -1274,7 +1274,7 @@ void castor::tape::tapegateway::WorkerThread::logInternalError (
 
 void castor::tape::tapegateway::WorkerThread::logInternalError (
     castor::exception::Exception e, requesterInfo& requester,
-    FileRecallReportList &fileRecallReportList) throw () {
+    FileRecallReportList &fileRecallReportList) throw() {
   castor::dlf::Param params[] ={
       castor::dlf::Param("IP",  castor::dlf::IPAddress(requester.ip)),
       castor::dlf::Param("Port",requester.port),

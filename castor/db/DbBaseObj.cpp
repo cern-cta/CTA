@@ -46,7 +46,7 @@ castor::db::DbBaseObj::DbBaseObj(castor::ICnvSvc* service) :
 // initCnvSvc
 // -----------------------------------------------------------------------
 void castor::db::DbBaseObj::initCnvSvc()
-  throw (castor::exception::Exception) {
+   {
   m_cnvSvc = dynamic_cast<castor::db::DbCnvSvc*>
     (svcs()->cnvService(m_cnvSvcName, SVC_DBCNV));
   if (!m_cnvSvc) {
@@ -61,7 +61,7 @@ void castor::db::DbBaseObj::initCnvSvc()
 // -----------------------------------------------------------------------
 castor::db::IDbStatement*
 castor::db::DbBaseObj::createStatement(const std::string &stmtString)
-  throw (castor::exception::Exception) {
+   {
   return cnvSvc()->createStatement(stmtString);
 }
 
@@ -69,7 +69,7 @@ castor::db::DbBaseObj::createStatement(const std::string &stmtString)
 // cnvSvc
 // -----------------------------------------------------------------------
 castor::db::DbCnvSvc* castor::db::DbBaseObj::cnvSvc()
-  throw (castor::exception::Exception) {
+   {
   if (0 == m_cnvSvc) initCnvSvc();
   return m_cnvSvc;
 }

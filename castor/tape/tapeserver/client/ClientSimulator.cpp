@@ -62,7 +62,7 @@ ClientSimulator::ClientSimulator(uint32_t volReqId, const std::string & vid,
 //processFirstRequest
 //------------------------------------------------------------------------------
 void ClientSimulator::processFirstRequest()
-throw (castor::exception::Exception) {
+ {
   // Accept the next connection
   std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
   // Read in the message sent by the tapebridge
@@ -111,7 +111,7 @@ throw (castor::exception::Exception) {
 //processOneRequest
 //------------------------------------------------------------------------------
 bool ClientSimulator::processOneRequest()
-throw (castor::exception::Exception) {
+ {
   // Accept the next connection
   std::auto_ptr<castor::io::ServerSocket> clientConnection(m_callbackSock.accept());
   // Read in the message sent by the tapebridge
@@ -269,7 +269,7 @@ void ClientSimulator::sendEndNotificationErrorReport(
     const int errorCode,
     const std::string &errorMessage,
     castor::io::AbstractSocket &sock)
-throw () {
+throw() {
   tapegateway::EndNotificationErrorReport err;
   err.setAggregatorTransactionId(tapebridgeTransactionId);
   err.setErrorCode(errorCode);

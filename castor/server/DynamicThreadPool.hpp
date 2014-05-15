@@ -100,7 +100,7 @@ namespace castor {
         unsigned int maxThreads  = DEFAULT_MAXTHREADS,
         unsigned int threshold   = DEFAULT_THRESHOLD,
         unsigned int maxTasks    = DEFAULT_MAXTASKS)
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Default Destructor
@@ -111,12 +111,12 @@ namespace castor {
        * Initializes the pool. This function is called before
        * any forking may take place.
        */
-      virtual void init() throw (castor::exception::Exception);
+      virtual void init() ;
 
       /**
        * Creates and starts the threads
        */
-      virtual void run() throw (castor::exception::Exception);
+      virtual void run() ;
       
       /**
        * Shutdowns the pool by terminating the task queue.
@@ -147,7 +147,7 @@ namespace castor {
        *           to be non-blocking.
        */
       void addTask(void *data, bool wait = true)
-        throw(castor::exception::Exception);
+        ;
         
       /**
        * Functions returning queue related metrics

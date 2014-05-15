@@ -52,7 +52,7 @@ protected:
   }
 
   int createLocalListenSocket(const char *const listenSockPath)
-    throw (castor::exception::Exception) {
+     {
 
     // Delete the file to be used for the socket if the file already exists
     unlink(listenSockPath);

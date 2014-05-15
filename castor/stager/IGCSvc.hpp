@@ -68,7 +68,7 @@ namespace castor {
        */
       virtual std::vector<castor::stager::GCLocalFile*>*
       selectFiles2Delete(std::string diskServer)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Informs the stager of files effectively deleted.
@@ -81,7 +81,7 @@ namespace castor {
        */
       virtual void filesDeleted
       (std::vector<u_signed64*>& diskCopyIds)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Informs the stager of files for which deletion failed.
@@ -92,7 +92,7 @@ namespace castor {
        */
       virtual void filesDeletionFailed
       (std::vector<u_signed64*>& diskCopyIds)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Handles a set of files that were deleted from
@@ -122,7 +122,7 @@ namespace castor {
        * The timeout is retrieved from the configuration table in the db
        */
       virtual void removeTerminatedRequests()
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
     }; // end of class IGCSvc
 

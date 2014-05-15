@@ -78,7 +78,7 @@ castor::tape::tapeserver::daemon::MountSession::MountSession(
  * Then branch to the right execution
  */
 void castor::tape::tapeserver::daemon::MountSession::execute()
-throw (castor::tape::Exception) {
+ {
   // 1) Prepare the logging environment
   LogContext lc(m_logger);
   // Create a sticky thread name, which will be overridden by the other threads

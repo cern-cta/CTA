@@ -49,7 +49,7 @@
 void castor::tape::tapebridge::RtcpTxRx::getRequestInfoFromRtcpd(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, 
   const int netReadWriteTimeout, legacymsg::RtcpTapeRqstErrMsgBody &reply) 
-  throw(castor::exception::Exception) {
+   {
 
  {
     castor::dlf::Param params[] = {
@@ -137,7 +137,7 @@ void castor::tape::tapebridge::RtcpTxRx::getRequestInfoFromRtcpd(
 void castor::tape::tapebridge::RtcpTxRx::giveVolumeToRtcpd(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, 
   const int netReadWriteTimeout, legacymsg::RtcpTapeRqstErrMsgBody &request) 
-  throw(castor::exception::Exception) {
+   {
 
   LogHelper::logMsgBody(cuuid, DLF_LVL_DEBUG,
     TAPEBRIDGE_GIVE_VOLUME_TO_RTCPD, volReqId, socketFd, request);
@@ -195,7 +195,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
   const int netReadWriteTimeout, const uint32_t mode,
   legacymsg::RtcpFileRqstErrMsgBody &request)
-  throw(castor::exception::Exception) {
+   {
 
   {
     const int message_no = mode == WRITE_ENABLE ?
@@ -264,7 +264,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
 void castor::tape::tapebridge::RtcpTxRx::tellRtcpdDumpTape(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd,
   const int netReadWriteTimeout, legacymsg::RtcpDumpTapeRqstMsgBody &request)
-  throw(castor::exception::Exception) {
+   {
 
   LogHelper::logMsgBody(cuuid, DLF_LVL_DEBUG, TAPEBRIDGE_TELL_RTCPD_DUMP_TAPE,
     volReqId, socketFd, request);
@@ -323,7 +323,7 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdDumpTape(
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
   const uint32_t volReqId, const int socketFd, const int netReadWriteTimeout)
-  throw(castor::exception::Exception) {
+   {
 
   char buf[RTCPMSGBUFSIZE];
   size_t totalLen = 0;
@@ -375,7 +375,7 @@ void castor::tape::tapebridge::RtcpTxRx::pingRtcpd(const Cuuid_t &cuuid,
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::RtcpTxRx::tellRtcpdEndOfFileList(
   const Cuuid_t &cuuid, const uint32_t volReqId, const int socketFd, 
-  const int netReadWriteTimeout) throw(castor::exception::Exception) {
+  const int netReadWriteTimeout)  {
 
   {
     castor::dlf::Param params[] = {
@@ -470,7 +470,7 @@ void castor::tape::tapebridge::RtcpTxRx::tellRtcpdEndOfFileList(
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::RtcpTxRx::receiveRtcpJobRqst(const Cuuid_t &cuuid,
   const int socketFd, const int,
-  legacymsg::RtcpJobRqstMsgBody &request) throw(castor::exception::Exception) {
+  legacymsg::RtcpJobRqstMsgBody &request)  {
 
   castor::dlf::dlf_writep(cuuid, DLF_LVL_DEBUG,
     TAPEBRIDGE_RECEIVE_RTCOPY_JOB);
@@ -555,7 +555,7 @@ void castor::tape::tapebridge::RtcpTxRx::askRtcpdToRequestMoreWork(
   const Cuuid_t &cuuid, const uint32_t volReqId, 
   const char *const tapePath, const int socketFd,
   const int netReadWriteTimeout, const uint32_t mode)
-  throw(castor::exception::Exception) {
+   {
 
   {
     castor::dlf::Param params[] = {
@@ -659,7 +659,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
   const char *const tapeFileId, const uint32_t umask,
   const int32_t positionMethod, const int32_t tapeFseq, const int32_t diskFseq,
   char (&nameServerHostName)[CA_MAXHOSTNAMELEN+1], const uint64_t castorFileId,
-  unsigned char (&blockId)[4]) throw(castor::exception::Exception) {
+  unsigned char (&blockId)[4])  {
 
   legacymsg::RtcpFileRqstErrMsgBody msgBody;
 
@@ -709,7 +709,7 @@ void castor::tape::tapebridge::RtcpTxRx::giveFileToRtcpd(
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::RtcpTxRx::checkMagic(const uint32_t expected,
   const uint32_t actual, const char*)
-  throw(castor::exception::Exception) {
+   {
 
   if(expected != actual) {
     TAPE_THROW_CODE(EBADMSG,
@@ -727,7 +727,7 @@ void castor::tape::tapebridge::RtcpTxRx::checkMagic(const uint32_t expected,
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::RtcpTxRx::checkRtcopyReqType(
   const uint32_t expected, const uint32_t actual, const char *function)
-  throw(castor::exception::Exception) {
+   {
 
   checkRtcopyReqType(&expected, 1, actual, function);
 }
@@ -738,7 +738,7 @@ void castor::tape::tapebridge::RtcpTxRx::checkRtcopyReqType(
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::RtcpTxRx::checkRtcopyReqType(
   const uint32_t *expected, const size_t nbExpected, const uint32_t actual,
-  const char*) throw(castor::exception::Exception) {
+  const char*)  {
 
   size_t i = 0;
 

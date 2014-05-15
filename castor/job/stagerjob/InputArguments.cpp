@@ -39,7 +39,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
-  throw (castor::exception::Exception) :
+   :
   requestUuid(nullCuuid),
   subRequestUuid(nullCuuid),
   rawRequestUuid(""),

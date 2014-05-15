@@ -96,7 +96,7 @@ public:
    * This method throws a castor::exception::NoValue exception if the value
    * and source of the configuration parameter have not been set.
    */
-  ValueType getValue() const throw(castor::exception::NoValue) {
+  ValueType getValue() const  {
     if(!valueAndSourceAreSet()) {
       TAPE_THROW_EX(castor::exception::NoValue,
         ": Value and source of configuation parameter have not been set"
@@ -112,7 +112,7 @@ public:
    * and source of the configuration parameter have not been set.
    */
   ConfigParamSource::Enum getSource() const
-    throw(castor::exception::NoValue) {
+     {
     if(!valueAndSourceAreSet()) {
       TAPE_THROW_EX(castor::exception::NoValue,
         ": Value and source of configuation parameter have not been set"

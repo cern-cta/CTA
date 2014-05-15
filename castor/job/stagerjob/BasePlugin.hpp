@@ -67,7 +67,7 @@ namespace castor {
         virtual void preForkHook
         (castor::job::stagerjob::InputArguments&,
          castor::job::stagerjob::PluginContext&)
-          throw (castor::exception::Exception) {};
+           {};
 
       protected:
 

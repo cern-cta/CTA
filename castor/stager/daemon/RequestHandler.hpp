@@ -31,7 +31,7 @@ namespace castor{
          * Default behavior is the common part across all user requests processing.
          * @throw exception in case of system/db errors.
          */
-        virtual void handle() throw (castor::exception::Exception);
+        virtual void handle() ;
         
         /// The RequestHelper instance
         RequestHelper* reqHelper;	

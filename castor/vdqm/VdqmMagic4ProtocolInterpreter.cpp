@@ -34,7 +34,7 @@
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmMagic4ProtocolInterpreter::VdqmMagic4ProtocolInterpreter(
   castor::io::ServerSocket &socket, const Cuuid_t &cuuid)
-  throw(castor::exception::Exception) : m_socket(socket), m_cuuid(cuuid) {
+   : m_socket(socket), m_cuuid(cuuid) {
 }
 
 
@@ -43,7 +43,7 @@ castor::vdqm::VdqmMagic4ProtocolInterpreter::VdqmMagic4ProtocolInterpreter(
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmMagic4ProtocolInterpreter::readHeader(
   const unsigned int magic, vdqmHdr_t &header)
-  throw(castor::exception::Exception) {
+   {
 
   // Fill in the magic number which has already been read out from the socket
   header.magic = magic;
@@ -79,7 +79,7 @@ void castor::vdqm::VdqmMagic4ProtocolInterpreter::readHeader(
 // readAggregatorVolReq
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmMagic4ProtocolInterpreter::readAggregatorVolReq(
-  const int len, vdqmVolReq_t &msg) throw(castor::exception::Exception) {
+  const int len, vdqmVolReq_t &msg)  {
 
   if(!VALID_VDQM_MSGLEN(len)) {
     castor::exception::Exception ex(SECONNDROP);
@@ -154,7 +154,7 @@ void castor::vdqm::VdqmMagic4ProtocolInterpreter::readAggregatorVolReq(
 // sendAggregatorVolReq
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmMagic4ProtocolInterpreter::sendAggregatorVolReqToClient
-(vdqmHdr_t&, vdqmVolReq_t &msg) throw(castor::exception::Exception) {
+(vdqmHdr_t&, vdqmVolReq_t &msg)  {
 
   char *p = NULL;
 

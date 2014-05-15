@@ -123,7 +123,7 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::addInitialRtcpdConn(
 // releaseInitialRtcpdConn
 //-----------------------------------------------------------------------------
 int castor::tape::tapebridge::BridgeSocketCatalogue::releaseInitialRtcpdConn()
-  throw(castor::exception::Exception) {
+   {
   // Throw an exception if the socket-descriptor has not been set
   if(0 > m_initialRtcpdSock) {
     TAPE_THROW_CODE(ENOENT,
@@ -171,7 +171,7 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::
 // getListenSock
 //-----------------------------------------------------------------------------
 int castor::tape::tapebridge::BridgeSocketCatalogue::getListenSock() const
-  throw(castor::exception::Exception) {
+   {
 
   // Throw an exception if the socket-descriptor of the listen socket does not
   // exist in the catalogue
@@ -188,7 +188,7 @@ int castor::tape::tapebridge::BridgeSocketCatalogue::getListenSock() const
 // getInitialRtcpdConn
 //-----------------------------------------------------------------------------
 int castor::tape::tapebridge::BridgeSocketCatalogue::getInitialRtcpdConn()
-  const throw(castor::exception::Exception) {
+  const  {
 
   // Throw an exception if the socket-descriptor of the initial rtcpd
   // connection does not exist in the catalogue
@@ -383,7 +383,7 @@ int castor::tape::tapebridge::BridgeSocketCatalogue::
 // checkForTimeout
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::BridgeSocketCatalogue::checkForTimeout() const
-  throw(castor::exception::TimeOut) {
+   {
 
   // If the "get more work" socket-descriptor has already been set
   if(0 <= m_getMoreWorkConnection.clientSock) {
@@ -404,7 +404,7 @@ void castor::tape::tapebridge::BridgeSocketCatalogue::checkForTimeout() const
         ": ageSecs=" << ageSecs <<
         ": clientNetRWTimeout=" << CLIENTNETRWTIMEOUT;
 
-      throw(te);
+      throw te;
     }
   }
 }
@@ -452,7 +452,7 @@ bool castor::tape::tapebridge::BridgeSocketCatalogue::
 //-----------------------------------------------------------------------------
 int castor::tape::tapebridge::BridgeSocketCatalogue::
   releaseClientMigrationReportSock(uint64_t &tapebridgeTransId)
-  throw(castor::exception::Exception) {
+   {
 
   // Throw an exception if the socket-descriptor has not been set
   if(0 > m_migrationReportConnection.clientSock) {
@@ -556,7 +556,7 @@ const castor::tape::tapebridge::GetMoreWorkConnection
 // releaseGetMoreWorkClientSock
 //-----------------------------------------------------------------------------
 int castor::tape::tapebridge::BridgeSocketCatalogue::
-  releaseGetMoreWorkClientSock() throw(castor::exception::Exception) {
+  releaseGetMoreWorkClientSock()  {
 
   // Throw an exception if the socket-descriptor has not been set
   if(0 > m_getMoreWorkConnection.clientSock) {

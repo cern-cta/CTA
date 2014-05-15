@@ -92,7 +92,7 @@ bool castor::tape::tpcp::TapeFseqRangeSequence::hasMore() const throw() {
 // next
 //------------------------------------------------------------------------------
 uint32_t castor::tape::tpcp::TapeFseqRangeSequence::next()
-  throw(exception::NoValue) {
+   {
 
   if(!hasMore()) {
     exception::NoValue ex;

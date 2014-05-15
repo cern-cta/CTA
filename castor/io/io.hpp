@@ -69,7 +69,7 @@ namespace io     {
  * @return           The socket descriptor.
  */
 int createListenerSock(const unsigned short port)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Creates a listener socket with a port number within the specified range.
@@ -96,7 +96,7 @@ int createListenerSock(
   const unsigned short lowPort,
   const unsigned short highPort,
   unsigned short       &chosenPort)
-  throw(castor::exception::Exception);
+  ;
 	
 /**
  * Creates a listener socket with a port number within the specified range.
@@ -123,7 +123,7 @@ int createListenerSock(
   const unsigned short lowPort,
   const unsigned short highPort,
   unsigned short       &chosenPort)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Creates a listener socket with a port number within the specified range.
@@ -149,7 +149,7 @@ int createListenerSock(
   const unsigned short lowPort,
   const unsigned short highPort,
   unsigned short       &chosenPort)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Creates a listener socket with the specified port number that is bound to
@@ -170,7 +170,7 @@ int createListenerSock(
  * @return     The socket descriptor.
  */
 int createLocalhostListenerSock(const unsigned short port)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Accepts a connection on the specified listener socket and returns the
@@ -181,7 +181,7 @@ int createLocalhostListenerSock(const unsigned short port)
  *                     socket.
  */
 int acceptConnection(const int listenSockFd)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Accepts a connection on the specified listener socket and returns the
@@ -219,7 +219,7 @@ int acceptConnection(
  * @return         The IP and port number of the specified socket.
  */
 IpAndPort getSockIpPort(const int socketFd)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Gets the peer IP and port number of the specified socket.
@@ -228,7 +228,7 @@ IpAndPort getSockIpPort(const int socketFd)
  * @return         The IP and port number of the specified socket.
  */
 IpAndPort getPeerIpPort(const int socketFd)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Gets the locally-bound host name of the specified socket.
@@ -242,7 +242,7 @@ void getSockHostName(
   const int    socketFd,
   char *const  buf,
   const size_t len)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Gets the locally-bound host name of the specified socket.
@@ -253,7 +253,7 @@ void getSockHostName(
 template<int n> static void getSockHostName(
   const int socketFd,
   char (&buf)[n])
-  throw(castor::exception::Exception) {
+   {
   getSockHostName(socketFd, buf, n);
 }
 
@@ -272,7 +272,7 @@ void getSockIpHostnamePort(
   unsigned long  &ip,
   char           *const hostName,
   const size_t   hostNameLen,
-  unsigned short &port) throw(castor::exception::Exception);
+  unsigned short &port) ;
 
 /**
  * Gets the locally-bound IP, host name and port of the specified socket.
@@ -287,7 +287,7 @@ template<int n> static void getSockIpHostnamePort(
   unsigned long  &ip,
   char           (&hostName)[n],
   unsigned short &port)
-  throw(castor::exception::Exception) {
+   {
   getSockIpHostnamePort(socketFd, ip, hostName, n, port);
 }
 
@@ -303,7 +303,7 @@ void getPeerHostName(
   const int    socketFd,
   char *const  buf,
   const size_t len)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Gets the peer host name of the specified connection.
@@ -314,7 +314,7 @@ void getPeerHostName(
 template<int n> static void getPeerHostName(
   const int socketFd,
   char (&buf)[n])
-  throw(castor::exception::Exception) {
+   {
   getPeerHostName(socketFd, buf, n);
 }
 
@@ -365,7 +365,7 @@ void readBytes(
   const int   timeout,
   const int   nbBytes,
   char *const buf)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Reads the specified number of bytes from the specified closable socket
@@ -382,7 +382,7 @@ bool readBytesFromCloseable(
   const int   timeout,
   const int   nbBytes,
   char *const buf) 
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Writes the specified number of bytes from the specified buffer to the
@@ -398,7 +398,7 @@ void writeBytes(
   const int   timeout,
   const int   nbBytes,
   char *const buf)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Creates the specified socket and uses it to connect to the specified
@@ -465,7 +465,7 @@ int connectWithTimeout(
  *            the marshalled value.
  */
 void marshalUint8(const uint8_t src, char * &dst)
- throw(castor::exception::Exception);
+ ;
 
 /**
  * Marshals the specified src value into the specified destination buffer.
@@ -477,7 +477,7 @@ void marshalUint8(const uint8_t src, char * &dst)
  *            the marshalled value.
  */
 void marshalInt16(const int16_t src, char * &dst)
- throw(castor::exception::Exception);
+ ;
 
 /**
  * Marshals the specified src value into the specified destination buffer.
@@ -489,7 +489,7 @@ void marshalInt16(const int16_t src, char * &dst)
  *            the marshalled value.
  */
 void marshalUint16(const uint16_t src, char * &dst)
- throw(castor::exception::Exception);
+ ;
 
 /**
  * Marshals the specified src value into the specified destination buffer.
@@ -501,7 +501,7 @@ void marshalUint16(const uint16_t src, char * &dst)
  *            the marshalled value.
  */
 void marshalInt32(const int32_t src, char * &dst)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Marshals the specified src value into the specified destination buffer.
@@ -513,7 +513,7 @@ void marshalInt32(const int32_t src, char * &dst)
  *            the marshalled value.
  */
 void marshalUint32(const uint32_t src, char * &dst)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Marshals the specified src value into the specified destination buffer.
@@ -525,7 +525,7 @@ void marshalUint32(const uint32_t src, char * &dst)
  *            the marshalled value.
  */
 void marshalUint64(const uint64_t src, char * &dst)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Marshals the specified string into the specified destination buffer.
@@ -537,7 +537,7 @@ void marshalUint64(const uint64_t src, char * &dst)
  * string.
  */
 void marshalString(const std::string &src, char * &dst)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Unmarshals a value from the specified source buffer into the specified
@@ -554,7 +554,7 @@ void marshalString(const std::string &src, char * &dst)
  * @param dst    Out parameter: The destination.
  */
 void unmarshalUint8(const char * &src, size_t &srcLen, uint8_t &dst)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Unmarshals a value from the specified source buffer into the specified
@@ -571,7 +571,7 @@ void unmarshalUint8(const char * &src, size_t &srcLen, uint8_t &dst)
  * @param dst    Out parameter: The destination.
  */
 void unmarshalInt16(const char * &src, size_t &srcLen, int16_t &dst)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Unmarshals a value from the specified source buffer into the specified
@@ -588,7 +588,7 @@ void unmarshalInt16(const char * &src, size_t &srcLen, int16_t &dst)
  * @param dst    Out parameter: The destination.
  */
 void unmarshalUint16(const char * &src, size_t &srcLen, uint16_t &dst)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Unmarshals a value from the specified source buffer into the specified
@@ -605,7 +605,7 @@ void unmarshalUint16(const char * &src, size_t &srcLen, uint16_t &dst)
  * @param dst    Out parameter: The destination.
  */
 void unmarshalUint32(const char * &src, size_t &srcLen, uint32_t &dst)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Unmarshals a value from the specified source buffer into the specified
@@ -622,7 +622,7 @@ void unmarshalUint32(const char * &src, size_t &srcLen, uint32_t &dst)
  * @param dst    Out parameter: The destination.
  */
 void unmarshalInt32(const char * &src, size_t &srcLen, int32_t &dst)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Unmarshals a value from the specified source buffer into the specified
@@ -639,7 +639,7 @@ void unmarshalInt32(const char * &src, size_t &srcLen, int32_t &dst)
  * @param dst    Out parameter: The destination.
  */
 void unmarshalUint64(const char * &src, size_t &srcLen, uint64_t &dst)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Unmarshals a string from the specified source buffer into the specified
@@ -660,7 +660,7 @@ void unmarshalUint64(const char * &src, size_t &srcLen, uint64_t &dst)
  * should be unmarshalled to.
  */
 void unmarshalString(const char * &src, size_t &srcLen, char *dst,
-  const size_t dstLen) throw(castor::exception::Exception);
+  const size_t dstLen) ;
 
 /**
  * Unmarshals a string from the specified source buffer into the specified
@@ -679,7 +679,7 @@ void unmarshalString(const char * &src, size_t &srcLen, char *dst,
  * string.
  */
 template<int n> void unmarshalString(const char * &src,
-  size_t &srcLen, char (&dst)[n]) throw(castor::exception::Exception) {
+  size_t &srcLen, char (&dst)[n])  {
   unmarshalString(src, srcLen, dst, n);
 }
 

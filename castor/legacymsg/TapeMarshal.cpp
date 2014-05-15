@@ -39,7 +39,7 @@
 // marshal
 //-----------------------------------------------------------------------------
 size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
-  const TapeStatRequestMsgBody &src) throw(castor::exception::Exception) {
+  const TapeStatRequestMsgBody &src)  {
   const char *const task = "marshal TapeStatRequestMsgBody";
 
   if(dst == NULL) {
@@ -114,7 +114,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 // marshal
 //-----------------------------------------------------------------------------
 size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
-  const TapeStatReplyMsgBody &body) throw(castor::exception::Exception) {
+  const TapeStatReplyMsgBody &body)  {
   const char *const task = "marshall TapeStatReplyMsgBody";
 
   if(dst == NULL) {
@@ -218,7 +218,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 // marshal
 //-----------------------------------------------------------------------------
 size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
-  const TapeConfigRequestMsgBody &src) throw(castor::exception::Exception) {
+  const TapeConfigRequestMsgBody &src)  {
   const char *const task = "marshal TapeConfigRequestMsgBody";
 
   if(dst == NULL) {
@@ -297,7 +297,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 // marshal
 //-----------------------------------------------------------------------------
 size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
-  const TapeLabelRqstMsgBody &src) throw(castor::exception::Exception) {
+  const TapeLabelRqstMsgBody &src)  {
   const char *const task = "marshal TapeLabelRqstMsgBody";
 
   if(dst == NULL) {
@@ -379,7 +379,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 //-----------------------------------------------------------------------------
 // marshal
 //-----------------------------------------------------------------------------
-size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const TapeUpdateDriveRqstMsgBody &src) throw(castor::exception::Exception) {
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const TapeUpdateDriveRqstMsgBody &src)  {
   const char *task = "marshal TapeUpdateDriveRqstMsgBody";
 
   if(dst == NULL) {
@@ -453,7 +453,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
-void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeStatReplyMsgBody &dst) throw(castor::exception::Exception) {
+void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeStatReplyMsgBody &dst)  {
   try {
     io::unmarshalUint16(src, srcLen, dst.number_of_drives);
     for(int i=0; i<dst.number_of_drives; i++) {
@@ -482,7 +482,7 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeStatRep
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
-void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeUpdateDriveRqstMsgBody &dst) throw(castor::exception::Exception) {
+void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeUpdateDriveRqstMsgBody &dst)  {
   try {
     io::unmarshalString(src, srcLen, dst.vid);
     io::unmarshalString(src, srcLen, dst.drive);
@@ -497,7 +497,7 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeUpdateD
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
-void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeConfigRequestMsgBody &dst) throw(castor::exception::Exception) {
+void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeConfigRequestMsgBody &dst)  {
   try {
     io::unmarshalUint32(src, srcLen, dst.uid);
     io::unmarshalUint32(src, srcLen, dst.gid);
@@ -514,7 +514,7 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeConfigR
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
-void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeLabelRqstMsgBody &dst) throw(castor::exception::Exception) {
+void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeLabelRqstMsgBody &dst)  {
   try {
     io::unmarshalUint16(src, srcLen, dst.force);
     io::unmarshalUint32(src, srcLen, dst.uid);
@@ -533,7 +533,7 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeLabelRq
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
-void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeStatRequestMsgBody &dst) throw(castor::exception::Exception) {
+void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeStatRequestMsgBody &dst)  {
   try {
     io::unmarshalUint32(src, srcLen, dst.uid);
     io::unmarshalUint32(src, srcLen, dst.gid);

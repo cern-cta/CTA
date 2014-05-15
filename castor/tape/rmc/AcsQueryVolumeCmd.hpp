@@ -97,7 +97,7 @@ protected:
    * @return The volume status of the volume identifier specified on the
    * command-line.
    */
-  void syncQueryVolume() throw(castor::exception::QueryVolumeFailed);
+  void syncQueryVolume() ;
 
   /**
    * Sends the query volume  request to ACSLS.
@@ -105,7 +105,7 @@ protected:
    * @param seqNumber The sequence number to be used in the request.
    */
   void sendQueryVolumeRequest(const SEQ_NO seqNumber)
-    throw (castor::exception::QueryVolumeFailed);
+    ;
 
   /**
    * Extracts the volume status from the specified query-response message and
@@ -116,7 +116,7 @@ protected:
    */
   void processQueryResponse(std::ostream &os,
     ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
-    throw(castor::exception::QueryVolumeFailed);
+    ;
 
   /**
    * Writes a human readable representation of the specified volume status to

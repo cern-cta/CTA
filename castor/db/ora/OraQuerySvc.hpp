@@ -78,7 +78,7 @@ namespace castor {
         /**
          * Reset the converter statements.
          */
-        void reset() throw ();
+        void reset() throw();
 
       public:
 
@@ -105,7 +105,7 @@ namespace castor {
                              u_signed64 svcClassId,
                              unsigned euid,
                              unsigned egid)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Gets all DiskCopies for a given file.
@@ -126,7 +126,7 @@ namespace castor {
                          unsigned euid,
                          unsigned egid,
                          std::string& fileName)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Gets all DiskCopies for a given request by reqId or userTag.
@@ -148,7 +148,7 @@ namespace castor {
         diskCopies4Request (castor::stager::RequestQueryType reqType,
                             std::string param,
                             u_signed64 svcClassId)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Lists diskpools and give details on their machine/filesystems
@@ -169,7 +169,7 @@ namespace castor {
 			  unsigned long egid,
 			  bool detailed,
                           enum castor::query::DiskPoolQueryType queryType)
-          throw (castor::exception::Exception);
+          ;
         
         /**
          * Give details on the machines/filesystems of a given diskpool
@@ -188,7 +188,7 @@ namespace castor {
 			 std::string svcClass,
 			 bool detailed,
                          enum castor::query::DiskPoolQueryType queryType)
-          throw (castor::exception::Exception);
+          ;
 
       private:
 
@@ -243,7 +243,7 @@ namespace castor {
         /// Private function to parse and return the list of results
         std::list<castor::stager::StageQueryResult*>*
         gatherResults(oracle::occi::ResultSet *rset)        
-          throw (oracle::occi::SQLException);
+          ;
 
       }; // end of class OraQuerySvc
 

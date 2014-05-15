@@ -49,25 +49,25 @@ namespace castor {
         /**
          * 
          */
-        virtual bool next(int count = 1) throw (castor::exception::SQLError) = 0;
+        virtual bool next(int count = 1)  = 0;
         
         /**
          * 
          * @param i 
          */
-        virtual int getInt(int i) throw (castor::exception::SQLError) = 0;
-        virtual signed64 getInt64(int i) throw (castor::exception::SQLError) = 0;
-        virtual u_signed64 getUInt64(int i) throw (castor::exception::SQLError) = 0;
-        virtual std::string getString(int i) throw (castor::exception::SQLError) = 0;
-        virtual std::string getClob(int i) throw (castor::exception::Exception) = 0;
-        virtual float getFloat(int i) throw (castor::exception::SQLError) = 0;
-        virtual double getDouble(int i) throw (castor::exception::SQLError) = 0;
+        virtual int getInt(int i)  = 0;
+        virtual signed64 getInt64(int i)  = 0;
+        virtual u_signed64 getUInt64(int i)  = 0;
+        virtual std::string getString(int i)  = 0;
+        virtual std::string getClob(int i)  = 0;
+        virtual float getFloat(int i)  = 0;
+        virtual double getDouble(int i)  = 0;
         
         /**
          *
          */
         virtual void setDataBuffer(int pos, void* buffer, unsigned dbType, unsigned size, void* bufLen)
-          throw (castor::exception::SQLError) = 0;
+           = 0;
     };
 
   }

@@ -51,14 +51,14 @@ namespace castor {
        * @param r the response to handle
        */
       virtual void handleResponse(castor::rh::Response& r)
-        throw (castor::exception::Exception) = 0;
+         = 0;
       
       /**
        * terminates the response handler. This is called
        * when all responses were received.
        */
       virtual void terminate()
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
     };
 

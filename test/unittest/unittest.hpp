@@ -40,7 +40,7 @@ namespace unittest {
    * @return               A descriptor referencing the newly created socket.
    */
   int createLocalListenSocket(const char *const listenSockPath)
-    throw (std::exception);
+    ;
 
   /**
    * Reads in, acknowledges and drops the specified number of RTCOPY messages
@@ -89,7 +89,7 @@ namespace unittest {
     const int      sockFd,
     const uint32_t magic,
     const uint32_t reqType)
-    throw(std::exception);
+    ;
 
   /**
    * Returns true if the connection associated with the specified
@@ -101,7 +101,7 @@ namespace unittest {
    * @param sockFd A file-descriptor referencing the socket of the connection
    *               to be tested.
    */
-  bool connectionHasBeenClosedByPeer(const int sockFd) throw(std::exception);
+  bool connectionHasBeenClosedByPeer(const int sockFd) ;
 
   /**
    * Reads in an RTCOPY acknowledgement message from the connection associated
@@ -118,7 +118,7 @@ namespace unittest {
     const uint32_t magic,
     const uint32_t reqType,
     const uint32_t status)
-    throw(std::exception);
+    ;
 
   /**
    * Writes a RTCP_REQUEST_MORE_WORK message to the specified connection.
@@ -133,7 +133,7 @@ namespace unittest {
     const int         sockFd,
     const uint32_t    volReqId,
     const char *const tapePath)
-    throw(std::exception);
+    ;
 
   /**
    * Write an RTCP_ENDOF_REQ message to the specified connection.
@@ -142,7 +142,7 @@ namespace unittest {
    *               to be written to.
    */
   void writeRTCP_ENDOF_REQ(const int sockFd)
-    throw(std::exception);
+    ;
 
   /**
    * Writes an RTCP_FINISHED message to the specified connection.
@@ -170,7 +170,7 @@ namespace unittest {
     const uint64_t    bytesIn,
     const uint64_t    bytesOut,
     const struct castor::tape::legacymsg::RtcpSegmentAttributes &segAttr)
-    throw(std::exception);
+    ;
 
   /**
    * Wrapper around the castor::tape::net::acceptConnection() method that
@@ -183,6 +183,6 @@ namespace unittest {
   int netAcceptConnection(
     const int    listenSockFd,
     const time_t &timeout)
-    throw(std::exception);
+    ;
 } // namespace unittest
 

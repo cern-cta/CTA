@@ -37,7 +37,7 @@
 //------------------------------------------------------------------------------
 castor::client::VectorResponseHandler::VectorResponseHandler
 (std::vector<castor::rh::Response *> *vector)
- throw (castor::exception::Exception) {
+  {
   if (0 == vector) {
     castor::exception::Exception e(EINVAL);
     e.getMessage() << "Null pointer passed to VectorResponseHandler constructor";
@@ -51,7 +51,7 @@ castor::client::VectorResponseHandler::VectorResponseHandler
 //------------------------------------------------------------------------------
 void castor::client::VectorResponseHandler::handleResponse
 (castor::rh::Response& r)
-  throw (castor::exception::Exception) {
+   {
   castor::IObject *obj = r.clone();
   castor::rh::Response *resp = dynamic_cast<castor::rh::Response *>(obj);
   if (0 == resp) {

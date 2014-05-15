@@ -98,7 +98,7 @@ protected:
    * @param queryInterval The amount of time in seconds to wait between
    * querying ACS for responses.
    */
-  void syncDismount() throw(castor::exception::DismountFailed);
+  void syncDismount() ;
 
   /**
    * Sends the dismount request to ACSLS.
@@ -106,7 +106,7 @@ protected:
    * @param seqNumber The sequence number to be used in the request.
    */
   void sendDismountRequest(const SEQ_NO seqNumber)
-    throw(castor::exception::DismountFailed);
+    ;
 
   /**
    * Throws castor::exception::DismountFailed if the mount was not
@@ -116,7 +116,7 @@ protected:
    */
   void processDismountResponse(
     ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
-    throw(castor::exception::DismountFailed);
+    ;
 
 private:
 

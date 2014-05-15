@@ -82,7 +82,7 @@ namespace castor {
        bool* emptyFile,
        u_signed64 fileId,
        const std::string nsHost)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Handles the start of a Put job.
@@ -100,7 +100,7 @@ namespace castor {
        std::string mountPoint,
        u_signed64 fileId,
        const std::string nsHost)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       virtual void prepareForMigration
       (u_signed64 subReqId,
@@ -110,7 +110,7 @@ namespace castor {
        const std::string nsHost,
        const std::string csumtype="",
        const std::string csumvalue="")
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Informs the stager the a Get or Update SubRequest
@@ -126,7 +126,7 @@ namespace castor {
       (u_signed64 subReqId,
        u_signed64 fileId,
        const std::string nsHost)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Informs the stager the a Get or Update SubRequest
@@ -141,7 +141,7 @@ namespace castor {
       (u_signed64 subReqId,
        u_signed64 fileId,
        const std::string nsHost)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Informs the stager the a Put or a PutDone SubRequest failed.
@@ -155,7 +155,7 @@ namespace castor {
       (u_signed64 subReqId,
        u_signed64 fileId,
        const std::string nsHost)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Informs the stager that an update subrequest has written
@@ -171,7 +171,7 @@ namespace castor {
       (u_signed64 subRequestId,
        u_signed64 fileId,
        const std::string nsHost)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
     }; // end of class IJobSvc
 

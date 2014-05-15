@@ -55,7 +55,7 @@ castor::server::Daemon::~Daemon() throw() {
 // parseCommandLine
 //------------------------------------------------------------------------------
 void castor::server::Daemon::parseCommandLine(int argc,
-  char *argv[]) throw(castor::exception::Exception) {
+  char *argv[])  {
   Coptions_t longopts[4];
 
   longopts[0].name = "foreground";
@@ -136,7 +136,7 @@ void castor::server::Daemon::runAsStagerSuperuser() throw() {
 // getForeground
 //------------------------------------------------------------------------------
 bool castor::server::Daemon::getForeground() const
-  throw(castor::exception::CommandLineNotParsed) {
+   {
   if(!m_commandLineHasBeenParsed) {
     castor::exception::CommandLineNotParsed ex;
     ex.getMessage() <<
@@ -161,7 +161,7 @@ void castor::server::Daemon::setCommandLineHasBeenParsed(const bool foreground)
 // dlfInit
 //-----------------------------------------------------------------------------
 void castor::server::Daemon::dlfInit(castor::dlf::Message messages[])
-  throw (castor::exception::Exception) {
+   {
   castor::dlf::dlf_init((char*)m_log.getProgramName().c_str(), messages);
   // Add framework specific messages
   castor::dlf::Message frameworkMessages[] =
@@ -192,7 +192,7 @@ void castor::server::Daemon::dlfInit(castor::dlf::Message messages[])
 // daemonizeIfNotRunInForeground
 //------------------------------------------------------------------------------
 void castor::server::Daemon::daemonizeIfNotRunInForeground()
-  throw (castor::exception::Exception) {
+   {
   // Do nothing if already a daemon
   if (1 == getppid())  {
     return;

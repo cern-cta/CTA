@@ -58,7 +58,7 @@ void castor::io::PollReactorImpl::clear() throw() {
 // registerHandler
 //------------------------------------------------------------------------------
 void castor::io::PollReactorImpl::registerHandler(
-  PollEventHandler *const handler) throw(castor::exception::Exception) {
+  PollEventHandler *const handler)  {
   std::pair<HandlerMap::iterator, bool> insertResult =
     m_handlers.insert(HandlerMap::value_type(handler->getFd(), handler));
   if(!insertResult.second) {
@@ -74,7 +74,7 @@ void castor::io::PollReactorImpl::registerHandler(
 // removeHandler
 //------------------------------------------------------------------------------
 void castor::io::PollReactorImpl::removeHandler(
-  PollEventHandler *const handler) throw(castor::exception::Exception) {
+  PollEventHandler *const handler)  {
   const HandlerMap::size_type nbElements = m_handlers.erase(handler->getFd());
   if(0 == nbElements) {
     castor::exception::Exception ex;
@@ -88,7 +88,7 @@ void castor::io::PollReactorImpl::removeHandler(
 // handleEvents
 //------------------------------------------------------------------------------
 void castor::io::PollReactorImpl::handleEvents(const int timeout)
-  throw(castor::exception::Exception) {
+   {
   nfds_t nfds = 0;
   castor::utils::SmartArrayPtr<struct pollfd> fds(buildPollFds(nfds));
 
@@ -117,7 +117,7 @@ void castor::io::PollReactorImpl::handleEvents(const int timeout)
 // buildPollFdsArray
 //------------------------------------------------------------------------------
 struct pollfd *castor::io::PollReactorImpl::buildPollFds(nfds_t &nfds)
-  throw(castor::exception::Exception) {
+   {
   nfds = m_handlers.size();
 
   castor::utils::SmartArrayPtr<struct pollfd> fds;
@@ -145,7 +145,7 @@ struct pollfd *castor::io::PollReactorImpl::buildPollFds(nfds_t &nfds)
 //------------------------------------------------------------------------------
 void castor::io::PollReactorImpl::dispatchEventHandlers(
   const struct pollfd *const fds, const nfds_t nfds)
-  throw(castor::exception::Exception) {
+   {
   // For each poll() file descriptor
   for(nfds_t i=0; i<nfds; i++) {
     // Find and dispatch the appropriate handler if there is a pending event
@@ -164,7 +164,7 @@ void castor::io::PollReactorImpl::dispatchEventHandlers(
 // findHandler
 //------------------------------------------------------------------------------
 castor::io::PollEventHandler *castor::io::PollReactorImpl::findHandler(
-  const int fd) throw(castor::exception::Exception) {
+  const int fd)  {
   HandlerMap::iterator itor = m_handlers.find(fd);
   if(itor == m_handlers.end()) {
     castor::exception::Exception ex;

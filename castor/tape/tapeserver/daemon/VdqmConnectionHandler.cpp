@@ -68,7 +68,7 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::fillPollFd(struct 
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
-bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(const struct pollfd &fd) throw(castor::exception::Exception) {
+bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(const struct pollfd &fd)  {
   std::list<log::Param> params;
   params.push_back(log::Param("fd"        , fd.fd                                     ));
   params.push_back(log::Param("POLLIN"    , fd.revents & POLLIN     ? "true" : "false"));
@@ -116,7 +116,7 @@ bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(const 
 //------------------------------------------------------------------------------
 // checkHandleEventFd
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmConnectionHandler::checkHandleEventFd(const int fd) throw (castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmConnectionHandler::checkHandleEventFd(const int fd)  {
   if(m_fd != fd) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to handle vdqm connection"
@@ -183,7 +183,7 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::logVdqmJobReceptio
 //------------------------------------------------------------------------------
 // readJobMsg
 //------------------------------------------------------------------------------
-castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsg(const int fd) throw(castor::exception::Exception) {
+castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsg(const int fd)  {
   const legacymsg::MessageHeader header = readJobMsgHeader(fd);
   const legacymsg::RtcpJobRqstMsgBody body = readJobMsgBody(fd,
     header.lenOrStatus);
@@ -194,7 +194,7 @@ castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConn
 //------------------------------------------------------------------------------
 // readJobMsgHeader
 //------------------------------------------------------------------------------
-castor::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsgHeader(const int fd) throw(castor::exception::Exception) {
+castor::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsgHeader(const int fd)  {
   // Read in the message header
   char buf[3 * sizeof(uint32_t)]; // magic + request type + len
   io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
@@ -230,7 +230,7 @@ castor::legacymsg::MessageHeader castor::tape::tapeserver::daemon::VdqmConnectio
 //------------------------------------------------------------------------------
 // readJobMsgBody
 //------------------------------------------------------------------------------
-castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsgBody(const int fd, const uint32_t len) throw(castor::exception::Exception) {
+castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConnectionHandler::readJobMsgBody(const int fd, const uint32_t len)  {
   char buf[1024];
 
   if(sizeof(buf) < len) {
@@ -260,7 +260,7 @@ castor::legacymsg::RtcpJobRqstMsgBody castor::tape::tapeserver::daemon::VdqmConn
 //------------------------------------------------------------------------------
 // writeJobReplyMsg
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmConnectionHandler::writeJobReplyMsg(const int fd) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::VdqmConnectionHandler::writeJobReplyMsg(const int fd)  {
   legacymsg::RtcpJobReplyMsgBody body;
   char buf[1024];
   const size_t len = legacymsg::marshal(buf, body);

@@ -69,7 +69,7 @@ public:
    * the reactor.
    */
   bool handleEvent(const struct pollfd &fd)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Destructor.
@@ -84,7 +84,7 @@ private:
    * Throws an exception if the specified file-descriptor is not that of the
    * socket listening for client connections.
    */
-  void checkHandleEventFd(const int fd) throw (castor::exception::Exception);
+  void checkHandleEventFd(const int fd) ;
 
   /**
    * The file descriptor of the socket listening for client connections.

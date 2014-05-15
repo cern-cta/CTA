@@ -38,7 +38,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::io::PipeSocket::PipeSocket()
-  throw (castor::exception::Exception) :
+   :
   AbstractSocket(0, false), m_mode(castor::io::PIPE_RW) 
 {
   int fds[2];
@@ -57,7 +57,7 @@ castor::io::PipeSocket::PipeSocket()
 // constructor
 //------------------------------------------------------------------------------
 castor::io::PipeSocket::PipeSocket(const int fdIn, const int fdOut, const int mode)
-  throw (castor::exception::Exception) :
+   :
   AbstractSocket(0, false), m_fdIn(fdIn), m_fdOut(fdOut), m_mode(mode) {}
 
 //------------------------------------------------------------------------------
@@ -98,7 +98,7 @@ void castor::io::PipeSocket::closeRead()
 void castor::io::PipeSocket::sendBuffer(const unsigned int magic,
                                         const char* buf,
                                         const int n)
-  throw (castor::exception::Exception) {
+   {
   if ((m_mode & castor::io::PIPE_WRITE) == 0) {
     castor::exception::Exception ex(0);
     ex.getMessage() << "Pipe closed for writing";
@@ -124,7 +124,7 @@ void castor::io::PipeSocket::sendBuffer(const unsigned int magic,
 void castor::io::PipeSocket::readBuffer(const unsigned int magic,
                                         char** buf,
                                         int& n)
-  throw (castor::exception::Exception) {
+   {
   if ((m_mode & castor::io::PIPE_READ) == 0) {
     castor::exception::Exception ex(0);
     ex.getMessage() << "Pipe closed for reading";

@@ -163,7 +163,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::fillRep(castor::IAddress*,
                                                           castor::IObject* object,
                                                           unsigned int type,
                                                           bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::GetUpdateStartRequest* obj = 
     dynamic_cast<castor::stager::GetUpdateStartRequest*>(object);
   try {
@@ -196,7 +196,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::fillRep(castor::IAddress*,
 // fillRepSvcClass
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbGetUpdateStartRequestCnv::fillRepSvcClass(castor::stager::GetUpdateStartRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   if (0 != obj->svcClass()) {
     // Check checkSvcClassExist statement
     if (0 == m_checkSvcClassExistStatement) {
@@ -228,7 +228,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::fillRepSvcClass(castor::stager
 // fillRepIClient
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbGetUpdateStartRequestCnv::fillRepIClient(castor::stager::GetUpdateStartRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check update statement
   if (0 == m_updateIClientStatement) {
     m_updateIClientStatement = createStatement(s_updateIClientStatementString);
@@ -246,7 +246,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::fillObj(castor::IAddress*,
                                                           castor::IObject* object,
                                                           unsigned int type,
                                                           bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::GetUpdateStartRequest* obj = 
     dynamic_cast<castor::stager::GetUpdateStartRequest*>(object);
   switch (type) {
@@ -272,7 +272,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::fillObj(castor::IAddress*,
 // fillObjSvcClass
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbGetUpdateStartRequestCnv::fillObjSvcClass(castor::stager::GetUpdateStartRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -310,7 +310,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::fillObjSvcClass(castor::stager
 // fillObjIClient
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbGetUpdateStartRequestCnv::fillObjIClient(castor::stager::GetUpdateStartRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -351,7 +351,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::createRep(castor::IAddress*,
                                                             castor::IObject* object,
                                                             bool endTransaction,
                                                             unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::GetUpdateStartRequest* obj = 
     dynamic_cast<castor::stager::GetUpdateStartRequest*>(object);
   // check whether something needs to be done
@@ -436,7 +436,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::bulkCreateRep(castor::IAddress
                                                                 std::vector<castor::IObject*> &objects,
                                                                 bool endTransaction,
                                                                 unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   // check whether something needs to be done
   int nb = objects.size();
   if (0 == nb) return;
@@ -929,7 +929,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::bulkCreateRep(castor::IAddress
 void castor::db::cnv::DbGetUpdateStartRequestCnv::updateRep(castor::IAddress*,
                                                             castor::IObject* object,
                                                             bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::GetUpdateStartRequest* obj = 
     dynamic_cast<castor::stager::GetUpdateStartRequest*>(object);
   // check whether something needs to be done
@@ -982,7 +982,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::updateRep(castor::IAddress*,
 void castor::db::cnv::DbGetUpdateStartRequestCnv::deleteRep(castor::IAddress*,
                                                             castor::IObject* object,
                                                             bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::GetUpdateStartRequest* obj = 
     dynamic_cast<castor::stager::GetUpdateStartRequest*>(object);
   // check whether something needs to be done
@@ -1020,7 +1020,7 @@ void castor::db::cnv::DbGetUpdateStartRequestCnv::deleteRep(castor::IAddress*,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::cnv::DbGetUpdateStartRequestCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   castor::BaseAddress* ad = 
     dynamic_cast<castor::BaseAddress*>(address);
   try {
@@ -1075,7 +1075,7 @@ castor::IObject* castor::db::cnv::DbGetUpdateStartRequestCnv::createObj(castor::
 //------------------------------------------------------------------------------
 std::vector<castor::IObject*>
 castor::db::cnv::DbGetUpdateStartRequestCnv::bulkCreateObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Prepare result
   std::vector<castor::IObject*> res;
   // check whether something needs to be done
@@ -1140,7 +1140,7 @@ castor::db::cnv::DbGetUpdateStartRequestCnv::bulkCreateObj(castor::IAddress* add
 // updateObj
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbGetUpdateStartRequestCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {

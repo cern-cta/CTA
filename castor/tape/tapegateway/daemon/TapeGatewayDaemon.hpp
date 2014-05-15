@@ -57,7 +57,7 @@ namespace castor {
        * DLF and the "exception catch and log" logic.
        */
       int exceptionThrowingMain(int argc,char **argv) 
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Logs the start of the daemon.

@@ -58,7 +58,7 @@ namespace castor {
       static unsigned int readMagicNumber(
         castor::io::ServerSocket &socket,
         const int timeout)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Writes the contents of the specified header buffer to the specified
@@ -69,7 +69,7 @@ namespace castor {
        * @exception In case of error
        */
       static void netWriteVdqmHeader(castor::io::ServerSocket &socket,
-        void *hdrbuf) throw (castor::exception::Exception);
+        void *hdrbuf) ;
           
       /**
        * Reads the VDQM header from the specified socket into the specified
@@ -79,7 +79,7 @@ namespace castor {
        * @param hdrbuf the header buffer where the data will be written to
        */
       static void netReadVdqmHeader(castor::io::ServerSocket &socket,
-        void *hdrbuf) throw (castor::exception::Exception);       
+        void *hdrbuf) ;       
 
       /**
        * Throws a permission denied exception if the specified action is
@@ -97,7 +97,7 @@ namespace castor {
       static void checkCupvPermissions(castor::io::ServerSocket &sock,
         const uid_t uid, const gid_t gid, const int privilege,
         const char *privilegeName, const char *messageType)
-        throw (castor::exception::PermissionDenied);
+        ;
 
     }; // class SocketHelper
 

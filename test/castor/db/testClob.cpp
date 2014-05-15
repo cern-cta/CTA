@@ -60,7 +60,7 @@ class occiClob
   string url;
   
   void insertRows (Connection *conn)
-  throw (SQLException)
+  
   {
     cout << "insertRows" << endl;
     Statement *stmt = conn->createStatement ("INSERT INTO clobstest(id, longdata) VALUES (:v1,:v2)");
@@ -82,7 +82,7 @@ class occiClob
   * populating the clob uses write method;
   */
   void populateClob (Clob &clob,unsigned int way, string value)
-  throw (SQLException)
+  
   {
     if (way == USE_NORM)
     {
@@ -102,7 +102,7 @@ class occiClob
   * printing the clob data as integer stream
   */
   void dumpClob (Clob &clob,unsigned int way)
-  throw (SQLException)
+  
   {
     if (clob.isNull())
     {
@@ -135,7 +135,7 @@ class occiClob
   }
   
   void runSample ()
-  throw (SQLException)
+  
   {
     Environment *env = Environment::createEnvironment (
     Environment::DEFAULT);

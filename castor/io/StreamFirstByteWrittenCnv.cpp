@@ -81,7 +81,7 @@ void castor::io::StreamFirstByteWrittenCnv::createRep(castor::IAddress* address,
                                                       castor::IObject* object,
                                                       bool,
                                                       unsigned int)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::FirstByteWritten* obj = 
     dynamic_cast<castor::stager::FirstByteWritten*>(object);
   StreamAddress* ad = 
@@ -109,7 +109,7 @@ void castor::io::StreamFirstByteWrittenCnv::createRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamFirstByteWrittenCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
@@ -173,7 +173,7 @@ castor::IObject* castor::io::StreamFirstByteWrittenCnv::createObj(castor::IAddre
 void castor::io::StreamFirstByteWrittenCnv::marshalObject(castor::IObject* object,
                                                           castor::io::StreamAddress* address,
                                                           castor::ObjectSet& alreadyDone)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::FirstByteWritten* obj = 
     dynamic_cast<castor::stager::FirstByteWritten*>(object);
   if (0 == obj) {
@@ -197,7 +197,7 @@ void castor::io::StreamFirstByteWrittenCnv::marshalObject(castor::IObject* objec
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamFirstByteWrittenCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                         castor::ObjectCatalog& newlyCreated)
-  throw (castor::exception::Exception) {
+   {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created

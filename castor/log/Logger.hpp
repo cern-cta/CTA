@@ -111,7 +111,7 @@ public:
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  virtual void prepareForFork() throw(castor::exception::Exception) = 0;
+  virtual void prepareForFork()  = 0;
 
   /**
    * Returns the name of the program that is to  be prepended to every log

@@ -48,7 +48,7 @@ namespace legacymsg {
  * @param src    The source structure.
  * @return       The total length of the message (header + body).
  */
-size_t marshal(char *const dst, const size_t dstLen, const TapeConfigRequestMsgBody &src) throw(castor::exception::Exception);
+size_t marshal(char *const dst, const size_t dstLen, const TapeConfigRequestMsgBody &src) ;
 
 /**
  * Marshals the specified source message body structure and its implicit
@@ -58,7 +58,7 @@ size_t marshal(char *const dst, const size_t dstLen, const TapeConfigRequestMsgB
  * @param src The source structure.
  * @return    The total length of the message (header + body).
  */
-template<int n> size_t marshal(char (&dst)[n], const TapeConfigRequestMsgBody &src) throw(castor::exception::Exception) {
+template<int n> size_t marshal(char (&dst)[n], const TapeConfigRequestMsgBody &src)  {
   return marshal(dst, n, src);
 }
 
@@ -75,7 +75,7 @@ template<int n> size_t marshal(char (&dst)[n], const TapeConfigRequestMsgBody &s
  * return is the number of bytes remaining in the source buffer.
  * @param dst The destination message body structure.
  */
-void unmarshal(const char * &src, size_t &srcLen, TapeConfigRequestMsgBody &dst) throw(castor::exception::Exception);
+void unmarshal(const char * &src, size_t &srcLen, TapeConfigRequestMsgBody &dst) ;
 
 /**
  * Marshals the specified source message body structure and its implicit
@@ -86,7 +86,7 @@ void unmarshal(const char * &src, size_t &srcLen, TapeConfigRequestMsgBody &dst)
  * @param src    The source structure.
  * @return       The total length of the message (header + body).
  */
-size_t marshal(char *const dst, const size_t dstLen, const TapeStatRequestMsgBody &src) throw(castor::exception::Exception);
+size_t marshal(char *const dst, const size_t dstLen, const TapeStatRequestMsgBody &src) ;
 
 /**
  * Marshals the specified source message body structure and its implicit
@@ -96,7 +96,7 @@ size_t marshal(char *const dst, const size_t dstLen, const TapeStatRequestMsgBod
  * @param src The source structure.
  * @return    The total length of the message (header + body).
  */
-template<int n> size_t marshal(char (&dst)[n], const TapeStatRequestMsgBody &src) throw(castor::exception::Exception) {
+template<int n> size_t marshal(char (&dst)[n], const TapeStatRequestMsgBody &src)  {
   return marshal(dst, n, src);
 }
 
@@ -113,7 +113,7 @@ template<int n> size_t marshal(char (&dst)[n], const TapeStatRequestMsgBody &src
  * return is the number of bytes remaining in the source buffer.
  * @param dst The destination message body structure.
  */
-void unmarshal(const char * &src, size_t &srcLen, TapeStatRequestMsgBody &dst) throw(castor::exception::Exception);
+void unmarshal(const char * &src, size_t &srcLen, TapeStatRequestMsgBody &dst) ;
 
 /**
  * Marshals the specified source message body structure and its implicit
@@ -124,7 +124,7 @@ void unmarshal(const char * &src, size_t &srcLen, TapeStatRequestMsgBody &dst) t
  * @param src    The source structure.
  * @return       The total length of the message (header + body).
  */
-size_t marshal(char *const dst, const size_t dstLen, const TapeStatReplyMsgBody &src) throw(castor::exception::Exception);
+size_t marshal(char *const dst, const size_t dstLen, const TapeStatReplyMsgBody &src) ;
 
 /**
  * Marshals the specified source message body structure and its implicit
@@ -134,7 +134,7 @@ size_t marshal(char *const dst, const size_t dstLen, const TapeStatReplyMsgBody 
  * @param src The source structure.
  * @return    The total length of the message (header + body).
  */
-template<int n> size_t marshal(char (&dst)[n], const TapeStatReplyMsgBody &src) throw(castor::exception::Exception) {
+template<int n> size_t marshal(char (&dst)[n], const TapeStatReplyMsgBody &src)  {
   return marshal(dst, n, src);
 }
 
@@ -151,7 +151,7 @@ template<int n> size_t marshal(char (&dst)[n], const TapeStatReplyMsgBody &src) 
  * return is the number of bytes remaining in the source buffer.
  * @param dst The destination message body structure.
  */
-void unmarshal(const char * &src, size_t &srcLen, TapeStatReplyMsgBody &dst) throw(castor::exception::Exception);
+void unmarshal(const char * &src, size_t &srcLen, TapeStatReplyMsgBody &dst) ;
 
 /**
  * Marshals the specified source message body structure and its implicit
@@ -162,7 +162,7 @@ void unmarshal(const char * &src, size_t &srcLen, TapeStatReplyMsgBody &dst) thr
  * @param src    The source structure.
  * @return       The total length of the message (header + body).
  */
-size_t marshal(char *const dst, const size_t dstLen, const TapeUpdateDriveRqstMsgBody &src) throw(castor::exception::Exception);
+size_t marshal(char *const dst, const size_t dstLen, const TapeUpdateDriveRqstMsgBody &src) ;
 
 /**
  * Marshals the specified source message body structure and its implicit
@@ -172,7 +172,7 @@ size_t marshal(char *const dst, const size_t dstLen, const TapeUpdateDriveRqstMs
  * @param src The source structure.
  * @return    The total length of the message (header + body).
  */
-template<int n> size_t marshal(char (&dst)[n], const TapeUpdateDriveRqstMsgBody &src) throw(castor::exception::Exception) {
+template<int n> size_t marshal(char (&dst)[n], const TapeUpdateDriveRqstMsgBody &src)  {
   return marshal(dst, n, src);
 }
 
@@ -189,7 +189,7 @@ template<int n> size_t marshal(char (&dst)[n], const TapeUpdateDriveRqstMsgBody 
  * return is the number of bytes remaining in the source buffer.
  * @param dst The destination message body structure.
  */
-void unmarshal(const char * &src, size_t &srcLen, TapeUpdateDriveRqstMsgBody &dst) throw(castor::exception::Exception);
+void unmarshal(const char * &src, size_t &srcLen, TapeUpdateDriveRqstMsgBody &dst) ;
 
 /**
  * Marshals the specified source message body structure and its implicit
@@ -200,7 +200,7 @@ void unmarshal(const char * &src, size_t &srcLen, TapeUpdateDriveRqstMsgBody &ds
  * @param src    The source structure.
  * @return       The total length of the message (header + body).
  */
-size_t marshal(char *const dst, const size_t dstLen, const TapeLabelRqstMsgBody &src) throw(castor::exception::Exception);
+size_t marshal(char *const dst, const size_t dstLen, const TapeLabelRqstMsgBody &src) ;
 
 /**
  * Marshals the specified source message body structure and its implicit
@@ -210,7 +210,7 @@ size_t marshal(char *const dst, const size_t dstLen, const TapeLabelRqstMsgBody 
  * @param src The source structure.
  * @return    The total length of the message (header + body).
  */
-template<int n> size_t marshal(char (&dst)[n], const TapeLabelRqstMsgBody &src) throw(castor::exception::Exception) {
+template<int n> size_t marshal(char (&dst)[n], const TapeLabelRqstMsgBody &src)  {
   return marshal(dst, n, src);
 }
 
@@ -227,7 +227,7 @@ template<int n> size_t marshal(char (&dst)[n], const TapeLabelRqstMsgBody &src) 
  * return is the number of bytes remaining in the source buffer.
  * @param dst The destination message body structure.
  */
-void unmarshal(const char * &src, size_t &srcLen, TapeLabelRqstMsgBody &dst) throw(castor::exception::Exception);
+void unmarshal(const char * &src, size_t &srcLen, TapeLabelRqstMsgBody &dst) ;
 
 } // namespace legacymsg
 } // namespace castor

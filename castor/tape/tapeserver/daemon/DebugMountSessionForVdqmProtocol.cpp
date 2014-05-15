@@ -68,7 +68,7 @@ castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::DebugMountSe
 //------------------------------------------------------------------------------
 // execute
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::execute() throw (castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::execute()  {
   changeProcessName();
 
   assignSessionPidToDrive();
@@ -126,14 +126,14 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::changeP
 //------------------------------------------------------------------------------
 // assignSessionPidToDrive
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::assignSessionPidToDrive() throw (castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::assignSessionPidToDrive()  {
   m_vdqm.assignDrive(m_hostName,  m_job.driveUnit, m_job.dgn, m_job.volReqId, m_sessionPid);
 }
 
 //------------------------------------------------------------------------------
 // getVolume
 //------------------------------------------------------------------------------
-castor::tape::tapegateway::Volume *castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::getVolume(const uint64_t clientMsgSeqNb) const throw(castor::exception::Exception) {
+castor::tape::tapegateway::Volume *castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::getVolume(const uint64_t clientMsgSeqNb) const  {
   // Prepare the request
   tapegateway::VolumeRequest request;
   request.setMountTransactionId(m_job.volReqId);
@@ -215,7 +215,7 @@ castor::tape::tapegateway::Volume *castor::tape::tapeserver::daemon::DebugMountS
 //-----------------------------------------------------------------------------
 // connectSendRequestAndReceiveReply
 //-----------------------------------------------------------------------------
-castor::IObject *castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::connectSendRequestAndReceiveReply(const char *const requestTypeName, IObject &request) const throw(castor::exception::Exception) {
+castor::IObject *castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::connectSendRequestAndReceiveReply(const char *const requestTypeName, IObject &request) const  {
   const int clientSock = io::connectWithTimeout(m_job.clientHost, m_job.clientPort, m_netTimeout);
   castor::io::ClientSocket sock(clientSock);
   sock.setTimeout(m_netTimeout);
@@ -271,7 +271,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::checkTr
   const uint32_t    actualMountTransactionId,
   const uint64_t    expectedTapebridgeTransId,
   const uint64_t    actualTapebridgeTransId) const
-  throw(castor::exception::Exception) {
+   {
 
   int nbErrors = 0;
   castor::exception::Exception ex;
@@ -302,7 +302,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::checkTr
 //-----------------------------------------------------------------------------
 // throwEndNotificationErrorReport
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::throwEndNotificationErrorReport(IObject *const obj) const throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::throwEndNotificationErrorReport(IObject *const obj) const  {
 
   // Down cast the reply to its specific class
   tapegateway::EndNotificationErrorReport *reply =
@@ -323,7 +323,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::throwEn
 //------------------------------------------------------------------------------
 // mountTape
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::mountTape(const std::string &vid) throw (castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::mountTape(const std::string &vid)  {
   const std::string drive = getLibrarySlot(m_job.driveUnit);
   m_rmc.mountTape(vid, drive);
 
@@ -338,7 +338,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::mountTa
 // getLibrarySlot
 //------------------------------------------------------------------------------
 std::string castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::getLibrarySlot(const std::string &unitName)
-  throw (castor::exception::Exception) {
+   {
   for(utils::TpconfigLines::const_iterator itor = m_tpConfig.begin(); itor != m_tpConfig.end(); itor++) {
     if(unitName == itor->unitName) {
       return itor->librarySlot;
@@ -353,7 +353,7 @@ std::string castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::
 //------------------------------------------------------------------------------
 // transferFiles
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::transferFiles(tapegateway::Volume &volume, uint64_t &clientMsgSeqNb) throw (castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::transferFiles(tapegateway::Volume &volume, uint64_t &clientMsgSeqNb)  {
   switch(volume.mode()) {
   case tapegateway::READ:
     recallFiles(volume.vid(), clientMsgSeqNb);
@@ -376,7 +376,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::transfe
 //------------------------------------------------------------------------------
 // recallFiles
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::recallFiles(const std::string &vid, uint64_t &clientMsgSeqNb) throw (castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::recallFiles(const std::string &vid, uint64_t &clientMsgSeqNb)  {
   log::Param params[] = {
     log::Param("unitName", m_job.driveUnit),
     log::Param("TPVID", vid)};
@@ -416,7 +416,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::recallF
 //------------------------------------------------------------------------------
 // migrateFiles
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::migrateFiles(const std::string &vid, uint64_t &clientMsgSeqNb) throw (castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::migrateFiles(const std::string &vid, uint64_t &clientMsgSeqNb)  {
   log::Param params[] = {
     log::Param("unitName", m_job.driveUnit),
     log::Param("TPVID", vid)};
@@ -432,7 +432,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::migrate
 //------------------------------------------------------------------------------
 // dumpFiles
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::dumpFiles(const std::string &vid) throw (castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::dumpFiles(const std::string &vid)  {
   log::Param params[] = {
     log::Param("unitName", m_job.driveUnit),
     log::Param("TPVID", vid)};
@@ -448,7 +448,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::dumpFil
 //------------------------------------------------------------------------------
 // releaseDrive
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::releaseDrive(const bool forceUnmount) throw (castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::releaseDrive(const bool forceUnmount)  {
   log::Param params[] = {
     log::Param("unitName", m_job.driveUnit),
     log::Param("forceUnmount", forceUnmount)};
@@ -460,7 +460,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::release
 //------------------------------------------------------------------------------
 // unmountTape
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::unmountTape(const std::string &vid) throw (castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::unmountTape(const std::string &vid)  {
   const std::string librarySlot = getLibrarySlot(m_job.driveUnit);
   m_rmc.unmountTape(vid, librarySlot);
 
@@ -474,7 +474,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::unmount
 //-----------------------------------------------------------------------------
 // getFilesToRecall
 //-----------------------------------------------------------------------------
-castor::tape::tapegateway::FilesToRecallList *castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::getFilesToRecall(const uint64_t clientMsgSeqNb, const uint64_t maxFiles, const uint64_t maxBytes) const throw(castor::exception::Exception) {
+castor::tape::tapegateway::FilesToRecallList *castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::getFilesToRecall(const uint64_t clientMsgSeqNb, const uint64_t maxFiles, const uint64_t maxBytes) const  {
   const int clientSock = sendFilesToRecallListRequest(clientMsgSeqNb, maxFiles, maxBytes);
   tapegateway::FilesToRecallList *const fileList = receiveFilesToRecallListRequestReplyAndClose(clientMsgSeqNb, clientSock);
   return fileList;
@@ -483,7 +483,7 @@ castor::tape::tapegateway::FilesToRecallList *castor::tape::tapeserver::daemon::
 //-----------------------------------------------------------------------------
 // sendFilesToRecallListRequest
 //-----------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::sendFilesToRecallListRequest(const uint64_t clientMsgSeqNb, const uint64_t maxFiles, const uint64_t maxBytes) const throw(castor::exception::Exception) {
+int castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::sendFilesToRecallListRequest(const uint64_t clientMsgSeqNb, const uint64_t maxFiles, const uint64_t maxBytes) const  {
 
   // Check method arguments
   if(maxFiles == 0) {
@@ -521,7 +521,7 @@ int castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::sendFile
 //-----------------------------------------------------------------------------
 // connectAndSendMessage
 //-----------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::connectAndSendMessage(IObject &message) const throw(castor::exception::Exception) {
+int castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::connectAndSendMessage(IObject &message) const  {
   const int clientSock = io::connectWithTimeout(m_job.clientHost, m_job.clientPort, m_netTimeout);
   castor::io::ClientSocket sock(clientSock);
   sock.setTimeout(m_netTimeout);
@@ -552,7 +552,7 @@ int castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::connectA
 //-----------------------------------------------------------------------------
 // receiveFilesToRecallListRequestReplyAndClose
 //-----------------------------------------------------------------------------
-castor::tape::tapegateway::FilesToRecallList *castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::receiveFilesToRecallListRequestReplyAndClose(const uint64_t clientMsgSeqNb, const int clientSock) const throw(castor::exception::Exception) {
+castor::tape::tapegateway::FilesToRecallList *castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::receiveFilesToRecallListRequestReplyAndClose(const uint64_t clientMsgSeqNb, const int clientSock) const  {
   const char *const task = "receive reply to FilesToRecallListRequest and close connection";
 
   std::auto_ptr<castor::IObject> obj;
@@ -635,7 +635,7 @@ castor::tape::tapegateway::FilesToRecallList *castor::tape::tapeserver::daemon::
 //-----------------------------------------------------------------------------
 // receiveReplyAndClose
 //-----------------------------------------------------------------------------
-castor::IObject *castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::receiveReplyAndClose(const int clientSock) const throw(castor::exception::Exception) {
+castor::IObject *castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::receiveReplyAndClose(const int clientSock) const  {
   const char *const task = "receive reply and close connection";
   // Receive the reply object
   castor::io::AbstractTCPSocket sock(clientSock);
@@ -669,7 +669,7 @@ castor::IObject *castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProto
 //-----------------------------------------------------------------------------
 // notifyEndOfSession
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::notifyEndOfSession(const uint64_t clientMsgSeqNb) const throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::notifyEndOfSession(const uint64_t clientMsgSeqNb) const  {
 
   // Prepare the request
   tapegateway::EndNotification request;
@@ -687,7 +687,7 @@ void castor::tape::tapeserver::daemon::DebugMountSessionForVdqmProtocol::notifyC
   const uint64_t    clientMsgSeqNb,
   const char *const requestTypeName,
   IObject&          request) const
-  throw(castor::exception::Exception) {
+   {
 
   // Send the request and receive the reply
   std::auto_ptr<castor::IObject> obj(connectSendRequestAndReceiveReply(requestTypeName, request));

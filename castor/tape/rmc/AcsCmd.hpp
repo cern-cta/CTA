@@ -95,7 +95,7 @@ protected:
   void requestResponsesUntilFinal(const SEQ_NO requestSeqNumber,
     ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)],
     const int queryInterval, const int timeout)
-    throw (castor::exception::RequestFailed);
+    ;
 
   /**
    * Sends a request for a response to the ACSLS.
@@ -110,7 +110,7 @@ protected:
   ACS_RESPONSE_TYPE requestResponse(const int timeout,
     const SEQ_NO requestSeqNumber,
     ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
-    throw(castor::exception::RequestFailed);
+    ;
 
   /**
    * Throws castor::exception::Mismatch if the specified request and
@@ -120,7 +120,7 @@ protected:
    * @param responseSeqNumber Response sequence-number.
    */
   void checkResponseSeqNumber(const SEQ_NO requestSeqNumber,
-    const SEQ_NO responseSeqNumber) throw(castor::exception::Mismatch);
+    const SEQ_NO responseSeqNumber) ;
 
 }; // class AcsCmd
 

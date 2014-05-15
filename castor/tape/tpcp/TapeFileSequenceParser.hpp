@@ -54,7 +54,7 @@ public:
    * @param tapeFseqRanges The resulting list of tape file sequence ranges.
    */
   static void parse(char *const str, TapeFseqRangeList &tapeFseqRanges)
-    throw (castor::exception::InvalidArgument);
+    ;
 
 }; // class TapeFileSequenceParser
 

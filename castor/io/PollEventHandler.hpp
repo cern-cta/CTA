@@ -63,7 +63,7 @@ public:
    * the reactor.
    */
   virtual bool handleEvent(const struct pollfd &fd)
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Destructor.

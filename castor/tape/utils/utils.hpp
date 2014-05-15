@@ -112,7 +112,7 @@ namespace utils  {
  * @param len    The length of the character buffer.
  */
 void toHex(uint32_t number, char *buf, size_t len)
-  throw(castor::exception::InvalidArgument);
+  ;
 
 /**
  * Writes the hex form of the specified unsigned 32-bit integer into the
@@ -123,7 +123,7 @@ void toHex(uint32_t number, char *buf, size_t len)
  * @param buf    The character buffer that must have a minimum of 9 bytes.
  */
 template<size_t n> void toHex(uint32_t number, char (&buf)[n])
-  throw(castor::exception::InvalidArgument) {
+   {
   toHex(number, buf, n);
 }
 
@@ -151,7 +151,7 @@ int countOccurrences(const char ch, const char *str);
  * @param dstLen The length of the destination character string.
  */
 void toHex(const uint64_t i, char *dst, size_t dstLen)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Writes the specified unsigned 64-bit integer into the specified
@@ -164,7 +164,7 @@ void toHex(const uint64_t i, char *dst, size_t dstLen)
  * @param dst The destination character array.
  */
 template<int n> void toHex(const uint64_t i, char (&dst)[n])
-  throw(castor::exception::Exception) {
+   {
   toHex(i, dst, n);
 }
 
@@ -237,7 +237,7 @@ const char *volumeModeToString(const tapegateway::VolumeMode mode) throw();
  *
  * @param fd The file descriptor of the file to be drained.
  */
-ssize_t drainFile(const int fd) throw(castor::exception::Exception);
+ssize_t drainFile(const int fd) ;
 
 /**
  * Appends each line of the specified file to the specified list of lines.
@@ -251,7 +251,7 @@ ssize_t drainFile(const int fd) throw(castor::exception::Exception);
  * @param lines The list to which each line of the file will be appended.
  */
 void readFileIntoList(const char *const filename,
-  std::list<std::string> &lines) throw(castor::exception::Exception);
+  std::list<std::string> &lines) ;
 
 /**
  * Appends to the specified list the filenames from the "filelist" file with
@@ -269,7 +269,7 @@ void readFileIntoList(const char *const filename,
  * @param list     The list to which the filenames will be appended.
  */
 void parseFileList(const char *filename, std::list<std::string> &list)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Creates and returns an std::string which is the result of the stripping
@@ -319,7 +319,7 @@ unsigned short getPortFromConfig(const char *const category,
  *                 TPCONFIG file.
  */
 void parseTpconfigFile(const char *const filename, TpconfigLines &lines)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * Extracts the drive-unit names from the specified list of parsed TPCONFIG
@@ -347,7 +347,7 @@ void extractTpconfigDriveNames(const TpconfigLines &tpconfigLines,
  *                 specified file.
  */
 void statFile(const char *const filename, struct stat &buf)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * C++ wrapper function of the C pthread_create() function.  This wrapper
@@ -368,7 +368,7 @@ void pthreadCreate(
   const pthread_attr_t *const attr,
   void *(*const startRoutine)(void*),
   void *const arg)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * C++ wrapper function of the C pthread_join() function.  This wrapper
@@ -380,7 +380,7 @@ void pthreadCreate(
  *                 value set by the target thread calling pthread_exit().
  */
 void pthreadJoin(pthread_t thread, void **const valuePtr)
-  throw(castor::exception::Exception);
+  ;
 
 /**
  * C++ wrapper function of the C getconfent() function.  This wrapper
@@ -392,7 +392,7 @@ void pthreadJoin(pthread_t thread, void **const valuePtr)
  * @return         The value returned bu getconfent().
  */
 const char *getMandatoryValueFromConfiguration(const char *const category,
-  const char *const name) throw(castor::exception::InvalidConfiguration);
+  const char *const name) ;
 
 /**
  * Returns true if the specified C string is empty else returns false.
@@ -431,7 +431,7 @@ std::string tapeBlockIdToString(
  *                         environment variable.
  */
 void appendPathToEnvVar(const std::string &envVarName,
-  const std::string &pathToBeAppended) throw(castor::exception::Exception);
+  const std::string &pathToBeAppended) ;
 
 } // namespace utils
 } // namespace tape

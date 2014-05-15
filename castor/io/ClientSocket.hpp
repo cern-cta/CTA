@@ -51,7 +51,7 @@ namespace castor {
        * Constructor building a Socket objet around a regular socket
        * @param socket the regular socket used
        */
-      ClientSocket(int socket) throw ();
+      ClientSocket(int socket) throw();
 
       /**
        * Constructor building a socket on a given port of a given host
@@ -61,7 +61,7 @@ namespace castor {
        */
       ClientSocket(const unsigned short port,
              const std::string host)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Constructor building a socket on a given port of a given host
@@ -71,13 +71,13 @@ namespace castor {
        */
       ClientSocket(const unsigned short port,
              const unsigned long ip)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Connects the socket to the given address
        */
        virtual void connect()
-	 throw (castor::exception::Exception);
+	 ;
 
     };
 

@@ -91,7 +91,7 @@ namespace castor {
      * is found
      */
     virtual IConverter* converter(const unsigned int objType)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * gets the representation type, that is the type of
@@ -115,7 +115,7 @@ namespace castor {
                            IObject* object,
                            bool endTransaction,
                            unsigned int type = OBJ_INVALID)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * create foreign representations from a set of C++ Object
@@ -133,7 +133,7 @@ namespace castor {
                                std::vector<IObject*> &objects,
 			       bool endTransaction,
 			       unsigned int type)
-      throw (castor::exception::Exception);
+      ;
     
     /**
      * Updates foreign representation from a C++ Object.
@@ -147,7 +147,7 @@ namespace castor {
     virtual void updateRep(IAddress* address,
                            IObject* object,
                            bool endTransaction)
-      throw (castor::exception::Exception);
+      ;
     
     /**
      * Deletes foreign representation of a C++ Object.
@@ -161,7 +161,7 @@ namespace castor {
     virtual void deleteRep(castor::IAddress* address,
                            castor::IObject* object,
                            bool endTransaction)
-      throw (castor::exception::Exception);
+      ;
     
     /**
      * Creates C++ object from foreign representation
@@ -173,7 +173,7 @@ namespace castor {
      * @exception Exception throws an Exception in case of error
      */
     virtual IObject* createObj (IAddress* address)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * create C++ objects from foreign representations
@@ -185,7 +185,7 @@ namespace castor {
      * @exception Exception throws an Exception in case of error
      */
     virtual std::vector<IObject*> bulkCreateObj(IAddress* address)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * Updates C++ object from its foreign representation.
@@ -193,7 +193,7 @@ namespace castor {
      * @exception Exception throws an Exception in case of error
      */
     virtual void updateObj(IObject* object)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * Fill the foreign representation with some of the objects
@@ -209,7 +209,7 @@ namespace castor {
                          castor::IObject* object,
                          unsigned int type,
                          bool endTransaction = false)
-      throw (castor::exception::Exception);
+      ;
     
     /**
      * Retrieve from the foreign representation some of the
@@ -225,7 +225,7 @@ namespace castor {
                          castor::IObject* object,
                          unsigned int type,
                          bool endTransaction = false)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * Forces the commit of the last changes.
@@ -235,7 +235,7 @@ namespace castor {
      * @exception Exception throws an Exception in case of error
      */
     virtual void commit()
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * Forces the rollback of the last changes
@@ -245,7 +245,7 @@ namespace castor {
      * @exception Exception throws an Exception in case of error
      */
     virtual void rollback()
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * Creates a prepared statement wrapped with the
@@ -253,7 +253,7 @@ namespace castor {
      * @param stmt the string statement to be prepared 
      */
     virtual castor::db::IDbStatement* createStatement(const std::string& stmt)
-      throw (castor::exception::Exception);
+      ;
 	  
     /**
      * Deletes foreign representation of a C++ Object without
@@ -268,7 +268,7 @@ namespace castor {
      */
     virtual void deleteRepByAddress (IAddress* address,
                                      bool endTransaction = true)
-      throw (castor::exception::Exception);
+      ;
 
   private:
     /**

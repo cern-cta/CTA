@@ -37,7 +37,7 @@ castor::server::AuthListenerThreadPool::AuthListenerThreadPool
  castor::server::IThread* thread,
  unsigned int listenPort,
  bool waitIfBusy,
- unsigned int nbThreads) throw(castor::exception::Exception) :
+ unsigned int nbThreads)  :
   TCPListenerThreadPool(poolName, thread, listenPort, waitIfBusy, nbThreads) {}
 
 //------------------------------------------------------------------------------
@@ -51,7 +51,7 @@ castor::server::AuthListenerThreadPool::AuthListenerThreadPool
  unsigned int initThreads,
  unsigned int maxThreads,
  unsigned int threshold,
- unsigned int maxTasks) throw(castor::exception::Exception) :
+ unsigned int maxTasks)  :
   TCPListenerThreadPool(poolName, thread, listenPort, waitIfBusy,
                         initThreads, maxThreads, threshold, maxTasks) {}
 
@@ -64,7 +64,7 @@ castor::server::AuthListenerThreadPool::~AuthListenerThreadPool() throw() {}
 // bind
 //------------------------------------------------------------------------------
 void castor::server::AuthListenerThreadPool::bind()
-  throw (castor::exception::Exception) {
+   {
   // Create a secure socket for the server, bind, and listen
   m_sock = new castor::io::AuthServerSocket(m_port, true);
 }

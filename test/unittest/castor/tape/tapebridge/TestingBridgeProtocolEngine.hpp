@@ -78,7 +78,7 @@ public:
   using BridgeProtocolEngine::processSocksInALoop;
 
   void handleSelectEvents(struct timeval selectTimeout)
-    throw(std::exception) {
+     {
     try {
       BridgeProtocolEngine::handleSelectEvents(selectTimeout);
     } catch(castor::exception::Exception &ex) {

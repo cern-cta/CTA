@@ -52,7 +52,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmServer::VdqmServer(std::ostream &stdOut, std::ostream &stdErr,
-  log::Logger &log) throw(castor::exception::Exception) :
+  log::Logger &log)  :
   castor::server::MultiThreadedDaemon(stdOut, stdErr, log),
   m_requestHandlerThreadNumber(REQUESTHANDLERDEFAULTTHREADNUMBER),
   m_RTCPJobSubmitterThreadNumber(RTCPJOBSUBMITTERDEFAULTTHREADNUMBER),
@@ -326,7 +326,7 @@ void castor::vdqm::VdqmServer::initDatabaseService(Cuuid_t &cuuid) {
 // getSchedulerTimeout
 //------------------------------------------------------------------------------
 int castor::vdqm::VdqmServer::getSchedulerTimeout()
-  throw(castor::exception::InvalidConfigEntry) {
+   {
   int timeout = SCHEDULERTIMEOUT; // Initialise to default value
   char *const configEntry = getconfent("VDQM", "SCHEDULERTIMEOUT", 0);
 
@@ -353,7 +353,7 @@ int castor::vdqm::VdqmServer::getSchedulerTimeout()
 // getRTCPJobSubmitterTimeout
 //------------------------------------------------------------------------------
 int castor::vdqm::VdqmServer::getRTCPJobSubmitterTimeout()
-  throw(castor::exception::InvalidConfigEntry) {
+   {
   int timeout = RTCPJOBSUBMITTERTIMEOUT; // Initialise to default value
   char *const configEntry = getconfent("VDQM", "RTCPJOBSUBMITTERTIMEOUT", 0);
 
@@ -380,7 +380,7 @@ int castor::vdqm::VdqmServer::getRTCPJobSubmitterTimeout()
 // getListenPort
 //------------------------------------------------------------------------------
 int castor::vdqm::VdqmServer::getListenPort()
-  throw(castor::exception::InvalidConfigEntry) {
+   {
   int port = VDQMPORT; // Initialise to default value
   char *const configEntry = getconfent("VDQM", "PORT", 0);
 
@@ -406,7 +406,7 @@ int castor::vdqm::VdqmServer::getListenPort()
 // getNotifyPort
 //------------------------------------------------------------------------------
 int castor::vdqm::VdqmServer::getNotifyPort()
-  throw(castor::exception::InvalidConfigEntry) {
+   {
   int port = VDQMNOTIFYPORT;  // Initialise to default value
   char *const configEntry = getconfent("VDQM", "NOTIFYPORT", 0);
 

@@ -51,7 +51,7 @@ namespace castor {
      */
     static const std::string client2String
     (const castor::IClient &cl)
-      throw (castor::exception::Exception);
+      ;
     
     /**
      * creates a Client from its human readable
@@ -64,7 +64,7 @@ namespace castor {
      */
     static castor::IClient* string2Client
     (const std::string &st)
-      throw (castor::exception::Exception);
+      ;
 
     }; // end of class IClientFactory
 

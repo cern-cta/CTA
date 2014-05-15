@@ -50,7 +50,7 @@ namespace castor {
        */
       ForkedProcessPool(const std::string poolName,
         castor::server::IThread* thread)
-        throw (castor::exception::Exception);
+        ;
       
       /*
        * destructor
@@ -61,18 +61,18 @@ namespace castor {
        * Creates the pool by forking children processes.
        * The parent process returns, children processes call childRun.
        */
-      virtual void init() throw (castor::exception::Exception);
+      virtual void init() ;
       
       /**
        * Shutdowns the pool. Kills all children.
        */
-      virtual bool shutdown(bool wait) throw ();
+      virtual bool shutdown(bool wait) throw();
       
       /**
        * Runs the pool. The forking phase is done in init, thus this
        * method is almost empty.
        */
-      virtual void run() throw (castor::exception::Exception);
+      virtual void run() ;
       
       /**
        * Entry point to dispatch a task to an idle process
@@ -80,7 +80,7 @@ namespace castor {
        * through the pipe fails.
        */
       void dispatch(castor::IObject& obj)
-        throw (castor::exception::Exception);
+        ;
       
     protected:
       

@@ -81,7 +81,7 @@ namespace castor {
        * @param value the amount by which the counter will be incremented
        * @throw exception on mutex errors
        */
-      void inc(int value = 1) throw (castor::exception::Exception);
+      void inc(int value = 1) ;
   
       /**
        * Recomputes mobile averages.

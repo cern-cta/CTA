@@ -39,7 +39,7 @@ namespace castor {
       public:
       
         static castor::stager::daemon::NsOverride* getInstance()
-          throw ();
+          throw();
         
         std::string getCnsHost() {
           return m_cnsHost;
@@ -57,7 +57,7 @@ namespace castor {
         /**
          * Default costructor
          */
-        NsOverride() throw ();
+        NsOverride() throw();
        
         /**
          * Default destructor

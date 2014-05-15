@@ -40,7 +40,7 @@ castor::tape::rmc::Acs::~Acs() throw() {
 // str2DriveId
 //------------------------------------------------------------------------------
 DRIVEID castor::tape::rmc::Acs::str2DriveId(const std::string &str)
-  const throw(castor::exception::InvalidArgument) {
+  const  {
   std::vector<std::string> components;
   castor::utils::splitString(str, ':', components);
 
@@ -49,7 +49,7 @@ DRIVEID castor::tape::rmc::Acs::str2DriveId(const std::string &str)
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Invalid number of components in drive ID"
       ": expected=4, actual=" << components.size();
-    throw(ex);
+    throw ex;
   }
 
   const std::string &acsStr = components[0];
@@ -62,48 +62,48 @@ DRIVEID castor::tape::rmc::Acs::str2DriveId(const std::string &str)
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Invalid ACS string length"
       ": expected=1..3, actual=" << acsStr.length();
-    throw(ex);
+    throw ex;
   }
   if(1 > lsmStr.length() || 3 < lsmStr.length()) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Invalid LSM string length"
       ": expected=1..3, actual=" << lsmStr.length();
-    throw(ex);
+    throw ex;
   }
   if(1 > panStr.length() || 3 < panStr.length()) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Invalid panel string length"
       ": expected=1..3, actual=" << panStr.length();
-    throw(ex);
+    throw ex;
   }
   if(1 > drvStr.length() || 3 < drvStr.length()) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Invalid drive string length"
       ": expected=1..3, actual=" << drvStr.length();
-    throw(ex);
+    throw ex;
   }
 
   // Each of the 4 components must only contain numerals
   if(!onlyContainsNumerals(acsStr)) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "ACS must only contain numerals: value=" << acsStr;
-    throw(ex);
+    throw ex;
   }
   if(!onlyContainsNumerals(lsmStr)) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "LSM must only contain numerals: value=" << acsStr;
-    throw(ex);
+    throw ex;
   }
   if(!onlyContainsNumerals(panStr)) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Panel must only contain numerals: value=" << acsStr;
-    throw(ex);
+    throw ex;
   }
   if(!onlyContainsNumerals(drvStr)) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Drive/Transport must only contain numerals: value=" <<
       acsStr;
-    throw(ex);
+    throw ex;
   }
 
   DRIVEID driveId;
@@ -119,7 +119,7 @@ DRIVEID castor::tape::rmc::Acs::str2DriveId(const std::string &str)
 // str2Volid
 //------------------------------------------------------------------------------
 VOLID castor::tape::rmc::Acs::str2Volid(const std::string &str) const
-  throw(castor::exception::InvalidArgument) {
+   {
   if(EXTERNAL_LABEL_SIZE < str.length()) {
     castor::exception::InvalidArgument ex;
     ex.getMessage() << "Failed to convert string to volume identifier"

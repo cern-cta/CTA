@@ -85,7 +85,7 @@ bool castor::tape::tpcp::TpcpCommand::s_receivedSigint = false;
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tpcp::TpcpCommand::TpcpCommand(const char *const programName)
-  throw () :
+  throw() :
   m_programName(programName),
   m_userId(getuid()),
   m_groupId(getgid()),
@@ -128,7 +128,7 @@ castor::tape::tpcp::TpcpCommand::TpcpCommand(const char *const programName)
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tpcp::TpcpCommand::~TpcpCommand() throw () {
+castor::tape::tpcp::TpcpCommand::~TpcpCommand() throw() {
   // Do nothing
 }
 
@@ -414,7 +414,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
           castor::exception::Exception ex(ECANCELED);
           ex.getMessage() << "Received SIGNINT";
 
-          throw(ex);
+          throw ex;
 
         // Else received a signal other than SIGINT
         } else {
@@ -511,7 +511,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
 // vmgrQueryTape
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::vmgrQueryTape()
-  throw (castor::exception::Exception) {
+   {
   const int side = 0;
   serrno=0;
   const int rc = vmgr_querytape_byte_u64(m_cmdLine.vid, side, &m_vmgrTapeInfo,
@@ -531,7 +531,7 @@ void castor::tape::tpcp::TpcpCommand::vmgrQueryTape()
 // setupCallbackSock
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::setupCallbackSock()
-  throw(castor::exception::Exception) {
+   {
 
   const unsigned short lowPort = utils::getPortFromConfig(
     "TAPESERVERCLIENT", "LOWPORT", TAPEBRIDGECLIENT_LOWPORT);
@@ -549,7 +549,7 @@ void castor::tape::tpcp::TpcpCommand::setupCallbackSock()
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(
   const int accessMode, char *const tapeServer)
-  throw(castor::exception::Exception) {
+   {
 
   // Get the port number and IP of the callback port
   unsigned short port = 0;
@@ -614,7 +614,7 @@ void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(
 // waitForMsgAndDispatchHandler
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler()
-  throw(castor::exception::Exception) {
+   {
 
   // Socket file descriptor for a callback connection from the tapebridge
   int connectionSockFd = 0;
@@ -650,7 +650,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler()
           castor::exception::Exception ex(ECANCELED);
 
           ex.getMessage() << "Received SIGNINT";
-          throw(ex);
+          throw ex;
 
         // Else received a signal other than SIGINT
         } else {
@@ -740,7 +740,7 @@ bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler()
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::TpcpCommand::handlePingNotification(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   tapegateway::PingNotification *msg = NULL;
 
@@ -766,7 +766,7 @@ bool castor::tape::tpcp::TpcpCommand::handlePingNotification(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::TpcpCommand::handleEndNotification(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   tapegateway::EndNotification *msg = NULL;
 
@@ -792,7 +792,7 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotification(
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::handleFailedTransfers(
   const std::vector<tapegateway::FileErrorReportStruct*> &files)
-  throw(castor::exception::Exception) {
+   {
   for(std::vector<tapegateway::FileErrorReportStruct*>::const_iterator
     itor = files.begin(); itor != files.end(); itor++) {
 
@@ -811,7 +811,7 @@ void castor::tape::tpcp::TpcpCommand::handleFailedTransfers(
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::handleFailedTransfer(
   const tapegateway::FileErrorReportStruct &file)
-  throw(castor::exception::Exception) {
+   {
 
   // Command-line user feedback
   std::ostream &os = std::cout;
@@ -838,7 +838,7 @@ void castor::tape::tpcp::TpcpCommand::handleFailedTransfer(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   tapegateway::EndNotificationErrorReport *msg = NULL;
 
@@ -890,7 +890,7 @@ bool castor::tape::tpcp::TpcpCommand::handleEndNotificationErrorReport(
 // acknowledgeEndOfSession
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
-  throw(castor::exception::Exception) {
+   {
 
   // Socket file descriptor for a callback connection from the tapebridge
   int connectionSockFd = 0;
@@ -928,7 +928,7 @@ void castor::tape::tpcp::TpcpCommand::acknowledgeEndOfSession()
           ex.getMessage() <<
            ": Received SIGNINT";
 
-          throw(ex);
+          throw ex;
 
         // Else received a signal other than SIGINT
         } else {
@@ -1019,7 +1019,7 @@ void castor::tape::tpcp::TpcpCommand::sigintHandler(int) {
 // deleteVdqmVolumeRequest
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::deleteVdqmVolumeRequest()
-  throw(castor::exception::Exception) {
+   {
 
   const int rc = vdqm_DelVolumeReq(NULL, m_volReqId, m_vmgrTapeInfo.vid, m_dgn,
     NULL, NULL, 0);
@@ -1037,7 +1037,7 @@ void castor::tape::tpcp::TpcpCommand::deleteVdqmVolumeRequest()
 // checkFilenameFormat
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
-  throw(castor::exception::Exception) {
+   {
 
   FilenameList::iterator itor = m_filenames.begin();
   // local string containing the hostname + ":"
@@ -1106,7 +1106,7 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
 // rfioStat
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TpcpCommand::rfioStat(const char *const path,
-  struct stat64 &statBuf) const throw(castor::exception::Exception) {
+  struct stat64 &statBuf) const  {
 
   // rfio_stat64 is a smart oparation, in case of a local file, it do not use
   // the rfio's stat, but the local stat. To forse the use of rfio's stat we
@@ -1145,6 +1145,6 @@ void castor::tape::tpcp::TpcpCommand::rfioStat(const char *const path,
     ex.getMessage() << "Failed to rfio_stat64 \"" << path << "\""
       ": " << err_msg;
 
-    throw(ex);
+    throw ex;
   }
 }

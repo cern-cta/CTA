@@ -42,7 +42,7 @@ castor::log::DummyLogger::~DummyLogger() throw() {
 // prepareForFork
 //------------------------------------------------------------------------------
 void castor::log::DummyLogger::prepareForFork()
-  throw(castor::exception::Exception) {
+   {
 }
 
 //------------------------------------------------------------------------------

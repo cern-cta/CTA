@@ -92,40 +92,40 @@ namespace castor {
         virtual void setNull(int pos);
 
         virtual void setDataBuffer(int pos, void* buffer, unsigned dbType, unsigned size, void* bufLens)
-          throw (castor::exception::SQLError);
+          ;
 
         virtual void setDataBufferArray(int pos, void* buffer, unsigned dbType,
           unsigned size, unsigned elementSize, void* bufLens)
-          throw (castor::exception::Exception);
+          ;
 
         virtual void setDataBufferUInt64Array(int pos, std::vector<u_signed64> data)
-          throw (castor::exception::Exception);
+          ;
 
         virtual void registerOutParam(int pos, unsigned dbType)
-          throw (castor::exception::SQLError);
+          ;
 
         /**
          * Getter methods
          * @param pos
          * @return value
          */
-        virtual int getInt(int pos) throw (castor::exception::SQLError);
-        virtual signed64 getInt64(int pos) throw (castor::exception::SQLError);
-        virtual u_signed64 getUInt64(int pos) throw (castor::exception::SQLError);
-        virtual std::string getString(int pos) throw (castor::exception::SQLError);
-        virtual float getFloat(int pos) throw (castor::exception::SQLError);
-        virtual double getDouble(int pos) throw (castor::exception::SQLError);
-        virtual std::string getClob(int pos) throw (castor::exception::Exception);
-        virtual castor::db::IDbResultSet* getCursor(int pos) throw (castor::exception::SQLError);
+        virtual int getInt(int pos) ;
+        virtual signed64 getInt64(int pos) ;
+        virtual u_signed64 getUInt64(int pos) ;
+        virtual std::string getString(int pos) ;
+        virtual float getFloat(int pos) ;
+        virtual double getDouble(int pos) ;
+        virtual std::string getClob(int pos) ;
+        virtual castor::db::IDbResultSet* getCursor(int pos) ;
 
         /**
          *
          */
         virtual IDbResultSet* executeQuery()
-          throw (castor::exception::SQLError);
+          ;
 
         virtual int execute(int count = 1)
-          throw (castor::exception::Exception);
+          ;
 
         inline oracle::occi::Statement* getStatementImpl() {
           return m_statement;

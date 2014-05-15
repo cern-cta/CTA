@@ -33,7 +33,7 @@
 //-----------------------------------------------------------------------------
 // marshal
 //-----------------------------------------------------------------------------
-size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const RmcAcsMntMsgBody &src) throw(castor::exception::Exception) {
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const RmcAcsMntMsgBody &src)  {
   const char *task = "marshal RmcAcsMntMsgBody";
 
   if(dst == NULL) {
@@ -117,7 +117,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Rm
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
-void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, RmcAcsMntMsgBody &dst) throw(castor::exception::Exception) {
+void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, RmcAcsMntMsgBody &dst)  {
   try {
     io::unmarshalUint32(src, srcLen, dst.uid);
     io::unmarshalUint32(src, srcLen, dst.gid);
@@ -137,7 +137,7 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, RmcAcsMntMs
 //-----------------------------------------------------------------------------
 // marshal
 //-----------------------------------------------------------------------------
-size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const RmcMountMsgBody &src) throw(castor::exception::Exception) {
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const RmcMountMsgBody &src)  {
   const char *task = "marshal RmcMountMsgBody";
 
   if(dst == NULL) {
@@ -219,7 +219,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Rm
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
-void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, RmcMountMsgBody &dst) throw(castor::exception::Exception) {
+void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, RmcMountMsgBody &dst)  {
   try {
     io::unmarshalUint32(src, srcLen, dst.uid);
     io::unmarshalUint32(src, srcLen, dst.gid);
@@ -238,7 +238,7 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, RmcMountMsg
 //-----------------------------------------------------------------------------
 // marshal
 //-----------------------------------------------------------------------------
-size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const RmcUnmountMsgBody &src) throw(castor::exception::Exception) {
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const RmcUnmountMsgBody &src)  {
   const char *const task = "marshal RmcUnmountMsgBody";
 
   if(dst == NULL) {
@@ -320,7 +320,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Rm
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
-void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, RmcUnmountMsgBody &dst) throw(castor::exception::Exception) {
+void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, RmcUnmountMsgBody &dst)  {
   try {
     io::unmarshalUint32(src, srcLen, dst.uid);
     io::unmarshalUint32(src, srcLen, dst.gid);

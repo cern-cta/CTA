@@ -70,7 +70,7 @@ namespace castor {
       void replyToClient(castor::IClient *client,
                          castor::IObject *response,
                          bool isLastResponse = false)
-        throw(castor::exception::Exception);
+        ;
 
 
       /**
@@ -80,7 +80,7 @@ namespace castor {
        * @exception Exception in case of error
        */
       void setCallback(void (*callback)(castor::IClient *, MajorConnectionStatus status))
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Adds a client to the queue of clients waiting for a response.
@@ -93,7 +93,7 @@ namespace castor {
       void sendResponse(castor::IClient *client,
 			castor::IObject *response,
 			bool isLastResponse = false)
-        throw(castor::exception::Exception);
+        ;
 
 
       /**
@@ -102,7 +102,7 @@ namespace castor {
        * @exception Exception in case of error
        */
       void closeClientConnection(castor::IClient *client)
-        throw(castor::exception::Exception);
+        ;
       
 
       /**

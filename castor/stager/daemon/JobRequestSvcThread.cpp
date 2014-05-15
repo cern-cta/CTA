@@ -39,7 +39,7 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::stager::daemon::JobRequestSvcThread::JobRequestSvcThread()
-  throw (castor::exception::Exception) : SelectProcessThread() {}
+   : SelectProcessThread() {}
 
 //-----------------------------------------------------------------------------
 // select
@@ -65,7 +65,7 @@ castor::IObject* castor::stager::daemon::JobRequestSvcThread::select() throw() {
 //-----------------------------------------------------------------------------
 castor::stager::daemon::JobRequest*
 castor::stager::daemon::JobRequestSvcThread::jobSubRequestToDo()
-  throw(castor::exception::Exception) {
+   {
   // get the DbCnvSvc for handling ORACLE statements
   castor::IService *svc = castor::BaseObject::services()->service("DbCnvSvc", castor::SVC_DBCNV);
   castor::db::ora::OraCnvSvc *dbSvc = dynamic_cast<castor::db::ora::OraCnvSvc*>(svc);
@@ -150,7 +150,7 @@ castor::stager::daemon::JobRequestSvcThread::jobSubRequestToDo()
 //-----------------------------------------------------------------------------
 // process
 //-----------------------------------------------------------------------------
-void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* requestToProcess) throw () {
+void castor::stager::daemon::JobRequestSvcThread::process(castor::IObject* requestToProcess) throw() {
   struct Cns_fileid cnsFileid;
   memset(&cnsFileid, 0, sizeof(cnsFileid));
   // for monitoring purposes
@@ -215,7 +215,7 @@ int castor::stager::daemon::JobRequestSvcThread::handleGetOrPut(const JobRequest
                                                                 struct Cns_fileid &cnsFileid,
                                                                 u_signed64 fileSize,
                                                                 u_signed64 stagerOpentimeInUsec)
-  throw (castor::exception::Exception) {
+   {
   // get the DbCnvSvc for handling ORACLE statements
   castor::IService *svc = castor::BaseObject::services()->service("DbCnvSvc", castor::SVC_DBCNV);
   castor::db::ora::OraCnvSvc *dbSvc = dynamic_cast<castor::db::ora::OraCnvSvc*>(svc);
@@ -263,7 +263,7 @@ int castor::stager::daemon::JobRequestSvcThread::handleGetOrPut(const JobRequest
 //-----------------------------------------------------------------------------
 bool castor::stager::daemon::JobRequestSvcThread::updateAndCheckSubRequest
 (const u_signed64 srId, const int status)
-  throw (castor::exception::Exception) {
+   {
   // get the DbCnvSvc for handling ORACLE statements
   castor::IService *svc = castor::BaseObject::services()->service("DbCnvSvc", castor::SVC_DBCNV);
   castor::db::ora::OraCnvSvc *dbSvc = dynamic_cast<castor::db::ora::OraCnvSvc*>(svc);
@@ -297,7 +297,7 @@ void castor::stager::daemon::JobRequestSvcThread::answerClient(const JobRequest 
                                                                int errorCode,
                                                                const std::string &errorMsg,
                                                                bool isLastAnswer)
-  throw (castor::exception::Exception) {
+   {
   /* create client object */
   castor::rh::Client cl;
   cl.setIpAddress(sr->clientIpAddress);

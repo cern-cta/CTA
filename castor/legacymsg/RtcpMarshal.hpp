@@ -54,7 +54,7 @@ namespace legacymsg {
  * @return       The total length of the message (header + body).
  */
 size_t marshal(char *const dst, const size_t dstLen,
-  const RtcpJobRqstMsgBody &src) throw(castor::exception::Exception);
+  const RtcpJobRqstMsgBody &src) ;
 
 /**
  * Marshalls the specified source message body structure into the
@@ -65,7 +65,7 @@ size_t marshal(char *const dst, const size_t dstLen,
  * @return    The total length of the message (header + body).
  */
 template<int n> size_t marshal(char (&dst)[n],
-  const RtcpJobRqstMsgBody &src) throw(castor::exception::Exception) {
+  const RtcpJobRqstMsgBody &src)  {
   return marshal(dst, n, src);
 }
 
@@ -83,7 +83,7 @@ template<int n> size_t marshal(char (&dst)[n],
  * @param dst The destination message body structure.
  */
 void unmarshal(const char * &src, size_t &srcLen,
-  RtcpJobRqstMsgBody &dst) throw(castor::exception::Exception);
+  RtcpJobRqstMsgBody &dst) ;
 
 /**
  * Marshalls the specified source message body structure into the
@@ -95,7 +95,7 @@ void unmarshal(const char * &src, size_t &srcLen,
  * @return       The total length of the message (header + body).
  */
 size_t marshal(char *const dst, const size_t dstLen,
-  const RtcpJobReplyMsgBody &src) throw(castor::exception::Exception);
+  const RtcpJobReplyMsgBody &src) ;
 
 /**
  * Marshalls the specified source message body structure into the
@@ -106,7 +106,7 @@ size_t marshal(char *const dst, const size_t dstLen,
  * @return    The total length of the message (header + body).
  */
 template<int n> size_t marshal(char (&dst)[n],
-  const RtcpJobReplyMsgBody &src) throw(castor::exception::Exception) {
+  const RtcpJobReplyMsgBody &src)  {
   return marshal(dst, n, src);
 }
 
@@ -124,7 +124,7 @@ template<int n> size_t marshal(char (&dst)[n],
  * @param dst The destination message body structure.
  */
 void unmarshal(const char * &src, size_t &srcLen,
-  RtcpJobReplyMsgBody &dst) throw(castor::exception::Exception);
+  RtcpJobReplyMsgBody &dst) ;
 
 /**
  * Marshalls the specified source message body structure into the
@@ -136,7 +136,7 @@ void unmarshal(const char * &src, size_t &srcLen,
  * @return       The total length of the message (header + body).
  */
 size_t marshal(char *const dst, const size_t dstLen,
-  const RtcpTapeRqstErrMsgBody &src) throw(castor::exception::Exception);
+  const RtcpTapeRqstErrMsgBody &src) ;
 
 /**
  * Marshalls the specified source message body structure into the
@@ -147,7 +147,7 @@ size_t marshal(char *const dst, const size_t dstLen,
  * @return    The total length of the message (header + body).
  */
 template<int n> size_t marshal(char (&dst)[n],
-  const RtcpTapeRqstErrMsgBody &src) throw(castor::exception::Exception) {
+  const RtcpTapeRqstErrMsgBody &src)  {
   return marshal(dst, n, src);
 }
 
@@ -165,7 +165,7 @@ template<int n> size_t marshal(char (&dst)[n],
  * @param dst The destination message body structure.
  */
 void unmarshal(const char * &src, size_t &srcLen,
-  RtcpTapeRqstErrMsgBody &dst) throw(castor::exception::Exception);
+  RtcpTapeRqstErrMsgBody &dst) ;
 
 /**
  * Unmarshals a message body with the specified destination structure type
@@ -181,7 +181,7 @@ void unmarshal(const char * &src, size_t &srcLen,
  * @param dst The destination message body structure.
  */
 void unmarshal(const char * &src, size_t &srcLen,
-  RtcpTapeRqstMsgBody &dst) throw(castor::exception::Exception);
+  RtcpTapeRqstMsgBody &dst) ;
 
 /**
  * Marshalls the specified source message body structure into the
@@ -193,7 +193,7 @@ void unmarshal(const char * &src, size_t &srcLen,
  * @return       The total length of the message (header + body).
  */
 size_t marshal(char *const dst, const size_t dstLen,
-  const RtcpFileRqstErrMsgBody &src) throw(castor::exception::Exception);
+  const RtcpFileRqstErrMsgBody &src) ;
 
 /**
  * Marshalls the specified source message body structure into the
@@ -204,7 +204,7 @@ size_t marshal(char *const dst, const size_t dstLen,
  * @return    The total length of the message (header + body).
  */
 template<int n> size_t marshal(char (&dst)[n],
-  const RtcpFileRqstErrMsgBody &src) throw(castor::exception::Exception) {
+  const RtcpFileRqstErrMsgBody &src)  {
   return marshal(dst, n, src);
 }
 
@@ -222,7 +222,7 @@ template<int n> size_t marshal(char (&dst)[n],
  * @param dst The destination message body structure.
  */
 void unmarshal(const char * &src, size_t &srcLen,
-  RtcpFileRqstErrMsgBody &dst) throw(castor::exception::Exception);
+  RtcpFileRqstErrMsgBody &dst) ;
 
 /**
  * Unmarshals a message body with the specified destination structure type
@@ -238,7 +238,7 @@ void unmarshal(const char * &src, size_t &srcLen,
  * @param dst The destination message body structure.
  */
 void unmarshal(const char * &src, size_t &srcLen,
-  RtcpFileRqstMsgBody &dst) throw(castor::exception::Exception);
+  RtcpFileRqstMsgBody &dst) ;
 
 /**
  * Unmarshals a message body with the specified destination structure type
@@ -254,7 +254,7 @@ void unmarshal(const char * &src, size_t &srcLen,
  * @param dst The destination message body structure.
  */
 void unmarshal(const char * &src, size_t &srcLen,
-  GiveOutpMsgBody &dst) throw(castor::exception::Exception);
+  GiveOutpMsgBody &dst) ;
 
 /**
  * Marshalls the specified source message body structure into the
@@ -266,7 +266,7 @@ void unmarshal(const char * &src, size_t &srcLen,
  * @return       The total length of the message (header + body).
  */
 size_t marshal(char *const dst, const size_t dstLen,
-  const RtcpNoMoreRequestsMsgBody &src) throw(castor::exception::Exception);
+  const RtcpNoMoreRequestsMsgBody &src) ;
 
 /**
  * Marshalls the specified source message body structure into the
@@ -278,7 +278,7 @@ size_t marshal(char *const dst, const size_t dstLen,
  */
 template<int n> size_t marshal(char (&dst)[n],
   const RtcpNoMoreRequestsMsgBody &src)
-  throw(castor::exception::Exception) {
+   {
   return marshal(dst, n, src);
 }
 
@@ -292,7 +292,7 @@ template<int n> size_t marshal(char (&dst)[n],
  * @return       The total length of the message (header + body).
  */
 size_t marshal(char *const dst, const size_t dstLen,
-  const RtcpDumpTapeRqstMsgBody &src) throw(castor::exception::Exception);
+  const RtcpDumpTapeRqstMsgBody &src) ;
 
 /**
  * Marshalls the specified source message body structure into the
@@ -303,7 +303,7 @@ size_t marshal(char *const dst, const size_t dstLen,
  * @return    The total length of the message (header + body).
  */
 template<int n> size_t marshal(char (&dst)[n],
-  const RtcpDumpTapeRqstMsgBody &src) throw(castor::exception::Exception) {
+  const RtcpDumpTapeRqstMsgBody &src)  {
   return marshal(dst, n, src);
 }
 

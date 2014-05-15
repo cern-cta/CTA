@@ -32,7 +32,7 @@
 //------------------------------------------------------------------------------
 void castor::client::BasicResponseHandler::handleResponse
 (castor::rh::Response& r)
-  throw (castor::exception::Exception) {
+   {
   castor::rh::BasicResponse *resp =
     dynamic_cast<castor::rh::BasicResponse*>(&r);
   if (resp->errorCode() > 0) {

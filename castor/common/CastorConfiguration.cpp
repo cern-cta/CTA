@@ -40,7 +40,7 @@ static pthread_mutex_t s_globalConfigLock = PTHREAD_MUTEX_INITIALIZER;
 //------------------------------------------------------------------------------
 castor::common::CastorConfiguration&
 castor::common::CastorConfiguration::getConfig(std::string fileName)
-  throw (castor::exception::Exception) {
+   {
   // This method is non thread safe, and is protected by the s_globalConfigLock
   // lock
   int rc = pthread_mutex_lock(&s_globalConfigLock);
@@ -73,7 +73,7 @@ castor::common::CastorConfiguration::getConfig(std::string fileName)
 // constructor
 //------------------------------------------------------------------------------
 castor::common::CastorConfiguration::CastorConfiguration(std::string fileName)
-  throw (castor::exception::Exception) : m_fileName(fileName),
+   : m_fileName(fileName),
   m_lastUpdateTime(0) {
   // create internal r/w lock
   int rc = pthread_rwlock_init(&m_lock, NULL);
@@ -89,7 +89,7 @@ castor::common::CastorConfiguration::CastorConfiguration(std::string fileName)
 // copy constructor
 //------------------------------------------------------------------------------
 castor::common::CastorConfiguration::CastorConfiguration(
-  const CastorConfiguration & other) throw (castor::exception::Exception):
+  const CastorConfiguration & other) :
   m_fileName(other.m_fileName), m_lastUpdateTime(other.m_lastUpdateTime),
   m_config(other.m_config) {
   // create a new internal r/w lock
@@ -116,7 +116,7 @@ castor::common::CastorConfiguration::~CastorConfiguration() {
 castor::common::CastorConfiguration &
   castor::common::CastorConfiguration::operator=(
     const castor::common::CastorConfiguration & other)
-  throw (castor::exception::Exception) {
+   {
   m_fileName = other.m_fileName;
   m_lastUpdateTime = other.m_lastUpdateTime;
   m_config = other.m_config;
@@ -137,7 +137,7 @@ castor::common::CastorConfiguration &
 const std::string&
 castor::common::CastorConfiguration::getConfEnt(const std::string &category,
                                                 const std::string &key)
-  throw (castor::exception::Exception) {
+   {
   // check whether we need to reload the configuration
   if (isStale()) {
     tryToRenewConfig();
@@ -182,7 +182,7 @@ castor::common::CastorConfiguration::getConfEnt(const std::string &category,
 // isStale
 //------------------------------------------------------------------------------
 bool castor::common::CastorConfiguration::isStale()
-  throw (castor::exception::Exception) {
+   {
   // get read lock
   int rc = pthread_rwlock_rdlock(&m_lock);
   if (0 != rc) {
@@ -209,7 +209,7 @@ bool castor::common::CastorConfiguration::isStale()
 // tryToRenewConfig
 //------------------------------------------------------------------------------
 void castor::common::CastorConfiguration::tryToRenewConfig()
-  throw (castor::exception::Exception) {
+   {
   // we should probably renew. First take the write lock.
   int rc = pthread_rwlock_wrlock(&m_lock);
   if (0 != rc) {
@@ -239,7 +239,7 @@ void castor::common::CastorConfiguration::tryToRenewConfig()
 // getTimeoutNolock
 //------------------------------------------------------------------------------
 int castor::common::CastorConfiguration::getTimeoutNolock()
-  throw (castor::exception::Exception) {
+   {
   // start with the default (300s = 5mn)
   int timeout = 300;
   // get value from config
@@ -260,7 +260,7 @@ int castor::common::CastorConfiguration::getTimeoutNolock()
 // renewConfigNolock
 //------------------------------------------------------------------------------
 void castor::common::CastorConfiguration::renewConfigNolock()
-  throw (castor::exception::Exception) {
+   {
   // reset the config
   m_config.clear();
 
@@ -272,7 +272,7 @@ void castor::common::CastorConfiguration::renewConfigNolock()
     ex.getMessage() << __FUNCTION__ << " failed"
       ": Failed to open file"
       ": m_fileName=" << m_fileName;
-    throw(ex);
+    throw ex;
   }
 
   std::string line;

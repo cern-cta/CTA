@@ -61,7 +61,7 @@ castor::job::stagerjob::RawMoverPlugin::RawMoverPlugin
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::RawMoverPlugin::preForkHook
 (InputArguments &args, PluginContext &context)
-  throw(castor::exception::Exception) {
+   {
   // For raw movers we use the inetd mode :
   // we send the I/O response before forking the mover
   castor::rh::IOResponse ioResponse;
@@ -143,7 +143,7 @@ void castor::job::stagerjob::RawMoverPlugin::preForkHook
 void castor::job::stagerjob::RawMoverPlugin::postForkHook
 (InputArguments &args, PluginContext &context,
  bool useChkSum, int moverStatus)
-  throw(castor::exception::Exception) {
+   {
   bool childFailed;
   if (moverStatus == -1) {
     // Wait for children

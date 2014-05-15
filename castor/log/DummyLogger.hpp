@@ -67,7 +67,7 @@ public:
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  void prepareForFork() throw(castor::exception::Exception);
+  void prepareForFork() ;
 
   /**
    * Dummy operator() method that does nothing.

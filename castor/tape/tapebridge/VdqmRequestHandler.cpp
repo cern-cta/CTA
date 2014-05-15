@@ -220,7 +220,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
         ": vdqmDriveUnitName=" << jobRequest.driveUnit <<
         ": tpconfigUnitNames=" << driveNamesStream.str();;
 
-      throw(ex);
+      throw ex;
     }
 
     // Log an error if there are more drives attached to the tape-server than
@@ -302,7 +302,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::run(void *param)
         "Received an error message from RTCPD"
         ": " << rtcpdReply.errorMessage;
 
-      throw(ex);
+      throw ex;
     }
 
     // Send a positive acknowledge to the VDQM
@@ -358,7 +358,7 @@ castor::legacymsg::RtcpJobReplyMsgBody
   const legacymsg::RtcpJobRqstMsgBody &jobRequest,
   const char                         (&bridgeCallbackHost)[io::HOSTNAMEBUFLEN],
   const unsigned short                bridgeCallbackPort)
-  const throw(castor::exception::Exception) {
+  const  {
   tapeBridgeClientInfo2MsgBody_t clientInfoMsgBody;
   legacymsg::RtcpJobReplyMsgBody rtcpdReply;
 
@@ -431,7 +431,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
   const legacymsg::RtcpJobRqstMsgBody &jobRequest,
   Counter<uint64_t>                   &tapebridgeTransactionCounter,
   const int                           bridgeCallbackSockFd)
-  throw(castor::exception::Exception) {
+   {
 
   // Accept the initial incoming RTCPD callback connection.
   // Wrap the socket file descriptor in a smart file descriptor so that it is
@@ -525,7 +525,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
         ": tapebridgeTransId=" << tapebridgeTransId <<
         ": " << ex.getMessage().str();
 
-      throw(ex2);
+      throw ex2;
     }
 
     return;
@@ -557,7 +557,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::exceptionThrowingRun(
           ": vid=" << volume->vid() <<
           ": " << ex.getMessage().str();
 
-        throw(ex2);
+        throw ex2;
       }
     }
 
@@ -637,7 +637,7 @@ void castor::tape::tapebridge::VdqmRequestHandler::stop()
 //-----------------------------------------------------------------------------
 void castor::tape::tapebridge::VdqmRequestHandler::
   checkRtcpJobSubmitterIsAuthorised(const int socketFd)
-  throw(castor::exception::Exception) {
+   {
 
   char peerHost[CA_MAXHOSTNAMELEN+1];
 

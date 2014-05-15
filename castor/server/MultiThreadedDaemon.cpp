@@ -47,7 +47,7 @@ castor::server::MultiThreadedDaemon::~MultiThreadedDaemon() throw() {
 // parseCommandLine
 //------------------------------------------------------------------------------
 void castor::server::MultiThreadedDaemon::parseCommandLine(int argc,
-  char *argv[]) throw(castor::exception::Exception) {
+  char *argv[])  {
   bool foreground = false; // Should the daemon run in the foreground?
   Coptions_t* longopts = new Coptions_t[m_threadPools.size() + 5];
   char tparam[] = "Xthreads";
@@ -156,7 +156,7 @@ void castor::server::MultiThreadedDaemon::addThreadPool(
 // start
 //------------------------------------------------------------------------------
 void castor::server::MultiThreadedDaemon::start()
-  throw(castor::exception::Exception) {
+   {
   if (getForeground()) {
     m_stdOut << "Starting " << getServerName() << std::endl;
   }
@@ -189,7 +189,7 @@ void castor::server::MultiThreadedDaemon::start()
 // setUpMultiThreadedSignalHandling
 //------------------------------------------------------------------------------
 void castor::server::MultiThreadedDaemon::setupMultiThreadedSignalHandling()
-  throw (castor::exception::Exception) {
+   {
   // Initialize mutex variable in case of a signal. Timeout = 10 seconds
   try {
     m_signalMutex = new Mutex(0);
@@ -392,7 +392,7 @@ void castor::server::MultiThreadedDaemon::resetAllMetrics() throw() {
 //------------------------------------------------------------------------------
 castor::server::BaseThreadPool *
   castor::server::MultiThreadedDaemon::getThreadPool(const char nameIn)
-  throw (castor::exception::Exception) {
+   {
   std::map<const char, BaseThreadPool*>::const_iterator tpIt =
     m_threadPools.find(nameIn);
   if(tpIt == m_threadPools.end()) {

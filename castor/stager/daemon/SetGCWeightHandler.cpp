@@ -31,7 +31,7 @@ namespace castor{
   namespace stager{
     namespace daemon{
             
-      void SetGCWeightHandler::handle() throw(castor::exception::Exception)
+      void SetGCWeightHandler::handle() 
       {
         RequestHandler::handle();
         
@@ -108,7 +108,7 @@ namespace castor{
           };
           
           castor::dlf::dlf_writep(reqHelper->requestUuid, DLF_LVL_ERROR, STAGER_SETGC, 2 ,params, &(reqHelper->cnsFileid));
-          throw(e); 
+          throw e; 
         }
       }
       

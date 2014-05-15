@@ -45,7 +45,7 @@ public:
   
   tapegateway::Volume *getVolume(
     const uint64_t tapebridgeTransId)
-    throw(castor::exception::Exception) {
+     {
     return NULL;
   }
 
@@ -53,7 +53,7 @@ public:
     const uint64_t tapebridgeTransId,
     const uint64_t maxFiles,
     const uint64_t maxBytes) const
-    throw(castor::exception::Exception) {
+     {
     return -1;
   }
 
@@ -61,7 +61,7 @@ public:
     *receiveFilesToMigrateListRequestReplyAndClose(
     const uint64_t tapebridgeTransId,
     const int      clientSock) const
-    throw(castor::exception::Exception) {
+     {
     return NULL;
   }
 
@@ -69,7 +69,7 @@ public:
     const uint64_t tapebridgeTransId,
     const uint64_t maxFiles,
     const uint64_t maxBytes) const
-    throw(castor::exception::Exception) {
+     {
     return -1;
   }
 
@@ -77,38 +77,38 @@ public:
     *receiveFilesToRecallListRequestReplyAndClose(
     const uint64_t tapebridgeTransId,
     const int      clientSock) const
-    throw(castor::exception::Exception) {
+     {
     return NULL;
   }
 
   void receiveNotificationReplyAndClose(
     const uint64_t tapebridgeTransId,
     const int      clientSock) const
-    throw(castor::exception::Exception) {
+     {
     // Do nothing
   }
 
   tapegateway::DumpParameters *getDumpParameters(
     const uint64_t tapebridgeTransId) const
-    throw(castor::exception::Exception) {
+     {
     return NULL;
   }
 
   void notifyDumpMessage(
     const uint64_t tapebridgeTransId,
     const char     (&message)[CA_MAXLINELEN+1]) const
-    throw(castor::exception::Exception) {
+     {
     // Do nothing
   }
 
   void ping(
     const uint64_t tapebridgeTransId) const
-    throw(castor::exception::Exception) {
+     {
     // Do nothing
   }
 
   IObject *receiveReplyAndClose(const int clientSock) const
-    throw(castor::exception::Exception) {
+     {
     return NULL;
   }
 
@@ -117,13 +117,13 @@ public:
     const uint32_t    actualMountTransactionId,
     const uint64_t    expectedTapebridgeTransId,
     const uint64_t    actualTapebridgeTransId) const
-    throw(castor::exception::Exception) {
+     {
     // Do nothing
   }
 
   void notifyEndOfSession(
     const uint64_t tapebridgeTransId) const
-    throw(castor::exception::Exception) {
+     {
     // Do nothing
   }
 
@@ -131,14 +131,14 @@ public:
     const uint64_t    tapebridgeTransId,
     const int         errorCode,
     const std::string &errorMessage) const
-    throw(castor::exception::Exception) {
+     {
     // Do nothing
   }
 
   int connectAndSendMessage(
     IObject &message,
     timeval &connectDuration) const
-    throw(castor::exception::Exception) {
+     {
     return -1;
   }
 }; // class DummyClientProxy

@@ -39,7 +39,7 @@ namespace castor {
         public:
 
 	void checkFseqForWrite (const std::string &vid, int Fseq)
-          throw (castor::exception::Exception);
+          ;
 
 	/* Ad-hoc exceptions */
 	class NoSuchFileException: public castor::exception::Exception {

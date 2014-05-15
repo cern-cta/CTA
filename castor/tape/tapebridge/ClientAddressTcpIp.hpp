@@ -58,7 +58,7 @@ public:
    * Throws a castor::exception::InvalidArgument exception if the client
    * address represented by this object is invalid.
    */
-  void checkValidity() const throw(castor::exception::InvalidArgument);
+  void checkValidity() const ;
 
   /**
    * Connects to the client at the address represented by this object.
@@ -73,7 +73,7 @@ public:
   int connectToClient(
     const int netTimeout,
     timeval   &connectDuration)
-    const throw(castor::exception::Exception);
+    const ;
 
   /**
    * Returns the hostname of the TCP/IP address.

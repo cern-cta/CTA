@@ -56,7 +56,7 @@ public:
   void gotReadMountDetailsFromClient(
     const std::string &unitName,
     const std::string &vid)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Informs the tapeserverd daemon that the mount-session child-process got
@@ -68,7 +68,7 @@ public:
   void gotWriteMountDetailsFromClient(
     const std::string &unitName,
     const std::string &vid)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Informs the tapeserverd daemon that the mount-session child-process got
@@ -80,7 +80,7 @@ public:
   void gotDumpMountDetailsFromClient(
     const std::string &unitName,
     const std::string &vid)
-    throw(castor::exception::Exception);
+    ;
   
   /**
    * Notifies the tapeserverd daemon that the specified tape has been mounted.
@@ -91,7 +91,7 @@ public:
   void tapeMountedForRead(
     const std::string &unitName,
     const std::string &vid)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Notifies the tapeserverd daemon that the specified tape has been mounted.
@@ -102,7 +102,7 @@ public:
   void tapeMountedForWrite(
     const std::string &unitName,
     const std::string &vid)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Notifies the tapeserverd daemon that the specified tape has been unmounted.
@@ -113,7 +113,7 @@ public:
  void tapeUnmounted(
     const std::string &unitName,
     const std::string &vid)
-    throw(castor::exception::Exception);
+    ;
 
 }; // class TapeserverProxyDummy
 

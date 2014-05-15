@@ -63,7 +63,7 @@ public:
    * @param argv The command-line vector.
    */
   virtual void parseCommandLine(int argc, char *argv[])
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Prints out the online help
@@ -86,7 +86,7 @@ public:
   /**
    * Returns true if the daemon is configured to run in the foreground.
    */
-  bool getForeground() const throw(castor::exception::CommandLineNotParsed);
+  bool getForeground() const ;
 
 protected:
 
@@ -106,7 +106,7 @@ protected:
    * @param messages the messages to be passed to dlf_init
    */
   void dlfInit(castor::dlf::Message messages[])
-    throw (castor::exception::Exception);
+    ;
 
   /**
    * Daemonizes the daemon if it has not been configured to run in the
@@ -118,7 +118,7 @@ protected:
    * or background mode (m_foreground) and whether or not the user of daemon
    * should be changed to the stager superuser (m_runAsStagerSuperuser).
    */
-  void daemonizeIfNotRunInForeground() throw(castor::exception::Exception);
+  void daemonizeIfNotRunInForeground() ;
 
   /**
    * Sends a notification message to the given host,port

@@ -98,7 +98,7 @@ void castor::tape::tapebridge::TapeFlushConfigParams::determineTapeFlushMode()
 //------------------------------------------------------------------------------
 uint32_t castor::tape::tapebridge::TapeFlushConfigParams::
   stringToTapeFlushMode(const std::string s)
-  throw(castor::exception::InvalidArgument) {
+   {
   if(s == "N_FLUSHES_PER_FILE") {
     return TAPEBRIDGE_N_FLUSHES_PER_FILE;
   } else if(s == "ONE_FLUSH_PER_N_FILES") {

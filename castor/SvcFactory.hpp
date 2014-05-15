@@ -52,7 +52,7 @@ namespace castor {
      * @param name the service name
      */
     virtual IService* instantiate(const std::string name) const
-      throw (castor::exception::Exception);
+      ;
 
     /** Get ID of the factory, i.e. of the underlying Service */
     unsigned int id() const;
@@ -68,7 +68,7 @@ inline castor::SvcFactory<Service>::SvcFactory() throw() {
 
 template <class Service> inline castor::IService*
 castor::SvcFactory<Service>::instantiate(const std::string name) const
-  throw (castor::exception::Exception) {
+   {
   return new Service(name);
 }
 

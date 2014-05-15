@@ -37,7 +37,7 @@ castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolNam
                                                        unsigned int listenPort,
                                                        bool waitIfBusy,
                                                        unsigned int nbThreads)
-  throw(castor::exception::Exception) :
+   :
   DynamicThreadPool(poolName, thread, 0, nbThreads, nbThreads),
   m_sock(0), m_port(listenPort), m_waitIfBusy(waitIfBusy) {}
 
@@ -52,7 +52,7 @@ castor::server::ListenerThreadPool::ListenerThreadPool(const std::string poolNam
                                                        unsigned int maxThreads,
                                                        unsigned int threshold,
                                                        unsigned int maxTasks)
-  throw(castor::exception::Exception) :
+   :
   DynamicThreadPool(poolName, thread, 0, initThreads, maxThreads, threshold, maxTasks),
   m_sock(0), m_port(listenPort), m_waitIfBusy(waitIfBusy) {}
 
@@ -64,7 +64,7 @@ castor::server::ListenerThreadPool::~ListenerThreadPool() throw() {}
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::server::ListenerThreadPool::run() throw (castor::exception::Exception) {
+void castor::server::ListenerThreadPool::run()  {
   // bind the socket (this can fail, we just propagate the exception)
   bind();
 

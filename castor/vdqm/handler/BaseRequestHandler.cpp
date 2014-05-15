@@ -47,7 +47,7 @@
 // Constructor
 //------------------------------------------------------------------------------
 castor::vdqm::handler::BaseRequestHandler::BaseRequestHandler() 
-throw(castor::exception::Exception)
+
 {
   castor::IService* svc = NULL;
 

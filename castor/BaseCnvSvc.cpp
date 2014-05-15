@@ -85,7 +85,7 @@ void castor::BaseCnvSvc::removeAlias(const unsigned int id) {
 //-----------------------------------------------------------------------------
 castor::IConverter* castor::BaseCnvSvc::converter
 (const unsigned int origObjType)
-  throw (castor::exception::Exception) {
+   {
   // First uses aliases
   unsigned int objType = origObjType;
   if (m_aliases.find(objType) != m_aliases.end()) {
@@ -121,7 +121,7 @@ void castor::BaseCnvSvc::createRep(castor::IAddress* address,
                                    castor::IObject* object,
                                    bool endTransaction,
                                    unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   // If no object, nothing to create
   if (0 != object) {
     // Look for an adapted converter
@@ -139,7 +139,7 @@ void castor::BaseCnvSvc::bulkCreateRep(castor::IAddress* address,
                                        std::vector<castor::IObject*> &objects,
                                        bool endTransaction,
                                        unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   // If no object, nothing to create
   if (objects.size() > 0) {
     // Look for an adapted converter
@@ -157,7 +157,7 @@ void castor::BaseCnvSvc::bulkCreateRep(castor::IAddress* address,
 void castor::BaseCnvSvc::updateRep(castor::IAddress* address,
                                    castor::IObject* object,
                                    bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   // If no object, nothing to update
   if (0 != object) {
     // Look for an adapted converter
@@ -174,7 +174,7 @@ void castor::BaseCnvSvc::updateRep(castor::IAddress* address,
 void castor::BaseCnvSvc::deleteRep(castor::IAddress* address,
                                    castor::IObject* object,
                                    bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   // Look for an adapted converter
   // The converter is always valid if no exception is thrown
   IConverter* conv = converter(object->type());
@@ -187,7 +187,7 @@ void castor::BaseCnvSvc::deleteRep(castor::IAddress* address,
 // -----------------------------------------------------------------------
 castor::IObject* castor::BaseCnvSvc::createObj
 (castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Look for an adapted converter
   // The converter is always valid if no exception is thrown
   castor::IConverter* conv = converter(address->objType());
@@ -199,7 +199,7 @@ castor::IObject* castor::BaseCnvSvc::createObj
 // -----------------------------------------------------------------------
 std::vector<castor::IObject*> castor::BaseCnvSvc::bulkCreateObj
 (castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Look for an adapted converter
   // The converter is always valid if no exception is thrown
   castor::IConverter* conv = converter(address->objType());
@@ -210,7 +210,7 @@ std::vector<castor::IObject*> castor::BaseCnvSvc::bulkCreateObj
 // updateObj
 // -----------------------------------------------------------------------
 void castor::BaseCnvSvc::updateObj(castor::IObject* object)
-  throw (castor::exception::Exception) {
+   {
   // Look for an adapted converter
   // The converter is always valid if no exception is thrown
   castor::IConverter* conv = converter(object->type());
@@ -224,7 +224,7 @@ void castor::BaseCnvSvc::fillRep(castor::IAddress* address,
                                  castor::IObject* object,
                                  unsigned int type,
                                  bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   // Look for an adapted converter
   // The converter is always valid if no exception is thrown
   castor::IConverter* conv = converter(object->type());
@@ -238,7 +238,7 @@ void castor::BaseCnvSvc::fillObj(castor::IAddress* address,
                                  castor::IObject* object,
                                  unsigned int type,
                                  bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   // Look for an adapted converter
   // The converter is always valid if no exception is thrown
   castor::IConverter* conv = converter(object->type());
@@ -250,7 +250,7 @@ void castor::BaseCnvSvc::fillObj(castor::IAddress* address,
 // -----------------------------------------------------------------------
 void castor::BaseCnvSvc::deleteRepByAddress (castor::IAddress* address,
                                              bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::IObject* obj = createObj(address);
   address->setObjType(obj->type());
   deleteRep(address, obj, endTransaction);
@@ -260,7 +260,7 @@ void castor::BaseCnvSvc::deleteRepByAddress (castor::IAddress* address,
 // commit
 //------------------------------------------------------------------------------
 void castor::BaseCnvSvc::commit()
-  throw (castor::exception::Exception) {
+   {
   // Default implementation, does nothing.
 }
 
@@ -268,7 +268,7 @@ void castor::BaseCnvSvc::commit()
 // rollback
 //------------------------------------------------------------------------------
 void castor::BaseCnvSvc::rollback()
-  throw (castor::exception::Exception) {
+   {
   // Default implementation, does nothing.
 }
 
@@ -276,7 +276,7 @@ void castor::BaseCnvSvc::rollback()
 // createStatement
 //------------------------------------------------------------------------------
 castor::db::IDbStatement* castor::BaseCnvSvc::createStatement(const std::string&)
-  throw (castor::exception::Exception) {
+   {
   // Default implementation, does nothing.
   return 0;
 }

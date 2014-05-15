@@ -102,7 +102,7 @@ size_t castor::log::SyslogLogger::determineMaxMsgLen() const throw() {
 //------------------------------------------------------------------------------
 std::map<int, std::string>
   castor::log::SyslogLogger::generatePriorityToTextMap() const 
-  throw(castor::exception::Exception) {
+   {
   std::map<int, std::string> m;
 
   try {
@@ -129,7 +129,7 @@ std::map<int, std::string>
 //------------------------------------------------------------------------------
 std::map<std::string, int>
   castor::log::SyslogLogger::generateConfigTextToPriorityMap() const
-  throw(castor::exception::Exception) {
+   {
   std::map<std::string, int> m;
 
   try {
@@ -156,7 +156,7 @@ std::map<std::string, int>
 // initMutex
 //------------------------------------------------------------------------------
 void castor::log::SyslogLogger::initMutex()
-  throw(castor::exception::Exception) {
+   {
   pthread_mutexattr_t attr;
   int rc = pthread_mutexattr_init(&attr);
   if(0 != rc) {
@@ -198,7 +198,7 @@ castor::log::SyslogLogger::~SyslogLogger() throw() {
 // prepareForFork
 //------------------------------------------------------------------------------
 void castor::log::SyslogLogger::prepareForFork() 
-  throw(castor::exception::Exception) {
+   {
   // Enter critical section
   {
     const int mutex_lock_rc = pthread_mutex_lock(&m_mutex);
@@ -206,7 +206,7 @@ void castor::log::SyslogLogger::prepareForFork()
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to lock mutex of logger's critcial section: "
         << sstrerror(mutex_lock_rc);
-      throw(ex);
+      throw ex;
     }
   }
 
@@ -219,7 +219,7 @@ void castor::log::SyslogLogger::prepareForFork()
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to unlock mutex of logger's critcial section: "
         << sstrerror(mutex_unlock_rc);
-      throw(ex);
+      throw ex;
     }
   }
 }

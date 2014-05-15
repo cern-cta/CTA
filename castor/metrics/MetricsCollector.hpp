@@ -52,12 +52,12 @@ namespace castor {
         castor::server::MultiThreadedDaemon* daemon = 0);
   
       /// Default destructor
-      virtual ~MetricsCollector() throw ();
+      virtual ~MetricsCollector() throw();
     
       /// Method to be called by application's threads
       /// to count the object represented by obj (e.g. a Request)
       void updateHistograms(castor::IObject* obj)
-        throw (castor::exception::Exception);
+        ;
   
       /// Add a new histogram to the system
       void addHistogram(castor::metrics::Histogram* h) {
@@ -70,7 +70,7 @@ namespace castor {
        * @throw castor::exception::Exception(ENOENT) when data not found
        */     
       std::string printXml(std::string histName, std::string counterName)
-        throw (castor::exception::Exception);
+        ;
         
       /**
        * Dumps the current metrics' values to a proc-like XML-formatted file.

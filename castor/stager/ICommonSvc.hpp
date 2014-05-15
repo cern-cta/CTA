@@ -66,7 +66,7 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual castor::stager::Request* requestToDo(std::string service)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
     }; // end of class ICommonSvc
 

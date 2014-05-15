@@ -102,7 +102,7 @@ void castor::tape::tpcp::DumpTpCommand::usage(std::ostream &os) const throw() {
 // parseCommandLine
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
-  char **argv) throw(castor::exception::Exception) {
+  char **argv)  {
 
   static struct option longopts[] = {
     {"debug"    , 0, NULL, 'd'},
@@ -335,7 +335,7 @@ void castor::tape::tpcp::DumpTpCommand::parseCommandLine(const int argc,
 // checkAccessToDisk
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::DumpTpCommand::checkAccessToDisk()
-  const throw (castor::exception::Exception) {
+  const  {
   // There are no disk files when making a dump of tape, therefore throw no
   // exceptions.
 }
@@ -345,7 +345,7 @@ void castor::tape::tpcp::DumpTpCommand::checkAccessToDisk()
 // checkAccessToTape
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::DumpTpCommand::checkAccessToTape()
-  const throw (castor::exception::Exception) {
+  const  {
   const bool userIsTapeOperator =
     Cupv_check(m_userId, m_groupId, m_hostname, "TAPE_SERVERS",
       P_TAPE_OPERATOR) == 0 ||
@@ -380,7 +380,7 @@ void castor::tape::tpcp::DumpTpCommand::checkAccessToTape()
 // requestDriveFromVdqm
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::DumpTpCommand::requestDriveFromVdqm(
-  char *const tapeServer) throw(castor::exception::Exception) {
+  char *const tapeServer)  {
   TpcpCommand::requestDriveFromVdqm(WRITE_DISABLE, tapeServer);
 }
 
@@ -391,7 +391,7 @@ void castor::tape::tpcp::DumpTpCommand::requestDriveFromVdqm(
 void castor::tape::tpcp::DumpTpCommand::sendVolumeToTapeBridge(
   const tapegateway::VolumeRequest &volumeRequest,
   castor::io::AbstractTCPSocket    &connection)
-  const throw(castor::exception::Exception) {
+  const  {
   castor::tape::tapegateway::Volume volumeMsg;
   volumeMsg.setVid(m_vmgrTapeInfo.vid);
   volumeMsg.setClientType(castor::tape::tapegateway::DUMP_TP);
@@ -412,7 +412,7 @@ void castor::tape::tpcp::DumpTpCommand::sendVolumeToTapeBridge(
 // performTransfer
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::DumpTpCommand::performTransfer()
-  throw (castor::exception::Exception) {
+   {
 
   // Spin in the wait for message and dispatch handler loop until there is no
   // more work
@@ -434,7 +434,7 @@ void castor::tape::tpcp::DumpTpCommand::performTransfer()
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::DumpTpCommand::dispatchMsgHandler(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
   switch(obj->type()) {
   case OBJ_DumpParametersRequest:
     return handleDumpParametersRequest(obj, sock);
@@ -471,7 +471,7 @@ bool castor::tape::tpcp::DumpTpCommand::dispatchMsgHandler(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::DumpTpCommand::handleDumpParametersRequest(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   tapegateway::DumpParametersRequest *msg = NULL;
 
@@ -505,7 +505,7 @@ bool castor::tape::tpcp::DumpTpCommand::handleDumpParametersRequest(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::DumpTpCommand::handleDumpNotification(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   tapegateway::DumpNotification *msg = NULL;
 
@@ -536,7 +536,7 @@ bool castor::tape::tpcp::DumpTpCommand::handleDumpNotification(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::DumpTpCommand::handleEndNotification(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   return TpcpCommand::handleEndNotification(obj, sock);
 }
@@ -547,7 +547,7 @@ bool castor::tape::tpcp::DumpTpCommand::handleEndNotification(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::DumpTpCommand::handleEndNotificationErrorReport(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   return TpcpCommand::handleEndNotificationErrorReport(obj,sock);
 }
@@ -558,7 +558,7 @@ bool castor::tape::tpcp::DumpTpCommand::handleEndNotificationErrorReport(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::DumpTpCommand::handlePingNotification(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   return TpcpCommand::handlePingNotification(obj,sock);
 }

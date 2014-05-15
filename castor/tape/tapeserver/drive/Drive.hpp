@@ -135,37 +135,37 @@ namespace drives {
   class DriveInterface {
   public:
     virtual ~DriveInterface(){};
-    virtual compressionStats getCompression() throw (Exception) = 0;
-    virtual void clearCompressionStats() throw (Exception) = 0;
-    virtual deviceInfo getDeviceInfo() throw (Exception) = 0;
-    virtual std::string getSerialNumber() throw (Exception) = 0;
-    virtual void positionToLogicalObject(uint32_t blockId) throw (Exception) = 0;
-    virtual positionInfo getPositionInfo() throw (Exception) = 0;
-    virtual std::vector<std::string> getTapeAlerts() throw (Exception) = 0;
+    virtual compressionStats getCompression()  = 0;
+    virtual void clearCompressionStats()  = 0;
+    virtual deviceInfo getDeviceInfo()  = 0;
+    virtual std::string getSerialNumber()  = 0;
+    virtual void positionToLogicalObject(uint32_t blockId)  = 0;
+    virtual positionInfo getPositionInfo()  = 0;
+    virtual std::vector<std::string> getTapeAlerts()  = 0;
     virtual void setDensityAndCompression(bool compression = true,
-        unsigned char densityCode = 0) throw (Exception) = 0;
-    virtual driveStatus getDriveStatus() throw (Exception) = 0;
-    virtual tapeError getTapeError() throw (Exception) = 0;
-    virtual void setSTBufferWrite(bool bufWrite) throw (Exception) = 0;
-    virtual void fastSpaceToEOM(void) throw (Exception) = 0;
-    virtual void rewind(void) throw (Exception) = 0;
-    virtual void spaceToEOM(void) throw (Exception) = 0;
-    virtual void spaceFileMarksBackwards(size_t count) throw (Exception) = 0;
-    virtual void spaceFileMarksForward(size_t count) throw (Exception) = 0;
-    virtual void spaceBlocksBackwards(size_t count) throw (Exception) = 0;
-    virtual void spaceBlocksForward(size_t count) throw (Exception) = 0;
-    virtual void unloadTape(void) throw (Exception) = 0;
-    virtual void flush(void) throw (Exception) = 0;
-    virtual void writeSyncFileMarks(size_t count) throw (Exception) = 0;
-    virtual void writeImmediateFileMarks(size_t count) throw (Exception) = 0;
-    virtual void writeBlock(const void * data, size_t count) throw (Exception) = 0;
-    virtual ssize_t readBlock(void * data, size_t count) throw (Exception) = 0;
-    virtual void readExactBlock(void * data, size_t count, std::string context) throw (Exception) = 0;
-    virtual void readFileMark(std::string context) throw (Exception) = 0;
-    virtual bool isReady() throw(Exception) = 0;    
-    virtual bool isWriteProtected() throw(Exception) = 0;
-    virtual bool isAtBOT() throw(Exception) = 0;
-    virtual bool isAtEOD() throw(Exception) = 0;
+        unsigned char densityCode = 0)  = 0;
+    virtual driveStatus getDriveStatus()  = 0;
+    virtual tapeError getTapeError()  = 0;
+    virtual void setSTBufferWrite(bool bufWrite)  = 0;
+    virtual void fastSpaceToEOM(void)  = 0;
+    virtual void rewind(void)  = 0;
+    virtual void spaceToEOM(void)  = 0;
+    virtual void spaceFileMarksBackwards(size_t count)  = 0;
+    virtual void spaceFileMarksForward(size_t count)  = 0;
+    virtual void spaceBlocksBackwards(size_t count)  = 0;
+    virtual void spaceBlocksForward(size_t count)  = 0;
+    virtual void unloadTape(void)  = 0;
+    virtual void flush(void)  = 0;
+    virtual void writeSyncFileMarks(size_t count)  = 0;
+    virtual void writeImmediateFileMarks(size_t count)  = 0;
+    virtual void writeBlock(const void * data, size_t count)  = 0;
+    virtual ssize_t readBlock(void * data, size_t count)  = 0;
+    virtual void readExactBlock(void * data, size_t count, std::string context)  = 0;
+    virtual void readFileMark(std::string context)  = 0;
+    virtual bool isReady()  = 0;    
+    virtual bool isWriteProtected()  = 0;
+    virtual bool isAtBOT()  = 0;
+    virtual bool isAtEOD()  = 0;
     /** Member string allowing the convenient storage of the string describing
      * drive location for the mount system (we get the information from TPCONFIG*/
     std::string librarySlot;
@@ -192,37 +192,37 @@ namespace drives {
     std::string contentToString() throw();
     FakeDrive() throw();
     virtual ~FakeDrive() throw(){}
-    virtual compressionStats getCompression() throw (Exception);
-    virtual void clearCompressionStats() throw (Exception);
-    virtual deviceInfo getDeviceInfo() throw (Exception);
-    virtual std::string getSerialNumber() throw (Exception);
-    virtual void positionToLogicalObject(uint32_t blockId) throw (Exception);
-    virtual positionInfo getPositionInfo() throw (Exception);
-    virtual std::vector<std::string> getTapeAlerts() throw (Exception);
+    virtual compressionStats getCompression() ;
+    virtual void clearCompressionStats() ;
+    virtual deviceInfo getDeviceInfo() ;
+    virtual std::string getSerialNumber() ;
+    virtual void positionToLogicalObject(uint32_t blockId) ;
+    virtual positionInfo getPositionInfo() ;
+    virtual std::vector<std::string> getTapeAlerts() ;
     virtual void setDensityAndCompression(bool compression = true, 
-        unsigned char densityCode = 0) throw (Exception);
-    virtual driveStatus getDriveStatus() throw (Exception);
-    virtual tapeError getTapeError() throw (Exception);
-    virtual void setSTBufferWrite(bool bufWrite) throw (Exception);
-    virtual void fastSpaceToEOM(void) throw (Exception);
-    virtual void rewind(void) throw (Exception);
-    virtual void spaceToEOM(void) throw (Exception);
-    virtual void spaceFileMarksBackwards(size_t count) throw (Exception);
-    virtual void spaceFileMarksForward(size_t count) throw (Exception);
-    virtual void spaceBlocksBackwards(size_t count) throw (Exception);
-    virtual void spaceBlocksForward(size_t count) throw (Exception);
-    virtual void unloadTape(void) throw (Exception);
-    virtual void flush(void) throw (Exception);
-    virtual void writeSyncFileMarks(size_t count) throw (Exception);
-    virtual void writeImmediateFileMarks(size_t count) throw (Exception);
-    virtual void writeBlock(const void * data, size_t count) throw (Exception);
-    virtual ssize_t readBlock(void * data, size_t count) throw (Exception);
-    virtual void readExactBlock(void * data, size_t count, std::string context) throw (Exception);
-    virtual void readFileMark(std::string context) throw (Exception);
-    virtual bool isReady() throw(Exception);    
-    virtual bool isWriteProtected() throw(Exception);
-    virtual bool isAtBOT() throw(Exception);
-    virtual bool isAtEOD() throw(Exception);
+        unsigned char densityCode = 0) ;
+    virtual driveStatus getDriveStatus() ;
+    virtual tapeError getTapeError() ;
+    virtual void setSTBufferWrite(bool bufWrite) ;
+    virtual void fastSpaceToEOM(void) ;
+    virtual void rewind(void) ;
+    virtual void spaceToEOM(void) ;
+    virtual void spaceFileMarksBackwards(size_t count) ;
+    virtual void spaceFileMarksForward(size_t count) ;
+    virtual void spaceBlocksBackwards(size_t count) ;
+    virtual void spaceBlocksForward(size_t count) ;
+    virtual void unloadTape(void) ;
+    virtual void flush(void) ;
+    virtual void writeSyncFileMarks(size_t count) ;
+    virtual void writeImmediateFileMarks(size_t count) ;
+    virtual void writeBlock(const void * data, size_t count) ;
+    virtual ssize_t readBlock(void * data, size_t count) ;
+    virtual void readExactBlock(void * data, size_t count, std::string context) ;
+    virtual void readFileMark(std::string context) ;
+    virtual bool isReady() ;    
+    virtual bool isWriteProtected() ;
+    virtual bool isAtBOT() ;
+    virtual bool isAtEOD() ;
   };
   
   /**
@@ -246,26 +246,26 @@ namespace drives {
      * fields toHost, fromDrive are related to the read operation.
      * @return compressionStats
      */
-    virtual compressionStats getCompression() throw (Exception) = 0;
+    virtual compressionStats getCompression()  = 0;
 
     /**
      * Reset all statistics about data movements on the drive.
      * All cumulative and threshold log counter values will be reset to their
      * default values as specified in that pages reset behavior section.
      */
-    virtual void clearCompressionStats() throw (Exception);
+    virtual void clearCompressionStats() ;
 
     /**
      * Information about the drive. The vendor id is used in the user labels of the files.
      * @return    The deviceInfo structure with the information about the drive.
      */
-    virtual deviceInfo getDeviceInfo() throw (Exception);
+    virtual deviceInfo getDeviceInfo() ;
 
     /**
      * Information about the serial number of the drive. 
      * @return   Right-aligned ASCII data for the vendor-assigned serial number.
      */
-    virtual std::string getSerialNumber() throw (Exception);
+    virtual std::string getSerialNumber() ;
 
     /**
      * Position to logical object identifier (i.e. block address). 
@@ -274,7 +274,7 @@ namespace drives {
      * has completed.
      * @param blockId The blockId, represented in local endianness.
      */
-    virtual void positionToLogicalObject(uint32_t blockId) throw (Exception);
+    virtual void positionToLogicalObject(uint32_t blockId) ;
 
     /**
      * Return logical position of the drive. This is the address of the next object
@@ -282,14 +282,14 @@ namespace drives {
      * @return positionInfo class. This contains the logical position, plus information
      * on the dirty data still in the write buffer.
      */
-    virtual positionInfo getPositionInfo() throw (Exception);
+    virtual positionInfo getPositionInfo() ;
 
     /**
      * Get tape alert information from the drive. There is a quite long list of possible tape alerts.
      * They are described in SSC-4, section 4.2.20: TapeAlert application client interface
      * @return list of tape alerts descriptions. They are simply used for logging.
      */
-    virtual std::vector<std::string> getTapeAlerts() throw (Exception);
+    virtual std::vector<std::string> getTapeAlerts() ;
 
     /**
      * Set the tape density and compression. 
@@ -305,17 +305,17 @@ namespace drives {
      *                     on the drive for the tape. By default it is enabled.
      */
     virtual void setDensityAndCompression(bool compression = true,
-            unsigned char densityCode = 0) throw (Exception);
+            unsigned char densityCode = 0) ;
 
     /**
      * Get drive status.
      * @return structure containing various booleans, and error conditions.
      */
-    virtual driveStatus getDriveStatus() throw (Exception) {
+    virtual driveStatus getDriveStatus()  {
       throw Exception("Not implemented");
     }
     
-    virtual bool isReady() throw(Exception) {
+    virtual bool isReady()  {
       // we need to reopen the drive to have the GMT_ONLINE check working (see "man st")
       castor::exception::Errnum::throwOnMinusOne(m_sysWrapper.close(m_tapeFD),
       std::string("Could not close device file: ") + m_SCSIInfo.nst_dev);
@@ -326,17 +326,17 @@ namespace drives {
       return m_driveStatus.ready;
     }
     
-    virtual bool isWriteProtected() throw(Exception) {
+    virtual bool isWriteProtected()  {
       UpdateDriveStatus();
       return m_driveStatus.writeProtection;
     }
     
-    virtual bool isAtBOT() throw(Exception) {
+    virtual bool isAtBOT()  {
       UpdateDriveStatus();
       return m_driveStatus.bot;
     }
     
-    virtual bool isAtEOD() throw(Exception) {
+    virtual bool isAtEOD()  {
       UpdateDriveStatus();
       return m_driveStatus.eod;
     }
@@ -370,7 +370,7 @@ namespace drives {
      *  {"Wrong tape media", ETCOMPA}
      * @return error code and string containing the error description
      */
-    virtual tapeError getTapeError() throw (Exception) {
+    virtual tapeError getTapeError()  {
       throw Exception("Not implemented");
     }
 
@@ -380,7 +380,7 @@ namespace drives {
      * layer, unless the parameter turns out to be disused.
      * @param bufWrite: value of the buffer write switch
      */
-    virtual void setSTBufferWrite(bool bufWrite) throw (Exception);
+    virtual void setSTBufferWrite(bool bufWrite) ;
 
     /**
      * Jump to end of media. This will use setSTFastMTEOM() to disable MT_ST_FAST_MTEOM.
@@ -390,74 +390,74 @@ namespace drives {
      * all tape drives.
      * TODO: synchronous? Timeout?
      */
-    virtual void fastSpaceToEOM(void) throw (Exception);
+    virtual void fastSpaceToEOM(void) ;
 
     /**
      * Rewind tape.
      */
-    virtual void rewind(void) throw (Exception);
+    virtual void rewind(void) ;
 
     /**
      * Jump to end of data. EOM in ST driver jargon, end of data (which is more accurate)
      * in SCSI terminology).
      */
-    virtual void spaceToEOM(void) throw (Exception);
+    virtual void spaceToEOM(void) ;
 
     /**
      * Space count file marks backwards.
      * @param count
      */
-    virtual void spaceFileMarksBackwards(size_t count) throw (Exception);
+    virtual void spaceFileMarksBackwards(size_t count) ;
 
     /**
      * Space count file marks forward.
      * @param count
      */
-    virtual void spaceFileMarksForward(size_t count) throw (Exception);
+    virtual void spaceFileMarksForward(size_t count) ;
 
     /**
      * Space count blocks backwards.
      * @param count
      */
-    virtual void spaceBlocksBackwards(size_t count) throw (Exception);
+    virtual void spaceBlocksBackwards(size_t count) ;
 
     /**
      * Space count blocks forward.
      * @param count
      */
-    virtual void spaceBlocksForward(size_t count) throw (Exception);
+    virtual void spaceBlocksForward(size_t count) ;
 
     /**
      * Unload the tape.
      */
-    virtual void unloadTape(void) throw (Exception);
+    virtual void unloadTape(void) ;
 
     /**
      * Synch call to the tape drive. This function will not return before the 
      * data in the drive's buffer is actually comitted to the medium.
      */
-    virtual void flush(void) throw (Exception);
+    virtual void flush(void) ;
 
     /**
      * Write count file marks. The function does not return before the file marks 
      * are committed to medium.
      * @param count
      */
-    virtual void writeSyncFileMarks(size_t count) throw (Exception);
+    virtual void writeSyncFileMarks(size_t count) ;
 
     /**
      * Write count file marks asynchronously. The file marks are just added to the drive's
      * buffer and the function return immediately.
      * @param count
      */
-    virtual void writeImmediateFileMarks(size_t count) throw (Exception);
+    virtual void writeImmediateFileMarks(size_t count) ;
 
     /**
      * Write a data block to tape.
      * @param data pointer the the data block
      * @param count size of the data block
      */
-    virtual void writeBlock(const void * data, size_t count) throw (Exception);
+    virtual void writeBlock(const void * data, size_t count) ;
 
     /**
      * Read a data block from tape.
@@ -465,7 +465,7 @@ namespace drives {
      * @param count size of the data block
      * @return the actual size of read data
      */
-    virtual ssize_t readBlock(void * data, size_t count) throw (Exception);
+    virtual ssize_t readBlock(void * data, size_t count) ;
     
     /**
      * Read a data block from tape. Throw an exception if the read block is not
@@ -475,13 +475,13 @@ namespace drives {
      * @param context optional context to be added to the thrown exception
      * @return the actual size of read data
      */
-    virtual void readExactBlock(void * data, size_t count, std::string context= "") throw (Exception);
+    virtual void readExactBlock(void * data, size_t count, std::string context= "") ;
     
     /**
      * Read over a file mark. Throw an exception we do not read one.
      * @return the actual size of read data
      */
-    virtual void readFileMark(std::string context= "") throw (Exception);
+    virtual void readFileMark(std::string context= "") ;
     
     virtual ~DriveGeneric() {
       if (-1 != m_tapeFD)
@@ -504,12 +504,12 @@ namespace drives {
      * the higher levels of the software (TODO: protected?).
      * @param fastMTEOM the option switch.
      */
-    virtual void setSTFastMTEOM(bool fastMTEOM) throw (Exception);
+    virtual void setSTFastMTEOM(bool fastMTEOM) ;
     
     /**
      * Update the drive status member.
      */
-    virtual void UpdateDriveStatus() throw (Exception);
+    virtual void UpdateDriveStatus() ;
   };
 
   class DriveT10000 : public DriveGeneric {
@@ -518,7 +518,7 @@ namespace drives {
     DriveT10000(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveGeneric(di, sw) {
     }
 
-    virtual compressionStats getCompression() throw (Exception);
+    virtual compressionStats getCompression() ;
   };
 
   class DriveLTO : public DriveGeneric {
@@ -527,7 +527,7 @@ namespace drives {
     DriveLTO(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveGeneric(di, sw) {
     }
 
-    virtual compressionStats getCompression() throw (Exception);
+    virtual compressionStats getCompression() ;
   };
 
   class DriveIBM3592 : public DriveGeneric {
@@ -536,7 +536,7 @@ namespace drives {
     DriveIBM3592(SCSI::DeviceInfo di, System::virtualWrapper & sw) : DriveGeneric(di, sw) {
     }
 
-    virtual compressionStats getCompression() throw (Exception);
+    virtual compressionStats getCompression() ;
   };
   
 } // namespace drives

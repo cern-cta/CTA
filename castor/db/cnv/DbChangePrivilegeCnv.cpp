@@ -203,7 +203,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillRep(castor::IAddress*,
                                                     castor::IObject* object,
                                                     unsigned int type,
                                                     bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::bwlist::ChangePrivilege* obj = 
     dynamic_cast<castor::bwlist::ChangePrivilege*>(object);
   try {
@@ -242,7 +242,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillRep(castor::IAddress*,
 // fillRepSvcClass
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbChangePrivilegeCnv::fillRepSvcClass(castor::bwlist::ChangePrivilege* obj)
-  throw (castor::exception::Exception) {
+   {
   if (0 != obj->svcClass()) {
     // Check checkSvcClassExist statement
     if (0 == m_checkSvcClassExistStatement) {
@@ -274,7 +274,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillRepSvcClass(castor::bwlist::Chan
 // fillRepIClient
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbChangePrivilegeCnv::fillRepIClient(castor::bwlist::ChangePrivilege* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check update statement
   if (0 == m_updateIClientStatement) {
     m_updateIClientStatement = createStatement(s_updateIClientStatementString);
@@ -289,7 +289,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillRepIClient(castor::bwlist::Chang
 // fillRepBWUser
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbChangePrivilegeCnv::fillRepBWUser(castor::bwlist::ChangePrivilege* obj)
-  throw (castor::exception::Exception) {
+   {
   // check select statement
   if (0 == m_selectBWUserStatement) {
     m_selectBWUserStatement = createStatement(s_selectBWUserStatementString);
@@ -342,7 +342,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillRepBWUser(castor::bwlist::Change
 // fillRepRequestType
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbChangePrivilegeCnv::fillRepRequestType(castor::bwlist::ChangePrivilege* obj)
-  throw (castor::exception::Exception) {
+   {
   // check select statement
   if (0 == m_selectRequestTypeStatement) {
     m_selectRequestTypeStatement = createStatement(s_selectRequestTypeStatementString);
@@ -398,7 +398,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObj(castor::IAddress*,
                                                     castor::IObject* object,
                                                     unsigned int type,
                                                     bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::bwlist::ChangePrivilege* obj = 
     dynamic_cast<castor::bwlist::ChangePrivilege*>(object);
   switch (type) {
@@ -430,7 +430,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObj(castor::IAddress*,
 // fillObjSvcClass
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbChangePrivilegeCnv::fillObjSvcClass(castor::bwlist::ChangePrivilege* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -468,7 +468,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjSvcClass(castor::bwlist::Chan
 // fillObjIClient
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbChangePrivilegeCnv::fillObjIClient(castor::bwlist::ChangePrivilege* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -506,7 +506,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjIClient(castor::bwlist::Chang
 // fillObjBWUser
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbChangePrivilegeCnv::fillObjBWUser(castor::bwlist::ChangePrivilege* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check select statement
   if (0 == m_selectBWUserStatement) {
     m_selectBWUserStatement = createStatement(s_selectBWUserStatementString);
@@ -558,7 +558,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::fillObjBWUser(castor::bwlist::Change
 // fillObjRequestType
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbChangePrivilegeCnv::fillObjRequestType(castor::bwlist::ChangePrivilege* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check select statement
   if (0 == m_selectRequestTypeStatement) {
     m_selectRequestTypeStatement = createStatement(s_selectRequestTypeStatementString);
@@ -613,7 +613,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::createRep(castor::IAddress*,
                                                       castor::IObject* object,
                                                       bool endTransaction,
                                                       unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   castor::bwlist::ChangePrivilege* obj = 
     dynamic_cast<castor::bwlist::ChangePrivilege*>(object);
   // check whether something needs to be done
@@ -690,7 +690,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::bulkCreateRep(castor::IAddress*,
                                                           std::vector<castor::IObject*> &objects,
                                                           bool endTransaction,
                                                           unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   // check whether something needs to be done
   int nb = objects.size();
   if (0 == nb) return;
@@ -1092,7 +1092,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::bulkCreateRep(castor::IAddress*,
 void castor::db::cnv::DbChangePrivilegeCnv::updateRep(castor::IAddress*,
                                                       castor::IObject* object,
                                                       bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::bwlist::ChangePrivilege* obj = 
     dynamic_cast<castor::bwlist::ChangePrivilege*>(object);
   // check whether something needs to be done
@@ -1141,7 +1141,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::updateRep(castor::IAddress*,
 void castor::db::cnv::DbChangePrivilegeCnv::deleteRep(castor::IAddress*,
                                                       castor::IObject* object,
                                                       bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::bwlist::ChangePrivilege* obj = 
     dynamic_cast<castor::bwlist::ChangePrivilege*>(object);
   // check whether something needs to be done
@@ -1179,7 +1179,7 @@ void castor::db::cnv::DbChangePrivilegeCnv::deleteRep(castor::IAddress*,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::cnv::DbChangePrivilegeCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   castor::BaseAddress* ad = 
     dynamic_cast<castor::BaseAddress*>(address);
   try {
@@ -1230,7 +1230,7 @@ castor::IObject* castor::db::cnv::DbChangePrivilegeCnv::createObj(castor::IAddre
 //------------------------------------------------------------------------------
 std::vector<castor::IObject*>
 castor::db::cnv::DbChangePrivilegeCnv::bulkCreateObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Prepare result
   std::vector<castor::IObject*> res;
   // check whether something needs to be done
@@ -1291,7 +1291,7 @@ castor::db::cnv::DbChangePrivilegeCnv::bulkCreateObj(castor::IAddress* address)
 // updateObj
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbChangePrivilegeCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {

@@ -38,7 +38,7 @@ castor::stager::daemon::NsOverride* castor::stager::daemon::NsOverride::s_instan
 // getInstance
 //------------------------------------------------------------------------------
 castor::stager::daemon::NsOverride* castor::stager::daemon::NsOverride::getInstance()
-  throw () {
+  throw() {
   // make the instantiation of the singleton thread-safe,
   // even though this class is supposed to be instantiated before spawning threads
   if (0 == s_instance) {
@@ -54,7 +54,7 @@ castor::stager::daemon::NsOverride* castor::stager::daemon::NsOverride::getInsta
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::stager::daemon::NsOverride::NsOverride() throw () {
+castor::stager::daemon::NsOverride::NsOverride() throw() {
   char* cnsHost = getconfent("CNS", "HOST", 0);
   if (cnsHost == 0 || *cnsHost == 0) {
     // no override in place

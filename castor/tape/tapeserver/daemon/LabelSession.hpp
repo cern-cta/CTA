@@ -58,7 +58,7 @@ namespace daemon {
     /**
      *  The only method. It will call executeLabel to do the actual job 
      */
-    void execute() throw (Exception);
+    void execute() ;
     
   private:
     

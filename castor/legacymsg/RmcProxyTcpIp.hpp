@@ -63,7 +63,7 @@ public:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
    * "manual" or "smc@rmc_host,drive_ordinal".
    */
-  void mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
+  void mountTape(const std::string &vid, const std::string &librarySlot) ;
 
   /**
    * Asks the remote media-changer daemon to unmount the specified tape from the
@@ -74,7 +74,7 @@ public:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
    * "manual" or "smc@rmc_host,drive_ordinal".
    */
-  void unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
+  void unmountTape(const std::string &vid, const std::string &librarySlot) ;
 
   /**
    * Enumeration of the different types of library slot.
@@ -131,14 +131,14 @@ protected:
    * @param librarySlot The library slot in the following form:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER".
    */
-  void mountTapeAcs(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
+  void mountTapeAcs(const std::string &vid, const std::string &librarySlot) ;
 
   /**
    * Logs a request to the tape-operator to manually mount the specified tape.
    *
    * @param vid The volume identifier of the tape.
    */
-  void mountTapeManual(const std::string &vid) throw(castor::exception::Exception);
+  void mountTapeManual(const std::string &vid) ;
 
   /**
    * Asks the remote media-changer daemon to mount the specified tape into the
@@ -148,7 +148,7 @@ protected:
    * @param librarySlot The library slot in the following form:
    * "smc@rmc_host,drive_ordinal".
    */
-  void mountTapeScsi(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
+  void mountTapeScsi(const std::string &vid, const std::string &librarySlot) ;
 
   /**
    * Asks the remote media-changer daemon to unmount the specified tape from the
@@ -158,14 +158,14 @@ protected:
    * @param librarySlot The library slot in the following form:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER".
    */
-  void unmountTapeAcs(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
+  void unmountTapeAcs(const std::string &vid, const std::string &librarySlot) ;
 
   /**
    * Logs a request to the tape-operator to manually unmount the specified tape.
    *
    * @param vid The volume identifier of the tape.
    */
-  void unmountTapeManual(const std::string &vid) throw(castor::exception::Exception);
+  void unmountTapeManual(const std::string &vid) ;
 
   /**
    * Asks the remote media-changer daemon to unmount the specified tape from the
@@ -175,7 +175,7 @@ protected:
    * @param librarySlot The library slot in the following form:
    * "smc@rmc_host,drive_ordinal".
    */
-  void unmountTapeScsi(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
+  void unmountTapeScsi(const std::string &vid, const std::string &librarySlot) ;
 
   /**
    * Connects to the rmcd daemon.
@@ -183,7 +183,7 @@ protected:
    * @param hostName The name of the host on which the rmcd daemon is running.
    * @return The socket-descriptor of the connection with the rmcd daemon.
    */
-  int connectToRmc(const std::string &hostName) const throw(castor::exception::Exception);
+  int connectToRmc(const std::string &hostName) const ;
 
   /**
    * Writes an RMC_SCSI_MOUNT message with the specifed body to the specified
@@ -192,7 +192,7 @@ protected:
    * @param fd The file descriptor of the connection.
    * @param body The body of the message.
    */
-  void writeRmcMountMsg(const int fd, const RmcMountMsgBody &body) throw(castor::exception::Exception);
+  void writeRmcMountMsg(const int fd, const RmcMountMsgBody &body) ;
 
   /**
    * Reads the header of an RMC_MAGIC message from the specified connection.
@@ -200,7 +200,7 @@ protected:
    * @param fd The file descriptor of the connection.
    * @return The message header.
    */
-  MessageHeader readRmcMsgHeader(const int fd) throw(castor::exception::Exception);
+  MessageHeader readRmcMsgHeader(const int fd) ;
 
   /**
    * Writes an RMC_SCSI_UNMOUNT message with the specifed body to the specified
@@ -209,7 +209,7 @@ protected:
    * @param fd The file descriptor of the connection.
    * @param body The body of the message.
    */
-  void writeRmcUnmountMsg(const int fd, const RmcUnmountMsgBody &body) throw(castor::exception::Exception);
+  void writeRmcUnmountMsg(const int fd, const RmcUnmountMsgBody &body) ;
 
 }; // class RmcProxyTcpIp
 

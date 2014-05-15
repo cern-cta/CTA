@@ -82,7 +82,7 @@ void castor::vdqm::DevTools::printSocketDescription(std::ostream &os,
 //------------------------------------------------------------------------------
 void castor::vdqm::DevTools::printMessage(std::ostream &os,
   const bool messageWasSent, const bool messageInNetworkByteOrder,
-  const int socket, void* hdrbuf) throw (castor::exception::Exception)
+  const int socket, void* hdrbuf) 
 {
   uint32_t           magic   = 0;
   uint32_t           reqtype = 0;

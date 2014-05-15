@@ -73,15 +73,15 @@ namespace threading {
     virtual ~ChildProcess() { if (m_started && !m_finished) kill(); };
     /** start function, taking as an argument a callback for parent's
      * resources cleanup. A child process can only be fired once. */
-    void start(Cleanup & cleanup) throw (castor::tape::Exception);
+    void start(Cleanup & cleanup) ;
     /** Check running status */
-    bool running() throw (castor::tape::Exception);
+    bool running() ;
     /** Wait for completion */
-    void wait() throw (castor::tape::Exception);
+    void wait() ;
     /** collect exit code */
-    int exitCode() throw (castor::tape::Exception);
+    int exitCode() ;
     /** kill */
-    void kill() throw (castor::tape::Exception);
+    void kill() ;
   private:
     pid_t m_pid;
     /** Was the process started? */

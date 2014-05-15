@@ -75,7 +75,7 @@ public:
    */
   virtual tapegateway::Volume *getVolume(
     const uint64_t tapebridgeTransId)
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Sends a FilesToMigrateListRequest to the client and returns the
@@ -96,7 +96,7 @@ public:
     const uint64_t tapebridgeTransId,
     const uint64_t maxFiles,
     const uint64_t maxBytes) const
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Receives the reply to a FilesToMigrateListRequest from the specified
@@ -118,7 +118,7 @@ public:
     *receiveFilesToMigrateListRequestReplyAndClose(
     const uint64_t tapebridgeTransId,
     const int      clientSock) const
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Sends a FilesToRecallListRequest to the client and returns the
@@ -142,7 +142,7 @@ public:
     const uint64_t tapebridgeTransId,
     const uint64_t maxFiles,
     const uint64_t maxBytes) const
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Receives the reply to a FilesToRecallListRequest from the specified client
@@ -164,7 +164,7 @@ public:
     *receiveFilesToRecallListRequestReplyAndClose(
     const uint64_t tapebridgeTransId,
     const int      clientSock) const
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Receives the reply to a FileMigrationReportList or a FileRecallReportList
@@ -177,7 +177,7 @@ public:
   virtual void receiveNotificationReplyAndClose(
     const uint64_t tapebridgeTransId,
     const int      clientSock) const
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Gets the parameters to be used when dumping a tape.
@@ -190,7 +190,7 @@ public:
    */
   virtual tapegateway::DumpParameters *getDumpParameters(
     const uint64_t tapebridgeTransId) const
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Notifies the client of a dump tape message string.
@@ -202,7 +202,7 @@ public:
   virtual void notifyDumpMessage(
     const uint64_t tapebridgeTransId,
     const char     (&message)[CA_MAXLINELEN+1]) const
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Pings the client and throws an exception if the ping has failed.
@@ -212,7 +212,7 @@ public:
    */
   virtual void ping(
     const uint64_t tapebridgeTransId) const
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Receives a reply from the specified client socket and then closes the
@@ -224,7 +224,7 @@ public:
    *                   object.
    */
   virtual IObject *receiveReplyAndClose(const int clientSock) const
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Throws an exception if there is a mount transaction ID mismatch and/or
@@ -240,7 +240,7 @@ public:
     const uint32_t    actualMountTransactionId,
     const uint64_t    expectedTapebridgeTransId,
     const uint64_t    actualTapebridgeTransId) const
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Notifies the client of the end of the recall/migration session.
@@ -250,7 +250,7 @@ public:
    */
   virtual void notifyEndOfSession(
     const uint64_t tapebridgeTransId) const
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Notifies the client of the end of the recall/migration session due to an
@@ -265,7 +265,7 @@ public:
     const uint64_t    tapebridgeTransId,
     const int         errorCode,
     const std::string &errorMessage) const
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Connects to the client and sends the specified message to the client.
@@ -283,7 +283,7 @@ public:
   virtual int connectAndSendMessage(
     IObject &message,
     timeval &connectDuration) const
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
 }; // class IClientProxy
 

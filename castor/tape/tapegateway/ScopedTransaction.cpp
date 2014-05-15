@@ -50,13 +50,13 @@ namespace castor {
       };
 
       // Explicit commit, disengaging the destructor's mechanism
-      void ScopedTransaction::commit() throw (castor::exception::Exception) {
+      void ScopedTransaction::commit()  {
         m_OraSvc->commit();
         m_transactionClosed = true;
       }
 
       // Explicit rollback, disengaging the destructor's mechanism
-      void ScopedTransaction::rollback() throw (castor::exception::Exception) {
+      void ScopedTransaction::rollback()  {
         m_OraSvc->rollback();
         m_transactionClosed = true;
       }

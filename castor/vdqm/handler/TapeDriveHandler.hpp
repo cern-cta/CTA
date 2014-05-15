@@ -65,7 +65,7 @@ namespace castor {
          */
         TapeDriveHandler(vdqmHdr_t *const header,
           vdqmDrvReq_t *const driveRequest, const Cuuid_t cuuid)
-          throw(castor::exception::Exception);
+          ;
         
         /**
          * Destructor.
@@ -78,14 +78,14 @@ namespace castor {
          * the request into the data Base or updates the status of existing
          * TapeDrives in the db.
          */
-        void newTapeDriveRequest() throw (castor::exception::Exception);
+        void newTapeDriveRequest() ;
         
         /**
          * This function replaces the old vdqm_DelDrvReq() C-function and is
          * called, when a VDQM_DEL_DRVREQ message comes from a client. It 
          * deletes the TapeDrive with the specified ID in the db.
          */
-        void deleteTapeDrive() throw (castor::exception::Exception);
+        void deleteTapeDrive() ;
         
         /**
          * This function replaces the old vdqm_GetDrvQueue() C-function. 
@@ -98,7 +98,7 @@ namespace castor {
          */
         void sendTapeDriveQueue(const vdqmVolReq_t *const volumeRequest,
           OldProtocolInterpreter *const oldProtInterpreter) 
-          throw (castor::exception::Exception);  
+          ;  
 
         /**
          * This method replaces the old vdqm_DedicateDrv() C-function.
@@ -106,7 +106,7 @@ namespace castor {
          * and to hosts.
          */
         void dedicateTapeDrive()
-          throw (castor::exception::Exception);
+          ;
           
           
       private:
@@ -160,7 +160,7 @@ namespace castor {
          * @exception In case of error
          */
         TapeDrive* getTapeDrive(TapeServer* tapeServer) 
-          throw (castor::exception::Exception);
+          ;
           
         /**
          * Copies the informations of the tape drive, which it has received 
@@ -171,7 +171,7 @@ namespace castor {
          * @exception In case of error
          */
         void copyTapeDriveInformations(TapeDrive* tapeDrive)
-          throw (castor::exception::Exception);  
+          ;  
 
         /**
          * Returns the equivalent VDQM1 bitset of the VDQM2 tape drive status.
@@ -181,7 +181,7 @@ namespace castor {
          * @exception if the specified VDQM2 tape drive status is unknown.
          */
         int tapeDriveStatus2Bitset(const TapeDriveStatusCodes status)
-          throw (castor::exception::Exception);
+          ;
         
         /**
          * Creates a log messages for the old and new status code. If the 
@@ -193,7 +193,7 @@ namespace castor {
          * @exception In case of error
          */  
         void printStatus(const int oldProtocolStatus, const int newActStatus)
-          throw (castor::exception::Exception);
+          ;
           
         /**
          * Connects the new tape drive with the TapeDriveCompatibility objects.
@@ -207,7 +207,7 @@ namespace castor {
          */  
         void handleTapeDriveCompatibilities(
           castor::vdqm::TapeDrive *newTapeDrive, std::string driveModel) 
-          throw (castor::exception::Exception);
+          ;
 
       }; // class TapeDriveHandler
     

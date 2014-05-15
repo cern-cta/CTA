@@ -163,7 +163,7 @@ castor::client::BaseClient::~BaseClient() throw() {
 std::string castor::client::BaseClient::sendRequest
 (castor::stager::Request* req,
  castor::client::IResponseHandler* rh)
-  throw(castor::exception::Exception) {
+   {
 
   // Build and send the Request with the Client information
   createClientAndSend(req);
@@ -187,7 +187,7 @@ std::string castor::client::BaseClient::sendRequest
 // createClient
 //------------------------------------------------------------------------------
 castor::IClient* castor::client::BaseClient::createClient()
-  throw (castor::exception::Exception) {
+   {
   // if no callbackSocket
   if (0 == m_callbackSocket) {
     castor::exception::Exception ex;
@@ -210,7 +210,7 @@ castor::IClient* castor::client::BaseClient::createClient()
 //------------------------------------------------------------------------------
 std::string castor::client::BaseClient::internalSendRequest
 (castor::stager::Request& request)
-  throw (castor::exception::Exception) {
+   {
   std::string requestId;
 
   // The service class has been previously resolved, attach it to the request
@@ -283,12 +283,12 @@ std::string castor::client::BaseClient::internalSendRequest
 // setRhPort
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::setRhPort()
-  throw (castor::exception::Exception) {
+   {
   setRhPort(0);
 }
 
 void castor::client::BaseClient::setRhPort(int optPort)
-  throw (castor::exception::Exception) {
+   {
 
   if (optPort > 65535) {
     castor::exception::Exception e(EINVAL);
@@ -329,12 +329,12 @@ void castor::client::BaseClient::setRhPort(int optPort)
 // setRhHost
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::setRhHost()
-  throw (castor::exception::Exception) {
+   {
   setRhHost("");
 }
 
 void castor::client::BaseClient::setRhHost(std::string optHost)
-  throw (castor::exception::Exception) {
+   {
   // RH server host. Can be passed given through the
   // STAGER_HOST environment variable or in the castor.conf
   // file as a STAGER/HOST entry
@@ -361,12 +361,12 @@ void castor::client::BaseClient::setRhHost(std::string optHost)
 // setRhSvcClass
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::setRhSvcClass()
-  throw (castor::exception::Exception) {
+   {
   setRhSvcClass("");
 }
 
 void castor::client::BaseClient::setRhSvcClass(std::string optSvcClass)
-  throw (castor::exception::Exception) {
+   {
   // RH server host. Can be passed given through the
   // RH_HOST environment variable or in the castor.conf
   // file as a RH/HOST entry
@@ -391,7 +391,7 @@ void castor::client::BaseClient::setRhSvcClass(std::string optSvcClass)
 // setOptions
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::setOptions(struct stage_options* opts)
-  throw (castor::exception::Exception) {
+   {
   if (0 != opts) {
     setRhHost(opts->stage_host);
     setRhPort(opts->stage_port);
@@ -421,7 +421,7 @@ std::string castor::client::BaseClient::requestId() {
 // setAutorizationId
 //----------------------------------------------------------------------------
 void castor::client::BaseClient::setAuthorizationId()
-  throw(castor::exception::Exception) {
+   {
   if (stage_getid(&m_authUid, &m_authGid) < 0) {
     castor::exception::Exception e(serrno);
     e.getMessage() << "Error in stage_getid" << std::endl;
@@ -443,7 +443,7 @@ void castor::client::BaseClient::setAuthorizationId(uid_t uid, gid_t gid) throw(
 //------------------------------------------------------------------------------
 // setAuthorization
 //------------------------------------------------------------------------------
-void castor::client::BaseClient::setAuthorization() throw(castor::exception::Exception) {
+void castor::client::BaseClient::setAuthorization()  {
   char *security;
   // Check if security env option is set.
   if (((security = getenv (castor::client::SECURITY_ENV)) != 0 ||
@@ -461,7 +461,7 @@ void castor::client::BaseClient::setAuthorization() throw(castor::exception::Exc
 //------------------------------------------------------------------------------
 std::string castor::client::BaseClient::createClientAndSend
 (castor::stager::Request *req)
-  throw (castor::exception::Exception) {
+   {
   // builds the Client (uuid,guid,hostname,etc)
   buildClient(req);
 
@@ -474,7 +474,7 @@ std::string castor::client::BaseClient::createClientAndSend
 // buildClient
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::buildClient(castor::stager::Request* req)
-  throw (castor::exception::Exception) {
+   {
 
   // Uid
   uid_t euid;
@@ -594,7 +594,7 @@ void castor::client::BaseClient::buildClient(castor::stager::Request* req)
 //------------------------------------------------------------------------------
 void castor::client::BaseClient::pollAnswersFromStager
 (castor::stager::Request* req, castor::client::IResponseHandler* rh)
-  throw (castor::exception::Exception) {
+   {
 
   // Check parameters
   if ((req == NULL) || (req->client() == NULL)) {

@@ -160,7 +160,7 @@ private:
     const legacymsg::RtcpJobRqstMsgBody &jobRequest,
     Counter<uint64_t>                   &tapebridgeTransactionCounter,
     const int                           bridgeCallbackSockFd)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Throws an exception if the peer host associated with the specified
@@ -169,7 +169,7 @@ private:
    * @param socketFd The socket file descriptor.
    */
   static void checkRtcpJobSubmitterIsAuthorised(const int socketFd)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Sends information about the tapebridged daemon to the rtcpd daemon.
@@ -196,7 +196,7 @@ private:
     const legacymsg::RtcpJobRqstMsgBody &jobRequest,
     const char                       (&bridgeCallbackHost)[io::HOSTNAMEBUFLEN],
     const unsigned short                bridgeCallbackPort)
-    const throw(castor::exception::Exception);
+    const ;
 
 }; // class VdqmRequestHandler
 

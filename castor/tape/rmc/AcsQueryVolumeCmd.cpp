@@ -235,7 +235,7 @@ void castor::tape::rmc::AcsQueryVolumeCmd::usage(std::ostream &os)
 // syncQueryVolume
 //------------------------------------------------------------------------------
 void castor::tape::rmc::AcsQueryVolumeCmd::syncQueryVolume()
-  throw(castor::exception::QueryVolumeFailed) {
+   {
   const SEQ_NO requestSeqNumber = 1;
   ALIGNED_BYTES buf[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)];
 
@@ -256,7 +256,7 @@ void castor::tape::rmc::AcsQueryVolumeCmd::syncQueryVolume()
 // sendQueryVolumeRequest
 //------------------------------------------------------------------------------
 void castor::tape::rmc::AcsQueryVolumeCmd::sendQueryVolumeRequest(
-  const SEQ_NO seqNumber) throw (castor::exception::QueryVolumeFailed) {
+  const SEQ_NO seqNumber)  {
   VOLID volIds[MAX_ID];
 
   memset(volIds, '\0', sizeof(volIds));
@@ -282,7 +282,7 @@ void castor::tape::rmc::AcsQueryVolumeCmd::sendQueryVolumeRequest(
 void castor::tape::rmc::AcsQueryVolumeCmd::processQueryResponse(
   std::ostream &os,
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
-  throw(castor::exception::QueryVolumeFailed) {
+   {
 
   const ACS_QUERY_VOL_RESPONSE *const msg = (ACS_QUERY_VOL_RESPONSE *)buf;
 
@@ -290,7 +290,7 @@ void castor::tape::rmc::AcsQueryVolumeCmd::processQueryResponse(
     castor::exception::QueryVolumeFailed ex;
     ex.getMessage() << "Status of query response is not success: " <<
       acs_status(msg->query_vol_status);
-    throw(ex);
+    throw ex;
   }
 
   if((unsigned short)1 != msg->count) {

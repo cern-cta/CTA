@@ -58,7 +58,7 @@ namespace castor {
      */
     IService* service (const std::string name,
                        const unsigned int id = 0)
-      throw(castor::exception::Exception);
+      ;
 
     /**
      * gets a conversion service by name.
@@ -67,7 +67,7 @@ namespace castor {
      */
     ICnvSvc* cnvService (const std::string name,
                          const unsigned int id = 0)
-      throw(castor::exception::Exception);
+      ;
 
     /**
      * create foreign representation from a C++ Object
@@ -81,7 +81,7 @@ namespace castor {
     void createRep(IAddress* address,
                    IObject* object,
                    bool endTransaction = true)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * create foreign representations from a set of C++ Object
@@ -95,7 +95,7 @@ namespace castor {
     virtual void bulkCreateRep(IAddress* address,
                                std::vector<IObject*> &objects,
 			       bool endTransaction = true)
-      throw (castor::exception::Exception);
+      ;
     
     /**
      * Updates foreign representation from a C++ Object.
@@ -109,7 +109,7 @@ namespace castor {
     void updateRep(IAddress* address,
                    IObject* object,
                    bool endTransaction = true)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * deletes foreign representation of a C++ Object
@@ -123,7 +123,7 @@ namespace castor {
     void deleteRep(IAddress* address,
                    IObject* object,
                    bool endTransaction = false)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * create C++ object from foreign representation
@@ -135,7 +135,7 @@ namespace castor {
      * @exception Exception throws an Exception in case of error
      */
     IObject* createObj(IAddress* address)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * create C++ objects from foreign representations
@@ -147,7 +147,7 @@ namespace castor {
      * @exception Exception throws an Exception in case of error
      */
     std::vector<IObject*> bulkCreateObj(IAddress* address)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * Updates C++ object from its foreign representation.
@@ -159,7 +159,7 @@ namespace castor {
      */
     virtual void updateObj(castor::IAddress* address,
                            castor::IObject* object)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * Fill the foreign representation with some of the objects
@@ -175,7 +175,7 @@ namespace castor {
                          castor::IObject* object,
                          unsigned int type,
                          bool endTransaction)
-      throw (castor::exception::Exception);
+      ;
     
     /**
      * Retrieve from the foreign representation some of the
@@ -191,7 +191,7 @@ namespace castor {
                          castor::IObject* object,
                          unsigned int type,
                          bool endTransaction = false)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * Forces the commit of the last changes in a given DB
@@ -199,7 +199,7 @@ namespace castor {
      * @exception Exception throws an Exception in case of error
      */
     virtual void commit(castor::IAddress* address)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * Forces the rollback of the last changes in a given DB
@@ -207,7 +207,7 @@ namespace castor {
      * @exception Exception throws an Exception in case of error
      */
     virtual void rollback(castor::IAddress* address)
-      throw (castor::exception::Exception);
+      ;
 
   private:
     /**
@@ -215,7 +215,7 @@ namespace castor {
      * address
      */
     castor::ICnvSvc* cnvSvcFromAddress(castor::IAddress* address)
-      throw (castor::exception::Exception);
+      ;
 
     /** the list of services, by name */
     std::map<const std::string, IService*> m_services;

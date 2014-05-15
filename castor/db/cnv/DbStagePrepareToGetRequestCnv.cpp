@@ -178,7 +178,7 @@ void castor::db::cnv::DbStagePrepareToGetRequestCnv::fillRep(castor::IAddress*,
                                                              castor::IObject* object,
                                                              unsigned int type,
                                                              bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StagePrepareToGetRequest* obj = 
     dynamic_cast<castor::stager::StagePrepareToGetRequest*>(object);
   try {
@@ -214,7 +214,7 @@ void castor::db::cnv::DbStagePrepareToGetRequestCnv::fillRep(castor::IAddress*,
 // fillRepSubRequest
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStagePrepareToGetRequestCnv::fillRepSubRequest(castor::stager::StagePrepareToGetRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // check select statement
   if (0 == m_selectSubRequestStatement) {
     m_selectSubRequestStatement = createStatement(s_selectSubRequestStatementString);
@@ -267,7 +267,7 @@ void castor::db::cnv::DbStagePrepareToGetRequestCnv::fillRepSubRequest(castor::s
 // fillRepSvcClass
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStagePrepareToGetRequestCnv::fillRepSvcClass(castor::stager::StagePrepareToGetRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   if (0 != obj->svcClass()) {
     // Check checkSvcClassExist statement
     if (0 == m_checkSvcClassExistStatement) {
@@ -299,7 +299,7 @@ void castor::db::cnv::DbStagePrepareToGetRequestCnv::fillRepSvcClass(castor::sta
 // fillRepIClient
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStagePrepareToGetRequestCnv::fillRepIClient(castor::stager::StagePrepareToGetRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check update statement
   if (0 == m_updateIClientStatement) {
     m_updateIClientStatement = createStatement(s_updateIClientStatementString);
@@ -317,7 +317,7 @@ void castor::db::cnv::DbStagePrepareToGetRequestCnv::fillObj(castor::IAddress*,
                                                              castor::IObject* object,
                                                              unsigned int type,
                                                              bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StagePrepareToGetRequest* obj = 
     dynamic_cast<castor::stager::StagePrepareToGetRequest*>(object);
   switch (type) {
@@ -346,7 +346,7 @@ void castor::db::cnv::DbStagePrepareToGetRequestCnv::fillObj(castor::IAddress*,
 // fillObjSubRequest
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStagePrepareToGetRequestCnv::fillObjSubRequest(castor::stager::StagePrepareToGetRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check select statement
   if (0 == m_selectSubRequestStatement) {
     m_selectSubRequestStatement = createStatement(s_selectSubRequestStatementString);
@@ -398,7 +398,7 @@ void castor::db::cnv::DbStagePrepareToGetRequestCnv::fillObjSubRequest(castor::s
 // fillObjSvcClass
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStagePrepareToGetRequestCnv::fillObjSvcClass(castor::stager::StagePrepareToGetRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -436,7 +436,7 @@ void castor::db::cnv::DbStagePrepareToGetRequestCnv::fillObjSvcClass(castor::sta
 // fillObjIClient
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStagePrepareToGetRequestCnv::fillObjIClient(castor::stager::StagePrepareToGetRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -477,7 +477,7 @@ void castor::db::cnv::DbStagePrepareToGetRequestCnv::createRep(castor::IAddress*
                                                                castor::IObject* object,
                                                                bool endTransaction,
                                                                unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StagePrepareToGetRequest* obj = 
     dynamic_cast<castor::stager::StagePrepareToGetRequest*>(object);
   // check whether something needs to be done
@@ -546,7 +546,7 @@ void castor::db::cnv::DbStagePrepareToGetRequestCnv::bulkCreateRep(castor::IAddr
                                                                    std::vector<castor::IObject*> &objects,
                                                                    bool endTransaction,
                                                                    unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   // check whether something needs to be done
   int nb = objects.size();
   if (0 == nb) return;
@@ -903,7 +903,7 @@ void castor::db::cnv::DbStagePrepareToGetRequestCnv::bulkCreateRep(castor::IAddr
 void castor::db::cnv::DbStagePrepareToGetRequestCnv::updateRep(castor::IAddress*,
                                                                castor::IObject* object,
                                                                bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StagePrepareToGetRequest* obj = 
     dynamic_cast<castor::stager::StagePrepareToGetRequest*>(object);
   // check whether something needs to be done
@@ -951,7 +951,7 @@ void castor::db::cnv::DbStagePrepareToGetRequestCnv::updateRep(castor::IAddress*
 void castor::db::cnv::DbStagePrepareToGetRequestCnv::deleteRep(castor::IAddress*,
                                                                castor::IObject* object,
                                                                bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StagePrepareToGetRequest* obj = 
     dynamic_cast<castor::stager::StagePrepareToGetRequest*>(object);
   // check whether something needs to be done
@@ -994,7 +994,7 @@ void castor::db::cnv::DbStagePrepareToGetRequestCnv::deleteRep(castor::IAddress*
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::cnv::DbStagePrepareToGetRequestCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   castor::BaseAddress* ad = 
     dynamic_cast<castor::BaseAddress*>(address);
   try {
@@ -1044,7 +1044,7 @@ castor::IObject* castor::db::cnv::DbStagePrepareToGetRequestCnv::createObj(casto
 //------------------------------------------------------------------------------
 std::vector<castor::IObject*>
 castor::db::cnv::DbStagePrepareToGetRequestCnv::bulkCreateObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Prepare result
   std::vector<castor::IObject*> res;
   // check whether something needs to be done
@@ -1104,7 +1104,7 @@ castor::db::cnv::DbStagePrepareToGetRequestCnv::bulkCreateObj(castor::IAddress* 
 // updateObj
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStagePrepareToGetRequestCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {

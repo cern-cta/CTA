@@ -52,7 +52,7 @@ namespace castor { namespace exception {
        * Trivial, but explicitely non-throwing destructor (required through
        * inheritence from std::exception) 
        */
-      virtual ~InvalidConfigEntry() throw () {};
+      virtual ~InvalidConfigEntry() throw() {};
       
       /**
        * Returns the category of the configuration entry.

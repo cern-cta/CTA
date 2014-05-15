@@ -69,7 +69,7 @@ namespace castor {
         /**
          * Reset the converter statements.
          */
-        void reset() throw ();
+        void reset() throw();
 
       public:
 
@@ -94,7 +94,7 @@ namespace castor {
          bool* emptyFile,
          u_signed64 fileId,
          const std::string nsHost)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Handles the start of a Put job.
@@ -112,7 +112,7 @@ namespace castor {
          std::string mountPoint,
          u_signed64 fileId,
          const std::string nsHost)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Prepares a file for migration, when needed.
@@ -142,7 +142,7 @@ namespace castor {
          const std::string nsHost,
          const std::string csumtype="",
          const std::string csumvalue="")
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Informs the stager the a Get or Update SubRequest
@@ -158,7 +158,7 @@ namespace castor {
         (u_signed64 subReqId,
          u_signed64 fileId,
          const std::string nsHost)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Informs the stager the a Get or Update SubRequest
@@ -173,7 +173,7 @@ namespace castor {
         (u_signed64 subReqId,
          u_signed64 fileId,
          const std::string nsHost)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Informs the stager the a Put SubRequest failed.
@@ -187,7 +187,7 @@ namespace castor {
         (u_signed64 subReqId,
          u_signed64 fileId,
          const std::string nsHost)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Informs the stager that an update subrequest has written
@@ -203,7 +203,7 @@ namespace castor {
         (u_signed64 subRequestId,
          u_signed64 fileId,
          const std::string nsHost)
-          throw (castor::exception::Exception);
+          ;
 
       private:
 

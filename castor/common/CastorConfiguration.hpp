@@ -54,7 +54,7 @@ namespace castor {
        * @param fileName the name of the file to be used for filling this configuration
        */
       static CastorConfiguration& getConfig(const std::string filename = "/etc/castor/castor.conf")
-        throw (castor::exception::Exception);
+        ;
         
     public:
       
@@ -63,14 +63,14 @@ namespace castor {
        * @param fileName the file that should be used to build the configuration
        */
       CastorConfiguration(std::string fileName = "/etc/castor/castor.conf")
-      throw (castor::exception::Exception);
+      ;
 
       /**
        * copy constructor
        * @param other instance of CastorConfiguration class
        */
       CastorConfiguration(const CastorConfiguration & other)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * destrcutor
@@ -82,7 +82,7 @@ namespace castor {
        * @param other instance of CastorConfiguration class
        */
       CastorConfiguration & operator=(const CastorConfiguration & other)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * retrieves a configuration entry
@@ -91,21 +91,21 @@ namespace castor {
        */
       const std::string& getConfEnt(const std::string &category,
                                     const std::string &key)
-        throw (castor::exception::Exception);
+        ;
 
     private:
 
       /**
        * check whether the configuration should be renewed
        */
-      bool isStale() throw (castor::exception::Exception);
+      bool isStale() ;
 
       /**
        * tries to renew the configuration.
        * That is : take the write lock to do it, check whether it's needed
        * and do it only if needed before releasing the lock
        */
-      void tryToRenewConfig() throw (castor::exception::Exception);
+      void tryToRenewConfig() ;
 
       /**
        * gets current timeout value (in seconds)
@@ -113,7 +113,7 @@ namespace castor {
        * configuration. So it should never be called without holding
        * a read or a write lock
        */
-      int getTimeoutNolock() throw (castor::exception::Exception);
+      int getTimeoutNolock() ;
 
       /**
        * renews the configuration
@@ -121,7 +121,7 @@ namespace castor {
        * configuration. So it should never be called without holding
        * the write lock
        */
-      void renewConfigNolock() throw (castor::exception::Exception);
+      void renewConfigNolock() ;
 
     private:
 

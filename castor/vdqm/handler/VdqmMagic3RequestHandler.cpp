@@ -35,7 +35,7 @@
 
 void castor::vdqm::handler::VdqmMagic3RequestHandler::handleDelDrv(
   castor::io::ServerSocket &socket, const Cuuid_t &cuuid,
-  vdqmDelDrv_t &msg) throw (castor::exception::Exception) {
+  vdqmDelDrv_t &msg)  {
 
   castor::dlf::Param param[] = {
     castor::dlf::Param("clientUID" , msg.clientUID),
@@ -56,7 +56,7 @@ void castor::vdqm::handler::VdqmMagic3RequestHandler::handleDelDrv(
 
 void castor::vdqm::handler::VdqmMagic3RequestHandler::handleDedicate(
   castor::io::ServerSocket &socket, const Cuuid_t &cuuid, vdqmDedicate_t &msg)
-  throw (castor::exception::Exception) {
+   {
   castor::dlf::Param param[] = {
     castor::dlf::Param("clientUID" , msg.clientUID),
     castor::dlf::Param("clientGID" , msg.clientGID),

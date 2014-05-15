@@ -87,7 +87,7 @@ namespace castor {
                              IObject* object,
                              bool endTransaction,
                              unsigned int type = OBJ_INVALID)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * create C++ object from foreign representation.
@@ -102,7 +102,7 @@ namespace castor {
        * @exception Exception throws an Exception in case of error
        */
       IObject* createObj (IAddress* address)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Marshals an object using a StreamAddress.
@@ -116,7 +116,7 @@ namespace castor {
       virtual void marshalObject(castor::IObject* object,
                                  castor::io::StreamAddress* address,
                                  castor::ObjectSet& alreadyDone)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Unmarshals an object from a StreamAddress.
@@ -130,7 +130,7 @@ namespace castor {
        */
       virtual castor::IObject* unmarshalObject(StreamAddress& address,
                                                castor::ObjectCatalog& newlyCreated)
-        throw (castor::exception::Exception);
+        ;
 
     };
 

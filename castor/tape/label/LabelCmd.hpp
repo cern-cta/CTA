@@ -84,7 +84,7 @@ protected:
    * @param argv Argument vector from the executable's entry function: main().
    */
   void parseCommandLine(const int argc, char **argv)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Writes the command-line usage message of to the specified output stream.
@@ -105,7 +105,7 @@ protected:
    * 
    * @return the return code contained in the reply message
    */
-  int executeCommand() throw(castor::exception::Exception);
+  int executeCommand() ;
   
   /**
    * The command line structure

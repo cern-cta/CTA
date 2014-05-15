@@ -49,7 +49,7 @@ namespace castor {
        * Constructor building a Socket objet around a regular socket
        * @param socket the regular socket used
        */
-      RemoteCopyConnection(int socket) throw ();
+      RemoteCopyConnection(int socket) throw();
 
       /**
        * Constructor building a socket on a given port of a given host
@@ -59,7 +59,7 @@ namespace castor {
        */
       RemoteCopyConnection(const unsigned short port,
         const std::string host)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Constructor building a socket on a given port of a given host
@@ -69,7 +69,7 @@ namespace castor {
        */
       RemoteCopyConnection(const unsigned short port,
         const unsigned long ip)
-        throw (castor::exception::Exception);
+        ;
 
 
       /**
@@ -82,7 +82,7 @@ namespace castor {
        * connects the socket to the given address
        */
        virtual void connect()
-         throw (castor::exception::Exception);      
+         ;      
       
       
       /**
@@ -106,7 +106,7 @@ namespace castor {
         const int          clientEgid,
         const std::string &deviceGroupName,
         const std::string &tapeDriveName)
-        throw (castor::exception::Exception);    
+        ;    
 
       
     private:
@@ -121,7 +121,7 @@ namespace castor {
        * @return false, in case of problems on RTCP side
        */
       bool readAnswer(const Cuuid_t &cuuid, const char *remoteCopyType)
-        throw (castor::exception::Exception);    
+        ;    
     };
 
   } // namespace vdqm

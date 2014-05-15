@@ -45,7 +45,7 @@ namespace castor {
          * connect to VDQM
          * @exception throws CASTOR exception if not successful
          */
-	void connectToVdqm() throw(castor::exception::Exception);
+	void connectToVdqm() ;
 
         /**
          * create a request in VDQM
@@ -61,13 +61,13 @@ namespace castor {
                                        const int mode,
                                        const int port,
                                        const int priority)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * validate a VDQM request created with createRequestForAggregator
          * @exception throws CASTOR exception if not successful
          */
-	void confirmRequestToVdqm() throw (castor::exception::Exception);
+	void confirmRequestToVdqm() ;
 
         /**
          * check existence of a given request in VDQM
@@ -75,13 +75,13 @@ namespace castor {
          * @exception throws CASTOR exception if not successful
          */
 	static void checkVdqmForRequest(const int mountTransactionId)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * disconnect to VDQM
          * @exception throws CASTOR exception if not successful
          */
-	void disconnectFromVdqm()throw (castor::exception::Exception);
+	void disconnectFromVdqm();
 
       public:
 

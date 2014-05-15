@@ -184,7 +184,7 @@ void castor::db::cnv::DbStageFileQueryRequestCnv::fillRep(castor::IAddress*,
                                                           castor::IObject* object,
                                                           unsigned int type,
                                                           bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StageFileQueryRequest* obj = 
     dynamic_cast<castor::stager::StageFileQueryRequest*>(object);
   try {
@@ -220,7 +220,7 @@ void castor::db::cnv::DbStageFileQueryRequestCnv::fillRep(castor::IAddress*,
 // fillRepQueryParameter
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageFileQueryRequestCnv::fillRepQueryParameter(castor::stager::StageFileQueryRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // check select statement
   if (0 == m_selectQueryParameterStatement) {
     m_selectQueryParameterStatement = createStatement(s_selectQueryParameterStatementString);
@@ -273,7 +273,7 @@ void castor::db::cnv::DbStageFileQueryRequestCnv::fillRepQueryParameter(castor::
 // fillRepSvcClass
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageFileQueryRequestCnv::fillRepSvcClass(castor::stager::StageFileQueryRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   if (0 != obj->svcClass()) {
     // Check checkSvcClassExist statement
     if (0 == m_checkSvcClassExistStatement) {
@@ -305,7 +305,7 @@ void castor::db::cnv::DbStageFileQueryRequestCnv::fillRepSvcClass(castor::stager
 // fillRepIClient
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageFileQueryRequestCnv::fillRepIClient(castor::stager::StageFileQueryRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check update statement
   if (0 == m_updateIClientStatement) {
     m_updateIClientStatement = createStatement(s_updateIClientStatementString);
@@ -323,7 +323,7 @@ void castor::db::cnv::DbStageFileQueryRequestCnv::fillObj(castor::IAddress*,
                                                           castor::IObject* object,
                                                           unsigned int type,
                                                           bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StageFileQueryRequest* obj = 
     dynamic_cast<castor::stager::StageFileQueryRequest*>(object);
   switch (type) {
@@ -352,7 +352,7 @@ void castor::db::cnv::DbStageFileQueryRequestCnv::fillObj(castor::IAddress*,
 // fillObjQueryParameter
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageFileQueryRequestCnv::fillObjQueryParameter(castor::stager::StageFileQueryRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check select statement
   if (0 == m_selectQueryParameterStatement) {
     m_selectQueryParameterStatement = createStatement(s_selectQueryParameterStatementString);
@@ -404,7 +404,7 @@ void castor::db::cnv::DbStageFileQueryRequestCnv::fillObjQueryParameter(castor::
 // fillObjSvcClass
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageFileQueryRequestCnv::fillObjSvcClass(castor::stager::StageFileQueryRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -442,7 +442,7 @@ void castor::db::cnv::DbStageFileQueryRequestCnv::fillObjSvcClass(castor::stager
 // fillObjIClient
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageFileQueryRequestCnv::fillObjIClient(castor::stager::StageFileQueryRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -483,7 +483,7 @@ void castor::db::cnv::DbStageFileQueryRequestCnv::createRep(castor::IAddress*,
                                                             castor::IObject* object,
                                                             bool endTransaction,
                                                             unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StageFileQueryRequest* obj = 
     dynamic_cast<castor::stager::StageFileQueryRequest*>(object);
   // check whether something needs to be done
@@ -560,7 +560,7 @@ void castor::db::cnv::DbStageFileQueryRequestCnv::bulkCreateRep(castor::IAddress
                                                                 std::vector<castor::IObject*> &objects,
                                                                 bool endTransaction,
                                                                 unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   // check whether something needs to be done
   int nb = objects.size();
   if (0 == nb) return;
@@ -967,7 +967,7 @@ void castor::db::cnv::DbStageFileQueryRequestCnv::bulkCreateRep(castor::IAddress
 void castor::db::cnv::DbStageFileQueryRequestCnv::updateRep(castor::IAddress*,
                                                             castor::IObject* object,
                                                             bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StageFileQueryRequest* obj = 
     dynamic_cast<castor::stager::StageFileQueryRequest*>(object);
   // check whether something needs to be done
@@ -1016,7 +1016,7 @@ void castor::db::cnv::DbStageFileQueryRequestCnv::updateRep(castor::IAddress*,
 void castor::db::cnv::DbStageFileQueryRequestCnv::deleteRep(castor::IAddress*,
                                                             castor::IObject* object,
                                                             bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StageFileQueryRequest* obj = 
     dynamic_cast<castor::stager::StageFileQueryRequest*>(object);
   // check whether something needs to be done
@@ -1059,7 +1059,7 @@ void castor::db::cnv::DbStageFileQueryRequestCnv::deleteRep(castor::IAddress*,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::cnv::DbStageFileQueryRequestCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   castor::BaseAddress* ad = 
     dynamic_cast<castor::BaseAddress*>(address);
   try {
@@ -1110,7 +1110,7 @@ castor::IObject* castor::db::cnv::DbStageFileQueryRequestCnv::createObj(castor::
 //------------------------------------------------------------------------------
 std::vector<castor::IObject*>
 castor::db::cnv::DbStageFileQueryRequestCnv::bulkCreateObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Prepare result
   std::vector<castor::IObject*> res;
   // check whether something needs to be done
@@ -1171,7 +1171,7 @@ castor::db::cnv::DbStageFileQueryRequestCnv::bulkCreateObj(castor::IAddress* add
 // updateObj
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageFileQueryRequestCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {

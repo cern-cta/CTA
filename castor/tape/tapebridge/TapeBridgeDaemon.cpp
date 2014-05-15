@@ -46,7 +46,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapebridge::TapeBridgeDaemon::TapeBridgeDaemon(
   std::ostream &stdOut, std::ostream &stdErr, log::Logger &log)
-  throw(castor::exception::Exception) :
+   :
   castor::server::MultiThreadedDaemon(stdOut, stdErr, log),
   m_vdqmRequestHandlerThreadPool(0) {
 }
@@ -109,7 +109,7 @@ int castor::tape::tapebridge::TapeBridgeDaemon::main(const int argc,
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 int castor::tape::tapebridge::TapeBridgeDaemon::exceptionThrowingMain(
-  const int argc, char **argv) throw(castor::exception::Exception) {
+  const int argc, char **argv)  {
 
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
@@ -256,7 +256,7 @@ std::string &castor::tape::tapebridge::TapeBridgeDaemon::appendArgvToString(
 // parseCommandLine
 //------------------------------------------------------------------------------
 void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
-  const int argc, char **argv) throw(castor::exception::Exception) {
+  const int argc, char **argv)  {
 
   static struct Coptions longopts[] = {
     {"foreground", NO_ARGUMENT, NULL, 'f'},
@@ -287,7 +287,7 @@ void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
         // Throw an exception
         castor::exception::InvalidArgument ex;
         ex.getMessage() << oss.str();
-        throw(ex);
+        throw ex;
       }
       break;
     case ':':
@@ -300,7 +300,7 @@ void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
         // Throw an exception
         castor::exception::InvalidArgument ex;
         ex.getMessage() << oss.str();
-        throw(ex);
+        throw ex;
       }
       break;
     default:
@@ -342,7 +342,7 @@ void castor::tape::tapebridge::TapeBridgeDaemon::parseCommandLine(
     // Throw an exception
     castor::exception::InvalidArgument ex;
     ex.getMessage() << oss.str();
-    throw(ex);
+    throw ex;
   }
 }
 
@@ -355,7 +355,7 @@ void castor::tape::tapebridge::TapeBridgeDaemon::
   const BulkRequestConfigParams &bulkRequestConfigParams,
   const TapeFlushConfigParams   &tapeFlushConfigParams,
   const uint32_t                nbDrives)
-  throw(castor::exception::Exception) {
+   {
 
   const int vdqmListenPort = utils::getPortFromConfig("TAPEBRIDGE", "VDQMPORT",
     TAPEBRIDGE_VDQMPORT);

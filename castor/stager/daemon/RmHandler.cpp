@@ -27,7 +27,7 @@ namespace castor{
     namespace daemon{
 
 
-      void RmHandler::handle() throw(castor::exception::Exception)
+      void RmHandler::handle() 
       {
         // stat the file in the nameserver
         reqHelper->statNameServerFile();
@@ -90,7 +90,7 @@ namespace castor{
             castor::dlf::Param("Error Code",sstrerror(e.code())),
             castor::dlf::Param("Error Message",e.getMessage().str())};
           castor::dlf::dlf_writep(reqHelper->requestUuid, DLF_LVL_ERROR, STAGER_RM, 2, params, &(reqHelper->cnsFileid));
-          throw(e);
+          throw e;
         }
       }
 

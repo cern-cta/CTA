@@ -32,7 +32,7 @@
 
 void castor::vdqm::handler::VdqmMagic2RequestHandler::handleVolPriority(
   const Cuuid_t &cuuid, vdqmVolPriority_t &msg)
-  throw (castor::exception::Exception) {
+   {
   castor::dlf::Param param[] = {
     castor::dlf::Param("priority"    , msg.priority),
     castor::dlf::Param("clientUID"   , msg.clientUID),

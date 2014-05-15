@@ -49,7 +49,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::io::AbstractSocket::AbstractSocket(int socket) throw () :
+castor::io::AbstractSocket::AbstractSocket(int socket) throw() :
   m_socket(socket),
   m_reusable(true),
   m_timeout(DEFAULT_SOCKET_NETTIMEOUT),
@@ -61,7 +61,7 @@ castor::io::AbstractSocket::AbstractSocket(int socket) throw () :
 // constructor
 //------------------------------------------------------------------------------
 castor::io::AbstractSocket::AbstractSocket(const bool reusable)
-  throw (castor::exception::Exception) :
+   :
   m_socket(-1), 
   m_reusable(reusable), 
   m_timeout(DEFAULT_SOCKET_NETTIMEOUT), 
@@ -74,7 +74,7 @@ castor::io::AbstractSocket::AbstractSocket(const bool reusable)
 //------------------------------------------------------------------------------
 castor::io::AbstractSocket::AbstractSocket(const unsigned short port,
                                            const bool reusable)
-  throw (castor::exception::Exception) :
+   :
   m_socket(-1), 
   m_reusable(reusable),
   m_timeout(DEFAULT_SOCKET_NETTIMEOUT), 
@@ -88,7 +88,7 @@ castor::io::AbstractSocket::AbstractSocket(const unsigned short port,
 castor::io::AbstractSocket::AbstractSocket(const unsigned short port,
                                            const std::string host,
                                            const bool reusable)
-  throw (castor::exception::Exception) :
+   :
   m_socket(-1), 
   m_reusable(reusable),
   m_timeout(DEFAULT_SOCKET_NETTIMEOUT), 
@@ -102,7 +102,7 @@ castor::io::AbstractSocket::AbstractSocket(const unsigned short port,
 castor::io::AbstractSocket::AbstractSocket(const unsigned short port,
                                            const unsigned long ip,
                                            const bool reusable)
-  throw (castor::exception::Exception) :
+   :
   m_socket(-1), 
   m_reusable(reusable),
   m_timeout(DEFAULT_SOCKET_NETTIMEOUT), 
@@ -113,7 +113,7 @@ castor::io::AbstractSocket::AbstractSocket(const unsigned short port,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::io::AbstractSocket::~AbstractSocket() throw () {
+castor::io::AbstractSocket::~AbstractSocket() throw() {
   this->close();
 }
 
@@ -122,7 +122,7 @@ castor::io::AbstractSocket::~AbstractSocket() throw () {
 //------------------------------------------------------------------------------
 void castor::io::AbstractSocket::getPortIp(unsigned short& port,
                                            unsigned long& ip) const
-  throw (castor::exception::Exception) {
+   {
   // get address
   unsigned int soutlen = sizeof(struct sockaddr_in);
   struct sockaddr_in sout;
@@ -141,7 +141,7 @@ void castor::io::AbstractSocket::getPortIp(unsigned short& port,
 //------------------------------------------------------------------------------
 void castor::io::AbstractSocket::getPeerIp(unsigned short& port,
                                            unsigned long& ip) const
-  throw (castor::exception::Exception) {
+   {
   // get address
   unsigned int soutlen = sizeof(struct sockaddr_in);
   struct sockaddr_in sout;
@@ -159,7 +159,7 @@ void castor::io::AbstractSocket::getPeerIp(unsigned short& port,
 // Sets the socket to reusable address
 //------------------------------------------------------------------------------
 void castor::io::AbstractSocket::setReusable()
-  throw (castor::exception::Exception) {
+   {
   if(!m_reusable) return;
   int on = 1;
   if (setsockopt(m_socket, SOL_SOCKET, SO_REUSEADDR,
@@ -174,7 +174,7 @@ void castor::io::AbstractSocket::setReusable()
 // sendObject
 //------------------------------------------------------------------------------
 void castor::io::AbstractSocket::sendObject(castor::IObject& obj)
-  throw(castor::exception::Exception) {
+   {
   // marshalls the object
   castor::io::biniostream buffer;
   castor::io::StreamAddress ad(buffer, "StreamCnvSvc", castor::SVC_STREAMCNV);
@@ -189,7 +189,7 @@ void castor::io::AbstractSocket::sendObject(castor::IObject& obj)
 // readObject
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::AbstractSocket::readObject()
-  throw(castor::exception::Exception) {
+   {
   // reads from the socket
   char* buffer;
   int length;
@@ -230,7 +230,7 @@ bool castor::io::AbstractSocket::isDataAvailable() throw() {
 // buildAddress
 //------------------------------------------------------------------------------
 sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port)
-  throw (castor::exception::Exception) {
+   {
   // Builds the address
   struct sockaddr_in saddr;
   memset(&saddr, 0, sizeof(saddr));
@@ -245,7 +245,7 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port)
 //------------------------------------------------------------------------------
 sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
                                                      const std::string host)
-  throw (castor::exception::Exception) {
+   {
   // get host information, reentrant in linux
   struct hostent *hp = Cgethostbyname(host.c_str());
   if(hp == 0) {
@@ -267,7 +267,7 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
 //------------------------------------------------------------------------------
 sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
                                                      const unsigned long ip)
-  throw (castor::exception::Exception) {
+   {
   // Builds the address
   struct sockaddr_in saddr;
   memset(&saddr, 0, sizeof(saddr));
@@ -280,7 +280,7 @@ sockaddr_in castor::io::AbstractSocket::buildAddress(const unsigned short port,
 //------------------------------------------------------------------------------
 // close
 //------------------------------------------------------------------------------
-void castor::io::AbstractSocket::close() throw () {
+void castor::io::AbstractSocket::close() throw() {
   if (m_socket >= 0) {
     ::close(m_socket);
   }

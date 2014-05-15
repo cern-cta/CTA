@@ -406,7 +406,7 @@ void castor::db::ora::OraVdqmSvc::rollback() {
 // -----------------------------------------------------------------------
 castor::vdqm::VdqmTape*
 castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
-  throw (castor::exception::Exception) {
+   {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -527,7 +527,7 @@ castor::db::ora::OraVdqmSvc::selectOrCreateTape(const std::string vid)
 castor::vdqm::TapeServer* 
   castor::db::ora::OraVdqmSvc::selectOrCreateTapeServer(
   const std::string serverName, bool withTapeDrives)
-  throw (castor::exception::Exception) {
+   {
 
   // Check if the parameter is empty 
   if(serverName == "") {
@@ -669,7 +669,7 @@ castor::vdqm::TapeServer*
 // -----------------------------------------------------------------------
 bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
   const castor::vdqm::TapeRequest *const newTapeRequest) 
-  throw (castor::exception::Exception) {
+   {
 
   // Get the Statement objects, creating them if necessary
   oracle::occi::Statement *stmt1 = NULL;
@@ -784,7 +784,7 @@ bool castor::db::ora::OraVdqmSvc::checkTapeRequest(
 // getQueuePosition
 // -----------------------------------------------------------------------
 int castor::db::ora::OraVdqmSvc::getQueuePosition(
-  const u_signed64 tapeRequestId) throw (castor::exception::Exception) {
+  const u_signed64 tapeRequestId)  {
     
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -843,7 +843,7 @@ int castor::db::ora::OraVdqmSvc::getQueuePosition(
 void castor::db::ora::OraVdqmSvc::setVolPriority(const int priority,
   const int clientUID, const int clientGID, const std::string clientHost,
   const std::string vid, const int tpMode, const int lifespanType)
-  throw (castor::exception::Exception) {
+   {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -894,7 +894,7 @@ void castor::db::ora::OraVdqmSvc::setVolPriority(const int priority,
 u_signed64 castor::db::ora::OraVdqmSvc::deleteVolPriority(
   const std::string vid, const int tpMode, const int lifespanType,
   int *const priority, int *const clientUID, int *const clientGID,
-  std::string *const clientHost) throw (castor::exception::Exception) {
+  std::string *const clientHost)  {
 
   u_signed64 id = 0;
 
@@ -957,7 +957,7 @@ u_signed64 castor::db::ora::OraVdqmSvc::deleteVolPriority(
 // deleteOldVolPriorities
 // -----------------------------------------------------------------------
 unsigned int castor::db::ora::OraVdqmSvc::deleteOldVolPriorities(
-  const unsigned int maxAge) throw (castor::exception::Exception) {
+  const unsigned int maxAge)  {
 
   unsigned int prioritiesDeletedVar = 0;
 
@@ -1010,7 +1010,7 @@ unsigned int castor::db::ora::OraVdqmSvc::deleteOldVolPriorities(
 // -----------------------------------------------------------------------
 void castor::db::ora::OraVdqmSvc::getAllVolPriorities(
   std::list<castor::vdqm::IVdqmSvc::VolPriority> &priorities)
-  throw (castor::exception::Exception) {
+   {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -1086,7 +1086,7 @@ void castor::db::ora::OraVdqmSvc::getAllVolPriorities(
 // -----------------------------------------------------------------------
 void castor::db::ora::OraVdqmSvc::getEffectiveVolPriorities(
   std::list<castor::vdqm::IVdqmSvc::VolPriority> &priorities)
-  throw (castor::exception::Exception) {
+   {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -1162,7 +1162,7 @@ void castor::db::ora::OraVdqmSvc::getEffectiveVolPriorities(
 // -----------------------------------------------------------------------
 void castor::db::ora::OraVdqmSvc::getVolPriorities(
   std::list<castor::vdqm::IVdqmSvc::VolPriority> &priorities,
-  const int lifespanType) throw (castor::exception::Exception) {
+  const int lifespanType)  {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -1239,7 +1239,7 @@ void castor::db::ora::OraVdqmSvc::getVolPriorities(
 void castor::db::ora::OraVdqmSvc::getVolRequestsPriorityOrder(
   castor::vdqm::IVdqmSvc::VolRequestList &requests,
   const std::string dgn, const std::string requestedSrv)
-  throw (castor::exception::Exception) {
+   {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -1329,7 +1329,7 @@ castor::vdqm::TapeDrive*
   castor::db::ora::OraVdqmSvc::selectTapeDrive(
   const vdqmDrvReq_t* driveRequest,
   castor::vdqm::TapeServer* tapeServer)
-  throw (castor::exception::Exception) {
+   {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -1439,7 +1439,7 @@ castor::vdqm::TapeDrive*
 // -----------------------------------------------------------------------
 void castor::db::ora::OraVdqmSvc::dedicateDrive(const std::string driveName,
   const std::string serverName, const std::string dgName,
-  const std::string dedicate) throw (castor::exception::Exception) {
+  const std::string dedicate)  {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -1509,7 +1509,7 @@ void castor::db::ora::OraVdqmSvc::dedicateDrive(const std::string driveName,
 // -----------------------------------------------------------------------
 void castor::db::ora::OraVdqmSvc::deleteDrive(std::string driveName,
   std::string serverName, std::string dgName)
-  throw (castor::exception::Exception){
+  {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -1634,7 +1634,7 @@ bool castor::db::ora::OraVdqmSvc::requestSubmitted(
   int              &requestStatusAfter,
   u_signed64       &requestDriveIdBefore,
   u_signed64       &requestDriveIdAfter)
-  throw (castor::exception::Exception) {
+   {
 
   bool result = false;
 
@@ -1718,7 +1718,7 @@ void castor::db::ora::OraVdqmSvc::resetDriveAndRequest(
   int              &requestStatusAfter,
   u_signed64       &requestDriveIdBefore,
   u_signed64       &requestDriveIdAfter)
-  throw (castor::exception::Exception) {
+   {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -1785,7 +1785,7 @@ void castor::db::ora::OraVdqmSvc::resetDriveAndRequest(
 bool
   castor::db::ora::OraVdqmSvc::existTapeDriveWithTapeInUse(
   const std::string volid)
-  throw (castor::exception::Exception) {
+   {
   
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -1839,7 +1839,7 @@ bool
 bool
   castor::db::ora::OraVdqmSvc::existTapeDriveWithTapeMounted(
   const std::string volid)
-  throw (castor::exception::Exception) {
+   {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -1893,7 +1893,7 @@ bool
 castor::vdqm::VdqmTape* 
   castor::db::ora::OraVdqmSvc::selectTapeByVid(
   const std::string volid)
-  throw (castor::exception::Exception) {
+   {
     
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -1975,7 +1975,7 @@ castor::vdqm::VdqmTape*
 castor::vdqm::TapeRequest* 
   castor::db::ora::OraVdqmSvc::selectTapeReqForMountedTape(
   const castor::vdqm::TapeDrive* tapeDrive)
-  throw (castor::exception::Exception) {
+   {
   
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -2074,7 +2074,7 @@ castor::vdqm::TapeRequest*
 castor::vdqm::TapeAccessSpecification* 
   castor::db::ora::OraVdqmSvc::selectTapeAccessSpecification(
   const int accessMode, const std::string density, const std::string tapeModel)
-  throw (castor::exception::Exception) {
+   {
     
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -2162,7 +2162,7 @@ castor::vdqm::TapeAccessSpecification*
 castor::vdqm::DeviceGroupName* 
   castor::db::ora::OraVdqmSvc::selectDeviceGroupName
   (const std::string dgName)
-  throw (castor::exception::Exception) {
+   {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -2246,7 +2246,7 @@ castor::vdqm::DeviceGroupName*
 void castor::db::ora::OraVdqmSvc::getTapeRequestQueue(
   castor::vdqm::IVdqmSvc::VolReqMsgList &requests, const std::string dgn,
   const std::string requestedSrv)
-  throw (castor::exception::Exception) {
+   {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -2355,7 +2355,7 @@ void castor::db::ora::OraVdqmSvc::getTapeRequestQueue(
 // -----------------------------------------------------------------------
 void castor::db::ora::OraVdqmSvc::getTapeDriveQueue(std::list<vdqmDrvReq_t>
   &drvReqs, const std::string dgn, const std::string requestedSrv)
-  throw (castor::exception::Exception) {
+   {
 
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -2470,7 +2470,7 @@ void castor::db::ora::OraVdqmSvc::getTapeDriveQueue(std::list<vdqmDrvReq_t>
 //------------------------------------------------------------------------------
 int castor::db::ora::OraVdqmSvc::translateNewStatus(
   castor::vdqm::TapeDriveStatusCodes newStatusCode)
-  throw (castor::exception::Exception) {
+   {
 
   int oldStatus = 0;
 
@@ -2523,7 +2523,7 @@ int castor::db::ora::OraVdqmSvc::translateNewStatus(
 // -----------------------------------------------------------------------
 castor::vdqm::TapeRequest*
   castor::db::ora::OraVdqmSvc::selectTapeRequest(
-  const int volReqID) throw (castor::exception::Exception) {
+  const int volReqID)  {
     
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -2610,7 +2610,7 @@ castor::vdqm::TapeRequest*
 // selectTapeRequestForUpdate
 // -----------------------------------------------------------------------
 bool castor::db::ora::OraVdqmSvc::selectTapeRequestForUpdate(
-  const int volReqID) throw (castor::exception::Exception) {
+  const int volReqID)  {
     
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -2665,7 +2665,7 @@ bool castor::db::ora::OraVdqmSvc::selectTapeRequestForUpdate(
 int castor::db::ora::OraVdqmSvc::allocateDrive(u_signed64 *tapeDriveId,
   std::string *tapeDriveName, u_signed64 *tapeRequestId,
   std::string *tapeRequestVid)
-  throw (castor::exception::Exception) {
+   {
 
   // 1 = drive allocated, 0 = no possible allocation found, -1 possible
   // allocation found, but invalidated by other threads
@@ -2727,7 +2727,7 @@ int castor::db::ora::OraVdqmSvc::allocateDrive(u_signed64 *tapeDriveId,
 int castor::db::ora::OraVdqmSvc::reuseDriveAllocation(
   castor::vdqm::VdqmTape *const tape, castor::vdqm::TapeDrive *const drive,
   const int accessMode, u_signed64 *const tapeRequestId)
-  throw (castor::exception::Exception) {
+   {
 
   // 1 = driev allocation reused, 0 = no possible reuse found, -1 possible
   // reuse found, but invalidated by other threads
@@ -2783,7 +2783,7 @@ int castor::db::ora::OraVdqmSvc::reuseDriveAllocation(
 // requestToSubmit
 // -----------------------------------------------------------------------
 castor::vdqm::TapeRequest *castor::db::ora::OraVdqmSvc::requestToSubmit()
-  throw (castor::exception::Exception) {
+   {
 
   u_signed64 idTapeRequest = 0;
 
@@ -2904,7 +2904,7 @@ castor::vdqm::TapeRequest *castor::db::ora::OraVdqmSvc::requestToSubmit()
 // -----------------------------------------------------------------------
 void castor::db::ora::OraVdqmSvc::selectCompatibilitiesForDriveModel(
   castor::vdqm::TapeDrive *const tapeDrive, const std::string tapeDriveModel)
-  throw (castor::exception::Exception) {
+   {
   
   // Get the Statement object, creating one if necessary
   oracle::occi::Statement *stmt = NULL;
@@ -2978,7 +2978,7 @@ void castor::db::ora::OraVdqmSvc::selectCompatibilitiesForDriveModel(
 std::vector<castor::vdqm::TapeAccessSpecification*>*
   castor::db::ora::OraVdqmSvc::selectTapeAccessSpecifications(
   const std::string tapeModel)
-  throw (castor::exception::Exception) {
+   {
   
   //The result from the select statement
   oracle::occi::ResultSet *rset;
@@ -3096,7 +3096,7 @@ castor::db::ora::OraVdqmSvc::handleException(oracle::occi::SQLException& e) {
 // -----------------------------------------------------------------------
 oracle::occi::Statement*
 castor::db::ora::OraVdqmSvc::createStatement (const std::string &stmtString)
-  throw (castor::exception::Exception) {
+   {
     return dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc())->createOraStatement(stmtString);
 }
 
@@ -3106,7 +3106,7 @@ castor::db::ora::OraVdqmSvc::createStatement (const std::string &stmtString)
 // -----------------------------------------------------------------------
 void
 castor::db::ora::OraVdqmSvc::deleteStatement(oracle::occi::Statement* stmt)
-  throw (castor::exception::Exception) {
+   {
     castor::db::ora::OraStatement* oraStmt =
         new castor::db::ora::OraStatement(stmt, dynamic_cast<castor::db::ora::OraCnvSvc*>(cnvSvc()));
     delete oraStmt;

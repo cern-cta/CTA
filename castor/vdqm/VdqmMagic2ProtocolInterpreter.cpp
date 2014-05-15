@@ -33,7 +33,7 @@
 //------------------------------------------------------------------------------
 castor::vdqm::VdqmMagic2ProtocolInterpreter::VdqmMagic2ProtocolInterpreter(
   castor::io::ServerSocket &socket, const Cuuid_t &cuuid)
-  throw(castor::exception::Exception) : m_socket(socket), m_cuuid(cuuid) {
+   : m_socket(socket), m_cuuid(cuuid) {
 }
 
 
@@ -42,7 +42,7 @@ castor::vdqm::VdqmMagic2ProtocolInterpreter::VdqmMagic2ProtocolInterpreter(
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmMagic2ProtocolInterpreter::readHeader(
   const unsigned int magic, vdqmHdr_t &header)
-  throw(castor::exception::Exception) {
+   {
 
   // Fill in the magic number which has already been read out from the socket
   header.magic = magic;
@@ -78,7 +78,7 @@ void castor::vdqm::VdqmMagic2ProtocolInterpreter::readHeader(
 // readVolPriority
 //------------------------------------------------------------------------------
 void castor::vdqm::VdqmMagic2ProtocolInterpreter::readVolPriority(const int len,
-  vdqmVolPriority_t &msg) throw(castor::exception::Exception) {
+  vdqmVolPriority_t &msg)  {
 
   if(!VALID_VDQM_MSGLEN(len)) {
     castor::exception::Exception ex(SECONNDROP);

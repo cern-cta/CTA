@@ -45,7 +45,7 @@
 // getUserId
 //-----------------------------------------------------------------------------
 void getUserId(std::string name, castor::bwlist::BWUser *u)
-  throw (castor::exception::InvalidArgument) {
+   {
   // empty user name means any and is thus mapped to -1
   if (name.size() == 0) {
     u->setEuid(-1);
@@ -75,7 +75,7 @@ void getUserId(std::string name, castor::bwlist::BWUser *u)
 // getGroupId
 //-----------------------------------------------------------------------------
 void getGroupId(std::string name, castor::bwlist::BWUser *u)
-  throw (castor::exception::InvalidArgument) {
+   {
   // empty group name, just ignore
   if (name.size() == 0) {
     return;
@@ -101,7 +101,7 @@ void getGroupId(std::string name, castor::bwlist::BWUser *u)
 // getRequestTypeId
 //-----------------------------------------------------------------------------
 int getRequestTypeId(std::string type)
-  throw (castor::exception::InvalidArgument) {
+   {
   // empty type name means any and is thus mapped to 0
   if (type.size() == 0) return 0;
   // get type id, here we go for a dummy O(n) listing
@@ -121,7 +121,7 @@ int getRequestTypeId(std::string type)
 void parseUsers(char *susers,
                 castor::bwlist::ChangePrivilege * req,
                 std::vector<castor::bwlist::BWUser*> &users)
-  throw (castor::exception::Exception) {
+   {
   // check for empty user list
   if (strlen(susers) == 0) {
     castor::exception::InvalidArgument e;
@@ -179,7 +179,7 @@ void parseUsers(char *susers,
 void parseRequestTypes(char *sreqTypes,
                        castor::bwlist::ChangePrivilege * req,
                        std::vector<castor::bwlist::RequestType*> &reqTypes)
-  throw (castor::exception::Exception) {
+   {
   std::stringstream s(sreqTypes);
   while (!s.eof() && ! s.bad()) {
     // get next type

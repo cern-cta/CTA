@@ -34,7 +34,7 @@ namespace castor{
   namespace stager{
     namespace daemon{
       
-      void PutDoneHandler::handle() throw(castor::exception::Exception)
+      void PutDoneHandler::handle() 
       {
         RequestHandler::handle();
 

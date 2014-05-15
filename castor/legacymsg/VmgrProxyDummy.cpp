@@ -32,12 +32,12 @@ castor::legacymsg::VmgrProxyDummy::~VmgrProxyDummy() throw() {
 // tapeMountedForRead
 //------------------------------------------------------------------------------
 void castor::legacymsg::VmgrProxyDummy::tapeMountedForRead(const std::string &vid)
-  throw (castor::exception::Exception) {
+   {
 }
 
 //------------------------------------------------------------------------------
 // tapeMountedForWrite
 //------------------------------------------------------------------------------
 void castor::legacymsg::VmgrProxyDummy::tapeMountedForWrite(const std::string &vid)
-  throw (castor::exception::Exception) {
+   {
 }

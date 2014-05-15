@@ -48,7 +48,7 @@ namespace castor {
        */
       UDPSocket(const unsigned short port,
                 const bool reusable)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Constructor building a socket on a given port
@@ -59,7 +59,7 @@ namespace castor {
        */
       UDPSocket(const unsigned short port,
 		const std::string host)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Constructor building a socket on a given port
@@ -70,7 +70,7 @@ namespace castor {
        */
       UDPSocket(const unsigned short port,
 		const unsigned long ip)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Constructor building a socket on a given local port for
@@ -83,7 +83,7 @@ namespace castor {
       UDPSocket(const unsigned short port,
                 const bool reusable,
 		const bool bind)
-        throw (castor::exception::Exception);
+        ;
 
     protected:
 
@@ -91,7 +91,7 @@ namespace castor {
        * Internal method to create the inner socket
        * @exception Exception in case of error
        */
-      virtual void createSocket() throw (castor::exception::Exception);
+      virtual void createSocket() ;
 
       /**
        * Internal method to send the content of a buffer
@@ -105,7 +105,7 @@ namespace castor {
       virtual void sendBuffer(const unsigned int magic,
                               const char* buf,
                               const int n)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Internal method to read from a socket into a buffer.
@@ -120,7 +120,7 @@ namespace castor {
       virtual void readBuffer(const unsigned int magic,
                               char** buf,
                               int& n)
-        throw (castor::exception::Exception);
+        ;
 
     };
 

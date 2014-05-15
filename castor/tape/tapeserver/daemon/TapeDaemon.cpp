@@ -63,7 +63,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   legacymsg::VmgrProxyFactory &vmgrFactory,
   legacymsg::RmcProxyFactory &rmcFactory,
   legacymsg::TapeserverProxyFactory &tapeserverFactory,
-  io::PollReactor &reactor) throw(castor::exception::Exception):
+  io::PollReactor &reactor) :
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),
   m_argv(argv),
@@ -82,7 +82,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
 //------------------------------------------------------------------------------
 std::string
   castor::tape::tapeserver::daemon::TapeDaemon::getHostName()
-  const throw(castor::exception::Exception) {
+  const  {
   char nameBuf[81];
   if(gethostname(nameBuf, sizeof(nameBuf))) {
     char errBuf[100];
@@ -104,7 +104,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::~TapeDaemon() throw() {
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::TapeDaemon::main() throw () {
+int castor::tape::tapeserver::daemon::TapeDaemon::main() throw() {
   try {
 
     exceptionThrowingMain(m_argc, m_argv);
@@ -130,7 +130,7 @@ int castor::tape::tapeserver::daemon::TapeDaemon::main() throw () {
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
-  const int argc, char **const argv) throw(castor::exception::Exception) {
+  const int argc, char **const argv)  {
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
   m_driveCatalogue.populateCatalogue(m_tpconfigLines);
@@ -144,7 +144,7 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
 // getConfigString
 //------------------------------------------------------------------------------
 std::string castor::tape::tapeserver::daemon::TapeDaemon::getConfigString(
-  const std::string &category, const std::string &name) throw(castor::exception::Exception) {
+  const std::string &category, const std::string &name)  {
   using namespace castor;
 
   std::ostringstream task;
@@ -237,7 +237,7 @@ std::string castor::tape::tapeserver::daemon::TapeDaemon::argvToString(
 // blockSignals
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const
-  throw(castor::exception::Exception) {
+   {
   sigset_t sigs;
   sigemptyset(&sigs);
   // The signals that should not asynchronously disturb the daemon
@@ -264,7 +264,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const
 // registerTapeDrivesWithVdqm
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDrivesWithVdqm()
-  throw(castor::exception::Exception) {
+   {
   const std::list<std::string> unitNames = m_driveCatalogue.getUnitNames();
 
   for(std::list<std::string>::const_iterator itor = unitNames.begin();
@@ -277,7 +277,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDrivesWithVdqm()
 // registerTapeDriveWithVdqm
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
-  const std::string &unitName) throw(castor::exception::Exception) {
+  const std::string &unitName)  {
   const DriveCatalogue::DriveState driveState =
     m_driveCatalogue.getState(unitName);
   const std::string dgn = m_driveCatalogue.getDgn(unitName);
@@ -316,7 +316,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
 // setUpReactor
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
-  throw(castor::exception::Exception) {
+   {
   createAndRegisterVdqmAcceptHandler();
   createAndRegisterAdminAcceptHandler();
   createAndRegisterMountSessionAcceptHandler();
@@ -325,7 +325,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
 //------------------------------------------------------------------------------
 // createAndRegisterVdqmAcceptHandler
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHandler() throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHandler()  {
   castor::utils::SmartFd listenSock;
   try {
     listenSock.reset(io::createListenerSock(TAPE_SERVER_VDQM_LISTENING_PORT));
@@ -360,7 +360,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterVdqmAcceptHa
 //------------------------------------------------------------------------------
 // createAndRegisterAdminAcceptHandler
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptHandler() throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptHandler()  {
   castor::utils::SmartFd listenSock;
   try {
     listenSock.reset(io::createListenerSock(TAPE_SERVER_ADMIN_LISTENING_PORT));
@@ -397,7 +397,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
 //------------------------------------------------------------------------------
 // createAndRegisterMountSessionAcceptHandler
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterMountSessionAcceptHandler() throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterMountSessionAcceptHandler()  {
   castor::utils::SmartFd mountSessionListenSock;
   try {
     mountSessionListenSock.reset(
@@ -437,7 +437,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterMountSession
 // mainEventLoop
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop()
-  throw(castor::exception::Exception) {
+   {
   while(handleEvents()) {
     forkMountSessions();
     forkLabelSessions();
@@ -448,7 +448,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop()
 // handleEvents
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::TapeDaemon::handleEvents()
-  throw(castor::exception::Exception) {
+   {
   // With our current understanding we see no reason for an exception from the
   // reactor to be used as a reason to stop the tapeserverd daemon.
   //
@@ -696,7 +696,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession
 //-----------------------------------------------------------------------------
 size_t castor::tape::tapeserver::daemon::TapeDaemon::marshalTapeRcReplyMsg(char *const dst,
   const size_t dstLen, const int rc)
-  throw(castor::exception::Exception) {
+   {
   legacymsg::MessageHeader src;
   src.magic = TPMAGIC;
   src.reqType = TAPERC;
@@ -707,7 +707,7 @@ size_t castor::tape::tapeserver::daemon::TapeDaemon::marshalTapeRcReplyMsg(char 
 //------------------------------------------------------------------------------
 // writeTapeRcReplyMsg
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::writeTapeRcReplyMsg(const int fd, const int rc) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::TapeDaemon::writeTapeRcReplyMsg(const int fd, const int rc)  {
   char buf[REPBUFSZ];
   const size_t len = marshalTapeRcReplyMsg(buf, sizeof(buf), rc);
   const int timeout = 10; //seconds
@@ -725,7 +725,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::writeTapeRcReplyMsg(const int
 // notifyLabelCmdOfEndOfSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::notifyLabelCmdOfEndOfSession(
-  const pid_t sessionPid, const int waitpidStat) throw(castor::exception::Exception) {
+  const pid_t sessionPid, const int waitpidStat)  {
   const int labelCmdConnection = m_driveCatalogue.getLabelCmdConnection(sessionPid);
   
   if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {

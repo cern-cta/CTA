@@ -107,7 +107,7 @@ protected:
    * @param s The string represention of the tape-flush mode.
    */
   uint32_t stringToTapeFlushMode(const std::string s)
-    throw(castor::exception::InvalidArgument);
+    ;
 
   /**
    * With respect to using buffered tape-marks over multiple files, this

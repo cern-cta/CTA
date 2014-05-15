@@ -53,7 +53,7 @@ namespace castor {
        * Constructor building a Socket objet around a regular socket
        * @param socket the regular socket used
        */
-      ServerSocket(int socket) throw ();
+      ServerSocket(int socket) throw();
 
       /**
        * Constructor building a socket with no port. As a consequence,
@@ -61,7 +61,7 @@ namespace castor {
        * The bind method should be call independently
        * @param reusable whether the socket should be reusable
        */
-      ServerSocket(const bool reusable) throw (castor::exception::Exception);
+      ServerSocket(const bool reusable) ;
 
       /**
        * Constructor building a socket on a given local port
@@ -71,7 +71,7 @@ namespace castor {
        */
       ServerSocket(const unsigned short port,
                    const bool reusable)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Constructor building a socket on a given port of a given host
@@ -83,7 +83,7 @@ namespace castor {
       ServerSocket(const unsigned short port,
                    const std::string host,
                    const bool reusable)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Constructor building a socket on a given port of a given host
@@ -95,7 +95,7 @@ namespace castor {
       ServerSocket(const unsigned short port,
                    const unsigned long ip,
                    const bool reusable)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Start listening on the socket.
@@ -103,14 +103,14 @@ namespace castor {
        * happen because bind() is not process/thread-safe), a new bind()
        * is performed, so to make this class process-safe.
        */
-      virtual void listen() throw(castor::exception::Exception);
+      virtual void listen() ;
 
       /**
        * accept a connection and return the correponding Socket.
        * The deallocation of the new socket is the responsability
        * of the caller.
        */
-      virtual ServerSocket* accept() throw(castor::exception::Exception);
+      virtual ServerSocket* accept() ;
 
       /**
        * binds the socket and let the system choose a port
@@ -120,7 +120,7 @@ namespace castor {
        * @param highPort the high value in the port range (included)
        */
       void bind(int lowPort, int highPort)
-        throw (castor::exception::Exception);
+        ;
 
     private:
 
@@ -140,7 +140,7 @@ namespace castor {
        * by a previous call to bind(lowPort, highPort)
        */
       void bind()
-        throw (castor::exception::Exception);
+        ;
         
     };
 

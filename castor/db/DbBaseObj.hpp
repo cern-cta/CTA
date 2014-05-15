@@ -62,7 +62,7 @@ namespace castor {
         /**
          * inits the conversion service to be used
          */
-        void initCnvSvc() throw (castor::exception::Exception);
+        void initCnvSvc() ;
 
         /**
          * creates a statement from a string. Note that the
@@ -73,19 +73,19 @@ namespace castor {
          * @return the newly created statement, wrapped by CDBC API
          */
         castor::db::IDbStatement* createStatement(const std::string &stmtString)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * access to the underlying database conversion service for child classes
          */
-        castor::db::DbCnvSvc* cnvSvc() throw (castor::exception::Exception);
+        castor::db::DbCnvSvc* cnvSvc() ;
 
         /**
          * register a Service to the underlying conversion service.
          * The conversion service is created if needed.
          * @param svc the service to register
          */
-        void registerToCnvSvc(castor::IService* svc) throw () {
+        void registerToCnvSvc(castor::IService* svc) throw() {
           cnvSvc()->registerDepSvc(svc);
         }
 
@@ -94,7 +94,7 @@ namespace castor {
          * In case no conversion service exists, this is a noop
          * @param svc the service to unregister
          */
-        void unregisterFromCnvSvc(castor::IService* svc) throw () {
+        void unregisterFromCnvSvc(castor::IService* svc) throw() {
           if (m_cnvSvc) m_cnvSvc->unregisterDepSvc(svc);
         }
 

@@ -58,7 +58,7 @@ public:
    * @return true if the event handler should be removed from and deleted by
    * the reactor.
    */
-  bool handleEvent(const struct pollfd &fd) throw(castor::exception::Exception);
+  bool handleEvent(const struct pollfd &fd) ;
 
   /**
    * Destructor.

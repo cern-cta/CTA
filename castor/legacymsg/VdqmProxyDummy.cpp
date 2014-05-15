@@ -43,7 +43,7 @@ castor::legacymsg::VdqmProxyDummy::~VdqmProxyDummy() throw() {
 //------------------------------------------------------------------------------
 // receiveJob
 //------------------------------------------------------------------------------
-castor::legacymsg::RtcpJobRqstMsgBody castor::legacymsg::VdqmProxyDummy::receiveJob(const int connection) throw(castor::exception::Exception) {
+castor::legacymsg::RtcpJobRqstMsgBody castor::legacymsg::VdqmProxyDummy::receiveJob(const int connection)  {
   if(!m_hasJob) throw castor::exception::Exception("In castor::legacymsg::VdqmProxyDummy::receiveJob: this object was constructed without a job.");
   return m_job;
 }
@@ -51,35 +51,35 @@ castor::legacymsg::RtcpJobRqstMsgBody castor::legacymsg::VdqmProxyDummy::receive
 //------------------------------------------------------------------------------
 // setDriveDown
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyDummy::setDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
+void castor::legacymsg::VdqmProxyDummy::setDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn)  {
 }
 
 //------------------------------------------------------------------------------
 // setDriveUp
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyDummy::setDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
+void castor::legacymsg::VdqmProxyDummy::setDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn)  {
 }
 
 //------------------------------------------------------------------------------
 // assignDrive
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyDummy::assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t sessionPid) throw(castor::exception::Exception) {
+void castor::legacymsg::VdqmProxyDummy::assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t sessionPid)  {
 }
 
 //------------------------------------------------------------------------------
 // tapeMounted
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyDummy::tapeMounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid) throw(castor::exception::Exception) {
+void castor::legacymsg::VdqmProxyDummy::tapeMounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid)  {
 }
 
 //------------------------------------------------------------------------------
 // releaseDrive
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyDummy::releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid) throw(castor::exception::Exception) {
+void castor::legacymsg::VdqmProxyDummy::releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid)  {
 }
 
 //-----------------------------------------------------------------------------
 // tapeUnmounted
 //-----------------------------------------------------------------------------
-void  castor::legacymsg::VdqmProxyDummy::tapeUnmounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid) throw(castor::exception::Exception) {
+void  castor::legacymsg::VdqmProxyDummy::tapeUnmounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid)  {
 }

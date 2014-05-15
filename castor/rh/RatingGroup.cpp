@@ -32,7 +32,7 @@
 // Constructor
 //-----------------------------------------------------------------------------
 castor::rh::RatingGroup::RatingGroup(const std::string name)
-  throw(castor::exception::Exception) :
+   :
   m_nbRequests(0),
   m_interval(0),
   m_groupName(name) {

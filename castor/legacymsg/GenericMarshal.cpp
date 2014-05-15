@@ -34,7 +34,7 @@
 //-----------------------------------------------------------------------------
 size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
   const uint32_t srcMagic, const uint32_t srcReqType,
-  const GenericReplyMsgBody &srcBody) throw(castor::exception::Exception) {
+  const GenericReplyMsgBody &srcBody)  {
   const char *const task = "marshal GenericReplyMsgBody";
 
   if(dst == NULL) {
@@ -107,7 +107,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 // unmarshal
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen,
-  GenericReplyMsgBody &dst) throw(castor::exception::Exception) {
+  GenericReplyMsgBody &dst)  {
   try {
     io::unmarshalUint32(src, srcLen, dst.status);
     io::unmarshalString(src, srcLen, dst.errorMessage);

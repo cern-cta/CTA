@@ -33,7 +33,7 @@
 //-----------------------------------------------------------------------------
 // marshal
 //-----------------------------------------------------------------------------
-size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const CupvCheckMsgBody &src) throw(castor::exception::Exception) {
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const CupvCheckMsgBody &src)  {
 
   if(dst == NULL) {
     castor::exception::Exception ex;
@@ -96,7 +96,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Cu
 //-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
-void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, CupvCheckMsgBody &dst) throw(castor::exception::Exception) {
+void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, CupvCheckMsgBody &dst)  {
   io::unmarshalUint32(src, srcLen, dst.uid);
   io::unmarshalUint32(src, srcLen, dst.gid);
   io::unmarshalUint32(src, srcLen, dst.privUid);

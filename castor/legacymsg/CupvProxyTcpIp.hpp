@@ -74,7 +74,7 @@ public:
     const gid_t privGid,
     const std::string &srcHost,
     const std::string &tgtHost,
-    const int privilege) throw(castor::exception::Exception);
+    const int privilege) ;
 
 private:
 
@@ -104,7 +104,7 @@ private:
    *
    * @return The socket-descriptor of the connection with the vdqmd daemon.
    */
-  int connectToCupv() const throw(castor::exception::Exception);
+  int connectToCupv() const ;
 
   /**
    * Writes a CUPV_CHECK message with the specifed contents to the specified
@@ -112,7 +112,7 @@ private:
    *
    * @param body The message body.
    */
-  void writeCupvCheckMsg(const int fd, const CupvCheckMsgBody &body) throw(castor::exception::Exception);
+  void writeCupvCheckMsg(const int fd, const CupvCheckMsgBody &body) ;
 
   /**
    * Reads the header of an CUPV_MAGIC message from the specified connection.
@@ -120,7 +120,7 @@ private:
    * @param fd The file descriptor of the connection.
    * @return The message header.
    */
-  MessageHeader readCupvMsgHeader(const int fd) throw(castor::exception::Exception);
+  MessageHeader readCupvMsgHeader(const int fd) ;
 
 }; // class CupvProxyTcpIp
 

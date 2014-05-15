@@ -57,7 +57,7 @@ namespace castor {
     BaseThreadPool(const std::string poolName,
                    castor::server::IThread* thread,
                    unsigned int nbThreads = DEFAULT_THREAD_NUMBER)
-      throw (castor::exception::Exception);
+      ;
 
     /*
      * Destructor
@@ -68,7 +68,7 @@ namespace castor {
      * Initializes the pool. This function is called before
      * any forking may take place.
      */
-    virtual void init() throw (castor::exception::Exception);
+    virtual void init() ;
 
     /**
      * Runs the pool. This function is supposed to spawn
@@ -76,7 +76,7 @@ namespace castor {
      * Specialized pools implement it according to their needs,
      * this implementation throws an exception.
      */
-    virtual void run() throw (castor::exception::Exception);
+    virtual void run() ;
     
     /**
      * Performs a graceful shutdown of the pool. This method is

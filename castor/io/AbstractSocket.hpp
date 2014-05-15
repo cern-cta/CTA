@@ -51,7 +51,7 @@ namespace castor {
        * Constructor building a Socket objet around a regular socket
        * @param socket the regular socket used
        */
-      AbstractSocket(int socket) throw ();
+      AbstractSocket(int socket) throw();
 
       /**
        * Constructor building a socket with no port. As a consequence,
@@ -61,7 +61,7 @@ namespace castor {
        * @exception Exception in case of error
        */
       AbstractSocket(const bool reusable) 
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Constructor building a socket on a given local port
@@ -72,7 +72,7 @@ namespace castor {
        */
       AbstractSocket(const unsigned short port,
                      const bool reusable)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Constructor building a socket on a given port of a given host
@@ -85,7 +85,7 @@ namespace castor {
       AbstractSocket(const unsigned short port,
                      const std::string host,
                      const bool reusable)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Constructor building a socket on a given port of a given host
@@ -98,7 +98,7 @@ namespace castor {
       AbstractSocket(const unsigned short port,
                      const unsigned long ip,
                      const bool reusable)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Destructor
@@ -111,7 +111,7 @@ namespace castor {
        * @exception Exception in case of error
        */
       void sendObject(castor::IObject& obj)
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Reads an object from the socket.
@@ -121,7 +121,7 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual castor::IObject* readObject()
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Check whether there is something to read on the socket
@@ -135,19 +135,19 @@ namespace castor {
        */
       void getPortIp(unsigned short& port,
                      unsigned long& ip) const
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Retrieve peer name
        */
       void getPeerIp(unsigned short& port,
                      unsigned long& ip) const
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Sets the SO_REUSEADDR option on the socket
        */
-      void setReusable() throw (castor::exception::Exception);
+      void setReusable() ;
       
       /**
        * Set the timeout value in seconds for reading and writing data
@@ -182,7 +182,7 @@ namespace castor {
       /**
        * Closes the socket
        */
-      void close() throw ();
+      void close() throw();
 
       /**
        * To be deleted when Socket class is complete XXX
@@ -204,27 +204,27 @@ namespace castor {
       /**
        * Internal method to create the inner socket
        */
-      virtual void createSocket() throw (castor::exception::Exception) = 0;
+      virtual void createSocket()  = 0;
 
       /**
        * Builds an address for the local machine on the given port
        */
       struct sockaddr_in buildAddress(const unsigned short port)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Builds an address for a remote machine on the given port
        */
       struct sockaddr_in buildAddress(const unsigned short port,
                                       const std::string host)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Builds an address for a remote machine on the given port
        */
       struct sockaddr_in buildAddress(const unsigned short port,
                                       const unsigned long ip)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Internal method to send the content of a buffer
@@ -238,7 +238,7 @@ namespace castor {
       virtual void sendBuffer(const unsigned int magic,
                               const char* buf,
                               const int n)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Internal method to read from a socket into a buffer.
@@ -253,7 +253,7 @@ namespace castor {
       virtual void readBuffer(const unsigned int magic,
                               char** buf,
                               int& n)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
     protected:
 

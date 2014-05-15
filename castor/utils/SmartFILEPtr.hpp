@@ -75,7 +75,7 @@ public:
    * </ul>
    */
   SmartFILEPtr &operator=(SmartFILEPtr& obj)
-    throw(castor::exception::NotAnOwner);
+    ;
 
   /**
    * Destructor.
@@ -96,7 +96,7 @@ public:
    *
    * @return The released FILE pointer.
    */
-  FILE *release() throw(castor::exception::NotAnOwner);
+  FILE *release() ;
 
 private:
 

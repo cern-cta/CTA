@@ -36,7 +36,7 @@ namespace daemon {
 //------------------------------------------------------------------------------
 MigrationMemoryManager::MigrationMemoryManager(const size_t numberOfBlocks, 
     const size_t blockSize, castor::log::LogContext lc)
-throw(castor::exception::Exception):
+:
     m_blockCapacity(blockSize), m_totalNumberOfBlocks(0),
     m_totalMemoryAllocated(0), m_blocksProvided(0), 
     m_blocksReturned(0), m_lc(lc)
@@ -73,7 +73,7 @@ MigrationMemoryManager::~MigrationMemoryManager() throw() {
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::startThreads
 //------------------------------------------------------------------------------
-void MigrationMemoryManager::startThreads() throw(castor::exception::Exception) {
+void MigrationMemoryManager::startThreads()  {
   castor::tape::threading::Thread::start();
   m_lc.log(LOG_INFO, "MigrationMemoryManager starting thread");
 }
@@ -81,7 +81,7 @@ void MigrationMemoryManager::startThreads() throw(castor::exception::Exception) 
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::waitThreads
 //------------------------------------------------------------------------------
-void MigrationMemoryManager::waitThreads() throw(castor::exception::Exception) {
+void MigrationMemoryManager::waitThreads()  {
   castor::tape::threading::Thread::wait();
 }
 
@@ -89,7 +89,7 @@ void MigrationMemoryManager::waitThreads() throw(castor::exception::Exception) {
 // MigrationMemoryManager::addClient
 //------------------------------------------------------------------------------
 void MigrationMemoryManager::addClient(DataPipeline* c)
-throw(castor::exception::Exception) {
+ {
   m_clientQueue.push(c);
 }
 
@@ -112,7 +112,7 @@ size_t MigrationMemoryManager::blockCapacity() {
 // MigrationMemoryManager::finish
 //------------------------------------------------------------------------------
 void MigrationMemoryManager::finish()
-throw(castor::exception::Exception) {
+ {
   addClient(NULL);
 }
 
@@ -120,7 +120,7 @@ throw(castor::exception::Exception) {
 // MigrationMemoryManager::releaseBlock
 //------------------------------------------------------------------------------
 void MigrationMemoryManager::releaseBlock(MemBlock* mb)
-throw(castor::exception::Exception) {
+ {
   mb->reset();
   m_freeBlocks.push(mb);
   {
@@ -132,7 +132,7 @@ throw(castor::exception::Exception) {
 //------------------------------------------------------------------------------
 // MigrationMemoryManager::run
 //------------------------------------------------------------------------------
-void MigrationMemoryManager::run() throw(castor::exception::Exception) {
+void MigrationMemoryManager::run()  {
   while (true) {
     DataPipeline* c = m_clientQueue.pop();
     // If the c is a NULL pointer, that means end of clients

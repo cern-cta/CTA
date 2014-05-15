@@ -63,38 +63,38 @@ namespace castor {
       virtual void setNull(int pos) = 0;
         
       virtual void setDataBuffer(int pos, void* buffer, unsigned dbType, unsigned size, void* bufLens)
-        throw (castor::exception::SQLError) = 0;
+         = 0;
         
       virtual void setDataBufferArray(int pos, void* buffer, unsigned dbType, 
 				      unsigned size, unsigned elementSize, void* bufLens)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       virtual void setDataBufferUInt64Array(int pos, std::vector<u_signed64> data)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       virtual void registerOutParam(int pos, unsigned dbType)
-        throw (castor::exception::SQLError) = 0;
+         = 0;
     
-      virtual int getInt(int pos) throw (castor::exception::SQLError) = 0;
-      virtual signed64 getInt64(int pos) throw (castor::exception::SQLError) = 0;
-      virtual u_signed64 getUInt64(int pos) throw (castor::exception::SQLError) = 0;
-      virtual std::string getString(int pos) throw (castor::exception::SQLError) = 0;
-      virtual float getFloat(int pos) throw (castor::exception::SQLError) = 0;
-      virtual double getDouble(int pos) throw (castor::exception::SQLError) = 0;
-      virtual std::string getClob(int pos) throw (castor::exception::Exception) = 0;
-      virtual castor::db::IDbResultSet* getCursor(int pos) throw (castor::exception::SQLError) = 0;
+      virtual int getInt(int pos)  = 0;
+      virtual signed64 getInt64(int pos)  = 0;
+      virtual u_signed64 getUInt64(int pos)  = 0;
+      virtual std::string getString(int pos)  = 0;
+      virtual float getFloat(int pos)  = 0;
+      virtual double getDouble(int pos)  = 0;
+      virtual std::string getClob(int pos)  = 0;
+      virtual castor::db::IDbResultSet* getCursor(int pos)  = 0;
     
       /**
        * 
        */
       virtual castor::db::IDbResultSet* executeQuery()
-        throw (castor::exception::SQLError) = 0;
+         = 0;
     
       /**
        * 
        */
       virtual int execute(int count = 1)
-        throw (castor::exception::Exception) = 0;
+         = 0;
     
     };
 

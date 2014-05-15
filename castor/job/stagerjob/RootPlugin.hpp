@@ -62,7 +62,7 @@ namespace castor {
          */
         virtual void preForkHook(InputArguments &args,
                                  PluginContext &context)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Hook for the code to be executed just after the mover fork,
@@ -83,7 +83,7 @@ namespace castor {
                                   PluginContext &context,
                                   bool useChksSum = false,
                                   int moverStatus = -1)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Hook for the launching of the mover
@@ -92,7 +92,7 @@ namespace castor {
          */
         virtual void execMover(InputArguments &args,
                                PluginContext &context)
-          throw (castor::exception::Exception);
+          ;
 
       private:
 

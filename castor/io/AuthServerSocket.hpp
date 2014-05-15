@@ -61,14 +61,14 @@ namespace castor {
        * @param doListen whether to start listening on the socket.
        */
       AuthServerSocket(const unsigned short port,
-		       const bool reusable) throw (castor::exception::Exception);
+		       const bool reusable) ;
 
       /**
        *
        */
       AuthServerSocket(castor::io::ServerSocket* cs,
                        const Csec_context_t context)
-        throw (castor::exception::Exception);
+        ;
 
       
       ~AuthServerSocket() throw();
@@ -78,14 +78,14 @@ namespace castor {
        * The deallocation of the new socket is the responsability
        * of the caller.
        */
-      virtual ServerSocket* accept() throw(castor::exception::Exception);
+      virtual ServerSocket* accept() ;
 
       /**
        * This method gets the dn or principal of the client from the context and then 
        * map to a local user. If the local user doen't exist it throws and exception
        * THAT METHOD SHOULDN'T BELONG TO THE CLASS SOCKET --TO BE MOVED
        */
-      void setClientId () throw(castor::exception::Security);      
+      void setClientId () ;      
 
       /**
        * Returns the value uid in the local machine 
@@ -111,7 +111,7 @@ namespace castor {
        */
       std::string getSecMech();
       
-      void initContext() throw (castor::exception::Security);
+      void initContext() ;
     private:
       Csec_context_t m_security_context;
       uid_t m_Euid;

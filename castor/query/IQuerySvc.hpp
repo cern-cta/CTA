@@ -80,7 +80,7 @@ namespace castor {
                            u_signed64 svcClassId,
                            unsigned euid,
                            unsigned egid)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Gets all DiskCopies for a given file.
@@ -102,7 +102,7 @@ namespace castor {
                        unsigned euid,
                        unsigned egid,
                        std::string& fileName)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
 
       /**
@@ -125,7 +125,7 @@ namespace castor {
       diskCopies4Request (castor::stager::RequestQueryType reqType,
 			  std::string param,
 			  u_signed64 svcClassId)
-	throw (castor::exception::Exception) = 0;
+	 = 0;
 
       /**
        * Lists diskpools and give details on their machine/filesystems
@@ -146,7 +146,7 @@ namespace castor {
 			unsigned long egid,
 			bool detailed,
                         enum castor::query::DiskPoolQueryType queryType)
-	throw (castor::exception::Exception) = 0;
+	 = 0;
 
       /**
        * Give details on the machines/filesystems of a given diskpool
@@ -165,7 +165,7 @@ namespace castor {
 		       std::string svcClass,
 		       bool detailed,
                        enum castor::query::DiskPoolQueryType queryType)
-	throw (castor::exception::Exception) = 0;
+	 = 0;
 
     }; // end of class IQuerySvc
 

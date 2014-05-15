@@ -75,7 +75,7 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::stager::daemon::QueryRequestSvcThread::QueryRequestSvcThread()
-  throw () :
+  throw() :
   BaseRequestSvcThread("QueryReqSvc", "DbQuerySvc", castor::SVC_DBQUERYSVC) {}
 
 //-----------------------------------------------------------------------------
@@ -167,7 +167,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileName
  castor::stager::StageFileQueryRequest& req,
  Cuuid_t uuid,
  bool all)
-  throw (castor::exception::Exception) {
+   {
   // "Processing File Query by Filename"
   castor::dlf::Param params[] =
     {castor::dlf::Param("Filename", fileName)};
@@ -280,7 +280,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByFileId
  castor::stager::StageFileQueryRequest& req,
  Cuuid_t uuid,
  bool all)
-  throw (castor::exception::Exception) {
+   {
   // Processing File Query by fileid
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_IQUERY, fid, nshost);
   std::list<castor::stager::StageQueryResult*>* result =
@@ -359,7 +359,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequestByRequest
  u_signed64 svcClassId,
  castor::stager::StageFileQueryRequest& req,
  Cuuid_t uuid)
-  throw (castor::exception::Exception) {
+   {
   // Processing File Query by Request
   castor::dlf::Param params[] =
     {castor::dlf::Param("ReqId", val),
@@ -441,7 +441,7 @@ castor::stager::daemon::QueryRequestSvcThread::handleFileQueryRequest
  castor::IClient *client,
  castor::query::IQuerySvc* qrySvc,
  Cuuid_t uuid)
-  throw (castor::exception::Exception) {
+   {
   // Useful Variables
   castor::stager::StageFileQueryRequest *uReq;
   // get the StageFileQueryRequest
@@ -626,7 +626,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleDiskPoolQuery
  castor::IClient *client,
  castor::query::IQuerySvc* qrySvc,
  Cuuid_t uuid)
-  throw (castor::exception::Exception) {
+   {
   castor::query::DiskPoolQuery *uReq;
   try {
     // Get the StageFileQueryRequest
@@ -744,7 +744,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleChangePrivilege
  castor::IClient *client,
  castor::rh::IRHSvc* rhSvc,
  Cuuid_t uuid)
-  throw (castor::exception::Exception) {
+   {
   // Get the ChangePrivilege
   // cannot return 0 since we check the type before calling this method
   castor::bwlist::ChangePrivilege *uReq =
@@ -843,7 +843,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleListPrivileges
  castor::IClient *client,
  castor::rh::IRHSvc* rhSvc,
  Cuuid_t uuid)
-  throw (castor::exception::Exception) {
+   {
   castor::bwlist::ListPrivileges *uReq;
   castor::bwlist::ListPrivilegesResponse res;
   try {
@@ -893,7 +893,7 @@ void castor::stager::daemon::QueryRequestSvcThread::handleListPrivileges
 //-----------------------------------------------------------------------------
 void castor::stager::daemon::QueryRequestSvcThread::handleVersionQuery
 (castor::stager::Request*, castor::IClient *client, Cuuid_t uuid)
-  throw (castor::exception::Exception) {
+   {
   // "Processing VersionQuery"
   castor::dlf::dlf_writep(uuid, DLF_LVL_SYSTEM, STAGER_QRYSVC_VQUERY);
   castor::query::VersionResponse result;

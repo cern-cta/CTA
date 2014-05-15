@@ -54,7 +54,7 @@ public:
   virtual void sendMsgHeader(
     const int                      socketFd,
     const legacymsg::MessageHeader &header)
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Receives a message header.
@@ -74,7 +74,7 @@ public:
   virtual void receiveMsgHeader(
     const int                socketFd,
     legacymsg::MessageHeader &header)
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Receives a message header or a connection close message.
@@ -87,7 +87,7 @@ public:
   virtual bool receiveMsgHeaderFromCloseable(
     const int                socketFd,
     legacymsg::MessageHeader &header) 
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
 }; // class LegacyTxRx
 

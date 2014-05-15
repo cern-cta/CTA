@@ -38,7 +38,7 @@
 // marshal
 //-----------------------------------------------------------------------------
 size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
-  const VmgrTapeInfoRqstMsgBody &src) throw(castor::exception::Exception) {
+  const VmgrTapeInfoRqstMsgBody &src)  {
 
   if(dst == NULL) {
     castor::exception::Exception ex;
@@ -100,7 +100,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, VmgrTapeInfoRqstMsgBody &dst)
-  throw(castor::exception::Exception) {
+   {
   io::unmarshalUint32(src, srcLen, dst.uid);
   io::unmarshalUint32(src, srcLen, dst.gid);
   io::unmarshalString(src, srcLen, dst.vid);
@@ -112,7 +112,7 @@ void castor::legacymsg::unmarshal(const char * &src,
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, VmgrTapeInfoMsgBody &dst)
-  throw(castor::exception::Exception) {
+   {
 
   io::unmarshalString(src, srcLen, dst.vsn               );
   io::unmarshalString(src, srcLen, dst.library           );

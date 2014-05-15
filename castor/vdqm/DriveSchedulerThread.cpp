@@ -152,7 +152,7 @@ void castor::vdqm::DriveSchedulerThread::run(void*) {
 // getDbVdqmSvc
 //-----------------------------------------------------------------------------
 castor::vdqm::IVdqmSvc *castor::vdqm::DriveSchedulerThread::getDbVdqmSvc()
-  throw(castor::exception::Exception)
+  
 {
   castor::Services *svcs = castor::BaseObject::services();
   castor::IService *svc = svcs->service("DbVdqmSvc", castor::SVC_DBVDQMSVC);

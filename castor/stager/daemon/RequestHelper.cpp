@@ -44,7 +44,7 @@ namespace castor {
 
       /* constructor, returns the request type */
       RequestHelper::RequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest)
-        throw(castor::exception::Exception) :
+         :
         stagerService(0), dbSvc(0), baseAddr(0), subrequest(subRequestToProcess),
         fileRequest(0), svcClass(0), castorFile(0), euid(0), egid(0) {
 
@@ -141,7 +141,7 @@ namespace castor {
         castor::dlf::dlf_writep(requestUuid, level, messageNb, 6, params, fid);
       }
 
-      void RequestHelper::resolveSvcClass() throw(castor::exception::Exception) {
+      void RequestHelper::resolveSvcClass()  {
         // XXX we're still using fillObj here, a single db method
         // XXX (better piggybacking on existing calls) should be implemented
         dbSvc->fillObj(baseAddr, fileRequest, castor::OBJ_SvcClass, false);
@@ -158,7 +158,7 @@ namespace castor {
 
 
       /* Gets the CastorFile from the db */
-      void RequestHelper::getCastorFile() throw(castor::exception::Exception)
+      void RequestHelper::getCastorFile() 
       {
         try{
           // get the castorFile from the stagerService and fill it on the subrequest
@@ -174,12 +174,12 @@ namespace castor {
 
           castor::exception::Exception ex(e.code());
           ex.getMessage() << "Impossible to perform the request: " << e.getMessage().str();
-          throw(ex);
+          throw ex;
         }
       }
       
       /* Stats the file in the NameServer, throws exception in case of error, except ENOENT */
-      void RequestHelper::statNameServerFile() throw(castor::exception::Exception) {
+      void RequestHelper::statNameServerFile()  {
         // Check the existence of the file. Don't throw exception if ENOENT
         Cns_setid(fileRequest->euid(), fileRequest->egid());
         serrno = 0;
@@ -205,7 +205,7 @@ namespace castor {
                                              const int modebits, const int flags,
                                              struct Cns_fileid &cnsFileid, u_signed64 &fileClass,
                                              u_signed64 &fileSize, u_signed64 &stagerOpenTimeInUsec)
-        throw(castor::exception::Exception) {
+         {
         // check if the filename is valid (it has to start with /)
         if (fileName.empty() || fileName.at(0) != '/') {
           castor::exception::Exception ex(EINVAL);

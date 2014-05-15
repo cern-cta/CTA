@@ -44,7 +44,7 @@ castor::dlf::dlf_getPendingMessages () throw() {
 //-----------------------------------------------------------------------------
 void castor::dlf::dlf_init
 (const char* facilityName, castor::dlf::Message messages[])
-  throw (castor::exception::Exception) {
+   {
   // Initialise the DLF interface
   if (::dlf_init(facilityName) != 0) {
     castor::exception::Exception ex;
@@ -71,7 +71,7 @@ void castor::dlf::dlf_init
 // dlf_addMessages
 //-----------------------------------------------------------------------------
 void castor::dlf::dlf_addMessages (int offset, Message messages[])
-  throw () {
+  throw() {
   if (::dlf_isinitialized()) {
     int i = 0;
     while (messages[i].number >= 0) {

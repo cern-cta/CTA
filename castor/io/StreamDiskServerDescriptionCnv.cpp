@@ -81,7 +81,7 @@ void castor::io::StreamDiskServerDescriptionCnv::createRep(castor::IAddress* add
                                                            castor::IObject* object,
                                                            bool,
                                                            unsigned int)
-  throw (castor::exception::Exception) {
+   {
   castor::query::DiskServerDescription* obj = 
     dynamic_cast<castor::query::DiskServerDescription*>(object);
   StreamAddress* ad = 
@@ -99,7 +99,7 @@ void castor::io::StreamDiskServerDescriptionCnv::createRep(castor::IAddress* add
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamDiskServerDescriptionCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
@@ -132,7 +132,7 @@ castor::IObject* castor::io::StreamDiskServerDescriptionCnv::createObj(castor::I
 void castor::io::StreamDiskServerDescriptionCnv::marshalObject(castor::IObject* object,
                                                                castor::io::StreamAddress* address,
                                                                castor::ObjectSet& alreadyDone)
-  throw (castor::exception::Exception) {
+   {
   castor::query::DiskServerDescription* obj = 
     dynamic_cast<castor::query::DiskServerDescription*>(object);
   if (0 == obj) {
@@ -161,7 +161,7 @@ void castor::io::StreamDiskServerDescriptionCnv::marshalObject(castor::IObject* 
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamDiskServerDescriptionCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                              castor::ObjectCatalog& newlyCreated)
-  throw (castor::exception::Exception) {
+   {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created

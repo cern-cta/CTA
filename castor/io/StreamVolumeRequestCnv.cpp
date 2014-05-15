@@ -78,7 +78,7 @@ void castor::io::StreamVolumeRequestCnv::createRep(castor::IAddress* address,
                                                    castor::IObject* object,
                                                    bool,
                                                    unsigned int)
-  throw (castor::exception::Exception) {
+   {
   castor::tape::tapegateway::VolumeRequest* obj = 
     dynamic_cast<castor::tape::tapegateway::VolumeRequest*>(object);
   StreamAddress* ad = 
@@ -94,7 +94,7 @@ void castor::io::StreamVolumeRequestCnv::createRep(castor::IAddress* address,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamVolumeRequestCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
@@ -121,7 +121,7 @@ castor::IObject* castor::io::StreamVolumeRequestCnv::createObj(castor::IAddress*
 void castor::io::StreamVolumeRequestCnv::marshalObject(castor::IObject* object,
                                                        castor::io::StreamAddress* address,
                                                        castor::ObjectSet& alreadyDone)
-  throw (castor::exception::Exception) {
+   {
   castor::tape::tapegateway::VolumeRequest* obj = 
     dynamic_cast<castor::tape::tapegateway::VolumeRequest*>(object);
   if (0 == obj) {
@@ -143,7 +143,7 @@ void castor::io::StreamVolumeRequestCnv::marshalObject(castor::IObject* object,
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamVolumeRequestCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                      castor::ObjectCatalog& newlyCreated)
-  throw (castor::exception::Exception) {
+   {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created

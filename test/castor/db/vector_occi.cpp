@@ -22,7 +22,7 @@ namespace localUtils {
     void append (const std::string& s) {
       m_what += s;
     }
-    virtual const char * what() const throw () {
+    virtual const char * what() const throw() {
       return m_what.c_str();
     }
   private:

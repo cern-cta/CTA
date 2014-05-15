@@ -52,7 +52,7 @@ castor::legacymsg::TapeserverProxyTcpIp::~TapeserverProxyTcpIp() throw() {
 void castor::legacymsg::TapeserverProxyTcpIp::gotReadMountDetailsFromClient(
   const std::string &unitName,
   const std::string &vid)
-  throw(castor::exception::Exception) {
+   {
   try {
     legacymsg::TapeUpdateDriveRqstMsgBody body;
     castor::utils::copyString(body.vid, vid.c_str());
@@ -74,7 +74,7 @@ void castor::legacymsg::TapeserverProxyTcpIp::gotReadMountDetailsFromClient(
 void castor::legacymsg::TapeserverProxyTcpIp::gotWriteMountDetailsFromClient(
   const std::string &unitName,
   const std::string &vid)
-  throw(castor::exception::Exception) {
+   {
   try {
     legacymsg::TapeUpdateDriveRqstMsgBody body;
     castor::utils::copyString(body.vid, vid.c_str());
@@ -96,7 +96,7 @@ void castor::legacymsg::TapeserverProxyTcpIp::gotWriteMountDetailsFromClient(
 void castor::legacymsg::TapeserverProxyTcpIp::gotDumpMountDetailsFromClient(
   const std::string &unitName,
   const std::string &vid)
-  throw(castor::exception::Exception) {
+   {
   try {
     legacymsg::TapeUpdateDriveRqstMsgBody body;
     castor::utils::copyString(body.vid, vid.c_str());
@@ -118,7 +118,7 @@ void castor::legacymsg::TapeserverProxyTcpIp::gotDumpMountDetailsFromClient(
 void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForRead(
   const std::string &unitName,
   const std::string &vid)
-  throw(castor::exception::Exception) {
+   {
 }
 
 //------------------------------------------------------------------------------
@@ -127,7 +127,7 @@ void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForRead(
 void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForWrite(
   const std::string &unitName,
   const std::string &vid)
-  throw(castor::exception::Exception) {
+   {
 } 
 
 //------------------------------------------------------------------------------
@@ -136,13 +136,13 @@ void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForWrite(
 void castor::legacymsg::TapeserverProxyTcpIp::tapeUnmounted(
   const std::string &unitName,
   const std::string &vid)
-  throw(castor::exception::Exception) {
+   {
 }
 
 //-----------------------------------------------------------------------------
 // connectToTapeserver
 //-----------------------------------------------------------------------------
-int castor::legacymsg::TapeserverProxyTcpIp::connectToTapeserver() const throw(castor::exception::Exception) {
+int castor::legacymsg::TapeserverProxyTcpIp::connectToTapeserver() const  {
   castor::utils::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(io::connectWithTimeout(m_tapeserverHostName, m_tapeserverPort,
@@ -162,7 +162,7 @@ int castor::legacymsg::TapeserverProxyTcpIp::connectToTapeserver() const throw(c
 //-----------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::writeTapeUpdateDriveRqstMsg(
   const int fd, const legacymsg::TapeUpdateDriveRqstMsgBody &body)
-  throw(castor::exception::Exception) {
+   {
   char buf[3 * sizeof(uint32_t) + sizeof(body)]; // header + body
   const size_t len = legacymsg::marshal(buf, sizeof(buf), body);
 
@@ -179,7 +179,7 @@ void castor::legacymsg::TapeserverProxyTcpIp::writeTapeUpdateDriveRqstMsg(
 //-----------------------------------------------------------------------------
 // readReplyMsg
 //-----------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyTcpIp::readReplyMsg(const int fd) throw(castor::exception::Exception) {
+void castor::legacymsg::TapeserverProxyTcpIp::readReplyMsg(const int fd)  {
   
   char buf[3 * sizeof(uint32_t)]; // magic + request type + len
   io::readBytes(fd, m_netTimeout, sizeof(buf), buf);

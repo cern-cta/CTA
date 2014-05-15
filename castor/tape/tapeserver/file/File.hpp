@@ -105,7 +105,7 @@ namespace castor {
          */
         static void checkHDR1(const HDR1 &hdr1, 
           const castor::tape::tapegateway::FileToRecallStruct &fileToRecall, 
-          const std::string &volId) throw (Exception);
+          const std::string &volId) ;
         
         /**
          * Checks the uhl1
@@ -114,21 +114,21 @@ namespace castor {
          */
         static void checkUHL1(const UHL1 &uhl1, 
           const castor::tape::tapegateway::FileToRecallStruct &fileToRecall)
-          throw (Exception);
+          ;
         
         /**
          * Checks the utl1
          * @param utl1: the utl1 trailer of the current file
          * @param fseq: the file sequence number of the current file
          */
-        static void checkUTL1(const UTL1 &utl1, const uint32_t fseq) throw (Exception);
+        static void checkUTL1(const UTL1 &utl1, const uint32_t fseq) ;
         
         /**
          * Checks the vol1
          * @param vol1: the vol1 header of the current file
          * @param volId: the volume id of the tape in the drive
          */
-        static void checkVOL1(const VOL1 &vol1, const std::string &volId) throw (Exception);
+        static void checkVOL1(const VOL1 &vol1, const std::string &volId) ;
         
       private:
         typedef enum {
@@ -146,7 +146,7 @@ namespace castor {
          * @return true if the header field  matches the numerical value, false otherwise
          */
         static bool checkHeaderNumericalField(const std::string &headerField,
-          const uint64_t value, const headerBase base = decimal) throw (Exception);
+          const uint64_t value, const headerBase base = decimal) ;
       };
       
       /**
@@ -174,7 +174,7 @@ namespace castor {
          * @param vid: volume name of the tape we would like to read from
          * @param force: force labeling even if tape is not empty
          */
-        LabelSession(drives::DriveInterface & drive, const std::string &vid, bool force) throw (Exception);
+        LabelSession(drives::DriveInterface & drive, const std::string &vid, bool force) ;
       };
 
       /**
@@ -194,7 +194,7 @@ namespace castor {
          * @param drive: drive object to which we bind the session
          * @param vid: volume name of the tape we would like to read from
          */
-        ReadSession(drives::DriveInterface & drive, const std::string &vid) throw (Exception);
+        ReadSession(drives::DriveInterface & drive, const std::string &vid) ;
         
         /**
          * DriveGeneric object referencing the drive used during this read session
@@ -214,7 +214,7 @@ namespace castor {
           return m_corrupted;
         }
         
-        void lock() throw (Exception) {
+        void lock()  {
           if(m_locked) {
             throw SessionAlreadyInUse();
           }
@@ -283,19 +283,19 @@ namespace castor {
          */
         ReadFile(ReadSession *rs, 
           const castor::tape::tapegateway::FileToRecallStruct &fileToRecall)
-          throw (Exception);
+          ;
         
         /**
          * Destructor of the ReadFile. It will release the lock on the read session.
          */
-        ~ReadFile() throw ();
+        ~ReadFile() throw();
         
         /**
          * After positioning at the beginning of a file for readings, this function
          * allows the reader to know which block sizes to provide.
          * @return the block size in bytes.
          */
-        size_t getBlockSize() throw (Exception);
+        size_t getBlockSize() ;
         
         /**
          * Reads data from the file. The buffer should be equal to or bigger than the 
@@ -304,7 +304,7 @@ namespace castor {
          * @param size: size of the buffer
          * @return The amount of data actually copied. Zero at end of file.
          */
-        size_t read(void *data, const size_t size) throw (Exception);
+        size_t read(void *data, const size_t size) ;
       
       private:
         
@@ -317,14 +317,14 @@ namespace castor {
          */
         void position(
           const castor::tape::tapegateway::FileToRecallStruct &fileToRecall)
-          throw (Exception);
+          ;
 
         /**
          * Set the block size member using the info contained within the uhl1
          * @param uhl1: the uhl1 header of the current file
          * @param fileInfo: the Information structure of the current file
          */
-        void setBlockSize(const UHL1 &uhl1) throw (Exception);
+        void setBlockSize(const UHL1 &uhl1) ;
         
         /**
          * Block size in Bytes of the current file
@@ -357,7 +357,7 @@ namespace castor {
          * @param last_fseq: fseq of the last active (undeleted) file on tape
          * @param compression: set this to true in case the drive has compression enabled (x000GC)
          */
-        WriteSession(drives::DriveInterface & drive, const std::string &vid, const uint32_t last_fseq, const bool compression) throw (Exception);
+        WriteSession(drives::DriveInterface & drive, const std::string &vid, const uint32_t last_fseq, const bool compression) ;
         
         /**
          * DriveGeneric object referencing the drive used during this write session
@@ -390,7 +390,7 @@ namespace castor {
           return m_corrupted;
         }
         
-        void lock() throw (Exception) {
+        void lock()  {
           if(m_locked) {
             throw SessionAlreadyInUse();
           }
@@ -412,12 +412,12 @@ namespace castor {
         /**
          * looks for the site name in /etc/resolv.conf in the search line and saves the upper-cased value in siteName
          */
-        void setSiteName() throw (Exception);
+        void setSiteName() ;
         
         /**
          * uses gethostname to get the upper-cased hostname without the domain name
          */
-        void setHostName() throw (Exception);
+        void setHostName() ;
         
         /**
          * The following two variables are needed when writing the headers and trailers, sitename is grabbed from /etc/resolv.conf
@@ -452,13 +452,13 @@ namespace castor {
          */
         WriteFile(WriteSession *ws, 
           const castor::tape::tapegateway::FileToMigrateStruct & fileToMigrate,
-          const size_t blockSize) throw (Exception);
+          const size_t blockSize) ;
         
         /**
          * Returns the block id of the current position
          * @return blockId of current position
          */
-        uint32_t getPosition() throw (Exception);
+        uint32_t getPosition() ;
         
         /**
          * Get the block size (that was set at construction time)
@@ -471,18 +471,18 @@ namespace castor {
          * @param data: buffer to copy the data from
          * @param size: size of the buffer
          */
-        void write(const void *data, const size_t size) throw (Exception);
+        void write(const void *data, const size_t size) ;
         
         /**
          * Closes the file by writing the corresponding trailer on tape
          * HAS TO BE CALL EXPLICITLY
          */
-        void close() throw (Exception);
+        void close() ;
         
         /**
          * Destructor of the WriteFile object. Releases the WriteSession
          */
-        ~WriteFile() throw ();
+        ~WriteFile() throw();
         
       private:
         
@@ -531,7 +531,7 @@ namespace castor {
          * Constructor of the ReadFile class. It opens the file for reading with the O_RDONLY flag.
          * @param url: Uniform Resource Locator of the file we want to read
          */
-        ReadFile(const std::string &url) throw (Exception);
+        ReadFile(const std::string &url) ;
         
         /**
          * Reads data from the file.
@@ -539,12 +539,12 @@ namespace castor {
          * @param size: size of the buffer
          * @return The amount of data actually copied. Zero at end of file.
          */
-        size_t read(void *data, const size_t size) throw (Exception);
+        size_t read(void *data, const size_t size) ;
         
         /**
          * Destructor of the ReadFile class. It closes the corresponding file descriptor.
          */
-        ~ReadFile() throw ();
+        ~ReadFile() throw();
         
       private:
         int m_fd;
@@ -557,24 +557,24 @@ namespace castor {
          * Constructor of the WriteFile class. It opens the file for writing with the O_WRONLY, O_CREAT and O_EXCL flags.
          * @param url: Uniform Resource Locator of the file we want to write
          */
-        WriteFile(const std::string &url) throw (Exception);
+        WriteFile(const std::string &url) ;
         
         /**
          * Writes a block of data on disk
          * @param data: buffer to copy the data from
          * @param size: size of the buffer
          */
-        void write(const void *data, const size_t size) throw (Exception);
+        void write(const void *data, const size_t size) ;
         
         /**
          * Closes the corresponding file descriptor, which may throw an exception.
          */
-        void close() throw (Exception);
+        void close() ;
         
         /**
          * Destructor of the WriteFile class.
          */
-        ~WriteFile() throw ();
+        ~WriteFile() throw();
         
       private:
         int m_fd;

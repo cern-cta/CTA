@@ -162,29 +162,29 @@ namespace castor {
       /**
        * returns the connections' client
        */
-      castor::rh::Client client() throw ();
+      castor::rh::Client client() throw();
 
 
       /**
        * Indicates whether the connection should be terminated
        */
-      bool terminate() throw ();
+      bool terminate() throw();
 
       /**
        * Date of last event on the connection, used by the garbage collection
        */
-      int lastEventDate() throw ();
+      int lastEventDate() throw();
 
       /**
        * Get connection's file descriptor
        */
-      int fd() throw ();
+      int fd() throw();
 
       /**
        * Last error message on the connection
        */
-      std::string errorMessage() throw ();
-      void setErrorMessage(std::string msg) throw ();
+      std::string errorMessage() throw();
+      void setErrorMessage(std::string msg) throw();
       
       /**
        * Returns the Response queue
@@ -200,17 +200,17 @@ namespace castor {
       /**
        * Calls the socket system call and creates the socket
        */
-      void createSocket() throw(castor::exception::Exception);
+      void createSocket() ;
 
       /**
        * performs the connect system call on the connection
        */
-      void connect() throw(castor::exception::Exception);
+      void connect() ;
       
       /**
        * Sends one message through the connection
        */
-      void sendNextMessage() throw(castor::exception::Exception);
+      void sendNextMessage() ;
 
       /**
        * Indicates whetehr there are messages to be sent, still
@@ -220,7 +220,7 @@ namespace castor {
       /**
        * pops one response from the queue
        */
-      void deleteNextMessage() throw(castor::exception::Exception);
+      void deleteNextMessage() ;
 
       /**
        * Representation of the client connection
@@ -232,7 +232,7 @@ namespace castor {
 
 
     protected:
-      void send() throw(castor::exception::Exception);
+      void send() ;
 
 
 

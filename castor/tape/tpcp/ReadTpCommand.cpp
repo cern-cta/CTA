@@ -112,7 +112,7 @@ void castor::tape::tpcp::ReadTpCommand::usage(std::ostream &os) const throw() {
 // parseCommandLine
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
-  char **argv) throw(castor::exception::Exception) {
+  char **argv)  {
 
   static struct option longopts[] = {
     {"debug"   , 0, NULL, 'd'},
@@ -316,7 +316,7 @@ void castor::tape::tpcp::ReadTpCommand::parseCommandLine(const int argc,
 // checkAccessToDisk
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::ReadTpCommand::checkAccessToDisk()
-  const throw (castor::exception::Exception) {
+  const  {
   // If there are no disk files then throw no exceptions and return
   if(m_cmdLine.nodataSet) {
     return;
@@ -387,7 +387,7 @@ void castor::tape::tpcp::ReadTpCommand::checkAccessToDisk()
 // checkAccessToTape
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::ReadTpCommand::checkAccessToTape()
-  const throw (castor::exception::Exception) {
+  const  {
   const bool userIsTapeOperator =
     Cupv_check(m_userId, m_groupId, m_hostname, "TAPE_SERVERS",
       P_TAPE_OPERATOR) == 0 ||
@@ -422,7 +422,7 @@ void castor::tape::tpcp::ReadTpCommand::checkAccessToTape()
 // requestDriveFromVdqm
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::ReadTpCommand::requestDriveFromVdqm(
-  char *const tapeServer) throw(castor::exception::Exception) {
+  char *const tapeServer)  {
   TpcpCommand::requestDriveFromVdqm(WRITE_DISABLE, tapeServer);
 }
 
@@ -433,7 +433,7 @@ void castor::tape::tpcp::ReadTpCommand::requestDriveFromVdqm(
 void castor::tape::tpcp::ReadTpCommand::sendVolumeToTapeBridge(
   const tapegateway::VolumeRequest &volumeRequest,
   castor::io::AbstractTCPSocket    &connection)
-  const throw(castor::exception::Exception) {
+  const  {
   castor::tape::tapegateway::Volume volumeMsg;
   volumeMsg.setVid(m_vmgrTapeInfo.vid);
   volumeMsg.setClientType(castor::tape::tapegateway::READ_TP);
@@ -454,7 +454,7 @@ void castor::tape::tpcp::ReadTpCommand::sendVolumeToTapeBridge(
 // performTransfer
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::ReadTpCommand::performTransfer()
-  throw (castor::exception::Exception) {
+   {
 
   m_tapeFseqSequence.reset(&m_cmdLine.tapeFseqRanges);
 
@@ -509,7 +509,7 @@ void castor::tape::tpcp::ReadTpCommand::performTransfer()
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ReadTpCommand::dispatchMsgHandler(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
   switch(obj->type()) {
   case OBJ_FilesToRecallListRequest:
     return handleFilesToRecallListRequest(obj, sock);
@@ -545,7 +545,7 @@ bool castor::tape::tpcp::ReadTpCommand::dispatchMsgHandler(
 // countNbRangesWithEnd
 //------------------------------------------------------------------------------
 unsigned int castor::tape::tpcp::ReadTpCommand::countNbRangesWithEnd()
-  throw (castor::exception::Exception) {
+   {
 
   unsigned int count = 0;
 
@@ -567,7 +567,7 @@ unsigned int castor::tape::tpcp::ReadTpCommand::countNbRangesWithEnd()
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ReadTpCommand::handleFilesToRecallListRequest(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   const tapegateway::FilesToRecallListRequest *msg = NULL;
 
@@ -600,7 +600,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFilesToRecallListRequest(
         // Notify the tapebridge about the exception and rethrow
         sendEndNotificationErrorReport(msg->aggregatorTransactionId(),
           ex.code(), ex.getMessage().str(), sock);
-        throw(ex);
+        throw ex;
       }
     }
 
@@ -674,7 +674,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleFilesToRecallListRequest(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ReadTpCommand::handleFileRecallReportList(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   tapegateway::FileRecallReportList *msg = NULL;
 
@@ -707,7 +707,7 @@ void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecalls(
   const uint64_t tapebridgeTransId,
   const std::vector<tapegateway::FileRecalledNotificationStruct*> &files,
   castor::io::AbstractSocket &sock) 
-  throw(castor::exception::Exception) {
+   {
   for(std::vector<tapegateway::FileRecalledNotificationStruct*>::const_iterator
     itor = files.begin(); itor != files.end(); itor++) {
 
@@ -727,7 +727,7 @@ void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecalls(
 void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecall(
   const uint64_t tapebridgeTransId,
   const tapegateway::FileRecalledNotificationStruct &file,
-  castor::io::AbstractSocket &sock) throw(castor::exception::Exception) {
+  castor::io::AbstractSocket &sock)  {
   // Check the file transaction ID
   {
     FileTransferMap::iterator itor =
@@ -747,7 +747,7 @@ void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecall(
       castor::exception::Exception ex(ECANCELED);
 
       ex.getMessage() << oss.str();
-      throw(ex);
+      throw ex;
     }
 
     // Command-line user feedback
@@ -782,7 +782,7 @@ void castor::tape::tpcp::ReadTpCommand::handleSuccessfulRecall(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ReadTpCommand::handleEndNotification(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   return TpcpCommand::handleEndNotification(obj, sock);
 }
@@ -793,7 +793,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleEndNotification(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ReadTpCommand::handleEndNotificationErrorReport(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   return TpcpCommand::handleEndNotificationErrorReport(obj,sock);
 }
@@ -804,7 +804,7 @@ bool castor::tape::tpcp::ReadTpCommand::handleEndNotificationErrorReport(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ReadTpCommand::handlePingNotification(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   return TpcpCommand::handlePingNotification(obj,sock);
 }

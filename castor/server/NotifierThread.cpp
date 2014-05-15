@@ -70,7 +70,7 @@ void castor::server::NotifierThread::run(void* param) {
 //------------------------------------------------------------------------------
 // doNotify
 //------------------------------------------------------------------------------
-void castor::server::NotifierThread::doNotify(char tpName, int nbThreads) throw () {
+void castor::server::NotifierThread::doNotify(char tpName, int nbThreads) throw() {
   castor::server::SignalThreadPool* pool = 0;
   try {
     // first resolve the pool

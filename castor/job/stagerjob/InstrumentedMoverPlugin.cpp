@@ -55,7 +55,7 @@ castor::job::stagerjob::InstrumentedMoverPlugin::InstrumentedMoverPlugin
 void castor::job::stagerjob::InstrumentedMoverPlugin::postForkHook
 (InputArguments &args, PluginContext &context,
  bool /*useChksSum*/, int /*moverStatus*/)
-  throw(castor::exception::Exception) {
+   {
   // Answer the client so that it can connect to the mover
   castor::rh::IOResponse ioResponse;
   ioResponse.setStatus(castor::stager::SUBREQUEST_READY);
@@ -77,7 +77,7 @@ void castor::job::stagerjob::InstrumentedMoverPlugin::postForkHook
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::InstrumentedMoverPlugin::waitChildAndInformStager
 (InputArguments &args, PluginContext &context)
-  throw(castor::exception::Exception) {
+   {
   // Wait for children
   bool childFailed = waitForChild(args);
   // No longer waiting for any mover processes

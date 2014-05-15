@@ -105,7 +105,7 @@ unsigned int castor::stager::RemoteGCSvc::ID() {
 //------------------------------------------------------------------------------
 castor::stager::Request*
 castor::stager::RemoteGCSvc::requestToDo(std::string)
-  throw (castor::exception::Exception) {
+   {
   castor::exception::NotSupported ex;
   ex.getMessage()
     << "RemoteGCSvc implementation is not complete"
@@ -150,7 +150,7 @@ public:
     m_result(result) {}
 
   virtual void handleResponse(castor::rh::Response& r)
-    throw (castor::exception::Exception) {
+     {
     if (0 != r.errorCode()) {
       castor::exception::Exception e(r.errorCode());
       e.getMessage() << r.errorMessage();
@@ -176,7 +176,7 @@ public:
     resp->files().clear();
   };
   virtual void terminate()
-    throw (castor::exception::Exception) {};
+     {};
 private:
   // where to store the diskCopy
   std::vector<castor::stager::GCLocalFile*>* m_result;
@@ -188,7 +188,7 @@ private:
 std::vector<castor::stager::GCLocalFile*>*
 castor::stager::RemoteGCSvc::selectFiles2Delete
 (std::string diskServer)
-  throw (castor::exception::Exception) {
+   {
   // Build the Files2DeleteRequest
   castor::stager::Files2Delete req;
   req.setDiskServer(diskServer);
@@ -209,7 +209,7 @@ castor::stager::RemoteGCSvc::selectFiles2Delete
 //------------------------------------------------------------------------------
 void castor::stager::RemoteGCSvc::filesDeleted
 (std::vector<u_signed64*>& diskCopyIds)
-  throw (castor::exception::Exception) {
+   {
   // Build the FilesDeletedRequest
   castor::stager::FilesDeleted req;
   for (std::vector<u_signed64*>::iterator it = diskCopyIds.begin();
@@ -237,7 +237,7 @@ void castor::stager::RemoteGCSvc::filesDeleted
 //------------------------------------------------------------------------------
 void castor::stager::RemoteGCSvc::filesDeletionFailed
 (std::vector<u_signed64*>& diskCopyIds)
-  throw (castor::exception::Exception) {
+   {
   // Build the FilesDeletionFailedRequest
   castor::stager::FilesDeletionFailed req;
   for (std::vector<u_signed64*>::iterator it = diskCopyIds.begin();
@@ -274,7 +274,7 @@ public:
     m_result(result) {}
 
   virtual void handleResponse(castor::rh::Response& r)
-    throw (castor::exception::Exception) {
+     {
     if (0 != r.errorCode()) {
       castor::exception::Exception e(r.errorCode());
       e.getMessage() << r.errorMessage();
@@ -299,7 +299,7 @@ public:
     resp->orphanFileIds().clear();
   };
   virtual void terminate()
-    throw (castor::exception::Exception) {};
+     {};
 private:
   // where to store the list of files not found
   std::vector<u_signed64>* m_result;
@@ -358,7 +358,7 @@ public:
     m_result(result) {}
 
   virtual void handleResponse(castor::rh::Response& r)
-    throw (castor::exception::Exception) {
+     {
     if (0 != r.errorCode()) {
       castor::exception::Exception e(r.errorCode());
       e.getMessage() << r.errorMessage();
@@ -383,7 +383,7 @@ public:
     resp->orphanFileIds().clear();
   };
   virtual void terminate()
-    throw (castor::exception::Exception) {};
+     {};
 private:
   // where to store the list of files not found
   std::vector<u_signed64>* m_result;
@@ -432,7 +432,7 @@ std::vector<u_signed64> castor::stager::RemoteGCSvc::stgFilesDeleted
 // dumpCleanupLogs
 // -----------------------------------------------------------------------
 void castor::stager::RemoteGCSvc::dumpCleanupLogs()
-  throw (castor::exception::Exception) {
+   {
   castor::exception::NotSupported ex;
   ex.getMessage()
     << "RemoteGCSvc implementation is not complete"
@@ -444,7 +444,7 @@ void castor::stager::RemoteGCSvc::dumpCleanupLogs()
 // removeTerminatedRequests
 // -----------------------------------------------------------------------
 void castor::stager::RemoteGCSvc::removeTerminatedRequests()
-  throw (castor::exception::Exception) {
+   {
   castor::exception::NotSupported ex;
   ex.getMessage()
     << "RemoteGCSvc implementation is not complete"

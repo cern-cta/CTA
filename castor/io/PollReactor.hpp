@@ -63,7 +63,7 @@ public:
    * and therefore delete it as needed.
    */
   virtual void registerHandler(PollEventHandler *const handler)
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * Handles any pending events.
@@ -71,7 +71,7 @@ public:
    * @param timeout Timeout in milliseconds.
    */
   virtual void handleEvents(const int timeout)
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
 }; // class PollReactor
 

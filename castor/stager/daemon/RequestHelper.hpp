@@ -100,7 +100,7 @@ namespace castor {
         timeval tvStart;
 
         RequestHelper(castor::stager::SubRequest* subRequestToProcess, int &typeRequest)
-          throw(castor::exception::Exception);
+          ;
 
         ~RequestHelper() throw();
 
@@ -108,7 +108,7 @@ namespace castor {
          * Resolves the svcClass if not resolved yet
          * @throw exception in case of any database error
          */
-        void resolveSvcClass() throw(castor::exception::Exception);
+        void resolveSvcClass() ;
 
         /**
          * Checks the existence of the requested file in the NameServer, and creates it if the request allows for
@@ -121,20 +121,20 @@ namespace castor {
                                        const int modebits, const int flags,
                                        struct Cns_fileid &cnsFileid, u_signed64 &fileClass,
                                        u_signed64 &fileSize, u_signed64 &stagerOpenTimeInUsec)
-        throw(castor::exception::Exception);
+        ;
 
         /**
          * Stats the requested file in the NameServer.
          * @throw exception in case of any NS error except ENOENT. serrno is set accordingly.
          */
         void statNameServerFile()
-          throw(castor::exception::Exception);
+          ;
 
         /**
          * Gets the castorFile from the db, calling selectCastorFile
          * @throw exception in case of any database error
          */
-        void getCastorFile() throw(castor::exception::Exception);
+        void getCastorFile() ;
 
         /**
          * Logs a standard message to DLF including all needed info (e.g. filename, svcClass, etc.)

@@ -74,7 +74,7 @@ namespace castor {
        * Overloaded method from BaseDaemon for individual command line parser
        */
       virtual void parseCommandLine(int argc, char *argv[])
-        throw(castor::exception::Exception);
+        ;
 
       /// The listening port
       int m_port;

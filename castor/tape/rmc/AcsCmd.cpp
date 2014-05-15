@@ -56,7 +56,7 @@ void castor::tape::rmc::AcsCmd::requestResponsesUntilFinal(
   const SEQ_NO requestSeqNumber,
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)],
   const int queryInterval, const int timeout)
-  throw (castor::exception::RequestFailed) {
+   {
   ACS_RESPONSE_TYPE responseType = RT_NONE;
   int elapsedTime = 0;
   do {
@@ -75,7 +75,7 @@ void castor::tape::rmc::AcsCmd::requestResponsesUntilFinal(
     if(elapsedTime >= timeout) {
       castor::exception::RequestFailed ex;
       ex.getMessage() << "Timed out after " << timeout << " seconds";
-      throw(ex);
+      throw ex;
     }
   } while(RT_FINAL != responseType);
 
@@ -88,7 +88,7 @@ void castor::tape::rmc::AcsCmd::requestResponsesUntilFinal(
 ACS_RESPONSE_TYPE castor::tape::rmc::AcsCmd::requestResponse(
   const int timeout, const SEQ_NO requestSeqNumber,
   ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
-  throw(castor::exception::RequestFailed) {
+   {
   SEQ_NO responseSeqNumber = 0;
   REQ_ID reqId = (REQ_ID)0;
   ACS_RESPONSE_TYPE responseType = RT_NONE;
@@ -116,11 +116,11 @@ ACS_RESPONSE_TYPE castor::tape::rmc::AcsCmd::requestResponse(
 //------------------------------------------------------------------------------
 void castor::tape::rmc::AcsCmd::checkResponseSeqNumber(
   const SEQ_NO requestSeqNumber, const SEQ_NO responseSeqNumber)
-  throw(castor::exception::Mismatch) {
+   {
   if(requestSeqNumber != responseSeqNumber) {
     castor::exception::Mismatch ex;
     ex.getMessage() <<  ": Sequence number mismatch: requestSeqNumber="
       << requestSeqNumber << " responseSeqNumber=" << responseSeqNumber;
-    throw(ex);
+    throw ex;
   }
 }

@@ -48,20 +48,20 @@ castor::legacymsg::VmgrProxyTcpIp::~VmgrProxyTcpIp() throw() {
 // tapeMountedForRead
 //------------------------------------------------------------------------------
 void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForRead(const std::string &vid) 
-  throw (castor::exception::Exception) {
+   {
 }
 
 //------------------------------------------------------------------------------
 // tapeMountedForWrite
 //------------------------------------------------------------------------------
 void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForWrite(const std::string &vid)
-  throw (castor::exception::Exception) {
+   {
 }
 
 //-----------------------------------------------------------------------------
 // connectToVmgr
 //-----------------------------------------------------------------------------
-int castor::legacymsg::VmgrProxyTcpIp::connectToVmgr() const throw(castor::exception::Exception) {
+int castor::legacymsg::VmgrProxyTcpIp::connectToVmgr() const  {
   castor::utils::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(io::connectWithTimeout(m_vmgrHostName, m_vmgrPort,

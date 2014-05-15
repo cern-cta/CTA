@@ -46,7 +46,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::vdqm::RemoteCopyConnection::RemoteCopyConnection(int socket) throw () :
+castor::vdqm::RemoteCopyConnection::RemoteCopyConnection(int socket) throw() :
   AbstractTCPSocket(socket) {}
 
 //------------------------------------------------------------------------------
@@ -54,7 +54,7 @@ castor::vdqm::RemoteCopyConnection::RemoteCopyConnection(int socket) throw () :
 //------------------------------------------------------------------------------
 castor::vdqm::RemoteCopyConnection::RemoteCopyConnection(
   const unsigned short port, const std::string host)
-  throw (castor::exception::Exception) :
+   :
   AbstractTCPSocket(port, host, false) {
   createSocket();
 }
@@ -64,7 +64,7 @@ castor::vdqm::RemoteCopyConnection::RemoteCopyConnection(
 //------------------------------------------------------------------------------
 castor::vdqm::RemoteCopyConnection::RemoteCopyConnection(
   const unsigned short port, const unsigned long ip)
-  throw (castor::exception::Exception) :
+   :
   AbstractTCPSocket(port, ip, false) {
     createSocket();
 }
@@ -73,7 +73,7 @@ castor::vdqm::RemoteCopyConnection::RemoteCopyConnection(
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::vdqm::RemoteCopyConnection::~RemoteCopyConnection() throw () {
+castor::vdqm::RemoteCopyConnection::~RemoteCopyConnection() throw() {
   ::shutdown(m_socket, SHUT_RDWR);
   this->close();
 }
@@ -83,7 +83,7 @@ castor::vdqm::RemoteCopyConnection::~RemoteCopyConnection() throw () {
 // connect
 //------------------------------------------------------------------------------
 void castor::vdqm::RemoteCopyConnection::connect()
-  throw (castor::exception::Exception) {
+   {
   // Connects the socket
   if (::connect(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr)) < 0) {
     int tmpserrno = errno;
@@ -125,7 +125,7 @@ bool castor::vdqm::RemoteCopyConnection::sendJob(
   const int          clientEgid,
   const std::string &deviceGroupName,
   const std::string &tapeDriveName)
-  throw (castor::exception::Exception) {
+   {
 
   bool acknSucc = true; // The return value
 
@@ -217,7 +217,7 @@ bool castor::vdqm::RemoteCopyConnection::sendJob(
 // readAnswer
 //------------------------------------------------------------------------------
 bool castor::vdqm::RemoteCopyConnection::readAnswer(const Cuuid_t &cuuid,
-  const char *remoteCopyType) throw (castor::exception::Exception) {
+  const char *remoteCopyType)  {
 
   char buffer[VDQM_MSGBUFSIZ];
 

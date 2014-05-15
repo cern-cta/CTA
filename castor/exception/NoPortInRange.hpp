@@ -52,7 +52,7 @@ public:
    * Empty Destructor, explicitely non-throwing (needed for std::exception
    * inheritance)
    */
-  virtual ~NoPortInRange() throw () {}
+  virtual ~NoPortInRange() throw() {}
   
   /**
    * Returns the inclusive low port of the port number range.

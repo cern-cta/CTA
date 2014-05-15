@@ -55,7 +55,7 @@ namespace castor {
        * @throw exception if the pipe cannot be created
        */
       PipeSocket()
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Constructor building a socket on the given file descriptors.
@@ -65,7 +65,7 @@ namespace castor {
        * @param mode one of PIPE_READ, PIPE_WRITE, PIPE_RW
        */
       PipeSocket(const int fdIn, const int fdOut, const int mode)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Default destructor. Closes the pipe.
@@ -98,7 +98,7 @@ namespace castor {
        * Internal method to create the inner socket
        * not needed for this implementation
        */
-      virtual void createSocket() throw (castor::exception::Exception) {};
+      virtual void createSocket()  {};
 
       /**
        * Internal method to send the content of a buffer
@@ -111,7 +111,7 @@ namespace castor {
       virtual void sendBuffer(const unsigned int magic,
                               const char* buf,
                               const int n)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Internal method to read from a socket into a buffer.
@@ -125,7 +125,7 @@ namespace castor {
       virtual void readBuffer(const unsigned int magic,
                               char** buf,
                               int& n)
-        throw (castor::exception::Exception);
+        ;
         
     private:
     

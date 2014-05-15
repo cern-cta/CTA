@@ -96,7 +96,7 @@ namespace castor {
                                castor::IObject* object,
                                bool endTransaction,
                                unsigned int type = castor::OBJ_INVALID)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Creates foreign representation from a set of C++ Objects.
@@ -114,7 +114,7 @@ namespace castor {
                                std::vector<castor::IObject*> &objects,
                                bool endTransaction,
                                unsigned int type = castor::OBJ_INVALID)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Updates foreign representation from a C++ Object.
@@ -128,7 +128,7 @@ namespace castor {
         virtual void updateRep(castor::IAddress* address,
                                castor::IObject* object,
                                bool endTransaction)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Deletes foreign representation of a C++ Object.
@@ -142,7 +142,7 @@ namespace castor {
         virtual void deleteRep(castor::IAddress* address,
                                castor::IObject* object,
                                bool endTransaction)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Creates C++ object from foreign representation
@@ -154,7 +154,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual castor::IObject* createObj(castor::IAddress* address)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * create C++ objects from foreign representations
@@ -166,7 +166,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual std::vector<castor::IObject*> bulkCreateObj(castor::IAddress* address)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Updates C++ object from its foreign representation.
@@ -174,7 +174,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void updateObj(castor::IObject* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Fill the foreign representation with some of the objects.refered by a given C++
@@ -190,7 +190,7 @@ namespace castor {
                              castor::IObject* object,
                              unsigned int type,
                              bool endTransaction)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Fill the database with objects of type SubRequest refered by a given object.
@@ -198,7 +198,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepSubRequest(castor::stager::StagePutDoneRequest* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Fill the database with objects of type SvcClass refered by a given object.
@@ -206,7 +206,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepSvcClass(castor::stager::StagePutDoneRequest* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Fill the database with objects of type IClient refered by a given object.
@@ -214,7 +214,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepIClient(castor::stager::StagePutDoneRequest* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Fill the database with objects of type FileRequest refered by a given object.
@@ -222,7 +222,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepFileRequest(castor::stager::StagePutDoneRequest* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Retrieve from the database some of the objects refered by a given object.
@@ -234,7 +234,7 @@ namespace castor {
                              castor::IObject* object,
                              unsigned int type,
                              bool endTransaction)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Retrieve from the database objects of type SubRequest refered by a given
@@ -243,7 +243,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjSubRequest(castor::stager::StagePutDoneRequest* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Retrieve from the database objects of type SvcClass refered by a given object.
@@ -251,7 +251,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjSvcClass(castor::stager::StagePutDoneRequest* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Retrieve from the database objects of type IClient refered by a given object.
@@ -259,7 +259,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjIClient(castor::stager::StagePutDoneRequest* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Retrieve from the database objects of type FileRequest refered by a given
@@ -268,7 +268,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjFileRequest(castor::stager::StagePutDoneRequest* obj)
-          throw (castor::exception::Exception);
+          ;
 
       private:
 

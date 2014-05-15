@@ -50,7 +50,7 @@ namespace castor {
           /**
            * Constructor
            */
-          TapeRequestHandler() throw(castor::exception::Exception);
+          TapeRequestHandler() ;
           
           /**
            * Destructor
@@ -67,7 +67,7 @@ namespace castor {
            */
           void newTapeRequest(const vdqmHdr_t &header, vdqmVolReq_t &msg,
             const Cuuid_t &cuuid) 
-            throw (castor::exception::Exception);
+            ;
             
           /**
            * Deletes a TapeRequest from the DB. The request must have the same
@@ -81,7 +81,7 @@ namespace castor {
            */
           void deleteTapeRequest(const vdqmVolReq_t *volumeRequest,
             const Cuuid_t cuuid, castor::io::ServerSocket &sock)
-            throw (castor::exception::Exception);
+            ;
             
           /**
            * This function replaces the old vdqm_GetQueuePos() C-function. It
@@ -94,7 +94,7 @@ namespace castor {
            *         -1: if there is no entry for it.
            */
           int getQueuePosition(const vdqmVolReq_t *const VolReq,
-            const Cuuid_t cuuid) throw (castor::exception::Exception);
+            const Cuuid_t cuuid) ;
 
           /**
            * This function replaces the old vdqm_GetVolQueue() C-function. 
@@ -109,7 +109,7 @@ namespace castor {
           void sendTapeRequestQueue(vdqmHdr_t *const header,
             vdqmVolReq_t *const volumeRequest,
             OldProtocolInterpreter *const oldProtInterpreter,
-            const Cuuid_t cuuid) throw (castor::exception::Exception);            
+            const Cuuid_t cuuid) ;            
       }; // class TapeRequestHandler
     
     } // end of namespace handler

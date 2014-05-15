@@ -29,13 +29,13 @@ namespace castor{
 
       public:
         /* constructor */
-        SetGCWeightHandler(RequestHelper* reqHelper) throw(castor::exception::Exception) :
+        SetGCWeightHandler(RequestHelper* reqHelper)  :
           RequestHandler(reqHelper) {};
         /* destructor */
         ~SetGCWeightHandler() throw() {};
 
         /* SetFileGCWeight handle implementation */
-        virtual void handle() throw(castor::exception::Exception);
+        virtual void handle() ;
         
       }; //end SetGCWeightHandler class
 

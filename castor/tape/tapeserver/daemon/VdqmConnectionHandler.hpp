@@ -80,7 +80,7 @@ public:
    *
    * @param fd The poll file-descriptor describing the event.
    */
-  bool handleEvent(const struct pollfd &fd) throw(castor::exception::Exception);
+  bool handleEvent(const struct pollfd &fd) ;
 
   /**
    * Destructor.
@@ -121,7 +121,7 @@ private:
    * Throws an exception if the specified file-descriptor is not that of the
    * connection with the client.
    */
-  void checkHandleEventFd(const int fd) throw (castor::exception::Exception);
+  void checkHandleEventFd(const int fd) ;
 
   /**
    * Returns true if the peer host of the connection being handled is
@@ -144,7 +144,7 @@ private:
    * @return The job request from the vdqm.
    */
   legacymsg::RtcpJobRqstMsgBody readJobMsg(const int fd)
-    throw(castor::exception::Exception);
+    ;
   
   /**
    * Reads the header of a job message from the specified connection.
@@ -154,7 +154,7 @@ private:
    * @return The message header.
    */
   legacymsg::MessageHeader readJobMsgHeader(const int fd)
-    throw(castor::exception::Exception);
+    ;
   
   /**
    * Reads the body of a job message from the specified connection.
@@ -165,7 +165,7 @@ private:
    * @return The message body.
    */
   legacymsg::RtcpJobRqstMsgBody readJobMsgBody(const int fd,
-    const uint32_t len) throw(castor::exception::Exception);
+    const uint32_t len) ;
 
   /**
    * Writes a job reply message to the specified connection.
@@ -174,7 +174,7 @@ private:
    * daemon.
    */
   void writeJobReplyMsg(const int fd)
-    throw(castor::exception::Exception);
+    ;
 
 }; // class VdqmConnectionHandler
 

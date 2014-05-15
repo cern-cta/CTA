@@ -34,7 +34,7 @@ namespace castor{
     namespace daemon{
 
 
-      ReplyHelper::ReplyHelper() throw(castor::exception::Exception)
+      ReplyHelper::ReplyHelper() 
       {
         try{
           this->ioResponse = new castor::rh::IOResponse;
@@ -65,7 +65,7 @@ namespace castor{
 					     int errorCode, 
 					     std::string errorMessage, 
 					     const castor::stager::DiskCopyInfo* diskCopy)
-        throw(castor::exception::Exception)
+        
       {
         if(!reqHelper->fileRequest) {
           castor::exception::Exception e;
@@ -106,7 +106,7 @@ namespace castor{
       /*********************************************************************************************/
       /* check if there is any subrequest left and send the endResponse to client if it is needed */
       /*******************************************************************************************/
-      void ReplyHelper::endReplyToClient(RequestHelper* reqHelper) throw(castor::exception::Exception){
+      void ReplyHelper::endReplyToClient(RequestHelper* reqHelper) {
         /* to update the subrequest on DB */
         bool requestLeft = reqHelper->stagerService->updateAndCheckSubRequest(reqHelper->subrequest);
         if(!requestLeft && reqHelper->fileRequest != 0) {

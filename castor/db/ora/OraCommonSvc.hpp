@@ -72,7 +72,7 @@ namespace castor {
         /**
          * Reset the converter statements.
          */
-        void reset() throw ();
+        void reset() throw();
 
       public:
 
@@ -85,7 +85,7 @@ namespace castor {
          * @exception Exception in case of error
          */
         virtual castor::stager::Request* requestToDo(std::string service)
-          throw (castor::exception::Exception);
+          ;
 
       protected:
 
@@ -103,19 +103,19 @@ namespace castor {
          * Helper method to handle exceptions - see OraCnvSvc
          * @param e an Oracle exception
          */
-        void handleException(oracle::occi::SQLException& e) throw ();
+        void handleException(oracle::occi::SQLException& e) throw();
 
         /**
          * helper method to create Oracle statement
          */
         virtual oracle::occi::Statement* createStatement(const std::string& stmtString)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * helper method to delete Oracle statement
          */
         virtual void deleteStatement(oracle::occi::Statement* stmt)
-          throw (castor::exception::Exception);
+          ;
 
       private:
 

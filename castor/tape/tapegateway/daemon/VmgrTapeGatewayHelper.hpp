@@ -60,7 +60,7 @@ namespace castor {
                                  std::string &vid,
                                  int& startFseq,
                                  const utils::BoolFunctor &shuttingDown)
-          throw (castor::exception::Exception);
+          ;
 
         /** unbusy a tape in VMGR
          * @param vid the vid of the tape to reset
@@ -69,17 +69,17 @@ namespace castor {
          */
         void resetBusyTape(const std::string &vid,
                                  const utils::BoolFunctor &shuttingDown)
-          throw (castor::exception::Exception);
+          ;
       
         void bulkUpdateTapeInVmgr(u_signed64 filesCount, signed64 highestFseq, u_signed64 totalBytes,
             u_signed64 totalCompressedBytes, const std::string& vid, const utils::BoolFunctor &shuttingDown)
-          throw (castor::exception::Exception);
+          ;
       
         void setTapeAsFull(const std::string &vid, const utils::BoolFunctor &shuttingDown)
-          throw (castor::exception::Exception);
+          ;
 
         void setTapeAsReadonlyAndUnbusy(const  std::string &vid, const utils::BoolFunctor &shuttingDown)
-          throw (castor::exception::Exception);
+          ;
 
         int maxFseqFromLabel(const char* label);
 
@@ -89,7 +89,7 @@ namespace castor {
          * @exception throws CASTOR exceptions in case of error
          */
         TapeInfo getTapeInfo(const std::string &vid, const utils::BoolFunctor &shuttingDown)
-          throw (castor::exception::Exception);
+          ;
         
         /* get information concerning a tape from VMGR and checks
          * that the tape is available
@@ -99,7 +99,7 @@ namespace castor {
          * if the tape is not available
          */
         TapeInfo getTapeInfoAssertAvailable(const std::string &vid, const utils::BoolFunctor &shuttingDown)
-          throw (castor::exception::Exception);
+          ;
 
       } // end of namespace VmgrTapeGatewayHelper
     } // end of namespace tapegateway

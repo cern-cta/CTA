@@ -61,7 +61,7 @@ namespace castor {
                             unsigned int listenPort,
                             bool waitIfBusy = true,
                             unsigned int nbThreads = DEFAULT_THREAD_NUMBER)
-        throw (castor::exception::Exception);
+        ;
   
       /**
        * Constructor for a TCP listener with a dynamic number of threads.
@@ -77,7 +77,7 @@ namespace castor {
                             unsigned int initThreads, unsigned int maxThreads,
                             unsigned int threshold = DEFAULT_THRESHOLD,
                             unsigned int maxTasks  = DEFAULT_MAXTASKS)      
-        throw (castor::exception::Exception);
+        ;
                        
       /**
        * Destructor
@@ -90,7 +90,7 @@ namespace castor {
        * Binds a standard ServerSocket to the given port.
        * @throw castor::exception::Exception if the port is busy.
        */
-      virtual void bind() throw (castor::exception::Exception);
+      virtual void bind() ;
 
       /**
        * The listening loop implementation for this Listener, based on standard ServerSocket.

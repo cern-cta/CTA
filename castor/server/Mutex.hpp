@@ -48,7 +48,7 @@ namespace castor {
      * @param timeout interval to be used in Cthread calls.
      */
     Mutex(int value, unsigned int timeout = TIMEOUT)
-      throw (castor::exception::Exception);
+      ;
     
     /**
      * Destructor
@@ -70,7 +70,7 @@ namespace castor {
      * acquired or the mutex initialization failed.
      */
     void setValue(int newValue)
-      throw (castor::exception::Exception);
+      ;
     
     /**
      * Sets the internal variable value.
@@ -98,17 +98,17 @@ namespace castor {
     /**
      * Tries to get a lock on this mutex.
      */
-    void lock() throw (castor::exception::Exception);
+    void lock() ;
     
     /**
      * Tries to release the lock on this mutex.
      */
-    void release() throw (castor::exception::Exception);
+    void release() ;
     
     /**
      * Tries to signal the mutex by calling Cthread_cond_signal().
      */
-    void signal() throw (castor::exception::Exception);
+    void signal() ;
 
   private:
     

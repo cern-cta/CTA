@@ -58,7 +58,7 @@ public:
    * @param
    */
   void tapeMountedForRead(const std::string &vid)
-    throw (castor::exception::Exception);
+    ;
 
   /**
    * Notifies the vmgrd daemon that the specified tape has been mounted for read.
@@ -67,7 +67,7 @@ public:
    * @param
    */
   void tapeMountedForWrite(const std::string &vid)
-    throw (castor::exception::Exception);
+    ;
 
 private:
 
@@ -97,7 +97,7 @@ private:
    *
    * @return The socket-descriptor of the connection with the vmgrd daemon.
    */
-  int connectToVmgr() const throw(castor::exception::Exception);
+  int connectToVmgr() const ;
 
 }; // class VmgrProxyTcpIp
 

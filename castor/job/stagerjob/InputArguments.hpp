@@ -62,7 +62,7 @@ namespace castor {
          * @param argc the number of arguments on the command line
          */
         InputArguments(int argc, char** argv)
-          throw (castor::exception::Exception);
+          ;
 
       public:
 

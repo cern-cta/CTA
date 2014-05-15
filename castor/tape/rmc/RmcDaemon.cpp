@@ -50,7 +50,7 @@ castor::tape::rmc::RmcDaemon::RmcDaemon::RmcDaemon(
   std::ostream &stdErr,
   log::Logger &log,
   io::PollReactor &reactor,
-  legacymsg::CupvProxy &cupv) throw(castor::exception::Exception):
+  legacymsg::CupvProxy &cupv) :
   castor::server::Daemon(stdOut, stdErr, log),
   m_reactor(reactor),
   m_cupv(cupv),
@@ -63,7 +63,7 @@ castor::tape::rmc::RmcDaemon::RmcDaemon::RmcDaemon(
 // getHostName
 //------------------------------------------------------------------------------
 std::string castor::tape::rmc::RmcDaemon::RmcDaemon::getHostName()
-  const throw(castor::exception::Exception) {
+  const  {
   char nameBuf[81];
   if(gethostname(nameBuf, sizeof(nameBuf))) {
     char errBuf[100];
@@ -80,7 +80,7 @@ std::string castor::tape::rmc::RmcDaemon::RmcDaemon::getHostName()
 // getRmcPort
 //------------------------------------------------------------------------------
 unsigned short castor::tape::rmc::RmcDaemon::getRmcPort()
-  throw(castor::exception::Exception) {
+   {
   std::string configParamValue;
 
   // If RMC PORT is not in /etc/castor.conf then use the compile time default
@@ -108,7 +108,7 @@ unsigned short castor::tape::rmc::RmcDaemon::getRmcPort()
 std::string castor::tape::rmc::RmcDaemon::getConfigParam(
   const std::string &category,
   const std::string &name)
-  throw(castor::exception::Exception) {
+   {
   std::ostringstream task;
   task << "get " << category << ":" << name << " from castor.conf";
 
@@ -145,7 +145,7 @@ castor::tape::rmc::RmcDaemon::~RmcDaemon() throw() {
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
-int castor::tape::rmc::RmcDaemon::main(const int argc, char **const argv) throw () {
+int castor::tape::rmc::RmcDaemon::main(const int argc, char **const argv) throw() {
   try {
 
     exceptionThrowingMain(argc, argv);
@@ -171,7 +171,7 @@ int castor::tape::rmc::RmcDaemon::main(const int argc, char **const argv) throw 
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 void  castor::tape::rmc::RmcDaemon::exceptionThrowingMain(
-  const int argc, char **const argv) throw(castor::exception::Exception) {
+  const int argc, char **const argv)  {
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
   daemonizeIfNotRunInForeground();
@@ -215,7 +215,7 @@ std::string castor::tape::rmc::RmcDaemon::argvToString(
 // blockSignals
 //------------------------------------------------------------------------------
 void castor::tape::rmc::RmcDaemon::blockSignals() const
-  throw(castor::exception::Exception) {
+   {
   sigset_t sigs;
   sigemptyset(&sigs);
   // The signals that should not asynchronously disturb the daemon
@@ -242,14 +242,14 @@ void castor::tape::rmc::RmcDaemon::blockSignals() const
 // setUpReactor
 //------------------------------------------------------------------------------
 void castor::tape::rmc::RmcDaemon::setUpReactor()
-  throw(castor::exception::Exception) {
+   {
   createAndRegisterAcceptHandler();
 }
 
 //------------------------------------------------------------------------------
 // createAndRegisterAcceptHandler
 //------------------------------------------------------------------------------
-void castor::tape::rmc::RmcDaemon::createAndRegisterAcceptHandler() throw(castor::exception::Exception) {
+void castor::tape::rmc::RmcDaemon::createAndRegisterAcceptHandler()  {
   castor::utils::SmartFd listenSock;
   try {
     listenSock.reset(io::createListenerSock(m_rmcPort));
@@ -284,7 +284,7 @@ void castor::tape::rmc::RmcDaemon::createAndRegisterAcceptHandler() throw(castor
 // mainEventLoop
 //------------------------------------------------------------------------------
 void castor::tape::rmc::RmcDaemon::mainEventLoop()
-  throw(castor::exception::Exception) {
+   {
   while(handleEvents()) {
     forkChildProcesses();
   }
@@ -294,7 +294,7 @@ void castor::tape::rmc::RmcDaemon::mainEventLoop()
 // handleEvents
 //------------------------------------------------------------------------------
 bool castor::tape::rmc::RmcDaemon::handleEvents()
-  throw(castor::exception::Exception) {
+   {
   const int timeout = 100; // 100 milliseconds
   m_reactor.handleEvents(timeout);
   return handlePendingSignals();

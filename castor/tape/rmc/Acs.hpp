@@ -58,7 +58,7 @@ public:
    * @return The drive ID object.
    */
   DRIVEID str2DriveId(const std::string &str) const
-    throw(castor::exception::InvalidArgument);
+    ;
 
   /**
    * Returns the VOLID equibvalent of the specified string.
@@ -70,7 +70,7 @@ public:
    * @return The VOLID representation of the volume identifier.
    */
   VOLID str2Volid(const std::string &str) const
-    throw(castor::exception::InvalidArgument);
+    ;
 
   /**
    * Returns true if the specified string only contains numerals else false.

@@ -58,6 +58,6 @@ class TestCnsStatThread : public castor::server::IThread,
     castor::server::Mutex* m;
 
     u_signed64 cnsStat(oracle::occi::Statement* m_cnsStatStatement, std::string filepath)
-      throw (castor::exception::Exception);
+      ;
     
 };

@@ -95,7 +95,7 @@ namespace castor {
                                castor::IObject* object,
                                bool endTransaction,
                                unsigned int type = castor::OBJ_INVALID)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Creates foreign representation from a set of C++ Objects.
@@ -113,7 +113,7 @@ namespace castor {
                                std::vector<castor::IObject*> &objects,
                                bool endTransaction,
                                unsigned int type = castor::OBJ_INVALID)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Updates foreign representation from a C++ Object.
@@ -127,7 +127,7 @@ namespace castor {
         virtual void updateRep(castor::IAddress* address,
                                castor::IObject* object,
                                bool endTransaction)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Deletes foreign representation of a C++ Object.
@@ -141,7 +141,7 @@ namespace castor {
         virtual void deleteRep(castor::IAddress* address,
                                castor::IObject* object,
                                bool endTransaction)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Creates C++ object from foreign representation
@@ -153,7 +153,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual castor::IObject* createObj(castor::IAddress* address)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * create C++ objects from foreign representations
@@ -165,7 +165,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual std::vector<castor::IObject*> bulkCreateObj(castor::IAddress* address)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Updates C++ object from its foreign representation.
@@ -173,7 +173,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void updateObj(castor::IObject* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Fill the foreign representation with some of the objects.refered by a given C++
@@ -189,7 +189,7 @@ namespace castor {
                              castor::IObject* object,
                              unsigned int type,
                              bool endTransaction)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Fill the database with objects of type VdqmTape refered by a given object.
@@ -197,7 +197,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepVdqmTape(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Fill the database with objects of type TapeRequest refered by a given object.
@@ -205,7 +205,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepTapeRequest(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Fill the database with objects of type TapeDriveDedication refered by a given
@@ -214,7 +214,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepTapeDriveDedication(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Fill the database with objects of type TapeDriveCompatibility refered by a given
@@ -223,7 +223,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepTapeDriveCompatibility(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Fill the database with objects of type DeviceGroupName refered by a given
@@ -232,7 +232,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepDeviceGroupName(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Fill the database with objects of type TapeServer refered by a given object.
@@ -240,7 +240,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillRepTapeServer(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Retrieve from the database some of the objects refered by a given object.
@@ -252,7 +252,7 @@ namespace castor {
                              castor::IObject* object,
                              unsigned int type,
                              bool endTransaction)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Retrieve from the database objects of type VdqmTape refered by a given object.
@@ -260,7 +260,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjVdqmTape(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Retrieve from the database objects of type TapeRequest refered by a given
@@ -269,7 +269,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTapeRequest(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Retrieve from the database objects of type TapeDriveDedication refered by a
@@ -278,7 +278,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTapeDriveDedication(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Retrieve from the database objects of type TapeDriveCompatibility refered by a
@@ -287,7 +287,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTapeDriveCompatibility(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Retrieve from the database objects of type DeviceGroupName refered by a given
@@ -296,7 +296,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjDeviceGroupName(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * Retrieve from the database objects of type TapeServer refered by a given
@@ -305,7 +305,7 @@ namespace castor {
          * @exception Exception throws an Exception in case of error
          */
         virtual void fillObjTapeServer(castor::vdqm::TapeDrive* obj)
-          throw (castor::exception::Exception);
+          ;
 
       private:
 

@@ -63,7 +63,7 @@ protected:
    * @param argv Argument vector from the executable's entry function: main().
    */
   void parseCommandLine(const int argc, char **argv)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Checks the disk files can be accessed correctly.
@@ -71,7 +71,7 @@ protected:
    * @throw A castor::exception::Exception exception if the disk files cannot
    *        be accessed correctly.
    */
-  void checkAccessToDisk() const throw(castor::exception::Exception);
+  void checkAccessToDisk() const ;
 
   /**
    * Checks the tape can be accessed.
@@ -79,7 +79,7 @@ protected:
    * @throw A castor::exception::Exception exception if the tape cannot be
    *        accessed.
    */
-  void checkAccessToTape() const throw(castor::exception::Exception);
+  void checkAccessToTape() const ;
 
   /**
    * Request a drive connected to the specified tape-server from the VDQM.
@@ -89,7 +89,7 @@ protected:
    *                   scheduling of the VDQM.
    */
   void requestDriveFromVdqm(char *const tapeServer)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Sends the volume message to the tapebridged daemon.
@@ -102,12 +102,12 @@ protected:
   void sendVolumeToTapeBridge(
     const tapegateway::VolumeRequest &volumeRequest,
     castor::io::AbstractTCPSocket    &connection)
-    const throw(castor::exception::Exception);
+    const ;
 
   /**
    * Performs the tape copy whether it be DUMP, READ or WRITE.
    */
-  void performTransfer() throw(castor::exception::Exception);
+  void performTransfer() ;
 
   /**
    * Dispatches the appropriate handler for the specified tape-gateway message.
@@ -118,7 +118,7 @@ protected:
    * @return     True if there is more work to be done, else false.
    */
   bool dispatchMsgHandler(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
 
 private:
@@ -131,7 +131,7 @@ private:
    * @return     True if there is more work to be done else false.
    */
   bool handleDumpParametersRequest(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
   /**
    * DumpNotification message handler.
@@ -141,7 +141,7 @@ private:
    * @return     True if there is more work to be done else false.
    */
   bool handleDumpNotification(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
   /**
    * EndNotification message handler.
@@ -151,7 +151,7 @@ private:
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotification(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
   /**
    * EndNotificationErrorReport message handler.
@@ -161,7 +161,7 @@ private:
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotificationErrorReport(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
   /**
    * PingNotification message handler.
@@ -171,7 +171,7 @@ private:
    * @return     True if there is more work to be done else false.
    */
   bool handlePingNotification(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
 }; // class DumpTpCommand
 

@@ -41,7 +41,7 @@ castor::db::ora::OraResultSet::~OraResultSet() {
 }
 
 bool castor::db::ora::OraResultSet::next(int count)
-  throw (castor::exception::SQLError) {
+   {
   try {
     return (m_rset->next(count) != oracle::occi::ResultSet::END_OF_FETCH);
   }
@@ -55,7 +55,7 @@ bool castor::db::ora::OraResultSet::next(int count)
 }
 
 int castor::db::ora::OraResultSet::getInt(int i)
-  throw (castor::exception::SQLError) {
+   {
   try {
     return m_rset->getInt(i);
   }
@@ -68,7 +68,7 @@ int castor::db::ora::OraResultSet::getInt(int i)
 }
 
 signed64 castor::db::ora::OraResultSet::getInt64(int i)
-  throw (castor::exception::SQLError) {
+   {
   try {
     return (signed64)m_rset->getDouble(i);
   }
@@ -81,7 +81,7 @@ signed64 castor::db::ora::OraResultSet::getInt64(int i)
 }
 
 u_signed64 castor::db::ora::OraResultSet::getUInt64(int i)
-  throw (castor::exception::SQLError) {
+   {
   try {
     return (u_signed64)m_rset->getDouble(i);
   }
@@ -94,7 +94,7 @@ u_signed64 castor::db::ora::OraResultSet::getUInt64(int i)
 }
 
 float castor::db::ora::OraResultSet::getFloat(int i)
-  throw (castor::exception::SQLError) {
+   {
   try {
     return m_rset->getFloat(i);
   }
@@ -107,7 +107,7 @@ float castor::db::ora::OraResultSet::getFloat(int i)
 }
 
 double castor::db::ora::OraResultSet::getDouble(int i)
-  throw (castor::exception::SQLError) {
+   {
   try {
     return m_rset->getDouble(i);
   }
@@ -120,7 +120,7 @@ double castor::db::ora::OraResultSet::getDouble(int i)
 }
 
 std::string castor::db::ora::OraResultSet::getString(int i)
-  throw (castor::exception::SQLError) {
+   {
   try {
     return m_rset->getString(i);
   }
@@ -133,7 +133,7 @@ std::string castor::db::ora::OraResultSet::getString(int i)
 }
 
 std::string castor::db::ora::OraResultSet::getClob(int i)
-  throw (castor::exception::Exception) {
+   {
   try {
     oracle::occi::Clob clob = m_rset->getClob(i);
     clob.open(oracle::occi::OCCI_LOB_READONLY);
@@ -160,7 +160,7 @@ std::string castor::db::ora::OraResultSet::getClob(int i)
 
 void castor::db::ora::OraResultSet::setDataBuffer
   (int pos, void* buffer, unsigned dbType, unsigned size, void* bufLen)
-  throw(castor::exception::SQLError) {
+   {
   if(dbType > DBTYPE_MAXVALUE) {
     castor::exception::SQLError ex;
     ex.getMessage() << "Invalid dbType: " << dbType;

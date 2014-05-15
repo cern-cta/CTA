@@ -150,7 +150,7 @@ void castor::db::cnv::DbBWUserCnv::fillRep(castor::IAddress*,
                                            castor::IObject* object,
                                            unsigned int type,
                                            bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::bwlist::BWUser* obj = 
     dynamic_cast<castor::bwlist::BWUser*>(object);
   try {
@@ -180,7 +180,7 @@ void castor::db::cnv::DbBWUserCnv::fillRep(castor::IAddress*,
 // fillRepChangePrivilege
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbBWUserCnv::fillRepChangePrivilege(castor::bwlist::BWUser* obj)
-  throw (castor::exception::Exception) {
+   {
   if (0 != obj->request()) {
     // Check checkChangePrivilegeExist statement
     if (0 == m_checkChangePrivilegeExistStatement) {
@@ -215,7 +215,7 @@ void castor::db::cnv::DbBWUserCnv::fillObj(castor::IAddress*,
                                            castor::IObject* object,
                                            unsigned int type,
                                            bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::bwlist::BWUser* obj = 
     dynamic_cast<castor::bwlist::BWUser*>(object);
   switch (type) {
@@ -238,7 +238,7 @@ void castor::db::cnv::DbBWUserCnv::fillObj(castor::IAddress*,
 // fillObjChangePrivilege
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbBWUserCnv::fillObjChangePrivilege(castor::bwlist::BWUser* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -281,7 +281,7 @@ void castor::db::cnv::DbBWUserCnv::createRep(castor::IAddress*,
                                              castor::IObject* object,
                                              bool endTransaction,
                                              unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   castor::bwlist::BWUser* obj = 
     dynamic_cast<castor::bwlist::BWUser*>(object);
   // check whether something needs to be done
@@ -328,7 +328,7 @@ void castor::db::cnv::DbBWUserCnv::bulkCreateRep(castor::IAddress*,
                                                  std::vector<castor::IObject*> &objects,
                                                  bool endTransaction,
                                                  unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   // check whether something needs to be done
   int nb = objects.size();
   if (0 == nb) return;
@@ -451,7 +451,7 @@ void castor::db::cnv::DbBWUserCnv::bulkCreateRep(castor::IAddress*,
 void castor::db::cnv::DbBWUserCnv::updateRep(castor::IAddress*,
                                              castor::IObject* object,
                                              bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::bwlist::BWUser* obj = 
     dynamic_cast<castor::bwlist::BWUser*>(object);
   // check whether something needs to be done
@@ -490,7 +490,7 @@ void castor::db::cnv::DbBWUserCnv::updateRep(castor::IAddress*,
 void castor::db::cnv::DbBWUserCnv::deleteRep(castor::IAddress*,
                                              castor::IObject* object,
                                              bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::bwlist::BWUser* obj = 
     dynamic_cast<castor::bwlist::BWUser*>(object);
   // check whether something needs to be done
@@ -528,7 +528,7 @@ void castor::db::cnv::DbBWUserCnv::deleteRep(castor::IAddress*,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::cnv::DbBWUserCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   castor::BaseAddress* ad = 
     dynamic_cast<castor::BaseAddress*>(address);
   try {
@@ -568,7 +568,7 @@ castor::IObject* castor::db::cnv::DbBWUserCnv::createObj(castor::IAddress* addre
 //------------------------------------------------------------------------------
 std::vector<castor::IObject*>
 castor::db::cnv::DbBWUserCnv::bulkCreateObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Prepare result
   std::vector<castor::IObject*> res;
   // check whether something needs to be done
@@ -618,7 +618,7 @@ castor::db::cnv::DbBWUserCnv::bulkCreateObj(castor::IAddress* address)
 // updateObj
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbBWUserCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {

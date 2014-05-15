@@ -73,7 +73,7 @@ size_t castor::log::StringLogger::determineMaxMsgLen() const throw() {
 //------------------------------------------------------------------------------
 std::map<int, std::string>
   castor::log::StringLogger::generatePriorityToTextMap() const 
-  throw(castor::exception::Exception) {
+   {
   std::map<int, std::string> m;
 
   try {
@@ -99,7 +99,7 @@ std::map<int, std::string>
 // initMutex
 //------------------------------------------------------------------------------
 void castor::log::StringLogger::initMutex()
-  throw(castor::exception::Exception) {
+   {
   pthread_mutexattr_t attr;
   int rc = pthread_mutexattr_init(&attr);
   if(0 != rc) {
@@ -141,7 +141,7 @@ castor::log::StringLogger::~StringLogger() throw() {
 // prepareForFork
 //------------------------------------------------------------------------------
 void castor::log::StringLogger::prepareForFork() 
-  throw(castor::exception::Exception) {}
+   {}
 
 //-----------------------------------------------------------------------------
 // operator() 

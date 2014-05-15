@@ -55,7 +55,7 @@ namespace castor{
          * system.
          */
         StagerDaemon(std::ostream &stdOut, std::ostream &stdErr,
-          log::Logger &log) throw (castor::exception::Exception);
+          log::Logger &log) ;
 
         /**
          * Destructor

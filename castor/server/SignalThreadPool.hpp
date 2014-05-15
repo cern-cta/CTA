@@ -80,7 +80,7 @@ namespace castor {
                      const int timeout = castor::server::Mutex::TIMEOUT,
                      const unsigned int nbThreads = DEFAULT_THREAD_NUMBER,
                      const unsigned int startingThreads = 1)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * Destructor
@@ -90,7 +90,7 @@ namespace castor {
     /**
      * Creates and runs the pool starting the threads in detached mode.
      */
-    virtual void run() throw (castor::exception::Exception);
+    virtual void run() ;
 
     /**
      * Shutdowns the pool.
@@ -98,7 +98,7 @@ namespace castor {
      * pool to terminate.
      * @return true iff no thread is active (i.e. m_nbActiveThreads == 0).
      */
-    virtual bool shutdown(bool wait = true) throw ();
+    virtual bool shutdown(bool wait = true) throw();
 
   private:
 
@@ -108,7 +108,7 @@ namespace castor {
      * @throw Exception if a mutex call fails
      */
     void waitSignalOrTimeout()
-      throw (castor::exception::Exception);
+      ;
 
     /// mutex used by the threads to safely access this class' fields
     Mutex m_poolMutex;

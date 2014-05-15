@@ -55,7 +55,7 @@ public:
    */
   MigrationMemoryManager(const size_t numberOfBlocks, const size_t blockSize, 
           castor::log::LogContext lc) 
-          throw(castor::exception::Exception);
+          ;
   
   /**
    * 
@@ -72,30 +72,30 @@ public:
   /**
    * Start serving clients (in the dedicated thread)
    */
-  void startThreads() throw(castor::exception::Exception);
+  void startThreads() ;
   
   /**
    * Waiting for clients to finish (in the dedicated thread)
    */
-  void waitThreads() throw(castor::exception::Exception);
+  void waitThreads() ;
   
   /**
    * Adds a new client in need for free memory blocks
    * @param c: the new client
    */
-  void addClient(DataPipeline* c) throw(castor::exception::Exception);
+  void addClient(DataPipeline* c) ;
   
   /**
    * Takes back a block which has been released by one of the clients
    * @param mb: the pointer to the block
    */
-  void releaseBlock(MemBlock *mb) throw(castor::exception::Exception);
+  void releaseBlock(MemBlock *mb) ;
   
   /**
    * Function used to specify that there are no more clients for this memory manager.
    * See the definition of endOfClients below.
    */
-  void finish() throw(castor::exception::Exception);
+  void finish() ;
 
   /**
    * Destructor
@@ -151,7 +151,7 @@ private:
   /**
    * Thread routine: pops a client and provides him blocks until he is happy!
    */
-  void run() throw(castor::exception::Exception);
+  void run() ;
   
 };
 

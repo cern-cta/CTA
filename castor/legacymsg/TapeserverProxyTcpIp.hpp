@@ -68,7 +68,7 @@ public:
   void gotReadMountDetailsFromClient(
     const std::string &unitName,
     const std::string &vid)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Informs the tapeserverd daemon that the mount-session child-process got
@@ -80,7 +80,7 @@ public:
   void gotWriteMountDetailsFromClient(
     const std::string &unitName,
     const std::string &vid)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Informs the tapeserverd daemon that the mount-session child-process got
@@ -92,7 +92,7 @@ public:
   void gotDumpMountDetailsFromClient(
     const std::string &unitName,
     const std::string &vid)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Notifies the tapeserverd daemon that the specified tape has been mounted.
@@ -103,7 +103,7 @@ public:
   void tapeMountedForRead(
     const std::string &unitName,
     const std::string &vid)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Notifies the tapeserverd daemon that the specified tape has been mounted.
@@ -114,7 +114,7 @@ public:
   void tapeMountedForWrite(
     const std::string &unitName,
     const std::string &vid)
-    throw(castor::exception::Exception);
+    ;
   
   /**
    * Notifies the tapeserverd daemon that the specified tape has been unmounted.
@@ -125,7 +125,7 @@ public:
  void tapeUnmounted(
     const std::string &unitName,
     const std::string &vid)
-    throw(castor::exception::Exception);
+    ;
 
 private:
 
@@ -134,21 +134,21 @@ private:
    *
    * @return The socket-descriptor of the connection with the vdqmd daemon.
    */
-  int connectToTapeserver() const throw(castor::exception::Exception);
+  int connectToTapeserver() const ;
 
   /**
    * Writes the specified message to the specified connection.
    *
    * @param body The body of the message.
    */
-  void writeTapeUpdateDriveRqstMsg(const int fd, const legacymsg::TapeUpdateDriveRqstMsgBody &body) throw(castor::exception::Exception);
+  void writeTapeUpdateDriveRqstMsg(const int fd, const legacymsg::TapeUpdateDriveRqstMsgBody &body) ;
 
   /**
    * Reads a reply message from the specified connection.
    *
    * @param fd The file-descriptor of the connection.
    */
-  void readReplyMsg(const int fd) throw(castor::exception::Exception);
+  void readReplyMsg(const int fd) ;
 
   /**
    * The object representing the API of the CASTOR logging system.

@@ -68,7 +68,7 @@ castor::job::stagerjob::XRootPlugin::XRootPlugin() throw():
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::XRootPlugin::recvMessage
 (int socket, char *buf, ssize_t len, int timeout)
-  throw(castor::exception::Exception) {
+   {
 
   // Read the data from the socket
   int n = netread_timeout(socket, buf, len, timeout);
@@ -90,7 +90,7 @@ void castor::job::stagerjob::XRootPlugin::recvMessage
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::XRootPlugin::preForkHook
 (InputArguments &args, PluginContext &context)
-  throw(castor::exception::Exception) {
+   {
 
   // Answer the client so that it can connect to the mover
   castor::rh::IOResponse ioResponse;
@@ -221,7 +221,7 @@ void castor::job::stagerjob::XRootPlugin::preForkHook
 void castor::job::stagerjob::XRootPlugin::postForkHook
 (InputArguments &args, PluginContext &context,
  bool /*useChksSum*/, int /*moverStatus*/)
-  throw(castor::exception::Exception) {
+   {
 
   // Variables
   bool moverStatus;

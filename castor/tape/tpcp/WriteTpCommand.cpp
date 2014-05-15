@@ -101,7 +101,7 @@ void castor::tape::tpcp::WriteTpCommand::usage(std::ostream &os) const throw() {
 // parseCommandLine
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
-  char **argv) throw(castor::exception::Exception) {
+  char **argv)  {
 
   static struct option longopts[] = {
     {"debug"   , 0, NULL, 'd'},
@@ -245,7 +245,7 @@ void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
 // checkAccessToDisk
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::WriteTpCommand::checkAccessToDisk()
-  const throw (castor::exception::Exception) {
+  const  {
   // Check that there is at least one file to be migrated
   if(m_filenames.size() == 0) {
     castor::exception::InvalidArgument ex;
@@ -309,7 +309,7 @@ void castor::tape::tpcp::WriteTpCommand::checkAccessToDisk()
 // checkAccessToTape
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::WriteTpCommand::checkAccessToTape()
-  const throw(castor::exception::Exception) {
+  const  {
   checkUserHasTapeWritePermission(m_vmgrTapeInfo.poolname, m_userId,
     m_groupId, m_hostname);
 
@@ -338,7 +338,7 @@ void castor::tape::tpcp::WriteTpCommand::checkAccessToTape()
 void castor::tape::tpcp::WriteTpCommand::checkUserHasTapeWritePermission(
   const char *const poolName, const uid_t userId, const gid_t groupId,
   const char *const sourceHost)
-  const throw(castor::exception::PermissionDenied) {
+  const  {
 
   // Get the owner of the pool by querying the VMGR
   uid_t poolUserId  = 0;
@@ -401,7 +401,7 @@ void castor::tape::tpcp::WriteTpCommand::checkUserHasTapeWritePermission(
 // requestDriveFromVdqm
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::WriteTpCommand::requestDriveFromVdqm(
-  char *const tapeServer) throw(castor::exception::Exception) {
+  char *const tapeServer)  {
   TpcpCommand::requestDriveFromVdqm(WRITE_ENABLE, tapeServer);
 }
 
@@ -412,7 +412,7 @@ void castor::tape::tpcp::WriteTpCommand::requestDriveFromVdqm(
 void castor::tape::tpcp::WriteTpCommand::sendVolumeToTapeBridge(
   const tapegateway::VolumeRequest &volumeRequest,
   castor::io::AbstractTCPSocket    &connection)
-  const throw(castor::exception::Exception) {
+  const  {
   castor::tape::tapegateway::Volume volumeMsg;
   volumeMsg.setVid(m_vmgrTapeInfo.vid);
   volumeMsg.setClientType(castor::tape::tapegateway::WRITE_TP);
@@ -433,7 +433,7 @@ void castor::tape::tpcp::WriteTpCommand::sendVolumeToTapeBridge(
 // performTransfer
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::WriteTpCommand::performTransfer()
-  throw (castor::exception::Exception) {
+   {
 
   std::ostream &os = std::cout;
 
@@ -498,7 +498,7 @@ void castor::tape::tpcp::WriteTpCommand::performTransfer()
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::WriteTpCommand::dispatchMsgHandler(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
   switch(obj->type()) {
   case OBJ_FilesToMigrateListRequest:
     return handleFilesToMigrateListRequest(obj, sock);
@@ -535,7 +535,7 @@ bool castor::tape::tpcp::WriteTpCommand::dispatchMsgHandler(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::WriteTpCommand::handleFilesToMigrateListRequest(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   tapegateway::FilesToMigrateListRequest *msg = NULL;
 
@@ -559,7 +559,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleFilesToMigrateListRequest(
       // Notify the tapebridge about the exception and rethrow
       sendEndNotificationErrorReport(msg->aggregatorTransactionId(),
         ex.code(), ex.getMessage().str(), sock);
-      throw(ex);
+      throw ex;
     }
 
     // Create a FilesToMigrateList message for the tapebridge
@@ -627,7 +627,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleFilesToMigrateListRequest(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::WriteTpCommand::handleFileMigrationReportList(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   tapegateway::FileMigrationReportList *msg = NULL;
 
@@ -671,7 +671,7 @@ void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigrations(
   const uint64_t tapebridgeTransId,
   const std::vector<tapegateway::FileMigratedNotificationStruct*> &files,
   castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
   for(std::vector<tapegateway::FileMigratedNotificationStruct*>::const_iterator
     itor = files.begin(); itor != files.end(); itor++) {
 
@@ -691,7 +691,7 @@ void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigrations(
 void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigration(
   const uint64_t tapebridgeTransId,
   const tapegateway::FileMigratedNotificationStruct &file,
-  castor::io::AbstractSocket &sock) throw(castor::exception::Exception) {
+  castor::io::AbstractSocket &sock)  {
   // Check the file transaction ID
   {
     FileTransferMap::iterator itor =
@@ -711,7 +711,7 @@ void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigration(
       castor::exception::Exception ex(ECANCELED);
 
       ex.getMessage() << oss.str();
-      throw(ex);
+      throw ex;
     }
 
     // Command-line user feedback
@@ -742,7 +742,7 @@ void castor::tape::tpcp::WriteTpCommand::handleSuccessfulMigration(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::WriteTpCommand::handleEndNotification(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   return TpcpCommand::handleEndNotification(obj, sock);
 }
@@ -753,7 +753,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleEndNotification(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::WriteTpCommand::handleEndNotificationErrorReport(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   return TpcpCommand::handleEndNotificationErrorReport(obj, sock);
 }
@@ -764,7 +764,7 @@ bool castor::tape::tpcp::WriteTpCommand::handleEndNotificationErrorReport(
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::WriteTpCommand::handlePingNotification(
   castor::IObject *const obj, castor::io::AbstractSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   return TpcpCommand::handlePingNotification(obj,sock);
 }

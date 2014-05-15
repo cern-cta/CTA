@@ -89,7 +89,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::fillPollFd(
 //-----------------------------------------------------------------------------
 size_t castor::tape::tapeserver::daemon::MountSessionAcceptHandler::marshalRcReplyMsg(char *const dst, const size_t dstLen,
     const int rc)
-  throw(castor::exception::Exception) {
+   {
   legacymsg::MessageHeader src;
   src.magic = TPMAGIC;
   src.reqType = TAPERC;
@@ -100,7 +100,7 @@ size_t castor::tape::tapeserver::daemon::MountSessionAcceptHandler::marshalRcRep
 //------------------------------------------------------------------------------
 // writeRcReplyMsg
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::writeRcReplyMsg(const int fd, const int rc) throw(castor::exception::Exception) {
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::writeRcReplyMsg(const int fd, const int rc)  {
   char buf[REPBUFSZ];
   const size_t len = marshalRcReplyMsg(buf, sizeof(buf), rc);
   try {
@@ -117,7 +117,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::writeRcReplyMs
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleEvent(
-  const struct pollfd &fd) throw(castor::exception::Exception) {
+  const struct pollfd &fd)  {
   checkHandleEventFd(fd.fd);
 
   // Do nothing if there is no data to read
@@ -157,7 +157,7 @@ bool castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleEvent(
 // checkHandleEventFd
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::checkHandleEventFd(
-  const int fd) throw (castor::exception::Exception) {
+  const int fd)  {
   if(m_fd != fd) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept connection from the admin command"
@@ -197,7 +197,7 @@ void
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingJob(
   const legacymsg::MessageHeader &header, const int clientConnection)
-  throw(castor::exception::Exception) {
+   {
 
   switch(header.reqType) {
   case SETVID:
@@ -226,7 +226,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingSetVidJob(
   const legacymsg::MessageHeader &header, const int clientConnection)
-  throw(castor::exception::Exception) {
+   {
   castor::utils::SmartFd connection(clientConnection);
 
   const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
@@ -244,7 +244,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingLabelJob(
   const legacymsg::MessageHeader &header, const int clientConnection)
-  throw(castor::exception::Exception) {
+   {
   castor::utils::SmartFd connection(clientConnection);
 
   const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
@@ -270,7 +270,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
 //------------------------------------------------------------------------------
 castor::legacymsg::MessageHeader
   castor::tape::tapeserver::daemon::MountSessionAcceptHandler::readJobMsgHeader(
-    const int clientConnection) throw(castor::exception::Exception) {
+    const int clientConnection)  {
   castor::utils::SmartFd connection(clientConnection);
   
   // Read in the message header
@@ -304,7 +304,7 @@ castor::legacymsg::MessageHeader
 castor::legacymsg::TapeUpdateDriveRqstMsgBody
   castor::tape::tapeserver::daemon::MountSessionAcceptHandler::readSetVidMsgBody(const int connection,
     const uint32_t len)
-    throw(castor::exception::Exception) {
+     {
   char buf[REQBUFSZ];
 
   if(sizeof(buf) < len) {
@@ -337,7 +337,7 @@ castor::legacymsg::TapeUpdateDriveRqstMsgBody
 castor::legacymsg::TapeLabelRqstMsgBody
   castor::tape::tapeserver::daemon::MountSessionAcceptHandler::readLabelRqstMsgBody(const int connection,
     const uint32_t len)
-    throw(castor::exception::Exception) {
+     {
   char buf[REQBUFSZ];
 
   if(sizeof(buf) < len) {

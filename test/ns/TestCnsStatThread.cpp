@@ -71,7 +71,7 @@ TestCnsStatThread::TestCnsStatThread() :
 // cnsStat
 //------------------------------------------------------------------------------
 u_signed64 TestCnsStatThread::cnsStat(oracle::occi::Statement* m_cnsStatStatement, std::string filepath)
-  throw (castor::exception::Exception) {
+   {
   u_signed64 fileid = 0;
   try {
     // Check whether the statements are ok

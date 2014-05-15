@@ -51,7 +51,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::vdqm::ProtocolFacade::ProtocolFacade(castor::io::ServerSocket &socket,
-  const Cuuid_t &cuuid) throw(castor::exception::Exception) :
+  const Cuuid_t &cuuid)  :
   m_socket(socket), m_cuuid(cuuid) {
 }
 
@@ -68,7 +68,7 @@ castor::vdqm::ProtocolFacade::~ProtocolFacade()
 // handleProtocolVersion
 //------------------------------------------------------------------------------
 void castor::vdqm::ProtocolFacade::handleProtocolVersion()
-  throw (castor::exception::Exception) {
+   {
   
   //The magic Number of the message on the socket
   unsigned int magicNumber = 0;  
@@ -162,7 +162,7 @@ void castor::vdqm::ProtocolFacade::handleProtocolVersion()
 // handleOldVdqmRequest
 //------------------------------------------------------------------------------
 void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
-  const unsigned int magicNumber) throw (castor::exception::Exception) {
+  const unsigned int magicNumber)  {
    
   // Message of the old Protocol
   vdqmVolReq_t volumeRequest;
@@ -338,7 +338,7 @@ void castor::vdqm::ProtocolFacade::handleOldVdqmRequest(
 // handleVdqmMagic2Request
 //------------------------------------------------------------------------------
 void castor::vdqm::ProtocolFacade::handleVdqmMagic2Request(
-  const unsigned int magicNumber) throw (castor::exception::Exception) {
+  const unsigned int magicNumber)  {
 
   vdqmHdr_t header;
 
@@ -454,7 +454,7 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic2Request(
 // handleVdqmMagic3Request
 //------------------------------------------------------------------------------
 void castor::vdqm::ProtocolFacade::handleVdqmMagic3Request(
-  const unsigned int magicNumber) throw (castor::exception::Exception) {
+  const unsigned int magicNumber)  {
 
   vdqmHdr_t header;
 
@@ -577,7 +577,7 @@ void castor::vdqm::ProtocolFacade::handleVdqmMagic3Request(
 // handleVdqmMagic4Request
 //------------------------------------------------------------------------------
 void castor::vdqm::ProtocolFacade::handleVdqmMagic4Request(
-  const unsigned int magicNumber) throw (castor::exception::Exception) {
+  const unsigned int magicNumber)  {
 
   vdqmHdr_t    header;
   vdqmVolReq_t volReq;

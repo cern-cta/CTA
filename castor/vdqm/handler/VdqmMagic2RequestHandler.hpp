@@ -52,7 +52,7 @@ namespace castor {
          */
         void handleVolPriority(const Cuuid_t &cuuid,
           vdqmVolPriority_t &msg)
-          throw (castor::exception::Exception);
+          ;
 
       }; // class VdqmMagic2RequestHandler
 

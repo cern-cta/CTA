@@ -50,7 +50,7 @@
 //------------------------------------------------------------------------------
 castor::io::UDPSocket::UDPSocket(const unsigned short port,
                                  const bool reusable)
-  throw (castor::exception::Exception) :
+   :
   AbstractSocket(port, reusable) {
   createSocket();
   setReusable();
@@ -62,7 +62,7 @@ castor::io::UDPSocket::UDPSocket(const unsigned short port,
 castor::io::UDPSocket::UDPSocket(const unsigned short port,
                                  const bool reusable,
 				 const bool bind)
-  throw (castor::exception::Exception) :
+   :
   AbstractSocket(port, reusable) {
   createSocket();
   setReusable();
@@ -81,7 +81,7 @@ castor::io::UDPSocket::UDPSocket(const unsigned short port,
 //------------------------------------------------------------------------------
 castor::io::UDPSocket::UDPSocket(const unsigned short port,
 				 const std::string host)
-  throw (castor::exception::Exception) :
+   :
   AbstractSocket(port, host, false) {
   createSocket();
 }
@@ -91,7 +91,7 @@ castor::io::UDPSocket::UDPSocket(const unsigned short port,
 //------------------------------------------------------------------------------
 castor::io::UDPSocket::UDPSocket(const unsigned short port,
 				 const unsigned long ip)
-  throw (castor::exception::Exception) :
+   :
   AbstractSocket(port, ip, false) {
   createSocket();
 }
@@ -100,7 +100,7 @@ castor::io::UDPSocket::UDPSocket(const unsigned short port,
 // createSocket
 //------------------------------------------------------------------------------
 void castor::io::UDPSocket::createSocket()
-  throw (castor::exception::Exception) {
+   {
   // Creates the socket
   if ((m_socket = ::socket(AF_INET, SOCK_DGRAM, 0)) < 0) {
     castor::exception::Exception ex(errno);
@@ -115,7 +115,7 @@ void castor::io::UDPSocket::createSocket()
 void castor::io::UDPSocket::sendBuffer(const unsigned int magic,
                                        const char* buf,
                                        const int n)
-  throw (castor::exception::Exception) {
+   {
   // Create new buffer to send everything in one go
   int size = n + 2 * sizeof(unsigned int);
   char* newBuf = new char[size];
@@ -139,7 +139,7 @@ void castor::io::UDPSocket::sendBuffer(const unsigned int magic,
 void castor::io::UDPSocket::readBuffer(const unsigned int magic,
                                        char** buf,
                                        int& n)
-  throw (castor::exception::Exception) {
+   {
   // Read everything in one go. Max allowed is 1K
   char* internalBuf = new char[MAX_UDP_DATAGRAM_LENGTH];
   socklen_t fromLen = sizeof(m_saddr);

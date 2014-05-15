@@ -127,12 +127,12 @@ namespace castor {
        */
       std::string sendRequest(castor::stager::Request* req,
                               castor::client::IResponseHandler* rh)
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Get the userid and groupid and set the authorization values.
        */
-      void setAuthorizationId() throw(castor::exception::Exception);
+      void setAuthorizationId() ;
 
       /**
        * Sets the authorization ID under which the request should be sent.
@@ -143,7 +143,7 @@ namespace castor {
        * Set the Authorization mechanism.
        */
       void setAuthorization()
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * gets the request handler port to use and put it
@@ -154,9 +154,9 @@ namespace castor {
        * modified.
        */
       virtual void setRhPort(int optPort)
-        throw (castor::exception::Exception);
+        ;
       virtual void setRhPort()
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * gets the request handler host to use and put it
@@ -167,18 +167,18 @@ namespace castor {
        * modified.
        */
       virtual void setRhHost(std::string optHost)
-        throw (castor::exception::Exception);
+        ;
       virtual void setRhHost()
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Gets the service class to be used with a similar
        * strategy as above.
        */
       virtual void setRhSvcClass(std::string optSvcClass)
-        throw (castor::exception::Exception);
+        ;
       virtual void setRhSvcClass()
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Gathers options from the parameter and calls the
@@ -189,7 +189,7 @@ namespace castor {
        * and service class.
        */
       virtual void setOptions(struct stage_options* opts)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Sets the request ID in the base client
@@ -209,7 +209,7 @@ namespace castor {
        */
       void pollAnswersFromStager(castor::stager::Request* req,
                                  castor::client::IResponseHandler* rh)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * calls buildClient and internalSendRequest to create and send the
@@ -218,7 +218,7 @@ namespace castor {
        * @exception in case of an error
        */
       std::string createClientAndSend(castor::stager::Request *req)
-        throw (castor::exception::Exception);
+        ;
 
     private:
 
@@ -228,13 +228,13 @@ namespace castor {
        * new client
        */
       virtual IClient* createClient()
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * sends a request to the request handler
        */
       std::string internalSendRequest(castor::stager::Request& request)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Builds the Client for a Request. The userid, groupid, hostname, etc
@@ -243,7 +243,7 @@ namespace castor {
        * @exception in case of an error
        */
       void buildClient(castor::stager::Request* req)
-        throw (castor::exception::Exception);
+        ;
 
     public: // protected:
 

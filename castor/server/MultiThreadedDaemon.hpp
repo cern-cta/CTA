@@ -67,7 +67,7 @@ public:
    * @throw castor::exception::Exception in case it was not found
    */
   BaseThreadPool* getThreadPool(const char nameIn)
-    throw (castor::exception::Exception);
+    ;
 
   /**
    * Calls resetMetrics on all registered thread pools
@@ -84,7 +84,7 @@ public:
   /**
    * Starts all the thread pools
    */
-  void start() throw (castor::exception::Exception);
+  void start() ;
 
   /**
    * Adds a dedicated UDP thread pool for getting wakeup notifications
@@ -101,7 +101,7 @@ public:
    * @param argv The command-line vector.
    */
   virtual void parseCommandLine(int argc, char *argv[])
-    throw(castor::exception::Exception);
+    ;
 
 protected:
 
@@ -115,7 +115,7 @@ protected:
    * waits for all threads to terminate before returning.
    * This implements a graceful kill and is triggered by SIGTERM.
    */
-  virtual void waitAllThreads() throw ();
+  virtual void waitAllThreads() throw();
 
   /**
    * Prints out the online help
@@ -127,7 +127,7 @@ private:
   /**
    * Sets up the signal handling for this multi-threaded daemon.
    */
-  void setupMultiThreadedSignalHandling() throw(castor::exception::Exception);
+  void setupMultiThreadedSignalHandling() ;
 
   /**
    * Handles signals and performs graceful/immediate stop.

@@ -176,7 +176,7 @@ std::string castor::replier::ClientConnection::errorMessage()  throw() {
   return m_errorMessage;
 }
 
-void castor::replier::ClientConnection::setErrorMessage(std::string msg) throw () {
+void castor::replier::ClientConnection::setErrorMessage(std::string msg) throw() {
   m_errorMessage = msg;
 }
 
@@ -196,7 +196,7 @@ void castor::replier::ClientConnection::setStatus(enum RCStatus stat)
 }
 
 void castor::replier::ClientConnection::createSocket()
-  throw(castor::exception::Exception) {
+   {
 
   // Creating the socket
   int s = socket(AF_INET, SOCK_STREAM, 0);
@@ -231,7 +231,7 @@ void castor::replier::ClientConnection::createSocket()
 }
 
 void castor::replier::ClientConnection::connect()
-  throw(castor::exception::Exception) {
+   {
 
   // Preparing the client address
   struct sockaddr_in saddr;
@@ -258,7 +258,7 @@ void castor::replier::ClientConnection::connect()
   setStatus(CONNECTING);
 }
 
-void castor::replier::ClientConnection::deleteNextMessage()  throw(castor::exception::Exception) {
+void castor::replier::ClientConnection::deleteNextMessage()   {
   const char *func = "cc::deleteNextMessage ";
   if (!m_messages.empty()) {
     ClientResponse message = m_messages.front();
@@ -274,7 +274,7 @@ void castor::replier::ClientConnection::deleteNextMessage()  throw(castor::excep
   }
 }
 
-void castor::replier::ClientConnection::sendNextMessage()  throw(castor::exception::Exception) {
+void castor::replier::ClientConnection::sendNextMessage()   {
   const char *func = "cc::sendNextMessage ";
   if (m_messages.empty()) {
     // "CC: No more messages in queue"
@@ -291,7 +291,7 @@ void castor::replier::ClientConnection::sendNextMessage()  throw(castor::excepti
 
 // Internal send method
 void castor::replier::ClientConnection::send()
-  throw(castor::exception::Exception) {
+   {
 
   const char *func = "ClientConnection::send ";
   castor::io::biniostream *response;

@@ -52,7 +52,7 @@ namespace castor {
        * @param log Object representing the API of the CASTOR logging system.
        */
       VdqmServer(std::ostream &stdOut, std::ostream &stdErr,
-        log::Logger &log) throw(castor::exception::Exception);
+        log::Logger &log) ;
 
       /**
        * Logs the start of the server.
@@ -88,25 +88,25 @@ namespace castor {
        * Returns the scheduler timeout, in other words the time a scheduler
        * thread will sleep when there is no work to be done.
        */
-      int getSchedulerTimeout() throw(castor::exception::InvalidConfigEntry);
+      int getSchedulerTimeout() ;
 
       /**
        * Returns the RTCP job submitter timeout, in other words the time an
        * RTCP job submitter thread will sleep when there is no work to be done.
        */
       int getRTCPJobSubmitterTimeout()
-        throw(castor::exception::InvalidConfigEntry);
+        ;
 
       /**
        * Returns the port on which the server will listen.
        */
-      int getListenPort() throw(castor::exception::InvalidConfigEntry);
+      int getListenPort() ;
 
       /**
        * Returns the UPD port on which the server will listen fori
        * notifications.
        */
-      int getNotifyPort() throw(castor::exception::InvalidConfigEntry);
+      int getNotifyPort() ;
 
       /**
        * Returns the number of threads in the request handler thread pool.

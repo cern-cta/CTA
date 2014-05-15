@@ -76,7 +76,7 @@ namespace castor {
        */
       void gcRemoveFilePath
       (std::string filepath, u_signed64 &filesize, u_signed64 &fileage)
-	throw (castor::exception::Exception);
+	;
 
     private:
 

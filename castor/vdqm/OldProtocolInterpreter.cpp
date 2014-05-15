@@ -52,7 +52,7 @@
 //------------------------------------------------------------------------------
 castor::vdqm::OldProtocolInterpreter::OldProtocolInterpreter(
   castor::io::ServerSocket &socket, const Cuuid_t &cuuid)
-  throw(castor::exception::Exception) : m_socket(socket), m_cuuid(cuuid){
+   : m_socket(socket), m_cuuid(cuuid){
 }
 
 
@@ -69,7 +69,7 @@ throw() {
 //------------------------------------------------------------------------------
 int castor::vdqm::OldProtocolInterpreter::readProtocol(vdqmHdr_t *header, 
   vdqmVolReq_t *volumeRequest, vdqmDrvReq_t *driveRequest) 
-throw (castor::exception::Exception) {
+ {
 
   // Header buffer is shorter, because the magic number should already be read
   // out
@@ -294,7 +294,7 @@ throw (castor::exception::Exception) {
 //------------------------------------------------------------------------------
 int castor::vdqm::OldProtocolInterpreter::sendToOldClient(vdqmHdr_t *header, 
   vdqmVolReq_t *volumeRequest, vdqmDrvReq_t *driveRequest) 
-throw (castor::exception::Exception) {
+ {
 
   char hdrbuf[VDQM_HDRBUFSIZ];
   char buf[VDQM_MSGBUFSIZ];
@@ -442,7 +442,7 @@ throw (castor::exception::Exception) {
 // sendAcknCommit
 //------------------------------------------------------------------------------
 void castor::vdqm::OldProtocolInterpreter::sendAcknCommit() 
-throw (castor::exception::Exception) {
+ {
     
   char hdrbuf[VDQM_HDRBUFSIZ];
   int recvreqtype, len;
@@ -480,7 +480,7 @@ throw (castor::exception::Exception) {
 // recvAcknFromOldClient
 //------------------------------------------------------------------------------
 int castor::vdqm::OldProtocolInterpreter::recvAcknFromOldClient() 
-throw (castor::exception::Exception) {
+ {
   
   char hdrbuf[VDQM_HDRBUFSIZ];
   unsigned int magic, recvreqtype, len;
@@ -514,7 +514,7 @@ throw (castor::exception::Exception) {
 // sendAcknPing
 //------------------------------------------------------------------------------
 void castor::vdqm::OldProtocolInterpreter::sendAcknPing(int queuePosition)
-throw (castor::exception::Exception) {
+ {
   
   int magic = VDQM_MAGIC;
   int reqtype = VDQM_PING;
@@ -546,7 +546,7 @@ throw (castor::exception::Exception) {
 // sendAcknRollback
 //------------------------------------------------------------------------------
 void castor::vdqm::OldProtocolInterpreter::sendAcknRollback(int errorCode) 
-throw (castor::exception::Exception) {
+ {
     
   char hdrbuf[VDQM_HDRBUFSIZ];
   int magic, recvreqtype, len;

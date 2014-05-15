@@ -87,7 +87,7 @@ public:
    *                     the file has been flushed to tape.
    */
   void fileWrittenWithoutFlush(const FileWrittenNotification &notification)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * To be called when there are no more files to be migrated.
@@ -97,7 +97,7 @@ public:
    * written to tape.  The pending-migrations store uses this knowledge to
    * check the validity of the tape-file sequence-number of flushes to tape.
    */
-  void noMoreFilesToMigrate() throw(castor::exception::Exception);
+  void noMoreFilesToMigrate() ;
 
   /**
    * Removes the pending file-migrations that have a tape-file sequence-number
@@ -114,7 +114,7 @@ public:
    * flush.
    */
   FileWrittenNotificationList dataFlushedToTape(
-    const int32_t tapeFSeqOfFlush) throw(castor::exception::Exception);
+    const int32_t tapeFSeqOfFlush) ;
 
   /**
    * Returns the total number of pending file-migrations currently inside the
@@ -314,7 +314,7 @@ private:
    */
   void checkForMismatches(const RequestToMigrateFile &request,
     const FileWrittenNotification &notification)
-    const throw(castor::exception::Exception);
+    const ;
 
   /**
    * Clears all of the pending migrations from this store.
@@ -325,20 +325,20 @@ private:
    * Returns the maximum number of bytes before the tape drive buffer should
    * be flushed.
    */
-  uint64_t getMaxBytesBeforeFlush() const throw(castor::exception::Exception);
+  uint64_t getMaxBytesBeforeFlush() const ;
 
   /**
    * Returns the maximum number of files before the tape drive buffer should
    * be flushed.
    */
-  uint64_t getMaxFilesBeforeFlush() const throw(castor::exception::Exception);
+  uint64_t getMaxFilesBeforeFlush() const ;
 
   /**
    * This method throws a SessionException of FILE_SCOPE if the specified
    * request to migrate a file is invalid.
    */
   void checkRequestToMigrateFile(const RequestToMigrateFile &request)
-    throw(SessionException);
+    ;
 
 }; // class PendingMigrationsStore
 

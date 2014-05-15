@@ -47,7 +47,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::io::AuthClientSocket::AuthClientSocket(int socket) 
-  throw (castor::exception::Exception) :
+   :
   ClientSocket(socket) {
  
   if (loader() == -1) {
@@ -69,7 +69,7 @@ castor::io::AuthClientSocket::AuthClientSocket(int socket)
 castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 					       const std::string host,
 					       int)
-  throw (castor::exception::Exception): ClientSocket(port, host) {
+  : ClientSocket(port, host) {
   
   if (loader() == -1) {
     castor::exception::Exception ex(serrno);
@@ -90,7 +90,7 @@ castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 					       const unsigned long ip,
 					       int)
-  throw (castor::exception::Exception) : ClientSocket(port, ip) {
+   : ClientSocket(port, ip) {
   
   if (loader() ==-1) {
     castor::exception::Exception ex(serrno);
@@ -108,7 +108,7 @@ castor::io::AuthClientSocket::AuthClientSocket(const unsigned short port,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::io::AuthClientSocket::~AuthClientSocket() throw () {
+castor::io::AuthClientSocket::~AuthClientSocket() throw() {
   // Csec_clearContext(&m_security_context);
   
   getClearContext(&m_security_context);
@@ -121,7 +121,7 @@ castor::io::AuthClientSocket::~AuthClientSocket() throw () {
 // connect
 //------------------------------------------------------------------------------
 void castor::io::AuthClientSocket::connect()
-  throw (castor::exception::Exception) {
+   {
   
   castor::io::ClientSocket::connect();
   

@@ -43,7 +43,7 @@
 castor::server::BaseThreadPool::BaseThreadPool(const std::string poolName,
                                                castor::server::IThread* thread,
                                                unsigned int nbThreads)
-throw (castor::exception::Exception) :
+ :
   BaseObject(),
   m_nbThreads(nbThreads),
   m_poolName(poolName),
@@ -73,7 +73,7 @@ castor::server::BaseThreadPool::~BaseThreadPool() throw()
 //------------------------------------------------------------------------------
 // init
 //------------------------------------------------------------------------------
-void castor::server::BaseThreadPool::init() throw (castor::exception::Exception)
+void castor::server::BaseThreadPool::init() 
 {
   // Enable internal monitoring if the metrics collector has already
   // been instantiated by the user application
@@ -94,7 +94,7 @@ void castor::server::BaseThreadPool::init() throw (castor::exception::Exception)
 //------------------------------------------------------------------------------
 // run
 //------------------------------------------------------------------------------
-void castor::server::BaseThreadPool::run() throw (castor::exception::Exception)
+void castor::server::BaseThreadPool::run() 
 {
   castor::exception::Exception notImpl;
   notImpl.getMessage() <<

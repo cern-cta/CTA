@@ -36,13 +36,13 @@ namespace castor{
         
       public:
         /* constructor */
-        RmHandler(RequestHelper* reqHelper) throw () :
+        RmHandler(RequestHelper* reqHelper) throw() :
           RequestHandler(reqHelper) {};
         /* destructor */
         ~RmHandler() throw() {};
         
         /* rm subrequest handler */
-        virtual void handle() throw(castor::exception::Exception);
+        virtual void handle() ;
         
       }; // end RmHandler class
       

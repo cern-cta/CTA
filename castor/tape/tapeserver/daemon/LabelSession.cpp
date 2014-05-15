@@ -58,7 +58,7 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
 //------------------------------------------------------------------------------
 // execute
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::LabelSession::execute() throw (castor::tape::Exception) {
+void castor::tape::tapeserver::daemon::LabelSession::execute()  {
   
   // 1) Prepare the logging environment
   LogContext lc(m_logger);

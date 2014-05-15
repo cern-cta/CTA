@@ -59,7 +59,7 @@ pthread_once_t castor::rh::RHThread::s_rateLimiterOnce(PTHREAD_ONCE_INIT);
 // Cconstructor
 //------------------------------------------------------------------------------
 castor::rh::RHThread::RHThread()
-  throw (castor::exception::Exception) :
+   :
   BaseObject() {
 
   // Statically initialize the list of stager service handlers for each
@@ -110,7 +110,7 @@ castor::rh::RHThread::RHThread()
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::rh::RHThread::~RHThread() throw () {
+castor::rh::RHThread::~RHThread() throw() {
   /*
     This empty destructor has to be implemented here and NOT inline,
     otherwise the following error will happen at linking time:
@@ -156,7 +156,7 @@ void castor::rh::RHThread::stop() {
 // makeRateLimiterKey
 //------------------------------------------------------------------------------
 void castor::rh::RHThread::makeRateLimiterKey()
-  throw (castor::exception::Exception)  {
+    {
   int rc = pthread_key_create(&s_rateLimiterKey, NULL);
   if (rc != 0) {
     castor::exception::Exception e(rc);
@@ -170,7 +170,7 @@ void castor::rh::RHThread::makeRateLimiterKey()
 //------------------------------------------------------------------------------
 castor::rh::RateLimiter *
 castor::rh::RHThread::getRateLimiterFromTLS()
-  throw (castor::exception::Exception) {
+   {
   // make a new key if we are in the first call to this
   {
     const int rc = pthread_once(&castor::rh::RHThread::s_rateLimiterOnce,
@@ -545,7 +545,7 @@ void castor::rh::RHThread::run(void* param) {
 // handleRequest
 //------------------------------------------------------------------------------
 unsigned int castor::rh::RHThread::handleRequest(castor::stager::Request* fr)
-  throw (castor::exception::Exception) {
+   {
 
   // get RH service
   castor::rh::IRHSvc* m_rhSvc = 0;

@@ -45,7 +45,7 @@
 
 castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
                                                const bool reusable)
-  throw (castor::exception::Exception) : ServerSocket(port, reusable),
+   : ServerSocket(port, reusable),
                                          m_Euid(0), m_Egid(0) {
   memset(&m_security_context, 0, sizeof(m_security_context));
 }
@@ -60,7 +60,7 @@ castor::io::AuthServerSocket::AuthServerSocket(const unsigned short port,
 
 castor::io::AuthServerSocket::AuthServerSocket(castor::io::ServerSocket* cs,
                                                const Csec_context_t)
-  throw (castor::exception::Exception) : ServerSocket(cs->socket()),
+   : ServerSocket(cs->socket()),
                                          m_Euid(0), m_Egid(0) {
   memset(&m_security_context, 0, sizeof(m_security_context));
   cs->resetSocket();
@@ -71,7 +71,7 @@ castor::io::AuthServerSocket::AuthServerSocket(castor::io::ServerSocket* cs,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::io::AuthServerSocket::~AuthServerSocket() throw () {
+castor::io::AuthServerSocket::~AuthServerSocket() throw() {
   getClearContext(&m_security_context);
 }
 
@@ -80,7 +80,7 @@ castor::io::AuthServerSocket::~AuthServerSocket() throw () {
 // accept
 //------------------------------------------------------------------------------
 castor::io::ServerSocket* castor::io::AuthServerSocket::accept()
-  throw(castor::exception::Exception) {
+   {
 
   castor::io::ServerSocket* as = castor::io::ServerSocket::accept();
   return new AuthServerSocket(as, m_security_context);
@@ -91,7 +91,7 @@ castor::io::ServerSocket* castor::io::AuthServerSocket::accept()
 // setClientId (That method should go out of this class
 //------------------------------------------------------------------------------
 void castor::io::AuthServerSocket::setClientId ()
-  throw(castor::exception::Security) {
+   {
   char *mech, *name;
   char username[CA_MAXUSRNAMELEN+1];
 
@@ -114,7 +114,7 @@ void castor::io::AuthServerSocket::setClientId ()
 // Init the security context and stablish the security context with the client
 //-----------------------------------------------------------------------------
 void  castor::io::AuthServerSocket::initContext() 
-  throw (castor::exception::Security) {
+   {
 
   if (loader() == -1) {
     castor::exception::Security ex(serrno);

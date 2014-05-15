@@ -86,13 +86,13 @@ namespace tapegateway{
     // Helper converting requester structure into a context string
     std::string requester2str (const requesterInfo & reqer);
     // handlers used with the different message types
-    castor::IObject* handleStartWorker      (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
-    castor::IObject* handleEndWorker        (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
-    castor::IObject* handleFailWorker       (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
-    castor::IObject* handleFileMigrationReportList   (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
-    castor::IObject* handleFileRecallReportList  (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
-    castor::IObject* handleFilesToMigrateListRequest (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
-    castor::IObject* handleFilesToRecallListRequest  (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) throw(castor::exception::Exception);
+    castor::IObject* handleStartWorker      (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) ;
+    castor::IObject* handleEndWorker        (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) ;
+    castor::IObject* handleFailWorker       (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) ;
+    castor::IObject* handleFileMigrationReportList   (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) ;
+    castor::IObject* handleFileRecallReportList  (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) ;
+    castor::IObject* handleFilesToMigrateListRequest (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) ;
+    castor::IObject* handleFilesToRecallListRequest  (castor::IObject& obj, castor::tape::tapegateway::ITapeGatewaySvc& oraSvc, requesterInfo& requester ) ;
 
     // Helper function for setting a sesssion to closing in the DB.
     // This is usually in reaction to a problem, which is logged in the caller.
@@ -102,7 +102,7 @@ namespace tapegateway{
     void setSessionToClosing (castor::tape::tapegateway::ITapeGatewaySvc&  oraSvc,
         castor::tape::tapegateway::WorkerThread::requesterInfo& requester,
         u_signed64 mountTransactionId)
-        throw ();
+        throw();
 
     // Error classifiers. They return a class with booleans indicating the decision.
     // They are used for dispatch criteria in handle report list functions.
@@ -117,15 +117,15 @@ namespace tapegateway{
       bool fileRetryable;
       bool tapeIsFull;
     };
-    fileErrorClassification classifyBridgeMigrationFileError(int errorCode) throw ();
-    fileErrorClassification classifyBridgeRecallFileError(int errorCode) throw ();
+    fileErrorClassification classifyBridgeMigrationFileError(int errorCode) throw();
+    fileErrorClassification classifyBridgeRecallFileError(int errorCode) throw();
 
     // Helper functions for logging database errors (overloaded variants with different
     // parameters.
     void logInternalError (castor::exception::Exception e, requesterInfo& requester,
-        FileMigrationReportList & fileMigrationReportList) throw ();
+        FileMigrationReportList & fileMigrationReportList) throw();
     void logInternalError (castor::exception::Exception e, requesterInfo& requester,
-        FileRecallReportList &fileRecallReportList) throw ();
+        FileRecallReportList &fileRecallReportList) throw();
     void logMigrationNotified (Cuuid_t uuid,
         u_signed64 mountTransactionId, u_signed64 aggregatorTransactionId,
         struct Cns_fileid* castorFileId,

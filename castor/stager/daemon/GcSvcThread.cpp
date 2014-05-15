@@ -51,7 +51,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::stager::daemon::GcSvcThread::GcSvcThread() throw () :
+castor::stager::daemon::GcSvcThread::GcSvcThread() throw() :
   BaseRequestSvcThread("GCSvc", "DbGCSvc", castor::SVC_DBGCSVC) {}
 
 

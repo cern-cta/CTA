@@ -45,7 +45,7 @@ public:
    * Creates an empty sequence, in other word hasMore() will always return
    * false.
    */
-  TapeFseqRangeListSequence() throw(castor::exception::Exception);
+  TapeFseqRangeListSequence() ;
 
   /**
    * Constructor.
@@ -54,7 +54,7 @@ public:
    * of tape file sequence numbers is to be generated.
    */
   TapeFseqRangeListSequence(const TapeFseqRangeList *const list)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Resets the sequence.
@@ -63,7 +63,7 @@ public:
    * of tape file sequence numbers is to be generated.
    */
   void reset(const TapeFseqRangeList *const list)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Returns true if there is another tape file sequence number in the
@@ -75,7 +75,7 @@ public:
    * Returns the next  tape file sequence number in the sequence, or throws an
    * exception if there isn't one.
    */
-  uint32_t next() throw(castor::exception::Exception);
+  uint32_t next() ;
 
   /**
    * Returns true if the sequence is finite, else false if it is infinite.

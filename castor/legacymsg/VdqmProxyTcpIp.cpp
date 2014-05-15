@@ -49,7 +49,7 @@ castor::legacymsg::VdqmProxyTcpIp::~VdqmProxyTcpIp() throw() {
 //------------------------------------------------------------------------------
 // setDriveDown
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyTcpIp::setDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
+void castor::legacymsg::VdqmProxyTcpIp::setDriveDown(const std::string &server, const std::string &unitName, const std::string &dgn)  {
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_UNIT_DOWN;
@@ -69,7 +69,7 @@ void castor::legacymsg::VdqmProxyTcpIp::setDriveDown(const std::string &server, 
 //------------------------------------------------------------------------------
 // setDriveUp
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyTcpIp::setDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn) throw(castor::exception::Exception) {
+void castor::legacymsg::VdqmProxyTcpIp::setDriveUp(const std::string &server, const std::string &unitName, const std::string &dgn)  {
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_UNIT_UP;
@@ -89,7 +89,7 @@ void castor::legacymsg::VdqmProxyTcpIp::setDriveUp(const std::string &server, co
 //------------------------------------------------------------------------------
 // assignDrive
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyTcpIp::assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t sessionPid) throw(castor::exception::Exception) {
+void castor::legacymsg::VdqmProxyTcpIp::assignDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const uint32_t mountTransactionId, const pid_t sessionPid)  {
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_UNIT_ASSIGN;
@@ -111,7 +111,7 @@ void castor::legacymsg::VdqmProxyTcpIp::assignDrive(const std::string &server, c
 //------------------------------------------------------------------------------
 // tapeMounted
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyTcpIp::tapeMounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid) throw(castor::exception::Exception) {
+void castor::legacymsg::VdqmProxyTcpIp::tapeMounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid)  {
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_VOL_MOUNT;
@@ -133,7 +133,7 @@ void castor::legacymsg::VdqmProxyTcpIp::tapeMounted(const std::string &server, c
 //------------------------------------------------------------------------------
 // releaseDrive
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyTcpIp::releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid) throw(castor::exception::Exception) {
+void castor::legacymsg::VdqmProxyTcpIp::releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid)  {
   int status = VDQM_UNIT_RELEASE;
   if(forceUnmount) {
     status |= VDQM_FORCE_UNMOUNT;
@@ -159,7 +159,7 @@ void castor::legacymsg::VdqmProxyTcpIp::releaseDrive(const std::string &server, 
 //------------------------------------------------------------------------------
 // setDriveStatus
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyTcpIp::setDriveStatus(const legacymsg::VdqmDrvRqstMsgBody &body) throw(castor::exception::Exception) {
+void castor::legacymsg::VdqmProxyTcpIp::setDriveStatus(const legacymsg::VdqmDrvRqstMsgBody &body)  {
   castor::utils::SmartFd fd(connectToVdqm());
   writeDriveStatusMsg(fd.get(), body);
   readCommitAck(fd.get());
@@ -171,7 +171,7 @@ void castor::legacymsg::VdqmProxyTcpIp::setDriveStatus(const legacymsg::VdqmDrvR
 //-----------------------------------------------------------------------------
 // connectToVdqm
 //-----------------------------------------------------------------------------
-int castor::legacymsg::VdqmProxyTcpIp::connectToVdqm() const throw(castor::exception::Exception) {
+int castor::legacymsg::VdqmProxyTcpIp::connectToVdqm() const  {
   castor::utils::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(io::connectWithTimeout(m_vdqmHostName, m_vdqmPort,
@@ -189,7 +189,7 @@ int castor::legacymsg::VdqmProxyTcpIp::connectToVdqm() const throw(castor::excep
 //-----------------------------------------------------------------------------
 // writeDriveStatusMsg
 //-----------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyTcpIp::writeDriveStatusMsg(const int fd, const legacymsg::VdqmDrvRqstMsgBody &body) throw(castor::exception::Exception) {
+void castor::legacymsg::VdqmProxyTcpIp::writeDriveStatusMsg(const int fd, const legacymsg::VdqmDrvRqstMsgBody &body)  {
   char buf[VDQM_MSGBUFSIZ];
   const size_t len = legacymsg::marshal(buf, body);
 
@@ -206,7 +206,7 @@ void castor::legacymsg::VdqmProxyTcpIp::writeDriveStatusMsg(const int fd, const 
 //-----------------------------------------------------------------------------
 // readCommitAck
 //-----------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyTcpIp::readCommitAck(const int fd) throw(castor::exception::Exception) {
+void castor::legacymsg::VdqmProxyTcpIp::readCommitAck(const int fd)  {
   legacymsg::MessageHeader ack;
 
   try {
@@ -247,7 +247,7 @@ void castor::legacymsg::VdqmProxyTcpIp::readCommitAck(const int fd) throw(castor
 //-----------------------------------------------------------------------------
 // readAck
 //-----------------------------------------------------------------------------
-castor::legacymsg::MessageHeader castor::legacymsg::VdqmProxyTcpIp::readAck(const int fd) throw(castor::exception::Exception) {
+castor::legacymsg::MessageHeader castor::legacymsg::VdqmProxyTcpIp::readAck(const int fd)  {
   char buf[12]; // Magic + type + len
   legacymsg::MessageHeader ack;
 
@@ -270,7 +270,7 @@ castor::legacymsg::MessageHeader castor::legacymsg::VdqmProxyTcpIp::readAck(cons
 //-----------------------------------------------------------------------------
 // readDriveStatusMsgHeader
 //-----------------------------------------------------------------------------
-castor::legacymsg::MessageHeader castor::legacymsg::VdqmProxyTcpIp::readDriveStatusMsgHeader(const int fd) throw(castor::exception::Exception) {
+castor::legacymsg::MessageHeader castor::legacymsg::VdqmProxyTcpIp::readDriveStatusMsgHeader(const int fd)  {
   char buf[12]; // Magic + type + len
   legacymsg::MessageHeader header;
 
@@ -311,7 +311,7 @@ castor::legacymsg::MessageHeader castor::legacymsg::VdqmProxyTcpIp::readDriveSta
 //-----------------------------------------------------------------------------
 // readDriveStatusMsgBody
 //-----------------------------------------------------------------------------
-castor::legacymsg::VdqmDrvRqstMsgBody castor::legacymsg::VdqmProxyTcpIp::readDriveStatusMsgBody(const int fd, const uint32_t bodyLen) throw(castor::exception::Exception) {
+castor::legacymsg::VdqmDrvRqstMsgBody castor::legacymsg::VdqmProxyTcpIp::readDriveStatusMsgBody(const int fd, const uint32_t bodyLen)  {
   char buf[VDQM_MSGBUFSIZ];
 
   if(sizeof(buf) < bodyLen) {
@@ -341,7 +341,7 @@ castor::legacymsg::VdqmDrvRqstMsgBody castor::legacymsg::VdqmProxyTcpIp::readDri
 //-----------------------------------------------------------------------------
 // writeCommitAck
 //-----------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyTcpIp::writeCommitAck(const int fd) throw(castor::exception::Exception) {
+void castor::legacymsg::VdqmProxyTcpIp::writeCommitAck(const int fd)  {
   legacymsg::MessageHeader ack;
   ack.magic = VDQM_MAGIC;
   ack.reqType = VDQM_COMMIT;
@@ -363,7 +363,7 @@ void castor::legacymsg::VdqmProxyTcpIp::writeCommitAck(const int fd) throw(casto
 //-----------------------------------------------------------------------------
 // tapeUnmounted
 //-----------------------------------------------------------------------------
-void  castor::legacymsg::VdqmProxyTcpIp::tapeUnmounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid) throw(castor::exception::Exception) {
+void  castor::legacymsg::VdqmProxyTcpIp::tapeUnmounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid)  {
   int status = VDQM_VOL_UNMOUNT;
 
   try {

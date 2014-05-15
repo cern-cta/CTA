@@ -97,7 +97,7 @@ namespace castor {
         /**
          * Reset the converter statements.
          */
-        void reset() throw ();
+        void reset() throw();
 
       public:
 
@@ -107,7 +107,7 @@ namespace castor {
          * @exception throws Exception in case of errors, in particular in case of permission denial
          */
         virtual void storeRequest(castor::stager::Request* req)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * stores a simple request into the stager DB.
@@ -271,7 +271,7 @@ namespace castor {
          std::vector<castor::bwlist::BWUser*> users,
          std::vector<castor::bwlist::RequestType*> requestTypes,
          bool isAdd)
-          throw (castor::exception::Exception);
+          ;
 
         /**
          * list privileges
@@ -292,7 +292,7 @@ namespace castor {
         listPrivileges
         (const std::string svcClassName, const int user,
          const int group, const int requestType)
-          throw (castor::exception::Exception);
+          ;
 
       private:
 

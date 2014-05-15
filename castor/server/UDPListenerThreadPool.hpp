@@ -67,7 +67,7 @@ namespace castor {
        * Binds a standard UDPSocket to the given port.
        * @throw castor::exception::Exception if the port is busy.
        */
-      virtual void bind() throw (castor::exception::Exception);
+      virtual void bind() ;
 
       /**
        * The listening loop implementation for this Listener, based on standard UDPSocket.

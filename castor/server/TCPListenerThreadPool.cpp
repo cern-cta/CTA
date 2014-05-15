@@ -38,7 +38,7 @@ castor::server::TCPListenerThreadPool::TCPListenerThreadPool
  castor::server::IThread* thread,
  unsigned int listenPort,
  bool waitIfBusy,
- unsigned int nbThreads) throw(castor::exception::Exception) :
+ unsigned int nbThreads)  :
   ListenerThreadPool(poolName, thread, listenPort, waitIfBusy, nbThreads) {}
 
 //------------------------------------------------------------------------------
@@ -52,7 +52,7 @@ castor::server::TCPListenerThreadPool::TCPListenerThreadPool
  unsigned int initThreads,
  unsigned int maxThreads,
  unsigned int threshold,
- unsigned int maxTasks) throw(castor::exception::Exception) :
+ unsigned int maxTasks)  :
   ListenerThreadPool(poolName, thread, listenPort, waitIfBusy,
                      initThreads, maxThreads, threshold, maxTasks) {}
 
@@ -64,7 +64,7 @@ castor::server::TCPListenerThreadPool::~TCPListenerThreadPool() throw() {}
 //------------------------------------------------------------------------------
 // bind
 //------------------------------------------------------------------------------
-void castor::server::TCPListenerThreadPool::bind() throw (castor::exception::Exception) {
+void castor::server::TCPListenerThreadPool::bind()  {
   // Create a socket for the server, bind, and listen
   m_sock = new castor::io::ServerSocket(m_port, true);
 }

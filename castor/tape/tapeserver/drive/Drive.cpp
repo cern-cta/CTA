@@ -60,7 +60,7 @@ m_tapeFD(-1),  m_sysWrapper(sw) {
   UpdateDriveStatus();
 }
 
-void drives::DriveGeneric::UpdateDriveStatus() throw (Exception) {
+void drives::DriveGeneric::UpdateDriveStatus()  {
   /* Read drive status */
   castor::exception::Errnum::throwOnMinusOne(m_sysWrapper.ioctl(m_tapeFD, MTIOCGET, &m_mtInfo), std::string("Could not read drive status: ") + m_SCSIInfo.nst_dev);
   if(GMT_BOT(m_mtInfo.mt_gstat)) m_driveStatus.bot=true; else m_driveStatus.bot=false;
@@ -74,7 +74,7 @@ void drives::DriveGeneric::UpdateDriveStatus() throw (Exception) {
  * All comulative and threshold log counter values will be reset to their
  * default values as specified in that pages reset behavior section.
  */
-void drives::DriveGeneric::clearCompressionStats() throw (Exception) {
+void drives::DriveGeneric::clearCompressionStats()  {
   SCSI::Structures::logSelectCDB_t cdb;
   cdb.PCR = 1; /* PCR set */
   cdb.PC = 0x3; /* PC = 11b  for T10000 only*/
@@ -97,7 +97,7 @@ void drives::DriveGeneric::clearCompressionStats() throw (Exception) {
  * Information about the drive. The vendor id is used in the user labels of the files.
  * @return    The deviceInfo structure with the information about the drive.
  */
-drives::deviceInfo drives::DriveGeneric::getDeviceInfo() throw (Exception) {
+drives::deviceInfo drives::DriveGeneric::getDeviceInfo()  {
   SCSI::Structures::inquiryCDB_t cdb;
   SCSI::Structures::inquiryData_t inquiryData;
   SCSI::Structures::senseData_t<255> senseBuff;
@@ -130,7 +130,7 @@ drives::deviceInfo drives::DriveGeneric::getDeviceInfo() throw (Exception) {
  * Information about the serial number of the drive. 
  * @return   Right-aligned ASCII data for the vendor-assigned serial number.
  */
-std::string drives::DriveGeneric::getSerialNumber() throw (Exception) {
+std::string drives::DriveGeneric::getSerialNumber()  {
   SCSI::Structures::inquiryCDB_t cdb;
   SCSI::Structures::inquiryUnitSerialNumberData_t inquirySerialData;
   SCSI::Structures::senseData_t<255> senseBuff;
@@ -165,7 +165,7 @@ std::string drives::DriveGeneric::getSerialNumber() throw (Exception) {
  * @param blockId The blockId, represented in local endianness.
  */
 void drives::DriveGeneric::positionToLogicalObject(uint32_t blockId)
-throw (Exception) {
+ {
   SCSI::Structures::locate10CDB_t cdb;
   SCSI::Structures::senseData_t<255> senseBuff;
   SCSI::Structures::LinuxSGIO_t sgh; 
@@ -191,7 +191,7 @@ throw (Exception) {
  * on the dirty data still in the write buffer.
  */
 drives::positionInfo drives::DriveGeneric::getPositionInfo()
-throw (Exception) {
+ {
   SCSI::Structures::readPositionCDB_t cdb;
   SCSI::Structures::readPositionDataShortForm_t positionData;
   SCSI::Structures::senseData_t<255> senseBuff;
@@ -238,7 +238,7 @@ throw (Exception) {
  * Section is 4.2.17 in SSC-3.
  * @return list of tape alerts descriptions. They are simply used for logging.
  */
-std::vector<std::string> drives::DriveGeneric::getTapeAlerts() throw (Exception) {
+std::vector<std::string> drives::DriveGeneric::getTapeAlerts()  {
   /* return vector */
   std::vector<std::string> ret;
   /* We don't know how many elements we'll get. Prepare a 100 parameters array */
@@ -288,7 +288,7 @@ std::vector<std::string> drives::DriveGeneric::getTapeAlerts() throw (Exception)
  *                     on the drive for the tape. By default it is enabled.
  */
 void drives::DriveGeneric::setDensityAndCompression(bool compression,
-    unsigned char densityCode) throw (Exception) {
+    unsigned char densityCode)  {
   SCSI::Structures::modeSenseDeviceConfiguration_t devConfig;
   { // get info from the drive
     SCSI::Structures::modeSense6CDB_t cdb;
@@ -346,7 +346,7 @@ void drives::DriveGeneric::setDensityAndCompression(bool compression,
  * layer, unless the parameter turns out to be disused.
  * @param bufWrite: value of the buffer write switch
  */
-void drives::DriveGeneric::setSTBufferWrite(bool bufWrite) throw (Exception) {
+void drives::DriveGeneric::setSTBufferWrite(bool bufWrite)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTSETDRVBUFFER;
   m_mtCmd.mt_count = bufWrite ? (MT_ST_SETBOOLEANS | MT_ST_BUFFER_WRITES) : (MT_ST_CLEARBOOLEANS | MT_ST_BUFFER_WRITES);
@@ -363,7 +363,7 @@ void drives::DriveGeneric::setSTBufferWrite(bool bufWrite) throw (Exception) {
  * all tape drives.
  * TODO: synchronous? Timeout?
  */    
-void drives::DriveGeneric::spaceToEOM(void) throw (Exception) {
+void drives::DriveGeneric::spaceToEOM(void)  {
   setSTFastMTEOM(false);
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTEOM;
@@ -379,7 +379,7 @@ void drives::DriveGeneric::spaceToEOM(void) throw (Exception) {
  * the higher levels of the software (TODO: protected?).
  * @param fastMTEOM the option switch.
  */
-void drives::DriveGeneric::setSTFastMTEOM(bool fastMTEOM) throw (Exception) {
+void drives::DriveGeneric::setSTFastMTEOM(bool fastMTEOM)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTSETDRVBUFFER;
   m_mtCmd.mt_count = fastMTEOM ? (MT_ST_SETBOOLEANS | MT_ST_FAST_MTEOM) : (MT_ST_CLEARBOOLEANS | MT_ST_FAST_MTEOM);
@@ -392,7 +392,7 @@ void drives::DriveGeneric::setSTFastMTEOM(bool fastMTEOM) throw (Exception) {
  * Jump to end of data. EOM in ST driver jargon, end of data (which is more accurate)
  * in SCSI terminology). This uses the fast setting (not to be used for MIR rebuild) 
  */
-void drives::DriveGeneric::fastSpaceToEOM(void) throw (Exception) {
+void drives::DriveGeneric::fastSpaceToEOM(void)  {
   setSTFastMTEOM(true);
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTEOM;
@@ -405,7 +405,7 @@ void drives::DriveGeneric::fastSpaceToEOM(void) throw (Exception) {
 /**
  * Rewind tape.
  */
-void drives::DriveGeneric::rewind(void) throw (Exception) {
+void drives::DriveGeneric::rewind(void)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTREW;
   m_mtCmd.mt_count = 1;
@@ -418,7 +418,7 @@ void drives::DriveGeneric::rewind(void) throw (Exception) {
  * Space count file marks backwards.
  * @param count
  */
-void drives::DriveGeneric::spaceFileMarksBackwards(size_t count) throw (Exception) {
+void drives::DriveGeneric::spaceFileMarksBackwards(size_t count)  {
   size_t tobeskipped = count;
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTBSF;
@@ -434,7 +434,7 @@ void drives::DriveGeneric::spaceFileMarksBackwards(size_t count) throw (Exceptio
  * Space count file marks forward.
  * @param count
  */
-void drives::DriveGeneric::spaceFileMarksForward(size_t count) throw (Exception) {
+void drives::DriveGeneric::spaceFileMarksForward(size_t count)  {
   size_t tobeskipped = count;
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTFSF;
@@ -453,7 +453,7 @@ void drives::DriveGeneric::spaceFileMarksForward(size_t count) throw (Exception)
  * next logical object is not a logical block (i.e. if it is a file mark instead).
  * @param count
  */
-void drives::DriveGeneric::spaceBlocksBackwards(size_t count) throw (Exception) {
+void drives::DriveGeneric::spaceBlocksBackwards(size_t count)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTBSR;
   m_mtCmd.mt_count = (int)count;
@@ -469,7 +469,7 @@ void drives::DriveGeneric::spaceBlocksBackwards(size_t count) throw (Exception) 
  * next logical object is not a logical block (i.e. if it is a file mark instead).
  * @param count
  */
-void drives::DriveGeneric::spaceBlocksForward(size_t count) throw (Exception) {
+void drives::DriveGeneric::spaceBlocksForward(size_t count)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTFSR;
   m_mtCmd.mt_count = (int)count;
@@ -481,7 +481,7 @@ void drives::DriveGeneric::spaceBlocksForward(size_t count) throw (Exception) {
 /**
  * Unload the tape.
  */
-void drives::DriveGeneric::unloadTape(void) throw (Exception) {
+void drives::DriveGeneric::unloadTape(void)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTUNLOAD;
   m_mtCmd.mt_count = 1;
@@ -494,7 +494,7 @@ void drives::DriveGeneric::unloadTape(void) throw (Exception) {
  * Synch call to the tape drive. This function will not return before the 
  * data in the drive's buffer is actually committed to the medium.
  */
-void drives::DriveGeneric::flush(void) throw (Exception) {
+void drives::DriveGeneric::flush(void)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTWEOF; //Not using MTNOP because it doesn't do what it claims (see st source code) so here we put "write sync file marks" with count set to 0.
   // The following text is a quote from the SCSI Stream commands manual (SSC-3):
@@ -510,7 +510,7 @@ void drives::DriveGeneric::flush(void) throw (Exception) {
  * are committed to medium.
  * @param count
  */
-void drives::DriveGeneric::writeSyncFileMarks(size_t count) throw (Exception) {
+void drives::DriveGeneric::writeSyncFileMarks(size_t count)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTWEOF;
   m_mtCmd.mt_count = (int)count;
@@ -524,7 +524,7 @@ void drives::DriveGeneric::writeSyncFileMarks(size_t count) throw (Exception) {
  * buffer and the function return immediately.
  * @param count
  */
-void drives::DriveGeneric::writeImmediateFileMarks(size_t count) throw (Exception) {
+void drives::DriveGeneric::writeImmediateFileMarks(size_t count)  {
   struct mtop m_mtCmd;
   m_mtCmd.mt_op = MTWEOFI; //Undocumented in "man st" needs the mtio_add.hh header file (see above)
   m_mtCmd.mt_count = (int)count;
@@ -538,7 +538,7 @@ void drives::DriveGeneric::writeImmediateFileMarks(size_t count) throw (Exceptio
  * @param data pointer the the data block
  * @param count size of the data block
  */
-void drives::DriveGeneric::writeBlock(const void * data, size_t count) throw (Exception) {
+void drives::DriveGeneric::writeBlock(const void * data, size_t count)  {
   castor::exception::Errnum::throwOnMinusOne(
       m_sysWrapper.write(m_tapeFD, data, count),
       "Failed ST write in DriveGeneric::writeBlock");
@@ -550,7 +550,7 @@ void drives::DriveGeneric::writeBlock(const void * data, size_t count) throw (Ex
  * @param count size of the data block
  * @return the actual size of read data
  */
-ssize_t drives::DriveGeneric::readBlock(void * data, size_t count) throw (Exception) {
+ssize_t drives::DriveGeneric::readBlock(void * data, size_t count)  {
   ssize_t res = m_sysWrapper.read(m_tapeFD, data, count);
   castor::exception::Errnum::throwOnMinusOne(res, 
       "Failed ST read in DriveGeneric::readBlock");
@@ -564,7 +564,7 @@ ssize_t drives::DriveGeneric::readBlock(void * data, size_t count) throw (Except
  * @param count size of the data block
  * @return the actual size of read data
  */
-void drives::DriveGeneric::readExactBlock(void * data, size_t count, std::string context) throw (Exception) {
+void drives::DriveGeneric::readExactBlock(void * data, size_t count, std::string context)  {
   ssize_t res = m_sysWrapper.read(m_tapeFD, data, count);
   // First handle block too big
   if (-1 == res && ENOSPC == errno)
@@ -581,7 +581,7 @@ void drives::DriveGeneric::readExactBlock(void * data, size_t count, std::string
  * Read over a file mark. Throw an exception we do not read one.
  * @return the actual size of read data
  */
-void drives::DriveGeneric::readFileMark(std::string context) throw (Exception) {
+void drives::DriveGeneric::readFileMark(std::string context)  {
   char buff[4]; // We need to try and read at least a small amount of data
                 // due to a bug in mhvtl
   ssize_t res = m_sysWrapper.read(m_tapeFD, buff, 4);
@@ -627,7 +627,7 @@ void drives::DriveGeneric::SCSI_inquiry() {
       << SCSI::Structures::toString(*((SCSI::Structures::inquiryData_t *) dataBuff));
 }
 
-drives::compressionStats drives::DriveT10000::getCompression() throw (Exception) {
+drives::compressionStats drives::DriveT10000::getCompression()  {
   compressionStats driveCompressionStats;
   
   SCSI::Structures::LinuxSGIO_t sgh;
@@ -684,7 +684,7 @@ drives::compressionStats drives::DriveT10000::getCompression() throw (Exception)
   return driveCompressionStats;
 }
 
-drives::compressionStats drives::DriveLTO::getCompression() throw (Exception) {
+drives::compressionStats drives::DriveLTO::getCompression()  {
   SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::logSenseCDB_t cdb;
   compressionStats driveCompressionStats;
@@ -758,7 +758,7 @@ drives::compressionStats drives::DriveLTO::getCompression() throw (Exception) {
   return driveCompressionStats;
 }
 
-drives::compressionStats drives::DriveIBM3592::getCompression() throw (Exception) {
+drives::compressionStats drives::DriveIBM3592::getCompression()  {
   SCSI::Structures::LinuxSGIO_t sgh;
   SCSI::Structures::logSenseCDB_t cdb;
   SCSI::Structures::senseData_t<255> senseBuff;
@@ -825,13 +825,13 @@ const char filemark[] = "";
 drives::FakeDrive::FakeDrive() throw() : m_current_position(0) {
   m_tape.reserve(max_fake_drive_record_length);
 }
-drives::compressionStats drives::FakeDrive::getCompression() throw (Exception) {
+drives::compressionStats drives::FakeDrive::getCompression()  {
   throw Exception("FakeDrive::getCompression Not implemented");
 }
-void drives::FakeDrive::clearCompressionStats() throw (Exception) {
+void drives::FakeDrive::clearCompressionStats()  {
   throw Exception("FakeDrive::clearCompressionStats Not implemented");
 }
-drives::deviceInfo drives::FakeDrive::getDeviceInfo() throw (Exception) {
+drives::deviceInfo drives::FakeDrive::getDeviceInfo()  {
   deviceInfo devInfo;
   devInfo.product = "Fake Drv";
   devInfo.productRevisionLevel = "0.1";
@@ -839,13 +839,13 @@ drives::deviceInfo drives::FakeDrive::getDeviceInfo() throw (Exception) {
   devInfo.serialNumber = "123456";
   return devInfo;
 }
-std::string drives::FakeDrive::getSerialNumber() throw (Exception) {
+std::string drives::FakeDrive::getSerialNumber()  {
   throw Exception("FakeDrive::getSerialNumber Not implemented");
 }
-void drives::FakeDrive::positionToLogicalObject(uint32_t blockId) throw (Exception) {
+void drives::FakeDrive::positionToLogicalObject(uint32_t blockId)  {
   m_current_position = blockId;
 }
-drives::positionInfo drives::FakeDrive::getPositionInfo() throw (Exception) {
+drives::positionInfo drives::FakeDrive::getPositionInfo()  {
   positionInfo pos;
   pos.currentPosition = m_current_position;
   pos.dirtyBytesCount = 0;
@@ -853,31 +853,31 @@ drives::positionInfo drives::FakeDrive::getPositionInfo() throw (Exception) {
   pos.oldestDirtyObject = 0;
   return pos;
 }
-std::vector<std::string> drives::FakeDrive::getTapeAlerts() throw (Exception) {
+std::vector<std::string> drives::FakeDrive::getTapeAlerts()  {
   throw Exception("FakeDrive::getTapeAlerts Not implemented");
 }
-void drives::FakeDrive::setDensityAndCompression(bool compression, unsigned char densityCode) throw (Exception) {
+void drives::FakeDrive::setDensityAndCompression(bool compression, unsigned char densityCode)  {
   throw Exception("FakeDrive::setDensityAndCompression Not implemented");
 }
-drives::driveStatus drives::FakeDrive::getDriveStatus() throw (Exception) {
+drives::driveStatus drives::FakeDrive::getDriveStatus()  {
   throw Exception("FakeDrive::getDriveStatus Not implemented");
 }
-drives::tapeError drives::FakeDrive::getTapeError() throw (Exception) {
+drives::tapeError drives::FakeDrive::getTapeError()  {
   throw Exception("FakeDrive::getTapeError Not implemented");
 }
-void drives::FakeDrive::setSTBufferWrite(bool bufWrite) throw (Exception) {
+void drives::FakeDrive::setSTBufferWrite(bool bufWrite)  {
   throw Exception("FakeDrive::setSTBufferWrite Not implemented");
 }
-void drives::FakeDrive::fastSpaceToEOM(void) throw (Exception) {
+void drives::FakeDrive::fastSpaceToEOM(void)  {
   m_current_position = m_tape.size()-1;
 }
-void drives::FakeDrive::rewind(void) throw (Exception) {
+void drives::FakeDrive::rewind(void)  {
   m_current_position = 0;
 }
-void drives::FakeDrive::spaceToEOM(void) throw (Exception) {
+void drives::FakeDrive::spaceToEOM(void)  {
   m_current_position = m_tape.size()-1;
 }
-void drives::FakeDrive::spaceFileMarksBackwards(size_t count) throw (Exception) {
+void drives::FakeDrive::spaceFileMarksBackwards(size_t count)  {
   if(!count) return;
   size_t countdown = count;
   std::vector<std::string>::size_type i=0;
@@ -889,7 +889,7 @@ void drives::FakeDrive::spaceFileMarksBackwards(size_t count) throw (Exception) 
   }  
   m_current_position = i-1; //BOT side of the filemark
 }
-void drives::FakeDrive::spaceFileMarksForward(size_t count) throw (Exception) {
+void drives::FakeDrive::spaceFileMarksForward(size_t count)  {
   if(!count) return;
   size_t countdown = count;
   std::vector<std::string>::size_type i=0;
@@ -901,18 +901,18 @@ void drives::FakeDrive::spaceFileMarksForward(size_t count) throw (Exception) {
   }
   m_current_position = i; //EOT side of the filemark
 }
-void drives::FakeDrive::spaceBlocksBackwards(size_t count) throw (Exception) {
+void drives::FakeDrive::spaceBlocksBackwards(size_t count)  {
   m_current_position -= count;
 }
-void drives::FakeDrive::spaceBlocksForward(size_t count) throw (Exception) {
+void drives::FakeDrive::spaceBlocksForward(size_t count)  {
   m_current_position += count;
 }
-void drives::FakeDrive::unloadTape(void) throw (Exception) {
+void drives::FakeDrive::unloadTape(void)  {
 }
-void drives::FakeDrive::flush(void) throw (Exception) {
+void drives::FakeDrive::flush(void)  {
   //already flushing
 }
-void drives::FakeDrive::writeSyncFileMarks(size_t count) throw (Exception) {
+void drives::FakeDrive::writeSyncFileMarks(size_t count)  {
   if(count==0) return;  
   m_tape.resize(m_current_position+count);
   for(size_t i=0; i<count; ++i) {
@@ -925,15 +925,15 @@ void drives::FakeDrive::writeSyncFileMarks(size_t count) throw (Exception) {
     m_current_position++;
   }
 }
-void drives::FakeDrive::writeImmediateFileMarks(size_t count) throw (Exception) {
+void drives::FakeDrive::writeImmediateFileMarks(size_t count)  {
   writeSyncFileMarks(count);
 }
-void drives::FakeDrive::writeBlock(const void * data, size_t count) throw (Exception) {  
+void drives::FakeDrive::writeBlock(const void * data, size_t count)  {  
   m_tape.resize(m_current_position+1);
   m_tape[m_current_position].assign((const char *)data, count);
   m_current_position++;
 }
-ssize_t drives::FakeDrive::readBlock(void *data, size_t count) throw (Exception) {
+ssize_t drives::FakeDrive::readBlock(void *data, size_t count)  {
   if(count < m_tape[m_current_position].size()) {
     throw Exception("Block size too small in FakeDrive::readBlock");
   }
@@ -953,7 +953,7 @@ std::string drives::FakeDrive::contentToString() throw() {
   exc << std::endl;
   return exc.str();
 }
-void drives::FakeDrive::readExactBlock(void *data, size_t count, std::string context) throw (Exception) {
+void drives::FakeDrive::readExactBlock(void *data, size_t count, std::string context)  {
   if(count != m_tape[m_current_position].size()) {
     std::stringstream exc;
     exc << "Wrong block size in FakeDrive::readExactBlock. Expected: " << count << " Found: " << m_tape[m_current_position].size() << " Position: " << m_current_position << " String: " << m_tape[m_current_position] << std::endl;
@@ -965,21 +965,21 @@ void drives::FakeDrive::readExactBlock(void *data, size_t count, std::string con
   }
   m_current_position++;
 }
-void drives::FakeDrive::readFileMark(std::string context) throw (Exception) {
+void drives::FakeDrive::readFileMark(std::string context)  {
   if(m_tape[m_current_position].compare(filemark)) {
     throw Exception("Failed FakeDrive::readFileMark");
   }
   m_current_position++;  
 }
-bool drives::FakeDrive::isReady() throw(Exception) {
+bool drives::FakeDrive::isReady()  {
   return true;
 }  
-bool drives::FakeDrive::isWriteProtected() throw(Exception) {
+bool drives::FakeDrive::isWriteProtected()  {
   return false;
 }
-bool drives::FakeDrive::isAtBOT() throw(Exception) {
+bool drives::FakeDrive::isAtBOT()  {
   return m_current_position==0;
 }
-bool drives::FakeDrive::isAtEOD() throw(Exception) {
+bool drives::FakeDrive::isAtEOD()  {
   return m_current_position==m_tape.size()-1;
 }

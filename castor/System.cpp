@@ -41,7 +41,7 @@
 //------------------------------------------------------------------------------
 // getHostName
 //------------------------------------------------------------------------------
-std::string castor::System::getHostName() throw (castor::exception::Exception)
+std::string castor::System::getHostName() 
 {
   // All this to get the hostname, thanks to C !
   int len = 64;
@@ -98,7 +98,7 @@ std::string castor::System::getHostName() throw (castor::exception::Exception)
 // porttoi
 //------------------------------------------------------------------------------
 int castor::System::porttoi(char* str)
-  throw (castor::exception::Exception) {
+   {
   char* dp = str;
   errno = 0;
   int iport = strtoul(str, &dp, 0);
@@ -122,7 +122,7 @@ int castor::System::porttoi(char* str)
 //------------------------------------------------------------------------------
 std::string castor::System::ipAddressToHostname
 (unsigned long long ipAddress)
-  throw (castor::exception::Exception) {
+   {
   std::ostringstream res;
   res << ((ipAddress & 0xFF000000) >> 24) << "."
       << ((ipAddress & 0x00FF0000) >> 16) << "."
@@ -146,7 +146,7 @@ std::string castor::System::ipAddressToHostname
 // switchToCastorSuperuser
 //------------------------------------------------------------------------------
 void castor::System::switchToCastorSuperuser()
-  throw (castor::exception::Exception) {
+   {
   struct passwd *stage_passwd;    // password structure pointer
   struct group  *stage_group;     // group structure pointer
 

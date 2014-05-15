@@ -107,7 +107,7 @@ castor::metrics::MetricsCollector::~MetricsCollector() throw()
 // updateHistograms
 //------------------------------------------------------------------------------
 void castor::metrics::MetricsCollector::updateHistograms(castor::IObject* obj)
-  throw (castor::exception::Exception)
+  
 {
   for(HistogramsIter h = histBegin(); h != histEnd(); h++) {
     CountersIter c;
@@ -132,7 +132,7 @@ void castor::metrics::MetricsCollector::updateHistograms(castor::IObject* obj)
 // printXml
 //------------------------------------------------------------------------------
 std::string castor::metrics::MetricsCollector::printXml(std::string histName, std::string counterName)
-  throw (castor::exception::Exception)
+  
 {
   std::ostringstream ss;
   time_t t = time(NULL);

@@ -72,14 +72,14 @@ public:
    * and therefore delete it as needed.
    */
   void registerHandler(PollEventHandler *const handler)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Handles any pending events.
    *
    * @param timeout Timeout in milliseconds.
    */
-  void handleEvents(const int timeout) throw(castor::exception::Exception);
+  void handleEvents(const int timeout) ;
 
 private:
 
@@ -105,21 +105,21 @@ private:
    * @return The array of file descriptors.  Please note that is the
    * responsibility of the caller to delete the array.
    */
-  struct pollfd *buildPollFds(nfds_t &nfds) throw(castor::exception::Exception);
+  struct pollfd *buildPollFds(nfds_t &nfds) ;
 
   /**
    * Dispatches the appropriate event handlers based on the specified result
    * from poll().
    */
   void dispatchEventHandlers(const struct pollfd *const fds, const nfds_t nfds)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Returns the event handler associated with the specified integer
    * file-descriptor.
    */
   PollEventHandler *findHandler(const int fd)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Removes the specified handler from the reactor.  This method effectively
@@ -128,7 +128,7 @@ private:
    * @param handler The handler to be removed.
    */
   void removeHandler(PollEventHandler *const handler)
-    throw(castor::exception::Exception);
+    ;
 
 }; // class PollReactorImpl
 

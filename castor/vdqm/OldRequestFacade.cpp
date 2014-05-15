@@ -67,7 +67,7 @@ castor::vdqm::OldRequestFacade::~OldRequestFacade() throw() {
 // checkRequestType
 //------------------------------------------------------------------------------
 void castor::vdqm::OldRequestFacade::checkRequestType(const Cuuid_t cuuid) 
-  throw (castor::exception::Exception) {
+   {
 
   int i;
   int req_values[] = VDQM_REQ_VALUES;
@@ -104,7 +104,7 @@ void castor::vdqm::OldRequestFacade::checkRequestType(const Cuuid_t cuuid)
 //------------------------------------------------------------------------------
 bool castor::vdqm::OldRequestFacade::handleRequestType(
   OldProtocolInterpreter* oldProtInterpreter, const Cuuid_t cuuid)
-  throw (castor::exception::Exception) {
+   {
   
   bool handleRequest = true;
 

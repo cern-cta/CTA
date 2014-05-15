@@ -71,7 +71,7 @@ namespace castor      {
          * Get all the pending migration mounts
          */
         virtual void  getMigrationMountsWithoutTapes(std::list<migrationMountParameters>& migrationMounts)
-          throw (castor::exception::Exception)=0;
+          =0;
 
         struct blockingSessionInfo {
           std::string vid;
@@ -83,7 +83,7 @@ namespace castor      {
          */
         virtual void getMigrationMountReqsForVids(const std::list<std::string>& vids,
                                                           std::list<blockingSessionInfo>& blockingSessions)
-          throw (castor::exception::Exception)=0;
+          =0;
 
         /**
          * Associate to each migrationMountParameters a Tape
@@ -91,7 +91,7 @@ namespace castor      {
         virtual void attachTapesToMigMounts(const std::list<u_signed64>& strIds,
                                             const std::list<std::string>& vids,
                                             const std::list<int>& fseqs)
-          throw (castor::exception::Exception)=0;
+          =0;
 
         /** get a tape for which a VDQM request si needed
          * @param vid a string filled with the VID of the selected tape
@@ -102,7 +102,7 @@ namespace castor      {
         virtual void getTapeWithoutDriveReq(std::string &vid,
                                             int &vdqmPriority,
                                             int &mode)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
         /** updates the db with the VDQM mountTransaction id
          * after we have sent a recall or migration request to VDQM
@@ -118,7 +118,7 @@ namespace castor      {
                                     const int mode,
                                     const char *label,
                                     const char *density)
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /**
          * Little nested struct to simplify the interface of getTapesWithDriveReqs
@@ -137,34 +137,34 @@ namespace castor      {
          */
         virtual void getTapesWithDriveReqs(std::list<TapeRequest>& requests,
                                            const u_signed64& timeOut)
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /** restarts requests lost by VDQM or a request which was processed
          * while the tapegateway was down
          * @param mountTransactionIds the transaction ids of the requests to be restarted
          */
         virtual void restartLostReqs(const std::list<int>& mountTransactionIds)
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /**
          * Get the tapecopies which faced a migration failure
          */
         virtual void  getFailedMigrations(std::list<castor::tape::tapegateway::RetryPolicyElement>& candidates)
-          throw (castor::exception::Exception)=0;
+          =0;
 
         /**
          * Update the db using the retry migration policy returned values
          */
         virtual void  setMigRetryResult(const std::list<u_signed64>& mjToRetry,
                                         const std::list<u_signed64>& mjToFail )
-          throw (castor::exception::Exception)=0;
+          =0;
 
         /**
          * Update the database when the Tapegateway allows us to serve a request
          */
         virtual void  startTapeSession( const castor::tape::tapegateway::VolumeRequest& startReq,
                                         castor::tape::tapegateway::Volume& volume) 
-          throw (castor::exception::Exception)=0; 
+          =0; 
 
         /**
          *  Structure carrying the tape information needed for a release.
@@ -183,7 +183,7 @@ namespace castor      {
          */
         virtual void  getTapeToRelease(const u_signed64& mountTransactionId,
           castor::tape::tapegateway::ITapeGatewaySvc::TapeToReleaseInfo& tape)
-          throw (castor::exception::Exception)=0;
+          =0;
 
           /** Ends a tape session by dropping it from the DB. If the tapebridge
            * comes afterwards asking for more data on the dropped session, it will
@@ -195,7 +195,7 @@ namespace castor      {
            */
         virtual void endTapeSession(const u_signed64 mountTransactionId,
                                     const int errorCode = 0)
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /** Ends a tape session by dropping it from the DB. If the tapebridge
          * comes afterwards asking for more data on the dropped session, it will
@@ -209,13 +209,13 @@ namespace castor      {
          */
       virtual void endTapeSessionAutonomous(const u_signed64 mountTransactionId,
                                   const int errorCode = 0)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
         /**
          *  delete migration mounts with wrong tapepool
          */
         virtual void deleteMigrationMountWithBadTapePool(const u_signed64 migrationMountId)
-          throw (castor::exception::Exception)=0;
+          =0;
       
         /**
          * Mark tape full for the tape session.
@@ -224,7 +224,7 @@ namespace castor      {
          * the session. Session is passed by VDQM request id (like for end/failSession).
          */
         virtual void flagTapeFullForMigrationSession(const u_signed64& tapeRequestId)
-          throw (castor::exception::Exception) = 0;
+           = 0;
       
         /**
          * Find the VID (and just it) for a migration mount.
@@ -245,7 +245,7 @@ namespace castor      {
                                              const std::string &vid,
                                              const int errorCode,
                                              const std::string &errorMsg)
-          throw (castor::exception::Exception) = 0;
+           = 0;
 
         /**
          * Get the next best files to migrate
@@ -254,7 +254,7 @@ namespace castor      {
             const std::string & context,
             u_signed64 mountTransactionId, u_signed64 maxFiles, u_signed64 maxBytes,
             std::queue<castor::tape::tapegateway::FileToMigrateStruct>& filesToMigrate)
-          throw (castor::exception::Exception)=0;
+          =0;
 
         /**
          * Structure extending the FileToRecallStruct to allow detailed logging.
@@ -263,7 +263,7 @@ namespace castor      {
         public:
           /* We need to define the constructors for exceptions throwing specs. (Inheritance would bread otherwise) */
           FileToRecallStructWithContext() throw() {};
-          virtual ~FileToRecallStructWithContext() throw () {};
+          virtual ~FileToRecallStructWithContext() throw() {};
           u_signed64 copyNb;
           u_signed64 eUid;
           u_signed64 eGid;
@@ -281,7 +281,7 @@ namespace castor      {
             const std::string & context,
             u_signed64 mountTransactionId, u_signed64 maxFiles, u_signed64 maxBytes,
             std::queue<FileToRecallStructWithContext>& filesToRecall)
-          throw (castor::exception::Exception)=0;
+          =0;
 
         /**
          * Check and update the NS and then the stager DB accordingly from migration result
@@ -292,7 +292,7 @@ namespace castor      {
             const std::string & context, u_signed64 mountTransactionId,
             std::vector<FileMigratedNotificationStruct *>& successes,
             std::vector<FileErrorReportStruct *>& failures)
-          throw (castor::exception::Exception)=0;
+          =0;
 
         /**
          * Check the NS and update the stager DB accordingly for files from recall result
@@ -302,7 +302,7 @@ namespace castor      {
             const std::string & context, u_signed64 mountTransactionId,
             std::vector<FileRecalledNotificationStruct *>& successes,
             std::vector<FileErrorReportStruct *>& failures)
-        throw (castor::exception::Exception)=0;
+        =0;
 
         /**
          *  Bypass access the the underlying DB accessor allowing safe handling from the caller

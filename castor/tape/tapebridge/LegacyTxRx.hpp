@@ -69,7 +69,7 @@ public:
   void sendMsgHeader(
     const int                      socketFd,
     const legacymsg::MessageHeader &header)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Receives a message header.
@@ -89,7 +89,7 @@ public:
   void receiveMsgHeader(
     const int                socketFd,
     legacymsg::MessageHeader &header)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Receives a message header or a connection close message.
@@ -102,7 +102,7 @@ public:
   bool receiveMsgHeaderFromCloseable(
     const int                socketFd,
     legacymsg::MessageHeader &header) 
-    throw(castor::exception::Exception);
+    ;
 
 private:
 

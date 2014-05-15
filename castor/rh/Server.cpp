@@ -171,7 +171,7 @@ void castor::rh::Server::help(std::string programName)
 //------------------------------------------------------------------------------
 // parseCommandLine
 //------------------------------------------------------------------------------
-void castor::rh::Server::parseCommandLine(int argc, char *argv[]) throw (castor::exception::Exception)
+void castor::rh::Server::parseCommandLine(int argc, char *argv[]) 
 {
   bool foreground = false; // Should the daemon run in the foreground?
   Coptions_t longopts[] =

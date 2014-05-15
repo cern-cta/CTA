@@ -34,14 +34,14 @@
 // constructor
 //-----------------------------------------------------------------------------
 castor::vdqm::RequestHandlerThread::RequestHandlerThread()
-  throw () {
+  throw() {
 }
 
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
 castor::vdqm::RequestHandlerThread::~RequestHandlerThread()
-  throw () {
+  throw() {
 }
 
 //-----------------------------------------------------------------------------
@@ -98,7 +98,7 @@ void castor::vdqm::RequestHandlerThread::run(void *param)
 //-----------------------------------------------------------------------------
 void castor::vdqm::RequestHandlerThread::handleRequest(Cuuid_t &cuuid,
   castor::io::ServerSocket &sock)
-  throw(castor::exception::Exception) {
+   {
 
   unsigned short port; // Client port
   unsigned long  ip;   // Client IP

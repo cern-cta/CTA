@@ -151,7 +151,7 @@ void castor::utils::toUpper(std::string &str) {
 // getTimeOfDay
 //---------------------------------------------------------------------------
 void castor::utils::getTimeOfDay(struct timeval *const tv,
-  struct timezone *const tz) throw(castor::exception::Exception) {
+  struct timezone *const tz)  {
   if(0 != gettimeofday(tv, tz)) {
     const int savedErrno = errno;
     char errBuf[100];
@@ -222,7 +222,7 @@ double castor::utils::timevalToDouble(const timeval &tv) throw() {
 // copyString
 //-----------------------------------------------------------------------------
 void castor::utils::copyString(char *const dst, const size_t dstSize,
-  const char *const src) throw(castor::exception::Exception) {
+  const char *const src)  {
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -274,7 +274,7 @@ void castor::utils::copyString(char *const dst, const size_t dstSize,
 // @param maxSize The maximum length the identifier string is permitted to have.
 //------------------------------------------------------------------------------
 static void checkDgnVidSyntax(const char *const idTypeName, const char *id,
-  const size_t maxLen) throw(castor::exception::InvalidArgument) {
+  const size_t maxLen)  {
 
   // Check the length of the identifier string
   const size_t len   = strlen(id);
@@ -306,7 +306,7 @@ static void checkDgnVidSyntax(const char *const idTypeName, const char *id,
 // checkDgnSyntax
 //------------------------------------------------------------------------------
 void castor::utils::checkDgnSyntax(const char *dgn)
-  throw(castor::exception::InvalidArgument) {
+   {
   checkDgnVidSyntax("DGN", dgn, CA_MAXDGNLEN);
 }
 
@@ -314,6 +314,6 @@ void castor::utils::checkDgnSyntax(const char *dgn)
 // checkVidSyntax
 //------------------------------------------------------------------------------
 void castor::utils::checkVidSyntax(const char *vid)
-  throw(castor::exception::InvalidArgument) {
+   {
   checkDgnVidSyntax("VID", vid, CA_MAXVIDLEN);
 }

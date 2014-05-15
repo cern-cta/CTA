@@ -58,7 +58,7 @@ void castor::tape::tapebridge::RtcpJobSubmitter::submit(
   const std::string              &dgn,
   const std::string              &driveUnit,
   legacymsg::RtcpJobReplyMsgBody &reply)
-  throw(castor::exception::Exception) {
+   {
 
   legacymsg::RtcpJobRqstMsgBody request;
 
@@ -151,7 +151,7 @@ void castor::tape::tapebridge::RtcpJobSubmitter::readReply(
   const int                      netReadWriteTimeout,
   const char                     *remoteCopyType,
   legacymsg::RtcpJobReplyMsgBody &reply)
-  throw(castor::exception::Exception) {
+   {
 
   // Read in the message header
   char headerBuf[3 * sizeof(uint32_t)]; // magic + request type + len

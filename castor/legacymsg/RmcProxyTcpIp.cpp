@@ -49,7 +49,7 @@ castor::legacymsg::RmcProxyTcpIp::~RmcProxyTcpIp() throw() {
 //------------------------------------------------------------------------------
 // mountTape
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyTcpIp::mountTape(const std::string &vid, const std::string &librarySlot)  {
   // Verify parameters
   if(vid.empty()) {
     castor::exception::Exception ex;
@@ -108,19 +108,19 @@ castor::legacymsg::RmcProxyTcpIp::RmcLibrarySlotType castor::legacymsg::RmcProxy
 //------------------------------------------------------------------------------
 // mountTapeAcs
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::mountTapeAcs(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyTcpIp::mountTapeAcs(const std::string &vid, const std::string &librarySlot)  {
 }
 
 //------------------------------------------------------------------------------
 // mountTapeManual
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::mountTapeManual(const std::string &vid) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyTcpIp::mountTapeManual(const std::string &vid)  {
 }
 
 //------------------------------------------------------------------------------
 // mountTapeScsi
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid, const std::string &librarySlot)  {
   std::ostringstream task;
   task << "mount tape " << vid << " in " << librarySlot;
 
@@ -179,7 +179,7 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid, con
 //------------------------------------------------------------------------------
 // unmountTape
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyTcpIp::unmountTape(const std::string &vid, const std::string &librarySlot)  {
   // Verify parameters
   if(vid.empty()) {
     castor::exception::Exception ex;
@@ -223,19 +223,19 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTape(const std::string &vid, const
 //------------------------------------------------------------------------------
 // unmountTapeAcs
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::unmountTapeAcs(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyTcpIp::unmountTapeAcs(const std::string &vid, const std::string &librarySlot)  {
 }
 
 //------------------------------------------------------------------------------
 // unmountTapeManual
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::unmountTapeManual(const std::string &vid) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyTcpIp::unmountTapeManual(const std::string &vid)  {
 }
 
 //------------------------------------------------------------------------------
 // unmountTapeScsi
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception) {
+void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid, const std::string &librarySlot)  {
   std::ostringstream task;
   task << "unmount tape " << vid << " from " << librarySlot;
 
@@ -295,7 +295,7 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid, c
 //-----------------------------------------------------------------------------
 // connectToRmc
 //-----------------------------------------------------------------------------
-int castor::legacymsg::RmcProxyTcpIp::connectToRmc(const std::string &hostName) const throw(castor::exception::Exception) {
+int castor::legacymsg::RmcProxyTcpIp::connectToRmc(const std::string &hostName) const  {
   castor::utils::SmartFd smartConnectSock;
   try {
     smartConnectSock.reset(io::connectWithTimeout(hostName, RMC_PORT, m_netTimeout));
@@ -313,7 +313,7 @@ int castor::legacymsg::RmcProxyTcpIp::connectToRmc(const std::string &hostName) 
 // writeRmcMountMsg
 //-----------------------------------------------------------------------------
 void castor::legacymsg::RmcProxyTcpIp::writeRmcMountMsg(const int fd, const RmcMountMsgBody &body)
-  throw(castor::exception::Exception) {
+   {
   char buf[RMC_MSGBUFSIZ];
   const size_t len = marshal(buf, body);
 
@@ -330,7 +330,7 @@ void castor::legacymsg::RmcProxyTcpIp::writeRmcMountMsg(const int fd, const RmcM
 //-----------------------------------------------------------------------------
 // readRmcMsgHeader
 //-----------------------------------------------------------------------------
-castor::legacymsg::MessageHeader castor::legacymsg::RmcProxyTcpIp::readRmcMsgHeader(const int fd) throw(castor::exception::Exception) {
+castor::legacymsg::MessageHeader castor::legacymsg::RmcProxyTcpIp::readRmcMsgHeader(const int fd)  {
   char buf[12]; // Magic + type + len
   MessageHeader header;
 
@@ -362,7 +362,7 @@ castor::legacymsg::MessageHeader castor::legacymsg::RmcProxyTcpIp::readRmcMsgHea
 // writeRmcUnmountMsg
 //-----------------------------------------------------------------------------
 void castor::legacymsg::RmcProxyTcpIp::writeRmcUnmountMsg(const int fd, const RmcUnmountMsgBody &body)
-  throw(castor::exception::Exception) {
+   {
   char buf[RMC_MSGBUFSIZ];
   const size_t len = marshal(buf, body);
 

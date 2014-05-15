@@ -50,7 +50,7 @@
 //-----------------------------------------------------------------------------
 // constructor
 //-----------------------------------------------------------------------------
-castor::stager::daemon::BulkStageReqSvcThread::BulkStageReqSvcThread() throw () :
+castor::stager::daemon::BulkStageReqSvcThread::BulkStageReqSvcThread() throw() :
   castor::server::SelectProcessThread() {}
 
 //-----------------------------------------------------------------------------

@@ -72,7 +72,7 @@ namespace castor {
      * Performs the notification by signalling the appropriate 
      * condition variable
      */
-    void doNotify(char tpName, int nbThreads = 1) throw ();
+    void doNotify(char tpName, int nbThreads = 1) throw();
 
   private:
 

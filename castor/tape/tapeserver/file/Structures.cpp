@@ -87,7 +87,7 @@ void tapeFile::HDR1EOF1::fillCommon(
 }
 
 void tapeFile::HDR1EOF1::verifyCommon()
-  const throw (exceptions::Errnum) {
+  const  {
 
   if (!cmpString(fileId, ""))
     throw Exception(
@@ -141,7 +141,7 @@ void tapeFile::HDR1::fill(
   fillCommon(_fileId, _VSN, _fSeq);
 }
 
-void tapeFile::HDR1::verify() const throw (Exception) {
+void tapeFile::HDR1::verify() const  {
   if (cmpString(label, "HDR1"))
     throw Exception(std::string("Failed verify for the HDR1: ") +
           tapeFile::toString(label));
@@ -160,7 +160,7 @@ void tapeFile::HDR1PRELABEL::fill(std::string _VSN) {
 }
 
 void tapeFile::HDR1PRELABEL::verify()
-  const throw (Exception) {
+  const  {
 
   if (cmpString(label, "HDR1"))
     throw Exception(std::string("Failed verify for the HDR1: ") +
@@ -186,7 +186,7 @@ void tapeFile::EOF1::fill(
   fillCommon(_fileId, _VSN, _fSeq);
 }
 
-void tapeFile::EOF1::verify() const throw (Exception) {
+void tapeFile::EOF1::verify() const  {
   if (cmpString(label, "EOF1"))
     throw Exception(std::string("Failed verify for the EOF1: ") +
           tapeFile::toString(label));
@@ -212,7 +212,7 @@ void tapeFile::HDR2EOF2::fillCommon(int _blockLength, bool driveHasCompression) 
 }
 
 void tapeFile::HDR2EOF2::verifyCommon() 
-  const throw (Exception) {
+  const  {
 
   if (cmpString(recordFormat, "F"))
     throw Exception(
@@ -243,7 +243,7 @@ void tapeFile::HDR2::fill(int _blockLength, bool driveHasCompression) {
   
   fillCommon(_blockLength, driveHasCompression);
 }
-void tapeFile::HDR2::verify() const throw (Exception) {
+void tapeFile::HDR2::verify() const  {
   if (cmpString(label, "HDR2"))
     throw Exception(std::string("Failed verify for the HDR2: ") +
           tapeFile::toString(label));
@@ -257,7 +257,7 @@ void tapeFile::EOF2::fill(int _blockLength, bool driveHasCompression) {
   fillCommon(_blockLength, driveHasCompression);
 }
 
-void tapeFile::EOF2::verify() const throw (Exception) {
+void tapeFile::EOF2::verify() const  {
   if (cmpString(label, "EOF2"))
     throw Exception(std::string("Failed verify for the EOF2: ") +
           tapeFile::toString(label));
@@ -282,7 +282,7 @@ void tapeFile::UHL1UTL1::fillCommon(int fSeq,
 }
 
 void tapeFile::UHL1UTL1::verifyCommon() 
-  const throw (Exception){  
+  const {  
 
   if (!cmpString(actualfSeq, ""))
     throw Exception(
@@ -329,7 +329,7 @@ void tapeFile::UHL1::fill(int fSeq,
   fillCommon(fSeq, blockSize, siteName, hostName, deviceInfo);
 }
 
-void tapeFile::UHL1::verify() const throw (Exception) {
+void tapeFile::UHL1::verify() const  {
   if (cmpString(label, "UHL1"))
     throw Exception(std::string("Failed verify for the UHL1: ") +
           tapeFile::toString(label));
@@ -348,7 +348,7 @@ void tapeFile::UTL1::fill(int fSeq,
   fillCommon(fSeq, blockSize, siteName, hostName, deviceInfo);
 }
 
-void tapeFile::UTL1::verify() const throw (Exception) {
+void tapeFile::UTL1::verify() const  {
   if (cmpString(label, "UTL1"))
     throw Exception(std::string("Failed verify for the UTL1: ") +
           tapeFile::toString(label));

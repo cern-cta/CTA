@@ -154,7 +154,7 @@ void castor::db::ora::OraStatement::setNull(int pos)
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::setDataBuffer
 (int pos, void* buffer, unsigned dbType, unsigned size, void* bufLens)
-  throw(castor::exception::SQLError) {
+   {
   if(dbType > DBTYPE_MAXVALUE) {
     castor::exception::SQLError ex;
     ex.getMessage() << "Invalid dbType: " << dbType;
@@ -176,7 +176,7 @@ void castor::db::ora::OraStatement::setDataBuffer
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::setDataBufferArray
 (int pos, void* buffer, unsigned dbType, unsigned size, unsigned elementSize, void* bufLens)
-  throw(castor::exception::Exception) {
+   {
   try {
     if (0 == m_arraySize) {
       m_arraySize = (ub4*) malloc(sizeof(ub4));
@@ -204,7 +204,7 @@ void castor::db::ora::OraStatement::setDataBufferArray
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::setDataBufferUInt64Array
 (int pos, std::vector<u_signed64> data)
-  throw(castor::exception::Exception) {
+   {
   m_arrayPos = pos;
   // a dedicated method to handle u_signed64 arrays, i.e. arrays of ids
   unsigned int nb1 = data.size() == 0 ? 1 : data.size();
@@ -234,7 +234,7 @@ void castor::db::ora::OraStatement::setDataBufferUInt64Array
 // registerOutParam
 //------------------------------------------------------------------------------
 void castor::db::ora::OraStatement::registerOutParam(int pos, unsigned dbType)
-  throw (castor::exception::SQLError) {
+   {
   if(dbType > DBTYPE_MAXVALUE) {
     castor::exception::SQLError ex;
     ex.getMessage() << "Invalid dbType: " << dbType;
@@ -254,7 +254,7 @@ void castor::db::ora::OraStatement::registerOutParam(int pos, unsigned dbType)
 // getInt
 //------------------------------------------------------------------------------
 int castor::db::ora::OraStatement::getInt(int pos)
-  throw (castor::exception::SQLError) {
+   {
   try {
     return m_statement->getInt(pos);
   }
@@ -270,7 +270,7 @@ int castor::db::ora::OraStatement::getInt(int pos)
 // getInt64
 //------------------------------------------------------------------------------
 signed64 castor::db::ora::OraStatement::getInt64(int pos)
-  throw (castor::exception::SQLError) {
+   {
   try {
     return (signed64)m_statement->getDouble(pos);
   }
@@ -286,7 +286,7 @@ signed64 castor::db::ora::OraStatement::getInt64(int pos)
 // getUInt64
 //------------------------------------------------------------------------------
 u_signed64 castor::db::ora::OraStatement::getUInt64(int pos)
-  throw (castor::exception::SQLError) {
+   {
   try {
     return (u_signed64)m_statement->getDouble(pos);
   }
@@ -302,7 +302,7 @@ u_signed64 castor::db::ora::OraStatement::getUInt64(int pos)
 // getString
 //------------------------------------------------------------------------------
 std::string castor::db::ora::OraStatement::getString(int pos)
-  throw (castor::exception::SQLError) {
+   {
   try {
     return m_statement->getString(pos);
   }
@@ -318,7 +318,7 @@ std::string castor::db::ora::OraStatement::getString(int pos)
 // getFloat
 //------------------------------------------------------------------------------
 float castor::db::ora::OraStatement::getFloat(int pos)
-  throw (castor::exception::SQLError) {
+   {
   try {
     return m_statement->getFloat(pos);
   }
@@ -334,7 +334,7 @@ float castor::db::ora::OraStatement::getFloat(int pos)
 // getDouble
 //------------------------------------------------------------------------------
 double castor::db::ora::OraStatement::getDouble(int pos)
-  throw (castor::exception::SQLError) {
+   {
   try {
     return m_statement->getDouble(pos);
   }
@@ -350,7 +350,7 @@ double castor::db::ora::OraStatement::getDouble(int pos)
 // getClob
 //------------------------------------------------------------------------------
 std::string castor::db::ora::OraStatement::getClob(int pos)
-  throw (castor::exception::Exception) {
+   {
   try {
     oracle::occi::Clob clob = m_statement->getClob(pos);
     clob.open(oracle::occi::OCCI_LOB_READONLY);
@@ -378,7 +378,7 @@ std::string castor::db::ora::OraStatement::getClob(int pos)
 // getCursor
 //------------------------------------------------------------------------------
 castor::db::IDbResultSet* castor::db::ora::OraStatement::getCursor(int pos)
-  throw (castor::exception::SQLError) {
+   {
   try {
     return new castor::db::ora::OraResultSet(m_statement->getCursor(pos), m_statement);
   }
@@ -394,7 +394,7 @@ castor::db::IDbResultSet* castor::db::ora::OraStatement::getCursor(int pos)
 // executeQuery
 //------------------------------------------------------------------------------
 castor::db::IDbResultSet* castor::db::ora::OraStatement::executeQuery()
-  throw (castor::exception::SQLError) {
+   {
   try {
     return new castor::db::ora::OraResultSet(m_statement->executeQuery(), m_statement);
   }
@@ -413,7 +413,7 @@ castor::db::IDbResultSet* castor::db::ora::OraStatement::executeQuery()
 // execute
 //------------------------------------------------------------------------------
 int castor::db::ora::OraStatement::execute(int count)
-  throw (castor::exception::Exception) {
+   {
   try {
     int ret = 0;
     if(count == 1) {

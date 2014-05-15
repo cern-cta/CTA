@@ -102,7 +102,7 @@ unsigned int castor::stager::RemoteJobSvc::ID() {
 //------------------------------------------------------------------------------
 castor::stager::Request*
 castor::stager::RemoteJobSvc::requestToDo(std::string)
-  throw (castor::exception::Exception) {
+   {
   castor::exception::NotSupported ex;
   ex.getMessage()
     << "RemoteJobSvc implementation is not complete"
@@ -127,7 +127,7 @@ public:
     m_emptyFile(emptyFile){}
 
   virtual void handleResponse(castor::rh::Response& r)
-    throw (castor::exception::Exception) {
+     {
     castor::rh::GetUpdateStartResponse *resp =
       dynamic_cast<castor::rh::GetUpdateStartResponse*>(&r);
     if (0 != resp->errorCode()) {
@@ -139,7 +139,7 @@ public:
     *m_emptyFile = resp->emptyFile();
   };
   virtual void terminate()
-    throw (castor::exception::Exception) {};
+     {};
 private:
   // Where to store the diskCopy
   std::string* m_diskCopyPath;
@@ -158,7 +158,7 @@ castor::stager::RemoteJobSvc::getUpdateStart
  bool* emptyFile,
  u_signed64 fileId,
  const std::string nsHost)
-  throw (castor::exception::Exception) {
+   {
   // placeholders for the result
   std::string result;
   // Build a response Handler
@@ -193,7 +193,7 @@ public:
     m_diskCopyPath(diskCopyPath) {}
 
   virtual void handleResponse(castor::rh::Response& r)
-    throw (castor::exception::Exception) {
+     {
     if (0 != r.errorCode()) {
       castor::exception::Exception e(r.errorCode());
       e.getMessage() << r.errorMessage();
@@ -211,7 +211,7 @@ public:
     *m_diskCopyPath = resp->diskCopyPath();
   };
   virtual void terminate()
-    throw (castor::exception::Exception) {};
+     {};
 private:
   // Where to store the diskCopyPath
   std::string* m_diskCopyPath;
@@ -227,7 +227,7 @@ castor::stager::RemoteJobSvc::putStart
  std::string mountPoint,
  u_signed64 fileId,
  const std::string nsHost)
-  throw (castor::exception::Exception) {
+   {
   // placeholders for the result
   std::string result;
   // Build a response Handler
@@ -259,7 +259,7 @@ void castor::stager::RemoteJobSvc::prepareForMigration
  const std::string nsHost,
  const std::string csumtype,
  const std::string csumvalue)
-  throw (castor::exception::Exception) {
+   {
   // Build the MoverCloseRequest
   castor::stager::MoverCloseRequest req;
   req.setSubReqId(subReqId);
@@ -306,7 +306,7 @@ void castor::stager::RemoteJobSvc::getUpdateDone
 (u_signed64 subReqId,
  u_signed64 fileId,
  const std::string nsHost)
-   throw (castor::exception::Exception) {
+    {
   // Build the GetUpdateDoneRequest
   castor::stager::GetUpdateDone req;
   req.setSubReqId(subReqId);
@@ -327,7 +327,7 @@ void castor::stager::RemoteJobSvc::getUpdateFailed
 (u_signed64 subReqId,
  u_signed64 fileId,
  const std::string nsHost)
-  throw (castor::exception::Exception) {
+   {
   // Build the GetUpdateFailedRequest
   castor::stager::GetUpdateFailed req;
   req.setSubReqId(subReqId);
@@ -348,7 +348,7 @@ void castor::stager::RemoteJobSvc::putFailed
 (u_signed64 subReqId,
  u_signed64 fileId,
  const std::string nsHost)
-  throw (castor::exception::Exception) {
+   {
   // Build the PutFailedRequest
   castor::stager::PutFailed req;
   req.setSubReqId(subReqId);
@@ -369,7 +369,7 @@ void castor::stager::RemoteJobSvc::firstByteWritten
 (u_signed64 subRequestId,
  u_signed64 fileId,
  const std::string nsHost)
-  throw (castor::exception::Exception) {
+   {
   // Build the FirstByteWrittenRequest
   castor::stager::FirstByteWritten req;
   req.setSubReqId(subRequestId);

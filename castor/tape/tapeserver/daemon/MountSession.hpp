@@ -111,7 +111,7 @@ namespace daemon {
             castor::legacymsg::TapeserverProxy & initialProcess,
             const CastorConf & castorConf);
     /** The only method. It will execute (like a task, that it is) */
-    void execute() throw (Exception);
+    void execute() ;
     /** Temporary method used for debugging while building the session class */
     std::string getVid() { return m_volInfo.vid; }
   private:

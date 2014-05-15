@@ -153,7 +153,7 @@ void castor::job::stagerjob::RfioPlugin::getLogLevel
 // setEnvironment
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::RfioPlugin::setEnvironment
-(EnvironmentRfio env) throw () {
+(EnvironmentRfio env) throw() {
   setenv("CSEC_TRACE", env.csec_trace.c_str(), 1);
   setenv("CSEC_TRACEFILE", env.csec_tracefile.c_str(), 1);
   setenv("CSEC_MECH", env.csec_mech.c_str(), 1);
@@ -170,7 +170,7 @@ void castor::job::stagerjob::RfioPlugin::setEnvironment
 // getEnvironment
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::RfioPlugin::getEnvironment
-(InputArguments&, EnvironmentRfio &env) throw () {
+(InputArguments&, EnvironmentRfio &env) throw() {
   // Globus location, required to resolved some dependencies
   const char* globus_location = getconfent("CSEC", "GLOBUS_LOCATION", 0);
   if (globus_location == NULL) {
@@ -245,7 +245,7 @@ void castor::job::stagerjob::RfioPlugin::getEnvironment
 void castor::job::stagerjob::RfioPlugin::postForkHook
 (InputArguments &args, PluginContext &context,
  bool /*useChksSum*/, int /*moverStatus*/)
-  throw(castor::exception::Exception) {
+   {
 
   // Log the mover command line on behalf of the mover process that cannot log
   std::string logFile;
@@ -297,7 +297,7 @@ void castor::job::stagerjob::RfioPlugin::postForkHook
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::RfioPlugin::execMover
 (InputArguments &args, PluginContext &context)
-  throw(castor::exception::Exception) {
+   {
 
   // Get environment
   EnvironmentRfio env;

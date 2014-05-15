@@ -59,7 +59,7 @@ void usage(char *cmd) {
 // handleRequest
 //------------------------------------------------------------------------------
 void handleRequest(castor::IObject* fr, castor::Services* svcs)
-  throw (castor::exception::Exception) {
+   {
 
   // Stores it into the data base
   castor::BaseAddress ad;
@@ -124,7 +124,7 @@ void handleRequest(castor::IObject* fr, castor::Services* svcs)
  * Main loop for initializing the data base
  */
 void initDB(castor::Services* svcs, castor::vdqm::IVdqmSvc* iVdqmService)
-  throw (castor::exception::Exception) {
+   {
 
   bool dgnUpdate = false;
   bool tasUpdate = false;

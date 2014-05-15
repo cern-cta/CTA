@@ -46,5 +46,5 @@ EXTERN_C int
 stage_resetid();
 
 int setDefaultOption(struct stage_options* opts)
-  throw(castor::exception::Exception);
+  ;
 

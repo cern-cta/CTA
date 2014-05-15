@@ -60,7 +60,7 @@ static bool clientAnswered = false;
 //------------------------------------------------------------------------------
 castor::job::stagerjob::IPlugin*
 castor::job::stagerjob::getPlugin(std::string protocol)
-  throw (castor::exception::Exception) {
+   {
   if (0 != s_plugins && s_plugins->find(protocol) != s_plugins->end()) {
     return s_plugins->operator[](protocol);
   }
@@ -75,7 +75,7 @@ castor::job::stagerjob::getPlugin(std::string protocol)
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::registerPlugin
 (std::string protocol, castor::job::stagerjob::IPlugin* plugin)
-  throw () {
+  throw() {
   if (0 == s_plugins) {
     s_plugins = new std::map<std::string, castor::job::stagerjob::IPlugin*>();
   }
@@ -86,7 +86,7 @@ void castor::job::stagerjob::registerPlugin
 // getJobSvc
 //------------------------------------------------------------------------------
 castor::stager::IJobSvc* getJobSvc()
-  throw (castor::exception::Exception) {
+   {
   // Initialize the remote job service
   castor::IService *remsvc =
     castor::BaseObject::services()->service
@@ -112,7 +112,7 @@ castor::stager::IJobSvc* getJobSvc()
 std::string startAndGetPath
 (castor::job::stagerjob::InputArguments* args,
  castor::job::stagerjob::PluginContext& context)
-  throw (castor::exception::Exception) {
+   {
 
   // Create a subreq in memory and we will just fill its id
   castor::stager::SubRequest subrequest;
@@ -197,7 +197,7 @@ std::string startAndGetPath
 // switchToCastorSuperuser
 //------------------------------------------------------------------------------
 void switchToCastorSuperuser(castor::job::stagerjob::InputArguments *args)
-  throw (castor::exception::Exception) {
+   {
 
   // "Credentials at start time"
   castor::dlf::Param params[] =
@@ -229,7 +229,7 @@ void switchToCastorSuperuser(castor::job::stagerjob::InputArguments *args)
 // createSocket
 //------------------------------------------------------------------------------
 void createSocket(castor::job::stagerjob::PluginContext &context) 
-  throw (castor::exception::Exception) {
+   {
   // Create the socket
   context.socket = socket(AF_INET, SOCK_STREAM, 0);
   if (context.socket < 0) {
@@ -255,7 +255,7 @@ void bindSocketAndListen
 (castor::job::stagerjob::PluginContext &context,
  castor::job::stagerjob::InputArguments* args,
  std::pair<int,int> &range)
-  throw (castor::exception::Exception) {
+   {
   // Build address
   struct sockaddr_in sin;
   memset(&sin, '\0', sizeof(sin));
@@ -326,7 +326,7 @@ void bindSocketAndListen
 //------------------------------------------------------------------------------
 void process(castor::job::stagerjob::PluginContext &context,
              castor::job::stagerjob::InputArguments* args)
-  throw (castor::exception::Exception) {
+   {
   castor::job::stagerjob::IPlugin* plugin = 0;
   try {
     // First switch to stage:st privileges
@@ -444,7 +444,7 @@ void process(castor::job::stagerjob::PluginContext &context,
 void castor::job::stagerjob::sendResponse
 (castor::IClient *client,
  castor::rh::IOResponse &response)
-  throw (castor::exception::Exception) {
+   {
   castor::rh::Client* rhc = dynamic_cast<castor::rh::Client*>(client);
   if (0 == rhc) {
     castor::exception::Exception e;

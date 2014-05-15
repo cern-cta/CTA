@@ -103,7 +103,7 @@ public:
    * @param data The data to be inserted.
    * @return The index of the element used to store the data.
    */
-  int insert(const T &data) throw(exception::OutOfMemory) {
+  int insert(const T &data)  {
     const char *const task = "insert data into IndexedContainer";
 
     if(m_free == NULL) {
@@ -114,7 +114,7 @@ public:
         ": No more free elements to store data pointer: "
         ": maxElements=" << m_nbElements;
 
-      throw(ex);
+      ;
     }
 
     // Get and remove the free element from the list of free elements
@@ -279,7 +279,7 @@ private:
    * @param index The array index of the element.
    * @return The data pointer.
    */
-  Element *getElement(const int index) throw(exception::InvalidArgument) {
+  Element *getElement(const int index)  {
     const char *const task = "get element from IndexContainer using index";
 
     // Throw an exception if the index is invalid

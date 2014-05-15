@@ -58,7 +58,7 @@ namespace castor {
          * @exception Exception in case of error.
          */
         void recvMessage(int socket, char *buf, ssize_t len, int timeout)
-          throw(castor::exception::Exception);
+          ;
 
         /**
          * The preForkHook used to establish a control channel with the local
@@ -68,7 +68,7 @@ namespace castor {
          */
         virtual void preForkHook(InputArguments &args,
                                  PluginContext &context)
-          throw(castor::exception::Exception);
+          ;
 
         /**
          * Hook to wait for the closure of a file.
@@ -87,12 +87,12 @@ namespace castor {
                                   PluginContext &context,
                                   bool useChksSum = false,
                                   int moverStatus = -1)
-          throw (castor::exception::Exception);
+          ;
 
         /// Not implemented
         virtual void execMover(InputArguments&,
                                PluginContext&)
-          throw (castor::exception::Exception) {};
+           {};
 
       private:
 

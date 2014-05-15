@@ -55,6 +55,6 @@ void castor::io::DummyPollEventHandler::fillPollFd(struct pollfd &fd) throw() {
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::io::DummyPollEventHandler::handleEvent(const struct pollfd &fd)
-  throw(castor::exception::Exception) {
+   {
   return m_returnVal;
 }

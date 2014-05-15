@@ -65,7 +65,7 @@ namespace castor {
        * @exception Exception in case of error.
        */
       Queue(unsigned int size = DEFAULT_QUEUE_BOUNDS)
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Default Destructor
@@ -90,7 +90,7 @@ namespace castor {
        * allocated to the object. If not, memory leaks will be observed.
        */
       void push(void *data, bool wait = true)
-        throw(castor::exception::Exception);
+        ;
       
       /**
        * Retrieve an element from the front of the queue
@@ -106,7 +106,7 @@ namespace castor {
        *   EINTR:  The blocking was interrupted (try again)
        */
       void pop(bool wait, QueueElement& qe)
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Returns the number of elements in the queue

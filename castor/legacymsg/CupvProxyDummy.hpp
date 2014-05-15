@@ -66,7 +66,7 @@ public:
     const gid_t privGid,
     const std::string &srcHost,
     const std::string &tgtHost,
-    const int priv) throw(castor::exception::Exception);
+    const int priv) ;
 
 private:
 

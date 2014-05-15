@@ -80,7 +80,7 @@ namespace castor {
        */
       virtual castor::stager::SubRequest* subRequestToDo
       (const std::string service)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Selects and processes a bulk request.
@@ -90,7 +90,7 @@ namespace castor {
        */
       virtual castor::IObject* processBulkRequest
       (const std::string service)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Selects the next SubRequest in FAILED status the stager
@@ -101,7 +101,7 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual castor::stager::SubRequest* subRequestFailedToDo()
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Processes a PToGet and PToUpdate subrequest.
@@ -111,7 +111,7 @@ namespace castor {
        */
       virtual int processPrepareRequest
       (castor::stager::SubRequest* subreq)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Processes a putDone subrequest.
@@ -123,7 +123,7 @@ namespace castor {
        */
       virtual int processPutDoneRequest
       (castor::stager::SubRequest* subreq)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Create an internal request to trigger a diskcopy replication.
@@ -141,7 +141,7 @@ namespace castor {
        const castor::stager::SvcClass* srcSc,
        const castor::stager::SvcClass* destSc,
        const bool internal = false)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Retrieves a CastorFile from the database based on its fileId
@@ -159,7 +159,7 @@ namespace castor {
         (castor::stager::SubRequest* subreq,
          const Cns_fileid* cnsFileId, const Cns_filestatcs* cnsFileStat,
          const u_signed64 nsOpenTimeInUsec)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Updates a SubRequest status in the DB, including
@@ -181,7 +181,7 @@ namespace castor {
        */
       virtual bool updateAndCheckSubRequest
       (castor::stager::SubRequest *subreq)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Archives a SubRequest
@@ -193,7 +193,7 @@ namespace castor {
        */
       virtual void archiveSubReq(u_signed64 subReqId,
         castor::stager::SubRequestStatusCodes finalStatus)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Implements a single file stageRm.
@@ -217,7 +217,7 @@ namespace castor {
       virtual int stageRm
       (castor::stager::SubRequest* subreq, const u_signed64 fileId,
        const std::string nsHost, const u_signed64 svcClassId)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /*
        * cleanups the stager DB in case of a stagerRm for a renamed file
@@ -225,7 +225,7 @@ namespace castor {
        */
       virtual void renamedFileCleanup
       (const std::string &fileName, const u_signed64 subReqId)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Updates the gcWeight of some copies of a given file.
@@ -242,7 +242,7 @@ namespace castor {
       virtual int setFileGCWeight
       (const u_signed64 fileId, const std::string nsHost,
        const u_signed64 svcClassId, const float weight)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Creates an empty (i.e. 0 size) file in the DB.
@@ -257,7 +257,7 @@ namespace castor {
       virtual void createEmptyFile
       (castor::stager::SubRequest* subreq,
        bool schedule)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Triggers the recall of a file
@@ -266,7 +266,7 @@ namespace castor {
        * @exception Exception in case of error
        */
       virtual castor::stager::SubRequestStatusCodes createRecallCandidate(u_signed64 srId)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Gets a configuration option from the
@@ -283,14 +283,14 @@ namespace castor {
       virtual std::string getConfigOption(std::string confClass,
                                           std::string confKey,
                                           std::string defaultValue)
-        throw (castor::exception::Exception) = 0;
+         = 0;
 
       /**
        * Dumps the current logs from the db.
        * The content is logged in DLF and then deleted.
        */
       virtual void dumpDBLogs()
-        throw (castor::exception::Exception) = 0;
+         = 0;
       
     }; // end of class IStagerSvc
 

@@ -58,7 +58,7 @@ castor::Services::~Services() {
 //-----------------------------------------------------------------------------
 castor::IService* castor::Services::service(const std::string name,
                                             const unsigned int id)
-  throw(castor::exception::Exception) {
+   {
   std::map<const std::string, IService*>::const_iterator it = m_services.find(name);
   if (it == m_services.end()) {
     if (id > 0) {
@@ -93,7 +93,7 @@ castor::IService* castor::Services::service(const std::string name,
 //-----------------------------------------------------------------------------
 castor::ICnvSvc* castor::Services::cnvService(const std::string name,
                                               const unsigned int id)
-  throw(castor::exception::Exception) {
+   {
   IService* svc = service(name, id);
   if (0 == svc) {
     return 0;
@@ -111,7 +111,7 @@ castor::ICnvSvc* castor::Services::cnvService(const std::string name,
 void castor::Services::createRep(castor::IAddress* address,
                                  castor::IObject* object,
                                  bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->createRep(address, object, endTransaction);
@@ -123,7 +123,7 @@ void castor::Services::createRep(castor::IAddress* address,
 void castor::Services::bulkCreateRep(castor::IAddress* address,
                                      std::vector<castor::IObject*> &objects,
                                      bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->bulkCreateRep(address, objects, endTransaction);
@@ -135,7 +135,7 @@ void castor::Services::bulkCreateRep(castor::IAddress* address,
 void castor::Services::updateRep(castor::IAddress* address,
                                  castor::IObject* object,
                                  bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->updateRep(address, object, endTransaction);
@@ -147,7 +147,7 @@ void castor::Services::updateRep(castor::IAddress* address,
 void castor::Services::deleteRep(castor::IAddress* address,
                                  castor::IObject* object,
                                  bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->deleteRep(address, object, endTransaction);
@@ -158,7 +158,7 @@ void castor::Services::deleteRep(castor::IAddress* address,
 // -----------------------------------------------------------------------
 castor::ICnvSvc*
 castor::Services::cnvSvcFromAddress(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // check address
   if (0 == address) {
     castor::exception::Exception ex;
@@ -182,7 +182,7 @@ castor::Services::cnvSvcFromAddress(castor::IAddress* address)
 // createObj
 // -----------------------------------------------------------------------
 castor::IObject* castor::Services::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   castor::IObject* result = cnvSvc->createObj(address);
@@ -194,7 +194,7 @@ castor::IObject* castor::Services::createObj(castor::IAddress* address)
 // -----------------------------------------------------------------------
 std::vector<castor::IObject*>
 castor::Services::bulkCreateObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   std::vector<castor::IObject*> result = cnvSvc->bulkCreateObj(address);
@@ -206,7 +206,7 @@ castor::Services::bulkCreateObj(castor::IAddress* address)
 //------------------------------------------------------------------------------
 void castor::Services::updateObj(castor::IAddress* address,
                                  castor::IObject* object)
-  throw (castor::exception::Exception) {
+   {
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->updateObj(object);
@@ -216,7 +216,7 @@ void castor::Services::updateObj(castor::IAddress* address,
 // commit
 //------------------------------------------------------------------------------
 void castor::Services::commit(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->commit();
@@ -230,7 +230,7 @@ void castor::Services::fillRep(castor::IAddress* address,
                                castor::IObject* object,
                                unsigned int type,
                                bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->fillRep(address, object, type, endTransaction);
@@ -243,7 +243,7 @@ void castor::Services::fillObj(castor::IAddress* address,
                                castor::IObject* object,
                                unsigned int type,
                                bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->fillObj(address, object, type, endTransaction);
@@ -253,7 +253,7 @@ void castor::Services::fillObj(castor::IAddress* address,
 // rollback
 //------------------------------------------------------------------------------
 void castor::Services::rollback(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Always returns a valid cnvSvc or throws an exception
   castor::ICnvSvc* cnvSvc = cnvSvcFromAddress(address);
   cnvSvc->rollback();

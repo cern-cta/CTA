@@ -150,7 +150,7 @@ void castor::db::cnv::DbTape2DriveDedicationCnv::fillRep(castor::IAddress*,
                                                          castor::IObject* object,
                                                          unsigned int type,
                                                          bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::vdqm::Tape2DriveDedication* obj = 
     dynamic_cast<castor::vdqm::Tape2DriveDedication*>(object);
   try {
@@ -180,7 +180,7 @@ void castor::db::cnv::DbTape2DriveDedicationCnv::fillRep(castor::IAddress*,
 // fillRepTapeDrive
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbTape2DriveDedicationCnv::fillRepTapeDrive(castor::vdqm::Tape2DriveDedication* obj)
-  throw (castor::exception::Exception) {
+   {
   if (0 != obj->tapeDrive()) {
     // Check checkTapeDriveExist statement
     if (0 == m_checkTapeDriveExistStatement) {
@@ -215,7 +215,7 @@ void castor::db::cnv::DbTape2DriveDedicationCnv::fillObj(castor::IAddress*,
                                                          castor::IObject* object,
                                                          unsigned int type,
                                                          bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::vdqm::Tape2DriveDedication* obj = 
     dynamic_cast<castor::vdqm::Tape2DriveDedication*>(object);
   switch (type) {
@@ -238,7 +238,7 @@ void castor::db::cnv::DbTape2DriveDedicationCnv::fillObj(castor::IAddress*,
 // fillObjTapeDrive
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbTape2DriveDedicationCnv::fillObjTapeDrive(castor::vdqm::Tape2DriveDedication* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -279,7 +279,7 @@ void castor::db::cnv::DbTape2DriveDedicationCnv::createRep(castor::IAddress*,
                                                            castor::IObject* object,
                                                            bool endTransaction,
                                                            unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   castor::vdqm::Tape2DriveDedication* obj = 
     dynamic_cast<castor::vdqm::Tape2DriveDedication*>(object);
   // check whether something needs to be done
@@ -328,7 +328,7 @@ void castor::db::cnv::DbTape2DriveDedicationCnv::bulkCreateRep(castor::IAddress*
                                                                std::vector<castor::IObject*> &objects,
                                                                bool endTransaction,
                                                                unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   // check whether something needs to be done
   int nb = objects.size();
   if (0 == nb) return;
@@ -475,7 +475,7 @@ void castor::db::cnv::DbTape2DriveDedicationCnv::bulkCreateRep(castor::IAddress*
 void castor::db::cnv::DbTape2DriveDedicationCnv::updateRep(castor::IAddress*,
                                                            castor::IObject* object,
                                                            bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::vdqm::Tape2DriveDedication* obj = 
     dynamic_cast<castor::vdqm::Tape2DriveDedication*>(object);
   // check whether something needs to be done
@@ -514,7 +514,7 @@ void castor::db::cnv::DbTape2DriveDedicationCnv::updateRep(castor::IAddress*,
 void castor::db::cnv::DbTape2DriveDedicationCnv::deleteRep(castor::IAddress*,
                                                            castor::IObject* object,
                                                            bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::vdqm::Tape2DriveDedication* obj = 
     dynamic_cast<castor::vdqm::Tape2DriveDedication*>(object);
   // check whether something needs to be done
@@ -549,7 +549,7 @@ void castor::db::cnv::DbTape2DriveDedicationCnv::deleteRep(castor::IAddress*,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::cnv::DbTape2DriveDedicationCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   castor::BaseAddress* ad = 
     dynamic_cast<castor::BaseAddress*>(address);
   try {
@@ -590,7 +590,7 @@ castor::IObject* castor::db::cnv::DbTape2DriveDedicationCnv::createObj(castor::I
 //------------------------------------------------------------------------------
 std::vector<castor::IObject*>
 castor::db::cnv::DbTape2DriveDedicationCnv::bulkCreateObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Prepare result
   std::vector<castor::IObject*> res;
   // check whether something needs to be done
@@ -641,7 +641,7 @@ castor::db::cnv::DbTape2DriveDedicationCnv::bulkCreateObj(castor::IAddress* addr
 // updateObj
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbTape2DriveDedicationCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {

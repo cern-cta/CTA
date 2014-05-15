@@ -49,7 +49,7 @@ public:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
    * "manual" or "smc@rmc_host,drive_ordinal".
    */
-  void mountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
+  void mountTape(const std::string &vid, const std::string &librarySlot) ;
 
   /**
    * Asks the remote media-changer daemon to unmount the specified tape from the
@@ -60,7 +60,7 @@ public:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
    * "manual" or "smc@rmc_host,drive_ordinal".
    */
-  void unmountTape(const std::string &vid, const std::string &librarySlot) throw(castor::exception::Exception);
+  void unmountTape(const std::string &vid, const std::string &librarySlot) ;
 
 }; // class RmcProxyDummy
 

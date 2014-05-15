@@ -127,7 +127,7 @@ public:
    * This method throws an exception if the socket-descriptor of the initial
    * rtpcd-connection is not set.
    */
-  int releaseInitialRtcpdConn() throw(castor::exception::Exception);
+  int releaseInitialRtcpdConn() ;
 
   /**
    * Adds to the catalogue an rtcpd disk/tape IO control-connection.
@@ -153,7 +153,7 @@ public:
    * This method throws an exception if the socket-descriptor of the listen
    * socket does not exist in the catalogue.
    */
-  int getListenSock() const throw(castor::exception::Exception);
+  int getListenSock() const ;
 
   /**
    * Returns the socket-descriptor of the initial rtcpd connection.
@@ -161,7 +161,7 @@ public:
    * This method throws an exception if the socket-descriptor of the initial
    * rtcpd connection does not exist in the catalogue.
    */
-  int getInitialRtcpdConn() const throw(castor::exception::Exception);
+  int getInitialRtcpdConn() const ;
 
   /**
    * Releases the specified rtcpd disk/tape IO control-connection from the
@@ -281,7 +281,7 @@ public:
    * client "get more work" connection is not set.
    */
   int releaseGetMoreWorkClientSock()
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Builds the set of file descriptors to be passed to select() to see if any
@@ -363,7 +363,7 @@ public:
    *
    * This method throws a TimeOut exception if a timeout is found.
    */
-  void checkForTimeout() const throw(castor::exception::TimeOut);
+  void checkForTimeout() const ;
 
   /**
    * Sets the socket-descriptor of the pending client migration-report
@@ -406,7 +406,7 @@ public:
    *                                migration-report connection.
    */
   int releaseClientMigrationReportSock(uint64_t &aggregatorTransactionId)
-    throw(castor::exception::Exception);
+    ;
 
 protected:
 

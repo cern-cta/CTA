@@ -56,7 +56,7 @@ namespace castor {
        * @param cuuid its uuid (for logging purposes only)
        */
       static void storeRepresentation(castor::IObject *const fr, Cuuid_t cuuid)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Deletes the IObject in the data base. Please edit this function and 
@@ -66,7 +66,7 @@ namespace castor {
        * @param cuuid its uuid (for logging purposes only)
        */
       static void deleteRepresentation(castor::IObject* fr, Cuuid_t cuuid)
-        throw (castor::exception::Exception);
+        ;
         
       /**
        * Updates the IObject representation in the data base. Please edit this
@@ -76,7 +76,7 @@ namespace castor {
        * @param cuuid its uuid (for logging purposes only)
        */
       static void updateRepresentation(castor::IObject* fr, Cuuid_t cuuid)
-        throw (castor::exception::Exception);          
+        ;          
 
 
     private:

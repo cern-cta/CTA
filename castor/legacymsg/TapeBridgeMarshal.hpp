@@ -50,7 +50,7 @@ namespace legacymsg {
  * @param dst The destination message body structure.
  */
 void unmarshal(const char * &src, size_t &srcLen,
-  tapeBridgeFlushedToTapeMsgBody_t &dst) throw(castor::exception::Exception);
+  tapeBridgeFlushedToTapeMsgBody_t &dst) ;
 
 } // namespace legacymsg
 } // namespace castor

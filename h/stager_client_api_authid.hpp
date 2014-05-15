@@ -39,7 +39,7 @@ namespace castor {
      */
     void setClientAuthorizationId
     (castor::client::BaseClient &client)
-      throw(castor::exception::Exception);
+      ;
 
   }
 }

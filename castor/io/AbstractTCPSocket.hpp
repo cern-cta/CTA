@@ -45,7 +45,7 @@ namespace castor {
        * Constructor building a Socket objet around a regular socket
        * @param socket the regular socket used
        */
-      AbstractTCPSocket(int socket) throw ();
+      AbstractTCPSocket(int socket) throw();
 
       /**
        * Constructor building a socket with no port. As a consequence,
@@ -55,7 +55,7 @@ namespace castor {
        * @exception Exception in case of error
        */
       AbstractTCPSocket(const bool reusable)
-	throw (castor::exception::Exception);
+	;
 
       /**
        * Constructor building a socket on a given local port
@@ -66,7 +66,7 @@ namespace castor {
        */
       AbstractTCPSocket(const unsigned short port,
                         const bool reusable)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Constructor building a socket on a given port of a given host
@@ -79,7 +79,7 @@ namespace castor {
       AbstractTCPSocket(const unsigned short port,
                         const std::string host,
                         const bool reusable)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Constructor building a socket on a given port of a given host
@@ -92,14 +92,14 @@ namespace castor {
       AbstractTCPSocket(const unsigned short port,
                         const unsigned long ip,
                         const bool reusable)
-        throw (castor::exception::Exception);
+        ;
 
     protected:
 
       /**
        * internal method to create the inner socket
        */
-      virtual void createSocket() throw (castor::exception::Exception);
+      virtual void createSocket() ;
 
       /**
        * Internal method to send the content of a buffer
@@ -113,7 +113,7 @@ namespace castor {
       virtual void sendBuffer(const unsigned int magic,
                               const char* buf,
                               const int n)
-        throw (castor::exception::Exception);
+        ;
 
       /**
        * Internal method to read from a socket into a buffer.
@@ -128,7 +128,7 @@ namespace castor {
       virtual void readBuffer(const unsigned int magic,
                               char** buf,
                               int& n)
-        throw (castor::exception::Exception);
+        ;
 
     protected:
 

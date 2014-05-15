@@ -49,7 +49,7 @@ namespace castor {
        * Default constructor
        */
       RateLimiter()
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Default destructor
@@ -62,7 +62,7 @@ namespace castor {
        * in castor.conf
        */
       void init()
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Method used to check if a user has exceeded their maximum number
@@ -80,7 +80,7 @@ namespace castor {
       castor::rh::RatingGroup *checkAndUpdateLimit(const std::string user,
                                                    const std::string group,
                                                    const uint64_t nbRequests)
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Refer to previous method
@@ -92,7 +92,7 @@ namespace castor {
       castor::rh::RatingGroup *checkAndUpdateLimit(const int euid,
                                                    const int egid,
                                                    const uint64_t nbRequests)
-        throw(castor::exception::Exception);
+        ;
 
     private:
 

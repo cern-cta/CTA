@@ -50,7 +50,7 @@ namespace castor {
        * @exception In case that one of the parameters is NULL
        */
       VdqmMagic4ProtocolInterpreter(castor::io::ServerSocket &socket,
-        const Cuuid_t &cuuid)throw (castor::exception::Exception);
+        const Cuuid_t &cuuid);
 
       /**
        * Reads the message header of VDQM message with a magic number of
@@ -63,7 +63,7 @@ namespace castor {
        * @param header The message header
        */
       void readHeader(const unsigned int magic, vdqmHdr_t &header)
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Reads the message body of an aggregator volume request message from
@@ -75,7 +75,7 @@ namespace castor {
        * should be read out into
        */
       void readAggregatorVolReq(const int len, vdqmVolReq_t &msg)
-        throw(castor::exception::Exception);
+        ;
 
       /**
        * Sends the specified aggegartor volume request back to the client.
@@ -84,7 +84,7 @@ namespace castor {
        * @param msg the message body
        */
       void sendAggregatorVolReqToClient(vdqmHdr_t &header, vdqmVolReq_t &msg)
-        throw(castor::exception::Exception);
+        ;
 
 
     private:

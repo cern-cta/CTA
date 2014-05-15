@@ -134,7 +134,7 @@ castor::job::stagerjob::GridFTPPlugin::getPortRange
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::GridFTPPlugin::getEnvironment
 (InputArguments &args, Environment &env)
-  throw(castor::exception::Exception) {
+   {
   // Get the location of globus
   char* globus_location = getenv("GLOBUS_LOCATION");
   if (globus_location == NULL) {
@@ -235,7 +235,7 @@ void castor::job::stagerjob::GridFTPPlugin::getEnvironment
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::GridFTPPlugin::preForkHook
 (InputArguments &args, PluginContext &context)
-  throw(castor::exception::Exception) {
+   {
   // Set the default time out for select
   char *value = getconfent("GSIFTP", "TIMEOUT", 0);
   int t = SELECT_TIMEOUT_GSIFTP;
@@ -264,7 +264,7 @@ void castor::job::stagerjob::GridFTPPlugin::preForkHook
 void castor::job::stagerjob::GridFTPPlugin::postForkHook
 (InputArguments &args, PluginContext &context,
  bool /*useChksSum*/, int /*moverStatus*/)
-  throw(castor::exception::Exception) {
+   {
   // Get environment
   Environment env;
   getEnvironment(args, env);
@@ -314,7 +314,7 @@ void castor::job::stagerjob::GridFTPPlugin::postForkHook
 //------------------------------------------------------------------------------
 void castor::job::stagerjob::GridFTPPlugin::execMover
 (InputArguments &args, PluginContext &context)
-  throw(castor::exception::Exception) {
+   {
   // Get environment
   Environment env;
   getEnvironment(args, env);

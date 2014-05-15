@@ -38,10 +38,10 @@ namespace threading {
    */
   class Mutex {
   public:
-    Mutex() throw (castor::exception::Exception);
+    Mutex() ;
     ~Mutex();
-    void lock() throw (castor::exception::Exception);
-    void unlock() throw (castor::exception::Exception) {
+    void lock() ;
+    void unlock()  {
       castor::exception::Errnum::throwOnReturnedErrno(
         pthread_mutex_unlock(&m_mutex),
         "Error from pthread_mutex_unlock in castor::tape::threading::Mutex::unlock()");
@@ -58,7 +58,7 @@ namespace threading {
    */
   class MutexLocker {
   public:
-    MutexLocker(Mutex * m) throw (castor::exception::Exception):m_mutex(m) {m->lock();}
+    MutexLocker(Mutex * m) :m_mutex(m) {m->lock();}
     ~MutexLocker() { try { m_mutex->unlock(); } catch (...) {} }
   private:
     Mutex * m_mutex;
@@ -69,11 +69,11 @@ namespace threading {
    */
   class PosixSemaphore {
   public:
-    PosixSemaphore(int initial = 0) throw (castor::exception::Exception);
+    PosixSemaphore(int initial = 0) ;
     ~PosixSemaphore();
-    void acquire() throw (castor::exception::Exception);
-    bool tryAcquire() throw (castor::exception::Exception);
-    void release(int n=1) throw (castor::exception::Exception);
+    void acquire() ;
+    bool tryAcquire() ;
+    void release(int n=1) ;
   private:
     sem_t m_sem;
     /* this mutex protects against destruction unser the feet of the last
@@ -87,11 +87,11 @@ namespace threading {
    */
   class CondVarSemaphore {
   public:
-    CondVarSemaphore(int initial = 0) throw (castor::exception::Exception);
+    CondVarSemaphore(int initial = 0) ;
     ~CondVarSemaphore();
-    void acquire() throw (castor::exception::Exception);
-    bool tryAcquire() throw (castor::exception::Exception);
-    void release(int n=1) throw (castor::exception::Exception);
+    void acquire() ;
+    bool tryAcquire() ;
+    void release(int n=1) ;
   private:
     pthread_cond_t m_cond;
     pthread_mutex_t m_mutex;
@@ -130,8 +130,8 @@ namespace threading {
   public:
     Thread(): m_hadException(false), m_what("") {}
     virtual ~Thread () {}
-    void start() throw (castor::exception::Exception);
-    void wait() throw (castor::exception::Exception);
+    void start() ;
+    void wait() ;
   protected:
     virtual void run () = 0;
   private:

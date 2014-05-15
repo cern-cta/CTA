@@ -45,7 +45,7 @@ castor::BaseObject::BaseObject() throw() {}
 // sharedServices
 //------------------------------------------------------------------------------
 castor::Services* castor::BaseObject::sharedServices()
-  throw (castor::exception::Exception) {
+   {
   // since this is the shared version, the instantiation of the singleton
   // has to be thread-safe.
   if (0 == s_sharedServices) {
@@ -62,7 +62,7 @@ castor::Services* castor::BaseObject::sharedServices()
 // svcs
 //------------------------------------------------------------------------------
 castor::Services* castor::BaseObject::svcs()
-  throw (castor::exception::Exception) {
+   {
   return services();
 }
 
@@ -70,7 +70,7 @@ castor::Services* castor::BaseObject::svcs()
 // services
 //------------------------------------------------------------------------------
 castor::Services* castor::BaseObject::services()
-  throw (castor::exception::Exception) {
+   {
   castor::Services *services =
     (castor::Services *)pthread_getspecific(s_servicesKey);
   
@@ -95,7 +95,7 @@ castor::Services* castor::BaseObject::services()
 // resetServices
 //------------------------------------------------------------------------------
 void castor::BaseObject::resetServices()
-  throw (castor::exception::Exception) {
+   {
   // If the services where not allocated (unlikely), this will have the
   // side effect of allocating them. The key will be created anyhow,
   // which is what we need.

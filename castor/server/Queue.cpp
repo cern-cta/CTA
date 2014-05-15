@@ -31,7 +31,7 @@
 // Constructor
 //-----------------------------------------------------------------------------
 castor::server::Queue::Queue(unsigned int size) 
-  throw(castor::exception::Exception) :
+   :
   m_bounds(size),
   m_terminated(false),
   m_nbWriters(0),
@@ -90,7 +90,7 @@ castor::server::Queue::~Queue() {
 // Push
 //-----------------------------------------------------------------------------
 void castor::server::Queue::push(void *data, bool wait)
-  throw(castor::exception::Exception) {
+   {
 
   // Check if the queue has been terminated
   if (m_terminated) {
@@ -146,7 +146,7 @@ void castor::server::Queue::push(void *data, bool wait)
 // Pop
 //-----------------------------------------------------------------------------
 void castor::server::Queue::pop(bool wait, QueueElement& qe)
-  throw(castor::exception::Exception) {
+   {
   
   // Check if the queue has been terminated
   if (m_terminated) {

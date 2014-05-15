@@ -335,7 +335,7 @@ EXTERN_C int stage_resetid() {
 
 void castor::client::setClientAuthorizationId
 (castor::client::BaseClient &client)
-  throw(castor::exception::Exception) {
+   {
 
   uid_t authUid;
   gid_t authGid;
@@ -350,7 +350,7 @@ void castor::client::setClientAuthorizationId
 }
 
 int setDefaultOption(struct stage_options* opts) 
-  throw(castor::exception::Exception) {
+   {
   if ((!opts) || (!opts->stage_host)) {
     castor::exception::Exception e(SENOSHOST);
     e.getMessage() << "Unable to find a value for STAGE_HOST.\n"

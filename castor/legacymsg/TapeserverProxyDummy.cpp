@@ -40,7 +40,7 @@ castor::legacymsg::TapeserverProxyDummy::~TapeserverProxyDummy() throw() {
 void castor::legacymsg::TapeserverProxyDummy::gotReadMountDetailsFromClient(
   const std::string &unitName,
   const std::string &vid)
-  throw(castor::exception::Exception) {
+   {
 }
 
 //------------------------------------------------------------------------------
@@ -49,7 +49,7 @@ void castor::legacymsg::TapeserverProxyDummy::gotReadMountDetailsFromClient(
 void castor::legacymsg::TapeserverProxyDummy::gotWriteMountDetailsFromClient(
   const std::string &unitName,
   const std::string &vid)
-  throw(castor::exception::Exception) {
+   {
 }
 
 //------------------------------------------------------------------------------
@@ -58,7 +58,7 @@ void castor::legacymsg::TapeserverProxyDummy::gotWriteMountDetailsFromClient(
 void castor::legacymsg::TapeserverProxyDummy::gotDumpMountDetailsFromClient(
   const std::string &unitName,
   const std::string &vid)
-  throw(castor::exception::Exception) {
+   {
 }
 
 //------------------------------------------------------------------------------
@@ -67,7 +67,7 @@ void castor::legacymsg::TapeserverProxyDummy::gotDumpMountDetailsFromClient(
 void castor::legacymsg::TapeserverProxyDummy::tapeMountedForRead(
   const std::string &unitName,
   const std::string &vid)
-  throw(castor::exception::Exception) {
+   {
 }
 
 //------------------------------------------------------------------------------
@@ -76,7 +76,7 @@ void castor::legacymsg::TapeserverProxyDummy::tapeMountedForRead(
 void castor::legacymsg::TapeserverProxyDummy::tapeMountedForWrite(
   const std::string &unitName,
   const std::string &vid)
-  throw(castor::exception::Exception) {
+   {
 }
 
 //------------------------------------------------------------------------------
@@ -85,5 +85,5 @@ void castor::legacymsg::TapeserverProxyDummy::tapeMountedForWrite(
 void castor::legacymsg::TapeserverProxyDummy::tapeUnmounted(
   const std::string &unitName,
   const std::string &vid)
-  throw(castor::exception::Exception) {
+   {
 } 

@@ -40,7 +40,7 @@ namespace castor {
      * the gethostname() API.  
      * @exception in case of an error 
      */
-    static std::string getHostName() throw (castor::exception::Exception);
+    static std::string getHostName() ;
 
     /**
      * Converts a string into a port number, checking
@@ -49,7 +49,7 @@ namespace castor {
      * @return the port as an int
      * @exception in case of invalid value
      */
-    static int porttoi(char* str) throw (castor::exception::Exception);
+    static int porttoi(char* str) ;
     
     /**
      * Converts an ip address to a hostname
@@ -58,14 +58,14 @@ namespace castor {
      */
     static std::string ipAddressToHostname
     (unsigned long long ipAddress)
-      throw (castor::exception::Exception);
+      ;
 
     /**
      * Switches the current process to use the Castor superuser
      * (typically stage:st). 
      * @exception in case of an error
      */
-    static void switchToCastorSuperuser() throw (castor::exception::Exception);
+    static void switchToCastorSuperuser() ;
      
   };
 

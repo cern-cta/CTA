@@ -48,7 +48,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::io::ClientSocket::ClientSocket(int socket) throw () :
+castor::io::ClientSocket::ClientSocket(int socket) throw() :
   AbstractTCPSocket(socket) {}
 
 //------------------------------------------------------------------------------
@@ -56,7 +56,7 @@ castor::io::ClientSocket::ClientSocket(int socket) throw () :
 //------------------------------------------------------------------------------
 castor::io::ClientSocket::ClientSocket(const unsigned short port,
                                        const std::string host)
-  throw (castor::exception::Exception) :
+   :
   AbstractTCPSocket(port, host, false) {
   createSocket();
 }
@@ -66,7 +66,7 @@ castor::io::ClientSocket::ClientSocket(const unsigned short port,
 //------------------------------------------------------------------------------
 castor::io::ClientSocket::ClientSocket(const unsigned short port,
                                        const unsigned long ip)
-  throw (castor::exception::Exception) :
+   :
   AbstractTCPSocket(port, ip, false) {
   createSocket();
 }
@@ -75,7 +75,7 @@ castor::io::ClientSocket::ClientSocket(const unsigned short port,
 // connect
 //------------------------------------------------------------------------------
 void castor::io::ClientSocket::connect()
-  throw (castor::exception::Exception) {
+   {
 
   // Connects the socket
   if (netconnect_timeout(m_socket, (struct sockaddr *)&m_saddr, sizeof(m_saddr), 

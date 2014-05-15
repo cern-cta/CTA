@@ -39,7 +39,7 @@
 // marshal
 //-----------------------------------------------------------------------------
 size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
-  const RtcpJobRqstMsgBody &src) throw(castor::exception::Exception) {
+  const RtcpJobRqstMsgBody &src)  {
 
   if(dst == NULL) {
     castor::exception::Exception ex;
@@ -103,7 +103,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 // unmarshal
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src,
-  size_t &srcLen, RtcpJobRqstMsgBody &dst) throw(castor::exception::Exception) {
+  size_t &srcLen, RtcpJobRqstMsgBody &dst)  {
 
   io::unmarshalUint32(src, srcLen, dst.volReqId);
   io::unmarshalUint32(src, srcLen, dst.clientPort);
@@ -121,7 +121,7 @@ void castor::legacymsg::unmarshal(const char * &src,
 //-----------------------------------------------------------------------------
 size_t castor::legacymsg::marshal(char *const dst,
   const size_t dstLen, const RtcpJobReplyMsgBody &src)
-  throw(castor::exception::Exception) {
+   {
 
   if(dst == NULL) {
     castor::exception::Exception ex;
@@ -186,7 +186,7 @@ size_t castor::legacymsg::marshal(char *const dst,
 // unmarshal
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen,
-  RtcpJobReplyMsgBody &dst) throw(castor::exception::Exception) {
+  RtcpJobReplyMsgBody &dst)  {
 
   // Unmarshal the status number
   io::unmarshalInt32(src, srcLen, dst.status);
@@ -212,7 +212,7 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen,
 // marshal
 //-----------------------------------------------------------------------------
 size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
-  const RtcpTapeRqstErrMsgBody &src) throw(castor::exception::Exception) {
+  const RtcpTapeRqstErrMsgBody &src)  {
 
   if(dst == NULL) {
     castor::exception::Exception ex;
@@ -309,7 +309,7 @@ size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
 // unmarshal
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen,
-  RtcpTapeRqstErrMsgBody &dst) throw(castor::exception::Exception) {
+  RtcpTapeRqstErrMsgBody &dst)  {
 
   unmarshal(src, srcLen, (RtcpTapeRqstMsgBody&)dst);
   io::unmarshalString(src, srcLen, dst.err.errorMsg);
@@ -324,7 +324,7 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen,
 // unmarshal
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen,
-  RtcpTapeRqstMsgBody &dst) throw(castor::exception::Exception) {
+  RtcpTapeRqstMsgBody &dst)  {
 
   io::unmarshalString(src, srcLen, dst.vid);
   io::unmarshalString(src, srcLen, dst.vsn);
@@ -364,7 +364,7 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen,
 // marshal
 //-----------------------------------------------------------------------------
 size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
-  const RtcpFileRqstErrMsgBody &src) throw(castor::exception::Exception) {
+  const RtcpFileRqstErrMsgBody &src)  {
 
   if(dst == NULL) {
     castor::exception::Exception ex;
@@ -504,7 +504,7 @@ size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, RtcpFileRqstErrMsgBody &dst)
-  throw(castor::exception::Exception) {
+   {
   unmarshal(src, srcLen, (RtcpFileRqstMsgBody&)dst);
   io::unmarshalString(src, srcLen, dst.err.errorMsg);
   io::unmarshalUint32(src, srcLen, dst.err.severity);
@@ -519,7 +519,7 @@ void castor::legacymsg::unmarshal(const char * &src,
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src,
   size_t &srcLen, RtcpFileRqstMsgBody &dst)
-  throw(castor::exception::Exception) {
+   {
 
   io::unmarshalString(src, srcLen, dst.rqst.filePath);
   io::unmarshalString(src, srcLen, dst.rqst.tapePath);
@@ -585,7 +585,7 @@ void castor::legacymsg::unmarshal(const char * &src,
 // unmarshal
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src,
-  size_t &srcLen, GiveOutpMsgBody &dst) throw(castor::exception::Exception) {
+  size_t &srcLen, GiveOutpMsgBody &dst)  {
 
   io::unmarshalString(src, srcLen, dst.message);
 }
@@ -595,7 +595,7 @@ void castor::legacymsg::unmarshal(const char * &src,
 // marshal
 //-----------------------------------------------------------------------------
 size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
-  const RtcpNoMoreRequestsMsgBody&) throw(castor::exception::Exception) {
+  const RtcpNoMoreRequestsMsgBody&)  {
 
   if(dst == NULL) {
     castor::exception::Exception ex;
@@ -645,7 +645,7 @@ size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
 // marshal
 //-----------------------------------------------------------------------------
 size_t castor::legacymsg::marshal(char *dst, const size_t dstLen,
-  const RtcpDumpTapeRqstMsgBody &src) throw(castor::exception::Exception) {
+  const RtcpDumpTapeRqstMsgBody &src)  {
 
   if(dst == NULL) {
     castor::exception::Exception ex;

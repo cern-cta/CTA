@@ -261,7 +261,7 @@ private:
     const ClientAddress    &clientAddress,
     const std::string      &dgn,
     const std::string      &driveUnit
-  ) throw(std::exception) {
+  )  {
     try {
       return new ClientProxy(
         cuuid,
@@ -695,7 +695,7 @@ public:
     const bool                          checkRtcpdIsConnectingFromLocalHost,
     IClientProxy                        &clientProxy,
     ILegacyTxRx                         &legacyTxRx)
-    throw(std::exception) {
+     {
     TestingBridgeProtocolEngine *engine = NULL;
 
     try {

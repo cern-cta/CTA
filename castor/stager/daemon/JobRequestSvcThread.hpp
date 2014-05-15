@@ -83,7 +83,7 @@ namespace castor {
       public: 
 
         /** constructor */
-        JobRequestSvcThread() throw (castor::exception::Exception);
+        JobRequestSvcThread() ;
 
         /** virtual destructor */
         virtual ~JobRequestSvcThread() throw() {};
@@ -103,7 +103,7 @@ namespace castor {
       private:
 
         /** helper function calling the PL/SQL method jobSubRequestToDo */
-        JobRequest *jobSubRequestToDo() throw (castor::exception::Exception);
+        JobRequest *jobSubRequestToDo() ;
 
         /** helper function calling the PL/SQL method handleGetOrPut
          *  returns whether we should reply to client. Possible values are
@@ -113,19 +113,19 @@ namespace castor {
          */
         int handleGetOrPut(const JobRequest *sr, struct Cns_fileid &cnsFileid,
                            u_signed64 fileSize, u_signed64 stagerOpentimeInUsec)
-        throw (castor::exception::Exception);
+        ;
         
         /** helper function calling the PL/SQL method updateAndCheckSubRequest
          * returns whether we are the last subrequest of the corresponding resquest
          */
         bool updateAndCheckSubRequest(const u_signed64 srId, const int status)
-        throw (castor::exception::Exception);
+        ;
 
         /** helper function answering the client */
         void answerClient(const JobRequest *sr, u_signed64 cnsFileid,
                           int status,  int errorCode, const std::string &errorMsg,
                           bool isLastAnswer = false)
-        throw (castor::exception::Exception);
+        ;
 
       };
       

@@ -47,7 +47,7 @@ namespace legacymsg {
  * @return       The total length of the header.
  */
 size_t marshal(char *const dst, const size_t dstLen,
-  const MessageHeader &src) throw(castor::exception::Exception);
+  const MessageHeader &src) ;
 
 /**
  * Marshals the specified source message header structure into the
@@ -58,7 +58,7 @@ size_t marshal(char *const dst, const size_t dstLen,
  * @return    The total length of the header.
  */
 template<int n> size_t marshal(char (&dst)[n],
-  const MessageHeader &src) throw(castor::exception::Exception) {
+  const MessageHeader &src)  {
   return marshal(dst, n, src);
 }
 
@@ -77,7 +77,7 @@ template<int n> size_t marshal(char (&dst)[n],
  * @param dst    The destination structure.
  */
 void unmarshal(const char * &src, size_t &srcLen, MessageHeader &dst)
-  throw(castor::exception::Exception);
+  ;
 
 } // namespace legacymsg
 } // namespace castor

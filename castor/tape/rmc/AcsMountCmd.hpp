@@ -93,7 +93,7 @@ protected:
    * This method does not return until the mount has either suceeded, failed or
    * the specified timeout has been reached.
    */
-  void syncMount() throw(castor::exception::MountFailed);
+  void syncMount() ;
 
   /**
    * Sends the mount request to ACSLS.
@@ -101,7 +101,7 @@ protected:
    * @param seqNumber The sequence number to be used in the request.
    */
   void sendMountRequest(const SEQ_NO seqNumber)
-    throw(castor::exception::MountFailed);
+    ;
 
   /**
    * Throws castor::exception::DismountFailed if the mount was not
@@ -111,7 +111,7 @@ protected:
    */
   void processMountResponse(
     ALIGNED_BYTES (&buf)[MAX_MESSAGE_SIZE / sizeof(ALIGNED_BYTES)])
-    throw(castor::exception::MountFailed);
+    ;
 
 private:
 

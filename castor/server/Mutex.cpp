@@ -32,7 +32,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::server::Mutex::Mutex(int value, unsigned int timeout)
-  throw (castor::exception::Exception) :
+   :
   m_var(value), m_timeout(timeout), m_mutexCthread(0)
 {
   if(createLock() != 0) {
@@ -75,7 +75,7 @@ int castor::server::Mutex::createLock()
 // setValue
 //------------------------------------------------------------------------------
 void castor::server::Mutex::setValue(int newValue)
-  throw (castor::exception::Exception)
+  
 {
   int oldValue = m_var;
   lock();
@@ -117,7 +117,7 @@ void castor::server::Mutex::wait()
 //------------------------------------------------------------------------------
 // lock
 //------------------------------------------------------------------------------
-void castor::server::Mutex::lock() throw (castor::exception::Exception)
+void castor::server::Mutex::lock() 
 {
   if (m_mutexCthread == 0 ||
       Cthread_mutex_timedlock_ext(m_mutexCthread, m_timeout) != 0) {
@@ -130,7 +130,7 @@ void castor::server::Mutex::lock() throw (castor::exception::Exception)
 //------------------------------------------------------------------------------
 // release
 //------------------------------------------------------------------------------
-void castor::server::Mutex::release() throw (castor::exception::Exception)
+void castor::server::Mutex::release() 
 {
   if(Cthread_mutex_unlock_ext(m_mutexCthread) != 0) {
     castor::exception::Exception ex;
@@ -142,7 +142,7 @@ void castor::server::Mutex::release() throw (castor::exception::Exception)
 //------------------------------------------------------------------------------
 // signal
 //------------------------------------------------------------------------------
-void castor::server::Mutex::signal() throw (castor::exception::Exception)
+void castor::server::Mutex::signal() 
 {
   if (m_mutexCthread == 0 ||
       Cthread_cond_signal_ext(m_mutexCthread) != 0) {

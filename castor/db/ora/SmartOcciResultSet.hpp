@@ -58,7 +58,7 @@ public:
   SmartOcciResultSet(
     oracle::occi::Statement *const statement,
     oracle::occi::ResultSet *const resultSet)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Destructor.
@@ -90,7 +90,7 @@ public:
    * This method throws an exception if the owned result set has been closed.
    */
   oracle::occi::ResultSet *operator->() const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Bypasses the smart pointer by returning the pointer to the owned
@@ -99,7 +99,7 @@ public:
    * This method throws an exception if the owned result set has been closed.
    */
   oracle::occi::ResultSet * get() const
-    throw(castor::exception::Exception);
+    ;
 
 private:
 

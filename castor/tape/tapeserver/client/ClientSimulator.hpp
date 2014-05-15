@@ -45,7 +45,7 @@ namespace client {
             const std::string & density, tapegateway::ClientType clientType,
             tapegateway::VolumeMode volumeMode);
     
-    virtual ~ClientSimulator() throw () {}
+    virtual ~ClientSimulator() throw() {}
     
     struct ipPort {
       ipPort(uint32_t i, uint16_t p): ip(i), port(p) {}
@@ -90,35 +90,35 @@ namespace client {
   protected:
     // Place holders for pure virtual members of TpcpCommand we don't
     // use in the simulator
-    virtual void usage(std::ostream &) const throw () {}
+    virtual void usage(std::ostream &) const throw() {}
     virtual void parseCommandLine(const int, char **)
-      throw(castor::exception::Exception) {}
+       {}
     virtual void checkAccessToDisk()
-      const throw(castor::exception::Exception) {}
+      const  {}
     virtual void checkAccessToTape()
-      const throw(castor::exception::Exception) {}
+      const  {}
     virtual void requestDriveFromVdqm(char *const)
-      throw(castor::exception::Exception) {}
-    virtual void performTransfer() throw(castor::exception::Exception) {}
+       {}
+    virtual void performTransfer()  {}
     
     
     // The functions we actually implement in the simulator
     virtual void sendVolumeToTapeBridge(
       const tapegateway::VolumeRequest &volumeRequest,
       castor::io::AbstractTCPSocket    &connection)
-      const throw(castor::exception::Exception) {}
+      const  {}
     virtual bool dispatchMsgHandler(castor::IObject *const obj,
-      castor::io::AbstractSocket &sock) throw(castor::exception::Exception) {
+      castor::io::AbstractSocket &sock)  {
       return false;
     }
     
   private:
     // Process the first request which should be getVolume
-    void processFirstRequest() throw(castor::exception::Exception);
+    void processFirstRequest() ;
     // Process requests (recall or migration) until we receive and end of session
     // This helper function will process one request and return true if there is 
     // still more to process (that is if the end session is not signaled yet)
-    bool processOneRequest() throw(castor::exception::Exception);
+    bool processOneRequest() ;
     // Notify the client
     void sendEndNotificationErrorReport(
     const uint64_t             tapebridgeTransactionId,

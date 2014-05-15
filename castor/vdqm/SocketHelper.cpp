@@ -56,7 +56,7 @@
 unsigned int castor::vdqm::SocketHelper::readMagicNumber(
   castor::io::ServerSocket &socket,
   const int                timeout)
-  throw (castor::exception::Exception) {
+   {
 
   char buffer[sizeof(unsigned int)];
 
@@ -108,7 +108,7 @@ unsigned int castor::vdqm::SocketHelper::readMagicNumber(
 //------------------------------------------------------------------------------
 void castor::vdqm::SocketHelper::netWriteVdqmHeader(
   castor::io::ServerSocket &socket, void *hdrbuf)
-  throw (castor::exception::Exception) {
+   {
 
   int rc = netwrite_timeout(socket.socket(), hdrbuf, VDQM_HDRBUFSIZ,
     VDQM_TIMEOUT);
@@ -144,7 +144,7 @@ void castor::vdqm::SocketHelper::netWriteVdqmHeader(
 //------------------------------------------------------------------------------
 void castor::vdqm::SocketHelper::netReadVdqmHeader(
   castor::io::ServerSocket &socket, void* hdrbuf)
-  throw (castor::exception::Exception) {
+   {
 
   int rc = netread_timeout(socket.socket(), hdrbuf, VDQM_HDRBUFSIZ,
     VDQM_TIMEOUT);
@@ -181,7 +181,7 @@ void castor::vdqm::SocketHelper::netReadVdqmHeader(
 void castor::vdqm::SocketHelper::checkCupvPermissions(
   castor::io::ServerSocket &sock, const uid_t uid, const gid_t gid,
   const int privilege, const char *privilegeName, const char *messageType)
-  throw (castor::exception::PermissionDenied) {
+   {
   // Get local hostname
   std::string localHostname;
   try {

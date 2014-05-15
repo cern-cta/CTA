@@ -31,10 +31,10 @@
 #include "Logger.hpp"
 #include "Ctape_constants.h"
 
-castor::log::LogContext::LogContext(castor::log::Logger& logger) throw ():
+castor::log::LogContext::LogContext(castor::log::Logger& logger) throw():
 m_log(logger) {}
 
-void castor::log::LogContext::pushOrReplace(const Param& param) throw () {
+void castor::log::LogContext::pushOrReplace(const Param& param) throw() {
   ParamNameMatcher match(param.getName());
   std::list<Param>::iterator i = 
       std::find_if(m_params.begin(), m_params.end(), match);
@@ -45,7 +45,7 @@ void castor::log::LogContext::pushOrReplace(const Param& param) throw () {
   }
 }
 
-void castor::log::LogContext::erase(const std::string& paramName) throw () {
+void castor::log::LogContext::erase(const std::string& paramName) throw() {
   bool found;
   do {
     found = false;
@@ -59,7 +59,7 @@ void castor::log::LogContext::erase(const std::string& paramName) throw () {
   } while (found);
 }
 
-void castor::log::LogContext::log(const int priority, const std::string& msg) throw () {
+void castor::log::LogContext::log(const int priority, const std::string& msg) throw() {
   m_log(priority, msg, m_params);
 }
 
@@ -69,7 +69,7 @@ void castor::log::LogContext::log(const int priority, const std::string& msg,
 }
 
 void castor::log::LogContext::logBacktrace(const int priority, 
-    const std::string& backtrace) throw () {
+    const std::string& backtrace) throw() {
   // Sanity check to prevent substr from throwing exceptions
   if (!backtrace.size())
     return;
@@ -100,12 +100,12 @@ void castor::log::LogContext::logBacktrace(const int priority,
 
 castor::log::LogContext::ScopedParam::ScopedParam(
     LogContext& context, 
-    const Param& param) throw (): 
+    const Param& param) throw(): 
     m_context(context), m_name(param.getName()) {
   m_context.pushOrReplace(param);
 }
 
-castor::log::LogContext::ScopedParam::~ScopedParam() throw () {
+castor::log::LogContext::ScopedParam::~ScopedParam() throw() {
    m_context.erase(m_name);
 }
 

@@ -79,7 +79,7 @@ void castor::db::DbCnvSvc::reset() throw() {
 // getObjFromId
 // -----------------------------------------------------------------------
 castor::IObject* castor::db::DbCnvSvc::getObjFromId(u_signed64 id, int objType)
-  throw (castor::exception::Exception) {
+   {
   castor::BaseAddress clientAd;
   clientAd.setTarget(id);
   clientAd.setObjType(objType);
@@ -93,7 +93,7 @@ castor::IObject* castor::db::DbCnvSvc::getObjFromId(u_signed64 id, int objType)
 // -----------------------------------------------------------------------
 std::vector<castor::IObject*> castor::db::DbCnvSvc::getObjsFromIds
 (std::vector<u_signed64> &ids, int objType)
-  throw (castor::exception::Exception) {
+   {
   castor::VectorAddress clientAd;
   clientAd.setTarget(ids);
   clientAd.setObjType(objType);

@@ -38,7 +38,7 @@ castor::tape::tpcp::TapeFseqRange::TapeFseqRange() throw() {
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tpcp::TapeFseqRange::TapeFseqRange(const uint32_t lower,
-  const uint32_t upper) throw(exception::InvalidArgument) {
+  const uint32_t upper)  {
 
   reset(lower, upper);
 }
@@ -58,13 +58,13 @@ void castor::tape::tpcp::TapeFseqRange::reset() throw() {
 // reset
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::TapeFseqRange::reset(const uint32_t lower,
-  const uint32_t upper) throw(exception::InvalidArgument) {
+  const uint32_t upper)  {
 
   if(lower == 0) {
     exception::InvalidArgument ex;
 
     ex.getMessage() << "Lower boundary must not be zero";
-    throw(ex);
+    throw ex;
   }
 
   // If the upper boundary is not 0 meaning infinity and the lower boundary is
@@ -76,7 +76,7 @@ void castor::tape::tpcp::TapeFseqRange::reset(const uint32_t lower,
       "Lower boundary must be less than or equal to the upper boundary"
       ": lower=" << lower << " upper=" << upper;
 
-    throw(ex);
+    throw ex;
   }
 
   m_isEmpty = false;

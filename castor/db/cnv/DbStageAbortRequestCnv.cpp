@@ -191,7 +191,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillRep(castor::IAddress*,
                                                       castor::IObject* object,
                                                       unsigned int type,
                                                       bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StageAbortRequest* obj = 
     dynamic_cast<castor::stager::StageAbortRequest*>(object);
   try {
@@ -230,7 +230,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillRep(castor::IAddress*,
 // fillRepSvcClass
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageAbortRequestCnv::fillRepSvcClass(castor::stager::StageAbortRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   if (0 != obj->svcClass()) {
     // Check checkSvcClassExist statement
     if (0 == m_checkSvcClassExistStatement) {
@@ -262,7 +262,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillRepSvcClass(castor::stager::St
 // fillRepIClient
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageAbortRequestCnv::fillRepIClient(castor::stager::StageAbortRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check update statement
   if (0 == m_updateIClientStatement) {
     m_updateIClientStatement = createStatement(s_updateIClientStatementString);
@@ -277,7 +277,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillRepIClient(castor::stager::Sta
 // fillRepFileRequest
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageAbortRequestCnv::fillRepFileRequest(castor::stager::StageAbortRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check update statement
   if (0 == m_updateFileRequestStatement) {
     m_updateFileRequestStatement = createStatement(s_updateFileRequestStatementString);
@@ -292,7 +292,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillRepFileRequest(castor::stager:
 // fillRepNsFileId
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageAbortRequestCnv::fillRepNsFileId(castor::stager::StageAbortRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // check select statement
   if (0 == m_selectNsFileIdStatement) {
     m_selectNsFileIdStatement = createStatement(s_selectNsFileIdStatementString);
@@ -348,7 +348,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObj(castor::IAddress*,
                                                       castor::IObject* object,
                                                       unsigned int type,
                                                       bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StageAbortRequest* obj = 
     dynamic_cast<castor::stager::StageAbortRequest*>(object);
   switch (type) {
@@ -380,7 +380,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObj(castor::IAddress*,
 // fillObjSvcClass
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageAbortRequestCnv::fillObjSvcClass(castor::stager::StageAbortRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -418,7 +418,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObjSvcClass(castor::stager::St
 // fillObjIClient
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageAbortRequestCnv::fillObjIClient(castor::stager::StageAbortRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -456,7 +456,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObjIClient(castor::stager::Sta
 // fillObjFileRequest
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageAbortRequestCnv::fillObjFileRequest(castor::stager::StageAbortRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check whether the statement is ok
   if (0 == m_selectStatement) {
     m_selectStatement = createStatement(s_selectStatementString);
@@ -494,7 +494,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::fillObjFileRequest(castor::stager:
 // fillObjNsFileId
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageAbortRequestCnv::fillObjNsFileId(castor::stager::StageAbortRequest* obj)
-  throw (castor::exception::Exception) {
+   {
   // Check select statement
   if (0 == m_selectNsFileIdStatement) {
     m_selectNsFileIdStatement = createStatement(s_selectNsFileIdStatementString);
@@ -549,7 +549,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::createRep(castor::IAddress*,
                                                         castor::IObject* object,
                                                         bool endTransaction,
                                                         unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StageAbortRequest* obj = 
     dynamic_cast<castor::stager::StageAbortRequest*>(object);
   // check whether something needs to be done
@@ -628,7 +628,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
                                                             std::vector<castor::IObject*> &objects,
                                                             bool endTransaction,
                                                             unsigned int type)
-  throw (castor::exception::Exception) {
+   {
   // check whether something needs to be done
   int nb = objects.size();
   if (0 == nb) return;
@@ -1054,7 +1054,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::bulkCreateRep(castor::IAddress*,
 void castor::db::cnv::DbStageAbortRequestCnv::updateRep(castor::IAddress*,
                                                         castor::IObject* object,
                                                         bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StageAbortRequest* obj = 
     dynamic_cast<castor::stager::StageAbortRequest*>(object);
   // check whether something needs to be done
@@ -1103,7 +1103,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::updateRep(castor::IAddress*,
 void castor::db::cnv::DbStageAbortRequestCnv::deleteRep(castor::IAddress*,
                                                         castor::IObject* object,
                                                         bool endTransaction)
-  throw (castor::exception::Exception) {
+   {
   castor::stager::StageAbortRequest* obj = 
     dynamic_cast<castor::stager::StageAbortRequest*>(object);
   // check whether something needs to be done
@@ -1141,7 +1141,7 @@ void castor::db::cnv::DbStageAbortRequestCnv::deleteRep(castor::IAddress*,
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::db::cnv::DbStageAbortRequestCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   castor::BaseAddress* ad = 
     dynamic_cast<castor::BaseAddress*>(address);
   try {
@@ -1192,7 +1192,7 @@ castor::IObject* castor::db::cnv::DbStageAbortRequestCnv::createObj(castor::IAdd
 //------------------------------------------------------------------------------
 std::vector<castor::IObject*>
 castor::db::cnv::DbStageAbortRequestCnv::bulkCreateObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   // Prepare result
   std::vector<castor::IObject*> res;
   // check whether something needs to be done
@@ -1253,7 +1253,7 @@ castor::db::cnv::DbStageAbortRequestCnv::bulkCreateObj(castor::IAddress* address
 // updateObj
 //------------------------------------------------------------------------------
 void castor::db::cnv::DbStageAbortRequestCnv::updateObj(castor::IObject* obj)
-  throw (castor::exception::Exception) {
+   {
   try {
     // Check whether the statement is ok
     if (0 == m_selectStatement) {

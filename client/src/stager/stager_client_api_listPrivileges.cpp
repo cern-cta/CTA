@@ -52,7 +52,7 @@ public:
     m_result(result) {}
 
   virtual void handleResponse(castor::rh::Response& r)
-    throw (castor::exception::Exception) {
+     {
     if (0 != r.errorCode()) {
       castor::exception::Exception e(r.errorCode());
       e.getMessage() << r.errorMessage();
@@ -78,7 +78,7 @@ public:
     resp->privileges().clear();
   };
   virtual void terminate()
-    throw (castor::exception::Exception) {};
+     {};
 private:
   // where to store the diskCopy
   std::vector<castor::bwlist::Privilege*>* m_result;

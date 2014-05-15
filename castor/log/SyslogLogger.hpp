@@ -68,7 +68,7 @@ public:
    * No further calls to operator() should be made after calling this
    * method until the call to fork() has completed.
    */
-  void prepareForFork() throw(castor::exception::Exception);
+  void prepareForFork() ;
 
   /**
    * Writes a message into the CASTOR logging system. Note that no exception
@@ -316,7 +316,7 @@ protected:
    * textual representations.
    */
   std::map<int, std::string> generatePriorityToTextMap() const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Generates and returns the mapping between the possible string values
@@ -324,13 +324,13 @@ protected:
    * syslog priorities.
    */
   std::map<std::string, int> generateConfigTextToPriorityMap() const
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Initializes the mutex used to protect the critical section of the
    * SyslogLogger object.
    */
-  void initMutex() throw(castor::exception::Exception);
+  void initMutex() ;
 
   /**
    * Connects to syslog.

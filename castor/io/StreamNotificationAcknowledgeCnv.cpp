@@ -77,7 +77,7 @@ void castor::io::StreamNotificationAcknowledgeCnv::createRep(castor::IAddress* a
                                                              castor::IObject* object,
                                                              bool,
                                                              unsigned int)
-  throw (castor::exception::Exception) {
+   {
   castor::tape::tapegateway::NotificationAcknowledge* obj = 
     dynamic_cast<castor::tape::tapegateway::NotificationAcknowledge*>(object);
   StreamAddress* ad = 
@@ -92,7 +92,7 @@ void castor::io::StreamNotificationAcknowledgeCnv::createRep(castor::IAddress* a
 // createObj
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamNotificationAcknowledgeCnv::createObj(castor::IAddress* address)
-  throw (castor::exception::Exception) {
+   {
   StreamAddress* ad = 
     dynamic_cast<StreamAddress*>(address);
   // create the new Object
@@ -116,7 +116,7 @@ castor::IObject* castor::io::StreamNotificationAcknowledgeCnv::createObj(castor:
 void castor::io::StreamNotificationAcknowledgeCnv::marshalObject(castor::IObject* object,
                                                                  castor::io::StreamAddress* address,
                                                                  castor::ObjectSet& alreadyDone)
-  throw (castor::exception::Exception) {
+   {
   castor::tape::tapegateway::NotificationAcknowledge* obj = 
     dynamic_cast<castor::tape::tapegateway::NotificationAcknowledge*>(object);
   if (0 == obj) {
@@ -138,7 +138,7 @@ void castor::io::StreamNotificationAcknowledgeCnv::marshalObject(castor::IObject
 //------------------------------------------------------------------------------
 castor::IObject* castor::io::StreamNotificationAcknowledgeCnv::unmarshalObject(castor::io::biniostream& stream,
                                                                                castor::ObjectCatalog& newlyCreated)
-  throw (castor::exception::Exception) {
+   {
   castor::io::StreamAddress ad(stream, "StreamCnvSvc", castor::SVC_STREAMCNV);
   castor::IObject* object = createObj(&ad);
   // Mark object as created

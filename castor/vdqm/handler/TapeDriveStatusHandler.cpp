@@ -49,7 +49,7 @@
 castor::vdqm::handler::TapeDriveStatusHandler::TapeDriveStatusHandler(
   castor::vdqm::TapeDrive *const tapeDrive, vdqmDrvReq_t *const driveRequest, 
   const Cuuid_t &cuuid, u_signed64 *const newRequestId)
-  throw(castor::exception::Exception) : ptr_tapeDrive(tapeDrive),
+   : ptr_tapeDrive(tapeDrive),
     ptr_driveRequest(driveRequest),  m_cuuid(cuuid),
     ptr_newRequestId(newRequestId) {
     
@@ -78,7 +78,7 @@ castor::vdqm::handler::TapeDriveStatusHandler::~TapeDriveStatusHandler()
 // handleOldStatus
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveStatusHandler::handleOldStatus() 
-  throw (castor::exception::Exception) {
+   {
 
   if ( ptr_tapeDrive->status() != UNIT_DOWN &&  
        ptr_tapeDrive->status() != STATUS_UNKNOWN) {
@@ -150,7 +150,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleOldStatus()
 // handleVolMountStatus
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus() 
-  throw (castor::exception::Exception) {
+   {
     
   TapeRequest* tapeRequest = ptr_tapeDrive->runningTapeReq();
   TapeServer* tapeServer = ptr_tapeDrive->tapeServer();
@@ -280,7 +280,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolMountStatus()
 // handleVolUnmountStatus
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus() 
-  throw (castor::exception::Exception) {
+   {
   
   delete ptr_tapeDrive->tape();
   ptr_tapeDrive->setTape(NULL);
@@ -367,7 +367,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleVolUnmountStatus()
 // handleUnitReleaseStatus
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus() 
-  throw (castor::exception::Exception) {
+   {
   
   TapeRequest*            tapeRequest = ptr_tapeDrive->runningTapeReq();
   castor::vdqm::VdqmTape* tape        = ptr_tapeDrive->tape();
@@ -610,7 +610,7 @@ void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitReleaseStatus()
 // handleUnitFreeStatus
 //------------------------------------------------------------------------------
 void castor::vdqm::handler::TapeDriveStatusHandler::handleUnitFreeStatus() 
-  throw (castor::exception::Exception) {
+   {
 
   TapeRequest* tapeRequest = NULL;
   

@@ -101,7 +101,7 @@ protected:
    * @param argv Argument vector from the executable's main().
    */
   virtual void parseCommandLine(const int argc, char **argv)
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * To be implemented by sub-classes.
@@ -112,7 +112,7 @@ protected:
    *        be accessed.
    */
   virtual void checkAccessToDisk()
-    const throw(castor::exception::Exception) = 0;
+    const  = 0;
 
   /**
    * To be implemented by sub-classes.
@@ -123,7 +123,7 @@ protected:
    *        accessed.
    */
   virtual void checkAccessToTape()
-    const throw(castor::exception::Exception) = 0;
+    const  = 0;
 
   /**
    * To be implemented by sub-classes.
@@ -135,7 +135,7 @@ protected:
    *                   scheduling of the VDQM.
    */
   virtual void requestDriveFromVdqm(char *const tapeServer)
-    throw(castor::exception::Exception) = 0;
+     = 0;
 
   /**
    * To be implemented by sub-classes.
@@ -150,14 +150,14 @@ protected:
   virtual void sendVolumeToTapeBridge(
     const tapegateway::VolumeRequest &volumeRequest,
     castor::io::AbstractTCPSocket    &connection)
-    const throw(castor::exception::Exception) = 0;
+    const  = 0;
 
   /**
    * To be implemented by sub-classes.
    *
    * Performs the tape copy whether it be DUMP, READ or WRITE.
    */
-  virtual void performTransfer() throw(castor::exception::Exception) = 0;
+  virtual void performTransfer()  = 0;
 
   /**
    * The program name.
@@ -243,13 +243,13 @@ protected:
    * vmgr_querytape.  This method converts the return value of -1 and the
    * serrno to an exception in the case of an error.
    */
-  void vmgrQueryTape() throw (castor::exception::Exception);
+  void vmgrQueryTape() ;
 
   /**
    * Creates, binds and sets to listening the callback socket to be used for
    * callbacks from the tape-bridge daemon.
    */
-  void setupCallbackSock() throw(castor::exception::Exception);
+  void setupCallbackSock() ;
 
   /**
    * Request a drive from the VDQM to mount the specified tape for the
@@ -262,7 +262,7 @@ protected:
    *                   scheduling of the VDQM.
    */
   void requestDriveFromVdqm(const int accessMode, char *const tapeServer)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Waits for and accepts an incoming tape-bridge connection, reads in the
@@ -271,7 +271,7 @@ protected:
    *
    * @return True if there is more work to be done, else false.
    */
-  bool waitForMsgAndDispatchHandler() throw(castor::exception::Exception);
+  bool waitForMsgAndDispatchHandler() ;
 
   /**
    * To be implemented by sub-classes.
@@ -284,7 +284,7 @@ protected:
    * @return     True if there is more work to be done, else false.
    */
   virtual bool dispatchMsgHandler(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception) = 0;
+    castor::io::AbstractSocket &sock)  = 0;
 
   /**
    * PingNotification message handler.
@@ -294,7 +294,7 @@ protected:
    * @return     True if there is more work to be done else false.
    */
   bool handlePingNotification(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
   /**
    * EndNotification message handler.
@@ -304,7 +304,7 @@ protected:
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotification(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
   /**
    * EndNotificationErrorReport message handler.
@@ -314,7 +314,7 @@ protected:
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotificationErrorReport(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) throw(castor::exception::Exception);
+    castor::io::AbstractSocket &sock) ;
 
   /**
    * Handles the specified failed file-transfers.
@@ -323,7 +323,7 @@ protected:
    */
   void handleFailedTransfers(
     const std::vector<tapegateway::FileErrorReportStruct*> &files)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Handles the specified failed file-transfer.
@@ -331,12 +331,12 @@ protected:
    * @param file The failed file-transfer.
    */
   void handleFailedTransfer(const tapegateway::FileErrorReportStruct &file)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Acknowledges the end of the session to the tape-bridge.
    */
-  void acknowledgeEndOfSession() throw(castor::exception::Exception);
+  void acknowledgeEndOfSession() ;
 
   /**
    * Convenience method for sending EndNotificationErrorReport messages to the
@@ -400,7 +400,7 @@ protected:
    * @param statBuf The stat buffer to be passed to rfio_stat64.
    */
   void rfioStat(const char *path, struct stat64 &statBuf)
-    const throw(castor::exception::Exception);
+    const ;
 
 
 private:
@@ -430,7 +430,7 @@ private:
   /**
    * Deletes the specified VDQM volume request.
    */
-  void deleteVdqmVolumeRequest() throw (castor::exception::Exception);
+  void deleteVdqmVolumeRequest() ;
 
   /**
    * The SIGINT signal handler.
@@ -452,7 +452,7 @@ private:
    * Relative filename will be prefix by the hostaname and by the current
    * working directory
    */
-  void checkFilenameFormat() throw(castor::exception::Exception);
+  void checkFilenameFormat() ;
 
   /**
    * The current working directory where tpcp command is run.

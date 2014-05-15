@@ -57,7 +57,7 @@ public:
     std::ostream &stdErr,
     log::Logger &log,
     io::PollReactor &reactor,
-    legacymsg::CupvProxy &cupv) throw(castor::exception::Exception);
+    legacymsg::CupvProxy &cupv) ;
 
   /**
    * Destructor.
@@ -78,13 +78,13 @@ protected:
   /**
    * Returns the name of the host on which the daemon is running.
    */
-  std::string getHostName() const throw(castor::exception::Exception);
+  std::string getHostName() const ;
 
   /**
    * Determines and returns the TCP/IP port onwhich the rmcd daemon should
    * listen for client connections.
    */
-  unsigned short getRmcPort() throw(castor::exception::Exception);
+  unsigned short getRmcPort() ;
 
   /**
    * Tries to get the value of the specified parameter from parsing
@@ -93,7 +93,7 @@ protected:
    * @param category The category of the configuration parameter.
    * @param name The name of the configuration parameter.
    */
-  std::string getConfigParam(const std::string &category, const std::string &name) throw(castor::exception::Exception);
+  std::string getConfigParam(const std::string &category, const std::string &name) ;
 
   /**
    * Exception throwing main() function.
@@ -102,7 +102,7 @@ protected:
    * @param argv The array of command-line arguments.
    */
   void exceptionThrowingMain(const int argc, char **const argv)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Logs the start of the daemon.
@@ -122,30 +122,30 @@ protected:
   /**
    * Blocks the signals that should not asynchronously disturb the daemon.
    */
-  void blockSignals() const throw(castor::exception::Exception);
+  void blockSignals() const ;
 
   /**
    * Sets up the reactor.
    */
-  void setUpReactor() throw(castor::exception::Exception);
+  void setUpReactor() ;
 
   /**
    * Creates the handler to accept client connections and registers it with
    * the reactor.
    */
-  void createAndRegisterAcceptHandler() throw(castor::exception::Exception);
+  void createAndRegisterAcceptHandler() ;
 
   /**
    * The main event loop of the daemon.
    */
-  void mainEventLoop() throw(castor::exception::Exception);
+  void mainEventLoop() ;
 
   /**
    * Handles any pending events.
    *
    * @return True if the main event loop should continue, else false.
    */
-  bool handleEvents() throw(castor::exception::Exception);
+  bool handleEvents() ;
 
   /**
    * Handles any pending signals.

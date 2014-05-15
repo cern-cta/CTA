@@ -58,7 +58,7 @@ public:
    * @param log Object representing the API of the CASTOR logging system.
    */
   TapeBridgeDaemon(std::ostream &stdOut, std::ostream &stdErr,
-    log::Logger &log) throw(castor::exception::Exception);
+    log::Logger &log) ;
 
   /**
    * Destructor.
@@ -86,7 +86,7 @@ private:
    * @param argv The array of command-line arguments.
    */
   int exceptionThrowingMain(const int argc, char **argv)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Logs the start of the daemon.
@@ -134,7 +134,7 @@ private:
    * @param argv Argument vector from the executable's entry function: main().
    */
   void parseCommandLine(const int argc, char **argv)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Writes the command-line usage message of the tapebridge daemon onto the
@@ -162,7 +162,7 @@ private:
     const BulkRequestConfigParams &bulkRequestConfigParams,
     const TapeFlushConfigParams   &tapeFlushConfigParams,
     const uint32_t                nbDrives)
-    throw (castor::exception::Exception);
+    ;
 
   /**
    * DLF message strings.

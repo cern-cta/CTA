@@ -67,7 +67,7 @@ public:
     const uint32_t                 gid,
     const char                     *const vid,
     legacymsg::VmgrTapeInfoMsgBody &reply)
-    throw(castor::exception::Exception);
+    ;
 
 }; // class VmgrTxRx
 

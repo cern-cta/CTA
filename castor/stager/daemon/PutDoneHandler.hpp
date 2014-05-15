@@ -30,13 +30,13 @@ namespace castor{
 	
       public:
         /* constructor */
-        PutDoneHandler(RequestHelper* reqHelper) throw(castor::exception::Exception) :
+        PutDoneHandler(RequestHelper* reqHelper)  :
           RequestHandler(reqHelper) {};
         /* destructor */
         ~PutDoneHandler() throw() {};
 
         /* putDone request handler */
-        virtual void handle() throw(castor::exception::Exception);
+        virtual void handle() ;
         
       }; //end PutDoneHandler class
 

@@ -62,7 +62,7 @@ public:
    * @param upper The inclusive upper bound of the range.
    */
   TapeFseqRange(const uint32_t lower, const uint32_t upper)
-    throw(exception::InvalidArgument);
+    ;
 
   /**
    * Resets the range to be an empty range.
@@ -80,7 +80,7 @@ public:
    * @param upper The inclusive upper bound of the range.
    */
   void reset(const uint32_t lower, const uint32_t upper)
-    throw(exception::InvalidArgument);
+    ;
 
   /**
    * Returns true if the range is empty.

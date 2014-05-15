@@ -49,7 +49,7 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::io::AbstractTCPSocket::AbstractTCPSocket(int socket) throw () :
+castor::io::AbstractTCPSocket::AbstractTCPSocket(int socket) throw() :
   AbstractSocket(socket),
   m_maxNetDataSize(-1) {}
 
@@ -57,7 +57,7 @@ castor::io::AbstractTCPSocket::AbstractTCPSocket(int socket) throw () :
 // constructor
 //------------------------------------------------------------------------------
 castor::io::AbstractTCPSocket::AbstractTCPSocket(const bool reusable)
-  throw (castor::exception::Exception) :
+   :
   AbstractSocket(reusable),
   m_maxNetDataSize(-1) {}
 
@@ -66,7 +66,7 @@ castor::io::AbstractTCPSocket::AbstractTCPSocket(const bool reusable)
 //------------------------------------------------------------------------------
 castor::io::AbstractTCPSocket::AbstractTCPSocket(const unsigned short port,
                                                  const bool reusable)
-  throw (castor::exception::Exception) :
+   :
   AbstractSocket(port, reusable),
   m_maxNetDataSize(-1) {}
 
@@ -76,7 +76,7 @@ castor::io::AbstractTCPSocket::AbstractTCPSocket(const unsigned short port,
 castor::io::AbstractTCPSocket::AbstractTCPSocket(const unsigned short port,
                                                  const std::string host,
                                                  const bool reusable)
-  throw (castor::exception::Exception) :
+   :
   AbstractSocket(port, host, reusable),
   m_maxNetDataSize(-1) {}
 
@@ -86,7 +86,7 @@ castor::io::AbstractTCPSocket::AbstractTCPSocket(const unsigned short port,
 castor::io::AbstractTCPSocket::AbstractTCPSocket(const unsigned short port,
                                                  const unsigned long ip,
                                                  const bool reusable)
-  throw (castor::exception::Exception) :
+   :
   AbstractSocket(port, ip, reusable),
   m_maxNetDataSize(-1) {}
 
@@ -94,7 +94,7 @@ castor::io::AbstractTCPSocket::AbstractTCPSocket(const unsigned short port,
 // createSocket
 //------------------------------------------------------------------------------
 void castor::io::AbstractTCPSocket::createSocket()
-  throw (castor::exception::Exception) {
+   {
   // creates the socket
   if ((m_socket = ::socket(AF_INET, SOCK_STREAM, 0)) < 0) {
     castor::exception::Exception ex(errno);
@@ -115,7 +115,7 @@ void castor::io::AbstractTCPSocket::createSocket()
 void castor::io::AbstractTCPSocket::sendBuffer(const unsigned int magic,
                                                const char* buf,
                                                const int n)
-  throw (castor::exception::Exception) {
+   {
   // Sends the buffer with a header (magic number + size)
   if (netwrite_timeout(m_socket,
 		       (char*)(&magic),
@@ -138,7 +138,7 @@ void castor::io::AbstractTCPSocket::sendBuffer(const unsigned int magic,
 void castor::io::AbstractTCPSocket::readBuffer(const unsigned int magic,
                                                char** buf,
                                                int& n)
-  throw (castor::exception::Exception) {
+   {
   // Determine the maximum amount of bytes per message that can be read from
   // the socket when readBuffer is called. By default this is 20MB
   if (m_maxNetDataSize == -1) {

@@ -40,7 +40,7 @@ castor::server::DynamicThreadPool::DynamicThreadPool
  unsigned int maxThreads,
  unsigned int threshold,
  unsigned int maxTasks)
-  throw(castor::exception::Exception) :
+   :
   BaseThreadPool(poolName, consumerThread, 0),
   m_taskQueue(maxTasks),
   m_producerThread(producerThread),
@@ -119,7 +119,7 @@ void castor::server::DynamicThreadPool::setNbThreads(unsigned int value) {
 // init
 //-----------------------------------------------------------------------------
 void castor::server::DynamicThreadPool::init()
-  throw (castor::exception::Exception) {
+   {
   
   castor::server::BaseThreadPool::init();
   
@@ -140,7 +140,7 @@ void castor::server::DynamicThreadPool::init()
 // run
 //-----------------------------------------------------------------------------
 void castor::server::DynamicThreadPool::run()
-  throw (castor::exception::Exception) {  
+   {  
   pthread_t t;
   int       rv;
   
@@ -417,7 +417,7 @@ void* castor::server::DynamicThreadPool::_consumer(void *arg) {
 // addTask
 //-----------------------------------------------------------------------------
 void castor::server::DynamicThreadPool::addTask(void *data, bool wait)
-  throw(castor::exception::Exception) {
+   {
   
   // Variables
   pthread_t t;

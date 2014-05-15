@@ -176,7 +176,7 @@ public:
    * @param lines The lines parsed from /etc/castor/TPCONFIG.
    */
   void populateCatalogue(const utils::TpconfigLines &lines)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Returns the unit name of the tape drive on which the specified mount
@@ -185,7 +185,7 @@ public:
    * @param sessionPid The process ID of the mount session.
    * @return the unit name of the tape drive.
    */
-  std::string getUnitName(const pid_t sessionPid) const throw(castor::exception::Exception);
+  std::string getUnitName(const pid_t sessionPid) const ;
 
   /**
    * Returns an unordered list of the unit names of all of the tape drives
@@ -193,7 +193,7 @@ public:
    *
    * @return Unordered list of the unit names.
    */
-  std::list<std::string> getUnitNames() const throw(castor::exception::Exception);
+  std::list<std::string> getUnitNames() const ;
 
   /**
    * Returns an unordered list of the unit names of the tape drives in the
@@ -202,7 +202,7 @@ public:
    * @return Unordered list of the unit names.
    */
   std::list<std::string> getUnitNames(const DriveState state)
-    const throw(castor::exception::Exception);
+    const ;
 
   /**
    * Returns the device group name (DGN) of the specified tape drive.
@@ -210,7 +210,7 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   const std::string &getDgn(const std::string &unitName)
-    const throw(castor::exception::Exception);
+    const ;
   
   /**
    * Returns the VID of the tape mounted on the specified tape drive.
@@ -218,7 +218,7 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   const std::string &getVid(const std::string &unitName)
-    const throw(castor::exception::Exception);
+    const ;
   
   /**
    * Returns the time when the tape was mounted on the specified tape drive.
@@ -226,7 +226,7 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   time_t getAssignmentTime(const std::string &unitName)
-    const throw(castor::exception::Exception);
+    const ;
 
   /**
    * Returns the filename of the device file of the specified tape drive.
@@ -234,7 +234,7 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   const std::string &getDevFilename(const std::string &unitName)
-    const throw(castor::exception::Exception);
+    const ;
 
   /**
    * Returns the tape densities supported by the specified tape drive.
@@ -242,7 +242,7 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   const std::list<std::string> &getDensities(const std::string &unitName)
-    const throw(castor::exception::Exception);
+    const ;
 
   /**
    * Returns the type of the specified session.
@@ -250,7 +250,7 @@ public:
    * @param sessionPid The process ID of the session.
    */
   SessionType getSessionType(const pid_t sessionPid)
-    const throw(castor::exception::Exception);
+    const ;
 
   /**
    * Returns the current state of the specified tape drive.
@@ -258,7 +258,7 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   DriveState getState(const std::string &unitName)
-    const throw(castor::exception::Exception);
+    const ;
 
   /**
    * Returns the library slot of the specified tape drive.
@@ -266,7 +266,7 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   const std::string &getLibrarySlot(const std::string &unitName)
-    const throw(castor::exception::Exception);
+    const ;
 
   /**
    * Returns the device type of the specified tape drive in its libary.
@@ -274,13 +274,13 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   const std::string &getDevType(const std::string &unitName)
-    const throw(castor::exception::Exception);
+    const ;
 
   /**
    * Returns the file descriptor of the connection with the command-line
    * tool castor-tape-label.
    */
-  int getLabelCmdConnection(const pid_t sessionPid) throw(castor::exception::Exception);
+  int getLabelCmdConnection(const pid_t sessionPid) ;
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_UP.
@@ -292,7 +292,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  void configureUp(const std::string &unitName) throw(castor::exception::Exception);
+  void configureUp(const std::string &unitName) ;
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_DOWN.
@@ -304,7 +304,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  void configureDown(const std::string &unitName) throw(castor::exception::Exception);
+  void configureDown(const std::string &unitName) ;
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_WAITFORK.
@@ -324,7 +324,7 @@ public:
    * @param job The job received from the vdqmd daemon.
    */
   void receivedVdqmJob(const legacymsg::RtcpJobRqstMsgBody &job)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_WAITLABEL.
@@ -352,7 +352,7 @@ public:
    * with the tape labeling command-line tool castor-tape-label.
    */
   void receivedLabelJob(const legacymsg::TapeLabelRqstMsgBody &job,
-    const int labelCmdConnection) throw(castor::exception::Exception);
+    const int labelCmdConnection) ;
 
   /**
    * Returns the job received from the vdqmd daemon for the specified tape
@@ -365,7 +365,7 @@ public:
    * @return The job received from the vdqmd daemon.
    */
   const legacymsg::RtcpJobRqstMsgBody &getVdqmJob(const std::string &unitName)
-    const throw(castor::exception::Exception);
+    const ;
   
   /**
    * Returns the job received from the vdqmd daemon for the specified tape
@@ -378,7 +378,7 @@ public:
    * @return The job received from the vdqmd daemon.
    */
   const legacymsg::TapeLabelRqstMsgBody &getLabelJob(const std::string &unitName)
-    const throw(castor::exception::Exception);
+    const ;
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_RUNNING.
@@ -391,7 +391,7 @@ public:
    * running the mount session.
    */
   void forkedMountSession(const std::string &unitName, const pid_t sessionPid)
-    throw(castor::exception::Exception); 
+    ; 
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_RUNNING.
@@ -404,7 +404,7 @@ public:
    * running the label session.
    */
   void forkedLabelSession(const std::string &unitName, const pid_t sessionPid)
-    throw(castor::exception::Exception);
+    ;
 
   /**
    * Returns the process ID of the child process responsible the mount session
@@ -417,7 +417,7 @@ public:
    * @return The process ID of the child process responsible for mount session
    * running on the specified tape drive.
    */
-  pid_t getSessionPid(const std::string &unitName) const throw(castor::exception::Exception);
+  pid_t getSessionPid(const std::string &unitName) const ;
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_UP if the
@@ -429,7 +429,7 @@ public:
    *
    * @param sessionPid Process ID of the child process handling the session.
    */
-  void sessionSucceeded(const pid_t sessionPid) throw(castor::exception::Exception);
+  void sessionSucceeded(const pid_t sessionPid) ;
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_UP if the
@@ -441,7 +441,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  void sessionSucceeded(const std::string &unitName) throw(castor::exception::Exception);
+  void sessionSucceeded(const std::string &unitName) ;
   
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_DOWN.
@@ -451,7 +451,7 @@ public:
    *
    * @param sessionPid Process ID of the child process handling the session.
    */
-  void sessionFailed(const pid_t sessionPid) throw(castor::exception::Exception);
+  void sessionFailed(const pid_t sessionPid) ;
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_DOWN.
@@ -461,7 +461,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  void sessionFailed(const std::string &unitName) throw(castor::exception::Exception);
+  void sessionFailed(const std::string &unitName) ;
   
   /**
    * Updates the vid and assignment time of the specified drive
@@ -469,7 +469,7 @@ public:
    * @param vid Volume ID of the tape mounted
    * @param unitName Name of the drive
    */
-  void updateVidAssignment(const std::string &vid, const std::string &unitName) throw(castor::exception::Exception);
+  void updateVidAssignment(const std::string &vid, const std::string &unitName) ;
 
 private:
 
@@ -595,7 +595,7 @@ private:
    *
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void enterTpconfigLine(const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void enterTpconfigLine(const utils::TpconfigLine &line) ;
 
   /**
    * Returns the equivalent DriveState value of the specified string
@@ -606,7 +606,7 @@ private:
    *
    * @param initialState String representation of the initial tape-drive state.
    */
-  DriveState str2InitialState(const std::string &initialState) const throw(castor::exception::Exception);
+  DriveState str2InitialState(const std::string &initialState) const ;
 
   /**
    * Checks the semantics of the specified TPCONFIG line against the specified
@@ -615,7 +615,7 @@ private:
    * @param catalogueEntry The catalogue entry.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLine(const DriveEntry &catalogueEntry, const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLine(const DriveEntry &catalogueEntry, const utils::TpconfigLine &line) ;
 
   /**
    * Throws an exception if the specified catalogue value does not match the
@@ -625,7 +625,7 @@ private:
    * the tape-drive catalogue.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLineDgn(const std::string &catalogueDgn, const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLineDgn(const std::string &catalogueDgn, const utils::TpconfigLine &line) ;
 
   /**
    * Throws an exception if the specified catalogue value does not match the
@@ -635,7 +635,7 @@ private:
    * drive that has been retrieved from the tape-drive catalogue.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLineDevFilename(const std::string &catalogueDevFilename, const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLineDevFilename(const std::string &catalogueDevFilename, const utils::TpconfigLine &line) ;
 
   /**
    * Throws an exception if the specified catalogue value does not match the
@@ -645,7 +645,7 @@ private:
    * have been retrived from the tape-drive catalogue.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLineDensity(const std::list<std::string> &catalogueDensities, const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLineDensity(const std::list<std::string> &catalogueDensities, const utils::TpconfigLine &line) ;
 
   /**
    * Throws an exception if the specified catalogue value does not match the
@@ -655,7 +655,7 @@ private:
    * has been retrieved from the tape-drive catalogue.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLineInitialState(const DriveState catalogueInitialState, const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLineInitialState(const DriveState catalogueInitialState, const utils::TpconfigLine &line) ;
 
   /**
    * Throws an exception if the specified catalogue value does not match the
@@ -665,7 +665,7 @@ private:
    * been retrieved from the tape-drive catalogue.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLineLibrarySlot(const std::string &catalogueLibrarySlot, const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLineLibrarySlot(const std::string &catalogueLibrarySlot, const utils::TpconfigLine &line) ;
 
   /**
    * Throws an exception if the specified catalogue value does not match the
@@ -675,7 +675,7 @@ private:
    * retrieved from the tape-drive library.
    * @param line The line parsed from /etc/castor/TPCONFIG.
    */
-  void checkTpconfigLineDevType(const std::string &catalogueDevType, const utils::TpconfigLine &line) throw(castor::exception::Exception);
+  void checkTpconfigLineDevType(const std::string &catalogueDevType, const utils::TpconfigLine &line) ;
 
 }; // class DriveCatalogue
 
