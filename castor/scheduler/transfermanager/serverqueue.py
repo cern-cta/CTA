@@ -431,31 +431,31 @@ class ServerQueue(dict):
       self.lock.release()
 
   def _isTransferMatchingAndGetPool(self, transferId, transferType, diskServerList,
-                                    reqdiskpool=None, reqUser=None):
-    '''checks whether a given transfer matches the given filter on diskpool and user'''
+                                    reqpool=None, reqUser=None):
+    '''checks whether a given transfer matches the given filter on pool and user'''
     # pick a random machine (we loop and break straight, due to lack of "getrandomitem" on a set
     for diskServer in self.transfersLocations[(transferId, transferType)]:
-      # get diskpool
+      # get pool
       try:
-        diskpool = diskServerList.getDiskServerPool(diskServer)
-        # are we interested in this diskpool ?
-        if reqdiskpool and reqdiskpool != diskpool:
+        pool = diskServerList.getDiskServerPool(diskServer)
+        # are we interested in this pool ?
+        if reqpool and reqpool != pool:
           return False
       except KeyError:
         # no diskServer found with this name. It must have disappeared while the associated
-        # transfer was queuein. Let's use the diskpool '???'
-        if reqdiskpool:
+        # transfer was queuein. Let's use the pool '???'
+        if reqpool:
           return False
-        diskpool = '???'
+        pool = '???'
       # are we interested in this user ?
       if reqUser:
         if reqUser != self[diskServer][transferId].user:
           return False
       break
     # transfer matches the filter
-    return diskpool
+    return pool
 
-  def listTransfers(self, reqdiskpool=None, reqUser=None):
+  def listTransfers(self, reqpool=None, reqUser=None):
     '''lists pending transfers'''
     res = []
     self.lock.acquire()
@@ -463,24 +463,24 @@ class ServerQueue(dict):
       # for each transfer
       for transferId, transferType in self.transfersLocations:
         # check that we are interested in it
-        diskpool = self._isTransferMatchingAndGetPool(transferId, transferType,
-                                                      diskserverlistcache.diskServerList,
-                                                      reqdiskpool, reqUser)
-        if diskpool:
+        pool = self._isTransferMatchingAndGetPool(transferId, transferType,
+                                                  diskserverlistcache.diskServerList,
+                                                  reqpool, reqUser)
+        if pool:
           # go through the different instances of this transfer
           for diskServer in self.transfersLocations[(transferId, transferType)]:
             # get information about the transfer
             transfer = self[diskServer][transferId]
             # add the transfer to list of results
             res.append((transferId, transfer.fileId, socket.getfqdn(),
-                        transfer.user, 'PEND', diskpool, diskServer,
+                        transfer.user, 'PEND', pool, diskServer,
                         TransferType.toPreciseStr(transfer), transfer.creationTime, None))
     finally:
       self.lock.release()
     return res
 
 
-  def nbTransfersPerPool(self, reqdiskpool=None, requser=None):
+  def nbTransfersPerPool(self, reqpool=None, requser=None):
     '''returns the number of unique transfers pending on the pool given (or all pools)
     for the given user (or all users)'''
     res = {}
@@ -489,14 +489,14 @@ class ServerQueue(dict):
       # for each transfer
       for transferId, transferType in self.transfersLocations:
         # check that we are interested in it
-        diskpool = self._isTransferMatchingAndGetPool(transferId, transferType,
-                                                      diskserverlistcache.diskServerList,
-                                                      reqdiskpool, requser)
-        if diskpool:
-          # increase counter for corresponding diskpool
-          if diskpool not in res:
-            res[diskpool] = 0
-          res[diskpool] = res[diskpool] + 1
+        pool = self._isTransferMatchingAndGetPool(transferId, transferType,
+                                                  diskserverlistcache.diskServerList,
+                                                  reqpool, requser)
+        if pool:
+          # increase counter for corresponding pool
+          if pool not in res:
+            res[pool] = 0
+          res[pool] = res[pool] + 1
     finally:
       self.lock.release()
     return res

@@ -20,8 +20,8 @@
 # *
 # *
 # * command line to display the ongoing transfers in the CASTOR instance
-# * On top of the full list, summaries can be retrieved per host and per diskpool
-# * The output can also be restricted to a given user or diskpool
+# * On top of the full list, summaries can be retrieved per host and per pool
+# * The output can also be restricted to a given user or pool
 # *
 # * @author Castor Dev team, castor-dev@cern.ch
 # *****************************************************************************/
@@ -39,7 +39,7 @@ def usage(exitCode):
   '''prints usage'''
   print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-s|--summary [-c|--clean]] ' + \
         '[-p|--poolsummary] [-u|--user <user>] [-x|--extra ' + \
-        '[-r|--restrict p1[:...]]] [-t|--transfermanager <node>[:<port>]] [diskpool]'
+        '[-r|--restrict p1[:...]]] [-t|--transfermanager <node>[:<port>]] [pool]'
   sys.exit(exitCode)
 
 # first parse the options
@@ -116,38 +116,38 @@ if extraprotocols and not extra:
   usage(1)
 
 # then parse the arguments, if any
-reqdiskpool = None
+reqpool = None
 if len(args) > 0:
-  reqdiskpool = args[0]
+  reqpool = args[0]
   if len(args) > 1:
-    print "Too many arguments, only one diskpool can be given"
+    print "Too many arguments, only one pool can be given"
     usage(1)
 
 def processTransfersListing():
-  '''retrieves and display the list of queuing and running transfers for the given diskpool and user.
+  '''retrieves and display the list of queuing and running transfers for the given pool and user.
   The queuing transfers are listed from the central transfermanager, the running ones are requested
   to the diskservers'''
-  transfers = rpconn.root.listRunningTransfers(reqdiskpool, requser)
-  transfers += rpconn.root.listPendingTransfersCentrally(reqdiskpool, requser)
+  transfers = rpconn.root.listRunningTransfers(reqpool, requser)
+  transfers += rpconn.root.listPendingTransfersCentrally(reqpool, requser)
   # loop to display errors
   for transfer in transfers:
     if not transfer[0]:
       print 'WARNING : was unable to contact ' + transfer[1] + '. Some transfers may be missing'
-  maxDiskPoolNameLen = max([5] + [len(t[5]) for t in transfers if t[0]])+1
+  maxPoolNameLen = max([5] + [len(t[5]) for t in transfers if t[0]])+1
   # Display valid lines
   titles = ('TRANSFERID', 'FILEID', 'USER', 'STAT', 'TYPE', 'POOL',
             'SCHEDULER', 'DISKSERVER', 'SUBMIT_TIME', 'START_TIME')
   data = []
   for transfer in transfers:
       if transfer[0]:
-          transId, fileId, scheduler, user, status, diskpool, \
+          transId, fileId, scheduler, user, status, pool, \
             execHost, transferType, submitTime, startTime = transfer
           if startTime:
-              data.append((transId, fileId[1], user, status, transferType, diskpool,
+              data.append((transId, fileId[1], user, status, transferType, pool,
                            scheduler, execHost, time.strftime('%b %d %H:%M:%S', time.localtime(submitTime)),
                            time.strftime('%b %d %H:%M:%S', time.localtime(startTime))))
           else:
-              data.append((transId, fileId[1], user, status, transferType, diskpool,
+              data.append((transId, fileId[1], user, status, transferType, pool,
                            scheduler, execHost, time.strftime('%b %d %H:%M:%S', time.localtime(submitTime)), '-'))
   castor_tools.prettyPrintTable(titles, data)
 
@@ -166,7 +166,7 @@ def _buildProtocolList(summaryreport):
 
 def _buildTitleAndCoStrings(presubtitle, preformat, preformatnodata, protocols):
   '''helper function to build title, subtitle and format string for the display in processHostListing
-  and processDiskPoolListing'''
+  and processPoolListing'''
   subtitleblock = 'NBTPEND NBSPEND NBTRUN  NBSRUN '
   stblocklen = len(subtitleblock)
   title = ' ' * len(presubtitle)
@@ -185,8 +185,8 @@ def _buildTitleAndCoStrings(presubtitle, preformat, preformatnodata, protocols):
   return title, subtitle, dataformat, nodataformat
 
 def processHostListing():
-  '''retrieves and display summary of the running transfers per host for the given diskpool and user'''
-  summaryreport = rpconn.root.summarizeTransfersPerHost(reqdiskpool, requser, extra)
+  '''retrieves and display summary of the running transfers per host for the given pool and user'''
+  summaryreport = rpconn.root.summarizeTransfersPerHost(reqpool, requser, extra)
   # compute the max length of the machine names we got and deduce the title and printf args
   maxMachineNameLen = max([0] + [len(s[0]) for s in summaryreport])
   machineHead = 'DISKSERVER ' + ' '*(maxMachineNameLen-10)
@@ -250,17 +250,17 @@ def processHostListing():
       else:
         print '%-*s%4s %7s %7s %7s %7s' % (machineHeadLen, summary[0], '-', '-', '-', '-', '-')
 
-def processDiskPoolListing():
-  '''retrieves and display summary of the running transfers per diskpool for the given diskpool and user'''
-  summaryreport, errorMsg = rpconn.root.summarizeTransfersPerPool(reqdiskpool, requser, extra)
-  # compute the max length of the diskpools we got and deduce the title and printf args
-  maxDiskPoolNameLen = max([0] + [len(s[0]) for s in summaryreport])
-  diskpoolHead = 'DISKPOOL ' + ' '*(maxDiskPoolNameLen-5)
-  diskpoolHeadLen = max(maxDiskPoolNameLen+4, 12)
+def processPoolListing():
+  '''retrieves and display summary of the running transfers per pool for the given pool and user'''
+  summaryreport, errorMsg = rpconn.root.summarizeTransfersPerPool(reqpool, requser, extra)
+  # compute the max length of the pools we got and deduce the title and printf args
+  maxPoolNameLen = max([0] + [len(s[0]) for s in summaryreport])
+  poolHead = 'POOL ' + ' '*(maxPoolNameLen-5)
+  poolHeadLen = max(maxPoolNameLen+4, 12)
   # depending on the extra flag, the output will differ
   if extra:
     # summaryreport is a tuple of reports of this form :
-    # (diskpoolName, nbUniqueQueueingTransfers, nbslots,
+    # (poolName, nbUniqueQueueingTransfers, nbslots,
     #  nbQueueingTransfers, (('proto1', nbQueueingTransfersForProto1), ...),
     #  nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
     #  nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
@@ -270,7 +270,7 @@ def processDiskPoolListing():
     # the (very weak) parsing of _buildProtocolList
     protocols = _buildProtocolList([report[:-1] for report in summaryreport])
     # build title, subtitle and format strings
-    title, subtitle, dataformat = _buildTitleAndCoStrings(diskpoolHead + 'NBSLOTS  NBUTPEND', '%-*s%5d%9s', '%-*s%5s%9s', protocols)[0:3]
+    title, subtitle, dataformat = _buildTitleAndCoStrings(poolHead + 'NBSLOTS  NBUTPEND', '%-*s%5d%9s', '%-*s%5s%9s', protocols)[0:3]
     # display title and subtitle
     print title
     print subtitle
@@ -279,7 +279,7 @@ def processDiskPoolListing():
     for s in summaryreport:
       # start with non protocol specific data
       if len(s) == 1:
-        data = [diskpoolHeadLen, s[0], '-', '0'] + [0] * (4 + len(protocols) * 4)
+        data = [poolHeadLen, s[0], '-', '0'] + [0] * (4 + len(protocols) * 4)
         print dataformat % tuple(data)
       else:
         poolname, nbUniqueQueueingTransfers, nbslots, nbQueueingTransfers, \
@@ -289,7 +289,7 @@ def processDiskPoolListing():
         if unreachableMachines:
           allUnreachableMachines[poolname] = unreachableMachines
           poolname = poolname + '(*)'
-        data = [diskpoolHeadLen, poolname, nbslots, str(nbUniqueQueueingTransfers), nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots]
+        data = [poolHeadLen, poolname, nbslots, str(nbUniqueQueueingTransfers), nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots]
         # and for each protocol
         for protocol in protocols:
           # gather specific data
@@ -299,20 +299,20 @@ def processDiskPoolListing():
         print dataformat % tuple(data)
   else:
     # summaryreport is a tuple of reports of this form :
-    # (diskpoolName, nbUniqueTransfers, nbslots,
+    # (poolName, nbUniqueTransfers, nbslots,
     #  nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots,
     #  (unreachableMachine,...))
-    print diskpoolHead + 'NBSLOTS  NBTPEND  NBUTPEND NBSPEND  NBTRUN   NBSRUN'
+    print poolHead + 'NBSLOTS  NBTPEND  NBUTPEND NBSPEND  NBTRUN   NBSRUN'
     allUnreachableMachines = {}
     for s in summaryreport:
       if len(s) == 1:
-        print '%-*s%5d %8d %8d %8d %8d %8d' % (diskpoolHeadLen, s[0], 0, 0, 0, 0, 0, 0)
+        print '%-*s%5d %8d %8d %8d %8d %8d' % (poolHeadLen, s[0], 0, 0, 0, 0, 0, 0)
       else:
-        diskpoolName, nbUniqueTransfers, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots, unreachableMachines = s
+        poolName, nbUniqueTransfers, nbslots, nbQueueingTransfers, nbQueueingSlots, nbRunningTransfers, nbRunningSlots, unreachableMachines = s
         if unreachableMachines:
-          allUnreachableMachines[diskpoolName] = unreachableMachines
-          diskpoolName = diskpoolName + '(*)'
-        print '%-*s%5d %8d %8s %8d %8d %8d' % (diskpoolHeadLen, diskpoolName, nbslots, nbQueueingTransfers, str(nbUniqueTransfers), nbQueueingSlots, nbRunningTransfers, nbRunningSlots)
+          allUnreachableMachines[poolName] = unreachableMachines
+          poolName = poolName + '(*)'
+        print '%-*s%5d %8d %8s %8d %8d %8d' % (poolHeadLen, poolName, nbslots, nbQueueingTransfers, str(nbUniqueTransfers), nbQueueingSlots, nbRunningTransfers, nbRunningSlots)
   # deal with unreachable machines if any
   if allUnreachableMachines:
     print '(*) Note that these numbers are incomplete as the following machines were unreachable :'
@@ -336,7 +336,7 @@ try:
     if issummary:
       processHostListing()
     elif ispoolsummary:
-      processDiskPoolListing()
+      processPoolListing()
     else:
       processTransfersListing()
   except Exception, unexpectedException:
