@@ -24,6 +24,7 @@ CREATE OR REPLACE PROCEDURE putStart
   prevDPId INTEGER;
   varFileId INTEGER;
   varNsHost VARCHAR2(100);
+  varDpName VARCHAR2(2048);
 BEGIN
   -- Get data and lock castorfile
   SELECT /*+ INDEX(Subrequest PK_Subrequest_Id) */
@@ -42,10 +43,12 @@ BEGIN
   END IF;
   -- Get selected filesystem/datapool
   IF selectedMountPoint IS NULL THEN
-    SELECT dataPool, status, hwOnline, id
-      INTO dpId, dsStatus, varHwOnline, varDsId
-      FROM DiskServer
-     WHERE name = selectedDiskServer;
+    SELECT DiskServer.dataPool, DiskServer.status,
+           DiskServer.hwOnline, DiskServer.id, DataPool.name
+      INTO dpId, dsStatus, varHwOnline, varDsId, varDpName
+      FROM DiskServer, DataPool
+     WHERE DiskServer.name = selectedDiskServer
+       AND DataPool.id = DiskServer.dataPool;
   ELSE 
     SELECT FileSystem.id, FileSystem.status, DiskServer.status, DiskServer.hwOnline
       INTO fsId, fsStatus, dsStatus, varHwOnline
@@ -80,6 +83,9 @@ BEGIN
          dataPool = dpId,
          nbCopyAccesses = nbCopyAccesses + 1
    WHERE id = varDcId;
+  IF selectedMountPoint IS NULL THEN
+    outPath := varDpName || '/' || outPath;
+  END IF;
   -- Log successful completion
   logToDLF(NULL, dlf.LVL_SYSTEM, dlf.STAGER_PUTSTART, varFileId, varNsHost, 'stagerd', '');
 EXCEPTION WHEN NO_DATA_FOUND THEN
@@ -111,6 +117,7 @@ CREATE OR REPLACE PROCEDURE getStart
   varDcStatus INTEGER;
   varFileId INTEGER;
   varNsHost VARCHAR2(100);
+  varDpName VARCHAR2(2048);
 BEGIN
   -- Get data and take a lock on the CastorFile. Associated with triggers,
   -- this guarantees we are the only ones dealing with its copies
@@ -125,10 +132,12 @@ BEGIN
      AND SubRequest.id = srId FOR UPDATE OF CastorFile.id;
   -- Get selected filesystem/datapool
   IF selectedMountPoint IS NULL THEN
-    SELECT dataPool, status, hwOnline, id
-      INTO dpId, dsStatus, varHwOnline, varDsId
-      FROM DiskServer
-     WHERE name = selectedDiskServer;
+    SELECT DiskServer.dataPool, DiskServer.status,
+           DiskServer.hwOnline, DiskServer.id, DataPool.name
+      INTO dpId, dsStatus, varHwOnline, varDsId, varDpName
+      FROM DiskServer, DataPool
+     WHERE DiskServer.name = selectedDiskServer
+       AND DataPool.id = DiskServer.dataPool;
   ELSE 
     SELECT FileSystem.id, FileSystem.status, DiskServer.status, DiskServer.hwOnline
       INTO fsId, fsStatus, dsStatus, varHwOnline
@@ -180,6 +189,9 @@ BEGIN
    WHERE id = dcId
   RETURNING path, status, diskCopySize
     INTO outPath, varDcStatus, varDiskCopySize;
+  IF selectedMountPoint IS NULL THEN
+    outPath := varDpName || '/' || outPath;
+  END IF;
   -- Update the SubRequest and set the link with the DiskCopy
   UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
      SET diskCopy = dcId
