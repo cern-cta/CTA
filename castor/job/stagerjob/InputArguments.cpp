@@ -193,7 +193,7 @@ castor::job::stagerjob::InputArguments::InputArguments(int argc, char** argv)
   }
 
   // Check that all mandatory command line options have been specified
-  if (diskServer.empty() || fileSystem.empty() || !fileId.fileid || !fileId.server[0] ||
+  if (diskServer.empty() || !fileId.fileid || !fileId.server[0] ||
       !client || !type || !subRequestId) {
     castor::exception::InvalidArgument e;
     e.getMessage() << "Mandatory command line arguments missing";
