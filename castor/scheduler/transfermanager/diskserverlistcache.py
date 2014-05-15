@@ -65,7 +65,12 @@ class DiskServerListCache:
                             WHERE FileSystem.diskServer = DiskServer.id
                               AND FileSystem.diskPool = DiskPool.id
                               AND DiskServer.status IN (0, 1, 3)
-                              AND FileSystem.status IN (0, 1, 3)'''
+                              AND FileSystem.status IN (0, 1, 3)
+                            UNION ALL
+                           SELECT UNIQUE DiskServer.name, DataPool.name
+                             FROM DiskServer, DataPool
+                            WHERE DiskServer.dataPool = DataPool.id
+                              AND DiskServer.status IN (0, 1, 3)'''
         stcur.execute(stDiskServers)
         rows = stcur.fetchall()
         # build up the list of new ones
