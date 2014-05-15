@@ -68,7 +68,7 @@ public:
    
    /**
     * Set the task injector. Has to be done that way (and not in the constructor)
-    *  because there is a dependency 
+    *  because there is a dep26569endency 
     * @param ti the task injector 
     */
    void setTaskInjector(RecallTaskInjector * ti) { 
@@ -104,14 +104,20 @@ private:
    */
   virtual void run() {
     m_logContext.pushOrReplace(log::Param("thread", "tapeRead"));
+    
+    std::auto_ptr<castor::tape::tapeFile::ReadSession> rs;
+    
+    try {
     // Before anything, the tape should be mounted
     m_rmc.mountTape(m_vid, m_drive.librarySlot);
+    
     // Then we have to initialise the tape read session
-    std::auto_ptr<castor::tape::tapeFile::ReadSession> rs;
-    try {
       rs.reset(new castor::tape::tapeFile::ReadSession(m_drive, m_vid));
       m_logContext.log(LOG_INFO, "Tape read session session successfully started");
     } catch (castor::exception::Exception & ex) {
+      castor::log::ScopedParamContainer scoped(m_logContext); 
+      scoped.add("exception_message", ex.getMessageValue())
+            .add("exception_code",ex.code());
       m_logContext.log(LOG_ERR, "Failed to start tape read session");
       // TODO: log and unroll the session
       // TODO: add an unroll mode to the tape read task. (Similar to exec, but pushing blocks marked in error)
