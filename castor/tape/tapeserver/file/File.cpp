@@ -44,11 +44,9 @@ namespace castor {
       LabelSession::LabelSession(drives::DriveInterface & drive, const std::string &vid, bool force)  {
         drive.rewind();
         if(!force) {
-          drive.spaceBlocksForward(1); //we are doing it the old CASTOR way (see usrreadlbl.c)
-          if(!(drive.isAtBOT() and drive.isAtEOD())) {
+          if(!drive.isTapeBlank()) {
             throw TapeNotEmpty();
           }
-          drive.rewind();
         }
         VOL1 vol1;
         vol1.fill(vid);

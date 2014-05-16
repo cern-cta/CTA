@@ -261,7 +261,7 @@ EXTERN_C int Cns_getpath (char *, u_signed64, char *);
 EXTERN_C int Cns_getsegattrs (const char *, struct Cns_fileid *, int *, struct Cns_segattrs **);
 EXTERN_C int Cns_lchown (const char *, uid_t, gid_t);
 EXTERN_C struct Cns_fileclass *Cns_listclass (char *, int, Cns_list *);
-EXTERN_C struct Cns_direntape *Cns_listtape (char *, char *, int, Cns_list *, int);
+EXTERN_C struct Cns_direntape *Cns_listtape (char *, const char *, int, Cns_list *, int);
 EXTERN_C struct Cns_linkinfo *Cns_listlinks (const char *, const char *, int, Cns_list *);
 EXTERN_C int Cns_lstat (const char *, struct Cns_filestat *);
 EXTERN_C int Cns_lastfseq (const char *, int, struct Cns_segattrs *);

@@ -24,13 +24,13 @@
 
 #pragma once
 
+#include "castor/exception/Errnum.hpp"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/SCSI/Structures.hpp"
 #include "castor/tape/tapeserver/SCSI/Exception.hpp"
-#include "castor/tape/tapeserver/system/Wrapper.hpp"
-#include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/tapeserver/drive/mtio_add.hpp"
-#include "castor/exception/Errnum.hpp"
+#include "castor/tape/tapeserver/exception/Exception.hpp"
+#include "castor/tape/tapeserver/system/Wrapper.hpp"
 
 /**
  * Class wrapping the tape server. Has to be templated (and hence fully in .hh)
@@ -143,7 +143,7 @@ namespace drives {
     virtual positionInfo getPositionInfo()  = 0;
     virtual std::vector<std::string> getTapeAlerts()  = 0;
     virtual void setDensityAndCompression(bool compression = true,
-        unsigned char densityCode = 0)  = 0;
+    unsigned char densityCode = 0)  = 0;
     virtual driveStatus getDriveStatus()  = 0;
     virtual tapeError getTapeError()  = 0;
     virtual void setSTBufferWrite(bool bufWrite)  = 0;
@@ -166,8 +166,11 @@ namespace drives {
     virtual bool isWriteProtected()  = 0;
     virtual bool isAtBOT()  = 0;
     virtual bool isAtEOD()  = 0;
-    /** Member string allowing the convenient storage of the string describing
-     * drive location for the mount system (we get the information from TPCONFIG*/
+    virtual bool isTapeBlank() = 0;
+    /**
+     * Member string allowing the convenient storage of the string describing
+     * drive location for the mount system (we get the information from TPCONFIG
+     */
     std::string librarySlot;
   };
   
@@ -200,7 +203,7 @@ namespace drives {
     virtual positionInfo getPositionInfo() ;
     virtual std::vector<std::string> getTapeAlerts() ;
     virtual void setDensityAndCompression(bool compression = true, 
-        unsigned char densityCode = 0) ;
+    unsigned char densityCode = 0) ;
     virtual driveStatus getDriveStatus() ;
     virtual tapeError getTapeError() ;
     virtual void setSTBufferWrite(bool bufWrite) ;
@@ -223,6 +226,7 @@ namespace drives {
     virtual bool isWriteProtected() ;
     virtual bool isAtBOT() ;
     virtual bool isAtEOD() ;
+    virtual bool isTapeBlank();
   };
   
   /**
@@ -347,7 +351,13 @@ namespace drives {
     virtual bool isAtEOD()  {
       UpdateDriveStatus();
       return m_driveStatus.eod;
-    }
+    }    
+        
+    /**
+     * Function that checks if a tape is blank (contains no records) 
+     * @return true if tape is blank, false otherwise
+     */
+    virtual bool isTapeBlank();
 
     /**
      * getTapeError: get SENSE buffer from patched version of the driver

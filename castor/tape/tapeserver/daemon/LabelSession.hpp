@@ -31,6 +31,11 @@
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
+#include "castor/legacymsg/NsProxy.hpp"
+#include "castor/tape/tapeserver/SCSI/Device.hpp"
+#include "castor/tape/tapeserver/drive/Drive.hpp"
+
+#include <memory>
 
 using namespace castor::tape;
 using namespace castor::log;
@@ -62,8 +67,10 @@ namespace daemon {
     LabelSession(
       const int labelCmdConnection,
       legacymsg::RmcProxy &rmc,
+      legacymsg::NsProxy &ns,
       const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
-      castor::log::Logger & logger, System::virtualWrapper & sysWrapper,
+      castor::log::Logger &logger,
+      System::virtualWrapper &sysWrapper,
       const utils::TpconfigLines &tpConfig,
       const bool force);
     
@@ -79,10 +86,79 @@ namespace daemon {
      */
     int m_labelCmdConnection;
     
+    enum TapeNsStatus {
+      LABEL_SESSION_STEP_SUCCEEDED,
+      LABEL_SESSION_STEP_FAILED
+    };
+    
+    /**
+     * 
+     * @param configLine The configuration line containing the drive-capability specification
+     * @return 
+     */
+    int checkIfVidStillHasSegments(utils::TpconfigLines::const_iterator &configLine);
+    
+    /**
+     * 
+     * @param configLine The configuration line containing the drive-capability specification
+     * @return 
+     */
+    int identifyDrive(utils::TpconfigLines::const_iterator &configLine);
+    
+    /**
+     * 
+     * @param configLine The configuration line containing the drive-capability specification
+     * @return 
+     */
+    int mountTape(utils::TpconfigLines::const_iterator &configLine);
+    
+    /**
+     * 
+     * @param configLine The configuration line containing the drive-capability specification
+     * @param driveInfo Structure containing information of the device file of the drive
+     * @return 
+     */
+    int getDeviceInfo(utils::TpconfigLines::const_iterator &configLine, castor::tape::SCSI::DeviceInfo &driveInfo);
+    
+    /**
+     * 
+     * @param configLine The configuration line containing the drive-capability specification
+     * @param driveInfo Structure containing information of the device file of the drive
+     * @param drive Drive object
+     * @return 
+     */
+    int getDriveObject(utils::TpconfigLines::const_iterator &configLine, castor::tape::SCSI::DeviceInfo &driveInfo, std::auto_ptr<castor::tape::drives::DriveInterface> &drive);
+    
+    /**
+     * 
+     * @param drive
+     * @return 
+     */
+    int checkDriveObject(castor::tape::drives::DriveInterface *drive);
+    
+    /**
+     * 
+     * @param drive
+     * @return 
+     */
+    int labelTheTape(castor::tape::drives::DriveInterface *drive);
+    
+    /**
+     * 
+     * @param configLine The configuration line containing the drive-capability specification
+     * @return 
+     */
+    int unmountTape(utils::TpconfigLines::const_iterator &configLine);
+    
     /**
      * The object representing the rmcd daemon.
      */
     legacymsg::RmcProxy &m_rmc;
+    
+    /**
+     * The object representing the rmcd daemon.
+     */
+    legacymsg::NsProxy &m_ns;
     
     /**
      * The label request message body
@@ -114,7 +190,7 @@ namespace daemon {
      * 
      * @param lc the log context
      */
-    void executeLabel(LogContext & lc);
+    void executeLabel();
 
  }; // class LabelSession
 

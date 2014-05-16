@@ -36,6 +36,10 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   GiveOutpMsgBody.cpp
   legacymsg.cpp
   MessageHeader.cpp
+  NsProxy.cpp
+  NsProxyFactory.cpp
+  NsProxy_TapeAlwaysEmpty.cpp
+  NsProxy_TapeAlwaysEmptyFactory.cpp
   RmcAcsMntMsgBody.cpp
   RmcMarshal.cpp
   RmcMountMsgBody.cpp
@@ -81,6 +85,6 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
 add_library (castortapelegacymsg SHARED ${TAPE_LEGACYMSG_LIB_SRC_FILES})
 CastorSetLibraryVersions (castortapelegacymsg)
 target_link_libraries (castortapelegacymsg castorclient castorcommon
-  castortapeutils)
+  castortapeutils castorns)
 install (TARGETS castortapelegacymsg LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
   NAMELINK_SKIP)
