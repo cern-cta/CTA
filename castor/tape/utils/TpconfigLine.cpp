@@ -24,6 +24,7 @@
  *****************************************************************************/
 
 #include "castor/tape/utils/TpconfigLine.hpp"
+#include "castor/utils/utils.hpp"
 
 //------------------------------------------------------------------------------
 // Constructor.
@@ -40,7 +41,39 @@ castor::tape::utils::TpconfigLine::TpconfigLine(
   dgn(dgn),
   devFilename(devFilename),
   density(density),
-  initialState(initialState),
+  initialState(str2InitialState(initialState)),
   librarySlot(librarySlot),
   devType(devType) {
+}
+
+//------------------------------------------------------------------------------
+// initialState2Str
+//------------------------------------------------------------------------------
+const char *castor::tape::utils::TpconfigLine::initialState2Str(
+  const InitialState value) throw() {
+  switch(value) {
+  case TPCONFIG_DRIVE_NONE: return "none";
+  case TPCONFIG_DRIVE_UP: return "up";
+  case TPCONFIG_DRIVE_DOWN: return "down";
+  default: return "unknown";
+  }
+}
+
+//------------------------------------------------------------------------------
+// str2InitialState
+//------------------------------------------------------------------------------
+castor::tape::utils::TpconfigLine::InitialState
+  castor::tape::utils::TpconfigLine::str2InitialState(std::string str) {
+  castor::utils::toUpper(str);
+  if(str == "UP") {
+    return TPCONFIG_DRIVE_UP;
+  } else if(str == "DOWN") {
+    return TPCONFIG_DRIVE_DOWN;
+  } else {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to interpret string representation of initial tape-drive state"
+      ": str=" << str;
+    throw ex;
+  }
 }

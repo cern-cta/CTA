@@ -598,15 +598,16 @@ private:
   void enterTpconfigLine(const utils::TpconfigLine &line) ;
 
   /**
-   * Returns the equivalent DriveState value of the specified string
-   * representation of the initial state of a tape drive.
+   * Converts the specified TPCONFIG initial drive-state to a drive-catalogue
+   * drive-state.
    *
-   * This method throws an exception if the specified string is neither "up"
-   * nor "down" (case insensitive).
+   * This method throws an exception if the conversion fails.
    *
-   * @param initialState String representation of the initial tape-drive state.
+   * @param initialState The TPCONFIG initial drive-state.
+   * @return The drive-catalogue drive-state.
    */
-  DriveState str2InitialState(const std::string &initialState) const ;
+  DriveState initial2DriveState(
+    const utils::TpconfigLine::InitialState initialState) const;
 
   /**
    * Checks the semantics of the specified TPCONFIG line against the specified

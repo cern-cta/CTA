@@ -171,19 +171,6 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
 }
 
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
-  invalidInitialStatePopulate) {
-  using namespace castor::tape::tapeserver::daemon;
-  
-  castor::tape::utils::TpconfigLines lines;
-  lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT", "DGN", "DEV", "DEN", "invalid", "SLOT", "DEVTYPE"));
-    
-  DriveCatalogue catalogue; 
-  ASSERT_THROW(catalogue.populateCatalogue(lines),
-    castor::exception::Exception);
-} 
-
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
   dgnMismatchPopulate) {
   using namespace castor::tape::tapeserver::daemon;
 
