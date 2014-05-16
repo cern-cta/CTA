@@ -54,7 +54,7 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
   legacymsg::RmcProxy &rmc, 
   legacymsg::NsProxy &ns,
   const legacymsg::TapeLabelRqstMsgBody &clientRequest,
-  castor::log::Logger &logger,
+  castor::log::Logger &log,
   System::virtualWrapper &sysWrapper,
   const utils::TpconfigLines &tpConfig,
   const bool force):     
@@ -62,7 +62,7 @@ castor::tape::tapeserver::daemon::LabelSession::LabelSession(
   m_rmc(rmc),
   m_ns(ns),
   m_request(clientRequest),
-  m_logger(logger),
+  m_log(log),
   m_sysWrapper(sysWrapper),
   m_tpConfig(tpConfig),
   m_force(force) {
@@ -76,7 +76,10 @@ void castor::tape::tapeserver::daemon::LabelSession::execute()  {
     executeLabel();
     legacymsg::writeTapeRcReplyMsg(m_labelCmdConnection, 0);
   } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "Label session caught an exception", params);
     legacymsg::writeTapeRcReplyMsg(m_labelCmdConnection, 1);
+    exit(1);
   }
 }
 
@@ -97,7 +100,7 @@ int castor::tape::tapeserver::daemon::LabelSession::checkIfVidStillHasSegments(u
       log::Param("dgn", m_request.dgn),
       log::Param("m_request.vid", m_request.vid),
       log::Param("errorMessage", e.getMessageValue())};
-    m_logger(LOG_ERR, "End session with error. Error while querying the name server", params);
+    m_log(LOG_ERR, "End session with error. Error while querying the name server", params);
     return LABEL_SESSION_STEP_FAILED;
   }
   
@@ -109,7 +112,7 @@ int castor::tape::tapeserver::daemon::LabelSession::checkIfVidStillHasSegments(u
       log::Param("drive", m_request.drive),
       log::Param("dgn", m_request.dgn),
       log::Param("m_request.vid", m_request.vid)};
-    m_logger(LOG_INFO, "Tape has no NS files. We are allowed to proceed with the labeling", params);
+    m_log(LOG_INFO, "Tape has no NS files. We are allowed to proceed with the labeling", params);
   }
   else if(rc==castor::legacymsg::NsProxy::NSPROXY_TAPE_HAS_AT_LEAST_ONE_DISABLED_SEGMENT) {
     log::Param params[] = {
@@ -119,7 +122,7 @@ int castor::tape::tapeserver::daemon::LabelSession::checkIfVidStillHasSegments(u
       log::Param("drive", m_request.drive),
       log::Param("dgn", m_request.dgn),
       log::Param("m_request.vid", m_request.vid)};
-    m_logger(LOG_ERR, "End session with error. Tape has at least one disabled segment. Aborting labeling...", params);
+    m_log(LOG_ERR, "End session with error. Tape has at least one disabled segment. Aborting labeling...", params);
     return LABEL_SESSION_STEP_FAILED;
   }
   else { // rc==castor::legacymsg::NsProxy::NSPROXY_TAPE_HAS_AT_LEAST_ONE_ACTIVE_SEGMENT
@@ -130,7 +133,7 @@ int castor::tape::tapeserver::daemon::LabelSession::checkIfVidStillHasSegments(u
       log::Param("drive", m_request.drive),
       log::Param("dgn", m_request.dgn),
       log::Param("m_request.vid", m_request.vid)};
-    m_logger(LOG_ERR, "End session with error. Tape has at least one active segment. Aborting labeling...", params);
+    m_log(LOG_ERR, "End session with error. Tape has at least one active segment. Aborting labeling...", params);
     return LABEL_SESSION_STEP_FAILED;
   }
   return LABEL_SESSION_STEP_SUCCEEDED;
@@ -155,7 +158,7 @@ int castor::tape::tapeserver::daemon::LabelSession::identifyDrive(utils::Tpconfi
       log::Param("vid", m_request.vid),
       log::Param("drive", m_request.drive),
       log::Param("dgn", m_request.dgn)};
-    m_logger(LOG_ERR, "End session with error. Drive unit not found in TPCONFIG", params);
+    m_log(LOG_ERR, "End session with error. Drive unit not found in TPCONFIG", params);
     return LABEL_SESSION_STEP_FAILED;
   }
   return LABEL_SESSION_STEP_SUCCEEDED;
@@ -176,7 +179,7 @@ int castor::tape::tapeserver::daemon::LabelSession::mountTape(utils::TpconfigLin
       log::Param("dgn", m_request.dgn),
       log::Param("m_request.vid", m_request.vid),
       log::Param("configLine->librarySlot", configLine->librarySlot)};
-    m_logger(LOG_INFO, "Tape mounted for labeling", params);
+    m_log(LOG_INFO, "Tape mounted for labeling", params);
   } catch (castor::exception::Exception & e) { // mount failed
     log::Param params[] = {
       log::Param("uid", m_request.uid),
@@ -187,7 +190,7 @@ int castor::tape::tapeserver::daemon::LabelSession::mountTape(utils::TpconfigLin
       log::Param("m_request.vid", m_request.vid),
       log::Param("configLine->librarySlot", configLine->librarySlot),
       log::Param("errorMessage", e.getMessageValue())};
-    m_logger(LOG_ERR, "End session with error. Error mounting tape", params);
+    m_log(LOG_ERR, "End session with error. Error mounting tape", params);
     return LABEL_SESSION_STEP_FAILED;
   }
   return LABEL_SESSION_STEP_SUCCEEDED;
@@ -210,7 +213,7 @@ int castor::tape::tapeserver::daemon::LabelSession::getDeviceInfo(utils::Tpconfi
       log::Param("drive", m_request.drive),
       log::Param("dgn", m_request.dgn),
       log::Param("devFilename", configLine->devFilename)};
-    m_logger(LOG_ERR, "End session with error. Drive not found on this path", params);
+    m_log(LOG_ERR, "End session with error. Drive not found on this path", params);
     return LABEL_SESSION_STEP_FAILED;
   } catch (castor::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
@@ -222,7 +225,7 @@ int castor::tape::tapeserver::daemon::LabelSession::getDeviceInfo(utils::Tpconfi
       log::Param("dgn", m_request.dgn),
       log::Param("devFilename", configLine->devFilename),
       log::Param("errorMessage", e.getMessageValue())};
-    m_logger(LOG_ERR, "End session with error. Error looking to path to tape drive", params);
+    m_log(LOG_ERR, "End session with error. Error looking to path to tape drive", params);
     return LABEL_SESSION_STEP_FAILED;
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
@@ -233,7 +236,7 @@ int castor::tape::tapeserver::daemon::LabelSession::getDeviceInfo(utils::Tpconfi
       log::Param("drive", m_request.drive),
       log::Param("dgn", m_request.dgn),
       log::Param("devFilename", configLine->devFilename)};
-    m_logger(LOG_ERR, "End session with error. Unexpected exception while looking for drive", params);
+    m_log(LOG_ERR, "End session with error. Unexpected exception while looking for drive", params);
     return LABEL_SESSION_STEP_FAILED;
   }
   return LABEL_SESSION_STEP_SUCCEEDED;
@@ -257,7 +260,7 @@ int castor::tape::tapeserver::daemon::LabelSession::getDriveObject(utils::Tpconf
       log::Param("dgn", m_request.dgn),
       log::Param("devFilename", configLine->devFilename),
       log::Param("errorMessage", e.getMessageValue())};
-    m_logger(LOG_ERR, "End session with error. Error opening tape drive", params);
+    m_log(LOG_ERR, "End session with error. Error opening tape drive", params);
     return LABEL_SESSION_STEP_FAILED;
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
@@ -268,7 +271,7 @@ int castor::tape::tapeserver::daemon::LabelSession::getDriveObject(utils::Tpconf
       log::Param("drive", m_request.drive),
       log::Param("dgn", m_request.dgn),
       log::Param("devFilename", configLine->devFilename)};
-    m_logger(LOG_ERR, "End session with error. Unexpected exception while opening drive", params);
+    m_log(LOG_ERR, "End session with error. Unexpected exception while opening drive", params);
     return LABEL_SESSION_STEP_FAILED;
   }
   return LABEL_SESSION_STEP_SUCCEEDED;
@@ -286,7 +289,7 @@ int castor::tape::tapeserver::daemon::LabelSession::checkDriveObject(castor::tap
       log::Param("vid", m_request.vid),
       log::Param("drive", m_request.drive),
       log::Param("dgn", m_request.dgn)};
-    m_logger(LOG_ERR, "End session with error. Failed to label the tape: drive is write protected", params);
+    m_log(LOG_ERR, "End session with error. Failed to label the tape: drive is write protected", params);
     return LABEL_SESSION_STEP_FAILED;
   }
   
@@ -298,7 +301,7 @@ int castor::tape::tapeserver::daemon::LabelSession::checkDriveObject(castor::tap
       log::Param("vid", m_request.vid),
       log::Param("drive", m_request.drive),
       log::Param("dgn", m_request.dgn)};
-    m_logger(LOG_INFO, "Drive not ready yet...", params);
+    m_log(LOG_INFO, "Drive not ready yet...", params);
     sleep(1);
   }  
   return LABEL_SESSION_STEP_SUCCEEDED;
@@ -319,7 +322,7 @@ int castor::tape::tapeserver::daemon::LabelSession::labelTheTape(castor::tape::d
       log::Param("drive", m_request.drive),
       log::Param("dgn", m_request.dgn),
       log::Param("m_force", m_force)};
-    m_logger(LOG_INFO, "Tape label session session successfully completed", params);
+    m_log(LOG_INFO, "Tape label session session successfully completed", params);
   } catch (castor::exception::Exception & ex) {// labeling failed
     log::Param params[] = {
       log::Param("uid", m_request.uid),
@@ -329,7 +332,7 @@ int castor::tape::tapeserver::daemon::LabelSession::labelTheTape(castor::tape::d
       log::Param("dgn", m_request.dgn),
       log::Param("m_force", m_force),
       log::Param("errorMessage", ex.getMessageValue())};
-    m_logger(LOG_ERR, "End session with error. Failed tape label session", params);
+    m_log(LOG_ERR, "End session with error. Failed tape label session", params);
     return LABEL_SESSION_STEP_FAILED;
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
@@ -339,7 +342,7 @@ int castor::tape::tapeserver::daemon::LabelSession::labelTheTape(castor::tape::d
       log::Param("vid", m_request.vid),
       log::Param("drive", m_request.drive),
       log::Param("dgn", m_request.dgn)};
-    m_logger(LOG_ERR, "End session with error. Unexpected exception while labeling tape", params);
+    m_log(LOG_ERR, "End session with error. Unexpected exception while labeling tape", params);
     return LABEL_SESSION_STEP_FAILED;
   }
   return LABEL_SESSION_STEP_SUCCEEDED;
@@ -359,7 +362,7 @@ int castor::tape::tapeserver::daemon::LabelSession::unmountTape(utils::TpconfigL
       log::Param("drive", m_request.drive),
       log::Param("dgn", m_request.dgn),
       log::Param("configLine->librarySlot", configLine->librarySlot)};
-    m_logger(LOG_INFO, "Tape unmounted after labeling", params);
+    m_log(LOG_INFO, "Tape unmounted after labeling", params);
   } catch (castor::exception::Exception & e) { // unmount failed
     log::Param params[] = {
       log::Param("uid", m_request.uid),
@@ -369,7 +372,7 @@ int castor::tape::tapeserver::daemon::LabelSession::unmountTape(utils::TpconfigL
       log::Param("dgn", m_request.dgn),
       log::Param("configLine->librarySlot", configLine->librarySlot),
       log::Param("errorMessage", e.getMessageValue())};
-    m_logger(LOG_ERR, "End session with error. Error unmounting tape", params);
+    m_log(LOG_ERR, "End session with error. Error unmounting tape", params);
     return LABEL_SESSION_STEP_FAILED;
   }
 
@@ -380,34 +383,60 @@ int castor::tape::tapeserver::daemon::LabelSession::unmountTape(utils::TpconfigL
 // executeLabel
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::executeLabel() {
+  std::ostringstream task;
+  task << "label tape " << m_request.vid << " for gid=" << m_request.gid <<
+    " uid=" << m_request.uid << " in drive " << m_request.drive;
   
   utils::TpconfigLines::const_iterator configLine;  
   castor::tape::SCSI::DeviceInfo driveInfo;
   std::auto_ptr<castor::tape::drives::DriveInterface> drive;
   
   if(checkIfVidStillHasSegments(configLine)             == LABEL_SESSION_STEP_FAILED) {
-    return;
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << task.str() <<
+      ": Tape still contains CASTOR files";
+    throw ex;
   }
   if(identifyDrive(configLine)                          == LABEL_SESSION_STEP_FAILED) {
-    return;
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << task.str() <<
+      ": Unidentified drive";
+    throw ex;
   }
   if(mountTape(configLine)                              == LABEL_SESSION_STEP_FAILED) {
-    return;
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << task.str() <<
+      ": Failed to mount tape";
+    throw ex;
   }
   if(getDeviceInfo(configLine, driveInfo)               == LABEL_SESSION_STEP_FAILED) {
-    return;
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << task.str() <<
+      ": Failed to get device information";
+    throw ex;
   }
   if(getDriveObject(configLine, driveInfo, drive)       == LABEL_SESSION_STEP_FAILED) {
-    return;
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << task.str() <<
+      ": Failed to get drive object";
+    throw ex;
   }
   if(checkDriveObject(drive.get())                      == LABEL_SESSION_STEP_FAILED) {
-    return;
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << task.str() <<
+      ": Invalid drive object";
+    throw ex;
   }
   if(labelTheTape(drive.get())                          == LABEL_SESSION_STEP_FAILED) {
-    return;
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << task.str() <<
+      ": Failed to write pre-label to tape";
+    throw ex;
   }
   if(unmountTape(configLine)                            == LABEL_SESSION_STEP_FAILED) {
-    return;
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << task.str() <<
+      ": Failed to unmount tape";
+    throw ex;
   }
-  return; // Good day scenario: everything succeeded
 }
