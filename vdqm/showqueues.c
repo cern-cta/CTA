@@ -119,7 +119,13 @@ int main(int argc, char *argv[]) {
        } 
     } while (rc != -1);
     if ( tmp != NULL ) free(tmp);
-
+    /*
+     * If we failed to connect to the server, stop here.
+     */
+    if (serrno == SENOSSERV) {
+      fprintf(stderr, "Could not connect to server\n");
+      exit(1);
+    }
     if ( drives_only == 0 ) {
       nw = NULL;
       /*
