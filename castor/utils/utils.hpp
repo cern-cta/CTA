@@ -100,8 +100,7 @@ void toUpper(std::string &str);
  * @param tv See the manual page for gettimeofday.
  * @param tz See the manual page for gettimeofday.
  */
-void getTimeOfDay(struct timeval *const tv, struct timezone *const tz)
-  ;
+void getTimeOfDay(struct timeval *const tv, struct timezone *const tz);
 
 /**
  * Compares two time-values, a and b, and returns true if time value a is
@@ -140,8 +139,7 @@ double timevalToDouble(const timeval &tv) throw();
  * @param src     Source string.
  * destination.
  */
-void copyString(char *const dst, const size_t dstSize, const char *const src)
-  ;
+void copyString(char *const dst, const size_t dstSize, const char *const src);
 
 /**
  * Safely copies source string into destination string.  The destination
@@ -172,8 +170,7 @@ template<typename T> void setBytes(T &object, const int c) throw() {
  *
  * @param dgn The DGN to be checked.
  */
-void checkDgnSyntax(const char *dgn)
-  ;
+void checkDgnSyntax(const char *dgn);
 
 /**
  * Throws an InvalidArgument exception if the specified VID is syntactically
@@ -181,8 +178,7 @@ void checkDgnSyntax(const char *dgn)
  *
  * @param vid The VID to be checked.
  */
-void checkVidSyntax(const char *vid)
-  ;
+void checkVidSyntax(const char *vid);
 
 } // namespace utils
 } // namespace castor
