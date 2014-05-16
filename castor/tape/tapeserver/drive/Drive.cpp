@@ -971,7 +971,7 @@ void drives::FakeDrive::readFileMark(std::string context)  {
   }
   m_current_position++;  
 }
-bool drives::FakeDrive::isReady()  {
+bool drives::FakeDrive::waitUntilReady(int timeoutSecond)  {
   return true;
 }  
 bool drives::FakeDrive::isWriteProtected()  {

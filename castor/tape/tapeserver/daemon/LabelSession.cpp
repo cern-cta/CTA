@@ -225,17 +225,21 @@ void castor::tape::tapeserver::daemon::LabelSession::executeLabel(LogContext & l
   }
   
   // check that drive is not write protected
-  if(drive.get()->isWriteProtected()) {
+  if(drive->isWriteProtected()) {
     LogContext::ScopedParam sp01(lc, Param("m_request.drive", m_request.drive));
     lc.log(LOG_ERR, "Failed to label the tape: drive is write protected");
     return;
   }
   
-  // wait until drive is ready
-  while(!(drive.get()->isReady())) {
-    LogContext::ScopedParam sp01(lc, Param("m_request.drive", m_request.drive));
-    lc.log(LOG_INFO, "Drive not ready yet...");
-  }  
+  try{
+    // wait 600 drive is ready
+    drive->waitUntilReady(10);
+  }catch(const castor::exception::Exception& e){
+    LogContext::ScopedParam sp01(lc, Param("exception_code", e.code()));
+    LogContext::ScopedParam sp02(lc, Param("exception_message", e.getMessageValue()));
+    lc.log(LOG_INFO, "LabelSession::executeLabel : waiting for drive to be ready timeout");
+    throw;
+  }
   
   // We can now start labeling
   std::auto_ptr<castor::tape::tapeFile::LabelSession> ls;
