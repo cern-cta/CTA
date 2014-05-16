@@ -214,9 +214,9 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
 // handleIncomingLabelJob
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingLabelJob(
-  const legacymsg::MessageHeader &header, const int clientConnection)
-   {
+  const legacymsg::MessageHeader &header, const int clientConnection) {
   castor::utils::SmartFd connection(clientConnection);
+  const char *const task = "handle incoming label job";
 
   const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
   const legacymsg::TapeLabelRqstMsgBody body = readLabelRqstMsgBody(connection.get(), bodyLen);
@@ -239,12 +239,17 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
     log::Param params[] = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "Informing client label-command of error", params);
 
-    // Tell the client there was an error
-    legacymsg::writeTapeRcReplyMsg(connection.get(), 1);
+    // Inform the client there was an error
+    try {
+      legacymsg::writeTapeRcReplyMsg(connection.get(), 1);
+    } catch(castor::exception::Exception &ne) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to " << task <<
+        ": Failed to inform the client there was an error: " <<
+        ne.getMessage().str();
+      throw ex;
+    }
   }
-
-  // Explicitly close the client connection for readability
-  close(connection.release());
 }
 
 //------------------------------------------------------------------------------
