@@ -88,6 +88,16 @@ private:
     using castor::log::Param;
     typedef LogContext::ScopedParam ScopedParam;
     
+    try{
+      // wait 600 drive is ready
+      m_drive.waitUntilReady(600);
+    }catch(const castor::exception::Exception& e){
+      log::LogContext::ScopedParam sp01(m_logContext, log::Param("exception_code", e.code()));
+      log::LogContext::ScopedParam sp02(m_logContext, log::Param("exception_message", e.getMessageValue()));
+      m_logContext.log(LOG_INFO, "TapeWriteSingleThread::openWriteSession : waiting for drive to be ready timeout");
+      throw;
+    }
+    
     std::auto_ptr<castor::tape::tapeFile::WriteSession> rs;
   
     ScopedParam sp[]={
@@ -132,6 +142,7 @@ private:
       m_logContext.pushOrReplace(log::Param("thread", "TapeWrite"));
       // Before anything, the tape should be mounted
       m_rmc.mountTape(m_vid, m_drive.librarySlot);
+      
       // Then we have to initialise the tape write session
       m_logContext.log(LOG_DEBUG, "Starting tape write thread");
       std::auto_ptr<castor::tape::tapeFile::WriteSession> rs(openWriteSession());
