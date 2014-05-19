@@ -467,15 +467,8 @@ BEGIN
           INTO fid, nsh, fc
           FROM CastorFile
          WHERE id = cf.cfId FOR UPDATE;
-        BEGIN
-          -- delete the original diskcopy to be dropped
-          DELETE FROM DiskCopy WHERE id = cf.dcId;
-        EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-          -- there's some left-over d2d job linked to this diskCopy:
-          -- drop it and try again, the physical disk copy does not exist any longer
-          DELETE FROM Disk2DiskCopyJob WHERE srcDcId = cf.dcId;
-          DELETE FROM DiskCopy WHERE id = cf.dcId;
-        END;
+        -- delete the original diskcopy to be dropped
+        DELETE FROM DiskCopy WHERE id = cf.dcId;
         -- Cleanup: attempt to delete the CastorFile. Thanks to FKs,
         -- this will fail if in the meantime some other activity took
         -- ownership of the CastorFile entry.
