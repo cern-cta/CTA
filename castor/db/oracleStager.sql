@@ -1287,20 +1287,9 @@ BEGIN
        SET status = dconst.SUBREQUEST_ARCHIVED
      WHERE request = rId
        AND status = dconst.SUBREQUEST_FINISHED;
-    -- in case of repack, change the status of the request
+    -- special handling in case of repack
     IF rType = 119 THEN  -- OBJ_StageRepackRequest
-      DECLARE
-        nbfailures NUMBER;
-      BEGIN
-        SELECT count(*) INTO nbfailures FROM SubRequest
-         WHERE request = rId
-           AND status = dconst.SUBREQUEST_FAILED_FINISHED
-           AND ROWNUM < 2;
-        UPDATE StageRepackRequest
-           SET status = CASE nbfailures WHEN 1 THEN tconst.REPACK_FAILED ELSE tconst.REPACK_FINISHED END,
-               lastModificationTime = getTime()
-         WHERE id = rId;
-      END;
+      handleEndOfRepack(rId);
     END IF;
   END;
 END;
