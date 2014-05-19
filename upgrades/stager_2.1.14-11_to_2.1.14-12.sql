@@ -1733,6 +1733,70 @@ BEGIN
 END;
 /
 
+/* PL/SQL procedure called when a repack request is over: see archiveSubReq */
+CREATE OR REPLACE PROCEDURE handleEndOfRepack(inReqId INTEGER) AS
+  nbLeftSegs INTEGER;
+BEGIN
+  -- check if any segment is left in the original tape
+  SELECT 1 INTO nbLeftSegs FROM Cns_seg_metadata@RemoteNS
+   WHERE vid = (SELECT repackVID FROM StageRepackRequest WHERE id = inReqId)
+     AND ROWNUM < 2;
+  -- we found at least one segment, final status is FAILED
+  UPDATE StageRepackRequest
+     SET status = tconst.REPACK_FAILED,
+         lastModificationTime = getTime()
+   WHERE id = inReqId;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- no segments found, repack was successful
+  UPDATE StageRepackRequest
+     SET status = tconst.REPACK_FINISHED,
+         lastModificationTime = getTime()
+   WHERE id = inReqId;
+END;
+/
+
+/* PL/SQL method to archive a SubRequest */
+CREATE OR REPLACE PROCEDURE archiveSubReq(srId IN INTEGER, finalStatus IN INTEGER) AS
+  unused INTEGER;
+  rId INTEGER;
+  rName VARCHAR2(100);
+  rType NUMBER := 0;
+  clientId INTEGER;
+BEGIN
+  UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id) */ SubRequest
+     SET diskCopy = NULL,  -- unlink this subrequest as it's dead now
+         lastModificationTime = getTime(),
+         status = finalStatus
+   WHERE id = srId
+   RETURNING request, reqType, (SELECT object FROM Type2Obj WHERE type = reqType) INTO rId, rType, rName;
+  -- Try to see whether another subrequest in the same
+  -- request is still being processed. For this, we
+  -- need a master lock on the request.
+  EXECUTE IMMEDIATE
+    'BEGIN SELECT client INTO :clientId FROM '|| rName ||' WHERE id = :rId FOR UPDATE; END;'
+    USING OUT clientId, IN rId;
+  BEGIN
+    -- note the decode trick to use the dedicated index I_SubRequest_Req_Stat_no89
+    SELECT request INTO unused FROM SubRequest
+     WHERE request = rId AND decode(status,8,NULL,9,NULL,status) IS NOT NULL
+       AND ROWNUM < 2;  -- all but {FAILED_,}FINISHED
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- All subrequests have finished, we can archive:
+    -- drop the associated Client entity
+    DELETE FROM Client WHERE id = clientId;
+    -- archive the successful subrequests
+    UPDATE /*+ INDEX_RS_ASC(SubRequest I_SubRequest_Request) */ SubRequest
+       SET status = dconst.SUBREQUEST_ARCHIVED
+     WHERE request = rId
+       AND status = dconst.SUBREQUEST_FINISHED;
+    -- special handling in case of repack
+    IF rType = 119 THEN  -- OBJ_StageRepackRequest
+      handleEndOfRepack(rId);
+    END IF;
+  END;
+END;
+/
+
 -- Drop obsoleted entities
 DROP INDEX I_FileSystem_Rate;
 DROP FUNCTION fileSystemRate;

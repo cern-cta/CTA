@@ -535,6 +535,27 @@ BEGIN
 END;
 /
 
+/* PL/SQL procedure called when a repack request is over: see archiveSubReq */
+CREATE OR REPLACE PROCEDURE handleEndOfRepack(inReqId INTEGER) AS
+  nbLeftSegs INTEGER;
+BEGIN
+  -- check if any segment is left in the original tape
+  SELECT 1 INTO nbLeftSegs FROM Cns_seg_metadata@RemoteNS
+   WHERE vid = (SELECT repackVID FROM StageRepackRequest WHERE id = inReqId)
+     AND ROWNUM < 2;
+  -- we found at least one segment, final status is FAILED
+  UPDATE StageRepackRequest
+     SET status = tconst.REPACK_FAILED,
+         lastModificationTime = getTime()
+   WHERE id = inReqId;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- no segments found, repack was successful
+  UPDATE StageRepackRequest
+     SET status = tconst.REPACK_FINISHED,
+         lastModificationTime = getTime()
+   WHERE id = inReqId;
+END;
+/
 
 /*
  * Database jobs
