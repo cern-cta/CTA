@@ -1675,8 +1675,6 @@ CREATE OR REPLACE PROCEDURE filesDeletedProc
   fc NUMBER;
   nsh VARCHAR2(2048);
   nb INTEGER;
-  CONSTRAINT_VIOLATED EXCEPTION;
-  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
 BEGIN
   IF dcIds.COUNT > 0 THEN
     -- List the castorfiles to be cleaned up afterwards
@@ -1689,45 +1687,76 @@ BEGIN
     FOR cf IN (SELECT cfId, dcId
                  FROM filesDeletedProcHelper
                 ORDER BY cfId ASC) LOOP
+      DECLARE
+        CONSTRAINT_VIOLATED EXCEPTION;
+        PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
       BEGIN
         -- Get data and lock the castorFile
         SELECT fileId, nsHost, fileClass
           INTO fid, nsh, fc
           FROM CastorFile
          WHERE id = cf.cfId FOR UPDATE;
-        BEGIN
-          -- delete the original diskcopy to be dropped
-          DELETE FROM DiskCopy WHERE id = cf.dcId;
-        EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-          -- there's some left-over d2d job linked to this diskCopy:
-          -- drop it and try again, the physical disk copy does not exist any longer
-          DELETE FROM Disk2DiskCopyJob WHERE srcDcId = cf.dcId;
-          DELETE FROM DiskCopy WHERE id = cf.dcId;
-        END;
-        -- Cleanup: attempt to delete the CastorFile. Thanks to FKs,
-        -- this will fail if in the meantime some other activity took
-        -- ownership of the CastorFile entry.
-        BEGIN
+        -- delete the original diskcopy to be dropped
+        DELETE FROM DiskCopy WHERE id = cf.dcId;
+        -- Cleanup:
+        -- See whether it has any other DiskCopy or any new Recall request:
+        -- if so, skip the rest
+        SELECT count(*) INTO nb FROM DiskCopy
+         WHERE castorFile = cf.cfId;
+        IF nb > 0 THEN
+          CONTINUE;
+        END IF;
+        SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
+          FROM SubRequest
+         WHERE castorFile = cf.cfId
+           AND status = dconst.SUBREQUEST_WAITTAPERECALL;
+        IF nb > 0 THEN
+          CONTINUE;
+        END IF;
+        -- Now check for Disk2DiskCopy jobs
+        SELECT /*+ INDEX(I_Disk2DiskCopyJob_cfId) */ count(*) INTO nb FROM Disk2DiskCopyJob
+         WHERE castorFile = cf.cfId;
+        IF nb > 0 THEN
+          CONTINUE;
+        END IF;
+        -- Nothing found, check for any other subrequests
+        SELECT /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ count(*) INTO nb
+          FROM SubRequest
+         WHERE castorFile = cf.cfId
+           AND status IN (1, 2, 3, 4, 5, 6, 7, 10, 12, 13);  -- all but START, FINISHED, FAILED_FINISHED, ARCHIVED
+        IF nb = 0 THEN
+          -- Nothing left, delete the CastorFile
           DELETE FROM CastorFile WHERE id = cf.cfId;
-          -- And check whether this file potentially had copies on tape
-          SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
-          IF nb = 0 THEN
-            -- This castorfile was created with no copy on tape
-            -- So removing it from the stager means erasing
-            -- it completely. We should thus also remove it
-            -- from the name server
-            INSERT INTO FilesDeletedProcOutput (fileId, nsHost) VALUES (fid, nsh);
-          END IF;
-        EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-          -- Ignore the deletion, some draining/rebalancing/recall activity
-          -- started to reuse the CastorFile
-          NULL;
-        END;
+        ELSE
+          -- Fail existing subrequests for this file
+          UPDATE /*+ INDEX_RS_ASC(Subrequest I_Subrequest_Castorfile)*/ SubRequest
+             SET status = dconst.SUBREQUEST_FAILED
+           WHERE castorFile = cf.cfId
+             AND status IN (1, 2, 3, 4, 5, 6, 12, 13);  -- same as above
+        END IF;
+        -- Check whether this file potentially had copies on tape
+        SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
+        IF nb = 0 THEN
+          -- This castorfile was created with no copy on tape
+          -- So removing it from the stager means erasing
+          -- it completely. We should thus also remove it
+          -- from the name server
+          INSERT INTO FilesDeletedProcOutput (fileId, nsHost) VALUES (fid, nsh);
+        END IF;
       EXCEPTION WHEN NO_DATA_FOUND THEN
-        -- This means that the castorFile did not exist.
+        -- Ignore, this means that the castorFile did not exist.
         -- There is thus no way to find out whether to remove the
         -- file from the nameserver. For safety, we thus keep it
         NULL;
+      WHEN CONSTRAINT_VIOLATED THEN
+        IF sqlerrm LIKE '%constraint (CASTOR_STAGER.FK_%_CASTORFILE) violated%' THEN
+          -- Ignore the deletion, probably some draining/rebalancing/recall activity created
+          -- a new Disk2DiskCopyJob/RecallJob entity while we were attempting to drop the CastorFile
+          NULL;
+        ELSE
+          -- Any other constraint violation is an error
+          RAISE;
+        END IF;
       END;
     END LOOP;
   END IF;
