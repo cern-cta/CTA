@@ -109,7 +109,7 @@ private:
     
     try {
     // Before anything, the tape should be mounted
-    m_rmc.mountTape(m_vid, m_drive.librarySlot);
+    m_rmc.mountTape(m_vid, m_drive.librarySlot, legacymsg::RmcProxy::MOUNT_MODE_READONLY);
     
     // Then we have to initialise the tape read session
       rs.reset(new castor::tape::tapeFile::ReadSession(m_drive, m_vid));

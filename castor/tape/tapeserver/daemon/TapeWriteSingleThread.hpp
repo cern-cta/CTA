@@ -131,7 +131,7 @@ private:
     {
       m_logContext.pushOrReplace(log::Param("thread", "TapeWrite"));
       // Before anything, the tape should be mounted
-      m_rmc.mountTape(m_vid, m_drive.librarySlot);
+      m_rmc.mountTape(m_vid, m_drive.librarySlot, legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
       // Then we have to initialise the tape write session
       m_logContext.log(LOG_DEBUG, "Starting tape write thread");
       std::auto_ptr<castor::tape::tapeFile::WriteSession> rs(openWriteSession());

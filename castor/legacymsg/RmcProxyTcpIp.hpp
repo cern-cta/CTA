@@ -62,8 +62,13 @@ public:
    * @param librarySlot The library slot in one of the following three forms:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
    * "manual" or "smc@rmc_host,drive_ordinal".
+   * @param mode The access mode in which the specified tape should be mounted.
+   * Please note that the value of this parameter is honored in a best effort
+   * fashion.  If the library and drive combination do not support specifying
+   * the access mode, then this parameter will be ignored.
    */
-  void mountTape(const std::string &vid, const std::string &librarySlot) ;
+  void mountTape(const std::string &vid, const std::string &librarySlot,
+    const MountMode mode);
 
   /**
    * Asks the remote media-changer daemon to unmount the specified tape from the

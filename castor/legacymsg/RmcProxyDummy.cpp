@@ -31,7 +31,8 @@ castor::legacymsg::RmcProxyDummy::~RmcProxyDummy() throw() {
 //------------------------------------------------------------------------------
 // mountTape
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyDummy::mountTape(const std::string &vid, const std::string &librarySlot)  {
+void castor::legacymsg::RmcProxyDummy::mountTape(const std::string &vid,
+  const std::string &librarySlot, const MountMode mode)  {
 }
 
 //------------------------------------------------------------------------------

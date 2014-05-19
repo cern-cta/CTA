@@ -170,7 +170,8 @@ int castor::tape::tapeserver::daemon::LabelSession::identifyDrive(utils::Tpconfi
 int castor::tape::tapeserver::daemon::LabelSession::mountTape(utils::TpconfigLines::const_iterator &configLine) {
   // Let's mount the tape now
   try {
-    m_rmc.mountTape(m_request.vid, configLine->librarySlot);
+    m_rmc.mountTape(m_request.vid, configLine->librarySlot,
+      legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
     log::Param params[] = {
       log::Param("uid", m_request.uid),
       log::Param("gid", m_request.gid),
