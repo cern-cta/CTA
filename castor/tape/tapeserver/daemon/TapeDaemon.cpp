@@ -600,12 +600,20 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logSessionProcessTerminated(c
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedDataTransferSession(
   const pid_t sessionPid, const int waitpidStat) throw() {
-  log::Param params[] = {log::Param("sessionPid", sessionPid)};
+  std::list<log::Param> params;
+  params.push_back(log::Param("sessionPid", sessionPid));
 
   if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
     m_driveCatalogue.sessionSucceeded(sessionPid);
     m_log(LOG_INFO, "Mount session succeeded", params);
-    notifyVdqmTapeUnmounted(sessionPid);
+    try {
+      requestVdqmToReleaseDrive(sessionPid);
+      notifyVdqmTapeUnmounted(sessionPid);
+    } catch(castor::exception::Exception &ex) {
+      params.push_back(log::Param("message", ex.getMessage().str()));
+      m_log(LOG_ERR, "Failed to post process reaped data transfer session",
+        params);
+    }
   } else {
     m_driveCatalogue.sessionFailed(sessionPid);
     m_log(LOG_INFO, "Mount session failed", params);
@@ -614,9 +622,41 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedDataTransfer
 }
 
 //------------------------------------------------------------------------------
+// requestVdqmToReleaseDrive
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::requestVdqmToReleaseDrive(
+  const pid_t sessionPid) {
+  std::list<log::Param> params;
+  try {
+    params.push_back(log::Param("sessionPid", sessionPid));
+
+    const std::string unitName = m_driveCatalogue.getUnitName(sessionPid);
+    params.push_back(log::Param("unitName", unitName));
+
+    const std::string vid = m_driveCatalogue.getVid(unitName);
+    params.push_back(log::Param("vid", unitName));
+
+    const std::string dgn = m_driveCatalogue.getDgn(unitName);
+    params.push_back(log::Param("dgn", unitName));
+
+    const bool forceUnmount = true;
+    params.push_back(log::Param("forceUnmount", forceUnmount));
+
+    std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
+    vdqm->releaseDrive(m_hostName, unitName, dgn, forceUnmount, sessionPid);
+    m_log(LOG_INFO, "Requested vdqm to release drive", params);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed request vdqm to release drive: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
 // notifyVdqmTapeUnmounted
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::notifyVdqmTapeUnmounted(const pid_t sessionPid) throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::notifyVdqmTapeUnmounted(const pid_t sessionPid) {
   std::list<log::Param> params;
   try {
     params.push_back(log::Param("sessionPid", sessionPid));
@@ -633,10 +673,11 @@ void castor::tape::tapeserver::daemon::TapeDaemon::notifyVdqmTapeUnmounted(const
     std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
     vdqm->tapeUnmounted(m_hostName, unitName, dgn, vid);
     m_log(LOG_INFO, "Notified vdqm that a tape was unmounted", params);
-  } catch(castor::exception::Exception &ex) {
-    params.push_back(log::Param("message", ex.getMessage().str()));
-    m_log(LOG_ERR, "Failed to notify vdqm that a tape was unmounted", params);
-    return;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed notify vdqm that a tape was unmounted: " <<
+      ne.getMessage().str();
+    throw ex;
   }
 }
 
