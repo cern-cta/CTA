@@ -58,7 +58,7 @@ namespace daemon {
      * @param rmc Proxy object representing the rmcd daemon.
      * @param clientRequest The request to label a tape received from the label
      * tape command.
-     * @param logger Object reprsenting the API to the CASTOR logging system.
+     * @param log Object reprsenting the API to the CASTOR logging system.
      * @param sysWrapper Object representing the operating system.
      * @param tpConfig The parsed lines of /etc/castor/TPCONFIG.
      * @param force The flag that, if set to true, allows labeling a non-blank
@@ -69,7 +69,7 @@ namespace daemon {
       legacymsg::RmcProxy &rmc,
       legacymsg::NsProxy &ns,
       const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
-      castor::log::Logger &logger,
+      castor::log::Logger &log,
       System::virtualWrapper &sysWrapper,
       const utils::TpconfigLines &tpConfig,
       const bool force);
@@ -168,7 +168,7 @@ namespace daemon {
     /**
      * The logging object     
      */
-    castor::log::Logger & m_logger;
+    castor::log::Logger & m_log;
     
     /**
      * The system wrapper used to find the device and instantiate the drive object

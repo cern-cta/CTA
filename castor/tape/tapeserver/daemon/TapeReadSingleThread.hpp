@@ -65,30 +65,6 @@ public:
           castor::log::LogContext & lc): 
    TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr, vid, lc),
    m_maxFilesRequest(maxFilesRequest),m_filesProcessed(0) {
-   
-     m_logContext.pushOrReplace(log::Param("thread", "tapeRead"));    
-     try {
-    // Before anything, the tape should be mounted
-    m_rmc.mountTape(m_vid, m_drive.librarySlot);
-    
-    //wait for drive to be ready
-    m_drive.waitUntilReady(600);
-    
-    // Then we have to initialise the tape read session
-      rs.reset(new castor::tape::tapeFile::ReadSession(m_drive, m_vid));
-      m_logContext.log(LOG_INFO, "Tape read session session successfully started");
-    } catch (castor::exception::Exception & ex) {
-      castor::log::ScopedParamContainer scoped(m_logContext); 
-      scoped.add("exception_message", ex.getMessageValue())
-            .add("exception_code",ex.code());
-      m_logContext.log(LOG_ERR, "Failed to start tape read session");
-      // TODO: log and unroll the session
-      // TODO: add an unroll mode to the tape read task. (Similar to exec, but pushing blocks marked in error)
-      
-      //then we rethrow, ?? no reason at all to go into the loop
-      throw;
-    }
-    
    }
    
    /**
@@ -128,6 +104,29 @@ private:
    * This function is from Thread, it is the function that will do all the job
    */
   virtual void run() {
+    m_logContext.pushOrReplace(log::Param("thread", "tapeRead"));
+    
+    std::auto_ptr<castor::tape::tapeFile::ReadSession> rs;
+    
+    try {
+    // Before anything, the tape should be mounted
+    m_rmc.mountTape(m_vid, m_drive.librarySlot, legacymsg::RmcProxy::MOUNT_MODE_READONLY);
+    
+    //wait for drive to be ready
+    m_drive.waitUntilReady(600);
+    
+    // Then we have to initialise the tape read session
+    rs.reset(new castor::tape::tapeFile::ReadSession(m_drive, m_vid));
+    m_logContext.log(LOG_INFO, "Tape read session session successfully started");
+    
+    } catch (castor::exception::Exception & ex) {
+      castor::log::ScopedParamContainer scoped(m_logContext); 
+      scoped.add("exception_message", ex.getMessageValue())
+            .add("exception_code",ex.code());
+      m_logContext.log(LOG_ERR, "Failed to start tape read session");
+      // TODO: log and unroll the session
+      // TODO: add an unroll mode to the tape read task. (Similar to exec, but pushing blocks marked in error)
+    }
     // Then we will loop on the tasks as they get from 
     // the task injector
     while(1) {

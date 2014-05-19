@@ -303,12 +303,20 @@ protected:
   void postProcessReapedLabelSession(const pid_t sessionPid, const int waitpidStat) throw();
 
   /**
+   * Request the vdqmd daemon to release the tape drive associated with the
+   * session child-process with the specified process ID.
+   *
+   * @param sessionPid The process ID of the session child-process.
+   */
+  void requestVdqmToReleaseDrive(const pid_t sessionPid);
+
+  /**
    * Notifies the vdqm that the tape associated with the session child-process
    * with the specified process ID has been unmounted.
    *
    * @param sessionPid The process ID of the session child-process.
    */
-  void notifyVdqmTapeUnmounted(const pid_t sessionPid) throw();
+  void notifyVdqmTapeUnmounted(const pid_t sessionPid);
 
   /**
    * Forks a mount-session child-process for every tape drive entry in the

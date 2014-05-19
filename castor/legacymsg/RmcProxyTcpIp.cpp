@@ -49,7 +49,8 @@ castor::legacymsg::RmcProxyTcpIp::~RmcProxyTcpIp() throw() {
 //------------------------------------------------------------------------------
 // mountTape
 //------------------------------------------------------------------------------
-void castor::legacymsg::RmcProxyTcpIp::mountTape(const std::string &vid, const std::string &librarySlot)  {
+void castor::legacymsg::RmcProxyTcpIp::mountTape(const std::string &vid,
+  const std::string &librarySlot, const MountMode mode)  {
   // Verify parameters
   if(vid.empty()) {
     castor::exception::Exception ex;

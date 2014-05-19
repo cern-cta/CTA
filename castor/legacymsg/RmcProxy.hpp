@@ -34,6 +34,23 @@ namespace legacymsg {
  */
 class RmcProxy {
 public:
+  /**
+   * Enumeration of the possible mount access-modes.
+   */
+  enum MountMode {
+    MOUNT_MODE_READONLY,
+    MOUNT_MODE_READWRITE};
+
+  /**
+   * Returns the string representation of the specified mount access-mode.
+   */
+  const char *mountMode2Str(const MountMode m) throw() {
+    switch(m) {
+    case MOUNT_MODE_READONLY: return "read only";
+    case MOUNT_MODE_READWRITE: return "read/write";
+    default: return "unknown";
+    }
+  }
 
   /**
    * Destructor.
@@ -48,8 +65,13 @@ public:
    * @param librarySlot The library slot in one of the following three forms:
    * "acs@rmc_host,ACS_NUMBER,LSM_NUMBER,PANEL_NUMBER,TRANSPORT_NUMBER",
    * "manual" or "smc@rmc_host,drive_ordinal".
+   * @param mode The access mode in which the specified tape should be mounted.
+   * Please note that the value of this parameter is honored in a best effort
+   * fashion.  If the library and drive combination do not support specifying
+   * the access mode, then this parameter will be ignored.
    */
-  virtual void mountTape(const std::string &vid, const std::string &librarySlot)  = 0;
+  virtual void mountTape(const std::string &vid, const std::string &librarySlot,
+    const MountMode mode)  = 0;
 
   /**
    * Asks the remote media-changer daemon to unmount the specified tape from the

@@ -36,37 +36,42 @@ namespace legacymsg {
  * The good-day sequence of events for a tape being mounted and then unmounted
  * is as follows:
  *
- * tapeserverd                           vdqm
- *      |                                 |
- *      | setDriveUp                      |
- *      |-------------------------------->| schedule drive
- *      |                                 |------
- *      |                                 |      |
- *      |                         RtcpJob |<-----
- *      |<--------------------------------|
- *      |                                 |
- *      | fork                            |
- *      |----------->MountSession         |
- *      |                 |               |
- *      |                 | assignDrive   |
- *      |      mount tape |-------------->|
- *      |           ------|               |
- *      |          |      |               |
- *      |           ----->| tapeMounted   |
- *      |                 |-------------->|
- *      |  transfer files |               |
- *      |           ------|               |
- *      |          |      |               |
- *      |           ----->|               |
- *      |                 | releaseDrive  |
- *      |    unmount tape |-------------->|
- *      |           ------|               |
- *      |          |      |               |
- *      |           ----->| tapeUnmounted |
- *      |                 |-------------->|
- *      |                 |               |
- *      |                                 |
- *      |                                 |
+ * tapeserverd                           vdqm               rmcd
+ *      |                                 |                  |
+ *      | setDriveUp                      |                  |
+ *      |-------------------------------->| schedule drive   |
+ *      |                                 |------            |
+ *      |                                 |      |           |
+ *      |                         RtcpJob |<-----            |
+ *      |<--------------------------------|                  |
+ *      |                                 |                  |
+ *      | fork                            |                  |
+ *      |----------->MountSession         |                  |
+ *      |                 |               |                  |
+ *      |                 | assignDrive   |                  |
+ *      |                 |-------------->|                  |
+ *      |                 |               |                  |
+ *      |                 | mount tape    |                  |
+ *      |                 |--------------------------------->|
+ *      |                 |               |                  |
+ *      |                 | tapeMounted   |                  |
+ *      |                 |-------------->|                  |
+ *      |  transfer files |               |                  |
+ *      |           ------|               |                  |
+ *      |          |      |               |                  |
+ *      |           ----->| unmount tape  |                  |
+ *      |                 |--------------------------------->|
+ *      | waitpid         |               |                  |
+ *      |---------------->|               |                  |
+ *      |                                 |                  |
+ *      |                                 |                  |
+ *      | releaseDrive(forceUnmount)      |                  |
+ *      |-------------------------------->|                  |
+ *      |                                 |                  |
+ *      | tapeUnmounted                   |                  |
+ *      |-------------------------------->|                  |
+ *      |                                 |                  |
+ *      |                                 |                  |
  */
 class VdqmProxy {
 public:
