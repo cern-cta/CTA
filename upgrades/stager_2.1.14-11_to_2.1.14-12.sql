@@ -1440,6 +1440,172 @@ BEGIN
 END;
 /
 
+/* Get next candidates for a given recall mount.
+ * input:  VDQM transaction id, count and total size
+ * output: outFiles, a cursor for the set of recall candidates.
+ */
+CREATE OR REPLACE PROCEDURE tg_getBulkFilesToRecall(inLogContext IN VARCHAR2,
+                                                    inMountTrId IN NUMBER,
+                                                    inCount IN INTEGER,
+                                                    inTotalSize IN INTEGER,
+                                                    outFiles OUT SYS_REFCURSOR) AS
+  varVid VARCHAR2(10);
+  varPreviousFseq INTEGER;
+  varCount INTEGER;
+  varTotalSize INTEGER;
+  varPath VARCHAR2(2048);
+  varFileTrId INTEGER;
+  varNewFseq INTEGER;
+  bestFSForRecall_error EXCEPTION;
+  PRAGMA EXCEPTION_INIT(bestFSForRecall_error, -20115);
+  varNbLockedFiles INTEGER := 0;
+BEGIN
+  BEGIN
+    -- Get VID and last processed fseq for this recall mount, lock
+    SELECT vid, lastProcessedFseq INTO varVid, varPreviousFseq
+      FROM RecallMount
+     WHERE mountTransactionId = inMountTrId
+       FOR UPDATE;
+  EXCEPTION WHEN NO_DATA_FOUND THEN
+    -- recall is over or unknown request: return an empty cursor
+    OPEN outFiles FOR
+      SELECT fileId, nsHost, fileTransactionId, filePath, blockId, fseq, copyNb,
+             euid, egid, VID, fileSize, creationTime, nbRetriesInMount, nbMounts
+        FROM FilesToRecallHelper;
+    RETURN;
+  END;
+  varCount := 0;
+  varTotalSize := 0;
+  varNewFseq := varPreviousFseq;
+  -- Get candidates up to inCount or inTotalSize
+  -- Select only the ones further down the tape (fseq > current one) as long as possible
+  LOOP
+    DECLARE
+      varRjId INTEGER;
+      varFSeq INTEGER;
+      varBlockId RAW(4);
+      varFileSize INTEGER;
+      varCfId INTEGER;
+      varFileId INTEGER;
+      varNsHost VARCHAR2(2048);
+      varCopyNb NUMBER;
+      varEuid NUMBER;
+      varEgid NUMBER;
+      varCreationTime NUMBER;
+      varNbRetriesInMount NUMBER;
+      varNbMounts NUMBER;
+      CfLocked EXCEPTION;
+      PRAGMA EXCEPTION_INIT (CfLocked, -54);
+    BEGIN
+      -- Find the unprocessed recallJobs of this tape with lowest fSeq
+      -- that is above the previous one
+      SELECT * INTO varRjId, varFSeq, varBlockId, varFileSize, varCfId, varCopyNb,
+                    varEuid, varEgid, varCreationTime, varNbRetriesInMount,
+                    varNbMounts
+        FROM (SELECT id, fSeq, blockId, fileSize, castorFile, copyNb, eUid, eGid,
+                     creationTime, nbRetriesWithinMount,  nbMounts
+                FROM RecallJob
+               WHERE vid = varVid
+                 AND status = tconst.RECALLJOB_PENDING
+                 AND fseq > varNewFseq
+               ORDER BY fseq ASC)
+       WHERE ROWNUM < 2;
+      -- move up last fseq used. Note that it moves up even if bestFileSystemForRecall
+      -- (or any other statement) fails and the file is actually not recalled.
+      -- The goal is that a potential retry within the same mount only occurs after
+      -- we went around the other files on this tape.
+      varNewFseq := varFseq;
+      -- lock the corresponding CastorFile, give up if we do not manage as it means that
+      -- this file is already being handled by someone else
+      -- Note that the giving up is handled by the handling of the CfLocked exception
+      SELECT fileId, nsHost INTO varFileId, varNsHost
+        FROM CastorFile
+       WHERE id = varCfId
+         FOR UPDATE NOWAIT;
+      -- Now that we have the lock, double check that the RecallJob is still there and
+      -- valid (due to race conditions, it may have been processed in between our first select
+      -- and the taking of the lock)
+      BEGIN
+        SELECT id INTO varRjId FROM RecallJob WHERE id = varRJId AND status = tconst.RECALLJOB_PENDING;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- we got the race condition ! So this has already been handled, let's move to next file
+        CONTINUE;
+      END;
+      -- Find the best filesystem to recall the selected file
+      bestFileSystemForRecall(varCfId, varPath);
+      varCount := varCount + 1;
+      varTotalSize := varTotalSize + varFileSize;
+      INSERT INTO FilesToRecallHelper (fileId, nsHost, fileTransactionId, filePath, blockId, fSeq,
+                 copyNb, euid, egid, VID, fileSize, creationTime, nbRetriesInMount, nbMounts)
+        VALUES (varFileId, varNsHost, ids_seq.nextval, varPath, varBlockId, varFSeq,
+                varCopyNb, varEuid, varEgid, varVID, varFileSize, varCreationTime, varNbRetriesInMount,
+                varNbMounts)
+        RETURNING fileTransactionId INTO varFileTrId;
+      -- update RecallJobs of this file. Only the recalled one gets a fileTransactionId
+      UPDATE RecallJob
+         SET status = tconst.RECALLJOB_SELECTED,
+             fileTransactionID = CASE WHEN id = varRjId THEN varFileTrId ELSE NULL END
+       WHERE castorFile = varCfId;
+      IF varCount >= inCount OR varTotalSize >= inTotalSize THEN
+        -- we have enough candidates for this round, exit loop
+        EXIT;
+      END IF;
+    EXCEPTION
+      WHEN CfLocked THEN
+        -- Go to next candidate, this CastorFile is being processed by another thread
+        -- still check that this does not happen too often
+        -- the reason is that a long standing lock (due to another bug) would make us spin
+        -- like mad (learnt the hard way in production...)
+        varNbLockedFiles := varNbLockedFiles + 1;
+        IF varNbLockedFiles >= 100 THEN
+          DECLARE
+            lastSQL VARCHAR2(2048);
+            prevSQL VARCHAR2(2048);
+          BEGIN
+            -- find the blocking SQL
+            SELECT lastSql.sql_text, prevSql.sql_text INTO lastSQL, prevSQL
+              FROM v$session currentSession, v$session blockerSession, v$sql lastSql, v$sql prevSql
+             WHERE currentSession.sid = (SELECT sys_context('USERENV','SID') FROM DUAL)
+               AND blockerSession.sid(+) = currentSession.blocking_session
+               AND lastSql.sql_id(+) = blockerSession.sql_id
+               AND prevSql.sql_id(+) = blockerSession.prev_sql_id;
+            -- log the issue and exit, as if we were out of candidates
+            logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_LOOPING_ON_LOCK, varFileId, varNsHost, 'tapegatewayd',
+                   'SQLOfLockingSession="' || lastSQL || '" PreviousSQLOfLockingSession="' || prevSQL ||
+                   '" mountTransactionId=' || to_char(inMountTrId) ||' '|| inLogContext);
+            EXIT;
+          END;
+        END IF;
+      WHEN bestFSForRecall_error THEN
+        -- log 'bestFileSystemForRecall could not find a suitable destination for this recall' and skip it
+        logToDLF(NULL, dlf.LVL_ERROR, dlf.RECALL_FS_NOT_FOUND, varFileId, varNsHost, 'tapegatewayd',
+                 'errorMessage="' || SQLERRM || '" mountTransactionId=' || to_char(inMountTrId) ||' '|| inLogContext);
+        -- mark the recall job as failed, and maybe retry
+        retryOrFailRecall(varCfId, varVID, NULL, inLogContext);
+      WHEN NO_DATA_FOUND THEN
+        -- nothing found. In case we did not try so far, try to restart with low fseqs
+        IF varNewFseq > -1 THEN
+          varNewFseq := -1;
+        ELSE
+          -- low fseqs were tried, we are really out of candidates, so exit the loop
+          EXIT;
+        END IF;
+    END;
+  END LOOP;
+  -- Record last fseq at the mount level
+  UPDATE RecallMount
+     SET lastProcessedFseq = varNewFseq
+   WHERE vid = varVid;
+  -- Return all candidates. Don't commit now, this will be done in C++
+  -- after the results have been collected as the temporary table will be emptied.
+  OPEN outFiles FOR
+    SELECT fileId, nsHost, fileTransactionId, filePath, blockId, fseq,
+           copyNb, euid, egid, VID, fileSize, creationTime,
+           nbRetriesInMount, nbMounts
+      FROM FilesToRecallHelper;
+END;
+/
+
 /* Procedure responsible for rebalancing one given filesystem by moving away
  * the given amount of data */
 CREATE OR REPLACE PROCEDURE rebalance(inFsId IN INTEGER, inDataAmount IN INTEGER,
@@ -1490,6 +1656,82 @@ BEGIN
 END;
 /
 
+/*
+ * PL/SQL method implementing filesDeleted
+ * Note that we don't increase the freespace of the fileSystem.
+ * This is done by the monitoring daemon, that knows the
+ * exact amount of free space.
+ * dcIds gives the list of diskcopies to delete.
+ * fileIds returns the list of castor files to be removed
+ * from the name server
+ */
+CREATE OR REPLACE PROCEDURE filesDeletedProc
+(dcIds IN castor."cnumList",
+ fileIds OUT castor.FileList_Cur) AS
+  fid NUMBER;
+  fc NUMBER;
+  nsh VARCHAR2(2048);
+  nb INTEGER;
+  CONSTRAINT_VIOLATED EXCEPTION;
+  PRAGMA EXCEPTION_INIT(CONSTRAINT_VIOLATED, -1);
+BEGIN
+  IF dcIds.COUNT > 0 THEN
+    -- List the castorfiles to be cleaned up afterwards
+    FORALL i IN dcIds.FIRST .. dcIds.LAST
+      INSERT INTO FilesDeletedProcHelper (cfId, dcId) (
+        SELECT castorFile, id FROM DiskCopy
+         WHERE id = dcIds(i));
+    -- Use a normal loop to clean castorFiles. Note: We order the list to
+    -- prevent a deadlock
+    FOR cf IN (SELECT cfId, dcId
+                 FROM filesDeletedProcHelper
+                ORDER BY cfId ASC) LOOP
+      BEGIN
+        -- Get data and lock the castorFile
+        SELECT fileId, nsHost, fileClass
+          INTO fid, nsh, fc
+          FROM CastorFile
+         WHERE id = cf.cfId FOR UPDATE;
+        BEGIN
+          -- delete the original diskcopy to be dropped
+          DELETE FROM DiskCopy WHERE id = cf.dcId;
+        EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+          -- there's some left-over d2d job linked to this diskCopy:
+          -- drop it and try again, the physical disk copy does not exist any longer
+          DELETE FROM Disk2DiskCopyJob WHERE srcDcId = cf.dcId;
+          DELETE FROM DiskCopy WHERE id = cf.dcId;
+        END;
+        -- Cleanup: attempt to delete the CastorFile. Thanks to FKs,
+        -- this will fail if in the meantime some other activity took
+        -- ownership of the CastorFile entry.
+        BEGIN
+          DELETE FROM CastorFile WHERE id = cf.cfId;
+          -- And check whether this file potentially had copies on tape
+          SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
+          IF nb = 0 THEN
+            -- This castorfile was created with no copy on tape
+            -- So removing it from the stager means erasing
+            -- it completely. We should thus also remove it
+            -- from the name server
+            INSERT INTO FilesDeletedProcOutput (fileId, nsHost) VALUES (fid, nsh);
+          END IF;
+        EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+          -- Ignore the deletion, some draining/rebalancing/recall activity
+          -- started to reuse the CastorFile
+          NULL;
+        END;
+      EXCEPTION WHEN NO_DATA_FOUND THEN
+        -- This means that the castorFile did not exist.
+        -- There is thus no way to find out whether to remove the
+        -- file from the nameserver. For safety, we thus keep it
+        NULL;
+      END;
+    END LOOP;
+  END IF;
+  OPEN fileIds FOR
+    SELECT fileId, nsHost FROM FilesDeletedProcOutput;
+END;
+/
 
 -- Drop obsoleted entities
 DROP INDEX I_FileSystem_Rate;
