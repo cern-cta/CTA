@@ -53,16 +53,6 @@ GlobalStatusReporter::Report::Report(const std::string &_server,const std::strin
 //------------------------------------------------------------------------------
 //reportNowOccupiedDrive
 //------------------------------------------------------------------------------   
-   void GlobalStatusReporter::releaseDrive(const std::string &server, const std::string &unitName, 
-  const std::string &dgn, const bool forceUnmount, const pid_t sessionPid){
-     m_fifo.push(
-     new ReportReleaseDrive(server,unitName,dgn,forceUnmount,sessionPid)
-     );
-   }
-   
-//------------------------------------------------------------------------------
-//reportNowOccupiedDrive
-//------------------------------------------------------------------------------   
    void GlobalStatusReporter::reportNowOccupiedDrive(const std::string &server,
            const std::string &unitName,const std::string &dgn, 
            const uint32_t mountTransactionId,const pid_t sessionPid){
@@ -123,22 +113,6 @@ GlobalStatusReporter::Report::Report(const std::string &_server,const std::strin
     reporter.m_vdqmProxy.assignDrive(server,unitName, dgn, mountTransactionId,sessionPid);
   }
   
-//------------------------------------------------------------------------------
-//ReportReleaseDrive::ReportReleaseDrive
-//------------------------------------------------------------------------------  
-    GlobalStatusReporter::ReportReleaseDrive::ReportReleaseDrive(
-      const std::string &_server,const std::string &_unitName, 
-            const std::string &_dgn, bool _forceUnmount,
-            const pid_t _sessionPid):Report(_server,_unitName, 
-            _dgn, _sessionPid),forceUnmount(_forceUnmount)
-  {}
-//------------------------------------------------------------------------------
-//  ReportReleaseDrive::execute
-//------------------------------------------------------------------------------  
-    void GlobalStatusReporter::ReportReleaseDrive::
-    execute(GlobalStatusReporter& parent){
-      parent.m_vdqmProxy.releaseDrive(server,unitName,dgn, forceUnmount,sessionPid);
-  }
 //------------------------------------------------------------------------------
 // ReportGotDetailsFromClient::ReportGotDetailsFromClient
 //------------------------------------------------------------------------------

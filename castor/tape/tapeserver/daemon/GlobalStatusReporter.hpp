@@ -78,11 +78,6 @@ public:
   const std::string &dgn, const uint32_t mountTransactionId, 
   const pid_t sessionPid);
   
-    /**
-   * Will call VdqmProxy::releaseDrive
-   */
-  void releaseDrive(const std::string &server, const std::string &unitName, 
-  const std::string &dgn, const bool forceUnmount, const pid_t sessionPid);
 //------------------------------------------------------------------------------
   /**
    * Will call TapeserverProxy::gotWriteMountDetailsFromClient
@@ -127,7 +122,7 @@ private:
             const pid_t _sessionPid);
     
     /**
-     * Constructor for ReportReleaseDrive
+     * Constructor for ReportReleaseDrive and ReportTapeMountedForRead
      */
     Report(const std::string &_server,const std::string &_unitName, 
             const std::string &_dgn,const pid_t _sessionPid);
@@ -157,15 +152,6 @@ private:
             const std::string &dgn, const uint32_t mountTransactionId,
             const pid_t sessionPid);
     virtual ~ReportAssignDrive(){}
-    virtual void execute(GlobalStatusReporter&);
-  };
-  class ReportReleaseDrive : public Report {
-    const bool forceUnmount;
-  public:
-    ReportReleaseDrive(const std::string &server,const std::string &unitName, 
-            const std::string &dgn, bool forceUnmount,
-            const pid_t sessionPid);
-    virtual ~ReportReleaseDrive(){}
     virtual void execute(GlobalStatusReporter&);
   };
 
