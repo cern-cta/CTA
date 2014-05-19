@@ -93,6 +93,9 @@ CREATE VIEW LateMigrationsView AS
   ORDER BY DC.creationTime DESC;
 
 
+ALTER TABLE Disk2DiskCopyJob DROP CONSTRAINT FK_Disk2DiskCopyJob_SrcDcId;
+
+
 /* Code revalidation */
 /*********************/
 
