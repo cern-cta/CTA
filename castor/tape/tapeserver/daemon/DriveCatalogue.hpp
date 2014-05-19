@@ -183,8 +183,7 @@ public:
    *
    * @param lines The lines parsed from /etc/castor/TPCONFIG.
    */
-  void populateCatalogue(const utils::TpconfigLines &lines)
-    ;
+  void populateCatalogue(const utils::TpconfigLines &lines);
 
   /**
    * Returns the unit name of the tape drive on which the specified mount
@@ -201,7 +200,7 @@ public:
    *
    * @return Unordered list of the unit names.
    */
-  std::list<std::string> getUnitNames() const ;
+  std::list<std::string> getUnitNames() const;
 
   /**
    * Returns an unordered list of the unit names of the tape drives in the
@@ -209,80 +208,70 @@ public:
    *
    * @return Unordered list of the unit names.
    */
-  std::list<std::string> getUnitNames(const DriveState state)
-    const ;
+  std::list<std::string> getUnitNames(const DriveState state) const;
 
   /**
    * Returns the device group name (DGN) of the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getDgn(const std::string &unitName)
-    const ;
+  const std::string &getDgn(const std::string &unitName) const;
   
   /**
    * Returns the VID of the tape mounted on the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getVid(const std::string &unitName)
-    const ;
+  const std::string &getVid(const std::string &unitName) const;
   
   /**
    * Returns the time when the tape was mounted on the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  time_t getAssignmentTime(const std::string &unitName)
-    const ;
+  time_t getAssignmentTime(const std::string &unitName) const;
 
   /**
    * Returns the filename of the device file of the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getDevFilename(const std::string &unitName)
-    const ;
+  const std::string &getDevFilename(const std::string &unitName) const;
 
   /**
    * Returns the tape densities supported by the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::list<std::string> &getDensities(const std::string &unitName)
-    const ;
+  const std::list<std::string> &getDensities(const std::string &unitName) const;
 
   /**
    * Returns the type of the specified session.
    *
    * @param sessionPid The process ID of the session.
    */
-  SessionType getSessionType(const pid_t sessionPid)
-    const ;
+  SessionType getSessionType(const pid_t sessionPid) const;
 
   /**
    * Returns the current state of the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  DriveState getState(const std::string &unitName)
-    const ;
+  DriveState getState(const std::string &unitName) const;
 
   /**
    * Returns the library slot of the specified tape drive.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getLibrarySlot(const std::string &unitName)
-    const ;
+  const std::string &getLibrarySlot(const std::string &unitName) const;
 
   /**
    * Returns the device type of the specified tape drive in its libary.
    *
    * @param unitName The unit name of the tape drive.
    */
-  const std::string &getDevType(const std::string &unitName)
-    const ;
+  const std::string &getDevType(const std::string &unitName) const;
 
   /**
    * Releases and returns the file descriptor of the connection with the

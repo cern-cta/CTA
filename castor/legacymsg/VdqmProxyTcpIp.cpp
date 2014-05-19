@@ -111,7 +111,10 @@ void castor::legacymsg::VdqmProxyTcpIp::assignDrive(const std::string &server, c
 //------------------------------------------------------------------------------
 // tapeMounted
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyTcpIp::tapeMounted(const std::string &server, const std::string &unitName, const std::string &dgn, const std::string &vid, const pid_t sessionPid)  {
+void castor::legacymsg::VdqmProxyTcpIp::tapeMounted(const std::string &server,
+  const std::string &unitName, const std::string &dgn, const std::string &vid,
+  const pid_t sessionPid)  {
+
   try {
     legacymsg::VdqmDrvRqstMsgBody body;
     body.status = VDQM_VOL_MOUNT;
@@ -133,7 +136,10 @@ void castor::legacymsg::VdqmProxyTcpIp::tapeMounted(const std::string &server, c
 //------------------------------------------------------------------------------
 // releaseDrive
 //------------------------------------------------------------------------------
-void castor::legacymsg::VdqmProxyTcpIp::releaseDrive(const std::string &server, const std::string &unitName, const std::string &dgn, const bool forceUnmount, const pid_t sessionPid)  {
+void castor::legacymsg::VdqmProxyTcpIp::releaseDrive(const std::string &server,
+  const std::string &unitName, const std::string &dgn, const bool forceUnmount,
+  const pid_t sessionPid)  {
+
   int status = VDQM_UNIT_RELEASE;
   if(forceUnmount) {
     status |= VDQM_FORCE_UNMOUNT;

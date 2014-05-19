@@ -1816,6 +1816,11 @@ BEGIN
                  AND fseq > varNewFseq
                ORDER BY fseq ASC)
        WHERE ROWNUM < 2;
+      -- move up last fseq used. Note that it moves up even if bestFileSystemForRecall
+      -- (or any other statement) fails and the file is actually not recalled.
+      -- The goal is that a potential retry within the same mount only occurs after
+      -- we went around the other files on this tape.
+      varNewFseq := varFseq;
       -- lock the corresponding CastorFile, give up if we do not manage as it means that
       -- this file is already being handled by someone else
       -- Note that the giving up is handled by the handling of the CfLocked exception
@@ -1832,11 +1837,6 @@ BEGIN
         -- we got the race condition ! So this has already been handled, let's move to next file
         CONTINUE;
       END;
-      -- move up last fseq used. Note that it moves up even if bestFileSystemForRecall
-      -- (or any other statement) fails and the file is actually not recalled.
-      -- The goal is that a potential retry within the same mount only occurs after
-      -- we went around the other files on this tape.
-      varNewFseq := varFseq;
       -- Find the best filesystem to recall the selected file
       bestFileSystemForRecall(varCfId, varPath);
       varCount := varCount + 1;
