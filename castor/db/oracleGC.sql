@@ -467,31 +467,31 @@ BEGIN
           INTO fid, nsh, fc
           FROM CastorFile
          WHERE id = cf.cfId FOR UPDATE;
-        -- delete the original diskcopy to be dropped
-        DELETE FROM DiskCopy WHERE id = cf.dcId;
-        -- Cleanup: attempt to delete the CastorFile. Thanks to FKs,
-        -- this will fail if in the meantime some other activity took
-        -- ownership of the CastorFile entry.
-        BEGIN
-          DELETE FROM CastorFile WHERE id = cf.cfId;
-          -- And check whether this file potentially had copies on tape
-          SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
-          IF nb = 0 THEN
-            -- This castorfile was created with no copy on tape
-            -- So removing it from the stager means erasing
-            -- it completely. We should thus also remove it
-            -- from the name server
-            INSERT INTO FilesDeletedProcOutput (fileId, nsHost) VALUES (fid, nsh);
-          END IF;
-        EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
-          -- Ignore the deletion, some draining/rebalancing/recall activity
-          -- started to reuse the CastorFile
-          NULL;
-        END;
       EXCEPTION WHEN NO_DATA_FOUND THEN
         -- This means that the castorFile did not exist.
         -- There is thus no way to find out whether to remove the
         -- file from the nameserver. For safety, we thus keep it
+        CONTINUE;
+      END;
+      -- delete the original diskcopy to be dropped
+      DELETE FROM DiskCopy WHERE id = cf.dcId;
+      -- Cleanup: attempt to delete the CastorFile. Thanks to FKs,
+      -- this will fail if in the meantime some other activity took
+      -- ownership of the CastorFile entry.
+      BEGIN
+        DELETE FROM CastorFile WHERE id = cf.cfId;
+        -- And check whether this file potentially had copies on tape
+        SELECT nbCopies INTO nb FROM FileClass WHERE id = fc;
+        IF nb = 0 THEN
+          -- This castorfile was created with no copy on tape
+          -- So removing it from the stager means erasing
+          -- it completely. We should thus also remove it
+          -- from the name server
+          INSERT INTO FilesDeletedProcOutput (fileId, nsHost) VALUES (fid, nsh);
+        END IF;
+      EXCEPTION WHEN CONSTRAINT_VIOLATED THEN
+        -- Ignore the deletion, some draining/rebalancing/recall activity
+        -- started to reuse the CastorFile
         NULL;
       END;
     END LOOP;
