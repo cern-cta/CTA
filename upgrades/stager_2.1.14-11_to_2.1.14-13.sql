@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 stager_2.1.14-11_to_2.1.14-12.sql
+ *                 stager_2.1.14-11_to_2.1.14-13.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * This script upgrades a CASTOR v2.1.14-11 STAGER database to v2.1.14-12
+ * This script upgrades a CASTOR v2.1.14-11 STAGER database to v2.1.14-13
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -32,7 +32,7 @@ BEGIN
   UPDATE UpgradeLog
      SET failureCount = failureCount + 1
    WHERE schemaVersion = '2_1_14_2'
-     AND release = '2_1_14_12'
+     AND release = '2_1_14_13'
      AND state != 'COMPLETE';
   COMMIT;
 END;
@@ -52,7 +52,7 @@ END;
 /
 
 INSERT INTO UpgradeLog (schemaVersion, release, type)
-VALUES ('2_1_14_2', '2_1_14_12', 'TRANSPARENT');
+VALUES ('2_1_14_2', '2_1_14_13', 'TRANSPARENT');
 COMMIT;
 
 /* Job management */
@@ -1812,7 +1812,7 @@ END;
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
 UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
- WHERE release = '2_1_14_12';
+ WHERE release = '2_1_14_13';
 COMMIT;
 
 /* Post-upgrade cleanup phase: archive all requests older than 24h and stuck in status 4 */

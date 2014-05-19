@@ -1,5 +1,5 @@
 /******************************************************************************
- *                 cupv_2.1.14-11_to_2.1.14-12.sql
+ *                 vdqm_2.1.14-11_to_2.1.14-13.sql
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * This script upgrades a CASTOR v2.1.14-11 CUPV database to v2.1.14-12
+ * This script upgrades a CASTOR v2.1.14-11 VDQM database to v2.1.14-13
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
@@ -31,8 +31,8 @@ BEGIN
   ROLLBACK;
   UPDATE UpgradeLog
      SET failureCount = failureCount + 1
-   WHERE schemaVersion = '2_1_9_3'
-     AND release = '2_1_14_12'
+   WHERE schemaVersion = '2_1_12_0'
+     AND release = '2_1_14_13'
      AND state != 'COMPLETE';
   COMMIT;
 END;
@@ -43,16 +43,16 @@ DECLARE
   unused VARCHAR(100);
 BEGIN
   SELECT release INTO unused FROM CastorVersion
-   WHERE schemaName = 'CUPV'
+   WHERE schemaName = 'VDQM'
      AND release LIKE '2_1_14_11%';
 EXCEPTION WHEN NO_DATA_FOUND THEN
   -- Error, we cannot apply this script
-  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the CUPV before this one.');
+  raise_application_error(-20000, 'PL/SQL release mismatch. Please run previous upgrade scripts for the VDQM before this one.');
 END;
 /
 
 INSERT INTO UpgradeLog (schemaVersion, release, type)
-VALUES ('2_1_9_3', '2_1_14_12', 'TRANSPARENT');
+VALUES ('2_1_12_0', '2_1_14_13', 'TRANSPARENT');
 COMMIT;
 
 
@@ -66,5 +66,5 @@ END;
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
 UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE'
- WHERE release = '2_1_14_12';
+ WHERE release = '2_1_14_13';
 COMMIT;

@@ -1,5 +1,5 @@
 -------------
-- 2.1.14-12 -
+- 2.1.14-13 -
 -------------
 
   Summary
@@ -15,6 +15,7 @@
     #104171 'Permission denied' message in rhd.log incomplete
     #104176 Rebalancing too aggressive may affect user activity
     #104177 killtransfers doesn't kill when options are passed
+    #104185 Unable to remove deleted files because of integrity constraint violation
     #104192 ORA-02292: integrity constraint (CASTOR_STAGER.FK_DRAININGERRORS_DC) violated - child record found
     #104233 printrecallstatus gives an error when there are no recalljobs in the DB
     #104257 PendingTimeout handling improvements
@@ -24,6 +25,12 @@
   --------------
 
     #104444 RFE: add support for querying file checksums through the xrootd interface
+    #104488 xrootd TPC not computing the checksum
+
+  Repack
+  ------
+
+    #102258 Incorrect final state of a repack operation
 
   Nameserver
   ----------
@@ -36,7 +43,7 @@
     Stager
     ------
 
-    The upgrade of the stager database to 2.1.14-12 can be performed online while the system is running.
+    The upgrade of the stager database to 2.1.14-13 can be performed online while the system is running.
     The RPM upgrade can also be performed on a running system, with 2 restrictions:
       - the restart of the RH servers may be noticable by few clients (< 1s downtime);
       - the restart of the transfermanagers and diskmanagers should not be done concurrently.
@@ -44,9 +51,9 @@
       Instructions
       ------------
 
-       1. Upgrade the STAGER database using the stager_2.1.14-11_to_2.1.14-12.sql
+       1. Upgrade the STAGER database using the stager_2.1.14-11_to_2.1.14-13.sql
           upgrade script available from:
-          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-12/dbupgrades
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-13/dbupgrades
           This script includes the hotfix script version 2.1.14-11-1.
 
        2. Upgrade the software on the headnodes.
@@ -56,24 +63,24 @@
           Note: All daemons involved in the upgrade will be restarted automatically.
 
        4. Test the instance by running the test suite available from:
-          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-12/testsuite
+          - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-13/testsuite
 
-       5. Congratulations you have successfully upgraded to the 2.1.14-12 release
+       5. Congratulations you have successfully upgraded to the 2.1.14-13 release
           of CASTOR.
 
     Central services (CUPV, VMGR, VDQM, Nameserver)
     -----------------------------------------------
 
-      The upgrade of the central databases to 2.1.14-12 can be performed online while
+      The upgrade of the central databases to 2.1.14-13 can be performed online while
       the system is running.
 
       Instructions
       ------------
 
        1. Apply the appropriate database upgrade script from:
-         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-12/dbupgrades
+         - http://cern.ch/castor/DIST/CERN/savannah/CASTOR.pkg/2.1.14-*/2.1.14-13/dbupgrades
 
-       2. Update the software to use the 2.1.14-12 RPMs. Note: All
+       2. Update the software to use the 2.1.14-13 RPMs. Note: All
           daemons involved in the upgrade will be restarted automatically.
 
        3. Upgrade complete.
