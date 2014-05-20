@@ -138,7 +138,6 @@ private:
       if (task) {
         task->execute(*rs, m_logContext);
         delete task;
-        sleep(20);
         m_filesProcessed++;
       } else {
         break;
