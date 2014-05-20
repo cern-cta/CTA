@@ -26,13 +26,15 @@
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/legacymsg.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
+#include "castor/legacymsg/GenericReplyMsgBody.hpp"
 #include "h/Ctape.h"
+#include "castor/utils/utils.hpp"
+#include "GenericMarshal.hpp"
 
 //------------------------------------------------------------------------------
 // writeTapeRcReplyMsg
 //------------------------------------------------------------------------------
-void castor::legacymsg::writeTapeRcReplyMsg(const int fd, const int rc)
-  throw(castor::exception::Exception) {
+void castor::legacymsg::writeTapeRcReplyMsg(const int timeout, const int fd, const int rc) {
   try {
     char dst[12];
     legacymsg::MessageHeader src;
@@ -40,11 +42,30 @@ void castor::legacymsg::writeTapeRcReplyMsg(const int fd, const int rc)
     src.reqType = TAPERC;
     src.lenOrStatus = rc;
     const size_t len = legacymsg::marshal(dst, src);
-    const int timeout = 10; //seconds
-    castor::io::writeBytes(fd, timeout, len, dst); // TODO: put the 10 seconds of
+    castor::io::writeBytes(fd, timeout, len, dst);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to write tape-label reply message with rc=" << rc
+      << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// writeTapeReplyMsg
+//------------------------------------------------------------------------------
+void castor::legacymsg::writeTapeReplyMsg(const int timeout, const int fd, const int rc, const std::string &message) {
+  try {    
+    const int dstlen = 12+4+CA_MAXLINELEN+1; // 12 bytes of header + 4 bytes of return code + max length of error message
+    char dst[dstlen];
+    castor::legacymsg::GenericReplyMsgBody src;    
+    src.status=rc;
+    castor::utils::copyString(src.errorMessage, CA_MAXLINELEN+1, message.c_str());
+    const size_t len = castor::legacymsg::marshal(dst, dstlen, TPMAGIC, MSG_DATA, src);    
+    castor::io::writeBytes(fd, timeout, len, dst);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to write tape-label reply message with rc=" << rc << " and error message=\"" << message << "\". "
       << ne.getMessage().str();
     throw ex;
   }

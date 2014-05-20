@@ -32,6 +32,7 @@
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "h/Ctape.h"
 #include "castor/tape/tpcp/Constants.hpp"
+#include "castor/legacymsg/GenericMarshal.hpp"
 
 #include <getopt.h>
 #include <iostream>
@@ -275,9 +276,13 @@ int castor::tape::label::LabelCmd::executeCommand()  {
   const int readReplyTimeout = 300; // 5 minutes
   
   writeTapeLabelRequest(writeRequestTimeout);
-  legacymsg::MessageHeader replymsg = readTapeLabelReply(readReplyTimeout);
+  legacymsg::GenericReplyMsgBody replymsg = readTapeLabelReply(readReplyTimeout);
+  
+  if(0 != replymsg.status) {
+    std::cout << "\n[ERROR] Tape labeling failed due to the following reason: " << replymsg.errorMessage << "\n";
+  }
 
-  return replymsg.lenOrStatus;
+  return replymsg.status;
 }
 
 //------------------------------------------------------------------------------
@@ -310,12 +315,15 @@ void castor::tape::label::LabelCmd::writeTapeLabelRequest(const int timeout) {
 //------------------------------------------------------------------------------
 // readTapeLabelReply
 //------------------------------------------------------------------------------
-castor::legacymsg::MessageHeader castor::tape::label::LabelCmd::readTapeLabelReply(const int timeout) {
-  char buf[3 * sizeof(uint32_t)]; // magic + request type + rc
-  size_t bufLen = sizeof(buf);
-  memset(buf, '\0', bufLen);
+castor::legacymsg::GenericReplyMsgBody castor::tape::label::LabelCmd::readTapeLabelReply(const int timeout) {
+  
+  
+  size_t headerBufLen = 12; // 12 bytes of header
+  char headerBuf[12];
+  memset(headerBuf, '\0', headerBufLen);
+  
   try {
-    castor::io::readBytes(m_smartClientConnectionSock.get(), timeout, bufLen, buf);
+    castor::io::readBytes(m_smartClientConnectionSock.get(), timeout, headerBufLen, headerBuf);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to read label reply message: " <<
@@ -323,16 +331,35 @@ castor::legacymsg::MessageHeader castor::tape::label::LabelCmd::readTapeLabelRep
     throw ex;
   }
   
-  const char *bufPtr = buf;
-  castor::legacymsg::MessageHeader replymsg;
-  memset(&replymsg, '\0', sizeof(replymsg));
-  castor::legacymsg::unmarshal(bufPtr, bufLen, replymsg);
+  const char *headerBufPtr = headerBuf;
+  castor::legacymsg::MessageHeader replyHeader;
+  memset(&replyHeader, '\0', sizeof(replyHeader));
+  castor::legacymsg::unmarshal(headerBufPtr, headerBufLen, replyHeader);
   
-  if(TAPERC != replymsg.reqType || TPMAGIC != replymsg.magic) {
+  if(MSG_DATA != replyHeader.reqType || TPMAGIC != replyHeader.magic) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Wrong reply type or magic # in label reply message. replymsg.reqType: " << replymsg.reqType << " replymsg.magic: " << replymsg.magic;
+    ex.getMessage() << "Wrong reply type or magic # in label reply message. replymsg.reqType: " << replyHeader.reqType << " (expected: " << MSG_DATA << ") replymsg.magic: " << replyHeader.magic << " (expected: " << TPMAGIC << ")";
     throw ex;
   }
+  
+  size_t bodyBufLen = 4+CA_MAXLINELEN+1; // 4 bytes of return code + max length of error message
+  char bodyBuf[4+CA_MAXLINELEN+1];
+  memset(bodyBuf, '\0', bodyBufLen);
+  int actualBodyLen = replyHeader.lenOrStatus;
+  
+  try {
+    castor::io::readBytes(m_smartClientConnectionSock.get(), timeout, actualBodyLen, bodyBuf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to read label reply message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+  
+  const char *bodyBufPtr = bodyBuf;
+  castor::legacymsg::GenericReplyMsgBody replymsg;
+  memset(&replymsg, '\0', sizeof(replymsg));
+  castor::legacymsg::unmarshal(bodyBufPtr, bodyBufLen, replymsg);
   
   return replymsg;
 }
