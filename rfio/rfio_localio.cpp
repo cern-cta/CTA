@@ -59,7 +59,7 @@ static libradosstriper::RadosStriper* getRadosStriper(std::string pool) {
     librados::IoCtx ioctx;
     rc = cluster.ioctx_create(pool.c_str(), ioctx);
     if (rc != 0) return 0;
-    libradosstriper::RadosStriper *newStriper;
+    libradosstriper::RadosStriper *newStriper = new libradosstriper::RadosStriper;
     rc = libradosstriper::RadosStriper::striper_create(ioctx, newStriper);
     if (rc != 0) return 0;
     it = g_radosStripers.insert(std::pair<std::string, libradosstriper::RadosStriper*>
