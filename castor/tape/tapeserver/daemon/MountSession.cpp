@@ -155,14 +155,21 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
   // file to recall.
   // findDrive does not throw exceptions (it catches them to log errors)
   // A NULL pointer is returned on failure
-  std::auto_ptr<castor::tape::drives::DriveInterface> drive(findDrive(lc));
+  const utils::TpconfigLines::const_iterator configLine=findConfigLine(lc);
+  std::auto_ptr<castor::tape::drives::DriveInterface> drive(findDrive(configLine,lc));
+  
   if(!drive.get()) return;    
   // We can now start instantiating all the components of the data path
   {
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
-    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, m_vmgr, lc);
+    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, m_vmgr,*configLine, 
+            m_hostname, m_volInfo.vid, lc);
+    //we retrieved the detail from the client in execute, so at this point 
+    //we can already report !
+    gsr.gotReadMountDetailsFromClient();
+    
     TapeReadSingleThread trst(*drive, m_rmc, gsr, m_volInfo.vid, 
         m_castorConf.tapebridgeBulkRequestRecallMaxFiles, lc);
     RecallReportPacker rrp(m_clientProxy,
@@ -184,6 +191,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
       dwtp.startThreads();
       rrp.startThreads();
       rti.startThreads();
+      gsr.startThreads();
       // This thread is now going to be idle until the system unwinds at the end 
       // of the session
       // All client notifications are done by the report packer, including the
@@ -192,6 +200,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
       rrp.waitThread();
       dwtp.waitThreads();
       trst.waitThreads();
+      gsr.waitThreads();
     } else {
       // Just log this was an empty mount and that's it. The memory management
       // will be deallocated automatically.
@@ -222,11 +231,16 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
   // in order to get the task injector ready to check if we actually have a 
   // file to migrate.
   // 1) Get hold of the drive error logs are done inside the findDrive function
-  std::auto_ptr<castor::tape::drives::DriveInterface> drive(findDrive(lc));
+  utils::TpconfigLines::const_iterator configLine=findConfigLine(lc);
+  std::auto_ptr<castor::tape::drives::DriveInterface> drive(findDrive(configLine,lc));
   if (!drive.get()) return;
   // Once we got hold of the drive, we can run the session
   {
-    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, m_vmgr, lc);
+    
+    //deferencing configLine is save, because if configLine were not valid, 
+    //then findDrive would have return NULL and we would have not end up there
+    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, m_vmgr, *configLine,m_hostname,
+            m_volInfo.vid,lc);
     MigrationMemoryManager mm(m_castorConf.rtcopydNbBufs,
         m_castorConf.rtcopydBufsz,lc);
     MigrationReportPacker mrp(m_clientProxy,
@@ -249,7 +263,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
     drtp.setTaskInjector(&mti);
     if (mti.synchronousInjection()) {
       twst.setlastFseq(mti.lastFSeq());
-
+      
       // We have something to do: start the session by starting all the 
       // threads.
       mm.startThreads();
@@ -257,12 +271,15 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
       twst.startThreads();
       mrp.startThreads();
       mti.startThreads();
+      //gsr.startThreads();
+      
       // Synchronise with end of threads
       mti.waitThreads();
       mrp.waitThread();
       twst.waitThreads();
       drtp.waitThreads();
       mm.waitThreads();
+      //gsr.waitThreads();
     } else {
       // Just log this was an empty mount and that's it. The memory management
       // will be deallocated automatically.
@@ -310,15 +327,9 @@ void castor::tape::tapeserver::daemon::MountSession::executeDump(LogContext & lc
  * @return the drive if found, NULL otherwise
  */
 castor::tape::drives::DriveInterface *
-castor::tape::tapeserver::daemon::MountSession::findDrive(LogContext& lc) {
-  // 1) Get hold of the drive and check it.
-  utils::TpconfigLines::const_iterator configLine;
-  for (configLine = m_tpConfig.begin(); configLine != m_tpConfig.end(); configLine++) {
-    if (configLine->unitName == m_request.driveUnit && configLine->density == m_volInfo.density) {
-      break;
-    }
-  }
-  // If we did not find the drive in the tpConfig, we have a problem
+castor::tape::tapeserver::daemon::MountSession::findDrive(
+utils::TpconfigLines::const_iterator configLine,LogContext& lc) {
+  //First of all If we did not find the drive in the tpConfig, we have a problem
   if (configLine == m_tpConfig.end()) {
     LogContext::ScopedParam sp08(lc, Param("density", m_volInfo.density));
     lc.log(LOG_ERR, "Drive unit not found in TPCONFIG");
@@ -434,4 +445,17 @@ castor::tape::tapeserver::daemon::MountSession::findDrive(LogContext& lc) {
     lc.log(LOG_ERR, "Notified client of end session with error");
     return NULL;
   }
+}
+
+utils::TpconfigLines::const_iterator
+castor::tape::tapeserver::daemon::MountSession::findConfigLine(LogContext & lc) const {
+  
+  utils::TpconfigLines::const_iterator configLine;
+  for (configLine = m_tpConfig.begin(); configLine != m_tpConfig.end(); configLine++) {
+    if (configLine->unitName == m_request.driveUnit && configLine->density == m_volInfo.density) {
+      lc.pushOrReplace(log::Param("unitName", configLine->unitName));
+      break;
+    }
+  }
+  return configLine;
 }

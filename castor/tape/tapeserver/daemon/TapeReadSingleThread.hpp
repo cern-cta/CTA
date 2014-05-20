@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <memory>
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
-
+#include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -117,8 +117,10 @@ private:
     
     // Then we have to initialise the tape read session
     rs.reset(new castor::tape::tapeFile::ReadSession(m_drive, m_vid));
-    m_logContext.log(LOG_INFO, "Tape read session session successfully started");
     
+    //and then report
+    m_logContext.log(LOG_INFO, "Tape read session session successfully started");
+    m_gsr.tapeMountedForRead();
     } catch (castor::exception::Exception & ex) {
       castor::log::ScopedParamContainer scoped(m_logContext); 
       scoped.add("exception_message", ex.getMessageValue())
@@ -136,6 +138,7 @@ private:
       if (task) {
         task->execute(*rs, m_logContext);
         delete task;
+        sleep(20);
         m_filesProcessed++;
       } else {
         break;
@@ -153,7 +156,13 @@ private:
     m_drive.unloadTape();
     // And return the tape to the library
     m_rmc.unmountTape(m_vid, m_drive.librarySlot);
+    
+    //then we log/notigy
     m_logContext.log(LOG_DEBUG, "Finishing Tape Read Thread. Just signalled task injector of the end");
+    m_gsr.tapeUnmounted();
+    
+    //then we terminate the global status reporter
+    m_gsr.finish();
   }
   
   /**

@@ -125,7 +125,11 @@ namespace daemon {
     /** utility to find the drive on the system. This function logs 
      * all errors and hence does not throw exceptions. It returns NULL
      * in case of failure. */
-    castor::tape::drives::DriveInterface * findDrive(LogContext & lc);
+    castor::tape::drives::DriveInterface * findDrive(
+    utils::TpconfigLines::const_iterator configLine,LogContext & lc);
+        
+    utils::TpconfigLines::const_iterator findConfigLine(LogContext & lc) const;
+    
     /** sub-part of execute for the read sessions */
     void executeRead(LogContext & lc);
     /** sub-part of execute for a write session */
