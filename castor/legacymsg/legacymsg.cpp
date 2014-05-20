@@ -70,3 +70,4 @@ void castor::legacymsg::writeTapeReplyMsg(const int timeout, const int fd, const
     throw ex;
   }
 }
+
