@@ -112,6 +112,7 @@ ssize_t ceph_write(CephFileRef &fr, const char *buf, size_t count) {
   if (striper->write(fr.name, bl, count, fr.offset)) {
     return -1;
   }
+  fr.offset += count;
   return count;
 }
 
@@ -129,6 +130,7 @@ ssize_t ceph_read(CephFileRef &fr, char *buf, size_t count) {
   int rc = striper->read(fr.name, &bl, count, fr.offset);
   if (rc < 0) return rc;
   bl.copy(0, rc, buf);
+  fr.offset += rc;
   return rc;
 }
 
