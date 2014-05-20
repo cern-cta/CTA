@@ -109,7 +109,10 @@ ssize_t ceph_write(CephFileRef &fr, const char *buf, size_t count) {
   }
   ceph::bufferlist bl;
   bl.append(buf, count);
-  return striper->write(fr.name, bl, count, fr.offset);
+  if (striper->write(fr.name, bl, count, fr.offset)) {
+    return -1;
+  }
+  return count;
 }
 
 ssize_t ceph_read(CephFileRef &fr, char *buf, size_t count) {
@@ -124,9 +127,9 @@ ssize_t ceph_read(CephFileRef &fr, char *buf, size_t count) {
   }
   ceph::bufferlist bl;
   int rc = striper->read(fr.name, &bl, count, fr.offset);
-  if (0 != rc) return rc;
-  bl.copy(0, count, buf);
-  return 0;
+  if (rc < 0) return rc;
+  bl.copy(0, rc, buf);
+  return rc;
 }
 
 int ceph_fstat(CephFileRef &fr, struct stat *buf) {
