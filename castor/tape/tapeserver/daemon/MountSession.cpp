@@ -164,7 +164,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
-    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, m_vmgr,*configLine, 
+    GlobalStatusReporter gsr(m_intialProcess, m_vdqm,*configLine, 
             m_hostname, m_volInfo.vid, lc);
     //we retrieved the detail from the client in execute, so at this point 
     //we can already report !
@@ -237,9 +237,9 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
   // Once we got hold of the drive, we can run the session
   {
     
-    //deferencing configLine is save, because if configLine were not valid, 
+    //deferencing configLine is safe, because if configLine were not valid, 
     //then findDrive would have return NULL and we would have not end up there
-    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, m_vmgr, *configLine,m_hostname,
+    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, *configLine,m_hostname,
             m_volInfo.vid,lc);
     MigrationMemoryManager mm(m_castorConf.rtcopydNbBufs,
         m_castorConf.rtcopydBufsz,lc);

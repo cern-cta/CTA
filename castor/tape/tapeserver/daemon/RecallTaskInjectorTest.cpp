@@ -66,7 +66,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::daemon::GlobalStatusReporter gsr(initialProcess,
-  vdqm, vmgr,utils::TpconfigLine("","","","","","",""),"0.0.0.0","V12345",lc);
+  vdqm, utils::TpconfigLine("","","","","","",""),"0.0.0.0","V12345",lc);
   FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, "V12345", lc);
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);
@@ -114,7 +114,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::TapeserverProxyDummy initialProcess;
-  castor::tape::tapeserver::daemon::GlobalStatusReporter gsr(initialProcess, vdqm, vmgr,
+  castor::tape::tapeserver::daemon::GlobalStatusReporter gsr(initialProcess, vdqm, 
   utils::TpconfigLine("","","","","","",""),"0.0.0.0","V12345",lc);  
   FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, "V12345", lc);
   

@@ -50,16 +50,19 @@ class GlobalStatusReporter : private castor::tape::threading::Thread {
 
 public:
   /**
-   * Constructor
+   * COnstructor
    * @param tapeserverProxy
    * @param vdqmProxy
    * @param vmgrProxy
-   * @param rmcProxy
-   * @param lc
+   * @param configLineThe configuration line of the drive we are using. 
+   * Used to gather several information (unitName, dgn,...)
+   * @param hostname The host name of the computer
+   * @param _vid the vid of the tape we are manipulating
+   * @param lc 
    */
   GlobalStatusReporter(legacymsg::TapeserverProxy& tapeserverProxy,
           legacymsg::VdqmProxy& vdqmProxy,
-          legacymsg::VmgrProxy& vmgrProxy,const tape::utils::TpconfigLine& configLine,
+          const tape::utils::TpconfigLine& configLine,
           const std::string &hostname,const std::string &_vid,log::LogContext lc);
   
   /**
@@ -68,7 +71,6 @@ public:
    */      
   void finish();
 
-//------------------------------------------------------------------------------
   /**
    * Will call TapeserverProxy::gotWriteMountDetailsFromClient
    * @param unitName The unit name of the tape drive.
@@ -78,13 +80,11 @@ public:
   
   /**
    * Will call TapeserverProxy::tapeUnmounted and VdqmProx::tapeUnmounted()
-   * 
    */
   void tapeUnmounted();
 //------------------------------------------------------------------------------
   /**
-   * Will call VmgrProxy::tapeMountedForRead and TapeserverProxy::tapeMountedForRead,
-   * parameters TBD
+   * Will call TapeserverProxy::tapeMountedForRead,
    */
   void tapeMountedForRead();
   
@@ -97,7 +97,6 @@ private:
     virtual ~Report(){}
     virtual void execute(GlobalStatusReporter&)=0;
   };
-  //vdqm proxy stuff
 
   class ReportGotDetailsFromClient : public Report {
   public:
@@ -128,16 +127,17 @@ private:
    */
   legacymsg::TapeserverProxy& m_tapeserverProxy;
   legacymsg::VdqmProxy& m_vdqmProxy;
-  legacymsg::VmgrProxy& m_vmgrProxy;
   
+  /**
+   * Log context, copied because it is in a separated thread
+   */
   log::LogContext m_lc;
   
-  const std::string server;
-  const std::string unitName;
-  const std::string dgn;
-//  const uint32_t mountTransactionId; 
-  const std::string &vid;
-  const pid_t sessionPid;
+  const std::string m_server;
+  const std::string m_unitName;
+  const std::string m_dgn;
+  const std::string m_vid;
+  const pid_t m_sessionPid;
 };
 
 }}}}

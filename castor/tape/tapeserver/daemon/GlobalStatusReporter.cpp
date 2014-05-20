@@ -16,13 +16,12 @@ namespace daemon {
 //------------------------------------------------------------------------------  
   GlobalStatusReporter::GlobalStatusReporter(
   legacymsg::TapeserverProxy& tapeserverProxy,
-  legacymsg::VdqmProxy& vdqmProxy,legacymsg::VmgrProxy& vmgrProxy,
+  legacymsg::VdqmProxy& vdqmProxy,
         const tape::utils::TpconfigLine& configLine,const std::string &hostname,
           const std::string &_vid,log::LogContext lc):
           m_tapeserverProxy(tapeserverProxy),m_vdqmProxy(vdqmProxy),
-          m_vmgrProxy(vmgrProxy),m_lc(lc), server(hostname),unitName(configLine.unitName),
-  dgn(configLine.dgn),vid(_vid),
-  sessionPid(getpid()){
+          m_lc(lc), m_server(hostname),m_unitName(configLine.unitName),
+          m_dgn(configLine.dgn),m_vid(_vid),m_sessionPid(getpid()){
     //change the thread's name in the log
     m_lc.pushOrReplace(log::Param("thread","GlobalStatusReporter"));
   }
@@ -34,13 +33,13 @@ namespace daemon {
     m_fifo.push(NULL);
   }
 //------------------------------------------------------------------------------
-//finish
+//startThreads
 //------------------------------------------------------------------------------   
   void GlobalStatusReporter::startThreads(){
     start();
   }
 //------------------------------------------------------------------------------
-//finish
+//waitThreads
 //------------------------------------------------------------------------------     
   void GlobalStatusReporter::waitThreads(){
     wait();
@@ -84,8 +83,8 @@ namespace daemon {
     void GlobalStatusReporter::ReportGotDetailsFromClient::execute(
     GlobalStatusReporter& parent){
       log::ScopedParamContainer sp(parent.m_lc);
-      sp.add(parent.unitName,"unitName").add(parent.vid,"vid");
-      parent.m_tapeserverProxy.gotWriteMountDetailsFromClient(parent.unitName,parent.vid);
+      sp.add(parent.m_unitName,"unitName").add(parent.m_vid,"vid");
+      parent.m_tapeserverProxy.gotWriteMountDetailsFromClient(parent.m_unitName,parent.m_vid);
       parent.m_lc.log(LOG_INFO,"From GlobalStatusReporter, Reported gotWriteMountDetailsFromClient");
     }
 //------------------------------------------------------------------------------
@@ -93,15 +92,15 @@ namespace daemon {
 //------------------------------------------------------------------------------        
     void GlobalStatusReporter::ReportTapeMountedForRead::
     execute(GlobalStatusReporter& parent){
-      parent.m_tapeserverProxy.tapeMountedForRead(parent.unitName,parent.vid);
-      parent.m_vdqmProxy.tapeMounted(parent.server, parent.unitName, parent.dgn,parent.vid,parent.sessionPid);
+      parent.m_tapeserverProxy.tapeMountedForRead(parent.m_unitName,parent.m_vid);
+      parent.m_vdqmProxy.tapeMounted(parent.m_server, parent.m_unitName, parent.m_dgn,parent.m_vid,parent.m_sessionPid);
     }
 //------------------------------------------------------------------------------
 // ReportTapeUnmounted::execute
 //------------------------------------------------------------------------------        
     void GlobalStatusReporter::ReportTapeUnmounted::
     execute(GlobalStatusReporter& parent){
-      parent.m_tapeserverProxy.tapeUnmounted(parent.unitName,parent.vid);
+      parent.m_tapeserverProxy.tapeUnmounted(parent.m_unitName,parent.m_vid);
     }
 }}}}
 
