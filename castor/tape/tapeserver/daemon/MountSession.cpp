@@ -170,7 +170,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc
     //we can already report !
     gsr.gotReadMountDetailsFromClient();
     
-    TapeReadSingleThread trst(*drive, m_rmc, gsr, m_volInfo.vid, 
+    TapeReadSingleThread trst(*drive, m_rmc, gsr, m_volInfo, 
         m_castorConf.tapebridgeBulkRequestRecallMaxFiles, lc);
     RecallReportPacker rrp(m_clientProxy,
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,

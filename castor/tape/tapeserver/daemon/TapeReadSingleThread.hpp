@@ -36,6 +36,7 @@
 #include <memory>
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -61,10 +62,10 @@ public:
   TapeReadSingleThread(castor::tape::drives::DriveInterface & drive,
           castor::legacymsg::RmcProxy & rmc,
           GlobalStatusReporter & gsr,
-          const std::string vid, uint64_t maxFilesRequest,
+          client::ClientInterface::VolumeInfo volInfo, uint64_t maxFilesRequest,
           castor::log::LogContext & lc): 
-   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr, vid, lc),
-   m_maxFilesRequest(maxFilesRequest),m_filesProcessed(0) {
+   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr, volInfo.vid, lc),
+   m_maxFilesRequest(maxFilesRequest),m_filesProcessed(0),m_volInfo(volInfo) {
    }
    
    /**
@@ -110,13 +111,13 @@ private:
     
     try {
     // Before anything, the tape should be mounted
-    m_rmc.mountTape(m_vid, m_drive.librarySlot, legacymsg::RmcProxy::MOUNT_MODE_READONLY);
+    m_rmc.mountTape(m_volInfo.vid, m_drive.librarySlot, legacymsg::RmcProxy::MOUNT_MODE_READONLY);
     
     //wait for drive to be ready
     m_drive.waitUntilReady(600);
     
     // Then we have to initialise the tape read session
-    rs.reset(new castor::tape::tapeFile::ReadSession(m_drive, m_vid));
+    rs.reset(new castor::tape::tapeFile::ReadSession(m_drive,m_volInfo));
     
     //and then report
     m_logContext.log(LOG_INFO, "Tape read session session successfully started");
@@ -154,7 +155,7 @@ private:
     // Do the final cleanup
     m_drive.unloadTape();
     // And return the tape to the library
-    m_rmc.unmountTape(m_vid, m_drive.librarySlot);
+    m_rmc.unmountTape(m_volInfo.vid, m_drive.librarySlot);
     
     //then we log/notigy
     m_logContext.log(LOG_DEBUG, "Finishing Tape Read Thread. Just signalled task injector of the end");
@@ -177,6 +178,8 @@ private:
   size_t m_filesProcessed;
   
   std::auto_ptr<castor::tape::tapeFile::ReadSession> rs;
+  
+  client::ClientInterface::VolumeInfo m_volInfo;
 };
 }
 }

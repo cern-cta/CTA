@@ -57,7 +57,10 @@ namespace castor {
         drive.writeSyncFileMarks(1);
       }
 
-      ReadSession::ReadSession(drives::DriveInterface & drive, const std::string &vid)  : m_drive(drive), m_vid(vid), m_corrupted(false), m_locked(false), m_fseq(1), m_currentFilePart(Header) { 
+      ReadSession::ReadSession(drives::DriveInterface & drive,
+              tapeserver::client::ClientInterface::VolumeInfo volInfo)  : 
+      m_drive(drive), m_vid(volInfo.vid), m_corrupted(false), m_locked(false), 
+      m_fseq(1), m_currentFilePart(Header),m_volInfo(volInfo) { 
         m_drive.rewind();
         VOL1 vol1;
         m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
@@ -66,7 +69,7 @@ namespace castor {
         } catch (std::exception & e) {
           throw TapeFormatError(e.what());
         }
-        HeaderChecker::checkVOL1(vol1, vid); //after which we are at the end of VOL1 header (i.e. beginning of HDR1 of the first file) on success, or at BOT in case of exception
+        HeaderChecker::checkVOL1(vol1, volInfo.vid); //after which we are at the end of VOL1 header (i.e. beginning of HDR1 of the first file) on success, or at BOT in case of exception
       }
 
       void HeaderChecker::checkVOL1(const VOL1 &vol1, const std::string &volId)  {
@@ -115,9 +118,11 @@ namespace castor {
 
       void HeaderChecker::checkHDR1(const HDR1 &hdr1,
         const castor::tape::tapegateway::FileToRecallStruct &filetoRecall,
-        const std::string &volId)  {
-        if(!checkHeaderNumericalField(hdr1.getFileId(), 
-            filetoRecall.fileid(), hexadecimal)) { 
+        const tape::tapeserver::client::ClientInterface::VolumeInfo &volInfo)  {
+        const std::string &volId = volInfo.vid;
+        if( volInfo.clientType != tape::tapegateway::READ_TP 
+       && (!checkHeaderNumericalField(hdr1.getFileId(), 
+            filetoRecall.fileid(), hexadecimal))) { 
           // the nsfileid stored in HDR1 as an hexadecimal string . The one in 
           // filetoRecall is numeric
           std::stringstream ex_str;
@@ -264,7 +269,7 @@ namespace castor {
         }
 
         //headers are valid here, let's see if they contain the right info, i.e. are we in the correct place?
-        HeaderChecker::checkHDR1(hdr1, fileToRecall, m_session->m_vid);
+        HeaderChecker::checkHDR1(hdr1, fileToRecall, m_session->getVolumeInfo());
         //we disregard hdr2 on purpose as it contains no useful information, we now check the fseq in uhl1 
         //(hdr1 also contains fseq info but it is modulo 10000, therefore useless)
         HeaderChecker::checkUHL1(uhl1, fileToRecall);
