@@ -167,8 +167,7 @@ void
 // handleIncomingJob
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingJob(
-  const legacymsg::MessageHeader &header, const int clientConnection)
-   {
+  const legacymsg::MessageHeader &header, const int clientConnection) {
 
   switch(header.reqType) {
   case SETVID:
@@ -214,21 +213,22 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
 // handleIncomingLabelJob
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingLabelJob(
-  const legacymsg::MessageHeader &header, const int clientConnection) {
+  const legacymsg::MessageHeader &header, const int clientConnection) throw() {
   castor::utils::SmartFd connection(clientConnection);
   const char *const task = "handle incoming label job";
 
-  const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
-  const legacymsg::TapeLabelRqstMsgBody body = readLabelRqstMsgBody(connection.get(), bodyLen);
-  logLabelJobReception(body);
-
-  // Try to inform the drive catalogue of the reception of the label job
-  //
-  // PLEASE NOTE that this method must keep ownership of the client connection
-  // whilst informing the drive catalogue of the reception of the label job.
-  // If the drive catalogue throws an exception whilst evaluating the drive
-  // state-change then the catalogue will NOT have closed the connection.
   try {
+    // Read message body
+    const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
+    const legacymsg::TapeLabelRqstMsgBody body = readLabelRqstMsgBody(connection.get(), bodyLen);
+    logLabelJobReception(body);
+
+    // Try to inform the drive catalogue of the reception of the label job
+    //
+    // PLEASE NOTE that this method must keep ownership of the client connection
+    // whilst informing the drive catalogue of the reception of the label job.
+    // If the drive catalogue throws an exception whilst evaluating the drive
+    // state-change then the catalogue will NOT have closed the connection.
     m_driveCatalogue.receivedLabelJob(body, connection.get());
 
     // The drive catalogue will now remember the client connection, therefore it

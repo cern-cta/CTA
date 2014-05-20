@@ -74,8 +74,7 @@ public:
    * @return true if the event handler should be removed from and deleted by
    * the reactor.
    */
-  bool handleEvent(const struct pollfd &fd)
-    ;
+  bool handleEvent(const struct pollfd &fd);
 
   /**
    * Destructor.
@@ -94,7 +93,7 @@ private:
    * @return       The total length of the header.
    */
   size_t marshalLabelReplyMsg(char *const dst, const size_t dstLen,
-    const int rc) ;
+    const int rc);
   
   /**
    * Writes a job reply message to the tape label command connection.
@@ -103,14 +102,13 @@ private:
    * @param rc The return code to reply.
    * 
    */
-  void writeLabelReplyMsg(const int fd, const int rc)
-    ;
+  void writeLabelReplyMsg(const int fd, const int rc);
   
   /**
    * Throws an exception if the specified file-descriptor is not that of the
    * socket listening for connections from the mount session.
    */
-  void checkHandleEventFd(const int fd) ;
+  void checkHandleEventFd(const int fd);
   
   /**
    * Logs the reception of the specified job message from the tpconfig command.
@@ -133,7 +131,7 @@ private:
    * the client.
    */
   void handleIncomingJob(const legacymsg::MessageHeader &header,
-    const int clientConnection) ;
+    const int clientConnection);
 
   /**
    * Handles an incoming job.
@@ -150,7 +148,7 @@ private:
    * the client.
    */
   void handleIncomingSetVidJob(const legacymsg::MessageHeader &header,
-    const int clientConnection) ;
+    const int clientConnection);
 
   /**
    * Handles an incoming job.
@@ -158,16 +156,13 @@ private:
    * Please note that this method takes ownership of the specified
    * TCP/IP connection.
    *
-   * PLEASE NOTE: If this method throws an exception then it WILL have closed
-   * the specified TCP/IP connection.
-   *
    * @param header The header of the incoming job message that has already been
    * read out from the client connection and un-marshalled.
    * @param clientConnection The file descriptor of the TCP/IP connection with
    * the client.
    */
   void handleIncomingLabelJob(const legacymsg::MessageHeader &header,
-    const int clientConnection) ;
+    const int clientConnection) throw();
   
   /**
    * Logs the reception of the specified job message from the tplabel command.
@@ -182,8 +177,7 @@ private:
    * daemon.
    * @return The message header.
    */
-  legacymsg::MessageHeader readJobMsgHeader(const int connection)
-    ;
+  legacymsg::MessageHeader readJobMsgHeader(const int connection);
   
   /**
    * Reads the body of a job message from the specified connection.
@@ -193,7 +187,7 @@ private:
    * @return The message body.
    */
   legacymsg::TapeUpdateDriveRqstMsgBody readSetVidMsgBody(const int connection,
-    const uint32_t len) ;
+    const uint32_t len);
   
   /**
    * Reads the body of a job message from the specified connection.
@@ -203,7 +197,7 @@ private:
    * @return The message body.
    */
   legacymsg::TapeLabelRqstMsgBody readLabelRqstMsgBody(const int connection,
-    const uint32_t len) ;
+    const uint32_t len);
 
   /**
    * The file descriptor of the socket listening for connections from the vdqmd
