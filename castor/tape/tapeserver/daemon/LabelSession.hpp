@@ -80,6 +80,11 @@ namespace daemon {
     void execute() ;
     
   private:
+    
+    /**
+     * The network timeout in seconds
+     */
+    int m_timeout;
 
     /**
      * The file descriptor of the connection with the label command.
@@ -92,63 +97,46 @@ namespace daemon {
     };
     
     /**
-     * 
+     * Checks if the VID has still active or disabled segments registered within the name server
+     * @return 
+     */
+    void checkIfVidStillHasSegments();
+    
+    /**
+     * Instantiates the drive object by resetting the corresponding drive auto pointer
+     * @param configLine The configuration line containing the drive-capability specification
+     * @param drive Drive object; auto pointer reference to be reset by this function (no ownership taken)
+     * @return 
+     */
+    void getDriveObject(utils::TpconfigLines::const_iterator &configLine, std::auto_ptr<castor::tape::drives::DriveInterface> &drive);
+    
+    /**
+     * Mounts the requested VID in the tape drive specified in the configuration line
      * @param configLine The configuration line containing the drive-capability specification
      * @return 
      */
-    int checkIfVidStillHasSegments(utils::TpconfigLines::const_iterator &configLine);
+    void mountTape(utils::TpconfigLines::const_iterator &configLine);
     
     /**
-     * 
+     * Check the tape drive write-ability and waits for it to become ready (tape needs to be loaded)
+     * @param drive The drive object pointer
+     * @return 
+     */
+    void waitUntilDriveReady(castor::tape::drives::DriveInterface *drive);
+    
+    /**
+     * The function carrying out the actual labeling
+     * @param drive The drive object pointer
+     * @return 
+     */
+    void labelTheTape(castor::tape::drives::DriveInterface *drive);
+    
+    /**
+     * Unmounts the requested VID in the tape drive specified in the configuration line
      * @param configLine The configuration line containing the drive-capability specification
      * @return 
      */
-    int identifyDrive(utils::TpconfigLines::const_iterator &configLine);
-    
-    /**
-     * 
-     * @param configLine The configuration line containing the drive-capability specification
-     * @return 
-     */
-    int mountTape(utils::TpconfigLines::const_iterator &configLine);
-    
-    /**
-     * 
-     * @param configLine The configuration line containing the drive-capability specification
-     * @param driveInfo Structure containing information of the device file of the drive
-     * @return 
-     */
-    int getDeviceInfo(utils::TpconfigLines::const_iterator &configLine, castor::tape::SCSI::DeviceInfo &driveInfo);
-    
-    /**
-     * 
-     * @param configLine The configuration line containing the drive-capability specification
-     * @param driveInfo Structure containing information of the device file of the drive
-     * @param drive Drive object
-     * @return 
-     */
-    int getDriveObject(utils::TpconfigLines::const_iterator &configLine, castor::tape::SCSI::DeviceInfo &driveInfo, std::auto_ptr<castor::tape::drives::DriveInterface> &drive);
-    
-    /**
-     * 
-     * @param drive
-     * @return 
-     */
-    int checkDriveObject(castor::tape::drives::DriveInterface *drive);
-    
-    /**
-     * 
-     * @param drive
-     * @return 
-     */
-    int labelTheTape(castor::tape::drives::DriveInterface *drive);
-    
-    /**
-     * 
-     * @param configLine The configuration line containing the drive-capability specification
-     * @return 
-     */
-    int unmountTape(utils::TpconfigLines::const_iterator &configLine);
+    void unmountTape(utils::TpconfigLines::const_iterator &configLine);
     
     /**
      * The object representing the rmcd daemon.
