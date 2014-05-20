@@ -76,7 +76,91 @@ ALTER TABLE Cns_file_metadata MODIFY (stagerTime CONSTRAINT NN_File_stagerTime N
 
 
 /* PL/SQL code update */
-XXX insert closex procedure here
+/* This procedure implements the Cns_closex API */
+CREATE OR REPLACE PROCEDURE closex(inFid IN INTEGER,
+                                   inFileSize IN INTEGER,
+                                   inCksumType IN VARCHAR2,
+                                   inCksumValue IN VARCHAR2,
+                                   inMTime IN INTEGER,
+                                   inLastOpenTime IN NUMBER,
+                                   outRC OUT INTEGER,
+                                   outMsg OUT VARCHAR2) AS
+  -- the autonomous transaction is needed because we commit AND we have OUT parameters,
+  -- otherwise we would get an ORA-02064 distributed operation not supported error.
+  PRAGMA AUTONOMOUS_TRANSACTION;
+  varFmode NUMBER(6);
+  varFLastOpenTime NUMBER;
+  varFCksumName VARCHAR2(2);
+  varFCksum VARCHAR2(32);
+  varUnused INTEGER;
+BEGIN
+  outRC := 0;
+  outMsg := '';
+  -- We truncate to 5 decimal digits, which is the precision of the lastOpenTime we get from the stager.
+  -- Note this is just fitting the mantissa precision of a double, and it is due to the fact
+  -- that those numbers go through OCI as double.
+  SELECT filemode, TRUNC(stagertime, 5), csumType, csumValue
+    INTO varFmode, varFLastOpenTime, varFCksumName, varFCksum
+    FROM Cns_file_metadata
+   WHERE fileId = inFid FOR UPDATE;
+  -- Is it a directory?
+  IF bitand(varFmode, 4*8*8*8*8) > 0 THEN  -- 040000 == S_IFDIR
+    outRC := serrno.EISDIR;
+    outMsg := serrno.EISDIR_MSG;
+    ROLLBACK;
+    RETURN;
+  END IF;
+  -- Has the file been changed meanwhile?
+  IF varFLastOpenTime > inLastOpenTime THEN
+    outRC := serrno.ENSFILECHG;
+    outMsg := serrno.ENSFILECHG_MSG ||' : NSLastOpenTime='|| varFLastOpenTime
+      ||', StagerLastOpenTime='|| inLastOpenTime;
+    ROLLBACK;
+    RETURN;
+  END IF;
+  -- Validate checksum type
+  IF inCksumType != 'AD' THEN
+    outRC := serrno.EINVAL;
+    outMsg := serrno.EINVAL_MSG ||' : incorrect checksum type detected '|| inCksumType;
+    ROLLBACK;
+    RETURN;
+  END IF;
+  -- Validate checksum value
+  BEGIN
+    SELECT to_number(inCksumValue, 'XXXXXXXX') INTO varUnused FROM Dual;
+  EXCEPTION WHEN INVALID_NUMBER THEN
+    outRC := serrno.EINVAL;
+    outMsg := serrno.EINVAL_MSG ||' : incorrect checksum value detected '|| inCksumValue;
+    ROLLBACK;
+    RETURN;
+  END;
+  -- Cross check file checksums when preset-adler32 (PA in the file entry):
+  IF varFCksumName = 'PA' AND
+     to_number(inCksumValue, 'XXXXXXXX') != to_number(varFCksum, 'XXXXXXXX') THEN
+    outRC := serrno.SECHECKSUM;
+    outMsg := 'Predefined file checksum mismatch : preset='|| varFCksum ||', actual='|| inCksumValue;
+    ROLLBACK;
+    RETURN;
+  END IF;
+  -- All right, update file size and other metadata
+  UPDATE Cns_file_metadata
+     SET fileSize = inFileSize,
+         csumType = inCksumType,
+         csumValue = inCksumValue,
+         ctime = inMTime,
+         mtime = inMTime
+   WHERE fileId = inFid;
+  outMsg := 'Function="closex" FileSize=' || inFileSize
+    ||' ChecksumType="'|| inCksumType ||'" ChecksumValue="'|| inCksumValue
+    ||'" NewModTime=' || inMTime ||' StagerLastOpenTime='|| inLastOpenTime ||' RtnCode=0';
+  COMMIT;
+EXCEPTION WHEN NO_DATA_FOUND THEN
+  -- The file entry was not found, just give up
+  outRC := serrno.ENOENT;
+  outMsg := serrno.ENOENT_MSG;
+END;
+/
+
 
 /* Flag the schema upgrade as COMPLETE */
 /***************************************/
