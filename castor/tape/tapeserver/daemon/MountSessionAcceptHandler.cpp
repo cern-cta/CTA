@@ -205,7 +205,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
   logSetVidJobReception(body);
   m_driveCatalogue.updateVidAssignment(body.vid, body.drive);
   // 0 as return code for the tape config command, as in: "all went fine"
-  legacymsg::writeTapeRcReplyMsg(connection.get(), 0);
+  legacymsg::writeTapeRcReplyMsg(m_netTimeout, connection.get(), 0);
 
   close(connection.release());
 }
@@ -241,7 +241,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
 
     // Inform the client there was an error
     try {
-      legacymsg::writeTapeRcReplyMsg(connection.get(), 1);
+      legacymsg::writeTapeReplyMsg(m_netTimeout, connection.get(), 1, ex.getMessage().str());
     } catch(castor::exception::Exception &ne) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task <<

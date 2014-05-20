@@ -37,7 +37,8 @@ namespace legacymsg {
  * @param rc The return code to reply.
  * 
  */
-void writeTapeRcReplyMsg(const int fd, const int rc) throw (castor::exception::Exception);
+void writeTapeRcReplyMsg(const int timeout, const int fd, const int rc);
+void writeTapeReplyMsg(const int timeout, const int fd, const int rc, const std::string &message);
   
 } // namespace legacymsg
 } // namespace castor
