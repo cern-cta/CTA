@@ -139,3 +139,9 @@
   Helgrind:Race
   fun:_ZNKSs6*
 }
+
+{
+  helgrind-unitTest-castor-basicStringsGottaCatchAllTer
+  Helgrind:Race
+  fun:_ZNKSs*
+}
