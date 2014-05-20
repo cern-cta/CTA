@@ -23,6 +23,7 @@
 #include "Castor_limits.h"
 #include <sys/xattr.h>
 #include "castor/stager/IJobSvc.h"
+#include "rfio_localio.h"
 
 struct internal_context {
   int one_byte_at_least;
@@ -115,11 +116,7 @@ int rfio_handle_open(const char *lfn,
       return -1;
     }
 
-    struct stat64 statbuf;
-    if (stat64(internal_context->pfn,&statbuf) < 0) {
-      /* local file does not exist: here we assume that it's going to be created,
-         and this is equivalent to a write operation regardless the mode bits.
-         So we set one_byte_at_least to 1 */
+    if (flags && O_WRONLY != 0) {
       internal_context->one_byte_at_least = 1;
     } else {
       internal_context->one_byte_at_least = 0;
@@ -178,16 +175,12 @@ int rfio_handle_close(void *ctx,
   int      error_code;
   char*    error_msg;
 
-  (void)filestat;
   if (internal_context != NULL) {
     char tmpbuf[21];
 
     if (((internal_context->flags & O_TRUNC) == O_TRUNC) ||
         (internal_context->one_byte_at_least)) {   /* see also comment in rfio_handle_open */
       /* This is a write */
-      struct stat64 statbuf;
-
-      if (stat64(internal_context->pfn, &statbuf) == 0) {
         /* File still exists - this is a candidate for migration regardless of its size (zero-length are ignored in the stager) */
         useCksum = 1;
         csumtype[0] = '\0';
@@ -235,23 +228,13 @@ int rfio_handle_close(void *ctx,
           csumvalue[0] = '\0';
         }
         (*logfunc)(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_prepareForMigration on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-        if (Cstager_IJobSvc_prepareForMigration(internal_context->subrequest_id,(u_signed64) statbuf.st_size, (u_signed64) time(NULL),internal_context->fileId, internal_context->nsHost, csumtype, csumvalue, &error_code, &error_msg) != 0) {
+        if (Cstager_IJobSvc_prepareForMigration(internal_context->subrequest_id,(u_signed64) filestat->st_size, (u_signed64) time(NULL),internal_context->fileId, internal_context->nsHost, csumtype, csumvalue, &error_code, &error_msg) != 0) {
           serrno = error_code;
           (*logfunc)(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_prepareForMigration error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), error_msg);
           free(error_msg);
         } else {
           forced_mover_exit_error = 0;
         }
-      } else {
-        /* File does not exist !? */
-        (*logfunc)(LOG_ERR, "rfio_handle_close : stat64() error (%s)\n", strerror(errno));
-        (*logfunc)(LOG_INFO, "rfio_handle_close : Calling Cstager_IJobSvc_putFailed on subrequest_id=%s\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0));
-        if (Cstager_IJobSvc_putFailed(subrequest_id,internal_context->fileId, internal_context->nsHost, &error_code, &error_msg) != 0) {
-          serrno = error_code;
-          (*logfunc)(LOG_ERR, "rfio_handle_close : Cstager_IJobSvc_putFailed error for subrequest_id=%s (%s)\n", u64tostr(internal_context->subrequest_id, tmpbuf, 0), error_msg);
-          free(error_msg);
-        }
-      }
     } else {
       /* This is a read: the close() status is enough to decide on a getUpdateDone/Failed */
       if (close_status == 0) {
