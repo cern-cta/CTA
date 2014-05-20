@@ -45,6 +45,7 @@ int dsflag;
 int iflag;
 int Lflag;
 int lflag;
+int nflag;
 int Rflag;
 int Tflag;
 int uflag;
@@ -64,6 +65,7 @@ void usage(int status, char *name) {
     printf ("  -L              for symbolic links, print target attributes instead of link\n");
     printf ("                  attributes\n");
     printf ("  -l              long listing\n");
+    printf ("  -n              display numeric user and group ids rather than logins\n");
     printf ("  -R              list the contents of directories recursively\n");
     printf ("  -T              list file segments migrated to tape\n");
     printf ("  -u              use last access time instead of last modification\n");
@@ -105,7 +107,7 @@ int main(int argc,
 
   Copterr = 1;
   Coptind = 1;
-  while ((c = Cgetopt_long (argc, argv, "cdiLlRTu", longopts, NULL)) != EOF) {
+  while ((c = Cgetopt_long (argc, argv, "cdiLlnRTu", longopts, NULL)) != EOF) {
     switch (c) {
     case 'c':
       cflag++;
@@ -121,6 +123,9 @@ int main(int argc,
       break;
     case 'l':
       lflag++;
+      break;
+    case 'n':
+      nflag++;
       break;
     case 'R':
       Rflag++;
@@ -441,7 +446,7 @@ decode_group(gid_t gid)
 
   if (gid != sav_gid) {
     sav_gid = gid;
-    if ((gr = getgrgid (sav_gid))) {
+    if (0 == nflag && (gr = getgrgid (sav_gid))) {
       strncpy (sav_gidstr, gr->gr_name, sizeof(sav_gidstr) - 1);
       sav_gidstr[sizeof(sav_gidstr) - 1] = '\0';
     } else {
@@ -460,7 +465,7 @@ decode_user(uid_t uid)
 
   if (uid != sav_uid) {
     sav_uid = uid;
-    if ((pw = getpwuid (sav_uid))) {
+    if (0 == nflag && (pw = getpwuid (sav_uid))) {
       strcpy (sav_uidstr, pw->pw_name);
     } else {
       sprintf (sav_uidstr, "%d", sav_uid);

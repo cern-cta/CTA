@@ -38,6 +38,9 @@ for symbolic links, print target attributes instead of link attributes.
 .B -l
 long listing (see below).
 .TP
+.B -n
+display numeric user and group ids rather than logins.
+.TP
 .B -R
 list the contents of directories recursively.
 .TP
