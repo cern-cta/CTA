@@ -114,8 +114,10 @@ ALTER TABLE DiskServer ADD CONSTRAINT FK_DiskServer_DataPool
 
 ALTER TABLE DiskCopy ADD (dataPool INTEGER);
 CREATE INDEX I_DiskCopy_DataPool ON DiskCopy (dataPool);
-CREATE INDEX I_DiskCopy_DP_GCW ON DiskCopy (dataPool, gcWeight);
-CREATE INDEX I_DiskCopy_Status_7_DP ON DiskCopy (decode(status,7,status,NULL), dataPool);
+DROP INDEX I_DiskCopy_FS_GCW;
+DROP INDEX I_DiskCopy_Status_7_FS;
+CREATE INDEX I_DiskCopy_FS_DP_GCW ON DiskCopy (nvl(fileSystem,0)+nvl(dataPool,0), gcWeight);
+CREATE INDEX I_DiskCopy_Status_7_FS_DP ON DiskCopy (decode(status,7,status,NULL), nvl(fileSystem,0)+nvl(dataPool,0));
 ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_FileSystem
   FOREIGN KEY (FileSystem) REFERENCES FileSystem (id);
 ALTER TABLE DiskCopy ADD CONSTRAINT FK_DiskCopy_DataPool

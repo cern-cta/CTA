@@ -31,6 +31,7 @@
 #include "castor/stager/GCLocalFile.hpp"
 #include "castor/System.hpp"
 #include "getconfent.h"
+#include <radosstriper/libradosstriper.hpp>
 
 #include <vector>
 #include <errno.h>
@@ -273,24 +274,86 @@ void castor::gc::DeletionThread::run(void*) {
   } // End of loop
 }
 
+/// global variables holding stripers for each ceph pool
+std::map<std::string, libradosstriper::RadosStriper*> g_radosStripers;
+
+static libradosstriper::RadosStriper* getRadosStriper(std::string pool) {
+  std::map<std::string, libradosstriper::RadosStriper*>::iterator it =
+    g_radosStripers.find(pool);
+  if (it == g_radosStripers.end()) {
+    // we need to create a new radosStriper
+    librados::Rados cluster;
+    int rc = cluster.init(0);
+    if (rc) return 0;
+    rc = cluster.conf_read_file(NULL);
+    if (rc) {
+      cluster.shutdown();
+      return 0;
+    }
+    cluster.conf_parse_env(NULL);
+    rc = cluster.connect();
+    if (rc) {
+      cluster.shutdown();
+      return 0;
+    }
+    librados::IoCtx ioctx;
+    rc = cluster.ioctx_create(pool.c_str(), ioctx);
+    if (rc != 0) return 0;
+    libradosstriper::RadosStriper *newStriper = new libradosstriper::RadosStriper;
+    rc = libradosstriper::RadosStriper::striper_create(ioctx, newStriper);
+    if (rc != 0) return 0;
+    it = g_radosStripers.insert(std::pair<std::string, libradosstriper::RadosStriper*>
+                                (pool, newStriper)).first;
+  }
+  return it->second;
+}
 
 //-----------------------------------------------------------------------------
 // gcRemoveFilePath
 //-----------------------------------------------------------------------------
 void castor::gc::DeletionThread::gcRemoveFilePath
-(std::string filepath, u_signed64 &filesize, u_signed64 &fileage)
-   {
-  struct stat64 fileinfo;
-  if (::stat64(filepath.c_str(), &fileinfo) ) {
-    castor::exception::Exception e(errno);
-    e.getMessage() << "Failed to stat file " << filepath;
-    throw e;
-  }
-  filesize = fileinfo.st_size;
-  fileage  = time(NULL) - fileinfo.st_ctime;
-  if (unlink(filepath.c_str()) < 0) {
-    castor::exception::Exception e(errno);
-    e.getMessage() << "Failed to unlink file " << filepath;
-    throw e;
+(std::string filepath, u_signed64 &filesize, u_signed64 &fileage) {
+  if (!filepath.empty() and filepath[0] == '/') {
+    // regular file, call POSIX API
+    struct stat64 fileinfo;
+    if (::stat64(filepath.c_str(), &fileinfo) ) {
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Failed to stat file " << filepath;
+      throw e;
+    }
+    filesize = fileinfo.st_size;
+    fileage  = time(NULL) - fileinfo.st_ctime;
+    if (unlink(filepath.c_str()) < 0) {
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Failed to unlink file " << filepath;
+      throw e;
+    }
+  } else {
+    // ceph file
+    int slashPos = filepath.find('/');
+    std::string pool = filepath.substr(0,slashPos);
+    std::string filename = filepath.substr(slashPos+1);
+    libradosstriper::RadosStriper *striper = getRadosStriper(pool);
+    if (0 == striper) {
+      castor::exception::Exception e(EINVAL);
+      e.getMessage() << "Failed to connect to ceph while unlinking file " << filepath;
+      throw e;
+    }
+    time_t pmtime;
+    uint64_t pmsize;
+    int rc = striper->stat(filename, &pmsize, &pmtime);
+    if (rc) {
+      castor::exception::Exception e(-rc);
+      e.getMessage() << "Failed to stat ceph file " << filepath;
+      throw e;
+    }
+    filesize = pmsize;
+    fileage  = time(NULL) - pmtime;
+    rc = striper->remove(filename);
+    if (rc) {
+      castor::exception::Exception e(-rc);
+      e.getMessage() << "Failed to unlink ceph file " << filepath;
+      throw e;
+    }
   }
 }
