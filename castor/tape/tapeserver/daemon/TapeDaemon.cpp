@@ -40,6 +40,7 @@
 #include "castor/utils/utils.hpp"
 #include "castor/common/CastorConfiguration.hpp"
 #include "h/Ctape.h"
+
 #include <algorithm>
 #include <limits.h>
 #include <memory>
@@ -438,8 +439,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterMountSession
 //------------------------------------------------------------------------------
 // mainEventLoop
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop()
-   {
+void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop() {
   while(handleEvents()) {
     forkMountSessions();
     forkLabelSessions();
@@ -740,55 +740,66 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSessions() throw() {
 // forkMountSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSession(const std::string &unitName) throw() {
+  std::list<log::Param> params;
+  params.push_back(log::Param("unitName", unitName));
+
+  // Get the vdqm job from the drive catalogue
   legacymsg::RtcpJobRqstMsgBody job;
   try {
     job = m_driveCatalogue.getVdqmJob(unitName);
+    params.push_back(log::Param("mountTransactiondId", job.volReqId));
   } catch(castor::exception::Exception &ex) {
     // Should never happen
-    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    params.push_back(log::Param("message", ex.getMessage().str()));
     m_log(LOG_ERR, "Failed to fork mount-session"
       ": Failed to retrieve VDQM job from drive catalogue", params);
     return;
   }
 
   m_log.prepareForFork();
-  const pid_t sessionPid = fork();
+
+  pid_t sessionPid = fork();
 
   // If fork failed
   if(0 > sessionPid) {
     // Log an error message and return
     char errBuf[100];
     sstrerror_r(errno, errBuf, sizeof(errBuf));
-    log::Param params[] = {log::Param("message", errBuf)};
+    params.push_back(log::Param("message", errBuf));
     m_log(LOG_ERR, "Failed to fork mount session for tape drive", params);
+    return;
 
   // Else if this is the parent process
   } else if(0 < sessionPid) {
+    // Notify the drive catalogue that the fork succeeded and return
     m_driveCatalogue.forkedMountSession(unitName, sessionPid);
+    return;
 
   // Else this is the child process
   } else {
+    // Get process ID because this is the child process and sessionPid is
+    // currently 0 from the call to fork()
+    sessionPid = getpid();
+
+    params.push_back(log::Param("sessionPid", sessionPid));
+
     // Clear the reactor which in turn will close all of the open
     // file-descriptors owned by the event handlers
     m_reactor.clear();
 
     try {
       std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
-      vdqm->assignDrive(m_hostName, unitName, job.dgn, job.volReqId, sessionPid);
+      vdqm->assignDrive(m_hostName, unitName, job.dgn, job.volReqId,
+        sessionPid);
+      m_log(LOG_INFO, "Assigned the drive in the vdqm", params);
     } catch(castor::exception::Exception &ex) {
-      log::Param params[] = {
-        log::Param("sessionPid", getpid()),
-        log::Param("message", ex.getMessage().str())};
+      params.push_back(log::Param("message", ex.getMessage().str()));
       m_log(LOG_ERR,
         "Mount session could not be started: Failed to assign drive in vdqm",
         params);
     }
 
     runMountSession(unitName);
-
-    // The runMountSession() should call exit() and should therefore never
-    // return
-    m_log(LOG_ERR, "runMountSession() returned unexpectedly");
   }
 }
 

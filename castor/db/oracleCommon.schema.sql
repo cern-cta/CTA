@@ -1317,6 +1317,8 @@ ALTER TABLE DrainingErrors
  *   destSvcClass : the destination service class
  *   replicationType : the type of replication involved (user, internal, draining or rebalancing)
  *   srcDcId : the source diskCopy. NULL at the beginning when the source is not yet scheduled.
+ *             note there's no FK constraint to DiskCopy as the src DiskCopy may well disappear
+ *             in between and in such a case the job is retried if possible (see disk2DiskCopyStart).
  *   destDcId : the ID to be used for the destination DiskCopy. Note that the DiskCopy does not yet
  *              exist during the lifetime of the job, therefore a FK constraint cannot be enforced.
  *   dropSource : is the source to be dropped?
@@ -1369,8 +1371,6 @@ ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_CastorFile
   FOREIGN KEY (castorFile) REFERENCES CastorFile(id);
 ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_SvcClass
   FOREIGN KEY (destSvcClass) REFERENCES SvcClass(id);
-ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_SrcDcId
-  FOREIGN KEY (srcDcId) REFERENCES DiskCopy(id);
 ALTER TABLE Disk2DiskCopyJob ADD CONSTRAINT FK_Disk2DiskCopyJob_DrainJob
   FOREIGN KEY (drainingJob) REFERENCES DrainingJob(id);
 ALTER TABLE Disk2DiskCopyJob
