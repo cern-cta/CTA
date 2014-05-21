@@ -75,18 +75,10 @@ namespace castor {
 
       /**
        * Read config file values
-       * @param chunkInterval a pointer to the chunk interval value
-       * @param chunkSize a pointer to the chunk size value
-       * @param disableStagerSync a pointer to the boolean commanding disabling
-       * of the synchronization with the stager
        * @param firstTime whether this is a first call. used only for logging
        * purposes
        */
-      void readConfigFile(unsigned int *chunkInterval,
-                          unsigned int *chunkSize,
-                          bool *disableStagerSync,
-                          bool firstTime = false)
-	;
+      void readConfigFile(bool firstTime = false);
 
       /**
        * Parse a fileName and extract the diskCopyId
@@ -96,8 +88,7 @@ namespace castor {
        * syntax
        */
       std::pair<std::string, u_signed64>
-      diskCopyIdFromFileName(std::string fileName)
-        ;
+      diskCopyIdFromFileName(std::string fileName);
 
       /**
        * Parse a filePath and extract the fileId
@@ -106,34 +97,74 @@ namespace castor {
        * @throw exception in case the file name is not matching the expected
        * syntax
        */
-      u_signed64 fileIdFromFilePath(std::string filePath)
-        ;
+      u_signed64 fileIdFromFilePath(std::string filePath);
 
       /**
        * gets a list of files open for write in the given mountPoint
        * @param mountPoint the mountPoint to be considered
        * @throw exception in case of error
        */
-      std::set<std::string> getFilesBeingWrittenTo(char* mountPoint)
-        ;
+      std::set<std::string> getFilesBeingWrittenTo(const std::string &mountPoint);
+
+
+      /**
+       * Synchronizes a given file
+       * @param mountPoint the mountPoint or DataPool concerned
+       * @param path the path where the file lies inside the mountPoint,
+       *             or empty string for DataPools
+       * @param fileName the file name
+       * @param paths the differents "chunks", that is list of files, sorted by namespace
+       * @return whether synchronization took place
+       */
+      bool syncFile(const std::string &mountPoint,
+                    const std::string &path,
+                    const char* fileName,
+                    std::map<std::string, std::map<u_signed64, std::string> > &paths);
+
+      /**
+       * Synchronizes all chunks present in paths
+       * @param mountPoint the mountPoint or DataPool concerned
+       * @param paths the differents "chunks", that is list of files, sorted by namespace
+       */
+      void syncAllChunks(const std::string &mountPoint,
+                         std::map<std::string, std::map<u_signed64, std::string> > &paths);
+
+      /**
+       * Checks whether to synchronize a chunk for the given nameserver
+       * and does it if needed
+       * @param nameServer the nameServer concerned
+       * @param paths the differents "chunks", that is list of files, sorted by namespace
+       * @param mountPoint the mountPoint or DataPool concerned
+       * @param minimumNbFiles the minimumNbFiles we should have in the chunk to
+       *        got for synchronization
+       * @return whether synchronization took place
+       */
+      bool checkAndSyncChunk(const std::string &nameServer,
+                             std::map<std::string, std::map<u_signed64, std::string> > &paths,
+                             const std::string &mountPoint,
+                             u_signed64 minimumNbFiles);
 
       /**
        * Synchronizes a list of files from a given filesystem with the nameserver and stager catalog
        * @param nameServer the nameserver to use
        * @param paths a map giving the full file name for each diskCopyId to be checked
-       * @param disableStagerSync whether to disable the stager synchronization
        * @param mountPoint the mountPoint of the filesystem on which the files reside
        */
-      void synchronizeFiles(std::string nameServer,
+      void synchronizeFiles(const std::string &nameServer,
                             const std::map<u_signed64, std::string> &paths,
-                            bool disableStagerSync,
-                            char* mountPoint)
+                            const std::string &mountPoint)
         throw();
 
     private:
 
       /// The number of seconds to delay the first invocation of the run method
       int m_startDelay;
+      /// The number of seconds to wait between two chunks' synchronization
+      unsigned int m_chunkInterval;
+      /// the size of a chunk, aka the maximum number of files to synchronize in one go
+      unsigned int m_chunkSize;
+      /// Whether stager synchronization should be disabled;
+      bool m_disableStagerSync;
 
     };
 
