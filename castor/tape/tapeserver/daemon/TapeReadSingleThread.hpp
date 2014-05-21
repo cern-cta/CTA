@@ -35,7 +35,8 @@
 #include <stdio.h>
 #include <memory>
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
-
+#include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -61,10 +62,11 @@ public:
   TapeReadSingleThread(castor::tape::drives::DriveInterface & drive,
           castor::legacymsg::RmcProxy & rmc,
           GlobalStatusReporter & gsr,
-          const std::string vid, uint64_t maxFilesRequest,
+          client::ClientInterface::VolumeInfo volInfo, uint64_t maxFilesRequest,
           castor::log::LogContext & lc): 
-   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr, vid, lc),
-   m_maxFilesRequest(maxFilesRequest),m_filesProcessed(0) {}
+   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr, volInfo.vid, lc),
+   m_maxFilesRequest(maxFilesRequest),m_filesProcessed(0),m_volInfo(volInfo) {
+   }
    
    /**
     * Set the task injector. Has to be done that way (and not in the constructor)
@@ -109,11 +111,17 @@ private:
     
     try {
     // Before anything, the tape should be mounted
-    m_rmc.mountTape(m_vid, m_drive.librarySlot, legacymsg::RmcProxy::MOUNT_MODE_READONLY);
+    m_rmc.mountTape(m_volInfo.vid, m_drive.librarySlot, legacymsg::RmcProxy::MOUNT_MODE_READONLY);
+    
+    //wait for drive to be ready
+    m_drive.waitUntilReady(600);
     
     // Then we have to initialise the tape read session
-      rs.reset(new castor::tape::tapeFile::ReadSession(m_drive, m_vid));
-      m_logContext.log(LOG_INFO, "Tape read session session successfully started");
+    rs.reset(new castor::tape::tapeFile::ReadSession(m_drive,m_volInfo));
+    
+    //and then report
+    m_logContext.log(LOG_INFO, "Tape read session session successfully started");
+    m_gsr.tapeMountedForRead();
     } catch (castor::exception::Exception & ex) {
       castor::log::ScopedParamContainer scoped(m_logContext); 
       scoped.add("exception_message", ex.getMessageValue())
@@ -136,14 +144,25 @@ private:
         break;
       }
     }
+    
+
     // We now acknowledge to the task injector that read reached the end. There
     // will hence be no more requests for more. (last thread turns off the light)
     m_taskInjector->finish();
+
+    //does this need to be done in all cases ? If yes, RAII IT !!!
+    //TODOOOOOOO
     // Do the final cleanup
     m_drive.unloadTape();
     // And return the tape to the library
-    m_rmc.unmountTape(m_vid, m_drive.librarySlot);
+    m_rmc.unmountTape(m_volInfo.vid, m_drive.librarySlot);
+    
+    //then we log/notigy
     m_logContext.log(LOG_DEBUG, "Finishing Tape Read Thread. Just signalled task injector of the end");
+    m_gsr.tapeUnmounted();
+    
+    //then we terminate the global status reporter
+    m_gsr.finish();
   }
   
   /**
@@ -157,6 +176,10 @@ private:
   
   ///how many files have we already processed(for loopback purpose)
   size_t m_filesProcessed;
+  
+  std::auto_ptr<castor::tape::tapeFile::ReadSession> rs;
+  
+  client::ClientInterface::VolumeInfo m_volInfo;
 };
 }
 }

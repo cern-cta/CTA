@@ -57,7 +57,10 @@ namespace castor {
         drive.writeSyncFileMarks(1);
       }
 
-      ReadSession::ReadSession(drives::DriveInterface & drive, const std::string &vid)  : m_drive(drive), m_vid(vid), m_corrupted(false), m_locked(false), m_fseq(1), m_currentFilePart(Header) { 
+      ReadSession::ReadSession(drives::DriveInterface & drive,
+              tapeserver::client::ClientInterface::VolumeInfo volInfo)  : 
+      m_drive(drive), m_vid(volInfo.vid), m_corrupted(false), m_locked(false), 
+      m_fseq(1), m_currentFilePart(Header),m_volInfo(volInfo) { 
         m_drive.rewind();
         VOL1 vol1;
         m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[ReadSession::ReadSession()] - Reading VOL1");
@@ -66,7 +69,7 @@ namespace castor {
         } catch (std::exception & e) {
           throw TapeFormatError(e.what());
         }
-        HeaderChecker::checkVOL1(vol1, vid); //after which we are at the end of VOL1 header (i.e. beginning of HDR1 of the first file) on success, or at BOT in case of exception
+        HeaderChecker::checkVOL1(vol1, volInfo.vid); //after which we are at the end of VOL1 header (i.e. beginning of HDR1 of the first file) on success, or at BOT in case of exception
       }
 
       void HeaderChecker::checkVOL1(const VOL1 &vol1, const std::string &volId)  {
@@ -115,9 +118,11 @@ namespace castor {
 
       void HeaderChecker::checkHDR1(const HDR1 &hdr1,
         const castor::tape::tapegateway::FileToRecallStruct &filetoRecall,
-        const std::string &volId)  {
-        if(!checkHeaderNumericalField(hdr1.getFileId(), 
-            filetoRecall.fileid(), hexadecimal)) { 
+        const tape::tapeserver::client::ClientInterface::VolumeInfo &volInfo)  {
+        const std::string &volId = volInfo.vid;
+        if( volInfo.clientType != tape::tapegateway::READ_TP 
+       && (!checkHeaderNumericalField(hdr1.getFileId(), 
+            filetoRecall.fileid(), hexadecimal))) { 
           // the nsfileid stored in HDR1 as an hexadecimal string . The one in 
           // filetoRecall is numeric
           std::stringstream ex_str;
@@ -178,14 +183,7 @@ namespace castor {
 
       void ReadFile::position(
         const castor::tape::tapegateway::FileToRecallStruct &fileToRecall)  {  
-        if(0==fileToRecall.fileid() or fileToRecall.fseq()<1) {
-          std::stringstream err;
-          err << "Unexpected fileId in ReadFile::position (expected != 0, got: "
-              << fileToRecall.fileid() << ") or fSeq (expected >=1, got: "
-              << fileToRecall.fseq() << ")";
-          throw castor::exception::InvalidArgument(err.str());
-        }
-
+        
         if(m_session->getCurrentFilePart() != Header) {
           m_session->setCorrupted();
           throw SessionCorrupted();
@@ -193,14 +191,32 @@ namespace castor {
 
         if(fileToRecall.positionCommandCode()==castor::tape::tapegateway::TPPOSIT_BLKID) {
           // if we want the first file on tape (fileInfo.blockId==0) we need to skip the VOL1 header
-          uint32_t destination_block = BlockId::extract(fileToRecall) ? 
+          const uint32_t destination_block = BlockId::extract(fileToRecall) ? 
             BlockId::extract(fileToRecall) : 1;
-          // we position using the sg locate because it is supposed to do the right thing possibly in a more optimized way (better than st's spaceBlocksForward/Backwards)
-          m_session->m_drive.positionToLogicalObject(destination_block);// at this point we should be at the beginning of the headers of the desired file, so now let's check the headers...
+          /* 
+          we position using the sg locate because it is supposed to do the 
+          right thing possibly in a more optimized way (better than st's 
+          spaceBlocksForward/Backwards) 
+           */
+          
+          // at this point we should be at the beginning of
+          //the headers of the desired file, so now let's check the headers...
+          m_session->m_drive.positionToLogicalObject(destination_block);
         }
         else if(fileToRecall.positionCommandCode()==castor::tape::tapegateway::TPPOSIT_FSEQ) {    
+          
+          if(fileToRecall.fseq()<1) {
+            std::stringstream err;
+            err << "Unexpected fileId in ReadFile::position with fSeq expected >=1, got: "
+                    << fileToRecall.fseq() << ")";
+            throw castor::exception::InvalidArgument(err.str());
+          }
+          
           int64_t fseq_delta = fileToRecall.fseq() - m_session->getCurrentFseq();
-          if(fileToRecall.fseq() == 1) { // special case: we can rewind the tape to be faster (TODO: in the future we could also think of a threshold above which we rewind the tape anyway and then space forward)       
+          if(fileToRecall.fseq() == 1) { 
+            // special case: we can rewind the tape to be faster 
+            //(TODO: in the future we could also think of a threshold above 
+            //which we rewind the tape anyway and then space forward)       
             m_session->m_drive.rewind();
             VOL1 vol1;
             m_session->m_drive.readExactBlock((void * )&vol1, sizeof(vol1), "[ReadFile::position] - Reading VOL1");
@@ -214,10 +230,14 @@ namespace castor {
             // do nothing we are in the correct place
           }
           else if(fseq_delta > 0) {
-            m_session->m_drive.spaceFileMarksForward((uint32_t)fseq_delta*3); //we need to skip three file marks per file (header, payload, trailer)
+            //we need to skip three file marks per file (header, payload, trailer)
+            m_session->m_drive.spaceFileMarksForward((uint32_t)fseq_delta*3); 
           }
           else {
-            m_session->m_drive.spaceFileMarksBackwards((uint32_t)abs(fseq_delta)*3+1); //we need to skip three file marks per file (trailer, payload, header) + 1 to go on the BOT (beginning of tape) side of the file mark before the header of the file we want to read
+            //we need to skip three file marks per file 
+            //(trailer, payload, header) + 1 to go on the BOT (beginning of tape) side 
+            //of the file mark before the header of the file we want to read
+            m_session->m_drive.spaceFileMarksBackwards((uint32_t)abs(fseq_delta)*3+1); 
             m_session->m_drive.readFileMark("[ReadFile::position] Reading file mark right before the header of the file we want to read");
           }
         }
@@ -234,7 +254,8 @@ namespace castor {
         m_session->m_drive.readExactBlock((void *)&hdr1, sizeof(hdr1), "[ReadFile::position] - Reading HDR1");  
         m_session->m_drive.readExactBlock((void *)&hdr2, sizeof(hdr2), "[ReadFile::position] - Reading HDR2");
         m_session->m_drive.readExactBlock((void *)&uhl1, sizeof(uhl1), "[ReadFile::position] - Reading UHL1");
-        m_session->m_drive.readFileMark("[ReadFile::position] - Reading file mark at the end of file header"); // after this we should be where we want, i.e. at the beginning of the file
+        m_session->m_drive.readFileMark("[ReadFile::position] - Reading file mark at the end of file header"); 
+        // after this we should be where we want, i.e. at the beginning of the file
         m_session->setCurrentFilePart(Payload);
 
         //the size of the headers is fine, now let's check each header  
@@ -248,10 +269,12 @@ namespace castor {
         }
 
         //headers are valid here, let's see if they contain the right info, i.e. are we in the correct place?
-        HeaderChecker::checkHDR1(hdr1, fileToRecall, m_session->m_vid);
-        //we disregard hdr2 on purpose as it contains no useful information, we now check the fseq in uhl1 (hdr1 also contains fseq info but it is modulo 10000, therefore useless)
+        HeaderChecker::checkHDR1(hdr1, fileToRecall, m_session->getVolumeInfo());
+        //we disregard hdr2 on purpose as it contains no useful information, we now check the fseq in uhl1 
+        //(hdr1 also contains fseq info but it is modulo 10000, therefore useless)
         HeaderChecker::checkUHL1(uhl1, fileToRecall);
-        //now that we are all happy with the information contained within the headers, we finally get the block size for our file (provided it has a reasonable value)
+        //now that we are all happy with the information contained within the 
+        //headers, we finally get the block size for our file (provided it has a reasonable value)
         setBlockSize(uhl1);
       }
 

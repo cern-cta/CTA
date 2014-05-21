@@ -144,15 +144,20 @@ void castor::tape::tapeserver::daemon::LabelSession::mountTape(utils::TpconfigLi
 // waitUntilDriveReady
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::waitUntilDriveReady(castor::tape::drives::DriveInterface *drive) { 
-  
-  // wait until drive is ready
-  while(!(drive->isReady())) {
-    log::Param params[] = {
-      log::Param("drive", m_request.drive),
-      log::Param("dgn", m_request.dgn)};
-    m_log(LOG_INFO, "Drive not ready yet...", params);
-    sleep(1);
+  std::list<log::Param> params;
+  params.push_back(log::Param("uid", m_request.uid));
+  params.push_back(log::Param("gid", m_request.gid));
+  params.push_back(log::Param("vid", m_request.vid));
+  params.push_back(log::Param("drive", m_request.drive));
+  params.push_back(log::Param("dgn", m_request.dgn));
+
+  // check that drive is not write protected
+  if(drive->isWriteProtected()) {
+    m_log(LOG_ERR, "Failed to label the tape: drive is write protected",
+      params);
   }
+  
+  drive->waitUntilReady(600);
 }
 
 //------------------------------------------------------------------------------

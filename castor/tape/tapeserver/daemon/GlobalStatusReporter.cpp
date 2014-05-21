@@ -3,96 +3,67 @@
 #include "castor/legacymsg/TapeserverProxy.hpp"
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
+#include "castor/tape/utils/TpconfigLine.hpp"
+#include "castor/log/LogContext.hpp"
+#include "castor/log/Logger.hpp"
 
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-//------------------------------------------------------------------------------
-//GlobalStatusReporter::Report:: Constructors
-//------------------------------------------------------------------------------  
-GlobalStatusReporter::Report::Report(const std::string &_server,const std::string &_unitName, 
-        const std::string &_dgn, const uint32_t _mountTransactionId,
-        const pid_t _sessionPid):
-        server(_server),unitName(_unitName),dgn(_dgn),
-        mountTransactionId(_mountTransactionId),sessionPid(_sessionPid)
-  {}
-  
- GlobalStatusReporter::Report::Report(const std::string &_server,const std::string &_unitName, 
-            const std::string &_dgn,const pid_t _sessionPid):
-            server(_server),unitName(_unitName),dgn(_dgn),
-         mountTransactionId(0),sessionPid(_sessionPid)
-  {}
- 
- GlobalStatusReporter::Report::Report(const std::string &_server,
-      const std::string &_unitName, const std::string &_dgn):
-      server(_server),unitName(_unitName),dgn(_dgn),mountTransactionId(0),sessionPid(0)
-  {}
- 
-  GlobalStatusReporter::Report::Report(const std::string &_unitName):
-  server(""),unitName(_unitName),
-          dgn(""),mountTransactionId(0),sessionPid(0)
-  {}
-//------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
 //GlobalStatusReporter::GlobalStatusReporter
 //------------------------------------------------------------------------------  
   GlobalStatusReporter::GlobalStatusReporter(
   legacymsg::TapeserverProxy& tapeserverProxy,
-  legacymsg::VdqmProxy& vdqmProxy,legacymsg::VmgrProxy& vmgrProxy,
-          log::LogContext lc):
+  legacymsg::VdqmProxy& vdqmProxy,
+        const tape::utils::TpconfigLine& configLine,const std::string &hostname,
+          const std::string &_vid,log::LogContext lc):
           m_tapeserverProxy(tapeserverProxy),m_vdqmProxy(vdqmProxy),
-          m_vmgrProxy(vmgrProxy),m_lc(lc){
+          m_lc(lc), m_server(hostname),m_unitName(configLine.unitName),
+          m_dgn(configLine.dgn),m_vid(_vid),m_sessionPid(getpid()){
+    //change the thread's name in the log
+    m_lc.pushOrReplace(log::Param("thread","GlobalStatusReporter"));
   }
   
 //------------------------------------------------------------------------------
 //finish
 //------------------------------------------------------------------------------
-   void GlobalStatusReporter::finish(){
-        m_fifo.push(NULL);
+  void GlobalStatusReporter::finish(){
+    m_fifo.push(NULL);
   }
 //------------------------------------------------------------------------------
-//reportNowOccupiedDrive
+//startThreads
 //------------------------------------------------------------------------------   
-   void GlobalStatusReporter::releaseDrive(const std::string &server, const std::string &unitName, 
-  const std::string &dgn, const bool forceUnmount, const pid_t sessionPid){
-     m_fifo.push(
-     new ReportReleaseDrive(server,unitName,dgn,forceUnmount,sessionPid)
-     );
-   }
-   
+  void GlobalStatusReporter::startThreads(){
+    start();
+  }
 //------------------------------------------------------------------------------
-//reportNowOccupiedDrive
-//------------------------------------------------------------------------------   
-   void GlobalStatusReporter::reportNowOccupiedDrive(const std::string &server,
-           const std::string &unitName,const std::string &dgn, 
-           const uint32_t mountTransactionId,const pid_t sessionPid){
-     m_fifo.push(
-     new ReportAssignDrive(server,unitName,dgn,mountTransactionId,sessionPid)
-      );
-   }
+//waitThreads
+//------------------------------------------------------------------------------     
+  void GlobalStatusReporter::waitThreads(){
+    wait();
+  }
+  
 //------------------------------------------------------------------------------
 //gotReadMountDetailsFromClient
 //------------------------------------------------------------------------------  
-   void GlobalStatusReporter::gotReadMountDetailsFromClient(
-   const std::string &unitName,const std::string &vid){
+   void GlobalStatusReporter::gotReadMountDetailsFromClient(){
      m_fifo.push(
-     new ReportGotDetailsFromClient(unitName,vid)
+     new ReportGotDetailsFromClient()
      );
    }
 //------------------------------------------------------------------------------
 //tapeMountedForRead
 //------------------------------------------------------------------------------  
-   void GlobalStatusReporter::tapeMountedForRead(const std::string &server, 
-           const std::string &unitName,const std::string &dgn, 
-           const std::string &vid, const pid_t sessionPid){
-     m_fifo.push(new ReportTapeMountedForRead(server,unitName,dgn,vid,sessionPid));
+   void GlobalStatusReporter::tapeMountedForRead(){
+     m_fifo.push(new ReportTapeMountedForRead());
    }
 //------------------------------------------------------------------------------
 //tapeUnmounted
 //------------------------------------------------------------------------------     
-   void GlobalStatusReporter::tapeUnmounted(const std::string &server, const std::string &unitName, 
-  const std::string &dgn, const std::string &vid){
-     m_fifo.push(new ReportTapeUnmounted(server,unitName,dgn,vid));
+   void GlobalStatusReporter::tapeUnmounted(){
+     m_fifo.push(new ReportTapeUnmounted());
    }
 //------------------------------------------------------------------------------
 //run
@@ -107,87 +78,29 @@ GlobalStatusReporter::Report::Report(const std::string &_server,const std::strin
     }
   }
 //------------------------------------------------------------------------------
-//ReportAssignDrive::ReportAssignDrive
-//------------------------------------------------------------------------------  
-  GlobalStatusReporter::ReportAssignDrive::ReportAssignDrive(
-      const std::string &_server,const std::string &_unitName, 
-            const std::string &_dgn, const uint32_t _mountTransactionId,
-            const pid_t _sessionPid):Report(_server,_unitName, _dgn, _mountTransactionId,_sessionPid)
-  {}
-
-//------------------------------------------------------------------------------
-//ReportAssignDrive::execute
-//------------------------------------------------------------------------------  
-  void  GlobalStatusReporter::ReportAssignDrive::
-  execute(GlobalStatusReporter& reporter) {
-    reporter.m_vdqmProxy.assignDrive(server,unitName, dgn, mountTransactionId,sessionPid);
-  }
-  
-//------------------------------------------------------------------------------
-//ReportReleaseDrive::ReportReleaseDrive
-//------------------------------------------------------------------------------  
-    GlobalStatusReporter::ReportReleaseDrive::ReportReleaseDrive(
-      const std::string &_server,const std::string &_unitName, 
-            const std::string &_dgn, bool _forceUnmount,
-            const pid_t _sessionPid):Report(_server,_unitName, 
-            _dgn, _sessionPid),forceUnmount(_forceUnmount)
-  {}
-//------------------------------------------------------------------------------
-//  ReportReleaseDrive::execute
-//------------------------------------------------------------------------------  
-    void GlobalStatusReporter::ReportReleaseDrive::
-    execute(GlobalStatusReporter& parent){
-      parent.m_vdqmProxy.releaseDrive(server,unitName,dgn, forceUnmount,sessionPid);
-  }
-//------------------------------------------------------------------------------
-// ReportGotDetailsFromClient::ReportGotDetailsFromClient
-//------------------------------------------------------------------------------
-  GlobalStatusReporter::
-  ReportGotDetailsFromClient::ReportGotDetailsFromClient(const std::string &_unitName,
-  const std::string &_vid):Report(_unitName),vid(_vid){}
-//------------------------------------------------------------------------------
 // ReportGotDetailsFromClient::execute
 //------------------------------------------------------------------------------
     void GlobalStatusReporter::ReportGotDetailsFromClient::execute(
     GlobalStatusReporter& parent){
-      parent.m_tapeserverProxy.gotWriteMountDetailsFromClient(unitName,vid);
-    }
-//------------------------------------------------------------------------------
-// ReportTapeMountedForRead::ReportTapeMountedForRead
-//------------------------------------------------------------------------------    
-    GlobalStatusReporter::ReportTapeMountedForRead::
-    ReportTapeMountedForRead(const std::string &server, 
-           const std::string &unitName,const std::string &dgn, 
-           const std::string &_vid, const pid_t sessionPid):
-           Report(server,unitName,dgn,sessionPid),vid(_vid){
-    
+      log::ScopedParamContainer sp(parent.m_lc);
+      sp.add(parent.m_unitName,"unitName").add(parent.m_vid,"vid");
+      parent.m_tapeserverProxy.gotWriteMountDetailsFromClient(parent.m_unitName,parent.m_vid);
+      parent.m_lc.log(LOG_INFO,"From GlobalStatusReporter, Reported gotWriteMountDetailsFromClient");
     }
 //------------------------------------------------------------------------------
 // ReportTapeMountedForRead::execute
 //------------------------------------------------------------------------------        
     void GlobalStatusReporter::ReportTapeMountedForRead::
     execute(GlobalStatusReporter& parent){
-      throw castor::tape::Exception("TODO ReportTapeMountedForRead::execute");
-      parent.m_tapeserverProxy.tapeMountedForRead(unitName,vid);
-      parent.m_vdqmProxy.tapeMounted(server,unitName,dgn,vid,sessionPid);
-    }
-    //------------------------------------------------------------------------------
-// ReportTapeUnmounted::ReportTapeUnmounted
-//------------------------------------------------------------------------------    
-    GlobalStatusReporter::ReportTapeUnmounted::
-    ReportTapeUnmounted(const std::string &server,const std::string &unitName, 
-            const std::string &dgn,const std::string & _vid):
-    Report(server,unitName,dgn),vid(_vid){
-    
+      parent.m_tapeserverProxy.tapeMountedForRead(parent.m_unitName,parent.m_vid);
+      parent.m_vdqmProxy.tapeMounted(parent.m_server, parent.m_unitName, parent.m_dgn,parent.m_vid,parent.m_sessionPid);
     }
 //------------------------------------------------------------------------------
 // ReportTapeUnmounted::execute
 //------------------------------------------------------------------------------        
     void GlobalStatusReporter::ReportTapeUnmounted::
     execute(GlobalStatusReporter& parent){
-      throw castor::tape::Exception("TODO ReportTapeUnmounted::execute");
-      parent.m_tapeserverProxy.tapeUnmounted(unitName,vid);
-      parent.m_vdqmProxy.tapeUnmounted(server,unitName,dgn,vid);
+      parent.m_tapeserverProxy.tapeUnmounted(parent.m_unitName,parent.m_vid);
     }
 }}}}
 

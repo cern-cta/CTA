@@ -162,7 +162,7 @@ namespace drives {
     virtual ssize_t readBlock(void * data, size_t count)  = 0;
     virtual void readExactBlock(void * data, size_t count, std::string context)  = 0;
     virtual void readFileMark(std::string context)  = 0;
-    virtual bool isReady()  = 0;    
+    virtual bool waitUntilReady(int timeoutSecond)  = 0;    
     virtual bool isWriteProtected()  = 0;
     virtual bool isAtBOT()  = 0;
     virtual bool isAtEOD()  = 0;
@@ -222,7 +222,7 @@ namespace drives {
     virtual ssize_t readBlock(void * data, size_t count) ;
     virtual void readExactBlock(void * data, size_t count, std::string context) ;
     virtual void readFileMark(std::string context) ;
-    virtual bool isReady() ;    
+    virtual bool waitUntilReady(int timeoutSecond) ;    
     virtual bool isWriteProtected() ;
     virtual bool isAtBOT() ;
     virtual bool isAtEOD() ;
@@ -319,17 +319,25 @@ namespace drives {
       throw Exception("Not implemented");
     }
     
-    virtual bool isReady()  {
-      // we need to reopen the drive to have the GMT_ONLINE check working (see "man st")
-      castor::exception::Errnum::throwOnMinusOne(m_sysWrapper.close(m_tapeFD),
-      std::string("Could not close device file: ") + m_SCSIInfo.nst_dev);
-      castor::exception::Errnum::throwOnMinusOne(
-      m_tapeFD = m_sysWrapper.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
-      std::string("Could not open device file: ") + m_SCSIInfo.nst_dev);
-      UpdateDriveStatus();
-      return m_driveStatus.ready;
+    virtual bool waitUntilReady(int timeoutSecond)  {
+      for(int i =0;i<timeoutSecond;++i) {
+        // we need to reopen the drive to have the GMT_ONLINE check working (see "man st")
+        castor::exception::Errnum::throwOnMinusOne(m_sysWrapper.close(m_tapeFD),
+                std::string("Could not close device file: ") + m_SCSIInfo.nst_dev);
+        castor::exception::Errnum::throwOnMinusOne(
+                m_tapeFD = m_sysWrapper.open(m_SCSIInfo.nst_dev.c_str(), O_RDWR | O_NONBLOCK),
+                std::string("Could not open device file: ") + m_SCSIInfo.nst_dev);
+        UpdateDriveStatus();
+        if(m_driveStatus.ready) {
+          return m_driveStatus.ready;
+        }
+        //sleep for 1 second
+        sleep(1);
+      }
+      castor::exception::Exception ex("Cant get the drive ready after waiting");
+      ex.getMessage()<<timeoutSecond<<" seconds";
+      throw ex;
     }
-    
     virtual bool isWriteProtected()  {
       UpdateDriveStatus();
       return m_driveStatus.writeProtection;

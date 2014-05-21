@@ -28,6 +28,8 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/tape/tapegateway/FileToRecallStruct.hpp"
 #include "castor/tape/tapegateway/FileToMigrateStruct.hpp"
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
+
 #include <string>
 
 namespace castor {
@@ -103,9 +105,9 @@ namespace castor {
          * @param fileInfo: the Information structure of the current file
          * @param volId: the volume id of the tape in the drive
          */
-        static void checkHDR1(const HDR1 &hdr1, 
-          const castor::tape::tapegateway::FileToRecallStruct &fileToRecall, 
-          const std::string &volId) ;
+        static void checkHDR1(const HDR1 &hdr1,
+        const castor::tape::tapegateway::FileToRecallStruct &filetoRecall,
+        const tape::tapeserver::client::ClientInterface::VolumeInfo &volInfo) ;
         
         /**
          * Checks the uhl1
@@ -194,7 +196,8 @@ namespace castor {
          * @param drive: drive object to which we bind the session
          * @param vid: volume name of the tape we would like to read from
          */
-        ReadSession(drives::DriveInterface & drive, const std::string &vid) ;
+        ReadSession(drives::DriveInterface & drive, 
+                tapeserver::client::ClientInterface::VolumeInfo volInfo);
         
         /**
          * DriveGeneric object referencing the drive used during this read session
@@ -238,6 +241,9 @@ namespace castor {
         uint32_t getCurrentFseq() {
           return m_fseq;
         }       
+        const tapeserver::client::ClientInterface::VolumeInfo& getVolumeInfo() {
+          return m_volInfo;
+        }  
         
         void setCurrentFilePart(PartOfFile currentFilePart) {
           m_currentFilePart = currentFilePart;
@@ -268,6 +274,8 @@ namespace castor {
          * Part of the file we are reading
          */
         PartOfFile m_currentFilePart;
+        
+        tapeserver::client::ClientInterface::VolumeInfo m_volInfo;
       };
       
       class ReadFile{

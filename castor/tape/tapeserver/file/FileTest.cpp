@@ -28,6 +28,7 @@
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/exception/Errnum.hpp"
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include <gtest/gtest.h>
 
 namespace UnitTests {
@@ -51,7 +52,8 @@ namespace UnitTests {
       fileToMigrate.setFileSize(500);
       fileToMigrate.setFileid(1);
       fileToMigrate.setFseq(1);
-
+      volInfo.clientType = castor::tape::tapegateway::READ_TP;
+      volInfo.vid= label;
       //Label
       castor::tape::tapeFile::LabelSession *ls;
       ls = new castor::tape::tapeFile::LabelSession(d, label, true);
@@ -65,6 +67,7 @@ namespace UnitTests {
     std::string label;
     castor::tape::tapegateway::FileToRecallStruct fileToRecall;
     castor::tape::tapegateway::FileToMigrateStruct fileToMigrate;
+     castor::tape::tapeserver::client::ClientInterface::VolumeInfo volInfo;
   };
   
   TEST_F(castorTapeFileTest, throwsWhenLabelingANonEmptyTape) {
@@ -73,7 +76,7 @@ namespace UnitTests {
   
   TEST_F(castorTapeFileTest, throwsWhenReadingAnEmptyTape) {    
     castor::tape::tapeFile::ReadSession *rs;
-    rs = new castor::tape::tapeFile::ReadSession(d, label);    
+    rs = new castor::tape::tapeFile::ReadSession(d, volInfo);    
     ASSERT_NE((long int)rs, 0);
     fileToRecall.setPositionCommandCode(castor::tape::tapegateway::TPPOSIT_BLKID);
     ASSERT_THROW({castor::tape::tapeFile::ReadFile rf1(rs, fileToRecall);}, castor::exception::Exception); //cannot read a file on an empty tape
@@ -94,7 +97,7 @@ namespace UnitTests {
     }
     delete ws;
     castor::tape::tapeFile::ReadSession *rs;
-    rs = new castor::tape::tapeFile::ReadSession(d, label);
+    rs = new castor::tape::tapeFile::ReadSession(d, volInfo);
     {
       fileToRecall.setPositionCommandCode(castor::tape::tapegateway::TPPOSIT_BLKID);
       castor::tape::tapeFile::ReadFile rf1(rs, fileToRecall);
@@ -143,7 +146,7 @@ namespace UnitTests {
     delete ws;
     
     castor::tape::tapeFile::ReadSession *rs;
-    rs = new castor::tape::tapeFile::ReadSession(d, label);
+    rs = new castor::tape::tapeFile::ReadSession(d, volInfo);
     {
       fileToRecall.setPositionCommandCode(castor::tape::tapegateway::TPPOSIT_BLKID);
       castor::tape::tapeFile::ReadFile rf(rs, fileToRecall);
@@ -159,7 +162,7 @@ namespace UnitTests {
   TEST_F(castorTapeFileTest, canProperlyVerifyLabelWriteAndReadTape) {    
     //Verify label
     castor::tape::tapeFile::ReadSession *rs;
-    rs = new castor::tape::tapeFile::ReadSession(d, label);
+    rs = new castor::tape::tapeFile::ReadSession(d, volInfo);
     ASSERT_NE((long int)rs, 0);
     ASSERT_EQ(rs->getCurrentFilePart(), castor::tape::tapeFile::Header);
     ASSERT_EQ(rs->getCurrentFseq(), (uint32_t)1);
@@ -182,7 +185,7 @@ namespace UnitTests {
     delete ws;
     
     //Read it back and compare
-    rs = new castor::tape::tapeFile::ReadSession(d, label);
+    rs = new castor::tape::tapeFile::ReadSession(d, volInfo);
     ASSERT_NE((long int)rs, 0);
     ASSERT_EQ(rs->getCurrentFilePart(), castor::tape::tapeFile::Header);
     ASSERT_EQ(rs->getCurrentFseq(), (uint32_t)1);
