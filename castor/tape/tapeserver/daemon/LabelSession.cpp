@@ -143,34 +143,21 @@ void castor::tape::tapeserver::daemon::LabelSession::mountTape(utils::TpconfigLi
 //------------------------------------------------------------------------------
 // waitUntilDriveReady
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::LabelSession::checkDriveObject(castor::tape::drives::DriveInterface *drive) {
-  
-    // check that drive is not write protected
+void castor::tape::tapeserver::daemon::LabelSession::waitUntilDriveReady(castor::tape::drives::DriveInterface *drive) { 
+  std::list<log::Param> params;
+  params.push_back(log::Param("uid", m_request.uid));
+  params.push_back(log::Param("gid", m_request.gid));
+  params.push_back(log::Param("vid", m_request.vid));
+  params.push_back(log::Param("drive", m_request.drive));
+  params.push_back(log::Param("dgn", m_request.dgn));
+
+  // check that drive is not write protected
   if(drive->isWriteProtected()) {
-    log::Param params[] = {
-      log::Param("uid", m_request.uid),
-      log::Param("gid", m_request.gid),
-      log::Param("vid", m_request.vid),
-      log::Param("drive", m_request.drive),
-      log::Param("dgn", m_request.dgn)};
-    m_log(LOG_ERR, "End session with error. Failed to label the tape: drive is write protected", params);
-    return LABEL_SESSION_STEP_FAILED;
+    m_log(LOG_ERR, "Failed to label the tape: drive is write protected",
+      params);
   }
   
-      log::Param params[] = {
-      log::Param("uid", m_request.uid),
-      log::Param("gid", m_request.gid),
-      log::Param("vid", m_request.vid),
-      log::Param("drive", m_request.drive),
-      log::Param("dgn", m_request.dgn)};
-      
-    try{
-      drive->waitUntilReady(600);
-    }catch(const castor::tape::Exception& e){
-      m_log(LOG_INFO, "Drive not ready after 600 seconds waiting", params);
-    }
-      m_log(LOG_INFO, "Drive  ready for labeling", params);
-  return LABEL_SESSION_STEP_SUCCEEDED;
+  drive->waitUntilReady(600);
 }
 
 //------------------------------------------------------------------------------

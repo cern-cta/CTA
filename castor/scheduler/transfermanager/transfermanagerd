@@ -122,40 +122,40 @@ class TransferManagerService(rpyc.Service):
     cls.stagerDBlock.release()
   releaseDbConnection = classmethod(releaseDbConnection)
 
-  def dispatch(self, func, diskPool, *args):
+  def dispatch(self, func, pool, *args):
     '''gather the results of the call to func for all diskServers'''
     res = {}
     dslist = diskserverlistcache.diskServerList.getlist()
-    if diskPool != None:
-      if diskPool in dslist:
-        dslist = {diskPool : dslist[diskPool]}
+    if pool != None:
+      if pool in dslist:
+        dslist = {pool : dslist[pool]}
       else:
         dslist = {}
-    for diskPool in dslist:
-      res[diskPool] = {}
-      for ds in dslist[diskPool]:
+    for pool in dslist:
+      res[pool] = {}
+      for ds in dslist[pool]:
         try:
           # call the function on the appropriate diskserver
-          res[diskPool][ds] = getattr(connectionpool.connections, func)(ds, *args)
+          res[pool][ds] = getattr(connectionpool.connections, func)(ds, *args)
         except Exception, e:
           # 'Could not contact diskserver' message
           dlf.writenotice(msgs.COULDNOTCONTACTDS, Function=func, DiskServer=ds,
                           Type=str(e.__class__), Message=str(e))
           # fill dictionary with None value
-          res[diskPool][ds] = None
+          res[pool][ds] = None
     return res
 
-  def exposed_nbTransfersPerPool(self, diskPool=None, user=None):
+  def exposed_nbTransfersPerPool(self, pool=None, user=None):
     '''returns the number of unique transfers pending on the pool given (or all pools)
     for the given user (or all users). Only tansfers handled by this transfer manager
     are reported'''
-    return tuple(queueingTransfers.nbTransfersPerPool(diskPool, user).items())
+    return tuple(queueingTransfers.nbTransfersPerPool(pool, user).items())
 
-  def exposed_listLocalPendingTransfersCentrally(self, diskPool=None, user=None):
-    '''lists the pending transfers known by this headnode per diskpool for a given diskpool and user'''
-    return tuple(queueingTransfers.listTransfers(diskPool, user))
+  def exposed_listLocalPendingTransfersCentrally(self, pool=None, user=None):
+    '''lists the pending transfers known by this headnode per pool for a given pool and user'''
+    return tuple(queueingTransfers.listTransfers(pool, user))
 
-  def _computeNbTransfersPerPool(self, diskPool=None, user=None):
+  def _computeNbTransfersPerPool(self, pool=None, user=None):
     '''internal method to compute the number of unique transfers pending per pool
     accross all transfer managers. For this purpose, it contacts all running transfer
     managers and sums up the results. Results can be restricted to a given pool and a
@@ -166,11 +166,11 @@ class TransferManagerService(rpyc.Service):
     # go through all schedulers
     for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
       try:
-        for diskpool, n in connectionpool.connections.nbTransfersPerPool(scheduler, diskPool,
+        for pool, n in connectionpool.connections.nbTransfersPerPool(scheduler, pool,
                                                                          user, timeout=timeout):
-          if diskpool not in nbTransfersPerPool:
-            nbTransfersPerPool[diskpool] = 0
-          nbTransfersPerPool[diskpool] = nbTransfersPerPool[diskpool] + n
+          if pool not in nbTransfersPerPool:
+            nbTransfersPerPool[pool] = 0
+          nbTransfersPerPool[pool] = nbTransfersPerPool[pool] + n
       except Exception, e:
         # 'Could not contact transfer manager' message
         dlf.writenotice(msgs.COULDNOTCONTACTTM, Function='_computeNbTransfersPerPool', TransferManager=scheduler,
@@ -179,8 +179,8 @@ class TransferManagerService(rpyc.Service):
                       'See transfermanagerd\'s log for details')
     return nbTransfersPerPool
 
-  def exposed_listPendingTransfersCentrally(self, diskPool=None, user=None):
-    '''lists the pending transfers per diskpool for a given diskpool and user, as seen by the
+  def exposed_listPendingTransfersCentrally(self, pool=None, user=None):
+    '''lists the pending transfers per pool for a given pool and user, as seen by the
     transfer managers, without connecting to the diskservers'''
     transfers = []
     # get the timeout to be used
@@ -188,7 +188,7 @@ class TransferManagerService(rpyc.Service):
     # go through all schedulers
     for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
       try:
-        transfers += connectionpool.connections.listLocalPendingTransfersCentrally(scheduler, diskPool,
+        transfers += connectionpool.connections.listLocalPendingTransfersCentrally(scheduler, pool,
                                                                                    user, timeout=timeout)
       except Exception, e:
         # 'Could not contact transfer manager' message
@@ -198,69 +198,69 @@ class TransferManagerService(rpyc.Service):
                       'See transfermanagerd\'s log for details')
     return tuple(transfers)
 
-  def exposed_summarizeTransfersPerPool(self, diskPool=None, user=None, detailed=False):
-    '''summarizes the number of running and pending transfers per diskpool for a given diskpool and user.
+  def exposed_summarizeTransfersPerPool(self, pool=None, user=None, detailed=False):
+    '''summarizes the number of running and pending transfers per pool for a given pool and user.
     Returns a pair containing :
-      - a tuple of tuples, with the diskpool name as first item, then a list of data that depends
-    on the status of the diskpool and on the value of the the detailed parameter.
+      - a tuple of tuples, with the pool name as first item, then a list of data that depends
+    on the status of the pool and on the value of the the detailed parameter.
       - a tuple of errors
-    If the diskpool is unknown or has no hosts in it, then only the diskpool name is present
+    If the pool is unknown or has no hosts in it, then only the pool name is present
     in each tuple of the first element.
     Else the number of unique transfers in the pool plus all values returned by each diskmanagerd
     summed up by pool are added to each tuple after the disk pool name. This last set varies depending
     on the detailed parameter.
     The exact format of the returned tuple for each non empty and existing pool if detailed is False is :
-     (diskpoolName, nbUniqueQueueingTransfers, nbslots,
-                    nbQueueingTransfers, nbQueueingSlots,
-                    nbRunningTransfers, nbRunningSlots, (<list of unreachable machine names>))
+     (poolName, nbUniqueQueueingTransfers, nbslots,
+                nbQueueingTransfers, nbQueueingSlots,
+                nbRunningTransfers, nbRunningSlots, (<list of unreachable machine names>))
     If detailed is True, then it is :
-     (diskpoolName, nbUniqueQueueingTransfers, nbslots,
-                    nbQueueingTransfers, (('proto1', nbQueueingTransfersForProto1), ...),
-                    nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
-                    nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
-                    nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...),
-                    (<list of unreachable machine names>))'''
-    dlf.writedebug(msgs.INVOKINGSUMMARIZETRANSFERSPERPOOL, DiskPool=diskPool, Username=user, Detailed=detailed)
+     (poolName, nbUniqueQueueingTransfers, nbslots,
+                nbQueueingTransfers, (('proto1', nbQueueingTransfersForProto1), ...),
+                nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
+                nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
+                nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...),
+                (<list of unreachable machine names>))'''
+    dlf.writedebug(msgs.INVOKINGSUMMARIZETRANSFERSPERPOOL, Pool=pool, Username=user, Detailed=detailed)
     # get the raw data per diskserveras a dictionnary of dictionnaries (svclass then diskserver level)
-    nbs = self.dispatch('summarizeTransfers', diskPool, user, detailed)
+    nbs = self.dispatch('summarizeTransfers', pool, user, detailed)
     errorMsg = ''
-    # get the number of unique transfers running per diskpool
+    # get the number of unique transfers running per pool
     try:
-      nbtransfersPerPool = self._computeNbTransfersPerPool(diskPool, user)
+      nbtransfersPerPool = self._computeNbTransfersPerPool(pool, user)
     except IOError, e:
       nbtransfersPerPool = None
       errorMsg = str(e)
-    # flatten all data to a list of (diskpool, (values))
+    # flatten all data to a list of (pool, (values))
     res = []
-    for diskPool in nbs:
-      if len(nbs[diskPool]) > 0:
+    for pool in nbs:
+      if len(nbs[pool]) > 0:
         # deal with special cases for the nbtransfersPerPool
         if nbtransfersPerPool == None:
           # case where we have no data for the pool
           nbtransfers = '-'
-        elif diskPool not in nbtransfersPerPool:
+        elif pool not in nbtransfersPerPool:
           # case where the pool has no diskserver
           nbtransfers = 0
         else:
           # regular case
-          nbtransfers = nbtransfersPerPool[diskPool]
+          nbtransfers = nbtransfersPerPool[pool]
         # check whether we have all data we need for the pool
-        unreachableMachines = [m for m in nbs[diskPool] if nbs[diskPool][m] == None]
+        unreachableMachines = [m for m in nbs[pool] if nbs[pool][m] == None]
         # append an item to the result set
-        if len(unreachableMachines) < len(nbs[diskPool]):
-          data = [extendedSum(item) for item in zip(*[item for item in nbs[diskPool].values() if item])]
+        if len(unreachableMachines) < len(nbs[pool]):
+          data = [extendedSum(item) for item in zip(*[item for item in nbs[pool].values() if item])]
         else:
           if detailed:
             data = [0, 0, (), 0, (), 0, (), 0, ()]
           else:
             data = [0, 0, 0, 0, 0]
-        res.append(tuple([diskPool, nbtransfers] + data + [tuple(unreachableMachines)]))
+        res.append(tuple([pool, nbtransfers] + data + [tuple(unreachableMachines)]))
       else:
-        res.append((diskPool,))
+        res.append((pool,))
     return (tuple(res), errorMsg)
 
-  def exposed_summarizeTransfersPerHost(self, diskPool=None, user=None, detailed=False):
-    '''summarizes the number of running and pending transfers per host for a given diskpool and user.
+  def exposed_summarizeTransfersPerHost(self, pool=None, user=None, detailed=False):
+    '''summarizes the number of running and pending transfers per host for a given pool and user.
     Returns a tuple of tuples, with the host name as first item, then a list of data that depends
     on the value of the detailed parameter.
     The exact format of the returned tuple for each host if detailed is False is :
@@ -270,12 +270,12 @@ class TransferManagerService(rpyc.Service):
                          nbQueueingSlots, (('proto1', nbQueueingSlotsForProto1), ...),
                          nbRunningTransfers, (('proto1', nbRunningTransfersForProto1), ...),
                          nbRunningSlots, (('proto1', nbRunningSlotsForProto1), ...)) '''
-    dlf.writedebug(msgs.INVOKINGSUMMARIZETRANSFERSPERHOST, DiskPool=diskPool, Username=user, Detailed=detailed)
+    dlf.writedebug(msgs.INVOKINGSUMMARIZETRANSFERSPERHOST, Pool=pool, Username=user, Detailed=detailed)
     # get the raw data as a dictionnary of dictionnaries (svclass then diskserver level)
-    hosts = self.dispatch('summarizeTransfers', diskPool, user, detailed)
+    hosts = self.dispatch('summarizeTransfers', pool, user, detailed)
     # flatten it to a list of (diskserver, (values))
     if hosts :
-      hostslist = reduce(lambda x, y:x+y, [diskpool.items() for diskpool in hosts.values()])
+      hostslist = reduce(lambda x, y:x+y, [pool.items() for pool in hosts.values()])
     else:
       hostslist = []
     # return a tuple of (diskserver, value1, value2, ...), or (diskserver, None) in case we got
@@ -288,17 +288,17 @@ class TransferManagerService(rpyc.Service):
         res.append((host[0], '-'))
     return tuple(res)
 
-  def exposed_listRunningTransfers(self, diskPool=None, user=None):
-    '''lists the running transfers per diskpool for a given diskpool and user'''
-    dlf.writedebug(msgs.INVOKINGLISTTRANSFERS, DiskPool=diskPool)
-    transfers = self.dispatch('listRunningTransfers', diskPool, user)
+  def exposed_listRunningTransfers(self, pool=None, user=None):
+    '''lists the running transfers per pool for a given pool and user'''
+    dlf.writedebug(msgs.INVOKINGLISTTRANSFERS, Pool=pool)
+    transfers = self.dispatch('listRunningTransfers', pool, user)
     res = []
-    for diskPool in transfers:
-      for ds in transfers[diskPool]:
-        if transfers[diskPool][ds] != None:
+    for pool in transfers:
+      for ds in transfers[pool]:
+        if transfers[pool][ds] != None:
           for transferId, fileid, scheduler, user, status, transfertype, arrivalTime, \
-              startTime in transfers[diskPool][ds]:
-            res.append((transferId, fileid, scheduler, user, status, diskPool, ds,
+              startTime in transfers[pool][ds]:
+            res.append((transferId, fileid, scheduler, user, status, pool, ds,
                         transfertype, arrivalTime, startTime))
         else:
           res.append((None, ds))
@@ -534,16 +534,16 @@ class TransferManagerService(rpyc.Service):
        Returns the status of the diskserver and all its fileSystems'''
     reportmanager.handleStateReport(report)
 
-  def exposed_modifyDiskServers(self, targets, state, mountPoints, diskPool, dataPool, isRecursive):
+  def exposed_modifyDiskServers(self, targets, state, mountPoints, pool, dataPool, isRecursive):
     '''called by the modifydiskserver CLI to modify a set of diskservers. Returns a user-friendly message .'''
     dlf.write(msgs.INVOKINGMODIFYDISKSERVERS, Targets=str(targets), State=state, MountPoints=str(mountPoints))
     try:
       try:
         self.__class__.acquireDbConnection()
-        return modifydiskservers.modifyDiskServers(self.__class__.dbConnection(), targets, state, mountPoints, diskPool, dataPool, isRecursive)
+        return modifydiskservers.modifyDiskServers(self.__class__.dbConnection(), targets, state, mountPoints, pool, dataPool, isRecursive)
       except Exception, e:
         # "Exception caught while modifying diskserver(s), giving up" message
-        dlf.writenotice(msgs.MODIFYDISKSERVERSEXCEPTION, Message=str(e), Type=str(e.__class__), Targets=str(targets), State=state, MountPoints=str(mountPoints), DiskPool=diskPool, DataPool=dataPool)
+        dlf.writenotice(msgs.MODIFYDISKSERVERSEXCEPTION, Message=str(e), Type=str(e.__class__), Targets=str(targets), State=state, MountPoints=str(mountPoints), Pool=pool, DataPool=dataPool)
         # check whether we should reconnect to DB, and do so if needed
         self.__class__.dbConnection().checkForReconnection(e)
         raise e
@@ -558,8 +558,8 @@ def initQueues():
   timeout = configuration.getValue('TransferManager', 'AdminTimeout', 5, float)
   # loop through diskservers
   dslist = diskserverlistcache.diskServerList.getlist()
-  for diskPool in dslist:
-    for ds in dslist[diskPool]:
+  for pool in dslist:
+    for ds in dslist[pool]:
       try:
         # first list the running d2dsrc transfers
         dlf.write(msgs.INITQUEUELISTRUNNING, DiskServer=ds, timeout=timeout)

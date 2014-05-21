@@ -58,12 +58,15 @@ class ActivityControlThread(threading.Thread):
       return True
     # find out the limit in terms of free space, from the config file
     minFreeSpacePerc = self.configuration.getValue('DiskManager', 'FSMinAllowedFreeSpace', 0.02, float)
-    # get status of the filesystem
-    stat = os.statvfs(transfer.mountPoint)
-    availableSpace = stat.f_bavail * stat.f_frsize
-    totalSpace = stat.f_blocks * stat.f_bsize
-    # do the check
-    return availableSpace > minFreeSpacePerc * totalSpace
+    if (transfer.mountPoint):
+      # get status of the filesystem
+      stat = os.statvfs(transfer.mountPoint)
+      availableSpace = stat.f_bavail * stat.f_frsize
+      totalSpace = stat.f_blocks * stat.f_bsize
+      # do the check
+      return availableSpace > minFreeSpacePerc * totalSpace
+    else:
+      return True
 
   def startD2DTransfer(self, scheduler, transfer, srcDcPath, destDcPath):
     '''effectively starts a disk to disk transfer'''
@@ -96,7 +99,7 @@ class ActivityControlThread(threading.Thread):
             # in case of transfers wanting to write data, we check that space is available
             if not self.checkSpaceLeftOnFS(transfer):
               # not enough space, we cancel the transfer
-              connectionpool.connections.transfersCanceled(scheduler, (transfer.asTuple(), 28, 'No space left on device')) # ENOSPC
+              connectionpool.connections.transfersCanceled(scheduler, ((transfer.asTuple(), 28, 'No space left on device'),)) # ENOSPC
             else:
               # notifies the central scheduler that we want to start this transfer
               # this may raise a ValueError exception if we should give up (e.g. the

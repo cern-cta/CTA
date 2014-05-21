@@ -22,7 +22,6 @@
 #include <common.h>
 #include <stdlib.h>
 #include <zlib.h>
-#include <sys/xattr.h>
 #include <sys/param.h>
 #include <syslog.h>                     /* System logger                */
 #include <sys/time.h>
@@ -52,6 +51,7 @@
 #endif
 
 #include "rfio_callhandlers.h"
+#include "rfio_localio.h"
 #include "checkkey.h"
 #include "rfio_calls.h"
 
@@ -1382,8 +1382,8 @@ int  sropen(int     s,
           strcpy(ofilename, filename);
           fd = -1;
           if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-            fd = open(CORRECT_FILENAME(ofilename), ntohopnflg(flags),
-                      ((forced_filename != NULL) && (((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
+            fd = generic_open(CORRECT_FILENAME(ofilename), ntohopnflg(flags),
+                              ((forced_filename != NULL) && (((ntohopnflg(flags)) & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
             (*logfunc)(LOG_DEBUG, "ropen: open(%s,%d,%d) returned %x (hex)\n", CORRECT_FILENAME(ofilename), flags, mode, fd);
           }
           if (fd < 0) {
@@ -1394,7 +1394,7 @@ int  sropen(int     s,
             /*
              * Getting current offset
              */
-            status= lseek(fd,0L,SEEK_CUR);
+            status= generic_lseek(fd,0L,SEEK_CUR);
             (*logfunc)(LOG_DEBUG,"ropen: lseek(%d,0,SEEK_CUR) returned %x (hex)\n",fd,status);
             if ( status < 0 ) rcode= errno;
           }
@@ -1415,7 +1415,7 @@ int  sropen(int     s,
   (*logfunc)(LOG_DEBUG, "ropen: sending back status(%d) and errno(%d)\n",status,rcode);
   if (netwrite_timeout(s,rqstbuf,WORDSIZE+3*LONGSIZE,RFIO_CTRL_TIMEOUT) != (WORDSIZE+3*LONGSIZE))  {
     (*logfunc)(LOG_ERR,"ropen: netwrite_timeout(): %s\n",strerror(errno));
-    if (fd >=0) close(fd);
+    if (fd >=0) generic_close(fd);
     return -1;
   }
   return fd;
@@ -1504,7 +1504,7 @@ int srwrite(int     s,
   if ( how != -1 ) {
     (*logfunc)(LOG_DEBUG,"rwrite(%d,%d): lseek(%d,%d,%d)\n",s,fd,fd,offset,how);
     infop->seekop++;
-    if ( (status= lseek(fd,offset,how)) == -1 ) {
+    if ( (status= generic_lseek(fd,offset,how)) == -1 ) {
       rfio_calls_answer_client_internal(rqstbuf, errno, status, s);
       return -1;
     }
@@ -1513,7 +1513,7 @@ int srwrite(int     s,
    * Writing data on disk.
    */
   infop->wnbr+= size;
-  status = write(fd,p,size);
+  status = generic_write(fd,p,size);
   rcode= ( status < 0 ) ? errno : 0;
 
   if (rfio_calls_answer_client_internal(rqstbuf, rcode, status, s) < 0) {
@@ -1548,7 +1548,7 @@ int srread(int     s,
   if ( how != -1 ) {
     (*logfunc)(LOG_DEBUG,"rread(%d,%d): lseek(%d,%d,%d)\n",s,fd,fd,offset,how);
     infop->seekop++;
-    if ( (status= lseek(fd,offset,how)) == -1 ) {
+    if ( (status= generic_lseek(fd,offset,how)) == -1 ) {
       rcode= errno;
       p= rqstbuf;
       marshall_WORD(p,RQST_READ);
@@ -1596,7 +1596,7 @@ int srread(int     s,
     (*logfunc)(LOG_DEBUG, "rread(): setsockopt(SO_SNDBUF): %d\n",optval);
   }
   p = iobuffer + WORDSIZE + 3*LONGSIZE;
-  status = read(fd, p, size);
+  status = generic_read(fd, p, size);
   if ( status < 0 ) {
     rcode= errno;
     msgsiz= WORDSIZE+3*LONGSIZE;
@@ -1644,7 +1644,7 @@ int srreadahead(int     s,
   if ( how != -1 ) {
     (*logfunc)(LOG_DEBUG,"rread(%d,%d): lseek(%d,%d,%d)\n",s,fd,fd,offset,how);
     infop->seekop++;
-    if ( (status= lseek(fd,offset,how)) == -1 ) {
+    if ( (status= generic_lseek(fd,offset,how)) == -1 ) {
       rcode= errno;
       p= iobuffer;
       marshall_WORD(p,RQST_FIRSTREAD);
@@ -1707,7 +1707,7 @@ int srreadahead(int     s,
      * Reading disk ...
      */
     p= iobuffer + WORDSIZE + 3*LONGSIZE;
-    status = read(fd,p,size);
+    status = generic_read(fd,p,size);
     if (status < 0)        {
       rcode= errno;
       iobufsiz= WORDSIZE+3*LONGSIZE;
@@ -1760,14 +1760,14 @@ int   srclose(int     s,
   /* sync the file to be sure that filesize in correct in following stats.
      this is needed by some ext3 bug/feature
      Still ignore the output of fsync */
-  fsync(fd);
+  generic_fsync(fd);
 
   /* Stat the file to be able to provide that information
      to the close handler */
   memset(&filestat,0,sizeof(struct stat));
-  fstat(fd, &filestat);
+  generic_fstat(fd, &filestat);
 
-  status = close(fd);
+  status = generic_close(fd);
   rcode = ( status < 0 ) ? errno : 0;
   if (iobufsiz > 0)       {
     (*logfunc)(LOG_DEBUG,"rclose(): freeing %x\n",iobuffer);
@@ -1911,7 +1911,7 @@ int     srfstat(int     s,
    */
   if ( how != -1 ) {
     (*logfunc)(LOG_DEBUG,"rread(%d,%d): lseek(%d,%d,%d)\n",s,fd,fd,offset,how);
-    if ( (status= lseek(fd,offset,how)) == -1 ) {
+    if ( (status= generic_lseek(fd,offset,how)) == -1 ) {
       rcode= errno;
       p= rqstbuf;
       marshall_WORD(p,RQST_FSTAT);
@@ -1927,7 +1927,7 @@ int     srfstat(int     s,
   /*
    * Issuing the fstat()
    */
-  status= fstat(fd, &statbuf);
+  status= generic_fstat(fd, &statbuf);
   rcode= errno;
   msgsiz= 5*WORDSIZE + 5*LONGSIZE;
   p = rqstbuf;
@@ -1968,7 +1968,7 @@ int srlseek(int     s,
   unmarshall_LONG(p,offset);
   unmarshall_LONG(p,how);
   (*logfunc)(LOG_DEBUG,"rlseek(%d, %d): offset %d, how: %x\n",s,fd,offset,how);
-  status = lseek(fd, offset, how);
+  status = generic_lseek(fd, offset, how);
   rcode= ( status < 0 ) ? errno : 0;
   (*logfunc)(LOG_DEBUG,"rlseek: status %d, rcode %d\n",status,rcode);
   p= rqstbuf;
@@ -2358,8 +2358,8 @@ int  sropen_v3(int     s,
           strcpy(ofilename, filename);
           fd = -1;
           if (forced_filename!=NULL || !check_path_whitelist(host, filename, perm_array, ofilename, sizeof(ofilename),1)) {
-            fd = open(CORRECT_FILENAME(ofilename), flags,
-                      ((forced_filename != NULL) && ((flags & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
+            fd = generic_open(CORRECT_FILENAME(ofilename), flags,
+                              ((forced_filename != NULL) && ((flags & (O_WRONLY|O_RDWR)) != 0)) ? 0644 : mode);
             (*logfunc)(LOG_DEBUG,"ropen_v3: open(%s,%d,%d) returned %x (hex)\n",CORRECT_FILENAME(ofilename),flags,mode,fd);
           }
           if (fd < 0)  {
@@ -2371,7 +2371,7 @@ int  sropen_v3(int     s,
             /*
              * Getting current offset
              */
-            status= lseek(fd,0L,SEEK_CUR);
+            status= generic_lseek(fd,0L,SEEK_CUR);
             (*logfunc)(LOG_DEBUG,"ropen_v3: lseek(%d,0,SEEK_CUR) returned %x (hex)\n",fd,status);
             if ( status < 0 ) rcode= errno;
           }
@@ -2487,7 +2487,7 @@ int  sropen_v3(int     s,
   if (netwrite_timeout(s,rqstbuf,RQSTSIZE,RFIO_CTRL_TIMEOUT) != RQSTSIZE)  {
     (*logfunc)(LOG_ERR,"ropen_v3: netwrite_timeout(): %s\n",strerror(errno));
     if (data_s >= 0) close(data_s);
-    if (fd >= 0) close(fd);
+    if (fd >= 0) generic_close(fd);
     return -1;
   }
 
@@ -2588,14 +2588,14 @@ int   srclose_v3(int     s,
   /* sync the file to be sure that filesize in correct in following stats.
      this is needed by some ext3 bug/feature
      Still ignore the output of fsync */
-  fsync(fd);
+  generic_fsync(fd);
 
   /* Stat the file to be able to provide that information
      to the close handler */
   memset(&filestat,0,sizeof(struct stat));
-  fstat(fd, &filestat);
+  generic_fstat(fd, &filestat);
 
-  status = close(fd);
+  status = generic_close(fd);
   rcode = ( status < 0 ) ? errno : 0;
 
   ret=rfio_handle_close(handler_context, &filestat, rcode);
@@ -2651,7 +2651,7 @@ void *produce_thread(int *ptr)
     if (!strncasecmp(conf_ent,"no",2)) useCksum = 0;
 
   if (useCksum) {
-    if ((xattr_len = fgetxattr(fd,"user.castor.checksum.value",ckSumbufdisk,CA_MAXCKSUMLEN)) == -1) {
+    if ((xattr_len = generic_fgetxattr(fd,"user.castor.checksum.value",ckSumbufdisk,CA_MAXCKSUMLEN)) == -1) {
       (*logfunc)(LOG_ERR,"produce_thread: fgetxattr failed for user.castor.checksum.value, error=%d\n",errno);
       (*logfunc)(LOG_ERR,"produce_thread: skipping checksums check\n");
       useCksum = 0;
@@ -2676,7 +2676,7 @@ void *produce_thread(int *ptr)
     }
     Csemaphore_down(&empty);
 
-    byte_read = read(fd,array[produced % daemonv3_rdmt_nbuf].p,daemonv3_rdmt_bufsize);
+    byte_read = generic_read(fd,array[produced % daemonv3_rdmt_nbuf].p,daemonv3_rdmt_bufsize);
 
     if (byte_read > 0) {
       total_produced += byte_read;
@@ -2742,7 +2742,7 @@ void *consume_thread(int *ptr)
 
   /* Deal with cases where checksums should not be calculated */
   if (useCksum) {
-    mode = fcntl(fd,F_GETFL);
+    mode = generic_fcntl(fd,F_GETFL);
     if (mode == -1) {
       (*logfunc)(LOG_ERR,"consume_thread: fcntl (F_GETFL) failed, error=%d\n",errno);
       useCksum = 0;
@@ -2756,7 +2756,7 @@ void *consume_thread(int *ptr)
      * remove the checksum value but leave the type.
      */
     else if ((mode & O_WRONLY) &&
-             (fgetxattr(fd,"user.castor.checksum.type",ckSumbufdisk,CA_MAXCKSUMLEN) != -1)) {
+             (generic_fgetxattr(fd,"user.castor.checksum.type",ckSumbufdisk,CA_MAXCKSUMLEN) != -1)) {
       (*logfunc)(LOG_INFO,"consume_thread: file opened in O_WRONLY and checksum already exists, removing checksum\n");
       useCksum = 0;
     } else {
@@ -2765,7 +2765,7 @@ void *consume_thread(int *ptr)
     }
   }
   /* Always remove the checksum value */
-  fremovexattr(fd,"user.castor.checksum.value");
+  generic_fremovexattr(fd,"user.castor.checksum.value");
 
   while ((! error) && (! end)) {
     Csemaphore_down(&full);
@@ -2776,7 +2776,7 @@ void *consume_thread(int *ptr)
     if (len_to_write > 0) {
       (*logfunc)(LOG_DEBUG,"Trying to write %d bytes from %X\n",len_to_write,buffer_to_write);
 
-      byte_written = write(fd, buffer_to_write, len_to_write);
+      byte_written = generic_write(fd, buffer_to_write, len_to_write);
       /* If the write is successfull but incomplete (fs is full) we
          report the ENOSPC error immediately in order to simplify the code
       */
@@ -2838,14 +2838,14 @@ void *consume_thread(int *ptr)
     /* Double check whether the checksum is set on disk. If yes, it means
        it appeared while we were writing. this means that concurrent writing
        is taking place. Thus we reset the checksum rather than setting it */
-    if (fgetxattr(fd,"user.castor.checksum.value",ckSumbufdisk,CA_MAXCKSUMLEN) != -1) {
+    if (generic_fgetxattr(fd,"user.castor.checksum.value",ckSumbufdisk,CA_MAXCKSUMLEN) != -1) {
       (*logfunc)(LOG_INFO,"consume64_thread: concurrent writing detected, removing checksum\n");
-      fremovexattr(fd,"user.castor.checksum.value");
+      generic_fremovexattr(fd,"user.castor.checksum.value");
     } else {
       /* Always try and set the type first! */
-      if (fsetxattr(fd,"user.castor.checksum.type",ckSumalg,strlen(ckSumalg),0))
+      if (generic_fsetxattr(fd,"user.castor.checksum.type",ckSumalg,strlen(ckSumalg),0))
         (*logfunc)(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.type, error=%d\n",errno);
-      else if (fsetxattr(fd,"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0))
+      else if (generic_fsetxattr(fd,"user.castor.checksum.value",ckSumbuf,strlen(ckSumbuf),0))
         (*logfunc)(LOG_ERR,"consume64_thread: fsetxattr failed for user.castor.checksum.value, error=%d\n",errno);
     }
   }
@@ -2975,13 +2975,13 @@ void wait_consumer_thread(int cid)
         (*logfunc)(LOG_DEBUG, "rread_v3 malloc buffer allocated : 0X%X\n",iobuffer);
       }
 
-      if (fstat(fd,&st) < 0) {
+      if (generic_fstat(fd,&st) < 0) {
         (*logfunc)(LOG_ERR, "rread_v3: fstat(): ERROR occured (errno=%d)", errno);
         return -1;
       }
 
       (*logfunc)(LOG_DEBUG, "rread_v3 filesize : %d bytes\n",st.st_size);
-      if ((offset = lseek(fd,0L,SEEK_CUR)) < 0) {
+      if ((offset = generic_lseek(fd,0L,SEEK_CUR)) < 0) {
         (*logfunc)(LOG_ERR, "rread_v3: lseek offset(): ERROR occured (errno=%d)", errno);
         return -1;
       }
@@ -3128,7 +3128,7 @@ void wait_consumer_thread(int cid)
           consumed++;
         }
         else
-          status = read(fd,iobuffer,DISKBUFSIZE_READ);
+          status = generic_read(fd,iobuffer,DISKBUFSIZE_READ);
 
         /* To simulate a read I/O error
            status = -1;
@@ -3411,7 +3411,7 @@ int srwrite_v3(int     s,
             Csemaphore_up(&full);
           }
           else {
-            status = write(fd,iobuffer,byte_in_diskbuffer);
+            status = generic_write(fd,iobuffer,byte_in_diskbuffer);
             /* If the write is successfull but incomplete (fs is full) we
                report the ENOSPC error immediately in order to simplify the
                code */
@@ -3601,7 +3601,7 @@ int srwrite_v3(int     s,
           Csemaphore_up(&full);
         }
         else {
-          status = write(fd, iobuffer, byte_in_diskbuffer);
+          status = generic_write(fd, iobuffer, byte_in_diskbuffer);
           /* If the write is successfull but incomplete (fs is full) we
              report the ENOSPC error immediately in order to simplify the
              code */
@@ -3754,7 +3754,7 @@ int srwrite_v3(int     s,
           Csemaphore_up(&full);
         }
         else {
-          status = write(fd, iobuffer, byte_in_diskbuffer);
+          status = generic_write(fd, iobuffer, byte_in_diskbuffer);
           /* If the write is successfull but incomplete (fs is full) we
              report the ENOSPC error immediately in order to simplify the
              code */
@@ -3929,7 +3929,7 @@ int srlseek_v3(int s,
   unmarshall_LONG(p,offset);
   unmarshall_LONG(p,how);
   (*logfunc)(LOG_DEBUG,"rlseek_v3(%d, %d): offset %d, how: %d\n",s,fd,offset,how);
-  status = lseek(fd, offset, how);
+  status = generic_lseek(fd, offset, how);
   rcode = (status < 0) ? errno:0;
   (*logfunc)(LOG_DEBUG,"rlseek_v3: status %d, rcode %d\n",status,rcode);
   p = rqstbuf;
