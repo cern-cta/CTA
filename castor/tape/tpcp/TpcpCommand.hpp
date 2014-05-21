@@ -43,10 +43,9 @@
 #include <signal.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <unistd.h>
-
+#include <sys/stat.h>
 #include <sys/types.h>
-#include "h/rfio_api.h"
+#include <unistd.h>
 
 namespace castor {
 namespace tape   {
@@ -100,8 +99,7 @@ protected:
    * @param argc Argument count from the executable's main().
    * @param argv Argument vector from the executable's main().
    */
-  virtual void parseCommandLine(const int argc, char **argv)
-     = 0;
+  virtual void parseCommandLine(const int argc, char **argv) = 0;
 
   /**
    * To be implemented by sub-classes.
@@ -111,8 +109,7 @@ protected:
    * @throw A castor::exception::Exception exception if the disk files cannot
    *        be accessed.
    */
-  virtual void checkAccessToDisk()
-    const  = 0;
+  virtual void checkAccessToDisk() const  = 0;
 
   /**
    * To be implemented by sub-classes.
@@ -122,8 +119,7 @@ protected:
    * @throw A castor::exception::Exception exception if the tape cannot be
    *        accessed.
    */
-  virtual void checkAccessToTape()
-    const  = 0;
+  virtual void checkAccessToTape() const  = 0;
 
   /**
    * To be implemented by sub-classes.
@@ -134,8 +130,7 @@ protected:
    *                   server to be used, therefore overriding the drive
    *                   scheduling of the VDQM.
    */
-  virtual void requestDriveFromVdqm(char *const tapeServer)
-     = 0;
+  virtual void requestDriveFromVdqm(char *const tapeServer) = 0;
 
   /**
    * To be implemented by sub-classes.
@@ -149,15 +144,14 @@ protected:
    */
   virtual void sendVolumeToTapeBridge(
     const tapegateway::VolumeRequest &volumeRequest,
-    castor::io::AbstractTCPSocket    &connection)
-    const  = 0;
+    castor::io::AbstractTCPSocket    &connection) const  = 0;
 
   /**
    * To be implemented by sub-classes.
    *
    * Performs the tape copy whether it be DUMP, READ or WRITE.
    */
-  virtual void performTransfer()  = 0;
+  virtual void performTransfer() = 0;
 
   /**
    * The program name.
@@ -191,12 +185,12 @@ protected:
   ParsedCommandLine m_cmdLine;
 
   /**
-   * The list of RFIO filenames to be processed by the request handlers.
+   * The list of disk file-names to be processed by the request handlers.
    */
   FilenameList m_filenames;
 
   /**
-   * Iterator pointing to the next RFIO filename;
+   * Iterator pointing to the next disk file-name;
    */
   FilenameList::const_iterator m_filenameItor;
 
@@ -243,13 +237,13 @@ protected:
    * vmgr_querytape.  This method converts the return value of -1 and the
    * serrno to an exception in the case of an error.
    */
-  void vmgrQueryTape() ;
+  void vmgrQueryTape();
 
   /**
    * Creates, binds and sets to listening the callback socket to be used for
    * callbacks from the tape-bridge daemon.
    */
-  void setupCallbackSock() ;
+  void setupCallbackSock();
 
   /**
    * Request a drive from the VDQM to mount the specified tape for the
@@ -261,8 +255,7 @@ protected:
    *                   server to be used, therefore overriding the drive
    *                   scheduling of the VDQM.
    */
-  void requestDriveFromVdqm(const int accessMode, char *const tapeServer)
-    ;
+  void requestDriveFromVdqm(const int accessMode, char *const tapeServer);
 
   /**
    * Waits for and accepts an incoming tape-bridge connection, reads in the
@@ -271,7 +264,7 @@ protected:
    *
    * @return True if there is more work to be done, else false.
    */
-  bool waitForMsgAndDispatchHandler() ;
+  bool waitForMsgAndDispatchHandler();
 
   /**
    * To be implemented by sub-classes.
@@ -294,7 +287,7 @@ protected:
    * @return     True if there is more work to be done else false.
    */
   bool handlePingNotification(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
   /**
    * EndNotification message handler.
@@ -304,7 +297,7 @@ protected:
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotification(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
   /**
    * EndNotificationErrorReport message handler.
@@ -314,7 +307,7 @@ protected:
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotificationErrorReport(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
   /**
    * Handles the specified failed file-transfers.
@@ -322,21 +315,19 @@ protected:
    * @param files The failed file transfers.
    */
   void handleFailedTransfers(
-    const std::vector<tapegateway::FileErrorReportStruct*> &files)
-    ;
+    const std::vector<tapegateway::FileErrorReportStruct*> &files);
 
   /**
    * Handles the specified failed file-transfer.
    *
    * @param file The failed file-transfer.
    */
-  void handleFailedTransfer(const tapegateway::FileErrorReportStruct &file)
-    ;
+  void handleFailedTransfer(const tapegateway::FileErrorReportStruct &file);
 
   /**
    * Acknowledges the end of the session to the tape-bridge.
    */
-  void acknowledgeEndOfSession() ;
+  void acknowledgeEndOfSession();
 
   /**
    * Convenience method for sending EndNotificationErrorReport messages to the
@@ -393,14 +384,13 @@ protected:
   }
 
   /**
-   * Helper method that wraps the C function rfio_stat64 and converts any
+   * Helper method that wraps the C function stat() and converts any
    * error it reports into an exception.
    *
-   * @param path    The path to be passed to rfio_stat64.
-   * @param statBuf The stat buffer to be passed to rfio_stat64.
+   * @param path    The path to be passed to stat().
+   * @param statBuf The stat buffer to be passed to stat().
    */
-  void rfioStat(const char *path, struct stat64 &statBuf)
-    const ;
+  void localStat(const char *path, struct stat &statBuf) const;
 
 
 private:
@@ -430,7 +420,7 @@ private:
   /**
    * Deletes the specified VDQM volume request.
    */
-  void deleteVdqmVolumeRequest() ;
+  void deleteVdqmVolumeRequest();
 
   /**
    * The SIGINT signal handler.
@@ -443,16 +433,16 @@ private:
   struct sigaction m_sigintAction;
 
   /**
-   * Check the format of the filename, that MUST BE of the form: 
+   * Check the format of the file name, that MUST BE of the form: 
    * hostaname:/<filepath/>filename.
    * Local files need to have an hostname specified, if not will be added the
    * local hostname.
    * Hostnames like "localhost", "127.0.0.1" or "" are not allowed, they will be
    * translate in to local hostname.
-   * Relative filename will be prefix by the hostaname and by the current
+   * Relative file-name will be prefixed by the hostname and by the current
    * working directory
    */
-  void checkFilenameFormat() ;
+  void checkFilenameFormat();
 
   /**
    * The current working directory where tpcp command is run.

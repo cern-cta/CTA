@@ -125,13 +125,13 @@ protected:
 private:
 
   /**
-   * Data type for a map of file transaction IDs to the RFIO filenames of
+   * Data type for a map of file transaction IDs to the disk file-names of
    * files currently being transfered.
    */
   typedef std::map<uint64_t, std::string> FileTransferMap;
 
   /**
-   * Map of file transaction IDs to the RFIO filenames of files currently
+   * Map of file transaction IDs to the disk file-names of files currently
    * being transfered.
    */
   FileTransferMap m_pendingFileTransfers;

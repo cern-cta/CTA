@@ -42,7 +42,6 @@
 #include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/Cupv_api.h"
-#include "h/rfio_api.h"
 
 #include <errno.h>
 #include <getopt.h>
@@ -77,7 +76,7 @@ void castor::tape::tpcp::WriteTpCommand::usage(std::ostream &os) const throw() {
     "Where:\n"
     "\n"
     "\tVID      The VID of the tape to be written to.\n"
-    "\tFILE     A filename in RFIO notation [host:]local_path.\n"
+    "\tFILE     A file name in the form [host:]local_path.\n"
     "\n"
     "Options:\n"
     "\n"
@@ -85,8 +84,8 @@ void castor::tape::tpcp::WriteTpCommand::usage(std::ostream &os) const throw() {
     "\t-h, --help          Print this help and exit.\n"
     "\t-s, --server server Specifies the tape server to be used, therefore\n"
     "\t                    overriding the drive scheduling of the VDQM.\n"
-    "\t-f, --filelist file File containing a list of filenames in RFIO\n"
-    "\t                    notation [host:]local_path\n"
+    "\t-f, --filelist file File containing a list of file names in the form\n"
+    "\t                    [host:]local_path\n"
     "\n"
     "Constraints:\n"
     "\n"
@@ -256,51 +255,46 @@ void castor::tape::tpcp::WriteTpCommand::checkAccessToDisk()
     throw ex;
   }
 
-  // RFIO stat the first file to be migrated in order to check the RFIO
-  // daemon is running
-  {
-    FilenameList::const_iterator itor = m_filenames.begin();
+  // Sanity check - there should be at least one file to be migrated
+  if(m_filenames.empty()) {
+    TAPE_THROW_EX(castor::exception::Exception,
+      ": List of filenames to be processed is unexpectedly empty");
+  }
 
-    // Sanity check - there should be at least one file to be migrated
-    if(itor == m_filenames.end()) {
-      TAPE_THROW_EX(castor::exception::Exception,
-        ": List of filenames to be processed is unexpectedly empty");
-    }
+  FilenameList::const_iterator itor = m_filenames.begin();
+  const std::string &filename = *itor;
 
-    const std::string &filename = *itor;
+  // Command-line user feedback
+  std::ostream &os = std::cout;
+  time_t       now = time(NULL);
 
-    // Command-line user feedback
-    std::ostream &os = std::cout;
-    time_t       now = time(NULL);
+  castor::utils::writeTime(os, now, TIMEFORMAT);
+  os << " stat the first file \""
+     << filename << "\"" << std::endl;
 
-    castor::utils::writeTime(os, now, TIMEFORMAT);
-    os << " RFIO stat the first file \""
-       << filename << "\"" << std::endl;
+  // Stat the disk file
+  struct stat statBuf;
+  localStat(filename.c_str(), statBuf);
 
-    // Perform the RFIO stat
-    struct stat64 statBuf;
-    rfioStat(filename.c_str(), statBuf);
+  // Test if the filename corrispond to a directory
+  if( (statBuf.st_mode & S_IFMT) == S_IFDIR ){
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      ": Invalid disk file-name syntax"
+      ": File name must identify a regular file"
+      ": file name=\"" << filename.c_str() <<"\"";
 
-    // Test if the filename corrispond to a directory
-    if( (statBuf.st_mode & S_IFMT) == S_IFDIR ){
-      castor::exception::Exception ex(ECANCELED);
-      ex.getMessage() <<
-        ": Invalid RFIO filename syntax"
-        ": Filename must identify a regular file"
-        ": filename=\"" << filename.c_str() <<"\"";
+    throw ex;
+  }
 
-      throw ex;
-    }
+  // Test if the filesize is greather than zero
+  if(statBuf.st_size == 0){
+    castor::exception::Exception ex(ECANCELED);
+    ex.getMessage() <<
+      ": Invalid file size: File size must be greater than zero"
+      ": filename=\"" << filename.c_str() <<"\"";
 
-    // Test if the filesize is greather than zero
-    if(statBuf.st_size == 0){
-      castor::exception::Exception ex(ECANCELED);
-      ex.getMessage() <<
-        ": Invalid file size: File size must be greater than zero"
-        ": filename=\"" << filename.c_str() <<"\"";
-
-      throw ex;
-    }
+    throw ex;
   }
 }
 
@@ -548,14 +542,12 @@ bool castor::tape::tpcp::WriteTpCommand::handleFilesToMigrateListRequest(
 
     const std::string filename = *(m_filenameItor++);
 
-    struct stat64 statBuf;
+    struct stat statBuf;
 
-    // RFIO stat the disk file in order to check the RFIO daemon is running and
-    // to get the file size
+    // stat the disk file in order to get the file size
     try {
-      rfioStat(filename.c_str(), statBuf);
+      localStat(filename.c_str(), statBuf);
     } catch(castor::exception::Exception &ex) {
-
       // Notify the tapebridge about the exception and rethrow
       sendEndNotificationErrorReport(msg->aggregatorTransactionId(),
         ex.code(), ex.getMessage().str(), sock);

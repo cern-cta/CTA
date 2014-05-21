@@ -69,7 +69,7 @@ delete the request when it receives Ctrl-C).  If this option is not set then
 the VDQM will allocate the first free compatible drive.
 .TP
 .B -f, \-\-filelist file
-File containing the list of destination filenames in RFIO notation
+File containing the list of destination filenames in Rthe form
 [host:]local_path.  There should be one filename per line. Whitespace is
 trimmed from the left and right of each filename.  Blank lines are ignored.
 Lines starting with a '#' character are considered comments and are therefore
