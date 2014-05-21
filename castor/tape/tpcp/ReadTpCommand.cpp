@@ -43,7 +43,6 @@
 #include "castor/utils/utils.hpp"
 #include "h/Ctape_constants.h"
 #include "h/Cupv_api.h"
-#include "h/rfio_api.h"
 
 #include <errno.h>
 #include <getopt.h>
@@ -86,7 +85,7 @@ void castor::tape::tpcp::ReadTpCommand::usage(std::ostream &os) const throw() {
     "\n"
     "\tVID      The VID of the tape to be read from.\n"
     "\tSEQUENCE The sequence of tape file sequence numbers.\n"
-    "\tFILE     A filename in RFIO notation [host:]local_path.\n"
+    "\tFILE     A filename in the form [host:]local_path.\n"
     "\n"
     "Options:\n"
     "\n"
@@ -94,8 +93,8 @@ void castor::tape::tpcp::ReadTpCommand::usage(std::ostream &os) const throw() {
     "\t-h, --help          Print this help messgae and exit.\n"
     "\t-s, --server server Specifies the tape server to be used, therefore\n"
     "\t                    overriding the drive scheduling of the VDQM.\n"
-    "\t-f, --filelist file File containing a list of filenames in RFIO\n"
-    "\t                    notation [host:]local_path.\n"
+    "\t-f, --filelist file File containing a list of filenames in the form\n"
+    "\t                    [host:]local_path.\n"
     "\t-n, --nodata        Send all data read from tape to the /dev/null of the\n"
     "\t                    tape server.\n"
     "\n"
@@ -330,55 +329,22 @@ void castor::tape::tpcp::ReadTpCommand::checkAccessToDisk()
   TapeFseqRangeListSequence seq(&m_cmdLine.tapeFseqRanges);
 
   // Throw an exception if the number of tape files is finite and does not
-  // match the number of RFIO file names
+  // match the number of disk files
   if(seq.isFinite() && seq.totalSize() != m_filenames.size()) {
     castor::exception::InvalidArgument ex;
 
     ex.getMessage() <<
-      "The number of tape files does not match the number of RFIO "
-      "filenames"
+      "The number of tape files does not match the number of disk files"
       ": Number of tape files=" << seq.totalSize() <<
-      " Number of RFIO filenames=" << m_filenames.size();
+      " Number of disk files=" << m_filenames.size();
 
     throw ex;
   }
 
-  // RFIO stat the directory to which the first file to be recalled will be
-  // written, in order to check the RFIO daemon is running
-  {
-    FilenameList::const_iterator itor = m_filenames.begin();
-
-    // Sanity check - there should be at least one file to be migrated
-    if(itor == m_filenames.end()) {
-      TAPE_THROW_EX(castor::exception::Exception,
-        ": List of filenames to be processed is unexpectedly empty");
-    }
-
-    const std::string &filename = *itor;
-    std::string filepath(filename.substr(0, filename.find_last_of("/")+1));
-
-    // Command-line user feedback
-    std::ostream &os = std::cout;
-    time_t       now = time(NULL);
-
-    castor::utils::writeTime(os, now, TIMEFORMAT);
-    os << " RFIO stat the directory of the first file \""
-       << filepath << "\"" << std::endl;
-
-    // Perform the RFIO stat
-    struct stat64 statBuf;
-    rfioStat(filepath.c_str(), statBuf);
-
-    // Test if the filepath is not a directory
-    if( (statBuf.st_mode & S_IFMT) != S_IFDIR ){
-      castor::exception::Exception ex(ECANCELED);
-      ex.getMessage() <<
-        ": Invalid RFIO filename syntax"
-        ": Filepath must identify a regular directory"
-        ": filepath=\"" << filepath.c_str() <<"\"";
-
-      throw ex;
-    }
+  // Sanity check - there should be at least one file to be recalled
+  if(m_filenames.empty()) {
+    TAPE_THROW_EX(castor::exception::Exception,
+      ": List of filenames to be processed is unexpectedly empty");
   }
 }
 
@@ -566,8 +532,7 @@ unsigned int castor::tape::tpcp::ReadTpCommand::countNbRangesWithEnd()
 // handleFilesToRecallListRequest
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::ReadTpCommand::handleFilesToRecallListRequest(
-  castor::IObject *const obj, castor::io::AbstractSocket &sock)
-   {
+  castor::IObject *const obj, castor::io::AbstractSocket &sock) {
 
   const tapegateway::FilesToRecallListRequest *msg = NULL;
 
@@ -580,31 +545,12 @@ bool castor::tape::tpcp::ReadTpCommand::handleFilesToRecallListRequest(
 
   if(anotherFile) {
 
-    std::string filename;
-    if(m_cmdLine.nodataSet){ 
-      // If the opion -n/--nodata is set, the destination filename is hardcoded
-      // to NODATAFILENAME = localhost:/dev/null
-      filename = NODATAFILENAME;
-    }
-    else { 
-      filename = *(m_filenameItor++);
-      std::string filepath(filename.substr(0, filename.find_last_of("/")+1)); 
+    // If the opion -n/--nodata is set, the destination filename is hardcoded
+    // to NODATAFILENAME = localhost:/dev/null
+    const std::string filename = m_cmdLine.nodataSet ? NODATAFILENAME :
+      *(m_filenameItor++);
 
-      // RFIO stat the directory to which the recalled file will be written to,
-      // in order to check the RFIO daemon is running
-      try {
-        struct stat64 statBuf;
-        rfioStat(filepath.c_str(), statBuf);
-      } catch(castor::exception::Exception &ex) {
-
-        // Notify the tapebridge about the exception and rethrow
-        sendEndNotificationErrorReport(msg->aggregatorTransactionId(),
-          ex.code(), ex.getMessage().str(), sock);
-        throw ex;
-      }
-    }
-
-    // Get the tape file sequence number and RFIO filename
+    // Get the tape file sequence number and disk file-name
     const uint32_t tapeFseq = m_tapeFseqSequence.next();
 
     // Create a FilesToRecallList message for the tapebridge

@@ -58,6 +58,8 @@
 #include <list>
 #include <stdint.h>
 #include <string.h>
+#include <sys/stat.h>
+#include <sys/types.h>
 #include <sys/unistd.h>
 #include <time.h>
 #include <unistd.h>
@@ -278,19 +280,19 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     throw ex;
   }
 
-  // Fill the list of filenames to be processed.
+  // Fill the list of file names to be processed.
   //
-  // The list of filenames will either come from the command-line arguments
+  // The list of file names will either come from the command-line arguments
   // or (exclusive or) from a "filelist" file specified with the
   // "-f, --filelist" option.
   if(m_cmdLine.fileListSet) {
-    // Parse the "filelist" file into the list of filenames to be
+    // Parse the "filelist" file into the list of file names to be
     // processed
     utils::parseFileList(m_cmdLine.fileListFilename.c_str(),
       m_filenames);
   } else {
     if(!m_cmdLine.nodataSet) {
-      // Copy the command-line argument filenames into the list of filenames
+      // Copy the command-line argument file-names into the list of file-names
       // to be processed
       for(FilenameList::const_iterator
         itor=m_cmdLine.filenames.begin();
@@ -300,10 +302,10 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
     }
   }
 
-  // In the case of -n/--nodata the destination filename is hardcoded to
+  // In the case of -n/--nodata the destination file-name is hardcoded to
   // localhost:/dev/null and should not he checked
   if(!m_cmdLine.nodataSet) {
-    //check the format of the filename: hostname:/filepath/filename
+    //check the format of the file-name: hostname:/filepath/filename
     checkFilenameFormat();
   }
 
@@ -312,12 +314,12 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
   if(m_cmdLine.debugSet) {
     std::ostream &os = std::cout;
 
-    os << "Filenames to be processed = " << m_filenames << std::endl;
+    os << "File-names to be processed = " << m_filenames << std::endl;
   }
 
   checkAccessToDisk();
 
-  // Set the iterator pointing to the next RFIO filename to be processed
+  // Set the iterator pointing to the next disk file-name to be processed
   m_filenameItor = m_filenames.begin();
 
   // Get information about the tape to be used from the VMGR
@@ -1049,7 +1051,7 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
 
    std::string &line = *itor;
 
-   // check if the filename ends with '.' or '/'
+   // check if the file name ends with '.' or '/'
    const char *characters = "/.";
    std::string::size_type end = line.find_last_not_of(characters);
 
@@ -1057,9 +1059,9 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
 
     castor::exception::Exception ex(ECANCELED);
     ex.getMessage() <<
-           ": Invalid RFIO filename syntax"
-           ": Filename must identify a regular file"
-           ": filename=\"" << line <<"\"";
+           ": Invalid file-name syntax"
+           ": File name must identify a regular file"
+           ": file name=\"" << line <<"\"";
 
       throw ex;
    } 
@@ -1083,9 +1085,9 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
        if(str.empty()){
          castor::exception::Exception ex(ECANCELED);
          ex.getMessage() <<
-           ": Invalid RFIO filename syntax"
+           ": Invalid file-name syntax"
            ": Missing hostname before ':/'"
-           ": filename=\"" << line <<"\"";
+           ": file name=\"" << line <<"\"";
 
          throw ex;
        }
@@ -1103,34 +1105,15 @@ void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
 
 
 //------------------------------------------------------------------------------
-// rfioStat
+// localStat
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::rfioStat(const char *const path,
-  struct stat64 &statBuf) const  {
-
-  const int rc = rfio_stat64((char *)path, &statBuf);
-  const int savedSerrno = rfio_serrno();
-
-  if(rc != 0) {
-    // In case of failure, rfio_stat64 can set:
-    // serrno     if error from support routines
-    // errno      if error from system calls
-    // rfio_errno if error from remote host (if remote host runs a different
-    //            OS, then it will return a locally unknown error code)
-    //
-    // rfio_serrno() Returns the error taking into account what rfio_stat64 can
-    //               set.
-    // rfio_serror() Returns the error string matching the error code (if
-    //               the error is from a remote host, then this function
-    //               connects to the host and asks for the maching string)
-
-    const char *err_msg = rfio_serror();
-
-    castor::exception::Exception ex(savedSerrno);
-
-    ex.getMessage() << "Failed to rfio_stat64 \"" << path << "\""
-      ": " << err_msg;
-
+void castor::tape::tpcp::TpcpCommand::localStat(const char *const path,
+  struct stat &statBuf) const  {
+  if(stat(path, &statBuf)) {
+    const char *const errMsg = sstrerror(errno);
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to stat \"" << path << "\""
+      ": " << errMsg;
     throw ex;
   }
 }
