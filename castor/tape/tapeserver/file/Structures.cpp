@@ -48,7 +48,7 @@ void tapeFile::VOL1::verify() {
     throw Exception(
           std::string("Failed verify for the label standard: ") +
           tapeFile::toString(lblStandard));
-  if (cmpString(ownerID, "CASTOR"))
+  if (cmpString(ownerID, "CASTOR") && cmpString(ownerID, "stage"))
     throw Exception(
           std::string("Failed verify for the ownerID: ") +
           tapeFile::toString(ownerID));
