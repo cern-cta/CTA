@@ -305,8 +305,7 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
   // In the case of -n/--nodata the destination file-name is hardcoded to
   // localhost:/dev/null and should not he checked
   if(!m_cmdLine.nodataSet) {
-    //check the format of the file-name: hostname:/filepath/filename
-    checkFilenameFormat();
+    translateFilenamesIntoRemoteFilenames();
   }
 
   // If debug, then display the list of files to be processed by the action
@@ -316,8 +315,6 @@ void castor::tape::tpcp::TpcpCommand::executeCommand() {
 
     os << "File-names to be processed = " << m_filenames << std::endl;
   }
-
-  checkAccessToDisk();
 
   // Set the iterator pointing to the next disk file-name to be processed
   m_filenameItor = m_filenames.begin();
@@ -615,8 +612,7 @@ void castor::tape::tpcp::TpcpCommand::requestDriveFromVdqm(
 //------------------------------------------------------------------------------
 // waitForMsgAndDispatchHandler
 //------------------------------------------------------------------------------
-bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler()
-   {
+bool castor::tape::tpcp::TpcpCommand::waitForMsgAndDispatchHandler() {
 
   // Socket file descriptor for a callback connection from the tapebridge
   int connectionSockFd = 0;
@@ -1036,10 +1032,9 @@ void castor::tape::tpcp::TpcpCommand::deleteVdqmVolumeRequest()
 
 
 //------------------------------------------------------------------------------
-// checkFilenameFormat
+// translateFilenamesIntoRemoteFilenames
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::TpcpCommand::checkFilenameFormat()
-   {
+void castor::tape::tpcp::TpcpCommand::translateFilenamesIntoRemoteFilenames() {
 
   FilenameList::iterator itor = m_filenames.begin();
   // local string containing the hostname + ":"

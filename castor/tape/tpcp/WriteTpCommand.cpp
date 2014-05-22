@@ -76,7 +76,7 @@ void castor::tape::tpcp::WriteTpCommand::usage(std::ostream &os) const throw() {
     "Where:\n"
     "\n"
     "\tVID      The VID of the tape to be written to.\n"
-    "\tFILE     A file name in the form [host:]local_path.\n"
+    "\tFILE     The path of a file on a locally mounted file system.\n"
     "\n"
     "Options:\n"
     "\n"
@@ -84,8 +84,7 @@ void castor::tape::tpcp::WriteTpCommand::usage(std::ostream &os) const throw() {
     "\t-h, --help          Print this help and exit.\n"
     "\t-s, --server server Specifies the tape server to be used, therefore\n"
     "\t                    overriding the drive scheduling of the VDQM.\n"
-    "\t-f, --filelist file File containing a list of file names in the form\n"
-    "\t                    [host:]local_path\n"
+    "\t-f, --filelist file File containing a list of file names.\n"
     "\n"
     "Constraints:\n"
     "\n"
@@ -241,65 +240,6 @@ void castor::tape::tpcp::WriteTpCommand::parseCommandLine(const int argc,
 
 
 //------------------------------------------------------------------------------
-// checkAccessToDisk
-//------------------------------------------------------------------------------
-void castor::tape::tpcp::WriteTpCommand::checkAccessToDisk()
-  const  {
-  // Check that there is at least one file to be migrated
-  if(m_filenames.size() == 0) {
-    castor::exception::InvalidArgument ex;
-
-    ex.getMessage()
-      << "There must be at least one file to be migrated";
-
-    throw ex;
-  }
-
-  // Sanity check - there should be at least one file to be migrated
-  if(m_filenames.empty()) {
-    TAPE_THROW_EX(castor::exception::Exception,
-      ": List of filenames to be processed is unexpectedly empty");
-  }
-
-  FilenameList::const_iterator itor = m_filenames.begin();
-  const std::string &filename = *itor;
-
-  // Command-line user feedback
-  std::ostream &os = std::cout;
-  time_t       now = time(NULL);
-
-  castor::utils::writeTime(os, now, TIMEFORMAT);
-  os << " stat the first file \""
-     << filename << "\"" << std::endl;
-
-  // Stat the disk file
-  struct stat statBuf;
-  localStat(filename.c_str(), statBuf);
-
-  // Test if the filename corrispond to a directory
-  if( (statBuf.st_mode & S_IFMT) == S_IFDIR ){
-    castor::exception::Exception ex(ECANCELED);
-    ex.getMessage() <<
-      ": Invalid disk file-name syntax"
-      ": File name must identify a regular file"
-      ": file name=\"" << filename.c_str() <<"\"";
-
-    throw ex;
-  }
-
-  // Test if the filesize is greather than zero
-  if(statBuf.st_size == 0){
-    castor::exception::Exception ex(ECANCELED);
-    ex.getMessage() <<
-      ": Invalid file size: File size must be greater than zero"
-      ": filename=\"" << filename.c_str() <<"\"";
-
-    throw ex;
-  }
-}
-
-
-//------------------------------------------------------------------------------
 // checkAccessToTape
 //------------------------------------------------------------------------------
 void castor::tape::tpcp::WriteTpCommand::checkAccessToTape()
@@ -390,7 +330,6 @@ void castor::tape::tpcp::WriteTpCommand::checkUserHasTapeWritePermission(
   }
 }
 
-
 //------------------------------------------------------------------------------
 // requestDriveFromVdqm
 //------------------------------------------------------------------------------
@@ -398,7 +337,6 @@ void castor::tape::tpcp::WriteTpCommand::requestDriveFromVdqm(
   char *const tapeServer)  {
   TpcpCommand::requestDriveFromVdqm(WRITE_ENABLE, tapeServer);
 }
-
 
 //------------------------------------------------------------------------------
 // sendVolumeToTapeBridge
@@ -422,12 +360,10 @@ void castor::tape::tpcp::WriteTpCommand::sendVolumeToTapeBridge(
   Helper::displaySentMsgIfDebug(volumeMsg, m_cmdLine.debugSet);
 }
 
-
 //------------------------------------------------------------------------------
 // performTransfer
 //------------------------------------------------------------------------------
-void castor::tape::tpcp::WriteTpCommand::performTransfer()
-   {
+void castor::tape::tpcp::WriteTpCommand::performTransfer() {
 
   std::ostream &os = std::cout;
 
@@ -528,8 +464,7 @@ bool castor::tape::tpcp::WriteTpCommand::dispatchMsgHandler(
 // handleFilesMigrateListRequest
 //------------------------------------------------------------------------------
 bool castor::tape::tpcp::WriteTpCommand::handleFilesToMigrateListRequest(
-  castor::IObject *const obj, castor::io::AbstractSocket &sock)
-   {
+  castor::IObject *const obj, castor::io::AbstractSocket &sock) {
 
   tapegateway::FilesToMigrateListRequest *msg = NULL;
 
@@ -542,11 +477,16 @@ bool castor::tape::tpcp::WriteTpCommand::handleFilesToMigrateListRequest(
 
     const std::string filename = *(m_filenameItor++);
 
-    struct stat statBuf;
+    // Determine the local file-name
+    const std::string::size_type localIdx = filename.find(':');
+    const std::string localFilename  =
+      localIdx == std::string::npos || localIdx == filename.length() - 1 ?
+      filename : filename.substr(localIdx + 1);
 
     // stat the disk file in order to get the file size
+    struct stat statBuf;
     try {
-      localStat(filename.c_str(), statBuf);
+      localStat(localFilename.c_str(), statBuf);
     } catch(castor::exception::Exception &ex) {
       // Notify the tapebridge about the exception and rethrow
       sendEndNotificationErrorReport(msg->aggregatorTransactionId(),

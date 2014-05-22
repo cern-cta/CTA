@@ -43,7 +43,8 @@ to the last file on the tape.
 A series of non\-consecutive ranges of files.
 .RE
 .P
-The filenames of the destination disk files can be specified using three
+A destination disk-file should be given in the form [host:]local_path.
+The file names of the destination disk-files can be specified using three
 mutually-exclusive methods.  They can be entered on the command-line
 (\fB[FILE]\fP), in a "file-list" file using the
 .B -f, --filelist
@@ -69,8 +70,8 @@ delete the request when it receives Ctrl-C).  If this option is not set then
 the VDQM will allocate the first free compatible drive.
 .TP
 .B -f, \-\-filelist file
-File containing the list of destination filenames in Rthe form
-[host:]local_path.  There should be one filename per line. Whitespace is
+File containing the list of destination file-names.
+There should be one filename per line. Whitespace is
 trimmed from the left and right of each filename.  Blank lines are ignored.
 Lines starting with a '#' character are considered comments and are therefore
 ignored.  Whitespace is allowed between the beginning of the line and a '#'
@@ -80,7 +81,7 @@ providing filenames on the command-line and with the
 option.
 .TP
 \fB\-n, \-\-nodata
-Send all data read from tape to the /dev/null of the tape server.  Please note
+Send all data read from tape to /dev/null on the tape server.  Please note
 that this option is mutually exclusive with providing filenames on the
 command-line and with the
 .B -f, \-\-filelist
