@@ -33,7 +33,7 @@
 #include "castor/legacymsg/RmcProxy.hpp"
 #include <iostream>
 #include <stdio.h>
-
+#include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -58,13 +58,13 @@ public:
   TapeWriteSingleThread(castor::tape::drives::DriveInterface & drive, 
           castor::legacymsg::RmcProxy & rmc,
           GlobalStatusReporter & gsr,
-          const std::string & vid,
+          const client::ClientInterface::VolumeInfo& volInfo,
           castor::log::LogContext & lc, MigrationReportPacker & repPacker,
 	  uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
-  TapeSingleThreadInterface<TapeWriteTask>(drive, rmc, gsr, vid, lc),
+  TapeSingleThreadInterface<TapeWriteTask>(drive, rmc, gsr, volInfo, lc),
           m_filesBeforeFlush(filesBeforeFlush),
           m_bytesBeforeFlush(bytesBeforeFlush),
-          m_drive(drive), m_reportPacker(repPacker), m_vid(vid), 
+          m_drive(drive), m_reportPacker(repPacker),
           m_lastFseq(-1),
           m_compress(true) {}
   
@@ -98,7 +98,7 @@ private:
       throw;
     }
     
-    std::auto_ptr<castor::tape::tapeFile::WriteSession> rs;
+    std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession;
   
     ScopedParam sp[]={
         ScopedParam(m_logContext, Param("vid",m_vid)),
@@ -107,7 +107,9 @@ private:
       };
     tape::utils::suppresUnusedVariable(sp);
       try {
-       rs.reset(new castor::tape::tapeFile::WriteSession(m_drive,m_vid,m_lastFseq,m_compress));
+       writeSession.reset(
+         new castor::tape::tapeFile::WriteSession(m_drive,m_vid,m_lastFseq,m_compress)
+       );
         m_logContext.log(LOG_INFO, "Tape Write session session successfully started");
       }
       catch (castor::exception::Exception & e) {
@@ -118,7 +120,7 @@ private:
         // TODO: add an unroll mode to the tape read task. (Similar to exec, but pushing blocks marked in error)
         throw;
       }
-    return rs;
+    return writeSession;
   }
   /**
    * Execute flush on tape
@@ -222,9 +224,6 @@ private:
   
   ///the object that will send reports to the client
   MigrationReportPacker & m_reportPacker;
-  
-  ///the volumeID of the tape
-  const std::string m_vid;
   
   /**
    * the last fseq that has been written on the tape = the starting point 

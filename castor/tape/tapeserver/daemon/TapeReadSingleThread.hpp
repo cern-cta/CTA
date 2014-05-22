@@ -62,10 +62,10 @@ public:
   TapeReadSingleThread(castor::tape::drives::DriveInterface & drive,
           castor::legacymsg::RmcProxy & rmc,
           GlobalStatusReporter & gsr,
-          client::ClientInterface::VolumeInfo volInfo, uint64_t maxFilesRequest,
+          const client::ClientInterface::VolumeInfo& volInfo, uint64_t maxFilesRequest,
           castor::log::LogContext & lc): 
-   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr, volInfo.vid, lc),
-   m_maxFilesRequest(maxFilesRequest),m_filesProcessed(0),m_volInfo(volInfo) {
+   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr,volInfo,lc),
+   m_maxFilesRequest(maxFilesRequest),m_filesProcessed(0) {
    }
    
    /**
@@ -178,8 +178,7 @@ private:
   size_t m_filesProcessed;
   
   std::auto_ptr<castor::tape::tapeFile::ReadSession> rs;
-  
-  client::ClientInterface::VolumeInfo m_volInfo;
+ 
 };
 }
 }

@@ -12,6 +12,7 @@
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/legacymsg/TapeserverProxyDummy.hpp"
 #include "castor/tape/utils/TpconfigLine.hpp"
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 namespace unitTests
 {
 using namespace castor::tape::tapeserver::daemon;
@@ -35,8 +36,8 @@ public:
   FakeSingleTapeReadThread(castor::tape::drives::DriveInterface& drive,
     castor::legacymsg::RmcProxy & rmc,
     castor::tape::tapeserver::daemon::GlobalStatusReporter & gsr,
-    const std::string & vid, castor::log::LogContext & lc):
-  TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr, vid, lc){}
+    const castor::tape::tapeserver::client::ClientInterface::VolumeInfo& volInfo, castor::log::LogContext & lc):
+  TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr, volInfo, lc){}
   
   ~FakeSingleTapeReadThread(){
     const unsigned int size= m_tasks.size();
@@ -65,9 +66,11 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::TapeserverProxyDummy initialProcess;
+  castor::tape::tapeserver::client::ClientInterface::VolumeInfo volInfo;
+  volInfo.vid="V12345";
   castor::tape::tapeserver::daemon::GlobalStatusReporter gsr(initialProcess,
-  vdqm, utils::TpconfigLine("","","","","","",""),"0.0.0.0","V12345",lc);
-  FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, "V12345", lc);
+  vdqm, utils::TpconfigLine("","","","","UP","",""),"0.0.0.0","V12345",lc);
+  FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, volInfo, lc);
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);
   
@@ -114,9 +117,11 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::TapeserverProxyDummy initialProcess;
+  castor::tape::tapeserver::client::ClientInterface::VolumeInfo volInfo;
+  volInfo.vid="V12345";
   castor::tape::tapeserver::daemon::GlobalStatusReporter gsr(initialProcess, vdqm, 
-  utils::TpconfigLine("","","","","","",""),"0.0.0.0","V12345",lc);  
-  FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, "V12345", lc);
+  utils::TpconfigLine("","","","","UP","",""),"0.0.0.0","V12345",lc);  
+  FakeSingleTapeReadThread tapeRead(drive, rmc, gsr,volInfo, lc);
   
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);

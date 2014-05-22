@@ -10,7 +10,7 @@
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
-
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
 
 namespace castor {
@@ -51,6 +51,8 @@ protected:
 
   ///log context, for ... logging purpose, copied du to thread mechanism 
   castor::log::LogContext m_logContext;
+  
+  client::ClientInterface::VolumeInfo m_volInfo;
 public:
   /**
    * Push into the class a sentinel value to trigger to end the the thread.
@@ -82,8 +84,8 @@ public:
   TapeSingleThreadInterface(castor::tape::drives::DriveInterface & drive,
     castor::legacymsg::RmcProxy & rmc,
     GlobalStatusReporter & gsr,
-    const std::string & vid, castor::log::LogContext & lc):
-  m_drive(drive), m_rmc(rmc), m_gsr(gsr), m_vid(vid), m_logContext(lc) {}
+    const client::ClientInterface::VolumeInfo& volInfo,castor::log::LogContext & lc):
+  m_drive(drive), m_rmc(rmc), m_gsr(gsr), m_vid(volInfo.vid), m_logContext(lc),m_volInfo(volInfo) {}
 };
 
 }
