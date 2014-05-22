@@ -241,6 +241,10 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
     //then findDrive would have return NULL and we would have not end up there
     GlobalStatusReporter gsr(m_intialProcess, m_vdqm, *configLine,m_hostname,
             m_volInfo.vid,lc);
+    //we retrieved the detail from the client in execute, so at this point 
+    //we can already report !
+    gsr.gotReadMountDetailsFromClient();
+    
     MigrationMemoryManager mm(m_castorConf.rtcopydNbBufs,
         m_castorConf.rtcopydBufsz,lc);
     MigrationReportPacker mrp(m_clientProxy,
@@ -248,7 +252,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
     TapeWriteSingleThread twst(*drive.get(),
         m_rmc,
         gsr,
-        m_volInfo.vid,
+        m_volInfo,
         lc,
         mrp,
         m_castorConf.tapebridgeMaxFilesBeforeFlush,
@@ -271,7 +275,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
       twst.startThreads();
       mrp.startThreads();
       mti.startThreads();
-      //gsr.startThreads();
+      gsr.startThreads();
       
       // Synchronise with end of threads
       mti.waitThreads();
@@ -279,7 +283,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
       twst.waitThreads();
       drtp.waitThreads();
       mm.waitThreads();
-      //gsr.waitThreads();
+      gsr.waitThreads();
     } else {
       // Just log this was an empty mount and that's it. The memory management
       // will be deallocated automatically.
