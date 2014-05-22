@@ -104,16 +104,6 @@ protected:
   /**
    * To be implemented by sub-classes.
    *
-   * Checks the disk files can be accessed.
-   *
-   * @throw A castor::exception::Exception exception if the disk files cannot
-   *        be accessed.
-   */
-  virtual void checkAccessToDisk() const  = 0;
-
-  /**
-   * To be implemented by sub-classes.
-   *
    * Checks the tape can be accessed.
    *
    * @throw A castor::exception::Exception exception if the tape cannot be
@@ -433,16 +423,13 @@ private:
   struct sigaction m_sigintAction;
 
   /**
-   * Check the format of the file name, that MUST BE of the form: 
-   * hostaname:/<filepath/>filename.
-   * Local files need to have an hostname specified, if not will be added the
-   * local hostname.
-   * Hostnames like "localhost", "127.0.0.1" or "" are not allowed, they will be
-   * translate in to local hostname.
-   * Relative file-name will be prefixed by the hostname and by the current
-   * working directory
+   * This method prefixes the local hostname onto the beginning of local
+   * file-names.
+   *
+   * This method prefixes the current working directory onto the
+   * beginning of relative-path file-names.
    */
-  void checkFilenameFormat();
+  void translateFilenamesIntoRemoteFilenames();
 
   /**
    * The current working directory where tpcp command is run.
