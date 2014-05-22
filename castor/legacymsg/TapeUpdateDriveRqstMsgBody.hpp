@@ -24,6 +24,8 @@
 
 #pragma once
 
+#include "castor/tape/tapegateway/ClientType.hpp"
+#include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "h/Castor_limits.h"
 
 #include <stdint.h>
@@ -35,6 +37,44 @@ namespace legacymsg {
  * An update-VID message, used to update the drive catalogue with the contents of a drive.
  */
 struct TapeUpdateDriveRqstMsgBody {
+  
+  /**
+   * The status of the tape with respect to the drive mount and unmount operations
+   */
+  enum tapeEvent {
+    TAPE_STATUS_NONE,
+    TAPE_STATUS_MOUNT_STARTED,
+    TAPE_STATUS_MOUNTED,
+    TAPE_STATUS_UNMOUNT_STARTED,
+    TAPE_STATUS_UNMOUNTED    
+  }; 
+  
+  uint32_t event;
+  
+  /**
+   * Are we mounting for read, write (read/write), or dump
+   */
+  enum tapeMode {
+    TAPE_MODE_NONE,
+    TAPE_MODE_READ,
+    TAPE_MODE_READWRITE,
+    TAPE_MODE_DUMP    
+  }; 
+  
+  uint32_t mode;
+
+  /**
+   * The client could be the gateway, readtp, writetp, or dumptp
+   */
+  enum tapeClientType {
+    CLIENT_TYPE_NONE,
+    CLIENT_TYPE_GATEWAY,
+    CLIENT_TYPE_READTP,
+    CLIENT_TYPE_WRITETP,
+    CLIENT_TYPE_DUMPTP    
+  }; 
+  
+  uint32_t clientType;
   
   /**
    * The VID of the tape inside the drive ("" if empty)

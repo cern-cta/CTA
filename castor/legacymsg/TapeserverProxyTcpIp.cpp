@@ -22,8 +22,13 @@
 
 #include "castor/io/io.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
+#include "castor/legacymsg/GenericReplyMsgBody.hpp"
+#include "castor/legacymsg/GenericMarshal.hpp"
 #include "castor/legacymsg/TapeMarshal.hpp"
 #include "castor/legacymsg/TapeserverProxyTcpIp.hpp"
+#include "castor/legacymsg/legacymsg.hpp"
+#include "castor/tape/tapegateway/ClientType.hpp"
+#include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/rtcp_constants.h"
@@ -47,14 +52,51 @@ castor::legacymsg::TapeserverProxyTcpIp::~TapeserverProxyTcpIp() throw() {
 }
 
 //------------------------------------------------------------------------------
-// gotReadMountDetailsFromClient
+// updateDrive
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyTcpIp::gotReadMountDetailsFromClient(
+void castor::legacymsg::TapeserverProxyTcpIp::updateDriveInfo(
+  const castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent event,
+  const castor::tape::tapegateway::VolumeMode mode,
+  const castor::tape::tapegateway::ClientType clientType,
   const std::string &unitName,
   const std::string &vid)
-   {
-  try {
-    legacymsg::TapeUpdateDriveRqstMsgBody body;
+{    
+  legacymsg::TapeUpdateDriveRqstMsgBody body;
+  try {    
+    switch(clientType) {
+      case castor::tape::tapegateway::TAPE_GATEWAY:
+        body.clientType=castor::legacymsg::TapeUpdateDriveRqstMsgBody::CLIENT_TYPE_GATEWAY;
+        break;
+      case castor::tape::tapegateway::READ_TP:
+        body.clientType=castor::legacymsg::TapeUpdateDriveRqstMsgBody::CLIENT_TYPE_READTP;
+        break;
+      case castor::tape::tapegateway::WRITE_TP:
+        body.clientType=castor::legacymsg::TapeUpdateDriveRqstMsgBody::CLIENT_TYPE_WRITETP;
+        break;
+      case castor::tape::tapegateway::DUMP_TP:
+        body.clientType=castor::legacymsg::TapeUpdateDriveRqstMsgBody::CLIENT_TYPE_DUMPTP;
+        break;
+      default:
+        body.clientType=castor::legacymsg::TapeUpdateDriveRqstMsgBody::CLIENT_TYPE_NONE;
+        break;
+    }
+    
+    switch(mode) {
+      case castor::tape::tapegateway::READ:
+        body.mode=castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READ;
+        break;
+      case castor::tape::tapegateway::WRITE:
+        body.mode=castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READWRITE;
+        break;
+      case castor::tape::tapegateway::DUMP:
+        body.mode=castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_DUMP;
+        break;
+      default:
+        body.mode=castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_NONE;
+        break;
+    }
+    
+    body.event=event;
     castor::utils::copyString(body.vid, vid.c_str());
     castor::utils::copyString(body.drive, unitName.c_str()); 
     castor::utils::SmartFd fd(connectToTapeserver());
@@ -62,81 +104,113 @@ void castor::legacymsg::TapeserverProxyTcpIp::gotReadMountDetailsFromClient(
     readReplyMsg(fd.get());  
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to notify tapeserverd of read mount: unitName="
-      << unitName << " vid=" << vid << ": " << ne.getMessage().str();
+    ex.getMessage() << "Failed to notify tapeserverd of drive info update: "
+        << " event = "<< body.event 
+        << " mode = " << body.mode 
+        << " clientType = " << body.clientType
+        << " unitName = " << body.drive
+        << " vid = " << body.vid
+        << ": " << ne.getMessage().str();
     throw ex;
   }
+}
+
+//------------------------------------------------------------------------------
+// gotReadMountDetailsFromClient
+//------------------------------------------------------------------------------
+void castor::legacymsg::TapeserverProxyTcpIp::gotReadMountDetailsFromClient(
+castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
+{  
+  updateDriveInfo(
+       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNT_STARTED, 
+       volInfo.volumeMode, 
+       volInfo.clientType,
+       unitName,
+       volInfo.vid);
 }
 
 //------------------------------------------------------------------------------
 // gotWriteMountDetailsFromClient
 //------------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::gotWriteMountDetailsFromClient(
-  const std::string &unitName,
-  const std::string &vid)
-   {
-  try {
-    legacymsg::TapeUpdateDriveRqstMsgBody body;
-    castor::utils::copyString(body.vid, vid.c_str());
-    castor::utils::copyString(body.drive, unitName.c_str());
-    castor::utils::SmartFd fd(connectToTapeserver());
-    writeTapeUpdateDriveRqstMsg(fd.get(), body);
-    readReplyMsg(fd.get());
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to notify tapeserverd of read mount: unitName=" 
-      << unitName << " vid=" << vid << ": " << ne.getMessage().str();
-    throw ex;
-  }
+castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
+{  
+  updateDriveInfo(
+       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNT_STARTED, 
+       volInfo.volumeMode, 
+       volInfo.clientType,
+       unitName,
+       volInfo.vid);
 }
 
 //------------------------------------------------------------------------------
 // gotDumpMountDetailsFromClient
 //------------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::gotDumpMountDetailsFromClient(
-  const std::string &unitName,
-  const std::string &vid)
-   {
-  try {
-    legacymsg::TapeUpdateDriveRqstMsgBody body;
-    castor::utils::copyString(body.vid, vid.c_str());
-    castor::utils::copyString(body.drive, unitName.c_str());
-    castor::utils::SmartFd fd(connectToTapeserver());
-    writeTapeUpdateDriveRqstMsg(fd.get(), body);
-    readReplyMsg(fd.get());
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to notify tapeserverd of read mount: unitName=" 
-      << unitName << " vid=" << vid << ": " << ne.getMessage().str();
-    throw ex;
-  }
+castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
+{  
+  updateDriveInfo(
+       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNT_STARTED, 
+       volInfo.volumeMode, 
+       volInfo.clientType,
+       unitName,
+       volInfo.vid);
 }
 
 //------------------------------------------------------------------------------
 // tapeMountedForRead
 //------------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForRead(
-  const std::string &unitName,
-  const std::string &vid)
-   {
+castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
+{  
+  updateDriveInfo(
+       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED, 
+       volInfo.volumeMode, 
+       volInfo.clientType,
+       unitName,
+       volInfo.vid);
 }
 
 //------------------------------------------------------------------------------
 // tapeMountedForWrite
 //------------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForWrite(
-  const std::string &unitName,
-  const std::string &vid)
-   {
-} 
+castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
+{  
+  updateDriveInfo(
+       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED, 
+       volInfo.volumeMode, 
+       volInfo.clientType,
+       unitName,
+       volInfo.vid);
+}
+
+//------------------------------------------------------------------------------
+// tapeUnmounting
+//------------------------------------------------------------------------------
+void castor::legacymsg::TapeserverProxyTcpIp::tapeUnmounting(
+castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
+{  
+  updateDriveInfo(
+       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNT_STARTED, 
+       volInfo.volumeMode, 
+       volInfo.clientType,
+       unitName,
+       volInfo.vid);
+}
 
 //------------------------------------------------------------------------------
 // tapeUnmounted
 //------------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::tapeUnmounted(
-  const std::string &unitName,
-  const std::string &vid)
-   {
+castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
+{  
+  updateDriveInfo(
+       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNTED, 
+       volInfo.volumeMode, 
+       volInfo.clientType,
+       unitName,
+       volInfo.vid);
 }
 
 //-----------------------------------------------------------------------------
@@ -181,27 +255,52 @@ void castor::legacymsg::TapeserverProxyTcpIp::writeTapeUpdateDriveRqstMsg(
 //-----------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::readReplyMsg(const int fd)  {
   
-  char buf[3 * sizeof(uint32_t)]; // magic + request type + len
-  io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
-
-  const char *bufPtr = buf;
-  size_t bufLen = sizeof(buf);
-  legacymsg::MessageHeader header;
-  memset(&header, '\0', sizeof(header));
-  legacymsg::unmarshal(bufPtr, bufLen, header);
-
-  if(TPMAGIC != header.magic) {
+  size_t headerBufLen = 12; // 12 bytes of header
+  char headerBuf[12];
+  memset(headerBuf, '\0', headerBufLen);
+  
+  try {
+    castor::io::readBytes(fd, m_netTimeout, headerBufLen, headerBuf);
+  } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Invalid mount session message: Invalid magic"
-      ": expected=0x" << std::hex << TPMAGIC << " actual=0x" <<
-      header.magic;
+    ex.getMessage() << "Failed to read Tape Update Drive reply message: " <<
+      ne.getMessage().str();
     throw ex;
   }
   
-  if(0 != header.lenOrStatus) {
+  const char *headerBufPtr = headerBuf;
+  castor::legacymsg::MessageHeader replyHeader;
+  memset(&replyHeader, '\0', sizeof(replyHeader));
+  castor::legacymsg::unmarshal(headerBufPtr, headerBufLen, replyHeader);
+  
+  if(MSG_DATA != replyHeader.reqType || TPMAGIC != replyHeader.magic) {
     castor::exception::Exception ex;
-    ex.getMessage() << "\"Set Vid\" failed. Return code: "
-      << header.lenOrStatus;
+    ex.getMessage() << "Wrong reply type or magic # in Tape Update Drive reply message. replymsg.reqType: " << replyHeader.reqType << " (expected: " << MSG_DATA << ") replymsg.magic: " << replyHeader.magic << " (expected: " << TPMAGIC << ")";
+    throw ex;
+  }
+  
+  size_t bodyBufLen = 4+CA_MAXLINELEN+1; // 4 bytes of return code + max length of error message
+  char bodyBuf[4+CA_MAXLINELEN+1];
+  memset(bodyBuf, '\0', bodyBufLen);
+  int actualBodyLen = replyHeader.lenOrStatus;
+  
+  try {
+    castor::io::readBytes(fd, m_netTimeout, actualBodyLen, bodyBuf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to read Tape Update Drive reply message: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+  
+  const char *bodyBufPtr = bodyBuf;
+  castor::legacymsg::GenericReplyMsgBody replymsg;
+  memset(&replymsg, '\0', sizeof(replymsg));
+  castor::legacymsg::unmarshal(bodyBufPtr, bodyBufLen, replymsg);
+  
+  if(0 != replymsg.status) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to update drive state: " << replymsg.errorMessage;
     throw ex;
   }
 }

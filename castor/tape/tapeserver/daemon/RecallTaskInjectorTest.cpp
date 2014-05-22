@@ -12,6 +12,7 @@
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/legacymsg/TapeserverProxyDummy.hpp"
 #include "castor/tape/utils/TpconfigLine.hpp"
+#include "castor/utils/utils.hpp"
 namespace unitTests
 {
 using namespace castor::tape::tapeserver::daemon;
@@ -65,8 +66,14 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::TapeserverProxyDummy initialProcess;
+  castor::tape::tapeserver::client::ClientInterface::VolumeInfo volume;
+  volume.clientType=castor::tape::tapegateway::READ_TP;
+  volume.density="8000GC";
+  volume.labelObsolete="AUL";
+  volume.vid="V12345";
+  volume.volumeMode=castor::tape::tapegateway::READ;
   castor::tape::tapeserver::daemon::GlobalStatusReporter gsr(initialProcess,
-  vdqm, utils::TpconfigLine("","","","","","",""),"0.0.0.0","V12345",lc);
+  vdqm, utils::TpconfigLine("","","","","","",""),"0.0.0.0",volume,lc);
   FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, "V12345", lc);
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);
@@ -113,9 +120,15 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   castor::legacymsg::RmcProxyDummy rmc;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm;
-  castor::legacymsg::TapeserverProxyDummy initialProcess;
+  castor::legacymsg::TapeserverProxyDummy initialProcess;  
+  castor::tape::tapeserver::client::ClientInterface::VolumeInfo volume;
+  volume.clientType=castor::tape::tapegateway::READ_TP;
+  volume.density="8000GC";
+  volume.labelObsolete="AUL";
+  volume.vid="V12345";
+  volume.volumeMode=castor::tape::tapegateway::READ;
   castor::tape::tapeserver::daemon::GlobalStatusReporter gsr(initialProcess, vdqm, 
-  utils::TpconfigLine("","","","","","",""),"0.0.0.0","V12345",lc);  
+  utils::TpconfigLine("","","","","","",""),"0.0.0.0",volume,lc);  
   FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, "V12345", lc);
   
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);

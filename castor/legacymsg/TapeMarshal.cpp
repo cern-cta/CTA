@@ -391,6 +391,9 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
 
   // Calculate the length of the message body
   const uint32_t bodyLen =
+    sizeof(uint32_t) + // event
+    sizeof(uint32_t) + // mode
+    sizeof(uint32_t) + // clientType
     strlen(src.vid) + 1 + // vid
     strlen(src.drive) + 1; // drive
 
@@ -426,6 +429,9 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
 
   // Marshal message body
   try {
+    io::marshalUint32(src.event, p);
+    io::marshalUint32(src.mode, p);
+    io::marshalUint32(src.clientType, p);   
     io::marshalString(src.vid, p);
     io::marshalString(src.drive, p);
   } catch(castor::exception::Exception &ne) {
@@ -484,6 +490,9 @@ void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeStatRep
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src, size_t &srcLen, TapeUpdateDriveRqstMsgBody &dst)  {
   try {
+    io::unmarshalUint32(src, srcLen, dst.event);
+    io::unmarshalUint32(src, srcLen, dst.mode);
+    io::unmarshalUint32(src, srcLen, dst.clientType);
     io::unmarshalString(src, srcLen, dst.vid);
     io::unmarshalString(src, srcLen, dst.drive);
   } catch(castor::exception::Exception &ne) {
