@@ -137,14 +137,16 @@ private:
   }
   
   virtual void run() {
+
     try
     {
       m_logContext.pushOrReplace(log::Param("thread", "TapeWrite"));
       // Before anything, the tape should be mounted
       m_rmc.mountTape(m_vid, m_drive.librarySlot, legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
+
       // Then we have to initialise the tape write session
       m_logContext.log(LOG_DEBUG, "Starting tape write thread");
-      std::auto_ptr<castor::tape::tapeFile::WriteSession> rs(openWriteSession());
+      std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
     
       uint64_t bytes=0;
       uint64_t files=0;
@@ -154,47 +156,56 @@ private:
         //get a task
         task.reset(m_tasks.pop());
         
-        //if it is not the end 
-        if(NULL!=task.get()) {
-          //execute it
-          task->execute(*rs,m_reportPacker,m_logContext);
-          
-          //raise counters
-          files++;
-          bytes+=task->fileSize();
-          
-          //if one counter is above a threshold, then we flush
-          if (files >= m_filesBeforeFlush || bytes >= m_bytesBeforeFlush) {
-            tapeFlush("Normal flush because thresholds was reached",bytes,files);
-            files=0;
-            bytes=0;
-          }
-        }
-        else{
-          //it is the end, we flush without asking
-          tapeFlush("End of TapeWriteWorkerThread::run() (flushing",bytes,files);
-          
+        //if is the end
+        if(NULL==task.get()) {      
+          //we flush without asking
+          tapeFlush("End of TapeWriteWorkerThread::run() flushing",bytes,files);
           //end of session + log 
           m_reportPacker.reportEndOfSession();
-          // Do the final cleanup
-          m_drive.unloadTape();
-          // And return the tape to the library
-          m_rmc.unmountTape(m_vid, m_drive.librarySlot);
           m_logContext.log(LOG_DEBUG, "Finishing tape write thread");
-          return;
+          break;
         }
-      } 
-    }
+        
+        task->execute(*writeSession,m_reportPacker,m_logContext);
+
+        //raise counters
+        files++;
+        bytes+=task->fileSize();
+          
+        //if one counter is above a threshold, then we flush
+        if (files >= m_filesBeforeFlush || bytes >= m_bytesBeforeFlush) {
+          tapeFlush("Normal flush because thresholds was reached",bytes,files);
+          files=0;
+          bytes=0;
+        }
+      } //end of while(1))
+    } //end of try
     catch(const castor::exception::Exception& e){
+      //we end there because write session could not be opened or because a task failed
+
+      //first empty all the tasks and circulate mem blocks
+      while(1) {
+        std::auto_ptr<TapeWriteTask>  task(m_tasks.pop());
+        if(task.get()==NULL) {
+          break;
+        }
+        task->circulateMemBlocks(m_logContext);
+      }
+      //then log
       log::LogContext::ScopedParam sp1(m_logContext, log::Param("exceptionCode", e.code()));
       log::LogContext::ScopedParam sp2(m_logContext, log::Param("error_MessageValue", e.getMessageValue()));
       m_logContext.log(LOG_ERR,"An error occurred during TapwWriteSingleThread::execute");
+      
       m_reportPacker.reportEndOfSessionWithErrors(e.what(),e.code());
-      // Do the final cleanup
-      m_drive.unloadTape();
-      // And return the tape to the library
-      m_rmc.unmountTape(m_vid, m_drive.librarySlot);
     }
+    
+    // Do the final cleanup
+    m_drive.unloadTape();
+    // And return the tape to the library
+    m_rmc.unmountTape(m_vid, m_drive.librarySlot);
+    
+    m_gsr.tapeUnmounted();
+    m_gsr.finish();
   }
   
   //m_filesBeforeFlush and m_bytesBeforeFlush are thresholds for flushing 
