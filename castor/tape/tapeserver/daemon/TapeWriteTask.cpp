@@ -110,8 +110,9 @@ namespace daemon {
       lc.log(LOG_INFO,"TapeWriteTask: a previous file has failed for migration "
       "Do nothing except circulating blocks");
       circulateMemBlocks();
+      throw;
     }
-    catch(const castor::tape::Exception& e){
+    catch(const castor::exception::Exception& e){
       //we can end up there because
       //we failed to open the WriteFile
       //we received a bad block or a block written failed
@@ -126,6 +127,7 @@ namespace daemon {
       lc.log(LOG_ERR,"Circulating blocks into TapeWriteTask::execute");
       circulateMemBlocks();
       reportPacker.reportFailedJob(*m_fileToMigrate,e.getMessageValue(),e.code());
+      throw;
     } 
    }
 //------------------------------------------------------------------------------
@@ -164,6 +166,17 @@ namespace daemon {
        throw;
      }
      return output;
+   }
+//------------------------------------------------------------------------------
+// circulateMemBlocks
+//------------------------------------------------------------------------------   
+   void TapeWriteTask::circulateMemBlocks(log::LogContext& lc){
+     if(!m_errorFlag){
+       lc.log(LOG_ERR,"Trying to force circulating of all mem block in TapeWriteTask, "
+               "but nothing went wrong (or not record of it) = buggy software ! ");
+       return;
+     }
+     circulateMemBlocks();
    }
 //------------------------------------------------------------------------------
 // circulateMemBlocks
