@@ -144,14 +144,17 @@ void castor::tape::tapeserver::daemon::LabelSession::mountTape(utils::TpconfigLi
 // waitUntilDriveReady
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::waitUntilDriveReady(castor::tape::drives::DriveInterface *drive) { 
-  
-  // wait until drive is ready
-  while(!(drive->isReady())) {
-    log::Param params[] = {
-      log::Param("drive", m_request.drive),
-      log::Param("dgn", m_request.dgn)};
-    m_log(LOG_INFO, "Drive not ready yet...", params);
-    sleep(1);
+  log::Param params[] = {
+  log::Param("uid", m_request.uid),
+  log::Param("gid", m_request.gid),
+  log::Param("vid", m_request.vid),
+  log::Param("drive", m_request.drive),
+  log::Param("dgn", m_request.dgn)};
+      
+  try{
+    drive->waitUntilReady(600);
+  }catch(const castor::tape::Exception& e){
+    m_log(LOG_INFO, "Drive not ready after 600 seconds waiting", params);
   }
 }
 
