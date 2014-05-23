@@ -194,19 +194,35 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
 //------------------------------------------------------------------------------
 // handleIncomingSetVidJob
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingSetVidJob(
-  const legacymsg::MessageHeader &header, const int clientConnection)
-   {
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingSetVidJob(const legacymsg::MessageHeader &header, const int clientConnection) {
   castor::utils::SmartFd connection(clientConnection);
+  const char *const task = "handle incoming set vid job";
+  try {
+    // Read message body
+    const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
+    const legacymsg::TapeUpdateDriveRqstMsgBody body = readSetVidMsgBody(connection.get(), bodyLen);
+    logSetVidJobReception(body);
+  
+    m_driveCatalogue.updateVidAssignment(body.vid, body.drive);
+    // 0 as return code for the tape config command, as in: "all went fine"
+    legacymsg::writeTapeReplyMsg(m_netTimeout, connection.get(), 0, "");
+    close(connection.release());
+  } catch(castor::exception::Exception &ex) {
+    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    m_log(LOG_ERR, "Informing mount session of error", params);
 
-  const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
-  const legacymsg::TapeUpdateDriveRqstMsgBody body = readSetVidMsgBody(connection.get(), bodyLen);
-  logSetVidJobReception(body);
-  m_driveCatalogue.updateVidAssignment(body.vid, body.drive);
-  // 0 as return code for the tape config command, as in: "all went fine"
-  legacymsg::writeTapeRcReplyMsg(m_netTimeout, connection.get(), 0);
 
-  close(connection.release());
+    // Inform the client there was an error
+    try {
+      legacymsg::writeTapeReplyMsg(m_netTimeout, connection.get(), 1, ex.getMessage().str());
+    } catch(castor::exception::Exception &ne) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to " << task <<
+        ": Failed to inform the client there was an error: " <<
+        ne.getMessage().str();
+      throw ex;
+    }
+  }    
 }
 
 //------------------------------------------------------------------------------

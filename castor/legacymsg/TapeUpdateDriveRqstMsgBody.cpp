@@ -26,7 +26,11 @@
 
 #include <string.h>
 
-castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeUpdateDriveRqstMsgBody() throw() {
+castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeUpdateDriveRqstMsgBody() throw():
+  event(TAPE_STATUS_NONE),
+  mode(TAPE_MODE_NONE),
+  clientType(CLIENT_TYPE_NONE)
+{
   memset(vid, '\0', sizeof(vid));
   memset(drive, '\0', sizeof(drive));
 }

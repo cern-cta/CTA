@@ -68,6 +68,7 @@ CastorInstallInitScript (vdqmd)
 # Rules to build and install vdqmDBInit
 ################################################################################
 add_executable (vdqmDBInit vdqmDBInit.cpp)
-target_link_libraries (vdqmDBInit castorcnvs castorcommon castorvmgr)
+target_link_libraries (vdqmDBInit castorcnvs castorcommon castorvmgr 
+  castorcommonora castorvdqmora)
 install (TARGETS vdqmDBInit DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallExeManPage (vdqmDBInit)

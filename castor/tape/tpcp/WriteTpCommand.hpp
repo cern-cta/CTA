@@ -63,16 +63,7 @@ protected:
    * @param argc Argument count from the executable's entry function: main().
    * @param argv Argument vector from the executable's entry function: main().
    */
-  void parseCommandLine(const int argc, char **argv)
-    ;
-
-  /**
-   * Checks the disk files can be accessed.
-   *
-   * @throw A castor::exception::Exception exception if the disk files cannot
-   *        be accessed.
-   */
-  void checkAccessToDisk() const ;
+  void parseCommandLine(const int argc, char **argv);
 
   /**
    * Checks the tape can be accessed.
@@ -80,7 +71,7 @@ protected:
    * @throw A castor::exception::Exception exception if the tape cannot be
    *        accessed.
    */
-  void checkAccessToTape() const ;
+  void checkAccessToTape() const;
 
   /**
    * Request a drive connected to the specified tape-server from the VDQM.
@@ -89,8 +80,7 @@ protected:
    *                   server to be used, therefore overriding the drive
    *                   scheduling of the VDQM.
    */
-  void requestDriveFromVdqm(char *const tapeServer)
-    ;
+  void requestDriveFromVdqm(char *const tapeServer);
 
   /**
    * Sends the volume message to the tapebridged daemon.
@@ -103,12 +93,12 @@ protected:
   void sendVolumeToTapeBridge(
     const tapegateway::VolumeRequest &volumeRequest,
     castor::io::AbstractTCPSocket    &connection)
-    const ;
+    const;
 
   /**
    * Performs the tape copy whether it be DUMP, READ or WRITE.
    */
-  void performTransfer() ;
+  void performTransfer();
 
   /**
    * Dispatches the appropriate handler for the specified tape-gateway message.
@@ -119,19 +109,18 @@ protected:
    * @return     True if there is more work to be done, else false.
    */
   bool dispatchMsgHandler(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) ;
-
+    castor::io::AbstractSocket &sock);
 
 private:
 
   /**
-   * Data type for a map of file transaction IDs to the RFIO filenames of
+   * Data type for a map of file transaction IDs to the disk file-names of
    * files currently being transfered.
    */
   typedef std::map<uint64_t, std::string> FileTransferMap;
 
   /**
-   * Map of file transaction IDs to the RFIO filenames of files currently
+   * Map of file transaction IDs to the disk file-names of files currently
    * being transfered.
    */
   FileTransferMap m_pendingFileTransfers;
@@ -160,7 +149,7 @@ private:
    */
   void checkUserHasTapeWritePermission(const char *const poolName,
     const uid_t userId, const gid_t groupId, const char *const sourceHost)
-    const ;
+    const;
 
   /**
    * FilesToMigrateListRequest message handler.
@@ -170,7 +159,7 @@ private:
    * @return     True if there is more work to be done else false.
    */
   bool handleFilesToMigrateListRequest(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
   /**
    * FileMigrationReportList message handler.
@@ -180,7 +169,7 @@ private:
    * @return     True if there is more work to be done else false.
    */
   bool handleFileMigrationReportList(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
   /**
    * Handles the specified successful migration of files to tape.
@@ -193,7 +182,7 @@ private:
   void handleSuccessfulMigrations(
     const uint64_t tapebridgeTransId,
     const std::vector<tapegateway::FileMigratedNotificationStruct*> &files,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
   /**
    * Handles the successfull migration of a file to tape.
@@ -206,7 +195,7 @@ private:
   void handleSuccessfulMigration(
     const uint64_t tapebridgeTransId,
     const tapegateway::FileMigratedNotificationStruct &file,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
   /**
    * EndNotification message handler.
@@ -216,7 +205,7 @@ private:
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotification(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
   /**
    * EndNotificationErrorReport message handler.
@@ -226,7 +215,7 @@ private:
    * @return     True if there is more work to be done else false.
    */
   bool handleEndNotificationErrorReport(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
   /**
    * PingNotification message handler.
@@ -236,7 +225,7 @@ private:
    * @return     True if there is more work to be done else false.
    */
   bool handlePingNotification(castor::IObject *const obj,
-    castor::io::AbstractSocket &sock) ;
+    castor::io::AbstractSocket &sock);
 
 }; // class WriteTpCommand
 

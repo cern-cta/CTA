@@ -26,6 +26,7 @@
 
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
+#include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
 #include <memory>
 #include <string>
@@ -57,13 +58,15 @@ public:
    * @param configLineThe configuration line of the drive we are using. 
    * Used to gather several information (unitName, dgn,...)
    * @param hostname The host name of the computer
-   * @param _vid the vid of the tape we are manipulating
+   * @param volume The volume information from the client
    * @param lc 
    */
   GlobalStatusReporter(legacymsg::TapeserverProxy& tapeserverProxy,
-          legacymsg::VdqmProxy& vdqmProxy,
-          const tape::utils::TpconfigLine& configLine,
-          const std::string &hostname,const std::string &_vid,log::LogContext lc);
+    legacymsg::VdqmProxy& vdqmProxy,
+    const tape::utils::TpconfigLine& configLine,
+    const std::string &hostname,
+    const castor::tape::tapeserver::client::ClientInterface::VolumeInfo &volume,
+    log::LogContext lc);
   
   /**
    * Put into the waiting list a guard value to signal the thread we want
@@ -136,7 +139,7 @@ private:
   const std::string m_server;
   const std::string m_unitName;
   const std::string m_dgn;
-  const std::string m_vid;
+  const castor::tape::tapeserver::client::ClientInterface::VolumeInfo m_volume;
   const pid_t m_sessionPid;
 };
 

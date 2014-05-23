@@ -163,7 +163,7 @@ private:
     uint32_t tapeFseq;
 
     /**
-     * The RFIO filename.
+     * The disk file-name.
      */
     std::string filename;
   };

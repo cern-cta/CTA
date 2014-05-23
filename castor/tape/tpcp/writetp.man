@@ -18,16 +18,19 @@ writetp \- write files to the end a tape
 
 .SH DESCRIPTION
 .B writetp
-appends one or more files from disk to the end of a tape.
+appends one or more files from a local file system to the end of a tape.
 .P
 This command gives privileged users direct access to the tape system.
 .P
 The tape to be written is specified by the \fBVID\fP argument.
-The filenames of the source disk files can be specified using two
+The file names of the source disk files can be specified using two
 mutually-exclusive methods.  They can be entered on the command-line
 (\fB[FILE]\fP) or in a "file-list" file using the
 .B -f, --filelist
 option.
+All source file-names must be on a locally mounted file system.  The
+writetp command needs to be able to call the system function stat() on each
+file in order to determine the size of the file.  
 
 .SH OPTIONS
 .TP
@@ -47,13 +50,12 @@ delete the request when it receives Ctrl-C).  If this option is not set then
 the VDQM will allocate the first free compatible drive.
 .TP
 \fB\-f, \-\-filelist file
-File containing the list of source filenames in RFIO notation
-[host:]local_path.  There should be one filename per line. Whitespace is
-trimmed from the left and right of each filename.  Blank lines are ignored.
-Lines starting with a '#' character are considered comments and are therefore
-ignored.  Whitespace is allowed between the beginning of the line and a '#'
-character.  Please note that this option is mutually exclusive with the method
-of providing filenames on the command-line.
+File containing the list of source file-names.  There should be one file-name
+per line.  Whitespace is trimmed from the left and right of each filename.
+Blank lines are ignored.  Lines starting with a '#' character are considered
+comments and are therefore ignored.  Whitespace is allowed between the
+beginning of the line and a '#' character.  Please note that this option is
+mutually exclusive with the method of providing filenames on the command-line.
 
 .SH "RETURN CODES"
 .TP
@@ -89,7 +91,7 @@ The name of the host on which the VMGR daemon is running.
 The following example appends the file \fBlxc2disk07:/tmp/test\fP to the
 tape with VID \fBI02024\fP.
 .P
-writetp I02024 lxc2disk07:/tmp/test
+writetp I02024 /tmp/test
 
 .SH AUTHOR
 \fBCASTOR\fP Team <castor.support@cern.ch>

@@ -141,11 +141,15 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeStatRequestMsgBody) {
 
 TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeUpdateDriveRqstMsgBody) {
   using namespace castor::legacymsg;
-  char buf[25]; // Expect message (header + body) to occupy exactly 25 bytes
+  char buf[37]; // Expect message (header + body) to occupy exactly 25 bytes
   TapeUpdateDriveRqstMsgBody srcMsgBody;
 
   // Marshal entire message (header + body)
   {
+    srcMsgBody.event = 1;
+    srcMsgBody.mode = 2;
+    srcMsgBody.clientType = 3;
+    
     castor::utils::copyString(srcMsgBody.vid, "VIDVID");
     castor::utils::copyString(srcMsgBody.drive, "DRIVE");
 
@@ -153,7 +157,7 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeUpdateDriveRqstMsgBody) {
     size_t totalLen = 0; // Total length of message (header + body)
 
     ASSERT_NO_THROW(totalLen = marshal(buf, bufLen, srcMsgBody));
-    ASSERT_EQ((uint32_t)25, totalLen);
+    ASSERT_EQ((uint32_t)37, totalLen);
   }
 
   // Unmarshall message header
@@ -167,7 +171,7 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeUpdateDriveRqstMsgBody) {
 
     ASSERT_EQ((uint32_t)TPMAGIC, dstHeader.magic);
     ASSERT_EQ((uint32_t)SETVID, dstHeader.reqType);
-    ASSERT_EQ((uint32_t)25, dstHeader.lenOrStatus);
+    ASSERT_EQ((uint32_t)37, dstHeader.lenOrStatus);
   }
 
   // Unmarshall message body
@@ -175,11 +179,15 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeUpdateDriveRqstMsgBody) {
     TapeUpdateDriveRqstMsgBody dstMsgBody;
 
     const char *bufPtr = buf + 12; // Point at beginning of message body
-    size_t bufLen = 13; // Length of the message body
+    size_t bufLen = 25; // Length of the message body
     ASSERT_NO_THROW(unmarshal(bufPtr, bufLen, dstMsgBody));
-    ASSERT_EQ(buf + 25, bufPtr);
+    ASSERT_EQ(buf + 37, bufPtr);
     ASSERT_EQ((size_t)0, bufLen);
 
+    ASSERT_EQ((uint32_t)1, dstMsgBody.event);
+    ASSERT_EQ((uint32_t)2, dstMsgBody.mode);
+    ASSERT_EQ((uint32_t)3, dstMsgBody.clientType);
+    
     ASSERT_EQ(std::string("VIDVID"), dstMsgBody.vid);
     ASSERT_EQ(std::string("DRIVE"), dstMsgBody.drive);
   }
