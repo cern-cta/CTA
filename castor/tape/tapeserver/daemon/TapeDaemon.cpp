@@ -815,56 +815,90 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
     m_log(LOG_INFO, "Mount-session child-process started", params);
   }
 
-  try {  
+  try {
     MountSession::CastorConf castorConf;
-    castorConf.rfioConnRetry =    getConfig<uint32_t>("RFIO", "CONRETRY");
-    castorConf.rfioConnRetryInt = getConfig<uint32_t>("RFIO", "CONRETRY");
-    castorConf.rfioIOBufSize =    getConfig<uint32_t>("RFIO", "IOBUFSIZE");
-    castorConf.rtcopydBufsz =     getConfig<uint32_t>("RTCOPYD", "BUFSZ");
-    castorConf.rtcopydNbBufs =    getConfig<uint32_t>("RTCOPYD", "NB_BUFS");
-    castorConf.tapeBadMIRHandlingRepair = 
-                     getConfigString("TAPE", "BADMIR_HANDLING");
-    castorConf.tapeConfirmDriveFree = 
-                     getConfigString("TAPE", "CONFIRM_DRIVE_FREE");
-    castorConf.tapeConfirmDriveFreeInterval = 
-                     getConfig<uint32_t>("TAPE", "CONFIRM_DRIVE_FREE_INTVL");
-    castorConf.tapebridgeBulkRequestMigrationMaxBytes = 
-                     getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXBYTES");
-    castorConf.tapebridgeBulkRequestMigrationMaxFiles = 
-                     getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXFILES");
-    castorConf.tapebridgeBulkRequestRecallMaxBytes = 
-                     getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTRECALLMAXBYTES");
-    castorConf.tapebridgeBulkRequestRecallMaxFiles = 
-                     getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTRECALLMAXFILES");
-    castorConf.tapebridgeMaxBytesBeforeFlush = 
-                     getConfig<uint64_t>("TAPEBRIDGE", "MAXBYTESBEFOREFLUSH");
-    castorConf.tapebridgeMaxFilesBeforeFlush = 
-                     getConfig<uint64_t>("TAPEBRIDGE", "MAXFILESBEFOREFLUSH");
-    castorConf.tapeserverdDiskThreads = 
-                     getConfig<uint32_t>("TAPEBRIDGE", "THREAD_POOL");
-    castor::tape::System::realWrapper sysWrapper;
+    // This try bloc will allow us to send a failure notification to the client
+    // if we fail before the MountSession has an opportunity to do so.
+    std::auto_ptr<MountSession> mountSession;
     const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getVdqmJob(unitName);
-    std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
-    std::auto_ptr<legacymsg::VmgrProxy> vmgr(m_vmgrFactory.create());
-    std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
-    std::auto_ptr<legacymsg::TapeserverProxy> tapeserver(m_tapeserverFactory.create());
-    MountSession mountSession(
-      m_argc,
-      m_argv,
-      m_hostName,
-      job,
-      m_log,
-      sysWrapper,
-      m_tpconfigLines,
-      *(vdqm.get()),
-      *(vmgr.get()),
-      *(rmc.get()),
-      *(tapeserver.get()),
-      castorConf
-    );
+    try {
+      castorConf.rfioConnRetry =    getConfig<uint32_t>("RFIO", "CONRETRY");
+      castorConf.rfioConnRetryInt = getConfig<uint32_t>("RFIO", "CONRETRY");
+      castorConf.rfioIOBufSize =    getConfig<uint32_t>("RFIO", "IOBUFSIZE");
+      castorConf.rtcopydBufsz =     getConfig<uint32_t>("RTCOPYD", "BUFSZ");
+      castorConf.rtcopydNbBufs =    getConfig<uint32_t>("RTCOPYD", "NB_BUFS");
+      castorConf.tapeBadMIRHandlingRepair = 
+                       getConfigString("TAPE", "BADMIR_HANDLING");
+      castorConf.tapeConfirmDriveFree = 
+                       getConfigString("TAPE", "CONFIRM_DRIVE_FREE");
+      castorConf.tapeConfirmDriveFreeInterval = 
+                       getConfig<uint32_t>("TAPE", "CONFIRM_DRIVE_FREE_INTVL");
+      castorConf.tapebridgeBulkRequestMigrationMaxBytes = 
+                       getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXBYTES");
+      castorConf.tapebridgeBulkRequestMigrationMaxFiles = 
+                       getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXFILES");
+      castorConf.tapebridgeBulkRequestRecallMaxBytes = 
+                       getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTRECALLMAXBYTES");
+      castorConf.tapebridgeBulkRequestRecallMaxFiles = 
+                       getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTRECALLMAXFILES");
+      castorConf.tapebridgeMaxBytesBeforeFlush = 
+                       getConfig<uint64_t>("TAPEBRIDGE", "MAXBYTESBEFOREFLUSH");
+      castorConf.tapebridgeMaxFilesBeforeFlush = 
+                       getConfig<uint64_t>("TAPEBRIDGE", "MAXFILESBEFOREFLUSH");
+      castorConf.tapeserverdDiskThreads = 
+                       getConfig<uint32_t>("TAPEBRIDGE", "THREAD_POOL");
+      castor::tape::System::realWrapper sysWrapper;
 
-    mountSession.execute();
-
+      std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
+      std::auto_ptr<legacymsg::VmgrProxy> vmgr(m_vmgrFactory.create());
+      std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
+      std::auto_ptr<legacymsg::TapeserverProxy> tapeserver(m_tapeserverFactory.create());
+      mountSession.reset(new MountSession (
+        m_argc,
+        m_argv,
+        m_hostName,
+        job,
+        m_log,
+        sysWrapper,
+        m_tpconfigLines,
+        *(vdqm.get()),
+        *(vmgr.get()),
+        *(rmc.get()),
+        *(tapeserver.get()),
+        castorConf
+      ));
+    } catch (castor::exception::Exception & ex) {
+      try {
+        client::ClientProxy cl(job);
+        client::ClientInterface::RequestReport rep;
+        cl.reportEndOfSessionWithError(ex.getMessageValue(), ex.code(), rep);
+      } catch (...) {
+        log::Param params[] = {
+          log::Param("sessionPid", sessionPid),
+          log::Param("unitName", unitName),
+          log::Param("errorMessage", ex.getMessageValue()),
+          log::Param("errorCode", ex.code())
+        };
+        m_log(LOG_ERR, "Failed to notify the client of the failed session when setting up the mount session", params);
+      }
+      throw;
+    } catch (...) {
+      try {
+        client::ClientProxy cl(job);
+        client::ClientInterface::RequestReport rep;
+        cl.reportEndOfSessionWithError("Non-Castor exception when setting up the mount session", SEINTERNAL, rep);
+      } catch (...) {
+        log::Param params[] = {
+          log::Param("sessionPid", sessionPid),
+          log::Param("unitName", unitName),
+          log::Param("errorMessage", "Non-Castor exception when setting up the mount session")
+        };
+        m_log(LOG_ERR, "Failed to notify the client of the failed session when setting up the mount session", params);
+      }
+      throw;
+    }
+    
+    mountSession->execute();
     exit(0);
   } catch(std::exception &se) {
     log::Param params[] = {
