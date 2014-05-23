@@ -143,7 +143,7 @@ TEST_F(castor_legacymsg_VmgrMarshalTest, marshalVmgrTapeMountedMsgBody) {
     ASSERT_EQ((uint32_t)2, dstMsgBody.gid);
     ASSERT_EQ(std::string("333333"), dstMsgBody.vid);
     ASSERT_EQ((uint16_t)4, dstMsgBody.mode);
-    ASSERT_EQ((uint32_t)4, dstMsgBody.jid);
+    ASSERT_EQ((uint32_t)5, dstMsgBody.jid);
   }
 }
 
