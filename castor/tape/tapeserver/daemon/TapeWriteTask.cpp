@@ -158,10 +158,13 @@ namespace daemon {
    tape::tapeFile::WriteSession & session, log::LogContext& lc){
      std::auto_ptr<tape::tapeFile::WriteFile> output;
      try{
-       output.reset(new tape::tapeFile::WriteFile(&session, *m_fileToMigrate,m_memManager.blockCapacity()));
+       const uint64_t tapeBlockSize = 256*1024;
+       output.reset(new tape::tapeFile::WriteFile(&session, *m_fileToMigrate,tapeBlockSize));
        lc.log(LOG_DEBUG, "Successfully opened the tape file for writing");
      }
      catch(const castor::exception::Exception & ex){
+       log::LogContext::ScopedParam sp(lc, log::Param("exceptionCode",ex.code()));
+       log::LogContext::ScopedParam sp1(lc, log::Param("exceptionMessage", ex.getMessageValue()));
        lc.log(LOG_ERR, "Failed to open tape file for writing");
        throw;
      }
