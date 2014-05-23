@@ -115,8 +115,11 @@ TEST(tapeServer, MountSessionGooddayRecall) {
         "V12345", true);
     mockSys.fake.m_pathToDrive["/dev/nst0"]->rewind();
     // And write to it
+    castor::tape::tapeserver::client::ClientInterface::VolumeInfo volInfo;
+    volInfo.vid="V12345";
+    volInfo.clientType=castor::tape::tapegateway::READ_TP;
     castor::tape::tapeFile::WriteSession ws(*mockSys.fake.m_pathToDrive["/dev/nst0"],
-        "V12345", 0, true);
+       volInfo , 0, true);
     // Write a few files on the virtual tape
     // Prepare the data
     uint8_t data[1000];
