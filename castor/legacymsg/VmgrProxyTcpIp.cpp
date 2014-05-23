@@ -147,12 +147,14 @@ void castor::legacymsg::VmgrProxyTcpIp::sendNotification(const legacymsg::VmgrTa
 void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForRead(const std::string &vid) 
 {
   try {
-  castor::legacymsg::VmgrTapeMountedMsgBody msg;
-  msg.uid = getuid();
-  msg.gid = getgid();
-  msg.jid = getpid();
-  msg.mode = WRITE_DISABLE;
-  castor::utils::copyString(msg.vid, vid.c_str());
+    castor::legacymsg::VmgrTapeMountedMsgBody msg;
+    msg.uid = getuid();
+    msg.gid = getgid();
+    msg.jid = getpid();
+    msg.mode = WRITE_DISABLE;
+    castor::utils::copyString(msg.vid, vid.c_str());
+
+    sendNotification(msg);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to notify the VMGR that the tape " << vid <<
@@ -166,12 +168,21 @@ void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForRead(const std::string &vi
 //------------------------------------------------------------------------------
 void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForWrite(const std::string &vid)
 {
-  castor::legacymsg::VmgrTapeMountedMsgBody msg;
-  msg.uid = getuid();
-  msg.gid = getgid();
-  msg.jid = getpid();
-  msg.mode = WRITE_ENABLE;
-  castor::utils::copyString(msg.vid, vid.c_str());
+  try {
+    castor::legacymsg::VmgrTapeMountedMsgBody msg;
+    msg.uid = getuid();
+    msg.gid = getgid();
+    msg.jid = getpid();
+    msg.mode = WRITE_ENABLE;
+    castor::utils::copyString(msg.vid, vid.c_str());
+
+    sendNotification(msg);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to notify the VMGR that the tape " << vid <<
+      " was mounted: " << ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //-----------------------------------------------------------------------------
