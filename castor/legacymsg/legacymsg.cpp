@@ -60,7 +60,7 @@ void castor::legacymsg::writeTapeReplyMsg(const int timeout, const int fd, const
     char dst[dstlen];
     castor::legacymsg::GenericReplyMsgBody src;    
     src.status=rc;
-    castor::utils::copyString(src.errorMessage, CA_MAXLINELEN+1, message.c_str());
+    castor::utils::copyString(src.errorMessage, message.c_str());
     const size_t len = castor::legacymsg::marshal(dst, dstlen, TPMAGIC, MSG_DATA, src);    
     castor::io::writeBytes(fd, timeout, len, dst);
   } catch(castor::exception::Exception &ne) {

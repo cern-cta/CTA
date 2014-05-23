@@ -22,7 +22,9 @@
 
 #pragma once
 
+#include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/legacymsg/VmgrProxy.hpp"
+#include "castor/legacymsg/VmgrTapeMountedMsgBody.hpp"
 #include "castor/log/Logger.hpp"
 
 namespace castor {
@@ -98,6 +100,37 @@ private:
    * @return The socket-descriptor of the connection with the vmgrd daemon.
    */
   int connectToVmgr() const ;
+  
+  /**
+   * Writes a tape mount notification message with the specifed contents to the specified
+   * connection.
+   *
+   * @param body The message body containing information of the tape mounted
+   */
+  void writeTapeMountNotificationMsg(const int fd, const legacymsg::VmgrTapeMountedMsgBody &body) ;
+  
+  /**
+   * Send the tape mount notification to the VMGR and receives the reply
+   * 
+   * @param body The message body containing information of the tape mounted
+   */
+  void sendNotification(const legacymsg::VmgrTapeMountedMsgBody &body);
+  
+  /**
+   * Reads a VMGR ack message from the specified connection.
+   *
+   * @param fd The file-descriptor of the connection.
+   * @return The message.
+   */
+  void readVmgrReply(const int fd) ;
+
+  /**
+   * Reads an ack message from the specified connection.
+   *
+   * @param fd The file-descriptor of the connection.
+   * @return The message.
+   */
+  MessageHeader readRcReplyMsg(const int fd) ;
 
 }; // class VmgrProxyTcpIp
 

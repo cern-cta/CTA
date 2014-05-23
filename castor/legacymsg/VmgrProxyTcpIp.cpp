@@ -21,8 +21,17 @@
  *****************************************************************************/
 
 #include "castor/io/io.hpp"
+#include "castor/legacymsg/CommonMarshal.hpp"
+#include "castor/legacymsg/VmgrMarshal.hpp"
 #include "castor/legacymsg/VmgrProxyTcpIp.hpp"
+#include "castor/legacymsg/VmgrTapeMountedMsgBody.hpp"
 #include "castor/utils/SmartFd.hpp"
+#include "castor/utils/utils.hpp"
+#include "h/Ctape_constants.h"
+#include "h/vmgr.h"
+
+#include <unistd.h>
+#include <sys/types.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -44,18 +53,125 @@ castor::legacymsg::VmgrProxyTcpIp::VmgrProxyTcpIp(
 castor::legacymsg::VmgrProxyTcpIp::~VmgrProxyTcpIp() throw() {
 }
 
+//-----------------------------------------------------------------------------
+// readVmgrReply
+//-----------------------------------------------------------------------------
+void castor::legacymsg::VmgrProxyTcpIp::readVmgrReply(const int fd)  {
+  legacymsg::MessageHeader reply;
+
+  try {
+    reply = readRcReplyMsg(fd);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to read VMGR reply: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+
+  if(VMGR_MAGIC != reply.magic) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to read VMGR reply: Invalid magic"
+      ": expected=0x" << std::hex << VMGR_MAGIC << " actual=" << reply.magic;
+    throw ex;
+  }
+  
+  if(VMGR_RC != reply.reqType) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Wrong VMGR reply type"
+      ": expected=0x" << std::hex << VMGR_RC << " actual=" << reply.reqType;
+    throw ex;
+  } 
+  
+  if(0 != reply.lenOrStatus) {
+    // VMGR is reporting an error
+    char errBuf[80];
+    sstrerror_r(reply.reqType, errBuf, sizeof(errBuf));
+    castor::exception::Exception ex;
+    ex.getMessage() << "VMGR reported an error: " << errBuf;
+    throw ex;
+  }
+}
+
+//-----------------------------------------------------------------------------
+// readRcReplyMsg
+//-----------------------------------------------------------------------------
+castor::legacymsg::MessageHeader castor::legacymsg::VmgrProxyTcpIp::readRcReplyMsg(const int fd)  {
+  char buf[12]; // Magic + type + len
+  legacymsg::MessageHeader reply;
+
+  try {
+    io::readBytes(fd, m_netTimeout, sizeof(buf), buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to read ack: "
+      << ne.getMessage().str();
+    throw ex;
+  }
+
+  const char *bufPtr = buf;
+  size_t bufLen = sizeof(buf);
+  legacymsg::unmarshal(bufPtr, bufLen, reply);
+
+  return reply;
+}
+
+//-----------------------------------------------------------------------------
+// writeDriveStatusMsg
+//-----------------------------------------------------------------------------
+void castor::legacymsg::VmgrProxyTcpIp::writeTapeMountNotificationMsg(const int fd, const legacymsg::VmgrTapeMountedMsgBody &body)  {
+  char buf[REQBUFSZ];
+  const size_t len = legacymsg::marshal(buf, body);
+
+  try {
+    io::writeBytes(fd, m_netTimeout, len, buf);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to write mount notification message: "
+      << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// setDriveStatus
+//------------------------------------------------------------------------------
+void castor::legacymsg::VmgrProxyTcpIp::sendNotification(const legacymsg::VmgrTapeMountedMsgBody &body)  {
+  castor::utils::SmartFd fd(connectToVmgr());
+  writeTapeMountNotificationMsg(fd.get(), body);
+  readVmgrReply(fd.get());
+}
+
 //------------------------------------------------------------------------------
 // tapeMountedForRead
 //------------------------------------------------------------------------------
 void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForRead(const std::string &vid) 
-   {
+{
+  try {
+  castor::legacymsg::VmgrTapeMountedMsgBody msg;
+  msg.uid = getuid();
+  msg.gid = getgid();
+  msg.jid = getpid();
+  msg.mode = WRITE_DISABLE;
+  castor::utils::copyString(msg.vid, vid.c_str());
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to notify the VMGR that the tape " << vid <<
+      " was mounted: " << ne.getMessage().str();
+    throw ex;
+  }
 }
 
 //------------------------------------------------------------------------------
 // tapeMountedForWrite
 //------------------------------------------------------------------------------
 void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForWrite(const std::string &vid)
-   {
+{
+  castor::legacymsg::VmgrTapeMountedMsgBody msg;
+  msg.uid = getuid();
+  msg.gid = getgid();
+  msg.jid = getpid();
+  msg.mode = WRITE_ENABLE;
+  castor::utils::copyString(msg.vid, vid.c_str());
 }
 
 //-----------------------------------------------------------------------------

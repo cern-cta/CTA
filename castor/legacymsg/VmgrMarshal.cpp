@@ -96,6 +96,82 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
 }
 
 //-----------------------------------------------------------------------------
+// marshal
+//-----------------------------------------------------------------------------
+size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen,
+  const VmgrTapeMountedMsgBody &src)  {
+
+  if(dst == NULL) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to marshal VmgrTapeMountedMsgBody"
+      ": Pointer to destination buffer is NULL";
+    throw ex;
+  }
+
+  // Calculate the length of the message body
+  const uint32_t len =
+    sizeof(uint32_t)   + // uid
+    sizeof(uint32_t)   + // gid
+    strlen(src.vid)    + // vid
+    1                  + // 1 = the string termination character of the vid
+    sizeof(uint16_t)   + // mode
+    sizeof(uint32_t);    // jid
+
+  // Calculate the total length of the message (header + body)
+  // Message header = magic + reqType + len = 3 * sizeof(uint32_t)
+  const size_t totalLen = 3 * sizeof(uint32_t) + len;
+
+  // Check that the message buffer is big enough
+  if(totalLen > dstLen) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to marshal VmgrTapeMountedMsgBody"
+      ": Buffer too small: required=" << totalLen << " actual=" << dstLen;
+    throw ex;
+  }
+
+  // Marshall the whole message (header + body)
+  char *p = dst;
+  io::marshalUint32(VMGR_MAGIC2 , p); // Magic number
+  io::marshalUint32(VMGR_TPMOUNTED, p); // Request type
+  // Marshall the total length of the message.  Please note that this is
+  // different from the RTCOPY legacy protocol which marshals the length
+  // of the message body.
+  io::marshalUint32(totalLen    , p); // Total length (UNLIKE RTCPD)
+  io::marshalUint32(src.uid     , p);
+  io::marshalUint32(src.gid     , p);
+  io::marshalString(src.vid     , p);
+  io::marshalUint16(src.mode    , p);
+  io::marshalUint32(src.jid     , p);
+
+  // Calculate the number of bytes actually marshaled
+  const size_t nbBytesMarshaled = p - dst;
+
+  // Check that the number of bytes marshaled was what was expected
+  if(totalLen != nbBytesMarshaled) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to marshal VmgrTapeMountedMsgBody"
+      ": Mismatch between expected total length and actual"
+      ": expected=" << totalLen << " actual=" << nbBytesMarshaled;
+    throw ex;
+  }
+
+  return totalLen;
+}
+
+//-----------------------------------------------------------------------------
+// unmarshal
+//-----------------------------------------------------------------------------
+void castor::legacymsg::unmarshal(const char * &src,
+  size_t &srcLen, VmgrTapeMountedMsgBody &dst)
+   {
+  io::unmarshalUint32(src, srcLen, dst.uid);
+  io::unmarshalUint32(src, srcLen, dst.gid);
+  io::unmarshalString(src, srcLen, dst.vid);
+  io::unmarshalUint16(src, srcLen, dst.mode);
+  io::unmarshalUint32(src, srcLen, dst.jid);
+}
+
+//-----------------------------------------------------------------------------
 // unmarshal
 //-----------------------------------------------------------------------------
 void castor::legacymsg::unmarshal(const char * &src,
