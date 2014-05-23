@@ -67,7 +67,7 @@ public:
           m_drive(drive), m_reportPacker(repPacker),
           m_lastFseq(-1),
           m_compress(true) {}
-  
+    
   /**
    * 
    * @param lastFseq
@@ -108,7 +108,7 @@ private:
     tape::utils::suppresUnusedVariable(sp);
       try {
        writeSession.reset(
-         new castor::tape::tapeFile::WriteSession(m_drive,m_vid,m_lastFseq,m_compress)
+         new castor::tape::tapeFile::WriteSession(m_drive,m_volInfo,m_lastFseq,m_compress)
        );
         m_logContext.log(LOG_INFO, "Tape Write session session successfully started");
       }

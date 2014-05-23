@@ -275,7 +275,7 @@ namespace castor {
          */
         PartOfFile m_currentFilePart;
         
-        tapeserver::client::ClientInterface::VolumeInfo m_volInfo;
+        const tapeserver::client::ClientInterface::VolumeInfo m_volInfo;
       };
       
       class ReadFile{
@@ -365,7 +365,9 @@ namespace castor {
          * @param last_fseq: fseq of the last active (undeleted) file on tape
          * @param compression: set this to true in case the drive has compression enabled (x000GC)
          */
-        WriteSession(drives::DriveInterface & drive, const std::string &vid, const uint32_t last_fseq, const bool compression) ;
+        WriteSession(drives::DriveInterface & drive, 
+                const tapeserver::client::ClientInterface::VolumeInfo& volInfo, 
+                const uint32_t last_fseq, const bool compression) ;
         
         /**
          * DriveGeneric object referencing the drive used during this write session
@@ -375,7 +377,7 @@ namespace castor {
         /**
          * Volume Serial Number
          */
-        std::string m_vid;
+        const std::string m_vid;
         
         /**
          * set to true if the drive has compression enabled 
@@ -415,6 +417,10 @@ namespace castor {
           m_locked = false;
         }
         
+        const tapeserver::client::ClientInterface::VolumeInfo&
+        getVolumeInfo()  const {
+          return m_volInfo;
+        }
       private:
         
         /**
@@ -446,6 +452,8 @@ namespace castor {
          * Session lock to be sure that a read session is owned by maximum one WriteFile object 
          */
         bool m_locked;
+        
+        const tapeserver::client::ClientInterface::VolumeInfo m_volInfo;
       };
       
       class WriteFile {        

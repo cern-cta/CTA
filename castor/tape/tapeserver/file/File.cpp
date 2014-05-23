@@ -322,9 +322,13 @@ namespace castor {
         return bytes_read;
       }
 
-      WriteSession::WriteSession(drives::DriveInterface & drive, const std::string &volId, const uint32_t last_fseq, const bool compression)  : m_drive(drive), m_vid(volId), m_compressionEnabled(compression), m_corrupted(false), m_locked(false) {
+      WriteSession::WriteSession(drives::DriveInterface & drive, 
+              const tapeserver::client::ClientInterface::VolumeInfo& volInfo, 
+              const uint32_t last_fseq, const bool compression)  
+      : m_drive(drive), m_vid(volInfo.vid), m_compressionEnabled(compression),
+              m_corrupted(false), m_locked(false),m_volInfo(volInfo) {
 
-        if(!volId.compare("")) {
+        if(!m_vid.compare("")) {
           throw castor::exception::InvalidArgument();
         }
 
@@ -336,7 +340,7 @@ namespace castor {
         } catch (std::exception & e) {
           throw TapeFormatError(e.what());
         }  
-        HeaderChecker::checkVOL1(vol1, volId); // now we know that we are going to write on the correct tape
+        HeaderChecker::checkVOL1(vol1, m_vid); // now we know that we are going to write on the correct tape
         //if the tape is not empty let's move to the last trailer
         if(last_fseq>0) {
           uint32_t dst_filemark = last_fseq*3-1; // 3 file marks per file but we want to read the last trailer (hence the -1)
@@ -408,7 +412,8 @@ namespace castor {
         m_open(false), m_nonzeroFileWritten(false), m_numberOfBlocks(0)
       {
         // Check the sanity of the parameters. fSeq should be >= 1
-        if (0 == ftm.fileid() || ftm.fseq()<1) {
+        if ( ws->getVolumeInfo().clientType != castor::tape::tapegateway::WRITE_TP &&
+                (0 == ftm.fileid() || ftm.fseq()<1)) {
           std::stringstream err;
           err << "Unexpected fileId in WriteFile::WriteFile (expected != 0, got: "
               << ftm.fileid() << ") or fSeq (expected >=1, got: "

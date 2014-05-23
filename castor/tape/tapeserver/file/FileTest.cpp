@@ -67,7 +67,7 @@ namespace UnitTests {
     std::string label;
     castor::tape::tapegateway::FileToRecallStruct fileToRecall;
     castor::tape::tapegateway::FileToMigrateStruct fileToMigrate;
-     castor::tape::tapeserver::client::ClientInterface::VolumeInfo volInfo;
+    castor::tape::tapeserver::client::ClientInterface::VolumeInfo volInfo;
   };
   
   TEST_F(castorTapeFileTest, throwsWhenLabelingANonEmptyTape) {
@@ -86,7 +86,7 @@ namespace UnitTests {
   TEST_F(castorTapeFileTest, throwsWhenUsingSessionTwice) {
     const std::string testString("Hello World!");
     castor::tape::tapeFile::WriteSession *ws;
-    ws = new castor::tape::tapeFile::WriteSession(d, label, 0, true);
+    ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true);
     ASSERT_EQ(ws->m_compressionEnabled, true);
     ASSERT_EQ(ws->m_vid.compare(label), 0);
     ASSERT_EQ(ws->isCorrupted(), false);
@@ -108,7 +108,7 @@ namespace UnitTests {
   
   TEST_F(castorTapeFileTest, throwsWhenWritingAnEmptyFileOrSessionCorrupted) {
     castor::tape::tapeFile::WriteSession *ws;
-    ws = new castor::tape::tapeFile::WriteSession(d, label, 0, true);
+    ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true);
     ASSERT_EQ(ws->isCorrupted(), false);
     {
       castor::tape::tapeFile::WriteFile wf(ws, fileToMigrate, block_size);
@@ -124,7 +124,7 @@ namespace UnitTests {
   TEST_F(castorTapeFileTest, throwsWhenClosingTwice) {
     const std::string testString("Hello World!");
     castor::tape::tapeFile::WriteSession *ws;
-    ws = new castor::tape::tapeFile::WriteSession(d, label, 0, true);
+    ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true);
     {
       castor::tape::tapeFile::WriteFile wf(ws, fileToMigrate, block_size);
       wf.write(testString.c_str(),testString.size());
@@ -137,7 +137,7 @@ namespace UnitTests {
   TEST_F(castorTapeFileTest, throwsWhenWrongBlockSizeOrEOF) {
     const std::string testString("Hello World!");
     castor::tape::tapeFile::WriteSession *ws;
-    ws = new castor::tape::tapeFile::WriteSession(d, label, 0, true);
+    ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true);
     {
       castor::tape::tapeFile::WriteFile wf(ws, fileToMigrate, block_size);
       wf.write(testString.c_str(),testString.size());
@@ -173,7 +173,7 @@ namespace UnitTests {
     //Write AULFile with Hello World
     const std::string testString("Hello World!");
     castor::tape::tapeFile::WriteSession *ws;
-    ws = new castor::tape::tapeFile::WriteSession(d, label, 0, true);
+    ws = new castor::tape::tapeFile::WriteSession(d, volInfo, 0, true);
     ASSERT_EQ(ws->m_compressionEnabled, true);
     ASSERT_EQ(ws->m_vid.compare(label), 0);
     ASSERT_EQ(ws->isCorrupted(), false);
