@@ -34,10 +34,7 @@
 
 namespace castor {
     namespace legacymsg{
-    class VmgrProxy;
-    class VdqmProxy;
     class TapeserverProxy;
-    class RmcProxy;
   };
   
 namespace tape {
@@ -62,7 +59,6 @@ public:
    * @param lc 
    */
   GlobalStatusReporter(legacymsg::TapeserverProxy& tapeserverProxy,
-    legacymsg::VdqmProxy& vdqmProxy,
     const tape::utils::TpconfigLine& configLine,
     const std::string &hostname,
     const castor::tape::tapeserver::client::ClientInterface::VolumeInfo &volume,
@@ -129,7 +125,6 @@ private:
    * outside world when we have to
    */
   legacymsg::TapeserverProxy& m_tapeserverProxy;
-  legacymsg::VdqmProxy& m_vdqmProxy;
   
   /**
    * Log context, copied because it is in a separated thread

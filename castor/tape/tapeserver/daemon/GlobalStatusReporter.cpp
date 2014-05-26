@@ -16,12 +16,11 @@ namespace daemon {
 //------------------------------------------------------------------------------  
 GlobalStatusReporter::GlobalStatusReporter(
   legacymsg::TapeserverProxy& tapeserverProxy,
-  legacymsg::VdqmProxy& vdqmProxy,
   const tape::utils::TpconfigLine& configLine,
   const std::string &hostname,
   const castor::tape::tapeserver::client::ClientInterface::VolumeInfo &volume,
   log::LogContext lc):
-  m_tapeserverProxy(tapeserverProxy),m_vdqmProxy(vdqmProxy),
+  m_tapeserverProxy(tapeserverProxy),
   m_lc(lc),
   m_server(hostname),
   m_unitName(configLine.unitName),
@@ -99,7 +98,6 @@ GlobalStatusReporter::GlobalStatusReporter(
     void GlobalStatusReporter::ReportTapeMountedForRead::
     execute(GlobalStatusReporter& parent){
       parent.m_tapeserverProxy.tapeMountedForRead(parent.m_volume, parent.m_unitName);
-      parent.m_vdqmProxy.tapeMounted(parent.m_server, parent.m_unitName, parent.m_dgn, parent.m_volume.vid, parent.m_sessionPid);
     }
 //------------------------------------------------------------------------------
 // ReportTapeUnmounted::execute
