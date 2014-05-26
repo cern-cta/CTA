@@ -155,8 +155,7 @@ void castor::tape::tapeserver::daemon::LabelSession::waitUntilDriveReady(castor:
   if(drive->isWriteProtected()) {
     m_log(LOG_ERR, "Failed to label the tape: drive is write protected",
       params);
-  }
-  
+  }  
   drive->waitUntilReady(600);
 }
 

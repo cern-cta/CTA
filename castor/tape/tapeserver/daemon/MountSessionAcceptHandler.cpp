@@ -211,7 +211,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
     log::Param params[] = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "Informing mount session of error", params);
 
-
+    
     // Inform the client there was an error
     try {
       legacymsg::writeTapeReplyMsg(m_netTimeout, connection.get(), 1, ex.getMessage().str());

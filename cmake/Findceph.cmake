@@ -21,27 +21,43 @@
 
 # - Find ceph
 #
-# CEPH_FOUND               - true if ceph has been found
 # RADOS_INCLUDE_DIR        - location of the ceph-devel header files for rados
 # RADOS_LIBS               - list of rados libraries, with full path
+#
+# Note that a dirty hack was introduced for SLC5, removing the dependency on ceph
+# and redirecting includes to a fake implementation present in the fakeradosstriper
+# directory of CASTOR. This should be dropped when SLC5 support goes.
+# The basic rule is : drop any line dealing with SLCVERSION
+
+if (EXISTS /etc/redhat-release)
+  file(STRINGS /etc/redhat-release SLC_VERSION REGEX "Scientific Linux CERN SLC release")
+  string(SUBSTRING ${SLC_VERSION} 34 1 SLC_VERSION)
+endif (EXISTS /etc/redhat-release)
+message (STATUS "SLCVERSION               = ${SLC_VERSION}")
 
 # Be silent if CEPH_INCLUDE_DIR is already cached
 if (RADOS_INCLUDE_DIR)
   set(RADOS_FIND_QUIETLY TRUE)
 endif (RADOS_INCLUDE_DIR)
 
-find_path (RADOS_INCLUDE_DIR NAMES radosstriper/libradosstriper.hpp
-  PATH_SUFFIXES include/radosstriper
-)
+if (SLC_VERSION AND SLC_VERSION LESS 6)
+  set(RADOS_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/fakeradosstriper)
+  set(RADOS_LIBS "")
+else (SLC_VERSION AND SLC_VERSION LESS 6)
+  find_path (RADOS_INCLUDE_DIR NAMES radosstriper/libradosstriper.hpp
+    PATH_SUFFIXES include/radosstriper
+  )
 
-find_library (RADOSSTRIPER_LIB radosstriper)
-find_library (RADOS_LIB rados)
-set(RADOS_LIBS ${RADOS_LIB} ${RADOSSTRIPER_LIB})
+  find_library (RADOSSTRIPER_LIB radosstriper)
+  find_library (RADOS_LIB rados)
+  set(RADOS_LIBS ${RADOS_LIB} ${RADOSSTRIPER_LIB})
 
-message (STATUS "RADOS_INCLUDE_DIR        = ${RADOS_INCLUDE_DIR}")
-message (STATUS "RADOS_LIBS               = ${RADOS_LIBS}")
+  message (STATUS "RADOS_INCLUDE_DIR        = ${RADOS_INCLUDE_DIR}")
+  message (STATUS "RADOS_LIBS               = ${RADOS_LIBS}")
 
-include (FindPackageHandleStandardArgs)
-find_package_handle_standard_args (ceph DEFAULT_MSG 
-  RADOS_INCLUDE_DIR
-  RADOS_LIBS)
+  include (FindPackageHandleStandardArgs)
+  find_package_handle_standard_args (ceph DEFAULT_MSG 
+    RADOS_INCLUDE_DIR
+    RADOS_LIBS)
+endif (SLC_VERSION AND SLC_VERSION LESS 6)
+

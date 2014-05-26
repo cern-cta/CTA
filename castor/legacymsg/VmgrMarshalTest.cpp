@@ -93,4 +93,58 @@ TEST_F(castor_legacymsg_VmgrMarshalTest, marshalVmgrTapeInfoRqstMsgBody) {
   }
 }
 
+TEST_F(castor_legacymsg_VmgrMarshalTest, marshalVmgrTapeMountedMsgBody) {
+  using namespace castor::legacymsg;
+  char buf[33]; // Expect message (header + body) to occupy exactly 40 bytes
+
+  // Marshal entire message (header + body)
+  {
+    VmgrTapeMountedMsgBody srcMsgBody;
+
+    srcMsgBody.uid = 1;
+    srcMsgBody.gid = 2;
+    castor::utils::copyString(srcMsgBody.vid, "333333");
+    srcMsgBody.mode = 4;
+    srcMsgBody.jid = 5;
+
+    size_t bufLen = sizeof(buf);
+    size_t totalLen = 0; // Total length of message (header + body)
+
+    ASSERT_NO_THROW(totalLen = marshal(buf, bufLen, srcMsgBody));
+
+    ASSERT_EQ((size_t)33, totalLen);
+  }
+
+  // Unmarshall message header
+  {
+    MessageHeader dstHeader;
+    const char *bufPtr = buf;
+    size_t bufLen = 12; // Length of the message header
+    ASSERT_NO_THROW(unmarshal(bufPtr, bufLen, dstHeader));
+    ASSERT_EQ(buf + 12, bufPtr);
+    ASSERT_EQ((size_t)0, bufLen);
+
+    ASSERT_EQ((uint32_t)VMGR_MAGIC2, dstHeader.magic);
+    ASSERT_EQ((uint32_t)VMGR_TPMOUNTED, dstHeader.reqType);
+    ASSERT_EQ((uint32_t)33, dstHeader.lenOrStatus);
+  }
+
+  // Unmarshall message body
+  {
+    VmgrTapeMountedMsgBody dstMsgBody;
+
+    const char *bufPtr = buf + 12; // Point at beginning of message body
+    size_t bufLen = 21; // Length of the message body
+    ASSERT_NO_THROW(unmarshal(bufPtr, bufLen, dstMsgBody));
+    ASSERT_EQ(buf + 33, bufPtr);
+    ASSERT_EQ((size_t)0, bufLen);
+
+    ASSERT_EQ((uint32_t)1, dstMsgBody.uid);
+    ASSERT_EQ((uint32_t)2, dstMsgBody.gid);
+    ASSERT_EQ(std::string("333333"), dstMsgBody.vid);
+    ASSERT_EQ((uint16_t)4, dstMsgBody.mode);
+    ASSERT_EQ((uint32_t)5, dstMsgBody.jid);
+  }
+}
+
 } // namespace unitTests

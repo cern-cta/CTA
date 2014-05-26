@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/legacymsg/VmgrProxy.hpp
+ *         castor/legacymsg/VmgrTapeMountedMsgBody.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,50 +17,20 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author Steven.Murray@cern.ch
+ *
+ * 
+ * @author dkruse@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "castor/legacymsg/VmgrTapeMountedMsgBody.hpp"
 
+#include <string.h>
 
-#include "castor/exception/Exception.hpp"
-
-#include <string>
-
-namespace castor {
-namespace legacymsg {
-
-/**
- * Proxy class representing the vmgr daemon.
- */
-class VmgrProxy {
-public:
-
-  /**
-   * Destructor.
-   */
-  virtual ~VmgrProxy() throw() = 0;
-
-  /**
-   * Notifies the vmgrd daemon that the specified tape has been mounted for read.
-   *
-   * @param vid The volume identifier of the mounted tape.
-   * @param
-   */
-  virtual void tapeMountedForRead(const std::string &vid)
-     = 0;
-
-  /**
-   * Notifies the vmgrd daemon that the specified tape has been mounted for read.
-   *
-   * @param vid The volume identifier of the mounted tape.
-   * @param
-   */
-  virtual void tapeMountedForWrite(const std::string &vid)
-     = 0;
-
-}; // class VmgrProxy
-
-} // namespace legacymsg
-} // namespace castor
-
+castor::legacymsg::VmgrTapeMountedMsgBody::VmgrTapeMountedMsgBody()
+  throw():
+  uid(0),
+  gid(0),
+  mode(0),
+  jid(0) {
+  memset(vid, '\0', sizeof(vid));
+}

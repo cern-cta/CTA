@@ -81,7 +81,8 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   VmgrProxyTcpIpFactory.cpp
   VmgrMarshal.cpp
   VmgrTapeInfoMsgBody.cpp
-  VmgrTapeInfoRqstMsgBody.cpp)
+  VmgrTapeInfoRqstMsgBody.cpp
+  VmgrTapeMountedMsgBody.cpp)
 add_library (castortapelegacymsg SHARED ${TAPE_LEGACYMSG_LIB_SRC_FILES})
 CastorSetLibraryVersions (castortapelegacymsg)
 target_link_libraries (castortapelegacymsg castorclient castorcommon

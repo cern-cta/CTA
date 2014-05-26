@@ -239,7 +239,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
     
     //deferencing configLine is safe, because if configLine were not valid, 
     //then findDrive would have return NULL and we would have not end up there
-    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, *configLine,m_hostname, m_volInfo,lc);
+    GlobalStatusReporter gsr(m_intialProcess, m_vdqm, *configLine,m_hostname,m_volInfo,lc);
     //we retrieved the detail from the client in execute, so at this point 
     //we can already report !
     gsr.gotReadMountDetailsFromClient();
