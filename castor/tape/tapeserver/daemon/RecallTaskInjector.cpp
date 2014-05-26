@@ -178,12 +178,16 @@ void RecallTaskInjector::WorkerThread::run()
    * m_diskWriter might still want some more task (the threshold could be crossed),
    * so we discard everything that might still be in the queue
    */
-  bool stillReading =true;
-  while(stillReading) {
-    Request req = _this.m_queue.pop();
-    if (req.end) stillReading = false;
-    LogContext::ScopedParam sp(_this.m_lc, Param("lastCall", req.lastCall));
-    _this.m_lc.log(LOG_INFO,"In RecallJobInjector::WorkerThread::run(): popping extra request");
+  if(_this.m_queue.size()>0) {
+    bool stillReading =true;
+    while(stillReading) {
+      Request req = _this.m_queue.pop();
+      if (req.end){
+        stillReading = false;
+      }
+      LogContext::ScopedParam sp(_this.m_lc, Param("lastCall", req.lastCall));
+      _this.m_lc.log(LOG_INFO,"In RecallJobInjector::WorkerThread::run(): popping extra request");
+    }
   }
 }
 

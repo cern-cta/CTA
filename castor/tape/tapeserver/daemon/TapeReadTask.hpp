@@ -132,7 +132,7 @@ public:
           mb->m_fSeq = m_fileToRecall->fseq();
           mb->m_fileid = m_fileToRecall->fileid();
         }
-        
+
         //mark the block failed and push it
         mb->markAsFailed();
         m_fifo.pushDataBlock(mb);
@@ -144,6 +144,18 @@ public:
     m_fifo.pushDataBlock(NULL);
     lc.log(LOG_DEBUG, "File read completed");
   }
+   
+   void reportErrorToDiskTask(){
+     MemBlock* mb =m_mm.getFreeBlock();
+     mb->m_fSeq = m_fileToRecall->fseq();
+     mb->m_fileid = m_fileToRecall->fileid();
+     
+     //mark the block failed and push it
+     mb->markAsFailed();
+     m_fifo.pushDataBlock(mb);
+     m_fifo.pushDataBlock(NULL);
+
+   }
 private:
   
   /** 

@@ -92,7 +92,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
   m_lc.log(LOG_INFO, "Starting DiskWriteWorkerThread");
   std::auto_ptr<DiskWriteTask>  task;
   while(1) {
-    task.reset(m_parentThreadPool. m_tasks.pop());
+    task.reset(m_parentThreadPool.m_tasks.pop());
     if (NULL!=task.get()) {
       if(false==task->execute(m_parentThreadPool.m_reporter,m_lc)) {
         ++m_parentThreadPool.m_failedWriteCount;
