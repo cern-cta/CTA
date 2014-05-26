@@ -229,7 +229,7 @@ int main(int argc, char *argv[]) {
       //-----------------
       // Start the server
       //-----------------
-      const bool runAsStagerSuperuser = false;
+      const bool runAsStagerSuperuser = true;
       server.start(runAsStagerSuperuser);
       
     } catch (castor::exception::Exception &e) {
