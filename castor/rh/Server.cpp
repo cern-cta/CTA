@@ -74,7 +74,8 @@ int main(int argc, char *argv[]) {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 16, 2, params);
 
     // start the server
-    server.start();
+    const bool runAsStagerSuperuser = false;
+    server.start(runAsStagerSuperuser);
     return 0;
 
   } catch (castor::exception::Exception& e) {

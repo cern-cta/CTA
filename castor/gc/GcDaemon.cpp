@@ -86,8 +86,8 @@ int main(int argc, char *argv[]) {
 
     // Start daemon as the stager superuser
     daemon.parseCommandLine(argc, argv);
-    daemon.runAsStagerSuperuser();
-    daemon.start();
+    const bool runAsStagerSuperuser = true;
+    daemon.start(runAsStagerSuperuser);
     return 0;
 
   } catch (castor::exception::Exception& e) {

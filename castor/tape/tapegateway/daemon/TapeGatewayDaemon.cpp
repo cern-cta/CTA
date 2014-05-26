@@ -126,8 +126,6 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
     }
   }
   parseCommandLine(argc, argv);
-  // run as stage st
-  runAsStagerSuperuser();
 
   // The order of the thread here match the lifecycle of the tape migration action
   // Migration mount ('A' is running as a DB job)
@@ -156,7 +154,8 @@ int castor::tape::tapegateway::TapeGatewayDaemon::exceptionThrowingMain(int argc
   addThreadPool(wPool.release());
 
   // start the daemon
-  start();
+  const bool runAsStagerSuperuser = true;
+  start(runAsStagerSuperuser);
   return 0;
 }
 
