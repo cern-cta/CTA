@@ -144,9 +144,26 @@ private:
    * @param state The state of the tape drive.
    * @return The translated value.
    */
-  uint16_t driveStateToStatEntryUp(const DriveCatalogue::DriveState state)
-    ;
+  uint16_t driveStateToStatEntryUp(const DriveCatalogue::DriveState state);
 
+  /**
+   * Translates the specified tape mode into the corresponding value for
+   * the mode field of TapeStatDriveEntry.
+   *
+   * @param mode The mode of the tape mounted in the drive
+   * @return The translated value.
+   */
+  uint16_t driveTapeModeToStatEntryMode(const castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeMode mode);
+  
+  /**
+   * Translates the specified tape event into the corresponding value for
+   * the tobemounted field of TapeStatDriveEntry.
+   *
+   * @param event The mounting/un-mounting event of the tape in the drive
+   * @return The translated value.
+   */
+  uint16_t driveTapeEventToStatEntryToBeMounted(const castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent event);
+  
   /**
    * Translates the specified tape-drive state into the corresponding value for
    * the asn field of TapeStatDriveEntry.

@@ -135,7 +135,7 @@ void castor::legacymsg::VmgrProxyTcpIp::writeTapeMountNotificationMsg(const int 
 //------------------------------------------------------------------------------
 // setDriveStatus
 //------------------------------------------------------------------------------
-void castor::legacymsg::VmgrProxyTcpIp::sendNotification(const legacymsg::VmgrTapeMountedMsgBody &body)  {
+void castor::legacymsg::VmgrProxyTcpIp::sendNotificationAndReceiveReply(const legacymsg::VmgrTapeMountedMsgBody &body)  {
   castor::utils::SmartFd fd(connectToVmgr());
   writeTapeMountNotificationMsg(fd.get(), body);
   readVmgrReply(fd.get());
@@ -154,7 +154,7 @@ void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForRead(const std::string &vi
     msg.mode = WRITE_DISABLE;
     castor::utils::copyString(msg.vid, vid.c_str());
 
-    sendNotification(msg);
+    sendNotificationAndReceiveReply(msg);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to notify the VMGR that the tape " << vid <<
@@ -176,7 +176,7 @@ void castor::legacymsg::VmgrProxyTcpIp::tapeMountedForWrite(const std::string &v
     msg.mode = WRITE_ENABLE;
     castor::utils::copyString(msg.vid, vid.c_str());
 
-    sendNotification(msg);
+    sendNotificationAndReceiveReply(msg);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to notify the VMGR that the tape " << vid <<

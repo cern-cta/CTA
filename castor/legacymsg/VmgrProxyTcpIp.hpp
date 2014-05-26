@@ -114,7 +114,7 @@ private:
    * 
    * @param body The message body containing information of the tape mounted
    */
-  void sendNotification(const legacymsg::VmgrTapeMountedMsgBody &body);
+  void sendNotificationAndReceiveReply(const legacymsg::VmgrTapeMountedMsgBody &body);
   
   /**
    * Reads a VMGR ack message from the specified connection.

@@ -170,7 +170,7 @@ TEST_F(castor_legacymsg_TapeMarshalTest, marshalTapeUpdateDriveRqstMsgBody) {
     ASSERT_EQ((size_t)0, bufLen);
 
     ASSERT_EQ((uint32_t)TPMAGIC, dstHeader.magic);
-    ASSERT_EQ((uint32_t)SETVID, dstHeader.reqType);
+    ASSERT_EQ((uint32_t)UPDDRIVE, dstHeader.reqType);
     ASSERT_EQ((uint32_t)37, dstHeader.lenOrStatus);
   }
 

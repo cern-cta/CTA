@@ -422,9 +422,11 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterMountSession
 
   std::auto_ptr<MountSessionAcceptHandler> mountSessionAcceptHandler;
   try {
+    std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
+    std::auto_ptr<legacymsg::VmgrProxy> vmgr(m_vmgrFactory.create());
     mountSessionAcceptHandler.reset(new MountSessionAcceptHandler(
       mountSessionListenSock.get(), m_reactor, m_log, m_driveCatalogue,
-      m_hostName));
+      m_hostName, *(vdqm.get()), *(vmgr.get())));
     mountSessionListenSock.release();
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;

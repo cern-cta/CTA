@@ -166,21 +166,74 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillTapeStatDriveEntr
       m_driveCatalogue.getDgn(unitName).c_str());
     const DriveCatalogue::DriveState driveState =
       m_driveCatalogue.getState(unitName);
+    const castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeMode mode = m_driveCatalogue.getTapeMode(unitName);
+    const castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent event = m_driveCatalogue.getTapeEvent(unitName);
     entry.up = driveStateToStatEntryUp(driveState);
     entry.asn = driveStateToStatEntryAsn(driveState);
     entry.asn_time = m_driveCatalogue.getAssignmentTime(unitName);
     castor::utils::copyString(entry.drive, unitName.c_str());
-    entry.mode = WRITE_DISABLE; // TODO: TapeUpdateDriveRqstMsgBody needs to be augmented
+    entry.mode = driveTapeModeToStatEntryMode(mode);
     castor::utils::copyString(entry.lblcode, "aul"); // only aul format is used
-    entry.tobemounted = 0; // TODO: put 1 if the tape is mounting 0 otherwise
+    entry.tobemounted = driveTapeEventToStatEntryToBeMounted(event);
     castor::utils::copyString(entry.vid, m_driveCatalogue.getVid(unitName).c_str());
     castor::utils::copyString(entry.vsn, entry.vid);
-    entry.cfseq = 0; // the fseq is ignored by tpstat, so we leave it empty
+    entry.cfseq = 0; // the fseq is ignored by tpstat, so we leave it set to 0
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to fill TapeStatDriveEntry: " <<
       ne.getMessage().str();
     throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// driveTapeModeToStatEntryMode
+//------------------------------------------------------------------------------
+uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveTapeModeToStatEntryMode(
+  const castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeMode mode)  {
+  switch(mode) {
+    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READ:
+      return WRITE_DISABLE;
+      break;
+    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READWRITE:
+      return WRITE_ENABLE;
+      break;
+    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_DUMP:
+      return WRITE_DISABLE;
+      break;
+    default:
+      {
+        castor::exception::Exception ex;
+        ex.getMessage() <<
+          "Failed to translate drive tape mode to TapeStatDriveEntry.mode"
+          ": Unknown tape mode: " << mode;
+        throw ex;
+      }
+  }
+}
+
+//------------------------------------------------------------------------------
+// driveTapeEventToStatEntryToBeMounted
+//------------------------------------------------------------------------------
+uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveTapeEventToStatEntryToBeMounted(
+  const castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent event)  {
+  switch(event) {
+    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNT_STARTED:
+      return 1; // "to be mounted"
+      break;
+    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED:
+    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNT_STARTED:
+    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNTED:
+      return 0; // NOT "to be mounted"
+      break;
+    default:
+      {
+        castor::exception::Exception ex;
+        ex.getMessage() <<
+          "Failed to translate drive tape mode to TapeStatDriveEntry.ToBeMounted"
+          ": Unknown tape event: " << event;
+        throw ex;
+      }
   }
 }
 

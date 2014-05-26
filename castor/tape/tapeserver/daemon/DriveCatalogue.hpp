@@ -29,6 +29,8 @@
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/tape/utils/TpconfigLine.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
+#include "castor/tape/tapeserver/client/ClientProxy.hpp"
+#include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 
 #include <map>
 #include <string>
@@ -272,6 +274,20 @@ public:
    * @param unitName The unit name of the tape drive.
    */
   const std::string &getDevType(const std::string &unitName) const;
+  
+  /**
+   * Returns the last tape mode of the tape mounted on this drive
+   *
+   * @param unitName The unit name of the tape drive.
+   */
+  castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeMode getTapeMode(const std::string &unitName) const;
+  
+  /**
+   * Returns the last tape event related to this drive
+   *
+   * @param unitName The unit name of the tape drive.
+   */
+  castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent getTapeEvent(const std::string &unitName) const;
 
   /**
    * Releases and returns the file descriptor of the connection with the
@@ -469,7 +485,7 @@ public:
    * @param vid Volume ID of the tape mounted
    * @param unitName Name of the drive
    */
-  void updateVidAssignment(const std::string &vid, const std::string &unitName) ;
+  void updateDriveVolumeInfo(const legacymsg::TapeUpdateDriveRqstMsgBody &body) ;
 
 private:
 
@@ -477,6 +493,17 @@ private:
    * Structure used to store a tape drive in the catalogue.
    */
   struct DriveEntry {
+    
+    /**
+     * Are we mounting for read, write (read/write), or dump
+     */
+    castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeMode mode;
+    
+    /**
+     * The status of the tape with respect to the drive mount and unmount operations
+     */
+    castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent event;
+    
     /**
      * The device group name of the tape drive as defined in
      * /etc/castor/TPCONFIG.
@@ -560,6 +587,8 @@ private:
      * variables of the nested vdqm job.
      */
     DriveEntry() throw():
+      mode(castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_NONE),
+      event(castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_NONE),
       sessionType(SESSION_TYPE_NONE),
       state(DRIVE_STATE_INIT),
       labelCmdConnection(-1) {

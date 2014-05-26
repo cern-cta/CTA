@@ -51,12 +51,16 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::MountSessionAcceptHandler::MountSessionAcceptHandler(
   const int fd, io::PollReactor &reactor, log::Logger &log,
-  DriveCatalogue &driveCatalogue, const std::string &hostName) throw():
+  DriveCatalogue &driveCatalogue, const std::string &hostName,
+  castor::legacymsg::VdqmProxy & vdqm,
+  castor::legacymsg::VmgrProxy & vmgr) throw():
   m_fd(fd),
   m_reactor(reactor),
   m_log(log),
   m_driveCatalogue(driveCatalogue),
   m_hostName(hostName),
+  m_vdqm(vdqm),
+  m_vmgr(vmgr),
   m_netTimeout(10) {
 }
 
@@ -139,9 +143,9 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::checkHandleEve
 }
 
 //------------------------------------------------------------------------------
-// logTapeConfigJobReception
+// logUpdateDriveJobReception
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::logSetVidJobReception(
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::logUpdateDriveJobReception(
   const legacymsg::TapeUpdateDriveRqstMsgBody &job) const throw() {
   log::Param params[] = {
     log::Param("drive", job.drive),
@@ -170,9 +174,9 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
   const legacymsg::MessageHeader &header, const int clientConnection) {
 
   switch(header.reqType) {
-  case SETVID:
+  case UPDDRIVE:
     // handleIncomingSetVidJob takes ownership of the client connection
-    handleIncomingSetVidJob(header, clientConnection);
+    handleIncomingUpdateDriveJob(header, clientConnection);
     break;
   case TPLABEL:
     // handleIncomingSetVidJob takes ownership of the client connection
@@ -185,25 +189,54 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
       close(clientConnection);
 
       castor::exception::Exception ex;
-      ex.getMessage() << "Unknown request type: " << header.reqType << ". Expected: " << SETVID << "(SETVID)";
+      ex.getMessage() << "Unknown request type: " << header.reqType << ".";
       throw ex;
     }
   }
 }
 
 //------------------------------------------------------------------------------
-// handleIncomingSetVidJob
+// handleIncomingUpdateDriveJob
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingSetVidJob(const legacymsg::MessageHeader &header, const int clientConnection) {
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingUpdateDriveJob(const legacymsg::MessageHeader &header, const int clientConnection) {
   castor::utils::SmartFd connection(clientConnection);
   const char *const task = "handle incoming set vid job";
   try {
     // Read message body
     const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
-    const legacymsg::TapeUpdateDriveRqstMsgBody body = readSetVidMsgBody(connection.get(), bodyLen);
-    logSetVidJobReception(body);
-  
-    m_driveCatalogue.updateVidAssignment(body.vid, body.drive);
+    const legacymsg::TapeUpdateDriveRqstMsgBody body = readTapeUpdateDriveRqstMsgBody(connection.get(), bodyLen);
+    logUpdateDriveJobReception(body);  
+    
+    m_driveCatalogue.updateDriveVolumeInfo(body);
+    
+    switch(body.event) {
+      case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNT_STARTED:
+        break;
+      case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED:
+        switch(body.mode) {
+          case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READ:
+            m_vmgr.tapeMountedForRead(body.vid);
+            break;
+          case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READWRITE:
+            m_vmgr.tapeMountedForWrite(body.vid);
+            break;
+          case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_DUMP:
+            m_vmgr.tapeMountedForRead(body.vid);
+            break;
+          default:
+            break;
+        }
+        break;
+      case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNT_STARTED:
+        break;
+      case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNTED:
+        break;
+      default:
+        break;
+    }
+    
+    
+    
     // 0 as return code for the tape config command, as in: "all went fine"
     legacymsg::writeTapeReplyMsg(m_netTimeout, connection.get(), 0, "");
     close(connection.release());
@@ -302,10 +335,10 @@ castor::legacymsg::MessageHeader
 }
 
 //------------------------------------------------------------------------------
-// readSetVidMsgBody
+// readTapeUpdateDriveRqstMsgBody
 //------------------------------------------------------------------------------
 castor::legacymsg::TapeUpdateDriveRqstMsgBody
-  castor::tape::tapeserver::daemon::MountSessionAcceptHandler::readSetVidMsgBody(const int connection,
+  castor::tape::tapeserver::daemon::MountSessionAcceptHandler::readTapeUpdateDriveRqstMsgBody(const int connection,
     const uint32_t len)
      {
   char buf[REQBUFSZ];
