@@ -74,7 +74,7 @@ int main(int argc, char *argv[]) {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_SYSTEM, 16, 2, params);
 
     // start the server
-    const bool runAsStagerSuperuser = false;
+    const bool runAsStagerSuperuser = true;
     server.start(runAsStagerSuperuser);
     return 0;
 
@@ -300,9 +300,11 @@ void castor::rh::Server::parseCommandLine(int argc, char *argv[])
 }
 
 //------------------------------------------------------------------------------
-// Desstructor
+// Destructor
 //------------------------------------------------------------------------------
 castor::rh::Server::~Server() throw() {
-  dlclose(m_dlopenHandle);
+  if(NULL != m_dlopenHandle) {
+    dlclose(m_dlopenHandle);
+  }
 }
 
