@@ -155,8 +155,8 @@ void castor::server::MultiThreadedDaemon::addThreadPool(
 //------------------------------------------------------------------------------
 // start
 //------------------------------------------------------------------------------
-void castor::server::MultiThreadedDaemon::start()
-   {
+void castor::server::MultiThreadedDaemon::start(
+  const bool runAsStagerSuperuser) {
   if (getForeground()) {
     m_stdOut << "Starting " << getServerName() << std::endl;
   }
@@ -168,7 +168,7 @@ void castor::server::MultiThreadedDaemon::start()
   }
 
   // Daemonize if not configiured to run in the foreground
-  daemonizeIfNotRunInForeground();
+  daemonizeIfNotRunInForeground(runAsStagerSuperuser);
 
   // Initialize CASTOR Thread interface
   Cthread_init();
