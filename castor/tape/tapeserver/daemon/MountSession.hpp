@@ -111,7 +111,7 @@ namespace daemon {
             castor::legacymsg::TapeserverProxy & initialProcess,
             const CastorConf & castorConf);
     /** The only method. It will execute (like a task, that it is) */
-    void execute() ;
+    int execute() ;
     /** Temporary method used for debugging while building the session class */
     std::string getVid() { return m_volInfo.vid; }
   private:
@@ -131,9 +131,9 @@ namespace daemon {
     utils::TpconfigLines::const_iterator findConfigLine(LogContext & lc) const;
     
     /** sub-part of execute for the read sessions */
-    void executeRead(LogContext & lc);
+    int executeRead(LogContext & lc);
     /** sub-part of execute for a write session */
-    void executeWrite(LogContext & lc);
+    int executeWrite(LogContext & lc);
     /** sub-part of execute for a dump session */
     void executeDump(LogContext & lc);
     /** Reference to the VdqmProxy, allowing reporting of the drive status. It

@@ -104,6 +104,9 @@ private:
       m_this.m_gsr.finish();
       }
       catch(const castor::exception::Exception& ex){
+        //set it to -1 to notify something failed during the cleaning 
+        m_this.m_hardarwareStatus = -1;
+        
         castor::log::ScopedParamContainer scoped(m_this.m_logContext);
         scoped.add("exception_message", ex.getMessageValue())
         .add("exception_code",ex.code());
