@@ -174,7 +174,8 @@ void  castor::tape::rmc::RmcDaemon::exceptionThrowingMain(
   const int argc, char **const argv)  {
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
-  daemonizeIfNotRunInForeground();
+  const bool runAsStagerSuperuser = false;
+  daemonizeIfNotRunInForeground(runAsStagerSuperuser);
   blockSignals();
   setUpReactor();
   mainEventLoop();

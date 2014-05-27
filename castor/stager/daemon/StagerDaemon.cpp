@@ -128,7 +128,8 @@ int main(int argc, char* argv[]){
 
     stagerDaemon.parseCommandLine(argc, argv);
 
-    stagerDaemon.start();
+    const bool runAsStagerSuperuser = true;
+    stagerDaemon.start(runAsStagerSuperuser);
 
   } catch (castor::exception::Exception& e) {
     std::cerr << "Caught exception: "

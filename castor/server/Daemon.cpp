@@ -41,8 +41,7 @@ castor::server::Daemon::Daemon(std::ostream &stdOut, std::ostream &stdErr,
   m_stdErr(stdErr),
   m_log(log),
   m_foreground(false),
-  m_commandLineHasBeenParsed(false),
-  m_runAsStagerSuperuser(false) {
+  m_commandLineHasBeenParsed(false) {
 }
 
 //------------------------------------------------------------------------------
@@ -126,13 +125,6 @@ const std::string &castor::server::Daemon::getServerName() const throw() {
 }
 
 //------------------------------------------------------------------------------
-// runAsStagerSuperuser
-//------------------------------------------------------------------------------
-void castor::server::Daemon::runAsStagerSuperuser() throw() {
-  m_runAsStagerSuperuser = true;
-}
-
-//------------------------------------------------------------------------------
 // getForeground
 //------------------------------------------------------------------------------
 bool castor::server::Daemon::getForeground() const
@@ -191,8 +183,8 @@ void castor::server::Daemon::dlfInit(castor::dlf::Message messages[])
 //------------------------------------------------------------------------------
 // daemonizeIfNotRunInForeground
 //------------------------------------------------------------------------------
-void castor::server::Daemon::daemonizeIfNotRunInForeground()
-   {
+void castor::server::Daemon::daemonizeIfNotRunInForeground(
+  const bool runAsStagerSuperuser) {
   // Do nothing if already a daemon
   if (1 == getppid())  {
     return;
@@ -236,7 +228,7 @@ void castor::server::Daemon::daemonizeIfNotRunInForeground()
   } // if (!m_foreground)
 
   // Change the user of the daemon process to the Castor superuser if requested
-  if (m_runAsStagerSuperuser) {
+  if (runAsStagerSuperuser) {
     castor::System::switchToCastorSuperuser();
   }
 

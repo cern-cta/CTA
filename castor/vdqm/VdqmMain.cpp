@@ -229,8 +229,8 @@ int main(int argc, char *argv[]) {
       //-----------------
       // Start the server
       //-----------------
-
-      server.start();
+      const bool runAsStagerSuperuser = true;
+      server.start(runAsStagerSuperuser);
       
     } catch (castor::exception::Exception &e) {
       std::cerr << "Failed to start VDQM server : "

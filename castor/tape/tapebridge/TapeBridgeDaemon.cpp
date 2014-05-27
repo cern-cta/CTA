@@ -196,7 +196,8 @@ int castor::tape::tapebridge::TapeBridgeDaemon::exceptionThrowingMain(
     driveNames.size());
 
   // Start the threads
-  start();
+  const bool runAsStagerSuperuser = true;
+  start(runAsStagerSuperuser);
 
   return 0;
 }

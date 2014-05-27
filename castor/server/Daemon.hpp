@@ -76,14 +76,6 @@ public:
   const std::string &getServerName() const throw();
 
   /**
-   * Sets the runAsStagerSuperuser flag to true.
-   *
-   * The default value of the runAsStagerSuperuser flag at construction time is
-   * false.
-   */
-  void runAsStagerSuperuser() throw();
-
-  /**
    * Returns true if the daemon is configured to run in the foreground.
    */
   bool getForeground() const ;
@@ -105,20 +97,22 @@ protected:
    * Does not create the DLF thread, this is created after daemonization
    * @param messages the messages to be passed to dlf_init
    */
-  void dlfInit(castor::dlf::Message messages[])
-    ;
+  void dlfInit(castor::dlf::Message messages[]);
 
   /**
    * Daemonizes the daemon if it has not been configured to run in the
    * foreground.
    *
-   * Please make sure that the setForeground() and runAsStagerSuperuser()
-   * methods have been called as appropriate before this method is called.
-   * This method takes into account whether the dameon should run in foregreound
-   * or background mode (m_foreground) and whether or not the user of daemon
-   * should be changed to the stager superuser (m_runAsStagerSuperuser).
+   * Please make sure that the setForeground() method has been called as
+   * appropriate before this method is called.
+   *
+   * This method takes into account whether or not the dameon should run in
+   * foregreound or background mode (m_foreground).
+   *
+   * @param runAsStagerSuperuser Set to true if the user ID and group ID of the
+   * daemon should be set to those of the stager superuser.
    */
-  void daemonizeIfNotRunInForeground() ;
+  void daemonizeIfNotRunInForeground(const bool runAsStagerSuperuser);
 
   /**
    * Sends a notification message to the given host,port
@@ -158,13 +152,6 @@ private:
    * True if the command-line has been parsed.
    */
   bool m_commandLineHasBeenParsed;
-
-  /**
-   * Flag indicating whether the server should
-   * change identity at startup and run as STAGERSUPERUSER
-   * (normally defined as stage:st)
-   */
-  bool m_runAsStagerSuperuser;
 
 }; // class Daemon
 

@@ -66,8 +66,7 @@ public:
    * @param nameIn the name initial
    * @throw castor::exception::Exception in case it was not found
    */
-  BaseThreadPool* getThreadPool(const char nameIn)
-    ;
+  BaseThreadPool* getThreadPool(const char nameIn);
 
   /**
    * Calls resetMetrics on all registered thread pools
@@ -83,8 +82,11 @@ public:
 
   /**
    * Starts all the thread pools
+   *
+   * @param runAsStagerSuperuser Set to true if the user ID and group ID of the
+   * daemon should be set to those of the stager superuser.
    */
-  void start() ;
+  void start(const bool runAsStagerSuperuser);
 
   /**
    * Adds a dedicated UDP thread pool for getting wakeup notifications
@@ -100,8 +102,7 @@ public:
    * @param argc The size of the command-line vector.
    * @param argv The command-line vector.
    */
-  virtual void parseCommandLine(int argc, char *argv[])
-    ;
+  virtual void parseCommandLine(int argc, char *argv[]);
 
 protected:
 
