@@ -25,6 +25,7 @@
 
 // Include files
 #include "castor/gc/DeletionThread.hpp"
+#include "castor/gc/CephGlobals.hpp"
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/stager/IGCSvc.hpp"
@@ -272,40 +273,6 @@ void castor::gc::DeletionThread::run(void*) {
     castor::dlf::dlf_writep(nullCuuid, DLF_LVL_DEBUG, 9, 1, params2);
     sleep(m_interval);
   } // End of loop
-}
-
-/// global variables holding stripers for each ceph pool
-std::map<std::string, libradosstriper::RadosStriper*> g_radosStripers;
-
-static libradosstriper::RadosStriper* getRadosStriper(std::string pool) {
-  std::map<std::string, libradosstriper::RadosStriper*>::iterator it =
-    g_radosStripers.find(pool);
-  if (it == g_radosStripers.end()) {
-    // we need to create a new radosStriper
-    librados::Rados cluster;
-    int rc = cluster.init(0);
-    if (rc) return 0;
-    rc = cluster.conf_read_file(NULL);
-    if (rc) {
-      cluster.shutdown();
-      return 0;
-    }
-    cluster.conf_parse_env(NULL);
-    rc = cluster.connect();
-    if (rc) {
-      cluster.shutdown();
-      return 0;
-    }
-    librados::IoCtx ioctx;
-    rc = cluster.ioctx_create(pool.c_str(), ioctx);
-    if (rc != 0) return 0;
-    libradosstriper::RadosStriper *newStriper = new libradosstriper::RadosStriper;
-    rc = libradosstriper::RadosStriper::striper_create(ioctx, newStriper);
-    if (rc != 0) return 0;
-    it = g_radosStripers.insert(std::pair<std::string, libradosstriper::RadosStriper*>
-                                (pool, newStriper)).first;
-  }
-  return it->second;
 }
 
 //-----------------------------------------------------------------------------

@@ -100,59 +100,62 @@ namespace castor {
       u_signed64 fileIdFromFilePath(std::string filePath);
 
       /**
-       * gets a list of files open for write in the given mountPoint
-       * @param mountPoint the mountPoint to be considered
-       * @throw exception in case of error
+       * synchronizes all fileSystems
        */
-      std::set<std::string> getFilesBeingWrittenTo(const std::string &mountPoint);
-
+      void syncFileSystems();
 
       /**
-       * Synchronizes a given file
-       * @param mountPoint the mountPoint or DataPool concerned
+       * synchronizes all dataPools
+       */
+      void syncDataPools();
+
+      /**
+       * Synchronizes a given local file
        * @param path the path where the file lies inside the mountPoint,
        *             or empty string for DataPools
        * @param fileName the file name
        * @param paths the differents "chunks", that is list of files, sorted by namespace
        * @return whether synchronization took place
        */
-      bool syncFile(const std::string &mountPoint,
-                    const std::string &path,
-                    const char* fileName,
-                    std::map<std::string, std::map<u_signed64, std::string> > &paths);
+      bool syncLocalFile(const std::string &path,
+                         const char* fileName,
+                         std::map<std::string, std::map<u_signed64, std::string> > &paths);
+
+      /**
+       * Synchronizes a given ceph file
+       * @param fileName the name of the file
+       * @param paths the differents "chunks", that is list of files, sorted by namespace
+       * @return whether synchronization took place
+       */
+      bool syncCephFile(const std::string fileName,
+                        std::map<std::string, std::map<u_signed64, std::string> > &paths);
 
       /**
        * Synchronizes all chunks present in paths
-       * @param mountPoint the mountPoint or DataPool concerned
        * @param paths the differents "chunks", that is list of files, sorted by namespace
        */
-      void syncAllChunks(const std::string &mountPoint,
-                         std::map<std::string, std::map<u_signed64, std::string> > &paths);
+      void syncAllChunks(std::map<std::string, std::map<u_signed64, std::string> > &paths);
 
       /**
        * Checks whether to synchronize a chunk for the given nameserver
        * and does it if needed
        * @param nameServer the nameServer concerned
        * @param paths the differents "chunks", that is list of files, sorted by namespace
-       * @param mountPoint the mountPoint or DataPool concerned
        * @param minimumNbFiles the minimumNbFiles we should have in the chunk to
        *        got for synchronization
        * @return whether synchronization took place
        */
       bool checkAndSyncChunk(const std::string &nameServer,
                              std::map<std::string, std::map<u_signed64, std::string> > &paths,
-                             const std::string &mountPoint,
                              u_signed64 minimumNbFiles);
 
       /**
        * Synchronizes a list of files from a given filesystem with the nameserver and stager catalog
        * @param nameServer the nameserver to use
        * @param paths a map giving the full file name for each diskCopyId to be checked
-       * @param mountPoint the mountPoint of the filesystem on which the files reside
        */
       void synchronizeFiles(const std::string &nameServer,
-                            const std::map<u_signed64, std::string> &paths,
-                            const std::string &mountPoint)
+                            const std::map<u_signed64, std::string> &paths)
         throw();
 
     private:
@@ -163,6 +166,9 @@ namespace castor {
       unsigned int m_chunkInterval;
       /// the size of a chunk, aka the maximum number of files to synchronize in one go
       unsigned int m_chunkSize;
+      /// the grace period for new files. That is the period during which they are not
+      /// considered for synchronization
+      unsigned int m_gracePeriod;
       /// Whether stager synchronization should be disabled;
       bool m_disableStagerSync;
 
