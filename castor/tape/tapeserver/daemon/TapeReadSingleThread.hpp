@@ -86,10 +86,10 @@ private:
       try{
       // Do the final cleanup
       m_this.m_drive.unloadTape();
-      m_this.m_logContext.log(LOG_INFO, "TapeUnloaded");
+      m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread : Tape unloaded");
       // And return the tape to the library
       m_this.m_rmc.unmountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot);
-      m_this.m_logContext.log(LOG_INFO, "unmountTape");
+      m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread : tape unmounted");
       m_this.m_gsr.tapeUnmounted();
       
       // We now acknowledge to the task injector that read reached the end. There
@@ -97,7 +97,8 @@ private:
       m_this.m_taskInjector->finish();
       
       //then we log/notify
-      m_this.m_logContext.log(LOG_INFO, "Finishing Tape Read Thread. Just signalled task injector of the end");
+      m_this.m_logContext.log(LOG_INFO, "Finishing Tape Read Thread."
+      " Just signaled task injector of the end");
     
       //then we terminate the global status reporter
       m_this.m_gsr.finish();
@@ -106,7 +107,7 @@ private:
         castor::log::ScopedParamContainer scoped(m_this.m_logContext);
         scoped.add("exception_message", ex.getMessageValue())
         .add("exception_code",ex.code());
-        m_this.m_logContext.log(LOG_ERR, "Ex in TapeCleaming");
+        m_this.m_logContext.log(LOG_ERR, "Exception in TapeReadSingleThread-TapeCleaning");
       }
     }
   };
@@ -147,7 +148,7 @@ private:
       throw;
     }
   }
-    void waitForDrive(){
+  void waitForDrive(){
     try {
       //wait for drive to be ready
       m_drive.waitUntilReady(600);
@@ -167,21 +168,21 @@ private:
      * of the object through auto_ptr's copy constructor
      * @return 
      */
-    std::auto_ptr<castor::tape::tapeFile::ReadSession> openReadSession(){
-      try{
+  std::auto_ptr<castor::tape::tapeFile::ReadSession> openReadSession(){
+    try{
       std::auto_ptr<castor::tape::tapeFile::ReadSession> rs(
-        new castor::tape::tapeFile::ReadSession(m_drive,m_volInfo));
+      new castor::tape::tapeFile::ReadSession(m_drive,m_volInfo));
       m_logContext.log(LOG_DEBUG, "Created tapeFile::ReadSession with success");
       
-        return rs;
-      }catch(castor::exception::Exception & ex){
+      return rs;
+    }catch(castor::exception::Exception & ex){
         castor::log::ScopedParamContainer scoped(m_logContext); 
         scoped.add("exception_message", ex.getMessageValue())
         .add("exception_code",ex.code());
         m_logContext.log(LOG_ERR, "Failed to tapeFile::ReadSession");
-      throw;
-      }
+        throw;
     }
+  }
   
   /**
    * This function is from Thread, it is the function that will do all the job
