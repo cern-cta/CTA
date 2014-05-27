@@ -226,6 +226,8 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
           case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_DUMP:
             m_vmgr.tapeMountedForRead(body.vid);
             break;
+          case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_NONE:
+            break;
           default:
             castor::exception::Exception ex;
             ex.getMessage() << "Unknown tape mode: " << body.mode;
@@ -237,6 +239,8 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
       case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNT_STARTED:
         break;
       case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNTED:
+        break;
+      case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_NONE:
         break;
       default:
         castor::exception::Exception ex;

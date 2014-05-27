@@ -201,6 +201,9 @@ uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveTapeModeToSt
     case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_DUMP:
       return WRITE_DISABLE;
       break;
+    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_NONE:
+      return WRITE_DISABLE;
+      break;
     default:
       {
         castor::exception::Exception ex;
@@ -224,6 +227,7 @@ uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveTapeEventToS
     case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED:
     case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNT_STARTED:
     case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNTED:
+    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_NONE:
       return 0; // NOT "to be mounted"
       break;
     default:
