@@ -242,7 +242,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & l
     GlobalStatusReporter gsr(m_intialProcess, *configLine,m_hostname,m_volInfo,lc);
     //we retrieved the detail from the client in execute, so at this point 
     //we can already report !
-    gsr.gotReadMountDetailsFromClient();
+    gsr.gotWriteMountDetailsFromClient();
     
     MigrationMemoryManager mm(m_castorConf.rtcopydNbBufs,
         m_castorConf.rtcopydBufsz,lc);

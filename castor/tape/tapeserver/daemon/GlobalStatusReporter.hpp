@@ -43,7 +43,7 @@ namespace tape {
   }
 namespace tapeserver {
 namespace daemon {
- 
+
 class GlobalStatusReporter : private castor::tape::threading::Thread {
 
 public:
@@ -87,17 +87,31 @@ public:
    */
   void tapeMountedForRead();
   
+  void tapeMountedForWrite();
+  void gotWriteMountDetailsFromClient();
+  
   //start and wait for thread to finish
   void startThreads();
   void waitThreads();
 private:
+  /*
+  This internal mechanism could (should ?) be easily changed to a queue 
+   * of {std/boost}::function coupled with bind. For instance, tapeMountedForWrite
+   * should look like 
+   *   m_fifo.push(bind(m_tapeserverProxy,&tapeMountedForWrite,args...))
+   * and execute
+   *  while(1)
+   *   (m_fifo.push())();
+   * But no tr1 neither boost, so, another time ...
+  */
+  
   class Report {
   public:
     virtual ~Report(){}
     virtual void execute(GlobalStatusReporter&)=0;
   };
 
-  class ReportGotDetailsFromClient : public Report {
+  class ReportGotReadDetailsFromClient : public Report {
   public:
     virtual void execute(GlobalStatusReporter&);
   };
@@ -106,6 +120,14 @@ private:
     virtual void execute(GlobalStatusReporter&);
   };
   class ReportTapeUnmounted : public Report {
+  public:
+    virtual void execute(GlobalStatusReporter&);
+  };
+  class ReportTapeMounterForWrite : public Report {
+  public:
+    virtual void execute(GlobalStatusReporter&);
+  };
+  class ReportGotWriteMountDetailsFromClient : public Report {
   public:
     virtual void execute(GlobalStatusReporter&);
   };
@@ -130,7 +152,7 @@ private:
    * Log context, copied because it is in a separated thread
    */
   log::LogContext m_lc;
-  
+
   const std::string m_server;
   const std::string m_unitName;
   const std::string m_dgn;

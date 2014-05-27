@@ -1,7 +1,4 @@
-#include "castor/legacymsg/VdqmProxy.hpp"
-#include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/legacymsg/TapeserverProxy.hpp"
-#include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
 #include "castor/tape/utils/TpconfigLine.hpp"
 #include "castor/log/LogContext.hpp"
@@ -50,12 +47,22 @@ GlobalStatusReporter::GlobalStatusReporter(
     wait();
   }
   
+  void GlobalStatusReporter::tapeMountedForWrite(){
+    m_fifo.push(
+    new ReportTapeMounterForWrite()
+    );
+  }
+  void GlobalStatusReporter::gotWriteMountDetailsFromClient(){
+    m_fifo.push(
+    new ReportGotWriteMountDetailsFromClient()
+    );
+  }
 //------------------------------------------------------------------------------
 //gotReadMountDetailsFromClient
 //------------------------------------------------------------------------------  
    void GlobalStatusReporter::gotReadMountDetailsFromClient(){
      m_fifo.push(
-     new ReportGotDetailsFromClient()
+     new ReportGotReadDetailsFromClient()
      );
    }
 //------------------------------------------------------------------------------
@@ -85,7 +92,7 @@ GlobalStatusReporter::GlobalStatusReporter(
 //------------------------------------------------------------------------------
 // ReportGotDetailsFromClient::execute
 //------------------------------------------------------------------------------
-    void GlobalStatusReporter::ReportGotDetailsFromClient::execute(
+    void GlobalStatusReporter::ReportGotReadDetailsFromClient::execute(
     GlobalStatusReporter& parent){
       log::ScopedParamContainer sp(parent.m_lc);
       sp.add(parent.m_unitName, "unitName").add(parent.m_volume.vid, "vid");
@@ -105,6 +112,20 @@ GlobalStatusReporter::GlobalStatusReporter(
     void GlobalStatusReporter::ReportTapeUnmounted::
     execute(GlobalStatusReporter& parent){
       parent.m_tapeserverProxy.tapeUnmounted(parent.m_volume, parent.m_unitName);
+    }
+//------------------------------------------------------------------------------
+// ReportTapeMounterForWrite::execute
+//------------------------------------------------------------------------------         
+    void GlobalStatusReporter::ReportTapeMounterForWrite::
+    execute(GlobalStatusReporter& parent){
+      parent.m_tapeserverProxy.tapeMountedForWrite(parent.m_volume, parent.m_unitName);
+    }
+    //------------------------------------------------------------------------------
+// ReportTapeUnmounted::execute
+//------------------------------------------------------------------------------         
+    void GlobalStatusReporter::ReportGotWriteMountDetailsFromClient::
+    execute(GlobalStatusReporter& parent){
+      parent.m_tapeserverProxy.gotWriteMountDetailsFromClient(parent.m_volume, parent.m_unitName);
     }
 }}}}
 
