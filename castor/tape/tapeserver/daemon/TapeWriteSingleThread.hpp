@@ -76,6 +76,36 @@ public:
     m_lastFseq=lastFseq;
   }
 private:
+    class TapeCleaning{
+    TapeWriteSingleThread& m_this;
+  public:
+    TapeCleaning(TapeWriteSingleThread& parent):m_this(parent){}
+    ~TapeCleaning(){
+      try{
+      // Do the final cleanup
+      m_this.m_drive.unloadTape();
+      m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread : Tape unloaded");
+      // And return the tape to the library
+      m_this.m_rmc.unmountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot);
+      m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread : tape unmounted");
+      m_this.m_gsr.tapeUnmounted();
+        
+      //then we log/notify
+      m_this.m_logContext.log(LOG_INFO, "Finishing TapeWriteSingleThread"
+      " Just signaled task injector of the end");
+    
+      //then we terminate the global status reporter
+      m_this.m_gsr.finish();
+      }
+      catch(const castor::exception::Exception& ex){
+        castor::log::ScopedParamContainer scoped(m_this.m_logContext);
+        scoped.add("exception_message", ex.getMessageValue())
+        .add("exception_code",ex.code());
+        m_this.m_logContext.log(LOG_ERR, "Exception in TapeWriteSingleThread-TapeCleaning");
+      }
+    }
+  };
+  
   /**
    * Function to open the WriteSession 
    * If successful, returns a std::auto_ptr on it. A copy of that std::auto_ptr
@@ -87,16 +117,6 @@ private:
     using castor::log::LogContext;
     using castor::log::Param;
     typedef LogContext::ScopedParam ScopedParam;
-    
-    try{
-      // wait 600 drive is ready
-      m_drive.waitUntilReady(600);
-    }catch(const castor::exception::Exception& e){
-      log::LogContext::ScopedParam sp01(m_logContext, log::Param("exception_code", e.code()));
-      log::LogContext::ScopedParam sp02(m_logContext, log::Param("exception_message", e.getMessageValue()));
-      m_logContext.log(LOG_INFO, "TapeWriteSingleThread::openWriteSession : waiting for drive to be ready timeout");
-      throw;
-    }
     
     std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession;
   
@@ -137,19 +157,50 @@ private:
     m_logContext.log(LOG_INFO,message);
     m_reportPacker.reportFlush();
   }
-  
+
+    void mountTape(){
+    castor::log::ScopedParamContainer scoped(m_logContext); 
+    scoped.add("vid",m_volInfo.vid)
+          .add("drive_Slot",m_drive.librarySlot);
+    try {
+         m_rmc.mountTape(m_volInfo.vid, m_drive.librarySlot, legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
+        m_logContext.log(LOG_INFO, "Tape Mounted");
+    }
+    catch (castor::exception::Exception & ex) {
+      scoped.add("exception_message", ex.getMessageValue())
+            .add("exception_code",ex.code());
+      m_logContext.log(LOG_ERR, "Failed to mount the tape for writing");
+      throw;
+    }
+  }
+    
+    void waitForDrive(){
+      try{
+        // wait 600 drive is ready
+        m_drive.waitUntilReady(600);
+      }catch(const castor::exception::Exception& e){
+        log::LogContext::ScopedParam sp01(m_logContext, log::Param("exception_code", e.code()));
+        log::LogContext::ScopedParam sp02(m_logContext, log::Param("exception_message", e.getMessageValue()));
+        m_logContext.log(LOG_INFO, "TapeWriteSingleThread waiting for drive to be ready timeout");
+        throw;
+      }
+    }
+    
   virtual void run() {
 
     try
     {
       m_logContext.pushOrReplace(log::Param("thread", "TapeWrite"));
-      // Before anything, the tape should be mounted
-      m_rmc.mountTape(m_vid, m_drive.librarySlot, legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
-
+      
+      TapeCleaning cleaner(*this);
+      mountTape();
+      waitForDrive();
       // Then we have to initialise the tape write session
-      m_logContext.log(LOG_DEBUG, "Starting tape write thread");
       std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
-    
+      
+      //log and notify
+      m_logContext.log(LOG_INFO, "Starting tape write thread");
+      m_gsr.tapeMountedForWrite();
       uint64_t bytes=0;
       uint64_t files=0;
       std::auto_ptr<TapeWriteTask> task ;      
@@ -201,13 +252,6 @@ private:
       m_reportPacker.reportEndOfSessionWithErrors(e.what(),e.code());
     }
     
-    // Do the final cleanup
-    m_drive.unloadTape();
-    // And return the tape to the library
-    m_rmc.unmountTape(m_vid, m_drive.librarySlot);
-    
-    m_gsr.tapeUnmounted();
-    m_gsr.finish();
   }
   
   //m_filesBeforeFlush and m_bytesBeforeFlush are thresholds for flushing 
