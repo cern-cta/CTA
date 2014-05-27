@@ -96,7 +96,7 @@ GlobalStatusReporter::GlobalStatusReporter(
     GlobalStatusReporter& parent){
       log::ScopedParamContainer sp(parent.m_lc);
       sp.add(parent.m_unitName, "unitName").add(parent.m_volume.vid, "vid");
-      parent.m_tapeserverProxy.gotWriteMountDetailsFromClient(parent.m_volume, parent.m_unitName);
+      parent.m_tapeserverProxy.gotReadMountDetailsFromClient(parent.m_volume, parent.m_unitName);
       parent.m_lc.log(LOG_INFO,"From GlobalStatusReporter, Reported gotWriteMountDetailsFromClient");
     }
 //------------------------------------------------------------------------------
