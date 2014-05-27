@@ -200,7 +200,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingUpdateDriveJob(const legacymsg::MessageHeader &header, const int clientConnection) {
   castor::utils::SmartFd connection(clientConnection);
-  const char *const task = "handle incoming set vid job";
+  const char *const task = "handle incoming update drive job";
   try {
     // Read message body
     const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
@@ -208,6 +208,9 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
     logUpdateDriveJobReception(body);  
     
     m_driveCatalogue.updateDriveVolumeInfo(body);
+    
+    const std::string &dgn = m_driveCatalogue.getDgn(body.drive);
+    const pid_t pid = m_driveCatalogue.getSessionPid(body.drive);
     
     switch(body.event) {
       case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNT_STARTED:
@@ -224,18 +227,23 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
             m_vmgr.tapeMountedForRead(body.vid);
             break;
           default:
+            castor::exception::Exception ex;
+            ex.getMessage() << "Unknown tape mode: " << body.mode;
+            throw ex;
             break;
         }
+        m_vdqm.tapeMounted(m_hostName, body.drive, dgn, body.vid, pid);
         break;
       case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNT_STARTED:
         break;
       case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNTED:
         break;
       default:
+        castor::exception::Exception ex;
+        ex.getMessage() << "Unknown tape event: " << body.event;
+        throw ex;
         break;
-    }
-    
-    
+    }    
     
     // 0 as return code for the tape config command, as in: "all went fine"
     legacymsg::writeTapeReplyMsg(m_netTimeout, connection.get(), 0, "");
