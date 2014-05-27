@@ -28,6 +28,8 @@
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
+#include "castor/legacymsg/VdqmProxy.hpp"
+#include "castor/legacymsg/VmgrProxy.hpp"
 
 #include <poll.h>
 
@@ -54,7 +56,9 @@ public:
    * server daemon.
    */
   MountSessionAcceptHandler(const int fd, io::PollReactor &reactor,
-    log::Logger &log, DriveCatalogue &driveCatalogue, const std::string &hostName) throw();
+    log::Logger &log, DriveCatalogue &driveCatalogue, const std::string &hostName,
+    castor::legacymsg::VdqmProxy & vdqm,
+    castor::legacymsg::VmgrProxy & vmgr) throw();
 
   /**
    * Returns the integer file descriptor of this event handler.
@@ -113,7 +117,7 @@ private:
   /**
    * Logs the reception of the specified job message from the tpconfig command.
    */
-  void logSetVidJobReception(const legacymsg::TapeUpdateDriveRqstMsgBody &job)
+  void logUpdateDriveJobReception(const legacymsg::TapeUpdateDriveRqstMsgBody &job)
     const throw();
   
   /**
@@ -147,7 +151,7 @@ private:
    * @param clientConnection The file descriptor of the TCP/IP connection with
    * the client.
    */
-  void handleIncomingSetVidJob(const legacymsg::MessageHeader &header,
+  void handleIncomingUpdateDriveJob(const legacymsg::MessageHeader &header,
     const int clientConnection);
 
   /**
@@ -186,7 +190,7 @@ private:
    * @param len The length of the message body in bytes.
    * @return The message body.
    */
-  legacymsg::TapeUpdateDriveRqstMsgBody readSetVidMsgBody(const int connection,
+  legacymsg::TapeUpdateDriveRqstMsgBody readTapeUpdateDriveRqstMsgBody(const int connection,
     const uint32_t len);
   
   /**
@@ -224,6 +228,18 @@ private:
    * The name of the host on which tape daemon is running.
    */
   const std::string m_hostName;
+  
+  /** 
+   * Reference to the VdqmProxy, allowing reporting of the drive status. It
+   * will be used by the StatusReporter 
+   */
+  castor::legacymsg::VdqmProxy & m_vdqm;
+
+  /** 
+   * Reference to the VmgrProxy, allowing reporting and checking tape status.
+   * It is also used by the StatusReporter 
+   */
+  castor::legacymsg::VmgrProxy & m_vmgr;
   
   /**
    * The timeout in seconds to be applied when performing network read and

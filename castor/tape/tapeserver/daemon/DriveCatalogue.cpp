@@ -24,6 +24,7 @@
 
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/utils/utils.hpp"
+#include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 
 #include <string.h>
 #include <time.h>
@@ -468,23 +469,59 @@ const std::string &
 }
 
 //-----------------------------------------------------------------------------
+// getTapeMode
+//-----------------------------------------------------------------------------
+castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeMode castor::tape::tapeserver::daemon::DriveCatalogue::getTapeMode(
+    const std::string &unitName) const  {
+  DriveMap::const_iterator itor = m_drives.find(unitName);
+  if(m_drives.end() == itor) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to get device type of tape drive " << unitName <<
+      ": Unknown drive";
+    throw ex;
+  }
+
+  return itor->second.mode;
+}
+
+//-----------------------------------------------------------------------------
+// getTapeEvent
+//-----------------------------------------------------------------------------
+castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent castor::tape::tapeserver::daemon::DriveCatalogue::getTapeEvent(
+    const std::string &unitName) const  {
+  DriveMap::const_iterator itor = m_drives.find(unitName);
+  if(m_drives.end() == itor) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to get device type of tape drive " << unitName <<
+      ": Unknown drive";
+    throw ex;
+  }
+
+  return itor->second.event;
+}
+
+//-----------------------------------------------------------------------------
 // updateVidAssignment
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::updateVidAssignment(
-  const std::string &vid, const std::string &unitName)
+void castor::tape::tapeserver::daemon::DriveCatalogue::updateDriveVolumeInfo(
+  const legacymsg::TapeUpdateDriveRqstMsgBody &body)
    {
   std::ostringstream task;
-  task << "update the VID of tape drive " << unitName;
+  task << "update the VID of tape drive " << body.drive;
 
-  DriveMap::iterator itor = m_drives.find(unitName);
+  DriveMap::iterator itor = m_drives.find(body.drive);
   if(m_drives.end() == itor) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() << ": Unknown drive";
     throw ex;
   }
   
-  itor->second.vid = vid;
-  itor->second.assignment_time = time(0); // set to "now"
+  itor->second.vid = body.vid;
+  if(castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNT_STARTED == body.event) {    
+    itor->second.assignment_time = time(0); // set to "now"
+  }
+  itor->second.event = (castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent)body.event;
+  itor->second.mode = (castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeMode)body.mode;
 }
 
 //-----------------------------------------------------------------------------

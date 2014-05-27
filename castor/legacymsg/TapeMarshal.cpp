@@ -416,7 +416,7 @@ size_t castor::legacymsg::marshal(char *const dst, const size_t dstLen, const Ta
   char *p = dst;
   try {
     const uint32_t magic = TPMAGIC;
-    const uint32_t reqType = SETVID;
+    const uint32_t reqType = UPDDRIVE;
     io::marshalUint32(magic, p);
     io::marshalUint32(reqType, p);
     io::marshalUint32(totalLen, p);
