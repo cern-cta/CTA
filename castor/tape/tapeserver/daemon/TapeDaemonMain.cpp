@@ -27,8 +27,8 @@
 #include "castor/legacymsg/NsProxy_TapeAlwaysEmptyFactory.hpp"
 #include "castor/legacymsg/RmcProxyTcpIpFactory.hpp"
 #include "castor/legacymsg/TapeserverProxyTcpIpFactory.hpp"
-#include "castor/legacymsg/VdqmProxyTcpIpFactory.hpp"
-#include "castor/legacymsg/VmgrProxyTcpIpFactory.hpp"
+#include "castor/legacymsg/VdqmProxyTcpIp.hpp"
+#include "castor/legacymsg/VmgrProxyTcpIp.hpp"
 #include "castor/log/SyslogLogger.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/MountSession.hpp"
@@ -101,8 +101,8 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
 
   // Create proxy objects for the vdqm, vmgr and rmc daemons
   const int netTimeout = 10; // Timeout in seconds
-  castor::legacymsg::VdqmProxyTcpIpFactory vdqmFactory(log, vdqmHostName, VDQM_PORT, netTimeout);
-  castor::legacymsg::VmgrProxyTcpIpFactory vmgrFactory(log, vmgrHostName, VMGR_PORT, netTimeout);
+  castor::legacymsg::VdqmProxyTcpIp vdqm(log, vdqmHostName, VDQM_PORT, netTimeout);
+  castor::legacymsg::VmgrProxyTcpIp vmgr(log, vmgrHostName, VMGR_PORT, netTimeout);
   castor::legacymsg::RmcProxyTcpIpFactory rmcFactory(log, netTimeout);
   castor::legacymsg::TapeserverProxyTcpIpFactory tapeserverFactory(log, TAPE_SERVER_MOUNTSESSION_LISTENING_PORT, netTimeout);
   castor::legacymsg::NsProxy_TapeAlwaysEmptyFactory nsFactory;
@@ -118,8 +118,8 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
     std::cerr,
     log,
     tpconfigLines,
-    vdqmFactory,
-    vmgrFactory,
+    vdqm,
+    vmgr,
     rmcFactory,
     tapeserverFactory,
     nsFactory,

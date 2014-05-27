@@ -159,8 +159,6 @@ TEST(tapeServer, MountSessionGooddayRecall) {
   castorConf.tapebridgeBulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
   castorConf.tapebridgeBulkRequestRecallMaxFiles = 1000;
   castorConf.tapeserverdDiskThreads = 1;
-  castor::legacymsg::VmgrProxyDummy vmgr;
-  castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::legacymsg::RmcProxyDummy rmc;
   castor::legacymsg::TapeserverProxyDummy initialProcess;
   char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
@@ -175,7 +173,7 @@ TEST(tapeServer, MountSessionGooddayRecall) {
     }
   }
   MountSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys, tpConfig, 
-  vdqm, vmgr, rmc, initialProcess, castorConf);
+    rmc, initialProcess, castorConf);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
@@ -239,7 +237,7 @@ TEST(tapeServer, MountSessionNoSuchDrive) {
     }
   }
   MountSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys, tpConfig, 
-  vdqm, vmgr, rmc, initialProcess, castorConf);
+    rmc, initialProcess, castorConf);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
@@ -391,7 +389,7 @@ TEST(tapeServer, MountSessionGooddayMigration) {
     }
   }
   MountSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys, tpConfig, 
-  vdqm, vmgr, rmc, initialProcess, castorConf);
+    rmc, initialProcess, castorConf);
   sess.execute();
   simRun.wait();
   for (std::vector<struct expectedResult>::iterator i = expected.begin();

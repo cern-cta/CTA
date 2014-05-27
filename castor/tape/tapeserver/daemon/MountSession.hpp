@@ -105,8 +105,6 @@ namespace daemon {
             const legacymsg::RtcpJobRqstMsgBody & clientRequest, 
             castor::log::Logger & logger, System::virtualWrapper & sysWrapper,
             const utils::TpconfigLines & tpConfig,
-            castor::legacymsg::VdqmProxy & vdqm,
-            castor::legacymsg::VmgrProxy & vmgr,
             castor::legacymsg::RmcProxy & rmc,
             castor::legacymsg::TapeserverProxy & initialProcess,
             const CastorConf & castorConf);
@@ -136,12 +134,6 @@ namespace daemon {
     void executeWrite(LogContext & lc);
     /** sub-part of execute for a dump session */
     void executeDump(LogContext & lc);
-    /** Reference to the VdqmProxy, allowing reporting of the drive status. It
-     * will be used by the StatusReporter */
-    castor::legacymsg::VdqmProxy & m_vdqm;
-    /** Reference to the VmgrProxy, allowing reporting and checking tape status.
-     * It is also used by the StatusReporter */
-    castor::legacymsg::VmgrProxy & m_vmgr;
     /** Reference to the RmcProxy, allowing the mounting of the tape by the
      * library. It will be used exclusively by the tape thread. */
     castor::legacymsg::RmcProxy & m_rmc;

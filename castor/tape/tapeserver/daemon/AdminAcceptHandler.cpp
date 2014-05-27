@@ -50,14 +50,14 @@ castor::tape::tapeserver::daemon::AdminAcceptHandler::AdminAcceptHandler(
   const int fd,
   io::PollReactor &reactor,
   log::Logger &log,
-  legacymsg::VdqmProxyFactory &vdqmFactory,
+  legacymsg::VdqmProxy &vdqm,
   DriveCatalogue &driveCatalogue,
   const std::string &hostName)
   throw():
     m_fd(fd),
     m_reactor(reactor),
     m_log(log),
-    m_vdqmFactory(vdqmFactory),
+    m_vdqm(vdqm),
     m_driveCatalogue(driveCatalogue),
     m_hostName(hostName),
     m_netTimeout(10) {
@@ -379,16 +379,14 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeConfigJob(
     log::Param("unitName", unitName),
     log::Param("dgn", dgn)};
 
-  std::auto_ptr<legacymsg::VdqmProxy> vdqm(m_vdqmFactory.create());
-
   switch(body.status) {
   case CONF_UP:
-    vdqm->setDriveUp(m_hostName, unitName, dgn);
+    m_vdqm.setDriveUp(m_hostName, unitName, dgn);
     m_driveCatalogue.configureUp(unitName);
     m_log(LOG_INFO, "Drive configured up", params);
     break;
   case CONF_DOWN:
-    vdqm->setDriveDown(m_hostName, unitName, dgn);
+    m_vdqm.setDriveDown(m_hostName, unitName, dgn);
     m_driveCatalogue.configureDown(unitName);
     m_log(LOG_INFO, "Drive configured down", params);
     break;

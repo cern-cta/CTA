@@ -27,11 +27,11 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/io/PollReactor.hpp"
+#include "castor/legacymsg/NsProxyFactory.hpp"
 #include "castor/legacymsg/RmcProxyFactory.hpp"
 #include "castor/legacymsg/TapeserverProxyFactory.hpp"
-#include "castor/legacymsg/VdqmProxyFactory.hpp"
-#include "castor/legacymsg/VmgrProxyFactory.hpp"
-#include "castor/legacymsg/NsProxyFactory.hpp"
+#include "castor/legacymsg/VdqmProxy.hpp"
+#include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
@@ -67,10 +67,8 @@ public:
    * @param stdErr Stream representing standard error.
    * @param log The object representing the API of the CASTOR logging system.
    * @param tpconfigLines The parsed lines of /etc/castor/TPCONFIG.
-   * @param vdqmFactory Factory to create proxy objects representing the vdqmd
-   * daemon.
-   * @param vmgrFactory Factory to create proxy objects representing the vmgrd
-   * daemon.
+   * @param vdqm Proxy object representing the vdqmd daemon.
+   * @param vmgr Proxy object representing the vmgrd daemon.
    * @param rmcFactory Factory to create proxy objects representing the rmcd
    * daemon.
    * @param reactor The reactor responsible for dispatching the I/O events of
@@ -83,8 +81,8 @@ public:
     std::ostream &stdErr,
     log::Logger &log,
     const utils::TpconfigLines &tpconfigLines,
-    legacymsg::VdqmProxyFactory &vdqmFactory,
-    legacymsg::VmgrProxyFactory &vmgrFactory,
+    legacymsg::VdqmProxy &vdqm,
+    legacymsg::VmgrProxy &vmgr,
     legacymsg::RmcProxyFactory &rmcFactory,
     legacymsg::TapeserverProxyFactory &tapeserverProxyFactory,
     legacymsg::NsProxyFactory &nsProxyFactory,
@@ -394,14 +392,14 @@ protected:
   const utils::TpconfigLines m_tpconfigLines;
 
   /**
-   * Factory to create proxy objects representing the vdqmd daemon.
+   * Proxy object representing the vdqmd daemon.
    */
-  legacymsg::VdqmProxyFactory &m_vdqmFactory;
+  legacymsg::VdqmProxy &m_vdqm;
 
   /**
-   * Factory to create proxy objects representing the vmgrd daemon.
+   * Proxy object representing the vmgrd daemon.
    */
-  legacymsg::VmgrProxyFactory &m_vmgrFactory;
+  legacymsg::VmgrProxy &m_vmgr;
 
   /**
    * Factory to create proxy objects representing the rmcd daemon.

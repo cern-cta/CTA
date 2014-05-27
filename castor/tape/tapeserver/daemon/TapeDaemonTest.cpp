@@ -25,8 +25,8 @@
 #include "castor/io/DummyPollReactor.hpp"
 #include "castor/legacymsg/RmcProxyDummyFactory.hpp"
 #include "castor/legacymsg/TapeserverProxyDummyFactory.hpp"
-#include "castor/legacymsg/VdqmProxyDummyFactory.hpp"
-#include "castor/legacymsg/VmgrProxyDummyFactory.hpp"
+#include "castor/legacymsg/VdqmProxyDummy.hpp"
+#include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/log/DummyLogger.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -71,15 +71,15 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
   castor::tape::utils::TpconfigLines tpconfigLines;
-  castor::legacymsg::VdqmProxyDummyFactory vdqmFactory(job);
-  castor::legacymsg::VmgrProxyDummyFactory vmgrFactory;
+  castor::legacymsg::VdqmProxyDummy vdqm;
+  castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::RmcProxyDummyFactory rmcFactory;
   castor::legacymsg::TapeserverProxyDummyFactory tpsFactory;
   castor::legacymsg::NsProxyDummyFactory nsFactory;
   castor::io::DummyPollReactor reactor;
   std::auto_ptr<TapeDaemon> daemon;
   ASSERT_NO_THROW(daemon.reset(new TapeDaemon(argc, argv, stdOut, stdErr, log,
-    tpconfigLines, vdqmFactory, vmgrFactory, rmcFactory, tpsFactory, nsFactory, reactor)));
+    tpconfigLines, vdqm, vmgr, rmcFactory, tpsFactory, nsFactory, reactor)));
 }
 
 } // namespace unitTests
