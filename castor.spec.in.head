@@ -49,7 +49,7 @@ BuildRequires: oracle-instantclient-devel
 
 %if %compile_server
 %if 0%{?rhel} >= 6
-BuildRequires: libradosstriper-devel
+BuildRequires: ceph-devel
 %endif
 %endif
 
