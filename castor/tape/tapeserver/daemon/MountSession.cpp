@@ -104,7 +104,7 @@ int castor::tape::tapeserver::daemon::MountSession::execute()
     LogContext::ScopedParam sp09(lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
     LogContext::ScopedParam sp10(lc, Param("ErrorMsg", fullError.str()));
     lc.log(LOG_ERR, "Notified client of end session with error");
-    return;
+    return 0;
   } catch (client::ClientProxy::UnexpectedResponse & unexp) {
     std::stringstream fullError;
     fullError << "Received unexpected response from client when requesting Volume"
@@ -116,7 +116,7 @@ int castor::tape::tapeserver::daemon::MountSession::execute()
     LogContext::ScopedParam sp09(lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
     LogContext::ScopedParam sp10(lc, Param("ErrorMsg", fullError.str()));
     lc.log(LOG_ERR, "Notified client of end session with error");
-    return;
+    return 0;
   }
   // 2b) ... and log.
   // Make the TPVID parameter permanent.
@@ -142,6 +142,8 @@ int castor::tape::tapeserver::daemon::MountSession::execute()
   case tapegateway::DUMP:
     executeDump(lc);
     return 0;
+  default:
+      return 0;
   }
 }
 //------------------------------------------------------------------------------
@@ -156,7 +158,7 @@ int castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc)
   const utils::TpconfigLines::const_iterator configLine=findConfigLine(lc);
   std::auto_ptr<castor::tape::drives::DriveInterface> drive(findDrive(configLine,lc));
   
-  if(!drive.get()) return;    
+  if(!drive.get()) return 0;    
   // We can now start instantiating all the components of the data path
   {
     // Allocate all the elements of the memory management (in proper order
@@ -234,7 +236,7 @@ int castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc
   // 1) Get hold of the drive error logs are done inside the findDrive function
   utils::TpconfigLines::const_iterator configLine=findConfigLine(lc);
   std::auto_ptr<castor::tape::drives::DriveInterface> drive(findDrive(configLine,lc));
-  if (!drive.get()) return;
+  if (!drive.get()) return 0;
   // Once we got hold of the drive, we can run the session
   {
     
