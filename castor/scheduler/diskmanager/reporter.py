@@ -111,6 +111,8 @@ class ReporterThread(threading.Thread):
       for dataPool in dataPools:
           try:
                 totalSpace = quotas[dataPool]
+                if 0 == totalSpace:
+                      raise Exception("Quota missing in datapool %s (set to 0)" % dataPool)
                 freeSpace = totalSpace - usedSpace[dataPool]
                 # fill report
                 reports.append((diskServerName, dataPool, maxFreeSpace, minAllowedFreeSpace,

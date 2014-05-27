@@ -1439,7 +1439,7 @@ BEGIN
     UPDATE /*+ INDEX(Subrequest PK_Subrequest_Id)*/ SubRequest
        SET status = dconst.SUBREQUEST_FAILED,
            errorCode = serrno.ENOSPC, -- No space left on device
-           errorMessage = 'File creation canceled since diskPool is full'
+           errorMessage = 'File creation canceled since pool is full'
      WHERE id = srId;
     RETURN;
   END IF;
