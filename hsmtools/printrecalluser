@@ -30,14 +30,14 @@ import castor_tools
 # usage function
 def usage(exitCode):
     '''prints usage'''
-    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-g <recallGroupName]'
+    print 'Usage : ' + sys.argv[0] + ' [-h|--help] [-g <recallGroupName>]'
     print '        ' + sys.argv[0] + ' [-h|--help] [(<userName>|<uid>) [...]]'
     print '        ' + sys.argv[0] + ' [-h|--help] [(<userName>|<uid>)?:(groupName|<gid>) [...]]'
     sys.exit(exitCode)
 
 # first parse the options
 try:
-    options, args = getopt.getopt(sys.argv[1:], 'hvg:', ['help', 'verbose', 'recallgroup'])
+    options, args = getopt.getopt(sys.argv[1:], 'hvg:', ['help', 'verbose', 'recallgroup='])
 except Exception, e:
     print e
     usage(1)

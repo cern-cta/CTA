@@ -330,38 +330,6 @@ int main ()
           drive->rewind(); // go back to the beginning of tape
           print_and_assert_position(*drive, 0);
           
-          std::cout << "Spacing 2 logical blocks forward..." << std::endl;
-          drive->spaceBlocksForward(2);
-          print_and_assert_position(*drive, 2);
-          
-          std::cout << "Reading..." << std::endl;                    
-          memset(data, 0, count);
-          drive->readBlock((void *)data, count);
-          print_and_assert_position(*drive, 3);
-          print_and_assert_data("222222222", (const char *)data);
-          
-          std::cout << "Spacing 1 logical block backwards..." << std::endl;
-          drive->spaceBlocksBackwards(1);
-          print_and_assert_position(*drive, 2);
-          
-          std::cout << "Spacing 5 logical blocks forward..." << std::endl;
-          drive->spaceBlocksForward(5);
-          print_and_assert_position(*drive, 7);
-          
-          std::cout << "Spacing 3 logical blocks backwards..." << std::endl;
-          drive->spaceBlocksBackwards(3);
-          print_and_assert_position(*drive, 4);
-          
-          std::cout << "Reading..." << std::endl;                    
-          memset(data, 0, count);
-          drive->readBlock((void *)data, count);
-          print_and_assert_position(*drive, 5);
-          print_and_assert_data("444444444", (const char *)data);
-          
-          std::cout << "Rewinding..." << std::endl;
-          drive->rewind(); // go back to the beginning of tape
-          print_and_assert_position(*drive, 0);
-          
           std::cout << "TEST PASSED!" << std::endl;
           
           std::cout << "************** END: Rewind/Read/Write/Skip Test *************" << std::endl;
