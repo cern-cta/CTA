@@ -31,13 +31,13 @@ import castor_tools
 def usage(exitCode):
     '''prints usage'''
     print 'Usage : ' + sys.argv[0] + ' [-h|--help] ' + \
-          '[-f|--fileclass <fileClassName] [-t|--tapepool <tapePoolName>]'
+          '[-f|--fileclass <fileClassName>] [-t|--tapepool <tapePoolName>]'
     sys.exit(exitCode)
 
 # first parse the options
 try:
     options, args = getopt.getopt(sys.argv[1:], 'hvs:S:f:t:',
-                                  ['help', 'verbose', 'fileclass', 'tapepool'])
+                                  ['help', 'verbose', 'fileclass=', 'tapepool='])
 except Exception, e:
     print e
     usage(1)
