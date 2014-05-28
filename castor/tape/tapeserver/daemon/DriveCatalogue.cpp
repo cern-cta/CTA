@@ -471,7 +471,7 @@ const std::string &
 //-----------------------------------------------------------------------------
 // getTapeMode
 //-----------------------------------------------------------------------------
-castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeMode castor::tape::tapeserver::daemon::DriveCatalogue::getTapeMode(
+castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode castor::tape::tapeserver::daemon::DriveCatalogue::getTapeMode(
     const std::string &unitName) const  {
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
@@ -487,7 +487,7 @@ castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeMode castor::tape::tapeserver
 //-----------------------------------------------------------------------------
 // getTapeEvent
 //-----------------------------------------------------------------------------
-castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent castor::tape::tapeserver::daemon::DriveCatalogue::getTapeEvent(
+castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent castor::tape::tapeserver::daemon::DriveCatalogue::getTapeEvent(
     const std::string &unitName) const  {
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
@@ -517,11 +517,11 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::updateDriveVolumeInfo(
   }
   
   itor->second.vid = body.vid;
-  if(castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNT_STARTED == body.event) {    
+  if(castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED == body.event) {    
     itor->second.assignment_time = time(0); // set to "now"
   }
-  itor->second.event = (castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent)body.event;
-  itor->second.mode = (castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeMode)body.mode;
+  itor->second.event = (castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent)body.event;
+  itor->second.mode = (castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode)body.mode;
 }
 
 //-----------------------------------------------------------------------------

@@ -87,6 +87,22 @@ public:
 
 private:
   
+  /**
+   * Handles the case when the status of the tape is TAPE_STATUS_MOUNTED in the update drive message
+   * 
+   * @param vid   Volume ID of the tape mounted
+   * @param mode  The mode in which the tape is mounted
+   */
+  void tellVMGRTapeWasMounted(const std::string& vid, const uint32_t mode);
+  
+  /**
+   * Checks that a tape mounted for migration by request of the tapegateway is marked as BUSY in the VMGR
+   * 
+   * @param vid  Volume ID of the tape to be mounted
+   * @param type The client type of this mount session
+   */
+  void checkTapeConsistencyWithVMGR(const std::string& vid, const uint32_t type, const uint32_t mode);
+  
    /**
    * Marshals the specified source tape label reply message structure into the
    * specified destination buffer.

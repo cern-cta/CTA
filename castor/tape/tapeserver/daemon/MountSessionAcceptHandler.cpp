@@ -33,12 +33,12 @@
 #include "h/common.h"
 #include "h/serrno.h"
 #include "h/Ctape.h"
+#include "h/vmgr_constants.h"
 
 #include <vdqm_api.h>
 
 #include <errno.h>
 #include <memory>
-#include <string.h>
 #include <list>
 #include <unistd.h>
 #include <sys/types.h>
@@ -150,7 +150,7 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::logUpdateDrive
   log::Param params[] = {
     log::Param("drive", job.drive),
     log::Param("vid", job.vid)};
-  m_log(LOG_INFO, "Received message from mount session to set VID of a drive", params);
+  m_log(LOG_INFO, "Received message from mount session to update the status of a drive", params);
 }
 
 //------------------------------------------------------------------------------
@@ -196,6 +196,48 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
 }
 
 //------------------------------------------------------------------------------
+// handleTapeStatusBeforeMountStarted
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::checkTapeConsistencyWithVMGR(const std::string& vid, const uint32_t type, const uint32_t mode)
+{
+  if(mode==castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READWRITE) {
+    legacymsg::VmgrTapeInfoMsgBody tapeInfo;
+    m_vmgr.queryTape(vid, tapeInfo);
+    // If the client is the tape gateway and the volume is not marked as BUSY
+    if(type == castor::legacymsg::TapeUpdateDriveRqstMsgBody::CLIENT_TYPE_GATEWAY && !(tapeInfo.status & TAPE_BUSY)) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "The tape gateway is the client and the tape to be mounted is not BUSY: vid=" << vid;
+      throw ex;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+// handleTapeStatusMounted
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::tellVMGRTapeWasMounted(const std::string& vid, const uint32_t mode)
+{
+  switch(mode) {
+    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READ:
+      m_vmgr.tapeMountedForRead(vid);
+      break;
+    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READWRITE:
+      m_vmgr.tapeMountedForWrite(vid);
+      break;
+    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_DUMP:
+      m_vmgr.tapeMountedForRead(vid);
+      break;
+    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_NONE:
+      break;
+    default:
+      castor::exception::Exception ex;
+      ex.getMessage() << "Unknown tape mode: " << mode;
+      throw ex;
+      break;
+  }
+}
+
+//------------------------------------------------------------------------------
 // handleIncomingUpdateDriveJob
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingUpdateDriveJob(const legacymsg::MessageHeader &header, const int clientConnection) {
@@ -213,27 +255,11 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
     const pid_t pid = m_driveCatalogue.getSessionPid(body.drive);
     
     switch(body.event) {
-      case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNT_STARTED:
+      case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED:
+        checkTapeConsistencyWithVMGR(body.vid, body.clientType, body.mode);
         break;
       case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED:
-        switch(body.mode) {
-          case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READ:
-            m_vmgr.tapeMountedForRead(body.vid);
-            break;
-          case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READWRITE:
-            m_vmgr.tapeMountedForWrite(body.vid);
-            break;
-          case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_DUMP:
-            m_vmgr.tapeMountedForRead(body.vid);
-            break;
-          case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_NONE:
-            break;
-          default:
-            castor::exception::Exception ex;
-            ex.getMessage() << "Unknown tape mode: " << body.mode;
-            throw ex;
-            break;
-        }
+        tellVMGRTapeWasMounted(body.vid, body.mode);
         m_vdqm.tapeMounted(m_hostName, body.drive, dgn, body.vid, pid);
         break;
       case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNT_STARTED:

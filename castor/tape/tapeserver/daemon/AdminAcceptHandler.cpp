@@ -166,8 +166,8 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillTapeStatDriveEntr
       m_driveCatalogue.getDgn(unitName).c_str());
     const DriveCatalogue::DriveState driveState =
       m_driveCatalogue.getState(unitName);
-    const castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeMode mode = m_driveCatalogue.getTapeMode(unitName);
-    const castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent event = m_driveCatalogue.getTapeEvent(unitName);
+    const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode mode = m_driveCatalogue.getTapeMode(unitName);
+    const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event = m_driveCatalogue.getTapeEvent(unitName);
     entry.up = driveStateToStatEntryUp(driveState);
     entry.asn = driveStateToStatEntryAsn(driveState);
     entry.asn_time = m_driveCatalogue.getAssignmentTime(unitName);
@@ -190,7 +190,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillTapeStatDriveEntr
 // driveTapeModeToStatEntryMode
 //------------------------------------------------------------------------------
 uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveTapeModeToStatEntryMode(
-  const castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeMode mode)  {
+  const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode mode)  {
   switch(mode) {
     case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READ:
       return WRITE_DISABLE;
@@ -219,9 +219,9 @@ uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveTapeModeToSt
 // driveTapeEventToStatEntryToBeMounted
 //------------------------------------------------------------------------------
 uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveTapeEventToStatEntryToBeMounted(
-  const castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent event)  {
+  const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event)  {
   switch(event) {
-    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNT_STARTED:
+    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED:
       return 1; // "to be mounted"
       break;
     case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED:

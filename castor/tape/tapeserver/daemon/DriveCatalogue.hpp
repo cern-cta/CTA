@@ -280,14 +280,14 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeMode getTapeMode(const std::string &unitName) const;
+  castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode getTapeMode(const std::string &unitName) const;
   
   /**
    * Returns the last tape event related to this drive
    *
    * @param unitName The unit name of the tape drive.
    */
-  castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent getTapeEvent(const std::string &unitName) const;
+  castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent getTapeEvent(const std::string &unitName) const;
 
   /**
    * Releases and returns the file descriptor of the connection with the
@@ -497,12 +497,12 @@ private:
     /**
      * Are we mounting for read, write (read/write), or dump
      */
-    castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeMode mode;
+    castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode mode;
     
     /**
      * The status of the tape with respect to the drive mount and unmount operations
      */
-    castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent event;
+    castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event;
     
     /**
      * The device group name of the tape drive as defined in

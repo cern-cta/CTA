@@ -24,8 +24,13 @@
 
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/legacymsg/VmgrProxy.hpp"
+#include "castor/legacymsg/VmgrTapeInfoRqstMsgBody.hpp"
 #include "castor/legacymsg/VmgrTapeMountedMsgBody.hpp"
+#include "castor/legacymsg/VmgrMarshal.hpp"
 #include "castor/log/Logger.hpp"
+
+const size_t VMGR_REQUEST_BUFSIZE = 256;
+const size_t VMGR_REPLY_BUFSIZE = 4096;
 
 namespace castor {
 namespace legacymsg {
@@ -59,8 +64,7 @@ public:
    * @param vid The volume identifier of the mounted tape.
    * @param
    */
-  void tapeMountedForRead(const std::string &vid)
-    ;
+  void tapeMountedForRead(const std::string &vid);
 
   /**
    * Notifies the vmgrd daemon that the specified tape has been mounted for read.
@@ -68,8 +72,15 @@ public:
    * @param vid The volume identifier of the mounted tape.
    * @param
    */
-  void tapeMountedForWrite(const std::string &vid)
-    ;
+  void tapeMountedForWrite(const std::string &vid);
+  
+  /**
+   * Gets information from vmgrd about the specified tape
+   * 
+   * @param vid   The volume identifier of the tape.
+   * @param reply The structure containing the reply from vmgrd
+   */
+  void queryTape(const std::string &vid, legacymsg::VmgrTapeInfoMsgBody &reply);
 
 private:
 
@@ -117,12 +128,12 @@ private:
   void sendNotificationAndReceiveReply(const legacymsg::VmgrTapeMountedMsgBody &body);
   
   /**
-   * Reads a VMGR ack message from the specified connection.
+   * Reads a VMGR rc-type reply message from the specified connection.
    *
    * @param fd The file-descriptor of the connection.
    * @return The message.
    */
-  void readVmgrReply(const int fd) ;
+  void readVmgrRcReply(const int fd) ;
 
   /**
    * Reads an ack message from the specified connection.
@@ -131,6 +142,49 @@ private:
    * @return The message.
    */
   MessageHeader readRcReplyMsg(const int fd) ;
+  
+  /**
+   * Marshals the Query Tape request
+   * 
+   * @param request  Source request
+   * @param buf      Destination buffer
+   * @param totalLen Total length of bytes marshaled
+   */
+  void marshalQueryTapeRequest(const std::string &vid, legacymsg::VmgrTapeInfoRqstMsgBody &request, char *buf, size_t bufLen, size_t &totalLen);
+  
+  /**
+   * Send the request out to the VMGR
+   * 
+   * @param fd       File descriptor of the connection
+   * @param buf      Source buffer
+   * @param totalLen Buffer length
+   */
+  void sendQueryTapeRequest(const std::string &vid, const int fd, char *buf, size_t totalLen);
+  
+  /**
+   * Receives the header of the reply coming from the VMGR
+   * 
+   * @param fd          File descriptor of the connection
+   * @param replyHeader Destination structure for the header
+   */
+  void receiveQueryTapeReplyHeader(const std::string &vid, const int fd, legacymsg::MessageHeader &replyHeader);
+  
+  /**
+   * Function that receives and handles the error string coming from the VMGR
+   * 
+   * @param fd          File descriptor of the connection
+   * @param replyHeader Reply header
+   */
+  void handleErrorReply(const std::string &vid, const int fd, legacymsg::MessageHeader &replyHeader);
+  
+  /**
+   * Function that receives and unmarshals the reply data coming from the VMGR
+   * 
+   * @param fd          File descriptor of the connection
+   * @param replyHeader Reply header
+   * @param reply       Destination structure for the reply coming from the VMGR
+   */
+  void handleDataReply(const std::string &vid, const int fd, legacymsg::MessageHeader &replyHeader, legacymsg::VmgrTapeInfoMsgBody &reply);
 
 }; // class VmgrProxyTcpIp
 

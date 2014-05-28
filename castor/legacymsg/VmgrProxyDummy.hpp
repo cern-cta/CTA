@@ -46,8 +46,7 @@ public:
    * @param vid The volume identifier of the mounted tape.
    * @param
    */
-  void tapeMountedForRead(const std::string &vid)
-    ;
+  void tapeMountedForRead(const std::string &vid);
 
   /**
    * Notifies the vmgrd daemon that the specified tape has been mounted for read.
@@ -55,8 +54,15 @@ public:
    * @param vid The volume identifier of the mounted tape.
    * @param
    */
-  void tapeMountedForWrite(const std::string &vid)
-    ;
+  void tapeMountedForWrite(const std::string &vid);
+  
+  /**
+   * Gets information from vmgrd about the specified tape
+   * 
+   * @param vid   The volume identifier of the tape.
+   * @param reply The structure containing the reply from vmgrd
+   */
+  void queryTape(const std::string &vid, legacymsg::VmgrTapeInfoMsgBody &reply);
 
 }; // class VmgrProxyDummy
 

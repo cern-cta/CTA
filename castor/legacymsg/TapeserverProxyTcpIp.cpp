@@ -55,7 +55,7 @@ castor::legacymsg::TapeserverProxyTcpIp::~TapeserverProxyTcpIp() throw() {
 // updateDrive
 //------------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::updateDriveInfo(
-  const castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent event,
+  const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event,
   const castor::tape::tapegateway::VolumeMode mode,
   const castor::tape::tapegateway::ClientType clientType,
   const std::string &unitName,
@@ -122,7 +122,7 @@ void castor::legacymsg::TapeserverProxyTcpIp::gotReadMountDetailsFromClient(
 castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
 {  
   updateDriveInfo(
-       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNT_STARTED, 
+       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED, 
        volInfo.volumeMode, 
        volInfo.clientType,
        unitName,
@@ -136,7 +136,7 @@ void castor::legacymsg::TapeserverProxyTcpIp::gotWriteMountDetailsFromClient(
 castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
 {  
   updateDriveInfo(
-       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNT_STARTED, 
+       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED, 
        volInfo.volumeMode, 
        volInfo.clientType,
        unitName,
@@ -150,7 +150,7 @@ void castor::legacymsg::TapeserverProxyTcpIp::gotDumpMountDetailsFromClient(
 castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
 {  
   updateDriveInfo(
-       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNT_STARTED, 
+       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED, 
        volInfo.volumeMode, 
        volInfo.clientType,
        unitName,

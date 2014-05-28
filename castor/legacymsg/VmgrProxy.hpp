@@ -24,6 +24,7 @@
 
 
 #include "castor/exception/Exception.hpp"
+#include "castor/legacymsg/VmgrTapeInfoMsgBody.hpp"
 
 #include <string>
 
@@ -58,6 +59,14 @@ public:
    */
   virtual void tapeMountedForWrite(const std::string &vid)
      = 0;
+  
+  /**
+   * Gets information from vmgrd about the specified tape
+   * 
+   * @param vid   The volume identifier of the tape.
+   * @param reply The structure containing the reply from vmgrd
+   */
+  virtual void queryTape(const std::string &vid, legacymsg::VmgrTapeInfoMsgBody &reply) = 0;
 
 }; // class VmgrProxy
 

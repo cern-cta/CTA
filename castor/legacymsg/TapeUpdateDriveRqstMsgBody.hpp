@@ -41,9 +41,9 @@ struct TapeUpdateDriveRqstMsgBody {
   /**
    * The status of the tape with respect to the drive mount and unmount operations
    */
-  enum tapeEvent {
+  enum TapeEvent {
     TAPE_STATUS_NONE,
-    TAPE_STATUS_MOUNT_STARTED,
+    TAPE_STATUS_BEFORE_MOUNT_STARTED,
     TAPE_STATUS_MOUNTED,
     TAPE_STATUS_UNMOUNT_STARTED,
     TAPE_STATUS_UNMOUNTED    
@@ -54,7 +54,7 @@ struct TapeUpdateDriveRqstMsgBody {
   /**
    * Are we mounting for read, write (read/write), or dump
    */
-  enum tapeMode {
+  enum TapeMode {
     TAPE_MODE_NONE,
     TAPE_MODE_READ,
     TAPE_MODE_READWRITE,
@@ -66,7 +66,7 @@ struct TapeUpdateDriveRqstMsgBody {
   /**
    * The client could be the gateway, readtp, writetp, or dumptp
    */
-  enum tapeClientType {
+  enum TapeClientType {
     CLIENT_TYPE_NONE,
     CLIENT_TYPE_GATEWAY,
     CLIENT_TYPE_READTP,

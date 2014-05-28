@@ -131,7 +131,7 @@ private:
    * @param vid        The Volume ID of the tape to be mounted.
    */
   void updateDriveInfo(
-    const castor::legacymsg::TapeUpdateDriveRqstMsgBody::tapeEvent event,
+    const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event,
     const castor::tape::tapegateway::VolumeMode mode,
     const castor::tape::tapegateway::ClientType clientType,
     const std::string &unitName,

@@ -41,3 +41,10 @@ void castor::legacymsg::VmgrProxyDummy::tapeMountedForRead(const std::string &vi
 void castor::legacymsg::VmgrProxyDummy::tapeMountedForWrite(const std::string &vid)
    {
 }
+
+//------------------------------------------------------------------------------
+// getTapeInfo
+//------------------------------------------------------------------------------
+void castor::legacymsg::VmgrProxyDummy::queryTape(const std::string &vid, legacymsg::VmgrTapeInfoMsgBody &reply)
+   {
+}
