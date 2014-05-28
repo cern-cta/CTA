@@ -113,7 +113,7 @@ void DiskWriteThreadPool::DiskWriteWorkerThread::run() {
       m_lc.log(LOG_INFO, "As last exiting DiskWriteWorkerThread, reported a successful end of session");
     }
     else{
-      m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("A thread failed to write a file",SEINTERNAL);
+      m_parentThreadPool.m_reporter.reportEndOfSessionWithErrors("A DiskWritethread failed to write a file",SEINTERNAL);
       ScopedParam sp(m_lc, Param("errorCount", m_parentThreadPool.m_failedWriteCount));
       m_lc.log(LOG_ERR, "As last exiting DiskWriteWorkerThread, reported an end of session with errors");
     }

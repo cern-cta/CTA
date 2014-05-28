@@ -53,7 +53,17 @@ protected:
   castor::log::LogContext m_logContext;
   
   client::ClientInterface::VolumeInfo m_volInfo;
+  
+  /**
+   Integer to notify is the tapeserver if the drive has to be put down
+   * 0 means everything all right, any other value means we have to put it down
+   */
+  int m_hardarwareStatus;
 public:
+  
+  int getHardwareStatus() const {
+    return m_hardarwareStatus;
+  }
   /**
    * Push into the class a sentinel value to trigger to end the the thread.
    */
@@ -85,7 +95,8 @@ public:
     castor::legacymsg::RmcProxy & rmc,
     GlobalStatusReporter & gsr,
     const client::ClientInterface::VolumeInfo& volInfo,castor::log::LogContext & lc):
-  m_drive(drive), m_rmc(rmc), m_gsr(gsr), m_vid(volInfo.vid), m_logContext(lc),m_volInfo(volInfo) {}
+  m_drive(drive), m_rmc(rmc), m_gsr(gsr), m_vid(volInfo.vid), m_logContext(lc),
+          m_volInfo(volInfo),m_hardarwareStatus(0) {}
 };
 
 }
