@@ -219,6 +219,7 @@ target_link_libraries(castorThreadedUnitTests
   castorTapeServerDaemon
   TestDummies
   SCSI
+  System
   Utils
   castortapegatewayprotocol
   castortapelegacymsg
