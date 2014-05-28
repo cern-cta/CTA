@@ -816,6 +816,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
     // if we fail before the MountSession has an opportunity to do so.
     std::auto_ptr<MountSession> mountSession;
     const legacymsg::RtcpJobRqstMsgBody job = m_driveCatalogue.getVdqmJob(unitName);
+    castor::tape::System::realWrapper sysWrapper;
+    std::auto_ptr<legacymsg::RmcProxy> rmc;
+    std::auto_ptr<legacymsg::TapeserverProxy> tapeserver;
     try {
       castorConf.rfioConnRetry =    getConfig<uint32_t>("RFIO", "CONRETRY");
       castorConf.rfioConnRetryInt = getConfig<uint32_t>("RFIO", "CONRETRY");
@@ -842,10 +845,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
                        getConfig<uint64_t>("TAPEBRIDGE", "MAXFILESBEFOREFLUSH");
       castorConf.tapeserverdDiskThreads = 
                        getConfig<uint32_t>("TAPEBRIDGE", "THREAD_POOL");
-      castor::tape::System::realWrapper sysWrapper;
-
-      std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
-      std::auto_ptr<legacymsg::TapeserverProxy> tapeserver(m_tapeserverFactory.create());
+      
+      rmc.reset(m_rmcFactory.create());
+      tapeserver.reset(m_tapeserverFactory.create());
       mountSession.reset(new MountSession (
         m_argc,
         m_argv,
