@@ -152,8 +152,6 @@ namespace drives {
     virtual void spaceToEOM(void)  = 0;
     virtual void spaceFileMarksBackwards(size_t count)  = 0;
     virtual void spaceFileMarksForward(size_t count)  = 0;
-    virtual void spaceBlocksBackwards(size_t count)  = 0;
-    virtual void spaceBlocksForward(size_t count)  = 0;
     virtual void unloadTape(void)  = 0;
     virtual void flush(void)  = 0;
     virtual void writeSyncFileMarks(size_t count)  = 0;
@@ -212,8 +210,6 @@ namespace drives {
     virtual void spaceToEOM(void) ;
     virtual void spaceFileMarksBackwards(size_t count) ;
     virtual void spaceFileMarksForward(size_t count) ;
-    virtual void spaceBlocksBackwards(size_t count) ;
-    virtual void spaceBlocksForward(size_t count) ;
     virtual void unloadTape(void) ;
     virtual void flush(void) ;
     virtual void writeSyncFileMarks(size_t count) ;
@@ -432,18 +428,6 @@ namespace drives {
      * @param count
      */
     virtual void spaceFileMarksForward(size_t count) ;
-
-    /**
-     * Space count blocks backwards.
-     * @param count
-     */
-    virtual void spaceBlocksBackwards(size_t count) ;
-
-    /**
-     * Space count blocks forward.
-     * @param count
-     */
-    virtual void spaceBlocksForward(size_t count) ;
 
     /**
      * Unload the tape.

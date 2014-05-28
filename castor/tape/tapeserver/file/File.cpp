@@ -233,7 +233,7 @@ namespace castor {
             //we need to skip three file marks per file (header, payload, trailer)
             m_session->m_drive.spaceFileMarksForward((uint32_t)fseq_delta*3); 
           }
-          else {
+          else { //fseq_delta < 0
             //we need to skip three file marks per file 
             //(trailer, payload, header) + 1 to go on the BOT (beginning of tape) side 
             //of the file mark before the header of the file we want to read

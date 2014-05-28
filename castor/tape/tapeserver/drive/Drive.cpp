@@ -477,38 +477,6 @@ void drives::DriveGeneric::spaceFileMarksForward(size_t count)  {
 }
 
 /**
- * Space count logical blocks backwards.
- * A logical block is the smallest user data unit accessible on tape and its 
- * length is defined at write time. This function will throw an exception if the 
- * next logical object is not a logical block (i.e. if it is a file mark instead).
- * @param count
- */
-void drives::DriveGeneric::spaceBlocksBackwards(size_t count)  {
-  struct mtop m_mtCmd;
-  m_mtCmd.mt_op = MTBSR;
-  m_mtCmd.mt_count = (int)count;
-  castor::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
-      "Failed ST ioctl (MTBSR) in DriveGeneric::spaceBlocksBackwards");
-}
-
-/**
- * Space count logical blocks forward.
- * A logical block is the smallest user data unit accessible on tape and its 
- * length is defined at write time. This function will throw an exception if the 
- * next logical object is not a logical block (i.e. if it is a file mark instead).
- * @param count
- */
-void drives::DriveGeneric::spaceBlocksForward(size_t count)  {
-  struct mtop m_mtCmd;
-  m_mtCmd.mt_op = MTFSR;
-  m_mtCmd.mt_count = (int)count;
-  castor::exception::Errnum::throwOnMinusOne(
-      m_sysWrapper.ioctl(m_tapeFD, MTIOCTOP, &m_mtCmd),
-      "Failed ST ioctl (MTFSR) in DriveGeneric::spaceBlocksForward");
-}
-
-/**
  * Unload the tape.
  */
 void drives::DriveGeneric::unloadTape(void)  {
@@ -930,12 +898,6 @@ void drives::FakeDrive::spaceFileMarksForward(size_t count)  {
     throw Exception("Failed FakeDrive::spaceFileMarksForward");
   }
   m_current_position = i; //EOT side of the filemark
-}
-void drives::FakeDrive::spaceBlocksBackwards(size_t count)  {
-  m_current_position -= count;
-}
-void drives::FakeDrive::spaceBlocksForward(size_t count)  {
-  m_current_position += count;
 }
 void drives::FakeDrive::unloadTape(void)  {
 }
