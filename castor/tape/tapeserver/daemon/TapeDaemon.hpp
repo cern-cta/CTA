@@ -107,8 +107,8 @@ public:
    * @param name category of the configuration parameter
    * @return string from castor.conf for this paramter
    */
-  static std::string getConfigString(const std::string &category, const std::string &name) 
-  ;
+  static std::string getConfigString(const std::string &category,
+    const std::string &name);
   
   /**
    * Tries to get the value of the specified parameter from parsing (integer)
@@ -121,7 +121,8 @@ public:
   static T getConfig(const std::string &category, const std::string &name)  {
     std::string strVal = getConfigString(category, name);
     if (!castor::utils::isValidUInt(strVal.c_str()))
-      throw castor::exception::InvalidConfigEntry(category.c_str(), name.c_str(), strVal.c_str());
+      throw castor::exception::InvalidConfigEntry(category.c_str(),
+        name.c_str(), strVal.c_str());
     T val;
     std::stringstream ss;
     ss << strVal.c_str();
@@ -194,8 +195,7 @@ protected:
   /**
    * Registers the specified tape drive with ethe vdqmd daemon.
    */
-  void registerTapeDriveWithVdqm(const std::string &unitName)
-    ;
+  void registerTapeDriveWithVdqm(const std::string &unitName);
 
   /**
    * Sets up the reactor.
@@ -258,7 +258,8 @@ protected:
    * @param sessionPid The process ID of the session child-process.
    * @param waitpidStat The status information given by a call to waitpid().
    */
-  void logSessionProcessTerminated(const pid_t sessionPid, const int waitpidStat) throw();
+  void logSessionProcessTerminated(const pid_t sessionPid,
+    const int waitpidStat) throw();
 
   /**
    * Does the required post processing for the specified reaped session.
@@ -266,7 +267,8 @@ protected:
    * @param sessionPid The process ID of the session child-process.
    * @param waitpidStat The status information given by a call to waitpid().
    */
-  void postProcessReapedDataTransferSession(const pid_t sessionPid, const int waitpidStat) throw();
+  void postProcessReapedDataTransferSession(const pid_t sessionPid,
+    const int waitpidStat) throw();
 
   /**
    * Sets the state of the tape drive asscoiated with the specified
@@ -298,7 +300,8 @@ protected:
    * @param sessionPid The process ID of the session child-process.
    * @param waitpidStat The status information given by a call to waitpid().
    */
-  void postProcessReapedLabelSession(const pid_t sessionPid, const int waitpidStat) throw();
+  void postProcessReapedLabelSession(const pid_t sessionPid,
+    const int waitpidStat) throw();
 
   /**
    * Request the vdqmd daemon to release the tape drive associated with the
@@ -368,7 +371,8 @@ protected:
    * @param labelCmdConnection The file descriptor of the connection with the
    * command-line tool castor-tape-label.
    */
-  void runLabelSession(const std::string &unitName, const int labelCmdConnection) throw();
+  void runLabelSession(const std::string &unitName,
+    const int labelCmdConnection) throw();
 
   /**
    * Catalogue used to keep track of both the initial and current state of

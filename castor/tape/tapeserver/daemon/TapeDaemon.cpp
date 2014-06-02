@@ -137,7 +137,7 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
   m_driveCatalogue.populateCatalogue(m_tpconfigLines);
-  const bool runAsStagerSuperuser = false;
+  const bool runAsStagerSuperuser = true;
   daemonizeIfNotRunInForeground(runAsStagerSuperuser);
   blockSignals();
   setUpReactor();

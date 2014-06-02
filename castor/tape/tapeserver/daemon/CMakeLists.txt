@@ -22,7 +22,8 @@ add_library(castorTapeServerDaemon
   TapeDaemonMain.cpp
   VdqmAcceptHandler.cpp
   VdqmConnectionHandler.cpp
-  GlobalStatusReporter.cpp)
+  GlobalStatusReporter.cpp
+  SmartCap.cpp)
 
 add_library(castorTapeServerDaemonTestDummies
   ../client/ClientSimulator.cpp 
