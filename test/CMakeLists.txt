@@ -73,6 +73,14 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   endforeach ()
 endif (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
 
+# Try to find the libcap library because it will not exist on Mac OS X
+find_library (LIBCAP_LIB cap)
+if (LIBCAP_LIB)
+  message(STATUS "Found the libcap library")
+  set (LIBCAPUNITTEST_SRC_FILES
+    ../castor/tape/tapeserver/daemon/SmartCapTest.cpp)
+endif (LIBCAP_LIB)
+
 # Create a shared librbary for the dummies supporting the tests
 add_library(TestDummies
   ../castor/io/DummyPollEventHandler.cpp
@@ -158,7 +166,8 @@ add_executable(castorUnitTests
   ../castor/utils/SmartArrayPtrTest.cpp
   ../castor/utils/SmartFdTest.cpp
   ../castor/utils/UtilsTest.cpp
-  ${STK_UNITTEST_SRC_FILES})
+  ${STK_UNITTEST_SRC_FILES}
+  ${LIBCAPUNITTEST_SRC_FILES})
 
 set_property(SOURCE ../SCSI/StructuresTest.cpp
   PROPERTY COMPILE_FLAGS -fno-strict-aliasing
@@ -187,6 +196,7 @@ target_link_libraries(castorUnitTests
   castortapeutils
   castorvmgr
   castorvdqm
+  ${LIBCAP_LIB}
   ${STK_API_LIB}
   ${STK_UTL_LIB}
   ${STK_IPC_LIB}

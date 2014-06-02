@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <sys/capability.h>
 
 namespace castor {
