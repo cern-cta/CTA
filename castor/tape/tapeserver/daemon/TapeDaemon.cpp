@@ -65,7 +65,8 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   legacymsg::RmcProxyFactory &rmcFactory,
   legacymsg::TapeserverProxyFactory &tapeserverFactory,
   legacymsg::NsProxyFactory &nsFactory,
-  io::PollReactor &reactor) throw(castor::exception::Exception):
+  io::PollReactor &reactor,
+  CapabilityUtils &capUtils) throw(castor::exception::Exception):
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),
   m_argv(argv),
@@ -76,6 +77,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   m_tapeserverFactory(tapeserverFactory),
   m_nsFactory(nsFactory),
   m_reactor(reactor),
+  m_capUtils(capUtils),
   m_programName("tapeserverd"),
   m_hostName(getHostName()) {
 }

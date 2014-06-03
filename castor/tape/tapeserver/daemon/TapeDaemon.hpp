@@ -33,6 +33,7 @@
 #include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/server/Daemon.hpp"
+#include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -73,6 +74,7 @@ public:
    * daemon.
    * @param reactor The reactor responsible for dispatching the I/O events of
    * the parent process of the tape server daemon.
+   * @param capUtils Object providing utilities for working UNIX capabilities.
    */
   TapeDaemon(
     const int argc,
@@ -86,7 +88,8 @@ public:
     legacymsg::RmcProxyFactory &rmcFactory,
     legacymsg::TapeserverProxyFactory &tapeserverProxyFactory,
     legacymsg::NsProxyFactory &nsProxyFactory,
-    io::PollReactor &reactor) throw(castor::exception::Exception);
+    io::PollReactor &reactor,
+    CapabilityUtils &capUtils) throw(castor::exception::Exception);
 
   /**
    * Destructor.
@@ -425,6 +428,11 @@ protected:
    * of the tape server daemon.
    */
   io::PollReactor &m_reactor;
+
+  /**
+   * Object providing utilities for working UNIX capabilities.
+   */
+  CapabilityUtils &m_capUtils;
 
   /**
    * The program name of the daemon.
