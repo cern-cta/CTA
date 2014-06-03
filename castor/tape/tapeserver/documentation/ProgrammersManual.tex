@@ -190,33 +190,6 @@ avoid repositioning between consecutive files when reading).
 Some libraries already exist in CAStor, and will be reused, either by copying or linking from pre-compiled 
 packages. The main parts of the sessions spawner will be taken from the VDQM as well.
 
-\subsubsection{Memory management and threading architecture}
-Like the previous version in rtcpd, the tape server will pre-allocate a fixed number of memory
-blocks for the whole duration of the tape session, and circulate them between the data producers 
-and consumers.
-
-The data flow is organised around block passing, from queue to queue. Each queue output is processed
-by a thread of thread pool.
-
-The overall layout of a migration mount is shown in figure \ref{tsMigrationMM}. The recall mount, shown in\
-figure \ref{tsRecallMM}, is almost symmetric. The report packer triggers on threshold instead of tape 
-flushes, and 
-
-\begin{figure}[h]
-\begin{center}
-\includegraphics[scale=0.75]{images/MigrationMountMM}
-\end{center}
-\caption{\label{tsMigrationMM}Tape server child process: layout of the memory management in the case
-of a migration mount}
-\end{figure}
-
-\begin{figure}[h]
-\begin{center}
-\includegraphics[scale=0.75]{images/RecallMountMM}
-\end{center}
-\caption{\label{tsRecallMM}Tape server child process: layout of the memory management in the case
-of a recall mount}
-\end{figure}
 
 
 % Section:  Reference documentations
@@ -353,6 +326,77 @@ Index: CMakeLists.txt
         
         \small{}\verb#genhtml 00build/coverage.info --output-directory 00build/coverage#.
 \end{itemize}
+\section{Data transfer session step by step}
+The following sequence describes when and what the different components of castor communicate while a  data transfer if occurring 
+\begin{enumerate}[noitemsep]
+\item Tape operator runs "readtp V12345" -n 1 or "writetp V12345 /etc/group"
+\item readtp/writetp queries \textbf{vmgrd} for information about the the tape with volume identifier V12345
+\item readtp/writetp queries \textbf{cupvd} to determine whether or not the tape operator really has the TP\_OPER privilege
+\item readtp/writetp aborts if the tape is DISABLED and the tape operator does not have the TP\_OPER privilege
+\item readtp/writetp aborts if the tape is either EXPORTED or ARCHIVED
+\item readtp/writetp binds a TCP/IP listening socket ready for callbacks from a \textbf{mount-session} child-process of \textbf{tapeserverd}
+\item readtp/writetp requests \textbf{vdqmd} to allocate it a free drive in the same DGN as tape V12345 - readtp sends its callback port in the request
+\item The RequestHandlerThread of \textbf{vdqmd} stores the readtp/writetp request in the database
+\item The DriveSchedulerThread of \textbf{vdqmd} allocates a free drive to the readtp/writetp request
+\item The RtcpJobSubmitterThread of \textbf{vdqmd} sends a job to \textbf{tapeserverd}
+\item \textbf{tapeserverd} checks that the vdqm’s hostname is in the ADMIN HOSTS parameter of /etc/castor/castor.conf
+\item \textbf{tapeserverd} forks a \textbf{mount-session} child-process.
+\item The TapeDaemon::forkMountSession() function of the child process asks the \textbf{vdqmd} daemon to assign the process ID to the drive.
+\begin{itemize}
+\item        VdqmProxy::assignDrive()
+\end{itemize}
+\item The child process creates the MountSession object and calls MountSession::execute().
+\item \textbf{mount-session} asks readtp/writetp for the details of the mount (tapegateway::Volume)
+\item \textbf{mount-session} sends the mount details (tapegateway::Volume) to the \textbf{tapeserverd} parent process
+\begin{itemize}
+\item        TapeserverProxy::gotReadMountDetailsFromClient()
+\item        TapeserverProxy::gotWriteMountDetailsFromClient()
+\end{itemize}
+\item If writing to tape and the client is the tapegatewayd daemon then the \textbf{tapeserverd} parent process checks with the \textbf{vmgrd} daemon that the tape is marked as BUSY. A tape is marked as busy as a result of the tapegatwayd daemon calling vmgr\_gettape().
+\item \textbf{mount-session} asks readtp/writetp for the first file to be recalled or migrated
+\item \textbf{mount-session} requests rmcd to mount the tape - the request is synchronous
+\begin{itemize}
+\item        RmcProxy::mountTape()
+\end{itemize}
+\item \textbf{mount-session} checks with the drive that the tape has been mounted
+\item \textbf{mount-session} notifies the tapserverd parent process that the tape has been mounted
+\begin{itemize}
+\item        TapeserverProxy::tapeMountedForRead()
+\item        TapeserverProxy::tapeMountedForWrite()
+\end{itemize}
+\item \textbf{tapeserverd} via MountSessionAcceptHandler::handleIncomingUpdateDriveJob() notifies the \textbf{vmgrd} daemon that the tape has been mounted
+\begin{itemize}
+\item        VmgrProxy::tapeMountedForRead()
+\item        VmgrProxy::tapeMountedForWrite()
+\end{itemize}
+\item \textbf{tapeserverd} via MountSessionAcceptHandler::handleIncomingUpdateDriveJob() notifies the \textbf{vdqmd} daemon that the tape has been mounted
+\begin{itemize}
+\item        VdqmProxy::tapeMounted()
+\end{itemize}
+\item \textbf{mount-session} recalls/migrates and requests more files until gateway::NoMore
+\item \textbf{mount-session} unloads tape from drive
+\item \textbf{mount-session} requests rmcd to unmount the tape - the request is synchronous
+\begin{itemize}
+\item        RmcProxy::unmountTape()
+\end{itemize}
+\item \textbf{mount-session} notifies \textbf{tapeserverd} the tape has been unmounted - currently this is not used
+\begin{itemize}
+\item        TapeserverProxy::tapeUnmounted()
+\end{itemize}
+\item \textbf{mount-session} terminates with the success value of 0
+\item \textbf{tapeserverd} reaps the zombie \textbf{mount-session}
+\item \textbf{tapeserverd} parent-process marks the drive as FREE
+\item \textbf{tapeserverd} via TapeDaemon::postProcessReapedDataTransferSession() notifies \textbf{vdqmd} that it is releasing the tape
+\begin{itemize}
+\item        VdqmProxy::releaseDrive(forceUnmount)
+\end{itemize}
+\item \textbf{tapeserverd} via TapeDaemon::postProcessReapedDataTransferSession() notifies \textbf{vdqmd} the tape has been unmounted
+\begin{itemize}
+\item        VdqmProxy::tapeUnmounted()
+\end{itemize}
+
+\end{enumerate}
+
 
 \section{Software layout}
 
@@ -948,14 +992,7 @@ TODO: define writing behavior (is the checksum pre-declared?).
 \subsubsection{Tape::File API}
 TODO.
 
-\subsection{Memory chunk manager}
 
-The memory block manager allocates (usually all at once) a large chunk of memory.
-This memory is then shared between the various FIFOs in the system. Deallocation
-of memory on exit will allow memory leak checks. This class will have to be 
-thread safe.
-
-TODO: Define API.
 
 \subsection{FIFOs}
 
@@ -969,7 +1006,7 @@ but as they will be single user, single consumer, some parts might possible
 be lockless.
 
 \subsection{Disk client library}
-
+Castor is dropping rfio and is moving to xroot.
 \subsection{VDQM client library}
 
 TODO: describe how we will link with the VDQM client library. The VDQM is also 
@@ -984,19 +1021,115 @@ will be force-closed by the TapeServer.
 
 \subsection{Logging system client library}
 
+
+
 \subsection{Application architecture}
+\subsubsection{Memory management and threading architecture}
+Like the previous version in rtcpd, the tape server will pre-allocate a fixed number of memory
+blocks for the whole duration of the tape session, and circulate them between the data producers 
+and consumers.
+
+The data flow is organised around block passing, from queue to queue. Each queue output is processed
+by a thread of thread pool.
+
+The overall layout of a migration mount is shown in figure \ref{tsMigrationMM}. The recall mount, shown in\
+figure \ref{tsRecallMM}, is almost symmetric. The report packer triggers on threshold instead of tape 
+flushes, and 
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[scale=0.75]{images/MigrationMountMM}
+\end{center}
+\caption{\label{tsMigrationMM}Tape server child process: layout of the memory management in the case
+of a migration mount}
+\end{figure}
+
+\begin{figure}[h]
+\begin{center}
+\includegraphics[scale=0.75]{images/RecallMountMM}
+\end{center}
+\caption{\label{tsRecallMM}Tape server child process: layout of the memory management in the case
+of a recall mount}
+\end{figure}
+
 
 \subsubsection{Session spawner}
-
 \subsubsection{Session process}
 
+\subsubsection{Memory chunk manager}
+
+The memory block manager allocates (usually all at once) a large chunk of memory.
+This memory is then shared between the various FIFOs in the system. Deallocation
+of memory on exit will allow memory leak checks. 
+
+\paragraph{Recall}
+In case of a recall, the memory manager is pretty much an empty shell.
+Memory blocks are sequentially pulled by the current tape read task and pushed back to the memory manager once written to the disk
+\paragraph{Migration}
+In case of a migration, he memory manager has an active role. 
+He has a list of clients that are waiting for some memory blocks. It pushes to them  
+
+
 \subsubsection{Tape read thread}
-
+Behavior :
+Beginning : 
+\begin{itemize}[noitemsep]
+\item Load tape
+\item Mount tape
+\item wait for drive to be ready
+\item Check the label and position the tape 
+\end{itemize}
+Run 
+\begin{itemize}[noitemsep]
+\item Pop a queued task (and ask the task injector to put more tasks in) 
+\item execute 
+\end{itemize}
+At the end :
+\begin{itemize}[noitemsep]
+\item Signal the end to the global status reporter
+\item Signal to the task injector that he can stop 
+\item attempt of cleaning : unmount and unload the tape
+\end{itemize}
 \subsubsection{Tape write thread}
+Behavior :
+Beginning : 
+\begin{itemize}[noitemsep]
+\item Load tape
+\item Mount tape
+\item wait for drive to be ready
+\item Check the label and position the tape 
+\end{itemize}
+Run 
+\begin{itemize}[noitemsep]
+\item Pop a queued task 
+\item execute 
+\item Report to the client if a threshold has been crossed
+\end{itemize}
+At the end :
+\begin{itemize}[noitemsep]
+\item Signal the end to the global status reporter
+\item attempt of cleaning : unmount and unload the tape
+\end{itemize}
+\subsubsection{Disk read thread pool}
+It is an empty shell owning and running a set of disk read threads. Each thread will pop a task and execute it.
+While popping a task, we ask the task injector to provide more task if we cross on the thresholds.
+The last thread alive will report the end of the session to the client 
+\subsubsection{Disk write thread pool}
+It is also an empty shell owning and running a set of disk write threads. Each thread will pop a task and execute it.
+The last thread alive will report the end of the session to the client 
+\subsubsection{Global status reporter}
 
-\subsubsection{Disk read thread}
+\subsubsection{Task injector}
+\paragraph{Recall}
+\paragraph{Migration}
+\subsubsection{Loopback system}
 
-\subsubsection{Disk write thread}
+\subsection{How to interpret the exit code of the mount-session child process}
+An exit code of 0 means the underlying drive is free to be used again and the tapeserverd parent-process should therefore move the state of the drive to UP (idle in tpstat and FREE in showqueues).
+
+A non-zero exit code means the tapeserverd parent-process should move the state of underlying drive to DOWN.  An operator will take a look. Under no circumstances should the tapeserverd daemon launch a Leon/Victor process to clean the situation.
+
+If the mount-session child-process terminates without an exit code (it received a terminating signal) then the Leon/Victor process should be launched.
 
 \section{Compilation instructions}
 
@@ -1040,6 +1173,15 @@ But you need get and install manualy from swrep\footnote{http://swrep/swrep/} at
  \item stk-ssi-2.3-3.cern
 \end{itemize}
 
+
+Ceph is also need. The following command should take care of that : 
+\begin{table}[h]
+\begin{lstlisting}
+yum localinstall http://swrep/swrep/x86_64_slc6/ceph-0.80.1-0.cern.x86_64.rpm http://swrep/swrep/x86_64_slc6/ceph-devel-0.80.1-0.cern.x86_64.rpm http://swrep/swrep/x86_64_slc6/librados2-0.80.1-0.cern.x86_64.rpm http://swrep/swrep/x86_64_slc6/python-ceph-0.80.1-0.cern.x86_64.rpm http://swrep/swrep/x86_64_slc6/libradosstriper-0.80.1-0.cern.x86_64.rpm http://swrep/swrep/x86_64_slc6/libcephfs_jni1-0.80.1-0.cern.x86_64.rpm http://swrep/swrep/x86_64_slc6/libcephfs1-0.80.1-0.cern.x86_64.rpm http://swrep/swrep/x86_64_slc6/librbd1-0.80.1-0.cern.x86_64.rpm
+\end{lstlisting}
+\end{table}
+
+You may install ceph-debuginfo (2.8 Go) if you need to.
 
 After that, you can run again
 \begin{table}[h]
