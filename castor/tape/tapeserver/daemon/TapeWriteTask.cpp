@@ -90,8 +90,8 @@ namespace daemon {
             LogContext::ScopedParam(lc, Param("failed_Status", mb->m_failed))
           };
           tape::utils::suppresUnusedVariable(sp);
-          lc.log(LOG_ERR,"received a bad block for writing");
-          throw castor::tape::Exception("received a bad block for writing");
+          lc.log(LOG_ERR,"Failed to read from disk");
+          throw castor::tape::Exception("Failed to read from disk");
         }
 
         ckSum =  mb->m_payload.adler32(ckSum);
