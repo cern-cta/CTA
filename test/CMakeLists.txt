@@ -140,6 +140,7 @@ add_executable(castorUnitTests
   ../castor/server/DaemonTest.cpp
   ../castor/tape/tapeserver/client/ClientProxyTest.cpp
   ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
+  ../castor/tape/tapeserver/daemon/CapabilityUtilsDummy.cpp
 #  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
@@ -214,6 +215,7 @@ add_executable(castorThreadedUnitTests
   ../castor/tape/tapeserver/threading/ThreadingMTTests.cpp
   ../castor/tape/tapeserver/daemon/MountSessionTest.cpp
   ../castor/tape/tapeserver/threading/ThreadingBlockingQTests.cpp
+  ../castor/tape/tapeserver/daemon/CapabilityUtilsDummy.cpp
   ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp
   ../castor/tape/tapeserver/daemon/MigrationReportPackerTest.cpp
 )

@@ -2,6 +2,8 @@ find_package( ZLIB REQUIRED )
 
 add_library(castorTapeServerDaemon 
   ../client/ClientProxy.cpp 
+  CapabilityUtils.cpp
+  CapabilityUtilsImpl.cpp
   LabelSession.cpp
   RecallTaskInjector.cpp 
   MigrationReportPacker.cpp 
@@ -34,6 +36,15 @@ add_library(castorTapeServerDaemonTestDummies
 
 add_executable(tapeserverd TapeDaemon.cpp)
 
+find_library (LIBCAP_LIB cap)
+if (LIBCAP_LIB)
+  message(STATUS "Found the libcap library")
+  set (LIBCAPUNITTEST_SRC_FILES
+    ../castor/tape/tapeserver/daemon/SmartCapTest.cpp)
+else (LIBCAP_LIB)
+  message(STATUS "Failed to find libcap library")
+endif (LIBCAP_LIB)
+
 target_link_libraries(tapeserverd
   castorTapeServerDaemon
   Exception
@@ -46,6 +57,7 @@ target_link_libraries(tapeserverd
   castortapegatewayprotocol
   castortapelegacymsg
   castorTapeServerThreading
+  ${LIBCAP_LIB}
   ${ZLIB_LIBRARIES})
 
 install (TARGETS tapeserverd DESTINATION ${CASTOR_DEST_BIN_DIR})

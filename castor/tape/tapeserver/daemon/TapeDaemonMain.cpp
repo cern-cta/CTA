@@ -30,6 +30,7 @@
 #include "castor/legacymsg/VdqmProxyTcpIp.hpp"
 #include "castor/legacymsg/VmgrProxyTcpIp.hpp"
 #include "castor/log/SyslogLogger.hpp"
+#include "castor/tape/tapeserver/daemon/CapabilityUtilsImpl.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/MountSession.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
@@ -110,6 +111,9 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
   // Create the poll() reactor
   castor::io::PollReactorImpl reactor(log);
 
+  // Create the object providing utilities for working with UNIX capabilities
+  CapabilityUtilsImpl capUtils;
+
   // Create the main tapeserverd object
   TapeDaemon daemon(
     argc,
@@ -123,7 +127,8 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
     rmcFactory,
     tapeserverFactory,
     nsFactory,
-    reactor);
+    reactor,
+    capUtils);
 
   // Run the tapeserverd daemon
   return daemon.main();

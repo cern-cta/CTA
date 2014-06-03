@@ -58,10 +58,11 @@ castor::tape::tapeserver::daemon::MountSession::MountSession(
     const utils::TpconfigLines & tpConfig,
     castor::legacymsg::RmcProxy & rmc,
     castor::legacymsg::TapeserverProxy & initialProcess,
+    CapabilityUtils &capUtils,
     const CastorConf & castorConf): 
     m_request(clientRequest), m_logger(logger), m_clientProxy(clientRequest),
     m_sysWrapper(sysWrapper), m_tpConfig(tpConfig), m_castorConf(castorConf), 
-    m_rmc(rmc), m_intialProcess(initialProcess), 
+    m_rmc(rmc), m_intialProcess(initialProcess), m_capUtils(capUtils),
     m_argc(argc), m_argv(argv) {}
 
 //------------------------------------------------------------------------------

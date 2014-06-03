@@ -30,6 +30,7 @@
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
+#include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 #include "TapeSingleThreadInterface.hpp"
 
 using namespace castor::tape;
@@ -107,6 +108,7 @@ namespace daemon {
             const utils::TpconfigLines & tpConfig,
             castor::legacymsg::RmcProxy & rmc,
             castor::legacymsg::TapeserverProxy & initialProcess,
+            CapabilityUtils &capUtils,
             const CastorConf & castorConf);
     /** The only method. It will execute (like a task, that it is) */
     int execute() ;
@@ -139,6 +141,8 @@ namespace daemon {
     castor::legacymsg::RmcProxy & m_rmc;
     /** Reference to the tape server's parent process to report detailed status */
     castor::legacymsg::TapeserverProxy & m_intialProcess;
+    /** Object providing utilities for working UNIX capabilities. */
+    CapabilityUtils &m_capUtils;
     /** copy of the process's argc to allow "command line reporting"
      * i.e. snprintf to argv's, which will be visible in 'ps' */
     int m_argc;

@@ -30,6 +30,7 @@
 #include "castor/tape/tapeserver/client/ClientSimulator.hpp"
 #include "castor/tape/tapeserver/client/ClientSimSingleReply.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
+#include "castor/tape/tapeserver/daemon/CapabilityUtilsDummy.hpp"
 #include "../threading/Threading.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "MountSession.hpp"
@@ -160,6 +161,7 @@ TEST(tapeServer, MountSessionGooddayRecall) {
   castorConf.tapebridgeBulkRequestRecallMaxFiles = 1000;
   castorConf.tapeserverdDiskThreads = 1;
   castor::legacymsg::RmcProxyDummy rmc;
+  CapabilityUtilsDummy capUtils;
   castor::legacymsg::TapeserverProxyDummy initialProcess;
   char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
   int argc = 4;
@@ -173,7 +175,7 @@ TEST(tapeServer, MountSessionGooddayRecall) {
     }
   }
   MountSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys, tpConfig, 
-    rmc, initialProcess, castorConf);
+    rmc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
@@ -225,6 +227,7 @@ TEST(tapeServer, MountSessionNoSuchDrive) {
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::legacymsg::RmcProxyDummy rmc;
   castor::legacymsg::TapeserverProxyDummy initialProcess;
+  CapabilityUtilsDummy capUtils;
   char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
   int argc = 4;
   char * argv [4];
@@ -237,7 +240,7 @@ TEST(tapeServer, MountSessionNoSuchDrive) {
     }
   }
   MountSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys, tpConfig, 
-    rmc, initialProcess, castorConf);
+    rmc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
@@ -377,6 +380,7 @@ TEST(tapeServer, MountSessionGooddayMigration) {
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::legacymsg::RmcProxyDummy rmc;
   castor::legacymsg::TapeserverProxyDummy initialProcess;
+  CapabilityUtilsDummy capUtils;
   char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
   int argc = 4;
   char * argv [4];
@@ -389,7 +393,7 @@ TEST(tapeServer, MountSessionGooddayMigration) {
     }
   }
   MountSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys, tpConfig, 
-    rmc, initialProcess, castorConf);
+    rmc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
   for (std::vector<struct expectedResult>::iterator i = expected.begin();
