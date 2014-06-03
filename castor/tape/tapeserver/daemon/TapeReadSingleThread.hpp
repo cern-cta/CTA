@@ -83,7 +83,6 @@ private:
   public:
     TapeCleaning(TapeReadSingleThread& parent):m_this(parent){}
     ~TapeCleaning(){
-      try{
         // Tell everyone to wrap up the session
         // We now acknowledge to the task injector that read reached the end. There
         // will hence be no more requests for more.
@@ -113,16 +112,6 @@ private:
         }
         //then we terminate the global status reporter
         m_this.m_gsr.finish();
-      } catch(const castor::exception::Exception& ex){
-        //set it to -1 to notify something failed during the cleaning 
-        m_this.m_hardarwareStatus = -1;
-        castor::log::ScopedParamContainer scoped(m_this.m_logContext);
-        scoped.add("exception_message", ex.getMessageValue())
-        .add("exception_code",ex.code());
-        m_this.m_logContext.log(LOG_ERR, "Exception in TapeReadSingleThread-TapeCleaning");
-      } catch (...) {
-        m_this.m_logContext.log(LOG_ERR, "Non-Castor exception in TapeReadSingleThread-TapeCleaning");
-      }
     }
   };
   /**

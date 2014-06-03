@@ -89,13 +89,7 @@ private:
       m_this.m_rmc.unmountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot);
       m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread : tape unmounted");
       m_this.m_gsr.tapeUnmounted();
-        
-      //then we log/notify
-      m_this.m_logContext.log(LOG_INFO, "Finishing TapeWriteSingleThread"
-      " Just signaled task injector of the end");
-    
-      //then we terminate the global status reporter
-      m_this.m_gsr.finish();
+              
       }
       catch(const castor::exception::Exception& ex){
         //set it to -1 to notify something failed during the cleaning 
@@ -104,7 +98,14 @@ private:
         scoped.add("exception_message", ex.getMessageValue())
         .add("exception_code",ex.code());
         m_this.m_logContext.log(LOG_ERR, "Exception in TapeWriteSingleThread-TapeCleaning");
+      } catch (...) {
+          //set it to -1 to notify something failed during the cleaning 
+          m_this.m_hardarwareStatus = -1;
+          m_this.m_logContext.log(LOG_ERR, "Non-Castor exception in TapeWriteSingleThread-TapeCleaning when unmounting the tape");
       }
+      
+      //then we terminate the global status reporter
+      m_this.m_gsr.finish();
     }
   };
   
