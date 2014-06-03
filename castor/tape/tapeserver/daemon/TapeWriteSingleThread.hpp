@@ -34,6 +34,8 @@
 #include <iostream>
 #include <stdio.h>
 #include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
+#include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -60,8 +62,9 @@ public:
           GlobalStatusReporter & gsr,
           const client::ClientInterface::VolumeInfo& volInfo,
           castor::log::LogContext & lc, MigrationReportPacker & repPacker,
+           CapabilityUtils &capUtils,
 	  uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
-  TapeSingleThreadInterface<TapeWriteTask>(drive, rmc, gsr, volInfo, lc),
+  TapeSingleThreadInterface<TapeWriteTask>(drive, rmc, gsr, volInfo,capUtils, lc),
           m_filesBeforeFlush(filesBeforeFlush),
           m_bytesBeforeFlush(bytesBeforeFlush),
           m_drive(drive), m_reportPacker(repPacker),

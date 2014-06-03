@@ -37,6 +37,8 @@
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
+#include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -63,8 +65,8 @@ public:
           castor::legacymsg::RmcProxy & rmc,
           GlobalStatusReporter & gsr,
           const client::ClientInterface::VolumeInfo& volInfo, uint64_t maxFilesRequest,
-          castor::log::LogContext & lc): 
-   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr,volInfo,lc),
+          CapabilityUtils &capUtils,castor::log::LogContext & lc): 
+   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr,volInfo,capUtils,lc),
    m_maxFilesRequest(maxFilesRequest),m_filesProcessed(0) {
    }
    

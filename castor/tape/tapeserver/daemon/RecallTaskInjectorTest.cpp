@@ -14,7 +14,7 @@
 #include "castor/tape/utils/TpconfigLine.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/utils/utils.hpp"
-
+#include "castor/tape/tapeserver/daemon/CapabilityUtilsDummy.hpp"
 namespace unitTests
 {
 using namespace castor::tape::tapeserver::daemon;
@@ -38,8 +38,10 @@ public:
   FakeSingleTapeReadThread(castor::tape::drives::DriveInterface& drive,
     castor::legacymsg::RmcProxy & rmc,
     castor::tape::tapeserver::daemon::GlobalStatusReporter & gsr,
-    const castor::tape::tapeserver::client::ClientInterface::VolumeInfo& volInfo, castor::log::LogContext & lc):
-  TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr, volInfo, lc){}
+    const castor::tape::tapeserver::client::ClientInterface::VolumeInfo& volInfo, 
+     castor::tape::tapeserver::daemon::CapabilityUtils& cap,
+    castor::log::LogContext & lc):
+  TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr, volInfo,cap, lc){}
   
   ~FakeSingleTapeReadThread(){
     const unsigned int size= m_tasks.size();
@@ -76,7 +78,8 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   volume.volumeMode=castor::tape::tapegateway::READ;
   castor::tape::tapeserver::daemon::GlobalStatusReporter gsr(initialProcess,
   utils::TpconfigLine("","","","","UP","",""),"0.0.0.0",volume,lc);
-  FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, volume, lc);
+  castor::tape::tapeserver::daemon::CapabilityUtilsDummy cap;
+  FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, volume, cap,lc);
 
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);
@@ -130,9 +133,10 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   volume.labelObsolete="AUL";
   volume.vid="V12345";
   volume.volumeMode=castor::tape::tapegateway::READ;
+  castor::tape::tapeserver::daemon::CapabilityUtilsDummy cap;
   castor::tape::tapeserver::daemon::GlobalStatusReporter gsr(initialProcess,  
   utils::TpconfigLine("","","","","UP","",""),"0.0.0.0",volume,lc);  
-  FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, volume, lc);
+  FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, volume,cap, lc);
   
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);

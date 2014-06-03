@@ -12,6 +12,7 @@
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
+#include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 
 namespace castor {
 namespace legacymsg {
@@ -88,15 +89,33 @@ public:
    * Constructor
    * @param drive An interface to manipulate the drive to manipulate the tape
    * with the requested vid
-   * @param vid The volumeID of the tape on which we want to operate
-   * @param lc The log context, later on copied
+   * @param rmc The media changer (=robot) that will (un)load/(un)mount the tape
+   * @param gsr
+   * @param volInfo All we need to know about the tape we are manipulating 
+   * @param capUtils
+   * @param lc lc The log context, later on copied
    */
   TapeSingleThreadInterface(castor::tape::drives::DriveInterface & drive,
     castor::legacymsg::RmcProxy & rmc,
     GlobalStatusReporter & gsr,
-    const client::ClientInterface::VolumeInfo& volInfo,castor::log::LogContext & lc):
+    const client::ClientInterface::VolumeInfo& volInfo,
+          CapabilityUtils &capUtils,castor::log::LogContext & lc):
   m_drive(drive), m_rmc(rmc), m_gsr(gsr), m_vid(volInfo.vid), m_logContext(lc),
-          m_volInfo(volInfo),m_hardarwareStatus(0) {}
+          m_volInfo(volInfo),m_hardarwareStatus(0) {
+      try {
+    m_capUtils.capSetProcText("cap_sys_rawio+ep");
+    log::Param params[] =
+      {log::Param("capabilities", m_capUtils.capGetProcText())};
+    m_log(LOG_INFO,
+      "Set process capabilities in the tape common interface",
+      params);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to set process capabilities after switching to"
+      " the stager superuser: " << ne.getMessage().str();
+  }
+    
+  }
 };
 
 }

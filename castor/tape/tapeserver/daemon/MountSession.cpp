@@ -24,7 +24,7 @@
 
 #include <memory>
 
-#include "MountSession.hpp"
+#include "castor/tape/tapeserver/daemon/MountSession.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
@@ -35,14 +35,15 @@
 #include "h/serrno.h"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
-#include "RecallTaskInjector.hpp"
-#include "RecallReportPacker.hpp"
-#include "TapeWriteSingleThread.hpp"
-#include "DiskReadThreadPool.hpp"
-#include "MigrationTaskInjector.hpp"
+#include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
+#include "castor/tape/tapeserver/daemon/RecallReportPacker.hpp"
+#include "castor/tape/tapeserver/daemon/TapeWriteSingleThread.hpp"
+#include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
+#include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
+#include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 
 using namespace castor::tape;
 using namespace castor::log;
@@ -170,7 +171,7 @@ int castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc)
     gsr.gotReadMountDetailsFromClient();
     
     TapeReadSingleThread trst(*drive, m_rmc, gsr, m_volInfo, 
-        m_castorConf.tapebridgeBulkRequestRecallMaxFiles, lc);
+        m_castorConf.tapebridgeBulkRequestRecallMaxFiles,m_capUtils, lc);
     RecallReportPacker rrp(m_clientProxy,
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
         lc);
@@ -256,6 +257,7 @@ int castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc
         m_volInfo,
         lc,
         mrp,
+        m_capUtils,    
         m_castorConf.tapebridgeMaxFilesBeforeFlush,
         m_castorConf.tapebridgeMaxBytesBeforeFlush/m_castorConf.rtcopydBufsz);
     DiskReadThreadPool drtp(m_castorConf.tapeserverdDiskThreads,
