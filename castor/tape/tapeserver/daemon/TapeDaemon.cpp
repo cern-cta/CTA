@@ -891,8 +891,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
       throw;
     }
     
-    mountSession->execute();
-    exit(0);
+    exit (mountSession->execute());
   } catch(std::exception &se) {
     log::Param params[] = {
       log::Param("sessionPid", sessionPid),
