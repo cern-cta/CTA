@@ -99,22 +99,18 @@ public:
     castor::legacymsg::RmcProxy & rmc,
     GlobalStatusReporter & gsr,
     const client::ClientInterface::VolumeInfo& volInfo,
-          CapabilityUtils &capUtils,castor::log::LogContext & lc):
-  m_drive(drive), m_rmc(rmc), m_gsr(gsr), m_vid(volInfo.vid), m_logContext(lc),
-          m_volInfo(volInfo),m_hardarwareStatus(0) {
-      try {
-    m_capUtils.capSetProcText("cap_sys_rawio+ep");
-    log::Param params[] =
-      {log::Param("capabilities", m_capUtils.capGetProcText())};
-    m_log(LOG_INFO,
-      "Set process capabilities in the tape common interface",
-      params);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to set process capabilities after switching to"
-      " the stager superuser: " << ne.getMessage().str();
-  }
-    
+    CapabilityUtils &capUtils,castor::log::LogContext & lc):
+    m_drive(drive), m_rmc(rmc), m_gsr(gsr), m_vid(volInfo.vid), m_logContext(lc),
+    m_volInfo(volInfo),m_hardarwareStatus(0) {
+    try {
+      capUtils.capSetProcText("cap_sys_rawio+ep");
+      log::LogContext::ScopedParam(lc,
+        log::Param("capabilities", capUtils.capGetProcText()));
+      lc.log(LOG_INFO, "Set process capabilities in the tape common interface");
+    } catch(castor::exception::Exception &ne) {
+      lc.log(LOG_ERR,
+        "Failed to set process capabilities in the tape common interface");
+    }
   }
 };
 
