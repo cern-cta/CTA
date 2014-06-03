@@ -894,6 +894,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(const std::st
         m_tpconfigLines,
         *(rmc.get()),
         *(tapeserver.get()),
+        m_capUtils,
         castorConf
       ));
     } catch (castor::exception::Exception & ex) {
