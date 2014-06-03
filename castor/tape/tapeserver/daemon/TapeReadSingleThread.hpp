@@ -84,33 +84,44 @@ private:
     TapeCleaning(TapeReadSingleThread& parent):m_this(parent){}
     ~TapeCleaning(){
       try{
-      // Do the final cleanup
-      m_this.m_drive.unloadTape();
-      m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread : Tape unloaded");
-      // And return the tape to the library
-      m_this.m_rmc.unmountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot);
-      m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread : tape unmounted");
-      m_this.m_gsr.tapeUnmounted();
-      
-      // We now acknowledge to the task injector that read reached the end. There
-      // will hence be no more requests for more.
-      m_this.m_taskInjector->finish();
-      
-      //then we log/notify
-      m_this.m_logContext.log(LOG_INFO, "Finishing Tape Read Thread."
-      " Just signaled task injector of the end");
-    
-      //then we terminate the global status reporter
-      m_this.m_gsr.finish();
-      }
-      catch(const castor::exception::Exception& ex){
+        // Tell everyone to wrap up the session
+        // We now acknowledge to the task injector that read reached the end. There
+        // will hence be no more requests for more.
+        m_this.m_taskInjector->finish();
+        //then we log/notify
+        m_this.m_logContext.log(LOG_INFO, "Finishing Tape Read Thread."
+        " Just signaled task injector of the end");
+        try {
+          // Do the final cleanup
+          m_this.m_drive.unloadTape();
+          m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread : Tape unloaded");
+          // And return the tape to the library
+          m_this.m_rmc.unmountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot);
+          m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread : tape unmounted");
+          m_this.m_gsr.tapeUnmounted();
+        } catch(const castor::exception::Exception& ex){
+          //set it to -1 to notify something failed during the cleaning 
+          m_this.m_hardarwareStatus = -1;
+          castor::log::ScopedParamContainer scoped(m_this.m_logContext);
+          scoped.add("exception_message", ex.getMessageValue())
+          .add("exception_code",ex.code());
+          m_this.m_logContext.log(LOG_ERR, "Exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
+        } catch (...) {
+          //set it to -1 to notify something failed during the cleaning 
+          m_this.m_hardarwareStatus = -1;
+          m_this.m_logContext.log(LOG_ERR, "Non-Castor exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
+        }
+        //then we terminate the global status reporter
+        m_this.m_gsr.finish();
+      } catch(const castor::exception::Exception& ex){
         //set it to -1 to notify something failed during the cleaning 
         m_this.m_hardarwareStatus = -1;
-        
         castor::log::ScopedParamContainer scoped(m_this.m_logContext);
         scoped.add("exception_message", ex.getMessageValue())
         .add("exception_code",ex.code());
         m_this.m_logContext.log(LOG_ERR, "Exception in TapeReadSingleThread-TapeCleaning");
+      } catch (...) {
+        m_this.m_logContext.log(LOG_ERR, "Non-Castor exception in TapeReadSingleThread-TapeCleaning");
       }
     }
   };
@@ -223,10 +234,10 @@ private:
           break;
         }
       }
-    }catch(const castor::exception::Exception& e){
-      //we can only end there because 
-      //moundTape, waitForDrive or crating the ReadSession failed
-      //that means we cant do anything because the environment is wrong 
+    } catch(const castor::exception::Exception& e){
+      // we can only end there because 
+      // moundTape, waitForDrive or crating the ReadSession failed
+      // that means we cant do anything because the environment is wrong 
       // so we have to delete all task and return
 
       m_logContext.log(LOG_ERR, "Tape read session failed to start");
