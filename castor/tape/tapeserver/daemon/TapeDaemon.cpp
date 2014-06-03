@@ -139,8 +139,42 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
   m_driveCatalogue.populateCatalogue(m_tpconfigLines);
+
+  // Process must be able to change user now and should be permitted to perform
+  // raw IO in the future
+  try {
+    m_capUtils.capSetProcText("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
+    log::Param params[] =
+      {log::Param("capabilities", m_capUtils.capGetProcText())};
+    m_log(LOG_INFO, "Set process capabilities before daemonizing",
+      params);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to set process capabilities before daemonizing: "
+      << ne.getMessage().str();
+    throw ex;
+  }
+
   const bool runAsStagerSuperuser = true;
   daemonizeIfNotRunInForeground(runAsStagerSuperuser);
+
+  // There is no longer a need for the process to be able to change user,
+  // however the process should still be permitted to perform raw IO in the
+  // future
+  try {
+    m_capUtils.capSetProcText("cap_sys_rawio+p");
+    log::Param params[] =
+      {log::Param("capabilities", m_capUtils.capGetProcText())};
+    m_log(LOG_INFO,
+      "Set process capabilities after switching to the stager superuser",
+      params);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to set process capabilities after switching to"
+      " the stager superuser: " << ne.getMessage().str();
+    throw ex;
+  }
+
   blockSignals();
   setUpReactor();
   registerTapeDrivesWithVdqm();
