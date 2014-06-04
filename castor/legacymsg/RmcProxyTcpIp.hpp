@@ -108,16 +108,6 @@ protected:
   static const int RMC_MSGBUFSIZ = 256;
 
   /**
-   * The user ID of the current process.
-   */
-  const uid_t m_uid;
-
-  /**
-   * The group ID of the current process.
-   */
-  const gid_t m_gid; 
-
-  /**
    * The object representing the API of the CASTOR logging system.
    */
   log::Logger &m_log;

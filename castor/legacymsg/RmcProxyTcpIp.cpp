@@ -34,8 +34,6 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::legacymsg::RmcProxyTcpIp::RmcProxyTcpIp(log::Logger &log, const int netTimeout) throw():
-    m_uid(getuid()),
-    m_gid(getgid()),
     m_log(log),
     m_netTimeout(netTimeout) {
 } 
@@ -131,8 +129,8 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid, con
     castor::utils::SmartFd fd(connectToRmc(parsedSlot.rmcHostName));
 
     RmcMountMsgBody body;
-    body.uid = m_uid;
-    body.gid = m_gid;
+    body.uid = getuid();
+    body.gid = getgid();
     castor::utils::copyString(body.vid, vid.c_str());
     body.drvOrd = parsedSlot.drvOrd;
     writeRmcMountMsg(fd.get(), body);
@@ -246,8 +244,8 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid, c
     castor::utils::SmartFd fd(connectToRmc(parsedSlot.rmcHostName));
 
     RmcUnmountMsgBody body;
-    body.uid = m_uid;
-    body.gid = m_gid;
+    body.uid = getuid();
+    body.gid = getgid();
     castor::utils::copyString(body.vid, vid.c_str());
     body.drvOrd = parsedSlot.drvOrd;
     body.force = 0;
