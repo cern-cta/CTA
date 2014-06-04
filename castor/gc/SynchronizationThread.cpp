@@ -441,8 +441,8 @@ void castor::gc::SynchronizationThread::readConfigFile(bool firstTime) {
       (value = getconfent("GC", "SyncGracePeriod", 0))) {
     gracePeriodnew = atoi(value);
     if (gracePeriodnew >= 0) {
-      if (m_gracePeriod != (unsigned int)gracePeriodnew) {
-        m_gracePeriod = (unsigned int)gracePeriodnew;
+      if (m_gracePeriod != (time_t)gracePeriodnew) {
+        m_gracePeriod = (time_t)gracePeriodnew;
         if (!firstTime) {
           // "New synchronization grace period"
           castor::dlf::Param params[] =

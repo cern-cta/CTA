@@ -168,7 +168,7 @@ namespace castor {
       unsigned int m_chunkSize;
       /// the grace period for new files. That is the period during which they are not
       /// considered for synchronization
-      unsigned int m_gracePeriod;
+      time_t m_gracePeriod;
       /// Whether stager synchronization should be disabled;
       bool m_disableStagerSync;
 
