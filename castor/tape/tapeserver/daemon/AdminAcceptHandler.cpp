@@ -161,7 +161,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillTapeStatDriveEntr
   }
 
   try {
-    entry.uid = getuid();
+    entry.uid = geteuid();
     castor::utils::copyString(entry.dgn,
       m_driveCatalogue.getDgn(unitName).c_str());
     const DriveCatalogue::DriveState driveState =
