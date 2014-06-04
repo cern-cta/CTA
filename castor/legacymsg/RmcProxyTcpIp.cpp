@@ -129,8 +129,8 @@ void castor::legacymsg::RmcProxyTcpIp::mountTapeScsi(const std::string &vid, con
     castor::utils::SmartFd fd(connectToRmc(parsedSlot.rmcHostName));
 
     RmcMountMsgBody body;
-    body.uid = getuid();
-    body.gid = getgid();
+    body.uid = geteuid();
+    body.gid = getegid();
     castor::utils::copyString(body.vid, vid.c_str());
     body.drvOrd = parsedSlot.drvOrd;
     writeRmcMountMsg(fd.get(), body);
@@ -244,8 +244,8 @@ void castor::legacymsg::RmcProxyTcpIp::unmountTapeScsi(const std::string &vid, c
     castor::utils::SmartFd fd(connectToRmc(parsedSlot.rmcHostName));
 
     RmcUnmountMsgBody body;
-    body.uid = getuid();
-    body.gid = getgid();
+    body.uid = geteuid();
+    body.gid = getegid();
     castor::utils::copyString(body.vid, vid.c_str());
     body.drvOrd = parsedSlot.drvOrd;
     body.force = 0;
