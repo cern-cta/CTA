@@ -24,6 +24,7 @@
  *****************************************************************************/
 
 #include "castor/gc/CephGlobals.hpp"
+#include <map>
 
 /// global variables holding ioCtx and stripers for each ceph pool
 std::map<std::string, libradosstriper::RadosStriper*> g_radosStripers;
