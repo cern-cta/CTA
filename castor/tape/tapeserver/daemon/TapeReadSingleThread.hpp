@@ -188,7 +188,7 @@ private:
         throw;
     }
   }
-  
+
   /**
    * This function is from Thread, it is the function that will do all the job
    */
@@ -196,7 +196,10 @@ private:
     m_logContext.pushOrReplace(log::Param("thread", "tapeRead"));
 
     try{
-      //after this point, the tape ins loaded, so 
+      
+      setCapabilities();
+      
+      // the tape ins loaded 
       //it has to be unloaded, unmounted at all cost -> RAII
       //will also take care of the GlobalStatusReporer and of RecallTaskInjector
       TapeCleaning tapeCleaner(*this);

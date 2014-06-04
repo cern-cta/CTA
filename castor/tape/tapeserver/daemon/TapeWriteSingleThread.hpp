@@ -197,6 +197,7 @@ private:
     try
     {
       m_logContext.pushOrReplace(log::Param("thread", "TapeWrite"));
+      setCapabilities();
       
       TapeCleaning cleaner(*this);
       mountTape();

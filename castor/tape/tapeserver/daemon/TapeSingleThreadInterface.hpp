@@ -31,6 +31,8 @@ namespace daemon {
 template <class Task>
 class TapeSingleThreadInterface : private castor::tape::threading::Thread
 {
+private :
+  CapabilityUtils &m_capUtils;
 protected:
   ///the queue of tasks 
   castor::tape::threading::BlockingQueue<Task *> m_tasks;
@@ -60,6 +62,19 @@ protected:
    * 0 means everything all right, any other value means we have to put it down
    */
   int m_hardarwareStatus;
+ 
+  
+  void setCapabilities(){
+    try {
+      m_capUtils.capSetProcText("cap_sys_rawio+ep");
+      log::LogContext::ScopedParam sp(m_logContext,
+              log::Param("capabilities", m_capUtils.capGetProcText()));
+      m_logContext.log(LOG_INFO, "Set process capabilities for using tape");
+    } catch(const castor::exception::Exception &ne) {
+      m_logContext.log(LOG_ERR,
+              "Failed to set process capabilities for using the tape ");
+    }
+  }
 public:
   
   int getHardwareStatus() const {
@@ -99,18 +114,10 @@ public:
     castor::legacymsg::RmcProxy & rmc,
     GlobalStatusReporter & gsr,
     const client::ClientInterface::VolumeInfo& volInfo,
-    CapabilityUtils &capUtils,castor::log::LogContext & lc):
+    CapabilityUtils &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
     m_drive(drive), m_rmc(rmc), m_gsr(gsr), m_vid(volInfo.vid), m_logContext(lc),
     m_volInfo(volInfo),m_hardarwareStatus(0) {
-    try {
-      capUtils.capSetProcText("cap_sys_rawio+ep");
-      log::LogContext::ScopedParam(lc,
-        log::Param("capabilities", capUtils.capGetProcText()));
-      lc.log(LOG_INFO, "Set process capabilities in the tape common interface");
-    } catch(castor::exception::Exception &ne) {
-      lc.log(LOG_ERR,
-        "Failed to set process capabilities in the tape common interface");
-    }
+
   }
 };
 
