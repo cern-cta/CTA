@@ -250,7 +250,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logTpconfigLine(
     log::Param("dgn", line.dgn),
     log::Param("devFilename", line.devFilename),
     log::Param("density", line.density),
-    log::Param("initialState", line.initialState),
     log::Param("librarySlot", line.librarySlot),
     log::Param("devType", line.devType)};
   m_log(LOG_INFO, "TPCONFIG line", params);

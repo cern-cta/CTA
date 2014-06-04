@@ -107,7 +107,7 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::enterTpconfigLine(
     entry.dgn = line.dgn;
     entry.devFilename = line.devFilename;
     entry.densities.push_back(line.density);
-    entry.state = initial2DriveState(line.initialState);
+    entry.state = DRIVE_STATE_DOWN;
     entry.librarySlot = line.librarySlot;
     entry.devType = line.devType;
     m_drives[line.unitName] = entry;
@@ -124,32 +124,6 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::enterTpconfigLine(
 }
 
 //-----------------------------------------------------------------------------
-// initial2DriveState
-//-----------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogue::DriveState
-  castor::tape::tapeserver::daemon::DriveCatalogue::initial2DriveState(
-  const utils::TpconfigLine::InitialState initialState) const  {
-  switch(initialState) {
-  case utils::TpconfigLine::TPCONFIG_DRIVE_NONE:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to convert initial drive state"
-        ": TPCONFIG_DRIVE_NONE is invalid";
-      throw ex;
-    }
-  case utils::TpconfigLine::TPCONFIG_DRIVE_UP: return DRIVE_STATE_UP;
-  case utils::TpconfigLine::TPCONFIG_DRIVE_DOWN: return DRIVE_STATE_DOWN;
-  default:
-   {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to convert initial drive state"
-        ": Unknown initial drive state: initialState=" << initialState;
-      throw ex;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
 // checkTpconfigLine
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::checkTpconfigLine(
@@ -158,7 +132,6 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::checkTpconfigLine(
   checkTpconfigLineDgn(catalogueEntry.dgn, line);
   checkTpconfigLineDevFilename(catalogueEntry.devFilename, line);
   checkTpconfigLineDensity(catalogueEntry.densities, line);
-  checkTpconfigLineInitialState(catalogueEntry.state, line);
   checkTpconfigLineLibrarySlot(catalogueEntry.librarySlot, line);
   checkTpconfigLineDevType(catalogueEntry.devType, line);
 }
@@ -209,22 +182,6 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::checkTpconfigLineDensity(
         ": repeatedDensity=" << line.density;
       throw ex;
     }
-  }
-}
-
-//-----------------------------------------------------------------------------
-// checkTpconfigLineInitialState
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::
-  checkTpconfigLineInitialState(const DriveState catalogueInitialState,
-  const utils::TpconfigLine &line)  {
-  if(catalogueInitialState != initial2DriveState(line.initialState)) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Invalid TPCONFIG line"
-      ": A tape drive can only have one initial state"
-      ": catalogueInitialState=" << catalogueInitialState <<
-      " lineInitialState=" << line.initialState;
-    throw ex;
   }
 }
 

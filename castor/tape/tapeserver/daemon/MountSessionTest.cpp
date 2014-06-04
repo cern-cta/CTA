@@ -151,9 +151,9 @@ TEST(tapeServer, MountSessionGooddayRecall) {
   utils::TpconfigLines tpConfig;
   // Actual TPCONFIG lifted from prod
   tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
-  "/dev/tape_T10D6116", "8000GC", "down", "acs0,1,1,6", "T10000"));
+  "/dev/tape_T10D6116", "8000GC", "acs0,1,1,6", "T10000"));
   tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
-  "/dev/tape_T10D6116", "5000GC", "down", "acs0,1,1,6", "T10000"));
+  "/dev/tape_T10D6116", "5000GC", "acs0,1,1,6", "T10000"));
   MountSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
   castorConf.rtcopydNbBufs = 10;
@@ -217,9 +217,9 @@ TEST(tapeServer, MountSessionNoSuchDrive) {
   utils::TpconfigLines tpConfig;
   // Actual TPCONFIG lifted from prod
   tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
-  "/dev/noSuchTape", "8000GC", "down", "acs0,1,1,6", "T10000"));
+  "/dev/noSuchTape", "8000GC", "acs0,1,1,6", "T10000"));
   tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
-  "/dev/noSuchTape", "5000GC", "down", "acs0,1,1,6", "T10000"));
+  "/dev/noSuchTape", "5000GC", "acs0,1,1,6", "T10000"));
   MountSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024;
   castorConf.rtcopydNbBufs = 10;
@@ -367,9 +367,9 @@ TEST(tapeServer, MountSessionGooddayMigration) {
   utils::TpconfigLines tpConfig;
   // Actual TPCONFIG lifted from prod
   tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
-  "/dev/tape_T10D6116", "8000GC", "down", "acs0,1,1,6", "T10000"));
+  "/dev/tape_T10D6116", "8000GC", "acs0,1,1,6", "T10000"));
   tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
-  "/dev/tape_T10D6116", "5000GC", "down", "acs0,1,1,6", "T10000"));
+  "/dev/tape_T10D6116", "5000GC", "acs0,1,1,6", "T10000"));
   MountSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
   castorConf.rtcopydNbBufs = 10;

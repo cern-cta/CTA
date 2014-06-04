@@ -470,7 +470,7 @@ void castor::tape::utils::parseTpconfigFile(const char *const filename,
   TpconfigLines &lines)  {
 
   // The expected number of data-columns in a TPCONFIG data-line
-  const unsigned int NBCOLUMNS = 7;
+  const unsigned int expectedNbOfColumns = 6;
 
   // Open the TPCONFIG file for reading
   castor::utils::SmartFILEPtr file(fopen(filename, "r"));
@@ -534,14 +534,14 @@ void castor::tape::utils::parseTpconfigFile(const char *const filename,
       castor::utils::splitString(line, ' ', columns);
 
       // Throw an exception if the number of data-columns is invalid
-      if(columns.size() != NBCOLUMNS) {
+      if(columns.size() != expectedNbOfColumns) {
         castor::exception::InvalidArgument ex;
 
         ex.getMessage() <<
           "Failed to parse TPCONFIG file"
           ": Invalid number of data columns in TPCONFIG line"
           ": filename='" << filename << "'"
-          ": expectedNbColumns=" << NBCOLUMNS <<
+          ": expectedNbColumns=" << expectedNbOfColumns <<
           ": actualNbColumns=" << columns.size() <<
           ": lineNb=" << lineNb;
 
@@ -554,9 +554,8 @@ void castor::tape::utils::parseTpconfigFile(const char *const filename,
         columns[1], // dgn
         columns[2], // devFilename
         columns[3], // density
-        columns[4], // initialStatus
-        columns[5], // positionInLibrary
-        columns[6]  // devType
+        columns[4], // positionInLibrary
+        columns[5]  // devType
       ));
     }
   }
