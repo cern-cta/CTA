@@ -163,14 +163,15 @@ private:
     m_logContext.log(LOG_INFO,message);
     m_reportPacker.reportFlush();
   }
-
-    void mountTape(){
+  
+  //see comment in TapeReadSingleThread
+  void mountTape(){
     castor::log::ScopedParamContainer scoped(m_logContext); 
     scoped.add("vid",m_volInfo.vid)
           .add("drive_Slot",m_drive.librarySlot);
     try {
-         m_rmc.mountTape(m_volInfo.vid, m_drive.librarySlot, legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
-        m_logContext.log(LOG_INFO, "Tape Mounted");
+      m_rmc.mountTape(m_volInfo.vid, m_drive.librarySlot, legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
+      m_logContext.log(LOG_INFO, "Tape Mounted");
     }
     catch (castor::exception::Exception & ex) {
       scoped.add("exception_message", ex.getMessageValue())
@@ -179,18 +180,18 @@ private:
       throw;
     }
   }
-    
-    void waitForDrive(){
-      try{
-        // wait 600 drive is ready
-        m_drive.waitUntilReady(600);
-      }catch(const castor::exception::Exception& e){
-        log::LogContext::ScopedParam sp01(m_logContext, log::Param("exception_code", e.code()));
-        log::LogContext::ScopedParam sp02(m_logContext, log::Param("exception_message", e.getMessageValue()));
-        m_logContext.log(LOG_INFO, "TapeWriteSingleThread waiting for drive to be ready timeout");
-        throw;
-      }
+  //see comment in TapeReadSingleThread 
+  void waitForDrive(){
+    try{
+      // wait 600 drive is ready
+      m_drive.waitUntilReady(600);
+    }catch(const castor::exception::Exception& e){
+      log::LogContext::ScopedParam sp01(m_logContext, log::Param("exception_code", e.code()));
+      log::LogContext::ScopedParam sp02(m_logContext, log::Param("exception_message", e.getMessageValue()));
+      m_logContext.log(LOG_INFO, "TapeWriteSingleThread waiting for drive to be ready timeout");
+      throw;
     }
+  }
     
   virtual void run() {
 

@@ -32,6 +32,9 @@ template <class Task>
 class TapeSingleThreadInterface : private castor::tape::threading::Thread
 {
 private :
+  /**
+   * Utility to change the capabilities of the current tape thread
+   */
   CapabilityUtils &m_capUtils;
 protected:
   ///the queue of tasks 
@@ -63,7 +66,10 @@ protected:
    */
   int m_hardarwareStatus;
  
-  
+  /**
+   * This function will try to set the cap_sys_rawio capability that is needed
+   * for by tape thread to access /dev/nst
+   */
   void setCapabilities(){
     try {
       m_capUtils.capSetProcText("cap_sys_rawio+ep");

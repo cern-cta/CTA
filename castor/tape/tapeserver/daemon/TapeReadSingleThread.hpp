@@ -80,6 +80,7 @@ public:
    }
 
 private:
+  //RAII class for cleaning tape stuff
   class TapeCleaning{
     TapeReadSingleThread& m_this;
   public:
@@ -136,7 +137,9 @@ private:
     }
     return vrp.value;
   }
-  
+  /**
+   * Try to mount the tape, get an exception if it fails 
+   */
   void mountTape(){
     castor::log::ScopedParamContainer scoped(m_logContext); 
     scoped.add("vid",m_volInfo.vid)
@@ -153,6 +156,14 @@ private:
       throw;
     }
   }
+  
+  /**
+   * After mounting the tape, the drive will say it has no tape inside,
+   * because there was no tape the first time it was opened... 
+   * That function will wait a certain amount of time for the drive 
+   * to tell us he acknowledge it has indeed a tap (get an ex exception in 
+   * case of timeout)
+   */
   void waitForDrive(){
     try {
       //wait for drive to be ready
@@ -258,8 +269,6 @@ private:
   ///how many files have we already processed(for loopback purpose)
   size_t m_filesProcessed;
   
-  std::auto_ptr<castor::tape::tapeFile::ReadSession> rs;
- 
 };
 }
 }
