@@ -86,12 +86,12 @@ void castor::tape::tapeserver::daemon::LabelSession::checkIfVidStillHasSegments(
   
   if(rc==castor::legacymsg::NsProxy::NSPROXY_TAPE_HAS_AT_LEAST_ONE_DISABLED_SEGMENT) {
     castor::exception::Exception ex;
-    ex.getMessage() << "End session with error. Tape has at least one disabled segment. Aborting labeling...";
+    ex.getMessage() << "End session with error. Tape has at least one disabled segment. Aborting labelling...";
     throw ex;
   }
   else if (rc==castor::legacymsg::NsProxy::NSPROXY_TAPE_HAS_AT_LEAST_ONE_ACTIVE_SEGMENT) {
     castor::exception::Exception ex;
-    ex.getMessage() << "End session with error. Tape has at least one active segment. Aborting labeling...";
+    ex.getMessage() << "End session with error. Tape has at least one active segment. Aborting labelling...";
     throw ex;
   }
   else {} // rc==castor::legacymsg::NsProxy::NSPROXY_TAPE_EMPTY. Tape is empty, we are good to go..
@@ -112,7 +112,7 @@ void castor::tape::tapeserver::daemon::LabelSession::getDriveObject(utils::Tpcon
   // If we did not find the drive in the tpConfig, we have a problem
   if (configLine == m_tpConfig.end()) {
     castor::exception::Exception ex;
-    ex.getMessage() << "End session with error. Drive unit not found in TPCONFIG. Aborting labeling...";
+    ex.getMessage() << "End session with error. Drive unit not found in TPCONFIG. Aborting labelling...";
     throw ex;
   }
   
@@ -126,7 +126,7 @@ void castor::tape::tapeserver::daemon::LabelSession::getDriveObject(utils::Tpcon
   // check that drive is not write protected
   if(drive->isWriteProtected()) {   
     castor::exception::Exception ex;
-    ex.getMessage() << "End session with error. Drive is write protected. Aborting labeling...";
+    ex.getMessage() << "End session with error. Drive is write protected. Aborting labelling...";
     throw ex;
   }
 }
@@ -164,16 +164,14 @@ void castor::tape::tapeserver::daemon::LabelSession::waitUntilDriveReady(castor:
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::labelTheTape(castor::tape::drives::DriveInterface *drive) {
   
-  // We can now start labeling
-  std::auto_ptr<castor::tape::tapeFile::LabelSession> ls;
-  ls.reset(new castor::tape::tapeFile::LabelSession(*drive, m_request.vid, m_force));
+  // We can now start labelling
+  castor::tape::tapeFile::LabelSession ls(*drive, m_request.vid, m_force);
 }
 
 //------------------------------------------------------------------------------
 // unmountTape
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelSession::unmountTape(utils::TpconfigLines::const_iterator &configLine) {
-  
   // We are done: unmount the tape now
   m_rmc.unmountTape(m_request.vid, configLine->librarySlot);
 }
@@ -198,30 +196,60 @@ void castor::tape::tapeserver::daemon::LabelSession::executeLabel() {
   
   bool tapeMounted=false;
   bool configlineSet=false;
+  bool labellingError=false;
+  bool clientNotified=false;
   
   try {
     checkIfVidStillHasSegments();
-    m_log(LOG_INFO, "The tape to be labeled has no files registered in the nameserver", params);
+    m_log(LOG_INFO, "The tape to be labelled has no files registered in the nameserver", params);
     getDriveObject(configLine, drive);
     m_log(LOG_INFO, "The tape drive object has been instantiated", params);
     configlineSet=true;
     mountTape(configLine);
-    m_log(LOG_INFO, "The tape has been successfully mounted for labeling", params);
+    m_log(LOG_INFO, "The tape has been successfully mounted for labelling", params);
     tapeMounted=true;
     waitUntilDriveReady(drive.get());
-    m_log(LOG_INFO, "The drive is ready for labeling", params);
-    labelTheTape(drive.get());
-    m_log(LOG_INFO, "The tape has been successfully labeled", params);
+    m_log(LOG_INFO, "The drive is ready for labelling", params);
+    try {
+      labelTheTape(drive.get());
+      m_log(LOG_INFO, "The tape has been successfully labelled", params);
+    } catch(castor::tape::tapeFile::TapeNotEmpty & ex) {
+      // In case of error
+      log::Param params[] = {log::Param("message", ex.getMessage().str())};
+      m_log(LOG_ERR, "The tape could not be labelled", params);
+      try {
+        legacymsg::writeTapeReplyMsg(m_timeout, m_labelCmdConnection, 1, ex.getMessage().str());
+      } catch (...) {}
+      clientNotified=true;
+    }
+    drive->unloadTape();
     unmountTape(configLine);
-    m_log(LOG_INFO, "The tape has been successfully unmounted after labeling", params);
+    m_log(LOG_INFO, "The tape has been successfully unmounted after labelling", params);
     tapeMounted=false;
-    legacymsg::writeTapeReplyMsg(m_timeout, m_labelCmdConnection, 0, "");
+    if (!labellingError) {
+      try {
+        legacymsg::writeTapeReplyMsg(m_timeout, m_labelCmdConnection, 0, "");
+      } catch (...) {}
+      clientNotified=true;
+    }
   } catch(castor::exception::Exception &ex) {
-    if(tapeMounted && configlineSet) unmountTape(configLine); // trying to clean up here
+    int exitValue = EXIT_SUCCESS;
+    if(tapeMounted && configlineSet) {
+      try {
+        unmountTape(configLine); // trying to clean up here
+      } catch (...) {
+        // Iff we fail to unload a tape, we call this a failure of the process
+        exitValue = EXIT_FAILURE;
+      }
+    }
     log::Param params[] = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "Label session caught an exception", params);
-    legacymsg::writeTapeReplyMsg(m_timeout, m_labelCmdConnection, 1, ex.getMessage().str());
-    exit(1);
+    if (!clientNotified) {
+      try {
+        legacymsg::writeTapeReplyMsg(m_timeout, m_labelCmdConnection, 1, ex.getMessage().str());
+      } catch (...) {}
+    }
+    exit(exitValue);
   }
   
 }
