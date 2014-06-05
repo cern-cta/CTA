@@ -143,11 +143,6 @@ for LTO cartridges. If
 .B 0
 is specified, the tape daemon does not check the density and does not set it on the drive either.
 .TP
-initial status
-.B up
-or
-.B down
-.TP
 robot/manual
 This field may be set to
 .BI acs a,l,p,d [,noro]
@@ -204,12 +199,12 @@ Here is an example of a configuration file:
 .ft CW
 # 				Tape configuration
 #
-# drive	  dev		dev		density 	initial	library	dev
-# name	  group		name		(0 = N/A)	status	slot 	type
+# drive	  dev		dev		density 	library	dev
+# name	  group		name		(0 = N/A)	slot 	type
 #
-cart0     CART		/dev/nrmt0	0		down 	manual	3480
-cart1     CART		/dev/nrmt1	0		down 	manual	3480
-exab0     8500		/dev/nrmt9	8500		down 	manual	8500/VB
+cart0     CART		/dev/nrmt0	0		manual	3480
+cart1     CART		/dev/nrmt1	0		manual	3480
+exab0     8500		/dev/nrmt9	8500		manual	8500/VB
 .ft
 .fi
 

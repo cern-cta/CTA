@@ -12,60 +12,7 @@
 
 #include <errno.h>
 #include <string>
-
-namespace ceph {
-
-  class bufferlist {
-
-  public:
-
-    void append(const char *data, unsigned len) {};
-
-    void copy(unsigned off, unsigned len, char *dest) const {};    
-
-  };  
-
-};
-
-namespace librados {
-
-  class IoCtx {
-
-  public:
-
-    IoCtx(){}
-    
-  };
-
-  class Rados {
-
-  public:
-
-    Rados(){};
-    
-    int init(const char * const id) {
-      return -EINVAL;
-    }
-    
-    int conf_read_file(const char * const path) {
-      return -EINVAL;
-    }
-
-    int conf_parse_env(const char *env) const {
-      return -EINVAL;
-    }
-
-    int connect() {
-      return -EINVAL;
-    }
-
-    void shutdown(){}
-
-    int ioctx_create(const char *name, IoCtx &pioctx) {
-      return -EINVAL;
-    }
-  };
-};
+#include <rados/librados.hpp>
 
 namespace libradosstriper {
 

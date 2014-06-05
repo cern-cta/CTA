@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/utils/TpconfigLine.cpp
+ *                      CephGlobals.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,29 +17,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
+ * couple of global maps needed for interfacing with ceph libraries.
+ * Basically a cache of connections to ceph
  *
- *
- *
- * @author Steven.Murray@cern.ch
+ * @author castor dev team
  *****************************************************************************/
 
-#include "castor/tape/utils/TpconfigLine.hpp"
-#include "castor/utils/utils.hpp"
+#pragma once
 
-//------------------------------------------------------------------------------
-// Constructor.
-//------------------------------------------------------------------------------
-castor::tape::utils::TpconfigLine::TpconfigLine(
-  const std::string &unitName,
-  const std::string &dgn,
-  const std::string &devFilename,
-  const std::string &density,
-  const std::string &librarySlot,
-  const std::string &devType) throw():
-  unitName(unitName),
-  dgn(dgn),
-  devFilename(devFilename),
-  density(density),
-  librarySlot(librarySlot),
-  devType(devType) {
+#include "castor/gc/CephGlobals.hpp"
+#include <rados/librados.hpp>
+#include <radosstriper/libradosstriper.hpp>
+
+namespace castor {
+
+  namespace gc {
+
+    /// gets an IoCtx object for a given pool
+    librados::IoCtx* getRadosIoCtx(std::string pool);
+
+    /// gets a Striper object for a given pool
+    libradosstriper::RadosStriper* getRadosStriper(std::string pool);
+
+  }
+  
 }

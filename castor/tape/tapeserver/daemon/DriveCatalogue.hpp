@@ -627,18 +627,6 @@ private:
   void enterTpconfigLine(const utils::TpconfigLine &line) ;
 
   /**
-   * Converts the specified TPCONFIG initial drive-state to a drive-catalogue
-   * drive-state.
-   *
-   * This method throws an exception if the conversion fails.
-   *
-   * @param initialState The TPCONFIG initial drive-state.
-   * @return The drive-catalogue drive-state.
-   */
-  DriveState initial2DriveState(
-    const utils::TpconfigLine::InitialState initialState) const;
-
-  /**
    * Checks the semantics of the specified TPCONFIG line against the specified
    * current catalogue entry.
    *

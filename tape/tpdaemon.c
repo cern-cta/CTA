@@ -675,14 +675,12 @@ int initdrvtab()
 	FILE *fopen(), *s;
 	unsigned int i;
         int j;
-	char instat[5];
 	int lineno;
 	char *p_den;
 	char *p_dgn;
 	char *p_dvn;
 	char *p_dvt;
 	char *p_ldr;
-	char *p_stat;
 	char *p_unm;
 	char prevdrive[CA_MAXUNMLEN+1];
 	struct tpdev *tdp;
@@ -715,7 +713,6 @@ int initdrvtab()
 		if ((p_dgn = strtok (NULL, " \t")) == NULL ||
 		    (p_dvn = strtok (NULL, " \t")) == NULL ||
 		    (p_den = strtok (NULL, " \t")) == NULL ||
-		    (p_stat = strtok (NULL, " \t")) == NULL ||
 		    (p_ldr = strtok (NULL, " \t")) == NULL ||
 		    (p_dvt = strtok (NULL, " \t")) == NULL) {
 			tplogit (func, TP032, lineno, "missing fields");
@@ -761,14 +758,6 @@ int initdrvtab()
                                             "func",    TL_MSG_PARAM_STR, func,
                                             "Line",    TL_MSG_PARAM_INT, lineno,
                                             "Message", TL_MSG_PARAM_STR, "invalid density" );                        
-			errflag++;
-		}
-		if (strcmp (p_stat, "up") && strcmp (p_stat, "down")) {
-			tplogit (func, TP032, lineno, "invalid status");
-                        tl_tpdaemon.tl_log( &tl_tpdaemon, 32, 3,
-                                            "func",    TL_MSG_PARAM_STR, func,
-                                            "Line",    TL_MSG_PARAM_INT, lineno,
-                                            "Message", TL_MSG_PARAM_STR, "invalid status" );                        
 			errflag++;
 		}
 		if (strlen (p_ldr) > CA_MAXRBTNAMELEN) {
@@ -833,14 +822,14 @@ int initdrvtab()
 			fgets (buf, sizeof(buf), s);
 			if (buf[0] == '#') continue;	/* comment line */
 			if (strspn (buf, " \t") == (strlen (buf) - 1)) continue;
-			sscanf (buf, "%s%s%s%s%s%s%s", 
+			sscanf (buf, "%s%s%s%s%s%s", 
 				tunp->drive, tunp->dgn, tdp->dvn, aden,
-				instat, tunp->loader, tunp->devtype);
+				tunp->loader, tunp->devtype);
 			tdp->den = cvtden (aden);
 			tdp++;
 			j++;
 		}
-		(void) confdrive (tunp, -1, (instat[0] == 'u') ? CONF_UP:CONF_DOWN);
+		(void) confdrive (tunp, -1, CONF_DOWN);
 		tunp++;
 	}
 	fclose (s);

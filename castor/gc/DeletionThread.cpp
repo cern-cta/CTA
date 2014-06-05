@@ -25,12 +25,14 @@
 
 // Include files
 #include "castor/gc/DeletionThread.hpp"
+#include "castor/gc/CephGlobals.hpp"
 #include "castor/Services.hpp"
 #include "castor/Constants.hpp"
 #include "castor/stager/IGCSvc.hpp"
 #include "castor/stager/GCLocalFile.hpp"
 #include "castor/System.hpp"
 #include "getconfent.h"
+#include <radosstriper/libradosstriper.hpp>
 
 #include <vector>
 #include <errno.h>
@@ -273,24 +275,52 @@ void castor::gc::DeletionThread::run(void*) {
   } // End of loop
 }
 
-
 //-----------------------------------------------------------------------------
 // gcRemoveFilePath
 //-----------------------------------------------------------------------------
 void castor::gc::DeletionThread::gcRemoveFilePath
-(std::string filepath, u_signed64 &filesize, u_signed64 &fileage)
-   {
-  struct stat64 fileinfo;
-  if (::stat64(filepath.c_str(), &fileinfo) ) {
-    castor::exception::Exception e(errno);
-    e.getMessage() << "Failed to stat file " << filepath;
-    throw e;
-  }
-  filesize = fileinfo.st_size;
-  fileage  = time(NULL) - fileinfo.st_ctime;
-  if (unlink(filepath.c_str()) < 0) {
-    castor::exception::Exception e(errno);
-    e.getMessage() << "Failed to unlink file " << filepath;
-    throw e;
+(std::string filepath, u_signed64 &filesize, u_signed64 &fileage) {
+  if (!filepath.empty() and filepath[0] == '/') {
+    // regular file, call POSIX API
+    struct stat64 fileinfo;
+    if (::stat64(filepath.c_str(), &fileinfo) ) {
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Failed to stat file " << filepath;
+      throw e;
+    }
+    filesize = fileinfo.st_size;
+    fileage  = time(NULL) - fileinfo.st_ctime;
+    if (unlink(filepath.c_str()) < 0) {
+      castor::exception::Exception e(errno);
+      e.getMessage() << "Failed to unlink file " << filepath;
+      throw e;
+    }
+  } else {
+    // ceph file
+    int slashPos = filepath.find('/');
+    std::string pool = filepath.substr(0,slashPos);
+    std::string filename = filepath.substr(slashPos+1);
+    libradosstriper::RadosStriper *striper = getRadosStriper(pool);
+    if (0 == striper) {
+      castor::exception::Exception e(EINVAL);
+      e.getMessage() << "Failed to connect to ceph while unlinking file " << filepath;
+      throw e;
+    }
+    time_t pmtime;
+    uint64_t pmsize;
+    int rc = striper->stat(filename, &pmsize, &pmtime);
+    if (rc) {
+      castor::exception::Exception e(-rc);
+      e.getMessage() << "Failed to stat ceph file " << filepath;
+      throw e;
+    }
+    filesize = pmsize;
+    fileage  = time(NULL) - pmtime;
+    rc = striper->remove(filename);
+    if (rc) {
+      castor::exception::Exception e(-rc);
+      e.getMessage() << "Failed to unlink ceph file " << filepath;
+      throw e;
+    }
   }
 }
