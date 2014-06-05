@@ -114,21 +114,12 @@ std::auto_ptr<castor::tape::drives::DriveInterface>
   // check that drive is not write protected
   if(drive->isWriteProtected()) {   
     castor::exception::Exception ex;
-    ex.getMessage() << "End session with error. Drive is write protected. Aborting labelling...";
+    ex.getMessage() <<
+      "End session with error. Drive is write protected. Aborting labelling...";
     throw ex;
   }
 
   return drive;
-}
-
-//------------------------------------------------------------------------------
-// mountTape
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::LabelSession::mountTape() {
-  
-  // Let's mount the tape now
-  m_rmc.mountTape(m_request.vid, m_driveConfig.librarySlot,
-    castor::legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
 }
 
 //------------------------------------------------------------------------------
@@ -202,7 +193,8 @@ void castor::tape::tapeserver::daemon::LabelSession::executeLabel() {
       log::Param params[] = {log::Param("message", ex.getMessage().str())};
       m_log(LOG_ERR, "The tape could not be labelled", params);
       try {
-        legacymsg::writeTapeReplyMsg(m_timeout, m_labelCmdConnection, 1, ex.getMessage().str());
+        legacymsg::writeTapeReplyMsg(m_timeout, m_labelCmdConnection, 1,
+          ex.getMessage().str());
       } catch (...) {}
       clientNotified=true;
     }

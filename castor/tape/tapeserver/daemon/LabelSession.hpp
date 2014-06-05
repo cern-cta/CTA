@@ -110,12 +110,8 @@ namespace daemon {
     std::auto_ptr<castor::tape::drives::DriveInterface> getDriveObject();
     
     /**
-     * Mounts the tape to be lablled.
-     */
-    void mountTape();
-    
-    /**
-     * Check the tape drive write-ability and waits for it to become ready (tape needs to be loaded)
+     * Check the tape drive write-ability and waits for it to become ready
+     * (tape needs to be loaded)
      * @param drive The drive object pointer
      * @return 
      */
@@ -127,14 +123,6 @@ namespace daemon {
      * @return 
      */
     void labelTheTape(castor::tape::drives::DriveInterface *drive);
-    
-    /**
-     * Unmounts the requested VID in the tape drive specified in the configuration line
-     * @param driveConfig The configuration of the tape drive to be used to
-     * label a tape.
-     * @return 
-     */
-    void unmountTape(const utils::DriveConfig &driveConfig);
     
     /**
      * The object representing the rmcd daemon.
