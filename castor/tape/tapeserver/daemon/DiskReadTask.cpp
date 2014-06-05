@@ -90,7 +90,7 @@ void DiskReadTask::execute(log::LogContext& lc) {
       //we either read at full capacity (ie size=capacity) or if there different,
       //it should be the end => migratingFileSize should be 0. If it not, error
       if(mb->m_payload.size() != mb->m_payload.totalCapacity() && migratingFileSize>0){
-        mb->m_failed=true;
+        mb->markAsFailed();
         throw castor::tape::Exception("Error while reading a file. Did not read at full capacity but the file is not fully read");
       }
     } //end of while(migratingFileSize>0)
@@ -127,7 +127,8 @@ void DiskReadTask::circulateAllBlocks(size_t fromBlockId){
   size_t blockId = fromBlockId;
   while(blockId<m_numberOfBlock) {
     MemBlock * mb = m_nextTask.getFreeBlock();
-    mb->m_failed=true;
+    mb->m_fileid = m_migratedFile->fileid();
+    mb->markAsFailed();
     m_nextTask.pushDataBlock(mb);
     ++blockId;
   } //end of while

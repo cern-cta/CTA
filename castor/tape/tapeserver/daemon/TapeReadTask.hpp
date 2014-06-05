@@ -107,7 +107,9 @@ public:
           // Pass the block to the disk write task
           m_fifo.pushDataBlock(mb);
         } //end of while(stillReading)
-    
+      //  we have to signal the end of the tape read to the disk write task.
+      m_fifo.pushDataBlock(NULL);
+      lc.log(LOG_DEBUG, "File read completed");
       } //end of try
       catch (castor::exception::Exception & ex) {
         //we end up there because :
@@ -135,12 +137,7 @@ public:
         else{
           reportErrorToDiskTask(mb);
         }
-        return;
-      }
-    // In all cases, we have to signal the end of the tape read to the disk write
-    // task.
-    m_fifo.pushDataBlock(NULL);
-    lc.log(LOG_DEBUG, "File read completed");
+      } //end of catch
   }
    /**
     * Get a valid block and ask to to do the report to the disk write task

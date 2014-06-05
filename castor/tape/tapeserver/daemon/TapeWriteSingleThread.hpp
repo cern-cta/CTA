@@ -149,7 +149,7 @@ private:
     return writeSession;
   }
   /**
-   * Execute flush on tape
+   * Execute flush on tape, do some log and report the flush to the client
    * @param message the message the log will register
    * @param bytes the number of bytes that have been written since the last flush  
    * (for logging)

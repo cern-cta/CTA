@@ -77,9 +77,15 @@ bool DiskWriteTask::execute(RecallReportPacker& reporter,log::LogContext& lc) {
   } //end of try
   catch(const castor::exception::Exception& e){
     /*
-     *We might end up there with some blocks into m_fifo
-     * We need to empty it
+     *We might end up there because ;
+     * -- WriteFile failed 
+     * -- A desynchronization between tape read and disk write
+     * -- An error in tape read
+     * -- An error while writing the file
      */
+    
+    //there might still be some blocks into m_fifo
+    // We need to empty it
     releaseAllBlock();
     
     reporter.reportFailedJob(*m_recallingFile,e.getMessageValue(),e.code());
