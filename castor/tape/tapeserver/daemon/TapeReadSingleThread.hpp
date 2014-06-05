@@ -67,7 +67,7 @@ public:
           const client::ClientInterface::VolumeInfo& volInfo, uint64_t maxFilesRequest,
           CapabilityUtils &capUtils,castor::log::LogContext & lc): 
    TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr,volInfo,capUtils,lc),
-   m_maxFilesRequest(maxFilesRequest),m_filesProcessed(0) {
+   m_maxFilesRequest(maxFilesRequest) {
    }
    
    /**
@@ -196,7 +196,7 @@ private:
         scoped.add("exception_message", ex.getMessageValue())
         .add("exception_code",ex.code());
         m_logContext.log(LOG_ERR, "Failed to tapeFile::ReadSession");
-        throw;
+        throw castor::exception::Exception("Tape's label is either missing or not valid"); 
     }
   }
 
@@ -234,7 +234,6 @@ private:
         if (task) {
           task->execute(*rs, m_logContext);
           delete task;
-          m_filesProcessed++;
         } else {
           break;
         }
@@ -266,8 +265,6 @@ private:
   ///a pointer to task injector, thus we can ask him for more tasks
   castor::tape::tapeserver::daemon::RecallTaskInjector * m_taskInjector;
   
-  ///how many files have we already processed(for loopback purpose)
-  size_t m_filesProcessed;
   
 };
 }
