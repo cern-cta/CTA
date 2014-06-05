@@ -111,6 +111,7 @@ ELSE(DEFINED PackageOnly)
   set (CASTOR_DEST_C_HEADERS_DIR ${CASTOR_DEST_INCLUDE_DIR}/castor/h)
   set (CASTOR_DEST_CPP_HEADERS_DIR ${CASTOR_DEST_INCLUDE_DIR}/castor/castor)
   set (CASTOR_DEST_WWW_DIR /var/www)
+  set (CASTOR_DEST_UDEV_RULE_DIR /etc/udev/rules.d)
   
   message (STATUS "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
   message (STATUS "CMAKE_SIZEOF_VOID_P = ${CMAKE_SIZEOF_VOID_P}")
@@ -187,6 +188,11 @@ ELSE(DEFINED PackageOnly)
     WORLD_READ             WORLD_EXECUTE)
   
   set (CASTOR_SYSCONFIG_PERMS
+    OWNER_READ OWNER_WRITE
+    GROUP_READ
+    WORLD_READ)
+
+  set (CASTOR_UDEV_RULES_PERMS
     OWNER_READ OWNER_WRITE
     GROUP_READ
     WORLD_READ)
@@ -333,6 +339,12 @@ ELSE(DEFINED PackageOnly)
     set_target_properties (${_name} PROPERTIES
     VERSION ${MAJOR_CASTOR_VERSION}.${MINOR_CASTOR_VERSION}
     SOVERSION ${MAJOR_CASTOR_VERSION})
+  endfunction ()
+
+  function (CastorInstallUdevRule _name)
+    install (FILES ${_name}
+      DESTINATION ${CASTOR_DEST_UDEV_RULE_DIR}
+      PERMISSIONS ${CASTOR_UDEV_RULES_PERMS})
   endfunction ()
   
   set (CMAKE_C_FLAGS "-fPIC -Wall -Wextra -Werror -Wno-unused-parameter")
