@@ -126,17 +126,15 @@ public:
         }
         
         //if we end up there because openReadFile brought us here
-        //then mb is not valid, we need to get a block
+        //then mb is not valid, we need to get a block 
+        //that will be done in reportErrorToDiskTask() 
+        //or directly call reportErrorToDiskTask with the mem block
         if(!mb) {
-          mb=m_mm.getFreeBlock();
-          mb->m_fSeq = m_fileToRecall->fseq();
-          mb->m_fileid = m_fileToRecall->fileid();
+          reportErrorToDiskTask();
         }
-
-        //mark the block failed and push it
-        mb->markAsFailed();
-        m_fifo.pushDataBlock(mb);
-        m_fifo.pushDataBlock(NULL);
+        else{
+          reportErrorToDiskTask(mb);
+        }
         return;
       }
     // In all cases, we have to signal the end of the tape read to the disk write
@@ -144,20 +142,27 @@ public:
     m_fifo.pushDataBlock(NULL);
     lc.log(LOG_DEBUG, "File read completed");
   }
-   
+   /**
+    * Get a valid block and ask to to do the report to the disk write task
+    */
    void reportErrorToDiskTask(){
      MemBlock* mb =m_mm.getFreeBlock();
      mb->m_fSeq = m_fileToRecall->fseq();
      mb->m_fileid = m_fileToRecall->fileid();
      
-     //mark the block failed and push it
+     reportErrorToDiskTask(mb);
+   }
+private:
+  /**
+   * Do the actual report to the disk write task
+   * @param mb We assume that mb is a valid mem block
+   */
+  void reportErrorToDiskTask(MemBlock* mb){
+    //mark the block failed and push it
      mb->markAsFailed();
      m_fifo.pushDataBlock(mb);
      m_fifo.pushDataBlock(NULL);
-
    }
-private:
-  
   /** 
    * Open the file on the tape. In case of failure, log and throw
    * Copying the auto_ptr on the calling point will give us the ownership of the 
