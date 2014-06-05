@@ -59,7 +59,6 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   std::ostream &stdOut,
   std::ostream &stdErr,
   log::Logger &log,
-  const utils::TpconfigLines &tpconfigLines,
   const utils::DriveConfigMap &driveConfigs,
   legacymsg::VdqmProxy &vdqm,
   legacymsg::VmgrProxy &vmgr,
@@ -71,7 +70,6 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),
   m_argv(argv),
-  m_tpconfigLines(tpconfigLines),
   m_driveConfigs(driveConfigs),
   m_vdqm(vdqm),
   m_vmgr(vmgr),
@@ -140,7 +138,7 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   const int argc, char **const argv)  {
   logStartOfDaemon(argc, argv);
   parseCommandLine(argc, argv);
-  m_driveCatalogue.populateCatalogue(m_tpconfigLines);
+  m_driveCatalogue.populateCatalogue(m_driveConfigs);
 
   // Process must be able to change user now and should be permitted to perform
   // raw IO in the future
@@ -229,32 +227,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logStartOfDaemon(
   log::Param params[] = {
     log::Param("argv", concatenatedArgs)};
   m_log(LOG_INFO, msg.str(), params);
-}
-
-//------------------------------------------------------------------------------
-// logTpconfigLines
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::logTpconfigLines(
-  const utils::TpconfigLines &lines) throw() {
-  for(utils::TpconfigLines::const_iterator itor = lines.begin();
-    itor != lines.end(); itor++) {
-    logTpconfigLine(*itor);
-  }
-}
-
-//------------------------------------------------------------------------------
-// logTpconfigLine
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::logTpconfigLine(
-  const utils::TpconfigLine &line) throw() {
-  log::Param params[] = {
-    log::Param("unitName", line.unitName),
-    log::Param("dgn", line.dgn),
-    log::Param("devFilename", line.devFilename),
-    log::Param("density", line.density),
-    log::Param("librarySlot", line.librarySlot),
-    log::Param("devType", line.devType)};
-  m_log(LOG_INFO, "TPCONFIG line", params);
 }
 
 //------------------------------------------------------------------------------
@@ -985,6 +957,24 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
     return;
   }
 
+  // Get the configuration of the tap drive to be used during the session
+  utils::DriveConfigMap::const_iterator driveConfigItor =
+    m_driveConfigs.find(unitName);
+  if(m_driveConfigs.end() == driveConfigItor) {
+    m_log(LOG_ERR, "Failed to fork label session"
+      ": Failed to find the configuration of the tape drive");
+    return;
+  }
+  const utils::DriveConfig &driveConfig = driveConfigItor->second;
+  if(unitName != driveConfig.unitName) {
+    params.push_back(log::Param("driveConfig.unitName",
+      driveConfig.unitName));
+    // This should never happen, but let's check to sure
+    m_log(LOG_ERR, "Failed to fork label-session"
+      ": Unit name within drive configuration is incorrect", params);
+    return;
+  }
+
   m_log.prepareForFork();
   const pid_t sessionPid = fork();
 
@@ -1010,7 +1000,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
     // file-descriptors owned by the event handlers
     m_reactor.clear();
 
-    runLabelSession(unitName, labelCmdConnection.release());
+    runLabelSession(driveConfig, labelCmdConnection.release());
   }
 }
 
@@ -1018,17 +1008,17 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
 // runLabelSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(
-  const std::string &unitName, const int labelCmdConnection) throw() {
+  const utils::DriveConfig &driveConfig, const int labelCmdConnection) throw() {
   const pid_t sessionPid = getpid();
   std::list<log::Param> params;
   params.push_back(log::Param("sessionPid", sessionPid));
-  params.push_back(log::Param("unitName", unitName));
+  params.push_back(log::Param("unitName", driveConfig.unitName));
 
   m_log(LOG_INFO, "Label-session child-process started", params);
 
   try {
     const legacymsg::TapeLabelRqstMsgBody job =
-      m_driveCatalogue.getLabelJob(unitName);
+      m_driveCatalogue.getLabelJob(driveConfig.unitName);
     std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
     std::auto_ptr<legacymsg::NsProxy> ns(m_nsFactory.create());
     castor::tape::System::realWrapper sWrapper;
@@ -1040,7 +1030,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(
       job,
       m_log,
       sWrapper,
-      m_tpconfigLines,
+      driveConfig,
       force);
     labelsession.execute();
     exit(0);

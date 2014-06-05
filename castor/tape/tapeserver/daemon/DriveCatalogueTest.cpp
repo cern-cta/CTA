@@ -69,8 +69,11 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
   lines.push_back(castor::tape::utils::TpconfigLine(
     "UNIT2", "DGN2", "DEV2", "DEN22", "SLOT2", "DEVTYPE2"));
 
+  castor::tape::utils::DriveConfigMap driveConfigs;
+  driveConfigs.enterTpconfigLines(lines);
+
   DriveCatalogue catalogue;
-  ASSERT_NO_THROW(catalogue.populateCatalogue(lines));
+  ASSERT_NO_THROW(catalogue.populateCatalogue(driveConfigs));
 
   {
     std::list<std::string> fromCatalogue;
@@ -170,66 +173,6 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
   }
 }
 
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
-  dgnMismatchPopulate) {
-  using namespace castor::tape::tapeserver::daemon;
-
-  castor::tape::utils::TpconfigLines lines;
-  lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN1", "DEV", "DEN1", "SLOT", "DEVTYPE"));
-  lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN2", "DEV", "DEN2", "SLOT", "DEVTYPE"));
-
-  DriveCatalogue catalogue;
-  ASSERT_THROW(catalogue.populateCatalogue(lines),
-    castor::exception::Exception);
-}
-
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
-  systemDeviceMismatchPopulate) {
-  using namespace castor::tape::tapeserver::daemon;
-
-  castor::tape::utils::TpconfigLines lines;
-  lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV1", "DEN1", "SLOT", "DEVTYPE"));
-  lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV2", "DEN2", "SLOT", "DEVTYPE"));
-
-  DriveCatalogue catalogue;
-  ASSERT_THROW(catalogue.populateCatalogue(lines),
-    castor::exception::Exception);
-}
-
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
-  librarySlotMismatchPopulate) {
-  using namespace castor::tape::tapeserver::daemon;
-  
-  castor::tape::utils::TpconfigLines lines;
-  lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV", "DEN1", "SLOT1", "DEVTYPE"));
-  lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV", "DEN2", "SLOT2", "DEVTYPE"));
-    
-  DriveCatalogue catalogue;
-  ASSERT_THROW(catalogue.populateCatalogue(lines),
-    castor::exception::Exception);
-}
-
-TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
-  deviceTypeMismatchPopulate) {
-  using namespace castor::tape::tapeserver::daemon;
-
-  castor::tape::utils::TpconfigLines lines;
-  lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV", "DEN1", "SLOT", "DEVTYPE1"));
-  lines.push_back(castor::tape::utils::TpconfigLine(
-    "UNIT1", "DGN", "DEV", "DEN2", "SLOT", "DEVTYPE2"));
-
-  DriveCatalogue catalogue;
-  ASSERT_THROW(catalogue.populateCatalogue(lines),
-    castor::exception::Exception);
-}
-
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, 
   getStateOfNonExistingDrive) {
   using namespace castor::tape::tapeserver::daemon;
@@ -247,8 +190,10 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
     "UNIT", "DGN", "DEV", "DEN", "SLOT", "DEVTYPE"));
+  castor::tape::utils::DriveConfigMap driveConfigs;
+  driveConfigs.enterTpconfigLines(lines);
   DriveCatalogue catalogue;
-  ASSERT_NO_THROW(catalogue.populateCatalogue(lines));
+  ASSERT_NO_THROW(catalogue.populateCatalogue(driveConfigs));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_DOWN, catalogue.getState("UNIT"));
 
   // Configure the tape drive UP
@@ -328,9 +273,11 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
   castor::tape::utils::TpconfigLines lines;
   lines.push_back(castor::tape::utils::TpconfigLine(
     "UNIT", "DGN1", "DEV", "DEN", "SLOT", "DEVTYPE"));
+  castor::tape::utils::DriveConfigMap driveConfigs;
+  driveConfigs.enterTpconfigLines(lines);
 
   DriveCatalogue catalogue;
-  ASSERT_NO_THROW(catalogue.populateCatalogue(lines));
+  ASSERT_NO_THROW(catalogue.populateCatalogue(driveConfigs));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_DOWN, catalogue.getState("UNIT"));
   ASSERT_NO_THROW(catalogue.configureUp("UNIT"));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_UP, catalogue.getState("UNIT"));
@@ -353,9 +300,11 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, getUnitNames) {
     "UNIT1", "DGN1", "DEV1", "DEN1", "SLOT1", "DEVTYPE1"));
   lines.push_back(castor::tape::utils::TpconfigLine(
     "UNIT2", "DGN2", "DEV2", "DEN2", "SLOT2", "DEVTYPE2"));
+  castor::tape::utils::DriveConfigMap driveConfigs;
+  driveConfigs.enterTpconfigLines(lines);
 
   DriveCatalogue catalogue;
-  ASSERT_NO_THROW(catalogue.populateCatalogue(lines));
+  ASSERT_NO_THROW(catalogue.populateCatalogue(driveConfigs));
 
   {
     std::list<std::string> allUnitNames;

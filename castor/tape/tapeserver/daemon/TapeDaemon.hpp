@@ -36,7 +36,6 @@
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/utils/DriveConfigMap.hpp"
-#include "castor/tape/utils/TpconfigLines.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 
@@ -68,7 +67,6 @@ public:
    * @param stdOut Stream representing standard out.
    * @param stdErr Stream representing standard error.
    * @param log The object representing the API of the CASTOR logging system.
-   * @param tpconfigLines The parsed lines of /etc/castor/TPCONFIG.
    * @param driveConfig The configuration of the tape drives.
    * @param vdqm Proxy object representing the vdqmd daemon.
    * @param vmgr Proxy object representing the vmgrd daemon.
@@ -84,7 +82,6 @@ public:
     std::ostream &stdOut,
     std::ostream &stdErr,
     log::Logger &log,
-    const utils::TpconfigLines &tpconfigLines,
     const utils::DriveConfigMap &driveConfigs,
     legacymsg::VdqmProxy &vdqm,
     legacymsg::VmgrProxy &vmgr,
@@ -141,7 +138,7 @@ protected:
   /**
    * Returns the name of the host on which the daemon is running.
    */
-  std::string getHostName() const ;
+  std::string getHostName() const;
 
   /**
    * Exception throwing main() function.
@@ -149,33 +146,12 @@ protected:
    * @param argc The number of command-line arguments.
    * @param argv The array of command-line arguments.
    */
-  void exceptionThrowingMain(const int argc, char **const argv)
-    ;
+  void exceptionThrowingMain(const int argc, char **const argv);
 
   /**
    * Logs the start of the daemon.
    */
   void logStartOfDaemon(const int argc, const char *const *const argv) throw();
-
-  /**
-   * Parses the /etc/castor/TPCONFIG files in order to determine the drives
-   * attached to the tape server.
-   */
-  void parseTpconfig() ;
-
-  /**
-   * Writes the specified TPCONFIG lines to the logging system.
-   *
-   * @param lines The lines parsed from /etc/castor/TPCONFIG.
-   */
-  void logTpconfigLines(const utils::TpconfigLines &lines) throw();
-
-  /**
-   * Writes the specified TPCONFIG lines to the logging system.
-   *
-   * @param line The line parsed from /etc/castor/TPCONFIG.
-   */
-  void logTpconfigLine(const utils::TpconfigLine &line) throw();
 
   /**
    * Creates a string that contains the specified command-line arguments
@@ -190,7 +166,7 @@ protected:
   /**
    * Blocks the signals that should not asynchronously disturb the daemon.
    */
-  void blockSignals() const ;
+  void blockSignals() const;
 
   /**
    * Registers the tape drives controlled by the tape server daemon with the
@@ -374,11 +350,12 @@ protected:
    * Runs the label session.  This method is to be called within the child
    * process responsible for running the label session.
    *
-   * @param unitName The unit name of the tape drive.
+   * @param driveConfig The configuration of the tape drive to be used during
+   * the session.
    * @param labelCmdConnection The file descriptor of the connection with the
    * command-line tool castor-tape-label.
    */
-  void runLabelSession(const std::string &unitName,
+  void runLabelSession(const utils::DriveConfig &driveConfig,
     const int labelCmdConnection) throw();
 
   /**
@@ -396,11 +373,6 @@ protected:
    * The argv of main().
    */
   char **const m_argv;
-
-  /**
-   * The parsed lines of /etc/castor/TPCONFIG.
-   */
-  const utils::TpconfigLines m_tpconfigLines;
 
   /**
    * The configuration of the tape drives.

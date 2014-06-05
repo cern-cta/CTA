@@ -47,8 +47,13 @@
 //
 // The main() function delegates the bulk of its implementation to this
 // exception throwing version.
+//
+// @param argc The number of command-line arguments.
+// @param argv The command-line arguments.
+// @param log The logging system.
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const int argc, char **const argv, castor::log::Logger &log);
+static int exceptionThrowingMain(const int argc, char **const argv,
+  castor::log::Logger &log);
 
 //------------------------------------------------------------------------------
 // main
@@ -88,6 +93,24 @@ int main(const int argc, char **const argv) {
 }
 
 //------------------------------------------------------------------------------
+// Writes the specified TPCONFIG lines to the specified logging system.
+//
+// @param log The logging system.
+// @param lines The lines parsed from /etc/castor/TPCONFIG.
+//------------------------------------------------------------------------------
+static void logTpconfigLines(castor::log::Logger &log,
+  const utils::TpconfigLines &lines) throw();
+
+//------------------------------------------------------------------------------
+// Writes the specified TPCONFIG lines to the logging system.
+//
+// @param log The logging system.
+// @param line The line parsed from /etc/castor/TPCONFIG.
+//------------------------------------------------------------------------------
+static void logTpconfigLine(castor::log::Logger &log,
+  const utils::TpconfigLine &line) throw();
+
+//------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 static int exceptionThrowingMain(const int argc, char **const argv, castor::log::Logger &log) {
@@ -99,6 +122,7 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
   // Parse /etc/castor/TPCONFIG
   castor::tape::utils::TpconfigLines tpconfigLines;
   castor::tape::utils::parseTpconfigFile("/etc/castor/TPCONFIG", tpconfigLines);
+  logTpconfigLines(log, tpconfigLines);
   castor::tape::utils::DriveConfigMap driveConfigs;
   driveConfigs.enterTpconfigLines(tpconfigLines);
 
@@ -123,7 +147,6 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
     std::cout,
     std::cerr,
     log,
-    tpconfigLines,
     driveConfigs,
     vdqm,
     vmgr,
@@ -137,3 +160,28 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
   return daemon.main();
 }
 
+//------------------------------------------------------------------------------
+// logTpconfigLines
+//------------------------------------------------------------------------------
+static void logTpconfigLines(castor::log::Logger &log,
+  const utils::TpconfigLines &lines) throw() {
+  for(utils::TpconfigLines::const_iterator itor = lines.begin();
+    itor != lines.end(); itor++) {
+    logTpconfigLine(log, *itor);
+  }
+}
+
+//------------------------------------------------------------------------------
+// logTpconfigLine
+//------------------------------------------------------------------------------
+static void logTpconfigLine(castor::log::Logger &log,
+  const utils::TpconfigLine &line) throw() {
+  castor::log::Param params[] = {
+    castor::log::Param("unitName", line.unitName),
+    castor::log::Param("dgn", line.dgn),
+    castor::log::Param("devFilename", line.devFilename),
+    castor::log::Param("density", line.density),
+    castor::log::Param("librarySlot", line.librarySlot),
+    castor::log::Param("devType", line.devType)};
+  log(LOG_INFO, "TPCONFIG line", params);
+}

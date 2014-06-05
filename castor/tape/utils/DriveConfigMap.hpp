@@ -48,13 +48,13 @@ public:
    */
   void enterTpconfigLines(const TpconfigLines &lines);
 
+private:
+
   /**
    * Enters the specified parsed line from the TPCONFIG file into the map
    * of drive configurations.
    */
   void enterTpconfigLine(const TpconfigLine &line);
-
-private:
 
   /**
    * Throws an exception if the specified TPCONFIG line is invalid when

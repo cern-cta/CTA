@@ -29,6 +29,7 @@
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "castor/tape/utils/DriveConfig.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/legacymsg/NsProxy.hpp"
@@ -36,9 +37,6 @@
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 
 #include <memory>
-
-using namespace castor::tape;
-using namespace castor::log;
 
 namespace castor {
 namespace tape {
@@ -60,7 +58,8 @@ namespace daemon {
      * tape command.
      * @param log Object reprsenting the API to the CASTOR logging system.
      * @param sysWrapper Object representing the operating system.
-     * @param tpConfig The parsed lines of /etc/castor/TPCONFIG.
+     * @param driveConfig the configiuration of the tape-drive to be used to
+     * label a tape.
      * @param force The flag that, if set to true, allows labeling a non-blank
      * tape.
      */
@@ -71,7 +70,7 @@ namespace daemon {
       const legacymsg::TapeLabelRqstMsgBody &clientRequest, 
       castor::log::Logger &log,
       System::virtualWrapper &sysWrapper,
-      const utils::TpconfigLines &tpConfig,
+      const utils::DriveConfig &driveConfig,
       const bool force);
     
     /**
@@ -103,19 +102,17 @@ namespace daemon {
     void checkIfVidStillHasSegments();
     
     /**
-     * Instantiates the drive object by resetting the corresponding drive auto pointer
-     * @param configLine The configuration line containing the drive-capability specification
-     * @param drive Drive object; auto pointer reference to be reset by this function (no ownership taken)
-     * @return 
+     * Returns a Drive object representing the tape drive to be used to label
+     * a tape.
+     *
+     * @return The drive object.
      */
-    void getDriveObject(utils::TpconfigLines::const_iterator &configLine, std::auto_ptr<castor::tape::drives::DriveInterface> &drive);
+    std::auto_ptr<castor::tape::drives::DriveInterface> getDriveObject();
     
     /**
-     * Mounts the requested VID in the tape drive specified in the configuration line
-     * @param configLine The configuration line containing the drive-capability specification
-     * @return 
+     * Mounts the tape to be lablled.
      */
-    void mountTape(utils::TpconfigLines::const_iterator &configLine);
+    void mountTape();
     
     /**
      * Check the tape drive write-ability and waits for it to become ready (tape needs to be loaded)
@@ -133,10 +130,11 @@ namespace daemon {
     
     /**
      * Unmounts the requested VID in the tape drive specified in the configuration line
-     * @param configLine The configuration line containing the drive-capability specification
+     * @param driveConfig The configuration of the tape drive to be used to
+     * label a tape.
      * @return 
      */
-    void unmountTape(utils::TpconfigLines::const_iterator &configLine);
+    void unmountTape(const utils::DriveConfig &driveConfig);
     
     /**
      * The object representing the rmcd daemon.
@@ -164,9 +162,9 @@ namespace daemon {
     System::virtualWrapper & m_sysWrapper;
     
     /**
-     * The object containing the information found in the TPCONFIG file
+     * The configuration of the tape drive to be used to label a tape.
      */
-    const utils::TpconfigLines & m_tpConfig;
+    const utils::DriveConfig m_driveConfig;
     
     /**
      * The flag that, if set to true, allows labeling a non-blank tape
