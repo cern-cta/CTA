@@ -123,57 +123,7 @@ private:
    * @param rc The return code to reply.
    * 
    */
-  void writeTapeStatReplyMsg(const int fd)
-    ;
-
-  /**
-   * Fills the specified TapeStatDriveEntry with the information correpsonding
-   * to the tape drive with specified unit name.
-   *
-   * @param entry Output parameter: The TapeStatDriveEntry.
-   * @param unitName The unit name of the tape drive.
-   */
-  void fillTapeStatDriveEntry(legacymsg::TapeStatDriveEntry &entry,
-    const std::string &unitName) ;
-
-  /**
-   * Translates the specified tape-drive state into the corresponding value for
-   * the up field of TapeStatDriveEntry.
-   *
-   * @param state The state of the tape drive.
-   * @return The translated value.
-   */
-  uint16_t driveStateToStatEntryUp(const DriveCatalogueEntry::DriveState state);
-
-  /**
-   * Translates the specified tape mode into the corresponding value for
-   * the mode field of TapeStatDriveEntry.
-   *
-   * @param mode The mode of the tape mounted in the drive
-   * @return The translated value.
-   */
-  uint16_t driveTapeModeToStatEntryMode(
-   const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode mode);
-  
-  /**
-   * Translates the specified tape event into the corresponding value for
-   * the tobemounted field of TapeStatDriveEntry.
-   *
-   * @param event The mounting/un-mounting event of the tape in the drive
-   * @return The translated value.
-   */
-  uint16_t driveTapeEventToStatEntryToBeMounted(
-   const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event);
-  
-  /**
-   * Translates the specified tape-drive state into the corresponding value for
-   * the asn field of TapeStatDriveEntry.
-   *
-   * @param state The state of the tape drive.
-   * @return The translated value.
-   */
-  uint16_t driveStateToStatEntryAsn(
-    const DriveCatalogueEntry::DriveState state);
+  void writeTapeStatReplyMsg(const int fd);
 
   /**
    * Throws an exception if the specified file-descriptor is not that of the

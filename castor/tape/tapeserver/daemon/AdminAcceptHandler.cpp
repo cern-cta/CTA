@@ -119,19 +119,27 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeRcReplyMsg(c
 //------------------------------------------------------------------------------
 // writeTapeStatReplyMsg
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeStatReplyMsg(const int fd)  {
+void
+  castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeStatReplyMsg(
+  const int fd)  {
   legacymsg::TapeStatReplyMsgBody body;
   
   const std::list<std::string> unitNames = m_driveCatalogue.getUnitNames();
-  if(unitNames.size()>CA_MAXNBDRIVES) {
+  if(unitNames.size() > CA_MAXNBDRIVES) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Too many drives in drive catalogue: " << unitNames.size() << ". Max allowed: " << CA_MAXNBDRIVES << ".";
+    ex.getMessage() << "Too many drives in drive catalogue: " <<
+      unitNames.size() << ": max=" << CA_MAXNBDRIVES << " actual=" <<
+      unitNames.size();
     throw ex;
   }
   body.number_of_drives = unitNames.size();
   int i=0;
-  for(std::list<std::string>::const_iterator itor = unitNames.begin(); itor!=unitNames.end() and i<CA_MAXNBDRIVES; itor++) {
-    fillTapeStatDriveEntry(body.drives[i], *itor);
+  for(std::list<std::string>::const_iterator itor = unitNames.begin();
+    itor!=unitNames.end() and i<CA_MAXNBDRIVES; itor++) {
+    const std::string &unitName = *itor;
+    const DriveCatalogueEntry &drive =
+       m_driveCatalogue.findConstDrive(unitName);
+    body.drives[i] = drive.getTapeStatDriveEntry();
     i++;
   }
   
@@ -144,159 +152,6 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeStatReplyMsg
     ex.getMessage() << "Failed to write job reply message: " <<
       ne.getMessage().str();
     throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// fillTapeStatDriveEntry
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillTapeStatDriveEntry(
-  legacymsg::TapeStatDriveEntry &entry, const std::string &unitName)
-   {
-  // If there is no process ID available then just put 0
-  try {
-    entry.jid = m_driveCatalogue.getSessionPid(unitName);
-  } catch(castor::exception::Exception) {
-    entry.jid = 0;
-  }
-
-  try {
-    entry.uid = geteuid();
-    castor::utils::copyString(entry.dgn,
-      m_driveCatalogue.getDgn(unitName).c_str());
-    const DriveCatalogueEntry::DriveState driveState =
-      m_driveCatalogue.getState(unitName);
-    const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode mode =
-      m_driveCatalogue.getTapeMode(unitName);
-    const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event =
-      m_driveCatalogue.getTapeEvent(unitName);
-    entry.up = driveStateToStatEntryUp(driveState);
-    entry.asn = driveStateToStatEntryAsn(driveState);
-    entry.asn_time = m_driveCatalogue.getAssignmentTime(unitName);
-    castor::utils::copyString(entry.drive, unitName.c_str());
-    entry.mode = driveTapeModeToStatEntryMode(mode);
-    castor::utils::copyString(entry.lblcode, "aul"); // only aul format is used
-    entry.tobemounted = driveTapeEventToStatEntryToBeMounted(event);
-    castor::utils::copyString(entry.vid,
-      m_driveCatalogue.getVid(unitName).c_str());
-    castor::utils::copyString(entry.vsn, entry.vid);
-    entry.cfseq = 0; // the fseq is ignored by tpstat, so we leave it set to 0
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to fill TapeStatDriveEntry: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// driveTapeModeToStatEntryMode
-//------------------------------------------------------------------------------
-uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveTapeModeToStatEntryMode(
-  const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode mode)  {
-  switch(mode) {
-    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READ:
-      return WRITE_DISABLE;
-      break;
-    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READWRITE:
-      return WRITE_ENABLE;
-      break;
-    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_DUMP:
-      return WRITE_DISABLE;
-      break;
-    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_NONE:
-      return WRITE_DISABLE;
-      break;
-    default:
-      {
-        castor::exception::Exception ex;
-        ex.getMessage() <<
-          "Failed to translate drive tape mode to TapeStatDriveEntry.mode"
-          ": Unknown tape mode: " << mode;
-        throw ex;
-      }
-  }
-}
-
-//------------------------------------------------------------------------------
-// driveTapeEventToStatEntryToBeMounted
-//------------------------------------------------------------------------------
-uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveTapeEventToStatEntryToBeMounted(
-  const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event)  {
-  switch(event) {
-    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED:
-      return 1; // "to be mounted"
-      break;
-    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED:
-    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNT_STARTED:
-    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNTED:
-    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_NONE:
-      return 0; // NOT "to be mounted"
-      break;
-    default:
-      {
-        castor::exception::Exception ex;
-        ex.getMessage() <<
-          "Failed to translate drive tape mode to TapeStatDriveEntry.ToBeMounted"
-          ": Unknown tape event: " << event;
-        throw ex;
-      }
-  }
-}
-
-//------------------------------------------------------------------------------
-// driveStateToStatEntryUp
-//------------------------------------------------------------------------------
-uint16_t
-  castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatEntryUp(
-  const DriveCatalogueEntry::DriveState state)  {
-  switch(state) {
-    case DriveCatalogueEntry::DRIVE_STATE_INIT:
-    case DriveCatalogueEntry::DRIVE_STATE_DOWN:
-    case DriveCatalogueEntry::DRIVE_STATE_WAITDOWN:
-      return 0;
-      break;
-    case DriveCatalogueEntry::DRIVE_STATE_UP:
-    case DriveCatalogueEntry::DRIVE_STATE_WAITFORK:
-    case DriveCatalogueEntry::DRIVE_STATE_WAITLABEL:
-    case DriveCatalogueEntry::DRIVE_STATE_RUNNING:
-      return 1;
-      break;
-    default:
-      {
-        castor::exception::Exception ex;
-        ex.getMessage() <<
-          "Failed to translate drive state to TapeStatDriveEntry.up"
-          ": Unknown drive-state: state=" << state;
-        throw ex;
-      }
-  }
-}
-
-//------------------------------------------------------------------------------
-// driveStateToStatEntryAsn
-//------------------------------------------------------------------------------
-uint16_t
- castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatEntryAsn(
-  const DriveCatalogueEntry::DriveState state)  {
-  switch(state) {
-    case DriveCatalogueEntry::DRIVE_STATE_INIT:
-    case DriveCatalogueEntry::DRIVE_STATE_DOWN:
-    case DriveCatalogueEntry::DRIVE_STATE_UP:
-      return 0;
-    case DriveCatalogueEntry::DRIVE_STATE_WAITFORK:
-    case DriveCatalogueEntry::DRIVE_STATE_WAITLABEL:
-    case DriveCatalogueEntry::DRIVE_STATE_RUNNING:
-    case DriveCatalogueEntry::DRIVE_STATE_WAITDOWN:
-      return 1;
-    default:
-      {
-        castor::exception::Exception ex;
-        ex.getMessage() <<
-          "Failed to translate drive state to TapeStatDriveEntry.asn"
-          ": Unknown drive-state: state=" << state;
-        throw ex;
-      }
   }
 }
 
@@ -378,21 +233,22 @@ void
 void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeConfigJob(
   const legacymsg::TapeConfigRequestMsgBody &body)  {
   const std::string unitName(body.drive);
-  const std::string dgn = m_driveCatalogue.getDgn(unitName);
+  DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(unitName);
+  const utils::DriveConfig &driveConfig = drive.getConfig();
 
   log::Param params[] = {
     log::Param("unitName", unitName),
-    log::Param("dgn", dgn)};
+    log::Param("dgn", driveConfig.dgn)};
 
   switch(body.status) {
   case CONF_UP:
-    m_vdqm.setDriveUp(m_hostName, unitName, dgn);
-    m_driveCatalogue.configureUp(unitName);
+    m_vdqm.setDriveUp(m_hostName, unitName, driveConfig.dgn);
+    drive.configureUp();
     m_log(LOG_INFO, "Drive configured up", params);
     break;
   case CONF_DOWN:
-    m_vdqm.setDriveDown(m_hostName, unitName, dgn);
-    m_driveCatalogue.configureDown(unitName);
+    m_vdqm.setDriveDown(m_hostName, unitName, driveConfig.dgn);
+    drive.configureDown();
     m_log(LOG_INFO, "Drive configured down", params);
     break;
   default:

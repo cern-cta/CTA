@@ -71,21 +71,15 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
   // UNIT1 assertions
   ///////////////////
 
-  {
-    std::string fromCatalogue;
-    ASSERT_NO_THROW(fromCatalogue = catalogue.getDgn("UNIT1"));
-    ASSERT_EQ(std::string("DGN1"), fromCatalogue);
-  }
+  const DriveCatalogueEntry &unit1 = catalogue.findConstDrive("UNIT1");
+  const castor::tape::utils::DriveConfig &unit1Config = unit1.getConfig();
 
-  {
-    std::string fromCatalogue;
-    ASSERT_NO_THROW(fromCatalogue = catalogue.getDevFilename("UNIT1"));
-    ASSERT_EQ(std::string("DEV1"), fromCatalogue);
-  }
+  ASSERT_EQ(std::string("DGN1"), unit1Config.dgn);
+  ASSERT_EQ(std::string("DEV1"), unit1Config.devFilename);
 
   {
     std::list<std::string> fromCatalogue;
-    ASSERT_NO_THROW(fromCatalogue = catalogue.getDensities("UNIT1"));
+    ASSERT_NO_THROW(fromCatalogue = unit1Config.densities);
     ASSERT_EQ((std::list<std::string>::size_type)2, 
       fromCatalogue.size());
     ASSERT_EQ("DEN11", fromCatalogue.front());
@@ -93,44 +87,23 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
     ASSERT_EQ("DEN12", fromCatalogue.front());
   }
 
-  {
-    DriveCatalogueEntry::DriveState fromCatalogue =
-      DriveCatalogueEntry::DRIVE_STATE_INIT;
-    ASSERT_NO_THROW(fromCatalogue = catalogue.getState("UNIT1"));
-    ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, fromCatalogue);
-  }
-
-  {
-    std::string fromCatalogue;
-    ASSERT_NO_THROW(fromCatalogue = catalogue.getLibrarySlot("UNIT1"));
-    ASSERT_EQ(std::string("SLOT1"), fromCatalogue);
-  }
-
-  {
-    std::string fromCatalogue;
-    ASSERT_NO_THROW(fromCatalogue = catalogue.getDevType("UNIT1"));
-    ASSERT_EQ(std::string("DEVTYPE1"), fromCatalogue);
-  }
+  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, unit1.getState());
+  ASSERT_EQ(std::string("SLOT1"), unit1Config.librarySlot);
+  ASSERT_EQ(std::string("DEVTYPE1"), unit1Config.devType);
 
   ///////////////////
   // UNIT2 assertions
   ///////////////////
 
-  {
-    std::string fromCatalogue;
-    ASSERT_NO_THROW(fromCatalogue = catalogue.getDgn("UNIT2"));
-    ASSERT_EQ(std::string("DGN2"), fromCatalogue);
-  }
+  const DriveCatalogueEntry &unit2 = catalogue.findConstDrive("UNIT2");
+  const castor::tape::utils::DriveConfig &unit2Config = unit2.getConfig();
 
-  {
-    std::string fromCatalogue;
-    ASSERT_NO_THROW(fromCatalogue = catalogue.getDevFilename("UNIT2"));
-    ASSERT_EQ(std::string("DEV2"), fromCatalogue);
-  }
+  ASSERT_EQ(std::string("DGN2"), unit2Config.dgn);
+  ASSERT_EQ(std::string("DEV2"), unit2Config.devFilename);
 
   {
     std::list<std::string> fromCatalogue;
-    ASSERT_NO_THROW(fromCatalogue = catalogue.getDensities("UNIT2"));
+    ASSERT_NO_THROW(fromCatalogue = unit2Config.densities);
     ASSERT_EQ((std::list<std::string>::size_type)2,
       fromCatalogue.size());
     ASSERT_EQ("DEN21", fromCatalogue.front());
@@ -138,24 +111,9 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, goodDayPopulate) {
     ASSERT_EQ("DEN22", fromCatalogue.front());
   }
 
-  {
-    DriveCatalogueEntry::DriveState fromCatalogue =
-      DriveCatalogueEntry::DRIVE_STATE_INIT;
-    ASSERT_NO_THROW(fromCatalogue = catalogue.getState("UNIT2"));
-    ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, fromCatalogue);
-  }
-
-  {
-    std::string fromCatalogue;
-    ASSERT_NO_THROW(fromCatalogue = catalogue.getLibrarySlot("UNIT2"));
-    ASSERT_EQ(std::string("SLOT2"), fromCatalogue);
-  }
-
-  {
-    std::string fromCatalogue;
-    ASSERT_NO_THROW(fromCatalogue = catalogue.getDevType("UNIT2"));
-    ASSERT_EQ(std::string("DEVTYPE2"), fromCatalogue);
-  }
+  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, unit2.getState());
+  ASSERT_EQ(std::string("SLOT2"), unit2Config.librarySlot);
+  ASSERT_EQ(std::string("DEVTYPE2"), unit2Config.devType);
 }
 
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, 
@@ -164,8 +122,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest,
 
   const std::string unitName = "DRIVE";
   DriveCatalogue catalogue;
-  ASSERT_THROW(catalogue.getState(unitName), 
-    castor::exception::Exception);
+  ASSERT_THROW(catalogue.findDrive(unitName), castor::exception::Exception);
 }
 
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
@@ -179,18 +136,25 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   driveConfigs.enterTpconfigLines(lines);
   DriveCatalogue catalogue;
   ASSERT_NO_THROW(catalogue.populateCatalogue(driveConfigs));
-  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, catalogue.getState("UNIT"));
+  DriveCatalogueEntry &unit = catalogue.findDrive("UNIT");
+  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, unit.getState());
+
+  // Check that the unit can be found and returned as a const reference
+  {
+    const DriveCatalogueEntry &constUnit = catalogue.findDrive("UNIT");
+    ASSERT_EQ(&unit, &constUnit);
+  }
 
   // Configure the tape drive UP
-  ASSERT_NO_THROW(catalogue.configureUp("UNIT"));
-  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_UP, catalogue.getState("UNIT"));
+  ASSERT_NO_THROW(unit.configureUp());
+  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_UP, unit.getState());
 
   // Check that there are no tape drives waiting for their mount sessions to
   // be forked
   {
     std::list<std::string> unitNames;
     ASSERT_NO_THROW(unitNames = catalogue.getUnitNames(
-      DriveCatalogueEntry::DRIVE_STATE_WAITFORK));
+      DriveCatalogueEntry::DRIVE_STATE_WAITFORKTRANSFER));
     ASSERT_EQ((std::list<std::string>::size_type)0, unitNames.size());
   }
 
@@ -204,63 +168,70 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
   castor::utils::copyString(job.dgn, "DGN");
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
-  ASSERT_NO_THROW(catalogue.receivedVdqmJob(job));
-  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_WAITFORK,
-    catalogue.getState("UNIT"));
-  ASSERT_EQ(job.volReqId, catalogue.getVdqmJob("UNIT").volReqId);
-  ASSERT_EQ(job.clientPort, catalogue.getVdqmJob("UNIT").clientPort);
-  ASSERT_EQ(job.clientEuid, catalogue.getVdqmJob("UNIT").clientEuid);
-  ASSERT_EQ(job.clientEgid, catalogue.getVdqmJob("UNIT").clientEgid);
+  ASSERT_NO_THROW(unit.receivedVdqmJob(job));
+  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_WAITFORKTRANSFER, unit.getState());
+  ASSERT_EQ(job.volReqId, unit.getVdqmJob().volReqId);
+  ASSERT_EQ(job.clientPort, unit.getVdqmJob().clientPort);
+  ASSERT_EQ(job.clientEuid, unit.getVdqmJob().clientEuid);
+  ASSERT_EQ(job.clientEgid, unit.getVdqmJob().clientEgid);
   ASSERT_EQ(std::string(job.clientHost),
-    std::string(catalogue.getVdqmJob("UNIT").clientHost));
-  ASSERT_EQ(std::string(job.dgn),
-    std::string(catalogue.getVdqmJob("UNIT").dgn));
+    std::string(unit.getVdqmJob().clientHost));
+  ASSERT_EQ(std::string(job.dgn), std::string(unit.getVdqmJob().dgn));
   ASSERT_EQ(std::string(job.driveUnit),
-    std::string(catalogue.getVdqmJob("UNIT").driveUnit));
+    std::string(unit.getVdqmJob().driveUnit));
   ASSERT_EQ(std::string(job.clientUserName),
-    std::string(catalogue.getVdqmJob("UNIT").clientUserName));
+    std::string(unit.getVdqmJob().clientUserName));
 
   // Check that there is one tape drive waiting for a mount session to be forked
   {
     std::list<std::string> unitNames;
     ASSERT_NO_THROW(unitNames =
-      catalogue.getUnitNames(DriveCatalogueEntry::DRIVE_STATE_WAITFORK));
+      catalogue.getUnitNames(DriveCatalogueEntry::DRIVE_STATE_WAITFORKTRANSFER));
     ASSERT_EQ((std::list<std::string>::size_type)1, unitNames.size());
     ASSERT_EQ(std::string("UNIT"), unitNames.front());
   }
 
   // Fork the mount session
   const pid_t sessionPid = 1234;
-  ASSERT_NO_THROW(catalogue.forkedMountSession("UNIT", sessionPid));
-  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_RUNNING, catalogue.getState("UNIT"));
-  ASSERT_EQ(sessionPid, catalogue.getSessionPid("UNIT"));
+  ASSERT_NO_THROW(unit.forkedMountSession(sessionPid));
+  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_RUNNING, unit.getState());
+  ASSERT_EQ(sessionPid, unit.getSessionPid());
 
   // Check that there are no longer any tape drives waiting for their mount
   // sessions to be forked
   {
     std::list<std::string> unitNames;
     ASSERT_NO_THROW(unitNames =
-      catalogue.getUnitNames(DriveCatalogueEntry::DRIVE_STATE_WAITFORK));
+      catalogue.getUnitNames(DriveCatalogueEntry::DRIVE_STATE_WAITFORKTRANSFER));
     ASSERT_EQ((std::list<std::string>::size_type)0, unitNames.size());
   }
 
+  // Check that the unit can be found by process ID
+  {
+    DriveCatalogueEntry &unitFoundByPid = catalogue.findDrive(sessionPid);
+    ASSERT_EQ(&unit, &unitFoundByPid);
+  }
+  {
+    const DriveCatalogueEntry &constUnitFoundByPid =
+      catalogue.findConstDrive(sessionPid);
+    ASSERT_EQ(&unit, &constUnitFoundByPid);
+  }
+
   // Configure the tape drive DOWN whilst the mount session is running
-  ASSERT_NO_THROW(catalogue.configureDown("UNIT"));
-  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_WAITDOWN,
-    catalogue.getState("UNIT"));
+  ASSERT_NO_THROW(unit.configureDown());
+  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_WAITDOWN, unit.getState());
 
   // Configure the tape drive back UP whilst the mount session is running
-  ASSERT_NO_THROW(catalogue.configureUp("UNIT"));
-  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_RUNNING,
-    catalogue.getState("UNIT"));
+  ASSERT_NO_THROW(unit.configureUp());
+  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_RUNNING, unit.getState());
 
   // Complete the tape session successfully
-  ASSERT_NO_THROW(catalogue.sessionSucceeded("UNIT"));
-  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_UP, catalogue.getState("UNIT"));
+  ASSERT_NO_THROW(unit.sessionSucceeded());
+  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_UP, unit.getState());
 
   // Configure the tape drive DOWN
-  ASSERT_NO_THROW(catalogue.configureDown("UNIT"));
-  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, catalogue.getState("UNIT"));
+  ASSERT_NO_THROW(unit.configureDown());
+  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, unit.getState());
 }
 
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
@@ -273,9 +244,10 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
 
   DriveCatalogue catalogue;
   ASSERT_NO_THROW(catalogue.populateCatalogue(driveConfigs));
-  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, catalogue.getState("UNIT"));
-  ASSERT_NO_THROW(catalogue.configureUp("UNIT"));
-  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_UP, catalogue.getState("UNIT"));
+  DriveCatalogueEntry &unit = catalogue.findDrive("UNIT");
+  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_DOWN, unit.getState());
+  ASSERT_NO_THROW(unit.configureUp());
+  ASSERT_EQ(DriveCatalogueEntry::DRIVE_STATE_UP, unit.getState());
   castor::legacymsg::RtcpJobRqstMsgBody job;
   job.volReqId = 1111;
   job.clientPort = 2222;
@@ -285,7 +257,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, dgnMismatchStart) {
   castor::utils::copyString(job.dgn, "DGN2");
   castor::utils::copyString(job.driveUnit, "UNIT");
   castor::utils::copyString(job.clientUserName, "USER");
-  ASSERT_THROW(catalogue.receivedVdqmJob(job), castor::exception::Exception);
+  ASSERT_THROW(unit.receivedVdqmJob(job), castor::exception::Exception);
 }
 
 TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, getUnitNames) {

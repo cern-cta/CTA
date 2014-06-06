@@ -27,6 +27,7 @@
 #include "castor/tape/utils/DriveConfig.hpp"
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
+#include "castor/legacymsg/TapeStatDriveEntry.hpp"
 #include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 
 #include <string>
@@ -40,9 +41,10 @@ namespace tapeserver {
 namespace daemon     {
 
 /**
- * Structure used to store a tape drive in the catalogue.
+ * A tape-drive entry in the tape-drive catalogue.
  */
-struct DriveCatalogueEntry {
+class DriveCatalogueEntry {
+public:
 
   /**
    * The state of a drive as described by the following FSTN:
@@ -64,14 +66,14 @@ struct DriveCatalogueEntry {
    *             | label job           | vdqm job    |                     |
    *             |                     |             |                     |
    *             v                     v             |                     |
-   *        -----------        ------------------    | SIGCHLD             |
-   *       | WAITLABEL |      |    WAITFORK      |   | [success]           |
-   *        -----------        ------------------    |                     |
-   *             |                  |                |                     |
-   *             |                  |                |                     |
-   *             | forked           | forked         |                     |
-   *             |                  |                |                     |
-   *             |                  v                |                     |
+   *      ---------------      ------------------    | SIGCHLD             |
+   *     | WAITFORKLABEL |    | WAITFORKTRANSFER |   | [success]           |
+   *      ---------------      ------------------    |                     |
+   *             |                     |             |                     |
+   *             |                     |             |                     |
+   *             | forked              | forked      |                     |
+   *             |                     |             |                     |
+   *             |                     v             |                     |
    *             |                  ------------------    SIGCHLD [fail]   |
    *              ---------------->|     RUNNING      |--------------------|
    *                                ------------------                     |
@@ -96,11 +98,11 @@ struct DriveCatalogueEntry {
    * The tape daemon can receive a job from the vdqmd daemon for a tape drive
    * when the state of that drive is DRIVE_STATE_UP.  On reception of the job
    * the daemon prepares to fork a child process and enters the
-   * DRIVE_STATE_WAITFORK state.
+   * DRIVE_STATE_WAITFORKTRANSFER state.
    *
-   * The DRIVE_STATE_WAIT_FORK state allows the object responsible for handling
-   * the connection from the vdqmd daemon (an instance of
-   * VdqmConnectionHandler) to delegate the task of forking of a mount session.
+   * The DRIVE_STATE_WAITFORKTRANSFER state allows the object responsible for
+   * handling the connection from the vdqmd daemon (an instance of
+   * VdqmConnectionHandler) to delegate the task of forking a mount session.
    *
    * Once the child process is forked the drive enters the DRIVE_STATE_RUNNING
    * state.  The child process is responsible for running a mount session.
@@ -132,8 +134,8 @@ struct DriveCatalogueEntry {
     DRIVE_STATE_INIT,
     DRIVE_STATE_DOWN,
     DRIVE_STATE_UP,
-    DRIVE_STATE_WAITFORK,
-    DRIVE_STATE_WAITLABEL,
+    DRIVE_STATE_WAITFORKTRANSFER,
+    DRIVE_STATE_WAITFORKLABEL,
     DRIVE_STATE_RUNNING,
     DRIVE_STATE_WAITDOWN};
 
@@ -168,77 +170,400 @@ struct DriveCatalogueEntry {
   static const char *sessionType2Str(const SessionType sessionType) throw();
 
   /**
+   * Default constructor that initializes all strings to the empty string,
+   * all integers to zero, all file descriptors to -1, all lists to empty,
+   * the drive state to DRIVE_STATE_INIT and the sessionType to
+   * SESSION_TYPE_NONE.
+   */
+  DriveCatalogueEntry() throw();
+
+  /**
+   * Constructor that except for its parameters, initializes all strings to
+   * the empty string, all integers to zero, all file descriptors to -1,
+   * all lists to the emptylist, and the sessionType to SESSION_TYPE_NONE.
+   *
+   * @param config The configuration of the tape drive.
+   * @param state The initial state of the tape drive.
+   */
+  DriveCatalogueEntry(const utils::DriveConfig &config,
+    const DriveState state) throw();
+
+  /**
+   * Sets the configuration of the tape-drive.
+   */
+  void setConfig(const tape::utils::DriveConfig &config) throw();
+
+  /**
+   * Gets the configuration of the tape-drive.
+   *
+   * @return The configuration of the tape-drive.
+   */
+  const tape::utils::DriveConfig &getConfig() const;
+
+  /**
+   * Sets the mode of the current mount to either read, write, or dump.
+   */
+  void setMode(const legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode mode);
+
+  /**
+   * Gets the mode of the current mount, either read, write, or dump.
+   *
+   * @return The mode of the current mount.
+   */
+  legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode getMode() const;
+
+  /**
+   * Sets the status of the tape with respect to the drive mount and unmount
+   * operations.
+   */
+  void setEvent(const legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event);
+
+  /**
+   * Gets the state of the tape with respect to the drive mount and unmount
+   * operations.
+   *
+   * @return The state of the tape with respect to the drive mount and unmount
+   * operations.
+   */
+  legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent getEvent() const;
+
+  /**
+   * Sets the Volume ID of the tape mounted in the drive. Empty string if drive
+   * is empty.
+   */
+  void setVid(const std::string &vid);
+
+  /**
+   * Gets the Volume ID of the tape mounted in the drive. Empty string if drive
+   * is empty.
+   *
+   * @return The Volume ID or an empty string if teh drive is empty.
+   */
+  std::string getVid() const;
+
+  /**
+   * Sets the point in time when the drive was assigned a tape.
+   */
+  void setAssignmentTime(const time_t assignmentTime);
+
+  /**
+   * Gets the point in time when the drive was assigned a tape.
+   *
+   * @return Te point in time when the drive was assigned a tape.
+   */
+  time_t getAssignmentTime() const;
+
+  /**
+   * Gets the current state of the tape drive.
+   *
+   * @return The current state of the tape drive.
+   */
+  DriveState getState() const throw();
+
+  /**
+   * Gets the type of session associated with the tape drive.
+   */
+  SessionType getSessionType() const throw();
+
+  /**
+   * Configures the tape-drive up.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_UP, DRIVE_STATE_DOWN or DRIVE_STATE_WAITDOWN.
+   *
+   * configureUp() is idempotent.
+   */
+  void configureUp();
+
+  /**
+   * Configures the tape drive down.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_UP, DRIVE_STATE_DOWN or DRIVE_STATE_RUNNING.
+   *
+   * configureDown() is idempotent.
+   */
+  void configureDown();
+
+  /**
+   * Moves the state of tape drive to DRIVE_STATE_WAITFORK.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_UP. 
+   *    
+   * The unit name of a tape drive is unique for a given host.  No two drives
+   * on the same host can have the same unit name.
+   *
+   * A tape drive cannot be a member of more than one device group name (DGN).
+   *
+   * This method throws an exception if the DGN field of the specified vdqm job
+   * does not match the value that was entered into the catalogue with the
+   * populateCatalogue() method.
+   *  
+   * @param job The job received from the vdqmd daemon.
+   */   
+  void receivedVdqmJob(const legacymsg::RtcpJobRqstMsgBody &job);
+      
+  /**
+   * Moves the state of the tape drive to DRIVE_STATE_WAITLABEL.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_UP.
+   *
+   * The unit name of a tape drive is unique for a given host.  No two drives
+   * on the same host can have the same unit name.
+   *
+   * A tape drive cannot be a member of more than one device group name (DGN).
+   *
+   * This method throws an exception if the DGN field of the specified vdqm job
+   * does not match the value that was entered into the catalogue with the
+   * populateCatalogue() method.
+   *
+   * PLEASE NOTE: If this method throws an exception then it does NOT close
+   * the file descriptor of the TCP/IP connection with the tape labeling
+   * command-line tool castor-tape-label.  The caller of this method is left
+   * to close the connection because this gives them the opportunity to send
+   * an approprioate error message to the client.
+   *
+   * @param job The label job.
+   * @param labelCmdConnection The file descriptor of the TCP/IP connection
+   * with the tape labeling command-line tool castor-tape-label.
+   */
+  void receivedLabelJob(const legacymsg::TapeLabelRqstMsgBody &job,
+    const int labelCmdConnection);
+
+  /**
+   * Moves the state of the tape drive to DRIVE_STATE_RUNNING.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_WAITFORK.
+   *
+   * @param sessionPid The process ID of the child process responsible for
+   * running the mount session.
+   */
+  void forkedMountSession(const pid_t sessionPid);
+  
+  /**
+   * Moves the state of the tape drive to DRIVE_STATE_RUNNING.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_WAITLABEL.
+   *
+   * @param sessionPid The process ID of the child process responsible for
+   * running the label session.
+   */   
+  void forkedLabelSession(const pid_t sessionPid);
+
+  /**
+   * Moves the state of the tape drive to DRIVE_STATE_UP if the
+   * current state is DRIVE_STATE_RUNNING or to DRIVE_STATE_DOWN if the
+   * current state is DRIVE_STATE_WAIT_DOWN.
+   *  
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_RUNNING or DRIVE_STATE_WAITDOWN.
+   */
+  void sessionSucceeded(); 
+      
+  /**
+   * Moves the state of tape drive to DRIVE_STATE_DOWN.
+   *
+   * This method throws an exception if the current state of the tape drive is
+   * not DRIVE_STATE_RUNNING.
+   */
+  void sessionFailed();
+
+  /**
+   * Gets the job received from the vdqmd daemon.
+   *
+   * This method throws a castor::exception::Exception if the tape drive is not
+   * in a state for which there is a vdqm job.
+   *
+   * @return The job received from the vdqmd daemon.
+   */
+  const legacymsg::RtcpJobRqstMsgBody &getVdqmJob() const;
+
+  /**
+   * Gets the label job received from the castor-tape-label command-line tool.
+   *
+   * This method throws a castor::exception::Exception if the tape drive is not
+   * in a state for which there is a label job.
+   *
+   * @return The label job received from the castor-tape-label command-line
+   * tool.
+   */ 
+  const legacymsg::TapeLabelRqstMsgBody &getLabelJob() const;
+
+  /**
+   * The process ID of the child process running the mount session.
+   *
+   * This method throws a castor::exception::Exception if the tape drive is not
+   * in a state for which there is a session process-ID.
+   *
+   * @return The process ID of the child process running the mount session.
+   */
+  pid_t getSessionPid() const;
+
+  /**
+   * Gets the file descriptor of the TCP/IP connection with the
+   * castor-tape-label command-line tool.
+   *
+   * This method throws a castor::exception::Exception if the tape drive is not
+   * in a state for which there is a TCP/IP connection with the
+   * castor-tape-label command-line tool..
+   *
+   * @return The file descriptor of the TCP/IP connection with the
+   * castor-tape-label command-line tool.
+   */
+  int getLabelCmdConnection() const;
+
+  /**
+   * Releases and returns the TCP/IP connection with the
+   * castor-tape-label command-line tool.
+   *
+   * This method throws a castor::exception::Exception if is invalid to call
+   * this method.
+   *
+   * @return The file descriptor of the TCP/IP connection with the
+   * castor-tape-label command-line tool.
+   */
+  int releaseLabelCmdConnection();
+
+  /**
+   * Updates the vid and assignment time.
+   * 
+   * @param body The TapeUpdateDriveRqstMsgBody requesting the update.
+   */
+  void updateVolumeInfo(const legacymsg::TapeUpdateDriveRqstMsgBody &body);
+
+  /**
+   * Gets the tpstat representation of the tape drive.
+   *
+   * @return The tpstat representation of the tape drive.
+   */
+  legacymsg::TapeStatDriveEntry getTapeStatDriveEntry() const;
+
+private:
+
+  /**
    * The configuration of the tape-drive.
    */
-  castor::tape::utils::DriveConfig config;
-  
+  castor::tape::utils::DriveConfig m_config;
+
   /**
    * Are we mounting for read, write (read/write), or dump
    */
-  castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode mode;
+  legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode m_mode;
   
   /**
-   * The status of the tape with respect to the drive mount and unmount operations
+   * The status of the tape with respect to the drive mount and unmount
+   * operations.
    */
-  castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event;
+  legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent m_event;
   
   /**
    * The Volume ID of the tape mounted in the drive. Empty string if drive is
    * empty.
    */
-  std::string vid;
+  std::string m_vid;
   
   /**
-   * The point in time when the drive has been assigned a tape
+   * The point in time when the drive was assigned a tape.
    */
-  time_t assignment_time;
+  time_t m_assignmentTime;
 
   /**
    * The current state of the tape drive.
    */
-  DriveState state;
+  DriveState m_state;
   
   /**
    * The type of mount session.
    */
-  SessionType sessionType;
+  SessionType m_sessionType;
 
   /**
-   * The job received from the vdqmd daemon when the drive is in the
-   * DRIVE_STATE_RUNNING state.  In all other states the value of this
-   * member variable is undefined.
+   * The job received from the vdqmd daemon.
    */
-  legacymsg::RtcpJobRqstMsgBody vdqmJob;
+  legacymsg::RtcpJobRqstMsgBody m_vdqmJob;
   
   /**
-   * The label job received from the tape label command when the drive is in the
-   * DRIVE_STATE_RUNNING state.  In all other states the value of this
-   * member variable is undefined.
+   * The label job received from the castor-tape-label command-line tool.
    */
-  legacymsg::TapeLabelRqstMsgBody labelJob;
+  legacymsg::TapeLabelRqstMsgBody m_labelJob;
   
   /**
    * The process ID of the child process running the mount session.
    */
-  pid_t sessionPid;
+  pid_t m_sessionPid;
 
   /**
    * If the drive state is either DRIVE_WAITLABEL, DRIVE_STATE_RUNNING or
    * DRIVE_STATE_WAITDOWN and the type of the session is SESSION_TYPE_LABEL
    * then this is the file descriptor of the TCP/IP connection with the tape
    * labeling command-line tool castor-tape-label.  In any other state, the
-   * value of this filed is undefined.
+   * value of this field is undefined.
    */
-  int labelCmdConnection;
+  int m_labelCmdConnection;
 
   /**
-   * Default constructor that initializes all strings to the empty string,
-   * all integers to zero, all file descriptors to -1, all lists to empty,
-   * the drive state to DRIVE_STATE_INIT and the sessionType to
-   * SESSION_TYPE_NONE.  This initialization includes the individual member
-   * variables of the nested vdqm job.
+   * Returns the value of the uid field of a TapeStatDriveEntry to be used
+   * in a TapeStatReplyMsgBody.
    */
-  DriveCatalogueEntry() throw();
+  uint32_t getUidForTapeStatDriveEntry() const throw();
+
+  /**
+   * Returns the value of the jid field of a TapeStatDriveEntry to be used
+   * in a TapeStatReplyMsgBody.
+   */
+  uint32_t getJidForTapeStatDriveEntry() const throw();
+
+  /**
+   * Returns the value of the up field of a TapeStatDriveEntry to be used
+   * in a TapeStatReplyMsgBody.
+   */
+  uint16_t getUpForTapeStatDriveEntry() const throw();
+
+  /**
+   * Returns the value of the asn field of a TapeStatDriveEntry to be used
+   * in a TapeStatReplyMsgBody.
+   */
+  uint16_t getAsnForTapeStatDriveEntry() const throw();
+
+  /**
+   * Returns the value of the asnTime field of a TapeStatDriveEntry to be used
+   * in a TapeStatReplyMsgBody.
+   */
+  uint32_t getAsnTimeForTapeStatDriveEntry() const throw();
+
+  /**
+   * Returns the value of the mode field of a TapeStatDriveEntry to be used
+   * in a TapeStatReplyMsgBody.
+   */
+  uint16_t getModeForTapeStatDriveEntry() const throw();
+
+  /**
+   * Returns the value of the lblCode field of a TapeStatDriveEntry to be used
+   * in a TapeStatReplyMsgBody.
+   */
+  std::string getLblCodeForTapeStatDriveEntry() const throw();
+
+  /**
+   * Returns the value of the tobeMounted field of a TapeStatDriveEntry to be
+   * used in a TapeStatReplyMsgBody.
+   */
+  uint16_t getToBeMountedForTapeStatDriveEntry() const throw();
+
+  /**
+   * Returns the value of the vid field of a TapeStatDriveEntry to be used
+   * in a TapeStatReplyMsgBody.
+   */
+  std::string getVidForTapeStatDriveEntry() const throw();
+
+  /**
+   * Returns the value of the vsn field of a TapeStatDriveEntry to be used
+   * in a TapeStatReplyMsgBody.
+   */
+  std::string getVsnForTapeStatDriveEntry() const throw();
 
 }; // class DriveCatalogueEntry
 

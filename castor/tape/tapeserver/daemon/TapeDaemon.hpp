@@ -227,12 +227,13 @@ protected:
   void reapZombies() throw();
 
   /**
-   * Reaps the specified zombie process.
+   * Does the required post processing for the specified reaped session.
    *
-   * @param sessionPid The process ID of the zombie mount-session child-process.
+   * @param sessionPid The process ID of the session child-process.
    * @param waitpidStat The status information given by a call to waitpid().
    */
-  void reapZombie(const pid_t sessionPid, const int waitpidStat) throw();
+  void postProcessReapedSession(const pid_t sessionPid, const int waitpidStat)
+    throw();
 
   /**
    * Logs the fact that the specified session child-process has terminated.
@@ -289,17 +290,22 @@ protected:
    * Request the vdqmd daemon to release the tape drive associated with the
    * session child-process with the specified process ID.
    *
+   * @param driveConfig The configuration of the tape drive.
    * @param sessionPid The process ID of the session child-process.
    */
-  void requestVdqmToReleaseDrive(const pid_t sessionPid);
+  void requestVdqmToReleaseDrive(const utils::DriveConfig &driveConfig,
+    const pid_t sessionPid);
 
   /**
    * Notifies the vdqm that the tape associated with the session child-process
    * with the specified process ID has been unmounted.
    *
+   * @param driveConfig The configuration of the tape drive.
+   * @param vid The identifier of the unmounted volume.
    * @param sessionPid The process ID of the session child-process.
    */
-  void notifyVdqmTapeUnmounted(const pid_t sessionPid);
+  void notifyVdqmTapeUnmounted(const utils::DriveConfig &driveConfig,
+    const std::string &vid, const pid_t sessionPid);
 
   /**
    * Forks a mount-session child-process for every tape drive entry in the
@@ -315,18 +321,18 @@ protected:
   /**
    * Forks a mount-session child-process for the specified tape drive.
    *
-   * @param unitName The unit name of the tape drive.
+   * @param drive The tape-drive entry in the tape-drive catalogue.
    */ 
-  void forkMountSession(const std::string &unitName) throw();
+  void forkMountSession(DriveCatalogueEntry &drive) throw();
 
   /**
    * Runs the mount session.  This method is to be called within the child
    * process responsible for running the mount session.
    *
-   * @param driveConfig The configuration of the tape drive to be used during
-   * the session.
+   * @param drive The catalogue entry of the tape drive to be used during the
+   * session.
    */
-  void runMountSession(const utils::DriveConfig &driveConfig) throw();
+  void runMountSession(const DriveCatalogueEntry &drive) throw();
 
   /**
    * Forks a label-session child-process for every tape drive entry in the
@@ -342,20 +348,20 @@ protected:
   /**
    * Forks a label-session child-process for the specified tape drive.
    *
-   * @param unitName The unit name of the tape drive.
+   * @param drive The tape-drive entry in the tape-drive catalogue.
    */
-  void forkLabelSession(const std::string &unitName) throw();
+  void forkLabelSession(DriveCatalogueEntry &drive) throw();
 
   /**
    * Runs the label session.  This method is to be called within the child
    * process responsible for running the label session.
    *
-   * @param driveConfig The configuration of the tape drive to be used during
-   * the session.
+   * @param drive The catalogue entry of the tape drive to be used during the
+   * session.
    * @param labelCmdConnection The file descriptor of the connection with the
    * command-line tool castor-tape-label.
    */
-  void runLabelSession(const utils::DriveConfig &driveConfig,
+  void runLabelSession(const DriveCatalogueEntry &drive,
     const int labelCmdConnection) throw();
 
   /**

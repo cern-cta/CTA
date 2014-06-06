@@ -240,39 +240,42 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::tellVMGRTapeWa
 //------------------------------------------------------------------------------
 // handleIncomingUpdateDriveJob
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingUpdateDriveJob(const legacymsg::MessageHeader &header, const int clientConnection) {
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingUpdateDriveJob(
+  const legacymsg::MessageHeader &header, const int clientConnection) {
   castor::utils::SmartFd connection(clientConnection);
   const char *const task = "handle incoming update drive job";
   try {
     // Read message body
     const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
-    const legacymsg::TapeUpdateDriveRqstMsgBody body = readTapeUpdateDriveRqstMsgBody(connection.get(), bodyLen);
-    logUpdateDriveJobReception(body);  
-    
-    m_driveCatalogue.updateDriveVolumeInfo(body);
-    
-    const std::string &dgn = m_driveCatalogue.getDgn(body.drive);
-    const pid_t pid = m_driveCatalogue.getSessionPid(body.drive);
-    
+    const legacymsg::TapeUpdateDriveRqstMsgBody body =
+      readTapeUpdateDriveRqstMsgBody(connection.get(), bodyLen);
+    logUpdateDriveJobReception(body);
+    const std::string unitName(body.drive);
+    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(unitName);
+    drive.updateVolumeInfo(body);
+
+    const utils::DriveConfig &driveConfig = drive.getConfig();
+
     switch(body.event) {
-      case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED:
-        checkTapeConsistencyWithVMGR(body.vid, body.clientType, body.mode);
-        break;
-      case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED:
-        tellVMGRTapeWasMounted(body.vid, body.mode);
-        m_vdqm.tapeMounted(m_hostName, body.drive, dgn, body.vid, pid);
-        break;
-      case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNT_STARTED:
-        break;
-      case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNTED:
-        break;
-      case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_NONE:
-        break;
-      default:
-        castor::exception::Exception ex;
-        ex.getMessage() << "Unknown tape event: " << body.event;
-        throw ex;
-        break;
+    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED:
+      checkTapeConsistencyWithVMGR(body.vid, body.clientType, body.mode);
+      break;
+    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED:
+      tellVMGRTapeWasMounted(body.vid, body.mode);
+      m_vdqm.tapeMounted(m_hostName, body.drive, driveConfig.dgn, body.vid,
+        drive.getSessionPid());
+      break;
+    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNT_STARTED:
+      break;
+    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNTED:
+      break;
+    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_NONE:
+      break;
+    default:
+      castor::exception::Exception ex;
+      ex.getMessage() << "Unknown tape event: " << body.event;
+      throw ex;
+      break;
     }    
     
     // 0 as return code for the tape config command, as in: "all went fine"
@@ -285,7 +288,8 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
     
     // Inform the client there was an error
     try {
-      legacymsg::writeTapeReplyMsg(m_netTimeout, connection.get(), 1, ex.getMessage().str());
+      legacymsg::writeTapeReplyMsg(m_netTimeout, connection.get(), 1,
+        ex.getMessage().str());
     } catch(castor::exception::Exception &ne) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task <<
@@ -316,7 +320,8 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncoming
     // whilst informing the drive catalogue of the reception of the label job.
     // If the drive catalogue throws an exception whilst evaluating the drive
     // state-change then the catalogue will NOT have closed the connection.
-    m_driveCatalogue.receivedLabelJob(body, connection.get());
+    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(body.drive);
+    drive.receivedLabelJob(body, connection.get());
 
     // The drive catalogue will now remember the client connection, therefore it
     // is now safe and necessary for this method to relinquish ownership of the
