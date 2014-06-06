@@ -916,9 +916,15 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
     }
     
     exit (mountSession->execute());
+  } catch(castor::exception::Exception & ex) {
+    params.push_back(log::Param("message", ex.getMessageValue()));
+    m_log(LOG_ERR, "Aborting mount session: Caught an unexpected CASTOR exception", params);
+    castor::log::LogContext lc(m_log);
+    lc.logBacktrace(LOG_ERR, ex.backtrace());
+    exit(1);
   } catch(std::exception &se) {
     params.push_back(log::Param("message", se.what()));
-    m_log(LOG_ERR, "Aborting mount session: Caught an unexpected exception", params);
+    m_log(LOG_ERR, "Aborting mount session: Caught an unexpected standard exception", params);
     exit(1);
   } catch(...) {
     m_log(LOG_ERR, "Aborting mount session: Caught an unexpected and unknown exception", params);
