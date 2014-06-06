@@ -95,7 +95,7 @@ namespace castor {
        * Get the backtrace's contents
        * @return backtrace in a standard string.
        */
-      std::string const backtrace() {
+      std::string const backtrace() const {
         return (std::string)m_backtrace;
       }
       
