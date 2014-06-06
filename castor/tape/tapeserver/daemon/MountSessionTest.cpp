@@ -148,12 +148,14 @@ TEST(tapeServer, MountSessionGooddayRecall) {
       sim.addFileToRecall(ftr, sizeof(data));
     }
   }
-  utils::TpconfigLines tpConfig;
-  // Actual TPCONFIG lifted from prod
-  tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
-  "/dev/tape_T10D6116", "8000GC", "acs0,1,1,6", "T10000"));
-  tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
-  "/dev/tape_T10D6116", "5000GC", "acs0,1,1,6", "T10000"));
+  utils::DriveConfig driveConfig;
+  driveConfig.unitName = "T10D6116";
+  driveConfig.dgn = "T10KD6";
+  driveConfig.devFilename = "/dev/tape_T10D6116";
+  driveConfig.densities.push_back("8000GC");
+  driveConfig.densities.push_back("5000GC");
+  driveConfig.librarySlot = "manual";
+  driveConfig.devType = "T10000";
   MountSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
   castorConf.rtcopydNbBufs = 10;
@@ -174,8 +176,8 @@ TEST(tapeServer, MountSessionGooddayRecall) {
       argv_ctn_str.find_first_of("\0",pos);
     }
   }
-  MountSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys, tpConfig, 
-    rmc, initialProcess, capUtils, castorConf);
+  MountSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys,
+    driveConfig, rmc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
@@ -214,12 +216,14 @@ TEST(tapeServer, MountSessionNoSuchDrive) {
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
-  utils::TpconfigLines tpConfig;
-  // Actual TPCONFIG lifted from prod
-  tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
-  "/dev/noSuchTape", "8000GC", "acs0,1,1,6", "T10000"));
-  tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
-  "/dev/noSuchTape", "5000GC", "acs0,1,1,6", "T10000"));
+  utils::DriveConfig driveConfig;
+  driveConfig.unitName = "T10D6116";
+  driveConfig.dgn = "T10KD6";
+  driveConfig.devFilename = "/dev/noSuchTape";
+  driveConfig.densities.push_back("8000GC");
+  driveConfig.densities.push_back("5000GC");
+  driveConfig.librarySlot = "manual";
+  driveConfig.devType = "T10000";
   MountSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024;
   castorConf.rtcopydNbBufs = 10;
@@ -239,8 +243,8 @@ TEST(tapeServer, MountSessionNoSuchDrive) {
       argv_ctn_str.find_first_of("\0",pos);
     }
   }
-  MountSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys, tpConfig, 
-    rmc, initialProcess, capUtils, castorConf);
+  MountSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys,
+    driveConfig, rmc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
   std::string temp = logger.getLog();
@@ -364,12 +368,14 @@ TEST(tapeServer, MountSessionGooddayMigration) {
     expected.push_back(expectedResult(fseq, tf->checksum()));
     tempFiles.push_back(tf.release());
   }
-  utils::TpconfigLines tpConfig;
-  // Actual TPCONFIG lifted from prod
-  tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
-  "/dev/tape_T10D6116", "8000GC", "acs0,1,1,6", "T10000"));
-  tpConfig.push_back(utils::TpconfigLine("T10D6116", "T10KD6", 
-  "/dev/tape_T10D6116", "5000GC", "acs0,1,1,6", "T10000"));
+  utils::DriveConfig driveConfig;
+  driveConfig.unitName = "T10D6116";
+  driveConfig.dgn = "T10KD6";
+  driveConfig.devFilename = "/dev/tape_T10D6116";
+  driveConfig.densities.push_back("8000GC");
+  driveConfig.densities.push_back("5000GC");
+  driveConfig.librarySlot = "manual";
+  driveConfig.devType = "T10000";
   MountSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
   castorConf.rtcopydNbBufs = 10;
@@ -392,8 +398,8 @@ TEST(tapeServer, MountSessionGooddayMigration) {
       argv_ctn_str.find_first_of("\0",pos);
     }
   }
-  MountSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys, tpConfig, 
-    rmc, initialProcess, capUtils, castorConf);
+  MountSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys,
+    driveConfig, rmc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
   for (std::vector<struct expectedResult>::iterator i = expected.begin();

@@ -102,14 +102,18 @@ namespace daemon {
       uint32_t tapeserverdDiskThreads;
     };
     /** Constructor */
-    MountSession(int argc, char ** argv, const std::string & hostname,
-            const legacymsg::RtcpJobRqstMsgBody & clientRequest, 
-            castor::log::Logger & logger, System::virtualWrapper & sysWrapper,
-            const utils::TpconfigLines & tpConfig,
-            castor::legacymsg::RmcProxy & rmc,
-            castor::legacymsg::TapeserverProxy & initialProcess,
-            CapabilityUtils &capUtils,
-            const CastorConf & castorConf);
+    MountSession(
+      int argc,
+      char ** argv,
+      const std::string & hostname,
+      const legacymsg::RtcpJobRqstMsgBody & clientRequest, 
+      castor::log::Logger & logger,
+      System::virtualWrapper & sysWrapper,
+      const utils::DriveConfig & driveConfig,
+      castor::legacymsg::RmcProxy & rmc,
+      castor::legacymsg::TapeserverProxy & initialProcess,
+      CapabilityUtils &capUtils,
+      const CastorConf & castorConf);
     /** The only method. It will execute (like a task, that it is) */
     int execute() ;
     /** Temporary method used for debugging while building the session class */
@@ -120,16 +124,17 @@ namespace daemon {
     client::ClientProxy m_clientProxy;
     client::ClientProxy::VolumeInfo m_volInfo;
     System::virtualWrapper & m_sysWrapper;
-    const utils::TpconfigLines & m_tpConfig;
+    /**
+     * The configuration of the tape drive to be used by this session.
+     */
+    const utils::DriveConfig m_driveConfig;
     const CastorConf & m_castorConf;
     /** utility to find the drive on the system. This function logs 
      * all errors and hence does not throw exceptions. It returns NULL
      * in case of failure. */
     castor::tape::drives::DriveInterface * findDrive(
-    utils::TpconfigLines::const_iterator configLine,LogContext & lc);
+     const utils::DriveConfig &driveConfig,LogContext & lc);
         
-    utils::TpconfigLines::const_iterator findConfigLine(LogContext & lc) const;
-    
     /** sub-part of execute for the read sessions */
     int executeRead(LogContext & lc);
     /** sub-part of execute for a write session */

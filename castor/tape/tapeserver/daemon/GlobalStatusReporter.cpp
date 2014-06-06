@@ -13,15 +13,15 @@ namespace daemon {
 //------------------------------------------------------------------------------  
 GlobalStatusReporter::GlobalStatusReporter(
   legacymsg::TapeserverProxy& tapeserverProxy,
-  const tape::utils::TpconfigLine& configLine,
+  const tape::utils::DriveConfig& driveConfig,
   const std::string &hostname,
   const castor::tape::tapeserver::client::ClientInterface::VolumeInfo &volume,
   log::LogContext lc):
   m_tapeserverProxy(tapeserverProxy),
   m_lc(lc),
   m_server(hostname),
-  m_unitName(configLine.unitName),
-  m_dgn(configLine.dgn),
+  m_unitName(driveConfig.unitName),
+  m_dgn(driveConfig.dgn),
   m_volume(volume),
   m_sessionPid(getpid()){
   //change the thread's name in the log

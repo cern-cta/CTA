@@ -33,6 +33,8 @@
 #include "castor/tape/Constants.hpp"
 #include "castor/tape/tapegateway/ClientType.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
+#include "castor/tape/utils/DriveConfig.hpp"
+#include "castor/tape/utils/DriveConfigMap.hpp"
 #include "castor/tape/utils/TpconfigLines.hpp"
 
 #include <errno.h>
@@ -111,8 +113,7 @@ namespace utils  {
  * @param buf    The character buffer that must have a minimum of 9 bytes.
  * @param len    The length of the character buffer.
  */
-void toHex(uint32_t number, char *buf, size_t len)
-  ;
+void toHex(uint32_t number, char *buf, size_t len);
 
 /**
  * Writes the hex form of the specified unsigned 32-bit integer into the
@@ -122,8 +123,7 @@ void toHex(uint32_t number, char *buf, size_t len)
  * @param number The 32-bit integer.
  * @param buf    The character buffer that must have a minimum of 9 bytes.
  */
-template<size_t n> void toHex(uint32_t number, char (&buf)[n])
-   {
+template<size_t n> void toHex(uint32_t number, char (&buf)[n]) {
   toHex(number, buf, n);
 }
 
@@ -150,8 +150,7 @@ int countOccurrences(const char ch, const char *str);
  *               (17 characters = 16 x 'F' + 1 x '\0').
  * @param dstLen The length of the destination character string.
  */
-void toHex(const uint64_t i, char *dst, size_t dstLen)
-  ;
+void toHex(const uint64_t i, char *dst, size_t dstLen);
 
 /**
  * Writes the specified unsigned 64-bit integer into the specified
@@ -268,8 +267,7 @@ void readFileIntoList(const char *const filename,
  * @param filename The filename of the "filelist" file.
  * @param list     The list to which the filenames will be appended.
  */
-void parseFileList(const char *filename, std::list<std::string> &list)
-  ;
+void parseFileList(const char *filename, std::list<std::string> &list);
 
 /**
  * Creates and returns an std::string which is the result of the stripping
@@ -315,11 +313,20 @@ unsigned short getPortFromConfig(const char *const category,
  * Parses the specified TPCONFIG file.
  *
  * @param filename The filename of the TPCONFIG file.
+ * @param lines    Output parameter: Map from the unit name of a tape drive to
+ *                 its configuration.
+ */
+void parseTpconfigFile(const std::string &filename, DriveConfigMap &drives)
+  throw(castor::exception::Exception);
+
+/**
+ * Parses the specified TPCONFIG file.
+ *
+ * @param filename The filename of the TPCONFIG file.
  * @param lines    Output parameter: The list of data-lines parsed from the
  *                 TPCONFIG file.
  */
-void parseTpconfigFile(const char *const filename, TpconfigLines &lines)
-  ;
+void parseTpconfigFile(const std::string &filename, TpconfigLines &lines);
 
 /**
  * Extracts the drive-unit names from the specified list of parsed TPCONFIG
@@ -346,8 +353,7 @@ void extractTpconfigDriveNames(const TpconfigLines &tpconfigLines,
  * @param buf      Output parameter: The infromation returned about the
  *                 specified file.
  */
-void statFile(const char *const filename, struct stat &buf)
-  ;
+void statFile(const char *const filename, struct stat &buf);
 
 /**
  * C++ wrapper function of the C pthread_create() function.  This wrapper
@@ -367,8 +373,7 @@ void pthreadCreate(
   pthread_t *const thread,
   const pthread_attr_t *const attr,
   void *(*const startRoutine)(void*),
-  void *const arg)
-  ;
+  void *const arg);
 
 /**
  * C++ wrapper function of the C pthread_join() function.  This wrapper
@@ -379,8 +384,7 @@ void pthreadCreate(
  * @param valuePtr If not NULL, will be made to point to the location of the
  *                 value set by the target thread calling pthread_exit().
  */
-void pthreadJoin(pthread_t thread, void **const valuePtr)
-  ;
+void pthreadJoin(pthread_t thread, void **const valuePtr);
 
 /**
  * C++ wrapper function of the C getconfent() function.  This wrapper
@@ -431,7 +435,7 @@ std::string tapeBlockIdToString(
  *                         environment variable.
  */
 void appendPathToEnvVar(const std::string &envVarName,
-  const std::string &pathToBeAppended) ;
+  const std::string &pathToBeAppended);
 
 } // namespace utils
 } // namespace tape

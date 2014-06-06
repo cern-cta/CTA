@@ -83,137 +83,54 @@ const char *castor::tape::tapeserver::daemon::DriveCatalogue::sessionType2Str(
 // populateCatalogue
 //-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogue::populateCatalogue(
-  const utils::TpconfigLines &lines)  {
+  const utils::DriveConfigMap &driveConfigs)  {
 
-  // Enter each TPCONFIG line into the catalogue
-  for(utils::TpconfigLines::const_iterator itor = lines.begin();
-    itor != lines.end(); itor++) {
-    enterTpconfigLine(*itor);
+  try {
+    for(utils::DriveConfigMap::const_iterator itor = driveConfigs.begin();
+      itor != driveConfigs.end(); itor++) {
+      const std::string &unitName = itor->first;
+      const utils::DriveConfig &driveConfig = itor->second;
+
+      // Sanity check
+      if(unitName != driveConfig.unitName) {
+        // This should never happen
+        castor::exception::Exception ex;
+        ex.getMessage() << "Unit name mismatch: expected=" << unitName <<
+          " actual=" << driveConfig.unitName;
+        throw ex;
+      }
+
+      enterDriveConfig(driveConfig);
+    }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to populate tape-drive catalogue: " <<
+      ne.getMessage().str();
+    throw ex;
   }
 }
 
 //-----------------------------------------------------------------------------
-// enterTpconfigLine
+// enterDriveConfig
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::enterTpconfigLine(
-  const utils::TpconfigLine &line)  {
+void castor::tape::tapeserver::daemon::DriveCatalogue::enterDriveConfig(
+  const utils::DriveConfig &driveConfig)  {
 
-  DriveMap::iterator itor = m_drives.find(line.unitName);
+  DriveMap::iterator itor = m_drives.find(driveConfig.unitName);
 
   // If the drive is not in the catalogue
   if(m_drives.end() == itor) {
     // Insert it
     DriveEntry entry;
-    entry.dgn = line.dgn;
-    entry.devFilename = line.devFilename;
-    entry.densities.push_back(line.density);
+    entry.config = driveConfig;
     entry.state = DRIVE_STATE_DOWN;
-    entry.librarySlot = line.librarySlot;
-    entry.devType = line.devType;
-    m_drives[line.unitName] = entry;
+    m_drives[driveConfig.unitName] = entry;
   // Else the drive is already in the catalogue
   } else {
-    checkTpconfigLine(itor->second, line);
-
-    // Each TPCONFIG line for a given drive specifies a new tape density
-    //
-    // Add the new density to the list of supported densities already stored
-    // within the tape-drive catalogue
-    itor->second.densities.push_back(line.density);
-  }
-}
-
-//-----------------------------------------------------------------------------
-// checkTpconfigLine
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::checkTpconfigLine(
-  const DriveEntry &catalogueEntry, const utils::TpconfigLine &line)
-   {
-  checkTpconfigLineDgn(catalogueEntry.dgn, line);
-  checkTpconfigLineDevFilename(catalogueEntry.devFilename, line);
-  checkTpconfigLineDensity(catalogueEntry.densities, line);
-  checkTpconfigLineLibrarySlot(catalogueEntry.librarySlot, line);
-  checkTpconfigLineDevType(catalogueEntry.devType, line);
-}
-
-//-----------------------------------------------------------------------------
-// checkTpconfigLineDgn
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::checkTpconfigLineDgn(
-  const std::string &catalogueDgn, const utils::TpconfigLine &line)
-   {
-  if(catalogueDgn != line.dgn) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Invalid TPCONFIG line"
-      ": A tape drive can only be asscoiated with one DGN"
-      ": catalogueDgn=" << catalogueDgn << " lineDgn=" << line.dgn;
-    throw ex;
-  }
-}
-
-//-----------------------------------------------------------------------------
-// checkTpconfigLineDevFilename
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::
-  checkTpconfigLineDevFilename(const std::string &catalogueDevFilename,
-  const utils::TpconfigLine &line)  {
-  if(catalogueDevFilename != line.devFilename) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Invalid TPCONFIG line"
-      ": A tape drive can only have one device filename"
-      ": catalogueDevFilename=" << catalogueDevFilename <<
-      " lineDevFilename=" << line.devFilename;
-    throw ex;
-  }
-}
-
-//-----------------------------------------------------------------------------
-// checkTpconfigLineDensity
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::checkTpconfigLineDensity(
-  const std::list<std::string> &catalogueDensities,
-  const utils::TpconfigLine &line)  {
-  for(std::list<std::string>::const_iterator itor = catalogueDensities.begin();
-    itor != catalogueDensities.end(); itor++) {
-    if((*itor) == line.density) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Invalid TPCONFIG line"
-        ": A tape drive can only be associated with a tape density once"
-        ": repeatedDensity=" << line.density;
-      throw ex;
-    }
-  }
-}
-
-//-----------------------------------------------------------------------------
-// checkTpconfigLineLibrarySlot
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::
-  checkTpconfigLineLibrarySlot(
-  const std::string &catalogueLibrarySlot,
-  const utils::TpconfigLine &line)  {
-  if(catalogueLibrarySlot != line.librarySlot) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Invalid TPCONFIG line"
-      ": A tape drive can only have one slot within its library"
-      ": catalogueLibrarySlot=" << catalogueLibrarySlot <<
-      " lineLibrarySlot=" << line.librarySlot;
-    throw ex;
-  }
-}
-
-//-----------------------------------------------------------------------------
-// checkTpconfigLineDevType
-//-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogue::
-  checkTpconfigLineDevType(const std::string &catalogueDevType,
-  const utils::TpconfigLine &line)  {
-  if(catalogueDevType != line.devType) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Invalid TPCONFIG line"
-      ": A tape drive can only have one device type"
-      ": catalogueDevType=" << catalogueDevType <<
-      " lineDevType=" << line.devType;
+    ex.getMessage() <<
+      "Failed to enter tape-drive configuration into tape-drive catalogue"
+      ": Duplicate entry: unitName=" << driveConfig.unitName;
     throw ex;
   }
 }
@@ -276,7 +193,8 @@ const std::string &castor::tape::tapeserver::daemon::DriveCatalogue::getDgn(
     throw ex;
   }
 
-  return itor->second.dgn;
+  const DriveEntry &drive = itor->second;
+  return drive.config.dgn;
 }
 
 //-----------------------------------------------------------------------------
@@ -292,7 +210,8 @@ const std::string &castor::tape::tapeserver::daemon::DriveCatalogue::getVid(
     throw ex;
   }
 
-  return itor->second.vid;
+  const DriveEntry &drive = itor->second;
+  return drive.vid;
 }
 
 //-----------------------------------------------------------------------------
@@ -308,7 +227,8 @@ time_t castor::tape::tapeserver::daemon::DriveCatalogue::getAssignmentTime(
     throw ex;
   }
 
-  return itor->second.assignment_time;
+  const DriveEntry &drive = itor->second;
+  return drive.assignment_time;
 }
 
 //-----------------------------------------------------------------------------
@@ -325,7 +245,8 @@ const std::string
     throw ex;
   }
 
-  return itor->second.devFilename;
+  const DriveEntry &drive = itor->second;
+  return drive.config.devFilename;
 }
 
 //-----------------------------------------------------------------------------
@@ -342,7 +263,8 @@ const std::list<std::string>
     throw ex;
   }
 
-  return itor->second.densities;
+  const DriveEntry &drive = itor->second;
+  return drive.config.densities;
 }
 
 //-----------------------------------------------------------------------------
@@ -371,7 +293,8 @@ castor::tape::tapeserver::daemon::DriveCatalogue::SessionType
     throw ex;
   }
 
-  return itor->second.sessionType;
+  const DriveEntry &drive = itor->second;
+  return drive.sessionType;
 }
 
 //-----------------------------------------------------------------------------
@@ -388,7 +311,8 @@ castor::tape::tapeserver::daemon::DriveCatalogue::DriveState
     throw ex;
   }
 
-  return itor->second.state;
+  const DriveEntry &drive = itor->second;
+  return drive.state;
 }
 
 //-----------------------------------------------------------------------------
@@ -405,7 +329,8 @@ const std::string &
     throw ex;
   }
 
-  return itor->second.librarySlot;
+  const DriveEntry &drive = itor->second;
+  return drive.config.librarySlot;
 }
 
 //-----------------------------------------------------------------------------
@@ -422,7 +347,8 @@ const std::string &
     throw ex;
   }
 
-  return itor->second.devType;
+  const DriveEntry &drive = itor->second;
+  return drive.config.devType;
 }
 
 //-----------------------------------------------------------------------------
@@ -438,7 +364,8 @@ castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode castor::tape::tapeserver
     throw ex;
   }
 
-  return itor->second.mode;
+  const DriveEntry &drive = itor->second;
+  return drive.mode;
 }
 
 //-----------------------------------------------------------------------------
@@ -449,12 +376,13 @@ castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent castor::tape::tapeserve
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to get device type of tape drive " << unitName <<
+    ex.getMessage() << "Failed to get tape event of tape drive " << unitName <<
       ": Unknown drive";
     throw ex;
   }
 
-  return itor->second.event;
+  const DriveEntry &drive = itor->second;
+  return drive.event;
 }
 
 //-----------------------------------------------------------------------------
@@ -573,20 +501,22 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::configureDown(
     throw ex;
   }
 
-  switch(itor->second.state) {
+  DriveEntry &drive = itor->second;
+
+  switch(drive.state) {
   case DRIVE_STATE_DOWN:
     break;
   case DRIVE_STATE_UP:
-    itor->second.state = DRIVE_STATE_DOWN;
+    drive.state = DRIVE_STATE_DOWN;
     break;
   case DRIVE_STATE_RUNNING:
-    itor->second.state = DRIVE_STATE_WAITDOWN;
+    drive.state = DRIVE_STATE_WAITDOWN;
     break;
   default:
     {
       castor::exception::Exception ex;  
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+        ": Incompatible drive state: state=" << drvState2Str(drive.state);
       throw ex;
     }
   } 
@@ -608,22 +538,24 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedVdqmJob(const leg
     throw ex;
   }
 
-  switch(itor->second.state) {
+  DriveEntry &drive = itor->second;
+
+  switch(drive.state) {
   case DRIVE_STATE_UP:
-    if(std::string(job.dgn) != itor->second.dgn) {
+    if(std::string(job.dgn) != drive.config.dgn) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": DGN mismatch: catalogueDgn=" << itor->second.dgn << " vdqmJobDgn=" << job.dgn;
+        ": DGN mismatch: catalogueDgn=" << drive.config.dgn << " vdqmJobDgn=" << job.dgn;
       throw ex;
     }
-    itor->second.vdqmJob = job;
-    itor->second.state = DRIVE_STATE_WAITFORK;
+    drive.vdqmJob = job;
+    drive.state = DRIVE_STATE_WAITFORK;
     break;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+        ": Incompatible drive state: state=" << drvState2Str(drive.state);
       throw ex;
     }
   }
@@ -647,29 +579,32 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedLabelJob(
     throw ex;
   }
 
-  switch(itor->second.state) {
+  DriveEntry &drive = itor->second;
+
+  switch(drive.state) {
   case DRIVE_STATE_UP:
-    if(std::string(job.dgn) != itor->second.dgn) {
+    if(std::string(job.dgn) != drive.config.dgn) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": DGN mismatch: catalogueDgn=" << itor->second.dgn << " labelJobDgn=" << job.dgn;
+        ": DGN mismatch: catalogueDgn=" << drive.config.dgn << " labelJobDgn="
+        << job.dgn;
       throw ex;
     }
-    if(-1 != itor->second.labelCmdConnection) {
+    if(-1 != drive.labelCmdConnection) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
         ": Drive catalogue already owns a label-command connection";
       throw ex;
     }
-    itor->second.labelJob = job;
-    itor->second.labelCmdConnection = labelCmdConnection;
-    itor->second.state = DRIVE_STATE_WAITLABEL;
+    drive.labelJob = job;
+    drive.labelCmdConnection = labelCmdConnection;
+    drive.state = DRIVE_STATE_WAITLABEL;
     break;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+        ": Incompatible drive state: state=" << drvState2Str(drive.state);
       throw ex;
     }
   }
@@ -689,16 +624,18 @@ const castor::legacymsg::RtcpJobRqstMsgBody &castor::tape::tapeserver::daemon::D
     throw ex;
   }
 
-  switch(itor->second.state) {
+  const DriveEntry &drive = itor->second;
+
+  switch(drive.state) {
   case DRIVE_STATE_WAITFORK:
   case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
-    return itor->second.vdqmJob;
+    return drive.vdqmJob;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+        ": Incompatible drive state: state=" << drvState2Str(drive.state);
       throw ex;
     }
   }
@@ -718,16 +655,18 @@ const castor::legacymsg::TapeLabelRqstMsgBody &castor::tape::tapeserver::daemon:
     throw ex;
   }
 
-  switch(itor->second.state) {
+  const DriveEntry &drive = itor->second;
+
+  switch(drive.state) {
   case DRIVE_STATE_WAITLABEL:
   case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
-    return itor->second.labelJob;
+    return drive.labelJob;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+        ": Incompatible drive state: state=" << drvState2Str(drive.state);
       throw ex;
     }
   }
@@ -747,17 +686,19 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::forkedMountSession(const 
     throw ex;
   }
 
-  switch(itor->second.state) {
+  DriveEntry &drive = itor->second;
+
+  switch(drive.state) {
   case DRIVE_STATE_WAITFORK:
-    itor->second.sessionPid = sessionPid;
-    itor->second.sessionType = SESSION_TYPE_DATATRANSFER;
-    itor->second.state = DRIVE_STATE_RUNNING;
+    drive.sessionPid = sessionPid;
+    drive.sessionType = SESSION_TYPE_DATATRANSFER;
+    drive.state = DRIVE_STATE_RUNNING;
     break;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+        ": Incompatible drive state: state=" << drvState2Str(drive.state);
       throw ex;
     }
   }
@@ -779,17 +720,19 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::forkedLabelSession(
     throw ex;
   }
 
-  switch(itor->second.state) {
+  DriveEntry &drive = itor->second;
+
+  switch(drive.state) {
   case DRIVE_STATE_WAITLABEL:
-    itor->second.sessionPid = sessionPid;
-    itor->second.sessionType = SESSION_TYPE_LABEL;
-    itor->second.state = DRIVE_STATE_RUNNING;
+    drive.sessionPid = sessionPid;
+    drive.sessionType = SESSION_TYPE_LABEL;
+    drive.state = DRIVE_STATE_RUNNING;
     break;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+        ": Incompatible drive state: state=" << drvState2Str(drive.state);
       throw ex;
     }
   }
@@ -810,15 +753,17 @@ pid_t castor::tape::tapeserver::daemon::DriveCatalogue::getSessionPid(
     throw ex;
   }
 
-  switch(itor->second.state) {
+  const DriveEntry &drive = itor->second;
+
+  switch(drive.state) {
   case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
-    return itor->second.sessionPid;
+    return drive.sessionPid;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+        ": Incompatible drive state: state=" << drvState2Str(drive.state);
       throw ex;
     }
   }

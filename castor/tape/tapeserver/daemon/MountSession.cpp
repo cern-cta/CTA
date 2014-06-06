@@ -56,15 +56,22 @@ castor::tape::tapeserver::daemon::MountSession::MountSession(
     const std::string & hostname,
     const legacymsg::RtcpJobRqstMsgBody & clientRequest, 
     castor::log::Logger& logger, System::virtualWrapper & sysWrapper,
-    const utils::TpconfigLines & tpConfig,
+    const utils::DriveConfig & driveConfig,
     castor::legacymsg::RmcProxy & rmc,
     castor::legacymsg::TapeserverProxy & initialProcess,
     CapabilityUtils &capUtils,
     const CastorConf & castorConf): 
-    m_request(clientRequest), m_logger(logger), m_clientProxy(clientRequest),
-    m_sysWrapper(sysWrapper), m_tpConfig(tpConfig), m_castorConf(castorConf), 
-    m_rmc(rmc), m_intialProcess(initialProcess), m_capUtils(capUtils),
-    m_argc(argc), m_argv(argv) {}
+    m_request(clientRequest),
+    m_logger(logger),
+    m_clientProxy(clientRequest),
+    m_sysWrapper(sysWrapper),
+    m_driveConfig(driveConfig),
+    m_castorConf(castorConf), 
+    m_rmc(rmc),
+    m_intialProcess(initialProcess),
+    m_capUtils(capUtils),
+    m_argc(argc),
+    m_argv(argv) {}
 
 //------------------------------------------------------------------------------
 //MountSession::execute
@@ -155,8 +162,7 @@ int castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc)
   // file to recall.
   // findDrive does not throw exceptions (it catches them to log errors)
   // A NULL pointer is returned on failure
-  const utils::TpconfigLines::const_iterator configLine=findConfigLine(lc);
-  std::auto_ptr<castor::tape::drives::DriveInterface> drive(findDrive(configLine,lc));
+  std::auto_ptr<castor::tape::drives::DriveInterface> drive(findDrive(m_driveConfig,lc));
   
   if(!drive.get()) return 0;    
   // We can now start instantiating all the components of the data path
@@ -164,7 +170,7 @@ int castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc)
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
-    GlobalStatusReporter gsr(m_intialProcess,*configLine, 
+    GlobalStatusReporter gsr(m_intialProcess, m_driveConfig, 
             m_hostname, m_volInfo, lc);
     //we retrieved the detail from the client in execute, so at this point 
     //we can already report !
@@ -234,15 +240,14 @@ int castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc
   // in order to get the task injector ready to check if we actually have a 
   // file to migrate.
   // 1) Get hold of the drive error logs are done inside the findDrive function
-  utils::TpconfigLines::const_iterator configLine=findConfigLine(lc);
-  std::auto_ptr<castor::tape::drives::DriveInterface> drive(findDrive(configLine,lc));
+  std::auto_ptr<castor::tape::drives::DriveInterface> drive(findDrive(m_driveConfig,lc));
   if (!drive.get()) return 0;
   // Once we got hold of the drive, we can run the session
   {
     
     //deferencing configLine is safe, because if configLine were not valid, 
     //then findDrive would have return NULL and we would have not end up there
-    GlobalStatusReporter gsr(m_intialProcess, *configLine,m_hostname,m_volInfo,lc);
+    GlobalStatusReporter gsr(m_intialProcess, m_driveConfig, m_hostname,m_volInfo,lc);
     //we retrieved the detail from the client in execute, so at this point 
     //we can already report !
     gsr.gotWriteMountDetailsFromClient();
@@ -338,34 +343,17 @@ void castor::tape::tapeserver::daemon::MountSession::executeDump(LogContext & lc
  * @return the drive if found, NULL otherwise
  */
 castor::tape::drives::DriveInterface *
-castor::tape::tapeserver::daemon::MountSession::findDrive(
-utils::TpconfigLines::const_iterator configLine,LogContext& lc) {
-  //First of all If we did not find the drive in the tpConfig, we have a problem
-  if (configLine == m_tpConfig.end()) {
-    LogContext::ScopedParam sp08(lc, Param("density", m_volInfo.density));
-    lc.log(LOG_ERR, "Drive unit not found in TPCONFIG");
-    
-    client::ClientProxy::RequestReport reqReport;
-    std::stringstream errMsg;
-    errMsg << "Drive unit not found in TPCONFIG" << lc;
-    m_clientProxy.reportEndOfSessionWithError("Drive unit not found", SEINTERNAL, reqReport);
-    LogContext::ScopedParam sp09(lc, Param("tapebridgeTransId", reqReport.transactionId));
-    LogContext::ScopedParam sp10(lc, Param("connectDuration", reqReport.connectDuration));
-    LogContext::ScopedParam sp11(lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
-    LogContext::ScopedParam sp12(lc, Param("errorMessage", errMsg.str()));
-    LogContext::ScopedParam sp13(lc, Param("errorCode", SEINTERNAL));
-    lc.log(LOG_ERR, "Notified client of end session with error");
-    return NULL;
-  }
-  // Actually find the drive.
+castor::tape::tapeserver::daemon::MountSession::findDrive(const utils::DriveConfig
+  &driveConfig, LogContext& lc) {
+  // Find the drive in the system's SCSI devices
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);
   castor::tape::SCSI::DeviceInfo driveInfo;
   try {
-    driveInfo = dv.findBySymlink(configLine->devFilename);
+    driveInfo = dv.findBySymlink(driveConfig.devFilename);
   } catch (castor::tape::SCSI::DeviceVector::NotFound & e) {
     // We could not find this drive in the system's SCSI devices
     LogContext::ScopedParam sp08(lc, Param("density", m_volInfo.density));
-    LogContext::ScopedParam sp09(lc, Param("devFilename", configLine->devFilename));
+    LogContext::ScopedParam sp09(lc, Param("devFilename", driveConfig.devFilename));
     lc.log(LOG_ERR, "Drive not found on this path");
     
     client::ClientProxy::RequestReport reqReport;
@@ -382,7 +370,7 @@ utils::TpconfigLines::const_iterator configLine,LogContext& lc) {
   } catch (castor::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
     LogContext::ScopedParam sp08(lc, Param("density", m_volInfo.density));
-    LogContext::ScopedParam sp09(lc, Param("devFilename", configLine->devFilename));
+    LogContext::ScopedParam sp09(lc, Param("devFilename", driveConfig.devFilename));
     LogContext::ScopedParam sp10(lc, Param("errorMessage", e.getMessageValue()));
     lc.log(LOG_ERR, "Error looking to path to tape drive");
     
@@ -400,7 +388,7 @@ utils::TpconfigLines::const_iterator configLine,LogContext& lc) {
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
     LogContext::ScopedParam sp08(lc, Param("density", m_volInfo.density));
-    LogContext::ScopedParam sp09(lc, Param("devFilename", configLine->devFilename));
+    LogContext::ScopedParam sp09(lc, Param("devFilename", driveConfig.devFilename));
     lc.log(LOG_ERR, "Unexpected exception while looking for drive");
     
     client::ClientProxy::RequestReport reqReport;
@@ -418,12 +406,12 @@ utils::TpconfigLines::const_iterator configLine,LogContext& lc) {
   try {
     std::auto_ptr<castor::tape::drives::DriveInterface> drive;
     drive.reset(castor::tape::drives::DriveFactory(driveInfo, m_sysWrapper));
-    if (drive.get()) drive->librarySlot = configLine->librarySlot;
+    if (drive.get()) drive->librarySlot = driveConfig.librarySlot;
     return drive.release();
   } catch (castor::exception::Exception & e) {
     // We could not find this drive in the system's SCSI devices
     LogContext::ScopedParam sp08(lc, Param("density", m_volInfo.density));
-    LogContext::ScopedParam sp09(lc, Param("devFilename", configLine->devFilename));
+    LogContext::ScopedParam sp09(lc, Param("devFilename", driveConfig.devFilename));
     LogContext::ScopedParam sp10(lc, Param("errorMessage", e.getMessageValue()));
     lc.log(LOG_ERR, "Error opening tape drive");
     
@@ -441,7 +429,7 @@ utils::TpconfigLines::const_iterator configLine,LogContext& lc) {
   } catch (...) {
     // We could not find this drive in the system's SCSI devices
     LogContext::ScopedParam sp08(lc, Param("density", m_volInfo.density));
-    LogContext::ScopedParam sp09(lc, Param("devFilename", configLine->devFilename));
+    LogContext::ScopedParam sp09(lc, Param("devFilename", driveConfig.devFilename));
     lc.log(LOG_ERR, "Unexpected exception while opening drive");
     
     client::ClientProxy::RequestReport reqReport;
@@ -456,17 +444,4 @@ utils::TpconfigLines::const_iterator configLine,LogContext& lc) {
     lc.log(LOG_ERR, "Notified client of end session with error");
     return NULL;
   }
-}
-
-utils::TpconfigLines::const_iterator
-castor::tape::tapeserver::daemon::MountSession::findConfigLine(LogContext & lc) const {
-  
-  utils::TpconfigLines::const_iterator configLine;
-  for (configLine = m_tpConfig.begin(); configLine != m_tpConfig.end(); configLine++) {
-    if (configLine->unitName == m_request.driveUnit && configLine->density == m_volInfo.density) {
-      lc.pushOrReplace(log::Param("unitName", configLine->unitName));
-      break;
-    }
-  }
-  return configLine;
 }

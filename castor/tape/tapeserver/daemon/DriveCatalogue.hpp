@@ -27,8 +27,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
-#include "castor/tape/utils/TpconfigLine.hpp"
-#include "castor/tape/utils/TpconfigLines.hpp"
+#include "castor/tape/utils/DriveConfigMap.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 
@@ -180,12 +179,11 @@ public:
   static const char *sessionType2Str(const SessionType sessionType) throw();
 
   /**
-   * Poplates the catalogue using the specified parsed lines from
-   * /etc/castor/TPCONFIG.
+   * Poplates the catalogue using the specified tape-drive configurations.
    *
-   * @param lines The lines parsed from /etc/castor/TPCONFIG.
+   * @param driveConfigs Tape-drive configurations.
    */
-  void populateCatalogue(const utils::TpconfigLines &lines);
+  void populateCatalogue(const utils::DriveConfigMap &driveConfigs);
 
   /**
    * Returns the unit name of the tape drive on which the specified mount
@@ -308,7 +306,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  void configureUp(const std::string &unitName) ;
+  void configureUp(const std::string &unitName);
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_DOWN.
@@ -320,7 +318,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  void configureDown(const std::string &unitName) ;
+  void configureDown(const std::string &unitName);
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_WAITFORK.
@@ -339,8 +337,7 @@ public:
    *
    * @param job The job received from the vdqmd daemon.
    */
-  void receivedVdqmJob(const legacymsg::RtcpJobRqstMsgBody &job)
-    ;
+  void receivedVdqmJob(const legacymsg::RtcpJobRqstMsgBody &job);
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_WAITLABEL.
@@ -406,8 +403,7 @@ public:
    * @param sessionPid The process ID of the child process responsible for
    * running the mount session.
    */
-  void forkedMountSession(const std::string &unitName, const pid_t sessionPid)
-    ; 
+  void forkedMountSession(const std::string &unitName, const pid_t sessionPid); 
 
   /**
    * Moves the state of the specified tape drive to DRIVE_STATE_RUNNING.
@@ -419,8 +415,7 @@ public:
    * @param sessionPid The process ID of the child process responsible for
    * running the label session.
    */
-  void forkedLabelSession(const std::string &unitName, const pid_t sessionPid)
-    ;
+  void forkedLabelSession(const std::string &unitName, const pid_t sessionPid);
 
   /**
    * Returns the process ID of the child process responsible the mount session
@@ -493,6 +488,11 @@ private:
    * Structure used to store a tape drive in the catalogue.
    */
   struct DriveEntry {
+
+    /**
+     * The configuration of the tape-drive.
+     */
+    castor::tape::utils::DriveConfig config;
     
     /**
      * Are we mounting for read, write (read/write), or dump
@@ -505,12 +505,6 @@ private:
     castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event;
     
     /**
-     * The device group name of the tape drive as defined in
-     * /etc/castor/TPCONFIG.
-     */
-    std::string dgn;
-    
-    /**
      * The Volume ID of the tape mounted in the drive. Empty string if drive is empty.
      */
     std::string vid;
@@ -521,16 +515,6 @@ private:
     time_t assignment_time;
     
     /**
-     * The device file of the tape drive, for example: /dev/nst0
-     */
-    std::string devFilename;
-
-    /**
-     * The tape densities supported by the tape drive.
-     */
-    std::list<std::string> densities;
-
-    /**
      * The type of mount session.
      */
     SessionType sessionType;
@@ -539,17 +523,6 @@ private:
      * The current state of the tape drive.
      */
     DriveState state;
-
-    /**
-     * The library slot n which the tape drive is located, for example:
-     * smc@localhost,0
-     */
-    std::string librarySlot;
-
-    /**
-     * The device type of the tape drive, for example: T10000
-     */
-    std::string devType;
 
     /**
      * The job received from the vdqmd daemon when the drive is in the
@@ -619,81 +592,11 @@ private:
   DriveMap m_drives;
 
   /** 
-   * Enters the specified parsed line from /etc/castor/TPCONFIG into the
-   * catalogue.
+   * Enters the specified tape-drive configuration into the catalogue.
    *
-   * @param line The line parsed from /etc/castor/TPCONFIG.
+   * @param driveConfig The tape-drive configuration.
    */
-  void enterTpconfigLine(const utils::TpconfigLine &line) ;
-
-  /**
-   * Checks the semantics of the specified TPCONFIG line against the specified
-   * current catalogue entry.
-   *
-   * @param catalogueEntry The catalogue entry.
-   * @param line The line parsed from /etc/castor/TPCONFIG.
-   */
-  void checkTpconfigLine(const DriveEntry &catalogueEntry, const utils::TpconfigLine &line) ;
-
-  /**
-   * Throws an exception if the specified catalogue value does not match the
-   * specified TPCONFIG line value.
-   *
-   * @param catalogueDgn The DGN of the tape drive that has been retrieved from
-   * the tape-drive catalogue.
-   * @param line The line parsed from /etc/castor/TPCONFIG.
-   */
-  void checkTpconfigLineDgn(const std::string &catalogueDgn, const utils::TpconfigLine &line) ;
-
-  /**
-   * Throws an exception if the specified catalogue value does not match the
-   * specified TPCONFIG line value.
-   *
-   * @param catalogueDevFilename The filename of the device file of the tape
-   * drive that has been retrieved from the tape-drive catalogue.
-   * @param line The line parsed from /etc/castor/TPCONFIG.
-   */
-  void checkTpconfigLineDevFilename(const std::string &catalogueDevFilename, const utils::TpconfigLine &line) ;
-
-  /**
-   * Throws an exception if the specified catalogue value does not match the
-   * specified TPCONFIG line value.
-   *
-   * @param catalogueDensities The densities supported by the tape drive that
-   * have been retrived from the tape-drive catalogue.
-   * @param line The line parsed from /etc/castor/TPCONFIG.
-   */
-  void checkTpconfigLineDensity(const std::list<std::string> &catalogueDensities, const utils::TpconfigLine &line) ;
-
-  /**
-   * Throws an exception if the specified catalogue value does not match the
-   * specified TPCONFIG line value.
-   *
-   * @param catalogueInitialState The initial state of the tape drive that
-   * has been retrieved from the tape-drive catalogue.
-   * @param line The line parsed from /etc/castor/TPCONFIG.
-   */
-  void checkTpconfigLineInitialState(const DriveState catalogueInitialState, const utils::TpconfigLine &line) ;
-
-  /**
-   * Throws an exception if the specified catalogue value does not match the
-   * specified TPCONFIG line value.
-   *
-   * @param catalogueLibrarySlot The library slot of the tape drive that has
-   * been retrieved from the tape-drive catalogue.
-   * @param line The line parsed from /etc/castor/TPCONFIG.
-   */
-  void checkTpconfigLineLibrarySlot(const std::string &catalogueLibrarySlot, const utils::TpconfigLine &line) ;
-
-  /**
-   * Throws an exception if the specified catalogue value does not match the
-   * specified TPCONFIG line value.
-   *
-   * @param catalogueDevType The device type of the tape drive that has been
-   * retrieved from the tape-drive library.
-   * @param line The line parsed from /etc/castor/TPCONFIG.
-   */
-  void checkTpconfigLineDevType(const std::string &catalogueDevType, const utils::TpconfigLine &line) ;
+  void enterDriveConfig(const utils::DriveConfig &driveConfig);
 
 }; // class DriveCatalogue
 

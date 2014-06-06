@@ -60,18 +60,15 @@ struct DriveConfig {
   std::list<std::string> densities;
 
   /**
-   * The state the tape drive will enter when the tapeserverd daemon is
-   * started.
-   *
-   * Current possible value are "down" and "up".
-   */
-  std::string initialState;
-
-  /**
    * The library slot n which the tape drive is located, for example:
    * smc@localhost,0
    */
   std::string librarySlot;
+
+  /**
+   * The device type.
+   */
+  std::string devType;
 
 }; // class DriveConfig
 

@@ -77,7 +77,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   volume.vid="V12345";
   volume.volumeMode=castor::tape::tapegateway::READ;
   castor::tape::tapeserver::daemon::GlobalStatusReporter gsr(initialProcess,
-  utils::TpconfigLine("","","","","",""),"0.0.0.0",volume,lc);
+  utils::DriveConfig(),"0.0.0.0",volume,lc);
   castor::tape::tapeserver::daemon::CapabilityUtilsDummy cap;
   FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, volume, cap,lc);
 
@@ -135,7 +135,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   volume.volumeMode=castor::tape::tapegateway::READ;
   castor::tape::tapeserver::daemon::CapabilityUtilsDummy cap;
   castor::tape::tapeserver::daemon::GlobalStatusReporter gsr(initialProcess,  
-  utils::TpconfigLine("","","","","",""),"0.0.0.0",volume,lc);  
+  utils::DriveConfig(),"0.0.0.0",volume,lc);  
   FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, volume,cap, lc);
   
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
