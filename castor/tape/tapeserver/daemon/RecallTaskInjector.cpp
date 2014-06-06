@@ -42,7 +42,7 @@ RecallTaskInjector::RecallTaskInjector(RecallMemoryManager & mm,
         uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc) : 
         m_thread(*this),m_memManager(mm),
         m_tapeReader(tapeReader),m_diskWriter(diskWriter),
-        m_client(client),m_lc(lc),m_maxFiles(maxFiles),m_byteSizeThreshold(byteSizeThreshold)
+        m_client(client),m_lc(lc),m_maxFiles(maxFiles),m_maxBytes(byteSizeThreshold)
 {}
 //------------------------------------------------------------------------------
 //destructor
@@ -63,7 +63,7 @@ void RecallTaskInjector::finish(){
 void RecallTaskInjector::requestInjection(bool lastCall) {
   //@TODO where shall we  acquire the lock ? There of just before the push ?
   castor::tape::threading::MutexLocker ml(&m_producerProtection);
-  m_queue.push(Request(m_maxFiles, m_byteSizeThreshold, lastCall));
+  m_queue.push(Request(m_maxFiles, m_maxBytes, lastCall));
 }
 //------------------------------------------------------------------------------
 //waitThreads
@@ -119,15 +119,23 @@ bool RecallTaskInjector::synchronousInjection()
   client::ClientProxy::RequestReport reqReport;  
 
   std::auto_ptr<castor::tape::tapegateway::FilesToRecallList> 
-    filesToRecallList(m_client.getFilesToRecall(m_maxFiles,m_byteSizeThreshold,reqReport));
-  
+    filesToRecallList;
+  try {
+    filesToRecallList.reset(m_client.getFilesToRecall(m_maxFiles,m_maxBytes,reqReport));
+  } catch (castor::exception::Exception & ex) {
+    castor::log::ScopedParamContainer scoped(m_lc);
+    scoped.add("transactionId", reqReport.transactionId)
+          .add("byteSizeThreshold",m_maxBytes)
+          .add("maxFiles", m_maxFiles)
+          .add("message", ex.getMessageValue());
+    m_lc.log(LOG_ERR, "Failed to getFiledToRecall.");
+    return false;
+  }
   castor::log::ScopedParamContainer scoped(m_lc); 
   scoped.add("sendRecvDuration", reqReport.sendRecvDuration)
-        .add("byteSizeThreshold",m_byteSizeThreshold)
+        .add("byteSizeThreshold",m_maxBytes)
         .add("transactionId", reqReport.transactionId)
-        .add("sendRecvDuration", reqReport.sendRecvDuration)
         .add("maxFiles", m_maxFiles);
-  
   if(NULL==filesToRecallList.get()) { 
     m_lc.log(LOG_ERR, "No files to recall: empty mount");
     return false;

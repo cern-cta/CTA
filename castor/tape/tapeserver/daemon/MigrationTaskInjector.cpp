@@ -58,7 +58,7 @@ namespace daemon {
            uint64_t maxFiles, uint64_t byteSizeThreshold,castor::log::LogContext lc):
           m_thread(*this),m_memManager(mm),m_tapeWriter(tapeWriter),
           m_diskReader(diskReader),m_client(client),m_lc(lc),
-          m_maxFiles(maxFiles),  m_maxByte(byteSizeThreshold)
+          m_maxFiles(maxFiles),  m_maxBytes(byteSizeThreshold)
   {
     
   }
@@ -117,7 +117,7 @@ namespace daemon {
   void MigrationTaskInjector::requestInjection( bool lastCall) {
     castor::tape::threading::MutexLocker ml(&m_producerProtection);
     if(!m_errorFlag) {
-      m_queue.push(Request(m_maxFiles, m_maxByte, lastCall));
+      m_queue.push(Request(m_maxFiles, m_maxBytes, lastCall));
     }
   }
 //------------------------------------------------------------------------------
@@ -126,8 +126,24 @@ namespace daemon {
   bool MigrationTaskInjector::synchronousInjection() {
     client::ClientProxy::RequestReport reqReport;
     std::auto_ptr<tapegateway::FilesToMigrateList>
-      filesToMigrateList(m_client.getFilesToMigrate(m_maxFiles, 
-        m_maxByte,reqReport));
+      filesToMigrateList;
+    try {
+      filesToMigrateList.reset(m_client.getFilesToMigrate(m_maxFiles, 
+        m_maxBytes,reqReport));
+    } catch (castor::exception::Exception & ex) {
+      castor::log::ScopedParamContainer scoped(m_lc);
+      scoped.add("transactionId", reqReport.transactionId)
+            .add("byteSizeThreshold",m_maxBytes)
+            .add("maxFiles", m_maxFiles)
+            .add("message", ex.getMessageValue());
+      m_lc.log(LOG_ERR, "Failed to getFiledToRecall.");
+      return false;
+    }
+    castor::log::ScopedParamContainer scoped(m_lc); 
+    scoped.add("sendRecvDuration", reqReport.sendRecvDuration)
+          .add("byteSizeThreshold",m_maxBytes)
+          .add("transactionId", reqReport.transactionId)
+          .add("maxFiles", m_maxFiles);
     if(NULL == filesToMigrateList.get()) {
       m_lc.log(LOG_ERR, "No files to migrate: empty mount");
       return false;
