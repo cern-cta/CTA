@@ -143,6 +143,8 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/daemon/CapabilityUtilsDummy.cpp
 #  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
+  ../castor/tape/tapeserver/daemon/DriveCatalogueEntry.cpp
+  ../castor/tape/tapeserver/daemon/DriveCatalogueEntryTest.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
   ../castor/tape/tapeserver/daemon/MountSessionAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemon.cpp

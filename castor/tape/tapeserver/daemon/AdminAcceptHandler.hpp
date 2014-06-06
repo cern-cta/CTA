@@ -143,7 +143,7 @@ private:
    * @param state The state of the tape drive.
    * @return The translated value.
    */
-  uint16_t driveStateToStatEntryUp(const DriveCatalogue::DriveState state);
+  uint16_t driveStateToStatEntryUp(const DriveCatalogueEntry::DriveState state);
 
   /**
    * Translates the specified tape mode into the corresponding value for
@@ -152,7 +152,8 @@ private:
    * @param mode The mode of the tape mounted in the drive
    * @return The translated value.
    */
-  uint16_t driveTapeModeToStatEntryMode(const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode mode);
+  uint16_t driveTapeModeToStatEntryMode(
+   const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode mode);
   
   /**
    * Translates the specified tape event into the corresponding value for
@@ -161,7 +162,8 @@ private:
    * @param event The mounting/un-mounting event of the tape in the drive
    * @return The translated value.
    */
-  uint16_t driveTapeEventToStatEntryToBeMounted(const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event);
+  uint16_t driveTapeEventToStatEntryToBeMounted(
+   const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event);
   
   /**
    * Translates the specified tape-drive state into the corresponding value for
@@ -170,8 +172,8 @@ private:
    * @param state The state of the tape drive.
    * @return The translated value.
    */
-  uint16_t driveStateToStatEntryAsn(const DriveCatalogue::DriveState state) 
-    ;
+  uint16_t driveStateToStatEntryAsn(
+    const DriveCatalogueEntry::DriveState state);
 
   /**
    * Throws an exception if the specified file-descriptor is not that of the

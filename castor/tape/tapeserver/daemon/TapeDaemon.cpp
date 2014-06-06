@@ -291,7 +291,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDrivesWithVdqm()
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   const std::string &unitName)  {
-  const DriveCatalogue::DriveState driveState =
+  const DriveCatalogueEntry::DriveState driveState =
     m_driveCatalogue.getState(unitName);
   const std::string dgn = m_driveCatalogue.getDgn(unitName);
 
@@ -301,12 +301,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   params.push_back(log::Param("dgn", dgn));
 
   switch(driveState) {
-  case DriveCatalogue::DRIVE_STATE_DOWN:
+  case DriveCatalogueEntry::DRIVE_STATE_DOWN:
     params.push_back(log::Param("state", "down"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
     m_vdqm.setDriveDown(m_hostName, unitName, dgn);
     break;
-  case DriveCatalogue::DRIVE_STATE_UP:
+  case DriveCatalogueEntry::DRIVE_STATE_UP:
     params.push_back(log::Param("state", "up"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
     m_vdqm.setDriveUp(m_hostName, unitName, dgn);
@@ -317,7 +317,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
       ex.getMessage() << "Failed to register tape drive in vdqm"
         ": server=" << m_hostName << " unitName=" << unitName << " dgn=" << dgn
         << ": Invalid drive state: state=" <<
-        DriveCatalogue::drvState2Str(driveState);
+        DriveCatalogueEntry::drvState2Str(driveState);
       throw ex;
     }
   }
@@ -547,10 +547,11 @@ void castor::tape::tapeserver::daemon::TapeDaemon::reapZombie(
   std::list<log::Param> params;
   params.push_back(log::Param("sessionPid", sessionPid));
 
-  DriveCatalogue::SessionType sessionType;
+  DriveCatalogueEntry::SessionType sessionType;
   try {
     sessionType = m_driveCatalogue.getSessionType(sessionPid);
-    params.push_back(log::Param("sessionType", DriveCatalogue::sessionType2Str(sessionType)));
+    params.push_back(log::Param("sessionType",
+      DriveCatalogueEntry::sessionType2Str(sessionType)));
   } catch(castor::exception::Exception &ex) {
     params.push_back(log::Param("message", ex.getMessage().str()));
     m_log(LOG_ERR, "Failed to get the type of the reaped session", params);
@@ -558,9 +559,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::reapZombie(
   }
 
   switch(sessionType) {
-  case DriveCatalogue::SESSION_TYPE_DATATRANSFER:
+  case DriveCatalogueEntry::SESSION_TYPE_DATATRANSFER:
     return postProcessReapedDataTransferSession(sessionPid, waitpidStat);
-  case DriveCatalogue::SESSION_TYPE_LABEL:
+  case DriveCatalogueEntry::SESSION_TYPE_LABEL:
     return postProcessReapedLabelSession(sessionPid, waitpidStat);
   default:
     m_log(LOG_ERR, "Failed to perform post processing of reaped process"
@@ -733,7 +734,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSessions() throw() {
   const std::list<std::string> unitNames =
-    m_driveCatalogue.getUnitNames(DriveCatalogue::DRIVE_STATE_WAITFORK);
+    m_driveCatalogue.getUnitNames(DriveCatalogueEntry::DRIVE_STATE_WAITFORK);
 
   for(std::list<std::string>::const_iterator itor = unitNames.begin();
     itor != unitNames.end(); itor++) {
@@ -937,7 +938,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSessions() throw() {
   const std::list<std::string> unitNames =
-    m_driveCatalogue.getUnitNames(DriveCatalogue::DRIVE_STATE_WAITLABEL);
+    m_driveCatalogue.getUnitNames(DriveCatalogueEntry::DRIVE_STATE_WAITLABEL);
 
   for(std::list<std::string>::const_iterator itor = unitNames.begin();
     itor != unitNames.end(); itor++) {

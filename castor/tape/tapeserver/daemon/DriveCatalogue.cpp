@@ -37,45 +37,13 @@ castor::tape::tapeserver::daemon::DriveCatalogue::~DriveCatalogue() throw() {
   // tape-drive catalogue
   for(DriveMap::const_iterator itor = m_drives.begin(); itor != m_drives.end();
      itor++) {
-    const DriveState driveState = itor->second.state;
-    const SessionType sessionType = itor->second.sessionType;
-    const int labelCmdConnection = itor->second.labelCmdConnection;
+    const DriveCatalogueEntry &drive = itor->second;
 
-    if(DRIVE_STATE_WAITLABEL == driveState &&
-      SESSION_TYPE_LABEL == sessionType &&
-      -1 != labelCmdConnection) {
-      close(labelCmdConnection);
+    if(DriveCatalogueEntry::DRIVE_STATE_WAITLABEL == drive.state &&
+      DriveCatalogueEntry::SESSION_TYPE_LABEL == drive.sessionType &&
+      -1 != drive.labelCmdConnection) {
+      close(drive.labelCmdConnection);
     }
-  }
-}
-
-//-----------------------------------------------------------------------------
-// drvState2Str
-//-----------------------------------------------------------------------------
-const char *castor::tape::tapeserver::daemon::DriveCatalogue::drvState2Str(
-  const DriveState state) throw() {
-  switch(state) {
-  case DRIVE_STATE_INIT     : return "INIT";
-  case DRIVE_STATE_DOWN     : return "DOWN";
-  case DRIVE_STATE_UP       : return "UP";
-  case DRIVE_STATE_WAITFORK : return "WAITFORK";
-  case DRIVE_STATE_WAITLABEL: return "WAITLABEL";
-  case DRIVE_STATE_RUNNING  : return "RUNNING";
-  case DRIVE_STATE_WAITDOWN : return "WAITDOWN";
-  default                   : return "UNKNOWN";
-  }
-}
-
-//-----------------------------------------------------------------------------
-// mountSessionType2Str
-//-----------------------------------------------------------------------------
-const char *castor::tape::tapeserver::daemon::DriveCatalogue::sessionType2Str(
-  const SessionType sessionType) throw() {
-  switch(sessionType) {
-  case SESSION_TYPE_NONE        : return "NONE";
-  case SESSION_TYPE_DATATRANSFER: return "DATATRANSFER";
-  case SESSION_TYPE_LABEL       : return "LABEL";
-  default                       : return "UNKNOWN";
   }
 }
 
@@ -121,16 +89,16 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::enterDriveConfig(
   // If the drive is not in the catalogue
   if(m_drives.end() == itor) {
     // Insert it
-    DriveEntry entry;
-    entry.config = driveConfig;
-    entry.state = DRIVE_STATE_DOWN;
-    m_drives[driveConfig.unitName] = entry;
+    DriveCatalogueEntry drive;
+    drive.config = driveConfig;
+    drive.state = DriveCatalogueEntry::DRIVE_STATE_DOWN;
+    m_drives[driveConfig.unitName] = drive;
   // Else the drive is already in the catalogue
   } else {
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to enter tape-drive configuration into tape-drive catalogue"
-      ": Duplicate entry: unitName=" << driveConfig.unitName;
+      ": Duplicate drive-entry: unitName=" << driveConfig.unitName;
     throw ex;
   }
 }
@@ -153,7 +121,8 @@ std::string castor::tape::tapeserver::daemon::DriveCatalogue::getUnitName(
 //-----------------------------------------------------------------------------
 // getUnitNames
 //-----------------------------------------------------------------------------
-std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNames() const  {
+std::list<std::string>
+  castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNames() const  {
   std::list<std::string> unitNames;
 
   for(DriveMap::const_iterator itor = m_drives.begin();
@@ -167,7 +136,9 @@ std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnit
 //-----------------------------------------------------------------------------
 // getUnitNames
 //-----------------------------------------------------------------------------
-std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNames(const DriveState state) const  {
+std::list<std::string>
+  castor::tape::tapeserver::daemon::DriveCatalogue::getUnitNames(
+    const DriveCatalogueEntry::DriveState state) const  {
   std::list<std::string> unitNames;
 
   for(DriveMap::const_iterator itor = m_drives.begin();
@@ -185,16 +156,74 @@ std::list<std::string> castor::tape::tapeserver::daemon::DriveCatalogue::getUnit
 //-----------------------------------------------------------------------------
 const std::string &castor::tape::tapeserver::daemon::DriveCatalogue::getDgn(
   const std::string &unitName) const  {
+  std::ostringstream task;
+  task << "get DGN of tape drive " << unitName;
+
+  const DriveCatalogueEntry &drive = findConstDriveEntry(unitName, task.str());
+
+  return drive.config.dgn;
+}
+
+//-----------------------------------------------------------------------------
+// findConstDriveEntry
+//-----------------------------------------------------------------------------
+const castor::tape::tapeserver::daemon::DriveCatalogueEntry
+  &castor::tape::tapeserver::daemon::DriveCatalogue::findConstDriveEntry(
+    const std::string &unitName, const std::string &taskOfCaller) const {
+
   DriveMap::const_iterator itor = m_drives.find(unitName);
   if(m_drives.end() == itor) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to get DGN of tape drive " <<
-      unitName << ": Unknown drive";
+    ex.getMessage() << "Failed to " << taskOfCaller <<
+      ": No entry in tape-drive catalogue for " << unitName;
     throw ex;
   }
 
-  const DriveEntry &drive = itor->second;
-  return drive.config.dgn;
+  const DriveCatalogueEntry &drive = itor->second;
+
+  // Sanity check
+  if(unitName != drive.config.unitName) {
+    // This should never happen
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to " << taskOfCaller <<
+      ": Found inconsistent entry in tape-drive catalogue"
+      ": Unit name mismatch: expected=" << unitName <<
+      " actual=" << drive.config.unitName;
+    throw ex;
+  }
+
+  return drive;
+}
+
+//-----------------------------------------------------------------------------
+// findConstDriveEntry
+//-----------------------------------------------------------------------------
+const castor::tape::tapeserver::daemon::DriveCatalogueEntry
+  &castor::tape::tapeserver::daemon::DriveCatalogue::findConstDriveEntry(
+    const std::string &unitName) const {
+
+  DriveMap::const_iterator itor = m_drives.find(unitName);
+  if(m_drives.end() == itor) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to find entry in tape-drive catalogue: " <<
+      ": No entry for tape-drive " << unitName;
+    throw ex;
+  }
+
+  const DriveCatalogueEntry &drive = itor->second;
+
+  // Sanity check
+  if(unitName != drive.config.unitName) {
+    // This should never happen
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to find entry in tape-drive catalogue: " <<
+      ": Found inconsistent entry in tape-drive catalogue"
+      ": Unit name mismatch: expected=" << unitName <<
+      " actual=" << drive.config.unitName;
+    throw ex;
+  }
+
+  return drive;
 }
 
 //-----------------------------------------------------------------------------
@@ -210,7 +239,7 @@ const std::string &castor::tape::tapeserver::daemon::DriveCatalogue::getVid(
     throw ex;
   }
 
-  const DriveEntry &drive = itor->second;
+  const DriveCatalogueEntry &drive = itor->second;
   return drive.vid;
 }
 
@@ -227,7 +256,7 @@ time_t castor::tape::tapeserver::daemon::DriveCatalogue::getAssignmentTime(
     throw ex;
   }
 
-  const DriveEntry &drive = itor->second;
+  const DriveCatalogueEntry &drive = itor->second;
   return drive.assignment_time;
 }
 
@@ -245,7 +274,7 @@ const std::string
     throw ex;
   }
 
-  const DriveEntry &drive = itor->second;
+  const DriveCatalogueEntry &drive = itor->second;
   return drive.config.devFilename;
 }
 
@@ -263,14 +292,14 @@ const std::list<std::string>
     throw ex;
   }
 
-  const DriveEntry &drive = itor->second;
+  const DriveCatalogueEntry &drive = itor->second;
   return drive.config.densities;
 }
 
 //-----------------------------------------------------------------------------
 // getSessionType
 //-----------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogue::SessionType
+castor::tape::tapeserver::daemon::DriveCatalogueEntry::SessionType
   castor::tape::tapeserver::daemon::DriveCatalogue::getSessionType(
   const pid_t sessionPid) const  {
   std::ostringstream task;
@@ -293,14 +322,14 @@ castor::tape::tapeserver::daemon::DriveCatalogue::SessionType
     throw ex;
   }
 
-  const DriveEntry &drive = itor->second;
+  const DriveCatalogueEntry &drive = itor->second;
   return drive.sessionType;
 }
 
 //-----------------------------------------------------------------------------
 // getState
 //-----------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::DriveCatalogue::DriveState
+castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveState
   castor::tape::tapeserver::daemon::DriveCatalogue::getState(
   const std::string &unitName) const  {
   DriveMap::const_iterator itor = m_drives.find(unitName);
@@ -311,7 +340,7 @@ castor::tape::tapeserver::daemon::DriveCatalogue::DriveState
     throw ex;
   }
 
-  const DriveEntry &drive = itor->second;
+  const DriveCatalogueEntry &drive = itor->second;
   return drive.state;
 }
 
@@ -329,7 +358,7 @@ const std::string &
     throw ex;
   }
 
-  const DriveEntry &drive = itor->second;
+  const DriveCatalogueEntry &drive = itor->second;
   return drive.config.librarySlot;
 }
 
@@ -347,7 +376,7 @@ const std::string &
     throw ex;
   }
 
-  const DriveEntry &drive = itor->second;
+  const DriveCatalogueEntry &drive = itor->second;
   return drive.config.devType;
 }
 
@@ -364,7 +393,7 @@ castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode castor::tape::tapeserver
     throw ex;
   }
 
-  const DriveEntry &drive = itor->second;
+  const DriveCatalogueEntry &drive = itor->second;
   return drive.mode;
 }
 
@@ -381,7 +410,7 @@ castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent castor::tape::tapeserve
     throw ex;
   }
 
-  const DriveEntry &drive = itor->second;
+  const DriveCatalogueEntry &drive = itor->second;
   return drive.event;
 }
 
@@ -426,27 +455,27 @@ int castor::tape::tapeserver::daemon::DriveCatalogue::releaseLabelCmdConnection(
     throw ex;
   }
 
-  const DriveState driveState = itor->second.state;
-  const SessionType sessionType = itor->second.sessionType;
-  if(DRIVE_STATE_WAITLABEL != driveState &&
-    SESSION_TYPE_LABEL != sessionType) {
+  DriveCatalogueEntry &drive = itor->second;
+
+  if(DriveCatalogueEntry::DRIVE_STATE_WAITLABEL != drive.state &&
+    DriveCatalogueEntry::SESSION_TYPE_LABEL != drive.sessionType) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
       ": Invalid drive state and session type: driveState=" <<
-      drvState2Str(driveState) << " sessionType=" <<
-      sessionType2Str(sessionType);
+      DriveCatalogueEntry::drvState2Str(drive.state) << " sessionType=" <<
+      DriveCatalogueEntry::sessionType2Str(drive.sessionType);
     throw ex;
   }
 
-  if(-1 == itor->second.labelCmdConnection) {
+  if(-1 == drive.labelCmdConnection) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<
       ": Connection with label command already released";
     throw ex;
   }
 
-  const int labelCmdConnection = itor->second.labelCmdConnection;
-  itor->second.labelCmdConnection = -1;
+  const int labelCmdConnection = drive.labelCmdConnection;
+  drive.labelCmdConnection = -1;
   
   return labelCmdConnection;
 }
@@ -466,20 +495,21 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::configureUp(const std::st
   }
 
   switch(itor->second.state) {
-  case DRIVE_STATE_UP:
-  case DRIVE_STATE_RUNNING:
+  case DriveCatalogueEntry::DRIVE_STATE_UP:
+  case DriveCatalogueEntry::DRIVE_STATE_RUNNING:
     break;
-  case DRIVE_STATE_DOWN:
-    itor->second.state = DRIVE_STATE_UP;
+  case DriveCatalogueEntry::DRIVE_STATE_DOWN:
+    itor->second.state = DriveCatalogueEntry::DRIVE_STATE_UP;
     break;
-  case DRIVE_STATE_WAITDOWN:
-    itor->second.state = DRIVE_STATE_RUNNING;
+  case DriveCatalogueEntry::DRIVE_STATE_WAITDOWN:
+    itor->second.state = DriveCatalogueEntry::DRIVE_STATE_RUNNING;
     break;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+        ": Incompatible drive state: state=" <<
+        DriveCatalogueEntry::drvState2Str(itor->second.state);
       throw ex;
     }
   }
@@ -501,22 +531,23 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::configureDown(
     throw ex;
   }
 
-  DriveEntry &drive = itor->second;
+  DriveCatalogueEntry &drive = itor->second;
 
   switch(drive.state) {
-  case DRIVE_STATE_DOWN:
+  case DriveCatalogueEntry::DRIVE_STATE_DOWN:
     break;
-  case DRIVE_STATE_UP:
-    drive.state = DRIVE_STATE_DOWN;
+  case DriveCatalogueEntry::DRIVE_STATE_UP:
+    drive.state = DriveCatalogueEntry::DRIVE_STATE_DOWN;
     break;
-  case DRIVE_STATE_RUNNING:
-    drive.state = DRIVE_STATE_WAITDOWN;
+  case DriveCatalogueEntry::DRIVE_STATE_RUNNING:
+    drive.state = DriveCatalogueEntry::DRIVE_STATE_WAITDOWN;
     break;
   default:
     {
       castor::exception::Exception ex;  
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(drive.state);
+        ": Incompatible drive state: state=" <<
+        DriveCatalogueEntry::drvState2Str(drive.state);
       throw ex;
     }
   } 
@@ -538,10 +569,10 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedVdqmJob(const leg
     throw ex;
   }
 
-  DriveEntry &drive = itor->second;
+  DriveCatalogueEntry &drive = itor->second;
 
   switch(drive.state) {
-  case DRIVE_STATE_UP:
+  case DriveCatalogueEntry::DRIVE_STATE_UP:
     if(std::string(job.dgn) != drive.config.dgn) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
@@ -549,13 +580,14 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedVdqmJob(const leg
       throw ex;
     }
     drive.vdqmJob = job;
-    drive.state = DRIVE_STATE_WAITFORK;
+    drive.state = DriveCatalogueEntry::DRIVE_STATE_WAITFORK;
     break;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(drive.state);
+        ": Incompatible drive state: state=" <<
+        DriveCatalogueEntry::drvState2Str(drive.state);
       throw ex;
     }
   }
@@ -579,10 +611,10 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedLabelJob(
     throw ex;
   }
 
-  DriveEntry &drive = itor->second;
+  DriveCatalogueEntry &drive = itor->second;
 
   switch(drive.state) {
-  case DRIVE_STATE_UP:
+  case DriveCatalogueEntry::DRIVE_STATE_UP:
     if(std::string(job.dgn) != drive.config.dgn) {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
@@ -598,13 +630,14 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::receivedLabelJob(
     }
     drive.labelJob = job;
     drive.labelCmdConnection = labelCmdConnection;
-    drive.state = DRIVE_STATE_WAITLABEL;
+    drive.state = DriveCatalogueEntry::DRIVE_STATE_WAITLABEL;
     break;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(drive.state);
+        ": Incompatible drive state: state=" <<
+        DriveCatalogueEntry::drvState2Str(drive.state);
       throw ex;
     }
   }
@@ -624,18 +657,19 @@ const castor::legacymsg::RtcpJobRqstMsgBody &castor::tape::tapeserver::daemon::D
     throw ex;
   }
 
-  const DriveEntry &drive = itor->second;
+  const DriveCatalogueEntry &drive = itor->second;
 
   switch(drive.state) {
-  case DRIVE_STATE_WAITFORK:
-  case DRIVE_STATE_RUNNING:
-  case DRIVE_STATE_WAITDOWN:
+  case DriveCatalogueEntry::DRIVE_STATE_WAITFORK:
+  case DriveCatalogueEntry::DRIVE_STATE_RUNNING:
+  case DriveCatalogueEntry::DRIVE_STATE_WAITDOWN:
     return drive.vdqmJob;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(drive.state);
+        ": Incompatible drive state: state=" <<
+        DriveCatalogueEntry::drvState2Str(drive.state);
       throw ex;
     }
   }
@@ -655,18 +689,19 @@ const castor::legacymsg::TapeLabelRqstMsgBody &castor::tape::tapeserver::daemon:
     throw ex;
   }
 
-  const DriveEntry &drive = itor->second;
+  const DriveCatalogueEntry &drive = itor->second;
 
   switch(drive.state) {
-  case DRIVE_STATE_WAITLABEL:
-  case DRIVE_STATE_RUNNING:
-  case DRIVE_STATE_WAITDOWN:
+  case DriveCatalogueEntry::DRIVE_STATE_WAITLABEL:
+  case DriveCatalogueEntry::DRIVE_STATE_RUNNING:
+  case DriveCatalogueEntry::DRIVE_STATE_WAITDOWN:
     return drive.labelJob;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(drive.state);
+        ": Incompatible drive state: state=" <<
+        DriveCatalogueEntry::drvState2Str(drive.state);
       throw ex;
     }
   }
@@ -686,19 +721,20 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::forkedMountSession(const 
     throw ex;
   }
 
-  DriveEntry &drive = itor->second;
+  DriveCatalogueEntry &drive = itor->second;
 
   switch(drive.state) {
-  case DRIVE_STATE_WAITFORK:
+  case DriveCatalogueEntry::DRIVE_STATE_WAITFORK:
     drive.sessionPid = sessionPid;
-    drive.sessionType = SESSION_TYPE_DATATRANSFER;
-    drive.state = DRIVE_STATE_RUNNING;
+    drive.sessionType = DriveCatalogueEntry::SESSION_TYPE_DATATRANSFER;
+    drive.state = DriveCatalogueEntry::DRIVE_STATE_RUNNING;
     break;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(drive.state);
+        ": Incompatible drive state: state=" <<
+        DriveCatalogueEntry::drvState2Str(drive.state);
       throw ex;
     }
   }
@@ -720,19 +756,20 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::forkedLabelSession(
     throw ex;
   }
 
-  DriveEntry &drive = itor->second;
+  DriveCatalogueEntry &drive = itor->second;
 
   switch(drive.state) {
-  case DRIVE_STATE_WAITLABEL:
+  case DriveCatalogueEntry::DRIVE_STATE_WAITLABEL:
     drive.sessionPid = sessionPid;
-    drive.sessionType = SESSION_TYPE_LABEL;
-    drive.state = DRIVE_STATE_RUNNING;
+    drive.sessionType = DriveCatalogueEntry::SESSION_TYPE_LABEL;
+    drive.state = DriveCatalogueEntry::DRIVE_STATE_RUNNING;
     break;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(drive.state);
+        ": Incompatible drive state: state=" <<
+        DriveCatalogueEntry::drvState2Str(drive.state);
       throw ex;
     }
   }
@@ -753,17 +790,18 @@ pid_t castor::tape::tapeserver::daemon::DriveCatalogue::getSessionPid(
     throw ex;
   }
 
-  const DriveEntry &drive = itor->second;
+  const DriveCatalogueEntry &drive = itor->second;
 
   switch(drive.state) {
-  case DRIVE_STATE_RUNNING:
-  case DRIVE_STATE_WAITDOWN:
+  case DriveCatalogueEntry::DRIVE_STATE_RUNNING:
+  case DriveCatalogueEntry::DRIVE_STATE_WAITDOWN:
     return drive.sessionPid;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(drive.state);
+        ": Incompatible drive state: state=" <<
+        DriveCatalogueEntry::drvState2Str(drive.state);
       throw ex;
     }
   }
@@ -802,17 +840,18 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::sessionSucceeded(const st
   }
 
   switch(itor->second.state) {
-  case DRIVE_STATE_RUNNING:
-    itor->second.state = DRIVE_STATE_UP;
+  case DriveCatalogueEntry::DRIVE_STATE_RUNNING:
+    itor->second.state = DriveCatalogueEntry::DRIVE_STATE_UP;
     break;
-  case DRIVE_STATE_WAITDOWN:
-    itor->second.state = DRIVE_STATE_DOWN;
+  case DriveCatalogueEntry::DRIVE_STATE_WAITDOWN:
+    itor->second.state = DriveCatalogueEntry::DRIVE_STATE_DOWN;
     break;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+        ": Incompatible drive state: state=" <<
+        DriveCatalogueEntry::drvState2Str(itor->second.state);
       throw ex;
     }
   }
@@ -851,15 +890,16 @@ void castor::tape::tapeserver::daemon::DriveCatalogue::sessionFailed(const std::
   }
 
   switch(itor->second.state) {
-  case DRIVE_STATE_RUNNING:
-  case DRIVE_STATE_WAITDOWN:
-    itor->second.state = DRIVE_STATE_DOWN;
+  case DriveCatalogueEntry::DRIVE_STATE_RUNNING:
+  case DriveCatalogueEntry::DRIVE_STATE_WAITDOWN:
+    itor->second.state = DriveCatalogueEntry::DRIVE_STATE_DOWN;
     break;
   default:
     {
       castor::exception::Exception ex;
       ex.getMessage() << "Failed to " << task.str() <<
-        ": Incompatible drive state: state=" << drvState2Str(itor->second.state);
+        ": Incompatible drive state: state=" <<
+        DriveCatalogueEntry::drvState2Str(itor->second.state);
       throw ex;
     }
   }

@@ -20,6 +20,7 @@ add_library(castorTapeServerDaemon
   AdminAcceptHandler.cpp
   MountSessionAcceptHandler.cpp
   DriveCatalogue.cpp
+  DriveCatalogueEntry.cpp
   ../drive/Drive.cpp
   TapeDaemonMain.cpp
   VdqmAcceptHandler.cpp

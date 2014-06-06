@@ -164,10 +164,12 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillTapeStatDriveEntr
     entry.uid = geteuid();
     castor::utils::copyString(entry.dgn,
       m_driveCatalogue.getDgn(unitName).c_str());
-    const DriveCatalogue::DriveState driveState =
+    const DriveCatalogueEntry::DriveState driveState =
       m_driveCatalogue.getState(unitName);
-    const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode mode = m_driveCatalogue.getTapeMode(unitName);
-    const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event = m_driveCatalogue.getTapeEvent(unitName);
+    const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode mode =
+      m_driveCatalogue.getTapeMode(unitName);
+    const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event =
+      m_driveCatalogue.getTapeEvent(unitName);
     entry.up = driveStateToStatEntryUp(driveState);
     entry.asn = driveStateToStatEntryAsn(driveState);
     entry.asn_time = m_driveCatalogue.getAssignmentTime(unitName);
@@ -175,7 +177,8 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillTapeStatDriveEntr
     entry.mode = driveTapeModeToStatEntryMode(mode);
     castor::utils::copyString(entry.lblcode, "aul"); // only aul format is used
     entry.tobemounted = driveTapeEventToStatEntryToBeMounted(event);
-    castor::utils::copyString(entry.vid, m_driveCatalogue.getVid(unitName).c_str());
+    castor::utils::copyString(entry.vid,
+      m_driveCatalogue.getVid(unitName).c_str());
     castor::utils::copyString(entry.vsn, entry.vid);
     entry.cfseq = 0; // the fseq is ignored by tpstat, so we leave it set to 0
   } catch(castor::exception::Exception &ne) {
@@ -244,18 +247,19 @@ uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveTapeEventToS
 //------------------------------------------------------------------------------
 // driveStateToStatEntryUp
 //------------------------------------------------------------------------------
-uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatEntryUp(
-  const DriveCatalogue::DriveState state)  {
+uint16_t
+  castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatEntryUp(
+  const DriveCatalogueEntry::DriveState state)  {
   switch(state) {
-    case DriveCatalogue::DRIVE_STATE_INIT:
-    case DriveCatalogue::DRIVE_STATE_DOWN:
-    case DriveCatalogue::DRIVE_STATE_WAITDOWN:
+    case DriveCatalogueEntry::DRIVE_STATE_INIT:
+    case DriveCatalogueEntry::DRIVE_STATE_DOWN:
+    case DriveCatalogueEntry::DRIVE_STATE_WAITDOWN:
       return 0;
       break;
-    case DriveCatalogue::DRIVE_STATE_UP:
-    case DriveCatalogue::DRIVE_STATE_WAITFORK:
-    case DriveCatalogue::DRIVE_STATE_WAITLABEL:
-    case DriveCatalogue::DRIVE_STATE_RUNNING:
+    case DriveCatalogueEntry::DRIVE_STATE_UP:
+    case DriveCatalogueEntry::DRIVE_STATE_WAITFORK:
+    case DriveCatalogueEntry::DRIVE_STATE_WAITLABEL:
+    case DriveCatalogueEntry::DRIVE_STATE_RUNNING:
       return 1;
       break;
     default:
@@ -272,17 +276,18 @@ uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatE
 //------------------------------------------------------------------------------
 // driveStateToStatEntryAsn
 //------------------------------------------------------------------------------
-uint16_t castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatEntryAsn(
-  const DriveCatalogue::DriveState state)  {
+uint16_t
+ castor::tape::tapeserver::daemon::AdminAcceptHandler::driveStateToStatEntryAsn(
+  const DriveCatalogueEntry::DriveState state)  {
   switch(state) {
-    case DriveCatalogue::DRIVE_STATE_INIT:
-    case DriveCatalogue::DRIVE_STATE_DOWN:
-    case DriveCatalogue::DRIVE_STATE_UP:
+    case DriveCatalogueEntry::DRIVE_STATE_INIT:
+    case DriveCatalogueEntry::DRIVE_STATE_DOWN:
+    case DriveCatalogueEntry::DRIVE_STATE_UP:
       return 0;
-    case DriveCatalogue::DRIVE_STATE_WAITFORK:
-    case DriveCatalogue::DRIVE_STATE_WAITLABEL:
-    case DriveCatalogue::DRIVE_STATE_RUNNING:
-    case DriveCatalogue::DRIVE_STATE_WAITDOWN:
+    case DriveCatalogueEntry::DRIVE_STATE_WAITFORK:
+    case DriveCatalogueEntry::DRIVE_STATE_WAITLABEL:
+    case DriveCatalogueEntry::DRIVE_STATE_RUNNING:
+    case DriveCatalogueEntry::DRIVE_STATE_WAITDOWN:
       return 1;
     default:
       {
