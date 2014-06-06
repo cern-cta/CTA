@@ -84,7 +84,7 @@ public:
   void tapeMountedForRead();
   
   void tapeMountedForWrite();
-  void gotWriteMountDetailsFromClient();
+  uint64_t gotWriteMountDetailsFromClient();
   
   //start and wait for thread to finish
   void startThreads();
@@ -120,10 +120,6 @@ private:
     virtual void execute(GlobalStatusReporter&);
   };
   class ReportTapeMounterForWrite : public Report {
-  public:
-    virtual void execute(GlobalStatusReporter&);
-  };
-  class ReportGotWriteMountDetailsFromClient : public Report {
   public:
     virtual void execute(GlobalStatusReporter&);
   };

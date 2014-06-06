@@ -262,9 +262,6 @@ int castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc
     //deferencing configLine is safe, because if configLine were not valid, 
     //then findDrive would have return NULL and we would have not end up there
     GlobalStatusReporter gsr(m_intialProcess, m_driveConfig, m_hostname,m_volInfo,lc);
-    //we retrieved the detail from the client in execute, so at this point 
-    //we can already report !
-    gsr.gotWriteMountDetailsFromClient();
     
     MigrationMemoryManager mm(m_castorConf.rtcopydNbBufs,
         m_castorConf.rtcopydBufsz,lc);
@@ -288,8 +285,18 @@ int castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc
             m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,lc);
     drtp.setTaskInjector(&mti);
     if (mti.synchronousInjection()) {
-      twst.setlastFseq(mti.lastFSeq());
+      const uint64_t lastFseqFromClient = mti.lastFSeq();
+      twst.setlastFseq(lastFseqFromClient);
       
+      //we retrieved the detail from the client in execute, so at this point 
+      //we can report. We get in exchange the number of files on the tape
+      const uint64_t nbOfFileOnTape = gsr.gotWriteMountDetailsFromClient();
+
+      //theses 2 numbers should match. Otherwise, it means the stager went mad 
+      if(lastFseqFromClient != nbOfFileOnTape) {
+       //no mount at all, drive to be kept up = return 0
+        return 0;
+      }
       // We have something to do: start the session by starting all the 
       // threads.
       mm.startThreads();

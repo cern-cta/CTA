@@ -52,10 +52,8 @@ GlobalStatusReporter::GlobalStatusReporter(
     new ReportTapeMounterForWrite()
     );
   }
-  void GlobalStatusReporter::gotWriteMountDetailsFromClient(){
-    m_fifo.push(
-    new ReportGotWriteMountDetailsFromClient()
-    );
+  uint64_t GlobalStatusReporter::gotWriteMountDetailsFromClient(){
+   return m_tapeserverProxy.gotWriteMountDetailsFromClient(m_volume, m_unitName);
   }
 //------------------------------------------------------------------------------
 //gotReadMountDetailsFromClient
@@ -97,7 +95,6 @@ GlobalStatusReporter::GlobalStatusReporter(
       log::ScopedParamContainer sp(parent.m_lc);
       sp.add(parent.m_unitName, "unitName").add(parent.m_volume.vid, "vid");
       parent.m_tapeserverProxy.gotReadMountDetailsFromClient(parent.m_volume, parent.m_unitName);
-      parent.m_lc.log(LOG_INFO,"From GlobalStatusReporter, Reported gotWriteMountDetailsFromClient");
     }
 //------------------------------------------------------------------------------
 // ReportTapeMountedForRead::execute
@@ -119,13 +116,6 @@ GlobalStatusReporter::GlobalStatusReporter(
     void GlobalStatusReporter::ReportTapeMounterForWrite::
     execute(GlobalStatusReporter& parent){
       parent.m_tapeserverProxy.tapeMountedForWrite(parent.m_volume, parent.m_unitName);
-    }
-    //------------------------------------------------------------------------------
-// ReportTapeUnmounted::execute
-//------------------------------------------------------------------------------         
-    void GlobalStatusReporter::ReportGotWriteMountDetailsFromClient::
-    execute(GlobalStatusReporter& parent){
-      parent.m_tapeserverProxy.gotWriteMountDetailsFromClient(parent.m_volume, parent.m_unitName);
     }
 }}}}
 
