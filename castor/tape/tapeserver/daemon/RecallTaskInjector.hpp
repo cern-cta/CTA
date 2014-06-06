@@ -191,7 +191,7 @@ private:
   const uint64_t m_maxFiles;
   
   //maximal number of cumulated byte requested. at once
-  const uint64_t m_byteSizeThreshold;
+  const uint64_t m_maxBytes;
 };
 
 } //end namespace daemon

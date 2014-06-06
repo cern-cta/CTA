@@ -196,7 +196,7 @@ private:
   const uint64_t m_maxFiles;
   
   /// Same as m_maxFilesReq for size per request. (in bytes))
-  const uint64_t m_maxByte;
+  const uint64_t m_maxBytes;
   
   /**The last fseq used on the tape. We should not see this but 
    * IT is computed by subtracting 1 to fSeg  of the first file to migrate we 
