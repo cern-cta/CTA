@@ -110,6 +110,9 @@ namespace daemon {
       lc.log(LOG_INFO,"TapeWriteTask: a previous file has failed for migration "
       "Do nothing except circulating blocks");
       circulateMemBlocks();
+      
+      //we throw again because we want TWST to stop all tasks from execution 
+      //and go into a degraded mode operation.
       throw;
     }
     catch(const castor::exception::Exception& e){
@@ -127,6 +130,9 @@ namespace daemon {
       lc.log(LOG_ERR,"Circulating blocks into TapeWriteTask::execute");
       circulateMemBlocks();
       reportPacker.reportFailedJob(*m_fileToMigrate,e.getMessageValue(),e.code());
+  
+      //we throw again because we want TWST to stop all tasks from execution 
+      //and go into a degraded mode operation.
       throw;
     } 
    }
