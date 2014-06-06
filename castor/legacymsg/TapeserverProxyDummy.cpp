@@ -37,48 +37,58 @@ castor::legacymsg::TapeserverProxyDummy::~TapeserverProxyDummy() throw() {
 //------------------------------------------------------------------------------
 // gotReadMountDetailsFromClient
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyDummy::gotReadMountDetailsFromClient(castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
-   {
+void castor::legacymsg::TapeserverProxyDummy::gotReadMountDetailsFromClient(
+  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  const std::string &unitName) {
 }
 
 //------------------------------------------------------------------------------
 // gotWriteMountDetailsFromClient
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyDummy::gotWriteMountDetailsFromClient(castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
-   {
+uint64_t
+  castor::legacymsg::TapeserverProxyDummy::gotWriteMountDetailsFromClient(
+  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  const std::string &unitName) {
+
+  return 0;  // Always return 0 files on tape
 }
 
 //------------------------------------------------------------------------------
 // gotDumpMountDetailsFromClient
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyDummy::gotDumpMountDetailsFromClient(castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
-   {
+void castor::legacymsg::TapeserverProxyDummy::gotDumpMountDetailsFromClient(
+  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  const std::string &unitName) {
 }
 
 //------------------------------------------------------------------------------
 // tapeMountedForRead
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyDummy::tapeMountedForRead(castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
-   {
+void castor::legacymsg::TapeserverProxyDummy::tapeMountedForRead(
+  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  const std::string &unitName) {
 }
 
 //------------------------------------------------------------------------------
 // tapeMountedForWrite
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyDummy::tapeMountedForWrite(castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
-   {
+void castor::legacymsg::TapeserverProxyDummy::tapeMountedForWrite(
+  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  const std::string &unitName) {
 }
 
 //------------------------------------------------------------------------------
 // tapeUnmounting
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyDummy::tapeUnmounting(castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
-   {
+void castor::legacymsg::TapeserverProxyDummy::tapeUnmounting(
+  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  const std::string &unitName) {
 } 
 
 //------------------------------------------------------------------------------
 // tapeUnmounted
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyDummy::tapeUnmounted(castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
-   {
+void castor::legacymsg::TapeserverProxyDummy::tapeUnmounted(
+  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  const std::string &unitName) {
 } 

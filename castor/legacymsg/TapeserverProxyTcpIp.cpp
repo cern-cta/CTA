@@ -119,98 +119,101 @@ void castor::legacymsg::TapeserverProxyTcpIp::updateDriveInfo(
 // gotReadMountDetailsFromClient
 //------------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::gotReadMountDetailsFromClient(
-castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
-{  
+  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  const std::string &unitName) {  
   updateDriveInfo(
-       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED, 
-       volInfo.volumeMode, 
-       volInfo.clientType,
-       unitName,
-       volInfo.vid);
+    legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED, 
+    volInfo.volumeMode, 
+    volInfo.clientType,
+    unitName,
+    volInfo.vid);
 }
 
 //------------------------------------------------------------------------------
 // gotWriteMountDetailsFromClient
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyTcpIp::gotWriteMountDetailsFromClient(
-castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
-{  
+uint64_t
+  castor::legacymsg::TapeserverProxyTcpIp::gotWriteMountDetailsFromClient(
+  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  const std::string &unitName) {  
   updateDriveInfo(
-       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED, 
-       volInfo.volumeMode, 
-       volInfo.clientType,
-       unitName,
-       volInfo.vid);
+    legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED, 
+    volInfo.volumeMode, 
+    volInfo.clientType,
+    unitName,
+    volInfo.vid);
+
+  return 0; // TO BE DONE
 }
 
 //------------------------------------------------------------------------------
 // gotDumpMountDetailsFromClient
 //------------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::gotDumpMountDetailsFromClient(
-castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
-{  
+  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  const std::string &unitName) {  
   updateDriveInfo(
-       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED, 
-       volInfo.volumeMode, 
-       volInfo.clientType,
-       unitName,
-       volInfo.vid);
+    legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED, 
+    volInfo.volumeMode, 
+    volInfo.clientType,
+    unitName,
+    volInfo.vid);
 }
 
 //------------------------------------------------------------------------------
 // tapeMountedForRead
 //------------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForRead(
-castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
-{  
+  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  const std::string &unitName) {  
   updateDriveInfo(
-       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED, 
-       volInfo.volumeMode, 
-       volInfo.clientType,
-       unitName,
-       volInfo.vid);
+    legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED, 
+    volInfo.volumeMode, 
+    volInfo.clientType,
+    unitName,
+    volInfo.vid);
 }
 
 //------------------------------------------------------------------------------
 // tapeMountedForWrite
 //------------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForWrite(
-castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
-{  
+  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  const std::string &unitName) {  
   updateDriveInfo(
-       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED, 
-       volInfo.volumeMode, 
-       volInfo.clientType,
-       unitName,
-       volInfo.vid);
+    legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED, 
+    volInfo.volumeMode, 
+    volInfo.clientType,
+    unitName,
+    volInfo.vid);
 }
 
 //------------------------------------------------------------------------------
 // tapeUnmounting
 //------------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::tapeUnmounting(
-castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
-{  
+  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  const std::string &unitName) {  
   updateDriveInfo(
-       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNT_STARTED, 
-       volInfo.volumeMode, 
-       volInfo.clientType,
-       unitName,
-       volInfo.vid);
+    legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNT_STARTED, 
+    volInfo.volumeMode, 
+    volInfo.clientType,
+    unitName,
+    volInfo.vid);
 }
 
 //------------------------------------------------------------------------------
 // tapeUnmounted
 //------------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::tapeUnmounted(
-castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::string &unitName)
-{  
+  castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+  const std::string &unitName) {  
   updateDriveInfo(
-       castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNTED, 
-       volInfo.volumeMode, 
-       volInfo.clientType,
-       unitName,
-       volInfo.vid);
+    legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNTED, 
+    volInfo.volumeMode, 
+    volInfo.clientType,
+    unitName,
+    volInfo.vid);
 }
 
 //-----------------------------------------------------------------------------
@@ -219,12 +222,13 @@ castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo, const std::st
 int castor::legacymsg::TapeserverProxyTcpIp::connectToTapeserver() const  {
   castor::utils::SmartFd smartConnectSock;
   try {
-    smartConnectSock.reset(io::connectWithTimeout(m_tapeserverHostName, m_tapeserverPort,
-      m_netTimeout));
+    smartConnectSock.reset(io::connectWithTimeout(m_tapeserverHostName,
+      m_tapeserverPort, m_netTimeout));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to connect to tapeserver on host " << m_tapeserverHostName
-      << " port " << m_tapeserverPort << ": " << ne.getMessage().str();
+    ex.getMessage() << "Failed to connect to tapeserver on host " <<
+      m_tapeserverHostName << " port " << m_tapeserverPort << ": " <<
+      ne.getMessage().str();
     throw ex;
   }
 
@@ -235,8 +239,7 @@ int castor::legacymsg::TapeserverProxyTcpIp::connectToTapeserver() const  {
 // writeTapeUpdateDriveRqstMsg
 //-----------------------------------------------------------------------------
 void castor::legacymsg::TapeserverProxyTcpIp::writeTapeUpdateDriveRqstMsg(
-  const int fd, const legacymsg::TapeUpdateDriveRqstMsgBody &body)
-   {
+  const int fd, const legacymsg::TapeUpdateDriveRqstMsgBody &body) {
   char buf[3 * sizeof(uint32_t) + sizeof(body)]; // header + body
   const size_t len = legacymsg::marshal(buf, sizeof(buf), body);
 
