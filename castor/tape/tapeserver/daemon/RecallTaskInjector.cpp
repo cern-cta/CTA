@@ -139,54 +139,85 @@ bool RecallTaskInjector::synchronousInjection()
   }
 }
 //------------------------------------------------------------------------------
+//signalEndDataMovement
+//------------------------------------------------------------------------------
+  void RecallTaskInjector::signalEndDataMovement(){        
+    //first send the end signal to the threads
+    m_tapeReader.finish();
+    m_diskWriter.finish();
+  }
+//------------------------------------------------------------------------------
+//deleteAllTasks
+//------------------------------------------------------------------------------
+  void RecallTaskInjector::deleteAllTasks(){
+    //discard all the tasks !!
+    while(m_queue.size()>0){
+      m_queue.pop();
+    }
+  }
+  
+//------------------------------------------------------------------------------
 //WorkerThread::run
 //------------------------------------------------------------------------------
 void RecallTaskInjector::WorkerThread::run()
 {
   using castor::log::LogContext;
-  _this.m_lc.pushOrReplace(Param("thread", "recallTaskInjector"));
-  _this.m_lc.log(LOG_DEBUG, "Starting RecallTaskInjector thread");
+  m_parent.m_lc.pushOrReplace(Param("thread", "recallTaskInjector"));
+  m_parent.m_lc.log(LOG_DEBUG, "Starting RecallTaskInjector thread");
   
-  while (1) {
-    Request req = _this.m_queue.pop();
-    _this.m_lc.log(LOG_INFO,"RecallJobInjector:run: about to call client interface\n");
-    client::ClientProxy::RequestReport reqReport;
-    std::auto_ptr<tapegateway::FilesToRecallList> filesToRecallList(_this.m_client.getFilesToRecall(req.nbMaxFiles, req.byteSizeThreshold,reqReport));
-        
-    LogContext::ScopedParam sp01(_this.m_lc, Param("transactionId", reqReport.transactionId));
-    LogContext::ScopedParam sp02(_this.m_lc, Param("connectDuration", reqReport.connectDuration));
-    LogContext::ScopedParam sp03(_this.m_lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
-    
-    if (NULL == filesToRecallList.get()) {
-      if (req.lastCall) {
-        _this.m_lc.log(LOG_INFO,"No more file to recall: triggering the end of session.\n");
-        _this.m_tapeReader.finish();
-        _this.m_diskWriter.finish();
-        break;
+  try{
+    while (1) {
+      Request req = m_parent.m_queue.pop();
+      m_parent.m_lc.log(LOG_INFO,"RecallJobInjector:run: about to call client interface\n");
+      client::ClientProxy::RequestReport reqReport;
+      std::auto_ptr<tapegateway::FilesToRecallList> filesToRecallList(m_parent.m_client.getFilesToRecall(req.nbMaxFiles, req.byteSizeThreshold,reqReport));
+      
+      LogContext::ScopedParam sp01(m_parent.m_lc, Param("transactionId", reqReport.transactionId));
+      LogContext::ScopedParam sp02(m_parent.m_lc, Param("connectDuration", reqReport.connectDuration));
+      LogContext::ScopedParam sp03(m_parent.m_lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
+      
+      if (NULL == filesToRecallList.get()) {
+        if (req.lastCall) {
+          m_parent.m_lc.log(LOG_INFO,"No more file to recall: triggering the end of session.\n");
+          m_parent.signalEndDataMovement();
+          break;
+        } else {
+          m_parent.m_lc.log(LOG_INFO,"In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.\n");
+        }
       } else {
-        _this.m_lc.log(LOG_INFO,"In RecallJobInjector::WorkerThread::run(): got empty list, but not last call. NoOp.\n");
+        std::vector<tapegateway::FileToRecallStruct*>& jobs= filesToRecallList->filesToRecall();
+        m_parent.injectBulkRecalls(jobs);
       }
-    } else {
-      std::vector<tapegateway::FileToRecallStruct*>& jobs= filesToRecallList->filesToRecall();
-      _this.injectBulkRecalls(jobs);
-    }
-  } // end of while(1)
+    } // end of while(1)
+  } //end of try
+  catch(const castor::exception::Exception& ex){
+      //we end up there because we could not talk to the client
+      log::ScopedParamContainer container( m_parent.m_lc);
+      container.add("exception code",ex.code())
+               .add("exception message",ex.getMessageValue());
+      m_parent.m_lc.logBacktrace(LOG_ERR,ex.backtrace());
+      m_parent.m_lc.log(LOG_ERR,"In RecallJobInjector::WorkerThread::run(): "
+      "could not retrieve a list of file to recall. End of session");
+      
+      m_parent.signalEndDataMovement();
+      m_parent.deleteAllTasks();
+    } 
   //-------------
-  _this.m_lc.log(LOG_DEBUG, "Finishing RecallTaskInjector thread");
+  m_parent.m_lc.log(LOG_DEBUG, "Finishing RecallTaskInjector thread");
   /* We want to finish at the first lastCall we encounter.
    * But even after sending finish() to m_diskWriter and to m_tapeReader,
    * m_diskWriter might still want some more task (the threshold could be crossed),
    * so we discard everything that might still be in the queue
    */
-  if(_this.m_queue.size()>0) {
+  if(m_parent.m_queue.size()>0) {
     bool stillReading =true;
     while(stillReading) {
-      Request req = _this.m_queue.pop();
+      Request req = m_parent.m_queue.pop();
       if (req.end){
         stillReading = false;
       }
-      LogContext::ScopedParam sp(_this.m_lc, Param("lastCall", req.lastCall));
-      _this.m_lc.log(LOG_INFO,"In RecallJobInjector::WorkerThread::run(): popping extra request");
+      LogContext::ScopedParam sp(m_parent.m_lc, Param("lastCall", req.lastCall));
+      m_parent.m_lc.log(LOG_INFO,"In RecallJobInjector::WorkerThread::run(): popping extra request");
     }
   }
 }

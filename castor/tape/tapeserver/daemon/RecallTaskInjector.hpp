@@ -110,6 +110,16 @@ public:
    */
   void startThreads();
 private:
+  /**
+   * It will signal to the disk read thread  pool, tape write single thread
+   * and to the mem manager they have to stop their threads(s)
+   */
+  void signalEndDataMovement();
+
+  /**
+   * It will delete all remaining tasks 
+   */
+  void deleteAllTasks();
   
   /**
    * Create all the tape-read and write-disk tasks for set of files to retrieve
@@ -149,10 +159,10 @@ private:
   
   class WorkerThread: public castor::tape::threading::Thread {
   public:
-    WorkerThread(RecallTaskInjector & rji): _this(rji) {}
+    WorkerThread(RecallTaskInjector & rji): m_parent(rji) {}
     virtual void run();
   private:
-    RecallTaskInjector & _this;
+    RecallTaskInjector & m_parent;
   } m_thread;
   ///The memory manager for accessing memory blocks. 
   RecallMemoryManager & m_memManager;

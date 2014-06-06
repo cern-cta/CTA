@@ -145,8 +145,25 @@ namespace daemon {
     castor::tape::threading::MutexLocker ml(&m_producerProtection);
     m_queue.push(Request());
   }
- 
 //------------------------------------------------------------------------------
+//signalEndDataMovement
+//------------------------------------------------------------------------------   
+  void MigrationTaskInjector::signalEndDataMovement(){        
+    //first send the end signal to the threads
+    m_tapeWriter.finish();
+    m_diskReader.finish();
+    m_memManager.finish();
+  }
+//------------------------------------------------------------------------------
+//deleteAllTasks
+//------------------------------------------------------------------------------     
+  void MigrationTaskInjector::deleteAllTasks(){
+    //discard all the tasks !!
+    while(m_queue.size()>0){
+      m_queue.pop();
+    }
+  }
+  //------------------------------------------------------------------------------
 //WorkerThread::run
 //------------------------------------------------------------------------------
   void MigrationTaskInjector::WorkerThread::run(){
@@ -159,14 +176,14 @@ namespace daemon {
         }
         Request req = m_parent.m_queue.pop();
         client::ClientProxy::RequestReport reqReport;
-        std::auto_ptr<tapegateway::FilesToMigrateList> filesToMigrateList(m_parent.m_client.getFilesToMigrate(req.nbMaxFiles, req.byteSizeThreshold,reqReport));
-        
+        std::auto_ptr<tapegateway::FilesToMigrateList> filesToMigrateList(
+          m_parent.m_client.getFilesToMigrate(req.nbMaxFiles, req.byteSizeThreshold,reqReport)
+        );
+
         if(NULL==filesToMigrateList.get()){
           if (req.lastCall) {
             m_parent.m_lc.log(LOG_INFO,"No more file to migrate: triggering the end of session.\n");
-            m_parent.m_tapeWriter.finish();
-            m_parent.m_diskReader.finish();
-            m_parent.m_memManager.finish();
+            m_parent.signalEndDataMovement();
             break;
           } else {
             m_parent.m_lc.log(LOG_INFO,"In MigrationTaskInjector::WorkerThread::run(): got empty list, but not last call");
@@ -181,15 +198,22 @@ namespace daemon {
       m_parent.m_lc.log(LOG_ERR,"In MigrationTaskInjector::WorkerThread::run(): a task screw up, "
       "finishing and discarding all tasks ");
       
-      //first send the end signal to the threads
-      m_parent.m_tapeWriter.finish();
-      m_parent.m_diskReader.finish();
+      m_parent.signalEndDataMovement();
+      m_parent.deleteAllTasks();
+    } 
+    catch(const castor::exception::Exception& ex){
+      //we end up there because we could not talk to the client
       
-      //discard all the tasks !!
-      while(m_parent.m_queue.size()>0){
-        m_parent.m_queue.pop();
-      }
-    } // end of while(1)
+      log::ScopedParamContainer container( m_parent.m_lc);
+      container.add("exception code",ex.code())
+               .add("exception message",ex.getMessageValue());
+      m_parent.m_lc.logBacktrace(LOG_ERR,ex.backtrace());
+      m_parent.m_lc.log(LOG_ERR,"In MigrationTaskInjector::WorkerThread::run(): "
+      "could not retrieve a list of file to migrate. End of session");
+      
+      m_parent.signalEndDataMovement();
+      m_parent.deleteAllTasks();
+    } 
     //-------------
     m_parent.m_lc.log(LOG_INFO, "Finishing MigrationTaskInjector thread");
     /* We want to finish at the first lastCall we encounter.
