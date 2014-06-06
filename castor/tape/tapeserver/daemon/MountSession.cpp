@@ -102,8 +102,8 @@ int castor::tape::tapeserver::daemon::MountSession::execute()
     m_clientProxy.fetchVolumeId(m_volInfo, reqReport);
   } catch(client::ClientProxy::EndOfSession & eof) {
     std::stringstream fullError;
-    fullError << "Received end of session from client when requesting Volume"
-      << eof.what();
+    fullError << "Received end of session from client when requesting Volume "
+      << eof.getMessageValue();
     lc.log(LOG_ERR, fullError.str());
     m_clientProxy.reportEndOfSession(reqReport);
     LogContext::ScopedParam sp07(lc, Param("tapebridgeTransId", reqReport.transactionId));
@@ -115,7 +115,7 @@ int castor::tape::tapeserver::daemon::MountSession::execute()
   } catch (client::ClientProxy::UnexpectedResponse & unexp) {
     std::stringstream fullError;
     fullError << "Received unexpected response from client when requesting Volume"
-      << unexp.what();
+      << unexp.getMessageValue();
     lc.log(LOG_ERR, fullError.str());
     m_clientProxy.reportEndOfSession(reqReport);
     LogContext::ScopedParam sp07(lc, Param("tapebridgeTransId", reqReport.transactionId));
@@ -123,6 +123,20 @@ int castor::tape::tapeserver::daemon::MountSession::execute()
     LogContext::ScopedParam sp09(lc, Param("sendRecvDuration", reqReport.sendRecvDuration));
     LogContext::ScopedParam sp10(lc, Param("ErrorMsg", fullError.str()));
     lc.log(LOG_ERR, "Notified client of end session with error");
+    return 0;
+  } catch (castor::exception::Exception & ex) {
+    std::stringstream fullError;
+    fullError << "When requesting Volume, "
+      << ex.getMessageValue();
+    lc.log(LOG_ERR, fullError.str());
+    try {
+      // Attempt to notify the client. This is so hopeless and likely to fail
+      // that is does not deserve a log.
+      m_clientProxy.reportEndOfSession(reqReport);
+    } catch (...) {}
+    LogContext::ScopedParam sp07(lc, Param("tapebridgeTransId", reqReport.transactionId));
+    LogContext::ScopedParam sp10(lc, Param("ErrorMsg", fullError.str()));
+    lc.log(LOG_ERR, "Could not contact client for Volume (client notification was attempted).");
     return 0;
   }
   // 2b) ... and log.
