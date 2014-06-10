@@ -1006,7 +1006,8 @@ but as they will be single user, single consumer, some parts might possible
 be lockless.
 
 \subsection{Disk client library}
-Castor is dropping rfio and is moving to xroot.
+Castor is dropping rfio and is moving to xroot. The effects on the code are to be
+discussed with Sebastien.
 \subsection{VDQM client library}
 
 TODO: describe how we will link with the VDQM client library. The VDQM is also 
@@ -1020,9 +1021,52 @@ will be force-closed by the TapeServer.
 \subsection{Stager/TapeGateway client library}
 
 \subsection{Logging system client library}
+In case of failure,  operators need to have logs filles as much as possible. 
+Thus, castor has an very aggressive logging strategy and every step of execution within the process 
+is monitored.
 
+Each thread has it own \textbf{log::LogContext}, which is holding a set of variables that have to be log in every case 
+with every message. That way, we do bother only once with the variables to 
+log (when adding them to the log context) and can focus on the log message.
 
+The variables are stored within the \textbf{log::LogContex} as \textbf{log::Param}, which is roughly speaking a pair of string 
+for the name of the parameter and its value.
 
+Adding variables is done through \textbf{LogContext::pushOrReplace}, removing them through \textbf{LogContext::erase} and the 
+logging through the log member function.
+\begin{table}[h]
+\begin{lstlisting}
+log::Logger log;
+log::LogContext lc(log);
+{
+  lc.pushOrReplace(log::Param("Name var 1",var1));
+  lc.log(LEVEL,message);
+  lc.erase("Name var 1");
+}
+\end{lstlisting}
+\end{table}
+To avoid this cumbersome add/remove, you can use \textbf{LogContext::ScopedParameter}, which is 
+a RAII-class for registering a variable into the \textbf{LogContext} and removing it automatically when its goes out of scope.
+\begin{table}[h]
+\begin{lstlisting}
+{
+  log::LogContext::ScopedParam sp(lc, log::Param("name var1",var1));
+  log::LogContext::ScopedParam sp2(lc, log::Param("name var2",var2));
+  lc.log(LEVEL,message);
+}
+\end{lstlisting}
+\end{table}
+Using \textbf{LogContext::ScopedParameter} is still a bit clunky. To get rid of that, there is the 
+ScopedContainParameter, which acts as RAII container for parameters.
+\begin{table}[h]
+\begin{lstlisting}
+{
+  log::ScopedParamContainer sp(lc);
+  sp.add(var1, "name1").add(var2, "name2");
+  lc.log(LEVEL,message);
+}
+\end{lstlisting}
+\end{table}
 \subsection{Application architecture}
 \subsubsection{Memory management and threading architecture}
 Like the previous version in rtcpd, the tape server will pre-allocate a fixed number of memory

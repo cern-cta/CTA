@@ -4,7 +4,8 @@
 
 \chapter{Administrator's manual}
 \section{User and capabilities}
-Castor used to run as root, which is not the best safety policy. New version should be own by stage:st.
+Castor used to run as root, which is not the best safety policy. New version should be run by stage:st (even if still own by root),
+because the first action will be to drop the root's privlegeves to move to stage:st
 But accessing /dev/nst* for writing data requires to either be root (on SLC5) or to have the the capabilitie CAP\_SYS\_RAWIO set on. 
 Here the incriminated piece of code into the st driver :
 \begin{table}[h]
