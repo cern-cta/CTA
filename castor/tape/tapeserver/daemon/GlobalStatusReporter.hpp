@@ -84,6 +84,13 @@ public:
   void tapeMountedForRead();
   
   void tapeMountedForWrite();
+  
+  //The following function could be split into 2 parts 
+  /**
+   * Notify the client we got the fseq of the first file to transfer we get in
+   * exchange return the number of files on the tape according to the VMGR
+   * @return the number of files on the tape according to the VMGR
+   */
   uint64_t gotWriteMountDetailsFromClient();
   
   //start and wait for thread to finish

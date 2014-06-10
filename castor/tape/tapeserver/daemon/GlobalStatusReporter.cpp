@@ -46,12 +46,17 @@ GlobalStatusReporter::GlobalStatusReporter(
   void GlobalStatusReporter::waitThreads(){
     wait();
   }
-  
+//------------------------------------------------------------------------------
+//tapeMountedForWrite
+//------------------------------------------------------------------------------    
   void GlobalStatusReporter::tapeMountedForWrite(){
     m_fifo.push(
     new ReportTapeMounterForWrite()
     );
   }
+//------------------------------------------------------------------------------
+//gotWriteMountDetailsFromClient
+//------------------------------------------------------------------------------    
   uint64_t GlobalStatusReporter::gotWriteMountDetailsFromClient(){
    return m_tapeserverProxy.gotWriteMountDetailsFromClient(m_volume, m_unitName);
   }
