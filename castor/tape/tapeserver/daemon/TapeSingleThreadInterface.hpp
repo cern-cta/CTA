@@ -13,11 +13,11 @@
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
+#include "castor/legacymsg/RmcProxy.hpp"
+#include "castor/tape/utils/Timer.hpp"
 
 namespace castor {
-namespace legacymsg {
-  class RmcProxy;
-}
+
 namespace tape {
 namespace tapeserver {
 namespace daemon {
@@ -79,6 +79,51 @@ protected:
     } catch(const castor::exception::Exception &ne) {
       m_logContext.log(LOG_ERR,
               "Failed to set process capabilities for using the tape ");
+    }
+  }
+  
+    /**
+   * Try to mount the tape, get an exception if it fails 
+   */
+  void mountTape(castor::legacymsg::RmcProxy::MountMode mode){
+    castor::log::ScopedParamContainer scoped(m_logContext); 
+    scoped.add("vid",m_volInfo.vid)
+          .add("drive_Slot",m_drive.librarySlot);
+    try {
+      tape::utils::Timer timer;
+        m_rmc.mountTape(m_volInfo.vid, m_drive.librarySlot,
+                mode);
+        const std::string modeAsString = std::string("R")+ ((mode==legacymsg::RmcProxy::MOUNT_MODE_READWRITE) ? "W" : "");
+        scoped.add("time taken",timer.usecs()).add("mode",modeAsString);
+        m_logContext.log(LOG_INFO, "Tape Mounted");
+        
+    }
+    catch (castor::exception::Exception & ex) {
+      scoped.add("exception_message", ex.getMessageValue())
+            .add("exception_code",ex.code());
+      m_logContext.log(LOG_ERR, "Failed to mount the tape");
+      throw;
+    }
+  }
+  
+  /**
+   * After mounting the tape, the drive will say it has no tape inside,
+   * because there was no tape the first time it was opened... 
+   * That function will wait a certain amount of time for the drive 
+   * to tell us he acknowledge it has indeed a tap (get an ex exception in 
+   * case of timeout)
+   */
+  void waitForDrive(){
+    try{
+      tape::utils::Timer timer;
+      // wait 600 drive is ready
+      m_drive.waitUntilReady(600);
+      log::LogContext::ScopedParam sp0(m_logContext, log::Param("time taken", timer.usecs()));
+    }catch(const castor::exception::Exception& e){
+      log::LogContext::ScopedParam sp01(m_logContext, log::Param("exception_code", e.code()));
+      log::LogContext::ScopedParam sp02(m_logContext, log::Param("exception_message", e.getMessageValue()));
+      m_logContext.log(LOG_INFO, "waiting for drive to be ready but got timeout");
+      throw;
     }
   }
 public:

@@ -31,10 +31,11 @@
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/legacymsg/RmcProxy.hpp"
-#include <iostream>
-#include <stdio.h>
 #include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
+#include "castor/tape/utils/Timer.hpp"
+#include <iostream>
+#include <stdio.h>
 
 namespace castor {
 namespace tape {
@@ -44,7 +45,7 @@ namespace daemon {
 // forward declaration
 class GlobalStatusReporter;
 
-class TapeWriteSingleThread :  public TapeSingleThreadInterface<TapeWriteTask> {
+class TapeWriteSingleThread : public TapeSingleThreadInterface<TapeWriteTask> {
 public:
   /**
    * Constructor
@@ -164,35 +165,7 @@ private:
     m_reportPacker.reportFlush();
   }
   
-  //see comment in TapeReadSingleThread
-  void mountTape(){
-    castor::log::ScopedParamContainer scoped(m_logContext); 
-    scoped.add("vid",m_volInfo.vid)
-          .add("drive_Slot",m_drive.librarySlot);
-    try {
-      m_rmc.mountTape(m_volInfo.vid, m_drive.librarySlot, legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
-      m_logContext.log(LOG_INFO, "Tape Mounted");
-    }
-    catch (castor::exception::Exception & ex) {
-      scoped.add("exception_message", ex.getMessageValue())
-            .add("exception_code",ex.code());
-      m_logContext.log(LOG_ERR, "Failed to mount the tape for writing");
-      throw;
-    }
-  }
-  //see comment in TapeReadSingleThread 
-  void waitForDrive(){
-    try{
-      // wait 600 drive is ready
-      m_drive.waitUntilReady(600);
-    }catch(const castor::exception::Exception& e){
-      log::LogContext::ScopedParam sp01(m_logContext, log::Param("exception_code", e.code()));
-      log::LogContext::ScopedParam sp02(m_logContext, log::Param("exception_message", e.getMessageValue()));
-      m_logContext.log(LOG_INFO, "TapeWriteSingleThread waiting for drive to be ready timeout");
-      throw;
-    }
-  }
-    
+
   virtual void run() {
 
     try
@@ -201,7 +174,7 @@ private:
       setCapabilities();
       
       TapeCleaning cleaner(*this);
-      mountTape();
+      mountTape(castor::legacymsg::RmcProxy::MOUNT_MODE_READWRITE);
       waitForDrive();
       // Then we have to initialise the tape write session
       std::auto_ptr<castor::tape::tapeFile::WriteSession> writeSession(openWriteSession());
@@ -211,7 +184,8 @@ private:
       m_gsr.tapeMountedForWrite();
       uint64_t bytes=0;
       uint64_t files=0;
-      std::auto_ptr<TapeWriteTask> task ;      
+      std::auto_ptr<TapeWriteTask> task;  
+      tape::utils::Timer timer;
       while(1) {
         
         //get a task
@@ -220,10 +194,11 @@ private:
         //if is the end
         if(NULL==task.get()) {      
           //we flush without asking
-          tapeFlush("End of TapeWriteWorkerThread::run() flushing",bytes,files);
+          tapeFlush("No more data to write on tape, unconditional flushing to the client",bytes,files);
           //end of session + log 
           m_reportPacker.reportEndOfSession();
-          m_logContext.log(LOG_DEBUG, "Finishing tape write thread");
+          log::LogContext::ScopedParam sp0(m_logContext, log::Param("time taken", timer.secs()));
+          m_logContext.log(LOG_DEBUG, "writing data to tape has finished");
           break;
         }
         

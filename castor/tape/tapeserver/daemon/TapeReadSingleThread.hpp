@@ -30,7 +30,7 @@
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
-#include "castor/legacymsg/RmcProxy.hpp"
+#include "castor/tape/utils/Timer.hpp"
 #include <iostream>
 #include <stdio.h>
 #include <memory>
@@ -94,11 +94,14 @@ private:
         m_this.m_logContext.log(LOG_INFO, "Finishing Tape Read Thread."
         " Just signaled task injector of the end");
         try {
+          tape::utils::Timer timer;
           // Do the final cleanup
           m_this.m_drive.unloadTape();
           m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread : Tape unloaded");
           // And return the tape to the library
           m_this.m_rmc.unmountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot);
+          
+          log::LogContext::ScopedParam sp0( m_this.m_logContext, log::Param("time taken", timer.usecs()));
           m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread : tape unmounted");
           m_this.m_gsr.tapeUnmounted();
         } catch(const castor::exception::Exception& ex){
@@ -106,7 +109,7 @@ private:
           m_this.m_hardarwareStatus = -1;
           castor::log::ScopedParamContainer scoped(m_this.m_logContext);
           scoped.add("exception_message", ex.getMessageValue())
-          .add("exception_code",ex.code());
+                .add("exception_code",ex.code());
           m_this.m_logContext.log(LOG_ERR, "Exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
         } catch (...) {
           //set it to -1 to notify something failed during the cleaning 
@@ -137,46 +140,6 @@ private:
     }
     return vrp.value;
   }
-  /**
-   * Try to mount the tape, get an exception if it fails 
-   */
-  void mountTape(){
-    castor::log::ScopedParamContainer scoped(m_logContext); 
-    scoped.add("vid",m_volInfo.vid)
-          .add("drive_Slot",m_drive.librarySlot);
-    try {
-        m_rmc.mountTape(m_volInfo.vid, m_drive.librarySlot,
-                legacymsg::RmcProxy::MOUNT_MODE_READONLY);
-        m_logContext.log(LOG_INFO, "Tape Mounted");
-    }
-    catch (castor::exception::Exception & ex) {
-      scoped.add("exception_message", ex.getMessageValue())
-            .add("exception_code",ex.code());
-      m_logContext.log(LOG_ERR, "Failed to mount the tape for reading");
-      throw;
-    }
-  }
-  
-  /**
-   * After mounting the tape, the drive will say it has no tape inside,
-   * because there was no tape the first time it was opened... 
-   * That function will wait a certain amount of time for the drive 
-   * to tell us he acknowledge it has indeed a tap (get an ex exception in 
-   * case of timeout)
-   */
-  void waitForDrive(){
-    try {
-      //wait for drive to be ready
-      m_drive.waitUntilReady(600);
-    }
-    catch (castor::exception::Exception & ex) {
-      castor::log::ScopedParamContainer scoped(m_logContext); 
-      scoped.add("exception_message", ex.getMessageValue())
-            .add("exception_code",ex.code());
-      m_logContext.log(LOG_ERR, "Drive not ready after a 600s timeout");
-      throw;
-    }
-  }
     
     /**
      * Try to open an tapeFile::ReadSession, if it fails, we got an exception.
@@ -194,7 +157,7 @@ private:
     }catch(castor::exception::Exception & ex){
         castor::log::ScopedParamContainer scoped(m_logContext); 
         scoped.add("exception_message", ex.getMessageValue())
-        .add("exception_code",ex.code());
+              .add("exception_code",ex.code());
         m_logContext.log(LOG_ERR, "Failed to tapeFile::ReadSession");
         throw castor::exception::Exception("Tape's label is either missing or not valid"); 
     }
@@ -216,7 +179,7 @@ private:
       TapeCleaning tapeCleaner(*this);
       
       // Before anything, the tape should be mounted
-      mountTape();
+      mountTape(legacymsg::RmcProxy::MOUNT_MODE_READONLY);
       waitForDrive();
       
       // Then we have to initialise the tape read session
@@ -225,6 +188,7 @@ private:
       //and then report
       m_logContext.log(LOG_INFO, "Tape read session session successfully started");
       m_gsr.tapeMountedForRead();
+      tape::utils::Timer timer;
       // Then we will loop on the tasks as they get from 
       // the task injector
       while(1) {
@@ -235,6 +199,8 @@ private:
           task->execute(*rs, m_logContext);
           delete task;
         } else {
+          log::LogContext::ScopedParam sp0(m_logContext, log::Param("time taken", timer.secs()));
+          m_logContext.log(LOG_INFO, "reading data from the tape has finished");
           break;
         }
       }
