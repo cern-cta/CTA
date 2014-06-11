@@ -58,6 +58,7 @@ set (XRDXCASTOR2SERVERACC_LIB_SRC_FILES
   XrdxCastor2ServerAcc.cpp
   XrdxCastorTiming.cpp)
 add_library (XrdxCastor2ServerAcc SHARED ${XRDXCASTOR2SERVERACC_LIB_SRC_FILES})
+CastorSetLibraryVersions (XrdxCastor2ServerAcc)
 target_link_libraries (XrdxCastor2ServerAcc crypto ${XROOTD_XRDUTILS_LIB})
 install (TARGETS XrdxCastor2ServerAcc DESTINATION ${CASTOR_DEST_LIB_DIR})
 
