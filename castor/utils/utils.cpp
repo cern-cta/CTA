@@ -151,9 +151,8 @@ void castor::utils::toUpper(std::string &str) {
 //---------------------------------------------------------------------------
 // getTimeOfDay
 //---------------------------------------------------------------------------
-void castor::utils::getTimeOfDay(struct timeval *const tv,
-  struct timezone *const tz)  {
-  if(0 != gettimeofday(tv, tz)) {
+void castor::utils::getTimeOfDay(struct timeval *const tv)  {
+  if(0 != gettimeofday(tv, NULL)) {
     const int savedErrno = errno;
     char errBuf[100];
     castor::exception::Exception ex;

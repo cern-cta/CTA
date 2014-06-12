@@ -789,7 +789,7 @@ castor::IObject
   // Send the request
   timeval sendAndReceiveStartTime = {0, 0};
   timeval sendAndReceiveEndTime   = {0, 0};
-  castor::utils::getTimeOfDay(&sendAndReceiveStartTime, NULL);
+  castor::utils::getTimeOfDay(&sendAndReceiveStartTime);
   try {
     sock.sendObject(request);
   } catch(castor::exception::Exception &ex) {
@@ -810,7 +810,7 @@ castor::IObject
         ": Failed to send request and receive reply"
         ": ClientSocket::readObject() returned null");
     }
-    castor::utils::getTimeOfDay(&sendAndReceiveEndTime, NULL);
+    castor::utils::getTimeOfDay(&sendAndReceiveEndTime);
     sendRecvDuration = castor::utils::timevalAbsDiff(sendAndReceiveStartTime,
       sendAndReceiveEndTime);
   } catch(castor::exception::Exception &ex) {

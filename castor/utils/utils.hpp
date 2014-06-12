@@ -98,9 +98,8 @@ void toUpper(std::string &str);
  * simply converts the return of -1 and the setting of errno to an exception.
  *
  * @param tv See the manual page for gettimeofday.
- * @param tz See the manual page for gettimeofday.
  */
-void getTimeOfDay(struct timeval *const tv, struct timezone *const tz);
+void getTimeOfDay(struct timeval *const tv);
 
 /**
  * Compares two time-values, a and b, and returns true if time value a is
