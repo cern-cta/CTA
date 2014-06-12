@@ -42,7 +42,7 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-class GlobalStatusReporter : private castor::tape::threading::Thread {
+class TapeServerReporter : private castor::tape::threading::Thread {
 
 public:
   /**
@@ -53,7 +53,7 @@ public:
    * @param volume The volume information from the client
    * @param lc 
    */
-  GlobalStatusReporter(
+  TapeServerReporter(
     legacymsg::TapeserverProxy& tapeserverProxy,
     const tape::utils::DriveConfig &driveConfig,
     const std::string &hostname,
@@ -111,24 +111,24 @@ private:
   class Report {
   public:
     virtual ~Report(){}
-    virtual void execute(GlobalStatusReporter&)=0;
+    virtual void execute(TapeServerReporter&)=0;
   };
 
   class ReportGotReadDetailsFromClient : public Report {
   public:
-    virtual void execute(GlobalStatusReporter&);
+    virtual void execute(TapeServerReporter&);
   };
   class ReportTapeMountedForRead : public Report {
   public:
-    virtual void execute(GlobalStatusReporter&);
+    virtual void execute(TapeServerReporter&);
   };
   class ReportTapeUnmounted : public Report {
   public:
-    virtual void execute(GlobalStatusReporter&);
+    virtual void execute(TapeServerReporter&);
   };
   class ReportTapeMounterForWrite : public Report {
   public:
-    virtual void execute(GlobalStatusReporter&);
+    virtual void execute(TapeServerReporter&);
   };
   /**
    * Inherited from Thread, it will do the job : pop a request, execute it 

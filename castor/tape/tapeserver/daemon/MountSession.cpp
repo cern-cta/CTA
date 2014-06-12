@@ -184,13 +184,13 @@ int castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc)
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
-    GlobalStatusReporter gsr(m_intialProcess, m_driveConfig, 
+    TapeServerReporter tsr(m_intialProcess, m_driveConfig, 
             m_hostname, m_volInfo, lc);
     //we retrieved the detail from the client in execute, so at this point 
     //we can already report !
-    gsr.gotReadMountDetailsFromClient();
+    tsr.gotReadMountDetailsFromClient();
     
-    TapeReadSingleThread trst(*drive, m_rmc, gsr, m_volInfo, 
+    TapeReadSingleThread trst(*drive, m_rmc, tsr, m_volInfo, 
         m_castorConf.tapebridgeBulkRequestRecallMaxFiles,m_capUtils, lc);
     RecallReportPacker rrp(m_clientProxy,
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
@@ -211,7 +211,7 @@ int castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc)
       dwtp.startThreads();
       rrp.startThreads();
       rti.startThreads();
-      gsr.startThreads();
+      tsr.startThreads();
       // This thread is now going to be idle until the system unwinds at the end 
       // of the session
       // All client notifications are done by the report packer, including the
@@ -220,7 +220,7 @@ int castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc)
       rrp.waitThread();
       dwtp.waitThreads();
       trst.waitThreads();
-      gsr.waitThreads();
+      tsr.waitThreads();
       return trst.getHardwareStatus();
     } else {
       // Just log this was an empty mount and that's it. The memory management
@@ -261,7 +261,7 @@ int castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc
     
     //deferencing configLine is safe, because if configLine were not valid, 
     //then findDrive would have return NULL and we would have not end up there
-    GlobalStatusReporter gsr(m_intialProcess, m_driveConfig, m_hostname,m_volInfo,lc);
+    TapeServerReporter tsr(m_intialProcess, m_driveConfig, m_hostname,m_volInfo,lc);
     
     MigrationMemoryManager mm(m_castorConf.rtcopydNbBufs,
         m_castorConf.rtcopydBufsz,lc);
@@ -269,7 +269,7 @@ int castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc
         lc);
     TapeWriteSingleThread twst(*drive.get(),
         m_rmc,
-        gsr,
+        tsr,
         m_volInfo,
         lc,
         mrp,
@@ -290,7 +290,7 @@ int castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc
       
       //we retrieved the detail from the client in execute, so at this point 
       //we can report. We get in exchange the number of files on the tape
-      const uint64_t nbOfFileOnTape = gsr.gotWriteMountDetailsFromClient();
+      const uint64_t nbOfFileOnTape = tsr.gotWriteMountDetailsFromClient();
 
       //theses 2 numbers should match. Otherwise, it means the stager went mad 
       if(lastFseqFromClient != nbOfFileOnTape) {
@@ -304,7 +304,7 @@ int castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc
       twst.startThreads();
       mrp.startThreads();
       mti.startThreads();
-      gsr.startThreads();
+      tsr.startThreads();
       
       // Synchronise with end of threads
       mti.waitThreads();
@@ -312,7 +312,7 @@ int castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc
       twst.waitThreads();
       drtp.waitThreads();
       mm.waitThreads();
-      gsr.waitThreads();
+      tsr.waitThreads();
       
       return twst.getHardwareStatus();
     } else {

@@ -9,9 +9,9 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 //-----------------------------------------------------------------------------
-//GlobalStatusReporter::GlobalStatusReporter
+//constructor
 //------------------------------------------------------------------------------  
-GlobalStatusReporter::GlobalStatusReporter(
+TapeServerReporter::TapeServerReporter(
   legacymsg::TapeserverProxy& tapeserverProxy,
   const tape::utils::DriveConfig& driveConfig,
   const std::string &hostname,
@@ -31,25 +31,25 @@ GlobalStatusReporter::GlobalStatusReporter(
 //------------------------------------------------------------------------------
 //finish
 //------------------------------------------------------------------------------
-  void GlobalStatusReporter::finish(){
+  void TapeServerReporter::finish(){
     m_fifo.push(NULL);
   }
 //------------------------------------------------------------------------------
 //startThreads
 //------------------------------------------------------------------------------   
-  void GlobalStatusReporter::startThreads(){
+  void TapeServerReporter::startThreads(){
     start();
   }
 //------------------------------------------------------------------------------
 //waitThreads
 //------------------------------------------------------------------------------     
-  void GlobalStatusReporter::waitThreads(){
+  void TapeServerReporter::waitThreads(){
     wait();
   }
 //------------------------------------------------------------------------------
 //tapeMountedForWrite
 //------------------------------------------------------------------------------    
-  void GlobalStatusReporter::tapeMountedForWrite(){
+  void TapeServerReporter::tapeMountedForWrite(){
     m_fifo.push(
     new ReportTapeMounterForWrite()
     );
@@ -57,13 +57,13 @@ GlobalStatusReporter::GlobalStatusReporter(
 //------------------------------------------------------------------------------
 //gotWriteMountDetailsFromClient
 //------------------------------------------------------------------------------    
-  uint64_t GlobalStatusReporter::gotWriteMountDetailsFromClient(){
+  uint64_t TapeServerReporter::gotWriteMountDetailsFromClient(){
    return m_tapeserverProxy.gotWriteMountDetailsFromClient(m_volume, m_unitName);
   }
 //------------------------------------------------------------------------------
 //gotReadMountDetailsFromClient
 //------------------------------------------------------------------------------  
-   void GlobalStatusReporter::gotReadMountDetailsFromClient(){
+   void TapeServerReporter::gotReadMountDetailsFromClient(){
      m_fifo.push(
      new ReportGotReadDetailsFromClient()
      );
@@ -71,19 +71,19 @@ GlobalStatusReporter::GlobalStatusReporter(
 //------------------------------------------------------------------------------
 //tapeMountedForRead
 //------------------------------------------------------------------------------  
-   void GlobalStatusReporter::tapeMountedForRead(){
+   void TapeServerReporter::tapeMountedForRead(){
      m_fifo.push(new ReportTapeMountedForRead());
    }
 //------------------------------------------------------------------------------
 //tapeUnmounted
 //------------------------------------------------------------------------------     
-   void GlobalStatusReporter::tapeUnmounted(){
+   void TapeServerReporter::tapeUnmounted(){
      m_fifo.push(new ReportTapeUnmounted());
    }
 //------------------------------------------------------------------------------
 //run
 //------------------------------------------------------------------------------  
-  void GlobalStatusReporter::run(){
+  void TapeServerReporter::run(){
     while(1){
       std::auto_ptr<Report> currentReport(m_fifo.pop());
       if(NULL==currentReport.get()) {
@@ -95,8 +95,8 @@ GlobalStatusReporter::GlobalStatusReporter(
 //------------------------------------------------------------------------------
 // ReportGotDetailsFromClient::execute
 //------------------------------------------------------------------------------
-    void GlobalStatusReporter::ReportGotReadDetailsFromClient::execute(
-    GlobalStatusReporter& parent){
+    void TapeServerReporter::ReportGotReadDetailsFromClient::execute(
+    TapeServerReporter& parent){
       log::ScopedParamContainer sp(parent.m_lc);
       sp.add(parent.m_unitName, "unitName").add(parent.m_volume.vid, "vid");
       parent.m_tapeserverProxy.gotReadMountDetailsFromClient(parent.m_volume, parent.m_unitName);
@@ -104,22 +104,22 @@ GlobalStatusReporter::GlobalStatusReporter(
 //------------------------------------------------------------------------------
 // ReportTapeMountedForRead::execute
 //------------------------------------------------------------------------------        
-    void GlobalStatusReporter::ReportTapeMountedForRead::
-    execute(GlobalStatusReporter& parent){
+    void TapeServerReporter::ReportTapeMountedForRead::
+    execute(TapeServerReporter& parent){
       parent.m_tapeserverProxy.tapeMountedForRead(parent.m_volume, parent.m_unitName);
     }
 //------------------------------------------------------------------------------
 // ReportTapeUnmounted::execute
 //------------------------------------------------------------------------------        
-    void GlobalStatusReporter::ReportTapeUnmounted::
-    execute(GlobalStatusReporter& parent){
+    void TapeServerReporter::ReportTapeUnmounted::
+    execute(TapeServerReporter& parent){
       parent.m_tapeserverProxy.tapeUnmounted(parent.m_volume, parent.m_unitName);
     }
 //------------------------------------------------------------------------------
 // ReportTapeMounterForWrite::execute
 //------------------------------------------------------------------------------         
-    void GlobalStatusReporter::ReportTapeMounterForWrite::
-    execute(GlobalStatusReporter& parent){
+    void TapeServerReporter::ReportTapeMounterForWrite::
+    execute(TapeServerReporter& parent){
       parent.m_tapeserverProxy.tapeMountedForWrite(parent.m_volume, parent.m_unitName);
     }
 }}}}

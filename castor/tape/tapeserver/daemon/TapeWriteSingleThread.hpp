@@ -43,7 +43,7 @@ namespace tapeserver {
 namespace daemon {
   
 // forward declaration
-class GlobalStatusReporter;
+class TapeServerReporter;
 
 class TapeWriteSingleThread : public TapeSingleThreadInterface<TapeWriteTask> {
 public:
@@ -60,7 +60,7 @@ public:
    */
   TapeWriteSingleThread(castor::tape::drives::DriveInterface & drive, 
           castor::legacymsg::RmcProxy & rmc,
-          GlobalStatusReporter & gsr,
+          TapeServerReporter & gsr,
           const client::ClientInterface::VolumeInfo& volInfo,
           castor::log::LogContext & lc, MigrationReportPacker & repPacker,
            CapabilityUtils &capUtils,
