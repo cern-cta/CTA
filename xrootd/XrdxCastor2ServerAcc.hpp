@@ -69,8 +69,7 @@ class XrdxCastor2ServerAcc: public XrdAccAuthorize
       char* id;              ///< the client connection id 
       char* client_sec_uid;  ///< the sec identity eg. user name 
       char* client_sec_gid;  ///< the sec identity eg. group name 
-      char* token;           ///< the full token
-      char* signature;       ///< signature for 'token' 
+      char* signature;       ///< signature
       char* manager;         ///< hostname of the managernode 
 
       
@@ -86,7 +85,7 @@ class XrdxCastor2ServerAcc: public XrdAccAuthorize
       AuthzInfo( bool ownObj ) :
         takeOwnership( ownObj ), accessop( 0 ), exptime( 0 ), 
         sfn( NULL ), pfn1( NULL ), pfn2( NULL ), id( NULL ), client_sec_uid( NULL ),
-        client_sec_gid( NULL ), token( NULL ), signature( NULL ), manager( NULL )
+        client_sec_gid( NULL ), signature( NULL ), manager( NULL )
       { }
 
 
@@ -101,7 +100,6 @@ class XrdxCastor2ServerAcc: public XrdAccAuthorize
           if ( id )             free( id );
           if ( client_sec_uid ) free( client_sec_uid );
           if ( client_sec_gid ) free( client_sec_gid );
-          if ( token )          free( token );
           if ( signature )      free( signature );
           if ( manager )        free( manager );
         }
@@ -139,29 +137,18 @@ class XrdxCastor2ServerAcc: public XrdAccAuthorize
 
 
     //--------------------------------------------------------------------------
-    //! Build token by concatenating the info in AuthzInfo structure
-    //!
-    //! @param authz structure containing info about authorization
-    //! @param token string token to be built
-    //!
-    //! @return true if token construction was successful, otherwise false 
-    //!
-    //--------------------------------------------------------------------------
-    static bool BuildToken( XrdxCastor2ServerAcc::AuthzInfo* authz, 
-                            XrdOucString&                    token );
-
-
-    //--------------------------------------------------------------------------
     //! Build opaque information based on the info in AuthzInfo structure
     //! 
     //! @param authz structure containing info about authorization
-    //! @param opque opque information to be built
+    //! @param stagehost the name of the stager concerned
     //! 
-    //! @return true if opque info successfully built, otherwise false 
+    //! @return the opaque information or empty string in case of error 
     //! 
     //--------------------------------------------------------------------------
-    static bool BuildOpaque( XrdxCastor2ServerAcc::AuthzInfo* authz, 
-                             XrdOucString&                    opaque );
+    std::string BuildOpaque(XrdxCastor2ServerAcc::AuthzInfo &authz,
+                            XrdOucString &stagehost,
+                            bool issueCapability,
+                            XrdOucString &map_path);
 
 
     //--------------------------------------------------------------------------
@@ -237,7 +224,7 @@ class XrdxCastor2ServerAcc: public XrdAccAuthorize
     //! hashed value of the data buffer must be the same as the value obtained 
     //! by decoding the signature using the public key.
     //! 
-    //! @param data buffer containgin the full token information
+    //! @param data buffer containing the signed part of the original URL
     //! @param base64buffer signature buffer
     //! @param path file name path 
     //!
@@ -247,18 +234,6 @@ class XrdxCastor2ServerAcc: public XrdAccAuthorize
     bool VerifyUnbase64( const char*    data, 
                          unsigned char* base64buffer, 
                          const char*    path );
-
-
-    //--------------------------------------------------------------------------
-    //! Decode the opaque information 
-    //!
-    //! @param opaque buffer containing opaque information
-    //!
-    //! @return new AuthzInfo structure populated with info from the opque
-    //!         buffer, otherwise NULL
-    //!
-    //--------------------------------------------------------------------------
-    XrdxCastor2ServerAcc::AuthzInfo* Decode( const char* opaque );
 
 
     char* auth_certfile;                    ///< file name of public key for signature verification

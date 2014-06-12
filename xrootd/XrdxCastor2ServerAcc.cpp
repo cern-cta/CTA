@@ -18,7 +18,7 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- * @author Elvin Sindrilaru & Andreas Peters - CERN
+ * @author castor-dev@cern.ch
  * 
  ******************************************************************************/
 
@@ -27,6 +27,7 @@
 #include <ctype.h>
 #include <fcntl.h>
 #include <string.h>
+#include <sstream>
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastor2ServerAcc.hpp"
 #include "XrdxCastor2Ofs.hpp"
@@ -516,190 +517,48 @@ XrdxCastor2ServerAcc::VerifyUnbase64( const char*    data,
   return true;
 }
 
-
-//------------------------------------------------------------------------------
-// Decode opaque information
-//------------------------------------------------------------------------------
-XrdxCastor2ServerAcc::AuthzInfo*
-XrdxCastor2ServerAcc::Decode( const char* opaque )
-{
-  if ( !opaque ) return NULL;
-
-  XrdOucString sop = opaque;
-  // Convert the '&' seperated tokens into '\n' seperated tokens
-  sop.replace( "&", "\n" );
-  XrdOucTokenizer authztokens( ( char* )sop.c_str() );
-  XrdxCastor2ServerAcc::AuthzInfo* authz = new XrdxCastor2ServerAcc::AuthzInfo( true );
-  const char* stoken;
-  int ntoken = 0;
-
-  while ( ( stoken = authztokens.GetLine() ) )  {
-    XrdOucString token = stoken;
-
-    // Check the existance of the castor2fs token in the opaque info
-    if ( token.beginswith( "castor2fs.sfn=" ) ) {
-      authz->sfn = strdup( token.c_str() + 14 );
-      ntoken++;
-      continue;
-    }
-
-    if ( token.beginswith( "castor2fs.id=" ) ) {
-      authz->id = strdup( token.c_str() + 13 );
-      ntoken++;
-      continue;
-    }
-
-    if ( token.beginswith( "castor2fs.client_sec_uid=" ) ) {
-      authz->client_sec_uid = strdup( token.c_str() + 25 );
-      ntoken++;
-      continue;
-    }
-
-    if ( token.beginswith( "castor2fs.client_sec_gid=" ) ) {
-      authz->client_sec_gid = strdup( token.c_str() + 25 );
-      ntoken++;
-      continue;
-    }
-
-    if ( token.beginswith( "castor2fs.accessop=" ) ) {
-      authz->accessop = atoi( token.c_str() + 19 );
-      ntoken++;
-      continue;
-    }
-
-    if ( token.beginswith( "castor2fs.exptime=" ) ) {
-      authz->exptime  = ( time_t ) strtol( token.c_str() + 18, 0, 10 );
-      ntoken++;
-      continue;
-    }
-
-    if ( token.beginswith( "castor2fs.token=" ) ) {
-      authz->token = strdup( token.c_str() + 16 );
-      ntoken++;
-      continue;
-    }
-
-    if ( token.beginswith( "castor2fs.signature=" ) ) {
-      authz->signature = strdup( token.c_str() + 20 );
-      ntoken++;
-      continue;
-    }
-
-    if ( token.beginswith( "castor2fs.manager=" ) ) {
-      authz->manager = strdup( token.c_str() + 18 );
-      ntoken++;
-      continue;
-    }
-
-    if ( token.beginswith( "castor2fs.pfn1=" ) ) {
-      authz->pfn1 = strdup( token.c_str() + 15 );
-      ntoken++;
-      continue;
-    }
-
-    if ( token.beginswith( "castor2fs.pfn2=" ) ) {
-      authz->pfn2 = strdup( token.c_str() + 15 );
-      ntoken++;
-      continue;
-    }
-  }
-
-  // We expect 11 opaque castor2fs tokens to be present
-  if ( ntoken != 11 ) {
-    //    printf("Wrong Number of tokens %d\n",ntoken);
-    XrdOucString ntk = "";
-    ntk += ntoken;
-    TkEroute.Emsg( "Access", EACCES, ntk.c_str(), opaque );
-    delete authz;;
-    return NULL;
-  }
-
-  return authz;
-}
-
-
-//------------------------------------------------------------------------------
-// Build token using AuthzInfo structure
-//------------------------------------------------------------------------------
-bool
-XrdxCastor2ServerAcc::BuildToken( XrdxCastor2ServerAcc::AuthzInfo* authz, 
-                                  XrdOucString&                    token )
-{
-  token = "";
-
-  if ( !authz ) return false;
-  if ( !authz->sfn ) return false;
-  if ( !authz->id )  return false;
-  if ( !authz->client_sec_uid ) return false;
-  if ( !authz->client_sec_gid ) return false;
-  if ( !authz->manager ) return false;
-
-  token += authz->sfn;
-  token += authz->pfn1;
-  token += authz->pfn2;
-  token += authz->id;
-  token += authz->client_sec_uid;
-  token += authz->client_sec_gid;
-  token += ( int ) authz->accessop;
-  token += ( int ) authz->exptime;
-  token += authz->manager;
-  return true;
-}
-
-
 //------------------------------------------------------------------------------
 // Build opaque information using AuthzInfo structure
 //------------------------------------------------------------------------------
-bool
-XrdxCastor2ServerAcc::BuildOpaque( XrdxCastor2ServerAcc::AuthzInfo* authz, 
-                                   XrdOucString&                    opaque )
-{
-  opaque = "";
+std::string
+XrdxCastor2ServerAcc::BuildOpaque(XrdxCastor2ServerAcc::AuthzInfo &authz,
+                                  XrdOucString &stagehost,
+                                  bool issueCapability,
+                                  XrdOucString &map_path) {
+  if ( !authz.sfn ) return false;
+  if ( !authz.pfn1 ) return false;
+  if ( !authz.pfn2 ) return false;
+  if ( !authz.id )  return false;
+  if ( !authz.client_sec_uid ) return false;
+  if ( !authz.client_sec_gid ) return false;
+  if ( !authz.manager ) return false;
+  std::ostringstream oss;
+  oss << "castor2fs.sfn="<< authz.sfn << "&"
+      << "castor2fs.pfn1=" << authz.pfn1 << "&"
+      << "castor2fs.pfn2=" << authz.pfn2 << "&"
+      << "castor2fs.id=" << authz.id << "&"
+      << "castor2fs.client_sec_uid=" << authz.client_sec_uid << "&"
+      << "castor2fs.client_sec_gid=" << authz.client_sec_gid << "&"
+      << "castor2fs.accessop=" << authz.accessop << "&"
+      << "castor2fs.exptime=" << ( int )authz.exptime << "&"
+      << "castor2fs.manager=" << authz.manager;
+  std::string opaque = oss.str();
+  XrdOucString sb64;
+  if (issueCapability) {
+    int sig64len = 0;
+    int rc = SignBase64((unsigned char*)opaque.c_str(), opaque.size(), sb64,
+                        sig64len, stagehost.c_str());
+    if (!rc) {
+      TkEroute.Emsg("open", rc, "sign authorization for sfn = ", map_path.c_str());
+      return "";
+    }
+    authz.signature = (char*)sb64.c_str();
+  }
 
-  if ( !authz ) return false;
-  if ( !authz->sfn ) return false;
-  if ( !authz->pfn1 ) return false;
-  if ( !authz->pfn2 ) return false;
-  if ( !authz->id )  return false;
-  if ( !authz->client_sec_uid ) return false;
-  if ( !authz->client_sec_gid ) return false;
-  if ( !authz->manager ) return false;
-  if ( !authz->token ) return false;
+  // add signature to the opaque information
+  oss << "&" << "castor2fs.signature=" << authz.signature << "&";
 
-  opaque  = "castor2fs.sfn=";
-  opaque += authz->sfn;
-  opaque += "&";
-  opaque += "castor2fs.pfn1=";
-  opaque += authz->pfn1;
-  opaque += "&";
-  opaque += "castor2fs.pfn2=";
-  opaque += authz->pfn2;
-  opaque += "&";
-  opaque += "castor2fs.id=";
-  opaque += authz->id;
-  opaque += "&";
-  opaque += "castor2fs.client_sec_uid=";
-  opaque += authz->client_sec_uid;
-  opaque += "&";
-  opaque += "castor2fs.client_sec_gid=";
-  opaque += authz->client_sec_gid;
-  opaque += "&";
-  opaque += "castor2fs.accessop=";
-  opaque += authz->accessop;
-  opaque += "&";
-  opaque += "castor2fs.exptime=";
-  opaque += ( int )authz->exptime;
-  opaque += "&";
-  opaque += "castor2fs.token=";
-  opaque += authz->token;
-  opaque += "&";
-  opaque += "castor2fs.signature=";
-  opaque += authz->signature;
-  opaque += "&";
-  opaque += "castor2fs.manager=";
-  opaque += authz->manager;
-  opaque += "&";
-  return true;
+  return oss.str();
 }
 
 
@@ -725,9 +584,7 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
   //cerr << "path="<< path<< " operation=" <<(int)oper << " env="<< envstring.c_str();
   //TkTrace.End();
 
-  char* opaque = 0;
   envlen = 0;
-  XrdxCastor2ServerAcc::AuthzInfo* authz;
   // Do a bypass for the /proc file system, we check the client identity 
   // in the XrdxCastorOfsFile::open method
   XrdOucString spath = path;
@@ -763,7 +620,7 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
   }
 
   time_t now = time( NULL );
-  opaque = Env->Env( envlen );
+  char* opaque = Env->Env( envlen );
 
   if ( !opaque ) {
     decodeLock.UnLock();
@@ -778,78 +635,44 @@ XrdxCastor2ServerAcc::Access( const XrdSecEntity*    Entity,
       opaque[i] = '&';
   }
 
-  // Decode the authz information from the opaque info 
-  if ( RequireCapability && !( authz = Decode( opaque ) ) ) {
-    TkEroute.Emsg( "Access", EACCES, "decode access token for sfn=", path );
-    decodeLock.UnLock();
-    return XrdAccPriv_None;
-  }
-
   if ( RequireCapability ) {
-    // Verify that the token information is identical to the explicit tokens 
-    XrdOucString reftoken;
 
-    if ( !BuildToken( authz, reftoken ) ) {
-      TkEroute.Emsg( "Access", EACCES, "build reference token for sfn=", path );
-      delete authz;;
+    // extract core part, signature and expTime from opaque data
+    std::string data = opaque;
+    size_t sfnIndex = data.find("castor2fs.sfn=");
+    size_t signIndex = data.find("&castor2fs.signature=");
+    if (sfnIndex == string::npos || signIndex == string::npos) {
+      TkEroute.Emsg( "Access", EACCES, "decode access token for sfn=", path );
       decodeLock.UnLock();
       return XrdAccPriv_None;
     }
-
-    if ( reftoken != XrdOucString( authz->token ) ) {
-      TkEroute.Emsg( "Access", EACCES, "verify the provided token information - "
-                     "intrinsic tags differ from explicit tags for sfn=", path );
-      printf( "%s||||%s\n", reftoken.c_str(), authz->token );
-      delete authz;;
+    std::string core = data.substr(sfnIndex, signIndex-sfnIndex);
+    size_t signBegin = signIndex + sizeof("&castor2fs.signature");
+    size_t signEnd = data.find("&", signBegin);
+    std::string sign = data.substr(signBegin, signEnd-signBegin);
+    size_t expTimeIndex = data.find("&castor2fs.exptime=");
+    if (expTimeIndex == string::npos) {
+      TkEroute.Emsg( "Access", EACCES, "decode access token for sfn=", path );
       decodeLock.UnLock();
       return XrdAccPriv_None;
     }
-
-    // Verify the signature of authz information 
-    if ( ( !VerifyUnbase64( ( const char* )authz->token, ( unsigned char* )authz->signature, path ) ) ) {
+    size_t expTimeBegin = expTimeIndex + sizeof("&castor2fs.exptime");
+    size_t expTimeEnd = data.find("&", expTimeBegin);
+    time_t expTime = (time_t)strtol(data.substr(expTimeBegin, expTimeEnd-expTimeBegin).c_str(), 0, 10);
+    
+    // Verify the signature
+    if ((!VerifyUnbase64(core.c_str(), (unsigned char*)sign.c_str(), path))) {
       TkEroute.Emsg( "Access", EACCES, "verify signature in request sfn=", path );
-      delete authz;;
       decodeLock.UnLock();
       return XrdAccPriv_None;
-    }
-
-    // Check that path in token and request are identical 
-    if ( strcmp( path, authz->pfn1 ) && strcmp( path, authz->pfn2 ) ) {
-      // If it does not fit, check that it is a replica location
-      XrdOucString spfn2 = authz->pfn2;
-
-      if ( !spfn2.find( authz->pfn1 ) ) {
-        TkEroute.Emsg( "Access", EACCES, "give access - the signature was not provided for this path!" );
-        delete authz;
-        decodeLock.UnLock();
-        return XrdAccPriv_None;
-      }
     }
 
     // Check validity time in authz 
-    if ( authz->exptime < now ) {
+    if (expTime < now) {
       TkEroute.Emsg( "check_user_access", EACCES, "give access - the signature has expired already!" );
-      delete authz;
       decodeLock.UnLock();
       return XrdAccPriv_None;
     }
-
-    // Check that the connected client is identical to the client connected 
-    // to the manager
-    if ( 0 ) {
-      delete authz;;
-      decodeLock.UnLock();
-      return XrdAccPriv_None;
-    }
-
-    // Check that the client name is identical to the client name used at the manager 
-    if ( 0 ) {
-      delete authz;;
-      decodeLock.UnLock();
-      return XrdAccPriv_None;
-    }
-
-    delete authz;
   }
 
   // If we have an open with a write we have to send a fsctl message to the manager 
