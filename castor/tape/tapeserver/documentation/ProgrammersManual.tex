@@ -1033,7 +1033,7 @@ The variables are stored within the \textbf{log::LogContex} as \textbf{log::Para
 for the name of the parameter and its value.
 
 Adding variables is done through \textbf{LogContext::pushOrReplace}, removing them through \textbf{LogContext::erase} and the 
-logging through the log member function.
+logging through the \textbf{log} member function.
 \begin{table}[h]
 \begin{lstlisting}
 log::Logger log;
@@ -1057,7 +1057,7 @@ a RAII-class for registering a variable into the \textbf{LogContext} and removin
 \end{lstlisting}
 \end{table}
 Using \textbf{LogContext::ScopedParameter} is still a bit clunky. To get rid of that, there is the 
-ScopedContainParameter, which acts as RAII container for parameters.
+\textbf{ScopedParamContainer}, which acts as RAII container for parameters.
 \begin{table}[h]
 \begin{lstlisting}
 {
