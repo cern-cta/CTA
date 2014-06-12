@@ -89,7 +89,7 @@ try:
         print 'DiskPools cannot be dropped if not empty and'
         for name, nbfs in rows:
             print '  - disk pool %s still has %d filesystem(s)' % (name, nbfs)
-        print 'You may want to use moveDiskServer to correct this'
+        print 'You may want to use delete/modifydiskserver to correct this'
         sys.exit(1)
     # drop disk pools
     if existingDiskPools:
