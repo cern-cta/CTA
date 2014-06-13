@@ -160,13 +160,6 @@ Build-Depends: libcap-devel, stk-ssi-devel, stk-ssi
 Description: castor (Cern Advanced STORage system)
  Tape server
 
-Package: castor-experimental-tape-server-II
-Architecture: any
-Depends: logrotate, castor-lib = %{version}-%{release}
-Description: castor (Cern Advanced STORage system)
- Experimental re-implementation of the tape server
- NO FOR PRODUCTION!
-
 Package: castor-tape-server-nostk
 Architecture: any
 Depends: logrotate, castor-lib = %{version}-%{release}
