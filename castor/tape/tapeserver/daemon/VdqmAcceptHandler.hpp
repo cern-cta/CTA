@@ -72,8 +72,7 @@ public:
    * @return true if the event handler should be removed from and deleted by
    * the reactor.
    */
-  bool handleEvent(const struct pollfd &fd)
-    ;
+  bool handleEvent(const struct pollfd &fd);
 
   /**
    * Destructor.
@@ -85,10 +84,15 @@ public:
 private:
 
   /**
+   * Logs the specifed IO event of the vdqm listen socket.
+   */
+  void logVdqmAcceptEvent(const struct pollfd &fd);
+
+  /**
    * Throws an exception if the specified file-descriptor is not that of the
    * socket listening for connections from the vdqmd daemon.
    */
-  void checkHandleEventFd(const int fd) ;
+  void checkHandleEventFd(const int fd);
 
   /**
    * The file descriptor of the socket listening for connections from the vdqmd

@@ -68,20 +68,9 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::fillPollFd(struct 
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
-bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(const struct pollfd &fd)  {
-  std::list<log::Param> params;
-  params.push_back(log::Param("fd"        , fd.fd                                     ));
-  params.push_back(log::Param("POLLIN"    , fd.revents & POLLIN     ? "true" : "false"));
-  params.push_back(log::Param("POLLRDNORM", fd.revents & POLLRDNORM ? "true" : "false"));
-  params.push_back(log::Param("POLLRDBAND", fd.revents & POLLRDBAND ? "true" : "false"));
-  params.push_back(log::Param("POLLPRI"   , fd.revents & POLLPRI    ? "true" : "false"));
-  params.push_back(log::Param("POLLOUT"   , fd.revents & POLLOUT    ? "true" : "false"));
-  params.push_back(log::Param("POLLWRNORM", fd.revents & POLLWRNORM ? "true" : "false"));
-  params.push_back(log::Param("POLLWRBAND", fd.revents & POLLWRBAND ? "true" : "false"));
-  params.push_back(log::Param("POLLERR"   , fd.revents & POLLERR    ? "true" : "false"));
-  params.push_back(log::Param("POLLHUP"   , fd.revents & POLLHUP    ? "true" : "false"));
-  params.push_back(log::Param("POLLNVAL"  , fd.revents & POLLNVAL   ? "true" : "false"));
-  m_log(LOG_DEBUG, "VdqmConnectionHandler::handleEvent()", params);
+bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
+  const struct pollfd &fd)  {
+  logVdqmConnectionEvent(fd);
 
   checkHandleEventFd(fd.fd);
 
@@ -106,12 +95,44 @@ bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(const 
     DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(job.driveUnit);
     drive.receivedVdqmJob(job);
   } catch(castor::exception::Exception &ex) {
-    params.push_back(log::Param("message", ex.getMessage().str()));
+    log::Param params[] = {
+      log::Param("fd", fd.fd),
+      log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "Failed to handle vdqm-connection event", params);
     return true; // Ask reactor to remove and delete this handler
   }
 
   return true; // Ask reactor to remove and delete this handler
+}
+
+//------------------------------------------------------------------------------
+// logVdqmConnectionEvent 
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmConnectionHandler::
+  logVdqmConnectionEvent(const struct pollfd &fd)  {
+  std::list<log::Param> params;
+  params.push_back(log::Param("fd", fd.fd));
+  params.push_back(log::Param("POLLIN",
+    fd.revents & POLLIN ? "true" : "false"));
+  params.push_back(log::Param("POLLRDNORM",
+    fd.revents & POLLRDNORM ? "true" : "false"));
+  params.push_back(log::Param("POLLRDBAND",
+    fd.revents & POLLRDBAND ? "true" : "false"));
+  params.push_back(log::Param("POLLPRI",
+    fd.revents & POLLPRI ? "true" : "false"));
+  params.push_back(log::Param("POLLOUT",
+    fd.revents & POLLOUT ? "true" : "false"));
+  params.push_back(log::Param("POLLWRNORM",
+    fd.revents & POLLWRNORM ? "true" : "false"));
+  params.push_back(log::Param("POLLWRBAND",
+    fd.revents & POLLWRBAND ? "true" : "false"));
+  params.push_back(log::Param("POLLERR",
+    fd.revents & POLLERR ? "true" : "false"));
+  params.push_back(log::Param("POLLHUP",
+    fd.revents & POLLHUP ? "true" : "false"));
+  params.push_back(log::Param("POLLNVAL",
+    fd.revents & POLLNVAL ? "true" : "false"));
+  m_log(LOG_DEBUG, "I/O event on vdqm connection", params);
 }
 
 //------------------------------------------------------------------------------

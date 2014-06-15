@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp
+ *                castor/tape/tapeserver/daemon/AdminConnectionHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -43,7 +43,7 @@ namespace daemon     {
  * Handles the events of the socket listening for connection from the admin
  * commands.
  */
-class AdminAcceptHandler: public io::PollEventHandler {
+class AdminConnectionHandler: public io::PollEventHandler {
 public:
 
   /**
@@ -58,7 +58,7 @@ public:
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
    */
-  AdminAcceptHandler(
+  AdminConnectionHandler(
     const int fd,
     io::PollReactor &reactor,
     log::Logger &log,
@@ -84,27 +84,110 @@ public:
    * @return true if the event handler should be removed from and deleted by
    * the reactor.
    */
-  bool handleEvent(const struct pollfd &fd)
-    ;
+  bool handleEvent(const struct pollfd &fd);
 
   /**
    * Destructor.
    */
-  ~AdminAcceptHandler() throw();
+  ~AdminConnectionHandler() throw();
 
 private:
-
-  /**
-   * Logs the specifed IO event of the admin listen socket.
-   */
-  void logAdminAcceptEvent(const struct pollfd &fd);
   
   /**
+   * Marshals the specified source tape config reply message structure into the
+   * specified destination buffer.
+   *
+   * @param dst    The destination buffer.
+   * @param dstLen The length of the destination buffer.
+   * @param rc     The return code to reply.
+   * @return       The total length of the header.
+   */
+  size_t marshalTapeRcReplyMsg(char *const dst, const size_t dstLen,
+    const int rc) ;
+  
+  /**
+   * Writes a job reply message to the tape config command connection.
+   *
+   * @param rc The return code to reply.
+   * 
+   */
+  void writeTapeRcReplyMsg(const int rc);
+  
+  /**
+   * Writes a reply message to the tape stat command connection.
+   */
+  void writeTapeStatReplyMsg();
+
+  /**
+   * Logs the specifed IO event of the admin connection.
+   */
+  void logAdminConnectionEvent(const struct pollfd &fd);
+
+  /**
    * Throws an exception if the specified file-descriptor is not that of the
-   * socket listening for admin connections.
+   * socket listening for connections from the vdqmd daemon.
    */
   void checkHandleEventFd(const int fd) ;
   
+  /**
+   * Handles the specified request message.
+   *
+   * @param header The header of the request message.
+   */
+  void handleRequest(const legacymsg::MessageHeader &header);
+
+  /**
+   * Handles the specified config request-message.
+   *
+   * @param header The header of the request message.
+   */
+  void handleConfigRequest(const legacymsg::MessageHeader &header);
+
+  /**
+   * Handles the specified stat request-message.
+   *
+   * @param header The header of the request message.
+   */
+  void handleStatRequest(const legacymsg::MessageHeader &header);
+  
+  /**
+   * Logs the reception of the specified job message from the tpconfig command.
+   */
+  void logTapeConfigJobReception(const legacymsg::TapeConfigRequestMsgBody &job)
+    const throw();
+  
+  /**
+   * Logs the reception of the specified job message from the tpstat command.
+   */
+  void logTapeStatJobReception(const legacymsg::TapeStatRequestMsgBody &job)
+    const throw();
+  
+  /**
+   * Reads the header of a job message from the specified connection.
+   *
+   * @param connection The file descriptor of the connection with the vdqm
+   * daemon.
+   * @return The message header.
+   */
+  legacymsg::MessageHeader readJobMsgHeader(const int connection);
+  
+  /**
+   * Reads the body of a job message from the specified connection.
+   *
+   * @param bodyLen The length of the message body in bytes.
+   * @return The message body.
+   */
+  legacymsg::TapeConfigRequestMsgBody readTapeConfigMsgBody(
+    const uint32_t bodyLen);
+  
+  /**
+   * Reads the body of a job message from the specified connection.
+   *
+   * @param bodyLen The length of the message body in bytes.
+   * @return The message body.
+   */
+  legacymsg::TapeStatRequestMsgBody readTapeStatMsgBody(const uint32_t bodyLen);
+
   /**
    * The file descriptor of the socket listening for connections from the vdqmd
    * daemon.
@@ -143,7 +226,7 @@ private:
    */
   const int m_netTimeout;
 
-}; // class VdqmAcceptHandler
+}; // class VdqmConnectionHandler
 
 } // namespace daemon
 } // namespace tapeserver

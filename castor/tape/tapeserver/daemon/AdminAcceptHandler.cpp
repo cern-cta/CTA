@@ -24,7 +24,7 @@
 #include "castor/exception/Errnum.hpp"
 #include "castor/io/io.hpp"
 #include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
-#include "castor/tape/tapeserver/daemon/VdqmConnectionHandler.hpp"
+#include "castor/tape/tapeserver/daemon/AdminConnectionHandler.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "h/common.h"
 #include "h/serrno.h"
@@ -36,12 +36,12 @@
 #include "castor/utils/utils.hpp"
 
 #include <errno.h>
+#include <list>
 #include <memory>
 #include <string.h>
-#include <list>
-#include <unistd.h>
-#include <sys/types.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -60,7 +60,7 @@ castor::tape::tapeserver::daemon::AdminAcceptHandler::AdminAcceptHandler(
     m_vdqm(vdqm),
     m_driveCatalogue(driveCatalogue),
     m_hostName(hostName),
-    m_netTimeout(10) {
+    m_netTimeout(10) { // Timeout in seconds
 }
 
 //------------------------------------------------------------------------------
@@ -68,6 +68,9 @@ castor::tape::tapeserver::daemon::AdminAcceptHandler::AdminAcceptHandler(
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::AdminAcceptHandler::~AdminAcceptHandler()
   throw() {
+  log::Param params[] = {log::Param("fd", m_fd)};
+  m_log(LOG_DEBUG, "Closing admin listen socket", params);
+  close(m_fd);
 }
 
 //------------------------------------------------------------------------------
@@ -87,79 +90,13 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillPollFd(
   fd.revents = 0;
 }
 
-//-----------------------------------------------------------------------------
-// marshalTapeConfigReplyMsg
-//-----------------------------------------------------------------------------
-size_t castor::tape::tapeserver::daemon::AdminAcceptHandler::marshalTapeRcReplyMsg(char *const dst,
-  const size_t dstLen, const int rc)
-   {
-  legacymsg::MessageHeader src;
-  src.magic = TPMAGIC;
-  src.reqType = TAPERC;
-  src.lenOrStatus = rc;  
-  return legacymsg::marshal(dst, dstLen, src);
-}
-
-//------------------------------------------------------------------------------
-// writeTapeConfigReplyMsg
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeRcReplyMsg(const int fd, const int rc)  {
-  char buf[REPBUFSZ];
-  const size_t len = marshalTapeRcReplyMsg(buf, sizeof(buf), rc);
-  try {
-    io::writeBytes(fd, m_netTimeout, len, buf);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to write job reply message: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// writeTapeStatReplyMsg
-//------------------------------------------------------------------------------
-void
-  castor::tape::tapeserver::daemon::AdminAcceptHandler::writeTapeStatReplyMsg(
-  const int fd)  {
-  legacymsg::TapeStatReplyMsgBody body;
-  
-  const std::list<std::string> unitNames = m_driveCatalogue.getUnitNames();
-  if(unitNames.size() > CA_MAXNBDRIVES) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Too many drives in drive catalogue: " <<
-      unitNames.size() << ": max=" << CA_MAXNBDRIVES << " actual=" <<
-      unitNames.size();
-    throw ex;
-  }
-  body.number_of_drives = unitNames.size();
-  int i=0;
-  for(std::list<std::string>::const_iterator itor = unitNames.begin();
-    itor!=unitNames.end() and i<CA_MAXNBDRIVES; itor++) {
-    const std::string &unitName = *itor;
-    const DriveCatalogueEntry &drive =
-       m_driveCatalogue.findConstDrive(unitName);
-    body.drives[i] = drive.getTapeStatDriveEntry();
-    i++;
-  }
-  
-  char buf[REPBUFSZ];
-  const size_t len = legacymsg::marshal(buf, sizeof(buf), body);
-  try {
-    io::writeBytes(fd, m_netTimeout, len, buf);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to write job reply message: " <<
-      ne.getMessage().str();
-    throw ex;
-  }
-}
-
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
   const struct pollfd &fd)  {
+  logAdminAcceptEvent(fd);
+
   checkHandleEventFd(fd.fd);
 
   // Do nothing if there is no data to read
@@ -178,13 +115,71 @@ bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
     connection.reset(io::acceptConnection(fd.fd, 1));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to accept a connection from the admin command"
+    ex.getMessage() << "Failed to accept an admin connection"
       ": " << ne.getMessage().str();
     throw ex;
   }
-  
-  dispatchJob(connection.get());  
+
+  m_log(LOG_DEBUG, "Accepted a possible admin connection");
+
+  // Create a new admin connection handler
+  std::auto_ptr<AdminConnectionHandler> connectionHandler;
+  try {
+    connectionHandler.reset(new AdminConnectionHandler(connection.get(),
+      m_reactor, m_log, m_vdqm, m_driveCatalogue, m_hostName));
+    connection.release();
+  } catch(std::bad_alloc &ba) {
+    castor::exception::BadAlloc ex;
+    ex.getMessage() << "Failed to allocate a new admin connection handler"
+      ": " << ba.what();
+    throw ex;
+  }
+
+  m_log(LOG_DEBUG, "Created a new admin connection handler");
+
+  // Register the new admin connection handler with the reactor
+  try {
+    m_reactor.registerHandler(connectionHandler.get());
+    connectionHandler.release();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to register a new admin connection handler"
+      ": " << ne.getMessage().str();
+  }
+
+  m_log(LOG_DEBUG, "Registered the new admin connection handler");
+
   return false; // Stay registered with the reactor
+}
+
+//------------------------------------------------------------------------------
+// logAdminAcceptConnectionEvent
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::AdminAcceptHandler::
+  logAdminAcceptEvent(const struct pollfd &fd)  {
+  std::list<log::Param> params;
+  params.push_back(log::Param("fd", fd.fd));
+  params.push_back(log::Param("POLLIN",
+    fd.revents & POLLIN ? "true" : "false"));
+  params.push_back(log::Param("POLLRDNORM",
+    fd.revents & POLLRDNORM ? "true" : "false"));
+  params.push_back(log::Param("POLLRDBAND",
+    fd.revents & POLLRDBAND ? "true" : "false"));
+  params.push_back(log::Param("POLLPRI",
+    fd.revents & POLLPRI ? "true" : "false"));
+  params.push_back(log::Param("POLLOUT",
+    fd.revents & POLLOUT ? "true" : "false"));
+  params.push_back(log::Param("POLLWRNORM",
+    fd.revents & POLLWRNORM ? "true" : "false"));
+  params.push_back(log::Param("POLLWRBAND",
+    fd.revents & POLLWRBAND ? "true" : "false"));
+  params.push_back(log::Param("POLLERR",
+    fd.revents & POLLERR ? "true" : "false"));
+  params.push_back(log::Param("POLLHUP",
+    fd.revents & POLLHUP ? "true" : "false"));
+  params.push_back(log::Param("POLLNVAL",
+    fd.revents & POLLNVAL ? "true" : "false"));
+  m_log(LOG_DEBUG, "I/O event on admin listen socket", params);
 }
 
 //------------------------------------------------------------------------------
@@ -199,196 +194,4 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::checkHandleEventFd(
       ": expected=" << m_fd << " actual=" << fd;
     throw ex;
   }
-}
-
-//------------------------------------------------------------------------------
-// logTapeConfigJobReception
-//------------------------------------------------------------------------------
-void
-  castor::tape::tapeserver::daemon::AdminAcceptHandler::logTapeConfigJobReception(
-  const legacymsg::TapeConfigRequestMsgBody &job) const throw() {
-  log::Param params[] = {
-    log::Param("drive", job.drive),
-    log::Param("gid", job.gid),
-    log::Param("uid", job.uid),
-    log::Param("status", job.status)};
-  m_log(LOG_INFO, "Received message from tpconfig command", params);
-}
-
-//------------------------------------------------------------------------------
-// logTapeStatJobReception
-//------------------------------------------------------------------------------
-void
-  castor::tape::tapeserver::daemon::AdminAcceptHandler::logTapeStatJobReception(
-  const legacymsg::TapeStatRequestMsgBody &job) const throw() {
-  log::Param params[] = {
-    log::Param("gid", job.gid),
-    log::Param("uid", job.uid)};
-  m_log(LOG_INFO, "Received message from tpstat command", params);
-}
-
-//------------------------------------------------------------------------------
-// handleTapeConfigJob
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeConfigJob(
-  const legacymsg::TapeConfigRequestMsgBody &body)  {
-  const std::string unitName(body.drive);
-  DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(unitName);
-  const utils::DriveConfig &driveConfig = drive.getConfig();
-
-  log::Param params[] = {
-    log::Param("unitName", unitName),
-    log::Param("dgn", driveConfig.dgn)};
-
-  switch(body.status) {
-  case CONF_UP:
-    m_vdqm.setDriveUp(m_hostName, unitName, driveConfig.dgn);
-    drive.configureUp();
-    m_log(LOG_INFO, "Drive configured up", params);
-    break;
-  case CONF_DOWN:
-    m_vdqm.setDriveDown(m_hostName, unitName, driveConfig.dgn);
-    drive.configureDown();
-    m_log(LOG_INFO, "Drive configured down", params);
-    break;
-  default:
-    {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Wrong drive status requested: " << body.status;
-      throw ex;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleTapeStatJob
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::AdminAcceptHandler::handleTapeStatJob(const legacymsg::TapeStatRequestMsgBody &body)  {
-  
-}
-
-//------------------------------------------------------------------------------
-// dispatchJob
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::AdminAcceptHandler::dispatchJob(
-    const int connection)  {
-  
-  const legacymsg::MessageHeader header = readJobMsgHeader(connection);
-  if(TPCONF == header.reqType) {
-    const legacymsg::TapeConfigRequestMsgBody body = readTapeConfigMsgBody(connection, header.lenOrStatus-sizeof(header));
-    logTapeConfigJobReception(body);
-    handleTapeConfigJob(body);
-    writeTapeRcReplyMsg(connection, 0); // 0 as return code for the tape config command, as in: "all went fine"
-  }
-  else { //TPSTAT
-    const legacymsg::TapeStatRequestMsgBody body = readTapeStatMsgBody(connection, header.lenOrStatus-sizeof(header));
-    logTapeStatJobReception(body);
-    handleTapeStatJob(body);
-    writeTapeStatReplyMsg(connection);
-    writeTapeRcReplyMsg(connection, 0); // 0 as return code for the tape config command, as in: "all went fine"
-  }
-}
-
-//------------------------------------------------------------------------------
-// readJobMsgHeader
-//------------------------------------------------------------------------------
-castor::legacymsg::MessageHeader
-  castor::tape::tapeserver::daemon::AdminAcceptHandler::readJobMsgHeader(
-    const int connection)  {
-  // Read in the message header
-  char buf[3 * sizeof(uint32_t)]; // magic + request type + len
-  io::readBytes(connection, m_netTimeout, sizeof(buf), buf);
-
-  const char *bufPtr = buf;
-  size_t bufLen = sizeof(buf);
-  legacymsg::MessageHeader header;
-  memset(&header, '\0', sizeof(header));
-  legacymsg::unmarshal(bufPtr, bufLen, header);
-
-  if(TPMAGIC != header.magic) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Invalid admin job message: Invalid magic"
-      ": expected=0x" << std::hex << TPMAGIC << " actual=0x" <<
-      header.magic;
-    throw ex;
-  }
-
-  if(TPCONF != header.reqType and TPSTAT != header.reqType) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Invalid admin job message: Invalid request type"
-       ": expected= 0x" << std::hex << TPCONF << " or 0x" << TPSTAT << " actual=0x" <<
-       header.reqType;
-    throw ex;
-  }
-
-  // The length of the message body is checked later, just before it is read in
-  // to memory
-
-  return header;
-}
-
-//------------------------------------------------------------------------------
-// readTapeConfigMsgBody
-//------------------------------------------------------------------------------
-castor::legacymsg::TapeConfigRequestMsgBody
-  castor::tape::tapeserver::daemon::AdminAcceptHandler::readTapeConfigMsgBody(
-    const int connection, const uint32_t len)
-     {
-  char buf[REQBUFSZ];
-
-  if(sizeof(buf) < len) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to read body of job message"
-       ": Maximum body length exceeded"
-       ": max=" << sizeof(buf) << " actual=" << len;
-    throw ex;
-  }
-
-  try {
-    io::readBytes(connection, m_netTimeout, len, buf);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to read body of job message"
-      ": " << ne.getMessage().str();
-    throw ex;
-  }
-
-  legacymsg::TapeConfigRequestMsgBody body;
-  const char *bufPtr = buf;
-  size_t bufLen = sizeof(buf);
-  legacymsg::unmarshal(bufPtr, bufLen, body);
-  return body;
-}
-
-//------------------------------------------------------------------------------
-// readTapeStatMsgBody
-//------------------------------------------------------------------------------
-castor::legacymsg::TapeStatRequestMsgBody
-  castor::tape::tapeserver::daemon::AdminAcceptHandler::readTapeStatMsgBody(
-    const int connection, const uint32_t len)
-     {
-  char buf[REQBUFSZ];
-
-  if(sizeof(buf) < len) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to read body of job message"
-       ": Maximum body length exceeded"
-       ": max=" << sizeof(buf) << " actual=" << len;
-    throw ex;
-  }
-
-  try {
-    io::readBytes(connection, m_netTimeout, len, buf);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to read body of job message"
-      ": " << ne.getMessage().str();
-    throw ex;
-  }
-
-  legacymsg::TapeStatRequestMsgBody body;
-  const char *bufPtr = buf;
-  size_t bufLen = sizeof(buf);
-  legacymsg::unmarshal(bufPtr, bufLen, body);
-  return body;
 }

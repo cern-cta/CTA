@@ -51,11 +51,8 @@ castor::tape::tapeserver::daemon::VdqmAcceptHandler::VdqmAcceptHandler(
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmAcceptHandler::~VdqmAcceptHandler()
   throw() {
-  {
-    log::Param params[] = {
-      log::Param("fd", m_fd)};
-    m_log(LOG_DEBUG, "Closing vdqm listen socket", params);
-  }
+  log::Param params[] = {log::Param("fd", m_fd)};
+  m_log(LOG_DEBUG, "Closing vdqm listen socket", params);
   close(m_fd);
 }
 
@@ -81,21 +78,7 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::fillPollFd(
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
   const struct pollfd &fd)  {
-  {
-    log::Param params[] = {
-      log::Param("fd"        , fd.fd                                     ),
-      log::Param("POLLIN"    , fd.revents & POLLIN     ? "true" : "false"),
-      log::Param("POLLRDNORM", fd.revents & POLLRDNORM ? "true" : "false"),
-      log::Param("POLLRDBAND", fd.revents & POLLRDBAND ? "true" : "false"),
-      log::Param("POLLPRI"   , fd.revents & POLLPRI    ? "true" : "false"),
-      log::Param("POLLOUT"   , fd.revents & POLLOUT    ? "true" : "false"),
-      log::Param("POLLWRNORM", fd.revents & POLLWRNORM ? "true" : "false"),
-      log::Param("POLLWRBAND", fd.revents & POLLWRBAND ? "true" : "false"),
-      log::Param("POLLERR"   , fd.revents & POLLERR    ? "true" : "false"),
-      log::Param("POLLHUP"   , fd.revents & POLLHUP    ? "true" : "false"),
-      log::Param("POLLNVAL"  , fd.revents & POLLNVAL   ? "true" : "false")};
-    m_log(LOG_DEBUG, "VdqmAcceptHandler::handleEvent()", params);
-  }
+  logVdqmAcceptEvent(fd);
 
   checkHandleEventFd(fd.fd);
 
@@ -150,6 +133,36 @@ bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
   m_log(LOG_DEBUG, "Registered the new vdqm connection handler");
 
   return false; // Stay registered with the reactor
+}
+
+//------------------------------------------------------------------------------
+// logVdqmAcceptConnectionEvent
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::VdqmAcceptHandler::logVdqmAcceptEvent(
+  const struct pollfd &fd)  {
+  std::list<log::Param> params;
+  params.push_back(log::Param("fd", fd.fd));
+  params.push_back(log::Param("POLLIN",
+    fd.revents & POLLIN ? "true" : "false"));
+  params.push_back(log::Param("POLLRDNORM",
+    fd.revents & POLLRDNORM ? "true" : "false"));
+  params.push_back(log::Param("POLLRDBAND",
+    fd.revents & POLLRDBAND ? "true" : "false"));
+  params.push_back(log::Param("POLLPRI",
+    fd.revents & POLLPRI ? "true" : "false"));
+  params.push_back(log::Param("POLLOUT",
+    fd.revents & POLLOUT ? "true" : "false"));
+  params.push_back(log::Param("POLLWRNORM",
+    fd.revents & POLLWRNORM ? "true" : "false"));
+  params.push_back(log::Param("POLLWRBAND",
+    fd.revents & POLLWRBAND ? "true" : "false"));
+  params.push_back(log::Param("POLLERR",
+    fd.revents & POLLERR ? "true" : "false"));
+  params.push_back(log::Param("POLLHUP",
+    fd.revents & POLLHUP ? "true" : "false"));
+  params.push_back(log::Param("POLLNVAL",
+    fd.revents & POLLNVAL ? "true" : "false"));
+  m_log(LOG_DEBUG, "I/O event on vdqm listen socket", params);
 }
 
 //------------------------------------------------------------------------------

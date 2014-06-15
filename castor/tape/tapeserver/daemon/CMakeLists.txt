@@ -18,6 +18,7 @@ add_library(castorTapeServerDaemon
   RecallMemoryManager.cpp
   MountSession.cpp
   AdminAcceptHandler.cpp
+  AdminConnectionHandler.cpp
   MountSessionAcceptHandler.cpp
   DriveCatalogue.cpp
   DriveCatalogueEntry.cpp

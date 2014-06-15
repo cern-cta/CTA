@@ -118,6 +118,11 @@ private:
   const int m_netTimeout;
 
   /**
+   * Logs the specifed IO event of the vdqm connection.
+   */
+  void logVdqmConnectionEvent(const struct pollfd &fd);
+
+  /**
    * Throws an exception if the specified file-descriptor is not that of the
    * connection with the client.
    */
@@ -143,8 +148,7 @@ private:
    * daemon.
    * @return The job request from the vdqm.
    */
-  legacymsg::RtcpJobRqstMsgBody readJobMsg(const int fd)
-    ;
+  legacymsg::RtcpJobRqstMsgBody readJobMsg(const int fd);
   
   /**
    * Reads the header of a job message from the specified connection.
@@ -153,8 +157,7 @@ private:
    * daemon.
    * @return The message header.
    */
-  legacymsg::MessageHeader readJobMsgHeader(const int fd)
-    ;
+  legacymsg::MessageHeader readJobMsgHeader(const int fd);
   
   /**
    * Reads the body of a job message from the specified connection.
@@ -165,7 +168,7 @@ private:
    * @return The message body.
    */
   legacymsg::RtcpJobRqstMsgBody readJobMsgBody(const int fd,
-    const uint32_t len) ;
+    const uint32_t len);
 
   /**
    * Writes a job reply message to the specified connection.
@@ -173,8 +176,7 @@ private:
    * @param fd The file descriptor of the connection with the vdqm
    * daemon.
    */
-  void writeJobReplyMsg(const int fd)
-    ;
+  void writeJobReplyMsg(const int fd);
 
 }; // class VdqmConnectionHandler
 
