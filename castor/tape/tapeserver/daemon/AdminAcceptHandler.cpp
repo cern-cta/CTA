@@ -120,7 +120,8 @@ bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
     throw ex;
   }
 
-  m_log(LOG_DEBUG, "Accepted a possible admin connection");
+  log::Param params[] = {log::Param("fd", connection.get())};
+  m_log(LOG_DEBUG, "Accepted a possible admin connection", params);
 
   // Create a new admin connection handler
   std::auto_ptr<AdminConnectionHandler> connectionHandler;
@@ -135,7 +136,7 @@ bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
     throw ex;
   }
 
-  m_log(LOG_DEBUG, "Created a new admin connection handler");
+  m_log(LOG_DEBUG, "Created a new admin connection handler", params);
 
   // Register the new admin connection handler with the reactor
   try {
@@ -145,9 +146,10 @@ bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to register a new admin connection handler"
       ": " << ne.getMessage().str();
+    throw ex;
   }
 
-  m_log(LOG_DEBUG, "Registered the new admin connection handler");
+  m_log(LOG_DEBUG, "Registered the new admin connection handler", params);
 
   return false; // Stay registered with the reactor
 }
@@ -189,8 +191,8 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::checkHandleEventFd(
   const int fd)  {
   if(m_fd != fd) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to accept connection from the admin command"
-      ": Event handler passed wrong file descriptor"
+    ex.getMessage() <<
+      "AdminAcceptHandler passed wrong file descriptor"
       ": expected=" << m_fd << " actual=" << fd;
     throw ex;
   }

@@ -92,10 +92,11 @@ bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
     return false; // Stay registeed with the reactor
   }
 
-  // Accept the connection from the vdqmd daemon
+  // Accept the connection
   castor::utils::SmartFd connection;
   try {
-    connection.reset(io::acceptConnection(fd.fd, 1));
+    const time_t acceptTimeout  = 1; // Timeout in seconds
+    connection.reset(io::acceptConnection(fd.fd, acceptTimeout));
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept a connection from the vdqm daemon"
@@ -103,7 +104,8 @@ bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
     throw ex;
   }
 
-  m_log(LOG_DEBUG, "Accepted a possible vdqm connection");
+  log::Param params[] = {log::Param("fd", connection.get())};
+  m_log(LOG_DEBUG, "Accepted a possible vdqm connection", params);
 
   // Create a new vdqm connection handler
   std::auto_ptr<VdqmConnectionHandler> connectionHandler;
@@ -118,7 +120,7 @@ bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
     throw ex;
   }
 
-  m_log(LOG_DEBUG, "Created a new vdqm connection handler");
+  m_log(LOG_DEBUG, "Created a new vdqm connection handler", params);
 
   // Register the new vdqm connection handler with the reactor
   try {
@@ -128,9 +130,10 @@ bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to register a new vdqm connection handler"
       ": " << ne.getMessage().str();
+    throw ex;
   }
 
-  m_log(LOG_DEBUG, "Registered the new vdqm connection handler");
+  m_log(LOG_DEBUG, "Registered the new vdqm connection handler", params);
 
   return false; // Stay registered with the reactor
 }
@@ -172,8 +175,8 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::checkHandleEventFd(
   const int fd)  {
   if(m_fd != fd) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to accept connection from vdqmd daemon"
-      ": Event handler passed wrong file descriptor"
+    ex.getMessage() <<
+      "VdqmAcceptHandler passed wrong file descriptor"
       ": expected=" << m_fd << " actual=" << fd;
     throw ex;
   }

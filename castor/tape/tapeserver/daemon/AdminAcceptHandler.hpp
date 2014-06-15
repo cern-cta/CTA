@@ -100,14 +100,15 @@ private:
   void logAdminAcceptEvent(const struct pollfd &fd);
   
   /**
-   * Throws an exception if the specified file-descriptor is not that of the
-   * socket listening for admin connections.
+   * Throws an exception if the specified file-descriptor does not match the
+   * file-descriptor of this event handler.
+   *
+   * @param fd The file descriptor to be checked.
    */
-  void checkHandleEventFd(const int fd) ;
+  void checkHandleEventFd(const int fd);
   
   /**
-   * The file descriptor of the socket listening for connections from the vdqmd
-   * daemon.
+   * The file descriptor of the socket listening for admin connections.
    */
   const int m_fd;
 

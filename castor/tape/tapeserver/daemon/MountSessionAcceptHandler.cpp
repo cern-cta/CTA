@@ -29,13 +29,13 @@
 #include "castor/tape/utils/utils.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/tapeserver/daemon/MountSessionAcceptHandler.hpp"
+#include "castor/tape/tapeserver/daemon/MountSessionConnectionHandler.hpp"
 #include "castor/utils/SmartFd.hpp"
 #include "h/common.h"
-#include "h/serrno.h"
 #include "h/Ctape.h"
+#include "h/serrno.h"
+#include "h/vdqm_api.h"
 #include "h/vmgr_constants.h"
-
-#include <vdqm_api.h>
 
 #include <errno.h>
 #include <memory>
@@ -69,6 +69,9 @@ castor::tape::tapeserver::daemon::MountSessionAcceptHandler::MountSessionAcceptH
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::MountSessionAcceptHandler::~MountSessionAcceptHandler()
   throw() {
+  log::Param params[] = {log::Param("fd", m_fd)};
+  m_log(LOG_DEBUG, "Closing mount-session listen socket", params);
+  close(m_fd);
 }
 
 //------------------------------------------------------------------------------
@@ -93,6 +96,8 @@ void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::fillPollFd(
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleEvent(
   const struct pollfd &fd)  {
+  logMountSessionAcceptEvent(fd);
+
   checkHandleEventFd(fd.fd);
 
   // Do nothing if there is no data to read
@@ -105,7 +110,7 @@ bool castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleEvent(
     return false; // Stay registered with the reactor
   }
 
-  // Accept the connection from the admin command
+  // Accept the connection
   castor::utils::SmartFd connection;
   try {
     const time_t acceptTimeout  = 1; // Timeout in seconds
@@ -117,328 +122,82 @@ bool castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleEvent(
     throw ex;
   }
 
-  // Read in the message header
-  const legacymsg::MessageHeader header = readJobMsgHeader(connection.get());
-  
-  // handleIncomingJob() takes ownership of the client connection because in
-  // the good-day scenario it will pass the client connection to the catalogue
-  // of tape drives
-  handleIncomingJob(header, connection.release());
+  log::Param params[] = {log::Param("fd", connection.get())};
+  m_log(LOG_DEBUG, "Accepted a possible mount-session connection", params);
+
+  // Create a new mount-session connection handler
+  std::auto_ptr<MountSessionConnectionHandler> connectionHandler;
+  try {
+    connectionHandler.reset(new MountSessionConnectionHandler(connection.get(),
+      m_reactor, m_log, m_driveCatalogue, m_hostName, m_vdqm, m_vmgr));
+    connection.release();
+  } catch(std::bad_alloc &ba) {
+    castor::exception::BadAlloc ex;
+    ex.getMessage() <<
+      "Failed to allocate a new mount-session connection handler: " <<
+      ba.what();
+    throw ex;
+  }
+
+  m_log(LOG_DEBUG, "Created a new mount-session connection handler", params);
+
+  // Register the new mount-session connection handler with the reactor
+  try {
+    m_reactor.registerHandler(connectionHandler.get());
+    connectionHandler.release();
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() <<
+      "Failed to register a new mount-session connection handler: " <<
+      ne.getMessage().str();
+    throw ex;
+  }
+
+  m_log(LOG_DEBUG, "Registered the new vdqm connection handler", params);
 
   return false; // Stay registered with the reactor
 }
 
 //------------------------------------------------------------------------------
+// logMountSessionAcceptConnectionEvent
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::
+  logMountSessionAcceptEvent(const struct pollfd &fd)  {
+  std::list<log::Param> params;
+  params.push_back(log::Param("fd", fd.fd));
+  params.push_back(log::Param("POLLIN",
+    fd.revents & POLLIN ? "true" : "false"));
+  params.push_back(log::Param("POLLRDNORM",
+    fd.revents & POLLRDNORM ? "true" : "false"));
+  params.push_back(log::Param("POLLRDBAND",
+    fd.revents & POLLRDBAND ? "true" : "false"));
+  params.push_back(log::Param("POLLPRI",
+    fd.revents & POLLPRI ? "true" : "false"));
+  params.push_back(log::Param("POLLOUT",
+    fd.revents & POLLOUT ? "true" : "false"));
+  params.push_back(log::Param("POLLWRNORM",
+    fd.revents & POLLWRNORM ? "true" : "false"));
+  params.push_back(log::Param("POLLWRBAND",
+    fd.revents & POLLWRBAND ? "true" : "false"));
+  params.push_back(log::Param("POLLERR",
+    fd.revents & POLLERR ? "true" : "false"));
+  params.push_back(log::Param("POLLHUP",
+    fd.revents & POLLHUP ? "true" : "false"));
+  params.push_back(log::Param("POLLNVAL",
+    fd.revents & POLLNVAL ? "true" : "false"));
+  m_log(LOG_DEBUG, "I/O event on mount-session listen socket", params);
+}
+
+//------------------------------------------------------------------------------
 // checkHandleEventFd
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::checkHandleEventFd(
-  const int fd)  {
+void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::
+  checkHandleEventFd(const int fd) {
   if(m_fd != fd) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to accept connection from the admin command"
-      ": Event handler passed wrong file descriptor"
+    ex.getMessage() <<
+      "MountSessionAcceptHandler passed wrong file descriptor"
       ": expected=" << m_fd << " actual=" << fd;
     throw ex;
   }
-}
-
-//------------------------------------------------------------------------------
-// logUpdateDriveJobReception
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::logUpdateDriveJobReception(
-  const legacymsg::TapeUpdateDriveRqstMsgBody &job) const throw() {
-  log::Param params[] = {
-    log::Param("drive", job.drive),
-    log::Param("vid", job.vid)};
-  m_log(LOG_INFO, "Received message from mount session to update the status of a drive", params);
-}
-
-//------------------------------------------------------------------------------
-// logLabelJobReception
-//------------------------------------------------------------------------------
-void
-  castor::tape::tapeserver::daemon::MountSessionAcceptHandler::logLabelJobReception(const legacymsg::TapeLabelRqstMsgBody &job) const throw() {
-  log::Param params[] = {
-    log::Param("drive", job.drive),
-    log::Param("vid", job.vid),
-    log::Param("dgn", job.dgn),
-    log::Param("uid", job.uid),
-    log::Param("gid", job.gid)};
-  m_log(LOG_INFO, "Received message to label a tape", params);
-}
-
-//------------------------------------------------------------------------------
-// handleIncomingJob
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingJob(
-  const legacymsg::MessageHeader &header, const int clientConnection) {
-
-  switch(header.reqType) {
-  case UPDDRIVE:
-    // handleIncomingSetVidJob takes ownership of the client connection
-    handleIncomingUpdateDriveJob(header, clientConnection);
-    break;
-  case TPLABEL:
-    // handleIncomingSetVidJob takes ownership of the client connection
-    handleIncomingLabelJob(header, clientConnection);
-    break;
-  default:
-    {
-      // Close the client connection because this method still owns the
-      // connection and has not been able to pass it on
-      close(clientConnection);
-
-      castor::exception::Exception ex;
-      ex.getMessage() << "Unknown request type: " << header.reqType << ".";
-      throw ex;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleTapeStatusBeforeMountStarted
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::checkTapeConsistencyWithVMGR(const std::string& vid, const uint32_t type, const uint32_t mode)
-{
-  if(mode==castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READWRITE) {
-    legacymsg::VmgrTapeInfoMsgBody tapeInfo;
-    m_vmgr.queryTape(vid, tapeInfo);
-    // If the client is the tape gateway and the volume is not marked as BUSY
-    if(type == castor::legacymsg::TapeUpdateDriveRqstMsgBody::CLIENT_TYPE_GATEWAY && !(tapeInfo.status & TAPE_BUSY)) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "The tape gateway is the client and the tape to be mounted is not BUSY: vid=" << vid;
-      throw ex;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleTapeStatusMounted
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::tellVMGRTapeWasMounted(const std::string& vid, const uint32_t mode)
-{
-  switch(mode) {
-    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READ:
-      m_vmgr.tapeMountedForRead(vid);
-      break;
-    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READWRITE:
-      m_vmgr.tapeMountedForWrite(vid);
-      break;
-    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_DUMP:
-      m_vmgr.tapeMountedForRead(vid);
-      break;
-    case castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_NONE:
-      break;
-    default:
-      castor::exception::Exception ex;
-      ex.getMessage() << "Unknown tape mode: " << mode;
-      throw ex;
-      break;
-  }
-}
-
-//------------------------------------------------------------------------------
-// handleIncomingUpdateDriveJob
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingUpdateDriveJob(
-  const legacymsg::MessageHeader &header, const int clientConnection) {
-  castor::utils::SmartFd connection(clientConnection);
-  const char *const task = "handle incoming update drive job";
-  try {
-    // Read message body
-    const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
-    const legacymsg::TapeUpdateDriveRqstMsgBody body =
-      readTapeUpdateDriveRqstMsgBody(connection.get(), bodyLen);
-    logUpdateDriveJobReception(body);
-    const std::string unitName(body.drive);
-    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(unitName);
-    drive.updateVolumeInfo(body);
-
-    const utils::DriveConfig &driveConfig = drive.getConfig();
-
-    switch(body.event) {
-    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED:
-      checkTapeConsistencyWithVMGR(body.vid, body.clientType, body.mode);
-      break;
-    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED:
-      tellVMGRTapeWasMounted(body.vid, body.mode);
-      m_vdqm.tapeMounted(m_hostName, body.drive, driveConfig.dgn, body.vid,
-        drive.getSessionPid());
-      break;
-    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNT_STARTED:
-      break;
-    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNTED:
-      break;
-    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_NONE:
-      break;
-    default:
-      castor::exception::Exception ex;
-      ex.getMessage() << "Unknown tape event: " << body.event;
-      throw ex;
-      break;
-    }    
-    
-    // 0 as return code for the tape config command, as in: "all went fine"
-    legacymsg::writeTapeReplyMsg(m_netTimeout, connection.get(), 0, "");
-    close(connection.release());
-  } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {log::Param("message", ex.getMessage().str())};
-    m_log(LOG_ERR, "Informing mount session of error", params);
-
-    
-    // Inform the client there was an error
-    try {
-      legacymsg::writeTapeReplyMsg(m_netTimeout, connection.get(), 1,
-        ex.getMessage().str());
-    } catch(castor::exception::Exception &ne) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to " << task <<
-        ": Failed to inform the client there was an error: " <<
-        ne.getMessage().str();
-      throw ex;
-    }
-  }    
-}
-
-//------------------------------------------------------------------------------
-// handleIncomingLabelJob
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleIncomingLabelJob(
-  const legacymsg::MessageHeader &header, const int clientConnection) throw() {
-  castor::utils::SmartFd connection(clientConnection);
-  const char *const task = "handle incoming label job";
-
-  try {
-    // Read message body
-    const uint32_t bodyLen = header.lenOrStatus - 3 * sizeof(uint32_t);
-    const legacymsg::TapeLabelRqstMsgBody body = readLabelRqstMsgBody(connection.get(), bodyLen);
-    logLabelJobReception(body);
-
-    // Try to inform the drive catalogue of the reception of the label job
-    //
-    // PLEASE NOTE that this method must keep ownership of the client connection
-    // whilst informing the drive catalogue of the reception of the label job.
-    // If the drive catalogue throws an exception whilst evaluating the drive
-    // state-change then the catalogue will NOT have closed the connection.
-    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(body.drive);
-    drive.receivedLabelJob(body, connection.get());
-
-    // The drive catalogue will now remember the client connection, therefore it
-    // is now safe and necessary for this method to relinquish ownership of the
-    // connection
-    connection.release();
-  } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {log::Param("message", ex.getMessage().str())};
-    m_log(LOG_ERR, "Informing client label-command of error", params);
-
-    // Inform the client there was an error
-    try {
-      legacymsg::writeTapeReplyMsg(m_netTimeout, connection.get(), 1, ex.getMessage().str());
-    } catch(castor::exception::Exception &ne) {
-      castor::exception::Exception ex;
-      ex.getMessage() << "Failed to " << task <<
-        ": Failed to inform the client there was an error: " <<
-        ne.getMessage().str();
-      throw ex;
-    }
-  }
-}
-
-//------------------------------------------------------------------------------
-// readJobMsgHeader
-//------------------------------------------------------------------------------
-castor::legacymsg::MessageHeader
-  castor::tape::tapeserver::daemon::MountSessionAcceptHandler::readJobMsgHeader(
-    const int clientConnection)  {
-  castor::utils::SmartFd connection(clientConnection);
-  
-  // Read in the message header
-  char buf[3 * sizeof(uint32_t)]; // magic + request type + len
-  io::readBytes(connection.get(), m_netTimeout, sizeof(buf), buf);
-
-  const char *bufPtr = buf;
-  size_t bufLen = sizeof(buf);
-  legacymsg::MessageHeader header;
-  memset(&header, '\0', sizeof(header));
-  legacymsg::unmarshal(bufPtr, bufLen, header);
-
-  if(TPMAGIC != header.magic) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Invalid admin job message: Invalid magic"
-      ": expected=0x" << std::hex << TPMAGIC << " actual=0x" <<
-      header.magic;
-    throw ex;
-  }
-
-  // The length of the message body is checked later, just before it is read in
-  // to memory
-
-  connection.release();
-  return header;
-}
-
-//------------------------------------------------------------------------------
-// readTapeUpdateDriveRqstMsgBody
-//------------------------------------------------------------------------------
-castor::legacymsg::TapeUpdateDriveRqstMsgBody
-  castor::tape::tapeserver::daemon::MountSessionAcceptHandler::readTapeUpdateDriveRqstMsgBody(const int connection,
-    const uint32_t len)
-     {
-  char buf[REQBUFSZ];
-
-  if(sizeof(buf) < len) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to read body of job message"
-       ": Maximum body length exceeded"
-       ": max=" << sizeof(buf) << " actual=" << len;
-    throw ex;
-  }
-
-  try {
-    io::readBytes(connection, m_netTimeout, len, buf);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to read body of job message"
-      ": " << ne.getMessage().str();
-    throw ex;
-  }
-
-  legacymsg::TapeUpdateDriveRqstMsgBody body;
-  const char *bufPtr = buf;
-  size_t bufLen = sizeof(buf);
-  legacymsg::unmarshal(bufPtr, bufLen, body);
-  return body;
-}
-
-//------------------------------------------------------------------------------
-// readLabelRqstMsgBody
-//------------------------------------------------------------------------------
-castor::legacymsg::TapeLabelRqstMsgBody
-  castor::tape::tapeserver::daemon::MountSessionAcceptHandler::readLabelRqstMsgBody(const int connection,
-    const uint32_t len)
-     {
-  char buf[REQBUFSZ];
-
-  if(sizeof(buf) < len) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to read body of job message"
-       ": Maximum body length exceeded"
-       ": max=" << sizeof(buf) << " actual=" << len;
-    throw ex;
-  }
-
-  try {
-    io::readBytes(connection, m_netTimeout, len, buf);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to read body of job message"
-      ": " << ne.getMessage().str();
-    throw ex;
-  }
-
-  legacymsg::TapeLabelRqstMsgBody body;
-  const char *bufPtr = buf;
-  size_t bufLen = sizeof(buf);
-  legacymsg::unmarshal(bufPtr, bufLen, body);
-  return body;
 }

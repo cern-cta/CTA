@@ -92,7 +92,7 @@ public:
 private:
 
   /**
-   * The file descriptor of the connection with the vdqm daemon.
+   * The file descriptor of the vdqm connection.
    */
   const int m_fd;
 
@@ -141,42 +141,31 @@ private:
     const throw();
   
   /**
-   * Reads a job message from the specified connection, sends back a positive
-   * acknowledgement and closes the connection.
+   * Reads a job message from the vdqm connection.
    *
-   * @param connection The file descriptor of the connection with the vdqm
-   * daemon.
-   * @return The job request from the vdqm.
+   * @return The job message from the vdqm.
    */
-  legacymsg::RtcpJobRqstMsgBody readJobMsg(const int fd);
+  legacymsg::RtcpJobRqstMsgBody readJobMsg();
   
   /**
-   * Reads the header of a job message from the specified connection.
+   * Reads a message header from the vdqm connection.
    *
-   * @param fd The file descriptor of the connection with the vdqm
-   * daemon.
    * @return The message header.
    */
-  legacymsg::MessageHeader readJobMsgHeader(const int fd);
+  legacymsg::MessageHeader readMsgHeader();
   
   /**
-   * Reads the body of a job message from the specified connection.
+   * Reads the body of a job message from the vdqm connection.
    *
-   * @param fd The file descriptor of the connection with the vdqm
-   * daemon.
    * @param len The length of the message body in bytes.
    * @return The message body.
    */
-  legacymsg::RtcpJobRqstMsgBody readJobMsgBody(const int fd,
-    const uint32_t len);
+  legacymsg::RtcpJobRqstMsgBody readJobMsgBody(const uint32_t len);
 
   /**
-   * Writes a job reply message to the specified connection.
-   *
-   * @param fd The file descriptor of the connection with the vdqm
-   * daemon.
+   * Writes a job reply message to the vdqm connection.
    */
-  void writeJobReplyMsg(const int fd);
+  void writeJobReplyMsg();
 
 }; // class VdqmConnectionHandler
 

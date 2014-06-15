@@ -103,7 +103,7 @@ private:
    * @return       The total length of the header.
    */
   size_t marshalTapeRcReplyMsg(char *const dst, const size_t dstLen,
-    const int rc) ;
+    const int rc);
   
   /**
    * Writes a job reply message to the tape config command connection.
@@ -124,10 +124,12 @@ private:
   void logAdminConnectionEvent(const struct pollfd &fd);
 
   /**
-   * Throws an exception if the specified file-descriptor is not that of the
-   * socket listening for connections from the vdqmd daemon.
+   * Throws an exception if the specified file-descriptor does not match the
+   * file-descriptor of this event handler.
+   *
+   * @param fd The file descriptor to be checked.
    */
-  void checkHandleEventFd(const int fd) ;
+  void checkHandleEventFd(const int fd);
   
   /**
    * Handles the specified request message.
@@ -163,13 +165,11 @@ private:
     const throw();
   
   /**
-   * Reads the header of a job message from the specified connection.
+   * Reads a message header from admin connection.
    *
-   * @param connection The file descriptor of the connection with the vdqm
-   * daemon.
    * @return The message header.
    */
-  legacymsg::MessageHeader readJobMsgHeader(const int connection);
+  legacymsg::MessageHeader readMsgHeader();
   
   /**
    * Reads the body of a job message from the specified connection.
@@ -189,8 +189,7 @@ private:
   legacymsg::TapeStatRequestMsgBody readTapeStatMsgBody(const uint32_t bodyLen);
 
   /**
-   * The file descriptor of the socket listening for connections from the vdqmd
-   * daemon.
+   * The file descriptor of the admin connection.
    */
   const int m_fd;
 

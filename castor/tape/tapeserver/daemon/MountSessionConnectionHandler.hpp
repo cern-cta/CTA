@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/MountSessionAcceptHandler.hpp
+ *         castor/tape/tapeserver/daemon/MountSessionConnectionHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -39,7 +39,7 @@ namespace daemon     {
 /**
  * Handles the events of the socket listening for connection from the mount session
  */
-class MountSessionAcceptHandler: public io::PollEventHandler {
+class MountSessionConnectionHandler: public io::PollEventHandler {
 public:
 
   /**
@@ -53,8 +53,12 @@ public:
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
    */
-  MountSessionAcceptHandler(const int fd, io::PollReactor &reactor,
-    log::Logger &log, DriveCatalogue &driveCatalogue, const std::string &hostName,
+  MountSessionConnectionHandler(
+    const int fd,
+    io::PollReactor &reactor,
+    log::Logger &log,
+    DriveCatalogue &driveCatalogue,
+    const std::string &hostName,
     castor::legacymsg::VdqmProxy & vdqm,
     castor::legacymsg::VmgrProxy & vmgr) throw();
 
@@ -81,28 +85,124 @@ public:
   /**
    * Destructor.
    */
-  ~MountSessionAcceptHandler() throw();
+  ~MountSessionConnectionHandler() throw();
 
 private:
 
   /**
-   * Logs the specifed IO event of the mount-session listen-socket.
+   * Logs the specifed IO event of the mount session connection.
    */
-  void logMountSessionAcceptEvent(const struct pollfd &fd);
+  void logMountSessionConnectionEvent(const struct pollfd &fd);
   
   /**
-   * Throws an exception if the specified file-descriptor does not match the
-   * file-descriptor of this event handler.
-   *
-   * @param fd The file descriptor to be checked.
+   * Throws an exception if the specified file-descriptor is not that of the
+   * socket listening for connections from the mount session.
    */
   void checkHandleEventFd(const int fd);
   
   /**
-   * The file descriptor of the socket listening for mount-session
-   * connections.
+   * Reads a message header from the mount-session connection.
+   *
+   * @return The message header.
+   */
+  legacymsg::MessageHeader readMsgHeader();
+
+  /**
+   * Handles the specified  message.
+   *
+   * @param header The header of the message.
+   */
+  void handleRequest(const legacymsg::MessageHeader &header);
+  
+  /**
+   * Handles an update request.
+   *
+   * @param header The header of the request message.
+   */
+  void handleUpdateRequest(const legacymsg::MessageHeader &header);
+
+  /**
+   * Handles the case when the status of the tape is TAPE_STATUS_MOUNTED in the update drive message
+   * 
+   * @param vid   Volume ID of the tape mounted
+   * @param mode  The mode in which the tape is mounted
+   */
+  void tellVMGRTapeWasMounted(const std::string& vid, const uint32_t mode);
+  
+  /**
+   * Checks that a tape mounted for migration by request of the tapegateway is marked as BUSY in the VMGR
+   * 
+   * @param vid  Volume ID of the tape to be mounted
+   * @param type The client type of this mount session
+   */
+  void checkTapeConsistencyWithVMGR(const std::string& vid, const uint32_t type, const uint32_t mode);
+  
+   /**
+   * Marshals the specified source tape label reply message structure into the
+   * specified destination buffer.
+   *
+   * @param dst    The destination buffer.
+   * @param dstLen The length of the destination buffer.
+   * @param rc     The return code to reply.
+   * @return       The total length of the header.
+   */
+  size_t marshalLabelReplyMsg(char *const dst, const size_t dstLen,
+    const int rc);
+  
+  /**
+   * Writes a job reply message to the mount-session connection.
+   *
+   * @param fd The file descriptor of the connection with the admin command.
+   * @param rc The return code to reply.
+   * 
+   */
+  void writeLabelReplyMsg(const int rc);
+  
+  /**
+   * Logs the reception of the specified job message from the tpconfig command.
+   */
+  void logUpdateDriveJobReception(const legacymsg::TapeUpdateDriveRqstMsgBody &job)
+    const throw();
+
+  /**
+   * Handles a request to label a tape.
+   *
+   * @param header The header of the request message.
+   */
+  void handleLabelRequest(const legacymsg::MessageHeader &header);
+  
+  /**
+   * Logs the reception of the specified job message from the tplabel command.
+   */
+  void logLabelJobReception(const legacymsg::TapeLabelRqstMsgBody &job)
+    const throw();
+  
+  /**
+   * Reads the body of a tape-update message from the mount-session connection.
+   *
+   * @param len The length of the message body in bytes.
+   * @return The message body.
+   */
+  legacymsg::TapeUpdateDriveRqstMsgBody readTapeUpdateDriveRqstMsgBody(
+    const uint32_t len);
+  
+  /**
+   * Reads the body of a label message from the mount-session connection.
+   *
+   * @param len The length of the message body in bytes.
+   * @return The message body.
+   */
+  legacymsg::TapeLabelRqstMsgBody readLabelRqstMsgBody(const uint32_t len);
+
+  /**
+   * The file descriptor of the mount-session connection.
    */
   const int m_fd;
+
+  /**
+   * True if this event handler owns the mount-session connection.
+   */
+  bool m_thisEventHandlerOwnsFd;
 
   /**
    * The reactor to which new Vdqm connection handlers are to be registered.
@@ -142,7 +242,7 @@ private:
    */
   const int m_netTimeout;
 
-}; // class VdqmAcceptHandler
+}; // class VdqmConnectionHandler
 
 } // namespace daemon
 } // namespace tapeserver

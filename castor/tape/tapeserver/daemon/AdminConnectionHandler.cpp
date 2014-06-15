@@ -65,7 +65,8 @@ castor::tape::tapeserver::daemon::AdminConnectionHandler::AdminConnectionHandler
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::AdminConnectionHandler::~AdminConnectionHandler() throw() {
+castor::tape::tapeserver::daemon::AdminConnectionHandler::
+  ~AdminConnectionHandler() throw() {
   log::Param params[] = {log::Param("fd", m_fd)};
   m_log(LOG_DEBUG, "Closing admin connection", params);
   close(m_fd);
@@ -97,6 +98,9 @@ bool castor::tape::tapeserver::daemon::AdminConnectionHandler::handleEvent(
 
   checkHandleEventFd(fd.fd);
 
+  std::list<log::Param> params;
+  params.push_back(log::Param("fd", m_fd));
+
   // Do nothing if there is no data to read
   //
   // POLLIN is unfortunately not the logical or of POLLRDNORM and POLLRDBAND
@@ -108,13 +112,15 @@ bool castor::tape::tapeserver::daemon::AdminConnectionHandler::handleEvent(
   }
 
   try {
-    const legacymsg::MessageHeader header = readJobMsgHeader(fd.fd);
+    const legacymsg::MessageHeader header = readMsgHeader();
     handleRequest(header);
   } catch(castor::exception::Exception &ex) {
-    log::Param params[] = {log::Param("message", ex.getMessage().str())};
+    params.push_back(log::Param("message", ex.getMessage().str()));
     m_log(LOG_ERR, "Failed to handle IO event on admin connection", params);
   }
 
+  m_log(LOG_DEBUG, "Asking reactor to remove and delete"
+    " AdminConnectionHandler", params);
   return true; // Ask reactor to remove and delete this handler
 }
 
@@ -155,8 +161,8 @@ void castor::tape::tapeserver::daemon::AdminConnectionHandler::
   checkHandleEventFd(const int fd)  {
   if(m_fd != fd) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to handle admin connection"
-      ": Event handler passed wrong file descriptor"
+    ex.getMessage() <<
+      "AdminConnectionHandler passed wrong file descriptor"
       ": expected=" << m_fd << " actual=" << fd;
     throw ex;
   }
@@ -368,11 +374,10 @@ void
 // readJobMsgHeader
 //------------------------------------------------------------------------------
 castor::legacymsg::MessageHeader
-  castor::tape::tapeserver::daemon::AdminConnectionHandler::readJobMsgHeader(
-    const int connection)  {
+  castor::tape::tapeserver::daemon::AdminConnectionHandler::readMsgHeader() {
   // Read in the message header
   char buf[3 * sizeof(uint32_t)]; // magic + request type + len
-  io::readBytes(connection, m_netTimeout, sizeof(buf), buf);
+  io::readBytes(m_fd, m_netTimeout, sizeof(buf), buf);
 
   const char *bufPtr = buf;
   size_t bufLen = sizeof(buf);
