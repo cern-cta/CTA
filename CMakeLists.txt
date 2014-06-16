@@ -210,6 +210,7 @@ if (${COMPILE_PACKAGING} STREQUAL "1")
    "${PROJECT_NAME}-${CASTOR_VERSION}-${CASTOR_RELEASE}")
   message (STATUS
     "Setting package file name to: ${CPACK_SOURCE_PACKAGE_FILE_NAME}")
+  set(CPACK_SOURCE_IGNORE_FILES "/.git/")
   include(CPack)
   include(cmake/UseRPMTools.cmake)
   if (RPMTools_FOUND)
