@@ -36,6 +36,13 @@ Description: castor (Cern Advanced STORage system)
  DB Administration tools
 XBS-Obsoletes: castor-rmmaster-client
 
+Package: castor-dbSQL-autotests
+Architecture: any
+Depends: oracle-instantclient-sqlplus
+Description: castor (Cern Advanced STORage system)
+  Packaging of the SQL sources for automated tests in continuous integration.
+  NOT FOR PRODUCTION.
+
 Package: castor-job
 Architecture: any
 Depends: logrotate, castor-lib = %{version}-%{release}

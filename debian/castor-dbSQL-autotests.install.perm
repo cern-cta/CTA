@@ -1,0 +1,9 @@
+%attr(0755,root,root) usr/share/castor-%{castorVersion}-%{castorRelease}/sql/cns_oracle_create.sql
+%attr(0755,root,root) usr/share/castor-%{castorVersion}-%{castorRelease}/sql/cupv_oracle_create.sql
+%attr(0755,root,root) usr/share/castor-%{castorVersion}-%{castorRelease}/sql/drop_oracle_schema.sql
+%attr(0755,root,root) usr/share/castor-%{castorVersion}-%{castorRelease}/sql/stager_oracle_create.sql
+%attr(0755,root,root) usr/share/castor-%{castorVersion}-%{castorRelease}/sql/vdqm_oracle_create.sql
+%attr(0755,root,root) usr/share/castor-%{castorVersion}-%{castorRelease}/sql/vmgr_oracle_create.sql
+%config etc/castor/SQLSchemaTests.conf
+%attr(0755,root,root) usr/bin/castor-SQLSchemaTests
+
