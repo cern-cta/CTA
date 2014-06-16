@@ -24,7 +24,7 @@
 
 #include "castor/io/io.hpp"
 #include "castor/io/PollEventHandler.hpp"
-#include "castor/io/PollReactor.hpp"
+#include "castor/io/ZMQReactor.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
@@ -45,7 +45,7 @@ namespace daemon     {
 /**
  * Handles the events of a connection with the vdqmd daemon.
  */
-class VdqmConnectionHandler: public io::PollEventHandler {
+class VdqmConnectionHandler: public io::ZMQPollEventHandler {
 public:
 
   /**
@@ -60,7 +60,7 @@ public:
    */
   VdqmConnectionHandler(
     const int fd,
-    io::PollReactor &reactor,
+    io::ZMQReactor &reactor,
     log::Logger &log,
     DriveCatalogue &driveCatalogue) throw();
 
@@ -73,14 +73,14 @@ public:
    * Fills the specified poll file-descriptor ready to be used in a call to
    * poll().
    */
-  void fillPollFd(struct pollfd &fd) throw();
+  void fillPollFd(zmq::pollitem_t &fd) throw();
 
   /**
    * Handles the specified event.
    *
    * @param fd The poll file-descriptor describing the event.
    */
-  bool handleEvent(const struct pollfd &fd) ;
+  bool handleEvent(const zmq::pollitem_t &fd) ;
 
   /**
    * Destructor.
@@ -99,7 +99,7 @@ private:
   /**
    * The reactor with which this event handler is registered.
    */
-  io::PollReactor &m_reactor;
+  io::ZMQReactor &m_reactor;
 
   /**
    * The object representing the API of the CASTOR logging system.
@@ -120,7 +120,7 @@ private:
   /**
    * Logs the specifed IO event of the vdqm connection.
    */
-  void logVdqmConnectionEvent(const struct pollfd &fd);
+  void logVdqmConnectionEvent(const zmq::pollitem_t &fd);
 
   /**
    * Throws an exception if the specified file-descriptor is not that of the

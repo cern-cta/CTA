@@ -23,7 +23,7 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/io/PollReactorImpl.hpp"
+#include "castor/io/ZMQReactor.hpp"
 #include "castor/legacymsg/NsProxy_TapeAlwaysEmptyFactory.hpp"
 #include "castor/legacymsg/RmcProxyTcpIpFactory.hpp"
 #include "castor/legacymsg/TapeserverProxyTcpIpFactory.hpp"
@@ -115,12 +115,12 @@ static void logTpconfigLine(castor::log::Logger &log,
 //------------------------------------------------------------------------------
 static int exceptionThrowingMain(const int argc, char **const argv, castor::log::Logger &log) {
   using namespace castor::tape::tapeserver::daemon;
-
+  
   const std::string vdqmHostName =
     castor::common::CastorConfiguration::getConfig().getConfEntString("VDQM", "HOST");
   const std::string vmgrHostName =
     castor::common::CastorConfiguration::getConfig().getConfEntString("VMGR", "HOST");
-
+  zmq::context_t ctx;
   // Parse /etc/castor/TPCONFIG
   castor::tape::utils::TpconfigLines tpconfigLines;
   castor::tape::utils::parseTpconfigFile("/etc/castor/TPCONFIG", tpconfigLines);
@@ -137,7 +137,8 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
   castor::legacymsg::NsProxy_TapeAlwaysEmptyFactory nsFactory;
 
   // Create the poll() reactor
-  castor::io::PollReactorImpl reactor(log);
+  //castor::io::PollReactorImpl reactor(log);
+  castor::io::ZMQReactor reactor(log,ctx);
 
   // Create the object providing utilities for working with UNIX capabilities
   CapabilityUtilsImpl capUtils;

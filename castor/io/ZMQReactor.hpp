@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/io/PollReactorImpl.hpp
+ *                ZMQReactor.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,46 +21,39 @@
  *****************************************************************************/
 
 #pragma once
-
-#include "castor/io/PollReactor.hpp"
 #include "castor/log/Logger.hpp"
-
-#include <map>
-#include <poll.h>
+#include "castor/io/ZMQPollEventHandler.hpp"
+#include "zmq/zmqcastor.hpp"
+#include <vector>
+#include <utility>
 
 namespace castor {
 namespace io {
-
-/**
- * Concrete implementation of the a reactor that wraps the poll() system call.
- *
- * This class is part of an implementation of the Reactor architecture pattern
- * described in the following book:
- *
- *    Pattern-Oriented Software Architecture Volume 2
- *    Patterns for Concurrent and Networked Objects
- *    Authors: Schmidt, Stal, Rohnert and Buschmann
- *    Publication date: 2000
- *    ISBN 0-471-60695-2
- */
-class PollReactorImpl: public PollReactor {
+  /**
+   * This reactor wraps the poll() system call.
+   *
+   * This class is part of an implementation of the Reactor architecture pattern
+o   * described in the following book:
+   *
+   *    Pattern-Oriented Software Architecture Volume 2
+   *    Patterns for Concurrent and Networked Objects
+   *    Authors: Schmidt, Stal, Rohnert and Buschmann
+   *    Publication date: 2000
+   *    ISBN 0-471-60695-2
+   */
+class ZMQReactor {
 public:
+
   /**
    * Constructor.
-   *
-   * @param log The object representing the API of the CASTOR logging system.
    */
-  PollReactorImpl(log::Logger &log) throw();
+  ZMQReactor(log::Logger& log,zmq::context_t& ctx);
 
-  /**
-   * Destructor.
-   */
-  ~PollReactorImpl() throw();
-
+  ~ZMQReactor();
   /**
    * Removes and deletes all of the event handlers registered with the reactor.
    */
-  void clear() throw();
+  void clear();
 
   /**
    * Registers the specified handler.
@@ -72,67 +65,63 @@ public:
    * MUST be allocated on the heap because the reactor will own the handler
    * and therefore delete it as needed.
    */
-  void registerHandler(PollEventHandler *const handler)
-    ;
+  void registerHandler(ZMQPollEventHandler *const handler);
 
   /**
    * Handles any pending events.
    *
    * @param timeout Timeout in milliseconds.
    */
-  void handleEvents(const int timeout) ;
-
+  void handleEvents(const int timeout);
 private:
-
-  /**
-   * Object representing the API of the CASTOR logging system.
-   */
-  log::Logger &m_log;
-
-  /**
-   * Type used to map file descriptor to event handler.
-   */
-  typedef std::map<int, PollEventHandler*> HandlerMap;
-
-  /**
-   * Map of file descriptor to registered event handler.
-   */
-  HandlerMap m_handlers;
-
-  /**
+    /**
    * Allocates and builds the array of file descriptors to be passed to poll().
    *
-   * @param nfds Output parameter: The number of elements in the array.
    * @return The array of file descriptors.  Please note that is the
    * responsibility of the caller to delete the array.
    */
-  struct pollfd *buildPollFds(nfds_t &nfds) ;
-
+  std::vector<zmq::pollitem_t> buildPollFds() const ;
+  
+  /**
+   * Returns the event handler associated with the specified integer
+   * file-descriptor (null if there no handler associated, if ti happens = bug)
+   */
+  ZMQPollEventHandler*  findHandler(const zmq::pollitem_t&) const;
+  
   /**
    * Dispatches the appropriate event handlers based on the specified result
    * from poll().
    */
-  void dispatchEventHandlers(const struct pollfd *const fds, const nfds_t nfds)
-    ;
-
-  /**
-   * Returns the event handler associated with the specified integer
-   * file-descriptor.
-   */
-  PollEventHandler *findHandler(const int fd)
-    ;
-
+  void dispatchEventHandlers(const std::vector<zmq::pollitem_t>& pollFD);
+  
   /**
    * Removes the specified handler from the reactor.  This method effectively
    * does the opposite of registerHandler().
    *
    * @param handler The handler to be removed.
    */
-  void removeHandler(PollEventHandler *const handler)
-    ;
+  void removeHandler(ZMQPollEventHandler *const handler);
+  
+  /**
+   * Type used to map file descriptor to event handler.
+   */
+  typedef std::vector<std::pair<zmq::pollitem_t, ZMQPollEventHandler*> > HandlerMap;
+  
+  /**
+   * Map of file descriptor to registered event handler.
+   */
+  HandlerMap  m_handlers;  
+  
+  zmq::context_t& m_context;
+  
+  /**
+   * Object representing the API of the CASTOR logging system.
+   */
+  log::Logger& m_log;
+}; // class ZMQReactor
 
-}; // class PollReactorImpl
 
 } // namespace io
 } // namespace castor
+
 

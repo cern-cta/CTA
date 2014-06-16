@@ -37,7 +37,7 @@ public:
   
   FakeSingleTapeReadThread(castor::tape::drives::DriveInterface& drive,
     castor::legacymsg::RmcProxy & rmc,
-    castor::tape::tapeserver::daemon::GlobalStatusReporter & gsr,
+    castor::tape::tapeserver::daemon::TapeServerReporter & gsr,
     const castor::tape::tapeserver::client::ClientInterface::VolumeInfo& volInfo, 
      castor::tape::tapeserver::daemon::CapabilityUtils& cap,
     castor::log::LogContext & lc):
@@ -76,7 +76,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   volume.labelObsolete="AUL";
   volume.vid="V12345";
   volume.volumeMode=castor::tape::tapegateway::READ;
-  castor::tape::tapeserver::daemon::GlobalStatusReporter gsr(initialProcess,
+  castor::tape::tapeserver::daemon::TapeServerReporter gsr(initialProcess,
   utils::DriveConfig(),"0.0.0.0",volume,lc);
   castor::tape::tapeserver::daemon::CapabilityUtilsDummy cap;
   FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, volume, cap,lc);
@@ -134,7 +134,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   volume.vid="V12345";
   volume.volumeMode=castor::tape::tapegateway::READ;
   castor::tape::tapeserver::daemon::CapabilityUtilsDummy cap;
-  castor::tape::tapeserver::daemon::GlobalStatusReporter gsr(initialProcess,  
+  castor::tape::tapeserver::daemon::TapeServerReporter gsr(initialProcess,  
   utils::DriveConfig(),"0.0.0.0",volume,lc);  
   FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, volume,cap, lc);
   

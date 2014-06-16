@@ -23,7 +23,7 @@
 #pragma once
 
 #include "castor/io/PollEventHandler.hpp"
-#include "castor/io/PollReactor.hpp"
+#include "castor/io/ZMQReactor.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
@@ -43,7 +43,7 @@ namespace daemon     {
  * Handles the events of the socket listening for connection from the admin
  * commands.
  */
-class AdminConnectionHandler: public io::PollEventHandler {
+class AdminConnectionHandler: public io::ZMQPollEventHandler {
 public:
 
   /**
@@ -60,22 +60,17 @@ public:
    */
   AdminConnectionHandler(
     const int fd,
-    io::PollReactor &reactor,
+    io::ZMQReactor &reactor,
     log::Logger &log,
     legacymsg::VdqmProxy &vdqm,
     DriveCatalogue &driveCatalogue,
     const std::string &hostName) throw();
 
   /**
-   * Returns the integer file descriptor of this event handler.
-   */
-  int getFd() throw();
-
-  /**
    * Fills the specified poll file-descriptor ready to be used in a call to
    * poll().
    */
-  void fillPollFd(struct pollfd &fd) throw();
+  void fillPollFd(zmq::pollitem_t &fd) throw();
 
   /**
    * Handles the specified event.
@@ -84,7 +79,7 @@ public:
    * @return true if the event handler should be removed from and deleted by
    * the reactor.
    */
-  bool handleEvent(const struct pollfd &fd);
+  bool handleEvent(const zmq::pollitem_t &fd);
 
   /**
    * Destructor.
@@ -121,7 +116,7 @@ private:
   /**
    * Logs the specifed IO event of the admin connection.
    */
-  void logAdminConnectionEvent(const struct pollfd &fd);
+  void logAdminConnectionEvent(const zmq::pollitem_t &fd);
 
   /**
    * Throws an exception if the specified file-descriptor does not match the
@@ -196,7 +191,7 @@ private:
   /**
    * The reactor to which new Vdqm connection handlers are to be registered.
    */
-  io::PollReactor &m_reactor;
+  io::ZMQReactor &m_reactor;
 
   /**
    * The object representing the API of the CASTOR logging system.

@@ -24,7 +24,7 @@
 
 #include "castor/io/io.hpp"
 #include "castor/io/PollEventHandler.hpp"
-#include "castor/io/PollReactor.hpp"
+#include "castor/io/ZMQReactor.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
@@ -38,7 +38,7 @@ namespace rmc {
 /**
  * Handles the events of a client connection.
  */
-class ConnectionHandler: public io::PollEventHandler {
+class ConnectionHandler: public io::ZMQPollEventHandler {
 public:
 
   /**
@@ -50,7 +50,7 @@ public:
    */
   ConnectionHandler(
     const int fd,
-    io::PollReactor &reactor,
+    io::ZMQReactor &reactor,
     log::Logger &log) throw();
 
   /**
@@ -62,14 +62,14 @@ public:
    * Fills the specified poll file-descriptor ready to be used in a call to
    * poll().
    */
-  void fillPollFd(struct pollfd &fd) throw();
+  void fillPollFd(zmq::pollitem_t &fd) throw();
 
   /**
    * Handles the specified event.
    *
    * @param fd The poll file-descriptor describing the event.
    */
-  bool handleEvent(const struct pollfd &fd) ;
+  bool handleEvent(const zmq::pollitem_t &fd) ;
 
   /**
    * Destructor.
@@ -88,7 +88,7 @@ private:
   /**
    * The reactor with which this event handler is registered.
    */
-  io::PollReactor &m_reactor;
+  io::ZMQReactor &m_reactor;
 
   /**
    * The object representing the API of the CASTOR logging system.

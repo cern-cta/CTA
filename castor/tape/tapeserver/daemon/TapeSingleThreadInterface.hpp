@@ -22,7 +22,7 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   // Forward declaration
-  class GlobalStatusReporter;
+  class TapeServerReporter;
   /** 
    * This class is the base class for the 2 classes that will be executing 
    * all tape-{read|write} tasks. The template parameter Task is the type of 
@@ -50,7 +50,7 @@ protected:
   castor::legacymsg::RmcProxy & m_rmc;
   
   /** Reference to the Global reporting interface */
-  GlobalStatusReporter & m_gsr;
+  TapeServerReporter & m_gsr;
   
   ///The volumeID of the tape on which we want to operate  
   const std::string m_vid;
@@ -163,7 +163,7 @@ public:
    */
   TapeSingleThreadInterface(castor::tape::drives::DriveInterface & drive,
     castor::legacymsg::RmcProxy & rmc,
-    GlobalStatusReporter & gsr,
+    TapeServerReporter & gsr,
     const client::ClientInterface::VolumeInfo& volInfo,
     CapabilityUtils &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
     m_drive(drive), m_rmc(rmc), m_gsr(gsr), m_vid(volInfo.vid), m_logContext(lc),

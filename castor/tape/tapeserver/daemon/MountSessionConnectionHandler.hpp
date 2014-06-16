@@ -23,7 +23,7 @@
 #pragma once
 
 #include "castor/io/PollEventHandler.hpp"
-#include "castor/io/PollReactor.hpp"
+#include "castor/io/ZMQReactor.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
@@ -39,7 +39,7 @@ namespace daemon     {
 /**
  * Handles the events of the socket listening for connection from the mount session
  */
-class MountSessionConnectionHandler: public io::PollEventHandler {
+class MountSessionConnectionHandler: public io::ZMQPollEventHandler {
 public:
 
   /**
@@ -55,7 +55,7 @@ public:
    */
   MountSessionConnectionHandler(
     const int fd,
-    io::PollReactor &reactor,
+    io::ZMQReactor &reactor,
     log::Logger &log,
     DriveCatalogue &driveCatalogue,
     const std::string &hostName,
@@ -71,7 +71,7 @@ public:
    * Fills the specified poll file-descriptor ready to be used in a call to
    * poll().
    */
-  void fillPollFd(struct pollfd &fd) throw();
+  void fillPollFd(zmq::pollitem_t &fd) throw();
 
   /**
    * Handles the specified event.
@@ -80,7 +80,7 @@ public:
    * @return true if the event handler should be removed from and deleted by
    * the reactor.
    */
-  bool handleEvent(const struct pollfd &fd);
+  bool handleEvent(const zmq::pollitem_t &fd);
 
   /**
    * Destructor.
@@ -92,7 +92,7 @@ private:
   /**
    * Logs the specifed IO event of the mount session connection.
    */
-  void logMountSessionConnectionEvent(const struct pollfd &fd);
+  void logMountSessionConnectionEvent(const zmq::pollitem_t &fd);
   
   /**
    * Throws an exception if the specified file-descriptor is not that of the
@@ -207,7 +207,7 @@ private:
   /**
    * The reactor to which new Vdqm connection handlers are to be registered.
    */
-  io::PollReactor &m_reactor;
+  io::ZMQReactor &m_reactor;
 
   /**
    * The object representing the API of the CASTOR logging system.

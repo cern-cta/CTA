@@ -23,7 +23,7 @@
 #pragma once
 
 #include "castor/legacymsg/RmcProxyFactory.hpp"
-
+#include "castor/log/Logger.hpp"
 namespace castor {
 namespace legacymsg {
 

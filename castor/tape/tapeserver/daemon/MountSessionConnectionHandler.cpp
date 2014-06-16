@@ -49,7 +49,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::MountSessionConnectionHandler::MountSessionConnectionHandler(
-  const int fd, io::PollReactor &reactor, log::Logger &log,
+  const int fd, io::ZMQReactor &reactor, log::Logger &log,
   DriveCatalogue &driveCatalogue, const std::string &hostName,
   castor::legacymsg::VdqmProxy & vdqm,
   castor::legacymsg::VmgrProxy & vmgr) throw():
@@ -86,34 +86,23 @@ int castor::tape::tapeserver::daemon::MountSessionConnectionHandler::getFd() thr
 //------------------------------------------------------------------------------
 // fillPollFd
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionConnectionHandler::fillPollFd(
-  struct pollfd &fd) throw() {
+void castor::tape::tapeserver::daemon::MountSessionConnectionHandler::fillPollFd(zmq::pollitem_t &fd) throw() {
   fd.fd = m_fd;
-  fd.events = POLLRDNORM;
   fd.revents = 0;
+  fd.socket = NULL;
 }
 
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::MountSessionConnectionHandler::handleEvent(
-  const struct pollfd &fd)  {
+  const zmq::pollitem_t &fd)  {
   logMountSessionConnectionEvent(fd);
 
   checkHandleEventFd(fd.fd);
 
   std::list<log::Param> params;
   params.push_back(log::Param("fd", m_fd));
-
-  // Do nothing if there is no data to read
-  //
-  // POLLIN is unfortunately not the logical or of POLLRDNORM and POLLRDBAND
-  // on SLC 5.  I therefore replaced POLLIN with the logical or.  I also
-  // added POLLPRI into the mix to cover all possible types of read event.
-  if(0 == (fd.revents & POLLRDNORM) && 0 == (fd.revents & POLLRDBAND) &&
-    0 == (fd.revents & POLLPRI)) {
-    return false; // Stay registered with the reactor
-  }
 
   try {
     const legacymsg::MessageHeader header = readMsgHeader();
@@ -133,7 +122,7 @@ bool castor::tape::tapeserver::daemon::MountSessionConnectionHandler::handleEven
 // logMountSessionConnectionEvent
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::MountSessionConnectionHandler::
-  logMountSessionConnectionEvent(const struct pollfd &fd) {
+  logMountSessionConnectionEvent(const zmq::pollitem_t &fd) {
   std::list<log::Param> params;
   params.push_back(log::Param("fd", fd.fd));
   params.push_back(log::Param("POLLIN",

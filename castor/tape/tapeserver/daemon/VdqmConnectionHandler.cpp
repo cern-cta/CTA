@@ -29,7 +29,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmConnectionHandler::VdqmConnectionHandler(
   const int fd,
-  io::PollReactor &reactor,
+  io::ZMQReactor &reactor,
   log::Logger &log,
   DriveCatalogue &driveCatalogue) throw():
     m_fd(fd),
@@ -59,33 +59,23 @@ int castor::tape::tapeserver::daemon::VdqmConnectionHandler::getFd() throw() {
 //------------------------------------------------------------------------------
 // fillPollFd
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmConnectionHandler::fillPollFd(struct pollfd &fd) throw() {
+void castor::tape::tapeserver::daemon::VdqmConnectionHandler::fillPollFd(zmq::pollitem_t &fd) throw() {
   fd.fd = m_fd;
-  fd.events = POLLRDNORM;
   fd.revents = 0;
+  fd.socket = NULL;
 }
 
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
-  const struct pollfd &fd)  {
+  const zmq::pollitem_t &fd)  {
   logVdqmConnectionEvent(fd);
 
   checkHandleEventFd(fd.fd);
 
   std::list<log::Param> params;
   params.push_back(log::Param("fd", m_fd));
-
-  // Do nothing if there is no data to read
-  //
-  // POLLIN is unfortuntaley not the logical or of POLLRDNORM and POLLRDBAND
-  // on SLC 5.  I therefore replaced POLLIN with the logical or.  I also
-  // added POLLPRI into the mix to cover all possible types of read event.
-  if(0 == (fd.revents & POLLRDNORM) && 0 == (fd.revents & POLLRDBAND) &&
-    0 == (fd.revents & POLLPRI)) {
-    return false; // Stay registered with the reactor
-  }
 
   if(!connectionIsAuthorized()) {
     return true; // Ask reactor to remove and delete this handler
@@ -111,7 +101,7 @@ bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
 // logVdqmConnectionEvent 
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmConnectionHandler::
-  logVdqmConnectionEvent(const struct pollfd &fd)  {
+  logVdqmConnectionEvent(const zmq::pollitem_t &fd)  {
   std::list<log::Param> params;
   params.push_back(log::Param("fd", fd.fd));
   params.push_back(log::Param("POLLIN",

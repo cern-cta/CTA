@@ -28,7 +28,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::rmc::ConnectionHandler::ConnectionHandler(
-  const int fd, io::PollReactor &reactor, log::Logger &log) throw():
+  const int fd, io::ZMQReactor &reactor, log::Logger &log) throw():
     m_fd(fd),
     m_reactor(reactor),
     m_log(log),
@@ -55,16 +55,16 @@ int castor::tape::rmc::ConnectionHandler::getFd() throw() {
 //------------------------------------------------------------------------------
 // fillPollFd
 //------------------------------------------------------------------------------
-void castor::tape::rmc::ConnectionHandler::fillPollFd(struct pollfd &fd) throw() {
+void castor::tape::rmc::ConnectionHandler::fillPollFd(zmq::pollitem_t &fd) throw() {
   fd.fd = m_fd;
-  fd.events = POLLRDNORM;
   fd.revents = 0;
+  fd.socket = NULL;
 }
 
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
-bool castor::tape::rmc::ConnectionHandler::handleEvent(const struct pollfd &fd)  {
+bool castor::tape::rmc::ConnectionHandler::handleEvent(const zmq::pollitem_t &fd)  {
   std::list<log::Param> params;
   params.push_back(log::Param("fd"        , fd.fd                                     ));
   params.push_back(log::Param("POLLIN"    , fd.revents & POLLIN     ? "true" : "false"));
@@ -81,15 +81,6 @@ bool castor::tape::rmc::ConnectionHandler::handleEvent(const struct pollfd &fd) 
 
   checkHandleEventFd(fd.fd);
 
-  // Do nothing if there is no data to read
-  //
-  // POLLIN is unfortuntaley not the logical or of POLLRDNORM and POLLRDBAND
-  // on SLC 5.  I therefore replaced POLLIN with the logical or.  I also
-  // added POLLPRI into the mix to cover all possible types of read event.
-  if(0 == (fd.revents & POLLRDNORM) && 0 == (fd.revents & POLLRDBAND) &&
-    0 == (fd.revents & POLLPRI)) {
-    return false; // Stay registered with the reactor
-  }
 
   if(!connectionIsAuthorized()) {
     return true; // Ask reactor to remove and delete this handler

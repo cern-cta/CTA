@@ -28,7 +28,7 @@
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/exception/NoEntry.hpp"
-#include "castor/io/PollReactor.hpp"
+#include "castor/io/ZMQReactor.hpp"
 #include "castor/legacymsg/NsProxyFactory.hpp"
 #include "castor/legacymsg/RmcProxyFactory.hpp"
 #include "castor/legacymsg/TapeserverProxyFactory.hpp"
@@ -90,7 +90,7 @@ public:
     legacymsg::RmcProxyFactory &rmcFactory,
     legacymsg::TapeserverProxyFactory &tapeserverProxyFactory,
     legacymsg::NsProxyFactory &nsProxyFactory,
-    io::PollReactor &reactor,
+    io::ZMQReactor &reactor,
     CapabilityUtils &capUtils) throw(castor::exception::Exception);
 
   /**
@@ -397,7 +397,7 @@ protected:
    * The reactor responsible for dispatching the file-descriptor event-handlers
    * of the tape server daemon.
    */
-  io::PollReactor &m_reactor;
+  io::ZMQReactor &m_reactor;
 
   /**
    * Object providing utilities for working UNIX capabilities.

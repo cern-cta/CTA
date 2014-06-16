@@ -36,7 +36,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmAcceptHandler::VdqmAcceptHandler(
   const int fd,
-  io::PollReactor &reactor,
+  io::ZMQReactor &reactor,
   log::Logger &log,
   DriveCatalogue &driveCatalogue)
   throw():
@@ -66,31 +66,20 @@ int castor::tape::tapeserver::daemon::VdqmAcceptHandler::getFd() throw() {
 //------------------------------------------------------------------------------
 // fillPollFd
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmAcceptHandler::fillPollFd(
-  struct pollfd &fd) throw() {
+void castor::tape::tapeserver::daemon::VdqmAcceptHandler::fillPollFd(zmq::pollitem_t &fd) throw() {
   fd.fd = m_fd;
-  fd.events = POLLRDNORM;
   fd.revents = 0;
+  fd.socket = NULL;
 }
 
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
-  const struct pollfd &fd)  {
+  const zmq::pollitem_t &fd)  {
   logVdqmAcceptEvent(fd);
 
   checkHandleEventFd(fd.fd);
-
-  // Do nothing if there is no data to read
-  //
-  // POLLIN is unfortuntaley not the logical or of POLLRDNORM and POLLRDBAND
-  // on SLC 5.  I therefore replaced POLLIN with the logical or.  I also
-  // added POLLPRI into the mix to cover all possible types of read event.
-  if(0 == (fd.revents & POLLRDNORM) && 0 == (fd.revents & POLLRDBAND) &&
-    0 == (fd.revents & POLLPRI)) {
-    return false; // Stay registeed with the reactor
-  }
 
   // Accept the connection
   castor::utils::SmartFd connection;
@@ -142,7 +131,7 @@ bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
 // logVdqmAcceptConnectionEvent
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmAcceptHandler::logVdqmAcceptEvent(
-  const struct pollfd &fd)  {
+  const zmq::pollitem_t &fd)  {
   std::list<log::Param> params;
   params.push_back(log::Param("fd", fd.fd));
   params.push_back(log::Param("POLLIN",

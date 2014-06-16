@@ -35,7 +35,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::rmc::AcceptHandler::AcceptHandler(
-  const int fd, io::PollReactor &reactor, log::Logger &log)
+  const int fd, io::ZMQReactor &reactor, log::Logger &log)
   throw(): m_fd(fd), m_reactor(reactor), m_log(log) {
 }
 
@@ -62,18 +62,17 @@ int castor::tape::rmc::AcceptHandler::getFd() throw() {
 //------------------------------------------------------------------------------
 // fillPollFd
 //------------------------------------------------------------------------------
-void castor::tape::rmc::AcceptHandler::fillPollFd(
-  struct pollfd &fd) throw() {
+void castor::tape::rmc::AcceptHandler::fillPollFd(zmq::pollitem_t &fd) throw() {
   fd.fd = m_fd;
-  fd.events = POLLRDNORM;
   fd.revents = 0;
+  fd.socket = NULL;
 }
 
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::rmc::AcceptHandler::handleEvent(
-  const struct pollfd &fd)  {
+  const zmq::pollitem_t &fd)  {
   {
     log::Param params[] = {
       log::Param("fd"        , fd.fd                                     ),
@@ -91,16 +90,6 @@ bool castor::tape::rmc::AcceptHandler::handleEvent(
   }
 
   checkHandleEventFd(fd.fd);
-
-  // Do nothing if there is no data to read
-  //
-  // POLLIN is unfortuntaley not the logical or of POLLRDNORM and POLLRDBAND
-  // on SLC 5.  I therefore replaced POLLIN with the logical or.  I also
-  // added POLLPRI into the mix to cover all possible types of read event.
-  if(0 == (fd.revents & POLLRDNORM) && 0 == (fd.revents & POLLRDBAND) &&
-    0 == (fd.revents & POLLPRI)) {
-    return false; // Stay registeed with the reactor
-  }
 
   // Accept the connection
   castor::utils::SmartFd connection;

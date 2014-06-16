@@ -48,7 +48,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::AdminAcceptHandler::AdminAcceptHandler(
   const int fd,
-  io::PollReactor &reactor,
+  io::ZMQReactor &reactor,
   log::Logger &log,
   legacymsg::VdqmProxy &vdqm,
   DriveCatalogue &driveCatalogue,
@@ -83,31 +83,20 @@ int castor::tape::tapeserver::daemon::AdminAcceptHandler::getFd() throw() {
 //------------------------------------------------------------------------------
 // fillPollFd
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillPollFd(
-  struct pollfd &fd) throw() {
+void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillPollFd(zmq::pollitem_t &fd) throw() {
   fd.fd = m_fd;
-  fd.events = POLLRDNORM;
   fd.revents = 0;
+  fd.socket = NULL;
 }
 
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
-  const struct pollfd &fd)  {
+  const zmq::pollitem_t &fd)  {
   logAdminAcceptEvent(fd);
 
   checkHandleEventFd(fd.fd);
-
-  // Do nothing if there is no data to read
-  //
-  // POLLIN is unfortunately not the logical or of POLLRDNORM and POLLRDBAND
-  // on SLC 5.  I therefore replaced POLLIN with the logical or.  I also
-  // added POLLPRI into the mix to cover all possible types of read event.
-  if(0 == (fd.revents & POLLRDNORM) && 0 == (fd.revents & POLLRDBAND) &&
-    0 == (fd.revents & POLLPRI)) {
-    return false; // Stay registered with the reactor
-  }
 
   // Accept the connection from the admin command
   castor::utils::SmartFd connection;
@@ -158,7 +147,7 @@ bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
 // logAdminAcceptConnectionEvent
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::AdminAcceptHandler::
-  logAdminAcceptEvent(const struct pollfd &fd)  {
+  logAdminAcceptEvent(const zmq::pollitem_t &fd)  {
   std::list<log::Param> params;
   params.push_back(log::Param("fd", fd.fd));
   params.push_back(log::Param("POLLIN",
