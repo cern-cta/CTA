@@ -44,7 +44,7 @@ BuildRequires: cmake >= 2.6 redhat-rpm-config
   %define debug_package %{nil}
 %endif
 %if %compile_server
-BuildRequires: oracle-instantclient-devel
+BuildRequires: oracle-instantclient-devel protobuf-devel zeromq3-devel
 %endif
 
 %if %compile_server
