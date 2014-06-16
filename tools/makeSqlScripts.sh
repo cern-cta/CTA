@@ -18,24 +18,30 @@ fi
 # Construct the database schema name in uppercase
 schemaname=`echo $1 | tr '[a-z]' '[A-Z]'`
 
-if [ $# == 3 ]; then
-  rm -rf $1_oracle_create.sql*
+if [ $# == 4 ]; then
+  destdir=`readlink -f $4`
+  destdir=${destdir}/
+else
+  destdir=""
+fi
 
-  # force the SQL client to exit on errors
-  /bin/cat > $1_oracle_create.sql <<EOF
+rm -rf ${destdir}$1_oracle_create.sql*
+
+# force the SQL client to exit on errors
+/bin/cat > ${destdir}$1_oracle_create.sql <<EOF
 /* Stop on errors */
 WHENEVER SQLERROR EXIT FAILURE;
 
 EOF
 
-  if [ -f oracleHeader.sql ]; then
-    cat oracleHeader.sql >> $1_oracle_create.sql
-  fi
+if [ -f oracleHeader.sql ]; then
+  cat oracleHeader.sql >> ${destdir}$1_oracle_create.sql
+fi
 
-  cat oracleSchema.sql >> $1_oracle_create.sql
+cat oracleSchema.sql >> ${destdir}$1_oracle_create.sql
 
-  # insert release number
-  /bin/cat >> $1_oracle_create.sql <<EOF
+# insert release number
+/bin/cat >> ${destdir}$1_oracle_create.sql <<EOF
 
 /* SQL statements for table UpgradeLog */
 CREATE TABLE UpgradeLog (Username VARCHAR2(64) DEFAULT sys_context('USERENV', 'OS_USER') CONSTRAINT NN_UpgradeLog_Username NOT NULL, SchemaName VARCHAR2(64) DEFAULT '$schemaname' CONSTRAINT NN_UpgradeLog_SchemaName NOT NULL, Machine VARCHAR2(64) DEFAULT sys_context('USERENV', 'HOST') CONSTRAINT NN_UpgradeLog_Machine NOT NULL, Program VARCHAR2(48) DEFAULT sys_context('USERENV', 'MODULE') CONSTRAINT NN_UpgradeLog_Program NOT NULL, StartDate TIMESTAMP(6) WITH TIME ZONE DEFAULT systimestamp, EndDate TIMESTAMP(6) WITH TIME ZONE, FailureCount NUMBER DEFAULT 0, Type VARCHAR2(20) DEFAULT 'NON TRANSPARENT', State VARCHAR2(20) DEFAULT 'INCOMPLETE', SchemaVersion VARCHAR2(20) CONSTRAINT NN_UpgradeLog_SchemaVersion NOT NULL, Release VARCHAR2(20) CONSTRAINT NN_UpgradeLog_Release NOT NULL);
@@ -66,28 +72,22 @@ AS
 
 EOF
 
-  # append trailers
-  if [ -f $1_oracle_create.list ]; then
-    for f in `cat $1_oracle_create.list`; do
-      cat $f >> $1_oracle_create.sql
-    done
-  else
-    cat oracleTrailer.sql >> $1_oracle_create.sql
-  fi
+# append trailers
+if [ -f $1_oracle_create.list ]; then
+  for f in `cat $1_oracle_create.list`; do
+    cat $f >> ${destdir}$1_oracle_create.sql
+  done
+else
+  cat oracleTrailer.sql >> ${destdir}$1_oracle_create.sql
+fi
 
-  # flag creation script completion
-  /bin/cat >> $1_oracle_create.sql <<EOF
+# flag creation script completion
+/bin/cat >> ${destdir}$1_oracle_create.sql <<EOF
 
 /* Flag the schema creation as COMPLETE */
 UPDATE UpgradeLog SET endDate = systimestamp, state = 'COMPLETE';
 COMMIT;
 EOF
 
-  echo Creation script for $1 generated with tag $2
-
-else
-  # install
-  cp $1_oracle_create.sql $4
-  echo Creation script for $1 installed in $4
-fi
+echo "Creation script for $1 (${destdir}$1_oracle_create.sql) generated with tag $2"
 

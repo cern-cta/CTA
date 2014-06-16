@@ -26,3 +26,17 @@ add_subdirectory (cnv)
 if (${COMPILE_SERVER} STREQUAL "1")
   add_subdirectory (ora)
 endif (${COMPILE_SERVER} STREQUAL "1")
+
+# Generate the SQL schema creation script for the stager
+FILE(READ stager_oracle_create.list STAGER_SQL_LIST)
+STRING(REPLACE "\n" ";" STAGER_SQL_LIST "${STAGER_SQL_LIST}")
+STRING(REPLACE " " "" STAGER_SQL_LIST "${STAGER_SQL_LIST}")
+add_custom_target(stager_oracle_create.sql ALL
+  COMMAND ${CMAKE_SOURCE_DIR}/tools/makeSqlScripts.sh stager ${CASTOR_DB_VERSION} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
+  DEPENDS oracleSchema.sql oracleHeader.sql ${STAGER_SQL_LIST}
+  COMMENT Creating stager_oracle_create.sql
+)
+CastorInstallSQL(stager_oracle_create.sql)
+CastorInstallSQLFromSource(drop_oracle_schema.sql)
+CastorInstallConfigNoRename(SQLSchemaTests.conf)
+CastorInstallScript(castor-SQLSchemaTests)

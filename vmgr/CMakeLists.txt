@@ -190,3 +190,13 @@ foreach (CLIENT_EXE ${VMGR_CLIENT_EXES})
 endforeach ()
 target_link_libraries (vmgrdeletetape castorns)
 install(TARGETS ${VMGR_CLIENT_EXES} DESTINATION ${CASTOR_DEST_BIN_DIR})
+
+################################################################################
+# Rules to build and install the VMGR oracle SQL schema
+################################################################################
+add_custom_target(vmgr_oracle_create.sql ALL
+  COMMAND ${CMAKE_SOURCE_DIR}/tools/makeSqlScripts.sh vmgr ${CASTOR_DB_VERSION} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
+  DEPENDS oracleSchema.sql oracleTrailer.sql
+  COMMENT Creating vmgr_oracle_create.sql
+)
+CastorInstallSQL(vmgr_oracle_create.sql)

@@ -70,3 +70,13 @@ CastorAddProC(Cupv_oracle_ifce)
   CastorInstallSysconfigExample(cupvd)
   CastorInstallLogrotate(castor-upv-server)
 endif (${COMPILE_SERVER} STREQUAL "1")
+
+################################################################################
+# Rules to build and install the CUPV oracle SQL schema
+################################################################################
+add_custom_target(cupv_oracle_create.sql ALL
+  COMMAND ${CMAKE_SOURCE_DIR}/tools/makeSqlScripts.sh cupv ${CASTOR_DB_VERSION} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
+  DEPENDS oracleSchema.sql oracleTrailer.sql
+  COMMENT Creating cupv_oracle_create.sql
+)
+CastorInstallSQL(cupv_oracle_create.sql)

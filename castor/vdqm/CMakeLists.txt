@@ -72,3 +72,13 @@ target_link_libraries (vdqmDBInit castorcnvs castorcommon castorvmgr
   castorcommonora castorvdqmora)
 install (TARGETS vdqmDBInit DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallExeManPage (vdqmDBInit)
+
+################################################################################
+# Rules to build and install the VDQM oracle SQL schema
+################################################################################
+add_custom_target(vdqm_oracle_create.sql ALL
+  COMMAND ${CMAKE_SOURCE_DIR}/tools/makeSqlScripts.sh vdqm ${CASTOR_DB_VERSION} ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_BINARY_DIR}
+  DEPENDS oracleSchema.sql oracleTrailer.sql
+  COMMENT Creating vdqm_oracle_create.sql
+)
+CastorInstallSQL(vdqm_oracle_create.sql)
