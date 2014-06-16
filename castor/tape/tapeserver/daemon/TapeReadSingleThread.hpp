@@ -38,7 +38,7 @@
 #include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
-
+#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -101,7 +101,7 @@ private:
           // And return the tape to the library
           m_this.m_rmc.unmountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot);
           
-          log::LogContext::ScopedParam sp0( m_this.m_logContext, log::Param("time taken", timer.usecs()));
+          log::LogContext::ScopedParam sp0( m_this.m_logContext, log::Param("timeTaken", timer.usecs()));
           m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread : tape unmounted");
           m_this.m_gsr.tapeUnmounted();
         } catch(const castor::exception::Exception& ex){
@@ -189,6 +189,11 @@ private:
       m_logContext.log(LOG_INFO, "Tape read session session successfully started");
       m_gsr.tapeMountedForRead();
       tape::utils::Timer timer;
+      
+      TaskWatchDog watchdog(m_logContext);
+      //start the threading and ask to initiate the protocol with the tapeserverd
+      watchdog.startThread();
+//      ::sleep();
       // Then we will loop on the tasks as they get from 
       // the task injector
       while(1) {
@@ -196,7 +201,7 @@ private:
         TapeReadTask * task = popAndRequestMoreJobs();
         m_logContext.log(LOG_DEBUG, "TapeReadThread: just got one more job");
         if (task) {
-          task->execute(*rs, m_logContext);
+          task->execute(*rs, m_logContext,watchdog);
           delete task;
         } else {
           log::LogContext::ScopedParam sp0(m_logContext, log::Param("time taken", timer.secs()));
@@ -204,6 +209,7 @@ private:
           break;
         }
       }
+      watchdog.stopThread();
     } catch(const castor::exception::Exception& e){
       // we can only end there because 
       // moundTape, waitForDrive or crating the ReadSession failed

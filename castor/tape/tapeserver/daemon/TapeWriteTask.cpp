@@ -78,7 +78,7 @@ namespace daemon {
         //if someone screw somewhere else, we stop
         hasAnotherTaskTailed();
         
-        MemBlock* const mb = m_fifo.popDataBlock();
+        MemBlock* const mb = m_fifo.popDataBlock();        
         AutoReleaseBlock<MigrationMemoryManager> releaser(mb,m_memManager);
         
         if(m_fileToMigrate->fileid() != static_cast<unsigned int>(mb->m_fileid)
@@ -193,6 +193,7 @@ namespace daemon {
    void TapeWriteTask::circulateMemBlocks(){
      while(!m_fifo.finished()) {
         m_memManager.releaseBlock(m_fifo.popDataBlock());
+//        watchdog.notify();
      }
    }
 }}}}

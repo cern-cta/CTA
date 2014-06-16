@@ -30,12 +30,12 @@
 #include "castor/tape/tapeserver/daemon/DataConsumer.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/tapeserver/daemon/AutoReleaseBlock.hpp"
+#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 
 namespace castor {
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-  
   /**
    * This class is in charge of 
    * 
@@ -60,7 +60,7 @@ public:
      * Acquire a free memory block from the memory manager , fill it, push it 
      */
    void execute(castor::tape::tapeFile::ReadSession & rs,
-    castor::log::LogContext & lc) {
+    castor::log::LogContext & lc,TaskWatchDog& watchdog) {
 
     using castor::log::Param;
     typedef castor::log::LogContext::ScopedParam ScopedParam;
@@ -71,6 +71,8 @@ public:
     ScopedParam sp2(lc, Param("BlockId", castor::tape::tapeFile::BlockId::extract(*m_fileToRecall)));
     ScopedParam sp3(lc, Param("fSeq", m_fileToRecall->fseq()));
     ScopedParam sp4(lc, Param("fileTransactionId", m_fileToRecall->fileTransactionId()));
+    
+
     
     // Read the file and transmit it
     bool stillReading = true;
@@ -98,6 +100,7 @@ public:
           // end of file. append() also protects against reading too big tape blocks.
             while (mb->m_payload.append(*rf)) {
               tapeBlock++;
+              sleep(1);
             }
           } catch (const castor::tape::exceptions::EndOfFile&) {
             // append() signaled the end of the file.
@@ -106,7 +109,9 @@ public:
           
           // Pass the block to the disk write task
           m_fifo.pushDataBlock(mb);
-        } //end of while(stillReading)
+          watchdog.notify();
+          lc.log(LOG_INFO, "going for sleep");
+      } //end of while(stillReading)
       //  we have to signal the end of the tape read to the disk write task.
       m_fifo.pushDataBlock(NULL);
       lc.log(LOG_DEBUG, "File read completed");

@@ -54,6 +54,10 @@ TapeServerReporter::TapeServerReporter(
     new ReportTapeMounterForWrite()
     );
   }
+
+  void TapeServerReporter::notifyWatchdog(uint64_t nbOfMemblocksMoved){
+ 
+  }
 //------------------------------------------------------------------------------
 //gotWriteMountDetailsFromClient
 //------------------------------------------------------------------------------    

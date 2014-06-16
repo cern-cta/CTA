@@ -34,6 +34,7 @@
 #include "castor/tape/tapeserver/daemon/MountSession.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
+#include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFd.hpp"
@@ -307,6 +308,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
   createAndRegisterVdqmAcceptHandler();
   createAndRegisterAdminAcceptHandler();
   createAndRegisterMountSessionAcceptHandler();
+  createAndRegisterTapeMessageHandler();
 }
 
 //------------------------------------------------------------------------------
@@ -418,6 +420,25 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterMountSession
   }
   m_reactor.registerHandler(mountSessionAcceptHandler.get());
   mountSessionAcceptHandler.release();
+}
+
+//------------------------------------------------------------------------------
+// createAndRegisterMountSessionAcceptHandler
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterTapeMessageHandler()  {
+
+  std::auto_ptr<TapeMessageHandler> tapeMessageHandler;
+  try {
+    tapeMessageHandler.reset(new TapeMessageHandler(m_reactor, m_log));
+  } catch(std::bad_alloc &ba) {
+    castor::exception::BadAlloc ex;
+    ex.getMessage() <<
+      "Failed to create event handler for communicating with forked sessions"
+      ": " << ba.what();
+    throw ex;
+  }
+  m_reactor.registerHandler(tapeMessageHandler.get());
+  tapeMessageHandler.release();
 }
 
 //------------------------------------------------------------------------------

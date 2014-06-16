@@ -1,0 +1,5 @@
+package castor.messages;
+
+message Heartbeat {
+ required int64 bytesMoved = 1;
+}

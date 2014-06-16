@@ -175,6 +175,11 @@ protected:
   void createAndRegisterMountSessionAcceptHandler() ;
 
   /**
+   * Creates the handler to discuss through zmq socket to the forked sessions
+   */
+  void createAndRegisterTapeMessageHandler();
+  
+  /**
    * The main event loop of the daemon.
    */
   void mainEventLoop() ;

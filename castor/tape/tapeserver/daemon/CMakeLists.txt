@@ -19,6 +19,7 @@ add_library(castorTapeServerDaemon
   MountSession.cpp
   AdminAcceptHandler.cpp
   AdminConnectionHandler.cpp
+  TapeMessageHandler.cpp
   MountSessionAcceptHandler.cpp
   MountSessionConnectionHandler.cpp
   DriveCatalogue.cpp
@@ -29,6 +30,8 @@ add_library(castorTapeServerDaemon
   VdqmConnectionHandler.cpp
   GlobalStatusReporter.cpp
   SmartCap.cpp)
+
+target_link_libraries(castorTapeServerDaemon castorMessages)
 
 add_library(castorTapeServerDaemonTestDummies
   ../client/ClientSimulator.cpp 
@@ -61,7 +64,8 @@ target_link_libraries(tapeserverd
   castortapelegacymsg
   castorTapeServerThreading
   ${LIBCAP_LIB}
-  ${ZLIB_LIBRARIES})
+  ${ZLIB_LIBRARIES}
+  castorMessages)
 
 install (TARGETS tapeserverd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (tapeserverd)

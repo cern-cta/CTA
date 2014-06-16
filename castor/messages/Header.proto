@@ -1,0 +1,12 @@
+package castor.messages;
+
+message Header {
+ required uint32 magic = 1;
+ required uint32 protocolType = 2;
+ required uint32 protocolVersion = 3;
+ required uint32 reqType = 4;
+ required string bodyHashType = 5;		
+ required string bodyHashValue = 6;	
+ required string bodySignatureType= 7;	
+ required string bodySignature = 8;	
+}

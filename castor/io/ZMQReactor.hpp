@@ -73,6 +73,8 @@ public:
    * @param timeout Timeout in milliseconds.
    */
   void handleEvents(const int timeout);
+  
+  zmq::context_t& getContext()const {return m_context;}
 private:
     /**
    * Allocates and builds the array of file descriptors to be passed to poll().

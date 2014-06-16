@@ -96,6 +96,8 @@ public:
   //start and wait for thread to finish
   void startThreads();
   void waitThreads();
+  
+  void notifyWatchdog(uint64_t nbOfMemblocksMoved);
 private:
   /*
   This internal mechanism could (should ?) be easily changed to a queue 
@@ -157,6 +159,7 @@ private:
   const std::string m_dgn;
   const castor::tape::tapeserver::client::ClientInterface::VolumeInfo m_volume;
   const pid_t m_sessionPid;
+
 };
 
 }}}}

@@ -33,6 +33,7 @@
 
 #include <ostream>
 #include <string>
+#include <sstream>
 #include <sys/time.h>
 #include <time.h>
 #include <vector>
@@ -74,6 +75,12 @@ void splitString(const std::string &str, const char separator,
  * @return The result of trimming the string.
  */
 std::string trimString(const std::string &s) throw();
+
+template <class T> std::string toString(const T& t){
+  std::ostringstream o;
+  o<<t;
+  return o.str();
+}
 
 /**
  * Checks if the specified string is a valid unsigned integer.

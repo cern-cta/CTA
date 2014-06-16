@@ -34,6 +34,7 @@
 #include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 #include "castor/tape/utils/Timer.hpp"
+#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include <iostream>
 #include <stdio.h>
 
@@ -185,7 +186,10 @@ private:
       uint64_t bytes=0;
       uint64_t files=0;
       std::auto_ptr<TapeWriteTask> task;  
+      
       tape::utils::Timer timer;
+      TaskWatchDog watchdog(m_logContext);
+      
       while(1) {
         
         //get a task
