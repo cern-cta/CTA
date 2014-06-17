@@ -114,7 +114,7 @@ public:
   template<typename T>
   static T getConfig(const std::string &category, const std::string &name)  {
     const std::string strVal =
-      common::CastorConfiguration::getConfig().getConfEnt(category, name);
+      common::CastorConfiguration::getConfig().getConfEntString(category, name);
     if (!castor::utils::isValidUInt(strVal.c_str()))
       throw castor::exception::InvalidConfigEntry(category.c_str(),
         name.c_str(), strVal.c_str());

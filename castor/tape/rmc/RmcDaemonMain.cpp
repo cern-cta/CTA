@@ -122,7 +122,7 @@ static std::string getConfigParam(const std::string &category, const std::string
   }
 
   try {
-    value = config.getConfEnt(category.c_str(), name.c_str());
+    value = config.getConfEntString(category.c_str(), name.c_str());
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to " << task.str() <<

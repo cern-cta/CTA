@@ -787,7 +787,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
       castorConf.rtcopydBufsz =     getConfig<uint32_t>("RTCOPYD", "BUFSZ");
       castorConf.rtcopydNbBufs =    getConfig<uint32_t>("RTCOPYD", "NB_BUFS");
       castorConf.tapeBadMIRHandlingRepair =
-        config.getConfEnt("TAPE", "BADMIR_HANDLING");
+        config.getConfEntString("TAPE", "BADMIR_HANDLING");
       castorConf.tapebridgeBulkRequestMigrationMaxBytes = 
         getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXBYTES");
       castorConf.tapebridgeBulkRequestMigrationMaxFiles = 

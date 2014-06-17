@@ -134,10 +134,8 @@ castor::common::CastorConfiguration &
 //------------------------------------------------------------------------------
 // getConfEnt
 //------------------------------------------------------------------------------
-const std::string&
-castor::common::CastorConfiguration::getConfEnt(const std::string &category,
-                                                const std::string &key)
-   {
+const std::string& castor::common::CastorConfiguration::getConfEntString(
+  const std::string &category, const std::string &key) {
   // check whether we need to reload the configuration
   if (isStale()) {
     tryToRenewConfig();

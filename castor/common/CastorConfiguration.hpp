@@ -89,9 +89,7 @@ namespace castor {
        * @param category the category of the entry
        * @param key the key of the entry
        */
-      const std::string& getConfEnt(const std::string &category,
-                                    const std::string &key)
-        ;
+      const std::string& getConfEntString(const std::string &category, const std::string &key);
 
     private:
 

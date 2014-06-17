@@ -117,9 +117,9 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
   using namespace castor::tape::tapeserver::daemon;
 
   const std::string vdqmHostName =
-    castor::common::CastorConfiguration::getConfig().getConfEnt("VDQM", "HOST");
+    castor::common::CastorConfiguration::getConfig().getConfEntString("VDQM", "HOST");
   const std::string vmgrHostName =
-    castor::common::CastorConfiguration::getConfig().getConfEnt("VMGR", "HOST");
+    castor::common::CastorConfiguration::getConfig().getConfEntString("VMGR", "HOST");
 
   // Parse /etc/castor/TPCONFIG
   castor::tape::utils::TpconfigLines tpconfigLines;
