@@ -133,10 +133,10 @@ class ActivityControlThread(threading.Thread):
               # 'Timeout when trying to start/cancel transfer. Putting it back to the queue' message
               dlf.writenotice(msgs.TRANSFERSTARTTIMEOUT, subreqid=transfer.transferId,
                               reqid=transfer.reqId, fileId=transfer.fileId)
-            except connectionpool.Timeout:
+            except Exception, e:
               # 'Failed to start transfer and got timeout when putting back to queue'
               dlf.writenotice(msgs.TRANSFERBACKTOQUEUEFAILED, subreqid=transfer.transferId,
-                              reqid=transfer.reqId, fileId=transfer.fileId, originalError='Timeout')
+                              reqid=transfer.reqId, fileId=transfer.fileId, originalError='Timeout', error=e)
           except ValueError, e:
             # 'Transfer start canceled' message
             dlf.writedebug(msgs.TRANSFERSTARTCANCELED, reason=e.args, subreqid=transfer.transferId,
@@ -152,20 +152,23 @@ class ActivityControlThread(threading.Thread):
             self.transferQueue.d2dDestReady(scheduler, transfer)
           except Exception, e:
             # startup of the transfer failed with unexpected error
-            # We need to try again thus we put the transfer into the priority queue and inform the scheduler
+            # We need to try again thus we put the transfer into the queue and inform the scheduler
+            # note that we put it now at the end of the queue (opposite approach compared to
+            # the Timeout case). This allows other transfers to go through in cas of persistent
+            # errors (e.g. Connection refused because of a dead transfermanagerd)
             try:
-              self.transferQueue.putPriority(scheduler, transfer)
+              self.transferQueue.put(scheduler, transfer)
               connectionpool.connections.transferBackToQueue(scheduler, transfer.asTuple())
               # 'Failed to start transfer. Putting it back to the queue' message
               dlf.writeerr(msgs.TRANSFERSTARTINGFAILED, subreqid=transfer.transferId,
                            reqid=transfer.reqId, fileId=transfer.fileId, error=e)
               time.sleep(1)
-            except connectionpool.Timeout:
+            except Exception, e2:
               # clear this exception context, i.e. the Timeout, so that we log the original error
               sys.exc_clear()
               # 'Failed to start transfer and got timeout when putting back to queue'
               dlf.writeerr(msgs.TRANSFERBACKTOQUEUEFAILED, subreqid=transfer.transferId,
-                           reqid=transfer.reqId, fileId=transfer.fileId, originalError=e)
+                           reqid=transfer.reqId, fileId=transfer.fileId, originalError=e, error=e2)
         else:
           time.sleep(.05)
       except Exception:
