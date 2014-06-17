@@ -105,35 +105,6 @@ public:
    */
   int main() throw();
   
-  /**
-   * Tries to get the value of the specified parameter from parsing (integer)
-   * /etc/castor/castor.conf.
-   * @param category category of the configuration parameter
-   * @param name category of the configuration parameter
-   * @return string from castor.conf for this paramter
-   */
-  template<typename T>
-  static T getConfEntInt(const std::string &category, const std::string &key, const T defaultVal)  {
-    std::string strVal;
-    try {
-      strVal =
-        common::CastorConfiguration::getConfig().getConfEntString(category, key);
-    } catch(castor::exception::NoEntry &ne) {
-      return defaultVal;
-    }
-
-    if (!castor::utils::isValidUInt(strVal.c_str())) {
-      throw castor::exception::InvalidConfigEntry(category.c_str(),
-        key.c_str(), strVal.c_str());
-    }
-
-    T val;
-    std::stringstream ss;
-    ss << strVal.c_str();
-    ss >> val;
-    return val;
-  }
-
 protected:
 
   /**

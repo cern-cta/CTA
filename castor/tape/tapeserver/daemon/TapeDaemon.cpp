@@ -786,31 +786,35 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
     std::auto_ptr<legacymsg::RmcProxy> rmc;
     std::auto_ptr<legacymsg::TapeserverProxy> tapeserver;
     try {
-      common::CastorConfiguration &config = common::CastorConfiguration::getConfig();
-      castorConf.rtcopydBufsz = getConfEntInt("RTCOPYD", "BUFSZ", (uint32_t)RTCP_BUFSZ);
-      castorConf.rtcopydNbBufs = getConfEntInt("RTCOPYD", "NB_BUFS", (uint32_t)NB_RTCP_BUFS);
+      common::CastorConfiguration &config =
+        common::CastorConfiguration::getConfig();
+      castorConf.rtcopydBufsz =
+        config.getConfEntInt("RTCOPYD", "BUFSZ", (uint32_t)RTCP_BUFSZ);
+      castorConf.rtcopydNbBufs =
+        config.getConfEntInt("RTCOPYD", "NB_BUFS", (uint32_t)NB_RTCP_BUFS);
       castorConf.tapeBadMIRHandlingRepair =
         config.getConfEntString("TAPE", "BADMIR_HANDLING", "CANCEL");
       castorConf.tapebridgeBulkRequestMigrationMaxBytes = 
-        getConfEntInt("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXBYTES",
+        config.getConfEntInt("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXBYTES",
           (uint64_t)tapebridge::TAPEBRIDGE_BULKREQUESTMIGRATIONMAXBYTES);
       castorConf.tapebridgeBulkRequestMigrationMaxFiles = 
-        getConfEntInt("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXFILES",
+        config.getConfEntInt("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXFILES",
           (uint64_t)tapebridge::TAPEBRIDGE_BULKREQUESTMIGRATIONMAXFILES);
       castorConf.tapebridgeBulkRequestRecallMaxBytes = 
-        getConfEntInt("TAPEBRIDGE", "BULKREQUESTRECALLMAXBYTES",
+        config.getConfEntInt("TAPEBRIDGE", "BULKREQUESTRECALLMAXBYTES",
           (uint64_t)tapebridge::TAPEBRIDGE_BULKREQUESTRECALLMAXBYTES);
       castorConf.tapebridgeBulkRequestRecallMaxFiles = 
-        getConfEntInt("TAPEBRIDGE", "BULKREQUESTRECALLMAXFILES",
+        config.getConfEntInt("TAPEBRIDGE", "BULKREQUESTRECALLMAXFILES",
           (uint64_t)tapebridge::TAPEBRIDGE_BULKREQUESTRECALLMAXFILES);
       castorConf.tapebridgeMaxBytesBeforeFlush = 
-        getConfEntInt("TAPEBRIDGE", "MAXBYTESBEFOREFLUSH",
+        config.getConfEntInt("TAPEBRIDGE", "MAXBYTESBEFOREFLUSH",
           (uint64_t)tapebridge::TAPEBRIDGE_MAXBYTESBEFOREFLUSH);
       castorConf.tapebridgeMaxFilesBeforeFlush = 
-        getConfEntInt("TAPEBRIDGE", "MAXFILESBEFOREFLUSH",
+        config.getConfEntInt("TAPEBRIDGE", "MAXFILESBEFOREFLUSH",
           (uint64_t)tapebridge::TAPEBRIDGE_MAXFILESBEFOREFLUSH);
       castorConf.tapeserverdDiskThreads = 
-        getConfEntInt("RTCPD", "THREAD_POOL", (uint32_t)RTCPD_THREAD_POOL);
+        config.getConfEntInt("RTCPD", "THREAD_POOL",
+          (uint32_t)RTCPD_THREAD_POOL);
       
       rmc.reset(m_rmcFactory.create());
       tapeserver.reset(m_tapeserverFactory.create());

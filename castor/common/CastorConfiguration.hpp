@@ -24,10 +24,12 @@
 
 #pragma once
 
-// Include Files
+#include "castor/exception/Exception.hpp"
+#include "castor/exception/NoEntry.hpp"
+#include "castor/utils/utils.hpp"
+
 #include <string>
 #include <map>
-#include "castor/exception/Exception.hpp"
 
 namespace castor {
   
@@ -88,8 +90,8 @@ namespace castor {
        * retrieves a configuration entry
        * @param category the category of the entry
        * @param key the key of the entry
-       * @param default value to be return if the configuration entry is not in
-       * the configuration file
+       * @param defaultValue the value to be returned if the configuration entry
+       * is not in the configuration file
        */
       const std::string& getConfEntString(const std::string &category,
         const std::string &key, const std::string &defaultValue);
@@ -106,6 +108,35 @@ namespace castor {
        */
       const std::string& getConfEntString(const std::string &category,
         const std::string &key);
+
+      /**
+       * retrieves a configuration entry as an integer
+       * @param category category of the configuration parameter
+       * @param name category of the configuration parameter
+       * @param defaultValue the value to be returned if the configuration entry
+       * is not in the configuration file
+       * @return the integer value
+       */
+      template<typename T> T getConfEntInt(const std::string &category,
+        const std::string &key, const T defaultValue)  {
+        std::string strValue;
+        try {
+          strValue = getConfEntString(category, key);
+        } catch(castor::exception::NoEntry &ne) {
+          return defaultValue;
+        }
+
+        if (!castor::utils::isValidUInt(strValue.c_str())) {
+          throw castor::exception::InvalidConfigEntry(category.c_str(),
+            key.c_str(), strValue.c_str());
+        }
+
+        T value;
+        std::stringstream ss;
+        ss << strValue.c_str();
+        ss >> value;
+        return value;
+      }
 
     private:
 
