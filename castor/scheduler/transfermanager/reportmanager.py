@@ -127,6 +127,8 @@ class ReportManagerThread(threading.Thread):
             except Exception, e:
                 # "Caught exception in ReportManager thread" message
                 dlf.writeerr(msgs.REPORTMANAGEREXCEPTION, error=str(e))
+                # check whether we should reconnect to DB, and do so if needed
+                self.dbConnection().checkForReconnection(e)
             # Wait until the next DB update
             time.sleep(self.config.getValue('TransferManager', 'HeartBeatDBUpdateInterval', 1.0, float))
 
