@@ -59,7 +59,7 @@ namespace daemon {
     class CastorConf {
     public:
       CastorConf(): 
-        rtcopydBufsz(0), rtcopydNbBufs(0), tapeConfirmDriveFreeInterval(0),
+        rtcopydBufsz(0), rtcopydNbBufs(0),
         tapebridgeBulkRequestMigrationMaxBytes(0),
         tapebridgeBulkRequestMigrationMaxFiles(0),
         tapebridgeBulkRequestRecallMaxBytes(0),
@@ -70,8 +70,6 @@ namespace daemon {
       uint32_t rtcopydBufsz;
       uint32_t rtcopydNbBufs;
       std::string tapeBadMIRHandlingRepair;
-      std::string tapeConfirmDriveFree;
-      uint32_t tapeConfirmDriveFreeInterval;
       uint64_t tapebridgeBulkRequestMigrationMaxBytes;
       uint64_t tapebridgeBulkRequestMigrationMaxFiles;
       uint64_t tapebridgeBulkRequestRecallMaxBytes;
