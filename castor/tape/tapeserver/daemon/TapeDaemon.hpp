@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
 #include "castor/io/PollReactor.hpp"
@@ -104,16 +105,6 @@ public:
   int main() throw();
   
   /**
-   * Tries to get the value of the specified parameter from parsing (string)
-   * /etc/castor/castor.conf.
-   * @param category category of the configuration parameter
-   * @param name category of the configuration parameter
-   * @return string from castor.conf for this paramter
-   */
-  static std::string getConfigString(const std::string &category,
-    const std::string &name);
-  
-  /**
    * Tries to get the value of the specified parameter from parsing (integer)
    * /etc/castor/castor.conf.
    * @param category category of the configuration parameter
@@ -122,7 +113,8 @@ public:
    */
   template<typename T>
   static T getConfig(const std::string &category, const std::string &name)  {
-    std::string strVal = getConfigString(category, name);
+    const std::string strVal =
+      common::CastorConfiguration::getConfig().getConfEnt(category, name);
     if (!castor::utils::isValidUInt(strVal.c_str()))
       throw castor::exception::InvalidConfigEntry(category.c_str(),
         name.c_str(), strVal.c_str());

@@ -116,8 +116,10 @@ static void logTpconfigLine(castor::log::Logger &log,
 static int exceptionThrowingMain(const int argc, char **const argv, castor::log::Logger &log) {
   using namespace castor::tape::tapeserver::daemon;
 
-  const std::string vdqmHostName = TapeDaemon::getConfigString("VDQM", "HOST");
-  const std::string vmgrHostName = TapeDaemon::getConfigString("VMGR", "HOST");
+  const std::string vdqmHostName =
+    castor::common::CastorConfiguration::getConfig().getConfEnt("VDQM", "HOST");
+  const std::string vmgrHostName =
+    castor::common::CastorConfiguration::getConfig().getConfEnt("VMGR", "HOST");
 
   // Parse /etc/castor/TPCONFIG
   castor::tape::utils::TpconfigLines tpconfigLines;
