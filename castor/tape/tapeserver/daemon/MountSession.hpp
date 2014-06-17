@@ -58,7 +58,7 @@ namespace daemon {
      * calls allows unit testing */
     class CastorConf {
     public:
-      CastorConf(): rfioConnRetry(0), rfioConnRetryInt(0), rfioIOBufSize(0),
+      CastorConf(): 
         rtcopydBufsz(0), rtcopydNbBufs(0), tapeConfirmDriveFreeInterval(0),
         tapebridgeBulkRequestMigrationMaxBytes(0),
         tapebridgeBulkRequestMigrationMaxFiles(0),
@@ -67,9 +67,6 @@ namespace daemon {
         tapebridgeMaxBytesBeforeFlush(0),
         tapebridgeMaxFilesBeforeFlush(0),
         tapeserverdDiskThreads(0) {}
-      uint32_t rfioConnRetry;
-      uint32_t rfioConnRetryInt;
-      uint32_t rfioIOBufSize;
       uint32_t rtcopydBufsz;
       uint32_t rtcopydNbBufs;
       std::string tapeBadMIRHandlingRepair;

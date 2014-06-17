@@ -784,9 +784,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
     std::auto_ptr<legacymsg::TapeserverProxy> tapeserver;
     try {
       common::CastorConfiguration &config = common::CastorConfiguration::getConfig();
-      castorConf.rfioConnRetry =    getConfig<uint32_t>("RFIO", "CONRETRY");
-      castorConf.rfioConnRetryInt = getConfig<uint32_t>("RFIO", "CONRETRY");
-      castorConf.rfioIOBufSize =    getConfig<uint32_t>("RFIO", "IOBUFSIZE");
       castorConf.rtcopydBufsz =     getConfig<uint32_t>("RTCOPYD", "BUFSZ");
       castorConf.rtcopydNbBufs =    getConfig<uint32_t>("RTCOPYD", "NB_BUFS");
       castorConf.tapeBadMIRHandlingRepair =
