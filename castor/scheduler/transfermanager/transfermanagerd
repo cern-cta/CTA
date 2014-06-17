@@ -194,8 +194,7 @@ class TransferManagerService(rpyc.Service):
         # 'Could not contact transfer manager' message
         dlf.writenotice(msgs.COULDNOTCONTACTTM, Function='listPendingTransfersCentrally',
                         TransferManager=scheduler, Type=str(e.__class__), Message=str(e))
-        raise IOError(0, 'Could not contact transfer manager on %s' % scheduler,
-                      'See transfermanagerd\'s log for details')
+        transfers.append((None, scheduler))
     return tuple(transfers)
 
   def exposed_summarizeTransfersPerPool(self, diskPool=None, user=None, detailed=False):
