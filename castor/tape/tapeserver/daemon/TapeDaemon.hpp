@@ -27,6 +27,7 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/InvalidConfigEntry.hpp"
+#include "castor/exception/NoEntry.hpp"
 #include "castor/io/PollReactor.hpp"
 #include "castor/legacymsg/NsProxyFactory.hpp"
 #include "castor/legacymsg/RmcProxyFactory.hpp"
@@ -112,12 +113,20 @@ public:
    * @return string from castor.conf for this paramter
    */
   template<typename T>
-  static T getConfig(const std::string &category, const std::string &name)  {
-    const std::string strVal =
-      common::CastorConfiguration::getConfig().getConfEntString(category, name);
-    if (!castor::utils::isValidUInt(strVal.c_str()))
+  static T getConfEntInt(const std::string &category, const std::string &key, const T defaultVal)  {
+    std::string strVal;
+    try {
+      strVal =
+        common::CastorConfiguration::getConfig().getConfEntString(category, key);
+    } catch(castor::exception::NoEntry &ne) {
+      return defaultVal;
+    }
+
+    if (!castor::utils::isValidUInt(strVal.c_str())) {
       throw castor::exception::InvalidConfigEntry(category.c_str(),
-        name.c_str(), strVal.c_str());
+        key.c_str(), strVal.c_str());
+    }
+
     T val;
     std::stringstream ss;
     ss << strVal.c_str();

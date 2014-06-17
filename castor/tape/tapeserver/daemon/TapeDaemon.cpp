@@ -784,24 +784,24 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
     std::auto_ptr<legacymsg::TapeserverProxy> tapeserver;
     try {
       common::CastorConfiguration &config = common::CastorConfiguration::getConfig();
-      castorConf.rtcopydBufsz =     getConfig<uint32_t>("RTCOPYD", "BUFSZ");
-      castorConf.rtcopydNbBufs =    getConfig<uint32_t>("RTCOPYD", "NB_BUFS");
+      castorConf.rtcopydBufsz = getConfEntInt("RTCOPYD", "BUFSZ", (uint32_t));
+      castorConf.rtcopydNbBufs = getConfEntInt("RTCOPYD", "NB_BUFS", (uint32_t));
       castorConf.tapeBadMIRHandlingRepair =
         config.getConfEntString("TAPE", "BADMIR_HANDLING");
       castorConf.tapebridgeBulkRequestMigrationMaxBytes = 
-        getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXBYTES");
+        getConfEntInt("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXBYTES", (uint64_t));
       castorConf.tapebridgeBulkRequestMigrationMaxFiles = 
-        getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXFILES");
+        getConfEntInt("TAPEBRIDGE", "BULKREQUESTMIGRATIONMAXFILES", (uint64_t));
       castorConf.tapebridgeBulkRequestRecallMaxBytes = 
-        getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTRECALLMAXBYTES");
+        getConfEntInt("TAPEBRIDGE", "BULKREQUESTRECALLMAXBYTES", (uint64_t));
       castorConf.tapebridgeBulkRequestRecallMaxFiles = 
-        getConfig<uint64_t>("TAPEBRIDGE", "BULKREQUESTRECALLMAXFILES");
+        getConfEntInt("TAPEBRIDGE", "BULKREQUESTRECALLMAXFILES", (uint64_t));
       castorConf.tapebridgeMaxBytesBeforeFlush = 
-        getConfig<uint64_t>("TAPEBRIDGE", "MAXBYTESBEFOREFLUSH");
+        getConfEntInt("TAPEBRIDGE", "MAXBYTESBEFOREFLUSH", (uint64_t));
       castorConf.tapebridgeMaxFilesBeforeFlush = 
-        getConfig<uint64_t>("TAPEBRIDGE", "MAXFILESBEFOREFLUSH");
+        getConfEntInt("TAPEBRIDGE", "MAXFILESBEFOREFLUSH", (uint64_t));
       castorConf.tapeserverdDiskThreads = 
-        getConfig<uint32_t>("TAPEBRIDGE", "THREAD_POOL");
+        getConfEntInt("TAPEBRIDGE", "THREAD_POOL", (uint32_t));
       
       rmc.reset(m_rmcFactory.create());
       tapeserver.reset(m_tapeserverFactory.create());
