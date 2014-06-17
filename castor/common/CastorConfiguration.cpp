@@ -132,7 +132,20 @@ castor::common::CastorConfiguration &
 }
 
 //------------------------------------------------------------------------------
-// getConfEnt
+// getConfEntString
+//------------------------------------------------------------------------------
+const std::string& castor::common::CastorConfiguration::getConfEntString(
+  const std::string &category, const std::string &key,
+  const std::string &defaultValue) {
+  try {
+    return getConfEntString(category, key);
+  } catch(castor::exception::NoEntry &ne) {
+    return defaultValue;
+  }
+}
+
+//------------------------------------------------------------------------------
+// getConfEntString
 //------------------------------------------------------------------------------
 const std::string& castor::common::CastorConfiguration::getConfEntString(
   const std::string &category, const std::string &key) {

@@ -88,8 +88,24 @@ namespace castor {
        * retrieves a configuration entry
        * @param category the category of the entry
        * @param key the key of the entry
+       * @param default value to be return if the configuration entry is not in
+       * the configuration file
        */
-      const std::string& getConfEntString(const std::string &category, const std::string &key);
+      const std::string& getConfEntString(const std::string &category,
+        const std::string &key, const std::string &defaultValue);
+
+      /**
+       * retrieves a configuration entry
+       *
+       * besides other possible exception, this method throws a
+       * castor::exception::NoEntry exception if the specified configuration
+       * entry is not in the configuration file
+       *
+       * @param category the category of the entry
+       * @param key the key of the entry
+       */
+      const std::string& getConfEntString(const std::string &category,
+        const std::string &key);
 
     private:
 
