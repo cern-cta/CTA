@@ -486,7 +486,7 @@ class TransferManagerService(rpyc.Service):
                        path=localPath, originalErrCode=errCode, originalError=errMsg,
                        Type=str(e.__class__), Message=str(e))
           # check whether we should reconnect to DB, and do so if needed
-          self.__class__.dbConnection().checkForReconnection(e)
+        self.__class__.dbConnection().checkForReconnection(e)
     finally:
       self.__class__.releaseDbConnection()
 
