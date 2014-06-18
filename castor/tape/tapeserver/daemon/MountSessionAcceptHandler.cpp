@@ -153,7 +153,8 @@ bool castor::tape::tapeserver::daemon::MountSessionAcceptHandler::handleEvent(
     throw ex;
   }
 
-  m_log(LOG_DEBUG, "Registered the new vdqm connection handler", params);
+  m_log(LOG_DEBUG, "Registered the new mount-session connection handler",
+    params);
 
   return false; // Stay registered with the reactor
 }

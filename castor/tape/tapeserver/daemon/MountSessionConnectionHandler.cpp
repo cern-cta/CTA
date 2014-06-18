@@ -381,6 +381,11 @@ void castor::tape::tapeserver::daemon::MountSessionConnectionHandler::
     // therefore it is now safe and necessary for this connection handler to
     // relinquish ownership of the connection
     m_thisEventHandlerOwnsFd = false;
+    {
+      log::Param params[] = {log::Param("fd", m_fd)};
+      m_log(LOG_DEBUG, "Mount-session handler released label connection",
+        params);
+    }
   } catch(castor::exception::Exception &ex) {
     log::Param params[] = {log::Param("message", ex.getMessage().str())};
     m_log(LOG_ERR, "Informing client label-command of error", params);
