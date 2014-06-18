@@ -38,13 +38,13 @@ set(RTCPD_SRC_FILES rtcpd.c rtcp_CallVMGR.c rtcp_CheckReq.c rtcp_Listen.c
   rtcpd_tpdump.c rtcp_recvRtcpHdr.c 
   rtcp_marshallVdqmClientInfoMsg.c rtcpd_SendAckToVdqmOrTapeBridge.c 
   rtcpd_GetClientInfoMsg.c rtcpd_GetClientInfo.c rtcp_tellClient.c
-  rtcpdIsConfiguredToReuseMount.c rtcp_xroot.c)
+  rtcpdIsConfiguredToReuseMount.c rtcp_xroot.cpp)
 add_executable (rtcpd ${RTCPD_SRC_FILES})
 # Relax compilation of old code full of pointer casting. Funnily enough,
 # the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
 set_property(SOURCE rtcp_log.c rtcpd_Ctape.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 target_link_libraries (rtcpd castorcommon castorvmgr castorvdqm castortape 
-  castortapebridge castorsecurity ${XROOTD_XRDPOSIX_LIB} -lz)
+  castortapebridge castorsecurity ${XROOTD_XRDPOSIX_LIB} z crypto)
 install (TARGETS rtcpd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallInitScript(rtcpd)
 CastorInstallSysconfigExample(rtcpd)

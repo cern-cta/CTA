@@ -568,6 +568,7 @@ static int rtcp_CheckFileReq(file_list_t *file) {
          */
         rtcp_log(LOG_DEBUG,"rtcp_CheckFileReq(%d,%s) (tpread) stat64() remote file\n",
             filereq->tape_fseq,filereq->file_path);
+        {
             serrno = 0;
             struct stat xrootStat;
             char xrootFilePath[CA_MAXPATHLEN+1];

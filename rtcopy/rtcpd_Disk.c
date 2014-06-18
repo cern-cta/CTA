@@ -85,42 +85,6 @@ extern int AbortFlag;
 int success = 0;
 int failure = -1;
 
-/**
- * Convert the server:/path string to the CASTOR xroot
- * root://server:port//dummy?castor2fs.pfn1=path&castor2fs.pfn2=dummy
- * @param rtcpPath the path to be converted.
- * @param xrootFilePath the variable to return xroot path.
- * @return 0 if convertion succeed and -1 in error case.
- */
-static int rtcpToCastorXroot(const char *const rtcpPath,
-                             char *const xrootFilePath) {  
-    const char *const xrootPort="1095";
-    const char *pathWithoutServer;
-    extern char *getconfent();
-    *xrootFilePath='\0';
-    if ( CA_MAXPATHLEN <
-      (strlen("root://")+strlen(xrootPort)+strlen(rtcpPath)+
-       strlen("//dummy?castor2fs.pfn1=&castor2fs.pfn2=dummy&")+
-       strlen("streamout=xxx&streamin=xxx")) ) {
-         return (-1);
-    }
-    if ( NULL == (pathWithoutServer=strchr(rtcpPath,'/'))) {
-      return (-1);
-    }
-    /* protocol */
-    strcat(xrootFilePath,"root://");
-    /* server name */
-    strncat(xrootFilePath,rtcpPath, pathWithoutServer-rtcpPath);
-    /* port */
-    strcat(xrootFilePath,xrootPort);
-    /* castor2fs.pfn1 */
-    strcat(xrootFilePath,"//dummy?castor2fs.pfn1=");
-    strcat(xrootFilePath,pathWithoutServer);
-    /* castor2fs.pfn2 */
-    strcat(xrootFilePath,"&castor2fs.pfn2=dummy");
-    return (0);
-}
-
 static int DiskIOstarted() {
     int rc;
 
@@ -289,14 +253,8 @@ static int DiskFileOpen(int pool_index,
         }
         DK_STATUS(RTCP_PS_OPEN);
 
-        char xrootFilePath[CA_MAXPATHLEN+1];
-        if ( -1 == rtcpToCastorXroot(filereq->file_path,xrootFilePath) ) {
-            errno = EFAULT; /* sets  "Bad address" errno */
-            rc = -1;
-        } else {
-            rc = rtcp_xroot_open(xrootFilePath, flags, 0666); 
-            rtcp_log(LOG_DEBUG,"rtcp_xroot_open for %s\n",xrootFilePath);
-        }  
+        rc = rtcp_xroot_open(filereq->file_path, flags, 0666); 
+        rtcp_log(LOG_DEBUG,"rtcp_xroot_open for %s\n",filereq->file_path);
 
         DK_STATUS(RTCP_PS_NOBLOCKING);
         if ( rc == -1 ) { 
