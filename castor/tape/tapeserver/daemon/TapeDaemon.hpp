@@ -217,25 +217,36 @@ protected:
     const int waitpidStat) throw();
 
   /**
+   * Dispatches the appropriate post-processor of repaed sessions based on
+   * the specified session type.
+   *
+   * @sessionType The type of the reaped session.
+   * @param sessionPid The process ID of the reaped session.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void dispatchReapedSessionPostProcessor(
+   const DriveCatalogueEntry::SessionType sessionType,
+   const pid_t sessionPid,
+   const int waitpidStat);
+
+  /**
    * Does the required post processing for the specified reaped session.
    *
-   * @param sessionPid The process ID of the session child-process.
+   * @param sessionPid The process ID of the reaped session.
    * @param waitpidStat The status information given by a call to waitpid().
    */
   void postProcessReapedDataTransferSession(const pid_t sessionPid,
-    const int waitpidStat) throw();
+    const int waitpidStat);
 
   /**
    * Sets the state of the tape drive asscoiated with the specified
    * mount-session process to down within the vdqmd daemon.
    *
-   * If for any reason the state of the drive within the vdqmd daemon cannot
-   * be set to down, then this method logs an appropriate error message but
-   * does not throw an exception.
-   *
    * @param sessionPid The process ID of the mount-session child-process.
+   * @param driveConfig The configuration of the tape drive.
    */
-  void setDriveDownInVdqm(const pid_t sessionPid) throw();
+  void setDriveDownInVdqm(const pid_t sessionPid,
+    const utils::DriveConfig &driveConfig);
   
   /**
    * Marshals the specified source tape rc reply message structure into the
@@ -252,11 +263,11 @@ protected:
   /**
    * Does the required post processing for the specified reaped session.
    *
-   * @param sessionPid The process ID of the session child-process.
+   * @param sessionPid The process ID of the reaped session.
    * @param waitpidStat The status information given by a call to waitpid().
    */
   void postProcessReapedLabelSession(const pid_t sessionPid,
-    const int waitpidStat) throw();
+    const int waitpidStat);
 
   /**
    * Request the vdqmd daemon to release the tape drive associated with the

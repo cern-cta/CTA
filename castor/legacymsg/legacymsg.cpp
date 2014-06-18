@@ -45,7 +45,7 @@ void castor::legacymsg::writeTapeRcReplyMsg(const int timeout, const int fd, con
     castor::io::writeBytes(fd, timeout, len, dst);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to write tape-label reply message with rc=" << rc
+    ex.getMessage() << "Failed to write tape reply message: "
       << ne.getMessage().str();
     throw ex;
   }
@@ -65,8 +65,8 @@ void castor::legacymsg::writeTapeReplyMsg(const int timeout, const int fd, const
     castor::io::writeBytes(fd, timeout, len, dst);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to write tape-label reply message with rc=" << rc << " and error message=\"" << message << "\". "
-      << ne.getMessage().str();
+    ex.getMessage() << "Failed to write tape reply message: " <<
+      ne.getMessage().str();
     throw ex;
   }
 }

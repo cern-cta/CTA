@@ -522,28 +522,22 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedSession(
     params.push_back(log::Param("unitName", driveConfig.unitName));
     params.push_back(log::Param("sessionType",
       DriveCatalogueEntry::sessionType2Str(drive.getSessionType())));
+
+    dispatchReapedSessionPostProcessor(drive.getSessionType(), sessionPid,
+      waitpidStat);
   } catch(castor::exception::Exception &ne) {
     params.push_back(log::Param("message", ne.getMessage().str()));
     m_log(LOG_ERR, "Failed to perform post processing of reaped session",
       params);
     return;
   }
-
-  switch(drive.getSessionType()) {
-  case DriveCatalogueEntry::SESSION_TYPE_DATATRANSFER:
-    return postProcessReapedDataTransferSession(sessionPid, waitpidStat);
-  case DriveCatalogueEntry::SESSION_TYPE_LABEL:
-    return postProcessReapedLabelSession(sessionPid, waitpidStat);
-  default:
-    m_log(LOG_ERR, "Failed to perform post processing of reaped session"
-      ": Unexpected session type", params);
-  }
 }
 
 //------------------------------------------------------------------------------
 // logSessionProcessTerminated
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::logSessionProcessTerminated(const pid_t sessionPid, const int waitpidStat) throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::logSessionProcessTerminated(
+  const pid_t sessionPid, const int waitpidStat) throw() {
   std::list<log::Param> params;
   params.push_back(log::Param("sessionPid", sessionPid));
 
@@ -575,31 +569,56 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logSessionProcessTerminated(c
 }
 
 //------------------------------------------------------------------------------
+// dispatchReapedSessionPostProcessor
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::
+  dispatchReapedSessionPostProcessor(
+  const DriveCatalogueEntry::SessionType sessionType,
+  const pid_t sessionPid,
+  const int waitpidStat) {
+
+  switch(sessionType) {
+  case DriveCatalogueEntry::SESSION_TYPE_DATATRANSFER:
+    return postProcessReapedDataTransferSession(sessionPid, waitpidStat);
+  case DriveCatalogueEntry::SESSION_TYPE_LABEL:
+    return postProcessReapedLabelSession(sessionPid, waitpidStat);
+  default:
+    {
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to dispatch reaped-session post processor"
+        ": Unexpected session type: sessionType=" << sessionType;
+      throw ex;
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
 // postProcessReapedDataTransferSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedDataTransferSession(
-  const pid_t sessionPid, const int waitpidStat) throw() {
-  std::list<log::Param> params;
-  params.push_back(log::Param("sessionPid", sessionPid));
-  DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(sessionPid);
-  const utils::DriveConfig &driveConfig = drive.getConfig();
+  const pid_t sessionPid, const int waitpidStat) {
+  try {
+    std::list<log::Param> params;
+    params.push_back(log::Param("sessionPid", sessionPid));
+    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(sessionPid);
+    const utils::DriveConfig &driveConfig = drive.getConfig();
 
-  if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
-    const std::string vid = drive.getVid();
-    drive.sessionSucceeded();
-    m_log(LOG_INFO, "Mount session succeeded", params);
-    try {
+    if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
+      const std::string vid = drive.getVid();
+      drive.sessionSucceeded();
+      m_log(LOG_INFO, "Mount session succeeded", params);
       requestVdqmToReleaseDrive(driveConfig, sessionPid);
       notifyVdqmTapeUnmounted(driveConfig, vid, sessionPid);
-    } catch(castor::exception::Exception &ex) {
-      params.push_back(log::Param("message", ex.getMessage().str()));
-      m_log(LOG_ERR, "Failed to post process reaped data transfer session",
-        params);
+    } else {
+      drive.sessionFailed();
+      m_log(LOG_INFO, "Mount session failed", params);
+      setDriveDownInVdqm(sessionPid, drive.getConfig());
     }
-  } else {
-    drive.sessionFailed();
-    m_log(LOG_INFO, "Mount session failed", params);
-    setDriveDownInVdqm(sessionPid);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to post process reaped data transfer session: " << 
+    ne.getMessage().str();
+    throw ex;
   }
 }
 
@@ -656,24 +675,21 @@ void castor::tape::tapeserver::daemon::TapeDaemon::notifyVdqmTapeUnmounted(
 // setDriveDownInVdqm
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(
-  const pid_t sessionPid) throw() {
+  const pid_t sessionPid, const utils::DriveConfig &driveConfig) {
   std::list<log::Param> params;
   params.push_back(log::Param("sessionPid", sessionPid));
 
   try {
-    const DriveCatalogueEntry &drive =
-      m_driveCatalogue.findConstDrive(sessionPid);
-    const utils::DriveConfig driveConfig = drive.getConfig();
     params.push_back(log::Param("unitName", driveConfig.unitName));
-    params.push_back(log::Param("vid", drive.getVid()));
     params.push_back(log::Param("dgn", driveConfig.dgn));
 
     m_vdqm.setDriveDown(m_hostName, driveConfig.unitName, driveConfig.dgn);
     m_log(LOG_INFO, "Set tape-drive down in vdqm", params);
-  } catch(castor::exception::Exception &ex) {
-    params.push_back(log::Param("message", ex.getMessage().str()));
-    m_log(LOG_ERR, "Failed to set tape-drive down in vdqm", params);
-    return;
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to set tape-drive down in vdqm: " <<
+      ne.getMessage().str();
+    throw ex;
   }
 }
 
@@ -681,19 +697,26 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(
 // postProcessReapedLabelSession 
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession(
-  const pid_t sessionPid, const int waitpidStat) throw() {
-  std::list<log::Param> params;
-  params.push_back(log::Param("sessionPid", sessionPid));
+  const pid_t sessionPid, const int waitpidStat) {
+  try {
+    std::list<log::Param> params;
+    params.push_back(log::Param("sessionPid", sessionPid));
 
-  DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(sessionPid);
+    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(sessionPid);
 
-  if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
-    drive.sessionSucceeded();
-    m_log(LOG_INFO, "Label session succeeded", params);
-  } else {
-    drive.sessionFailed();
-    m_log(LOG_INFO, "Label session failed", params);
-    setDriveDownInVdqm(sessionPid);
+    if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
+      drive.sessionSucceeded();
+      m_log(LOG_INFO, "Label session succeeded", params);
+    } else {
+      drive.sessionFailed();
+      m_log(LOG_INFO, "Label session failed", params);
+      setDriveDownInVdqm(sessionPid, drive.getConfig());
+    }
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to post process reaped label session: " <<
+    ne.getMessage().str();
+    throw ex;
   }
 }
 
