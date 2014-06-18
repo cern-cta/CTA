@@ -28,7 +28,7 @@
 
 import sys
 import getopt
-import rpyc
+import rpyc, rpyc.utils.server
 import socket
 import traceback
 import connectionpool, castor_tools, localqueue, runningtransfersset
@@ -36,7 +36,6 @@ import manager, activitycontrol, activitycontrolchecker, reporter
 import daemon
 import dlf
 from diskmanagerdlf import msgs
-from threadpoolserver import ThreadPoolServer
 from transfer import tupleToTransfer, RunningTransfer, TransferType
 
 # usage function
@@ -245,10 +244,11 @@ try:
     reporterThr = reporter.ReporterThread(runningTransfers, configuration)
     # launch a service listening for new transfers from the central scheduler and filling the queue
     # By default, the number of threads in the server is the number of server hosts + 1
-    t = ThreadPoolServer(DiskServerManagerService,
-                         port = configuration.getValue('DiskManager', 'Port', 15011, int),
-                         auto_register=False,
-                         nbThreads = len(configuration.getValue('DiskManager', 'ServerHosts').split())+1)
+    t = rpyc.utils.server.ThreadPoolServer \
+      (DiskServerManagerService,
+       port=configuration.getValue('DiskManager', 'Port', 15011, int),
+       auto_register=False,
+       nbThreads=len(configuration.getValue('DiskManager', 'ServerHosts').split())+1)
     t.daemon = True
     t.start()
     # we reach this point when the service has stopped

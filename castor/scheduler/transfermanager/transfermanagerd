@@ -28,7 +28,7 @@
 
 import sys
 import getopt
-import rpyc
+import rpyc, rpyc.utils.server
 import threading
 import socket
 import daemon
@@ -36,7 +36,6 @@ import castor_tools, connectionpool, dispatcher, serverqueue, aborter
 import synchronizer, suicider, reportmanager, diskserverlistcache, modifydiskservers
 import dlf
 from transfermanagerdlf import msgs
-from threadpoolserver import ThreadPoolServer
 from transfer import tupleToTransfer, TransferType
 import cx_Oracle
 
@@ -649,10 +648,11 @@ try:
     # from now on, we want to drain if we exit
     drainOnExit = True
     # defines a service listening for monitoring queries and answering them
-    transfermanager = ThreadPoolServer(TransferManagerService,
-                                       port = configuration.getValue('TransferManager', 'Port', 15011, int),
-                                       auto_register=False,
-                                       nbThreads = configuration.getValue('TransferManager', 'NbRpycThreads', 20, int))
+    transfermanager = rpyc.utils.server.ThreadPoolServer \
+      (TransferManagerService,
+       port=configuration.getValue('TransferManager', 'Port', 15011, int),
+       auto_register=False,
+       nbThreads=configuration.getValue('TransferManager', 'NbRpycThreads', 20, int))
     transfermanager.daemon = True
     # launch a report manager thread, handling reports from diskservers about their state and
     # updating the stager DB regularly

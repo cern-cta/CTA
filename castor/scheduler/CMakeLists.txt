@@ -31,7 +31,6 @@ add_subdirectory(diskmanager)
 
 set(SCHEDULER_SCRIPTS
   connectionpool.py
-  threadpoolserver.py
   transfer.py)
 install(FILES ${SCHEDULER_SCRIPTS}
   DESTINATION ${CASTOR_DEST_PYTHON_LIBDIR}
