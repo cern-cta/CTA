@@ -133,7 +133,6 @@ def processTransfersListing():
   for transfer in transfers:
     if not transfer[0]:
       print 'WARNING : was unable to contact ' + transfer[1] + '. Some transfers may be missing'
-  maxPoolNameLen = max([5] + [len(t[5]) for t in transfers if t[0]])+1
   # Display valid lines
   titles = ('TRANSFERID', 'FILEID', 'USER', 'STAT', 'TYPE', 'POOL',
             'SCHEDULER', 'DISKSERVER', 'SUBMIT_TIME', 'START_TIME')

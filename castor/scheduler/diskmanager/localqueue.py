@@ -297,7 +297,7 @@ class LocalQueue(Queue.Queue):
           try:
             timeout = timeouts[transfer.svcClassName]
           except KeyError:
-            try :
+            try:
               timeout = timeouts['all']
             except KeyError:
               # no timeout could be found, so we take it as infinite, meaning we do not cancel anything

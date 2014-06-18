@@ -84,7 +84,7 @@ def extendedSum(t):
   if isinstance(t[0], int) or t[0] == '-':
     return sum(t)
   dt = [dict(item) for item in t]
-  keys = reduce(lambda a, b : a|set(b), [set()] + dt)
+  keys = reduce(lambda a, b: a|set(b), [set()] + dt)
   return tuple((n, sum([d.get(n, 0) for d in dt])) for n in keys)
 
 class TransferManagerService(rpyc.Service):
@@ -167,7 +167,7 @@ class TransferManagerService(rpyc.Service):
     for scheduler in configuration.getValue('DiskManager', 'ServerHosts').split():
       try:
         for pool, n in connectionpool.connections.nbTransfersPerPool(scheduler, pool,
-                                                                         user, timeout=timeout):
+                                                                     user, timeout=timeout):
           if pool not in nbTransfersPerPool:
             nbTransfersPerPool[pool] = 0
           nbTransfersPerPool[pool] = nbTransfersPerPool[pool] + n
@@ -273,8 +273,8 @@ class TransferManagerService(rpyc.Service):
     # get the raw data as a dictionnary of dictionnaries (svclass then diskserver level)
     hosts = self.dispatch('summarizeTransfers', pool, user, detailed)
     # flatten it to a list of (diskserver, (values))
-    if hosts :
-      hostslist = reduce(lambda x, y:x+y, [pool.items() for pool in hosts.values()])
+    if hosts:
+      hostslist = reduce(lambda x, y: x+y, [pool.items() for pool in hosts.values()])
     else:
       hostslist = []
     # return a tuple of (diskserver, value1, value2, ...), or (diskserver, None) in case we got
@@ -418,7 +418,7 @@ class TransferManagerService(rpyc.Service):
             error, = e.args
             if isinstance(error, cx_Oracle._Error):
               errorcode = error.code
-              if (errorcode == 20110):
+              if errorcode == 20110:
                 # cleanup source
                 queueingTransfers.d2dendById(transfer.transferId)
                 # raise ValueError to tell the upper layer to give up
@@ -631,7 +631,7 @@ if daemonize:
   context.__enter__()
 drainOnExit = False
 try:
-  try :
+  try:
     # get configuration
     try:
       configuration = castor_tools.castorConf()

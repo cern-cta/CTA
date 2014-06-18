@@ -285,10 +285,10 @@ class AbstractDispatcherThread(threading.Thread):
     # and finally stop the DB thread
     self.dbthread.running = False
 
-    
+
 class UserDispatcherThread(AbstractDispatcherThread):
   '''Dispatcher thread dedicated to user transfers'''
-  
+
   def __init__(self, queueingTransfers, nbWorkers=5):
     '''constructor of this thread. Arguments are the connection pool and the transfer queue to use'''
     super(UserDispatcherThread, self).__init__(queueingTransfers, 'UserDispatcherThread', nbWorkers)
@@ -362,8 +362,8 @@ class UserDispatcherThread(AbstractDispatcherThread):
                                                  reqSvcClass.getvalue(), reqCreationTime.getvalue(),
                                                  srProtocol.getvalue(), srId.getvalue(),
                                                  int(reqType.getvalue()), srOpenFlags.getvalue(),
-                                                 inttoip(int(clientIp.getvalue())), 
-                                                 int(clientPort.getvalue()),int(clientSecure.getvalue())),
+                                                 inttoip(int(clientIp.getvalue())),
+                                                 int(clientPort.getvalue()), int(clientSecure.getvalue())),
                                         destFilesystems.getvalue())))
               # if maxNbTransfersScheduledPerSecond is given, request throttling is active
               # What it does is keep a count of the number of scheduled request in the current second
@@ -393,10 +393,10 @@ class UserDispatcherThread(AbstractDispatcherThread):
         self.dbConnection().checkForReconnection(e)
         # then sleep a bit to not loop to fast on the error
         time.sleep(1)
-    
+
 class D2DDispatcherThread(AbstractDispatcherThread):
   '''Dispatcher thread dedicated to disk to disk transfers'''
-  
+
   def __init__(self, queueingTransfers, nbWorkers=5):
     '''constructor of this thread. Arguments are the connection pool and the transfer queue to use'''
     super(D2DDispatcherThread, self).__init__(queueingTransfers, 'D2DDispatcherThread', nbWorkers)
@@ -431,7 +431,7 @@ class D2DDispatcherThread(AbstractDispatcherThread):
                           'd2dsrc', msgs.SCHEDD2DSRCFAILED, 'Unable to schedule on source host'):
       # source could not be scheduled. Give up. Note that the stagerDB has already been updated
       return
-        
+
     # now schedule on all potential destinations
     schedDestCandidates = [candidate.split(':') for candidate in destFilesystems.split('|')]
     # 'Scheduling d2d destination' message

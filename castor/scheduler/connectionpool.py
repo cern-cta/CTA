@@ -102,7 +102,7 @@ class ConnectionPool(object):
   def closeall(self):
     '''Close all connections'''
     conns = self.connections.values()
-    self.connections = {}    
+    self.connections = {}
     for conn in conns:
       try:
         conn.close()

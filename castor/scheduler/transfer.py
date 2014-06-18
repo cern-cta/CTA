@@ -104,7 +104,7 @@ def getProcessStartTime(pid):
   Note that this is linux specific code'''
   timeasstr = subprocess.Popen(['ps', '-o', 'etime=', '-p', str(pid)],
                                stdout=subprocess.PIPE).stdout.read().strip()
-  m = re.match('(?:(?:(\d+)?-)?(\d+):)?(\d+):(\d+)', timeasstr)
+  m = re.match('(?:(?:(\\d+)?-)?(\\d+):)?(\\d+):(\\d+)', timeasstr)
   if m:
     elapsed = int(m.group(3))*60+int(m.group(4))
     if m.group(1):
@@ -121,7 +121,7 @@ def cmdLineToTransfer(cmdLine, scheduler):
   Depending on the command, the appropriate type of transfer will be created inside the
   RunningTransfer. In case the command is not recognized, None is returned'''
   # find out if we have a regular transfer or disk 2 disk copies
-  if cmdLine.startswith('/usr/bin/stagerjob') or cmdLine.startswith('/usr/bin/d2dtransfer'):
+  if cmdLine.startswith('/usr/bin/stagerjob'):
     # parse command line
     cmdLine = cmdLine.split('\0')
     executable = cmdLine[0]
@@ -135,15 +135,8 @@ def cmdLineToTransfer(cmdLine, scheduler):
                           int(args['-u']), int(args['-g']), args['-S'], creationTime,
                           args['-p'], args['-i'], TransferType.STD, args['-m'], clientIPAddress,
                           int(clientPort), int(args['-X']), diskServer, mountPoint)
-    elif executable == '/usr/bin/d2dtransfer':
-      diskServer, mountPoint = args['-R'].split(':')
-      creationTime = int(args['-t'])
-      transfer = D2DTransfer(args['-s'], args['-r'], (args['-H'], int(args['-F'])),
-                             int(args['-u']), int(args['-g']), args['-S'], creationTime,
-                             TransferType.D2DDST, 'd2ddest', int(args['-D']), int(args['-X']),
-                             diskServer, mountPoint)
     # wrap into a RunningTransfer object
-    return RunningTransfer(scheduler, None, creationTime, transfer)
+    return RunningTransfer(scheduler, None, creationTime, transfer, '')
   else:
     return None
 
@@ -152,7 +145,7 @@ def transferToCmdLine(transfer):
   '''creates a cmdLine for launching a given transfer'''
   # find out if we have a regular transfer or disk 2 disk copies
   if transfer.transferType not in (TransferType.D2DDST, TransferType.STD):
-    raise TypeError, 'no command line for transfer of type %s' % TransferType.toStr(transfer.transferType)
+    raise TypeError('no command line for transfer of type %s' % TransferType.toStr(transfer.transferType))
   else:
     # first the executable
     if transfer.transferType == TransferType.D2DDST:
@@ -215,7 +208,7 @@ def tupleToTransfer(t):
   try:
     d = dict(t)
   except TypeError:
-    raise ValueError, 'parameter of tupleToTransfer was no a valid tuple of tuples : %s' % str(t)
+    raise ValueError('parameter of tupleToTransfer was no a valid tuple of tuples : %s' % str(t))
   transferType = d['transferType']
   try:
     if transferType == TransferType.STD:
@@ -224,9 +217,9 @@ def tupleToTransfer(t):
     elif transferType == TransferType.D2DSRC or transferType == TransferType.D2DDST:
       return D2DTransfer(**d)
     else:
-      raise ValueError, 'unknown transferType found in tupleToTransfer : %d' % d['transferType']
+      raise ValueError('unknown transferType found in tupleToTransfer : %d' % d['transferType'])
   except KeyError:
-    raise ValueError, 'no transferType in tuple given to tupleToTransfer : %s' % str(d)
+    raise ValueError('no transferType in tuple given to tupleToTransfer : %s' % str(d))
 
 
 class BaseTransfer(object):
@@ -262,7 +255,7 @@ class BaseTransfer(object):
        See method tupleToTransfer for the opposite direction'''
     return tuple(self.__dict__.items())
 
-  
+
 class Transfer(BaseTransfer):
   '''little container describing a regular transfer'''
   def __init__(self, transferId, reqId, fileId, euid, egid, svcClassName, creationTime,
@@ -294,7 +287,7 @@ class D2DTransfer(BaseTransfer):
   def protocol(self):
     '''get protocol name, either taking the actual protocol member or building one from the transferType'''
     return TransferType.toStr(self.transferType)
-    
+
 
 class TapeTransfer(object):
   '''little container describing a tape transfer'''
