@@ -49,7 +49,7 @@ def buildXrootURL(self, diskserver, path):
     # signature part
     try:
         # get Xroot RSA key
-        keyFile = self.configuration.getValue('DiskManager', 'XrootPrivateKey', \
+        keyFile = self.configuration.getValue('XROOT', 'PrivateKey', \
                                               '/opt/xrootd/keys/key.pem')
         key = RSA.importKey(open(keyFile, 'r').read())
         # sign opaque part
