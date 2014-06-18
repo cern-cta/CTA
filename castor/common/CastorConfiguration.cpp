@@ -136,10 +136,27 @@ castor::common::CastorConfiguration &
 //------------------------------------------------------------------------------
 const std::string& castor::common::CastorConfiguration::getConfEntString(
   const std::string &category, const std::string &key,
-  const std::string &defaultValue) {
+  const std::string &defaultValue, log::Logger *const log) {
   try {
-    return getConfEntString(category, key);
+    const std::string &value = getConfEntString(category, key);
+    if(NULL != log) {           
+      log::Param params[] = {   
+        log::Param("category", category),
+        log::Param("key", key),
+        log::Param("value", value),
+        log::Param("source", m_fileName)};
+      (*log)(LOG_INFO, "Got configuration entry", params);
+    }
+    return value;
   } catch(castor::exception::NoEntry &ne) {
+    if(NULL != log) {
+      log::Param params[] = {
+        log::Param("category", category),
+        log::Param("key", key),
+        log::Param("value", defaultValue),
+        log::Param("source", "DEFAULT")};
+      (*log)(LOG_INFO, "Got configuration entry", params);
+    }
     return defaultValue;
   }
 }
@@ -148,7 +165,7 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
 // getConfEntString
 //------------------------------------------------------------------------------
 const std::string& castor::common::CastorConfiguration::getConfEntString(
-  const std::string &category, const std::string &key) {
+  const std::string &category, const std::string &key, log::Logger *const log) {
   // check whether we need to reload the configuration
   if (isStale()) {
     tryToRenewConfig();
@@ -179,6 +196,15 @@ const std::string& castor::common::CastorConfiguration::getConfEntString(
         << key << ": Failed to find " << key << " key";
       throw e;
     }
+
+    if(NULL != log) {
+      log::Param params[] = {
+        log::Param("category", category),
+        log::Param("key", key),
+        log::Param("value", entIt->second)};
+      (*log)(LOG_INFO, "Got configuration entry", params);
+    }
+
     // release the lock
     pthread_rwlock_unlock(&m_lock);
     return entIt->second;

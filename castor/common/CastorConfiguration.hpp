@@ -26,6 +26,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "castor/log/Logger.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <string>
@@ -88,41 +89,69 @@ namespace castor {
 
       /**
        * retrieves a configuration entry
+       *
+       * If this method is passed a logger object then it will log the value
+       * of the configuration entry together with an indication of whether the
+       * value was found in the castor configuration file or whether the
+       * specified default value was used instead.
+       *
        * @param category the category of the entry
        * @param key the key of the entry
        * @param defaultValue the value to be returned if the configuration entry
        * is not in the configuration file
+       * @param log pointer to NULL or an optional logger object
        */
       const std::string& getConfEntString(const std::string &category,
-        const std::string &key, const std::string &defaultValue);
+        const std::string &key, const std::string &defaultValue,
+        log::Logger *const log = NULL);
 
       /**
        * retrieves a configuration entry
        *
-       * besides other possible exception, this method throws a
+       * Besides other possible exceptions, this method throws a
        * castor::exception::NoEntry exception if the specified configuration
-       * entry is not in the configuration file
+       * entry is not in the configuration file.
+       *
+       * If this method is passed a logger object then this method will log the
+       * the value of the configuration entry.
        *
        * @param category the category of the entry
        * @param key the key of the entry
+       * @param log pointer to NULL or an optional logger object
        */
       const std::string& getConfEntString(const std::string &category,
-        const std::string &key);
+        const std::string &key, log::Logger *const log = NULL);
 
       /**
        * retrieves a configuration entry as an integer
+       *
+       * If this method is passed a logger object then it will log the value
+       * of the configuration entry together with an indication of whether the
+       * value was found in the castor configuration file or whether the
+       * specified default value was used instead.
+       *
        * @param category category of the configuration parameter
        * @param name category of the configuration parameter
        * @param defaultValue the value to be returned if the configuration entry
        * is not in the configuration file
+       * @param log pointer to NULL or an optional logger object
        * @return the integer value
        */
       template<typename T> T getConfEntInt(const std::string &category,
-        const std::string &key, const T defaultValue)  {
+        const std::string &key, const T defaultValue,
+        log::Logger *const log = NULL)  {
         std::string strValue;
         try {
           strValue = getConfEntString(category, key);
         } catch(castor::exception::NoEntry &ne) {
+          if(NULL != log) {
+            log::Param params[] = {
+              log::Param("category", category),
+              log::Param("key", key),
+              log::Param("value", defaultValue),
+              log::Param("source", "DEFAULT")};
+            (*log)(LOG_INFO, "Got configuration entry", params);
+          }
           return defaultValue;
         }
 
@@ -135,6 +164,16 @@ namespace castor {
         std::stringstream ss;
         ss << strValue.c_str();
         ss >> value;
+
+        if(NULL != log) {
+          log::Param params[] = {
+            log::Param("category", category),
+            log::Param("key", key),
+            log::Param("value", value),
+            log::Param("source", m_fileName)};
+          (*log)(LOG_INFO, "Got configuration entry", params);
+        }
+
         return value;
       }
 
