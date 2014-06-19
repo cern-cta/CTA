@@ -38,5 +38,12 @@ message (STATUS "CASTOR_GLOBUS_MOPTION = ${CASTOR_GLOBUS_MOPTION}")
 
 include_directories(${GLOBUS_CONFINC_PATH} ${GLOBUS_INC_PATH})
 
-add_subdirectory (common)
-add_subdirectory (internal)
+set_property (SOURCE globus_gridftp_server_CASTOR2int.c
+  PROPERTY COMPILE_FLAGS "${CASTOR_GLOBUS_MOPTION}")
+add_library (globus_gridftp_server_CASTOR2int SHARED
+  globus_gridftp_server_CASTOR2int.c)
+set_target_properties (globus_gridftp_server_CASTOR2int PROPERTIES
+  LINK_FLAGS "${GLOBUS_FTPLIB} -lz")
+install (TARGETS globus_gridftp_server_CASTOR2int
+  DESTINATION ${CASTOR_DEST_LIB_DIR})
+CastorInstallLogRotate(castor-gridftp-dsi-int)

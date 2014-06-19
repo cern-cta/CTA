@@ -245,16 +245,11 @@ XBS-Obsoletes: castor-lib-policy, castor-lib-tapeutils
 Description: castor (Cern Advanced STORage system)
  Shared utilities library for castor tape servers and command-line tools
 
-Package: castor-gridftp-dsi-common
-Architecture: any
-Depends: castor-lib = %{version}-%{release}
-Description: castor (Cern Advanced STORage system)
- Commonnalities between internal and external CASTOR2 gridftp2 DSI module
-
 Package: castor-gridftp-dsi-int
 Architecture: any
 Depends: globus-gridftp-server-progs, globus-common, castor-gridftp-dsi-common
 Build-Depends: libattr-devel, zlib-devel, globus-gridftp-server-devel, globus-common-devel
+XBS-Obsoletes: castor-gridftp-dsi-common
 Description: castor (Cern Advanced STORage system)
  Internal CASTOR2 gridftp2 DSI module
 
