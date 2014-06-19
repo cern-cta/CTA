@@ -1,5 +1,5 @@
 /******************************************************************************
- *                     dsi_CASTOR2int.h
+ *                     dsi_CASTOR2.h
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -33,7 +33,7 @@ typedef struct checksum_block_list_s {
   struct checksum_block_list_s *next;
 } checksum_block_list_t;
 
-typedef struct globus_l_gfs_CASTOR2int_handle_s {
+typedef struct globus_l_gfs_CASTOR2_handle_s {
   globus_mutex_t mutex;
   int fd;
   globus_result_t cached_res;
@@ -52,7 +52,7 @@ typedef struct globus_l_gfs_CASTOR2int_handle_s {
   checksum_block_list_t *checksum_list_p;
   unsigned long number_of_blocks;
   char useCksum;        /* GSIFTP USE_CKSUM value in castor.conf, default yes */
-} globus_l_gfs_CASTOR2int_handle_t;
+} globus_l_gfs_CASTOR2_handle_t;
 
 static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t,
                                           globus_result_t,
@@ -61,7 +61,7 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t,
                                           globus_off_t,
                                           globus_bool_t,
                                           void *);
-static void globus_l_gfs_CASTOR2int_read_from_net(globus_l_gfs_CASTOR2int_handle_t * );
+static void globus_l_gfs_CASTOR2_read_from_net(globus_l_gfs_CASTOR2_handle_t * );
 static globus_result_t globus_l_gfs_make_error(const char *);
 
 int CASTOR2_handle_open(char *, int, int, globus_l_gfs_CASTOR2_handle_t *);

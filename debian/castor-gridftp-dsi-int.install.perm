@@ -1,2 +1,0 @@
-%attr(0755,root,root) usr/lib/libglobus_gridftp_server_CASTOR2int.so*
-%attr(0644,root,root) etc/logrotate.d/castor-gridftp-dsi-int

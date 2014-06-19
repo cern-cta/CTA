@@ -1,5 +1,5 @@
 /******************************************************************************
- *                  globus_gridftp_server_CASTOR2int.c
+ *                  globus_gridftp_server_CASTOR2.c
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -31,7 +31,7 @@
 #include <string.h>
 
 #include "globus_gridftp_server.h"
-#include "dsi_CASTOR2int.h"
+#include "dsi_CASTOR2.h"
 
 #include <stdio.h>
 #include <sys/stat.h>
@@ -176,42 +176,42 @@ static void ceph_logfunc_wrapper (char *format, va_list argp) {
  *        of the finished_info structure, but it currently does not.
  *        The DSI developer should jsut follow this template for now
  ************************************************************************/
-static void globus_l_gfs_CASTOR2int_start(globus_gfs_operation_t op,
-                                          globus_gfs_session_info_t *session_info) {
-  globus_l_gfs_CASTOR2int_handle_t *CASTOR2int_handle;
+static void globus_l_gfs_CASTOR2_start(globus_gfs_operation_t op,
+                                       globus_gfs_session_info_t *session_info) {
+  globus_l_gfs_CASTOR2_handle_t *CASTOR2_handle;
   globus_gfs_finished_info_t finished_info;
   char *p;
-  char *func="globus_l_gfs_CASTOR2int_start";
+  char *func="globus_l_gfs_CASTOR2_start";
 
-  GlobusGFSName(globus_l_gfs_CASTOR2int_start);
-  CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *)
-    globus_malloc(sizeof(globus_l_gfs_CASTOR2int_handle_t));
+  GlobusGFSName(globus_l_gfs_CASTOR2_start);
+  CASTOR2_handle = (globus_l_gfs_CASTOR2_handle_t *)
+    globus_malloc(sizeof(globus_l_gfs_CASTOR2_handle_t));
   globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: started, uid: %u, gid: %u\n",
                          func, getuid(),getgid());
-  globus_mutex_init(&CASTOR2int_handle->mutex,NULL);
+  globus_mutex_init(&CASTOR2_handle->mutex,NULL);
 
   memset(&finished_info, '\0', sizeof(globus_gfs_finished_info_t));
   finished_info.type = GLOBUS_GFS_OP_SESSION_START;
   finished_info.result = GLOBUS_SUCCESS;
-  finished_info.info.session.session_arg = CASTOR2int_handle;
+  finished_info.info.session.session_arg = CASTOR2_handle;
   finished_info.info.session.username = session_info->username;
   finished_info.info.session.home_dir = NULL; /* if null we will go to HOME directory */
 
-  CASTOR2int_handle->uuid=getenv("UUID");
-  CASTOR2int_handle->fullDestPath=getenv("FULLDESTPATH");
-  CASTOR2int_handle->access_mode=getenv("ACCESS_MODE");
+  CASTOR2_handle->uuid=getenv("UUID");
+  CASTOR2_handle->fullDestPath=getenv("FULLDESTPATH");
+  CASTOR2_handle->access_mode=getenv("ACCESS_MODE");
   globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: uuid=\"%s\" fullDestPath=\"%s\" mode=\"%s\"\n",
-                         func, CASTOR2int_handle->uuid,CASTOR2int_handle->fullDestPath,
-                         CASTOR2int_handle->access_mode);
-  CASTOR2int_handle->checksum_list=NULL;
-  CASTOR2int_handle->checksum_list_p=NULL;
+                         func, CASTOR2_handle->uuid,CASTOR2_handle->fullDestPath,
+                         CASTOR2_handle->access_mode);
+  CASTOR2_handle->checksum_list=NULL;
+  CASTOR2_handle->checksum_list_p=NULL;
 
-  CASTOR2int_handle->useCksum=1;
+  CASTOR2_handle->useCksum=1;
   p = getenv ("USE_CKSUM");
   if (NULL != p && 0 == strcasecmp(p, "no")) {
-    CASTOR2int_handle->useCksum=0;
+    CASTOR2_handle->useCksum=0;
   }
-  if (CASTOR2int_handle->useCksum) {
+  if (CASTOR2_handle->useCksum) {
     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: USE_CKSUM=YES\n",func);
   } else {
     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: USE_CKSUM=NO\n",func);
@@ -227,11 +227,11 @@ static void globus_l_gfs_CASTOR2int_start(globus_gfs_operation_t op,
  *  The dsi should clean up all memory they associated wit the session
  *  here.
  ************************************************************************/
-static void globus_l_gfs_CASTOR2int_destroy(void *user_arg) {
-  globus_l_gfs_CASTOR2int_handle_t *CASTOR2int_handle;
-  CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
-  globus_mutex_destroy(&CASTOR2int_handle->mutex);
-  globus_free(CASTOR2int_handle);
+static void globus_l_gfs_CASTOR2_destroy(void *user_arg) {
+  globus_l_gfs_CASTOR2_handle_t *CASTOR2_handle;
+  CASTOR2_handle = (globus_l_gfs_CASTOR2_handle_t *) user_arg;
+  globus_mutex_destroy(&CASTOR2_handle->mutex);
+  globus_free(CASTOR2_handle);
 }
 
 /*************************************************************************
@@ -242,28 +242,28 @@ static void globus_l_gfs_CASTOR2int_destroy(void *user_arg) {
  *  LIST is sent by the client, when the server needs to verify that
  *  a file exists and has the proper permissions, etc.
  ************************************************************************/
-static void globus_l_gfs_CASTOR2int_stat(globus_gfs_operation_t op,
-                                         globus_gfs_stat_info_t *stat_info,
-                                         void *user_arg) {
+static void globus_l_gfs_CASTOR2_stat(globus_gfs_operation_t op,
+                                      globus_gfs_stat_info_t *stat_info,
+                                      void *user_arg) {
   globus_gfs_stat_t *                 stat_array;
   int                                 stat_count;
-  globus_l_gfs_CASTOR2int_handle_t *  CASTOR2int_handle;
-  char *                              func="globus_l_gfs_CASTOR2int_stat";
+  globus_l_gfs_CASTOR2_handle_t *  CASTOR2_handle;
+  char *                              func="globus_l_gfs_CASTOR2_stat";
   struct stat64                       statbuf;
   int                                 status=0;
   globus_result_t                     result;
   char *                              pathname;
   char *                              uuid_path;
 
-  GlobusGFSName(globus_l_gfs_CASTOR2int_stat);
-  CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
+  GlobusGFSName(globus_l_gfs_CASTOR2_stat);
+  CASTOR2_handle = (globus_l_gfs_CASTOR2_handle_t *) user_arg;
   uuid_path = stat_info->pathname;
   while(strchr(uuid_path, '/') != NULL) {
-    /* strip any preceding path to isolate only the uuid part; see also CASTOR2int_handle_open */
+    /* strip any preceding path to isolate only the uuid part; see also CASTOR2_handle_open */
     uuid_path = strchr(uuid_path, '/') + 1;
   }
-  if(strcmp(uuid_path, CASTOR2int_handle->uuid) == 0) {
-    pathname = strdup(CASTOR2int_handle->fullDestPath);
+  if(strcmp(uuid_path, CASTOR2_handle->uuid) == 0) {
+    pathname = strdup(CASTOR2_handle->fullDestPath);
   } else {
     pathname = strdup(func); /* we want that stat64 fails */
   }
@@ -313,43 +313,43 @@ static void globus_l_gfs_CASTOR2int_stat(globus_gfs_operation_t op,
  *      GLOBUS_GFS_CMD_SITE_CHMOD,
  *      GLOBUS_GFS_CMD_SITE_DSI
  ************************************************************************/
-static void globus_l_gfs_CASTOR2int_command(globus_gfs_operation_t op,
-                                            globus_gfs_command_info_t *cmd_info,
-                                            void *user_arg) {
+static void globus_l_gfs_CASTOR2_command(globus_gfs_operation_t op,
+                                         globus_gfs_command_info_t *cmd_info,
+                                         void *user_arg) {
   globus_result_t result;
   (void)cmd_info;
   (void)user_arg;
-  GlobusGFSName(globus_l_gfs_CASTOR2int_command);
+  GlobusGFSName(globus_l_gfs_CASTOR2_command);
   /* in gridftp disk server we do not allow to perform commads */
   result=GlobusGFSErrorGeneric("error: commands denied");
   globus_gridftp_server_finished_command(op, result, GLOBUS_NULL);
   return;
 }
 
-int CASTOR2int_handle_open(char *path,
-                           int flags,
-                           int mode,
-                           globus_l_gfs_CASTOR2int_handle_t *CASTOR2int_handle) {
+int CASTOR2_handle_open(char *path,
+                        int flags,
+                        int mode,
+                        globus_l_gfs_CASTOR2_handle_t *CASTOR2_handle) {
   int       rc;
-  char *    func="CASTOR2int_handle_open";
+  char *    func="CASTOR2_handle_open";
   char * uuid_path;
 
   uuid_path = path;
   while(strchr(uuid_path, '/') != NULL) {
     /* strip any preceding path to isolate only the uuid part;
-       see also globus_l_gfs_CASTOR2int_stat */
+       see also globus_l_gfs_CASTOR2_stat */
     uuid_path = strchr(uuid_path, '/') + 1;
   }
-  if(strcmp(uuid_path,CASTOR2int_handle->uuid) == 0) {
+  if(strcmp(uuid_path,CASTOR2_handle->uuid) == 0) {
     /* if clients uuid is the same as internal uuid we will access fullDestPath file then */
     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: open file \"%s\"\n",
-                           func,CASTOR2int_handle->fullDestPath);
-    rc = ceph_posix_open(CASTOR2int_handle->fullDestPath,flags,mode);
+                           func,CASTOR2_handle->fullDestPath);
+    rc = ceph_posix_open(CASTOR2_handle->fullDestPath,flags,mode);
     return (rc);
   }
   globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,
                          "%s: client and server uuids do not match \"%s\" != \"%s\"\n",
-                         func, uuid_path,CASTOR2int_handle->uuid);
+                         func, uuid_path,CASTOR2_handle->uuid);
   errno = EINVAL;
   return (-1);
 }
@@ -363,7 +363,7 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t op,
                                           globus_bool_t eof,
                                           void *user_arg) {
   globus_off_t                        start_offset;
-  globus_l_gfs_CASTOR2int_handle_t *  CASTOR2int_handle;
+  globus_l_gfs_CASTOR2_handle_t *  CASTOR2_handle;
   globus_size_t                       bytes_written;
   unsigned long                       adler;
   checksum_block_list_t**             checksum_array;
@@ -375,52 +375,52 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t op,
   char *                              ckSumalg="ADLER32"; /* we only support Adler32 for gridftp */
   char *                              func="globus_l_gfs_file_net_read_cb";
 
-  CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
+  CASTOR2_handle = (globus_l_gfs_CASTOR2_handle_t *) user_arg;
 
-  globus_mutex_lock(&CASTOR2int_handle->mutex);
+  globus_mutex_lock(&CASTOR2_handle->mutex);
   {
-    if(eof)    CASTOR2int_handle->done = GLOBUS_TRUE;
-    CASTOR2int_handle->outstanding--;
+    if(eof)    CASTOR2_handle->done = GLOBUS_TRUE;
+    CASTOR2_handle->outstanding--;
     if(result != GLOBUS_SUCCESS) {
-      CASTOR2int_handle->cached_res = result;
-      CASTOR2int_handle->done = GLOBUS_TRUE;
+      CASTOR2_handle->cached_res = result;
+      CASTOR2_handle->done = GLOBUS_TRUE;
     }
     else if(nbytes > 0) {
-      start_offset = ceph_posix_lseek64(CASTOR2int_handle->fd, offset, SEEK_SET);
+      start_offset = ceph_posix_lseek64(CASTOR2_handle->fd, offset, SEEK_SET);
       if(start_offset != offset) {
-        CASTOR2int_handle->cached_res = globus_l_gfs_make_error("seek");
-        CASTOR2int_handle->done = GLOBUS_TRUE;
+        CASTOR2_handle->cached_res = globus_l_gfs_make_error("seek");
+        CASTOR2_handle->done = GLOBUS_TRUE;
       } else {
-        bytes_written = ceph_posix_write(CASTOR2int_handle->fd, buffer, nbytes);
-        if (CASTOR2int_handle->useCksum) {
+        bytes_written = ceph_posix_write(CASTOR2_handle->fd, buffer, nbytes);
+        if (CASTOR2_handle->useCksum) {
           /* fill the checksum list  */
           /* we will have a lot of checksums blocks in the list */
           adler = adler32(0L, Z_NULL, 0);
           adler = adler32(adler, buffer, nbytes);
 
-          CASTOR2int_handle->checksum_list_p->next=
+          CASTOR2_handle->checksum_list_p->next=
             (checksum_block_list_t *)globus_malloc(sizeof(checksum_block_list_t));
 
-          if (CASTOR2int_handle->checksum_list_p->next==NULL) {
-            CASTOR2int_handle->cached_res = GLOBUS_FAILURE;
+          if (CASTOR2_handle->checksum_list_p->next==NULL) {
+            CASTOR2_handle->cached_res = GLOBUS_FAILURE;
             globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: malloc error \n",func);
-            CASTOR2int_handle->done = GLOBUS_TRUE;
-            globus_mutex_unlock(&CASTOR2int_handle->mutex);
+            CASTOR2_handle->done = GLOBUS_TRUE;
+            globus_mutex_unlock(&CASTOR2_handle->mutex);
             return;
           }
-          CASTOR2int_handle->checksum_list_p->next->next=NULL;
-          CASTOR2int_handle->checksum_list_p->offset=offset;
-          CASTOR2int_handle->checksum_list_p->size=bytes_written;
-          CASTOR2int_handle->checksum_list_p->csumvalue=adler;
-          CASTOR2int_handle->checksum_list_p=CASTOR2int_handle->checksum_list_p->next;
-          CASTOR2int_handle->number_of_blocks++;
+          CASTOR2_handle->checksum_list_p->next->next=NULL;
+          CASTOR2_handle->checksum_list_p->offset=offset;
+          CASTOR2_handle->checksum_list_p->size=bytes_written;
+          CASTOR2_handle->checksum_list_p->csumvalue=adler;
+          CASTOR2_handle->checksum_list_p=CASTOR2_handle->checksum_list_p->next;
+          CASTOR2_handle->number_of_blocks++;
           /* end of the checksum section */
         }
         if(bytes_written < nbytes) {
           errno = ENOSPC;
-          CASTOR2int_handle->cached_res = globus_l_gfs_make_error("write");
-          CASTOR2int_handle->done = GLOBUS_TRUE;
-          free_checksum_list(CASTOR2int_handle->checksum_list);
+          CASTOR2_handle->cached_res = globus_l_gfs_make_error("write");
+          CASTOR2_handle->done = GLOBUS_TRUE;
+          free_checksum_list(CASTOR2_handle->checksum_list);
         } else {
           globus_gridftp_server_update_bytes_written(op,offset,nbytes);
         }
@@ -429,23 +429,23 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t op,
 
     globus_free(buffer);
     /* if not done just register the next one */
-    if(!CASTOR2int_handle->done) globus_l_gfs_CASTOR2int_read_from_net(CASTOR2int_handle);
+    if(!CASTOR2_handle->done) globus_l_gfs_CASTOR2_read_from_net(CASTOR2_handle);
     /* if done and there are no outstanding callbacks finish */
-    else if(CASTOR2int_handle->outstanding == 0){
-      if (CASTOR2int_handle->useCksum) {
+    else if(CASTOR2_handle->outstanding == 0){
+      if (CASTOR2_handle->useCksum) {
         /* checksum calculation */
         checksum_array=(checksum_block_list_t**)
-          globus_calloc(CASTOR2int_handle->number_of_blocks,sizeof(checksum_block_list_t*));
+          globus_calloc(CASTOR2_handle->number_of_blocks,sizeof(checksum_block_list_t*));
         if (checksum_array==NULL){
-          free_checksum_list(CASTOR2int_handle->checksum_list);
-          CASTOR2int_handle->cached_res = GLOBUS_FAILURE;
+          free_checksum_list(CASTOR2_handle->checksum_list);
+          CASTOR2_handle->cached_res = GLOBUS_FAILURE;
           globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: malloc error \n",func);
-          CASTOR2int_handle->done = GLOBUS_TRUE;
-          ceph_posix_close(CASTOR2int_handle->fd);
-          globus_mutex_unlock(&CASTOR2int_handle->mutex);
+          CASTOR2_handle->done = GLOBUS_TRUE;
+          ceph_posix_close(CASTOR2_handle->fd);
+          globus_mutex_unlock(&CASTOR2_handle->mutex);
           return;
         }
-        checksum_list_pp=CASTOR2int_handle->checksum_list;
+        checksum_list_pp=CASTOR2_handle->checksum_list;
         /* sorting of the list to the array */
         index = 0;
         /* the latest block is always empty and has next pointer as NULL */
@@ -469,7 +469,7 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t op,
         }
         chkOffset += checksum_array[0]->size;
         /* go over all received chunks */
-        for (i=1;i<CASTOR2int_handle->number_of_blocks;i++) {
+        for (i=1;i<CASTOR2_handle->number_of_blocks;i++) {
           /* check the continuity with previous chunk */
           if (checksum_array[i]->offset != chkOffset) {
             // not continuous, a chunk is missing, consider it full of 0s
@@ -485,73 +485,73 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t op,
         }
 
         globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: checksum for %s : AD 0x%lx\n",
-                               func,CASTOR2int_handle->fullDestPath,file_checksum);
+                               func,CASTOR2_handle->fullDestPath,file_checksum);
         globus_free(checksum_array);
-        free_checksum_list(CASTOR2int_handle->checksum_list);
+        free_checksum_list(CASTOR2_handle->checksum_list);
         /* set extended attributes */
         sprintf(ckSumbuf,"%lx",file_checksum);
-        if (ceph_posix_fsetxattr(CASTOR2int_handle->fd,"user.castor.checksum.type",
-                              ckSumalg,strlen(ckSumalg),0)) {
+        if (ceph_posix_fsetxattr(CASTOR2_handle->fd,"user.castor.checksum.type",
+                                 ckSumalg,strlen(ckSumalg),0)) {
           ;/* ignore all errors */
-        } else if (ceph_posix_fsetxattr(CASTOR2int_handle->fd,"user.castor.checksum.value",
-                                     ckSumbuf,strlen(ckSumbuf),0)) {
+        } else if (ceph_posix_fsetxattr(CASTOR2_handle->fd,"user.castor.checksum.value",
+                                        ckSumbuf,strlen(ckSumbuf),0)) {
           ; /* ignore all errors */
         }
         /* end of checksum section */
       }
-      ceph_posix_close(CASTOR2int_handle->fd);
+      ceph_posix_close(CASTOR2_handle->fd);
 
-      globus_gridftp_server_finished_transfer(op, CASTOR2int_handle->cached_res);
+      globus_gridftp_server_finished_transfer(op, CASTOR2_handle->cached_res);
     }
   }
-  globus_mutex_unlock(&CASTOR2int_handle->mutex);
+  globus_mutex_unlock(&CASTOR2_handle->mutex);
 }
 
-static void globus_l_gfs_CASTOR2int_read_from_net
-(globus_l_gfs_CASTOR2int_handle_t *CASTOR2int_handle) {
+static void globus_l_gfs_CASTOR2_read_from_net
+(globus_l_gfs_CASTOR2_handle_t *CASTOR2_handle) {
   globus_byte_t *                     buffer;
   globus_result_t                     result;
-  char *                     func="globus_l_gfs_CASTOR2int_read_from_net";
+  char *                     func="globus_l_gfs_CASTOR2_read_from_net";
 
-  GlobusGFSName(globus_l_gfs_CASTOR2int_read_from_net);
+  GlobusGFSName(globus_l_gfs_CASTOR2_read_from_net);
   /* in the read case this number will vary */
-  globus_gridftp_server_get_optimal_concurrency(CASTOR2int_handle->op,
-                                                &CASTOR2int_handle->optimal_count);
+  globus_gridftp_server_get_optimal_concurrency(CASTOR2_handle->op,
+                                                &CASTOR2_handle->optimal_count);
 
-  while(CASTOR2int_handle->outstanding < CASTOR2int_handle->optimal_count) {
-    buffer=globus_malloc(CASTOR2int_handle->block_size);
+  while(CASTOR2_handle->outstanding < CASTOR2_handle->optimal_count) {
+    buffer=globus_malloc(CASTOR2_handle->block_size);
     if (buffer == NULL) {
       result = GlobusGFSErrorGeneric("error: globus malloc failed");
-      CASTOR2int_handle->cached_res = result;
-      CASTOR2int_handle->done = GLOBUS_TRUE;
-      if (CASTOR2int_handle->outstanding == 0) {
-        ceph_posix_close(CASTOR2int_handle->fd);
-        globus_gridftp_server_finished_transfer(CASTOR2int_handle->op,
-                                                CASTOR2int_handle->cached_res);
+      CASTOR2_handle->cached_res = result;
+      CASTOR2_handle->done = GLOBUS_TRUE;
+      if (CASTOR2_handle->outstanding == 0) {
+        ceph_posix_close(CASTOR2_handle->fd);
+        globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
+                                                CASTOR2_handle->cached_res);
       }
       return;
     }
-    result= globus_gridftp_server_register_read(CASTOR2int_handle->op,
+    result= globus_gridftp_server_register_read(CASTOR2_handle->op,
                                                 buffer,
-                                                CASTOR2int_handle->block_size,
+                                                CASTOR2_handle->block_size,
                                                 globus_l_gfs_file_net_read_cb,
-                                                CASTOR2int_handle);
+                                                CASTOR2_handle);
 
     if(result != GLOBUS_SUCCESS)  {
       globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,
                              "%s: register read has finished with a bad result \n",
                              func);
       globus_free(buffer);
-      CASTOR2int_handle->cached_res = result;
-      CASTOR2int_handle->done = GLOBUS_TRUE;
-      if (CASTOR2int_handle->outstanding == 0) {
-        ceph_posix_close(CASTOR2int_handle->fd);
-        globus_gridftp_server_finished_transfer(CASTOR2int_handle->op,
-                                                CASTOR2int_handle->cached_res);
+      CASTOR2_handle->cached_res = result;
+      CASTOR2_handle->done = GLOBUS_TRUE;
+      if (CASTOR2_handle->outstanding == 0) {
+        ceph_posix_close(CASTOR2_handle->fd);
+        globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
+                                                CASTOR2_handle->cached_res);
       }
       return;
     }
-    CASTOR2int_handle->outstanding++;
+    CASTOR2_handle->outstanding++;
   }
 }
 
@@ -571,23 +571,23 @@ static void globus_l_gfs_CASTOR2int_read_from_net
  *
  ************************************************************************/
 
-static void globus_l_gfs_CASTOR2int_recv(globus_gfs_operation_t op,
-                                         globus_gfs_transfer_info_t *transfer_info,
-                                         void *user_arg) {
-  globus_l_gfs_CASTOR2int_handle_t *     CASTOR2int_handle;
+static void globus_l_gfs_CASTOR2_recv(globus_gfs_operation_t op,
+                                      globus_gfs_transfer_info_t *transfer_info,
+                                      void *user_arg) {
+  globus_l_gfs_CASTOR2_handle_t *     CASTOR2_handle;
 
   globus_result_t                     result;
-  char *                 func="globus_l_gfs_CASTOR2int_recv";
+  char *                 func="globus_l_gfs_CASTOR2_recv";
   char *                 pathname;
   int                 flags;
 
-  GlobusGFSName(globus_l_gfs_CASTOR2int_recv);
-  CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
+  GlobusGFSName(globus_l_gfs_CASTOR2_recv);
+  CASTOR2_handle = (globus_l_gfs_CASTOR2_handle_t *) user_arg;
 
   globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: started\n",func);
 
-  if (strcmp(CASTOR2int_handle->access_mode,"w") != 0 &&
-      strcmp(CASTOR2int_handle->access_mode,"o") != 0) {
+  if (strcmp(CASTOR2_handle->access_mode,"w") != 0 &&
+      strcmp(CASTOR2_handle->access_mode,"o") != 0) {
     result=GlobusGFSErrorGeneric("error: incorect access mode");
     globus_gridftp_server_finished_transfer(op, result);
     return;
@@ -604,9 +604,9 @@ static void globus_l_gfs_CASTOR2int_recv(globus_gfs_operation_t op,
   flags = O_WRONLY | O_CREAT;
   if(transfer_info->truncate) flags |= O_TRUNC;
 
-  CASTOR2int_handle->fd = CASTOR2int_handle_open(pathname, flags, 0644, CASTOR2int_handle);
+  CASTOR2_handle->fd = CASTOR2_handle_open(pathname, flags, 0644, CASTOR2_handle);
 
-  if (CASTOR2int_handle->fd < 0) {
+  if (CASTOR2_handle->fd < 0) {
     result=globus_l_gfs_make_error("open/create");
     free(pathname);
     globus_gridftp_server_finished_transfer(op, result);
@@ -614,38 +614,38 @@ static void globus_l_gfs_CASTOR2int_recv(globus_gfs_operation_t op,
   }
 
   /* reset all the needed variables in the handle */
-  CASTOR2int_handle->cached_res = GLOBUS_SUCCESS;
-  CASTOR2int_handle->outstanding = 0;
-  CASTOR2int_handle->done = GLOBUS_FALSE;
-  CASTOR2int_handle->blk_length = 0;
-  CASTOR2int_handle->blk_offset = 0;
-  CASTOR2int_handle->op = op;
+  CASTOR2_handle->cached_res = GLOBUS_SUCCESS;
+  CASTOR2_handle->outstanding = 0;
+  CASTOR2_handle->done = GLOBUS_FALSE;
+  CASTOR2_handle->blk_length = 0;
+  CASTOR2_handle->blk_offset = 0;
+  CASTOR2_handle->op = op;
 
-  globus_gridftp_server_get_block_size(op, &CASTOR2int_handle->block_size);
+  globus_gridftp_server_get_block_size(op, &CASTOR2_handle->block_size);
   globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: block size: %ld\n",
-                         func,CASTOR2int_handle->block_size);
+                         func,CASTOR2_handle->block_size);
 
   /* here we will save all checksums for the file blocks        */
   /* malloc memory for the first element in the checksum list   */
   /* we should always have at least one block for a file        */
-  CASTOR2int_handle->checksum_list=
+  CASTOR2_handle->checksum_list=
     (checksum_block_list_t *)globus_malloc(sizeof(checksum_block_list_t));
-  if (CASTOR2int_handle->checksum_list==NULL) {
+  if (CASTOR2_handle->checksum_list==NULL) {
     globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: malloc error \n",func);
     globus_gridftp_server_finished_transfer(op, GLOBUS_FAILURE);
     return;
   }
-  CASTOR2int_handle->checksum_list->next=NULL;
-  CASTOR2int_handle->checksum_list_p=CASTOR2int_handle->checksum_list;
-  CASTOR2int_handle->number_of_blocks=0;
+  CASTOR2_handle->checksum_list->next=NULL;
+  CASTOR2_handle->checksum_list_p=CASTOR2_handle->checksum_list;
+  CASTOR2_handle->number_of_blocks=0;
 
-  globus_gridftp_server_begin_transfer(op, 0, CASTOR2int_handle);
+  globus_gridftp_server_begin_transfer(op, 0, CASTOR2_handle);
 
-  globus_mutex_lock(&CASTOR2int_handle->mutex);
+  globus_mutex_lock(&CASTOR2_handle->mutex);
   {
-    globus_l_gfs_CASTOR2int_read_from_net(CASTOR2int_handle);
+    globus_l_gfs_CASTOR2_read_from_net(CASTOR2_handle);
   }
-  globus_mutex_unlock(&CASTOR2int_handle->mutex);
+  globus_mutex_unlock(&CASTOR2_handle->mutex);
   free(pathname);
   globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: finished\n",func);
   return;
@@ -666,22 +666,22 @@ static void globus_l_gfs_CASTOR2int_recv(globus_gfs_operation_t op,
  *      globus_gridftp_server_finished_transfer();
  *
  ************************************************************************/
-static void globus_l_gfs_CASTOR2int_send(globus_gfs_operation_t op,
-                                         globus_gfs_transfer_info_t *transfer_info,
-                                         void *user_arg) {
-  globus_l_gfs_CASTOR2int_handle_t *       CASTOR2int_handle;
-  char *                 func="globus_l_gfs_CASTOR2int_send";
+static void globus_l_gfs_CASTOR2_send(globus_gfs_operation_t op,
+                                      globus_gfs_transfer_info_t *transfer_info,
+                                      void *user_arg) {
+  globus_l_gfs_CASTOR2_handle_t *       CASTOR2_handle;
+  char *                 func="globus_l_gfs_CASTOR2_send";
   char *                pathname;
   int                 i;
   globus_bool_t                       done;
   globus_result_t                     result;
 
-  GlobusGFSName(globus_l_gfs_CASTOR2int_send);
-  CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
+  GlobusGFSName(globus_l_gfs_CASTOR2_send);
+  CASTOR2_handle = (globus_l_gfs_CASTOR2_handle_t *) user_arg;
   globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: started\n",func);
 
-  if( strcmp(CASTOR2int_handle->access_mode,"r") != 0 &&
-      strcmp(CASTOR2int_handle->access_mode,"o") !=0 ) {
+  if( strcmp(CASTOR2_handle->access_mode,"r") != 0 &&
+      strcmp(CASTOR2_handle->access_mode,"o") !=0 ) {
     result=GlobusGFSErrorGeneric("error: incorect access mode");
     globus_gridftp_server_finished_transfer(op, result);
     return;
@@ -696,10 +696,10 @@ static void globus_l_gfs_CASTOR2int_send(globus_gfs_operation_t op,
 
   globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: pathname: %s\n",func,pathname);
   /* mode is ignored */
-  CASTOR2int_handle->fd = CASTOR2int_handle_open(pathname, O_RDONLY,
-                                                 0, CASTOR2int_handle);
+  CASTOR2_handle->fd = CASTOR2_handle_open(pathname, O_RDONLY,
+                                           0, CASTOR2_handle);
 
-  if (CASTOR2int_handle->fd < 0) {
+  if (CASTOR2_handle->fd < 0) {
     result = globus_l_gfs_make_error("open");
     free(pathname);
     globus_gridftp_server_finished_transfer(op, result);
@@ -707,50 +707,50 @@ static void globus_l_gfs_CASTOR2int_send(globus_gfs_operation_t op,
   }
 
   /* reset all the needed variables in the handle */
-  CASTOR2int_handle->cached_res = GLOBUS_SUCCESS;
-  CASTOR2int_handle->outstanding = 0;
-  CASTOR2int_handle->done = GLOBUS_FALSE;
-  CASTOR2int_handle->blk_length = 0;
-  CASTOR2int_handle->blk_offset = 0;
-  CASTOR2int_handle->op = op;
+  CASTOR2_handle->cached_res = GLOBUS_SUCCESS;
+  CASTOR2_handle->outstanding = 0;
+  CASTOR2_handle->done = GLOBUS_FALSE;
+  CASTOR2_handle->blk_length = 0;
+  CASTOR2_handle->blk_offset = 0;
+  CASTOR2_handle->op = op;
 
-  globus_gridftp_server_get_optimal_concurrency(op, &CASTOR2int_handle->optimal_count);
+  globus_gridftp_server_get_optimal_concurrency(op, &CASTOR2_handle->optimal_count);
   globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: optimal_concurrency: %u\n",
-                         func,CASTOR2int_handle->optimal_count);
+                         func,CASTOR2_handle->optimal_count);
 
-  globus_gridftp_server_get_block_size(op, &CASTOR2int_handle->block_size);
+  globus_gridftp_server_get_block_size(op, &CASTOR2_handle->block_size);
   globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: block_size: %ld\n",
-                         func,CASTOR2int_handle->block_size);
+                         func,CASTOR2_handle->block_size);
 
   /* here we will save all checksums for the file blocks        */
   /* malloc memory for the first element in the checksum list   */
   /* we should always have at least one block for a file        */
-  CASTOR2int_handle->checksum_list=
+  CASTOR2_handle->checksum_list=
     (checksum_block_list_t *)globus_malloc(sizeof(checksum_block_list_t));
-  if (CASTOR2int_handle->checksum_list==NULL) {
+  if (CASTOR2_handle->checksum_list==NULL) {
     globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: malloc error \n",func);
     globus_gridftp_server_finished_transfer(op, GLOBUS_FAILURE);
     return;
   }
-  CASTOR2int_handle->checksum_list->next=NULL;
-  CASTOR2int_handle->checksum_list_p=CASTOR2int_handle->checksum_list;
-  CASTOR2int_handle->number_of_blocks=0;
+  CASTOR2_handle->checksum_list->next=NULL;
+  CASTOR2_handle->checksum_list_p=CASTOR2_handle->checksum_list;
+  CASTOR2_handle->number_of_blocks=0;
 
-  globus_gridftp_server_begin_transfer(op, 0, CASTOR2int_handle);
+  globus_gridftp_server_begin_transfer(op, 0, CASTOR2_handle);
   done = GLOBUS_FALSE;
-  globus_mutex_lock(&CASTOR2int_handle->mutex);
+  globus_mutex_lock(&CASTOR2_handle->mutex);
   {
-    for(i = 0; i < CASTOR2int_handle->optimal_count && !done; i++) {
-      done = globus_l_gfs_CASTOR2int_send_next_to_client(CASTOR2int_handle);
+    for(i = 0; i < CASTOR2_handle->optimal_count && !done; i++) {
+      done = globus_l_gfs_CASTOR2_send_next_to_client(CASTOR2_handle);
     }
   }
-  globus_mutex_unlock(&CASTOR2int_handle->mutex);
+  globus_mutex_unlock(&CASTOR2_handle->mutex);
   free(pathname);
   globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: finished\n",func);
 }
 
-static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
-(globus_l_gfs_CASTOR2int_handle_t *CASTOR2int_handle) {
+static globus_bool_t globus_l_gfs_CASTOR2_send_next_to_client
+(globus_l_gfs_CASTOR2_handle_t *CASTOR2_handle) {
   globus_result_t                     result;
   globus_result_t                     res;
   globus_off_t                        read_length;
@@ -768,91 +768,91 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
   char                                ckSumnamedisk[CA_MAXCKSUMNAMELEN+1];
   char                                useCksum;
   int                                 xattr_len;
-  char *                              func = "globus_l_gfs_CASTOR2int_send_next_to_client";
+  char *                              func = "globus_l_gfs_CASTOR2_send_next_to_client";
 
-  GlobusGFSName(globus_l_gfs_CASTOR2int_send_next_to_client);
+  GlobusGFSName(globus_l_gfs_CASTOR2_send_next_to_client);
 
-  if (CASTOR2int_handle->blk_length == 0) {
+  if (CASTOR2_handle->blk_length == 0) {
     /* check the next range to read */
-    globus_gridftp_server_get_read_range(CASTOR2int_handle->op,
-                                         &CASTOR2int_handle->blk_offset,
-                                         &CASTOR2int_handle->blk_length);
-    if(CASTOR2int_handle->blk_length == 0) {
+    globus_gridftp_server_get_read_range(CASTOR2_handle->op,
+                                         &CASTOR2_handle->blk_offset,
+                                         &CASTOR2_handle->blk_length);
+    if(CASTOR2_handle->blk_length == 0) {
       result = GLOBUS_SUCCESS;
-      ceph_posix_close(CASTOR2int_handle->fd);
-      CASTOR2int_handle->cached_res = result;
-      CASTOR2int_handle->done = GLOBUS_TRUE;
-      if (CASTOR2int_handle->outstanding == 0) {
-        globus_gridftp_server_finished_transfer(CASTOR2int_handle->op,
-                                                CASTOR2int_handle->cached_res);
+      ceph_posix_close(CASTOR2_handle->fd);
+      CASTOR2_handle->cached_res = result;
+      CASTOR2_handle->done = GLOBUS_TRUE;
+      if (CASTOR2_handle->outstanding == 0) {
+        globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
+                                                CASTOR2_handle->cached_res);
       }
-      return CASTOR2int_handle->done;
+      return CASTOR2_handle->done;
     }
   }
 
-  if (CASTOR2int_handle->blk_length == -1 ||
-      (globus_size_t)CASTOR2int_handle->blk_length > CASTOR2int_handle->block_size)
-    read_length = CASTOR2int_handle->block_size;
-  else read_length = CASTOR2int_handle->blk_length;
+  if (CASTOR2_handle->blk_length == -1 ||
+      (globus_size_t)CASTOR2_handle->blk_length > CASTOR2_handle->block_size)
+    read_length = CASTOR2_handle->block_size;
+  else read_length = CASTOR2_handle->blk_length;
 
-  start_offset = ceph_posix_lseek64(CASTOR2int_handle->fd,
-                                 CASTOR2int_handle->blk_offset,
-                                 SEEK_SET);
+  start_offset = ceph_posix_lseek64(CASTOR2_handle->fd,
+                                    CASTOR2_handle->blk_offset,
+                                    SEEK_SET);
   /* verify that it worked */
-  if (start_offset != CASTOR2int_handle->blk_offset) {
+  if (start_offset != CASTOR2_handle->blk_offset) {
     result = globus_l_gfs_make_error("seek");
-    ceph_posix_close(CASTOR2int_handle->fd);
-    CASTOR2int_handle->cached_res = result;
-    CASTOR2int_handle->done = GLOBUS_TRUE;
-    if (CASTOR2int_handle->outstanding == 0) {
-      globus_gridftp_server_finished_transfer(CASTOR2int_handle->op,
-                                              CASTOR2int_handle->cached_res);
+    ceph_posix_close(CASTOR2_handle->fd);
+    CASTOR2_handle->cached_res = result;
+    CASTOR2_handle->done = GLOBUS_TRUE;
+    if (CASTOR2_handle->outstanding == 0) {
+      globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
+                                              CASTOR2_handle->cached_res);
     }
-    return CASTOR2int_handle->done;
+    return CASTOR2_handle->done;
   }
 
   buffer = globus_malloc(read_length);
   if (buffer == NULL) {
     result = GlobusGFSErrorGeneric("error: malloc failed");
-    ceph_posix_close(CASTOR2int_handle->fd);
-    CASTOR2int_handle->cached_res = result;
-    CASTOR2int_handle->done = GLOBUS_TRUE;
-    if (CASTOR2int_handle->outstanding == 0) {
-      globus_gridftp_server_finished_transfer(CASTOR2int_handle->op,
-                                              CASTOR2int_handle->cached_res);
+    ceph_posix_close(CASTOR2_handle->fd);
+    CASTOR2_handle->cached_res = result;
+    CASTOR2_handle->done = GLOBUS_TRUE;
+    if (CASTOR2_handle->outstanding == 0) {
+      globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
+                                              CASTOR2_handle->cached_res);
     }
-    return CASTOR2int_handle->done;
+    return CASTOR2_handle->done;
   }
 
-  nbread = ceph_posix_read(CASTOR2int_handle->fd, buffer, read_length);
+  nbread = ceph_posix_read(CASTOR2_handle->fd, buffer, read_length);
   if (nbread>0) {
-    if (CASTOR2int_handle->useCksum) {
+    if (CASTOR2_handle->useCksum) {
       /* fill the checksum list  */
       adler = adler32(0L, Z_NULL, 0);
       adler = adler32(adler, buffer, nbread);
 
-      CASTOR2int_handle->checksum_list_p->next=
+      CASTOR2_handle->checksum_list_p->next=
         (checksum_block_list_t *)globus_malloc(sizeof(checksum_block_list_t));
 
-      if (CASTOR2int_handle->checksum_list_p->next==NULL) {
+      if (CASTOR2_handle->checksum_list_p->next==NULL) {
         globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: malloc error \n",func);
         globus_free(buffer);
-        ceph_posix_close(CASTOR2int_handle->fd);
-        CASTOR2int_handle->cached_res = GLOBUS_FAILURE;
-        CASTOR2int_handle->done = GLOBUS_TRUE;
-        if (CASTOR2int_handle->outstanding == 0) {
-          globus_gridftp_server_finished_transfer(CASTOR2int_handle->op,
-                                                  CASTOR2int_handle->cached_res);
+        ceph_posix_close(CASTOR2_handle->fd);
+        CASTOR2_handle->cached_res = GLOBUS_FAILURE;
+        CASTOR2_handle->done = GLOBUS_TRUE;
+        if (CASTOR2_handle->outstanding == 0) {
+          globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
+                                                  CASTOR2_handle->cached_res);
         }
         globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: finished (error)\n",func);
-        return CASTOR2int_handle->done;
+        return CASTOR2_handle->done;
       }
-      CASTOR2int_handle->checksum_list_p->next->next=NULL;
-      CASTOR2int_handle->checksum_list_p->offset=CASTOR2int_handle->blk_offset;
-      CASTOR2int_handle->checksum_list_p->size=nbread;
-      CASTOR2int_handle->checksum_list_p->csumvalue=adler;
-      CASTOR2int_handle->checksum_list_p=CASTOR2int_handle->checksum_list_p->next;
-      CASTOR2int_handle->number_of_blocks++;
+      CASTOR2_handle->checksum_list_p->next->next=NULL;
+      CASTOR2_handle->checksum_list_p->offset=CASTOR2_handle->blk_offset;
+      CASTOR2_handle->checksum_list_p->size=nbread;
+      CASTOR2_handle->checksum_list_p->csumvalue=adler;
+      CASTOR2_handle->checksum_list_p=CASTOR2_handle->checksum_list_p->next;
+      CASTOR2_handle->number_of_blocks++;
       /* end of the checksum section */
     }
   }
@@ -860,25 +860,25 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
     result = GLOBUS_SUCCESS;
     globus_free(buffer);
 
-    if (CASTOR2int_handle->useCksum) {
+    if (CASTOR2_handle->useCksum) {
       /* checksum calculation */
       checksum_array=
-        (checksum_block_list_t**)globus_calloc(CASTOR2int_handle->number_of_blocks,
+        (checksum_block_list_t**)globus_calloc(CASTOR2_handle->number_of_blocks,
                                                sizeof(checksum_block_list_t*));
       if (checksum_array==NULL){
-        free_checksum_list(CASTOR2int_handle->checksum_list);
-        CASTOR2int_handle->cached_res = GLOBUS_FAILURE;
+        free_checksum_list(CASTOR2_handle->checksum_list);
+        CASTOR2_handle->cached_res = GLOBUS_FAILURE;
         globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: malloc error \n",func);
-        CASTOR2int_handle->done = GLOBUS_TRUE;
-        if (CASTOR2int_handle->outstanding == 0) {
-          globus_gridftp_server_finished_transfer(CASTOR2int_handle->op,
-                                                  CASTOR2int_handle->cached_res);
+        CASTOR2_handle->done = GLOBUS_TRUE;
+        if (CASTOR2_handle->outstanding == 0) {
+          globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
+                                                  CASTOR2_handle->cached_res);
         }
         globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,"%s: finished (error)\n",func);
-        ceph_posix_close(CASTOR2int_handle->fd);
-        return CASTOR2int_handle->done;
+        ceph_posix_close(CASTOR2_handle->fd);
+        return CASTOR2_handle->done;
       }
-      checksum_list_pp=CASTOR2int_handle->checksum_list;
+      checksum_list_pp=CASTOR2_handle->checksum_list;
       /* sorting of the list to the array */
       index = 0;
       /* the latest block is always empty and has next pointer as NULL */
@@ -891,39 +891,38 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
       /* combine here  */
       /* ************* */
       file_checksum=checksum_array[0]->csumvalue;
-      for (i=1;i<CASTOR2int_handle->number_of_blocks;i++) {
+      for (i=1;i<CASTOR2_handle->number_of_blocks;i++) {
         file_checksum=adler32_combine_(file_checksum,checksum_array[i]->csumvalue,
                                        checksum_array[i]->size);
       }
       globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: checksum for %s : AD 0x%lx\n",
-                             func,CASTOR2int_handle->fullDestPath,file_checksum);
+                             func,CASTOR2_handle->fullDestPath,file_checksum);
       globus_free(checksum_array);
-      free_checksum_list(CASTOR2int_handle->checksum_list);
+      free_checksum_list(CASTOR2_handle->checksum_list);
       /* get extended attributes */
       useCksum=1;
-      xattr_len = ceph_posix_fgetxattr(CASTOR2int_handle->fd,
+      xattr_len = ceph_posix_fgetxattr(CASTOR2_handle->fd,
                                        "user.castor.checksum.type",
-                                       ckSumnamedisk,CA_MAXCKSUMNAMELEN);
-      
-      if (-1 == xattr_len) {
-        /* no error messages */
-        useCksum = 0;
-      } else {
-        ckSumnamedisk[xattr_len] = '\0';
-        xattr_len = ceph_posix_fgetxattr(CASTOR2int_handle->fd,
-                                         "user.castor.checksum.value",
-                                         ckSumnamedisk,
-                                         CA_MAXCKSUMNAMELEN);
+                                       ckSumnamedisk,
+                                       CA_MAXCKSUMNAMELEN);
         if (-1 == xattr_len) {
           /* no error messages */
           useCksum = 0;
         } else {
-          ckSumbufdisk[xattr_len] = '\0';
-          if (strncmp(ckSumnamedisk,"ADLER32",CA_MAXCKSUMNAMELEN) != 0) {
-            useCksum=1; /* for gridftp we know only ADLER32 */
-          }
+          ckSumnamedisk[xattr_len] = '\0';
+          xattr_len = ceph_posix_fgetxattr(CASTOR2_handle->fd,
+                                           "user.castor.checksum.value",
+                                           ckSumbufdisk,CA_MAXCKSUMLEN);
+            if (-1 == xattr_len) {
+              /* no error messages */
+              useCksum = 0;
+            } else {
+              ckSumbufdisk[xattr_len] = '\0';
+              if (strncmp(ckSumnamedisk,"ADLER32",CA_MAXCKSUMNAMELEN) != 0) {
+                useCksum=1; /* for gridftp we know only ADLER32 */
+              }
+            }
         }
-      }
 
       if (useCksum) { /* we have disks and on the fly checksums here */
         sprintf(ckSumbuf,"%lx", file_checksum);
@@ -933,20 +932,20 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
           globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,
                                  "%s: checksum error detected reading file: %s (recorded checksum: 0x%s calculated checksum: 0x%s)\n",
                                  func,
-                                 CASTOR2int_handle->fullDestPath,
+                                 CASTOR2_handle->fullDestPath,
                                  ckSumbufdisk,
                                  ckSumbuf);
           /* to do something in error case */
-          CASTOR2int_handle->cached_res =
+          CASTOR2_handle->cached_res =
             globus_error_put (globus_object_construct (GLOBUS_ERROR_TYPE_BAD_DATA));
-          CASTOR2int_handle->done = GLOBUS_TRUE;
-          if (CASTOR2int_handle->outstanding == 0) {
-            globus_gridftp_server_finished_transfer(CASTOR2int_handle->op,
-                                                    CASTOR2int_handle->cached_res);
+          CASTOR2_handle->done = GLOBUS_TRUE;
+          if (CASTOR2_handle->outstanding == 0) {
+            globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
+                                                    CASTOR2_handle->cached_res);
           }
           globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,"%s: finished (error)\n",func);
-          ceph_posix_close(CASTOR2int_handle->fd);
-          return CASTOR2int_handle->done;
+          ceph_posix_close(CASTOR2_handle->fd);
+          return CASTOR2_handle->done;
         }
       } else {
         globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,
@@ -955,66 +954,66 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
       }
       /* end of checksum section */
     }
-    ceph_posix_close(CASTOR2int_handle->fd);
+    ceph_posix_close(CASTOR2_handle->fd);
 
-    CASTOR2int_handle->cached_res = result;
-    CASTOR2int_handle->done = GLOBUS_TRUE;
-    if (CASTOR2int_handle->outstanding == 0) {
-      globus_gridftp_server_finished_transfer(CASTOR2int_handle->op,
-                                              CASTOR2int_handle->cached_res);
+    CASTOR2_handle->cached_res = result;
+    CASTOR2_handle->done = GLOBUS_TRUE;
+    if (CASTOR2_handle->outstanding == 0) {
+      globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
+                                              CASTOR2_handle->cached_res);
     }
     globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,"%s: finished (eof)\n",func);
-    return CASTOR2int_handle->done;
+    return CASTOR2_handle->done;
   }
   if (nbread < 0) { /* error */
     result = globus_l_gfs_make_error("read");
     globus_free(buffer);
-    ceph_posix_close(CASTOR2int_handle->fd);
-    CASTOR2int_handle->cached_res = result;
-    CASTOR2int_handle->done = GLOBUS_TRUE;
-    if (CASTOR2int_handle->outstanding == 0) {
-      globus_gridftp_server_finished_transfer(CASTOR2int_handle->op,
-                                              CASTOR2int_handle->cached_res);
+    ceph_posix_close(CASTOR2_handle->fd);
+    CASTOR2_handle->cached_res = result;
+    CASTOR2_handle->done = GLOBUS_TRUE;
+    if (CASTOR2_handle->outstanding == 0) {
+      globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
+                                              CASTOR2_handle->cached_res);
     }
     globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: finished (error)\n",func);
-    return CASTOR2int_handle->done;
+    return CASTOR2_handle->done;
 
   }
 
   if (read_length>=nbread) {
     /* if we have a file with size less than block_size we do not have use parrallel connections (one will be enough) */
-    CASTOR2int_handle->optimal_count--;
+    CASTOR2_handle->optimal_count--;
   }
   read_length = nbread;
 
-  if (CASTOR2int_handle->blk_length != -1) {
-    CASTOR2int_handle->blk_length -= read_length;
+  if (CASTOR2_handle->blk_length != -1) {
+    CASTOR2_handle->blk_length -= read_length;
   }
 
   /* start offset? */
-  res = globus_gridftp_server_register_write(CASTOR2int_handle->op,
+  res = globus_gridftp_server_register_write(CASTOR2_handle->op,
                                              buffer,
                                              read_length,
-                                             CASTOR2int_handle->blk_offset,
+                                             CASTOR2_handle->blk_offset,
                                              -1,
                                              globus_l_gfs_net_write_cb,
-                                             CASTOR2int_handle);
+                                             CASTOR2_handle);
 
-  CASTOR2int_handle->blk_offset += read_length;
+  CASTOR2_handle->blk_offset += read_length;
 
   if(res != GLOBUS_SUCCESS) {
     globus_free(buffer);
-    ceph_posix_close(CASTOR2int_handle->fd);
-    CASTOR2int_handle->cached_res = res;
-    CASTOR2int_handle->done = GLOBUS_TRUE;
-    if (CASTOR2int_handle->outstanding == 0) {
-      globus_gridftp_server_finished_transfer(CASTOR2int_handle->op,
-                                              CASTOR2int_handle->cached_res);
+    ceph_posix_close(CASTOR2_handle->fd);
+    CASTOR2_handle->cached_res = res;
+    CASTOR2_handle->done = GLOBUS_TRUE;
+    if (CASTOR2_handle->outstanding == 0) {
+      globus_gridftp_server_finished_transfer(CASTOR2_handle->op,
+                                              CASTOR2_handle->cached_res);
     }
-    return CASTOR2int_handle->done;
+    return CASTOR2_handle->done;
   }
 
-  CASTOR2int_handle->outstanding++;
+  CASTOR2_handle->outstanding++;
   return GLOBUS_FALSE;
 }
 
@@ -1024,63 +1023,63 @@ static void globus_l_gfs_net_write_cb(globus_gfs_operation_t op,
                                       globus_byte_t *buffer,
                                       globus_size_t nbytes,
                                       void *user_arg) {
-  globus_l_gfs_CASTOR2int_handle_t *CASTOR2int_handle;
+  globus_l_gfs_CASTOR2_handle_t *CASTOR2_handle;
   char *func="globus_l_gfs_net_write_cb";
   (void)nbytes;
-  CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
+  CASTOR2_handle = (globus_l_gfs_CASTOR2_handle_t *) user_arg;
 
   globus_free(buffer);
-  globus_mutex_lock(&CASTOR2int_handle->mutex);
+  globus_mutex_lock(&CASTOR2_handle->mutex);
   {
-    CASTOR2int_handle->outstanding--;
+    CASTOR2_handle->outstanding--;
     if(result != GLOBUS_SUCCESS) {
-      CASTOR2int_handle->cached_res = result;
-      CASTOR2int_handle->done = GLOBUS_TRUE;
+      CASTOR2_handle->cached_res = result;
+      CASTOR2_handle->done = GLOBUS_TRUE;
     }
-    if (!CASTOR2int_handle->done)  {
-      globus_l_gfs_CASTOR2int_send_next_to_client(CASTOR2int_handle);
-    } else if (CASTOR2int_handle->outstanding == 0) {
-      ceph_posix_close(CASTOR2int_handle->fd);
+    if (!CASTOR2_handle->done)  {
+      globus_l_gfs_CASTOR2_send_next_to_client(CASTOR2_handle);
+    } else if (CASTOR2_handle->outstanding == 0) {
+      ceph_posix_close(CASTOR2_handle->fd);
       globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,"%s: finished transfer\n",func);
-      globus_gridftp_server_finished_transfer(op, CASTOR2int_handle->cached_res);
+      globus_gridftp_server_finished_transfer(op, CASTOR2_handle->cached_res);
     }
   }
-  globus_mutex_unlock(&CASTOR2int_handle->mutex);
+  globus_mutex_unlock(&CASTOR2_handle->mutex);
 }
 
 
-static int globus_l_gfs_CASTOR2int_activate(void);
+static int globus_l_gfs_CASTOR2_activate(void);
 
-static int globus_l_gfs_CASTOR2int_deactivate(void);
-
-/*
- *  no need to change this
- */
-static globus_gfs_storage_iface_t globus_l_gfs_CASTOR2int_dsi_iface = {
-    GLOBUS_GFS_DSI_DESCRIPTOR_BLOCKING | GLOBUS_GFS_DSI_DESCRIPTOR_SENDER,
-    globus_l_gfs_CASTOR2int_start,
-    globus_l_gfs_CASTOR2int_destroy,
-    NULL, /* list */
-    globus_l_gfs_CASTOR2int_send,
-    globus_l_gfs_CASTOR2int_recv,
-    NULL, /* trev */
-    NULL, /* active */
-    NULL, /* passive */
-    NULL, /* data destroy */
-    globus_l_gfs_CASTOR2int_command,
-    globus_l_gfs_CASTOR2int_stat,
-    NULL, /* set_cred */
-    NULL, /* buffer_send */
-    NULL  /*realpath */
-  };
+static int globus_l_gfs_CASTOR2_deactivate(void);
 
 /*
  *  no need to change this
  */
-GlobusExtensionDefineModule(globus_gridftp_server_CASTOR2int) = {
-  "globus_gridftp_server_CASTOR2int",
-  globus_l_gfs_CASTOR2int_activate,
-  globus_l_gfs_CASTOR2int_deactivate,
+static globus_gfs_storage_iface_t globus_l_gfs_CASTOR2_dsi_iface = {
+  GLOBUS_GFS_DSI_DESCRIPTOR_BLOCKING | GLOBUS_GFS_DSI_DESCRIPTOR_SENDER,
+  globus_l_gfs_CASTOR2_start,
+  globus_l_gfs_CASTOR2_destroy,
+  NULL, /* list */
+  globus_l_gfs_CASTOR2_send,
+  globus_l_gfs_CASTOR2_recv,
+  NULL, /* trev */
+  NULL, /* active */
+  NULL, /* passive */
+  NULL, /* data destroy */
+  globus_l_gfs_CASTOR2_command,
+  globus_l_gfs_CASTOR2_stat,
+  NULL, /* set_cred */
+  NULL, /* buffer_send */
+  NULL  /*realpath */
+};
+
+/*
+ *  no need to change this
+ */
+GlobusExtensionDefineModule(globus_gridftp_server_CASTOR2) = {
+  "globus_gridftp_server_CASTOR2",
+  globus_l_gfs_CASTOR2_activate,
+  globus_l_gfs_CASTOR2_deactivate,
   NULL,
   NULL,
   &local_version,
@@ -1090,11 +1089,11 @@ GlobusExtensionDefineModule(globus_gridftp_server_CASTOR2int) = {
 /*
  *  no need to change this
  */
-static int globus_l_gfs_CASTOR2int_activate(void) {
+static int globus_l_gfs_CASTOR2_activate(void) {
   globus_extension_registry_add(GLOBUS_GFS_DSI_REGISTRY,
-                                "CASTOR2int",
-                                GlobusExtensionMyModule(globus_gridftp_server_CASTOR2int),
-                                &globus_l_gfs_CASTOR2int_dsi_iface);
+                                "CASTOR2",
+                                GlobusExtensionMyModule(globus_gridftp_server_CASTOR2),
+                                &globus_l_gfs_CASTOR2_dsi_iface);
   // initialize ceph wrapper log
   ceph_posix_set_logfunc(ceph_logfunc_wrapper);
   return 0;
@@ -1103,7 +1102,7 @@ static int globus_l_gfs_CASTOR2int_activate(void) {
 /*
  *  no need to change this
  */
-static int globus_l_gfs_CASTOR2int_deactivate(void) {
-  globus_extension_registry_remove(GLOBUS_GFS_DSI_REGISTRY, "CASTOR2int");
+static int globus_l_gfs_CASTOR2_deactivate(void) {
+  globus_extension_registry_remove(GLOBUS_GFS_DSI_REGISTRY, "CASTOR2");
   return 0;
 }
