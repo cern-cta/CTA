@@ -204,20 +204,12 @@ globus_l_gfs_CASTOR2int_start(
     finished_info.info.session.username = session_info->username;
     finished_info.info.session.home_dir = NULL; /* if null we will go to HOME directory */
 
-    CASTOR2int_handle->use_uuid=GLOBUS_FALSE;
-    CASTOR2int_handle->uuid=NULL;
-    CASTOR2int_handle->fullDestPath=NULL;
-    CASTOR2int_handle->access_mode=NULL;
-    if((CASTOR2int_handle->uuid=getenv("UUID"))!=NULL) {
-	    if((CASTOR2int_handle->fullDestPath=getenv("FULLDESTPATH"))!=NULL) {
-		    if((CASTOR2int_handle->access_mode=getenv("ACCESS_MODE"))!=NULL) {
-		       CASTOR2int_handle->use_uuid=GLOBUS_TRUE;
-		       globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: uuid access is on: uuid=\"%s\" fullDestPath=\"%s\" mode=\"%s\"\n",
-			                      func, CASTOR2int_handle->uuid,CASTOR2int_handle->fullDestPath,CASTOR2int_handle->access_mode);
-		    }
-	    } 
-    }
-    
+    CASTOR2int_handle->uuid=getenv("UUID");
+    CASTOR2int_handle->fullDestPath=getenv("FULLDESTPATH");
+    CASTOR2int_handle->access_mode=getenv("ACCESS_MODE");
+    globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: uuid=\"%s\" fullDestPath=\"%s\" mode=\"%s\"\n",
+                           func, CASTOR2int_handle->uuid,CASTOR2int_handle->fullDestPath,
+                           CASTOR2int_handle->access_mode);    
     CASTOR2int_handle->checksum_list=NULL;
     CASTOR2int_handle->checksum_list_p=NULL;
     
@@ -281,19 +273,15 @@ globus_l_gfs_CASTOR2int_stat(
 
     CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
     
-    if(CASTOR2int_handle->use_uuid) { /* we will use fullDestPath instead of client "path", and "path" must be in uuid form */
-       uuid_path = stat_info->pathname;
-       while(strchr(uuid_path, '/') != NULL) {
-         /* strip any preceding path to isolate only the uuid part; see also CASTOR2int_handle_open */
-         uuid_path = strchr(uuid_path, '/') + 1;
-       }
-       if(strcmp(uuid_path, CASTOR2int_handle->uuid) == 0)
-         pathname = strdup(CASTOR2int_handle->fullDestPath);
-       else
-         pathname = strdup(func); /* we want that stat64 fails */
+    uuid_path = stat_info->pathname;
+    while(strchr(uuid_path, '/') != NULL) {
+      /* strip any preceding path to isolate only the uuid part; see also CASTOR2int_handle_open */
+      uuid_path = strchr(uuid_path, '/') + 1;
     }
+    if(strcmp(uuid_path, CASTOR2int_handle->uuid) == 0)
+      pathname = strdup(CASTOR2int_handle->fullDestPath);
     else
-      pathname = strdup(func);
+      pathname = strdup(func); /* we want that stat64 fails */
         
     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: pathname: %s\n",func,pathname);
     
@@ -364,23 +352,22 @@ int CASTOR2int_handle_open(char *path, int flags, int mode, globus_l_gfs_CASTOR2
    char *	func="CASTOR2int_handle_open";
    char * uuid_path;
    
-   if(CASTOR2int_handle->use_uuid) { /* we will use fullDestPath instead of client "path", and "path" must be in uuid form */
-     uuid_path = path;
-     while(strchr(uuid_path, '/') != NULL) {
-       /* strip any preceding path to isolate only the uuid part; see also globus_l_gfs_CASTOR2int_stat */
-       uuid_path = strchr(uuid_path, '/') + 1;
-     }
-     if(strcmp(uuid_path,CASTOR2int_handle->uuid) == 0) {
-       /* if clients uuid is the same as internal uuid we will access fullDestPath file then */
-       globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: open file in uuid mode \"%s\"\n",func,CASTOR2int_handle->fullDestPath);
-       rc = open64 (CASTOR2int_handle->fullDestPath,flags,mode);
-       return (rc);
-	   }
-	   globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,"%s: client and server uuids do not match in uuid mode \"%s\" != \"%s\"\n",
-		      func, uuid_path,CASTOR2int_handle->uuid);
-	   errno = ENOENT;
-	   return (-1);
-	 }
+   uuid_path = path;
+   while(strchr(uuid_path, '/') != NULL) {
+     /* strip any preceding path to isolate only the uuid part;
+        see also globus_l_gfs_CASTOR2int_stat */
+     uuid_path = strchr(uuid_path, '/') + 1;
+   }
+   if(strcmp(uuid_path,CASTOR2int_handle->uuid) == 0) {
+     /* if clients uuid is the same as internal uuid we will access fullDestPath file then */
+     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: open file \"%s\"\n",
+                            func,CASTOR2int_handle->fullDestPath);
+     rc = open64 (CASTOR2int_handle->fullDestPath,flags,mode);
+     return (rc);
+   }
+   globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,
+                          "%s: client and server uuids do not match \"%s\" != \"%s\"\n",
+                          func, uuid_path,CASTOR2int_handle->uuid);
    errno = EINVAL;
    return (-1);
 }
@@ -620,12 +607,12 @@ globus_l_gfs_CASTOR2int_recv(
    
     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: started\n",func);
     
-    if(CASTOR2int_handle->use_uuid) /* we use uuid mode to access files */
-       if( strcmp(CASTOR2int_handle->access_mode,"w") != 0 && strcmp(CASTOR2int_handle->access_mode,"o") !=0 ) {
-	    result=GlobusGFSErrorGeneric("error: incorect access mode");
-	    globus_gridftp_server_finished_transfer(op, result);
-	    return;
-       }
+    if( strcmp(CASTOR2int_handle->access_mode,"w") != 0 &&
+        strcmp(CASTOR2int_handle->access_mode,"o") !=0 ) {
+      result=GlobusGFSErrorGeneric("error: incorect access mode");
+      globus_gridftp_server_finished_transfer(op, result);
+      return;
+    }
     pathname=strdup(transfer_info->pathname);
     if(pathname==NULL) {
 	    result=GlobusGFSErrorGeneric("error: strdup failed");
@@ -716,12 +703,12 @@ globus_l_gfs_CASTOR2int_send(
     CASTOR2int_handle = (globus_l_gfs_CASTOR2int_handle_t *) user_arg;
     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: started\n",func);
     
-    if(CASTOR2int_handle->use_uuid) /* we use uuid mode to access files */
-       if( strcmp(CASTOR2int_handle->access_mode,"r") != 0 && strcmp(CASTOR2int_handle->access_mode,"o") !=0 ) {
-	    result=GlobusGFSErrorGeneric("error: incorect access mode");
-	    globus_gridftp_server_finished_transfer(op, result);
-	    return;
-       }
+    if( strcmp(CASTOR2int_handle->access_mode,"r") != 0 &&
+        strcmp(CASTOR2int_handle->access_mode,"o") !=0 ) {
+      result=GlobusGFSErrorGeneric("error: incorect access mode");
+      globus_gridftp_server_finished_transfer(op, result);
+      return;
+    }
     
     pathname=strdup(transfer_info->pathname);
     if (pathname == NULL) {

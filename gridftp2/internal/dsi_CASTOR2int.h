@@ -50,7 +50,6 @@ typedef struct globus_l_gfs_CASTOR2int_handle_s
    globus_off_t			blk_offset;
    globus_size_t		block_size;
    globus_gfs_operation_t	op;
-   globus_bool_t                use_uuid; /* if use_uuid is true we will use uuid and fullDestPath in the file accessing commands */
    char *			uuid;           /* must be pointers to environment variables */
    char *			fullDestPath;   /* we do not allocate or free memory here    */
    char *                       access_mode;
