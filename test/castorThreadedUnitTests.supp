@@ -145,3 +145,10 @@
   Helgrind:Race
   fun:_ZNKSs*
 }
+
+{
+  helgrind-unitTest-castor-zmq
+  Helgrind:Race
+  ...
+  obj:/usr/lib64/libzmq.so.3.0.0
+}

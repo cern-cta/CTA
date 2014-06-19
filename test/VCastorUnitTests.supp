@@ -1,0 +1,45 @@
+# castor unit tests suppression list
+#
+
+{
+   TestSUppresLeakProtocolBuffer
+   Memcheck:Leak
+   ...
+   fun:_ZN6google8protobuf55protobuf_AddDesc_google_2fprotobuf_2fdescriptor_2eprotoEv
+}
+
+{
+   ZN6castor8messages42StaticDescriptorInitializer
+   Memcheck:Leak
+   ...
+   fun:_ZN6castor8messages42StaticDescriptorInitializer_Header_2eprotoC1Ev
+}
+
+{
+   Heartbeat
+   Memcheck:Leak
+   ...
+   fun:_GLOBAL__I_Heartbeat.pb.cc
+}
+
+{
+   _ZN6castor8messages45StaticDescriptorInitializer_Heartbeat_2eprotoC1Ev
+   Memcheck:Leak
+   ...
+   fun:_ZN6castor8messages45StaticDescriptorInitializer_Heartbeat_2eprotoC1Ev
+}
+
+{
+   socketcall_sendto
+   Memcheck:Param
+   socketcall.sendto(msg)
+   fun:send
+   ...
+}
+{
+   socketcall_sendto2
+   Memcheck:Param
+   socketcall.send(msg)
+   fun:send
+   ...
+}

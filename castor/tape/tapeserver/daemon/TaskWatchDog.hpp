@@ -49,9 +49,9 @@ class TaskWatchDog : private castor::tape::threading::Thread{
 
     log::LogContext m_lc;
     zmq::context_t m_ctx;
-    zmq::socket_t m_socket;
+
     
-    template <class T> void sendMessage(const T& msg,int flag=0){
+    template <class T> void sendMessage(zmq::socket_t& m_socket,const T& msg,int flag=0){
     int size=msg.ByteSize();
     if(!msg.IsInitialized()){
       log::ScopedParamContainer c(m_lc);
@@ -64,7 +64,7 @@ class TaskWatchDog : private castor::tape::threading::Thread{
     }
   }
         
-    void report(){
+    void report(zmq::socket_t& m_socket){
       try
       {
         castor::messages::Header header;
@@ -77,11 +77,11 @@ class TaskWatchDog : private castor::tape::threading::Thread{
         header.set_bodysignature("PIPO");
         header.set_bodysignaturetype("SHA1");
 
-        sendMessage(header,ZMQ_SNDMORE);
+        sendMessage(m_socket,header,ZMQ_SNDMORE);
         
         castor::messages::Heartbeat body;
         body.set_bytesmoved(nbOfMemblocksMoved.getAndReset());
-        sendMessage(body);
+        sendMessage(m_socket,body);
         m_lc.log(LOG_INFO,"Notified MF");
         zmq::message_t blob;
         m_socket.recv(&blob);
@@ -99,14 +99,15 @@ class TaskWatchDog : private castor::tape::threading::Thread{
       }
       
     }
-    void connect(){
+    void connect( zmq::socket_t& m_socket){
           std::string bindingAdress("tcp://127.0.0.1:");
           bindingAdress+=castor::utils::toString(tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT);
           m_socket.connect(bindingAdress.c_str());
     }
     void run(){
       GOOGLE_PROTOBUF_VERIFY_VERSION;
-      connect();
+      zmq::socket_t m_socket(m_ctx,ZMQ_REQ);
+      connect(m_socket);
       
       using castor::utils::timevalToDouble;
       using castor::utils::timevalAbsDiff;
@@ -121,14 +122,14 @@ class TaskWatchDog : private castor::tape::threading::Thread{
         if( diffTimed> periodToReport){
           m_lc.log(LOG_INFO,"going to report");
           previousTime=currentTime;
-          report();
+          report(m_socket);
         }
       }
     }
     
   public:
     TaskWatchDog(log::LogContext lc): 
-    nbOfMemblocksMoved(0),periodToReport(2),m_lc(lc),m_ctx(),m_socket(m_ctx,ZMQ_REQ){
+    nbOfMemblocksMoved(0),periodToReport(2),m_lc(lc),m_ctx(){
       m_lc.pushOrReplace(log::Param("thread","Watchdog"));
       castor::utils::getTimeOfDay(&previousTime);
     }
