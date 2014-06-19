@@ -180,6 +180,25 @@ void checkDgnSyntax(const char *dgn);
  */
 void checkVidSyntax(const char *vid);
 
+/**
+ * Returns true if the attributes of the current process indicate that it will
+ * produce a core dump if it receives a signal whose behaviour is to produce a
+ * core dump.
+ *
+ * This method is implemented using prctl().
+ *
+ * @return true if the current program is dumpable.
+ */
+bool getDumpableProcessAttribute();
+
+/**
+ * Sets the attributes of the current process to indicate hat it will produce a
+ * core dump if it receives a signal whose behaviour is to produce a core dump.
+ *
+ * @param dumpable true if the current program should be dumpable.
+ */
+void setDumpableProcessAttribute(const bool dumpable);
+
 } // namespace utils
 } // namespace castor
 

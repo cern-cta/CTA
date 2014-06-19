@@ -161,6 +161,14 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
   const bool runAsStagerSuperuser = true;
   daemonizeIfNotRunInForeground(runAsStagerSuperuser);
 
+  castor::utils::setDumpableProcessAttribute(true);
+  {
+    const bool dumpable = castor::utils::getDumpableProcessAttribute();
+    log::Param params[] = {
+      log::Param("dumpable", dumpable ? "true" : "false")};
+    m_log(LOG_INFO, "Got dumpable attribute of process", params);
+  }
+
   // There is no longer a need for the process to be able to change user,
   // however the process should still be permitted to perform raw IO in the
   // future

@@ -34,6 +34,7 @@
 #include <time.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <sys/prctl.h>
 #include <sys/socket.h>
 
 //-----------------------------------------------------------------------------
@@ -222,7 +223,7 @@ double castor::utils::timevalToDouble(const timeval &tv) throw() {
 // copyString
 //-----------------------------------------------------------------------------
 void castor::utils::copyString(char *const dst, const size_t dstSize,
-  const char *const src)  {
+  const char *const src) {
 
   if(dst == NULL) {
     castor::exception::Exception ex(EINVAL);
@@ -274,7 +275,7 @@ void castor::utils::copyString(char *const dst, const size_t dstSize,
 // @param maxSize The maximum length the identifier string is permitted to have.
 //------------------------------------------------------------------------------
 static void checkDgnVidSyntax(const char *const idTypeName, const char *id,
-  const size_t maxLen)  {
+  const size_t maxLen) {
 
   // Check the length of the identifier string
   const size_t len   = strlen(id);
@@ -305,15 +306,75 @@ static void checkDgnVidSyntax(const char *const idTypeName, const char *id,
 //------------------------------------------------------------------------------
 // checkDgnSyntax
 //------------------------------------------------------------------------------
-void castor::utils::checkDgnSyntax(const char *dgn)
-   {
+void castor::utils::checkDgnSyntax(const char *dgn) {
   checkDgnVidSyntax("DGN", dgn, CA_MAXDGNLEN);
 }
 
 //------------------------------------------------------------------------------
 // checkVidSyntax
 //------------------------------------------------------------------------------
-void castor::utils::checkVidSyntax(const char *vid)
-   {
+void castor::utils::checkVidSyntax(const char *vid) {
   checkDgnVidSyntax("VID", vid, CA_MAXVIDLEN);
+}
+
+//------------------------------------------------------------------------------
+// getDumpableProcessAttribute
+//------------------------------------------------------------------------------
+bool castor::utils::getDumpableProcessAttribute() {
+  const int rc = prctl(PR_GET_DUMPABLE);
+  switch(rc) {
+  case -1:
+    {
+      char errStr[100];
+      sstrerror_r(errno, errStr, sizeof(errStr));
+      errStr[sizeof(errStr) - 1] = '\0';
+      castor::exception::Exception ex;
+      ex.getMessage() <<
+        "Failed to get the dumpable attribute of the process: " << errStr;
+      throw ex;
+    }
+  case 0: return false;
+  case 1: return true;
+  case 2: return true;
+  default:
+    {
+      castor::exception::Exception ex;
+      ex.getMessage() <<
+        "Failed to get the dumpable attribute of the process"
+        ": Unknown value returned by prctl(): rc=" << rc;
+      throw ex;
+    }
+  }
+}
+
+
+/**
+ * Sets the attributes of the current process to indicate hat it will produce a
+ * core dump if it receives a signal whose behaviour is to produce a core dump.
+ *
+ * @param dumpable true if the current program should be dumpable.
+ */
+void castor::utils::setDumpableProcessAttribute(const bool dumpable) {
+  const int rc = prctl(PR_SET_DUMPABLE, dumpable ? 1 : 0);
+  switch(rc) {
+  case -1:
+    {
+      char errStr[100];
+      sstrerror_r(errno, errStr, sizeof(errStr));
+      errStr[sizeof(errStr) - 1] = '\0';
+      castor::exception::Exception ex;
+      ex.getMessage() <<
+        "Failed to set the dumpable attribute of the process: " << errStr;
+      throw ex;
+    }
+  case 0: return;
+  default:
+    {
+      castor::exception::Exception ex;
+      ex.getMessage() <<
+        "Failed to set the dumpable attribute of the process"
+        ": Unknown value returned by prctl(): rc=" << rc;
+      throw ex;
+    }
+  }
 }
