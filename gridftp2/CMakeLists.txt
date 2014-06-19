@@ -39,5 +39,4 @@ message (STATUS "CASTOR_GLOBUS_MOPTION = ${CASTOR_GLOBUS_MOPTION}")
 include_directories(${GLOBUS_CONFINC_PATH} ${GLOBUS_INC_PATH})
 
 add_subdirectory (common)
-add_subdirectory (external)
 add_subdirectory (internal)
