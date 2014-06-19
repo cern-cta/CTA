@@ -47,6 +47,7 @@
 #include "castor/stager/SubRequestStatusCodes.hpp"
 #include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/job/stagerjob/RawMoverPlugin.hpp"
+#include "ceph/ceph_posix.h"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -167,7 +168,7 @@ void castor::job::stagerjob::RawMoverPlugin::postForkHook
     // Do a stat of the output file
     errno = 0;
     struct stat64 statbuf;
-    if (stat64((char*)context.fullDestPath.c_str(), &statbuf) == 0) {
+    if (ceph_posix_stat64((char*)context.fullDestPath.c_str(), &statbuf) == 0) {
       // deal with the case of an empty file when the child failed
       if (childFailed && (0 == statbuf.st_size)) {
         // "No data transferred"

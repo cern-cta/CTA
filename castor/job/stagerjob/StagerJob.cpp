@@ -48,6 +48,7 @@
 #include "castor/job/stagerjob/InputArguments.hpp"
 #include "castor/exception/Exception.hpp"
 #include "castor/exception/NoEntry.hpp"
+#include "ceph/ceph_posix.h"
 
 // Static map s_plugins
 static std::map<std::string, castor::job::stagerjob::IPlugin*> *s_plugins = 0;
@@ -144,7 +145,7 @@ std::string startAndGetPath
     // so let's check and create when needed
     if (emptyFile) {
       struct stat s;
-      if (-1 == stat(fullDestPath.c_str(), &s) && errno == ENOENT) {
+      if (-1 == ceph_posix_stat(fullDestPath.c_str(), &s) && errno == ENOENT) {
         int thisfd = creat(fullDestPath.c_str(), (S_IRUSR|S_IWUSR));
         if (thisfd < 0) {
           // "Failed to create empty file"

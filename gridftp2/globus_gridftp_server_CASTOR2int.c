@@ -42,6 +42,8 @@
 #include <zlib.h>
 #include <sys/xattr.h>
 
+#include "ceph/ceph_posix.h"
+
 #define  CA_MAXCKSUMLEN 32
 #define  CA_MAXCKSUMNAMELEN 15
 
@@ -68,7 +70,7 @@ static globus_result_t globus_l_gfs_make_error(const char *msg) {
 }
 
 /* fill the statbuf into globus_gfs_stat_t */
-void fill_stat_array(globus_gfs_stat_t * filestat, struct stat64 statbuf, char *name) {
+static void fill_stat_array(globus_gfs_stat_t * filestat, struct stat64 statbuf, char *name) {
   filestat->mode = statbuf.st_mode;;
   filestat->nlink = statbuf.st_nlink;
   filestat->uid = statbuf.st_uid;
@@ -84,13 +86,13 @@ void fill_stat_array(globus_gfs_stat_t * filestat, struct stat64 statbuf, char *
   filestat->name = strdup(name);
 }
 /* free memory in stat_array from globus_gfs_stat_t->name */
-void free_stat_array(globus_gfs_stat_t * filestat,int count) {
+static void free_stat_array(globus_gfs_stat_t * filestat,int count) {
   int i;
   for(i=0;i<count;i++) free(filestat[i].name);
 }
 
 /* free memory for the checksum list */
-void free_checksum_list(checksum_block_list_t *checksum_list) {
+static void free_checksum_list(checksum_block_list_t *checksum_list) {
   checksum_block_list_t *checksum_list_p;
   checksum_block_list_t *checksum_list_pp;
   checksum_list_p=checksum_list;
@@ -103,7 +105,7 @@ void free_checksum_list(checksum_block_list_t *checksum_list) {
 }
 
 // comparison of 2 checksum_block_list_t* on their offset for the use of qsort
-int offsetComparison(const void *first, const void *second) {
+static int offsetComparison(const void *first, const void *second) {
   checksum_block_list_t** f = (checksum_block_list_t**)first;
   checksum_block_list_t** s = (checksum_block_list_t**)second;
   long long int diff = (*f)->offset - (*s)->offset;
@@ -118,9 +120,9 @@ int offsetComparison(const void *first, const void *second) {
 #define BASE 65521UL    /* largest prime smaller than 65536 */
 #define MOD(a) a %= BASE
 
-unsigned long  adler32_combine_(unsigned int adler1,
-                                unsigned int adler2,
-                                globus_off_t len2) {
+static unsigned long adler32_combine_(unsigned int adler1,
+                                       unsigned int adler2,
+                                       globus_off_t len2) {
   unsigned int sum1;
   unsigned int sum2;
   unsigned int rem;
@@ -138,8 +140,23 @@ unsigned long  adler32_combine_(unsigned int adler1,
   return sum1 | (sum2 << 16);
 }
 
-unsigned long  adler32_0chunks(unsigned int len) {
+static unsigned long adler32_0chunks(unsigned int len) {
   return ((len%BASE) << 16) | 1;
+}
+
+static void ceph_logfunc_wrapper (char *format, va_list argp) {
+  // do the printing ourselves as we cannot call the variadic globus_gfs_log_message
+  int size = 1024;
+  char* logstr = (char*)malloc(size);
+  int written = vsnprintf(logstr, size, format, argp);
+  while (written >= size) {
+    size *=2;
+    logstr = (char*)realloc(logstr, size);
+    written = vsnprintf(logstr, size, format, argp);
+  }
+  // call log func with a single argument
+  (*globus_gfs_log_message)(GLOBUS_GFS_LOG_DUMP, "%s", logstr);
+  free(logstr);
 }
 
 /*************************************************************************
@@ -252,7 +269,7 @@ static void globus_l_gfs_CASTOR2int_stat(globus_gfs_operation_t op,
   }
 
   globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: pathname: %s\n",func,pathname);
-  status=stat64(pathname,&statbuf);
+  status=ceph_posix_stat64(pathname,&statbuf);
   if(status!=0) {
     result=globus_l_gfs_make_error("fstat64");
     globus_gridftp_server_finished_stat(op,result,NULL, 0);
@@ -327,7 +344,7 @@ int CASTOR2int_handle_open(char *path,
     /* if clients uuid is the same as internal uuid we will access fullDestPath file then */
     globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: open file \"%s\"\n",
                            func,CASTOR2int_handle->fullDestPath);
-    rc = open64 (CASTOR2int_handle->fullDestPath,flags,mode);
+    rc = ceph_posix_open(CASTOR2int_handle->fullDestPath,flags,mode);
     return (rc);
   }
   globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,
@@ -369,12 +386,12 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t op,
       CASTOR2int_handle->done = GLOBUS_TRUE;
     }
     else if(nbytes > 0) {
-      start_offset = lseek64(CASTOR2int_handle->fd, offset, SEEK_SET);
+      start_offset = ceph_posix_lseek64(CASTOR2int_handle->fd, offset, SEEK_SET);
       if(start_offset != offset) {
         CASTOR2int_handle->cached_res = globus_l_gfs_make_error("seek");
         CASTOR2int_handle->done = GLOBUS_TRUE;
       } else {
-        bytes_written = write(CASTOR2int_handle->fd, buffer, nbytes);
+        bytes_written = ceph_posix_write(CASTOR2int_handle->fd, buffer, nbytes);
         if (CASTOR2int_handle->useCksum) {
           /* fill the checksum list  */
           /* we will have a lot of checksums blocks in the list */
@@ -424,7 +441,7 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t op,
           CASTOR2int_handle->cached_res = GLOBUS_FAILURE;
           globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: malloc error \n",func);
           CASTOR2int_handle->done = GLOBUS_TRUE;
-          close(CASTOR2int_handle->fd);
+          ceph_posix_close(CASTOR2int_handle->fd);
           globus_mutex_unlock(&CASTOR2int_handle->mutex);
           return;
         }
@@ -473,16 +490,16 @@ static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t op,
         free_checksum_list(CASTOR2int_handle->checksum_list);
         /* set extended attributes */
         sprintf(ckSumbuf,"%lx",file_checksum);
-        if (fsetxattr(CASTOR2int_handle->fd,"user.castor.checksum.type",
-                      ckSumalg,strlen(ckSumalg),0)) {
+        if (ceph_posix_fsetxattr(CASTOR2int_handle->fd,"user.castor.checksum.type",
+                              ckSumalg,strlen(ckSumalg),0)) {
           ;/* ignore all errors */
-        } else if (fsetxattr(CASTOR2int_handle->fd,"user.castor.checksum.value",
-                             ckSumbuf,strlen(ckSumbuf),0)) {
+        } else if (ceph_posix_fsetxattr(CASTOR2int_handle->fd,"user.castor.checksum.value",
+                                     ckSumbuf,strlen(ckSumbuf),0)) {
           ; /* ignore all errors */
         }
         /* end of checksum section */
       }
-      close(CASTOR2int_handle->fd);
+      ceph_posix_close(CASTOR2int_handle->fd);
 
       globus_gridftp_server_finished_transfer(op, CASTOR2int_handle->cached_res);
     }
@@ -507,15 +524,14 @@ static void globus_l_gfs_CASTOR2int_read_from_net
       result = GlobusGFSErrorGeneric("error: globus malloc failed");
       CASTOR2int_handle->cached_res = result;
       CASTOR2int_handle->done = GLOBUS_TRUE;
-      if(CASTOR2int_handle->outstanding == 0) {
-        close(CASTOR2int_handle->fd);
+      if (CASTOR2int_handle->outstanding == 0) {
+        ceph_posix_close(CASTOR2int_handle->fd);
         globus_gridftp_server_finished_transfer(CASTOR2int_handle->op,
                                                 CASTOR2int_handle->cached_res);
       }
       return;
     }
-    result= globus_gridftp_server_register_read(
-                                                CASTOR2int_handle->op,
+    result= globus_gridftp_server_register_read(CASTOR2int_handle->op,
                                                 buffer,
                                                 CASTOR2int_handle->block_size,
                                                 globus_l_gfs_file_net_read_cb,
@@ -528,8 +544,8 @@ static void globus_l_gfs_CASTOR2int_read_from_net
       globus_free(buffer);
       CASTOR2int_handle->cached_res = result;
       CASTOR2int_handle->done = GLOBUS_TRUE;
-      if(CASTOR2int_handle->outstanding == 0) {
-        close(CASTOR2int_handle->fd);
+      if (CASTOR2int_handle->outstanding == 0) {
+        ceph_posix_close(CASTOR2int_handle->fd);
         globus_gridftp_server_finished_transfer(CASTOR2int_handle->op,
                                                 CASTOR2int_handle->cached_res);
       }
@@ -570,8 +586,8 @@ static void globus_l_gfs_CASTOR2int_recv(globus_gfs_operation_t op,
 
   globus_gfs_log_message(GLOBUS_GFS_LOG_DUMP,"%s: started\n",func);
 
-  if( strcmp(CASTOR2int_handle->access_mode,"w") != 0 &&
-      strcmp(CASTOR2int_handle->access_mode,"o") !=0 ) {
+  if (strcmp(CASTOR2int_handle->access_mode,"w") != 0 &&
+      strcmp(CASTOR2int_handle->access_mode,"o") != 0) {
     result=GlobusGFSErrorGeneric("error: incorect access mode");
     globus_gridftp_server_finished_transfer(op, result);
     return;
@@ -590,7 +606,7 @@ static void globus_l_gfs_CASTOR2int_recv(globus_gfs_operation_t op,
 
   CASTOR2int_handle->fd = CASTOR2int_handle_open(pathname, flags, 0644, CASTOR2int_handle);
 
-  if(CASTOR2int_handle->fd < 0) {
+  if (CASTOR2int_handle->fd < 0) {
     result=globus_l_gfs_make_error("open/create");
     free(pathname);
     globus_gridftp_server_finished_transfer(op, result);
@@ -683,7 +699,7 @@ static void globus_l_gfs_CASTOR2int_send(globus_gfs_operation_t op,
   CASTOR2int_handle->fd = CASTOR2int_handle_open(pathname, O_RDONLY,
                                                  0, CASTOR2int_handle);
 
-  if(CASTOR2int_handle->fd < 0) {
+  if (CASTOR2int_handle->fd < 0) {
     result = globus_l_gfs_make_error("open");
     free(pathname);
     globus_gridftp_server_finished_transfer(op, result);
@@ -758,13 +774,12 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
 
   if (CASTOR2int_handle->blk_length == 0) {
     /* check the next range to read */
-    globus_gridftp_server_get_read_range(
-                                         CASTOR2int_handle->op,
+    globus_gridftp_server_get_read_range(CASTOR2int_handle->op,
                                          &CASTOR2int_handle->blk_offset,
                                          &CASTOR2int_handle->blk_length);
     if(CASTOR2int_handle->blk_length == 0) {
       result = GLOBUS_SUCCESS;
-      close(CASTOR2int_handle->fd);
+      ceph_posix_close(CASTOR2int_handle->fd);
       CASTOR2int_handle->cached_res = result;
       CASTOR2int_handle->done = GLOBUS_TRUE;
       if (CASTOR2int_handle->outstanding == 0) {
@@ -780,11 +795,13 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
     read_length = CASTOR2int_handle->block_size;
   else read_length = CASTOR2int_handle->blk_length;
 
-  start_offset = lseek64(CASTOR2int_handle->fd, CASTOR2int_handle->blk_offset, SEEK_SET);
+  start_offset = ceph_posix_lseek64(CASTOR2int_handle->fd,
+                                 CASTOR2int_handle->blk_offset,
+                                 SEEK_SET);
   /* verify that it worked */
-  if(start_offset != CASTOR2int_handle->blk_offset) {
+  if (start_offset != CASTOR2int_handle->blk_offset) {
     result = globus_l_gfs_make_error("seek");
-    close(CASTOR2int_handle->fd);
+    ceph_posix_close(CASTOR2int_handle->fd);
     CASTOR2int_handle->cached_res = result;
     CASTOR2int_handle->done = GLOBUS_TRUE;
     if (CASTOR2int_handle->outstanding == 0) {
@@ -795,9 +812,9 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
   }
 
   buffer = globus_malloc(read_length);
-  if(buffer == NULL) {
+  if (buffer == NULL) {
     result = GlobusGFSErrorGeneric("error: malloc failed");
-    close(CASTOR2int_handle->fd);
+    ceph_posix_close(CASTOR2int_handle->fd);
     CASTOR2int_handle->cached_res = result;
     CASTOR2int_handle->done = GLOBUS_TRUE;
     if (CASTOR2int_handle->outstanding == 0) {
@@ -807,8 +824,8 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
     return CASTOR2int_handle->done;
   }
 
-  nbread = read(CASTOR2int_handle->fd, buffer, read_length);
-  if(nbread>0) {
+  nbread = ceph_posix_read(CASTOR2int_handle->fd, buffer, read_length);
+  if (nbread>0) {
     if (CASTOR2int_handle->useCksum) {
       /* fill the checksum list  */
       adler = adler32(0L, Z_NULL, 0);
@@ -820,7 +837,7 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
       if (CASTOR2int_handle->checksum_list_p->next==NULL) {
         globus_gfs_log_message(GLOBUS_GFS_LOG_ERR,"%s: malloc error \n",func);
         globus_free(buffer);
-        close(CASTOR2int_handle->fd);
+        ceph_posix_close(CASTOR2int_handle->fd);
         CASTOR2int_handle->cached_res = GLOBUS_FAILURE;
         CASTOR2int_handle->done = GLOBUS_TRUE;
         if (CASTOR2int_handle->outstanding == 0) {
@@ -858,7 +875,7 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
                                                   CASTOR2int_handle->cached_res);
         }
         globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,"%s: finished (error)\n",func);
-        close(CASTOR2int_handle->fd);
+        ceph_posix_close(CASTOR2int_handle->fd);
         return CASTOR2int_handle->done;
       }
       checksum_list_pp=CASTOR2int_handle->checksum_list;
@@ -884,14 +901,20 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
       free_checksum_list(CASTOR2int_handle->checksum_list);
       /* get extended attributes */
       useCksum=1;
-      if ((xattr_len = fgetxattr(CASTOR2int_handle->fd,"user.castor.checksum.type",
-                                 ckSumnamedisk,CA_MAXCKSUMNAMELEN)) == -1) {
+      xattr_len = ceph_posix_fgetxattr(CASTOR2int_handle->fd,
+                                       "user.castor.checksum.type",
+                                       ckSumnamedisk,CA_MAXCKSUMNAMELEN);
+      
+      if (-1 == xattr_len) {
         /* no error messages */
         useCksum = 0;
       } else {
         ckSumnamedisk[xattr_len] = '\0';
-        if ((xattr_len = fgetxattr(CASTOR2int_handle->fd,"user.castor.checksum.value",
-                                   ckSumbufdisk,CA_MAXCKSUMLEN)) == -1) {
+        xattr_len = ceph_posix_fgetxattr(CASTOR2int_handle->fd,
+                                         "user.castor.checksum.value",
+                                         ckSumnamedisk,
+                                         CA_MAXCKSUMNAMELEN);
+        if (-1 == xattr_len) {
           /* no error messages */
           useCksum = 0;
         } else {
@@ -922,7 +945,7 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
                                                     CASTOR2int_handle->cached_res);
           }
           globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,"%s: finished (error)\n",func);
-          close(CASTOR2int_handle->fd);
+          ceph_posix_close(CASTOR2int_handle->fd);
           return CASTOR2int_handle->done;
         }
       } else {
@@ -932,7 +955,7 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
       }
       /* end of checksum section */
     }
-    close(CASTOR2int_handle->fd);
+    ceph_posix_close(CASTOR2int_handle->fd);
 
     CASTOR2int_handle->cached_res = result;
     CASTOR2int_handle->done = GLOBUS_TRUE;
@@ -943,10 +966,10 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
     globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,"%s: finished (eof)\n",func);
     return CASTOR2int_handle->done;
   }
-  if(nbread < 0) { /* error */
+  if (nbread < 0) { /* error */
     result = globus_l_gfs_make_error("read");
     globus_free(buffer);
-    close(CASTOR2int_handle->fd);
+    ceph_posix_close(CASTOR2int_handle->fd);
     CASTOR2int_handle->cached_res = result;
     CASTOR2int_handle->done = GLOBUS_TRUE;
     if (CASTOR2int_handle->outstanding == 0) {
@@ -958,13 +981,13 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
 
   }
 
-  if(read_length>=nbread) {
+  if (read_length>=nbread) {
     /* if we have a file with size less than block_size we do not have use parrallel connections (one will be enough) */
     CASTOR2int_handle->optimal_count--;
   }
   read_length = nbread;
 
-  if(CASTOR2int_handle->blk_length != -1) {
+  if (CASTOR2int_handle->blk_length != -1) {
     CASTOR2int_handle->blk_length -= read_length;
   }
 
@@ -981,7 +1004,7 @@ static globus_bool_t globus_l_gfs_CASTOR2int_send_next_to_client
 
   if(res != GLOBUS_SUCCESS) {
     globus_free(buffer);
-    close(CASTOR2int_handle->fd);
+    ceph_posix_close(CASTOR2int_handle->fd);
     CASTOR2int_handle->cached_res = res;
     CASTOR2int_handle->done = GLOBUS_TRUE;
     if (CASTOR2int_handle->outstanding == 0) {
@@ -1017,7 +1040,7 @@ static void globus_l_gfs_net_write_cb(globus_gfs_operation_t op,
     if (!CASTOR2int_handle->done)  {
       globus_l_gfs_CASTOR2int_send_next_to_client(CASTOR2int_handle);
     } else if (CASTOR2int_handle->outstanding == 0) {
-      close(CASTOR2int_handle->fd);
+      ceph_posix_close(CASTOR2int_handle->fd);
       globus_gfs_log_message(GLOBUS_GFS_LOG_INFO,"%s: finished transfer\n",func);
       globus_gridftp_server_finished_transfer(op, CASTOR2int_handle->cached_res);
     }
@@ -1072,6 +1095,8 @@ static int globus_l_gfs_CASTOR2int_activate(void) {
                                 "CASTOR2int",
                                 GlobusExtensionMyModule(globus_gridftp_server_CASTOR2int),
                                 &globus_l_gfs_CASTOR2int_dsi_iface);
+  // initialize ceph wrapper log
+  ceph_posix_set_logfunc(ceph_logfunc_wrapper);
   return 0;
 }
 

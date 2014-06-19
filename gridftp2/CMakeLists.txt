@@ -23,6 +23,8 @@
 cmake_minimum_required (VERSION 2.6)
 
 find_package (globus REQUIRED)
+find_package (ceph REQUIRED)
+include_directories(${RADOS_INCLUDE_DIR})
 
 execute_process (COMMAND uname -m OUTPUT_VARIABLE CASTOR_GLOBUS_UNAME)
 string (REGEX REPLACE "\n" "" CASTOR_GLOBUS_UNAME ${CASTOR_GLOBUS_UNAME})
@@ -42,6 +44,7 @@ set_property (SOURCE globus_gridftp_server_CASTOR2int.c
   PROPERTY COMPILE_FLAGS "${CASTOR_GLOBUS_MOPTION}")
 add_library (globus_gridftp_server_CASTOR2int SHARED
   globus_gridftp_server_CASTOR2int.c)
+target_link_libraries(globus_gridftp_server_CASTOR2 ${RADOS_LIBS} castorcephposix)
 set_target_properties (globus_gridftp_server_CASTOR2int PROPERTIES
   LINK_FLAGS "${GLOBUS_FTPLIB} -lz")
 install (TARGETS globus_gridftp_server_CASTOR2int
