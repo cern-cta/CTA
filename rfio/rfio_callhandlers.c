@@ -23,7 +23,6 @@
 #include "Castor_limits.h"
 #include <sys/xattr.h>
 #include "castor/stager/IJobSvc.h"
-#include "rfio_localio.h"
 
 struct internal_context {
   int one_byte_at_least;
