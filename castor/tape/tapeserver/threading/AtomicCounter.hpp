@@ -57,6 +57,12 @@ template <class T> struct AtomicCounter{
         threading::MutexLocker ml(&m_mutex);
         m_val=0;
       }
+     T getAndReset(){
+       threading::MutexLocker ml(&m_mutex);
+        T old =m_val;
+        m_val=0;
+        return old;
+     }
     private:
       T m_val;
       mutable threading::Mutex m_mutex;
