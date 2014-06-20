@@ -27,7 +27,8 @@
 #include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape.h"
-#include "zmq/zmqcastor.hpp"
+#include "zmq/castorZmqWrapper.hpp"
+#include "zmq/castorZmqUtils.hpp"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/Heartbeat.pb.h"
 #include "castor/messages/Constants.hpp"
@@ -49,39 +50,25 @@ class TaskWatchDog : private castor::tape::threading::Thread{
 
     log::LogContext m_lc;
     zmq::context_t m_ctx;
-
-    
-    template <class T> void sendMessage(zmq::socket_t& m_socket,const T& msg,int flag=0){
-    int size=msg.ByteSize();
-    if(!msg.IsInitialized()){
-      log::ScopedParamContainer c(m_lc);
-      c.add("debug string",msg.DebugString());
-      m_lc.log(LOG_ERR,"message not fully initialized");
-    }else{
-      zmq::message_t blob(size);
-      msg.SerializeToArray(blob.data(),size);
-      m_socket.send(blob,flag);
-    }
-  }
-        
+     
     void report(zmq::socket_t& m_socket){
       try
       {
         castor::messages::Header header;
         header.set_magic(TPMAGIC);
         header.set_protocoltype(messages::protocolType::Tape);
-        header.set_protocolversion(2);
+        header.set_protocolversion(castor::messages::protocolVersion::prototype);
         header.set_reqtype(messages::reqType::Heartbeat);
         header.set_bodyhashtype("SHA1");
         header.set_bodyhashvalue("PIPO");
         header.set_bodysignature("PIPO");
         header.set_bodysignaturetype("SHA1");
 
-        sendMessage(m_socket,header,ZMQ_SNDMORE);
+        castor::utils::sendMessage(m_socket,header,ZMQ_SNDMORE);
         
         castor::messages::Heartbeat body;
         body.set_bytesmoved(nbOfMemblocksMoved.getAndReset());
-        sendMessage(m_socket,body);
+        castor::utils::sendMessage(m_socket,body);
         m_lc.log(LOG_INFO,"Notified MF");
         zmq::message_t blob;
         m_socket.recv(&blob);
@@ -99,15 +86,10 @@ class TaskWatchDog : private castor::tape::threading::Thread{
       }
       
     }
-    void connect( zmq::socket_t& m_socket){
-          std::string bindingAdress("tcp://127.0.0.1:");
-          bindingAdress+=castor::utils::toString(tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT);
-          m_socket.connect(bindingAdress.c_str());
-    }
     void run(){
       GOOGLE_PROTOBUF_VERIFY_VERSION;
       zmq::socket_t m_socket(m_ctx,ZMQ_REQ);
-      connect(m_socket);
+      castor::utils::connectToLocalhost(m_socket);
       
       using castor::utils::timevalToDouble;
       using castor::utils::timevalAbsDiff;

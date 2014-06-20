@@ -23,8 +23,8 @@
 #pragma once
 #include "castor/log/Logger.hpp"
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
-#include "zmq/zmqcastor.hpp"
-
+#include "castor/tape/reactor/ZMQReactor.hpp"
+#include "zmq/castorZmqWrapper.hpp"
 #include <vector>
 #include <utility>
 

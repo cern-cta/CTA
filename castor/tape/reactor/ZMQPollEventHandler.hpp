@@ -23,7 +23,7 @@
 #pragma once
 
 #include "castor/exception/Exception.hpp"
-#include "zmq/zmqcastor.hpp"
+#include "zmq/castorZmqWrapper.hpp"
 
 namespace castor {
 namespace tape {

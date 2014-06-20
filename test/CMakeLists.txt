@@ -146,7 +146,6 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/daemon/DriveCatalogueEntry.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueEntryTest.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
-  ../castor/tape/tapeserver/daemon/MountSessionAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemon.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemonTest.cpp
   ../castor/tape/tapeserver/daemon/VdqmAcceptHandler.cpp
@@ -215,7 +214,7 @@ target_link_libraries(castorUnitTests
 add_executable(castorThreadedUnitTests
   castorUnitTests.cpp
   ../castor/tape/tapeserver/threading/ThreadingMTTests.cpp
-# ../castor/tape/tapeserver/daemon/MountSessionTest.cpp
+ ../castor/tape/tapeserver/daemon/MountSessionTest.cpp
   ../castor/tape/tapeserver/threading/ThreadingBlockingQTests.cpp
   ../castor/tape/tapeserver/daemon/CapabilityUtilsDummy.cpp
   ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp

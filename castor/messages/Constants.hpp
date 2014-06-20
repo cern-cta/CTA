@@ -21,6 +21,7 @@
  *
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
+#pragma once
 
 namespace castor {
   namespace messages{
@@ -31,7 +32,17 @@ namespace castor {
     };
     struct reqType{
       enum {
-        Heartbeat
+        NoReturnValue,
+        Heartbeat,
+        NotifyDriveBeforeMountStarted,
+        NotifyDriveTapeMounted,
+        NotifyDriveUnmountStarted,
+        NotifyDriveTapeUnmounted    
+      };
+    };
+    struct protocolVersion{
+      enum {
+        prototype
       };
     };
   }

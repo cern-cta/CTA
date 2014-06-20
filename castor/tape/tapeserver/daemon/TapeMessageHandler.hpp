@@ -23,12 +23,17 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
-#include "zmq/zmqcastor.hpp"
+#include "zmq/castorZmqWrapper.hpp"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/Heartbeat.pb.h"
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
+#include "castor/messages/NotifyDrive.pb.h"
+#include "castor/legacymsg/VdqmProxy.hpp"
+#include "castor/legacymsg/VmgrProxy.hpp"
+#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
+#include "castor/utils/utils.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -56,7 +61,10 @@ public:
    */
   TapeMessageHandler(
     reactor::ZMQReactor &reactor,
-    log::Logger &log);
+    log::Logger &log,DriveCatalogue &driveCatalogue,
+    const std::string &hostName,
+    castor::legacymsg::VdqmProxy & vdqm,
+    castor::legacymsg::VmgrProxy & vmgr);
 
   /**
    * Fills the specified poll file-descriptor ready to be used in a call to
@@ -74,6 +82,16 @@ public:
   bool handleEvent(const zmq::pollitem_t &fd);
   
 private:
+  void sendEmptyReplyToClient();
+  
+  template <class T> void unserialize(T& msg,const zmq::message_t& blob){
+    std::string logMessage="Cant parse " ;
+    logMessage+=castor::utils::demangledNameOf(msg)+" from binary data. Wrong body";
+    if(!msg.ParseFromArray(blob.data(),blob.size())){
+        m_log(LOG_ERR,logMessage); 
+      }
+  }
+  
    /**
    * The reactor to which new Vdqm connection handlers are to be registered.
    */
@@ -86,12 +104,41 @@ private:
   
   zmq::socket_t m_socket;
   
+    /**
+   * The catalogue of tape drives controlled by the tape server daemon.
+   */
+  DriveCatalogue &m_driveCatalogue;
+  
+  /**
+   * The name of the host on which tape daemon is running.
+   */
+  const std::string m_hostName;
+  
+  /** 
+   * Reference to the VdqmProxy, allowing reporting of the drive status. It
+   * will be used by the StatusReporter 
+   */
+  castor::legacymsg::VdqmProxy & m_vdqm;
+
+  /** 
+   * Reference to the VmgrProxy, allowing reporting and checking tape status.
+   * It is also used by the StatusReporter 
+   */
+  castor::legacymsg::VmgrProxy & m_vmgr;
+  
   void checkSocket(const zmq::pollitem_t &fd);
   
   void dispatchEvent(const castor::messages::Header& header);
   
   void dealWith(const castor::messages::Header&,
                          const castor::messages::Heartbeat& body);
+  
+  void dealWith(const castor::messages::Header& header, 
+     const castor::messages::NotifyDriveBeforeMountStarted& body);
+
+void dealWith(const castor::messages::Header& header,
+     const castor::messages::NotifyDriveTapeMounted& body); 
+
   /**
    * Unserialise the blob and check the header
    * @param headerBlob

@@ -86,6 +86,6 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
 add_library (castortapelegacymsg SHARED ${TAPE_LEGACYMSG_LIB_SRC_FILES})
 CastorSetLibraryVersions (castortapelegacymsg)
 target_link_libraries (castortapelegacymsg castorclient castorcommon
-  castortapeutils castorns)
+  castortapeutils castorns castorMessages castorZMQWrapper)
 install (TARGETS castortapelegacymsg LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
   NAMELINK_SKIP)

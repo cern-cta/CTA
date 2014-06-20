@@ -37,6 +37,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <vector>
+#include <cxxabi.h>
 
 namespace castor {
 namespace utils  {
@@ -205,6 +206,18 @@ bool getDumpableProcessAttribute();
  */
 void setDumpableProcessAttribute(const bool dumpable);
 
+  
+template <class T>std::string demangledNameOf(const T&t){
+  std::string responseType = typeid(t).name();
+  int status = -1;
+  char * demangled = abi::__cxa_demangle(responseType.c_str(), NULL, NULL, &status);
+  if (!status) {
+    responseType = demangled; 
+  }
+  free(demangled);
+  
+  return responseType;
+}
 } // namespace utils
 } // namespace castor
 

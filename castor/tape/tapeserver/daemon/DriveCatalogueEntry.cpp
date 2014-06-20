@@ -34,8 +34,8 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveCatalogueEntry()
   throw():
-  m_mode(castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_NONE),
-  m_event(castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_NONE),
+  m_mode(castor::messages::TAPE_MODE_NONE),
+  m_getToBeMountedForTapeStatDriveEntry(false),
   m_state(DRIVE_STATE_INIT),
   m_sessionType(SESSION_TYPE_NONE),
   m_labelCmdConnection(-1) {
@@ -58,8 +58,8 @@ castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveCatalogueEntry()
 castor::tape::tapeserver::daemon::DriveCatalogueEntry::DriveCatalogueEntry(
   const utils::DriveConfig &config, const DriveState state) throw():
   m_config(config),
-  m_mode(castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_NONE),
-  m_event(castor::legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_NONE),
+  m_mode(castor::messages::TAPE_MODE_NONE),
+  m_getToBeMountedForTapeStatDriveEntry(false),
   m_state(state),
   m_sessionType(SESSION_TYPE_NONE),
   m_labelCmdConnection(-1) {
@@ -121,38 +121,6 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::setConfig(
 const castor::tape::utils::DriveConfig
   &castor::tape::tapeserver::daemon::DriveCatalogueEntry::getConfig() const {
   return m_config;
-}
-
-//------------------------------------------------------------------------------
-// setMode
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::setMode(
-  const legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode mode) {
-  m_mode = mode;
-}
-
-//------------------------------------------------------------------------------
-// getMode
-//------------------------------------------------------------------------------
-castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode
-  castor::tape::tapeserver::daemon::DriveCatalogueEntry::getMode() const {
-  return m_mode;
-}
-
-//------------------------------------------------------------------------------
-// setEvent
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::setEvent(
-  const legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event) {
-  m_event = event;
-}
-
-//------------------------------------------------------------------------------
-// getEvent
-//------------------------------------------------------------------------------
-castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent
-  castor::tape::tapeserver::daemon::DriveCatalogueEntry::getEvent() const {
-  return m_event;
 }
 
 //------------------------------------------------------------------------------
@@ -328,28 +296,17 @@ int castor::tape::tapeserver::daemon::DriveCatalogueEntry::
 //-----------------------------------------------------------------------------
 // updateDriveVolumeInfo
 //-----------------------------------------------------------------------------
+
+//-----------------------------------------------------------------------------
+// updateDriveVolumeInfo
+//-----------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::DriveCatalogueEntry::updateVolumeInfo(
-  const legacymsg::TapeUpdateDriveRqstMsgBody &body) {
-  std::ostringstream task;
-  task << "update the volume information of tape drive " << body.drive;
-
-  try {
-    m_vid = body.vid;
-    if(legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED
-      == body.event) {
-      const time_t now = time(0);
-      m_assignmentTime = now;
-    }
-    m_event =
-     (castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent)body.event;
-    m_mode = (castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode)body.mode;
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to " << task << ": " << ne.getMessage().str();
-    throw ex;
-  }
+  const castor::messages::NotifyDriveBeforeMountStarted &body) {
+  m_assignmentTime = time(0);
+  m_vid = body.vid();
+  m_getToBeMountedForTapeStatDriveEntry = true;
+  m_mode = body.mode();
 }
-
 //------------------------------------------------------------------------------
 // configureUp
 //------------------------------------------------------------------------------
@@ -704,13 +661,13 @@ uint16_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
   case DRIVE_STATE_RUNNING:
   case DRIVE_STATE_WAITDOWN:
     switch(m_mode) {
-    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READ:
+    case castor::messages::TAPE_MODE_READ:
       return WRITE_DISABLE;
-    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_READWRITE:
+    case castor::messages::TAPE_MODE_READWRITE:
       return WRITE_ENABLE;
-    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_DUMP:
+    case castor::messages::TAPE_MODE_DUMP:
       return WRITE_DISABLE;
-    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_MODE_NONE:
+      case castor::messages::TAPE_MODE_NONE:
       return WRITE_DISABLE;
     }
   default:
@@ -731,12 +688,7 @@ std::string castor::tape::tapeserver::daemon::DriveCatalogueEntry::
 //------------------------------------------------------------------------------
 uint16_t castor::tape::tapeserver::daemon::DriveCatalogueEntry::
   getToBeMountedForTapeStatDriveEntry() const throw() {
-  switch(m_event) {
-  case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED:
-    return 1; // "to be mounted"
-  default:
-    return 0; // NOT "to be mounted"
-  }
+  return m_getToBeMountedForTapeStatDriveEntry;
 }
 
 //------------------------------------------------------------------------------

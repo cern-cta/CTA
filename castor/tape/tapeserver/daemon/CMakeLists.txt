@@ -20,13 +20,12 @@ add_library(castorTapeServerDaemon
   MigrationTaskInjector.cpp
   MountSession.cpp
   MountSessionAcceptHandler.cpp
-  MountSessionConnectionHandler.cpp
   RecallMemoryManager.cpp
   RecallTaskInjector.cpp 
   RecallReportPacker.cpp
   SmartCap.cpp
-  TapeDaemonMain.cpp
   TapeMessageHandler.cpp
+  TapeDaemonMain.cpp
   TapeWriteTask.cpp
   VdqmAcceptHandler.cpp
   VdqmConnectionHandler.cpp)
@@ -66,7 +65,8 @@ target_link_libraries(tapeserverd
   castorTapeServerThreading
   ${LIBCAP_LIB}
   ${ZLIB_LIBRARIES}
-  castorMessages)
+  castorMessages
+  castorZMQWrapper)
 
 install (TARGETS tapeserverd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (tapeserverd)

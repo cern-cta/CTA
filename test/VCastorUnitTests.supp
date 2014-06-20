@@ -30,16 +30,22 @@
 }
 
 {
-   socketcall_sendto
-   Memcheck:Param
-   socketcall.sendto(msg)
-   fun:send
+   libcastorMessages
+   Memcheck:Leak
    ...
+   fun:_GLOBAL__I_Header.pb.cc
 }
+
 {
-   socketcall_sendto2
-   Memcheck:Param
-   socketcall.send(msg)
-   fun:send
+   libcastorMessages
+   Memcheck:Leak
    ...
+   fun:_GLOBAL__I_NotifyDrive.pb.cc
+}
+
+{
+   <insert_a_suppression_name_here>
+   Memcheck:Leak
+   ...
+   fun:_ZN6castor8messages47StaticDescriptorInitializer_NotifyDrive_2eprotoC1Ev
 }

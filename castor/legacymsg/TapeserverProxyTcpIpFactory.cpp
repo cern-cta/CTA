@@ -41,6 +41,6 @@ castor::legacymsg::TapeserverProxyTcpIpFactory::~TapeserverProxyTcpIpFactory() t
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxy *castor::legacymsg::TapeserverProxyTcpIpFactory::create() {
-  return new TapeserverProxyTcpIp(m_log, m_tapeserverPort, m_netTimeout);
+castor::legacymsg::TapeserverProxy *castor::legacymsg::TapeserverProxyTcpIpFactory::create(zmq::context_t& ctx) {
+  return new TapeserverProxyTcpIp(m_log, m_tapeserverPort, m_netTimeout,ctx);
 }

@@ -23,7 +23,7 @@
 #pragma once
 
 #include "castor/legacymsg/TapeserverProxy.hpp"
-
+#include "zmq/castorZmqWrapper.hpp"
 namespace castor {
 namespace legacymsg {
 
@@ -47,7 +47,7 @@ public:
    *
    * @return A pointer to the newly created object.
    */
-  virtual TapeserverProxy *create() = 0;
+  virtual TapeserverProxy *create(zmq::context_t& ctx) = 0;
 
 }; // class TapeserverProxyFactory
 

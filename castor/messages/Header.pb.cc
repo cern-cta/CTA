@@ -18,6 +18,9 @@ namespace {
 const ::google::protobuf::Descriptor* Header_descriptor_ = NULL;
 const ::google::protobuf::internal::GeneratedMessageReflection*
   Header_reflection_ = NULL;
+const ::google::protobuf::Descriptor* NoReturnValue_descriptor_ = NULL;
+const ::google::protobuf::internal::GeneratedMessageReflection*
+  NoReturnValue_reflection_ = NULL;
 
 }  // namespace
 
@@ -50,6 +53,20 @@ void protobuf_AssignDesc_Header_2eproto() {
       ::google::protobuf::DescriptorPool::generated_pool(),
       ::google::protobuf::MessageFactory::generated_factory(),
       sizeof(Header));
+  NoReturnValue_descriptor_ = file->message_type(1);
+  static const int NoReturnValue_offsets_[1] = {
+  };
+  NoReturnValue_reflection_ =
+    new ::google::protobuf::internal::GeneratedMessageReflection(
+      NoReturnValue_descriptor_,
+      NoReturnValue::default_instance_,
+      NoReturnValue_offsets_,
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NoReturnValue, _has_bits_[0]),
+      GOOGLE_PROTOBUF_GENERATED_MESSAGE_FIELD_OFFSET(NoReturnValue, _unknown_fields_),
+      -1,
+      ::google::protobuf::DescriptorPool::generated_pool(),
+      ::google::protobuf::MessageFactory::generated_factory(),
+      sizeof(NoReturnValue));
 }
 
 namespace {
@@ -64,6 +81,8 @@ void protobuf_RegisterTypes(const ::std::string&) {
   protobuf_AssignDescriptorsOnce();
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
     Header_descriptor_, &Header::default_instance());
+  ::google::protobuf::MessageFactory::InternalRegisterGeneratedMessage(
+    NoReturnValue_descriptor_, &NoReturnValue::default_instance());
 }
 
 }  // namespace
@@ -71,6 +90,8 @@ void protobuf_RegisterTypes(const ::std::string&) {
 void protobuf_ShutdownFile_Header_2eproto() {
   delete Header::default_instance_;
   delete Header_reflection_;
+  delete NoReturnValue::default_instance_;
+  delete NoReturnValue_reflection_;
 }
 
 void protobuf_AddDesc_Header_2eproto() {
@@ -85,11 +106,13 @@ void protobuf_AddDesc_Header_2eproto() {
     "\027\n\017protocolVersion\030\003 \002(\r\022\017\n\007reqType\030\004 \002("
     "\r\022\024\n\014bodyHashType\030\005 \002(\t\022\025\n\rbodyHashValue"
     "\030\006 \002(\t\022\031\n\021bodySignatureType\030\007 \002(\t\022\025\n\rbod"
-    "ySignature\030\010 \002(\t", 216);
+    "ySignature\030\010 \002(\t\"\017\n\rNoReturnValue", 233);
   ::google::protobuf::MessageFactory::InternalRegisterGeneratedFile(
     "Header.proto", &protobuf_RegisterTypes);
   Header::default_instance_ = new Header();
+  NoReturnValue::default_instance_ = new NoReturnValue();
   Header::default_instance_->InitAsDefaultInstance();
+  NoReturnValue::default_instance_->InitAsDefaultInstance();
   ::google::protobuf::internal::OnShutdown(&protobuf_ShutdownFile_Header_2eproto);
 }
 
@@ -657,6 +680,161 @@ void Header::Swap(Header* other) {
   ::google::protobuf::Metadata metadata;
   metadata.descriptor = Header_descriptor_;
   metadata.reflection = Header_reflection_;
+  return metadata;
+}
+
+
+// ===================================================================
+
+#ifndef _MSC_VER
+#endif  // !_MSC_VER
+
+NoReturnValue::NoReturnValue()
+  : ::google::protobuf::Message() {
+  SharedCtor();
+}
+
+void NoReturnValue::InitAsDefaultInstance() {
+}
+
+NoReturnValue::NoReturnValue(const NoReturnValue& from)
+  : ::google::protobuf::Message() {
+  SharedCtor();
+  MergeFrom(from);
+}
+
+void NoReturnValue::SharedCtor() {
+  _cached_size_ = 0;
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+}
+
+NoReturnValue::~NoReturnValue() {
+  SharedDtor();
+}
+
+void NoReturnValue::SharedDtor() {
+  if (this != default_instance_) {
+  }
+}
+
+void NoReturnValue::SetCachedSize(int size) const {
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+}
+const ::google::protobuf::Descriptor* NoReturnValue::descriptor() {
+  protobuf_AssignDescriptorsOnce();
+  return NoReturnValue_descriptor_;
+}
+
+const NoReturnValue& NoReturnValue::default_instance() {
+  if (default_instance_ == NULL) protobuf_AddDesc_Header_2eproto();  return *default_instance_;
+}
+
+NoReturnValue* NoReturnValue::default_instance_ = NULL;
+
+NoReturnValue* NoReturnValue::New() const {
+  return new NoReturnValue;
+}
+
+void NoReturnValue::Clear() {
+  ::memset(_has_bits_, 0, sizeof(_has_bits_));
+  mutable_unknown_fields()->Clear();
+}
+
+bool NoReturnValue::MergePartialFromCodedStream(
+    ::google::protobuf::io::CodedInputStream* input) {
+#define DO_(EXPRESSION) if (!(EXPRESSION)) return false
+  ::google::protobuf::uint32 tag;
+  while ((tag = input->ReadTag()) != 0) {
+    if (::google::protobuf::internal::WireFormatLite::GetTagWireType(tag) ==
+        ::google::protobuf::internal::WireFormatLite::WIRETYPE_END_GROUP) {
+      return true;
+    }
+    DO_(::google::protobuf::internal::WireFormat::SkipField(
+          input, tag, mutable_unknown_fields()));
+  }
+  return true;
+#undef DO_
+}
+
+void NoReturnValue::SerializeWithCachedSizes(
+    ::google::protobuf::io::CodedOutputStream* output) const {
+  if (!unknown_fields().empty()) {
+    ::google::protobuf::internal::WireFormat::SerializeUnknownFields(
+        unknown_fields(), output);
+  }
+}
+
+::google::protobuf::uint8* NoReturnValue::SerializeWithCachedSizesToArray(
+    ::google::protobuf::uint8* target) const {
+  if (!unknown_fields().empty()) {
+    target = ::google::protobuf::internal::WireFormat::SerializeUnknownFieldsToArray(
+        unknown_fields(), target);
+  }
+  return target;
+}
+
+int NoReturnValue::ByteSize() const {
+  int total_size = 0;
+  
+  if (!unknown_fields().empty()) {
+    total_size +=
+      ::google::protobuf::internal::WireFormat::ComputeUnknownFieldsSize(
+        unknown_fields());
+  }
+  GOOGLE_SAFE_CONCURRENT_WRITES_BEGIN();
+  _cached_size_ = total_size;
+  GOOGLE_SAFE_CONCURRENT_WRITES_END();
+  return total_size;
+}
+
+void NoReturnValue::MergeFrom(const ::google::protobuf::Message& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  const NoReturnValue* source =
+    ::google::protobuf::internal::dynamic_cast_if_available<const NoReturnValue*>(
+      &from);
+  if (source == NULL) {
+    ::google::protobuf::internal::ReflectionOps::Merge(from, this);
+  } else {
+    MergeFrom(*source);
+  }
+}
+
+void NoReturnValue::MergeFrom(const NoReturnValue& from) {
+  GOOGLE_CHECK_NE(&from, this);
+  mutable_unknown_fields()->MergeFrom(from.unknown_fields());
+}
+
+void NoReturnValue::CopyFrom(const ::google::protobuf::Message& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+void NoReturnValue::CopyFrom(const NoReturnValue& from) {
+  if (&from == this) return;
+  Clear();
+  MergeFrom(from);
+}
+
+bool NoReturnValue::IsInitialized() const {
+  
+  return true;
+}
+
+void NoReturnValue::Swap(NoReturnValue* other) {
+  if (other != this) {
+    _unknown_fields_.Swap(&other->_unknown_fields_);
+    std::swap(_cached_size_, other->_cached_size_);
+  }
+}
+
+::google::protobuf::Metadata NoReturnValue::GetMetadata() const {
+  protobuf_AssignDescriptorsOnce();
+  ::google::protobuf::Metadata metadata;
+  metadata.descriptor = NoReturnValue_descriptor_;
+  metadata.reflection = NoReturnValue_reflection_;
   return metadata;
 }
 

@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/TapeserverProxyDummyFactory.hpp
+ *                castorZmqUtils.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,21 +17,28 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
+ *
+ *
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/TapeserverProxyDummy.hpp"
-#include "castor/legacymsg/TapeserverProxyDummyFactory.hpp"
-
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxyDummyFactory::~TapeserverProxyDummyFactory() throw() {
+#include "zmq/castorZmqUtils.hpp"
+#include "zmq/castorZmqWrapper.hpp"
+#include "castor/utils/utils.hpp"
+namespace castor {
+  namespace utils {
+void connectToLocalhost(zmq::socket_t& m_socket){
+  std::string bindingAdress("tcp://127.0.0.1:");
+  bindingAdress+=castor::utils::toString(tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT);
+  m_socket.connect(bindingAdress.c_str());
 }
-
-//------------------------------------------------------------------------------
-// create
-//------------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxy *castor::legacymsg::TapeserverProxyDummyFactory::create(zmq::context_t& ctx) {
-  return new TapeserverProxyDummy();
-}
+castor::messages::Header preFilleHeader(){
+    castor::messages::Header header;
+    header.set_magic(TPMAGIC);
+    header.set_protocoltype(castor::messages::protocolType::Tape);
+    header.set_protocolversion(castor::messages::protocolVersion::prototype);
+    header.set_bodyhashtype("SHA1");
+    header.set_bodysignaturetype("SHA1");
+    return header;
+  }
+  }}

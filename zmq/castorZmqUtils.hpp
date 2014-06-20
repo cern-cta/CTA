@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/TapeserverProxyDummyFactory.hpp
+ *                      castorZmqUtils.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,21 +17,34 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author dkruse@cern.ch
+ * 
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
+#include "zmq/castorZmqWrapper.hpp"
+#include "castor/messages/Header.pb.h"
+#include "castor/messages/Constants.hpp"
+#include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "h/Ctape.h"
+#include "castor/exception/Exception.hpp"
+#pragma once 
 
-#include "castor/legacymsg/TapeserverProxyDummy.hpp"
-#include "castor/legacymsg/TapeserverProxyDummyFactory.hpp"
+namespace castor {
+  namespace utils {
+    
+template <class T> void sendMessage(zmq::socket_t& socket,const T& msg,int flag=0) {
 
-//------------------------------------------------------------------------------
-// destructor
-//------------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxyDummyFactory::~TapeserverProxyDummyFactory() throw() {
+  if(!msg.IsInitialized()){
+    castor::exception::Exception ex("the protocol buffer message was not correctly set");
+    throw ex;
+  }
+
+  const int size=msg.ByteSize();
+  zmq::message_t blob(size);
+  msg.SerializeToArray(blob.data(),size);
+  socket.send(blob,flag);
 }
 
-//------------------------------------------------------------------------------
-// create
-//------------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxy *castor::legacymsg::TapeserverProxyDummyFactory::create(zmq::context_t& ctx) {
-  return new TapeserverProxyDummy();
-}
+void connectToLocalhost(zmq::socket_t& m_socket);
+castor::messages::Header preFilleHeader();
+}}

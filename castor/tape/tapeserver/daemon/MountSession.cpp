@@ -71,7 +71,9 @@ castor::tape::tapeserver::daemon::MountSession::MountSession(
     m_intialProcess(initialProcess),
     m_capUtils(capUtils),
     m_argc(argc),
-    m_argv(argv) {}
+    m_argv(argv) {
+  m_logger(LOG_INFO,"fine ");
+}
 
 //------------------------------------------------------------------------------
 //MountSession::execute

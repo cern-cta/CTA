@@ -27,5 +27,5 @@
 //-----------------------------------------------------------------------------
 // destructor
 //-----------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxy::~TapeserverProxy() throw() {
+castor::legacymsg::TapeserverProxy::~TapeserverProxy() {
 }

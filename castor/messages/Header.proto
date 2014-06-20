@@ -10,3 +10,6 @@ message Header {
  required string bodySignatureType= 7;	
  required string bodySignature = 8;	
 }
+
+message NoReturnValue{
+}

@@ -27,7 +27,7 @@
 #include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeserverProxy.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
-
+#include "zmq/castorZmqWrapper.hpp"
 namespace castor {
 namespace legacymsg {
 
@@ -49,15 +49,7 @@ public:
    * network read and write operations.
    */
   TapeserverProxyTcpIp(log::Logger &log, const unsigned short tapeserverPort,
-    const int netTimeout) throw();
-
-  /**
-   * Destructor.
-   *
-   * Closes the listening socket created in the constructor to listen for
-   * connections from the vdqmd daemon.
-   */
-  ~TapeserverProxyTcpIp() throw();
+    const int netTimeout,zmq::context_t& ctx) throw();
 
   /**
    * Informs the tapeserverd daemon that the mount-session child-process got
@@ -145,31 +137,6 @@ public:
 
 private:
 
-  /**
-   * Fills in the body of the update drive request and calls
-   * writeTapeUpdateDriveRqstMsg to send it to the tapeserver
-   * 
-   * @param event      The status of the tape with respect to the drive mount
-   *                   and unmount operations
-   * @param mode       Read (read only), write (read/write), or dump
-   * @param clientType The client could be the gateway, readtp, writetp, or
-   *                   dumptp
-   * @param unitName   The unit name of the tape drive.
-   * @param vid        The Volume ID of the tape to be mounted.
-   */
-  void updateDriveInfo(
-    const castor::legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event,
-    const castor::tape::tapegateway::VolumeMode mode,
-    const castor::tape::tapegateway::ClientType clientType,
-    const std::string &unitName,
-    const std::string &vid);
-  
-  /**
-   * Connects to the vdqmd daemon.
-   *
-   * @return The socket-descriptor of the connection with the vdqmd daemon.
-   */
-  int connectToTapeserver() const;
 
   /**
    * Writes the specified message to the specified connection.
@@ -184,7 +151,7 @@ private:
    *
    * @param fd The file-descriptor of the connection.
    */
-  void readReplyMsg(const int fd);
+  void readReplyMsg();
 
   /**
    * The object representing the API of the CASTOR logging system.
@@ -206,6 +173,8 @@ private:
    * write operations.
    */
   const int m_netTimeout;
+  
+  zmq::socket_t m_socket;
 
 }; // class TapeserverProxyTcpIp
 

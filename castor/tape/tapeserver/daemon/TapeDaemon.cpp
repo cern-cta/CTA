@@ -307,7 +307,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
    {
   createAndRegisterVdqmAcceptHandler();
   createAndRegisterAdminAcceptHandler();
-  createAndRegisterMountSessionAcceptHandler();
   createAndRegisterTapeMessageHandler();
 }
 
@@ -383,44 +382,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
   adminAcceptHandler.release();
 }
 
-//------------------------------------------------------------------------------
-// createAndRegisterMountSessionAcceptHandler
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterMountSessionAcceptHandler()  {
-  castor::utils::SmartFd mountSessionListenSock;
-  try {
-    mountSessionListenSock.reset(
-      io::createLocalhostListenerSock(TAPE_SERVER_MOUNTSESSION_LISTENING_PORT));
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex(ne.code());
-    ex.getMessage() <<
-      "Failed to create socket to listen for mount session connections"
-      ": " << ne.getMessage().str();
-    throw ex;
-  }
-  {
-    log::Param params[] = {
-      log::Param("listeningPort", TAPE_SERVER_MOUNTSESSION_LISTENING_PORT)};
-    m_log(LOG_INFO,
-      "Listening for connections from the mount sessions", params);
-  }
-
-  std::auto_ptr<MountSessionAcceptHandler> mountSessionAcceptHandler;
-  try {
-    mountSessionAcceptHandler.reset(new MountSessionAcceptHandler(
-      mountSessionListenSock.get(), m_reactor, m_log, m_driveCatalogue,
-      m_hostName, m_vdqm, m_vmgr));
-    mountSessionListenSock.release();
-  } catch(std::bad_alloc &ba) {
-    castor::exception::BadAlloc ex;
-    ex.getMessage() <<
-      "Failed to create event handler for accepting mount-session connections"
-      ": " << ba.what();
-    throw ex;
-  }
-  m_reactor.registerHandler(mountSessionAcceptHandler.get());
-  mountSessionAcceptHandler.release();
-}
 
 //------------------------------------------------------------------------------
 // createAndRegisterMountSessionAcceptHandler
@@ -429,7 +390,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterTapeMessageH
 
   std::auto_ptr<TapeMessageHandler> tapeMessageHandler;
   try {
-    tapeMessageHandler.reset(new TapeMessageHandler(m_reactor, m_log));
+    tapeMessageHandler.reset(new TapeMessageHandler(m_reactor, m_log,m_driveCatalogue,m_hostName,m_vdqm,m_vmgr));
   } catch(std::bad_alloc &ba) {
     castor::exception::BadAlloc ex;
     ex.getMessage() <<
@@ -828,7 +789,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
   params.push_back(log::Param("unitName", driveConfig.unitName));
 
   m_log(LOG_INFO, "Mount-session child-process started", params);
-
+  zmq::context_t ctx;
   try {
     MountSession::CastorConf castorConf;
     // This try bloc will allow us to send a failure notification to the client
@@ -868,7 +829,16 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
         "RTCPD", "THREAD_POOL", (uint32_t)RTCPD_THREAD_POOL, &m_log);
       
       rmc.reset(m_rmcFactory.create());
-      tapeserver.reset(m_tapeserverFactory.create());
+m_log(LOG_INFO, "Before context");
+      
+m_log(LOG_INFO, "After context");
+      try{
+        tapeserver.reset(m_tapeserverFactory.create(ctx));
+      }
+      catch(const std::exception& e){
+        m_log(LOG_ERR, "Failed to connect ZMQ/REQ socket in MountSession");
+      }
+m_log(LOG_INFO, "connect ZMQ context : OK");
       mountSession.reset(new MountSession (
         m_argc,
         m_argv,
@@ -882,6 +852,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
         m_capUtils,
         castorConf
       ));
+      m_log(LOG_INFO, "foobar");
     } catch (castor::exception::Exception & ex) {
       try {
         client::ClientProxy cl(drive.getVdqmJob());
@@ -894,8 +865,10 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
           " when setting up the mount session", params);
       }
       throw;
-    } catch (...) {
+    } 
+    catch (...) {
       try {
+        m_log(LOG_ERR, "got non castor exception error while construction mount session", params);
         client::ClientProxy cl(drive.getVdqmJob());
         client::ClientInterface::RequestReport rep;
         cl.reportEndOfSessionWithError(
@@ -909,7 +882,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
       }
       throw;
     }
-    
+    m_log(LOG_INFO, "Going to execute Mount Session");
     exit (mountSession->execute());
   } catch(castor::exception::Exception & ex) {
     params.push_back(log::Param("message", ex.getMessageValue()));

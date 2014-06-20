@@ -45,6 +45,7 @@
 #include <stdio.h>
 #include <unistd.h>
 
+<<<<<<< HEAD
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -76,120 +77,7 @@ castor::tape::tapeserver::daemon::MountSessionConnectionHandler::
   }
 }
 
-//------------------------------------------------------------------------------
-// getFd
-//------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::MountSessionConnectionHandler::getFd() throw() {
-  return m_fd;
-}
 
-//------------------------------------------------------------------------------
-// fillPollFd
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionConnectionHandler::fillPollFd(zmq::pollitem_t &fd) throw() {
-  fd.fd = m_fd;
-  fd.revents = 0;
-  fd.socket = NULL;
-}
-
-//------------------------------------------------------------------------------
-// handleEvent
-//------------------------------------------------------------------------------
-bool castor::tape::tapeserver::daemon::MountSessionConnectionHandler::handleEvent(
-  const zmq::pollitem_t &fd)  {
-  logMountSessionConnectionEvent(fd);
-
-  checkHandleEventFd(fd.fd);
-
-  std::list<log::Param> params;
-  params.push_back(log::Param("fd", m_fd));
-
-  try {
-    const legacymsg::MessageHeader header = readMsgHeader();
-    handleRequest(header);
-  } catch(castor::exception::Exception &ex) {
-    params.push_back(log::Param("message", ex.getMessage().str()));
-    m_log(LOG_ERR, "Failed to handle IO event on mount-session connection",
-      params);
-  }
-
-  m_log(LOG_DEBUG, "Asking reactor to remove and delete"
-    " MountSessionConnectionHandler", params);
-  return true; // Ask reactor to remove and delete this handler
-}
-
-//------------------------------------------------------------------------------
-// logMountSessionConnectionEvent
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionConnectionHandler::
-  logMountSessionConnectionEvent(const zmq::pollitem_t &fd) {
-  std::list<log::Param> params;
-  params.push_back(log::Param("fd", fd.fd));
-  params.push_back(log::Param("POLLIN",
-    fd.revents & POLLIN ? "true" : "false"));
-  params.push_back(log::Param("POLLRDNORM",
-    fd.revents & POLLRDNORM ? "true" : "false"));
-  params.push_back(log::Param("POLLRDBAND",
-    fd.revents & POLLRDBAND ? "true" : "false"));
-  params.push_back(log::Param("POLLPRI",
-    fd.revents & POLLPRI ? "true" : "false"));
-  params.push_back(log::Param("POLLOUT",
-    fd.revents & POLLOUT ? "true" : "false"));
-  params.push_back(log::Param("POLLWRNORM",
-    fd.revents & POLLWRNORM ? "true" : "false"));
-  params.push_back(log::Param("POLLWRBAND",
-    fd.revents & POLLWRBAND ? "true" : "false"));
-  params.push_back(log::Param("POLLERR",
-    fd.revents & POLLERR ? "true" : "false"));
-  params.push_back(log::Param("POLLHUP",
-    fd.revents & POLLHUP ? "true" : "false"));
-  params.push_back(log::Param("POLLNVAL",
-    fd.revents & POLLNVAL ? "true" : "false"));
-  m_log(LOG_DEBUG, "I/O event on mount-session connection", params);
-}
-
-//------------------------------------------------------------------------------
-// checkHandleEventFd
-//------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSessionConnectionHandler::
-  checkHandleEventFd(const int fd)  {
-  if(m_fd != fd) {
-    castor::exception::Exception ex;
-    ex.getMessage() <<
-      "MountSessionConnectionHandler passed wrong file descriptor"
-      ": expected=" << m_fd << " actual=" << fd;
-    throw ex;
-  }
-}
-
-//------------------------------------------------------------------------------
-// readMsgHeader
-//------------------------------------------------------------------------------
-castor::legacymsg::MessageHeader castor::tape::tapeserver::daemon::
-  MountSessionConnectionHandler::readMsgHeader()  {
-  // Read in the message header
-  char buf[3 * sizeof(uint32_t)]; // magic + request type + len
-  io::readBytes(m_fd, m_netTimeout, sizeof(buf), buf);
-
-  const char *bufPtr = buf;
-  size_t bufLen = sizeof(buf);
-  legacymsg::MessageHeader header;
-  memset(&header, '\0', sizeof(header));
-  legacymsg::unmarshal(bufPtr, bufLen, header);
-
-  if(TPMAGIC != header.magic) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Invalid admin job message: Invalid magic"
-      ": expected=0x" << std::hex << TPMAGIC << " actual=0x" <<
-      header.magic;
-    throw ex;
-  }
-
-  // The length of the message body is checked later, just before it is read in
-  // to memory
-
-  return header;
-}
 
 //------------------------------------------------------------------------------
 // handleRequest
@@ -222,42 +110,7 @@ void castor::tape::tapeserver::daemon::MountSessionConnectionHandler::
   handleUpdateRequest(const legacymsg::MessageHeader &header) {
   const char *const task = "handle incoming update drive job";
 
-  try {
-    // Read message body
-    const uint32_t totalLen = header.lenOrStatus;
-    const uint32_t headerLen = 3 * sizeof(uint32_t); // magic, type and length
-    const uint32_t bodyLen = totalLen - headerLen;
-    const legacymsg::TapeUpdateDriveRqstMsgBody body =
-      readTapeUpdateDriveRqstMsgBody(bodyLen);
-    logUpdateDriveJobReception(body);
-    const std::string unitName(body.drive);
-    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(unitName);
-    drive.updateVolumeInfo(body);
-
-    const utils::DriveConfig &driveConfig = drive.getConfig();
-
-    switch(body.event) {
-    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_BEFORE_MOUNT_STARTED:
-      checkTapeConsistencyWithVMGR(body.vid, body.clientType, body.mode);
-      break;
-    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_MOUNTED:
-      tellVMGRTapeWasMounted(body.vid, body.mode);
-      m_vdqm.tapeMounted(m_hostName, body.drive, driveConfig.dgn, body.vid,
-        drive.getSessionPid());
-      break;
-    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNT_STARTED:
-      break;
-    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_UNMOUNTED:
-      break;
-    case legacymsg::TapeUpdateDriveRqstMsgBody::TAPE_STATUS_NONE:
-      break;
-    default:
-      castor::exception::Exception ex;
-      ex.getMessage() << "Unknown tape event: " << body.event;
-      throw ex;
-      break;
-    }    
-    
+  try { 
     // 0 as return code for the tape config command, as in: "all went fine"
     legacymsg::writeTapeReplyMsg(m_netTimeout, m_fd, 0, "");
   } catch(castor::exception::Exception &ex) {

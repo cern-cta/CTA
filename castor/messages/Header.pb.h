@@ -34,6 +34,7 @@ void protobuf_AssignDesc_Header_2eproto();
 void protobuf_ShutdownFile_Header_2eproto();
 
 class Header;
+class NoReturnValue;
 
 // ===================================================================
 
@@ -195,6 +196,87 @@ class Header : public ::google::protobuf::Message {
   
   void InitAsDefaultInstance();
   static Header* default_instance_;
+};
+// -------------------------------------------------------------------
+
+class NoReturnValue : public ::google::protobuf::Message {
+ public:
+  NoReturnValue();
+  virtual ~NoReturnValue();
+  
+  NoReturnValue(const NoReturnValue& from);
+  
+  inline NoReturnValue& operator=(const NoReturnValue& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+  
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+  
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const NoReturnValue& default_instance();
+  
+  void Swap(NoReturnValue* other);
+  
+  // implements Message ----------------------------------------------
+  
+  NoReturnValue* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const NoReturnValue& from);
+  void MergeFrom(const NoReturnValue& from);
+  void Clear();
+  bool IsInitialized() const;
+  
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  
+  ::google::protobuf::Metadata GetMetadata() const;
+  
+  // nested types ----------------------------------------------------
+  
+  // accessors -------------------------------------------------------
+  
+  // @@protoc_insertion_point(class_scope:castor.messages.NoReturnValue)
+ private:
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  mutable int _cached_size_;
+  
+  friend void  protobuf_AddDesc_Header_2eproto();
+  friend void protobuf_AssignDesc_Header_2eproto();
+  friend void protobuf_ShutdownFile_Header_2eproto();
+  
+  ::google::protobuf::uint32 _has_bits_[1];
+  
+  // WHY DOES & HAVE LOWER PRECEDENCE THAN != !?
+  inline bool _has_bit(int index) const {
+    return (_has_bits_[index / 32] & (1u << (index % 32))) != 0;
+  }
+  inline void _set_bit(int index) {
+    _has_bits_[index / 32] |= (1u << (index % 32));
+  }
+  inline void _clear_bit(int index) {
+    _has_bits_[index / 32] &= ~(1u << (index % 32));
+  }
+  
+  void InitAsDefaultInstance();
+  static NoReturnValue* default_instance_;
 };
 // ===================================================================
 
@@ -434,6 +516,10 @@ inline ::std::string* Header::mutable_bodysignature() {
   }
   return bodysignature_;
 }
+
+// -------------------------------------------------------------------
+
+// NoReturnValue
 
 
 // @@protoc_insertion_point(namespace_scope)

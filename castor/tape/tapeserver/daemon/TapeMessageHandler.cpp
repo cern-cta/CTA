@@ -27,22 +27,33 @@
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape.h"
-#include "zmq/zmqcastor.hpp"
+#include "castor/messages/NotifyDrive.pb.h"
+#include "castor/messages/Constants.hpp"
+#include "zmq/castorZmqWrapper.hpp"
+#include "zmq/castorZmqUtils.hpp"
+#include "h/vmgr_constants.h"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
-  reactor::ZMQReactor &reactor,
-  log::Logger &log):
-    m_reactor(reactor),
-    m_log(log),m_socket(reactor.getContext(),ZMQ_REP){ 
+   reactor::ZMQReactor &reactor,
+  log::Logger &log,DriveCatalogue &driveCatalogue,
+  const std::string &hostName,
+  castor::legacymsg::VdqmProxy & vdqm,
+  castor::legacymsg::VmgrProxy & vmgr):
+  m_reactor(reactor),
+  m_log(log),m_socket(reactor.getContext(),ZMQ_REP),
+  m_driveCatalogue(driveCatalogue),
+  m_hostName(hostName),
+  m_vdqm(vdqm),
+  m_vmgr(vmgr){ 
   
   std::string bindingAdress("tcp://127.0.0.1:");
   bindingAdress+=castor::utils::toString(tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT);
   std::vector<log::Param> v;
   v.push_back(log::Param("endpoint",bindingAdress));
-
+  
   try{
     m_socket.bind(bindingAdress.c_str());
     m_log(LOG_INFO,"bind succesful",v);
@@ -141,14 +152,30 @@ const messages::Header& header){
     case messages::reqType::Heartbeat:
     {
       castor::messages::Heartbeat body;
-      if(!body.ParseFromArray(bodyBlob.data(),bodyBlob.size())){
-        m_log(LOG_ERR,"Cant parse Heartbeat from binary data. Wrong body");
-      }
+      unserialize(body,bodyBlob);
       dealWith(header,body);
     }
       break;
+    case messages::reqType::NotifyDriveBeforeMountStarted:
+    {
+      castor::messages::NotifyDriveBeforeMountStarted body;
+      unserialize(body,bodyBlob);
+      dealWith(header,body);
+    }
+      break;
+    case messages::reqType::NotifyDriveTapeMounted:
+    {
+      castor::messages::NotifyDriveTapeMounted body;
+      unserialize(body,bodyBlob);
+      dealWith(header,body);
+    }
+      break;
+    case messages::reqType::NotifyDriveTapeUnmounted:
+      break;
+    case messages::reqType::NotifyDriveUnmountStarted:
+      break;
     default:
-      m_log(LOG_INFO,"default  dispatch in TapeMessageHandler");
+      m_log(LOG_ERR,"default  dispatch in TapeMessageHandler");
       break;
   }
 }
@@ -171,3 +198,62 @@ const castor::messages::Header& header, const castor::messages::Heartbeat& body)
   }
 }
 
+void castor::tape::tapeserver::daemon::TapeMessageHandler::dealWith(
+const castor::messages::Header& header, 
+const castor::messages::NotifyDriveBeforeMountStarted& body){
+  m_log(LOG_INFO,"NotifyDriveBeforeMountStarted-dealWith");
+  //check castor consistensy
+    if(body.mode()==castor::messages::TAPE_MODE_READWRITE) {
+    legacymsg::VmgrTapeInfoMsgBody tapeInfo;
+    m_vmgr.queryTape(body.vid(), tapeInfo);
+    // If the client is the tape gateway and the volume is not marked as BUSY
+    if(body.clienttype() == castor::messages::NotifyDriveBeforeMountStarted::CLIENT_TYPE_GATEWAY && !(tapeInfo.status & TAPE_BUSY)) {
+      castor::exception::Exception ex;
+      ex.getMessage() << "The tape gateway is the client and the tape to be mounted is not BUSY: vid=" << body.vid();
+      throw ex;
+    }
+  }
+    sendEmptyReplyToClient();
+}
+
+void castor::tape::tapeserver::daemon::TapeMessageHandler::dealWith(
+const castor::messages::Header& header, 
+const castor::messages::NotifyDriveTapeMounted& body){
+  m_log(LOG_INFO,"NotifyDriveTapeMounted-dealWith");
+  DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(body.unitname());
+  drive.updateVolumeInfo(body);
+  const utils::DriveConfig &driveConfig = drive.getConfig();
+    
+  const std::string vid = body.vid();
+  switch(body.mode()) {
+    case castor::messages::TAPE_MODE_READ:
+      m_vmgr.tapeMountedForRead(vid);
+      break;
+    case castor::messages::TAPE_MODE_READWRITE:
+      m_vmgr.tapeMountedForWrite(vid);
+      break;
+    case castor::messages::TAPE_MODE_DUMP:
+      m_vmgr.tapeMountedForRead(vid);
+      break;
+    case castor::messages::TAPE_MODE_NONE:
+      break;
+    default:
+      castor::exception::Exception ex;
+      ex.getMessage() << "Unknown tape mode: " << body.mode();
+      throw ex;
+  }
+  m_vdqm.tapeMounted(m_hostName, body.unitname(), driveConfig.dgn, body.vid(),
+        drive.getSessionPid());
+  
+  sendEmptyReplyToClient();
+}
+
+void castor::tape::tapeserver::daemon::TapeMessageHandler::sendEmptyReplyToClient(){
+    castor::messages::Header header = castor::utils::preFilleHeader();
+    header.set_reqtype(messages::reqType::NoReturnValue);
+    header.set_bodyhashvalue("PIPO");
+    header.set_bodysignature("PIPO");
+    castor::messages::NoReturnValue body;
+    castor::utils::sendMessage(m_socket,header,ZMQ_SNDMORE);
+    castor::utils::sendMessage(m_socket,body);
+}

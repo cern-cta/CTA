@@ -25,6 +25,9 @@
 #pragma once
 
 #include "castor/tape/tapebridge/IFileCloser.hpp"
+#include "castor/exception/Exception.hpp"
+#include "zmq/castorZmqWrapper.hpp"
+#include <poll.h>
 
 #include <cppunit/extensions/HelperMacros.h>
 #include <unistd.h>

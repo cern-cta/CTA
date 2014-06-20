@@ -42,7 +42,7 @@ public:
    * Closes the listening socket created in the constructor to listen for
    * connections from the vdqmd daemon.
    */
-  virtual ~TapeserverProxy() throw() = 0;
+  virtual ~TapeserverProxy()  = 0;
 
   /**
    * Notifies the tapeserverd daemon that the mount-session child-process got

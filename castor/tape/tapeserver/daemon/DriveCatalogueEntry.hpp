@@ -29,7 +29,7 @@
 #include "castor/legacymsg/TapeLabelRqstMsgBody.hpp"
 #include "castor/legacymsg/TapeStatDriveEntry.hpp"
 #include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
-
+#include "castor/messages/NotifyDrive.pb.h"
 #include <string>
 #include <sys/types.h>
 #include <time.h>
@@ -199,33 +199,6 @@ public:
    * @return The configuration of the tape-drive.
    */
   const tape::utils::DriveConfig &getConfig() const;
-
-  /**
-   * Sets the mode of the current mount to either read, write, or dump.
-   */
-  void setMode(const legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode mode);
-
-  /**
-   * Gets the mode of the current mount, either read, write, or dump.
-   *
-   * @return The mode of the current mount.
-   */
-  legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode getMode() const;
-
-  /**
-   * Sets the status of the tape with respect to the drive mount and unmount
-   * operations.
-   */
-  void setEvent(const legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent event);
-
-  /**
-   * Gets the state of the tape with respect to the drive mount and unmount
-   * operations.
-   *
-   * @return The state of the tape with respect to the drive mount and unmount
-   * operations.
-   */
-  legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent getEvent() const;
 
   /**
    * Sets the Volume ID of the tape mounted in the drive. Empty string if drive
@@ -428,13 +401,16 @@ public:
    */
   int releaseLabelCmdConnection();
 
-  /**
-   * Updates the vid and assignment time.
-   * 
-   * @param body The TapeUpdateDriveRqstMsgBody requesting the update.
-   */
-  void updateVolumeInfo(const legacymsg::TapeUpdateDriveRqstMsgBody &body);
 
+  //default template version for the nes messages
+  template <class T> void updateVolumeInfo(const T &body) {
+    m_vid = body.vid();
+    m_getToBeMountedForTapeStatDriveEntry = false;
+    m_mode = body.mode();
+  }
+  //overload that will be picked up when passing a NotifyDriveBeforeMountStarted
+  void updateVolumeInfo(const castor::messages::NotifyDriveBeforeMountStarted &body);
+  
   /**
    * Gets the tpstat representation of the tape drive.
    *
@@ -452,13 +428,13 @@ private:
   /**
    * Are we mounting for read, write (read/write), or dump
    */
-  legacymsg::TapeUpdateDriveRqstMsgBody::TapeMode m_mode;
+  castor::messages::TapeMode m_mode;
   
   /**
    * The status of the tape with respect to the drive mount and unmount
    * operations.
    */
-  legacymsg::TapeUpdateDriveRqstMsgBody::TapeEvent m_event;
+  bool m_getToBeMountedForTapeStatDriveEntry;
   
   /**
    * The Volume ID of the tape mounted in the drive. Empty string if drive is

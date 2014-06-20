@@ -167,12 +167,6 @@ protected:
    * registers it with the reactor.
    */
   void createAndRegisterAdminAcceptHandler() ;
-  
-  /**
-   * Creates the handler to accept connections from the mount session(s) and
-   * registers it with the reactor.
-   */
-  void createAndRegisterMountSessionAcceptHandler() ;
 
   /**
    * Creates the handler to discuss through zmq socket to the forked sessions
