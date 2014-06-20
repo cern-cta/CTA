@@ -163,7 +163,7 @@ Package: castor-tape-server
 Architecture: any
 Depends: logrotate, protobuf-devel, stk-ssi, castor-lib = %{version}-%{release}
 Conflicts: castor-tape-server-nostk
-Build-Depends: libcap-devel, stk-ssi-devel, stk-ssi
+Build-Depends: libcap-devel, protobuf-devel, stk-ssi-devel, stk-ssi
 Description: castor (Cern Advanced STORage system)
  Tape server
 
