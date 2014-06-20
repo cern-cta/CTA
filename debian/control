@@ -161,7 +161,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-tape-server
 Architecture: any
-Depends: logrotate, stk-ssi, castor-lib = %{version}-%{release}
+Depends: logrotate, protobuf-devel, stk-ssi, castor-lib = %{version}-%{release}
 Conflicts: castor-tape-server-nostk
 Build-Depends: libcap-devel, stk-ssi-devel, stk-ssi
 Description: castor (Cern Advanced STORage system)
