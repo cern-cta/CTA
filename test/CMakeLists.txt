@@ -177,7 +177,7 @@ set_property(SOURCE ../SCSI/StructuresTest.cpp
 target_link_libraries(castorUnitTests
   castorcommon
   castorclient
-  castortapelegacymsg
+  castorlegacymsg
   castorTapeServerThreading
   castortapeutils
   Exception
@@ -225,8 +225,8 @@ target_link_libraries(castorThreadedUnitTests
   Exception
   castorclient
   castorcommon
+  castorlegacymsg
   castortapegatewayprotocol
-  castortapelegacymsg
   castorTapeServerThreading
   castorTapeServerDaemonTestDummies
   castorTapeServerDaemon
@@ -235,7 +235,6 @@ target_link_libraries(castorThreadedUnitTests
   System
   Utils
   castortapegatewayprotocol
-  castortapelegacymsg
   castortapeutils
   castorvdqm
   castorvmgr

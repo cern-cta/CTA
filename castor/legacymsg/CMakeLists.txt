@@ -23,9 +23,9 @@
 cmake_minimum_required (VERSION 2.6)
 
 ################################################################################
-# Rules to build and install libcastortapelegacymsg.so
+# Rules to build and install libcastorlegacymsg.so
 ################################################################################
-set (TAPE_LEGACYMSG_LIB_SRC_FILES
+set (CASTOR_LEGACYMSG_LIB_SRC_FILES
   CommonMarshal.cpp
   CupvCheckMsgBody.cpp
   CupvMarshal.cpp
@@ -83,9 +83,9 @@ set (TAPE_LEGACYMSG_LIB_SRC_FILES
   VmgrTapeInfoMsgBody.cpp
   VmgrTapeInfoRqstMsgBody.cpp
   VmgrTapeMountedMsgBody.cpp)
-add_library (castortapelegacymsg SHARED ${TAPE_LEGACYMSG_LIB_SRC_FILES})
-CastorSetLibraryVersions (castortapelegacymsg)
-target_link_libraries (castortapelegacymsg castorclient castorcommon
-  castortapeutils castorns castorMessages castorZMQWrapper)
-install (TARGETS castortapelegacymsg LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
+add_library (castorlegacymsg SHARED ${CASTOR_LEGACYMSG_LIB_SRC_FILES})
+CastorSetLibraryVersions (castorlegacymsg)
+target_link_libraries (castorlegacymsg castorclient castorcommon
+  castorMessages castorZMQWrapper)
+install (TARGETS castorlegacymsg LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
   NAMELINK_SKIP)

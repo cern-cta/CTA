@@ -32,7 +32,7 @@ if (${COMPILE_SERVER} STREQUAL "1")
     RmcDaemon.cpp
     RmcDaemonMain.cpp)
   add_executable (newrmcd ${RMCD_SRC_FILES})
-  target_link_libraries (newrmcd castorclient castorcommon castortapelegacymsg
+  target_link_libraries (newrmcd castorclient castorcommon castorlegacymsg
     castortapereactor)
   #install (TARGETS newrmcd DESTINATION ${CASTOR_DEST_LIB_DIR})
   #CastorInstallExeManPage(newrmcd)

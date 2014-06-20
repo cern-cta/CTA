@@ -59,10 +59,11 @@ target_link_libraries(tapeserverd
   File
   castorcommon
   castorclient
+  castorlegacymsg
   castortapegatewayprotocol
-  castortapelegacymsg
   castortapereactor
   castorTapeServerThreading
+  castortapeutils
   ${LIBCAP_LIB}
   ${ZLIB_LIBRARIES}
   castorMessages
