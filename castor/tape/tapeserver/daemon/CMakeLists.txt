@@ -1,37 +1,37 @@
 find_package( ZLIB REQUIRED )
 
 add_library(castorTapeServerDaemon 
+  AdminAcceptHandler.cpp
+  AdminConnectionHandler.cpp
   ../client/ClientProxy.cpp 
   CapabilityUtils.cpp
   CapabilityUtilsImpl.cpp
-  LabelSession.cpp
-  RecallTaskInjector.cpp 
-  MigrationReportPacker.cpp 
-  RecallReportPacker.cpp
-  DiskWriteThreadPool.cpp
   DiskReadThreadPool.cpp
-  TapeWriteTask.cpp
   DiskReadTask.cpp
   DiskWriteTask.cpp
-  MigrationTaskInjector.cpp
-  MigrationMemoryManager.cpp
-  RecallMemoryManager.cpp
-  MountSession.cpp
-  AdminAcceptHandler.cpp
-  AdminConnectionHandler.cpp
-  TapeMessageHandler.cpp
-  MountSessionAcceptHandler.cpp
-  MountSessionConnectionHandler.cpp
+  DiskWriteThreadPool.cpp
   DriveCatalogue.cpp
   DriveCatalogueEntry.cpp
   ../drive/Drive.cpp
-  TapeDaemonMain.cpp
-  VdqmAcceptHandler.cpp
-  VdqmConnectionHandler.cpp
   GlobalStatusReporter.cpp
-  SmartCap.cpp)
+  LabelSession.cpp
+  MigrationMemoryManager.cpp
+  MigrationReportPacker.cpp 
+  MigrationTaskInjector.cpp
+  MountSession.cpp
+  MountSessionAcceptHandler.cpp
+  MountSessionConnectionHandler.cpp
+  RecallMemoryManager.cpp
+  RecallTaskInjector.cpp 
+  RecallReportPacker.cpp
+  SmartCap.cpp
+  TapeDaemonMain.cpp
+  TapeMessageHandler.cpp
+  TapeWriteTask.cpp
+  VdqmAcceptHandler.cpp
+  VdqmConnectionHandler.cpp)
 
-target_link_libraries(castorTapeServerDaemon castorMessages)
+target_link_libraries(castorTapeServerDaemon castorMessages castortapereactor)
 
 add_library(castorTapeServerDaemonTestDummies
   ../client/ClientSimulator.cpp 
@@ -62,6 +62,7 @@ target_link_libraries(tapeserverd
   castorclient
   castortapegatewayprotocol
   castortapelegacymsg
+  castortapereactor
   castorTapeServerThreading
   ${LIBCAP_LIB}
   ${ZLIB_LIBRARIES}

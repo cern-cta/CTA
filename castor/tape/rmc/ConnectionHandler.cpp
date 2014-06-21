@@ -27,8 +27,8 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::rmc::ConnectionHandler::ConnectionHandler(
-  const int fd, io::ZMQReactor &reactor, log::Logger &log) throw():
+castor::tape::rmc::ConnectionHandler::ConnectionHandler(const int fd,
+  reactor::ZMQReactor &reactor, log::Logger &log) throw():
     m_fd(fd),
     m_reactor(reactor),
     m_log(log),

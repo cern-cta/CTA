@@ -22,9 +22,9 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/io/DummyPollReactor.hpp"
 #include "castor/legacymsg/CupvProxyDummy.hpp"
 #include "castor/log/DummyLogger.hpp"
+#include "castor/tape/reactor/DummyPollReactor.hpp"
 #include "castor/tape/rmc/RmcDaemon.hpp"
 
 #include <gtest/gtest.h>
@@ -50,7 +50,7 @@ TEST_F(castor_tape_rmc_RmcDaemonTest, constructor) {
   std::ostringstream stdErr;
   castor::log::DummyLogger logger("unittest");
   zmq::context_t ctx;
-  castor::io::ZMQReactor reactor(logger,ctx);
+  castor::tape::reactor::ZMQReactor reactor(logger,ctx);
   const bool isGrantedReturnValue = true;
   castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
   

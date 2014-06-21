@@ -23,9 +23,9 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/io/ZMQReactor.hpp"
 #include "castor/legacymsg/CupvProxyTcpIp.hpp"
 #include "castor/log/SyslogLogger.hpp"
+#include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/rmc/RmcDaemon.hpp"
 #include "h/Cupv_constants.h"
 
@@ -92,7 +92,7 @@ int main(const int argc, char **const argv) {
 static int exceptionThrowingMain(const int argc, char **const argv, castor::log::Logger &log) {
   const std::string cupvHostName = getConfigParam("UPV", "HOST");
   zmq::context_t ctx;
-  castor::io::ZMQReactor reactor(log,ctx);
+  castor::tape::reactor::ZMQReactor reactor(log,ctx);
   const int netTimeout = 10; // Timeout in seconds
   castor::legacymsg::CupvProxyTcpIp cupv(log, cupvHostName, CUPV_PORT, netTimeout);
   castor::tape::rmc::RmcDaemon daemon(std::cout, std::cerr, log, reactor, cupv);

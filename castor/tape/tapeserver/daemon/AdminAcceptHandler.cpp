@@ -48,7 +48,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::AdminAcceptHandler::AdminAcceptHandler(
   const int fd,
-  io::ZMQReactor &reactor,
+  reactor::ZMQReactor &reactor,
   log::Logger &log,
   legacymsg::VdqmProxy &vdqm,
   DriveCatalogue &driveCatalogue,

@@ -23,13 +23,13 @@
  *****************************************************************************/
 
 #include "castor/common/CastorConfiguration.hpp"
-#include "castor/io/ZMQReactor.hpp"
 #include "castor/legacymsg/NsProxy_TapeAlwaysEmptyFactory.hpp"
 #include "castor/legacymsg/RmcProxyTcpIpFactory.hpp"
 #include "castor/legacymsg/TapeserverProxyTcpIpFactory.hpp"
 #include "castor/legacymsg/VdqmProxyTcpIp.hpp"
 #include "castor/legacymsg/VmgrProxyTcpIp.hpp"
 #include "castor/log/SyslogLogger.hpp"
+#include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtilsImpl.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/MountSession.hpp"
@@ -138,7 +138,7 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
 
   // Create the poll() reactor
   //castor::io::PollReactorImpl reactor(log);
-  castor::io::ZMQReactor reactor(log,ctx);
+  castor::tape::reactor::ZMQReactor reactor(log,ctx);
 
   // Create the object providing utilities for working with UNIX capabilities
   CapabilityUtilsImpl capUtils;

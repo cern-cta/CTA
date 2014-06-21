@@ -78,10 +78,6 @@ set (CLIENT_LIB_SRC_FILES
   io/PipeSocket.cpp
   io/ClientSocket.cpp
   io/io.cpp
-  io/PollEventHandler.cpp
-  io/PollReactor.cpp
-  io/PollReactorImpl.cpp
-  io/ZMQReactor.cpp
   io/ServerSocket.cpp
   io/StreamAddress.cpp
   io/StreamBaseCnv.cpp
@@ -282,7 +278,7 @@ add_library (castorclient SHARED ${CLIENT_LIB_SRC_FILES})
 # the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
 set_property(SOURCE ../client/src/stager/stager_errmsg.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 CastorSetLibraryVersions (castorclient)
-target_link_libraries (castorclient castordlf zmq)
+target_link_libraries (castorclient castordlf)
 install (TARGETS castorclient DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 if (${COMPILE_SERVER} STREQUAL "1")

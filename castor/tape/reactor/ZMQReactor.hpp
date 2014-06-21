@@ -1,5 +1,5 @@
 /******************************************************************************
- *                ZMQReactor.hpp
+ *         castor/tape/reactor/ZMQReactor.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,30 +17,33 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author Steven.Murray@cern.ch
+ * @author castor-dev
  *****************************************************************************/
 
 #pragma once
 #include "castor/log/Logger.hpp"
-#include "castor/io/ZMQPollEventHandler.hpp"
+#include "castor/tape/reactor/ZMQPollEventHandler.hpp"
 #include "zmq/zmqcastor.hpp"
+
 #include <vector>
 #include <utility>
 
 namespace castor {
-namespace io {
-  /**
-   * This reactor wraps the poll() system call.
-   *
-   * This class is part of an implementation of the Reactor architecture pattern
-o   * described in the following book:
-   *
-   *    Pattern-Oriented Software Architecture Volume 2
-   *    Patterns for Concurrent and Networked Objects
-   *    Authors: Schmidt, Stal, Rohnert and Buschmann
-   *    Publication date: 2000
-   *    ISBN 0-471-60695-2
-   */
+namespace tape {
+namespace reactor {
+
+/**
+ * This reactor wraps the poll() system call.
+ *
+ * This class is part of an implementation of the Reactor architecture pattern
+ * described in the following book:
+ *
+ *    Pattern-Oriented Software Architecture Volume 2
+ *    Patterns for Concurrent and Networked Objects
+ *    Authors: Schmidt, Stal, Rohnert and Buschmann
+ *    Publication date: 2000
+ *    ISBN 0-471-60695-2
+ */
 class ZMQReactor {
 public:
 
@@ -75,14 +78,16 @@ public:
   void handleEvents(const int timeout);
   
   zmq::context_t& getContext()const {return m_context;}
+
 private:
-    /**
+
+  /**
    * Allocates and builds the array of file descriptors to be passed to poll().
    *
    * @return The array of file descriptors.  Please note that is the
    * responsibility of the caller to delete the array.
    */
-  std::vector<zmq::pollitem_t> buildPollFds() const ;
+  std::vector<zmq::pollitem_t> buildPollFds() const;
   
   /**
    * Returns the event handler associated with the specified integer
@@ -120,10 +125,9 @@ private:
    * Object representing the API of the CASTOR logging system.
    */
   log::Logger& m_log;
+
 }; // class ZMQReactor
 
-
-} // namespace io
+} // namespace reactor
+} // namespace tape
 } // namespace castor
-
-

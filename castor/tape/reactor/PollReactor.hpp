@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/io/DummyPollReactor.hpp
+ *         castor/tape/reactor/PollReactor.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,27 +22,36 @@
 
 #pragma once
 
-#include "castor/io/PollReactor.hpp"
+#include "castor/tape/reactor/PollEventHandler.hpp"
 
 namespace castor {
-namespace io {
+namespace tape {
+namespace reactor {
 
 /**
- * A dummy poll() reactor.
+ * This reactor wraps the poll() system call.
  *
- * The main goal of this class is to facilitate the development of unit tests.
+ * This class is part of an implementation of the Reactor architecture pattern
+ * described in the following book:
+ *
+ *    Pattern-Oriented Software Architecture Volume 2
+ *    Patterns for Concurrent and Networked Objects
+ *    Authors: Schmidt, Stal, Rohnert and Buschmann
+ *    Publication date: 2000
+ *    ISBN 0-471-60695-2
  */
-class DummyPollReactor: public PollReactor {
+class PollReactor {
 public:
+
   /**
    * Destructor.
    */
-  ~DummyPollReactor() throw();
-  
+  virtual ~PollReactor() throw() = 0;
+
   /**
    * Removes and deletes all of the event handlers registered with the reactor.
    */
-  void clear() throw();
+  virtual void clear() throw() = 0;
 
   /**
    * Registers the specified handler.
@@ -50,29 +59,22 @@ public:
    * Please note that the reactor takes ownership of the handler and will
    * delete it as appropriate.
    *
-   * @param handler The handler to be registered.
+   * @param handler The handler to be registered.  Please note that the handler
+   * MUST be allocated on the heap because the reactor will own the handler
+   * and therefore delete it as needed.
    */
-  void registerHandler(PollEventHandler *const handler)
-    ;
-
-  /**
-   * Removes the specified handler from the reactor.  This method effectively
-   * does the opposite of registerHandler().
-   *
-   * @param handler The handler to be removed.
-   */
-  void removeHandler(PollEventHandler *const handler)
-    ;
+  virtual void registerHandler(PollEventHandler *const handler) = 0;
 
   /**
    * Handles any pending events.
    *
    * @param timeout Timeout in milliseconds.
    */
-  void handleEvents(const int timeout) ;
+  virtual void handleEvents(const int timeout) = 0;
 
-}; // class DummyPollReactor
+}; // class PollReactor
 
-} // namespace io
+} // namespace reactor
+} // namespace tape
 } // namespace castor
 

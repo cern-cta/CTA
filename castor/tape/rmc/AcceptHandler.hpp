@@ -22,9 +22,9 @@
 
 #pragma once
 
-#include "castor/io/PollEventHandler.hpp"
-#include "castor/io/ZMQReactor.hpp"
 #include "castor/log/Logger.hpp"
+#include "castor/tape/reactor/PollEventHandler.hpp"
+#include "castor/tape/reactor/ZMQReactor.hpp"
 
 #include <poll.h>
 
@@ -36,7 +36,7 @@ namespace rmc {
  * Handles the events of the socket listening for connections from clients of
  * the rmcd daemon.
  */
-class AcceptHandler: public io::ZMQPollEventHandler {
+class AcceptHandler: public reactor::ZMQPollEventHandler {
 public:
 
   /**
@@ -48,7 +48,7 @@ public:
    * registered.
    * @param log The object representing the API of the CASTOR logging system.
    */
-  AcceptHandler(const int fd, io::ZMQReactor &reactor, log::Logger &log) throw();
+  AcceptHandler(const int fd, reactor::ZMQReactor &reactor, log::Logger &log) throw();
 
   /**
    * Returns the integer file descriptor of this event handler.
@@ -94,7 +94,7 @@ private:
   /**
    * The reactor to which new connection handlers are to be registered.
    */
-  io::ZMQReactor &m_reactor;
+  reactor::ZMQReactor &m_reactor;
 
   /**
    * The object representing the API of the CASTOR logging system.

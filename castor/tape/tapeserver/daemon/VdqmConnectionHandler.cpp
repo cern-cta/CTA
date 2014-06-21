@@ -29,7 +29,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmConnectionHandler::VdqmConnectionHandler(
   const int fd,
-  io::ZMQReactor &reactor,
+  reactor::ZMQReactor &reactor,
   log::Logger &log,
   DriveCatalogue &driveCatalogue) throw():
     m_fd(fd),

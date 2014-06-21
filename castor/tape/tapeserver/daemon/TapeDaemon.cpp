@@ -69,7 +69,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   legacymsg::RmcProxyFactory &rmcFactory,
   legacymsg::TapeserverProxyFactory &tapeserverFactory,
   legacymsg::NsProxyFactory &nsFactory,
-  io::ZMQReactor &reactor,
+  reactor::ZMQReactor &reactor,
   CapabilityUtils &capUtils) throw(castor::exception::Exception):
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),

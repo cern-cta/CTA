@@ -49,7 +49,7 @@ castor::tape::rmc::RmcDaemon::RmcDaemon::RmcDaemon(
   std::ostream &stdOut,
   std::ostream &stdErr,
   log::Logger &log,
-  io::ZMQReactor &reactor,
+  reactor::ZMQReactor &reactor,
   legacymsg::CupvProxy &cupv) :
   castor::server::Daemon(stdOut, stdErr, log),
   m_reactor(reactor),

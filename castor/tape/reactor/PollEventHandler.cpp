@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/io/PollEventHandler.cpp
+ *         castor/tape/reactor/PollEventHandler.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,10 +20,10 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/io/PollEventHandler.hpp"
+#include "castor/tape/reactor/PollEventHandler.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::io::PollEventHandler::~PollEventHandler() throw() {
+castor::tape::reactor::PollEventHandler::~PollEventHandler() throw() {
 }

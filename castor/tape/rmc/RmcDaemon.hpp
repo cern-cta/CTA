@@ -26,8 +26,8 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/CupvProxy.hpp"
-#include "castor/io/ZMQReactor.hpp"
 #include "castor/server/Daemon.hpp"
+#include "castor/tape/reactor/ZMQReactor.hpp"
 
 #include <string>
 
@@ -56,7 +56,7 @@ public:
     std::ostream &stdOut,
     std::ostream &stdErr,
     log::Logger &log,
-    io::ZMQReactor &reactor,
+    reactor::ZMQReactor &reactor,
     legacymsg::CupvProxy &cupv) ;
 
   /**
@@ -190,7 +190,7 @@ protected:
    * The reactor responsible for dispatching the file-descriptor event-handlers
    * of the rmcd daemon.
    */
-  io::ZMQReactor &m_reactor;
+  reactor::ZMQReactor &m_reactor;
 
   /**
    * Proxy object representing the cupvd daemon.

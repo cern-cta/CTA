@@ -21,19 +21,19 @@
  *****************************************************************************/
 
 
-#include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
 #include "castor/messages/Header.pb.h"
-
+#include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
-#include "castor/tape/tapeserver/daemon/Constants.hpp"
-#include "zmq/zmqcastor.hpp"
 #include "h/Ctape.h"
+#include "zmq/zmqcastor.hpp"
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
-  io::ZMQReactor &reactor,
+  reactor::ZMQReactor &reactor,
   log::Logger &log):
     m_reactor(reactor),
     m_log(log),m_socket(reactor.getContext(),ZMQ_REP){ 

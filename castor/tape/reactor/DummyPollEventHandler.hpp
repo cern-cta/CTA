@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/io/DummyPollEventHandler.hpp
+ *         castor/tape/reactor/DummyPollEventHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,10 +22,11 @@
 
 #pragma once
 
-#include "castor/io/PollEventHandler.hpp"
+#include "castor/tape/reactor/PollEventHandler.hpp"
 
 namespace castor {
-namespace io {
+namespace tape {
+namespace reactor {
 
 /**
  * This is a dummy poll() event-handler that is intended to be used to write
@@ -79,6 +80,7 @@ private:
 
 }; // class DummyPollEventHandler
 
-} // namespace io
+} // namespace reactor
+} // namespace tape
 } // namespace castor
 

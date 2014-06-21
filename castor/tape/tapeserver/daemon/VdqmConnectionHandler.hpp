@@ -23,15 +23,15 @@
 #pragma once
 
 #include "castor/io/io.hpp"
-#include "castor/io/PollEventHandler.hpp"
-#include "castor/io/ZMQReactor.hpp"
 #include "castor/log/Logger.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/legacymsg/CommonMarshal.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/legacymsg/RtcpMarshal.hpp"
 #include "castor/legacymsg/VdqmProxyFactory.hpp"
 #include "castor/legacymsg/VdqmMarshal.hpp"
+#include "castor/tape/reactor/PollEventHandler.hpp"
+#include "castor/tape/reactor/ZMQReactor.hpp"
+#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "h/vdqm_constants.h"
 #include "h/rtcp_constants.h"
 
@@ -45,7 +45,7 @@ namespace daemon     {
 /**
  * Handles the events of a connection with the vdqmd daemon.
  */
-class VdqmConnectionHandler: public io::ZMQPollEventHandler {
+class VdqmConnectionHandler: public reactor::ZMQPollEventHandler {
 public:
 
   /**
@@ -60,7 +60,7 @@ public:
    */
   VdqmConnectionHandler(
     const int fd,
-    io::ZMQReactor &reactor,
+    reactor::ZMQReactor &reactor,
     log::Logger &log,
     DriveCatalogue &driveCatalogue) throw();
 
@@ -99,7 +99,7 @@ private:
   /**
    * The reactor with which this event handler is registered.
    */
-  io::ZMQReactor &m_reactor;
+  reactor::ZMQReactor &m_reactor;
 
   /**
    * The object representing the API of the CASTOR logging system.

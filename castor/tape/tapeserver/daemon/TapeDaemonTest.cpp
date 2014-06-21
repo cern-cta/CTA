@@ -22,12 +22,12 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/io/DummyPollReactor.hpp"
 #include "castor/legacymsg/RmcProxyDummyFactory.hpp"
 #include "castor/legacymsg/TapeserverProxyDummyFactory.hpp"
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/log/DummyLogger.hpp"
+#include "castor/tape/reactor/DummyPollReactor.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtilsDummy.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/utils/utils.hpp"
@@ -78,7 +78,7 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::legacymsg::TapeserverProxyDummyFactory tpsFactory;
   castor::legacymsg::NsProxyDummyFactory nsFactory;
   zmq::context_t ctx;
-  castor::io::ZMQReactor reactor(log,ctx);
+  castor::tape::reactor::ZMQReactor reactor(log,ctx);
   CapabilityUtilsDummy capUtils;
   std::auto_ptr<TapeDaemon> daemon;
   ASSERT_NO_THROW(daemon.reset(new TapeDaemon(argc, argv, stdOut, stdErr, log,

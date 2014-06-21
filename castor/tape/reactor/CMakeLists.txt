@@ -1,5 +1,5 @@
 #
-#                      castor/tape/CMakeLists.txt
+#         castor/tape/reactor/CMakeLists.txt
 #
 # This file is part of the Castor project.
 # See http://castor.web.cern.ch/castor
@@ -22,12 +22,13 @@
 #
 cmake_minimum_required (VERSION 2.6)
 
-add_subdirectory (gatewayprotocol)
-add_subdirectory (label)
-add_subdirectory (reactor)
-add_subdirectory (rmc)
-add_subdirectory (tapebridge)
-add_subdirectory (tapegateway)
-add_subdirectory (tapeserver)
-add_subdirectory (tpcp)
-add_subdirectory (utils)
+################################################################################
+# Rules to build the reactor code that is common to both rmcd and tapeserverd
+################################################################################
+set (REACTOR_SRC_FILES
+  PollEventHandler.cpp
+  PollReactor.cpp
+  PollReactorImpl.cpp
+  ZMQReactor.cpp)
+add_library (castortapereactor ${REACTOR_SRC_FILES})
+target_link_libraries (castortapereactor zmq)

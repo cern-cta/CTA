@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/io/PollReactorImplTest.cpp
+ *         castor/tape/reactor/PollReactorImplTest.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,15 +22,15 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/io/DummyPollEventHandler.hpp"
-#include "castor/io/PollReactorImpl.hpp"
+#include "castor/tape/reactor/DummyPollEventHandler.hpp"
+#include "castor/tape/reactor/PollReactorImpl.hpp"
 #include "castor/log/DummyLogger.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-class castor_io_PollReactorImplTest : public ::testing::Test {
+class castor_tape_reactor_PollReactorImplTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -40,23 +40,25 @@ protected:
   }
 };
 
-TEST_F(castor_io_PollReactorImplTest, goodDayRegisterAndLeave) {
+TEST_F(castor_tape_reactor_PollReactorImplTest, goodDayRegisterAndLeave) {
   castor::log::DummyLogger log("unittests");
-  castor::io::PollReactorImpl reactor(log);
-  reactor.registerHandler(new castor::io::DummyPollEventHandler(1234, false));
+  castor::tape::reactor::PollReactorImpl reactor(log);
+  reactor.registerHandler(
+    new castor::tape::reactor::DummyPollEventHandler(1234, false));
 }
 
-TEST_F(castor_io_PollReactorImplTest, goodDayRegisterAndRemove) {
+TEST_F(castor_tape_reactor_PollReactorImplTest, goodDayRegisterAndRemove) {
   castor::log::DummyLogger log("unittests");
-  castor::io::PollReactorImpl reactor(log);
-  reactor.registerHandler(new castor::io::DummyPollEventHandler(1234, true));
+  castor::tape::reactor::PollReactorImpl reactor(log);
+  reactor.registerHandler(
+    new castor::tape::reactor::DummyPollEventHandler(1234, true));
 }
 
-TEST_F(castor_io_PollReactorImplTest, registerTwiceTheSameHandler) {
+TEST_F(castor_tape_reactor_PollReactorImplTest, registerTwiceTheSameHandler) {
   castor::log::DummyLogger log("unittests");
-  castor::io::PollReactorImpl reactor(log);
-  castor::io::DummyPollEventHandler *handler =
-    new castor::io::DummyPollEventHandler(1234,false);
+  castor::tape::reactor::PollReactorImpl reactor(log);
+  castor::tape::reactor::DummyPollEventHandler *handler =
+    new castor::tape::reactor::DummyPollEventHandler(1234,false);
   reactor.registerHandler(handler);
   ASSERT_THROW(reactor.registerHandler(handler), castor::exception::Exception);
 }

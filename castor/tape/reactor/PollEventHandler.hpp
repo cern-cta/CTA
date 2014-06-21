@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/io/PollEventHandler.hpp
+ *         castor/tape/reactor/PollEventHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -27,7 +27,8 @@
 #include <poll.h>
 
 namespace castor {
-namespace io {
+namespace tape {
+namespace reactor {
 
 /**
  * Handles the events that occur on a poll() file descriptor.
@@ -62,8 +63,7 @@ public:
    * @return true if the event handler should be removed from and deleted by
    * the reactor.
    */
-  virtual bool handleEvent(const struct pollfd &fd)
-     = 0;
+  virtual bool handleEvent(const struct pollfd &fd) = 0;
 
   /**
    * Destructor.
@@ -72,6 +72,6 @@ public:
 
 }; // class PollEventHandler
 
-} // namespace io
+} // namespace reactor
+} // namespace tape
 } // namespace castor
-

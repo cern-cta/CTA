@@ -83,8 +83,6 @@ endif (LIBCAP_LIB)
 
 # Create a shared librbary for the dummies supporting the tests
 add_library(TestDummies
-  ../castor/io/DummyPollEventHandler.cpp
-  ../castor/io/DummyPollReactor.cpp
   ../castor/legacymsg/CupvProxyDummy.cpp
   ../castor/legacymsg/RmcProxyDummy.cpp
   ../castor/legacymsg/RmcProxyDummyFactory.cpp
@@ -95,6 +93,8 @@ add_library(TestDummies
   ../castor/legacymsg/TapeserverProxyDummy.cpp
   ../castor/legacymsg/TapeserverProxyDummyFactory.cpp
   ../castor/log/DummyLogger.cpp
+  ../castor/tape/reactor/DummyPollEventHandler.cpp
+  ../castor/tape/reactor/DummyPollReactor.cpp
 )
 
 # Those tests are single threaded, functionnal and error tests. They could
@@ -106,7 +106,6 @@ add_executable(castorUnitTests
   castorUnitTests.cpp
   ../castor/exception/ExceptionTest.cpp
   ../castor/io/IoTest.cpp
-  ../castor/io/PollReactorImplTest.cpp
   ../castor/legacymsg/CommonMarshalTest.cpp
   ../castor/legacymsg/CupvMarshalTest.cpp
   ../castor/legacymsg/CupvProxyDummy.cpp
@@ -138,6 +137,7 @@ add_executable(castorUnitTests
   ../castor/log/StringLoggerTest.cpp
   ../castor/log/SyslogLoggerTest.cpp
   ../castor/server/DaemonTest.cpp
+  ../castor/tape/reactor/PollReactorImplTest.cpp
   ../castor/tape/tapeserver/client/ClientProxyTest.cpp
   ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
   ../castor/tape/tapeserver/daemon/CapabilityUtilsDummy.cpp

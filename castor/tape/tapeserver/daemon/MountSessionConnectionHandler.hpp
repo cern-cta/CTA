@@ -22,14 +22,14 @@
 
 #pragma once
 
-#include "castor/io/PollEventHandler.hpp"
-#include "castor/io/ZMQReactor.hpp"
 #include "castor/log/Logger.hpp"
-#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/legacymsg/MessageHeader.hpp"
 #include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 #include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/legacymsg/VmgrProxy.hpp"
+#include "castor/tape/reactor/PollEventHandler.hpp"
+#include "castor/tape/reactor/ZMQReactor.hpp"
+#include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -39,7 +39,7 @@ namespace daemon     {
 /**
  * Handles the events of the socket listening for connection from the mount session
  */
-class MountSessionConnectionHandler: public io::ZMQPollEventHandler {
+class MountSessionConnectionHandler: public reactor::ZMQPollEventHandler {
 public:
 
   /**
@@ -55,7 +55,7 @@ public:
    */
   MountSessionConnectionHandler(
     const int fd,
-    io::ZMQReactor &reactor,
+    reactor::ZMQReactor &reactor,
     log::Logger &log,
     DriveCatalogue &driveCatalogue,
     const std::string &hostName,
@@ -207,7 +207,7 @@ private:
   /**
    * The reactor to which new Vdqm connection handlers are to be registered.
    */
-  io::ZMQReactor &m_reactor;
+  reactor::ZMQReactor &m_reactor;
 
   /**
    * The object representing the API of the CASTOR logging system.

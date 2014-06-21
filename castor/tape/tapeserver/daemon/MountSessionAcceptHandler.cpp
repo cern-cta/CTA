@@ -50,7 +50,7 @@
 // constructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::MountSessionAcceptHandler::MountSessionAcceptHandler(
-  const int fd, io::ZMQReactor &reactor, log::Logger &log,
+  const int fd, reactor::ZMQReactor &reactor, log::Logger &log,
   DriveCatalogue &driveCatalogue, const std::string &hostName,
   castor::legacymsg::VdqmProxy & vdqm,
   castor::legacymsg::VmgrProxy & vmgr) throw():

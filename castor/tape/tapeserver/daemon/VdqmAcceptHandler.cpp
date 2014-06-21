@@ -36,7 +36,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::VdqmAcceptHandler::VdqmAcceptHandler(
   const int fd,
-  io::ZMQReactor &reactor,
+  reactor::ZMQReactor &reactor,
   log::Logger &log,
   DriveCatalogue &driveCatalogue)
   throw():

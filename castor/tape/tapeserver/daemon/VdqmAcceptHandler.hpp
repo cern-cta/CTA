@@ -22,12 +22,10 @@
 
 #pragma once
 
-#include "castor/io/PollEventHandler.hpp"
-#include "castor/io/ZMQReactor.hpp"
 #include "castor/log/Logger.hpp"
+#include "castor/tape/reactor/PollEventHandler.hpp"
+#include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
-
-#include <poll.h>
 
 namespace castor     {
 namespace tape       {
@@ -38,7 +36,7 @@ namespace daemon     {
  * Handles the events of the socket listening for connection from the vdqmd
  * daemon.
  */
-class VdqmAcceptHandler: public io::ZMQPollEventHandler {
+class VdqmAcceptHandler: public reactor::ZMQPollEventHandler {
 public:
 
   /**
@@ -52,7 +50,8 @@ public:
    * @param driveCatalogue The catalogue of tape drives controlled by the tape
    * server daemon.
    */
-  VdqmAcceptHandler(const int fd, io::ZMQReactor &reactor, log::Logger &log, DriveCatalogue &driveCatalogue) throw();
+  VdqmAcceptHandler(const int fd, reactor::ZMQReactor &reactor,
+    log::Logger &log, DriveCatalogue &driveCatalogue) throw();
 
   /**
    * Returns the integer file descriptor of this event handler.
@@ -104,7 +103,7 @@ private:
   /**
    * The reactor to which new Vdqm connection handlers are to be registered.
    */
-  io::ZMQReactor &m_reactor;
+  reactor::ZMQReactor &m_reactor;
 
   /**
    * The object representing the API of the CASTOR logging system.

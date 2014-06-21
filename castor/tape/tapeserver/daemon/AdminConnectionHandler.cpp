@@ -47,7 +47,7 @@
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::AdminConnectionHandler::AdminConnectionHandler(
   const int fd,
-  io::ZMQReactor &reactor,
+  reactor::ZMQReactor &reactor,
   log::Logger &log,
   legacymsg::VdqmProxy &vdqm,
   DriveCatalogue &driveCatalogue,

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/tape/tapeserver/daemon/PollReactor.hpp
+ *         castor/tape/reactor/PollEventHandler.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,13 +22,15 @@
 
 #pragma once
 
-#include "castor/io/PollEventHandler.hpp"
+#include "castor/exception/Exception.hpp"
+#include "zmq/zmqcastor.hpp"
 
 namespace castor {
-namespace io {
+namespace tape {
+namespace reactor {
 
 /**
- * This reactor wraps the poll() system call.
+ * Handles the events that occur on a poll() file descriptor.
  *
  * This class is part of an implementation of the Reactor architecture pattern
  * described in the following book:
@@ -39,42 +41,26 @@ namespace io {
  *    Publication date: 2000
  *    ISBN 0-471-60695-2
  */
-class PollReactor {
+class ZMQPollEventHandler {
 public:
 
   /**
-   * Destructor.
+   * Fills the specified poll file-descriptor ready to be used in a call to
+   * poll().
    */
-  virtual ~PollReactor() throw() = 0;
+   virtual void fillPollFd(zmq::pollitem_t &pollitem) =0;
 
   /**
-   * Removes and deletes all of the event handlers registered with the reactor.
-   */
-  virtual void clear() throw() = 0;
-
-  /**
-   * Registers the specified handler.
+   * Handles the specified event.
    *
-   * Please note that the reactor takes ownership of the handler and will
-   * delete it as appropriate.
-   *
-   * @param handler The handler to be registered.  Please note that the handler
-   * MUST be allocated on the heap because the reactor will own the handler
-   * and therefore delete it as needed.
+   * @param fd The poll file-descriptor describing the event.
+   * @return true if the event handler should be removed from and deleted by
+   * the reactor.
    */
-  virtual void registerHandler(PollEventHandler *const handler)
-     = 0;
+  virtual bool handleEvent(const zmq::pollitem_t &fd)=0;
+}; // class ZMQPollEventHandler
 
-  /**
-   * Handles any pending events.
-   *
-   * @param timeout Timeout in milliseconds.
-   */
-  virtual void handleEvents(const int timeout)
-     = 0;
-
-}; // class PollReactor
-
-} // namespace io
+} // namespace reactor
+} // namespace tape
 } // namespace castor
 

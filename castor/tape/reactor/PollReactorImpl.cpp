@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/io/PollReactor.cpp
+ *         castor/tape/PollReactorImpl.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,29 +21,30 @@
  *****************************************************************************/
 
 #include "castor/exception/BadAlloc.hpp"
-#include "castor/io/PollReactorImpl.hpp"
+#include "castor/tape/reactor/PollReactorImpl.hpp"
 #include "castor/utils/SmartArrayPtr.hpp"
 
 #include <unistd.h>
 #include <poll.h>
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::io::PollReactorImpl::PollReactorImpl(log::Logger &log) throw():
-  m_log(log) {
+castor::tape::reactor::PollReactorImpl::PollReactorImpl(log::Logger &log)
+  throw(): m_log(log) {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::io::PollReactorImpl::~PollReactorImpl() throw() {
+castor::tape::reactor::PollReactorImpl::~PollReactorImpl() throw() {
   clear();
 }
 
 //------------------------------------------------------------------------------
 // clear
 //------------------------------------------------------------------------------
-void castor::io::PollReactorImpl::clear() throw() {
+void castor::tape::reactor::PollReactorImpl::clear() throw() {
   // Delete all event handlers
   for(HandlerMap::const_iterator itor = m_handlers.begin();
     itor !=  m_handlers.end(); itor++) {
@@ -57,7 +58,7 @@ void castor::io::PollReactorImpl::clear() throw() {
 //------------------------------------------------------------------------------
 // registerHandler
 //------------------------------------------------------------------------------
-void castor::io::PollReactorImpl::registerHandler(
+void castor::tape::reactor::PollReactorImpl::registerHandler(
   PollEventHandler *const handler)  {
   std::pair<HandlerMap::iterator, bool> insertResult =
     m_handlers.insert(HandlerMap::value_type(handler->getFd(), handler));
@@ -73,7 +74,7 @@ void castor::io::PollReactorImpl::registerHandler(
 //------------------------------------------------------------------------------
 // removeHandler
 //------------------------------------------------------------------------------
-void castor::io::PollReactorImpl::removeHandler(
+void castor::tape::reactor::PollReactorImpl::removeHandler(
   PollEventHandler *const handler)  {
   const HandlerMap::size_type nbElements = m_handlers.erase(handler->getFd());
   if(0 == nbElements) {
@@ -87,8 +88,7 @@ void castor::io::PollReactorImpl::removeHandler(
 //------------------------------------------------------------------------------
 // handleEvents
 //------------------------------------------------------------------------------
-void castor::io::PollReactorImpl::handleEvents(const int timeout)
-   {
+void castor::tape::reactor::PollReactorImpl::handleEvents(const int timeout) {
   nfds_t nfds = 0;
   castor::utils::SmartArrayPtr<struct pollfd> fds(buildPollFds(nfds));
 
@@ -116,8 +116,8 @@ void castor::io::PollReactorImpl::handleEvents(const int timeout)
 //------------------------------------------------------------------------------
 // buildPollFdsArray
 //------------------------------------------------------------------------------
-struct pollfd *castor::io::PollReactorImpl::buildPollFds(nfds_t &nfds)
-   {
+struct pollfd *castor::tape::reactor::PollReactorImpl::buildPollFds(
+  nfds_t &nfds) {
   nfds = m_handlers.size();
 
   castor::utils::SmartArrayPtr<struct pollfd> fds;
@@ -143,9 +143,8 @@ struct pollfd *castor::io::PollReactorImpl::buildPollFds(nfds_t &nfds)
 //------------------------------------------------------------------------------
 // dispatchEventHandlers
 //------------------------------------------------------------------------------
-void castor::io::PollReactorImpl::dispatchEventHandlers(
-  const struct pollfd *const fds, const nfds_t nfds)
-   {
+void castor::tape::reactor::PollReactorImpl::dispatchEventHandlers(
+  const struct pollfd *const fds, const nfds_t nfds) {
   // For each poll() file descriptor
   for(nfds_t i=0; i<nfds; i++) {
     // Find and dispatch the appropriate handler if there is a pending event
@@ -163,8 +162,8 @@ void castor::io::PollReactorImpl::dispatchEventHandlers(
 //------------------------------------------------------------------------------
 // findHandler
 //------------------------------------------------------------------------------
-castor::io::PollEventHandler *castor::io::PollReactorImpl::findHandler(
-  const int fd)  {
+castor::tape::reactor::PollEventHandler
+  *castor::tape::reactor::PollReactorImpl::findHandler(const int fd)  {
   HandlerMap::iterator itor = m_handlers.find(fd);
   if(itor == m_handlers.end()) {
     castor::exception::Exception ex;

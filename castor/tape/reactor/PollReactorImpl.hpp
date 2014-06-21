@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/io/PollReactorImpl.hpp
+ *         castor/tape/reactor/PollReactorImpl.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,14 +22,15 @@
 
 #pragma once
 
-#include "castor/io/PollReactor.hpp"
 #include "castor/log/Logger.hpp"
+#include "castor/tape/reactor/PollReactor.hpp"
 
 #include <map>
 #include <poll.h>
 
 namespace castor {
-namespace io {
+namespace tape {
+namespace reactor {
 
 /**
  * Concrete implementation of the a reactor that wraps the poll() system call.
@@ -72,15 +73,14 @@ public:
    * MUST be allocated on the heap because the reactor will own the handler
    * and therefore delete it as needed.
    */
-  void registerHandler(PollEventHandler *const handler)
-    ;
+  void registerHandler(PollEventHandler *const handler);
 
   /**
    * Handles any pending events.
    *
    * @param timeout Timeout in milliseconds.
    */
-  void handleEvents(const int timeout) ;
+  void handleEvents(const int timeout);
 
 private:
 
@@ -106,21 +106,20 @@ private:
    * @return The array of file descriptors.  Please note that is the
    * responsibility of the caller to delete the array.
    */
-  struct pollfd *buildPollFds(nfds_t &nfds) ;
+  struct pollfd *buildPollFds(nfds_t &nfds);
 
   /**
    * Dispatches the appropriate event handlers based on the specified result
    * from poll().
    */
-  void dispatchEventHandlers(const struct pollfd *const fds, const nfds_t nfds)
-    ;
+  void dispatchEventHandlers(const struct pollfd *const fds,
+    const nfds_t nfds);
 
   /**
    * Returns the event handler associated with the specified integer
    * file-descriptor.
    */
-  PollEventHandler *findHandler(const int fd)
-    ;
+  PollEventHandler *findHandler(const int fd);
 
   /**
    * Removes the specified handler from the reactor.  This method effectively
@@ -128,11 +127,10 @@ private:
    *
    * @param handler The handler to be removed.
    */
-  void removeHandler(PollEventHandler *const handler)
-    ;
+  void removeHandler(PollEventHandler *const handler);
 
 }; // class PollReactorImpl
 
-} // namespace io
+} // namespace reactor
+} // namespace tape
 } // namespace castor
-

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/io/PollReactor.cpp
+ *         castor/tape/reactor/PollReactor.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,10 +20,10 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/io/PollReactor.hpp"
+#include "castor/tape/reactor/PollReactor.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::io::PollReactor::~PollReactor() throw() {
+castor::tape::reactor::PollReactor::~PollReactor() throw() {
 }

@@ -34,9 +34,9 @@
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::rmc::AcceptHandler::AcceptHandler(
-  const int fd, io::ZMQReactor &reactor, log::Logger &log)
-  throw(): m_fd(fd), m_reactor(reactor), m_log(log) {
+castor::tape::rmc::AcceptHandler::AcceptHandler(const int fd,
+  reactor::ZMQReactor &reactor, log::Logger &log) throw(): m_fd(fd),
+  m_reactor(reactor), m_log(log) {
 }
 
 //------------------------------------------------------------------------------

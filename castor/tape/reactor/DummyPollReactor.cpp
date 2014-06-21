@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/io/DummyPollEventHandler.cpp
+ *         castor/tape/reactor/DummyPollReactor.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,41 +20,37 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/io/DummyPollEventHandler.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-castor::io::DummyPollEventHandler::DummyPollEventHandler(const int fd, const bool returnVal) throw():
-  m_fd(fd), m_returnVal(returnVal) {
-}
+#include "castor/tape/reactor/DummyPollReactor.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::io::DummyPollEventHandler::~DummyPollEventHandler() throw() {
+castor::tape::reactor::DummyPollReactor::~DummyPollReactor() throw() {
+  clear();
 }
 
 //------------------------------------------------------------------------------
-// getFd
+// clear
 //------------------------------------------------------------------------------
-int castor::io::DummyPollEventHandler::getFd() throw() {
-  return m_fd;
+void castor::tape::reactor::DummyPollReactor::clear() throw() {
 }
 
 //------------------------------------------------------------------------------
-// fillPollFd
+// registerHandler
 //------------------------------------------------------------------------------
-void castor::io::DummyPollEventHandler::fillPollFd(struct pollfd &fd) throw() {
-  fd.fd = 0;
-  fd.events = 0;
-  fd.revents = 0;
+void castor::tape::reactor::DummyPollReactor::registerHandler(
+  PollEventHandler *const handler)  {
 }
 
 //------------------------------------------------------------------------------
-// handleEvent
+// removeHandler
 //------------------------------------------------------------------------------
-bool castor::io::DummyPollEventHandler::handleEvent(const struct pollfd &fd)
-   {
-  return m_returnVal;
+void castor::tape::reactor::DummyPollReactor::removeHandler(
+  PollEventHandler *const handler)  {
+}
+
+//------------------------------------------------------------------------------
+// handleEvents
+//------------------------------------------------------------------------------
+void castor::tape::reactor::DummyPollReactor::handleEvents(const int timeout) {
 }
