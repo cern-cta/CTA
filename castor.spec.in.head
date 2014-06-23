@@ -43,9 +43,6 @@ BuildRequires: cmake >= 2.6 redhat-rpm-config
 %else
   %define debug_package %{nil}
 %endif
-%if %compile_server
-BuildRequires: oracle-instantclient-devel
-%endif
 
 %if %compile_server
 %if 0%{?rhel} >= 6
