@@ -44,12 +44,6 @@ BuildRequires: cmake >= 2.6 redhat-rpm-config
   %define debug_package %{nil}
 %endif
 
-%if %compile_server
-%if 0%{?rhel} >= 6
-BuildRequires: ceph-devel
-%endif
-%endif
-
 %description
 The CASTOR Project stands for CERN Advanced STORage Manager, and its goal is to handle LHC data in a fully distributed environment.
 
