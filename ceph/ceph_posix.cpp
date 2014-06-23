@@ -147,34 +147,78 @@ ssize_t ceph_read(CephFileRef &fr, char *buf, size_t count) {
 }
 
 int ceph_fstat(CephFileRef &fr, struct stat *buf) {
-  // minimal stat for rfio usage : return only size
+  // minimal stat : only size and times are filled
   libradosstriper::RadosStriper *striper = getRadosStriper(fr.pool);
   if (0 == striper) {
     errno = EINVAL;
     return -1;
   }
-  time_t pmtime;
-  int rc = striper->stat(fr.name, (uint64_t*)&(buf->st_size), &pmtime);
+  memset(buf, 0, sizeof(*buf));
+  int rc = striper->stat(fr.name, (uint64_t*)&(buf->st_size), &(buf->st_atime));
   if (rc != 0) {
     errno = -rc;
     return -1;
   }
+  buf->st_mtime = buf->st_atime;
+  buf->st_ctime = buf->st_atime;  
+  return 0;
+}
+
+int ceph_stat(const char *pathname, struct stat *buf) {
+  // minimal stat : only size and times are filled
+  std::string path = pathname;
+  int slashPos = path.find('/');
+  libradosstriper::RadosStriper *striper = getRadosStriper(path.substr(0,slashPos));
+  if (0 == striper) {
+    errno = EINVAL;
+    return -1;
+  }
+  memset(buf, 0, sizeof(*buf));
+  int rc = striper->stat(path.substr(slashPos+1), (uint64_t*)&(buf->st_size), &(buf->st_atime));
+  if (rc != 0) {
+    errno = -rc;
+    return -1;
+  }
+  buf->st_mtime = buf->st_atime;
+  buf->st_ctime = buf->st_atime;  
   return 0;
 }
 
 int ceph_fstat64(CephFileRef &fr, struct stat64 *buf) {
-  // minimal stat for rfio usage : return only size
+  // minimal stat : only size and times are filled
   libradosstriper::RadosStriper *striper = getRadosStriper(fr.pool);
   if (0 == striper) {
     errno = EINVAL;
     return -1;
   }
-  time_t pmtime;
-  int rc = striper->stat(fr.name, (uint64_t*)&(buf->st_size), &pmtime);
+  memset(buf, 0, sizeof(*buf));
+  int rc = striper->stat(fr.name, (uint64_t*)&(buf->st_size), &(buf->st_atime));
   if (rc != 0) {
     errno = -rc;
     return -1;
   }
+  buf->st_mtime = buf->st_atime;
+  buf->st_ctime = buf->st_atime;  
+  return 0;
+}
+
+int ceph_stat64(const char *pathname, struct stat64 *buf) {
+  // minimal stat : only size and times are filled
+  std::string path = pathname;
+  int slashPos = path.find('/');
+  libradosstriper::RadosStriper *striper = getRadosStriper(path.substr(0,slashPos));
+  if (0 == striper) {
+    errno = EINVAL;
+    return -1;
+  }
+  memset(buf, 0, sizeof(*buf));
+  int rc = striper->stat(path.substr(slashPos+1), (uint64_t*)&(buf->st_size), &(buf->st_atime));
+  if (rc != 0) {
+    errno = -rc;
+    return -1;
+  }
+  buf->st_mtime = buf->st_atime;
+  buf->st_ctime = buf->st_atime;  
   return 0;
 }
 
@@ -365,6 +409,16 @@ extern "C" {
     }
   }
 
+  int ceph_posix_stat(const char *pathname, struct stat *buf) {
+    if (pathname[0] != '/') {
+      logwrapper((char*)"ceph_stat: %s\n", pathname);
+      return ceph_stat(pathname, buf);
+    } else {
+      logwrapper((char*)"local_stat: %s\n", pathname);
+      return stat(pathname, buf);
+    }
+  }
+
   int ceph_posix_fstat64(int fd, struct stat64 *buf) {
     std::map<unsigned int, FileRef>::iterator it = g_fds.find(fd);
     if (it != g_fds.end()) {
@@ -379,6 +433,16 @@ extern "C" {
     } else {
       errno = EBADF;
       return -1;
+    }
+  }
+
+  int ceph_posix_stat64(const char *pathname, struct stat64 *buf) {
+    if (pathname[0] != '/') {
+      logwrapper((char*)"ceph_stat: %s\n", pathname);
+      return ceph_stat64(pathname, buf);
+    } else {
+      logwrapper((char*)"local_stat: %s\n", pathname);
+      return stat64(pathname, buf);
     }
   }
 
