@@ -2,7 +2,6 @@ Source: castor
 Section: science
 Priority: optional
 Maintainer: CERN CASTOR Team <castor.support@cern.ch>
-Build-Depends: cmake >= 2.6
 
 Package: castor-config
 Architecture: any
@@ -178,7 +177,7 @@ Description: castor (Cern Advanced STORage system)
 Package: castor-unit-test
 Architecture: any
 Depends: castor-lib = %{version}-%{release}
-Build-Depends: gtest >= 1.5.0, gmock >= 1.5.0, gtest-devel >= 1.5.0, gmock-devel  >= 1.5.0, valgrind >= 3.5.0
+Build-Depends: cmake >= 2.6, gtest >= 1.5.0, gmock >= 1.5.0, gtest-devel >= 1.5.0, gmock-devel  >= 1.5.0, valgrind >= 3.5.0
 Description: castor (Cern Advanced STORage system)
  Unit tests for castor development.
 
