@@ -36,6 +36,7 @@ URL: http://cern.ch/castor
 License: http://cern.ch/castor/DIST/CONDITIONS
 Group: Application/Castor
 BuildRoot: %{_builddir}/%{name}-%{version}-root
+BuildRequires: redhat-rpm-config
 # only build debug info if you're building the whole code
 
 %if %compile_server

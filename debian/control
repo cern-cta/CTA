@@ -2,7 +2,7 @@ Source: castor
 Section: science
 Priority: optional
 Maintainer: CERN CASTOR Team <castor.support@cern.ch>
-Build-Depends: cmake >= 2.6 redhat-rpm-config
+Build-Depends: cmake >= 2.6
 
 Package: castor-config
 Architecture: any
