@@ -92,4 +92,4 @@ cd build
 %endif
 %endif
 
-# The following will be filled dynamically with the rule: makespec.in.sh
+# The following will be filled dynamically with the rule: makespec.py
