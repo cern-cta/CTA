@@ -17,7 +17,8 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-gc-server
 Architecture: any
-Depends: logrotate, castor-lib = %{version}-%{release}
+Depends: logrotate, castor-lib = %{version}-%{release}, ceph
+Build-Depends: ceph-devel
 Description: castor (Cern Advanced STORage system)
  Garbage collector, running on every worker node
 
@@ -110,8 +111,8 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-rfio-server
 Architecture: any
-Depends: logrotate, castor-lib = %{version}-%{release}
-Build-Depends: xfsprogs-devel, libattr-devel, zlib-devel
+Depends: logrotate, castor-lib = %{version}-%{release}, ceph
+Build-Depends: ceph-devel, xfsprogs-devel, libattr-devel, zlib-devel
 Description: castor (Cern Advanced STORage system)
  RFIO server
 
