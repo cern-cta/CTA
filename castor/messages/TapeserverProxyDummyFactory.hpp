@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castorZmqUtils.hpp
+ *         castor/messages/TapeserverProxyDummyFactory.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,34 +17,40 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * 
- *
- * @author Castor Dev team, castor-dev@cern.ch
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
-#include "zmq/castorZmqWrapper.hpp"
-#include "castor/messages/Header.pb.h"
-#include "castor/messages/Constants.hpp"
-#include "castor/tape/tapeserver/daemon/Constants.hpp"
-#include "h/Ctape.h"
-#include "castor/exception/Exception.hpp"
-#pragma once 
+
+#pragma once
+
+#include "castor/messages/TapeserverProxyFactory.hpp"
 
 namespace castor {
-  namespace utils {
-    
-template <class T> void sendMessage(zmq::socket_t& socket,const T& msg,int flag=0) {
+namespace messages {
 
-  if(!msg.IsInitialized()){
-    castor::exception::Exception ex("the protocol buffer message was not correctly set");
-    throw ex;
-  }
+/**
+ * Concrete factory for creating objects of type TapeserverProxyDummy.
+ */
+class TapeserverProxyDummyFactory: public TapeserverProxyFactory {
+public:
 
-  const int size=msg.ByteSize();
-  zmq::message_t blob(size);
-  msg.SerializeToArray(blob.data(),size);
-  socket.send(blob,flag);
-}
+  /**
+   * Destructor.
+   */
+  ~TapeserverProxyDummyFactory() throw();
 
-void connectToLocalhost(zmq::socket_t& m_socket);
-castor::messages::Header preFilleHeader();
-}}
+  /**
+   * Creates an object of type TapeserverProxyDummy on the heap and returns a pointer
+   * to it.
+   *
+   * Please note that it is the responsibility of the caller to deallocate the
+   * proxy object from the heap.
+   *
+   * @return A pointer to the newly created object.
+   */
+  TapeserverProxy *create(zmq::context_t& ctx);
+
+}; // class TapeserverProxyDummyFactory
+
+} // namespace messages
+} // namespace castor
+

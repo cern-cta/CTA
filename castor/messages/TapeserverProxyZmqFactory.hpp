@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/TapeserverProxyTcpIpFactory.hpp
+ *         castor/messages/TapeserverProxyZmqFactory.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,15 +22,15 @@
 
 #pragma once
 
-#include "castor/legacymsg/TapeserverProxyFactory.hpp"
+#include "castor/messages/TapeserverProxyFactory.hpp"
 
 namespace castor {
-namespace legacymsg {
+namespace messages {
 
 /**
- * Concrete factory for creating objects of type TapeserverProxyTcpIp.
+ * Concrete factory for creating objects of type TapeserverProxyZmq.
  */
-class TapeserverProxyTcpIpFactory: public TapeserverProxyFactory {
+class TapeserverProxyZmqFactory: public TapeserverProxyFactory {
 public:
 
   /**
@@ -40,15 +40,15 @@ public:
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    */
-  TapeserverProxyTcpIpFactory(log::Logger &log, const unsigned short tapeserverPort, const int netTimeout) throw();
+  TapeserverProxyZmqFactory(log::Logger &log, const unsigned short tapeserverPort, const int netTimeout) throw();
 
   /**
    * Destructor.
    */
-  ~TapeserverProxyTcpIpFactory() throw();
+  ~TapeserverProxyZmqFactory() throw();
 
   /**
-   * Creates an object of type TapeserverProxyTcpIp on the heap and returns a pointer
+   * Creates an object of type TapeserverProxyZmq on the heap and returns a pointer
    * to it.
    *
    * Please note that it is the responsibility of the caller to deallocate the
@@ -76,8 +76,8 @@ private:
    */
   const int m_netTimeout;
 
-}; // class TapeserverProxyTcpIpFactory
+}; // class TapeserverProxyZmqFactory
 
-} // namespace legacymsg
+} // namespace messages
 } // namespace castor
 

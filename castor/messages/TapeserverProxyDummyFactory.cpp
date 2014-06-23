@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/TapeserverProxyFactory.cpp
+ *         castor/messages/TapeserverProxyDummyFactory.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,10 +20,18 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/TapeserverProxyFactory.hpp"
+#include "castor/messages/TapeserverProxyDummy.hpp"
+#include "castor/messages/TapeserverProxyDummyFactory.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxyFactory::~TapeserverProxyFactory() throw() {
+castor::messages::TapeserverProxyDummyFactory::~TapeserverProxyDummyFactory() throw() {
+}
+
+//------------------------------------------------------------------------------
+// create
+//------------------------------------------------------------------------------
+castor::messages::TapeserverProxy *castor::messages::TapeserverProxyDummyFactory::create(zmq::context_t& ctx) {
+  return new TapeserverProxyDummy();
 }

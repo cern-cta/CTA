@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/TapeserverProxyDummy.cpp
+ *         castor/messages/TapeserverProxyDummy.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,24 +20,24 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/TapeserverProxyDummy.hpp"
+#include "castor/messages/TapeserverProxyDummy.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxyDummy::TapeserverProxyDummy() throw() {
+castor::messages::TapeserverProxyDummy::TapeserverProxyDummy() throw() {
 }
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxyDummy::~TapeserverProxyDummy() throw() {
+castor::messages::TapeserverProxyDummy::~TapeserverProxyDummy() throw() {
 }
 
 //------------------------------------------------------------------------------
 // gotReadMountDetailsFromClient
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyDummy::gotReadMountDetailsFromClient(
+void castor::messages::TapeserverProxyDummy::gotReadMountDetailsFromClient(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {
 }
@@ -46,7 +46,7 @@ void castor::legacymsg::TapeserverProxyDummy::gotReadMountDetailsFromClient(
 // gotWriteMountDetailsFromClient
 //------------------------------------------------------------------------------
 uint64_t
-  castor::legacymsg::TapeserverProxyDummy::gotWriteMountDetailsFromClient(
+  castor::messages::TapeserverProxyDummy::gotWriteMountDetailsFromClient(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {
 
@@ -56,7 +56,7 @@ uint64_t
 //------------------------------------------------------------------------------
 // gotDumpMountDetailsFromClient
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyDummy::gotDumpMountDetailsFromClient(
+void castor::messages::TapeserverProxyDummy::gotDumpMountDetailsFromClient(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {
 }
@@ -64,7 +64,7 @@ void castor::legacymsg::TapeserverProxyDummy::gotDumpMountDetailsFromClient(
 //------------------------------------------------------------------------------
 // tapeMountedForRead
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyDummy::tapeMountedForRead(
+void castor::messages::TapeserverProxyDummy::tapeMountedForRead(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {
 }
@@ -72,7 +72,7 @@ void castor::legacymsg::TapeserverProxyDummy::tapeMountedForRead(
 //------------------------------------------------------------------------------
 // tapeMountedForWrite
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyDummy::tapeMountedForWrite(
+void castor::messages::TapeserverProxyDummy::tapeMountedForWrite(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {
 }
@@ -80,7 +80,7 @@ void castor::legacymsg::TapeserverProxyDummy::tapeMountedForWrite(
 //------------------------------------------------------------------------------
 // tapeUnmounting
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyDummy::tapeUnmounting(
+void castor::messages::TapeserverProxyDummy::tapeUnmounting(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {
 } 
@@ -88,7 +88,7 @@ void castor::legacymsg::TapeserverProxyDummy::tapeUnmounting(
 //------------------------------------------------------------------------------
 // tapeUnmounted
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyDummy::tapeUnmounted(
+void castor::messages::TapeserverProxyDummy::tapeUnmounted(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {
 } 

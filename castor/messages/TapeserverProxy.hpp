@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/TapeserverProxyDummy.hpp
+ *         castor/messages/TapeserverProxy.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,41 +22,37 @@
 
 #pragma once
 
-#include "castor/legacymsg/TapeserverProxy.hpp"
+#include "castor/log/Logger.hpp"
+#include "castor/tape/tapeserver/client/ClientProxy.hpp"
 
 namespace castor {
-namespace legacymsg {
+namespace messages {
 
 /**
- * A dummy tapeserverd-proxy.
+ * Abstract class defining the interface to a proxy object representing the
+ * internal network interface of the tapeserverd daemon.
  */
-class TapeserverProxyDummy: public TapeserverProxy {
+class TapeserverProxy {
 public:
-
-  /**
-   * Constructor.
-   */
-  TapeserverProxyDummy() throw();
-
   /**
    * Destructor.
    *
    * Closes the listening socket created in the constructor to listen for
    * connections from the vdqmd daemon.
    */
-  ~TapeserverProxyDummy() throw();
+  virtual ~TapeserverProxy()  = 0;
 
   /**
-   * Informs the tapeserverd daemon that the mount-session child-process got
+   * Notifies the tapeserverd daemon that the mount-session child-process got
    * the mount details from the client.
    *
    * @param volInfo The volume information of the tape the session is working
    * with.
    * @param unitName The unit name of the tape drive.
    */
-  void gotReadMountDetailsFromClient(
+  virtual void gotReadMountDetailsFromClient(
     castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-    const std::string &unitName);
+    const std::string &unitName) = 0;
 
   /**
    * Notifies the tapeserverd daemon that the mount-session child-process got
@@ -65,26 +61,26 @@ public:
    * the vmgrd daemon.
    *
    * @param volInfo The volume information of the tape the session is working
-   * with.
+   * with
    * @param unitName The unit name of the tape drive.
    * @return The number of files currently stored on the tape as given by the
    * vmgrd daemon.
    */
-  uint64_t gotWriteMountDetailsFromClient(
+  virtual uint64_t gotWriteMountDetailsFromClient(
     castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-    const std::string &unitName);
+    const std::string &unitName) = 0;
 
   /**
-   * Informs the tapeserverd daemon that the mount-session child-process got
+   * Notifies the tapeserverd daemon that the mount-session child-process got
    * the mount details from the client.
    *
    * @param volInfo The volume information of the tape the session is working
    * with.
    * @param unitName The unit name of the tape drive.
    */
-  void gotDumpMountDetailsFromClient(
+  virtual void gotDumpMountDetailsFromClient(
     castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-    const std::string &unitName);
+    const std::string &unitName) = 0;
 
   /**
    * Notifies the tapeserverd daemon that the specified tape has been mounted.
@@ -93,9 +89,9 @@ public:
    * with.
    * @param unitName The unit name of the tape drive.
    */
-  void tapeMountedForRead(
+  virtual void tapeMountedForRead(
     castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-    const std::string &unitName);
+    const std::string &unitName) = 0;
 
   /**
    * Notifies the tapeserverd daemon that the specified tape has been mounted.
@@ -104,10 +100,10 @@ public:
    * with.
    * @param unitName The unit name of the tape drive.
    */
-  void tapeMountedForWrite(
+  virtual void tapeMountedForWrite(
     castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-    const std::string &unitName);
-
+    const std::string &unitName) = 0;
+  
   /**
    * Notifies the tapeserverd daemon that the specified tape is unmounting.
    *
@@ -115,23 +111,23 @@ public:
    * with.
    * @param unitName The unit name of the tape drive.
    */
- void tapeUnmounting(
-   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-   const std::string &unitName);
+  virtual void tapeUnmounting(
+    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+    const std::string &unitName) = 0;
 
   /**
    * Notifies the tapeserverd daemon that the specified tape has been unmounted.
    *
    * @param volInfo The volume information of the tape the session is working
    * with.
-   * @param unitName   The unit name of the tape drive.
+   * @param unitName The unit name of the tape drive.
    */
- void tapeUnmounted(
-   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
-   const std::string &unitName);
+  virtual void tapeUnmounted(
+    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
+    const std::string &unitName) = 0;
 
-}; // class TapeserverProxyDummy
+}; // class TapeserverProxy
 
-} // namespace legacymsg
+} // namespace messages
 } // namespace castor
 

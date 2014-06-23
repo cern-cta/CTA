@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/TapeserverProxyFactory.hpp
+ *         castor/messages/messages.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,40 +17,37 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author dkruse@cern.ch
+ * 
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#pragma once
-
-#include "castor/legacymsg/TapeserverProxy.hpp"
 #include "zmq/castorZmqWrapper.hpp"
+#include "castor/messages/Header.pb.h"
+#include "castor/messages/Constants.hpp"
+#include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "h/Ctape.h"
+#include "castor/exception/Exception.hpp"
+#pragma once 
+
 namespace castor {
-namespace legacymsg {
+namespace messages {
+    
+template <class T> void sendMessage(zmq::socket_t& socket,const T& msg,int flag=0) {
 
-/**
- * Abstract factory for creating objects of type TapeserverProxy.
- */
-class TapeserverProxyFactory {
-public:
+  if(!msg.IsInitialized()){
+    castor::exception::Exception ex("the protocol buffer message was not correctly set");
+    throw ex;
+  }
 
-  /**
-   * Destructor.
-   */
-  virtual ~TapeserverProxyFactory() throw() = 0;
+  const int size=msg.ByteSize();
+  zmq::message_t blob(size);
+  msg.SerializeToArray(blob.data(),size);
+  socket.send(blob,flag);
+}
 
-  /**
-   * Creates an object of type TapeserverProxy on the heap and returns a pointer to
-   * it.
-   *
-   * Please note that it is the responsibility of the caller to deallocate the
-   * proxy object from the heap.
-   *
-   * @return A pointer to the newly created object.
-   */
-  virtual TapeserverProxy *create(zmq::context_t& ctx) = 0;
+void connectToLocalhost(zmq::socket_t& m_socket);
+castor::messages::Header preFilleHeader();
 
-}; // class TapeserverProxyFactory
-
-} // namespace legacymsg
+} // namespace messages
 } // namespace castor
-

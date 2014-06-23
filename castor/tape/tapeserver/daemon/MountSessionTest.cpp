@@ -46,7 +46,7 @@
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/legacymsg/RmcProxyDummy.hpp"
-#include "castor/legacymsg/TapeserverProxyDummy.hpp"
+#include "castor/messages/TapeserverProxyDummy.hpp"
 #include <sys/mman.h>
 #include <zlib.h>
 #include <unistd.h>
@@ -164,7 +164,7 @@ TEST(tapeServer, MountSessionGooddayRecall) {
   castorConf.tapeserverdDiskThreads = 1;
   castor::legacymsg::RmcProxyDummy rmc;
   CapabilityUtilsDummy capUtils;
-  castor::legacymsg::TapeserverProxyDummy initialProcess;
+  castor::messages::TapeserverProxyDummy initialProcess;
   char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
   int argc = 4;
   char * argv [4];
@@ -230,7 +230,7 @@ TEST(tapeServer, MountSessionNoSuchDrive) {
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::legacymsg::RmcProxyDummy rmc;
-  castor::legacymsg::TapeserverProxyDummy initialProcess;
+  castor::messages::TapeserverProxyDummy initialProcess;
   CapabilityUtilsDummy capUtils;
   char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
   int argc = 4;
@@ -385,7 +385,7 @@ TEST(tapeServer, MountSessionGooddayMigration) {
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::legacymsg::RmcProxyDummy rmc;
-  castor::legacymsg::TapeserverProxyDummy initialProcess;
+  castor::messages::TapeserverProxyDummy initialProcess;
   CapabilityUtilsDummy capUtils;
   char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
   int argc = 4;

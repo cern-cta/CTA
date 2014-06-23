@@ -23,10 +23,10 @@
  *****************************************************************************/
 
 #include "castor/legacymsg/RmcProxyDummyFactory.hpp"
-#include "castor/legacymsg/TapeserverProxyDummyFactory.hpp"
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/log/DummyLogger.hpp"
+#include "castor/messages/TapeserverProxyDummyFactory.hpp"
 #include "castor/tape/reactor/DummyPollReactor.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtilsDummy.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
@@ -75,7 +75,7 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::legacymsg::VdqmProxyDummy vdqm;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::RmcProxyDummyFactory rmcFactory;
-  castor::legacymsg::TapeserverProxyDummyFactory tpsFactory;
+  castor::messages::TapeserverProxyDummyFactory tpsFactory;
   castor::legacymsg::NsProxyDummyFactory nsFactory;
   zmq::context_t ctx;
   castor::tape::reactor::ZMQReactor reactor(log,ctx);

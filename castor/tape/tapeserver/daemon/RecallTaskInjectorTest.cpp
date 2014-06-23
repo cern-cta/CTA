@@ -10,7 +10,7 @@
 #include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
-#include "castor/legacymsg/TapeserverProxyDummy.hpp"
+#include "castor/messages/TapeserverProxyDummy.hpp"
 #include "castor/tape/utils/TpconfigLine.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/utils/utils.hpp"
@@ -69,7 +69,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   castor::legacymsg::RmcProxyDummy rmc;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm;
-  castor::legacymsg::TapeserverProxyDummy initialProcess;
+  castor::messages::TapeserverProxyDummy initialProcess;
   castor::tape::tapeserver::client::ClientInterface::VolumeInfo volume;
   volume.clientType=castor::tape::tapegateway::READ_TP;
   volume.density="8000GC";
@@ -126,7 +126,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   castor::legacymsg::RmcProxyDummy rmc;
   castor::legacymsg::VmgrProxyDummy vmgr;
   castor::legacymsg::VdqmProxyDummy vdqm;
-  castor::legacymsg::TapeserverProxyDummy initialProcess;  
+  castor::messages::TapeserverProxyDummy initialProcess;  
   castor::tape::tapeserver::client::ClientInterface::VolumeInfo volume;
   volume.clientType=castor::tape::tapegateway::READ_TP;
   volume.density="8000GC";

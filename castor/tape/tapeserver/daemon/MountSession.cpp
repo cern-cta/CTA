@@ -58,7 +58,7 @@ castor::tape::tapeserver::daemon::MountSession::MountSession(
     castor::log::Logger& logger, System::virtualWrapper & sysWrapper,
     const utils::DriveConfig & driveConfig,
     castor::legacymsg::RmcProxy & rmc,
-    castor::legacymsg::TapeserverProxy & initialProcess,
+    castor::messages::TapeserverProxy & initialProcess,
     CapabilityUtils &capUtils,
     const CastorConf & castorConf): 
     m_request(clientRequest),

@@ -66,8 +66,7 @@ target_link_libraries(tapeserverd
   castortapeutils
   ${LIBCAP_LIB}
   ${ZLIB_LIBRARIES}
-  castorMessages
-  castorZMQWrapper)
+  castorMessages)
 
 install (TARGETS tapeserverd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (tapeserverd)

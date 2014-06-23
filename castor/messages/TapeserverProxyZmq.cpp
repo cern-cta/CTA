@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/legacymsg/TapeserverProxyTcpIp.cpp
+ *                castor/messages/TapeserverProxyZmq.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,12 +21,11 @@
  *****************************************************************************/
 
 #include "castor/io/io.hpp"
-#include "castor/legacymsg/CommonMarshal.hpp"
-#include "castor/legacymsg/GenericReplyMsgBody.hpp"
-#include "castor/legacymsg/GenericMarshal.hpp"
-#include "castor/legacymsg/TapeMarshal.hpp"
-#include "castor/legacymsg/TapeserverProxyTcpIp.hpp"
-#include "castor/legacymsg/legacymsg.hpp"
+#include "castor/messages/Header.pb.h"
+#include "castor/messages/Constants.hpp"
+#include "castor/messages/TapeserverProxyZmq.hpp"
+#include "castor/messages/messages.hpp"
+#include "castor/messages/NotifyDrive.pb.h"
 #include "castor/tape/tapegateway/ClientType.hpp"
 #include "castor/tape/tapegateway/VolumeMode.hpp"
 #include "castor/utils/SmartFd.hpp"
@@ -34,10 +33,6 @@
 #include "h/rtcp_constants.h"
 #include "h/vdqm_constants.h"
 #include "h/Ctape.h"
-#include "castor/messages/Header.pb.h"
-#include "castor/messages/NotifyDrive.pb.h"
-#include "castor/messages/Constants.hpp"
-#include "zmq/castorZmqUtils.hpp"
 
 namespace {
   castor::messages::NotifyDriveBeforeMountStarted_TapeClientType 
@@ -72,22 +67,22 @@ namespace {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxyTcpIp::TapeserverProxyTcpIp(log::Logger &log, 
+castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log, 
         const unsigned short tapeserverPort, const int netTimeout,zmq::context_t& ctx) throw():
   m_log(log),
   m_tapeserverHostName("localhost"),
   m_tapeserverPort(tapeserverPort),
   m_netTimeout(netTimeout),m_socket(ctx,ZMQ_REQ) {
-  castor::utils::connectToLocalhost(m_socket);
+  castor::messages::connectToLocalhost(m_socket);
 }
 
 //------------------------------------------------------------------------------
 // gotReadMountDetailsFromClient
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyTcpIp::gotReadMountDetailsFromClient(
+void castor::messages::TapeserverProxyZmq::gotReadMountDetailsFromClient(
 castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
         const std::string &unitName) {  
-  castor::messages::Header header=castor::utils::preFilleHeader();
+  castor::messages::Header header=castor::messages::preFilleHeader();
   header.set_bodyhashvalue("PIPO");
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
@@ -98,8 +93,8 @@ castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   body.set_unitname(unitName);
   body.set_vid(volInfo.vid);
 
-  castor::utils::sendMessage(m_socket,header,ZMQ_SNDMORE);
-  castor::utils::sendMessage(m_socket,body);
+  castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
+  castor::messages::sendMessage(m_socket,body);
   
   readReplyMsg(); 
 }
@@ -108,10 +103,10 @@ castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
 // gotWriteMountDetailsFromClient
 //------------------------------------------------------------------------------
 uint64_t
-  castor::legacymsg::TapeserverProxyTcpIp::gotWriteMountDetailsFromClient(
+  castor::messages::TapeserverProxyZmq::gotWriteMountDetailsFromClient(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {  
-  castor::messages::Header header=castor::utils::preFilleHeader();
+  castor::messages::Header header=castor::messages::preFilleHeader();
   header.set_bodyhashvalue("PIPO");
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
@@ -122,8 +117,8 @@ uint64_t
   body.set_unitname(unitName);
   body.set_vid(volInfo.vid);
 
-  castor::utils::sendMessage(m_socket,header,ZMQ_SNDMORE);
-  castor::utils::sendMessage(m_socket,body);
+  castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
+  castor::messages::sendMessage(m_socket,body);
   readReplyMsg();
   return 0; // TO BE DONE
 }
@@ -131,10 +126,10 @@ uint64_t
 //------------------------------------------------------------------------------
 // gotDumpMountDetailsFromClient
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyTcpIp::gotDumpMountDetailsFromClient(
+void castor::messages::TapeserverProxyZmq::gotDumpMountDetailsFromClient(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {  
-  castor::messages::Header header=castor::utils::preFilleHeader();
+  castor::messages::Header header=castor::messages::preFilleHeader();
   header.set_bodyhashvalue("PIPO");
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
@@ -145,8 +140,8 @@ void castor::legacymsg::TapeserverProxyTcpIp::gotDumpMountDetailsFromClient(
   body.set_unitname(unitName);
   body.set_vid(volInfo.vid);
 
-  castor::utils::sendMessage(m_socket,header,ZMQ_SNDMORE);
-  castor::utils::sendMessage(m_socket,body);
+  castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
+  castor::messages::sendMessage(m_socket,body);
   
   readReplyMsg();
 }
@@ -154,10 +149,10 @@ void castor::legacymsg::TapeserverProxyTcpIp::gotDumpMountDetailsFromClient(
 //------------------------------------------------------------------------------
 // tapeMountedForRead
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForRead(
+void castor::messages::TapeserverProxyZmq::tapeMountedForRead(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {  
-  castor::messages::Header header=castor::utils::preFilleHeader();
+  castor::messages::Header header=castor::messages::preFilleHeader();
   header.set_bodyhashvalue("PIPO");
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveTapeMounted);
@@ -167,8 +162,8 @@ void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForRead(
   body.set_unitname(unitName);
   body.set_vid(volInfo.vid);
 
-  castor::utils::sendMessage(m_socket,header,ZMQ_SNDMORE);
-  castor::utils::sendMessage(m_socket,body);
+  castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
+  castor::messages::sendMessage(m_socket,body);
   
   readReplyMsg();
 }
@@ -176,10 +171,10 @@ void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForRead(
 //------------------------------------------------------------------------------
 // tapeMountedForWrite
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForWrite(
+void castor::messages::TapeserverProxyZmq::tapeMountedForWrite(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {  
-  castor::messages::Header header=castor::utils::preFilleHeader();
+  castor::messages::Header header=castor::messages::preFilleHeader();
   header.set_bodyhashvalue("PIPO");
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveTapeMounted);
@@ -189,8 +184,8 @@ void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForWrite(
   body.set_unitname(unitName);
   body.set_vid(volInfo.vid);
 
-  castor::utils::sendMessage(m_socket,header,ZMQ_SNDMORE);
-  castor::utils::sendMessage(m_socket,body);
+  castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
+  castor::messages::sendMessage(m_socket,body);
   
   readReplyMsg();
 }
@@ -198,18 +193,18 @@ void castor::legacymsg::TapeserverProxyTcpIp::tapeMountedForWrite(
 //------------------------------------------------------------------------------
 // tapeUnmounting
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyTcpIp::tapeUnmounting(
+void castor::messages::TapeserverProxyZmq::tapeUnmounting(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {  
-  castor::messages::Header header=castor::utils::preFilleHeader();
+  castor::messages::Header header=castor::messages::preFilleHeader();
   header.set_bodyhashvalue("PIPO");
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveUnmountStarted);
   
   castor::messages::NotifyDriveUnmountStarted body;
   
-  castor::utils::sendMessage(m_socket,header,ZMQ_SNDMORE);
-  castor::utils::sendMessage(m_socket,body);
+  castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
+  castor::messages::sendMessage(m_socket,body);
   
   readReplyMsg();
 }
@@ -217,18 +212,18 @@ void castor::legacymsg::TapeserverProxyTcpIp::tapeUnmounting(
 //------------------------------------------------------------------------------
 // tapeUnmounted
 //------------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyTcpIp::tapeUnmounted(
+void castor::messages::TapeserverProxyZmq::tapeUnmounted(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {  
-  castor::messages::Header header=castor::utils::preFilleHeader();
+  castor::messages::Header header=castor::messages::preFilleHeader();
   header.set_bodyhashvalue("PIPO");
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveTapeUnmounted);
   
   castor::messages::NotifyDriveTapeUnmounted body;
   
-  castor::utils::sendMessage(m_socket,header,ZMQ_SNDMORE);
-  castor::utils::sendMessage(m_socket,body);
+  castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
+  castor::messages::sendMessage(m_socket,body);
   
   readReplyMsg();
 }
@@ -236,6 +231,6 @@ void castor::legacymsg::TapeserverProxyTcpIp::tapeUnmounted(
 //-----------------------------------------------------------------------------
 // readReplyMsg
 //-----------------------------------------------------------------------------
-void castor::legacymsg::TapeserverProxyTcpIp::readReplyMsg()  {
+void castor::messages::TapeserverProxyZmq::readReplyMsg()  {
   
 }

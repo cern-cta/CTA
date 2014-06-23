@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/TapeserverProxyDummyFactory.hpp
+ *                castorZmqUtils.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,40 +17,27 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author Steven.Murray@cern.ch
+ *
+ *
+ * @author dkruse@cern.ch
  *****************************************************************************/
 
-#pragma once
+#include "castor/messages/messages.hpp"
+#include "castor/utils/utils.hpp"
+#include "zmq/castorZmqWrapper.hpp"
 
-#include "castor/legacymsg/TapeserverProxyFactory.hpp"
+void castor::messages::connectToLocalhost(zmq::socket_t& m_socket){
+  std::string bindingAdress("tcp://127.0.0.1:");
+  bindingAdress+=castor::utils::toString(tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT);
+  m_socket.connect(bindingAdress.c_str());
+}
 
-namespace castor {
-namespace legacymsg {
-
-/**
- * Concrete factory for creating objects of type TapeserverProxyDummy.
- */
-class TapeserverProxyDummyFactory: public TapeserverProxyFactory {
-public:
-
-  /**
-   * Destructor.
-   */
-  ~TapeserverProxyDummyFactory() throw();
-
-  /**
-   * Creates an object of type TapeserverProxyDummy on the heap and returns a pointer
-   * to it.
-   *
-   * Please note that it is the responsibility of the caller to deallocate the
-   * proxy object from the heap.
-   *
-   * @return A pointer to the newly created object.
-   */
-  TapeserverProxy *create(zmq::context_t& ctx);
-
-}; // class TapeserverProxyDummyFactory
-
-} // namespace legacymsg
-} // namespace castor
-
+castor::messages::Header castor::messages::preFilleHeader() {
+  castor::messages::Header header;
+  header.set_magic(TPMAGIC);
+  header.set_protocoltype(castor::messages::protocolType::Tape);
+  header.set_protocolversion(castor::messages::protocolVersion::prototype);
+  header.set_bodyhashtype("SHA1");
+  header.set_bodysignaturetype("SHA1");
+  return header;
+}

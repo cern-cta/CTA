@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/TapeserverProxyTcpIp.hpp
+ *         castor/messages/TapeserverProxyZmq.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,19 +23,17 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
-#include "castor/legacymsg/MessageHeader.hpp"
-#include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
-#include "castor/legacymsg/TapeserverProxy.hpp"
+#include "castor/messages/TapeserverProxy.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "zmq/castorZmqWrapper.hpp"
 namespace castor {
-namespace legacymsg {
+namespace messages {
 
 /**
  * A concrete implementation of the interface to the internal network
  * communications of the tapeserverd daemon.
  */
-class TapeserverProxyTcpIp: public TapeserverProxy {
+class TapeserverProxyZmq: public TapeserverProxy {
 public:
 
   /**
@@ -48,7 +46,7 @@ public:
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
    */
-  TapeserverProxyTcpIp(log::Logger &log, const unsigned short tapeserverPort,
+  TapeserverProxyZmq(log::Logger &log, const unsigned short tapeserverPort,
     const int netTimeout,zmq::context_t& ctx) throw();
 
   /**
@@ -137,15 +135,6 @@ public:
 
 private:
 
-
-  /**
-   * Writes the specified message to the specified connection.
-   *
-   * @param body The body of the message.
-   */
-  void writeTapeUpdateDriveRqstMsg(const int fd,
-    const legacymsg::TapeUpdateDriveRqstMsgBody &body);
-
   /**
    * Reads a reply message from the specified connection.
    *
@@ -176,8 +165,8 @@ private:
   
   zmq::socket_t m_socket;
 
-}; // class TapeserverProxyTcpIp
+}; // class TapeserverProxyZmq
 
-} // namespace legacymsg
+} // namespace messages
 } // namespace castor
 

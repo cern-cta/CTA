@@ -24,6 +24,7 @@
 
 #pragma once
 
+#include "castor/messages/TapeserverProxy.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
@@ -34,10 +35,6 @@
 #include <stdint.h>
 
 namespace castor {
-    namespace legacymsg{
-    class TapeserverProxy;
-  };
-  
 namespace tape {
 namespace tapeserver {
 namespace daemon {
@@ -54,7 +51,7 @@ public:
    * @param lc 
    */
   TapeServerReporter(
-    legacymsg::TapeserverProxy& tapeserverProxy,
+    messages::TapeserverProxy& tapeserverProxy,
     const tape::utils::DriveConfig &driveConfig,
     const std::string &hostname,
     const castor::tape::tapeserver::client::ClientInterface::VolumeInfo &volume,
@@ -147,7 +144,7 @@ private:
    A bunch of references to proxies to send messages to the 
    * outside world when we have to
    */
-  legacymsg::TapeserverProxy& m_tapeserverProxy;
+  messages::TapeserverProxy& m_tapeserverProxy;
   
   /**
    * Log context, copied because it is in a separated thread

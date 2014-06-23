@@ -25,10 +25,10 @@
 #include "castor/common/CastorConfiguration.hpp"
 #include "castor/legacymsg/NsProxy_TapeAlwaysEmptyFactory.hpp"
 #include "castor/legacymsg/RmcProxyTcpIpFactory.hpp"
-#include "castor/legacymsg/TapeserverProxyTcpIpFactory.hpp"
 #include "castor/legacymsg/VdqmProxyTcpIp.hpp"
 #include "castor/legacymsg/VmgrProxyTcpIp.hpp"
 #include "castor/log/SyslogLogger.hpp"
+#include "castor/messages/TapeserverProxyZmqFactory.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtilsImpl.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
@@ -133,7 +133,7 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
   castor::legacymsg::VdqmProxyTcpIp vdqm(log, vdqmHostName, VDQM_PORT, netTimeout);
   castor::legacymsg::VmgrProxyTcpIp vmgr(log, vmgrHostName, VMGR_PORT, netTimeout);
   castor::legacymsg::RmcProxyTcpIpFactory rmcFactory(log, netTimeout);
-  castor::legacymsg::TapeserverProxyTcpIpFactory tapeserverFactory(log, TAPE_SERVER_MOUNTSESSION_LISTENING_PORT, netTimeout);
+  castor::messages::TapeserverProxyZmqFactory tapeserverFactory(log, TAPE_SERVER_MOUNTSESSION_LISTENING_PORT, netTimeout);
   castor::legacymsg::NsProxy_TapeAlwaysEmptyFactory nsFactory;
 
   // Create the poll() reactor

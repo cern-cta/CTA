@@ -30,9 +30,9 @@
 #include "castor/exception/NoEntry.hpp"
 #include "castor/legacymsg/NsProxyFactory.hpp"
 #include "castor/legacymsg/RmcProxyFactory.hpp"
-#include "castor/legacymsg/TapeserverProxyFactory.hpp"
 #include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/legacymsg/VmgrProxy.hpp"
+#include "castor/messages/TapeserverProxyFactory.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
@@ -88,7 +88,7 @@ public:
     legacymsg::VdqmProxy &vdqm,
     legacymsg::VmgrProxy &vmgr,
     legacymsg::RmcProxyFactory &rmcFactory,
-    legacymsg::TapeserverProxyFactory &tapeserverProxyFactory,
+    messages::TapeserverProxyFactory &tapeserverProxyFactory,
     legacymsg::NsProxyFactory &nsProxyFactory,
     reactor::ZMQReactor &reactor,
     CapabilityUtils &capUtils) throw(castor::exception::Exception);
@@ -385,7 +385,7 @@ protected:
   /**
    * The proxy object representing the tapeserver daemon.
    */
-  legacymsg::TapeserverProxyFactory &m_tapeserverFactory;
+  messages::TapeserverProxyFactory &m_tapeserverFactory;
   
   /**
    * The proxy object representing the nameserver daemon.

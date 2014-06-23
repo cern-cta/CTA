@@ -63,10 +63,6 @@ set (CASTOR_LEGACYMSG_LIB_SRC_FILES
   TapeLabelRqstMsgBody.cpp
   TapeStatDriveEntry.cpp
   TapeMarshal.cpp
-  TapeserverProxy.cpp
-  TapeserverProxyFactory.cpp
-  TapeserverProxyTcpIp.cpp
-  TapeserverProxyTcpIpFactory.cpp
   TapeStatRequestMsgBody.cpp
   TapeStatReplyMsgBody.cpp
   VdqmDrvRqstMsgBody.cpp
@@ -85,7 +81,6 @@ set (CASTOR_LEGACYMSG_LIB_SRC_FILES
   VmgrTapeMountedMsgBody.cpp)
 add_library (castorlegacymsg SHARED ${CASTOR_LEGACYMSG_LIB_SRC_FILES})
 CastorSetLibraryVersions (castorlegacymsg)
-target_link_libraries (castorlegacymsg castorclient castorcommon
-  castorMessages castorZMQWrapper)
+target_link_libraries (castorlegacymsg castorclient castorcommon)
 install (TARGETS castorlegacymsg LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
   NAMELINK_SKIP)

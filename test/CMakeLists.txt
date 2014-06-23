@@ -83,6 +83,8 @@ endif (LIBCAP_LIB)
 
 # Create a shared librbary for the dummies supporting the tests
 add_library(TestDummies
+  ../castor/messages/TapeserverProxyDummy.cpp
+  ../castor/messages/TapeserverProxyDummyFactory.cpp
   ../castor/legacymsg/CupvProxyDummy.cpp
   ../castor/legacymsg/RmcProxyDummy.cpp
   ../castor/legacymsg/RmcProxyDummyFactory.cpp
@@ -90,8 +92,6 @@ add_library(TestDummies
   ../castor/legacymsg/VdqmProxyDummyFactory.cpp
   ../castor/legacymsg/VmgrProxyDummy.cpp
   ../castor/legacymsg/VmgrProxyDummyFactory.cpp
-  ../castor/legacymsg/TapeserverProxyDummy.cpp
-  ../castor/legacymsg/TapeserverProxyDummyFactory.cpp
   ../castor/log/DummyLogger.cpp
   ../castor/tape/reactor/DummyPollEventHandler.cpp
   ../castor/tape/reactor/DummyPollReactor.cpp
@@ -106,6 +106,8 @@ add_executable(castorUnitTests
   castorUnitTests.cpp
   ../castor/exception/ExceptionTest.cpp
   ../castor/io/IoTest.cpp
+  ../castor/messages/TapeserverProxy.cpp
+  ../castor/messages/TapeserverProxyZmq.cpp
   ../castor/legacymsg/CommonMarshalTest.cpp
   ../castor/legacymsg/CupvMarshalTest.cpp
   ../castor/legacymsg/CupvProxyDummy.cpp
@@ -125,8 +127,6 @@ add_executable(castorUnitTests
   ../castor/legacymsg/ScsiLibrarySlot.cpp
   ../castor/legacymsg/ScsiLibrarySlotTest.cpp
   ../castor/legacymsg/TapeMarshalTest.cpp
-  ../castor/legacymsg/TapeserverProxy.cpp
-  ../castor/legacymsg/TapeserverProxyTcpIp.cpp
   ../castor/legacymsg/VdqmMarshalTest.cpp
   ../castor/legacymsg/VdqmProxy.cpp
   ../castor/legacymsg/VdqmProxyTcpIp.cpp

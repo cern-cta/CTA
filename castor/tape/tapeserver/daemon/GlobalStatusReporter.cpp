@@ -1,4 +1,4 @@
-#include "castor/legacymsg/TapeserverProxy.hpp"
+#include "castor/messages/TapeserverProxy.hpp"
 #include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
 #include "castor/tape/utils/TpconfigLine.hpp"
 #include "castor/log/LogContext.hpp"
@@ -12,7 +12,7 @@ namespace daemon {
 //constructor
 //------------------------------------------------------------------------------  
 TapeServerReporter::TapeServerReporter(
-  legacymsg::TapeserverProxy& tapeserverProxy,
+  messages::TapeserverProxy& tapeserverProxy,
   const tape::utils::DriveConfig& driveConfig,
   const std::string &hostname,
   const castor::tape::tapeserver::client::ClientInterface::VolumeInfo &volume,

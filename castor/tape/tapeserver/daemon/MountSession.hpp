@@ -25,6 +25,7 @@
 #pragma once
 
 #include "castor/legacymsg/RtcpJobRqstMsgBody.hpp"
+#include "castor/messages/TapeserverProxy.hpp"
 #include "castor/log/Logger.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/system/Wrapper.hpp"
@@ -41,7 +42,6 @@ namespace legacymsg {
   class VdqmProxy;
   class VmgrProxy;
   class RmcProxy;
-  class TapeserverProxy;
 }
 namespace tape {
 namespace tapeserver {
@@ -106,7 +106,7 @@ namespace daemon {
       System::virtualWrapper & sysWrapper,
       const utils::DriveConfig & driveConfig,
       castor::legacymsg::RmcProxy & rmc,
-      castor::legacymsg::TapeserverProxy & initialProcess,
+      castor::messages::TapeserverProxy & initialProcess,
       CapabilityUtils &capUtils,
       const CastorConf & castorConf);
     /** The only method. It will execute (like a task, that it is) */
@@ -140,7 +140,7 @@ namespace daemon {
      * library. It will be used exclusively by the tape thread. */
     castor::legacymsg::RmcProxy & m_rmc;
     /** Reference to the tape server's parent process to report detailed status */
-    castor::legacymsg::TapeserverProxy & m_intialProcess;
+    castor::messages::TapeserverProxy & m_intialProcess;
     /** Object providing utilities for working UNIX capabilities. */
     CapabilityUtils &m_capUtils;
     /** copy of the process's argc to allow "command line reporting"

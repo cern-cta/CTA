@@ -28,10 +28,10 @@
 #include "castor/utils/utils.hpp"
 #include "h/Ctape.h"
 #include "zmq/castorZmqWrapper.hpp"
-#include "zmq/castorZmqUtils.hpp"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/Heartbeat.pb.h"
 #include "castor/messages/Constants.hpp"
+#include "castor/messages/messages.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape.h"
@@ -64,11 +64,11 @@ class TaskWatchDog : private castor::tape::threading::Thread{
         header.set_bodysignature("PIPO");
         header.set_bodysignaturetype("SHA1");
 
-        castor::utils::sendMessage(m_socket,header,ZMQ_SNDMORE);
+        castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
         
         castor::messages::Heartbeat body;
         body.set_bytesmoved(nbOfMemblocksMoved.getAndReset());
-        castor::utils::sendMessage(m_socket,body);
+        castor::messages::sendMessage(m_socket,body);
         m_lc.log(LOG_INFO,"Notified MF");
         zmq::message_t blob;
         m_socket.recv(&blob);
@@ -89,7 +89,7 @@ class TaskWatchDog : private castor::tape::threading::Thread{
     void run(){
       GOOGLE_PROTOBUF_VERIFY_VERSION;
       zmq::socket_t m_socket(m_ctx,ZMQ_REQ);
-      castor::utils::connectToLocalhost(m_socket);
+      castor::messages::connectToLocalhost(m_socket);
       
       using castor::utils::timevalToDouble;
       using castor::utils::timevalAbsDiff;

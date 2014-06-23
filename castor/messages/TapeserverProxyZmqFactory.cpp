@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/TapeserverProxyDummyFactory.hpp
+ *                castor/messages/TapeserverProxyZmqFactory.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,18 +20,27 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/TapeserverProxyDummy.hpp"
-#include "castor/legacymsg/TapeserverProxyDummyFactory.hpp"
+#include "castor/messages/TapeserverProxyZmq.hpp"
+#include "castor/messages/TapeserverProxyZmqFactory.hpp"
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::messages::TapeserverProxyZmqFactory::TapeserverProxyZmqFactory(log::Logger &log, const unsigned short tapeserverPort, const int netTimeout) throw():
+    m_log(log),
+    m_tapeserverPort(tapeserverPort),
+    m_netTimeout(netTimeout) {
+} 
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxyDummyFactory::~TapeserverProxyDummyFactory() throw() {
+castor::messages::TapeserverProxyZmqFactory::~TapeserverProxyZmqFactory() throw() {
 }
 
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxy *castor::legacymsg::TapeserverProxyDummyFactory::create(zmq::context_t& ctx) {
-  return new TapeserverProxyDummy();
+castor::messages::TapeserverProxy *castor::messages::TapeserverProxyZmqFactory::create(zmq::context_t& ctx) {
+  return new TapeserverProxyZmq(m_log, m_tapeserverPort, m_netTimeout,ctx);
 }

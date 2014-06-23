@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castorZmqUtils.cpp
+ *                castor/messages/TapeserverProxy.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,23 +22,10 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#include "zmq/castorZmqUtils.hpp"
-#include "zmq/castorZmqWrapper.hpp"
-#include "castor/utils/utils.hpp"
-namespace castor {
-  namespace utils {
-void connectToLocalhost(zmq::socket_t& m_socket){
-  std::string bindingAdress("tcp://127.0.0.1:");
-  bindingAdress+=castor::utils::toString(tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT);
-  m_socket.connect(bindingAdress.c_str());
+#include "castor/messages/TapeserverProxy.hpp"
+
+//-----------------------------------------------------------------------------
+// destructor
+//-----------------------------------------------------------------------------
+castor::messages::TapeserverProxy::~TapeserverProxy() {
 }
-castor::messages::Header preFilleHeader(){
-    castor::messages::Header header;
-    header.set_magic(TPMAGIC);
-    header.set_protocoltype(castor::messages::protocolType::Tape);
-    header.set_protocolversion(castor::messages::protocolVersion::prototype);
-    header.set_bodyhashtype("SHA1");
-    header.set_bodysignaturetype("SHA1");
-    return header;
-  }
-  }}

@@ -67,7 +67,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   legacymsg::VdqmProxy &vdqm,
   legacymsg::VmgrProxy &vmgr,
   legacymsg::RmcProxyFactory &rmcFactory,
-  legacymsg::TapeserverProxyFactory &tapeserverFactory,
+  messages::TapeserverProxyFactory &tapeserverFactory,
   legacymsg::NsProxyFactory &nsFactory,
   reactor::ZMQReactor &reactor,
   CapabilityUtils &capUtils) throw(castor::exception::Exception):
@@ -797,7 +797,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
     std::auto_ptr<MountSession> mountSession;
     castor::tape::System::realWrapper sysWrapper;
     std::auto_ptr<legacymsg::RmcProxy> rmc;
-    std::auto_ptr<legacymsg::TapeserverProxy> tapeserver;
+    std::auto_ptr<messages::TapeserverProxy> tapeserver;
     try {
       common::CastorConfiguration &config =
         common::CastorConfiguration::getConfig();

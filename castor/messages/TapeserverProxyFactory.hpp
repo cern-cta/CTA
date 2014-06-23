@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/legacymsg/TapeserverProxy.cpp
+ *         castor/messages/TapeserverProxyFactory.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,15 +17,40 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- *
- *
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/TapeserverProxy.hpp"
+#pragma once
 
-//-----------------------------------------------------------------------------
-// destructor
-//-----------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxy::~TapeserverProxy() {
-}
+#include "castor/messages/TapeserverProxy.hpp"
+#include "zmq/castorZmqWrapper.hpp"
+namespace castor {
+namespace messages {
+
+/**
+ * Abstract factory for creating objects of type TapeserverProxy.
+ */
+class TapeserverProxyFactory {
+public:
+
+  /**
+   * Destructor.
+   */
+  virtual ~TapeserverProxyFactory() throw() = 0;
+
+  /**
+   * Creates an object of type TapeserverProxy on the heap and returns a pointer to
+   * it.
+   *
+   * Please note that it is the responsibility of the caller to deallocate the
+   * proxy object from the heap.
+   *
+   * @return A pointer to the newly created object.
+   */
+  virtual TapeserverProxy *create(zmq::context_t& ctx) = 0;
+
+}; // class TapeserverProxyFactory
+
+} // namespace messages
+} // namespace castor
+

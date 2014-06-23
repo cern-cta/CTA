@@ -27,10 +27,10 @@
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape.h"
-#include "castor/messages/NotifyDrive.pb.h"
 #include "castor/messages/Constants.hpp"
+#include "castor/messages/NotifyDrive.pb.h"
+#include "castor/messages/messages.hpp"
 #include "zmq/castorZmqWrapper.hpp"
-#include "zmq/castorZmqUtils.hpp"
 #include "h/vmgr_constants.h"
 
 //------------------------------------------------------------------------------
@@ -249,11 +249,11 @@ const castor::messages::NotifyDriveTapeMounted& body){
 }
 
 void castor::tape::tapeserver::daemon::TapeMessageHandler::sendEmptyReplyToClient(){
-    castor::messages::Header header = castor::utils::preFilleHeader();
+    castor::messages::Header header = castor::messages::preFilleHeader();
     header.set_reqtype(messages::reqType::NoReturnValue);
     header.set_bodyhashvalue("PIPO");
     header.set_bodysignature("PIPO");
     castor::messages::NoReturnValue body;
-    castor::utils::sendMessage(m_socket,header,ZMQ_SNDMORE);
-    castor::utils::sendMessage(m_socket,body);
+    castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
+    castor::messages::sendMessage(m_socket,body);
 }

@@ -24,11 +24,10 @@
 
 #pragma once
 
-#include "castor/legacymsg/TapeserverProxy.hpp"
+#include "castor/legacymsg/GenericReplyMsgBody.hpp"
 #include "castor/tape/label/ParsedTpLabelCommandLine.hpp"
 #include "castor/utils/DebugBuf.hpp"
 #include "castor/utils/SmartFd.hpp"
-#include "castor/legacymsg/GenericReplyMsgBody.hpp"
 
 #include <istream>
 #include <ostream>

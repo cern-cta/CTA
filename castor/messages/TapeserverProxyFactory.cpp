@@ -1,5 +1,5 @@
 /******************************************************************************
- *                castor/legacymsg/TapeserverProxyTcpIpFactory.cpp
+ *         castor/messages/TapeserverProxyFactory.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -20,27 +20,10 @@
  * @author dkruse@cern.ch
  *****************************************************************************/
 
-#include "castor/legacymsg/TapeserverProxyTcpIp.hpp"
-#include "castor/legacymsg/TapeserverProxyTcpIpFactory.hpp"
-
-//------------------------------------------------------------------------------
-// constructor
-//------------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxyTcpIpFactory::TapeserverProxyTcpIpFactory(log::Logger &log, const unsigned short tapeserverPort, const int netTimeout) throw():
-    m_log(log),
-    m_tapeserverPort(tapeserverPort),
-    m_netTimeout(netTimeout) {
-} 
+#include "castor/messages/TapeserverProxyFactory.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxyTcpIpFactory::~TapeserverProxyTcpIpFactory() throw() {
-}
-
-//------------------------------------------------------------------------------
-// create
-//------------------------------------------------------------------------------
-castor::legacymsg::TapeserverProxy *castor::legacymsg::TapeserverProxyTcpIpFactory::create(zmq::context_t& ctx) {
-  return new TapeserverProxyTcpIp(m_log, m_tapeserverPort, m_netTimeout,ctx);
+castor::messages::TapeserverProxyFactory::~TapeserverProxyFactory() throw() {
 }
