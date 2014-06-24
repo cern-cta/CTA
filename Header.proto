@@ -1,5 +1,0 @@
-package castor;
-
-message HeartBeat {
- required int64 bytesMoved = 1;
-}
