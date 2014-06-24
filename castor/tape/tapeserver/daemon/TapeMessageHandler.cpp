@@ -222,9 +222,9 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::dealWith(
 const castor::messages::Header& header, 
 const castor::messages::NotifyDriveTapeMounted& body){
   m_log(LOG_INFO,"NotifyDriveTapeMounted-dealWith");
-  DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(body.unitname());
-  drive.updateVolumeInfo(body);
-  const utils::DriveConfig &driveConfig = drive.getConfig();
+  DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(body.unitname());
+  drive->updateVolumeInfo(body);
+  const utils::DriveConfig &driveConfig = drive->getConfig();
     
   const std::string vid = body.vid();
   switch(body.mode()) {
@@ -245,7 +245,7 @@ const castor::messages::NotifyDriveTapeMounted& body){
       throw ex;
   }
   m_vdqm.tapeMounted(m_hostName, body.unitname(), driveConfig.dgn, body.vid(),
-        drive.getSessionPid());
+    drive->getSessionPid());
   
   sendEmptyReplyToClient();
 }

@@ -169,6 +169,12 @@ protected:
   void createAndRegisterAdminAcceptHandler() ;
 
   /**
+   * Creates the handler to accept connections from the label tape
+   * command-line tool and registers it with the reactor.
+   */
+  void createAndRegisterLabelCmdAcceptHandler();
+
+  /**
    * Creates the handler to discuss through zmq socket to the forked sessions
    */
   void createAndRegisterTapeMessageHandler();
@@ -305,7 +311,7 @@ protected:
    *
    * @param drive The tape-drive entry in the tape-drive catalogue.
    */ 
-  void forkMountSession(DriveCatalogueEntry &drive) throw();
+  void forkMountSession(DriveCatalogueEntry *drive) throw();
 
   /**
    * Runs the mount session.  This method is to be called within the child
@@ -314,7 +320,7 @@ protected:
    * @param drive The catalogue entry of the tape drive to be used during the
    * session.
    */
-  void runMountSession(const DriveCatalogueEntry &drive) throw();
+  void runMountSession(const DriveCatalogueEntry *drive) throw();
 
   /**
    * Forks a label-session child-process for every tape drive entry in the
@@ -332,7 +338,7 @@ protected:
    *
    * @param drive The tape-drive entry in the tape-drive catalogue.
    */
-  void forkLabelSession(DriveCatalogueEntry &drive) throw();
+  void forkLabelSession(DriveCatalogueEntry *drive) throw();
 
   /**
    * Runs the label session.  This method is to be called within the child
@@ -343,7 +349,7 @@ protected:
    * @param labelCmdConnection The file descriptor of the connection with the
    * command-line tool castor-tape-label.
    */
-  void runLabelSession(const DriveCatalogueEntry &drive,
+  void runLabelSession(const DriveCatalogueEntry *drive,
     const int labelCmdConnection) throw();
 
   /**

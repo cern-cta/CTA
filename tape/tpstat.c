@@ -63,7 +63,7 @@ int main(int	argc,
 				timestamp[0] = '\0';
 			} else {
 				if (drv_status[i].status <= 0)
-					strcpy (status, "wdwn");
+					strcpy (status, "wdwn"); //wait to go down
 				else
 					strcpy (status, "assn");
 				if ((pwd = getpwuid (drv_status[i].uid)) == NULL) {

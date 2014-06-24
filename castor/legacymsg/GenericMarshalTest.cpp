@@ -42,7 +42,7 @@ protected:
 
 TEST_F(castor_legacymsg_GenericMarshalTest, marshalGenericReplyMsgBody) {
   using namespace castor::legacymsg;
-  char buf[30]; // Expect message (header + body) to occupy exactly 80 bytes
+  char buf[30]; // Expect message (header + body) to occupy exactly 30 bytes
   GenericReplyMsgBody srcMsgBody;
 
   // Marshal entire message (header + body)
@@ -59,7 +59,7 @@ TEST_F(castor_legacymsg_GenericMarshalTest, marshalGenericReplyMsgBody) {
     ASSERT_EQ((uint32_t)30, totalLen);
   }
 
-  // Unmarshall message header
+  // Unmarshal message header
   {
     MessageHeader dstHeader;
     const char *bufPtr = buf;
@@ -73,7 +73,7 @@ TEST_F(castor_legacymsg_GenericMarshalTest, marshalGenericReplyMsgBody) {
     ASSERT_EQ((uint32_t)18, dstHeader.lenOrStatus);
   }
 
-  // Unmarshall message body
+  // Unmarshal message body
   {
     GenericReplyMsgBody dstMsgBody;
 
@@ -84,6 +84,52 @@ TEST_F(castor_legacymsg_GenericMarshalTest, marshalGenericReplyMsgBody) {
     ASSERT_EQ((size_t)0, bufLen);
 
     ASSERT_EQ((uint32_t)1, dstMsgBody.status);
+    ASSERT_EQ(std::string("Error message"), dstMsgBody.errorMessage);
+  }
+}
+
+TEST_F(castor_legacymsg_GenericMarshalTest, marshalGenericErrorReplyMsgBody) {
+  using namespace castor::legacymsg;
+  char buf[26]; // Expect message (header + body) to occupy exactly 26 bytes
+  GenericErrorReplyMsgBody srcMsgBody;
+
+  // Marshal entire message (header + body)
+  {
+    castor::utils::copyString(srcMsgBody.errorMessage, "Error message");
+
+    size_t bufLen = sizeof(buf);
+    size_t totalLen = 0; // Total length of message (header + body)
+
+    const uint32_t srcMagic = 1111;
+    const uint32_t srcReqType = 2222;
+    ASSERT_NO_THROW(totalLen = marshal(buf, bufLen, srcMagic, srcReqType, srcMsgBody));    
+    ASSERT_EQ((uint32_t)26, totalLen);
+  }
+
+  // Unmarshal message header
+  {
+    MessageHeader dstHeader;
+    const char *bufPtr = buf;
+    size_t bufLen = 12; // Length of the message header
+    ASSERT_NO_THROW(unmarshal(bufPtr, bufLen, dstHeader));
+    ASSERT_EQ(buf + 12, bufPtr);
+    ASSERT_EQ((size_t)0, bufLen);
+
+    ASSERT_EQ((uint32_t)1111, dstHeader.magic);
+    ASSERT_EQ((uint32_t)2222, dstHeader.reqType);    
+    ASSERT_EQ((uint32_t)14, dstHeader.lenOrStatus);
+  }
+
+  // Unmarshal message body
+  {
+    GenericErrorReplyMsgBody dstMsgBody;
+
+    const char *bufPtr = buf + 12; // Point at beginning of message body
+    size_t bufLen = 14; // Length of the message body
+    ASSERT_NO_THROW(unmarshal(bufPtr, bufLen, dstMsgBody));
+    ASSERT_EQ(buf + 26, bufPtr);
+    ASSERT_EQ((size_t)0, bufLen);
+
     ASSERT_EQ(std::string("Error message"), dstMsgBody.errorMessage);
   }
 }

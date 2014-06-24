@@ -187,11 +187,11 @@ void castor::tape::tapeserver::daemon::LabelSession::executeLabel() {
     m_log(LOG_INFO, "The drive is ready for labeling", params);
     try {
       labelTheTape(drive.get());
-      m_log(LOG_INFO, "The tape has been successfully labelled", params);
+      m_log(LOG_INFO, "The tape has been successfully labeled", params);
     } catch(castor::tape::tapeFile::TapeNotEmpty & ex) {
       // In case of error
       log::Param params[] = {log::Param("message", ex.getMessage().str())};
-      m_log(LOG_ERR, "The tape could not be labelled", params);
+      m_log(LOG_ERR, "The tape could not be labeled", params);
       try {
         legacymsg::writeTapeReplyMsg(m_timeout, m_labelCmdConnection, 1,
           ex.getMessage().str());

@@ -41,9 +41,10 @@ const unsigned short TAPE_SERVER_ADMIN_LISTENING_PORT = 5011;
 
 /**
  * The TCP/IP port on which the tape server daemon listens for incoming
- * connections from the mount session.
+ * connections from the label command.
  */
-const unsigned short TAPE_SERVER_MOUNTSESSION_LISTENING_PORT = 54321;
+const unsigned short TAPE_SERVER_LABELCMD_LISTENING_PORT = 54321;
+
 /*
  * The port on which ZMQ sockets will bind for internal communication between 
  * motherforker and forked session
