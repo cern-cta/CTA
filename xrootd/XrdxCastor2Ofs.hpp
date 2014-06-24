@@ -20,7 +20,7 @@
  *
  * @author Andreas Peters <apeters@cern.ch>
  * @author Elvin Sindrilaru <esindril.cern.ch>
- * 
+ *
  ******************************************************************************/
 
 #ifndef __XCASTOR_OFS_HH__
@@ -44,84 +44,19 @@
 #include "XrdClient/XrdClientAdmin.hh"
 /*-----------------------------------------------------------------------------*/
 #include "XrdxCastorLogging.hpp"
-#include "XrdTransferManager.hpp"
 /*-----------------------------------------------------------------------------*/
 
 
 //! TpcInfo structure containing informationn about a third-party transfer
 struct TpcInfo
 {
-  std::string path;  ///< castor lfn path
-  time_t expire;     ///< time when entry was created
+  std::string path; ///< castor lfn path
+  time_t expire;    ///< time when entry was created
 };
 
 
-//------------------------------------------------------------------------------
-//! Class XrdxCastor2Ofs2StagerJob
-//------------------------------------------------------------------------------
-class XrdxCastor2Ofs2StagerJob : public LogId
-{
-  public:
-
-    int  ErrCode;         ///< error code
-    XrdOucString ErrMsg;  ///< error message
-
-    //--------------------------------------------------------------------------
-    //! Constructor
-    //!
-    //! @param sjobuuid stager job identifier
-    //! @param port port
-    //!
-    //--------------------------------------------------------------------------
-    XrdxCastor2Ofs2StagerJob( const char* sjobuuid, int port );
-
-
-    //--------------------------------------------------------------------------
-    //! Destructor
-    //--------------------------------------------------------------------------
-    ~XrdxCastor2Ofs2StagerJob();
-
-
-    //--------------------------------------------------------------------------
-    //! Open new connection to the StagerJob
-    //--------------------------------------------------------------------------
-    bool Open();
-
-
-    //--------------------------------------------------------------------------
-    //! Close connection
-    //!
-    //! @param ok ?
-    //! @param update mark that writes were made
-    //!
-    //! @return true if succesful, otherwise false
-    //!
-    //--------------------------------------------------------------------------
-    bool Close( bool ok, bool update );
-
-
-    //--------------------------------------------------------------------------
-    //! Test if connection still alive
-    //--------------------------------------------------------------------------
-    bool StillConnected();
-
-
-    //--------------------------------------------------------------------------
-    //! Get connection status
-    //--------------------------------------------------------------------------
-    inline bool Connected() {
-      return IsConnected;
-    }
-
-  private:
-
-    int Port;              ///<
-    bool IsConnected;      ///<
-    XrdOucString SjobUuid; ///<
-    XrdNetSocket* Socket;  ///<
-    struct timeval to;     ///<
-    fd_set check_set;      ///<
-};
+//~ Forward declaration
+class XrdxCastor2Ofs2StagerJob;
 
 
 //------------------------------------------------------------------------------
@@ -131,13 +66,10 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
 {
   public:
 
-    enum eProcRequest {kProcNone, kProcRead, kProcWrite};
-
-
     //--------------------------------------------------------------------------
     //! Constuctor
     //--------------------------------------------------------------------------
-    XrdxCastor2OfsFile( const char* user, int MonID = 0 );
+    XrdxCastor2OfsFile(const char* user, int MonID = 0);
 
 
     //--------------------------------------------------------------------------
@@ -149,12 +81,12 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
     //--------------------------------------------------------------------------
     //! Open file
     //--------------------------------------------------------------------------
-    int open( const char*         fileName,
-              XrdSfsFileOpenMode  openMode,
-              mode_t              createMode,
-              const XrdSecEntity* client,
-              const char*         opaque = 0 );
-  
+    int open(const char* fileName,
+             XrdSfsFileOpenMode openMode,
+             mode_t createMode,
+             const XrdSecEntity* client,
+             const char* opaque = 0);
+
 
     //--------------------------------------------------------------------------
     //! Close file
@@ -165,125 +97,70 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
     //--------------------------------------------------------------------------
     //! Read from file
     //--------------------------------------------------------------------------
-    int read( XrdSfsFileOffset fileOffset,  // Preread only
-              XrdSfsXferSize   amount );
-
-
-    //--------------------------------------------------------------------------
-    //! Read from file 
-    //--------------------------------------------------------------------------
-    XrdSfsXferSize read( XrdSfsFileOffset fileOffset,
-                         char*            buffer,
-                         XrdSfsXferSize   buffer_size );
+    int read(XrdSfsFileOffset fileOffset,   // Preread only
+             XrdSfsXferSize amount);
 
 
     //--------------------------------------------------------------------------
     //! Read from file
     //--------------------------------------------------------------------------
-    int read( XrdSfsAio* aioparm );
+    XrdSfsXferSize read(XrdSfsFileOffset fileOffset,
+                        char*            buffer,
+                        XrdSfsXferSize   buffer_size);
 
 
     //--------------------------------------------------------------------------
-    //! Write to file 
+    //! Read from file
     //--------------------------------------------------------------------------
-    XrdSfsXferSize write( XrdSfsFileOffset fileOffset,
-                          const char*      buffer,
-                          XrdSfsXferSize   buffer_size );
+    int read(XrdSfsAio* aioparm);
 
 
     //--------------------------------------------------------------------------
-    //! Write to file 
+    //! Write to file
     //--------------------------------------------------------------------------
-    int write( XrdSfsAio* aioparm );
+    XrdSfsXferSize write(XrdSfsFileOffset fileOffset,
+                         const char* buffer,
+                         XrdSfsXferSize buffer_size);
 
 
     //--------------------------------------------------------------------------
-    //! Sync file
+    //! Write to file
     //--------------------------------------------------------------------------
-    int sync();
-
-
-    //--------------------------------------------------------------------------
-    //! Sync file - async 
-    //--------------------------------------------------------------------------
-    int sync( XrdSfsAio* aiop );
-
+    int write(XrdSfsAio* aioparm);
+  
 
     //--------------------------------------------------------------------------
-    //! Truncate file 
-    //--------------------------------------------------------------------------
-    int truncate( XrdSfsFileOffset fileOffset );
-
-
-    //--------------------------------------------------------------------------
-    //! Update meta data - used to inform the manager node that the first byte 
-    //! was written
-    //--------------------------------------------------------------------------
-    int UpdateMeta();
-
-
-    //--------------------------------------------------------------------------
-    //! Unlink file 
+    //! Unlink file
     //--------------------------------------------------------------------------
     int Unlink();
 
 
     //--------------------------------------------------------------------------
-    //! Verify checksum 
+    //! Verify checksum
     //--------------------------------------------------------------------------
     bool VerifyChecksum();
 
 
-    //--------------------------------------------------------------------------
-    //! Do a third party transfer
-    //--------------------------------------------------------------------------
-    int ThirdPartyTransfer( const char*         fileName,
-                            XrdSfsFileOpenMode  openMode,
-                            mode_t              createMode,
-                            const XrdSecEntity* client,
-                            const char*         opaque );
-  
-    //--------------------------------------------------------------------------
-    //! Close third party transfer
-    //--------------------------------------------------------------------------
-    int ThirdPartyTransferClose( const char* uuidstring );
-
-
-    XrdxCastor2Ofs2StagerJob* StagerJob; ///< interface to communicate with stagerjob
-    XrdTransfer* Transfer;               ///<
-    int          StagerJobPid;           ///< pid of an assigned stagerjob
-
-    bool         IsAdminStream;          ///<
-    bool         IsThirdPartyStream;     ///<
-    bool         IsThirdPartyStreamCopy; ///<
-    bool         IsClosed;               ///<
-    time_t       LastMdsUpdate;          ///<
-
   private:
-  
-    int              procRequest;    ///<
-    XrdOucEnv*       envOpaque;      ///<
-    bool             isRW;           ///<
-    bool             isTruncate;     ///<
-    bool             hasWrite;       ///<
-    bool             firstWrite;     ///<
-    bool             isOpen;         ///<
-    bool             viaDestructor;  ///<
-    XrdOucString     reqid;          ///< 
-    XrdOucString     serviceclass;   ///<
-    int              stagerjobport;  ///<
-    XrdOucString     SjobUuid;       ///<
-    XrdOucString     castorlfn;      ///<
-    unsigned int     adler;          ///<
-    bool             hasadler;       ///<
-    bool             hasadlererror;  ///<
-    XrdSfsFileOffset adleroffset;    ///<
-    struct stat      statinfo;       ///<
-    XrdOucString     DiskChecksum;   ///<
-    XrdOucString     DiskChecksumAlgorithm; ///<
-    bool             verifyChecksum; ///<
-    std::string      mTpcKey;        ///< tpc key allocated to this file
-    bool             mIsUpdate;      ///< mark if file is opened for update
+
+    enum eProcRequest {kProcNone, kProcRead, kProcWrite};
+    XrdxCastor2Ofs2StagerJob* mStagerJob; ///< StagerJob object
+    int mProcRequest; ///< Save type of proc request
+    XrdOucEnv* mEnvOpaque; ///< Initial opaque information
+    bool mIsRW; ///< File opened for writing
+    bool mIsTruncate; ///< File is truncated
+    bool mHasWrite; ///< Mark is file has writes
+    bool mViaDestructor; ///< Mark close via destructor - not properly closed
+    XrdOucString mReqId; ///< Request id received from the redirector
+    unsigned int mAdlerXs; ///< Adler checksum
+    bool mHasAdlerErr; ///< Mark if there was an adler error
+    bool mHasAdler; ///< Mark if it has adler xs computed
+    XrdSfsFileOffset mAdlerOffset; ///< Current adler offset 
+    XrdOucString mXsValue; ///< Checksum value
+    XrdOucString mXsType; ///< Checksum type: adler, crc32c etc.
+    bool mIsClosed; ///< TODO: to replace with mIsOpen
+    struct stat mStatInfo; ///< File stat info
+    std::string mTpcKey; ///< tpc key allocated to this file
 };
 
 
@@ -297,13 +174,14 @@ class XrdxCastor2OfsDirectory : public XrdOfsDirectory
     //--------------------------------------------------------------------------
     //! Constructor
     //--------------------------------------------------------------------------
-    XrdxCastor2OfsDirectory( const char* user, int MonID = 0 ) :
-      XrdOfsDirectory( user, MonID )  {};
+    XrdxCastor2OfsDirectory(const char* user, int MonID = 0) :
+      XrdOfsDirectory(user, MonID)  { }
 
+  
     //--------------------------------------------------------------------------
     //! Destructor
     //--------------------------------------------------------------------------
-    virtual ~XrdxCastor2OfsDirectory() {};
+    virtual ~XrdxCastor2OfsDirectory() { }
 };
 
 
@@ -314,7 +192,7 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
 {
     friend class XrdxCastor2OfsDirectory;
     friend class XrdxCastor2OfsFile;
-  
+
   public:
 
     //--------------------------------------------------------------------------
@@ -326,187 +204,252 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
     //--------------------------------------------------------------------------
     //! Destructor
     //--------------------------------------------------------------------------
-    virtual ~XrdxCastor2Ofs() {};
+    virtual ~XrdxCastor2Ofs() {}
 
 
     //--------------------------------------------------------------------------
     //! Configure function
     //--------------------------------------------------------------------------
-    int Configure( XrdSysError& error );
+    int Configure(XrdSysError& error);
 
 
     //--------------------------------------------------------------------------
     //! Create new directory object
     //--------------------------------------------------------------------------
-    XrdSfsDirectory* newDir( char* user = 0, int MonID = 0 ) {
-      return ( XrdSfsDirectory* ) new XrdxCastor2OfsDirectory( user, MonID );
+    XrdSfsDirectory* newDir(char* user = 0, int MonID = 0)
+    {
+      return (XrdSfsDirectory*) new XrdxCastor2OfsDirectory(user, MonID);
     }
 
 
     //--------------------------------------------------------------------------
-    //! Create new file object 
+    //! Create new file object
     //--------------------------------------------------------------------------
-    XrdSfsFile* newFile( char* user = 0, int MonID = 0 ) {
-      return ( XrdSfsFile* ) new XrdxCastor2OfsFile( user, MonID );
-    };
+    XrdSfsFile* newFile(char* user = 0, int MonID = 0)
+    {
+      return (XrdSfsFile*) new XrdxCastor2OfsFile(user, MonID);
+    }
 
 
     //--------------------------------------------------------------------------
-    //!
+    //! Update proc 
     //--------------------------------------------------------------------------
-    bool UpdateProc( const char* name );
+    bool UpdateProc(const char* name);
 
 
-    // *** Here we mask all illegal operations ***
     //--------------------------------------------------------------------------
-    //!
+    //! Chmod - masked
     //--------------------------------------------------------------------------
-    int chmod( const char*         /*Name*/,
-               XrdSfsMode          /*Mode*/,
+    int chmod(const char*         /*Name*/,
+              XrdSfsMode          /*Mode*/,
+              XrdOucErrInfo&      /*out_error*/,
+              const XrdSecEntity* /*client*/,
+              const char*         /*opaque = 0*/)
+    {
+      return SFS_OK;
+    }
+
+
+    //--------------------------------------------------------------------------
+    //! Exists - masked
+    //--------------------------------------------------------------------------
+    int exists(const char*          /*fileName*/,
+               XrdSfsFileExistence& /*exists_flag*/,
+               XrdOucErrInfo&       /*out_error*/,
+               const XrdSecEntity*  /*client*/,
+               const char*          /*opaque = 0*/)
+    {
+      return SFS_OK;
+    }
+
+
+    //--------------------------------------------------------------------------
+    //! fsctl - masked
+    //--------------------------------------------------------------------------
+    int fsctl(const int           /*cmd*/,
+              const char*         /*args*/,
+              XrdOucErrInfo&      /*out_error*/,
+              const XrdSecEntity* /*client*/)
+    {
+      return SFS_OK;
+    }
+
+
+    //--------------------------------------------------------------------------
+    //! Mkdir - masked
+    //--------------------------------------------------------------------------
+    int mkdir(const char*         /*dirName*/,
+              XrdSfsMode          /*Mode*/,
+              XrdOucErrInfo&      /*out_error*/,
+              const XrdSecEntity* /*client*/,
+              const char*         /*opaque = 0*/)
+    {
+      return SFS_OK;
+    }
+
+
+    //--------------------------------------------------------------------------
+    //! prepare - masked
+    //--------------------------------------------------------------------------
+    int prepare(XrdSfsPrep&         /*pargs*/,
+                XrdOucErrInfo&      /*out_error*/,
+                const XrdSecEntity* /*client = 0*/)
+    {
+      return SFS_OK;
+    }
+
+
+    //--------------------------------------------------------------------------
+    //! remdir - masked
+    //--------------------------------------------------------------------------
+    int remdir(const char*         /*dirName*/,
                XrdOucErrInfo&      /*out_error*/,
                const XrdSecEntity* /*client*/,
-               const char*         /*opaque = 0*/ ) { return SFS_OK; }
+               const char*         /*info = 0*/)
+    {
+      return SFS_OK;
+    }
 
 
     //--------------------------------------------------------------------------
-    //!
+    //! rename - masked
     //--------------------------------------------------------------------------
-    int exists( const char*          /*fileName*/,
-                XrdSfsFileExistence& /*exists_flag*/,
-                XrdOucErrInfo&       /*out_error*/,
-                const XrdSecEntity*  /*client*/,
-                const char*          /*opaque = 0*/ ) { return SFS_OK; }
-
-
-    //--------------------------------------------------------------------------
-    //!
-    //--------------------------------------------------------------------------
-    int fsctl( const int           /*cmd*/,
-               const char*         /*args*/,
-               XrdOucErrInfo&      /*out_error*/,
-               const XrdSecEntity* /*client*/ ) { return SFS_OK; }
-
-
-    //--------------------------------------------------------------------------
-    //!
-    //--------------------------------------------------------------------------
-    int mkdir( const char*         /*dirName*/,
-               XrdSfsMode          /*Mode*/,
+    int rename(const char*         /*oldFileName*/,
+               const char*         /*newFileName*/,
                XrdOucErrInfo&      /*out_error*/,
                const XrdSecEntity* /*client*/,
-               const char*         /*opaque = 0*/ ) { return SFS_OK; }
+               const char*         /*infoO = 0*/,
+               const char*         /*infoN = 0*/)
+    {
+      return SFS_OK;
+    }
 
 
     //--------------------------------------------------------------------------
-    //!
+    //! Remove file - masked
     //--------------------------------------------------------------------------
-    int prepare( XrdSfsPrep&         /*pargs*/,
-                 XrdOucErrInfo&      /*out_error*/,
-                 const XrdSecEntity* /*client = 0*/ ) { return SFS_OK; }
+    int rem(const char* path,
+            XrdOucErrInfo& out_error,
+            const XrdSecEntity* client,
+            const char* info = 0)
+    {
+      return SFS_OK;
+    }
 
 
     //--------------------------------------------------------------------------
-    //!
+    //! Stat - masked
     //--------------------------------------------------------------------------
-    int remdir( const char*         /*dirName*/,
-                XrdOucErrInfo&      /*out_error*/,
-                const XrdSecEntity* /*client*/,
-                const char*         /*info = 0*/ ) { return SFS_OK; }
-
-
-    //--------------------------------------------------------------------------
-    //!
-    //--------------------------------------------------------------------------
-    int rename( const char*         /*oldFileName*/,
-                const char*         /*newFileName*/,
-                XrdOucErrInfo&      /*out_error*/,
-                const XrdSecEntity* /*client*/,
-                const char*         /*infoO = 0*/,
-                const char*         /*infoN = 0*/ ) { return SFS_OK; }
-
-
-    //--------------------------------------------------------------------------
-    //!
-    //--------------------------------------------------------------------------
-    int rem( const char*         path,
-             XrdOucErrInfo&      out_error,
+    int stat(const char* Name,
+             struct stat* buf,
+             XrdOucErrInfo& out_error,
              const XrdSecEntity* client,
-             const char*         info = 0 );
+             const char* opaque = 0)
+    {
+      return SFS_OK;
+    }
 
 
-    //--------------------------------------------------------------------------
-    //! This function we needs to work without authorization
-    //--------------------------------------------------------------------------
-    int stat( const char*         Name,
-              struct stat*        buf,
-              XrdOucErrInfo&      out_error,
-              const XrdSecEntity* client,
-              const char*         opaque = 0 );
-
-
-
-    //--------------------------------------------------------------------------
-    //! This function deals with plugin calls
-    //--------------------------------------------------------------------------
-    int FSctl( int, XrdSfsFSctl&, XrdOucErrInfo&, const XrdSecEntity* );
-
-
-    //--------------------------------------------------------------------------
-    //!
-    //--------------------------------------------------------------------------
-    void ThirdPartySetup( const char* transferdirectory, int slots, int rate );
-
-
-    //--------------------------------------------------------------------------
-    //!
-    //--------------------------------------------------------------------------
-    void ThirdPartyCleanupOnRestart();
-
-
-    XrdOucHash<XrdOucString> FileNameMap;    ///< keeping the mapping LFN->PFN for open files
-    XrdSysMutex         FileNameMapLock;     ///< protecting the MAP hash for LFN->PFN
-
-    XrdOucString        Procfilesystem;      ///< location of the proc file system directory
-    bool                ProcfilesystemSync;  ///< sync every access on disk
-
-    XrdSysError*        Eroute;
-    const char*         LocalRoot;           ///< we need this to write /proc variables directly to the FS
-
-    bool                doChecksumStreaming; ///<
-    bool                doChecksumUpdates;   ///<
-    bool                doPOSC;              ///<
-
-    bool                ThirdPartyCopy;               ///< default from Configure
-    int                 ThirdPartyCopySlots;          ///< default from Configure
-    int                 ThirdPartyCopySlotRate;       ///< default from Configure
-    XrdOucString        ThirdPartyCopyStateDirectory; ///< default from Configure
-    int                 mLogLevel; ///< log level from configuration file
-
-    XrdSysMutex mTpcMapMutex;  ///< mutex to protect access to the TPC map
-    std::map<std::string, struct TpcInfo> mTpcMap;  ///< TPC map of kety to lfn 
+    XrdSysError* Eroute; ///< Error object
+    bool doPOSC; ///< 'Persistency on successful close' flag
+    int mLogLevel; ///< log level from configuration file
+    XrdOucString mProcFs; ///< location of the proc file system directory
+    XrdSysMutex mTpcMapMutex; ///< mutex to protect access to the TPC map
+    std::map<std::string, struct TpcInfo> mTpcMap; ///< TPC map of kety to lfn
 
   private:
 
-
-    vecString procUsers;   ///< vector of users ( reduced tidents <user>@host 
-                           ///< which can write into /proc )
+    vecString procUsers; ///< vector of users ( reduced tidents <user>@host
+                         ///< which can write into /proc )
 
     //--------------------------------------------------------------------------
     //! Write values to the /proc file system - source in XrdxCastor2OfsProc.cc
+    //! @param name variable name
+    //! @param value variable value
+    //!
+    //! @return True if successful, otherwise false.
     //--------------------------------------------------------------------------
-    bool Write2ProcFile( const char* name, long long value );
+    bool Write2ProcFile(const char* name, long long value);
 
 
     //--------------------------------------------------------------------------
     //! Read values out of the /proc file system
+    //!
+    //! @param entryname name of the variable to be read
+    //!
+    //! @return True if successful, otherwise false.
     //--------------------------------------------------------------------------
-    bool ReadAllProc();
+    bool ReadFromProc(const char* entryname);
+};
+
+
+//------------------------------------------------------------------------------
+//! Class XrdxCastor2Ofs2StagerJob
+//------------------------------------------------------------------------------
+class XrdxCastor2Ofs2StagerJob : public LogId
+{
+  public:
+
+    int ErrCode; ///< error code
+    XrdOucString ErrMsg; ///< error message
+
+    //--------------------------------------------------------------------------
+    //! Constructor
+    //!
+    //! @param sjobuuid stager job identifier
+    //! @param port port
+    //!
+    //--------------------------------------------------------------------------
+    XrdxCastor2Ofs2StagerJob(const char* sjobuuid, int port);
 
 
     //--------------------------------------------------------------------------
-    //! Read values out of the /proc file system
+    //! Destructor
     //--------------------------------------------------------------------------
-    bool ReadFromProc( const char* entryname );
+    ~XrdxCastor2Ofs2StagerJob();
+
+
+    //--------------------------------------------------------------------------
+    //! Open new connection to the StagerJob
+    //!
+    //! @return True if successful, otherwise false.
+    //--------------------------------------------------------------------------
+    bool Open();
+
+
+    //--------------------------------------------------------------------------
+    //! Close connection
+    //!
+    //! @param ok ?
+    //! @param update mark that writes were made
+    //!
+    //! @return true if succesful, otherwise false
+    //--------------------------------------------------------------------------
+    bool Close(bool ok, bool update);
+
+
+    //--------------------------------------------------------------------------
+    //! Test if connection still alive
+    //!
+    //! @return True if still connected, otherwise false.
+    //--------------------------------------------------------------------------
+    bool StillConnected();
+
+
+    //--------------------------------------------------------------------------
+    //! Get connection status
+    //--------------------------------------------------------------------------
+    inline bool Connected() const
+    {
+      return mIsConnected;
+    }
+
+  private:
+
+    int mPort; ///< port number where stager job is listening
+    XrdOucString mSjobUuid; ///< stager job uuid
+    XrdNetSocket* mSocket; ///< socket object user for connection to sjob
+    bool mIsConnected; ///< true when connected to sjob
 };
 
 extern XrdxCastor2Ofs* gSrv; ///< global diskserver OFS handle

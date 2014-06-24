@@ -43,7 +43,7 @@ extern XrdOucTrace OfsTrace;
     else {                                  \
       char line[4096];                      \
       if ((fscanf(fp,"%s",line)) != 1)      \
-  _val_=-1;                                 \
+        _val_=-1;                           \
       _val_=strtoll(line,(char**)NULL,0);   \
       fclose(fp);                           \
     }                                       \
@@ -53,15 +53,15 @@ extern XrdOucTrace OfsTrace;
 //------------------------------------------------------------------------------
 // Write value to file
 //------------------------------------------------------------------------------
-#define WRITELONGLONGTOFILE(_name_,_val_)   \
-  do {                                      \
-    FILE* fp = fopen(_name_,"w+");          \
-    if (!fp)                                \
-      _val_=-1;                             \
-    else {                                  \
-      _val_ = (int) fprintf(fp,"%lld\n",(long long)_val_);\
-       fclose(fp);                          \
-    }                                       \
+#define WRITELONGLONGTOFILE(_name_,_val_)                  \
+  do {                                                     \
+    FILE* fp = fopen(_name_,"w+");                         \
+    if (!fp)                                               \
+      _val_=-1;                                            \
+    else {                                                 \
+      _val_ = (int) fprintf(fp,"%lld\n",(long long)_val_); \
+       fclose(fp);                                         \
+    }                                                      \
   } while (0);
 
 
@@ -73,7 +73,7 @@ bool
 XrdxCastor2Ofs::Write2ProcFile( const char* name, long long val )
 {
   XrdOucString procname;
-  procname = Procfilesystem;
+  procname = mProcFs;
   procname += "proc/";
   procname += name;
   //  printf("Writing %s => %lld\n",procname.c_str(),val);
@@ -92,50 +92,10 @@ XrdxCastor2Ofs::UpdateProc( const char* inname )
   modname.assign( modname, modname.find( "/proc" ) );
   const char* name = modname.c_str();
 
-  if ( ThirdPartyCopy ) {
-    if ( !strcmp( name, "/proc/thirdpartycopyslots" ) ) {
-      return Write2ProcFile( "thirdpartycopyslots", ( long long )ThirdPartyCopySlots );
-    }
-
-    if ( !strcmp( name, "/proc/thirdpartycopyslotrate" ) ) {
-      return Write2ProcFile( "thirdpartycopyslotrate", ( long long )ThirdPartyCopySlotRate );
-    }
-  }
-
-  if ( !strcmp( name, "/proc/trace" ) ) {
+  if (!strcmp(name, "/proc/trace") || !strcmp(name, "*"))
     return true;
-  }
-
-  if ( !strcmp( name, "*" ) ) {
-    bool result = true;
-
-    if ( ThirdPartyCopy ) {
-      result *= Write2ProcFile( "thirdpartycopyslots", ThirdPartyCopySlots );
-      result *= Write2ProcFile( "thirdpartycopyslotrate", ThirdPartyCopySlotRate );
-    }
-
-    return result;
-  }
-
-  return false;
-}
-
-
-//------------------------------------------------------------------------------
-// Read all values from proc
-//------------------------------------------------------------------------------
-bool
-XrdxCastor2Ofs::ReadAllProc()
-{
-  bool result = true;
-
-  if ( ThirdPartyCopy ) {
-    if ( !ReadFromProc( "thirdpartycopyslots" ) ) result = false;
-    if ( !ReadFromProc( "thirdpartycopyslotrate" ) ) result = false;
-  }
-
-  ReadFromProc( "trace" );
-  return result;
+  else
+    return false;
 }
 
 
@@ -145,7 +105,7 @@ XrdxCastor2Ofs::ReadAllProc()
 bool
 XrdxCastor2Ofs::ReadFromProc( const char* entryname )
 {
-  XrdOucString procname = Procfilesystem;
+  XrdOucString procname = mProcFs;
   XrdOucString oucentry = entryname;
   long long val = 0;
   procname += "proc/";
@@ -156,17 +116,7 @@ XrdxCastor2Ofs::ReadFromProc( const char* entryname )
   if ( val == -1 )
     return false;
 
-  if ( oucentry == "thirdpartycopyslots" ) {
-    ThirdPartyCopySlots = ( unsigned int )val;
-    return true;
-  }
-
-  if ( oucentry == "thirdpartycopyslotrate" ) {
-    ThirdPartyCopySlotRate = ( unsigned int ) val;
-    return true;
-  }
-
-  if ( oucentry == "trace" ) {
+  if (oucentry == "trace") {
     OfsTrace.What = val;
     return true;
   }

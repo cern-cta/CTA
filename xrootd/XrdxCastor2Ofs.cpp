@@ -20,7 +20,7 @@
  *
  * @author Andreas Peters <apeters@cern.ch>
  * @author Elvin Sindrilaru <esindril@cern.ch>
- * 
+ *
  ******************************************************************************/
 
 /*-----------------------------------------------------------------------------*/
@@ -32,8 +32,8 @@
 #include "h/serrno.h"
 #include <string.h>
 /*----------------------------------------------------------------------------*/
+#include "XrdVersion.hh"
 #include "XrdAcc/XrdAccAuthorize.hh"
-#include "XrdOfs/XrdOfsTrace.hh"
 #include "XrdOfs/XrdOfs.hh"
 #include "XrdSfs/XrdSfsAio.hh"
 #include "XrdSys/XrdSysDNS.hh"
@@ -54,8 +54,7 @@ XrdxCastor2Ofs* gSrv; ///< global diskserver OFS handle
 extern XrdOfs*     XrdOfsFS;
 extern XrdSysError OfsEroute;
 extern XrdOssSys*  XrdOfsOss;
-extern XrdOss*     XrdOssGetSS( XrdSysLogger*, const char*, const char* );
-extern XrdOucTrace OfsTrace;
+extern XrdOss*     XrdOssGetSS(XrdSysLogger*, const char*, const char*);
 
 XrdVERSIONINFO(XrdSfsGetFileSystem, xCastor2Ofs);
 
@@ -64,20 +63,19 @@ XrdVERSIONINFO(XrdSfsGetFileSystem, xCastor2Ofs);
 //------------------------------------------------------------------------------
 extern "C"
 {
-  XrdSfsFileSystem* XrdSfsGetFileSystem( XrdSfsFileSystem* native_fs,
-                                         XrdSysLogger*     lp,
-                                         const char*       configfn )
+  XrdSfsFileSystem* XrdSfsGetFileSystem(XrdSfsFileSystem* native_fs,
+                                        XrdSysLogger*     lp,
+                                        const char*       configfn)
   {
     static XrdxCastor2Ofs myFS;
     // Do the herald thing
-    OfsEroute.SetPrefix( "castor2ofs_" );
-    OfsEroute.logger( lp );
-    OfsEroute.Say( "++++++ (c) 2008 CERN/IT-DM-SMD ",
-                   "xCastor2Ofs (extended Castor2 File System) v 1.0" );
-
+    OfsEroute.SetPrefix("castor2ofs_");
+    OfsEroute.logger(lp);
+    OfsEroute.Say("++++++ (c) 2008 CERN/IT-DM-SMD ",
+                  "xCastor2Ofs (extended Castor2 File System) v 1.0");
     // Initialize the subsystems
     gSrv = &myFS;
-    gSrv->ConfigFN = ( configfn && *configfn ? strdup( configfn ) : 0 );
+    gSrv->ConfigFN = (configfn && *configfn ? strdup(configfn) : 0);
 
     if (gSrv->Configure(OfsEroute)) return 0;
 
@@ -95,374 +93,159 @@ extern "C"
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-XrdxCastor2Ofs::XrdxCastor2Ofs(): 
-  LogId()
-{
-  mLogLevel = LOG_INFO; // log info
-}
+XrdxCastor2Ofs::XrdxCastor2Ofs():
+  XrdOfs(),
+  LogId(),
+  mLogLevel(LOG_INFO)
+{ }
 
 
 //------------------------------------------------------------------------------
 // Configure
 //------------------------------------------------------------------------------
-int XrdxCastor2Ofs::Configure( XrdSysError& Eroute )
+int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
 {
   char* var;
   const char* val;
   int  cfgFD;
-
   // Extract the manager from the config file
-  XrdOucStream config_stream( &Eroute, getenv( "XRDINSTANCE" ) );
-  doChecksumStreaming = true;
-  doChecksumUpdates   = false;
+  XrdOucStream config_stream(&Eroute, getenv("XRDINSTANCE"));
   doPOSC = false;
-  ThirdPartyCopy = true;
-  ThirdPartyCopySlots = 5;
-  ThirdPartyCopySlotRate = 25;
-  ThirdPartyCopyStateDirectory = "/var/log/xrootd/server/transfer";
-  Procfilesystem = "/tmp/xcastor2-ofs/";
-  ProcfilesystemSync = false;
+  mProcFs = "/tmp/xcastor2-ofs/";
 
-  if ( !ConfigFN || !*ConfigFN ) {
-    // This error will be reported by XrdOfsFS->Configure
-  } else {
+  if (ConfigFN && *ConfigFN)
+  {
     // Try to open the configuration file.
-    if ( ( cfgFD = open( ConfigFN, O_RDONLY, 0 ) ) < 0 ) {
-      return Eroute.Emsg( "Config", errno, "open config file fn=", ConfigFN );
-    }
-
-    config_stream.Attach( cfgFD );
-   
+    if ((cfgFD = open(ConfigFN, O_RDONLY, 0)) < 0)
+      return Eroute.Emsg("Config", errno, "open config file fn=", ConfigFN);
+    
+    config_stream.Attach(cfgFD);
+    
     // Now start reading records until eof.
-    while ( ( var = config_stream.GetMyFirstWord() ) ) {
-      if ( !strncmp( var, "xcastor2.", 9 ) ) {
+    while ((var = config_stream.GetMyFirstWord()))
+    {
+      if (!strncmp(var, "xcastor2.", 9))
+      {
         var += 9;
-
+        
         // Get the debug level
-        if ( !strcmp( "loglevel", var ) ) {
-          if ( !( val = config_stream.GetWord() ) ) {
-            Eroute.Emsg( "Config", "argument for debug level invalid set to INFO." );
+        if (!strcmp("loglevel", var))
+        {
+          if (!(val = config_stream.GetWord()))
+          {
+            Eroute.Emsg("Config", "argument for debug level invalid set to INFO.");
             mLogLevel = LOG_INFO;
-          } else {
+          }
+          else
+          {
             std::string str_val(val);
-            if (isdigit(str_val[0])) {
-              // The level is given as a number 
+
+            // Loglevel can be a number or a string 
+            if (isdigit(str_val[0]))
               mLogLevel = atoi(val);
-            }
-            else {
-              // The level is given as a string
+            else
               mLogLevel = Logging::GetPriorityByString(val);
-            }
+
             Logging::SetLogPriority(mLogLevel);
-            Eroute.Say( "=====> xcastor2.loglevel: ", 
-                        Logging::GetPriorityString(mLogLevel), "" );
+            Eroute.Say("=====> xcastor2.loglevel: ",
+                       Logging::GetPriorityString(mLogLevel), "");
           }
         }
 
-        // Get any debug filter name 
-        if ( !strcmp( "debugfilter", var ) ) {
-          if ( !( val = config_stream.GetWord() ) ) {
-            Eroute.Emsg( "Config", "argument for debug filter invalid set to none." );
-          } else {
+        // Get any debug filter name
+        if (!strcmp("debugfilter", var))
+        {
+          if (!(val = config_stream.GetWord()))
+          {
+            Eroute.Emsg("Config", "argument for debug filter invalid set to none.");
+          }
+          else
+          {
             Logging::SetFilter(val);
-            Eroute.Say( "=====> xcastor2.debugfileter: ", val, "" );
+            Eroute.Say("=====> xcastor2.debugfileter: ", val, "");
           }
         }
 
-        if ( !strcmp( "procuser", var ) ) {
-          if ( ( val = config_stream.GetWord() ) ) {
+        if (!strcmp("procuser", var))
+        {
+          if ((val = config_stream.GetWord()))
+          {
             XrdOucString sval = val;
-            procUsers.Push_back( sval );
+            procUsers.Push_back(sval);
           }
         }
 
-        if ( !strcmp( "posc", var ) ) {
-          if ( ( val = config_stream.GetWord() ) ) {
+        if (!strcmp("posc", var))
+        {
+          if ((val = config_stream.GetWord()))
+          {
             XrdOucString sval = val;
 
-            if ( ( sval == "true" ) || ( sval == "1" ) || ( sval == "yes" ) ) {
+            if ((sval == "true") || (sval == "1") || (sval == "yes"))
               doPOSC = true;
-            }
           }
         }
 
-        if ( !strcmp( "checksum", var ) ) {
-          if ( ( val = config_stream.GetWord() ) ) {
-            XrdOucString sval = val;
-
-            if ( sval == "always" ) {
-              doChecksumStreaming = true;
-              doChecksumUpdates   = true;
-            } 
-            else if ( sval == "never" ) {
-              doChecksumStreaming = false;
-              doChecksumUpdates   = false;
-            } 
-            else if ( sval == "streaming" ) {
-              doChecksumStreaming = true;
-              doChecksumUpdates   = false;
-            } else {
-              Eroute.Emsg( "Config", "argument for checksum invalid. Specify"
-                           " xcastor2.checksum [always|never|streaming]" );
-              exit( -1 );
-            }
+        if (!strcmp("proc", var))
+        {
+          if (!(val = config_stream.GetWord()))
+          {
+            Eroute.Emsg("Config", "argument for proc invalid");
+            exit(-1);
           }
-        }
+          else
+          {
+            mProcFs = val;
 
-        if ( !strcmp( "proc", var ) ) {
-          if ( !( val = config_stream.GetWord() ) ) {
-            Eroute.Emsg( "Config", "argument for proc invalid." );
-            exit( -1 );
-          } else {
-            Procfilesystem = val;
+            while (mProcFs.replace("//", "/")) {}
 
-            if ( ( val = config_stream.GetWord() ) ) {
-              if ( ( !strcmp( val, "sync" ) ) || ( !strcmp( val, "async" ) ) ) {
-                if ( !strcmp( val, "sync" ) ) ProcfilesystemSync = true;
-                if ( !strcmp( val, "async" ) ) ProcfilesystemSync = false;
-              } else {
-                Eroute.Emsg( "Config", "argument for proc invalid. Specify xcastor2.proc <path> [sync|async]" );
-                exit( -1 );
-              }
-            }
-
-            while ( Procfilesystem.replace( "//", "/" ) ) {}
-
-            if ( ProcfilesystemSync ) {
-              Eroute.Say( "=====> xcastor2.proc: ", Procfilesystem.c_str(), " sync" );
-            }
-            else {
-              Eroute.Say( "=====> xcastor2.proc: ", Procfilesystem.c_str(), " async" );
-            }
-          }
-        }
-
-        if ( !strcmp( "thirdparty", var ) ) {
-          if ( ( val = config_stream.GetWord() ) ) {
-            if ( ( !strcmp( val, "1" ) ) || 
-                 ( !strcmp( val, "yes" ) ) || 
-                 ( !strcmp( val, "true" ) ) ) 
-            {
-              ThirdPartyCopy = true;
-            }  else {
-              ThirdPartyCopy = false;
-            }
-          }
-        }
-
-        if ( !strcmp( "thirdparty.slots", var ) ) {
-          if ( ( val = config_stream.GetWord() ) ) {
-            int slots = atoi( val );
-            if ( slots < 1 )   slots = 1;
-            if ( slots > 128 ) slots = 128;
-            ThirdPartyCopySlots = slots;
-          }
-        }
-
-        if ( !strcmp( "thirdparty.slotrate", var ) ) {
-          if ( ( val = config_stream.GetWord() ) ) {
-            int rate = atoi( val );
-            if ( rate < 1 ) rate = 1;
-            ThirdPartyCopySlotRate = rate;
-          }
-        }
-
-        if ( !strcmp( "thirdparty.statedirectory", var ) ) {
-          if ( ( val = config_stream.GetWord() ) ) {
-            ThirdPartyCopyStateDirectory = val;
+            Eroute.Say("=====> xcastor2.proc: ", mProcFs.c_str());
           }
         }
       }
     }
-
     config_stream.Close();
   }
 
-  XrdOucString makeProc;
-  makeProc = "mkdir -p ";
-  makeProc += Procfilesystem;
-  makeProc += "/proc";
-#ifdef XFS_SUPPORT
-  makeProc += "/xfs";
-#endif
-  makeProc += "; chown stage.st ";
-  makeProc += Procfilesystem;
-  makeProc += "/proc";
-  system( makeProc.c_str() );
-
-  if ( access( Procfilesystem.c_str(), R_OK | W_OK ) ) {
-    Eroute.Emsg( "Config", "Cannot use given third proc directory ", Procfilesystem.c_str() );
-    exit( -1 );
-  }
-
-  if (ThirdPartyCopy) {
-    XrdOucString makeStateDirectory;
-    makeStateDirectory = "mkdir -p ";
-    makeStateDirectory += ThirdPartyCopyStateDirectory.c_str();
-    makeStateDirectory += "; chown stage.st ";
-    makeStateDirectory += ThirdPartyCopyStateDirectory.c_str();
-    system( makeStateDirectory.c_str() );
-
-    if ( access( ThirdPartyCopyStateDirectory.c_str(), R_OK | W_OK ) ) {
-      Eroute.Emsg( "Config", "Cannot use given third party state directory ", 
-                   ThirdPartyCopyStateDirectory.c_str() );
-      exit( -1 );
-    }
-
-    // Set the configuration values
-    ThirdPartySetup(ThirdPartyCopyStateDirectory.c_str(), 
-                    ThirdPartyCopySlots, ThirdPartyCopySlotRate);
-    XrdxCastor2Ofs::ThirdPartyCleanupOnRestart();
-  }
-
-  for ( int i = 0; i < procUsers.GetSize(); i++ ) {
-    Eroute.Say( "=====> xcastor2.procuser: ", procUsers[i].c_str() );
-  }
-
-  if ( doPOSC ) {
-    Eroute.Say( "=====> xcastor2.posc: yes", "", "" );
-  } else {
-    Eroute.Say( "=====> xcastor2.posc: no ", "", "" );
-  }
-
-  if ( ThirdPartyCopy ) {
-    Eroute.Say( "=====> xcastor2.thirdparty: yes", "", "" );
-    XrdOucString slots = "";
-    slots += ThirdPartyCopySlots;
-    Eroute.Say( "=====> xcastor2.thirdparty.slots: ", slots.c_str(), "" );
-    XrdOucString rate = "";
-    rate += ThirdPartyCopySlotRate;
-    rate += " Mb/s";
-    Eroute.Say( "=====> xcastor2.thirdparty.rate: ", rate.c_str(), "" );
-    Eroute.Say( "=====> xcastor2.thirdparty.statedirectory: ", ThirdPartyCopyStateDirectory.c_str() );
-  } else {
-    Eroute.Say( "=====> xcastor2.thirdparty: no ", "", "" );
-  }
-
-  // Setup the circular in-memory logging buffer  
+  // Setup the circular in-memory logging buffer
   XrdOucString unit = "rdr@";
   unit += XrdSysDNS::getHostName();
   unit += ":1094";
-
   Logging::Init();
-  Logging::SetLogPriority( mLogLevel );
-  Logging::SetUnit( unit.c_str() );
-  xcastor_info( "info=\"logging configured\" " );
+  Logging::SetLogPriority(mLogLevel);
+  Logging::SetUnit(unit.c_str());
+  xcastor_info("info=\"logging configured\" ");
+
+  // Create the /proc/ directory
+  std::ostringstream oss;
+  oss << "mkdir -p " << mProcFs << "/proc";
+#ifdef XFS_SUPPORT
+  oss << "/xfs";
+#endif // XFS_SUPPORT
+  oss << "; chown stage.st " << mProcFs << "/proc" << std::endl;
+  system(oss.str().c_str());
+          
+  if (access(mProcFs.c_str(), R_OK | W_OK))
+  {
+    Eroute.Emsg("Config", "Cannot use given proc directory ", mProcFs.c_str());
+    exit(-1);
+  }
+
+  for (int i = 0; i < procUsers.GetSize(); i++)
+    Eroute.Say("=====> xcastor2.procuser: ", procUsers[i].c_str(), "");
+
+  Eroute.Say("=====> xcastor2.posc: ", (doPOSC ? "yes" : "no"), "");
 
   // Read in /proc variables at startup time to reset to previous values
-  ReadAllProc();
-  UpdateProc( "*" );
-  ReadAllProc();
-  int rc = XrdOfs::Configure( Eroute );
-  
-  // We need to set the effective user for all the XrdClient's used to issue 
-  // 'prepares' to redirectors or third-party transfers
-  setenv( "XrdClientEUSER", "stage", 1 );
+  ReadFromProc("trace");
+  UpdateProc("*");
+  ReadFromProc("trace");
+  int rc = XrdOfs::Configure(Eroute);
+
+  // Set the effective user for all the XrdClients used to issue 'prepares' 
+  // to redirector
+  setenv("XrdClientEUSER", "stage", 1);
   return rc;
-}
-
-
-//------------------------------------------------------------------------------
-// Remove
-//------------------------------------------------------------------------------
-int
-XrdxCastor2Ofs::rem( const char*         path,
-                     XrdOucErrInfo&      error,
-                     const XrdSecEntity* /*client*/,
-                     const char*         /*info*/ )
-{
-  const char* tident = error.getErrUser();
-  bool allowed = false;
-  XrdOucString reducedTident, user, stident;
-  reducedTident = "";
-  user = "";
-  stident = tident;
-  int dotpos = stident.find( "." );
-  reducedTident.assign( tident, 0, dotpos - 1 );
-  reducedTident += "@";
-  int atpos  = stident.find( "@" );
-  user.assign( tident, atpos + 1 );
-  reducedTident += user;
-
-  for ( int i = 0 ; i < procUsers.GetSize(); i++ ) {
-    if (procUsers[i] == reducedTident) {
-      allowed = true;
-      break;
-    }
-  }
-
-  if ( !allowed ) {
-    return Emsg( "rem", error, EPERM, "allow access to unlink", path );
-  }
-
-  if ( unlink( path ) ) {
-    // We don't report deletion of a not existing file as error
-    if ( errno != ENOENT ) {
-      return Emsg( "rem", error, errno, "remove", path );
-    }
-  }
-
-  XrdOfsHandle::Hide( path );
-  return SFS_OK;
-}
-
-
-//------------------------------------------------------------------------------
-// Stat
-//------------------------------------------------------------------------------
-int
-XrdxCastor2Ofs::stat( const char*         Name,
-                      struct stat*        buf,
-                      XrdOucErrInfo&      /*out_error*/,
-                      const XrdSecEntity* /*client*/,
-                      const char*         /*opaque*/ )
-{
-  int fd = ::open( "/etc/castor/status", O_RDONLY );
-
-  if ( fd ) {
-    char buffer[4096];
-    int nread = ::read( fd, buffer, 4095 );
-
-    if ( nread > 0 ) {
-      buffer[nread] = 0;
-      XrdOucString status = buffer;
-
-      if ( ( status.find( "DiskServerStatus=DISKSERVER_PRODUCTION" ) ) == STR_NPOS ) {
-        close( fd );
-        return SFS_ERROR;
-      }
-
-      int fpos = 1;
-      XrdOucString name = Name;
-
-      while ( ( fpos = name.find( "/", fpos ) ) != STR_NPOS ) {
-        XrdOucString fsprod;
-        fsprod.assign( name, 0, fpos - 1 );
-        XrdOucString tag1 = fsprod;
-        tag1 += "=FILESYSTEM_PRODUCTION";
-        XrdOucString tag2 = fsprod;
-        tag2 += "/";
-        tag2 += "=FILESYSTEM_PRODUCTION";
-
-        if ( ( status.find( tag1 ) != STR_NPOS ) || ( status.find( tag2 ) != STR_NPOS ) ) {
-          // yes in production
-          break;
-        }
-
-        fpos++;
-      }
-
-      if ( fpos == STR_NPOS ) {
-        close( fd );
-        return SFS_ERROR;
-      }
-    }
-
-    close( fd );
-  }
-
-  if ( !::stat( Name, buf ) ) return SFS_OK;
-  else return SFS_ERROR;
 }
 
 
@@ -474,37 +257,25 @@ XrdxCastor2Ofs::stat( const char*         Name,
 //------------------------------------------------------------------------------
 // Constuctor
 //------------------------------------------------------------------------------
-XrdxCastor2OfsFile::XrdxCastor2OfsFile( const char* user, int MonID ) :
-  XrdOfsFile( user, MonID )
+XrdxCastor2OfsFile::XrdxCastor2OfsFile(const char* user, int MonID) :
+    XrdOfsFile(user, MonID),
+    mStagerJob(NULL),
+    mProcRequest(kProcNone),
+    mEnvOpaque(NULL),
+    mIsRW(false),
+    mIsTruncate(false),
+    mHasWrite(false),
+    mViaDestructor(false),
+    mReqId("0"),
+    mHasAdlerErr(false),
+    mHasAdler(true),
+    mAdlerOffset(0),
+    mXsValue(""),
+    mXsType(""),
+    mIsClosed(false),
+    mTpcKey("")
 {
-  envOpaque = NULL;
-  IsAdminStream = false;
-  IsThirdPartyStream = false;
-  IsThirdPartyStreamCopy = false;
-  firstWrite = true;
-  hasWrite = false;
-  serviceclass = "none";
-  reqid = "0";
-  hasadler = 1;
-  adler = adler32( 0L, Z_NULL, 0 );
-  adleroffset = 0;
-  DiskChecksum = "";
-  DiskChecksumAlgorithm = "";
-  verifyChecksum = true;
-  hasadlererror = false;
-  castorlfn = "";
-  Transfer = 0;
-  StagerJobPid = 0;
-  IsClosed = false;
-  StagerJob = 0;
-  SjobUuid = "";
-  stagerjobport = 0;
-  isOpen = false;
-  isRW = false;
-  isTruncate = false;
-  viaDestructor = false;
-  mTpcKey = "";
-  mIsUpdate = false;
+  mAdlerXs = adler32(0L, Z_NULL, 0);
 }
 
 
@@ -513,506 +284,338 @@ XrdxCastor2OfsFile::XrdxCastor2OfsFile( const char* user, int MonID ) :
 //------------------------------------------------------------------------------
 XrdxCastor2OfsFile::~XrdxCastor2OfsFile()
 {
-  viaDestructor = true;
+  mViaDestructor = true;
   close();
 
-  if ( envOpaque ) delete envOpaque;
-  if ( Transfer ) XrdTransferManager::TM()->DetachTransfer( Transfer );
-  if ( StagerJob ) delete StagerJob;
+  if (mEnvOpaque) delete mEnvOpaque;
+  if (mStagerJob) delete mStagerJob;
 
-  envOpaque = NULL;
-  Transfer = 0;
-  StagerJob = 0;
+  mEnvOpaque = NULL;
+  mStagerJob = 0;
 }
 
 
 //------------------------------------------------------------------------------
-// XrdxCastor2OfsFile::open
+// Open file
 //------------------------------------------------------------------------------
 int
-XrdxCastor2OfsFile::open( const char*         path,
-                          XrdSfsFileOpenMode  open_mode,
-                          mode_t              create_mode,
-                          const XrdSecEntity* client,
-                          const char*         opaque )
+XrdxCastor2OfsFile::open(const char*         path,
+                         XrdSfsFileOpenMode  open_mode,
+                         mode_t              create_mode,
+                         const XrdSecEntity* client,
+                         const char*         opaque)
 {
   xcastor_debug("path=%s", path);
-
-  // The OFS open is caugth to set the access/modify time in the nameserver
-  procRequest = kProcNone;
-  char* val = 0;
   const char* tident = error.getErrUser();
   xcastor::Timing opentiming("ofsf::open");
   TIMING("START", &opentiming);
   XrdOucString spath = path;
-  isRW = false;
-  isTruncate = false;
-  castorlfn = path;
-  xcastor_debug("castorlfn=%s, opaque=%s", castorlfn.c_str(), opaque);
+  xcastor_debug("castorlfn=%s, opaque=%s", path, opaque);
   XrdOucString newpath = "";
   XrdOucString newopaque = opaque;
-
-  // If there is explicit user opaque information we find two ?, 
+  // If there is explicit user opaque information we find two ?,
   // so we just replace it with a seperator.
-  newopaque.replace( "?", "&" );
-  newopaque.replace( "&&", "&" );
+  newopaque.replace("?", "&");
+  newopaque.replace("&&", "&");
 
   // Check if there are several redirection tokens
   int firstpos = 0;
   int lastpos = 0;
   int newpos = 0;
-  firstpos = newopaque.find( "castor2fs.sfn", 0 );
+  firstpos = newopaque.find("castor2fs.sfn", 0);
   lastpos = firstpos + 1;
 
-  while ( ( newpos = newopaque.find( "castor2fs.sfn", lastpos ) ) != STR_NPOS ) {
+  while ((newpos = newopaque.find("castor2fs.sfn", lastpos)) != STR_NPOS)
+  {
     lastpos = newpos + 1;
   }
 
   // Erase from the beginning to the last token start
-  if ( lastpos > ( firstpos + 1 ) ) {
-    newopaque.erase( firstpos, lastpos - 2 - firstpos );
-  }
+  if (lastpos > (firstpos + 1))
+    newopaque.erase(firstpos, lastpos - 2 - firstpos);
 
   // Erase the tried parameter from the opaque information
-  int tried_pos = newopaque.find( "tried=" );
-  int amp_pos = newopaque.find ( '&', tried_pos );
+  int tried_pos = newopaque.find("tried=");
+  int amp_pos = newopaque.find('&', tried_pos);
 
-  if ( tried_pos != STR_NPOS ) {
-    newopaque.erase( tried_pos, amp_pos - tried_pos );
-  }
-
-  if ( newopaque.find( "castor2fs.signature=" ) == STR_NPOS ) {
-    // This is a backdoor for the tape to update files
-    firstWrite = false;
-  }
+  if (tried_pos != STR_NPOS)
+    newopaque.erase(tried_pos, amp_pos - tried_pos);
 
   // This prevents 'clever' users from faking internal opaque information
-  newopaque.replace( "ofsgranted=", "notgranted=" );
-  newopaque.replace( "source=", "nosource=" );
-  envOpaque = new XrdOucEnv( newopaque.c_str() );
-  newpath = envOpaque->Get( "castor2fs.pfn1" );
+  newopaque.replace("ofsgranted=", "notgranted=");
+  newopaque.replace("source=", "nosource=");
+  mEnvOpaque = new XrdOucEnv(newopaque.c_str());
+  newpath = mEnvOpaque->Get("castor2fs.pfn1");
 
-  if ( newopaque.endswith( "&" ) ) {
+  if (newopaque.endswith("&"))
     newopaque += "source=";
-  } else {
+  else
     newopaque += "&source=";
-  }
 
   newopaque += newpath.c_str();
 
-  if ( !envOpaque->Get( "target" ) ) {
-    if ( newopaque.endswith( "&" ) ) {
+  if (!mEnvOpaque->Get("target"))
+  {
+    if (newopaque.endswith("&"))
       newopaque += "target=";
-    } else {
+    else
       newopaque += "&target=";
-    }
 
     newopaque += newpath.c_str();
   }
 
-  // Store opaque information
-  if ( envOpaque->Get( "castor2ofsproc" ) ) {
+  if (mEnvOpaque->Get("castor2ofsproc"))
+  {
     // that is strange ;-) ....
-    newopaque.replace( "castor2ofsproc", "castor2ofsfake" );
+    newopaque.replace("castor2ofsproc", "castor2ofsfake");
   }
 
-  XrdOucString verifytag = envOpaque->Get( "verifychecksum" );
-
-  if ( ( verifytag == "false" ) ||
-       ( verifytag == "0" ) ||
-       ( verifytag == "off" ) ) {
-    verifyChecksum = false;
-  }
-  
-  if (open_mode & SFS_O_RDWR)
-    mIsUpdate = true;
-  
   open_mode |= SFS_O_MKPTH;
   create_mode |= SFS_O_MKPTH;
+  mIsTruncate = open_mode & SFS_O_TRUNC;
 
-  if ( ( open_mode & ( SFS_O_RDONLY | SFS_O_WRONLY | SFS_O_RDWR |
-                       SFS_O_CREAT  | SFS_O_TRUNC ) ) != 0 ) {
-    isRW = true;
+  if ((open_mode & (SFS_O_CREAT | SFS_O_TRUNC |
+                    SFS_O_WRONLY | SFS_O_RDWR)) != 0)
+  {
+    mIsRW = true;
   }
 
-  if ( open_mode & SFS_O_TRUNC )
-    isTruncate = true;
+  if (spath.beginswith("/proc/"))
+  {
+    mProcRequest = kProcRead;
 
-  if ( spath.beginswith( "/proc/" ) ) {
-    procRequest = kProcRead;
-
-    if ( isRW ) {
-      procRequest = kProcWrite;
-    }
+    if (mIsRW)
+      mProcRequest = kProcWrite;
 
     // Declare this as a proc path to the authorization plugin
     newopaque += "&";
     newopaque += "castor2ofsproc=true";
-  } else {
-    // Deny this as a proc path to the authorization plugin
-    newopaque += "&";
-    newopaque += "castor2ofsproc=false";
-  }
 
-  if ( !procRequest ) {
-    // Send an acc/mod update to the server
-    switch ( open_mode & ( SFS_O_RDONLY | SFS_O_WRONLY | SFS_O_RDWR |
-                           SFS_O_CREAT  | SFS_O_TRUNC ) ) {
-    case SFS_O_RDONLY:
-      break;
-      break;
+    // Re-root the /proc/ location
+    XrdOucString proc_path = gSrv->mProcFs;
+    proc_path += "/";
+    proc_path += spath;
 
-    default:
-      break;
-    }
-  } else {
-    // Reroot the /proc location
-    XrdOucString prependedspath = gSrv->Procfilesystem;
-    prependedspath += "/";
-    prependedspath += spath;
+    while (proc_path.replace("//", "/")) {};
 
-    while ( prependedspath.replace( "//", "/" ) ) {};
-
-    // check the allowed proc users
-    // this is not a high performance implementation but the usage of /proc is very rare anyway
-    //
-    // clients are allowed to read/modify /proc, when they appear in the configuration file f.e. as
+    // Check the allowed proc users - this is not a high performance implementation
+    // but the usage of /proc is very rare anyway.Clients are allowed to read/modify
+    // /proc, when they appear in the configuration file f.e. as
     // -> xcastor2.procUsers xrootd@pcitmeta.cern.ch
     // where the user name in front of @ is the UID name on the client side
-    // and the host name after the @ is the hostname without domain
+    // and the host name after the @ is the hostname without domain.
     XrdOucString reducedTident, user, stident;
     reducedTident = "";
     user = "";
     stident = tident;
-    int dotpos = stident.find( "." );
-    reducedTident.assign( tident, 0, dotpos - 1 );
+    int pos = stident.find(".");
+    reducedTident.assign(tident, 0, pos - 1);
     reducedTident += "@";
-    int adpos  = stident.find( "@" );
-    user.assign( tident, adpos + 1 );
+    pos = stident.find("@");
+    user.assign(tident, pos + 1);
     reducedTident += user;
     bool allowed = false;
 
-    for ( int i = 0 ; i < gSrv->procUsers.GetSize(); i++ ) {
-      if ( gSrv->procUsers[i] == reducedTident ) {
+    for (int i = 0 ; i < gSrv->procUsers.GetSize(); i++)
+    {
+      if (gSrv->procUsers[i] == reducedTident)
+      {
         allowed = true;
         break;
       }
     }
 
-    if ( !allowed ) {
-      return gSrv->Emsg( "open", error, EPERM, "allow access to /proc/ fs in xrootd", path );
+    if (!allowed)
+    {
+      return gSrv->Emsg("open", error, EPERM, "allow access to /proc/ fs in xrootd",
+                        path);
     }
 
-    if ( procRequest == kProcWrite ) {
+    if (mProcRequest == kProcWrite)
+    {
       open_mode = SFS_O_RDWR | SFS_O_TRUNC;
-      prependedspath += ".__proc_update__";
-    } else {
+      proc_path += ".__proc_update__";
+    }
+    else
+    {
       // Depending on the desired file, we update the information in that file
-      if ( !gSrv->UpdateProc( prependedspath.c_str() ) )
-        return gSrv->Emsg( "open", error, EIO, "update /proc information", path );
+      if (!gSrv->UpdateProc(proc_path.c_str()))
+        return gSrv->Emsg("open", error, EIO, "update /proc information", path);
     }
 
-    // We have to open the rerooted proc path!
-    int rc = XrdOfsFile::open( prependedspath.c_str(), open_mode, create_mode, client, newopaque.c_str() );
+    // We have to open the re-rooted proc path!
+    int rc = XrdOfsFile::open(proc_path.c_str(), open_mode, create_mode,
+                              client, newopaque.c_str());
     return rc;
   }
+  else
+  {
+    // Deny this as a proc path to the authorization plugin
+    newopaque += "&";
+    newopaque += "castor2ofsproc=false";
+  }
 
-  // Deal with native TPC transfers which are passed directly to the OFS layer 
+  char* val = 0;
+
+  // Deal with native TPC transfers which are passed directly to the OFS layer
   if (newopaque.find("tpc.dst") != STR_NPOS)
   {
     // This is a source TPC file and we just received the second open reuqest from the initiator.
-    // We save the mapping between the tpc.key and the castor lfn for future open requests from 
+    // We save the mapping between the tpc.key and the castor lfn for future open requests from
     // the destination of the TPC transfer.
-    if ((val = envOpaque->Get("tpc.key")))
-    {    
+    if ((val = mEnvOpaque->Get("tpc.key")))
+    {
       mTpcKey = val;
-      struct TpcInfo transfer = (struct TpcInfo) { std::string(newpath.c_str()), time(NULL) };
+      struct TpcInfo transfer = (struct TpcInfo)
+      {
+        std::string(newpath.c_str()), time(NULL)
+      };
+      
       gSrv->mTpcMapMutex.Lock();     // -->
       std::pair< std::map<std::string, struct TpcInfo>::iterator, bool> pair =
         gSrv->mTpcMap.insert(std::make_pair(mTpcKey, transfer));
-      
+
       if (pair.second == false)
       {
         xcastor_err("tpc.key:%s is already in the map", mTpcKey.c_str());
         gSrv->mTpcMap.erase(pair.first);
         gSrv->mTpcMapMutex.UnLock(); // <--
-        return gSrv->Emsg( "open", error, EINVAL, 
-                                      "tpc.key already in the map for file:  ",
-                                      newpath.c_str() );
+        return gSrv->Emsg("open", error, EINVAL,
+                          "tpc.key already in the map for file:  ",
+                          newpath.c_str());
       }
-      
+
       gSrv->mTpcMapMutex.UnLock();   // <--
-      int rc = XrdOfsFile::open( newpath.c_str(), open_mode, create_mode, client, newopaque.c_str() );
+      int rc = XrdOfsFile::open(newpath.c_str(), open_mode, create_mode, client,
+                                newopaque.c_str());
       return rc;
     }
 
     xcastor_err("no tpc.key in the opaque information");
-    return gSrv->Emsg( "open", error, ENOENT, 
-                                  "no tpc.key in the opaque info for file: ",
-                                  newpath.c_str() );
+    return gSrv->Emsg("open", error, ENOENT,
+                      "no tpc.key in the opaque info for file: ",
+                      newpath.c_str());
   }
   else if (newopaque.find("tpc.org") != STR_NPOS)
   {
     // This is a source TPC file and we just received the third open request which
     // comes directly from the destination of the transfer. Here we need to retrieve
-    // the castor lfn from the map which we saved previously as the destination has 
-    // no knowledge of the castor mapping. 
-    if ((val = envOpaque->Get("tpc.key")))
+    // the castor lfn from the map which we saved previously as the destination has
+    // no knowledge of the castor mapping.
+    if ((val = mEnvOpaque->Get("tpc.key")))
     {
-      std::string key = val;   
+      std::string key = val;
       gSrv->mTpcMapMutex.Lock();     // -->
       std::map<std::string, struct TpcInfo>::iterator iter = gSrv->mTpcMap.find(key);
 
       if (iter != gSrv->mTpcMap.end())
-      { 
+      {
         std::string saved_lfn = iter->second.path;
         gSrv->mTpcMapMutex.UnLock(); // <--
-        int rc = XrdOfsFile::open(saved_lfn.c_str(), open_mode, create_mode, 
-                                  client, newopaque.c_str() );
+        int rc = XrdOfsFile::open(saved_lfn.c_str(), open_mode, create_mode,
+                                  client, newopaque.c_str());
         return rc;
       }
 
       gSrv->mTpcMapMutex.UnLock(); // <--
-      return gSrv->Emsg( "open", error, EINVAL, 
-                                    "can not find tpc.key in map for file: ",
-                                    newpath.c_str() );
+      return gSrv->Emsg("open", error, EINVAL,
+                        "can not find tpc.key in map for file: ",
+                        newpath.c_str());
     }
-   
-    xcastor_err("no tpc.key in the opaque information");
-    return gSrv->Emsg( "open", error, ENOENT, 
-                                  "no tpc.key in the opaque info for file: ",
-                                  newpath.c_str() );
-  }
 
+    xcastor_err("no tpc.key in the opaque information");
+    return gSrv->Emsg("open", error, ENOENT,
+                      "no tpc.key in the opaque info for file: ",
+                      newpath.c_str());
+  }
+  else if (newopaque.find("tpc.src") != STR_NPOS)
+  {
+    // This is a TPC destination and we force the recomputation of the checksum
+    // at the end since all writes go directly to the file without passing through
+    // the write method in OFS.
+    mHasWrite = true;
+    mHasAdler = false;
+  }
+  
   TIMING("PROCBLOCK", &opentiming);
 
-  //////////////////////////////////////////////////////////////////////////////
-  //............................................................................
-  // Section to deal with third party transfer streams
-  //............................................................................
-  if ( gSrv->ThirdPartyCopy && ( val = envOpaque->Get( "xferuuid" ) ) ) {
-    IsThirdPartyStream = true;
-    // look at third party transfers
-    // do some checks to allow to bypass the authorization module
-    val = envOpaque->Get( "xfercmd" );
-    XrdOucString xcmd = val;
-
-    if ( xcmd == "copy" ) {
-      IsThirdPartyStreamCopy = true;
-      // we have to get the physical mapping from the Map
-      XrdOucString* mappedpath = 0;
-      gSrv->FileNameMapLock.Lock();
-      mappedpath = gSrv->FileNameMap.Find( path );
-      gSrv->FileNameMapLock.UnLock();
-
-      if ( !mappedpath ) {
-        // the user has not anymore the file open, for the moment we forbid this!
-        return gSrv->Emsg( "open", error, EPERM, "open transfer stream - "
-                                      "destination file is not open anymore", newpath.c_str() );
-      } else {
-        newpath = mappedpath->c_str();
-        // place it for the close statement
-        envOpaque->Put( "castor2fs.pfn1", newpath.c_str() );
-      }
-
-      // determine if the file exists and has size 0
-      if ( !( XrdOfsOss->Stat( newpath.c_str(), &statinfo ) ) ) {
-        // this must be a copy write stream, and the file has to exist with size 0
-        if ( isRW && ( !statinfo.st_size ) ) {
-          newopaque += "&ofsgranted=yes";
-        } // else: this will file latest during the open authorization
-      } // else: this will file latest during the open authorization
-    } else {
-      // store a mapping for the third party copy who doesn't know the PFN
-      gSrv->FileNameMapLock.Lock();
-      gSrv->FileNameMap.Add( path, new XrdOucString( newpath.c_str() ) );
-      gSrv->FileNameMapLock.UnLock();
-    }
-  }
-  //////////////////////////////////////////////////////////////////////////////
-
-  int retc;
-  char* v = 0;
-
-  if ( ( v = envOpaque->Get( "createifnotexist" ) ) ) {
-    if ( atoi( v ) ) {
-      if ( !isRW ) {
-        if ( ( retc = XrdOfsOss->Stat( newpath.c_str(), &statinfo ) ) ) {
-          // If this does not work we get the error later in any case!
-          creat( newpath.c_str(), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH );
-        }
-      }
-    }
-  }
-
-  if ( ( retc = XrdOfsOss->Stat( newpath.c_str(), &statinfo ) ) ) {
-    // File does not exist, keep the create flag (unless this is 
-    // an update but the file didn't exist on the disk server
-    if ( envOpaque->Get( "castor2fs.accessop" ) && 
-         ( atoi( envOpaque->Get( "castor2fs.accessop" ) ) == AOP_Update ) ) 
-      {
-        firstWrite = true;
-      } else {
-      firstWrite = false;
-    }
-  } else {
-    if ( open_mode & SFS_O_CREAT )
-      open_mode -= SFS_O_CREAT;
-
-    // the file exists and it is in write mode = update
-    // hmm... not this one
-    // try to get a checksum from the filesystem
-    char diskckSumbuf[32 + 1];
-    char diskckSumalg[32];
-    diskckSumbuf[0] = diskckSumalg[0] = 0;
-    // Get existing checksum - we don't check errors here
-    int nattr = 0;
-    nattr = getxattr( newpath.c_str(), "user.castor.checksum.type", diskckSumalg, sizeof( diskckSumalg ) );
-
-    if ( nattr ) diskckSumalg[nattr] = 0;
-
-    nattr = getxattr( newpath.c_str(), "user.castor.checksum.value", diskckSumbuf, sizeof( diskckSumbuf ) );
-
-    if ( nattr ) diskckSumbuf[nattr] = 0;
-
-    DiskChecksum = diskckSumbuf;
-    DiskChecksumAlgorithm = diskckSumalg;
-    xcastor_debug("checksum algorithm=%s, checksum=%s", DiskChecksumAlgorithm.c_str(),
-                  DiskChecksum.c_str() );
-  }
-
-  uid_t sec_uid = 0;
-  uid_t sec_gid = 0;
-
-  if ( envOpaque->Get( "castor2fs.client_sec_uid" ) ) {
-    sec_uid = atoi( envOpaque->Get( "castor2fs.client_sec_uid" ) );
-  }
-
-  if ( envOpaque->Get( "castor2fs.client_sec_gid" ) ) {
-    sec_gid = atoi( envOpaque->Get( "castor2fs.client_sec_gid" ) );
-  }
-
   // Extract the stager information
-  val = envOpaque->Get( "castor2fs.pfn2" );
+  val = mEnvOpaque->Get("castor2fs.pfn2");
 
-  if ( !( gSrv->ThirdPartyCopy ) || ( !IsThirdPartyStreamCopy ) ) {
-    if ( !( val ) || ( !strlen( val ) ) ) {
-      return gSrv->Emsg( "open", error, ESHUTDOWN, "reqid/pfn2 is missing", FName() );
-    }
-  } else {
-    // Third party streams don't have any req id
-    val = "";
-  }
+  if (!val || !strlen(val))
+    return gSrv->Emsg("open", error, ESHUTDOWN, "reqid/pfn2 is missing", FName());
 
   XrdOucString reqtag = val;
-  reqid = "0";
-  serviceclass = "none";
-  stagerjobport = 0;
-  SjobUuid = "";
-  int pos1;
-  int pos2;
-  int pos3;
+  XrdOucString sjob_uuid = "";
+  int sjob_port = 0;
+  int pos1, pos2, pos3;
 
+  // TODO: drop the serviceclass from request syntax
   // Syntax is reqid: <reqid:serviceclass:stagerjobport:stagerjobuuid>
-  if ( ( pos1 = reqtag.find( ":" ) ) != STR_NPOS ) {
-    reqid.assign( reqtag, 0, pos1 - 1 );
+  if ((pos1 = reqtag.find(":")) != STR_NPOS)
+  {
+    mReqId.assign(reqtag, 0, pos1 - 1);
 
-    if ( ( pos2 = reqtag.find( ":", pos1 + 1 ) ) != STR_NPOS ) {
-      serviceclass.assign( reqtag, pos1 + 1, pos2 - 1 );
-      
-      if ( ( pos3 = reqtag.find( ":", pos2 + 1 ) ) != STR_NPOS ) 
+    if ((pos2 = reqtag.find(":", pos1 + 1)) != STR_NPOS)
+    {
+      if ((pos3 = reqtag.find(":", pos2 + 1)) != STR_NPOS)
       {
         XrdOucString sport;
-        sport.assign( reqtag, pos2 + 1, pos3 - 1 );
-        stagerjobport = atoi( sport.c_str() );
-        SjobUuid.assign( reqtag, pos3 + 1 );
+        sport.assign(reqtag, pos2 + 1, pos3 - 1);
+        sjob_port = atoi(sport.c_str());
+        sjob_uuid.assign(reqtag.c_str(), pos3 + 1);
       }
     }
   }
 
-  xcastor_debug("StagerJob uuid=%s, port=%i ", SjobUuid.c_str(), stagerjobport );
-  StagerJob = new XrdxCastor2Ofs2StagerJob( SjobUuid.c_str(), stagerjobport );
+  xcastor_debug("StagerJob uuid=%s, port=%i ", sjob_uuid.c_str(), sjob_port);
+  mStagerJob = new XrdxCastor2Ofs2StagerJob(sjob_uuid.c_str(), sjob_port);
 
-  if ( !IsThirdPartyStreamCopy ) {
-    // Send the sigusr1 to the local xcastor2job to signal the open
-    if ( !StagerJob->Open() ) {
-      // The open failed
-      xcastor_err("error: open => couldn't run the Open towards StagerJob: "
-                  "reqid=%s, stagerjobport=%i, stagerjobuuid=%s",
-                  reqid.c_str(), stagerjobport, SjobUuid.c_str() );
-      return gSrv->Emsg( "open", error, EIO, "signal open to the corresponding stagerjob", "" );
-    }
-
-    if ( IsThirdPartyStream ) {
-      if ( isRW ) {
-        hasWrite = true;
-
-        // Here we send the update for the 1st byte written
-        if ( UpdateMeta() != SFS_OK ) {
-          return SFS_ERROR;
-        }
-
-        firstWrite = false;
-      }
-    }
+  // Send the sigusr1 to the local xcastor2job to signal the open
+  if (!mStagerJob->Open())
+  {
+    xcastor_err("error: open => couldn't run the Open towards StagerJob: "
+                "reqid=%s, stagerjobport=%i, stagerjobuuid=%s",
+                mReqId.c_str(), sjob_port, sjob_uuid.c_str());
+    return gSrv->Emsg("open", error, EIO,
+                      "signal open to the corresponding stagerjob");
   }
 
   TIMING("FILEOPEN", &opentiming);
-  int rc = XrdOfsFile::open( newpath.c_str(), open_mode, create_mode, client, newopaque.c_str() );
+  int rc = XrdOfsFile::open(newpath.c_str(), open_mode, create_mode, client,
+                            newopaque.c_str());
 
-  //////////////////////////////////////////////////////////////////////////////
-  //............................................................................
-  // Section to deal with third party transfer streams
-  //............................................................................
-  if ( rc == SFS_OK ) {
-    isOpen = true;
-
-    if ( IsThirdPartyStream ) {
-      TIMING("THIRDPARTY", &opentiming);
-      xcastor_debug("copy slots scheduled: %i, available: %i", 
-                    XrdTransferManager::TM()->ScheduledTransfers.Num(), 
-                    gSrv->ThirdPartyCopySlots );
-      // evt. change the thread parameters defined on the /proc state
-      gSrv->ThirdPartySetup(gSrv->ThirdPartyCopyStateDirectory.c_str(), 
-                            gSrv->ThirdPartyCopySlots, 
-                            gSrv->ThirdPartyCopySlotRate );
-      
-      // execute the third party managing function
-      rc = ThirdPartyTransfer( path, open_mode, create_mode, client, newopaque.c_str() );
-
-      if ( rc > 0 ) {
-        // send a stall to the client, the transfer is already detached ....
-        XrdOfsFile::close();
-        return retc;
-      }
-    }
-
-    if ( isTruncate ) {
-      truncate( 0 );
-    }
-  }
-
-  //////////////////////////////////////////////////////////////////////////////
-  if ( IsThirdPartyStreamCopy ) {
-    // retrieve the req id from the opaque info
-
-    // we wait for the stagerJob PID from x2castorjob
-    // try to read the pid file
-    if ( !Transfer ) {
-      // uups this is fatal and strange
-      return gSrv->Emsg( "open", error, EINVAL, 
-                                    "open attach any transfer as a copy stream; ", newpath.c_str() );
-    }
-
-    XrdOucString reqtag = Transfer->Options->Get( "castor2fs.pfn2" );
-    reqid = "0";
-    int pos1;
-
-    if ( ( pos1 = reqtag.find( ":" ) ) != STR_NPOS ) {
-      reqid.assign( reqtag, 0, pos1 - 1 );
+  if (rc == SFS_OK)
+  {
+    // Try to get the file checksum from the filesystem
+    int nattr = 0;
+    char disk_xs_buf[32 + 1];
+    char disk_xs_type[32];
+    disk_xs_buf[0] = disk_xs_type[0] = '\0';
+    
+    // Get existing checksum - we don't check errors here
+    nattr = getxattr(newpath.c_str(), "user.castor.checksum.type", disk_xs_type,
+                     sizeof(disk_xs_type));
+    
+    if (nattr) disk_xs_type[nattr] = '\0';
+    
+    nattr = getxattr(newpath.c_str(), "user.castor.checksum.value", disk_xs_buf,
+                     sizeof(disk_xs_buf));
+    
+    if (nattr) disk_xs_buf[nattr] = '\0';
+    
+    mXsValue = disk_xs_buf;
+    mXsType = disk_xs_type;
+    xcastor_debug("xs_type=%s, xs_val=%s", mXsType.c_str(),  mXsValue.c_str());
+    
+    // Get also the size of the file 
+    if (XrdOfsOss->Stat(newpath.c_str(), &mStatInfo))
+    {
+      xcastor_err("error: getting file stat information");
+      rc = SFS_ERROR;
     }
   }
-
+  
   TIMING("DONE", &opentiming);
   opentiming.Print();
   return rc;
@@ -1020,20 +623,20 @@ XrdxCastor2OfsFile::open( const char*         path,
 
 
 //------------------------------------------------------------------------------
-// XrdxCasto2OfsFile::close
+// Close file
 //------------------------------------------------------------------------------
 int
 XrdxCastor2OfsFile::close()
 {
   int rc = SFS_OK;
 
-  if ( IsClosed )
+  if (mIsClosed)
     return true;
 
   // If this is a TPC transfer then we can drop the key from the map
   if (mTpcKey != "")
   {
-    xcastor_debug("drop from map tpc.key:%s", mTpcKey.c_str());
+    xcastor_debug("drop from map tpc.key=%s", mTpcKey.c_str());
     XrdSysMutexHelper lock(gSrv->mTpcMapMutex);
     gSrv->mTpcMap.erase(mTpcKey);
     mTpcKey = "";
@@ -1041,131 +644,117 @@ XrdxCastor2OfsFile::close()
     // Remove keys which are older than one hour
     std::map<std::string, struct TpcInfo>::iterator iter = gSrv->mTpcMap.begin();
     time_t now = time(NULL);
-    
+
     while (iter != gSrv->mTpcMap.end())
     {
       if (now - iter->second.expire > 3600)
       {
-        xcastor_info("expire tpc.key:%s", iter->first.c_str());
+        xcastor_info("expire tpc.key=%s", iter->first.c_str());
         gSrv->mTpcMap.erase(iter++);
       }
-      else 
+      else
       {
         ++iter;
       }
     }
   }
 
-  IsClosed = true;
+  mIsClosed = true;
   XrdOucString spath = FName();
 
-  if ( procRequest == kProcWrite ) {
+  if (mProcRequest == kProcWrite)
+  {
     sync();
     XrdOucString newpath = spath;
-    newpath.erase( ".__proc_update__" );
-    gSrv->rem( newpath.c_str(), error, 0, "" );
-    int rc =  ::rename( spath.c_str(), newpath.c_str() ); 
-    //    printf("rc is %d %s->%s\n",rc, spath.c_str(),newpath.c_str());
-    gSrv->rem( spath.c_str(), error, 0, "" );
-    gSrv->ReadAllProc();
-    gSrv->UpdateProc( newpath.c_str() );
+    newpath.erase(".__proc_update__");
+    gSrv->rem(newpath.c_str(), error, 0, "");
+    int rc =  ::rename(spath.c_str(), newpath.c_str());
+    // printf("rc is %d %s->%s\n",rc, spath.c_str(),newpath.c_str());
+    gSrv->rem(spath.c_str(), error, 0, "");
+    gSrv->ReadFromProc("trace");
+    gSrv->UpdateProc(newpath.c_str());
     XrdOfsFile::close();
     return rc;
-  } else {
-    gSrv->ReadFromProc( "trace" );
+  }
+  else
+  {
+    gSrv->ReadFromProc("trace");
   }
 
   char ckSumbuf[32 + 1];
-  sprintf( ckSumbuf, "%x", adler );
+  sprintf(ckSumbuf, "%x", mAdlerXs);
   char* ckSumalg = "ADLER32";
   XrdOucString newpath = "";
-  newpath = envOpaque->Get( "castor2fs.pfn1" );
+  newpath = mEnvOpaque->Get("castor2fs.pfn1");
 
-  if ( hasWrite ) {
-    if ( gSrv->doChecksumUpdates && ( !hasadler ) ) {
-      xcastor::Timing checksumtiming( "ofsf::checksum" );
-      TIMING("START", &checksumtiming);
-      char chcksumbuf[64 * 1024];
-      // We just quickly rescan the file and recompute the checksum
-      adler = adler32( 0L, Z_NULL, 0 );
-      adleroffset = 0;
-      XrdSfsFileOffset checkoffset = 0;
-      XrdSfsXferSize checksize = 0;
-      XrdSfsFileOffset checklength = 0;
+  if (mHasWrite)
+  {
+    if (!mHasAdler)
+    {
+      // Rescan the file and compute checksum
+      xcastor_debug("rescan file and compute checksum");
+      xcastor::Timing xs_timing("ofsf::checksum");
+      TIMING("START", &xs_timing);
+      char blk_xs_buf[64 * 1024];
+      mAdlerXs = adler32(0L, Z_NULL, 0);
+      mAdlerOffset = 0;
+      XrdSfsFileOffset xs_offset = 0;
+      XrdSfsXferSize xs_size = 0;
 
-      while ( ( checksize = read( checkoffset, chcksumbuf, sizeof( chcksumbuf ) ) ) > 0 ) {
-        adler = adler32( adler, ( const Bytef* )chcksumbuf, checksize );
-        checklength += checksize;
-        checkoffset += checksize;
+      while ((xs_size = read(xs_offset, blk_xs_buf, sizeof(blk_xs_buf))) > 0)
+      {
+        mAdlerXs = adler32(mAdlerXs, (const Bytef*)blk_xs_buf, xs_size);
+        xs_offset += xs_size;
       }
 
-      TIMING("STOP", &checksumtiming);
-      checksumtiming.Print();
-      sprintf( ckSumbuf, "%x", adler );
-      xcastor_debug("recalculated checksum [ length=%u bytes ] is=%s", checklength, ckSumbuf);
-      hasadler = true;
-    } else {
-      if ( ( gSrv->doChecksumStreaming || gSrv->doChecksumUpdates ) && hasadler ) {
-        sprintf( ckSumbuf, "%x", adler );
-        xcastor_debug("streaming checksum=%s", ckSumbuf);
-      }
+      TIMING("STOP", &xs_timing);
+      xs_timing.Print();
+      mHasAdler = true;
     }
 
-    if ( ( gSrv->doChecksumStreaming || gSrv->doChecksumUpdates ) && hasadler ) {
-      // Only the real copy stream set's checksums, not the fake open
-      if ( ( !IsThirdPartyStream ) || ( IsThirdPartyStream && IsThirdPartyStreamCopy ) ) {
-        if ( setxattr( newpath.c_str(), "user.castor.checksum.type", ckSumalg, strlen( ckSumalg ), 0 ) ) {
-          gSrv->Emsg( "close", error, EIO, "set checksum type", "" );
-          rc = SFS_ERROR;
-          // Anyway this is not returned to the client
-        } else {
-          if ( setxattr( newpath.c_str(), "user.castor.checksum.value", ckSumbuf, strlen( ckSumbuf ), 0 ) ) {
-            gSrv->Emsg( "close", error, EIO, "set checksum", "" );
-            rc = SFS_ERROR;
-            // Anyway this is not returned to the client
-          }
-        }
-      }
-    } else {
-      if ( ( !gSrv->doChecksumUpdates ) && ( !hasadler ) ) {
-        // Remove checksum - we don't check errors here
-        removexattr( newpath.c_str(), "user.castor.checksum.type" );
-        removexattr( newpath.c_str(), "user.castor.checksum.value" );
+    sprintf(ckSumbuf, "%x", mAdlerXs);
+    xcastor_debug("file xs=%s", ckSumbuf);
+    
+    if (setxattr(newpath.c_str(), "user.castor.checksum.type", ckSumalg,
+                 strlen(ckSumalg), 0))
+    {
+      gSrv->Emsg("close", error, EIO, "set checksum type");
+      rc = SFS_ERROR; // Anyway this is not returned to the client
+    }
+    else
+    {
+      if (setxattr(newpath.c_str(), "user.castor.checksum.value", ckSumbuf,
+                   strlen(ckSumbuf), 0))
+      {
+        gSrv->Emsg("close", error, EIO, "set checksum");
+        rc = SFS_ERROR; // Anyway this is not returned to the client
       }
     }
   }
 
-  if ( gSrv->ThirdPartyCopy ) {
-    if ( IsThirdPartyStream ) {
-      // Terminate the transfer to set the final state and wait for the termination
-      rc = ThirdPartyTransferClose( envOpaque->Get( "xferuuid" ) );
+  bool file_ok = true;
 
-      if ( !IsThirdPartyStreamCopy ) {
-        // Remove mappings for non third party streams
-        gSrv->FileNameMapLock.Lock();
-        gSrv->FileNameMap.Del( castorlfn.c_str() );
-        gSrv->FileNameMapLock.UnLock();
-        // Comment: if there is no mapping defined, no 3rd party copy can be run towards this file
-      }
-    }
-
-    XrdOfsFile::close();
+  if ((rc = XrdOfsFile::close()))
+  {
+    gSrv->Emsg("close", error, EIO, "closing ofs file", "");
+    file_ok = false;
+    rc = SFS_ERROR;
   }
 
-  // Inform the StagerJob
-  if ( !IsThirdPartyStreamCopy ) {
-    if ( viaDestructor ) {
-      // This means the file was not properly closed
-      Unlink();
-    }
+  // This means the file was not properly closed
+  if (mViaDestructor)
+  {
+    Unlink();
+    file_ok = false;
+  }
 
-    if ( StagerJob && ( !StagerJob->Close( true, hasWrite ) ) ) {
-      // For the moment, we cannot send this back, but soon we will
-      xcastor_debug("StagerJob close faied, got rc=%i and msg=%s", 
-                    StagerJob->ErrCode, StagerJob->ErrMsg.c_str());
-      gSrv->Emsg( "close", error, StagerJob->ErrCode, StagerJob->ErrMsg.c_str(), "" );
-      rc = SFS_ERROR;
-    }
+  if (mStagerJob && (!mStagerJob->Close(file_ok, mHasWrite)))
+  {
+    // For the moment, we cannot send this back, but soon we will
+    xcastor_debug("StagerJob close failed, got rc=%i and msg=%s",
+                  mStagerJob->ErrCode, mStagerJob->ErrMsg.c_str());
+    gSrv->Emsg("close", error, mStagerJob->ErrCode, mStagerJob->ErrMsg.c_str());
+    rc = SFS_ERROR;
   }
 
   return rc;
@@ -1173,40 +762,43 @@ XrdxCastor2OfsFile::close()
 
 
 //------------------------------------------------------------------------------
-// XrdxCastor2OfsFile::VerifyChecksum
+// Verify checksum
 //------------------------------------------------------------------------------
 bool
 XrdxCastor2OfsFile::VerifyChecksum()
 {
   bool rc = true;
-  XrdOucString CalcChecksum;
-  XrdOucString CalcChecksumAlgorithm;
+  XrdOucString xs_val;
+  XrdOucString xs_type;
 
-  if ( ( DiskChecksum != "" ) &&
-       ( DiskChecksumAlgorithm != "" ) &&
-       verifyChecksum ) 
+  if ((mXsValue != "") && (mXsType != ""))
   {
     char ckSumbuf[32 + 1];
-    sprintf( ckSumbuf, "%x", adler );
-    CalcChecksum = ckSumbuf;
-    CalcChecksumAlgorithm = "ADLER32";
+    sprintf(ckSumbuf, "%x", mAdlerXs);
+    xs_val = ckSumbuf;
+    xs_type = "ADLER32";
 
-    if ( CalcChecksum != DiskChecksum ) {
-      gSrv->Emsg( "VerifyChecksum", error, EIO, "verify checksum - checksum wrong!", "" );
+    if (xs_val != mXsValue)
+    {
+      gSrv->Emsg("VerifyChecksum", error, EIO, "checksum value wrong");
       rc = false;
     }
 
-    if ( CalcChecksumAlgorithm != DiskChecksumAlgorithm ) {
-      gSrv->Emsg( "VerifyChecksum", error, EIO, "verify checksum - checksum type wrong!", "" );
+    if (xs_type != mXsType)
+    {
+      gSrv->Emsg("VerifyChecksum", error, EIO, "wrong checksum type");
       rc = false;
     }
 
-    if ( !rc ) {
-      xcastor_err("error: checksum %s != %s with algorithms [ %s  <=> %s ]", 
-                    CalcChecksum.c_str(), DiskChecksum.c_str(), 
-                    CalcChecksumAlgorithm.c_str(), DiskChecksumAlgorithm.c_str());
-    } else {
-      xcastor_debug("checksum OK: %s", CalcChecksum.c_str());
+    if (!rc)
+    {
+      xcastor_err("error: checksum %s != %s with algorithms [ %s  <=> %s ]",
+                  xs_val.c_str(), mXsValue.c_str(),
+                  xs_type.c_str(), mXsType.c_str());
+    }
+    else
+    {
+      xcastor_debug("checksum OK: %s", xs_val.c_str());
     }
   }
 
@@ -1218,11 +810,11 @@ XrdxCastor2OfsFile::VerifyChecksum()
 // Read
 //------------------------------------------------------------------------------
 int
-XrdxCastor2OfsFile::read( XrdSfsFileOffset fileOffset,  // Preread only
-                          XrdSfsXferSize   amount )
+XrdxCastor2OfsFile::read(XrdSfsFileOffset fileOffset,   // Preread only
+                         XrdSfsXferSize   amount)
 {
-  int rc = XrdOfsFile::read( fileOffset, amount );
-  hasadler = false;
+  int rc = XrdOfsFile::read(fileOffset, amount);
+  mHasAdler = false;
   return rc;
 }
 
@@ -1231,33 +823,38 @@ XrdxCastor2OfsFile::read( XrdSfsFileOffset fileOffset,  // Preread only
 // Read
 //------------------------------------------------------------------------------
 XrdSfsXferSize
-XrdxCastor2OfsFile::read( XrdSfsFileOffset fileOffset,
-                          char*            buffer,
-                          XrdSfsXferSize   buffer_size )
+XrdxCastor2OfsFile::read(XrdSfsFileOffset fileOffset,
+                         char*            buffer,
+                         XrdSfsXferSize   buffer_size)
 {
   // If we once got an adler checksum error, we fail all reads.
-  if ( hasadlererror ) {
+  if (mHasAdlerErr)
+  {
+    xcastor_err("error: found xs error, fail read at off=%ll, size=%i", 
+                fileOffset, buffer_size);
     return SFS_ERROR;
   }
 
-  int rc = XrdOfsFile::read( fileOffset, buffer, buffer_size );
+  int rc = XrdOfsFile::read(fileOffset, buffer, buffer_size);
 
   // Computation of adler checksum - we disable it if seeks happen
-  if ( fileOffset != adleroffset ) {
-    hasadler = false;
+  if (fileOffset != mAdlerOffset)
+    mHasAdler = false;
+
+  if (mHasAdler)
+  {
+    mAdlerXs = adler32(mAdlerXs, (const Bytef*) buffer, rc);
+
+    if (rc > 0)
+      mAdlerOffset += rc;
   }
 
-  if ( hasadler && gSrv->doChecksumStreaming ) {
-    adler = adler32( adler, ( const Bytef* ) buffer, rc );
-
-    if ( rc > 0 )
-      adleroffset += rc;
-  }
-
-  if ( hasadler && ( fileOffset + buffer_size >= statinfo.st_size ) ) {
+  if (mHasAdler && (fileOffset + buffer_size >= mStatInfo.st_size))
+  {
     // Invoke the checksum verification
-    if ( !VerifyChecksum() ) {
-      hasadlererror = true;
+    if (!VerifyChecksum())
+    {
+      mHasAdlerErr = true;
       rc = SFS_ERROR;
     }
   }
@@ -1270,10 +867,10 @@ XrdxCastor2OfsFile::read( XrdSfsFileOffset fileOffset,
 // Read
 //------------------------------------------------------------------------------
 int
-XrdxCastor2OfsFile::read( XrdSfsAio* aioparm )
+XrdxCastor2OfsFile::read(XrdSfsAio* aioparm)
 {
-  int rc = XrdOfsFile::read( aioparm );
-  hasadler = false;
+  int rc = XrdOfsFile::read(aioparm);
+  mHasAdler = false;
   return rc;
 }
 
@@ -1282,77 +879,46 @@ XrdxCastor2OfsFile::read( XrdSfsAio* aioparm )
 // Write
 //------------------------------------------------------------------------------
 XrdSfsXferSize
-XrdxCastor2OfsFile::write( XrdSfsFileOffset fileOffset,
-                           const char*      buffer,
-                           XrdSfsXferSize   buffer_size )
+XrdxCastor2OfsFile::write(XrdSfsFileOffset fileOffset,
+                          const char*      buffer,
+                          XrdSfsXferSize   buffer_size)
 {
-  // If we are a transfer - check if we are still in running state,
-  if ( Transfer ) {
-    if ( Transfer->State != XrdTransfer::kRunning ) {
-      // This transfer has been canceled, we have terminate
-      gSrv->Emsg( "write", error, ECANCELED, "write - the transfer has been canceled already ", 
-                             XrdTransferStateAsString[Transfer->State] );
-
-      // We truncate this file to 0!
-      if ( !IsClosed ) {
-        truncate( 0 );
-        sync();
-      }
-
-      return SFS_ERROR;
-    }
-  }
-
-  if ( StagerJob && StagerJob->Connected() ) {
+  if (mStagerJob && mStagerJob->Connected())
+  {
     // If we have a stagerJob watching, check it is still alive
-    if ( !StagerJob->StillConnected() ) {
-      // oh oh, the stagerJob died ... reject any write now
+    if (!mStagerJob->StillConnected())
+    {
+      // StagerJob died ... reject any writes
       xcastor_err("error:write => StagerJob has been canceled");
 
       // We truncate this file to 0!
-      if ( !IsClosed ) {
-        truncate( 0 );
+      if (!mIsClosed)
+      {
+        truncate(0);
         sync();
       }
 
-      if ( Transfer && ( Transfer->State == XrdTransfer::kRunning ) ) {
-        // If we are a transfer we terminate the transfer and close the file ;-)
-        Transfer->SetState( XrdTransfer::kTerminate );
-        close();
-      }
-
-      gSrv->Emsg( "write", error, ECANCELED, "write - the stagerjob write slot has been canceled ", "" );
+      gSrv->Emsg("write", error, ECANCELED,
+                 "write - the stagerjob write slot has been canceled ");
       return SFS_ERROR;
-    } else {
-      xcastor_debug("my StagerJob is alive");
     }
   }
 
-  int rc = XrdOfsFile::write( fileOffset, buffer, buffer_size );
+  int rc = XrdOfsFile::write(fileOffset, buffer, buffer_size);
 
   // Computation of adler checksum - we disable it if seek happened
-  if ( fileOffset != adleroffset ) {
-    hasadler = false;
+  if (fileOffset != mAdlerOffset)
+    mHasAdler = false;
+
+  if (mHasAdler)
+  {
+    mAdlerXs = adler32(mAdlerXs, (const Bytef*) buffer, buffer_size);
+
+    if (rc > 0)
+      mAdlerOffset += rc;
   }
 
-  if ( hasadler && gSrv->doChecksumStreaming ) {
-    adler = adler32( adler, ( const Bytef* ) buffer, buffer_size );
-
-    if ( rc > 0 ) {
-      adleroffset += rc;
-    }
-  }
-
-  hasWrite = true;
-
-  if ( firstWrite ) {
-    if ( UpdateMeta() != SFS_OK ) {
-      return SFS_ERROR;
-    }
-
-    firstWrite = false;
-  }
-
+  mHasWrite = true;
   return rc;
 }
 
@@ -1361,92 +927,35 @@ XrdxCastor2OfsFile::write( XrdSfsFileOffset fileOffset,
 // Write
 //------------------------------------------------------------------------------
 int
-XrdxCastor2OfsFile::write( XrdSfsAio* aioparm )
+XrdxCastor2OfsFile::write(XrdSfsAio* aioparm)
 {
-  // If we are a transfer - check if we are still in running state,
-  if ( Transfer ) {
-    if ( Transfer->State != XrdTransfer::kRunning ) {
-      // This transfer has been canceled, we have terminated
-      gSrv->Emsg( "write", error, ECANCELED, "write - the transfer has been canceld already ", 
-                             XrdTransferStateAsString[Transfer->State] );
-
-      // We truncate this file to 0!
-      if ( !IsClosed ) {
-        truncate( 0 );
-        sync();
-      }
-
-      return SFS_ERROR;
-    }
-  }
-
-  if ( StagerJob && StagerJob->Connected() ) {
-    if ( !StagerJob->StillConnected() ) {
-      // oh oh, the stagerJob died ... reject any write now
+  if (mStagerJob && mStagerJob->Connected())
+  {
+    if (!mStagerJob->StillConnected())
+    {
+      // StagerJob died ... reject any writes
       xcastor_err("error:write => StagerJob has been canceled");
 
       // We truncate this file to 0!
-      if ( !IsClosed ) {
-        truncate( 0 );
+      if (!mIsClosed)
+      {
+        truncate(0);
         sync();
       }
 
-      if ( Transfer && ( Transfer->State == XrdTransfer::kRunning ) ) {
-        // If we are a transfer we terminate the transfer and close the file ;-)
-        Transfer->SetState( XrdTransfer::kTerminate );
-        close();
-      }
-
-      gSrv->Emsg( "write", error, ECANCELED, "write - the stagerjob write slot has been canceled ", "" );
+      gSrv->Emsg("write", error, ECANCELED,
+                 "write - the stagerjob write slot has been canceled");
       return SFS_ERROR;
-    } else {
-      xcastor_err("my StagerJob is alive");
+    }
+    else
+    {
+      xcastor_debug("StagerJob is alive");
     }
   }
 
-  int rc = XrdOfsFile::write( aioparm );
-  hasWrite = true;
-
-  if ( firstWrite ) {
-    if ( UpdateMeta() != SFS_OK ) {
-      return SFS_ERROR;
-    }
-
-    firstWrite = false;
-  }
-
+  int rc = XrdOfsFile::write(aioparm);
+  mHasWrite = true;
   return rc;
-}
-
-
-//------------------------------------------------------------------------------
-// Sync
-//------------------------------------------------------------------------------
-int
-XrdxCastor2OfsFile::sync()
-{
-  return XrdOfsFile::sync();
-}
-
-
-
-//------------------------------------------------------------------------------
-// Sync
-//------------------------------------------------------------------------------
-int
-XrdxCastor2OfsFile::sync( XrdSfsAio* /*aiop*/ )
-{
-  return XrdOfsFile::sync();
-}
-
-
-//------------------------------------------------------------------------------
-// Truncate
-//------------------------------------------------------------------------------
-int
-XrdxCastor2OfsFile::truncate( XrdSfsFileOffset fileOffset )
-{
-  return XrdOfsFile::truncate( fileOffset );
 }
 
 
@@ -1456,127 +965,61 @@ XrdxCastor2OfsFile::truncate( XrdSfsFileOffset fileOffset )
 int
 XrdxCastor2OfsFile::Unlink()
 {
-  if ( ( !gSrv->doPOSC ) || ( !isRW ) ) {
+  if (!gSrv->doPOSC || !mIsRW)
+  {
     return SFS_OK;
   }
 
-  if ( IsThirdPartyStreamCopy ) {
-    return SFS_OK;
-  }
-
-  XrdOucString preparename = envOpaque->Get( "castor2fs.sfn" );
-  XrdOucString secuid      = envOpaque->Get( "castor2fs.client_sec_uid" );
-  XrdOucString secgid      = envOpaque->Get( "castor2fs.client_sec_gid" );
+  XrdOucString preparename = mEnvOpaque->Get("castor2fs.sfn");
+  XrdOucString secuid      = mEnvOpaque->Get("castor2fs.client_sec_uid");
+  XrdOucString secgid      = mEnvOpaque->Get("castor2fs.client_sec_gid");
   xcastor_debug("unlink lfn=%s", preparename.c_str());
 
   // Don't deal with proc requests
-  if ( procRequest != kProcNone )
+  if (mProcRequest != kProcNone)
     return SFS_OK;
 
   XrdOucString mdsaddress = "root://";
-  mdsaddress += envOpaque->Get( "castor2fs.manager" );
+  mdsaddress += mEnvOpaque->Get("castor2fs.manager");
   mdsaddress += "//dummy";
   XrdCl::URL url(mdsaddress.c_str());
   XrdCl::Buffer* buffer = 0;
   std::vector<std::string> list;
-  
-  if (!url.IsValid()) {
+
+  if (!url.IsValid())
+  {
     xcastor_debug("URL is not valid: %s", mdsaddress.c_str());
-    return gSrv->Emsg( "Unlink", error, ENOENT, "URL is not valid ", "" );
+    return gSrv->Emsg("Unlink", error, ENOENT, "URL is not valid ");
   }
-  
+
   XrdCl::FileSystem* mdsclient = new XrdCl::FileSystem(url);
 
-  if (!mdsclient) {
+  if (!mdsclient)
+  {
     xcastor_err("Could not create XrdCl::FileSystem object.");
-    return gSrv->Emsg( "Unlink", error, EHOSTUNREACH, 
-                                  "connect to the mds host (normally the manager) ", "" );
+    return gSrv->Emsg("Unlink", error, EHOSTUNREACH,
+                      "connect to the mds host (normally the manager)");
   }
 
   preparename += "?";
   preparename += "&unlink=true";
   preparename += "&reqid=";
-  preparename += reqid;
+  preparename += mReqId;
   preparename += "&uid=";
   preparename += secuid;
   preparename += "&gid=";
   preparename += secgid;
-
   list.push_back(preparename.c_str());
   xcastor_debug("Informing about %s", preparename.c_str());
-  XrdCl::XRootDStatus status = mdsclient->Prepare(list, XrdCl::PrepareFlags::Stage, 1, buffer); 
+  XrdCl::XRootDStatus status = mdsclient->Prepare(list,
+                               XrdCl::PrepareFlags::Stage, 1, buffer);
   delete mdsclient;
 
-  if (!status.IsOK()) {
+  if (!status.IsOK())
+  {
     xcastor_err("Prepare response invalid.");
     delete buffer;
     return gSrv->Emsg("Unlink", error, ESHUTDOWN, "unlink ", FName());
-  }
-
-  delete buffer;
-  return SFS_OK;
-}
-
-
-//------------------------------------------------------------------------------
-// UpdateMeta
-//------------------------------------------------------------------------------
-int
-XrdxCastor2OfsFile::UpdateMeta()
-{
-  if ( IsThirdPartyStreamCopy ) {
-    return SFS_OK;
-  }
-
-  XrdOucString preparename = envOpaque->Get( "castor2fs.sfn" );
-  xcastor_debug("haswrite=%i, firstWrite=%i, 3rd-party=%i/%i, lfn=%s",                
-                hasWrite, firstWrite, IsThirdPartyStream, IsThirdPartyStreamCopy,
-                preparename.c_str());
-
-  // Don't deal with proc requests
-  if ( procRequest != kProcNone )
-    return SFS_OK;
-
-  XrdOucString mdsaddress = "root://";
-  mdsaddress += envOpaque->Get( "castor2fs.manager" );
-  mdsaddress += "//dummy";
-  XrdCl::URL url(mdsaddress.c_str());
-  XrdCl::Buffer* buffer = 0;
-  std::vector<std::string> list;
-  
-  if (!url.IsValid()) {
-    xcastor_debug("URL is not valid: %s", mdsaddress.c_str());
-    return gSrv->Emsg( "UpdateMeta", error, ENOENT, "URL is not valid ", "" );
-  }
-  
-  XrdCl::FileSystem* mdsclient = new XrdCl::FileSystem(url);
-
-  if (!mdsclient) {
-    xcastor_err("Could not create XrdCl::FileSystem object.");
-    return gSrv->Emsg( "UpdateMeta", error, EHOSTUNREACH, 
-                                  "connect to the mds host (normally the manager) ", "" );
-  }
-
-  preparename += "?";
-
-  if ( mIsUpdate && firstWrite && hasWrite )
-    preparename += "&firstbytewritten=true";
-  else 
-    return SFS_OK;
-  
-
-  preparename += "&reqid=";
-  preparename += reqid;
-  list.push_back(preparename.c_str());
-  xcastor_debug("informing about %s", preparename.c_str());
-
-  XrdCl::XRootDStatus status = mdsclient->Prepare(list, XrdCl::PrepareFlags::Stage, 1, buffer); 
-  delete mdsclient;
-  
-  if (!status.IsOK()) {
-    xcastor_err("Prepare response invalid.");
-    delete buffer;
-    return gSrv->Emsg( "Unlink", error, ESHUTDOWN, "update mds size/modtime", FName());
   }
 
   delete buffer;
@@ -1591,19 +1034,16 @@ XrdxCastor2OfsFile::UpdateMeta()
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-XrdxCastor2Ofs2StagerJob::XrdxCastor2Ofs2StagerJob( const char* sjobuuid, int port ):
-  LogId()
-{
-  Port     = port;
-  SjobUuid = sjobuuid;
-  Socket   = 0;
-  // select timeout is 0
-  to.tv_sec  = 0;
-  to.tv_usec = 1;
-  IsConnected = false;
-  ErrCode = 0;
-  ErrMsg = "undef";
-}
+XrdxCastor2Ofs2StagerJob::XrdxCastor2Ofs2StagerJob(const char* sjobuuid,
+                                                   int port):
+    LogId(),
+    ErrCode(0),
+    ErrMsg("undef"),
+    mPort(port),
+    mSjobUuid(sjobuuid),
+    mSocket(0),
+    mIsConnected(false)
+{ }
 
 
 //------------------------------------------------------------------------------
@@ -1611,12 +1051,13 @@ XrdxCastor2Ofs2StagerJob::XrdxCastor2Ofs2StagerJob( const char* sjobuuid, int po
 //------------------------------------------------------------------------------
 XrdxCastor2Ofs2StagerJob::~XrdxCastor2Ofs2StagerJob()
 {
-  if ( Socket ) {
-    delete Socket;
-    Socket = 0;
+  if (mSocket)
+  {
+    delete mSocket;
+    mSocket = 0;
   }
 
-  IsConnected = false;
+  mIsConnected = false;
 }
 
 
@@ -1626,31 +1067,29 @@ XrdxCastor2Ofs2StagerJob::~XrdxCastor2Ofs2StagerJob()
 bool
 XrdxCastor2Ofs2StagerJob::Open()
 {
-  // If no port is specified then we don't inform anybody
-  if ( !Port )
-    return true;
+  mSocket = new XrdNetSocket();
 
-  Socket = new XrdNetSocket();
-
-  if ( ( Socket->Open( "localhost", Port, 0, 0 ) ) < 0 ) {
-    xcastor_debug("can not open socket");
+  if ((mSocket->Open("localhost", mPort, 0, 0)) < 0)
+  {
+    xcastor_err("can not open socket for port=%i", mPort);
     return false;
   }
 
-  Socket->setOpts( Socket->SockNum(), XRDNET_KEEPALIVE | XRDNET_DELAY );
+  mSocket->setOpts(mSocket->SockNum(), XRDNET_KEEPALIVE | XRDNET_DELAY);
   // Build IDENT message
   XrdOucString ident = "IDENT ";
-  ident += SjobUuid.c_str();
+  ident += mSjobUuid.c_str();
   ident += "\n";
   // Send IDENT message
-  int nwrite = write( Socket->SockNum(), ident.c_str(), ident.length() );
+  int nwrite = write(mSocket->SockNum(), ident.c_str(), ident.length());
 
-  if ( nwrite != ident.length() ) {
-    xcastor_debug("Calling XrdxCastor2Ofs2StagerJob::Open return false");
+  if (nwrite != ident.length())
+  {
+    xcastor_err("writing to sjob socket failed");
     return false;
   }
 
-  IsConnected = true;
+  mIsConnected = true;
   return true;
 }
 
@@ -1662,24 +1101,25 @@ bool
 XrdxCastor2Ofs2StagerJob::StillConnected()
 {
   int sval;
+  fd_set check_set;
 
-  if ( !IsConnected )
-    return false;
-
-  if ( !Socket )
+  if (!mIsConnected || !mSocket)
     return false;
 
   // Add the socket to the select set
-  FD_ZERO( &check_set );
-  FD_SET( Socket->SockNum(), &check_set );
+  FD_ZERO(&check_set);
+  FD_SET(mSocket->SockNum(), &check_set);
+  
+  // Set select timeout to 0
+  struct timeval time;
+  time.tv_sec  = 0;
+  time.tv_usec = 1;
 
-  if ( ( sval = select( Socket->SockNum() + 1, &check_set, 0, 0, &to ) ) < 0 ) {
+  if ((sval = select(mSocket->SockNum() + 1, &check_set, 0, 0, &time)) < 0)
     return false;
-  }
 
-  if ( FD_ISSET( Socket->SockNum(), &check_set ) ) {
+  if (FD_ISSET(mSocket->SockNum(), &check_set))
     return false;
-  }
 
   return true;
 }
@@ -1689,36 +1129,32 @@ XrdxCastor2Ofs2StagerJob::StillConnected()
 // StagerJob close
 //------------------------------------------------------------------------------
 bool
-XrdxCastor2Ofs2StagerJob::Close( bool ok, bool haswrite )
+XrdxCastor2Ofs2StagerJob::Close(bool ok, bool haswrite)
 {
-  if ( !Port || !Socket || !IsConnected) {
+  if (!mSocket || !mIsConnected)
     return true;
-  }
 
   XrdOucString ident = "CLOSE ";
 
-  if ( ok ) {
+  if (ok)
     ident += "0 ";
-  } else {
+  else
     ident += "1 ";
-  }
 
-  if ( haswrite ) {
+  if (haswrite)
     ident += "1 \n";
-  } else {
+  else
     ident += "0 \n";
-  }
 
   // Send CLOSE message
-  xcastor_debug("Trying to send CLOSE message to StagerJob");
-  int nwrite = write( Socket->SockNum(), ident.c_str(), ident.length() );
+  xcastor_debug("Send CLOSE message to StagerJob");
+  int nwrite = ::write(mSocket->SockNum(), ident.c_str(), ident.length());
 
-  if ( nwrite != ident.length() ) {
+  if (nwrite != ident.length())
+  {
     ErrCode = EIO;
-    ErrMsg = "Couldn't write CLOSE request to StagerJob!";
+    ErrMsg = "Error writing CLOSE request to StagerJob";
     return false;
-  } else {
-    xcastor_debug("Sent CLOSE message to StagerJob");
   }
 
   // Read CLOSE response
@@ -1726,34 +1162,36 @@ XrdxCastor2Ofs2StagerJob::Close( bool ok, bool haswrite )
   int  respcode;
   char respmesg[16384];
   int nread = 0;
-  xcastor_debug("Trying to read CLOSE response from StagerJob");
-  nread = ::read( Socket->SockNum(), closeresp, sizeof( closeresp ) );
+  xcastor_debug("Read CLOSE response from StagerJob");
+  nread = ::read(mSocket->SockNum(), closeresp, sizeof(closeresp));
   xcastor_debug("This read gave %i bytes and errno=%i", nread, errno);
 
-  if ( nread > 0 ) {
-    xcastor_debug("Read CLOSE response from StagerJob");
+  if (nread > 0)
+  {
+    xcastor_debug("Parse StagerJob CLOSE response");
 
-    // ok, try to parse it
-    if ( ( sscanf( closeresp, "%d %[^\n]", &respcode, respmesg ) ) == 2 ) {
+    // Try to parse the response
+    if ((sscanf(closeresp, "%d %[^\n]", &respcode, respmesg)) == 2)
+    {
       ErrMsg = respmesg;
       ErrCode = respcode;
 
-      // Check the code
-      if ( ErrCode != 0 ) {
+      if (ErrCode != 0)
         return false;
-      }
-
-      // yes, everything worked!
-    } else {
+    }
+    else
+    {
       ErrCode = EINVAL;
       ErrMsg  = "StagerJob returned illegal response: ";
-      ErrMsg += ( char* )closeresp;
+      ErrMsg += (char*)closeresp;
       return false;
     }
-  } else {
+  }
+  else
+  {
     // That was an error
     ErrCode = errno;
-    ErrMsg = "Couldn't read response from StagerJob!";
+    ErrMsg = "Error reading StagerJob response";
     return false;
   }
 
