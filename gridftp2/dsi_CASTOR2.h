@@ -51,7 +51,6 @@ typedef struct globus_l_gfs_CASTOR2_handle_s {
   checksum_block_list_t * checksum_list;
   checksum_block_list_t *checksum_list_p;
   unsigned long number_of_blocks;
-  char useCksum;        /* GSIFTP USE_CKSUM value in castor.conf, default yes */
 } globus_l_gfs_CASTOR2_handle_t;
 
 static void globus_l_gfs_file_net_read_cb(globus_gfs_operation_t,
