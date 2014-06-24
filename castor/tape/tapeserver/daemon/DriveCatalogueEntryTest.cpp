@@ -49,10 +49,8 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueEntryTest, drvState2Str) {
     DriveCatalogueEntry::drvState2Str(DriveCatalogueEntry::DRIVE_STATE_DOWN));
   ASSERT_EQ(std::string("UP"),
     DriveCatalogueEntry::drvState2Str(DriveCatalogueEntry::DRIVE_STATE_UP));
-  ASSERT_EQ(std::string("WAITFORKTRANSFER"), DriveCatalogueEntry::drvState2Str(
-    DriveCatalogueEntry::DRIVE_STATE_WAITFORKTRANSFER));
-  ASSERT_EQ(std::string("RUNNING"), DriveCatalogueEntry::drvState2Str(
-    DriveCatalogueEntry::DRIVE_STATE_RUNNING));
+  ASSERT_EQ(std::string("SESSIONRUNNING"), DriveCatalogueEntry::drvState2Str(
+    DriveCatalogueEntry::DRIVE_STATE_SESSIONRUNNING));
   ASSERT_EQ(std::string("WAITDOWN"), DriveCatalogueEntry::drvState2Str(
     DriveCatalogueEntry::DRIVE_STATE_WAITDOWN));
 }

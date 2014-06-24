@@ -31,6 +31,7 @@ set (CASTOR_LEGACYMSG_LIB_SRC_FILES
   CupvMarshal.cpp
   CupvProxy.cpp
   CupvProxyTcpIp.cpp
+  GenericErrorReplyMsgBody.cpp
   GenericMarshal.cpp
   GenericReplyMsgBody.cpp
   GiveOutpMsgBody.cpp

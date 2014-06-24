@@ -71,7 +71,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  const DriveCatalogueEntry &findConstDrive(const std::string &unitName)
+  const DriveCatalogueEntry *findConstDrive(const std::string &unitName)
     const;
 
   /**
@@ -82,7 +82,7 @@ public:
    *
    * @param sessionPid The process ID of the session.
    */
-  const DriveCatalogueEntry &findConstDrive(const pid_t sessionPid) const;
+  const DriveCatalogueEntry *findConstDrive(const pid_t sessionPid) const;
 
   /**
    * Returns a reference to the tape-drive entry corresponding to the tape
@@ -92,7 +92,7 @@ public:
    *
    * @param unitName The unit name of the tape drive.
    */
-  DriveCatalogueEntry &findDrive(const std::string &unitName);
+  DriveCatalogueEntry *findDrive(const std::string &unitName);
 
   /**
    * Returns a reference to the tape-drive entry associated with the
@@ -102,7 +102,7 @@ public:
    *
    * @param sessionPid The process ID of the session.
    */
-  DriveCatalogueEntry &findDrive(const pid_t sessionPid);
+  DriveCatalogueEntry *findDrive(const pid_t sessionPid);
 
   /**
    * Returns an unordered list of the unit names of all of the tape drives
@@ -118,8 +118,23 @@ public:
    *
    * @return Unordered list of the unit names.
    */
-  std::list<std::string> getUnitNames(
-   const DriveCatalogueEntry::DriveState state) const;
+  std::list<std::string> getUnitNames(const DriveCatalogueEntry::DriveState state) const;
+  
+  /**
+   * Returns an unordered list of the unit names of the tape drives wait for
+   * forking a transfer session.
+   *
+   * @return Unordered list of the unit names.
+   */
+  std::list<std::string> getUnitNamesWaitingForTransferFork() const;
+  
+  /**
+   * Returns an unordered list of the unit names of the tape drives wait for
+   * forking a label session.
+   *
+   * @return Unordered list of the unit names.
+   */
+  std::list<std::string> getUnitNamesWaitingForLabelFork() const;
 
 private:
 
@@ -127,7 +142,7 @@ private:
    * Type that maps the unit name of a tape drive to the catalogue entry of
    * that drive.
    */
-  typedef std::map<std::string, DriveCatalogueEntry> DriveMap;
+  typedef std::map<std::string, DriveCatalogueEntry *> DriveMap;
 
   /**
    * Map from the unit name of a tape drive to the catalogue entry of that
@@ -148,4 +163,3 @@ private:
 } // namespace tapeserver
 } // namespace tape
 } // namespace castor
-

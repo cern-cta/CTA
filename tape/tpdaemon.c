@@ -2654,11 +2654,11 @@ void check_child_exit()
         /* is it a rlstape process? */
 
         tunp = tptabp;
-		for (i = 0; i < nbtpdrives; i++) {
+        for (i = 0; i < nbtpdrives; i++) {
             unsigned int j;
             int c;
             char *p;
-			if (tunp->rlsovly_pid == pid) {
+	    if (tunp->rlsovly_pid == pid) {
                 tunp->rlsovly_pid = 0;
                 if (status) {
                     tplogit (func, "rlstape process %d found dead (jid %d)\n", pid, tunp->jid);

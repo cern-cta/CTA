@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      LabelSession.hpp
+ *             castor/tape/tapeserver/daemon/LabelSession.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor

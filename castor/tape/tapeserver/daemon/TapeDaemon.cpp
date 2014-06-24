@@ -54,6 +54,8 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#include <sys/prctl.h>
+
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
@@ -186,7 +188,6 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
       " the stager superuser: " << ne.getMessage().str();
     throw ex;
   }
-
   blockSignals();
   setUpReactor();
   registerTapeDrivesWithVdqm();
@@ -269,15 +270,15 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDrivesWithVdqm()
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
   const std::string &unitName)  {
-  const DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(unitName);
-  const utils::DriveConfig &driveConfig = drive.getConfig();
+  const DriveCatalogueEntry *drive = m_driveCatalogue.findDrive(unitName);
+  const utils::DriveConfig &driveConfig = drive->getConfig();
 
   std::list<log::Param> params;
   params.push_back(log::Param("server", m_hostName));
   params.push_back(log::Param("unitName", unitName));
   params.push_back(log::Param("dgn", driveConfig.dgn));
 
-  switch(drive.getState()) {
+  switch(drive->getState()) {
   case DriveCatalogueEntry::DRIVE_STATE_DOWN:
     params.push_back(log::Param("state", "down"));
     m_log(LOG_INFO, "Registering tape drive in vdqm", params);
@@ -294,7 +295,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
       ex.getMessage() << "Failed to register tape drive in vdqm"
         ": server=" << m_hostName << " unitName=" << unitName << " dgn=" <<
         driveConfig.dgn << ": Invalid drive state: state=" <<
-        DriveCatalogueEntry::drvState2Str(drive.getState());
+        DriveCatalogueEntry::drvState2Str(drive->getState());
       throw ex;
     }
   }
@@ -525,7 +526,6 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handlePendingSignals()
 void castor::tape::tapeserver::daemon::TapeDaemon::reapZombies() throw() {
   pid_t sessionPid = 0;
   int waitpidStat = 0;
-
   while (0 < (sessionPid = waitpid(-1, &waitpidStat, WNOHANG))) {
     postProcessReapedSession(sessionPid, waitpidStat);
   }
@@ -541,21 +541,20 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedSession(
   std::list<log::Param> params;
   params.push_back(log::Param("sessionPid", sessionPid));
 
-  DriveCatalogueEntry drive;
+  const DriveCatalogueEntry *drive = NULL;
   try {
     drive = m_driveCatalogue.findConstDrive(sessionPid);
-    const utils::DriveConfig &driveConfig = drive.getConfig();
+    const utils::DriveConfig &driveConfig = drive->getConfig();
     params.push_back(log::Param("unitName", driveConfig.unitName));
     params.push_back(log::Param("sessionType",
-      DriveCatalogueEntry::sessionType2Str(drive.getSessionType())));
+      DriveCatalogueEntry::sessionType2Str(drive->getSessionType())));
 
-    dispatchReapedSessionPostProcessor(drive.getSessionType(), sessionPid,
+    dispatchReapedSessionPostProcessor(drive->getSessionType(), sessionPid,
       waitpidStat);
   } catch(castor::exception::Exception &ne) {
     params.push_back(log::Param("message", ne.getMessage().str()));
     m_log(LOG_ERR, "Failed to perform post processing of reaped session",
       params);
-    return;
   }
 }
 
@@ -626,19 +625,19 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedDataTransfer
   try {
     std::list<log::Param> params;
     params.push_back(log::Param("sessionPid", sessionPid));
-    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(sessionPid);
-    const utils::DriveConfig &driveConfig = drive.getConfig();
+    DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(sessionPid);
+    const utils::DriveConfig &driveConfig = drive->getConfig();
 
     if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
-      const std::string vid = drive.getVid();
-      drive.sessionSucceeded();
+      const std::string vid = drive->getVid();
+      drive->sessionSucceeded();
       m_log(LOG_INFO, "Mount session succeeded", params);
       requestVdqmToReleaseDrive(driveConfig, sessionPid);
       notifyVdqmTapeUnmounted(driveConfig, vid, sessionPid);
     } else {
-      drive.sessionFailed();
+      drive->sessionFailed();
       m_log(LOG_INFO, "Mount session failed", params);
-      setDriveDownInVdqm(sessionPid, drive.getConfig());
+      setDriveDownInVdqm(sessionPid, drive->getConfig());
     }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -728,15 +727,15 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession
     std::list<log::Param> params;
     params.push_back(log::Param("sessionPid", sessionPid));
 
-    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(sessionPid);
+    DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(sessionPid);
 
     if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
-      drive.sessionSucceeded();
+      drive->sessionSucceeded();
       m_log(LOG_INFO, "Label session succeeded", params);
     } else {
-      drive.sessionFailed();
+      drive->sessionFailed();
       m_log(LOG_INFO, "Label session failed", params);
-      setDriveDownInVdqm(sessionPid, drive.getConfig());
+      setDriveDownInVdqm(sessionPid, drive->getConfig());
     }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -750,13 +749,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession
 // forkMountSessions
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSessions() throw() {
-  const std::list<std::string> unitNames = m_driveCatalogue.getUnitNames(
-    DriveCatalogueEntry::DRIVE_STATE_WAITFORKTRANSFER);
+  const std::list<std::string> unitNames = m_driveCatalogue.getUnitNamesWaitingForTransferFork();
 
   for(std::list<std::string>::const_iterator itor = unitNames.begin();
     itor != unitNames.end(); itor++) {
     const std::string unitName = *itor;
-    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(unitName);
+    DriveCatalogueEntry *drive = m_driveCatalogue.findDrive(unitName);
     forkMountSession(drive);
   }
 }
@@ -765,8 +763,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSessions() throw() {
 // forkMountSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSession(
-  DriveCatalogueEntry &drive) throw() {
-  const utils::DriveConfig &driveConfig = drive.getConfig();
+  DriveCatalogueEntry *drive) throw() {
+  const utils::DriveConfig &driveConfig = drive->getConfig();
 
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", driveConfig.unitName));
@@ -786,7 +784,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSession(
 
   // Else if this is the parent process
   } else if(0 < forkRc) {
-    drive.forkedMountSession(forkRc);
+    drive->forkedMountSession(forkRc);
     return;
 
   // Else this is the child process
@@ -799,7 +797,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSession(
 
     try {
       m_vdqm.assignDrive(m_hostName, driveConfig.unitName,
-        drive.getVdqmJob().dgn, drive.getVdqmJob().volReqId, getpid());
+        drive->getVdqmJob().dgn, drive->getVdqmJob().volReqId, getpid());
       m_log(LOG_INFO, "Assigned the drive in the vdqm", params);
     } catch(castor::exception::Exception &ex) {
       params.push_back(log::Param("message", ex.getMessage().str()));
@@ -816,8 +814,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSession(
 // runMountSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
-  const DriveCatalogueEntry &drive) throw() {
-  const utils::DriveConfig &driveConfig = drive.getConfig();
+  const DriveCatalogueEntry *drive) throw() {
+  const utils::DriveConfig &driveConfig = drive->getConfig();
   const pid_t sessionPid = getpid();
 
   std::list<log::Param> params;
@@ -879,7 +877,7 @@ m_log(LOG_INFO, "connect ZMQ context : OK");
         m_argc,
         m_argv,
         m_hostName,
-        drive.getVdqmJob(),
+        drive->getVdqmJob(),
         m_log,
         sysWrapper,
         driveConfig,
@@ -891,7 +889,7 @@ m_log(LOG_INFO, "connect ZMQ context : OK");
       m_log(LOG_INFO, "foobar");
     } catch (castor::exception::Exception & ex) {
       try {
-        client::ClientProxy cl(drive.getVdqmJob());
+        client::ClientProxy cl(drive->getVdqmJob());
         client::ClientInterface::RequestReport rep;
         cl.reportEndOfSessionWithError(ex.getMessageValue(), ex.code(), rep);
       } catch (...) {
@@ -904,8 +902,8 @@ m_log(LOG_INFO, "connect ZMQ context : OK");
     } 
     catch (...) {
       try {
-        m_log(LOG_ERR, "got non castor exception error while construction mount session", params);
-        client::ClientProxy cl(drive.getVdqmJob());
+        m_log(LOG_ERR, "got non castor exception error while constructing mount session", params);
+        client::ClientProxy cl(drive->getVdqmJob());
         client::ClientInterface::RequestReport rep;
         cl.reportEndOfSessionWithError(
          "Non-Castor exception when setting up the mount session", SEINTERNAL,
@@ -945,13 +943,12 @@ m_log(LOG_INFO, "connect ZMQ context : OK");
 // forkLabelSessions
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSessions() throw() {
-  const std::list<std::string> unitNames = m_driveCatalogue.getUnitNames(
-    DriveCatalogueEntry::DRIVE_STATE_WAITFORKLABEL);
+  const std::list<std::string> unitNames = m_driveCatalogue.getUnitNamesWaitingForLabelFork();
 
   for(std::list<std::string>::const_iterator itor = unitNames.begin();
     itor != unitNames.end(); itor++) {
     const std::string &unitName = *itor;
-    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(unitName);
+    DriveCatalogueEntry *drive = m_driveCatalogue.findDrive(unitName);
     forkLabelSession(drive);
   }
 }
@@ -960,15 +957,15 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSessions() throw() {
 // forkLabelSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
-  DriveCatalogueEntry &drive) throw() {
-  const utils::DriveConfig &driveConfig = drive.getConfig();
+  DriveCatalogueEntry *drive) throw() {
+  const utils::DriveConfig &driveConfig = drive->getConfig();
   std::list<log::Param> params;
   params.push_back(log::Param("unitName", driveConfig.unitName));
 
   // Release the connection with the label command from the drive catalogue
   castor::utils::SmartFd labelCmdConnection;
   try {
-    labelCmdConnection.reset(drive.releaseLabelCmdConnection());
+    labelCmdConnection.reset(drive->releaseLabelCmdConnection());
   } catch(castor::exception::Exception &ne) {
     params.push_back(log::Param("message", ne.getMessage().str()));
     m_log(LOG_ERR, "Failed to fork label session", params);
@@ -992,7 +989,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
     // open
     close(labelCmdConnection.release());
 
-    drive.forkedLabelSession(sessionPid);
+    drive->forkedLabelSession(sessionPid);
 
   // Else this is the child process
   } else {
@@ -1008,8 +1005,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
 // runLabelSession
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(
-  const DriveCatalogueEntry &drive, const int labelCmdConnection) throw() {
-  const utils::DriveConfig &driveConfig = drive.getConfig();
+  const DriveCatalogueEntry *drive, const int labelCmdConnection) throw() {
+  const utils::DriveConfig &driveConfig = drive->getConfig();
   const pid_t sessionPid = getpid();
   std::list<log::Param> params;
   params.push_back(log::Param("sessionPid", sessionPid));
@@ -1021,12 +1018,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(
     std::auto_ptr<legacymsg::RmcProxy> rmc(m_rmcFactory.create());
     std::auto_ptr<legacymsg::NsProxy> ns(m_nsFactory.create());
     castor::tape::System::realWrapper sWrapper;
-    bool force = drive.getLabelJob().force==1 ? true : false;
+    bool force = drive->getLabelJob().force==1 ? true : false;
     castor::tape::tapeserver::daemon::LabelSession labelsession(
       labelCmdConnection,
       *(rmc.get()),
       *(ns.get()),
-      drive.getLabelJob(),
+      drive->getLabelJob(),
       m_log,
       sWrapper,
       driveConfig,

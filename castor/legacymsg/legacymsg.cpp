@@ -70,3 +70,22 @@ void castor::legacymsg::writeTapeReplyMsg(const int timeout, const int fd, const
     throw ex;
   }
 }
+
+//------------------------------------------------------------------------------
+// writeTapeReplyErrorMsg
+//------------------------------------------------------------------------------
+void castor::legacymsg::writeTapeReplyErrorMsg(const int timeout, const int fd, const std::string &message) {
+  try {    
+    const int dstlen = 12 + CA_MAXLINELEN+1; // 12 bytes of header + max length of error message
+    char dst[dstlen];
+    castor::legacymsg::GenericErrorReplyMsgBody src;
+    castor::utils::copyString(src.errorMessage, message.c_str());
+    const size_t len = castor::legacymsg::marshal(dst, dstlen, TPMAGIC, MSG_ERR, src);    
+    castor::io::writeBytes(fd, timeout, len, dst);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to write error reply message with and error message=\"" << message << "\". "
+      << ne.getMessage().str();
+    throw ex;
+  }
+}

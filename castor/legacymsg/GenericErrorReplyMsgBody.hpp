@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/legacymsg/legacymsg.hpp
+ *         castor/legacymsg/GenericErrorReplyMsgBody.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -18,45 +18,40 @@
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
  *
- *
- *
- * @author steven.murray@cern.ch
+ * 
+ * @author dkruse@cern.ch
  *****************************************************************************/
 
 #pragma once
 
-#include "castor/exception/Exception.hpp"
+#include "h/Castor_limits.h"
 
-namespace castor    {
+#include <stdint.h>
+
+namespace castor {
 namespace legacymsg {
 
 /**
- * Writes an RC reply message to the specified connection.
- *
- * @param fd The file descriptor of the connection.
- * @param rc The return code to reply.
- * 
+ * The body of an error reply message.
  */
-void writeTapeRcReplyMsg(const int timeout, const int fd, const int rc);
+struct GenericErrorReplyMsgBody {
 
-/**
- * Writes a generic reply message to the specified connection.
- * 
- * @param timeout Connection timeout in seconds
- * @param fd      The file descriptor of the connection.
- * @param rc      The return code to reply.
- * @param message Reply message string
- */
-void writeTapeReplyMsg(const int timeout, const int fd, const int rc, const std::string &message);
+  /**
+   * In the case of success this field should be set to the empty string and in
+   * the case of an error it should contain an appropriate error message.
+   */
+  char errorMessage[CA_MAXLINELEN+1];
 
-/**
- * Writes an error reply message to the specified connection.
- * 
- * @param timeout Connection timeout in seconds
- * @param fd      The file descriptor of the connection.
- * @param message Reply error message string
- */
-void writeTapeReplyErrorMsg(const int timeout, const int fd, const std::string &message);
-  
+  /**
+   * Constructor.
+   *
+   * Sets all integer member-variables to 0, and all string member-varibles to
+   * the empty string.
+   */
+  GenericErrorReplyMsgBody() throw();
+
+}; // struct GenericErrorReplyMsgBody
+
 } // namespace legacymsg
 } // namespace castor
+

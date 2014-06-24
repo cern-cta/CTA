@@ -211,8 +211,8 @@ void castor::tape::tapeserver::daemon::LabelCmdConnectionHandler::
     logLabelRequest(body);
 
     // Try to inform the drive catalogue of the reception of the label job
-    DriveCatalogueEntry &drive = m_driveCatalogue.findDrive(body.drive);
-    drive.receivedLabelJob(body, m_fd);
+    DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(body.drive);
+    drive->receivedLabelJob(body, m_fd);
 
     // The drive catalogue will now remember and own the client connection,
     // therefore it is now safe and necessary for this connection handler to

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      castor/legacymsg/RmcMarshal.hpp
+ *                      castor/legacymsg/GenericMarshal.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -27,6 +27,7 @@
 
 #include "castor/exception/Exception.hpp"
 #include "castor/legacymsg/GenericReplyMsgBody.hpp"
+#include "castor/legacymsg/GenericErrorReplyMsgBody.hpp"
 
 #include <stdint.h>
 
@@ -83,6 +84,57 @@ template<int n> size_t marshal(char (&dst)[n], const uint32_t srcMagic,
  * @param dst The destination message body structure.
  */
 void unmarshal(const char * &src, size_t &srcLen, GenericReplyMsgBody &dst) ;
+
+/**
+ * Marshals the specified source message into the specified destination buffer.
+ *
+ * Please note that this method marshals the length of the message body as the
+ * third field of the message header (message header = magic + reqType + len).
+ *
+ * @param dst        The destination message buffer.
+ * @param dstLen     The length of the destination buffer.
+ * @param srcMagic   The magic number of the source message.
+ * @param srcReqType The request type of the source message.
+ * @param srcBody    The body of the source message.
+ *
+ * @return         The total length of the message (header + body).
+ */
+size_t marshal(char *const dst, const size_t dstLen, const uint32_t srcMagic,
+  const uint32_t srcReqType, const GenericErrorReplyMsgBody &srcBody)
+  ;
+
+/**
+ * Marshals the specified source message into the specified destination buffer.
+ *
+ * Please note that this method marshals the length of the message body as the
+ * third field of the message header (message header = magic + reqType + len).
+ *
+ * @param dst        The destination message buffer.
+ * @param srcMagic   The magic number of the source message.
+ * @param srcReqType The request type of the source message.
+ * @param srcBody    The body of the source message.
+ * @return           The total length of the message (header + body).
+ */
+template<int n> size_t marshal(char (&dst)[n], const uint32_t srcMagic,
+  const uint32_t srcReqType, const GenericErrorReplyMsgBody &srcBody)
+   {
+  return marshal(dst, n, srcMagic, srcReqType, srcBody);
+}
+
+/**
+ * Unmarshals a message body with the specified destination structure type
+ * from the specified source buffer.
+ *
+ * @param src In/out parameter, before invocation points to the source
+ * buffer where the message body should be unmarshalled from and on return
+ * points to the byte in the source buffer immediately after the
+ * unmarshalled message body.
+ * @param srcLen In/out parameter, before invocation is the length of the
+ * source buffer from where the message body should be unmarshalled and on
+ * return is the number of bytes remaining in the source buffer.
+ * @param dst The destination message body structure.
+ */
+void unmarshal(const char * &src, size_t &srcLen, GenericErrorReplyMsgBody &dst) ;
 
 } // namespace legacymsg
 } // namespace castor

@@ -30,10 +30,14 @@
 #include "castor/legacymsg/TapeStatDriveEntry.hpp"
 #include "castor/legacymsg/TapeUpdateDriveRqstMsgBody.hpp"
 #include "castor/messages/NotifyDrive.pb.h"
+#include "castor/tape/tapeserver/daemon/DriveCatalogueSession.hpp"
+
 #include <string>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
+#include <memory>
+#include <iostream>
 
 namespace castor     {
 namespace tape       {
@@ -45,7 +49,7 @@ namespace daemon     {
  */
 class DriveCatalogueEntry {
 public:
-
+  
   /**
    * The state of a drive as described by the following FSTN:
    *
@@ -134,9 +138,7 @@ public:
     DRIVE_STATE_INIT,
     DRIVE_STATE_DOWN,
     DRIVE_STATE_UP,
-    DRIVE_STATE_WAITFORKTRANSFER,
-    DRIVE_STATE_WAITFORKLABEL,
-    DRIVE_STATE_RUNNING,
+    DRIVE_STATE_SESSIONRUNNING,
     DRIVE_STATE_WAITDOWN};
 
   /**
@@ -176,6 +178,11 @@ public:
    * SESSION_TYPE_NONE.
    */
   DriveCatalogueEntry() throw();
+  
+  /**
+   * Destructor
+   */
+  ~DriveCatalogueEntry() throw();
 
   /**
    * Constructor that except for its parameters, initializes all strings to
@@ -232,6 +239,13 @@ public:
    * @return The current state of the tape drive.
    */
   DriveState getState() const throw();
+  
+  /**
+   * Gets the current state of the tape drive session.
+   *
+   * @return The current state of the tape drive session.
+   */
+  castor::tape::tapeserver::daemon::DriveCatalogueSession::SessionState getSessionState() const throw();
 
   /**
    * Gets the type of session associated with the tape drive.
@@ -353,7 +367,7 @@ public:
    *
    * @return The job received from the vdqmd daemon.
    */
-  const legacymsg::RtcpJobRqstMsgBody &getVdqmJob() const;
+  const legacymsg::RtcpJobRqstMsgBody getVdqmJob() const;
 
   /**
    * Gets the label job received from the castor-tape-label command-line tool.
@@ -364,7 +378,7 @@ public:
    * @return The label job received from the castor-tape-label command-line
    * tool.
    */ 
-  const legacymsg::TapeLabelRqstMsgBody &getLabelJob() const;
+  const legacymsg::TapeLabelRqstMsgBody getLabelJob() const;
 
   /**
    * The process ID of the child process running the mount session.
@@ -421,6 +435,13 @@ public:
 private:
 
   /**
+   * Copy constructor and assignment operator are declared private since the member "m_session" is now a pointer
+   * @param other
+   */
+  DriveCatalogueEntry( const DriveCatalogueEntry& other );  
+  DriveCatalogueEntry& operator=( const DriveCatalogueEntry& other );
+
+  /**
    * The configuration of the tape-drive.
    */
   castor::tape::utils::DriveConfig m_config;
@@ -458,21 +479,6 @@ private:
   SessionType m_sessionType;
 
   /**
-   * The job received from the vdqmd daemon.
-   */
-  legacymsg::RtcpJobRqstMsgBody m_vdqmJob;
-  
-  /**
-   * The label job received from the castor-tape-label command-line tool.
-   */
-  legacymsg::TapeLabelRqstMsgBody m_labelJob;
-  
-  /**
-   * The process ID of the child process running the mount session.
-   */
-  pid_t m_sessionPid;
-
-  /**
    * If the drive state is either DRIVE_WAITLABEL, DRIVE_STATE_RUNNING or
    * DRIVE_STATE_WAITDOWN and the type of the session is SESSION_TYPE_LABEL
    * then this is the file descriptor of the TCP/IP connection with the tape
@@ -480,6 +486,17 @@ private:
    * value of this field is undefined.
    */
   int m_labelCmdConnection;
+  
+  /**
+   * The session metadata associated to the drive catalogue entry
+   */
+  DriveCatalogueSession *m_session;
+  
+  /**
+   * 
+   * @return the associated drive catalogue session pointer
+   */
+  DriveCatalogueSession * getSession() const;
 
   /**
    * Returns the value of the uid field of a TapeStatDriveEntry to be used
@@ -547,4 +564,3 @@ private:
 } // namespace tapeserver
 } // namespace tape
 } // namespace castor
-
