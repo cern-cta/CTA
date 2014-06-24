@@ -82,7 +82,7 @@ castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log,
 void castor::messages::TapeserverProxyZmq::gotReadMountDetailsFromClient(
 castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
         const std::string &unitName) {  
-  castor::messages::Header header=castor::messages::preFilleHeader();
+  castor::messages::Header header=castor::messages::preFillHeader();
   header.set_bodyhashvalue("PIPO");
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
@@ -106,7 +106,7 @@ uint64_t
   castor::messages::TapeserverProxyZmq::gotWriteMountDetailsFromClient(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {  
-  castor::messages::Header header=castor::messages::preFilleHeader();
+  castor::messages::Header header=castor::messages::preFillHeader();
   header.set_bodyhashvalue("PIPO");
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
@@ -129,7 +129,7 @@ uint64_t
 void castor::messages::TapeserverProxyZmq::gotDumpMountDetailsFromClient(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {  
-  castor::messages::Header header=castor::messages::preFilleHeader();
+  castor::messages::Header header=castor::messages::preFillHeader();
   header.set_bodyhashvalue("PIPO");
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveBeforeMountStarted);
@@ -152,7 +152,7 @@ void castor::messages::TapeserverProxyZmq::gotDumpMountDetailsFromClient(
 void castor::messages::TapeserverProxyZmq::tapeMountedForRead(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {  
-  castor::messages::Header header=castor::messages::preFilleHeader();
+  castor::messages::Header header=castor::messages::preFillHeader();
   header.set_bodyhashvalue("PIPO");
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveTapeMounted);
@@ -174,7 +174,7 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForRead(
 void castor::messages::TapeserverProxyZmq::tapeMountedForWrite(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {  
-  castor::messages::Header header=castor::messages::preFilleHeader();
+  castor::messages::Header header=castor::messages::preFillHeader();
   header.set_bodyhashvalue("PIPO");
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveTapeMounted);
@@ -196,7 +196,7 @@ void castor::messages::TapeserverProxyZmq::tapeMountedForWrite(
 void castor::messages::TapeserverProxyZmq::tapeUnmounting(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {  
-  castor::messages::Header header=castor::messages::preFilleHeader();
+  castor::messages::Header header=castor::messages::preFillHeader();
   header.set_bodyhashvalue("PIPO");
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveUnmountStarted);
@@ -215,7 +215,7 @@ void castor::messages::TapeserverProxyZmq::tapeUnmounting(
 void castor::messages::TapeserverProxyZmq::tapeUnmounted(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {  
-  castor::messages::Header header=castor::messages::preFilleHeader();
+  castor::messages::Header header=castor::messages::preFillHeader();
   header.set_bodyhashvalue("PIPO");
   header.set_bodysignature("PIPO");
   header.set_reqtype(castor::messages::reqType::NotifyDriveTapeUnmounted);

@@ -251,7 +251,7 @@ const castor::messages::NotifyDriveTapeMounted& body){
 }
 
 void castor::tape::tapeserver::daemon::TapeMessageHandler::sendEmptyReplyToClient(){
-    castor::messages::Header header = castor::messages::preFilleHeader();
+    castor::messages::Header header = castor::messages::preFillHeader();
     header.set_reqtype(messages::reqType::NoReturnValue);
     header.set_bodyhashvalue("PIPO");
     header.set_bodysignature("PIPO");

@@ -32,7 +32,7 @@ void castor::messages::connectToLocalhost(zmq::socket_t& m_socket){
   m_socket.connect(bindingAdress.c_str());
 }
 
-castor::messages::Header castor::messages::preFilleHeader() {
+castor::messages::Header castor::messages::preFillHeader() {
   castor::messages::Header header;
   header.set_magic(TPMAGIC);
   header.set_protocoltype(castor::messages::protocolType::Tape);
