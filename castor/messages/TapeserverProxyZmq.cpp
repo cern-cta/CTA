@@ -232,5 +232,7 @@ void castor::messages::TapeserverProxyZmq::tapeUnmounted(
 // readReplyMsg
 //-----------------------------------------------------------------------------
 void castor::messages::TapeserverProxyZmq::readReplyMsg()  {
-  
+  zmq::message_t blobHeader,blobBody;
+  m_socket.recv(&blobHeader); 
+  m_socket.recv(&blobBody);
 }
