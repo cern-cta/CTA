@@ -350,6 +350,15 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
     }
 
 
+    //--------------------------------------------------------------------------
+    //! Set the log level for the xrootd daemon
+    //!
+    //! @param logLevel new loglevel to be set
+    //!
+    //--------------------------------------------------------------------------
+    void SetLogLevel(int logLevel);
+
+  
     XrdSysError* Eroute; ///< Error object
     bool doPOSC; ///< 'Persistency on successful close' flag
     int mLogLevel; ///< log level from configuration file

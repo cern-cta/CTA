@@ -573,26 +573,20 @@ XrdxCastor2FsStats::Update()
           if (log_level == -1)
           {
             // Maybe the log level is specified as an int from 0 to 7
-            char* end;
             errno = 0;
+            char* end;
             log_level = (int) strtol(slog_level.c_str(), &end, 10);
-
-            if (!(errno == ERANGE && ((log_level == LONG_MIN) || (log_level == LONG_MAX))) &&
-                !((errno != 0) && (log_level == 0)))
+            
+            if ((errno == ERANGE && ((log_level == LONG_MIN) || (log_level == LONG_MAX))) ||
+                ((errno != 0) && (log_level == 0)) ||
+                (end == slog_level.c_str()))
             {
-              if (end != slog_level.c_str())
-              {
-                // Conversion successful - the log level was an int
-                if ((log_level >= 0) && (log_level <= 7))
-                  gMgr->SetLogLevel(log_level);
-              }
+              // There was an error default to LOG_INFO
+              log_level = 6;
             }
           }
-          else
-          {
-            // Log level was a string
-            gMgr->SetLogLevel(log_level);
-          }
+
+          gMgr->SetLogLevel(log_level);
         }
       }
     }

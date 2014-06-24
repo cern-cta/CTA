@@ -138,20 +138,30 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
           }
           else
           {
-            std::string str_val(val);
+            long int log_level = Logging::GetPriorityByString(val);
 
-            // Loglevel can be a number or a string 
-            if (isdigit(str_val[0]))
-              mLogLevel = atoi(val);
-            else
-              mLogLevel = Logging::GetPriorityByString(val);
+            if (log_level == -1)
+            {
+              // Maybe the log level is specified as an int from 0 to 7
+              errno = 0;
+              char* end;
+              log_level = (int) strtol(val, &end, 10);
+              
+              if ((errno == ERANGE && ((log_level == LONG_MIN) || (log_level == LONG_MAX))) ||
+                  ((errno != 0) && (log_level == 0)) ||
+                  (end == val))
+              {
+                // There was an error default to LOG_INFO
+                  log_level = 6;
+              }
+            }
 
-            Logging::SetLogPriority(mLogLevel);
+            SetLogLevel(log_level);
             Eroute.Say("=====> xcastor2.loglevel: ",
                        Logging::GetPriorityString(mLogLevel), "");
           }
         }
-
+        
         // Get any debug filter name
         if (!strcmp("debugfilter", var))
         {
@@ -1193,3 +1203,21 @@ XrdxCastor2Ofs2StagerJob::Close(bool ok, bool haswrite)
 
   return true;
 }
+
+
+//------------------------------------------------------------------------------
+// Set the log level for the xrootd daemon
+//------------------------------------------------------------------------------
+void
+XrdxCastor2Ofs::SetLogLevel(int logLevel)
+{
+  if (mLogLevel != logLevel)
+  {
+    xcastor_notice("update log level from:%s to:%s",
+                   Logging::GetPriorityString(mLogLevel),
+                   Logging::GetPriorityString(logLevel));
+    mLogLevel = logLevel;
+    Logging::SetLogPriority(mLogLevel);
+  }
+}
+

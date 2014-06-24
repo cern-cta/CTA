@@ -1643,7 +1643,7 @@ XrdxCastor2Fs::GetAdminDelay(XrdOucString& msg, bool isRW)
 
 
 //------------------------------------------------------------------------------
-//! Set the log level for the manager xrootd server
+// Set the log level for the xrootd daemon
 //------------------------------------------------------------------------------
 void
 XrdxCastor2Fs::SetLogLevel(int logLevel)
