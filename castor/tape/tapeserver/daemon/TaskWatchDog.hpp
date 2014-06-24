@@ -33,9 +33,9 @@
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/messages.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
-#include "castor/utils/utils.hpp"
-#include "h/Ctape.h"
 #include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
+#include "castor/tape/tapeserver/daemon/MountSession.hpp"
+
 namespace castor {
 
 namespace tape {
@@ -49,7 +49,6 @@ class TaskWatchDog : private castor::tape::threading::Thread{
     castor::tape::threading::AtomicFlag m_stopFlag;
 
     log::LogContext m_lc;
-    zmq::context_t m_ctx;
      
     void report(zmq::socket_t& m_socket){
       try
@@ -87,8 +86,7 @@ class TaskWatchDog : private castor::tape::threading::Thread{
       
     }
     void run(){
-      GOOGLE_PROTOBUF_VERIFY_VERSION;
-      zmq::socket_t m_socket(m_ctx,ZMQ_REQ);
+      zmq::socket_t m_socket(MountSession::ctx,ZMQ_REQ);
       castor::messages::connectToLocalhost(m_socket);
       
       using castor::utils::timevalToDouble;
@@ -111,7 +109,7 @@ class TaskWatchDog : private castor::tape::threading::Thread{
     
   public:
     TaskWatchDog(log::LogContext lc): 
-    nbOfMemblocksMoved(0),periodToReport(2),m_lc(lc),m_ctx(){
+    nbOfMemblocksMoved(0),periodToReport(2),m_lc(lc){
       m_lc.pushOrReplace(log::Param("thread","Watchdog"));
       castor::utils::getTimeOfDay(&previousTime);
     }

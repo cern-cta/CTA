@@ -789,7 +789,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
   params.push_back(log::Param("unitName", driveConfig.unitName));
 
   m_log(LOG_INFO, "Mount-session child-process started", params);
-  zmq::context_t ctx;
+  
   try {
     MountSession::CastorConf castorConf;
     // This try bloc will allow us to send a failure notification to the client
@@ -833,7 +833,7 @@ m_log(LOG_INFO, "Before context");
       
 m_log(LOG_INFO, "After context");
       try{
-        tapeserver.reset(m_tapeserverFactory.create(ctx));
+        tapeserver.reset(m_tapeserverFactory.create(MountSession::ctx));
       }
       catch(const std::exception& e){
         m_log(LOG_ERR, "Failed to connect ZMQ/REQ socket in MountSession");

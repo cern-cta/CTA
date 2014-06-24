@@ -44,9 +44,14 @@
 #include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
-
+#include "castor/tape/tapeserver/daemon/MountSession.hpp"
 using namespace castor::tape;
 using namespace castor::log;
+//------------------------------------------------------------------------------
+// Global context
+//------------------------------------------------------------------------------
+zmq::context_t castor::tape::tapeserver::daemon::MountSession::ctx;
+
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------

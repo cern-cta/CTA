@@ -33,6 +33,7 @@
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 #include "TapeSingleThreadInterface.hpp"
+#include "zmq/castorZmqWrapper.hpp"
 
 using namespace castor::tape;
 using namespace castor::log;
@@ -113,6 +114,8 @@ namespace daemon {
     int execute() ;
     /** Temporary method used for debugging while building the session class */
     std::string getVid() { return m_volInfo.vid; }
+    
+    static zmq::context_t ctx;
   private:
     legacymsg::RtcpJobRqstMsgBody m_request;
     castor::log::Logger & m_logger;
