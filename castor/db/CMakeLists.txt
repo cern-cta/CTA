@@ -39,4 +39,6 @@ add_custom_target(stager_oracle_create.sql ALL
 CastorInstallSQL(stager_oracle_create.sql)
 CastorInstallSQLFromSource(drop_oracle_schema.sql)
 CastorInstallConfigNoRename(SQLSchemaTests.conf)
-CastorInstallScript(castor-SQLSchemaTests)
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/castor-SQLSchemaTests.in 
+  ${CMAKE_CURRENT_BINARY_DIR}/castor-SQLSchemaTests)
+CastorInstallScript(${CMAKE_CURRENT_BINARY_DIR}/castor-SQLSchemaTests)
