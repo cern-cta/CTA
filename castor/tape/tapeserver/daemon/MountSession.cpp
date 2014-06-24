@@ -47,10 +47,6 @@
 #include "castor/tape/tapeserver/daemon/MountSession.hpp"
 using namespace castor::tape;
 using namespace castor::log;
-//------------------------------------------------------------------------------
-// Global context
-//------------------------------------------------------------------------------
-zmq::context_t castor::tape::tapeserver::daemon::MountSession::ctx;
 
 //------------------------------------------------------------------------------
 //Constructor
@@ -473,3 +469,19 @@ castor::tape::tapeserver::daemon::MountSession::findDrive(const utils::DriveConf
     return NULL;
   }
 }
+
+//------------------------------------------------------------------------------
+//MountSession::ctx
+//------------------------------------------------------------------------------
+zmq::context_t& castor::tape::tapeserver::daemon::MountSession::ctx(){
+  static zmq::context_t m_ctx;
+  return m_ctx;
+}
+//------------------------------------------------------------------------------
+//destructor
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::MountSession::~MountSession(){
+  ctx().close();
+}
+    
+    

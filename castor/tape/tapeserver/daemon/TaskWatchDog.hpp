@@ -86,7 +86,7 @@ class TaskWatchDog : private castor::tape::threading::Thread{
       
     }
     void run(){
-      zmq::socket_t m_socket(MountSession::ctx,ZMQ_REQ);
+      zmq::socket_t m_socket(MountSession::ctx(),ZMQ_REQ);
       castor::messages::connectToLocalhost(m_socket);
       
       using castor::utils::timevalToDouble;
