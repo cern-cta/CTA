@@ -171,8 +171,10 @@ const messages::Header& header){
     }
       break;
     case messages::reqType::NotifyDriveTapeUnmounted:
+      sendEmptyReplyToClient();
       break;
     case messages::reqType::NotifyDriveUnmountStarted:
+      sendEmptyReplyToClient();
       break;
     default:
       m_log(LOG_ERR,"default  dispatch in TapeMessageHandler");
