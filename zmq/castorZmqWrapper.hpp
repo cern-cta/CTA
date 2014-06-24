@@ -293,7 +293,7 @@ namespace zmq
 
         inline ~context_t ()
         {
-            close();
+            //close();
         }
 
         inline void close()
