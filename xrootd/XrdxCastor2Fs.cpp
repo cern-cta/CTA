@@ -1680,7 +1680,7 @@ XrdxCastor2Fs::CacheDiskServer(const std::string& hostname)
   // Insert the hostname without the domain
   if (pos != std::string::npos)
   {
-    std::string nodomain_host = hostname.substr(0, pos - 1);
+    std::string nodomain_host = hostname.substr(0, pos);
     mFsSet.insert(nodomain_host);
   }
 }
