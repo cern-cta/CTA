@@ -66,11 +66,7 @@ install (TARGETS XrdxCastor2ServerAcc DESTINATION ${CASTOR_DEST_LIB_DIR})
 ################################################################################
 set (XRDXCASTOR2OFS_LIB_SRC_FILES
   XrdxCastor2Ofs.cpp
-  XrdxCastor2OfsFSctl.cpp
-  XrdxCastor2OfsTransfer.cpp
   XrdxCastor2OfsProc.cpp
-  XrdTransfer.cpp
-  XrdTransferManager.cpp
   XrdxCastorLogging.cpp
   XrdxCastorTiming.cpp)
 set_property(SOURCE XrdxCastor2Ofs.cpp
@@ -82,14 +78,6 @@ set_property (TARGET XrdxCastor2Ofs
 target_link_libraries (XrdxCastor2Ofs crypto ${XROOTD_XRDCL_LIB}
   ${XROOTD_XRDCLIENT_LIB} ${XROOTD_XRDOFS_LIB} ${UUID_LIB} z)
 install (TARGETS XrdxCastor2Ofs DESTINATION ${CASTOR_DEST_LIB_DIR})
-
-################################################################################
-# Rules to build and install XrdTransfer
-################################################################################
-add_executable (XrdTransfer XrdTransfer.cpp)
-target_link_libraries (XrdTransfer crypto ${XROOTD_XRDCLIENT_LIB}
-  ${XROOTD_XRDUTILS_LIB})
-install (TARGETS XrdTransfer DESTINATION ${CASTOR_DEST_BIN_DIR})
 
 ################################################################################
 # Rules to install the x2cp and x2proc scripts
