@@ -407,7 +407,7 @@ XrdxCastor2Fs::chmod(const char*         path,
 
 
 //------------------------------------------------------------------------------
-// Determine if file exists
+// Check if file exists
 //------------------------------------------------------------------------------
 int
 XrdxCastor2Fs::exists(const char* path,
@@ -436,7 +436,7 @@ XrdxCastor2Fs::exists(const char* path,
 
 
 //------------------------------------------------------------------------------
-// Test if file exists - low level
+// Check if file exists - low level
 //------------------------------------------------------------------------------
 int
 XrdxCastor2Fs::_exists(const char* path,
@@ -1339,7 +1339,7 @@ int XrdxCastor2Fs::utimes(const char* path,
 
 
 //------------------------------------------------------------------------------
-//! Emsg - format error messages
+// Emsg - format error messages
 //------------------------------------------------------------------------------
 int
 XrdxCastor2Fs::Emsg(const char* pfx,

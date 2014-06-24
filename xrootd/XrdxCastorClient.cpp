@@ -314,7 +314,7 @@ XrdxCastorClient::GetResponse(const std::string& userId,
     }
     else if (isFirstTime)
     {
-      // If this is the first time we check for a response we give the stager a
+      // If this is the first time we check for a response we give the stager
       // wait_time seconds to reply to our request before stalling the client
       int wait_time = 4;
       struct timeval start;

@@ -160,7 +160,7 @@ public :
 
 
   //----------------------------------------------------------------------------
-  //! The ReqElement structure encapsule the request object sent to the stager 
+  //! The ReqElement structure encapsulates the request object sent to the stager 
   //! and also the response handler. These objects are stored in the mMapRequests
   //! and are accessed by both the asyn thread polling for responses and also
   //! by clients check-in for their responses.

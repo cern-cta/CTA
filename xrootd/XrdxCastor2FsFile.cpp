@@ -860,7 +860,7 @@ XrdxCastor2FsFile::truncate(XrdSfsFileOffset flen)
   if (gMgr->mProc)
     gMgr->mStats.IncCmd();
 
-  // Make sure the offset is not too larg
+  // Make sure the offset is not too large
 #if _FILE_OFFSET_BITS!=64
 
   if (flen >  0x000000007fffffff)
