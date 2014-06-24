@@ -548,23 +548,19 @@ XrdxCastor2OfsFile::open(const char*         path,
   XrdOucString reqtag = val;
   XrdOucString sjob_uuid = "";
   int sjob_port = 0;
-  int pos1, pos2, pos3;
+  int pos1, pos2;
 
-  // TODO: drop the serviceclass from request syntax
-  // Syntax is reqid: <reqid:serviceclass:stagerjobport:stagerjobuuid>
+  // Syntax for request is: <reqid:stagerJobPort:stagerJobUuid>
   if ((pos1 = reqtag.find(":")) != STR_NPOS)
   {
     mReqId.assign(reqtag, 0, pos1 - 1);
 
     if ((pos2 = reqtag.find(":", pos1 + 1)) != STR_NPOS)
     {
-      if ((pos3 = reqtag.find(":", pos2 + 1)) != STR_NPOS)
-      {
-        XrdOucString sport;
-        sport.assign(reqtag, pos2 + 1, pos3 - 1);
-        sjob_port = atoi(sport.c_str());
-        sjob_uuid.assign(reqtag.c_str(), pos3 + 1);
-      }
+      XrdOucString sport;
+      sport.assign(reqtag, pos1 + 1, pos2 - 1);
+      sjob_port = atoi(sport.c_str());
+      sjob_uuid.assign(reqtag.c_str(), pos2 + 1);
     }
   }
 

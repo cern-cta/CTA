@@ -267,13 +267,10 @@ XrdxCastor2FsFile::open(const char*         path,
                                " class for fn=", map_path.c_str());
   }
 
-  // Create response structure in which we initialize rpfn2 for not scheduled access
+  // Create response structure in which the pfn2 has the following structure
+  //  <reqid:stageJobPort:stageJobUuid>
   struct XrdxCastor2Stager::RespInfo resp_info;
-  resp_info.mRedirectionPfn2 = 0;
-  resp_info.mRedirectionPfn2 += ":";
-  resp_info.mRedirectionPfn2 += allowed_svc.c_str();
-  resp_info.mRedirectionPfn2 += ":0";
-  resp_info.mRedirectionPfn2 += ":0";
+  resp_info.mRedirectionPfn2 = "0:0:0"; 
 
   // Delay tag used to stall the current client incrementally
   XrdOucString delaytag = tident;
@@ -483,13 +480,6 @@ XrdxCastor2FsFile::open(const char*         path,
       return XrdxCastor2Fs::Emsg(epname, error, EINVAL,
                                  "access file in ANY stager (all stager queries failed) fn=",
                                  map_path.c_str());
-    }
-
-    // If there was no stager_get we fill request id 0
-    if (!resp_info.mRedirectionPfn2.length())
-    {
-      resp_info.mRedirectionPfn2 += ":";
-      resp_info.mRedirectionPfn2 += allowed_svc.c_str();
     }
       
     // Create structures for request and response and call the get method

@@ -718,18 +718,10 @@ XrdxCastor2Fs::prepare(XrdSfsPrep&         pargs,
   // Unlink files which are not properly closed on a disk server
   if (oenv.Get("unlink"))
   {
-    char cds[4096];
-    char nds[4096];
-    char* acpath;
-    TIMING("CNSSELSERV", &preparetiming);
-    Cns_selectsrvr(map_path.c_str(), cds, nds, &acpath);
-    xcastor_debug("nameserver is: %s", nds);
     TIMING("CNSUNLINK", &preparetiming);
 
     if ((!oenv.Get("uid")) || (!oenv.Get("gid")))
-    {
       return XrdxCastor2Fs::Emsg(epname, error, EINVAL, "missing sec uid/gid", map_path.c_str());
-    }
 
     xcastor_debug("running rm as uid:%i, gid:%i", oenv.Get("uid"), oenv.Get("gid"));
     // Do the unlink as the authorized user in the open
