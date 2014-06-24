@@ -100,7 +100,7 @@ public:
           // end of file. append() also protects against reading too big tape blocks.
             while (mb->m_payload.append(*rf)) {
               tapeBlock++;
-              sleep(1);
+//              sleep(1);
             }
           } catch (const castor::tape::exceptions::EndOfFile&) {
             // append() signaled the end of the file.
