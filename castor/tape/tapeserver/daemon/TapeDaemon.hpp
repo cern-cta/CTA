@@ -169,6 +169,12 @@ protected:
   void createAndRegisterAdminAcceptHandler() ;
 
   /**
+   * Creates the handler to accept connections from the label tape
+   * command-line tool and registers it with the reactor.
+   */
+  void createAndRegisterLabelCmdAcceptHandler();
+
+  /**
    * Creates the handler to discuss through zmq socket to the forked sessions
    */
   void createAndRegisterTapeMessageHandler();

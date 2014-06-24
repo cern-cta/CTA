@@ -22,6 +22,7 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
  
+#include "castor/common/CastorConfiguration.hpp"
 #include "castor/exception/Errnum.hpp"
 #include "castor/exception/BadAlloc.hpp"
 #include "castor/io/io.hpp"
@@ -29,18 +30,18 @@
 #include "castor/legacymsg/TapeMarshal.hpp"
 #include "castor/tape/tapebridge/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/AdminAcceptHandler.hpp"
-#include "castor/tape/tapeserver/daemon/MountSessionAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "castor/tape/tapeserver/daemon/LabelCmdAcceptHandler.hpp"
+#include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/MountSession.hpp"
+#include "castor/tape/tapeserver/daemon/MountSessionAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
-#include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
+#include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/SmartFd.hpp"
-#include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/utils/utils.hpp"
-#include "castor/common/CastorConfiguration.hpp"
 #include "h/Ctape.h"
 #include "h/rtcp_constants.h"
 #include "h/rtcpd_constants.h"
@@ -48,7 +49,6 @@
 #include <algorithm>
 #include <limits.h>
 #include <memory>
-#include <poll.h>
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/wait.h>
@@ -303,10 +303,10 @@ void castor::tape::tapeserver::daemon::TapeDaemon::registerTapeDriveWithVdqm(
 //------------------------------------------------------------------------------
 // setUpReactor
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor()
-   {
+void castor::tape::tapeserver::daemon::TapeDaemon::setUpReactor() {
   createAndRegisterVdqmAcceptHandler();
   createAndRegisterAdminAcceptHandler();
+  createAndRegisterLabelCmdAcceptHandler();
   createAndRegisterTapeMessageHandler();
 }
 
@@ -382,6 +382,42 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterAdminAcceptH
   adminAcceptHandler.release();
 }
 
+//------------------------------------------------------------------------------
+// createAndRegisterLabelCmdAcceptHandler
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterLabelCmdAcceptHandler()  {
+  castor::utils::SmartFd listenSock;
+  try {
+    listenSock.reset(io::createListenerSock(TAPE_SERVER_LABELCMD_LISTENING_PORT));
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex(ne.code());
+    ex.getMessage() <<
+      "Failed to create socket to listen for admin command connections"
+      ": " << ne.getMessage().str();
+    throw ex;
+  }
+  {
+    log::Param params[] = {
+      log::Param("listeningPort", TAPE_SERVER_LABELCMD_LISTENING_PORT)};
+    m_log(LOG_INFO, "Listening for connections from label command",
+      params);
+  }
+
+  std::auto_ptr<LabelCmdAcceptHandler> labelCmdAcceptHandler;
+  try {
+    labelCmdAcceptHandler.reset(new LabelCmdAcceptHandler(listenSock.get(), m_reactor,
+      m_log, m_driveCatalogue, m_hostName, m_vdqm, m_vmgr));
+    listenSock.release();
+  } catch(std::bad_alloc &ba) {
+    castor::exception::BadAlloc ex;
+    ex.getMessage() <<
+      "Failed to create event handler for accepting label-command connections"
+      ": " << ba.what();
+    throw ex;
+  }
+  m_reactor.registerHandler(labelCmdAcceptHandler.get());
+  labelCmdAcceptHandler.release();
+}
 
 //------------------------------------------------------------------------------
 // createAndRegisterMountSessionAcceptHandler

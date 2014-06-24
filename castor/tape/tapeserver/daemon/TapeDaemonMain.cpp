@@ -133,7 +133,8 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
   castor::legacymsg::VdqmProxyTcpIp vdqm(log, vdqmHostName, VDQM_PORT, netTimeout);
   castor::legacymsg::VmgrProxyTcpIp vmgr(log, vmgrHostName, VMGR_PORT, netTimeout);
   castor::legacymsg::RmcProxyTcpIpFactory rmcFactory(log, netTimeout);
-  castor::messages::TapeserverProxyZmqFactory tapeserverFactory(log, TAPE_SERVER_MOUNTSESSION_LISTENING_PORT, netTimeout);
+  castor::messages::TapeserverProxyZmqFactory tapeserverFactory(log, TAPE_SERVER_INTERNAL_LISTENING_PORT,
+    netTimeout);
   castor::legacymsg::NsProxy_TapeAlwaysEmptyFactory nsFactory;
 
   // Create the poll() reactor
