@@ -44,7 +44,15 @@ TapeServerReporter::TapeServerReporter(
 //waitThreads
 //------------------------------------------------------------------------------     
   void TapeServerReporter::waitThreads(){
-    wait();
+    try{
+      wait();
+    }catch(const std::exception& e){
+        log::ScopedParamContainer sp(m_lc);
+        sp.add("what",e.what());
+        m_lc.log(LOG_ERR,"TapeServerReporter error caught while waiting");
+      }catch(...){
+        m_lc.log(LOG_ERR,"TapeServerReporter error triple ...");
+      }
   }
 //------------------------------------------------------------------------------
 //tapeMountedForWrite
@@ -93,7 +101,13 @@ TapeServerReporter::TapeServerReporter(
       if(NULL==currentReport.get()) {
         break;
       }
-      currentReport->execute(*this); 
+      try{
+        currentReport->execute(*this); 
+      }catch(const std::exception& e){
+        log::ScopedParamContainer sp(m_lc);
+        sp.add("what",e.what());
+        m_lc.log(LOG_ERR,"TapeServerReporter error caught");
+      }
     }
   }
 //------------------------------------------------------------------------------
@@ -125,6 +139,11 @@ TapeServerReporter::TapeServerReporter(
     void TapeServerReporter::ReportTapeMounterForWrite::
     execute(TapeServerReporter& parent){
       parent.m_tapeserverProxy.tapeMountedForWrite(parent.m_volume, parent.m_unitName);
+    }
+    
+    std::auto_ptr<TaskWatchDog> TapeServerReporter::
+    createWatchdog(log::LogContext& lc) const {
+      return m_tapeserverProxy.createWatchdog(lc);
     }
 }}}}
 

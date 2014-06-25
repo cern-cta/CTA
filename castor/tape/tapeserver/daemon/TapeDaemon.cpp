@@ -822,7 +822,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
   params.push_back(log::Param("unitName", driveConfig.unitName));
 
   m_log(LOG_INFO, "Mount-session child-process started", params);
-  zmq::context_t ctx;
+  
   try {
     MountSession::CastorConf castorConf;
     // This try bloc will allow us to send a failure notification to the client
@@ -862,16 +862,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
         "RTCPD", "THREAD_POOL", (uint32_t)RTCPD_THREAD_POOL, &m_log);
       
       rmc.reset(m_rmcFactory.create());
-m_log(LOG_INFO, "Before context");
-      
-m_log(LOG_INFO, "After context");
       try{
-        tapeserver.reset(m_tapeserverFactory.create(ctx));
+        tapeserver.reset(m_tapeserverFactory.create(MountSession::ctx()));
       }
       catch(const std::exception& e){
         m_log(LOG_ERR, "Failed to connect ZMQ/REQ socket in MountSession");
       }
-m_log(LOG_INFO, "connect ZMQ context : OK");
       mountSession.reset(new MountSession (
         m_argc,
         m_argv,
@@ -885,7 +881,6 @@ m_log(LOG_INFO, "connect ZMQ context : OK");
         m_capUtils,
         castorConf
       ));
-      m_log(LOG_INFO, "foobar");
     } catch (castor::exception::Exception & ex) {
       try {
         client::ClientProxy cl(drive->getVdqmJob());
@@ -916,7 +911,9 @@ m_log(LOG_INFO, "connect ZMQ context : OK");
       throw;
     }
     m_log(LOG_INFO, "Going to execute Mount Session");
-    exit (mountSession->execute());
+    int result = mountSession->execute();
+//    MountSession::ctx().close();
+    exit(result);
   } catch(castor::exception::Exception & ex) {
     params.push_back(log::Param("message", ex.getMessageValue()));
     m_log(LOG_ERR,

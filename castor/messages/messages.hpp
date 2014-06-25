@@ -47,7 +47,7 @@ template <class T> void sendMessage(zmq::socket_t& socket,const T& msg,int flag=
 }
 
 void connectToLocalhost(zmq::socket_t& m_socket);
-castor::messages::Header preFilleHeader();
+castor::messages::Header preFillHeader();
 
 } // namespace messages
 } // namespace castor

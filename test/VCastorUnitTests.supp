@@ -49,3 +49,10 @@
    ...
    fun:_ZN6castor8messages47StaticDescriptorInitializer_NotifyDrive_2eprotoC1Ev
 }
+
+{
+   zmq_ctx_new
+   Memcheck:Leak
+   ...
+   fun:zmq_ctx_new
+}

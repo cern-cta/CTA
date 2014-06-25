@@ -24,7 +24,6 @@
 
 #pragma once
 
-#include "castor/messages/TapeserverProxy.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
@@ -35,10 +34,13 @@
 #include <stdint.h>
 
 namespace castor {
+namespace messages{
+    class TapeserverProxy;
+  }
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-
+  class TaskWatchDog;
 class TapeServerReporter : private castor::tape::threading::Thread {
 
 public:
@@ -95,6 +97,8 @@ public:
   void waitThreads();
   
   void notifyWatchdog(uint64_t nbOfMemblocksMoved);
+  
+  std::auto_ptr<TaskWatchDog> createWatchdog(log::LogContext& lc) const;
 private:
   /*
   This internal mechanism could (should ?) be easily changed to a queue 

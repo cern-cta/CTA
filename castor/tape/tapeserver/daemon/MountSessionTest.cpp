@@ -70,7 +70,7 @@ private:
 };
 
   
-/*
+
 TEST(tapeServer, MountSessionGooddayRecall) {
   // TpcpClients only supports 32 bits session number
   // This number has to be less than 2^31 as in addition there is a mix
@@ -185,7 +185,7 @@ TEST(tapeServer, MountSessionGooddayRecall) {
   temp += "";
   ASSERT_EQ("V12345", sess.getVid());
 }
-*/
+ 
 
 TEST(tapeServer, MountSessionNoSuchDrive) {
   // TpcpClients only supports 32 bits session number

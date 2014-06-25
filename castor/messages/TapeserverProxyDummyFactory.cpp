@@ -22,7 +22,7 @@
 
 #include "castor/messages/TapeserverProxyDummy.hpp"
 #include "castor/messages/TapeserverProxyDummyFactory.hpp"
-
+#include "castor/log/LogContext.hpp"
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
