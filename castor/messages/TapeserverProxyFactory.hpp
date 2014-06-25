@@ -47,7 +47,7 @@ public:
    *
    * @return A pointer to the newly created object.
    */
-  virtual TapeserverProxy *create(zmq::context_t& ctx) = 0;
+  virtual TapeserverProxy *create(zmq::Context& ctx) = 0;
 
 }; // class TapeserverProxyFactory
 

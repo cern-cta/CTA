@@ -26,7 +26,7 @@
 #include "castor/utils/utils.hpp"
 #include "zmq/castorZmqWrapper.hpp"
 
-void castor::messages::connectToLocalhost(zmq::socket_t& m_socket){
+void castor::messages::connectToLocalhost(zmq::Socket& m_socket){
   std::string bindingAdress("tcp://127.0.0.1:");
   bindingAdress+=castor::utils::toString(tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT);
   m_socket.connect(bindingAdress.c_str());

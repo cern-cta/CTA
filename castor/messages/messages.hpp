@@ -33,7 +33,7 @@
 namespace castor {
 namespace messages {
     
-template <class T> void sendMessage(zmq::socket_t& socket,const T& msg,int flag=0) {
+template <class T> void sendMessage(zmq::Socket& socket,const T& msg,int flag=0) {
 
   if(!msg.IsInitialized()){
     castor::exception::Exception ex("the protocol buffer message was not correctly set");
@@ -41,12 +41,12 @@ template <class T> void sendMessage(zmq::socket_t& socket,const T& msg,int flag=
   }
 
   const int size=msg.ByteSize();
-  zmq::message_t blob(size);
+  zmq::Message blob(size);
   msg.SerializeToArray(blob.data(),size);
   socket.send(blob,flag);
 }
 
-void connectToLocalhost(zmq::socket_t& m_socket);
+void connectToLocalhost(zmq::Socket& m_socket);
 castor::messages::Header preFillHeader();
 
 } // namespace messages

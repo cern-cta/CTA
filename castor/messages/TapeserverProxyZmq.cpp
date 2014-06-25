@@ -68,7 +68,7 @@ namespace {
 // constructor
 //------------------------------------------------------------------------------
 castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log, 
-        const unsigned short tapeserverPort, const int netTimeout,zmq::context_t& ctx) throw():
+        const unsigned short tapeserverPort, const int netTimeout,zmq::Context& ctx) throw():
   m_log(log),
   m_tapeserverHostName("localhost"),
   m_tapeserverPort(tapeserverPort),
@@ -232,9 +232,9 @@ void castor::messages::TapeserverProxyZmq::tapeUnmounted(
 // readReplyMsg
 //-----------------------------------------------------------------------------
 void castor::messages::TapeserverProxyZmq::readReplyMsg()  {
-  zmq::message_t blobHeader,blobBody;
-  m_socket.recv(&blobHeader); 
-  m_socket.recv(&blobBody);
+  zmq::Message blobHeader,blobBody;
+  m_socket.recv(blobHeader); 
+  m_socket.recv(blobBody);
 }
 
 std::auto_ptr<castor::tape::tapeserver::daemon::TaskWatchDog> 

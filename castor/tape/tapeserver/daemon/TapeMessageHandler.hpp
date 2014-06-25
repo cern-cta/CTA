@@ -84,7 +84,7 @@ public:
 private:
   void sendEmptyReplyToClient();
   
-  template <class T> void unserialize(T& msg,const zmq::message_t& blob){
+  template <class T> void unserialize(T& msg,const zmq::Message& blob){
     std::string logMessage="Cant parse " ;
     logMessage+=castor::utils::demangledNameOf(msg)+" from binary data. Wrong body";
     if(!msg.ParseFromArray(blob.data(),blob.size())){
@@ -102,7 +102,7 @@ private:
    */
   log::Logger &m_log;
   
-  zmq::socket_t m_socket;
+  zmq::Socket m_socket;
   
     /**
    * The catalogue of tape drives controlled by the tape server daemon.
@@ -143,7 +143,7 @@ void dealWith(const castor::messages::Header& header,
    * Unserialise the blob and check the header
    * @param headerBlob
    */
-  castor::messages::Header buildHeader(const zmq::message_t& headerBlob);
+  castor::messages::Header buildHeader(const zmq::Message& headerBlob);
 }; // class TapeMessageHandler
 
 } // namespace daemon

@@ -43,7 +43,7 @@ protected:
 
     log::LogContext m_lc;
     
-    void report(zmq::socket_t& m_socket);
+    void report(zmq::Socket& m_socket);
     
     virtual void run();
     

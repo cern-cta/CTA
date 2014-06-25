@@ -50,7 +50,7 @@ public:
   /**
    * Constructor.
    */
-  ZMQReactor(log::Logger& log,zmq::context_t& ctx);
+  ZMQReactor(log::Logger& log,zmq::Context& ctx);
 
   ~ZMQReactor();
   /**
@@ -77,7 +77,7 @@ public:
    */
   void handleEvents(const int timeout);
   
-  zmq::context_t& getContext()const {return m_context;}
+  zmq::Context& getContext()const {return m_context;}
 
 private:
 
@@ -119,7 +119,7 @@ private:
    */
   HandlerMap  m_handlers;  
   
-  zmq::context_t& m_context;
+  zmq::Context& m_context;
   
   /**
    * Object representing the API of the CASTOR logging system.

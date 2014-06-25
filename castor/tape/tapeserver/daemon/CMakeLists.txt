@@ -35,7 +35,7 @@ add_library(castorTapeServerDaemon
   VdqmAcceptHandler.cpp
   VdqmConnectionHandler.cpp)
 
-target_link_libraries(castorTapeServerDaemon castorMessages castortapereactor)
+target_link_libraries(castorTapeServerDaemon castorMessages castortapereactor castorZmqWrapper)
 
 add_library(castorTapeServerDaemonTestDummies
   ../client/ClientSimulator.cpp 

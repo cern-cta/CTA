@@ -37,7 +37,7 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
 
-void TaskWatchDog::report(zmq::socket_t& m_socket){
+void TaskWatchDog::report(zmq::Socket& m_socket){
   try
   {
     messages::Header header = messages::preFillHeader();
@@ -51,14 +51,14 @@ void TaskWatchDog::report(zmq::socket_t& m_socket){
     messages::sendMessage(m_socket,body);
     
     m_lc.log(LOG_INFO,"Notified MF");
-    zmq::message_t blob;
-    m_socket.recv(&blob);
+    zmq::Message blob;
+    m_socket.recv(blob);
     log::ScopedParamContainer c(m_lc);
     c.add("size",blob.size());
     m_lc.log(LOG_INFO,"debug purpose");
-  }catch(const zmq::error_t& e){
+  }catch(const castor::exception::Exception& e){
     log::ScopedParamContainer c(m_lc);
-    c.add("ex code",e.what());
+    c.add("ex code",e.getMessageValue());
     m_lc.log(LOG_ERR,"Error with the ZMQ socket while reporting to the MF");
   }
   catch(const std::exception& e){
@@ -71,7 +71,7 @@ void TaskWatchDog::report(zmq::socket_t& m_socket){
 }
     
 void TaskWatchDog::run(){
-  zmq::socket_t m_socket(DataTransferSession::ctx(),ZMQ_REQ);
+  zmq::Socket m_socket(DataTransferSession::ctx(),ZMQ_REQ);
   castor::messages::connectToLocalhost(m_socket);
   
   using castor::utils::timevalToDouble;

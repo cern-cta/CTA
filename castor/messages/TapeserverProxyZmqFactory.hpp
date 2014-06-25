@@ -56,7 +56,7 @@ public:
    *
    * @return A pointer to the newly created object.
    */
-  TapeserverProxy *create(zmq::context_t& ctx);
+  TapeserverProxy *create(zmq::Context& ctx);
 
 private:
 

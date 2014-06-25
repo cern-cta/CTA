@@ -85,8 +85,8 @@ const zmq::pollitem_t &fd) {
   messages::Header header; 
   
   try{
-    zmq::message_t headerBlob;
-    m_socket.recv(&headerBlob);
+    zmq::Message headerBlob;
+    m_socket.recv(headerBlob);
     
     if(!headerBlob.more()){
       castor::exception::Exception ex;
@@ -120,7 +120,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::checkSocket(
 
 
 castor::messages::Header castor::tape::tapeserver::daemon::TapeMessageHandler::buildHeader(
-const zmq::message_t& headerBlob){  
+const zmq::Message& headerBlob){  
   messages::Header header; 
   const bool headerCorrectlyParsed = header.ParseFromArray(headerBlob.data(),headerBlob.size());
   
@@ -145,8 +145,8 @@ const zmq::message_t& headerBlob){
 void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchEvent(
 const messages::Header& header){
   m_log(LOG_INFO,"dispathing  event in TapeMessageHandler");
-  zmq::message_t bodyBlob;
-  m_socket.recv(&bodyBlob);
+  zmq::Message bodyBlob;
+  m_socket.recv(bodyBlob);
   
   switch(header.reqtype()){
     case messages::reqType::Heartbeat:
@@ -190,7 +190,7 @@ const castor::messages::Header& header, const castor::messages::Heartbeat& body)
   param.push_back(log::Param("bytesMoved",body.bytesmoved()));
   m_log(LOG_INFO,"IT IS ALIVE",param);
   
-  zmq::message_t bodyBlob(body.ByteSize());
+  zmq::Message bodyBlob(body.ByteSize());
    body.SerializeToArray(bodyBlob.data(),body.ByteSize());
   try{
     m_socket.send(bodyBlob);

@@ -91,7 +91,7 @@ int main(const int argc, char **const argv) {
 //------------------------------------------------------------------------------
 static int exceptionThrowingMain(const int argc, char **const argv, castor::log::Logger &log) {
   const std::string cupvHostName = getConfigParam("UPV", "HOST");
-  zmq::context_t ctx;
+  zmq::Context ctx;
   castor::tape::reactor::ZMQReactor reactor(log,ctx);
   const int netTimeout = 10; // Timeout in seconds
   castor::legacymsg::CupvProxyTcpIp cupv(log, cupvHostName, CUPV_PORT, netTimeout);

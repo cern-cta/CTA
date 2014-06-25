@@ -120,7 +120,7 @@ namespace daemon {
      * TJIS FUNCTION SHALL ONLY BE CALLED IN THE FORKED PROCESS
      * @return 
      */
-    static zmq::context_t& ctx();
+    static zmq::Context& ctx();
     
     ~DataTransferSession();
   private:

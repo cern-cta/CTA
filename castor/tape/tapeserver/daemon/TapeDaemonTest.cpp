@@ -77,7 +77,7 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::legacymsg::RmcProxyDummyFactory rmcFactory;
   castor::messages::TapeserverProxyDummyFactory tpsFactory;
   castor::legacymsg::NsProxyDummyFactory nsFactory;
-  zmq::context_t ctx;
+  zmq::Context ctx;
   castor::tape::reactor::ZMQReactor reactor(log,ctx);
   CapabilityUtilsDummy capUtils;
   std::auto_ptr<TapeDaemon> daemon;

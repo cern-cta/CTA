@@ -47,7 +47,7 @@ public:
    * network read and write operations.
    */
   TapeserverProxyZmq(log::Logger &log, const unsigned short tapeserverPort,
-    const int netTimeout,zmq::context_t& ctx) throw();
+    const int netTimeout,zmq::Context& ctx) throw();
 
   /**
    * Informs the tapeserverd daemon that the mount-session child-process got
@@ -165,7 +165,7 @@ private:
    */
   const int m_netTimeout;
   
-  zmq::socket_t m_socket;
+  zmq::Socket m_socket;
 
 }; // class TapeserverProxyZmq
 

@@ -31,4 +31,4 @@ set (REACTOR_SRC_FILES
   PollReactorImpl.cpp
   ZMQReactor.cpp)
 add_library (castortapereactor ${REACTOR_SRC_FILES})
-target_link_libraries (castortapereactor zmq)
+target_link_libraries (castortapereactor castorZmqWrapper)

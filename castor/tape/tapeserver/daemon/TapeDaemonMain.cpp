@@ -43,9 +43,9 @@
 #include <string>
 namespace{
   class RAIIForContext{
-    zmq::context_t& m_context;
+    zmq::Context& m_context;
     public:
-    RAIIForContext(zmq::context_t& ctx):m_context(ctx){}
+    RAIIForContext(zmq::Context& ctx):m_context(ctx){}
     ~RAIIForContext(){m_context.close();}
   };
 }
@@ -127,7 +127,7 @@ static int exceptionThrowingMain(const int argc, char **const argv, castor::log:
     castor::common::CastorConfiguration::getConfig().getConfEntString("VDQM", "HOST");
   const std::string vmgrHostName =
     castor::common::CastorConfiguration::getConfig().getConfEntString("VMGR", "HOST");
-  zmq::context_t ctx;
+  zmq::Context ctx;
   RAIIForContext raii(ctx);
   // Parse /etc/castor/TPCONFIG
   castor::tape::utils::TpconfigLines tpconfigLines;

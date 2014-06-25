@@ -11,4 +11,4 @@ add_library(castorMessages SHARED
   TapeserverProxyZmqFactory.cpp
 )
 
-target_link_libraries(castorMessages protobuf)
+target_link_libraries(castorMessages castorZmqWrapper protobuf)

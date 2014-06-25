@@ -473,8 +473,8 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const utils::Dr
 //------------------------------------------------------------------------------
 //DataTransferSession::ctx
 //------------------------------------------------------------------------------
-zmq::context_t& castor::tape::tapeserver::daemon::DataTransferSession::ctx(){
-  static zmq::context_t m_ctx;
+zmq::Context& castor::tape::tapeserver::daemon::DataTransferSession::ctx(){
+  static zmq::Context m_ctx;
   return m_ctx;
 }
 //------------------------------------------------------------------------------

@@ -42,7 +42,7 @@ namespace reactor {
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------    
-  ZMQReactor::ZMQReactor(log::Logger& log,zmq::context_t& ctx):
+  ZMQReactor::ZMQReactor(log::Logger& log,zmq::Context& ctx):
   m_context(ctx),m_log(log){
     
   }
