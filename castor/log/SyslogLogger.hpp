@@ -282,11 +282,6 @@ protected:
   int m_logFile;
 
   /**
-   * True if there is currrently a connection with syslog.
-   */
-  bool m_connected;
-
-  /**
    * Map from syslog integer priority to textual representation.
    */
   const std::map<int, std::string> m_priorityToText;

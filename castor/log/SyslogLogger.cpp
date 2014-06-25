@@ -48,7 +48,6 @@ castor::log::SyslogLogger::SyslogLogger(
   Logger(programName),
   m_maxMsgLen(determineMaxMsgLen()),
   m_logFile(-1),
-  m_connected(false),
   m_priorityToText(generatePriorityToTextMap()),
   m_configTextToPriority(generateConfigTextToPriorityMap()) {
   initMutex();
@@ -101,8 +100,7 @@ size_t castor::log::SyslogLogger::determineMaxMsgLen() const throw() {
 // generatePriorityToTextMap
 //------------------------------------------------------------------------------
 std::map<int, std::string>
-  castor::log::SyslogLogger::generatePriorityToTextMap() const 
-   {
+  castor::log::SyslogLogger::generatePriorityToTextMap() const {
   std::map<int, std::string> m;
 
   try {
@@ -128,8 +126,7 @@ std::map<int, std::string>
 // generateConfigTextToPriorityMap
 //------------------------------------------------------------------------------
 std::map<std::string, int>
-  castor::log::SyslogLogger::generateConfigTextToPriorityMap() const
-   {
+  castor::log::SyslogLogger::generateConfigTextToPriorityMap() const {
   std::map<std::string, int> m;
 
   try {
@@ -155,8 +152,7 @@ std::map<std::string, int>
 //------------------------------------------------------------------------------
 // initMutex
 //------------------------------------------------------------------------------
-void castor::log::SyslogLogger::initMutex()
-   {
+void castor::log::SyslogLogger::initMutex() {
   pthread_mutexattr_t attr;
   int rc = pthread_mutexattr_init(&attr);
   if(0 != rc) {
@@ -197,8 +193,7 @@ castor::log::SyslogLogger::~SyslogLogger() throw() {
 //------------------------------------------------------------------------------
 // prepareForFork
 //------------------------------------------------------------------------------
-void castor::log::SyslogLogger::prepareForFork() 
-   {
+void castor::log::SyslogLogger::prepareForFork() {
   // Enter critical section
   {
     const int mutex_lock_rc = pthread_mutex_lock(&m_mutex);
@@ -228,22 +223,27 @@ void castor::log::SyslogLogger::prepareForFork()
 // openLog
 //------------------------------------------------------------------------------
 void castor::log::SyslogLogger::openLog() throw() {
-  if(-1 == m_logFile) {
+  if(-1 != m_logFile) {
+    return;
+  }
+
+  {
     struct sockaddr_un syslogAddr;
     syslogAddr.sun_family = AF_UNIX;
     strncpy(syslogAddr.sun_path, _PATH_LOG, sizeof(syslogAddr.sun_path));
     m_logFile = socket(AF_UNIX, SOCK_DGRAM, 0);
-    if(-1 == m_logFile) {
-      return;
-    }
-
-    if(-1 == fcntl(m_logFile, F_SETFD, FD_CLOEXEC)) {
-      close(m_logFile);
-      m_logFile = -1;
-      return;
-    }
   }
-  if(!m_connected) {
+  if(-1 == m_logFile) {
+    return;
+  }
+
+  if(-1 == fcntl(m_logFile, F_SETFD, FD_CLOEXEC)) {
+    close(m_logFile);
+    m_logFile = -1;
+    return;
+  }
+
+  {
     struct sockaddr_un syslogAddr;
     syslogAddr.sun_family = AF_UNIX;
     strncpy(syslogAddr.sun_path, _PATH_LOG, sizeof(syslogAddr.sun_path));
@@ -251,33 +251,34 @@ void castor::log::SyslogLogger::openLog() throw() {
       sizeof(syslogAddr))) {
       close(m_logFile);
       m_logFile = -1;
-    } else {
-#ifdef __APPLE__
-      // MAC has has no MSG_NOSIGNAL
-      // but >= 10.2 comes with SO_NOSIGPIPE
-      int set = 1;
-      if(0 != setsockopt(m_logFile, SOL_SOCKET, SO_NOSIGPIPE, &set,
-        sizeof(int))) {
-        close(m_logFile);
-        m_logFile = -1;
-        return;
-      }
-#endif
-      m_connected = true;
+      return;
     }
   }
+
+#ifdef __APPLE__
+  {
+    // MAC has has no MSG_NOSIGNAL
+    // but >= 10.2 comes with SO_NOSIGPIPE
+    int set = 1;
+    if(0 != setsockopt(m_logFile, SOL_SOCKET, SO_NOSIGPIPE, &set,
+      sizeof(int))) {
+      close(m_logFile);
+      m_logFile = -1;
+      return;
+    }
+  }
+#endif
 }
 
 //------------------------------------------------------------------------------
 // closeLog
 //------------------------------------------------------------------------------
 void castor::log::SyslogLogger::closeLog() throw() {
-  if(!m_connected) {
+  if(-1 == m_logFile) {
     return;
   }
   close(m_logFile);
   m_logFile = -1;
-  m_connected = false;
 }
 
 //-----------------------------------------------------------------------------
@@ -396,18 +397,16 @@ void castor::log::SyslogLogger::reducedSyslog(std::string msg) throw() {
   }
 
   // Try to connect if not already connected
-  if(!m_connected) {
-    openLog();
-  }
+  openLog();
 
   // If connected
-  if(m_connected) {
+  if(-1 != m_logFile) {
     // If sending the log message fails then try to reopen the syslog
     // connection and try again
     if(0 > send(m_logFile, msg.c_str(), msg.length(), send_flags)) {
       closeLog();
       openLog();
-      if (m_connected) {
+      if (-1 != m_logFile) {
         // If the second attempt to send the log message fails then give up and
         // attempt re-open next time
         if(0 > send(m_logFile, msg.c_str(), msg.length(), send_flags)) {
