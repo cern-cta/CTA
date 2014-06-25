@@ -24,18 +24,10 @@
 
 #pragma once 
 
-#include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
-#include "castor/utils/utils.hpp"
-#include "h/Ctape.h"
-#include "zmq/castorZmqWrapper.hpp"
-#include "castor/messages/Header.pb.h"
-#include "castor/messages/Heartbeat.pb.h"
-#include "castor/messages/Constants.hpp"
-#include "castor/messages/messages.hpp"
-#include "castor/tape/tapeserver/daemon/Constants.hpp"
-#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
-#include "castor/tape/tapeserver/daemon/MountSession.hpp"
 
+#include "zmq/castorZmqWrapper.hpp"
+#include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
+#include "castor/log/LogContext.hpp"
 namespace castor {
 
 namespace tape {
@@ -43,87 +35,29 @@ namespace tapeserver {
 namespace daemon {
 
 class TaskWatchDog : private castor::tape::threading::Thread{
+protected:
     castor::tape::threading::AtomicCounter<uint64_t> nbOfMemblocksMoved;
     timeval previousTime;
     const double periodToReport; //in second
     castor::tape::threading::AtomicFlag m_stopFlag;
 
     log::LogContext m_lc;
-     
-    void report(zmq::socket_t& m_socket){
-      try
-      {
-        castor::messages::Header header;
-        header.set_magic(TPMAGIC);
-        header.set_protocoltype(messages::protocolType::Tape);
-        header.set_protocolversion(castor::messages::protocolVersion::prototype);
-        header.set_reqtype(messages::reqType::Heartbeat);
-        header.set_bodyhashtype("SHA1");
-        header.set_bodyhashvalue("PIPO");
-        header.set_bodysignature("PIPO");
-        header.set_bodysignaturetype("SHA1");
-
-        castor::messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
-        
-        castor::messages::Heartbeat body;
-        body.set_bytesmoved(nbOfMemblocksMoved.getAndReset());
-        castor::messages::sendMessage(m_socket,body);
-        m_lc.log(LOG_INFO,"Notified MF");
-        zmq::message_t blob;
-        m_socket.recv(&blob);
-      }catch(const zmq::error_t& e){
-        log::ScopedParamContainer c(m_lc);
-        c.add("ex code",e.what());
-        m_lc.log(LOG_ERR,"Error with the ZMQ socket while reporting to the MF");
-      }
-      catch(const std::exception& e){
-        log::ScopedParamContainer c(m_lc);
-        c.add("ex code",e.what());
-        m_lc.log(LOG_ERR,"Exception while notifying MF");
-      }catch(...){
-        m_lc.log(LOG_INFO,"triple ...");
-      }
-      
-    }
-    void run(){
-      zmq::socket_t m_socket(MountSession::ctx(),ZMQ_REQ);
-      castor::messages::connectToLocalhost(m_socket);
-      
-      using castor::utils::timevalToDouble;
-      using castor::utils::timevalAbsDiff;
-      timeval currentTime;
-      while(!m_stopFlag) {
-        castor::utils::getTimeOfDay(&currentTime);
-        timeval diffTime = timevalAbsDiff(currentTime,previousTime);
-        double diffTimed = timevalToDouble(diffTime);
-        log::ScopedParamContainer c(m_lc);
-        c.add("diff.s",diffTime.tv_sec).add("diff.us",diffTime.tv_usec)
-         .add("double diff",diffTimed).add("period",periodToReport);
-        if( diffTimed> periodToReport){
-          m_lc.log(LOG_INFO,"going to report");
-          previousTime=currentTime;
-          report(m_socket);
-        }
-      }
-    }
+    
+    void report(zmq::socket_t& m_socket);
+    
+    virtual void run();
     
   public:
-    TaskWatchDog(log::LogContext lc): 
-    nbOfMemblocksMoved(0),periodToReport(2),m_lc(lc){
-      m_lc.pushOrReplace(log::Param("thread","Watchdog"));
-      castor::utils::getTimeOfDay(&previousTime);
-    }
-    void notify(){
-      nbOfMemblocksMoved++;
-    }
-    void startThread(){
-      start();
-    }
-    void stopThread(){
-      m_stopFlag.set();
-      wait();
-    }
+    TaskWatchDog(log::LogContext lc);
+    void notify();
+    void startThread();
+    void stopThread();
 
   };
   
+class DummyTaskWatchDog : public TaskWatchDog {    
+    void run();
+public:
+  DummyTaskWatchDog(log::LogContext& lc);
+  };
 }}}}
