@@ -188,6 +188,7 @@ void castor::log::SyslogLogger::initMutex() {
 // destructor
 //------------------------------------------------------------------------------
 castor::log::SyslogLogger::~SyslogLogger() throw() {
+  closeLog();
 }
 
 //------------------------------------------------------------------------------

@@ -37,5 +37,8 @@ int main(int argc, char** argv) {
   ::testing::InitGoogleMock(&argc, argv);
   int ret = RUN_ALL_TESTS();
   castor::BaseObject::resetServices();
+  close(0);
+  close(1);
+  close(2);
   return ret;
 }

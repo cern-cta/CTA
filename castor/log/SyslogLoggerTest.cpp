@@ -32,6 +32,9 @@
 namespace unitTests {
 
 class castor_log_SyslogLoggerTest: public ::testing::Test {
+public:
+  castor_log_SyslogLoggerTest(): m_log("unitttests") {
+  }
 protected:
 
   virtual void SetUp() {
@@ -39,18 +42,19 @@ protected:
 
   virtual void TearDown() {
   }
+
+  castor::log::TestingSyslogLogger m_log;
 }; // class SyslogLoggerTest
 
 TEST_F(castor_log_SyslogLoggerTest, logMsgParamsVectorAndTimeStamp) {
   using namespace castor::log;
-  SyslogLogger log("unitttests");
   std::vector<Param> params;
   params.push_back(Param("testParam", "value of test param"));
   struct timeval timeStamp;
 
   ASSERT_EQ(0, gettimeofday(&timeStamp, NULL));
 
-  ASSERT_NO_THROW(log(
+  ASSERT_NO_THROW(m_log(
     LOG_INFO,
     "castor_log_SyslogLoggerTest logMsgParamsVectorAndTimeStamp",
     params,
@@ -59,14 +63,13 @@ TEST_F(castor_log_SyslogLoggerTest, logMsgParamsVectorAndTimeStamp) {
 
 TEST_F(castor_log_SyslogLoggerTest, logMsgParamsListAndTimeStamp) {
   using namespace castor::log;
-  SyslogLogger log("unitttests");
   std::list<Param> params;
   params.push_back(Param("testParam", "value of test param"));
   struct timeval timeStamp;
 
   ASSERT_EQ(0, gettimeofday(&timeStamp, NULL));
 
-  ASSERT_NO_THROW(log(
+  ASSERT_NO_THROW(m_log(
     LOG_INFO,
     "castor_log_SyslogLoggerTest logMsgParamsListAndTimeStamp",
     params,
@@ -75,14 +78,13 @@ TEST_F(castor_log_SyslogLoggerTest, logMsgParamsListAndTimeStamp) {
 
 TEST_F(castor_log_SyslogLoggerTest, logMsgParamsArrayAndTimeStamp) {
   using namespace castor::log;
-  SyslogLogger log("unitttests");
   const int numParams = 1;
   const Param params[1] = {Param("testParam", "value of test param")};
   struct timeval timeStamp;
 
   ASSERT_EQ(0, gettimeofday(&timeStamp, NULL));
 
-  ASSERT_NO_THROW(log(
+  ASSERT_NO_THROW(m_log(
     LOG_INFO,
     "castor_log_SyslogLoggerTest logMsgParamsArrayAndTimeStamp",
     numParams,
@@ -92,11 +94,10 @@ TEST_F(castor_log_SyslogLoggerTest, logMsgParamsArrayAndTimeStamp) {
 
 TEST_F(castor_log_SyslogLoggerTest, logMsgAndParamsVector) {
   using namespace castor::log;
-  SyslogLogger log("unitttests");
   std::vector<Param> params;
   params.push_back(Param("testParam", "value of test param"));
 
-  ASSERT_NO_THROW(log(
+  ASSERT_NO_THROW(m_log(
       LOG_INFO,
       "castor_log_SyslogLoggerTest logMsgAndParamsVector",
       params));
@@ -104,12 +105,11 @@ TEST_F(castor_log_SyslogLoggerTest, logMsgAndParamsVector) {
 
 TEST_F(castor_log_SyslogLoggerTest, logMsgAndParamsList) {
   using namespace castor::log;
-  SyslogLogger log("unitttests");
   std::list<Param> params;
   params.push_back(Param("testParam", "value of test param"));
 
   ASSERT_NO_THROW(
-    log(
+    m_log(
       LOG_INFO,
       "castor_log_SyslogLoggerTest logMsgAndParamsList",
       params));
@@ -117,12 +117,11 @@ TEST_F(castor_log_SyslogLoggerTest, logMsgAndParamsList) {
 
 TEST_F(castor_log_SyslogLoggerTest, logMsgAndParamsArray) {
   using namespace castor::log;
-  SyslogLogger log("unitttests");
   const int numParams = 1;
   const Param params[1] = {Param("testParam", "value of test param")};
 
   ASSERT_NO_THROW(
-    log(
+    m_log(
       LOG_INFO,
       "castor_log_SyslogLoggerTest logMsgAndParamsArray",
       numParams,
@@ -131,27 +130,20 @@ TEST_F(castor_log_SyslogLoggerTest, logMsgAndParamsArray) {
 
 TEST_F(castor_log_SyslogLoggerTest, logMsg) {
   using namespace castor::log;
-  SyslogLogger log("unitttests");
 
   ASSERT_NO_THROW(
-    log(LOG_INFO, "Calling logger without parameters or time stamp"));
+    m_log(LOG_INFO, "Calling logger without parameters or time stamp"));
 }   
 
 TEST_F(castor_log_SyslogLoggerTest, cleanStringWithoutReplacingUnderscores) {
-  using namespace castor::log;
-  TestingSyslogLogger log("unitttests");
-
   const std::string s("  \t\t\n\n\"Hello there\tWorld\"  \t\t\n\n");
-  const std::string cleaned = log.cleanString(s, false);
+  const std::string cleaned = m_log.cleanString(s, false);
   ASSERT_EQ(std::string("'Hello there World'"), cleaned);
 }
 
 TEST_F(castor_log_SyslogLoggerTest, cleanStringReplacingUnderscores) {
-  using namespace castor::log;
-  TestingSyslogLogger log("unitttests");
-
   const std::string s("  \t\t\n\n\"Hello there\tWorld\"  \t\t\n\n");
-  const std::string cleaned = log.cleanString(s, true);
+  const std::string cleaned = m_log.cleanString(s, true);
   ASSERT_EQ(std::string("'Hello_there_World'"), cleaned);
 }
 
