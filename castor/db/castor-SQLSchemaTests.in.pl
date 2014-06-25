@@ -55,6 +55,7 @@ sub filterSQL ( $$$$$ ) {
   $line=~ s/\&cnsPasswd/$NsDbPasswd/g;
   $line=~ s/\&cnsDbName/$NsDbName/g;
   $line=~ s/\&vmgrSchema\./$vmgrSchema/g;
+  $line=~ s/\&cnsSchema/$NsDbUser/g;
   return $line;
 }
 

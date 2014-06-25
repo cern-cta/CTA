@@ -103,3 +103,10 @@ ALTER TABLE vmgr_tape_pool
 ALTER TABLE vmgr_tape_tag
         ADD CONSTRAINT fk_t_vid FOREIGN KEY (vid) REFERENCES vmgr_tape_info(vid)
         ADD CONSTRAINT pk_tag PRIMARY KEY (vid);
+
+-- Permissions should be granted to the CNS schema for VMGR_TAPE_SIDE and
+-- VMGR_TAPE_STATUS_VIEW.
+UNDEF cnsSchema
+ACCEPT cnsSchema CHAR DEFAULT 'castor_ns' PROMPT 'Enter the name of the NS schema (default castor_ns): ';
+GRANT SELECT ON vmgr_tape_side TO &cnsSchema;
+GRANT SELECT ON vmgr_tape_status_view TO &cnsSchema;
