@@ -73,14 +73,6 @@ if (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
   endforeach ()
 endif (STK_API_LIB AND STK_UTL_LIB AND STK_IPC_LIB AND STK_CL_LIB)
 
-# Try to find the libcap library because it will not exist on Mac OS X
-find_library (LIBCAP_LIB cap)
-if (LIBCAP_LIB)
-  message(STATUS "Found the libcap library")
-  set (LIBCAPUNITTEST_SRC_FILES
-    ../castor/tape/tapeserver/daemon/SmartCapTest.cpp)
-endif (LIBCAP_LIB)
-
 # Create a shared librbary for the dummies supporting the tests
 add_library(TestDummies
   ../castor/messages/TapeserverProxyDummy.cpp
@@ -95,6 +87,7 @@ add_library(TestDummies
   ../castor/log/DummyLogger.cpp
   ../castor/tape/reactor/DummyPollEventHandler.cpp
   ../castor/tape/reactor/DummyPollReactor.cpp
+  ../castor/utils/ProcessCapDummy.cpp
 )
 
 # Those tests are single threaded, functionnal and error tests. They could
@@ -141,12 +134,13 @@ add_executable(castorUnitTests
   ../castor/tape/reactor/ZMQReactorTest.cpp
   ../castor/tape/tapeserver/client/ClientProxyTest.cpp
   ../castor/tape/tapeserver/daemon/AdminAcceptHandler.cpp
-  ../castor/tape/tapeserver/daemon/CapabilityUtilsDummy.cpp
 #  ../castor/tape/tapeserver/daemon/DiskReadTaskTest.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogue.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueEntry.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueEntryTest.cpp
   ../castor/tape/tapeserver/daemon/DriveCatalogueTest.cpp
+  ../castor/tape/tapeserver/daemon/ProcessForker.cpp
+  ../castor/tape/tapeserver/daemon/ProcessForkerTest.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemon.cpp
   ../castor/tape/tapeserver/daemon/TapeDaemonTest.cpp
   ../castor/tape/tapeserver/daemon/VdqmAcceptHandler.cpp
@@ -167,6 +161,7 @@ add_executable(castorUnitTests
   ../castor/tape/tapeserver/threading/AtomicCounterTest.cpp
   ../castor/tape/utils/TpconfigLineTest.cpp
   ../castor/utils/SmartArrayPtrTest.cpp
+  ../castor/utils/SmartCapTest.cpp
   ../castor/utils/SmartFdTest.cpp
   ../castor/utils/UtilsTest.cpp
   ${STK_UNITTEST_SRC_FILES}
@@ -217,7 +212,6 @@ add_executable(castorThreadedUnitTests
   ../castor/tape/tapeserver/threading/ThreadingMTTests.cpp
  ../castor/tape/tapeserver/daemon/DataTransferSessionTest.cpp
   ../castor/tape/tapeserver/threading/ThreadingBlockingQTests.cpp
-  ../castor/tape/tapeserver/daemon/CapabilityUtilsDummy.cpp
   ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp
   ../castor/tape/tapeserver/daemon/MigrationReportPackerTest.cpp
 )

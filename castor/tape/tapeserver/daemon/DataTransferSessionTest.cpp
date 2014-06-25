@@ -27,32 +27,34 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <gtest/gtest.h>
-#include "castor/tape/tapeserver/client/ClientSimulator.hpp"
-#include "castor/tape/tapeserver/client/ClientSimSingleReply.hpp"
-#include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "castor/tape/tapeserver/daemon/CapabilityUtilsDummy.hpp"
-#include "../threading/Threading.hpp"
-#include "castor/log/StringLogger.hpp"
-#include "DataTransferSession.hpp"
-#include "../system/Wrapper.hpp"
-#include "Ctape.h"
-#include "castor/tape/tapegateway/Volume.hpp"
-#include "castor/tape/tapegateway/NoMoreFiles.hpp"
-#include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
-#include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
-#include "castor/tape/tapeserver/file/File.hpp"
-#include "castor/tape/tapegateway/RetryPolicyElement.hpp"
-#include "smc_struct.h"
+
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/legacymsg/RmcProxyDummy.hpp"
+#include "castor/log/StringLogger.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
+#include "castor/tape/tapegateway/EndNotificationErrorReport.hpp"
+#include "castor/tape/tapegateway/NoMoreFiles.hpp"
+#include "castor/tape/tapegateway/NotificationAcknowledge.hpp"
+#include "castor/tape/tapegateway/RetryPolicyElement.hpp"
+#include "castor/tape/tapegateway/Volume.hpp"
+#include "castor/tape/tapeserver/client/ClientSimulator.hpp"
+#include "castor/tape/tapeserver/client/ClientSimSingleReply.hpp"
+#include "castor/tape/tapeserver/client/ClientProxy.hpp"
+#include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
+#include "castor/tape/tapeserver/system/Wrapper.hpp"
+#include "castor/tape/tapeserver/threading/Threading.hpp"
+#include "castor/tape/tapeserver/file/File.hpp"
+#include "castor/utils/ProcessCapDummy.hpp"
+#include "h/Ctape.h"
+#include "h/smc_struct.h"
+
+#include <fcntl.h>
 #include <sys/mman.h>
-#include <zlib.h>
-#include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <fcntl.h>
+#include <unistd.h>
+#include <zlib.h>
 
 
 using namespace castor::tape::tapeserver;
@@ -83,8 +85,8 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
   std::string density = "8000GC";
-  client::ClientSimulator sim(volReq, vid, density, tapegateway::READ_TP,
-    tapegateway::READ);
+  client::ClientSimulator sim(volReq, vid, density,
+    castor::tape::tapegateway::READ_TP, castor::tape::tapegateway::READ);
   client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
@@ -149,7 +151,7 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
       sim.addFileToRecall(ftr, sizeof(data));
     }
   }
-  utils::DriveConfig driveConfig;
+  castor::tape::utils::DriveConfig driveConfig;
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
@@ -164,7 +166,7 @@ TEST(tapeServer, DataTransferSessionGooddayRecall) {
   castorConf.tapebridgeBulkRequestRecallMaxFiles = 1000;
   castorConf.tapeserverdDiskThreads = 1;
   castor::legacymsg::RmcProxyDummy rmc;
-  CapabilityUtilsDummy capUtils;
+  castor::utils::ProcessCap capUtils;
   castor::messages::TapeserverProxyDummy initialProcess;
   char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
   int argc = 4;
@@ -196,8 +198,8 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
   std::string density = "8000GC";
-  client::ClientSimulator sim(volReq, vid, density, tapegateway::READ_TP,
-    tapegateway::READ);
+  client::ClientSimulator sim(volReq, vid, density,
+    castor::tape::tapegateway::READ_TP, castor::tape::tapegateway::READ);
   client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
@@ -218,7 +220,7 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   mockSys.delegateToFake();
   mockSys.disableGMockCallsCounting();
   mockSys.fake.setupForVirtualDriveSLC6();
-  utils::DriveConfig driveConfig;
+  castor::tape::utils::DriveConfig driveConfig;
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/noSuchTape";
@@ -233,7 +235,7 @@ TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::legacymsg::RmcProxyDummy rmc;
   castor::messages::TapeserverProxyDummy initialProcess;
-  CapabilityUtilsDummy capUtils;
+  castor::utils::ProcessCapDummy capUtils;
   char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
   int argc = 4;
   char * argv [4];
@@ -322,8 +324,8 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   uint32_t volReq = 0xBEEF;
   std::string vid = "V12345";
   std::string density = "8000GC";
-  client::ClientSimulator sim(volReq, vid, density, tapegateway::WRITE_TP,
-    tapegateway::WRITE);
+  client::ClientSimulator sim(volReq, vid, density,
+    castor::tape::tapegateway::WRITE_TP, castor::tape::tapegateway::WRITE);
   client::ClientSimulator::ipPort clientAddr = sim.getCallbackAddress();
   clientRunner simRun(sim);
   simRun.start();
@@ -370,7 +372,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
     expected.push_back(expectedResult(fseq, tf->checksum()));
     tempFiles.push_back(tf.release());
   }
-  utils::DriveConfig driveConfig;
+  castor::tape::utils::DriveConfig driveConfig;
   driveConfig.unitName = "T10D6116";
   driveConfig.dgn = "T10KD6";
   driveConfig.devFilename = "/dev/tape_T10D6116";
@@ -388,7 +390,7 @@ TEST(tapeServer, DataTransferSessionGooddayMigration) {
   castor::legacymsg::VdqmProxyDummy vdqm(VDQMjob);
   castor::legacymsg::RmcProxyDummy rmc;
   castor::messages::TapeserverProxyDummy initialProcess;
-  CapabilityUtilsDummy capUtils;
+  castor::utils::ProcessCap capUtils;
   char argv_container [] = "tapeserver\0XXXXXXXX\0YYYYYYYYY\0ZZZZZZZZZZZ\0";
   int argc = 4;
   char * argv [4];

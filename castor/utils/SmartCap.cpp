@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/SmartCap.cpp
+ *         castor/utils/SmartCap.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,26 +23,26 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/tapeserver/daemon/SmartCap.hpp"
+#include "castor/utils/SmartCap.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::SmartCap::SmartCap() throw():
+castor::utils::SmartCap::SmartCap() throw():
   m_cap(NULL) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::SmartCap::SmartCap(cap_t cap) throw():
+castor::utils::SmartCap::SmartCap(cap_t cap) throw():
   m_cap(cap) {
 }
 
 //------------------------------------------------------------------------------
 // reset
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::SmartCap::reset(cap_t cap) throw() {
+void castor::utils::SmartCap::reset(cap_t cap) throw() {
   // If the new capability state is not the one already owned
   if(cap != m_cap) {
 
@@ -60,8 +60,7 @@ void castor::tape::tapeserver::daemon::SmartCap::reset(cap_t cap) throw() {
 //------------------------------------------------------------------------------
 // operator=
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::SmartCap
-  &castor::tape::tapeserver::daemon::SmartCap::operator=(SmartCap& obj) {
+castor::utils::SmartCap &castor::utils::SmartCap::operator=(SmartCap& obj) {
   reset(obj.release());
   return *this;
 }
@@ -69,21 +68,21 @@ castor::tape::tapeserver::daemon::SmartCap
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::SmartCap::~SmartCap() throw() {
+castor::utils::SmartCap::~SmartCap() throw() {
   reset();
 }
 
 //------------------------------------------------------------------------------
 // get
 //------------------------------------------------------------------------------
-cap_t castor::tape::tapeserver::daemon::SmartCap::get() const throw() {
+cap_t castor::utils::SmartCap::get() const throw() {
   return m_cap;
 }
 
 //------------------------------------------------------------------------------
 // release
 //------------------------------------------------------------------------------
-cap_t castor::tape::tapeserver::daemon::SmartCap::release() {
+cap_t castor::utils::SmartCap::release() {
   // If this smart pointer does not own a capbility state
   if(NULL == m_cap) {
     castor::exception::Exception ex;

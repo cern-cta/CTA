@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/CapabilityUtils.cpp
+ *         castor/tape/tapeserver/daemon/ProcessForkerProxy.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,10 +22,11 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp"
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::CapabilityUtils::~CapabilityUtils() throw() {
+castor::tape::tapeserver::daemon::ProcessForkerProxy::~ProcessForkerProxy()
+  throw() {
 }

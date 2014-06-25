@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/CapabilityUtils.hpp
+ *         castor/tape/tapeserver/daemon/ProcessForkerProxy.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,7 +24,7 @@
 
 #pragma once
 
-#include <string>
+#include "castor/log/Logger.hpp"
 
 namespace castor     {
 namespace tape       {
@@ -32,37 +32,33 @@ namespace tapeserver {
 namespace daemon     {
 
 /**
- * Abstract class that defines the interface to a utility class providing
- * support for UNIX capabilities.
- *
- * The purpose of this abstract class is to faciliate unit testing.  Changing
- * the capabilities of a process requires priviledges that a unit-test
- * program will probably not have.  Developers of unit tests can derive dummy
- * utility classes from this abstract class that do not actual change the
- * capbilities of a process.
+ * Proxy class representing the process forker.
  */
-class CapabilityUtils {
+class ProcessForkerProxy {
 public:
-
   /**
    * Destructor.
    */
-  virtual ~CapabilityUtils() throw() = 0;
+  virtual ~ProcessForkerProxy() throw() = 0;
 
   /**
-   * C++ wrapper around the C functions cap_get_proc() and cap_to_text().
+   * Forks a mount-session process.
    */
-  virtual std::string capGetProcText() = 0;
+  virtual void forkMountSession() = 0;
 
   /**
-   * C++ wrapper around the C functions cap_from_text() and cap_set_proc().
+   * Forks a label-session process.
    */
-  virtual void capSetProcText(const std::string &text) = 0;
+  virtual void forkLabelSession() = 0;
 
-}; // class CapabilityUtils
+  /**
+   * Forks a cleanup-session process.
+   */
+  virtual void forkCleanupSession() = 0;
+
+}; // class ProcessForkerProxy
 
 } // namespace daemon
 } // namespace tapeserver
 } // namespace tape
 } // namespace castor
-

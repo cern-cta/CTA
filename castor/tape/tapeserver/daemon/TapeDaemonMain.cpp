@@ -30,10 +30,10 @@
 #include "castor/log/SyslogLogger.hpp"
 #include "castor/messages/TapeserverProxyZmqFactory.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
-#include "castor/tape/tapeserver/daemon/CapabilityUtilsImpl.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
+#include "castor/utils/ProcessCap.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/rmc_constants.h"
 #include "h/vdqm_constants.h"
@@ -65,8 +65,9 @@ int main(const int argc, char **const argv) {
   try {
     logPtr = new castor::log::SyslogLogger("tapeserverd");
   } catch(castor::exception::Exception &ex) {
-    std::cerr << "Failed to instantiate object representing CASTOR logging system"
-      ": " << ex.getMessage().str() << std::endl;
+    std::cerr <<
+      "Failed to instantiate object representing CASTOR logging system: " <<
+      ex.getMessage().str() << std::endl;
     return 1;
   }
   castor::log::Logger &log = *logPtr;
@@ -86,7 +87,8 @@ int main(const int argc, char **const argv) {
   try {
     programRc = exceptionThrowingMain(argc, argv, log, zmqContext);
   } catch(castor::exception::Exception &ex) {
-    castor::log::Param params[] = {castor::log::Param("message", ex.getMessage().str())};
+    castor::log::Param params[] = {
+      castor::log::Param("message", ex.getMessage().str())};
     log(LOG_ERR, "Caught an unexpected CASTOR exception", params);
   } catch(std::exception &se) {
     castor::log::Param params[] = {castor::log::Param("what", se.what())};
@@ -114,7 +116,7 @@ int main(const int argc, char **const argv) {
 // @param lines The lines parsed from /etc/castor/TPCONFIG.
 //------------------------------------------------------------------------------
 static void logTpconfigLines(castor::log::Logger &log,
-  const utils::TpconfigLines &lines) throw();
+  const castor::tape::utils::TpconfigLines &lines) throw();
 
 //------------------------------------------------------------------------------
 // Writes the specified TPCONFIG lines to the logging system.
@@ -123,43 +125,43 @@ static void logTpconfigLines(castor::log::Logger &log,
 // @param line The line parsed from /etc/castor/TPCONFIG.
 //------------------------------------------------------------------------------
 static void logTpconfigLine(castor::log::Logger &log,
-  const utils::TpconfigLine &line) throw();
+  const castor::tape::utils::TpconfigLine &line) throw();
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
 static int exceptionThrowingMain(const int argc, char **const argv,
   castor::log::Logger &log, void *const zmqContext) {
-  using namespace castor::tape::tapeserver::daemon;
+  using namespace castor;
   
   const std::string vdqmHostName =
-    castor::common::CastorConfiguration::getConfig().getConfEntString("VDQM", "HOST");
+    common::CastorConfiguration::getConfig().getConfEntString("VDQM", "HOST");
   const std::string vmgrHostName =
-    castor::common::CastorConfiguration::getConfig().getConfEntString("VMGR", "HOST");
+    common::CastorConfiguration::getConfig().getConfEntString("VMGR", "HOST");
 
   // Parse /etc/castor/TPCONFIG
-  castor::tape::utils::TpconfigLines tpconfigLines;
-  castor::tape::utils::parseTpconfigFile("/etc/castor/TPCONFIG", tpconfigLines);
+  tape::utils::TpconfigLines tpconfigLines;
+  tape::utils::parseTpconfigFile("/etc/castor/TPCONFIG", tpconfigLines);
   logTpconfigLines(log, tpconfigLines);
-  castor::tape::utils::DriveConfigMap driveConfigs;
+  tape::utils::DriveConfigMap driveConfigs;
   driveConfigs.enterTpconfigLines(tpconfigLines);
 
   // Create proxy objects for the vdqm, vmgr and rmc daemons
   const int netTimeout = 10; // Timeout in seconds
-  castor::legacymsg::VdqmProxyTcpIp vdqm(log, vdqmHostName, VDQM_PORT, netTimeout);
-  castor::legacymsg::VmgrProxyTcpIp vmgr(log, vmgrHostName, VMGR_PORT, netTimeout);
-  castor::legacymsg::RmcProxyTcpIpFactory rmcFactory(log, netTimeout);
-  castor::messages::TapeserverProxyZmqFactory tapeserverFactory(log, TAPE_SERVER_INTERNAL_LISTENING_PORT,
-    netTimeout);
-  castor::legacymsg::NsProxy_TapeAlwaysEmptyFactory nsFactory;
+  legacymsg::VdqmProxyTcpIp vdqm(log, vdqmHostName, VDQM_PORT, netTimeout);
+  legacymsg::VmgrProxyTcpIp vmgr(log, vmgrHostName, VMGR_PORT, netTimeout);
+  legacymsg::RmcProxyTcpIpFactory rmcFactory(log, netTimeout);
+  messages::TapeserverProxyZmqFactory tapeserverFactory(log,
+    tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT, netTimeout);
+  legacymsg::NsProxy_TapeAlwaysEmptyFactory nsFactory;
 
-  castor::tape::reactor::ZMQReactor reactor(log, zmqContext);
+  tape::reactor::ZMQReactor reactor(log, zmqContext);
 
   // Create the object providing utilities for working with UNIX capabilities
-  CapabilityUtilsImpl capUtils;
+  castor::utils::ProcessCap capUtils;
 
   // Create the main tapeserverd object
-  TapeDaemon daemon(
+  tape::tapeserver::daemon::TapeDaemon daemon(
     argc,
     argv,
     std::cout,
@@ -182,8 +184,8 @@ static int exceptionThrowingMain(const int argc, char **const argv,
 // logTpconfigLines
 //------------------------------------------------------------------------------
 static void logTpconfigLines(castor::log::Logger &log,
-  const utils::TpconfigLines &lines) throw() {
-  for(utils::TpconfigLines::const_iterator itor = lines.begin();
+  const castor::tape::utils::TpconfigLines &lines) throw() {
+  for(castor::tape::utils::TpconfigLines::const_iterator itor = lines.begin();
     itor != lines.end(); itor++) {
     logTpconfigLine(log, *itor);
   }
@@ -193,7 +195,7 @@ static void logTpconfigLines(castor::log::Logger &log,
 // logTpconfigLine
 //------------------------------------------------------------------------------
 static void logTpconfigLine(castor::log::Logger &log,
-  const utils::TpconfigLine &line) throw() {
+  const castor::tape::utils::TpconfigLine &line) throw() {
   castor::log::Param params[] = {
     castor::log::Param("unitName", line.unitName),
     castor::log::Param("dgn", line.dgn),

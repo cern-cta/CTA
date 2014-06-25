@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/SmartCap.hpp
+ *         castor/utils/SmartCap.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -28,15 +28,15 @@
 #include <sys/capability.h>
 
 namespace castor {
-namespace tape {
-namespace tapeserver {
-namespace daemon {
+namespace utils {
 
 /**
  * A smart pointer that owns a capability state.
  *
  * This smart pointer will call cap_free() if it needs to free the owned
  * resource.
+ *
+ * Please note that process capabilities are not supported on Mac OS X.
  */
 class SmartCap {
 public:
@@ -117,8 +117,6 @@ private:
 
 }; // class SmartCap
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
+} // namespace utils
 } // namespace castor
 

@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/CapabilityUtilsImpl.cpp
+ *         castor/utils/ProcessCap.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,8 +23,8 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/tapeserver/daemon/CapabilityUtilsImpl.hpp"
-#include "castor/tape/tapeserver/daemon/SmartCap.hpp"
+#include "castor/utils/ProcessCap.hpp"
+#include "castor/utils/SmartCap.hpp"
 #include "h/serrno.h"
 
 #include <errno.h>
@@ -32,18 +32,17 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::CapabilityUtilsImpl::~CapabilityUtilsImpl()
+castor::utils::ProcessCap::~ProcessCap()
   throw() {
 }
 
 //------------------------------------------------------------------------------
-// capGetProcText
+// getProcText
 //------------------------------------------------------------------------------
-std::string
-  castor::tape::tapeserver::daemon::CapabilityUtilsImpl::capGetProcText() {
+std::string castor::utils::ProcessCap::getProcText() {
   try {
-    SmartCap cap(capGetProc());
-    return capToText((cap_t)cap.get());
+    SmartCap cap(getProc());
+    return toText((cap_t)cap.get());
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -54,9 +53,9 @@ std::string
 }
 
 //------------------------------------------------------------------------------
-// capGetProc
+// getProc
 //------------------------------------------------------------------------------
-cap_t castor::tape::tapeserver::daemon::CapabilityUtilsImpl::capGetProc() {
+cap_t castor::utils::ProcessCap::getProc() {
   cap_t cap = cap_get_proc();
   if(NULL == cap) {
     char errBuf[81];
@@ -70,9 +69,9 @@ cap_t castor::tape::tapeserver::daemon::CapabilityUtilsImpl::capGetProc() {
 }
 
 //------------------------------------------------------------------------------
-// capToText
+// toText
 //------------------------------------------------------------------------------
-std::string castor::tape::tapeserver::daemon::CapabilityUtilsImpl::capToText(
+std::string castor::utils::ProcessCap::toText(
   const cap_t cap) {
   // Create a C++ string with the result of calling cap_to_text()
   char *const text = cap_to_text(cap, NULL);
@@ -101,13 +100,12 @@ std::string castor::tape::tapeserver::daemon::CapabilityUtilsImpl::capToText(
 }
 
 //------------------------------------------------------------------------------
-// capSetProcText
+// setProcText
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CapabilityUtilsImpl::capSetProcText(
-  const std::string &text) {
+void castor::utils::ProcessCap::setProcText(const std::string &text) {
   try {
-    SmartCap cap(capFromText(text));
-    capSetProc(cap.get());
+    SmartCap cap(fromText(text));
+    setProc(cap.get());
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
     ex.getMessage() <<
@@ -117,18 +115,17 @@ void castor::tape::tapeserver::daemon::CapabilityUtilsImpl::capSetProcText(
 }
 
 //------------------------------------------------------------------------------
-// capFromText
+// fromText
 //------------------------------------------------------------------------------
-cap_t castor::tape::tapeserver::daemon::CapabilityUtilsImpl::capFromText(
-  const std::string &txt) {
-  const cap_t cap = cap_from_text(txt.c_str());
+cap_t castor::utils::ProcessCap::fromText(const std::string &text) {
+  const cap_t cap = cap_from_text(text.c_str());
   if(NULL == cap) {
     char errBuf[81];
     sstrerror_r(errno, errBuf, sizeof(errBuf));
     castor::exception::Exception ex;
     ex.getMessage() <<
       "Failed to create capability state from string representation"
-      ": txt='" << txt << "': " << errBuf;
+      ": text='" << text << "': " << errBuf;
     throw ex;
   }
 
@@ -136,10 +133,9 @@ cap_t castor::tape::tapeserver::daemon::CapabilityUtilsImpl::capFromText(
 }
 
 //------------------------------------------------------------------------------
-// capSetProc
+// setProc
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CapabilityUtilsImpl::capSetProc(
-  const cap_t cap) {
+void castor::utils::ProcessCap::setProc(const cap_t cap) {
   if(cap_set_proc(cap)) {
     char errBuf[81];
     sstrerror_r(errno, errBuf, sizeof(errBuf));

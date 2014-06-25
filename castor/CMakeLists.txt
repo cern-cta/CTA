@@ -245,6 +245,7 @@ set (CLIENT_LIB_SRC_FILES
   stager/BulkRequestResult.cpp
   stager/FileResult.cpp
   utils/DebugBuf.cpp
+  utils/ProcessCap.cpp
   utils/SmartFd.cpp
   utils/SmartFILEPtr.cpp
   utils/utils.cpp
@@ -274,12 +275,26 @@ set (CLIENT_LIB_SRC_FILES
   ../client/src/stager/stager_client_api_listPrivileges.cpp
   ../client/src/stager/stager_errmsg.c
   ../client/src/stager/stager_mapper.c)
-add_library (castorclient SHARED ${CLIENT_LIB_SRC_FILES})
+
+# Try to find the libcap library because it will not exist on Mac OS X
+find_library (LIBCAP_LIB cap)
+if (LIBCAP_LIB)
+  message(STATUS "Found the libcap library")
+  message(STATUS "Adding source to castor::utils to support process capabilities")
+  set (CLIENT_LIB_PROC_CAP_SRC_FILES
+    utils/SmartCap.cpp
+    utils/ProcessCap.cpp)
+endif (LIBCAP_LIB)
+
+add_library (castorclient SHARED
+  ${CLIENT_LIB_SRC_FILES}
+  ${CLIENT_LIB_PROC_CAP_SRC_FILES})
+
 # Relax compilation of old code full of pointer casting. Funnily enough,
 # the compiler only complains in -O2 mode (RelWithDebInfo in cmake).
 set_property(SOURCE ../client/src/stager/stager_errmsg.c APPEND PROPERTY COMPILE_FLAGS -fno-strict-aliasing)
 CastorSetLibraryVersions (castorclient)
-target_link_libraries (castorclient castordlf)
+target_link_libraries (castorclient cap castordlf)
 install (TARGETS castorclient DESTINATION ${CASTOR_DEST_LIB_DIR})
 
 if (${COMPILE_SERVER} STREQUAL "1")

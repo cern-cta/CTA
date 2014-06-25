@@ -46,14 +46,15 @@
 #include "h/rtcpd_constants.h"
 
 #include <algorithm>
+#include <errno.h>
 #include <limits.h>
 #include <memory>
 #include <signal.h>
+#include <sys/prctl.h>
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
-#include <sys/prctl.h>
 
 //------------------------------------------------------------------------------
 // constructor
@@ -71,7 +72,7 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   messages::TapeserverProxyFactory &tapeserverFactory,
   legacymsg::NsProxyFactory &nsFactory,
   reactor::ZMQReactor &reactor,
-  CapabilityUtils &capUtils) throw(castor::exception::Exception):
+  castor::utils::ProcessCap &capUtils):
   castor::server::Daemon(stdOut, stdErr, log),
   m_argc(argc),
   m_argv(argv),
@@ -84,7 +85,9 @@ castor::tape::tapeserver::daemon::TapeDaemon::TapeDaemon(
   m_reactor(reactor),
   m_capUtils(capUtils),
   m_programName("tapeserverd"),
-  m_hostName(getHostName()) {
+  m_hostName(getHostName()),
+  m_processForkerCmdSenderSocket(-1),
+  m_processForkerPid(0) {
 }
 
 //------------------------------------------------------------------------------
@@ -95,10 +98,10 @@ std::string
   const  {
   char nameBuf[81];
   if(gethostname(nameBuf, sizeof(nameBuf))) {
-    char errBuf[100];
-    sstrerror_r(errno, errBuf, sizeof(errBuf));
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to get host name: " << errBuf;
+    ex.getMessage() << "Failed to get host name: " << message;
     throw ex;
   }
 
@@ -109,6 +112,21 @@ std::string
 // destructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::TapeDaemon::~TapeDaemon() throw() {
+  if(-1 != m_processForkerCmdSenderSocket) {
+    std::list<log::Param> params;
+    params.push_back(
+      log::Param("cmdSenderSocket", m_processForkerCmdSenderSocket));
+    if(close(m_processForkerCmdSenderSocket)) {
+      char message[100];
+      strerror_r(errno, message, sizeof(message));
+      params.push_back(log::Param("message", message));
+      m_log(LOG_ERR, "Failed to close the socket used for sending copmmands to"
+        " the ProcessForker", params);
+    } else {
+      m_log(LOG_INFO, "Succesffuly closed the socket used for sending commands"
+        " to the ProcessForker", params);
+    }
+  }
 }
 
 //------------------------------------------------------------------------------
@@ -147,46 +165,18 @@ void  castor::tape::tapeserver::daemon::TapeDaemon::exceptionThrowingMain(
 
   // Process must be able to change user now and should be permitted to perform
   // raw IO in the future
-  try {
-    m_capUtils.capSetProcText("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
-    log::Param params[] =
-      {log::Param("capabilities", m_capUtils.capGetProcText())};
-    m_log(LOG_INFO, "Set process capabilities before daemonizing",
-      params);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to set process capabilities before daemonizing: "
-      << ne.getMessage().str();
-    throw ex;
-  }
+  setProcessCapabilities("cap_setgid,cap_setuid+ep cap_sys_rawio+p");
 
   const bool runAsStagerSuperuser = true;
   daemonizeIfNotRunInForeground(runAsStagerSuperuser);
+  setDumpable();
+  forkProcessForker();
 
-  castor::utils::setDumpableProcessAttribute(true);
-  {
-    const bool dumpable = castor::utils::getDumpableProcessAttribute();
-    log::Param params[] = {
-      log::Param("dumpable", dumpable ? "true" : "false")};
-    m_log(LOG_INFO, "Got dumpable attribute of process", params);
-  }
-
-  // There is no longer a need for the process to be able to change user,
+  // There is no longer any need for the process to be able to change user,
   // however the process should still be permitted to perform raw IO in the
   // future
-  try {
-    m_capUtils.capSetProcText("cap_sys_rawio+p");
-    log::Param params[] =
-      {log::Param("capabilities", m_capUtils.capGetProcText())};
-    m_log(LOG_INFO,
-      "Set process capabilities after switching to the stager superuser",
-      params);
-  } catch(castor::exception::Exception &ne) {
-    castor::exception::Exception ex;
-    ex.getMessage() << "Failed to set process capabilities after switching to"
-      " the stager superuser: " << ne.getMessage().str();
-    throw ex;
-  }
+  setProcessCapabilities("cap_sys_rawio+p");
+
   blockSignals();
   setUpReactor();
   registerTapeDrivesWithVdqm();
@@ -225,10 +215,168 @@ std::string castor::tape::tapeserver::daemon::TapeDaemon::argvToString(
 }
 
 //------------------------------------------------------------------------------
+// setDumpable
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::setDumpable() {
+  castor::utils::setDumpableProcessAttribute(true);
+  const bool dumpable = castor::utils::getDumpableProcessAttribute();
+  log::Param params[] = {
+    log::Param("dumpable", dumpable ? "true" : "false")};
+  m_log(LOG_INFO, "Got dumpable attribute of process", params);
+  if(!dumpable) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to set dumpable attribute of process to true";
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// setProcessCapabilities
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::setProcessCapabilities(
+  const std::string &text) {
+  try {
+    m_capUtils.setProcText(text);
+    log::Param params[] =
+      {log::Param("capabilities", m_capUtils.getProcText())};
+    m_log(LOG_INFO, "Set process capabilities", params);
+  } catch(castor::exception::Exception &ne) {
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to set process capabilities to '" << text <<
+      "': " << ne.getMessage().str();
+    throw ex;
+  }
+}
+
+//------------------------------------------------------------------------------
+// forkProcessForker
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::forkProcessForker() {
+  m_log.prepareForFork();
+  // Create a socket pair for controlling the ProcessForker
+  int sv[2] = {-1 , -1};
+  if(socketpair(AF_LOCAL, SOCK_STREAM, 0, sv)) {
+    char message[100];
+    strerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to fork process forker: Failed to create socket"
+      " pair for controlling the ProcessForker: " << message;
+    throw ex;
+  }
+
+  // TapeDaemon should store the socket responsible for sending commands to the
+  // ProcessForker
+  //
+  // The destructor of the TapeDaemon will close the socket responsible for
+  // sending commands to the ProcessForker
+  m_processForkerCmdSenderSocket = sv[0];
+
+  const int processForkerCmdReceiverSocket = sv[1];
+
+  {
+    log::Param params[] = {
+      log::Param("cmdSenderSocket", m_processForkerCmdSenderSocket),
+      log::Param("cmdReceiverSocket", processForkerCmdReceiverSocket)};
+    m_log(LOG_INFO, "TapeDaemon parent process succesfully created socket"
+      " pair for controlling the ProcessForker", params);
+  }
+
+  const pid_t forkRc = fork();
+
+  // If fork failed
+  if(0 > forkRc) {
+    close(processForkerCmdReceiverSocket);
+
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "Failed to fork ProcessForker: " << message;
+    throw ex;
+
+  // Else if this is the parent process
+  } else if(0 < forkRc) {
+    m_processForkerPid = forkRc;
+
+    {
+      log::Param params[] = {
+        log::Param("processForkerPid", m_processForkerPid)};
+      m_log(LOG_INFO, "Successfully forked the ProcessForker", params);
+    }
+
+    if(close(processForkerCmdReceiverSocket)) {
+      char message[100];
+      sstrerror_r(errno, message, sizeof(message));
+      castor::exception::Exception ex;
+      ex.getMessage() << "TapeDaemon parent process failed to close the socket"
+        " used to receive ProcessForker commands: " << message;
+      throw ex;
+    }
+
+    {
+      log::Param params[] =
+        {log::Param("cmdReceiverSocket", processForkerCmdReceiverSocket)};
+      m_log(LOG_INFO, "TapeDaemon parent process successfully closed the socket"
+        " used to receive ProcessForker commands", params);
+    }
+
+    return;
+
+  // Else this is the child process
+  } else {
+    // Clear the reactor which in turn will close all of the open
+    // file-descriptors owned by the event handlers
+    m_reactor.clear();
+
+    if(close(m_processForkerCmdSenderSocket)) {
+      char message[100];
+      sstrerror_r(errno, message, sizeof(message));
+      castor::exception::Exception ex;
+      ex.getMessage() << "ProcessForker process failed to close the socket"
+        " used to send ProcessForker commands: " << message;
+      throw ex;
+    }
+
+    {
+      m_processForkerCmdSenderSocket = -1;
+      log::Param params[] = 
+        {log::Param("cmdSenderSocket", m_processForkerCmdSenderSocket)};
+      m_log(LOG_INFO, "ProcessForker process successfully closed the socket" 
+        " used to send ProcessForker commands", params);
+    }
+
+    runProcessForker(processForkerCmdReceiverSocket);
+
+    exit(0);
+  }
+}
+
+//------------------------------------------------------------------------------
+// runProcessForker
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::runProcessForker(
+  const int cmdReceiverSocket) {
+
+  if(close(cmdReceiverSocket)) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::exception::Exception ex;
+    ex.getMessage() << "ProcessForker process failed to close the socket"
+      " used to receive ProcessForker commands: " << message;
+    throw ex;
+  }
+
+  {
+    log::Param params[] =
+      {log::Param("cmdReceiverSocket", cmdReceiverSocket)};
+    m_log(LOG_INFO, "ProcessForker process successfully closed the socket"
+      " used to receive ProcessForker commands", params);
+  }
+}
+
+//------------------------------------------------------------------------------
 // blockSignals
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const
-   {
+void castor::tape::tapeserver::daemon::TapeDaemon::blockSignals() const {
   sigset_t sigs;
   sigemptyset(&sigs);
   // The signals that should not asynchronously disturb the daemon
@@ -523,47 +671,62 @@ bool castor::tape::tapeserver::daemon::TapeDaemon::handlePendingSignals()
 // reapZombies
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::reapZombies() throw() {
-  pid_t sessionPid = 0;
+  pid_t pid = 0;
   int waitpidStat = 0;
-  while (0 < (sessionPid = waitpid(-1, &waitpidStat, WNOHANG))) {
-    postProcessReapedSession(sessionPid, waitpidStat);
+  while (0 < (pid = waitpid(-1, &waitpidStat, WNOHANG))) {
+    handleReapedProcess(pid, waitpidStat);
   }
 }
 
 //------------------------------------------------------------------------------
-// postProcessReapedSession
+// handleReapedProcess
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedSession(
-  const pid_t sessionPid, const int waitpidStat) throw() {
-  logSessionProcessTerminated(sessionPid, waitpidStat);
+void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedProcess(
+  const pid_t pid, const int waitpidStat) throw() {
+  logChildProcessTerminated(pid, waitpidStat);
 
-  std::list<log::Param> params;
-  params.push_back(log::Param("sessionPid", sessionPid));
+  if(pid == m_processForkerPid) {
+    handleReapedProcessForker(pid, waitpidStat);
+  } else {
+    handleReapedSession(pid, waitpidStat);
+  }
+}
 
-  const DriveCatalogueEntry *drive = NULL;
+//------------------------------------------------------------------------------
+// handleReapedProcessForker
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedProcessForker(
+  const pid_t pid, const int waitpidStat) throw() {
+  log::Param params[] = {
+    log::Param("processForkerPid", pid)};
+  m_log(LOG_INFO, "Handling reaped ProcessForker", params);
+  m_processForkerPid = 0;
+}
+
+//------------------------------------------------------------------------------
+// handleReapedSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedSession(
+  const pid_t pid, const int waitpidStat) throw() {
   try {
-    drive = m_driveCatalogue.findConstDrive(sessionPid);
-    const utils::DriveConfig &driveConfig = drive->getConfig();
-    params.push_back(log::Param("unitName", driveConfig.unitName));
-    params.push_back(log::Param("sessionType",
-      DriveCatalogueEntry::sessionType2Str(drive->getSessionType())));
-
-    dispatchReapedSessionPostProcessor(drive->getSessionType(), sessionPid,
+    const DriveCatalogueEntry *const drive =
+      m_driveCatalogue.findConstDrive(pid);
+    dispatchReapedSessionHandler(drive->getSessionType(), pid,
       waitpidStat);
   } catch(castor::exception::Exception &ne) {
-    params.push_back(log::Param("message", ne.getMessage().str()));
-    m_log(LOG_ERR, "Failed to perform post processing of reaped session",
+    log::Param params[] = {log::Param("message", ne.getMessage().str())};
+    m_log(LOG_ERR, "Failed to handle reaped session",
       params);
   }
 }
 
 //------------------------------------------------------------------------------
-// logSessionProcessTerminated
+// logChildProcessTerminated
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::logSessionProcessTerminated(
-  const pid_t sessionPid, const int waitpidStat) throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::logChildProcessTerminated(
+  const pid_t pid, const int waitpidStat) throw() {
   std::list<log::Param> params;
-  params.push_back(log::Param("sessionPid", sessionPid));
+  params.push_back(log::Param("terminatedPid", pid));
 
   if(WIFEXITED(waitpidStat)) {
     params.push_back(log::Param("WEXITSTATUS", WEXITSTATUS(waitpidStat)));
@@ -589,27 +752,27 @@ void castor::tape::tapeserver::daemon::TapeDaemon::logSessionProcessTerminated(
     params.push_back(log::Param("WIFCONTINUED", "false"));
   }
 
-  m_log(LOG_INFO, "Session child-process terminated", params);
+  m_log(LOG_INFO, "Child process terminated", params);
 }
 
 //------------------------------------------------------------------------------
-// dispatchReapedSessionPostProcessor
+// dispatchReapedSessionHandler
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::
-  dispatchReapedSessionPostProcessor(
+  dispatchReapedSessionHandler(
   const DriveCatalogueEntry::SessionType sessionType,
-  const pid_t sessionPid,
+  const pid_t pid,
   const int waitpidStat) {
 
   switch(sessionType) {
   case DriveCatalogueEntry::SESSION_TYPE_DATATRANSFER:
-    return postProcessReapedDataTransferSession(sessionPid, waitpidStat);
+    return handleReapedDataTransferSession(pid, waitpidStat);
   case DriveCatalogueEntry::SESSION_TYPE_LABEL:
-    return postProcessReapedLabelSession(sessionPid, waitpidStat);
+    return handleReapedLabelSession(pid, waitpidStat);
   default:
     {
       castor::exception::Exception ex;
-      ex.getMessage() << "Failed to dispatch reaped-session post processor"
+      ex.getMessage() << "Failed to dispatch handler for reaped session"
         ": Unexpected session type: sessionType=" << sessionType;
       throw ex;
     }
@@ -617,30 +780,30 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
 }
 
 //------------------------------------------------------------------------------
-// postProcessReapedDataTransferSession
+// handleReapedDataTransferSession
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedDataTransferSession(
-  const pid_t sessionPid, const int waitpidStat) {
+void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedDataTransferSession(
+  const pid_t pid, const int waitpidStat) {
   try {
     std::list<log::Param> params;
-    params.push_back(log::Param("sessionPid", sessionPid));
-    DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(sessionPid);
+    params.push_back(log::Param("dataTransferPid", pid));
+    DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(pid);
     const utils::DriveConfig &driveConfig = drive->getConfig();
 
     if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
       const std::string vid = drive->getVid();
       drive->sessionSucceeded();
-      m_log(LOG_INFO, "Mount session succeeded", params);
-      requestVdqmToReleaseDrive(driveConfig, sessionPid);
-      notifyVdqmTapeUnmounted(driveConfig, vid, sessionPid);
+      m_log(LOG_INFO, "Data-transfer session succeeded", params);
+      requestVdqmToReleaseDrive(driveConfig, pid);
+      notifyVdqmTapeUnmounted(driveConfig, vid, pid);
     } else {
       drive->sessionFailed();
-      m_log(LOG_INFO, "Mount session failed", params);
-      setDriveDownInVdqm(sessionPid, drive->getConfig());
+      m_log(LOG_INFO, "Data-transfer session failed", params);
+      setDriveDownInVdqm(pid, drive->getConfig());
     }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to post process reaped data transfer session: " << 
+    ex.getMessage() << "Failed to handle reaped data transfer session: " << 
     ne.getMessage().str();
     throw ex;
   }
@@ -650,18 +813,18 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedDataTransfer
 // requestVdqmToReleaseDrive
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::requestVdqmToReleaseDrive(
-  const utils::DriveConfig &driveConfig, const pid_t sessionPid) {
+  const utils::DriveConfig &driveConfig, const pid_t pid) {
   std::list<log::Param> params;
   try {
     const bool forceUnmount = true;
 
-    params.push_back(log::Param("sessionPid", sessionPid));
+    params.push_back(log::Param("pid", pid));
     params.push_back(log::Param("unitName", driveConfig.unitName));
     params.push_back(log::Param("dgn", driveConfig.dgn));
     params.push_back(log::Param("forceUnmount", forceUnmount));
 
     m_vdqm.releaseDrive(m_hostName, driveConfig.unitName, driveConfig.dgn,
-      forceUnmount, sessionPid);
+      forceUnmount, pid);
     m_log(LOG_INFO, "Requested vdqm to release drive", params);
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
@@ -676,10 +839,10 @@ void castor::tape::tapeserver::daemon::TapeDaemon::requestVdqmToReleaseDrive(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::notifyVdqmTapeUnmounted(
   const utils::DriveConfig &driveConfig, const std::string &vid,
-  const pid_t sessionPid) {
+  const pid_t pid) {
   try {
     std::list<log::Param> params;
-    params.push_back(log::Param("sessionPid", sessionPid));
+    params.push_back(log::Param("pid", pid));
     params.push_back(log::Param("unitName", driveConfig.unitName));
     params.push_back(log::Param("vid", vid));
     params.push_back(log::Param("dgn", driveConfig.dgn));
@@ -699,9 +862,9 @@ void castor::tape::tapeserver::daemon::TapeDaemon::notifyVdqmTapeUnmounted(
 // setDriveDownInVdqm
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(
-  const pid_t sessionPid, const utils::DriveConfig &driveConfig) {
+  const pid_t pid, const utils::DriveConfig &driveConfig) {
   std::list<log::Param> params;
-  params.push_back(log::Param("sessionPid", sessionPid));
+  params.push_back(log::Param("pid", pid));
 
   try {
     params.push_back(log::Param("unitName", driveConfig.unitName));
@@ -718,15 +881,15 @@ void castor::tape::tapeserver::daemon::TapeDaemon::setDriveDownInVdqm(
 }
 
 //------------------------------------------------------------------------------
-// postProcessReapedLabelSession 
+// handleReapedLabelSession 
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession(
-  const pid_t sessionPid, const int waitpidStat) {
+void castor::tape::tapeserver::daemon::TapeDaemon::handleReapedLabelSession(
+  const pid_t pid, const int waitpidStat) {
   try {
     std::list<log::Param> params;
-    params.push_back(log::Param("sessionPid", sessionPid));
+    params.push_back(log::Param("labelPid", pid));
 
-    DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(sessionPid);
+    DriveCatalogueEntry *const drive = m_driveCatalogue.findDrive(pid);
 
     if(WIFEXITED(waitpidStat) && 0 == WEXITSTATUS(waitpidStat)) {
       drive->sessionSucceeded();
@@ -734,11 +897,11 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession
     } else {
       drive->sessionFailed();
       m_log(LOG_INFO, "Label session failed", params);
-      setDriveDownInVdqm(sessionPid, drive->getConfig());
+      setDriveDownInVdqm(pid, drive->getConfig());
     }
   } catch(castor::exception::Exception &ne) {
     castor::exception::Exception ex;
-    ex.getMessage() << "Failed to post process reaped label session: " <<
+    ex.getMessage() << "Failed to handle reaped label session: " <<
     ne.getMessage().str();
     throw ex;
   }
@@ -770,14 +933,14 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSession(
 
   m_log.prepareForFork();
 
-  pid_t forkRc = fork();
+  const pid_t forkRc = fork();
 
   // If fork failed
   if(0 > forkRc) {
     // Log an error message and return
-    char errBuf[100];
-    sstrerror_r(errno, errBuf, sizeof(errBuf));
-    params.push_back(log::Param("message", errBuf));
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    params.push_back(log::Param("message", message));
     m_log(LOG_ERR, "Failed to fork mount session for tape drive", params);
     return;
 
@@ -788,8 +951,6 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSession(
 
   // Else this is the child process
   } else {
-    params.push_back(log::Param("sessionPid", getpid()));
-
     // Clear the reactor which in turn will close all of the open
     // file-descriptors owned by the event handlers
     m_reactor.clear();
@@ -797,11 +958,11 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSession(
     try {
       m_vdqm.assignDrive(m_hostName, driveConfig.unitName,
         drive->getVdqmJob().dgn, drive->getVdqmJob().volReqId, getpid());
-      m_log(LOG_INFO, "Assigned the drive in the vdqm", params);
+      m_log(LOG_INFO, "Assigned the drive in the vdqm");
     } catch(castor::exception::Exception &ex) {
-      params.push_back(log::Param("message", ex.getMessage().str()));
+      log::Param params[] = {log::Param("message", ex.getMessage().str())};
       m_log(LOG_ERR,
-        "Mount session could not be started: Failed to assign drive in vdqm",
+        "Data-transfer session could not be started: Failed to assign drive in vdqm",
         params);
     }
 
@@ -815,10 +976,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSession(
 void castor::tape::tapeserver::daemon::TapeDaemon::runDataTransferSession(
   const DriveCatalogueEntry *drive) throw() {
   const utils::DriveConfig &driveConfig = drive->getConfig();
-  const pid_t sessionPid = getpid();
-
   std::list<log::Param> params;
-  params.push_back(log::Param("sessionPid", sessionPid));
   params.push_back(log::Param("unitName", driveConfig.unitName));
 
   m_log(LOG_INFO, "Mount-session child-process started", params);
@@ -969,23 +1127,23 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
   }
 
   m_log.prepareForFork();
-  const pid_t sessionPid = fork();
+  const pid_t forkRc = fork();
 
   // If fork failed
-  if(0 > sessionPid) {
+  if(0 > forkRc) {
     // Log an error message and return
-    char errBuf[100];
-    sstrerror_r(errno, errBuf, sizeof(errBuf));
-    params.push_back(log::Param("message", errBuf));
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    params.push_back(log::Param("message", message));
     m_log(LOG_ERR, "Failed to fork label session", params);
 
   // Else if this is the parent process
-  } else if(0 < sessionPid) {
+  } else if(0 < forkRc) {
     // Only the child process should have the connection with the label-command
     // open
     close(labelCmdConnection.release());
 
-    drive->forkedLabelSession(sessionPid);
+    drive->forkedLabelSession(forkRc);
 
   // Else this is the child process
   } else {
@@ -1003,9 +1161,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkLabelSession(
 void castor::tape::tapeserver::daemon::TapeDaemon::runLabelSession(
   const DriveCatalogueEntry *drive, const int labelCmdConnection) throw() {
   const utils::DriveConfig &driveConfig = drive->getConfig();
-  const pid_t sessionPid = getpid();
   std::list<log::Param> params;
-  params.push_back(log::Param("sessionPid", sessionPid));
   params.push_back(log::Param("unitName", driveConfig.unitName));
 
   m_log(LOG_INFO, "Label-session child-process started", params);

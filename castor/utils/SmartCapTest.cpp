@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/SmartCapTest.cpp
+ *         castor/utils/SmartCapTest.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,13 +23,13 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
-#include "castor/tape/tapeserver/daemon/SmartCap.hpp"
+#include "castor/utils/SmartCap.hpp"
 
 #include <gtest/gtest.h>
 
 namespace unitTests {
 
-class castor_tape_tapserver_daemon_SmartCapTest : public ::testing::Test {
+class castor_utils_SmartCapTest : public ::testing::Test {
 protected:
 
   virtual void SetUp() {
@@ -39,21 +39,21 @@ protected:
   }
 };
 
-TEST_F(castor_tape_tapserver_daemon_SmartCapTest, default_constructor) {
-  castor::tape::tapeserver::daemon::SmartCap smartPtr;
+TEST_F(castor_utils_SmartCapTest, default_constructor) {
+  castor::utils::SmartCap smartPtr;
   ASSERT_EQ((cap_t)NULL, smartPtr.get());
 }
 
-TEST_F(castor_tape_tapserver_daemon_SmartCapTest, constructor) {
+TEST_F(castor_utils_SmartCapTest, constructor) {
   cap_t cap = cap_get_proc();
   ASSERT_NE((cap_t)NULL, cap);
 
-  castor::tape::tapeserver::daemon::SmartCap smartPtr(cap);
+  castor::utils::SmartCap smartPtr(cap);
   ASSERT_EQ(cap, smartPtr.get());
 }
 
-TEST_F(castor_tape_tapserver_daemon_SmartCapTest, reset) {
-  castor::tape::tapeserver::daemon::SmartCap smartPtr;
+TEST_F(castor_utils_SmartCapTest, reset) {
+  castor::utils::SmartCap smartPtr;
   ASSERT_EQ((cap_t)NULL, smartPtr.get());
 
   cap_t cap = cap_get_proc();
@@ -63,12 +63,12 @@ TEST_F(castor_tape_tapserver_daemon_SmartCapTest, reset) {
   ASSERT_EQ(cap, smartPtr.get());
 }
 
-TEST_F(castor_tape_tapserver_daemon_SmartCapTest, assignment) {
+TEST_F(castor_utils_SmartCapTest, assignment) {
   cap_t cap = cap_get_proc();
   ASSERT_NE((cap_t)NULL, cap);
 
-  castor::tape::tapeserver::daemon::SmartCap smartPtr1;
-  castor::tape::tapeserver::daemon::SmartCap smartPtr2;
+  castor::utils::SmartCap smartPtr1;
+  castor::utils::SmartCap smartPtr2;
 
   ASSERT_EQ((cap_t)NULL, smartPtr1.get());
   ASSERT_EQ((cap_t)NULL, smartPtr2.get());
@@ -81,8 +81,8 @@ TEST_F(castor_tape_tapserver_daemon_SmartCapTest, assignment) {
   ASSERT_EQ(cap, smartPtr2.get());
 }
 
-TEST_F(castor_tape_tapserver_daemon_SmartCapTest, releaseNull) {
-  castor::tape::tapeserver::daemon::SmartCap smartPtr;
+TEST_F(castor_utils_SmartCapTest, releaseNull) {
+  castor::utils::SmartCap smartPtr;
   ASSERT_THROW(smartPtr.release(), castor::exception::Exception);
 }
 

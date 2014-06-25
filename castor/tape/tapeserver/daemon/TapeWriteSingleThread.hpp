@@ -24,24 +24,25 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
-#include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
-#include "castor/tape/tapeserver/threading/Threading.hpp"
-#include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
-#include "castor/tape/tapeserver/drive/Drive.hpp"
-#include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/legacymsg/RmcProxy.hpp"
+#include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
-#include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
-#include "castor/tape/utils/Timer.hpp"
+#include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
+#include "castor/tape/tapeserver/daemon/TapeWriteTask.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "castor/tape/tapeserver/drive/Drive.hpp"
+#include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
+#include "castor/tape/tapeserver/threading/Threading.hpp"
+#include "castor/tape/utils/Timer.hpp"
+#include "castor/utils/ProcessCap.hpp"
+
 #include <iostream>
 #include <stdio.h>
 
-namespace castor {
-namespace tape {
+namespace castor     {
+namespace tape       {
 namespace tapeserver {
-namespace daemon {
+namespace daemon     {
   
 // forward declaration
 class TapeServerReporter;
@@ -59,19 +60,20 @@ public:
    * @param bytesBeforeFlush how many bytes written before flushing on tape
    * @param lastFseq the last fSeq 
    */
-  TapeWriteSingleThread(castor::tape::drives::DriveInterface & drive, 
-          castor::legacymsg::RmcProxy & rmc,
-          TapeServerReporter & tsr,
-          const client::ClientInterface::VolumeInfo& volInfo,
-          castor::log::LogContext & lc, MigrationReportPacker & repPacker,
-           CapabilityUtils &capUtils,
-	  uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
-  TapeSingleThreadInterface<TapeWriteTask>(drive, rmc, tsr, volInfo,capUtils, lc),
-          m_filesBeforeFlush(filesBeforeFlush),
-          m_bytesBeforeFlush(bytesBeforeFlush),
-          m_drive(drive), m_reportPacker(repPacker),
-          m_lastFseq(-1),
-          m_compress(true) {}
+  TapeWriteSingleThread(
+    castor::tape::drives::DriveInterface & drive, 
+    castor::legacymsg::RmcProxy & rmc,
+    TapeServerReporter & tsr,
+    const client::ClientInterface::VolumeInfo& volInfo,
+    castor::log::LogContext & lc, MigrationReportPacker & repPacker,
+    castor::utils::ProcessCap &capUtils,
+    uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
+    TapeSingleThreadInterface<TapeWriteTask>(drive, rmc, tsr, volInfo,capUtils, lc),
+    m_filesBeforeFlush(filesBeforeFlush),
+    m_bytesBeforeFlush(bytesBeforeFlush),
+    m_drive(drive), m_reportPacker(repPacker),
+    m_lastFseq(-1),
+    m_compress(true) {}
     
   /**
    * 
@@ -272,5 +274,10 @@ private:
    * Should the compression be enabled ? This is currently hard coded to true 
    */
   const bool m_compress;
-};
-}}}}
+
+}; // class TapeWriteSingleThread
+
+} // namespace daemon
+} // namespace tapeserver
+} // namsepace tape
+} // namespace castor

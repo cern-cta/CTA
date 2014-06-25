@@ -7,20 +7,20 @@
 
 #pragma once
 
+#include "castor/legacymsg/RmcProxy.hpp"
+#include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
-#include "castor/log/LogContext.hpp"
-#include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
-#include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/tape/utils/Timer.hpp"
+#include "castor/utils/ProcessCap.hpp"
 
-namespace castor {
-
-namespace tape {
+namespace castor     {
+namespace tape       {
 namespace tapeserver {
-namespace daemon {
+namespace daemon     {
+
   // Forward declaration
   class TapeServerReporter;
   /** 
@@ -35,7 +35,7 @@ private :
   /**
    * Utility to change the capabilities of the current tape thread
    */
-  CapabilityUtils &m_capUtils;
+  castor::utils::ProcessCap &m_capUtils;
 protected:
   ///the queue of tasks 
   castor::tape::threading::BlockingQueue<Task *> m_tasks;
@@ -72,17 +72,17 @@ protected:
    */
   void setCapabilities(){
     try {
-      m_capUtils.capSetProcText("cap_sys_rawio+ep");
+      m_capUtils.setProcText("cap_sys_rawio+ep");
       log::LogContext::ScopedParam sp(m_logContext,
-              log::Param("capabilities", m_capUtils.capGetProcText()));
+        log::Param("capabilities", m_capUtils.getProcText()));
       m_logContext.log(LOG_INFO, "Set process capabilities for using tape");
     } catch(const castor::exception::Exception &ne) {
       m_logContext.log(LOG_ERR,
-              "Failed to set process capabilities for using the tape ");
+        "Failed to set process capabilities for using the tape ");
     }
   }
   
-    /**
+  /**
    * Try to mount the tape, get an exception if it fails 
    */
   void mountTape(castor::legacymsg::RmcProxy::MountMode mode){
@@ -165,15 +165,15 @@ public:
     castor::legacymsg::RmcProxy & rmc,
     TapeServerReporter & tsr,
     const client::ClientInterface::VolumeInfo& volInfo,
-    CapabilityUtils &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
+    castor::utils::ProcessCap &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
     m_drive(drive), m_rmc(rmc), m_tsr(tsr), m_vid(volInfo.vid), m_logContext(lc),
     m_volInfo(volInfo),m_hardarwareStatus(0) {
 
   }
-};
+}; // class TapeSingleThreadInterface
 
-}
-}
-}
-}
+} // namespace daemon
+} // namespace tapeserver
+} // namespace tape
+} // namespace castor
 

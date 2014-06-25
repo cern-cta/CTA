@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/CapabilityUtilsDummy.hpp
+ *         castor/utils/ProcessCapDummy.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,41 +24,51 @@
 
 #pragma once
 
-#include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
+#include "castor/utils/ProcessCap.hpp"
 
 #include <string>
 #include <sys/capability.h>
 
-namespace castor     {
-namespace tape       {
-namespace tapeserver {
-namespace daemon     {
+namespace castor {
+namespace utils  {
 
 /**
- * Concrete but dummy implementation of a utility class providing support for
- * UNIX capabilities.  This dummy class does nothing.
+ * A dummy class that pretends to provide support for UNIX capabilities.
+ *
+ * This primary goal of this class is to facilitate unit testing.
  */
-class CapabilityUtilsDummy: public CapabilityUtils {
+class ProcessCapDummy: public ProcessCap {
 public:
 
   /**
    * Destructor.
    */
-  ~CapabilityUtilsDummy() throw();
+  ~ProcessCapDummy() throw();
 
   /**
    * C++ wrapper around the C functions cap_get_proc() and cap_to_text().
+   *
+   * @return The string representation the capabilities of the current
+   * process.
    */
-  std::string capGetProcText();
+  std::string getProcText();
 
   /**
    * C++ wrapper around the C functions cap_from_text() and cap_set_proc().
+   *
+   * @text The string representation the capabilities that the current
+   * process should have.
    */
-  void capSetProcText(const std::string &text);
+  void setProcText(const std::string &text);
 
-}; // class CapabilityUtils
+private:
 
-} // namespace daemon
-} // namespace tapeserver
-} // namespace tape
+  /**
+   * The string representation of the current capability state.
+   */
+  std::string m_text;
+
+}; // class ProcessCapDummy
+
+} // namespace utils
 } // namespace castor

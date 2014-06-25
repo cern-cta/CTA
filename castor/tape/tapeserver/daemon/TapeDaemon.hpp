@@ -35,10 +35,10 @@
 #include "castor/messages/TapeserverProxyFactory.hpp"
 #include "castor/server/Daemon.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
-#include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/utils/DriveConfigMap.hpp"
 #include "castor/tape/utils/utils.hpp"
+#include "castor/utils/ProcessCap.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <iostream>
@@ -91,7 +91,7 @@ public:
     messages::TapeserverProxyFactory &tapeserverProxyFactory,
     legacymsg::NsProxyFactory &nsProxyFactory,
     reactor::ZMQReactor &reactor,
-    CapabilityUtils &capUtils) throw(castor::exception::Exception);
+    castor::utils::ProcessCap &capUtils);
 
   /**
    * Destructor.
@@ -134,6 +134,32 @@ protected:
    */
   std::string argvToString(const int argc, const char *const *const argv)
     throw();
+
+  /**
+   * Sets the dumpable attribute of the current process to true.
+   */
+  void setDumpable();
+
+  /**
+   * Sets the capabilities of the current process.
+   *
+   * @text The string representation the capabilities that the current
+   * process should have.
+   */
+  void setProcessCapabilities(const std::string &text);
+
+  /**
+   * Forks the ProcessForker.
+   */
+  void forkProcessForker();
+
+  /**
+   * Runs the ProcessForker.
+   *
+   * @param cmdReceiverSocket The socket used to receive commands for the
+   * ProcessForker.
+   */
+  void runProcessForker(const int cmdReceiverSocket);
 
   /**
    * Blocks the signals that should not asynchronously disturb the daemon.
@@ -204,53 +230,69 @@ protected:
   void reapZombies() throw();
 
   /**
-   * Does the required post processing for the specified reaped session.
+   * Handles the specified reaped process.
    *
-   * @param sessionPid The process ID of the session child-process.
+   * @param pid The process ID of the child process.
    * @param waitpidStat The status information given by a call to waitpid().
    */
-  void postProcessReapedSession(const pid_t sessionPid, const int waitpidStat)
+  void handleReapedProcess(const pid_t pid, const int waitpidStat) throw();
+
+  /**
+   * Handles the specified reaped ProcessForker.
+   *
+   * @param pid The process ID of the child process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void handleReapedProcessForker(const pid_t pid, const int waitpidStat)
     throw();
 
   /**
-   * Logs the fact that the specified session child-process has terminated.
+   * Handles the specified reaped session.
    *
-   * @param sessionPid The process ID of the session child-process.
+   * @param pid The process ID of the child process.
    * @param waitpidStat The status information given by a call to waitpid().
    */
-  void logSessionProcessTerminated(const pid_t sessionPid,
-    const int waitpidStat) throw();
+  void handleReapedSession(const pid_t pid, const int waitpidStat) throw();
+
+  /**
+   * Logs the fact that the specified child process has terminated.
+   *
+   * @param pid The process ID of the child process.
+   * @param waitpidStat The status information given by a call to waitpid().
+   */
+  void logChildProcessTerminated(const pid_t pid, const int waitpidStat)
+    throw();
 
   /**
    * Dispatches the appropriate post-processor of repaed sessions based on
    * the specified session type.
    *
    * @sessionType The type of the reaped session.
-   * @param sessionPid The process ID of the reaped session.
+   * @param pid The process ID of the reaped session.
    * @param waitpidStat The status information given by a call to waitpid().
    */
-  void dispatchReapedSessionPostProcessor(
+  void dispatchReapedSessionHandler(
    const DriveCatalogueEntry::SessionType sessionType,
-   const pid_t sessionPid,
+   const pid_t pid,
    const int waitpidStat);
 
   /**
    * Does the required post processing for the specified reaped session.
    *
-   * @param sessionPid The process ID of the reaped session.
+   * @param pid The process ID of the reaped session.
    * @param waitpidStat The status information given by a call to waitpid().
    */
-  void postProcessReapedDataTransferSession(const pid_t sessionPid,
+  void handleReapedDataTransferSession(const pid_t pid,
     const int waitpidStat);
 
   /**
    * Sets the state of the tape drive asscoiated with the specified
    * mount-session process to down within the vdqmd daemon.
    *
-   * @param sessionPid The process ID of the mount-session child-process.
+   * @param pid The process ID of the mount-session child-process.
    * @param driveConfig The configuration of the tape drive.
    */
-  void setDriveDownInVdqm(const pid_t sessionPid,
+  void setDriveDownInVdqm(const pid_t pid,
     const utils::DriveConfig &driveConfig);
   
   /**
@@ -266,23 +308,22 @@ protected:
     const int rc) ;
   
   /**
-   * Does the required post processing for the specified reaped session.
+   * Handles the specified reaped session.
    *
-   * @param sessionPid The process ID of the reaped session.
+   * @param pid The process ID of the reaped session.
    * @param waitpidStat The status information given by a call to waitpid().
    */
-  void postProcessReapedLabelSession(const pid_t sessionPid,
-    const int waitpidStat);
+  void handleReapedLabelSession(const pid_t pid, const int waitpidStat);
 
   /**
    * Request the vdqmd daemon to release the tape drive associated with the
    * session child-process with the specified process ID.
    *
    * @param driveConfig The configuration of the tape drive.
-   * @param sessionPid The process ID of the session child-process.
+   * @param pid The process ID of the session child-process.
    */
   void requestVdqmToReleaseDrive(const utils::DriveConfig &driveConfig,
-    const pid_t sessionPid);
+    const pid_t pid);
 
   /**
    * Notifies the vdqm that the tape associated with the session child-process
@@ -290,10 +331,10 @@ protected:
    *
    * @param driveConfig The configuration of the tape drive.
    * @param vid The identifier of the unmounted volume.
-   * @param sessionPid The process ID of the session child-process.
+   * @param pid The process ID of the session child-process.
    */
   void notifyVdqmTapeUnmounted(const utils::DriveConfig &driveConfig,
-    const std::string &vid, const pid_t sessionPid);
+    const std::string &vid, const pid_t pid);
 
   /**
    * Forks a mount-session child-process for every tape drive entry in the
@@ -407,7 +448,7 @@ protected:
   /**
    * Object providing utilities for working UNIX capabilities.
    */
-  CapabilityUtils &m_capUtils;
+  castor::utils::ProcessCap &m_capUtils;
 
   /**
    * The program name of the daemon.
@@ -419,6 +460,16 @@ protected:
    * needed to fill in messages to be sent to the vdqmd daemon.
    */
   const std::string m_hostName;
+
+  /**
+   * The socket used to send commands to the ProcessForker.
+   */
+  int m_processForkerCmdSenderSocket;
+
+  /**   
+   * The process identifier of the ProcessForker.
+   */
+  pid_t m_processForkerPid;
 
 }; // class TapeDaemon
 

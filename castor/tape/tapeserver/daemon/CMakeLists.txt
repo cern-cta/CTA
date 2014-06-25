@@ -4,8 +4,6 @@ add_library(castorTapeServerDaemon
   AdminAcceptHandler.cpp
   AdminConnectionHandler.cpp
   ../client/ClientProxy.cpp 
-  CapabilityUtils.cpp
-  CapabilityUtilsImpl.cpp
   DiskReadThreadPool.cpp
   DiskReadTask.cpp
   DiskWriteTask.cpp
@@ -24,10 +22,12 @@ add_library(castorTapeServerDaemon
   MigrationReportPacker.cpp 
   MigrationTaskInjector.cpp
   DataTransferSession.cpp
+  ProcessForker.cpp
+  ProcessForkerProxy.cpp
+  ProcessForkerProxySocket.cpp
   RecallMemoryManager.cpp
   RecallTaskInjector.cpp 
   RecallReportPacker.cpp
-  SmartCap.cpp
   TapeMessageHandler.cpp
   TapeDaemonMain.cpp
   TapeWriteTask.cpp
@@ -45,15 +45,6 @@ add_library(castorTapeServerDaemonTestDummies
   ../../tpcp/TapeFseqRange.cpp)
 
 add_executable(tapeserverd TapeDaemon.cpp)
-
-find_library (LIBCAP_LIB cap)
-if (LIBCAP_LIB)
-  message(STATUS "Found the libcap library")
-  set (LIBCAPUNITTEST_SRC_FILES
-    ../castor/tape/tapeserver/daemon/SmartCapTest.cpp)
-else (LIBCAP_LIB)
-  message(STATUS "Failed to find libcap library")
-endif (LIBCAP_LIB)
 
 target_link_libraries(tapeserverd
   castorTapeServerDaemon

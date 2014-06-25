@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/CapabilityUtilsDummy.hpp
+ *         castor/tape/tapeserver/daemon/ProcessForkerProxySocket.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -22,26 +22,51 @@
  * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/CapabilityUtilsDummy.hpp"
+#include "castor/tape/tapeserver/daemon/ProcessForkerProxySocket.hpp"
+#include "h/serrno.h"
+
+#include <errno.h>
+
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
+  ProcessForkerProxySocket(log::Logger &log, const int socketFd) throw():
+  m_log(log), m_socketFd(socketFd) {
+}
 
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::CapabilityUtilsDummy::~CapabilityUtilsDummy()
-  throw() {
+castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
+  ~ProcessForkerProxySocket() throw() {
+  if(-1 == close(m_socketFd)) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    log::Param params[] = {log::Param("socketFd", m_socketFd), 
+      log::Param("message", message)};
+    m_log(LOG_ERR,
+      "Failed to close file-descriptor of ProcessForkerProxySocket", params);
+  }
 }
 
 //------------------------------------------------------------------------------
-// capGetProcText
+// forkMountSession
 //------------------------------------------------------------------------------
-std::string
-  castor::tape::tapeserver::daemon::CapabilityUtilsDummy::capGetProcText() {
-  return "";
+void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
+  forkMountSession() {
 }
 
 //------------------------------------------------------------------------------
-// capSetProcText
+// forkLabelSession
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::CapabilityUtilsDummy::capSetProcText(
-  const std::string &text) {
+void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
+  forkLabelSession() {
+}
+
+//------------------------------------------------------------------------------
+// forkCleanupSession
+//------------------------------------------------------------------------------
+void castor::tape::tapeserver::daemon::ProcessForkerProxySocket::
+  forkCleanupSession() {
 }

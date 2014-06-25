@@ -30,15 +30,16 @@
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/tape/tapeserver/file/File.hpp"
-#include "castor/tape/utils/Timer.hpp"
-#include <iostream>
-#include <stdio.h>
-#include <memory>
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
-#include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
+#include "castor/tape/utils/Timer.hpp"
+
+#include <iostream>
+#include <memory>
+#include <stdio.h>
+
 namespace castor {
 namespace tape {
 namespace tapeserver {
@@ -61,7 +62,7 @@ public:
           TapeServerReporter & gsr,
           const client::ClientInterface::VolumeInfo& volInfo, 
           uint64_t maxFilesRequest,
-          CapabilityUtils &capUtils,
+          castor::utils::ProcessCap &capUtils,
           TaskWatchDog<detail::Recall>& watchdog,
           castor::log::LogContext & lc): 
    TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr,volInfo,capUtils,lc),
@@ -235,9 +236,10 @@ private:
   castor::tape::tapeserver::daemon::RecallTaskInjector * m_taskInjector;
   
   TaskWatchDog<detail::Recall>& m_watchdog;
-};
-}
-}
-}
-}
 
+}; // class TapeReadSingleThread
+
+} // namespace daemon
+} // namespace tapeserver
+} // namespace tape
+} // namespace castor

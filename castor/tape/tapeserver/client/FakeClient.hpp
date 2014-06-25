@@ -9,6 +9,8 @@
 
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapegateway/FilesToRecallList.hpp"
+#include "castor/tape/tapegateway/FileToRecallStruct.hpp"
+
 #include <memory>
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
