@@ -192,7 +192,7 @@ private:
       
       TaskWatchDog watchdog(m_logContext);
       //start the threading and ask to initiate the protocol with the tapeserverd
-      watchdog.startThread();
+      //watchdog.startThread();
 //      ::sleep();
       // Then we will loop on the tasks as they get from 
       // the task injector
@@ -209,7 +209,7 @@ private:
           break;
         }
       }
-      watchdog.stopThread();
+      //watchdog.stopThread();
     } catch(const castor::exception::Exception& e){
       // we can only end there because 
       // moundTape, waitForDrive or crating the ReadSession failed
