@@ -101,7 +101,7 @@ tapegateway::GatewayMessage *
     std::stringstream mess;
     if (ret->mountTransactionId() != m_request.volReqId) {
     mess << "In castor::tape::server::clientInterface::requestResponseSession, "
-        "expected a information about mountSessionId=" << m_request.volReqId
+        "expected a information about DataTransferSessionId=" << m_request.volReqId
         << " and received: " << ret->mountTransactionId();
     } else {
     mess << "In castor::tape::server::clientInterface::requestResponseSession, "

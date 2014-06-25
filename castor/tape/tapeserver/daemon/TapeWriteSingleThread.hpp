@@ -261,7 +261,7 @@ private:
    * of our session. The last Fseq is computed by subtracting 1 to fSeg
    * of the first file to migrate we receive. That part is done by the 
    * MigrationTaskInjector.::synchronousInjection. Thus, we compute it into 
-   * that function and retrieve/set it within MountSession executeWrite
+   * that function and retrieve/set it within DataTransferSession executeWrite
    * after we make sure synchronousInjection returned true. 
    * 
    * It should be const, but it cant 

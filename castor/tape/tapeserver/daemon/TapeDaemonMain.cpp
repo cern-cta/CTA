@@ -32,7 +32,7 @@
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtilsImpl.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
-#include "castor/tape/tapeserver/daemon/MountSession.hpp"
+#include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/rmc_constants.h"

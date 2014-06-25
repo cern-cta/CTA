@@ -28,7 +28,7 @@
 #include "ClientProxy.hpp"
 #include "../threading/Threading.hpp"
 #include "castor/log/StringLogger.hpp"
-#include "castor/tape/tapeserver/daemon/MountSession.hpp"
+#include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "../system/Wrapper.hpp"
 #include "Ctape.h"
 #include "castor/tape/tapegateway/Volume.hpp"

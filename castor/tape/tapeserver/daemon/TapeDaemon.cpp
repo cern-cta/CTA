@@ -33,7 +33,7 @@
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/LabelCmdAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
-#include "castor/tape/tapeserver/daemon/MountSession.hpp"
+#include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
@@ -443,7 +443,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeDaemon::mainEventLoop() {
   while(handleEvents()) {
-    forkMountSessions();
+    forkDataTransferSessions();
     forkLabelSessions();
   }
 }
@@ -745,23 +745,23 @@ void castor::tape::tapeserver::daemon::TapeDaemon::postProcessReapedLabelSession
 }
 
 //------------------------------------------------------------------------------
-// forkMountSessions
+// forkDataTransferSessions
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSessions() throw() {
+void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSessions() throw() {
   const std::list<std::string> unitNames = m_driveCatalogue.getUnitNamesWaitingForTransferFork();
 
   for(std::list<std::string>::const_iterator itor = unitNames.begin();
     itor != unitNames.end(); itor++) {
     const std::string unitName = *itor;
     DriveCatalogueEntry *drive = m_driveCatalogue.findDrive(unitName);
-    forkMountSession(drive);
+    forkDataTransferSession(drive);
   }
 }
 
 //------------------------------------------------------------------------------
-// forkMountSession
+// forkDataTransferSession
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSession(
+void castor::tape::tapeserver::daemon::TapeDaemon::forkDataTransferSession(
   DriveCatalogueEntry *drive) throw() {
   const utils::DriveConfig &driveConfig = drive->getConfig();
 
@@ -783,7 +783,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSession(
 
   // Else if this is the parent process
   } else if(0 < forkRc) {
-    drive->forkedMountSession(forkRc);
+    drive->forkedDataTransferSession(forkRc);
     return;
 
   // Else this is the child process
@@ -805,14 +805,14 @@ void castor::tape::tapeserver::daemon::TapeDaemon::forkMountSession(
         params);
     }
 
-    runMountSession(drive);
+    runDataTransferSession(drive);
   }
 }
 
 //------------------------------------------------------------------------------
-// runMountSession
+// runDataTransferSession
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
+void castor::tape::tapeserver::daemon::TapeDaemon::runDataTransferSession(
   const DriveCatalogueEntry *drive) throw() {
   const utils::DriveConfig &driveConfig = drive->getConfig();
   const pid_t sessionPid = getpid();
@@ -824,10 +824,10 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
   m_log(LOG_INFO, "Mount-session child-process started", params);
   
   try {
-    MountSession::CastorConf castorConf;
+    DataTransferSession::CastorConf castorConf;
     // This try bloc will allow us to send a failure notification to the client
-    // if we fail before the MountSession has an opportunity to do so.
-    std::auto_ptr<MountSession> mountSession;
+    // if we fail before the DataTransferSession has an opportunity to do so.
+    std::auto_ptr<DataTransferSession> dataTransferSession;
     castor::tape::System::realWrapper sysWrapper;
     std::auto_ptr<legacymsg::RmcProxy> rmc;
     std::auto_ptr<messages::TapeserverProxy> tapeserver;
@@ -863,12 +863,12 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
       
       rmc.reset(m_rmcFactory.create());
       try{
-        tapeserver.reset(m_tapeserverFactory.create(MountSession::ctx()));
+        tapeserver.reset(m_tapeserverFactory.create(DataTransferSession::ctx()));
       }
       catch(const std::exception& e){
-        m_log(LOG_ERR, "Failed to connect ZMQ/REQ socket in MountSession");
+        m_log(LOG_ERR, "Failed to connect ZMQ/REQ socket in DataTransferSession");
       }
-      mountSession.reset(new MountSession (
+      dataTransferSession.reset(new DataTransferSession (
         m_argc,
         m_argv,
         m_hostName,
@@ -911,8 +911,7 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runMountSession(
       throw;
     }
     m_log(LOG_INFO, "Going to execute Mount Session");
-    int result = mountSession->execute();
-//    MountSession::ctx().close();
+    int result = dataTransferSession->execute();
     exit(result);
   } catch(castor::exception::Exception & ex) {
     params.push_back(log::Param("message", ex.getMessageValue()));

@@ -425,7 +425,7 @@ void castor::tape::rmc::RmcDaemon::forkChildProcess() throw() {
 
   // Else if this is the parent process
   } else if(0 < childPid) {
-    m_driveCatalogue.forkedMountSession(unitName, childPid);
+    m_driveCatalogue.forkedDataTransferSession(unitName, childPid);
 
   // Else this is the child process
   } else {
@@ -433,11 +433,11 @@ void castor::tape::rmc::RmcDaemon::forkChildProcess() throw() {
     // file-descriptors owned by the event handlers
     m_reactor.clear();
 
-    runMountSession(unitName);
+    runDataTransferSession(unitName);
 
-    // The runMountSession() should call exit() and should therefore never
+    // The runDataTransferSession() should call exit() and should therefore never
     // return
-    m_log(LOG_ERR, "runMountSession() returned unexpectedly");
+    m_log(LOG_ERR, "runDataTransferSession() returned unexpectedly");
   }
 */
 }

@@ -23,7 +23,7 @@ add_library(castorTapeServerDaemon
   MigrationMemoryManager.cpp
   MigrationReportPacker.cpp 
   MigrationTaskInjector.cpp
-  MountSession.cpp
+  DataTransferSession.cpp
   RecallMemoryManager.cpp
   RecallTaskInjector.cpp 
   RecallReportPacker.cpp

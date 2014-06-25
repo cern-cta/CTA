@@ -29,7 +29,7 @@
 #include "castor/messages/messages.hpp"
 #include "castor/utils/utils.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
-#include "castor/tape/tapeserver/daemon/MountSession.hpp"
+#include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 
 namespace castor {
 
@@ -71,7 +71,7 @@ void TaskWatchDog::report(zmq::socket_t& m_socket){
 }
     
 void TaskWatchDog::run(){
-  zmq::socket_t m_socket(MountSession::ctx(),ZMQ_REQ);
+  zmq::socket_t m_socket(DataTransferSession::ctx(),ZMQ_REQ);
   castor::messages::connectToLocalhost(m_socket);
   
   using castor::utils::timevalToDouble;

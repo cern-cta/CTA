@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      MountSession.hpp
+ *                      DataTransferSession.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -52,7 +52,7 @@ namespace daemon {
    * by the master process. It will drive a separate process. Only the sub
    * process interface is not included here to allow testability.
    */
-  class MountSession {
+  class DataTransferSession {
   public:
     /** Subclass holding all the contents from castor.conf file. The pre-
      * extraction of the contents by the caller instead of direct getconfent
@@ -98,7 +98,7 @@ namespace daemon {
       uint32_t tapeserverdDiskThreads;
     };
     /** Constructor */
-    MountSession(
+    DataTransferSession(
       int argc,
       char ** argv,
       const std::string & hostname,
@@ -122,7 +122,7 @@ namespace daemon {
      */
     static zmq::context_t& ctx();
     
-    ~MountSession();
+    ~DataTransferSession();
   private:
     legacymsg::RtcpJobRqstMsgBody m_request;
     castor::log::Logger & m_logger;

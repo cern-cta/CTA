@@ -46,7 +46,7 @@ namespace legacymsg {
  *      |<--------------------------------|                  |
  *      |                                 |                  |
  *      | fork                            |                  |
- *      |----------->MountSession         |                  |
+ *      |----------->DataTransferSession         |                  |
  *      |                 |               |                  |
  *      |                 | assignDrive   |                  |
  *      |                 |-------------->|                  |

@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      MountSession.cpp
+ *                      DataTransferSession.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -24,7 +24,7 @@
 
 #include <memory>
 
-#include "castor/tape/tapeserver/daemon/MountSession.hpp"
+#include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
@@ -44,14 +44,14 @@
 #include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
-#include "castor/tape/tapeserver/daemon/MountSession.hpp"
+#include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 using namespace castor::tape;
 using namespace castor::log;
 
 //------------------------------------------------------------------------------
 //Constructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::MountSession::MountSession(
+castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     int argc,
     char ** argv,
     const std::string & hostname,
@@ -77,7 +77,7 @@ castor::tape::tapeserver::daemon::MountSession::MountSession(
 }
 
 //------------------------------------------------------------------------------
-//MountSession::execute
+//DataTransferSession::execute
 //------------------------------------------------------------------------------
 /**
  * Function's synopsis 
@@ -87,7 +87,7 @@ castor::tape::tapeserver::daemon::MountSession::MountSession(
  * 2b) Log The result
  * Then branch to the right execution
  */
-int castor::tape::tapeserver::daemon::MountSession::execute()
+int castor::tape::tapeserver::daemon::DataTransferSession::execute()
  {
   // 1) Prepare the logging environment
   LogContext lc(m_logger);
@@ -171,9 +171,9 @@ int castor::tape::tapeserver::daemon::MountSession::execute()
   }
 }
 //------------------------------------------------------------------------------
-//MountSession::executeRead
+//DataTransferSession::executeRead
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc) {
+int castor::tape::tapeserver::daemon::DataTransferSession::executeRead(LogContext & lc) {
   // We are ready to start the session. We need to create the whole machinery 
   // in order to get the task injector ready to check if we actually have a 
   // file to recall.
@@ -250,9 +250,9 @@ int castor::tape::tapeserver::daemon::MountSession::executeRead(LogContext & lc)
   }
 }
 //------------------------------------------------------------------------------
-//MountSession::executeWrite
+//DataTransferSession::executeWrite
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc) {
+int castor::tape::tapeserver::daemon::DataTransferSession::executeWrite(LogContext & lc) {
   // We are ready to start the session. We need to create the whole machinery 
   // in order to get the task injector ready to check if we actually have a 
   // file to migrate.
@@ -341,9 +341,9 @@ int castor::tape::tapeserver::daemon::MountSession::executeWrite(LogContext & lc
   }
 }
 //------------------------------------------------------------------------------
-//MountSession::executeDump
+//DataTransferSession::executeDump
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::MountSession::executeDump(LogContext & lc) {
+void castor::tape::tapeserver::daemon::DataTransferSession::executeDump(LogContext & lc) {
   // We are ready to start the session. In case of read there is no interest in
   // creating the machinery before getting the tape mounted, so do it now.
   // 1) Get hold of the drive and check it.
@@ -351,7 +351,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeDump(LogContext & lc
 }
 
 //------------------------------------------------------------------------------
-//MountSession::findDrive
+//DataTransferSession::findDrive
 //------------------------------------------------------------------------------
 /*
  * Function synopsis  :
@@ -367,7 +367,7 @@ void castor::tape::tapeserver::daemon::MountSession::executeDump(LogContext & lc
  * @return the drive if found, NULL otherwise
  */
 castor::tape::drives::DriveInterface *
-castor::tape::tapeserver::daemon::MountSession::findDrive(const utils::DriveConfig
+castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const utils::DriveConfig
   &driveConfig, LogContext& lc) {
   // Find the drive in the system's SCSI devices
   castor::tape::SCSI::DeviceVector dv(m_sysWrapper);
@@ -471,16 +471,16 @@ castor::tape::tapeserver::daemon::MountSession::findDrive(const utils::DriveConf
 }
 
 //------------------------------------------------------------------------------
-//MountSession::ctx
+//DataTransferSession::ctx
 //------------------------------------------------------------------------------
-zmq::context_t& castor::tape::tapeserver::daemon::MountSession::ctx(){
+zmq::context_t& castor::tape::tapeserver::daemon::DataTransferSession::ctx(){
   static zmq::context_t m_ctx;
   return m_ctx;
 }
 //------------------------------------------------------------------------------
 //destructor
 //------------------------------------------------------------------------------
-castor::tape::tapeserver::daemon::MountSession::~MountSession(){
+castor::tape::tapeserver::daemon::DataTransferSession::~DataTransferSession(){
   ctx().close();
 }
     

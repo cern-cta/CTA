@@ -193,7 +193,7 @@ TEST_F(castor_tape_tapeserver_daemon_DriveCatalogueTest, completeFSTN) {
 
   // Fork the mount session
   const pid_t sessionPid = 1234;
-  ASSERT_NO_THROW(unit->forkedMountSession(sessionPid));
+  ASSERT_NO_THROW(unit->forkedDataTransferSession(sessionPid));
   ASSERT_EQ(castor::tape::tapeserver::daemon::DriveCatalogueSession::SESSION_STATE_RUNNING, unit->getSessionState());
   ASSERT_EQ(sessionPid, unit->getSessionPid());
 

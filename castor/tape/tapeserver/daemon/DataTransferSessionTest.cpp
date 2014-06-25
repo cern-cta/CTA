@@ -33,7 +33,7 @@
 #include "castor/tape/tapeserver/daemon/CapabilityUtilsDummy.hpp"
 #include "../threading/Threading.hpp"
 #include "castor/log/StringLogger.hpp"
-#include "MountSession.hpp"
+#include "DataTransferSession.hpp"
 #include "../system/Wrapper.hpp"
 #include "Ctape.h"
 #include "castor/tape/tapegateway/Volume.hpp"
@@ -71,7 +71,7 @@ private:
 
   
 
-TEST(tapeServer, MountSessionGooddayRecall) {
+TEST(tapeServer, DataTransferSessionGooddayRecall) {
   // TpcpClients only supports 32 bits session number
   // This number has to be less than 2^31 as in addition there is a mix
   // of signed and unsigned numbers
@@ -157,7 +157,7 @@ TEST(tapeServer, MountSessionGooddayRecall) {
   driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = "manual";
   driveConfig.devType = "T10000";
-  MountSession::CastorConf castorConf;
+  DataTransferSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
   castorConf.rtcopydNbBufs = 10;
   castorConf.tapebridgeBulkRequestRecallMaxBytes = UINT64_C(100)*1000*1000*1000;
@@ -177,7 +177,7 @@ TEST(tapeServer, MountSessionGooddayRecall) {
       argv_ctn_str.find_first_of("\0",pos);
     }
   }
-  MountSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys,
+  DataTransferSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys,
     driveConfig, rmc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
@@ -187,7 +187,7 @@ TEST(tapeServer, MountSessionGooddayRecall) {
 }
  
 
-TEST(tapeServer, MountSessionNoSuchDrive) {
+TEST(tapeServer, DataTransferSessionNoSuchDrive) {
   // TpcpClients only supports 32 bits session number
   // This number has to be less than 2^31 as in addition there is a mix
   // of signed and unsigned numbers
@@ -226,7 +226,7 @@ TEST(tapeServer, MountSessionNoSuchDrive) {
   driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = "manual";
   driveConfig.devType = "T10000";
-  MountSession::CastorConf castorConf;
+  DataTransferSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024;
   castorConf.rtcopydNbBufs = 10;
   castor::legacymsg::VmgrProxyDummy vmgr;
@@ -245,7 +245,7 @@ TEST(tapeServer, MountSessionNoSuchDrive) {
       argv_ctn_str.find_first_of("\0",pos);
     }
   }
-  MountSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys,
+  DataTransferSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys,
     driveConfig, rmc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();
@@ -310,7 +310,7 @@ struct expectedResult {
   uint32_t checksum;
 };
 
-TEST(tapeServer, MountSessionGooddayMigration) {
+TEST(tapeServer, DataTransferSessionGooddayMigration) {
   // TpcpClients only supports 32 bits session number
   // This number has to be less than 2^31 as in addition there is a mix
   // of signed and unsigned numbers
@@ -378,7 +378,7 @@ TEST(tapeServer, MountSessionGooddayMigration) {
   driveConfig.densities.push_back("5000GC");
   driveConfig.librarySlot = "manual";
   driveConfig.devType = "T10000";
-  MountSession::CastorConf castorConf;
+  DataTransferSession::CastorConf castorConf;
   castorConf.rtcopydBufsz = 1024*1024; // 1 MB memory buffers
   castorConf.rtcopydNbBufs = 10;
   castorConf.tapebridgeBulkRequestMigrationMaxBytes = UINT64_C(100)*1000*1000*1000;
@@ -400,7 +400,7 @@ TEST(tapeServer, MountSessionGooddayMigration) {
       argv_ctn_str.find_first_of("\0",pos);
     }
   }
-  MountSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys,
+  DataTransferSession sess(argc, argv, "tapeHost", VDQMjob, logger, mockSys,
     driveConfig, rmc, initialProcess, capUtils, castorConf);
   sess.execute();
   simRun.wait();

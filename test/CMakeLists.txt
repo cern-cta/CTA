@@ -214,7 +214,7 @@ target_link_libraries(castorUnitTests
 add_executable(castorThreadedUnitTests
   castorUnitTests.cpp
   ../castor/tape/tapeserver/threading/ThreadingMTTests.cpp
- ../castor/tape/tapeserver/daemon/MountSessionTest.cpp
+ ../castor/tape/tapeserver/daemon/DataTransferSessionTest.cpp
   ../castor/tape/tapeserver/threading/ThreadingBlockingQTests.cpp
   ../castor/tape/tapeserver/daemon/CapabilityUtilsDummy.cpp
   ../castor/tape/tapeserver/daemon/RecallTaskInjectorTest.cpp

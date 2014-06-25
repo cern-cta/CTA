@@ -305,7 +305,7 @@ TEST_F(castor_tape_utils_DriveCatalogueTest, completeFSTN) {
 
   // Fork the mount session
   const pid_t sessionPid = 1234;
-  ASSERT_NO_THROW(catalogue.forkedMountSession("UNIT", sessionPid));
+  ASSERT_NO_THROW(catalogue.forkedDataTransferSession("UNIT", sessionPid));
   ASSERT_EQ(DriveCatalogue::DRIVE_STATE_RUNNING, catalogue.getState("UNIT"));
   ASSERT_EQ(sessionPid, catalogue.getSessionPid("UNIT"));
 

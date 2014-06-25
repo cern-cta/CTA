@@ -304,14 +304,14 @@ protected:
    * call to m_reactor.handleEvents() handled requests to start a mount
    * session on more than one of the connected tape drives.
    */
-  void forkMountSessions() throw();
+  void forkDataTransferSessions() throw();
 
   /**
    * Forks a mount-session child-process for the specified tape drive.
    *
    * @param drive The tape-drive entry in the tape-drive catalogue.
    */ 
-  void forkMountSession(DriveCatalogueEntry *drive) throw();
+  void forkDataTransferSession(DriveCatalogueEntry *drive) throw();
 
   /**
    * Runs the mount session.  This method is to be called within the child
@@ -320,7 +320,7 @@ protected:
    * @param drive The catalogue entry of the tape drive to be used during the
    * session.
    */
-  void runMountSession(const DriveCatalogueEntry *drive) throw();
+  void runDataTransferSession(const DriveCatalogueEntry *drive) throw();
 
   /**
    * Forks a label-session child-process for every tape drive entry in the

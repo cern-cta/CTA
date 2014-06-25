@@ -328,7 +328,7 @@ public:
    * @param sessionPid The process ID of the child process responsible for
    * running the mount session.
    */
-  void forkedMountSession(const pid_t sessionPid);
+  void forkedDataTransferSession(const pid_t sessionPid);
   
   /**
    * Moves the state of the tape drive to DRIVE_STATE_RUNNING.

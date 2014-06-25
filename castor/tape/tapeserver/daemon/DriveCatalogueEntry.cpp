@@ -483,9 +483,9 @@ void castor::tape::tapeserver::daemon::DriveCatalogueEntry::receivedLabelJob(
 }
 
 //-----------------------------------------------------------------------------
-// forkedMountSession
+// forkedDataTransferSession
 //-----------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::DriveCatalogueEntry::forkedMountSession(
+void castor::tape::tapeserver::daemon::DriveCatalogueEntry::forkedDataTransferSession(
   const pid_t sessionPid)  {
   std::ostringstream task;
   task << "handle fork of mount session for tape drive " << m_config.unitName;
