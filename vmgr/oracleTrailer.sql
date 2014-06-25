@@ -395,3 +395,10 @@ BEGIN
   END LOOP;
 END;
 /
+
+-- Permissions should be granted to the CNS schema for VMGR_TAPE_SIDE and
+-- VMGR_TAPE_STATUS_VIEW.
+UNDEF cnsSchema
+ACCEPT cnsSchema CHAR DEFAULT 'castor_ns' PROMPT 'Enter the name of the NS schema (default castor_ns): ';
+GRANT SELECT ON vmgr_tape_side TO &cnsSchema;
+GRANT SELECT ON vmgr_tape_status_view TO &cnsSchema;
