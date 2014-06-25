@@ -66,7 +66,6 @@ install (TARGETS XrdxCastor2ServerAcc DESTINATION ${CASTOR_DEST_LIB_DIR})
 ################################################################################
 set (XRDXCASTOR2OFS_LIB_SRC_FILES
   XrdxCastor2Ofs.cpp
-  XrdxCastor2OfsProc.cpp
   XrdxCastorLogging.cpp
   XrdxCastorTiming.cpp)
 set_property(SOURCE XrdxCastor2Ofs.cpp

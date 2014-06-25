@@ -111,7 +111,6 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
   // Extract the manager from the config file
   XrdOucStream config_stream(&Eroute, getenv("XRDINSTANCE"));
   doPOSC = false;
-  mProcFs = "/tmp/xcastor2-ofs/";
 
   if (ConfigFN && *ConfigFN)
   {
@@ -176,15 +175,7 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
           }
         }
 
-        if (!strcmp("procuser", var))
-        {
-          if ((val = config_stream.GetWord()))
-          {
-            XrdOucString sval = val;
-            procUsers.Push_back(sval);
-          }
-        }
-
+        // Enable 'persistency on successful close'
         if (!strcmp("posc", var))
         {
           if ((val = config_stream.GetWord()))
@@ -193,23 +184,6 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
 
             if ((sval == "true") || (sval == "1") || (sval == "yes"))
               doPOSC = true;
-          }
-        }
-
-        if (!strcmp("proc", var))
-        {
-          if (!(val = config_stream.GetWord()))
-          {
-            Eroute.Emsg("Config", "argument for proc invalid");
-            exit(-1);
-          }
-          else
-          {
-            mProcFs = val;
-
-            while (mProcFs.replace("//", "/")) {}
-
-            Eroute.Say("=====> xcastor2.proc: ", mProcFs.c_str());
           }
         }
       }
@@ -225,31 +199,6 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
   Logging::SetLogPriority(mLogLevel);
   Logging::SetUnit(unit.c_str());
   xcastor_info("info=\"logging configured\" ");
-
-  // Create the /proc/ directory
-  std::ostringstream oss;
-  oss << "mkdir -p " << mProcFs << "/proc";
-#ifdef XFS_SUPPORT
-  oss << "/xfs";
-#endif // XFS_SUPPORT
-  oss << "; chown stage.st " << mProcFs << "/proc" << std::endl;
-  system(oss.str().c_str());
-          
-  if (access(mProcFs.c_str(), R_OK | W_OK))
-  {
-    Eroute.Emsg("Config", "Cannot use given proc directory ", mProcFs.c_str());
-    exit(-1);
-  }
-
-  for (int i = 0; i < procUsers.GetSize(); i++)
-    Eroute.Say("=====> xcastor2.procuser: ", procUsers[i].c_str(), "");
-
-  Eroute.Say("=====> xcastor2.posc: ", (doPOSC ? "yes" : "no"), "");
-
-  // Read in /proc variables at startup time to reset to previous values
-  ReadFromProc("trace");
-  UpdateProc("*");
-  ReadFromProc("trace");
   int rc = XrdOfs::Configure(Eroute);
 
   // Set the effective user for all the XrdClients used to issue 'prepares' 
@@ -270,7 +219,6 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
 XrdxCastor2OfsFile::XrdxCastor2OfsFile(const char* user, int MonID) :
     XrdOfsFile(user, MonID),
     mStagerJob(NULL),
-    mProcRequest(kProcNone),
     mEnvOpaque(NULL),
     mIsRW(false),
     mIsTruncate(false),
@@ -316,7 +264,6 @@ XrdxCastor2OfsFile::open(const char*         path,
                          const char*         opaque)
 {
   xcastor_debug("path=%s", path);
-  const char* tident = error.getErrUser();
   xcastor::Timing opentiming("ofsf::open");
   TIMING("START", &opentiming);
   XrdOucString spath = path;
@@ -374,12 +321,6 @@ XrdxCastor2OfsFile::open(const char*         path,
     newopaque += newpath.c_str();
   }
 
-  if (mEnvOpaque->Get("castor2ofsproc"))
-  {
-    // that is strange ;-) ....
-    newopaque.replace("castor2ofsproc", "castor2ofsfake");
-  }
-
   open_mode |= SFS_O_MKPTH;
   create_mode |= SFS_O_MKPTH;
   mIsTruncate = open_mode & SFS_O_TRUNC;
@@ -388,81 +329,6 @@ XrdxCastor2OfsFile::open(const char*         path,
                     SFS_O_WRONLY | SFS_O_RDWR)) != 0)
   {
     mIsRW = true;
-  }
-
-  if (spath.beginswith("/proc/"))
-  {
-    mProcRequest = kProcRead;
-
-    if (mIsRW)
-      mProcRequest = kProcWrite;
-
-    // Declare this as a proc path to the authorization plugin
-    newopaque += "&";
-    newopaque += "castor2ofsproc=true";
-
-    // Re-root the /proc/ location
-    XrdOucString proc_path = gSrv->mProcFs;
-    proc_path += "/";
-    proc_path += spath;
-
-    while (proc_path.replace("//", "/")) {};
-
-    // Check the allowed proc users - this is not a high performance implementation
-    // but the usage of /proc is very rare anyway.Clients are allowed to read/modify
-    // /proc, when they appear in the configuration file f.e. as
-    // -> xcastor2.procUsers xrootd@pcitmeta.cern.ch
-    // where the user name in front of @ is the UID name on the client side
-    // and the host name after the @ is the hostname without domain.
-    XrdOucString reducedTident, user, stident;
-    reducedTident = "";
-    user = "";
-    stident = tident;
-    int pos = stident.find(".");
-    reducedTident.assign(tident, 0, pos - 1);
-    reducedTident += "@";
-    pos = stident.find("@");
-    user.assign(tident, pos + 1);
-    reducedTident += user;
-    bool allowed = false;
-
-    for (int i = 0 ; i < gSrv->procUsers.GetSize(); i++)
-    {
-      if (gSrv->procUsers[i] == reducedTident)
-      {
-        allowed = true;
-        break;
-      }
-    }
-
-    if (!allowed)
-    {
-      return gSrv->Emsg("open", error, EPERM, "allow access to /proc/ fs in xrootd",
-                        path);
-    }
-
-    if (mProcRequest == kProcWrite)
-    {
-      open_mode = SFS_O_RDWR | SFS_O_TRUNC;
-      proc_path += ".__proc_update__";
-    }
-    else
-    {
-      // Depending on the desired file, we update the information in that file
-      if (!gSrv->UpdateProc(proc_path.c_str()))
-        return gSrv->Emsg("open", error, EIO, "update /proc information", path);
-    }
-
-    // We have to open the re-rooted proc path!
-    int rc = XrdOfsFile::open(proc_path.c_str(), open_mode, create_mode,
-                              client, newopaque.c_str());
-    return rc;
-  }
-  else
-  {
-    // Deny this as a proc path to the authorization plugin
-    newopaque += "&";
-    newopaque += "castor2ofsproc=false";
   }
 
   char* val = 0;
@@ -546,8 +412,6 @@ XrdxCastor2OfsFile::open(const char*         path,
     mHasWrite = true;
     mHasAdler = false;
   }
-  
-  TIMING("PROCBLOCK", &opentiming);
 
   // Extract the stager information
   val = mEnvOpaque->Get("castor2fs.pfn2");
@@ -667,26 +531,6 @@ XrdxCastor2OfsFile::close()
 
   mIsClosed = true;
   XrdOucString spath = FName();
-
-  if (mProcRequest == kProcWrite)
-  {
-    sync();
-    XrdOucString newpath = spath;
-    newpath.erase(".__proc_update__");
-    gSrv->rem(newpath.c_str(), error, 0, "");
-    int rc =  ::rename(spath.c_str(), newpath.c_str());
-    // printf("rc is %d %s->%s\n",rc, spath.c_str(),newpath.c_str());
-    gSrv->rem(spath.c_str(), error, 0, "");
-    gSrv->ReadFromProc("trace");
-    gSrv->UpdateProc(newpath.c_str());
-    XrdOfsFile::close();
-    return rc;
-  }
-  else
-  {
-    gSrv->ReadFromProc("trace");
-  }
-
   char ckSumbuf[32 + 1];
   sprintf(ckSumbuf, "%x", mAdlerXs);
   char* ckSumalg = "ADLER32";
@@ -980,11 +824,6 @@ XrdxCastor2OfsFile::Unlink()
   XrdOucString secuid      = mEnvOpaque->Get("castor2fs.client_sec_uid");
   XrdOucString secgid      = mEnvOpaque->Get("castor2fs.client_sec_gid");
   xcastor_debug("unlink lfn=%s", preparename.c_str());
-
-  // Don't deal with proc requests
-  if (mProcRequest != kProcNone)
-    return SFS_OK;
-
   XrdOucString mdsaddress = "root://";
   mdsaddress += mEnvOpaque->Get("castor2fs.manager");
   mdsaddress += "//dummy";

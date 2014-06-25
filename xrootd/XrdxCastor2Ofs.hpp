@@ -143,23 +143,21 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
 
   private:
 
-    enum eProcRequest {kProcNone, kProcRead, kProcWrite};
     XrdxCastor2Ofs2StagerJob* mStagerJob; ///< StagerJob object
-    int mProcRequest; ///< Save type of proc request
-    XrdOucEnv* mEnvOpaque; ///< Initial opaque information
-    bool mIsRW; ///< File opened for writing
-    bool mIsTruncate; ///< File is truncated
-    bool mHasWrite; ///< Mark is file has writes
-    bool mViaDestructor; ///< Mark close via destructor - not properly closed
-    XrdOucString mReqId; ///< Request id received from the redirector
-    unsigned int mAdlerXs; ///< Adler checksum
-    bool mHasAdlerErr; ///< Mark if there was an adler error
-    bool mHasAdler; ///< Mark if it has adler xs computed
-    XrdSfsFileOffset mAdlerOffset; ///< Current adler offset 
-    XrdOucString mXsValue; ///< Checksum value
-    XrdOucString mXsType; ///< Checksum type: adler, crc32c etc.
-    bool mIsClosed; ///< TODO: to replace with mIsOpen
-    struct stat mStatInfo; ///< File stat info
+    XrdOucEnv* mEnvOpaque; ///< initial opaque information
+    bool mIsRW; ///< file opened for writing
+    bool mIsTruncate; ///< file is truncated
+    bool mHasWrite; ///< mark is file has writes
+    bool mViaDestructor; ///< mark close via destructor - not properly closed
+    XrdOucString mReqId; ///< request id received from the redirector
+    unsigned int mAdlerXs; ///< adler checksum
+    bool mHasAdlerErr; ///< mark if there was an adler error
+    bool mHasAdler; ///< mark if it has adler xs computed
+    XrdSfsFileOffset mAdlerOffset; ///< current adler offset 
+    XrdOucString mXsValue; ///< checksum value
+    XrdOucString mXsType; ///< checksum type: adler, crc32c etc.
+    bool mIsClosed; ///< make when file is closed
+    struct stat mStatInfo; ///< file stat info
     std::string mTpcKey; ///< tpc key allocated to this file
 };
 
@@ -230,13 +228,7 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
       return (XrdSfsFile*) new XrdxCastor2OfsFile(user, MonID);
     }
 
-
-    //--------------------------------------------------------------------------
-    //! Update proc 
-    //--------------------------------------------------------------------------
-    bool UpdateProc(const char* name);
-
-
+  
     //--------------------------------------------------------------------------
     //! Chmod - masked
     //--------------------------------------------------------------------------
@@ -359,41 +351,19 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
     void SetLogLevel(int logLevel);
 
   
-    XrdSysError* Eroute; ///< Error object
     bool doPOSC; ///< 'Persistency on successful close' flag
-    int mLogLevel; ///< log level from configuration file
-    XrdOucString mProcFs; ///< location of the proc file system directory
     XrdSysMutex mTpcMapMutex; ///< mutex to protect access to the TPC map
     std::map<std::string, struct TpcInfo> mTpcMap; ///< TPC map of kety to lfn
 
   private:
 
-    vecString procUsers; ///< vector of users ( reduced tidents <user>@host
-                         ///< which can write into /proc )
-
-    //--------------------------------------------------------------------------
-    //! Write values to the /proc file system - source in XrdxCastor2OfsProc.cc
-    //! @param name variable name
-    //! @param value variable value
-    //!
-    //! @return True if successful, otherwise false.
-    //--------------------------------------------------------------------------
-    bool Write2ProcFile(const char* name, long long value);
-
-
-    //--------------------------------------------------------------------------
-    //! Read values out of the /proc file system
-    //!
-    //! @param entryname name of the variable to be read
-    //!
-    //! @return True if successful, otherwise false.
-    //--------------------------------------------------------------------------
-    bool ReadFromProc(const char* entryname);
+    int mLogLevel; ///< log level from configuration file
+    XrdSysError* Eroute; ///< error object
 };
 
 
 //------------------------------------------------------------------------------
-//! Class XrdxCastor2Ofs2StagerJob
+//! Class XrdxCastor2Ofs2StagerJob - interface with the StagerJob process
 //------------------------------------------------------------------------------
 class XrdxCastor2Ofs2StagerJob : public LogId
 {
