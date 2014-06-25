@@ -73,6 +73,7 @@ sub printFiltered ( $ ) {
 sub main () {
   my $check_compilation = "
   whenever sqlerror exit SQL.SQLCODE
+  set serveroutput on;
   declare
     nerrors NUMBER;
     newnerrors NUMBER;
@@ -94,9 +95,8 @@ sub main () {
       loop
         begin
           execute immediate 'ALTER PROCEDURE ' || proc.object_name || ' COMPILE';
-          DBMS_OUTPUT.put_line('successfully compiled ' || proc.object_name);
         exception when others then
-          DBMS_OUTPUT.put_line('failed to compile ' || proc.object_name);
+          null;
         end;
       end loop;
       select count(*)
@@ -105,6 +105,14 @@ sub main () {
       where object_type = 'PROCEDURE'
         and status = 'INVALID';
       if newnerrors = nerrors then
+        DBMS_OUTPUT.put_line('Failed to compile all objects');
+        for obj in (
+        select object_name, object_type
+         from user_objects
+        where  status = 'INVALID')
+        loop
+          DBMS_OUTPUT.put_line( obj.object_type||' '||obj.object_name|| ' is still invalid');
+        end loop;
         raise e;
       else
         nerrors := newnerrors;
