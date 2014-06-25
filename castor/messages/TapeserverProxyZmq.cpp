@@ -236,3 +236,10 @@ void castor::messages::TapeserverProxyZmq::readReplyMsg()  {
   m_socket.recv(&blobHeader); 
   m_socket.recv(&blobBody);
 }
+
+std::auto_ptr<castor::tape::tapeserver::daemon::TaskWatchDog> 
+castor::messages::TapeserverProxyZmq::createWatchdog(log::LogContext& lc) const{
+  return std::auto_ptr<castor::tape::tapeserver::daemon::TaskWatchDog>(
+          new castor::tape::tapeserver::daemon::TaskWatchDog(lc)
+          );
+}

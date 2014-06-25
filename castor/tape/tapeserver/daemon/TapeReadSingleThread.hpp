@@ -190,10 +190,10 @@ private:
       m_gsr.tapeMountedForRead();
       tape::utils::Timer timer;
       
-      TaskWatchDog watchdog(m_logContext);
+      std::auto_ptr<TaskWatchDog> watchdog(m_gsr.createWatchdog(m_logContext));
       //start the threading and ask to initiate the protocol with the tapeserverd
-      //watchdog.startThread();
-//      ::sleep();
+      watchdog->startThread();
+      
       // Then we will loop on the tasks as they get from 
       // the task injector
       while(1) {
@@ -201,7 +201,7 @@ private:
         TapeReadTask * task = popAndRequestMoreJobs();
         m_logContext.log(LOG_DEBUG, "TapeReadThread: just got one more job");
         if (task) {
-          task->execute(*rs, m_logContext,watchdog);
+          task->execute(*rs, m_logContext,*watchdog);
           delete task;
         } else {
           log::LogContext::ScopedParam sp0(m_logContext, log::Param("time taken", timer.secs()));
@@ -209,7 +209,7 @@ private:
           break;
         }
       }
-      //watchdog.stopThread();
+      watchdog->stopThread();
     } catch(const castor::exception::Exception& e){
       // we can only end there because 
       // moundTape, waitForDrive or crating the ReadSession failed

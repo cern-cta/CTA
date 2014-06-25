@@ -129,6 +129,9 @@ public:
  void tapeUnmounted(
    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
    const std::string &unitName);
+ 
+ virtual std::auto_ptr<castor::tape::tapeserver::daemon::TaskWatchDog> 
+ createWatchdog(log::LogContext&) const;
 
 }; // class TapeserverProxyDummy
 

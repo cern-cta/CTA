@@ -140,6 +140,11 @@ TapeServerReporter::TapeServerReporter(
     execute(TapeServerReporter& parent){
       parent.m_tapeserverProxy.tapeMountedForWrite(parent.m_volume, parent.m_unitName);
     }
+    
+    std::auto_ptr<TaskWatchDog> TapeServerReporter::
+    createWatchdog(log::LogContext& lc) const {
+      return m_tapeserverProxy.createWatchdog(lc);
+    }
 }}}}
 
 
