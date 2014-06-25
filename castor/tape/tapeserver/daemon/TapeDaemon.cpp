@@ -34,7 +34,6 @@
 #include "castor/tape/tapeserver/daemon/LabelCmdAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/LabelSession.hpp"
 #include "castor/tape/tapeserver/daemon/MountSession.hpp"
-#include "castor/tape/tapeserver/daemon/MountSessionAcceptHandler.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
 #include "castor/tape/tapeserver/daemon/VdqmAcceptHandler.hpp"
@@ -421,10 +420,10 @@ void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterLabelCmdAcce
 }
 
 //------------------------------------------------------------------------------
-// createAndRegisterMountSessionAcceptHandler
+// createAndRegisterTapeMessageHandler
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::TapeDaemon::createAndRegisterTapeMessageHandler()  {
-
+void castor::tape::tapeserver::daemon::TapeDaemon::
+  createAndRegisterTapeMessageHandler()  {
   std::auto_ptr<TapeMessageHandler> tapeMessageHandler;
   try {
     tapeMessageHandler.reset(new TapeMessageHandler(m_reactor, m_log,m_driveCatalogue,m_hostName,m_vdqm,m_vmgr));
