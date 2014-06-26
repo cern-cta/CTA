@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
+#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/Heartbeat.pb.h"
 #include "castor/messages/Constants.hpp"

@@ -41,7 +41,7 @@
 #include "castor/tape/tapeserver/daemon/DiskReadThreadPool.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationTaskInjector.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
-#include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
+#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"

@@ -35,7 +35,7 @@
 #include <stdio.h>
 #include <memory>
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
-#include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
+#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
@@ -175,7 +175,7 @@ private:
       
       // the tape ins loaded 
       //it has to be unloaded, unmounted at all cost -> RAII
-      //will also take care of the GlobalStatusReporer and of RecallTaskInjector
+      //will also take care of the TapeServerReporter and of RecallTaskInjector
       TapeCleaning tapeCleaner(*this);
       
       // Before anything, the tape should be mounted

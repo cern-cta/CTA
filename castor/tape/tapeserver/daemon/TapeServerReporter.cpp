@@ -1,5 +1,5 @@
 #include "castor/messages/TapeserverProxy.hpp"
-#include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
+#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/utils/TpconfigLine.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/log/Logger.hpp"
@@ -25,7 +25,7 @@ TapeServerReporter::TapeServerReporter(
   m_volume(volume),
   m_sessionPid(getpid()){
   //change the thread's name in the log
-  m_lc.pushOrReplace(log::Param("thread","GlobalStatusReporter"));
+  m_lc.pushOrReplace(log::Param("thread","TapeServerReporter"));
 }
   
 //------------------------------------------------------------------------------

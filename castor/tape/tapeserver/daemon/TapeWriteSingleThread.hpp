@@ -31,7 +31,7 @@
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
 #include "castor/legacymsg/RmcProxy.hpp"
-#include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
+#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 #include "castor/tape/utils/Timer.hpp"
 #include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"

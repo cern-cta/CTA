@@ -7,7 +7,7 @@
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
 #include "castor/legacymsg/RmcProxy.hpp"
 #include "castor/legacymsg/RmcProxyDummy.hpp"
-#include "castor/tape/tapeserver/daemon/GlobalStatusReporter.hpp"
+#include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/legacymsg/VmgrProxyDummy.hpp"
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
