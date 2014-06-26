@@ -186,7 +186,11 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeRead(LogContex
   {
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
-    TaskWatchDog watchdog(m_intialProcess,m_logger);
+    RecallReportPacker rrp(m_clientProxy,
+        m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
+        lc);
+    TaskWatchDog<detail::Recall> watchdog(m_intialProcess,rrp,m_logger);
+    
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
     TapeServerReporter tsr(m_intialProcess, m_driveConfig, 
             m_hostname, m_volInfo, lc);
@@ -196,9 +200,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeRead(LogContex
     
     TapeReadSingleThread trst(*drive, m_rmc, tsr, m_volInfo, 
         m_castorConf.tapebridgeBulkRequestRecallMaxFiles,m_capUtils,watchdog,lc);
-    RecallReportPacker rrp(m_clientProxy,
-        m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
-        lc);
+
     DiskWriteThreadPool dwtp(m_castorConf.tapeserverdDiskThreads,
         rrp,
         lc);

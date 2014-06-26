@@ -59,8 +59,11 @@ public:
   TapeReadSingleThread(castor::tape::drives::DriveInterface & drive,
           castor::legacymsg::RmcProxy & rmc,
           TapeServerReporter & gsr,
-          const client::ClientInterface::VolumeInfo& volInfo, uint64_t maxFilesRequest,
-          CapabilityUtils &capUtils,TaskWatchDog& watchdog,castor::log::LogContext & lc): 
+          const client::ClientInterface::VolumeInfo& volInfo, 
+          uint64_t maxFilesRequest,
+          CapabilityUtils &capUtils,
+          TaskWatchDog<detail::Recall>& watchdog,
+          castor::log::LogContext & lc): 
    TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr,volInfo,capUtils,lc),
    m_maxFilesRequest(maxFilesRequest),m_watchdog(watchdog) {
    }
@@ -231,7 +234,7 @@ private:
   ///a pointer to task injector, thus we can ask him for more tasks
   castor::tape::tapeserver::daemon::RecallTaskInjector * m_taskInjector;
   
-  TaskWatchDog& m_watchdog;
+  TaskWatchDog<detail::Recall>& m_watchdog;
 };
 }
 }

@@ -94,6 +94,11 @@ void MigrationReportPacker::reportEndOfSessionWithErrors(std::string msg,int err
   m_fifo.push(new ReportEndofSessionWithErrors(msg,error_code));
 }
 //------------------------------------------------------------------------------
+//ReportSuccessful::reportStuckOn
+//------------------------------------------------------------------------------
+void MigrationReportPacker::reportStuckOn(FileStruct& file){
+}
+//------------------------------------------------------------------------------
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
 void MigrationReportPacker::ReportSuccessful::execute(MigrationReportPacker& _this){

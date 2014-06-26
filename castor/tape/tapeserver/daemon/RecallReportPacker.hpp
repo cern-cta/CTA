@@ -35,7 +35,7 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
   
-class RecallReportPacker : protected ReportPackerInterface<detail::Recall> {
+class RecallReportPacker : public ReportPackerInterface<detail::Recall> {
 public:
   /**
    * Constructor
@@ -76,7 +76,10 @@ public:
    * @param msg The error message 
    * @param error_code The error code given by the drive
    */
-  virtual void reportEndOfSessionWithErrors(const std::string msg,int error_code);
+  virtual void reportEndOfSessionWithErrors(const std::string msg,int error_code); 
+  
+  void reportStuckOn(FileStruct& file);
+
   /**
    * Start the inner thread
    */
@@ -98,23 +101,32 @@ private:
     bool goingToEnd() const {return m_endNear;};
   };
   class ReportSuccessful :  public Report {
-    const FileStruct m_migratedFile;
+    const FileStruct m_recalledFile;
     unsigned long m_checksum;
   public:
     ReportSuccessful(const FileStruct& file,unsigned long checksum): 
-    Report(false),m_migratedFile(file),m_checksum(checksum){}
+    Report(false),m_recalledFile(file),m_checksum(checksum){}
     virtual void execute(RecallReportPacker& _this);
   };
   class ReportError : public Report {
-    const FileStruct m_migratedFile;
+    const FileStruct m_recalledFile;
     const std::string m_error_msg;
     const int m_error_code;
   public:
     ReportError(const FileStruct& file,std::string msg,int error_code):
-    Report(false),m_migratedFile(file),m_error_msg(msg),m_error_code(error_code){}
+    Report(false),m_recalledFile(file),m_error_msg(msg),m_error_code(error_code){}
 
     virtual void execute(RecallReportPacker& _this);
   };
+  class ReportStuck : public Report {
+    const FileStruct m_recalledFile;
+  public:
+    ReportStuck(const FileStruct& file):
+    Report(false),m_recalledFile(file){}
+
+    virtual void execute(RecallReportPacker& _this);
+  };
+  
   class ReportEndofSession : public Report {
   public:
     ReportEndofSession():Report(true){}

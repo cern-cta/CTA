@@ -40,7 +40,7 @@ namespace messages{
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-  class TaskWatchDog;
+  
 class TapeServerReporter : private castor::tape::threading::Thread {
 
 public:

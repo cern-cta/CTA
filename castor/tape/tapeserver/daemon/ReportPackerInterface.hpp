@@ -74,14 +74,14 @@ namespace detail{
  * the type PlaceHolder is either detail::Recall or detail::Migration
  */
 template <class PlaceHolder> class ReportPackerInterface{
-  protected :
+  public :
     //some inner typedef to have shorter (and unified) types inside the class
   typedef typename detail::HelperTrait<PlaceHolder>::FileReportList FileReportList;
   typedef typename detail::HelperTrait<PlaceHolder>::FileStruct FileStruct;
   typedef typename detail::HelperTrait<PlaceHolder>::FileSuccessStruct FileSuccessStruct;
   typedef typename detail::HelperTrait<PlaceHolder>::FileErrorStruct FileErrorStruct;
 
-
+  protected:
     ReportPackerInterface(client::ClientInterface & tg,log::LogContext lc):
   m_client(tg),m_lc(lc),m_listReports(new FileReportList)
   {}
@@ -140,6 +140,8 @@ template <class PlaceHolder> class ReportPackerInterface{
    * m_listReports is holding all the report waiting to be processed
    */
   std::auto_ptr<FileReportList> m_listReports;   
+  public:
+    virtual void reportStuckOn(FileStruct& file) =0;
 };
 
 }}}}

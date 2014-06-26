@@ -27,6 +27,7 @@
 #include "castor/tape/tapegateway/FileRecalledNotificationStruct.hpp"
 #include "castor/log/Logger.hpp"
 #include "log.h"
+#include <signal.h>
 
 namespace{
   struct failedReportRecallResult : public castor::tape::Exception{
@@ -88,23 +89,29 @@ void RecallReportPacker::reportEndOfSessionWithErrors(const std::string msg,int 
   castor::tape::threading::MutexLocker ml(&m_producterProtection);
   m_fifo.push(new ReportEndofSessionWithErrors(msg,error_code));
 }
- 
+  //------------------------------------------------------------------------------
+  //ReportSuccessful::reportStuckOn
+  //------------------------------------------------------------------------------
+void RecallReportPacker::reportStuckOn(FileStruct& file){
+  castor::tape::threading::MutexLocker ml(&m_producterProtection);
+  m_fifo.push(new ReportStuck(file));
+}
 //------------------------------------------------------------------------------
 //ReportSuccessful::execute
 //------------------------------------------------------------------------------
-void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& _this){
+void RecallReportPacker::ReportSuccessful::execute(RecallReportPacker& parent){
   std::auto_ptr<FileSuccessStruct> successRecall(new FileSuccessStruct);
   
-  successRecall->setFseq(m_migratedFile.fseq());
-  successRecall->setFileTransactionId(m_migratedFile.fileTransactionId());
-  successRecall->setId(m_migratedFile.id());
-  successRecall->setNshost(m_migratedFile.nshost());
-  successRecall->setFileid(m_migratedFile.fileid());
+  successRecall->setFseq(m_recalledFile.fseq());
+  successRecall->setFileTransactionId(m_recalledFile.fileTransactionId());
+  successRecall->setId(m_recalledFile.id());
+  successRecall->setNshost(m_recalledFile.nshost());
+  successRecall->setFileid(m_recalledFile.fileid());
   successRecall->setChecksum(m_checksum);
   
   //WARNING : ad hoc name of checksum algorithm
   successRecall->setChecksumName("adler32");
-  _this.m_listReports->addSuccessfulRecalls(successRecall.release());
+  parent.m_listReports->addSuccessfulRecalls(successRecall.release());
 }
 //------------------------------------------------------------------------------
 //flush
@@ -134,51 +141,62 @@ void RecallReportPacker::flush(){
 //------------------------------------------------------------------------------
 //ReportEndofSession::execute
 //------------------------------------------------------------------------------
-void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& _this){
+void RecallReportPacker::ReportEndofSession::execute(RecallReportPacker& parent){
   client::ClientInterface::RequestReport chrono;
-    if(!_this.m_errorHappened){
-      _this.m_client.reportEndOfSession(chrono);
-      _this.logRequestReport(chrono,"Nominal RecallReportPacker::EndofSession has been reported",LOG_INFO);
+    if(!parent.m_errorHappened){
+      parent.m_client.reportEndOfSession(chrono);
+      parent.logRequestReport(chrono,"Nominal RecallReportPacker::EndofSession has been reported",LOG_INFO);
     }
     else {
       const std::string& msg ="RecallReportPacker::EndofSession has been reported  but an error happened somewhere in the process";
-      _this.m_lc.log(LOG_ERR,msg);
-      _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono);
-      _this.logRequestReport(chrono,"reporting EndOfSessionWithError done",LOG_ERR);
+      parent.m_lc.log(LOG_ERR,msg);
+      parent.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono);
+      parent.logRequestReport(chrono,"reporting EndOfSessionWithError done",LOG_ERR);
     }
 }
 //------------------------------------------------------------------------------
 //ReportEndofSessionWithErrors::execute
 //------------------------------------------------------------------------------
-void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& _this){
+void RecallReportPacker::ReportEndofSessionWithErrors::execute(RecallReportPacker& parent){
   client::ClientInterface::RequestReport chrono;
-  if(_this.m_errorHappened) {
-  _this.m_client.reportEndOfSessionWithError(m_message,m_error_code,chrono); 
-  LogContext::ScopedParam(_this.m_lc,Param("errorCode",m_error_code));
-  _this.m_lc.log(LOG_ERR,m_message);
+  if(parent.m_errorHappened) {
+  parent.m_client.reportEndOfSessionWithError(m_message,m_error_code,chrono); 
+  LogContext::ScopedParam(parent.m_lc,Param("errorCode",m_error_code));
+  parent.m_lc.log(LOG_ERR,m_message);
   }
   else{
    const std::string& msg ="RecallReportPacker::EndofSessionWithErrors has been reported  but NO error was detected during the process";
-   _this.m_lc.log(LOG_ERR,msg);
-   _this.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono); 
+   parent.m_lc.log(LOG_ERR,msg);
+   parent.m_client.reportEndOfSessionWithError(msg,SEINTERNAL,chrono); 
   }
 }
 //------------------------------------------------------------------------------
 //ReportError::execute
 //------------------------------------------------------------------------------
-void RecallReportPacker::ReportError::execute(RecallReportPacker& _this){
+void RecallReportPacker::ReportError::execute(RecallReportPacker& parent){
    
   std::auto_ptr<FileErrorStruct> failed(new FileErrorStruct);
-  //failedMigration->setFileMigrationReportList(_this.m_listReports.get());
+  //failedMigration->setFileMigrationReportList(parent.m_listReports.get());
   failed->setErrorCode(m_error_code);
   failed->setErrorMessage(m_error_msg);
-  failed->setFseq(m_migratedFile.fseq());
-  failed->setFileTransactionId(m_migratedFile.fileTransactionId());
-  failed->setId(m_migratedFile.id());
-  failed->setNshost(m_migratedFile.nshost());
+  failed->setFseq(m_recalledFile.fseq());
+  failed->setFileTransactionId(m_recalledFile.fileTransactionId());
+  failed->setId(m_recalledFile.id());
+  failed->setNshost(m_recalledFile.nshost());
   
-  _this.m_listReports->addFailedRecalls(failed.release());
-  _this.m_errorHappened=true;
+  parent.m_listReports->addFailedRecalls(failed.release());
+  parent.m_errorHappened=true;
+}
+//------------------------------------------------------------------------------
+//WorkerThread::run
+//------------------------------------------------------------------------------
+void RecallReportPacker::ReportStuck::execute(RecallReportPacker& parent){
+  const int errCode=SEINTERNAL;
+  const std::string msg="Stuck while reading that file";
+  RecallReportPacker::ReportError(m_recalledFile,msg,errCode).execute(parent);
+  parent.flush();
+  RecallReportPacker::ReportEndofSessionWithErrors(msg,errCode).execute(parent);
+  kill(getpid(),SIGABRT);
 }
 //------------------------------------------------------------------------------
 //WorkerThread::WorkerThread

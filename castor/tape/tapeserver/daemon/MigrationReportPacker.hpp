@@ -37,7 +37,7 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
  
-class MigrationReportPacker : private ReportPackerInterface<detail::Migration> {
+class MigrationReportPacker : public ReportPackerInterface<detail::Migration> {
 public:
   /**
    * @param tg The client who is asking for a migration of his files 
@@ -82,6 +82,9 @@ public:
    */
   void reportEndOfSessionWithErrors(const std::string msg,int error_code);
   
+  
+  void reportStuckOn(FileStruct& file);
+
   void startThreads() { m_workerThread.start(); }
   void waitThread() { m_workerThread.wait(); }
   

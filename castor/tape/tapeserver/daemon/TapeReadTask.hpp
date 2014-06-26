@@ -60,7 +60,7 @@ public:
      * Acquire a free memory block from the memory manager , fill it, push it 
      */
    void execute(castor::tape::tapeFile::ReadSession & rs,
-    castor::log::LogContext & lc,TaskWatchDog& watchdog) {
+    castor::log::LogContext & lc,TaskWatchDog<detail::Recall>& watchdog) {
 
     using castor::log::Param;
     typedef castor::log::LogContext::ScopedParam ScopedParam;
@@ -84,6 +84,7 @@ public:
     MemBlock* mb=NULL;
     try {
       std::auto_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
+      watchdog.notifyBeginNewJob(m_fileToRecall);
       while (stillReading) {
         // Get a memory block and add information to its metadata
         mb=m_mm.getFreeBlock();
@@ -142,6 +143,7 @@ public:
           reportErrorToDiskTask(mb);
         }
       } //end of catch
+    watchdog.fileFinished();
   }
    /**
     * Get a valid block and ask to to do the report to the disk write task

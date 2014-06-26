@@ -37,37 +37,55 @@ namespace tape {
 namespace tapeserver {
 namespace daemon {
     
-void TaskWatchDog::run(){
-  timeval currentTime;
-  while(!m_stopFlag) {
-    castor::utils::getTimeOfDay(&currentTime);
-    timeval diffTime = castor::utils::timevalAbsDiff(currentTime,previousTime);
-    double diffTimed = castor::utils::timevalToDouble(diffTime);
-    if(diffTimed > periodToReport){
-      m_lc.log(LOG_DEBUG,"going to report");
-      previousTime=currentTime;
-      m_initialProcess.notifyHeartbeat(nbOfMemblocksMoved.getAndReset());
-    }else{
-      usleep(100000);
-    }
-  }
-}
-    
-TaskWatchDog::TaskWatchDog(messages::TapeserverProxy& initialProcess,log::LogContext lc): 
-nbOfMemblocksMoved(0),periodToReport(2),
-        m_initialProcess(initialProcess),m_lc(lc){
-  m_lc.pushOrReplace(log::Param("thread","Watchdog"));
-  castor::utils::getTimeOfDay(&previousTime);
-}
-void TaskWatchDog::notify(){
-  nbOfMemblocksMoved++;
-}
-void TaskWatchDog::startThread(){
-  start();
-}
-void TaskWatchDog::stopThread(){
-  m_stopFlag.set();
-  wait();
-}
-
+//void TaskWatchDog::run(){
+//  timeval currentTime;
+//  while(!m_stopFlag) {
+//    castor::utils::getTimeOfDay(&currentTime);
+//
+//    timeval diffTimeStuck = castor::utils::timevalAbsDiff(currentTime,m_previousNotifiedTime);
+//    double diffTimeStuckd = castor::utils::timevalToDouble(diffTimeStuck);
+//    if(diffTimeStuckd>m_stuckPeriod){
+//      
+//      m_reportPacker.reportStuckOn(file);
+//    }
+//
+//    timeval diffTimeReport = castor::utils::timevalAbsDiff(currentTime,m_previousReportTime);
+//    double diffTimeReportd = castor::utils::timevalToDouble(diffTimeReport);
+//    if(diffTimeReportd > m_periodToReport){
+//      m_lc.log(LOG_DEBUG,"going to report");
+//      m_previousReportTime=currentTime;
+//      m_initialProcess.notifyHeartbeat(m_nbOfMemblocksMoved.getAndReset());
+//    } 
+//    else{
+//      usleep(100000);
+//    }
+//  }
+//}
+//    
+//TaskWatchDog::TaskWatchDog(messages::TapeserverProxy& initialProcess,
+//       ReportPackerInterface<placeHolder>& reportPacker ,log::LogContext lc): 
+//m_nbOfMemblocksMoved(0),m_periodToReport(2),m_stuckPeriod(60*10),
+//        m_initialProcess(initialProcess),m_reportPacker(reportPacker),m_lc(lc){
+//  m_lc.pushOrReplace(log::Param("thread","Watchdog"));
+//  castor::utils::getTimeOfDay(&m_previousReportTime);
+//}
+//void TaskWatchDog::notify(){
+//  timeval tmpTime;
+//  castor::utils::getTimeOfDay(&tmpTime);
+//  m_previousNotifiedTime=tmpTime;
+//  m_nbOfMemblocksMoved++;
+//}
+//void TaskWatchDog::startThread(){
+//  start();
+//}
+//void TaskWatchDog::stopThread(){
+//  m_stopFlag.set();
+//  wait();
+//}
+// void TaskWatchDog::notifyBeginNewJob(const FileStruct& file){
+//   m_file=file;
+// }
+//  void TaskWatchDog::fileFinished(){
+//   m_file=file;
+// }
 }}}}
