@@ -33,7 +33,7 @@
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 #include "TapeSingleThreadInterface.hpp"
-#include "zmq/castorZmqWrapper.hpp"
+#include "zmq/ZmqWrapper.hpp"
 
 using namespace castor::tape;
 using namespace castor::log;

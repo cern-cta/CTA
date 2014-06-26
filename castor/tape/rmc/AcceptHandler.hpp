@@ -59,7 +59,7 @@ public:
    * Fills the specified poll file-descriptor ready to be used in a call to
    * poll().
    */
-  void fillPollFd(zmq::pollitem_t &fd) throw();
+  void fillPollFd(zmq::Pollitem &fd) throw();
 
   /**
    * Handles the specified event.
@@ -68,7 +68,7 @@ public:
    * @return true if the event handler should be removed from and deleted by
    * the reactor.
    */
-  bool handleEvent(const zmq::pollitem_t &fd)
+  bool handleEvent(const zmq::Pollitem &fd)
     ;
 
   /**

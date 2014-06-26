@@ -26,7 +26,7 @@
 
 #include "castor/tape/tapebridge/IFileCloser.hpp"
 #include "castor/exception/Exception.hpp"
-#include "zmq/castorZmqWrapper.hpp"
+#include "zmq/ZmqWrapper.hpp"
 #include <poll.h>
 
 #include <cppunit/extensions/HelperMacros.h>

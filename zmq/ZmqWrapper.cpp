@@ -1,11 +1,45 @@
-#include "zmq/castorZmqWrapper.hpp"
+/******************************************************************************
+ *                      castorZmqWrapper.cpp
+ *
+ * This file is part of the Castor project.
+ * See http://castor.web.cern.ch/castor
+ *
+ * Copyright (C) 2003  CERN
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
+ *
+ * 
+ *
+ * @author Castor Dev team, castor-dev@cern.ch
+ *****************************************************************************/
+#include "zmq/ZmqWrapper.hpp"
+
+#include <algorithm>
+#include <cassert>
+#include <cstring>
+#include <exception>
+
+namespace{
+  std::string currentZmqError(){
+    return currentZmqError();
+  }
+}
 namespace zmq
 {
   int poll (zmq_pollitem_t *items_, int nitems_, long timeout_)
   {
     int rc = zmq_poll (items_, nitems_, timeout_);
     if (rc < 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
     return rc;
   }
   
@@ -13,7 +47,7 @@ namespace zmq
   {
     int rc = zmq_proxy (frontend, backend, capture);
     if (rc != 0){
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
     }
   }
   
@@ -27,21 +61,21 @@ namespace zmq
   {
     int rc = zmq_msg_init (&m_message);
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
   }
   
    Message::Message (size_t size_)
   {
     int rc = zmq_msg_init_size (&m_message, size_);
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
   }
   
-  Message::Message (void *data_, size_t size_, free_fn *ffn_,void *hint_ )
+  Message::Message (void *data_, size_t size_, FreeFunctor *ffn_,void *hint_ )
   {
     int rc = zmq_msg_init_data (&m_message, data_, size_, ffn_, hint_);
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
   }
   
   Message::~Message ()
@@ -54,44 +88,44 @@ namespace zmq
   {
     int rc = zmq_msg_close (&m_message);
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
     rc = zmq_msg_init (&m_message);
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
   }
   
   void Message::rebuild (size_t size_)
   {
     int rc = zmq_msg_close (&m_message);
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
     rc = zmq_msg_init_size (&m_message, size_);
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
   }
   
-  void Message::rebuild (void *data_, size_t size_, free_fn *ffn_, void *hint_)
+  void Message::rebuild (void *data_, size_t size_, FreeFunctor *ffn_, void *hint_)
   { 
     int rc = zmq_msg_close (&m_message);
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
     rc = zmq_msg_init_data (&m_message, data_, size_, ffn_, hint_);
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
   }
   
   void Message::move (Message& otherMsg)
   {
     int rc = zmq_msg_move (&m_message, &(otherMsg.m_message));
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
   }
   
   void Message::copy (Message& otherMsg)
   {
     int rc = zmq_msg_copy (&m_message, &(otherMsg.m_message));
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
   }
   
   bool Message::more ()
@@ -119,7 +153,7 @@ namespace zmq
   {
     m_context = zmq_ctx_new ();
     if (m_context == NULL)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
   }
   
   
@@ -127,7 +161,7 @@ namespace zmq
   {
     m_context = zmq_ctx_new ();
     if (m_context == NULL)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
     
     int rc = zmq_ctx_set (m_context, ZMQ_IO_THREADS, io_threads);
     ZMQ_ASSERT (rc == 0);
@@ -151,12 +185,12 @@ namespace zmq
   }
   
   
-  Socket::Socket (Context &context, int type_)
+  Socket::Socket (Context &context, int type)
   {
     m_ownerContext = context.m_context;
-    m_socket = zmq_socket (context.m_context, type_);
+    m_socket = zmq_socket (context.m_context, type);
     if (m_socket == NULL)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
   }
   
   Socket::~Socket ()
@@ -183,28 +217,28 @@ namespace zmq
   {
     int rc = zmq_bind (m_socket, addr);
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
   }
   
   void Socket::unbind (const char *addr)
   {
     int rc = zmq_unbind (m_socket, addr);
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
   }
   
   void Socket::connect (const char *addr)
   {
     int rc = zmq_connect (m_socket, addr);
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
   }
   
   void Socket::disconnect (const char *addr)
   {
     int rc = zmq_disconnect (m_socket, addr);
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
   }
   
   bool Socket::connected()
@@ -212,47 +246,47 @@ namespace zmq
     return(m_socket != NULL);
   }
   
-  size_t Socket::send (const void *buf_, size_t len_, int flags_)
+  size_t Socket::send (const void *buf, size_t len, int flags)
   {
-    int nbytes = zmq_send (m_socket, buf_, len_, flags_);
+    int nbytes = zmq_send (m_socket, buf, len, flags);
     if (nbytes >= 0)
       return (size_t) nbytes;
     if (zmq_errno () == EAGAIN)
       return 0;
-    throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+    throw castor::exception::Exception (currentZmqError());
   }
   
-  bool Socket::send (Message &msg_, int flags_)
+  bool Socket::send (Message &msg, int flags)
   {
-    int nbytes = zmq_msg_send (&(msg_.m_message), m_socket, flags_);
+    int nbytes = zmq_msg_send (&(msg.m_message), m_socket, flags);
     if (nbytes >= 0)
       return true;
     if (zmq_errno () == EAGAIN)
       return false;
-    throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+    throw castor::exception::Exception (currentZmqError());
   }
   
-  size_t Socket::recv (void *buf_, size_t len_, int flags_)
+  size_t Socket::recv (void *buf, size_t len, int flags)
   {
-    int nbytes = zmq_recv (m_socket, buf_, len_, flags_);
+    int nbytes = zmq_recv (m_socket, buf, len, flags);
     if (nbytes >= 0)
       return (size_t) nbytes;
     if (zmq_errno () == EAGAIN)
       return 0;
-    throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+    throw castor::exception::Exception ();
   }
   
-  bool Socket::recv (Message& msg_, int flags_)
+  bool Socket::recv (Message& msg_, int flags)
   {
-    int nbytes = zmq_msg_recv (&(msg_.m_message), m_socket, flags_);
+    int nbytes = zmq_msg_recv (&(msg_.m_message), m_socket, flags);
     if (nbytes >= 0)
       return true;
     if (zmq_errno () == EAGAIN)
       return false;
-    throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+    throw castor::exception::Exception (currentZmqError());
   }
   
-  Monitor::Monitor() : socketPtr(NULL) {
+  Monitor::Monitor() : m_socketMonitored(NULL) {
   
   }
   Monitor::~Monitor() {
@@ -262,9 +296,9 @@ namespace zmq
   {
     int rc = zmq_socket_monitor(socket.m_socket, addr, events);
     if (rc != 0)
-      throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
+      throw castor::exception::Exception (currentZmqError());
     
-    socketPtr = socket.m_socket;
+    m_socketMonitored = socket.m_socket;
     void *s = zmq_socket (socket.m_ownerContext, ZMQ_PAIR);
     assert (s);
     
@@ -330,7 +364,7 @@ namespace zmq
       zmq_msg_close (&eventMsg);
     }
     zmq_close (s);
-    socketPtr = NULL;
+    m_socketMonitored = NULL;
   }
 
   void Monitor::on_monitor_started() {}

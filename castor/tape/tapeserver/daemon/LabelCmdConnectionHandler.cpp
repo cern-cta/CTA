@@ -86,7 +86,7 @@ int castor::tape::tapeserver::daemon::LabelCmdConnectionHandler::getFd() throw()
 //------------------------------------------------------------------------------
 // fillPollFd
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::LabelCmdConnectionHandler::fillPollFd(zmq::pollitem_t &fd) throw() {
+void castor::tape::tapeserver::daemon::LabelCmdConnectionHandler::fillPollFd(zmq::Pollitem &fd) throw() {
   fd.fd = m_fd;
   fd.revents = 0;
   fd.socket = NULL;
@@ -96,7 +96,7 @@ void castor::tape::tapeserver::daemon::LabelCmdConnectionHandler::fillPollFd(zmq
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::LabelCmdConnectionHandler::handleEvent(
-  const zmq::pollitem_t &fd)  {
+  const zmq::Pollitem &fd)  {
   logLabelCmdConnectionEvent(fd);
 
   checkHandleEventFd(fd.fd);
@@ -122,7 +122,7 @@ bool castor::tape::tapeserver::daemon::LabelCmdConnectionHandler::handleEvent(
 // logLabelCmdConnectionEvent
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::LabelCmdConnectionHandler::
-  logLabelCmdConnectionEvent(const zmq::pollitem_t &fd) {
+  logLabelCmdConnectionEvent(const zmq::Pollitem &fd) {
   log::Param params[] = {
   log::Param("fd", fd.fd),
   log::Param("ZMQ_POLLIN", fd.revents & ZMQ_POLLIN ? "true" : "false"),

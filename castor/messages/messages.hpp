@@ -22,7 +22,7 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "zmq/castorZmqWrapper.hpp"
+#include "zmq/ZmqWrapper.hpp"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"

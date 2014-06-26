@@ -22,11 +22,11 @@
 
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
-#include "zmq/castorZmqWrapper.hpp"
+#include "zmq/ZmqWrapper.hpp"
 #include <algorithm>
 
 namespace{
-  bool operator==(const zmq::pollitem_t& a,const zmq::pollitem_t& b){
+  bool operator==(const zmq::Pollitem& a,const zmq::Pollitem& b){
        if( (a.fd==b.fd && a.fd!= -1 && b.fd != -1) || 
             (a.socket==b.socket && a.socket!=NULL && b.socket != NULL) ){
       return true;
@@ -65,7 +65,7 @@ namespace reactor {
 // registerHandler
 //------------------------------------------------------------------------------  
   void ZMQReactor::registerHandler(ZMQPollEventHandler *const handler){
-    zmq::pollitem_t item;
+    zmq::Pollitem item;
     handler->fillPollFd(item);
     item.events = ZMQ_POLLIN;
     //TODO, handle double registration 
@@ -76,7 +76,7 @@ namespace reactor {
 //------------------------------------------------------------------------------  
   void ZMQReactor::handleEvents(const int timeout){
     //it should not bring any copy, thanks to NRVO
-    std::vector<zmq::pollitem_t> pollFD=buildPollFds();
+    std::vector<zmq::Pollitem> pollFD=buildPollFds();
     
     const int pollrc = zmq::poll(&pollFD[0], pollFD.size(), timeout);  
     if(pollrc !=0){
@@ -86,8 +86,8 @@ namespace reactor {
 //------------------------------------------------------------------------------
 // dispatchEventHandlers
 //------------------------------------------------------------------------------  
-  void ZMQReactor::dispatchEventHandlers(const std::vector<zmq::pollitem_t>& pollFD){  
-    for(std::vector<zmq::pollitem_t>::const_iterator it=pollFD.begin();
+  void ZMQReactor::dispatchEventHandlers(const std::vector<zmq::Pollitem>& pollFD){  
+    for(std::vector<zmq::Pollitem>::const_iterator it=pollFD.begin();
             it!=pollFD.end();
             ++it) {
       
@@ -111,7 +111,7 @@ namespace reactor {
   }
   
   ZMQPollEventHandler *  
-  ZMQReactor::findHandler(const zmq::pollitem_t& pollfd) const{
+  ZMQReactor::findHandler(const zmq::Pollitem& pollfd) const{
     for(HandlerMap::const_iterator it=m_handlers.begin();it!=m_handlers.end();++it){
       if(pollfd==it->first){
         return it->second;
@@ -123,7 +123,7 @@ namespace reactor {
 // removeHandler
 //------------------------------------------------------------------------------
   void ZMQReactor::removeHandler(ZMQPollEventHandler *const handler){
-    zmq::pollitem_t pollitem;
+    zmq::Pollitem pollitem;
     for(HandlerMap::iterator it=m_handlers.begin();it!=m_handlers.end();++it){
       if(it->second==handler){
         pollitem=it->first;
@@ -135,8 +135,8 @@ namespace reactor {
 //------------------------------------------------------------------------------
 // buildPollFds
 //------------------------------------------------------------------------------  
-  std::vector<zmq::pollitem_t>  ZMQReactor::buildPollFds() const{
-    std::vector<zmq::pollitem_t> vec;
+  std::vector<zmq::Pollitem>  ZMQReactor::buildPollFds() const{
+    std::vector<zmq::Pollitem> vec;
     vec.reserve(m_handlers.size());
     for(HandlerMap::const_iterator it=m_handlers.begin();it!=m_handlers.end();++it){
       vec.push_back(it->first);

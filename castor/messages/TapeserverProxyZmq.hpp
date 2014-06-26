@@ -25,7 +25,7 @@
 #include "castor/log/Logger.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "zmq/castorZmqWrapper.hpp"
+#include "zmq/ZmqWrapper.hpp"
 namespace castor {
 namespace messages {
 

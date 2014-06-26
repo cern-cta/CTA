@@ -62,7 +62,7 @@ int castor::tape::rmc::AcceptHandler::getFd() throw() {
 //------------------------------------------------------------------------------
 // fillPollFd
 //------------------------------------------------------------------------------
-void castor::tape::rmc::AcceptHandler::fillPollFd(zmq::pollitem_t &fd) throw() {
+void castor::tape::rmc::AcceptHandler::fillPollFd(zmq::Pollitem &fd) throw() {
   fd.fd = m_fd;
   fd.revents = 0;
   fd.socket = NULL;
@@ -72,7 +72,7 @@ void castor::tape::rmc::AcceptHandler::fillPollFd(zmq::pollitem_t &fd) throw() {
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::rmc::AcceptHandler::handleEvent(
-  const zmq::pollitem_t &fd)  {
+  const zmq::Pollitem &fd)  {
   {
     log::Param params[] = {
       log::Param("fd"        , fd.fd                                     ),

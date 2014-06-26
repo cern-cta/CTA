@@ -24,12 +24,7 @@
 #pragma once
 #include "castor/exception/Exception.hpp"
 #include <zmq.h>
-
-#include <algorithm>
-#include <cassert>
-#include <cstring>
 #include <string>
-#include <exception>
 
 // In order to prevent unused variable warnings when building in non-debug
 // mode use this macro to make assertions.
@@ -39,17 +34,23 @@
 # define ZMQ_ASSERT(expression) (void)(expression)
 #endif
 
+/**
+ * Straightforward wrapper of ZMQ C APi into C++ classes.  
+ * Each function is pretty simple and calls the matching zmq function  
+ * and handles the errors, throwing exceptions if needed. 
+ * If you need to know what does a particular function, have a look at ZMQ's doc :
+ */
 namespace zmq
 {
 
-  typedef zmq_free_fn free_fn;
-  typedef zmq_pollitem_t pollitem_t;
+  typedef zmq_free_fn FreeFunctor;
+  typedef zmq_pollitem_t Pollitem;
   
-  int poll (zmq_pollitem_t *items_, int nitems_, long timeout_ = -1);
+  int poll (zmq_pollitem_t *items, int nitems, long timeout = -1);
   
   void proxy (void *frontend, void *backend, void *capture);
   
-  void version (int &major_, int &minor_, int &patch_);
+  void version (int &major, int &minor, int &patch);
   
   class Message
   {
@@ -59,9 +60,9 @@ namespace zmq
     
     Message ();
     
-    explicit Message (size_t size_);
+    explicit Message (size_t size);
     
-    Message (void *data_, size_t size_, free_fn *ffn_,void *hint_ = NULL);
+    Message (void *data, size_t size, FreeFunctor *ffn,void *hint = NULL);
     
     ~Message ();
     
@@ -69,7 +70,7 @@ namespace zmq
     
     void rebuild (size_t size_);
     
-    void rebuild (void *data_, size_t size_, free_fn *ffn_, void *hint_ = NULL);
+    void rebuild (void *data, size_t size, FreeFunctor *ffn_, void *hint = NULL);
     
     void move (Message& msg_);
     
@@ -101,7 +102,7 @@ namespace zmq
   public:
     Context ();
     
-    explicit Context (int io_threads_, int max_sockets_ = ZMQ_MAX_SOCKETS_DFLT);
+    explicit Context (int io_threads, int max_sockets = ZMQ_MAX_SOCKETS_DFLT);
     
     ~Context ();
     
@@ -153,13 +154,13 @@ namespace zmq
     
     bool connected();
     
-    size_t send (const void *buf_, size_t len_, int flags_ = 0);
+    size_t send (const void *buf, size_t len, int flags = 0);
     
-    bool send (Message &msg_, int flags_ = 0);
+    bool send (Message &msg_, int flags = 0);
     
-    size_t recv (void *buf_, size_t len_, int flags_ = 0);
+    size_t recv (void *buf, size_t len, int flags = 0);
     
-    bool recv (Message& msg_, int flags_ = 0);
+    bool recv (Message& msg_, int flags = 0);
     
   private:
     void *m_socket;
@@ -190,7 +191,7 @@ namespace zmq
     virtual void on_event_disconnected(const zmq_event_t &, const char*) ;
     virtual void on_event_unknown(const zmq_event_t &, const char*);
   private:
-    void* socketPtr;
+    void* m_socketMonitored;
   };
 }
 

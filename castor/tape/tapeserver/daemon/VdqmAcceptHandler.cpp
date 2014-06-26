@@ -66,7 +66,7 @@ int castor::tape::tapeserver::daemon::VdqmAcceptHandler::getFd() throw() {
 //------------------------------------------------------------------------------
 // fillPollFd
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmAcceptHandler::fillPollFd(zmq::pollitem_t &fd) throw() {
+void castor::tape::tapeserver::daemon::VdqmAcceptHandler::fillPollFd(zmq::Pollitem &fd) throw() {
   fd.fd = m_fd;
   fd.revents = 0;
   fd.socket = NULL;
@@ -76,7 +76,7 @@ void castor::tape::tapeserver::daemon::VdqmAcceptHandler::fillPollFd(zmq::pollit
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
-  const zmq::pollitem_t &fd)  {
+  const zmq::Pollitem &fd)  {
   logVdqmAcceptEvent(fd);
 
   checkHandleEventFd(fd.fd);
@@ -131,7 +131,7 @@ bool castor::tape::tapeserver::daemon::VdqmAcceptHandler::handleEvent(
 // logVdqmAcceptConnectionEvent
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmAcceptHandler::logVdqmAcceptEvent(
-  const zmq::pollitem_t &fd)  {
+  const zmq::Pollitem &fd)  {
   std::list<log::Param> params;
   params.push_back(log::Param("fd", fd.fd));
   params.push_back(log::Param("POLLIN",

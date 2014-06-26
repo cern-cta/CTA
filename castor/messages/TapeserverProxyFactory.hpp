@@ -23,7 +23,7 @@
 #pragma once
 
 #include "castor/messages/TapeserverProxy.hpp"
-#include "zmq/castorZmqWrapper.hpp"
+#include "zmq/ZmqWrapper.hpp"
 namespace castor {
 namespace messages {
 

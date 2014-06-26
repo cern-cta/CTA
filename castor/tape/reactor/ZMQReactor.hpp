@@ -24,7 +24,7 @@
 #include "castor/log/Logger.hpp"
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
-#include "zmq/castorZmqWrapper.hpp"
+#include "zmq/ZmqWrapper.hpp"
 #include <vector>
 #include <utility>
 
@@ -87,19 +87,19 @@ private:
    * @return The array of file descriptors.  Please note that is the
    * responsibility of the caller to delete the array.
    */
-  std::vector<zmq::pollitem_t> buildPollFds() const;
+  std::vector<zmq::Pollitem> buildPollFds() const;
   
   /**
    * Returns the event handler associated with the specified integer
    * file-descriptor (null if there no handler associated, if ti happens = bug)
    */
-  ZMQPollEventHandler*  findHandler(const zmq::pollitem_t&) const;
+  ZMQPollEventHandler*  findHandler(const zmq::Pollitem&) const;
   
   /**
    * Dispatches the appropriate event handlers based on the specified result
    * from poll().
    */
-  void dispatchEventHandlers(const std::vector<zmq::pollitem_t>& pollFD);
+  void dispatchEventHandlers(const std::vector<zmq::Pollitem>& pollFD);
   
   /**
    * Removes the specified handler from the reactor.  This method effectively
@@ -112,7 +112,7 @@ private:
   /**
    * Type used to map file descriptor to event handler.
    */
-  typedef std::vector<std::pair<zmq::pollitem_t, ZMQPollEventHandler*> > HandlerMap;
+  typedef std::vector<std::pair<zmq::Pollitem, ZMQPollEventHandler*> > HandlerMap;
   
   /**
    * Map of file descriptor to registered event handler.

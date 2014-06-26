@@ -23,7 +23,7 @@
 #pragma once
 
 #include "castor/exception/Exception.hpp"
-#include "zmq/castorZmqWrapper.hpp"
+#include "zmq/ZmqWrapper.hpp"
 
 namespace castor {
 namespace tape {
@@ -48,7 +48,7 @@ public:
    * Fills the specified poll file-descriptor ready to be used in a call to
    * poll().
    */
-   virtual void fillPollFd(zmq::pollitem_t &pollitem) =0;
+   virtual void fillPollFd(zmq::Pollitem &pollitem) =0;
 
   /**
    * Handles the specified event.
@@ -57,7 +57,7 @@ public:
    * @return true if the event handler should be removed from and deleted by
    * the reactor.
    */
-  virtual bool handleEvent(const zmq::pollitem_t &fd)=0;
+  virtual bool handleEvent(const zmq::Pollitem &fd)=0;
 }; // class ZMQPollEventHandler
 
 } // namespace reactor

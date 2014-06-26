@@ -30,7 +30,7 @@
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/NotifyDrive.pb.h"
 #include "castor/messages/messages.hpp"
-#include "zmq/castorZmqWrapper.hpp"
+#include "zmq/ZmqWrapper.hpp"
 #include "h/vmgr_constants.h"
 
 //------------------------------------------------------------------------------
@@ -69,7 +69,7 @@ castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
 // fillPollFd
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeMessageHandler::fillPollFd(
-  zmq::pollitem_t &fd) throw() {
+  zmq::Pollitem &fd) throw() {
   fd.revents = 0;
   fd.socket = m_socket;
   fd.fd= -1;
@@ -79,7 +79,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::fillPollFd(
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
-const zmq::pollitem_t &fd) {
+const zmq::Pollitem &fd) {
   checkSocket(fd);
   m_log(LOG_INFO,"handling event in TapeMessageHandler");
   messages::Header header; 
@@ -109,7 +109,7 @@ const zmq::pollitem_t &fd) {
 // checkSocket
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeMessageHandler::checkSocket(
-  const zmq::pollitem_t &fd) {
+  const zmq::Pollitem &fd) {
   void* underlyingSocket = m_socket;
   if(fd.socket != underlyingSocket){
     castor::exception::Exception ex;

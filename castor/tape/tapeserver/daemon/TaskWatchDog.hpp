@@ -25,7 +25,7 @@
 #pragma once 
 
 
-#include "zmq/castorZmqWrapper.hpp"
+#include "zmq/ZmqWrapper.hpp"
 #include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
 #include "castor/log/LogContext.hpp"
 namespace castor {

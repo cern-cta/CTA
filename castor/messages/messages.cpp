@@ -24,7 +24,7 @@
 
 #include "castor/messages/messages.hpp"
 #include "castor/utils/utils.hpp"
-#include "zmq/castorZmqWrapper.hpp"
+#include "zmq/ZmqWrapper.hpp"
 
 void castor::messages::connectToLocalhost(zmq::Socket& m_socket){
   std::string bindingAdress("tcp://127.0.0.1:");

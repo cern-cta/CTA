@@ -83,7 +83,7 @@ int castor::tape::tapeserver::daemon::AdminAcceptHandler::getFd() throw() {
 //------------------------------------------------------------------------------
 // fillPollFd
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillPollFd(zmq::pollitem_t &fd) throw() {
+void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillPollFd(zmq::Pollitem &fd) throw() {
   fd.fd = m_fd;
   fd.revents = 0;
   fd.socket = NULL;
@@ -93,7 +93,7 @@ void castor::tape::tapeserver::daemon::AdminAcceptHandler::fillPollFd(zmq::polli
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
-  const zmq::pollitem_t &fd)  {
+  const zmq::Pollitem &fd)  {
   logAdminAcceptEvent(fd);
 
   checkHandleEventFd(fd.fd);
@@ -147,7 +147,7 @@ bool castor::tape::tapeserver::daemon::AdminAcceptHandler::handleEvent(
 // logAdminAcceptConnectionEvent
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::AdminAcceptHandler::
-  logAdminAcceptEvent(const zmq::pollitem_t &fd)  {
+  logAdminAcceptEvent(const zmq::Pollitem &fd)  {
   std::list<log::Param> params;
   params.push_back(log::Param("fd", fd.fd));
   params.push_back(log::Param("POLLIN",

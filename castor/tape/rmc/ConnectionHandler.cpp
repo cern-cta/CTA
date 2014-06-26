@@ -55,7 +55,7 @@ int castor::tape::rmc::ConnectionHandler::getFd() throw() {
 //------------------------------------------------------------------------------
 // fillPollFd
 //------------------------------------------------------------------------------
-void castor::tape::rmc::ConnectionHandler::fillPollFd(zmq::pollitem_t &fd) throw() {
+void castor::tape::rmc::ConnectionHandler::fillPollFd(zmq::Pollitem &fd) throw() {
   fd.fd = m_fd;
   fd.revents = 0;
   fd.socket = NULL;
@@ -64,7 +64,7 @@ void castor::tape::rmc::ConnectionHandler::fillPollFd(zmq::pollitem_t &fd) throw
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
-bool castor::tape::rmc::ConnectionHandler::handleEvent(const zmq::pollitem_t &fd)  {
+bool castor::tape::rmc::ConnectionHandler::handleEvent(const zmq::Pollitem &fd)  {
   std::list<log::Param> params;
   params.push_back(log::Param("fd"        , fd.fd                                     ));
   params.push_back(log::Param("POLLIN"    , fd.revents & POLLIN     ? "true" : "false"));

@@ -23,7 +23,7 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
-#include "zmq/castorZmqWrapper.hpp"
+#include "zmq/ZmqWrapper.hpp"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/Heartbeat.pb.h"
@@ -70,7 +70,7 @@ public:
    * Fills the specified poll file-descriptor ready to be used in a call to
    * poll().
    */
-  void fillPollFd(zmq::pollitem_t &fd) throw();
+  void fillPollFd(zmq::Pollitem &fd) throw();
 
   /**
    * Handles the specified event.
@@ -79,7 +79,7 @@ public:
    * @return true if the event handler should be removed from and deleted by
    * the reactor.
    */
-  bool handleEvent(const zmq::pollitem_t &fd);
+  bool handleEvent(const zmq::Pollitem &fd);
   
 private:
   void sendEmptyReplyToClient();
@@ -126,7 +126,7 @@ private:
    */
   castor::legacymsg::VmgrProxy & m_vmgr;
   
-  void checkSocket(const zmq::pollitem_t &fd);
+  void checkSocket(const zmq::Pollitem &fd);
   
   void dispatchEvent(const castor::messages::Header& header);
   

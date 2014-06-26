@@ -1,5 +1,5 @@
 add_library(castorZmqWrapper SHARED
-  castorZmqWrapper.cpp
+  ZmqWrapper.cpp
 )
 
 target_link_libraries(castorZmqWrapper zmq)

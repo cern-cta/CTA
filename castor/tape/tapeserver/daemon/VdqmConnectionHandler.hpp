@@ -73,14 +73,14 @@ public:
    * Fills the specified poll file-descriptor ready to be used in a call to
    * poll().
    */
-  void fillPollFd(zmq::pollitem_t &fd) throw();
+  void fillPollFd(zmq::Pollitem &fd) throw();
 
   /**
    * Handles the specified event.
    *
    * @param fd The poll file-descriptor describing the event.
    */
-  bool handleEvent(const zmq::pollitem_t &fd) ;
+  bool handleEvent(const zmq::Pollitem &fd) ;
 
   /**
    * Destructor.
@@ -120,7 +120,7 @@ private:
   /**
    * Logs the specifed IO event of the vdqm connection.
    */
-  void logVdqmConnectionEvent(const zmq::pollitem_t &fd);
+  void logVdqmConnectionEvent(const zmq::Pollitem &fd);
 
   /**
    * Throws an exception if the specified file-descriptor is not that of the
