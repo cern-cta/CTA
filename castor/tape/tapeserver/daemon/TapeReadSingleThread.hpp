@@ -54,20 +54,15 @@ class TapeServerReporter;
 class TapeReadSingleThread : public TapeSingleThreadInterface<TapeReadTask>{
 public:
   /**
-   * Constructor 
-   * @param drive The drive which holds all we need in order to read later data from it
-   * @param vid Volume ID (tape number)
-   * @param maxFilesRequest : the maximul number of file the task injector may 
-   * ask to the client in a single requiest, this is used for the feedback loop
-   * @param lc : log context, for logging purpose
+   * 
    */
   TapeReadSingleThread(castor::tape::drives::DriveInterface & drive,
           castor::legacymsg::RmcProxy & rmc,
           TapeServerReporter & gsr,
           const client::ClientInterface::VolumeInfo& volInfo, uint64_t maxFilesRequest,
-          CapabilityUtils &capUtils,castor::log::LogContext & lc): 
+          CapabilityUtils &capUtils,TaskWatchDog& watchdog,castor::log::LogContext & lc): 
    TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr,volInfo,capUtils,lc),
-   m_maxFilesRequest(maxFilesRequest) {
+   m_maxFilesRequest(maxFilesRequest),m_watchdog(watchdog) {
    }
    
    /**
@@ -190,9 +185,8 @@ private:
       m_gsr.tapeMountedForRead();
       tape::utils::Timer timer;
       
-      std::auto_ptr<TaskWatchDog> watchdog(m_gsr.createWatchdog(m_logContext));
       //start the threading and ask to initiate the protocol with the tapeserverd
-      watchdog->startThread();
+      m_watchdog.startThread();
       
       // Then we will loop on the tasks as they get from 
       // the task injector
@@ -201,7 +195,7 @@ private:
         TapeReadTask * task = popAndRequestMoreJobs();
         m_logContext.log(LOG_DEBUG, "TapeReadThread: just got one more job");
         if (task) {
-          task->execute(*rs, m_logContext,*watchdog);
+          task->execute(*rs, m_logContext,m_watchdog);
           delete task;
         } else {
           log::LogContext::ScopedParam sp0(m_logContext, log::Param("time taken", timer.secs()));
@@ -209,7 +203,7 @@ private:
           break;
         }
       }
-      watchdog->stopThread();
+      m_watchdog.stopThread();
     } catch(const castor::exception::Exception& e){
       // we can only end there because 
       // moundTape, waitForDrive or crating the ReadSession failed
@@ -237,7 +231,7 @@ private:
   ///a pointer to task injector, thus we can ask him for more tasks
   castor::tape::tapeserver::daemon::RecallTaskInjector * m_taskInjector;
   
-  
+  TaskWatchDog& m_watchdog;
 };
 }
 }

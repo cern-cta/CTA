@@ -17,6 +17,7 @@ TapeServerReporter::TapeServerReporter(
   const std::string &hostname,
   const castor::tape::tapeserver::client::ClientInterface::VolumeInfo &volume,
   log::LogContext lc):
+  m_threadRunnig(false),
   m_tapeserverProxy(tapeserverProxy),
   m_lc(lc),
   m_server(hostname),
@@ -39,6 +40,7 @@ TapeServerReporter::TapeServerReporter(
 //------------------------------------------------------------------------------   
   void TapeServerReporter::startThreads(){
     start();
+    m_threadRunnig=true;
   }
 //------------------------------------------------------------------------------
 //waitThreads
@@ -46,12 +48,13 @@ TapeServerReporter::TapeServerReporter(
   void TapeServerReporter::waitThreads(){
     try{
       wait();
+      m_threadRunnig=false;
     }catch(const std::exception& e){
         log::ScopedParamContainer sp(m_lc);
         sp.add("what",e.what());
-        m_lc.log(LOG_ERR,"TapeServerReporter error caught while waiting");
+        m_lc.log(LOG_ERR,"error caught while waiting");
       }catch(...){
-        m_lc.log(LOG_ERR,"TapeServerReporter error triple ...");
+        m_lc.log(LOG_ERR,"unknown error while waiting");
       }
   }
 //------------------------------------------------------------------------------
@@ -62,14 +65,14 @@ TapeServerReporter::TapeServerReporter(
     new ReportTapeMounterForWrite()
     );
   }
-
-  void TapeServerReporter::notifyWatchdog(uint64_t nbOfMemblocksMoved){
- 
-  }
 //------------------------------------------------------------------------------
 //gotWriteMountDetailsFromClient
 //------------------------------------------------------------------------------    
   uint64_t TapeServerReporter::gotWriteMountDetailsFromClient(){
+    if(m_threadRunnig){
+      m_lc.log(LOG_ERR,"TapeServerReporter is running but calling a synchronous operation on it"
+      "Could cause a race with the underlying  zmq sockets in the proxy");
+    }
    return m_tapeserverProxy.gotWriteMountDetailsFromClient(m_volume, m_unitName);
   }
 //------------------------------------------------------------------------------
@@ -139,11 +142,6 @@ TapeServerReporter::TapeServerReporter(
     void TapeServerReporter::ReportTapeMounterForWrite::
     execute(TapeServerReporter& parent){
       parent.m_tapeserverProxy.tapeMountedForWrite(parent.m_volume, parent.m_unitName);
-    }
-    
-    std::auto_ptr<TaskWatchDog> TapeServerReporter::
-    createWatchdog(log::LogContext& lc) const {
-      return m_tapeserverProxy.createWatchdog(lc);
     }
 }}}}
 

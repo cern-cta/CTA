@@ -105,7 +105,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::execute()
     m_clientProxy.fetchVolumeId(m_volInfo, reqReport);
   } catch(client::ClientProxy::EndOfSession & eof) {
     std::stringstream fullError;
-    fullError << "Received end of session from client when requesting Volume "
+    fullError << "Received end of session rom client when requesting Volume "
       << eof.getMessageValue();
     lc.log(LOG_ERR, fullError.str());
     m_clientProxy.reportEndOfSession(reqReport);
@@ -186,6 +186,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeRead(LogContex
   {
     // Allocate all the elements of the memory management (in proper order
     // to refer them to each other)
+    TaskWatchDog watchdog(m_intialProcess,m_logger);
     RecallMemoryManager mm(m_castorConf.rtcopydNbBufs, m_castorConf.rtcopydBufsz,lc);
     TapeServerReporter tsr(m_intialProcess, m_driveConfig, 
             m_hostname, m_volInfo, lc);
@@ -194,7 +195,7 @@ int castor::tape::tapeserver::daemon::DataTransferSession::executeRead(LogContex
     tsr.gotReadMountDetailsFromClient();
     
     TapeReadSingleThread trst(*drive, m_rmc, tsr, m_volInfo, 
-        m_castorConf.tapebridgeBulkRequestRecallMaxFiles,m_capUtils, lc);
+        m_castorConf.tapebridgeBulkRequestRecallMaxFiles,m_capUtils,watchdog,lc);
     RecallReportPacker rrp(m_clientProxy,
         m_castorConf.tapebridgeBulkRequestMigrationMaxFiles,
         lc);

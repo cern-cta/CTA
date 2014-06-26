@@ -95,11 +95,9 @@ public:
   //start and wait for thread to finish
   void startThreads();
   void waitThreads();
-  
-  void notifyWatchdog(uint64_t nbOfMemblocksMoved);
-  
-  std::auto_ptr<TaskWatchDog> createWatchdog(log::LogContext& lc) const;
+    
 private:
+  bool m_threadRunnig;
   /*
   This internal mechanism could (should ?) be easily changed to a queue 
    * of {std/boost}::function coupled with bind. For instance, tapeMountedForWrite

@@ -30,67 +30,32 @@
 #include "castor/utils/utils.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
-
+#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 namespace castor {
 
 namespace tape {
 namespace tapeserver {
 namespace daemon {
-
-void TaskWatchDog::report(zmq::Socket& m_socket){
-  try
-  {
-    messages::Header header = messages::preFillHeader();
-    header.set_reqtype(messages::reqType::Heartbeat);
-    header.set_bodyhashvalue("PIPO");
-    header.set_bodysignature("PIPO");
-    
-    messages::sendMessage(m_socket,header,ZMQ_SNDMORE);
-    messages::Heartbeat body;
-    body.set_bytesmoved(nbOfMemblocksMoved.getAndReset());
-    messages::sendMessage(m_socket,body);
-    
-    m_lc.log(LOG_INFO,"Notified MF");
-    zmq::Message blob;
-    m_socket.recv(blob);
-    log::ScopedParamContainer c(m_lc);
-    c.add("size",blob.size());
-    m_lc.log(LOG_INFO,"debug purpose");
-  }catch(const castor::exception::Exception& e){
-    log::ScopedParamContainer c(m_lc);
-    c.add("ex code",e.getMessageValue());
-    m_lc.log(LOG_ERR,"Error with the ZMQ socket while reporting to the MF");
-  }
-  catch(const std::exception& e){
-    log::ScopedParamContainer c(m_lc);
-    c.add("ex code",e.what());
-    m_lc.log(LOG_ERR,"Exception while notifying MF");
-  }catch(...){
-    m_lc.log(LOG_INFO,"triple ...");
-  }
-}
     
 void TaskWatchDog::run(){
-  zmq::Socket m_socket(DataTransferSession::ctx(),ZMQ_REQ);
-  castor::messages::connectToLocalhost(m_socket);
-  
-  using castor::utils::timevalToDouble;
-  using castor::utils::timevalAbsDiff;
   timeval currentTime;
   while(!m_stopFlag) {
     castor::utils::getTimeOfDay(&currentTime);
-    timeval diffTime = timevalAbsDiff(currentTime,previousTime);
-    double diffTimed = timevalToDouble(diffTime);
-    if( diffTimed> periodToReport){
+    timeval diffTime = castor::utils::timevalAbsDiff(currentTime,previousTime);
+    double diffTimed = castor::utils::timevalToDouble(diffTime);
+    if(diffTimed > periodToReport){
       m_lc.log(LOG_DEBUG,"going to report");
       previousTime=currentTime;
-      report(m_socket);
+      m_initialProcess.notifyHeartbeat(nbOfMemblocksMoved.getAndReset());
+    }else{
+      usleep(100000);
     }
   }
 }
     
-TaskWatchDog::TaskWatchDog(log::LogContext lc): 
-nbOfMemblocksMoved(0),periodToReport(2),m_lc(lc){
+TaskWatchDog::TaskWatchDog(messages::TapeserverProxy& initialProcess,log::LogContext lc): 
+nbOfMemblocksMoved(0),periodToReport(2),
+        m_initialProcess(initialProcess),m_lc(lc){
   m_lc.pushOrReplace(log::Param("thread","Watchdog"));
   castor::utils::getTimeOfDay(&previousTime);
 }
@@ -103,16 +68,6 @@ void TaskWatchDog::startThread(){
 void TaskWatchDog::stopThread(){
   m_stopFlag.set();
   wait();
-}
-
-DummyTaskWatchDog::DummyTaskWatchDog(log::LogContext& lc):
-  TaskWatchDog(lc){
-}
-
-void DummyTaskWatchDog::run(){
-  while(!m_stopFlag){
-    sleep(1);
-  }
 }
 
 }}}}

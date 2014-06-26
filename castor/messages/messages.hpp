@@ -32,7 +32,16 @@
 
 namespace castor {
 namespace messages {
-    
+
+  
+  struct ReplyContainer{
+    castor::messages::Header header;
+    zmq::Message blobBody;
+    ReplyContainer(zmq::Socket& socket);
+  private :
+    ReplyContainer(const ReplyContainer&);
+    ReplyContainer& operator=(const ReplyContainer&);
+  };
 template <class T> void sendMessage(zmq::Socket& socket,const T& msg,int flag=0) {
 
   if(!msg.IsInitialized()){
@@ -48,6 +57,8 @@ template <class T> void sendMessage(zmq::Socket& socket,const T& msg,int flag=0)
 
 void connectToLocalhost(zmq::Socket& m_socket);
 castor::messages::Header preFillHeader();
+
+ReplyContainer readReplyMsg(zmq::Socket& socket);
 
 } // namespace messages
 } // namespace castor

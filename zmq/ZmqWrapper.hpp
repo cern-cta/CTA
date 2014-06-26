@@ -137,9 +137,9 @@ namespace zmq
         throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
     }
     
-    template<class T> void getsockopt (int option, T& optval){
-      const int size = sizeof(optval);
-      int rc = zmq_getsockopt (m_socket, option, &optval, &size);
+    template<class T> void getsockopt (int option, T& optval) const{
+      size_t size = sizeof(optval);
+      int rc = zmq_getsockopt ((m_socket), option, &optval, &size);
       if (rc != 0)
         throw castor::exception::Exception (zmq_strerror(zmq_errno ()));
     }
@@ -161,7 +161,7 @@ namespace zmq
     size_t recv (void *buf, size_t len, int flags = 0);
     
     bool recv (Message& msg_, int flags = 0);
-    
+    bool moreParts() const;
   private:
     void *m_socket;
     void *m_ownerContext;

@@ -190,14 +190,7 @@ const castor::messages::Header& header, const castor::messages::Heartbeat& body)
   param.push_back(log::Param("bytesMoved",body.bytesmoved()));
   m_log(LOG_INFO,"IT IS ALIVE",param);
   
-  zmq::Message bodyBlob(body.ByteSize());
-   body.SerializeToArray(bodyBlob.data(),body.ByteSize());
-  try{
-    m_socket.send(bodyBlob);
-  }
-  catch(const std::exception& e){
-    m_log(LOG_ERR,"failed to reply to heartbeat",param);
-  }
+  sendEmptyReplyToClient();
 }
 
 void castor::tape::tapeserver::daemon::TapeMessageHandler::dealWith(

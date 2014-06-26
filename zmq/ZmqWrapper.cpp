@@ -285,7 +285,16 @@ namespace zmq
       return false;
     throw castor::exception::Exception (currentZmqError());
   }
-  
+  bool Socket::moreParts() const{
+    int more;
+    getsockopt(ZMQ_RCVMORE,more);
+    if(more) {
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
   Monitor::Monitor() : m_socketMonitored(NULL) {
   
   }

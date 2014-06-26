@@ -92,10 +92,9 @@ void castor::messages::TapeserverProxyDummy::tapeUnmounted(
   castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
   const std::string &unitName) {
 } 
-
-std::auto_ptr<castor::tape::tapeserver::daemon::TaskWatchDog> 
-castor::messages::TapeserverProxyDummy::createWatchdog(log::LogContext& lc) const{
-  return std::auto_ptr<castor::tape::tapeserver::daemon::TaskWatchDog>(
-          new castor::tape::tapeserver::daemon::DummyTaskWatchDog(lc)
-          );
-}
+//------------------------------------------------------------------------------
+// tapeUnmounted
+//------------------------------------------------------------------------------
+void castor::messages::TapeserverProxyDummy::
+notifyHeartbeat(uint64_t) {
+} 

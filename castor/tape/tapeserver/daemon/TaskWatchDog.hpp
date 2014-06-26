@@ -28,6 +28,7 @@
 #include "zmq/ZmqWrapper.hpp"
 #include "castor/tape/tapeserver/threading/AtomicCounter.hpp"
 #include "castor/log/LogContext.hpp"
+#include "castor/messages/TapeserverProxy.hpp"
 namespace castor {
 
 namespace tape {
@@ -40,7 +41,7 @@ protected:
     timeval previousTime;
     const double periodToReport; //in second
     castor::tape::threading::AtomicFlag m_stopFlag;
-
+    messages::TapeserverProxy& m_initialProcess;
     log::LogContext m_lc;
     
     void report(zmq::Socket& m_socket);
@@ -48,16 +49,11 @@ protected:
     virtual void run();
     
   public:
-    TaskWatchDog(log::LogContext lc);
+    TaskWatchDog(messages::TapeserverProxy& initialProcess,log::LogContext lc);
     void notify();
     void startThread();
     void stopThread();
 
   };
-  
-class DummyTaskWatchDog : public TaskWatchDog {    
-    void run();
-public:
-  DummyTaskWatchDog(log::LogContext& lc);
-  };
+ 
 }}}}

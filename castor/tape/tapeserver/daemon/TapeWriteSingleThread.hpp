@@ -188,7 +188,6 @@ private:
       std::auto_ptr<TapeWriteTask> task;  
       
       tape::utils::Timer timer;
-      TaskWatchDog watchdog(m_logContext);
       
       while(1) {
         

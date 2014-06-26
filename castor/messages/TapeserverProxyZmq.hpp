@@ -132,18 +132,9 @@ public:
  void tapeUnmounted(
    castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
    const std::string &unitName);
-
-   virtual std::auto_ptr<castor::tape::tapeserver::daemon::TaskWatchDog> 
-   createWatchdog(log::LogContext&) const;
+ 
+ void notifyHeartbeat(uint64_t nbOfMemblocksMoved);
 private:
-
-  /**
-   * Reads a reply message from the specified connection.
-   *
-   * @param fd The file-descriptor of the connection.
-   */
-  void readReplyMsg();
-
   /**
    * The object representing the API of the CASTOR logging system.
    */
@@ -165,7 +156,8 @@ private:
    */
   const int m_netTimeout;
   
-  zmq::Socket m_socket;
+  zmq::Socket m_messageSocket;
+  zmq::Socket m_heartbeatSocket;
 
 }; // class TapeserverProxyZmq
 

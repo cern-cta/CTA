@@ -24,7 +24,6 @@
 
 #include "castor/log/Logger.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "castor/tape/tapeserver/daemon/TaskWatchDog.hpp"
 #include <memory>
 
 namespace castor {
@@ -128,8 +127,7 @@ public:
     castor::tape::tapeserver::client::ClientProxy::VolumeInfo volInfo,
     const std::string &unitName) = 0;
 
-  virtual std::auto_ptr<castor::tape::tapeserver::daemon::TaskWatchDog> 
-  createWatchdog(log::LogContext&) const = 0;
+  virtual void notifyHeartbeat(uint64_t nbOfMemblocksMoved) =0;
 }; // class TapeserverProxy
 
 } // namespace messages

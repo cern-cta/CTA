@@ -41,3 +41,20 @@ castor::messages::Header castor::messages::preFillHeader() {
   header.set_bodysignaturetype("SHA1");
   return header;
 }
+
+ castor::messages::ReplyContainer::ReplyContainer(zmq::Socket& socket)  {
+  zmq::Message blobHeader;
+  socket.recv(blobHeader); 
+  
+  if(!socket.moreParts()) {
+    throw castor::exception::Exception("Expecting a multi part message. Got a header without a body");
+  }
+  socket.recv(blobBody);
+  
+  if(!header.ParseFromArray(blobHeader.data(),blobHeader.size())){
+    throw castor::exception::Exception("Message header cant be parsed from binary data read");
+  }
+  if(socket.moreParts()){
+    throw castor::exception::Exception("Expecting a message with excatly 2 parts. Got at least 3 parts");
+  }
+}
