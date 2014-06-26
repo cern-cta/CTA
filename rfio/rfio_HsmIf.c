@@ -281,7 +281,7 @@ int rfio_HsmIf_open(const char *path, int flags, mode_t mode, int mode64, int st
     char *url = NULL;
 
     for (;;) {
-      TRACE(3,"rfio","Calling stage_open with: %s %x %x",
+      TRACE(3,"rfio","Calling stage_open with: %s 0x%x 0x%x",
             path, flags, mode);
       rc = stage_open(NULL,
                       mover_protocol_rfio,
