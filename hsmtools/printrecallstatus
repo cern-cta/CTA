@@ -54,7 +54,7 @@ try:
     stconn = castor_tools.connectToStager()
     stcur = stconn.cursor()
     sqlStatement = '''
-        select /*+ USE_NL(cf rj)  */
+      SELECT /*+ USE_NL(cf rj)  */
         (select name from recallgroup where id = rj.recallgroup) recallgroup,
         count(*) files,
         sum((select count(*) from recallmount rm where rm.vid = rj.vid)) files_queued,
@@ -65,20 +65,20 @@ try:
         (select count(distinct rj2.vid) from recalljob rj2 where rj2.recallgroup = rj.recallgroup) tapes,
         (select count(distinct rm.vid) from recallmount rm inner join recalljob rj2 on rj2.vid = rm.vid where rj2.recallgroup = rj.recallgroup) tapes_queued,
         (select count(distinct rm.vid) from recallmount rm inner join recalljob rj2 on rj2.vid = rm.vid where rj2.recallgroup = rj.recallgroup and rm.status = 2) tapes_recalling,
-        round(min(gettime() - rj.creationtime)/3600/24,2) min_age_days,
-        round(max(gettime() - rj.creationtime)/3600/24,2) max_age_days/*, cf.fileid*/
-         from recalljob rj
-         left outer join castorfile cf on cf.id = rj.castorfile
-        group by rj.recallgroup
-        order by case when sum((select count(*) from recallmount rm where rm.vid = rj.vid)) != 0 then 1 else 0 end desc,
-        round(max(gettime() - rj.creationtime)/3600/24,2) desc, round(min(gettime() - rj.creationtime)/3600/24,2) desc
+        min(gettime() - rj.creationtime) min_age,
+        max(gettime() - rj.creationtime) max_age /*, cf.fileid*/
+      FROM RecallJob rj
+        LEFT OUTER JOIN CastorFile cf on cf.id = rj.castorfile
+      GROUP BY rj.recallgroup
+      ORDER BY case when sum((select count(*) from recallmount rm where rm.vid = rj.vid)) != 0 then 1 else 0 end desc,
+               recallgroup asc
     '''
     stcur.execute(sqlStatement)
     # get results
     rows = stcur.fetchall()
     # get the totals
     sqlStatementTot = '''
-        select /*+ USE_NL(cf rj)  */
+      SELECT /*+ USE_NL(cf rj)  */
         'ALL' recallgroup,
         count(*) files,
         sum((select count(*) from recallmount rm where rm.vid = rj.vid)) files_queued,
@@ -89,14 +89,12 @@ try:
         (select count(distinct rj2.vid) from recalljob rj2) tapes,
         (select count(distinct rm.vid) from recallmount rm inner join recalljob rj2 on rj2.vid = rm.vid) tapes_queued,
         (select count(distinct rm.vid) from recallmount rm inner join recalljob rj2 on rj2.vid = rm.vid where rm.status = 2) tapes_recalling,
-        round(min(gettime() - rj.creationtime)/3600/24,2) min_age_days,
-        round(max(gettime() - rj.creationtime)/3600/24,2) max_age_days/*, cf.fileid*/
-         from recalljob rj
-         left outer join castorfile cf on cf.id = rj.castorfile
-         group by 'x'
-        order by case when sum((select count(*) from recallmount rm where rm.vid = rj.vid)) != 0 then 1 else 0 end desc,
-        round(max(gettime() - rj.creationtime)/3600/24,2) desc, round(min(gettime() - rj.creationtime)/3600/24,2) desc
-    '''
+        min(gettime() - rj.creationtime) min_age,
+        max(gettime() - rj.creationtime) max_age /*, cf.fileid*/
+      FROM Recalljob rj
+         LEFT OUTER JOIN CastorFile cf on cf.id = rj.castorfile
+      GROUP BY 'x'
+    '''  # GROUP BY 'x' is a workaround needed because of the extra inner select count() statements
     stcur.execute(sqlStatementTot)
     # get results
     rowsTot = stcur.fetchall()
@@ -107,17 +105,16 @@ try:
     # Compute column widths (dry-run print)
     columnTitles = ['RECALLGROUP', 'FILES', 'FILES_QUEUED', 'FILES_RECALLING', 'TOTAL_SIZE',
                        'SIZE_QUEUED', 'SIZE_RECALLING', 'TAPES', 'TAPES_QUEUED', 'TAPES_RECALLING',
-                       'MIN_AGE_DAYS', 'MAX_AGE_DAYS']
-    columnFormats = ['%*s', '%*d', '%*d', '%*d', '%*d', '%*d', '%*d', '%*d', '%*d', '%*d', '%*.2f', '%*.2f']
+                       'MIN_AGE', 'MAX_AGE']
     stringData = [];
     if len(rows):
         rows.extend(rowsTot);
         # Format the rows into strings
-        stringData = [(recallgroup, '%d' % files, '%d' % filesQueued, '%d' % filesRecalling, '%d' % totalSize,
-                       '%d' % sizeQueued, '%d' % sizeRecalling, '%d' % tapes, '%d' % tapesQueued,
-                       '%d' % tapesRecalling, '%.2f' % minAgeDays, '%.2f' % maxAgeDays) for
-                      recallgroup, files, filesQueued, filesRecalling, totalSize, sizeQueued, sizeRecalling,
-                      tapes, tapesQueued, tapesRecalling, minAgeDays, maxAgeDays in rows];
+        stringData = [(recallgroup, files, filesQueued, filesRecalling, castor_tools.nbToDataAmount(totalSize),
+                       castor_tools.nbToDataAmount(sizeQueued), castor_tools.nbToDataAmount(sizeRecalling), tapes,
+                       tapesQueued, tapesRecalling, castor_tools.nbToAge(int(minAge)), castor_tools.nbToAge(int(maxAge)))
+                      for recallgroup, files, filesQueued, filesRecalling, totalSize, sizeQueued, sizeRecalling,
+                          tapes, tapesQueued, tapesRecalling, minAge, maxAge in rows];
     else:
         stringData = [ ('ALL', '0', '0', '0', '0', '0', '0', '0', '0', '0', '0.00', '0.00') ];
     castor_tools.prettyPrintTable(columnTitles, stringData, True);
