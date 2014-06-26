@@ -63,9 +63,9 @@ sub printFiltered ( $ ) {
   my $allLines = shift;
   foreach my $line ( split ( /\n/, $allLines ) ) {
     if ( ! ( $line =~ /^$/ || 
-             $line =~ /^(\d+ row|Table|Package|Type|Function|Procedure|Index|Sequence)\w+(created|updated|altered)\.\w?$/ ||
+             $line =~ /^(\d+ rows?|Table|Package(| body)|Type|Function|Procedure|Index|Sequence|View|Synonym|Commit|Grant|Trigger)\s+(created|updated|altered|complete|succeeded)\.\w?$/ ||
              $line =~ /PL\/SQL procedure successfully completed./ ) ) {
-      print $line."\n";
+      print "    $line\n";
     }
   }
 }
