@@ -1596,10 +1596,6 @@ BEGIN
   -- terminate repack subrequests
   IF varOriginalCopyNb IS NOT NULL THEN
     archiveOrFailRepackSubreq(varCfId, inErrorCode);
-    -- set back the CastorFile to ONTAPE otherwise repack will wait forever
-    UPDATE CastorFile
-       SET tapeStatus = dconst.CASTORFILE_ONTAPE
-     WHERE id = varCfId;
   END IF;
   
   IF varErrorCode = serrno.ENOENT THEN
