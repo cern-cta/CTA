@@ -37,7 +37,8 @@ namespace castor {
         NotifyDriveBeforeMountStarted,
         NotifyDriveTapeMounted,
         NotifyDriveUnmountStarted,
-        NotifyDriveTapeUnmounted    
+        NotifyDriveTapeUnmounted,
+        NotifyDriveBeforeMountStartedAnswer,
       };
     };
     struct protocolVersion{

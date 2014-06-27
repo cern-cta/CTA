@@ -33,3 +33,7 @@ message NotifyDriveUnmountStarted {
 
 message NotifyDriveTapeUnmounted {
 }
+
+message NotifyDriveBeforeMountStartedAnswer {
+required uint32 howManyFilesOnTape = 1;
+}

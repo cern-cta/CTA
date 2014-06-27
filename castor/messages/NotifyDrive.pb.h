@@ -37,6 +37,7 @@ class NotifyDriveBeforeMountStarted;
 class NotifyDriveTapeMounted;
 class NotifyDriveUnmountStarted;
 class NotifyDriveTapeUnmounted;
+class NotifyDriveBeforeMountStartedAnswer;
 
 enum NotifyDriveBeforeMountStarted_TapeClientType {
   NotifyDriveBeforeMountStarted_TapeClientType_CLIENT_TYPE_NONE = 1,
@@ -504,6 +505,95 @@ class NotifyDriveTapeUnmounted : public ::google::protobuf::Message {
   void InitAsDefaultInstance();
   static NotifyDriveTapeUnmounted* default_instance_;
 };
+// -------------------------------------------------------------------
+
+class NotifyDriveBeforeMountStartedAnswer : public ::google::protobuf::Message {
+ public:
+  NotifyDriveBeforeMountStartedAnswer();
+  virtual ~NotifyDriveBeforeMountStartedAnswer();
+  
+  NotifyDriveBeforeMountStartedAnswer(const NotifyDriveBeforeMountStartedAnswer& from);
+  
+  inline NotifyDriveBeforeMountStartedAnswer& operator=(const NotifyDriveBeforeMountStartedAnswer& from) {
+    CopyFrom(from);
+    return *this;
+  }
+  
+  inline const ::google::protobuf::UnknownFieldSet& unknown_fields() const {
+    return _unknown_fields_;
+  }
+  
+  inline ::google::protobuf::UnknownFieldSet* mutable_unknown_fields() {
+    return &_unknown_fields_;
+  }
+  
+  static const ::google::protobuf::Descriptor* descriptor();
+  static const NotifyDriveBeforeMountStartedAnswer& default_instance();
+  
+  void Swap(NotifyDriveBeforeMountStartedAnswer* other);
+  
+  // implements Message ----------------------------------------------
+  
+  NotifyDriveBeforeMountStartedAnswer* New() const;
+  void CopyFrom(const ::google::protobuf::Message& from);
+  void MergeFrom(const ::google::protobuf::Message& from);
+  void CopyFrom(const NotifyDriveBeforeMountStartedAnswer& from);
+  void MergeFrom(const NotifyDriveBeforeMountStartedAnswer& from);
+  void Clear();
+  bool IsInitialized() const;
+  
+  int ByteSize() const;
+  bool MergePartialFromCodedStream(
+      ::google::protobuf::io::CodedInputStream* input);
+  void SerializeWithCachedSizes(
+      ::google::protobuf::io::CodedOutputStream* output) const;
+  ::google::protobuf::uint8* SerializeWithCachedSizesToArray(::google::protobuf::uint8* output) const;
+  int GetCachedSize() const { return _cached_size_; }
+  private:
+  void SharedCtor();
+  void SharedDtor();
+  void SetCachedSize(int size) const;
+  public:
+  
+  ::google::protobuf::Metadata GetMetadata() const;
+  
+  // nested types ----------------------------------------------------
+  
+  // accessors -------------------------------------------------------
+  
+  // required uint32 howManyFilesOnTape = 1;
+  inline bool has_howmanyfilesontape() const;
+  inline void clear_howmanyfilesontape();
+  static const int kHowManyFilesOnTapeFieldNumber = 1;
+  inline ::google::protobuf::uint32 howmanyfilesontape() const;
+  inline void set_howmanyfilesontape(::google::protobuf::uint32 value);
+  
+  // @@protoc_insertion_point(class_scope:castor.messages.NotifyDriveBeforeMountStartedAnswer)
+ private:
+  ::google::protobuf::UnknownFieldSet _unknown_fields_;
+  mutable int _cached_size_;
+  
+  ::google::protobuf::uint32 howmanyfilesontape_;
+  friend void  protobuf_AddDesc_NotifyDrive_2eproto();
+  friend void protobuf_AssignDesc_NotifyDrive_2eproto();
+  friend void protobuf_ShutdownFile_NotifyDrive_2eproto();
+  
+  ::google::protobuf::uint32 _has_bits_[(1 + 31) / 32];
+  
+  // WHY DOES & HAVE LOWER PRECEDENCE THAN != !?
+  inline bool _has_bit(int index) const {
+    return (_has_bits_[index / 32] & (1u << (index % 32))) != 0;
+  }
+  inline void _set_bit(int index) {
+    _has_bits_[index / 32] |= (1u << (index % 32));
+  }
+  inline void _clear_bit(int index) {
+    _has_bits_[index / 32] &= ~(1u << (index % 32));
+  }
+  
+  void InitAsDefaultInstance();
+  static NotifyDriveBeforeMountStartedAnswer* default_instance_;
+};
 // ===================================================================
 
 
@@ -741,6 +831,26 @@ inline void NotifyDriveTapeMounted::set_mode(castor::messages::TapeMode value) {
 // -------------------------------------------------------------------
 
 // NotifyDriveTapeUnmounted
+
+// -------------------------------------------------------------------
+
+// NotifyDriveBeforeMountStartedAnswer
+
+// required uint32 howManyFilesOnTape = 1;
+inline bool NotifyDriveBeforeMountStartedAnswer::has_howmanyfilesontape() const {
+  return _has_bit(0);
+}
+inline void NotifyDriveBeforeMountStartedAnswer::clear_howmanyfilesontape() {
+  howmanyfilesontape_ = 0u;
+  _clear_bit(0);
+}
+inline ::google::protobuf::uint32 NotifyDriveBeforeMountStartedAnswer::howmanyfilesontape() const {
+  return howmanyfilesontape_;
+}
+inline void NotifyDriveBeforeMountStartedAnswer::set_howmanyfilesontape(::google::protobuf::uint32 value) {
+  _set_bit(0);
+  howmanyfilesontape_ = value;
+}
 
 
 // @@protoc_insertion_point(namespace_scope)
