@@ -101,7 +101,7 @@ private:
           
           log::LogContext::ScopedParam sp0( m_this.m_logContext, log::Param("timeTaken", timer.usecs()));
           m_this.m_logContext.log(LOG_INFO, "TapeReadSingleThread : tape unmounted");
-          m_this.m_gsr.tapeUnmounted();
+          m_this.m_tsr.tapeUnmounted();
         } catch(const castor::exception::Exception& ex){
           //set it to -1 to notify something failed during the cleaning 
           m_this.m_hardarwareStatus = -1;
@@ -115,7 +115,7 @@ private:
           m_this.m_logContext.log(LOG_ERR, "Non-Castor exception in TapeReadSingleThread-TapeCleaning when unmounting the tape");
         }
         //then we terminate the global status reporter
-        m_this.m_gsr.finish();
+        m_this.m_tsr.finish();
     }
   };
   /**
@@ -185,7 +185,7 @@ private:
       
       //and then report
       m_logContext.log(LOG_INFO, "Tape read session session successfully started");
-      m_gsr.tapeMountedForRead();
+      m_tsr.tapeMountedForRead();
       tape::utils::Timer timer;
       
       //start the threading and ask to initiate the protocol with the tapeserverd

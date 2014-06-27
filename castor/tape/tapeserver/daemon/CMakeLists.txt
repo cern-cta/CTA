@@ -35,7 +35,7 @@ add_library(castorTapeServerDaemon
   VdqmAcceptHandler.cpp
   VdqmConnectionHandler.cpp)
 
-target_link_libraries(castorTapeServerDaemon castorMessages castortapereactor castorZmqWrapper)
+target_link_libraries(castorTapeServerDaemon castormessages castortapereactor castorzmqwrapper)
 
 add_library(castorTapeServerDaemonTestDummies
   ../client/ClientSimulator.cpp 
@@ -71,7 +71,7 @@ target_link_libraries(tapeserverd
   castortapeutils
   ${LIBCAP_LIB}
   ${ZLIB_LIBRARIES}
-  castorMessages)
+  castormessages)
 
 install (TARGETS tapeserverd DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (tapeserverd)

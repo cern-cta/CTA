@@ -1,4 +1,4 @@
-add_library(castorMessages SHARED
+add_library(castormessages SHARED
   Header.pb.cc
   Heartbeat.pb.cc
   messages.cpp
@@ -11,4 +11,5 @@ add_library(castorMessages SHARED
   TapeserverProxyZmqFactory.cpp
 )
 
-target_link_libraries(castorMessages castorZmqWrapper protobuf)
+target_link_libraries(castormessages castorzmqwrapper protobuf)
+install (TARGETS castormessages DESTINATION ${CASTOR_DEST_LIB_DIR})

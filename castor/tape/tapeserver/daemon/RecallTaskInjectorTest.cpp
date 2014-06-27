@@ -37,11 +37,11 @@ public:
   
   FakeSingleTapeReadThread(castor::tape::drives::DriveInterface& drive,
     castor::legacymsg::RmcProxy & rmc,
-    castor::tape::tapeserver::daemon::TapeServerReporter & gsr,
+    castor::tape::tapeserver::daemon::TapeServerReporter & tsr,
     const castor::tape::tapeserver::client::ClientInterface::VolumeInfo& volInfo, 
      castor::tape::tapeserver::daemon::CapabilityUtils& cap,
     castor::log::LogContext & lc):
-  TapeSingleThreadInterface<TapeReadTask>(drive, rmc, gsr, volInfo,cap, lc){}
+  TapeSingleThreadInterface<TapeReadTask>(drive, rmc, tsr, volInfo,cap, lc){}
   
   ~FakeSingleTapeReadThread(){
     const unsigned int size= m_tasks.size();
@@ -134,9 +134,9 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   volume.vid="V12345";
   volume.volumeMode=castor::tape::tapegateway::READ;
   castor::tape::tapeserver::daemon::CapabilityUtilsDummy cap;
-  castor::tape::tapeserver::daemon::TapeServerReporter gsr(initialProcess,  
+  castor::tape::tapeserver::daemon::TapeServerReporter tsr(initialProcess,  
   utils::DriveConfig(),"0.0.0.0",volume,lc);  
-  FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, volume,cap, lc);
+  FakeSingleTapeReadThread tapeRead(drive, rmc, tsr, volume,cap, lc);
   
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
   tapeserver::daemon::RecallTaskInjector rti(mm,tapeRead,diskWrite,client,6,blockSize,lc);

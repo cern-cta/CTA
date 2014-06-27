@@ -50,7 +50,7 @@ protected:
   castor::legacymsg::RmcProxy & m_rmc;
   
   /** Reference to the Global reporting interface */
-  TapeServerReporter & m_gsr;
+  TapeServerReporter & m_tsr;
   
   ///The volumeID of the tape on which we want to operate  
   const std::string m_vid;
@@ -163,10 +163,10 @@ public:
    */
   TapeSingleThreadInterface(castor::tape::drives::DriveInterface & drive,
     castor::legacymsg::RmcProxy & rmc,
-    TapeServerReporter & gsr,
+    TapeServerReporter & tsr,
     const client::ClientInterface::VolumeInfo& volInfo,
     CapabilityUtils &capUtils,castor::log::LogContext & lc):m_capUtils(capUtils),
-    m_drive(drive), m_rmc(rmc), m_gsr(gsr), m_vid(volInfo.vid), m_logContext(lc),
+    m_drive(drive), m_rmc(rmc), m_tsr(tsr), m_vid(volInfo.vid), m_logContext(lc),
     m_volInfo(volInfo),m_hardarwareStatus(0) {
 
   }

@@ -61,12 +61,12 @@ public:
    */
   TapeWriteSingleThread(castor::tape::drives::DriveInterface & drive, 
           castor::legacymsg::RmcProxy & rmc,
-          TapeServerReporter & gsr,
+          TapeServerReporter & tsr,
           const client::ClientInterface::VolumeInfo& volInfo,
           castor::log::LogContext & lc, MigrationReportPacker & repPacker,
            CapabilityUtils &capUtils,
 	  uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
-  TapeSingleThreadInterface<TapeWriteTask>(drive, rmc, gsr, volInfo,capUtils, lc),
+  TapeSingleThreadInterface<TapeWriteTask>(drive, rmc, tsr, volInfo,capUtils, lc),
           m_filesBeforeFlush(filesBeforeFlush),
           m_bytesBeforeFlush(bytesBeforeFlush),
           m_drive(drive), m_reportPacker(repPacker),
@@ -93,7 +93,7 @@ private:
       // And return the tape to the library
       m_this.m_rmc.unmountTape(m_this.m_volInfo.vid, m_this.m_drive.librarySlot);
       m_this.m_logContext.log(LOG_INFO, "TapeWriteSingleThread : tape unmounted");
-      m_this.m_gsr.tapeUnmounted();
+      m_this.m_tsr.tapeUnmounted();
               
       }
       catch(const castor::exception::Exception& ex){
@@ -110,7 +110,7 @@ private:
       }
       
       //then we terminate the global status reporter
-      m_this.m_gsr.finish();
+      m_this.m_tsr.finish();
     }
   };
   
@@ -182,7 +182,7 @@ private:
       
       //log and notify
       m_logContext.log(LOG_INFO, "Starting tape write thread");
-      m_gsr.tapeMountedForWrite();
+      m_tsr.tapeMountedForWrite();
       uint64_t bytes=0;
       uint64_t files=0;
       std::auto_ptr<TapeWriteTask> task;  

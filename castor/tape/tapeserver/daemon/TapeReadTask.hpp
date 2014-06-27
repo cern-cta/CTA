@@ -84,7 +84,7 @@ public:
     MemBlock* mb=NULL;
     try {
       std::auto_ptr<castor::tape::tapeFile::ReadFile> rf(openReadFile(rs,lc));
-      watchdog.notifyBeginNewJob(m_fileToRecall);
+      watchdog.notifyBeginNewJob(*m_fileToRecall);
       while (stillReading) {
         // Get a memory block and add information to its metadata
         mb=m_mm.getFreeBlock();
