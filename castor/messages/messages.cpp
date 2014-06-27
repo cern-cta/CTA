@@ -62,4 +62,18 @@ castor::messages::ReplyContainer::ReplyContainer(tape::utils::ZmqSocket& socket)
   if(!header.ParseFromArray(zmq_msg_data(&blobHeader.getZmqMsg()),zmq_msg_size(&blobHeader.getZmqMsg()))){
     throw castor::exception::Exception("Message header cant be parsed from binary data read");
   }
+  
+  if(header.magic()!=TPMAGIC){
+    throw castor::exception::Exception("Wrong magic number in the header");
+  }
+  if(header.protocoltype()!=messages::protocolType::Tape){
+    throw castor::exception::Exception("Wrong protocol type in the header");
+  }
+  if(header.protocolversion()!=messages::protocolVersion::prototype){
+    throw castor::exception::Exception("Wrong protocol version in the header");
+  }
+  if(socket.moreParts()){
+    throw castor::exception::Exception("Expecting a message with excatly 2 parts (header+body)."
+            " Got at least 3 parts");
+  }
 }
