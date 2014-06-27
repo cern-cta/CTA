@@ -50,17 +50,19 @@ castor::tape::tapeserver::daemon::VdqmConnectionHandler::~VdqmConnectionHandler(
 }
 
 //------------------------------------------------------------------------------
-// getFd
+// getName
 //------------------------------------------------------------------------------
-int castor::tape::tapeserver::daemon::VdqmConnectionHandler::getFd() throw() {
-  return m_fd;
+std::string castor::tape::tapeserver::daemon::VdqmConnectionHandler::getName() 
+  const throw() {
+  return "VdqmConnectionHandler";
 }
 
 //------------------------------------------------------------------------------
 // fillPollFd
 //------------------------------------------------------------------------------
-void castor::tape::tapeserver::daemon::VdqmConnectionHandler::fillPollFd(zmq::Pollitem &fd) throw() {
+void castor::tape::tapeserver::daemon::VdqmConnectionHandler::fillPollFd(zmq_pollitem_t &fd) throw() {
   fd.fd = m_fd;
+  fd.events = ZMQ_POLLIN;
   fd.revents = 0;
   fd.socket = NULL;
 }
@@ -69,7 +71,7 @@ void castor::tape::tapeserver::daemon::VdqmConnectionHandler::fillPollFd(zmq::Po
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
-  const zmq::Pollitem &fd)  {
+  const zmq_pollitem_t &fd)  {
   logVdqmConnectionEvent(fd);
 
   checkHandleEventFd(fd.fd);
@@ -101,29 +103,12 @@ bool castor::tape::tapeserver::daemon::VdqmConnectionHandler::handleEvent(
 // logVdqmConnectionEvent 
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::VdqmConnectionHandler::
-  logVdqmConnectionEvent(const zmq::Pollitem &fd)  {
-  std::list<log::Param> params;
-  params.push_back(log::Param("fd", fd.fd));
-  params.push_back(log::Param("POLLIN",
-    fd.revents & POLLIN ? "true" : "false"));
-  params.push_back(log::Param("POLLRDNORM",
-    fd.revents & POLLRDNORM ? "true" : "false"));
-  params.push_back(log::Param("POLLRDBAND",
-    fd.revents & POLLRDBAND ? "true" : "false"));
-  params.push_back(log::Param("POLLPRI",
-    fd.revents & POLLPRI ? "true" : "false"));
-  params.push_back(log::Param("POLLOUT",
-    fd.revents & POLLOUT ? "true" : "false"));
-  params.push_back(log::Param("POLLWRNORM",
-    fd.revents & POLLWRNORM ? "true" : "false"));
-  params.push_back(log::Param("POLLWRBAND",
-    fd.revents & POLLWRBAND ? "true" : "false"));
-  params.push_back(log::Param("POLLERR",
-    fd.revents & POLLERR ? "true" : "false"));
-  params.push_back(log::Param("POLLHUP",
-    fd.revents & POLLHUP ? "true" : "false"));
-  params.push_back(log::Param("POLLNVAL",
-    fd.revents & POLLNVAL ? "true" : "false"));
+  logVdqmConnectionEvent(const zmq_pollitem_t &fd)  {
+  log::Param params[] = {
+  log::Param("fd", fd.fd),
+  log::Param("ZMQ_POLLIN", fd.revents & ZMQ_POLLIN ? "true" : "false"),
+  log::Param("ZMQ_POLLOUT", fd.revents & ZMQ_POLLOUT ? "true" : "false"),
+  log::Param("ZMQ_POLLERR", fd.revents & ZMQ_POLLERR ? "true" : "false")};
   m_log(LOG_DEBUG, "I/O event on vdqm connection", params);
 }
 

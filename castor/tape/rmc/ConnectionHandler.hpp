@@ -52,22 +52,22 @@ public:
     log::Logger &log) throw();
 
   /**
-   * Returns the integer file descriptor of this event handler.
+   * Returns the human-readable name this event handler.
    */
-  int getFd() throw();
+  std::string getName() const throw();
 
   /**
    * Fills the specified poll file-descriptor ready to be used in a call to
    * poll().
    */
-  void fillPollFd(zmq::Pollitem &fd) throw();
+  void fillPollFd(zmq_pollitem_t &fd) throw();
 
   /**
    * Handles the specified event.
    *
    * @param fd The poll file-descriptor describing the event.
    */
-  bool handleEvent(const zmq::Pollitem &fd) ;
+  bool handleEvent(const zmq_pollitem_t &fd) ;
 
   /**
    * Destructor.

@@ -65,22 +65,22 @@ public:
     DriveCatalogue &driveCatalogue) throw();
 
   /**
-   * Returns the integer file descriptor of this event handler.
+   * Returns the human-readable name this event handler.
    */
-  int getFd() throw();
+  std::string getName() const throw();
 
   /**
    * Fills the specified poll file-descriptor ready to be used in a call to
    * poll().
    */
-  void fillPollFd(zmq::Pollitem &fd) throw();
+  void fillPollFd(zmq_pollitem_t &fd) throw();
 
   /**
    * Handles the specified event.
    *
    * @param fd The poll file-descriptor describing the event.
    */
-  bool handleEvent(const zmq::Pollitem &fd) ;
+  bool handleEvent(const zmq_pollitem_t &fd) ;
 
   /**
    * Destructor.
@@ -120,7 +120,7 @@ private:
   /**
    * Logs the specifed IO event of the vdqm connection.
    */
-  void logVdqmConnectionEvent(const zmq::Pollitem &fd);
+  void logVdqmConnectionEvent(const zmq_pollitem_t &fd);
 
   /**
    * Throws an exception if the specified file-descriptor is not that of the

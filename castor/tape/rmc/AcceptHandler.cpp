@@ -42,8 +42,7 @@ castor::tape::rmc::AcceptHandler::AcceptHandler(const int fd,
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::tape::rmc::AcceptHandler::~AcceptHandler()
-  throw() {
+castor::tape::rmc::AcceptHandler::~AcceptHandler() throw() {
   {
     log::Param params[] = {
       log::Param("fd", m_fd)};
@@ -53,17 +52,18 @@ castor::tape::rmc::AcceptHandler::~AcceptHandler()
 }
 
 //------------------------------------------------------------------------------
-// getFd
+// getName
 //------------------------------------------------------------------------------
-int castor::tape::rmc::AcceptHandler::getFd() throw() {
-  return m_fd;
+std::string castor::tape::rmc::AcceptHandler::getName() const throw() {
+  return "rmc::AcceptHandler";
 }
 
 //------------------------------------------------------------------------------
 // fillPollFd
 //------------------------------------------------------------------------------
-void castor::tape::rmc::AcceptHandler::fillPollFd(zmq::Pollitem &fd) throw() {
+void castor::tape::rmc::AcceptHandler::fillPollFd(zmq_pollitem_t &fd) throw() {
   fd.fd = m_fd;
+  fd.events = ZMQ_POLLIN;
   fd.revents = 0;
   fd.socket = NULL;
 }
@@ -72,22 +72,13 @@ void castor::tape::rmc::AcceptHandler::fillPollFd(zmq::Pollitem &fd) throw() {
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::rmc::AcceptHandler::handleEvent(
-  const zmq::Pollitem &fd)  {
-  {
-    log::Param params[] = {
-      log::Param("fd"        , fd.fd                                     ),
-      log::Param("POLLIN"    , fd.revents & POLLIN     ? "true" : "false"),
-      log::Param("POLLRDNORM", fd.revents & POLLRDNORM ? "true" : "false"),
-      log::Param("POLLRDBAND", fd.revents & POLLRDBAND ? "true" : "false"),
-      log::Param("POLLPRI"   , fd.revents & POLLPRI    ? "true" : "false"),
-      log::Param("POLLOUT"   , fd.revents & POLLOUT    ? "true" : "false"),
-      log::Param("POLLWRNORM", fd.revents & POLLWRNORM ? "true" : "false"),
-      log::Param("POLLWRBAND", fd.revents & POLLWRBAND ? "true" : "false"),
-      log::Param("POLLERR"   , fd.revents & POLLERR    ? "true" : "false"),
-      log::Param("POLLHUP"   , fd.revents & POLLHUP    ? "true" : "false"),
-      log::Param("POLLNVAL"  , fd.revents & POLLNVAL   ? "true" : "false")};
-    m_log(LOG_DEBUG, "AcceptHandler::handleEvent()", params);
-  }
+  const zmq_pollitem_t &fd)  {
+  log::Param params[] = {
+    log::Param("fd", fd.fd),
+    log::Param("ZMQ_POLLIN", fd.revents & ZMQ_POLLIN ? "true" : "false"),
+    log::Param("ZMQ_POLLOUT", fd.revents & ZMQ_POLLOUT ? "true" : "false"),
+    log::Param("ZMQ_POLLERR", fd.revents & ZMQ_POLLERR ? "true" : "false")};
+  m_log(LOG_DEBUG, "I/O event on rmc listen socket", params);
 
   checkHandleEventFd(fd.fd);
 
@@ -136,8 +127,7 @@ bool castor::tape::rmc::AcceptHandler::handleEvent(
 //------------------------------------------------------------------------------
 // checkHandleEventFd
 //------------------------------------------------------------------------------
-void castor::tape::rmc::AcceptHandler::checkHandleEventFd(
-  const int fd)  {
+void castor::tape::rmc::AcceptHandler::checkHandleEventFd(const int fd)  {
   if(m_fd != fd) {
     castor::exception::Exception ex;
     ex.getMessage() << "Failed to accept connection from client"

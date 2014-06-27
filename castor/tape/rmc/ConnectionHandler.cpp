@@ -46,17 +46,18 @@ castor::tape::rmc::ConnectionHandler::~ConnectionHandler() throw() {
 }
 
 //------------------------------------------------------------------------------
-// getFd
+// getName
 //------------------------------------------------------------------------------
-int castor::tape::rmc::ConnectionHandler::getFd() throw() {
-  return m_fd;
+std::string castor::tape::rmc::ConnectionHandler::getName() const throw() {
+  return "rmc::ConnectionHandler";
 }
 
 //------------------------------------------------------------------------------
 // fillPollFd
 //------------------------------------------------------------------------------
-void castor::tape::rmc::ConnectionHandler::fillPollFd(zmq::Pollitem &fd) throw() {
+void castor::tape::rmc::ConnectionHandler::fillPollFd(zmq_pollitem_t &fd) throw() {
   fd.fd = m_fd;
+  fd.events = ZMQ_POLLIN;
   fd.revents = 0;
   fd.socket = NULL;
 }
@@ -64,23 +65,15 @@ void castor::tape::rmc::ConnectionHandler::fillPollFd(zmq::Pollitem &fd) throw()
 //------------------------------------------------------------------------------
 // handleEvent
 //------------------------------------------------------------------------------
-bool castor::tape::rmc::ConnectionHandler::handleEvent(const zmq::Pollitem &fd)  {
-  std::list<log::Param> params;
-  params.push_back(log::Param("fd"        , fd.fd                                     ));
-  params.push_back(log::Param("POLLIN"    , fd.revents & POLLIN     ? "true" : "false"));
-  params.push_back(log::Param("POLLRDNORM", fd.revents & POLLRDNORM ? "true" : "false"));
-  params.push_back(log::Param("POLLRDBAND", fd.revents & POLLRDBAND ? "true" : "false"));
-  params.push_back(log::Param("POLLPRI"   , fd.revents & POLLPRI    ? "true" : "false"));
-  params.push_back(log::Param("POLLOUT"   , fd.revents & POLLOUT    ? "true" : "false"));
-  params.push_back(log::Param("POLLWRNORM", fd.revents & POLLWRNORM ? "true" : "false"));
-  params.push_back(log::Param("POLLWRBAND", fd.revents & POLLWRBAND ? "true" : "false"));
-  params.push_back(log::Param("POLLERR"   , fd.revents & POLLERR    ? "true" : "false"));
-  params.push_back(log::Param("POLLHUP"   , fd.revents & POLLHUP    ? "true" : "false"));
-  params.push_back(log::Param("POLLNVAL"  , fd.revents & POLLNVAL   ? "true" : "false"));
-  m_log(LOG_DEBUG, "ConnectionHandler::handleEvent()", params);
+bool castor::tape::rmc::ConnectionHandler::handleEvent(const zmq_pollitem_t &fd)  {
+  log::Param params[] = {
+  log::Param("fd", fd.fd),
+  log::Param("ZMQ_POLLIN", fd.revents & ZMQ_POLLIN ? "true" : "false"),
+  log::Param("ZMQ_POLLOUT", fd.revents & ZMQ_POLLOUT ? "true" : "false"),
+  log::Param("ZMQ_POLLERR", fd.revents & ZMQ_POLLERR ? "true" : "false")};
+  m_log(LOG_DEBUG, "I/O event on rmc connection", params);
 
   checkHandleEventFd(fd.fd);
-
 
   if(!connectionIsAuthorized()) {
     return true; // Ask reactor to remove and delete this handler

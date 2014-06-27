@@ -65,10 +65,15 @@ public:
     const std::string &hostName) throw();
 
   /**
+   * Returns the human-readable name this event handler.
+   */
+  std::string getName() const throw();
+
+  /**
    * Fills the specified poll file-descriptor ready to be used in a call to
    * poll().
    */
-  void fillPollFd(zmq::Pollitem &fd) throw();
+  void fillPollFd(zmq_pollitem_t &fd) throw();
 
   /**
    * Handles the specified event.
@@ -77,7 +82,7 @@ public:
    * @return true if the event handler should be removed from and deleted by
    * the reactor.
    */
-  bool handleEvent(const zmq::Pollitem &fd);
+  bool handleEvent(const zmq_pollitem_t &fd);
 
   /**
    * Destructor.
@@ -114,7 +119,7 @@ private:
   /**
    * Logs the specifed IO event of the admin connection.
    */
-  void logAdminConnectionEvent(const zmq::Pollitem &fd);
+  void logAdminConnectionEvent(const zmq_pollitem_t &fd);
 
   /**
    * Throws an exception if the specified file-descriptor does not match the

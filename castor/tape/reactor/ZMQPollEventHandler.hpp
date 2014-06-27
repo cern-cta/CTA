@@ -25,6 +25,8 @@
 #include "castor/exception/Exception.hpp"
 #include "zmq/ZmqWrapper.hpp"
 
+#include <zmq.h>
+
 namespace castor {
 namespace tape {
 namespace reactor {
@@ -45,10 +47,20 @@ class ZMQPollEventHandler {
 public:
 
   /**
+   * Destructor.
+   */
+  //virtual ~ZMQPollEventHandler() throw() = 0;
+
+  /**
+   * Returns the human-readable name this event handler.
+   */
+  virtual std::string getName() const throw() = 0;
+
+  /**
    * Fills the specified poll file-descriptor ready to be used in a call to
    * poll().
    */
-   virtual void fillPollFd(zmq::Pollitem &pollitem) =0;
+  virtual void fillPollFd(zmq_pollitem_t &pollitem) =0;
 
   /**
    * Handles the specified event.
@@ -57,7 +69,7 @@ public:
    * @return true if the event handler should be removed from and deleted by
    * the reactor.
    */
-  virtual bool handleEvent(const zmq::Pollitem &fd)=0;
+  virtual bool handleEvent(const zmq_pollitem_t &fd)=0;
 }; // class ZMQPollEventHandler
 
 } // namespace reactor

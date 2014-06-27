@@ -44,7 +44,6 @@ namespace zmq
 {
 
   typedef zmq_free_fn FreeFunctor;
-  typedef zmq_pollitem_t Pollitem;
   
   int poll (zmq_pollitem_t *items, int nitems, long timeout = -1);
   

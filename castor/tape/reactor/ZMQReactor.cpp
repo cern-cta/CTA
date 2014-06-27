@@ -26,7 +26,7 @@
 #include <algorithm>
 
 namespace{
-  bool operator==(const zmq::Pollitem& a,const zmq::Pollitem& b){
+  bool operator==(const zmq_pollitem_t& a,const zmq_pollitem_t& b){
        if( (a.fd==b.fd && a.fd!= -1 && b.fd != -1) || 
             (a.socket==b.socket && a.socket!=NULL && b.socket != NULL) ){
       return true;
@@ -46,12 +46,14 @@ namespace reactor {
   m_context(ctx),m_log(log){
     
   }
+
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-  ZMQReactor::~ZMQReactor(){
+  ZMQReactor::~ZMQReactor() throw() {
     clear();
   }
+
 //------------------------------------------------------------------------------
 // clear
 //------------------------------------------------------------------------------  
@@ -61,86 +63,97 @@ namespace reactor {
     }
     m_handlers.clear();
   }
+
 //------------------------------------------------------------------------------
 // registerHandler
 //------------------------------------------------------------------------------  
   void ZMQReactor::registerHandler(ZMQPollEventHandler *const handler){
-    zmq::Pollitem item;
+    zmq_pollitem_t item;
     handler->fillPollFd(item);
     item.events = ZMQ_POLLIN;
     //TODO, handle double registration 
     m_handlers.push_back(std::make_pair(item,handler));
   }
+
 //------------------------------------------------------------------------------
 // handleEvents
 //------------------------------------------------------------------------------  
-  void ZMQReactor::handleEvents(const int timeout){
+  void ZMQReactor::handleEvents(const int timeout) {
     //it should not bring any copy, thanks to NRVO
-    std::vector<zmq::Pollitem> pollFD=buildPollFds();
+    std::vector<zmq_pollitem_t> pollFds=buildPollFds();
     
-    const int pollrc = zmq::poll(&pollFD[0], pollFD.size(), timeout);  
-    if(pollrc !=0){
-      dispatchEventHandlers(pollFD);
+    m_log(LOG_DEBUG, "Before zmq_poll");
+    const int pollRc = zmq_poll(&pollFds[0], pollFds.size(), timeout);  
+    m_log(LOG_DEBUG, "After zmq_poll");
+    if(0 <= pollRc){
+      for(std::vector<zmq_pollitem_t>::const_iterator it=pollFds.begin();
+        it!=pollFds.end(); ++it) {
+        const zmq_pollitem_t &pollFd = *it;
+        if(0 != pollFd.revents) {
+          handleEvent(pollFd);
+        }
+      }
+    } else if(0 > pollRc) {
+      char message[100];
+      sstrerror_r(errno, message, sizeof(message));
+      log::Param params[] = {log::Param("message", message)};
+      m_log(LOG_ERR, "Failed to handle I/O event: zmq_poll() failed", params);
     }
   }
+
 //------------------------------------------------------------------------------
-// dispatchEventHandlers
-//------------------------------------------------------------------------------  
-  void ZMQReactor::dispatchEventHandlers(const std::vector<zmq::Pollitem>& pollFD){  
-    for(std::vector<zmq::Pollitem>::const_iterator it=pollFD.begin();
-            it!=pollFD.end();
-            ++it) {
-      
-      // Find and dispatch the appropriate handler if there is a pending event
-      if(it->revents & ZMQ_POLLIN) {
-        ZMQPollEventHandler *handler = findHandler(*it);
-        if(handler) {
-          const bool removeAndDeleteHandler = handler->handleEvent(*it);
-          if(removeAndDeleteHandler) { 
-            removeHandler(handler);
-            delete(handler);
-          }
-        }else {
-          std::list<log::Param> params;
-          params.push_back(log::Param("fd",it->fd));
-          params.push_back(log::Param("socket",it->socket));
-          m_log(LOG_ERR, "Event on some poll, but no handler to match it", params);
+// handleEvent
+//------------------------------------------------------------------------------
+  void ZMQReactor::handleEvent(const zmq_pollitem_t &pollFd) {
+    // Find and dispatch the appropriate handler if there is a pending event
+    if(pollFd.revents & ZMQ_POLLIN) {
+      HandlerMap::iterator handlerItor = findHandler(pollFd);
+      if(handlerItor != m_handlers.end()) {
+        ZMQPollEventHandler *const handler = handlerItor->second;
+        const bool removeAndDeleteHandler = handler->handleEvent(pollFd);
+        if(removeAndDeleteHandler) { 
+          m_handlers.erase(handlerItor);
+          delete(handler);
         }
+      }else {
+        std::list<log::Param> params;
+        params.push_back(log::Param("fd",pollFd.fd));
+        params.push_back(log::Param("socket",pollFd.socket));
+        m_log(LOG_ERR, "Event on some poll, but no handler to match it", params);
       }
     }
   }
   
-  ZMQPollEventHandler *  
-  ZMQReactor::findHandler(const zmq::Pollitem& pollfd) const{
-    for(HandlerMap::const_iterator it=m_handlers.begin();it!=m_handlers.end();++it){
+//------------------------------------------------------------------------------
+// findHandler
+//------------------------------------------------------------------------------
+  ZMQReactor::HandlerMap::iterator
+  ZMQReactor::findHandler(const zmq_pollitem_t& pollfd) {
+    for(HandlerMap::iterator it=m_handlers.begin();it!=m_handlers.end();++it){
+      // Use overloaded == to compare zmq_pollitem_t references
       if(pollfd==it->first){
-        return it->second;
+        return it;
       } 
     }
-    return NULL;
+    return m_handlers.end();
   }
-//------------------------------------------------------------------------------
-// removeHandler
-//------------------------------------------------------------------------------
-  void ZMQReactor::removeHandler(ZMQPollEventHandler *const handler){
-    zmq::Pollitem pollitem;
-    for(HandlerMap::iterator it=m_handlers.begin();it!=m_handlers.end();++it){
-      if(it->second==handler){
-        pollitem=it->first;
-        m_handlers.erase(it);
-        break;
-      }
-    }
-  }
+
 //------------------------------------------------------------------------------
 // buildPollFds
 //------------------------------------------------------------------------------  
-  std::vector<zmq::Pollitem>  ZMQReactor::buildPollFds() const{
-    std::vector<zmq::Pollitem> vec;
+  std::vector<zmq_pollitem_t>  ZMQReactor::buildPollFds() const{
+    std::vector<zmq_pollitem_t> vec;
     vec.reserve(m_handlers.size());
     for(HandlerMap::const_iterator it=m_handlers.begin();it!=m_handlers.end();++it){
+      //ZMQPollEventHandler *const handler = it->second;
+      //zmq_pollitem_t pollFd;
+      //handler->fillPollFd(pollFd);
+      //pollFd.events = ZMQ_POLLIN;
       vec.push_back(it->first);
     }
+            std::list<log::Param> params;
+        params.push_back(log::Param("nbFds",vec.size()));
+        m_log(LOG_INFO, "STEVE buildPollFds()", params);
     return vec;
   }
 

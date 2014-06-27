@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/tape/tapeserver/daemon/AdminConnectionHandler.cpp
+ *         castor/tape/tapeserver/daemon/TapeMessageHandler.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -21,17 +21,17 @@
  *****************************************************************************/
 
 
+#include "castor/messages/Constants.hpp"
 #include "castor/messages/Header.pb.h"
+#include "castor/messages/messages.hpp"
+#include "castor/messages/NotifyDrive.pb.h"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/TapeMessageHandler.hpp"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/Ctape.h"
-#include "castor/messages/Constants.hpp"
-#include "castor/messages/NotifyDrive.pb.h"
-#include "castor/messages/messages.hpp"
-#include "zmq/ZmqWrapper.hpp"
 #include "h/vmgr_constants.h"
+#include "zmq/ZmqWrapper.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -66,10 +66,26 @@ castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
 }
 
 //------------------------------------------------------------------------------
+// destructor
+//------------------------------------------------------------------------------
+castor::tape::tapeserver::daemon::TapeMessageHandler::~TapeMessageHandler()
+  throw() {
+}
+
+//------------------------------------------------------------------------------
+// getName
+//------------------------------------------------------------------------------
+std::string castor::tape::tapeserver::daemon::TapeMessageHandler::getName() 
+  const throw() {
+  return "TapeMessageHandler";
+}
+
+//------------------------------------------------------------------------------
 // fillPollFd
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeMessageHandler::fillPollFd(
-  zmq::Pollitem &fd) throw() {
+  zmq_pollitem_t &fd) throw() {
+  fd.events = ZMQ_POLLIN;
   fd.revents = 0;
   fd.socket = m_socket;
   fd.fd= -1;
@@ -79,7 +95,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::fillPollFd(
 // handleEvent
 //------------------------------------------------------------------------------
 bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
-const zmq::Pollitem &fd) {
+  const zmq_pollitem_t &fd) {
   checkSocket(fd);
   m_log(LOG_INFO,"handling event in TapeMessageHandler");
   messages::Header header; 
@@ -109,7 +125,7 @@ const zmq::Pollitem &fd) {
 // checkSocket
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeMessageHandler::checkSocket(
-  const zmq::Pollitem &fd) {
+  const zmq_pollitem_t &fd) {
   void* underlyingSocket = m_socket;
   if(fd.socket != underlyingSocket){
     castor::exception::Exception ex;

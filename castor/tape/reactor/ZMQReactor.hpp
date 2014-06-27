@@ -49,10 +49,17 @@ public:
 
   /**
    * Constructor.
+   *
+   * @param log Interface to the CASTOR logging system.
+   * @param ctx The ZMQ context used by the sockets handled by this reactor.
    */
   ZMQReactor(log::Logger& log,zmq::Context& ctx);
 
-  ~ZMQReactor();
+  /**
+   * Destructor.
+   */
+  ~ZMQReactor() throw();
+
   /**
    * Removes and deletes all of the event handlers registered with the reactor.
    */
@@ -77,9 +84,19 @@ public:
    */
   void handleEvents(const int timeout);
   
+  /**
+   * Returns the ZMQ context used by the sockets handled by this reactor.
+   *
+   * @return The ZMQ context used by the sockets handled by this reactor.
+   */
   zmq::Context& getContext()const {return m_context;}
 
 private:
+  
+  /**
+   * Type used to map zmq_pollitem_t to event handler.
+   */
+  typedef std::vector<std::pair<zmq_pollitem_t, ZMQPollEventHandler*> > HandlerMap;
 
   /**
    * Allocates and builds the array of file descriptors to be passed to poll().
@@ -87,19 +104,19 @@ private:
    * @return The array of file descriptors.  Please note that is the
    * responsibility of the caller to delete the array.
    */
-  std::vector<zmq::Pollitem> buildPollFds() const;
+  std::vector<zmq_pollitem_t> buildPollFds() const;
   
   /**
-   * Returns the event handler associated with the specified integer
-   * file-descriptor (null if there no handler associated, if ti happens = bug)
+   * Returns the event handler associated with the specified zmq_pollitem_t.
    */
-  ZMQPollEventHandler*  findHandler(const zmq::Pollitem&) const;
+  HandlerMap::iterator findHandler(const zmq_pollitem_t&);
   
   /**
-   * Dispatches the appropriate event handlers based on the specified result
-   * from poll().
+   * Handles the specified ZMQ I/O event.
+   *
+   * @param pollFd The file-descriptor representing the I/O event.
    */
-  void dispatchEventHandlers(const std::vector<zmq::Pollitem>& pollFD);
+  void handleEvent(const zmq_pollitem_t &pollFd);
   
   /**
    * Removes the specified handler from the reactor.  This method effectively
@@ -110,15 +127,13 @@ private:
   void removeHandler(ZMQPollEventHandler *const handler);
   
   /**
-   * Type used to map file descriptor to event handler.
-   */
-  typedef std::vector<std::pair<zmq::Pollitem, ZMQPollEventHandler*> > HandlerMap;
-  
-  /**
    * Map of file descriptor to registered event handler.
    */
-  HandlerMap  m_handlers;  
+  HandlerMap m_handlers;  
   
+  /**
+   * The ZMQ context used by the sockets handled by this reactor.
+   */
   zmq::Context& m_context;
   
   /**
