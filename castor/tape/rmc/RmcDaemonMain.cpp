@@ -44,55 +44,73 @@ static std::string getConfigParam(const std::string &category, const std::string
 //
 // The main() function delegates the bulk of its implementation to this
 // exception throwing version.
+//
+// @param argc The number of command-line arguments.
+// @param argv The command-line arguments.
+// @param log The logging system.
+// @param zmqContext The ZMQ context.
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const int argc, char **const argv, castor::log::Logger &log);
+static int exceptionThrowingMain(const int argc, char **const argv,
+  castor::log::Logger &log, void *const zmqContext);
 
 //------------------------------------------------------------------------------
 // main
 //------------------------------------------------------------------------------
 int main(const int argc, char **const argv) {
-  using namespace castor;
-
+  // Try to instantiate the logging system API
+  castor::log::Logger *logPtr = NULL;
   try {
-    log::SyslogLogger log("rmcd");
-
-    try {
-      return exceptionThrowingMain(argc, argv, log);
-    } catch(castor::exception::Exception &ex) {
-      log::Param params[] = {castor::log::Param("message", ex.getMessage().str())};
-      log(LOG_ERR, "Caught an unexpected CASTOR exception", params);
-      return 1;
-    } catch(std::exception &se) {
-      log::Param params[] = {log::Param("what", se.what())};
-      log(LOG_ERR, "Caught an unexpected standard exception", params);
-      return 1;
-    } catch(...) {
-      log(LOG_ERR, "Caught an unexpected and unknown exception");
-      return 1;
-    }
+    logPtr = new castor::log::SyslogLogger("rmcd");
   } catch(castor::exception::Exception &ex) {
     std::cerr << "Failed to instantiate object representing CASTOR logging system"
       ": " << ex.getMessage().str() << std::endl;
     return 1;
-  } catch(std::exception &se) {
-    std::cerr << "Failed to instantiate object representing CASTOR logging system"
-      ": " << se.what() << std::endl;
-    return 1;
-  } catch(...) {
-    std::cerr << "Failed to instantiate object representing CASTOR logging system"
-      ": Caught an unknown exception" << std::endl;
+  }
+  castor::log::Logger &log = *logPtr;
+
+  // Try to instantiate a ZMQ context
+  const int sizeOfIOThreadPoolForZMQ = 1;
+  void *const zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
+  if(NULL == zmqContext) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::log::Param params[] = {castor::log::Param("message", message)};
+    log(LOG_ERR, "Failed to instantiate ZMQ context", params);
     return 1;
   }
-  return 0;
+
+  int programRc = 1; // Be pessimistic
+  try {
+    programRc = exceptionThrowingMain(argc, argv, log, zmqContext);
+  } catch(castor::exception::Exception &ex) {
+    castor::log::Param params[] = {castor::log::Param("message", ex.getMessage().str())};
+    log(LOG_ERR, "Caught an unexpected CASTOR exception", params);
+  } catch(std::exception &se) {
+    castor::log::Param params[] = {castor::log::Param("what", se.what())};
+    log(LOG_ERR, "Caught an unexpected standard exception", params);
+  } catch(...) {
+    log(LOG_ERR, "Caught an unexpected and unknown exception");
+  }
+
+  // Try to destroy the ZMQ context
+  if(zmq_term(zmqContext)) {
+    char message[100];
+    sstrerror_r(errno, message, sizeof(message));
+    castor::log::Param params[] = {castor::log::Param("message", message)};
+    log(LOG_ERR, "Failed to destroy ZMQ context", params);
+    return 1;
+  }
+
+  return programRc;
 }
 
 //------------------------------------------------------------------------------
 // exceptionThrowingMain
 //------------------------------------------------------------------------------
-static int exceptionThrowingMain(const int argc, char **const argv, castor::log::Logger &log) {
+static int exceptionThrowingMain(const int argc, char **const argv,
+  castor::log::Logger &log, void *const zmqContext) {
   const std::string cupvHostName = getConfigParam("UPV", "HOST");
-  zmq::Context ctx;
-  castor::tape::reactor::ZMQReactor reactor(log,ctx);
+  castor::tape::reactor::ZMQReactor reactor(log, zmqContext);
   const int netTimeout = 10; // Timeout in seconds
   castor::legacymsg::CupvProxyTcpIp cupv(log, cupvHostName, CUPV_PORT, netTimeout);
   castor::tape::rmc::RmcDaemon daemon(std::cout, std::cerr, log, reactor, cupv);

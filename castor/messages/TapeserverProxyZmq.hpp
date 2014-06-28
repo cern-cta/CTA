@@ -25,7 +25,8 @@
 #include "castor/log/Logger.hpp"
 #include "castor/messages/TapeserverProxy.hpp"
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
-#include "zmq/ZmqWrapper.hpp"
+#include "castor/tape/utils/ZmqSocket.hpp"
+
 namespace castor {
 namespace messages {
 
@@ -45,9 +46,10 @@ public:
    * @param vdqmPort The TCP/IP port on which the vdqmd daemon is listening.
    * @param netTimeout The timeout in seconds to be applied when performing
    * network read and write operations.
+   * @param zmqContext The ZMQ context.
    */
   TapeserverProxyZmq(log::Logger &log, const unsigned short tapeserverPort,
-    const int netTimeout,zmq::Context& ctx) throw();
+    const int netTimeout, void *const zmqContext) throw();
 
   /**
    * Informs the tapeserverd daemon that the mount-session child-process got
@@ -156,8 +158,8 @@ private:
    */
   const int m_netTimeout;
   
-  zmq::Socket m_messageSocket;
-  zmq::Socket m_heartbeatSocket;
+  tape::utils::ZmqSocket m_messageSocket;
+  tape::utils::ZmqSocket m_heartbeatSocket;
 
 }; // class TapeserverProxyZmq
 

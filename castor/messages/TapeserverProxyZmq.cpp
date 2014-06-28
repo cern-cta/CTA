@@ -69,13 +69,14 @@ namespace {
 // constructor
 //------------------------------------------------------------------------------
 castor::messages::TapeserverProxyZmq::TapeserverProxyZmq(log::Logger &log, 
-        const unsigned short tapeserverPort, const int netTimeout,zmq::Context& ctx) throw():
+  const unsigned short tapeserverPort, const int netTimeout,
+  void *const zmqContext) throw():
   m_log(log),
   m_tapeserverHostName("localhost"),
   m_tapeserverPort(tapeserverPort),
   m_netTimeout(netTimeout),
-        m_messageSocket(ctx,ZMQ_REQ),
-        m_heartbeatSocket(ctx,ZMQ_REQ)  {
+  m_messageSocket(zmqContext, ZMQ_REQ),
+  m_heartbeatSocket(zmqContext, ZMQ_REQ) {
   castor::messages::connectToLocalhost(m_messageSocket);
   castor::messages::connectToLocalhost(m_heartbeatSocket);
 }

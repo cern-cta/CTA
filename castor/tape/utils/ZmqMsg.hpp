@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/messages/TapeserverProxyFactory.hpp
+ *         castor/utils/ZmqMsg.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -17,41 +17,74 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place - Suite 330, Boston, MA 02111-1307, USA.
  *
- * @author dkruse@cern.ch
+ *
+ * 
+ * @author Steven.Murray@cern.ch
  *****************************************************************************/
 
 #pragma once
 
-#include "castor/messages/TapeserverProxy.hpp"
+#include "castor/exception/NotAnOwner.hpp"
+
+#include <stdio.h>
+#include <zmq.h>
+
 
 namespace castor {
-namespace messages {
+namespace tape {
+namespace utils {
 
 /**
- * Abstract factory for creating objects of type TapeserverProxy.
+ * C++ wrapper around a ZMQ message.
  */
-class TapeserverProxyFactory {
+class ZmqMsg {
+
 public:
 
   /**
-   * Destructor.
+   * Constructor.
    */
-  virtual ~TapeserverProxyFactory() throw() = 0;
+  ZmqMsg() throw();
 
   /**
-   * Creates an object of type TapeserverProxy on the heap and returns a pointer to
-   * it.
+   * Constructor.
    *
-   * Please note that it is the responsibility of the caller to deallocate the
-   * proxy object from the heap.
-   *
-   * @param zmqContext The ZMQ context.
-   * @return A pointer to the newly created object.
+   * @param msgSize The size of the ZMQ message.
    */
-  virtual TapeserverProxy *create(void *const zmqContext) = 0;
+  ZmqMsg(const size_t msgSize) throw();
 
-}; // class TapeserverProxyFactory
+  /**
+   * Destructor.
+   *
+   * Calls zmq_msg_close().
+   */
+  ~ZmqMsg() throw();
 
-} // namespace messages
+  /**
+   * Returns the underlying ZMQ message.
+   *
+   * @return The underlying ZMQ message.
+   */
+  zmq_msg_t &getZmqMsg() throw();
+
+private:
+
+  /**
+   * The enclosed ZMQ message.
+   */ 
+  zmq_msg_t m_zmqMsg;
+
+  /**
+   * Private copy-constructor to prevent users from trying to create a new
+   * copy of an object of this class.
+   *
+   * Not implemented so that it cannot be called
+   */
+  ZmqMsg(const ZmqMsg &obj) throw();
+
+}; // class ZmqMsg
+
+} // namespace utils
+} // namespace tape
 } // namespace castor
 

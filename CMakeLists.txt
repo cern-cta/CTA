@@ -195,7 +195,6 @@ ELSE(DEFINED PackageOnly)
   if (${COMPILE_SERVER} STREQUAL "1")
     add_subdirectory (rtcopy)
     add_subdirectory (test)
-    add_subdirectory (zmq)
   endif (${COMPILE_SERVER} STREQUAL "1")
 ENDIF(DEFINED PackageOnly)
 

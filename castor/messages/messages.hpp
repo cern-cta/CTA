@@ -22,12 +22,13 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include "zmq/ZmqWrapper.hpp"
+#include "castor/exception/Exception.hpp"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
+#include "castor/tape/utils/ZmqMsg.hpp"
+#include "castor/tape/utils/ZmqSocket.hpp"
 #include "h/Ctape.h"
-#include "castor/exception/Exception.hpp"
 #pragma once 
 
 namespace castor {
@@ -36,13 +37,13 @@ namespace messages {
   
   struct ReplyContainer{
     castor::messages::Header header;
-    zmq::Message blobBody;
-    ReplyContainer(zmq::Socket& socket);
+    tape::utils::ZmqMsg blobBody;
+    ReplyContainer(tape::utils::ZmqSocket& socket);
   private :
     ReplyContainer(const ReplyContainer&);
     ReplyContainer& operator=(const ReplyContainer&);
   };
-template <class T> void sendMessage(zmq::Socket& socket,const T& msg,int flag=0) {
+template <class T> void sendMessage(tape::utils::ZmqSocket& socket,const T& msg,int flag=0) {
 
   if(!msg.IsInitialized()){
     castor::exception::Exception ex("the protocol buffer message was not correctly set");
@@ -50,15 +51,15 @@ template <class T> void sendMessage(zmq::Socket& socket,const T& msg,int flag=0)
   }
 
   const int size=msg.ByteSize();
-  zmq::Message blob(size);
-  msg.SerializeToArray(blob.data(),size);
-  socket.send(blob,flag);
+  tape::utils::ZmqMsg blob(size);
+  msg.SerializeToArray(zmq_msg_data(&blob.getZmqMsg()),size);
+  socket.send(&blob.getZmqMsg(), flag);
 }
 
-void connectToLocalhost(zmq::Socket& m_socket);
+void connectToLocalhost(tape::utils::ZmqSocket& m_socket);
 castor::messages::Header preFillHeader();
 
-ReplyContainer readReplyMsg(zmq::Socket& socket);
+ReplyContainer readReplyMsg(tape::utils::ZmqSocket& socket);
 
 } // namespace messages
 } // namespace castor

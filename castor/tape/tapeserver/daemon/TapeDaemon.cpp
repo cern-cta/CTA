@@ -863,7 +863,8 @@ void castor::tape::tapeserver::daemon::TapeDaemon::runDataTransferSession(
       
       rmc.reset(m_rmcFactory.create());
       try{
-        tapeserver.reset(m_tapeserverFactory.create(DataTransferSession::ctx()));
+        tapeserver.reset(
+          m_tapeserverFactory.create(DataTransferSession::getZmqContext()));
       }
       catch(const std::exception& e){
         m_log(LOG_ERR, "Failed to connect ZMQ/REQ socket in DataTransferSession");

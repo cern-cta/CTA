@@ -11,5 +11,5 @@ add_library(castormessages SHARED
   TapeserverProxyZmqFactory.cpp
 )
 
-target_link_libraries(castormessages castorzmqwrapper protobuf)
+target_link_libraries(castormessages protobuf)
 install (TARGETS castormessages DESTINATION ${CASTOR_DEST_LIB_DIR})

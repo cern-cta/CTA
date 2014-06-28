@@ -31,7 +31,6 @@
 #include "castor/utils/utils.hpp"
 #include "h/Ctape.h"
 #include "h/vmgr_constants.h"
-#include "zmq/ZmqWrapper.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
@@ -43,7 +42,7 @@ castor::tape::tapeserver::daemon::TapeMessageHandler::TapeMessageHandler(
   castor::legacymsg::VdqmProxy & vdqm,
   castor::legacymsg::VmgrProxy & vmgr):
   m_reactor(reactor),
-  m_log(log),m_socket(reactor.getContext(),ZMQ_REP),
+  m_log(log),m_socket(reactor.getZmqContext(), ZMQ_REP),
   m_driveCatalogue(driveCatalogue),
   m_hostName(hostName),
   m_vdqm(vdqm),
@@ -87,7 +86,7 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::fillPollFd(
   zmq_pollitem_t &fd) throw() {
   fd.events = ZMQ_POLLIN;
   fd.revents = 0;
-  fd.socket = m_socket;
+  fd.socket = m_socket.getZmqSocket();
   fd.fd= -1;
 }
 
@@ -101,10 +100,10 @@ bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
   messages::Header header; 
   
   try{
-    zmq::Message headerBlob;
-    m_socket.recv(headerBlob);
+    tape::utils::ZmqMsg headerBlob;
+    m_socket.recv(&headerBlob.getZmqMsg());
     
-    if(!headerBlob.more()){
+    if(!zmq_msg_more(&headerBlob.getZmqMsg())){
       castor::exception::Exception ex;
       ex.getMessage() <<"Read header blob, expecting a multi parts message but nothing to come";
       throw ex;
@@ -126,7 +125,7 @@ bool castor::tape::tapeserver::daemon::TapeMessageHandler::handleEvent(
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeMessageHandler::checkSocket(
   const zmq_pollitem_t &fd) {
-  void* underlyingSocket = m_socket;
+  void* underlyingSocket = m_socket.getZmqSocket();
   if(fd.socket != underlyingSocket){
     castor::exception::Exception ex;
     ex.getMessage() <<"TapeMessageHandler passed wrong poll item";
@@ -135,10 +134,14 @@ void castor::tape::tapeserver::daemon::TapeMessageHandler::checkSocket(
 }
 
 
+//------------------------------------------------------------------------------
+// buildHeader
+//------------------------------------------------------------------------------
 castor::messages::Header castor::tape::tapeserver::daemon::TapeMessageHandler::buildHeader(
-const zmq::Message& headerBlob){  
+  tape::utils::ZmqMsg &headerBlob){  
   messages::Header header; 
-  const bool headerCorrectlyParsed = header.ParseFromArray(headerBlob.data(),headerBlob.size());
+  const bool headerCorrectlyParsed = header.ParseFromArray(
+    zmq_msg_data(&headerBlob.getZmqMsg()), zmq_msg_size(&headerBlob.getZmqMsg()));
   
   if(!headerCorrectlyParsed){
     castor::exception::Exception ex;
@@ -158,11 +161,14 @@ const zmq::Message& headerBlob){
   return header;
 }
 
+//------------------------------------------------------------------------------
+// dispatchEvent
+//------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchEvent(
-const messages::Header& header){
+  messages::Header& header) {
   m_log(LOG_INFO,"dispathing  event in TapeMessageHandler");
-  zmq::Message bodyBlob;
-  m_socket.recv(bodyBlob);
+  tape::utils::ZmqMsg bodyBlob;
+  m_socket.recv(&bodyBlob.getZmqMsg());
   
   switch(header.reqtype()){
     case messages::reqType::Heartbeat:

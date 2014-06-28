@@ -23,7 +23,6 @@
 #pragma once
 
 #include "castor/exception/Exception.hpp"
-#include "zmq/ZmqWrapper.hpp"
 
 #include <zmq.h>
 
@@ -70,6 +69,7 @@ public:
    * the reactor.
    */
   virtual bool handleEvent(const zmq_pollitem_t &fd)=0;
+
 }; // class ZMQPollEventHandler
 
 } // namespace reactor

@@ -24,14 +24,19 @@
 
 #include "castor/messages/messages.hpp"
 #include "castor/utils/utils.hpp"
-#include "zmq/ZmqWrapper.hpp"
 
-void castor::messages::connectToLocalhost(zmq::Socket& m_socket){
+//------------------------------------------------------------------------------
+// connectToLocalhost
+//------------------------------------------------------------------------------
+void castor::messages::connectToLocalhost(tape::utils::ZmqSocket& m_socket){
   std::string bindingAdress("tcp://127.0.0.1:");
   bindingAdress+=castor::utils::toString(tape::tapeserver::daemon::TAPE_SERVER_INTERNAL_LISTENING_PORT);
   m_socket.connect(bindingAdress.c_str());
 }
 
+//------------------------------------------------------------------------------
+// preFillHeader
+//------------------------------------------------------------------------------
 castor::messages::Header castor::messages::preFillHeader() {
   castor::messages::Header header;
   header.set_magic(TPMAGIC);
@@ -42,19 +47,19 @@ castor::messages::Header castor::messages::preFillHeader() {
   return header;
 }
 
- castor::messages::ReplyContainer::ReplyContainer(zmq::Socket& socket)  {
-  zmq::Message blobHeader;
-  socket.recv(blobHeader); 
+//------------------------------------------------------------------------------
+// constructor
+//------------------------------------------------------------------------------
+castor::messages::ReplyContainer::ReplyContainer(tape::utils::ZmqSocket& socket)  {
+  tape::utils::ZmqMsg blobHeader;
+  socket.recv(&blobHeader.getZmqMsg()); 
   
-  if(!socket.moreParts()) {
+  if(!zmq_msg_more(&blobHeader.getZmqMsg())) {
     throw castor::exception::Exception("Expecting a multi part message. Got a header without a body");
   }
-  socket.recv(blobBody);
+  socket.recv(&blobBody.getZmqMsg());
   
-  if(!header.ParseFromArray(blobHeader.data(),blobHeader.size())){
+  if(!header.ParseFromArray(zmq_msg_data(&blobHeader.getZmqMsg()),zmq_msg_size(&blobHeader.getZmqMsg()))){
     throw castor::exception::Exception("Message header cant be parsed from binary data read");
-  }
-  if(socket.moreParts()){
-    throw castor::exception::Exception("Expecting a message with excatly 2 parts. Got at least 3 parts");
   }
 }

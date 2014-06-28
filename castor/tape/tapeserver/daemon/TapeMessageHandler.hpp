@@ -23,16 +23,17 @@
 #pragma once
 
 #include "castor/log/Logger.hpp"
-#include "zmq/ZmqWrapper.hpp"
 #include "castor/messages/Header.pb.h"
 #include "castor/messages/Constants.hpp"
 #include "castor/messages/Heartbeat.pb.h"
+#include "castor/messages/NotifyDrive.pb.h"
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
-#include "castor/messages/NotifyDrive.pb.h"
 #include "castor/legacymsg/VdqmProxy.hpp"
 #include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
+#include "castor/tape/utils/ZmqMsg.hpp"
+#include "castor/tape/utils/ZmqSocket.hpp"
 #include "castor/utils/utils.hpp"
 
 namespace castor     {
@@ -94,10 +95,10 @@ public:
 private:
   void sendEmptyReplyToClient();
   
-  template <class T> void unserialize(T& msg,const zmq::Message& blob){
+  template <class T> void unserialize(T& msg, tape::utils::ZmqMsg& blob){
     std::string logMessage="Cant parse " ;
     logMessage+=castor::utils::demangledNameOf(msg)+" from binary data. Wrong body";
-    if(!msg.ParseFromArray(blob.data(),blob.size())){
+    if(!msg.ParseFromArray(zmq_msg_data(&blob.getZmqMsg()),zmq_msg_size(&blob.getZmqMsg()))){
         m_log(LOG_ERR,logMessage); 
       }
   }
@@ -112,7 +113,7 @@ private:
    */
   log::Logger &m_log;
   
-  zmq::Socket m_socket;
+  tape::utils::ZmqSocket m_socket;
   
     /**
    * The catalogue of tape drives controlled by the tape server daemon.
@@ -138,7 +139,7 @@ private:
   
   void checkSocket(const zmq_pollitem_t &fd);
   
-  void dispatchEvent(const castor::messages::Header& header);
+  void dispatchEvent(castor::messages::Header& header);
   
   void dealWith(const castor::messages::Header&,
                          const castor::messages::Heartbeat& body);
@@ -153,7 +154,7 @@ void dealWith(const castor::messages::Header& header,
    * Unserialise the blob and check the header
    * @param headerBlob
    */
-  castor::messages::Header buildHeader(const zmq::Message& headerBlob);
+  castor::messages::Header buildHeader(tape::utils::ZmqMsg& headerBlob);
 }; // class TapeMessageHandler
 
 } // namespace daemon

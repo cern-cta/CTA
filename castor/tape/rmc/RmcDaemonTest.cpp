@@ -33,8 +33,18 @@
 
 namespace unitTest {
 
-class castor_tape_rmc_RmcDaemonTest: public ::testing::Test {
+class castor_tape_rmc_RmcDaemonTest : public ::testing::Test {
 protected:
+  void *const m_zmqContext;
+
+  castor_tape_rmc_RmcDaemonTest(): m_zmqContext(zmq_init(1)) {
+  }
+
+  ~castor_tape_rmc_RmcDaemonTest() {
+    if(NULL != m_zmqContext) {
+      zmq_term(m_zmqContext);
+    }
+  }
 
   virtual void SetUp() {
   }
@@ -43,14 +53,17 @@ protected:
   }
 }; // class castor_tape_rmc_RmcDaemonTest
 
+TEST_F(castor_tape_rmc_RmcDaemonTest, zmqContext) {
+  ASSERT_NE((void *const)0, m_zmqContext);
+}
+
 TEST_F(castor_tape_rmc_RmcDaemonTest, constructor) {
   using namespace castor::tape::rmc;
 
   std::ostringstream stdOut;
   std::ostringstream stdErr;
   castor::log::DummyLogger logger("unittest");
-  zmq::Context ctx;
-  castor::tape::reactor::ZMQReactor reactor(logger,ctx);
+  castor::tape::reactor::ZMQReactor reactor(logger, m_zmqContext);
   const bool isGrantedReturnValue = true;
   castor::legacymsg::CupvProxyDummy cupv(isGrantedReturnValue);
   

@@ -45,9 +45,10 @@ public:
    * Please note that it is the responsibility of the caller to deallocate the
    * proxy object from the heap.
    *
+   * @param zmqContext The ZMQ context.
    * @return A pointer to the newly created object.
    */
-  TapeserverProxy *create(zmq::Context& ctx);
+  TapeserverProxy *create(void *const zmqContext);
 
 }; // class TapeserverProxyDummyFactory
 

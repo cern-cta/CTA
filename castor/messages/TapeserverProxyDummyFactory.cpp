@@ -32,6 +32,6 @@ castor::messages::TapeserverProxyDummyFactory::~TapeserverProxyDummyFactory() th
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-castor::messages::TapeserverProxy *castor::messages::TapeserverProxyDummyFactory::create(zmq::Context& ctx) {
+castor::messages::TapeserverProxy *castor::messages::TapeserverProxyDummyFactory::create(void *const zmqContext) {
   return new TapeserverProxyDummy();
 }

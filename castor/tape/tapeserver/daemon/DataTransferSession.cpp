@@ -22,8 +22,6 @@
  * @author Castor Dev team, castor-dev@cern.ch
  *****************************************************************************/
 
-#include <memory>
-
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/log/LogContext.hpp"
 #include "castor/tape/tapeserver/exception/Exception.hpp"
@@ -32,7 +30,6 @@
 #include "stager_client_commandline.h"
 #include "castor/tape/utils/utils.hpp"
 #include "castor/System.hpp"
-#include "h/serrno.h"
 #include "castor/tape/tapeserver/SCSI/Device.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/tape/tapeserver/daemon/RecallTaskInjector.hpp"
@@ -45,8 +42,16 @@
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
-using namespace castor::tape;
-using namespace castor::log;
+#include "h/serrno.h"
+
+#include <memory>
+#include <zmq.h>
+
+//------------------------------------------------------------------------------
+// m_zmqContext
+//------------------------------------------------------------------------------
+void *castor::tape::tapeserver::daemon::DataTransferSession::m_zmqContext =
+  NULL;
 
 //------------------------------------------------------------------------------
 //Constructor
@@ -474,17 +479,31 @@ castor::tape::tapeserver::daemon::DataTransferSession::findDrive(const utils::Dr
 }
 
 //------------------------------------------------------------------------------
-//DataTransferSession::ctx
+// getZmqContext
 //------------------------------------------------------------------------------
-zmq::Context& castor::tape::tapeserver::daemon::DataTransferSession::ctx(){
-  static zmq::Context m_ctx;
-  return m_ctx;
+void *castor::tape::tapeserver::daemon::DataTransferSession::getZmqContext() {
+  // Create the ZMQ context if it does not already exist
+  if(NULL == m_zmqContext) {
+    const int sizeOfIOThreadPoolForZMQ = 1;
+    m_zmqContext = zmq_init(sizeOfIOThreadPoolForZMQ);
+    if(NULL == m_zmqContext) {
+      char message[100];
+      sstrerror_r(errno, message, sizeof(message));
+      castor::exception::Exception ex;
+      ex.getMessage() << "Failed to instantiate ZMQ context: " << message;
+      throw ex;
+    }
+  }
+
+  return m_zmqContext;
 }
+
 //------------------------------------------------------------------------------
-//destructor
+// destructor
 //------------------------------------------------------------------------------
 castor::tape::tapeserver::daemon::DataTransferSession::~DataTransferSession(){
-  ctx().close();
+  if(NULL != m_zmqContext) {
+    zmq_term(m_zmqContext);
+    m_zmqContext = NULL;
+  }
 }
-    
-    

@@ -31,9 +31,11 @@ set (TAPE_UTILS_LIB_SRC_FILES
   ShutdownBoolFunctor.cpp
   Timer.cpp
   TpconfigLine.cpp
-  utils.cpp)
+  utils.cpp
+  ZmqMsg.cpp
+  ZmqSocket.cpp)
 add_library (castortapeutils SHARED ${TAPE_UTILS_LIB_SRC_FILES})
 CastorSetLibraryVersions (castortapeutils)
-target_link_libraries (castortapeutils castorcommon)
+target_link_libraries (castortapeutils castorcommon zmq)
 install (TARGETS castortapeutils LIBRARY DESTINATION ${CASTOR_DEST_LIB_DIR}
   NAMELINK_SKIP)

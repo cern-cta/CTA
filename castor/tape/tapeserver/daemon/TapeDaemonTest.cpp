@@ -43,13 +43,27 @@ namespace unitTests {
 
 class castor_tape_tapeserver_daemon_TapeDaemonTest : public ::testing::Test {
 protected:
+  void *const m_zmqContext;
+
+  castor_tape_tapeserver_daemon_TapeDaemonTest(): m_zmqContext(zmq_init(1)) {
+  }
+
+  ~castor_tape_tapeserver_daemon_TapeDaemonTest() {
+    if(NULL != m_zmqContext) {
+      zmq_term(m_zmqContext);
+    }
+  }
 
   virtual void SetUp() {
   }
 
   virtual void TearDown() {
   }
-};
+}; // class castor_tape_tapeserver_daemon_TapeDaemonTest
+
+TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, zmqContext) {
+  ASSERT_NE((void *const)0, m_zmqContext);
+}
 
 TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   using namespace castor::tape::tapeserver::daemon;
@@ -77,8 +91,7 @@ TEST_F(castor_tape_tapeserver_daemon_TapeDaemonTest, constructor) {
   castor::legacymsg::RmcProxyDummyFactory rmcFactory;
   castor::messages::TapeserverProxyDummyFactory tpsFactory;
   castor::legacymsg::NsProxyDummyFactory nsFactory;
-  zmq::Context ctx;
-  castor::tape::reactor::ZMQReactor reactor(log,ctx);
+  castor::tape::reactor::ZMQReactor reactor(log, m_zmqContext);
   CapabilityUtilsDummy capUtils;
   std::auto_ptr<TapeDaemon> daemon;
   ASSERT_NO_THROW(daemon.reset(new TapeDaemon(argc, argv, stdOut, stdErr, log,

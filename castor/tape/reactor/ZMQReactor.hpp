@@ -21,10 +21,11 @@
  *****************************************************************************/
 
 #pragma once
+
 #include "castor/log/Logger.hpp"
 #include "castor/tape/reactor/ZMQPollEventHandler.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
-#include "zmq/ZmqWrapper.hpp"
+
 #include <vector>
 #include <utility>
 
@@ -51,9 +52,10 @@ public:
    * Constructor.
    *
    * @param log Interface to the CASTOR logging system.
-   * @param ctx The ZMQ context used by the sockets handled by this reactor.
+   * @param xmqContext The ZMQ context used by the sockets handled by this
+   * reactor.
    */
-  ZMQReactor(log::Logger& log,zmq::Context& ctx);
+  ZMQReactor(log::Logger& log, void *const zmqContext) throw();
 
   /**
    * Destructor.
@@ -89,7 +91,7 @@ public:
    *
    * @return The ZMQ context used by the sockets handled by this reactor.
    */
-  zmq::Context& getContext()const {return m_context;}
+  void *getZmqContext() const throw();
 
 private:
   
@@ -134,7 +136,7 @@ private:
   /**
    * The ZMQ context used by the sockets handled by this reactor.
    */
-  zmq::Context& m_context;
+  void *const m_zmqContext;
   
   /**
    * Object representing the API of the CASTOR logging system.

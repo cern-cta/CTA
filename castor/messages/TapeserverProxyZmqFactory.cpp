@@ -41,6 +41,6 @@ castor::messages::TapeserverProxyZmqFactory::~TapeserverProxyZmqFactory() throw(
 //------------------------------------------------------------------------------
 // create
 //------------------------------------------------------------------------------
-castor::messages::TapeserverProxy *castor::messages::TapeserverProxyZmqFactory::create(zmq::Context& ctx) {
-  return new TapeserverProxyZmq(m_log, m_tapeserverPort, m_netTimeout,ctx);
+castor::messages::TapeserverProxy *castor::messages::TapeserverProxyZmqFactory::create(void *const zmqContext) {
+  return new TapeserverProxyZmq(m_log, m_tapeserverPort, m_netTimeout, zmqContext);
 }

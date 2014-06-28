@@ -33,7 +33,6 @@
 #include "castor/tape/tapeserver/client/ClientProxy.hpp"
 #include "castor/tape/tapeserver/daemon/CapabilityUtils.hpp"
 #include "TapeSingleThreadInterface.hpp"
-#include "zmq/ZmqWrapper.hpp"
 
 using namespace castor::tape;
 using namespace castor::log;
@@ -117,13 +116,21 @@ namespace daemon {
     
     /**
      * Return the global shared zmq context for the mount session
-     * TJIS FUNCTION SHALL ONLY BE CALLED IN THE FORKED PROCESS
-     * @return 
+     * THIS FUNCTION SHALL ONLY BE CALLED IN THE FORKED PROCESS
+     *
+     * @return The global shared zmq context for the data-transfer session.
      */
-    static zmq::Context& ctx();
+    static void *getZmqContext();
     
     ~DataTransferSession();
+
   private:
+
+    /**
+     * The global shared zmq context for the date-transfer session.
+     */
+    static void *m_zmqContext;
+
     legacymsg::RtcpJobRqstMsgBody m_request;
     castor::log::Logger & m_logger;
     client::ClientProxy m_clientProxy;
