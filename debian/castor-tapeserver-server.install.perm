@@ -4,4 +4,3 @@
 %attr(0644,root,root) etc/logrotate.d/castor-tapeserver-server
 %attr(0644,root,root) etc/udev/rules.d/99-tape.rules
 %attr(-,root,root) usr/lib/libcastormessages.so*
-%attr(-,root,root) usr/lib/libcastorzmqwrapper.so*
