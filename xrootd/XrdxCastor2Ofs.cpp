@@ -42,6 +42,7 @@
 #include "XrdOuc/XrdOucHash.hh"
 #include "XrdNet/XrdNetOpts.hh"
 #include "XrdCl/XrdClFileSystem.hh"
+#include "XrdSec/XrdSecEntity.hh"
 /*----------------------------------------------------------------------------*/
 #include "XrdxCastor2Ofs.hpp"
 #include "XrdxCastor2FsConstants.hpp"
@@ -57,6 +58,11 @@ extern XrdOssSys*  XrdOfsOss;
 extern XrdOss*     XrdOssGetSS(XrdSysLogger*, const char*, const char*);
 
 XrdVERSIONINFO(XrdSfsGetFileSystem, xCastor2Ofs);
+
+// Constants
+// One minute for destination to contact us for tpc.key rendez-vous
+const int XrdxCastor2OfsFile::sKeyExpiry = 60;
+
 
 //------------------------------------------------------------------------------
 // SfsGetFileSystem
@@ -117,16 +123,16 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
     // Try to open the configuration file.
     if ((cfgFD = open(ConfigFN, O_RDONLY, 0)) < 0)
       return Eroute.Emsg("Config", errno, "open config file fn=", ConfigFN);
-    
+
     config_stream.Attach(cfgFD);
-    
+
     // Now start reading records until eof.
     while ((var = config_stream.GetMyFirstWord()))
     {
       if (!strncmp(var, "xcastor2.", 9))
       {
         var += 9;
-        
+
         // Get the debug level
         if (!strcmp("loglevel", var))
         {
@@ -145,7 +151,7 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
               errno = 0;
               char* end;
               log_level = (int) strtol(val, &end, 10);
-              
+
               if ((errno == ERANGE && ((log_level == LONG_MIN) || (log_level == LONG_MAX))) ||
                   ((errno != 0) && (log_level == 0)) ||
                   (end == val))
@@ -160,7 +166,7 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
                        Logging::GetPriorityString(mLogLevel), "");
           }
         }
-        
+
         // Get any debug filter name
         if (!strcmp("debugfilter", var))
         {
@@ -198,13 +204,30 @@ int XrdxCastor2Ofs::Configure(XrdSysError& Eroute)
   Logging::Init();
   Logging::SetLogPriority(mLogLevel);
   Logging::SetUnit(unit.c_str());
-  xcastor_info("info=\"logging configured\" ");
+  xcastor_info("logging configured");
   int rc = XrdOfs::Configure(Eroute);
 
-  // Set the effective user for all the XrdClients used to issue 'prepares' 
+  // Set the effective user for all the XrdClients used to issue 'prepares'
   // to redirector
   setenv("XrdClientEUSER", "stage", 1);
   return rc;
+}
+
+
+//------------------------------------------------------------------------------
+// Set the log level for the xrootd daemon
+//------------------------------------------------------------------------------
+void
+XrdxCastor2Ofs::SetLogLevel(int logLevel)
+{
+  if (mLogLevel != logLevel)
+  {
+    xcastor_notice("update log level from=%s to=%s",
+                   Logging::GetPriorityString(mLogLevel),
+                   Logging::GetPriorityString(logLevel));
+    mLogLevel = logLevel;
+    Logging::SetLogPriority(mLogLevel);
+  }
 }
 
 
@@ -231,7 +254,8 @@ XrdxCastor2OfsFile::XrdxCastor2OfsFile(const char* user, int MonID) :
     mXsValue(""),
     mXsType(""),
     mIsClosed(false),
-    mTpcKey("")
+    mTpcKey(""),
+    mTpcFlag(TpcFlag::kTpcNone)
 {
   mAdlerXs = adler32(0L, Z_NULL, 0);
 }
@@ -263,11 +287,10 @@ XrdxCastor2OfsFile::open(const char*         path,
                          const XrdSecEntity* client,
                          const char*         opaque)
 {
-  xcastor_debug("path=%s", path);
   xcastor::Timing opentiming("ofsf::open");
   TIMING("START", &opentiming);
   XrdOucString spath = path;
-  xcastor_debug("castorlfn=%s, opaque=%s", path, opaque);
+  xcastor_debug("path=%s, opaque=%s", path, opaque);
   XrdOucString newpath = "";
   XrdOucString newopaque = opaque;
   // If there is explicit user opaque information we find two ?,
@@ -283,9 +306,7 @@ XrdxCastor2OfsFile::open(const char*         path,
   lastpos = firstpos + 1;
 
   while ((newpos = newopaque.find("castor2fs.sfn", lastpos)) != STR_NPOS)
-  {
     lastpos = newpos + 1;
-  }
 
   // Erase from the beginning to the last token start
   if (lastpos > (firstpos + 1))
@@ -304,23 +325,6 @@ XrdxCastor2OfsFile::open(const char*         path,
   mEnvOpaque = new XrdOucEnv(newopaque.c_str());
   newpath = mEnvOpaque->Get("castor2fs.pfn1");
 
-  if (newopaque.endswith("&"))
-    newopaque += "source=";
-  else
-    newopaque += "&source=";
-
-  newopaque += newpath.c_str();
-
-  if (!mEnvOpaque->Get("target"))
-  {
-    if (newopaque.endswith("&"))
-      newopaque += "target=";
-    else
-      newopaque += "&target=";
-
-    newopaque += newpath.c_str();
-  }
-
   open_mode |= SFS_O_MKPTH;
   create_mode |= SFS_O_MKPTH;
   mIsTruncate = open_mode & SFS_O_TRUNC;
@@ -331,125 +335,18 @@ XrdxCastor2OfsFile::open(const char*         path,
     mIsRW = true;
   }
 
-  char* val = 0;
-
   // Deal with native TPC transfers which are passed directly to the OFS layer
-  if (newopaque.find("tpc.dst") != STR_NPOS)
+  if (newopaque.find("tpc.") != STR_NPOS)
   {
-    // This is a source TPC file and we just received the second open reuqest from the initiator.
-    // We save the mapping between the tpc.key and the castor lfn for future open requests from
-    // the destination of the TPC transfer.
-    if ((val = mEnvOpaque->Get("tpc.key")))
-    {
-      mTpcKey = val;
-      struct TpcInfo transfer = (struct TpcInfo)
-      {
-        std::string(newpath.c_str()), time(NULL)
-      };
-      
-      gSrv->mTpcMapMutex.Lock();     // -->
-      std::pair< std::map<std::string, struct TpcInfo>::iterator, bool> pair =
-        gSrv->mTpcMap.insert(std::make_pair(mTpcKey, transfer));
-
-      if (pair.second == false)
-      {
-        xcastor_err("tpc.key:%s is already in the map", mTpcKey.c_str());
-        gSrv->mTpcMap.erase(pair.first);
-        gSrv->mTpcMapMutex.UnLock(); // <--
-        return gSrv->Emsg("open", error, EINVAL,
-                          "tpc.key already in the map for file:  ",
-                          newpath.c_str());
-      }
-
-      gSrv->mTpcMapMutex.UnLock();   // <--
-      int rc = XrdOfsFile::open(newpath.c_str(), open_mode, create_mode, client,
-                                newopaque.c_str());
-      return rc;
-    }
-
-    xcastor_err("no tpc.key in the opaque information");
-    return gSrv->Emsg("open", error, ENOENT,
-                      "no tpc.key in the opaque info for file: ",
-                      newpath.c_str());
+    if (PrepareTPC(newpath, newopaque, client))
+      return SFS_ERROR;
   }
-  else if (newopaque.find("tpc.org") != STR_NPOS)
+  else
   {
-    // This is a source TPC file and we just received the third open request which
-    // comes directly from the destination of the transfer. Here we need to retrieve
-    // the castor lfn from the map which we saved previously as the destination has
-    // no knowledge of the castor mapping.
-    if ((val = mEnvOpaque->Get("tpc.key")))
-    {
-      std::string key = val;
-      gSrv->mTpcMapMutex.Lock();     // -->
-      std::map<std::string, struct TpcInfo>::iterator iter = gSrv->mTpcMap.find(key);
-
-      if (iter != gSrv->mTpcMap.end())
-      {
-        std::string saved_lfn = iter->second.path;
-        gSrv->mTpcMapMutex.UnLock(); // <--
-        int rc = XrdOfsFile::open(saved_lfn.c_str(), open_mode, create_mode,
-                                  client, newopaque.c_str());
-        return rc;
-      }
-
-      gSrv->mTpcMapMutex.UnLock(); // <--
-      return gSrv->Emsg("open", error, EINVAL,
-                        "can not find tpc.key in map for file: ",
-                        newpath.c_str());
-    }
-
-    xcastor_err("no tpc.key in the opaque information");
-    return gSrv->Emsg("open", error, ENOENT,
-                      "no tpc.key in the opaque info for file: ",
-                      newpath.c_str());
-  }
-  else if (newopaque.find("tpc.src") != STR_NPOS)
-  {
-    // This is a TPC destination and we force the recomputation of the checksum
-    // at the end since all writes go directly to the file without passing through
-    // the write method in OFS.
-    mHasWrite = true;
-    mHasAdler = false;
+    if (ContactStagerJob(*mEnvOpaque))
+      return SFS_ERROR;
   }
 
-  // Extract the stager information
-  val = mEnvOpaque->Get("castor2fs.pfn2");
-
-  if (!val || !strlen(val))
-    return gSrv->Emsg("open", error, ESHUTDOWN, "reqid/pfn2 is missing", FName());
-
-  XrdOucString reqtag = val;
-  XrdOucString sjob_uuid = "";
-  int sjob_port = 0;
-  int pos1, pos2;
-
-  // Syntax for request is: <reqid:stagerJobPort:stagerJobUuid>
-  if ((pos1 = reqtag.find(":")) != STR_NPOS)
-  {
-    mReqId.assign(reqtag, 0, pos1 - 1);
-
-    if ((pos2 = reqtag.find(":", pos1 + 1)) != STR_NPOS)
-    {
-      XrdOucString sport;
-      sport.assign(reqtag, pos1 + 1, pos2 - 1);
-      sjob_port = atoi(sport.c_str());
-      sjob_uuid.assign(reqtag.c_str(), pos2 + 1);
-    }
-  }
-
-  xcastor_debug("StagerJob uuid=%s, port=%i ", sjob_uuid.c_str(), sjob_port);
-  mStagerJob = new XrdxCastor2Ofs2StagerJob(sjob_uuid.c_str(), sjob_port);
-
-  // Send the sigusr1 to the local xcastor2job to signal the open
-  if (!mStagerJob->Open())
-  {
-    xcastor_err("error: open => couldn't run the Open towards StagerJob: "
-                "reqid=%s, stagerjobport=%i, stagerjobuuid=%s",
-                mReqId.c_str(), sjob_port, sjob_uuid.c_str());
-    return gSrv->Emsg("open", error, EIO,
-                      "signal open to the corresponding stagerjob");
-  }
 
   TIMING("FILEOPEN", &opentiming);
   int rc = XrdOfsFile::open(newpath.c_str(), open_mode, create_mode, client,
@@ -462,30 +359,30 @@ XrdxCastor2OfsFile::open(const char*         path,
     char disk_xs_buf[32 + 1];
     char disk_xs_type[32];
     disk_xs_buf[0] = disk_xs_type[0] = '\0';
-    
+
     // Get existing checksum - we don't check errors here
     nattr = getxattr(newpath.c_str(), "user.castor.checksum.type", disk_xs_type,
                      sizeof(disk_xs_type));
-    
+
     if (nattr) disk_xs_type[nattr] = '\0';
-    
+
     nattr = getxattr(newpath.c_str(), "user.castor.checksum.value", disk_xs_buf,
                      sizeof(disk_xs_buf));
-    
+
     if (nattr) disk_xs_buf[nattr] = '\0';
-    
+
     mXsValue = disk_xs_buf;
     mXsType = disk_xs_type;
     xcastor_debug("xs_type=%s, xs_val=%s", mXsType.c_str(),  mXsValue.c_str());
-    
-    // Get also the size of the file 
+
+    // Get also the size of the file
     if (XrdOfsOss->Stat(newpath.c_str(), &mStatInfo))
     {
       xcastor_err("error: getting file stat information");
       rc = SFS_ERROR;
     }
   }
-  
+
   TIMING("DONE", &opentiming);
   opentiming.Print();
   return rc;
@@ -501,13 +398,15 @@ XrdxCastor2OfsFile::close()
   int rc = SFS_OK;
 
   if (mIsClosed)
-    return true;
+    return SFS_OK;
+
+  mIsClosed = true;
 
   // If this is a TPC transfer then we can drop the key from the map
   if (mTpcKey != "")
   {
     xcastor_debug("drop from map tpc.key=%s", mTpcKey.c_str());
-    XrdSysMutexHelper lock(gSrv->mTpcMapMutex);
+    XrdSysMutexHelper tpc_lock(gSrv->mTpcMapMutex);
     gSrv->mTpcMap.erase(mTpcKey);
     mTpcKey = "";
 
@@ -529,7 +428,6 @@ XrdxCastor2OfsFile::close()
     }
   }
 
-  mIsClosed = true;
   XrdOucString spath = FName();
   char ckSumbuf[32 + 1];
   sprintf(ckSumbuf, "%x", mAdlerXs);
@@ -564,7 +462,7 @@ XrdxCastor2OfsFile::close()
 
     sprintf(ckSumbuf, "%x", mAdlerXs);
     xcastor_debug("file xs=%s", ckSumbuf);
-    
+
     if (setxattr(newpath.c_str(), "user.castor.checksum.type", ckSumalg,
                  strlen(ckSumalg), 0))
     {
@@ -608,6 +506,240 @@ XrdxCastor2OfsFile::close()
   }
 
   return rc;
+}
+
+
+//--------------------------------------------------------------------------
+//! Prepare TPC transfer - save info in the global TPC map, do checks etc.
+//--------------------------------------------------------------------------
+int
+XrdxCastor2OfsFile::PrepareTPC(XrdOucString& path,
+                               XrdOucString& opaque,
+                               const XrdSecEntity* client)
+{
+  char* val;
+  xcastor_info("path=%s", path.c_str());
+
+  // Get the current state of the TPC transfer
+  if ((val = mEnvOpaque->Get("tpc.stage")))
+  {
+    if (strncmp(val, "placement", 9) == 0)
+    {
+      mTpcFlag = TpcFlag::kTpcSrcCanDo;
+    }
+    else if (strncmp(val, "copy", 4) == 0)
+    {
+      if (!(val = mEnvOpaque->Get("tpc.key")))
+      {
+        xcastor_err("missing tpc.key information");
+        return gSrv->Emsg("open", error, EACCES, "open - missing tpc.key info");
+      }
+
+      if ((val = mEnvOpaque->Get("tpc.lfn")))
+      {
+        mTpcFlag = TpcFlag::kTpcDstSetup;
+      }
+      else if ((val = mEnvOpaque->Get("tpc.dst")))
+      {
+        mTpcFlag = TpcFlag::kTpcSrcSetup;
+        mTpcKey = mEnvOpaque->Get("tpc.key"); // save key only at this stage
+      }
+      else
+      {
+        xcastor_err("missing tpc options in copy stage");
+        return gSrv->Emsg("open", error, EACCES, "open - missing tpc options",
+                          "in copy stage" );
+      }
+    }
+    else
+    {
+      xcastor_err("unknown tpc.stage=", val);
+      return gSrv->Emsg("open", error, EACCES, "open - unknown tpc.stage=", val);
+    }
+  }
+  else if ((val = mEnvOpaque->Get("tpc.key")) &&
+           (val = mEnvOpaque->Get("tpc.org")))
+  {
+    mTpcFlag = TpcFlag::kTpcSrcRead;
+  }
+
+
+  if (mTpcFlag == TpcFlag::kTpcSrcSetup)
+  {
+    // This is a source TPC file and we just received the second open reuqest
+    // from the initiator. We save the mapping between the tpc.key and the
+    // castor pfn for future open requests from the destination of the TPC transfer.
+    std::string castor_pfn = mEnvOpaque->Get("castor2fs.pfn1");
+    std::string tpc_org = client->tident;
+    tpc_org.erase(tpc_org.find(":"));
+    tpc_org += "@";
+    tpc_org += client->addrInfo->Name();;
+
+    struct TpcInfo transfer = (struct TpcInfo)
+    {
+      castor_pfn,
+      tpc_org,
+      std::string(opaque.c_str()),
+      time(NULL) + sKeyExpiry
+    };
+
+    {
+      // Insert new key-transfer pair in the map
+      XrdSysMutexHelper tpc_lock(gSrv->mTpcMapMutex);
+      std::pair< std::map<std::string, struct TpcInfo>::iterator, bool> pair =
+          gSrv->mTpcMap.insert(std::make_pair(mTpcKey, transfer));
+
+      if (pair.second == false)
+      {
+        xcastor_err("tpc.key:%s is already in the map", mTpcKey.c_str());
+        gSrv->mTpcMap.erase(pair.first);
+        return gSrv->Emsg("open", error, EINVAL,
+                          "tpc.key already in the map for file:  ",
+                          path.c_str());
+      }
+    }
+  }
+  else if (mTpcFlag == TpcFlag::kTpcSrcRead)
+  {
+    // This is a source TPC file and we just received the third open request which
+    // comes directly from the destination of the transfer. Here we need to retrieve
+    // the castor lfn from the map which we saved previously as the destination has
+    // no knowledge of the castor physical file name.
+    std::string check_key =  mEnvOpaque->Get("tpc.key");
+
+    // Get init opaque just for stager job information and don't touch the current
+    // opaque info as it contains the tpc.key and tpc.org info needed by the OFS
+    // layer to perform the actual tpc transfer
+    std::string init_opaque;
+
+    {
+      bool found_key = false;
+      int num_tries = 150;
+      XrdSysMutexHelper tpc_lock(gSrv->mTpcMapMutex);
+      std::map<std::string, struct TpcInfo>::iterator iter =
+          gSrv->mTpcMap.find(check_key);
+
+      while ((num_tries > 0) && !found_key)
+      {
+        num_tries--;
+
+        if (iter != gSrv->mTpcMap.end())
+        {
+          // Check if the key is still valid
+          if (iter->second.expire > time(NULL))
+          {
+            std::string tpc_org = mEnvOpaque->Get("tpc.org");
+
+            if (tpc_org != iter->second.org)
+            {
+              xcastor_err("tpc.org from destination=%s, not matching initiator orig.=%s",
+                          tpc_org.c_str(), iter->second.org.c_str());
+              return gSrv->Emsg("open", error, EPERM, "PrepareTPC - destination "
+                                "tpc.org not matching initiator origin");
+            }
+
+            path = iter->second.path.c_str();
+            init_opaque = iter->second.opaque;
+            found_key = true;
+          }
+          else
+          {
+            xcastor_err("tpc key expired");
+            return gSrv->Emsg("open", error, EKEYEXPIRED, "PrepareTPC - "
+                            "tpc key expired");
+          }
+        }
+        else
+        {
+          // Wait for the initiator to show up with the proper key and unlock
+          // the map so that he can add the key
+          gSrv->mTpcMapMutex.UnLock(); // <--
+          XrdSysTimer timer;
+          timer.Wait(100);
+          xcastor_debug("wait for initator to come with the tpc.key");
+          gSrv->mTpcMapMutex.Lock();  // -->
+        }
+      }
+
+      if (!found_key)
+      {
+        xcastor_err("tpc key from destination not in map");
+        return gSrv->Emsg("open", error, EINVAL, "PrepareTPC - can not find "
+                          "tpc.key in map");
+      }
+    }
+
+    // Now we can contact the StagerJob process
+    XrdOucEnv env_opaque(init_opaque.c_str());
+
+    if (ContactStagerJob(env_opaque))
+      return SFS_ERROR;
+  }
+  else if (mTpcFlag == TpcFlag::kTpcDstSetup)
+  {
+    // This is a TPC destination and we force the recomputation of the checksum
+    // at the end since all writes go directly to the file without passing through
+    // the write method in OFS.
+    mHasWrite = true;
+    mHasAdler = false;
+
+    // Now we can contact the StagerJob process
+    XrdOucEnv env_opaque(opaque.c_str());
+
+    if (ContactStagerJob(env_opaque))
+      return SFS_ERROR;
+  }
+
+  return SFS_OK;
+}
+
+
+//------------------------------------------------------------------------------
+// Extract stager job info from the opaque data and establish a connection
+//------------------------------------------------------------------------------
+int
+XrdxCastor2OfsFile::ContactStagerJob(XrdOucEnv& env_opaque)
+{
+  std::string connect_info = env_opaque.Get("castor2fs.pfn2");
+
+  if (connect_info.empty())
+  {
+    xcastor_err("no stager job opaque infomation present");
+    return gSrv->Emsg("open", error, EIO, "open - missing stager job info");
+  }
+
+  std::string sjob_uuid = "";
+  int sjob_port = 0;
+  int pos1;
+
+  // Syntax for request is: <reqid:stagerJobPort:stagerJobUuid>
+  if ((pos1 = connect_info.find(":")) != STR_NPOS)
+  {
+    mReqId.assign(connect_info, 0, pos1 - 1);
+    int pos2;
+
+    if ((pos2 = connect_info.find(":", pos1 + 1)) != STR_NPOS)
+    {
+      std::string sport (connect_info, pos1 + 1, pos2 - 1);
+      sjob_port = atoi(sport.c_str());
+      sjob_uuid.assign(connect_info.c_str(), pos2 + 1, std::string::npos);
+    }
+  }
+
+  xcastor_debug("SJob uuid=%s, port=%i ", sjob_uuid.c_str(), sjob_port);
+  mStagerJob = new XrdxCastor2Ofs2StagerJob(sjob_uuid, sjob_port);
+
+  // Send the sigusr1 to the local xcastor2job to signal the open
+  if (!mStagerJob->Open())
+  {
+    xcastor_err("open => couldn't run the open towards StagerJob: "
+                "reqid=%s, stagerjobport=%i, stagerjobuuid=%s",
+                mReqId.c_str(), sjob_port, sjob_uuid.c_str());
+    return gSrv->Emsg("open", error, EIO,
+                      "signal open to the corresponding stagerjob");
+  }
+
+  return SFS_OK;
 }
 
 
@@ -680,7 +812,7 @@ XrdxCastor2OfsFile::read(XrdSfsFileOffset fileOffset,
   // If we once got an adler checksum error, we fail all reads.
   if (mHasAdlerErr)
   {
-    xcastor_err("error: found xs error, fail read at off=%ll, size=%i", 
+    xcastor_err("error: found xs error, fail read at off=%ll, size=%i",
                 fileOffset, buffer_size);
     return SFS_ERROR;
   }
@@ -816,9 +948,7 @@ int
 XrdxCastor2OfsFile::Unlink()
 {
   if (!gSrv->doPOSC || !mIsRW)
-  {
     return SFS_OK;
-  }
 
   XrdOucString preparename = mEnvOpaque->Get("castor2fs.sfn");
   XrdOucString secuid      = mEnvOpaque->Get("castor2fs.client_sec_uid");
@@ -849,7 +979,7 @@ XrdxCastor2OfsFile::Unlink()
   preparename += "?";
   preparename += "&unlink=true";
   preparename += "&reqid=";
-  preparename += mReqId;
+  preparename += mReqId.c_str();
   preparename += "&uid=";
   preparename += secuid;
   preparename += "&gid=";
@@ -879,7 +1009,7 @@ XrdxCastor2OfsFile::Unlink()
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-XrdxCastor2Ofs2StagerJob::XrdxCastor2Ofs2StagerJob(const char* sjobuuid,
+XrdxCastor2Ofs2StagerJob::XrdxCastor2Ofs2StagerJob(const std::string& sjobuuid,
                                                    int port):
     LogId(),
     ErrCode(0),
@@ -916,7 +1046,7 @@ XrdxCastor2Ofs2StagerJob::Open()
 
   if ((mSocket->Open("localhost", mPort, 0, 0)) < 0)
   {
-    xcastor_err("can not open socket for port=%i", mPort);
+    xcastor_err("can not open SJob socket on port=%i", mPort);
     return false;
   }
 
@@ -930,7 +1060,7 @@ XrdxCastor2Ofs2StagerJob::Open()
 
   if (nwrite != ident.length())
   {
-    xcastor_err("writing to sjob socket failed");
+    xcastor_err("writing to SJob socket failed");
     return false;
   }
 
@@ -954,7 +1084,7 @@ XrdxCastor2Ofs2StagerJob::StillConnected()
   // Add the socket to the select set
   FD_ZERO(&check_set);
   FD_SET(mSocket->SockNum(), &check_set);
-  
+
   // Set select timeout to 0
   struct timeval time;
   time.tv_sec  = 0;
@@ -992,7 +1122,7 @@ XrdxCastor2Ofs2StagerJob::Close(bool ok, bool haswrite)
     ident += "0 \n";
 
   // Send CLOSE message
-  xcastor_debug("Send CLOSE message to StagerJob");
+  xcastor_debug("SJob send CLOSE message");
   int nwrite = ::write(mSocket->SockNum(), ident.c_str(), ident.length());
 
   if (nwrite != ident.length())
@@ -1007,19 +1137,17 @@ XrdxCastor2Ofs2StagerJob::Close(bool ok, bool haswrite)
   int  respcode;
   char respmesg[16384];
   int nread = 0;
-  xcastor_debug("Read CLOSE response from StagerJob");
   nread = ::read(mSocket->SockNum(), closeresp, sizeof(closeresp));
-  xcastor_debug("This read gave %i bytes and errno=%i", nread, errno);
+    xcastor_debug("SJob response bytes=%i, errno=%i", nread, errno);
 
   if (nread > 0)
   {
-    xcastor_debug("Parse StagerJob CLOSE response");
-
     // Try to parse the response
     if ((sscanf(closeresp, "%d %[^\n]", &respcode, respmesg)) == 2)
     {
-      ErrMsg = respmesg;
       ErrCode = respcode;
+      ErrMsg = respmesg;
+      xcastor_debug("SJob CLOSE msg=%s, errcode=%i", ErrMsg.c_str(), ErrCode);
 
       if (ErrCode != 0)
         return false;
@@ -1027,7 +1155,7 @@ XrdxCastor2Ofs2StagerJob::Close(bool ok, bool haswrite)
     else
     {
       ErrCode = EINVAL;
-      ErrMsg  = "StagerJob returned illegal response: ";
+      ErrMsg  = "SJob CLOSE illegal msg=";
       ErrMsg += (char*)closeresp;
       return false;
     }
@@ -1042,21 +1170,3 @@ XrdxCastor2Ofs2StagerJob::Close(bool ok, bool haswrite)
 
   return true;
 }
-
-
-//------------------------------------------------------------------------------
-// Set the log level for the xrootd daemon
-//------------------------------------------------------------------------------
-void
-XrdxCastor2Ofs::SetLogLevel(int logLevel)
-{
-  if (mLogLevel != logLevel)
-  {
-    xcastor_notice("update log level from:%s to:%s",
-                   Logging::GetPriorityString(mLogLevel),
-                   Logging::GetPriorityString(logLevel));
-    mLogLevel = logLevel;
-    Logging::SetLogPriority(mLogLevel);
-  }
-}
-

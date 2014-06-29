@@ -47,16 +47,18 @@
 /*-----------------------------------------------------------------------------*/
 
 
+//~ Forward declaration
+class XrdxCastor2Ofs2StagerJob;
+
+
 //! TpcInfo structure containing informationn about a third-party transfer
 struct TpcInfo
 {
-  std::string path; ///< castor lfn path
-  time_t expire;    ///< time when entry was created
+  std::string path;   ///< castor lfn path
+  std::string org;    ///< TPC origin e.g. user@host
+  std::string opaque; ///< opaque information
+  time_t expire;      ///< entry expire timestamp
 };
-
-
-//~ Forward declaration
-class XrdxCastor2Ofs2StagerJob;
 
 
 //------------------------------------------------------------------------------
@@ -127,12 +129,44 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
     //! Write to file
     //--------------------------------------------------------------------------
     int write(XrdSfsAio* aioparm);
-  
+
 
     //--------------------------------------------------------------------------
     //! Unlink file
     //--------------------------------------------------------------------------
     int Unlink();
+
+
+  private:
+
+    //--------------------------------------------------------------------------
+    //! TPC flags - indicating the current access type
+    //--------------------------------------------------------------------------
+    struct TpcFlag
+    {
+      enum Flag
+      {
+        kTpcNone     = 0, ///< no TPC access
+        kTpcSrcSetup = 1, ///< access setting up a source TPC access
+        kTpcDstSetup = 2, ///< access setting up a destination TPC access
+        kTpcSrcRead  = 3, ///< read access from a TPC destination
+        kTpcSrcCanDo = 4  ///< read access to evaluate if source is available
+      };
+    };
+
+    //--------------------------------------------------------------------------
+    //! Prepare TPC transfer - do the necessary operations need to support
+    //! native TPC like saving the tpc.key and tpc.org for the rendez-vous etc.
+    //!
+    //! @param path castor pfn value
+    //! @param opaque opaque information
+    //! @param client client identity
+    //!
+    //! @return SFS_OK if successful, otherwise SFS_ERROR.
+    //--------------------------------------------------------------------------
+    int PrepareTPC(XrdOucString& path,
+                   XrdOucString& opaque,
+                   const XrdSecEntity* client);
 
 
     //--------------------------------------------------------------------------
@@ -141,24 +175,34 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
     bool VerifyChecksum();
 
 
-  private:
+    //--------------------------------------------------------------------------
+    //! Extract stager job info from the opaque data and establish a connection
+    //!
+    //! @param env_opaque env containing opaque information
+    //!
+    //! @return SFS_OK if successful, otherwise SFS_ERROR.
+    //--------------------------------------------------------------------------
+    int ContactStagerJob(XrdOucEnv& env_opaque);
 
+
+    static const int sKeyExpiry; ///< validity time of a tpc key
     XrdxCastor2Ofs2StagerJob* mStagerJob; ///< StagerJob object
     XrdOucEnv* mEnvOpaque; ///< initial opaque information
     bool mIsRW; ///< file opened for writing
     bool mIsTruncate; ///< file is truncated
     bool mHasWrite; ///< mark is file has writes
     bool mViaDestructor; ///< mark close via destructor - not properly closed
-    XrdOucString mReqId; ///< request id received from the redirector
+    std::string mReqId; ///< request id received from the redirector
     unsigned int mAdlerXs; ///< adler checksum
     bool mHasAdlerErr; ///< mark if there was an adler error
     bool mHasAdler; ///< mark if it has adler xs computed
-    XrdSfsFileOffset mAdlerOffset; ///< current adler offset 
+    XrdSfsFileOffset mAdlerOffset; ///< current adler offset
     XrdOucString mXsValue; ///< checksum value
     XrdOucString mXsType; ///< checksum type: adler, crc32c etc.
     bool mIsClosed; ///< make when file is closed
     struct stat mStatInfo; ///< file stat info
     std::string mTpcKey; ///< tpc key allocated to this file
+    TpcFlag::Flag mTpcFlag ;; ///< tpc flag to identify the access type
 };
 
 
@@ -175,7 +219,7 @@ class XrdxCastor2OfsDirectory : public XrdOfsDirectory
     XrdxCastor2OfsDirectory(const char* user, int MonID = 0) :
       XrdOfsDirectory(user, MonID)  { }
 
-  
+
     //--------------------------------------------------------------------------
     //! Destructor
     //--------------------------------------------------------------------------
@@ -228,7 +272,7 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
       return (XrdSfsFile*) new XrdxCastor2OfsFile(user, MonID);
     }
 
-  
+
     //--------------------------------------------------------------------------
     //! Chmod - masked
     //--------------------------------------------------------------------------
@@ -350,7 +394,7 @@ class XrdxCastor2Ofs : public XrdOfs, public LogId
     //--------------------------------------------------------------------------
     void SetLogLevel(int logLevel);
 
-  
+
     bool doPOSC; ///< 'Persistency on successful close' flag
     XrdSysMutex mTpcMapMutex; ///< mutex to protect access to the TPC map
     std::map<std::string, struct TpcInfo> mTpcMap; ///< TPC map of kety to lfn
@@ -379,7 +423,7 @@ class XrdxCastor2Ofs2StagerJob : public LogId
     //! @param port port
     //!
     //--------------------------------------------------------------------------
-    XrdxCastor2Ofs2StagerJob(const char* sjobuuid, int port);
+    XrdxCastor2Ofs2StagerJob(const std::string& sjobuuid, int port);
 
 
     //--------------------------------------------------------------------------
@@ -426,7 +470,7 @@ class XrdxCastor2Ofs2StagerJob : public LogId
   private:
 
     int mPort; ///< port number where stager job is listening
-    XrdOucString mSjobUuid; ///< stager job uuid
+    std::string mSjobUuid; ///< stager job uuid
     XrdNetSocket* mSocket; ///< socket object user for connection to sjob
     bool mIsConnected; ///< true when connected to sjob
 };
