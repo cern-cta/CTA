@@ -68,9 +68,9 @@ class XrdxCastor2Fs : public XrdSfsFileSystem, public LogId
   friend class XrdxCastor2FsFile;
   friend class XrdxCastor2FsDirectory;
   friend class XrdxCastor2FsStats;
-  
+
 public:
-  
+
   //----------------------------------------------------------------------------
   //! Constructor
   //----------------------------------------------------------------------------
@@ -90,8 +90,8 @@ public:
   //!
   //----------------------------------------------------------------------------
   virtual int Configure(XrdSysError& fsEroute);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Initialisation
   //----------------------------------------------------------------------------
@@ -105,20 +105,20 @@ public:
   //!
   //----------------------------------------------------------------------------
   virtual void Disc(const XrdSecEntity* client = 0);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Create new directory
   //----------------------------------------------------------------------------
   XrdSfsDirectory* newDir(char* user = 0, int MonID = 0);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Create new file
   //----------------------------------------------------------------------------
   XrdSfsFile* newFile(char* user = 0, int MonID = 0);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Change the mode on a file or directory
   //!
@@ -136,8 +136,8 @@ public:
             XrdOucErrInfo& out_error,
             const XrdSecEntity* client = 0,
             const char* opaque = 0);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Determine if file 'path' actually exists
   //!
@@ -160,7 +160,7 @@ public:
              XrdOucErrInfo& error,
              const XrdSecEntity* client = 0,
              const char* info = 0);
-  
+
 
   //----------------------------------------------------------------------------
   //! Determine if file 'path' actually exists - low level
@@ -170,8 +170,8 @@ public:
               XrdOucErrInfo& error,
               const XrdSecEntity* client = 0,
               const char* info = 0);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Implementation specific command
   //----------------------------------------------------------------------------
@@ -188,13 +188,13 @@ public:
   {
     return 0;
   }
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Get version of the plugin
   //----------------------------------------------------------------------------
   const char* getVersion();
-  
+
 
   //----------------------------------------------------------------------------
   //! Create a directory entry
@@ -224,7 +224,7 @@ public:
              XrdOucErrInfo& out_error,
              const XrdSecEntity* client = 0,
              const char* opaque = 0);
-  
+
 
   //----------------------------------------------------------------------------
   //! Stage prepare
@@ -233,7 +233,7 @@ public:
                    XrdOucErrInfo& error,
                    const XrdSecEntity* client,
                    const char* info);
-  
+
 
   //----------------------------------------------------------------------------
   //! Prepare request
@@ -241,7 +241,7 @@ public:
   int prepare(XrdSfsPrep& pargs,
               XrdOucErrInfo& out_error,
               const XrdSecEntity* client = 0);
-  
+
 
   //----------------------------------------------------------------------------
   //! Delete a file - stager_rm
@@ -258,7 +258,7 @@ public:
           XrdOucErrInfo&  out_error,
           const XrdSecEntity* client = 0,
           const char* opaque = 0);
-  
+
 
   //----------------------------------------------------------------------------
   //! Delete a file from the namespace
@@ -274,7 +274,7 @@ public:
   int _rem(const char* path,
            XrdOucErrInfo& out_error,
            const char* opaque = 0);
-  
+
 
   //----------------------------------------------------------------------------
   //! Delete a directory from the namespace
@@ -291,7 +291,7 @@ public:
              XrdOucErrInfo& out_error,
              const XrdSecEntity* client = 0,
              const char* info = 0);
-  
+
 
   //----------------------------------------------------------------------------
   //! Delete a directory from the namespace
@@ -308,8 +308,8 @@ public:
               XrdOucErrInfo& out_error,
               const XrdSecEntity* client = 0,
               const char* opaque = 0);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Renames a file/directory with name 'old_name' to 'new_name'
   //!
@@ -367,7 +367,7 @@ public:
            XrdOucErrInfo& out_error,
            const XrdSecEntity* client = 0,
            const char* opaque = 0);
-  
+
 
   //----------------------------------------------------------------------------
   //! Get info on 'path'
@@ -386,22 +386,22 @@ public:
             XrdOucErrInfo& error,
             const XrdSecEntity* client = 0,
             const char* info = 0);
-  
+
 
   //----------------------------------------------------------------------------
   //! Truncate
   //----------------------------------------------------------------------------
   int truncate(const char*, XrdSfsFileOffset, XrdOucErrInfo&,
                const XrdSecEntity*, const char*);
-  
+
 
   //----------------------------------------------------------------------------
   //! Symbolic link
   //----------------------------------------------------------------------------
   int symlink(const char*, const char*, XrdOucErrInfo&,
               const XrdSecEntity*, const char*);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Read link
   //----------------------------------------------------------------------------
@@ -411,24 +411,24 @@ public:
                const XrdSecEntity* client = 0,
                const char* info = 0);
 
-  
+
   //----------------------------------------------------------------------------
   //! Access
   //----------------------------------------------------------------------------
-  int access(const char* path, 
-             int mode, 
-             XrdOucErrInfo& error, 
+  int access(const char* path,
+             int mode,
+             XrdOucErrInfo& error,
              const XrdSecEntity* client,
              const char* info);
-  
+
 
   //----------------------------------------------------------------------------
   //! Utimes
   //----------------------------------------------------------------------------
   int utimes(const char*, struct timeval* tvp, XrdOucErrInfo&,
              const XrdSecEntity*, const char*);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Compose error message
   //!
@@ -447,9 +447,9 @@ public:
 
 
   //----------------------------------------------------------------------------
-  //! Get stager host value 
+  //! Get stager host value
   //!
-  //! @return stager host 
+  //! @return stager host
   //!
   //----------------------------------------------------------------------------
   inline const std::string& GetStagerHost() const
@@ -469,9 +469,9 @@ public:
   long long xCastor2FsDelayRead; ///< if true, all reads get a default delay to come back later
   long long xCastor2FsDelayWrite; ///< if true, all writes get a default dealy to come back later
   XrdOucString zeroProc; ///< path to a 0-byte file in the proc filesystem
-  
+
 protected:
-  
+
   char* HostName; ///< our hostname as derived in XrdOfs
   char* HostPref; ///< our hostname as derived in XrdOfs without domain
   XrdOucString ManagerId;  ///< manager id in <host>:<port> format
@@ -479,9 +479,9 @@ protected:
   bool mIssueCapability; ///< attach an opaque capability for verification on the disk server
   XrdxCastor2Proc* mProc; ///< proc handling object
   XrdxCastor2FsStats mStats; ///< FS statistics
-  
+
 private:
-  
+
   //----------------------------------------------------------------------------
   //! Cache diskserver host name with and without the domain name so that
   //! subsequent prepare requests from the diskservers are allowed to pass
@@ -491,8 +491,8 @@ private:
   //!
   //----------------------------------------------------------------------------
   void CacheDiskServer(const std::string& hostname);
-  
-  
+
+
   //----------------------------------------------------------------------------
   //! Check if the diskserver hostname is known at the redirector
   //!
@@ -571,7 +571,7 @@ private:
   //----------------------------------------------------------------------------
   std::string GetAllowedSvc(const char* path,
                             const std::string& desired_svc);
-  
+
 
   //----------------------------------------------------------------------------
   //! Get all allowed service classes for the requested path and desired svc
@@ -621,7 +621,7 @@ private:
             std::pair<std::list<std::string>, bool> > mStageMap;///< map path -> allowed svc
   XrdOucHash<struct passwd>* mPasswdStore; ///< cache passwd struct info
   std::map<std::string, std::string> mRoleMap; ///< user role map
-  XrdSysMutex mMutexPasswd; ///< mutex for the passwd store  
+  XrdSysMutex mMutexPasswd; ///< mutex for the passwd store
   XrdAccAuthorize* mAuthorization; ///< authorization service used only by ALICE
   std::string mStagerHost; ///< stager host to which requests are sent
 };

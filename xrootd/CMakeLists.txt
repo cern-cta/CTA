@@ -33,7 +33,6 @@ set (XRDXCASTOR2FS_LIB_SRC_FILES
   XrdxCastor2Fs.cpp
   XrdxCastor2FsFile.cpp
   XrdxCastor2FsDirectory.cpp
-  XrdxCastor2FsConfig.cpp
   XrdxCastor2FsStats.cpp
   XrdxCastor2ServerAcc.cpp
   XrdxCastor2Stager.cpp
