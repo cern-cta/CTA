@@ -66,14 +66,13 @@ void castor::tape::reactor::ZMQReactor::registerHandler(
   ZMQPollEventHandler *const handler) {
   zmq_pollitem_t item;
   handler->fillPollFd(item);
-  item.events = ZMQ_POLLIN;
   //TODO, handle double registration 
   m_handlers.push_back(std::make_pair(item,handler));
 }
 
 //------------------------------------------------------------------------------
 // handleEvents
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 void castor::tape::reactor::ZMQReactor::handleEvents(const int timeout) {
   //it should not bring any copy, thanks to NRVO
   std::vector<zmq_pollitem_t> pollFds=buildPollFds();
@@ -142,17 +141,17 @@ castor::tape::reactor::ZMQReactor::HandlerMap::iterator
 
 //------------------------------------------------------------------------------
 // buildPollFds
-//------------------------------------------------------------------------------  
+//------------------------------------------------------------------------------
 std::vector<zmq_pollitem_t> castor::tape::reactor::ZMQReactor::buildPollFds()
   const {
   std::vector<zmq_pollitem_t> pollFds;
   pollFds.reserve(m_handlers.size());
-  for(HandlerMap::const_iterator it=m_handlers.begin();it!=m_handlers.end();++it){
-    //ZMQPollEventHandler *const handler = it->second;
-    //zmq_pollitem_t pollFd;
-    //handler->fillPollFd(pollFd);
-    //pollFd.events = ZMQ_POLLIN;
-    pollFds.push_back(it->first);
+  for(HandlerMap::const_iterator it=m_handlers.begin();it!=m_handlers.end();
+    ++it) {
+    ZMQPollEventHandler *const handler = it->second;
+    zmq_pollitem_t pollFd;
+    handler->fillPollFd(pollFd);
+    pollFds.push_back(pollFd);
   }
   return pollFds;
 }
