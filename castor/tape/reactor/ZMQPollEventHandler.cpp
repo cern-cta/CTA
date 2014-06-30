@@ -25,5 +25,5 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-//castor::tape::reactor::ZMQPollEventHandler::~ZMQPollEventHandler() throw() {
-//}
+castor::tape::reactor::ZMQPollEventHandler::~ZMQPollEventHandler() throw() {
+}

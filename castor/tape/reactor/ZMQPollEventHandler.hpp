@@ -47,7 +47,19 @@ public:
 
   /**
    * Destructor.
+   *
+   * This destructor should be virtual, but it is temporarily not in order to
+   * keep the system running ableit with file descriptor leaks.
+   *
+   * When this destructor is made virtual, please uncomment the following
+   * unit test in order to prove that file descriptors are being closed
+   * correctly.
+   *
+   * File: castor/tape/reactor/ZMQReactorTest.cpp
+   * Test: TEST_F(castor_tape_reactor_ZMQReactorTest, closeFd)
+   * Valrgind command-line: valgrind --track-fds=yes test/castorUnitTests
    */
+  ~ZMQPollEventHandler() throw();
   //virtual ~ZMQPollEventHandler() throw() = 0;
 
   /**
