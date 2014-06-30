@@ -166,7 +166,7 @@ castor::messages::Header castor::tape::tapeserver::daemon::TapeMessageHandler::b
 //------------------------------------------------------------------------------
 void castor::tape::tapeserver::daemon::TapeMessageHandler::dispatchEvent(
   messages::Header& header) {
-  m_log(LOG_INFO,"dispathing  event in TapeMessageHandler");
+  m_log(LOG_INFO,"dispatching  event in TapeMessageHandler");
   tape::utils::ZmqMsg bodyBlob;
   m_socket.recv(&bodyBlob.getZmqMsg());
   

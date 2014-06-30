@@ -593,8 +593,8 @@ castor::legacymsg::TapeStatDriveEntry
   legacymsg::TapeStatDriveEntry entry;
 
   try {
-    entry.jid = getUidForTapeStatDriveEntry();
-    entry.uid = getJidForTapeStatDriveEntry();
+    entry.uid = getUidForTapeStatDriveEntry();
+    entry.jid = getJidForTapeStatDriveEntry();
     castor::utils::copyString(entry.dgn, m_config.dgn.c_str());
     entry.up = getUpForTapeStatDriveEntry();
     entry.asn = getAsnForTapeStatDriveEntry();
