@@ -25,33 +25,31 @@
 
 #pragma once
 
-// Include Files
+#include "castor/server/metrics/Counter.hpp"
+
 #include <string>
-#include "castor/metrics/Counter.hpp"
 
 namespace castor {
-  
-  namespace rh {
+namespace rh {
 
-    class SvcClassCounter : public castor::metrics::Counter {
+class SvcClassCounter : public castor::server::metrics::Counter {
 
-    public:    
+public:    
     
-      /// Factory method
-      static castor::metrics::Counter* instantiate(castor::IObject* obj);
+  /// Factory method
+  static castor::server::metrics::Counter* instantiate(castor::IObject* obj);
       
-      /// Default constructor
-      SvcClassCounter(castor::IObject* obj);
+  /// Default constructor
+  SvcClassCounter(castor::IObject* obj);
       
-      /// Default destructor
-      ~SvcClassCounter() {};
+  /// Default destructor
+  ~SvcClassCounter() {};
     
-      /// match
-      virtual int match(castor::IObject* obj);
+  /// match
+  virtual int match(castor::IObject* obj);
       
-    };
+}; // class SvcClassCounter
 
-  } // end of namespace rh
-  
-} // end of namespace castor
+} // namespace rh
+} // namespace castor
 

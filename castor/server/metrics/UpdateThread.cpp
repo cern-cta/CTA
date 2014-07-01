@@ -1,5 +1,5 @@
 /******************************************************************************
- *                      SvcClassCounter.cpp
+ *                      UpdateThread.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,61 +19,65 @@
  *
  * @(#)BaseClient.cpp,v 1.37 $Release$ 2006/02/16 15:56:58 sponcec3
  *
+ * A thread used by the MetricsCollector container/thread pool 
+ * to update all collected metric values.
  *
- *
- * @author Giuseppe Lo Presti
+ * @author castor-dev team
  *****************************************************************************/
 
-#include "castor/stager/Request.hpp"
-#include "castor/stager/FileRequest.hpp"
-#include "castor/rh/SvcClassCounter.hpp"
-#include "h/Cgrp.h"
-#include "h/Cpwd.h"
-
-#include <errno.h>
-
-//------------------------------------------------------------------------------
-// instantiate
-//------------------------------------------------------------------------------
-castor::server::metrics::Counter* castor::rh::SvcClassCounter::instantiate(
-  castor::IObject* obj)
-{
-  return new SvcClassCounter(obj);
-}
+#include "castor/server/metrics/MetricsCollector.hpp"
+#include "castor/server/metrics/UpdateThread.hpp"
+#include "h/getconfent.h"
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::rh::SvcClassCounter::SvcClassCounter(castor::IObject* obj) :
-  castor::server::metrics::Counter("")
+castor::server::metrics::UpdateThread::UpdateThread() : m_t0(0)
 {
-  castor::stager::Request* r;
-  r = dynamic_cast<castor::stager::Request*>(obj);
-  if(r == 0) {
-    castor::exception::Exception ex(EINVAL);
-    ex.getMessage() << "This counter must be initialized with a valid Request object";
-    throw ex;
+  m_sampling = DEFAULT_SAMPLING_INTERVAL;
+  char* sampling = getconfent("Metrics", "SamplingInterval", 0);
+  if(sampling) {
+    m_sampling = atoi(sampling);
+    if(m_sampling == 0) {
+      m_sampling = DEFAULT_SAMPLING_INTERVAL;
+    }
+  }
+  if(m_sampling < 10) {
+    m_sampling = 10;   // this is the minimum allowed
+  }
+}
+
+//------------------------------------------------------------------------------
+// init
+//------------------------------------------------------------------------------
+void castor::server::metrics::UpdateThread::init()
+{
+  // make sure the first run dumps the data
+  m_t0 = time(0) - m_sampling - 1;
+}
+
+//------------------------------------------------------------------------------
+// run
+//------------------------------------------------------------------------------
+void castor::server::metrics::UpdateThread::run(void* param)
+{
+  u_signed64 t = time(0);
+  if((t - m_t0) / m_sampling == 0) {
+    return;
+  }
+  m_t0 = t;
+  
+  // Collect user and internal metrics
+  MetricsCollector* mc = (MetricsCollector*)param;
+  for(HistogramsIter h = mc->histBegin(); h != mc->histEnd(); h++) {
+    for(CountersIter c = h->second->cBegin(); c != h->second->cEnd(); c++) {
+      c->second->updateRates(m_sampling);
+    }
   }
   
-  m_name = r->svcClassName();
-  m_value = match(r);    // set the initial value 
+  // Dump current values to a proc-like file
+  mc->dumpToFile();
+  
+  // Reset all internal metrics' values
+  mc->resetAllMetrics();
 }
-
-//------------------------------------------------------------------------------
-// match
-//------------------------------------------------------------------------------
-int castor::rh::SvcClassCounter::match(castor::IObject* obj)
-{
-  castor::stager::Request* r =
-    dynamic_cast<castor::stager::Request*>(obj);
-  if(r != 0 && r->svcClassName() == m_name) {
-    castor::stager::FileRequest* fr = 
-      dynamic_cast<castor::stager::FileRequest*>(r);
-    if(fr != 0)
-      return fr->subRequests().size();
-    else
-      return 1;
-  }
-  return 0;
-}
-

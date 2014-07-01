@@ -33,6 +33,7 @@ set(STAGERJOB_EXE_SRC_FILES
   XRootPlugin.cpp
   GridFTPPlugin.cpp)
 add_executable(stagerjob ${STAGERJOB_EXE_SRC_FILES})
-target_link_libraries(stagerjob castorcommon castordlf castorclient castorrfio)
+target_link_libraries(stagerjob castorcommon castordlf castorclient castorrfio
+  castorserver)
 install(TARGETS stagerjob DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallLogrotate(castor-job)

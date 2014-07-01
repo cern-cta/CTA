@@ -21,13 +21,13 @@
  * @author Dennis Waldron
  *****************************************************************************/
 
-// Include files
+#include "castor/server/metrics/MetricsCollector.hpp"
+#include "castor/server/metrics/InternalCounter.hpp"
+#include "castor/server/DynamicThreadPool.hpp"
+#include "castor/Services.hpp"
+
 #include <unistd.h>
 #include <sys/time.h>
-#include "castor/Services.hpp"
-#include "castor/metrics/MetricsCollector.hpp"
-#include "castor/metrics/InternalCounter.hpp"
-#include "castor/server/DynamicThreadPool.hpp"
 
 //-----------------------------------------------------------------------------
 // Constructor
@@ -125,13 +125,13 @@ void castor::server::DynamicThreadPool::init()
   
   // Enable internal monitoring if the metrics collector has already
   // been instantiated by the user application
-  castor::metrics::MetricsCollector* mc = castor::metrics::MetricsCollector::getInstance(0);
+  metrics::MetricsCollector* mc = metrics::MetricsCollector::getInstance(0);
   if(mc) {
     mc->getHistogram("BacklogFactor")->addCounter(
-      new castor::metrics::InternalCounter(*this, "%",
+      new metrics::InternalCounter(*this, "%",
         &castor::server::BaseThreadPool::getBacklogFactor));
     mc->getHistogram("AvgQueuingTime")->addCounter(
-      new castor::metrics::InternalCounter(*this, "ms",
+      new metrics::InternalCounter(*this, "ms",
         &castor::server::BaseThreadPool::getAvgQueuingTime));
   }
 }

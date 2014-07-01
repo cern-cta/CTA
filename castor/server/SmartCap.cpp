@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/utils/SmartCap.cpp
+ *         castor/server/SmartCap.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,26 +23,26 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
-#include "castor/utils/SmartCap.hpp"
+#include "castor/server/SmartCap.hpp"
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::utils::SmartCap::SmartCap() throw():
+castor::server::SmartCap::SmartCap() throw():
   m_cap(NULL) {
 }
 
 //------------------------------------------------------------------------------
 // constructor
 //------------------------------------------------------------------------------
-castor::utils::SmartCap::SmartCap(cap_t cap) throw():
+castor::server::SmartCap::SmartCap(cap_t cap) throw():
   m_cap(cap) {
 }
 
 //------------------------------------------------------------------------------
 // reset
 //------------------------------------------------------------------------------
-void castor::utils::SmartCap::reset(cap_t cap) throw() {
+void castor::server::SmartCap::reset(cap_t cap) throw() {
   // If the new capability state is not the one already owned
   if(cap != m_cap) {
 
@@ -60,7 +60,7 @@ void castor::utils::SmartCap::reset(cap_t cap) throw() {
 //------------------------------------------------------------------------------
 // operator=
 //------------------------------------------------------------------------------
-castor::utils::SmartCap &castor::utils::SmartCap::operator=(SmartCap& obj) {
+castor::server::SmartCap &castor::server::SmartCap::operator=(SmartCap& obj) {
   reset(obj.release());
   return *this;
 }
@@ -68,21 +68,21 @@ castor::utils::SmartCap &castor::utils::SmartCap::operator=(SmartCap& obj) {
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::utils::SmartCap::~SmartCap() throw() {
+castor::server::SmartCap::~SmartCap() throw() {
   reset();
 }
 
 //------------------------------------------------------------------------------
 // get
 //------------------------------------------------------------------------------
-cap_t castor::utils::SmartCap::get() const throw() {
+cap_t castor::server::SmartCap::get() const throw() {
   return m_cap;
 }
 
 //------------------------------------------------------------------------------
 // release
 //------------------------------------------------------------------------------
-cap_t castor::utils::SmartCap::release() {
+cap_t castor::server::SmartCap::release() {
   // If this smart pointer does not own a capbility state
   if(NULL == m_cap) {
     castor::exception::Exception ex;

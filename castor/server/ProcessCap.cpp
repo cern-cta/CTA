@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/utils/ProcessCap.cpp
+ *         castor/server/ProcessCap.cpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -23,8 +23,8 @@
  *****************************************************************************/
 
 #include "castor/exception/Exception.hpp"
-#include "castor/utils/ProcessCap.hpp"
-#include "castor/utils/SmartCap.hpp"
+#include "castor/server/ProcessCap.hpp"
+#include "castor/server/SmartCap.hpp"
 #include "h/serrno.h"
 
 #include <errno.h>
@@ -32,14 +32,14 @@
 //------------------------------------------------------------------------------
 // destructor
 //------------------------------------------------------------------------------
-castor::utils::ProcessCap::~ProcessCap()
+castor::server::ProcessCap::~ProcessCap()
   throw() {
 }
 
 //------------------------------------------------------------------------------
 // getProcText
 //------------------------------------------------------------------------------
-std::string castor::utils::ProcessCap::getProcText() {
+std::string castor::server::ProcessCap::getProcText() {
   try {
     SmartCap cap(getProc());
     return toText((cap_t)cap.get());
@@ -55,7 +55,7 @@ std::string castor::utils::ProcessCap::getProcText() {
 //------------------------------------------------------------------------------
 // getProc
 //------------------------------------------------------------------------------
-cap_t castor::utils::ProcessCap::getProc() {
+cap_t castor::server::ProcessCap::getProc() {
   cap_t cap = cap_get_proc();
   if(NULL == cap) {
     char errBuf[81];
@@ -71,7 +71,7 @@ cap_t castor::utils::ProcessCap::getProc() {
 //------------------------------------------------------------------------------
 // toText
 //------------------------------------------------------------------------------
-std::string castor::utils::ProcessCap::toText(
+std::string castor::server::ProcessCap::toText(
   const cap_t cap) {
   // Create a C++ string with the result of calling cap_to_text()
   char *const text = cap_to_text(cap, NULL);
@@ -102,7 +102,7 @@ std::string castor::utils::ProcessCap::toText(
 //------------------------------------------------------------------------------
 // setProcText
 //------------------------------------------------------------------------------
-void castor::utils::ProcessCap::setProcText(const std::string &text) {
+void castor::server::ProcessCap::setProcText(const std::string &text) {
   try {
     SmartCap cap(fromText(text));
     setProc(cap.get());
@@ -117,7 +117,7 @@ void castor::utils::ProcessCap::setProcText(const std::string &text) {
 //------------------------------------------------------------------------------
 // fromText
 //------------------------------------------------------------------------------
-cap_t castor::utils::ProcessCap::fromText(const std::string &text) {
+cap_t castor::server::ProcessCap::fromText(const std::string &text) {
   const cap_t cap = cap_from_text(text.c_str());
   if(NULL == cap) {
     char errBuf[81];
@@ -135,7 +135,7 @@ cap_t castor::utils::ProcessCap::fromText(const std::string &text) {
 //------------------------------------------------------------------------------
 // setProc
 //------------------------------------------------------------------------------
-void castor::utils::ProcessCap::setProc(const cap_t cap) {
+void castor::server::ProcessCap::setProc(const cap_t cap) {
   if(cap_set_proc(cap)) {
     char errBuf[81];
     sstrerror_r(errno, errBuf, sizeof(errBuf));

@@ -25,6 +25,7 @@
 #pragma once
 
 #include "castor/legacymsg/RmcProxy.hpp"
+#include "castor/server/ProcessCap.hpp"
 #include "castor/tape/tapeserver/daemon/MigrationReportPacker.hpp"
 #include "castor/tape/tapeserver/daemon/TapeServerReporter.hpp"
 #include "castor/tape/tapeserver/daemon/TapeSingleThreadInterface.hpp"
@@ -34,7 +35,6 @@
 #include "castor/tape/tapeserver/threading/BlockingQueue.hpp"
 #include "castor/tape/tapeserver/threading/Threading.hpp"
 #include "castor/tape/utils/Timer.hpp"
-#include "castor/utils/ProcessCap.hpp"
 
 #include <iostream>
 #include <stdio.h>
@@ -66,7 +66,7 @@ public:
     TapeServerReporter & tsr,
     const client::ClientInterface::VolumeInfo& volInfo,
     castor::log::LogContext & lc, MigrationReportPacker & repPacker,
-    castor::utils::ProcessCap &capUtils,
+    castor::server::ProcessCap &capUtils,
     uint64_t filesBeforeFlush, uint64_t bytesBeforeFlush): 
     TapeSingleThreadInterface<TapeWriteTask>(drive, rmc, tsr, volInfo,capUtils, lc),
     m_filesBeforeFlush(filesBeforeFlush),

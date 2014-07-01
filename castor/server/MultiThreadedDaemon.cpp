@@ -20,7 +20,7 @@
  * @author castor dev team
  ******************************************************************************/
 
-#include "castor/metrics/MetricsCollector.hpp"
+#include "castor/server/metrics/MetricsCollector.hpp"
 #include "castor/server/MultiThreadedDaemon.hpp"
 #include "castor/server/UDPListenerThreadPool.hpp"
 #include "h/Cgetopt.h"
@@ -101,7 +101,7 @@ void castor::server::MultiThreadedDaemon::parseCommandLine(int argc,
       break;
     case 'm':
       // initialize the metrics collector thread
-      castor::metrics::MetricsCollector::getInstance(this);
+      metrics::MetricsCollector::getInstance(this);
       break;
     default:
       tp = m_threadPools.find(c);

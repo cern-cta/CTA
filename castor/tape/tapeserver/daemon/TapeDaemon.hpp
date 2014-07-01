@@ -34,11 +34,11 @@
 #include "castor/legacymsg/VmgrProxy.hpp"
 #include "castor/messages/TapeserverProxyFactory.hpp"
 #include "castor/server/Daemon.hpp"
+#include "castor/server/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/DriveCatalogue.hpp"
 #include "castor/tape/utils/DriveConfigMap.hpp"
 #include "castor/tape/utils/utils.hpp"
-#include "castor/utils/ProcessCap.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <iostream>
@@ -91,7 +91,7 @@ public:
     messages::TapeserverProxyFactory &tapeserverProxyFactory,
     legacymsg::NsProxyFactory &nsProxyFactory,
     reactor::ZMQReactor &reactor,
-    castor::utils::ProcessCap &capUtils);
+    castor::server::ProcessCap &capUtils);
 
   /**
    * Destructor.
@@ -448,7 +448,7 @@ protected:
   /**
    * Object providing utilities for working UNIX capabilities.
    */
-  castor::utils::ProcessCap &m_capUtils;
+  castor::server::ProcessCap &m_capUtils;
 
   /**
    * The program name of the daemon.

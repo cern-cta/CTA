@@ -24,14 +24,14 @@
  * @author castor-dev team
  *****************************************************************************/
 
-// Local includes
-#include "castor/metrics/ObjTypeCounter.hpp"
 #include "castor/Constants.hpp"
+#include "castor/server/metrics/ObjTypeCounter.hpp"
 
 //------------------------------------------------------------------------------
 // instantiate
 //------------------------------------------------------------------------------
-castor::metrics::Counter* castor::metrics::ObjTypeCounter::instantiate(castor::IObject* obj)
+castor::server::metrics::Counter*
+  castor::server::metrics::ObjTypeCounter::instantiate(castor::IObject* obj)
 {
   return new ObjTypeCounter(obj);
 }
@@ -39,8 +39,8 @@ castor::metrics::Counter* castor::metrics::ObjTypeCounter::instantiate(castor::I
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::metrics::ObjTypeCounter::ObjTypeCounter(castor::IObject* obj) :
-  castor::metrics::Counter(ObjectsIdStrings[obj->type()]),
+castor::server::metrics::ObjTypeCounter::ObjTypeCounter(castor::IObject* obj) :
+  castor::server::metrics::Counter(ObjectsIdStrings[obj->type()]),
   m_type(obj->type())
 {
   m_value = 1;    // set the initial value  
@@ -49,7 +49,7 @@ castor::metrics::ObjTypeCounter::ObjTypeCounter(castor::IObject* obj) :
 //------------------------------------------------------------------------------
 // match
 //------------------------------------------------------------------------------
-inline int castor::metrics::ObjTypeCounter::match(castor::IObject* obj)
+inline int castor::server::metrics::ObjTypeCounter::match(castor::IObject* obj)
 {
   return (obj->type() == m_type);
 }

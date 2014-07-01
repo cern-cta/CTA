@@ -21,31 +21,28 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-// Include Files
-#include "castor/rh/Server.hpp"
-#include "castor/exception/Exception.hpp"
-#include "castor/server/TCPListenerThreadPool.hpp"
-#include "castor/server/AuthListenerThreadPool.hpp"
-#include "castor/log/SyslogLogger.hpp"
-#include "castor/metrics/MetricsCollector.hpp"
-#include "castor/metrics/ObjTypeCounter.hpp"
-#include "castor/rh/UserCounter.hpp"
-#include "castor/rh/SvcClassCounter.hpp"
-#include "castor/rh/RHThread.hpp"
-#include "castor/rh/IRHSvc.hpp"
-#include <string.h>
-
-#include "castor/System.hpp"
 #include "castor/Constants.hpp"
 #include "castor/ICnvSvc.hpp"
+#include "castor/exception/Exception.hpp"
+#include "castor/log/SyslogLogger.hpp"
+#include "castor/rh/RHThread.hpp"
+#include "castor/rh/Server.hpp"
+#include "castor/rh/SvcClassCounter.hpp"
+#include "castor/rh/UserCounter.hpp"
+#include "castor/rh/IRHSvc.hpp"
+#include "castor/server/AuthListenerThreadPool.hpp"
+#include "castor/server/metrics/MetricsCollector.hpp"
+#include "castor/server/metrics/ObjTypeCounter.hpp"
+#include "castor/server/TCPListenerThreadPool.hpp"
 #include "castor/Services.hpp"
-#include "common.h"   // for getconfent
-
-#include "patchlevel.h"
+#include "castor/System.hpp"
+#include "h/common.h"   // for getconfent
+#include "h/patchlevel.h"
 
 #include <iostream>
 #include <dlfcn.h>
 #include <stdio.h>
+#include <string.h>
 
 //------------------------------------------------------------------------------
 // String constants

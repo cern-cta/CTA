@@ -60,7 +60,7 @@ set (TAPEBRIDGE_SRC_FILES
   VmgrTxRx.cpp)
 add_executable (tapebridged ${TAPEBRIDGE_SRC_FILES})
 target_link_libraries (tapebridged castorcommon castorlegacymsg castortapebridge
-  castortapegatewayprotocol castortapeutils)
+  castortapegatewayprotocol castortapeutils castorserver)
 install (TARGETS tapebridged DESTINATION ${CASTOR_DEST_BIN_DIR})
 CastorInstallAdmManPage (tapebridged)
 CastorInstallLogrotate (castor-tapebridge-server)

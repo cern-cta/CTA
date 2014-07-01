@@ -64,7 +64,7 @@ castor::tape::tapeserver::daemon::DataTransferSession::DataTransferSession(
     const utils::DriveConfig & driveConfig,
     castor::legacymsg::RmcProxy & rmc,
     castor::messages::TapeserverProxy & initialProcess,
-    castor::utils::ProcessCap &capUtils,
+    castor::server::ProcessCap &capUtils,
     const CastorConf & castorConf): 
     m_request(clientRequest),
     m_logger(logger),

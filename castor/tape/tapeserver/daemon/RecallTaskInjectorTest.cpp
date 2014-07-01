@@ -4,6 +4,7 @@
 #include "castor/legacymsg/VdqmProxyDummy.hpp"
 #include "castor/log/StringLogger.hpp"
 #include "castor/messages/TapeserverProxyDummy.hpp"
+#include "castor/server/ProcessCapDummy.hpp"
 #include "castor/tape/tapeserver/client/ClientInterface.hpp"
 #include "castor/tape/tapeserver/client/FakeClient.hpp"
 #include "castor/tape/tapeserver/daemon/DiskWriteThreadPool.hpp"
@@ -12,7 +13,6 @@
 #include "castor/tape/tapeserver/daemon/TapeReadSingleThread.hpp"
 #include "castor/tape/tapeserver/drive/Drive.hpp"
 #include "castor/tape/utils/TpconfigLine.hpp"
-#include "castor/utils/ProcessCapDummy.hpp"
 #include "castor/utils/utils.hpp"
 
 #include <gtest/gtest.h>
@@ -41,7 +41,7 @@ public:
     castor::legacymsg::RmcProxy & rmc,
     castor::tape::tapeserver::daemon::TapeServerReporter & tsr,
     const castor::tape::tapeserver::client::ClientInterface::VolumeInfo& volInfo, 
-     castor::utils::ProcessCap& cap,
+     castor::server::ProcessCap& cap,
     castor::log::LogContext & lc):
   TapeSingleThreadInterface<TapeReadTask>(drive, rmc, tsr, volInfo,cap, lc){}
   
@@ -80,7 +80,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNominal) {
   volume.volumeMode=castor::tape::tapegateway::READ;
   castor::tape::tapeserver::daemon::TapeServerReporter gsr(initialProcess,
   utils::DriveConfig(),"0.0.0.0",volume,lc);
-  castor::utils::ProcessCapDummy cap;
+  castor::server::ProcessCapDummy cap;
   FakeSingleTapeReadThread tapeRead(drive, rmc, gsr, volume, cap,lc);
 
   tapeserver::daemon::RecallReportPacker rrp(client,2,lc);
@@ -135,7 +135,7 @@ TEST(castor_tape_tapeserver_daemon, RecallTaskInjectorNoFiles) {
   volume.labelObsolete="AUL";
   volume.vid="V12345";
   volume.volumeMode=castor::tape::tapegateway::READ;
-  castor::utils::ProcessCapDummy cap;
+  castor::server::ProcessCapDummy cap;
   castor::tape::tapeserver::daemon::TapeServerReporter tsr(initialProcess,  
   utils::DriveConfig(),"0.0.0.0",volume,lc);  
   FakeSingleTapeReadThread tapeRead(drive, rmc, tsr, volume,cap, lc);

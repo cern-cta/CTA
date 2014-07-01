@@ -24,23 +24,22 @@
  * @author castor-dev team
  *****************************************************************************/
 
-// Include Files
-#include <errno.h>
+#include "castor/server/metrics/Histogram.hpp"
 
-// Local includes
-#include "Histogram.hpp"
+#include <errno.h>
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::metrics::Histogram::Histogram(std::string name, CounterInstantiator instantiator) :
-  m_name(name), m_instantiator(instantiator), m_mutex(0)
+castor::server::metrics::Histogram::Histogram(std::string name,
+  CounterInstantiator instantiator) : m_name(name),
+  m_instantiator(instantiator), m_mutex(0)
 {}
 
 //------------------------------------------------------------------------------
 // Destructor
 //------------------------------------------------------------------------------
-castor::metrics::Histogram::~Histogram()
+castor::server::metrics::Histogram::~Histogram()
 {
   for(CountersIter c = cBegin(); c != cEnd(); c++) {
     delete c->second;
@@ -50,7 +49,7 @@ castor::metrics::Histogram::~Histogram()
 //------------------------------------------------------------------------------
 // notifyNewValue
 //------------------------------------------------------------------------------
-void castor::metrics::Histogram::notifyNewValue(castor::IObject* obj)
+void castor::server::metrics::Histogram::notifyNewValue(castor::IObject* obj)
   
 {
   if(m_instantiator != 0) {
@@ -87,8 +86,8 @@ void castor::metrics::Histogram::notifyNewValue(castor::IObject* obj)
 //------------------------------------------------------------------------------
 // printXml
 //------------------------------------------------------------------------------
-std::string castor::metrics::Histogram::printXml(std::string counterName)
-  
+std::string castor::server::metrics::Histogram::printXml(
+  std::string counterName)
 {
   std::ostringstream ss;
   ss << "<histogram name='" << m_name << "'>\n";

@@ -24,20 +24,20 @@
  * @author Giuseppe Lo Presti
  *****************************************************************************/
 
-// Local includes
-#include <errno.h>
-#include <string.h>
-#include "Cpwd.h"
-#include "Cgrp.h"
+#include "castor/rh/UserCounter.hpp"
 #include "castor/stager/Request.hpp"
 #include "castor/stager/FileRequest.hpp"
-#include "castor/rh/UserCounter.hpp"
+#include "h/Cgrp.h"
+#include "h/Cpwd.h"
 
+#include <errno.h>
+#include <string.h>
 
 //------------------------------------------------------------------------------
 // instantiate
 //------------------------------------------------------------------------------
-castor::metrics::Counter* castor::rh::UserCounter::instantiate(castor::IObject* obj)
+castor::server::metrics::Counter* castor::rh::UserCounter::instantiate(
+  castor::IObject* obj)
 {
   return new UserCounter(obj);
 }
@@ -46,7 +46,7 @@ castor::metrics::Counter* castor::rh::UserCounter::instantiate(castor::IObject* 
 // Constructor
 //------------------------------------------------------------------------------
 castor::rh::UserCounter::UserCounter(castor::IObject* obj) :
-  castor::metrics::Counter("")
+  castor::server::metrics::Counter("")
 {
   castor::stager::Request* r;
   struct passwd *pwd = 0;

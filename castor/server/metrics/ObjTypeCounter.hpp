@@ -1,5 +1,5 @@
 /******************************************************************************
- *         castor/utils/ProcessCapDummy.hpp
+ *                      ObjTypeCounter.hpp
  *
  * This file is part of the Castor project.
  * See http://castor.web.cern.ch/castor
@@ -19,56 +19,43 @@
  *
  *
  *
- * @author Steven.Murray@cern.ch
+ *
+ * @author castor-dev team
  *****************************************************************************/
 
 #pragma once
 
-#include "castor/utils/ProcessCap.hpp"
+#include "castor/server/metrics/Counter.hpp"
 
 #include <string>
-#include <sys/capability.h>
 
-namespace castor {
-namespace utils  {
+namespace castor  {
+namespace server  {
+namespace metrics {
 
-/**
- * A dummy class that pretends to provide support for UNIX capabilities.
- *
- * This primary goal of this class is to facilitate unit testing.
- */
-class ProcessCapDummy: public ProcessCap {
+class ObjTypeCounter : public Counter {
+
 public:
+      
+  /// Factory method
+  static Counter* instantiate(castor::IObject* obj);
+      
+  /// Default constructor
+  ObjTypeCounter(castor::IObject* obj);
+      
+  /// Default destructor
+  ~ObjTypeCounter() {};
+    
+  /// match
+  virtual int match(castor::IObject* obj);
+      
+protected:
+  /// Object type for matching
+  int m_type;
+    
+}; // class ObjTypeCounter
 
-  /**
-   * Destructor.
-   */
-  ~ProcessCapDummy() throw();
-
-  /**
-   * C++ wrapper around the C functions cap_get_proc() and cap_to_text().
-   *
-   * @return The string representation the capabilities of the current
-   * process.
-   */
-  std::string getProcText();
-
-  /**
-   * C++ wrapper around the C functions cap_from_text() and cap_set_proc().
-   *
-   * @text The string representation the capabilities that the current
-   * process should have.
-   */
-  void setProcText(const std::string &text);
-
-private:
-
-  /**
-   * The string representation of the current capability state.
-   */
-  std::string m_text;
-
-}; // class ProcessCapDummy
-
-} // namespace utils
+} // namespace metrics
+} // namespace server
 } // namespace castor
+

@@ -24,15 +24,14 @@
  * @author castor-dev team
  *****************************************************************************/
 
-// Include Files
-#include <errno.h>
-#include "castor/metrics/InternalCounter.hpp"
+#include "castor/server/metrics/InternalCounter.hpp"
 
+#include <errno.h>
 
 //------------------------------------------------------------------------------
 // Constructor
 //------------------------------------------------------------------------------
-castor::metrics::InternalCounter::InternalCounter(
+castor::server::metrics::InternalCounter::InternalCounter(
   castor::server::BaseThreadPool& tp,
   std::string unit,
   castor::server::BaseThreadPool::MetricGetter metricGetter) :
@@ -42,7 +41,7 @@ castor::metrics::InternalCounter::InternalCounter(
 //------------------------------------------------------------------------------
 // updateRates
 //------------------------------------------------------------------------------
-void castor::metrics::InternalCounter::updateRates(int si)
+void castor::server::metrics::InternalCounter::updateRates(int si)
 {
   // use the pointer-to-member operator to call the given getter method
   // from the given thread pool. This is the metric value used by this counter
@@ -58,7 +57,7 @@ void castor::metrics::InternalCounter::updateRates(int si)
   m_lastValue = 0;
   
   // update rates as per inherited logic
-  castor::metrics::Counter::updateRates(si);
+  castor::server::metrics::Counter::updateRates(si);
   
   // restore the correct value for later reporting
   m_value = m_value * 60/si;

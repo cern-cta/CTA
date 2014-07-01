@@ -26,52 +26,51 @@
 
 #pragma once
 
-// Include Files
 #include "castor/server/IThread.hpp"
 #include "castor/exception/Exception.hpp"
 
-namespace castor {
-  
-  namespace metrics {
+namespace castor  {
+namespace server  {
+namespace metrics {
 
-    const int DEFAULT_SAMPLING_INTERVAL = 30;
+const int DEFAULT_SAMPLING_INTERVAL = 30;
     
-    /**
-     * The metrics updater thread
-     */
-    class UpdateThread : public castor::server::IThread {
-  
-    public:    
-      /**
-       * Default constructor. Note: this class uses
-       * member thread-UNsafe variables and can't (+ doesn't
-       * need to) be run by multiple parallel threads.
-       */
-      UpdateThread();
-      
-      /// Default destructor
-      virtual ~UpdateThread() throw() {};
-      
-      /// Standard init method. Initializes m_t0
-      virtual void init();
-      
-      /// Main work for this thread. Updates all metrics
-      virtual void run(void* param);
-      
-      /// Empty stop method
-      virtual void stop() {};
-      
-    private:
-      
-      /// Sampling interval
-      int m_sampling;
-      
-      /// time at previous update
-      u_signed64 m_t0;
-      
-    };
-    
-  } // end of namespace metrics
+/**
+ * The metrics updater thread
+ */
+class UpdateThread : public IThread {
 
-} // end of namespace castor
+public:    
+  /**
+   * Default constructor. Note: this class uses
+   * member thread-UNsafe variables and can't (+ doesn't
+   * need to) be run by multiple parallel threads.
+   */
+  UpdateThread();
+  
+  /// Default destructor
+  virtual ~UpdateThread() throw() {};
+  
+  /// Standard init method. Initializes m_t0
+  virtual void init();
+  
+  /// Main work for this thread. Updates all metrics
+  virtual void run(void* param);
+  
+  /// Empty stop method
+  virtual void stop() {};
+  
+private:
+  
+  /// Sampling interval
+  int m_sampling;
+  
+  /// time at previous update
+  u_signed64 m_t0;
+  
+}; // class UpdateThread
+    
+} // namespace metrics
+} // namespace server
+} // namespace castor
 

@@ -29,11 +29,11 @@
 #include "castor/legacymsg/VmgrProxyTcpIp.hpp"
 #include "castor/log/SyslogLogger.hpp"
 #include "castor/messages/TapeserverProxyZmqFactory.hpp"
+#include "castor/server/ProcessCap.hpp"
 #include "castor/tape/reactor/ZMQReactor.hpp"
 #include "castor/tape/tapeserver/daemon/Constants.hpp"
 #include "castor/tape/tapeserver/daemon/DataTransferSession.hpp"
 #include "castor/tape/tapeserver/daemon/TapeDaemon.hpp"
-#include "castor/utils/ProcessCap.hpp"
 #include "castor/utils/utils.hpp"
 #include "h/rmc_constants.h"
 #include "h/vdqm_constants.h"
@@ -158,7 +158,7 @@ static int exceptionThrowingMain(const int argc, char **const argv,
   tape::reactor::ZMQReactor reactor(log, zmqContext);
 
   // Create the object providing utilities for working with UNIX capabilities
-  castor::utils::ProcessCap capUtils;
+  castor::server::ProcessCap capUtils;
 
   // Create the main tapeserverd object
   tape::tapeserver::daemon::TapeDaemon daemon(
