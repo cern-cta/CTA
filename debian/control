@@ -239,7 +239,7 @@ Description: castor (Cern Advanced STORage system)
 
 Package: castor-lib-tape
 Architecture: any
-Depends: castor-lib = %{version}-%{release}
+Depends: castor-lib = %{version}-%{release}, zeromq3
 Build-Depends: python-devel
 XBS-Obsoletes: castor-lib-policy, castor-lib-tapeutils
 Description: castor (Cern Advanced STORage system)
