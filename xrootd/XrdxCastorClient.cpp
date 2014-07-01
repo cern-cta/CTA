@@ -65,12 +65,16 @@ XrdxCastorClient::XrdxCastorClient()
   int low_port  = castor::client::LOW_CLIENT_PORT_RANGE;
   int high_port = castor::client::HIGH_CLIENT_PORT_RANGE;
   char* sport;
+
   if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
-                          (char *)castor::client::LOWPORT_CONF, 0)) != 0) {
+                          (char *)castor::client::LOWPORT_CONF, 0)) != 0)
+  {
     low_port = castor::System::porttoi(sport);
   }
+
   if ((sport = getconfent((char *)castor::client::CLIENT_CONF,
-                          (char *)castor::client::HIGHPORT_CONF, 0)) != 0) {
+                          (char *)castor::client::HIGHPORT_CONF, 0)) != 0)
+  {
     high_port = castor::System::porttoi(sport);
   }
 
@@ -78,7 +82,9 @@ XrdxCastorClient::XrdxCastorClient()
   int rc;
   int nonblocking = 1;
   rc = ioctl(mCallbackSocket->socket(), FIONBIO, &nonblocking);
-  if (rc == -1) {
+
+  if (rc == -1)
+  {
     castor::exception::InvalidArgument e;
     e.getMessage() << "Could not set socket asynchronous";
     throw e;
@@ -390,12 +396,10 @@ XrdxCastorClient::HasSubmittedReq(const char* path, XrdOucErrInfo& error)
   ostr << error.getErrUser() << ":" << path << ":";
   std::string get_req = ostr.str() + "get";
   std::string put_req = ostr.str() + "put";
-  std::string update_req = ostr.str() + "update";
 
   XrdSysMutexHelper lock(mMutexMaps);
   return ((mMapUsers.find(get_req) != mMapUsers.end()) ||
-          (mMapUsers.find(put_req) != mMapUsers.end()) ||
-          (mMapUsers.find(update_req) != mMapUsers.end())) ;
+          (mMapUsers.find(put_req) != mMapUsers.end()));
 }
   
 

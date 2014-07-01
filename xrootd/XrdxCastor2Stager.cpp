@@ -39,10 +39,8 @@
 #include "castor/stager/IJobSvc.hpp"
 #include "castor/stager/StagePrepareToGetRequest.hpp"
 #include "castor/stager/StagePrepareToPutRequest.hpp"
-#include "castor/stager/StagePrepareToUpdateRequest.hpp"
 #include "castor/stager/StagePutRequest.hpp"
 #include "castor/stager/StageGetRequest.hpp"
-#include "castor/stager/StageUpdateRequest.hpp"
 #include "castor/stager/SubRequest.hpp"
 #include "castor/rh/IOResponse.hpp"
 #include "castor/exception/Exception.hpp"
@@ -222,7 +220,6 @@ XrdxCastor2Stager::Prepare2Get(XrdOucErrInfo& error,
 
 //------------------------------------------------------------------------------
 // Send an async request to the stager. This request can be a GET or a PUT
-// or an UPDATE.
 //------------------------------------------------------------------------------
 int 
 XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
@@ -257,7 +254,7 @@ XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
     else 
     {
       // Response not received, we need to stall the client some more
-      xcastor_static_debug("response for previous request hasn't arrived yer");
+      xcastor_static_debug("response for previous request hasn't arrived yet");
       return SFS_STALL;
     }
   }
@@ -274,13 +271,7 @@ XrdxCastor2Stager::DoAsyncReq(XrdOucErrInfo& error,
   else if (opType == "put")
   {
     user_tag = "xCastor2Put";
-    request = new castor::stager::StagePutRequest();
-    
-  }
-  else if (opType == "update")
-  {
-    user_tag = "xCastor2Update";
-    request = new castor::stager::StageUpdateRequest();
+    request = new castor::stager::StagePutRequest();    
   }
   else 
   {

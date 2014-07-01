@@ -244,7 +244,6 @@ XrdxCastor2OfsFile::XrdxCastor2OfsFile(const char* user, int MonID) :
     mStagerJob(NULL),
     mEnvOpaque(NULL),
     mIsRW(false),
-    mIsTruncate(false),
     mHasWrite(false),
     mViaDestructor(false),
     mReqId("0"),
@@ -324,10 +323,8 @@ XrdxCastor2OfsFile::open(const char*         path,
   newopaque.replace("source=", "nosource=");
   mEnvOpaque = new XrdOucEnv(newopaque.c_str());
   newpath = mEnvOpaque->Get("castor2fs.pfn1");
-
   open_mode |= SFS_O_MKPTH;
   create_mode |= SFS_O_MKPTH;
-  mIsTruncate = open_mode & SFS_O_TRUNC;
 
   if ((open_mode & (SFS_O_CREAT | SFS_O_TRUNC |
                     SFS_O_WRONLY | SFS_O_RDWR)) != 0)

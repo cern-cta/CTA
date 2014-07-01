@@ -189,7 +189,6 @@ class XrdxCastor2OfsFile : public XrdOfsFile, public LogId
     XrdxCastor2Ofs2StagerJob* mStagerJob; ///< StagerJob object
     XrdOucEnv* mEnvOpaque; ///< initial opaque information
     bool mIsRW; ///< file opened for writing
-    bool mIsTruncate; ///< file is truncated
     bool mHasWrite; ///< mark is file has writes
     bool mViaDestructor; ///< mark close via destructor - not properly closed
     std::string mReqId; ///< request id received from the redirector

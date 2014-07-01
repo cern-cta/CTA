@@ -114,7 +114,6 @@ XrdxCastor2FsFile::open(const char*         path,
   int retc = 0, open_flag = 0;
   struct Cns_filestatcs buf;
   int isRW = 0;
-  int isRewrite = 0;
   int crOpts = (Mode & SFS_O_MKPTH ? XRDOSS_mkpath : 0);
   XrdOucEnv Open_Env(info);
 
@@ -209,7 +208,9 @@ XrdxCastor2FsFile::open(const char*         path,
           }
           else
           {
-            isRewrite = 1;
+            xcastor_err("update operation is not allowed");
+            return XrdxCastor2Fs::Emsg(epname, error, EIO, "open - update not allowed",
+                                       map_path.c_str());
           }
         }
       }
@@ -268,7 +269,7 @@ XrdxCastor2FsFile::open(const char*         path,
   }
 
   // Create response structure in which the pfn2 has the following structure
-  //  <reqid:stageJobPort:stageJobUuid>
+  // <reqid:stageJobPort:stageJobUuid>
   struct XrdxCastor2Stager::RespInfo resp_info;
   resp_info.mRedirectionPfn2 = "0:0:0"; 
 
@@ -279,7 +280,7 @@ XrdxCastor2FsFile::open(const char*         path,
 
   if (isRW)
   {
-    if (!stall_comeback && !isRewrite)
+    if (!stall_comeback)
     {
       // File doesn't exist, we have to create the path - check if we need to mkpath
       if (Mode & SFS_O_MKPTH)
@@ -299,7 +300,8 @@ XrdxCastor2FsFile::open(const char*         path,
 
           if (XrdxCastor2FsUFS::Statfn(spath.c_str(), &cstat))
           {
-            // Protect against misconfiguration ( all.export / ) and missing stat result on Cns_stat('/');
+            // Protect against misconfiguration ( all.export / ) and missing
+            // stat result on Cns_stat('/');
             if (rpos < 0)
               return XrdxCastor2Fs::Emsg(epname, error, serrno , "create path in root directory");
             
@@ -330,6 +332,7 @@ XrdxCastor2FsFile::open(const char*         path,
 
             const char* file_class = 0;
 
+            // TODO: what is this "fileClass"? Is it the same as the svcClass?
             if ((file_class = Open_Env.Get("fileClass")) &&
                 (Cns_chclass(newpath.c_str(), 0, (char*)file_class)))
             {
@@ -350,20 +353,10 @@ XrdxCastor2FsFile::open(const char*         path,
     struct XrdxCastor2Stager::ReqInfo req_info(client_uid, client_gid, 
                                                map_path.c_str(), allowed_svc.c_str());
    
-    if (!isRewrite)
-    {
-      xcastor_debug("Put allowed_svc=%s", allowed_svc.c_str());
-      status = XrdxCastor2Stager::DoAsyncReq(error, "put", &req_info, resp_info);
-      delaytag += ":put";
-      aop = AOP_Create;
-    }
-    else
-    {
-      xcastor_debug("Update allowed_svc=%s", allowed_svc.c_str());
-      status = XrdxCastor2Stager::DoAsyncReq(error, "update", &req_info, resp_info);
-      delaytag += ":update";
-      aop = AOP_Update;
-    }
+    xcastor_debug("Put allowed_svc=%s", allowed_svc.c_str());
+    status = XrdxCastor2Stager::DoAsyncReq(error, "put", &req_info, resp_info);
+    delaytag += ":put";
+    aop = AOP_Create;
 
     if (status == SFS_ERROR)
     {
